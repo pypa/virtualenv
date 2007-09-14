@@ -9,10 +9,10 @@ here = os.path.dirname(__file__)
 script = os.path.join(here, 'virtualenv.py')
 
 file_regex = re.compile(
-    r'##file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+)\s*=\s*"""\n(.*?)"""\n',
+    r'##file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+)\s*=\s*"""\n(.*?)"""\.decode\("base64"\)\.decode\("zlib"\)\n',
     re.S)
 
-file_template = '##file %(filename)s\n%(varname)s = """\n%(data)s"""\n'
+file_template = '##file %(filename)s\n%(varname)s = """\n%(data)s""".decode("base64").decode("zlib")\n'
 
 def rebuild():
     f = open(script, 'rb')
@@ -20,6 +20,7 @@ def rebuild():
     f.close()
     parts = []
     last_pos = 0
+    match = None
     for match in file_regex.finditer(content):
         parts.append(content[last_pos:match.start()])
         last_pos = match.end()
@@ -50,6 +51,10 @@ def rebuild():
         f.write(new_content)
         f.close()
         print 'done.'
+    else:
+        print 'No changes in content'
+    if match is None:
+        print 'No variables were matched/found'
 
 def zipped_len(data):
     if not data:

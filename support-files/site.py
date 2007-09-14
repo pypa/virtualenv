@@ -66,7 +66,6 @@ import sys
 import os
 import __builtin__
 
-
 def makepath(*paths):
     dir = os.path.abspath(os.path.join(*paths))
     return dir, os.path.normcase(dir)
@@ -388,7 +387,6 @@ def virtual_install_main_packages():
     sys.real_prefix = f.read().strip()
     f.close()
     sys.path.insert(1, os.path.join(sys.real_prefix, 'lib', 'python'+sys.version[:3]))
-    print 'adding %s: %s' % (sys.real_prefix, sys.path)
 
 def virtual_addsitepackages(known_paths):
     if not os.path.exists(os.path.join(os.path.dirname(__file__), 'no-global-site-packages.txt')):
