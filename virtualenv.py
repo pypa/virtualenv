@@ -171,7 +171,15 @@ def main():
             ' '.join(args))
         parser.print_help()
         sys.exit(2)
+
+    verbosity = options.verbose - options.quiet
+    logger = Logger(Logger.DEFAULT + verbosity)
+
     home_dir = args[0]
+
+    create_environment(home_dir, options)
+
+def create_environment(home_dir, options):
     lib_dir = join(home_dir, 'lib', py_version)
     inc_dir = join(home_dir, 'include', py_version)
     bin_dir = join(home_dir, 'bin')
@@ -179,9 +187,6 @@ def main():
     if sys.executable.startswith(bin_dir):
         print 'Please use the *system* python to run this script'
         return
-
-    verbosity = options.verbose - options.quiet
-    logger = Logger(Logger.DEFAULT + verbosity)
         
     if options.clear:
         rmtree(lib_dir)
