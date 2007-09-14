@@ -116,56 +116,50 @@ def install_setuptools(py_executable):
     elif sys.version_info[:2] == (2, 5):
         setup_fn = 'setuptools-0.6c7-py2.5.egg'
     setup_fn = join(os.path.dirname(__file__), 'support-files', setup_fn)
-    inst_dir = os.tempnam('virtualenv-files')
-    logger.info('Creating temporary directory %s', inst_dir)
-    os.makedirs(inst_dir)
-    try:
-        ez_fn = join(inst_dir, 'ez_setup.py')
-        writefile(ez_fn, EZ_SETUP_PY)
-        cmd = [py_executable, ez_fn]
-        if os.path.exists(setup_fn):
-            logger.info('Using existing Setuptools egg: %s', setup_fn)
-            cmd.append(setup_fn)
-        else:
-            logger.info('No Setuptools egg found; downloading')
-            cmd.extend(['--always-copy', '-U', 'setuptools'])
-        logger.notify('Running %s', ' '.join(cmd))
-        subprocess.call(cmd)
-    finally:
-        logger.info('Removing temporary directory %s', inst_dir)
-        #shutil.rmtree(inst_dir)
-
-parser = optparse.OptionParser(
-    usage="%prog [OPTIONS] DEST_DIR")
-
-parser.add_option(
-    '-v', '--verbose',
-    action='count',
-    dest='verbose',
-    default=0,
-    help="Increase verbosity")
-
-parser.add_option(
-    '-q', '--quiet',
-    action='count',
-    dest='quiet',
-    default=0,
-    help='Decrease verbosity')
-
-parser.add_option(
-    '--clear',
-    dest='clear',
-    action='store_true',
-    help="Clear out the non-root install and start from scratch")
-
-parser.add_option(
-    '--no-site-packages',
-    dest='no_site_packages',
-    action='store_true',
-    help="Don't copy the contents of the global site-packages dir to the "
-         "non-root site-packages")
+    cmd = [py_executable, '-c', EZ_SETUP_PY]
+    if os.path.exists(setup_fn):
+        logger.info('Using existing Setuptools egg: %s', setup_fn)
+        cmd.append(setup_fn)
+    else:
+        logger.info('No Setuptools egg found; downloading')
+        cmd.extend(['--always-copy', '-U', 'setuptools'])
+    logger.notify('Installing setuptools')
+    subprocess.call(cmd)
 
 def main():
+    parser = optparse.OptionParser(
+        usage="%prog [OPTIONS] DEST_DIR")
+
+    parser.add_option(
+        '-v', '--verbose',
+        action='count',
+        dest='verbose',
+        default=0,
+        help="Increase verbosity")
+
+    parser.add_option(
+        '-q', '--quiet',
+        action='count',
+        dest='quiet',
+        default=0,
+        help='Decrease verbosity')
+
+    parser.add_option(
+        '--clear',
+        dest='clear',
+        action='store_true',
+        help="Clear out the non-root install and start from scratch")
+
+    parser.add_option(
+        '--no-site-packages',
+        dest='no_site_packages',
+        action='store_true',
+        help="Don't copy the contents of the global site-packages dir to the "
+             "non-root site-packages")
+
+    if 'extend_parser' in globals():
+        extend_parser(parser)
+
     options, args = parser.parse_args()
     global logger
     if not args:
@@ -230,6 +224,9 @@ def main():
                       'your %s file.' % pydistutils)
 
     install_setuptools(py_executable)
+
+    if 'after_install' in globals():
+        after_install(options, home_dir)
 
 ##file site.py
 SITE_PY = """
