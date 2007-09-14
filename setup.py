@@ -3,16 +3,23 @@ import sys, os
 
 version = '0.1'
 
+f = open(os.path.join(os.path.dirname(__file__), 'docs', 'index.txt'))
+long_description = f.read().strip()
+f.close()
+
 setup(name='virtualenv',
       version=version,
       description="Virtual Python Environment builder",
-      long_description="""\
-""",
-      classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
-      keywords='',
+      long_description=long_description,
+      classifiers=[
+        'Development Status :: 4 - Beta',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: MIT License',
+      ],
+      keywords='setuptools deployment installation distutils',
       author='Ian Bicking',
       author_email='ianb@colorstudy.com',
-      url='',
+      url='http://pypi.python.org/pypi/virtualenv',
       license='MIT',
       modules=['virtualenv'],
       include_package_data=True,

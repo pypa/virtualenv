@@ -186,6 +186,7 @@ def main():
     if options.clear:
         rmtree(lib_dir)
         rmtree(inc_dir)
+        ## FIXME: why not delete it?
         logger.notify('Not deleting %s', bin_dir)
 
     prefix = sys.prefix
