@@ -161,7 +161,15 @@ def main():
         extend_parser(parser)
 
     options, args = parser.parse_args()
+
     global logger
+
+    if 'adjust_options' in globals():
+        adjust_options(options, args)
+
+    verbosity = options.verbose - options.quiet
+    logger = Logger(Logger.DEFAULT + verbosity)
+
     if not args:
         print 'You must provide a DEST_DIR'
         parser.print_help()
@@ -172,9 +180,6 @@ def main():
         parser.print_help()
         sys.exit(2)
 
-    verbosity = options.verbose - options.quiet
-    logger = Logger(Logger.DEFAULT + verbosity)
-
     home_dir = args[0]
 
     create_environment(home_dir, site_packages=not options.no_site_packages, clear=options.clear)
@@ -182,6 +187,15 @@ def main():
         after_install(options, home_dir)
 
 def create_environment(home_dir, site_packages=True, clear=False):
+    """
+    Creates a new environment in ``home_dir``.
+
+    If ``site_packages`` is true (the default) then the global
+    ``site-packages/`` directory will be on the path.
+
+    If ``clear`` is true (default False) then the environment will
+    first be cleared.
+    """
     lib_dir = join(home_dir, 'lib', py_version)
     inc_dir = join(home_dir, 'include', py_version)
     bin_dir = join(home_dir, 'bin')
@@ -232,6 +246,51 @@ def create_environment(home_dir, site_packages=True, clear=False):
                       'your %s file.' % pydistutils)
 
     install_setuptools(py_executable)
+
+def create_bootstrap_script(extra_text):
+    """
+    Creates a bootstrap script, which is like this script but with
+    extend_parser, adjust_options, and after_install hooks.
+
+    This returns a string that (written to disk of course) can be used
+    as a bootstrap script with your own customizations.  The script
+    will be the standard virtualenv.py script, with your extra text
+    added (your extra text should be Python code).
+
+    If you include these functions, they will be called:
+
+    ``extend_parser(optparse_parser)``:
+        You can add or remove options from the parser here.
+
+    ``adjust_options(options, args)``:
+        You can change options here, or change the args (if you accept
+        different kinds of arguments, be sure you modify ``args`` so it is
+        only ``[DEST_DIR]``).
+
+    ``after_install(options, home_dir)``:
+
+        After everything is installed, this function is called.  This
+        is probably the function you are most likely to use.  An
+        example would be::
+
+            def after_install(options, home_dir):
+                subprocess.call([join(home_dir, 'bin', 'easy_install'),
+                                 'MyPackage'])
+                subprocess.call([join(home_dir, 'bin', 'my-package-script'),
+                                 'setup', home_dir])
+
+        This example immediately installs a package, and runs a setup
+        script from that package.
+    """
+    filename = __file__
+    if filename.endswith('.pyc'):
+        filename = filename[:-1]
+    f = open(filename, 'rb')
+    content = f.read()
+    f.close()
+    return content.replace('##EXT' 'END##', extra_text)
+
+##EXTEND##
 
 ##file site.py
 SITE_PY = """

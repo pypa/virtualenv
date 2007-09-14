@@ -60,6 +60,74 @@ It also installs `Setuptools
 you use ``ENV/bin/easy_install`` the packages will be installed into
 the environment.
 
+Creating Your Own Bootstrap Scripts
+-----------------------------------
+
+While this creates an environment, it doesn't put anything into the
+environment.  Developers may find it useful to distribute a script
+that sets up a particular environment, for example a script that
+installs a particular web application.
+
+To create a script like this, call
+``virtualenv.create_bootstrap_script(extra_text)``, and write the
+result to your new bootstrapping script.  Here's the documentation
+from the docstring:
+
+Creates a bootstrap script, which is like this script but with
+extend_parser, adjust_options, and after_install hooks.
+
+This returns a string that (written to disk of course) can be used
+as a bootstrap script with your own customizations.  The script
+will be the standard virtualenv.py script, with your extra text
+added (your extra text should be Python code).
+
+If you include these functions, they will be called:
+
+``extend_parser(optparse_parser)``:
+    You can add or remove options from the parser here.
+
+``adjust_options(options, args)``:
+    You can change options here, or change the args (if you accept
+    different kinds of arguments, be sure you modify ``args`` so it is
+    only ``[DEST_DIR]``).
+
+``after_install(options, home_dir)``:
+
+    After everything is installed, this function is called.  This
+    is probably the function you are most likely to use.  An
+    example would be::
+
+        def after_install(options, home_dir):
+            subprocess.call([join(home_dir, 'bin', 'easy_install'),
+                             'MyPackage'])
+            subprocess.call([join(home_dir, 'bin', 'my-package-script'),
+                             'setup', home_dir])
+
+    This example immediately installs a package, and runs a setup
+    script from that package.
+
+Bootstrap Example
+~~~~~~~~~~~~~~~~~
+
+Here's a more concrete example of how you could use this::
+
+    import virtualenv, textwrap
+    output = virtualenv.create_bootstrap_script(textwrap.dedent("""
+    import os, subprocess
+    def after_install(options, home_dir):
+        etc = join(home_dir, 'etc')
+        if not os.path.exists(etc):
+            os.makedirs(etc)
+        subprocess.call([join(home_dir, 'bin', 'easy_install'),
+                         'BlogApplication'])
+        subprocess.call([join(home_dir, 'bin', 'paster'),
+                         'make-config', 'BlogApplication',
+                         join(etc, 'blog.ini')])
+        subprocess.call([join(home_dir, 'bin', 'paster'),
+                         'setup-app', join(etc, 'blog.ini')])
+    """))
+    f = open('blog-bootstrap.py', 'w').write(output)
+
 Compare & Contrast with Alternatives
 ------------------------------------
 
