@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.1'
+version = '0.8.1'
 
 f = open(os.path.join(os.path.dirname(__file__), 'docs', 'index.txt'))
 long_description = f.read().strip()
