@@ -36,7 +36,7 @@ def rebuild():
             parts.append(match.group(0))
             continue
         print '  Content changed (%s bytes -> %s bytes)' % (
-            len(c), len(data.decode('base64').decode('zlib')))
+            zipped_len(data), len(c))
         new_match = file_template % dict(
             filename=filename,
             varname=varname,
@@ -50,6 +50,14 @@ def rebuild():
         f.write(new_content)
         f.close()
         print 'done.'
+
+def zipped_len(data):
+    if not data:
+        return 'no data'
+    try:
+        return len(data.decode('base64').decode('zlib'))
+    except:
+        return 'unknown'
 
 if __name__ == '__main__':
     rebuild()
