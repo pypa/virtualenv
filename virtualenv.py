@@ -177,9 +177,11 @@ def main():
 
     home_dir = args[0]
 
-    create_environment(home_dir, options)
+    create_environment(home_dir, site_packages=not options.no_site_packages, clear=options.clear)
+    if 'after_install' in globals():
+        after_install(options, home_dir)
 
-def create_environment(home_dir, options):
+def create_environment(home_dir, site_packages=True, clear=False):
     lib_dir = join(home_dir, 'lib', py_version)
     inc_dir = join(home_dir, 'include', py_version)
     bin_dir = join(home_dir, 'bin')
@@ -188,7 +190,7 @@ def create_environment(home_dir, options):
         print 'Please use the *system* python to run this script'
         return
         
-    if options.clear:
+    if clear:
         rmtree(lib_dir)
         rmtree(inc_dir)
         ## FIXME: why not delete it?
@@ -203,7 +205,7 @@ def create_environment(home_dir, options):
     mkdir(join(lib_dir, 'site-packages'))
     writefile(join(lib_dir, 'site.py'), SITE_PY)
     writefile(join(lib_dir, 'orig-prefix.txt'), prefix)
-    if options.no_site_packages:
+    if not site_packages:
         writefile(join(stdlib_dir, 'no-global-site-packages.txt'), '')
 
     #mkdir(inc_dir)
@@ -230,9 +232,6 @@ def create_environment(home_dir, options):
                       'your %s file.' % pydistutils)
 
     install_setuptools(py_executable)
-
-    if 'after_install' in globals():
-        after_install(options, home_dir)
 
 ##file site.py
 SITE_PY = """
