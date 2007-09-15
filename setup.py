@@ -25,7 +25,7 @@ setup(name='virtualenv',
       ## Hacks to get the package data installed:
       packages=[''],
       package_dir={'': '.'},
-      package_data={'': ['support-files/*.egg']},
+      package_data={'': ['support-files/*-py%s.egg' % sys.version[:3]]},
       zip_safe=False,
       entry_points="""
       [console_scripts]
