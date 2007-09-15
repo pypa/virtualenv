@@ -21,8 +21,11 @@ setup(name='virtualenv',
       author_email='ianb@colorstudy.com',
       url='http://pypi.python.org/pypi/virtualenv',
       license='MIT',
-      modules=['virtualenv'],
-      include_package_data=True,
+      py_modules=['virtualenv'],
+      ## Hacks to get the package data installed:
+      packages=[''],
+      package_dir={'': '.'},
+      package_data={'': ['support-files/*.egg']},
       zip_safe=False,
       entry_points="""
       [console_scripts]
