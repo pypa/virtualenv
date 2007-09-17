@@ -216,8 +216,13 @@ def create_environment(home_dir, site_packages=True, clear=False):
     mkdir(join(lib_dir, 'site-packages'))
     writefile(join(lib_dir, 'site.py'), SITE_PY)
     writefile(join(lib_dir, 'orig-prefix.txt'), prefix)
+    site_packages_filename = join(lib_dir, 'no-global-site-packages.txt')
     if not site_packages:
-        writefile(join(stdlib_dir, 'no-global-site-packages.txt'), '')
+        writefile(site_packages_filename, '')
+    else:
+        if os.path.exists(site_packages_filename):
+            logger.info('Deleting %s' % site_packages_filename)
+            os.unlink(site_packages_filename)
 
     #mkdir(inc_dir)
     #stdinc_dir = join(prefix, 'include', py_version)
@@ -239,7 +244,7 @@ def create_environment(home_dir, site_packages=True, clear=False):
 
     pydistutils = os.path.expanduser('~/.pydistutils.cfg')
     if os.path.exists(pydistutils):
-        logger.notify('Please make sure you remove any previous custom paths from'
+        logger.notify('Please make sure you remove any previous custom paths from '
                       'your %s file.' % pydistutils)
 
     install_setuptools(py_executable)
