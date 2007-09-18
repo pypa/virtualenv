@@ -241,6 +241,21 @@ def create_environment(home_dir, site_packages=True, clear=False):
         ## FIXME: could I just hard link?
         shutil.copyfile(sys.executable, py_executable)
         make_exe(py_executable)
+    cmd = [py_executable, '-c', 'import sys; print sys.prefix']
+    logger.info('Testing executable with %s %s "%s"' % tuple(cmd))
+    proc = subprocess.Popen(cmd,
+                            stdout=subprocess.PIPE)
+    proc_stdout, proc_stderr = proc.communicate()
+    proc_stdout = os.path.abspath(proc_stdout.strip())
+    if proc_stdout != os.path.abspath(home_dir):
+        logger.fatal(
+            'The executable %s is not functioning' % py_executable)
+        logger.fatal(
+            'It thinks sys.prefix is %r (should be %r)'
+            % (proc_stdout, home_dir))
+        sys.exit(3)
+    else:
+        logger.info('Got sys.prefix result: %r' % proc_stdout)
 
     pydistutils = os.path.expanduser('~/.pydistutils.cfg')
     if os.path.exists(pydistutils):
