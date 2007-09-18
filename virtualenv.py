@@ -5,7 +5,16 @@ import sys
 import os
 import optparse
 import shutil
-import subprocess
+try:
+    import subprocess
+except ImportError, e:
+    if sys.version_info <= (2, 3):
+        print 'ERROR: %s' % e
+        print 'ERROR: this script requires Python 2.4 or greater; or at least the subprocess module.'
+        sys.exit(101)
+    else:
+        raise
+    
 join = os.path.join
 py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
 
@@ -179,6 +188,11 @@ def main():
 
     home_dir = args[0]
 
+    if os.environ.get('WORKING_ENV'):
+        logger.fatal('ERROR: you cannot run virtualenv while in a workingenv')
+        logger.fatal('Please deactivate your workingenv, then re-run this script')
+        sys.exit(3)
+
     create_environment(home_dir, site_packages=not options.no_site_packages, clear=options.clear)
     if 'after_install' in globals():
         after_install(options, home_dir)
@@ -249,11 +263,13 @@ def create_environment(home_dir, site_packages=True, clear=False):
     proc_stdout = os.path.abspath(proc_stdout.strip())
     if proc_stdout != os.path.abspath(home_dir):
         logger.fatal(
-            'The executable %s is not functioning' % py_executable)
+            'ERROR: The executable %s is not functioning' % py_executable)
         logger.fatal(
-            'It thinks sys.prefix is %r (should be %r)'
+            'ERROR: It thinks sys.prefix is %r (should be %r)'
             % (proc_stdout, home_dir))
-        sys.exit(3)
+        logger.fatal(
+            'ERROR: virtualenv is not compatible with this system or executable')
+        sys.exit(100)
     else:
         logger.info('Got sys.prefix result: %r' % proc_stdout)
 
