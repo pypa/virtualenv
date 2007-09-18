@@ -167,3 +167,23 @@ There are several alternatives that create isolated environments:
 I *strongly* recommend anyone doing application development or
 deployment use one of these tools.
 
+Changes & News
+--------------
+
+0.8.2
+~~~~~
+
+* Give a better warning if you are on an unsupported platform (Mac
+  Framework Pythons, and Windows).
+* Give error about running while inside a workingenv.
+* Give better error message about Python 2.3.
+
+0.8.1
+~~~~~
+
+Fixed packaging of the library.
+
+0.8
+~~~
+
+Initial release.  Everything is changed and new!
