@@ -6,9 +6,9 @@ virtualenv
 Status and License
 ------------------
 
-``virtualenv`` is the successor to `workingenv
-<http://cheeseshop.python.org/pypi/workingenv.py>`_, and an extension
-of `virtual-python
+``virtualenv`` is intended (when complete) to be a successor to
+`workingenv <http://cheeseshop.python.org/pypi/workingenv.py>`_, and
+an extension of `virtual-python
 <http://peak.telecommunity.com/DevCenter/EasyInstall#creating-a-virtual-python>`_.
 
 It is written by Ian Bicking, and sponsored by the `Open Planning
@@ -133,12 +133,13 @@ Compare & Contrast with Alternatives
 
 There are several alternatives that create isolated environments:
 
-* ``workingenv`` (which I do *not* suggest you use anymore) is the
-  predecessor to this library.  It used the main Python interpreter,
-  but relied on setting ``$PYTHONPATH`` to activate the environment.
-  This causes problems when running Python scripts that aren't part of
-  the environment (e.g., a globally installed ``hg`` or ``bzr``).  It
-  also conflicted a lot with Setuptools.
+* ``workingenv`` (which I do not suggest you use anymore *if*
+  virtualenv works on your platform) is the predecessor to this
+  library.  It used the main Python interpreter, but relied on setting
+  ``$PYTHONPATH`` to activate the environment.  This causes problems
+  when running Python scripts that aren't part of the environment
+  (e.g., a globally installed ``hg`` or ``bzr``).  It also conflicted
+  a lot with Setuptools.
 
 * `virtual-python
   <http://peak.telecommunity.com/DevCenter/EasyInstall#creating-a-virtual-python>`_
