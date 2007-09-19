@@ -226,10 +226,7 @@ def create_environment(home_dir, site_packages=True, clear=False):
 
     prefix = sys.prefix
     mkdir(lib_dir)
-    if sys.platform == 'win32':
-        stdlib_dir = join(prefix, 'lib', py_version)
-    else:
-        stdlib_dir = join(prefix, 'lib')
+    stdlib_dir = os.path.dirname(os.__file__)
     for fn in os.listdir(stdlib_dir):
         if fn != 'site-packages' and os.path.splitext(fn)[0] in REQUIRED_MODULES:
             copyfile(join(stdlib_dir, fn), join(lib_dir, fn))
