@@ -170,6 +170,11 @@ deployment use one of these tools.
 Changes & News
 --------------
 
+0.8.3
+~~~~~
+
+* Added support for Windows.
+
 0.8.2
 ~~~~~
 
