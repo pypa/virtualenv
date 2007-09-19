@@ -207,7 +207,10 @@ def create_environment(home_dir, site_packages=True, clear=False):
     If ``clear`` is true (default False) then the environment will
     first be cleared.
     """
-    lib_dir = join(home_dir, 'lib', py_version)
+    if sys.platform == 'win32':
+        lib_dir = join(home_dir, 'lib')
+    else:
+        lib_dir = join(home_dir, 'lib', py_version)
     inc_dir = join(home_dir, 'include', py_version)
     bin_dir = join(home_dir, 'bin')
 
