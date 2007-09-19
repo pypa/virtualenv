@@ -19,9 +19,10 @@ join = os.path.join
 py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
 
 ## FIXME: probably other modules for Windows?
-REQUIRED_MODULES = ['os', 're', 'posix', 'posixpath', 'stat', 'UserDict', 'readline',
-                    'copy_reg', 'types', 'fnmatch',
-                    'sre', 'sre_parse', 'sre_constants', 'sre_compile']
+REQUIRED_MODULES = ['os', 'posix', 'posixpath', 'ntpath', 'fnmatch',
+                    'locale', 'encodings', 'codecs',
+                    'stat', 'UserDict', 'readline', 'copy_reg', 'types',
+                    're', 'sre', 'sre_parse', 'sre_constants', 'sre_compile']
 
 class Logger(object):
 
@@ -247,7 +248,10 @@ def create_environment(home_dir, site_packages=True, clear=False):
     #    copyfile(join(stdinc_dir, fn), join(inc_dir, fn))
 
     if sys.exec_prefix != sys.prefix:
-        exec_dir = join(sys.exec_prefix, 'lib', py_version)
+        if sys.platform == 'win32':
+            exec_dir = join(sys.exec_prefix, 'lib')
+        else:
+            exec_dir = join(sys.exec_prefix, 'lib', py_version)
         for fn in os.listdir(exec_dir):
             copyfile(join(exec_dir, fn), join(lib_dir, fn))
 
