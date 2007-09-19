@@ -5,6 +5,7 @@ import sys
 import os
 import optparse
 import shutil
+import logging
 try:
     import subprocess
 except ImportError, e:
@@ -26,45 +27,147 @@ REQUIRED_MODULES = ['os', 'posix', 'posixpath', 'ntpath', 'fnmatch',
 
 class Logger(object):
 
-    FATAL = 1
-    ERROR = 2
-    WARNING = 3
-    NOTIFY = 4
-    INFO = 5
-    DEBUG = 6
+    """
+    Logging object for use in command-line script.  Allows ranges of
+    levels, to avoid some redundancy of displayed information.
+    """
 
-    DEFAULT = 4
+    DEBUG = logging.DEBUG
+    INFO = logging.INFO
+    NOTIFY = (logging.INFO+logging.WARN)/2
+    WARN = WARNING = logging.WARN
+    ERROR = logging.ERROR
+    FATAL = logging.FATAL
 
-    def __init__(self, level):
-        self.level = level
+    LEVELS = [DEBUG, INFO, NOTIFY, WARN, ERROR, FATAL]
 
-    def fatal(self, msg, *args, **kw):
-        self.log(self.FATAL, msg, *args, **kw)
-    def error(self, msg, *args, **kw):
-        self.log(self.ERROR, msg, *args, **kw)
-    def warning(self, msg, *args, **kw):
-        self.log(self.WARNING, msg, *args, **kw)
-    warn = warning
-    def notify(self, msg, *args, **kw):
-        self.log(self.NOTIFY, msg, *args, **kw)
-    def info(self, msg, *args, **kw):
-        self.log(self.INFO, msg, *args, **kw)
+    def __init__(self, consumers):
+        self.consumers = consumers
+        self.indent = 0
+        self.in_progress = None
+        self.in_progress_hanging = False
+
     def debug(self, msg, *args, **kw):
         self.log(self.DEBUG, msg, *args, **kw)
+    def info(self, msg, *args, **kw):
+        self.log(self.INFO, msg, *args, **kw)
+    def notify(self, msg, *args, **kw):
+        self.log(self.NOTIFY, msg, *args, **kw)
+    def warn(self, msg, *args, **kw):
+        self.log(self.WARN, msg, *args, **kw)
+    def error(self, msg, *args, **kw):
+        self.log(self.WARN, msg, *args, **kw)
+    def fatal(self, msg, *args, **kw):
+        self.log(self.FATAL, msg, *args, **kw)
     def log(self, level, msg, *args, **kw):
-        if level <= self.level:
-            if args and kw:
+        if args:
+            if kw:
                 raise TypeError(
-                    "positional or keyword arguments allowed; not both")
-            if args:
-                msg = msg % args
-            elif kw:
-                msg = msg % kw
-            print msg
+                    "You may give positional or keyword arguments, not both")
+        args = args or kw
+        rendered = None
+        for consumer_level, consumer in self.consumers:
+            if self.level_matches(level, consumer_level):
+                if (self.in_progress_hanging
+                    and consumer in (sys.stdout, sys.stderr)):
+                    self.in_progress_hanging = False
+                    sys.stdout.write('\n')
+                    sys.stdout.flush()
+                if rendered is None:
+                    if args:
+                        rendered = msg % args
+                    else:
+                        rendered = msg
+                    rendered = ' '*self.indent + rendered
+                if hasattr(consumer, 'write'):
+                    consumer.write(rendered+'\n')
+                else:
+                    consumer(rendered)
+
+    def start_progress(self, msg):
+        assert not self.in_progress, (
+            "Tried to start_progress(%r) while in_progress %r"
+            % (msg, self.in_progress))
+        if self.level_matches(self.NOTIFY, self._stdout_level()):
+            sys.stdout.write(msg)
+            sys.stdout.flush()
+            self.in_progress_hanging = True
+        else:
+            self.in_progress_hanging = False
+        self.in_progress = msg
+
+    def end_progress(self, msg='done.'):
+        assert self.in_progress, (
+            "Tried to end_progress without start_progress")
+        if self.stdout_level_matches(self.NOTIFY):
+            if not self.in_progress_hanging:
+                # Some message has been printed out since start_progress
+                sys.stdout.write('...' + self.in_progress + msg + '\n')
+                sys.stdout.flush()
+            else:
+                sys.stdout.write(msg + '\n')
+                sys.stdout.flush()
+        self.in_progress = None
+        self.in_progress_hanging = False
+
+    def show_progress(self):
+        """If we are in a progress scope, and no log messages have been
+        shown, write out another '.'"""
+        if self.in_progress_hanging:
+            sys.stdout.write('.')
+            sys.stdout.flush()
+
+    def stdout_level_matches(self, level):
+        """Returns true if a message at this level will go to stdout"""
+        return self.level_matches(level, self._stdout_level())
+
+    def _stdout_level(self):
+        """Returns the level that stdout runs at"""
+        for level, consumer in self.consumers:
+            if consumer is sys.stdout:
+                return level
+        return self.FATAL
+
+    def level_matches(self, level, consumer_level):
+        """
+        >>> l = Logger()
+        >>> l.level_matches(3, 4)
+        False
+        >>> l.level_matches(3, 2)
+        True
+        >>> l.level_matches(slice(None, 3), 3)
+        False
+        >>> l.level_matches(slice(None, 3), 2)
+        True
+        >>> l.level_matches(slice(1, 3), 1)
+        True
+        >>> l.level_matches(slice(2, 3), 1)
+        False
+        """
+        if isinstance(level, slice):
+            start, stop = level.start, level.stop
+            if start is not None and start > consumer_level:
+                return False
+            if stop is not None or stop <= consumer_level:
+                return False
+            return True
+        else:
+            return level >= consumer_level
+
+    #@classmethod
+    def level_for_integer(cls, level):
+        levels = cls.LEVELS
+        if level < 0:
+            return levels[0]
+        if level >= len(levels):
+            return levels[-1]
+        return levels[level]
+
+    level_for_integer = classmethod(level_for_integer)
 
 def mkdir(path):
     if not os.path.exists(path):
-        logger.notify('Creating %s', path)
+        logger.info('Creating %s', path)
         os.makedirs(path)
     else:
         logger.info('Directory %s already exists', path)
@@ -130,8 +233,24 @@ def install_setuptools(py_executable):
     else:
         logger.info('No Setuptools egg found; downloading')
         cmd.extend(['--always-copy', '-U', 'setuptools'])
-    logger.notify('Installing setuptools')
-    subprocess.call(cmd)
+    logger.start_progress('Installing setuptools...')
+    logger.indent += 2
+    try:
+        call_subprocess(cmd, show_stdout=False,
+                        filter_stdout=filter_ez_setup)
+    finally:
+        logger.indent -= 2
+        logger.end_progress()
+
+def filter_ez_setup(line):
+    if not line.strip():
+        return Logger.DEBUG
+    for prefix in ['Reading ', 'Best match', 'Processing setuptools',
+                   'Copying setuptools', 'Adding setuptools',
+                   'Installing ', 'Installed ']:
+        if line.startswith(prefix):
+            return Logger.DEBUG
+    return Logger.INFO
 
 def main():
     parser = optparse.OptionParser(
@@ -175,7 +294,7 @@ def main():
         adjust_options(options, args)
 
     verbosity = options.verbose - options.quiet
-    logger = Logger(Logger.DEFAULT + verbosity)
+    logger = Logger([(Logger.level_for_integer(2-verbosity), sys.stdout)])
 
     if not args:
         print 'You must provide a DEST_DIR'
@@ -197,6 +316,58 @@ def main():
     create_environment(home_dir, site_packages=not options.no_site_packages, clear=options.clear)
     if 'after_install' in globals():
         after_install(options, home_dir)
+
+def call_subprocess(cmd, show_stdout=True,
+                    filter_stdout=None, cwd=None,
+                    raise_on_returncode=True):
+    cmd_parts = []
+    for part in cmd:
+        if ' ' in part or '\n' in part or '"' in part or "'" in part:
+            part = '"%s"' % part.replace('"', '\\"')
+        cmd_parts.append(part)
+    cmd_desc = ' '.join(cmd_parts)
+    if show_stdout:
+        stdout = None
+    else:
+        stdout = subprocess.PIPE
+    logger.debug("Running command %s" % cmd_desc)
+    try:
+        proc = subprocess.Popen(
+            cmd, stderr=subprocess.STDOUT, stdin=None, stdout=stdout,
+            cwd=cwd)
+    except Exception, e:
+        logger.fatal(
+            "Error %s while executing command %s" % (e, cmd_desc))
+        raise
+    if stdout is not None:
+        stdout = proc.stdout
+        while 1:
+            line = stdout.readline()
+            if not line:
+                break
+            line = line.rstrip()
+            if filter_stdout:
+                level = filter_stdout(line)
+                if isinstance(level, tuple):
+                    level, line = level
+                logger.log(level, line)
+                if not logger.stdout_level_matches(level):
+                    logger.show_progress()
+            else:
+                logger.info(line)
+    else:
+        proc.communicate()
+    proc.wait()
+    if proc.returncode:
+        if raise_on_returncode:
+            raise OSError(
+                "Command %s failed with error code %s"
+                % (cmd_desc, proc.returncode))
+        else:
+            logger.warn(
+                "Command %s had error code %s"
+                % (cmd_desc, proc.returncode))
+
 
 def create_environment(home_dir, site_packages=True, clear=False):
     """
@@ -259,8 +430,8 @@ def create_environment(home_dir, site_packages=True, clear=False):
             copyfile(join(exec_dir, fn), join(lib_dir, fn))
 
     mkdir(bin_dir)
-    logger.notify('Copying %s to %s', sys.executable, bin_dir)
     py_executable = join(bin_dir, os.path.basename(sys.executable))
+    logger.notify('New python executable in %s', py_executable)
     if sys.executable != py_executable:
         ## FIXME: could I just hard link?
         shutil.copyfile(sys.executable, py_executable)
