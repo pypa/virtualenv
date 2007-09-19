@@ -253,7 +253,7 @@ def create_environment(home_dir, site_packages=True, clear=False):
 
     mkdir(bin_dir)
     logger.notify('Copying %s to %s', sys.executable, bin_dir)
-    py_executable = join(bin_dir, 'python')
+    py_executable = join(bin_dir, os.path.basename(sys.executable))
     if sys.executable != py_executable:
         ## FIXME: could I just hard link?
         shutil.copyfile(sys.executable, py_executable)
