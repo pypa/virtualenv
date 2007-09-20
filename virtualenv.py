@@ -447,7 +447,7 @@ def create_environment(home_dir, site_packages=True, clear=False):
             'ERROR: The executable %s is not functioning' % py_executable)
         logger.fatal(
             'ERROR: It thinks sys.prefix is %r (should be %r)'
-            % (proc_stdout, home_dir))
+            % (proc_stdout, os.path.abspath(home_dir)))
         logger.fatal(
             'ERROR: virtualenv is not compatible with this system or executable')
         sys.exit(100)
