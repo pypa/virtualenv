@@ -170,6 +170,12 @@ deployment use one of these tools.
 Changes & News
 --------------
 
+svn trunk
+~~~~~~~~~
+
+* Added ``lib-dynload`` and ``config`` to things that need to be
+  copied over in an environment.
+
 0.8.4
 ~~~~~
 

@@ -23,7 +23,8 @@ py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
 REQUIRED_MODULES = ['os', 'posix', 'posixpath', 'ntpath', 'fnmatch',
                     'locale', 'encodings', 'codecs',
                     'stat', 'UserDict', 'readline', 'copy_reg', 'types',
-                    're', 'sre', 'sre_parse', 'sre_constants', 'sre_compile']
+                    're', 'sre', 'sre_parse', 'sre_constants', 'sre_compile',
+                    'lib-dynload', 'config']
 
 class Logger(object):
 
