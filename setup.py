@@ -1,4 +1,8 @@
-from setuptools import setup, find_packages
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
+    print 'Note: without Setuptools installed you will have to use "python -m virtualenv ENV"'
 import sys, os
 
 version = '0.8.4'

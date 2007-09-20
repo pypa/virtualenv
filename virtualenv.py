@@ -441,13 +441,13 @@ def create_environment(home_dir, site_packages=True, clear=False):
     proc = subprocess.Popen(cmd,
                             stdout=subprocess.PIPE)
     proc_stdout, proc_stderr = proc.communicate()
-    proc_stdout = os.path.abspath(proc_stdout.strip())
-    if proc_stdout != os.path.abspath(home_dir):
+    proc_stdout = os.path.normcase(os.path.abspath(proc_stdout.strip()))
+    if proc_stdout != os.path.normcase(os.path.abspath(home_dir)):
         logger.fatal(
             'ERROR: The executable %s is not functioning' % py_executable)
         logger.fatal(
             'ERROR: It thinks sys.prefix is %r (should be %r)'
-            % (proc_stdout, os.path.abspath(home_dir)))
+            % (proc_stdout, os.path.normcase(os.path.abspath(home_dir))))
         logger.fatal(
             'ERROR: virtualenv is not compatible with this system or executable')
         sys.exit(100)
