@@ -170,6 +170,13 @@ deployment use one of these tools.
 Changes & News
 --------------
 
+0.8.4
+~~~~~
+
+* Windows installs would sometimes give errors about ``sys.prefix`` that
+  were inaccurate.
+* Slightly prettier output.
+
 0.8.3
 ~~~~~
 
