@@ -402,6 +402,7 @@ def create_environment(home_dir, site_packages=True, clear=False):
 
     prefix = sys.prefix
     mkdir(lib_dir)
+    fix_lib64(lib_dir)
     stdlib_dir = os.path.dirname(os.__file__)
     for fn in os.listdir(stdlib_dir):
         if fn != 'site-packages' and os.path.splitext(fn)[0] in REQUIRED_MODULES:
@@ -417,10 +418,12 @@ def create_environment(home_dir, site_packages=True, clear=False):
             logger.info('Deleting %s' % site_packages_filename)
             os.unlink(site_packages_filename)
 
-    #mkdir(inc_dir)
-    #stdinc_dir = join(prefix, 'include', py_version)
-    #for fn in os.listdir(stdinc_dir):
-    #    copyfile(join(stdinc_dir, fn), join(inc_dir, fn))
+    
+    stdinc_dir = join(prefix, 'include', py_version)
+    if os.path.exists(stdinc_dir):
+        copyfile(stdinc_dir, inc_dir, fn)
+    else:
+        logger.debug('No include dir %s' % stdinc_dir)
 
     if sys.exec_prefix != sys.prefix:
         if sys.platform == 'win32':
@@ -461,6 +464,17 @@ def create_environment(home_dir, site_packages=True, clear=False):
                       'your %s file.' % pydistutils)
 
     install_setuptools(py_executable)
+
+def fix_lib64(lib_dir):
+    """
+    Some platforms (particularly Gentoo on x64) put things in lib64/pythonX.Y
+    instead of lib/pythonX.Y.  If this is such a platform we'll just create a
+    symlink so lib64 points to lib
+    """
+    if [(i,j) for (i,j) in distutils.sysconfig.get_config_vars().items() 
+        if isinstance(j, basestring) and 'lib64' in j]:
+        logger.debug('This system uses lib64; symlinking lib64 to lib')
+        copyfile(lib_dir, os.path.join(os.path.dirname(lib_dir), 'lib64'))
 
 def create_bootstrap_script(extra_text):
     """
