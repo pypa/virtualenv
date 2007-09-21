@@ -182,6 +182,9 @@ def copyfile(src, dest):
     if os.path.exists(dest):
         logger.info('File %s already exists', dest)
         return
+    if not os.path.exists(os.path.dirname(dest)):
+        logger.info('Creating parent directories for %s' % os.path.dirname(dest))
+        os.makedirs(os.path.dirname(dest))
     if hasattr(os, 'symlink'):
         logger.info('Symlinking %s', dest)
         os.symlink(src, dest)
@@ -422,7 +425,7 @@ def create_environment(home_dir, site_packages=True, clear=False):
     
     stdinc_dir = join(prefix, 'include', py_version)
     if os.path.exists(stdinc_dir):
-        copyfile(stdinc_dir, inc_dir, fn)
+        copyfile(stdinc_dir, inc_dir)
     else:
         logger.debug('No include dir %s' % stdinc_dir)
 
