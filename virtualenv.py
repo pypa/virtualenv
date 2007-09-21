@@ -6,6 +6,7 @@ import os
 import optparse
 import shutil
 import logging
+import distutils.sysconfig
 try:
     import subprocess
 except ImportError, e:
