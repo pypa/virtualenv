@@ -469,6 +469,19 @@ def create_environment(home_dir, site_packages=True, clear=False):
 
     install_setuptools(py_executable)
 
+    install_activate(home_dir, bin_dir)
+
+def install_activate(home_dir, bin_dir):
+    if sys.platform == 'win32':
+        files = {'activate.bat': ACTIVATE_BAT,
+                 'deactivate.bat': DEACTIVATE_BAT}
+    else:
+        files = {'activate': ACTIVATE_SH}
+    for name, content in files.items():
+        content = content.replace('__VIRTUAL_ENV__', os.path.abspath(home_dir))
+        content = content.replace('__VIRTUAL_NAME__', os.path.basename(os.path.abspath(home_dir)))
+        writefile(os.path.join(bin_dir, name), content)
+
 def fix_lib64(lib_dir):
     """
     Some platforms (particularly Gentoo on x64) put things in lib64/pythonX.Y
@@ -677,6 +690,34 @@ XjUeRK23M16fI+B3Od+norrdqAq92TT7oUtJY2NJVFpeNxKkTcDr02B3tIbuaw1+GpWgJdvOpx+z
 4Utu6Jpv//b73avF71MlBxbDtkE9PWCpJ84QoLaq/2WQEoH88GJ6vn3txhftKvx7u1KGDSV159bi
 DtoelchX6q6+Ca0i3FrdPR3+7NBgQjZypHN9kIAJhNHmcb2ebTa4lTebWfcGIUWL4Kba3W9sVaDa
 77fWHTxzfQ3J0ltoUFAGe6obbq/unqpUij16mzhIff4NddKjIg==
+""".decode("base64").decode("zlib")
+
+##file activate.sh
+ACTIVATE_SH = """
+eJx9VMFO20AQvfsrHk4PgEqsXKlySFXUoiKoSEoOgJyNPY5Xsnej3XVcivrvnXWcxDi0Pqy86zc7
+b96b8QCzXFpksiCUlXVYEipLKWrpcoRWVyYhLKWKROLkRjgKcZ4ZXWIpbH4eDPCiKyRCKe1gKgXp
+kEpDiStegiClXRROz/AagB+Z4REXCuGH+O7mS/xwfT/7ObmJf0xm30I84xNcTqpB+scfj9+D7hH0
+a62Na4D7s0pZcojnV03c/O7++/Xt13gPyeR/mUxH7xGZjo54MPCIxnTUZ9EL2TE4UDhhBpxyjFBp
+lZJ1pvKqUY/FAFMqMuwAJ708B613Gf4EbM/2ozSGCrEh5bARRoplQbbrztvEQdBWs6N9dfswDuO4
+s43jMAiOXGGFtua0m05AxD102X7tWhb09fF3eGEbaRbcZaRESejetcB4jDjuy2PXlEhRcDdaQqYN
+JnyiUIqVTNqm1EZy4S2cCLlz68soqut6+JucSGkzTHQZWZ25WhiKhL8hCvYN8Hgg9LTgK4+oPS0W
+z9gWQIWlQ+TpP0o524LZrk4HsW/NWNpcV0XK1jrm3kzcR9S5THLkwkL4NQcTLoVKWQnhmhnmaJ7i
+RBQFz7HTWPkGcP6NRfGbteBBb8PsEJjzrOvKx20BTqrVW5CXGY17SHKhVmRR8w+DBePlhdunTWrI
+m+AoDQ7D9Xky7U92w/vC+Kr/AouKWtI=
+""".decode("base64").decode("zlib")
+
+##file activate.bat
+ACTIVATE_BAT = """
+eJx1kE0LgkAQhu/zK+bggv6FQkhQSvJjMfMkDJS75cU95P+n3SwbUPc2s8/78jAHdX8aNFrDS43Y
+pFV9jTJKiiYkYhMRQK9xMCN2SveD6lBWZS5r9AHtc+FpEXrSO0LwwX8olVk8t23lhFjBhHBVjlr5
+tJGZYkX+37yI8oQoQAZue0X1iVvZceFkd7bCIQ8zGrycU+l21nGpOOW/EdjNLCtnBxaibW/9sGeJ
+pIjhDfhHdDA=
+""".decode("base64").decode("zlib")
+
+##file deactivate.bat
+DEACTIVATE_BAT = """
+eJxzSE3OyFfIT0vj4spMU0hJTcvMS01RiPf3cYkP8wwKCXX0iQ8I8vcNCFHQ4FIAguLUEgWIgK2q
+KhZlqqpcmlwgRVjkbHHbEe4f5O3p5x4f4BjigWwTkItkT2gIyCygGA5bQKq5uKxc/Vy4AOHQPcY=
 """.decode("base64").decode("zlib")
 
 if __name__ == '__main__':
