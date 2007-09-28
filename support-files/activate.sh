@@ -5,7 +5,7 @@ deactivate () {
     if [ -n "$_OLD_VIRTUAL_PATH" ] ; then
         PATH="$_OLD_VIRTUAL_PATH"
         export PATH
-        unset _WE_OLD_WORKING_PATH
+        unset _OLD_VIRTUAL_PATH
     fi
     if [ -n "$_OLD_VIRTUAL_PS1" ] ; then
         PS1="$_OLD_VIRTUAL_PS1"
