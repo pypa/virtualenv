@@ -187,7 +187,7 @@ def copyfile(src, dest):
         os.makedirs(os.path.dirname(dest))
     if hasattr(os, 'symlink'):
         logger.info('Symlinking %s', dest)
-        os.symlink(src, dest)
+        os.symlink(src, os.path.abspath(dest))
     else:
         logger.info('Copying to %s', dest)
         if os.path.isdir(src):
