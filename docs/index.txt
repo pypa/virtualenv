@@ -176,6 +176,11 @@ svn trunk
 * Added ``lib-dynload`` and ``config`` to things that need to be
   copied over in an environment.
 
+* Better avoid downloading Setuptools, and hitting PyPI on environment
+  creation. 
+
+* Fix a problem creating a ``lib64/`` directory.
+
 0.8.4
 ~~~~~
 

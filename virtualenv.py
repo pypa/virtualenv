@@ -232,9 +232,13 @@ def install_setuptools(py_executable):
     setup_fn = 'setuptools-0.6c7-py%s.egg' % sys.version[:3]
     setup_fn = join(os.path.dirname(__file__), 'support-files', setup_fn)
     cmd = [py_executable, '-c', EZ_SETUP_PY]
+    env = {}
+    if logger.stdout_level_matches(logger.INFO):
+        cmd.append('-v')
     if os.path.exists(setup_fn):
         logger.info('Using existing Setuptools egg: %s', setup_fn)
         cmd.append(setup_fn)
+        env['PYTHONPATH'] = setup_fn
     else:
         logger.info('No Setuptools egg found; downloading')
         cmd.extend(['--always-copy', '-U', 'setuptools'])
@@ -242,7 +246,8 @@ def install_setuptools(py_executable):
     logger.indent += 2
     try:
         call_subprocess(cmd, show_stdout=False,
-                        filter_stdout=filter_ez_setup)
+                        filter_stdout=filter_ez_setup,
+                        extra_env=env)
     finally:
         logger.indent -= 2
         logger.end_progress()
@@ -324,9 +329,11 @@ def main():
 
 def call_subprocess(cmd, show_stdout=True,
                     filter_stdout=None, cwd=None,
-                    raise_on_returncode=True):
+                    raise_on_returncode=True, extra_env=None):
     cmd_parts = []
     for part in cmd:
+        if len(part) > 40:
+            part = part[:30]+"..."+part[-5:]
         if ' ' in part or '\n' in part or '"' in part or "'" in part:
             part = '"%s"' % part.replace('"', '\\"')
         cmd_parts.append(part)
@@ -336,10 +343,15 @@ def call_subprocess(cmd, show_stdout=True,
     else:
         stdout = subprocess.PIPE
     logger.debug("Running command %s" % cmd_desc)
+    if extra_env:
+        env = os.environ.copy()
+        env.update(extra_env)
+    else:
+        env = None
     try:
         proc = subprocess.Popen(
             cmd, stderr=subprocess.STDOUT, stdin=None, stdout=stdout,
-            cwd=cwd)
+            cwd=cwd, env=env)
     except Exception, e:
         logger.fatal(
             "Error %s while executing command %s" % (e, cmd_desc))
@@ -491,7 +503,12 @@ def fix_lib64(lib_dir):
     if [(i,j) for (i,j) in distutils.sysconfig.get_config_vars().items() 
         if isinstance(j, basestring) and 'lib64' in j]:
         logger.debug('This system uses lib64; symlinking lib64 to lib')
-        copyfile(lib_dir, os.path.join(os.path.dirname(lib_dir), 'lib64'))
+        assert os.path.basename(lib_dir) == 'python%s' % sys.version[:3], (
+            "Unexpected python lib dir: %r" % lib_dir)
+        lib_parent = os.path.dirname(lib_dir)
+        assert os.path.basename(lib_parent) == 'lib', (
+            "Unexpected parent dir: %r" % lib_parent)
+        copyfile(lib_parent, os.path.join(os.path.dirname(lib_parent), 'lib64'))
 
 def create_bootstrap_script(extra_text):
     """
