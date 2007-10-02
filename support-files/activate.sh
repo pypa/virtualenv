@@ -13,6 +13,7 @@ deactivate () {
         unset _OLD_VIRTUAL_PS1
     fi
 
+    unset VIRTUAL_ENV
     if [ ! "$1" = "nondestructive" ] ; then
     # Self destruct!
         unset deactivate
