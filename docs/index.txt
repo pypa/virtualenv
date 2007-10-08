@@ -175,6 +175,10 @@ svn trunk
 
 * Added ``lib-dynload`` and ``config`` to things that need to be
   copied over in an environment.
+* Copy over or symlink the ``include`` directory, so that you can
+  build packages that need the C headers.
+* Include a ``distutils`` package, so you can locally update
+  ``distutils.cfg`` (in ``lib/pythonX.Y/distutils/distutils.cfg``).
 
 * Better avoid downloading Setuptools, and hitting PyPI on environment
   creation. 
