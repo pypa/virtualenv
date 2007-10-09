@@ -478,11 +478,16 @@ def create_environment(home_dir, site_packages=True, clear=False):
             os.path.join(frmdir, 'Python'))
 
         # And then change the install_name of the cpied python executable
-        call_subprocess(
-            ["install_name_tool", "-change",
-             os.path.join(sys.prefix, 'Python'),
-             os.path.abspath(os.path.join(frmdir, 'Python'))
-             py_executable])
+        try:
+            call_subprocess(
+                ["install_name_tool", "-change",
+                 os.path.join(sys.prefix, 'Python'),
+                 os.path.abspath(os.path.join(frmdir, 'Python'))
+                 py_executable])
+        except:
+            logger.fatal(
+                "Could not call install_name_tool -- you must have Apple's development tools installed")
+            raise
 
     cmd = [py_executable, '-c', 'import sys; print sys.prefix']
     logger.info('Testing executable with %s %s "%s"' % tuple(cmd))
