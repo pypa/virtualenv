@@ -17,6 +17,11 @@ Project <http://topp.openplans.org>`_.
 It is licensed under an `MIT-style permissive license
 <http://svn.colorstudy.com/virtualenv/trunk/docs/license.txt>`_.
 
+You can install it with ``easy_install virtualenv``, or from the
+`subversion repository
+<http://svn.colorstudy.com/virtualenv/trunk#egg=virtualenv-dev>`_ with
+``easy_install virtualenv==dev``.
+
 What It Does
 ------------
 
