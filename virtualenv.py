@@ -453,11 +453,37 @@ def create_environment(home_dir, site_packages=True, clear=False):
 
     mkdir(bin_dir)
     py_executable = join(bin_dir, os.path.basename(sys.executable))
+    if 'Python.framework' in sys.prefix:
+        if py_executable.endswith('/Python'):
+            # The name of the python executable is not quite what
+            # we want, rename it.
+            py_executable = os.path.join(
+                    os.path.dirname(py_executable), 'python')
+
     logger.notify('New python executable in %s', py_executable)
     if sys.executable != py_executable:
         ## FIXME: could I just hard link?
         shutil.copyfile(sys.executable, py_executable)
         make_exe(py_executable)
+    
+    if 'Python.framework' in sys.prefix:
+        logger.debug('MacOSX Python framework detected')
+
+        # Create a dummy framework tree
+        frmdir = os.path.join(home_dir, 'lib', 'Python.framework', 'Versions', 
+            '%s.%s'%(sys.version_info[0], sys.version_info[1]))
+        mkdir(frmdir)
+        copyfile(
+            os.path.join(sys.prefix, 'Python'),
+            os.path.join(frmdir, 'Python'))
+
+        # And then change the install_name of the cpied python executable
+        call_subprocess(
+            ["install_name_tool", "-change",
+             os.path.join(sys.prefix, 'Python'),
+             os.path.abspath(os.path.join(frmdir, 'Python'))
+             py_executable])
+
     cmd = [py_executable, '-c', 'import sys; print sys.prefix']
     logger.info('Testing executable with %s %s "%s"' % tuple(cmd))
     proc = subprocess.Popen(cmd,
