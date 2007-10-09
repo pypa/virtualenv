@@ -482,7 +482,7 @@ def create_environment(home_dir, site_packages=True, clear=False):
             call_subprocess(
                 ["install_name_tool", "-change",
                  os.path.join(sys.prefix, 'Python'),
-                 os.path.abspath(os.path.join(frmdir, 'Python'))
+                 os.path.abspath(os.path.join(frmdir, 'Python')),
                  py_executable])
         except:
             logger.fatal(
