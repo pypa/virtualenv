@@ -6,15 +6,14 @@ virtualenv
 Status and License
 ------------------
 
-``virtualenv`` is intended (when complete) to be a successor to
-`workingenv <http://cheeseshop.python.org/pypi/workingenv.py>`_, and
-an extension of `virtual-python
+``virtualenv`` is a successor to `workingenv
+<http://cheeseshop.python.org/pypi/workingenv.py>`_, and an extension
+of `virtual-python
 <http://peak.telecommunity.com/DevCenter/EasyInstall#creating-a-virtual-python>`_.
 
 It is written by Ian Bicking, and sponsored by the `Open Planning
-Project <http://topp.openplans.org>`_.
-
-It is licensed under an `MIT-style permissive license
+Project <http://topp.openplans.org>`_.  It is licensed under an
+`MIT-style permissive license
 <http://svn.colorstudy.com/virtualenv/trunk/docs/license.txt>`_.
 
 You can install it with ``easy_install virtualenv``, or from the
