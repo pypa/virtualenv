@@ -207,7 +207,7 @@ def writefile(dest, content, overwrite=True):
         f.close()
         if c != content:
             if not overwrite:
-                logger.notify('File %s exists with new content; not overwriting', dest)
+                logger.notify('File %s exists with different content; not overwriting', dest)
                 return
             logger.notify('Overwriting %s with new content', dest)
             f = open(dest, 'wb')
@@ -482,7 +482,8 @@ def create_environment(home_dir, site_packages=True, clear=False):
             call_subprocess(
                 ["install_name_tool", "-change",
                  os.path.join(sys.prefix, 'Python'),
-                 os.path.abspath(os.path.join(frmdir, 'Python')),
+                 '@executable_path/../lib/Python.framework/Versions/%s.%s/Python' %
+                 (sys.version_info[0], sys.version_info[1]),
                  py_executable])
         except:
             logger.fatal(
