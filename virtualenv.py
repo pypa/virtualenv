@@ -358,6 +358,7 @@ def call_subprocess(cmd, show_stdout=True,
         logger.fatal(
             "Error %s while executing command %s" % (e, cmd_desc))
         raise
+    all_output = []
     if stdout is not None:
         stdout = proc.stdout
         while 1:
@@ -365,6 +366,7 @@ def call_subprocess(cmd, show_stdout=True,
             if not line:
                 break
             line = line.rstrip()
+            all_output.append(line)
             if filter_stdout:
                 level = filter_stdout(line)
                 if isinstance(level, tuple):
@@ -379,6 +381,9 @@ def call_subprocess(cmd, show_stdout=True,
     proc.wait()
     if proc.returncode:
         if raise_on_returncode:
+            if all_output:
+                logger.notify('Complete output from command %s:' % cmd_desc)
+                logger.notify('\n'.join(all_output) + '\n----------------------------------------')
             raise OSError(
                 "Command %s failed with error code %s"
                 % (cmd_desc, proc.returncode))
@@ -439,7 +444,6 @@ def create_environment(home_dir, site_packages=True, clear=False):
         if os.path.exists(site_packages_filename):
             logger.info('Deleting %s' % site_packages_filename)
             os.unlink(site_packages_filename)
-
     
     stdinc_dir = join(prefix, 'include', py_version)
     if os.path.exists(stdinc_dir):
