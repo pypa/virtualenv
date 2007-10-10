@@ -188,7 +188,7 @@ svn trunk
   creation. 
 * Fix a problem creating a ``lib64/`` directory.
 * Should work on MacOSX Framework builds (the default Python
-  installations on Mac).  From Ronald Oussoren.
+  installations on Mac).  Thanks to Ronald Oussoren.
 
 0.8.4
 ~~~~~
