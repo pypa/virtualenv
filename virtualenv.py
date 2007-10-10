@@ -419,11 +419,10 @@ def create_environment(home_dir, site_packages=True, clear=False):
         logger.notify('Not deleting %s', bin_dir)
 
     if hasattr(sys, 'real_prefix'):
-        logging.notify('Using real prefix %r' % sys.real_prefix)
+        logger.notify('Using real prefix %r' % sys.real_prefix)
         prefix = sys.real_prefix
     else:
         prefix = sys.prefix
-    prefix = sys.prefix
     mkdir(lib_dir)
     fix_lib64(lib_dir)
     stdlib_dir = os.path.dirname(os.__file__)
