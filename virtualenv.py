@@ -418,6 +418,11 @@ def create_environment(home_dir, site_packages=True, clear=False):
         ## FIXME: why not delete it?
         logger.notify('Not deleting %s', bin_dir)
 
+    if hasattr(sys, 'real_prefix'):
+        logging.notify('Using real prefix %r' % sys.real_prefix)
+        prefix = sys.real_prefix
+    else:
+        prefix = sys.prefix
     prefix = sys.prefix
     mkdir(lib_dir)
     fix_lib64(lib_dir)
@@ -443,7 +448,7 @@ def create_environment(home_dir, site_packages=True, clear=False):
     else:
         logger.debug('No include dir %s' % stdinc_dir)
 
-    if sys.exec_prefix != sys.prefix:
+    if sys.exec_prefix != prefix:
         if sys.platform == 'win32':
             exec_dir = join(sys.exec_prefix, 'lib')
         else:
@@ -453,7 +458,7 @@ def create_environment(home_dir, site_packages=True, clear=False):
 
     mkdir(bin_dir)
     py_executable = join(bin_dir, os.path.basename(sys.executable))
-    if 'Python.framework' in sys.prefix:
+    if 'Python.framework' in prefix:
         if py_executable.endswith('/Python'):
             # The name of the python executable is not quite what
             # we want, rename it.
@@ -466,7 +471,7 @@ def create_environment(home_dir, site_packages=True, clear=False):
         shutil.copyfile(sys.executable, py_executable)
         make_exe(py_executable)
     
-    if 'Python.framework' in sys.prefix:
+    if 'Python.framework' in prefix:
         logger.debug('MacOSX Python framework detected')
 
         # Create a dummy framework tree
@@ -474,14 +479,14 @@ def create_environment(home_dir, site_packages=True, clear=False):
             '%s.%s'%(sys.version_info[0], sys.version_info[1]))
         mkdir(frmdir)
         copyfile(
-            os.path.join(sys.prefix, 'Python'),
+            os.path.join(prefix, 'Python'),
             os.path.join(frmdir, 'Python'))
 
         # And then change the install_name of the cpied python executable
         try:
             call_subprocess(
                 ["install_name_tool", "-change",
-                 os.path.join(sys.prefix, 'Python'),
+                 os.path.join(prefix, 'Python'),
                  '@executable_path/../lib/Python.framework/Versions/%s.%s/Python' %
                  (sys.version_info[0], sys.version_info[1]),
                  py_executable])
