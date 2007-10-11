@@ -30,7 +30,7 @@ PATH="$VIRTUAL_ENV/bin:$PATH"
 export PATH
 
 _OLD_VIRTUAL_PS1="$PS1"
-if [ `basename $VIRTUAL_ENV` == __ ] ; then
+if [ "`basename $VIRTUAL_ENV`" = "__" ] ; then
     # special case for Aspen magic directories
     # see http://www.zetadev.com/software/aspen/
     PS1="[`basename \`dirname $VIRTUAL_ENV\``] $PS1"

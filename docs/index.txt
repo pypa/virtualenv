@@ -178,6 +178,7 @@ svn trunk
 ~~~~~~~~~
 
 * Improve ability to create a virtualenv from inside a virtualenv.
+* Fix a little bug in ``bin/activate``.
 
 0.9
 ~~~
