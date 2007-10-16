@@ -390,12 +390,10 @@ def virtual_install_main_packages():
     if sys.path[0] == '':
         pos += 1
     if sys.platform == 'win32':
-        lib_path = os.path.join(sys.real_prefix, 'Lib')
-        sys.path.insert(pos, lib_path)
-        sys.path.insert(pos+1, os.path.join(sys.real_prefix, 'DLLs'))
+        paths = [os.path.join(sys.real_prefix, 'Lib'), os.path.join(sys.real_prefix, 'DLLs')]
     else:
-        lib_path = os.path.join(sys.real_prefix, 'lib', 'python'+sys.version[:3])
-        sys.path.insert(pos, lib_path)
+        paths = [os.path.join(sys.real_prefix, 'lib', 'python'+sys.version[:3])]
+    sys.path.extend(paths)
 
 def virtual_addsitepackages(known_paths):
     if not os.path.exists(os.path.join(os.path.dirname(__file__), 'no-global-site-packages.txt')):

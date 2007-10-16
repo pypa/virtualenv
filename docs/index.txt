@@ -179,6 +179,7 @@ svn trunk
 
 * Improve ability to create a virtualenv from inside a virtualenv.
 * Fix a little bug in ``bin/activate``.
+* Actually get ``distutils.cfg`` to work reliably.
 
 0.9
 ~~~
