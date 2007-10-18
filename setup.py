@@ -5,7 +5,7 @@ except ImportError:
     print 'Note: without Setuptools installed you will have to use "python -m virtualenv ENV"'
 import sys, os
 
-version = '0.9.1'
+version = '0.9.2'
 
 f = open(os.path.join(os.path.dirname(__file__), 'docs', 'index.txt'))
 long_description = f.read().strip()
