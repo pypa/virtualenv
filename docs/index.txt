@@ -132,6 +132,25 @@ Here's a more concrete example of how you could use this::
     """))
     f = open('blog-bootstrap.py', 'w').write(output)
 
+Using Virtualenv without ``bin/python``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sometimes you can't or don't want to use the Python interpreter
+created by the virtualenv.  For instance, in a `mod_python
+<http://www.modpython.org/>`_ or `mod_wsgi <http://www.modwsgi.org/>`_
+environment, there is only one interpreter.
+
+Luckily, it's easy.  You must use the custom Python interpreter to
+*install* libraries.  But to *use* libraries, you just have to be sure
+the path is correct.  Adding the correct path is easy::
+
+    import site
+    site.addsitedir('/path/to/virtualenv/lib/python2.5/site-packages')
+
+Using this you can have your isolated working environment, using the
+custom Python interpreter, but treat the result as just a simple set
+of libraries when running your application.
+
 Compare & Contrast with Alternatives
 ------------------------------------
 
@@ -174,8 +193,8 @@ deployment use one of these tools.
 Changes & News
 --------------
 
-svn trunk
-~~~~~~~~~
+0.9.1
+~~~~~
 
 * Improve ability to create a virtualenv from inside a virtualenv.
 * Fix a little bug in ``bin/activate``.
