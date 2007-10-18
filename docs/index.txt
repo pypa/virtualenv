@@ -193,6 +193,11 @@ deployment use one of these tools.
 Changes & News
 --------------
 
+svn trunk
+~~~~~~~~~
+
+* Fix include dir copying on Windows (makes compiling possible).
+
 0.9.1
 ~~~~~
 

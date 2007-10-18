@@ -405,13 +405,12 @@ def create_environment(home_dir, site_packages=True, clear=False):
     """
     if sys.platform == 'win32':
         lib_dir = join(home_dir, 'Lib')
+        bin_dir = join(home_dir, 'Scripts')
+        inc_dir = join(home_dir, 'include')
     else:
         lib_dir = join(home_dir, 'lib', py_version)
-    inc_dir = join(home_dir, 'include', py_version)
-    if sys.platform == 'win32':
-        bin_dir = join(home_dir, 'Scripts')
-    else:
         bin_dir = join(home_dir, 'bin')
+        inc_dir = join(home_dir, 'include', py_version)
 
     if sys.executable.startswith(bin_dir):
         print 'Please use the *system* python to run this script'
@@ -444,8 +443,11 @@ def create_environment(home_dir, site_packages=True, clear=False):
         if os.path.exists(site_packages_filename):
             logger.info('Deleting %s' % site_packages_filename)
             os.unlink(site_packages_filename)
-    
-    stdinc_dir = join(prefix, 'include', py_version)
+
+    if sys.platform == 'win32':
+        stdinc_dir = join(prefix, 'include')
+    else:
+        stdinc_dir = join(prefix, 'include', py_version)
     if os.path.exists(stdinc_dir):
         copyfile(stdinc_dir, inc_dir)
     else:
