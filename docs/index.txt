@@ -197,6 +197,7 @@ svn trunk
 ~~~~~~~~~
 
 * Fix include dir copying on Windows (makes compiling possible).
+* Include the main ``lib-tk`` in the path.
 
 0.9.1
 ~~~~~
