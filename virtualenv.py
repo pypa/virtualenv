@@ -403,6 +403,8 @@ def create_environment(home_dir, site_packages=True, clear=False):
     If ``clear`` is true (default False) then the environment will
     first be cleared.
     """
+    ## TODO: this should all come from distutils
+    ## like distutils.sysconfig.get_python_inc()
     if sys.platform == 'win32':
         lib_dir = join(home_dir, 'Lib')
         bin_dir = join(home_dir, 'Scripts')
@@ -809,3 +811,6 @@ xJ4EFmGbvfJiicSHFRzUSISMY6hq3GLCRLnIvSTnEefN0FIjw5tF0Hkk9Q5dRunBsVoyFi24aaLg
 if __name__ == '__main__':
     main()
 
+## TODO:
+## Copy python.exe.manifest
+## Monkeypatch distutils.sysconfig
