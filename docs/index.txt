@@ -198,6 +198,8 @@ svn trunk
 
 * Fix include dir copying on Windows (makes compiling possible).
 * Include the main ``lib-tk`` in the path.
+* Patch ``distutils.sysconfig``: ``get_python_inc`` and
+  ``get_python_lib`` to point to the global locations.
 
 0.9.1
 ~~~~~

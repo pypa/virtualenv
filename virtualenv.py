@@ -408,11 +408,9 @@ def create_environment(home_dir, site_packages=True, clear=False):
     if sys.platform == 'win32':
         lib_dir = join(home_dir, 'Lib')
         bin_dir = join(home_dir, 'Scripts')
-        inc_dir = join(home_dir, 'include')
     else:
         lib_dir = join(home_dir, 'lib', py_version)
         bin_dir = join(home_dir, 'bin')
-        inc_dir = join(home_dir, 'include', py_version)
 
     if sys.executable.startswith(bin_dir):
         print 'Please use the *system* python to run this script'
@@ -445,15 +443,6 @@ def create_environment(home_dir, site_packages=True, clear=False):
         if os.path.exists(site_packages_filename):
             logger.info('Deleting %s' % site_packages_filename)
             os.unlink(site_packages_filename)
-
-    if sys.platform == 'win32':
-        stdinc_dir = join(prefix, 'include')
-    else:
-        stdinc_dir = join(prefix, 'include', py_version)
-    if os.path.exists(stdinc_dir):
-        copyfile(stdinc_dir, inc_dir)
-    else:
-        logger.debug('No include dir %s' % stdinc_dir)
 
     if sys.exec_prefix != prefix:
         if sys.platform == 'win32':
@@ -794,12 +783,16 @@ FlWqXJpcICVYpGxx2xDuH+Tt6eceH+AY4oFsD5CLsCU0BGQUUAi7HSC1XFxWrn4uXAAdwT0y
 
 ##file distutils-init.py
 DISTUTILS_INIT = """
-eJyNkMtuxCAMRfd8haUuEqQR6rpSd/0PRIOZcUVMBM48/r4kmck80kVZIGQf7rUv9UPKAqkoWl4n
-l5l4X+Dt/qQCnAQcHCnL6CLyEfrkx4g7KAlOCJ1jGAsCCUiCQOxBDghFfKRvpTxldj3CZzUyg5OD
-uVamVpFRKBY71R+In0TcvuDtbSRjbaCI1uodNKtEo5WdZaw1xAWztO87eHbQCs/YQRrwrj5bPWNV
-1lpikio1XBqtTUbnW61uOU24Uil6O21ru8SB9vNQpS4xdc1XvTJ9V9HEZkMpjwE21bZgDPpDQT0h
-jTXHmshfJgs4c+VSBHu7LvAa4maztWC6sG8WEQrrJzzXfjV4kb1OtU72EPEGncmMMmZeYPWPROrc
-25TUL6lF7+4=
+eJytlD3P2yAQx3c+xUkZYkuR1TlS1KWtlKFdujwbIuaIqQhYgPPy7Z/Ddhy/xGqHeojI3f9e+AGn
+L7XzEVxguluFx7C8CW+1PQfYvJY6gHURBFy1j40waK9wcbIxuIPg4IZQCgtNQNARogOlrYRYIYQo
+jT4xJrW34oJwoJpFLWJV9JbkCrGJ2gSe7CPFH6dtNpNnz5YKzpU2yHm+g+2QYpsz3qbhvNA2oI/Z
+lx1MK+QM71iCq/GVvS01lVFazrXVkVLVj22eFx6FzHL25JTkI3yls0qfGdtsXvWKtALKVlYY9ow5
+I3lCwztxu4NAO06y4hv9eH2iQGeLhYpJVLCwZgGNyvcM6FOuIeiE712RTtjqqNeIFz40OSe+wPDa
+TqnO2y6JVkMQ3slPBWZp+66GzkbnsZC2So+x8bYTs38gQn0vKU3xD8cyO4MzRl4/YuUsnXBJiQZh
+MXW11AfnLC6rjYg81FhqpcsDbaz2qPT98MtZ7LdPnDpjekLJ/qLS29vi6W4Z3lnGMJbNTos+S+Zs
+rUl6J9KVnPcX472Tre1/jGYWuyBJ73yNZBoBqyTJuSQZorBSeJm8q2THIqDl/0S96Gra01/Ak2Id
+/Mj5HvyM5Cw23fEfx4+f3/fwu3KNkXDsrveMfR98FT7A1/Quuu8YoRKBRrmhge4SxEapHU3z0P69
+VZoySYfBbmmuIV7SPD9hGu6yYJ9XWDrf
 """.decode("base64").decode("zlib")
 
 ##file distutils.cfg
