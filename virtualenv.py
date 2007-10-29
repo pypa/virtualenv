@@ -514,11 +514,11 @@ def create_environment(home_dir, site_packages=True, clear=False):
         logger.notify('Please make sure you remove any previous custom paths from '
                       'your %s file.' % pydistutils)
 
+    install_distutils(lib_dir)
+
     install_setuptools(py_executable)
 
     install_activate(home_dir, bin_dir)
-
-    install_distutils(lib_dir)
 
 def install_activate(home_dir, bin_dir):
     if sys.platform == 'win32':

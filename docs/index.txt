@@ -200,6 +200,8 @@ svn trunk
 * Include the main ``lib-tk`` in the path.
 * Patch ``distutils.sysconfig``: ``get_python_inc`` and
   ``get_python_lib`` to point to the global locations.
+* Install ``distutils.cfg`` before Setuptools, so that system
+  customizations of ``distutils.cfg`` won't effect the installation.
 
 0.9.1
 ~~~~~
