@@ -132,6 +132,30 @@ Here's a more concrete example of how you could use this::
     """))
     f = open('blog-bootstrap.py', 'w').write(output)
 
+activate script
+~~~~~~~~~~~~~~~
+
+In a newly created virtualenv there will be a ``bin/activate`` shell
+script, or a ``Scripts/activate.bat`` batch file on Windows.
+
+On Posix systems you can do::
+
+  $ source bin/activate
+
+This will change your ``$PATH`` to point to the virtualenv ``bin/``
+directory, and update your prompt.  Unlike workingenv, this is all it
+does; it's a convenience.  But if you use the complete path like
+``/path/to/env/bin/python script.py`` you do not need to activate the
+environment first.  You have to use ``source`` because it changes the
+environment in-place.  After activating an environment you can use the
+function ``deactivate`` to undo the changes.
+
+On Windows you just do::
+
+  > \path\to\env\bin\activate.bat
+
+And use ``deactivate.bat`` to undo the changes.
+
 Using Virtualenv without ``bin/python``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
