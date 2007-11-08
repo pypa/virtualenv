@@ -292,8 +292,8 @@ def main():
         '--no-site-packages',
         dest='no_site_packages',
         action='store_true',
-        help="Don't copy the contents of the global site-packages dir to the "
-             "non-root site-packages")
+        help="Don't give access to the global site-packages dir to the "
+             "virtual environment")
 
     if 'extend_parser' in globals():
         extend_parser(parser)
