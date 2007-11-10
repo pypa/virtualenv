@@ -266,6 +266,7 @@ def filter_ez_setup(line):
 
 def main():
     parser = optparse.OptionParser(
+        version="0.9.2",
         usage="%prog [OPTIONS] DEST_DIR")
 
     parser.add_option(

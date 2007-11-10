@@ -220,8 +220,8 @@ deployment use one of these tools.
 Changes & News
 --------------
 
-svn trunk
-~~~~~~~~~
+0.9.2
+~~~~~
 
 * Fix include dir copying on Windows (makes compiling possible).
 * Include the main ``lib-tk`` in the path.
