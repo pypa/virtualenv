@@ -132,6 +132,9 @@ Here's a more concrete example of how you could use this::
     """))
     f = open('blog-bootstrap.py', 'w').write(output)
 
+Another example is available `here
+<https://svn.openplans.org/svn/fassembler/trunk/fassembler/create-venv-script.py>`_.
+
 activate script
 ~~~~~~~~~~~~~~~
 
