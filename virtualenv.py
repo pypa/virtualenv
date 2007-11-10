@@ -470,26 +470,34 @@ def create_environment(home_dir, site_packages=True, clear=False):
     if 'Python.framework' in prefix:
         logger.debug('MacOSX Python framework detected')
 
-        # Create a dummy framework tree
-        frmdir = os.path.join(home_dir, 'lib', 'Python.framework', 'Versions', 
-            '%s.%s'%(sys.version_info[0], sys.version_info[1]))
-        mkdir(frmdir)
+        # Copy the framework's dylib into the virtual 
+        # environment
+        virtual_lib = os.path.join(home_dir, '.Python')
+
+        if os.path.exists(virtual_lib):
+            os.unlink(virtual_lib)
         copyfile(
             os.path.join(prefix, 'Python'),
-            os.path.join(frmdir, 'Python'))
+            virtual_lib)
 
-        # And then change the install_name of the cpied python executable
+        # And then change the install_name of the copied python executable
         try:
             call_subprocess(
                 ["install_name_tool", "-change",
                  os.path.join(prefix, 'Python'),
-                 '@executable_path/../lib/Python.framework/Versions/%s.%s/Python' %
-                 (sys.version_info[0], sys.version_info[1]),
+                 '@executable_path/../.Python',
                  py_executable])
         except:
             logger.fatal(
                 "Could not call install_name_tool -- you must have Apple's development tools installed")
             raise
+
+        # Some tools depend on pythonX.Y being present
+        pth = py_executable + '%s.%s' % (
+                sys.version_info[0], sys.version_info[1])
+        if os.path.exists(pth):
+            os.unlink(pth)
+        os.symlink('python', pth)
 
     cmd = [py_executable, '-c', 'import sys; print sys.prefix']
     logger.info('Testing executable with %s %s "%s"' % tuple(cmd))

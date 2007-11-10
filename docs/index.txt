@@ -229,6 +229,10 @@ svn trunk
   ``get_python_lib`` to point to the global locations.
 * Install ``distutils.cfg`` before Setuptools, so that system
   customizations of ``distutils.cfg`` won't effect the installation.
+* Add ``bin/pythonX.Y`` to the virtualenv (in addition to
+  ``bin/python``).
+* Fixed an issue with Mac Framework Python builds, and absolute paths
+  (from Ronald Oussoren).
 
 0.9.1
 ~~~~~
