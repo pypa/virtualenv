@@ -159,6 +159,16 @@ On Windows you just do::
 
 And use ``deactivate.bat`` to undo the changes.
 
+The ``--no-site-packages`` Option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you build with ``virtualenv --no-site-packages ENV`` it will *not*
+inherit any packages from ``/usr/lib/python2.5/site-packages`` (or
+wherever your global site-packages directory is).  This can be used if
+you don't have control over site-packages and don't want to depend on
+the packages there, or you just want more isolation from the global
+system.
+
 Using Virtualenv without ``bin/python``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
