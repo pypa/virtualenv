@@ -393,11 +393,15 @@ def virtual_install_main_packages():
         paths = [os.path.join(sys.real_prefix, 'Lib'), os.path.join(sys.real_prefix, 'DLLs')]
     else:
         paths = [os.path.join(sys.real_prefix, 'lib', 'python'+sys.version[:3])]
+        lib64_path = os.path.join(sys.real_prefix, 'lib64', python+sys.version[:3])
+        if os.path.exists(lib64_path):
+            paths.append(lib64_path)
     # This is hardcoded in the Python executable, but
     # relative to sys.prefix, so we have to fix up:
-    tk_dir = os.path.join(paths[0], 'lib-tk')
-    if os.path.exists(tk_dir):
-        paths.append(tk_dir)
+    for path in list(paths):
+        tk_dir = os.path.join(paths[0], 'lib-tk')
+        if os.path.exists(tk_dir):
+            paths.append(tk_dir)
     sys.path.extend(paths)
 
 def virtual_addsitepackages(known_paths):
