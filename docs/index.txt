@@ -220,6 +220,13 @@ deployment use one of these tools.
 Changes & News
 --------------
 
+svn trunk
+~~~~~~~~~
+
+* Fix build on systems that use ``/usr/lib64``, distinct from
+  ``/usr/lib`` (specifically CentOS x64).
+* Fixed bug in ``--clear``.
+
 0.9.2
 ~~~~~
 
