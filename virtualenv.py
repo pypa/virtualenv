@@ -16,6 +16,10 @@ except ImportError, e:
         sys.exit(101)
     else:
         raise
+try:
+    set
+except NameError:
+    from sets import Set as set
     
 join = os.path.join
 py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
