@@ -420,6 +420,7 @@ def create_environment(home_dir, site_packages=True, clear=False):
     if clear:
         rmtree(lib_dir)
         ## FIXME: why not delete it?
+        ## Maybe it should delete everything with #!/path/to/venv/python in it
         logger.notify('Not deleting %s', bin_dir)
 
     if hasattr(sys, 'real_prefix'):
@@ -690,14 +691,14 @@ J34l14av2/c+qlRh80cPjh2SpFsffYZtGdnqrf8xg1XeUpfQ5QO9tcRXrkeFR3m9y67hpaJGu0us
 1LMV3c1WwEMvTrQOslXHno8I3q9p8bPSusS+u/ManDxiuUq0fVJV3aTFwr2LsMCUbdGexzo628so
 916zanMWSLANpJ4n3ILE3MF3q5GfkB8X/mAU6nVXrifhBY/+XYjSYK73pOfHsYP4mDPYwIMj5Nf+
 isBDXL4/qB6d8YZUzulsIJ4Nj7ZGUNiOjt3JUT99feg6BawDX5ysxV8PDguCQykA/O7bxaHe7wjp
-d98CWsY6Qhq6hcHll26VQbnkLrVwszeAitjyfIa2hiQQ9Tj3NwidmfBtLdRpctBuVntN1J/Huw1Y
-g4dm65RHUG2a8lmblPPlFE2tw2l4rYws5XbRv3vNR38IxSeS2BWvb+P7mMA47mOAg2g13M2uccyd
-kvRs7Z5bD24Z1xYaUPJg69Pm5KYwy7Q46b80xJY4ynW/5BZGoFr76rRDFz3QrXhv8hmXQzC9q+1R
-y3GYswAqsPYf3Ab3bEO+cBMSYgL4A3U3ad/G4VvgwRGp5+ESkpXxTVFC8YZPocJLMr17tftoG/Iz
-HN474ZBijCfuc2ruCkfY0BocvkXuKZ+U+L+C3oR/5CsFlkFXBvjxLnNzIWYU2Jwtuyv5B+LnrD0E
-wzNsi7kXqnubekmHpQ3wKb12Mnwrlk7uagnlursRA1LMZHCtmm5UM6q6//ptBWE3xRKSX3Sdty/G
-EBynmbZ94wvLyEwmXgLr1OK7FKgteHFgtL9QWXJZHOBCFLFRuFvHuA9vIdy1m7Q6C4Gjezvj4EVh
-Nwt/Pqrm1A3F1vssRHmNL7Rg2Ynqju9qgP4s2AIXToMcJdH/AUtojXI=
+d9/ehzZ0DIPrL906g4LJXWvhdm8AFbHt+RxtDWkganLu7xA6Q+H7WqjV5KLdrPaiqD+Rd1uwBo/N
+1imPoOI05bM2LefrKZqah9PwYhnZyu2if/uaD/8Qis8ksS9e38b3MYFx3McAB9HquJtd45g7J+lZ
+2z33HtwyrjE0oOTB9qfNyU1hlmlx0n9tiG1xlO1+yT2MQLn2VWqHrnqgY/H+5DNOh2B6l9ujluMw
+ZwFUYPU/uA/u2YZ84TYkRAXwCOpu0r6Pw/fAg0NSz8MlpCvju6KE4g2fQ4XXZHo3a/fRNuRnOLx3
+wiHFGE/c59bcJY6wpTU4fovcUz4r8X8F3Qn/yNcKLIOuEPDjXe7mgswotDlbdpfyD0TQWXsMhqfY
+FrMvVPc2+ZIOSxviU3rxZPheLJ3d1RIKdncnBqSYyeBiNd2pZlR1/wXcCgJvikUkv+o6b1+NIThO
+NG37zhcWkplMvATWqcW3KVBb8OrAaH+hsuSyOMCFKGKjcPeOcR/eQrhvN2l1FkJH937GwavCbhb+
+fFTNqR+KzfdZiPIaX2nBwhPVHd/WAP1ZsAUunAY5SqL/A1ZAjcA=
 """.decode("base64").decode("zlib")
 
 ##file ez_setup.py
