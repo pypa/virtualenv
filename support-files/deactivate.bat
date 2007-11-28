@@ -5,8 +5,8 @@ if defined _OLD_VIRTUAL_PROMPT (
 )
 set _OLD_VIRTUAL_PROMPT=
 
-if defined _OLD_VIRTUAL_WORKING_PATH (
-    set PATH=%_OLD_VIRUTAL_PATH%
+if defined _OLD_VIRTUAL_PATH (
+    set PATH=%_OLD_VIRTUAL_PATH%
 )
 set _OLD_VIRTUAL_PATH=
 

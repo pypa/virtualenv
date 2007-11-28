@@ -236,6 +236,7 @@ svn trunk
 * Fix build on systems that use ``/usr/lib64``, distinct from
   ``/usr/lib`` (specifically CentOS x64).
 * Fixed bug in ``--clear``.
+* Fixed typos in ``deactivate.bat``.
 
 0.9.2
 ~~~~~

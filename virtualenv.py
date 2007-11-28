@@ -792,7 +792,7 @@ oiwkX126c9k=
 ##file deactivate.bat
 DEACTIVATE_BAT = """
 eJxzSE3OyFfIT0vj4spMU0hJTcvMS01RiPf3cYkP8wwKCXX0iQ8I8vcNCFHQ4FIAguLUEgWIgK0q
-FlWqXJpcICVYpGxx2xDuH+Tt6eceH+AY4oFsD5CLsCU0BGQUUAi7HSC1XFxWrn4uXAAdwT0y
+FlWqXJpcICVYpGzx2OAY4oFsPpCLbjpQCLvZILVcXFaufi5cACHzOrI=
 """.decode("base64").decode("zlib")
 
 ##file distutils-init.py
