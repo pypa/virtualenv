@@ -607,6 +607,9 @@ def create_bootstrap_script(extra_text):
     f = open(filename, 'rb')
     content = f.read()
     f.close()
+    content = ('#!/usr/bin/env python\n'
+               + '## WARNING: This file is generated\n'
+               + content)
     return content.replace('##EXT' 'END##', extra_text)
 
 ##EXTEND##
