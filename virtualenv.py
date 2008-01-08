@@ -181,7 +181,7 @@ def mkdir(path):
 def copyfile(src, dest):
     if not os.path.exists(src):
         # Some bad symlink in the src
-        logger.warn('Cannot find file %s', src)
+        logger.warn('Cannot find file %s (bad symlink)', src)
         return
     if os.path.exists(dest):
         logger.info('File %s already exists', dest)

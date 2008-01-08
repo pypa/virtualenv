@@ -237,6 +237,7 @@ svn trunk
   ``/usr/lib`` (specifically CentOS x64).
 * Fixed bug in ``--clear``.
 * Fixed typos in ``deactivate.bat``.
+* Preserve ``$PYTHONPATH`` when calling subprocesses.
 
 0.9.2
 ~~~~~
