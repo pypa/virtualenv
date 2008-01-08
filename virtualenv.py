@@ -245,7 +245,10 @@ def install_setuptools(py_executable):
     if os.path.exists(setup_fn):
         logger.info('Using existing Setuptools egg: %s', setup_fn)
         cmd.append(setup_fn)
-        env['PYTHONPATH'] = setup_fn
+        if os.environ.get('PYTHONPATH'):
+            env['PYTHONPATH'] = setup_fn + os.path.pathsep + os.environ['PYTHONPATH']
+        else:
+            env['PYTHONPATH'] = setup_fn
     else:
         logger.info('No Setuptools egg found; downloading')
         cmd.extend(['--always-copy', '-U', 'setuptools'])
