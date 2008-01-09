@@ -438,10 +438,13 @@ def create_environment(home_dir, site_packages=True, clear=False):
         prefix = sys.prefix
     mkdir(lib_dir)
     fix_lib64(lib_dir)
-    stdlib_dir = os.path.dirname(os.__file__)
-    for fn in os.listdir(stdlib_dir):
-        if fn != 'site-packages' and os.path.splitext(fn)[0] in REQUIRED_MODULES:
-            copyfile(join(stdlib_dir, fn), join(lib_dir, fn))
+    stdlib_dirs = [os.path.dirname(os.__file__)]
+    if sys.platform == 'win32':
+        stdlib_dirs.append(os.path.dirname(stdlib_dirs[0]), 'DLLs')
+    for stdlib_dir in stdlib_dirs:
+        for fn in os.listdir(stdlib_dir):
+            if fn != 'site-packages' and os.path.splitext(fn)[0] in REQUIRED_MODULES:
+                copyfile(join(stdlib_dir, fn), join(lib_dir, fn))
     mkdir(join(lib_dir, 'site-packages'))
     writefile(join(lib_dir, 'site.py'), SITE_PY)
     writefile(join(lib_dir, 'orig-prefix.txt'), prefix)
