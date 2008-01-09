@@ -1,6 +1,9 @@
 virtualenv
 ==========
 
+* `Discussion list <http://groups.google.com/group/python-virtualenv/>`_
+* `Bugs <https://bugs.launchpad.net/virtualenv/>`_
+
 .. contents::
 
 Status and License

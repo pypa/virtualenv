@@ -29,7 +29,7 @@ REQUIRED_MODULES = ['os', 'posix', 'posixpath', 'ntpath', 'fnmatch',
                     'locale', 'encodings', 'codecs',
                     'stat', 'UserDict', 'readline', 'copy_reg', 'types',
                     're', 'sre', 'sre_parse', 'sre_constants', 'sre_compile',
-                    'lib-dynload', 'config']
+                    'lib-dynload', 'config', 'zlib']
 
 class Logger(object):
 
