@@ -230,6 +230,16 @@ There are several alternatives that create isolated environments:
 I *strongly* recommend anyone doing application development or
 deployment use one of these tools.
 
+Other Documentation
+-------------------
+
+* James Gardner has written a tutorial on using `virtualenv with
+  Pylons
+  <http://wiki.pylonshq.com/display/pylonscookbook/Using+a+Virtualenv+Sandbox>`_.
+
+* `Blog announcement
+  <http://blog.ianbicking.org/2007/10/10/workingenv-is-dead-long-live-virtualenv/>`_.
+
 Changes & News
 --------------
 
