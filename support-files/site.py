@@ -65,6 +65,10 @@ ImportError exception, it is silently ignored.
 import sys
 import os
 import __builtin__
+try:
+    set
+except NameError:
+    from sets import Set as set
 
 def makepath(*paths):
     dir = os.path.abspath(os.path.join(*paths))
