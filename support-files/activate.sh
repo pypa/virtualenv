@@ -26,7 +26,7 @@ deactivate nondestructive
 export VIRTUAL_ENV="__VIRTUAL_ENV__"
 
 _OLD_VIRTUAL_PATH="$PATH"
-PATH="$VIRTUAL_ENV/bin:$PATH"
+PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
 export PATH
 
 _OLD_VIRTUAL_PS1="$PS1"

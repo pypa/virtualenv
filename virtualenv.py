@@ -544,11 +544,14 @@ def install_activate(home_dir, bin_dir):
     if sys.platform == 'win32':
         files = {'activate.bat': ACTIVATE_BAT,
                  'deactivate.bat': DEACTIVATE_BAT}
+        if os.environ.get('OS') == 'Windows_NT' and os.environ.get('OSTYPE') == 'cygwin':
+            files['activate'] = ACTIVATE_SH
     else:
         files = {'activate': ACTIVATE_SH}
     for name, content in files.items():
         content = content.replace('__VIRTUAL_ENV__', os.path.abspath(home_dir))
         content = content.replace('__VIRTUAL_NAME__', os.path.basename(os.path.abspath(home_dir)))
+        content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         writefile(os.path.join(bin_dir, name), content)
 
 def install_distutils(lib_dir):
@@ -779,16 +782,16 @@ DtoelchX6q6+Ca0i3FrdPR3+7NBgQjZypHN9kIAJhNHmcb2ebTa4lTebWfcGIUWL4Kba3W9sVaDa
 
 ##file activate.sh
 ACTIVATE_SH = """
-eJx9VEFu2zAQvPMVE7mHJGgs+JrCBxct0AJBW9RuekgCmZZWFgGJNEjKqlv0713KsqXYaXQQRO4s
-OTuzqxEWhXLIVUmoauexItSOMjTKF4icqW1KWCkdy9SrrfQU4Tq3psJKuuJajLAzNVKptfGwtYby
-yJSl1Jc7ITI6ZOHyCn8E+FE5HnCjEb1Jvt59SO4/f1/8mN0l32aLTxGe8A6+IN0iwxO2py9Bjwj6
-tTHWt8DjXq0deZwltfFcvUpjPnmJxXxyRoKBZxzmk1cpdGFmIHrIIfrxy31P7IJ5MZEpIm10Rs7b
-OghJJ9xGmFOZ4wC4OLm9l/9w71/Bju2Dyloq5Za0x1ZaJVcluaFhzy8WoqtxQHcaJclgmSSREGea
-s257v7rFICHmtrrtokMXxalq4YwgdytNtOTOIy0rwvCwZasWczhVyG0oVbLkHnWE3FjMeEejkmuV
-dq1qrOLaOzgRCu83t3HcNM34N3mZ0Xacmip2JveNtBTLcEIsjp3x0FN6XPKRZ+Qel8sn7Gug0lGf
-efmfYq72YHZs0FpsXTusrjB1mbG7nrm3c/gWTaHSAoV0kOFdgAlXUmeshPTtZHM2z3Yqy5Kn2xus
-Qw/48MWihMVG8vh3aW4M/OQ/gKlD3h7glV4/BwWZ0RqItJB6TQ4N/0ZYMH7tuIO6Sy0FEzxlop+6
-97P56by3vG9sqPofb6xgcA==
+eJx9VMFu2zAMvesrWGeHtlhj5NohhxQrsAJdNixZd2gLRbHpWIAtBRIdLxv676McJ3aTrj4IlvRI
+Pb1HagDzXHvIdIFQVp5giVB5TKHWlEPkbeUShKU2sUpIbxRhBJeZsyUslc8vxQC2toJEGWMJXGVA
+E6TaYULFVogU91FwfgF/BfCnM3iEKwPRB/nt/rN8uPsx/zm5l98n8y8RPMMnoBxNgwxfWB6/BT0g
+8PfaOmqAh7XKeCQ4CWr2M/0ujdnoLRaz0QkJBp5wmI3epdBuMwPRQfa7t9OHjtgZ82IiY4iMNSl6
+clUQEo+4DWCGRQZ7wNnR6Z38+3NfBDu229TOYaE2aAg2ymm1LND3DXt9sBDtHXt0x5GUvamUkRAn
+mrNuO7/aSS8glvLmbiqnk6+3Ul63sL6d4li+kCzo3mgULbgE0agSoZ910cjGZI6l8mtMtCq4WD1C
+Zh1MeMVAqVY6aWvWOs0itHBEyInW13Fc1/XwD5JKcTNMbBl7m1GtHMYqZIjFoUQeO0pPC055Qu5p
+sXiG3R2w8NhFnv/nMhc7MFvXqzH2sOlan9uqSNlmYu5NQ36EOtdJDrnyoMKYAxMulUlZCUVNi3M0
+N3miioLbnCysQjFQ+GNRwmSt+B1ow/wQ4Bc/BbYKcTsAabN6DQoyQ2MgJLkyK/RQ83vCgvGw5VJq
+D3UYTCBMRdd+N5PZceM3vK9cuPU/alpjDA==
 """.decode("base64").decode("zlib")
 
 ##file activate.bat
