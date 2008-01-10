@@ -243,6 +243,11 @@ Other Documentation
 Changes & News
 --------------
 
+svn trunk
+~~~~~~~~~
+
+* Fix a problem with missing ``DLLs/zlib.pyd`` on Windows.
+
 1.0
 ~~~
 

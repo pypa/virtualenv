@@ -440,7 +440,7 @@ def create_environment(home_dir, site_packages=True, clear=False):
     fix_lib64(lib_dir)
     stdlib_dirs = [os.path.dirname(os.__file__)]
     if sys.platform == 'win32':
-        stdlib_dirs.append(os.path.dirname(stdlib_dirs[0]), 'DLLs')
+        stdlib_dirs.append(join(os.path.dirname(stdlib_dirs[0]), 'DLLs'))
     for stdlib_dir in stdlib_dirs:
         for fn in os.listdir(stdlib_dir):
             if fn != 'site-packages' and os.path.splitext(fn)[0] in REQUIRED_MODULES:
