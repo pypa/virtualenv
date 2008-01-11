@@ -478,6 +478,19 @@ def create_environment(home_dir, site_packages=True, clear=False):
         ## FIXME: could I just hard link?
         shutil.copyfile(sys.executable, py_executable)
         make_exe(py_executable)
+    if os.path.splitext(os.path.basename(py_executable))[0] != 'python':
+        secondary_exe = os.path.join(os.path.dirname(py_executable), 'python')
+        py_executable_ext = os.path.splitext(py_executable)[1]
+        if py_executable_ext == '.exe':
+            # python2.4 gives an extension of '.4' :P
+            secondary_exe += py_executable_ext
+        if os.path.exists(secondary_exe):
+            logger.warning('Not overwriting existing python script %s (you must use %s)'
+                           % (secondary_exe, py_executable))
+        else:
+            logger.notify('Also creating executable in %s' % secondary_exe)
+            shutil.copyfile(sys.executable, secondary_exe)
+            make_exe(secondary_exe)
     
     if 'Python.framework' in prefix:
         logger.debug('MacOSX Python framework detected')

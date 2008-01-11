@@ -246,7 +246,9 @@ Changes & News
 svn trunk
 ~~~~~~~~~
 
-* Fix a problem with missing ``DLLs/zlib.pyd`` on Windows.
+* Fix a problem with missing ``DLLs/zlib.pyd`` on Windows.  Create
+* ``bin/python`` (or ``bin/python.exe``) even when you run virtualenv
+  with an interpreter named, e.g., ``python2.4``
 
 1.0
 ~~~
