@@ -576,7 +576,7 @@ def fix_lib64(lib_dir):
             "Unexpected parent dir: %r" % lib_parent)
         copyfile(lib_parent, os.path.join(os.path.dirname(lib_parent), 'lib64'))
 
-def create_bootstrap_script(extra_text):
+def create_bootstrap_script(extra_text, python_version=''):
     """
     Creates a bootstrap script, which is like this script but with
     extend_parser, adjust_options, and after_install hooks.
@@ -610,6 +610,11 @@ def create_bootstrap_script(extra_text):
 
         This example immediately installs a package, and runs a setup
         script from that package.
+
+    If you provide something like ``python_version='2.4'`` then the
+    script will start with ``#!/usr/bin/env python2.4`` instead of
+    ``#!/usr/bin/env python``.  You can use this when the script must
+    be run with a particular Python version.
     """
     filename = __file__
     if filename.endswith('.pyc'):
@@ -617,7 +622,8 @@ def create_bootstrap_script(extra_text):
     f = open(filename, 'rb')
     content = f.read()
     f.close()
-    content = (('#!/usr/bin/env %s\n' % os.path.basename(sys.executable))
+    py_exe = 'python%s' % python_version
+    content = (('#!/usr/bin/env %s\n' % py_exe)
                + '## WARNING: This file is generated\n'
                + content)
     return content.replace('##EXT' 'END##', extra_text)
