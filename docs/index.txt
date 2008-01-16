@@ -60,7 +60,9 @@ libraries you install will go.  It also creates ``ENV/bin/python``,
 which is a Python interpreter that uses this environment.  Anytime you
 use that interpreter (including when a script has
 ``#!/path/to/ENV/bin/python`` in it) the libraries in that environment
-will be used.
+will be used.  (**Note for Windows:** scripts and executables on
+Windows go in ``ENV\Scripts\``; everywhere you see ``bin/`` replace it
+with ``Scripts\``)
 
 It also installs `Setuptools
 <http://peak.telecommunity.com/DevCenter/setuptools>`_ for you, and if
