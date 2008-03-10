@@ -39,10 +39,9 @@ else
 fi
 export PS1
 
-# This should detect bash, which has a hash command that must
-# be called to get it to forget past commands.  Without
-# forgetting past commands the $PATH changes we made may not
-# be respected
-if [ -n "$BASH" ] ; then
+# This should detect bash and zsh, which have a hash command that must
+# be called to get it to forget past commands.  Without forgetting
+# past commands the $PATH changes we made may not be respected
+if [ -n "$BASH" -o -n "$ZSH_VERSION" ] ; then
     hash -r
 fi
