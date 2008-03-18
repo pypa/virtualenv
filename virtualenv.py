@@ -441,7 +441,11 @@ def create_environment(home_dir, site_packages=True, clear=False):
     stdlib_dirs = [os.path.dirname(os.__file__)]
     if sys.platform == 'win32':
         stdlib_dirs.append(join(os.path.dirname(stdlib_dirs[0]), 'DLLs'))
+    elif sys.platform == 'darwin':
+        stdlib_dirs.append(join(stdlib_dirs[0], 'site-packages'))
     for stdlib_dir in stdlib_dirs:
+        if not os.path.isdir(stdlib_dir):
+            continue
         for fn in os.listdir(stdlib_dir):
             if fn != 'site-packages' and os.path.splitext(fn)[0] in REQUIRED_MODULES:
                 copyfile(join(stdlib_dir, fn), join(lib_dir, fn))
