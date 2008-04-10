@@ -254,6 +254,7 @@ svn trunk
   with an interpreter named, e.g., ``python2.4``
 * Fix MacPorts Python
 * Added --unzip-setuptools option
+* Update to Setuptools 0.6c8
 
 1.0
 ~~~

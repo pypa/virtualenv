@@ -236,7 +236,7 @@ def make_exe(fn):
         logger.info('Changed mode of %s to %s', fn, oct(newmode))
 
 def install_setuptools(py_executable, unzip=False):
-    setup_fn = 'setuptools-0.6c7-py%s.egg' % sys.version[:3]
+    setup_fn = 'setuptools-0.6c8-py%s.egg' % sys.version[:3]
     setup_fn = join(os.path.dirname(__file__), 'support-files', setup_fn)
     cmd = [py_executable, '-c', EZ_SETUP_PY]
     if unzip:
