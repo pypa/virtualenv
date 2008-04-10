@@ -253,6 +253,7 @@ svn trunk
 * ``bin/python`` (or ``bin/python.exe``) even when you run virtualenv
   with an interpreter named, e.g., ``python2.4``
 * Fix MacPorts Python
+* Added --unzip-setuptools option
 
 1.0
 ~~~

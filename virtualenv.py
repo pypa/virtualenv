@@ -235,10 +235,12 @@ def make_exe(fn):
         os.chmod(fn, newmode)
         logger.info('Changed mode of %s to %s', fn, oct(newmode))
 
-def install_setuptools(py_executable):
+def install_setuptools(py_executable, unzip=False):
     setup_fn = 'setuptools-0.6c7-py%s.egg' % sys.version[:3]
     setup_fn = join(os.path.dirname(__file__), 'support-files', setup_fn)
     cmd = [py_executable, '-c', EZ_SETUP_PY]
+    if unzip:
+        cmd.append('--always-unzip')
     env = {}
     if logger.stdout_level_matches(logger.INFO):
         cmd.append('-v')
@@ -304,6 +306,12 @@ def main():
         help="Don't give access to the global site-packages dir to the "
              "virtual environment")
 
+    parser.add_option(
+        '--unzip-setuptools',
+        dest='unzip_setuptools',
+        action='store_true',
+        help="Unzip Setuptools when installing it")
+
     if 'extend_parser' in globals():
         extend_parser(parser)
 
@@ -334,7 +342,8 @@ def main():
         logger.fatal('Please deactivate your workingenv, then re-run this script')
         sys.exit(3)
 
-    create_environment(home_dir, site_packages=not options.no_site_packages, clear=options.clear)
+    create_environment(home_dir, site_packages=not options.no_site_packages, clear=options.clear,
+                       unzip_setuptools=options.unzip_setuptools)
     if 'after_install' in globals():
         after_install(options, home_dir)
 
@@ -402,7 +411,8 @@ def call_subprocess(cmd, show_stdout=True,
                 % (cmd_desc, proc.returncode))
 
 
-def create_environment(home_dir, site_packages=True, clear=False):
+def create_environment(home_dir, site_packages=True, clear=False,
+                       unzip_setuptools=False):
     """
     Creates a new environment in ``home_dir``.
 
@@ -489,8 +499,8 @@ def create_environment(home_dir, site_packages=True, clear=False):
             # python2.4 gives an extension of '.4' :P
             secondary_exe += py_executable_ext
         if os.path.exists(secondary_exe):
-            logger.warning('Not overwriting existing python script %s (you must use %s)'
-                           % (secondary_exe, py_executable))
+            logger.warn('Not overwriting existing python script %s (you must use %s)'
+                        % (secondary_exe, py_executable))
         else:
             logger.notify('Also creating executable in %s' % secondary_exe)
             shutil.copyfile(sys.executable, secondary_exe)
@@ -553,7 +563,7 @@ def create_environment(home_dir, site_packages=True, clear=False):
 
     install_distutils(lib_dir)
 
-    install_setuptools(py_executable)
+    install_setuptools(py_executable, unzip=unzip_setuptools)
 
     install_activate(home_dir, bin_dir)
 
