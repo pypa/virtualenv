@@ -255,6 +255,7 @@ svn trunk
 * Fix MacPorts Python
 * Added --unzip-setuptools option
 * Update to Setuptools 0.6c8
+* If the current directory is not writable, run ez_setup.py in ``/tmp``
 
 1.0
 ~~~

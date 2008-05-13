@@ -256,10 +256,14 @@ def install_setuptools(py_executable, unzip=False):
         cmd.extend(['--always-copy', '-U', 'setuptools'])
     logger.start_progress('Installing setuptools...')
     logger.indent += 2
+    cwd = None
+    if not os.access(os.getcwd(), os.W_OK):
+        cwd = '/tmp'
     try:
         call_subprocess(cmd, show_stdout=False,
                         filter_stdout=filter_ez_setup,
-                        extra_env=env)
+                        extra_env=env,
+                        cwd=cwd)
     finally:
         logger.indent -= 2
         logger.end_progress()
