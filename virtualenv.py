@@ -430,9 +430,11 @@ def create_environment(home_dir, site_packages=True, clear=False,
     ## like distutils.sysconfig.get_python_inc()
     if sys.platform == 'win32':
         lib_dir = join(home_dir, 'Lib')
+        inc_dir = join(home_dir, 'Include')
         bin_dir = join(home_dir, 'Scripts')
     else:
         lib_dir = join(home_dir, 'lib', py_version)
+        inc_dir = join(home_dir, 'include', py_version)
         bin_dir = join(home_dir, 'bin')
 
     if sys.executable.startswith(bin_dir):
@@ -473,6 +475,12 @@ def create_environment(home_dir, site_packages=True, clear=False,
         if os.path.exists(site_packages_filename):
             logger.info('Deleting %s' % site_packages_filename)
             os.unlink(site_packages_filename)
+
+    stdinc_dir = join(prefix, 'include', py_version)
+    if os.path.exists(stdinc_dir):
+        copyfile(stdinc_dir, inc_dir)
+    else:
+        logger.debug('No include dir %s' % stdinc_dir)
 
     if sys.exec_prefix != prefix:
         if sys.platform == 'win32':

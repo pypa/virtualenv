@@ -256,6 +256,8 @@ svn trunk
 * Added --unzip-setuptools option
 * Update to Setuptools 0.6c8
 * If the current directory is not writable, run ez_setup.py in ``/tmp``
+* Copy or symlink over the ``include`` directory so that packages will
+  more consistently compile.
 
 1.0
 ~~~
