@@ -245,8 +245,8 @@ Other Documentation
 Changes & News
 --------------
 
-svn trunk
-~~~~~~~~~
+1.1
+~~~
 
 * Added support for Python 2.6.
 * Fix a problem with missing ``DLLs/zlib.pyd`` on Windows.  Create
