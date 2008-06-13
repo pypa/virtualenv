@@ -280,7 +280,7 @@ def filter_ez_setup(line):
 
 def main():
     parser = optparse.OptionParser(
-        version="1.0.1dev",
+        version="1.1.1dev",
         usage="%prog [OPTIONS] DEST_DIR")
 
     parser.add_option(
@@ -860,16 +860,17 @@ FlWqXJpcICVYpGzx2OAY4oFsPpCLbjpQCLvZILVcXFaufi5cACHzOrI=
 
 ##file distutils-init.py
 DISTUTILS_INIT = """
-eJytlD3P2yAQx3c+xUkZYkuR1TlS1KWtlKFdujwbIuaIqQhYgPPy7Z/Ddhy/xGqHeojI3f9e+AGn
-L7XzEVxguluFx7C8CW+1PQfYvJY6gHURBFy1j40waK9wcbIxuIPg4IZQCgtNQNARogOlrYRYIYQo
-jT4xJrW34oJwoJpFLWJV9JbkCrGJ2gSe7CPFH6dtNpNnz5YKzpU2yHm+g+2QYpsz3qbhvNA2oI/Z
-lx1MK+QM71iCq/GVvS01lVFazrXVkVLVj22eFx6FzHL25JTkI3yls0qfGdtsXvWKtALKVlYY9ow5
-I3lCwztxu4NAO06y4hv9eH2iQGeLhYpJVLCwZgGNyvcM6FOuIeiE712RTtjqqNeIFz40OSe+wPDa
-TqnO2y6JVkMQ3slPBWZp+66GzkbnsZC2So+x8bYTs38gQn0vKU3xD8cyO4MzRl4/YuUsnXBJiQZh
-MXW11AfnLC6rjYg81FhqpcsDbaz2qPT98MtZ7LdPnDpjekLJ/qLS29vi6W4Z3lnGMJbNTos+S+Zs
-rUl6J9KVnPcX472Tre1/jGYWuyBJ73yNZBoBqyTJuSQZorBSeJm8q2THIqDl/0S96Gra01/Ak2Id
-/Mj5HvyM5Cw23fEfx4+f3/fwu3KNkXDsrveMfR98FT7A1/Quuu8YoRKBRrmhge4SxEapHU3z0P69
-VZoySYfBbmmuIV7SPD9hGu6yYJ9XWDrf
+eJytlbuu2zAMQHd9BXGDIjYQGJ0DBHdpC2Rol3boJigWHat1JEOS8/j7UpbjZ4x2qIdAISk+Dmla
+XWpjPRjHVDy5R3+8CauVPjvYDEflQBsPAq7K+kZUqK9wMbKpcAfOwA0hFxoah6A8eAOF0hJ8ieC8
+rNSJMamsFheEA8XMauHLrJMElfONV5XjQT6y+GWUTmbmyTOljPNCVch5uoNt72KbMlX0DrSxl3BI
+piFSOCzSSBZ3ev/pngE9feBwSFpReN5+UJUjKn0oqEX+W5wRhIcPDkRdo7AuwDkRJR3pBCSVyYVX
+RoNwUfhwHi+Do/e3lGHlMKbB2xI4z5R2aH3ycQez6lozvGMOpsYBYEtzakrkOFdaeXJXP7ZpmlkU
+MknZcxSC+WhCcqMLdWZssxliZuFEtfq8RLdnzFSSh+7zaNxCdNTUYJZ9oh+rTk0oN1tYMYkFLKSJ
+w6roelCYhuaKmvcqSDRs7SJCPvRiNlQLDEM5eXHeRiejQcI76SnAzG2XVZ/ZqCcL09bSom+sjsbs
+H4hQ3ktKU/x9W2Y9OKPn9cOXRlOHc3LUG2ZTVUu9V87uJXUlPHc15qpQ+YEKqy0W6n74ZjR25ROn
+KAxbIsgHKp28DR5mq+JRMoaxTHYa9BkyZWtJ0iqQJue8G4zXSrZW/xjN7O6CJK2yNZJhy62SJOWS
+pPNCS2Fl0K6SHRsBHf8n6kVW05z+Ap4s1sGPlK/Bz0jO7oYZ/3L8+fXzHr6XpqkkHON4z9h3l69h
+sb6H9yI+Rw8lLVNBq5W+cQFiUxQ7+mC59u+tVORJGnR6S3sNadnGrUzfL5mxPwffh74=
 """.decode("base64").decode("zlib")
 
 ##file distutils.cfg

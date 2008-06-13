@@ -5,8 +5,12 @@ import warnings # warnings is not a virtualenv module, so we can use it to find 
 dirname = os.path.dirname
 
 distutils_path = os.path.join(os.path.dirname(warnings.__file__), 'distutils')
-__path__.insert(0, distutils_path)
-exec open(os.path.join(distutils_path, '__init__.py')).read()
+if os.path.normpath(distutils_path) == os.path.dirname(os.path.normpath(__file__)):
+    warnings.warn(
+        "The virtualenv distutils package at %s appears to be in the same location as the system distutils?")
+else:
+    __path__.insert(0, distutils_path)
+    exec open(os.path.join(distutils_path, '__init__.py')).read()
 
 import dist
 import sysconfig
