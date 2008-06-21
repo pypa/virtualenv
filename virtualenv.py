@@ -29,7 +29,7 @@ REQUIRED_MODULES = ['os', 'posix', 'posixpath', 'ntpath', 'genericpath',
                     'fnmatch', 'locale', 'encodings', 'codecs',
                     'stat', 'UserDict', 'readline', 'copy_reg', 'types',
                     're', 'sre', 'sre_parse', 'sre_constants', 'sre_compile',
-                    'lib-dynload', 'config', 'zlib']
+                    'lib-dynload', 'config', 'warnings', 'zlib']
 
 class Logger(object):
 
@@ -860,17 +860,18 @@ FlWqXJpcICVYpGzx2OAY4oFsPpCLbjpQCLvZILVcXFaufi5cACHzOrI=
 
 ##file distutils-init.py
 DISTUTILS_INIT = """
-eJytlbuu2zAMQHd9BXGDIjYQGJ0DBHdpC2Rol3boJigWHat1JEOS8/j7UpbjZ4x2qIdAISk+Dmla
-XWpjPRjHVDy5R3+8CauVPjvYDEflQBsPAq7K+kZUqK9wMbKpcAfOwA0hFxoah6A8eAOF0hJ8ieC8
-rNSJMamsFheEA8XMauHLrJMElfONV5XjQT6y+GWUTmbmyTOljPNCVch5uoNt72KbMlX0DrSxl3BI
-piFSOCzSSBZ3ev/pngE9feBwSFpReN5+UJUjKn0oqEX+W5wRhIcPDkRdo7AuwDkRJR3pBCSVyYVX
-RoNwUfhwHi+Do/e3lGHlMKbB2xI4z5R2aH3ycQez6lozvGMOpsYBYEtzakrkOFdaeXJXP7ZpmlkU
-MknZcxSC+WhCcqMLdWZssxliZuFEtfq8RLdnzFSSh+7zaNxCdNTUYJZ9oh+rTk0oN1tYMYkFLKSJ
-w6roelCYhuaKmvcqSDRs7SJCPvRiNlQLDEM5eXHeRiejQcI76SnAzG2XVZ/ZqCcL09bSom+sjsbs
-H4hQ3ktKU/x9W2Y9OKPn9cOXRlOHc3LUG2ZTVUu9V87uJXUlPHc15qpQ+YEKqy0W6n74ZjR25ROn
-KAxbIsgHKp28DR5mq+JRMoaxTHYa9BkyZWtJ0iqQJue8G4zXSrZW/xjN7O6CJK2yNZJhy62SJOWS
-pPNCS2Fl0K6SHRsBHf8n6kVW05z+Ap4s1sGPlK/Bz0jO7oYZ/3L8+fXzHr6XpqkkHON4z9h3l69h
-sb6H9yI+Rw8lLVNBq5W+cQFiUxQ7+mC59u+tVORJGnR6S3sNadnGrUzfL5mxPwffh74=
+eJytlUmr2zAQgO/6FcMLJTYE03MgvEMXyKGl0B56E3rWOFbrSEaSs/z7jizHa0x7qA9BnhnN8s1k
+rM61sR6MYyqe3L0/XoXVSp8cPAQfjC7U6ZuwDi1spq/KgTYeBFyU9Y2oUF/gbGRT4Q6cgStCLjQ0
+DkF58AYKpSX4EsF5Wak3xqSyWpwRDpRMVgtfZp0kqJxvvKocD/KRxS+jdDIzT8ZpZZwXqkLO0x1s
+ezfblKmid6KNPYdDMg2TwmGRSrK40/tP9wzoeTDLwiFpReF5+UGVjsj0oaAW+W9xQhAe3jkQdY2U
+eAD0RqR0JBSwVCYXXhkNwkXh3Xk8D45eX1KGlcOYBm9L4DxTmij45P0OZtW1ZnjDHEyNA8SW6NSU
+yHGutPLkrr5v0zSzKGSSssdYBPPR+OQtf8Y2myFmFk5Uq89LdHvGTCV5mAAejVuIjhobzLKP9GPV
+WxPKzRZWTGIBC2nisCq6HhSmodmi5j0LEg1bu4iQD72YDdYCw1BOXpy20clokPBGegowc9tl1Wc2
+6snCtLW06BurozH7ByKU95LSFH/fllkPTuh5ffel0dThnBz1htlU1VLvlbN7SV0Jz12NuSpUfqDC
+aouFuh2+Go1d+cQpCsOmCPKBSidvg4fZqniUjGEsk50GfYRM2VqStAqkyTnvBuO5kq3VP0Yzu7sg
+SetsjWTYdKskSbkk6bzQUlgZtKtkx0ZAx/+JepHVNKe/gCeLdfAj5XPwM5Kzu2HGPx9/fvm0h++l
+aSoJxzjeM/bd5UtYrK/hfxGfo4eSlqmg1UofwACxKYodfbRc+3otFXmSBp3e0l5DWrZxK9M3TGbs
+D3BIkho=
 """.decode("base64").decode("zlib")
 
 ##file distutils.cfg

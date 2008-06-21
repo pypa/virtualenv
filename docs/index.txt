@@ -245,6 +245,11 @@ Other Documentation
 Changes & News
 --------------
 
+svn trunk
+~~~~~~~~~
+
+* Add ``warnings`` to the modules copied over, for Python 2.6 support.
+
 1.1
 ~~~
 

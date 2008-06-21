@@ -1,10 +1,11 @@
 import os
 import sys
-import warnings # warnings is not a virtualenv module, so we can use it to find the stdlib
+import warnings 
+import ConfigParser # ConfigParser is not a virtualenv module, so we can use it to find the stdlib
 
 dirname = os.path.dirname
 
-distutils_path = os.path.join(os.path.dirname(warnings.__file__), 'distutils')
+distutils_path = os.path.join(os.path.dirname(ConfigParser.__file__), 'distutils')
 if os.path.normpath(distutils_path) == os.path.dirname(os.path.normpath(__file__)):
     warnings.warn(
         "The virtualenv distutils package at %s appears to be in the same location as the system distutils?")
