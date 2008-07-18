@@ -77,10 +77,10 @@ def makepath(*paths):
 def abs__file__():
     """Set all module' __file__ attribute to an absolute path"""
     for m in sys.modules.values():
-        try:
-            m.__file__ = os.path.abspath(m.__file__)
-        except AttributeError:
+        f = getattr(m, '__file__', None)
+        if f is None:
             continue
+        m.__file__ = os.path.abspath(f)
 
 def removeduppaths():
     """ Remove duplicate entries from sys.path along with making them
@@ -183,7 +183,7 @@ def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_pre
         prefixes.append(os.path.join(exec_prefix, "local"))
     for prefix in prefixes:
         if prefix:
-            if sys.platform in ('os2emx', 'riscos'):
+            if sys.platform in ('os2emx', 'riscos') or sys.platform[:4] == 'java':
                 sitedirs = [os.path.join(prefix, "Lib", "site-packages")]
             elif os.sep == '/':
                 sitedirs = [os.path.join(prefix,
@@ -395,6 +395,8 @@ def virtual_install_main_packages():
         pos += 1
     if sys.platform == 'win32':
         paths = [os.path.join(sys.real_prefix, 'Lib'), os.path.join(sys.real_prefix, 'DLLs')]
+    elif sys.platform[:4] == 'java':
+        paths = [os.path.join(sys.real_prefix, 'Lib')]
     else:
         paths = [os.path.join(sys.real_prefix, 'lib', 'python'+sys.version[:3])]
         lib64_path = os.path.join(sys.real_prefix, 'lib64', 'python'+sys.version[:3])
