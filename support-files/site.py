@@ -71,7 +71,10 @@ except NameError:
     from sets import Set as set
 
 def makepath(*paths):
-    dir = os.path.abspath(os.path.join(*paths))
+    dir = os.path.join(*paths)
+    if dir == '__classpath__' and sys.platform[:4] == 'java':
+        return dir, dir
+    dir = os.path.abspath(dir)
     return dir, os.path.normcase(dir)
 
 def abs__file__():
