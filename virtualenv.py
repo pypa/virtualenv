@@ -191,7 +191,7 @@ def copyfile(src, dest, symlink=True):
         logger.warn('Cannot find file %s (bad symlink)', src)
         return
     if os.path.exists(dest):
-        logger.info('File %s already exists', dest)
+        logger.debug('File %s already exists', dest)
         return
     if not os.path.exists(os.path.dirname(dest)):
         logger.info('Creating parent directories for %s' % os.path.dirname(dest))
@@ -246,7 +246,7 @@ def install_setuptools(py_executable, unzip=False):
     setup_fn = 'setuptools-0.6c8-py%s.egg' % sys.version[:3]
     setup_fn = join(os.path.dirname(__file__), 'support-files', setup_fn)
     if is_jython and os._name == 'nt':
-        # XXX: Jython's .bat sys.executable can't handle a command line
+        # Jython's .bat sys.executable can't handle a command line
         # argument with newlines
         import tempfile
         fd, ez_setup = tempfile.mkstemp('.py')
@@ -258,7 +258,7 @@ def install_setuptools(py_executable, unzip=False):
     if unzip:
         cmd.append('--always-unzip')
     env = {}
-    if logger.stdout_level_matches(logger.INFO):
+    if logger.stdout_level_matches(logger.DEBUG):
         cmd.append('-v')
     if os.path.exists(setup_fn):
         logger.info('Using existing Setuptools egg: %s', setup_fn)
@@ -488,9 +488,13 @@ def create_environment(home_dir, site_packages=True, clear=False,
             logger.info('Symlinking Python bootstrap modules')
         else:
             logger.info('Copying Python bootstrap modules')
-        for fn in os.listdir(stdlib_dir):
-            if fn != 'site-packages' and os.path.splitext(fn)[0] in REQUIRED_MODULES:
-                copyfile(join(stdlib_dir, fn), join(lib_dir, fn))
+        logger.indent += 2
+        try:
+            for fn in os.listdir(stdlib_dir):
+                if fn != 'site-packages' and os.path.splitext(fn)[0] in REQUIRED_MODULES:
+                    copyfile(join(stdlib_dir, fn), join(lib_dir, fn))
+        finally:
+            logger.indent -= 2
     mkdir(join(lib_dir, 'site-packages'))
     writefile(join(lib_dir, 'site.py'), SITE_PY)
     writefile(join(lib_dir, 'orig-prefix.txt'), prefix)
