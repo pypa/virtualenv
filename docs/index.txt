@@ -198,13 +198,12 @@ Compare & Contrast with Alternatives
 
 There are several alternatives that create isolated environments:
 
-* ``workingenv`` (which I do not suggest you use anymore *if*
-  virtualenv works on your platform) is the predecessor to this
-  library.  It used the main Python interpreter, but relied on setting
-  ``$PYTHONPATH`` to activate the environment.  This causes problems
-  when running Python scripts that aren't part of the environment
-  (e.g., a globally installed ``hg`` or ``bzr``).  It also conflicted
-  a lot with Setuptools.
+* ``workingenv`` (which I do not suggest you use anymore) is the
+  predecessor to this library.  It used the main Python interpreter,
+  but relied on setting ``$PYTHONPATH`` to activate the environment.
+  This causes problems when running Python scripts that aren't part of
+  the environment (e.g., a globally installed ``hg`` or ``bzr``).  It
+  also conflicted a lot with Setuptools.
 
 * `virtual-python
   <http://peak.telecommunity.com/DevCenter/EasyInstall#creating-a-virtual-python>`_
@@ -214,12 +213,12 @@ There are several alternatives that create isolated environments:
   won't see new additions to the global ``site-packages``.
 
   This script only symlinks a small portion of the standard library
-  into the environment, and so Windows it is feasible to simply copy
-  these files over.  Also, it creates a new/empty ``site-packages``
-  and also adds the global ``site-packages`` to the path, so updates
-  are tracked separately.  This script also installs Setuptools
-  automatically, saving a step and avoiding the need for network
-  access.
+  into the environment, and so on Windows it is feasible to simply
+  copy these files over.  Also, it creates a new/empty
+  ``site-packages`` and also adds the global ``site-packages`` to the
+  path, so updates are tracked separately.  This script also installs
+  Setuptools automatically, saving a step and avoiding the need for
+  network access.
 
 * `zc.buildout <http://pypi.python.org/pypi/zc.buildout>`_ doesn't
   create an isolated Python environment in the same style, but
@@ -232,8 +231,8 @@ There are several alternatives that create isolated environments:
 I *strongly* recommend anyone doing application development or
 deployment use one of these tools.
 
-Other Documentation
--------------------
+Other Documentation and Links
+-----------------------------
 
 * James Gardner has written a tutorial on using `virtualenv with
   Pylons
@@ -241,6 +240,20 @@ Other Documentation
 
 * `Blog announcement
   <http://blog.ianbicking.org/2007/10/10/workingenv-is-dead-long-live-virtualenv/>`_.
+
+* Doug Hellmann wrote a description of his `command-line work flow
+  using virtualenv (virtualenvwrapper)
+  <http://www.doughellmann.com/articles/CompletelyDifferent-2008-05-virtualenvwrapper/index.html>`_
+  including some handy scripts to make working with multiple
+  environments easier.  He also wrote `an example of using virtualenv
+  to try IPython
+  <http://www.doughellmann.com/articles/CompletelyDifferent-2008-02-ipython-and-virtualenv/index.html>`_.
+
+* Chris Perkins created a `showmedo video including virtualenv
+  <http://showmedo.com/videos/video?name=2910000&fromSeriesID=291>`_.
+
+* `Using virtualenv with mod_python
+  <http://code.google.com/p/modwsgi/wiki/VirtualEnvironments>`_.
 
 Changes & News
 --------------
