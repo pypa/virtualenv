@@ -261,12 +261,13 @@ Changes & News
 svn trunk
 ~~~~~~~~~
 
+* Added a ``--python`` option to select the Python interpreter.
 * Add ``warnings`` to the modules copied over, for Python 2.6 support.
 * Add ``sets`` to the module copied over for Python 2.3 (though Python
   2.3 still probably doesn't work).
 
 1.1.1
-~~~
+~~~~~
 
 * Added support for Jython 2.5.
 

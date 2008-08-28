@@ -316,6 +316,14 @@ def main():
         help='Decrease verbosity')
 
     parser.add_option(
+        '-p', '--python',
+        dest='python',
+        metavar='PYTHON_EXE',
+        help='The Python interpreter to use, e.g., --python=python2.5 will use the python2.5 '
+        'interpreter to create the new environment.  The default is the interpreter that '
+        'virtualenv was installed in (%s)' % sys.executable)
+
+    parser.add_option(
         '--clear',
         dest='clear',
         action='store_true',
@@ -346,6 +354,16 @@ def main():
 
     verbosity = options.verbose - options.quiet
     logger = Logger([(Logger.level_for_integer(2-verbosity), sys.stdout)])
+
+    if options.python and not os.environ.get('VIRTUALENV_INTERPRETER_RUNNING'):
+        env = os.environ.copy()
+        interpreter = resolve_interpreter(options.python)
+        if interpreter == sys.executable:
+            logger.warn('Already using interpreter %s' % interpreter)
+        else:
+            logger.notify('Running virtualenv with interpreter %s' % interpreter)
+            env['VIRTUALENV_INTERPRETER_RUNNING'] = 'true'
+            os.execvpe(interpreter, [interpreter, __file__] + sys.argv[1:], env)
 
     if not args:
         print 'You must provide a DEST_DIR'
@@ -653,6 +671,21 @@ def fix_lib64(lib_dir):
         assert os.path.basename(lib_parent) == 'lib', (
             "Unexpected parent dir: %r" % lib_parent)
         copyfile(lib_parent, os.path.join(os.path.dirname(lib_parent), 'lib64'))
+
+def resolve_interpreter(exe):
+    """
+    If the executable given isn't an absolute path, search $PATH for the interpreter
+    """
+    if os.path.abspath(exe) != exe:
+        paths = os.environ.get('PATH', '').split(os.pathsep)
+        for path in paths:
+            if os.path.exists(os.path.join(path, exe)):
+                exe = os.path.join(path, exe)
+                break
+    if not os.path.exists(exe):
+        logger.fatal('The executable %s (from --python=%s) does not exist' % (exe, exe))
+        sys.exit(3)
+    return exe
 
 def create_bootstrap_script(extra_text, python_version=''):
     """
