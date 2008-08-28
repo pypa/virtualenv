@@ -363,6 +363,9 @@ def main():
         else:
             logger.notify('Running virtualenv with interpreter %s' % interpreter)
             env['VIRTUALENV_INTERPRETER_RUNNING'] = 'true'
+            file = __file__
+            if file.endswith('.pyc'):
+                file = file[:-1]
             os.execvpe(interpreter, [interpreter, __file__] + sys.argv[1:], env)
 
     if not args:
