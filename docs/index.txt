@@ -258,8 +258,8 @@ Other Documentation and Links
 Changes & News
 --------------
 
-svn trunk
-~~~~~~~~~
+1.2
+~~~
 
 * Added a ``--python`` option to select the Python interpreter.
 * Add ``warnings`` to the modules copied over, for Python 2.6 support.
