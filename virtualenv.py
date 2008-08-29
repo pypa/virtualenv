@@ -298,7 +298,7 @@ def filter_ez_setup(line):
 
 def main():
     parser = optparse.OptionParser(
-        version="1.2",
+        version="1.2dev",
         usage="%prog [OPTIONS] DEST_DIR")
 
     parser.add_option(
@@ -321,7 +321,7 @@ def main():
         metavar='PYTHON_EXE',
         help='The Python interpreter to use, e.g., --python=python2.5 will use the python2.5 '
         'interpreter to create the new environment.  The default is the interpreter that '
-        'virtualenv was installed in (%s)' % sys.executable)
+        'virtualenv was installed with (%s)' % sys.executable)
 
     parser.add_option(
         '--clear',
