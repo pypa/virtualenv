@@ -184,14 +184,57 @@ environment, there is only one interpreter.
 
 Luckily, it's easy.  You must use the custom Python interpreter to
 *install* libraries.  But to *use* libraries, you just have to be sure
-the path is correct.  Adding the correct path is easy::
+the path is correct.  A script is available to correct the path.  You
+can setup the environment like::
 
-    import site
-    site.addsitedir('/path/to/virtualenv/lib/python2.5/site-packages')
+    activate_this = '/path/to/env/bin/activate_this.py'
+    execfile(activate_this, dict(__file__=activate_this))
 
-Using this you can have your isolated working environment, using the
-custom Python interpreter, but treat the result as just a simple set
-of libraries when running your application.
+This will change ``sys.path`` and even change ``sys.prefix``, but also
+allow you to use an existing interpreter.  Items in your environment
+will show up first on ``sys.path``, before global items.  However,
+this cannot undo the activation of other environments, or modules that
+have been imported.  You shouldn't try to, for instance, activate an
+environment before a web request; you should activate *one*
+environment as early as possible, and not do it again in that process.
+
+Making Environments Relocatable
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Note: this option is somewhat experimental, and there are probably
+caveats that have not yet been identified.  Also this does not
+currently work on Windows.
+
+Normally environments are tied to a specific path.  That means that
+you cannot move an environment around or copy it to another computer.
+You can fix up an environment to make it relocatable with the
+command::
+
+    $ virtualenv --relocatable ENV
+
+This will make some of the files created by setuptools use relative
+paths, and will change all the scripts to use ``activate_this.py``
+instead of using the location of the Python interpreter to select the
+environment.
+
+**Note:** you must run this after you've installed *any* packages into
+the environment.  If you make an environment relocatable, then
+install a new package, you must run ``virtualenv --relocatable``
+again.
+
+Also, this **does not make your packages cross-platform**.  You can
+move the directory around, but it can only be used on other similar
+computers.  Some known environmental differences that can cause
+incompatibilities: a different version of Python, when one platform
+uses UCS2 for its internal unicode representation and another uses
+UCS4 (a compile-time option), obvious platform changes like Windows
+vs. Linux, or Intel vs. ARM, and if you have libraries that bind to C
+libraries on the system, if those C libraries are located somewhere
+different (either different versions, or a different filesystem
+layout).
+
+Currently the ``--no-site-packages`` option will not be honored if you
+use this on an environment.
 
 Compare & Contrast with Alternatives
 ------------------------------------
@@ -261,6 +304,11 @@ Changes & News
 svn trunk
 ~~~~~~~~~
 
+* Added an option ``virtualenv --relocatable EXISTING_ENV``, which
+  will make an existing environment "relocatable" -- the paths will
+  not be absolute in scripts, ``.egg-info`` and ``.pth`` files.  This
+  may assist in building environments that can be moved and copied.
+  You have to run this *after* any new packages installed.
 * Added ``bin/activate_this.py``, a file you can use like
   ``execfile("path_to/activate_this.py",
   dict(__file__="path_to/activate_this.py"))`` -- this will activate

@@ -342,6 +342,13 @@ def main():
         action='store_true',
         help="Unzip Setuptools when installing it")
 
+    parser.add_option(
+        '--relocatable',
+        dest='relocatable',
+        action='store_true',
+        help='Make an EXISTING virtualenv environment relocatable.  '
+        'This fixes up scripts and makes all .pth files relative')
+
     if 'extend_parser' in globals():
         extend_parser(parser)
 
@@ -384,6 +391,10 @@ def main():
         logger.fatal('ERROR: you cannot run virtualenv while in a workingenv')
         logger.fatal('Please deactivate your workingenv, then re-run this script')
         sys.exit(3)
+
+    if options.relocatable:
+        make_environment_relocatable(home_dir)
+        return
 
     create_environment(home_dir, site_packages=not options.no_site_packages, clear=options.clear,
                        unzip_setuptools=options.unzip_setuptools)
@@ -690,6 +701,150 @@ def resolve_interpreter(exe):
         logger.fatal('The executable %s (from --python=%s) does not exist' % (exe, exe))
         sys.exit(3)
     return exe
+
+############################################################
+## Relocating the environment:
+
+def make_environment_relocatable(home_dir):
+    """
+    Makes the already-existing environment use relative paths, and takes out 
+    the #!-based environment selection in scripts.
+    """
+    fixup_scripts(home_dir)
+    fixup_pth_and_egg_link(home_dir)
+
+OK_ABS_SCRIPTS = ['python', 'python%s' % sys.version[:3],
+                  'activate', 'activate.bat', 'active_this.py']
+
+def fixup_scripts(home_dir):
+    # This is what we expect at the top of scripts:
+    shebang = '#!%s/bin/python' % os.path.normcase(os.path.abspath(home_dir))
+    # This is what we'll put:
+    new_shebang = '#!/usr/bin/env python%s' % sys.version[:3]
+    activate = "import os; activate_this=os.path.join(os.path.dirname(__file__), 'activate_this.py'); execfile(activate_this, dict(__file__=activate_this)); del os, activate_this"
+    bin_dir = os.path.join(home_dir, 'bin')
+    for filename in os.listdir(bin_dir):
+        filename = os.path.join(bin_dir, filename)
+        f = open(filename, 'rb')
+        lines = f.readlines()
+        f.close()
+        if not lines:
+            logger.warn('Script %s is an empty file' % filename)
+            continue
+        if lines[0].strip() != shebang:
+            if os.path.basename(filename) in OK_ABS_SCRIPTS:
+                logger.debug('Cannot make script %s relative' % filename)
+            if lines[0].strip() == new_shebang:
+                logger.info('Script %s has already been made relative' % filename)
+            else:
+                logger.warn('Script %s cannot be made relative (it\'s not a normal script that starts with %s)'
+                            % (filename, shebang))
+            continue
+        logger.notify('Making script %s relative' % filename)
+        lines = [new_shebang+'\n', activate+'\n'] + lines[1:]
+        f = open(filename, 'wb')
+        f.writelines(lines)
+        f.close()
+
+def fixup_pth_and_egg_link(home_dir):
+    """Makes .pth and .egg-link files use relative paths"""
+    home_dir = os.path.normcase(os.path.abspath(home_dir))
+    for path in sys.path:
+        if not path:
+            path = '.'
+        if not os.path.isdir(path):
+            continue
+        path = os.path.normcase(os.path.abspath(path))
+        if not path.startswith(home_dir):
+            logger.debug('Skipping system (non-environment) directory %s' % path)
+            continue
+        for filename in os.listdir(path):
+            filename = os.path.join(path, filename)
+            if filename.endswith('.pth'):
+                if not os.access(filename, os.W_OK):
+                    logger.warn('Cannot write .pth file %s, skipping' % filename)
+                else:
+                    fixup_pth_file(filename)
+            if filename.endswith('.egg-link'):
+                if not os.access(filename, os.W_OK):
+                    logger.warn('Cannot write .egg-link file %s, skipping' % filename)
+                else:
+                    fixup_egg_link(filename)
+
+def fixup_pth_file(filename):
+    lines = []
+    prev_lines = []
+    f = open(filename)
+    prev_lines = f.readlines()
+    f.close()
+    for line in prev_lines:
+        line = line.strip()
+        if (not line or line.startswith('#') or line.startswith('import ')
+            or os.path.abspath(line) != line):
+            lines.append(line)
+        else:
+            new_value = make_relative_path(filename, line)
+            if line != new_value:
+                logger.debug('Rewriting path %s as %s (in %s)' % (line, new_value, filename))
+            lines.append(new_value)
+    if lines == prev_lines:
+        logger.info('No changes to .pth file %s' % filename)
+        return
+    logger.notify('Making paths in .pth file %s relative' % filename)
+    f = open(filename, 'w')
+    f.write('\n'.join(lines) + '\n')
+    f.close()
+
+def fixup_egg_link(filename):
+    f = open(filename)
+    link = f.read().strip()
+    f.close()
+    if os.path.abspath(link) != link:
+        logger.debug('Link in %s already relative' % filename)
+        return
+    new_link = make_relative_path(filename, link)
+    logger.notify('Rewriting link %s in %s as %s' % (link, filename, new_link))
+    f = open(filename, 'w')
+    f.write(new_link)
+    f.close()
+
+def make_relative_path(source, dest, dest_is_directory=True):
+    """
+    Make a filename relative, where the filename is dest, and it is
+    being referred to from the filename source.
+
+        >>> make_relative_path('/usr/share/something/a-file.pth',
+        ...                    '/usr/share/another-place/src/Directory')
+        '../another-place/src/Directory'
+        >>> make_relative_path('/usr/share/something/a-file.pth',
+        ...                    '/home/user/src/Directory')
+        '../../../home/user/src/Directory'
+        >>> make_relative_path('/usr/share/a-file.pth', '/usr/share/')
+        './'
+    """
+    source = os.path.dirname(source)
+    if not dest_is_directory:
+        dest_filename = os.path.basename(dest)
+        dest = os.path.dirname(dest)
+    dest = os.path.normpath(os.path.abspath(dest))
+    source = os.path.normpath(os.path.abspath(source))
+    dest_parts = dest.strip(os.path.sep).split(os.path.sep)
+    source_parts = source.strip(os.path.sep).split(os.path.sep)
+    while dest_parts and source_parts and dest_parts[0] == source_parts[0]:
+        dest_parts.pop(0)
+        source_parts.pop(0)
+    full_parts = ['..']*len(source_parts) + dest_parts
+    if not dest_is_directory:
+        full_parts.append(dest_filename)
+    if not full_parts:
+        # Special case for the current directory (otherwise it'd be '')
+        return './'
+    return os.path.sep.join(full_parts)
+                
+
+
+############################################################
+## Bootstrap script creation:
 
 def create_bootstrap_script(extra_text, python_version=''):
     """
