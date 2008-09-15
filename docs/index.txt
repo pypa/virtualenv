@@ -272,6 +272,7 @@ svn trunk
 * Some platform-specific modules in Macs are added to the path now
   (``plat-darwin/``, ``plat-mac/``, ``plat-mac/lib-scriptpackages``),
   from Andrea Rech.
+* Fixed a small Bashism in the ``bin/activate`` shell script.
 
 1.2
 ~~~

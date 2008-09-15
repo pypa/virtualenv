@@ -31,7 +31,8 @@ deactivate () {
 # unset irrelavent variables
 deactivate nondestructive
 
-export VIRTUAL_ENV="__VIRTUAL_ENV__"
+VIRTUAL_ENV="__VIRTUAL_ENV__"
+export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
 PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
