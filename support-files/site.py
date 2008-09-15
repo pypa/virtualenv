@@ -411,6 +411,17 @@ def virtual_install_main_packages():
         tk_dir = os.path.join(path, 'lib-tk')
         if os.path.exists(tk_dir):
             paths.append(tk_dir)
+
+    # These are hardcoded in the Apple's Python executable,
+    # but relative to sys.prefix, so we have to fix them up:
+    if sys.platform == 'darwin':
+        hardcoded_paths = [os.path.join(sys.real_prefix, 'lib', 'python'+sys.version[:3], module)
+                           for module in ('plat-darwin', 'plat-mac', 'plat-mac/lib-scriptpackages')]
+
+        for path in hardcoded_paths:
+            if os.path.exists(path):
+                paths.append(path)
+
     sys.path.extend(paths)
 
 def virtual_addsitepackages(known_paths):

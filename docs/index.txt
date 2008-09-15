@@ -266,6 +266,9 @@ svn trunk
   dict(__file__="path_to/activate_this.py"))`` -- this will activate
   the environment in place, similar to what `the mod_python example
   does <http://code.google.com/p/modwsgi/wiki/VirtualEnvironments>`_.
+* Some platform-specific modules in Macs are added to the path now
+  (``plat-darwin/``, ``plat-mac/``, ``plat-mac/lib-scriptpackages``),
+  from Andrea Rech.
 
 1.2
 ~~~
