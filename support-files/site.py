@@ -184,10 +184,22 @@ def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_pre
     prefixes = [os.path.join(sys_prefix, "local"), sys_prefix]
     if exec_prefix != sys_prefix:
         prefixes.append(os.path.join(exec_prefix, "local"))
+
     for prefix in prefixes:
         if prefix:
             if sys.platform in ('os2emx', 'riscos') or sys.platform[:4] == 'java':
                 sitedirs = [os.path.join(prefix, "Lib", "site-packages")]
+            elif sys.platform == 'darwin' and prefix == sys_prefix:
+
+                if prefix.startswith("/System/Library/Frameworks/"): # Apple's Python
+
+                    sitedirs = [os.path.join("/Library/Python", sys.version[:3], "site-packages"),
+                                os.path.join(prefix, "Extras", "lib", "python")]
+
+                else: # any other Python distros on OSX work this way
+                    sitedirs = [os.path.join(prefix, "lib",
+                                             "python" + sys.version[:3], "site-packages")]
+
             elif os.sep == '/':
                 sitedirs = [os.path.join(prefix,
                                          "lib",
