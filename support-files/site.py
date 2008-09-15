@@ -408,7 +408,7 @@ def virtual_install_main_packages():
     # This is hardcoded in the Python executable, but
     # relative to sys.prefix, so we have to fix up:
     for path in list(paths):
-        tk_dir = os.path.join(paths[0], 'lib-tk')
+        tk_dir = os.path.join(path, 'lib-tk')
         if os.path.exists(tk_dir):
             paths.append(tk_dir)
     sys.path.extend(paths)
