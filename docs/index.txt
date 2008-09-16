@@ -295,7 +295,7 @@ Other Documentation and Links
 * Chris Perkins created a `showmedo video including virtualenv
   <http://showmedo.com/videos/video?name=2910000&fromSeriesID=291>`_.
 
-* `Using virtualenv with mod_python
+* `Using virtualenv with mod_wsgi
   <http://code.google.com/p/modwsgi/wiki/VirtualEnvironments>`_.
 
 Changes & News
@@ -321,6 +321,8 @@ svn trunk
   (``plat-darwin/``, ``plat-mac/``, ``plat-mac/lib-scriptpackages``),
   from Andrea Rech.
 * Fixed a small Bashism in the ``bin/activate`` shell script.
+* Added ``__future__`` to the list of required modules, for Python
+  2.3.  You'll still need to backport your own ``subprocess`` module.
 
 1.2
 ~~~
