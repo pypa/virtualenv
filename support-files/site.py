@@ -442,6 +442,15 @@ def virtual_addsitepackages(known_paths):
     else:
         return known_paths
 
+def fixclasspath():
+    """Adjust the special classpath sys.path entry for Jython. The classpath
+    must follow the virtualenv libs
+    """
+    classpath = '__classpath__'
+    if classpath in sys.path:
+        sys.path.remove(classpath)
+        sys.path.append(classpath)
+
 def main():
     virtual_install_main_packages()
     abs__file__()
@@ -451,6 +460,8 @@ def main():
         addbuilddir()
     paths_in_sys = addsitepackages(paths_in_sys)
     paths_in_sys = virtual_addsitepackages(paths_in_sys)
+    if sys.platform[:4] == 'java':
+        fixclasspath()
     if sys.platform == 'os2emx':
         setBEGINLIBPATH()
     setquit()

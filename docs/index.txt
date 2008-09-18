@@ -323,6 +323,8 @@ svn trunk
 * Fixed a small Bashism in the ``bin/activate`` shell script.
 * Added ``__future__`` to the list of required modules, for Python
   2.3.  You'll still need to backport your own ``subprocess`` module.
+* Fixed the ``__classpath__`` entry in Jython's ``sys.path`` taking
+  precedent over virtualenv's libs.
 
 1.2
 ~~~
