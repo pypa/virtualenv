@@ -301,9 +301,10 @@ Other Documentation and Links
 Changes & News
 --------------
 
-svn trunk
-~~~~~~~~~
+1.3
+~~~
 
+* Update to Setuptools 0.6c9
 * Added an option ``virtualenv --relocatable EXISTING_ENV``, which
   will make an existing environment "relocatable" -- the paths will
   not be absolute in scripts, ``.egg-info`` and ``.pth`` files.  This
@@ -325,7 +326,6 @@ svn trunk
   2.3.  You'll still need to backport your own ``subprocess`` module.
 * Fixed the ``__classpath__`` entry in Jython's ``sys.path`` taking
   precedent over virtualenv's libs.
-* Update to Setuptools 0.6c9
 
 1.2
 ~~~
