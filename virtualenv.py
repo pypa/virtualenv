@@ -243,7 +243,7 @@ def make_exe(fn):
         logger.info('Changed mode of %s to %s', fn, oct(newmode))
 
 def install_setuptools(py_executable, unzip=False):
-    setup_fn = 'setuptools-0.6c8-py%s.egg' % sys.version[:3]
+    setup_fn = 'setuptools-0.6c9-py%s.egg' % sys.version[:3]
     setup_fn = join(os.path.dirname(__file__), 'support-files', setup_fn)
     if is_jython and os._name == 'nt':
         # Jython's .bat sys.executable can't handle a command line

@@ -325,6 +325,7 @@ svn trunk
   2.3.  You'll still need to backport your own ``subprocess`` module.
 * Fixed the ``__classpath__`` entry in Jython's ``sys.path`` taking
   precedent over virtualenv's libs.
+* Update to Setuptools 0.6c9
 
 1.2
 ~~~
