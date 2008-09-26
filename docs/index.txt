@@ -313,7 +313,7 @@ Changes & News
 * Added ``bin/activate_this.py``, a file you can use like
   ``execfile("path_to/activate_this.py",
   dict(__file__="path_to/activate_this.py"))`` -- this will activate
-  the environment in place, similar to what `the mod_python example
+  the environment in place, similar to what `the mod_wsgi example
   does <http://code.google.com/p/modwsgi/wiki/VirtualEnvironments>`_.
 * For Mac framework builds of Python, the site-packages directory
   ``/Library/Python/X.Y/site-packages`` is added to ``sys.path``, from
