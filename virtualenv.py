@@ -572,7 +572,14 @@ def create_environment(home_dir, site_packages=True, clear=False,
     logger.notify('New %s executable in %s', expected_exe, py_executable)
     if sys.executable != py_executable:
         ## FIXME: could I just hard link?
-        shutil.copyfile(sys.executable, py_executable)
+        executable = sys.executable
+        if (sys.platform == 'cygwin' and not os.path.exists(executable)
+            and os.path.exists(executable + '.exe')):
+            # Cygwin misreports sys.executable sometimes
+            executable += '.exe'
+            py_executable += '.exe'
+            logger.info('Executable actually exists in %s' % executable)
+        shutil.copyfile(executable, py_executable)
         make_exe(py_executable)
     if os.path.splitext(os.path.basename(py_executable))[0] != expected_exe:
         secondary_exe = os.path.join(os.path.dirname(py_executable),

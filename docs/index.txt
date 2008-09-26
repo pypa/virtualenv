@@ -301,6 +301,12 @@ Other Documentation and Links
 Changes & News
 --------------
 
+svn trunk
+~~~~~~~~~
+
+* Sometimes Cygwin seems to leave ``.exe`` off ``sys.executable``; a
+  workaround is added.
+
 1.3
 ~~~
 
