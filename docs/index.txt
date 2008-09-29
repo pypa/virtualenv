@@ -307,6 +307,11 @@ svn trunk
 * Sometimes Cygwin seems to leave ``.exe`` off ``sys.executable``; a
   workaround is added.
 
+* Always set ``[install] prefix`` in ``distutils.cfg`` -- previously
+  on some platforms where a system-wide ``distutils.cfg`` was present
+  with a ``prefix`` setting, packages would be installed globally
+  (usually in ``/usr/local/lib/pythonX.Y/site-packages``).
+
 1.3
 ~~~
 

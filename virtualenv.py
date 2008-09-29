@@ -651,7 +651,7 @@ def create_environment(home_dir, site_packages=True, clear=False,
         logger.notify('Please make sure you remove any previous custom paths from '
                       'your %s file.' % pydistutils)
 
-    install_distutils(lib_dir)
+    install_distutils(lib_dir, home_dir)
 
     install_setuptools(py_executable, unzip=unzip_setuptools)
 
@@ -672,11 +672,12 @@ def install_activate(home_dir, bin_dir):
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         writefile(os.path.join(bin_dir, name), content)
 
-def install_distutils(lib_dir):
+def install_distutils(lib_dir, home_dir):
     distutils_path = os.path.join(lib_dir, 'distutils')
     mkdir(distutils_path)
+    distutils_cfg = DISTUTILS_CFG + "\n[install]\nprefix=%s\noptimize=0\n" % home_dir
     writefile(os.path.join(distutils_path, '__init__.py'), DISTUTILS_INIT)
-    writefile(os.path.join(distutils_path, 'distutils.cfg'), DISTUTILS_CFG, overwrite=False)
+    writefile(os.path.join(distutils_path, 'distutils.cfg'), distutils_cfg, overwrite=False)
 
 def fix_lib64(lib_dir):
     """
