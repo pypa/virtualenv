@@ -107,9 +107,13 @@ If you include these functions, they will be called:
     example would be::
 
         def after_install(options, home_dir):
-            subprocess.call([join(home_dir, 'bin', 'easy_install'),
+            if sys.platform == 'win32':
+                bin = 'Scripts'
+            else:
+                bin = 'bin'
+            subprocess.call([join(home_dir, bin, 'easy_install'),
                              'MyPackage'])
-            subprocess.call([join(home_dir, 'bin', 'my-package-script'),
+            subprocess.call([join(home_dir, bin, 'my-package-script'),
                              'setup', home_dir])
 
     This example immediately installs a package, and runs a setup
