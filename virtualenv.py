@@ -680,6 +680,9 @@ def install_activate(home_dir, bin_dir):
 def install_distutils(lib_dir, home_dir):
     distutils_path = os.path.join(lib_dir, 'distutils')
     mkdir(distutils_path)
+    ## FIXME: maybe this prefix setting should only be put in place if
+    ## there's a local distutils.cfg with a prefix setting?
+    home_dir = os.path.abspath(home_dir)
     distutils_cfg = DISTUTILS_CFG + "\n[install]\nprefix=%s\noptimize=0\n" % home_dir
     writefile(os.path.join(distutils_path, '__init__.py'), DISTUTILS_INIT)
     writefile(os.path.join(distutils_path, 'distutils.cfg'), distutils_cfg, overwrite=False)
@@ -730,6 +733,7 @@ def make_environment_relocatable(home_dir):
             'on this environment to update it' % activate_this)
     fixup_scripts(home_dir)
     fixup_pth_and_egg_link(home_dir)
+    ## FIXME: need to fix up distutils.cfg
 
 OK_ABS_SCRIPTS = ['python', 'python%s' % sys.version[:3],
                   'activate', 'activate.bat', 'active_this.py']
