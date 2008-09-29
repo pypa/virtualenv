@@ -628,6 +628,11 @@ def create_environment(home_dir, site_packages=True, clear=False,
             os.unlink(pth)
         os.symlink('python', pth)
 
+    if sys.platform == 'win32' and ' ' in py_executable:
+        # There's a bug with subprocess on Windows when using a first
+        # argument that has a space in it.  Instead we have to quote
+        # the value:
+        py_executable = '"%s"' % py_executable
     cmd = [py_executable, '-c', 'import sys; print sys.prefix']
     logger.info('Testing executable with %s %s "%s"' % tuple(cmd))
     proc = subprocess.Popen(cmd,
