@@ -683,7 +683,7 @@ def install_distutils(lib_dir, home_dir):
     ## FIXME: maybe this prefix setting should only be put in place if
     ## there's a local distutils.cfg with a prefix setting?
     home_dir = os.path.abspath(home_dir)
-    distutils_cfg = DISTUTILS_CFG + "\n[install]\nprefix=%s\noptimize=0\n" % home_dir
+    distutils_cfg = DISTUTILS_CFG + "\n[install]\nprefix=%s\n" % home_dir
     writefile(os.path.join(distutils_path, '__init__.py'), DISTUTILS_INIT)
     writefile(os.path.join(distutils_path, 'distutils.cfg'), distutils_cfg, overwrite=False)
 
