@@ -31,7 +31,7 @@ sys.path more than once.  Blank lines and lines beginning with
 '#' are skipped. Lines starting with 'import' are executed.
 
 For example, suppose sys.prefix and sys.exec_prefix are set to
-/usr/local and there is a directory /usr/local/lib/python2.3/site-packages
+/usr/local and there is a directory /usr/local/lib/python2.X/site-packages
 with three subdirectories, foo, bar and spam, and two path
 configuration files, foo.pth and bar.pth.  Assume foo.pth contains the
 following:
@@ -48,8 +48,8 @@ and bar.pth contains:
 
 Then the following directories are added to sys.path, in this order:
 
-  /usr/local/lib/python2.3/site-packages/bar
-  /usr/local/lib/python2.3/site-packages/foo
+  /usr/local/lib/python2.X/site-packages/bar
+  /usr/local/lib/python2.X/site-packages/foo
 
 Note that bletch is omitted because it doesn't exist; bar precedes foo
 because bar.pth comes alphabetically before foo.pth; and spam is
@@ -69,6 +69,15 @@ try:
     set
 except NameError:
     from sets import Set as set
+
+# Prefixes for site-packages; add additional prefixes like /usr/local here
+PREFIXES = [sys.prefix, sys.exec_prefix]
+# Enable per user site-packages directory
+# set it to False to disable the feature or True to force the feature
+ENABLE_USER_SITE = None
+# for distutils.commands.install
+USER_SITE = None
+USER_BASE = None
 
 def makepath(*paths):
     dir = os.path.join(*paths)
@@ -110,6 +119,8 @@ def addbuilddir():
     (especially for Guido :-)"""
     from distutils.util import get_platform
     s = "build/lib.%s-%.3s" % (get_platform(), sys.version)
+    if hasattr(sys, 'gettotalrefcount'):
+        s += '-pydebug'
     s = os.path.join(os.path.dirname(sys.path[-1]), s)
     sys.path.append(s)
 
@@ -232,6 +243,75 @@ def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_pre
                     addsitedir(sitedir, known_paths)
     return None
 
+def check_enableusersite():
+    """Check if user site directory is safe for inclusion
+
+    The function tests for the command line flag (including environment var),
+    process uid/gid equal to effective uid/gid.
+
+    None: Disabled for security reasons
+    False: Disabled by user (command line option)
+    True: Safe and enabled
+    """
+    if hasattr(sys, 'flags') and getattr(sys.flags, 'no_user_site', False):
+        return False
+
+    if hasattr(os, "getuid") and hasattr(os, "geteuid"):
+        # check process uid == effective uid
+        if os.geteuid() != os.getuid():
+            return None
+    if hasattr(os, "getgid") and hasattr(os, "getegid"):
+        # check process gid == effective gid
+        if os.getegid() != os.getgid():
+            return None
+
+    return True
+
+def addusersitepackages(known_paths):
+    """Add a per user site-package to sys.path
+
+    Each user has its own python directory with site-packages in the
+    home directory.
+
+    USER_BASE is the root directory for all Python versions
+
+    USER_SITE is the user specific site-packages directory
+
+    USER_SITE/.. can be used for data.
+    """
+    global USER_BASE, USER_SITE, ENABLE_USER_SITE
+    env_base = os.environ.get("PYTHONUSERBASE", None)
+
+    def joinuser(*args):
+        return os.path.expanduser(os.path.join(*args))
+
+    #if sys.platform in ('os2emx', 'riscos'):
+    #    # Don't know what to put here
+    #    USER_BASE = ''
+    #    USER_SITE = ''
+    if os.name == "nt":
+        base = os.environ.get("APPDATA") or "~"
+        if env_base:
+            USER_BASE = env_base
+        else:
+            USER_BASE = joinuser(base, "Python")
+        USER_SITE = os.path.join(USER_BASE,
+                                 "Python" + sys.version[0] + sys.version[2],
+                                 "site-packages")
+    else:
+        if env_base:
+            USER_BASE = env_base
+        else:
+            USER_BASE = joinuser("~", ".local")
+        USER_SITE = os.path.join(USER_BASE, "lib",
+                                 "python" + sys.version[:3],
+                                 "site-packages")
+
+    if ENABLE_USER_SITE and os.path.isdir(USER_SITE):
+        addsitedir(USER_SITE, known_paths)
+    return known_paths
+
+
 
 def setBEGINLIBPATH():
     """The OS/2 EMX port has optional extension modules that do double duty
@@ -256,12 +336,27 @@ def setquit():
 
     """
     if os.sep == ':':
-        exit = 'Use Cmd-Q to quit.'
+        eof = 'Cmd-Q'
     elif os.sep == '\\':
-        exit = 'Use Ctrl-Z plus Return to exit.'
+        eof = 'Ctrl-Z plus Return'
     else:
-        exit = 'Use Ctrl-D (i.e. EOF) to exit.'
-    __builtin__.quit = __builtin__.exit = exit
+        eof = 'Ctrl-D (i.e. EOF)'
+
+    class Quitter(object):
+        def __init__(self, name):
+            self.name = name
+        def __repr__(self):
+            return 'Use %s() or %s to exit' % (self.name, eof)
+        def __call__(self, code=None):
+            # Shells like IDLE catch the SystemExit, but listen when their
+            # stdin wrapper is closed.
+            try:
+                sys.stdin.close()
+            except:
+                pass
+            raise SystemExit(code)
+    __builtin__.quit = Quitter('quit')
+    __builtin__.exit = Quitter('exit')
 
 
 class _Printer(object):
@@ -451,13 +546,26 @@ def fixclasspath():
         sys.path.remove(classpath)
         sys.path.append(classpath)
 
+
+def execusercustomize():
+    """Run custom user specific code, if available."""
+    try:
+        import usercustomize
+    except ImportError:
+        pass
+
+
 def main():
+    global ENABLE_USER_SITE
     virtual_install_main_packages()
     abs__file__()
     paths_in_sys = removeduppaths()
     if (os.name == "posix" and sys.path and
         os.path.basename(sys.path[-1]) == "Modules"):
         addbuilddir()
+    if ENABLE_USER_SITE is None:
+        ENABLE_USER_SITE = check_enableusersite()
+    paths_in_sys = addusersitepackages(paths_in_sys)
     paths_in_sys = addsitepackages(paths_in_sys)
     paths_in_sys = virtual_addsitepackages(paths_in_sys)
     if sys.platform[:4] == 'java':
@@ -470,6 +578,8 @@ def main():
     aliasmbcs()
     setencoding()
     execsitecustomize()
+    if ENABLE_USER_SITE:
+        execusercustomize()
     # Remove sys.setdefaultencoding() so that users cannot change the
     # encoding after initialization.  The test for presence is needed when
     # this module is run as a script, because this code is executed twice.
@@ -478,11 +588,57 @@ def main():
 
 main()
 
-def _test():
-    print "sys.path = ["
-    for dir in sys.path:
-        print "    %r," % (dir,)
-    print "]"
+def _script():
+    help = """\
+    %s [--user-base] [--user-site]
+
+    Without arguments print some useful information
+    With arguments print the value of USER_BASE and/or USER_SITE separated
+    by '%s'.
+
+    Exit codes with --user-base or --user-site:
+      0 - user site directory is enabled
+      1 - user site directory is disabled by user
+      2 - uses site directory is disabled by super user
+          or for security reasons
+     >2 - unknown error
+    """
+    args = sys.argv[1:]
+    if not args:
+        print "sys.path = ["
+        for dir in sys.path:
+            print "    %r," % (dir,)
+        print "]"
+        def exists(path):
+            if os.path.isdir(path):
+                return "exists"
+            else:
+                return "doesn't exist"
+        print "USER_BASE: %r (%s)" % (USER_BASE, exists(USER_BASE))
+        print "USER_SITE: %r (%s)" % (USER_SITE, exists(USER_BASE))
+        print "ENABLE_USER_SITE: %r" %  ENABLE_USER_SITE
+        sys.exit(0)
+
+    buffer = []
+    if '--user-base' in args:
+        buffer.append(USER_BASE)
+    if '--user-site' in args:
+        buffer.append(USER_SITE)
+
+    if buffer:
+        print os.pathsep.join(buffer)
+        if ENABLE_USER_SITE:
+            sys.exit(0)
+        elif ENABLE_USER_SITE is False:
+            sys.exit(1)
+        elif ENABLE_USER_SITE is None:
+            sys.exit(2)
+        else:
+            sys.exit(3)
+    else:
+        import textwrap
+        print textwrap.dedent(help % (sys.argv[0], os.pathsep))
+        sys.exit(10)
 
 if __name__ == '__main__':
-    _test()
+    _script()

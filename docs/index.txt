@@ -308,13 +308,19 @@ Changes & News
 svn trunk
 ~~~~~~~~~
 
-* Sometimes Cygwin seems to leave ``.exe`` off ``sys.executable``; a
-  workaround is added.
+* Real Python 2.6 compatibility.  Backported the Python 2.6 updates to
+  ``site.py``, including `user directories
+  <http://docs.python.org/dev/whatsnew/2.6.html#pep-370-per-user-site-packages-directory>`_
+  (this means older versions of Python will support user directories,
+  whether intended or not).
 
 * Always set ``[install] prefix`` in ``distutils.cfg`` -- previously
   on some platforms where a system-wide ``distutils.cfg`` was present
   with a ``prefix`` setting, packages would be installed globally
   (usually in ``/usr/local/lib/pythonX.Y/site-packages``).
+
+* Sometimes Cygwin seems to leave ``.exe`` off ``sys.executable``; a
+  workaround is added.
 
 1.3
 ~~~
