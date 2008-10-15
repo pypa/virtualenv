@@ -737,7 +737,7 @@ def make_environment_relocatable(home_dir):
     ## FIXME: need to fix up distutils.cfg
 
 OK_ABS_SCRIPTS = ['python', 'python%s' % sys.version[:3],
-                  'activate', 'activate.bat', 'active_this.py']
+                  'activate', 'activate.bat', 'activate_this.py']
 
 def fixup_scripts(home_dir):
     # This is what we expect at the top of scripts:
@@ -757,7 +757,7 @@ def fixup_scripts(home_dir):
         if lines[0].strip() != shebang:
             if os.path.basename(filename) in OK_ABS_SCRIPTS:
                 logger.debug('Cannot make script %s relative' % filename)
-            if lines[0].strip() == new_shebang:
+            elif lines[0].strip() == new_shebang:
                 logger.info('Script %s has already been made relative' % filename)
             else:
                 logger.warn('Script %s cannot be made relative (it\'s not a normal script that starts with %s)'
