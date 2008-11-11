@@ -556,8 +556,12 @@ def create_environment(home_dir, site_packages=True, clear=False,
             copyfile(join(exec_dir, fn), join(lib_dir, fn))
     
     if is_jython:
-        for name in 'jython.jar', 'javalib':
-            copyfile(join(prefix, name), join(home_dir, name))
+        # Jython has either jython.jar and javalib/ dir, or just
+        # jython-complete.jar
+        for name in 'jython.jar', 'javalib', 'jython-complete.jar':
+            src = join(prefix, name)
+            if os.path.exists(src):
+                copyfile(src, join(home_dir, name))
         copyfile(join(prefix, 'cachedir'), join(home_dir, 'cachedir'),
                  symlink=False)
 
