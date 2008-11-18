@@ -322,6 +322,8 @@ svn trunk
 * Sometimes Cygwin seems to leave ``.exe`` off ``sys.executable``; a
   workaround is added.
 
+* Fix ``--python`` option.
+
 * Fixed handling of Jython environments that use a
   jython-complete.jar.
 

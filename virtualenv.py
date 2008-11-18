@@ -374,7 +374,7 @@ def main():
             file = __file__
             if file.endswith('.pyc'):
                 file = file[:-1]
-            os.execvpe(interpreter, [interpreter, __file__] + sys.argv[1:], env)
+            os.execvpe(interpreter, [interpreter, file] + sys.argv[1:], env)
 
     if not args:
         print 'You must provide a DEST_DIR'
