@@ -393,6 +393,13 @@ def main():
         logger.fatal('Please deactivate your workingenv, then re-run this script')
         sys.exit(3)
 
+    if os.environ.get('PYTHONHOME'):
+        if sys.platform == 'win32':
+            name = '%PYTHONHOME%'
+        else:
+            name = '$PYTHONHOME'
+        logger.warn('%s is set; this can cause problems creating environments' % name)
+
     if options.relocatable:
         make_environment_relocatable(home_dir)
         return
