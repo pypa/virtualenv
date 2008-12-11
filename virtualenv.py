@@ -245,7 +245,10 @@ def make_exe(fn):
 
 def install_setuptools(py_executable, unzip=False):
     setup_fn = 'setuptools-0.6c9-py%s.egg' % sys.version[:3]
-    setup_fn = join(os.path.dirname(__file__), 'support-files', setup_fn)
+    for dir in ['.', os.path.dirname(__file__), join(os.path.dirname(__file__), 'support-files')]:
+        if os.path.exists(join(dir, setup_fn)):
+            setup_fn = join(dir, setup_fn)
+            break
     if is_jython and os._name == 'nt':
         # Jython's .bat sys.executable can't handle a command line
         # argument with newlines
