@@ -217,6 +217,10 @@ def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_pre
                                          "python" + sys.version[:3],
                                          "site-packages"),
                             os.path.join(prefix, "lib", "site-python")]
+                lib64_dir = os.path.join(prefix, "lib64", "python" + sys.version[:3], "site-packages")
+                if (os.path.exists(lib64_dir) and 
+                    os.path.realpath(lib64_dir) not in [os.path.realpath(p) for p in sitedirs]):
+                    sitedirs.append(lib64_dir)
                 try:
                     # sys.getobjects only available in --with-pydebug build
                     sys.getobjects
