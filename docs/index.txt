@@ -54,6 +54,8 @@ The basic usage is::
 
     $ python virtualenv.py ENV
 
+If you install it you can also just do ``virtualenv ENV``.
+
 This creates ``ENV/lib/python2.4/site-packages`` (or
 ``ENV/lib/python2.5/site-packages`` on Python 2.5, etc), where any
 libraries you install will go.  It also creates ``ENV/bin/python``,

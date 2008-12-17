@@ -22,8 +22,8 @@ old_find_config_files = dist.Distribution.find_config_files
 def find_config_files(self):
     found = old_find_config_files(self)
     system_distutils = os.path.join(distutils_path, 'distutils.cfg')
-    if os.path.exists(system_distutils):
-        found.insert(0, system_distutils)
+    #if os.path.exists(system_distutils):
+    #    found.insert(0, system_distutils)
     return found
 dist.Distribution.find_config_files = find_config_files
 
