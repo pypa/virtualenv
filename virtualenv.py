@@ -718,8 +718,8 @@ def fix_lib64(lib_dir):
     instead of lib/pythonX.Y.  If this is such a platform we'll just create a
     symlink so lib64 points to lib
     """
-    if [(i,j) for (i,j) in distutils.sysconfig.get_config_vars().items() 
-        if isinstance(j, basestring) and 'lib64' in j]:
+    if [p for p in distutils.sysconfig.get_config_vars().values() 
+        if isinstance(p, basestring) and 'lib64' in p]:
         logger.debug('This system uses lib64; symlinking lib64 to lib')
         assert os.path.basename(lib_dir) == 'python%s' % sys.version[:3], (
             "Unexpected python lib dir: %r" % lib_dir)
