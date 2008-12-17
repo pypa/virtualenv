@@ -307,8 +307,8 @@ Other Documentation and Links
 Changes & News
 --------------
 
-svn trunk
-~~~~~~~~~
+1.3.2
+~~~~~
 
 * Remove the ``[install] prefix = ...`` setting from the virtualenv
   ``distutils.cfg`` -- this has been causing problems for a lot of
