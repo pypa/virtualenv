@@ -319,6 +319,8 @@ svn trunk
 
 .. _boot script: `Creating Your Own Bootstrap Scripts`_
 
+* Added platform-specific paths, like ``/usr/lib/pythonX.Y/plat-linux2``
+
 1.3.1
 ~~~~~
 
