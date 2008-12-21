@@ -307,6 +307,12 @@ Other Documentation and Links
 Changes & News
 --------------
 
+svn trunk
+~~~~~~~~~
+
+* Use Windows newlines in ``activate.bat``, which has been reported to help
+  when using non-ASCII directory names.
+
 1.3.2
 ~~~~~
 
