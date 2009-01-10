@@ -313,6 +313,8 @@ svn trunk
 * Use Windows newlines in ``activate.bat``, which has been reported to help
   when using non-ASCII directory names.
 
+* Fixed compatibility with Jython 2.5b1.
+
 1.3.2
 ~~~~~
 
