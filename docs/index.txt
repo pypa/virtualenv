@@ -318,6 +318,9 @@ svn trunk
 * Added a function ``virtualenv.install_python`` for more fine-grained
   access to what ``virtualenv.create_environment`` does.
 
+* Fix `a problem <https://bugs.launchpad.net/virtualenv/+bug/241581>`_
+  with Windows and paths that contain spaces.
+
 1.3.2
 ~~~~~
 

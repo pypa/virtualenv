@@ -496,7 +496,7 @@ def create_environment(home_dir, site_packages=True, clear=False,
     If ``clear`` is true (default False) then the environment will
     first be cleared.
     """
-    lib_dir, inc_dir, bin_dir = path_locations(home_dir)
+    home_dir, lib_dir, inc_dir, bin_dir = path_locations(home_dir)
 
     py_executable = install_python(
         home_dir, lib_dir, inc_dir, bin_dir, 
@@ -514,6 +514,12 @@ def path_locations(home_dir):
     # XXX: We'd use distutils.sysconfig.get_python_inc/lib but its
     # prefix arg is broken: http://bugs.python.org/issue3386
     if sys.platform == 'win32':
+        # Windows has lots of problems with executables with spaces in
+        # the name; this function will remove them (using the ~1
+        # format):
+        mkdir(home_dir)
+        import win32api
+        home_dir = win32api.GetShortPathName(home_dir)
         lib_dir = join(home_dir, 'Lib')
         inc_dir = join(home_dir, 'Include')
         bin_dir = join(home_dir, 'Scripts')
@@ -525,7 +531,7 @@ def path_locations(home_dir):
         lib_dir = join(home_dir, 'lib', py_version)
         inc_dir = join(home_dir, 'include', py_version)
         bin_dir = join(home_dir, 'bin')
-    return lib_dir, inc_dir, bin_dir
+    return home_dir, lib_dir, inc_dir, bin_dir
 
 def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     """Install just the base environment, no distutils patches etc"""
