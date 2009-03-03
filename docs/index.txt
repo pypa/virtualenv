@@ -315,6 +315,9 @@ svn trunk
 
 * Fixed compatibility with Jython 2.5b1.
 
+* Added a function ``virtualenv.install_python`` for more fine-grained
+  access to what ``virtualenv.create_environment`` does.
+
 1.3.2
 ~~~~~
 

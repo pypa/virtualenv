@@ -496,6 +496,21 @@ def create_environment(home_dir, site_packages=True, clear=False,
     If ``clear`` is true (default False) then the environment will
     first be cleared.
     """
+    lib_dir, inc_dir, bin_dir = path_locations(home_dir)
+
+    py_executable = install_python(
+        home_dir, lib_dir, inc_dir, bin_dir, 
+        site_packages=site_packages, clear=clear)
+
+    install_distutils(lib_dir, home_dir)
+
+    install_setuptools(py_executable, unzip=unzip_setuptools)
+
+    install_activate(home_dir, bin_dir)
+
+def path_locations(home_dir):
+    """Return the path locations for the environment (where libraries are,
+    where scripts go, etc)"""
     # XXX: We'd use distutils.sysconfig.get_python_inc/lib but its
     # prefix arg is broken: http://bugs.python.org/issue3386
     if sys.platform == 'win32':
@@ -510,7 +525,10 @@ def create_environment(home_dir, site_packages=True, clear=False,
         lib_dir = join(home_dir, 'lib', py_version)
         inc_dir = join(home_dir, 'include', py_version)
         bin_dir = join(home_dir, 'bin')
+    return lib_dir, inc_dir, bin_dir
 
+def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
+    """Install just the base environment, no distutils patches etc"""
     if sys.executable.startswith(bin_dir):
         print 'Please use the *system* python to run this script'
         return
@@ -679,12 +697,8 @@ def create_environment(home_dir, site_packages=True, clear=False,
     if os.path.exists(pydistutils):
         logger.notify('Please make sure you remove any previous custom paths from '
                       'your %s file.' % pydistutils)
-
-    install_distutils(lib_dir, home_dir)
-
-    install_setuptools(py_executable, unzip=unzip_setuptools)
-
-    install_activate(home_dir, bin_dir)
+    ## FIXME: really this should be calculated earlier
+    return py_executable
 
 def install_activate(home_dir, bin_dir):
     if sys.platform == 'win32' or is_jython and os._name == 'nt':
