@@ -24,6 +24,17 @@ def find_config_files(self):
     system_distutils = os.path.join(distutils_path, 'distutils.cfg')
     #if os.path.exists(system_distutils):
     #    found.insert(0, system_distutils)
+        # What to call the per-user config file
+    if os.name == 'posix':
+        user_filename = ".pydistutils.cfg"
+    else:
+        user_filename = "pydistutils.cfg"
+    user_filename = os.path.join(sys.prefix, user_filename)
+    if os.path.isfile(user_filename):
+        for item in list(found):
+            if item.endswith('pydistutils.cfg'):
+                found.remove(item)
+        found.append(user_filename)
     return found
 dist.Distribution.find_config_files = find_config_files
 

@@ -321,6 +321,10 @@ svn trunk
 * Fix `a problem <https://bugs.launchpad.net/virtualenv/+bug/241581>`_
   with Windows and paths that contain spaces.
 
+* If ``/path/to/env/.pydistutils.cfg`` exists (or
+  ``/path/to/env/pydistutils.cfg`` on Windows systems) then ignore
+  ``~/.pydistutils.cfg`` and use that other file instead.
+
 1.3.2
 ~~~~~
 
