@@ -325,6 +325,10 @@ svn trunk
   ``/path/to/env/pydistutils.cfg`` on Windows systems) then ignore
   ``~/.pydistutils.cfg`` and use that other file instead.
 
+* Fix ` a problem
+  <https://bugs.launchpad.net/virtualenv/+bug/340050>`_ picking up
+  some ``.so`` libraries in ``/usr/local``.
+
 1.3.2
 ~~~~~
 
