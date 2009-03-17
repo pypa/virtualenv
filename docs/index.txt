@@ -310,6 +310,8 @@ Changes & News
 svn trunk
 ~~~~~~~~~
 
+* Fail more gracefully on Windows when ``win32api`` is not installed.
+
 * Fix site-packages taking precedent over Jython's ``__classpath__``
   and also specially handle the new ``__pyclasspath__`` entry in
   ``sys.path``.

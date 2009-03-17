@@ -518,8 +518,15 @@ def path_locations(home_dir):
         # the name; this function will remove them (using the ~1
         # format):
         mkdir(home_dir)
-        import win32api
-        home_dir = win32api.GetShortPathName(home_dir)
+        if ' ' in home_dir:
+            try:
+                import win32api
+            except ImportError:
+                print 'Error: the path "%s" has a space in it' % home_dir
+                print 'To handle these kinds of paths, the win32api module must be installed:'
+                print '  http://sourceforge.net/projects/pywin32/'
+                sys.exit(3)
+            home_dir = win32api.GetShortPathName(home_dir)
         lib_dir = join(home_dir, 'Lib')
         inc_dir = join(home_dir, 'Include')
         bin_dir = join(home_dir, 'Scripts')
