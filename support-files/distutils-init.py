@@ -16,6 +16,23 @@ else:
 import dist
 import sysconfig
 
+
+## patch build_ext (distutils doesn't know how to get the libs directory
+## path on windows - it hardcodes the paths around the patched sys.prefix)
+
+if sys.platform == 'win32':
+    from distutils.command.build_ext import build_ext as old_build_ext
+    class build_ext(old_build_ext):
+        def finalize_options (self):
+            if self.library_dirs is None:
+                self.library_dirs = []
+            
+            self.library_dirs.insert(0, os.path.join(sys.real_prefix, "Libs"))
+            old_build_ext.finalize_options(self)
+            
+    from distutils.command import build_ext as build_ext_module 
+    build_ext_module.build_ext = build_ext
+
 ## distutils.dist patches:
 
 old_find_config_files = dist.Distribution.find_config_files

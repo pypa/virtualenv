@@ -316,6 +316,8 @@ svn trunk
   and also specially handle the new ``__pyclasspath__`` entry in
   ``sys.path``.
 
+* Better find libraries when compiling extensions on Windows.
+
 1.3.3
 ~~~~~
 
