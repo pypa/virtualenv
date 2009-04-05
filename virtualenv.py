@@ -311,7 +311,7 @@ def filter_ez_setup(line):
 
 def main():
     parser = optparse.OptionParser(
-        version="1.3.3",
+        version="1.3.4dev",
         usage="%prog [OPTIONS] DEST_DIR")
 
     parser.add_option(
@@ -612,6 +612,10 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             src = join(prefix, name)
             if os.path.exists(src):
                 copyfile(src, join(home_dir, name))
+        # XXX: registry should always exist after Jython 2.5rc1
+        src = join(prefix, 'registry')
+        if os.path.exists(src):
+            copyfile(src, join(home_dir, 'registry'), symlink=False)
         copyfile(join(prefix, 'cachedir'), join(home_dir, 'cachedir'),
                  symlink=False)
 
