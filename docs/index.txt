@@ -320,6 +320,8 @@ svn trunk
 
 * Better find libraries when compiling extensions on Windows.
 
+* Create ``Scripts\pythonw.exe`` on Windows.
+
 1.3.3
 ~~~~~
 
