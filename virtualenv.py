@@ -639,11 +639,17 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             logger.info('Executable actually exists in %s' % executable)
         shutil.copyfile(executable, py_executable)
         make_exe(py_executable)
-        if sys.platform == 'win32' or sys.platform == 'cygwin':
-            pythonw = os.path.join(os.path.dirname(sys.executable, 'pythonw.exe'))
+        if sys.platform == 'win32' or sys.platform == 'cygwin' or sys.platform == 'darwin':
+            if sys.platform == 'darwin':
+                basename = 'pythonw'
+            else:
+                basename = 'pythonw.exe'
+            pythonw = os.path.join(os.path.dirname(sys.executable, basename))
             if os.path.exists(pythonw):
-                logger.info('Also created pythonw.exe')
-                shutil.copyfile(pythonw, os.path.join(os.path.dirname(py_executable, 'pythonw.exe')))
+                pythonw_dest = os.path.join(os.path.dirname(py_executable, basename))
+                logger.info('Also created %s' % basename)
+                shutil.copyfile(pythonw, pythonw_dest)
+                make_exe(pythonw_dest)
                 
     if os.path.splitext(os.path.basename(py_executable))[0] != expected_exe:
         secondary_exe = os.path.join(os.path.dirname(py_executable),
