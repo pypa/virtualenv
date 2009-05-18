@@ -1,0 +1,9 @@
+#!/bin/sh
+
+mkdir -p docs/_static docs/_build
+sphinx-build -E -b html docs/ docs/_build || exit 1
+if [ "$1" = "publish" ] ; then
+  cd docs/
+  echo "Uploading files... (not enabled)"
+  exit 2
+fi
