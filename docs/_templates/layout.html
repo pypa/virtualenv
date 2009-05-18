@@ -1,6 +1,5 @@
 {%- block doctype -%}
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 {%- endblock %}
 {%- set reldelim1 = reldelim1 is not defined and ' &raquo;' or reldelim1 %}
 {%- set reldelim2 = reldelim2 is not defined and ' |' or reldelim2 %}
@@ -89,8 +88,8 @@
       {%- endif %}{% endif %}
 {%- endmacro %}
 
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
+<html dir="ltr" xmlns="http://www.w3.org/1999/xhtml" lang="en-US">
+  <head profile="http://gmpg.org/xfn/11">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     {{ metatags }}
     {%- if not embedded %}
@@ -98,8 +97,15 @@
     {%- else %}
       {%- set titlesuffix = "" %}
     {%- endif %}
-    <title>{{ title|striptags }}{{ titlesuffix }}</title>
-    <link rel="stylesheet" href="{{ pathto('_static/' + style, 1) }}" type="text/css" />
+    <title>{{ title|striptags }}{{ titlesuffix }} - TOPP Labs</title>
+    <link rel="stylesheet" href="http://topplabs.org/wp-content/themes/topplabs/tripoli_002.css">  
+    <link rel="stylesheet" href="http://topplabs.org/wp-content/themes/topplabs/tripoli_003.css">    
+    <link href="http://topplabs.org/wp-content/themes/topplabs/tripoli.css" rel="stylesheet" media="all">	
+    <style type="text/css" media="screen">
+      @import url( http://topplabs.org/wp-content/themes/topplabs/style.css?v=3 );
+    </style>
+
+    <link rel="stylesheet" href="{{ pathto('_static/' + style, 1) }}" type="text/css" /> 
     <link rel="stylesheet" href="{{ pathto('_static/pygments.css', 1) }}" type="text/css" />
     {%- if not embedded %}
     <script type="text/javascript">
@@ -150,12 +156,30 @@
 {%- block extrahead %} {% endblock %}
   </head>
   <body>
+<div id="heading">
+	<div class="content">
+		<h1><a href="http://topplabs.org/">TOPP Labs</a></h1>
+		<h2><span>Open Source Civic Hacking @ </span><a href="http://theopenplanningproject.org/" onclick="pageTracker._trackPageview('/outgoing/theopenplanningproject.org?referer=');">The Open Planning Project</a></h2>
+		<ul class="nav">
+			<li class="nav-blog"><a href="http://topplabs.org/civichacker/">The Civic Hacker Blog</a></li>
+			<li class="nav-wiki"><a href="http://ideas.topplabs.org/" onclick="pageTracker._trackPageview('/outgoing/ideas.topplabs.org/?referer=');">Ideas Wiki</a></li>
+			<li class="nav-lists"><a href="http://lists.topplabs.org/civichacker/" onclick="pageTracker._trackPageview('/outgoing/lists.topplabs.org/civichacker/?referer=');">Discussion Lists</a></li> <!-- will be http://lists.topplabs.org/ soon -->
+			<li class="nav-about"><a href="http://topplabs.org/about/">About</a></li>
+		</ul>	
+
+
+		<h3><a href="{{ pathto(master_doc) }}">{{ title }}</a></h3>
+		<div class="sub-heading">The Open Planning Project</div>
+	</div>
+</div>
+
 {%- block header %}{% endblock %}
 
-{%- block relbar1 %}{{ relbar() }}{% endblock %}
+<!-- {%- block relbar1 %}{{ relbar() }}{% endblock %} -->
 
 {%- block sidebar1 %} {# possible location for sidebar #} {% endblock %}
 
+<div id="body">
     <div class="document">
 {%- block document %}
       <div class="documentwrapper">
@@ -170,15 +194,32 @@
       {%- endif %}{% endif %}
       </div>
 {%- endblock %}
+</div>
 
 {%- block sidebar2 %}{{ sidebar() }}{% endblock %}
       <div class="clearer"></div>
     </div>
 
-{%- block relbar2 %}{{ relbar() }}{% endblock %}
+<!-- {%- block relbar2 %}{{ relbar() }}{% endblock %} -->
 
 {%- block footer %}
-    <div class="footer">
+<div id="footer">
+	<div class="content">
+		<h1><a href="http://topplabs.org/">TOPP Labs</a></h1>
+		<h2><span>Open Source Civic Hacking @ </span><a href="http://theopenplanningproject.org/" onclick="pageTracker._trackPageview('/outgoing/theopenplanningproject.org?referer=');">The Open Planning Project</a></h2>
+		<ul class="nav">
+			
+			<li class="nav-blog"><a href="http://topplabs.org/civichacker/">The Civic Hacker Blog</a></li>
+			<li class="nav-wiki"><a href="http://ideas.topplabs.org/" onclick="pageTracker._trackPageview('/outgoing/ideas.topplabs.org/?referer=');">Ideas Wiki</a></li>
+			<li class="nav-lists"><a href="http://lists.topplabs.org/civichacker" onclick="pageTracker._trackPageview('/outgoing/lists.topplabs.org/civichacker?referer=');">Discussion Lists</a></li>
+			<li class="nav-about"><a href="http://topplabs.org/about/">About</a></li>
+			
+		</ul>
+    	
+	</div>
+</div>
+    
+<!--    <div class="footer">
     {%- if hasdoc('copyright') %}
       {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; <a href="{{ path }}">Copyright</a> {{ copyright }}.{% endtrans %}
     {%- else %}
@@ -190,7 +231,7 @@
     {%- if show_sphinx %}
       {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
     {%- endif %}
-    </div>
+    </div> -->
 {%- endblock %}
   </body>
 </html>
