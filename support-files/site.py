@@ -13,15 +13,16 @@ works).
 This will append site-specific paths to the module search path.  On
 Unix, it starts with sys.prefix and sys.exec_prefix (if different) and
 appends lib/python<version>/site-packages as well as lib/site-python.
-On other platforms (mainly Mac and Windows), it uses just sys.prefix
-(and sys.exec_prefix, if different, but this is unlikely).  The
-resulting directories, if they exist, are appended to sys.path, and
-also inspected for path configuration files.
+It also supports the Debian convention of
+lib/python<version>/dist-packages.  On other platforms (mainly Mac and
+Windows), it uses just sys.prefix (and sys.exec_prefix, if different,
+but this is unlikely).  The resulting directories, if they exist, are
+appended to sys.path, and also inspected for path configuration files.
 
 FOR DEBIAN, this sys.path is augmented with directories in /usr/local.
 Local addons go into /usr/local/lib/python<version>/site-packages
 (resp. /usr/local/lib/site-python), Debian addons install into
-/usr/{lib,share}/python<version>/site-packages.
+/usr/{lib,share}/python<version>/dist-packages.
 
 A path configuration file is a file whose name has the form
 <package>.pth; its contents are additional directories (one per line)
@@ -231,6 +232,14 @@ def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_pre
                     sitedirs.insert(0, os.path.join(sitedirs[0], 'debug'))
                 except AttributeError:
                     pass
+                # Debian-specific dist-packages directories:
+                sitedirs.append(os.path.join(prefix, "lib",
+                                             "python" + sys.version[:3],
+                                             "dist-packages"))
+                sitedirs.append(os.path.join(prefix, "local/lib",
+                                             "python" + sys.version[:3],
+                                             "dist-packages"))
+                sitedirs.append(os.path.join(prefix, "lib", "dist-python"))
             else:
                 sitedirs = [prefix, os.path.join(prefix, "lib", "site-packages")]
             if sys.platform == 'darwin':
@@ -317,6 +326,13 @@ def addusersitepackages(known_paths):
 
     if ENABLE_USER_SITE and os.path.isdir(USER_SITE):
         addsitedir(USER_SITE, known_paths)
+    if ENABLE_USER_SITE:
+        for dist_libdir in ("lib", "local/lib"):
+            user_site = os.path.join(USER_BASE, dist_libdir,
+                                     "python" + sys.version[:3],
+                                     "dist-packages")
+            if os.path.isdir(user_site):
+                addsitedir(user_site, known_paths)
     return known_paths
 
 

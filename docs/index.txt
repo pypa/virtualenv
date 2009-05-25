@@ -322,6 +322,9 @@ svn trunk
 
 * Create ``Scripts\pythonw.exe`` on Windows.
 
+* Added support for the Debian/Ubuntu
+  ``/usr/lib/pythonX.Y/dist-packages`` directory.
+
 1.3.3
 ~~~~~
 
