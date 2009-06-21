@@ -325,6 +325,9 @@ svn trunk
 * Added support for the Debian/Ubuntu
   ``/usr/lib/pythonX.Y/dist-packages`` directory.
 
+* Virtualenv now copies the actual embedded Python binary on 
+  Mac OS X to fix a hang on Snow Leopard (10.6).
+
 1.3.3
 ~~~~~
 
