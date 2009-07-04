@@ -560,8 +560,24 @@ def virtual_install_main_packages():
 
     sys.path.extend(paths)
 
+def force_global_eggs_after_local_site_packages():
+    """
+    Force easy_installed eggs in the global environment to get placed
+    in sys.path after all packages inside the virtualenv.  This
+    maintains the "least surprise" result that packages in the
+    virtualenv always mask global packages, never the other way
+    around.
+    
+    """
+    egginsert = getattr(sys, '__egginsert', 0)
+    for i, path in enumerate(sys.path):
+        if i > egginsert and path.startswith(sys.prefix):
+            egginsert = i
+    sys.__egginsert = egginsert + 1
+    
 def virtual_addsitepackages(known_paths):
     if not os.path.exists(os.path.join(os.path.dirname(__file__), 'no-global-site-packages.txt')):
+        force_global_eggs_after_local_site_packages()
         return addsitepackages(known_paths, sys_prefix=sys.real_prefix)
     else:
         return known_paths
