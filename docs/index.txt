@@ -328,6 +328,9 @@ svn trunk
 * Virtualenv now copies the actual embedded Python binary on 
   Mac OS X to fix a hang on Snow Leopard (10.6).
 
+* Set ``distutils.sysconfig.get_config_vars()['LIBDIR']`` (based on
+  ``sys.real_prefix``) which is reported to help building on Windows.
+
 1.3.3
 ~~~~~
 
