@@ -76,8 +76,12 @@ sysconfig.get_python_lib = sysconfig_get_python_lib
 old_get_config_vars = sysconfig.get_config_vars
 def sysconfig_get_config_vars(*args):
     real_vars = old_get_config_vars(*args)
-    if sys.platform == 'win32' and 'LIBDIR' not in real_vars:
-        real_vars['LIBDIR'] = os.path.join(sys.real_prefix, "libs")
+    if sys.platform == 'win32':
+        lib_dir = os.path.join(sys.real_prefix, "libs")
+        if isinstance(real_vars, dict) and 'LIBDIR' not in real_vars:
+            real_vars['LIBDIR'] = lib_dir # asked for all
+        elif isinstance(real_vars, list) and 'LIBDIR' in args:
+            real_vars = real_vars + [lib_dir] # asked for list
     return real_vars
 sysconfig_get_config_vars.__doc__ = old_get_config_vars.__doc__
 sysconfig.get_config_vars = sysconfig_get_config_vars
