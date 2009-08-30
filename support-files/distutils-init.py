@@ -73,5 +73,11 @@ def sysconfig_get_python_lib(plat_specific=0, standard_lib=0, prefix=None):
 sysconfig_get_python_lib.__doc__ = old_get_python_lib.__doc__
 sysconfig.get_python_lib = sysconfig_get_python_lib
 
-##FIXME: Should I patch sysconfig.get_config_vars ?
-##       It has a lot of stuff, most of which doesn't seem to be used.
+old_get_config_vars = sysconfig.get_config_vars
+def sysconfig_get_config_vars(*args):
+    real_vars = old_get_config_vars(*args)
+    if sys.platform == 'win32' and 'LIBDIR' not in real_vars:
+        real_vars['LIBDIR'] = os.path.join(sys.real_prefix, "libs")
+    return real_vars
+sysconfig_get_config_vars.__doc__ = old_get_config_vars.__doc__
+sysconfig.get_config_vars = sysconfig_get_config_vars
