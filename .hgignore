@@ -10,3 +10,4 @@ syntax:glob
 virtualenv.egg-info
 build
 dist
+docs/_build
