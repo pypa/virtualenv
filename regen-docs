@@ -12,8 +12,10 @@ if [ "$1" = "publish" ] ; then
 fi
 pushd docs/_build/_static
 for F in basic.css default.css ; do
+  if [ -e ../../_static/$F ] ; then
     rm -f $F
     ln -s ../../_static/$F
+  fi
 done
 popd
     
