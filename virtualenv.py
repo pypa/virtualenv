@@ -824,7 +824,7 @@ def fixup_scripts(home_dir):
         if not lines:
             logger.warn('Script %s is an empty file' % filename)
             continue
-        if lines[0].strip() != shebang:
+        if not lines[0].strip().startswith(shebang):
             if os.path.basename(filename) in OK_ABS_SCRIPTS:
                 logger.debug('Cannot make script %s relative' % filename)
             elif lines[0].strip() == new_shebang:
