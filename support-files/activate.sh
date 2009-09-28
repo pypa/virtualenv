@@ -24,7 +24,7 @@ deactivate () {
     unset VIRTUAL_ENV
     if [ ! "$1" = "nondestructive" ] ; then
     # Self destruct!
-        unset deactivate
+        unset -f deactivate
     fi
 }
 
