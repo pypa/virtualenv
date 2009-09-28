@@ -696,11 +696,21 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             raise
 
         # Some tools depend on pythonX.Y being present
-        pth = py_executable + '%s.%s' % (
-                sys.version_info[0], sys.version_info[1])
-        if os.path.exists(pth):
-            os.unlink(pth)
-        os.symlink('python', pth)
+        py_executable_version = '%s.%s' % (
+            sys.version_info[0], sys.version_info[1])
+        if not py_executable.endswith(py_executable_version):
+            # symlinking pythonX.Y > python
+            pth = py_executable + '%s.%s' % (
+                    sys.version_info[0], sys.version_info[1])
+            if os.path.exists(pth):
+                os.unlink(pth)
+            os.symlink('python', pth)
+        else:
+            # reverse symlinking python -> pythonX.Y (with --python)
+            pth = join(bin_dir, 'python')
+            if os.path.exists(pth):
+                os.unlink(pth)
+            os.symlink(os.path.basename(py_executable), pth)
 
     if sys.platform == 'win32' and ' ' in py_executable:
         # There's a bug with subprocess on Windows when using a first
