@@ -6,7 +6,7 @@ import re
 import os
 
 here = os.path.dirname(__file__)
-script = os.path.join(here, 'virtualenv.py')
+script = os.path.join(here, '..', 'virtualenv.py')
 
 file_regex = re.compile(
     r'##file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+)\s*=\s*"""\n(.*?)"""\.decode\("base64"\)\.decode\("zlib"\)\n',

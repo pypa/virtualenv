@@ -7,7 +7,7 @@ import urllib
 import sys
 
 here = os.path.dirname(__file__)
-support_files = os.path.join(here, 'support-files')
+support_files = os.path.join(here, '..', 'support-files')
 
 files = [
     ('http://peak.telecommunity.com/dist/ez_setup.py', 'ez_setup.py'),
