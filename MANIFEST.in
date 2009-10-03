@@ -1,0 +1,2 @@
+recursive-include docs *.txt
+recursive-include support-files *.egg
