@@ -28,7 +28,7 @@ def rebuild():
         varname = match.group(2)
         data = match.group(3)
         print 'Found reference to file %s' % filename
-        f = open(os.path.join(here, 'support-files', filename), 'rb')
+        f = open(os.path.join(here, '..', 'support-files', filename), 'rb')
         c = f.read()
         f.close()
         new_data = c.encode('zlib').encode('base64')
