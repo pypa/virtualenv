@@ -9,6 +9,9 @@ hg tip
 
 * Include pip 0.6.3
 
+* Fix ``activate.bat`` and ``deactivate.bat`` under Windows when
+  ``PATH`` contained a parenthesis
+
 1.4.4
 ~~~~~
 

@@ -1429,16 +1429,16 @@ kf/Pcf/3UW/HnBT5Axjqy2Y=
 
 ##file activate.bat
 ACTIVATE_BAT = """
-eJx9kMsOgjAQRfdN+g+zoAn8goZEDESJPBpEViSzkFbZ0IX8f+RRaVW0u5mee3PanbjeFSgpKXmI
-Hqq4KC9BglFW+YjWhEgJJa2ETvXQCNl2ogFe5CkvwaUEhjPm543vcOdAiacjLxzzJFw6f2bZCsZ0
-2YitXPtswawi1zwgC9II0QPD/RELyuOb1jB/Sg0rNhM31Ss4n2I+7ibLb8epQGco2Rja1Fs/zeoa
-cR9nWnprJaMspOQJdBR1/g==
+eJx9kE0OgjAQhfdNeodZ0ASuICERA1EilAaRlckspFU2dCH3jxSQNgad1fx87+W1e3l/atBKUfKS
+AzRZVV/jHFPeRIjOhEgJJZ2CXg/QStX1sgVRlYWowacExjL6eRN5wjtSEiySD45lnqyeP7VsA2OL
+mcE2zhFbMcfItw/gcZEiBmC5P8Hi+jTnGZvvNOOKhfDQg4bLORNm3s41aSfc3HcWts7O77Ib4iHj
+S87QEaY8oeQNhWR0fg==
 """.decode("base64").decode("zlib")
 
 ##file deactivate.bat
 DEACTIVATE_BAT = """
 eJxzSE3OyFfIT0vj4spMU0hJTcvMS01RiPf3cYkP8wwKCXX0iQ8I8vcNCFHQ4FIAguLUEgWIgK0q
-FlWqXJpcICVYpGzx2OAY4oFsPpCLbjpQCLvZILVcXFaufi5cACHzOrI=
+FlWqXJpcICVYpGzx2OAY4gExGchANxcopMqFxVCQUi4uK1c/Fy4AyB051w==
 """.decode("base64").decode("zlib")
 
 ##file distutils-init.py
