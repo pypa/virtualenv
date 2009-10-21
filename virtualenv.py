@@ -244,8 +244,8 @@ def make_exe(fn):
         logger.info('Changed mode of %s to %s', fn, oct(newmode))
 
 def install_setuptools(py_executable, unzip=False):
-    setup_fn = 'setuptools-0.6c9-py%s.egg' % sys.version[:3]
-    search_dirs = ['.', os.path.dirname(__file__), join(os.path.dirname(__file__), 'support-files')]
+    setup_fn = 'setuptools-0.6c11-py%s.egg' % sys.version[:3]
+    search_dirs = ['.', os.path.dirname(__file__), join(os.path.dirname(__file__), 'virtualenv_support')]
     if os.path.splitext(os.path.dirname(__file__))[0] != 'virtualenv':
         # Probably some boot script; just in case virtualenv is installed...
         try:
@@ -253,7 +253,7 @@ def install_setuptools(py_executable, unzip=False):
         except ImportError:
             pass
         else:
-            search_dirs.append(os.path.join(os.path.dirname(virtualenv.__file__), 'support-files'))
+            search_dirs.append(os.path.join(os.path.dirname(virtualenv.__file__), 'virtualenv_support'))
     for dir in search_dirs:
         if os.path.exists(join(dir, setup_fn)):
             setup_fn = join(dir, setup_fn)

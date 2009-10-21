@@ -1,5 +1,5 @@
 """
-Refresh any files in support-files/ that come from elsewhere
+Refresh any files in ../virtualenv_support/ that come from elsewhere
 """
 
 import os
@@ -7,7 +7,7 @@ import urllib
 import sys
 
 here = os.path.dirname(__file__)
-support_files = os.path.join(here, '..', 'support-files')
+support_files = os.path.join(here, '..', 'virtualenv_support')
 
 files = [
     ('http://peak.telecommunity.com/dist/ez_setup.py', 'ez_setup.py'),

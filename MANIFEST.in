@@ -1,2 +1,2 @@
 recursive-include docs *.txt
-recursive-include support-files *.egg
+recursive-include virtualenv_support *.egg

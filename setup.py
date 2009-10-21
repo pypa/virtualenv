@@ -26,10 +26,8 @@ setup(name='virtualenv',
       url='http://pypi.python.org/pypi/virtualenv',
       license='MIT',
       py_modules=['virtualenv'],
-      ## Hacks to get the package data installed:
-      packages=[''],
-      package_dir={'': '.'},
-      package_data={'': ['support-files/*-py%s.egg' % sys.version[:3]]},
+      packages=['virtualenv_support'],
+      package_data={'virtualenv_support': ['*-py%s.egg' % sys.version[:3]]},
       zip_safe=False,
       entry_points="""
       [console_scripts]
