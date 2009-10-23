@@ -71,6 +71,16 @@ It also installs `Setuptools
 you use ``ENV/bin/easy_install`` the packages will be installed into
 the environment.
 
+If you use the ``--distribute`` option, it wil installs `distribute
+<http://pypi.python.org/pypi/distribute>`_ for you, instead of setuptools,
+and if you use `ENV/bin/easy_install`` the packages will be installed into the
+environment.
+
+To use Distribute just call virtualenv like this::
+
+    $ python virtualenv.py --distribute ENV
+
+
 Creating Your Own Bootstrap Scripts
 -----------------------------------
 
@@ -218,8 +228,8 @@ command::
 
     $ virtualenv --relocatable ENV
 
-This will make some of the files created by setuptools use relative
-paths, and will change all the scripts to use ``activate_this.py``
+This will make some of the files created by setuptools or distribute
+use relative paths, and will change all the scripts to use ``activate_this.py``
 instead of using the location of the Python interpreter to select the
 environment.
 
@@ -306,6 +316,11 @@ Other Documentation and Links
 
 Changes & News
 --------------
+
+trunk
+~~~~~
+
+* Added the --distribute option
 
 1.3.4
 ~~~~~

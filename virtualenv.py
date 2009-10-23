@@ -243,8 +243,8 @@ def make_exe(fn):
         os.chmod(fn, newmode)
         logger.info('Changed mode of %s to %s', fn, oct(newmode))
 
-def install_setuptools(py_executable, unzip=False):
-    setup_fn = 'setuptools-0.6c11-py%s.egg' % sys.version[:3]
+def _install_distribute_or_setuptools(setup_fn, project_name, py_executable,
+                                      unzip=False):
     search_dirs = ['.', os.path.dirname(__file__), join(os.path.dirname(__file__), 'virtualenv_support')]
     if os.path.splitext(os.path.dirname(__file__))[0] != 'virtualenv':
         # Probably some boot script; just in case virtualenv is installed...
@@ -274,23 +274,29 @@ def install_setuptools(py_executable, unzip=False):
     if logger.stdout_level_matches(logger.DEBUG):
         cmd.append('-v')
     if os.path.exists(setup_fn):
-        logger.info('Using existing Setuptools egg: %s', setup_fn)
+        logger.info('Using existing %s egg: %s' % (project_name, setup_fn))
         cmd.append(setup_fn)
         if os.environ.get('PYTHONPATH'):
             env['PYTHONPATH'] = setup_fn + os.path.pathsep + os.environ['PYTHONPATH']
         else:
             env['PYTHONPATH'] = setup_fn
     else:
-        logger.info('No Setuptools egg found; downloading')
-        cmd.extend(['--always-copy', '-U', 'setuptools'])
-    logger.start_progress('Installing setuptools...')
+        logger.info('No %s egg found; downloading' % project_name)
+        cmd.extend(['--always-copy', '-U', project_name])
+    logger.start_progress('Installing %s...' % project_name)
     logger.indent += 2
     cwd = None
+
+    def _filter_ez_setup(line):
+        def __filter_ez_setup(line):
+            return filter_ez_setup(line, project_name)
+        return __filter_ez_setup
+
     if not os.access(os.getcwd(), os.W_OK):
         cwd = '/tmp'
     try:
         call_subprocess(cmd, show_stdout=False,
-                        filter_stdout=filter_ez_setup,
+                        filter_stdout=_filter_ez_setup,
                         extra_env=env,
                         cwd=cwd)
     finally:
@@ -299,11 +305,21 @@ def install_setuptools(py_executable, unzip=False):
         if is_jython and os._name == 'nt':
             os.remove(ez_setup)
 
-def filter_ez_setup(line):
+def install_setuptools(py_executable, unzip=False):
+    setup_fn = 'setuptools-0.6c11-py%s.egg' % sys.version[:3]
+    _install_distribute_or_setuptools(setup_fn, 'setuptools', py_executable,
+                                      unzip)
+
+def install_distribute(py_executable, unzip=False):
+    setup_fn = 'distribute-0.6-py%s.egg' % sys.version[:3]
+    _install_distribute_or_setuptools(setup_fn, 'distribute', py_executable,
+                                      unzip)
+
+def filter_ez_setup(line, project_name='setuptools'):
     if not line.strip():
         return Logger.DEBUG
-    for prefix in ['Reading ', 'Best match', 'Processing setuptools',
-                   'Copying setuptools', 'Adding setuptools',
+    for prefix in ['Reading ', 'Best match', 'Processing %s' % project_name,
+                   'Copying setuptools', 'Adding %s' % project_name,
                    'Installing ', 'Installed ']:
         if line.startswith(prefix):
             return Logger.DEBUG
@@ -362,6 +378,12 @@ def main():
         help='Make an EXISTING virtualenv environment relocatable.  '
         'This fixes up scripts and makes all .pth files relative')
 
+    parser.add_option(
+        '--distribute',
+        dest='use_distribute',
+        action='store_true',
+        help="Use Distribute instead of Setuptools")
+
     if 'extend_parser' in globals():
         extend_parser(parser)
 
@@ -417,7 +439,8 @@ def main():
         return
 
     create_environment(home_dir, site_packages=not options.no_site_packages, clear=options.clear,
-                       unzip_setuptools=options.unzip_setuptools)
+                       unzip_setuptools=options.unzip_setuptools,
+                       use_distribute=options.use_distribute)
     if 'after_install' in globals():
         after_install(options, home_dir)
 
@@ -486,7 +509,7 @@ def call_subprocess(cmd, show_stdout=True,
 
 
 def create_environment(home_dir, site_packages=True, clear=False,
-                       unzip_setuptools=False):
+                       unzip_setuptools=False, use_distribute=False):
     """
     Creates a new environment in ``home_dir``.
 
@@ -504,7 +527,10 @@ def create_environment(home_dir, site_packages=True, clear=False,
 
     install_distutils(lib_dir, home_dir)
 
-    install_setuptools(py_executable, unzip=unzip_setuptools)
+    if use_distribute:
+        install_distribute(py_executable, unzip=unzip_setuptools):
+    else:
+        install_setuptools(py_executable, unzip=unzip_setuptools)
 
     install_activate(home_dir, bin_dir)
 
