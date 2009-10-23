@@ -243,13 +243,21 @@ def make_exe(fn):
         os.chmod(fn, newmode)
         logger.info('Changed mode of %s to %s', fn, oct(newmode))
 
+def _find_file(filename, dirs):
+    for dir in dirs:
+        if os.path.exists(join(dir, filename)):
+            return join(dir, filename)
+    return filename
+
 def _install_req(py_executable, unzip=False, distribute=False):
     if not distribute:
         setup_fn = 'setuptools-0.6c11-py%s.egg' % sys.version[:3]
         project_name = 'setuptools'
         bootstrap_script = EZ_SETUP_PY
+        source = None
     else:
-        setup_fn = 'distribute-0.6.6.tar.gz'
+        setup_fn = None
+        source = 'distribute-0.6.6.tar.gz'
         project_name = 'distribute'
         bootstrap_script = DISTRIBUTE_SETUP_PY
 
@@ -262,11 +270,13 @@ def _install_req(py_executable, unzip=False, distribute=False):
             pass
         else:
             search_dirs.append(os.path.join(os.path.dirname(virtualenv.__file__), 'virtualenv_support'))
+
     if setup_fn is not None:
-        for dir in search_dirs:
-            if os.path.exists(join(dir, setup_fn)):
-                setup_fn = join(dir, setup_fn)
-                break
+        setup_fn = _find_file(setup_fn, search_dirs)
+
+    if source is not None:
+        source = _find_file(source, search_dirs)
+
     if is_jython and os._name == 'nt':
         # Jython's .bat sys.executable can't handle a command line
         # argument with newlines
@@ -282,6 +292,8 @@ def _install_req(py_executable, unzip=False, distribute=False):
     env = {}
     if logger.stdout_level_matches(logger.DEBUG):
         cmd.append('-v')
+
+    old_chdir = os.getcwd()
     if setup_fn is not None and os.path.exists(setup_fn):
         logger.info('Using existing %s egg: %s' % (project_name, setup_fn))
         cmd.append(setup_fn)
@@ -290,6 +302,9 @@ def _install_req(py_executable, unzip=False, distribute=False):
         else:
             env['PYTHONPATH'] = setup_fn
     else:
+        # the source is found, let's chdir
+        if source is not None and os.path.exists(source):
+            os.chdir(os.path.dirname(source))
         logger.info('No %s egg found; downloading' % project_name)
         cmd.extend(['--always-copy', '-U', project_name])
     logger.start_progress('Installing %s...' % project_name)
@@ -297,12 +312,15 @@ def _install_req(py_executable, unzip=False, distribute=False):
     cwd = None
 
     def _filter_ez_setup(line):
-        def __filter_ez_setup(line):
-            return filter_ez_setup(line, project_name)
-        return __filter_ez_setup
+        return filter_ez_setup(line, project_name)
 
     if not os.access(os.getcwd(), os.W_OK):
         cwd = '/tmp'
+        if source is not None and os.path.exists(source):
+            # the current working dir is hostile, let's copy the
+            # tarball to /tmp
+            target = os.path.join(cwd, os.path.split(source)[-1])
+            shutil.copy(source, target)
     try:
         call_subprocess(cmd, show_stdout=False,
                         filter_stdout=_filter_ez_setup,
@@ -311,6 +329,8 @@ def _install_req(py_executable, unzip=False, distribute=False):
     finally:
         logger.indent -= 2
         logger.end_progress()
+        if os.getcwd() != old_chdir:
+            os.chdir(old_chdir)
         if is_jython and os._name == 'nt':
             os.remove(ez_setup)
 
@@ -323,8 +343,17 @@ def install_distribute(py_executable, unzip=False):
 def filter_ez_setup(line, project_name='setuptools'):
     if not line.strip():
         return Logger.DEBUG
-    for prefix in ['Reading ', 'Best match', 'Processing %s' % project_name,
-                   'Copying setuptools', 'Adding %s' % project_name,
+    if project_name == 'distribute':
+        for prefix in ('Extracting', 'Now working', 'Installing', 'Before',
+                       'Scanning', 'Setuptools', 'Egg', 'Already',
+                       'running', 'writing', 'reading', 'installing',
+                       'creating', 'copying', 'byte-compiling', 'removing',
+                       'Processing'):
+            if line.startswith(prefix):
+                return Logger.DEBUG
+        return Logger.DEBUG
+    for prefix in ['Reading ', 'Best match', 'Processing setuptools',
+                   'Copying setuptools', 'Adding setuptools',
                    'Installing ', 'Installed ']:
         if line.startswith(prefix):
             return Logger.DEBUG
