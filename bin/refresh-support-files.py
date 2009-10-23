@@ -15,10 +15,6 @@ files = [
     ('http://pypi.python.org/packages/2.5/s/setuptools/setuptools-0.6c11-py2.5.egg', 'setuptools-0.6c11-py2.5.egg'),
     ('http://pypi.python.org/packages/2.4/s/setuptools/setuptools-0.6c11-py2.4.egg', 'setuptools-0.6c11-py2.4.egg'),
     ('http://python-distribute.org/distribute_setup.py', 'distribute_setup.py'),
-    ('http://pypi.python.org/packages/2.3/d/distribute/distribute-0.6-py2.3.egg', 'distribute-0.6-py2.3.egg'),
-    ('http://pypi.python.org/packages/2.4/d/distribute/distribute-0.6-py2.4.egg', 'distribute-0.6-py2.4.egg'),
-    ('http://pypi.python.org/packages/2.5/d/distribute/distribute-0.6-py2.5.egg', 'distribute-0.6-py2.5.egg'),
-    ('http://pypi.python.org/packages/2.6/d/distribute/distribute-0.6-py2.6.egg', 'distribute-0.6-py2.6.egg'),
     ]
 
 def main():

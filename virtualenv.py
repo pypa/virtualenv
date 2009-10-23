@@ -249,7 +249,7 @@ def _install_req(py_executable, unzip=False, distribute=False):
         project_name = 'setuptools'
         bootstrap_script = EZ_SETUP_PY
     else:
-        setup_fn = 'distribute-0.6-py%s.egg' % sys.version[:3]
+        setup_fn = None
         project_name = 'distribute'
         bootstrap_script = DISTRIBUTE_SETUP_PY
 
@@ -262,10 +262,11 @@ def _install_req(py_executable, unzip=False, distribute=False):
             pass
         else:
             search_dirs.append(os.path.join(os.path.dirname(virtualenv.__file__), 'virtualenv_support'))
-    for dir in search_dirs:
-        if os.path.exists(join(dir, setup_fn)):
-            setup_fn = join(dir, setup_fn)
-            break
+    if setup_fn is not None:
+        for dir in search_dirs:
+            if os.path.exists(join(dir, setup_fn)):
+                setup_fn = join(dir, setup_fn)
+                break
     if is_jython and os._name == 'nt':
         # Jython's .bat sys.executable can't handle a command line
         # argument with newlines
@@ -281,7 +282,7 @@ def _install_req(py_executable, unzip=False, distribute=False):
     env = {}
     if logger.stdout_level_matches(logger.DEBUG):
         cmd.append('-v')
-    if os.path.exists(setup_fn):
+    if setup_fn is not None and os.path.exists(setup_fn):
         logger.info('Using existing %s egg: %s' % (project_name, setup_fn))
         cmd.append(setup_fn)
         if os.environ.get('PYTHONPATH'):
