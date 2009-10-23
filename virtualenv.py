@@ -249,7 +249,7 @@ def _install_req(py_executable, unzip=False, distribute=False):
         project_name = 'setuptools'
         bootstrap_script = EZ_SETUP_PY
     else:
-        setup_fn = None
+        setup_fn = 'distribute-0.6.6.tar.gz'
         project_name = 'distribute'
         bootstrap_script = DISTRIBUTE_SETUP_PY
 
