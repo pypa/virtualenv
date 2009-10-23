@@ -243,8 +243,16 @@ def make_exe(fn):
         os.chmod(fn, newmode)
         logger.info('Changed mode of %s to %s', fn, oct(newmode))
 
-def _install_distribute_or_setuptools(setup_fn, project_name, py_executable,
-                                      unzip=False):
+def _install_req(py_executable, unzip=False, distribute=False):
+    if not distribute:
+        setup_fn = 'setuptools-0.6c11-py%s.egg' % sys.version[:3]
+        project_name = 'setuptools'
+        bootstrap_script = EZ_SETUP_PY
+    else:
+        setup_fn = 'distribute-0.6-py%s.egg' % sys.version[:3]
+        project_name = 'distribute'
+        bootstrap_script = DISTRIBUTE_SETUP_PY
+
     search_dirs = ['.', os.path.dirname(__file__), join(os.path.dirname(__file__), 'virtualenv_support')]
     if os.path.splitext(os.path.dirname(__file__))[0] != 'virtualenv':
         # Probably some boot script; just in case virtualenv is installed...
@@ -263,11 +271,11 @@ def _install_distribute_or_setuptools(setup_fn, project_name, py_executable,
         # argument with newlines
         import tempfile
         fd, ez_setup = tempfile.mkstemp('.py')
-        os.write(fd, EZ_SETUP_PY)
+        os.write(fd, bootstrap_script)
         os.close(fd)
         cmd = [py_executable, ez_setup]
     else:
-        cmd = [py_executable, '-c', EZ_SETUP_PY]
+        cmd = [py_executable, '-c', bootstrap_script]
     if unzip:
         cmd.append('--always-unzip')
     env = {}
@@ -306,14 +314,10 @@ def _install_distribute_or_setuptools(setup_fn, project_name, py_executable,
             os.remove(ez_setup)
 
 def install_setuptools(py_executable, unzip=False):
-    setup_fn = 'setuptools-0.6c11-py%s.egg' % sys.version[:3]
-    _install_distribute_or_setuptools(setup_fn, 'setuptools', py_executable,
-                                      unzip)
+    _install_req(py_executable, unzip)
 
 def install_distribute(py_executable, unzip=False):
-    setup_fn = 'distribute-0.6-py%s.egg' % sys.version[:3]
-    _install_distribute_or_setuptools(setup_fn, 'distribute', py_executable,
-                                      unzip)
+    _install_req(py_executable, unzip, distribute=True)
 
 def filter_ez_setup(line, project_name='setuptools'):
     if not line.strip():
@@ -369,7 +373,7 @@ def main():
         '--unzip-setuptools',
         dest='unzip_setuptools',
         action='store_true',
-        help="Unzip Setuptools when installing it")
+        help="Unzip Setuptools or Distribute when installing it")
 
     parser.add_option(
         '--relocatable',
@@ -1232,6 +1236,10 @@ G1mpIRQKfDG/LtIWEWtV8f8PGy3Y1K330l49YAzTjnyln9YPMbri0ebhZfMXz01OyKY96lTvOWAG
 M1o/breL3U4V7G636D4FSZVEqKlr+K2j6bD9+4P9gHdev4az6lLp0VevdrrlzubhJV7UGHGRqRbV
 178BYnMUkw==
 """.decode("base64").decode("zlib")
+
+##file distribute_setup.py
+DISTRIBUTE_SETUP_PY = """
+"""
 
 ##file activate.sh
 ACTIVATE_SH = """
