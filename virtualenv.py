@@ -22,7 +22,7 @@ try:
     set
 except NameError:
     from sets import Set as set
-    
+
 join = os.path.join
 py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
 is_jython = sys.platform.startswith('java')
@@ -499,7 +499,7 @@ def create_environment(home_dir, site_packages=True, clear=False,
     home_dir, lib_dir, inc_dir, bin_dir = path_locations(home_dir)
 
     py_executable = install_python(
-        home_dir, lib_dir, inc_dir, bin_dir, 
+        home_dir, lib_dir, inc_dir, bin_dir,
         site_packages=site_packages, clear=clear)
 
     install_distutils(lib_dir, home_dir)
@@ -545,7 +545,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     if sys.executable.startswith(bin_dir):
         print 'Please use the *system* python to run this script'
         return
-        
+
     if clear:
         rmtree(lib_dir)
         ## FIXME: why not delete it?
@@ -604,7 +604,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             exec_dir = join(sys.exec_prefix, 'lib', py_version)
         for fn in os.listdir(exec_dir):
             copyfile(join(exec_dir, fn), join(lib_dir, fn))
-    
+
     if is_jython:
         # Jython has either jython-dev.jar and javalib/ dir, or just
         # jython.jar
@@ -644,7 +644,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             if os.path.exists(pythonw):
                 logger.info('Also created pythonw.exe')
                 shutil.copyfile(pythonw, os.path.join(os.path.dirname(py_executable), 'pythonw.exe'))
-                
+
     if os.path.splitext(os.path.basename(py_executable))[0] != expected_exe:
         secondary_exe = os.path.join(os.path.dirname(py_executable),
                                      expected_exe)
@@ -659,10 +659,10 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             logger.notify('Also creating executable in %s' % secondary_exe)
             shutil.copyfile(sys.executable, secondary_exe)
             make_exe(secondary_exe)
-    
+
     if 'Python.framework' in prefix:
         logger.debug('MacOSX Python framework detected')
-        
+
         # Make sure we use the the embedded interpreter inside
         # the framework, even if sys.executable points to
         # the stub executable in ${sys.prefix}/bin
@@ -673,7 +673,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
                     prefix, 'Resources/Python.app/Contents/MacOS/Python'),
                 py_executable)
 
-        # Copy the framework's dylib into the virtual 
+        # Copy the framework's dylib into the virtual
         # environment
         virtual_lib = os.path.join(home_dir, '.Python')
 
@@ -774,7 +774,7 @@ def fix_lib64(lib_dir):
     instead of lib/pythonX.Y.  If this is such a platform we'll just create a
     symlink so lib64 points to lib
     """
-    if [p for p in distutils.sysconfig.get_config_vars().values() 
+    if [p for p in distutils.sysconfig.get_config_vars().values()
         if isinstance(p, basestring) and 'lib64' in p]:
         logger.debug('This system uses lib64; symlinking lib64 to lib')
         assert os.path.basename(lib_dir) == 'python%s' % sys.version[:3], (
@@ -804,7 +804,7 @@ def resolve_interpreter(exe):
 
 def make_environment_relocatable(home_dir):
     """
-    Makes the already-existing environment use relative paths, and takes out 
+    Makes the already-existing environment use relative paths, and takes out
     the #!-based environment selection in scripts.
     """
     activate_this = os.path.join(home_dir, 'bin', 'activate_this.py')
@@ -943,7 +943,7 @@ def make_relative_path(source, dest, dest_is_directory=True):
         # Special case for the current directory (otherwise it'd be '')
         return './'
     return os.path.sep.join(full_parts)
-                
+
 
 
 ############################################################
