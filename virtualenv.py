@@ -532,7 +532,7 @@ def create_environment(home_dir, site_packages=True, clear=False,
     install_distutils(lib_dir, home_dir)
 
     if use_distribute:
-        install_distribute(py_executable, unzip=unzip_setuptools):
+        install_distribute(py_executable, unzip=unzip_setuptools)
     else:
         install_setuptools(py_executable, unzip=unzip_setuptools)
 
