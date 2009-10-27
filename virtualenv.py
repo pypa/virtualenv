@@ -305,11 +305,14 @@ def _install_req(py_executable, unzip=False, distribute=False):
         # the source is found, let's chdir
         if source is not None and os.path.exists(source):
             os.chdir(os.path.dirname(source))
-        logger.info('No %s egg found; downloading' % project_name)
+        else:
+            logger.info('No %s egg found; downloading' % project_name)
         cmd.extend(['--always-copy', '-U', project_name])
     logger.start_progress('Installing %s...' % project_name)
     logger.indent += 2
     cwd = None
+    if project_name == 'distribute':
+        env['DONT_PATCH_SETUPTOOLS'] = 'true'
 
     def _filter_ez_setup(line):
         return filter_ez_setup(line, project_name)
