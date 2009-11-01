@@ -27,7 +27,7 @@ setup(name='virtualenv',
       license='MIT',
       py_modules=['virtualenv'],
       packages=['virtualenv_support'],
-      package_data={'virtualenv_support': ['*-py%s.egg' % sys.version[:3]]},
+      package_data={'virtualenv_support': ['*-py%s.egg' % sys.version[:3], '*.tar.gz']},
       zip_safe=False,
       entry_points="""
       [console_scripts]
