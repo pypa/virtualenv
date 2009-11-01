@@ -1,3 +1,5 @@
 recursive-include docs *.txt
 recursive-include virtualenv_support *.egg *.tar.gz
+recursive-exclude virtualenv_support *.py
+include virtualenv_support/__init__.py
 include *.py
