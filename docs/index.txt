@@ -317,10 +317,14 @@ Other Documentation and Links
 Changes & News
 --------------
 
-trunk
-~~~~~
+hg tip
+~~~~~~
+
+* Updated setuptools to 0.6c11
 
 * Added the --distribute option
+
+* Fixed packaging problem of support-files
 
 1.3.4
 ~~~~~
