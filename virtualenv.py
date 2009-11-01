@@ -558,9 +558,9 @@ def create_environment(home_dir, site_packages=True, clear=False,
     """
     home_dir, lib_dir, inc_dir, bin_dir = path_locations(home_dir)
 
-    py_executable = install_python(
+    py_executable = os.path.abspath(install_python(
         home_dir, lib_dir, inc_dir, bin_dir,
-        site_packages=site_packages, clear=clear)
+        site_packages=site_packages, clear=clear))
 
     install_distutils(lib_dir, home_dir)
 
