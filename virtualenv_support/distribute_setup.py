@@ -46,7 +46,7 @@ except ImportError:
             args = [quote(arg) for arg in args]
         return os.spawnl(os.P_WAIT, sys.executable, *args) == 0
 
-DEFAULT_VERSION = "0.6.6"
+DEFAULT_VERSION = "0.6.7"
 DEFAULT_URL = "http://pypi.python.org/packages/source/d/distribute/"
 SETUPTOOLS_PKG_INFO = """\
 Metadata-Version: 1.0
@@ -84,7 +84,7 @@ def _install(tarball):
         os.chdir(old_wd)
 
 
-def _build_egg(tarball, to_dir):
+def _build_egg(egg, tarball, to_dir):
     # extracting the tarball
     tmpdir = tempfile.mkdtemp()
     log.warn('Extracting in %s', tmpdir)
@@ -104,27 +104,28 @@ def _build_egg(tarball, to_dir):
         log.warn('Building a Distribute egg in %s', to_dir)
         _python_cmd('setup.py', '-q', 'bdist_egg', '--dist-dir', to_dir)
 
-        # returning the result
-        for file in os.listdir(to_dir):
-            if fnmatch.fnmatch(file, 'distribute-%s*.egg' % DEFAULT_VERSION):
-                return os.path.join(to_dir, file)
-
-        raise IOError('Could not build the egg.')
     finally:
         os.chdir(old_wd)
+    # returning the result
+    log.warn(egg)
+    if not os.path.exists(egg):
+        raise IOError('Could not build the egg.')
 
 
 def _do_download(version, download_base, to_dir, download_delay):
-    tarball = download_setuptools(version, download_base,
-                                  to_dir, download_delay)
-    egg = _build_egg(tarball, to_dir)
+    egg = os.path.join(to_dir, 'distribute-%s-py%d.%d.egg'
+                       % (version, sys.version_info[0], sys.version_info[1]))
+    if not os.path.exists(egg):
+        tarball = download_setuptools(version, download_base,
+                                      to_dir, download_delay)
+        _build_egg(egg, tarball, to_dir)
     sys.path.insert(0, egg)
     import setuptools
     setuptools.bootstrap_install_from = egg
 
 
 def use_setuptools(version=DEFAULT_VERSION, download_base=DEFAULT_URL,
-                   to_dir=os.curdir, download_delay=15, no_fake=False):
+                   to_dir=os.curdir, download_delay=15, no_fake=True):
     # making sure we use the absolute path
     to_dir = os.path.abspath(to_dir)
     was_imported = 'pkg_resources' in sys.modules or \
@@ -134,7 +135,7 @@ def use_setuptools(version=DEFAULT_VERSION, download_base=DEFAULT_URL,
             import pkg_resources
             if not hasattr(pkg_resources, '_distribute'):
                 if not no_fake:
-                    fake_setuptools()
+                    _fake_setuptools()
                 raise ImportError
         except ImportError:
             return _do_download(version, download_base, to_dir, download_delay)
@@ -159,7 +160,8 @@ def use_setuptools(version=DEFAULT_VERSION, download_base=DEFAULT_URL,
             return _do_download(version, download_base, to_dir,
                                 download_delay)
     finally:
-        _create_fake_setuptools_pkg_info(to_dir)
+        if not no_fake:
+            _create_fake_setuptools_pkg_info(to_dir)
 
 def download_setuptools(version=DEFAULT_VERSION, download_base=DEFAULT_URL,
                         to_dir=os.curdir, delay=15):
@@ -319,7 +321,7 @@ def _patch_egg_dir(path):
 
 def _before_install():
     log.warn('Before install bootstrap.')
-    fake_setuptools()
+    _fake_setuptools()
 
 
 def _under_prefix(location):
@@ -340,7 +342,7 @@ def _under_prefix(location):
     return True
 
 
-def fake_setuptools():
+def _fake_setuptools():
     log.warn('Scanning installed packages')
     try:
         import pkg_resources
