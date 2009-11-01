@@ -260,6 +260,16 @@ def _install_req(py_executable, unzip=False, distribute=False):
         source = 'distribute-0.6.8.tar.gz'
         project_name = 'distribute'
         bootstrap_script = DISTRIBUTE_SETUP_PY
+        try:
+            # check if the global Python has distribute installed or plain
+            # setuptools
+            import pkg_resources
+            if not hasattr(pkg_resources, '_distribute'):
+                raise ImportError
+        except ImportError:
+            logger.notify("A globally installed setuptools was found. "
+                "Use the --no-site-packages option to use distribute in "
+                "the virtualenv.")
 
     search_dirs = ['.', os.path.dirname(__file__), join(os.path.dirname(__file__), 'virtualenv_support')]
     if os.path.splitext(os.path.dirname(__file__))[0] != 'virtualenv':
