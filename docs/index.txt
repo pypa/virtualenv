@@ -317,8 +317,8 @@ Other Documentation and Links
 Changes & News
 --------------
 
-hg tip
-~~~~~~
+1.4
+~~~
 
 * Updated setuptools to 0.6c11
 
