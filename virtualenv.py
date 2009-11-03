@@ -265,11 +265,12 @@ def _install_req(py_executable, unzip=False, distribute=False):
             # setuptools
             import pkg_resources
             if not hasattr(pkg_resources, '_distribute'):
-                raise ImportError
+                location = os.path.dirname(pkg_resources.__file__)
+                logger.notify("A globally installed setuptools was found (in %s)" % location)
+                logger.notify("Use the --no-site-packages option to use distribute in "
+                              "the virtualenv.")
         except ImportError:
-            logger.notify("A globally installed setuptools was found. "
-                "Use the --no-site-packages option to use distribute in "
-                "the virtualenv.")
+            pass
 
     search_dirs = ['.', os.path.dirname(__file__), join(os.path.dirname(__file__), 'virtualenv_support')]
     if os.path.splitext(os.path.dirname(__file__))[0] != 'virtualenv':
