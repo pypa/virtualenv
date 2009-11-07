@@ -5,6 +5,7 @@
 import sys
 import os
 import optparse
+import re
 import shutil
 import logging
 import distutils.sysconfig
@@ -272,15 +273,7 @@ def _install_req(py_executable, unzip=False, distribute=False):
         except ImportError:
             pass
 
-    search_dirs = ['.', os.path.dirname(__file__), join(os.path.dirname(__file__), 'virtualenv_support')]
-    if os.path.splitext(os.path.dirname(__file__))[0] != 'virtualenv':
-        # Probably some boot script; just in case virtualenv is installed...
-        try:
-            import virtualenv
-        except ImportError:
-            pass
-        else:
-            search_dirs.append(os.path.join(os.path.dirname(virtualenv.__file__), 'virtualenv_support'))
+    search_dirs = file_search_dirs()
 
     if setup_fn is not None:
         setup_fn = _find_file(setup_fn, search_dirs)
@@ -348,11 +341,50 @@ def _install_req(py_executable, unzip=False, distribute=False):
         if is_jython and os._name == 'nt':
             os.remove(ez_setup)
 
+def file_search_dirs():
+    here = os.path.dirname(os.path.abspath(__file__))
+    dirs = ['.', here,
+            join(here, 'virtualenv_support')]
+    if os.path.splitext(os.path.dirname(__file__))[0] != 'virtualenv':
+        # Probably some boot script; just in case virtualenv is installed...
+        try:
+            import virtualenv
+        except ImportError:
+            pass
+        else:
+            dirs.append(os.path.join(os.path.dirname(virtualenv.__file__), 'virtualenv_support'))
+    return dirs
+
 def install_setuptools(py_executable, unzip=False):
     _install_req(py_executable, unzip)
 
 def install_distribute(py_executable, unzip=False):
     _install_req(py_executable, unzip, distribute=True)
+
+_pip_re = re.compile(r'^pip-.*(zip|tar.gz|tar.bz2|tgz|tbz)$', re.I)
+def install_pip(py_executable):
+    filenames = []
+    for dir in file_search_dirs():
+        filenames.extend([join(dir, fn) for fn in os.listdir(dir)
+                          if _pip_re.search(fn)])
+    filenames.sort(key=lambda x: os.path.basename(x).lower())
+    if not filenames:
+        filename = 'pip'
+    else:
+        filename = filenames[-1]
+    cmd = [py_executable, join(os.path.dirname(py_executable), 'easy_install'), filename]
+    if filename == 'pip':
+        logger.info('Installing pip from network...')
+    else:
+        logger.info('Installing %s' % os.path.basename(filename))
+    logger.indent += 2
+    def _filter_setup(line):
+        return filter_ez_setup(line, 'pip')
+    try:
+        call_subprocess(cmd, show_stdout=False,
+                        filter_stdout=_filter_setup)
+    finally:
+        logger.indent -= 2
 
 def filter_ez_setup(line, project_name='setuptools'):
     if not line.strip():
@@ -579,6 +611,8 @@ def create_environment(home_dir, site_packages=True, clear=False,
         install_distribute(py_executable, unzip=unzip_setuptools)
     else:
         install_setuptools(py_executable, unzip=unzip_setuptools)
+
+    install_pip(py_executable)
 
     install_activate(home_dir, bin_dir)
 
