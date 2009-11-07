@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Helper script to rebuild virtualenv.py from virtualenv_support
 """
