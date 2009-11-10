@@ -322,6 +322,8 @@ hg tip
 
 * Fix pip installation on Windows
 
+* Fix use of stand-alone ``virtualenv.py`` (and boot scripts)
+
 1.4.1
 ~~~~~
 
