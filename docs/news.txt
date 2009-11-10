@@ -8,6 +8,9 @@ hg tip
 
 * Fix use of stand-alone ``virtualenv.py`` (and boot scripts)
 
+* Exclude ~/.local (user site-packages) from environments when using
+  ``--no-site-packages``
+
 1.4.1
 ~~~~~
 
