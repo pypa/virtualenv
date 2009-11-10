@@ -576,11 +576,8 @@ def force_global_eggs_after_local_site_packages():
     sys.__egginsert = egginsert + 1
     
 def virtual_addsitepackages(known_paths):
-    if not os.path.exists(os.path.join(os.path.dirname(__file__), 'no-global-site-packages.txt')):
-        force_global_eggs_after_local_site_packages()
-        return addsitepackages(known_paths, sys_prefix=sys.real_prefix)
-    else:
-        return known_paths
+    force_global_eggs_after_local_site_packages()
+    return addsitepackages(known_paths, sys_prefix=sys.real_prefix)
 
 def fixclasspath():
     """Adjust the special classpath sys.path entries for Jython. These
@@ -614,11 +611,15 @@ def main():
         addbuilddir()
     if _is_jython:
         fixclasspath()
+    GLOBAL_SITE_PACKAGES = not os.path.exists(os.path.join(os.path.dirname(__file__), 'no-global-site-packages.txt'))
+    if not GLOBAL_SITE_PACKAGES:
+        ENABLE_USER_SITE = False
     if ENABLE_USER_SITE is None:
         ENABLE_USER_SITE = check_enableusersite()
-    paths_in_sys = addusersitepackages(paths_in_sys)
     paths_in_sys = addsitepackages(paths_in_sys)
-    paths_in_sys = virtual_addsitepackages(paths_in_sys)
+    paths_in_sys = addusersitepackages(paths_in_sys)
+    if GLOBAL_SITE_PACKAGES:
+        paths_in_sys = virtual_addsitepackages(paths_in_sys)
     if sys.platform == 'os2emx':
         setBEGINLIBPATH()
     setquit()
