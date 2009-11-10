@@ -353,7 +353,7 @@ def file_search_dirs():
             pass
         else:
             dirs.append(os.path.join(os.path.dirname(virtualenv.__file__), 'virtualenv_support'))
-    return dirs
+    return [d for d in dirs if os.path.isdir(d)]
 
 def install_setuptools(py_executable, unzip=False):
     _install_req(py_executable, unzip)
