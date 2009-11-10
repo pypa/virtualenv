@@ -2,6 +2,8 @@
 """Create a "virtual" Python installation
 """
 
+virtualenv_version = "1.4.1.post1"
+
 import sys
 import os
 import optparse
@@ -410,7 +412,7 @@ def filter_ez_setup(line, project_name='setuptools'):
 
 def main():
     parser = optparse.OptionParser(
-        version="1.4.1.post1",
+        version=virtualenv_version,
         usage="%prog [OPTIONS] DEST_DIR")
 
     parser.add_option(

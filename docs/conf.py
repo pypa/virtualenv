@@ -40,9 +40,23 @@ copyright = '2009, Ian Bicking, The Open Planning Project'
 # other places throughout the built documents.
 #
 # The short X.Y version.
-version = '1.4'
-# The full version, including alpha/beta/rc tags.
-release = '1.4.1.post1'
+
+## Figure out the version from virtualenv.py:
+version_re = re.compile(
+    r'virtualenv_version = "(.*?)"')
+fp = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                       'virtualenv.py'))
+version = None
+for line in fp:
+    match = version_re.search(line)
+    if match:
+        release = match.group(1)
+        break
+else:
+    raise Exception("Cannot find version in virtualenv.py")
+fp.close()
+del line, fp, version_re
+version = '.'.join(release.split('.')[:2])
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
