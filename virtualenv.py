@@ -372,7 +372,10 @@ def install_pip(py_executable):
         filename = 'pip'
     else:
         filename = filenames[-1]
-    cmd = [py_executable, join(os.path.dirname(py_executable), 'easy_install'), filename]
+    easy_install_script = 'easy_install'
+    if sys.platform == 'win32':
+        easy_install_script = 'easy_install-script.py'
+    cmd = [py_executable, join(os.path.dirname(py_executable), easy_install_script), filename]
     if filename == 'pip':
         logger.info('Installing pip from network...')
     else:

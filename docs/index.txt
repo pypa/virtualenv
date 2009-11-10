@@ -320,8 +320,11 @@ Changes & News
 hg tip
 ~~~~~~
 
+* Fix pip installation on Windows
+
 1.4.1
 ~~~~~
+
 * Include pip 0.6
 
 1.4
