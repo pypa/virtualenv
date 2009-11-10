@@ -24,7 +24,8 @@ import sys
 extensions = ['sphinx.ext.autodoc']
 
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
+## FIXME: disabled for now because I haven't figured out how to use this:
+#templates_path = ['_templates']
 
 # The suffix of source filenames.
 source_suffix = '.txt'
@@ -42,6 +43,7 @@ copyright = '2009, Ian Bicking, The Open Planning Project'
 # The short X.Y version.
 
 ## Figure out the version from virtualenv.py:
+import re, os
 version_re = re.compile(
     r'virtualenv_version = "(.*?)"')
 fp = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
@@ -55,7 +57,7 @@ for line in fp:
 else:
     raise Exception("Cannot find version in virtualenv.py")
 fp.close()
-del line, fp, version_re
+del re, os, line, fp, version_re
 version = '.'.join(release.split('.')[:2])
 
 # There are two options for replacing |today|: either, you set today to some
@@ -88,7 +90,10 @@ pygments_style = 'sphinx'
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths
 # given in html_static_path.
-html_style = 'default.css'
+#html_style = 'default.css'
+
+html_theme = 'nature'
+html_theme_path = ['_theme']
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
