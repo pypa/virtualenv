@@ -317,8 +317,9 @@ Other Documentation and Links
 Changes & News
 --------------
 
-hg tip
-~~~~~~
+1.4.1
+~~~~~
+* Include pip 0.6
 
 1.4
 ~~~
