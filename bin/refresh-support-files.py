@@ -17,7 +17,7 @@ files = [
     ('http://pypi.python.org/packages/2.4/s/setuptools/setuptools-0.6c11-py2.4.egg', 'setuptools-0.6c11-py2.4.egg'),
     ('http://python-distribute.org/distribute_setup.py', 'distribute_setup.py'),
     ('http://pypi.python.org/packages/source/d/distribute/distribute-0.6.8.tar.gz', 'distribute-0.6.8.tar.gz'),
-    ('http://pypi.python.org/packages/source/p/pip/pip-0.6.tar.gz', 'pip-0.6.tar.gz'),
+    ('http://pypi.python.org/packages/source/p/pip/pip-0.6.1.tar.gz', 'pip-0.6.1.tar.gz'),
     ]
 
 def main():

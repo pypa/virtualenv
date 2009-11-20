@@ -32,6 +32,7 @@ fp.close()
 ## Get long_description from index.txt:
 f = open(os.path.join(here, 'docs', 'index.txt'))
 long_description = f.read().strip()
+long_description = long_description.split('split here', 1)[1]
 f.close()
 
 if is_ianb and 'register' in sys.argv:
