@@ -4,6 +4,9 @@ Changes & News
 hg tip
 ~~~~~~
 
+* Create the ``virtualenv`` script even when Setuptools isn't
+  installed
+
 1.4.3
 ~~~~~
 
