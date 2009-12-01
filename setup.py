@@ -1,17 +1,16 @@
+import sys, os
 try:
     from setuptools import setup
+    kw = {'entry_points':
+          """[console_scripts]\nvirtualenv = virtualenv:main\n""",
+          'zip_safe': False}
 except ImportError:
     from distutils.core import setup
-    print 'Note: without Setuptools installed you will have to use "python -m virtualenv ENV"'
-import sys, os
+    if sys.platform == 'win32':
+        print 'Note: without Setuptools installed you will have to use "python -m virtualenv ENV"'
+    else:
+        kw = {'scripts': ['scripts/virtualenv']}
 import re
-## A warning just for Ian:
-try:
-    import getpass
-except ImportError:
-    is_ianb = False
-else:
-    is_ianb = getpass.getuser() == 'ianb'
 
 here = os.path.dirname(os.path.abspath(__file__))
 
@@ -35,6 +34,14 @@ long_description = f.read().strip()
 long_description = long_description.split('split here', 1)[1]
 f.close()
 
+## A warning just for Ian (related to distribution):
+try:
+    import getpass
+except ImportError:
+    is_ianb = False
+else:
+    is_ianb = getpass.getuser() == 'ianb'
+
 if is_ianb and 'register' in sys.argv:
     if 'hg tip\n~~~~~~' in long_description:
         print >> sys.stderr, (
@@ -57,9 +64,5 @@ setup(name='virtualenv',
       py_modules=['virtualenv'],
       packages=['virtualenv_support'],
       package_data={'virtualenv_support': ['*-py%s.egg' % sys.version[:3], '*.tar.gz']},
-      zip_safe=False,
-      entry_points="""
-      [console_scripts]
-      virtualenv = virtualenv:main
-      """,
+      **kw
       )
