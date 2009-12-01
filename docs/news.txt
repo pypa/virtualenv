@@ -7,6 +7,9 @@ hg tip
 * Create the ``virtualenv`` script even when Setuptools isn't
   installed
 
+* Fix problem with ``virtualenv --relocate`` when ``bin/`` has
+  subdirectories (e.g., ``bin/.svn/``); from Alan Franzoni.
+
 1.4.3
 ~~~~~
 

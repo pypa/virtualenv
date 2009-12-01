@@ -941,6 +941,9 @@ def fixup_scripts(home_dir):
     bin_dir = os.path.join(home_dir, 'bin')
     for filename in os.listdir(bin_dir):
         filename = os.path.join(bin_dir, filename)
+        if not os.path.isfile(filename):
+            # ignore subdirs, e.g. .svn ones.
+            continue
         f = open(filename, 'rb')
         lines = f.readlines()
         f.close()
