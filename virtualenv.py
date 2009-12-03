@@ -844,6 +844,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             % (proc_stdout, os.path.normcase(os.path.abspath(home_dir))))
         logger.fatal(
             'ERROR: virtualenv is not compatible with this system or executable')
+        if sys.platform == 'win32':
+            logger.fatal(
+                'Note: some Windows users have reported this error when they installed Python for "Only this user".  The problem may be resolvable if you install Python "For all users".  (See https://bugs.launchpad.net/virtualenv/+bug/352844)')
         sys.exit(100)
     else:
         logger.info('Got sys.prefix result: %r' % proc_stdout)
