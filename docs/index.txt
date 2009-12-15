@@ -78,7 +78,7 @@ It also installs `Setuptools
 you use ``ENV/bin/easy_install`` the packages will be installed into
 the environment.
 
-If you use the ``--distribute`` option, it wil installs `distribute
+If you use the ``--distribute`` option, it will install `distribute
 <http://pypi.python.org/pypi/distribute>`_ for you, instead of setuptools,
 and if you use `ENV/bin/easy_install`` the packages will be installed into the
 environment.
@@ -87,6 +87,8 @@ To use Distribute just call virtualenv like this::
 
     $ python virtualenv.py --distribute ENV
 
+You can also set the environment variable VIRTUALENV_USE_DISTRIBUTE (since 1.4.4) 
+and be a good Comrade
 
 Creating Your Own Bootstrap Scripts
 -----------------------------------

@@ -467,7 +467,8 @@ def main():
         '--distribute',
         dest='use_distribute',
         action='store_true',
-        help="Use Distribute instead of Setuptools")
+        help='Use Distribute instead of Setuptools. Set environ variable'
+        'VIRTUALENV_USE_DISTRIBUTE to make it the default ')
 
     if 'extend_parser' in globals():
         extend_parser(parser)
@@ -612,7 +613,7 @@ def create_environment(home_dir, site_packages=True, clear=False,
 
     install_distutils(lib_dir, home_dir)
 
-    if use_distribute:
+    if use_distribute or os.environ['VIRTUALENV_USE_DISTRIBUTE']:
         install_distribute(py_executable, unzip=unzip_setuptools)
     else:
         install_setuptools(py_executable, unzip=unzip_setuptools)
