@@ -10,6 +10,10 @@ hg tip
 * Fix problem with ``virtualenv --relocate`` when ``bin/`` has
   subdirectories (e.g., ``bin/.svn/``); from Alan Franzoni.
 
+* If you set ``$VIRTUALENV_USE_DISTRIBUTE`` then virtualenv will use
+  Distribute by default (so you don't have to remember to use
+  ``--distribute``).
+
 1.4.3
 ~~~~~
 
