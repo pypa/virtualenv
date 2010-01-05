@@ -969,10 +969,12 @@ def fixup_scripts(home_dir):
         f.writelines(lines)
         f.close()
 
-def fixup_pth_and_egg_link(home_dir):
+def fixup_pth_and_egg_link(home_dir, sys_path=None):
     """Makes .pth and .egg-link files use relative paths"""
     home_dir = os.path.normcase(os.path.abspath(home_dir))
-    for path in sys.path:
+    if sys_path is None:
+        sys_path = sys.path
+    for path in sys_path:
         if not path:
             path = '.'
         if not os.path.isdir(path):
