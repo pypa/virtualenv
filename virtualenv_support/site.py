@@ -81,6 +81,8 @@ USER_SITE = None
 USER_BASE = None
 
 _is_jython = sys.platform[:4] == 'java'
+if _is_jython:
+    ModuleType = type(os)
 
 def makepath(*paths):
     dir = os.path.join(*paths)
@@ -93,6 +95,11 @@ def makepath(*paths):
 def abs__file__():
     """Set all module' __file__ attribute to an absolute path"""
     for m in sys.modules.values():
+        if ((_is_jython and not isinstance(m, ModuleType)) or
+            hasattr(m, '__loader__')):
+            # only modules need the abspath in Jython. and don't mess
+            # with a PEP 302-supplied __file__
+            continue
         f = getattr(m, '__file__', None)
         if f is None:
             continue
