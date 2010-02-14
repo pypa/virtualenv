@@ -1,4 +1,5 @@
 recursive-include docs *.txt
+recursive-include scripts *
 recursive-include virtualenv_support *.egg *.tar.gz
 recursive-exclude virtualenv_support *.py
 recursive-exclude docs/_templates *.*
