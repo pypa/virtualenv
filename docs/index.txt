@@ -176,12 +176,19 @@ On Posix systems you can do::
   $ source bin/activate
 
 This will change your ``$PATH`` to point to the virtualenv ``bin/``
-directory, and update your prompt.  Unlike workingenv, this is all it
+directory.  Unlike workingenv, this is all it
 does; it's a convenience.  But if you use the complete path like
 ``/path/to/env/bin/python script.py`` you do not need to activate the
 environment first.  You have to use ``source`` because it changes the
 environment in-place.  After activating an environment you can use the
 function ``deactivate`` to undo the changes.
+
+The ``activate`` script will also modify your shell prompt to indicate
+which environment is currently active.  You can disable this behavior,
+which can be useful if you have your own custom prompt that already
+displays the active environment name.  To do so, set the
+``VIRTUAL_ENV_DISABLE_PROMPT`` environment variable to any non-empty
+value before running the ``activate`` script.
 
 On Windows you just do::
 
