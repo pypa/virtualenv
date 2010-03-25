@@ -736,7 +736,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     mkdir(bin_dir)
     py_executable = join(bin_dir, os.path.basename(sys.executable))
     if 'Python.framework' in prefix:
-        if py_executable.endswith('/Python'):
+        if re.search(r'/Python(?:-32|-64)*$', py_executable):
             # The name of the python executable is not quite what
             # we want, rename it.
             py_executable = os.path.join(
@@ -784,7 +784,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         #                              browse_thread/thread/17cab2f85da75951
         shutil.copy(
                 os.path.join(
-                    prefix, 'Resources/Python.app/Contents/MacOS/Python'),
+                    prefix, 'Resources/Python.app/Contents/MacOS/%s' % os.path.basename(sys.executable)),
                 py_executable)
 
         # Copy the framework's dylib into the virtual
