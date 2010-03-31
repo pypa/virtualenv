@@ -2,7 +2,7 @@
 """Create a "virtual" Python installation
 """
 
-virtualenv_version = "1.4.5.post1"
+virtualenv_version = "1.4.6"
 
 import sys
 import os
