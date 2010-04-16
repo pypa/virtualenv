@@ -1,6 +1,12 @@
 Changes & News
 --------------
 
+hg tip
+------
+
+* Fix for Mac OS X Framework builds that use
+  ``--universal-archs=intel``
+
 1.4.7
 -----
 
