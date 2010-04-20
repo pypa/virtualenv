@@ -513,7 +513,8 @@ def main():
         logger.fatal('Please deactivate your workingenv, then re-run this script')
         sys.exit(3)
 
-    if os.environ.get('PYTHONHOME'):
+    if 'PYTHONHOME' in os.environ:
+        logger.warn('PYTHONHOME is set.  You *must* activate the virtualenv before using it')
         del os.environ['PYTHONHOME']
 
     if options.relocatable:
