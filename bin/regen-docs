@@ -1,5 +1,9 @@
 #!/bin/bash
 
+if [ ! -e 'virtualenv.py' ] ; then
+  echo "You should run this script as ./bin/$(basename $0)"
+  exit 2
+fi
 mkdir -p docs/_static docs/_build
 #for F in basic.css default.css ; do
 #    rm -f docs/_build/_static/$F
