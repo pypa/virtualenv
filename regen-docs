@@ -6,17 +6,8 @@ mkdir -p docs/_static docs/_build
 #done
 sphinx-build -E -b html docs/ docs/_build || exit 1
 if [ "$1" = "publish" ] ; then
-  cd docs/_build/
-  tar czvf - . | ssh flow.openplans.org 'ssh acura.openplans.org "cd /www/virtualenv.openplans.org/htdocs/; tar xzvf -"'
-  exit 2
+  cd docs/
+  echo "Uploading files..."
+  scp -r _build/ root@cloudsilverlining.org:/var/lib/silverlining/writable-roots/bbdocs/virtualenv.openplans.org/
+  ssh root@cloudsilverlining.org 'chown -R www-data:www-data /var/lib/silverlining/writable-roots/bbdocs/'
 fi
-
-#pushd docs/_build/_static
-#for F in basic.css default.css ; do
-#  if [ -e ../../_static/$F ] ; then
-#    rm -f $F
-#    ln -s ../../_static/$F
-#  fi
-#done
-#popd
-    
