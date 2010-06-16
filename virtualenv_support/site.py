@@ -212,6 +212,9 @@ def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_pre
         if prefix:
             if sys.platform in ('os2emx', 'riscos') or _is_jython:
                 sitedirs = [os.path.join(prefix, "Lib", "site-packages")]
+            elif _is_pypy:
+                pypylib = 'pypy%d.%d' % sys.pypy_version_info[:2]
+                sitedirs = [os.path.join(prefix, 'lib', pypylib, 'site-packages')]
             elif sys.platform == 'darwin' and prefix == sys_prefix:
 
                 if prefix.startswith("/System/Library/Frameworks/"): # Apple's Python
