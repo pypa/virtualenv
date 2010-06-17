@@ -668,14 +668,20 @@ def path_locations(home_dir):
     return home_dir, lib_dir, inc_dir, bin_dir
 
 
-def change_prefix(filename, src_prefix, dst_prefix):
-    assert filename.startswith(src_prefix)
-    _, relpath = filename.split(src_prefix, 1)
-    assert relpath[0] == '/'
-    relpath = relpath[1:]
-    return join(dst_prefix, relpath)
+def change_prefix(filename, dst_prefix):
+    prefixes = [sys.prefix]
+    if hasattr(sys, 'real_prefix'):
+        prefixes.append(sys.real_prefix)
+    for src_prefix in prefixes:
+        if filename.startswith(src_prefix):
+            _, relpath = filename.split(src_prefix, 1)
+            assert relpath[0] == '/'
+            relpath = relpath[1:]
+            return join(dst_prefix, relpath)
+    assert False, "Filename %s does not start with any of these prefixes: %s" % \
+        (filename, prefixes)
 
-def copy_required_modules(src_prefix, dst_prefix):
+def copy_required_modules(dst_prefix):
     for modname in REQUIRED_MODULES:
         if modname in sys.builtin_module_names:
             logger.notify("Ignoring built-in bootstrap module: %s" % mod)
@@ -690,7 +696,7 @@ def copy_required_modules(src_prefix, dst_prefix):
                 assert filename.endswith('__init__.py') or \
                        filename.endswith('__init__.pyc')
                 filename = os.path.dirname(filename)
-            dst_filename = change_prefix(filename, src_prefix, dst_prefix)
+            dst_filename = change_prefix(filename, dst_prefix)
             copyfile(filename, dst_filename)
             if filename.endswith('.pyc'):
                 pyfile = filename[:-1]
@@ -736,7 +742,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
                 if fn != 'site-packages' and os.path.splitext(fn)[0] in REQUIRED_FILES:
                     copyfile(join(stdlib_dir, fn), join(lib_dir, fn))
         # ...and modules
-        copy_required_modules(prefix, home_dir)
+        copy_required_modules(home_dir)
     finally:
         logger.indent -= 2
     mkdir(join(lib_dir, 'site-packages'))
@@ -744,7 +750,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     site_filename = site.__file__
     if site_filename.endswith('.pyc'):
         site_filename = site_filename[:-1]
-    site_filename_dst = change_prefix(site_filename, prefix, home_dir)
+    site_filename_dst = change_prefix(site_filename, home_dir)
     site_dir = os.path.dirname(site_filename_dst)
     writefile(site_filename_dst, SITE_PY)
     writefile(join(site_dir, 'orig-prefix.txt'), prefix)
@@ -811,6 +817,11 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             if os.path.exists(pythonw):
                 logger.info('Also created pythonw.exe')
                 shutil.copyfile(pythonw, os.path.join(os.path.dirname(py_executable), 'pythonw.exe'))
+        if is_pypy:
+            # make a symlink python --> pypy-c
+            python_executable = os.path.join(os.path.dirname(py_executable), 'python')
+            logger.info('Also created executable %s' % python_executable)
+            copyfile(py_executable, python_executable)
 
     if os.path.splitext(os.path.basename(py_executable))[0] != expected_exe:
         secondary_exe = os.path.join(os.path.dirname(py_executable),
