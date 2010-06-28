@@ -698,7 +698,8 @@ def copy_required_modules(dst_prefix):
             filename = mod.__file__
             if getattr(mod, '__path__', None) is not None:
                 assert filename.endswith('__init__.py') or \
-                       filename.endswith('__init__.pyc')
+                       filename.endswith('__init__.pyc') or \
+                       filename.endswith('__init__$py.class')
                 filename = os.path.dirname(filename)
             dst_filename = change_prefix(filename, dst_prefix)
             copyfile(filename, dst_filename)
@@ -754,6 +755,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     site_filename = site.__file__
     if site_filename.endswith('.pyc'):
         site_filename = site_filename[:-1]
+    elif site_filename.endswith('$py.class'):
+        site_filename = site_filename.replace('$py.class', '.py')
     site_filename_dst = change_prefix(site_filename, home_dir)
     site_dir = os.path.dirname(site_filename_dst)
     writefile(site_filename_dst, SITE_PY)
