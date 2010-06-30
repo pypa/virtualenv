@@ -688,21 +688,18 @@ def change_prefix(filename, dst_prefix):
         (filename, prefixes)
 
 def copy_required_modules(dst_prefix):
+    import imp
     for modname in REQUIRED_MODULES:
         if modname in sys.builtin_module_names:
-            logger.notify("Ignoring built-in bootstrap module: %s" % mod)
+            logger.info("Ignoring built-in bootstrap module: %s" % modname)
             continue
         try:
-            mod = __import__(modname)
+            f, filename, _ = imp.find_module(modname)
         except ImportError:
-            logger.notify("Cannot import bootstrap module: %s" % modname)
+            logger.info("Cannot import bootstrap module: %s" % modname)
         else:
-            filename = mod.__file__
-            if getattr(mod, '__path__', None) is not None:
-                assert filename.endswith('__init__.py') or \
-                       filename.endswith('__init__.pyc') or \
-                       filename.endswith('__init__$py.class')
-                filename = os.path.dirname(filename)
+            if f is not None:
+                f.close()
             dst_filename = change_prefix(filename, dst_prefix)
             copyfile(filename, dst_filename)
             if filename.endswith('.pyc'):
