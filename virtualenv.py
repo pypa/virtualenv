@@ -676,6 +676,8 @@ def change_prefix(filename, dst_prefix):
     prefixes = [sys.prefix]
     if hasattr(sys, 'real_prefix'):
         prefixes.append(sys.real_prefix)
+    prefixes = map(os.path.abspath, prefixes)
+    filename = os.path.abspath(filename)
     for src_prefix in prefixes:
         if filename.startswith(src_prefix):
             _, relpath = filename.split(src_prefix, 1)
