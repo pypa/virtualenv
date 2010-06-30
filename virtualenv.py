@@ -663,7 +663,7 @@ def path_locations(home_dir):
         bin_dir = join(home_dir, 'bin')
     elif is_pypy:
         lib_dir = home_dir
-        inc_dir = join(home_dir, 'Include')
+        inc_dir = join(home_dir, 'include')
         bin_dir = join(home_dir, 'bin')
     else:
         lib_dir = join(home_dir, 'lib', py_version)
@@ -768,7 +768,10 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             logger.info('Deleting %s' % site_packages_filename)
             os.unlink(site_packages_filename)
 
-    stdinc_dir = join(prefix, 'include', py_version)
+    if is_pypy:
+        stdinc_dir = join(prefix, 'include')
+    else:
+        stdinc_dir = join(prefix, 'include', py_version)
     if os.path.exists(stdinc_dir):
         copyfile(stdinc_dir, inc_dir)
     else:
