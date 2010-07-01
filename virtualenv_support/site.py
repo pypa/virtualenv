@@ -462,7 +462,9 @@ def setcopyright():
             "credits",
             "Jython is maintained by the Jython developers (www.jython.org).")
     elif _is_pypy:
-        pass # XXX fixme
+        __builtin__.credits = _Printer(
+            "credits",
+            "PyPy is maintained by the PyPy developers: http://codespeak.net/pypy")
     else:
         __builtin__.credits = _Printer("credits", """\
     Thanks to CWI, CNRI, BeOpen.com, Zope Corporation and a cast of thousands
