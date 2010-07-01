@@ -27,19 +27,18 @@ except NameError:
     from sets import Set as set
 
 join = os.path.join
+py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
 
 is_jython = sys.platform.startswith('java')
 is_pypy = hasattr(sys, 'pypy_version_info')
 
 if is_pypy:
-    py_version = 'pypy%s.%s' % (sys.pypy_version_info[0], sys.pypy_version_info[1])
     expected_exe = 'pypy-c'
+elif is_jython:
+    expected_exe = 'jython'
 else:
-    py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
     expected_exe = 'python'
 
-
-expected_exe = is_jython and 'jython' or expected_exe
 
 REQUIRED_MODULES = ['os', 'posix', 'posixpath', 'nt', 'ntpath', 'genericpath',
                     'fnmatch', 'locale', 'encodings', 'codecs',
