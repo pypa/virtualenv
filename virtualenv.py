@@ -311,6 +311,7 @@ def _install_req(py_executable, unzip=False, distribute=False):
     if unzip:
         cmd.append('--always-unzip')
     env = {}
+    remove_from_env = []
     if logger.stdout_level_matches(logger.DEBUG):
         cmd.append('-v')
 
@@ -326,6 +327,10 @@ def _install_req(py_executable, unzip=False, distribute=False):
         # the source is found, let's chdir
         if source is not None and os.path.exists(source):
             os.chdir(os.path.dirname(source))
+            # in this case, we want to be sure that PYTHONPATH is unset (not
+            # just empty, really unset), else CPython tries to import the
+            # site.py that it's in virtualenv_support
+            remove_from_env.append('PYTHONPATH')
         else:
             logger.info('No %s egg found; downloading' % project_name)
         cmd.extend(['--always-copy', '-U', project_name])
@@ -349,6 +354,7 @@ def _install_req(py_executable, unzip=False, distribute=False):
         call_subprocess(cmd, show_stdout=False,
                         filter_stdout=_filter_ez_setup,
                         extra_env=env,
+                        remove_from_env=remove_from_env,
                         cwd=cwd)
     finally:
         logger.indent -= 2
@@ -544,7 +550,8 @@ def main():
 
 def call_subprocess(cmd, show_stdout=True,
                     filter_stdout=None, cwd=None,
-                    raise_on_returncode=True, extra_env=None):
+                    raise_on_returncode=True, extra_env=None,
+                    remove_from_env=None):
     cmd_parts = []
     for part in cmd:
         if len(part) > 40:
@@ -558,9 +565,13 @@ def call_subprocess(cmd, show_stdout=True,
     else:
         stdout = subprocess.PIPE
     logger.debug("Running command %s" % cmd_desc)
-    if extra_env:
+    if extra_env or remove_from_env:
         env = os.environ.copy()
-        env.update(extra_env)
+        if extra_env:
+            env.update(extra_env)
+        if remove_from_env:
+            for varname in remove_from_env:
+                env.pop(varname, None)
     else:
         env = None
     try:
