@@ -467,7 +467,7 @@ def main():
         '--distribute',
         dest='use_distribute',
         action='store_true',
-        help='Use Distribute instead of Setuptools. Set environ variable'
+        help='Use Distribute instead of Setuptools. Set environ variable '
         'VIRTUALENV_USE_DISTRIBUTE to make it the default ')
 
     if 'extend_parser' in globals():
