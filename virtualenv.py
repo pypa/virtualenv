@@ -779,10 +779,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         # the stub executable in ${sys.prefix}/bin
         # See http://groups.google.com/group/python-virtualenv/
         #                              browse_thread/thread/17cab2f85da75951
-        shutil.copy(
-                os.path.join(
-                    prefix, 'Resources/Python.app/Contents/MacOS/%s' % os.path.basename(sys.executable)),
-                py_executable)
+        original_python = os.path.join(
+            prefix, 'Resources/Python.app/Contents/MacOS/Python')
+        shutil.copy(original_python, py_executable)
 
         # Copy the framework's dylib into the virtual
         # environment
