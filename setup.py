@@ -8,6 +8,7 @@ except ImportError:
     from distutils.core import setup
     if sys.platform == 'win32':
         print 'Note: without Setuptools installed you will have to use "python -m virtualenv ENV"'
+        kw = {}
     else:
         kw = {'scripts': ['scripts/virtualenv']}
 import re
