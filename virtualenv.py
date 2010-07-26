@@ -10,6 +10,7 @@ import optparse
 import re
 import shutil
 import logging
+import tempfile
 import distutils.sysconfig
 try:
     import subprocess
@@ -286,7 +287,6 @@ def _install_req(py_executable, unzip=False, distribute=False):
     if is_jython and os._name == 'nt':
         # Jython's .bat sys.executable can't handle a command line
         # argument with newlines
-        import tempfile
         fd, ez_setup = tempfile.mkstemp('.py')
         os.write(fd, bootstrap_script)
         os.close(fd)
@@ -324,10 +324,10 @@ def _install_req(py_executable, unzip=False, distribute=False):
         return filter_ez_setup(line, project_name)
 
     if not os.access(os.getcwd(), os.W_OK):
-        cwd = '/tmp'
+        cwd = tempfile.mkdtemp()
         if source is not None and os.path.exists(source):
             # the current working dir is hostile, let's copy the
-            # tarball to /tmp
+            # tarball to a temp dir
             target = os.path.join(cwd, os.path.split(source)[-1])
             shutil.copy(source, target)
     try:
