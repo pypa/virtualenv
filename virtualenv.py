@@ -931,7 +931,8 @@ def make_environment_relocatable(home_dir):
     Makes the already-existing environment use relative paths, and takes out
     the #!-based environment selection in scripts.
     """
-    activate_this = os.path.join(home_dir, 'bin', 'activate_this.py')
+    home_dir, lib_dir, inc_dir, bin_dir = path_locations(home_dir)
+    activate_this = os.path.join(bin_dir, 'activate_this.py')
     if not os.path.exists(activate_this):
         logger.fatal(
             'The environment doesn\'t have a file %s -- please re-run virtualenv '
@@ -950,6 +951,7 @@ def fixup_scripts(home_dir):
     new_shebang = '#!/usr/bin/env python%s' % sys.version[:3]
     activate = "import os; activate_this=os.path.join(os.path.dirname(__file__), 'activate_this.py'); execfile(activate_this, dict(__file__=activate_this)); del os, activate_this"
     bin_dir = os.path.join(home_dir, 'bin')
+    home_dir, lib_dir, inc_dir, bin_dir = path_locations(home_dir)
     for filename in os.listdir(bin_dir):
         filename = os.path.join(bin_dir, filename)
         if not os.path.isfile(filename):
