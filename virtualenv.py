@@ -369,7 +369,9 @@ def install_pip(py_executable):
     for dir in file_search_dirs():
         filenames.extend([join(dir, fn) for fn in os.listdir(dir)
                           if _pip_re.search(fn)])
-    filenames.sort(key=lambda x: os.path.basename(x).lower())
+    filenames = [(os.path.basename(filename).lower(), i, filename) for i, filename in enumerate(filenames)]
+    filenames.sort()
+    filenames = [filename for basename, i, filename in filenames]
     if not filenames:
         filename = 'pip'
     else:
