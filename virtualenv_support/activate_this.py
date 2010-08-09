@@ -9,7 +9,7 @@ try:
     __file__
 except NameError:
     raise AssertionError(
-        "You must run this like execfile('path/to/active_this.py', dict(__file__='path/to/activate_this.py'))")
+        "You must run this like execfile('path/to/activate_this.py', dict(__file__='path/to/activate_this.py'))")
 import sys
 import os
 
