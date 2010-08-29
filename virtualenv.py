@@ -873,6 +873,11 @@ def install_activate(home_dir, bin_dir, prompt=None):
             files['activate'] = ACTIVATE_SH
     else:
         files = {'activate': ACTIVATE_SH}
+
+        # suppling activate.fish in addition to, not instead of, the 
+        # bash script support.
+        files['activate.fish'] = ACTIVATE_FISH 
+     
     files['activate_this.py'] = ACTIVATE_THIS
     vname = os.path.basename(os.path.abspath(home_dir))
     for name, content in files.items():
@@ -1441,6 +1446,27 @@ Rd4OXM1ByExVVkmoTwfBJ7Lt10Iq1Kgo23Bmd8Ib1KrGbsbO4Pp2yO4fpnf3s6MnZiwuiJuls1/L
 Pu4yUCvhpA+vZaJvWWDTr0yFYYyVnHMqCEq+QniuYX225xmnzRENjbXACF3wkCYNVZ1mBwxoR9Iw
 WAo3/36oSOTfgjwEEQKt15e9Xpqm52+oaXxszmnE9GLl65RH2OMmS6+u5acKxDmlPgj2eT5/gQOX
 LLK0j1y0Uwbmn438VZkVpqlfNKa/YET/53j+99G8H8tUhr9ZSXs2
+""".decode("base64").decode("zlib")
+
+##file activate.fish
+ACTIVATE_FISH = """
+eJytVt9v2kgQfuevmC5EFyowutdKrUQVTiAlECVcpFN7shZ7jFexd7ndtZ30r++sbYwNpvdSHhJ7
+d358M/PNjIewjYWBSCQIaWYs7BAygyEUwsbAPNgJOeOBFTm36EXCxAw+Rlql4J4/wm1s7eHTbObe
+TIxJ4im9Hw+G8K4yCLiUyoLOJAgLodAY2OR9MIgySRaVhBCPpgGmIbDFG8nlQtuMJyhz4DIEjTbT
+EqwCqXTKEyjdAF0LrWSK0rIB0G9IkgYtqCRsX0LOteC7BE0pJSKwSGFOJbCRv7m/819WT9u/5/f+
+43y7ZFAKuZ8zNd2/gTuGS8muHEK/AMrw/7z+s11u1svNw4Jdum7uzgE0F7+G0RVzYK6g+Wv1vPQf
+nzYPj1t/87J4elrdtfAcy2WcB1do/0AEONhe532muu5r6SPKxfqlg4qNuN7n3/78l8GHz8CkkiEd
+68wRBU+ghvCMSQTHuw/9aE8EazCUOIaQSYdDaI0Jz7s8abGy630wOJamBR6Y77defZ+dxC5YAaOS
+Gx1ysVFLfeb7X1drfz1/WJClWryB22IEpYtOBtU/mP4HZ9Xuh9BiVJ88tq2UiWq48qOL079bPc+/
+3i/qUh9b0LGjblCaIgZ4U44JCGks8hBU5PrT5dtMajVqbqJUmAUINkao6OXBJketRSjkvjzGN2Gs
+e2nmB00u5Obdq80sVYGkMgEeVkqq1AsyqjJVuDLrlDgkwlo38pRGKJR+rU3Uhtab7eITPFvh4pAm
+I6FYFTXMXIQIJjsclLYQKU32jaWBWJk3ExpgvLYDpf8m+2WqIOX6FbUHqz0NtDIcsuHkUuUGlncq
+R+KGWWW2HNC3FtODexp3OmZkLLeZabWGIUp3Qm91bZM9z/MaFQxiBazJq09+/ZYOgy9fYNQB01Wl
+UfJ9+AuhU1O2kVyXH0KBf1AMKQ+rQNglJKcwAaMyTbQR9hSMd82qTmEaXbts+3a7z3ml+uyFpJ1z
+ljpaNZKnGE4IpttyoCqmYqVKkEAV0rsIv3d6tsrtBzEGrztuqNbur3PS7Ts27ug1FGhpfnYTiXXE
+alYcMBAUTOCkHOnmdCIpx3sR1NuZAkbTp4rUAdWmL4rC+4GWCpN7gUpnRkW24Bpn3FmbXSgfiOM2
+AnZjbm/M+MbAjWFwSwH7gUoIxHQHuySjzMXC4rgVNyHqi7+tW30R0NE5O7pZwsTg78P1G/DUnwX1
+8+VHx9VNeua8u9R+Arnp9QQ=
 """.decode("base64").decode("zlib")
 
 ##file activate.bat
