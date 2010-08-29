@@ -61,7 +61,7 @@ if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
             if test $_checkbase = "__"
                 # special case for Aspen magic directories
                 # see http://www.zetadev.com/software/aspen/
-                printf "%s[%s]%s %s" (set_color -b blue white) (basename dirname "$VIRTUAL_ENV") (set_color normal) (_old_fish_prompt)
+                printf "%s[%s]%s %s" (set_color -b blue white) (basename (dirname "$VIRTUAL_ENV")) (set_color normal) (_old_fish_prompt)
             else
                 printf "%s(%s)%s%s" (set_color -b blue white) (basename "$VIRTUAL_ENV") (set_color normal) (_old_fish_prompt)
             end
