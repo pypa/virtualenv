@@ -41,10 +41,8 @@ end
 if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
     # fish shell uses a function, instead of env vars,
     # to produce the prompt. Overriding the existing function is easy.
-    # However, adding to the current prompt is a little more work.
-    #
-    # NOTE: Still unsure how to provide support for custom prompts, via
-    #   the VIRTUAL_PROMPT marker. Ignoring for the moment.
+    # However, adding to the current prompt, instead of clobbering it,
+    # is a little more work.
     set -l oldpromptfile (tempfile)
     if test $status
         # save the current fish_prompt function...
@@ -55,8 +53,17 @@ if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
         . $oldpromptfile
         rm -f $oldpromptfile
         
+        if test -n "__VIRTUAL_PROMPT__"
+            # We've been given us a prompt override.
+            # 
+            # FIXME: Unsure how to handle this *safely*. We could just eval()
+            #   whatever is given, but the risk is a bit much.
+            echo "activate.fish: Alternative prompt prefix is not supported under fish-shell." 1>&2
+            echo "activate.fish: Alter the fish_prompt in this file as needed." 1>&2
+        end        
+        
         # with the original prompt function renamed, we can override with our own.
-        function fish_prompt
+        function fish_prompt                
             set -l _checkbase (basename "$VIRTUAL_ENV")
             if test $_checkbase = "__"
                 # special case for Aspen magic directories
