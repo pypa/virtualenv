@@ -1,6 +1,23 @@
 Changes & News
 --------------
 
+tip
+---
+
+* Add support for PyPy.
+
+* Uses a proper temporary dir when installing environment requirements.
+
+* Add ``--prompt`` option to be able to override the default prompt prefix.
+
+* Fix an issue with ``--relocatable`` on Windows.
+
+* Include pip 0.8.0.
+
+* Fix issue with installing the wrong version of distribute.
+
+* Add fish and csh activate scripts.
+
 1.4.9
 -----
 
