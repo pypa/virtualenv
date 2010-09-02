@@ -80,6 +80,7 @@ ENABLE_USER_SITE = None
 USER_SITE = None
 USER_BASE = None
 
+_is_pypy = hasattr(sys, 'pypy_version_info')
 _is_jython = sys.platform[:4] == 'java'
 if _is_jython:
     ModuleType = type(os)
@@ -211,6 +212,8 @@ def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_pre
         if prefix:
             if sys.platform in ('os2emx', 'riscos') or _is_jython:
                 sitedirs = [os.path.join(prefix, "Lib", "site-packages")]
+            elif _is_pypy:
+                sitedirs = [os.path.join(prefix, 'site-packages')]
             elif sys.platform == 'darwin' and prefix == sys_prefix:
 
                 if prefix.startswith("/System/Library/Frameworks/"): # Apple's Python
@@ -458,6 +461,10 @@ def setcopyright():
         __builtin__.credits = _Printer(
             "credits",
             "Jython is maintained by the Jython developers (www.jython.org).")
+    elif _is_pypy:
+        __builtin__.credits = _Printer(
+            "credits",
+            "PyPy is maintained by the PyPy developers: http://codespeak.net/pypy")
     else:
         __builtin__.credits = _Printer("credits", """\
     Thanks to CWI, CNRI, BeOpen.com, Zope Corporation and a cast of thousands
@@ -538,6 +545,11 @@ def virtual_install_main_packages():
         paths = [os.path.join(sys.real_prefix, 'Lib'), os.path.join(sys.real_prefix, 'DLLs')]
     elif _is_jython:
         paths = [os.path.join(sys.real_prefix, 'Lib')]
+    elif _is_pypy:
+        cpyver = '%d.%d.%d' % sys.version_info[:3]
+        paths = [os.path.join(sys.real_prefix, 'lib_pypy'),
+                 os.path.join(sys.real_prefix, 'lib-python', 'modified-%s' % cpyver),
+                 os.path.join(sys.real_prefix, 'lib-python', cpyver)]
     else:
         paths = [os.path.join(sys.real_prefix, 'lib', 'python'+sys.version[:3])]
         lib64_path = os.path.join(sys.real_prefix, 'lib64', 'python'+sys.version[:3])

@@ -1,11 +1,13 @@
 import os
 import sys
 import warnings 
-import ConfigParser # ConfigParser is not a virtualenv module, so we can use it to find the stdlib
+import opcode # opcode is not a virtualenv module, so we can use it to find the stdlib
+              # Important! To work on pypy, this must be a module that resides in the
+              # lib-python/modified-x.y.z directory
 
 dirname = os.path.dirname
 
-distutils_path = os.path.join(os.path.dirname(ConfigParser.__file__), 'distutils')
+distutils_path = os.path.join(os.path.dirname(opcode.__file__), 'distutils')
 if os.path.normpath(distutils_path) == os.path.dirname(os.path.normpath(__file__)):
     warnings.warn(
         "The virtualenv distutils package at %s appears to be in the same location as the system distutils?")
