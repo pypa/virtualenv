@@ -1,0 +1,18 @@
+Added fix to set the correct bin_dir in fixup_scripts for win32
+
+diff -r 8dd7663d9811 virtualenv.py
+--- a/virtualenv.py	Thu Apr 22 03:15:11 2010 -0500
++++ b/virtualenv.py	Wed Jun 23 21:58:42 2010 -0400
+@@ -939,7 +939,11 @@
+     # This is what we'll put:
+     new_shebang = '#!/usr/bin/env python%s' % sys.version[:3]
+     activate = "import os; activate_this=os.path.join(os.path.dirname(__file__), 'activate_this.py'); execfile(activate_this, dict(__file__=activate_this)); del os, activate_this"
+-    bin_dir = os.path.join(home_dir, 'bin')
++    if sys.platform == 'win32':
++        bin_suffix = 'Scripts'
++    else:
++        bin_suffix = 'bin'
++    bin_dir = os.path.join(home_dir, bin_suffix)
+     for filename in os.listdir(bin_dir):
+         filename = os.path.join(bin_dir, filename)
+         if not os.path.isfile(filename):
