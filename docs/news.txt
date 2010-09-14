@@ -1,8 +1,10 @@
 Changes & News
 --------------
 
-tip
+1.5
 ---
+
+* Include pip 0.8.1.
 
 * Add support for PyPy.
 
@@ -11,8 +13,6 @@ tip
 * Add ``--prompt`` option to be able to override the default prompt prefix.
 
 * Fix an issue with ``--relocatable`` on Windows.
-
-* Include pip 0.8.0.
 
 * Fix issue with installing the wrong version of distribute.
 

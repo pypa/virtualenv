@@ -2,7 +2,7 @@
 """Create a "virtual" Python installation
 """
 
-virtualenv_version = "1.4.9"
+virtualenv_version = "1.5"
 
 import sys
 import os
@@ -960,15 +960,15 @@ def install_activate(home_dir, bin_dir, prompt=None):
     else:
         files = {'activate': ACTIVATE_SH}
 
-        # suppling activate.fish in addition to, not instead of, the 
+        # suppling activate.fish in addition to, not instead of, the
         # bash script support.
-        files['activate.fish'] = ACTIVATE_FISH 
-        
+        files['activate.fish'] = ACTIVATE_FISH
+
         # same for csh/tcsh support...
         files['activate.csh'] = ACTIVATE_CSH
-        
-        
-     
+
+
+
     files['activate_this.py'] = ACTIVATE_THIS
     vname = os.path.basename(os.path.abspath(home_dir))
     for name, content in files.items():
