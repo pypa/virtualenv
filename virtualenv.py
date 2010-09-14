@@ -51,6 +51,8 @@ REQUIRED_FILES = ['lib-dynload', 'config']
 
 if sys.version_info[:2] >= (2, 6):
     REQUIRED_MODULES.extend(['warnings', 'linecache', '_abcoll', 'abc'])
+if sys.version_info[:2] >= (2, 7):
+    REQUIRED_MODULES.extend(['_weakrefset'])
 if sys.version_info[:2] <= (2, 3):
     REQUIRED_MODULES.extend(['sets', '__future__'])
 if is_pypy:
