@@ -703,7 +703,7 @@ def change_prefix(filename, dst_prefix):
     for src_prefix in prefixes:
         if filename.startswith(src_prefix):
             _, relpath = filename.split(src_prefix, 1)
-            assert relpath[0] == '/'
+            assert relpath[0] == os.sep
             relpath = relpath[1:]
             return join(dst_prefix, relpath)
     assert False, "Filename %s does not start with any of these prefixes: %s" % \
