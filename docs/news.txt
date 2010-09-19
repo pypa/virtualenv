@@ -1,10 +1,12 @@
 Changes & News
 --------------
 
-hg tip
-------
+1.5.1
+-----
 
 * Added ``_weakrefset`` requirement for Python 2.7.1.
+
+* Fixed Windows regression in 1.5
 
 1.5
 ---
