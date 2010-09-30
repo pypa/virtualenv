@@ -90,6 +90,12 @@ To use Distribute just call virtualenv like this::
 You can also set the environment variable VIRTUALENV_USE_DISTRIBUTE (since 1.4.4) 
 and be a good Comrade
 
+PyPy Support
+~~~~~~~~~~~~
+
+Beginning with virtualenv version 1.5 there is experimental `PyPy
+<http://pypy.org>`_ support. Currently only PyPy trunk is supported.
+
 Creating Your Own Bootstrap Scripts
 -----------------------------------
 
