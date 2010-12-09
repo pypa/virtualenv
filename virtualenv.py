@@ -34,7 +34,7 @@ is_jython = sys.platform.startswith('java')
 is_pypy = hasattr(sys, 'pypy_version_info')
 
 if is_pypy:
-    expected_exe = 'pypy-c'
+    expected_exe = 'pypy'
 elif is_jython:
     expected_exe = 'jython'
 else:
