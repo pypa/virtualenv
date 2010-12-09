@@ -799,7 +799,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     else:
         logger.debug('No include dir %s' % stdinc_dir)
 
-    if sys.exec_prefix != prefix:
+    # pypy never uses exec_prefix, just ignore it
+    if sys.exec_prefix != prefix and not is_pypy:
         if sys.platform == 'win32':
             exec_dir = join(sys.exec_prefix, 'lib')
         elif is_jython:
