@@ -539,6 +539,7 @@ def virtual_install_main_packages():
     sys.real_prefix = f.read().strip()
     f.close()
     pos = 2
+    hardcoded_relative_dirs = []
     if sys.path[0] == '':
         pos += 1
     if sys.platform == 'win32':
@@ -550,8 +551,16 @@ def virtual_install_main_packages():
         paths = [os.path.join(sys.real_prefix, 'lib_pypy'),
                  os.path.join(sys.real_prefix, 'lib-python', 'modified-%s' % cpyver),
                  os.path.join(sys.real_prefix, 'lib-python', cpyver)]
+        hardcoded_relative_dirs = paths[:] # for the special 'darwin' case below
+        #
+        # This is hardcoded in the Python executable, but relative to sys.prefix:
+        for path in paths[:]:
+            plat_path = os.path.join(path, 'plat-%s' % sys.platform)
+            if os.path.exists(plat_path):
+                paths.append(plat_path)
     else:
         paths = [os.path.join(sys.real_prefix, 'lib', 'python'+sys.version[:3])]
+        hardcoded_relative_dirs = paths[:] # for the special 'darwin' case below
         lib64_path = os.path.join(sys.real_prefix, 'lib64', 'python'+sys.version[:3])
         if os.path.exists(lib64_path):
             paths.append(lib64_path)
@@ -570,7 +579,8 @@ def virtual_install_main_packages():
     # These are hardcoded in the Apple's Python executable,
     # but relative to sys.prefix, so we have to fix them up:
     if sys.platform == 'darwin':
-        hardcoded_paths = [os.path.join(sys.real_prefix, 'lib', 'python'+sys.version[:3], module)
+        hardcoded_paths = [os.path.join(relative_dir, module)
+                           for relative_dir in hardcoded_relative_dirs
                            for module in ('plat-darwin', 'plat-mac', 'plat-mac/lib-scriptpackages')]
 
         for path in hardcoded_paths:
