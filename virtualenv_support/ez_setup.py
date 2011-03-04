@@ -112,11 +112,11 @@ def use_setuptools(
             "\n\n(Currently using %r)"
             ) % (version, e.args[0])
             sys.exit(2)
-        else:
-            del pkg_resources, sys.modules['pkg_resources']    # reload ok
-            return do_download()
     except pkg_resources.DistributionNotFound:
-        return do_download()
+        pass
+
+    del pkg_resources, sys.modules['pkg_resources']    # reload ok
+    return do_download()
 
 def download_setuptools(
     version=DEFAULT_VERSION, download_base=DEFAULT_URL, to_dir=os.curdir,
