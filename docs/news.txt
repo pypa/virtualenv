@@ -1,6 +1,13 @@
 Changes & News
 --------------
 
+tip
+---
+
+* Fixed a few more pypy related bugs.
+
+* Updated bundled pip to 0.8.2.
+
 1.5.1
 -----
 
