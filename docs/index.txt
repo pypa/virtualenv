@@ -2,7 +2,7 @@ virtualenv
 ==========
 
 * `Discussion list <http://groups.google.com/group/python-virtualenv/>`_
-* `Bugs <https://bitbucket.org/ianb/virtualenv/issues/>`_
+* `Bugs <https://github.com/pypa/virtualenv/issues/>`_
 
 .. contents::
 
@@ -10,7 +10,6 @@ virtualenv
    :maxdepth: 1
 
    news
-   license
 
 .. comment: split here
 
@@ -22,13 +21,15 @@ Status and License
 of `virtual-python
 <http://peak.telecommunity.com/DevCenter/EasyInstall#creating-a-virtual-python>`_.
 
-It is written by Ian Bicking, and sponsored by the `Open Planning
-Project <http://openplans.org>`_.  It is licensed under an
-`MIT-style permissive license <license.html>`_.
+It was written by Ian Bicking, sponsored by the `Open Planning
+Project <http://openplans.org>`_ and is now maintained by a
+`group of developers <https://github.com/pypa/virtualenv/raw/master/AUTHORS.txt>`.
+It is licensed under an
+`MIT-style permissive license <https://github.com/pypa/virtualenv/raw/master/LICENSE.txt>`_.
 
 You can install it with ``easy_install virtualenv``, or from the `hg
-repository <http://bitbucket.org/ianb/virtualenv>`_ or from a `tarball
-<http://bitbucket.org/ianb/virtualenv/get/tip.gz#egg=virtualenv-tip>`_
+repository <https://github.com/pypa/virtualenv>`_ or from a `tarball
+<https://github.com/pypa/pip/tarball/master#egg=virtualenv-tip>`_
 ``easy_install virtualenv==tip``.
 
 What It Does
@@ -88,7 +89,7 @@ To use Distribute just call virtualenv like this::
     $ python virtualenv.py --distribute ENV
 
 You can also set the environment variable VIRTUALENV_USE_DISTRIBUTE (since 1.4.4) 
-and be a good Comrade
+and be a good Comrade.
 
 PyPy Support
 ~~~~~~~~~~~~

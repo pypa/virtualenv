@@ -35,7 +35,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'virtualenv'
-copyright = '2009, Ian Bicking, The Open Planning Project'
+copyright = '2007-2011, Ian Bicking, The Open Planning Project, The virtualenv developers'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.

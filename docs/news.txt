@@ -8,6 +8,10 @@ tip
 
 * Updated bundled pip to 0.8.2.
 
+* Handed project over to new team of maintainers.
+
+* Moved virtualenv to Github at https://github.com/pypa/virtualenv
+
 1.5.1
 -----
 
