@@ -1,8 +1,8 @@
 Changes & News
 --------------
 
-tip
----
+1.5.2
+-----
 
 * Fixed a few more pypy related bugs.
 
