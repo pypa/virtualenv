@@ -4,6 +4,10 @@ Changes & News
 1.5.2
 -----
 
+* Moved main repository to Github: https://github.com/pypa/virtualenv
+
+* Transferred primary maintenance from Ian to Jannis Leidel, Carl Meyer and Brian Rosner
+
 * Fixed a few more pypy related bugs.
 
 * Updated bundled pip to 0.8.2.
