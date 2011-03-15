@@ -7,7 +7,7 @@ try:
 except ImportError:
     from distutils.core import setup
     if sys.platform == 'win32':
-        print 'Note: without Setuptools installed you will have to use "python -m virtualenv ENV"'
+        print('Note: without Setuptools installed you will have to use "python -m virtualenv ENV"')
         kw = {}
     else:
         kw = {'scripts': ['scripts/virtualenv']}
@@ -35,10 +35,17 @@ long_description = f.read().strip()
 long_description = long_description.split('split here', 1)[1]
 f.close()
 
-if 'register' in sys.argv:
+## A warning just for Ian (related to distribution):
+try:
+    import getpass
+except ImportError:
+    is_ianb = False
+else:
+    is_ianb = getpass.getuser() == 'ianb'
+
+if is_ianb and 'register' in sys.argv:
     if 'hg tip\n~~~~~~' in long_description:
-        print >> sys.stderr, (
-            "WARNING: hg tip is in index.txt")
+        sys.stderr.write("WARNING: hg tip is in index.txt\n")
 
 setup(name='virtualenv',
       version=version,

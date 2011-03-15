@@ -5,6 +5,7 @@ Helper script to rebuild virtualenv.py from virtualenv_support
 
 import re
 import os
+import sys
 
 here = os.path.dirname(__file__)
 script = os.path.join(here, '..', 'virtualenv.py')
@@ -28,17 +29,17 @@ def rebuild():
         filename = match.group(1)
         varname = match.group(2)
         data = match.group(3)
-        print 'Found reference to file %s' % filename
+        print('Found reference to file %s' % filename)
         f = open(os.path.join(here, '..', 'virtualenv_support', filename), 'rb')
         c = f.read()
         f.close()
         new_data = c.encode('zlib').encode('base64')
         if new_data == data:
-            print '  Reference up to date (%s bytes)' % len(c)
+            print('  Reference up to date (%s bytes)' % len(c))
             parts.append(match.group(0))
             continue
-        print '  Content changed (%s bytes -> %s bytes)' % (
-            zipped_len(data), len(c))
+        print('  Content changed (%s bytes -> %s bytes)' % (
+            zipped_len(data), len(c)))
         new_match = file_template % dict(
             filename=filename,
             varname=varname,
@@ -47,15 +48,15 @@ def rebuild():
     parts.append(content[last_pos:])
     new_content = ''.join(parts)
     if new_content != content:
-        print 'Content updated; overwriting...',
+        sys.stdout.write('Content updated; overwriting... ')
         f = open(script, 'wb')
         f.write(new_content)
         f.close()
-        print 'done.'
+        print('done.')
     else:
-        print 'No changes in content'
+        print('No changes in content')
     if match is None:
-        print 'No variables were matched/found'
+        print('No variables were matched/found')
 
 def zipped_len(data):
     if not data:

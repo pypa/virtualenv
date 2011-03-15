@@ -13,11 +13,17 @@ if os.path.normpath(distutils_path) == os.path.dirname(os.path.normpath(__file__
         "The virtualenv distutils package at %s appears to be in the same location as the system distutils?")
 else:
     __path__.insert(0, distutils_path)
-    exec open(os.path.join(distutils_path, '__init__.py')).read()
+    exec(open(os.path.join(distutils_path, '__init__.py')).read())
 
-import dist
-import sysconfig
-
+try:
+    import dist
+    import sysconfig
+except ImportError:
+    from distutils import dist, sysconfig
+try:
+    basestring
+except NameError:
+    basestring = str
 
 ## patch build_ext (distutils doesn't know how to get the libs directory
 ## path on windows - it hardcodes the paths around the patched sys.prefix)

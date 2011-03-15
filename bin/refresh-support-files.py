@@ -4,7 +4,10 @@ Refresh any files in ../virtualenv_support/ that come from elsewhere
 """
 
 import os
-import urllib
+try:
+    from urllib.request import urlopen
+except ImportError:
+    from urllib2 import urlopen
 import sys
 
 here = os.path.dirname(__file__)
@@ -17,17 +20,17 @@ files = [
     ('http://pypi.python.org/packages/2.4/s/setuptools/setuptools-0.6c11-py2.4.egg', 'setuptools-0.6c11-py2.4.egg'),
     ('http://python-distribute.org/distribute_setup.py', 'distribute_setup.py'),
     ('http://pypi.python.org/packages/source/d/distribute/distribute-0.6.14.tar.gz', 'distribute-0.6.14.tar.gz'),
-    ('http://pypi.python.org/packages/source/p/pip/pip-0.8.3.tar.gz', 'pip-0.8.3.tar.gz'),
+    ('http://pypi.python.org/packages/source/p/pip/pip-0.8.2.tar.gz', 'pip-0.8.2.tar.gz'),
     ]
 
 def main():
     for url, filename in files:
-        print 'fetching', url, '...',
+        sys.stdout.write('fetching %s ... ' % url)
         sys.stdout.flush()
-        f = urllib.urlopen(url)
+        f = urlopen(url)
         content = f.read()
         f.close()
-        print 'done.'
+        print('done.')
         filename = os.path.join(support_files, filename)
         if os.path.exists(filename):
             f = open(filename, 'rb')
@@ -36,9 +39,9 @@ def main():
         else:
             cur_content = ''
         if cur_content == content:
-            print '  %s up-to-date' % filename
+            print('  %s up-to-date' % filename)
         else:
-            print '  overwriting %s' % filename
+            print('  overwriting %s' % filename)
             f = open(filename, 'wb')
             f.write(content)
             f.close()
