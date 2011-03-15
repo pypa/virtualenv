@@ -699,8 +699,8 @@ def change_prefix(filename, dst_prefix):
 
     if sys.platform == "darwin":
         prefixes.extend((
-            sitedirs.append(os.path.join("/Library/Python", sys.version[:3], "site-packages")),
-            sitedirs.append(os.path.join(prefix, "Extras", "lib", "python")),
+            os.path.join("/Library/Python", sys.version[:3], "site-packages"),
+            os.path.join(sys.prefix, "Extras", "lib", "python"),
             os.path.join("~", "Library", "Python", sys.version[:3], "site-packages")))
 
     if hasattr(sys, 'real_prefix'):
