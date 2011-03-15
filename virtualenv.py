@@ -64,7 +64,7 @@ if sys.version_info[0] == 2:
 elif sys.version_info[0] == 3:
     # Some extra modules are needed for Python 3, but different ones
     # for different versions.
-    REQUIRED_MODULES.extend(['warnings', 'linecache', 'abc', 'io',
+    REQUIRED_MODULES.extend(['_abcoll', 'warnings', 'linecache', 'abc', 'io',
                              '_weakrefset', 'copyreg', 'tempfile', 'random',
                              '__future__', 'collections', 'keyword', 'tarfile',
                              'shutil', 'struct', 'copy'])
