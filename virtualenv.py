@@ -2,7 +2,9 @@
 """Create a "virtual" Python installation
 """
 
-virtualenv_version = "1.5.2"
+# If you change the version here, change it in setup.py 
+# and docs/conf.py as well.
+virtualenv_version = "1.5.2.post1"
 
 import sys
 import os

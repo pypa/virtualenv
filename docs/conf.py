@@ -42,23 +42,8 @@ copyright = '2007-2011, Ian Bicking, The Open Planning Project, The virtualenv d
 #
 # The short X.Y version.
 
-## Figure out the version from virtualenv.py:
-import re, os
-version_re = re.compile(
-    r'virtualenv_version = "(.*?)"')
-fp = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                       'virtualenv.py'))
-version = None
-for line in fp:
-    match = version_re.search(line)
-    if match:
-        release = match.group(1)
-        break
-else:
-    raise Exception("Cannot find version in virtualenv.py")
-fp.close()
-del re, os, line, fp, version_re
-version = '.'.join(release.split('.')[:2])
+release = "1.5.2.post1"
+version = ".".join(release.split(".")[:2])
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
