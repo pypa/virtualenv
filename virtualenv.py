@@ -696,6 +696,13 @@ def path_locations(home_dir):
 
 def change_prefix(filename, dst_prefix):
     prefixes = [sys.prefix]
+
+    if sys.platform == "darwin":
+        prefixes.extend((
+            sitedirs.append(os.path.join("/Library/Python", sys.version[:3], "site-packages")),
+            sitedirs.append(os.path.join(prefix, "Extras", "lib", "python")),
+            os.path.join("~", "Library", "Python", sys.version[:3], "site-packages")))
+
     if hasattr(sys, 'real_prefix'):
         prefixes.append(sys.real_prefix)
     prefixes = map(os.path.abspath, prefixes)
