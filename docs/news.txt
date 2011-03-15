@@ -1,6 +1,12 @@
 Changes & News
 --------------
 
+tip (unreleased)
+----------------
+
+* Fixed creation of virtualenvs on Mac OS X when standard library modules  
+  (readline) are installed outside the standard library.
+
 1.5.2
 -----
 
