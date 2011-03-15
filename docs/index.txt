@@ -64,32 +64,34 @@ The basic usage is::
 
 If you install it you can also just do ``virtualenv ENV``.
 
-This creates ``ENV/lib/python2.4/site-packages`` (or
-``ENV/lib/python2.5/site-packages`` on Python 2.5, etc), where any
-libraries you install will go.  It also creates ``ENV/bin/python``,
-which is a Python interpreter that uses this environment.  Anytime you
-use that interpreter (including when a script has
-``#!/path/to/ENV/bin/python`` in it) the libraries in that environment
-will be used.  (**Note for Windows:** scripts and executables on
-Windows go in ``ENV\Scripts\``; everywhere you see ``bin/`` replace it
-with ``Scripts\``)
+This creates ``ENV/lib/pythonX.X/site-packages``, where any libraries you
+install will go.  It also creates ``ENV/bin/python``, which is a Python
+interpreter that uses this environment.  Anytime you use that interpreter
+(including when a script has ``#!/path/to/ENV/bin/python`` in it) the libraries
+in that environment will be used.
 
-It also installs `Setuptools
-<http://peak.telecommunity.com/DevCenter/setuptools>`_ for you, and if
-you use ``ENV/bin/easy_install`` the packages will be installed into
-the environment.
-
-If you use the ``--distribute`` option, it will install `distribute
-<http://pypi.python.org/pypi/distribute>`_ for you, instead of setuptools,
-and if you use `ENV/bin/easy_install`` the packages will be installed into the
-environment.
-
-To use Distribute just call virtualenv like this::
+It also installs either `Setuptools
+<http://peak.telecommunity.com/DevCenter/setuptools>`_ or `distribute
+<http://pypi.python.org/pypi/distribute>`_ into the environment. To use
+Distribute instead of setuptools, just call virtualenv like this::
 
     $ python virtualenv.py --distribute ENV
 
-You can also set the environment variable VIRTUALENV_USE_DISTRIBUTE (since 1.4.4) 
-and be a good Comrade.
+You can also set the environment variable VIRTUALENV_USE_DISTRIBUTE.
+
+A new virtualenv also includes the `pip <http://pypy.python.org/pypi/pip>`_
+installer, so you can use `ENV/bin/pip`` to install additional packages into
+the environment.
+
+Windows Notes
+~~~~~~~~~~~~~
+
+Some paths within the virtualenv are slightly different on Windows: scripts and
+executables on Windows go in ``ENV\Scripts\`` instead of ``ENV/bin/`` and
+libraries go in ``ENV\Lib\`` rather than ``ENV/lib/``.
+
+To create a virtualenv under a path with spaces in it on Windows, you'll need
+the `win32api <http://sourceforge.net/projects/pywin32/>`_ library installed.
 
 PyPy Support
 ~~~~~~~~~~~~
