@@ -5,3 +5,5 @@ recursive-exclude virtualenv_support *.py
 recursive-exclude docs/_templates *.*
 include virtualenv_support/__init__.py
 include *.py
+include AUTHORS.txt
+include LICENSE.txt
