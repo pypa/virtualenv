@@ -2,3 +2,4 @@ virtualenv.egg-info
 build
 dist
 docs/_build
+.DS_Store
