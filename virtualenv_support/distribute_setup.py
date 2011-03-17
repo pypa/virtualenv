@@ -1,3 +1,4 @@
+#!python
 """Bootstrap distribute installation
 
 If you want to use setuptools in your package's setup.py, just include this
@@ -45,8 +46,8 @@ except ImportError:
             args = [quote(arg) for arg in args]
         return os.spawnl(os.P_WAIT, sys.executable, *args) == 0
 
-DEFAULT_VERSION = "0.6.15dev"
-DEFAULT_URL = "file:///home/vinay/tools/distribute/dist/"
+DEFAULT_VERSION = "0.6.15"
+DEFAULT_URL = "http://pypi.python.org/packages/source/d/distribute/"
 SETUPTOOLS_FAKED_VERSION = "0.6c11"
 
 SETUPTOOLS_PKG_INFO = """\
