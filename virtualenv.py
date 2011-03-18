@@ -426,8 +426,8 @@ def rmtree(dir):
 
 def make_exe(fn):
     if hasattr(os, 'chmod'):
-        oldmode = os.stat(fn).st_mode & 0o7777
-        newmode = (oldmode | 0o555) & 0o7777
+        oldmode = os.stat(fn).st_mode & 0xFFF
+        newmode = (oldmode | 0x16D) & 0xFFF
         os.chmod(fn, newmode)
         logger.info('Changed mode of %s to %s', fn, oct(newmode))
 
