@@ -15,28 +15,19 @@ import re
 
 here = os.path.dirname(os.path.abspath(__file__))
 
-## Figure out the version from virtualenv.py:
-version_re = re.compile(
-    r'virtualenv_version = "(.*?)"')
-fp = open(os.path.join(here, 'virtualenv.py'))
-version = None
-for line in fp:
-    match = version_re.search(line)
-    if match:
-        version = match.group(1)
-        break
-else:
-    raise Exception("Cannot find version in virtualenv.py")
-fp.close()
-
 ## Get long_description from index.txt:
 f = open(os.path.join(here, 'docs', 'index.txt'))
 long_description = f.read().strip()
 long_description = long_description.split('split here', 1)[1]
 f.close()
+f = open(os.path.join(here, 'docs', 'news.txt'))
+long_description += "\n\n" + f.read()
+f.close()
 
 setup(name='virtualenv',
-      version=version,
+      # If you change the version here, change it in virtualenv.py and 
+      # docs/conf.py as well
+      version="1.5.2.post1",
       description="Virtual Python Environment builder",
       long_description=long_description,
       classifiers=[

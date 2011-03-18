@@ -2,13 +2,13 @@ Changes & News
 --------------
 
 tip (unreleased)
-----------------
+~~~~~~~~~~~~~~~~
 
 * Fixed creation of virtualenvs on Mac OS X when standard library modules  
   (readline) are installed outside the standard library.
 
 1.5.2
------
+~~~~~
 
 * Moved main repository to Github: https://github.com/pypa/virtualenv
 
@@ -23,14 +23,14 @@ tip (unreleased)
 * Moved virtualenv to Github at https://github.com/pypa/virtualenv
 
 1.5.1
------
+~~~~~
 
 * Added ``_weakrefset`` requirement for Python 2.7.1.
 
 * Fixed Windows regression in 1.5
 
 1.5
----
+~~~
 
 * Include pip 0.8.1.
 
@@ -47,12 +47,12 @@ tip (unreleased)
 * Add fish and csh activate scripts.
 
 1.4.9
------
+~~~~~
 
 * Include pip 0.7.2
 
 1.4.8
------
+~~~~~
 
 * Fix for Mac OS X Framework builds that use
   ``--universal-archs=intel``
@@ -66,7 +66,7 @@ tip (unreleased)
 * Include pip 0.7.1
 
 1.4.7
------
+~~~~~
 
 * Include pip 0.7
 

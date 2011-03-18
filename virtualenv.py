@@ -1,7 +1,9 @@
 """Create a "virtual" Python installation
 """
 
-virtualenv_version = "1.5.2"
+# If you change the version here, change it in setup.py 
+# and docs/conf.py as well.
+virtualenv_version = "1.5.2.post1"
 
 import base64
 import sys
@@ -730,8 +732,8 @@ def call_subprocess(cmd, show_stdout=True,
                     remove_from_env=None):
     cmd_parts = []
     for part in cmd:
-        if len(part) > 40:
-            part = part[:30]+"..."+part[-5:]
+        if len(part) > 45:
+            part = part[:20]+"..."+part[-20:]
         if ' ' in part or '\n' in part or '"' in part or "'" in part:
             part = '"%s"' % part.replace('"', '\\"')
         cmd_parts.append(part)
