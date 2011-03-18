@@ -39,6 +39,7 @@ py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
 
 is_jython = sys.platform.startswith('java')
 is_pypy = hasattr(sys, 'pypy_version_info')
+abiflags = getattr(sys, 'abiflags', '')
 
 if is_pypy:
     expected_exe = 'pypy'
@@ -56,21 +57,24 @@ REQUIRED_MODULES = ['os', 'posix', 'posixpath', 'nt', 'ntpath', 'genericpath',
 
 REQUIRED_FILES = ['lib-dynload', 'config']
 
-if sys.version_info[0] == 2:
-    if sys.version_info[:2] >= (2, 6):
+majver, minver = sys.version_info[:2]
+if majver == 2:
+    if minver >= 6:
         REQUIRED_MODULES.extend(['warnings', 'linecache', '_abcoll', 'abc'])
-    if sys.version_info[:2] >= (2, 7):
+    if minver >= 7:
         REQUIRED_MODULES.extend(['_weakrefset'])
-    if sys.version_info[:2] <= (2, 3):
+    if minver <= 3:
         REQUIRED_MODULES.extend(['sets', '__future__'])
-elif sys.version_info[0] == 3:
+elif majver == 3:
     # Some extra modules are needed for Python 3, but different ones
     # for different versions.
     REQUIRED_MODULES.extend(['_abcoll', 'warnings', 'linecache', 'abc', 'io',
                              '_weakrefset', 'copyreg', 'tempfile', 'random',
                              '__future__', 'collections', 'keyword', 'tarfile',
                              'shutil', 'struct', 'copy'])
-    if sys.version_info[1] == 3:
+    if minver >= 2:
+        REQUIRED_FILES[-1] = 'config-%s' % majver
+    if minver == 3:
         # The whole list of 3.3 modules is reproduced below - the current
         # uncommented ones are required for 3.3 as of now, but more may be
         # added as 3.3 development continues.
@@ -374,6 +378,12 @@ def mkdir(path):
     else:
         logger.info('Directory %s already exists', path)
 
+def copyfileordir(src, dest):
+    if os.path.isdir(src):
+        shutil.copytree(src, dest, True)
+    else:
+        shutil.copy2(src, dest)
+
 def copyfile(src, dest, symlink=True):
     if not os.path.exists(src):
         # Some bad symlink in the src
@@ -385,15 +395,20 @@ def copyfile(src, dest, symlink=True):
     if not os.path.exists(os.path.dirname(dest)):
         logger.info('Creating parent directories for %s' % os.path.dirname(dest))
         os.makedirs(os.path.dirname(dest))
+    if not os.path.islink(src):
+        srcpath = os.path.abspath(src)
+    else:
+        srcpath = os.readlink(src)
     if symlink and hasattr(os, 'symlink'):
         logger.info('Symlinking %s', dest)
-        os.symlink(os.path.abspath(src), dest)
+        try:
+            os.symlink(srcpath, dest)
+        except NotImplementedError:
+            logger.info('Symlinking failed, copying to %s', dest)
+            copyfileordir(src, dest)
     else:
         logger.info('Copying to %s', dest)
-        if os.path.isdir(src):
-            shutil.copytree(src, dest, True)
-        else:
-            shutil.copy2(src, dest)
+        copyfileordir(src, dest)
 
 def writefile(dest, content, overwrite=True):
     if not os.path.exists(dest):
@@ -721,7 +736,7 @@ def main():
 
     create_environment(home_dir, site_packages=not options.no_site_packages, clear=options.clear,
                        unzip_setuptools=options.unzip_setuptools,
-                       use_distribute=options.use_distribute or sys.version_info[0] > 2,
+                       use_distribute=options.use_distribute or majver > 2,
                        prompt=options.prompt)
     if 'after_install' in globals():
         after_install(options, home_dir)
@@ -858,7 +873,7 @@ def path_locations(home_dir):
         bin_dir = join(home_dir, 'bin')
     else:
         lib_dir = join(home_dir, 'lib', py_version)
-        inc_dir = join(home_dir, 'include', py_version)
+        inc_dir = join(home_dir, 'include', py_version + abiflags)
         bin_dir = join(home_dir, 'bin')
     return home_dir, lib_dir, inc_dir, bin_dir
 
@@ -941,7 +956,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             if not os.path.isdir(stdlib_dir):
                 continue
             for fn in os.listdir(stdlib_dir):
-                if fn != 'site-packages' and os.path.splitext(fn)[0] in REQUIRED_FILES:
+                bn = os.path.splitext(fn)[0]
+                if fn != 'site-packages' and bn in REQUIRED_FILES:
                     copyfile(join(stdlib_dir, fn), join(lib_dir, fn))
         # ...and modules
         copy_required_modules(home_dir)
@@ -969,7 +985,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     if is_pypy:
         stdinc_dir = join(prefix, 'include')
     else:
-        stdinc_dir = join(prefix, 'include', py_version)
+        stdinc_dir = join(prefix, 'include', py_version + abiflags)
     if os.path.exists(stdinc_dir):
         copyfile(stdinc_dir, inc_dir)
     else:

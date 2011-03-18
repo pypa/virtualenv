@@ -4,6 +4,8 @@ Changes & News
 tip (unreleased)
 ~~~~~~~~~~~~~~~~
 
+* Added Python 3 support! Huge thanks to Vinay Sajip and Vitaly Babiy.
+
 * Fixed creation of virtualenvs on Mac OS X when standard library modules  
   (readline) are installed outside the standard library.
 
