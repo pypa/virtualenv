@@ -1,7 +1,7 @@
 """Create a "virtual" Python installation
 """
 
-virtualenv_version = "1.5.1"
+virtualenv_version = "1.5.2"
 
 import base64
 import sys
@@ -39,7 +39,7 @@ is_jython = sys.platform.startswith('java')
 is_pypy = hasattr(sys, 'pypy_version_info')
 
 if is_pypy:
-    expected_exe = 'pypy-c'
+    expected_exe = 'pypy'
 elif is_jython:
     expected_exe = 'jython'
 else:

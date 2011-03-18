@@ -35,18 +35,6 @@ long_description = f.read().strip()
 long_description = long_description.split('split here', 1)[1]
 f.close()
 
-## A warning just for Ian (related to distribution):
-try:
-    import getpass
-except ImportError:
-    is_ianb = False
-else:
-    is_ianb = getpass.getuser() == 'ianb'
-
-if is_ianb and 'register' in sys.argv:
-    if 'hg tip\n~~~~~~' in long_description:
-        sys.stderr.write("WARNING: hg tip is in index.txt\n")
-
 setup(name='virtualenv',
       version=version,
       description="Virtual Python Environment builder",
