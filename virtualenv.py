@@ -68,9 +68,7 @@ elif sys.version_info[0] == 3:
                              '_weakrefset', 'copyreg', 'tempfile', 'random',
                              '__future__', 'collections', 'keyword', 'tarfile',
                              'shutil', 'struct', 'copy'])
-    if sys.version_info[1] == 2:
-        REQUIRED_MODULES.append('_abcoll')
-    else:
+    if sys.version_info[1] == 3:
         # The whole list of 3.3 modules is reproduced below - the current
         # uncommented ones are required for 3.3 as of now, but more may be
         # added as 3.3 development continues.
@@ -426,8 +424,8 @@ def rmtree(dir):
 
 def make_exe(fn):
     if hasattr(os, 'chmod'):
-        oldmode = os.stat(fn).st_mode & 0xFFF
-        newmode = (oldmode | 0x16D) & 0xFFF
+        oldmode = os.stat(fn).st_mode & 0o7777
+        newmode = (oldmode | 0o555) & 0o7777
         os.chmod(fn, newmode)
         logger.info('Changed mode of %s to %s', fn, oct(newmode))
 
