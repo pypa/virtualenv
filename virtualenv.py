@@ -371,6 +371,10 @@ class Logger(object):
 
     level_for_integer = classmethod(level_for_integer)
 
+# create a silent logger just to prevent this from being undefined
+# will be overridden with requested verbosity main() is called.
+logger = Logger([(Logger.LEVELS[-1], sys.stdout)])
+
 def mkdir(path):
     if not os.path.exists(path):
         logger.info('Creating %s', path)
