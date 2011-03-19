@@ -407,7 +407,7 @@ def copyfile(src, dest, symlink=True):
         logger.info('Symlinking %s', dest)
         try:
             os.symlink(srcpath, dest)
-        except NotImplementedError:
+        except (OSError, NotImplementedError):
             logger.info('Symlinking failed, copying to %s', dest)
             copyfileordir(src, dest)
     else:
