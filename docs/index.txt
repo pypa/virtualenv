@@ -29,7 +29,7 @@ It is licensed under an
 
 You can install it with ``easy_install virtualenv``, or from the `git
 repository <https://github.com/pypa/virtualenv>`_ or from a `tarball
-<https://github.com/pypa/pip/tarball/master#egg=virtualenv-dev>`_
+<https://github.com/pypa/virtualenv/tarball/master#egg=virtualenv-dev>`_
 ``easy_install virtualenv==dev``.
 
 What It Does
