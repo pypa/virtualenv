@@ -27,10 +27,10 @@ Project <http://openplans.org>`_ and is now maintained by a
 It is licensed under an
 `MIT-style permissive license <https://github.com/pypa/virtualenv/raw/master/LICENSE.txt>`_.
 
-You can install it with ``easy_install virtualenv``, or from the `hg
+You can install it with ``easy_install virtualenv``, or from the `git
 repository <https://github.com/pypa/virtualenv>`_ or from a `tarball
-<https://github.com/pypa/pip/tarball/master#egg=virtualenv-tip>`_
-``easy_install virtualenv==tip``.
+<https://github.com/pypa/pip/tarball/master#egg=virtualenv-dev>`_
+``easy_install virtualenv==dev``.
 
 What It Does
 ------------
