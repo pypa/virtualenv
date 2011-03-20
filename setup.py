@@ -11,7 +11,6 @@ except ImportError:
         kw = {}
     else:
         kw = {'scripts': ['scripts/virtualenv']}
-import re
 
 here = os.path.dirname(os.path.abspath(__file__))
 
@@ -25,7 +24,7 @@ long_description += "\n\n" + f.read()
 f.close()
 
 setup(name='virtualenv',
-      # If you change the version here, change it in virtualenv.py and 
+      # If you change the version here, change it in virtualenv.py and
       # docs/conf.py as well
       version="1.5.2.post1",
       description="Virtual Python Environment builder",
