@@ -1129,7 +1129,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         proc = subprocess.Popen(cmd,
                             stdout=subprocess.PIPE)
         proc_stdout, proc_stderr = proc.communicate()
-    except OSError, e:
+    except OSError:
+        e = sys.exc_info()[1]
         if e.errno == errno.EACCES:
             logger.fatal('ERROR: The executable %s could not be run: %s' % (py_executable, e))
             sys.exit(100)
