@@ -14,6 +14,7 @@ import shutil
 import logging
 import tempfile
 import zlib
+import errno
 import distutils.sysconfig
 try:
     import subprocess
@@ -1124,9 +1125,17 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         py_executable = '"%s"' % py_executable
     cmd = [py_executable, '-c', 'import sys; print(sys.prefix)']
     logger.info('Testing executable with %s %s "%s"' % tuple(cmd))
-    proc = subprocess.Popen(cmd,
+    try:
+        proc = subprocess.Popen(cmd,
                             stdout=subprocess.PIPE)
-    proc_stdout, proc_stderr = proc.communicate()
+        proc_stdout, proc_stderr = proc.communicate()
+    except OSError, e:
+        if e.errno == errno.EACCES:
+            logger.fatal('ERROR: The executable %s could not be run: %s' % (py_executable, e))
+            sys.exit(100)
+        else:
+          raise e
+
     proc_stdout = proc_stdout.strip().decode(sys.getdefaultencoding())
     proc_stdout = os.path.normcase(os.path.abspath(proc_stdout))
     if proc_stdout != os.path.normcase(os.path.abspath(home_dir)):
