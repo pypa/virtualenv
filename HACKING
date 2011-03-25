@@ -1,0 +1,11 @@
+virtualenv
+==========
+
+See docs/index.txt for user documentation
+
+Contributor notes
+-----------------
+
+* virtualenv is designed to work on python 2 and 3 with a single code base
+  This particularly affects exception handling use sys.exc_info()[1] to get at
+  exception objects.
