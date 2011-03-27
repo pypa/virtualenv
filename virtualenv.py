@@ -1165,8 +1165,16 @@ def install_activate(home_dir, bin_dir, prompt=None):
     if sys.platform == 'win32' or is_jython and os._name == 'nt':
         files = {'activate.bat': ACTIVATE_BAT,
                  'deactivate.bat': DEACTIVATE_BAT}
-        if os.environ.get('OS') == 'Windows_NT' and os.environ.get('OSTYPE') == 'cygwin':
-            files['activate'] = ACTIVATE_SH
+        if os.environ.get('OS') == 'Windows_NT':
+            if os.environ.get('OSTYPE') == 'cygwin':
+                files['activate'] = ACTIVATE_SH
+        
+            elif os.environ.get('MSYSTEM') == 'MINGW32':
+                # MSYS needs paths of the form /c/path/to/file
+                drive, tail = os.path.splitdrive(os.path.abspath(home_dir).replace(os.sep, '/'))
+                home_dir_msys = (drive and '/%s%s' or '%s%s') % (drive[:1], tail)
+                files['activate'] = ACTIVATE_SH.replace('__VIRTUAL_ENV__', home_dir_msys)
+            
     else:
         files = {'activate': ACTIVATE_SH}
 
