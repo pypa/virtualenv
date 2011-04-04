@@ -21,7 +21,7 @@ files = [
     ('http://python-distribute.org/distribute_setup.py', 'distribute_setup.py'),
     ('http://pypi.python.org/packages/source/d/distribute/distribute-0.6.15.tar.gz', 'distribute-0.6.15.tar.gz'),
     ('http://pypi.python.org/packages/source/p/pip/pip-0.8.2.tar.gz', 'pip-0.8.2.tar.gz'),
-    ]
+]
 
 def main():
     for url, filename in files:
