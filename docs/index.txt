@@ -23,7 +23,7 @@ of `virtual-python
 
 It was written by Ian Bicking, sponsored by the `Open Planning
 Project <http://openplans.org>`_ and is now maintained by a
-`group of developers <https://github.com/pypa/virtualenv/raw/master/AUTHORS.txt>`.
+`group of developers <https://github.com/pypa/virtualenv/raw/master/AUTHORS.txt>`_.
 It is licensed under an
 `MIT-style permissive license <https://github.com/pypa/virtualenv/raw/master/LICENSE.txt>`_.
 
