@@ -26,7 +26,7 @@ f.close()
 setup(name='virtualenv',
       # If you change the version here, change it in virtualenv.py and
       # docs/conf.py as well
-      version="1.5.2.post2",
+      version="1.6",
       description="Virtual Python Environment builder",
       long_description=long_description,
       classifiers=[
@@ -45,7 +45,7 @@ setup(name='virtualenv',
       keywords='setuptools deployment installation distutils',
       author='Ian Bicking',
       author_email='ianb@colorstudy.com',
-      maintainer='Jannis Leidel, Carl Meyer, and Brian Rosner',
+      maintainer='Jannis Leidel, Carl Meyer and Brian Rosner',
       maintainer_email='python-virtualenv@groups.google.com',
       url='http://www.virtualenv.org',
       license='MIT',

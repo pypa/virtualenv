@@ -3,7 +3,7 @@
 
 # If you change the version here, change it in setup.py 
 # and docs/conf.py as well.
-virtualenv_version = "1.5.2.post1"
+virtualenv_version = "1.6"
 
 import base64
 import sys
