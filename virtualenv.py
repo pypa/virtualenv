@@ -1257,7 +1257,7 @@ def fixup_scripts(home_dir):
     shebang = '#!%s/bin/python' % os.path.normcase(os.path.abspath(home_dir))
     # This is what we'll put:
     new_shebang = '#!/usr/bin/env python%s' % sys.version[:3]
-    activate = "import os; activate_this=os.path.join(os.path.dirname(__file__), 'activate_this.py'); execfile(activate_this, dict(__file__=activate_this)); del os, activate_this"
+    activate = "import os; activate_this=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'activate_this.py'); execfile(activate_this, dict(__file__=activate_this)); del os, activate_this"
     if sys.platform == 'win32':
         bin_suffix = 'Scripts'
     else:
