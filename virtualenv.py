@@ -685,12 +685,12 @@ def main():
 
     default_search_dirs = file_search_dirs()
     parser.add_option(
-        '--search-dir',
+        '--extra-search-dir',
         dest="search_dirs",
         action="append",
         default=default_search_dirs,
         help="Directory to look for setuptools/distribute/pip distributions in. "
-        "You can add any number of additional --search-dir paths.")
+        "You can add any number of additional --extra-search-dir paths.")
 
     parser.add_option(
         '--prompt=',
