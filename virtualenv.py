@@ -714,16 +714,16 @@ def main():
         "You can add any number of additional --extra-search-dir paths.")
 
     parser.add_option(
-        '--prompt=',
-        dest='prompt',
-        help='Provides an alternative prompt prefix for this environment')
-
-    parser.add_option(
         '--never-download',
         dest="never_download",
         action="store_true",
         help="Never download anything from the network.  Instead, virtualenv will fail "
         "if local distributions of setuptools/distribute/pip are not present.")
+
+    parser.add_option(
+        '--prompt=',
+        dest='prompt',
+        help='Provides an alternative prompt prefix for this environment')
 
     if 'extend_parser' in globals():
         extend_parser(parser)
