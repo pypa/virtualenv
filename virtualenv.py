@@ -458,7 +458,7 @@ def _find_file(filename, dirs):
     return filename
 
 def _install_req(py_executable, unzip=False, distribute=False,
-                 user_search_dir=None):
+                 search_dirs=None):
     if not distribute:
         setup_fn = 'setuptools-0.6c11-py%s.egg' % sys.version[:3]
         project_name = 'setuptools'
@@ -480,8 +480,6 @@ def _install_req(py_executable, unzip=False, distribute=False,
                               "the virtualenv.")
         except ImportError:
             pass
-
-    search_dirs = file_search_dirs(user_search_dir)
 
     if setup_fn is not None:
         setup_fn = _find_file(setup_fn, search_dirs)
@@ -555,7 +553,7 @@ def _install_req(py_executable, unzip=False, distribute=False,
         if is_jython and os._name == 'nt':
             os.remove(ez_setup)
 
-def file_search_dirs(user_search_dir=None):
+def file_search_dirs():
     here = os.path.dirname(os.path.abspath(__file__))
     dirs = ['.', here,
             join(here, 'virtualenv_support')]
@@ -567,20 +565,18 @@ def file_search_dirs(user_search_dir=None):
             pass
         else:
             dirs.append(os.path.join(os.path.dirname(virtualenv.__file__), 'virtualenv_support'))
-    if user_search_dir is not None:
-        dirs.insert(0, user_search_dir)
     return [d for d in dirs if os.path.isdir(d)]
 
-def install_setuptools(py_executable, unzip=False, user_search_dir=None):
-    _install_req(py_executable, unzip, user_search_dir=user_search_dir)
+def install_setuptools(py_executable, unzip=False, search_dirs=None):
+    _install_req(py_executable, unzip, search_dirs=search_dirs)
 
-def install_distribute(py_executable, unzip=False, user_search_dir=None):
-    _install_req(py_executable, unzip, distribute=True, user_search_dir=user_search_dir)
+def install_distribute(py_executable, unzip=False, search_dirs=None):
+    _install_req(py_executable, unzip, distribute=True, search_dirs=search_dirs)
 
 _pip_re = re.compile(r'^pip-.*(zip|tar.gz|tar.bz2|tgz|tbz)$', re.I)
-def install_pip(py_executable, user_search_dir=None):
+def install_pip(py_executable, search_dirs=None):
     filenames = []
-    for dir in file_search_dirs(user_search_dir):
+    for dir in search_dirs:
         filenames.extend([join(dir, fn) for fn in os.listdir(dir)
                           if _pip_re.search(fn)])
     filenames = [(os.path.basename(filename).lower(), i, filename) for i, filename in enumerate(filenames)]
@@ -597,7 +593,8 @@ def install_pip(py_executable, user_search_dir=None):
     if filename == 'pip':
         logger.info('Installing pip from network...')
     else:
-        logger.info('Installing %s' % os.path.basename(filename))
+        logger.info('Installing existing %s distribution: %s' % (
+                os.path.basename(filename), filename))
     logger.indent += 2
     def _filter_setup(line):
         return filter_ez_setup(line, 'pip')
@@ -686,10 +683,14 @@ def main():
         help='Use Distribute instead of Setuptools. Set environ variable '
         'VIRTUALENV_USE_DISTRIBUTE to make it the default ')
 
+    default_search_dirs = file_search_dirs()
     parser.add_option(
         '--search-dir',
-        dest="search_dir",
-        help="Directory to look for setuptools/distribute/pip distributions in. ")
+        dest="search_dirs",
+        action="append",
+        default=default_search_dirs,
+        help="Directory to look for setuptools/distribute/pip distributions in. "
+        "You can add any number of additional --search-dir paths.")
 
     parser.add_option(
         '--prompt=',
@@ -752,7 +753,7 @@ def main():
                        unzip_setuptools=options.unzip_setuptools,
                        use_distribute=options.use_distribute or majver > 2,
                        prompt=options.prompt,
-                       user_search_dir=options.search_dir)
+                       search_dirs=options.search_dirs)
     if 'after_install' in globals():
         after_install(options, home_dir)
 
@@ -829,7 +830,7 @@ def call_subprocess(cmd, show_stdout=True,
 
 def create_environment(home_dir, site_packages=True, clear=False,
                        unzip_setuptools=False, use_distribute=False,
-                       prompt=None, user_search_dir=None):
+                       prompt=None, search_dirs=None):
     """
     Creates a new environment in ``home_dir``.
 
@@ -848,11 +849,11 @@ def create_environment(home_dir, site_packages=True, clear=False,
     install_distutils(home_dir)
 
     if use_distribute or os.environ.get('VIRTUALENV_USE_DISTRIBUTE'):
-        install_distribute(py_executable, unzip=unzip_setuptools, user_search_dir=user_search_dir)
+        install_distribute(py_executable, unzip=unzip_setuptools, search_dirs=search_dirs)
     else:
-        install_setuptools(py_executable, unzip=unzip_setuptools, user_search_dir=user_search_dir)
+        install_setuptools(py_executable, unzip=unzip_setuptools, search_dirs=search_dirs)
 
-    install_pip(py_executable, user_search_dir=user_search_dir)
+    install_pip(py_executable, search_dirs=search_dirs)
 
     install_activate(home_dir, bin_dir, prompt)
 
