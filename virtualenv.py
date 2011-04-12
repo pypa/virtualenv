@@ -595,6 +595,7 @@ def install_pip(py_executable, search_dirs=None):
     else:
         logger.info('Installing existing %s distribution: %s' % (
                 os.path.basename(filename), filename))
+    logger.start_progress('Installing pip...')
     logger.indent += 2
     def _filter_setup(line):
         return filter_ez_setup(line, 'pip')
@@ -603,6 +604,7 @@ def install_pip(py_executable, search_dirs=None):
                         filter_stdout=_filter_setup)
     finally:
         logger.indent -= 2
+        logger.end_progress()
 
 def filter_ez_setup(line, project_name='setuptools'):
     if not line.strip():
