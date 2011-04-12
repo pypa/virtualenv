@@ -277,6 +277,30 @@ layout).
 Currently the ``--no-site-packages`` option will not be honored if you
 use this on an environment.
 
+The ``--extra-search-dir`` Option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When it creates a new environment, virtualenv installs either
+setuptools or distribute, and pip.  In normal operation, the latest
+releases of these packages are fetched from the `Python Package Index
+<http://pypi.python.org>`_ (PyPI). In some circumstances, this
+behavior may not be wanted, for example if you are using virtualenv
+during a deployment and do not want to depend on Internet access and
+PyPI availability.
+
+As an alternative, you can provide your own versions of setuptools,
+distribute and/or pip on the filesystem, and tell virtualenv to use
+those distributions instead of downloading them from the Internet.  To
+use this feature, pass one or more ``--extra-search-dir`` options to
+virtualenv like this::
+
+    $ virtualenv --extra-search-dir=/path/to/distributions ENV
+
+The ``/path/to/distributions`` path should point to a directory that
+contains setuptools, distribute and/or pip distributions.  Setuptools
+distributions must be ``.egg`` files; distribute and pip distributions
+should be `.tar.gz` source distributions.
+
 Compare & Contrast with Alternatives
 ------------------------------------
 
