@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Create a "virtual" Python installation
 """
 
