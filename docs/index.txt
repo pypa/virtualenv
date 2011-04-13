@@ -301,6 +301,20 @@ contains setuptools, distribute and/or pip distributions.  Setuptools
 distributions must be ``.egg`` files; distribute and pip distributions
 should be `.tar.gz` source distributions.
 
+Virtualenv will still download these packages if no satisfactory local
+distributions are found.
+
+If you are really concerned about virtualenv fetching these packages
+from the Internet and want to ensure that it never will, you can also
+provide an option ``--never-download`` like so::
+
+    $ virtualenv --extra-search-dir=/path/to/distributions --never-download ENV
+
+If this option is provided, virtualenv will never try to download
+setuptools/distribute or pip. Instead, it will exit with status code 1
+if it fails to find local distributions for any of these required
+packages.
+
 Compare & Contrast with Alternatives
 ------------------------------------
 
