@@ -459,6 +459,10 @@ def _find_file(filename, dirs):
 
 def _install_req(py_executable, unzip=False, distribute=False,
                  search_dirs=None, never_download=False):
+
+    if search_dirs is None:
+        search_dirs = file_search_dirs()
+
     if not distribute:
         setup_fn = 'setuptools-0.6c11-py%s.egg' % sys.version[:3]
         project_name = 'setuptools'
@@ -588,7 +592,10 @@ def install_distribute(py_executable, unzip=False,
                  search_dirs=search_dirs, never_download=never_download)
 
 _pip_re = re.compile(r'^pip-.*(zip|tar.gz|tar.bz2|tgz|tbz)$', re.I)
-def install_pip(py_executable, search_dirs=None, never_download=False):
+def install_pip(py_executable, search_dirs=None, never_download=False):    
+    if search_dirs is None:
+        search_dirs = file_search_dirs()
+
     filenames = []
     for dir in search_dirs:
         filenames.extend([join(dir, fn) for fn in os.listdir(dir)
