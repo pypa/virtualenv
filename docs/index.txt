@@ -41,7 +41,7 @@ The basic problem being addressed is one of dependencies and versions,
 and indirectly permissions.  Imagine you have an application that
 needs version 1 of LibFoo, but another application requires version
 2.  How can you use both these applications?  If you install
-everything into ``/usr/lib/python2.4/site-packages`` (or whatever your
+everything into ``/usr/lib/python2.7/site-packages`` (or whatever your
 platform's standard location is), it's easy to end up in a situation
 where you unintentionally upgrade an application that shouldn't be
 upgraded.
@@ -56,7 +56,7 @@ Also, what if you can't install packages into the global
 In all these cases, ``virtualenv`` can help you.  It creates an
 environment that has its own installation directories, that doesn't
 share libraries with other virtualenv environments (and optionally
-doesn't use the globally installed libraries either).
+doesn't access the globally installed libraries either).
 
 The basic usage is::
 
@@ -184,13 +184,15 @@ On Posix systems you can do::
 
   $ source bin/activate
 
-This will change your ``$PATH`` to point to the virtualenv ``bin/``
-directory.  Unlike workingenv, this is all it
-does; it's a convenience.  But if you use the complete path like
-``/path/to/env/bin/python script.py`` you do not need to activate the
-environment first.  You have to use ``source`` because it changes the
-environment in-place.  After activating an environment you can use the
-function ``deactivate`` to undo the changes.
+This will change your ``$PATH`` to point to the virtualenv's ``bin/``
+directory.  (You have to use ``source`` because it changes your shell
+environment in-place.) This is all it does; it's purely a convenience.  If
+you directly run a script or the python interpreter from the virtualenv's
+``bin/`` directory (e.g.  ``path/to/env/bin/pip`` or
+``/path/to/env/bin/python script.py``) there's no need for activation. 
+
+After activating an environment you can use the function ``deactivate`` to
+undo the changes to your ``$PATH``.
 
 The ``activate`` script will also modify your shell prompt to indicate
 which environment is currently active.  You can disable this behavior,
@@ -231,13 +233,14 @@ can setup the environment like::
     activate_this = '/path/to/env/bin/activate_this.py'
     execfile(activate_this, dict(__file__=activate_this))
 
-This will change ``sys.path`` and even change ``sys.prefix``, but also
-allow you to use an existing interpreter.  Items in your environment
-will show up first on ``sys.path``, before global items.  However,
-this cannot undo the activation of other environments, or modules that
-have been imported.  You shouldn't try to, for instance, activate an
-environment before a web request; you should activate *one*
-environment as early as possible, and not do it again in that process.
+This will change ``sys.path`` and even change ``sys.prefix``, but also allow
+you to use an existing interpreter.  Items in your environment will show up
+first on ``sys.path``, before global items.  However, global items will
+always be accessible -- this technique does not support the
+``--no-site-packages`` flag.  Also, this cannot undo the activation of other
+environments, or modules that have been imported.  You shouldn't try to, for
+instance, activate an environment before a web request; you should activate
+*one* environment as early as possible, and not do it again in that process.
 
 Making Environments Relocatable
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
