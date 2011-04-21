@@ -1,7 +1,5 @@
 import virtualenv
 from mock import patch, Mock
-import os.path
-import sys
 
 
 def test_version():
@@ -33,11 +31,11 @@ def test_resolve_intepreter_with_nonexistant_interpreter(mock_abspath, mock_exis
     mock_exists.return_value = False
 
     try:
-        exe = virtualenv.resolve_interpreter("/usr/bin/python42")
+        virtualenv.resolve_interpreter("/usr/bin/python42")
         assert False, "Should raise exception"
     except SystemExit:
         pass
-        
+
     mock_abspath.assert_called_with("/usr/bin/python42")
     mock_exists.assert_called_with("/usr/bin/python42")
 
@@ -51,11 +49,11 @@ def test_resolve_intepreter_with_invalid_interpreter(mock_abspath, mock_exists):
     virtualenv.is_executable = Mock(return_value=False)
 
     try:
-        exe = virtualenv.resolve_interpreter("/usr/bin/python42")
+        virtualenv.resolve_interpreter("/usr/bin/python42")
         assert False, "Should raise exception"
     except SystemExit:
         pass
-        
+
     mock_abspath.assert_called_with("/usr/bin/python42")
     mock_exists.assert_called_with("/usr/bin/python42")
     virtualenv.is_executable.assert_called_with("/usr/bin/python42")
