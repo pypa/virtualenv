@@ -1228,8 +1228,15 @@ def resolve_interpreter(exe):
                 break
     if not os.path.exists(exe):
         logger.fatal('The executable %s (from --python=%s) does not exist' % (exe, exe))
-        sys.exit(3)
+        raise SystemExit(3)
+    if not is_executable(exe):
+        logger.fatal('The executable %s (from --python=%s) is not executable' % (exe, exe))
+        raise SystemExit(3)
     return exe
+
+def is_executable(exe):
+    """Checks a file is executable"""
+    return os.access(exe, os.X_OK)
 
 ############################################################
 ## Relocating the environment:
