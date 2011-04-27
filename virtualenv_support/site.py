@@ -553,7 +553,7 @@ def virtual_install_main_packages():
     elif _is_jython:
         paths = [os.path.join(sys.real_prefix, 'Lib')]
     elif _is_pypy:
-        cpyver = '%d.%d.%d' % sys.version_info[:3]
+        cpyver = '%d.%d' % sys.version_info[:2]
         paths = [os.path.join(sys.real_prefix, 'lib_pypy'),
                  os.path.join(sys.real_prefix, 'lib-python', 'modified-%s' % cpyver),
                  os.path.join(sys.real_prefix, 'lib-python', cpyver)]
