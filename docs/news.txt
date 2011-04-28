@@ -6,6 +6,8 @@ HEAD
 
 * Start to use git-flow.
 
+* Added support for PyPy 1.5
+
 1.6
 ~~~
 
