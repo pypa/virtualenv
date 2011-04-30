@@ -41,7 +41,7 @@ The basic problem being addressed is one of dependencies and versions,
 and indirectly permissions.  Imagine you have an application that
 needs version 1 of LibFoo, but another application requires version
 2.  How can you use both these applications?  If you install
-everything into ``/usr/lib/python2.4/site-packages`` (or whatever your
+everything into ``/usr/lib/python2.7/site-packages`` (or whatever your
 platform's standard location is), it's easy to end up in a situation
 where you unintentionally upgrade an application that shouldn't be
 upgraded.
@@ -56,7 +56,7 @@ Also, what if you can't install packages into the global
 In all these cases, ``virtualenv`` can help you.  It creates an
 environment that has its own installation directories, that doesn't
 share libraries with other virtualenv environments (and optionally
-doesn't use the globally installed libraries either).
+doesn't access the globally installed libraries either).
 
 The basic usage is::
 
@@ -184,13 +184,15 @@ On Posix systems you can do::
 
   $ source bin/activate
 
-This will change your ``$PATH`` to point to the virtualenv ``bin/``
-directory.  Unlike workingenv, this is all it
-does; it's a convenience.  But if you use the complete path like
-``/path/to/env/bin/python script.py`` you do not need to activate the
-environment first.  You have to use ``source`` because it changes the
-environment in-place.  After activating an environment you can use the
-function ``deactivate`` to undo the changes.
+This will change your ``$PATH`` to point to the virtualenv's ``bin/``
+directory.  (You have to use ``source`` because it changes your shell
+environment in-place.) This is all it does; it's purely a convenience.  If
+you directly run a script or the python interpreter from the virtualenv's
+``bin/`` directory (e.g.  ``path/to/env/bin/pip`` or
+``/path/to/env/bin/python script.py``) there's no need for activation. 
+
+After activating an environment you can use the function ``deactivate`` to
+undo the changes to your ``$PATH``.
 
 The ``activate`` script will also modify your shell prompt to indicate
 which environment is currently active.  You can disable this behavior,
@@ -231,13 +233,14 @@ can setup the environment like::
     activate_this = '/path/to/env/bin/activate_this.py'
     execfile(activate_this, dict(__file__=activate_this))
 
-This will change ``sys.path`` and even change ``sys.prefix``, but also
-allow you to use an existing interpreter.  Items in your environment
-will show up first on ``sys.path``, before global items.  However,
-this cannot undo the activation of other environments, or modules that
-have been imported.  You shouldn't try to, for instance, activate an
-environment before a web request; you should activate *one*
-environment as early as possible, and not do it again in that process.
+This will change ``sys.path`` and even change ``sys.prefix``, but also allow
+you to use an existing interpreter.  Items in your environment will show up
+first on ``sys.path``, before global items.  However, global items will
+always be accessible -- this technique does not support the
+``--no-site-packages`` flag.  Also, this cannot undo the activation of other
+environments, or modules that have been imported.  You shouldn't try to, for
+instance, activate an environment before a web request; you should activate
+*one* environment as early as possible, and not do it again in that process.
 
 Making Environments Relocatable
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -277,6 +280,44 @@ layout).
 Currently the ``--no-site-packages`` option will not be honored if you
 use this on an environment.
 
+The ``--extra-search-dir`` Option
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When it creates a new environment, virtualenv installs either
+setuptools or distribute, and pip.  In normal operation, the latest
+releases of these packages are fetched from the `Python Package Index
+<http://pypi.python.org>`_ (PyPI). In some circumstances, this
+behavior may not be wanted, for example if you are using virtualenv
+during a deployment and do not want to depend on Internet access and
+PyPI availability.
+
+As an alternative, you can provide your own versions of setuptools,
+distribute and/or pip on the filesystem, and tell virtualenv to use
+those distributions instead of downloading them from the Internet.  To
+use this feature, pass one or more ``--extra-search-dir`` options to
+virtualenv like this::
+
+    $ virtualenv --extra-search-dir=/path/to/distributions ENV
+
+The ``/path/to/distributions`` path should point to a directory that
+contains setuptools, distribute and/or pip distributions.  Setuptools
+distributions must be ``.egg`` files; distribute and pip distributions
+should be `.tar.gz` source distributions.
+
+Virtualenv will still download these packages if no satisfactory local
+distributions are found.
+
+If you are really concerned about virtualenv fetching these packages
+from the Internet and want to ensure that it never will, you can also
+provide an option ``--never-download`` like so::
+
+    $ virtualenv --extra-search-dir=/path/to/distributions --never-download ENV
+
+If this option is provided, virtualenv will never try to download
+setuptools/distribute or pip. Instead, it will exit with status code 1
+if it fails to find local distributions for any of these required
+packages.
+
 Compare & Contrast with Alternatives
 ------------------------------------
 
@@ -314,6 +355,43 @@ There are several alternatives that create isolated environments:
 
 I *strongly* recommend anyone doing application development or
 deployment use one of these tools.
+
+Contributing
+------------
+
+Refer to the `contributing to pip`_ documentation - it applies equally to
+virtualenv.
+
+Virtualenv's release schedule is tied to pip's -- each time there's a new pip
+release, there will be a new virtualenv release that bundles the new version of
+pip.
+
+.. _contributing to pip: http://www.pip-installer.org/en/latest/how-to-contribute.html
+
+Running the tests
+~~~~~~~~~~~~~~~~~
+
+Virtualenv's test suite is small and not yet at all comprehensive, but we aim
+to grow it.
+
+The easy way to run tests (handles test dependencies automatically)::
+
+    $ python setup.py test
+
+If you want to run only a selection of the tests, you'll need to run them
+directly with nose instead. Create a virtualenv, and install required
+packages::
+
+    $ pip install nose mock
+
+Run nosetests::
+
+    $ nosetests
+
+Or select just a single test file to run::
+
+    $ nosetests tests.test_virtualenv
+
 
 Other Documentation and Links
 -----------------------------

@@ -26,7 +26,7 @@ f.close()
 setup(name='virtualenv',
       # If you change the version here, change it in virtualenv.py and
       # docs/conf.py as well
-      version="1.6",
+      version="1.6.1",
       description="Virtual Python Environment builder",
       long_description=long_description,
       classifiers=[
@@ -52,5 +52,7 @@ setup(name='virtualenv',
       py_modules=['virtualenv'],
       packages=['virtualenv_support'],
       package_data={'virtualenv_support': ['*-py%s.egg' % sys.version[:3], '*.tar.gz']},
+      test_suite='nose.collector',
+      tests_require=['nose', 'Mock'],
       **kw
       )
