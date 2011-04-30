@@ -1280,8 +1280,15 @@ def resolve_interpreter(exe):
                 break
     if not os.path.exists(exe):
         logger.fatal('The executable %s (from --python=%s) does not exist' % (exe, exe))
-        sys.exit(3)
+        raise SystemExit(3)
+    if not is_executable(exe):
+        logger.fatal('The executable %s (from --python=%s) is not executable' % (exe, exe))
+        raise SystemExit(3)
     return exe
+
+def is_executable(exe):
+    """Checks a file is executable"""
+    return os.access(exe, os.X_OK)
 
 ############################################################
 ## Relocating the environment:
@@ -1612,34 +1619,36 @@ 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
-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
-AIOc2an2AKxRCP4P1A2QJQ==
+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
 """)
+
+
 
 
 
@@ -1713,6 +1722,8 @@ dX85nKW3umfYbtu8713Sylhb2i3v2qaoc8C7S2P3pME8uIGedi1IxXbL+adi+P2fT8Xy/m+/PrxZ
 6O7hZfMXz21OyLZB6lUfOGAGMzo/bjaL7VaV7Ha76D/1yJVEqKmr+L2nCbH7+959wDtv38JZplQG
 BDaonX65d/fwEjNqlDjLVIvM9X+XVxF7
 """)
+
+
 
 
 
@@ -1801,6 +1812,8 @@ K6nABS/3Cko7v8PX/1WM77/cBsRFdP8FkyefKnLfR1J9X71LSXQ3UfPs/GY2+ScwBeVg
 
 
 
+
+
 ##file activate.sh
 ACTIVATE_SH = convert("""
 eJytVU1v4jAQPW9+xTT0ANVS1GsrDlRFAqmFqmG72m0rY5IJsRRslDiktNr/vuMQ8tFQpNU2B4I9
@@ -1818,6 +1831,8 @@ Pu4yUCvhpA+vZaJvWWDTr0yFYYyVnHMqCEq+QniuYX225xmnzRENjbXACF3wkCYNVZ1mBwxoR9Iw
 WAo3/36oSOTfgjwEEQKt15e9Xpqm52+oaXxszmnE9GLl65RH2OMmS6+u5acKxDmlPgj2eT5/gQOX
 LLK0j1y0Uwbmn438VZkVpqlfNKa/YET/53j+99G8H8tUhr9ZSXs2
 """)
+
+
 
 
 
@@ -1846,6 +1861,8 @@ jJa65e+eE2Ya30E2GurxUP8ssA6e/wOnvo3V78d3vTcvMB3n7l3iX1JXWqk=
 
 
 
+
+
 ##file activate.csh
 ACTIVATE_CSH = convert("""
 eJx9U11vmzAUffevOCVRu+UB9pws29Kl0iq1aVWllaZlcgxciiViItsQdb9+xiQp+dh4QOB7Pu49
@@ -1861,6 +1878,8 @@ r8rRsC1TpTJj7f19m5sUf/V3Ir+x/yjtLu8KjLX/CmN/AcVGUUo=
 
 
 
+
+
 ##file activate.bat
 ACTIVATE_BAT = convert("""
 eJyFUkEKgzAQvAfyhz0YaL9QEWpRqlSjWGspFPZQTevFHOr/adQaU1GaUzI7Mzu7ZF89XhKkEJS8
@@ -1871,12 +1890,16 @@ ZT63gpgNT9lKOJ/CtHsvT99re3pX303kydn4HeyOeAg5cjf2EW1D6HOPkg9NGKhu
 
 
 
+
+
 ##file deactivate.bat
 DEACTIVATE_BAT = convert("""
 eJxzSE3OyFfIT0vj4spMU0hJTcvMS01RiPf3cYkP8wwKCXX0iQ8I8vcNCFHQ4FIAguLUEgWIgK0q
 FlWqXJpcICVYpGzx2BAZ4uHv5+Hv6wq1BWINXBTdKriEKkI1DhW2QAfhttcxxANiFZCBbglQSJUL
 i2dASrm4rFz9XLgAwJNbyQ==
 """)
+
+
 
 
 
@@ -1908,12 +1931,16 @@ gtEMcW1xKr/he4/6IQ6FUXP+0gkioHY5iwC9Eyx3HKO7af0zPPe+XyLn7fAY78k4aiR387bCr5XT
 
 
 
+
+
 ##file distutils.cfg
 DISTUTILS_CFG = convert("""
 eJxNj00KwkAMhfc9xYNuxe4Ft57AjYiUtDO1wXSmNJnK3N5pdSEEAu8nH6lxHVlRhtDHMPATA4uH
 xJ4EFmGbvfJiicSHFRzUSISMY6hq3GLCRLnIvSTnEefN0FIjw5tF0Hkk9Q5dRunBsVoyFi24aaLg
 9FDOlL0FPGluf4QjcInLlxd6f6rqkgPu/5nHLg0cXCscXoozRrP51DRT3j9QNl99AP53T2Q=
 """)
+
+
 
 
 
@@ -1929,6 +1956,8 @@ xu/Lx8M/UvCLTxW7VULHxB1PRRbrYfvWNY5S8it008jOjcleaMqVBDnUXcWULV2YK9JEQ92OfC96
 1Tv4ZicZZZ7GpuEpZbbeQ7DxquVx5hdqoyFSSmXwfC90f1Dc7hjFs/tK99I0fpkI8zSLy4tSy+sI
 3vMWehjQNJmE5VePlZbL61nzX3S93ZcfDqznnkb9AZ3GWJU=
 """)
+
+
 
 
 
