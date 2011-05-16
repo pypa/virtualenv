@@ -13,7 +13,7 @@ script = os.path.join(here, '..', 'virtualenv.py')
 file_regex = re.compile(
     r'##file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+)\s*=\s*convert\("""(.*?)"""\)',
     re.S)
-file_template = '##file %(filename)s\n%(varname)s = convert("""\n%(data)s""")\n'
+file_template = '##file %(filename)s\n%(varname)s = convert("""\n%(data)s""")'
 
 def rebuild():
     f = open(script, 'rb')
