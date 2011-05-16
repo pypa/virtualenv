@@ -6,6 +6,10 @@ Next release (1.7) schedule
 
 Beta release mid-July 2011, final release early August.
 
+HEAD
+~~~~
+
+* Updated embedded distribute_setup.py to 0.6.16.
 
 1.6.1 (2011-04-30)
 ~~~~~~~~~~~~~~~~~~
