@@ -1095,10 +1095,18 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         shutil.copyfile(executable, py_executable)
         make_exe(py_executable)
         if sys.platform == 'win32' or sys.platform == 'cygwin':
-            pythonw = os.path.join(os.path.dirname(sys.executable), 'pythonw.exe')
+            exec_src_dir = os.path.dirname(sys.executable)
+            dllname = 'python%s%s.dll' % sys.version_info[0:2]
+            pythondll = join(exec_src_dir, dllname)
+            if os.path.exists(pythondll): # Python is installed for current user
+                logger.info('Copying %s from Python directory' % dllname)
+                shutil.copyfile(pythondll, join(bin_dir, dllname))
+            else:
+                logger.info('Will use globally installed %s from System32 dir')
+            pythonw = join(exec_src_dir, 'pythonw.exe')
             if os.path.exists(pythonw):
                 logger.info('Also created pythonw.exe')
-                shutil.copyfile(pythonw, os.path.join(os.path.dirname(py_executable), 'pythonw.exe'))
+                shutil.copyfile(pythonw, join(bin_dir, 'pythonw.exe'))
         if is_pypy:
             # make a symlink python --> pypy-c
             python_executable = os.path.join(os.path.dirname(py_executable), 'python')
