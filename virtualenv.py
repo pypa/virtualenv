@@ -945,7 +945,7 @@ def change_prefix(filename, dst_prefix):
             os.path.join(sys.prefix, "Extras", "lib", "python"),
             os.path.join("~", "Library", "Python", sys.version[:3], "site-packages")))
 
-    if hasattr(sys, 'real_prefix'):
+    if hasattr(sys, 'real_prefix'): # real_prefix exists inside virtualenv only
         prefixes.append(sys.real_prefix)
     prefixes = list(map(os.path.abspath, prefixes))
     filename = os.path.abspath(filename)
@@ -991,7 +991,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         ## Maybe it should delete everything with #!/path/to/venv/python in it
         logger.notify('Not deleting %s', bin_dir)
 
-    if hasattr(sys, 'real_prefix'):
+    if hasattr(sys, 'real_prefix'): # real_prefix is set by virtualenv
         logger.notify('Using real prefix %r' % sys.real_prefix)
         prefix = sys.real_prefix
     else:
@@ -1076,7 +1076,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
 
     mkdir(bin_dir)
     py_executable = join(bin_dir, os.path.basename(sys.executable))
-    if 'Python.framework' in prefix:
+    if 'Python.framework' in prefix: # MacOS
         if re.search(r'/Python(?:-32|-64)*$', py_executable):
             # The name of the python executable is not quite what
             # we want, rename it.
@@ -1095,10 +1095,18 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         shutil.copyfile(executable, py_executable)
         make_exe(py_executable)
         if sys.platform == 'win32' or sys.platform == 'cygwin':
-            pythonw = os.path.join(os.path.dirname(sys.executable), 'pythonw.exe')
+            exec_src_dir = os.path.dirname(sys.executable)
+            dllname = 'python%s%s.dll' % sys.version_info[0:2]
+            pythondll = join(exec_src_dir, dllname)
+            if os.path.exists(pythondll): # Python is installed for current user
+                logger.info('Copying %s from Python directory' % dllname)
+                shutil.copyfile(pythondll, join(bin_dir, dllname))
+            else:
+                logger.info('Will use globally installed %s from System32 dir')
+            pythonw = join(exec_src_dir, 'pythonw.exe')
             if os.path.exists(pythonw):
                 logger.info('Also created pythonw.exe')
-                shutil.copyfile(pythonw, os.path.join(os.path.dirname(py_executable), 'pythonw.exe'))
+                shutil.copyfile(pythonw, join(bin_dir, 'pythonw.exe'))
         if is_pypy:
             # make a symlink python --> pypy-c
             python_executable = os.path.join(os.path.dirname(py_executable), 'python')
@@ -1215,32 +1223,37 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     return py_executable
 
 def install_activate(home_dir, bin_dir, prompt=None):
+    # [(name, mark_exec, content), ...]
+    files = [('activate_this.py', None, ACTIVATE_THIS)]
     if sys.platform == 'win32' or is_jython and os._name == 'nt':
-        files = {'activate.bat': ACTIVATE_BAT,
-                 'deactivate.bat': DEACTIVATE_BAT}
-        if os.environ.get('OS') == 'Windows_NT' and os.environ.get('OSTYPE') == 'cygwin':
-            files['activate'] = ACTIVATE_SH
+        files += [
+           ('activate.bat', None, ACTIVATE_BAT),
+           ('deactivate.bat', None, DEACTIVATE_BAT),
+        ]
+        if sys.platform == 'cygwin':
+            files += ('activate', True, ACTIVATE_SH),
     else:
-        files = {'activate': ACTIVATE_SH}
+        files += [
+           ('activate', True, ACTIVATE_SH),
 
-        # suppling activate.fish in addition to, not instead of, the
-        # bash script support.
-        files['activate.fish'] = ACTIVATE_FISH
+           # suppling activate.fish in addition to, not instead of, the
+           # bash script support.
+           ('activate.fish', True, ACTIVATE_FISH),
 
-        # same for csh/tcsh support...
-        files['activate.csh'] = ACTIVATE_CSH
+           # same for csh/tcsh support...
+           ('activate.csh', True, ACTIVATE_CSH),
+        ]
 
-
-
-    files['activate_this.py'] = ACTIVATE_THIS
     vname = os.path.basename(os.path.abspath(home_dir))
-    for name, content in files.items():
+    for name, mark_exec, content in files:
         content = content.replace('__VIRTUAL_PROMPT__', prompt or '')
         content = content.replace('__VIRTUAL_WINPROMPT__', prompt or '(%s)' % vname)
         content = content.replace('__VIRTUAL_ENV__', os.path.abspath(home_dir))
         content = content.replace('__VIRTUAL_NAME__', vname)
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
-        writefile(os.path.join(bin_dir, name), content)
+        writefile(join(bin_dir, name), content)
+        if mark_exec:
+            make_exe(join(bin_dir, name))
 
 def install_distutils(home_dir):
     distutils_path = change_prefix(distutils.__path__[0], home_dir)
