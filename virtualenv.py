@@ -1228,7 +1228,7 @@ def install_activate(home_dir, bin_dir, prompt=None):
         files += [
            ('activate', True, ACTIVATE_SH),
 
-           # suppling activate.fish in addition to, not instead of, the
+           # supplying activate.fish in addition to, not instead of, the
            # bash script support.
            ('activate.fish', True, ACTIVATE_FISH),
 
