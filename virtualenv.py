@@ -117,7 +117,7 @@ elif majver == 3:
             #"dis",
             #"doctest",
             #"dummy_threading",
-            #"_dummy_thread",
+            "_dummy_thread",
             #"email",
             #"filecmp",
             #"fileinput",
