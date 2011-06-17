@@ -9,7 +9,7 @@ Beta release mid-July 2011, final release early August.
 HEAD
 ~~~~
 
-* Updated embedded distribute_setup.py to 0.6.16.
+* Updated embedded distribute release to 0.6.19.
 
 1.6.1 (2011-04-30)
 ~~~~~~~~~~~~~~~~~~
