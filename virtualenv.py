@@ -1135,16 +1135,19 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             shutil.copyfile(sys.executable, secondary_exe)
             make_exe(secondary_exe)
 
-    if 'Python.framework' in prefix:
-        logger.debug('MacOSX Python framework detected')
-
-        # Make sure we use the the embedded interpreter inside
-        # the framework, even if sys.executable points to
-        # the stub executable in ${sys.prefix}/bin
-        # See http://groups.google.com/group/python-virtualenv/
-        #                              browse_thread/thread/17cab2f85da75951
-        original_python = os.path.join(
-            prefix, 'Resources/Python.app/Contents/MacOS/Python')
+    if '.framework' in prefix:
+        if 'Python.framework' in prefix:
+            logger.debug('MacOSX Python framework detected')
+            # Make sure we use the the embedded interpreter inside
+            # the framework, even if sys.executable points to
+            # the stub executable in ${sys.prefix}/bin
+            # See http://groups.google.com/group/python-virtualenv/
+            #                              browse_thread/thread/17cab2f85da75951
+            original_python = os.path.join(
+                prefix, 'Resources/Python.app/Contents/MacOS/Python')
+        if 'EPD' in prefix:
+            logger.debug('EPD framework detected')
+            original_python = os.path.join(prefix, 'bin/python')
         shutil.copy(original_python, py_executable)
 
         # Copy the framework's dylib into the virtual
