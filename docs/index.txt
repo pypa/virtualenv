@@ -203,7 +203,7 @@ value before running the ``activate`` script.
 
 On Windows you just do::
 
-  > \path\to\env\bin\activate.bat
+  > \path\to\env\Scripts\activate.bat
 
 And use ``deactivate.bat`` to undo the changes.
 
