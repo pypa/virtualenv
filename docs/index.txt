@@ -27,10 +27,9 @@ Project <http://openplans.org>`_ and is now maintained by a
 It is licensed under an
 `MIT-style permissive license <https://github.com/pypa/virtualenv/raw/master/LICENSE.txt>`_.
 
-You can install it with ``easy_install virtualenv``, or from the `git
-repository <https://github.com/pypa/virtualenv>`_ or from a `tarball
-<https://github.com/pypa/virtualenv/tarball/master#egg=virtualenv-dev>`_
-``easy_install virtualenv==dev``.
+You can install it with ``easy_install virtualenv``, or the `latest
+development version <https://github.com/pypa/virtualenv/tarball/develop#egg=virtualenv-dev>`_
+with ``easy_install virtualenv==dev``.
 
 What It Does
 ------------
@@ -96,8 +95,9 @@ the `win32api <http://sourceforge.net/projects/pywin32/>`_ library installed.
 PyPy Support
 ~~~~~~~~~~~~
 
-Beginning with virtualenv version 1.5 there is experimental `PyPy
-<http://pypy.org>`_ support. Currently only PyPy trunk is supported.
+Beginning with virtualenv version 1.5 `PyPy <http://pypy.org>`_ is
+supported. To use PyPy 1.4 or 1.4.1, you need a version of virtualenv >= 1.5.
+To use PyPy 1.5, you need a version of virtualenv >= 1.6.1.
 
 Creating Your Own Bootstrap Scripts
 -----------------------------------
@@ -203,7 +203,7 @@ value before running the ``activate`` script.
 
 On Windows you just do::
 
-  > \path\to\env\bin\activate.bat
+  > \path\to\env\Scripts\activate.bat
 
 And use ``deactivate.bat`` to undo the changes.
 
