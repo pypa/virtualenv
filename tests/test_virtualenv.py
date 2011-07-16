@@ -4,7 +4,7 @@ from mock import patch, Mock
 
 def test_version():
     """Should have a version string"""
-    assert virtualenv.virtualenv_version == "1.6.2", "Should have version"
+    assert virtualenv.virtualenv_version == "1.6.3", "Should have version"
 
 
 @patch('os.path.exists')
