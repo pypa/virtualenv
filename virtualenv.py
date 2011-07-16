@@ -13,6 +13,7 @@ import optparse
 import re
 import shutil
 import logging
+import sysconfig
 import tempfile
 import zlib
 import errno
@@ -1011,6 +1012,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         prefix = sys.prefix
     mkdir(lib_dir)
     fix_lib64(lib_dir)
+    fix_local_scheme(home_dir)
     stdlib_dirs = [os.path.dirname(os.__file__)]
     if sys.platform == 'win32':
         stdlib_dirs.append(join(os.path.dirname(stdlib_dirs[0]), 'DLLs'))
@@ -1265,6 +1267,17 @@ def install_distutils(home_dir):
     #distutils_cfg = DISTUTILS_CFG + "\n[install]\nprefix=%s\n" % home_dir
     writefile(os.path.join(distutils_path, '__init__.py'), DISTUTILS_INIT)
     writefile(os.path.join(distutils_path, 'distutils.cfg'), DISTUTILS_CFG, overwrite=False)
+
+def fix_local_scheme(home_dir):
+    """
+    Platforms that use the "posix_local" install scheme (like Ubuntu with
+    Python 2.7) need to be given an additional "local" location, sigh.
+    """
+    if sysconfig._get_default_scheme() == 'posix_local':
+        local_path = os.path.join(home_dir, 'local')
+        if not os.path.exists(local_path):
+            os.symlink(os.path.abspath(home_dir), local_path)
+        
 
 def fix_lib64(lib_dir):
     """
