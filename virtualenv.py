@@ -4,7 +4,7 @@
 
 # If you change the version here, change it in setup.py 
 # and docs/conf.py as well.
-virtualenv_version = "1.6.2"
+virtualenv_version = "1.6.3"
 
 import base64
 import sys
@@ -13,7 +13,6 @@ import optparse
 import re
 import shutil
 import logging
-import sysconfig
 import tempfile
 import zlib
 import errno
@@ -1273,11 +1272,15 @@ def fix_local_scheme(home_dir):
     Platforms that use the "posix_local" install scheme (like Ubuntu with
     Python 2.7) need to be given an additional "local" location, sigh.
     """
-    if sysconfig._get_default_scheme() == 'posix_local':
-        local_path = os.path.join(home_dir, 'local')
-        if not os.path.exists(local_path):
-            os.symlink(os.path.abspath(home_dir), local_path)
-        
+    try:
+        import sysconfig
+    except ImportError:
+        pass
+    else:
+        if sysconfig._get_default_scheme() == 'posix_local':
+            local_path = os.path.join(home_dir, 'local')
+            if not os.path.exists(local_path):
+                os.symlink(os.path.abspath(home_dir), local_path)
 
 def fix_lib64(lib_dir):
     """
