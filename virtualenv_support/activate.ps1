@@ -41,6 +41,6 @@ function global:_old_virtual_prompt { "" }
 $function:_old_virtual_prompt = $function:prompt
 function global:prompt {
     # Add a prefix to the current prompt, but don't discard it.
-    write-host "($(split-path $env:VIRTUAL_ENV -leaf))" -nonewline
+    write-host "($(split-path $env:VIRTUAL_ENV -leaf)) " -nonewline
     & $function:_old_virtual_prompt
 }

@@ -178,7 +178,8 @@ activate script
 ~~~~~~~~~~~~~~~
 
 In a newly created virtualenv there will be a ``bin/activate`` shell
-script, or a ``Scripts/activate.bat`` batch file on Windows.
+script. For Windows systems, activation scripts are provided for CMD.exe
+and Powershell.
 
 On Posix systems you can do::
 
@@ -189,7 +190,7 @@ directory.  (You have to use ``source`` because it changes your shell
 environment in-place.) This is all it does; it's purely a convenience.  If
 you directly run a script or the python interpreter from the virtualenv's
 ``bin/`` directory (e.g.  ``path/to/env/bin/pip`` or
-``/path/to/env/bin/python script.py``) there's no need for activation. 
+``/path/to/env/bin/python script.py``) there's no need for activation.
 
 After activating an environment you can use the function ``deactivate`` to
 undo the changes to your ``$PATH``.
@@ -203,9 +204,13 @@ value before running the ``activate`` script.
 
 On Windows you just do::
 
-  > \path\to\env\Scripts\activate.bat
+  > \path\to\env\Scripts\activate
 
-And use ``deactivate.bat`` to undo the changes.
+And type `deactivate` to undo the changes.
+
+Based on your active shell (CMD.exe or Powershell.exe), Windows will use
+either activate.bat or activate.ps1 (as appropriate) to activate the
+virtual environment.
 
 The ``--no-site-packages`` Option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
