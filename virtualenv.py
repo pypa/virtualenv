@@ -2,7 +2,7 @@
 """Create a "virtual" Python installation
 """
 
-# If you change the version here, change it in setup.py 
+# If you change the version here, change it in setup.py
 # and docs/conf.py as well.
 virtualenv_version = "1.6.3"
 
@@ -545,7 +545,7 @@ def _install_req(py_executable, unzip=False, distribute=False,
                              "and --never-download is set.  Either re-run virtualenv "
                              "without the --never-download option, or place a %s "
                              "distribution (%s) in one of these "
-                             "locations: %r" % (project_name, project_name, 
+                             "locations: %r" % (project_name, project_name,
                                                 setup_fn or source,
                                                 search_dirs))
                 sys.exit(1)
@@ -598,16 +598,16 @@ def file_search_dirs():
 
 def install_setuptools(py_executable, unzip=False,
                        search_dirs=None, never_download=False):
-    _install_req(py_executable, unzip, 
+    _install_req(py_executable, unzip,
                  search_dirs=search_dirs, never_download=never_download)
 
-def install_distribute(py_executable, unzip=False, 
+def install_distribute(py_executable, unzip=False,
                        search_dirs=None, never_download=False):
-    _install_req(py_executable, unzip, distribute=True, 
+    _install_req(py_executable, unzip, distribute=True,
                  search_dirs=search_dirs, never_download=never_download)
 
 _pip_re = re.compile(r'^pip-.*(zip|tar.gz|tar.bz2|tgz|tbz)$', re.I)
-def install_pip(py_executable, search_dirs=None, never_download=False):    
+def install_pip(py_executable, search_dirs=None, never_download=False):
     if search_dirs is None:
         search_dirs = file_search_dirs()
 
@@ -902,10 +902,10 @@ def create_environment(home_dir, site_packages=True, clear=False,
     install_distutils(home_dir)
 
     if use_distribute or os.environ.get('VIRTUALENV_USE_DISTRIBUTE'):
-        install_distribute(py_executable, unzip=unzip_setuptools, 
+        install_distribute(py_executable, unzip=unzip_setuptools,
                            search_dirs=search_dirs, never_download=never_download)
     else:
-        install_setuptools(py_executable, unzip=unzip_setuptools, 
+        install_setuptools(py_executable, unzip=unzip_setuptools,
                            search_dirs=search_dirs, never_download=never_download)
 
     install_pip(py_executable, search_dirs=search_dirs, never_download=never_download)
@@ -1231,7 +1231,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
 def install_activate(home_dir, bin_dir, prompt=None):
     if sys.platform == 'win32' or is_jython and os._name == 'nt':
         files = {'activate.bat': ACTIVATE_BAT,
-                 'deactivate.bat': DEACTIVATE_BAT}
+                 'deactivate.bat': DEACTIVATE_BAT,
+                 'activate.ps1': ACTIVATE_PS}
         if os.environ.get('OS') == 'Windows_NT' and os.environ.get('OSTYPE') == 'cygwin':
             files['activate'] = ACTIVATE_SH
     else:
@@ -1538,7 +1539,7 @@ def create_bootstrap_script(extra_text, python_version=''):
 def convert(s):
     b = base64.b64decode(s.encode('ascii'))
     return zlib.decompress(b).decode('utf-8')
-    
+
 ##file site.py
 SITE_PY = convert("""
 eJzVPP1z2zaWv/OvwMqTIZXKdD66nR2n7o2TOK3v3MTbpLO5dT06SoIk1hTJEqQV7c3d337vAwAB
@@ -1899,6 +1900,21 @@ DEACTIVATE_BAT = convert("""
 eJxzSE3OyFfIT0vj4spMU0hJTcvMS01RiPf3cYkP8wwKCXX0iQ8I8vcNCFHQ4FIAguLUEgWIgK0q
 FlWqXJpcICVYpGzx2BAZ4uHv5+Hv6wq1BWINXBTdKriEKkI1DhW2QAfhttcxxANiFZCBbglQSJUL
 i2dASrm4rFz9XLgAwJNbyQ==
+""")
+
+## file activate.ps1
+ACTIVATE_PS = convert("""
+eJyFVNtq20AQfTf4HyayaG1aKfRVwQ8udokhSUPshkJbxHo1qhdWu2IvSo3Jl/Whn9Rf6MqSLFt2
+Gj0IpJlzds7smfn7+88AlmumIWUcIbPawAohkQa0tIpiAqmSGdzLxfoKNtICJUK4qLICmOn3BpAw
+hdTwTQhTCcZRRRBCeEmoYQUxGOb6Q79XJn6af72dRUA5EgE2ByusdvwFUTrs93xNFctNtLyeL+L7
+yfIaxuBnGyYKSYlhUoTZhsosIyIJc2LWLeLjZDGLp/MHB9A5ZyYowzBUqCUvsPry/D3vZRh6Iwju
+iUJhWhZHEN9NbmfHLP6ePLhBkpZCUitoWQ/85HJFeJRgIxWG8E0/MUPXP8C/k2KK2ihbBhFG2xIL
+7mGpyzMuVJ3g5DOy4hjFn2+m8eP8YfllclM1YATbClI+PooiavryMqgFKMykk9+kgneS60Ggqcyx
+VlJBn1+os5EdxZInccGUsYTHuTNHbjqV7lPr6Pjg1xn0ScnMYNae9/1FyFGpu/406mZ3j8cllRQu
+oXO5HQgEfHfH58o5SUWlpCKVE7SbHeFGgEphmLB4rpMXJ444LHAAC+QpJHX84pWetJ7bH/VcDZkV
+Gg0wpZBjQYTZ+0v3ewdODYQUSVtMifUP5Y1b57tIV7yLHnzuwPUwnJp43Dq3Zqp/e13ay8VuEvWV
+B+8OQd2BO2fALXhe2YX/Gu3IiI2RuuwNYdXYAUySBAjkClP2C0y54RCoVeXygCr3PayscStTvHVv
+pilRiVuNYUXwpNzNBWvp9qo39Ievum808naXg0+cifp237w2P074P3GF0Yk=
 """)
 
 ##file distutils-init.py
