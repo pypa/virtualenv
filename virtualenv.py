@@ -487,16 +487,17 @@ def _install_req(py_executable, unzip=False, distribute=False,
             sys.path = sys.path[1:]
 
         try:
-            # check if the global Python has distribute installed or plain
-            # setuptools
-            import pkg_resources
-            if not hasattr(pkg_resources, '_distribute'):
-                location = os.path.dirname(pkg_resources.__file__)
-                logger.notify("A globally installed setuptools was found (in %s)" % location)
-                logger.notify("Use the --no-site-packages option to use distribute in "
-                              "the virtualenv.")
-        except ImportError:
-            pass
+            try:
+                # check if the global Python has distribute installed or plain
+                # setuptools
+                import pkg_resources
+                if not hasattr(pkg_resources, '_distribute'):
+                    location = os.path.dirname(pkg_resources.__file__)
+                    logger.notify("A globally installed setuptools was found (in %s)" % location)
+                    logger.notify("Use the --no-site-packages option to use distribute in "
+                                  "the virtualenv.")
+            except ImportError:
+                pass
         finally:
             sys.path = _prev_sys_path
 
