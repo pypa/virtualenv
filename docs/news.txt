@@ -6,6 +6,11 @@ Next release (1.7) schedule
 
 Beta release mid-July 2011, final release early August.
 
+1.6.4 (2011-07-21)
+~~~~~~~~~~~~~~~~~~
+
+* Restored ability to run on Python 2.4, too.
+
 1.6.3 (2011-07-16)
 ~~~~~~~~~~~~~~~~~~
 
