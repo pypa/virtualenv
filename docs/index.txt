@@ -210,7 +210,8 @@ And type `deactivate` to undo the changes.
 
 Based on your active shell (CMD.exe or Powershell.exe), Windows will use
 either activate.bat or activate.ps1 (as appropriate) to activate the
-virtual environment.
+virtual environment. If using Powershell, see the notes about code signing
+below.
 
 The ``--no-site-packages`` Option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -322,6 +323,52 @@ If this option is provided, virtualenv will never try to download
 setuptools/distribute or pip. Instead, it will exit with status code 1
 if it fails to find local distributions for any of these required
 packages.
+
+
+Powershell Activation Script Notes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Note, if using Powershell, the ``activate`` script is subject to the
+execution policies on the system. By default on Windows 7, the system's
+excution policy is set to `AllSigned`, meaning all scripts on the system
+must be digitally signed to be executed.
+
+The virtualenv activation script is signed by one of the
+contributors. In order to use the script, you may elect to trust the
+signer script or relax your system's execution policy.
+
+To trust the signer, simply execute the script. You will be prompted with
+the following::
+
+    PS C:> virtualenv \foo
+    New python executable in \foo\Scripts\python.exe
+    Installing setuptools................done.
+    Installing pip...................done.
+    PS C:> \foo\scripts\activate
+
+    Do you want to run software from this untrusted publisher?
+    File \foo\scripts\activate.ps1 is published by E=jaraco@jaraco.com, CN=Jason R. Coombs, L=Washington, S=District of Columbia, C=US, Description=469447-Ut5Oc0pPWHyGhuu5
+    and is not trusted on your system. Only run scripts from trusted publishers.
+    [V] Never run  [D] Do not run  [R] Run once  [A] Always run  [?] Help
+    (default is "D"):A
+    (foo) PS C:>
+
+If you select `Always Run`, the certificate will be added to the
+Trusted Publishers of your user account, and will be trusted in this
+user's context henceforth. If you select `Run Once`, the script will be
+run, but you will be prometed on a subsequent invocation. Advanced users
+can add the signer's
+certificate to the Trusted Publishers of the Computer account to apply to
+all users (though this technique is out of scope of this document).
+
+Alternatively, you may relax the system execution policy to allow running
+of local scripts without verifying the code signature using the following::
+
+    PS> Set-ExecutionPolicy RemoteSigned
+
+Since the activate.ps1 script is generated locally, it is not considered
+a remote script and can then be executed.
+
 
 Compare & Contrast with Alternatives
 ------------------------------------
