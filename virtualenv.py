@@ -1162,19 +1162,21 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     return py_executable
 
 def install_activate(home_dir, bin_dir, prompt=None):
+    home_dir = os.path.abspath(home_dir)
     if sys.platform == 'win32' or is_jython and os._name == 'nt':
+        # Windows envs can be activated in Cmd, MSYS, or Cygwin shells.
         files = {'activate.bat': ACTIVATE_BAT,
                  'deactivate.bat': DEACTIVATE_BAT}
-        if os.environ.get('OS') == 'Windows_NT':
-            if os.environ.get('OSTYPE') == 'cygwin':
-                files['activate'] = ACTIVATE_SH
-        
-            elif os.environ.get('MSYSTEM') == 'MINGW32':
-                # MSYS needs paths of the form /c/path/to/file
-                drive, tail = os.path.splitdrive(os.path.abspath(home_dir).replace(os.sep, '/'))
-                home_dir_msys = (drive and '/%s%s' or '%s%s') % (drive[:1], tail)
-                files['activate'] = ACTIVATE_SH.replace('__VIRTUAL_ENV__', home_dir_msys)
-            
+
+        # MSYS needs paths of the form /c/path/to/file
+        drive, tail = os.path.splitdrive(home_dir.replace(os.sep, '/'))
+        home_dir_msys = (drive and "/%s%s" or "%s%s") % (drive[:1], tail)
+
+        # Run-time conditional enables (basic) Cygwin compatibility
+        home_dir_sh = ("""$(if [ "$OSTYPE" == "cygwin" ]; then cygpath -u '%s'; else echo '%s'; fi;)""" % 
+                       (home_dir, home_dir_msys))
+        files['activate'] = ACTIVATE_SH.replace('__VIRTUAL_ENV__', home_dir_sh)
+
     else:
         files = {'activate': ACTIVATE_SH}
 
@@ -1188,11 +1190,11 @@ def install_activate(home_dir, bin_dir, prompt=None):
 
 
     files['activate_this.py'] = ACTIVATE_THIS
-    vname = os.path.basename(os.path.abspath(home_dir))
+    vname = os.path.basename(home_dir)
     for name, content in files.items():
         content = content.replace('__VIRTUAL_PROMPT__', prompt or '')
         content = content.replace('__VIRTUAL_WINPROMPT__', prompt or '(%s)' % vname)
-        content = content.replace('__VIRTUAL_ENV__', os.path.abspath(home_dir))
+        content = content.replace('__VIRTUAL_ENV__', home_dir)
         content = content.replace('__VIRTUAL_NAME__', vname)
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         writefile(os.path.join(bin_dir, name), content)
