@@ -1012,7 +1012,6 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         prefix = sys.prefix
     mkdir(lib_dir)
     fix_lib64(lib_dir)
-    fix_local_scheme(home_dir)
     stdlib_dirs = [os.path.dirname(os.__file__)]
     if sys.platform == 'win32':
         stdlib_dirs.append(join(os.path.dirname(stdlib_dirs[0]), 'DLLs'))
@@ -1227,6 +1226,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         logger.notify('Please make sure you remove any previous custom paths from '
                       'your %s file.' % pydistutils)
     ## FIXME: really this should be calculated earlier
+
+    fix_local_scheme(home_dir)
+
     return py_executable
 
 def install_activate(home_dir, bin_dir, prompt=None):
@@ -1281,7 +1283,12 @@ def fix_local_scheme(home_dir):
         if sysconfig._get_default_scheme() == 'posix_local':
             local_path = os.path.join(home_dir, 'local')
             if not os.path.exists(local_path):
-                os.symlink(os.path.abspath(home_dir), local_path)
+                os.mkdir(local_path)
+                for subdir_name in os.listdir(home_dir):
+                    if subdir_name == 'local':
+                        continue
+                    os.symlink(os.path.abspath(os.path.join(home_dir, subdir_name)), \
+                                                            os.path.join(local_path, subdir_name))
 
 def fix_lib64(lib_dir):
     """
