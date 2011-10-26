@@ -494,7 +494,7 @@ def _install_req(py_executable, unzip=False, distribute=False,
                 if not hasattr(pkg_resources, '_distribute'):
                     location = os.path.dirname(pkg_resources.__file__)
                     logger.notify("A globally installed setuptools was found (in %s)" % location)
-                    logger.notify("Use the --no-site-packages option to use distribute in "
+                    logger.notify("Refrain from using the --use-site-packages option to use distribute in "
                                   "the virtualenv.")
             except ImportError:
                 pass
@@ -710,6 +710,13 @@ def main():
              "virtual environment")
 
     parser.add_option(
+        '--use-site-packages',
+        dest='use_site_packages',
+        action='store_true',
+        help="Give access to the global site-packages dir to the "
+             "virtual environment")
+
+    parser.add_option(
         '--unzip-setuptools',
         dest='unzip_setuptools',
         action='store_true',
@@ -802,7 +809,13 @@ def main():
         make_environment_relocatable(home_dir)
         return
 
-    create_environment(home_dir, site_packages=not options.no_site_packages, clear=options.clear,
+    if options.no_site_packages:
+        logger.warn('The --no-site-packages flag is deprecated; it is now '
+                    'the default behavior.')
+
+    create_environment(home_dir,
+                       site_packages=options.use_site_packages,
+                       clear=options.clear,
                        unzip_setuptools=options.unzip_setuptools,
                        use_distribute=options.use_distribute or majver > 2,
                        prompt=options.prompt,
@@ -882,14 +895,14 @@ def call_subprocess(cmd, show_stdout=True,
                 % (cmd_desc, proc.returncode))
 
 
-def create_environment(home_dir, site_packages=True, clear=False,
+def create_environment(home_dir, site_packages=False, clear=False,
                        unzip_setuptools=False, use_distribute=False,
                        prompt=None, search_dirs=None, never_download=False):
     """
     Creates a new environment in ``home_dir``.
 
-    If ``site_packages`` is true (the default) then the global
-    ``site-packages/`` directory will be on the path.
+    If ``site_packages`` is true, then the global ``site-packages/``
+    directory will be on the path.
 
     If ``clear`` is true (default False) then the environment will
     first be cleared.
