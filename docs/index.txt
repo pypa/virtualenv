@@ -207,15 +207,16 @@ On Windows you just do::
 
 And use ``deactivate.bat`` to undo the changes.
 
-The ``--no-site-packages`` Option
+The ``--use-site-packages`` Option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you build with ``virtualenv --no-site-packages ENV`` it will *not*
-inherit any packages from ``/usr/lib/python2.5/site-packages`` (or
-wherever your global site-packages directory is).  This can be used if
-you don't have control over site-packages and don't want to depend on
-the packages there, or you just want more isolation from the global
-system.
+If you build with ``virtualenv --use-site-packages ENV``, your virtual
+environment will inherit packages from ``/usr/lib/python2.5/site-packages``
+(or wherever your global site-packages directory is).
+
+This can be used if you have control over the global site-packages directory,
+and you want to depend on the packages there.  If you want isolation from the
+global system, do not use this flag.
 
 Using Virtualenv without ``bin/python``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -236,8 +237,7 @@ can setup the environment like::
 This will change ``sys.path`` and even change ``sys.prefix``, but also allow
 you to use an existing interpreter.  Items in your environment will show up
 first on ``sys.path``, before global items.  However, global items will
-always be accessible -- this technique does not support the
-``--no-site-packages`` flag.  Also, this cannot undo the activation of other
+always be accessible.  Also, this cannot undo the activation of other
 environments, or modules that have been imported.  You shouldn't try to, for
 instance, activate an environment before a web request; you should activate
 *one* environment as early as possible, and not do it again in that process.
@@ -277,8 +277,8 @@ libraries on the system, if those C libraries are located somewhere
 different (either different versions, or a different filesystem
 layout).
 
-Currently the ``--no-site-packages`` option will not be honored if you
-use this on an environment.
+If you use this flag to create an environment, currently, the
+``--use-site-packages`` option will be implied.
 
 The ``--extra-search-dir`` Option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
