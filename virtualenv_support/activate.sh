@@ -37,7 +37,7 @@ deactivate () {
 # unset irrelavent variables
 deactivate nondestructive
 
-VIRTUAL_ENV="__VIRTUAL_ENV__"
+VIRTUAL_ENV="$(dirname $(dirname $(readlink -f -n $BASH_SOURCE)))"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
