@@ -783,7 +783,10 @@ def main():
                 file = file[:-1]
             popen = subprocess.Popen([interpreter, file] + sys.argv[1:], env=env)
             raise SystemExit(popen.wait())
-
+    
+    if os.environ.get('PYTHONDONTWRITEBYTECODE'):
+        print('You must unset the $PYTHONDONTWRITEBYTECODE environment variable before running virtualenv.')
+        sys.exit(2)
     if not args:
         print('You must provide a DEST_DIR')
         parser.print_help()
