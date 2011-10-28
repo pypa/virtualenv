@@ -1253,32 +1253,37 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     return py_executable
 
 def install_activate(home_dir, bin_dir, prompt=None):
+    # [(name, mark_exec, content), ...]
+    files = [('activate_this.py', None, ACTIVATE_THIS)]
     if sys.platform == 'win32' or is_jython and os._name == 'nt':
-        files = {'activate.bat': ACTIVATE_BAT,
-                 'deactivate.bat': DEACTIVATE_BAT}
-        if os.environ.get('OS') == 'Windows_NT' and os.environ.get('OSTYPE') == 'cygwin':
-            files['activate'] = ACTIVATE_SH
+        files += [
+           ('activate.bat', None, ACTIVATE_BAT),
+           ('deactivate.bat', None, DEACTIVATE_BAT),
+        ]
+        if sys.platform == 'cygwin':
+            files += ('activate', True, ACTIVATE_SH),
     else:
-        files = {'activate': ACTIVATE_SH}
+        files += [
+           ('activate', True, ACTIVATE_SH),
 
-        # suppling activate.fish in addition to, not instead of, the
-        # bash script support.
-        files['activate.fish'] = ACTIVATE_FISH
+           # supplying activate.fish in addition to, not instead of, the
+           # bash script support.
+           ('activate.fish', True, ACTIVATE_FISH),
 
-        # same for csh/tcsh support...
-        files['activate.csh'] = ACTIVATE_CSH
+           # same for csh/tcsh support...
+           ('activate.csh', True, ACTIVATE_CSH),
+        ]
 
-
-
-    files['activate_this.py'] = ACTIVATE_THIS
     vname = os.path.basename(os.path.abspath(home_dir))
-    for name, content in files.items():
+    for name, mark_exec, content in files:
         content = content.replace('__VIRTUAL_PROMPT__', prompt or '')
         content = content.replace('__VIRTUAL_WINPROMPT__', prompt or '(%s)' % vname)
         content = content.replace('__VIRTUAL_ENV__', os.path.abspath(home_dir))
         content = content.replace('__VIRTUAL_NAME__', vname)
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
-        writefile(os.path.join(bin_dir, name), content)
+        writefile(join(bin_dir, name), content)
+        if mark_exec:
+            make_exe(join(bin_dir, name))
 
 def install_distutils(home_dir):
     distutils_path = change_prefix(distutils.__path__[0], home_dir)
