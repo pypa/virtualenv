@@ -982,7 +982,7 @@ def change_prefix(filename, dst_prefix):
             os.path.join(sys.prefix, "Extras", "lib", "python"),
             os.path.join("~", "Library", "Python", sys.version[:3], "site-packages")))
 
-    if hasattr(sys, 'real_prefix'):
+    if hasattr(sys, 'real_prefix'): # real_prefix exists inside virtualenv only
         prefixes.append(sys.real_prefix)
     prefixes = list(map(os.path.abspath, prefixes))
     filename = os.path.abspath(filename)
@@ -1028,7 +1028,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         ## Maybe it should delete everything with #!/path/to/venv/python in it
         logger.notify('Not deleting %s', bin_dir)
 
-    if hasattr(sys, 'real_prefix'):
+    if hasattr(sys, 'real_prefix'): # real_prefix is set by virtualenv
         logger.notify('Using real prefix %r' % sys.real_prefix)
         prefix = sys.real_prefix
     else:
@@ -1114,7 +1114,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
 
     mkdir(bin_dir)
     py_executable = join(bin_dir, os.path.basename(sys.executable))
-    if 'Python.framework' in prefix:
+    if 'Python.framework' in prefix: # MacOS
         if re.search(r'/Python(?:-32|-64)*$', py_executable):
             # The name of the python executable is not quite what
             # we want, rename it.
@@ -1133,10 +1133,18 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         shutil.copyfile(executable, py_executable)
         make_exe(py_executable)
         if sys.platform == 'win32' or sys.platform == 'cygwin':
-            pythonw = os.path.join(os.path.dirname(sys.executable), 'pythonw.exe')
+            exec_src_dir = os.path.dirname(sys.executable)
+            dllname = 'python%s%s.dll' % sys.version_info[0:2]
+            pythondll = join(exec_src_dir, dllname)
+            if os.path.exists(pythondll): # Python is installed for current user
+                logger.info('Copying %s from Python directory' % dllname)
+                shutil.copyfile(pythondll, join(bin_dir, dllname))
+            else:
+                logger.info('Will use globally installed %s from System32 dir')
+            pythonw = join(exec_src_dir, 'pythonw.exe')
             if os.path.exists(pythonw):
                 logger.info('Also created pythonw.exe')
-                shutil.copyfile(pythonw, os.path.join(os.path.dirname(py_executable), 'pythonw.exe'))
+                shutil.copyfile(pythonw, join(bin_dir, 'pythonw.exe'))
         if is_pypy:
             # make a symlink python --> pypy-c
             python_executable = os.path.join(os.path.dirname(py_executable), 'python')
