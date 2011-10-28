@@ -207,10 +207,10 @@ On Windows you just do::
 
 And use ``deactivate.bat`` to undo the changes.
 
-The ``--use-site-packages`` Option
+The ``--system-site-packages`` Option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you build with ``virtualenv --use-site-packages ENV``, your virtual
+If you build with ``virtualenv --system-site-packages ENV``, your virtual
 environment will inherit packages from ``/usr/lib/python2.7/site-packages``
 (or wherever your global site-packages directory is).
 
@@ -237,7 +237,7 @@ can setup the environment like::
 This will change ``sys.path`` and even change ``sys.prefix``, but also allow
 you to use an existing interpreter.  Items in your environment will show up
 first on ``sys.path``, before global items.  However, global items will
-always be accessible (as if the ``--use-site-packages`` flag had been used
+always be accessible (as if the ``--system-site-packages`` flag had been used
 in creating the environment, whether it was or not).  Also, this cannot undo
 the activation of other environments, or modules that have been imported. 
 You shouldn't try to, for instance, activate an environment before a web
@@ -280,7 +280,7 @@ different (either different versions, or a different filesystem
 layout).
 
 If you use this flag to create an environment, currently, the
-``--use-site-packages`` option will be implied.
+``--system-site-packages`` option will be implied.
 
 The ``--extra-search-dir`` Option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
