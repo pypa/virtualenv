@@ -707,7 +707,8 @@ def main():
         dest='no_site_packages',
         action='store_true',
         help="Don't give access to the global site-packages dir to the "
-             "virtual environment")
+             "virtual environment. Set environ variable "
+             "VIRTUALENV_NO_SITE_PACKAGES to make it the default.")
 
     parser.add_option(
         '--system-site-packages',
@@ -732,7 +733,7 @@ def main():
     parser.add_option(
         '--distribute',
         dest='use_distribute',
-        action='store_true',
+        action='store_true',/
         help='Use Distribute instead of Setuptools. Set environ variable '
         'VIRTUALENV_USE_DISTRIBUTE to make it the default ')
 
@@ -918,6 +919,9 @@ def create_environment(home_dir, site_packages=False, clear=False,
     first be cleared.
     """
     home_dir, lib_dir, inc_dir, bin_dir = path_locations(home_dir)
+
+    if os.environ.get('VIRTUALENV_NO_SITE_PACKAGES'):
+        site_packages=False
 
     py_executable = os.path.abspath(install_python(
         home_dir, lib_dir, inc_dir, bin_dir,
