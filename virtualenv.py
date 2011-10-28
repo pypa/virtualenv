@@ -783,9 +783,16 @@ def main():
                 file = file[:-1]
             popen = subprocess.Popen([interpreter, file] + sys.argv[1:], env=env)
             raise SystemExit(popen.wait())
-    
-    if os.environ.get('PYTHONDONTWRITEBYTECODE'):
-        print('You must unset the $PYTHONDONTWRITEBYTECODE environment variable before running virtualenv.')
+
+    # Force --use-distribute on Python 3, since setuptools is not available.
+    if majver > 2:
+        options.use_distribute = True
+
+    if os.environ.get('PYTHONDONTWRITEBYTECODE') and not options.use_distribute:
+        print(
+            "The PYTHONDONTWRITEBYTECODE environment variable is "
+            "not compatible with setuptools. Either use --distribute "
+            "or unset PYTHONDONTWRITEBYTECODE.")
         sys.exit(2)
     if not args:
         print('You must provide a DEST_DIR')
@@ -820,7 +827,7 @@ def main():
                        site_packages=options.use_site_packages,
                        clear=options.clear,
                        unzip_setuptools=options.unzip_setuptools,
-                       use_distribute=options.use_distribute or majver > 2,
+                       use_distribute=options.use_distribute,
                        prompt=options.prompt,
                        search_dirs=options.search_dirs,
                        never_download=options.never_download)
