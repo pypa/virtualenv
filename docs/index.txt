@@ -211,7 +211,7 @@ The ``--use-site-packages`` Option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you build with ``virtualenv --use-site-packages ENV``, your virtual
-environment will inherit packages from ``/usr/lib/python2.5/site-packages``
+environment will inherit packages from ``/usr/lib/python2.7/site-packages``
 (or wherever your global site-packages directory is).
 
 This can be used if you have control over the global site-packages directory,
@@ -237,10 +237,12 @@ can setup the environment like::
 This will change ``sys.path`` and even change ``sys.prefix``, but also allow
 you to use an existing interpreter.  Items in your environment will show up
 first on ``sys.path``, before global items.  However, global items will
-always be accessible.  Also, this cannot undo the activation of other
-environments, or modules that have been imported.  You shouldn't try to, for
-instance, activate an environment before a web request; you should activate
-*one* environment as early as possible, and not do it again in that process.
+always be accessible (as if the ``--use-site-packages`` flag had been used
+in creating the environment, whether it was or not).  Also, this cannot undo
+the activation of other environments, or modules that have been imported. 
+You shouldn't try to, for instance, activate an environment before a web
+request; you should activate *one* environment as early as possible, and not
+do it again in that process.
 
 Making Environments Relocatable
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
