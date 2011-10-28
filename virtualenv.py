@@ -1256,7 +1256,7 @@ def install_activate(home_dir, bin_dir, prompt=None):
     if sys.platform == 'win32' or is_jython and os._name == 'nt':
         files = {'activate.bat': ACTIVATE_BAT,
                  'deactivate.bat': DEACTIVATE_BAT}
-        if os.environ.get('OS') == 'Windows_NT' and os.environ.get('OSTYPE') == 'cygwin':
+        if os.environ.get('OS') == 'Windows_NT' and (os.environ.get('OSTYPE') == 'cygwin' or os.environ.get('OSTYPE') == 'msys'):
             files['activate'] = ACTIVATE_SH
     else:
         files = {'activate': ACTIVATE_SH}
