@@ -494,7 +494,7 @@ def _install_req(py_executable, unzip=False, distribute=False,
                 if not hasattr(pkg_resources, '_distribute'):
                     location = os.path.dirname(pkg_resources.__file__)
                     logger.notify("A globally installed setuptools was found (in %s)" % location)
-                    logger.notify("Refrain from using the --use-site-packages option to use distribute in "
+                    logger.notify("Refrain from using the --system-site-packages option to use distribute in "
                                   "the virtualenv.")
             except ImportError:
                 pass
@@ -710,8 +710,8 @@ def main():
              "virtual environment")
 
     parser.add_option(
-        '--use-site-packages',
-        dest='use_site_packages',
+        '--system-site-packages',
+        dest='system_site_packages',
         action='store_true',
         help="Give access to the global site-packages dir to the "
              "virtual environment")
@@ -824,7 +824,7 @@ def main():
                     'the default behavior.')
 
     create_environment(home_dir,
-                       site_packages=options.use_site_packages,
+                       site_packages=options.system_site_packages,
                        clear=options.clear,
                        unzip_setuptools=options.unzip_setuptools,
                        use_distribute=options.use_distribute,
