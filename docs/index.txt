@@ -27,9 +27,16 @@ Project <http://openplans.org>`_ and is now maintained by a
 It is licensed under an
 `MIT-style permissive license <https://github.com/pypa/virtualenv/raw/master/LICENSE.txt>`_.
 
-You can install it with ``easy_install virtualenv``, or the `latest
+You can install it with ``pip install virtualenv``, or the `latest
 development version <https://github.com/pypa/virtualenv/tarball/develop#egg=virtualenv-dev>`_
-with ``easy_install virtualenv==dev``.
+with ``pip install virtualenv==dev``.
+
+You can also use ``easy_install``, or if you have no Python package manager
+available at all, you can just grab the single file `virtualenv.py`_ and run
+it with ``python virtualenv.py``.
+
+.. _virtualenv.py: https://raw.github.com/pypa/virtualenv/master/virtualenv.py
+
 
 What It Does
 ------------
@@ -208,7 +215,7 @@ On Windows you just do::
 And use ``deactivate.bat`` to undo the changes.
 
 The ``--system-site-packages`` Option
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If you build with ``virtualenv --system-site-packages ENV``, your virtual
 environment will inherit packages from ``/usr/lib/python2.7/site-packages``
