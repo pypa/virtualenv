@@ -406,7 +406,7 @@ def copyfile(src, dest, symlink=True):
         srcpath = os.path.abspath(src)
     else:
         srcpath = os.readlink(src)
-    if symlink and hasattr(os, 'symlink'):
+    if symlink and hasattr(os, 'symlink') and not is_win:
         logger.info('Symlinking %s', dest)
         try:
             os.symlink(srcpath, dest)
