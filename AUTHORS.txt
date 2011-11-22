@@ -27,3 +27,4 @@ Philip Jenvey
 Ronny Pfannschmidt
 Tarek Ziadé
 Vinay Sajip
+Gunnlaugur Thor Briem
