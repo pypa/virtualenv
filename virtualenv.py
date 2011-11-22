@@ -844,8 +844,13 @@ def call_subprocess(cmd, show_stdout=True,
             part = part[:20]+"..."+part[-20:]
         if ' ' in part or '\n' in part or '"' in part or "'" in part:
             part = '"%s"' % part.replace('"', '\\"')
+        if isinstance(part, str):
+            try:
+                part = part.decode(sys.getdefaultencoding())
+            except UnicodeDecodeError:
+                part = part.decode(sys.getfilesystemencoding())
         cmd_parts.append(part)
-    cmd_desc = ' '.join(cmd_parts)
+    cmd_desc = u' '.join(cmd_parts)
     if show_stdout:
         stdout = None
     else:
