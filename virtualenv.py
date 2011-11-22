@@ -1285,6 +1285,8 @@ def install_activate(home_dir, bin_dir, prompt=None):
 
 
     files['activate_this.py'] = ACTIVATE_THIS
+    if isinstance(home_dir, str):
+        home_dir = home_dir.decode(sys.getfilesystemencoding())
     vname = os.path.basename(os.path.abspath(home_dir))
     for name, content in files.items():
         content = content.replace('__VIRTUAL_PROMPT__', prompt or '')
