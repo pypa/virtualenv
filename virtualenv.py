@@ -1238,14 +1238,16 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         else:
           raise e
 
-    proc_stdout = proc_stdout.strip().decode(sys.getfilesystemencoding())
+    fs_enc = sys.getfilesystemencoding()
+    proc_stdout = proc_stdout.strip().decode(fs_enc)
     proc_stdout = os.path.normcase(os.path.abspath(proc_stdout))
-    if proc_stdout != os.path.normcase(os.path.abspath(home_dir)):
+    norm_home_dir = os.path.normcase(os.path.abspath(home_dir.decode(fs_enc)))
+    if proc_stdout != norm_home_dir:
         logger.fatal(
             'ERROR: The executable %s is not functioning' % py_executable)
         logger.fatal(
             'ERROR: It thinks sys.prefix is %r (should be %r)'
-            % (proc_stdout, os.path.normcase(os.path.abspath(home_dir))))
+            % (proc_stdout, norm_home_dir))
         logger.fatal(
             'ERROR: virtualenv is not compatible with this system or executable')
         if sys.platform == 'win32':
