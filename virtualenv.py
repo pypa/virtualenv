@@ -1252,9 +1252,9 @@ sys.stdout.write(prefix)
 
     proc_stdout = proc_stdout.strip().decode("utf-8")
     proc_stdout = os.path.normcase(os.path.abspath(proc_stdout))
-    if hasattr(home_dir, 'decode'):
-        home_dir = home_dir.decode(sys.getfilesystemencoding())
     norm_home_dir = os.path.normcase(os.path.abspath(home_dir))
+    if hasattr(norm_home_dir, 'decode'):
+        norm_home_dir = norm_home_dir.decode(sys.getfilesystemencoding())
     if proc_stdout != norm_home_dir:
         logger.fatal(
             'ERROR: The executable %s is not functioning' % py_executable)
@@ -1296,13 +1296,14 @@ def install_activate(home_dir, bin_dir, prompt=None):
 
 
     files['activate_this.py'] = ACTIVATE_THIS
+    home_dir = os.path.abspath(home_dir)
     if hasattr(home_dir, 'decode'):
         home_dir = home_dir.decode(sys.getfilesystemencoding())
-    vname = os.path.basename(os.path.abspath(home_dir))
+    vname = os.path.basename(home_dir)
     for name, content in files.items():
         content = content.replace('__VIRTUAL_PROMPT__', prompt or '')
         content = content.replace('__VIRTUAL_WINPROMPT__', prompt or '(%s)' % vname)
-        content = content.replace('__VIRTUAL_ENV__', os.path.abspath(home_dir))
+        content = content.replace('__VIRTUAL_ENV__', home_dir)
         content = content.replace('__VIRTUAL_NAME__', vname)
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         writefile(os.path.join(bin_dir, name), content)
