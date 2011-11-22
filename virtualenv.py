@@ -846,13 +846,13 @@ def call_subprocess(cmd, show_stdout=True,
             part = part[:20]+"..."+part[-20:]
         if ' ' in part or '\n' in part or '"' in part or "'" in part:
             part = '"%s"' % part.replace('"', '\\"')
-        if isinstance(part, str):
+        if hasattr(part, 'decode'):
             try:
                 part = part.decode(sys.getdefaultencoding())
             except UnicodeDecodeError:
                 part = part.decode(sys.getfilesystemencoding())
         cmd_parts.append(part)
-    cmd_desc = u' '.join(cmd_parts)
+    cmd_desc = ' '.join(cmd_parts)
     if show_stdout:
         stdout = None
     else:
@@ -1226,7 +1226,17 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         # argument that has a space in it.  Instead we have to quote
         # the value:
         py_executable = '"%s"' % py_executable
-    cmd = [py_executable, '-c', 'import sys; print(sys.prefix)']
+    cmd = [py_executable, '-c', """
+import sys
+prefix = sys.prefix
+if sys.version_info[0] == 3:
+    prefix = prefix.encode('utf8')
+if hasattr(sys.stdout, 'detach'):
+    sys.stdout = sys.stdout.detach()
+elif hasattr(sys.stdout, 'buffer'):
+    sys.stdout = sys.stdout.buffer
+sys.stdout.write(prefix)
+"""]
     logger.info('Testing executable with %s %s "%s"' % tuple(cmd))
     try:
         proc = subprocess.Popen(cmd,
@@ -1240,10 +1250,11 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         else:
           raise e
 
-    fs_enc = sys.getfilesystemencoding()
-    proc_stdout = proc_stdout.strip().decode(fs_enc)
+    proc_stdout = proc_stdout.strip().decode("utf-8")
     proc_stdout = os.path.normcase(os.path.abspath(proc_stdout))
-    norm_home_dir = os.path.normcase(os.path.abspath(home_dir.decode(fs_enc)))
+    if hasattr(home_dir, 'decode'):
+        home_dir = home_dir.decode(sys.getfilesystemencoding())
+    norm_home_dir = os.path.normcase(os.path.abspath(home_dir))
     if proc_stdout != norm_home_dir:
         logger.fatal(
             'ERROR: The executable %s is not functioning' % py_executable)
@@ -1285,7 +1296,7 @@ def install_activate(home_dir, bin_dir, prompt=None):
 
 
     files['activate_this.py'] = ACTIVATE_THIS
-    if isinstance(home_dir, str):
+    if hasattr(home_dir, 'decode'):
         home_dir = home_dir.decode(sys.getfilesystemencoding())
     vname = os.path.basename(os.path.abspath(home_dir))
     for name, content in files.items():
