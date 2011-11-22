@@ -1228,7 +1228,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         else:
           raise e
 
-    proc_stdout = proc_stdout.strip().decode(sys.getdefaultencoding())
+    proc_stdout = proc_stdout.strip().decode(sys.getfilesystemencoding())
     proc_stdout = os.path.normcase(os.path.abspath(proc_stdout))
     if proc_stdout != os.path.normcase(os.path.abspath(home_dir)):
         logger.fatal(
