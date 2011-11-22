@@ -878,8 +878,13 @@ def call_subprocess(cmd, show_stdout=True,
     if stdout is not None:
         stdout = proc.stdout
         encoding = sys.getdefaultencoding()
+        fs_encoding = sys.getfilesystemencoding()
         while 1:
-            line = stdout.readline().decode(encoding)
+            line = stdout.readline()
+            try:
+                line = line.decode(encoding)
+            except UnicodeDecodeError:
+                line = line.decode(fs_encoding)
             if not line:
                 break
             line = line.rstrip()
