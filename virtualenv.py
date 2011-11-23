@@ -476,31 +476,6 @@ def _install_req(py_executable, unzip=False, distribute=False,
         project_name = 'distribute'
         bootstrap_script = DISTRIBUTE_SETUP_PY
 
-        # If we are running under -p, we need to remove the current
-        # directory from sys.path temporarily here, so that we
-        # definitely get the pkg_resources from the site directory of
-        # the interpreter we are running under, not the one
-        # virtualenv.py is installed under (which might lead to py2/py3
-        # incompatibility issues)
-        _prev_sys_path = sys.path
-        if os.environ.get('VIRTUALENV_INTERPRETER_RUNNING'):
-            sys.path = sys.path[1:]
-
-        try:
-            try:
-                # check if the global Python has distribute installed or plain
-                # setuptools
-                import pkg_resources
-                if not hasattr(pkg_resources, '_distribute'):
-                    location = os.path.dirname(pkg_resources.__file__)
-                    logger.notify("A globally installed setuptools was found (in %s)" % location)
-                    logger.notify("Refrain from using the --system-site-packages option to use distribute in "
-                                  "the virtualenv.")
-            except ImportError:
-                pass
-        finally:
-            sys.path = _prev_sys_path
-
     if setup_fn is not None:
         setup_fn = _find_file(setup_fn, search_dirs)
 
