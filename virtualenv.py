@@ -1255,7 +1255,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
 def install_activate(home_dir, bin_dir, prompt=None):
     if sys.platform == 'win32' or is_jython and os._name == 'nt':
         files = {'activate.bat': ACTIVATE_BAT,
-                 'deactivate.bat': DEACTIVATE_BAT}
+                 'deactivate.bat': DEACTIVATE_BAT,
+                 'activate.ps1': ACTIVATE_PS1}
         if os.environ.get('OS') == 'Windows_NT' and os.environ.get('OSTYPE') == 'cygwin':
             files['activate'] = ACTIVATE_SH
     else:
@@ -1923,6 +1924,17 @@ DEACTIVATE_BAT = convert("""
 eJxzSE3OyFfIT0vj4spMU0hJTcvMS01RiPf3cYkP8wwKCXX0iQ8I8vcNCFHQ4FIAguLUEgWIgK0q
 FlWqXJpcICVYpGzx2BAZ4uHv5+Hv6wq1BWINXBTdKriEKkI1DhW2QAfhttcxxANiFZCBbglQSJUL
 i2dASrm4rFz9XLgAwJNbyQ==
+""")
+
+##file activate.ps1
+ACTIVATE_PS1 = convert("""
+eJyNlF1rgzAUhu8L/oeDCLUX/oFKL7rNTaF+4LLCYBDcGreCJqVNe1P87zPVmppGt1zFnPe8nI8H
+8yP94ltG4btgn1kx35Cs/j5lnNgWZXRDDnx/FC9kBmdjAvXZ5mCj+t1JMv4DHj3Ncbx6wusgRW/L
+FU6WyO+04lhCctEumvud3JXilJTsRJyAk1Jv3WorY/K/at6RH0d+HHq9mkSWppZODA4lMI3iyJv2
+8mQ/Uqrtqgvf9FbJKykORPVVW//LY3xUavLAwJ7b/SvZaRwmqNf5K+HOI6OcUC6Tkj0rdxzsF11Q
+5ziw6bEcXf0OZRyG+Bw0l2xLz4utDICF9kcRNiaXpV5L8aJ1vWcT45sHjE0pvOP0ikXLbHcXNqr1
+B8YPQYSjZehh7HbSxv4ecA3ToywvVGSbnGHe2rHkyr9Bsxw4V3WRWjZ0aj0oDUWzIaNdA9kZTFsd
+3AwsW4eZ6YKo6xftrmPt
 """)
 
 ##file distutils-init.py
