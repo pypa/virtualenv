@@ -603,7 +603,7 @@ def install_pip(py_executable, search_dirs=None, never_download=False):
         easy_install_script = 'easy_install-script.py'
     cmd = [join(os.path.dirname(py_executable), easy_install_script), filename]
     if sys.platform == 'win32':
-        cmd[:0] = py_executable
+        cmd.insert(0, py_executable)
     if filename == 'pip':
         if never_download:
             logger.fatal("Can't find any local distributions of pip to install "
