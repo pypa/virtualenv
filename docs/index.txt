@@ -13,21 +13,10 @@ virtualenv
 
 .. comment: split here
 
-Status and License
-------------------
+Installation
+------------
 
-``virtualenv`` is a successor to `workingenv
-<http://cheeseshop.python.org/pypi/workingenv.py>`_, and an extension
-of `virtual-python
-<http://peak.telecommunity.com/DevCenter/EasyInstall#creating-a-virtual-python>`_.
-
-It was written by Ian Bicking, sponsored by the `Open Planning
-Project <http://openplans.org>`_ and is now maintained by a
-`group of developers <https://github.com/pypa/virtualenv/raw/master/AUTHORS.txt>`_.
-It is licensed under an
-`MIT-style permissive license <https://github.com/pypa/virtualenv/raw/master/LICENSE.txt>`_.
-
-You can install it with ``pip install virtualenv``, or the `latest
+You can install virtualenv with ``pip install virtualenv``, or the `latest
 development version <https://github.com/pypa/virtualenv/tarball/develop#egg=virtualenv-dev>`_
 with ``pip install virtualenv==dev``.
 
@@ -36,7 +25,6 @@ available at all, you can just grab the single file `virtualenv.py`_ and run
 it with ``python virtualenv.py``.
 
 .. _virtualenv.py: https://raw.github.com/pypa/virtualenv/master/virtualenv.py
-
 
 What It Does
 ------------
@@ -485,3 +473,17 @@ Other Documentation and Links
 * `virtualenv commands
   <http://thisismedium.com/tech/extending-virtualenv/>`_ for some more
   workflow-related tools around virtualenv.
+
+Status and License
+------------------
+
+``virtualenv`` is a successor to `workingenv
+<http://cheeseshop.python.org/pypi/workingenv.py>`_, and an extension
+of `virtual-python
+<http://peak.telecommunity.com/DevCenter/EasyInstall#creating-a-virtual-python>`_.
+
+It was written by Ian Bicking, sponsored by the `Open Planning
+Project <http://openplans.org>`_ and is now maintained by a
+`group of developers <https://github.com/pypa/virtualenv/raw/master/AUTHORS.txt>`_.
+It is licensed under an
+`MIT-style permissive license <https://github.com/pypa/virtualenv/raw/master/LICENSE.txt>`_.
