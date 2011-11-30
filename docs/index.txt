@@ -81,7 +81,7 @@ It also installs either `Setuptools
 <http://pypi.python.org/pypi/distribute>`_ into the environment. To use
 Distribute instead of setuptools, just call virtualenv like this::
 
-    $ python virtualenv.py --use-distribute ENV
+    $ python virtualenv.py --distribute ENV
 
 You can also set the environment variable VIRTUALENV_USE_DISTRIBUTE.
 
@@ -110,7 +110,7 @@ virtualenv can not only be configured by passing command line options such as
 
   It's the same as passing the option to virtualenv directly::
 
-      $ python virtualenv.py --use-distribute ENV
+      $ python virtualenv.py --distribute ENV
 
   This also works for appending command line options, like ``--find-links``.
   Just leave an empty space between the passsed values, e.g.::
@@ -129,10 +129,10 @@ virtualenv can not only be configured by passing command line options such as
   ``%HOME%\\virtualenv\\virtualenv.ini``.
 
   The names of the settings are derived from the long command line option,
-  e.g. the option ``--use-distribute`` would look like this::
+  e.g. the option ``--distribute`` would look like this::
 
       [virtualenv]
-      use-distribute = true
+      distribute = true
 
   Appending options like ``--extra-search-dir`` can be written on multiple
   lines::

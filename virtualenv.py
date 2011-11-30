@@ -825,11 +825,11 @@ def main():
         'This fixes up scripts and makes all .pth files relative')
 
     parser.add_option(
-        '--distribute', '--use-distribute',
+        '--distribute',
         dest='use_distribute',
         action='store_true',
         help='Use Distribute instead of Setuptools. Set environ variable '
-        'VIRTUALENV_USE_DISTRIBUTE to make it the default ')
+        'VIRTUALENV_DISTRIBUTE to make it the default ')
 
     default_search_dirs = file_search_dirs()
     parser.add_option(
@@ -1030,7 +1030,9 @@ def create_environment(home_dir, site_packages=False, clear=False,
 
     install_distutils(home_dir)
 
-    if use_distribute:
+    # use_distribute also is True if VIRTUALENV_DISTRIBUTE env var is set
+    # we also check VIRTUALENV_USE_DISTRIBUTE for backwards compatibility
+    if use_distribute or os.environ.get('VIRTUALENV_USE_DISTRIBUTE'):
         install_distribute(py_executable, unzip=unzip_setuptools,
                            search_dirs=search_dirs, never_download=never_download)
     else:
