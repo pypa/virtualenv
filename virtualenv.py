@@ -879,7 +879,7 @@ def main():
             popen = subprocess.Popen([interpreter, file] + sys.argv[1:], env=env)
             raise SystemExit(popen.wait())
 
-    # Force --use-distribute on Python 3, since setuptools is not available.
+    # Force --distribute on Python 3, since setuptools is not available.
     if majver > 2:
         options.use_distribute = True
 
