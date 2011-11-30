@@ -81,13 +81,69 @@ It also installs either `Setuptools
 <http://pypi.python.org/pypi/distribute>`_ into the environment. To use
 Distribute instead of setuptools, just call virtualenv like this::
 
-    $ python virtualenv.py --distribute ENV
+    $ python virtualenv.py --use-distribute ENV
 
 You can also set the environment variable VIRTUALENV_USE_DISTRIBUTE.
 
 A new virtualenv also includes the `pip <http://pypy.python.org/pypi/pip>`_
 installer, so you can use ``ENV/bin/pip`` to install additional packages into
 the environment.
+
+Environment variables and configuration files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+virtualenv can not only be configured by passing command line options such as
+``--distribute`` but also by two other means:
+
+- Environment variables
+
+  Each command line option is automatically used to look for environment
+  variables with the name format ``VIRTUALENV_<UPPER_NAME>``. That means
+  the name of the command line options are capitalized and have dashes
+  (``'-'``) replaced with underscores (``'_'``).
+
+  For example, to automatically install Distribute instead of setuptools
+  you can also set an environment variable::
+
+      $ export VIRTUALENV_USE_DISTRIBUTE=true
+      $ python virtualenv.py ENV
+
+  It's the same as passing the option to virtualenv directly::
+
+      $ python virtualenv.py --use-distribute ENV
+
+  This also works for appending command line options, like ``--find-links``.
+  Just leave an empty space between the passsed values, e.g.::
+
+      $ export VIRTUALENV_EXTRA_SEARCH_DIR="/path/to/dists /path/to/other/dists"
+      $ virtualenv ENV
+
+  is the same as calling::
+
+      $ python virtualenv.py --extra-search-dir=/path/to/dists --extra-search-dir=/path/to/other/dists ENV
+
+- Config files
+
+  virtualenv also looks for a standard ini config file. On Unix and Mac OS X
+  that's ``$HOME/.virtualenv/virtualenv.ini`` and on Windows, it's
+  ``%HOME%\\virtualenv\\virtualenv.ini``.
+
+  The names of the settings are derived from the long command line option,
+  e.g. the option ``--use-distribute`` would look like this::
+
+      [virtualenv]
+      use-distribute = true
+
+  Appending options like ``--extra-search-dir`` can be written on multiple
+  lines::
+
+      [virtualenv]
+      extra-search-dir =
+          /path/to/dists
+          /path/to/other/dists
+
+Please have a look at the output of ``virtualenv --help`` for a full list
+of supported options.
 
 Windows Notes
 ~~~~~~~~~~~~~
@@ -196,7 +252,7 @@ directory.  (You have to use ``source`` because it changes your shell
 environment in-place.) This is all it does; it's purely a convenience.  If
 you directly run a script or the python interpreter from the virtualenv's
 ``bin/`` directory (e.g.  ``path/to/env/bin/pip`` or
-``/path/to/env/bin/python script.py``) there's no need for activation. 
+``/path/to/env/bin/python script.py``) there's no need for activation.
 
 After activating an environment you can use the function ``deactivate`` to
 undo the changes to your ``$PATH``.
@@ -246,7 +302,7 @@ you to use an existing interpreter.  Items in your environment will show up
 first on ``sys.path``, before global items.  However, global items will
 always be accessible (as if the ``--system-site-packages`` flag had been used
 in creating the environment, whether it was or not).  Also, this cannot undo
-the activation of other environments, or modules that have been imported. 
+the activation of other environments, or modules that have been imported.
 You shouldn't try to, for instance, activate an environment before a web
 request; you should activate *one* environment as early as possible, and not
 do it again in that process.

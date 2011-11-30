@@ -17,6 +17,8 @@ import tempfile
 import zlib
 import errno
 import distutils.sysconfig
+from distutils.util import strtobool
+
 try:
     import subprocess
 except ImportError:
@@ -36,6 +38,11 @@ try:
 except NameError:
     basestring = str
 
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
+
 join = os.path.join
 py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
 
@@ -43,6 +50,14 @@ is_jython = sys.platform.startswith('java')
 is_pypy = hasattr(sys, 'pypy_version_info')
 is_win  = (sys.platform == 'win32')
 abiflags = getattr(sys, 'abiflags', '')
+
+user_dir = os.path.expanduser('~')
+if sys.platform == 'win32':
+    user_dir = os.environ.get('APPDATA', user_dir)  # Use %APPDATA% for roaming
+    default_storage_dir = os.path.join(user_dir, 'virtualenv')
+else:
+    default_storage_dir = os.path.join(user_dir, '.virtualenv')
+default_config_file = os.path.join(default_storage_dir, 'virtualenv.ini')
 
 if is_pypy:
     expected_exe = 'pypy'
@@ -646,10 +661,113 @@ def filter_ez_setup(line, project_name='setuptools'):
             return Logger.DEBUG
     return Logger.INFO
 
+
+class UpdatingDefaultsHelpFormatter(optparse.IndentedHelpFormatter):
+    """
+    Custom help formatter for use in ConfigOptionParser that updates
+    the defaults before expanding them, allowing them to show up correctly
+    in the help listing
+    """
+    def expand_default(self, option):
+        if self.parser is not None:
+            self.parser.update_defaults(self.parser.defaults)
+        return optparse.IndentedHelpFormatter.expand_default(self, option)
+
+
+class ConfigOptionParser(optparse.OptionParser):
+    """
+    Custom option parser which updates its defaults by by checking the
+    configuration files and environmental variables
+    """
+    def __init__(self, *args, **kwargs):
+        self.config = ConfigParser.RawConfigParser()
+        self.files = self.get_config_files()
+        self.config.read(self.files)
+        optparse.OptionParser.__init__(self, *args, **kwargs)
+
+    def get_config_files(self):
+        config_file = os.environ.get('VIRTUALENV_CONFIG_FILE', False)
+        if config_file and os.path.exists(config_file):
+            return [config_file]
+        return [default_config_file]
+
+    def update_defaults(self, defaults):
+        """
+        Updates the given defaults with values from the config files and
+        the environ. Does a little special handling for certain types of
+        options (lists).
+        """
+        # Then go and look for the other sources of configuration:
+        config = {}
+        # 1. config files
+        config.update(dict(self.get_config_section('virtualenv')))
+        # 2. environmental variables
+        config.update(dict(self.get_environ_vars()))
+        # Then set the options with those values
+        for key, val in config.items():
+            key = key.replace('_', '-')
+            if not key.startswith('--'):
+                key = '--%s' % key  # only prefer long opts
+            option = self.get_option(key)
+            if option is not None:
+                # ignore empty values
+                if not val:
+                    continue
+                # handle multiline configs
+                if option.action == 'append':
+                    val = val.split()
+                else:
+                    option.nargs = 1
+                if option.action in ('store_true', 'store_false', 'count'):
+                    val = strtobool(val)
+                try:
+                    val = option.convert_value(key, val)
+                except optparse.OptionValueError:
+                    e = sys.exc_info()[1]
+                    print("An error occured during configuration: %s" % e)
+                    sys.exit(3)
+                defaults[option.dest] = val
+        return defaults
+
+    def get_config_section(self, name):
+        """
+        Get a section of a configuration
+        """
+        if self.config.has_section(name):
+            return self.config.items(name)
+        return []
+
+    def get_environ_vars(self, prefix='VIRTUALENV_'):
+        """
+        Returns a generator with all environmental vars with prefix VIRTUALENV
+        """
+        for key, val in os.environ.items():
+            if key.startswith(prefix):
+                yield (key.replace(prefix, '').lower(), val)
+
+    def get_default_values(self):
+        """
+        Overridding to make updating the defaults after instantiation of
+        the option parser possible, update_defaults() does the dirty work.
+        """
+        if not self.process_default_values:
+            # Old, pre-Optik 1.5 behaviour.
+            return optparse.Values(self.defaults)
+
+        defaults = self.update_defaults(self.defaults.copy()) # ours
+        for option in self._get_all_options():
+            default = defaults.get(option.dest)
+            if isinstance(default, basestring):
+                opt_str = option.get_opt_string()
+                defaults[option.dest] = option.check_value(opt_str, default)
+        return optparse.Values(defaults)
+
+
 def main():
-    parser = optparse.OptionParser(
+    parser = ConfigOptionParser(
         version=virtualenv_version,
-        usage="%prog [OPTIONS] DEST_DIR")
+        usage="%prog [OPTIONS] DEST_DIR",
+        formatter=UpdatingDefaultsHelpFormatter())
 
     parser.add_option(
         '-v', '--verbose',
@@ -707,7 +825,7 @@ def main():
         'This fixes up scripts and makes all .pth files relative')
 
     parser.add_option(
-        '--distribute',
+        '--distribute', '--use-distribute',
         dest='use_distribute',
         action='store_true',
         help='Use Distribute instead of Setuptools. Set environ variable '
@@ -912,7 +1030,7 @@ def create_environment(home_dir, site_packages=False, clear=False,
 
     install_distutils(home_dir)
 
-    if use_distribute or os.environ.get('VIRTUALENV_USE_DISTRIBUTE'):
+    if use_distribute:
         install_distribute(py_executable, unzip=unzip_setuptools,
                            search_dirs=search_dirs, never_download=never_download)
     else:
