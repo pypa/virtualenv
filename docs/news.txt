@@ -4,6 +4,10 @@ Changes & News
 1.7 (2011-11-30)
 ~~~~~~~~~~~~~~~~
 
+* Gave user-provided ``--extra-search-dir`` priority over default dirs for
+  finding setuptools/distribute (it already had priority for finding pip).
+  Thanks Ethan Jucovy.
+
 * Updated embedded Distribute release to 0.6.24. Thanks Alex Grönholm.
 
 * Made ``--no-site-packages`` behavior the default behavior.  The

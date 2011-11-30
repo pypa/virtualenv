@@ -21,6 +21,7 @@ Christian Stefanescu
 Christopher Nilsson
 Curt Micol
 Douglas Creager
+Ethan Jucovy
 Gunnlaugur Thor Briem
 Jeff Hammel
 Jorge Vargas
