@@ -15,7 +15,7 @@ Beta release November 2011, final release December.
   ``--no-site-packages`` flag is still permitted, but displays a warning when
   used. Thanks Chris McDonough.
 
-* New flag: ``--use-site-packages``; this flag should be passed to get the
+* New flag: ``--system-site-packages``; this flag should be passed to get the
   previous default global-site-package-including behavior back.
 
 * Added ability to set command options as environment variables and options
