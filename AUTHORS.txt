@@ -13,11 +13,15 @@ Jannis Leidel
 Contributors
 ------------
 
+Alex Grönholm
 Antonio Cuni
 Armin Ronacher
+Chris McDonough
+Christian Stefanescu
 Christopher Nilsson
 Curt Micol
 Douglas Creager
+Gunnlaugur Thor Briem
 Jeff Hammel
 Jorge Vargas
 Josh Bronson

@@ -1,10 +1,24 @@
 Changes & News
 --------------
 
-Next release (1.7) schedule
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1.7 (2011-11-30)
+~~~~~~~~~~~~~~~~
 
-Beta release mid-July 2011, final release early August.
+* Updated embedded Distribute release to 0.6.24. Thanks Alex Grönholm.
+
+* Made ``--no-site-packages`` behavior the default behavior.  The
+  ``--no-site-packages`` flag is still permitted, but displays a warning when
+  used. Thanks Chris McDonough.
+
+* New flag: ``--system-site-packages``; this flag should be passed to get the
+  previous default global-site-package-including behavior back.
+
+* Added ability to set command options as environment variables and options
+  in a ``virtualenv.ini`` file.
+
+* Fixed various encoding related issues with paths. Thanks Gunnlaugur Thor Briem.
+
+* Made ``virtualenv.py`` script executable.
 
 1.6.4 (2011-07-21)
 ~~~~~~~~~~~~~~~~~~
