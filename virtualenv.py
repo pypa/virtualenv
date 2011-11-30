@@ -469,7 +469,7 @@ def make_exe(fn):
         logger.info('Changed mode of %s to %s', fn, oct(newmode))
 
 def _find_file(filename, dirs):
-    for dir in dirs:
+    for dir in reversed(dirs):
         if os.path.exists(join(dir, filename)):
             return join(dir, filename)
     return filename
