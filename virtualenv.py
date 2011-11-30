@@ -469,9 +469,12 @@ def make_exe(fn):
         logger.info('Changed mode of %s to %s', fn, oct(newmode))
 
 def _find_file(filename, dirs):
+    matches = []
     for dir in dirs:
         if os.path.exists(join(dir, filename)):
-            return join(dir, filename)
+            matches.append(join(dir, filename))
+    if len(matches):
+        return matches[-1]
     return filename
 
 def _install_req(py_executable, unzip=False, distribute=False,
