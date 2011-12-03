@@ -1,6 +1,12 @@
 Changes & News
 --------------
 
+In development
+~~~~~~~~~~~~~~
+
+* Added activation script for Powershell (signed by Jannis Leidel). Many
+  thanks to Jason R. Coombs.
+
 1.7 (2011-11-30)
 ~~~~~~~~~~~~~~~~
 

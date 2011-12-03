@@ -23,6 +23,7 @@ Curt Micol
 Douglas Creager
 Ethan Jucovy
 Gunnlaugur Thor Briem
+Jason R. Coombs
 Jeff Hammel
 Jorge Vargas
 Josh Bronson
