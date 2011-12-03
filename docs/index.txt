@@ -400,7 +400,7 @@ the following::
     PS C:> \foo\scripts\activate
 
     Do you want to run software from this untrusted publisher?
-    File \foo\scripts\activate.ps1 is published by E=jaraco@jaraco.com, CN=Jason R. Coombs, L=Washington, S=District of Columbia, C=US, Description=469447-Ut5Oc0pPWHyGhuu5
+    File \foo\scripts\activate.ps1 is published by E=jannis@leidel.info, CN=Jannis Leidel, L=Berlin, S=Berlin, C=DE, Description=581796-Gh7xfJxkxQSIO4E0
     and is not trusted on your system. Only run scripts from trusted publishers.
     [V] Never run  [D] Do not run  [R] Run once  [A] Always run  [?] Help
     (default is "D"):A
