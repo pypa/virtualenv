@@ -883,7 +883,9 @@ def main():
     if majver > 2:
         options.use_distribute = True
 
-    if os.environ.get('PYTHONDONTWRITEBYTECODE') and not options.use_distribute:
+    if os.environ.get('PYTHONDONTWRITEBYTECODE') and not (
+        options.use_distribute or os.environ.get('VIRTUALENV_USE_DISTRIBUTE')):
+
         print(
             "The PYTHONDONTWRITEBYTECODE environment variable is "
             "not compatible with setuptools. Either use --distribute "
