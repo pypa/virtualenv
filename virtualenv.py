@@ -1255,6 +1255,14 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             if os.path.exists(pythonw):
                 logger.info('Also created pythonw.exe')
                 shutil.copyfile(pythonw, os.path.join(os.path.dirname(py_executable), 'pythonw.exe'))
+            # we need to copy the DLL to enforce that windows will load the correct one.
+            # may not exist if we are cygwin.
+            py_executable_dll = 'python%s%s.dll' % (
+                sys.version_info[0], sys.version_info[1])
+            pythondll = os.path.join(os.path.dirname(sys.executable), py_executable_dll)
+            if os.path.exists(pythondll):
+                logger.info('Also created %s' % py_executable_dll)
+                shutil.copyfile(pythondll, os.path.join(os.path.dirname(py_executable), py_executable_dll))
         if is_pypy:
             # make a symlink python --> pypy-c
             python_executable = os.path.join(os.path.dirname(py_executable), 'python')
@@ -1371,7 +1379,11 @@ sys.stdout.write(prefix)
             'ERROR: virtualenv is not compatible with this system or executable')
         if sys.platform == 'win32':
             logger.fatal(
-                'Note: some Windows users have reported this error when they installed Python for "Only this user".  The problem may be resolvable if you install Python "For all users".  (See https://bugs.launchpad.net/virtualenv/+bug/352844)')
+                'Note: some Windows users have reported this error when they '
+                'installed Python for "Only this user" or have multiple '
+                'versions of Python installed. Copying the appropriate '
+                'PythonXX.dll to the virtualenv Scripts/ directory may fix '
+                'this problem.')
         sys.exit(100)
     else:
         logger.info('Got sys.prefix result: %r' % proc_stdout)
@@ -1384,15 +1396,23 @@ sys.stdout.write(prefix)
     return py_executable
 
 def install_activate(home_dir, bin_dir, prompt=None):
+    home_dir = os.path.abspath(home_dir)
     if sys.platform == 'win32' or is_jython and os._name == 'nt':
         files = {
             'activate.bat': ACTIVATE_BAT,
             'deactivate.bat': DEACTIVATE_BAT,
             'activate.ps1': ACTIVATE_PS,
         }
-        if (os.environ.get('OS') == 'Windows_NT' and
-                os.environ.get('OSTYPE') == 'cygwin'):
-            files['activate'] = ACTIVATE_SH
+
+        # MSYS needs paths of the form /c/path/to/file
+        drive, tail = os.path.splitdrive(home_dir.replace(os.sep, '/'))
+        home_dir_msys = (drive and "/%s%s" or "%s%s") % (drive[:1], tail)
+
+        # Run-time conditional enables (basic) Cygwin compatibility
+        home_dir_sh = ("""$(if [ "$OSTYPE" == "cygwin" ]; then cygpath -u '%s'; else echo '%s'; fi;)""" % 
+                       (home_dir, home_dir_msys))
+        files['activate'] = ACTIVATE_SH.replace('__VIRTUAL_ENV__', home_dir_sh)
+
     else:
         files = {'activate': ACTIVATE_SH}
 
@@ -1404,7 +1424,6 @@ def install_activate(home_dir, bin_dir, prompt=None):
         files['activate.csh'] = ACTIVATE_CSH
 
     files['activate_this.py'] = ACTIVATE_THIS
-    home_dir = os.path.abspath(home_dir)
     if hasattr(home_dir, 'decode'):
         home_dir = home_dir.decode(sys.getfilesystemencoding())
     vname = os.path.basename(home_dir)
