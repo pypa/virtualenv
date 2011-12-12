@@ -1104,24 +1104,35 @@ def change_prefix(filename, dst_prefix):
 
 def copy_required_modules(dst_prefix):
     import imp
-    for modname in REQUIRED_MODULES:
-        if modname in sys.builtin_module_names:
-            logger.info("Ignoring built-in bootstrap module: %s" % modname)
-            continue
-        try:
-            f, filename, _ = imp.find_module(modname)
-        except ImportError:
-            logger.info("Cannot import bootstrap module: %s" % modname)
-        else:
-            if f is not None:
-                f.close()
-            dst_filename = change_prefix(filename, dst_prefix)
-            copyfile(filename, dst_filename)
-            if filename.endswith('.pyc'):
-                pyfile = filename[:-1]
-                if os.path.exists(pyfile):
-                    copyfile(pyfile, dst_filename[:-1])
-
+    # If we are running under -p, we need to remove the current
+    # directory from sys.path temporarily here, so that we
+    # definitely get the modules from the site directory of
+    # the interpreter we are running under, not the one
+    # virtualenv.py is installed under (which might lead to py2/py3
+    # incompatibility issues)
+    _prev_sys_path = sys.path
+    if os.environ.get('VIRTUALENV_INTERPRETER_RUNNING'):
+        sys.path = sys.path[1:]
+    try:
+        for modname in REQUIRED_MODULES:
+            if modname in sys.builtin_module_names:
+                logger.info("Ignoring built-in bootstrap module: %s" % modname)
+                continue
+            try:
+                f, filename, _ = imp.find_module(modname)
+            except ImportError:
+                logger.info("Cannot import bootstrap module: %s" % modname)
+            else:
+                if f is not None:
+                    f.close()
+                dst_filename = change_prefix(filename, dst_prefix)
+                copyfile(filename, dst_filename)
+                if filename.endswith('.pyc'):
+                    pyfile = filename[:-1]
+                    if os.path.exists(pyfile):
+                        copyfile(pyfile, dst_filename[:-1])
+    finally:
+        sys.path = _prev_sys_path
 
 def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     """Install just the base environment, no distutils patches etc"""
