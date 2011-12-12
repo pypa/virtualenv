@@ -4,6 +4,14 @@ Changes & News
 In development
 ~~~~~~~~~~~~~~
 
+* Made activate script available for use with msys and cygwin on Windows.
+  Thanks Greg Haskins, Cliff Xuan, Jonathan Griffin and Doug Napoleone.
+  Fixes #176.
+
+* Fixed creation of virtualenvs on Windows when Python is not installed for
+  all users. Thanks Anatoly Techtonik for report and patch and Doug
+  Napoleone for testing and confirmation. Fixes #87.
+
 * Fixed creation of virtualenvs using -p in installs where some modules
   that ought to be in the standard library (e.g. `readline`) are actually
   installed in `site-packages` next to `virtualenv.py`. Thanks Greg Haskins

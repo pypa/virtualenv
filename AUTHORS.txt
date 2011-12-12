@@ -14,18 +14,22 @@ Contributors
 ------------
 
 Alex Grönholm
+Anatoly Techtonik
 Antonio Cuni
 Armin Ronacher
 Chris McDonough
 Christian Stefanescu
 Christopher Nilsson
+Cliff Xuan
 Curt Micol
+Doug Napoleone
 Douglas Creager
 Ethan Jucovy
 Gunnlaugur Thor Briem
 Greg Haskins
 Jason R. Coombs
 Jeff Hammel
+Jonathan Griffin
 Jorge Vargas
 Josh Bronson
 Kumar McMillan
