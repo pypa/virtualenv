@@ -4,6 +4,11 @@ Changes & News
 In development
 ~~~~~~~~~~~~~~
 
+* Fixed creation of virtualenvs using -p in installs where some modules
+  that ought to be in the standard library (e.g. `readline`) are actually
+  installed in `site-packages` next to `virtualenv.py`. Thanks Greg Haskins
+  for report and fix. Fixes #167.
+
 * Added activation script for Powershell (signed by Jannis Leidel). Many
   thanks to Jason R. Coombs.
 
