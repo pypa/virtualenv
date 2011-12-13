@@ -37,5 +37,6 @@ Kumar McMillan
 Lars Francke
 Philip Jenvey
 Ronny Pfannschmidt
+Stefano Rivera
 Tarek Ziadé
 Vinay Sajip
