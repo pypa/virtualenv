@@ -29,11 +29,7 @@ def rebuild():
         varname = match.group(2)
         data = match.group(3)
         print('Found reference to file %s' % filename)
-        if filename.endswith('.py'):
-            pathname = os.path.join(here, '..', 'virtualenv_embedded',
-                                    filename)
-        else:
-            pathname = os.path.join(here, '..', 'virtualenv_support', filename)
+        pathname = os.path.join(here, '..', 'virtualenv_embedded', filename)
         f = open(pathname, 'rb')
         c = f.read()
         f.close()
