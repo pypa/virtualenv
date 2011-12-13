@@ -4,6 +4,9 @@ Changes & News
 In development
 ~~~~~~~~~~~~~~
 
+* Use non-recursive symlinks to fix things up for posix_local install
+  scheme. Thanks michr.
+
 * Made activate script available for use with msys and cygwin on Windows.
   Thanks Greg Haskins, Cliff Xuan, Jonathan Griffin and Doug Napoleone.
   Fixes #176.
