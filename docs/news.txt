@@ -4,6 +4,9 @@ Changes & News
 In development
 ~~~~~~~~~~~~~~
 
+* Support creating virtualenvs directly from a Python build directory on
+  Windows. Thanks CBWhiz. Fixes #139.
+
 * Use non-recursive symlinks to fix things up for posix_local install
   scheme. Thanks michr.
 
