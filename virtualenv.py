@@ -1239,6 +1239,18 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
                     os.path.dirname(py_executable), 'python')
 
     logger.notify('New %s executable in %s', expected_exe, py_executable)
+    pcbuild_dir = os.path.dirname(sys.executable)
+    pyd_pth = os.path.join(lib_dir, 'site-packages', 'virtualenv_builddir_pyd.pth')
+    if is_win and os.path.exists(os.path.join(pcbuild_dir, 'build.bat')):
+        logger.notify('Detected python running from build directory %s', pcbuild_dir)
+        logger.notify('Writing .pth file linking to build directory for *.pyd files')
+        writefile(pyd_pth, pcbuild_dir)
+    else:
+        pcbuild_dir = None
+        if os.path.exists(pyd_pth):
+            logger.info('Deleting %s (not Windows env or not build directory python)' % pyd_pth)
+            os.unlink(pyd_pth)
+        
     if sys.executable != py_executable:
         ## FIXME: could I just hard link?
         executable = sys.executable
