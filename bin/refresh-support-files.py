@@ -12,6 +12,7 @@ import sys
 
 here = os.path.dirname(__file__)
 support_files = os.path.join(here, '..', 'virtualenv_support')
+embedded_support_files = os.path.join(here, '..', 'virtualenv_embedded_support')
 
 files = [
     ('http://peak.telecommunity.com/dist/ez_setup.py', 'ez_setup.py'),
@@ -31,7 +32,10 @@ def main():
         content = f.read()
         f.close()
         print('done.')
-        filename = os.path.join(support_files, filename)
+        if filename.endswith('.py'):
+            filename = os.path.join(embedded_support_files, filename)
+        else:
+            filename = os.path.join(support_files, filename)
         if os.path.exists(filename):
             f = open(filename, 'rb')
             cur_content = f.read()

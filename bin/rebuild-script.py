@@ -29,7 +29,12 @@ def rebuild():
         varname = match.group(2)
         data = match.group(3)
         print('Found reference to file %s' % filename)
-        f = open(os.path.join(here, '..', 'virtualenv_support', filename), 'rb')
+        if filename.endswith('.py'):
+            pathname = os.path.join(here, '..', 'virtualenv_embedded_support',
+                                    filename)
+        else:
+            pathname = os.path.join(here, '..', 'virtualenv_support', filename)
+        f = open(pathname, 'rb')
         c = f.read()
         f.close()
         new_data = c.encode('zlib').encode('base64')
