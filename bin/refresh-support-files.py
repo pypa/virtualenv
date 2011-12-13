@@ -12,7 +12,7 @@ import sys
 
 here = os.path.dirname(__file__)
 support_files = os.path.join(here, '..', 'virtualenv_support')
-embedded_support_files = os.path.join(here, '..', 'virtualenv_embedded_support')
+embedded_files = os.path.join(here, '..', 'virtualenv_embedded')
 
 files = [
     ('http://peak.telecommunity.com/dist/ez_setup.py', 'ez_setup.py'),
@@ -33,7 +33,7 @@ def main():
         f.close()
         print('done.')
         if filename.endswith('.py'):
-            filename = os.path.join(embedded_support_files, filename)
+            filename = os.path.join(embedded_files, filename)
         else:
             filename = os.path.join(support_files, filename)
         if os.path.exists(filename):
