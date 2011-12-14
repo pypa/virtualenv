@@ -33,7 +33,7 @@ In development
   finding setuptools/distribute (it already had priority for finding pip).
   Thanks Ethan Jucovy.
 
-* Updated embedded Distribute release to 0.6.24. Thanks Alex Grönholm.
+* Updated embedded Distribute release to 0.6.24. Thanks Alex Gronholm.
 
 * Made ``--no-site-packages`` behavior the default behavior.  The
   ``--no-site-packages`` flag is still permitted, but displays a warning when
