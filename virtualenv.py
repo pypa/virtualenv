@@ -478,7 +478,7 @@ def _install_req(py_executable, unzip=False, distribute=False,
                  search_dirs=None, never_download=False):
 
     if search_dirs is None:
-        search_dirs = file_search_dirs()
+        search_dirs = file_search_dirs(py_executable=py_executable)
 
     if not distribute:
         setup_fn = 'setuptools-0.6c11-py%s.egg' % sys.version[:3]
@@ -573,11 +573,14 @@ def _install_req(py_executable, unzip=False, distribute=False,
         if is_jython and os._name == 'nt':
             os.remove(ez_setup)
 
-def file_search_dirs():
+def file_search_dirs(py_executable=None):
     here = os.path.dirname(os.path.abspath(__file__))
     dirs = ['.', here,
             join(here, 'virtualenv_support')]
-    if os.path.splitext(os.path.dirname(__file__))[0] != 'virtualenv':
+    if py_executable is not None:
+        # Ask the python we use for it's path
+        dirs.append(eval(call_subprocess([py_executable, "-c" "import sys; print sys.path"])))
+    elif os.path.splitext(os.path.dirname(__file__))[0] != 'virtualenv':
         # Probably some boot script; just in case virtualenv is installed...
         try:
             import virtualenv
@@ -600,7 +603,7 @@ def install_distribute(py_executable, unzip=False,
 _pip_re = re.compile(r'^pip-.*(zip|tar.gz|tar.bz2|tgz|tbz)$', re.I)
 def install_pip(py_executable, search_dirs=None, never_download=False):
     if search_dirs is None:
-        search_dirs = file_search_dirs()
+        search_dirs = file_search_dirs(py_executable=py_executable)
 
     filenames = []
     for dir in search_dirs:
