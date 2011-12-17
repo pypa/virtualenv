@@ -4,6 +4,9 @@ Changes & News
 In development
 ~~~~~~~~~~~~~~
 
+* Added environ PATH modification to activate_this.py. Thanks Doug
+  Napoleone. Fixes #14.
+
 * Support creating virtualenvs directly from a Python build directory on
   Windows. Thanks CBWhiz. Fixes #139.
 
