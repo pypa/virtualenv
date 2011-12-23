@@ -45,34 +45,33 @@ end
 
 if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
     # fish uses a function instead of an env var to generate the prompt.
-    if test $status
-        # save the current fish_prompt function as the function _old_fish_prompt
-        . ( begin
-                printf "function _old_fish_prompt\n\t#"
-                functions fish_prompt
-            end | psub )
-        
-        if test -n "__VIRTUAL_PROMPT__"
-            # We've been given us a prompt override.
-            # 
-            # FIXME: Unsure how to handle this *safely*. We could just eval()
-            #   whatever is given, but the risk is a bit much.
-            echo "activate.fish: Alternative prompt prefix is not supported under fish-shell." 1>&2
-            echo "activate.fish: Alter the fish_prompt in this file as needed." 1>&2
-        end
-        
-        # with the original prompt function renamed, we can override with our own.
-        function fish_prompt
-            set -l _checkbase (basename "$VIRTUAL_ENV")
-            if test $_checkbase = "__"
-                # special case for Aspen magic directories
-                # see http://www.zetadev.com/software/aspen/
-                printf "%s[%s]%s %s" (set_color -b blue white) (basename (dirname "$VIRTUAL_ENV")) (set_color normal) (_old_fish_prompt)
-            else
-                printf "%s(%s)%s%s" (set_color -b blue white) (basename "$VIRTUAL_ENV") (set_color normal) (_old_fish_prompt)
-            end
-        end 
-        
-        set -gx _OLD_FISH_PROMPT_OVERRIDE "$VIRTUAL_ENV"
+    
+    # save the current fish_prompt function as the function _old_fish_prompt
+    . ( begin
+            printf "function _old_fish_prompt\n\t#"
+            functions fish_prompt
+        end | psub )
+    
+    if test -n "__VIRTUAL_PROMPT__"
+        # We've been given us a prompt override.
+        # 
+        # FIXME: Unsure how to handle this *safely*. We could just eval()
+        #   whatever is given, but the risk is a bit much.
+        echo "activate.fish: Alternative prompt prefix is not supported under fish-shell." 1>&2
+        echo "activate.fish: Alter the fish_prompt in this file as needed." 1>&2
     end
+    
+    # with the original prompt function renamed, we can override with our own.
+    function fish_prompt
+        set -l _checkbase (basename "$VIRTUAL_ENV")
+        if test $_checkbase = "__"
+            # special case for Aspen magic directories
+            # see http://www.zetadev.com/software/aspen/
+            printf "%s[%s]%s %s" (set_color -b blue white) (basename (dirname "$VIRTUAL_ENV")) (set_color normal) (_old_fish_prompt)
+        else
+            printf "%s(%s)%s%s" (set_color -b blue white) (basename "$VIRTUAL_ENV") (set_color normal) (_old_fish_prompt)
+        end
+    end 
+    
+    set -gx _OLD_FISH_PROMPT_OVERRIDE "$VIRTUAL_ENV"
 end
