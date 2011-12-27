@@ -1005,6 +1005,8 @@ def create_environment(home_dir, site_packages=False, clear=False,
 
     install_activate(home_dir, bin_dir, prompt)
 
+    install_python_config(home_dir, bin_dir, prompt)
+
 def is_executable_file(fpath):
     return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
@@ -1518,6 +1520,10 @@ def install_activate(home_dir, bin_dir, prompt=None):
         files['activate.csh'] = ACTIVATE_CSH
 
     files['activate_this.py'] = ACTIVATE_THIS
+
+    install_files(home_dir, bin_dir, prompt, files)
+
+def install_files(home_dir, bin_dir, prompt, files):
     if hasattr(home_dir, 'decode'):
         home_dir = home_dir.decode(sys.getfilesystemencoding())
     vname = os.path.basename(home_dir)
@@ -1528,6 +1534,16 @@ def install_activate(home_dir, bin_dir, prompt=None):
         content = content.replace('__VIRTUAL_NAME__', vname)
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         writefile(os.path.join(bin_dir, name), content)
+
+def install_python_config(home_dir, bin_dir, prompt=None):
+    home_dir = os.path.abspath(home_dir)
+    if sys.platform == 'win32' or is_jython and os._name == 'nt':
+        files = {}
+    else:
+        files = {'python-config': PYTHON_CONFIG}
+    install_files(home_dir, bin_dir, prompt, files)
+    for name, content in files.items():
+        make_exe(os.path.join(bin_dir, name))
 
 def install_distutils(home_dir):
     distutils_path = change_prefix(distutils.__path__[0], home_dir)
@@ -2218,6 +2234,22 @@ yZ8jq1Z5Q1UXsyy3gf9nbjTEj7NzQMfCJa/YSmrQ+2D/BqfiOi6sclrGzvoeVivIj8rcfcmnIQRF
 m8eg6WYWqR6SL5OjKMGfSrYt/6kxxQtOpeAgj1LXBNmpE2ElmCSIy5H0zFd8gJ924HWijWhb2hRC
 6wNEm1QdDZtuSZcEprIUBo/XRNcbQe1OUbQ/r3hPTaPJJDNtFLu8KHV5XoNr3Eo6h6YtOKw8e8yw
 VF5PnJ+ts3a9/Mz38RpG/AUSzYUW
+""")
+
+##file python-config
+PYTHON_CONFIG = convert("""
+eJyFVFFvmzAQfvev8FpVBrXQ9jVSKqUd3dBYWiVt1aqKLAom8cQA2U4WpP34nW0IkKUtLxyc77vv
+vrvz8RdKn8LZw+MkosH0idJzSq/DKZ1OfgbwUdVqVRYI8d9VKRSWtWzNcmctmSorhTJR/sYpl2qt
+eC5xF5GURcaXCG3inKcUjko8xq+kEizjW3KGCduyxOs+eZHk65RJbef8zbyTLI+XYCE8eEieNg5M
+ViyvyAKhlGWYbbmif7ha0bWMl8xJypSNL92RCa8ELxS+ugJqvlQpE+IMHz3qcyN8IvHriVwc4RPs
+aH8slpvXi8V+3o8f8pf4v0peOMTzyCkUjLNSYP3mBe5UcF2DqtNovoaki5ASteWpz5xhYKD1siL7
+9tVRuxwtoHQovweL2DZhVdsXH+orhUXclwWy8QwXpTK53j1T1RsmgMOul5oGtSbdxMIhT8FsHt5N
+iYvAA38+OIwQ5KKma3oMtGHkcbRl6nC1TJrQwtADEU1rm7829DBX0+YLYNzTey8EALVjPNa4zcyN
+dt21o9FRv58Ft+EzssnyQWx/aN8HCJ6DG3oQBajp+egPu+c1Y+52gDuhiBcSfLonq11PCiCOe2BG
+P4up8lhRWbGEZzwZP4g1cxc7lEG1DbHRIIf5B7OrWJE6tvEOubmNJt/mxPVllcNQN0PeaUNwsxwm
+2j2sSrv2YKX/SaKddiNMwii87qWDclvH/GU+9A0Q/LiqNG/i5VYRcmrmvDt1jOM0xWrFsG3zOYQ1
+F+Kz/3JuJYUbD66PtzWsUJHXWjQIEAxzCXvVg5KrWLBUZxaxqHWdPVD/sOht7UPVm41tq7yv4d6e
+XEcBnX+fzIKvfaUG9fJCMqGcCy1rRHo6gUj3Eek1ahey19oonP64vZu1eT7tsMZw0T8AKOXE
 """)
 
 MH_MAGIC = 0xfeedface
