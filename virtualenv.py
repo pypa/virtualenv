@@ -1318,9 +1318,11 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             virtual_lib)
 
         # And then change the install_name of the copied python executable
+        install_name_tool = get_install_name_tool()
+
         try:
             call_subprocess(
-                ["install_name_tool", "-change",
+                [install_name_tool, "-change",
                  os.path.join(prefix, 'Python'),
                  '@executable_path/../.Python',
                  py_executable])
@@ -1517,6 +1519,58 @@ def resolve_interpreter(exe):
 def is_executable(exe):
     """Checks a file is executable"""
     return os.access(exe, os.X_OK)
+
+
+def get_install_name_tool():
+    """
+    returns the command name of a working ``install_name_tool``, installing
+    one to a temp file, if necessary, or None on failure.
+
+    Returns:
+        string, name of tool to use by ``call_subprocess``
+        None:  if it was unable to install or find one.
+    """
+    ## TODO:  decide how robust this should be to various failure cases.
+    ## is None the correct response on failure, or should it debug more?
+
+    ## TODO:  where/should this get 'cleaned up', if it's a temp install?
+    ## perhaps this should return a tuple of (path,tempdir)?
+
+    import platform    
+    import tarfile
+    import urllib
+
+    # default case... on path from Xcode or something.
+    try:
+        call_subprocess(['install_name_tool'])
+        return 'install_name_tool'
+    except OSError as exc:
+        logger.debug('%s',exc)
+
+    ### couldn't find an installed one, so, let's get one.
+    urls = {
+        '5': "http://src.macosforge.org/Roots/9A581/cctools.root.tar.gz",
+        '6': "http://src.macosforge.org/Roots/10A432/cctools.root.tar.gz",
+        '7': "http://src.macosforge.org/Roots/11A511a/cctools.root.tar.gz",
+    }
+    try:
+        url = urls[platform.mac_ver()[0].split('.')[1]]
+    except KeyError:
+        raise ValueError("your version of OSX wasn't planned for.  "
+            "File a bug against:  https://github.com/pypa/virtualenv/issues/168")
+
+    d = tempfile.mkdtemp()
+    tarname = "cctools.root.tar.gz"
+    urllib.urlretrieve(url,join(d,tarname))
+    tarfile.open(join(d,tarname)).extractall(d)
+    os.listdir(d)
+    tool_bin = join(d,'usr','bin','install_name_tool')
+    if is_executable(tool_bin):
+        return tool_bin
+    else:
+        logger.debug('not executable: %s' % (tool_bin,))
+        return None
+
 
 ############################################################
 ## Relocating the environment:
