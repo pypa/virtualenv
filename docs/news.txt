@@ -1,10 +1,42 @@
 Changes & News
 --------------
 
+In development
+~~~~~~~~~~~~~~
+
+* Added environ PATH modification to activate_this.py. Thanks Doug
+  Napoleone. Fixes #14.
+
+* Support creating virtualenvs directly from a Python build directory on
+  Windows. Thanks CBWhiz. Fixes #139.
+
+* Use non-recursive symlinks to fix things up for posix_local install
+  scheme. Thanks michr.
+
+* Made activate script available for use with msys and cygwin on Windows.
+  Thanks Greg Haskins, Cliff Xuan, Jonathan Griffin and Doug Napoleone.
+  Fixes #176.
+
+* Fixed creation of virtualenvs on Windows when Python is not installed for
+  all users. Thanks Anatoly Techtonik for report and patch and Doug
+  Napoleone for testing and confirmation. Fixes #87.
+
+* Fixed creation of virtualenvs using -p in installs where some modules
+  that ought to be in the standard library (e.g. `readline`) are actually
+  installed in `site-packages` next to `virtualenv.py`. Thanks Greg Haskins
+  for report and fix. Fixes #167.
+
+* Added activation script for Powershell (signed by Jannis Leidel). Many
+  thanks to Jason R. Coombs.
+
 1.7 (2011-11-30)
 ~~~~~~~~~~~~~~~~
 
-* Updated embedded Distribute release to 0.6.24. Thanks Alex Grönholm.
+* Gave user-provided ``--extra-search-dir`` priority over default dirs for
+  finding setuptools/distribute (it already had priority for finding pip).
+  Thanks Ethan Jucovy.
+
+* Updated embedded Distribute release to 0.6.24. Thanks Alex Gronholm.
 
 * Made ``--no-site-packages`` behavior the default behavior.  The
   ``--no-site-packages`` flag is still permitted, but displays a warning when
