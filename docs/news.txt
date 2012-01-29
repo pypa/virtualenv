@@ -4,6 +4,8 @@ Changes & News
 In development
 ~~~~~~~~~~~~~~
 
+* Fix `--relocatable` under Python 3. Thanks Doug Hellmann.
+
 * Added environ PATH modification to activate_this.py. Thanks Doug
   Napoleone. Fixes #14.
 
