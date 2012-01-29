@@ -1557,8 +1557,15 @@ def fixup_scripts(home_dir):
             # ignore subdirs, e.g. .svn ones.
             continue
         f = open(filename, 'rb')
-        lines = f.readlines()
-        f.close()
+        try:
+            try:
+                lines = f.read().decode('utf-8').splitlines()
+            except UnicodeDecodeError:
+                # This is probably a binary program instead
+                # of a script, so just ignore it.
+                continue
+        finally:
+            f.close()
         if not lines:
             logger.warn('Script %s is an empty file' % filename)
             continue
@@ -1574,7 +1581,7 @@ def fixup_scripts(home_dir):
         logger.notify('Making script %s relative' % filename)
         lines = [new_shebang+'\n', activate+'\n'] + lines[1:]
         f = open(filename, 'wb')
-        f.writelines(lines)
+        f.write(lines.join('\n').encode('utf-8'))#writelines(lines)
         f.close()
 
 def fixup_pth_and_egg_link(home_dir, sys_path=None):
