@@ -1423,7 +1423,7 @@ def install_activate(home_dir, bin_dir, prompt=None):
         home_dir_msys = (drive and "/%s%s" or "%s%s") % (drive[:1], tail)
 
         # Run-time conditional enables (basic) Cygwin compatibility
-        home_dir_sh = ("""$(if [ "$OSTYPE" == "cygwin" ]; then cygpath -u '%s'; else echo '%s'; fi;)""" % 
+        home_dir_sh = ("""$(if [ "$OSTYPE" "==" "cygwin" ]; then cygpath -u '%s'; else echo '%s'; fi;)""" % 
                        (home_dir, home_dir_msys))
         files['activate'] = ACTIVATE_SH.replace('__VIRTUAL_ENV__', home_dir_sh)
 
