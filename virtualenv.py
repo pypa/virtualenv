@@ -1266,6 +1266,14 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             if os.path.exists(pythonw):
                 logger.info('Also created pythonw.exe')
                 shutil.copyfile(pythonw, os.path.join(os.path.dirname(py_executable), 'pythonw.exe'))
+            python_d = os.path.join(os.path.dirname(sys.executable), 'python_d.exe')
+            python_d_dest = os.path.join(os.path.dirname(py_executable), 'python_d.exe')
+            if os.path.exists(python_d):
+                logger.info('Also created python_d.exe')
+                shutil.copyfile(python_d, python_d_dest)
+            elif os.path.exists(python_d_dest):
+                logger.info('Removed python_d.exe as it is no longer at the source')
+                os.unlink(python_d_dest)
             # we need to copy the DLL to enforce that windows will load the correct one.
             # may not exist if we are cygwin.
             py_executable_dll = 'python%s%s.dll' % (
