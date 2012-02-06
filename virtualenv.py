@@ -1278,10 +1278,20 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             # may not exist if we are cygwin.
             py_executable_dll = 'python%s%s.dll' % (
                 sys.version_info[0], sys.version_info[1])
+            py_executable_dll_d = 'python%s%s_d.dll' % (
+                sys.version_info[0], sys.version_info[1])
             pythondll = os.path.join(os.path.dirname(sys.executable), py_executable_dll)
+            pythondll_d = os.path.join(os.path.dirname(sys.executable), py_executable_dll_d)
+            pythondll_d_dest = os.path.join(os.path.dirname(py_executable), py_executable_dll_d)
             if os.path.exists(pythondll):
                 logger.info('Also created %s' % py_executable_dll)
                 shutil.copyfile(pythondll, os.path.join(os.path.dirname(py_executable), py_executable_dll))
+            if os.path.exists(pythondll_d):
+                logger.info('Also created %s' % py_executable_dll_d)
+                shutil.copyfile(pythondll_d, pythondll_d_dest)
+            elif os.path.exists(pythondll_d_dest):
+                logger.info('Removed %s as the source does not exist' % pythondll_d_dest)
+                os.unlink(pythondll_d_dest)
         if is_pypy:
             # make a symlink python --> pypy-c
             python_executable = os.path.join(os.path.dirname(py_executable), 'python')
