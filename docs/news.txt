@@ -1,6 +1,13 @@
 Changes & News
 --------------
 
+1.7.1.1 (2012-02-16)
+~~~~~~~~~~~~~~~~~~~~
+
+* Bumped the version string in ``virtualenv.py`` up, too.
+
+* Fixed rST rendering bug of long description.
+
 1.7.1 (2012-02-16)
 ~~~~~~~~~~~~~~~~~~
 
