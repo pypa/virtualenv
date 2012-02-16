@@ -13,6 +13,8 @@ except NameError:
 import sys
 import os
 
+old_os_path = os.environ['PATH']
+os.environ['PATH'] = os.path.dirname(os.path.abspath(__file__)) + os.pathsep + old_os_path
 base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if sys.platform == 'win32':
     site_packages = os.path.join(base, 'Lib', 'site-packages')
