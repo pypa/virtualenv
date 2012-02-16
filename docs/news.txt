@@ -4,6 +4,8 @@ Changes & News
 In development
 ~~~~~~~~~~~~~~
 
+* Update embedded pip to version 1.1.
+
 * Fix `--relocatable` under Python 3. Thanks Doug Hellmann.
 
 * Added environ PATH modification to activate_this.py. Thanks Doug
