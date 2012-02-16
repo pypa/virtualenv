@@ -42,7 +42,7 @@ copyright = '2007-2012, Ian Bicking, The Open Planning Project, The virtualenv d
 #
 # The short X.Y version.
 
-release = "1.7.1.1"
+release = "1.7.1.1.post1"
 version = ".".join(release.split(".")[:2])
 
 # There are two options for replacing |today|: either, you set today to some
