@@ -26,7 +26,7 @@ f.close()
 setup(name='virtualenv',
       # If you change the version here, change it in virtualenv.py and
       # docs/conf.py as well
-      version="1.7.1",
+      version="1.7.1.1",
       description="Virtual Python Environment builder",
       long_description=long_description,
       classifiers=[

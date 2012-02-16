@@ -426,12 +426,16 @@ provide an option ``--never-download`` like so::
 If this option is provided, virtualenv will never try to download
 setuptools/distribute or pip. Instead, it will exit with status code 1
 if it fails to find local distributions for any of these required
-packages. The local distribution lookup is done in this order and the 
+packages. The local distribution lookup is done in this order and the
 following locations:
+
     #. The current directory.
     #. The directory where virtualenv.py is located.
-    #. A ``virtualenv_support`` directory relative to the directory where virtualenv.py is located.
-    #. If the file being executed is not named virtualenv.py (i.e. is a boot script), a ``virtualenv_support`` directory relative to wherever virtualenv.py is actually installed.
+    #. A ``virtualenv_support`` directory relative to the directory where
+       virtualenv.py is located.
+    #. If the file being executed is not named virtualenv.py (i.e. is a boot
+       script), a ``virtualenv_support`` directory relative to wherever
+       virtualenv.py is actually installed.
 
 Compare & Contrast with Alternatives
 ------------------------------------
