@@ -35,14 +35,14 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'virtualenv'
-copyright = '2007-2011, Ian Bicking, The Open Planning Project, The virtualenv developers'
+copyright = '2007-2012, Ian Bicking, The Open Planning Project, The virtualenv developers'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 #
 # The short X.Y version.
 
-release = "1.7"
+release = "1.7.1"
 version = ".".join(release.split(".")[:2])
 
 # There are two options for replacing |today|: either, you set today to some
