@@ -1602,7 +1602,7 @@ def fixup_scripts(home_dir):
         logger.notify('Making script %s relative' % filename)
         lines = [new_shebang+'\n', activate+'\n'] + lines[1:]
         f = open(filename, 'wb')
-        f.write(lines.join('\n').encode('utf-8'))
+        f.write('\n'.join(lines).encode('utf-8'))
         f.close()
 
 def fixup_pth_and_egg_link(home_dir, sys_path=None):
