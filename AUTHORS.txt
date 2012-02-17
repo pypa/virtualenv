@@ -17,6 +17,7 @@ Alex Grönholm
 Anatoly Techtonik
 Antonio Cuni
 Armin Ronacher
+Cap Petschulat
 CBWhiz
 Chris McDonough
 Christian Stefanescu

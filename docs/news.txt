@@ -1,6 +1,11 @@
 Changes & News
 --------------
 
+1.7.1.2 (2012-02-17)
+~~~~~~~~~~~~~~~~~~~~
+
+* Fixed minor issue in `--relocatable`. Thanks, Cap Petschulat.
+
 1.7.1.1 (2012-02-16)
 ~~~~~~~~~~~~~~~~~~~~
 

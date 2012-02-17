@@ -4,7 +4,7 @@
 
 # If you change the version here, change it in setup.py
 # and docs/conf.py as well.
-virtualenv_version = "1.7.1.1"
+virtualenv_version = "1.7.1.2"
 
 import base64
 import sys
@@ -1602,7 +1602,7 @@ def fixup_scripts(home_dir):
         logger.notify('Making script %s relative' % filename)
         lines = [new_shebang+'\n', activate+'\n'] + lines[1:]
         f = open(filename, 'wb')
-        f.write(lines.join('\n').encode('utf-8'))
+        f.write('\n'.join(lines).encode('utf-8'))
         f.close()
 
 def fixup_pth_and_egg_link(home_dir, sys_path=None):
