@@ -73,7 +73,7 @@ Distribute instead of setuptools, just call virtualenv like this::
 
 You can also set the environment variable VIRTUALENV_USE_DISTRIBUTE.
 
-A new virtualenv also includes the `pip <http://pypy.python.org/pypi/pip>`_
+A new virtualenv also includes the `pip <http://pypi.python.org/pypi/pip>`_
 installer, so you can use ``ENV/bin/pip`` to install additional packages into
 the environment.
 
