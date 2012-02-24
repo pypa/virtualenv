@@ -1,12 +1,16 @@
 Changes & News
 --------------
 
-1.7.1.2 (2012-02-17)
-~~~~~~~~~~~~~~~~~~~~
+master (unreleased)
+~~~~~~~~~~~~~~~~~~~
 
 * Restored ability to create a virtualenv with a path longer than 78
   characters, without breaking creation of virtualenvs with non-ASCII paths.
   Thanks, Bradley Ayers.
+
+
+1.7.1.2 (2012-02-17)
+~~~~~~~~~~~~~~~~~~~~
 
 * Fixed minor issue in `--relocatable`. Thanks, Cap Petschulat.
 
