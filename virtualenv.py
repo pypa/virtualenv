@@ -616,9 +616,15 @@ def install_pip(py_executable, search_dirs=None, never_download=False):
     easy_install_script = 'easy_install'
     if sys.platform == 'win32':
         easy_install_script = 'easy_install-script.py'
-    cmd = [join(os.path.dirname(py_executable), easy_install_script), filename]
-    if sys.platform == 'win32':
-        cmd.insert(0, py_executable)
+    # There's two subtle issues here when invoking easy_install.
+    # 1. On unix-like systems the easy_install script can *only* be executed
+    #    directly if its full filesystem path is no longer than 78 characters.
+    # 2. A work around to [1] is to use the `python path/to/easy_install foo`
+    #    pattern, but that breaks if the path contains non-ASCII characters, as
+    #    you can't put the file encoding declaration before the shebang line.
+    # The solution is to use Python's -x flag to skip the first line of the
+    # script (and any ASCII decoding errors that may have occurred in that line)
+    cmd = [py_executable, '-x', join(os.path.dirname(py_executable), easy_install_script), filename]
     if filename == 'pip':
         if never_download:
             logger.fatal("Can't find any local distributions of pip to install "
@@ -1250,7 +1256,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         if os.path.exists(pyd_pth):
             logger.info('Deleting %s (not Windows env or not build directory python)' % pyd_pth)
             os.unlink(pyd_pth)
-        
+
     if sys.executable != py_executable:
         ## FIXME: could I just hard link?
         executable = sys.executable
@@ -1444,7 +1450,7 @@ def install_activate(home_dir, bin_dir, prompt=None):
         home_dir_msys = (drive and "/%s%s" or "%s%s") % (drive[:1], tail)
 
         # Run-time conditional enables (basic) Cygwin compatibility
-        home_dir_sh = ("""$(if [ "$OSTYPE" "==" "cygwin" ]; then cygpath -u '%s'; else echo '%s'; fi;)""" % 
+        home_dir_sh = ("""$(if [ "$OSTYPE" "==" "cygwin" ]; then cygpath -u '%s'; else echo '%s'; fi;)""" %
                        (home_dir, home_dir_msys))
         files['activate'] = ACTIVATE_SH.replace('__VIRTUAL_ENV__', home_dir_sh)
 
