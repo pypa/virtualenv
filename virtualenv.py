@@ -568,6 +568,8 @@ def _install_req(py_executable, unzip=False, distribute=False,
     finally:
         logger.indent -= 2
         logger.end_progress()
+        if cwd is not None:
+            shutil.rmtree(cwd)
         if os.getcwd() != old_chdir:
             os.chdir(old_chdir)
         if is_jython and os._name == 'nt':
