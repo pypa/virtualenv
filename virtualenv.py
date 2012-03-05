@@ -625,6 +625,9 @@ def install_pip(py_executable, search_dirs=None, never_download=False):
     # The solution is to use Python's -x flag to skip the first line of the
     # script (and any ASCII decoding errors that may have occurred in that line)
     cmd = [py_executable, '-x', join(os.path.dirname(py_executable), easy_install_script), filename]
+    # jython and pypy don't yet support -x
+    if is_jython or is_pypy:
+        cmd.remove('-x')
     if filename == 'pip':
         if never_download:
             logger.fatal("Can't find any local distributions of pip to install "
@@ -1071,7 +1074,7 @@ def path_locations(home_dir):
         lib_dir = join(home_dir, 'Lib')
         inc_dir = join(home_dir, 'Include')
         bin_dir = join(home_dir, 'Scripts')
-    elif is_jython:
+    if is_jython:
         lib_dir = join(home_dir, 'Lib')
         inc_dir = join(home_dir, 'Include')
         bin_dir = join(home_dir, 'bin')
@@ -1079,7 +1082,7 @@ def path_locations(home_dir):
         lib_dir = home_dir
         inc_dir = join(home_dir, 'include')
         bin_dir = join(home_dir, 'bin')
-    else:
+    elif sys.platform != 'win32':
         lib_dir = join(home_dir, 'lib', py_version)
         inc_dir = join(home_dir, 'include', py_version + abiflags)
         bin_dir = join(home_dir, 'bin')
@@ -1301,8 +1304,16 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         if is_pypy:
             # make a symlink python --> pypy-c
             python_executable = os.path.join(os.path.dirname(py_executable), 'python')
+            if sys.platform in ('win32', 'cygwin'):
+                python_executable += '.exe'
             logger.info('Also created executable %s' % python_executable)
             copyfile(py_executable, python_executable)
+
+            if sys.platform == 'win32':
+                for name in 'libexpat.dll', 'libpypy.dll', 'libpypy-c.dll':
+                    src = join(prefix, name)
+                    if os.path.exists(src):
+                        copyfile(src, join(bin_dir, name))
 
     if os.path.splitext(os.path.basename(py_executable))[0] != expected_exe:
         secondary_exe = os.path.join(os.path.dirname(py_executable),
@@ -1378,17 +1389,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         # argument that has a space in it.  Instead we have to quote
         # the value:
         py_executable = '"%s"' % py_executable
-    cmd = [py_executable, '-c', """
-import sys
-prefix = sys.prefix
-if sys.version_info[0] == 3:
-    prefix = prefix.encode('utf8')
-if hasattr(sys.stdout, 'detach'):
-    sys.stdout = sys.stdout.detach()
-elif hasattr(sys.stdout, 'buffer'):
-    sys.stdout = sys.stdout.buffer
-sys.stdout.write(prefix)
-"""]
+    # NOTE: keep this check as one line, cmd.exe doesn't cope with line breaks
+    cmd = [py_executable, '-c', 'import sys;out=sys.stdout;'
+        'getattr(out, "buffer", out).write(sys.prefix.encode("utf-8"))']
     logger.info('Testing executable with %s %s "%s"' % tuple(cmd))
     try:
         proc = subprocess.Popen(cmd,
@@ -1881,34 +1884,34 @@ eQscnyKYCb7FHTIOtVfoYVItq+Uei86RGBHgEdWW8Wh0wJhOiAGe0/OtRnN6mqd1e7Tjmbt5qg/S
 p7hi6TytHTCmHcLhznQFElmfOBhAaQTqnazCwkq0ffsnuy4uph9oH3nfjKTLh2p7rRQnh5K8U2AY
 x+34lIayhLR8a76MYZT3lNbWnoA3lviTTqpiXb93+4V7xLDJ9a0WXL/RXnUBcOgmJasgLTt6OsK5
 vsvCZ6bdcRcFfihEJ9xu0qpukmyqL0+YosM2tRvrGk97NO3OQ5fWWwEnvwAPeF9X0YPjYKpskJ5Y
-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
-Q7wQmAIMcman2gOwRiH4P2ts6wE=
+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
+BKYAg5zZqfYArFEI/g9Yl+sB
 """)
 
 ##file ez_setup.py
