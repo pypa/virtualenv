@@ -27,7 +27,7 @@ end
 # unset irrelavent variables
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "__VIRTUAL_ENV__"
+set -gx VIRTUAL_ENV (cd (dirname (status -f)); cd ..; pwd)
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/__BIN_NAME__" $PATH
@@ -43,7 +43,7 @@ if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
     # to produce the prompt. Overriding the existing function is easy.
     # However, adding to the current prompt, instead of clobbering it,
     # is a little more work.
-    set -l oldpromptfile (tempfile)
+    set -l oldpromptfile (mktemp -t tmp.oldpromptcontents.XXXX)
     if test $status
         # save the current fish_prompt function...
         echo "function _old_fish_prompt" >> $oldpromptfile
