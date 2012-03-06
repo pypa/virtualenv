@@ -1,6 +1,8 @@
 # This file must be used with "source bin/activate" *from bash*
 # you cannot run it directly
 
+ACTIVATE_PATH_FALLBACK="$_"
+
 deactivate () {
     # reset old environment variables
     if [ -n "$_OLD_VIRTUAL_PATH" ] ; then
@@ -37,7 +39,32 @@ deactivate () {
 # unset irrelavent variables
 deactivate nondestructive
 
+# attempt to determine VIRTUAL_ENV in relocatable way
+if [ ! -z "${BASH_SOURCE:-}" ]; then
+    # bash
+    ACTIVATE_PATH="${BASH_SOURCE}"
+elif [ ! -z "${DASH_SOURCE:-}" ]; then
+    # dash
+    ACTIVATE_PATH="${DASH_SOURCE}"
+elif [ ! -z "${ZSH_VERSION:-}" ]; then
+    # zsh
+    ACTIVATE_PATH="$0"
+elif [ ! -z "${KSH_VERSION:-}" ] || [ ! -z "${.sh.version:}" ]; then
+    # ksh - we have to use history, and unescape spaces before quoting
+    ACTIVATE_PATH="$(history -r -l -n | head -1 | sed -e 's/^[\t ]*\(\.\|source\) *//;s/\\ / /g')"
+elif [ "$(basename "$ACTIVATE_PATH_FALLBACK")" == "activate.sh" ]; then
+    ACTIVATE_PATH="${ACTIVATE_PATH_FALLBACK}"
+else
+    ACTIVATE_PATH=""
+fi
+
+# default to non-relocatable path
 VIRTUAL_ENV="__VIRTUAL_ENV__"
+if [ ! -z "${ACTIVATE_PATH:-}" ]; then
+    VIRTUAL_ENV="$(cd "$(dirname "${ACTIVATE_PATH}")/.."; pwd)"
+fi
+unset ACTIVATE_PATH
+unset ACTIVATE_PATH_FALLBACK
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
