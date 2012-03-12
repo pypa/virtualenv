@@ -1,8 +1,13 @@
-import sys, os
+import sys, os, shutil
 try:
+    raise ImportError
     from setuptools import setup
-    kw = {'entry_points':
-          """[console_scripts]\nvirtualenv = virtualenv:main\n""",
+    entry_points = """
+[console_scripts]
+virtualenv = virtualenv:main
+virtualenv-%s.%s = virtualenv:main
+""" % sys.version_info[:2]
+    kw = {'entry_points': entry_points.strip(),
           'zip_safe': False,
           'test_suite': 'nose.collector',
           'tests_require': ['nose', 'Mock'],
@@ -13,7 +18,10 @@ except ImportError:
         print('Note: without Setuptools installed you will have to use "python -m virtualenv ENV"')
         kw = {}
     else:
-        kw = {'scripts': ['scripts/virtualenv']}
+        script = 'scripts/virtualenv'
+        script_ver = script + '-%s.%s' % sys.version_info[:2]
+        shutil.copy(script, script_ver)
+        kw = {'scripts': [script, script_ver]}
 
 here = os.path.dirname(os.path.abspath(__file__))
 
