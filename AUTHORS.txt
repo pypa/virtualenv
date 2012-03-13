@@ -31,6 +31,7 @@ Douglas Creager
 Ethan Jucovy
 Gunnlaugur Thor Briem
 Greg Haskins
+Gregg Lind
 Jason R. Coombs
 Jeff Hammel
 Jonathan Griffin
@@ -44,3 +45,4 @@ Ronny Pfannschmidt
 Stefano Rivera
 Tarek Ziadé
 Vinay Sajip
+Yesudeep Mangalapilly
