@@ -1,6 +1,5 @@
 import sys, os, shutil
 try:
-    raise ImportError
     from setuptools import setup
     entry_points = """
 [console_scripts]
