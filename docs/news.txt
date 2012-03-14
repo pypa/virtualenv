@@ -4,6 +4,10 @@ Changes & News
 master (unreleased)
 ~~~~~~~~~~~~~~~~~~~
 
+* Create a virtualenv-x.x script with the Python version when installing, so
+  virtualenv for multiple Python versions can be installed to the same
+  script location. Thanks Miki Tebeka.
+
 * Restored ability to create a virtualenv with a path longer than 78
   characters, without breaking creation of virtualenvs with non-ASCII paths.
   Thanks, Bradley Ayers.
