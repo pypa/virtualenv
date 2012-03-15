@@ -1,6 +1,15 @@
 Changes & News
 --------------
 
+.. warning::
+
+   Python bugfix releases 2.6.8 and 2.7.3 include a change that will cause
+   "import random" to fail with "cannot import name urandom" on any virtualenv
+   created with an earlier release of Python 2.6 or 2.7, if the underlying
+   system Python is upgraded. It can be fixed by re-running virtualenv on the
+   same target directory, with the upgraded Python.
+
+
 master (unreleased)
 ~~~~~~~~~~~~~~~~~~~
 
