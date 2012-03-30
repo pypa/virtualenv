@@ -276,7 +276,7 @@ below.
     policy to ``AllSigned``, meaning all scripts on the system must be
     digitally signed to be executed. Since the virtualenv activation
     script is signed by one of the authors (Jannis Leidel) this level of
-    the execution policy suffices. As an adminstrator run::
+    the execution policy suffices. As an administrator run::
 
         PS C:\> Set-ExecutionPolicy AllSigned
 
