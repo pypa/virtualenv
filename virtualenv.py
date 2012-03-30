@@ -16,6 +16,9 @@ import logging
 import tempfile
 import zlib
 import errno
+import platform
+import tarfile
+import urllib
 import distutils.sysconfig
 from distutils.util import strtobool
 
@@ -1568,10 +1571,6 @@ def get_install_name_tool():
 
     # TODO: Where should this get 'cleaned up', if it's a temp
     # install? Perhaps this should return a tuple of (path, tempdir)?
-
-    import platform
-    import tarfile
-    import urllib
 
     # Default case... on path from Xcode or something.
     try:
