@@ -1579,14 +1579,6 @@ def get_install_name_tool():
     except OSError:
         logger.debug("Cannot find Xcode's install_name_tool.")
 
-    # The following exception handling is not portable and breaks
-    # on Python 2.5.
-    # try:
-    #     call_subprocess(['install_name_tool'])
-    #     return 'install_name_tool'
-    # except OSError as exc:
-    #     logger.debug('%s', exc)
-
     # Couldn't find the installed on, so, let's get one.
     urls = {
         '5': "http://src.macosforge.org/Roots/9A581/cctools.root.tar.gz",
