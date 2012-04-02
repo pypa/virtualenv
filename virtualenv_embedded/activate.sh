@@ -27,7 +27,7 @@ deactivate () {
         unset _OLD_VIRTUAL_PS1
     fi
 
-    unset VIRTUAL_ENV
+    unset VIRTUAL_ENV VIRTUAL_ENV_LIB
     if [ ! "$1" = "nondestructive" ] ; then
     # Self destruct!
         unset -f deactivate
@@ -38,7 +38,10 @@ deactivate () {
 deactivate nondestructive
 
 VIRTUAL_ENV="__VIRTUAL_ENV__"
-export VIRTUAL_ENV
+VIRTUAL_ENV_LIB="__LIB_DIR__"
+export VIRTUAL_ENV VIRTUAL_ENV_LIB
+
+
 
 _OLD_VIRTUAL_PATH="$PATH"
 PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"

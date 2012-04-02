@@ -1,5 +1,6 @@
 @echo off
 set VIRTUAL_ENV=__VIRTUAL_ENV__
+set VIRTUAL_ENV_LIB=__LIB_DIR__
 
 if not defined PROMPT (
     set PROMPT=$P$G

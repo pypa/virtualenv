@@ -2,12 +2,13 @@
 # You cannot run it directly.
 # Created by Davide Di Blasi <davidedb@gmail.com>.
 
-alias deactivate 'test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PATH" && unset _OLD_VIRTUAL_PATH; rehash; test $?_OLD_VIRTUAL_PROMPT != 0 && set prompt="$_OLD_VIRTUAL_PROMPT" && unset _OLD_VIRTUAL_PROMPT; unsetenv VIRTUAL_ENV; test "\!:*" != "nondestructive" && unalias deactivate'
+alias deactivate 'test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PATH" && unset _OLD_VIRTUAL_PATH; rehash; test $?_OLD_VIRTUAL_PROMPT != 0 && set prompt="$_OLD_VIRTUAL_PROMPT" && unset _OLD_VIRTUAL_PROMPT; unsetenv VIRTUAL_ENV; unsetenv VIRTUAL_ENV_LIB; test "\!:*" != "nondestructive" && unalias deactivate'
 
 # Unset irrelavent variables.
 deactivate nondestructive
 
 setenv VIRTUAL_ENV "__VIRTUAL_ENV__"
+setenv VIRTUAL_ENV_LIB "__LIB_DIR__"
 
 set _OLD_VIRTUAL_PATH="$PATH"
 setenv PATH "$VIRTUAL_ENV/__BIN_NAME__:$PATH"
