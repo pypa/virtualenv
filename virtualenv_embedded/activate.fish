@@ -18,6 +18,7 @@ function deactivate  -d "Exit virtualenv and return to normal shell environment"
     end
 
     set -e VIRTUAL_ENV
+    set -e VIRTUAL_ENV_LIB
     if test "$argv[1]" != "nondestructive"
         # Self destruct!
         functions -e deactivate
@@ -28,6 +29,7 @@ end
 deactivate nondestructive
 
 set -gx VIRTUAL_ENV "__VIRTUAL_ENV__"
+set -gx VIRTUAL_ENV_LIB "__LIB_DIR__"
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/__BIN_NAME__" $PATH
