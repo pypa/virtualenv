@@ -25,6 +25,7 @@ Christian Stefanescu
 Christopher Nilsson
 Cliff Xuan
 Curt Micol
+David Schoonover
 Doug Hellmann
 Doug Napoleone
 Douglas Creager

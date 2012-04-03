@@ -18,6 +18,8 @@ Changes & News
 master (unreleased)
 ~~~~~~~~~~~~~~~~~~~
 
+* Fix activate.fish on OS X. Fixes #8. Thanks David Schoonover.
+
 * Create a virtualenv-x.x script with the Python version when installing, so
   virtualenv for multiple Python versions can be installed to the same
   script location. Thanks Miki Tebeka.
