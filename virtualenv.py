@@ -1310,7 +1310,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             copyfile(py_executable, python_executable)
 
             if sys.platform == 'win32':
-                for name in 'libexpat.dll', 'libpypy.dll', 'libpypy-c.dll', 'libeay32.dll', 'ssleay32.sll', 'sqlite.dll':
+                for name in 'libexpat.dll', 'libpypy.dll', 'libpypy-c.dll', 'libeay32.dll', 'ssleay32.dll', 'sqlite.dll':
                     src = join(prefix, name)
                     if os.path.exists(src):
                         copyfile(src, join(bin_dir, name))
