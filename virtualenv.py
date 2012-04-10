@@ -811,7 +811,7 @@ def main():
         dest='no_site_packages',
         action='store_true',
         help="Don't give access to the global site-packages dir to the "
-             "virtual environment")
+             "virtual environment (default; deprecated)")
 
     parser.add_option(
         '--system-site-packages',
