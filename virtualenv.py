@@ -1667,7 +1667,7 @@ def fixup_pth_file(filename):
 
 def fixup_egg_link(filename):
     f = open(filename)
-    link = f.read().strip()
+    link = f.readline().strip()
     f.close()
     if os.path.abspath(link) != link:
         logger.debug('Link in %s already relative' % filename)
