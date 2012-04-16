@@ -443,7 +443,7 @@ def writefile(dest, content, overwrite=True):
         f = open(dest, 'rb')
         c = f.read()
         f.close()
-        if c != content:
+        if c != content.encode("utf-8"):
             if not overwrite:
                 logger.notify('File %s exists with different content; not overwriting', dest)
                 return
