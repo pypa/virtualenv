@@ -114,7 +114,7 @@ virtualenv can not only be configured by passing command line options such as
 
   virtualenv also looks for a standard ini config file. On Unix and Mac OS X
   that's ``$HOME/.virtualenv/virtualenv.ini`` and on Windows, it's
-  ``%HOME%\\virtualenv\\virtualenv.ini``.
+  ``%APPDATA%\virtualenv\virtualenv.ini``.
 
   The names of the settings are derived from the long command line option,
   e.g. the option ``--distribute`` would look like this::
