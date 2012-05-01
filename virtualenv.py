@@ -1330,6 +1330,28 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             shutil.copyfile(sys.executable, secondary_exe)
             make_exe(secondary_exe)
 
+    ## IDLE, pydoc and friends.
+    orig_bin_dir = os.path.dirname(sys.executable)
+    py_executable_version = '%s.%s' % (
+        sys.version_info[0], sys.version_info[1])
+    ## move/re-shebang pydoc and friends
+    # trying to autoguess which files to copy and re-shebang
+    # has issues:  https://github.com/pypa/virtualenv/issues/149
+    for script in ["2to3",
+            "2to3-%s" % (py_executable_version,),
+            "idle",
+            "idle%s" % (py_executable_version,),
+            "pydoc",
+            "pydoc%s" % (py_executable_version,),
+            "python-config",
+            "python%s-config" % (py_executable_version,),
+            "smtpd.py",
+            "smtpd%s.py" % (py_executable_version,)]:
+        logger.info("TRYING! %s", script)
+        if has_shebang(os.path.join(orig_bin_dir,script)):
+            copyfile(os.path.join(orig_bin_dir,script), os.path.join(bin_dir,script),symlink=False)
+            reshebang(os.path.join(bin_dir,script), "#!/usr/bin/env python\n")
+
     if '.framework' in prefix:
         if 'Python.framework' in prefix:
             logger.debug('MacOSX Python framework detected')
@@ -1525,6 +1547,54 @@ def fix_lib64(lib_dir):
         assert os.path.basename(lib_parent) == 'lib', (
             "Unexpected parent dir: %r" % lib_parent)
         copyfile(lib_parent, os.path.join(os.path.dirname(lib_parent), 'lib64'))
+
+def has_shebang(filename):
+    """ 
+    first line startswith("#!")?
+    
+    Args:
+        filename:  a path/filename
+
+    Returns:
+        bool.  
+    
+    Raise:
+        errors on any file reading problem. Be warned.
+    """
+
+    f = None
+
+    try:
+        f = open(filename,'rb')
+        lines = f.readlines()
+        return lines and lines[0].startswith("#!")
+    except IOError:
+        return False
+    except:
+        raise
+    finally:
+        if f:
+            f.close()   
+
+def reshebang(filename,new_shebang, shebang=None):
+    """
+    Note:  This is not terribly robust.
+    """
+    if not os.path.isfile(filename):
+        return 
+    
+    if has_shebang(filename):
+        logger.notify('changing shebang on %s' % filename)
+        lines = open(filename,'rb').readlines()
+        if shebang is not None:
+            lines = [lines[0].replace(shebang,new_shebang)] + lines[1:]
+        else:
+            s = lines[0].split(None,1)
+            lines = [" ".join(*([new_shebang]+s[1:],)),] + lines[1:]
+
+        f = open(filename, 'wb')
+        f.writelines(lines)
+        f.close()
 
 def resolve_interpreter(exe):
     """
