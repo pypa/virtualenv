@@ -20,25 +20,43 @@ echo "$0: Activating ${TESTENV}..." 1>&2
 source ${TESTENV}/bin/activate
 echo "$0: Activated ${TESTENV}." 1>&2
 
+echo "$0: Checking value of \$VIRTUAL_ENV..." 1>&2
+
 if [ "$VIRTUAL_ENV" != "${TESTENV}" ]; then
     echo "$0: Expected \$VIRTUAL_ENV to be set to \"${TESTENV}\"; actual value: \"${VIRTUAL_ENV}\"!" 1>&2
     exit 2
 fi
+
+echo "$0: \$VIRTUAL_ENV = \"${VIRTUAL_ENV}\" -- OK." 1>&2
+
+echo "$0: Checking output of \$(which python)..." 1>&2
 
 if [ "$(which python)" != "${TESTENV}/bin/python" ]; then
     echo "$0: Expected \$(which python) to return \"${TESTENV}/bin/python\"; actual value: \"$(which python)\"!" 1>&2
     exit 3
 fi
 
+echo "$0: Output of \$(which python) is OK." 1>&2
+
+echo "$0: Checking output of \$(which pip)..." 1>&2
+
 if [ "$(which pip)" != "${TESTENV}/bin/pip" ]; then
     echo "$0: Expected \$(which pip) to return \"${TESTENV}/bin/pip\"; actual value: \"$(which pip)\"!" 1>&2
     exit 4
 fi
 
+echo "$0: Output of \$(which pip) is OK." 1>&2
+
+echo "$0: Checking output of \$(which easy_install)..." 1>&2
+
 if [ "$(which easy_install)" != "${TESTENV}/bin/easy_install" ]; then
     echo "$0: Expected \$(which easy_install) to return \"${TESTENV}/bin/easy_install\"; actual value: \"$(which easy_install)\"!" 1>&2
     exit 5
 fi
+
+echo "$0: Output of \$(which easy_install) is OK." 1>&2
+
+echo "$0: Executing a simple Python program..." 1>&2
 
 TESTENV=${TESTENV} python <<__END__
 import os, sys
@@ -55,6 +73,8 @@ if [ $? -ne 0 ]; then
     echo "$0: Python script failed!" 1>&2
     exit 6
 fi
+
+echo "$0: Execution of a simple Python program -- OK." 1>&2
 
 echo "$0: Testing pydoc..." 1>&2
 
