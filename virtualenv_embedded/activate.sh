@@ -70,9 +70,7 @@ if [ -z "$VIRTUAL_ENV_DISABLE_PROMPT" ] ; then
     export PS1
 fi
 
-pydoc() {
-    python -m pydoc "$@"
-}
+alias pydoc="python -m pydoc"
 
 # This should detect bash and zsh, which have a hash command that must
 # be called to get it to forget past commands.  Without forgetting

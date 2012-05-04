@@ -28,7 +28,7 @@ endif
 set prompt = "[$env_name] $prompt"
 unset env_name
 
-alias pydoc 'python -m pydoc \!*'
+alias pydoc python -m pydoc
 
 rehash
 
