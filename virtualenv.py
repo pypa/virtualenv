@@ -806,20 +806,20 @@ def main():
         action='store_true',
         help="Clear out the non-root install and start from scratch")
 
-    parser.set_defaults(system_site_packages=True)
+    parser.set_defaults(system_site_packages=False)
     parser.add_option(
         '--no-site-packages',
         dest='system_site_packages',
         action='store_false',
         help="Don't give access to the global site-packages dir to the "
-             "virtual environment")
+             "virtual environment (default)")
 
     parser.add_option(
         '--system-site-packages',
         dest='system_site_packages',
         action='store_true',
         help="Give access to the global site-packages dir to the "
-             "virtual environment (default)")
+             "virtual environment")
 
     parser.add_option(
         '--unzip-setuptools',
