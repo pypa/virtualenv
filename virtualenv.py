@@ -4,11 +4,12 @@
 
 # If you change the version here, change it in setup.py
 # and docs/conf.py as well.
-virtualenv_version = "1.7.1.2.post1"
+virtualenv_version = "1.7.1.2.fix"
 
 import base64
 import sys
 import os
+import codecs
 import optparse
 import re
 import shutil
@@ -1759,13 +1760,12 @@ def create_bootstrap_script(extra_text, python_version=''):
     filename = __file__
     if filename.endswith('.pyc'):
         filename = filename[:-1]
-    f = open(filename, 'rb')
-    content = f.read()
-    f.close()
+    with codecs.open(filename, 'r', encoding='utf-8') as f:
+        content = f.read()
     py_exe = 'python%s' % python_version
     content = (('#!/usr/bin/env %s\n' % py_exe)
-               + '## WARNING: This file is generated\n'
-               + content)
+              + '## WARNING: This file is generated\n'
+              + content)
     return content.replace('##EXT' 'END##', extra_text)
 
 ##EXTEND##
