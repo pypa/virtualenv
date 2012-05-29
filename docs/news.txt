@@ -18,6 +18,8 @@ Changes & News
 master (unreleased)
 ~~~~~~~~~~~~~~~~~~~
 
+* Updated to distribute 0.6.27.
+
 * Fix activate.fish on OS X. Fixes #8. Thanks David Schoonover.
 
 * Create a virtualenv-x.x script with the Python version when installing, so
