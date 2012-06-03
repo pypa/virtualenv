@@ -16,6 +16,9 @@ import logging
 import tempfile
 import zlib
 import errno
+import platform
+import tarfile
+import urllib
 import distutils.sysconfig
 from distutils.util import strtobool
 
@@ -1356,9 +1359,10 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             virtual_lib)
 
         # And then change the install_name of the copied python executable
+        install_name_tool = get_install_name_tool()
         try:
             call_subprocess(
-                ["install_name_tool", "-change",
+                [install_name_tool, "-change",
                  os.path.join(prefix, 'Python'),
                  '@executable_path/../.Python',
                  py_executable])
@@ -1438,6 +1442,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     fix_local_scheme(home_dir)
 
     return py_executable
+
 
 def install_activate(home_dir, bin_dir, prompt=None):
     home_dir = os.path.abspath(home_dir)
@@ -1547,6 +1552,57 @@ def resolve_interpreter(exe):
 def is_executable(exe):
     """Checks a file is executable"""
     return os.access(exe, os.X_OK)
+
+def get_install_name_tool():
+    """
+    Returns the command name of a working ``install_name_tool``, installing
+    one to a temp file, if necessary, or None on failure.
+
+    Returns:
+        string, name: of tool to use by ``call_subprocess``
+        None: if it was unable to install or find one.
+    """
+    # Cleaned up patch with a fix for Python 2.5. Originally taken from:
+    # https://github.com/pypa/virtualenv/pull/212/files
+
+    # TODO: decide how robust this should be to various failure
+    # cases. Is None the correct response on failure, or should it
+    # debug more?
+
+    # TODO: Where should this get 'cleaned up', if it's a temp
+    # install? Perhaps this should return a tuple of (path, tempdir)?
+
+    # Default case... on path from Xcode or something.
+    try:
+        call_subprocess(['install_name_tool'])
+        return 'install_name_tool'
+    except OSError:
+        logger.debug("Cannot find Xcode's install_name_tool.")
+
+    # Couldn't find the installed on, so, let's get one.
+    urls = {
+        '5': "http://src.macosforge.org/Roots/9A581/cctools.root.tar.gz",
+        '6': "http://src.macosforge.org/Roots/10A432/cctools.root.tar.gz",
+        '7': "http://src.macosforge.org/Roots/11A511a/cctools.root.tar.gz",
+        }
+    try:
+        url = urls[platform.mac_ver()[0].split('.')[1]]
+    except KeyError:
+        raise ValueError("your version of OS X wasn't planned for. "
+                         "File a bug against: https://github.com/pypa/virtualenv/issues/168")
+
+    d = tempfile.mkdtemp()
+    tarname = "cctools.root.tar.gz"
+    urllib.urlretrieve(url, join(d, tarname))
+    tarfile.open(join(d, tarname)).extractall(d)
+    os.listdir(d)
+    tool_bin = join(d, 'usr', 'bin', 'install_name_tool')
+    if is_executable(tool_bin):
+        return tool_bin
+    else:
+        logger.debug('not executable: %s' % (tool_bin,))
+        return None
+
 
 ############################################################
 ## Relocating the environment:
