@@ -17,8 +17,8 @@ Installation
 ------------
 
 You can install virtualenv with ``pip install virtualenv``, or the `latest
-development version <https://github.com/pypa/virtualenv/tarball/develop#egg=virtualenv-dev>`_
-with ``pip install virtualenv==dev``.
+development version <https://github.com/pypa/virtualenv/tarball/develop>`_
+with ``pip install https://github.com/pypa/virtualenv/tarball/develop``.
 
 You can also use ``easy_install``, or if you have no Python package manager
 available at all, you can just grab the single file `virtualenv.py`_ and run
