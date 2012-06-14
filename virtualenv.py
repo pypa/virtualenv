@@ -18,6 +18,7 @@ import zlib
 import errno
 import distutils.sysconfig
 from distutils.util import strtobool
+import struct
 
 try:
     import subprocess
@@ -1357,15 +1358,20 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
 
         # And then change the install_name of the copied python executable
         try:
-            call_subprocess(
-                ["install_name_tool", "-change",
-                 os.path.join(prefix, 'Python'),
-                 '@executable_path/../.Python',
-                 py_executable])
+            mach_o_change(py_executable,
+                          os.path.join(prefix, 'Python'),
+                          '@executable_path/../.Python')
         except:
-            logger.fatal(
-                "Could not call install_name_tool -- you must have Apple's development tools installed")
-            raise
+            try:
+                call_subprocess(
+                    ["install_name_tool", "-change",
+                     os.path.join(prefix, 'Python'),
+                     '@executable_path/../.Python',
+                     py_executable])
+            except:
+                logger.fatal(
+                    "Could not call install_name_tool -- you must have Apple's development tools installed")
+                raise
 
         # Some tools depend on pythonX.Y being present
         py_executable_version = '%s.%s' % (
@@ -2274,9 +2280,145 @@ YdN2dEngUlbC4PG60M1WEN0piu7Nq7on0mgyyUw3iV1etLo6r/81biWdQ9MWHFaePWZYaq+nmp+t
 s3az+sj7eA0jfgPfeoN1
 """)
 
+MH_MAGIC = 0xfeedfaceL
+MH_CIGAM = 0xcefaedfeL
+MH_MAGIC_64 = 0xfeedfacfL
+MH_CIGAM_64 = 0xcffaedfeL
+FAT_MAGIC = 0xcafebabe
+BIG_ENDIAN = '>'
+LITTLE_ENDIAN = '<'
+LC_LOAD_DYLIB = 0xc
+
+class fileview(object):
+    """
+    A proxy for file-like objects that exposes a given view of a file.
+    Modified from macholib.
+    """
+
+    def __init__(self, fileobj, start=0, size=sys.maxint):
+        if isinstance(fileobj, fileview):
+            self._fileobj = fileobj._fileobj
+        else:
+            self._fileobj = fileobj
+        self._start = start
+        self._end = start + size
+        self._pos = 0
+
+    def __repr__(self):
+        return '<fileview [%d, %d] %r>' % (
+            self._start, self._end, self._fileobj)
+
+    def tell(self):
+        return self._pos
+
+    def _checkwindow(self, seekto, op):
+        if not (self._start <= seekto <= self._end):
+            raise IOError("%s to offset %d is outside window [%d, %d]" % (
+                op, seekto, self._start, self._end))
+
+    def seek(self, offset, whence=0):
+        seekto = offset
+        if whence == os.SEEK_SET:
+            seekto += self._start
+        elif whence == os.SEEK_CUR:
+            seekto += self._start + self._pos
+        elif whence == os.SEEK_END:
+            seekto += self._end
+        else:
+            raise IOError("Invalid whence argument to seek: %r" % (whence,))
+        self._checkwindow(seekto, 'seek')
+        self._fileobj.seek(seekto)
+        self._pos = seekto - self._start
+
+    def write(self, bytes):
+        here = self._start + self._pos
+        self._checkwindow(here, 'write')
+        self._checkwindow(here + len(bytes), 'write')
+        self._fileobj.seek(here, os.SEEK_SET)
+        self._fileobj.write(bytes)
+        self._pos += len(bytes)
+
+    def read(self, size=sys.maxint):
+        assert size >= 0
+        here = self._start + self._pos
+        self._checkwindow(here, 'read')
+        size = min(size, self._end - here)
+        self._fileobj.seek(here, os.SEEK_SET)
+        bytes = self._fileobj.read(size)
+        self._pos += len(bytes)
+        return bytes
+
+def read_data(file, endian, num = 1):
+    """
+    Read a given number of 32-bits unsigned integers from the given file
+    with the given endianness.
+    """
+    res = struct.unpack(endian + 'L' * num, file.read(num * 4))
+    if len(res) == 1:
+        return res[0]
+    return res
+
+def mach_o_change(path, what, value):
+    """
+    Replace a given name (what) in any LC_LOAD_DYLIB command found in
+    the given binary with a new name (value), provided it's shorter.
+    """
+
+    def do_macho(file, bits, endian):
+        # Read Mach-O header (the magic number is assumed read by the caller)
+        cputype, cpusubtype, filetype, ncmds, sizeofcmds, flags = read_data(file, endian, 6)
+        # 64-bits header has one more field.
+        if bits == 64:
+            read_data(file, endian)
+        # The header is followed by ncmds commands
+        for n in range(ncmds):
+            where = file.tell()
+            # Read command header
+            cmd, cmdsize = read_data(file, endian, 2)
+            if cmd == LC_LOAD_DYLIB:
+                # The first data field in LC_LOAD_DYLIB commands is the
+                # offset of the name, starting from the beginning of the
+                # command.
+                name_offset = read_data(file, endian)
+                file.seek(where + name_offset, os.SEEK_SET)
+                # Read the NUL terminated string
+                load = file.read(cmdsize - name_offset)
+                load = load[:load.index('\0')]
+                # If the string is what is being replaced, overwrite it.
+                if load == what:
+                    file.seek(where + name_offset, os.SEEK_SET)
+                    file.write(value + '\0')
+            # Seek to the next command
+            file.seek(where + cmdsize, os.SEEK_SET)
+
+    def do_file(file, offset = 0, size = sys.maxint):
+        file = fileview(file, offset, size)
+        # Read magic number
+        magic = read_data(file, BIG_ENDIAN)
+        if magic == FAT_MAGIC:
+            # Fat binaries contain nfat_arch Mach-O binaries
+            nfat_arch = read_data(file, BIG_ENDIAN)
+            for n in range(nfat_arch):
+                # Read arch header
+                cputype, cpusubtype, offset, size, align = read_data(file, BIG_ENDIAN, 5)
+                do_file(file, offset, size)
+        elif magic == MH_MAGIC:
+            do_macho(file, 32, BIG_ENDIAN)
+        elif magic == MH_CIGAM:
+            do_macho(file, 32, LITTLE_ENDIAN)
+        elif magic == MH_MAGIC_64:
+            do_macho(file, 64, BIG_ENDIAN)
+        elif magic == MH_CIGAM_64:
+            do_macho(file, 64, LITTLE_ENDIAN)
+
+    assert(len(what) >= len(value))
+    do_file(open(path,'r+b'))
+
+
 if __name__ == '__main__':
     main()
 
 ## TODO:
 ## Copy python.exe.manifest
 ## Monkeypatch distutils.sysconfig
+
