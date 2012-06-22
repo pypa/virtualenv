@@ -15,8 +15,8 @@ Changes & News
    with the upgraded Python.
 
 
-master (unreleased)
-~~~~~~~~~~~~~~~~~~~
+develop (unreleased)
+~~~~~~~~~~~~~~~~~~~~
 
 * Updated to distribute 0.6.27.
 
@@ -29,6 +29,9 @@ master (unreleased)
 * Restored ability to create a virtualenv with a path longer than 78
   characters, without breaking creation of virtualenvs with non-ASCII paths.
   Thanks, Bradley Ayers.
+
+* Added ability to create virtualenvs without having installed Apple's
+  developers tools (using an own implementation of ``install_name_tool``).
 
 
 1.7.1.2 (2012-02-17)

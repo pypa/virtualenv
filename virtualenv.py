@@ -1362,6 +1362,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
                           os.path.join(prefix, 'Python'),
                           '@executable_path/../.Python')
         except:
+            e = sys.exc_info()[1]
+            logger.warn("Could not call mach_o_change: %s. "
+                        "Trying to call install_name_tool instead." % e)
             try:
                 call_subprocess(
                     ["install_name_tool", "-change",
@@ -1369,8 +1372,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
                      '@executable_path/../.Python',
                      py_executable])
             except:
-                logger.fatal(
-                    "Could not call install_name_tool -- you must have Apple's development tools installed")
+                logger.fatal("Could not call install_name_tool -- you must "
+                             "have Apple's development tools installed")
                 raise
 
         # Some tools depend on pythonX.Y being present
@@ -1409,7 +1412,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             logger.fatal('ERROR: The executable %s could not be run: %s' % (py_executable, e))
             sys.exit(100)
         else:
-          raise e
+            raise e
 
     proc_stdout = proc_stdout.strip().decode("utf-8")
     proc_stdout = os.path.normcase(os.path.abspath(proc_stdout))
@@ -1444,6 +1447,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     fix_local_scheme(home_dir)
 
     return py_executable
+
 
 def install_activate(home_dir, bin_dir, prompt=None):
     home_dir = os.path.abspath(home_dir)
@@ -2289,6 +2293,7 @@ BIG_ENDIAN = '>'
 LITTLE_ENDIAN = '<'
 LC_LOAD_DYLIB = 0xc
 
+
 class fileview(object):
     """
     A proxy for file-like objects that exposes a given view of a file.
@@ -2348,7 +2353,8 @@ class fileview(object):
         self._pos += len(bytes)
         return bytes
 
-def read_data(file, endian, num = 1):
+
+def read_data(file, endian, num=1):
     """
     Read a given number of 32-bits unsigned integers from the given file
     with the given endianness.
@@ -2357,6 +2363,7 @@ def read_data(file, endian, num = 1):
     if len(res) == 1:
         return res[0]
     return res
+
 
 def mach_o_change(path, what, value):
     """
@@ -2391,7 +2398,7 @@ def mach_o_change(path, what, value):
             # Seek to the next command
             file.seek(where + cmdsize, os.SEEK_SET)
 
-    def do_file(file, offset = 0, size = sys.maxint):
+    def do_file(file, offset=0, size=sys.maxint):
         file = fileview(file, offset, size)
         # Read magic number
         magic = read_data(file, BIG_ENDIAN)
@@ -2412,7 +2419,7 @@ def mach_o_change(path, what, value):
             do_macho(file, 64, LITTLE_ENDIAN)
 
     assert(len(what) >= len(value))
-    do_file(open(path,'r+b'))
+    do_file(open(path, 'r+b'))
 
 
 if __name__ == '__main__':
@@ -2421,4 +2428,3 @@ if __name__ == '__main__':
 ## TODO:
 ## Copy python.exe.manifest
 ## Monkeypatch distutils.sysconfig
-
