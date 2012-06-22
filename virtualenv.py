@@ -2287,10 +2287,10 @@ YdN2dEngUlbC4PG60M1WEN0piu7Nq7on0mgyyUw3iV1etLo6r/81biWdQ9MWHFaePWZYaq+nmp+t
 s3az+sj7eA0jfgPfeoN1
 """)
 
-MH_MAGIC = 0xfeedfaceL
-MH_CIGAM = 0xcefaedfeL
-MH_MAGIC_64 = 0xfeedfacfL
-MH_CIGAM_64 = 0xcffaedfeL
+MH_MAGIC = 0xfeedface
+MH_CIGAM = 0xcefaedfe
+MH_MAGIC_64 = 0xfeedfacf
+MH_CIGAM_64 = 0xcffaedfe
 FAT_MAGIC = 0xcafebabe
 BIG_ENDIAN = '>'
 LITTLE_ENDIAN = '<'
