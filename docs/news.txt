@@ -344,7 +344,7 @@ Changes & News
   ``distutils.cfg`` -- this has been causing problems for a lot of
   people, in rather obscure ways.
 
-* If you use a `boot script <./index.html#boot-script>`_ it will attempt to import ``virtualenv``
+* If you use a boot script it will attempt to import ``virtualenv``
   and find a pre-downloaded Setuptools egg using that.
 
 * Added platform-specific paths, like ``/usr/lib/pythonX.Y/plat-linux2``
