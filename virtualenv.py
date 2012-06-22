@@ -2295,6 +2295,7 @@ FAT_MAGIC = 0xcafebabe
 BIG_ENDIAN = '>'
 LITTLE_ENDIAN = '<'
 LC_LOAD_DYLIB = 0xc
+maxint = majver == 3 and getattr(sys, 'maxsize') or getattr(sys, 'maxint')
 
 
 class fileview(object):
@@ -2303,7 +2304,7 @@ class fileview(object):
     Modified from macholib.
     """
 
-    def __init__(self, fileobj, start=0, size=sys.maxint):
+    def __init__(self, fileobj, start=0, size=maxint):
         if isinstance(fileobj, fileview):
             self._fileobj = fileobj._fileobj
         else:
@@ -2346,7 +2347,7 @@ class fileview(object):
         self._fileobj.write(bytes)
         self._pos += len(bytes)
 
-    def read(self, size=sys.maxint):
+    def read(self, size=maxint):
         assert size >= 0
         here = self._start + self._pos
         self._checkwindow(here, 'read')
@@ -2401,7 +2402,7 @@ def mach_o_change(path, what, value):
             # Seek to the next command
             file.seek(where + cmdsize, os.SEEK_SET)
 
-    def do_file(file, offset=0, size=sys.maxint):
+    def do_file(file, offset=0, size=maxint):
         file = fileview(file, offset, size)
         # Read magic number
         magic = read_data(file, BIG_ENDIAN)
