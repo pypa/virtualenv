@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import sys
 
@@ -38,6 +39,17 @@ long_description += "\n\n" + f.read()
 f.close()
 
 
+def get_version():
+    f = open(os.path.join(here, 'virtualenv.py'))
+    version_file = f.read()
+    f.close()
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
+
+
 # Hack to prevent stupid TypeError: 'NoneType' object is not callable error on
 # exit of python setup.py test # in multiprocessing/util.py _exit_function when
 # running python setup.py test (see
@@ -51,7 +63,7 @@ setup(
     name='virtualenv',
     # If you change the version here, change it in virtualenv.py and
     # docs/conf.py as well
-    version="1.7.1.2.post1",
+    version=get_version(),
     description="Virtual Python Environment builder",
     long_description=long_description,
     classifiers=[
