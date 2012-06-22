@@ -811,12 +811,13 @@ def main():
         action='store_true',
         help="Clear out the non-root install and start from scratch")
 
+    parser.set_defaults(system_site_packages=False)
     parser.add_option(
         '--no-site-packages',
-        dest='no_site_packages',
-        action='store_true',
+        dest='system_site_packages',
+        action='store_false',
         help="Don't give access to the global site-packages dir to the "
-             "virtual environment (default; deprecated)")
+             "virtual environment (default)")
 
     parser.add_option(
         '--system-site-packages',
@@ -927,10 +928,6 @@ def main():
     if options.relocatable:
         make_environment_relocatable(home_dir)
         return
-
-    if options.no_site_packages:
-        logger.warn('The --no-site-packages flag is deprecated; it is now '
-                    'the default behavior.')
 
     create_environment(home_dir,
                        site_packages=options.system_site_packages,
