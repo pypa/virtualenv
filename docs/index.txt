@@ -539,7 +539,7 @@ Other Documentation and Links
   <http://code.google.com/p/modwsgi/wiki/VirtualEnvironments>`_.
 
 * `virtualenv commands
-  <http://thisismedium.com/tech/extending-virtualenv/>`_ for some more
+  <https://github.com/thisismedium/virtualenv-commands>`_ for some more
   workflow-related tools around virtualenv.
 
 Status and License
