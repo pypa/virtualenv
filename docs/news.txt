@@ -34,6 +34,7 @@ develop (unreleased)
   developers tools (using an own implementation of ``install_name_tool``).
   Thanks Mike Hommey.
 
+* Fixed PyPy and Jython support on Windows. Thanks Konstantin Zemlyak.
 
 1.7.1.2 (2012-02-17)
 ~~~~~~~~~~~~~~~~~~~~
