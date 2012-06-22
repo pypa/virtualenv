@@ -113,7 +113,8 @@ virtualenv can not only be configured by passing command line options such as
 - Config files
 
   virtualenv also looks for a standard ini config file. On Unix and Mac OS X
-  that's ``$HOME/.virtualenv/virtualenv.ini`` and on Windows, it's
+  that's ``$HOME/.virtualenv/virtualenv.ini``. On Windows it will use
+  ``~\virtualenv\virtualenv.ini`` if it exists, otherwise it will use
   ``%APPDATA%\virtualenv\virtualenv.ini``.
 
   The names of the settings are derived from the long command line option,

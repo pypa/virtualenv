@@ -55,7 +55,9 @@ abiflags = getattr(sys, 'abiflags', '')
 
 user_dir = os.path.expanduser('~')
 if sys.platform == 'win32':
-    user_dir = os.environ.get('APPDATA', user_dir)  # Use %APPDATA% for roaming
+    ini_file = join(user_dir, 'virtualenv', 'virtualenv.ini')
+    if not os.path.isfile(ini_file):
+        user_dir = os.environ.get('APPDATA', user_dir)  # Use %APPDATA% for roaming
     default_storage_dir = os.path.join(user_dir, 'virtualenv')
 else:
     default_storage_dir = os.path.join(user_dir, '.virtualenv')
