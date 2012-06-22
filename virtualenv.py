@@ -767,7 +767,7 @@ class ConfigOptionParser(optparse.OptionParser):
             # Old, pre-Optik 1.5 behaviour.
             return optparse.Values(self.defaults)
 
-        defaults = self.update_defaults(self.defaults.copy()) # ours
+        defaults = self.update_defaults(self.defaults.copy())  # ours
         for option in self._get_all_options():
             default = defaults.get(option.dest)
             if isinstance(default, basestring):
@@ -838,7 +838,7 @@ def main():
         'This fixes up scripts and makes all .pth files relative')
 
     parser.add_option(
-        '--distribute',
+        '--distribute', '--use-distribute',  # the second option is for legacy reasons here. Hi Kenneth!
         dest='use_distribute',
         action='store_true',
         help='Use Distribute instead of Setuptools. Set environ variable '
@@ -876,7 +876,7 @@ def main():
         adjust_options(options, args)
 
     verbosity = options.verbose - options.quiet
-    logger = Logger([(Logger.level_for_integer(2-verbosity), sys.stdout)])
+    logger = Logger([(Logger.level_for_integer(2 - verbosity), sys.stdout)])
 
     if options.python and not os.environ.get('VIRTUALENV_INTERPRETER_RUNNING'):
         env = os.environ.copy()
@@ -1043,9 +1043,7 @@ def create_environment(home_dir, site_packages=False, clear=False,
 
     install_distutils(home_dir)
 
-    # use_distribute also is True if VIRTUALENV_DISTRIBUTE env var is set
-    # we also check VIRTUALENV_USE_DISTRIBUTE for backwards compatibility
-    if use_distribute or os.environ.get('VIRTUALENV_USE_DISTRIBUTE'):
+    if use_distribute:
         install_distribute(py_executable, unzip=unzip_setuptools,
                            search_dirs=search_dirs, never_download=never_download)
     else:

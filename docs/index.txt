@@ -71,7 +71,7 @@ Distribute instead of setuptools, just call virtualenv like this::
 
     $ python virtualenv.py --distribute ENV
 
-You can also set the environment variable VIRTUALENV_USE_DISTRIBUTE.
+You can also set the environment variable VIRTUALENV_DISTRIBUTE.
 
 A new virtualenv also includes the `pip <http://pypi.python.org/pypi/pip>`_
 installer, so you can use ``ENV/bin/pip`` to install additional packages into
@@ -93,7 +93,7 @@ virtualenv can not only be configured by passing command line options such as
   For example, to automatically install Distribute instead of setuptools
   you can also set an environment variable::
 
-      $ export VIRTUALENV_USE_DISTRIBUTE=true
+      $ export VIRTUALENV_DISTRIBUTE=true
       $ python virtualenv.py ENV
 
   It's the same as passing the option to virtualenv directly::

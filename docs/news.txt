@@ -40,6 +40,10 @@ develop (unreleased)
 
 * Fixed creating a bootstrap script on Python 3. Thanks Raul Leal. Fixes #280.
 
+* Fixed inconsistency when having set the ``PYTHONDONTWRITEBYTECODE`` env var
+  with the --distribute option or the ``VIRTUALENV_USE_DISTRIBUTE`` env var.
+  ``VIRTUALENV_USE_DISTRIBUTE`` is now considered again as a legacy alias.
+
 1.7.1.2 (2012-02-17)
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -249,7 +253,7 @@ develop (unreleased)
 * Fix problem with ``virtualenv --relocate`` when ``bin/`` has
   subdirectories (e.g., ``bin/.svn/``); from Alan Franzoni.
 
-* If you set ``$VIRTUALENV_USE_DISTRIBUTE`` then virtualenv will use
+* If you set ``$VIRTUALENV_DISTRIBUTE`` then virtualenv will use
   Distribute by default (so you don't have to remember to use
   ``--distribute``).
 
