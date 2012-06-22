@@ -20,7 +20,7 @@ deactivate () {
     # be called to get it to forget past commands.  Without forgetting
     # past commands the $PATH changes we made may not be respected
     if [ -n "$BASH" -o -n "$ZSH_VERSION" ] ; then
-        hash -r
+        hash -r 2>/dev/null
     fi
 
     if [ -n "$_OLD_VIRTUAL_PS1" ] ; then
@@ -76,5 +76,5 @@ alias pydoc="python -m pydoc"
 # be called to get it to forget past commands.  Without forgetting
 # past commands the $PATH changes we made may not be respected
 if [ -n "$BASH" -o -n "$ZSH_VERSION" ] ; then
-    hash -r
+    hash -r 2>/dev/null
 fi
