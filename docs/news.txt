@@ -36,6 +36,10 @@ develop (unreleased)
 
 * Fixed PyPy and Jython support on Windows. Thanks Konstantin Zemlyak.
 
+* Added pydoc script to ease use. Thanks Marc Abramowitz. Fixes #149.
+
+* Fixed creating a bootstrap script on Python 3. Thanks Raul Leal. Fixes #280.
+
 1.7.1.2 (2012-02-17)
 ~~~~~~~~~~~~~~~~~~~~
 

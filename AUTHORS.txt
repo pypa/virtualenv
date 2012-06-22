@@ -40,9 +40,11 @@ Josh Bronson
 Konstantin Zemlyak
 Kumar McMillan
 Lars Francke
+Marc Abramowitz
 Mike Hommey
 Miki Tebeka
 Philip Jenvey
+Raul Leal
 Ronny Pfannschmidt
 Stefano Rivera
 Tarek Ziadé

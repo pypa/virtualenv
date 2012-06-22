@@ -9,6 +9,7 @@ virtualenv_version = "1.7.1.2.post1"
 import base64
 import sys
 import os
+import codecs
 import optparse
 import re
 import shutil
@@ -1769,7 +1770,7 @@ def create_bootstrap_script(extra_text, python_version=''):
     filename = __file__
     if filename.endswith('.pyc'):
         filename = filename[:-1]
-    f = open(filename, 'rb')
+    f = codecs.open(filename, 'r', encoding='utf-8')
     content = f.read()
     f.close()
     py_exe = 'python%s' % python_version
