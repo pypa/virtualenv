@@ -39,11 +39,14 @@ copyright = '2007-2012, Ian Bicking, The Open Planning Project, The virtualenv d
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
-#
-# The short X.Y version.
-
-release = "1.7.1.2"
-version = ".".join(release.split(".")[:2])
+try:
+    from virtualenv import __version__
+    # The short X.Y version.
+    version = '.'.join(__version__.split('.')[:2])
+    # The full version, including alpha/beta/rc tags.
+    release = __version__
+except ImportError:
+    version = release = 'dev'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -83,7 +86,7 @@ html_theme_path = ['_theme']
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.

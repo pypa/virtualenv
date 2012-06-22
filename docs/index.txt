@@ -17,8 +17,8 @@ Installation
 ------------
 
 You can install virtualenv with ``pip install virtualenv``, or the `latest
-development version <https://github.com/pypa/virtualenv/tarball/develop#egg=virtualenv-dev>`_
-with ``pip install virtualenv==dev``.
+development version <https://github.com/pypa/virtualenv/tarball/develop>`_
+with ``pip install https://github.com/pypa/virtualenv/tarball/develop``.
 
 You can also use ``easy_install``, or if you have no Python package manager
 available at all, you can just grab the single file `virtualenv.py`_ and run
@@ -71,9 +71,9 @@ Distribute instead of setuptools, just call virtualenv like this::
 
     $ python virtualenv.py --distribute ENV
 
-You can also set the environment variable VIRTUALENV_USE_DISTRIBUTE.
+You can also set the environment variable VIRTUALENV_DISTRIBUTE.
 
-A new virtualenv also includes the `pip <http://pypy.python.org/pypi/pip>`_
+A new virtualenv also includes the `pip <http://pypi.python.org/pypi/pip>`_
 installer, so you can use ``ENV/bin/pip`` to install additional packages into
 the environment.
 
@@ -93,7 +93,7 @@ virtualenv can not only be configured by passing command line options such as
   For example, to automatically install Distribute instead of setuptools
   you can also set an environment variable::
 
-      $ export VIRTUALENV_USE_DISTRIBUTE=true
+      $ export VIRTUALENV_DISTRIBUTE=true
       $ python virtualenv.py ENV
 
   It's the same as passing the option to virtualenv directly::
@@ -114,7 +114,7 @@ virtualenv can not only be configured by passing command line options such as
 
   virtualenv also looks for a standard ini config file. On Unix and Mac OS X
   that's ``$HOME/.virtualenv/virtualenv.ini`` and on Windows, it's
-  ``%HOME%\\virtualenv\\virtualenv.ini``.
+  ``%APPDATA%\virtualenv\virtualenv.ini``.
 
   The names of the settings are derived from the long command line option,
   e.g. the option ``--distribute`` would look like this::
@@ -276,7 +276,7 @@ below.
     policy to ``AllSigned``, meaning all scripts on the system must be
     digitally signed to be executed. Since the virtualenv activation
     script is signed by one of the authors (Jannis Leidel) this level of
-    the execution policy suffices. As an adminstrator run::
+    the execution policy suffices. As an administrator run::
 
         PS C:\> Set-ExecutionPolicy AllSigned
 
@@ -479,13 +479,15 @@ Contributing
 ------------
 
 Refer to the `contributing to pip`_ documentation - it applies equally to
-virtualenv.
+virtualenv, except that virtualenv issues should filed on the `virtualenv
+repo`_ at GitHub.
 
 Virtualenv's release schedule is tied to pip's -- each time there's a new pip
 release, there will be a new virtualenv release that bundles the new version of
 pip.
 
 .. _contributing to pip: http://www.pip-installer.org/en/latest/contributing.html
+.. _virtualenv repo: https://github.com/pypa/virtualenv/
 
 Running the tests
 ~~~~~~~~~~~~~~~~~
@@ -537,7 +539,7 @@ Other Documentation and Links
   <http://code.google.com/p/modwsgi/wiki/VirtualEnvironments>`_.
 
 * `virtualenv commands
-  <http://thisismedium.com/tech/extending-virtualenv/>`_ for some more
+  <https://github.com/thisismedium/virtualenv-commands>`_ for some more
   workflow-related tools around virtualenv.
 
 Status and License

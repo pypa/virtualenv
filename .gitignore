@@ -6,3 +6,5 @@ docs/_build
 *.pyc
 mock-*.egg
 nose-*.egg
+.tox
+tests/test_activate_actual.output
