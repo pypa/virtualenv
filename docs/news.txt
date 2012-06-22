@@ -32,6 +32,7 @@ develop (unreleased)
 
 * Added ability to create virtualenvs without having installed Apple's
   developers tools (using an own implementation of ``install_name_tool``).
+  Thanks Mike Hommey.
 
 
 1.7.1.2 (2012-02-17)
