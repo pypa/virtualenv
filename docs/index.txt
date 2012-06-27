@@ -397,8 +397,8 @@ layout).
 If you use this flag to create an environment, currently, the
 ``--system-site-packages`` option will be implied.
 
-The ``--extra-search-dir`` Option
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The ``--extra-search-dir`` option
+---------------------------------
 
 When it creates a new environment, virtualenv installs either
 setuptools or distribute, and pip.  In normal operation, the latest
