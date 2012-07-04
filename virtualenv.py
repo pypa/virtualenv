@@ -1424,7 +1424,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             logger.fatal('ERROR: The executable %s could not be run: %s' % (py_executable, e))
             sys.exit(100)
         else:
-            raise e
+            raise Exception("Failed to run Python for testing: %s: %s" %
+                (cmd, e))
 
     proc_stdout = proc_stdout.strip().decode("utf-8")
     proc_stdout = os.path.normcase(os.path.abspath(proc_stdout))
