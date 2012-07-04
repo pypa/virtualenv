@@ -47,7 +47,7 @@ try:
 except ImportError:
     import configparser as ConfigParser
 
-join = os.path.join
+from os.path import join
 py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
 
 is_jython = sys.platform.startswith('java')
@@ -1276,6 +1276,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             os.unlink(pyd_pth)
 
     if sys.executable != py_executable:
+        source_dir = os.path.dirname(sys.executable)
+        dest_dir = os.path.dirname(py_executable)
+
         ## FIXME: could I just hard link?
         executable = sys.executable
         if sys.platform == 'cygwin' and os.path.exists(executable + '.exe'):
@@ -1286,36 +1289,31 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         shutil.copyfile(executable, py_executable)
         make_exe(py_executable)
         if sys.platform == 'win32' or sys.platform == 'cygwin':
-            pythonw = os.path.join(os.path.dirname(sys.executable), 'pythonw.exe')
-            if os.path.exists(pythonw):
-                logger.info('Also created pythonw.exe')
-                shutil.copyfile(pythonw, os.path.join(os.path.dirname(py_executable), 'pythonw.exe'))
-            python_d = os.path.join(os.path.dirname(sys.executable), 'python_d.exe')
-            python_d_dest = os.path.join(os.path.dirname(py_executable), 'python_d.exe')
-            if os.path.exists(python_d):
-                logger.info('Also created python_d.exe')
-                shutil.copyfile(python_d, python_d_dest)
-            elif os.path.exists(python_d_dest):
-                logger.info('Removed python_d.exe as it is no longer at the source')
-                os.unlink(python_d_dest)
-            # we need to copy the DLL to enforce that windows will load the correct one.
-            # may not exist if we are cygwin.
-            py_executable_dll = 'python%s%s.dll' % (
-                sys.version_info[0], sys.version_info[1])
-            py_executable_dll_d = 'python%s%s_d.dll' % (
-                sys.version_info[0], sys.version_info[1])
-            pythondll = os.path.join(os.path.dirname(sys.executable), py_executable_dll)
-            pythondll_d = os.path.join(os.path.dirname(sys.executable), py_executable_dll_d)
-            pythondll_d_dest = os.path.join(os.path.dirname(py_executable), py_executable_dll_d)
-            if os.path.exists(pythondll):
-                logger.info('Also created %s' % py_executable_dll)
-                shutil.copyfile(pythondll, os.path.join(os.path.dirname(py_executable), py_executable_dll))
-            if os.path.exists(pythondll_d):
-                logger.info('Also created %s' % py_executable_dll_d)
-                shutil.copyfile(pythondll_d, pythondll_d_dest)
-            elif os.path.exists(pythondll_d_dest):
-                logger.info('Removed %s as the source does not exist' % pythondll_d_dest)
-                os.unlink(pythondll_d_dest)
+            files_to_sync = set(('pythonw.exe', 'python_d.exe',
+                'python%s%s.dll' % (sys.version_info[0], sys.version_info[1]),
+                'python%s%s_d.dll' % (sys.version_info[0], sys.version_info[1]),
+                ))
+
+            # Copy any manifests and DLLs we can find
+            import glob
+
+            for dir in (source_dir, dest_dir):
+                for pattern in ('*.manifest', '*.dll'):
+                    for found_file in glob.iglob(join(dir, pattern)):
+                        files_to_sync.add(os.path.basename(found_file))
+
+            for filename in files_to_sync:
+                source_file = join(source_dir, filename)
+                dest_file = join(dest_dir, filename)
+
+                if os.path.exists(source_file):
+                    logger.info('Also created %s' % filename)
+                    shutil.copyfile(source_file, dest_file)
+                elif os.path.exists(dest_file):
+                    logger.info('Removed %s as it is no longer at the source' %
+                        filename)
+                    os.unlink(dest_file)
+
         if is_pypy:
             # make a symlink python --> pypy-c
             python_executable = os.path.join(os.path.dirname(py_executable), 'python')
