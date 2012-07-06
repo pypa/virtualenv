@@ -2404,12 +2404,12 @@ def mach_o_change(path, what, value):
                 name_offset = read_data(file, endian)
                 file.seek(where + name_offset, os.SEEK_SET)
                 # Read the NUL terminated string
-                load = file.read(cmdsize - name_offset)
+                load = file.read(cmdsize - name_offset).decode()
                 load = load[:load.index('\0')]
                 # If the string is what is being replaced, overwrite it.
                 if load == what:
                     file.seek(where + name_offset, os.SEEK_SET)
-                    file.write(value + '\0')
+                    file.write(value.encode() + '\0'.encode())
             # Seek to the next command
             file.seek(where + cmdsize, os.SEEK_SET)
 
