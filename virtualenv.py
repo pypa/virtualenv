@@ -1407,6 +1407,62 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
                 os.unlink(pth)
             os.symlink(os.path.basename(py_executable), pth)
 
+        ## incorporate the best bits of virtualenv-pythonw-osx
+        #  to prevent errors like:
+        # http://stackoverflow.com/questions/3692928/why-doesnt-the-save-button-work-on-a-matplotlib-plot
+
+        # TODO:  review.  Is this the right way to store this stub?
+        pythonw_c_contents = """
+/*
+ * This wrapper program executes a python executable hidden inside an
+ * application bundle inside the Python framework. This is needed to run
+ * GUI code: some GUI API's don't work unless the program is inside an
+ * application bundle.
+ */
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <err.h>
+
+static char Python[] = PYTHONWEXECUTABLE;
+
+int main(int argc, char **argv) {
+     char **a;
+     a = malloc((argc + 2) * sizeof(char *));
+     memcpy(a + 2, argv, argc * sizeof(char *));
+     a[0] = "/usr/bin/arch";
+     a[1] = sizeof(char *) == 4 ? "-i386" : "-x86_64";
+     a[2] = Python;
+     execv("/usr/bin/arch", a);
+     err(1, "execv: %s", "arch");
+     /* NOTREACHED */
+}
+"""
+        import tempfile
+        pythonw_c = tempfile.NamedTemporaryFile('w',suffix='.c')
+        pythonw_c.write(pythonw_c_contents)
+        pythonw_c.flush()
+        python_app_src = os.path.join(prefix, 'Resources', 'Python.app')
+        python_app_dest = os.path.join(home_dir, 'Python.app')
+        shutil.copytree(python_app_src, python_app_dest)
+        pythonw_executable = os.path.join(python_app_dest, 'Contents', 'MacOS', 'Python')
+        call_subprocess(["install_name_tool", "-change",
+            os.path.join(prefix, 'Python'),
+            '@executable_path/../../../.Python',  # point indirectly to earlier .Python
+            pythonw_executable])
+
+        # Compile bin/python{,w}
+        for name in ['python','pythonw']:
+            pythonw_dest = os.path.join(home_dir, 'bin', name)
+            call_subprocess([
+                'cc',
+                '-arch', 'i386', '-arch', 'x86_64',
+                '-DPYTHONWEXECUTABLE="%s"' % (pythonw_executable,),
+                '-o',
+                pythonw_dest,
+                pythonw_c.name,
+                ])
+
     if sys.platform == 'win32' and ' ' in py_executable:
         # There's a bug with subprocess on Windows when using a first
         # argument that has a space in it.  Instead we have to quote
