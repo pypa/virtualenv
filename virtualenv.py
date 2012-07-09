@@ -19,7 +19,6 @@ import tempfile
 import zlib
 import errno
 import distutils.sysconfig
-import subprocess
 from distutils.util import strtobool
 import struct
 
