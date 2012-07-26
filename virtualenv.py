@@ -1159,7 +1159,11 @@ def copy_required_modules(dst_prefix):
             else:
                 if f is not None:
                     f.close()
-                dst_filename = change_prefix(filename, dst_prefix)
+                # special-case custom readline.so on OS X:
+                if modname == 'readline' and sys.platform == 'darwin' and not filename.endswith(join('lib-dynload', 'readline.so')):
+                    dst_filename = join(dst_prefix, 'lib', 'python%s' % sys.version[:3], 'readline.so')
+                else:
+                    dst_filename = change_prefix(filename, dst_prefix)
                 copyfile(filename, dst_filename)
                 if filename.endswith('.pyc'):
                     pyfile = filename[:-1]
