@@ -283,7 +283,7 @@ class Logger(object):
     def warn(self, msg, *args, **kw):
         self.log(self.WARN, msg, *args, **kw)
     def error(self, msg, *args, **kw):
-        self.log(self.WARN, msg, *args, **kw)
+        self.log(self.ERROR, msg, *args, **kw)
     def fatal(self, msg, *args, **kw):
         self.log(self.FATAL, msg, *args, **kw)
     def log(self, level, msg, *args, **kw):
