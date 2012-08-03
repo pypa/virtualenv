@@ -55,7 +55,7 @@ is_win  = (sys.platform == 'win32')
 abiflags = getattr(sys, 'abiflags', '')
 
 user_dir = os.path.expanduser('~')
-if sys.platform == 'win32':
+if is_win:
     user_dir = os.environ.get('APPDATA', user_dir)  # Use %APPDATA% for roaming
     default_storage_dir = os.path.join(user_dir, 'virtualenv')
 else:
