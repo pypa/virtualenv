@@ -1085,7 +1085,7 @@ def path_locations(home_dir):
         lib_dir = home_dir
         inc_dir = join(home_dir, 'include')
         bin_dir = join(home_dir, 'bin')
-    elif sys.platform != 'win32':
+    elif not is_win:
         lib_dir = join(home_dir, 'lib', py_version)
         multiarch_exec = '/usr/bin/multiarch-platform'
         if is_executable_file(multiarch_exec):
