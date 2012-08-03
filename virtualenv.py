@@ -52,6 +52,7 @@ py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
 is_jython = sys.platform.startswith('java')
 is_pypy = hasattr(sys, 'pypy_version_info')
 is_win  = (sys.platform == 'win32')
+is_cygwin = (sys.platform == 'cygwin')
 is_darwin = (sys.platform == 'darwin')
 abiflags = getattr(sys, 'abiflags', '')
 
@@ -1278,14 +1279,14 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     if sys.executable != py_executable:
         ## FIXME: could I just hard link?
         executable = sys.executable
-        if sys.platform == 'cygwin' and os.path.exists(executable + '.exe'):
+        if is_cygwin and os.path.exists(executable + '.exe'):
             # Cygwin misreports sys.executable sometimes
             executable += '.exe'
             py_executable += '.exe'
             logger.info('Executable actually exists in %s' % executable)
         shutil.copyfile(executable, py_executable)
         make_exe(py_executable)
-        if is_win or sys.platform == 'cygwin':
+        if is_win or is_cygwin:
             pythonw = os.path.join(os.path.dirname(sys.executable), 'pythonw.exe')
             if os.path.exists(pythonw):
                 logger.info('Also created pythonw.exe')
