@@ -16,7 +16,10 @@ else:
     __path__.insert(0, distutils_path)
     real_distutils = imp.load_module("_virtualenv_distutils", None, distutils_path, ('', '', imp.PKG_DIRECTORY))
     # Copy the relevant attributes
-    __revision__ = real_distutils.__revision__
+    try:
+        __revision__ = real_distutils.__revision__
+    except AttributeError:
+        pass
     __version__ = real_distutils.__version__
 
 from distutils import dist, sysconfig
