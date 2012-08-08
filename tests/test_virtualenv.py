@@ -48,3 +48,22 @@ def test_resolve_intepreter_with_invalid_interpreter(mock_exists):
 
     mock_exists.assert_called_with("/usr/bin/python42")
     virtualenv.is_executable.assert_called_with("/usr/bin/python42")
+
+
+def test_activate_after_future_statements():
+    """Should insert activation line after last future statement"""
+    script = [
+        '#!/usr/bin/env python',
+        'from __future__ import with_statement',
+        'from __future__ import print_function',
+        'print("Hello, world!")'
+    ]
+    assert virtualenv.relative_script(script) == [
+        '#!/usr/bin/env python',
+        'from __future__ import with_statement',
+        'from __future__ import print_function',
+        '',
+        "import os; activate_this=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'activate_this.py'); execfile(activate_this, dict(__file__=activate_this)); del os, activate_this",
+        '',
+        'print("Hello, world!")'
+    ]
