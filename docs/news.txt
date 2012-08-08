@@ -15,6 +15,12 @@ Changes & News
    with the upgraded Python.
 
 
+master (unreleased)
+~~~~~~~~~~~~~~~~~~~
+
+* Fix ``--relocatable`` when a script uses ``__future__`` imports. Thanks
+  Branden Rolston.
+
 1.7.2 (2012-06-22)
 ~~~~~~~~~~~~~~~~~~
 
