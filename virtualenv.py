@@ -1644,9 +1644,9 @@ def relative_script(lines):
     # Find the last future statement in the script. If we insert the activation
     # line before a future statement, Python will raise a SyntaxError.
     activate_at = None
-    for idx, line in reversed(list(enumerate(lines, 1))):
+    for idx, line in reversed(list(enumerate(lines))):
         if line.split()[:3] == ['from', '__future__', 'import']:
-            activate_at = idx
+            activate_at = idx + 1
             break
     if activate_at is None:
         # Activate after the shebang.
