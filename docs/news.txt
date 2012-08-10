@@ -18,6 +18,9 @@ Changes & News
 master (unreleased)
 ~~~~~~~~~~~~~~~~~~~
 
+* Symlink some additional modules under Python 3. Fixes #194. Thanks Vinay
+  Sajip, Ian Clelland, and Stefan Holek for the report.
+
 * Fix ``--relocatable`` when a script uses ``__future__`` imports. Thanks
   Branden Rolston.
 
