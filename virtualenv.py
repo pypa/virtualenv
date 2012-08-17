@@ -615,13 +615,10 @@ def install_pip(py_executable, search_dirs=None, never_download=False):
     for dir in search_dirs:
         filenames.extend([join(dir, fn) for fn in os.listdir(dir)
                           if _pip_re.search(fn)])
-    filenames = [(os.path.basename(filename).lower(), i, filename) for i, filename in enumerate(filenames)]
-    filenames.sort()
-    filenames = [filename for basename, i, filename in filenames]
     if not filenames:
         filename = 'pip'
     else:
-        filename = filenames[-1]
+        filename = filenames[0]
     easy_install_script = 'easy_install'
     if is_win:
         easy_install_script = 'easy_install-script.py'
