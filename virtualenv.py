@@ -736,7 +736,9 @@ class ConfigOptionParser(optparse.OptionParser):
                     val = val.split()
                 else:
                     option.nargs = 1
-                if option.action in ('store_true', 'store_false', 'count'):
+                if option.action == 'store_false':
+                    val = not strtobool(val)
+                elif option.action in ('store_true', 'count'):
                     val = strtobool(val)
                 try:
                     val = option.convert_value(key, val)
