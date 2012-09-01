@@ -23,8 +23,8 @@ support_files = [
     ('http://pypi.python.org/packages/2.6/s/setuptools/setuptools-0.6c11-py2.6.egg', 'setuptools-0.6c11-py2.6.egg'),
     ('http://pypi.python.org/packages/2.5/s/setuptools/setuptools-0.6c11-py2.5.egg', 'setuptools-0.6c11-py2.5.egg'),
     ('http://pypi.python.org/packages/2.4/s/setuptools/setuptools-0.6c11-py2.4.egg', 'setuptools-0.6c11-py2.4.egg'),
-    ('http://pypi.python.org/packages/source/d/distribute/distribute-0.6.27.tar.gz', 'distribute-0.6.27.tar.gz'),
-    ('http://pypi.python.org/packages/source/p/pip/pip-1.1.tar.gz', 'pip-1.1.tar.gz'),
+    ('http://pypi.python.org/packages/source/d/distribute/distribute-0.6.28.tar.gz', 'distribute-0.6.28.tar.gz'),
+    ('http://pypi.python.org/packages/source/p/pip/pip-1.2.tar.gz', 'pip-1.2.tar.gz'),
 ]
 
 
