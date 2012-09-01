@@ -1224,10 +1224,6 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     site_packages_filename = join(site_dir, 'no-global-site-packages.txt')
     if not site_packages:
         writefile(site_packages_filename, '')
-    else:
-        if os.path.exists(site_packages_filename):
-            logger.info('Deleting %s' % site_packages_filename)
-            os.unlink(site_packages_filename)
 
     if is_pypy or is_win:
         stdinc_dir = join(prefix, 'include')
@@ -1469,6 +1465,11 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     ## FIXME: really this should be calculated earlier
 
     fix_local_scheme(home_dir)
+
+    if site_packages:
+        if os.path.exists(site_packages_filename):
+            logger.info('Deleting %s' % site_packages_filename)
+            os.unlink(site_packages_filename)
 
     return py_executable
 
