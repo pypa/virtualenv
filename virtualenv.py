@@ -489,7 +489,7 @@ def _install_req(py_executable, unzip=False, distribute=False,
         source = None
     else:
         setup_fn = None
-        source = 'distribute-0.6.27.tar.gz'
+        source = 'distribute-0.6.28.tar.gz'
         project_name = 'distribute'
         bootstrap_script = DISTRIBUTE_SETUP_PY
 
@@ -511,7 +511,7 @@ def _install_req(py_executable, unzip=False, distribute=False,
     if unzip:
         cmd.append('--always-unzip')
     env = {}
-    remove_from_env = []
+    remove_from_env = ['__PYVENV_LAUNCHER__']
     if logger.stdout_level_matches(logger.DEBUG):
         cmd.append('-v')
 
