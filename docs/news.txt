@@ -15,12 +15,14 @@ Changes & News
    with the upgraded Python.
 
 
-master (unreleased)
--------------------
+1.8.1 (2012-09-03)
+~~~~~~~~~~~~~~~~~~
 
 * Fixed distribute version used with `--never-download`. Thanks michr for
   report and patch.
 
+* Fix creating Python 3.3 based virtualenvs by unsetting the
+  ``__PYVENV_LAUNCHER__`` environment variable in subprocesses.
 
 1.8 (2012-09-01)
 ~~~~~~~~~~~~~~~~
