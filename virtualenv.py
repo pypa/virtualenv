@@ -4,7 +4,7 @@
 
 # If you change the version here, change it in setup.py
 # and docs/conf.py as well.
-__version__ = "1.8"  # following best practices
+__version__ = "1.8.1"  # following best practices
 virtualenv_version = __version__  # legacy, again
 
 import base64
@@ -18,6 +18,7 @@ import logging
 import tempfile
 import zlib
 import errno
+import glob
 import distutils.sysconfig
 from distutils.util import strtobool
 import struct
@@ -472,8 +473,9 @@ def make_exe(fn):
 
 def _find_file(filename, dirs):
     for dir in reversed(dirs):
-        if os.path.exists(join(dir, filename)):
-            return join(dir, filename)
+        files = glob.glob(os.path.join(dir, filename))
+        if files and os.path.exists(files[0]):
+            return files[0]
     return filename
 
 def _install_req(py_executable, unzip=False, distribute=False,
@@ -483,13 +485,13 @@ def _install_req(py_executable, unzip=False, distribute=False,
         search_dirs = file_search_dirs()
 
     if not distribute:
-        setup_fn = 'setuptools-0.6c11-py%s.egg' % sys.version[:3]
+        setup_fn = 'setuptools-*-py%s.egg' % sys.version[:3]
         project_name = 'setuptools'
         bootstrap_script = EZ_SETUP_PY
         source = None
     else:
         setup_fn = None
-        source = 'distribute-0.6.27.tar.gz'
+        source = 'distribute-*.tar.gz'
         project_name = 'distribute'
         bootstrap_script = DISTRIBUTE_SETUP_PY
 
@@ -511,7 +513,7 @@ def _install_req(py_executable, unzip=False, distribute=False,
     if unzip:
         cmd.append('--always-unzip')
     env = {}
-    remove_from_env = []
+    remove_from_env = ['__PYVENV_LAUNCHER__']
     if logger.stdout_level_matches(logger.DEBUG):
         cmd.append('-v')
 
@@ -1257,6 +1259,10 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     mkdir(bin_dir)
     py_executable = join(bin_dir, os.path.basename(sys.executable))
     if 'Python.framework' in prefix:
+        # OS X framework builds cause validation to break
+        # https://github.com/pypa/virtualenv/issues/322
+        if os.environ.get('__PYVENV_LAUNCHER__'):
+          os.unsetenv('__PYVENV_LAUNCHER__')
         if re.search(r'/Python(?:-32|-64)*$', py_executable):
             # The name of the python executable is not quite what
             # we want, rename it.
