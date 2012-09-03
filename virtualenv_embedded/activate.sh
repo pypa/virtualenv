@@ -10,6 +10,14 @@ deactivate () {
         export PATH
         unset _OLD_VIRTUAL_PATH
     fi
+    if [ -n "$_OLD_VIRTUAL_LD_LIBRARY_PATH" ] ; then
+        LD_LIBRARY_PATH="$_OLD_VIRTUAL_LD_LIBRARY_PATH"
+        if [ "x$LD_LIBRARY_PATH" = 'x:' ]; then
+            LD_LIBRARY_PATH=""
+        fi
+        export LD_LIBRARY_PATH
+        unset _OLD_VIRTUAL_LD_LIBRARY_PATH
+    fi
     if [ -n "$_OLD_VIRTUAL_PYTHONHOME" ] ; then
         PYTHONHOME="$_OLD_VIRTUAL_PYTHONHOME"
         export PYTHONHOME
@@ -45,6 +53,10 @@ export VIRTUAL_ENV
 _OLD_VIRTUAL_PATH="$PATH"
 PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
 export PATH
+
+_OLD_VIRTUAL_LD_LIBRARY_PATH="$LD_LIBRARY_PATH:"
+LD_LIBRARY_PATH="$VIRTUAL_ENV/__LIBRARY_NAME__:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH
 
 # unset PYTHONHOME if set
 # this will fail if PYTHONHOME is set to the empty string (which is bad anyway)
