@@ -5,6 +5,7 @@ python:
   - "2.7"
   - "3.2"
   - "pypy"
+install: pip install nose
 script:
   - python setup.py test
 notifications:
