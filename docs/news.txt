@@ -15,6 +15,13 @@ Changes & News
    with the upgraded Python.
 
 
+master (unreleased)
+-------------------
+
+* Fixed distribute version used with `--never-download`. Thanks michr for
+  report and patch.
+
+
 1.8 (2012-09-01)
 ~~~~~~~~~~~~~~~~
 
