@@ -1472,6 +1472,8 @@ def install_files(home_dir, bin_dir, prompt, files):
         content = content.replace('__VIRTUAL_ENV__', home_dir)
         content = content.replace('__VIRTUAL_NAME__', vname)
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
+        # this also works for lib64 as that's a link to lib
+        content = content.replace('__LIBRARY_NAME__', os.path.basename("lib"))
         writefile(os.path.join(bin_dir, name), content)
 
 def install_python_config(home_dir, bin_dir, prompt=None):
@@ -1963,20 +1965,21 @@ AVijEPwfucjncQ==
 
 ##file activate.sh
 ACTIVATE_SH = convert("""
-eJytVd9v2kAMfs9fYQLq2m4MscdNVKMqEkgtVIQxbeuUHolpTgsXdHehpT/+9/mSEBJS2MOaB0ji
-z77P9menDpOAK5jzEGERKw0zhFihD/dcB2CrKJYewoyLFvM0XzGNNpzOZbSAGVPBqVWHdRSDx4SI
-NMhYANfgc4meDteW5ePGC45P4MkCumKhUENzDsu1H3lw1vJx1RJxGMKns6O2lWDqINGgotAHFCsu
-I7FAoWHFJGezEFWGqsEvaD5C42naHb93X+A3+elYCgVaxgh8DmQAys9HL2SS0mIaWBgm7mTN/O3G
-kzu6vHCng/HkW/fSve5O+hTOpnhfQAcoEry5jKVjNypoO0fgwzKSOgHm79KUK06Jfc7/RebHpD8a
-9kdXvT2UcnuFWG6p0stNB0mWUUQ1q3uiGRVEMfXHR03dTuQATPjwqIIPcB9wL4CArRAY/ZHJixYL
-Y9YBtcAoLQtFevOoI9QaHcEdMSAB0d08kuZhyUiSmav6CPCdVBnFOjNrLu6yMCWgKRA0TInBC5i4
-QwX3JG/mm581GKnSsSSxJTFHf9MAKr8w5T/vOv1mUurn5/zlT6fvTntjZzAaNl9rQ5JkU5KIc0GX
-inagwU57T2eddqWlTrvaS6d9sImZeUMkhWysveF0m37NcGub9Dpgi0j4qGiOzATjDr06OBjOYQOo
-7RBoGtNm9Denv1i0LVI7lxJDXLHSSBeWRflsyyqw7diuW3h0XdvK6lBMyaoMG1UyHdTsoYBuue75
-YOgOu1c91/2cwYpznPPeDoQpGL2xSm09NKp7BsvQ2hnT3aMs07lUnskpxewvBk73/LLnXo9HV9eT
-ijB3hWBO2ygoiWg/bKuZxqCCQq0DD3vkWIVvI2KosIw+vqW1gIItEG5KJb+xb09g65ktwYKgTc51
-uGJ/EFQs0ayEWLCQM5V9N4g+1+8UbXOJzF8bqhKtIqIwicWvzNFROZJlpfD8A7Vc044R0FxkcezG
-VzsV75usvTdYef+57v5n1b225qhXfwEmxHEs
+eJytVtlu2kAUfZ+vuDEoS1sa0cdURCUqEkgJRJimShe5E/sSWzVjNDMmoTT/3jve8AK8NH4A7Hvm
+7ufgFsz8QME8CBEWsdLwgBAr9OAp0D5YKoqli/AQiHPu6mDFNVrwZi6jBTxw5b9hLVhHMbhciEiD
+jAUEGrxAoqvDNWMe5qfg9Aw2DOiKhUINnTks117kwuW5h6tzEYchfLg87rIE0wKJBhWFHqBYBTIS
+CxQaVlwG/CFElaGO4Dt0/kB7c9efvnVe4Ced07EUCrSMEYI5kAGoPg/dkEsqi2vgYZgcJ2t23mpv
+nMn1Z+duNJ196V87t/3ZkNxZ5O8jaB9FgjeXsfSsdgNtFQh8XkZSJ8DiWVpy41Binwd5MpSKgJpv
++nk9upr2p/dpmGZGNUQ9ubqD4lwS0HpuNyL04OT54gR+1uLsjLV1l5VR6kANfKgZu6Dbvuwb0v1s
+OBkPJzeDPaMq7I2BFZbm2ArTweFVUZRqto8Jl5QfxbS3HmpiQUIT4MKDP8p/B09+4Prg8xUCpy8y
+udFiYczap9U0DMxcEQ9d2lRaWR3BI2VAxKJf80iamyUnqmZH1XuAr8TWKNaZWQfiMXNTAZoGQdu0
+GFyfi0dU8ES05575WIOhMIUl6i0pc/Rqi7m56tvDTtLqv3+Lh9/soXM3mNqjybizawxJkR1J5C6I
+XmnagQHb3T2TtbuNkdrd5izt7sEhZuY8kRSSWwfju235Rya3rimvB5aIhIeK9MUoG9bSa4GN4Rxy
+wFEtgY4x5ZKYR39hpKKpPZASQ1zxitSVRLQam7FStj3LcUq3jmOxrA/lklhDhKiTqTBkNyX0ueNc
+jcbOuH8zcJyLDFbWN3aIxeSr9uTCYk1MNV5uzGM25GuPuBQd3FLTjI6esMqCHRKNPRQ3DaoJRj0U
+MzuUEiWJUp7D55Hdv7oeOLfTyc3trEGR+kqaaPkuZxK9nWvqg0YLRz143kOMJnzrEUOFVfTpLxIo
+FHyB8KMyjB/WrzPYnszkuEQtU3MLbvhvBBVLNOIUCx4GXGX/7JR+oE8U/d9K5N7apCqRlRElTSi/
+BxwfVz0xlsKLV4jlmtROQGeR+bHan6yURq8iwK8gvv8pvP8jursEl2b1D6C64Ro=
 """)
 
 ##file activate.fish
