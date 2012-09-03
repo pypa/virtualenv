@@ -511,7 +511,7 @@ def _install_req(py_executable, unzip=False, distribute=False,
     if unzip:
         cmd.append('--always-unzip')
     env = {}
-    remove_from_env = []
+    remove_from_env = ['__PYVENV_LAUNCHER__']
     if logger.stdout_level_matches(logger.DEBUG):
         cmd.append('-v')
 
@@ -1257,6 +1257,10 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     mkdir(bin_dir)
     py_executable = join(bin_dir, os.path.basename(sys.executable))
     if 'Python.framework' in prefix:
+        # OS X framework builds cause validation to break
+        # https://github.com/pypa/virtualenv/issues/322
+        if os.environ.get('__PYVENV_LAUNCHER__'):
+          os.unsetenv('__PYVENV_LAUNCHER__')
         if re.search(r'/Python(?:-32|-64)*$', py_executable):
             # The name of the python executable is not quite what
             # we want, rename it.
