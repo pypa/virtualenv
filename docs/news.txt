@@ -15,6 +15,12 @@ Changes & News
    with the upgraded Python.
 
 
+1.8.2 (2012-09-06)
+~~~~~~~~~~~~~~~~~~
+
+* Updated the included pip version to 1.2.1 to fix regressions introduced
+  there in 1.2.
+
 1.8.1 (2012-09-03)
 ~~~~~~~~~~~~~~~~~~
 
