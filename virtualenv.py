@@ -156,7 +156,8 @@ elif majver == 3:
             #"idlelib",
             #"imaplib",
             #"imghdr",
-            #"importlib",
+            "imp",
+            "importlib",
             #"inspect",
             #"json",
             #"lib2to3",
@@ -1120,6 +1121,8 @@ def change_prefix(filename, dst_prefix):
 
     if hasattr(sys, 'real_prefix'):
         prefixes.append(sys.real_prefix)
+    if hasattr(sys, 'base_prefix'):
+        prefixes.append(sys.base_prefix)
     prefixes = list(map(os.path.expanduser, prefixes))
     prefixes = list(map(os.path.abspath, prefixes))
     filename = os.path.abspath(filename)
