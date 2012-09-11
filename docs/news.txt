@@ -18,6 +18,9 @@ Changes & News
 develop (unreleased)
 ~~~~~~~~~~~~~~~~~~~~
 
+* Fix a bug with prompt-handling in ``activate.csh`` in non-interactive csh
+  shells. Fixes #332. Thanks Benjamin Root for report and patch.
+
 * Make it possible to create a virtualenv from within a Python
   3.3. pyvenv. Thanks Chris McDonough for the report.
 
