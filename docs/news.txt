@@ -18,6 +18,9 @@ Changes & News
 develop (unreleased)
 ~~~~~~~~~~~~~~~~~~~~
 
+* Give lib64 site-dir preference over lib on 64-bit systems, to avoid wrong
+  32-bit compiles in the venv. Fixes #328. Thanks Damien Nozay.
+
 * Fix a bug with prompt-handling in ``activate.csh`` in non-interactive csh
   shells. Fixes #332. Thanks Benjamin Root for report and patch.
 
