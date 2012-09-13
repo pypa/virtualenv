@@ -18,6 +18,9 @@ Changes & News
 develop (unreleased)
 ~~~~~~~~~~~~~~~~~~~~
 
+* Make the creation of lib64 symlink smarter about already-existing symlink,
+  and more explicit about full paths. Fixes #334 and #330. Thanks Jeremy Orem.
+
 * Give lib64 site-dir preference over lib on 64-bit systems, to avoid wrong
   32-bit compiles in the venv. Fixes #328. Thanks Damien Nozay.
 
