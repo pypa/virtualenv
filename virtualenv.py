@@ -1564,10 +1564,14 @@ def fix_lib64(lib_dir):
         assert os.path.basename(lib_dir) == 'python%s' % sys.version[:3], (
             "Unexpected python lib dir: %r" % lib_dir)
         lib_parent = os.path.dirname(lib_dir)
+        top_level = os.path.dirname(lib_parent)
+        lib_dir = os.path.join(top_level, 'lib')
+        lib64_link = os.path.join(top_level, 'lib64')
         assert os.path.basename(lib_parent) == 'lib', (
             "Unexpected parent dir: %r" % lib_parent)
-        os.symlink(os.path.join('.', os.path.basename(lib_parent)),
-                   os.path.join(os.path.dirname(lib_parent), 'lib64'))
+        if os.path.lexists(lib64_link) and os.readlink(lib64_link) == lib_dir:
+            return
+        os.symlink(lib_dir, lib64_link)
 
 def resolve_interpreter(exe):
     """
