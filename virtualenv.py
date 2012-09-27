@@ -476,8 +476,8 @@ def _find_file(filename, dirs):
     for dir in reversed(dirs):
         files = glob.glob(os.path.join(dir, filename))
         if files and os.path.exists(files[0]):
-            return files[0]
-    return filename
+            return True, files[0]
+    return False, filename
 
 def _install_req(py_executable, unzip=False, distribute=False,
                  search_dirs=None, never_download=False):
@@ -487,20 +487,26 @@ def _install_req(py_executable, unzip=False, distribute=False,
 
     if not distribute:
         setup_fn = 'setuptools-*-py%s.egg' % sys.version[:3]
+        found, setup_fn = _find_file(setup_fn, search_dirs)
         project_name = 'setuptools'
         bootstrap_script = EZ_SETUP_PY
         source = None
     else:
-        setup_fn = None
-        source = 'distribute-*.tar.gz'
-        project_name = 'distribute'
-        bootstrap_script = DISTRIBUTE_SETUP_PY
-
-    if setup_fn is not None:
-        setup_fn = _find_file(setup_fn, search_dirs)
-
-    if source is not None:
-        source = _find_file(source, search_dirs)
+        # Look for a distribute egg (these are not distributed by default,
+        # but can be made available by the user)
+        setup_fn = 'distribute-*-py%s.egg' % sys.version[:3]
+        found, setup_fn = _find_file(setup_fn, search_dirs)
+        if found:
+            source = None
+            project_name = 'distribute'
+            bootstrap_script = DISTRIBUTE_FROM_EGG_PY
+        else:
+            # Fall back to sdist
+            setup_fn = None
+            source = 'distribute-*.tar.gz'
+            found, source = _find_file(source, search_dirs)
+            project_name = 'distribute'
+            bootstrap_script = DISTRIBUTE_SETUP_PY
 
     if is_jython and os._name == 'nt':
         # Jython's .bat sys.executable can't handle a command line
@@ -2045,6 +2051,14 @@ dX85nKW3umfYbtu8713Sylhb2i3v2qaoc8C7S2P3pME8uIGedi1IxXbL+adi+P2fT8Xy/m+/PrxZ
 /TrXDcpqOMjotwdo9AJmg8r1N7BySygc+Gp+XaYdJhpV8f/7Oy3Y1s330l09YBDTjnyjn5qHGF7x
 6O7hZfMXz21OyLZB6lUfOGAGMzo/bjaL7VaV7Ha76D/1yJVEqKmr+L2nCbH7+959wDtv38JZplQG
 BDaonX65d/fwEjNqlDjLVIvM9X+XVxF7
+""")
+
+##file distribute_from_egg.py
+DISTRIBUTE_FROM_EGG_PY = convert("""
+eJw9j8tqAzEMRfcG/4MgmxQyptkGusonZBmGoGTUGYFfWPKE6dfXTkM3gqt7rh47OKP3NMF3SQFW
+LlrRU1zhybpAxoKBlIqcrNnBdRjQP3GTocYfzmNrrCPQPN9iwzpxSQfQhWBi0cL3qtRtYIG/4Mv0
+KApY5hooqrOGQ05FQTaxptF9Fnx16Rq0XofjaE1XGXVxHIWK7j8P8EY/rHndLqQ1a0pe3COFgHFy
+hLLdWkDbi/DeEpCjNb3u/zccT2Ob8gtnwVyI
 """)
 
 ##file distribute_setup.py
