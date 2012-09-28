@@ -18,6 +18,9 @@ Changes & News
 develop (unreleased)
 ~~~~~~~~~~~~~~~~~~~~
 
+* Added ability to install distribute from a user-provided egg, rather than the
+  bundled sdist, for better speed. Thanks Paul Moore.
+
 * Make the creation of lib64 symlink smarter about already-existing symlink,
   and more explicit about full paths. Fixes #334 and #330. Thanks Jeremy Orem.
 

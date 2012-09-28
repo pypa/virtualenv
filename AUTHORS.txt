@@ -47,6 +47,7 @@ Lars Francke
 Marc Abramowitz
 Mike Hommey
 Miki Tebeka
+Paul Moore
 Philip Jenvey
 Raul Leal
 Ronny Pfannschmidt
