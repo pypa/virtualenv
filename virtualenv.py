@@ -1575,9 +1575,9 @@ def fix_lib64(lib_dir):
         lib64_link = os.path.join(top_level, 'lib64')
         assert os.path.basename(lib_parent) == 'lib', (
             "Unexpected parent dir: %r" % lib_parent)
-        if os.path.lexists(lib64_link) and os.readlink(lib64_link) == lib_dir:
+        if os.path.lexists(lib64_link):
             return
-        os.symlink(lib_dir, lib64_link)
+        os.symlink('lib', lib64_link)
 
 def resolve_interpreter(exe):
     """
