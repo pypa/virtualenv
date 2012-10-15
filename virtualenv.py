@@ -96,6 +96,9 @@ elif majver == 3:
     if minver >= 2:
         REQUIRED_FILES[-1] = 'config-%s' % majver
     if minver == 3:
+        import sysconfig
+        platdir = sysconfig.get_config_var('PLATDIR')
+        REQUIRED_FILES.append(platdir)
         # The whole list of 3.3 modules is reproduced below - the current
         # uncommented ones are required for 3.3 as of now, but more may be
         # added as 3.3 development continues.
@@ -1174,6 +1177,17 @@ def copy_required_modules(dst_prefix):
     finally:
         sys.path = _prev_sys_path
 
+
+def subst_path(prefix_path, prefix, home_dir):
+    prefix_path = os.path.normpath(prefix_path)
+    prefix = os.path.normpath(prefix)
+    home_dir = os.path.normpath(home_dir)
+    if not prefix_path.startswith(prefix):
+        logger.warn('Path not in prefix %r %r', prefix_path, prefix)
+        return
+    return prefix_path.replace(prefix, home_dir, 1)
+
+
 def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     """Install just the base environment, no distutils patches etc"""
     if sys.executable.startswith(bin_dir):
@@ -1242,6 +1256,16 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         copyfile(stdinc_dir, inc_dir)
     else:
         logger.debug('No include dir %s' % stdinc_dir)
+
+    platinc_dir = distutils.sysconfig.get_python_inc(plat_specific=1)
+    if platinc_dir != stdinc_dir:
+        platinc_dest = distutils.sysconfig.get_python_inc(
+            plat_specific=1, prefix=home_dir)
+        if platinc_dir == platinc_dest:
+            # Do platinc_dest manually due to a CPython bug;
+            # not http://bugs.python.org/issue3386 but a close cousin
+            platinc_dest = subst_path(platinc_dir, prefix, home_dir)
+        copyfile(platinc_dir, platinc_dest)
 
     # pypy never uses exec_prefix, just ignore it
     if sys.exec_prefix != prefix and not is_pypy:
