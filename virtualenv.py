@@ -1079,14 +1079,21 @@ def path_locations(home_dir):
         # format):
         mkdir(home_dir)
         if ' ' in home_dir:
+            import ctypes
+            GetShortPathName = ctypes.windll.kernel32.GetShortPathNameW
+            size = max(len(home_dir)+1, 256)
+            buf = ctypes.create_unicode_buffer(size)
             try:
-                import win32api
-            except ImportError:
+                u = unicode
+            except NameError:
+                u = str
+            ret = GetShortPathName(u(home_dir), buf, size)
+            if not ret:
                 print('Error: the path "%s" has a space in it' % home_dir)
-                print('To handle these kinds of paths, the win32api module must be installed:')
-                print('  http://sourceforge.net/projects/pywin32/')
+                print('We could not determine the short pathname for it.')
+                print('Exiting.')
                 sys.exit(3)
-            home_dir = win32api.GetShortPathName(home_dir)
+            home_dir = str(buf.value)
         lib_dir = join(home_dir, 'Lib')
         inc_dir = join(home_dir, 'Include')
         bin_dir = join(home_dir, 'Scripts')
