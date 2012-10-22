@@ -1266,7 +1266,12 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             # Do platinc_dest manually due to a CPython bug;
             # not http://bugs.python.org/issue3386 but a close cousin
             platinc_dest = subst_path(platinc_dir, prefix, home_dir)
-        copyfile(platinc_dir, platinc_dest)
+        if platinc_dest:
+            # PyPy's stdinc_dir and prefix are relative to the original binary
+            # (traversing virtualenvs), whereas the platinc_dir is relative to
+            # the inner virtualenv and ignores the prefix argument.
+            # This seems more evolved than designed.
+            copyfile(platinc_dir, platinc_dest)
 
     # pypy never uses exec_prefix, just ignore it
     if sys.exec_prefix != prefix and not is_pypy:
