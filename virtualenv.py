@@ -489,26 +489,25 @@ def _install_req(py_executable, unzip=False, distribute=False,
         search_dirs = file_search_dirs()
 
     if not distribute:
-        setup_fn = 'setuptools-*-py%s.egg' % sys.version[:3]
-        found, setup_fn = _find_file(setup_fn, search_dirs)
+        egg_path = 'setuptools-*-py%s.egg' % sys.version[:3]
+        found, egg_path = _find_file(egg_path, search_dirs)
         project_name = 'setuptools'
         bootstrap_script = EZ_SETUP_PY
-        source = None
+        tgz_path = None
     else:
         # Look for a distribute egg (these are not distributed by default,
         # but can be made available by the user)
-        setup_fn = 'distribute-*-py%s.egg' % sys.version[:3]
-        found, setup_fn = _find_file(setup_fn, search_dirs)
+        egg_path = 'distribute-*-py%s.egg' % sys.version[:3]
+        found, egg_path = _find_file(egg_path, search_dirs)
+        project_name = 'distribute'
         if found:
-            source = None
-            project_name = 'distribute'
+            tgz_path = None
             bootstrap_script = DISTRIBUTE_FROM_EGG_PY
         else:
             # Fall back to sdist
-            setup_fn = None
-            source = 'distribute-*.tar.gz'
-            found, source = _find_file(source, search_dirs)
-            project_name = 'distribute'
+            egg_path = None
+            tgz_path = 'distribute-*.tar.gz'
+            found, tgz_path = _find_file(tgz_path, search_dirs)
             bootstrap_script = DISTRIBUTE_SETUP_PY
 
     if is_jython and os._name == 'nt':
@@ -520,26 +519,26 @@ def _install_req(py_executable, unzip=False, distribute=False,
         cmd = [py_executable, ez_setup]
     else:
         cmd = [py_executable, '-c', bootstrap_script]
-    if unzip:
+    if unzip and egg_path:
         cmd.append('--always-unzip')
     env = {}
     remove_from_env = ['__PYVENV_LAUNCHER__']
-    if logger.stdout_level_matches(logger.DEBUG):
+    if logger.stdout_level_matches(logger.DEBUG) and egg_path:
         cmd.append('-v')
 
     old_chdir = os.getcwd()
-    if setup_fn is not None and os.path.exists(setup_fn):
-        logger.info('Using existing %s egg: %s' % (project_name, setup_fn))
-        cmd.append(setup_fn)
+    if egg_path is not None and os.path.exists(egg_path):
+        logger.info('Using existing %s egg: %s' % (project_name, egg_path))
+        cmd.append(egg_path)
         if os.environ.get('PYTHONPATH'):
-            env['PYTHONPATH'] = setup_fn + os.path.pathsep + os.environ['PYTHONPATH']
+            env['PYTHONPATH'] = egg_path + os.path.pathsep + os.environ['PYTHONPATH']
         else:
-            env['PYTHONPATH'] = setup_fn
+            env['PYTHONPATH'] = egg_path
     else:
-        # the source is found, let's chdir
-        if source is not None and os.path.exists(source):
-            logger.info('Using existing %s egg: %s' % (project_name, source))
-            os.chdir(os.path.dirname(source))
+        # Found a tgz source dist, let's chdir
+        if tgz_path is not None and os.path.exists(tgz_path):
+            logger.info('Using existing %s egg: %s' % (project_name, tgz_path))
+            os.chdir(os.path.dirname(tgz_path))
             # in this case, we want to be sure that PYTHONPATH is unset (not
             # just empty, really unset), else CPython tries to import the
             # site.py that it's in virtualenv_support
@@ -551,12 +550,12 @@ def _install_req(py_executable, unzip=False, distribute=False,
                              "without the --never-download option, or place a %s "
                              "distribution (%s) in one of these "
                              "locations: %r" % (project_name, project_name,
-                                                setup_fn or source,
+                                                egg_path or tgz_path,
                                                 search_dirs))
                 sys.exit(1)
 
             logger.info('No %s egg found; downloading' % project_name)
-        cmd.extend(['--always-copy', '-U', project_name])
+            cmd.extend(['--always-copy', '-U', project_name])
     logger.start_progress('Installing %s...' % project_name)
     logger.indent += 2
     cwd = None
@@ -568,11 +567,11 @@ def _install_req(py_executable, unzip=False, distribute=False,
 
     if not os.access(os.getcwd(), os.W_OK):
         cwd = tempfile.mkdtemp()
-        if source is not None and os.path.exists(source):
+        if tgz_path is not None and os.path.exists(tgz_path):
             # the current working dir is hostile, let's copy the
             # tarball to a temp dir
-            target = os.path.join(cwd, os.path.split(source)[-1])
-            shutil.copy(source, target)
+            target = os.path.join(cwd, os.path.split(tgz_path)[-1])
+            shutil.copy(tgz_path, target)
     try:
         call_subprocess(cmd, show_stdout=False,
                         filter_stdout=_filter_ez_setup,
