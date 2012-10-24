@@ -18,6 +18,10 @@ Changes & News
 develop (unreleased)
 ~~~~~~~~~~~~~~~~~~~~
 
+* Fixed readline on OS X. Thanks minrk
+
+* Update distribute and fix pypy. Thanks Gabriel (g2p)
+
 * Added ability to install distribute from a user-provided egg, rather than the
   bundled sdist, for better speed. Thanks Paul Moore.
 

@@ -9,6 +9,7 @@ Maintainers
 Brian Rosner
 Carl Meyer
 Jannis Leidel
+Paul Nasrat
 
 Contributors
 ------------
