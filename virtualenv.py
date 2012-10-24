@@ -1409,22 +1409,23 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
                              "have Apple's development tools installed")
                 raise
 
-    # Some tools depend on pythonX.Y being present
-    py_executable_version = '%s.%s' % (
-        sys.version_info[0], sys.version_info[1])
-    if not py_executable.endswith(py_executable_version):
-        # symlinking pythonX.Y > python
-        pth = py_executable + '%s.%s' % (
-                sys.version_info[0], sys.version_info[1])
-        if os.path.exists(pth):
-            os.unlink(pth)
-        os.symlink('python', pth)
-    else:
-        # reverse symlinking python -> pythonX.Y (with --python)
-        pth = join(bin_dir, 'python')
-        if os.path.exists(pth):
-            os.unlink(pth)
-        os.symlink(os.path.basename(py_executable), pth)
+    if not is_win:
+        # Ensure that 'python', 'pythonX' and 'pythonX.Y' all exist
+        py_exe_version_major = 'python%s' % sys.version_info[0]
+        py_exe_version_major_minor = 'python%s.%s' % (
+            sys.version_info[0], sys.version_info[1])
+        py_exe_no_version = 'python'
+        required_symlinks = [ py_exe_no_version, py_exe_version_major,
+                         py_exe_version_major_minor ]
+
+        if py_executable in required_symlinks:
+            # Don't try to symlink to yourself.
+            required_symlinks.remove(py_executable)
+
+        for pth in required_symlinks:
+            if os.path.exists(pth):
+                os.unlink(pth)
+            os.symlink(py_executable, pth)
 
     if is_win and ' ' in py_executable:
         # There's a bug with subprocess on Windows when using a first
