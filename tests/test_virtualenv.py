@@ -1,4 +1,5 @@
 import virtualenv
+import optparse
 from mock import patch, Mock
 
 
@@ -48,3 +49,46 @@ def test_resolve_intepreter_with_invalid_interpreter(mock_exists):
 
     mock_exists.assert_called_with("/usr/bin/python42")
     virtualenv.is_executable.assert_called_with("/usr/bin/python42")
+
+
+def test_activate_after_future_statements():
+    """Should insert activation line after last future statement"""
+    script = [
+        '#!/usr/bin/env python',
+        'from __future__ import with_statement',
+        'from __future__ import print_function',
+        'print("Hello, world!")'
+    ]
+    assert virtualenv.relative_script(script) == [
+        '#!/usr/bin/env python',
+        'from __future__ import with_statement',
+        'from __future__ import print_function',
+        '',
+        "import os; activate_this=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'activate_this.py'); execfile(activate_this, dict(__file__=activate_this)); del os, activate_this",
+        '',
+        'print("Hello, world!")'
+    ]
+
+
+def test_cop_update_defaults_with_store_false():
+    """store_false options need reverted logic"""
+    class MyConfigOptionParser(virtualenv.ConfigOptionParser):
+        def __init__(self, *args, **kwargs):
+            self.config = virtualenv.ConfigParser.RawConfigParser()
+            self.files = []
+            optparse.OptionParser.__init__(self, *args, **kwargs)
+
+        def get_environ_vars(self, prefix='VIRTUALENV_'):
+            yield ("no_site_packages", "1")
+
+    cop = MyConfigOptionParser()
+    cop.add_option(
+        '--no-site-packages',
+        dest='system_site_packages',
+        action='store_false',
+        help="Don't give access to the global site-packages dir to the "
+             "virtual environment (default)")
+
+    defaults = {}
+    cop.update_defaults(defaults)
+    assert defaults == {'system_site_packages': 0}
