@@ -5,9 +5,13 @@ python:
   - "2.7"
   - "3.2"
   - "pypy"
-install: pip install nose
+install:
+  - pip install --use-mirrors nose
 script:
+# Unit tests
   - python setup.py test
+# Integration test
+  - python virtualenv.py --distribute ./test-venv
 notifications:
   irc:
     channels: "irc.freenode.org#pip"
