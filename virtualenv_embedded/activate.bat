@@ -21,7 +21,7 @@ if defined PYTHONHOME (
      set PYTHONHOME=
 )
 
-if defined _OLD_VIRTUAL_PATH set PATH=%_OLD_VIRTUAL_PATH%; goto SKIPPATH
+if defined _OLD_VIRTUAL_PATH set "PATH=%_OLD_VIRTUAL_PATH%"; goto SKIPPATH
 
 set _OLD_VIRTUAL_PATH=%PATH%
 
