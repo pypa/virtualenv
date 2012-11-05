@@ -20,7 +20,11 @@ develop (unreleased)
 
 * Fixed readline on OS X. Thanks minrk
 
-* Update distribute and fix pypy. Thanks Gabriel (g2p)
+* Updated distribute to 0.6.30 (improves our error reporting, plus new
+  distribute features and fixes). Thanks Gabriel (g2p)
+
+* Added compatibility with multiarch Python (Python 3.3 for example). Added an
+  integration test. Thanks Gabriel (g2p)
 
 * Added ability to install distribute from a user-provided egg, rather than the
   bundled sdist, for better speed. Thanks Paul Moore.

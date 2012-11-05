@@ -34,6 +34,7 @@ Doug Hellmann
 Doug Napoleone
 Douglas Creager
 Ethan Jucovy
+Gabriel de Perthuis
 Gunnlaugur Thor Briem
 Greg Haskins
 Jason R. Coombs
