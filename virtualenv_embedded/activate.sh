@@ -4,6 +4,8 @@
 ACTIVATE_PATH_FALLBACK="$_"
 
 deactivate () {
+    unset pydoc
+
     # reset old environment variables
     if [ -n "$_OLD_VIRTUAL_PATH" ] ; then
         PATH="$_OLD_VIRTUAL_PATH"
@@ -20,7 +22,7 @@ deactivate () {
     # be called to get it to forget past commands.  Without forgetting
     # past commands the $PATH changes we made may not be respected
     if [ -n "$BASH" -o -n "$ZSH_VERSION" ] ; then
-        hash -r
+        hash -r 2>/dev/null
     fi
 
     if [ -n "$_OLD_VIRTUAL_PS1" ] ; then
@@ -36,7 +38,7 @@ deactivate () {
     fi
 }
 
-# unset irrelavent variables
+# unset irrelevant variables
 deactivate nondestructive
 
 # attempt to determine VIRTUAL_ENV in relocatable way
@@ -95,9 +97,11 @@ if [ -z "$VIRTUAL_ENV_DISABLE_PROMPT" ] ; then
     export PS1
 fi
 
+alias pydoc="python -m pydoc"
+
 # This should detect bash and zsh, which have a hash command that must
 # be called to get it to forget past commands.  Without forgetting
 # past commands the $PATH changes we made may not be respected
 if [ -n "$BASH" -o -n "$ZSH_VERSION" ] ; then
-    hash -r
+    hash -r 2>/dev/null
 fi

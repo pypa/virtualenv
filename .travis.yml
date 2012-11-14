@@ -1,0 +1,19 @@
+language: python
+python:
+  - "2.5"
+  - "2.6"
+  - "2.7"
+  - "3.2"
+  - "pypy"
+install:
+  - pip install --use-mirrors nose
+script:
+# Unit tests
+  - python setup.py test
+# Integration test
+  - python virtualenv.py --distribute ./test-venv
+notifications:
+  irc:
+    channels: "irc.freenode.org#pip"
+    on_success: change
+    on_failure: change

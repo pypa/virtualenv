@@ -1,12 +1,123 @@
 Changes & News
 --------------
 
-master (unreleased)
-~~~~~~~~~~~~~~~~~~~
+.. warning::
+
+   Python bugfix releases 2.6.8, 2.7.3, 3.1.5 and 3.2.3 include a change that
+   will cause "import random" to fail with "cannot import name urandom" on any
+   virtualenv created on a Unix host with an earlier release of Python
+   2.6/2.7/3.1/3.2, if the underlying system Python is upgraded. This is due to
+   the fact that a virtualenv uses the system Python's standard library but
+   contains its own copy of the Python interpreter, so an upgrade to the system
+   Python results in a mismatch between the version of the Python interpreter
+   and the version of the standard library. It can be fixed by removing
+   ``$ENV/bin/python`` and re-running virtualenv on the same target directory
+   with the upgraded Python.
+
+
+develop (unreleased)
+~~~~~~~~~~~~~~~~~~~~
+
+* Fixed readline on OS X. Thanks minrk
+
+* Updated distribute to 0.6.30 (improves our error reporting, plus new
+  distribute features and fixes). Thanks Gabriel (g2p)
+
+* Added compatibility with multiarch Python (Python 3.3 for example). Added an
+  integration test. Thanks Gabriel (g2p)
+
+* Added ability to install distribute from a user-provided egg, rather than the
+  bundled sdist, for better speed. Thanks Paul Moore.
+
+* Make the creation of lib64 symlink smarter about already-existing symlink,
+  and more explicit about full paths. Fixes #334 and #330. Thanks Jeremy Orem.
+
+* Give lib64 site-dir preference over lib on 64-bit systems, to avoid wrong
+  32-bit compiles in the venv. Fixes #328. Thanks Damien Nozay.
+
+* Fix a bug with prompt-handling in ``activate.csh`` in non-interactive csh
+  shells. Fixes #332. Thanks Benjamin Root for report and patch.
+
+* Make it possible to create a virtualenv from within a Python
+  3.3. pyvenv. Thanks Chris McDonough for the report.
+
+
+1.8.2 (2012-09-06)
+~~~~~~~~~~~~~~~~~~
+
+* Updated the included pip version to 1.2.1 to fix regressions introduced
+  there in 1.2.
+
+
+1.8.1 (2012-09-03)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed distribute version used with `--never-download`. Thanks michr for
+  report and patch.
+
+* Fix creating Python 3.3 based virtualenvs by unsetting the
+  ``__PYVENV_LAUNCHER__`` environment variable in subprocesses.
+
+
+1.8 (2012-09-01)
+~~~~~~~~~~~~~~~~
+
+* **Dropped support for Python 2.4** The minimum supported Python version is
+  now Python 2.5.
+
+* Fix `--relocatable` on systems that use lib64. Fixes #78. Thanks Branden
+  Rolston.
+
+* Symlink some additional modules under Python 3. Fixes #194. Thanks Vinay
+  Sajip, Ian Clelland, and Stefan Holek for the report.
+
+* Fix ``--relocatable`` when a script uses ``__future__`` imports. Thanks
+  Branden Rolston.
+
+* Fix a bug in the config option parser that prevented setting negative
+  options with environemnt variables. Thanks Ralf Schmitt.
+
+* Allow setting ``--no-site-packages`` from the config file.
+
+* Use ``/usr/bin/multiarch-platform`` if available to figure out the include
+  directory. Thanks for the patch, Mika Laitio.
+
+* Fix ``install_name_tool`` replacement to work on Python 3.X.
+
+* Handle paths of users' site-packages on Mac OS X correctly when changing
+  the prefix.
+
+* Updated the embedded version of distribute to 0.6.28 and pip to 1.2.
+
+
+1.7.2 (2012-06-22)
+~~~~~~~~~~~~~~~~~~
+
+* Updated to distribute 0.6.27.
+
+* Fix activate.fish on OS X. Fixes #8. Thanks David Schoonover.
+
+* Create a virtualenv-x.x script with the Python version when installing, so
+  virtualenv for multiple Python versions can be installed to the same
+  script location. Thanks Miki Tebeka.
 
 * Restored ability to create a virtualenv with a path longer than 78
   characters, without breaking creation of virtualenvs with non-ASCII paths.
   Thanks, Bradley Ayers.
+
+* Added ability to create virtualenvs without having installed Apple's
+  developers tools (using an own implementation of ``install_name_tool``).
+  Thanks Mike Hommey.
+
+* Fixed PyPy and Jython support on Windows. Thanks Konstantin Zemlyak.
+
+* Added pydoc script to ease use. Thanks Marc Abramowitz. Fixes #149.
+
+* Fixed creating a bootstrap script on Python 3. Thanks Raul Leal. Fixes #280.
+
+* Fixed inconsistency when having set the ``PYTHONDONTWRITEBYTECODE`` env var
+  with the --distribute option or the ``VIRTUALENV_USE_DISTRIBUTE`` env var.
+  ``VIRTUALENV_USE_DISTRIBUTE`` is now considered again as a legacy alias.
 
 
 1.7.1.2 (2012-02-17)
@@ -14,12 +125,14 @@ master (unreleased)
 
 * Fixed minor issue in `--relocatable`. Thanks, Cap Petschulat.
 
+
 1.7.1.1 (2012-02-16)
 ~~~~~~~~~~~~~~~~~~~~
 
 * Bumped the version string in ``virtualenv.py`` up, too.
 
 * Fixed rST rendering bug of long description.
+
 
 1.7.1 (2012-02-16)
 ~~~~~~~~~~~~~~~~~~
@@ -53,6 +166,7 @@ master (unreleased)
 * Added activation script for Powershell (signed by Jannis Leidel). Many
   thanks to Jason R. Coombs.
 
+
 1.7 (2011-11-30)
 ~~~~~~~~~~~~~~~~
 
@@ -76,15 +190,18 @@ master (unreleased)
 
 * Made ``virtualenv.py`` script executable.
 
+
 1.6.4 (2011-07-21)
 ~~~~~~~~~~~~~~~~~~
 
 * Restored ability to run on Python 2.4, too.
 
+
 1.6.3 (2011-07-16)
 ~~~~~~~~~~~~~~~~~~
 
 * Restored ability to run on Python < 2.7.
+
 
 1.6.2 (2011-07-16)
 ~~~~~~~~~~~~~~~~~~
@@ -120,6 +237,7 @@ master (unreleased)
 
 * Added --never-download and --search-dir options. Thanks Ethan Jucovy.
 
+
 1.6
 ~~~
 
@@ -129,6 +247,7 @@ master (unreleased)
   (readline) are installed outside the standard library.
 
 * Updated bundled pip to 1.0.
+
 
 1.5.2
 ~~~~~
@@ -145,12 +264,14 @@ master (unreleased)
 
 * Moved virtualenv to Github at https://github.com/pypa/virtualenv
 
+
 1.5.1
 ~~~~~
 
 * Added ``_weakrefset`` requirement for Python 2.7.1.
 
 * Fixed Windows regression in 1.5
+
 
 1.5
 ~~~
@@ -169,10 +290,12 @@ master (unreleased)
 
 * Add fish and csh activate scripts.
 
+
 1.4.9
 ~~~~~
 
 * Include pip 0.7.2
+
 
 1.4.8
 ~~~~~
@@ -188,16 +311,19 @@ master (unreleased)
 
 * Include pip 0.7.1
 
+
 1.4.7
 ~~~~~
 
 * Include pip 0.7
+
 
 1.4.6
 ~~~~~
 
 * Allow ``activate.sh`` to skip updating the prompt (by setting
   ``$VIRTUAL_ENV_DISABLE_PROMPT``).
+
 
 1.4.5
 ~~~~~
@@ -206,6 +332,7 @@ master (unreleased)
 
 * Fix ``activate.bat`` and ``deactivate.bat`` under Windows when
   ``PATH`` contained a parenthesis
+
 
 1.4.4
 ~~~~~
@@ -218,14 +345,16 @@ master (unreleased)
 * Fix problem with ``virtualenv --relocate`` when ``bin/`` has
   subdirectories (e.g., ``bin/.svn/``); from Alan Franzoni.
 
-* If you set ``$VIRTUALENV_USE_DISTRIBUTE`` then virtualenv will use
+* If you set ``$VIRTUALENV_DISTRIBUTE`` then virtualenv will use
   Distribute by default (so you don't have to remember to use
   ``--distribute``).
+
 
 1.4.3
 ~~~~~
 
 * Include pip 0.6.1
+
 
 1.4.2
 ~~~~~
@@ -237,10 +366,12 @@ master (unreleased)
 * Exclude ~/.local (user site-packages) from environments when using
   ``--no-site-packages``
 
+
 1.4.1
 ~~~~~
 
 * Include pip 0.6
+
 
 1.4
 ~~~
@@ -250,6 +381,7 @@ master (unreleased)
 * Added the --distribute option
 
 * Fixed packaging problem of support-files
+
 
 1.3.4
 ~~~~~
@@ -280,6 +412,7 @@ master (unreleased)
 * Fixes for ``--python``: make it work with ``--relocatable`` and the
   symlink created to the exact Python version.
 
+
 1.3.3
 ~~~~~
 
@@ -302,6 +435,7 @@ master (unreleased)
   <https://bugs.launchpad.net/virtualenv/+bug/340050>`_ picking up
   some ``.so`` libraries in ``/usr/local``.
 
+
 1.3.2
 ~~~~~
 
@@ -309,10 +443,11 @@ master (unreleased)
   ``distutils.cfg`` -- this has been causing problems for a lot of
   people, in rather obscure ways.
 
-* If you use a `boot script <./index.html#boot-script>`_ it will attempt to import ``virtualenv``
+* If you use a boot script it will attempt to import ``virtualenv``
   and find a pre-downloaded Setuptools egg using that.
 
 * Added platform-specific paths, like ``/usr/lib/pythonX.Y/plat-linux2``
+
 
 1.3.1
 ~~~~~
@@ -335,6 +470,7 @@ master (unreleased)
 
 * Fixed handling of Jython environments that use a
   jython-complete.jar.
+
 
 1.3
 ~~~
@@ -362,6 +498,7 @@ master (unreleased)
 * Fixed the ``__classpath__`` entry in Jython's ``sys.path`` taking
   precedent over virtualenv's libs.
 
+
 1.2
 ~~~
 
@@ -370,10 +507,12 @@ master (unreleased)
 * Add ``sets`` to the module copied over for Python 2.3 (though Python
   2.3 still probably doesn't work).
 
+
 1.1.1
 ~~~~~
 
 * Added support for Jython 2.5.
+
 
 1.1
 ~~~
@@ -389,6 +528,7 @@ master (unreleased)
 * Copy or symlink over the ``include`` directory so that packages will
   more consistently compile.
 
+
 1.0
 ~~~
 
@@ -397,6 +537,7 @@ master (unreleased)
 * Fixed bug in ``--clear``.
 * Fixed typos in ``deactivate.bat``.
 * Preserve ``$PYTHONPATH`` when calling subprocesses.
+
 
 0.9.2
 ~~~~~
@@ -412,12 +553,14 @@ master (unreleased)
 * Fixed an issue with Mac Framework Python builds, and absolute paths
   (from Ronald Oussoren).
 
+
 0.9.1
 ~~~~~
 
 * Improve ability to create a virtualenv from inside a virtualenv.
 * Fix a little bug in ``bin/activate``.
 * Actually get ``distutils.cfg`` to work reliably.
+
 
 0.9
 ~~~
@@ -434,6 +577,7 @@ master (unreleased)
 * Should work on MacOSX Framework builds (the default Python
   installations on Mac).  Thanks to Ronald Oussoren.
 
+
 0.8.4
 ~~~~~
 
@@ -441,10 +585,12 @@ master (unreleased)
   were inaccurate.
 * Slightly prettier output.
 
+
 0.8.3
 ~~~~~
 
 * Added support for Windows.
+
 
 0.8.2
 ~~~~~
@@ -454,10 +600,12 @@ master (unreleased)
 * Give error about running while inside a workingenv.
 * Give better error message about Python 2.3.
 
+
 0.8.1
 ~~~~~
 
 Fixed packaging of the library.
+
 
 0.8
 ~~~
