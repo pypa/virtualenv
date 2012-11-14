@@ -865,6 +865,9 @@ def main():
         help='Use Setuptools instead of Distribute.  Set environ variable '
         'VIRTUALENV_SETUPTOOLS to make it the default ')
 
+    # Set this to True to use distribute by default, even in Python 2.
+    parser.set_defaults(use_distribute=False)
+
     default_search_dirs = file_search_dirs()
     parser.add_option(
         '--extra-search-dir',
