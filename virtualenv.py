@@ -858,6 +858,13 @@ def main():
         help='Use Distribute instead of Setuptools. Set environ variable '
         'VIRTUALENV_DISTRIBUTE to make it the default ')
 
+    parser.add_option(
+        '--setuptools', 
+        dest='use_distribute', 
+        action='store_false',
+        help='Use Setuptools instead of Distribute.  Set environ variable '
+        'VIRTUALENV_SETUPTOOLS to make it the default ')
+
     default_search_dirs = file_search_dirs()
     parser.add_option(
         '--extra-search-dir',
