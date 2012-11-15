@@ -26,7 +26,7 @@ def test_resolve_interpreter_with_absolute_path(mock_exists):
 
 
 @patch('os.path.exists')
-def test_resolve_intepreter_with_nonexistant_interpreter(mock_exists):
+def test_resolve_interpreter_with_nonexistent_interpreter(mock_exists):
     """Should exit when with absolute path if not exists"""
     mock_exists.return_value = False
 
@@ -40,7 +40,7 @@ def test_resolve_intepreter_with_nonexistant_interpreter(mock_exists):
 
 
 @patch('os.path.exists')
-def test_resolve_intepreter_with_invalid_interpreter(mock_exists):
+def test_resolve_interpreter_with_invalid_interpreter(mock_exists):
     """Should exit when with absolute path if not exists"""
     mock_exists.return_value = True
     virtualenv.is_executable = Mock(return_value=False)
