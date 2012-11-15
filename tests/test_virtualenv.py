@@ -1,5 +1,9 @@
 import virtualenv
 import optparse
+import os
+import shutil
+import sys
+import tempfile
 from mock import patch, Mock
 
 
@@ -92,3 +96,25 @@ def test_cop_update_defaults_with_store_false():
     defaults = {}
     cop.update_defaults(defaults)
     assert defaults == {'system_site_packages': 0}
+
+def test_install_python_symlinks():
+    """Should create the right symlinks in bin_dir"""
+    tmp_virtualenv = tempfile.mkdtemp()
+    try:
+        home_dir, lib_dir, inc_dir, bin_dir = \
+                                virtualenv.path_locations(tmp_virtualenv)
+        virtualenv.install_python(home_dir, lib_dir, inc_dir, bin_dir, False,
+                                  False)
+
+        py_exe_no_version = 'python'
+        py_exe_version_major = 'python%s' % sys.version_info[0]
+        py_exe_version_major_minor = 'python%s.%s' % (
+            sys.version_info[0], sys.version_info[1])
+        required_executables = [ py_exe_no_version, py_exe_version_major,
+                         py_exe_version_major_minor ]
+
+        for pth in required_executables:
+            assert os.path.exists(os.path.join(bin_dir, pth)), ("%s should "
+                            "exist in bin_dir" % pth)
+    finally:
+        shutil.rmtree(tmp_virtualenv)
