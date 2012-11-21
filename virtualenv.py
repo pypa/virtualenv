@@ -4,7 +4,7 @@
 
 # If you change the version here, change it in setup.py
 # and docs/conf.py as well.
-__version__ = "1.8.2"  # following best practices
+__version__ = "1.8.3"  # following best practices
 virtualenv_version = __version__  # legacy, again
 
 import base64
