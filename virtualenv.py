@@ -859,8 +859,8 @@ def main():
         'VIRTUALENV_DISTRIBUTE to make it the default ')
 
     parser.add_option(
-        '--setuptools', 
-        dest='use_distribute', 
+        '--setuptools',
+        dest='use_distribute',
         action='store_false',
         help='Use Setuptools instead of Distribute.  Set environ variable '
         'VIRTUALENV_SETUPTOOLS to make it the default ')

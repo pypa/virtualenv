@@ -14,9 +14,8 @@ Changes & News
    ``$ENV/bin/python`` and re-running virtualenv on the same target directory
    with the upgraded Python.
 
-
-develop (unreleased)
-~~~~~~~~~~~~~~~~~~~~
+1.8.3 (2012-11-21)
+~~~~~~~~~~~~~~~~~~
 
 * Fixed readline on OS X. Thanks minrk
 
@@ -41,6 +40,8 @@ develop (unreleased)
 * Make it possible to create a virtualenv from within a Python
   3.3. pyvenv. Thanks Chris McDonough for the report.
 
+* Add optional --setuptools option to be able to switch to it in case
+  distribute is the default (like in Debian).
 
 1.8.2 (2012-09-06)
 ~~~~~~~~~~~~~~~~~~
