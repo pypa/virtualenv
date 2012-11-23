@@ -12,6 +12,8 @@ script:
   - python setup.py test
 # Integration test
   - python virtualenv.py --distribute ./test-venv
+# Another integration test, where we must download
+  - cp -t bin virtualenv.py; cd bin; python virtualenv.py --distribute ./test-venv
 notifications:
   irc:
     channels: "irc.freenode.org#pip"
