@@ -505,6 +505,9 @@ def _install_req(py_executable, unzip=False, distribute=False,
             bootstrap_script = DISTRIBUTE_FROM_EGG_PY
         else:
             # Fall back to sdist
+            # NB: egg_path is not None iff tgz_path is None
+            # iff bootstrap_script is a generic setup script accepting
+            # the standard arguments.
             egg_path = None
             tgz_path = 'distribute-*.tar.gz'
             found, tgz_path = _find_file(tgz_path, search_dirs)
@@ -534,28 +537,28 @@ def _install_req(py_executable, unzip=False, distribute=False,
             env['PYTHONPATH'] = egg_path + os.path.pathsep + os.environ['PYTHONPATH']
         else:
             env['PYTHONPATH'] = egg_path
-    else:
+    elif tgz_path is not None and os.path.exists(tgz_path):
         # Found a tgz source dist, let's chdir
-        if tgz_path is not None and os.path.exists(tgz_path):
-            logger.info('Using existing %s egg: %s' % (project_name, tgz_path))
-            os.chdir(os.path.dirname(tgz_path))
-            # in this case, we want to be sure that PYTHONPATH is unset (not
-            # just empty, really unset), else CPython tries to import the
-            # site.py that it's in virtualenv_support
-            remove_from_env.append('PYTHONPATH')
-        else:
-            if never_download:
-                logger.fatal("Can't find any local distributions of %s to install "
-                             "and --never-download is set.  Either re-run virtualenv "
-                             "without the --never-download option, or place a %s "
-                             "distribution (%s) in one of these "
-                             "locations: %r" % (project_name, project_name,
-                                                egg_path or tgz_path,
-                                                search_dirs))
-                sys.exit(1)
-
-            logger.info('No %s egg found; downloading' % project_name)
-            cmd.extend(['--always-copy', '-U', project_name])
+        logger.info('Using existing %s egg: %s' % (project_name, tgz_path))
+        os.chdir(os.path.dirname(tgz_path))
+        # in this case, we want to be sure that PYTHONPATH is unset (not
+        # just empty, really unset), else CPython tries to import the
+        # site.py that it's in virtualenv_support
+        remove_from_env.append('PYTHONPATH')
+    elif never_download:
+        logger.fatal("Can't find any local distributions of %s to install "
+                     "and --never-download is set.  Either re-run virtualenv "
+                     "without the --never-download option, or place a %s "
+                     "distribution (%s) in one of these "
+                     "locations: %r" % (project_name, project_name,
+                                        egg_path or tgz_path,
+                                        search_dirs))
+        sys.exit(1)
+    elif egg_path:
+        logger.info('No %s egg found; downloading' % project_name)
+        cmd.extend(['--always-copy', '-U', project_name])
+    else:
+        logger.info('No %s tgz found; downloading' % project_name)
     logger.start_progress('Installing %s...' % project_name)
     logger.indent += 2
     cwd = None
