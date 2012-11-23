@@ -6,14 +6,17 @@ python:
   - "3.2"
   - "pypy"
 install:
-  - pip install --use-mirrors nose
+  - pip install --use-mirrors nose coverage
 script:
+  - coverage erase
 # Unit tests
-  - python setup.py test
+  - coverage run setup.py test
 # Integration test
-  - python virtualenv.py --distribute ./test-venv
+  - coverage run virtualenv.py --distribute ./test-venv-01
 # Another integration test, where we must download
-  - cp -t bin virtualenv.py; cd bin; python virtualenv.py --distribute ./test-venv
+  - cp -t bin virtualenv.py; coverage run bin/virtualenv.py --distribute ./test-venv-02
+# How was our test coverage?
+  - coverage report
 notifications:
   irc:
     channels: "irc.freenode.org#pip"
