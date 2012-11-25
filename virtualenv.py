@@ -478,7 +478,7 @@ def make_exe(fn):
 def _find_file(filename, dirs):
     for dir in reversed(dirs):
         files = glob.glob(os.path.join(dir, filename))
-        if files and os.path.exists(files[0]):
+        if files and os.path.isfile(files[0]):
             return True, files[0]
     return False, filename
 
