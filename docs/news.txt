@@ -14,6 +14,18 @@ Changes & News
    ``$ENV/bin/python`` and re-running virtualenv on the same target directory
    with the upgraded Python.
 
+develop (unreleased)
+~~~~~~~~~~~~~~~~~~~~
+
+* Updated distribute to 0.6.31.  This fixes #359 (numpy install regression) on
+  utf8 platforms, and provides a workaround on other platforms:
+  ``PYTHONIOENCODING=utf8 pip install numpy``.
+
+* When installing virtualenv via curl, don't forget to filter out arguments the
+  distribute setup script won't understand. Fixes #358.
+
+* Added some more integration tests.
+
 1.8.3 (2012-11-21)
 ~~~~~~~~~~~~~~~~~~
 
