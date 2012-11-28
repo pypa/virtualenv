@@ -39,8 +39,10 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="__VIRTUAL_ENV__"
+pushd $(dirname ${BASH_ARGV[0]})/.. > /dev/null
+VIRTUAL_ENV=$(pwd)
 export VIRTUAL_ENV
+popd > /dev/null
 
 _OLD_VIRTUAL_PATH="$PATH"
 PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
