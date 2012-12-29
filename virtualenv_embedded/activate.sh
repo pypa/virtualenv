@@ -15,6 +15,11 @@ deactivate () {
         export PYTHONHOME
         unset _OLD_VIRTUAL_PYTHONHOME
     fi
+    if [ -n "$_OLD_VIRTUAL_PYTHONPATH" ] ; then
+        PYTHONPATH="$_OLD_VIRTUAL_PYTHONPATH"
+        export PYTHONPATH
+        unset _OLD_VIRTUAL_PYTHONPATH
+    fi
 
     # This should detect bash and zsh, which have a hash command that must
     # be called to get it to forget past commands.  Without forgetting
@@ -52,6 +57,11 @@ export PATH
 if [ -n "$PYTHONHOME" ] ; then
     _OLD_VIRTUAL_PYTHONHOME="$PYTHONHOME"
     unset PYTHONHOME
+fi
+
+if [ -n "$PYTHONPATH" ] ; then
+    _OLD_VIRTUAL_PYTHONPATH="$PYTHONPATH"
+    unset PYTHONPATH
 fi
 
 if [ -z "$VIRTUAL_ENV_DISABLE_PROMPT" ] ; then
