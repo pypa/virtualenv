@@ -1352,11 +1352,6 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     if sys.executable != py_executable:
         ## FIXME: could I just hard link?
         executable = sys.executable
-        if is_cygwin and os.path.exists(executable + '.exe'):
-            # Cygwin misreports sys.executable sometimes
-            executable += '.exe'
-            py_executable += '.exe'
-            logger.info('Executable actually exists in %s' % executable)
         shutil.copyfile(executable, py_executable)
         make_exe(py_executable)
         if is_win or is_cygwin:
