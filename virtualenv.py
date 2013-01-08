@@ -871,6 +871,13 @@ def main():
     # Set this to True to use distribute by default, even in Python 2.
     parser.set_defaults(use_distribute=False)
 
+    parser.set_defaults(use_package_installers=True)
+    parser.add_option(
+        '--no-package-installers',
+        dest='use_package_installers',
+        action='store_false',
+        help='Don\'t install setuptools, distribute or pip')
+
     default_search_dirs = file_search_dirs()
     parser.add_option(
         '--extra-search-dir',
@@ -961,7 +968,8 @@ def main():
                        use_distribute=options.use_distribute,
                        prompt=options.prompt,
                        search_dirs=options.search_dirs,
-                       never_download=options.never_download)
+                       never_download=options.never_download,
+                       use_package_installers=options.use_package_installers)
     if 'after_install' in globals():
         after_install(options, home_dir)
 
@@ -1048,7 +1056,8 @@ def call_subprocess(cmd, show_stdout=True,
 
 def create_environment(home_dir, site_packages=False, clear=False,
                        unzip_setuptools=False, use_distribute=False,
-                       prompt=None, search_dirs=None, never_download=False):
+                       prompt=None, search_dirs=None, never_download=False,
+                       use_package_installers=True):
     """
     Creates a new environment in ``home_dir``.
 
@@ -1066,14 +1075,15 @@ def create_environment(home_dir, site_packages=False, clear=False,
 
     install_distutils(home_dir)
 
-    if use_distribute:
-        install_distribute(py_executable, unzip=unzip_setuptools,
-                           search_dirs=search_dirs, never_download=never_download)
-    else:
-        install_setuptools(py_executable, unzip=unzip_setuptools,
-                           search_dirs=search_dirs, never_download=never_download)
+    if use_package_installers:
+        if use_distribute:
+            install_distribute(py_executable, unzip=unzip_setuptools,
+                               search_dirs=search_dirs, never_download=never_download)
+        else:
+            install_setuptools(py_executable, unzip=unzip_setuptools,
+                               search_dirs=search_dirs, never_download=never_download)
 
-    install_pip(py_executable, search_dirs=search_dirs, never_download=never_download)
+        install_pip(py_executable, search_dirs=search_dirs, never_download=never_download)
 
     install_activate(home_dir, bin_dir, prompt)
 
