@@ -9,6 +9,7 @@ Maintainers
 Brian Rosner
 Carl Meyer
 Jannis Leidel
+Paul Nasrat
 
 Contributors
 ------------
@@ -33,6 +34,7 @@ Doug Hellmann
 Doug Napoleone
 Douglas Creager
 Ethan Jucovy
+Gabriel de Perthuis
 Gunnlaugur Thor Briem
 Greg Haskins
 Jason R. Coombs
@@ -47,6 +49,7 @@ Lars Francke
 Marc Abramowitz
 Mike Hommey
 Miki Tebeka
+Paul Moore
 Philip Jenvey
 Raul Leal
 Ronny Pfannschmidt

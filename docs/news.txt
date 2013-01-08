@@ -14,9 +14,34 @@ Changes & News
    ``$ENV/bin/python`` and re-running virtualenv on the same target directory
    with the upgraded Python.
 
+1.8.4 (2012-11-25)
+~~~~~~~~~~~~~~~~~~
 
-develop (unreleased)
-~~~~~~~~~~~~~~~~~~~~
+* Updated distribute to 0.6.31. This fixes #359 (numpy install regression) on
+  UTF-8 platforms, and provides a workaround on other platforms:
+  ``PYTHONIOENCODING=utf8 pip install numpy``.
+
+* When installing virtualenv via curl, don't forget to filter out arguments
+  the distribute setup script won't understand. Fixes #358.
+
+* Added some more integration tests.
+
+* Removed the unsupported embedded setuptools egg for Python 2.4 to reduce
+  file size.
+
+1.8.3 (2012-11-21)
+~~~~~~~~~~~~~~~~~~
+
+* Fixed readline on OS X. Thanks minrk
+
+* Updated distribute to 0.6.30 (improves our error reporting, plus new
+  distribute features and fixes). Thanks Gabriel (g2p)
+
+* Added compatibility with multiarch Python (Python 3.3 for example). Added an
+  integration test. Thanks Gabriel (g2p)
+
+* Added ability to install distribute from a user-provided egg, rather than the
+  bundled sdist, for better speed. Thanks Paul Moore.
 
 * Make the creation of lib64 symlink smarter about already-existing symlink,
   and more explicit about full paths. Fixes #334 and #330. Thanks Jeremy Orem.
@@ -30,6 +55,8 @@ develop (unreleased)
 * Make it possible to create a virtualenv from within a Python
   3.3. pyvenv. Thanks Chris McDonough for the report.
 
+* Add optional --setuptools option to be able to switch to it in case
+  distribute is the default (like in Debian).
 
 1.8.2 (2012-09-06)
 ~~~~~~~~~~~~~~~~~~
