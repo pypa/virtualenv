@@ -862,6 +862,19 @@ def main():
         'VIRTUALENV_DISTRIBUTE to make it the default ')
 
     parser.add_option(
+        '--no-setuptools',
+        dest='no_setuptools',
+        action='store_true',
+        help='Do not install distribute/setuptools (or pip) '
+        'in the new virtualenv.')
+
+    parser.add_option(
+        '--no-pip',
+        dest='no_pip',
+        action='store_true',
+        help='Do not install pip in the new virtualenv.')
+
+    parser.add_option(
         '--setuptools',
         dest='use_distribute',
         action='store_false',
@@ -961,7 +974,9 @@ def main():
                        use_distribute=options.use_distribute,
                        prompt=options.prompt,
                        search_dirs=options.search_dirs,
-                       never_download=options.never_download)
+                       never_download=options.never_download,
+                       no_setuptools=options.no_setuptools,
+                       no_pip=options.no_pip)
     if 'after_install' in globals():
         after_install(options, home_dir)
 
@@ -1048,7 +1063,8 @@ def call_subprocess(cmd, show_stdout=True,
 
 def create_environment(home_dir, site_packages=False, clear=False,
                        unzip_setuptools=False, use_distribute=False,
-                       prompt=None, search_dirs=None, never_download=False):
+                       prompt=None, search_dirs=None, never_download=False,
+                       no_setuptools=False, no_pip=False):
     """
     Creates a new environment in ``home_dir``.
 
@@ -1066,14 +1082,16 @@ def create_environment(home_dir, site_packages=False, clear=False,
 
     install_distutils(home_dir)
 
-    if use_distribute:
-        install_distribute(py_executable, unzip=unzip_setuptools,
-                           search_dirs=search_dirs, never_download=never_download)
-    else:
-        install_setuptools(py_executable, unzip=unzip_setuptools,
-                           search_dirs=search_dirs, never_download=never_download)
+    if not no_setuptools:
+        if use_distribute:
+            install_distribute(py_executable, unzip=unzip_setuptools,
+                               search_dirs=search_dirs, never_download=never_download)
+        else:
+            install_setuptools(py_executable, unzip=unzip_setuptools,
+                               search_dirs=search_dirs, never_download=never_download)
 
-    install_pip(py_executable, search_dirs=search_dirs, never_download=never_download)
+        if not no_pip:
+            install_pip(py_executable, search_dirs=search_dirs, never_download=never_download)
 
     install_activate(home_dir, bin_dir, prompt)
 
