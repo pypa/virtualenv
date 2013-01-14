@@ -49,7 +49,7 @@ except ImportError:
             args = [quote(arg) for arg in args]
         return os.spawnl(os.P_WAIT, sys.executable, *args) == 0
 
-DEFAULT_VERSION = "0.6.32"
+DEFAULT_VERSION = "0.6.34"
 DEFAULT_URL = "http://pypi.python.org/packages/source/d/distribute/"
 SETUPTOOLS_FAKED_VERSION = "0.6c11"
 
@@ -239,7 +239,9 @@ def _no_sandbox(function):
 
 def _patch_file(path, content):
     """Will backup the file then patch it"""
-    existing_content = open(path).read()
+    f = open(path)
+    existing_content = f.read()
+    f.close()
     if existing_content == content:
         # already patched
         log.warn('Already patched.')
@@ -257,7 +259,10 @@ _patch_file = _no_sandbox(_patch_file)
 
 
 def _same_content(path, content):
-    return open(path).read() == content
+    f = open(path)
+    existing_content = f.read()
+    f.close()
+    return existing_content == content
 
 
 def _rename_path(path):
