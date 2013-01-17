@@ -1835,8 +1835,8 @@ def make_relative_path(source, dest, dest_is_directory=True):
     if not dest_is_directory:
         dest_filename = os.path.basename(dest)
         dest = os.path.dirname(dest)
-    dest = os.path.normpath(os.path.abspath(dest))
-    source = os.path.normpath(os.path.abspath(source))
+    dest = os.path.realpath(dest)
+    source = os.path.realpath(source)
     dest_parts = dest.strip(os.path.sep).split(os.path.sep)
     source_parts = source.strip(os.path.sep).split(os.path.sep)
     while dest_parts and source_parts and dest_parts[0] == source_parts[0]:

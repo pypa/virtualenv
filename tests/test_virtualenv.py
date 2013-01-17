@@ -118,3 +118,30 @@ def test_install_python_symlinks():
                             "exist in bin_dir" % pth)
     finally:
         shutil.rmtree(tmp_virtualenv)
+
+def test_make_relative_path_symlinks():
+    """Don't care about symlinks when calculating a relative path."""
+    tmp_folder = tempfile.mkdtemp()
+    try:
+        # Set up a directory tree with different paths to the same folder
+        # through symlinks.
+        real = os.path.join(tmp_folder, 'real')
+        a = os.path.join(real, 'a')
+        b = os.path.join(real, 'b')
+        os.mkdir(real)
+        os.mkdir(a)
+        os.mkdir(b)
+
+        symlink = os.path.join(tmp_folder, 'symlink')
+        symlink_b = os.path.join(symlink, 'b')
+        os.symlink(real, symlink)
+
+        actual = virtualenv.make_relative_path(a+'/', b+'/')
+        target = '../b'
+        assert actual == target, '%r != %r' % (actual, target)
+
+        actual = virtualenv.make_relative_path(a+'/', symlink_b+'/')
+        target = '../b'
+        assert actual == target, '%r != %r' % (actual, target)
+    finally:
+        shutil.rmtree(tmp_folder)
