@@ -62,9 +62,9 @@ if [ -z "$VIRTUAL_ENV_DISABLE_PROMPT" ] ; then
     if [ "`basename \"$VIRTUAL_ENV\"`" = "__" ] ; then
         # special case for Aspen magic directories
         # see http://www.zetadev.com/software/aspen/
-        PS1="[`basename \`dirname \"$VIRTUAL_ENV\"\``] $PS1"
+        PS1="$(virtualenv_ps1_prefix 2>/dev/null || echo -n "($(basename "$(dirname "$VIRTUAL_ENV")"))")$PS1"
     else
-        PS1="(`basename \"$VIRTUAL_ENV\"`)$PS1"
+        PS1="$(virtualenv_ps1_prefix 2>/dev/null || echo -n "($(basename "$VIRTUAL_ENV"))")$PS1"
     fi
     fi
     export PS1
