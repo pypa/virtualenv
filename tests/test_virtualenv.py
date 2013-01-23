@@ -97,8 +97,8 @@ def test_cop_update_defaults_with_store_false():
     cop.update_defaults(defaults)
     assert defaults == {'system_site_packages': 0}
 
-def test_install_python_symlinks():
-    """Should create the right symlinks in bin_dir"""
+def test_install_python_bin():
+    """Should create the right python executables and links"""
     tmp_virtualenv = tempfile.mkdtemp()
     try:
         home_dir, lib_dir, inc_dir, bin_dir = \
@@ -106,12 +106,15 @@ def test_install_python_symlinks():
         virtualenv.install_python(home_dir, lib_dir, inc_dir, bin_dir, False,
                                   False)
 
-        py_exe_no_version = 'python'
-        py_exe_version_major = 'python%s' % sys.version_info[0]
-        py_exe_version_major_minor = 'python%s.%s' % (
-            sys.version_info[0], sys.version_info[1])
-        required_executables = [ py_exe_no_version, py_exe_version_major,
-                         py_exe_version_major_minor ]
+        if virtualenv.is_win:
+            required_executables = [ 'python.exe', 'pythonw.exe']
+        else:
+            py_exe_no_version = 'python'
+            py_exe_version_major = 'python%s' % sys.version_info[0]
+            py_exe_version_major_minor = 'python%s.%s' % (
+                sys.version_info[0], sys.version_info[1])
+            required_executables = [ py_exe_no_version, py_exe_version_major,
+                                     py_exe_version_major_minor ]
 
         for pth in required_executables:
             assert os.path.exists(os.path.join(bin_dir, pth)), ("%s should "
