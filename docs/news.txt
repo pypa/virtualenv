@@ -14,6 +14,18 @@ Changes & News
    ``$ENV/bin/python`` and re-running virtualenv on the same target directory
    with the upgraded Python.
 
+
+1.8.5 (unreleased)
+~~~~~~~~~~~~~~~~~~
+
+* Upgraded distribute to 0.6.34.
+* Added ``--no-setuptools`` and ``--no-pip`` options (Pull #336).
+* Fixed Issue #373. virtualenv-1.8.4 was failing in cygwin (Pull #382).
+* Fixed Issue #378. virtualenv is now "multiarch" aware on debian/ubuntu (Pull #379).
+* Fixed issue with readline module path on pypy and OSX (Pull #374).
+* Made 64bit detection compatible with Python 2.5 (Pull #393).
+
+
 1.8.4 (2012-11-25)
 ~~~~~~~~~~~~~~~~~~
 
