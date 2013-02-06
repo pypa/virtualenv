@@ -64,7 +64,6 @@ ImportError exception, it is silently ignored.
 """
 
 import sys
-import struct
 import os
 try:
     import __builtin__ as builtins
@@ -84,7 +83,7 @@ ENABLE_USER_SITE = None
 USER_SITE = None
 USER_BASE = None
 
-_is_64bit = struct.calcsize("P") == 8
+_is_64bit = (getattr(sys, 'maxsize', None) or getattr(sys, 'maxint')) > 2**32
 _is_pypy = hasattr(sys, 'pypy_version_info')
 _is_jython = sys.platform[:4] == 'java'
 if _is_jython:

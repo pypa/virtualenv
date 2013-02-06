@@ -121,15 +121,3 @@ def test_install_python_bin():
                             "exist in bin_dir" % pth)
     finally:
         shutil.rmtree(tmp_virtualenv)
-
-def test_64bit_technique():
-    """
-    Confirm the technique for determining 64bit in the embedded site.py
-    is returning an expected answer
-    """
-    import struct
-    assert (
-        struct.calcsize("P") == 8 #64bit
-        or
-        struct.calcsize("P") == 4 #32bit
-        )
