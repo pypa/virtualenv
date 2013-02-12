@@ -16,13 +16,41 @@ virtualenv
 Installation
 ------------
 
-You can install virtualenv with ``pip install virtualenv``, or the `latest
-development version <https://github.com/pypa/virtualenv/tarball/develop>`_
-with ``pip install https://github.com/pypa/virtualenv/tarball/develop``.
+On many linux systems `virtualenv` is available as an OS package and can be installed with tools like `yum` or `apt-get`,
+although the latest version may not be available.
 
-You can also use ``easy_install``, or if you have no Python package manager
-available at all, you can just grab the single file `virtualenv.py`_ and run
-it with ``python virtualenv.py``.
+To install with `pip` (if you have `pip` installed globally):
+
+::
+
+ $ [sudo] pip install virtualenv
+
+Or to get the latest unreleased dev version:
+
+::
+
+ $ [sudo] pip install https://github.com/pypa/virtualenv/tarball/develop
+
+
+To install with `easy_install` (if you have `Setuptools <https://pypi.python.org/pypi/setuptools>`_ or
+`Distribute <https://pypi.python.org/pypi/distribute>`_ installed globally):
+
+::
+
+ $ [sudo] easy_install virtualenv
+
+
+To install from source:
+
+::
+
+ $ curl -O https://pypi.python.org/packages/source/v/virtualenv/virtualenv-X.X.tar.gz
+ $ tar xvfz virtualenv-X.X.tar.gz
+ $ cd virtualenv-X.X
+ $ [sudo] python setup.py install
+
+Lastly, you can just down the single file `virtualenv.py`_ and use it directly
+(without installing the virtualenv distribution).
 
 .. _virtualenv.py: https://raw.github.com/pypa/virtualenv/master/virtualenv.py
 
