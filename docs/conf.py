@@ -39,14 +39,8 @@ copyright = '2007-2012, Ian Bicking, The Open Planning Project, The virtualenv d
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
-try:
-    from virtualenv import __version__
-    # The short X.Y version.
-    version = '.'.join(__version__.split('.')[:2])
-    # The full version, including alpha/beta/rc tags.
-    release = __version__
-except ImportError:
-    version = release = 'dev'
+from virtualenv import __version__
+version = release = __version__
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
