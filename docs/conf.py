@@ -39,7 +39,7 @@ copyright = '2007-2013, Ian Bicking, The Open Planning Project, The virtualenv d
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
-version = release = '1.10.dev1'
+version = release = '1.9rc1'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
