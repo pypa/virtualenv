@@ -10,6 +10,7 @@ Brian Rosner
 Carl Meyer
 Jannis Leidel
 Paul Nasrat
+Marcus Smith
 
 Contributors
 ------------
@@ -51,6 +52,7 @@ Mike Hommey
 Miki Tebeka
 Paul Moore
 Philip Jenvey
+Piotr Dobrogost
 Raul Leal
 Ronny Pfannschmidt
 Stefano Rivera

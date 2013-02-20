@@ -18,6 +18,7 @@ Changes & News
 1.8.5 (unreleased)
 ~~~~~~~~~~~~~~~~~~
 
+* Unset VIRTUAL_ENV environment variable in deactivate.bat (Pull #364)
 * Upgraded distribute to 0.6.34.
 * Added ``--no-setuptools`` and ``--no-pip`` options (Pull #336).
 * Fixed Issue #373. virtualenv-1.8.4 was failing in cygwin (Pull #382).

@@ -35,12 +35,12 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'virtualenv'
-copyright = '2007-2012, Ian Bicking, The Open Planning Project, The virtualenv developers'
+copyright = '2007-2013, Ian Bicking, The Open Planning Project, The virtualenv developers'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 from virtualenv import __version__
-version = release = __version__
+release = __version__
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
