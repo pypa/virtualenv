@@ -1,5 +1,11 @@
+
 virtualenv
 ==========
+
+.. note::
+
+  virtualenv-1.9 is not yet released to PyPI. Details to follow on how to install and test virtualenv-1.9rc1.
+
 
 * `Discussion list <http://groups.google.com/group/python-virtualenv/>`_
 * `Bugs <https://github.com/pypa/virtualenv/issues/>`_
