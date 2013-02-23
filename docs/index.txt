@@ -33,11 +33,11 @@ Installation
 
 .. warning::
 
-    We currently advise against using virtualenv.py directly, without installing the virtualenv distribution.
-    Using virtualenv.py directly relies upon insecure bootstrap scripts, and easy_install to install Setuptools/Distribute and pip.
+    We currently advise against using virtualenv.py in isolation without an associated virtualenv_support directory.
+    Using virtualenv.py in isolation relies upon insecure bootstrap scripts, and easy_install to install Setuptools/Distribute and pip.
 
 
-To install with `pip` (if you have pip-1.3 or greater installed globally):
+To install globally with `pip` (if you have pip-1.3 or greater installed globally):
 
 ::
 
@@ -50,7 +50,7 @@ Or to get the latest unreleased dev version:
  $ [sudo] pip install https://github.com/pypa/virtualenv/tarball/develop
 
 
-To install from source:
+To install globally from source:
 
 ::
 
@@ -58,6 +58,17 @@ To install from source:
  $ tar xvfz virtualenv-X.X.tar.gz
  $ cd virtualenv-X.X
  $ [sudo] python setup.py install
+
+
+To *use* locally from source (and not be insecure as described in the warning above):
+
+::
+
+ $ curl -O https://pypi.python.org/packages/source/v/virtualenv/virtualenv-X.X.tar.gz
+ $ tar xvfz virtualenv-X.X.tar.gz
+ $ cd virtualenv-X.X
+ $ python virtualenv.py myVE
+
 
 
 What It Does

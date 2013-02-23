@@ -15,8 +15,8 @@ Changes & News
    with the upgraded Python.
 
 
-1.8.5 (unreleased)
-~~~~~~~~~~~~~~~~~~
+1.9rc1 (unreleased)
+~~~~~~~~~~~~~~~~~~~
 
 * Unset VIRTUAL_ENV environment variable in deactivate.bat (Pull #364)
 * Upgraded distribute to 0.6.34.
