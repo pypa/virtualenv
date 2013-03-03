@@ -30,11 +30,11 @@ except ImportError:
 here = os.path.dirname(os.path.abspath(__file__))
 
 ## Get long_description from index.txt:
-f = open(os.path.join(here, 'docs', 'index.txt'))
+f = open(os.path.join(here, 'docs', 'index.rst'))
 long_description = f.read().strip()
 long_description = long_description.split('split here', 1)[1]
 f.close()
-f = open(os.path.join(here, 'docs', 'news.txt'))
+f = open(os.path.join(here, 'docs', 'news.rst'))
 long_description += "\n\n" + f.read()
 f.close()
 
