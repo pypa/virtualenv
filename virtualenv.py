@@ -1695,14 +1695,20 @@ OK_ABS_SCRIPTS = ['python', 'python%s' % sys.version[:3],
                   'activate', 'activate.bat', 'activate_this.py']
 
 def fixup_scripts(home_dir):
-    # This is what we expect at the top of scripts:
-    shebang = '#!%s/bin/python' % os.path.normcase(os.path.abspath(home_dir))
-    # This is what we'll put:
-    new_shebang = '#!/usr/bin/env python%s' % sys.version[:3]
+    interpreter_ext = ''
     if is_win:
+        comspec = os.path.normcase(os.environ.get('COMSPEC', 'cmd.exe'))
+        # This is what we'll put:
+        new_shebang = '#!%s /c python.exe' % comspec
         bin_suffix = 'Scripts'
+        interpreter_ext = '.exe'
     else:
+        # This is what we'll put:
+        new_shebang = '#!/usr/bin/env python%s' % (sys.version[:3])
         bin_suffix = 'bin'
+    # This is what we expect at the top of scripts:
+    shebang = '#!%s' % os.path.normcase(os.path.join(
+        os.path.abspath(home_dir), bin_suffix, 'python%s' % interpreter_ext))
     bin_dir = os.path.join(home_dir, bin_suffix)
     home_dir, lib_dir, inc_dir, bin_dir = path_locations(home_dir)
     for filename in os.listdir(bin_dir):
@@ -1723,7 +1729,11 @@ def fixup_scripts(home_dir):
         if not lines:
             logger.warn('Script %s is an empty file' % filename)
             continue
-        if not lines[0].strip().startswith(shebang):
+
+        old_shebang = lines[0].strip()
+        old_shebang = old_shebang[0:2] + os.path.normcase(old_shebang[2:])
+
+        if not old_shebang.startswith(shebang):
             if os.path.basename(filename) in OK_ABS_SCRIPTS:
                 logger.debug('Cannot make script %s relative' % filename)
             elif lines[0].strip() == new_shebang:
