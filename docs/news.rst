@@ -15,8 +15,35 @@ Changes & News
    with the upgraded Python.
 
 
-develop (unreleased)
-~~~~~~~~~~~~~~~~~~~~
+1.9rc1 (unreleased)
+~~~~~~~~~~~~~~~~~~~
+
+* Unset VIRTUAL_ENV environment variable in deactivate.bat (Pull #364)
+* Upgraded distribute to 0.6.34.
+* Added ``--no-setuptools`` and ``--no-pip`` options (Pull #336).
+* Fixed Issue #373. virtualenv-1.8.4 was failing in cygwin (Pull #382).
+* Fixed Issue #378. virtualenv is now "multiarch" aware on debian/ubuntu (Pull #379).
+* Fixed issue with readline module path on pypy and OSX (Pull #374).
+* Made 64bit detection compatible with Python 2.5 (Pull #393).
+
+
+1.8.4 (2012-11-25)
+~~~~~~~~~~~~~~~~~~
+
+* Updated distribute to 0.6.31. This fixes #359 (numpy install regression) on
+  UTF-8 platforms, and provides a workaround on other platforms:
+  ``PYTHONIOENCODING=utf8 pip install numpy``.
+
+* When installing virtualenv via curl, don't forget to filter out arguments
+  the distribute setup script won't understand. Fixes #358.
+
+* Added some more integration tests.
+
+* Removed the unsupported embedded setuptools egg for Python 2.4 to reduce
+  file size.
+
+1.8.3 (2012-11-21)
+~~~~~~~~~~~~~~~~~~
 
 * Fixed readline on OS X. Thanks minrk
 
@@ -41,6 +68,8 @@ develop (unreleased)
 * Make it possible to create a virtualenv from within a Python
   3.3. pyvenv. Thanks Chris McDonough for the report.
 
+* Add optional --setuptools option to be able to switch to it in case
+  distribute is the default (like in Debian).
 
 1.8.2 (2012-09-06)
 ~~~~~~~~~~~~~~~~~~
