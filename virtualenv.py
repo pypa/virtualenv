@@ -1695,7 +1695,6 @@ OK_ABS_SCRIPTS = ['python', 'python%s' % sys.version[:3],
                   'activate', 'activate.bat', 'activate_this.py']
 
 def fixup_scripts(home_dir):
-    interpreter_ext = ''
     if is_win:
         comspec = os.path.normcase(os.environ.get('COMSPEC', 'cmd.exe'))
         # This is what we'll put:
@@ -1706,6 +1705,7 @@ def fixup_scripts(home_dir):
         # This is what we'll put:
         new_shebang = '#!/usr/bin/env python%s' % (sys.version[:3])
         bin_suffix = 'bin'
+        interpreter_ext = ''
     # This is what we expect at the top of scripts:
     shebang = '#!%s' % os.path.normcase(os.path.join(
         os.path.abspath(home_dir), bin_suffix, 'python%s' % interpreter_ext))
