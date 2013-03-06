@@ -2,7 +2,7 @@
 # You cannot run it directly.
 # Created by Davide Di Blasi <davidedb@gmail.com>.
 
-alias deactivate 'test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PATH" && unset _OLD_VIRTUAL_PATH; rehash; test $?_OLD_VIRTUAL_PROMPT != 0 && set prompt="$_OLD_VIRTUAL_PROMPT" && unset _OLD_VIRTUAL_PROMPT; unsetenv VIRTUAL_ENV; test "\!:*" != "nondestructive" && unalias deactivate && unalias pydoc'
+alias deactivate 'test $?_OLD_VIRTUAL_PYTHONPATH_ && setenv PYTHONPATH=_OLD_VIRTUAL_PYTHONPATH; test $?_OLD_VIRTUALPYTHONHOME_ && setenv PYTHONHOME=_OLD_VIRTUAL_PYTHONHOME; test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PATH" && unset _OLD_VIRTUAL_PATH; rehash; test $?_OLD_VIRTUAL_PROMPT != 0 && set prompt="$_OLD_VIRTUAL_PROMPT" && unset _OLD_VIRTUAL_PROMPT; unsetenv VIRTUAL_ENV; test "\!:*" != "nondestructive" && unalias deactivate && unalias pydoc'
 
 # Unset irrelevant variables.
 deactivate nondestructive
@@ -12,7 +12,15 @@ setenv VIRTUAL_ENV "__VIRTUAL_ENV__"
 set _OLD_VIRTUAL_PATH="$PATH"
 setenv PATH "$VIRTUAL_ENV/__BIN_NAME__:$PATH"
 
+if ("_OLD_VIRTUAL_PYTHONHOME_" != "") then
+    setenv _OLD_VIRTUAL_PYTHONHOME_="__PYTHONHOME__"
+    unset PYTHONHOME
+endif
 
+if ("_OLD_VIRTUAL_PYTHONPATH_" != "") then
+    setenv _OLD_VIRTUAL_PYTHONPATH_="__PYTHONPATH__"
+    unset PYTHONPATH
+endif
 
 if ("__VIRTUAL_PROMPT__" != "") then
     set env_name = "__VIRTUAL_PROMPT__"

@@ -3,7 +3,7 @@
 
 function deactivate  -d "Exit virtualenv and return to normal shell environment"
     # reset old environment variables
-    if test -n "$_OLD_VIRTUAL_PATH" 
+    if test -n "$_OLD_VIRTUAL_PATH"
         set -gx PATH $_OLD_VIRTUAL_PATH
         set -e _OLD_VIRTUAL_PATH
     end
@@ -11,7 +11,11 @@ function deactivate  -d "Exit virtualenv and return to normal shell environment"
         set -gx PYTHONHOME $_OLD_VIRTUAL_PYTHONHOME
         set -e _OLD_VIRTUAL_PYTHONHOME
     end
-    
+    if test -n "$_OLD_VIRTUAL_PYTHONPATH"
+        set -gx PYTHONPATH $_OLD_VIRTUAL_PYTHONPATH
+        set -e _OLD_VIRTUAL_PYTHONPATH
+    end
+
     if test -n "$_OLD_FISH_PROMPT_OVERRIDE"
         functions -e fish_prompt
         set -e _OLD_FISH_PROMPT_OVERRIDE
@@ -21,7 +25,7 @@ function deactivate  -d "Exit virtualenv and return to normal shell environment"
             end | psub )
         functions -e _old_fish_prompt
     end
-    
+
     set -e VIRTUAL_ENV
     if test "$argv[1]" != "nondestructive"
         # Self destruct!
@@ -43,15 +47,21 @@ if set -q PYTHONHOME
     set -e PYTHONHOME
 end
 
+# unset PYTHONPATH if set
+if set -q PYTHONPATH
+    set -gx _OLD_VIRTUAL_PYTHONPATH $PYTHONPATH
+    set -e PYTHONPATH
+end
+
 if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
     # fish uses a function instead of an env var to generate the prompt.
-    
+
     # save the current fish_prompt function as the function _old_fish_prompt
     . ( begin
             printf "function _old_fish_prompt\n\t#"
             functions fish_prompt
         end | psub )
-    
+
     # with the original prompt function renamed, we can override with our own.
     function fish_prompt
         # Prompt override?
@@ -68,7 +78,7 @@ if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
         else
             printf "%s(%s)%s%s" (set_color -b blue white) (basename "$VIRTUAL_ENV") (set_color normal) (_old_fish_prompt)
         end
-    end 
-    
+    end
+
     set -gx _OLD_FISH_PROMPT_OVERRIDE "$VIRTUAL_ENV"
 end
