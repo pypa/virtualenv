@@ -1695,22 +1695,21 @@ OK_ABS_SCRIPTS = ['python', 'python%s' % sys.version[:3],
                   'activate', 'activate.bat', 'activate_this.py']
 
 def fixup_scripts(home_dir):
+    home_dir, lib_dir, inc_dir, bin_dir = path_locations(home_dir)
+    # new_shebang_args = (env_cmd, ver_suffix, bin_suffix)
     if is_win:
-        comspec = os.path.normcase(os.environ.get('COMSPEC', 'cmd.exe'))
-        # This is what we'll put:
-        new_shebang = '#!%s /c python.exe' % comspec
-        bin_suffix = 'Scripts'
-        interpreter_ext = '.exe'
+        new_shebang_args = (
+            '%s /c' % os.path.normcase(os.environ.get('COMSPEC', 'cmd.exe')),
+            '', '.exe')
     else:
-        # This is what we'll put:
-        new_shebang = '#!/usr/bin/env python%s' % (sys.version[:3])
-        bin_suffix = 'bin'
-        interpreter_ext = ''
+        new_shebang_args = ('/usr/bin/env', sys.version[:3], '')
+
     # This is what we expect at the top of scripts:
     shebang = '#!%s' % os.path.normcase(os.path.join(
-        os.path.abspath(home_dir), bin_suffix, 'python%s' % interpreter_ext))
-    bin_dir = os.path.join(home_dir, bin_suffix)
-    home_dir, lib_dir, inc_dir, bin_dir = path_locations(home_dir)
+        os.path.abspath(bin_dir), 'python%s' % new_shebang_args[2]))
+    # This is what we'll put:
+    new_shebang = '#!%s python%s%s' % new_shebang_args
+
     for filename in os.listdir(bin_dir):
         filename = os.path.join(bin_dir, filename)
         if not os.path.isfile(filename):
