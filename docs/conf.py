@@ -11,10 +11,11 @@
 # All configuration values have a default value; values that are commented out
 # serve to show the default value.
 
+import os
 import sys
 
 # If your extensions are in another directory, add it here.
-#sys.path.append('some/directory')
+sys.path.insert(0, os.path.abspath(os.pardir))
 
 # General configuration
 # ---------------------
@@ -39,7 +40,14 @@ copyright = '2007-2013, Ian Bicking, The Open Planning Project, The virtualenv d
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
-version = release = '1.9rc2'
+try:
+    from virtualenv import __version__
+    # The short X.Y version.
+    version = '.'.join(__version__.split('.')[:2])
+    # The full version, including alpha/beta/rc tags.
+    release = __version__
+except ImportError:
+    version = release = 'dev'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
