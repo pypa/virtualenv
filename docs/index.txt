@@ -1,5 +1,11 @@
+
 virtualenv
 ==========
+
+.. note::
+
+  virtualenv-1.9 is not yet released to PyPI, but `see the mailing list for details on installing the latest RC <https://groups.google.com/forum/?fromgroups#!forum/python-virtualenv>`_.
+
 
 * `Discussion list <http://groups.google.com/group/python-virtualenv/>`_
 * `Bugs <https://github.com/pypa/virtualenv/issues/>`_
@@ -16,15 +22,60 @@ virtualenv
 Installation
 ------------
 
-You can install virtualenv with ``pip install virtualenv``, or the `latest
-development version <https://github.com/pypa/virtualenv/tarball/develop>`_
-with ``pip install https://github.com/pypa/virtualenv/tarball/develop``.
+.. warning::
 
-You can also use ``easy_install``, or if you have no Python package manager
-available at all, you can just grab the single file `virtualenv.py`_ and run
-it with ``python virtualenv.py``.
+    We advise installing virtualenv-1.9 or greater. Prior to version 1.9, the pip included in virtualenv did not
+    not download from PyPI over SSL.
 
-.. _virtualenv.py: https://raw.github.com/pypa/virtualenv/master/virtualenv.py
+.. warning::
+
+    When using pip to install virtualenv, we advise using pip-1.3 or greater. Prior to version 1.3, pip did not
+    not download from PyPI over SSL.
+
+.. warning::
+
+    We advise against using easy_install to install virtualenv, because easy_install
+    does not download from PyPI over SSL.
+
+.. warning::
+
+    We currently advise against using virtualenv.py in isolation without an associated virtualenv_support directory.
+    Using virtualenv.py in isolation relies upon insecure bootstrap scripts, and easy_install to install Setuptools/Distribute and pip.
+
+
+To install globally with `pip` (if you have pip-1.3 or greater installed globally):
+
+::
+
+ $ [sudo] pip install virtualenv
+
+Or to get the latest unreleased dev version:
+
+::
+
+ $ [sudo] pip install https://github.com/pypa/virtualenv/tarball/develop
+
+
+To install globally from source:
+
+::
+
+ $ curl -O https://pypi.python.org/packages/source/v/virtualenv/virtualenv-X.X.tar.gz
+ $ tar xvfz virtualenv-X.X.tar.gz
+ $ cd virtualenv-X.X
+ $ [sudo] python setup.py install
+
+
+To *use* locally from source (and not be insecure as described in the warning above):
+
+::
+
+ $ curl -O https://pypi.python.org/packages/source/v/virtualenv/virtualenv-X.X.tar.gz
+ $ tar xvfz virtualenv-X.X.tar.gz
+ $ cd virtualenv-X.X
+ $ python virtualenv.py myVE
+
+
 
 What It Does
 ------------
@@ -57,9 +108,7 @@ Usage
 
 The basic usage is::
 
-    $ python virtualenv.py ENV
-
-If you install it you can also just do ``virtualenv ENV``.
+    $ virtualenv ENV
 
 This creates ``ENV/lib/pythonX.X/site-packages``, where any libraries you
 install will go.  It also creates ``ENV/bin/python``, which is a Python
@@ -72,7 +121,7 @@ It also installs either `Setuptools
 <http://pypi.python.org/pypi/distribute>`_ into the environment. To use
 Distribute instead of setuptools, just call virtualenv like this::
 
-    $ python virtualenv.py --distribute ENV
+    $ virtualenv --distribute ENV
 
 You can also set the environment variable VIRTUALENV_DISTRIBUTE.
 
@@ -201,11 +250,11 @@ virtualenv can not only be configured by passing command line options such as
   you can also set an environment variable::
 
       $ export VIRTUALENV_DISTRIBUTE=true
-      $ python virtualenv.py ENV
+      $ virtualenv ENV
 
   It's the same as passing the option to virtualenv directly::
 
-      $ python virtualenv.py --distribute ENV
+      $ virtualenv --distribute ENV
 
   This also works for appending command line options, like ``--find-links``.
   Just leave an empty space between the passsed values, e.g.::
@@ -215,7 +264,7 @@ virtualenv can not only be configured by passing command line options such as
 
   is the same as calling::
 
-      $ python virtualenv.py --extra-search-dir=/path/to/dists --extra-search-dir=/path/to/other/dists ENV
+      $ virtualenv --extra-search-dir=/path/to/dists --extra-search-dir=/path/to/other/dists ENV
 
 - Config files
 
