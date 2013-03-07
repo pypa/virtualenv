@@ -14,6 +14,12 @@ Changes & News
    ``$ENV/bin/python`` and re-running virtualenv on the same target directory
    with the upgraded Python.
 
+1.9.1 (2013-03-08)
+~~~~~~~~~~~~~~~~~~
+
+* Updated to pip 1.3.1 that fixed a major backward incompatible change of
+  parsing URLs to externally hosted packages that got accidentily included
+  in pip 1.3.
 
 1.9 (2013-03-07)
 ~~~~~~~~~~~~~~~~

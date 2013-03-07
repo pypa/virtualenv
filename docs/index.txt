@@ -1,11 +1,5 @@
-
 virtualenv
 ==========
-
-.. note::
-
-  virtualenv-1.9 is not yet released to PyPI, but `see the mailing list for details on installing the latest RC <https://groups.google.com/forum/?fromgroups#!forum/python-virtualenv>`_.
-
 
 * `Discussion list <http://groups.google.com/group/python-virtualenv/>`_
 * `Bugs <https://github.com/pypa/virtualenv/issues/>`_
