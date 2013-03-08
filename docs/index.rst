@@ -403,8 +403,7 @@ Making Environments Relocatable
 -------------------------------
 
 Note: this option is somewhat experimental, and there are probably
-caveats that have not yet been identified.  Also this does not
-currently work on Windows.
+caveats that have not yet been identified.
 
 Normally environments are tied to a specific path.  That means that
 you cannot move an environment around or copy it to another computer.
