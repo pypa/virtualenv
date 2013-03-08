@@ -1687,16 +1687,14 @@ def make_environment_relocatable(home_dir):
         logger.fatal(
             'The environment doesn\'t have a file %s -- please re-run virtualenv '
             'on this environment to update it' % activate_this)
-    fixup_scripts(home_dir)
+    fixup_scripts(home_dir, bin_dir)
     fixup_pth_and_egg_link(home_dir)
     ## FIXME: need to fix up distutils.cfg
 
 OK_ABS_SCRIPTS = ['python', 'python%s' % sys.version[:3],
                   'activate', 'activate.bat', 'activate_this.py']
 
-def fixup_scripts(home_dir):
-    home_dir, lib_dir, inc_dir, bin_dir = path_locations(home_dir)
-    # new_shebang_args = (env_cmd, ver_suffix, bin_suffix)
+def fixup_scripts(home_dir, bin_dir):
     if is_win:
         new_shebang_args = (
             '%s /c' % os.path.normcase(os.environ.get('COMSPEC', 'cmd.exe')),
@@ -1749,7 +1747,7 @@ def fixup_scripts(home_dir):
 
 def relative_script(lines):
     "Return a script that'll work in a relocatable environment."
-    activate = "import os; activate_this=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'activate_this.py'); execfile(activate_this, dict(__file__=activate_this)); del os, activate_this"
+    activate = "import os; activate_this=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'activate_this.py'); exec(compile(open(activate_this).read(), activate_this, 'exec'), dict(__file__=activate_this)); del os, activate_this"
     # Find the last future statement in the script. If we insert the activation
     # line before a future statement, Python will raise a SyntaxError.
     activate_at = None

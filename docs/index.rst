@@ -405,6 +405,12 @@ Making Environments Relocatable
 Note: this option is somewhat experimental, and there are probably
 caveats that have not yet been identified.
 
+.. warning::
+
+    The ``--relocatable`` option currently has a number of issues,
+    and is not guaranteed to work in all circumstances. It is possible
+    that the option will be deprecated in a future version of ``virtualenv``.
+
 Normally environments are tied to a specific path.  That means that
 you cannot move an environment around or copy it to another computer.
 You can fix up an environment to make it relocatable with the
@@ -416,6 +422,12 @@ This will make some of the files created by setuptools or distribute
 use relative paths, and will change all the scripts to use ``activate_this.py``
 instead of using the location of the Python interpreter to select the
 environment.
+
+**Note:** scripts which have been made relocatable will only work if
+the virtualenv is activated, specifically the python executable from
+the virtualenv must be the first one on the system PATH. Also note that
+the activate scripts are not currently made relocatable by
+``virtualenv --relocatable``.
 
 **Note:** you must run this after you've installed *any* packages into
 the environment.  If you make an environment relocatable, then
