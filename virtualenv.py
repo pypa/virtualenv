@@ -591,7 +591,10 @@ def install_requirements(py_executable, reqs,
         wheel = Wheel(filename)
         # We should check for failed installs here and add the requirement
         # back into outstanding
+        logger.start_progress("Installing %s (from %s)... " %
+            (req, os.path.basename(filename)))
         wheel.install(paths, executable=py_executable)
+        logger.end_progress()
 
     return outstanding
 
