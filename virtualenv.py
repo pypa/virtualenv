@@ -23,6 +23,17 @@ import distutils.sysconfig
 from distutils.util import strtobool
 import struct
 import subprocess
+import json
+
+try:
+    from urllib.request import url2pathname
+except ImportError:
+    from urllib2 import url2pathname
+
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 if sys.version_info < (2, 5):
     print('ERROR: %s' % sys.exc_info()[1])
@@ -474,6 +485,115 @@ def make_exe(fn):
         newmode = (oldmode | 0x16D) & 0xFFF # 0o555, 0o7777
         os.chmod(fn, newmode)
         logger.info('Changed mode of %s to %s', fn, oct(newmode))
+
+def _get_paths_for_exe(python):
+    """Get the distutils install paths for the virtualenv.
+
+    The name argument is only needed for the "headers" path, which is
+    project name specific. The default of "{}" means that the returned
+    value can have the right subdirectory substituted by the caller using
+    the format() string method.
+    """
+
+    SCRIPT="""
+import json
+from distutils.dist import Distribution
+from distutils.command.install import install
+d = Distribution({'name': '%s'})
+i = install(d)
+i.initialize_options()
+i.finalize_options()
+paths = {
+    'prefix': i.prefix,
+    'purelib': i.install_purelib,
+    'platlib': i.install_platlib,
+    'scripts': i.install_scripts,
+    'headers': i.install_headers,
+    'data': i.install_data,
+}
+print(json.dumps(paths))
+    """
+
+    args = [python, '-c', SCRIPT]
+    proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+    out, err = proc.communicate()
+
+    return json.loads(out.decode('ascii'))
+
+def have_distlib(dirs):
+    """Ensure we can import distlib.
+
+    Look on dirs for a distlib wheel, if distlib is not installed.
+    """
+    try:
+        # First, look for a system-installed distlib
+        import distlib
+        return True
+    except ImportError:
+        ok, filename = _find_file('distlib-*.whl', dirs)
+        if ok:
+            sys.path.append(filename)
+            try:
+                import distlib
+                return True
+            except ImportError:
+                pass
+    # We cannot find a distlib wheel.
+    return False
+
+def install_requirements(py_executable, reqs,
+                 search_dirs=None, never_download=False):
+
+    if search_dirs is None:
+        search_dirs = file_search_dirs()
+
+    if not have_distlib(search_dirs):
+        return reqs
+
+    from distlib.locators import AggregatingLocator, DirectoryLocator
+    from distlib.wheel import Wheel
+    class WheelLocator(DirectoryLocator):
+        downloadable_extensions = ('.whl',)
+
+    locators = []
+    for dir in search_dirs:
+        loc = WheelLocator(dir, recursive=False)
+        locators.append(loc)
+    # TODO: Need to check distlib - these locators might find wheels
+    # compatible with the *current* Python rather than with the one installed
+    # in the virtualenv...
+    # TODO: If never_download is false, maybe we should add a wheel locator
+    # for PyPI.
+    # TODO: Extend this to locate sdists and eggs??? This is probably not
+    # worth it, as we're getting into pip territory then...
+    # TODO: Add options to the main program to point to a package index
+    # containing wheels, or to add extra requirements.
+    # TODO: We might want to use merge=True here. Without it, the first
+    # directory containing a wheel is used even if better wheels are available
+    # in later directories...
+    locator = AggregatingLocator(*locators)
+
+    dists = {}
+    outstanding = set()
+    for req in reqs:
+        dist = locator.locate(req)
+        if dist is None:
+            outstanding.add(req)
+        else:
+            dists[req] = dist
+
+    paths = _get_paths_for_exe(py_executable)
+    headers = paths['headers']
+    for req, dist in dists.items():
+        url = dist.download_url
+        paths['headers'] = headers % (dist.name,)
+        filename = url2pathname(urlparse(url).path)
+        wheel = Wheel(filename)
+        # We should check for failed installs here and add the requirement
+        # back into outstanding
+        wheel.install(paths, executable=py_executable)
+
+    return outstanding
 
 def _find_file(filename, dirs):
     for dir in reversed(dirs):
@@ -1082,16 +1202,36 @@ def create_environment(home_dir, site_packages=False, clear=False,
 
     install_distutils(home_dir)
 
+    reqs = set()
     if not no_setuptools:
         if use_distribute:
-            install_distribute(py_executable, unzip=unzip_setuptools,
-                               search_dirs=search_dirs, never_download=never_download)
+            reqs.add('distribute')
         else:
-            install_setuptools(py_executable, unzip=unzip_setuptools,
-                               search_dirs=search_dirs, never_download=never_download)
-
+            reqs.add('setuptools')
         if not no_pip:
-            install_pip(py_executable, search_dirs=search_dirs, never_download=never_download)
+            reqs.add('pip')
+
+    # Install what we can using distlib, and return the rest for installing
+    # "the old way".
+    reqs = install_requirements(py_executable, reqs,
+        search_dirs=search_dirs, never_download=never_download)
+
+    # If distlib is not available, we can only install setuptools, distribute
+    # and pip.
+    others = reqs.difference(set(["setuptools", "distribute", "pip"]))
+    if others:
+        logger.fatal("Without distlib, we cannot install " +
+                     ', '.join(sorted(others)))
+        sys.exit(1)
+
+    if 'distribute' in reqs:
+        install_distribute(py_executable, unzip=unzip_setuptools,
+                           search_dirs=search_dirs, never_download=never_download)
+    if 'setuptools' in reqs:
+        install_setuptools(py_executable, unzip=unzip_setuptools,
+                           search_dirs=search_dirs, never_download=never_download)
+    if 'pip' in reqs:
+        install_pip(py_executable, search_dirs=search_dirs, never_download=never_download)
 
     install_activate(home_dir, bin_dir, prompt)
 
