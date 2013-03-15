@@ -407,9 +407,9 @@ def mkdir(path):
     else:
         logger.info('Directory %s already exists', path)
 
-def copyfileordir(src, dest):
+def copyfileordir(src, dest, symlink=True):
     if os.path.isdir(src):
-        shutil.copytree(src, dest, True)
+        shutil.copytree(src, dest, symlink)
     else:
         shutil.copy2(src, dest)
 
@@ -434,10 +434,10 @@ def copyfile(src, dest, symlink=True):
             os.symlink(srcpath, dest)
         except (OSError, NotImplementedError):
             logger.info('Symlinking failed, copying to %s', dest)
-            copyfileordir(src, dest)
+            copyfileordir(src, dest, symlink)
     else:
         logger.info('Copying to %s', dest)
-        copyfileordir(src, dest)
+        copyfileordir(src, dest, symlink)
 
 def writefile(dest, content, overwrite=True):
     if not os.path.exists(dest):
@@ -842,6 +842,13 @@ def main():
              "virtual environment")
 
     parser.add_option(
+        '--always-copy',
+        dest='symlink',
+        action='store_false',
+        default=True,
+        help="Always copy files rather than symlinking")
+
+    parser.add_option(
         '--unzip-setuptools',
         dest='unzip_setuptools',
         action='store_true',
@@ -976,7 +983,8 @@ def main():
                        search_dirs=options.search_dirs,
                        never_download=options.never_download,
                        no_setuptools=options.no_setuptools,
-                       no_pip=options.no_pip)
+                       no_pip=options.no_pip,
+                       symlink=options.symlink)
     if 'after_install' in globals():
         after_install(options, home_dir)
 
@@ -1064,7 +1072,7 @@ def call_subprocess(cmd, show_stdout=True,
 def create_environment(home_dir, site_packages=False, clear=False,
                        unzip_setuptools=False, use_distribute=False,
                        prompt=None, search_dirs=None, never_download=False,
-                       no_setuptools=False, no_pip=False):
+                       no_setuptools=False, no_pip=False, symlink=True):
     """
     Creates a new environment in ``home_dir``.
 
@@ -1078,7 +1086,7 @@ def create_environment(home_dir, site_packages=False, clear=False,
 
     py_executable = os.path.abspath(install_python(
         home_dir, lib_dir, inc_dir, bin_dir,
-        site_packages=site_packages, clear=clear))
+        site_packages=site_packages, clear=clear, symlink=symlink))
 
     install_distutils(home_dir)
 
@@ -1184,7 +1192,7 @@ def change_prefix(filename, dst_prefix):
     assert False, "Filename %s does not start with any of these prefixes: %s" % \
         (filename, prefixes)
 
-def copy_required_modules(dst_prefix):
+def copy_required_modules(dst_prefix, symlink):
     import imp
     # If we are running under -p, we need to remove the current
     # directory from sys.path temporarily here, so that we
@@ -1213,11 +1221,11 @@ def copy_required_modules(dst_prefix):
                     dst_filename = join(dst_prefix, 'lib', 'python%s' % sys.version[:3], 'readline.so')
                 else:
                     dst_filename = change_prefix(filename, dst_prefix)
-                copyfile(filename, dst_filename)
+                copyfile(filename, dst_filename, symlink)
                 if filename.endswith('.pyc'):
                     pyfile = filename[:-1]
                     if os.path.exists(pyfile):
-                        copyfile(pyfile, dst_filename[:-1])
+                        copyfile(pyfile, dst_filename[:-1], symlink)
     finally:
         sys.path = _prev_sys_path
 
@@ -1232,7 +1240,7 @@ def subst_path(prefix_path, prefix, home_dir):
     return prefix_path.replace(prefix, home_dir, 1)
 
 
-def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
+def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, symlink=True):
     """Install just the base environment, no distutils patches etc"""
     if sys.executable.startswith(bin_dir):
         print('Please use the *system* python to run this script')
@@ -1272,9 +1280,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             for fn in os.listdir(stdlib_dir):
                 bn = os.path.splitext(fn)[0]
                 if fn != 'site-packages' and bn in REQUIRED_FILES:
-                    copyfile(join(stdlib_dir, fn), join(lib_dir, fn))
+                    copyfile(join(stdlib_dir, fn), join(lib_dir, fn), symlink)
         # ...and modules
-        copy_required_modules(home_dir)
+        copy_required_modules(home_dir, symlink)
     finally:
         logger.indent -= 2
     mkdir(join(lib_dir, 'site-packages'))
@@ -1297,7 +1305,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
     else:
         stdinc_dir = join(prefix, 'include', py_version + abiflags)
     if os.path.exists(stdinc_dir):
-        copyfile(stdinc_dir, inc_dir)
+        copyfile(stdinc_dir, inc_dir, symlink)
     else:
         logger.debug('No include dir %s' % stdinc_dir)
 
@@ -1314,7 +1322,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             # (traversing virtualenvs), whereas the platinc_dir is relative to
             # the inner virtualenv and ignores the prefix argument.
             # This seems more evolved than designed.
-            copyfile(platinc_dir, platinc_dest)
+            copyfile(platinc_dir, platinc_dest, symlink)
 
     # pypy never uses exec_prefix, just ignore it
     if sys.exec_prefix != prefix and not is_pypy:
@@ -1325,7 +1333,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         else:
             exec_dir = join(sys.exec_prefix, 'lib', py_version)
         for fn in os.listdir(exec_dir):
-            copyfile(join(exec_dir, fn), join(lib_dir, fn))
+            copyfile(join(exec_dir, fn), join(lib_dir, fn), symlink)
 
     if is_jython:
         # Jython has either jython-dev.jar and javalib/ dir, or just
@@ -1333,7 +1341,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
         for name in 'jython-dev.jar', 'javalib', 'jython.jar':
             src = join(prefix, name)
             if os.path.exists(src):
-                copyfile(src, join(home_dir, name))
+                copyfile(src, join(home_dir, name), symlink)
         # XXX: registry should always exist after Jython 2.5rc1
         src = join(prefix, 'registry')
         if os.path.exists(src):
@@ -1409,13 +1417,13 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             if sys.platform in ('win32', 'cygwin'):
                 python_executable += '.exe'
             logger.info('Also created executable %s' % python_executable)
-            copyfile(py_executable, python_executable)
+            copyfile(py_executable, python_executable, symlink)
 
             if is_win:
                 for name in 'libexpat.dll', 'libpypy.dll', 'libpypy-c.dll', 'libeay32.dll', 'ssleay32.dll', 'sqlite.dll':
                     src = join(prefix, name)
                     if os.path.exists(src):
-                        copyfile(src, join(bin_dir, name))
+                        copyfile(src, join(bin_dir, name), symlink)
 
     if os.path.splitext(os.path.basename(py_executable))[0] != expected_exe:
         secondary_exe = os.path.join(os.path.dirname(py_executable),
@@ -1455,7 +1463,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             os.unlink(virtual_lib)
         copyfile(
             os.path.join(prefix, 'Python'),
-            virtual_lib)
+            virtual_lib,
+            symlink)
 
         # And then change the install_name of the copied python executable
         try:
@@ -1496,7 +1505,10 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             full_pth = join(bin_dir, pth)
             if os.path.exists(full_pth):
                 os.unlink(full_pth)
-            os.symlink(py_executable_base, full_pth)
+            if symlink:
+                os.symlink(py_executable_base, full_pth)
+            else:
+                shutil.copyfile(py_executable_base, full_pth)
 
     if is_win and ' ' in py_executable:
         # There's a bug with subprocess on Windows when using a first
@@ -1549,7 +1561,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
                       'your %s file.' % pydistutils)
     ## FIXME: really this should be calculated earlier
 
-    fix_local_scheme(home_dir)
+    fix_local_scheme(home_dir, symlink)
 
     if site_packages:
         if os.path.exists(site_packages_filename):
@@ -1610,7 +1622,7 @@ def install_distutils(home_dir):
     writefile(os.path.join(distutils_path, '__init__.py'), DISTUTILS_INIT)
     writefile(os.path.join(distutils_path, 'distutils.cfg'), DISTUTILS_CFG, overwrite=False)
 
-def fix_local_scheme(home_dir):
+def fix_local_scheme(home_dir, symlink=True):
     """
     Platforms that use the "posix_local" install scheme (like Ubuntu with
     Python 2.7) need to be given an additional "local" location, sigh.
@@ -1627,7 +1639,8 @@ def fix_local_scheme(home_dir):
                 for subdir_name in os.listdir(home_dir):
                     if subdir_name == 'local':
                         continue
-                    os.symlink(os.path.abspath(os.path.join(home_dir, subdir_name)), \
+                    cp_or_ln = (os.symlink if symlink else copyfile)
+                    cp_or_ln(os.path.abspath(os.path.join(home_dir, subdir_name)), \
                                                             os.path.join(local_path, subdir_name))
 
 def fix_lib64(lib_dir):
@@ -1649,7 +1662,8 @@ def fix_lib64(lib_dir):
             "Unexpected parent dir: %r" % lib_parent)
         if os.path.lexists(lib64_link):
             return
-        os.symlink('lib', lib64_link)
+        cp_or_ln = (os.symlink if symlink else copyfile)
+        cp_or_ln('lib', lib64_link)
 
 def resolve_interpreter(exe):
     """
