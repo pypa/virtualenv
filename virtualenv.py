@@ -974,7 +974,7 @@ def main():
                        use_distribute=options.use_distribute,
                        prompt=options.prompt,
                        search_dirs=options.search_dirs,
-                       never_download=options.never_download,
+                       never_download=True,
                        no_setuptools=options.no_setuptools,
                        no_pip=options.no_pip)
     if 'after_install' in globals():
