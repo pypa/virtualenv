@@ -55,12 +55,6 @@ Installation
     We advise against using easy_install to install virtualenv, because easy_install
     does not download from PyPI over SSL.
 
-.. warning::
-
-    We currently advise against using virtualenv.py in isolation without an associated virtualenv_support directory.
-    Using virtualenv.py in isolation relies upon insecure bootstrap scripts, and easy_install to install Setuptools/Distribute and pip.
-
-
 To install globally with `pip` (if you have pip-1.3 or greater installed globally):
 
 ::
@@ -93,6 +87,13 @@ To *use* locally from source (and not be insecure as described in the warning ab
  $ cd virtualenv-X.X
  $ python virtualenv.py myVE
 
+.. note::
+
+    The ``virtualenv.py`` script is *not* supported if run without the
+    necessary pip/setuptools/virtualenv distributions available locally. All
+    of the installation methods above include a ``virtualenv_support``
+    directory alongside ``virtualenv.py`` which contains a complete set of
+    pip, distribute and setuptools distributions, and so are fully supported.
 
 Usage
 -----
@@ -451,17 +452,13 @@ If you use this flag to create an environment, currently, the
 The ``--extra-search-dir`` option
 ---------------------------------
 
-When it creates a new environment, virtualenv installs either setuptools
-or distribute, and pip.  In normal operation when virtualenv is
-installed, the bundled version of these packages included in the
-``virtualenv_support`` directory is used. When ``virtualenv.py`` is run
-standalone and ``virtualenv_support`` is not available, the latest
-releases of these packages are fetched from the `Python Package Index
-<http://pypi.python.org>`_ (PyPI).
+When it creates a new environment, virtualenv installs either setuptools or
+distribute, and pip.  The bundled version of these packages included in the
+``virtualenv_support`` directory is used.
 
 As an alternative, you can provide your own versions of setuptools,
 distribute and/or pip on the filesystem, and tell virtualenv to use
-those distributions instead of downloading them from the Internet.  To
+those distributions instead of the ones in ``virtualenv_support``.  To
 use this feature, pass one or more ``--extra-search-dir`` options to
 virtualenv like this::
 
@@ -473,20 +470,11 @@ distributions must be ``.egg`` files; pip distributions should be
 `.tar.gz` source distributions, and distribute distributions may be
 either (if found an egg will be used preferentially).
 
-Virtualenv will still download these packages if no satisfactory local
-distributions are found.
+Virtualenv will never download packages.  If no satisfactory local
+distributions are found, virtualen will fail.
 
-If you are really concerned about virtualenv fetching these packages
-from the Internet and want to ensure that it never will, you can also
-provide an option ``--never-download`` like so::
-
-    $ virtualenv --extra-search-dir=/path/to/distributions --never-download ENV
-
-If this option is provided, virtualenv will never try to download
-setuptools/distribute or pip. Instead, it will exit with status code 1
-if it fails to find local distributions for any of these required
-packages. The local distribution lookup is done in the following
-locations, with the most recent version found used:
+The distribution lookup is done in the following locations, with the most
+recent version found used:
 
     #. The current directory.
     #. The directory where virtualenv.py is located.
