@@ -409,7 +409,7 @@ def mkdir(path):
 
 def copyfileordir(src, dest):
     if os.path.isdir(src):
-        shutil.copytree(src, dest, True)
+        shutil.copytree(src, dest, not always_copy)
     else:
         shutil.copy2(src, dest)
 
@@ -905,10 +905,20 @@ def main():
         dest='prompt',
         help='Provides an alternative prompt prefix for this environment')
 
+    parser.add_option(
+        '--always-copy',
+        action='count',
+        dest='always_copy',
+        default=0,
+        help="Always copy files instead of symlink")
+
     if 'extend_parser' in globals():
         extend_parser(parser)
 
     options, args = parser.parse_args()
+
+    global always_copy
+    always_copy = options.always_copy
 
     global logger
 
@@ -1496,7 +1506,10 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear):
             full_pth = join(bin_dir, pth)
             if os.path.exists(full_pth):
                 os.unlink(full_pth)
-            os.symlink(py_executable_base, full_pth)
+            if always_copy:
+                copyfile(os.path.join(bin_dir, py_executable_base), full_pth)
+            else:
+                os.symlink(py_executable_base, full_pth)
 
     if is_win and ' ' in py_executable:
         # There's a bug with subprocess on Windows when using a first
@@ -1627,7 +1640,8 @@ def fix_local_scheme(home_dir):
                 for subdir_name in os.listdir(home_dir):
                     if subdir_name == 'local':
                         continue
-                    os.symlink(os.path.abspath(os.path.join(home_dir, subdir_name)), \
+                    cmd = (copyfile if always_copy else os.symlink)
+                    cmd(os.path.abspath(os.path.join(home_dir, subdir_name)), \
                                                             os.path.join(local_path, subdir_name))
 
 def fix_lib64(lib_dir):
