@@ -967,6 +967,10 @@ def main():
         make_environment_relocatable(home_dir)
         return
 
+    if not options.never_download:
+        logger.warn('The --never-download option is for backward compatibility only.')
+        logger.warn('Setting it to false is no longer supported, and will be ignored.')
+
     create_environment(home_dir,
                        site_packages=options.system_site_packages,
                        clear=options.clear,
