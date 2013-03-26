@@ -1261,7 +1261,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     else:
         prefix = sys.prefix
     mkdir(lib_dir)
-    fix_lib64(lib_dir)
+    fix_lib64(lib_dir, symlink)
     stdlib_dirs = [os.path.dirname(os.__file__)]
     if is_win:
         stdlib_dirs.append(join(os.path.dirname(stdlib_dirs[0]), 'DLLs'))
@@ -1643,7 +1643,7 @@ def fix_local_scheme(home_dir, symlink=True):
                     cp_or_ln(os.path.abspath(os.path.join(home_dir, subdir_name)), \
                                                             os.path.join(local_path, subdir_name))
 
-def fix_lib64(lib_dir):
+def fix_lib64(lib_dir, symlink=True):
     """
     Some platforms (particularly Gentoo on x64) put things in lib64/pythonX.Y
     instead of lib/pythonX.Y.  If this is such a platform we'll just create a
