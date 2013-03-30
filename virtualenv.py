@@ -1651,7 +1651,14 @@ def fix_lib64(lib_dir, symlink=True):
     """
     if [p for p in distutils.sysconfig.get_config_vars().values()
         if isinstance(p, basestring) and 'lib64' in p]:
+        # PyPy's library path scheme is not affected by this.
+        # Return early or we will die on the following assert.
+        if is_pypy:
+            logger.debug('PyPy detected, skipping lib64 symlinking')
+            return
+
         logger.debug('This system uses lib64; symlinking lib64 to lib')
+
         assert os.path.basename(lib_dir) == 'python%s' % sys.version[:3], (
             "Unexpected python lib dir: %r" % lib_dir)
         lib_parent = os.path.dirname(lib_dir)
