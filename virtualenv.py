@@ -547,9 +547,7 @@ def _install_req(py_executable, unzip=False, distribute=False,
         remove_from_env.append('PYTHONPATH')
     elif never_download:
         logger.fatal("Can't find any local distributions of %s to install "
-                     "and --never-download is set.  Either re-run virtualenv "
-                     "without the --never-download option, or place a %s "
-                     "distribution (%s) in one of these "
+                     "Please place a %s distribution (%s) in one of these "
                      "locations: %r" % (project_name, project_name,
                                         egg_path or tgz_path,
                                         search_dirs))
@@ -648,10 +646,9 @@ def install_pip(py_executable, search_dirs=None, never_download=False):
         cmd.remove('-x')
     if filename == 'pip':
         if never_download:
-            logger.fatal("Can't find any local distributions of pip to install "
-                         "and --never-download is set.  Either re-run virtualenv "
-                         "without the --never-download option, or place a pip "
-                         "source distribution (zip/tar.gz/tar.bz2) in one of these "
+            logger.fatal("Can't find any local distributions of pip to "
+                         "install. Please place a pip source distribution "
+                         "(zip/tar.gz/tar.bz2) in one of these "
                          "locations: %r" % search_dirs)
             sys.exit(1)
         logger.info('Installing pip from network...')
@@ -904,8 +901,11 @@ def main():
         '--never-download',
         dest="never_download",
         action="store_true",
-        help="Never download anything from the network.  Instead, virtualenv will fail "
-        "if local distributions of setuptools/distribute/pip are not present.")
+        default=True,
+        help="Never download anything from the network. This is now always "
+        "the case. The option is only retained for backward compatibility, "
+        "and does nothing. Virtualenv will fail if local distributions "
+        "of setuptools/distribute/pip are not present.")
 
     parser.add_option(
         '--prompt',
@@ -974,6 +974,10 @@ def main():
         make_environment_relocatable(home_dir)
         return
 
+    if not options.never_download:
+        logger.warn('The --never-download option is for backward compatibility only.')
+        logger.warn('Setting it to false is no longer supported, and will be ignored.')
+
     create_environment(home_dir,
                        site_packages=options.system_site_packages,
                        clear=options.clear,
@@ -981,7 +985,7 @@ def main():
                        use_distribute=options.use_distribute,
                        prompt=options.prompt,
                        search_dirs=options.search_dirs,
-                       never_download=options.never_download,
+                       never_download=True,
                        no_setuptools=options.no_setuptools,
                        no_pip=options.no_pip,
                        symlink=options.symlink)
