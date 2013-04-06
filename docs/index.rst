@@ -452,14 +452,13 @@ If you use this flag to create an environment, currently, the
 The ``--extra-search-dir`` option
 ---------------------------------
 
-When it creates a new environment, virtualenv installs either setuptools or
-distribute, and pip.  The bundled version of these packages included in the
-``virtualenv_support`` directory is used.
+.. note:: Currently, this feature only partially works for pip, not at all for setuptools, or distribute. For details, see `Issue #327 <https://github.com/pypa/virtualenv/issues/327>`_
 
-As an alternative, you can provide your own versions of setuptools,
+This option allows you to provide your own versions of setuptools,
 distribute and/or pip on the filesystem, and tell virtualenv to use
-those distributions instead of the ones in ``virtualenv_support``.  To
-use this feature, pass one or more ``--extra-search-dir`` options to
+those distributions instead of the ones in ``virtualenv_support``.
+
+To use this feature, pass one or more ``--extra-search-dir`` options to
 virtualenv like this::
 
     $ virtualenv --extra-search-dir=/path/to/distributions ENV
@@ -470,19 +469,18 @@ distributions must be ``.egg`` files; pip distributions should be
 `.tar.gz` source distributions, and distribute distributions may be
 either (if found an egg will be used preferentially).
 
-Virtualenv will never download packages.  If no satisfactory local
-distributions are found, virtualen will fail.
+If no satisfactory local distributions are found, virtualenv will fail. Virtualenv will never download packages.
 
 The distribution lookup is done in the following locations, with the most
 recent version found used:
 
-    #. The current directory.
-    #. The directory where virtualenv.py is located.
-    #. A ``virtualenv_support`` directory relative to the directory where
-       virtualenv.py is located.
-    #. If the file being executed is not named virtualenv.py (i.e. is a boot
-       script), a ``virtualenv_support`` directory relative to wherever
-       virtualenv.py is actually installed.
+#. The current directory.
+#. The directory where virtualenv.py is located.
+#. A ``virtualenv_support`` directory relative to the directory where
+   virtualenv.py is located.
+#. If the file being executed is not named virtualenv.py (i.e. is a boot
+   script), a ``virtualenv_support`` directory relative to wherever
+   virtualenv.py is actually installed.
 
 
 Compare & Contrast with Alternatives
