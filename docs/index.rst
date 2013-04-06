@@ -78,7 +78,7 @@ To install globally from source:
  $ [sudo] python setup.py install
 
 
-To *use* locally from source (and not be insecure as described in the warning above):
+To *use* locally from source:
 
 ::
 
@@ -452,7 +452,7 @@ If you use this flag to create an environment, currently, the
 The ``--extra-search-dir`` option
 ---------------------------------
 
-.. note:: Currently, this feature only partially works for pip, not at all for setuptools, or distribute. For details, see `Issue #327 <https://github.com/pypa/virtualenv/issues/327>`_
+.. note:: Currently, this feature only partially works for pip, and not at all for setuptools, or distribute. For details, see `Issue #327 <https://github.com/pypa/virtualenv/issues/327>`_
 
 This option allows you to provide your own versions of setuptools,
 distribute and/or pip on the filesystem, and tell virtualenv to use

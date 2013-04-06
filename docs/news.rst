@@ -14,13 +14,13 @@ Changes & News
    ``$ENV/bin/python`` and re-running virtualenv on the same target directory
    with the upgraded Python.
 
-1.10 (2013-mm-dd)
-~~~~~~~~~~~~~~~~~~
+1.10 (unreleased)
+~~~~~~~~~~~~~~~~~
 
-* The ``--never-download`` flag is now obsolete. Virtualenv aleays expects
-  local copies of pip, distribute and/or setuptools (these are available by
-  default in the ``virtualenv_support`` directory). The ``--never-download``
-  option is retained purely as a no-op for backward compatibility.
+* Using ``virtualenv.py`` as an isolated script (i.e. without an associated ``virtualenv_support``
+  directory) is no longer supported for security reasons and will fail with an error.
+  Along with this, ``--never-download`` is now always pinned to True, and is only being maintained
+  in the short term for backward compatibility (Pull #412).
 
 1.9.1 (2013-03-08)
 ~~~~~~~~~~~~~~~~~~
