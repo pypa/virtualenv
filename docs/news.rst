@@ -17,6 +17,7 @@ Changes & News
 1.10 (unreleased)
 ~~~~~~~~~~~~~~~~~
 
+* Upgraded distribute to 0.6.36.
 * Using ``virtualenv.py`` as an isolated script (i.e. without an associated ``virtualenv_support``
   directory) is no longer supported for security reasons and will fail with an error.
   Along with this, ``--never-download`` is now always pinned to True, and is only being maintained
