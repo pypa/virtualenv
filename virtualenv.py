@@ -1223,6 +1223,11 @@ def copy_required_modules(dst_prefix, symlink):
                 if modname == 'readline' and sys.platform == 'darwin' and not (
                         is_pypy or filename.endswith(join('lib-dynload', 'readline.so'))):
                     dst_filename = join(dst_prefix, 'lib', 'python%s' % sys.version[:3], 'readline.so')
+                elif modname == 'readline' and sys.platform == 'win32':
+                    # special-case for Windows, where readline is not a
+                    # standard module, though it may have been installed in
+                    # site-packages by a third-party package
+                    pass
                 else:
                     dst_filename = change_prefix(filename, dst_prefix)
                 copyfile(filename, dst_filename, symlink)
