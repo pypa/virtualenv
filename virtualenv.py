@@ -422,7 +422,7 @@ def copyfile(src, dest, symlink=True):
         logger.debug('File %s already exists', dest)
         return
     if not os.path.exists(os.path.dirname(dest)):
-        logger.info('Creating parent directories for %s' % os.path.dirname(dest))
+        logger.info('Creating parent directories for %s', os.path.dirname(dest))
         os.makedirs(os.path.dirname(dest))
     if not os.path.islink(src):
         srcpath = os.path.abspath(src)
@@ -531,7 +531,7 @@ def _install_req(py_executable, unzip=False, distribute=False,
 
     old_chdir = os.getcwd()
     if egg_path is not None and os.path.exists(egg_path):
-        logger.info('Using existing %s egg: %s' % (project_name, egg_path))
+        logger.info('Using existing %s egg: %s', project_name, egg_path)
         cmd.append(egg_path)
         if os.environ.get('PYTHONPATH'):
             env['PYTHONPATH'] = egg_path + os.path.pathsep + os.environ['PYTHONPATH']
@@ -539,7 +539,7 @@ def _install_req(py_executable, unzip=False, distribute=False,
             env['PYTHONPATH'] = egg_path
     elif tgz_path is not None and os.path.exists(tgz_path):
         # Found a tgz source dist, let's chdir
-        logger.info('Using existing %s egg: %s' % (project_name, tgz_path))
+        logger.info('Using existing %s egg: %s', project_name, tgz_path)
         os.chdir(os.path.dirname(tgz_path))
         # in this case, we want to be sure that PYTHONPATH is unset (not
         # just empty, really unset), else CPython tries to import the
@@ -548,15 +548,15 @@ def _install_req(py_executable, unzip=False, distribute=False,
     elif never_download:
         logger.fatal("Can't find any local distributions of %s to install "
                      "Please place a %s distribution (%s) in one of these "
-                     "locations: %r" % (project_name, project_name,
+                     "locations: %r", project_name, project_name,
                                         egg_path or tgz_path,
-                                        search_dirs))
+                                        search_dirs)
         sys.exit(1)
     elif egg_path:
-        logger.info('No %s egg found; downloading' % project_name)
+        logger.info('No %s egg found; downloading', project_name)
         cmd.extend(['--always-copy', '-U', project_name])
     else:
-        logger.info('No %s tgz found; downloading' % project_name)
+        logger.info('No %s tgz found; downloading', project_name)
     logger.start_progress('Installing %s...' % project_name)
     logger.indent += 2
     cwd = None
@@ -649,12 +649,12 @@ def install_pip(py_executable, search_dirs=None, never_download=False):
             logger.fatal("Can't find any local distributions of pip to "
                          "install. Please place a pip source distribution "
                          "(zip/tar.gz/tar.bz2) in one of these "
-                         "locations: %r" % search_dirs)
+                         "locations: %r", search_dirs)
             sys.exit(1)
         logger.info('Installing pip from network...')
     else:
-        logger.info('Installing existing %s distribution: %s' % (
-                os.path.basename(filename), filename))
+        logger.info('Installing existing %s distribution: %s',
+                os.path.basename(filename), filename)
     logger.start_progress('Installing pip...')
     logger.indent += 2
     def _filter_setup(line):
