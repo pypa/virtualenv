@@ -17,6 +17,8 @@ Changes & News
 1.10 (unreleased)
 ~~~~~~~~~~~~~~~~~
 
+* Dropped support for Python 2.5. The minimum supported Python version is
+  now Python 2.6.
 * Added support for PyPy3k
 * Upgraded distribute to 0.6.36.
 * Using ``virtualenv.py`` as an isolated script (i.e. without an associated ``virtualenv_support``
