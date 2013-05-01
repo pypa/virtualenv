@@ -32,7 +32,7 @@ end
 # unset irrelevant variables
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "__VIRTUAL_ENV__"
+set -gx VIRTUAL_ENV (cd (dirname (status -f)); cd ..; pwd)
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV/__BIN_NAME__" $PATH
