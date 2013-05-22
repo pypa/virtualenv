@@ -115,7 +115,8 @@ Distribute instead of setuptools, just call virtualenv like this::
 
     $ virtualenv --distribute ENV
 
-You can also set the environment variable VIRTUALENV_DISTRIBUTE.
+This will install distribute version `0.6.34`. You can also set 
+the environment variable VIRTUALENV_DISTRIBUTE.
 
 A new virtualenv also includes the `pip <http://pypi.python.org/pypi/pip>`_
 installer, so you can use ``ENV/bin/pip`` to install additional packages into
