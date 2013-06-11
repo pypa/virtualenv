@@ -5,6 +5,9 @@ python:
   - "3.2"
   - "3.3"
   - "pypy"
+matrix:
+  allow_failures:
+    - python: "2.5"
 install:
   - pip install --use-mirrors nose coverage
 script:
