@@ -12,9 +12,7 @@ script:
 # Unit tests
   - coverage run -a setup.py test
 # Integration test
-  - coverage run -a virtualenv.py --distribute ./test-venv-01
-# Also test with setuptools if we are on Python 2
-  - python -c 'import sys; sys.exit(0 if sys.version_info >= (3,) else 1)' || coverage run -a virtualenv.py --setuptools ./test-venv-03
+  - coverage run -a virtualenv.py ./test-venv-01
 # How was our test coverage?
   - coverage report --show-missing
 notifications:
