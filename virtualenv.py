@@ -670,13 +670,6 @@ def main():
         help='Make an EXISTING virtualenv environment relocatable.  '
         'This fixes up scripts and makes all .pth files relative')
 
-    # parser.add_option(
-    #     '--distribute', '--use-distribute',  # the second option is for legacy reasons here. Hi Kenneth!
-    #     dest='use_distribute',
-    #     action='store_true',
-    #     help='Use Distribute instead of Setuptools. Set environ variable '
-    #     'VIRTUALENV_DISTRIBUTE to make it the default ')
-
     parser.add_option(
         '--no-setuptools',
         dest='no_setuptools',
@@ -689,13 +682,6 @@ def main():
         dest='no_pip',
         action='store_true',
         help='Do not install pip in the new virtualenv.')
-
-    # parser.add_option(
-    #     '--setuptools',
-    #     dest='use_distribute',
-    #     action='store_false',
-    #     help='Use Setuptools instead of Distribute.  Set environ variable '
-    #     'VIRTUALENV_SETUPTOOLS to make it the default ')
 
     default_search_dirs = file_search_dirs()
     parser.add_option(
