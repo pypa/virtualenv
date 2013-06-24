@@ -868,7 +868,7 @@ def install_sdist(project_name, sdist, py_executable, search_dirs=None):
     found, sdist_path = _find_file(sdist, search_dirs)
     if not found:
         logger.fatal("Cannot find sdist %s" % (sdist,))
-        return
+        sys.exit(100)
 
     tmpdir = tempfile.mkdtemp()
     try:
