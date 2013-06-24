@@ -68,6 +68,42 @@ elif is_jython:
 else:
     expected_exe = 'python'
 
+# Return a mapping of version -> Python executable
+# Only provided for Windows, where the information in the registry is used
+if not is_win:
+    def get_installed_pythons():
+        return {}
+else:
+    try:
+        import winreg
+    except ImportError:
+        import _winreg as winreg
+
+    def get_installed_pythons():
+        python_core = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE,
+                "Software\\Python\\PythonCore")
+        i = 0
+        versions = []
+        while True:
+            try:
+                versions.append(winreg.EnumKey(python_core, i))
+                i = i + 1
+            except WindowsError:
+                break
+        exes = dict()
+        for ver in versions:
+            path = winreg.QueryValue(python_core, "%s\\InstallPath" % ver)
+            exes[ver] = join(path, "python.exe")
+
+        winreg.CloseKey(python_core)
+
+        # Add the major versions
+        # Sort the keys, then repeatedly update the major version entry
+        # Last executable (i.e., highest version) wins with this approach
+        for ver in sorted(exes):
+            exes[ver[0]] = exes[ver]
+
+        return exes
 
 REQUIRED_MODULES = ['os', 'posix', 'posixpath', 'nt', 'ntpath', 'genericpath',
                     'fnmatch', 'locale', 'encodings', 'codecs',
@@ -1496,6 +1532,12 @@ def resolve_interpreter(exe):
     """
     If the executable given isn't an absolute path, search $PATH for the interpreter
     """
+    # If the "executable" is a version number, get the installed executable for
+    # that version
+    python_versions = get_installed_pythons()
+    if exe in python_versions:
+        exe = python_versions[exe]
+
     if os.path.abspath(exe) != exe:
         paths = os.environ.get('PATH', '').split(os.pathsep)
         for path in paths:
