@@ -25,6 +25,8 @@ Changes & News
   directory) is no longer supported for security reasons and will fail with an error.
   Along with this, ``--never-download`` is now always pinned to True, and is only being maintained
   in the short term for backward compatibility (Pull #412).
+* Added the option to use a version number with the -p option to get the system
+  copy of that Python version (Windows only)
 
 1.9.1 (2013-03-08)
 ~~~~~~~~~~~~~~~~~~
