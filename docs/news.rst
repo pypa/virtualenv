@@ -20,7 +20,7 @@ Changes & News
 * Dropped support for Python 2.5. The minimum supported Python version is
   now Python 2.6.
 * Added support for PyPy3k
-* Upgraded distribute to 0.6.36.
+* Switched to the merged setuptools 0.8 for Python 2 and 3
 * Using ``virtualenv.py`` as an isolated script (i.e. without an associated ``virtualenv_support``
   directory) is no longer supported for security reasons and will fail with an error.
   Along with this, ``--never-download`` is now always pinned to True, and is only being maintained
