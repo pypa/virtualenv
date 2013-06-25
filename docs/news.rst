@@ -27,6 +27,8 @@ Changes & News
   in the short term for backward compatibility (Pull #412).
 * Added the option to use a version number with the -p option to get the system
   copy of that Python version (Windows only)
+* Removed embedded ``ez_setup.py``, ``distribute_setup.py`` and
+  ``distribute_from_egg.py`` files as part of switching to merged setuptools.
 
 1.9.1 (2013-03-08)
 ~~~~~~~~~~~~~~~~~~
