@@ -743,6 +743,18 @@ def main():
         dest='prompt',
         help='Provides an alternative prompt prefix for this environment')
 
+    parser.add_option(
+        '--setuptools',
+        dest='setuptools',
+        action='store_true',
+        help="Backward compatibility. Does nothing.")
+
+    parser.add_option(
+        '--distribute',
+        dest='distribute',
+        action='store_true',
+        help="Backward compatibility. Does nothing.")
+
     if 'extend_parser' in globals():
         extend_parser(parser)
 
