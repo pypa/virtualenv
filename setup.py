@@ -61,8 +61,6 @@ except ImportError:
 
 setup(
     name='virtualenv',
-    # If you change the version here, change it in virtualenv.py and
-    # docs/conf.py as well
     version=get_version(),
     description="Virtual Python Environment builder",
     long_description=long_description,
