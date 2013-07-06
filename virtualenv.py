@@ -2,10 +2,8 @@
 """Create a "virtual" Python installation
 """
 
-# If you change the version here, change it in setup.py
-# and docs/conf.py as well.
-__version__ = "1.11.dev1"  # following best practices
-virtualenv_version = __version__  # legacy, again
+__version__ = "1.11.dev1"
+virtualenv_version = __version__  # legacy
 
 import base64
 import sys
