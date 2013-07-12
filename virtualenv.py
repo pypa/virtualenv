@@ -1400,8 +1400,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     proc_stdout = proc_stdout.strip().decode("utf-8")
     proc_stdout = os.path.normcase(os.path.abspath(proc_stdout))
     norm_home_dir = os.path.normcase(os.path.abspath(home_dir).decode(sys.getfilesystemencoding())) 
-    if hasattr(norm_home_dir, 'decode'):
-        norm_home_dir = norm_home_dir.decode(sys.getfilesystemencoding())
+    #if hasattr(norm_home_dir, 'decode'):
+    #    norm_home_dir = norm_home_dir.decode(sys.getfilesystemencoding())
     if proc_stdout != norm_home_dir:
         logger.fatal(
             'ERROR: The executable %s is not functioning' % py_executable)
@@ -1452,7 +1452,8 @@ def install_activate(home_dir, bin_dir, prompt=None):
 
         # Run-time conditional enables (basic) Cygwin compatibility
         home_dir_sh = ("""$(if [ "$OSTYPE" "==" "cygwin" ]; then cygpath -u '%s'; else echo '%s'; fi;)""" %
-                       (home_dir, home_dir_msys))
+                       (home_dir, home_dir_msys)).decode(sys.getfilesystemencoding())
+        
         files['activate'] = ACTIVATE_SH.replace('__VIRTUAL_ENV__', home_dir_sh)
 
     else:
