@@ -20,19 +20,21 @@ Changes & News
 * **BACKWARDS INCOMPATIBLE** Dropped support for Python 2.5. The minimum
   supported Python version is now Python 2.6.
 
-* **BACKWARDS INCOMPATIBLE** Switched to the new setuptools (v0.9.7) which
-  has been merged with Distribute_ again and works for Python 2 and 3 with one
-  codebase. The ``--distribute`` and ``--setuptools`` options are now no-op.
+* **BACKWARDS INCOMPATIBLE** Using ``virtualenv.py`` as an isolated script
+  (i.e. without an associated ``virtualenv_support`` directory) is no longer
+  supported for security reasons and will fail with an error.
+
+  Along with this, ``--never-download`` is now always pinned to ``True``, and
+  is only being maintained in the short term for backward compatibility
+  (Pull #412).
+
+* **IMPORTANT** Switched to the new setuptools (v0.9.7) which has been merged
+  with Distribute_ again and works for Python 2 and 3 with one codebase.
+  The ``--distribute`` and ``--setuptools`` options are now no-op.
 
 * Updated to pip 1.4.
 
 * Added support for PyPy3k
-
-* Using ``virtualenv.py`` as an isolated script (i.e. without an associated
-  ``virtualenv_support`` directory) is no longer supported for security reasons
-  and will fail with an error. Along with this, ``--never-download`` is now
-  always pinned to ``True``, and is only being maintained in the short term for
-  backward compatibility (Pull #412).
 
 * Added the option to use a version number with the ``-p`` option to get the
   system copy of that Python version (Windows only)
