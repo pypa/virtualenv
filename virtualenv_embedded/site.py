@@ -560,13 +560,17 @@ def virtual_install_main_packages():
     if _is_jython:
         paths = [os.path.join(sys.real_prefix, 'Lib')]
     elif _is_pypy:
-        if sys.pypy_version_info >= (1, 5):
+        if sys.version_info > (3, 2):
+            cpyver = '%d' % sys.version_info[0]
+        elif sys.pypy_version_info >= (1, 5):
             cpyver = '%d.%d' % sys.version_info[:2]
         else:
             cpyver = '%d.%d.%d' % sys.version_info[:3]
         paths = [os.path.join(sys.real_prefix, 'lib_pypy'),
-                 os.path.join(sys.real_prefix, 'lib-python', 'modified-%s' % cpyver),
                  os.path.join(sys.real_prefix, 'lib-python', cpyver)]
+        if sys.pypy_version_info < (1, 9):
+            paths.insert(1, os.path.join(sys.real_prefix,
+                                         'lib-python', 'modified-%s' % cpyver))
         hardcoded_relative_dirs = paths[:] # for the special 'darwin' case below
         #
         # This is hardcoded in the Python executable, but relative to sys.prefix:
