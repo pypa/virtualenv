@@ -14,21 +14,35 @@ Changes & News
    ``$ENV/bin/python`` and re-running virtualenv on the same target directory
    with the upgraded Python.
 
-1.10 (unreleased)
+1.10 (2013-07-23)
 ~~~~~~~~~~~~~~~~~
 
-* Dropped support for Python 2.5. The minimum supported Python version is
-  now Python 2.6.
+* **BACKWARDS INCOMPATIBLE** Dropped support for Python 2.5. The minimum
+  supported Python version is now Python 2.6.
+
+* **BACKWARDS INCOMPATIBLE** Switched to the new setuptools (v0.9.7) which
+  has been merged with Distribute_ again and works for Python 2 and 3 with one
+  codebase. The ``--distribute`` and ``--setuptools`` options are now no-op.
+
+* Updated to pip 1.4.
+
 * Added support for PyPy3k
-* Switched to the merged setuptools (v0.9.7) for Python 2 and 3
-* Using ``virtualenv.py`` as an isolated script (i.e. without an associated ``virtualenv_support``
-  directory) is no longer supported for security reasons and will fail with an error.
-  Along with this, ``--never-download`` is now always pinned to True, and is only being maintained
-  in the short term for backward compatibility (Pull #412).
-* Added the option to use a version number with the -p option to get the system
-  copy of that Python version (Windows only)
+
+* Using ``virtualenv.py`` as an isolated script (i.e. without an associated
+  ``virtualenv_support`` directory) is no longer supported for security reasons
+  and will fail with an error. Along with this, ``--never-download`` is now
+  always pinned to ``True``, and is only being maintained in the short term for
+  backward compatibility (Pull #412).
+
+* Added the option to use a version number with the ``-p`` option to get the
+  system copy of that Python version (Windows only)
+
 * Removed embedded ``ez_setup.py``, ``distribute_setup.py`` and
   ``distribute_from_egg.py`` files as part of switching to merged setuptools.
+
+* Fixed ``--relocatable`` to work better on Windows.
+
+* Fixed issue with readline on Windows.
 
 1.9.1 (2013-03-08)
 ~~~~~~~~~~~~~~~~~~
