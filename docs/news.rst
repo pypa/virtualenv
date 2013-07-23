@@ -44,6 +44,8 @@ Changes & News
 
 * Fixed issue with readline on Windows.
 
+.. _Distribute: https://pypi.python.org/pypi/distribute
+
 1.9.1 (2013-03-08)
 ~~~~~~~~~~~~~~~~~~
 

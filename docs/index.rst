@@ -6,7 +6,7 @@ virtualenv
 `Issues <https://github.com/pypa/virtualenv/issues>`_ `|`
 `Github <https://github.com/pypa/virtualenv>`_ `|`
 `PyPI <https://pypi.python.org/pypi/virtualenv/>`_ `|`
-irc:#pip
+IRC: #pip on Freenode
 
 .. comment: split here
 
@@ -42,20 +42,21 @@ Installation
 
 .. warning::
 
-    We advise installing virtualenv-1.9 or greater. Prior to version 1.9, the pip included in virtualenv did not
-    not download from PyPI over SSL.
+    We advise installing virtualenv-1.9 or greater. Prior to version 1.9, the
+    pip included in virtualenv did not not download from PyPI over SSL.
 
 .. warning::
 
-    When using pip to install virtualenv, we advise using pip-1.3 or greater. Prior to version 1.3, pip did not
-    not download from PyPI over SSL.
+    When using pip to install virtualenv, we advise using pip 1.3 or greater.
+    Prior to version 1.3, pip did not not download from PyPI over SSL.
 
 .. warning::
 
-    We advise against using easy_install to install virtualenv, because easy_install
-    does not download from PyPI over SSL.
+    We advise against using easy_install to install virtualenv when using
+    setuptools < 0.9.7, because easy_install didn't download from PyPI over SSL
+    and was broken in some subtle ways.
 
-To install globally with `pip` (if you have pip-1.3 or greater installed globally):
+To install globally with `pip` (if you have pip 1.3 or greater installed globally):
 
 ::
 
@@ -453,9 +454,11 @@ If you use this flag to create an environment, currently, the
 The ``--extra-search-dir`` option
 ---------------------------------
 
-.. note:: Currently, this feature only partially works for pip, and not at
-all for setuptools. For details, see
-`Issue #327 <https://github.com/pypa/virtualenv/issues/327>`_
+.. note::
+
+    Currently, this feature only partially works for pip, and not at
+    all for setuptools. For details,
+    see `Issue #327 <https://github.com/pypa/virtualenv/issues/327>`_
 
 This option allows you to provide your own versions of setuptools
 and/or pip on the filesystem, and tell virtualenv to use those distributions
