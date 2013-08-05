@@ -28,7 +28,7 @@ Changes & News
   is only being maintained in the short term for backward compatibility
   (Pull #412).
 
-* **IMPORTANT** Switched to the new setuptools (v0.9.7) which has been merged
+* **IMPORTANT** Switched to the new setuptools (v0.9.8) which has been merged
   with Distribute_ again and works for Python 2 and 3 with one codebase.
   The ``--distribute`` and ``--setuptools`` options are now no-op.
 
