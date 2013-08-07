@@ -109,7 +109,7 @@ interpreter that uses this environment. Anytime you use that interpreter
 (including when a script has ``#!/path/to/ENV/bin/python`` in it) the libraries
 in that environment will be used.
 
-It also installs either `Setuptools
+It also installs `Setuptools
 <http://peak.telecommunity.com/DevCenter/setuptools>`_ into the environment.
 
 .. note::
