@@ -14,6 +14,13 @@ Changes & News
    ``$ENV/bin/python`` and re-running virtualenv on the same target directory
    with the upgraded Python.
 
+1.10.1 (2013-08-07)
+~~~~~~~~~~~~~~~~~~~
+
+* Upgraded pip to v1.4.1
+* Upgraded setuptools to v0.9.8
+
+
 1.10 (2013-07-23)
 ~~~~~~~~~~~~~~~~~
 
@@ -28,7 +35,7 @@ Changes & News
   is only being maintained in the short term for backward compatibility
   (Pull #412).
 
-* **IMPORTANT** Switched to the new setuptools (v0.9.8) which has been merged
+* **IMPORTANT** Switched to the new setuptools (v0.9.7) which has been merged
   with Distribute_ again and works for Python 2 and 3 with one codebase.
   The ``--distribute`` and ``--setuptools`` options are now no-op.
 
