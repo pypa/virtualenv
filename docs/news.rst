@@ -14,6 +14,15 @@ Changes & News
    ``$ENV/bin/python`` and re-running virtualenv on the same target directory
    with the upgraded Python.
 
+1.10.1 (2013-08-07)
+~~~~~~~~~~~~~~~~~~~
+
+* **New Signing Key** Release 1.10.1 is using a different key than normal with
+  fingerprint: 7C6B 7C5D 5E2B 6356 A926 F04F 6E3C BCE9 3372 DCFA
+* Upgraded pip to v1.4.1
+* Upgraded setuptools to v0.9.8
+
+
 1.10 (2013-07-23)
 ~~~~~~~~~~~~~~~~~
 
