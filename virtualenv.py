@@ -1585,7 +1585,8 @@ def make_environment_relocatable(home_dir):
     ## FIXME: need to fix up distutils.cfg
 
 OK_ABS_SCRIPTS = ['python', 'python%s' % sys.version[:3],
-                  'activate', 'activate.bat', 'activate_this.py']
+                  'activate', 'activate.bat', 'activate_this.py',
+                  'activate.fish', 'activate.csh']
 
 def fixup_scripts(home_dir, bin_dir):
     if is_win:
