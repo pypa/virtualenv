@@ -1506,7 +1506,7 @@ def fix_local_scheme(home_dir, symlink=True):
                     if subdir_name == 'local':
                         continue
                     if symlink:
-                        # use relative link target, so a virtualencv can be relocated,
+                        # use relative link target, so a virtualenv can be relocated,
                         # and also be built in a staging area and then packaged to DEB etc.
                         os.symlink(os.path.join('..', subdir_name),
                             os.path.join(local_path, subdir_name))
