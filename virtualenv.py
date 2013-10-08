@@ -130,7 +130,7 @@ elif majver == 3:
                              'reprlib'])
     if minver >= 2:
         REQUIRED_FILES[-1] = 'config-%s' % majver
-    if minver == 3:
+    if minver >= 3:
         import sysconfig
         platdir = sysconfig.get_config_var('PLATDIR')
         REQUIRED_FILES.append(platdir)
@@ -285,6 +285,8 @@ elif majver == 3:
             #"xmlrpc",
             #"zipfile",
         ])
+if minver >= 4:
+    REQUIRED_MODULES.extend(['operator'])
 
 if is_pypy:
     # these are needed to correctly display the exceptions that may happen
