@@ -21,6 +21,6 @@ if defined _OLD_VIRTUAL_PATH (
 ) else (
     set "_OLD_VIRTUAL_PATH=%PATH%"
 )
-set "PATH=%VIRTUAL_ENV%\__BIN_NAME__;%PATH%"
+set "PATH=%VIRTUAL_ENV%;%PATH%"
 
 :END
