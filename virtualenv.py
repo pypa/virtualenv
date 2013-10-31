@@ -724,6 +724,7 @@ def main():
         '--extra-search-dir',
         dest="search_dirs",
         action="append",
+        metavar='DIR',
         default=default_search_dirs,
         help="Directory to look for setuptools/pip distributions in. "
         "You can add any number of additional --extra-search-dir paths.")
