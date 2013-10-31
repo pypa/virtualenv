@@ -454,38 +454,28 @@ If you use this flag to create an environment, currently, the
 The ``--extra-search-dir`` option
 ---------------------------------
 
-.. note::
-
-    Currently, this feature only partially works for pip, and not at
-    all for setuptools. For details,
-    see `Issue #327 <https://github.com/pypa/virtualenv/issues/327>`_
-
-This option allows you to provide your own versions of setuptools
-and/or pip on the filesystem, and tell virtualenv to use those distributions
-instead of the ones in ``virtualenv_support``.
+This option allows you to provide your own versions of setuptools and/or
+pip to use instead of the embedded versions that come with virtualenv.
 
 To use this feature, pass one or more ``--extra-search-dir`` options to
 virtualenv like this::
 
     $ virtualenv --extra-search-dir=/path/to/distributions ENV
 
-The ``/path/to/distributions`` path should point to a directory that
-contains setuptools and/or pip distributions. Setuptools distributions
-must be ``.egg`` files; pip distributions should be `.tar.gz` source
-distributions.
+The ``/path/to/distributions`` path should point to a directory that contains
+setuptools and/or pip `.tar.gz` source distributions.
 
-If no satisfactory local distributions are found, virtualenv will fail. Virtualenv will never download packages.
+virtualenv will use the *first* distribution it finds, which won't
+necessarily be the latest version.
 
-The distribution lookup is done in the following locations, with the most
-recent version found used:
+After the extra directories, the default search order is like so:
 
-#. The current directory.
+#. The ``virtualenv_support`` directory relative to virtualenv.py
 #. The directory where virtualenv.py is located.
-#. A ``virtualenv_support`` directory relative to the directory where
-   virtualenv.py is located.
-#. If the file being executed is not named virtualenv.py (i.e. is a boot
-   script), a ``virtualenv_support`` directory relative to wherever
-   virtualenv.py is actually installed.
+#. The current directory.
+
+If no satisfactory local distributions are found, virtualenv will
+fail. Virtualenv will never download packages.
 
 
 Compare & Contrast with Alternatives
