@@ -13,9 +13,14 @@ except NameError:
 import sys
 import os
 
-old_os_path = os.environ['PATH']
-os.environ['PATH'] = os.path.dirname(os.path.abspath(__file__)) + os.pathsep + old_os_path
-base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+abs_dir = os.path.dirname(os.path.abspath(__file__))
+
+# Prepend bin dir to $PATH, if it isn't there already
+if os.environ['PATH'].split(os.pathsep)[0] != abs_dir:
+    old_os_path = os.environ['PATH']
+    os.environ['PATH'] = abs_dir + os.pathsep + old_os_path
+
+base = os.path.dirname(abs_dir)
 if sys.platform == 'win32':
     site_packages = os.path.join(base, 'Lib', 'site-packages')
 else:
