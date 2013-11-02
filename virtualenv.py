@@ -285,8 +285,8 @@ elif majver == 3:
             #"xmlrpc",
             #"zipfile",
         ])
-if minver >= 4:
-    REQUIRED_MODULES.extend(['operator'])
+    if minver >= 4:
+        REQUIRED_MODULES.extend(['operator', '_collections_abc'])
 
 if is_pypy:
     # these are needed to correctly display the exceptions that may happen
