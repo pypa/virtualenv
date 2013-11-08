@@ -132,7 +132,7 @@ def test_always_copy_option():
         virtualenv.create_environment(tmp_virtualenv, symlink=False)
 
         for root, dirs, files in os.walk(tmp_virtualenv):
-            for f in files:
+            for f in files + dirs:
                 full_name = os.path.join(root, f)
                 assert not os.path.islink(full_name), "%s should not be a" \
                     " symlink" % full_name

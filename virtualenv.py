@@ -1508,9 +1508,8 @@ def fix_local_scheme(home_dir, symlink=True):
                 for subdir_name in os.listdir(home_dir):
                     if subdir_name == 'local':
                         continue
-                    cp_or_ln = (os.symlink if symlink else copyfile)
-                    cp_or_ln(os.path.abspath(os.path.join(home_dir, subdir_name)), \
-                                                            os.path.join(local_path, subdir_name))
+                    copyfileordir(os.path.abspath(os.path.join(home_dir, subdir_name)), \
+                                                    os.path.join(local_path, subdir_name), symlink)
 
 def fix_lib64(lib_dir, symlink=True):
     """
