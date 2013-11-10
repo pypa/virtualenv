@@ -513,10 +513,13 @@ def make_exe(fn):
         logger.info('Changed mode of %s to %s', fn, oct(newmode))
 
 def _find_file(filename, dirs):
-    for dir in reversed(dirs):
-        files = glob.glob(os.path.join(dir, filename))
-        if files and os.path.isfile(files[0]):
-            return True, files[0]
+    for dir_ in reversed(dirs):
+        files = glob.glob(os.path.join(dir_, filename))
+        for file_ in files:
+            if not os.path.isfile(file_): 
+                continue
+            else:
+                return True, file_
     return False, filename
 
 def file_search_dirs():
