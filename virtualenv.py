@@ -648,14 +648,14 @@ def main():
         action='count',
         dest='verbose',
         default=0,
-        help="Increase verbosity")
+        help="Increase verbosity.")
 
     parser.add_option(
         '-q', '--quiet',
         action='count',
         dest='quiet',
         default=0,
-        help='Decrease verbosity')
+        help='Decrease verbosity.')
 
     parser.add_option(
         '-p', '--python',
@@ -669,49 +669,47 @@ def main():
         '--clear',
         dest='clear',
         action='store_true',
-        help="Clear out the non-root install and start from scratch")
+        help="Clear out the non-root install and start from scratch.")
 
     parser.set_defaults(system_site_packages=False)
     parser.add_option(
         '--no-site-packages',
         dest='system_site_packages',
         action='store_false',
-        help="Don't give access to the global site-packages dir to the "
-             "virtual environment (default)")
+        help="DEPRECATED. Retained only for backward compatibility. "
+             "Not having access to global site-packages is now the default behavior.")
 
     parser.add_option(
         '--system-site-packages',
         dest='system_site_packages',
         action='store_true',
-        help="Give access to the global site-packages dir to the "
-             "virtual environment")
+        help="Give the virtual environment access to the global site-packages.")
 
     parser.add_option(
         '--always-copy',
         dest='symlink',
         action='store_false',
         default=True,
-        help="Always copy files rather than symlinking")
+        help="Always copy files rather than symlinking.")
 
     parser.add_option(
         '--unzip-setuptools',
         dest='unzip_setuptools',
         action='store_true',
-        help="Unzip Setuptools when installing it")
+        help="Unzip Setuptools when installing it.")
 
     parser.add_option(
         '--relocatable',
         dest='relocatable',
         action='store_true',
-        help='Make an EXISTING virtualenv environment relocatable.  '
-        'This fixes up scripts and makes all .pth files relative')
+        help='Make an EXISTING virtualenv environment relocatable. '
+             'This fixes up scripts and makes all .pth files relative.')
 
     parser.add_option(
         '--no-setuptools',
         dest='no_setuptools',
         action='store_true',
-        help='Do not install setuptools (or pip) '
-        'in the new virtualenv.')
+        help='Do not install setuptools (or pip) in the new virtualenv.')
 
     parser.add_option(
         '--no-pip',
@@ -727,34 +725,32 @@ def main():
         metavar='DIR',
         default=default_search_dirs,
         help="Directory to look for setuptools/pip distributions in. "
-        "You can add any number of additional --extra-search-dir paths.")
+              "This option can be used multiple times.")
 
     parser.add_option(
         '--never-download',
         dest="never_download",
         action="store_true",
         default=True,
-        help="Never download anything from the network. This is now always "
-        "the case. The option is only retained for backward compatibility, "
-        "and does nothing. Virtualenv will fail if local distributions "
-        "of setuptools/pip are not present.")
+        help="DEPRECATED. Retained only for backward compatibility. This option has no effect. "
+              "Virtualenv never downloads pip or setuptools.")
 
     parser.add_option(
         '--prompt',
         dest='prompt',
-        help='Provides an alternative prompt prefix for this environment')
+        help='Provides an alternative prompt prefix for this environment.')
 
     parser.add_option(
         '--setuptools',
         dest='setuptools',
         action='store_true',
-        help="Backward compatibility. Does nothing.")
+        help="DEPRECATED. Retained only for backward compatibility. This option has no effect.")
 
     parser.add_option(
         '--distribute',
         dest='distribute',
         action='store_true',
-        help="Backward compatibility. Does nothing.")
+        help="DEPRECATED. Retained only for backward compatibility. This option has no effect.")
 
     if 'extend_parser' in globals():
         extend_parser(parser)
