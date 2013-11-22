@@ -14,6 +14,20 @@ Changes & News
    ``$ENV/bin/python`` and re-running virtualenv on the same target directory
    with the upgraded Python.
 
+1.11 (2013-11-??)
+~~~~~~~~~~~~~~~~~
+
+* **BACKWARDS INCOMPATIBLE** Switched to using wheels for the bundled copies of
+  setuptools and pip. Using sdists is no longer supported - users supplying
+  their own versions of pip/setuptools will need to provide wheels.
+* **BACKWARDS INCOMPATIBLE** Modified the handling of ``--extra-search-dirs``.
+  This option now works like pip's ``--find-links`` option, in that it adds
+  extra directories to search for compatible wheels for pip and setuptools.
+  The actual wheel selected is chosen based on version and compatibility, using
+  the same algorithm as ``pip install setuptools``.
+* Upgraded pip to v1.5
+* Upgraded setuptools to v1.4
+
 1.10.1 (2013-08-07)
 ~~~~~~~~~~~~~~~~~~~
 
