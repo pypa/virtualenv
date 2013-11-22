@@ -452,12 +452,13 @@ virtualenv like this::
     $ virtualenv --extra-search-dir=/path/to/distributions ENV
 
 The ``/path/to/distributions`` path should point to a directory that contains
-setuptools and/or pip `.tar.gz` source distributions.
+setuptools and/or pip wheels.
 
-virtualenv will use the *first* distribution it finds, which won't
-necessarily be the latest version.
+virtualenv will look for wheels in the specified directories, but will use
+pip's standard algorithm for selecting the wheel to install, which looks for
+the latest compatible wheel.
 
-After the extra directories, the default search order is like so:
+As well as the extra directories, the search order includes:
 
 #. The ``virtualenv_support`` directory relative to virtualenv.py
 #. The directory where virtualenv.py is located.
