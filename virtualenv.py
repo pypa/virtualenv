@@ -906,34 +906,59 @@ def filter_install_output(line):
         return Logger.INFO
     return Logger.DEBUG
 
-def install_sdist(project_name, sdist, py_executable, search_dirs=None):
+def find_wheels(projects, search_dirs):
+    """Find wheels from which we can import PROJECTS.
 
+    Scan through SEARCH_DIRS for a wheel for each PROJECT in turn. Return
+    a list of the first wheel found for each PROJECT
+    """
+
+    wheels = []
+
+    # Look through SEARCH_DIRS for the first suitable wheel. Don't bother
+    # about version checking here, as this is simply to get something we can
+    # then use to install the correct version.
+    for project in projects:
+        for dirname in search_dirs:
+            # This relies on only having "universal" wheels available.
+            # The pattern could be tightened to require -py2.py3-none-any.whl.
+            files = glob.glob(os.path.join(dirname, project + '-*.whl'))
+            if files:
+                wheels.append(os.path.abspath(files[0]))
+                break
+        else:
+            # We're out of luck, so quit with a suitable error
+            logger.fatal('Cannot find a wheel for %s' % (project,))
+
+    return wheels
+
+def install_wheel(project_names, py_executable, search_dirs=None):
     if search_dirs is None:
         search_dirs = file_search_dirs()
-    found, sdist_path = _find_file(sdist, search_dirs)
-    if not found:
-        logger.fatal("Cannot find sdist %s" % (sdist,))
-        sys.exit(100)
 
-    tmpdir = tempfile.mkdtemp()
+    wheels = find_wheels(['setuptools', 'pip'], search_dirs)
+    pythonpath = os.pathsep.join(wheels)
+    findlinks = ' '.join(search_dirs)
+
+    cmd = [
+        py_executable, '-c',
+        'import sys, pip; pip.main(["install"] + sys.argv[1:])',
+    ] + project_names
+    logger.start_progress('Installing %s...' % (', '.join(project_names)))
+    logger.indent += 2
     try:
-        tar = tarfile.open(sdist_path)
-        tar.extractall(tmpdir)
-        tar.close()
-        srcdir = os.path.join(tmpdir, os.listdir(tmpdir)[0])
-        cmd = [py_executable, 'setup.py', 'install',
-            '--single-version-externally-managed',
-            '--record', 'record']
-        logger.start_progress('Installing %s...' % project_name)
-        logger.indent += 2
-        try:
-            call_subprocess(cmd, show_stdout=False, cwd=srcdir,
-                    filter_stdout=filter_install_output)
-        finally:
-            logger.indent -= 2
-            logger.end_progress()
+        call_subprocess(cmd, show_stdout=False,
+            extra_env = {
+                'PYTHONPATH': pythonpath,
+                'PIP_FIND_LINKS': findlinks,
+                'PIP_USE_WHEEL': '1',
+                'PIP_PRE': '1',
+                'PIP_NO_INDEX': '1'
+            }
+        )
     finally:
-        shutil.rmtree(tmpdir)
+        logger.indent -= 2
+        logger.end_progress()
 
 def create_environment(home_dir, site_packages=False, clear=False,
                        unzip_setuptools=False,
@@ -957,9 +982,10 @@ def create_environment(home_dir, site_packages=False, clear=False,
     install_distutils(home_dir)
 
     if not no_setuptools:
-        install_sdist('Setuptools', 'setuptools-*.tar.gz', py_executable, search_dirs)
+        to_install = ['setuptools']
         if not no_pip:
-            install_sdist('Pip', 'pip-*.tar.gz', py_executable, search_dirs)
+            to_install.append('pip')
+        install_wheel(to_install, py_executable, search_dirs)
 
     install_activate(home_dir, bin_dir, prompt)
 
