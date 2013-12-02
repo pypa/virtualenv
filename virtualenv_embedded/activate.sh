@@ -46,6 +46,9 @@ _OLD_VIRTUAL_PATH="$PATH"
 PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
 export PATH
 
+C_DEFAULT="\[\033[m\]"
+C_PS1=${VIRTUAL_ENV_PS1_COLOR:-"\[\033[32m\]"}
+
 # unset PYTHONHOME if set
 # this will fail if PYTHONHOME is set to the empty string (which is bad anyway)
 # could use `if (set -u; : $PYTHONHOME) ;` in bash
@@ -62,9 +65,9 @@ if [ -z "$VIRTUAL_ENV_DISABLE_PROMPT" ] ; then
     if [ "`basename \"$VIRTUAL_ENV\"`" = "__" ] ; then
         # special case for Aspen magic directories
         # see http://www.zetadev.com/software/aspen/
-        PS1="[`basename \`dirname \"$VIRTUAL_ENV\"\``] $PS1"
+        PS1="$C_PS1[`basename \`dirname \"$VIRTUAL_ENV\"\``]$C_DEFAULT $PS1"
     else
-        PS1="(`basename \"$VIRTUAL_ENV\"`)$PS1"
+        PS1="$C_PS1(`basename \"$VIRTUAL_ENV\"`)$C_DEFAULT$PS1"
     fi
     fi
     export PS1
