@@ -1383,23 +1383,22 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         py_exe_version_major_minor = 'python%s.%s' % (
             sys.version_info[0], sys.version_info[1])
         py_exe_no_version = 'python'
-        required_symlinks = [ py_exe_no_version, py_exe_version_major,
-                         py_exe_version_major_minor ]
+        required_links = [ py_exe_version_major, py_exe_version_major_minor ]
 
         py_executable_base = os.path.basename(py_executable)
 
-        if py_executable_base in required_symlinks:
-            # Don't try to symlink to yourself.
-            required_symlinks.remove(py_executable_base)
-
-        for pth in required_symlinks:
-            full_pth = join(bin_dir, pth)
+        def link_file(bin_dir, src, dest, symlink):
+            full_pth = join(bin_dir, dest)
             if os.path.exists(full_pth):
                 os.unlink(full_pth)
             if symlink:
-                os.symlink(py_executable_base, full_pth)
+                os.symlink(src, full_pth)
             else:
-                shutil.copyfile(py_executable_base, full_pth)
+                shutil.copyfile(src, full_pth)
+
+        link_file(bin_dir, sys.executable, py_exe_no_version, False)
+        for pth in required_links:
+            link_file(bin_dir, py_executable_base, pth, symlink)
 
     if is_win and ' ' in py_executable:
         # There's a bug with subprocess on Windows when using a first
