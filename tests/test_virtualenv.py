@@ -125,16 +125,15 @@ def test_install_python_bin():
 
 def test_always_copy_option():
     """Should be no symlinks in directory tree"""
-    if virtualenv.is_win:
-        return # no symlinks on win32
     tmp_virtualenv = tempfile.mkdtemp()
+    ve_path = os.path.join(tmp_virtualenv, 'venv')
     try:
-        virtualenv.create_environment(tmp_virtualenv, symlink=False)
+        virtualenv.create_environment(ve_path, symlink=False)
 
         for root, dirs, files in os.walk(tmp_virtualenv):
-            for f in files:
+            for f in files + dirs:
                 full_name = os.path.join(root, f)
                 assert not os.path.islink(full_name), "%s should not be a" \
-                    " symlink" % full_name
+                    " symlink (to %s)" % (full_name, os.readlink(full_name))
     finally:
         shutil.rmtree(tmp_virtualenv)
