@@ -121,3 +121,19 @@ def test_install_python_bin():
                             "exist in bin_dir" % pth)
     finally:
         shutil.rmtree(tmp_virtualenv)
+
+
+def test_always_copy_option():
+    """Should be no symlinks in directory tree"""
+    tmp_virtualenv = tempfile.mkdtemp()
+    ve_path = os.path.join(tmp_virtualenv, 'venv')
+    try:
+        virtualenv.create_environment(ve_path, symlink=False)
+
+        for root, dirs, files in os.walk(tmp_virtualenv):
+            for f in files + dirs:
+                full_name = os.path.join(root, f)
+                assert not os.path.islink(full_name), "%s should not be a" \
+                    " symlink (to %s)" % (full_name, os.readlink(full_name))
+    finally:
+        shutil.rmtree(tmp_virtualenv)

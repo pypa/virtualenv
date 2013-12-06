@@ -1399,7 +1399,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             if symlink:
                 os.symlink(py_executable_base, full_pth)
             else:
-                shutil.copyfile(py_executable_base, full_pth)
+                copyfile(py_executable, full_pth, symlink)
 
     if is_win and ' ' in py_executable:
         # There's a bug with subprocess on Windows when using a first
@@ -1530,9 +1530,8 @@ def fix_local_scheme(home_dir, symlink=True):
                 for subdir_name in os.listdir(home_dir):
                     if subdir_name == 'local':
                         continue
-                    cp_or_ln = (os.symlink if symlink else copyfile)
-                    cp_or_ln(os.path.abspath(os.path.join(home_dir, subdir_name)), \
-                                                            os.path.join(local_path, subdir_name))
+                    copyfile(os.path.abspath(os.path.join(home_dir, subdir_name)), \
+                                                            os.path.join(local_path, subdir_name), symlink)
 
 def fix_lib64(lib_dir, symlink=True):
     """
