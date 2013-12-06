@@ -1399,7 +1399,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             if symlink:
                 os.symlink(py_executable_base, full_pth)
             else:
-                shutil.copyfile(py_executable_base, full_pth)
+                shutil.copyfile(py_executable, full_pth)
+                shutil.copymode(py_executable, full_pth)
 
     if is_win and ' ' in py_executable:
         # There's a bug with subprocess on Windows when using a first
