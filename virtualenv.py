@@ -1013,7 +1013,7 @@ def path_locations(home_dir):
             # instead of being virtualenv/include/python2.7
             p = subprocess.Popen(multiarch_exec, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
-             # stdout.strip is needed to remove newline character
+            # stdout.strip is needed to remove newline character
             stdo = stdout.strip()
             # ensure that we join strings not bytes
             stdo = stdo.decode(sys.getdefaultencoding()) if isinstance(stdo, bytes) else stdo
