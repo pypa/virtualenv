@@ -1102,7 +1102,8 @@ def copy_required_modules(dst_prefix, symlink):
                 if f is not None:
                     f.close()
                 # special-case custom readline.so on OS X, but not for pypy:
-                if modname == 'readline' and sys.platform == 'darwin' and not (
+                if modname == 'readline' and sys.platform == 'darwin' and \
+                        filename.endswith('.so') and not (
                         is_pypy or filename.endswith(join('lib-dynload', 'readline.so'))):
                     dst_filename = join(dst_prefix, 'lib', 'python%s' % sys.version[:3], 'readline.so')
                 elif modname == 'readline' and sys.platform == 'win32':
