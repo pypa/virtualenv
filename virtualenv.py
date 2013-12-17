@@ -1530,9 +1530,14 @@ def fix_local_scheme(home_dir, symlink=True):
                 for subdir_name in os.listdir(home_dir):
                     if subdir_name == 'local':
                         continue
-                    cp_or_ln = (os.symlink if symlink else copyfile)
-                    cp_or_ln(os.path.abspath(os.path.join(home_dir, subdir_name)), \
-                                                            os.path.join(local_path, subdir_name))
+                    if symlink:
+                        # use relative link target, so a virtualenv can be relocated,
+                        # and also be built in a staging area and then packaged to DEB etc.
+                        os.symlink(os.path.join('..', subdir_name),
+                            os.path.join(local_path, subdir_name))
+                    else:
+                        copyfile(os.path.abspath(os.path.join(home_dir, subdir_name)),
+                            os.path.join(local_path, subdir_name))
 
 def fix_lib64(lib_dir, symlink=True):
     """
