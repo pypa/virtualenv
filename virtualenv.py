@@ -1552,12 +1552,6 @@ def fix_libdir_bitness(lib_dir, symlink=True):
     platform we'll just create a symlink so libXX points to lib
     """
 
-    # PyPy's library path scheme is not affected by this.
-    # Return early or we will die on an upcoming library name assert.
-    if is_pypy:
-        logger.debug('PyPy detected, skipping libdir symlinking')
-        return False, None
-
     for bitness in '64', '32', 'x32':
         if _do_fix_libdir_bitness(lib_dir, symlink, bitness):
             return True, bitness
@@ -1570,6 +1564,14 @@ def _do_fix_libdir_bitness(lib_dir, symlink, bitness_str):
 
     if [p for p in distutils.sysconfig.get_config_vars().values()
         if isinstance(p, basestring) and target_dirname in p]:
+        # PyPy's library path scheme is not affected by this.
+        # Return early or we will die on the following assert.
+        # Pretend we succeeded as there is no value in repeatedly skipping
+        # for the very same reason.
+        if is_pypy:
+            logger.debug('PyPy detected, skipping %s symlinking' % (target_dirname, ))
+            return True
+
         logger.debug('This system uses %s; symlinking %s to lib' % (
             target_dirname,
             target_dirname,
