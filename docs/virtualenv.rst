@@ -1,4 +1,3 @@
-
 Introduction
 ------------
 
@@ -37,7 +36,7 @@ Installation
 .. warning::
 
     When using pip to install virtualenv, we advise using pip 1.3 or greater.
-    Prior to version 1.3, pip did not not download from PyPI over SSL.
+    Prior to version 1.3, pip did not download from PyPI over SSL.
 
 .. warning::
 
