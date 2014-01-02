@@ -14,6 +14,8 @@
 import os
 import sys
 
+on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+
 # If your extensions are in another directory, add it here.
 sys.path.insert(0, os.path.abspath(os.pardir))
 
@@ -36,7 +38,7 @@ master_doc = 'index'
 
 # General substitutions.
 project = 'virtualenv'
-copyright = '2007-2013, Ian Bicking, The Open Planning Project, PyPA'
+copyright = '2007-2014, Ian Bicking, The Open Planning Project, PyPA'
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
