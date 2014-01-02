@@ -14,7 +14,7 @@ Changes & News
    ``$ENV/bin/python`` and re-running virtualenv on the same target directory
    with the upgraded Python.
 
-1.11 (2013-11-??)
+1.11 (2014-01-02)
 ~~~~~~~~~~~~~~~~~
 
 * **BACKWARDS INCOMPATIBLE** Switched to using wheels for the bundled copies of
