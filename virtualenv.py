@@ -29,10 +29,6 @@ if sys.version_info < (2, 6):
     sys.exit(101)
 
 try:
-    set
-except NameError:
-    from sets import Set as set
-try:
     basestring
 except NameError:
     basestring = str
