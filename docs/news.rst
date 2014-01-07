@@ -14,6 +14,14 @@ Changes & News
    ``$ENV/bin/python`` and re-running virtualenv on the same target directory
    with the upgraded Python.
 
+
+1.11.1 (unreleased)
+~~~~~~~~~~~~~~~~~~~
+
+* Fixed an issue where pip and setuptools were not getting installed when using
+  the ``--system-site-packages`` flag.
+* Updated setuptools to fix an issue when installed with easy_install
+
 1.11 (2014-01-02)
 ~~~~~~~~~~~~~~~~~
 
