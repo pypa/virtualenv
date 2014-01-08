@@ -33,6 +33,7 @@ Changes & News
   extra directories to search for compatible wheels for pip and setuptools.
   The actual wheel selected is chosen based on version and compatibility, using
   the same algorithm as ``pip install setuptools``.
+* Fixed #495, --always-copy was failing (#PR 511)
 * Upgraded pip to v1.5
 * Upgraded setuptools to v1.4
 
