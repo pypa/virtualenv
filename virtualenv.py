@@ -113,8 +113,6 @@ if majver == 2:
         REQUIRED_MODULES.extend(['warnings', 'linecache', '_abcoll', 'abc'])
     if minver >= 7:
         REQUIRED_MODULES.extend(['_weakrefset'])
-    if minver <= 3:
-        REQUIRED_MODULES.extend(['sets', '__future__'])
 elif majver == 3:
     # Some extra modules are needed for Python 3, but different ones
     # for different versions.
