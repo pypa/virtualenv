@@ -286,7 +286,11 @@ elif majver == 3:
             #"zipfile",
         ])
     if minver >= 4:
-        REQUIRED_MODULES.extend(['operator', '_collections_abc'])
+        REQUIRED_MODULES.extend([
+            'operator',
+            '_collections_abc',
+            '_bootlocale',
+        ])
 
 if is_pypy:
     # these are needed to correctly display the exceptions that may happen
