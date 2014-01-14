@@ -1,22 +1,24 @@
 language: python
-python:
-  - "2.6"
-  - "2.7"
-  - "3.2"
-  - "3.3"
-  - "pypy"
+
+env:
+  - TOXENV=py26
+  - TOXENV=py27
+  - TOXENV=py32
+  - TOXENV=py33
+  - TOXENV=pypy
+
 install:
-  - pip install --use-mirrors nose coverage
-script:
-  - coverage erase
-# Unit tests
-  - coverage run -a setup.py test
-# Integration test
-  - coverage run -a virtualenv.py ./test-venv-01
-# How was our test coverage?
-  - coverage report --show-missing
+  - pip install tox
+
+script: tox
+
+branches:
+  only:
+    - master
+    - develop
+    - 1.9.X
+    - 1.10.X
+    - 1.11.X
+
 notifications:
-  irc:
-    channels: "irc.freenode.org#pip"
-    on_success: change
-    on_failure: change
+  irc: "irc.freenode.org#pip"
