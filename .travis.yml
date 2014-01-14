@@ -5,9 +5,11 @@ env:
   - TOXENV=py27
   - TOXENV=py32
   - TOXENV=py33
+  - TOXENV=py34
   - TOXENV=pypy
 
 install:
+  - "if [[ $TOXENV == 'py34' ]]; then .travis/py34.sh; fi"
   - pip install tox
 
 script: tox
