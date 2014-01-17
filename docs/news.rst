@@ -21,6 +21,9 @@ Changes & News
 * Fixed an issue where pip and setuptools were not getting installed when using
   the ``--system-site-packages`` flag.
 * Updated setuptools to fix an issue when installed with easy_install
+* Fixed an issue with Python 3.4 and sys.stdout encoding being set to ascii
+* Upgraded pip to v1.5.1
+* Upgraded setuptools to v2.1
 
 1.11 (2014-01-02)
 ~~~~~~~~~~~~~~~~~
