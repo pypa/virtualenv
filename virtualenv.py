@@ -280,7 +280,11 @@ elif majver == 3:
             #"zipfile",
         ])
     if minver >= 4:
-        REQUIRED_MODULES.extend(['operator', '_collections_abc'])
+        REQUIRED_MODULES.extend([
+            'operator',
+            '_collections_abc',
+            '_bootlocale',
+        ])
 
 if is_pypy:
     # these are needed to correctly display the exceptions that may happen
@@ -936,7 +940,7 @@ def install_wheel(project_names, py_executable, search_dirs=None):
 
     cmd = [
         py_executable, '-c',
-        'import sys, pip; pip.main(["install"] + sys.argv[1:])',
+        'import sys, pip; sys.exit(pip.main(["install", "--ignore-installed"] + sys.argv[1:]))',
     ] + project_names
     logger.start_progress('Installing %s...' % (', '.join(project_names)))
     logger.indent += 2
@@ -1240,7 +1244,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         # OS X framework builds cause validation to break
         # https://github.com/pypa/virtualenv/issues/322
         if os.environ.get('__PYVENV_LAUNCHER__'):
-          os.unsetenv('__PYVENV_LAUNCHER__')
+            del os.environ["__PYVENV_LAUNCHER__"]
         if re.search(r'/Python(?:-32|-64)*$', py_executable):
             # The name of the python executable is not quite what
             # we want, rename it.
