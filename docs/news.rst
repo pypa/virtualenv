@@ -15,7 +15,7 @@ Changes & News
    with the upgraded Python.
 
 
-1.11.1 (unreleased)
+1.11.1 (2014-01-20)
 ~~~~~~~~~~~~~~~~~~~
 
 * Fixed an issue where pip and setuptools were not getting installed when using
