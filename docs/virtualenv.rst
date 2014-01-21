@@ -509,7 +509,7 @@ deployment use one of these tools.
 Contributing
 ------------
 
-Refer to the `contributing to pip`_ documentation - it applies equally to
+Refer to the `pip development`_ documentation - it applies equally to
 virtualenv, except that virtualenv issues should filed on the `virtualenv
 repo`_ at GitHub.
 
@@ -524,7 +524,7 @@ changes any file in `virtualenv_embedded/`, run `bin/rebuild-script.py` to
 update the embedded version of that file in `virtualenv.py`; commit that and
 submit it as part of your patch / pull request.
 
-.. _contributing to pip: http://www.pip-installer.org/en/latest/contributing.html
+.. _pip development: http://www.pip-installer.org/en/latest/development.html
 .. _virtualenv repo: https://github.com/pypa/virtualenv/
 
 Running the tests

@@ -14,6 +14,17 @@ Changes & News
    ``$ENV/bin/python`` and re-running virtualenv on the same target directory
    with the upgraded Python.
 
+
+1.11.1 (2014-01-20)
+~~~~~~~~~~~~~~~~~~~
+
+* Fixed an issue where pip and setuptools were not getting installed when using
+  the ``--system-site-packages`` flag.
+* Updated setuptools to fix an issue when installed with easy_install
+* Fixed an issue with Python 3.4 and sys.stdout encoding being set to ascii
+* Upgraded pip to v1.5.1
+* Upgraded setuptools to v2.1
+
 1.11 (2014-01-02)
 ~~~~~~~~~~~~~~~~~
 
@@ -25,6 +36,7 @@ Changes & News
   extra directories to search for compatible wheels for pip and setuptools.
   The actual wheel selected is chosen based on version and compatibility, using
   the same algorithm as ``pip install setuptools``.
+* Fixed #495, --always-copy was failing (#PR 511)
 * Upgraded pip to v1.5
 * Upgraded setuptools to v1.4
 
