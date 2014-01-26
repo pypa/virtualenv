@@ -15,6 +15,11 @@ Changes & News
    with the upgraded Python.
 
 
+1.11.2 (2014-01-26)
+~~~~~~~~~~~~~~~~~~~
+
+* Fixed easy_install installed virtualenvs by updated pip to 1.5.2
+
 1.11.1 (2014-01-20)
 ~~~~~~~~~~~~~~~~~~~
 
