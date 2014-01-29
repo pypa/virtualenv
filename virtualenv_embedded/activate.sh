@@ -46,8 +46,13 @@ _OLD_VIRTUAL_PATH="$PATH"
 PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
 export PATH
 
-C_DEFAULT="\[\033[m\]"
-C_PS1=${VIRTUAL_ENV_PS1_COLOR:-"\[\033[32m\]"}
+if [ -z "$VIRTUAL_ENV_DISABLE_COLOR" ] ; then
+    C_DEFAULT="\[\033[m\]"
+    C_PS1=${VIRTUAL_ENV_PS1_COLOR:-"\[\033[32m\]"}
+else
+    C_DEFAULT=""
+    C_PS1=""
+fi
 
 # unset PYTHONHOME if set
 # this will fail if PYTHONHOME is set to the empty string (which is bad anyway)
