@@ -137,11 +137,16 @@ After activating an environment you can use the function ``deactivate`` to
 undo the changes to your ``$PATH``.
 
 The ``activate`` script will also modify your shell prompt to indicate
-which environment is currently active. You can disable this behavior,
-which can be useful if you have your own custom prompt that already
-displays the active environment name. To do so, set the
-``VIRTUAL_ENV_DISABLE_PROMPT`` environment variable to any non-empty
-value before running the ``activate`` script.
+which environment is currently active. If you are running ``bash`` the active 
+environment name will appear in green color by default. If you want to use a 
+different color just set the ``VIRTUAL_ENV_PS1_COLOR`` variable to the 
+desired ANSI color. If you want to disable the color prompt set the 
+``VIRTUAL_ENV_DISABLE_COLOR`` to any non-empty value before running the 
+``activate`` script. 
+You can completely disable the prompt modification, which can be useful if 
+you have your own custom prompt that already displays the active environment 
+name. To do so, set the ``VIRTUAL_ENV_DISABLE_PROMPT`` environment variable 
+to any non-empty value before running the ``activate`` script.
 
 On Windows you just do::
 
