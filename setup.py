@@ -19,7 +19,8 @@ try:
 except ImportError:
     from distutils.core import setup
     if sys.platform == 'win32':
-        print('Note: without Setuptools installed you will have to use "python -m virtualenv ENV"')
+        print('Note: without Setuptools installed you will '
+              'have to use "python -m virtualenv ENV"')
         setup_params = {}
     else:
         script = 'scripts/virtualenv'
@@ -29,12 +30,12 @@ except ImportError:
 
 here = os.path.dirname(os.path.abspath(__file__))
 
-## Get long_description from index.txt:
+# Get long_description from index.rst:
 f = open(os.path.join(here, 'docs', 'index.rst'))
-long_description = f.read().strip()
-long_description = long_description.split('split here', 1)[0]
+long_description = f.read().strip().split('split here', 1)[0]
 f.close()
-f = open(os.path.join(here, 'docs', 'news.rst'))
+# Add release history
+f = open(os.path.join(here, 'docs', 'changes.rst'))
 long_description += "\n\n" + f.read()
 f.close()
 
@@ -55,7 +56,7 @@ def get_version():
 # running python setup.py test (see
 # http://www.eby-sarna.com/pipermail/peak/2010-May/003357.html)
 try:
-    import multiprocessing
+    import multiprocessing  # noqa
 except ImportError:
     pass
 
