@@ -1,4 +1,4 @@
-reference Guide
+Reference Guide
 ===============
 
 ``virtualenv`` Command
