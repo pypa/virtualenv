@@ -940,7 +940,8 @@ def install_wheel(project_names, py_executable, search_dirs=None):
 
     cmd = [
         py_executable, '-c',
-        'import sys, pip; sys.exit(pip.main(["install", "--ignore-installed"] + sys.argv[1:]))',
+        '"import sys, pip; sys.exit(pip.main())"',
+        'install', '--ignore-installed',
     ] + project_names
     logger.start_progress('Installing %s...' % (', '.join(project_names)))
     logger.indent += 2
