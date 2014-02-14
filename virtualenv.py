@@ -938,9 +938,15 @@ def install_wheel(project_names, py_executable, search_dirs=None):
     pythonpath = os.pathsep.join(wheels)
     findlinks = ' '.join(search_dirs)
 
+    # Workaround for http://bugs.python.org/issue20621
+    pip_import_line = 'import sys, pip; sys.exit(pip.main())'
+    if sys.version_info[:3]  == (3, 3, 4):
+        pip_import_line = "'%s'" % pip_import_line
+
     cmd = [
         py_executable, '-c',
-        'import sys, pip; sys.exit(pip.main(["install", "--ignore-installed"] + sys.argv[1:]))',
+        pip_import_line,
+        'install', '--ignore-installed',
     ] + project_names
     logger.start_progress('Installing %s...' % (', '.join(project_names)))
     logger.indent += 2
