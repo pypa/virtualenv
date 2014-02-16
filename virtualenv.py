@@ -931,6 +931,16 @@ def find_wheels(projects, search_dirs):
     return wheels
 
 def install_wheel(project_names, py_executable, search_dirs=None):
+    # Python issue http://bugs.python.org/issue20621 prevents installing
+    # from wheels
+    if sys.version_info > (3,3,3) and sys.version_info < (3,3,5):
+        logger.error("ERROR: Cannot install packages from wheels on Python 3.3.4")
+        logger.error("Bug http://bugs.python.org/issue20621 prevents installing %s" %
+                (', '.join(project_names)))
+        logger.error("Please either upgrade to Python 3.3.5 or install manually using get-pip")
+        logger.error("Virtualenv has been created as if --no-setuptools --no-pip was sepcified")
+        return
+
     if search_dirs is None:
         search_dirs = file_search_dirs()
 
