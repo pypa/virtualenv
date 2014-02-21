@@ -15,6 +15,13 @@ Changes & News
    with the upgraded Python.
 
 
+1.11.3 (2014-02-20)
+~~~~~~~~~~~~~~~~~~~
+
+* Updated setuptools to 2.2
+* Updated pip to 1.5.3
+
+
 1.11.2 (2014-01-26)
 ~~~~~~~~~~~~~~~~~~~
 
