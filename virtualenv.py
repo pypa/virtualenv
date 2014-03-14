@@ -86,7 +86,10 @@ else:
                 break
         exes = dict()
         for ver in versions:
-            path = winreg.QueryValue(python_core, "%s\\InstallPath" % ver)
+            try:
+                path = winreg.QueryValue(python_core, "%s\\InstallPath" % ver)
+            except WindowsError:
+                continue
             exes[ver] = join(path, "python.exe")
 
         winreg.CloseKey(python_core)
