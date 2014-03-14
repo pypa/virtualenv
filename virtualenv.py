@@ -1566,9 +1566,12 @@ def resolve_interpreter(exe):
     """
     # If the "executable" is a version number, get the installed executable for
     # that version
-    python_versions = get_installed_pythons()
-    if exe in python_versions:
-        exe = python_versions[exe]
+    try:
+        python_versions = get_installed_pythons()
+        if exe in python_versions:
+            exe = python_versions[exe]
+    except WindowsError:
+        pass
 
     if os.path.abspath(exe) != exe:
         paths = os.environ.get('PATH', '').split(os.pathsep)
