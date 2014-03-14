@@ -74,8 +74,12 @@ else:
         import _winreg as winreg
 
     def get_installed_pythons():
-        python_core = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE,
-                "Software\\Python\\PythonCore")
+        try:
+            python_core = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE,
+                    "Software\\Python\\PythonCore")
+        except WindowsError:
+            # No registered Python installations
+            return {}
         i = 0
         versions = []
         while True:
@@ -86,7 +90,10 @@ else:
                 break
         exes = dict()
         for ver in versions:
-            path = winreg.QueryValue(python_core, "%s\\InstallPath" % ver)
+            try:
+                path = winreg.QueryValue(python_core, "%s\\InstallPath" % ver)
+            except WindowsError:
+                continue
             exes[ver] = join(path, "python.exe")
 
         winreg.CloseKey(python_core)
