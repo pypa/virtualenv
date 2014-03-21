@@ -22,6 +22,7 @@ from distutils.util import strtobool
 import struct
 import subprocess
 import tarfile
+import platform
 
 if sys.version_info < (2, 6):
     print('ERROR: %s' % sys.exc_info()[1])
@@ -73,13 +74,7 @@ else:
     except ImportError:
         import _winreg as winreg
 
-    def get_installed_pythons():
-        try:
-            python_core = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE,
-                    "Software\\Python\\PythonCore")
-        except WindowsError:
-            # No registered Python installations
-            return {}
+    def query_versions(python_core):
         i = 0
         versions = []
         while True:
@@ -96,7 +91,36 @@ else:
                 continue
             exes[ver] = join(path, "python.exe")
 
-        winreg.CloseKey(python_core)
+        return exes
+
+    def get_installed_pythons():
+        path = "Software\\Python\\PythonCore"
+
+        if platform.machine() == 'AMD64':
+            exes = {}
+            flags = [winreg.KEY_WOW64_32KEY, winreg.KEY_WOW64_64KEY]
+            for f in flags:
+                try:
+                    python_core = winreg.CreateKeyEx(
+                        winreg.HKEY_LOCAL_MACHINE, path, 0,
+                        f | winreg.KEY_READ)
+                except WindowsError:
+                    # No registered Python installations on this view
+                    pass
+                else:
+                    exes.update(query_versions(python_core))
+                    winreg.CloseKey(python_core)
+            if not exes:
+                return {}
+
+        else:
+            try:
+                python_core = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, path)
+            except WindowsError:
+                # No registered Python installations
+                return {}
+            exes = query_versions(python_core)
+            winreg.CloseKey(python_core)
 
         # Add the major versions
         # Sort the keys, then repeatedly update the major version entry
