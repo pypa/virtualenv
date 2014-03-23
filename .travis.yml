@@ -23,4 +23,4 @@ branches:
     - 1.11.X
 
 notifications:
-  irc: "irc.freenode.org#pip"
+  irc: "irc.freenode.org#pypa-dev"
