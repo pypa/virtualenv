@@ -23,4 +23,8 @@ branches:
     - 1.11.X
 
 notifications:
-  irc: "irc.freenode.org#pypa-dev"
+  irc:
+    channels:
+      - "irc.freenode.org#pypa-dev"
+    use_notice: true
+    skip_join: true
