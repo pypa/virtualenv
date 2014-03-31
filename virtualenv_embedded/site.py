@@ -62,7 +62,7 @@ site-specific customizations.  If this import fails with an
 ImportError exception, it is silently ignored.
 
 """
-
+import sysconfig
 import sys
 import os
 try:
@@ -215,9 +215,9 @@ def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_pre
     for prefix in prefixes:
         if prefix:
             if sys.platform in ('os2emx', 'riscos') or _is_jython:
-                sitedirs = [os.path.join(prefix, "Lib", "site-packages")]
+                sitedirs = [sysconfig.get_path('purelib', vars={'base':prefix})]
             elif _is_pypy:
-                sitedirs = [os.path.join(prefix, 'site-packages')]
+                sitedirs = [sysconfig.get_path('purelib', vars={'base':prefix})]
             elif sys.platform == 'darwin' and prefix == sys_prefix:
 
                 if prefix.startswith("/System/Library/Frameworks/"): # Apple's Python
@@ -558,7 +558,7 @@ def virtual_install_main_packages():
     if sys.path[0] == '':
         pos += 1
     if _is_jython:
-        paths = [os.path.join(sys.real_prefix, 'Lib')]
+        paths = [sysconfig.get_path('stdlib', vars={'base': sys.real_prefix})]
     elif _is_pypy:
         if sys.version_info > (3, 2):
             cpyver = '%d' % sys.version_info[0]
@@ -566,8 +566,10 @@ def virtual_install_main_packages():
             cpyver = '%d.%d' % sys.version_info[:2]
         else:
             cpyver = '%d.%d.%d' % sys.version_info[:3]
-        paths = [os.path.join(sys.real_prefix, 'lib_pypy'),
-                 os.path.join(sys.real_prefix, 'lib-python', cpyver)]
+        paths = [sysconfig.get_path('stdlib', vars={'base': sys.real_prefix})]
+        for path in sys.path:
+            if path.endswith('lib_pypy'):
+                 paths.append(path.replace(sys.prefix, sys.real_prefix))
         if sys.pypy_version_info < (1, 9):
             paths.insert(1, os.path.join(sys.real_prefix,
                                          'lib-python', 'modified-%s' % cpyver))
