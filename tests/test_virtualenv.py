@@ -137,3 +137,18 @@ def test_always_copy_option():
                     " symlink (to %s)" % (full_name, os.readlink(full_name))
     finally:
         shutil.rmtree(tmp_virtualenv)
+
+
+def test_create_environment_from_dir_with_spaces():
+    """Should work with wheel sources read from a dir with spaces."""
+    tmp_virtualenv = tempfile.mkdtemp()
+    ve_path = os.path.join(tmp_virtualenv, 'venv')
+    spaced_support_dir = os.path.join(tmp_virtualenv, 'support with spaces')
+    try:
+        from virtualenv_support import __file__ as support_dir
+        support_dir = os.path.dirname(os.path.abspath(support_dir))
+        shutil.copytree(support_dir, spaced_support_dir)
+        virtualenv.create_environment(ve_path,
+            search_dirs=[spaced_support_dir])
+    finally:
+        shutil.rmtree(tmp_virtualenv)
