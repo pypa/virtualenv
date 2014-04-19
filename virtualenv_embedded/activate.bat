@@ -7,7 +7,7 @@ if defined _OLD_VIRTUAL_PROMPT (
     if not defined PROMPT (
         set "PROMPT=$P$G"
     )
-	set "_OLD_VIRTUAL_PROMPT=%PROMPT%"	
+    set "_OLD_VIRTUAL_PROMPT=%PROMPT%"
 )
 set "PROMPT=__VIRTUAL_WINPROMPT__ %PROMPT%"
 
