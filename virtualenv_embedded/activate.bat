@@ -11,6 +11,10 @@ if defined _OLD_VIRTUAL_PROMPT (
 )
 set "PROMPT=__VIRTUAL_WINPROMPT__ %PROMPT%"
 
+if defined VIRTUALENV_OLDTITLE (
+    title __VIRTUAL_NAME__ ^(VirtualEnv^)
+)
+
 if not defined _OLD_VIRTUAL_PYTHONHOME (
     set "_OLD_VIRTUAL_PYTHONHOME=%PYTHONHOME%"
 )
