@@ -1322,6 +1322,15 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
                     src = join(prefix, name)
                     if os.path.exists(src):
                         copyfile(src, join(bin_dir, name), symlink)
+            
+                for d in sys.path:
+                    if d.endswith('lib_pypy'):
+                        break
+                else:
+                    logger.fatal('Could not find lib_pypy in sys.path')
+                    raise SystemExit(3)
+                logger.info('Copying lib_pypy')
+                copyfile(d, os.path.join(home_dir, 'lib_pypy'), symlink)
 
     if os.path.splitext(os.path.basename(py_executable))[0] != expected_exe:
         secondary_exe = os.path.join(os.path.dirname(py_executable),
