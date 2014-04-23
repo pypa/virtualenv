@@ -1316,7 +1316,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             copyfile(py_executable, python_executable, symlink)
 
             if is_win:
-                for name in 'libexpat.dll', 'libpypy.dll', 'libpypy-c.dll', 'libeay32.dll', 'ssleay32.dll', 'sqlite.dll':
+                for name in ['libexpat.dll', 'libpypy.dll', 'libpypy-c.dll',
+                            'libeay32.dll', 'ssleay32.dll', 'sqlite3.dll',
+                            'tcl85.dll', 'tk85.dll']:
                     src = join(prefix, name)
                     if os.path.exists(src):
                         copyfile(src, join(bin_dir, name), symlink)
