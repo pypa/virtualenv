@@ -1322,7 +1322,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
                     src = join(prefix, name)
                     if os.path.exists(src):
                         copyfile(src, join(bin_dir, name), symlink)
-            
+
                 for d in sys.path:
                     if d.endswith('lib_pypy'):
                         break
