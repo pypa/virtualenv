@@ -122,10 +122,10 @@ and Powershell.
 
 On Posix systems you can do::
 
-    $ source bin/activate
+    $ . bin/activate
 
 This will change your ``$PATH`` so its first entry is the virtualenv's
-``bin/`` directory. (You have to use ``source`` because it changes your
+``bin/`` directory. (You have to use the ``.`` command because it changes your
 shell environment in-place.) This is all it does; it's purely a
 convenience. If you directly run a script or the python interpreter
 from the virtualenv's ``bin/`` directory (e.g. ``path/to/env/bin/pip``
