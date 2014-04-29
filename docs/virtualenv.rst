@@ -578,6 +578,11 @@ Other Documentation and Links
 * `virtualenv commands
   <https://github.com/thisismedium/virtualenv-commands>`_ for some more
   workflow-related tools around virtualenv.
+  
+* PyCon US 2011 talk: `Reverse-engineering Ian Bicking's brain: inside pip and virtualenv
+  <http://pyvideo.org/video/568/reverse-engineering-ian-bicking--39-s-brain--insi>`_.
+  By the end of the talk, you'll have a good idea exactly how pip and virtualenv do their
+  magic, and where to go looking in the source for particular behaviors or bug fixes.
 
 Status and License
 ------------------
