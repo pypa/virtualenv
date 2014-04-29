@@ -5,6 +5,26 @@ import sys
 
 try:
     from setuptools import setup
+    using_setuptools = True
+except ImportError:
+    from distutils.core import setup
+    using_setuptools = False
+
+if using_setuptools:
+    from setuptools.command.test import test as TestCommand
+
+    class PyTest(TestCommand):
+        def finalize_options(self):
+            TestCommand.finalize_options(self)
+            self.test_args = []
+            self.test_suite = True
+
+        def run_tests(self):
+            # import here, because outside the eggs aren't loaded
+            import pytest
+            errno = pytest.main(self.test_args)
+            sys.exit(errno)
+
     setup_params = {
         'entry_points': {
             'console_scripts': [
@@ -13,13 +33,13 @@ try:
             ],
         },
         'zip_safe': False,
-        'test_suite': 'nose.collector',
-        'tests_require': ['nose', 'Mock'],
+        'tests_require': ['pytest', 'Mock'],
+        'cmdclass': {'test': PyTest},
     }
-except ImportError:
-    from distutils.core import setup
+else:
     if sys.platform == 'win32':
-        print('Note: without Setuptools installed you will have to use "python -m virtualenv ENV"')
+        print('Note: without Setuptools installed you will'
+              'have to use "python -m virtualenv ENV"')
         setup_params = {}
     else:
         script = 'scripts/virtualenv'
@@ -27,37 +47,32 @@ except ImportError:
         shutil.copy(script, script_ver)
         setup_params = {'scripts': [script, script_ver]}
 
+
 here = os.path.dirname(os.path.abspath(__file__))
 
-## Get long_description from index.txt:
-f = open(os.path.join(here, 'docs', 'index.rst'))
-long_description = f.read().strip()
-long_description = long_description.split('split here', 1)[0]
-f.close()
-f = open(os.path.join(here, 'docs', 'news.rst'))
-long_description += "\n\n" + f.read()
-f.close()
+
+def read_file(*paths):
+    file_path = os.path.join(*([here] + list(paths)))
+    f = open(file_path)
+    contents = f.read().strip()
+    f.close()
+
+    return contents
+
+index = read_file('docs', 'index.rst')
+news = read_file('docs', 'news.rst')
+
+long_description = index.split('split here', 1)[0] + '\n\n' + news
 
 
 def get_version():
-    f = open(os.path.join(here, 'virtualenv.py'))
-    version_file = f.read()
-    f.close()
+    version_file = read_file('virtualenv.py')
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
                               version_file, re.M)
     if version_match:
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
 
-
-# Hack to prevent stupid TypeError: 'NoneType' object is not callable error on
-# exit of python setup.py test # in multiprocessing/util.py _exit_function when
-# running python setup.py test (see
-# http://www.eby-sarna.com/pipermail/peak/2010-May/003357.html)
-try:
-    import multiprocessing
-except ImportError:
-    pass
 
 setup(
     name='virtualenv',
