@@ -17,3 +17,4 @@ Dev IRC: #pypa-dev
    :maxdepth: 2
 
    virtualenv
+   news
