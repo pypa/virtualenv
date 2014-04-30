@@ -183,7 +183,7 @@ Release History
   Branden Rolston.
 
 * Fix a bug in the config option parser that prevented setting negative
-  options with environemnt variables. Thanks Ralf Schmitt.
+  options with environment variables. Thanks Ralf Schmitt.
 
 * Allow setting ``--no-site-packages`` from the config file.
 
@@ -319,7 +319,7 @@ Release History
 * Updated embedded pip release to 1.0.2.
 
 * Fixed #141 - Be smarter about finding pkg_resources when using the
-  non-default Python intepreter (by using the ``-p`` option).
+  non-default Python interpreter (by using the ``-p`` option).
 
 * Fixed #112 - Fixed path in docs.
 
