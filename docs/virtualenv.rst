@@ -240,7 +240,7 @@ virtualenv can not only be configured by passing command line options such as
       $ virtualenv --python=/opt/python-3.3/bin/python ENV
 
   This also works for appending command line options, like ``--find-links``.
-  Just leave an empty space between the passsed values, e.g.::
+  Just leave an empty space between the passed values, e.g.::
 
       $ export VIRTUALENV_EXTRA_SEARCH_DIR="/path/to/dists /path/to/other/dists"
       $ virtualenv ENV
