@@ -1,19 +1,17 @@
-Changes & News
---------------
+Release History
+===============
 
-.. warning::
+Future
+------
 
-   Python bugfix releases 2.6.8, 2.7.3, 3.1.5 and 3.2.3 include a change that
-   will cause "import random" to fail with "cannot import name urandom" on any
-   virtualenv created on a Unix host with an earlier release of Python
-   2.6/2.7/3.1/3.2, if the underlying system Python is upgraded. This is due to
-   the fact that a virtualenv uses the system Python's standard library but
-   contains its own copy of the Python interpreter, so an upgrade to the system
-   Python results in a mismatch between the version of the Python interpreter
-   and the version of the standard library. It can be fixed by removing
-   ``$ENV/bin/python`` and re-running virtualenv on the same target directory
-   with the upgraded Python.
+1.6.0
+~~~~~
 
+1.11.5
+~~~~~~
+
+Current
+-------
 
 1.11.4 (2014-02-21)
 ~~~~~~~~~~~~~~~~~~~
@@ -197,7 +195,7 @@ Changes & News
   Branden Rolston.
 
 * Fix a bug in the config option parser that prevented setting negative
-  options with environemnt variables. Thanks Ralf Schmitt.
+  options with environment variables. Thanks Ralf Schmitt.
 
 * Allow setting ``--no-site-packages`` from the config file.
 
@@ -333,7 +331,7 @@ Changes & News
 * Updated embedded pip release to 1.0.2.
 
 * Fixed #141 - Be smarter about finding pkg_resources when using the
-  non-default Python intepreter (by using the ``-p`` option).
+  non-default Python interpreter (by using the ``-p`` option).
 
 * Fixed #112 - Fixed path in docs.
 
