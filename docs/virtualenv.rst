@@ -132,6 +132,12 @@ from the virtualenv's ``bin/`` directory (e.g. ``path/to/env/bin/pip``
 or ``/path/to/env/bin/python script.py``) there's no need for
 activation.
 
+In some shells (notably the original Bourne shell) the ``source`` command does
+not exist, but the ``.`` command (which does the same thing) can be used as an
+alternative::
+
+    $ . bin/activate
+
 After activating an environment you can use the function ``deactivate`` to
 undo the changes to your ``$PATH``.
 
