@@ -8,9 +8,7 @@ env:
   - TOXENV=py34
   - TOXENV=pypy
 
-install:
-  - "if [[ $TOXENV == 'py34' ]]; then .travis/py34.sh; fi"
-  - pip install tox
+install: pip install tox
 
 script: tox
 
@@ -18,8 +16,6 @@ branches:
   only:
     - master
     - develop
-    - 1.9.X
-    - 1.10.X
     - 1.11.X
 
 notifications:
