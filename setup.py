@@ -81,7 +81,7 @@ setup(
     author_email='ianb@colorstudy.com',
     maintainer='Jannis Leidel, Carl Meyer and Brian Rosner',
     maintainer_email='python-virtualenv@groups.google.com',
-    url='http://www.virtualenv.org',
+    url='https://virtualenv.pypa.io/',
     license='MIT',
     py_modules=['virtualenv'],
     packages=['virtualenv_support'],
