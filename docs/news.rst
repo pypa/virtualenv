@@ -15,6 +15,11 @@ Changes & News
    with the upgraded Python.
 
 
+1.11.5 (unreleased)
+~~~~~~~~~~~~~~~~~~~
+
+* Updated setuptools to 3.4.4
+
 1.11.4 (2014-02-21)
 ~~~~~~~~~~~~~~~~~~~
 
