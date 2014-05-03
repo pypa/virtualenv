@@ -19,6 +19,7 @@ Changes & News
 ~~~~~~~~~~~~~~~~~~~
 
 * Updated setuptools to 3.4.4
+* Updated documentation to use https://virtualenv.pypa.io/
 
 1.11.4 (2014-02-21)
 ~~~~~~~~~~~~~~~~~~~
