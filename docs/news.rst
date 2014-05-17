@@ -15,6 +15,12 @@ Changes & News
    with the upgraded Python.
 
 
+1.11.6 (2014-05-16)
+~~~~~~~~~~~~~~~~~~~
+
+* Updated setuptools to 3.6
+* Updated pip to 1.5.6
+
 1.11.5 (2014-05-03)
 ~~~~~~~~~~~~~~~~~~~
 
