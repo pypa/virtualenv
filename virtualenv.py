@@ -992,6 +992,10 @@ def create_environment(home_dir, site_packages=False, clear=False,
             to_install.append('pip')
         install_wheel(to_install, py_executable, search_dirs)
 
+    if not is_win:
+        if ' ' in os.path.abspath(bin_dir):
+            fix_path_whitespace(home_dir, bin_dir)
+
     install_activate(home_dir, bin_dir, prompt)
 
 def is_executable_file(fpath):
@@ -1497,6 +1501,10 @@ def install_activate(home_dir, bin_dir, prompt=None):
         files['activate'] = ACTIVATE_SH.replace('__VIRTUAL_ENV__', home_dir_sh)
 
     else:
+
+        # On non-Windows boxes, escape any spaces
+        home_dir = home_dir.replace(' ', '\ ')
+
         files = {'activate': ACTIVATE_SH}
 
         # suppling activate.fish in addition to, not instead of, the
@@ -1524,6 +1532,9 @@ def install_distutils(home_dir):
     ## FIXME: maybe this prefix setting should only be put in place if
     ## there's a local distutils.cfg with a prefix setting?
     home_dir = os.path.abspath(home_dir)
+    if not is_win:
+        home_dir = home_dir.replace(' ', '\ ')
+
     ## FIXME: this is breaking things, removing for now:
     #distutils_cfg = DISTUTILS_CFG + "\n[install]\nprefix=%s\n" % home_dir
     writefile(os.path.join(distutils_path, '__init__.py'), DISTUTILS_INIT)
@@ -1605,6 +1616,54 @@ def resolve_interpreter(exe):
 def is_executable(exe):
     """Checks a file is executable"""
     return os.access(exe, os.X_OK)
+
+# In *nix systems, the path having unescaped white space causes
+#   things like pip to break. Lets open that file, and add
+#   our escapes.
+def fix_path_whitespace(home_dir, bin_dir):
+
+    # This is what we expect to find
+    shebang = '#!\"%s\"' % os.path.normcase(os.path.join(
+        os.path.abspath(bin_dir), 'python'))
+
+    new_shebang = '#!%s' % os.path.normcase(os.path.join(
+        os.path.abspath(bin_dir).replace(' ', '\ '),
+        'python'))
+
+    for filename in os.listdir(bin_dir):
+        filename = os.path.join(bin_dir, filename)
+        if not os.path.isfile(filename):
+            # ignore subdirs
+            continue
+        f = open(filename, 'rb')
+        try:
+            try:
+                lines = f.read().decode('utf-8').splitlines()
+            except UnicodeDecodeError:
+                # Ignore!
+                continue
+        finally:
+            f.close()
+        if not lines:
+            logger.warn('Script %s is an empty file!' % filename)
+            continue
+
+        old_shebang = lines[0].strip()
+        old_shebang = old_shebang[0:2] + os.path.normcase(old_shebang[2:])
+
+        if not old_shebang.startswith(shebang):
+            if lines[0].strip() == new_shebang:
+                logger.info('Script %s has acceptable whitespace.')
+            else:
+                logger.info('Script %s cannot be fixed, (it\'s not a normal script that starts with %s)'
+                    % (filename, shebang))
+            continue
+
+        logger.notify('Fixing whitespace in %s.' % filename)
+        script = [new_shebang] + lines[1:]
+        f = open(filename, 'wb')
+        f.write('\n'.join(script).encode('utf-8'))
+        f.close()
 
 ############################################################
 ## Relocating the environment:
