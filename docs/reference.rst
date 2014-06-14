@@ -43,7 +43,7 @@ Options
    --python=python2.5 will use the python2.5 interpreter
    to create the new environment.  The default is the
    interpreter that virtualenv was installed with
-   (/usr/bin/python3)
+   (like ``/usr/bin/python``)
 
 .. option:: --clear
 
