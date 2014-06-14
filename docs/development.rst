@@ -33,18 +33,18 @@ The easy way to run tests (handles test dependencies automatically)::
     $ python setup.py test
 
 If you want to run only a selection of the tests, you'll need to run them
-directly with nose instead. Create a virtualenv, and install required
+directly with pytest instead. Create a virtualenv, and install required
 packages::
 
-    $ pip install nose mock
+    $ pip install pytest mock
 
-Run nosetests::
+Run pytest::
 
-    $ nosetests
+    $ pytest
 
 Or select just a single test file to run::
 
-    $ nosetests tests.test_virtualenv
+    $ pytest tests/test_virtualenv
 
 Status and License
 ------------------

@@ -5,6 +5,26 @@ import sys
 
 try:
     from setuptools import setup
+    from setuptools.command.test import test as TestCommand
+
+    class PyTest(TestCommand):
+        user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
+
+        def initialize_options(self):
+            TestCommand.initialize_options(self)
+            self.pytest_args = None
+
+        def finalize_options(self):
+            TestCommand.finalize_options(self)
+            self.test_args = []
+            self.test_suite = True
+
+        def run_tests(self):
+            # import here, because outside the eggs aren't loaded
+            import pytest
+            errno = pytest.main(self.pytest_args)
+            sys.exit(errno)
+
     setup_params = {
         'entry_points': {
             'console_scripts': [
@@ -13,8 +33,8 @@ try:
             ],
         },
         'zip_safe': False,
-        'test_suite': 'nose.collector',
-        'tests_require': ['nose', 'Mock'],
+        'cmdclass': {'test': PyTest},
+        'tests_require': ['pytest', 'mock'],
     }
 except ImportError:
     from distutils.core import setup
@@ -28,22 +48,21 @@ except ImportError:
         shutil.copy(script, script_ver)
         setup_params = {'scripts': [script, script_ver]}
 
-here = os.path.dirname(os.path.abspath(__file__))
+
+def read_file(*paths):
+    here = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(here, *paths)) as f:
+        return f.read()
 
 # Get long_description from index.rst:
-f = open(os.path.join(here, 'docs', 'index.rst'))
-long_description = f.read().strip().split('split here', 1)[0]
-f.close()
+long_description = read_file('docs', 'index.rst')
+long_description = long_description.strip().split('split here', 1)[0]
 # Add release history
-f = open(os.path.join(here, 'docs', 'changes.rst'))
-long_description += "\n\n" + f.read()
-f.close()
+long_description += "\n\n" + read_file('docs', 'changes.rst')
 
 
 def get_version():
-    f = open(os.path.join(here, 'virtualenv.py'))
-    version_file = f.read()
-    f.close()
+    version_file = read_file('virtualenv.py')
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
                               version_file, re.M)
     if version_match:
