@@ -7,6 +7,11 @@ Future
 1.6.0
 ~~~~~
 
+* Split up documentation into structured pages
+* Now using pytest framework
+* Correct sys.path ordering for debian, issue #461
+* Correctly throws error on older Pythons, issue #619
+
 Current
 -------
 
