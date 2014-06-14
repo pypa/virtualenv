@@ -1575,8 +1575,10 @@ def fix_lib64(lib_dir, symlink=True):
             "Unexpected parent dir: %r" % lib_parent)
         if os.path.lexists(lib64_link):
             return
-        cp_or_ln = (os.symlink if symlink else copyfile)
-        cp_or_ln('lib', lib64_link)
+        if symlink:
+            os.symlink('lib', lib64_link)
+        else:
+            copyfile('lib', lib64_link)
 
 def resolve_interpreter(exe):
     """
