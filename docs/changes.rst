@@ -11,6 +11,7 @@ Future
 * Now using pytest framework
 * Correct sys.path ordering for debian, issue #461
 * Correctly throws error on older Pythons, issue #619
+* Allow for empty $PATH, pull #601
 
 Current
 -------
