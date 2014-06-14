@@ -183,7 +183,7 @@ do it again in that process.
 Making Environments Relocatable
 -------------------------------
 
-Note: this option is somewhat experimental, and there are probably
+**Note:** this option is somewhat experimental, and there are probably
 caveats that have not yet been identified.
 
 .. warning::
