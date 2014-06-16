@@ -4,7 +4,7 @@ Release History
 Future
 ------
 
-1.6.0
+1.12.0
 ~~~~~
 
 * Split up documentation into structured pages
