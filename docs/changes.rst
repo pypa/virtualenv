@@ -5,7 +5,7 @@ Future
 ------
 
 1.12.0
-~~~~~
+~~~~~~
 
 * Split up documentation into structured pages
 * Now using pytest framework
