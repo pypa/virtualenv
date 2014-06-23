@@ -7,12 +7,12 @@ Contributor notes
 -----------------
 
 * virtualenv is designed to work on python 2 and 3 with a single code base.
-  Use Python 3 print-function syntax, and always use sys.exc_info()[1]
-  inside the `except` block to get at exception objects.
+  Use Python 3 print-function syntax, and always ``use sys.exc_info()[1]``
+  inside the ``except`` block to get at exception objects.
 
 * virtualenv uses git-flow_ to `coordinate development`_. The latest stable
-  version should exist on the master branch, and new work should be
-  integrated to development.
+  version should exist on the *master* branch, and new work should be
+  integrated to *develop*.
 
 * All changes to files inside virtualenv_embedded should be integrated to
   ``virtualenv.py`` with ``bin/rebuild-script.py``.
