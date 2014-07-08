@@ -44,7 +44,7 @@ py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
 is_jython = sys.platform.startswith('java')
 is_pypy = hasattr(sys, 'pypy_version_info')
 is_ironpython = sys.platform == 'cli'
-is_win = (sys.platform == 'win32' or os.name == 'nt')
+is_win = sys.platform == 'win32' or os.name == 'nt' or getattr(os, '_name', None) == 'nt'
 is_cpython = not is_jython and not is_ironpython and not is_pypy
 is_cygwin = (sys.platform == 'cygwin')
 is_darwin = (sys.platform == 'darwin')
@@ -68,7 +68,7 @@ else:
 
 # Return a mapping of version -> Python executable
 # Only provided for Windows, where the information in the registry is used
-if not is_win:
+if not is_win or not is_cpython:
     def get_installed_pythons():
         return {}
 else:
