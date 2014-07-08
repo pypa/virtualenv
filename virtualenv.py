@@ -43,8 +43,9 @@ py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
 
 is_jython = sys.platform.startswith('java')
 is_pypy = hasattr(sys, 'pypy_version_info')
+is_ironpython = sys.platform == 'cli'
 is_win = (sys.platform == 'win32' or os.name == 'nt')
-is_cpython = not is_jython and not is_pypy
+is_cpython = not is_jython and not is_ironpython and not is_pypy
 is_cygwin = (sys.platform == 'cygwin')
 is_darwin = (sys.platform == 'darwin')
 abiflags = getattr(sys, 'abiflags', '')
@@ -60,6 +61,8 @@ if is_pypy:
     expected_exe = 'pypy'
 elif is_jython:
     expected_exe = 'jython'
+elif is_ironpython:
+    expected_exe = 'ipy'
 else:
     expected_exe = 'python'
 
@@ -1334,6 +1337,16 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
                     raise SystemExit(3)
                 logger.info('Copying lib_pypy')
                 copyfile(d, os.path.join(home_dir, 'lib_pypy'), symlink)
+
+        if is_ironpython:
+            copymanyfiles(('ipyw.exe', 'ipy64.exe', 'ipyw64.exe'),
+                prefix, bin_dir, symlink)
+            
+            copymanyfiles(('IronPython.dll', 'IronPython.Modules.dll',
+                        'Microsoft.Scripting.dll', 'Microsoft.Dynamic.dll',
+                        'Microsoft.Scripting.Metadata.dll'),
+                prefix, bin_dir, symlink)
+    
 
     if os.path.splitext(os.path.basename(py_executable))[0] != expected_exe:
         secondary_exe = os.path.join(os.path.dirname(py_executable),
