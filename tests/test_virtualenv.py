@@ -129,6 +129,8 @@ def test_install_python_bin():
 def test_install_unicode():
     """Should be able to install in directories containing Unicode & spaces"""
     subdir_unicode = "Heävy Mëtal ☃"
+    if sys.version_info[0] == '2' and sys.getfilesystemencoding() == 'mbcs':
+        subdir_unicode = subdir_unicode.decode('utf-8').encode('mbcs')
     tmp_virtualenv = tempfile.mkdtemp()
     tmp_virtualenv_unicode = os.path.join(tmp_virtualenv, subdir_unicode)
 
