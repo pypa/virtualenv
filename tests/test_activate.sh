@@ -17,7 +17,7 @@ fi
 echo "$0: Created virtualenv ${TESTENV}." 1>&2
 
 echo "$0: Activating ${TESTENV}..." 1>&2
-. ${TESTENV}/bin/activate
+source ${TESTENV}/bin/activate
 echo "$0: Activated ${TESTENV}." 1>&2
 
 echo "$0: Checking value of \$VIRTUAL_ENV..." 1>&2
