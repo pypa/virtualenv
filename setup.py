@@ -15,7 +15,9 @@ try:
 
         def initialize_options(self):
             TestCommand.initialize_options(self)
-            self.pytest_args = None
+            # use this directory instead of falling back on the 'test'
+            # command-as-directory which will fail
+            self.pytest_args = 'tests' 
 
         def finalize_options(self):
             TestCommand.finalize_options(self)
