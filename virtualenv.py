@@ -1106,6 +1106,14 @@ def copy_required_modules(dst_prefix, symlink):
             else:
                 if f is not None:
                     f.close()
+                # special-case files coming from exec_prefix if it exec_prefix != prefix
+                # these are handled by install_python() itself when it copies/links
+                # the contents of exec_prefix in the case where exec_prefix != prefix
+                # pypy never uses exec_prefix, just ignore it
+                if (sys.exec_prefix != sys.prefix
+                    and filename.startswith(sys.exec_prefix)
+                    and not is_pypy):
+                    continue
                 # special-case custom readline.so on OS X, but not for pypy:
                 if modname == 'readline' and sys.platform == 'darwin' and not (
                         is_pypy or filename.endswith(join('lib-dynload', 'readline.so'))):
