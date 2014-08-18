@@ -1580,6 +1580,20 @@ def fix_lib64(lib_dir, symlink=True):
         else:
             copyfile('lib', lib64_link)
 
+def resolve_exe(exe):
+    if os.path.exists(exe):
+        return exe
+
+    if os.name != 'nt':
+        return None
+
+    # check PATHEXT
+    exts = os.environ['PATHEXT'].split(os.pathsep)
+    for ext in exts:
+        if os.path.exists('%s%s' % (exe, ext)):
+            return '%s%s' % (exe, ext)
+    return None
+
 def resolve_interpreter(exe):
     """
     If the executable given isn't an absolute path, search $PATH for the interpreter
@@ -1593,10 +1607,12 @@ def resolve_interpreter(exe):
     if os.path.abspath(exe) != exe:
         paths = os.environ.get('PATH', '').split(os.pathsep)
         for path in paths:
-            if os.path.exists(os.path.join(path, exe)):
-                exe = os.path.join(path, exe)
+            check_exe = resolve_exe(os.path.join(path, exe))
+            if check_exe:
+                exe = check_exe
                 break
-    if not os.path.exists(exe):
+    exe = resolve_exe(exe)
+    if not exe:
         logger.fatal('The executable %s (from --python=%s) does not exist' % (exe, exe))
         raise SystemExit(3)
     if not is_executable(exe):
