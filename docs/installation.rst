@@ -4,7 +4,7 @@ Installation
 .. warning::
 
     We advise installing virtualenv-1.9 or greater. Prior to version 1.9, the
-    pip included in virtualenv did not not download from PyPI over SSL.
+    pip included in virtualenv did not download from PyPI over SSL.
 
 .. warning::
 
