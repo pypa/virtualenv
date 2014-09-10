@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -u
+
 ROOT="$(dirname $0)/.."
 VIRTUALENV="${ROOT}/virtualenv.py"
 TESTENV="/tmp/test_virtualenv_activate.venv"
