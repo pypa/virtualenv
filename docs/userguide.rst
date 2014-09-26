@@ -146,13 +146,6 @@ libraries go in ``ENV\Lib\`` rather than ``ENV/lib/``.
 To create a virtualenv under a path with spaces in it on Windows, you'll need
 the `win32api <http://sourceforge.net/projects/pywin32/>`_ library installed.
 
-PyPy Support
-~~~~~~~~~~~~
-
-Beginning with virtualenv version 1.5 `PyPy <http://pypy.org>`_ is
-supported. To use PyPy 1.4 or 1.4.1, you need a version of virtualenv >= 1.5.
-To use PyPy 1.5, you need a version of virtualenv >= 1.6.1.
-
 
 Using Virtualenv without ``bin/python``
 ---------------------------------------
