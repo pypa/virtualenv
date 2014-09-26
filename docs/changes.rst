@@ -4,9 +4,11 @@ Release History
 Future
 ------
 
-1.12.0
-~~~~~~
+12.0
+~~~~
 
+* **PROCESS** Version numbers are now simply ``X.Y`` where the leading ``1``
+  has been dropped.
 * Split up documentation into structured pages
 * Now using pytest framework
 * Correct sys.path ordering for debian, issue #461
