@@ -73,6 +73,12 @@ def get_version():
     raise RuntimeError("Unable to find version string.")
 
 
+def list_embedded():
+    '''list files under virtualenv_embedded dir files.'''
+    dir_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'virtualenv_embedded')
+    return [os.path.join('virtualenv_embedded', f) for f in os.listdir(dir_path)]
+
+
 # Hack to prevent stupid TypeError: 'NoneType' object is not callable error on
 # exit of python setup.py test # in multiprocessing/util.py _exit_function when
 # running python setup.py test (see
@@ -108,4 +114,5 @@ setup(
     py_modules=['virtualenv'],
     packages=['virtualenv_support'],
     package_data={'virtualenv_support': ['*.whl']},
+    data_files=[('virtualenv_embedded', list_embedded())],
     **setup_params)
