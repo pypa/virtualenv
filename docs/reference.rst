@@ -184,6 +184,12 @@ environment. Developers may find it useful to distribute a script
 that sets up a particular environment, for example a script that
 installs a particular web application.
 
+.. note::
+
+    A bootstrap script can't install pip by himself. It's needed to install
+    ``pip`` before executing, if you not use the ``--no-pip`` command line
+    argument.
+
 To create a script like this, call
 :py:func:`virtualenv.create_bootstrap_script`, and write the
 result to your new bootstrapping script.
