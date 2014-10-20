@@ -15,6 +15,7 @@ Future
 * Correctly throws error on older Pythons, issue #619
 * Allow for empty $PATH, pull #601
 * Don't set prompt if $env:VIRTUAL_ENV_DISABLE_PROMPT is set for Powershell
+* Updated setuptools to 7.0
 
 Current
 -------
