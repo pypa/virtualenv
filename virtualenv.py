@@ -1100,6 +1100,27 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         ## Maybe it should delete everything with #!/path/to/venv/python in it
         logger.notify('Not deleting %s', bin_dir)
 
+    # Check if symlinks are really supported by destination filesystem
+    if symlink:
+        if not hasattr(os, 'symlink'):
+            symlink = False
+            logger.info('Symlinks are not supported in this Python version')
+        else:
+            name = join(home_dir + '.symlink.test.file')
+            open(name, 'w').close()
+            try:
+                os.symlink(name, name + '.link')
+            except OSError as exc:
+                if exc.errno == 71: # [Errno 71] Protocol error
+                    symlink = False
+                    logger.notify('Symlinks are not supported on target file system')
+                else:
+                    raise
+            else:
+                os.remove(name + '.link')
+            finally:
+                os.remove(name)
+
     if hasattr(sys, 'real_prefix'):
         logger.notify('Using real prefix %r' % sys.real_prefix)
         prefix = sys.real_prefix
@@ -1115,7 +1136,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         stdlib_dirs.append(join(os.path.dirname(stdlib_dirs[0]), 'DLLs'))
     elif is_darwin:
         stdlib_dirs.append(join(stdlib_dirs[0], 'site-packages'))
-    if hasattr(os, 'symlink'):
+    if symlink:
         logger.info('Symlinking Python bootstrap modules')
     else:
         logger.info('Copying Python bootstrap modules')
