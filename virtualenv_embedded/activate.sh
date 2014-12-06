@@ -64,7 +64,7 @@ if [ -z "$VIRTUAL_ENV_DISABLE_PROMPT" ] ; then
         # see http://www.zetadev.com/software/aspen/
         PS1="[`basename \`dirname \"$VIRTUAL_ENV\"\``] $PS1"
     else
-        PS1="(`basename \"$VIRTUAL_ENV\"`)$PS1"
+        PS1="(`basename \"$VIRTUAL_ENV\"`) $PS1"
     fi
     fi
     export PS1
