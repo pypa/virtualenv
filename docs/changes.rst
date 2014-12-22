@@ -1,11 +1,8 @@
 Release History
 ===============
 
-Future
-------
-
-12.0
-~~~~
+12.0 (2014-12-22)
+~~~~~~~~~~~~~~~~~
 
 * **PROCESS** Version numbers are now simply ``X.Y`` where the leading ``1``
   has been dropped.
@@ -16,9 +13,6 @@ Future
 * Allow for empty $PATH, pull #601
 * Don't set prompt if $env:VIRTUAL_ENV_DISABLE_PROMPT is set for Powershell
 * Updated setuptools to 7.0
-
-Current
--------
 
 1.11.6 (2014-05-16)
 ~~~~~~~~~~~~~~~~~~~
