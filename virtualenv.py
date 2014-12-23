@@ -2,7 +2,7 @@
 """Create a "virtual" Python installation
 """
 
-__version__ = "13.0.dev0"
+__version__ = "12.1.dev0"
 virtualenv_version = __version__  # legacy
 
 # NB: avoid placing additional imports here, before sys.path is fixed!
