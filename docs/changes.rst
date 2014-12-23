@@ -1,6 +1,9 @@
 Release History
 ===============
 
+12.1.0 (unreleased)
+~~~~~~~~~~~~~~~~~~~
+
 12.0.2 (2014-12-23)
 ~~~~~~~~~~~~~~~~~~~
 
@@ -10,6 +13,7 @@ Release History
 ~~~~~~~~~~~~~~~~~~~
 
 * Upgraded pip to 6.0.1
+
 
 12.0 (2014-12-22)
 ~~~~~~~~~~~~~~~~~
@@ -110,6 +114,8 @@ Release History
 * Updated to pip 1.4.
 
 * Added support for PyPy3k
+
+* Added ``--always-copy`` option to suppress use of symlinks (Pull #409)
 
 * Added the option to use a version number with the ``-p`` option to get the
   system copy of that Python version (Windows only)
