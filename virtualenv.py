@@ -804,7 +804,7 @@ def main():
             file = __file__
             if file.endswith('.pyc'):
                 file = file[:-1]
-            popen = subprocess.Popen([interpreter, file] + sys.argv[1:], env=env)
+            popen = subprocess.Popen([interpreter, "-S", file] + sys.argv[1:], env=env)
             raise SystemExit(popen.wait())
 
     if not args:
