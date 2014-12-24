@@ -1,6 +1,14 @@
 Release History
 ===============
 
+12.0.4 (2014-22-23)
+~~~~~~~~~~~~~~~~~~~
+
+* Revert the fix to ``-p`` on Debian based pythons as it was broken in other
+  situations.
+
+* Revert several sys.path changes new in 12.0 which were breaking virtualenv.
+
 12.0.3 (2014-22-23)
 ~~~~~~~~~~~~~~~~~~~
 
