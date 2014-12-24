@@ -1,6 +1,18 @@
 import click
 
 import virtualenv
+import virtualenv.builders
+
+
+def create(destination, python=None, **kwargs):
+    # Determine which builder to use based on the capabiltiies of the target
+    # python.
+    builder_type = virtualenv.builders.select_builder(python)
+
+    # Instantiate our selected builder with the values given to us, and then
+    # create our virtual environment using the given builder.
+    builder = builder_type(python=python, **kwargs)
+    builder.create(destination)
 
 
 @click.command(
@@ -82,4 +94,5 @@ def cli(destination,
     """
     Creates virtual python environments in a target directory.
     """
-    pass
+
+    create(destination, python=python)
