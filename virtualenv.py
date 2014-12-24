@@ -796,7 +796,7 @@ def main():
     if options.python and not os.environ.get('VIRTUALENV_INTERPRETER_RUNNING'):
         env = os.environ.copy()
         interpreter = resolve_interpreter(options.python)
-        if interpreter == sys.executable:
+        if os.path.realpath(interpreter) == os.path.realpath(sys.executable):
             logger.warn('Already using interpreter %s' % interpreter)
         else:
             logger.notify('Running virtualenv with interpreter %s' % interpreter)
