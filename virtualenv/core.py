@@ -95,4 +95,9 @@ def cli(destination,
     Creates virtual python environments in a target directory.
     """
 
-    create(destination, python=python)
+    create(
+        destination,
+        python=python,
+        system_site_packages=system_site_packages,
+        clear=clear,
+    )
