@@ -8,27 +8,6 @@ virtualenv_version = __version__  # legacy
 import base64
 import sys
 import os
-
-#
-# RATIONALE:
-# This script is both it's own "host" and "guest".  If it's running in "guest
-# mode" (inside the virtualenv interpreter), it's essentially invoked via:
-#     /path/to/python /path/to/this/script.py
-#
-# Which, by the nature of Python, will put `/path/to/this` on the system path
-# as the first argument.  Now this can cause many subtle bugs, because the
-# rest of the script is now looking to import from the "host" Python version
-# first.  This has been especially troublesome when trying to create a Python
-# 3 "guest" env using a Python 2 "host", but even with minor Python
-# differences, there may been some bleeding between environments that doesn't
-# stand out as obviously.
-#
-# This removes the first argument off the system path, to avoid any accidental
-# usage of the "host" library directories.
-#
-if os.environ.get('VIRTUALENV_INTERPRETER_RUNNING'):
-    del sys.path[0]
-
 import codecs
 import optparse
 import re
