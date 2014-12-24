@@ -4,6 +4,14 @@ Release History
 12.1.0 (unreleased)
 ~~~~~~~~~~~~~~~~~~~
 
+12.0.3 (2014-22-23)
+~~~~~~~~~~~~~~~~~~~
+
+* Fix an issue where Debian based Pythons would fail when using -p with the
+  host Python.
+
+* Upgrade pip to 6.0.3
+
 12.0.2 (2014-12-23)
 ~~~~~~~~~~~~~~~~~~~
 
