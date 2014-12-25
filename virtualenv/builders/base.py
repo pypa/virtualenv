@@ -16,5 +16,11 @@ class BaseBuilder(object):
         # Actually Create the virtual environment
         self.create_virtual_environment(destination)
 
+        # Install our activate scripts into the virtual environment
+        self.install_scripts(destination)
+
     def create_virtual_environment(self, destination):
         raise NotImplementedError
+
+    def install_scripts(self, destination):
+        pass
