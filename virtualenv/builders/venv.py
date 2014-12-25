@@ -26,6 +26,18 @@ class VenvBuilder(BaseBuilder):
         builder.create({destination!r})
     """)
 
+    @classmethod
+    def check_available(self, python):
+        try:
+            subprocess.check_output(
+                [python, "-c", "import venv"],
+                stderr=subprocess.STDOUT,
+            )
+        except subprocess.CalledProcessError:
+            return False
+        else:
+            return True
+
     def create_virtual_environment(self, destination):
         # Create our script using our template and the given settings for
         # this environment.

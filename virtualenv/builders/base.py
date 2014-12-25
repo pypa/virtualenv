@@ -28,6 +28,10 @@ class BaseBuilder(object):
         self.setuptools = setuptools
         self.extra_search_dirs = extra_search_dirs
 
+    @classmethod
+    def check_available(self, python):
+        raise NotImplementedError
+
     def create(self, destination):
         # Actually Create the virtual environment
         self.create_virtual_environment(destination)
