@@ -5,7 +5,7 @@ import sys
 
 
 WHEEL_DIR = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "_bundled",
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "_wheels",
 )
 
 
