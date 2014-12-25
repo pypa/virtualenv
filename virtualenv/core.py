@@ -101,6 +101,7 @@ def create(destination, python=None, **kwargs):
 )
 @click.option(
     "--prompt",
+    default="",
     help="Provides an alternative prompt prefix for this environment.",
 )
 @click.argument("destination")
