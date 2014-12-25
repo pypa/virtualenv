@@ -12,16 +12,21 @@ WHEEL_DIR = os.path.join(
 class BaseBuilder(object):
 
     def __init__(self, python, system_site_packages=False, clear=False,
-                 pip=True, setuptools=True):
+                 pip=True, setuptools=True, extra_search_dirs=None):
         # We default to sys.executable if we're not given a Python.
         if python is None:
             python = sys.executable
+
+        # We default extra_search_dirs to and empty list if it's None
+        if extra_search_dirs is None:
+            extra_search_dirs = []
 
         self.python = python
         self.system_site_packages = system_site_packages
         self.clear = clear
         self.pip = pip
         self.setuptools = setuptools
+        self.extra_search_dirs = extra_search_dirs
 
     def create(self, destination):
         # Actually Create the virtual environment
@@ -59,13 +64,20 @@ class BaseBuilder(object):
         # Find all of the Wheels inside of our WHEEL_DIR
         wheels = glob.iglob(os.path.join(WHEEL_DIR, "*.whl"))
 
-        # We want to add the pip wheel to the virtual environment's PYTHONPATH
-        # and then import it and manually run the install routines to install
-        # the projects that we want to install.
+        # Construct the command that we're going to use to actually do the
+        # installs.
         command = [
             python, "-m", "pip", "install", "--no-index", "--isolated",
             "--find-links", WHEEL_DIR,
         ]
+
+        # Add our extra search directories to the pip command
+        for directory in self.extra_search_dirs:
+            command.extend(["--find-links", directory])
+
+        # Actually execute our command, adding the wheels from our WHEEL_DIR
+        # to the PYTHONPATH so that we can import pip into the virtual
+        # environment even though it's not currently installed.
         subprocess.check_call(
             command + projects,
             env={
