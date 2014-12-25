@@ -1,13 +1,35 @@
+import subprocess
+import sys
+
 import click
 
-import virtualenv
-import virtualenv.builders
+from virtualenv import __version__
+from virtualenv.builders.legacy import LegacyBuilder
+from virtualenv.builders.venv import VenvBuilder
+
+
+def select_builder(python):
+    # Determine what Python we're going to be using. If this is None we'll use
+    # the Python which we're currently running under.
+    if python is None:
+        python = sys.executable
+
+    # Determine if the target Python supports the venv module or not.
+    try:
+        subprocess.check_output(
+            [python, "-c", "import venv"],
+            stderr=subprocess.STDOUT,
+        )
+    except subprocess.CalledProcessError:
+        return LegacyBuilder
+    else:
+        return VenvBuilder
 
 
 def create(destination, python=None, **kwargs):
     # Determine which builder to use based on the capabiltiies of the target
     # python.
-    builder_type = virtualenv.builders.select_builder(python)
+    builder_type = select_builder(python)
 
     # Instantiate our selected builder with the values given to us, and then
     # create our virtual environment using the given builder.
@@ -24,7 +46,7 @@ def create(destination, python=None, **kwargs):
         "sourcing an activate script in its bin directory."
     ),
 )
-@click.version_option(version=virtualenv.__version__)
+@click.version_option(version=__version__)
 @click.option("-v", "--verbose", count=True, help="Increase verbosity.")
 @click.option("-q", "--quiet", count=True, help="Decrease verbosity.")
 @click.option(
