@@ -128,4 +128,5 @@ def cli(destination,
         pip=pip,
         setuptools=setuptools,
         extra_search_dirs=extra_search_dir,
+        prompt=prompt,
     )
