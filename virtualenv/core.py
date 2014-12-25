@@ -100,4 +100,6 @@ def cli(destination,
         python=python,
         system_site_packages=system_site_packages,
         clear=clear,
+        pip=pip,
+        setuptools=setuptools,
     )
