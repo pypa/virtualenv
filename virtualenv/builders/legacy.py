@@ -145,12 +145,12 @@ class LegacyBuilder(BaseBuilder):
             ]).decode("utf8"),
         )
 
-    def create_virtual_environment(self, destination):
+    def create_virtual_environment(self):
         # Get a bunch of information from the base Python.
         base_python = self._get_base_python_info()
 
         # Create our binaries that we'll use to create the virtual environment
-        bin_dir = os.path.join(destination, self.flavour.bin_dir)
+        bin_dir = os.path.join(self.destination, self.flavour.bin_dir)
         ensure_directory(bin_dir)
         for python_bin in self.flavour.python_bins(base_python["sys.version_info"]):
             copyfile(
@@ -162,7 +162,7 @@ class LegacyBuilder(BaseBuilder):
         # the standard library that we need in order to ensure that we can
         # successfully bootstrap a Python interpreter.
         lib_dir = os.path.join(
-            destination,
+            self.destination,
             self.flavour.lib_dir(base_python["sys.version_info"])
         )
         ensure_directory(lib_dir)
@@ -203,8 +203,8 @@ class LegacyBuilder(BaseBuilder):
             # Get the data from our source file, and replace our special
             # variables with the computed data.
             data = SITE
-            data = data.replace("__PREFIX__", repr(destination))
-            data = data.replace("__EXEC_PREFIX__", repr(destination))
+            data = data.replace("__PREFIX__", repr(self.destination))
+            data = data.replace("__EXEC_PREFIX__", repr(self.destination))
             data = data.replace("__BASE_PREFIX__", repr(base_python["sys.prefix"]))
             data = data.replace(
                 "__BASE_EXEC_PREFIX__", repr(base_python["sys.exec_prefix"]),
