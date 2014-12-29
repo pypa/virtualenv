@@ -8,7 +8,7 @@ from virtualenv.builders.legacy import LegacyBuilder
 from virtualenv.builders.venv import VenvBuilder
 
 
-def default_system():
+def default_flavour():
     """
     A simple dispatch to platform specific operations.
 
@@ -19,10 +19,10 @@ def default_system():
         sys.platform.startswith("win")
         or (sys.platform == "cli" and os.name == "nt")
     ):
-        from virtualenv.system import windows
+        from virtualenv.flavours import windows
         return windows
     else:
-        from virtualenv.system import posix
+        from virtualenv.flavours import posix
         return posix
 
 
@@ -48,17 +48,17 @@ def select_builder(python, builders=None):
     raise RuntimeError("No available builders for the target Python.")
 
 
-def create(destination, python=None, system=None, **kwargs):
+def create(destination, python=None, flavour=None, **kwargs):
     # Determine which builder to use based on the capabiltiies of the target
     # python.
     builder_type = select_builder(python)
 
-    if system is None:
-        system = default_system()
+    if flavour is None:
+        flavour = default_flavour()
 
     # Instantiate our selected builder with the values given to us, and then
     # create our virtual environment using the given builder.
-    builder = builder_type(python=python, system=system, **kwargs)
+    builder = builder_type(python=python, flavour=flavour, **kwargs)
     builder.create(destination)
 
 
