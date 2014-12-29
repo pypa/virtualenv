@@ -11,6 +11,10 @@ SITE = """
 import sys
 import os.path
 
+# We want to stash the global site-packages here, this will be None if we're
+# not adding them.
+global_site_packages = __GLOBAL_SITE_PACKAGES__
+
 # We want to make sure that our sys.prefix and sys.exec_prefix match the
 # locations in our virtual enviornment.
 sys.prefix = "__PREFIX__"
@@ -70,14 +74,29 @@ class AttrDict(dict):
 sys.flags = AttrDict((k, getattr(sys.flags, k)) for k in dir(sys.flags))
 sys.flags["no_user_site"] = True
 
-# Next we want to import the *real* site module from the base Python. Actually
+# We want to import the *real* site module from the base Python. Actually
 # attempting to do an import here will just import this module again, so we'll
 # just read the real site module and exec it.
 with open("__SITE__") as fp:
     exec(fp.read())
 
-# Finally we'll restore the real sys.flags
+# Restore the real sys.flags
 sys.flags = _real_sys_flags
+
+# If we're running with the global site-packages enabled, then we'll want to
+# go ahead and enable it here so that it comes after the virtual environment's
+# site-package.
+if global_site_packages is not None:
+    # Force a re-check of ENABLE_USER_SITE so that we get the "real" value
+    # instead of our forced off value.
+    ENABLE_USER_SITE = check_enableusersite()
+
+    # Add the actual user site-packages if we're supposed to.
+    addusersitepackages(None)
+
+    # Add the actual global site-packages.
+    for path in global_site_packages:
+        addsitedir(path)
 """
 
 
@@ -111,6 +130,9 @@ class LegacyBuilder(BaseBuilder):
                         "sys.executable": resolve(sys.executable),
                         "sys.prefix": resolve(sys.prefix),
                         "sys.exec_prefix": resolve(sys.exec_prefix),
+                        "site.getsitepackages": [
+                            resolve(f) for f in site.getsitepackages()
+                        ],
                         "lib": resolve(os.path.dirname(os.__file__)),
                         "site.py": os.path.join(
                             resolve(os.path.dirname(site.__file__)),
@@ -199,6 +221,13 @@ class LegacyBuilder(BaseBuilder):
                 "__BASE_EXEC_PREFIX__", base_python["sys.exec_prefix"],
             )
             data = data.replace("__SITE__", base_python["site.py"])
+            data = data.replace(
+                "__GLOBAL_SITE_PACKAGES__",
+                repr(
+                    base_python["site.getsitepackages"]
+                    if self.system_site_packages else None
+                ),
+            )
 
             # Write the final site.py file to our lib directory
             dst_fp.write(data)
