@@ -19,11 +19,11 @@ def default_flavour():
         sys.platform.startswith("win")
         or (sys.platform == "cli" and os.name == "nt")
     ):
-        from virtualenv.flavours import windows
-        return windows
+        from virtualenv.flavours.windows import flavour
     else:
-        from virtualenv.flavours import posix
-        return posix
+        from virtualenv.flavours.posix import flavour
+
+    return flavour
 
 
 def select_builder(python, builders=None):
