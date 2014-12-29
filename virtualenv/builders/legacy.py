@@ -191,12 +191,8 @@ class LegacyBuilder(BaseBuilder):
         # into our virtual environment's lib directory as well. Note that this
         # list also includes the os module, but since we've already copied
         # that we'll go ahead and omit it.
-        modules = {
-            "posixpath.py", "stat.py", "genericpath.py", "warnings.py",
-            "linecache.py", "types.py", "UserDict.py", "_abcoll.py", "abc.py",
-            "_weakrefset.py", "copy_reg.py",
-        }
-        for module in modules:
+
+        for module in self.flavour.core_modules:
             copyfile(
                 os.path.join(base_python["lib"], module),
                 os.path.join(lib_dir, module),

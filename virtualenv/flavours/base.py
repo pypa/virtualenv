@@ -2,6 +2,12 @@ import os
 
 
 class BaseFlavour(object):
+    core_modules = {
+        "posixpath.py", "stat.py", "genericpath.py", "warnings.py",
+        "linecache.py", "types.py", "UserDict.py", "_abcoll.py", "abc.py",
+        "_weakrefset.py", "copy_reg.py",
+    }
+
     def python_bins(self, version_info):
         return [
             "python{}".format(".".join(map(str, version_info[:i])))
