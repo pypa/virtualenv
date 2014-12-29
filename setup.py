@@ -31,8 +31,8 @@ try:
     setup_params = {
         'entry_points': {
             'console_scripts': [
-                'virtualenv=virtualenv:main',
-                'virtualenv-%s.%s=virtualenv:main' % sys.version_info[:2]
+                'virtualenv=virtualenv.__main__:main',
+                'virtualenv-%s.%s=virtualenv.__main__:main' % sys.version_info[:2]
             ],
         },
         'zip_safe': False,
@@ -124,4 +124,5 @@ setup(
             '_wheels/*.whl'
         ]
     },
+    install_requires=['click'],
     **setup_params)
