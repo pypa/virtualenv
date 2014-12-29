@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 
 class BaseFlavour(object):
@@ -21,3 +22,6 @@ class BaseFlavour(object):
                 ".".join(map(str, version_info[:2]))
             ),
         )
+
+    def execute(self, command, **env):
+        subprocess.check_call(command, env=env)

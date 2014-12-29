@@ -1,3 +1,5 @@
+import os
+
 from virtualenv.flavours.base import BaseFlavour
 
 
@@ -15,5 +17,10 @@ class Flavour(BaseFlavour):
     @property
     def activation_scripts(self):
         return {"activate.bat", "activate.ps1", "deactivate.bat"}
+
+    def execute(self, command, **env):
+        # Windows needs a valid system root
+        super(Flavour, self).execute(command, SYSTEMROOT=os.environ['SYSTEMROOT'], **env)
+
 
 flavour = Flavour()

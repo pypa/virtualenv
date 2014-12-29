@@ -141,9 +141,4 @@ class BaseBuilder(object):
         # Actually execute our command, adding the wheels from our WHEEL_DIR
         # to the PYTHONPATH so that we can import pip into the virtual
         # environment even though it's not currently installed.
-        subprocess.check_call(
-            command + projects,
-            env={
-                "PYTHONPATH": os.pathsep.join(wheels),
-            },
-        )
+        self.flavour.execute(command + projects, PYTHONPATH=os.pathsep.join(wheels))
