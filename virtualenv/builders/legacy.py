@@ -163,10 +163,7 @@ class LegacyBuilder(BaseBuilder):
         # successfully bootstrap a Python interpreter.
         lib_dir = os.path.join(
             destination,
-            "lib",
-            "python{}".format(
-                ".".join(map(str, base_python["sys.version_info"][:2]))
-            ),
+            self.flavour.lib_dir(base_python["sys.version_info"])
         )
         ensure_directory(lib_dir)
 
