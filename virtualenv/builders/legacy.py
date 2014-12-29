@@ -1,3 +1,4 @@
+import io
 import json
 import os.path
 import subprocess
@@ -210,7 +211,7 @@ class LegacyBuilder(BaseBuilder):
             )
 
         dst = os.path.join(lib_dir, "site.py")
-        with open(dst, "w", encoding="utf8") as dst_fp:
+        with io.open(dst, "w", encoding="utf8") as dst_fp:
             # Get the data from our source file, and replace our special
             # variables with the computed data.
             data = SITE

@@ -1,4 +1,5 @@
 import glob
+import io
 import os.path
 import shutil
 import subprocess
@@ -95,8 +96,8 @@ class BaseBuilder(object):
             target = os.path.join(destination, "bin", filename)
 
             # Write the files themselves into their target locations
-            with open(source, "r", encoding="utf-8") as source_fp:
-                with open(target, "w", encoding="utf-8") as target_fp:
+            with io.open(source, "r", encoding="utf-8") as source_fp:
+                with io.open(target, "w", encoding="utf-8") as target_fp:
                     # Get the content from the sources and then replace the
                     # variables with their final values.
                     win_prompt = self.prompt or "(%s)" % "wat"
