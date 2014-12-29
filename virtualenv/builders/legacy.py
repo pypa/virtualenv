@@ -1,37 +1,53 @@
 import json
 import os.path
 import subprocess
+import textwrap
 
 from virtualenv.builders.base import BaseBuilder
 from virtualenv._utils import copyfile, ensure_directory
 
 
-SITECUSTOMIZE = """
+SITE = """
 import sys
+import os.path
 
-# Create an empty sys_path which we'll build up to create our final sys.path
-sys_path = []
+# We want to make sure that our sys.prefix and sys.exec_prefix match the
+# locations in our virtual enviornment.
+sys.prefix = "__PREFIX__"
+sys.exec_prefix = "__EXEC_PREFIX__"
 
-# Check to see if "" is the first item the sys.path, if it is then re-add it
-# to our new sys.path
-if sys.path[:1] == [""]:
-    sys_path.append("")
+# We want to record what the "real/base" prefix is of the virtual environment.
+sys.base_prefix = "__BASE_PREFIX__"
+sys.base_exec_prefix = "__BASE_EXEC_PREFIX__"
 
-# Hack the sys.path so that it matches the sys.path of the *real* Python, sans
-# any site-packages.
-sys_path.extend(__SYS_PATH__)
+# At the point this code is running, the only paths on the sys.path are the
+# paths that the interpreter adds itself. These are essentially the locations
+# it looks for the various stdlib modules. Since we are inside of a virtual
+# environment these will all be relative to the sys.prefix and sys.exec_prefix,
+# however we want to change these to be relative to sys.base_prefix and
+# sys.base_exec_prefix instead.
+new_sys_path = []
+for path in sys.path:
+    # TODO: Is there a better way to determine this?
+    if path.startswith(sys.prefix):
+        path = os.path.join(
+            sys.base_prefix,
+            path[len(sys.prefix) + 1:],
+        )
+    elif path.startswith(sys.exec_prefix):
+        path = os.path.join(
+            sys.base_exec_prefix,
+            path[len(sys.exec_prefix) + 1:],
+        )
 
-# Add on the site-packages directory of the virtual environment to the very end
-# of the sys.path
-sys_path.append("__SITE_PACKAGES__")
+    new_sys_path.append(path)
+sys.path = new_sys_path
 
-# Replace the running sys.path with our newly created one.
-sys.path = sys_path
-
-# Now that we've fixed up our sys.path, let's purge everything out of
-# sys.modules except for sys.modules itself. This will mean that from here on
-# out any imports will be pulling from the global interpreter instead of the
-# virtual environment, other than site-packages.
+# We want to empty everything that has already been imported from the
+# sys.modules so that any additional imports of these modules will import them
+# from the base Python and not from the copies inside of the virtual
+# environment. This will ensure that our copies will only be used for
+# bootstrapping the virtual environment.
 for key in list(sys.modules):
     # We don't want to purge these modules because if we do, then things break
     # very badly.
@@ -39,6 +55,29 @@ for key in list(sys.modules):
         continue
 
     del sys.modules[key]
+
+# We want to trick the interpreter into thinking that the user specific
+# site-packages has been requested to be disabled. We'll do this by mimicing
+# that sys.flags.no_user_site has been set to False, however sys.flags is a
+# read-only structure so we'll temporarily replace it with one that has the
+# same values except for sys.flags.no_user_site which will be set to True.
+_real_sys_flags = sys.flags
+class AttrDict(dict):
+    def __init__(self, *args, **kwargs):
+        dict.__init__(self, *args, **kwargs)
+    def __getattr__(self, name):
+        return self[name]
+sys.flags = AttrDict((k, getattr(sys.flags, k)) for k in dir(sys.flags))
+sys.flags["no_user_site"] = True
+
+# Next we want to import the *real* site module from the base Python. Actually
+# attempting to do an import here will just import this module again, so we'll
+# just read the real site module and exec it.
+with open("__SITE__") as fp:
+    exec(fp.read())
+
+# Finally we'll restore the real sys.flags
+sys.flags = _real_sys_flags
 """
 
 
@@ -49,72 +88,55 @@ class LegacyBuilder(BaseBuilder):
         # TODO: Do we ever want to make this builder *not* available?
         return True
 
-    def _get_sys_version_info(self):
-        # We want to get the sys.version_info of the target Python. Since that
-        # may not be the currently executing Python we'll go ahead and create
-        # a subprocess and use it to inspect the target environment's
-        # sys.version_info.
-        return tuple(
-            json.loads(
-                subprocess.check_output([
-                    self.python, "-c",
-                    "import sys,json; "
-                    "print(json.dumps(tuple(sys.version_info)))",
-                ]).decode("utf8"),
-            ),
-        )
-
-    def _get_sys_executable(self):
-        # We want to get the sys.executable of the target Python. Since that
-        # may not be the currently executing Python we'll go ahead and create
-        # a subprocess and use it to inspect the target environment's
-        # sys.executable.
+    def _get_base_python_info(self):
+        # Get information from the base python that we need in order to create
+        # a legacy virtual environment.
         return json.loads(
             subprocess.check_output([
-                self.python, "-c",
-                "import sys,json; print(json.dumps(sys.executable))",
+                self.python,
+                "-c",
+                textwrap.dedent("""
+                import json
+                import os
+                import os.path
+                import site
+                import sys
+
+                def resolve(path):
+                    return os.path.realpath(os.path.abspath(path))
+
+                print(
+                    json.dumps({
+                        "sys.version_info": tuple(sys.version_info),
+                        "sys.executable": resolve(sys.executable),
+                        "sys.prefix": resolve(sys.prefix),
+                        "sys.exec_prefix": resolve(sys.exec_prefix),
+                        "lib": resolve(os.path.dirname(os.__file__)),
+                        "site.py": os.path.join(
+                            resolve(os.path.dirname(site.__file__)),
+                            "site.py",
+                        ),
+                    })
+                )
+                """),
             ]).decode("utf8"),
         )
-
-    def _get_lib_directory(self):
-        return json.loads(
-            subprocess.check_output([
-                self.python, "-c",
-                "import os,os.path,json; "
-                "print(json.dumps(os.path.dirname(os.__file__)))",
-            ]).decode("utf8"),
-        )
-
-    def _get_sys_path(self):
-        # TODO: Ensure that the -S flag will also prevent processing .pth
-        # from inside the site-packages.
-        return [
-            x for x in json.loads(
-                subprocess.check_output([
-                    self.python, "-S", "-c",
-                    "import sys,json; "
-                    "print(json.dumps(sys.path))",
-                ]).decode("utf8"),
-            )
-            if x
-        ]
 
     def create_virtual_environment(self, destination):
-        # Get the Python version of the target Python
-        python_verison = self._get_sys_version_info()
-
-        # Resolve the Python interpreter to the real actual file
-        python = os.path.realpath(self._get_sys_executable())
+        # Get a bunch of information from the base Python.
+        base_python = self._get_base_python_info()
 
         # Create our binaries that we'll use to create the virtual environment
         bin_dir = os.path.join(destination, "bin")
         ensure_directory(bin_dir)
         for i in range(3):
             copyfile(
-                python,
+                base_python["sys.executable"],
                 os.path.join(
                     bin_dir,
-                    "python{}".format(".".join(map(str, python_verison[:i]))),
+                    "python{}".format(
+                        ".".join(map(str, base_python["sys.version_info"][:i]))
+                    ),
                 ),
             )
 
@@ -124,7 +146,9 @@ class LegacyBuilder(BaseBuilder):
         lib_dir = os.path.join(
             destination,
             "lib",
-            "python{}".format(".".join(map(str, python_verison[:2]))),
+            "python{}".format(
+                ".".join(map(str, base_python["sys.version_info"][:2]))
+            ),
         )
         ensure_directory(lib_dir)
 
@@ -132,9 +156,6 @@ class LegacyBuilder(BaseBuilder):
         # really want control over.
         site_packages_dir = os.path.join(lib_dir, "site-packages")
         ensure_directory(site_packages_dir)
-
-        # Determine the stdlib directory for the target Python
-        target_lib_dir = self._get_lib_directory()
 
         # The Python interpreter uses the os.py module as a sort of sentinel
         # value for where it can locate the rest of it's files. It will first
@@ -146,17 +167,8 @@ class LegacyBuilder(BaseBuilder):
         # any other module unless they are "special" modules built into the
         # interpreter like the sys module.
         copyfile(
-            os.path.join(target_lib_dir, "os.py"),
+            os.path.join(base_python["lib"], "os.py"),
             os.path.join(lib_dir, "os.py"),
-        )
-
-        # Next we need to copy over the site module, this is because now that
-        # the Python interpreter is rooted in our new location, one of the
-        # first things it's going to do is attempt to import the site module
-        # so we'll want to make that available for it.
-        copyfile(
-            os.path.join(target_lib_dir, "site.py"),
-            os.path.join(lib_dir, "site.py"),
         )
 
         # The site module has a number of required modules that it needs in
@@ -167,27 +179,26 @@ class LegacyBuilder(BaseBuilder):
         modules = {
             "posixpath.py", "stat.py", "genericpath.py", "warnings.py",
             "linecache.py", "types.py", "UserDict.py", "_abcoll.py", "abc.py",
-            "copy_reg.py", "_weakrefset.py", "traceback.py", "sysconfig.py",
-            "re.py", "sre_compile.py", "sre_parse.py", "sre_constants.py",
-            "_sysconfigdata.py", "_osx_support.py",
+            "_weakrefset.py", "copy_reg.py",
         }
         for module in modules:
             copyfile(
-                os.path.join(target_lib_dir, module),
+                os.path.join(base_python["lib"], module),
                 os.path.join(lib_dir, module),
             )
 
-        # Now we're going to install our own sitecustomize.py file. This file
-        # is how we're going to adjust things like sys.path and such so that
-        # they reflect the values that we want them to inside of the virtual
-        # environment.
-        dst = os.path.join(lib_dir, "sitecustomize.py")
+        dst = os.path.join(lib_dir, "site.py")
         with open(dst, "w", encoding="utf8") as dst_fp:
             # Get the data from our source file, and replace our special
             # variables with the computed data.
-            data = SITECUSTOMIZE
-            data = data.replace("__SYS_PATH__", repr(self._get_sys_path()))
-            data = data.replace("__SITE_PACKAGES__", site_packages_dir)
+            data = SITE
+            data = data.replace("__PREFIX__", destination)
+            data = data.replace("__EXEC_PREFIX__", destination)
+            data = data.replace("__BASE_PREFIX__", base_python["sys.prefix"])
+            data = data.replace(
+                "__BASE_EXEC_PREFIX__", base_python["sys.exec_prefix"],
+            )
+            data = data.replace("__SITE__", base_python["site.py"])
 
-            # Write the final sitecustomize.py file to our lib directory
+            # Write the final site.py file to our lib directory
             dst_fp.write(data)
