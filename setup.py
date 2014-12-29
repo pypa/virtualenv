@@ -65,7 +65,7 @@ long_description += "\n\n" + read_file('docs', 'changes.rst')
 
 
 def get_version():
-    version_file = read_file('virtualenv.py')
+    version_file = read_file('virtualenv/__init__.py')
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
                               version_file, re.M)
     if version_match:
@@ -105,7 +105,23 @@ setup(
     maintainer_email='python-virtualenv@groups.google.com',
     url='https://virtualenv.pypa.io/',
     license='MIT',
-    py_modules=['virtualenv'],
-    packages=['virtualenv_support'],
-    package_data={'virtualenv_support': ['*.whl']},
+    packages=[
+        'virtualenv',
+        'virtualenv.builders',
+        'virtualenv.flavours',
+        'virtualenv._scripts',
+        'virtualenv._wheels',
+    ],
+    package_data={
+        'virtualenv': [
+            '_scripts/deactivate.bat',
+            '_scripts/activate_this.py',
+            '_scripts/activate.sh',
+            '_scripts/activate.ps1',
+            '_scripts/activate.fish',
+            '_scripts/activate.csh',
+            '_scripts/activate.bat',
+            '_wheels/*.whl'
+        ]
+    },
     **setup_params)
