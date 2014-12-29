@@ -70,10 +70,6 @@ def create(destination, python=None, **kwargs):
     help="Give the virtual environment access to the global site-packages.",
 )
 @click.option(
-    "--always-copy",
-    is_flag=True, help="Always copy files rather than symlinking.",
-)
-@click.option(
     "--relocatable",
     is_flag=True,
     help=(
@@ -111,7 +107,6 @@ def cli(destination,
         python=None,
         system_site_packages=False,
         clear=False,
-        always_copy=False,
         prompt=None,
         relocatable=False,
         extra_search_dir=None,

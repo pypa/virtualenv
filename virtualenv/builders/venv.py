@@ -10,6 +10,7 @@ import venv
 builder = venv.EnvBuilder(
     system_site_packages={system_site_packages!r},
     clear={clear!r},
+    symlink=False,
 )
 
 # Make sure that pip is actually disabled.
