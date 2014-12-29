@@ -150,17 +150,12 @@ class LegacyBuilder(BaseBuilder):
         base_python = self._get_base_python_info()
 
         # Create our binaries that we'll use to create the virtual environment
-        bin_dir = os.path.join(destination, "bin")
+        bin_dir = os.path.join(destination, self.flavour.bin_dir)
         ensure_directory(bin_dir)
-        for i in range(3):
+        for python_bin in self.flavour.python_bins(base_python["sys.version_info"]):
             copyfile(
                 base_python["sys.executable"],
-                os.path.join(
-                    bin_dir,
-                    "python{}".format(
-                        ".".join(map(str, base_python["sys.version_info"][:i]))
-                    ),
-                ),
+                os.path.join(bin_dir, python_bin),
             )
 
         # Create our lib directory, this is going to hold all of the parts of
