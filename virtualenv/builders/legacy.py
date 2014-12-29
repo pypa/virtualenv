@@ -8,7 +8,7 @@ from virtualenv.builders.base import BaseBuilder
 from virtualenv._utils import copyfile, ensure_directory
 
 
-SITE = """
+SITE = """# -*- encoding: utf-8 -*-
 import sys
 import os.path
 
@@ -18,12 +18,12 @@ global_site_packages = __GLOBAL_SITE_PACKAGES__
 
 # We want to make sure that our sys.prefix and sys.exec_prefix match the
 # locations in our virtual enviornment.
-sys.prefix = "__PREFIX__"
-sys.exec_prefix = "__EXEC_PREFIX__"
+sys.prefix = __PREFIX__
+sys.exec_prefix = __EXEC_PREFIX__
 
 # We want to record what the "real/base" prefix is of the virtual environment.
-sys.base_prefix = "__BASE_PREFIX__"
-sys.base_exec_prefix = "__BASE_EXEC_PREFIX__"
+sys.base_prefix = __BASE_PREFIX__
+sys.base_exec_prefix = __BASE_EXEC_PREFIX__
 
 # At the point this code is running, the only paths on the sys.path are the
 # paths that the interpreter adds itself. These are essentially the locations
@@ -78,7 +78,7 @@ sys.flags["no_user_site"] = True
 # We want to import the *real* site module from the base Python. Actually
 # attempting to do an import here will just import this module again, so we'll
 # just read the real site module and exec it.
-with open("__SITE__") as fp:
+with open(__SITE__) as fp:
     exec(fp.read())
 
 # Restore the real sys.flags
@@ -206,17 +206,17 @@ class LegacyBuilder(BaseBuilder):
             )
 
         dst = os.path.join(lib_dir, "site.py")
-        with io.open(dst, "w", encoding="utf8") as dst_fp:
+        with io.open(dst, "wb") as dst_fp:
             # Get the data from our source file, and replace our special
             # variables with the computed data.
             data = SITE
-            data = data.replace("__PREFIX__", destination)
-            data = data.replace("__EXEC_PREFIX__", destination)
-            data = data.replace("__BASE_PREFIX__", base_python["sys.prefix"])
+            data = data.replace("__PREFIX__", repr(destination))
+            data = data.replace("__EXEC_PREFIX__", repr(destination))
+            data = data.replace("__BASE_PREFIX__", repr(base_python["sys.prefix"]))
             data = data.replace(
-                "__BASE_EXEC_PREFIX__", base_python["sys.exec_prefix"],
+                "__BASE_EXEC_PREFIX__", repr(base_python["sys.exec_prefix"]),
             )
-            data = data.replace("__SITE__", base_python["site.py"])
+            data = data.replace("__SITE__", repr(base_python["site.py"]))
             data = data.replace(
                 "__GLOBAL_SITE_PACKAGES__",
                 repr(
