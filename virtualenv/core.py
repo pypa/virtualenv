@@ -1,3 +1,4 @@
+import os
 import sys
 
 import click
@@ -5,6 +6,24 @@ import click
 from virtualenv import __version__
 from virtualenv.builders.legacy import LegacyBuilder
 from virtualenv.builders.venv import VenvBuilder
+
+
+def default_system():
+    """
+    A simple dispatch to platform specific operations.
+
+    For now it dispatches to a module (as opposed to a class) because
+    there no state to hold. There may be later, we'll see ...
+    """
+    if (
+        sys.platform.startswith("win")
+        or (sys.platform == "cli" and os.name == "nt")
+    ):
+        from virtualenv.system import windows
+        return windows
+    else:
+        from virtualenv.system import posix
+        return posix
 
 
 def select_builder(python, builders=None):
@@ -29,14 +48,17 @@ def select_builder(python, builders=None):
     raise RuntimeError("No available builders for the target Python.")
 
 
-def create(destination, python=None, **kwargs):
+def create(destination, python=None, system=None, **kwargs):
     # Determine which builder to use based on the capabiltiies of the target
     # python.
     builder_type = select_builder(python)
 
+    if system is None:
+        system = default_system()
+
     # Instantiate our selected builder with the values given to us, and then
     # create our virtual environment using the given builder.
-    builder = builder_type(python=python, **kwargs)
+    builder = builder_type(python=python, system=system, **kwargs)
     builder.create(destination)
 
 

@@ -6,7 +6,6 @@ import subprocess
 import sys
 
 from virtualenv._compat import FileNotFoundError
-from virtualenv._system import WINDOWS
 
 
 WHEEL_DIR = os.path.join(
@@ -20,7 +19,7 @@ SCRIPT_DIR = os.path.join(
 
 class BaseBuilder(object):
 
-    def __init__(self, python, system_site_packages=False, clear=False,
+    def __init__(self, python, system, system_site_packages=False, clear=False,
                  pip=True, setuptools=True, extra_search_dirs=None,
                  prompt=""):
         # We default to sys.executable if we're not given a Python.
@@ -32,6 +31,7 @@ class BaseBuilder(object):
             extra_search_dirs = []
 
         self.python = python
+        self.system = system
         self.system_site_packages = system_site_packages
         self.clear = clear
         self.pip = pip
@@ -69,10 +69,7 @@ class BaseBuilder(object):
 
     def install_scripts(self, destination):
         # Determine the list of files based on if we're running on Windows
-        if WINDOWS:
-            files = {"activate.bat", "activate.ps1", "deactivate.bat"}
-        else:
-            files = {"activate.sh", "activate.fish", "activate.csh"}
+        files = set(self.system.activation_scripts)
 
         # We just always want add the activate_this.py script regardless of
         # platform.
