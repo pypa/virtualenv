@@ -1,8 +1,10 @@
 import glob
 import os.path
+import shutil
 import subprocess
 import sys
 
+from virtualenv._compat import FileNotFoundError
 from virtualenv._system import WINDOWS
 
 
@@ -41,6 +43,10 @@ class BaseBuilder(object):
         raise NotImplementedError
 
     def create(self, destination):
+        # Clear the existing virtual environment.
+        if self.clear:
+            self.clear_virtual_environment(destination)
+
         # Actually Create the virtual environment
         self.create_virtual_environment(destination)
 
@@ -50,6 +56,12 @@ class BaseBuilder(object):
         # Install the packaging tools (pip and setuptools) into the virtual
         # environment.
         self.install_tools(destination)
+
+    def clear_virtual_environment(self, destination):
+        try:
+            shutil.rmtree(destination)
+        except FileNotFoundError:
+            pass
 
     def create_virtual_environment(self, destination):
         raise NotImplementedError

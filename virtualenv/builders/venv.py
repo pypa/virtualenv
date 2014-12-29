@@ -9,7 +9,6 @@ import venv
 # Create our actual builder with our settings.
 builder = venv.EnvBuilder(
     system_site_packages={system_site_packages!r},
-    clear={clear!r},
     symlink=False,
 )
 
@@ -44,7 +43,6 @@ class VenvBuilder(BaseBuilder):
         # this environment.
         script = _SCRIPT.format(
             system_site_packages=self.system_site_packages,
-            clear=self.clear,
             destination=destination,
         )
 
