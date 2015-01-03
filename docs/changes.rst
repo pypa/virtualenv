@@ -6,6 +6,9 @@ Release History
 
 * Upgrade pip to 6.0.6
 
+* Upgrade setuptools to 11.0
+
+
 12.0.4 (2014-22-23)
 ~~~~~~~~~~~~~~~~~~~
 
