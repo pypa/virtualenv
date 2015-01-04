@@ -41,7 +41,7 @@ class BaseBuilder(object):
         self.prompt = prompt
 
     @classmethod
-    def check_available(self, python):
+    def check_available(cls, python):
         raise NotImplementedError
 
     def create(self, destination):

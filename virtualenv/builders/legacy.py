@@ -106,7 +106,7 @@ if global_site_packages is not None:
 class LegacyBuilder(BaseBuilder):
 
     @classmethod
-    def check_available(self, python):
+    def check_available(cls, python):
         # TODO: Do we ever want to make this builder *not* available?
         return True
 
