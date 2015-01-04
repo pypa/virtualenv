@@ -6,24 +6,17 @@ import click
 from virtualenv import __version__
 from virtualenv.builders.legacy import LegacyBuilder
 from virtualenv.builders.venv import VenvBuilder
+from virtualenv.flavors.posix import PosixFlavor
+from virtualenv.flavors.windows import WindowsFlavor
 
 
-def default_flavor():
-    """
-    A simple dispatch to platform specific operations.
+def select_flavor():
+    # Determine if we're running under Windows or not.
+    if (sys.platform.startswith("win")
+            or (sys.platform == "cli" and os.name == "nt")):
+        return WindowsFlavor
 
-    For now it dispatches to a module (as opposed to a class) because
-    there no state to hold. There may be later, we'll see ...
-    """
-    if (
-        sys.platform.startswith("win")
-        or (sys.platform == "cli" and os.name == "nt")
-    ):
-        from virtualenv.flavors.windows import flavor
-    else:
-        from virtualenv.flavors.posix import flavor
-
-    return flavor
+    return PosixFlavor
 
 
 def select_builder(python, builders=None):
@@ -48,17 +41,17 @@ def select_builder(python, builders=None):
     raise RuntimeError("No available builders for the target Python.")
 
 
-def create(destination, python=None, flavor=None, **kwargs):
+def create(destination, python=None, **kwargs):
     # Determine which builder to use based on the capabiltiies of the target
     # python.
     builder_type = select_builder(python)
 
-    if flavor is None:
-        flavor = default_flavor()
+    # Determine which flavor to use, based on the platform we're running on.
+    flavor_type = select_flavor()
 
     # Instantiate our selected builder with the values given to us, and then
     # create our virtual environment using the given builder.
-    builder = builder_type(python=python, flavor=flavor, **kwargs)
+    builder = builder_type(python=python, flavor=flavor_type(), **kwargs)
     builder.create(destination)
 
 
