@@ -219,7 +219,7 @@ class LegacyBuilder(BaseBuilder):
             data = data.replace(
                 "__GLOBAL_SITE_PACKAGES__",
                 repr(
-                    base_python["site.getsitepackages"]
+                    self.flavor.globalsitepaths(base_python)
                     if self.system_site_packages else None
                 ),
             )
