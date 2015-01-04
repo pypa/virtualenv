@@ -1,5 +1,14 @@
+import os
+import sys
+
 import pytest
 import scripttest
+
+
+is_windows = (
+    sys.platform.startswith("win") or
+    (sys.platform == "cli" and os.name == "nt")
+)
 
 
 @pytest.yield_fixture
@@ -12,10 +21,29 @@ def env(request):
 
 
 def test_create_via_script(env):
-    env.run('virtualenv', 'myenv')
-    assert env.files_created == {}
-
+    result = env.run('virtualenv', 'myenv')
+    if is_windows:
+        assert 'myenv\\Scripts\\activate.bat' in result.files_created
+        assert 'myenv\\Scripts\\activate.ps1' in result.files_created
+        assert 'myenv\\Scripts\\activate_this.py' in result.files_created
+        assert 'myenv\\Scripts\\deactivate.bat' in result.files_created
+        assert 'myenv\\Scripts\\easy_install.exe' in result.files_created
+        assert 'myenv\\Scripts\\pip.exe' in result.files_created
+        assert 'myenv\\Scripts\\python.exe' in result.files_created
+        assert 'myenv\\Scripts\\python2.exe' in result.files_created
+    else:
+        raise NotImplementedError("TODO")
 
 def test_create_via_module(env):
-    env.run('python', '-mvirtualenv', 'myenv')
-    assert env.files_created == {}
+    result = env.run('python', '-mvirtualenv', 'myenv')
+    if is_windows:
+        assert 'myenv\\Scripts\\activate.bat' in result.files_created
+        assert 'myenv\\Scripts\\activate.ps1' in result.files_created
+        assert 'myenv\\Scripts\\activate_this.py' in result.files_created
+        assert 'myenv\\Scripts\\deactivate.bat' in result.files_created
+        assert 'myenv\\Scripts\\easy_install.exe' in result.files_created
+        assert 'myenv\\Scripts\\pip.exe' in result.files_created
+        assert 'myenv\\Scripts\\python.exe' in result.files_created
+        assert 'myenv\\Scripts\\python2.exe' in result.files_created
+    else:
+        raise NotImplementedError("TODO")
