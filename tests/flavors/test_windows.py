@@ -1,12 +1,10 @@
-import os
-
 import pytest
 
 from virtualenv.flavors.windows import WindowsFlavor
 
 
 def test_activation_scripts():
-    expected = {"activate.bat", "activate.ps1", "deactivate.bat"}
+    expected = set(["activate.bat", "activate.ps1", "deactivate.bat"])
     assert WindowsFlavor().activation_scripts == expected
 
 

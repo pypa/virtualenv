@@ -6,11 +6,11 @@ import subprocess
 
 class BaseFlavor(object):
 
-    core_modules = {
+    core_modules = set([
         "posixpath.py", "stat.py", "genericpath.py", "warnings.py",
         "linecache.py", "types.py", "UserDict.py", "_abcoll.py", "abc.py",
         "_weakrefset.py", "copy_reg.py",
-    }
+    ])
 
     @property
     def activation_scripts(self):
