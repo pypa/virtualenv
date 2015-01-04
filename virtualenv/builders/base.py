@@ -19,7 +19,7 @@ SCRIPT_DIR = os.path.join(
 
 class BaseBuilder(object):
 
-    def __init__(self, destination, python, flavour, system_site_packages=False, clear=False,
+    def __init__(self, python, flavour, system_site_packages=False, clear=False,
                  pip=True, setuptools=True, extra_search_dirs=None,
                  prompt=""):
         # We default to sys.executable if we're not given a Python.
@@ -29,12 +29,6 @@ class BaseBuilder(object):
         # We default extra_search_dirs to and empty list if it's None
         if extra_search_dirs is None:
             extra_search_dirs = []
-
-        # Ensure that our destination is an absolute path
-        self.destination = os.path.abspath(destination)
-
-        # Determine the name of our virtual environment
-        self.name = os.path.basename(self.destination)
 
         self.python = python
         self.flavour = flavour
@@ -49,31 +43,31 @@ class BaseBuilder(object):
     def check_available(self, python):
         raise NotImplementedError
 
-    def create(self):
+    def create(self, destination):
         # Clear the existing virtual environment.
         if self.clear:
-            self.clear_virtual_environment()
+            self.clear_virtual_environment(destination)
 
         # Actually Create the virtual environment
-        self.create_virtual_environment()
+        self.create_virtual_environment(destination)
 
         # Install our activate scripts into the virtual environment
-        self.install_scripts()
+        self.install_scripts(destination)
 
         # Install the packaging tools (pip and setuptools) into the virtual
         # environment.
-        self.install_tools()
+        self.install_tools(destination)
 
-    def clear_virtual_environment(self):
+    def clear_virtual_environment(self, destination):
         try:
-            shutil.rmtree(self.destination)
+            shutil.rmtree(destination)
         except FileNotFoundError:
             pass
 
-    def create_virtual_environment(self):
+    def create_virtual_environment(self, destination):
         raise NotImplementedError
 
-    def install_scripts(self):
+    def install_scripts(self, destination):
         # Determine the list of files based on if we're running on Windows
         files = self.flavour.activation_scripts
 
@@ -81,8 +75,14 @@ class BaseBuilder(object):
         # platform.
         files.add("activate_this.py")
 
+        # Ensure that our destination is an absolute path
+        destination = os.path.abspath(destination)
+
+        # Determine the name of our virtual environment
+        name = os.path.basename(destination)
+
         # Determine the special Windows prompt
-        win_prompt = self.prompt if self.prompt else "({0})".format(self.name)
+        win_prompt = self.prompt if self.prompt else "({0})".format(name)
 
         # Go through each file that we want to install, replace the special
         # variables so that they point to the correct location, and then write
@@ -90,7 +90,7 @@ class BaseBuilder(object):
         for filename in files:
             # Compute our source and target paths
             source = os.path.join(SCRIPT_DIR, filename)
-            target = os.path.join(self.destination, self.flavour.bin_dir, filename)
+            target = os.path.join(destination, self.flavour.bin_dir, filename)
 
             # Write the files themselves into their target locations
             with io.open(source, "r", encoding="utf-8") as source_fp:
@@ -101,14 +101,14 @@ class BaseBuilder(object):
                     data = source_fp.read()
                     data = data.replace("__VIRTUAL_PROMPT__", self.prompt)
                     data = data.replace("__VIRTUAL_WINPROMPT__", win_prompt)
-                    data = data.replace("__VIRTUAL_ENV__", self.destination)
-                    data = data.replace("__VIRTUAL_NAME__", self.name)
+                    data = data.replace("__VIRTUAL_ENV__", destination)
+                    data = data.replace("__VIRTUAL_NAME__", name)
                     data = data.replace("__BIN_NAME__", self.flavour.bin_dir)
 
                     # Actually write our content to the target locations
                     target_fp.write(data)
 
-    def install_tools(self):
+    def install_tools(self, destination):
         # Determine which projects we are going to install
         projects = []
         if self.pip:
@@ -122,7 +122,7 @@ class BaseBuilder(object):
 
         # Compute the path to the Python interpreter inside the virtual
         # environment.
-        python = os.path.join(self.destination, self.flavour.bin_dir, self.flavour.python_bin)
+        python = os.path.join(destination, self.flavour.bin_dir, self.flavour.python_bin)
 
         # Find all of the Wheels inside of our WHEEL_DIR
         wheels = glob.iglob(os.path.join(WHEEL_DIR, "*.whl"))

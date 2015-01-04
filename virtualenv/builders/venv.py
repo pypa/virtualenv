@@ -8,7 +8,6 @@ import venv
 
 # Create our actual builder with our settings.
 builder = venv.EnvBuilder(
-    destination={destination!r},
     system_site_packages={system_site_packages!r},
     symlink=False,
 )
@@ -21,7 +20,7 @@ builder.with_pip = False
 builder.install_scripts = lambda *a, **kw: None
 
 # Create the virtual environment.
-builder.create()
+builder.create({destination!r})
 """
 
 
@@ -39,12 +38,12 @@ class VenvBuilder(BaseBuilder):
         else:
             return True
 
-    def create_virtual_environment(self):
+    def create_virtual_environment(self, destination):
         # Create our script using our template and the given settings for
         # this environment.
         script = _SCRIPT.format(
             system_site_packages=self.system_site_packages,
-            destination=self.destination,
+            destination=destination,
         )
 
         # Subshell into the venv module and create a new virtual environment.

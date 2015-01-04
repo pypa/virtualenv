@@ -58,8 +58,8 @@ def create(destination, python=None, flavour=None, **kwargs):
 
     # Instantiate our selected builder with the values given to us, and then
     # create our virtual environment using the given builder.
-    builder = builder_type(destination=destination, python=python, flavour=flavour, **kwargs)
-    builder.create()
+    builder = builder_type(python=python, flavour=flavour, **kwargs)
+    builder.create(destination)
 
 
 @click.command(
