@@ -9,7 +9,10 @@ class Flavour(BaseFlavour):
     core_modules = BaseFlavour.core_modules.union({"ntpath.py"})
 
     def python_bins(self, version_info):
-        return ["{}.exe".format(i) for i in super(Flavour, self).python_bins(version_info)]
+        return [
+            "{}.exe".format(i)
+            for i in super(Flavour, self).python_bins(version_info)
+        ]
 
     def lib_dir(self, version_info):
         return "Lib"
@@ -20,7 +23,9 @@ class Flavour(BaseFlavour):
 
     def execute(self, command, **env):
         # Windows needs a valid system root
-        super(Flavour, self).execute(command, SYSTEMROOT=os.environ['SYSTEMROOT'], **env)
+        super(Flavour, self).execute(
+            command, SYSTEMROOT=os.environ['SYSTEMROOT'], **env
+        )
 
 
 flavour = Flavour()

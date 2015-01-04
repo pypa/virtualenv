@@ -152,7 +152,8 @@ class LegacyBuilder(BaseBuilder):
         # Create our binaries that we'll use to create the virtual environment
         bin_dir = os.path.join(destination, self.flavour.bin_dir)
         ensure_directory(bin_dir)
-        for python_bin in self.flavour.python_bins(base_python["sys.version_info"]):
+        for python_bin in self.flavour.python_bins(
+                base_python["sys.version_info"]):
             copyfile(
                 base_python["sys.executable"],
                 os.path.join(bin_dir, python_bin),
@@ -205,7 +206,10 @@ class LegacyBuilder(BaseBuilder):
             data = SITE
             data = data.replace("__PREFIX__", repr(destination))
             data = data.replace("__EXEC_PREFIX__", repr(destination))
-            data = data.replace("__BASE_PREFIX__", repr(base_python["sys.prefix"]))
+            data = data.replace(
+                "__BASE_PREFIX__",
+                repr(base_python["sys.prefix"]),
+            )
             data = data.replace(
                 "__BASE_EXEC_PREFIX__", repr(base_python["sys.exec_prefix"]),
             )

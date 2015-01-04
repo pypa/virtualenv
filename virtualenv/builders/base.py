@@ -2,7 +2,6 @@ import glob
 import io
 import os.path
 import shutil
-import subprocess
 import sys
 
 from virtualenv._compat import FileNotFoundError
@@ -19,9 +18,9 @@ SCRIPT_DIR = os.path.join(
 
 class BaseBuilder(object):
 
-    def __init__(self, python, flavour, system_site_packages=False, clear=False,
-                 pip=True, setuptools=True, extra_search_dirs=None,
-                 prompt=""):
+    def __init__(self, python, flavour, system_site_packages=False,
+                 clear=False, pip=True, setuptools=True,
+                 extra_search_dirs=None, prompt=""):
         # We default to sys.executable if we're not given a Python.
         if python is None:
             python = sys.executable
@@ -122,7 +121,11 @@ class BaseBuilder(object):
 
         # Compute the path to the Python interpreter inside the virtual
         # environment.
-        python = os.path.join(destination, self.flavour.bin_dir, self.flavour.python_bin)
+        python = os.path.join(
+            destination,
+            self.flavour.bin_dir,
+            self.flavour.python_bin,
+        )
 
         # Find all of the Wheels inside of our WHEEL_DIR
         wheels = glob.iglob(os.path.join(WHEEL_DIR, "*.whl"))
@@ -141,4 +144,7 @@ class BaseBuilder(object):
         # Actually execute our command, adding the wheels from our WHEEL_DIR
         # to the PYTHONPATH so that we can import pip into the virtual
         # environment even though it's not currently installed.
-        self.flavour.execute(command + projects, PYTHONPATH=os.pathsep.join(wheels))
+        self.flavour.execute(
+            command + projects,
+            PYTHONPATH=os.pathsep.join(wheels),
+        )
