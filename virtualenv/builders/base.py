@@ -18,7 +18,7 @@ SCRIPT_DIR = os.path.join(
 
 class BaseBuilder(object):
 
-    def __init__(self, python, flavour, system_site_packages=False,
+    def __init__(self, python, flavor, system_site_packages=False,
                  clear=False, pip=True, setuptools=True,
                  extra_search_dirs=None, prompt=""):
         # We default to sys.executable if we're not given a Python.
@@ -30,7 +30,7 @@ class BaseBuilder(object):
             extra_search_dirs = []
 
         self.python = python
-        self.flavour = flavour
+        self.flavor = flavor
         self.system_site_packages = system_site_packages
         self.clear = clear
         self.pip = pip
@@ -68,7 +68,7 @@ class BaseBuilder(object):
 
     def install_scripts(self, destination):
         # Determine the list of files based on if we're running on Windows
-        files = self.flavour.activation_scripts
+        files = self.flavor.activation_scripts
 
         # We just always want add the activate_this.py script regardless of
         # platform.
@@ -89,7 +89,7 @@ class BaseBuilder(object):
         for filename in files:
             # Compute our source and target paths
             source = os.path.join(SCRIPT_DIR, filename)
-            target = os.path.join(destination, self.flavour.bin_dir, filename)
+            target = os.path.join(destination, self.flavor.bin_dir, filename)
 
             # Write the files themselves into their target locations
             with io.open(source, "r", encoding="utf-8") as source_fp:
@@ -102,7 +102,7 @@ class BaseBuilder(object):
                     data = data.replace("__VIRTUAL_WINPROMPT__", win_prompt)
                     data = data.replace("__VIRTUAL_ENV__", destination)
                     data = data.replace("__VIRTUAL_NAME__", name)
-                    data = data.replace("__BIN_NAME__", self.flavour.bin_dir)
+                    data = data.replace("__BIN_NAME__", self.flavor.bin_dir)
 
                     # Actually write our content to the target locations
                     target_fp.write(data)
@@ -123,8 +123,8 @@ class BaseBuilder(object):
         # environment.
         python = os.path.join(
             destination,
-            self.flavour.bin_dir,
-            self.flavour.python_bin,
+            self.flavor.bin_dir,
+            self.flavor.python_bin,
         )
 
         # Find all of the Wheels inside of our WHEEL_DIR
@@ -144,7 +144,7 @@ class BaseBuilder(object):
         # Actually execute our command, adding the wheels from our WHEEL_DIR
         # to the PYTHONPATH so that we can import pip into the virtual
         # environment even though it's not currently installed.
-        self.flavour.execute(
+        self.flavor.execute(
             command + projects,
             PYTHONPATH=os.pathsep.join(wheels),
         )

@@ -108,7 +108,7 @@ setup(
     packages=[
         'virtualenv',
         'virtualenv.builders',
-        'virtualenv.flavours',
+        'virtualenv.flavors',
         'virtualenv._scripts',
         'virtualenv._wheels',
     ],

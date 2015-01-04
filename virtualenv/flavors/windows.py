@@ -1,17 +1,17 @@
 import os
 
-from virtualenv.flavours.base import BaseFlavour
+from virtualenv.flavors.base import BaseFlavor
 
 
-class Flavour(BaseFlavour):
+class Flavor(BaseFlavor):
     bin_dir = "Scripts"
     python_bin = "python.exe"
-    core_modules = BaseFlavour.core_modules.union({"ntpath.py"})
+    core_modules = BaseFlavor.core_modules.union({"ntpath.py"})
 
     def python_bins(self, version_info):
         return [
             "{}.exe".format(i)
-            for i in super(Flavour, self).python_bins(version_info)
+            for i in super(Flavor, self).python_bins(version_info)
         ]
 
     def lib_dir(self, version_info):
@@ -23,9 +23,9 @@ class Flavour(BaseFlavour):
 
     def execute(self, command, **env):
         # Windows needs a valid system root
-        super(Flavour, self).execute(
+        super(Flavor, self).execute(
             command, SYSTEMROOT=os.environ['SYSTEMROOT'], **env
         )
 
 
-flavour = Flavour()
+flavor = Flavor()

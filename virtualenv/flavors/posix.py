@@ -1,7 +1,7 @@
-from virtualenv.flavours.base import BaseFlavour
+from virtualenv.flavors.base import BaseFlavor
 
 
-class Flavour(BaseFlavour):
+class Flavor(BaseFlavor):
     bin_dir = "bin"
     python_bin = "python"
 
@@ -9,4 +9,4 @@ class Flavour(BaseFlavour):
     def activation_scripts(self):
         return {"activate.sh", "activate.fish", "activate.csh"}
 
-flavour = Flavour()
+flavor = Flavor()
