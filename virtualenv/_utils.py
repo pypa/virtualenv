@@ -25,11 +25,6 @@ def copyfile(srcfile, destfile):
     # certain metadata to the destination file.
     st = os.stat(srcfile)
 
-    # Copy over the metadata for the file, currently this only
-    # includes the atime and mtime.
-    if hasattr(os, "utime"):
-        os.utime(destfile, (st.st_atime, st.st_mtime))
-
     # If our file is executable, then make our destination file
     # executable.
     if os.access(srcfile, os.X_OK):
