@@ -1,128 +1,79 @@
+from __future__ import absolute_import, division, print_function
+
 import os
-import re
-import shutil
 import sys
 
+import setuptools
+
 if sys.version_info[:2] < (2, 6):
-    sys.exit('virtualenv requires Python 2.6 or higher.')
+    sys.exit("virtualenv requires Python 2.6 or higher.")
 
-try:
-    from setuptools import setup
-    from setuptools.command.test import test as TestCommand
+base_dir = os.path.dirname(__file__)
 
-    class PyTest(TestCommand):
-        user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
-
-        def initialize_options(self):
-            TestCommand.initialize_options(self)
-            self.pytest_args = None
-
-        def finalize_options(self):
-            TestCommand.finalize_options(self)
-            self.test_args = []
-            self.test_suite = True
-
-        def run_tests(self):
-            # import here, because outside the eggs aren't loaded
-            import pytest
-            errno = pytest.main(self.pytest_args)
-            sys.exit(errno)
-
-    setup_params = {
-        'entry_points': {
-            'console_scripts': [
-                'virtualenv=virtualenv.__main__:main',
-                'virtualenv-%s.%s=virtualenv.__main__:main' % sys.version_info[:2]
-            ],
-        },
-        'zip_safe': False,
-        'cmdclass': {'test': PyTest},
-        'tests_require': ['pytest', 'mock'],
-    }
-except ImportError:
-    from distutils.core import setup
-    if sys.platform == 'win32':
-        print('Note: without Setuptools installed you will '
-              'have to use "python -m virtualenv ENV"')
-        setup_params = {}
-    else:
-        script = 'scripts/virtualenv'
-        script_ver = script + '-%s.%s' % sys.version_info[:2]
-        shutil.copy(script, script_ver)
-        setup_params = {'scripts': [script, script_ver]}
+# Fetch the metadata
+about = {}
+with open(os.path.join(base_dir, "virtualenv", "__about__.py")) as f:
+    exec(f.read(), about)
 
 
-def read_file(*paths):
-    here = os.path.dirname(os.path.abspath(__file__))
-    with open(os.path.join(here, *paths)) as f:
-        return f.read()
+# Build up the long description
+with open(os.path.join(base_dir, "docs", "index.rst")) as f:
+    long_description = f.read()
+    long_description = long_description.strip().split("split here", 1)[0]
 
-# Get long_description from index.rst:
-long_description = read_file('docs', 'index.rst')
-long_description = long_description.strip().split('split here', 1)[0]
-# Add release history
-long_description += "\n\n" + read_file('docs', 'changes.rst')
+with open(os.path.join(base_dir, "docs", "changes.rst")) as f:
+    long_description = "\n\n".join([long_description, f.read()])
 
 
-def get_version():
-    version_file = read_file('virtualenv/__init__.py')
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
-                              version_file, re.M)
-    if version_match:
-        return version_match.group(1)
-    raise RuntimeError("Unable to find version string.")
+setuptools.setup(
+    name=about["__title__"],
+    version=about["__version__"],
 
-
-# Hack to prevent stupid TypeError: 'NoneType' object is not callable error on
-# exit of python setup.py test # in multiprocessing/util.py _exit_function when
-# running python setup.py test (see
-# http://www.eby-sarna.com/pipermail/peak/2010-May/003357.html)
-try:
-    import multiprocessing  # noqa
-except ImportError:
-    pass
-
-setup(
-    name='virtualenv',
-    version=get_version(),
-    description="Virtual Python Environment builder",
+    description=about["__summary__"],
     long_description=long_description,
+    license=about["__license__"],
+    url=about["__uri__"],
+
+    author=about["__author__"],
+    author_email=about["__email__"],
+
     classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.1',
-        'Programming Language :: Python :: 3.2',
+        "Intended Audience :: Developers",
+
+        "License :: OSI Approved :: MIT License",
+
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.2",
+        "Programming Language :: Python :: 3.3",
+        "Programming Language :: Python :: 3.4",
     ],
-    keywords='setuptools deployment installation distutils',
-    author='Ian Bicking',
-    author_email='ianb@colorstudy.com',
-    maintainer='Jannis Leidel, Carl Meyer and Brian Rosner',
-    maintainer_email='python-virtualenv@groups.google.com',
-    url='https://virtualenv.pypa.io/',
-    license='MIT',
+
     packages=[
-        'virtualenv',
-        'virtualenv.builders',
-        'virtualenv.flavors',
-        'virtualenv._scripts',
-        'virtualenv._wheels',
+        "virtualenv",
+        "virtualenv.builders",
+        "virtualenv.flavors",
+        "virtualenv._scripts",
+        "virtualenv._wheels",
     ],
+
     package_data={
-        'virtualenv': [
-            '_scripts/deactivate.bat',
-            '_scripts/activate_this.py',
-            '_scripts/activate.sh',
-            '_scripts/activate.ps1',
-            '_scripts/activate.fish',
-            '_scripts/activate.csh',
-            '_scripts/activate.bat',
-            '_wheels/*.whl'
-        ]
+        "virtualenv._scripts": ["activate.*", "deactivate.bat"],
+        "virtualenv._wheels": ["*.whl"],
     },
-    install_requires=['click'],
-    **setup_params)
+
+    entry_points={
+        "console_scripts": [
+            "virtualenv=virtualenv.__main__:main",
+        ],
+    },
+
+    install_requires=[
+        "click",
+    ],
+
+    zip_safe=False,
+)
