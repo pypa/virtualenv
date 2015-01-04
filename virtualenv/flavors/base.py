@@ -1,3 +1,4 @@
+import os
 import subprocess
 
 
@@ -20,4 +21,10 @@ class BaseFlavor(object):
         raise NotImplementedError
 
     def execute(self, command, **env):
-        subprocess.check_call(command, env=env)
+        # We want to copy the environment that we're running in before
+        # executing our command, this is because by specifying the env to our
+        # subprocess call we break the ability to inherient the environment.
+        real_env = os.environ.copy()
+        real_env.update(env)
+
+        subprocess.check_call(command, env=real_env)

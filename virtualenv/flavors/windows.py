@@ -1,5 +1,3 @@
-import os
-
 from virtualenv.flavors.base import BaseFlavor
 
 
@@ -15,15 +13,9 @@ class WindowsFlavor(BaseFlavor):
 
     def python_bins(self, version_info):
         return [
-            "{}.exe".format(i)
-            for i in super(WindowsFlavor, self).python_bins(version_info)
+            "python{}.exe".format(".".join(map(str, version_info[:i])))
+            for i in range(3)
         ]
 
     def lib_dir(self, version_info):
         return "Lib"
-
-    def execute(self, command, **env):
-        # Windows needs a valid system root
-        super(WindowsFlavor, self).execute(
-            command, SYSTEMROOT=os.environ['SYSTEMROOT'], **env
-        )
