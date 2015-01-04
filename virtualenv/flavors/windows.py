@@ -1,5 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
+import os.path
+
 from virtualenv.flavors.base import BaseFlavor
 
 
@@ -21,3 +23,12 @@ class WindowsFlavor(BaseFlavor):
 
     def lib_dir(self, version_info):
         return "Lib"
+
+    def globalsitepaths(self, base_python):
+        prefix = base_python["sys.prefix"]
+        return [
+            os.path.join(prefix, "Lib"),
+            os.path.join(prefix, "DLLs")
+        ]
+
+

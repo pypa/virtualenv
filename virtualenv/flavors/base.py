@@ -22,6 +22,9 @@ class BaseFlavor(object):
     def lib_dir(self, version_info):
         raise NotImplementedError
 
+    def globalsitepaths(self, prefix):
+        raise NotImplementedError
+
     def execute(self, command, **env):
         # We want to copy the environment that we're running in before
         # executing our command, this is because by specifying the env to our
@@ -30,3 +33,5 @@ class BaseFlavor(object):
         real_env.update(env)
 
         subprocess.check_call(command, env=real_env)
+
+
