@@ -27,7 +27,7 @@ builder.create({destination!r})
 class VenvBuilder(BaseBuilder):
 
     @classmethod
-    def check_available(self, python):
+    def check_available(cls, python):
         try:
             subprocess.check_output(
                 [python, "-c", "import venv"],
