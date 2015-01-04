@@ -9,7 +9,7 @@ import venv
 # Create our actual builder with our settings.
 builder = venv.EnvBuilder(
     system_site_packages={system_site_packages!r},
-    symlink=False,
+    symlinks=False,
 )
 
 # Make sure that pip is actually disabled.
