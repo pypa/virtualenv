@@ -1,6 +1,7 @@
 import pytest
 import scripttest
 
+
 @pytest.yield_fixture
 def env(request):
     env = scripttest.TestFileEnvironment()
