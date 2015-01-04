@@ -26,15 +26,15 @@ class PosixFlavor(BaseFlavor):
         is_64bit = base_python["is_64bit"]
         arch = base_python["arch"]
 
-        paths = [os.path.join(prefix, "lib", "python%s.%s" % version_info[:2])]
-        lib64_path = os.path.join(prefix, "lib64", "python%s.%s" % version_info[:2])
+        paths = [os.path.join(prefix, "lib", "python{0}.{1}".format(*version_info))]
+        lib64_path = os.path.join(prefix, "lib64", "python{0}.{1}".format(*version_info))
         if os.path.exists(lib64_path):
             if is_64bit:
                 paths.insert(0, lib64_path)
             else:
                 paths.append(lib64_path)
 
-        plat_path = os.path.join(prefix, "lib", "python%s.%s" % version_info[:2], "plat-%s" % arch)
+        plat_path = os.path.join(prefix, "lib", "python{0}.{1}".format(*version_info), "plat-%s" % arch)
         if os.path.exists(plat_path):
             paths.append(plat_path)
 
@@ -43,7 +43,5 @@ class PosixFlavor(BaseFlavor):
     def lib_dir(self, version_info):
         return posixpath.join(
             "lib",
-            "python{0}".format(
-                ".".join(map(str, version_info[:2]))
-            ),
+            "python{0}.{1}".format(*version_info)
         )
