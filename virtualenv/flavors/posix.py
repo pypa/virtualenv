@@ -1,3 +1,5 @@
+from __future__ import absolute_import, division, print_function
+
 import os.path
 
 from virtualenv.flavors.base import BaseFlavor
