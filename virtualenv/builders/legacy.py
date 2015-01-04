@@ -103,6 +103,15 @@ if global_site_packages is not None:
 """
 
 
+def find_filename(filename, paths):
+    for path in paths:
+        item = os.path.join(path, filename)
+        if os.path.exists(item):
+            return item
+
+    raise RuntimeError("Could not find %r in any of %s." % (filename, paths))
+
+
 class LegacyBuilder(BaseBuilder):
 
     @classmethod
@@ -137,10 +146,10 @@ class LegacyBuilder(BaseBuilder):
                             resolve(f) for f in site.getsitepackages()
                         ],
                         "lib": resolve(os.path.dirname(os.__file__)),
-                        "site.py": os.path.join(
-                            resolve(os.path.dirname(site.__file__)),
-                            "site.py",
-                        ),
+                        "is_64bit": (getattr(sys, 'maxsize', None) or getattr(sys, 'maxint')) > 2**32,
+                        "is_pypy": hasattr(sys, 'pypy_version_info'),
+                        "is_jython": sys.platform[:4] == 'java',
+                        "arch": getattr(getattr(sys, 'implementation', sys), '_multiarch', sys.platform),
                     })
                 )
                 """),
@@ -150,6 +159,9 @@ class LegacyBuilder(BaseBuilder):
     def create_virtual_environment(self, destination):
         # Get a bunch of information from the base Python.
         base_python = self._get_base_python_info()
+
+        # Get all the global site-python paths
+        globalsitepaths = self.flavor.globalsitepaths(base_python)
 
         # Create our binaries that we'll use to create the virtual environment
         bin_dir = os.path.join(destination, self.flavor.bin_dir)
@@ -185,7 +197,7 @@ class LegacyBuilder(BaseBuilder):
         # any other module unless they are "special" modules built into the
         # interpreter like the sys module.
         copyfile(
-            os.path.join(base_python["lib"], "os.py"),
+            find_filename("os.py", globalsitepaths),
             os.path.join(lib_dir, "os.py"),
         )
 
@@ -197,7 +209,7 @@ class LegacyBuilder(BaseBuilder):
 
         for module in self.flavor.core_modules:
             copyfile(
-                os.path.join(base_python["lib"], module),
+                find_filename(module, globalsitepaths),
                 os.path.join(lib_dir, module),
             )
 
@@ -215,11 +227,11 @@ class LegacyBuilder(BaseBuilder):
             data = data.replace(
                 "__BASE_EXEC_PREFIX__", repr(base_python["sys.exec_prefix"]),
             )
-            data = data.replace("__SITE__", repr(base_python["site.py"]))
+            data = data.replace("__SITE__", repr(find_filename("site.py", globalsitepaths)))
             data = data.replace(
                 "__GLOBAL_SITE_PACKAGES__",
                 repr(
-                    self.flavor.globalsitepaths(base_python)
+                    globalsitepaths
                     if self.system_site_packages else None
                 ),
             )
