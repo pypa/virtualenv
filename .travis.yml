@@ -17,7 +17,7 @@ env:
 
 install: pip install tox
 
-script: tox -- py.test -vv tests
+script: tox
 
 branches:
   only:
