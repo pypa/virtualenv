@@ -5,5 +5,9 @@ include LICENSE.txt
 include .coveragerc
 include tox.ini
 
+exclude .travis.yml
+exclude appveyor.yml
+prune .appveyor
+
 recursive-include docs Makefile make.bat *.py *.rst *.empty
 recursive-include tests *.py
