@@ -8,7 +8,7 @@ import textwrap
 
 from virtualenv.builders.base import BaseBuilder
 from virtualenv._utils import copyfile, ensure_directory
-
+from virtualenv._compat import check_output
 
 SITE = """# -*- encoding: utf-8 -*-
 import sys
@@ -114,7 +114,7 @@ class LegacyBuilder(BaseBuilder):
         # Get information from the base python that we need in order to create
         # a legacy virtual environment.
         return json.loads(
-            subprocess.check_output([
+            check_output([
                 self.python,
                 "-c",
                 textwrap.dedent("""
