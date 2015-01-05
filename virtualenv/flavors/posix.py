@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
-import os.path
+import posixpath
 
 from virtualenv.flavors.base import BaseFlavor
 
@@ -21,7 +21,7 @@ class PosixFlavor(BaseFlavor):
         ]
 
     def lib_dir(self, version_info):
-        return os.path.join(
+        return posixpath.join(
             "lib",
             "python{0}".format(
                 ".".join(map(str, version_info[:2]))
