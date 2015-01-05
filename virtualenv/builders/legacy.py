@@ -214,6 +214,11 @@ class LegacyBuilder(BaseBuilder):
             os.path.join(base_python["sys.prefix"], include_dir),
             os.path.join(destination, include_dir)
         )
+        copyfile(
+            os.path.join(base_python["sys.prefix"], include_dir),
+            os.path.join(destination, "local", include_dir)
+        )
+
 
         dst = os.path.join(lib_dir, "site.py")
         with io.open(dst, "wb") as dst_fp:
@@ -230,6 +235,7 @@ class LegacyBuilder(BaseBuilder):
                 "__BASE_EXEC_PREFIX__", repr(base_python["sys.exec_prefix"]),
             )
             data = data.replace("__SITE__", repr(find_filename("site.py", globalsitepaths)))
+
             data = data.replace(
                 "__GLOBAL_SITE_PACKAGES__",
                 repr(
