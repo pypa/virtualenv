@@ -154,8 +154,7 @@ class LegacyBuilder(BaseBuilder):
         # Create our binaries that we'll use to create the virtual environment
         bin_dir = os.path.join(destination, self.flavor.bin_dir)
         ensure_directory(bin_dir)
-        for python_bin in self.flavor.python_bins(
-                base_python["sys.version_info"]):
+        for python_bin in self.flavor.python_bins(base_python):
             copyfile(
                 base_python["sys.executable"],
                 os.path.join(bin_dir, python_bin),
@@ -166,7 +165,7 @@ class LegacyBuilder(BaseBuilder):
         # successfully bootstrap a Python interpreter.
         lib_dir = os.path.join(
             destination,
-            self.flavor.lib_dir(base_python["sys.version_info"])
+            self.flavor.lib_dir(base_python)
         )
         ensure_directory(lib_dir)
 
@@ -195,13 +194,13 @@ class LegacyBuilder(BaseBuilder):
         # list also includes the os module, but since we've already copied
         # that we'll go ahead and omit it.
 
-        for module in self.flavor.core_modules:
+        for module in self.flavor.core_modules(base_python):
             copyfile(
                 os.path.join(base_python["lib"], module),
                 os.path.join(lib_dir, module),
             )
 
-        include_dir = self.flavor.include_dir(base_python["sys.version_info"])
+        include_dir = self.flavor.include_dir(base_python)
         copyfile(
             os.path.join(base_python["sys.prefix"], include_dir),
             os.path.join(destination, include_dir)

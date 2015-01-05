@@ -18,10 +18,10 @@ class BaseFlavor(object):
     def activation_scripts(self):
         raise NotImplementedError
 
-    def python_bins(self, version_info):
+    def python_bins(self, base_python):
         raise NotImplementedError
 
-    def lib_dir(self, version_info):
+    def lib_dir(self, base_python):
         raise NotImplementedError
 
     def execute(self, command, **env):
