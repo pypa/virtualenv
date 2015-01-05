@@ -39,12 +39,12 @@ for path in sys.path:
     if path.startswith(sys.prefix):
         path = os.path.join(
             sys.base_prefix,
-            path[len(sys.prefix) + 1:],
+            path[len(sys.prefix):],
         )
     elif path.startswith(sys.exec_prefix):
         path = os.path.join(
             sys.base_exec_prefix,
-            path[len(sys.exec_prefix) + 1:],
+            path[len(sys.exec_prefix):],
         )
 
     new_sys_path.append(path)
@@ -202,7 +202,7 @@ class LegacyBuilder(BaseBuilder):
             )
 
         dst = os.path.join(lib_dir, "site.py")
-        with io.open(dst, "wb") as dst_fp:
+        with io.open(dst, "w") as dst_fp:
             # Get the data from our source file, and replace our special
             # variables with the computed data.
             data = SITE
