@@ -34,14 +34,6 @@ from virtualenv.core import create
     help="Give the virtual environment access to the global site-packages.",
 )
 @click.option(
-    "--relocatable",
-    is_flag=True,
-    help=(
-        "Make an EXISTING virtualenv environment relocatable. This fixes up "
-        "scripts and makes all .pth files relative."
-    ),
-)
-@click.option(
     "--setuptools/--no-setuptools",
     default=True,
     help="Install setuptools into the new virtual environment.",
@@ -72,14 +64,12 @@ def cmd(destination,
         system_site_packages=False,
         clear=False,
         prompt=None,
-        relocatable=False,
         extra_search_dir=None,
         pip=True,
         setuptools=True):
     """
     Creates virtual python environments in a target directory.
     """
-
     create(
         destination,
         python=python,
