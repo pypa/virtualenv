@@ -39,12 +39,12 @@ for path in sys.path:
     if path.startswith(sys.prefix):
         path = os.path.join(
             sys.base_prefix,
-            path[len(sys.prefix):],
+            path[len(sys.prefix):].lstrip(os.path.sep),
         )
     elif path.startswith(sys.exec_prefix):
         path = os.path.join(
             sys.base_exec_prefix,
-            path[len(sys.exec_prefix):],
+            path[len(sys.exec_prefix):].lstrip(os.path.sep),
         )
 
     new_sys_path.append(path)
