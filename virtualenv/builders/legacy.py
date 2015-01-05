@@ -140,12 +140,8 @@ class LegacyBuilder(BaseBuilder):
                     json.dumps({
                         "sys.version_info": tuple(sys.version_info),
                         "sys.executable": resolve(sys.executable),
-                        "sys.prefix": resolve(sys.prefix),
-                        "sys.exec_prefix": resolve(sys.exec_prefix),
-                        "site.getsitepackages": [
-                            resolve(f) for f in site.getsitepackages()
-                        ],
-                        "lib": resolve(os.path.dirname(os.__file__)),
+                        "sys.prefix": resolve(getattr(sys, "real_prefix", sys.prefix)),
+                        "sys.exec_prefix": resolve(getattr(sys, "real_exec_prefix", sys.exec_prefix)),
                         "is_64bit": (getattr(sys, 'maxsize', None) or getattr(sys, 'maxint')) > 2**32,
                         "is_pypy": hasattr(sys, 'pypy_version_info'),
                         "is_jython": sys.platform[:4] == 'java',
