@@ -163,6 +163,11 @@ class LegacyBuilder(BaseBuilder):
                             resolve(os.path.dirname(site.__file__)),
                             "site.py",
                         ),
+                        "arch": getattr(
+                            getattr(sys, 'implementation', sys),
+                            '_multiarch',
+                            sys.platform
+                        ),
                     })
                 )
                 """),
