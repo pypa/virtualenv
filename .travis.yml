@@ -18,7 +18,7 @@ branches:
   only:
     - master
     - develop
-    - 1.11.X
+    - rewrite
 
 notifications:
   irc:
