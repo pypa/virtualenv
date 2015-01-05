@@ -32,7 +32,9 @@ def test_create_via_script(env):
         assert 'myenv\\Scripts\\python.exe' in result.files_created
         assert 'myenv\\Scripts\\python2.exe' in result.files_created
     else:
-        raise NotImplementedError("TODO")
+        assert 'myenv/bin/activate.sh' in result.files_created
+        assert 'myenv/bin/activate_this.py' in result.files_created
+        assert 'myenv/bin/python' in result.files_created
 
 def test_create_via_module(env):
     result = env.run('python', '-mvirtualenv', 'myenv')
@@ -46,4 +48,6 @@ def test_create_via_module(env):
         assert 'myenv\\Scripts\\python.exe' in result.files_created
         assert 'myenv\\Scripts\\python2.exe' in result.files_created
     else:
-        raise NotImplementedError("TODO")
+        assert 'myenv/bin/activate.sh' in result.files_created
+        assert 'myenv/bin/activate_this.py' in result.files_created
+        assert 'myenv/bin/python' in result.files_created
