@@ -31,4 +31,4 @@ install:
 build: off
 
 test_script:
-    - "%CMD_IN_ENV% %PYTHON%/Scripts/tox.exe -e %TOXENV% -- -m unit -n 8"
+    - "%CMD_IN_ENV% %PYTHON%/Scripts/tox.exe"
