@@ -44,13 +44,13 @@ def test_base_builder_create(clear):
     builder.create("/a/")
 
     if clear:
-        assert builder.clear_virtual_environment.calls == [pretend.call("/a/")]
+        assert builder.clear_virtual_environment.calls == [pretend.call("/a")]
     else:
         assert builder.clear_virtual_environment.calls == []
 
-    assert builder.create_virtual_environment.calls == [pretend.call("/a/")]
-    assert builder.install_scripts.calls == [pretend.call("/a/")]
-    assert builder.install_tools.calls == [pretend.call("/a/")]
+    assert builder.create_virtual_environment.calls == [pretend.call("/a")]
+    assert builder.install_scripts.calls == [pretend.call("/a")]
+    assert builder.install_tools.calls == [pretend.call("/a")]
 
 
 def test_base_builder_clear_environment_doesnt_exist(tmpdir):
