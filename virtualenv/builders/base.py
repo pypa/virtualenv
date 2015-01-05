@@ -45,6 +45,9 @@ class BaseBuilder(object):
         raise NotImplementedError
 
     def create(self, destination):
+        # Resolve the destination first, we can't save relative paths
+        destination = os.path.realpath(os.path.abspath(destination))
+
         # Clear the existing virtual environment.
         if self.clear:
             self.clear_virtual_environment(destination)
