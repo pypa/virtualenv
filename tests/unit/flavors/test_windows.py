@@ -34,7 +34,7 @@ def test_activation_scripts():
     ],
 )
 def test_python_bins(version_info, expected):
-    assert WindowsFlavor().python_bins(version_info) == expected
+    assert WindowsFlavor().python_bins({"sys.version_info": version_info}) == expected
 
 
 @pytest.mark.parametrize(
@@ -48,4 +48,4 @@ def test_python_bins(version_info, expected):
     ],
 )
 def test_lib_dir(version_info):
-    assert WindowsFlavor().lib_dir(version_info) == "Lib"
+    assert WindowsFlavor().lib_dir({"sys.version_info": version_info}) == "Lib"
