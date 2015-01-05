@@ -8,7 +8,7 @@ import textwrap
 
 from virtualenv.builders.base import BaseBuilder
 from virtualenv._utils import copyfile, ensure_directory
-
+from virtualenv._compat import check_output
 
 SITE = """# -*- encoding: utf-8 -*-
 import sys
@@ -103,13 +103,14 @@ if global_site_packages is not None:
 """
 
 
-def find_filename(filename, paths):
+def find_filename(filename, paths, raise_on_missing=True):
     for path in paths:
         item = os.path.join(path, filename)
         if os.path.exists(item):
             return item
 
-    raise RuntimeError("Could not find %r in any of %s." % (filename, paths))
+    if raise_on_missing:
+        raise RuntimeError("Could not find %r in any of %s." % (filename, paths))
 
 
 class LegacyBuilder(BaseBuilder):
@@ -123,7 +124,7 @@ class LegacyBuilder(BaseBuilder):
         # Get information from the base python that we need in order to create
         # a legacy virtual environment.
         return json.loads(
-            subprocess.check_output([
+            check_output([
                 self.python,
                 "-c",
                 textwrap.dedent("""
@@ -204,10 +205,12 @@ class LegacyBuilder(BaseBuilder):
         # that we'll go ahead and omit it.
 
         for module in self.flavor.core_modules(base_python):
-            copyfile(
-                find_filename(module, globalsitepaths),
-                os.path.join(lib_dir, module),
-            )
+            modulepath = find_filename(module, globalsitepaths, raise_on_missing=False)
+            if modulepath:
+                copyfile(
+                    modulepath,
+                    os.path.join(lib_dir, module),
+                )
 
         include_dir = self.flavor.include_dir(base_python["sys.version_info"])
         copyfile(
