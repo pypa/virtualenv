@@ -6,11 +6,13 @@ import subprocess
 
 class BaseFlavor(object):
 
-    core_modules = set([
-        "posixpath.py", "stat.py", "genericpath.py", "warnings.py",
-        "linecache.py", "types.py", "UserDict.py", "_abcoll.py", "abc.py",
-        "_weakrefset.py", "copy_reg.py",
-    ])
+    def core_modules(self, base_python):
+        return set([
+            # Files
+            "posixpath.py", "stat.py", "genericpath.py", "warnings.py",
+            "linecache.py", "types.py", "UserDict.py", "_abcoll.py", "abc.py",
+            "_weakrefset.py", "copy_reg.py",
+        ])
 
     @property
     def activation_scripts(self):
@@ -22,7 +24,7 @@ class BaseFlavor(object):
     def lib_dir(self, version_info):
         raise NotImplementedError
 
-    def globalsitepaths(self, prefix):
+    def globalsitepaths(self, base_python):
         raise NotImplementedError
 
     def execute(self, command, **env):
@@ -30,5 +32,3 @@ class BaseFlavor(object):
         # executing our command, this is because by specifying the env to our
         # subprocess call we break the ability to inherient the environment.
         subprocess.check_call(command, env=dict(os.environ, **env))
-
-

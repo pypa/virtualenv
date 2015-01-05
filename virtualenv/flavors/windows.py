@@ -9,7 +9,9 @@ class WindowsFlavor(BaseFlavor):
 
     bin_dir = "Scripts"
     python_bin = "python.exe"
-    core_modules = BaseFlavor.core_modules | set(["ntpath.py"])
+
+    def core_modules(self, base_python):
+        return super(WindowsFlavor, self).core_modules(base_python) | set(["ntpath.py"])
 
     @property
     def activation_scripts(self):
@@ -24,11 +26,12 @@ class WindowsFlavor(BaseFlavor):
     def lib_dir(self, version_info):
         return "Lib"
 
+    def include_dir(self, version_info):
+        return "include"
+
     def globalsitepaths(self, base_python):
         prefix = base_python["sys.prefix"]
         return [
             os.path.join(prefix, "Lib"),
             os.path.join(prefix, "DLLs")
         ]
-
-
