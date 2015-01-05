@@ -99,7 +99,7 @@ def test_base_builder_install_scripts(tmpdir, flavor):
         # setuptools
         [True, False],
         # extra_search_dirs
-        [[], ["/tmp/nothing/"]],
+        [[], ["/tmp/nothing/"], ["/tmp/nothing/", "/tmp/other/"]],
     ),
 )
 def test_base_builder_install_tools(tmpdir, flavor, pip, setuptools,
