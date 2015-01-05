@@ -1,11 +1,9 @@
-recursive-include bin *
-recursive-include docs *
-recursive-include scripts *
-recursive-include virtualenv_support *.whl
-recursive-include virtualenv_embedded *
-recursive-exclude docs/_templates *
-recursive-exclude docs/_build *
-include virtualenv_support/__init__.py
-include *.py
 include AUTHORS.txt
+include CONTRIBUTING.rst
 include LICENSE.txt
+
+include .coveragerc
+include tox.ini
+
+recursive-include docs Makefile make.bat *.py *.rst *.empty
+recursive-include tests *.py
