@@ -70,7 +70,7 @@ class BaseBuilder(object):
 
     def install_scripts(self, destination):
         # Determine the list of files based on if we're running on Windows
-        files = self.flavor.activation_scripts
+        files = self.flavor.activation_scripts.copy()
 
         # We just always want add the activate_this.py script regardless of
         # platform.
@@ -130,7 +130,7 @@ class BaseBuilder(object):
         )
 
         # Find all of the Wheels inside of our WHEEL_DIR
-        wheels = glob.iglob(os.path.join(WHEEL_DIR, "*.whl"))
+        wheels = glob.glob(os.path.join(WHEEL_DIR, "*.whl"))
 
         # Construct the command that we're going to use to actually do the
         # installs.
