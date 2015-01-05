@@ -210,7 +210,7 @@ class LegacyBuilder(BaseBuilder):
             )
 
         dst = os.path.join(lib_dir, "site.py")
-        with io.open(dst, "w") as dst_fp:
+        with io.open(dst, "wb") as dst_fp:
             # Get the data from our source file, and replace our special
             # variables with the computed data.
             data = SITE
