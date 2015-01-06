@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import io
 import json
+import locale
 import os.path
 import textwrap
 
@@ -149,7 +150,7 @@ class LegacyBuilder(BaseBuilder):
                     })
                 )
                 """),
-            ]).decode("utf8"),
+            ]).decode(locale.getpreferredencoding()),
         )
 
     def create_virtual_environment(self, destination):
