@@ -10,8 +10,8 @@ class WindowsFlavor(BaseFlavor):
     bin_dir = "Scripts"
     python_bin = "python.exe"
 
-    def core_modules(self, base_python):
-        return super(WindowsFlavor, self).core_modules(base_python) | set(["ntpath.py"])
+    def bootstrap_modules(self, base_python):
+        return super(WindowsFlavor, self).bootstrap_modules(base_python) | set(["ntpath.py"])
 
     @property
     def activation_scripts(self):

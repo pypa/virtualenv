@@ -224,7 +224,7 @@ class LegacyBuilder(BaseBuilder):
         # list also includes the os module, but since we've already copied
         # that we'll go ahead and omit it.
 
-        for module in self.flavor.core_modules(base_python):
+        for module in self.flavor.bootstrap_modules(base_python):
             copyfile(
                 os.path.join(base_python["lib"], module),
                 os.path.join(lib_dir, module),

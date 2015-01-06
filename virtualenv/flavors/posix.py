@@ -10,8 +10,8 @@ class PosixFlavor(BaseFlavor):
     bin_dir = "bin"
     python_bin = "python"
 
-    def core_modules(self, base_python):
-        return super(PosixFlavor, self).core_modules(base_python) | set([
+    def bootstrap_modules(self, base_python):
+        return super(PosixFlavor, self).bootstrap_modules(base_python) | set([
             # Directories
             "config",
             "plat-%s" % base_python["arch"]

@@ -6,8 +6,8 @@ import subprocess
 
 class BaseFlavor(object):
 
-    def core_modules(self, base_python):
-        return set([
+    def bootstrap_modules(self, base_python):
+        mods = set([
             # Files
             "posixpath.py", "stat.py", "genericpath.py", "warnings.py",
             "linecache.py", "types.py", "UserDict.py", "_abcoll.py", "abc.py",
