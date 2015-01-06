@@ -3,11 +3,11 @@ from __future__ import absolute_import, division, print_function
 import io
 import json
 import os.path
-import subprocess
 import textwrap
 
 from virtualenv.builders.base import BaseBuilder
-from virtualenv._utils import copyfile, ensure_directory
+from virtualenv._utils import copyfile
+from virtualenv._utils import ensure_directory
 from virtualenv._compat import check_output
 
 SITE = """# -*- encoding: utf-8 -*-
@@ -109,31 +109,6 @@ class LegacyBuilder(BaseBuilder):
     def check_available(cls, python):
         # TODO: Do we ever want to make this builder *not* available?
         return True
-
-    def _get_base_python_bin(self):
-        bindir = json.loads(
-            check_output([
-                self.python,
-                "-c",
-                textwrap.dedent("""
-                import json
-                import os
-                import sys
-                try:
-                    import sysconfig
-                except ImportError:
-                    from distutils import sysconfig
-
-                if (sys.platform.startswith("win") or sys.platform == "cli" and os.name == "nt"):
-                    bindir = getattr(sys, "real_prefix", sys.prefix)
-                else:
-                    bindir = sysconfig.get_config_var("BINDIR")
-
-                print(json.dumps(bindir))
-                """)
-            ])
-        )
-        return os.path.join(bindir, os.path.basename(self.python))
 
     def _get_base_python_info(self):
         # Get information from the base python that we need in order to create
