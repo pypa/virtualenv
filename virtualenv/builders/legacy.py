@@ -159,7 +159,7 @@ class LegacyBuilder(BaseBuilder):
                         "sys.prefix": resolve(sys.prefix),
                         "sys.exec_prefix": resolve(sys.exec_prefix),
                         "site.getsitepackages": [
-                            resolve(f) for f in site.getsitepackages()
+                            resolve(f) for f in getattr(site, "getsitepackages", lambda: site.addsitepackages(set()))()
                         ],
                         "lib": resolve(os.path.dirname(os.__file__)),
                         "site.py": os.path.join(
