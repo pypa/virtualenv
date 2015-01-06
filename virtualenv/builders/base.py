@@ -3,10 +3,13 @@ from __future__ import absolute_import, division, print_function
 import glob
 import io
 import os.path
+import json
 import shutil
 import sys
+import textwrap
 
 from virtualenv._compat import FileNotFoundError
+from virtualenv._compat import check_output
 
 
 WHEEL_DIR = os.path.join(
@@ -45,6 +48,31 @@ class BaseBuilder(object):
     @classmethod
     def check_available(cls, python):
         raise NotImplementedError
+
+    def _get_base_python_bin(self):
+        bindir = json.loads(
+            check_output([
+                self.python,
+                "-c",
+                textwrap.dedent("""
+                import json
+                import os
+                import sys
+                try:
+                    import sysconfig
+                except ImportError:
+                    from distutils import sysconfig
+
+                if (sys.platform.startswith("win") or sys.platform == "cli" and os.name == "nt"):
+                    bindir = getattr(sys, "real_prefix", sys.prefix)
+                else:
+                    bindir = sysconfig.get_config_var("BINDIR")
+
+                print(json.dumps(bindir))
+                """)
+            ])
+        )
+        return os.path.join(bindir, os.path.basename(self.python))
 
     def create(self, destination):
         # Resolve the destination first, we can't save relative paths
