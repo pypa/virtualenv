@@ -119,7 +119,10 @@ class LegacyBuilder(BaseBuilder):
                 import json
                 import os
                 import sys
-                import sysconfig
+                try:
+                    import sysconfig
+                except ImportError:
+                    from distutils import sysconfig
 
                 if (sys.platform.startswith("win") or sys.platform == "cli" and os.name == "nt"):
                     bindir = getattr(sys, "real_prefix", sys.prefix)
