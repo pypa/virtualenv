@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 import glob
 import io
 import os.path
+import locale
 import json
 import shutil
 import sys
@@ -70,7 +71,7 @@ class BaseBuilder(object):
 
                 print(json.dumps(bindir))
                 """)
-            ]).decode("utf8")
+            ]).decode(locale.getpreferredencoding()),
         )
         return os.path.join(bindir, os.path.basename(self.python))
 
