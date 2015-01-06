@@ -4,7 +4,7 @@ from virtualenv.flavors.posix import PosixFlavor
 
 
 def test_activation_scripts():
-    expected = set(["activate.sh", "activate.fish", "activate.csh"])
+    expected = {"activate.sh", "activate.fish", "activate.csh"}
     assert PosixFlavor().activation_scripts == expected
 
 

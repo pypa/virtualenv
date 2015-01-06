@@ -2,7 +2,6 @@ from __future__ import absolute_import, division, print_function
 
 import subprocess
 
-from virtualenv._compat import check_output
 from virtualenv.builders.base import BaseBuilder
 
 
@@ -32,7 +31,7 @@ class VenvBuilder(BaseBuilder):
     @classmethod
     def check_available(cls, python):
         try:
-            check_output(
+            subprocess.check_output(
                 [python, "-c", "import venv"],
                 stderr=subprocess.STDOUT,
             )

@@ -5,8 +5,8 @@ import sys
 
 import setuptools
 
-if sys.version_info[:2] < (2, 6):
-    sys.exit("virtualenv requires Python 2.6 or higher.")
+if sys.version_info[:2] < (2, 7):
+    sys.exit("virtualenv requires Python 2.7 or higher.")
 
 base_dir = os.path.dirname(__file__)
 
@@ -44,7 +44,6 @@ setuptools.setup(
 
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.2",

@@ -7,11 +7,11 @@ class WindowsFlavor(BaseFlavor):
 
     bin_dir = "Scripts"
     python_bin = "python.exe"
-    core_modules = BaseFlavor.core_modules | set(["ntpath.py"])
+    core_modules = BaseFlavor.core_modules | {"ntpath.py"}
 
     @property
     def activation_scripts(self):
-        return set(["activate.bat", "activate.ps1", "deactivate.bat"])
+        return {"activate.bat", "activate.ps1", "deactivate.bat"}
 
     def python_bins(self, version_info):
         return [
