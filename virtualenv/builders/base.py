@@ -17,6 +17,8 @@ SCRIPT_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "_scripts",
 )
 
+MAIN_SUFFIX = ".__main__" if sys.version_info[:2] == (2, 6) else ""
+
 
 class BaseBuilder(object):
 
@@ -138,7 +140,7 @@ class BaseBuilder(object):
         # Construct the command that we're going to use to actually do the
         # installs.
         command = [
-            python, "-m", "pip", "install", "--no-index", "--isolated",
+            python, "-m", "pip" + MAIN_SUFFIX, "install", "--no-index", "--isolated",
             "--find-links", WHEEL_DIR,
         ]
 

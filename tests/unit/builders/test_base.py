@@ -7,7 +7,7 @@ import sys
 import pretend
 import pytest
 
-from virtualenv.builders.base import BaseBuilder, WHEEL_DIR
+from virtualenv.builders.base import BaseBuilder, WHEEL_DIR, MAIN_SUFFIX
 from virtualenv.flavors.posix import PosixFlavor
 from virtualenv.flavors.windows import WindowsFlavor
 
@@ -128,7 +128,7 @@ def test_base_builder_install_tools(tmpdir, flavor, pip, setuptools,
             pretend.call(
                 [
                     str(tmpdir.join(flavor.bin_dir, flavor.python_bin)),
-                    "-m", "pip", "install", "--no-index", "--isolated",
+                    "-m", "pip" + MAIN_SUFFIX, "install", "--no-index", "--isolated",
                     "--find-links", WHEEL_DIR,
                 ]
                 + list(
