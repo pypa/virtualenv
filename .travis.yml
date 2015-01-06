@@ -17,7 +17,9 @@ env:
 
 install: pip install --upgrade --ignore-installed tox
 
-script: tox
+script:
+  - cat tox.ini
+  - tox
 
 branches:
   only:
