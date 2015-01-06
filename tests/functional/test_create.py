@@ -27,7 +27,6 @@ def test_create_via_script(env):
         assert 'myenv\\Scripts\\activate.ps1' in result.files_created
         assert 'myenv\\Scripts\\activate_this.py' in result.files_created
         assert 'myenv\\Scripts\\deactivate.bat' in result.files_created
-        assert 'myenv\\Scripts\\easy_install.exe' in result.files_created
         assert 'myenv\\Scripts\\pip.exe' in result.files_created
         assert 'myenv\\Scripts\\python.exe' in result.files_created
         assert 'myenv\\Scripts\\python2.exe' in result.files_created
@@ -43,7 +42,6 @@ def test_create_via_module(env):
         assert 'myenv\\Scripts\\activate.ps1' in result.files_created
         assert 'myenv\\Scripts\\activate_this.py' in result.files_created
         assert 'myenv\\Scripts\\deactivate.bat' in result.files_created
-        assert 'myenv\\Scripts\\easy_install.exe' in result.files_created
         assert 'myenv\\Scripts\\pip.exe' in result.files_created
         assert 'myenv\\Scripts\\python.exe' in result.files_created
         assert 'myenv\\Scripts\\python2.exe' in result.files_created
