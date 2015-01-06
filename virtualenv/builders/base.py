@@ -70,7 +70,7 @@ class BaseBuilder(object):
 
                 print(json.dumps(bindir))
                 """)
-            ])
+            ]).decode("utf8")
         )
         return os.path.join(bindir, os.path.basename(self.python))
 
