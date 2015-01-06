@@ -9,6 +9,7 @@ is_windows = (
     sys.platform.startswith("win") or
     (sys.platform == "cli" and os.name == "nt")
 )
+is_26 = sys.version_info[:2] == (2, 6)
 
 
 @pytest.yield_fixture
@@ -36,7 +37,7 @@ def test_create_via_script(env):
         assert 'myenv/bin/python' in result.files_created
 
 def test_create_via_module(env):
-    result = env.run('python', '-mvirtualenv', 'myenv')
+    result = env.run('python', '-mvirtualenv.__main__' if is_26 else '-mvirtualenv', 'myenv')
     if is_windows:
         assert 'myenv\\Scripts\\activate.bat' in result.files_created
         assert 'myenv\\Scripts\\activate.ps1' in result.files_created
