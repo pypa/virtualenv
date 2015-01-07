@@ -211,20 +211,6 @@ class LegacyBuilder(BaseBuilder):
         site_packages_dir = os.path.join(lib_dir, "site-packages")
         ensure_directory(site_packages_dir)
 
-        # The Python interpreter uses the os.py module as a sort of sentinel
-        # value for where it can locate the rest of it's files. It will first
-        # look relative to the bin directory, so we can copy the os.py file
-        # from the target Python into our lib directory to trick Python into
-        # using our virtual environment's prefix as it's own.
-        # Note: At this point we'll have a broken environment, because it will
-        # only have the os module but none of the os's modules dependencies or
-        # any other module unless they are "special" modules built into the
-        # interpreter like the sys module.
-        copyfile(
-            os.path.join(base_python["lib"], "os.py"),
-            os.path.join(lib_dir, "os.py"),
-        )
-
         # The site module has a number of required modules that it needs in
         # order to be successfully imported, so we'll copy each of those module
         # into our virtual environment's lib directory as well. Note that this
@@ -250,6 +236,16 @@ class LegacyBuilder(BaseBuilder):
                     ),
                 )
 
+        osmodulepath = self._locate_module("os", lib_dirs)
+        if not osmodulepath:
+            raise RuntimeError("Can't locate os module in any of %s." % lib_dirs)
+        osmoduledestination = os.path.join(
+            destination,
+            os.path.relpath(osmodulepath, sys_prefix)
+        )
+        copyfile(osmodulepath, osmoduledestination)
+
+
         include_dir = self.flavor.include_dir(base_python)
         copyfile(
             os.path.join(base_python["sys.prefix"], include_dir),
@@ -260,7 +256,7 @@ class LegacyBuilder(BaseBuilder):
             os.path.join(destination, "local", include_dir)
         )
 
-        dst = os.path.join(lib_dir, "site.py")
+        dst = os.path.join(os.path.dirname(osmoduledestination), "site.py")
         with io.open(dst, "wb") as dst_fp:
             # Get the data from our source file, and replace our special
             # variables with the computed data.
