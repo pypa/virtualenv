@@ -10,7 +10,16 @@ IS_WINDOWS = (
     (sys.platform == "cli" and os.name == "nt")
 )
 IS_26 = sys.version_info[:2] == (2, 6)
-PYTHON_BINS = [
+
+
+def locate_on_path(binary):
+    paths = os.environ["PATH"].split(os.path.pathsep)
+    for path in paths:
+        binpath = os.path.join(path, binary)
+        if os.path.exists(binpath):
+            return binpath
+
+PYTHON_BINS = set([
     "C:\\Python27\\python.exe",
     "C:\\Python27-x64\\python.exe",
     "C:\\Python33\\python.exe",
@@ -27,7 +36,14 @@ PYTHON_BINS = [
     "/usr/bin/python3.3",
     "/usr/bin/python3.4",
     "/usr/bin/pypy",
-]
+    locate_on_path("python"),
+    locate_on_path("python2.6"),
+    locate_on_path("python2.7"),
+    locate_on_path("python3.2"),
+    locate_on_path("python3.3"),
+    locate_on_path("python3.4"),
+    locate_on_path("pypy"),
+])
 
 
 @pytest.yield_fixture
