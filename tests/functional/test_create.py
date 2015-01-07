@@ -10,7 +10,7 @@ IS_WINDOWS = (
     (sys.platform == "cli" and os.name == "nt")
 )
 IS_26 = sys.version_info[:2] == (2, 6)
-PYTHON_BINS = [
+PYTHON_BINS = [path for path in (
     "C:\\Python27\\python.exe",
     "C:\\Python27-x64\\python.exe",
     "C:\\Python33\\python.exe",
@@ -27,7 +27,7 @@ PYTHON_BINS = [
     "python3.3",
     "python3.4",
     "pypy",
-]
+) if path is None or os.path.exists(path)]
 
 
 @pytest.yield_fixture
@@ -37,6 +37,7 @@ def env(request):
         yield env
     finally:
         env.clear()
+
 
 @pytest.mark.parametrize('python', PYTHON_BINS)
 def test_create_via_script(env, python):
