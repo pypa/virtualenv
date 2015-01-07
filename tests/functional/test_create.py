@@ -10,7 +10,7 @@ IS_WINDOWS = (
     (sys.platform == "cli" and os.name == "nt")
 )
 IS_26 = sys.version_info[:2] == (2, 6)
-PYTHON_BINS = [path for path in (
+PYTHON_BINS = [
     "C:\\Python27\\python.exe",
     "C:\\Python27-x64\\python.exe",
     "C:\\Python33\\python.exe",
@@ -27,7 +27,7 @@ PYTHON_BINS = [path for path in (
     "python3.3",
     "python3.4",
     "pypy",
-) if path is None or os.path.exists(path)]
+]
 
 
 @pytest.yield_fixture
@@ -39,7 +39,14 @@ def env(request):
         env.clear()
 
 
-@pytest.mark.parametrize('python', PYTHON_BINS)
+@pytest.yield_fixture(params=PYTHON_BINS)
+def python(request):
+    if request.param is None or os.path.exists(request.param):
+        yield request.param
+    else:
+        pytest.skip(msg="Implementation at %r not available." % request.param)
+
+
 def test_create_via_script(env, python):
     extra = ['--python', python] if python else []
     result = env.run('virtualenv', 'myenv', *extra)
@@ -56,7 +63,6 @@ def test_create_via_script(env, python):
         assert 'myenv/bin/python' in result.files_created
 
 
-@pytest.mark.parametrize('python', PYTHON_BINS)
 def test_create_via_module(env, python):
     extra = ['--python', python] if python else []
     result = env.run('python', '-mvirtualenv.__main__' if IS_26 else '-mvirtualenv', 'myenv', *extra)
