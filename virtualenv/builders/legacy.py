@@ -12,8 +12,8 @@ from virtualenv._utils import ensure_directory
 from virtualenv._compat import check_output
 
 SITE = b"""# -*- encoding: utf-8 -*-
-import sys
 import os.path
+import sys
 
 # We want to stash the global site-packages here, this will be None if we're
 # not adding them.
@@ -56,13 +56,32 @@ sys.path = new_sys_path
 # from the base Python and not from the copies inside of the virtual
 # environment. This will ensure that our copies will only be used for
 # bootstrapping the virtual environment.
+# TODO: is this really necessary? They would be the same modules as the global ones after all ///
+dirty_modules = (
+    # TODO: there might be less packages required but we
+    # need to extend the integration tests to see exactly what
+    "_codecs",
+    "codecs",
+    "builtins",
+    "encodings",
+    "encodings.",
+    "sys",
+    "site",
+    "sitecustomize",
+    "__builtin__",
+    "__main__",
+)
 for key in list(sys.modules):
     # We don't want to purge these modules because if we do, then things break
     # very badly.
-    if key in ["sys", "site", "sitecustomize", "__builtin__", "__main__"]:
+    if key in dirty_modules:
         continue
-
-    del sys.modules[key]
+    for mod in dirty_modules:
+        print(key, mod, key.startswith(mod))
+        if key.startswith(mod):
+            break
+    else:
+        del sys.modules[key]
 
 # We want to trick the interpreter into thinking that the user specific
 # site-packages has been requested to be disabled. We'll do this by mimicing
