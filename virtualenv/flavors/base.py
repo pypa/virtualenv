@@ -8,6 +8,7 @@ class BaseFlavor(object):
 
     def bootstrap_modules(self, base_python):
         return set([
+            "UserDict",
             "__future__",
             "_abcoll",
             "_bootlocale",
@@ -15,7 +16,9 @@ class BaseFlavor(object):
             "_dummy_thread",
             "_weakrefset",
             "abc",
+            "atexit",
             "base64",
+            "optparse",
             "bisect",
             "codecs",
             "collections",
@@ -39,10 +42,11 @@ class BaseFlavor(object):
             "lib-dynload",
             "linecache",
             "locale",
+            "logging",
             "nt",
             "ntpath",
             "operator",
-            "os",
+            "pkgutil",
             "plat-%s" % base_python["arch"],
             "posix",
             "posixpath",
@@ -51,6 +55,7 @@ class BaseFlavor(object):
             "readline",
             "reprlib"
             "rlcompleter",
+            "runpy",
             "shutil",
             "sre",
             "sre_compile",
@@ -60,6 +65,14 @@ class BaseFlavor(object):
             "struct",
             "tarfile",
             "tempfile",
+            "textwrap",
+            "string",
+            "contextlib",
+            "_functools",
+            "subprocess",
+            "pickle",
+            "zipfile",
+            "glob",
             "token",
             "tokenize",
             "traceback",
@@ -67,7 +80,8 @@ class BaseFlavor(object):
             "warnings",
             "weakref",
             "zlib",
-            "UserDict",
+
+
         ])
 
     @property
