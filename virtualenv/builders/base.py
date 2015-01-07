@@ -77,7 +77,7 @@ class BaseBuilder(object):
                         bindir = sysconfig.get_config_var("BINDIR")
                         if not bindir:
                             raise RuntimeError("BINDIR missing from sysconfig.")
-                        bin = os.path.join(prefix, name)
+                        bin = os.path.join(bindir, name)
                 print(json.dumps(bin))
                 """)
             ]).decode(locale.getpreferredencoding()),
