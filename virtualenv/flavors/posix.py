@@ -33,7 +33,10 @@ class PosixFlavor(BaseFlavor):
         )
 
     def include_dir(self, base_python):
-        return posixpath.join(
-            "include",
-            "python{1}.{2}{0}".format(base_python["sys.abiflags"], *base_python["sys.version_info"])
-        )
+        if base_python["is_pypy"]:
+            return "include"
+        else:
+            return posixpath.join(
+                "include",
+                "python{1}.{2}{0}".format(base_python["sys.abiflags"], *base_python["sys.version_info"])
+            )

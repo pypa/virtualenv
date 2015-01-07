@@ -168,7 +168,7 @@ class LegacyBuilder(BaseBuilder):
                             '_multiarch',
                             sys.platform
                         ),
-
+                        "is_pypy": hasattr(sys, 'pypy_version_info'),
                     })
                 )
                 """),
