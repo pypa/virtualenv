@@ -25,6 +25,7 @@ class BaseFlavor(object):
             "copy_reg",
             "copyreg",
             "encodings",
+            "errors",
             "fnmatch",
             "functools",
             "genericpath",
