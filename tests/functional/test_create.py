@@ -20,13 +20,13 @@ PYTHON_BINS = [
     "C:\\PyPy\\pypy.exe",
     "C:\\PyPy3\\pypy.exe",
     None,
-    "python",
-    "python2.6",
-    "python2.7",
-    "python3.2",
-    "python3.3",
-    "python3.4",
-    "pypy",
+    "/usr/bin/python",
+    "/usr/bin/python2.6",
+    "/usr/bin/python2.7",
+    "/usr/bin/python3.2",
+    "/usr/bin/python3.3",
+    "/usr/bin/python3.4",
+    "/usr/bin/pypy",
 ]
 
 
