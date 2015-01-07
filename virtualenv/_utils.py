@@ -1,7 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
-import errno
 import os
+import re
 import shutil
 import stat
 
@@ -12,15 +12,17 @@ def ensure_directory(directory, *args, **kwargs):
         os.makedirs(directory, *args, **kwargs)
 
 
-def copyfile(srcfile, destfile):
+def copyfile(srcfile, destfile, skip=re.compile(r".*\.pyc\Z|__pycache__\Z", re.IGNORECASE)):
+    ensure_directory(os.path.dirname(destfile))
+
     if os.path.isdir(srcfile):
         # TODO: just use shutil.copytree to avoid bikeshedding
-        ensure_directory(destfile)
         for name in os.listdir(srcfile):
-            copyfile(
-                os.path.join(srcfile, name),
-                os.path.join(destfile, name)
-            )
+            if not skip.match(name):
+                copyfile(
+                    os.path.join(srcfile, name),
+                    os.path.join(destfile, name)
+                )
     else:
         # We use copyfile (not move, copy, or copy2) to be extra sure that we are
         # not moving directories over (copyfile fails for directories) as well as
