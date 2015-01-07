@@ -4,6 +4,7 @@ import io
 import json
 import locale
 import os.path
+import sys
 import textwrap
 
 from virtualenv.builders.base import BaseBuilder
@@ -70,6 +71,7 @@ dirty_modules = (
     "sitecustomize",
     "__builtin__",
     "__main__",
+    "__pypy__",
 )
 for key in list(sys.modules):
     # We don't want to purge these modules because if we do, then things break
@@ -183,6 +185,15 @@ class LegacyBuilder(BaseBuilder):
             if os.path.exists(path):
                 return path
 
+    def _path_repr(self, string):
+        return (
+            b"'" +
+            string.encode(sys.getfilesystemencoding())
+                  .replace(b"'", b"\\'")
+                  .replace(b"\\", b"\\\\") +
+            b"'"
+        )
+
     def create_virtual_environment(self, destination):
         # Get a bunch of information from the base Python.
         base_python = self._get_base_python_info()
@@ -260,22 +271,21 @@ class LegacyBuilder(BaseBuilder):
             # Get the data from our source file, and replace our special
             # variables with the computed data.
             data = SITE
-            data = data.replace(b"__PREFIX__", repr(destination).encode("utf-8"))
-            data = data.replace(b"__EXEC_PREFIX__", repr(destination).encode("utf-8"))
+            data = data.replace(b"__PREFIX__", self._path_repr(destination))
+            data = data.replace(b"__EXEC_PREFIX__", self._path_repr(destination))
             data = data.replace(
                 b"__BASE_PREFIX__",
-                repr(base_python["sys.prefix"]).encode("utf-8"),
+                self._path_repr(base_python["sys.prefix"]),
             )
             data = data.replace(
-                b"__BASE_EXEC_PREFIX__", repr(base_python["sys.exec_prefix"]).encode("utf-8"),
+                b"__BASE_EXEC_PREFIX__", self._path_repr(base_python["sys.exec_prefix"]),
             )
-            data = data.replace(b"__SITE__", repr(base_python["site.py"]).encode("utf-8"))
+            data = data.replace(b"__SITE__", self._path_repr(base_python["site.py"]))
             data = data.replace(
                 b"__GLOBAL_SITE_PACKAGES__",
-                repr(
-                    base_python["site.getsitepackages"]
-                    if self.system_site_packages else None
-                ).encode("utf-8"),
+                b"[" + b", ".join(
+                    self._path_repr(path) for path in base_python["site.getsitepackages"]
+                ) + b"]",
             )
 
             # Write the final site.py file to our lib directory
