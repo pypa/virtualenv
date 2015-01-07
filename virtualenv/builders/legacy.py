@@ -77,7 +77,6 @@ for key in list(sys.modules):
     if key in dirty_modules:
         continue
     for mod in dirty_modules:
-        print(key, mod, key.startswith(mod))
         if key.startswith(mod):
             break
     else:
