@@ -11,7 +11,7 @@ from virtualenv._utils import copyfile
 from virtualenv._utils import ensure_directory
 from virtualenv._compat import check_output
 
-SITE = """# -*- encoding: utf-8 -*-
+SITE = b"""# -*- encoding: utf-8 -*-
 import sys
 import os.path
 
@@ -134,6 +134,8 @@ class LegacyBuilder(BaseBuilder):
                         "sys.executable": resolve(sys.executable),
                         "sys.prefix": resolve(sys.prefix),
                         "sys.exec_prefix": resolve(sys.exec_prefix),
+                        "sys.path": [resolve(path) for path in sys.path],
+                        "sys.abiflags": getattr(sys, "abiflags", ""),
                         "site.getsitepackages": [
                             resolve(f) for f in getattr(site, "getsitepackages", lambda: site.addsitepackages(set()))()
                         ],
@@ -147,11 +149,21 @@ class LegacyBuilder(BaseBuilder):
                             '_multiarch',
                             sys.platform
                         ),
+
                     })
                 )
                 """),
             ]).decode(locale.getpreferredencoding()),
         )
+
+    def _locate_module(self, mod, search_paths):
+        for search_path in search_paths:
+            pymod = os.path.join(search_path, mod + ".py")
+            if os.path.exists(pymod):
+                return pymod
+            path = os.path.join(search_path, mod)
+            if os.path.exists(path):
+                return path
 
     def create_virtual_environment(self, destination):
         # Get a bunch of information from the base Python.
@@ -199,12 +211,25 @@ class LegacyBuilder(BaseBuilder):
         # into our virtual environment's lib directory as well. Note that this
         # list also includes the os module, but since we've already copied
         # that we'll go ahead and omit it.
+        sys_prefix = base_python["sys.prefix"]
+        lib_dirs = [
+            path for path in base_python["sys.path"]
+            if path.startswith(sys_prefix)
+            # TODO: this has an unhandled edgecase, it handle case with
+            # partial match (should only match full components)
+
+        ]
 
         for module in self.flavor.bootstrap_modules(base_python):
-            copyfile(
-                os.path.join(base_python["lib"], module),
-                os.path.join(lib_dir, module),
-            )
+            modulepath = self._locate_module(module, lib_dirs)
+            if modulepath:
+                copyfile(
+                    modulepath,
+                    os.path.join(
+                        destination,
+                        os.path.relpath(modulepath, sys_prefix)
+                    ),
+                )
 
         include_dir = self.flavor.include_dir(base_python)
         copyfile(
@@ -221,22 +246,22 @@ class LegacyBuilder(BaseBuilder):
             # Get the data from our source file, and replace our special
             # variables with the computed data.
             data = SITE
-            data = data.replace("__PREFIX__", repr(destination))
-            data = data.replace("__EXEC_PREFIX__", repr(destination))
+            data = data.replace(b"__PREFIX__", repr(destination).encode("utf-8"))
+            data = data.replace(b"__EXEC_PREFIX__", repr(destination).encode("utf-8"))
             data = data.replace(
-                "__BASE_PREFIX__",
-                repr(base_python["sys.prefix"]),
+                b"__BASE_PREFIX__",
+                repr(base_python["sys.prefix"]).encode("utf-8"),
             )
             data = data.replace(
-                "__BASE_EXEC_PREFIX__", repr(base_python["sys.exec_prefix"]),
+                b"__BASE_EXEC_PREFIX__", repr(base_python["sys.exec_prefix"]).encode("utf-8"),
             )
-            data = data.replace("__SITE__", repr(base_python["site.py"]))
+            data = data.replace(b"__SITE__", repr(base_python["site.py"]).encode("utf-8"))
             data = data.replace(
-                "__GLOBAL_SITE_PACKAGES__",
+                b"__GLOBAL_SITE_PACKAGES__",
                 repr(
                     base_python["site.getsitepackages"]
                     if self.system_site_packages else None
-                ),
+                ).encode("utf-8"),
             )
 
             # Write the final site.py file to our lib directory

@@ -13,8 +13,6 @@ class PosixFlavor(BaseFlavor):
     def bootstrap_modules(self, base_python):
         return super(PosixFlavor, self).bootstrap_modules(base_python) | set([
             # Directories
-            "config",
-            "plat-%s" % base_python["arch"]
         ])
 
     @property
@@ -37,5 +35,5 @@ class PosixFlavor(BaseFlavor):
     def include_dir(self, base_python):
         return posixpath.join(
             "include",
-            "python{0}.{1}".format(*base_python["sys.version_info"])
+            "python{1}.{2}{0}".format(base_python["sys.abiflags"], *base_python["sys.version_info"])
         )
