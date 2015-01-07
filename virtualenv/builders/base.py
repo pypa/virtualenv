@@ -51,7 +51,7 @@ class BaseBuilder(object):
         raise NotImplementedError
 
     def _get_base_python_bin(self):
-        bindir = json.loads(
+        return json.loads(
             check_output([
                 self.python,
                 "-c",
@@ -64,17 +64,25 @@ class BaseBuilder(object):
                 except ImportError:
                     from distutils import sysconfig
 
+                prefix = getattr(sys, "real_prefix", sys.prefix)
+                name = os.path.basename(sys.executable)
                 if (sys.platform.startswith("win") or sys.platform == "cli" and os.name == "nt"):
-                    bindir = getattr(sys, "real_prefix", sys.prefix)
+                    bin = os.path.join(prefix, name)
                 else:
-                    # "projectbase" for pypy. TODO: I'm not really sure here ...
-                    bindir = sysconfig.get_config_var("BINDIR") or sysconfig.get_config_var("projectbase")
-
-                print(json.dumps(bindir))
+                    if hasattr(sys, 'pypy_version_info'):
+                        bin = os.path.join(prefix, "bin", "pypy-c")
+                        if not os.path.exists(bin):
+                            bin = os.path.join(prefix, "bin", "pypy") # TODO: who needs this?
+                    else:
+                        bindir = sysconfig.get_config_var("BINDIR")
+                        if not bindir:
+                            raise RuntimeError("BINDIR missing from sysconfig.")
+                        bin = os.path.join(prefix, name)
+                print(json.dumps(bin))
                 """)
             ]).decode(locale.getpreferredencoding()),
         )
-        return os.path.join(bindir, os.path.basename(self.python))
+
 
     def create(self, destination):
         # Resolve the destination first, we can't save relative paths
