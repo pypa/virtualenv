@@ -18,16 +18,3 @@ env:
 install: pip install tox
 
 script: tox
-
-branches:
-  only:
-    - master
-    - develop
-    - rewrite
-
-notifications:
-  irc:
-    channels:
-      - "irc.freenode.org#pypa-dev"
-    use_notice: true
-    skip_join: true
