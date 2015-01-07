@@ -67,7 +67,8 @@ class BaseBuilder(object):
                 if (sys.platform.startswith("win") or sys.platform == "cli" and os.name == "nt"):
                     bindir = getattr(sys, "real_prefix", sys.prefix)
                 else:
-                    bindir = sysconfig.get_config_var("BINDIR")
+                    # "projectbase" for pypy. TODO: I'm not really sure here ...
+                    bindir = sysconfig.get_config_var("BINDIR") or sysconfig.get_config_var("projectbase")
 
                 print(json.dumps(bindir))
                 """)
