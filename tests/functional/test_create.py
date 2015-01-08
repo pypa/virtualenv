@@ -1,6 +1,6 @@
 import os
 import sys
-from itertools import combinations
+from itertools import product
 
 import pytest
 import scripttest
@@ -63,7 +63,8 @@ def python(request):
     else:
         pytest.skip(msg="Implementation at %r not available." % request.param)
 
-@pytest.mark.parametrize("systemsitepackages,viascript", combinations([True, False] * 2, 2))
+
+@pytest.mark.parametrize("systemsitepackages,viascript", product([False, True], repeat=2))
 def test_create(env, python, systemsitepackages, viascript):
     if viascript:
         args = ["python", "-mvirtualenv.__main__" if IS_26 else "-mvirtualenv"]
