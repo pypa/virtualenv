@@ -227,6 +227,7 @@ class BaseBuilder(object):
         main_suffix = ".__main__" if self._python_info["sys.version_info"][:2] == [2, 6] else ""
         command = [
             python, "-m", "pip" + main_suffix, "install", "--no-index", "--isolated",
+            "--ignore-installed",
             "--find-links", WHEEL_DIR,
         ]
 
