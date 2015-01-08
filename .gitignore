@@ -2,6 +2,7 @@
 *.egg
 *.py[co]
 
+.ve*/
 .tox/
 .cache/
 .coverage
