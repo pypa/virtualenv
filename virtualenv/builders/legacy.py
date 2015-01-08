@@ -237,9 +237,13 @@ class LegacyBuilder(BaseBuilder):
             data = data.replace(b"__SITE__", self._path_repr(self._python_info["site.py"]))
             data = data.replace(
                 b"__GLOBAL_SITE_PACKAGES__",
-                b"[" + b", ".join(
-                    self._path_repr(path) for path in self._python_info["site.getsitepackages"]
-                ) + b"]",
+                (
+                    b"[" +
+                    b", ".join(
+                        self._path_repr(path) for path in self._python_info["site.getsitepackages"]
+                    ) +
+                    b"]"
+                ) if self.system_site_packages else b"None",
             )
 
             # Write the final site.py file to our lib directory
