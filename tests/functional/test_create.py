@@ -1,5 +1,6 @@
 import os
 import sys
+from itertools import combinations
 
 import pytest
 import scripttest
@@ -62,34 +63,32 @@ def python(request):
     else:
         pytest.skip(msg="Implementation at %r not available." % request.param)
 
-
-def test_create_via_script(env, python):
-    extra = ['--python', python] if python else []
-    result = env.run('virtualenv', 'myenv', *extra)
-    if IS_WINDOWS:
-        assert 'myenv\\Scripts\\activate.bat' in result.files_created
-        assert 'myenv\\Scripts\\activate.ps1' in result.files_created
-        assert 'myenv\\Scripts\\activate_this.py' in result.files_created
-        assert 'myenv\\Scripts\\deactivate.bat' in result.files_created
-        assert 'myenv\\Scripts\\pip.exe' in result.files_created
-        assert 'myenv\\Scripts\\python.exe' in result.files_created
+@pytest.mark.parametrize("systemsitepackages,viascript", combinations([True, False] * 2, 2))
+def test_create(env, python, systemsitepackages, viascript):
+    if viascript:
+        args = ["python", "-mvirtualenv.__main__" if IS_26 else "-mvirtualenv"]
     else:
-        assert 'myenv/bin/activate.sh' in result.files_created
-        assert 'myenv/bin/activate_this.py' in result.files_created
-        assert 'myenv/bin/python' in result.files_created
+        args = ["virtualenv"]
 
-
-def test_create_via_module(env, python):
-    extra = ['--python', python] if python else []
-    result = env.run('python', '-mvirtualenv.__main__' if IS_26 else '-mvirtualenv', 'myenv', *extra)
+    args += ["myenv"]
+    if systemsitepackages:
+        args += ["--system-site-packages"]
+    if python:
+        args += ["--python", python]
+    result = env.run(*args)
+    print(result)
     if IS_WINDOWS:
-        assert 'myenv\\Scripts\\activate.bat' in result.files_created
-        assert 'myenv\\Scripts\\activate.ps1' in result.files_created
-        assert 'myenv\\Scripts\\activate_this.py' in result.files_created
-        assert 'myenv\\Scripts\\deactivate.bat' in result.files_created
-        assert 'myenv\\Scripts\\pip.exe' in result.files_created
-        assert 'myenv\\Scripts\\python.exe' in result.files_created
+        assert "myenv\\Scripts\\activate.bat" in result.files_created
+        assert "myenv\\Scripts\\activate.ps1" in result.files_created
+        assert "myenv\\Scripts\\activate_this.py" in result.files_created
+        assert "myenv\\Scripts\\deactivate.bat" in result.files_created
+        assert "myenv\\Scripts\\pip.exe" in result.files_created
+        assert "myenv\\Scripts\\python.exe" in result.files_created
     else:
-        assert 'myenv/bin/activate.sh' in result.files_created
-        assert 'myenv/bin/activate_this.py' in result.files_created
-        assert 'myenv/bin/python' in result.files_created
+        assert "myenv/bin/activate.sh" in result.files_created
+        assert "myenv/bin/activate_this.py" in result.files_created
+        assert "myenv/bin/python" in result.files_created
+        assert "myenv/bin/pip" in result.files_created
+    for name in result.files_created:
+        assert name.startswith("myenv")
+
