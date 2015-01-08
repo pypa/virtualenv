@@ -192,4 +192,5 @@ class BaseBuilder(object):
         self.flavor.execute(
             command + projects,
             PYTHONPATH=os.pathsep.join(wheels),
+            VIRTUALENV_BOOTSTRAP_ADJUST_EGGINSERT="-1",
         )

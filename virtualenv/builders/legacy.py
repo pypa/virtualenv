@@ -13,6 +13,7 @@ from virtualenv._utils import ensure_directory
 from virtualenv._compat import check_output
 
 SITE = b"""# -*- encoding: utf-8 -*-
+import os
 import os.path
 import sys
 
@@ -28,6 +29,8 @@ sys.exec_prefix = __EXEC_PREFIX__
 # We want to record what the "real/base" prefix is of the virtual environment.
 sys.base_prefix = __BASE_PREFIX__
 sys.base_exec_prefix = __BASE_EXEC_PREFIX__
+if "VIRTUALENV_BOOTSTRAP_ADJUST_EGGINSERT" in os.environ:
+    sys.__egginsert = int(os.environ["VIRTUALENV_BOOTSTRAP_ADJUST_EGGINSERT"])
 
 # At the point this code is running, the only paths on the sys.path are the
 # paths that the interpreter adds itself. These are essentially the locations
