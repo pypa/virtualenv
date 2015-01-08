@@ -227,11 +227,13 @@ class BaseBuilder(object):
 
         # Construct the command that we're going to use to actually do the
         # installs.
-        self.flavor.execute(
-            [python, "-c", "import sys, pprint; pprint.pprint(sys.path)"],
-            PYTHONPATH=os.pathsep.join(wheels),
-            VIRTUALENV_BOOTSTRAP_ADJUST_EGGINSERT="-1",
-        )
+
+        # TODO: add --diagnostic command line arg that does stuff like this:
+        #  self.flavor.execute(
+        #      [python, "-c", "import sys, pprint; pprint.pprint(sys.path)"],
+        #      PYTHONPATH=os.pathsep.join(wheels),
+        #      VIRTUALENV_BOOTSTRAP_ADJUST_EGGINSERT="-1",
+        #  )
         main_suffix = ".__main__" if self._python_info["sys.version_info"][:2] == [2, 6] else ""
         command = [
             python, "-m", "pip" + main_suffix, "install", "--no-index", "--isolated",
