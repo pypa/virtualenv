@@ -27,8 +27,8 @@ sys.prefix = __PREFIX__
 sys.exec_prefix = __EXEC_PREFIX__
 
 # We want to record what the "real/base" prefix is of the virtual environment.
-sys.base_prefix = __BASE_PREFIX__
-sys.base_exec_prefix = __BASE_EXEC_PREFIX__
+sys.real_prefix = sys.base_prefix = __BASE_PREFIX__
+sys.real_exec_prefix = sys.base_exec_prefix = __BASE_EXEC_PREFIX__
 if "VIRTUALENV_BOOTSTRAP_ADJUST_EGGINSERT" in os.environ:
     sys.__egginsert = int(os.environ["VIRTUALENV_BOOTSTRAP_ADJUST_EGGINSERT"])
 
