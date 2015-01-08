@@ -6,7 +6,7 @@ import subprocess
 
 class BaseFlavor(object):
 
-    def bootstrap_modules(self, base_python):
+    def bootstrap_modules(self, python_info):
         return set([
             "UserDict",
             "__future__",
@@ -23,7 +23,7 @@ class BaseFlavor(object):
             "codecs",
             "collections",
             "config",
-            "config-{1}.{2}{0}".format(base_python["sys.abiflags"], *base_python["sys.version_info"][:2]),
+            "config-{1}.{2}{0}".format(python_info["sys.abiflags"], *python_info["sys.version_info"][:2]),
             "copy",
             "copy_reg",
             "copyreg",
@@ -47,7 +47,7 @@ class BaseFlavor(object):
             "ntpath",
             "operator",
             "pkgutil",
-            "plat-%s" % base_python["arch"],
+            "plat-%s" % python_info["arch"],
             "posix",
             "posixpath",
             "random",
@@ -88,10 +88,10 @@ class BaseFlavor(object):
     def activation_scripts(self):
         raise NotImplementedError
 
-    def python_bins(self, base_python):
+    def python_bins(self, python_info):
         raise NotImplementedError
 
-    def lib_dir(self, base_python):
+    def lib_dir(self, python_info):
         raise NotImplementedError
 
     def execute(self, command, **env):

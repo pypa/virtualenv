@@ -7,7 +7,7 @@ import sys
 import pretend
 import pytest
 
-from virtualenv.builders.base import BaseBuilder, WHEEL_DIR, MAIN_SUFFIX
+from virtualenv.builders.base import BaseBuilder, WHEEL_DIR
 from virtualenv.flavors.posix import PosixFlavor
 from virtualenv.flavors.windows import WindowsFlavor
 
@@ -106,7 +106,13 @@ def test_base_builder_install_tools(tmpdir, flavor, pip, setuptools,
                                     extra_search_dirs):
     flavor.execute = pretend.call_recorder(lambda *a, **kw: None)
 
-    builder = BaseBuilder(
+    class TestBuilder(BaseBuilder):
+        _python_bin = '?'
+        _python_info = {
+            "sys.version_info": (2, 7, 9)
+        }
+
+    builder = TestBuilder(
         None,
         flavor,
         pip=pip,
@@ -128,7 +134,7 @@ def test_base_builder_install_tools(tmpdir, flavor, pip, setuptools,
             pretend.call(
                 [
                     str(tmpdir.join(flavor.bin_dir, flavor.python_bin)),
-                    "-m", "pip" + MAIN_SUFFIX, "install", "--no-index", "--isolated",
+                    "-m", "pip", "install", "--no-index", "--isolated",
                     "--find-links", WHEEL_DIR,
                 ]
                 + list(
@@ -140,5 +146,6 @@ def test_base_builder_install_tools(tmpdir, flavor, pip, setuptools,
                 PYTHONPATH=os.pathsep.join(
                     glob.glob(os.path.join(WHEEL_DIR, "*.whl")),
                 ),
+                VIRTUALENV_BOOTSTRAP_ADJUST_EGGINSERT="-1",
             )
         ]

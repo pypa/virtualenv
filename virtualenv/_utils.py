@@ -39,3 +39,15 @@ def copyfile(srcfile, destfile, skip=re.compile(r".*\.pyc\Z|__pycache__\Z", re.I
     if os.access(srcfile, os.X_OK):
         permissions = st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
         os.chmod(destfile, permissions)
+
+
+class cached_property(object):
+    def __init__(self, func):
+        self.__doc__ = getattr(func, '__doc__')
+        self.func = func
+
+    def __get__(self, obj, cls):
+        if obj is None:
+            return self
+        value = obj.__dict__[self.func.__name__] = self.func(obj)
+        return value

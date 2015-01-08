@@ -14,15 +14,15 @@ class WindowsFlavor(BaseFlavor):
     def activation_scripts(self):
         return set(["activate.bat", "activate.ps1", "deactivate.bat"])
 
-    def python_bins(self, base_python):
-        version_info = base_python["sys.version_info"]
+    def python_bins(self, python_info):
+        version_info = python_info["sys.version_info"]
         return [
             "python{0}.exe".format(".".join(map(str, version_info[:i])))
             for i in range(3)
         ]
 
-    def lib_dir(self, base_python):
+    def lib_dir(self, python_info):
         return "Lib"
 
-    def include_dir(self, base_python):
+    def include_dir(self, python_info):
         return "include"

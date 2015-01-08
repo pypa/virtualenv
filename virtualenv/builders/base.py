@@ -1,16 +1,19 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import glob
+import json
+import locale
 import io
 import os.path
-import locale
-import json
 import shutil
 import sys
 import textwrap
 
-from virtualenv._compat import FileNotFoundError
 from virtualenv._compat import check_output
+from virtualenv._compat import FileNotFoundError
+from virtualenv._utils import cached_property
 
 
 WHEEL_DIR = os.path.join(
@@ -20,8 +23,6 @@ WHEEL_DIR = os.path.join(
 SCRIPT_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "_scripts",
 )
-
-MAIN_SUFFIX = ".__main__" if sys.version_info[:2] == (2, 6) else ""
 
 
 class BaseBuilder(object):
@@ -50,7 +51,8 @@ class BaseBuilder(object):
     def check_available(cls, python):
         raise NotImplementedError
 
-    def _get_base_python_bin(self):
+    @cached_property
+    def _python_bin(self):
         return json.loads(
             check_output([
                 self.python,
@@ -83,6 +85,51 @@ class BaseBuilder(object):
             ]).decode(locale.getpreferredencoding()),
         )
 
+    @cached_property
+    def _python_info(self):
+        # Get information from the base python that we need in order to create
+        # a legacy virtual environment.
+        return json.loads(
+            check_output([
+                self._python_bin,
+                "-c",
+                textwrap.dedent("""
+                import json
+                import os
+                import os.path
+                import site
+                import sys
+
+                def resolve(path):
+                    return os.path.realpath(os.path.abspath(path))
+
+                print(
+                    json.dumps({
+                        "sys.version_info": tuple(sys.version_info),
+                        "sys.executable": resolve(sys.executable),
+                        "sys.prefix": resolve(sys.prefix),
+                        "sys.exec_prefix": resolve(sys.exec_prefix),
+                        "sys.path": [resolve(path) for path in sys.path],
+                        "sys.abiflags": getattr(sys, "abiflags", ""),
+                        "site.getsitepackages": [
+                            resolve(f) for f in getattr(site, "getsitepackages", lambda: site.addsitepackages(set()))()
+                        ],
+                        "lib": resolve(os.path.dirname(os.__file__)),
+                        "site.py": os.path.join(
+                            resolve(os.path.dirname(site.__file__)),
+                            "site.py",
+                        ),
+                        "arch": getattr(
+                            getattr(sys, 'implementation', sys),
+                            '_multiarch',
+                            sys.platform
+                        ),
+                        "is_pypy": hasattr(sys, 'pypy_version_info'),
+                    })
+                )
+                """),
+            ]).decode(locale.getpreferredencoding()),
+        )
 
     def create(self, destination):
         # Resolve the destination first, we can't save relative paths
@@ -177,8 +224,9 @@ class BaseBuilder(object):
 
         # Construct the command that we're going to use to actually do the
         # installs.
+        main_suffix = ".__main__" if self._python_info["sys.version_info"][:2] == [2, 6] else ""
         command = [
-            python, "-m", "pip" + MAIN_SUFFIX, "install", "--no-index", "--isolated",
+            python, "-m", "pip" + main_suffix, "install", "--no-index", "--isolated",
             "--find-links", WHEEL_DIR,
         ]
 
