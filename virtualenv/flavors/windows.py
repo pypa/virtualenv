@@ -26,6 +26,21 @@ class WindowsFlavor(BaseFlavor):
             for i in range(3)
         ]
 
+    def extra_bins(self, python_info):
+        if python_info["is_pypy"]:
+            return [
+                'libexpat.dll',
+                'libpypy.dll',
+                'libpypy-c.dll',
+                'libeay32.dll',
+                'ssleay32.dll',
+                'sqlite3.dll',
+                'tcl85.dll',
+                'tk85.dll'
+            ]
+        else:
+            return []
+
     def lib_dir(self, python_info):
         return "Lib"
 

@@ -162,6 +162,15 @@ class LegacyBuilder(BaseBuilder):
                 os.path.join(bin_dir, python_bin),
             )
 
+        # Copy extra bins, like some DLLs PyPy likes to have in it's bin dir ...
+        for extra_bin in self.flavor.extra_bins(self._python_info):
+            bin_src = os.path.join(self._python_info["sys.prefix"], extra_bin)
+            if os.path.exists(bin_src):
+                copyfile(
+                    bin_src,
+                    os.path.join(bin_dir, extra_bin),
+                )
+
         # Create our lib directory, this is going to hold all of the parts of
         # the standard library that we need in order to ensure that we can
         # successfully bootstrap a Python interpreter.

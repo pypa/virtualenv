@@ -26,6 +26,9 @@ class PosixFlavor(BaseFlavor):
             for i in range(3)
         ]
 
+    def extra_bins(self, python_info):
+        return []
+
     def lib_dir(self, python_info):
         return posixpath.join(
             "lib",
