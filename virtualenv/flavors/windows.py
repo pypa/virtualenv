@@ -7,7 +7,12 @@ from virtualenv.flavors.base import BaseFlavor
 
 class WindowsFlavor(BaseFlavor):
 
-    bin_dir = "Scripts"
+    def bin_dir(self, python_info):
+        if python_info["is_pypy"]:
+            return "bin"
+        else:
+            return "Scripts"
+
     python_bin = "python.exe"
 
     @property

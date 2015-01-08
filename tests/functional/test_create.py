@@ -1,6 +1,7 @@
 import os
 import sys
 from itertools import product
+from pprint import pprint
 
 import pytest
 import scripttest
@@ -11,6 +12,7 @@ IS_WINDOWS = (
     (sys.platform == "cli" and os.name == "nt")
 )
 IS_26 = sys.version_info[:2] == (2, 6)
+IS_PYPY = hasattr(sys, 'pypy_version_info')
 
 
 def locate_on_path(binary):
@@ -79,17 +81,24 @@ def test_create(env, python, systemsitepackages, viascript):
     result = env.run(*args)
     print(result)
     if IS_WINDOWS:
-        assert "myenv\\Scripts\\activate.bat" in result.files_created
-        assert "myenv\\Scripts\\activate.ps1" in result.files_created
-        assert "myenv\\Scripts\\activate_this.py" in result.files_created
-        assert "myenv\\Scripts\\deactivate.bat" in result.files_created
-        assert "myenv\\Scripts\\pip.exe" in result.files_created
-        assert "myenv\\Scripts\\python.exe" in result.files_created
+        if not python and IS_PYPY or python and "pypy" in python:
+            assert 'myenv\\bin\\activate.bat' in result.files_created
+            assert 'myenv\\bin\\activate.ps1' in result.files_created
+            assert 'myenv\\bin\\activate_this.py' in result.files_created
+            assert 'myenv\\bin\\deactivate.bat' in result.files_created
+            assert 'myenv\\bin\\pip.exe' in result.files_created
+            assert 'myenv\\bin\\python.exe' in result.files_created
+        else:
+            assert 'myenv\\Scripts\\activate.bat' in result.files_created
+            assert 'myenv\\Scripts\\activate.ps1' in result.files_created
+            assert 'myenv\\Scripts\\activate_this.py' in result.files_created
+            assert 'myenv\\Scripts\\deactivate.bat' in result.files_created
+            assert 'myenv\\Scripts\\pip.exe' in result.files_created
+            assert 'myenv\\Scripts\\python.exe' in result.files_created
     else:
-        assert "myenv/bin/activate.sh" in result.files_created
-        assert "myenv/bin/activate_this.py" in result.files_created
-        assert "myenv/bin/python" in result.files_created
+        assert 'myenv/bin/activate.sh' in result.files_created
+        assert 'myenv/bin/activate_this.py' in result.files_created
+        assert 'myenv/bin/python' in result.files_created
         assert "myenv/bin/pip" in result.files_created
     for name in result.files_created:
         assert name.startswith("myenv")
-

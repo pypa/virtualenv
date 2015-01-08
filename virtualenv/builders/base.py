@@ -159,6 +159,9 @@ class BaseBuilder(object):
         raise NotImplementedError
 
     def install_scripts(self, destination):
+        # Bin dir for python, activation scripts etc
+        bin_dir = self.flavor.bin_dir(self._python_info)
+
         # Determine the list of files based on if we're running on Windows
         files = self.flavor.activation_scripts.copy()
 
@@ -181,7 +184,7 @@ class BaseBuilder(object):
         for filename in files:
             # Compute our source and target paths
             source = os.path.join(SCRIPT_DIR, filename)
-            target = os.path.join(destination, self.flavor.bin_dir, filename)
+            target = os.path.join(destination, bin_dir, filename)
 
             # Write the files themselves into their target locations
             with io.open(source, "r", encoding="utf-8") as source_fp:
@@ -194,7 +197,7 @@ class BaseBuilder(object):
                     data = data.replace("__VIRTUAL_WINPROMPT__", win_prompt)
                     data = data.replace("__VIRTUAL_ENV__", destination)
                     data = data.replace("__VIRTUAL_NAME__", name)
-                    data = data.replace("__BIN_NAME__", self.flavor.bin_dir)
+                    data = data.replace("__BIN_NAME__", bin_dir)
 
                     # Actually write our content to the target locations
                     target_fp.write(data)
@@ -215,7 +218,7 @@ class BaseBuilder(object):
         # environment.
         python = os.path.join(
             destination,
-            self.flavor.bin_dir,
+            self.flavor.bin_dir(self._python_info),
             self.flavor.python_bin,
         )
 

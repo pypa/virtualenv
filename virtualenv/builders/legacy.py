@@ -154,7 +154,7 @@ class LegacyBuilder(BaseBuilder):
 
     def create_virtual_environment(self, destination):
         # Create our binaries that we'll use to create the virtual environment
-        bin_dir = os.path.join(destination, self.flavor.bin_dir)
+        bin_dir = os.path.join(destination, self.flavor.bin_dir(self._python_info))
         ensure_directory(bin_dir)
         for python_bin in self.flavor.python_bins(self._python_info):
             copyfile(

@@ -78,7 +78,7 @@ def test_base_builder_create_virtual_environment():
 @pytest.mark.parametrize("flavor", [PosixFlavor(), WindowsFlavor()])
 def test_base_builder_install_scripts(tmpdir, flavor):
     envdir = str(tmpdir)
-    bindir = str(tmpdir.join(flavor.bin_dir))
+    bindir = str(tmpdir.join(flavor.bin_dir({"is_pypy": False})))
     os.makedirs(bindir)
 
     builder = BaseBuilder(None, flavor)
@@ -133,7 +133,7 @@ def test_base_builder_install_tools(tmpdir, flavor, pip, setuptools,
         assert flavor.execute.calls == [
             pretend.call(
                 [
-                    str(tmpdir.join(flavor.bin_dir, flavor.python_bin)),
+                    str(tmpdir.join(flavor.bin_dir({"is_pypy": False}), flavor.python_bin)),
                     "-m", "pip", "install", "--no-index", "--isolated",
                     "--find-links", WHEEL_DIR,
                 ]
