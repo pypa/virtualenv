@@ -9,6 +9,7 @@ class PosixFlavor(BaseFlavor):
 
     def bin_dir(self, python_info):
         return "bin"
+
     python_bin = "python"
 
     def bootstrap_modules(self, python_info):
