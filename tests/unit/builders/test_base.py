@@ -109,7 +109,8 @@ def test_base_builder_install_tools(tmpdir, flavor, pip, setuptools,
     class TestBuilder(BaseBuilder):
         _python_bin = '?'
         _python_info = {
-            "sys.version_info": (2, 7, 9)
+            "sys.version_info": (2, 7, 9),
+            "is_pypy": False,
         }
 
     builder = TestBuilder(
