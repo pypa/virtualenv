@@ -81,7 +81,14 @@ def test_base_builder_install_scripts(tmpdir, flavor):
     bindir = str(tmpdir.join(flavor.bin_dir({"is_pypy": False})))
     os.makedirs(bindir)
 
-    builder = BaseBuilder(None, flavor)
+    class TestBuilder(BaseBuilder):
+        _python_bin = '?'
+        _python_info = {
+            "sys.version_info": (2, 7, 9),
+            "is_pypy": False,
+        }
+
+    builder = TestBuilder(None, flavor)
     builder.install_scripts(envdir)
 
     files = flavor.activation_scripts.copy()
