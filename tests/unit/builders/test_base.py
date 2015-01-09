@@ -135,6 +135,7 @@ def test_base_builder_install_tools(tmpdir, flavor, pip, setuptools,
                 [
                     str(tmpdir.join(flavor.bin_dir({"is_pypy": False}), flavor.python_bin)),
                     "-m", "pip", "install", "--no-index", "--isolated",
+                    "--ignore-installed",
                     "--find-links", WHEEL_DIR,
                 ]
                 + list(
