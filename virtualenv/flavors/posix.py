@@ -7,7 +7,8 @@ from virtualenv.flavors.base import BaseFlavor
 
 class PosixFlavor(BaseFlavor):
 
-    bin_dir = "bin"
+    def bin_dir(self, python_info):
+        return "bin"
     python_bin = "python"
 
     def bootstrap_modules(self, python_info):
