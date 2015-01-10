@@ -1,4 +1,5 @@
 import logging
+import sys
 
 import click
 
@@ -73,9 +74,9 @@ def cmd(destination,
     Creates virtual python environments in a target directory.
     """
     if verbose:
-        logging.basicConfig(level="DEBUG")
+        logging.basicConfig(level="DEBUG", stream=sys.stdout)
     else:
-        logging.basicConfig(level="WARNING")
+        logging.basicConfig(level="WARNING", stream=sys.stdout)
 
     create(
         destination,
