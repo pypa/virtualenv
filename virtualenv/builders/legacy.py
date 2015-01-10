@@ -18,6 +18,10 @@ SITE = b"""# -*- encoding: utf-8 -*-
 import os
 import os.path
 import sys
+try:
+    import _struct
+except ImportError:
+    pass
 
 # We want to stash the global site-packages here, this will be None if we're
 # not adding them.
@@ -66,17 +70,18 @@ sys.path = new_sys_path
 dirty_modules = (
     # TODO: there might be less packages required but we
     # need to extend the integration tests to see exactly what
-    "_codecs",
-    "codecs",
-    "builtins",
-    "encodings",
-    "encodings.",
-    "sys",
-    "site",
-    "sitecustomize",
     "__builtin__",
     "__main__",
     "__pypy__",
+    "_codecs",
+    "_struct"
+    "builtins",
+    "codecs",
+    "encodings",
+    "encodings.",
+    "site",
+    "sitecustomize",
+    "sys",
 )
 for key in list(sys.modules):
     # We don't want to purge these modules because if we do, then things break
