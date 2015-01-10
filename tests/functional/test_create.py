@@ -1,7 +1,6 @@
 import os
 import sys
 from itertools import product
-from pprint import pprint
 
 import pytest
 import scripttest

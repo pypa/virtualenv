@@ -3,16 +3,15 @@ import subprocess
 import pretend
 import pytest
 
-import virtualenv.builders.venv
-
-from virtualenv.builders.venv import VenvBuilder, _SCRIPT
-from virtualenv import _compat
+from virtualenv.builders import venv
+from virtualenv.builders.venv import _SCRIPT
+from virtualenv.builders.venv import VenvBuilder
 
 
 def test_venv_builder_check_available_success(monkeypatch):
     check_output = pretend.call_recorder(lambda *a, **kw: None)
     monkeypatch.setattr(
-        virtualenv.builders.venv,
+        venv,
         "check_output",
         check_output,
     )
@@ -29,7 +28,7 @@ def test_venv_builder_check_available_fails(monkeypatch):
         raise subprocess.CalledProcessError(1, "an error!")
 
     monkeypatch.setattr(
-        virtualenv.builders.venv,
+        venv,
         "check_output",
         check_output,
     )

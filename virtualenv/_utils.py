@@ -41,7 +41,7 @@ def copyfile(srcfile, destfile, skip=re.compile(r".*\.pyc\Z|__pycache__\Z", re.I
         os.chmod(destfile, permissions)
 
 
-class cached_property(object):
+class cached_property(object):  # flake8: noqa
     def __init__(self, func):
         self.__doc__ = getattr(func, '__doc__')
         self.func = func
