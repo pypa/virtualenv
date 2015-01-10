@@ -263,7 +263,7 @@ class LegacyBuilder(BaseBuilder):
             )
 
             if self.verbose:
-                dst_fp.write(b"""
+                dst_fp.write(b"""# -*- encoding: utf-8 -*-
 import sys
 print("DEBUG: sys.modules:")
 for m in sorted(sys.modules):
