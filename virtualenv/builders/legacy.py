@@ -74,7 +74,7 @@ dirty_modules = (
     "__main__",
     "__pypy__",
     "_codecs",
-    "_struct"
+    "_struct",
     "builtins",
     "codecs",
     "encodings",
