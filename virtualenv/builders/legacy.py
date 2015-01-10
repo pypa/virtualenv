@@ -126,6 +126,8 @@ if global_site_packages is not None:
         addsitedir(path)
 """
 
+logger = logging.getLogger(__name__)
+
 
 class LegacyBuilder(BaseBuilder):
 
@@ -153,6 +155,8 @@ class LegacyBuilder(BaseBuilder):
         )
 
     def create_virtual_environment(self, destination):
+        logger.debug("Getting python info: \n%s", pprint.pformat(self._python_info))
+
         # Create our binaries that we'll use to create the virtual environment
         bin_dir = os.path.join(destination, self.flavor.bin_dir(self._python_info))
         ensure_directory(bin_dir)
@@ -255,5 +259,23 @@ class LegacyBuilder(BaseBuilder):
                 ) if self.system_site_packages else b"None",
             )
 
+            if self.verbose:
+                dst_fp.write(b"""
+import sys
+print("DEBUG: sys.modules:")
+for m in sorted(sys.modules):
+    print("DEBUG:   %s - %s" % (m, sys.modules[m]))
+print("DEBUG: sys.path:")
+for p in sys.path:
+    print("DEBUG:   %s" % p)
+""")
+
             # Write the final site.py file to our lib directory
             dst_fp.write(data)
+
+            if self.verbose:
+                dst_fp.write(b"""
+print("DEBUG: sys.path after site.py run:")
+for p in sys.path:
+    print("DEBUG:   %s" % p)
+""")

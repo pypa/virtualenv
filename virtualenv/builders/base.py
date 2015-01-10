@@ -29,7 +29,7 @@ class BaseBuilder(object):
 
     def __init__(self, python, flavor, system_site_packages=False,
                  clear=False, pip=True, setuptools=True,
-                 extra_search_dirs=None, prompt=""):
+                 extra_search_dirs=None, prompt="", verbose=False):
         # We default to sys.executable if we're not given a Python.
         if python is None:
             python = sys.executable
@@ -46,6 +46,7 @@ class BaseBuilder(object):
         self.setuptools = setuptools
         self.extra_search_dirs = extra_search_dirs
         self.prompt = prompt
+        self.verbose = verbose
 
     @classmethod
     def check_available(cls, python):

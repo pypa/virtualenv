@@ -73,7 +73,7 @@ def test_create(env, python, systemsitepackages, viascript):
     else:
         args = ["virtualenv"]
 
-    args += ["myenv"]
+    args += ["--verbose", "myenv"]
     if systemsitepackages:
         args += ["--system-site-packages"]
     if python:

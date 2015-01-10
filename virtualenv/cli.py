@@ -1,3 +1,5 @@
+import logging
+
 import click
 
 from virtualenv import __version__
@@ -70,6 +72,11 @@ def cmd(destination,
     """
     Creates virtual python environments in a target directory.
     """
+    if verbose:
+        logging.basicConfig(level="DEBUG")
+    else:
+        logging.basicConfig(level="WARNING")
+
     create(
         destination,
         python=python,
@@ -79,4 +86,5 @@ def cmd(destination,
         setuptools=setuptools,
         extra_search_dirs=extra_search_dir,
         prompt=prompt,
+        verbose=verbose,
     )
