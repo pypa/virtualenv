@@ -243,6 +243,7 @@ class LegacyBuilder(BaseBuilder):
         )
 
         dst = os.path.join(os.path.dirname(osmoduledestination), "site.py")
+        logger.debug("Writing %s", dst)
         with io.open(dst, "wb") as dst_fp:
             # Get the data from our source file, and replace our special
             # variables with the computed data.
