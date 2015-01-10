@@ -67,14 +67,14 @@ class BaseBuilder(object):
                     from distutils import sysconfig
 
                 prefix = getattr(sys, "real_prefix", sys.prefix)
-                name = os.path.basename(sys.executable)
+                name = os.path.basename(os.path.realpath(sys.executable))
                 if (sys.platform.startswith("win") or sys.platform == "cli" and os.name == "nt"):
                     bin = os.path.join(prefix, name)
                 else:
                     if hasattr(sys, 'pypy_version_info'):
                         bin = os.path.join(prefix, "bin", "pypy-c")
                         if not os.path.exists(bin):
-                            bin = os.path.join(prefix, "bin", "pypy") # TODO: who needs this?
+                            bin = os.path.join(prefix, "bin", name) # TODO: who needs this?
                     else:
                         bindir = sysconfig.get_config_var("BINDIR")
                         if not bindir:
