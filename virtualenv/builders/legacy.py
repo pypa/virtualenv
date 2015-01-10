@@ -3,9 +3,11 @@ from __future__ import absolute_import, division, print_function
 import io
 import json
 import locale
+import logging
 import os.path
 import sys
 import textwrap
+import pprint
 
 from virtualenv.builders.base import BaseBuilder
 from virtualenv._utils import copyfile
