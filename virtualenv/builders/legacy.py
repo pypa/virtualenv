@@ -127,6 +127,12 @@ if global_site_packages is not None:
     # Add the actual global site-packages.
     for path in global_site_packages:
         addsitedir(path)
+
+# On Debian-enized platforms the site.py won't add site-packages on sys.path
+# (it will add dist-packages and other crazy stuff).
+# Therefore we need to match pip's install location (site-packages)
+from distutils import sysconfig
+sys.path.append(sysconfig.get_python_lib())
 """
 
 logger = logging.getLogger(__name__)
