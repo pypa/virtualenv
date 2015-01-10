@@ -101,3 +101,22 @@ def test_create(env, python, systemsitepackages, viascript):
         assert "myenv/bin/pip" in result.files_created
     for name in result.files_created:
         assert name.startswith("myenv")
+
+    env.run('nameless')
+
+    if IS_WINDOWS:
+        if not python and IS_PYPY or python and "pypy" in python:
+            result = env.run('myenv\\bin\\pip', 'install', 'nameless')
+            env.run('myenv\\bin\\python', '-c', 'import nameless')
+            assert "myenv\\bin\\nameless" in result.files_created
+            env.run('myenv\\bin\\nameless')
+        else:
+            result = env.run('myenv\\Scripts\\pip install nameless')
+            env.run('myenv\\Scripts\\python', '-c', 'import nameless')
+            assert "myenv\\Scripts\\nameless" in result.files_created
+            env.run('myenv\\Scripts\\nameless')
+    else:
+        result = env.run('myenv/bin/pip install nameless')
+        env.run('myenv/bin/python', '-c', 'import nameless')
+        assert "myenv/bin/nameless" in result.files_created
+        env.run('myenv/bin/nameless')
