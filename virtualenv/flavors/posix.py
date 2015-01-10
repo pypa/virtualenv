@@ -12,11 +12,6 @@ class PosixFlavor(BaseFlavor):
 
     python_bin = "python"
 
-    def bootstrap_modules(self, python_info):
-        return super(PosixFlavor, self).bootstrap_modules(python_info) | set([
-            # Directories
-        ])
-
     @property
     def activation_scripts(self):
         return set(["activate.sh", "activate.fish", "activate.csh"])
