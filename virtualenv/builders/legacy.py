@@ -15,6 +15,9 @@ import os
 import os.path
 import sys
 try:
+    # Workaround for pypy losing it's builtin _struct module. The bundled
+    # _struct.py is horribly broken, see:
+    # https://bitbucket.org/pypy/pypy/issue/1959/zipimport-issue-unorderable-types-str-int
     import _struct
 except ImportError:
     pass
@@ -29,8 +32,15 @@ sys.prefix = __PREFIX__
 sys.exec_prefix = __EXEC_PREFIX__
 
 # We want to record what the "real/base" prefix is of the virtual environment.
+# We store the variants `real_` prefix for compatibility with code that detects
+# virtualenvs that way. Eg: Debian patches, pip, wheel etc ...
 sys.real_prefix = sys.base_prefix = __BASE_PREFIX__
 sys.real_exec_prefix = sys.base_exec_prefix = __BASE_EXEC_PREFIX__
+
+# This is used in the creation phase when pip is installed in the virtualenv.
+# We don't want those damn egg tripping up our PYTHONPATH whl loading, so we
+# instruct setuptools to add the eggs at the end of sys.path (or whatever position
+# VIRTUALENV_BOOTSTRAP_ADJUST_EGGINSERT specifies)
 if "VIRTUALENV_BOOTSTRAP_ADJUST_EGGINSERT" in os.environ:
     sys.__egginsert = int(os.environ["VIRTUALENV_BOOTSTRAP_ADJUST_EGGINSERT"])
 
