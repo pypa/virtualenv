@@ -58,7 +58,7 @@ class BaseFlavor(object):
             "random",
             "re",
             "readline",
-            "reprlib"
+            "reprlib",
             "rlcompleter",
             "runpy",
             "shutil",
