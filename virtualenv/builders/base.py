@@ -104,6 +104,18 @@ class BaseBuilder(object):
                 def resolve(path):
                     return os.path.realpath(os.path.abspath(path))
 
+                def getsitepackages(): # Fallback for Python 2.6
+                    addsitedir = site.addsitedir
+                    try:
+                        result = []
+                        def collector(path, *junk):
+                            result.append(path)
+                        site.addsitedir = collector
+                        site.addsitepackages(set())
+                    finally:
+                        site.addsitedir = addsitedir
+                    return result
+
                 print(
                     json.dumps({
                         "sys.version_info": tuple(sys.version_info),
@@ -113,7 +125,7 @@ class BaseBuilder(object):
                         "sys.path": [resolve(path) for path in sys.path],
                         "sys.abiflags": getattr(sys, "abiflags", ""),
                         "site.getsitepackages": [
-                            resolve(f) for f in getattr(site, "getsitepackages", lambda: site.addsitepackages(set()))()
+                            resolve(f) for f in getattr(site, "getsitepackages", getsitepackages)()
                         ],
                         "lib": resolve(os.path.dirname(os.__file__)),
                         "site.py": os.path.join(
