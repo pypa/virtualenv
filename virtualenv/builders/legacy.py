@@ -80,6 +80,7 @@ dirty_modules = (
     "__main__",
     "__pypy__",
     "_codecs",
+    "_frozen_importlib",
     "_struct",
     "builtins",
     "codecs",
