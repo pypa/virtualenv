@@ -18,7 +18,7 @@ def test_venv_builder_check_available_success(monkeypatch):
 
     assert VenvBuilder.check_available("wat")
     assert check_output.calls == [
-        pretend.call(["wat", "-c", "import venv"], stderr=subprocess.STDOUT),
+        pretend.call(["wat", "-c", "import venv, sys; assert sys.version_info >= (3, 4)"], stderr=subprocess.STDOUT),
     ]
 
 
@@ -35,7 +35,7 @@ def test_venv_builder_check_available_fails(monkeypatch):
 
     assert not VenvBuilder.check_available("wat")
     assert check_output.calls == [
-        pretend.call(["wat", "-c", "import venv"], stderr=subprocess.STDOUT),
+        pretend.call(["wat", "-c", "import venv, sys; assert sys.version_info >= (3, 4)"], stderr=subprocess.STDOUT),
     ]
 
 
