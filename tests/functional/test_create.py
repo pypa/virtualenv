@@ -86,6 +86,7 @@ def test_create(env, python, systemsitepackages, viascript):
     assert_env_is_working(env, python, result)  # on recreated env
 
 
+@pytest.mark.skipif(IS_26, reason="Tox doesn't work on Python 2.6")
 def test_create_from_tox(env):
     result = env.run(
         'tox', '-c', os.path.join(os.path.dirname(__file__), 'test_tox.ini'),
