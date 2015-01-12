@@ -15,6 +15,6 @@ env:
   - TOXENV=py2pep8
   - TOXENV=packaging
 
-install: pip install tox
+install: pip install tox nameless
 
 script: tox

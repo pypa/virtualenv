@@ -81,6 +81,7 @@ function main () {
     InstallPip $env:PYTHON
     InstallPackage $env:PYTHON wheel
     InstallPackage $env:PYTHON tox
+    InstallPackage $env:PYTHON nameless
 }
 
 main

@@ -79,7 +79,7 @@ def test_create(env, python, systemsitepackages, viascript):
         args += ["--python", python]
     result = assert_no_strays(env.run(*args))  # new env
     print(result)
-    assert_env_is_created(env, python, result)
+    assert_env_is_created(env, python, systemsitepackages, result)
     print("********* RECREATE *********")
     result = assert_no_strays(env.run(*args))  # recreate it
     print(result)
@@ -101,7 +101,7 @@ def assert_no_strays(result):
     return result
 
 
-def assert_env_is_created(env, python, result):
+def assert_env_is_created(env, python, systemsitepackages, result):
     if IS_WINDOWS:
         if not python and IS_PYPY or python and "pypy" in python:
             assert 'myenv\\bin\\activate.bat' in result.files_created
@@ -123,19 +123,34 @@ def assert_env_is_created(env, python, result):
         assert 'myenv/bin/python' in result.files_created
         assert "myenv/bin/pip" in result.files_created
 
+    assert_env_installation(env, python, systemsitepackages)
+    if systemsitepackages:
+        assert_env_installation(env, python, False, '--ignore-installed')
+
+
+def assert_env_installation(env, python, already_installed, *extra):
     if IS_WINDOWS:
         if not python and IS_PYPY or python and "pypy" in python:
-            result = assert_no_strays(env.run('myenv\\bin\\pip', 'install', 'nameless'))
+            result = assert_no_strays(env.run('myenv\\bin\\pip', 'install', 'nameless', *extra))
             print(result)
-            assert "myenv\\bin\\nameless.exe" in result.files_created
+            if already_installed:
+                assert "myenv\\bin\\nameless.exe" not in result.files_created
+            else:
+                assert "myenv\\bin\\nameless.exe" in result.files_created
         else:
-            result = assert_no_strays(env.run('myenv\\Scripts\\pip install nameless'))
+            result = assert_no_strays(env.run('myenv\\Scripts\\pip', 'install', 'nameless', *extra))
             print(result)
-            assert "myenv\\Scripts\\nameless.exe" in result.files_created
+            if already_installed:
+                assert "myenv\\Scripts\\nameless.exe" not in result.files_created
+            else:
+                assert "myenv\\Scripts\\nameless.exe" in result.files_created
     else:
-        result = assert_no_strays(env.run('myenv/bin/pip install nameless'))
+        result = assert_no_strays(env.run('myenv/bin/pip', 'install', 'nameless', *extra))
         print(result)
-        assert "myenv/bin/nameless" in result.files_created
+        if already_installed:
+            assert "myenv/bin/nameless" not in result.files_created
+        else:
+            assert "myenv/bin/nameless" in result.files_created
     assert_env_is_working(env, python, result)
 
 
