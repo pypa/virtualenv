@@ -77,8 +77,30 @@ def test_create(env, python, systemsitepackages, viascript):
         args += ["--system-site-packages"]
     if python:
         args += ["--python", python]
-    result = env.run(*args)
+    result = assert_no_strays(env.run(*args))  # new env
     print(result)
+    assert_env_is_created(env, python, result)
+    print("********* RECREATE *********")
+    result = assert_no_strays(env.run(*args))  # recreate it
+    print(result)
+    assert_env_is_working(env, python, result)  # on recreated env
+
+
+def test_create_from_tox(env):
+    result = env.run(
+        'tox', '-c', os.path.join(os.path.dirname(__file__), 'test_tox.ini'),
+        '--skip-missing-interpreters'
+    )
+    print(result)
+
+
+def assert_no_strays(result):
+    for name in result.files_created:
+        assert name.startswith("myenv")
+    return result
+
+
+def assert_env_is_created(env, python, result):
     if IS_WINDOWS:
         if not python and IS_PYPY or python and "pypy" in python:
             assert 'myenv\\bin\\activate.bat' in result.files_created
@@ -99,27 +121,33 @@ def test_create(env, python, systemsitepackages, viascript):
         assert 'myenv/bin/activate_this.py' in result.files_created
         assert 'myenv/bin/python' in result.files_created
         assert "myenv/bin/pip" in result.files_created
-    for name in result.files_created:
-        assert name.startswith("myenv")
-
-    env.run('nameless')
 
     if IS_WINDOWS:
         if not python and IS_PYPY or python and "pypy" in python:
-            result = env.run('myenv\\bin\\pip', 'install', 'nameless')
+            result = assert_no_strays(env.run('myenv\\bin\\pip', 'install', 'nameless'))
             print(result)
-            env.run('myenv\\bin\\python', '-c', 'import nameless')
             assert "myenv\\bin\\nameless.exe" in result.files_created
+        else:
+            result = assert_no_strays(env.run('myenv\\Scripts\\pip install nameless'))
+            print(result)
+            assert "myenv\\Scripts\\nameless.exe" in result.files_created
+    else:
+        result = assert_no_strays(env.run('myenv/bin/pip install nameless'))
+        print(result)
+        assert "myenv/bin/nameless" in result.files_created
+    assert_env_is_working(env, python, result)
+
+
+def assert_env_is_working(env, python, result):
+    if IS_WINDOWS:
+        if not python and IS_PYPY or python and "pypy" in python:
+            env.run('myenv\\bin\\python', '-c', 'import nameless')
             env.run('myenv\\bin\\nameless')
         else:
-            result = env.run('myenv\\Scripts\\pip install nameless')
-            print(result)
             env.run('myenv\\Scripts\\python', '-c', 'import nameless')
-            assert "myenv\\Scripts\\nameless.exe" in result.files_created
             env.run('myenv\\Scripts\\nameless')
     else:
-        result = env.run('myenv/bin/pip install nameless')
-        print(result)
         env.run('myenv/bin/python', '-c', 'import nameless')
-        assert "myenv/bin/nameless" in result.files_created
         env.run('myenv/bin/nameless')
+
+# TODO: Test if source packages with C extensions can be built or installed
