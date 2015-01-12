@@ -33,7 +33,7 @@ class VenvBuilder(BaseBuilder):
     def check_available(cls, python):
         try:
             check_output(
-                [python, "-c", "import venv"],
+                [python, "-c", "import venv, sys; assert sys.version_info >= (3, 4)"],
                 stderr=subprocess.STDOUT,
             )
         except subprocess.CalledProcessError:
