@@ -7,7 +7,7 @@ include tox.ini
 
 exclude .travis.yml
 exclude appveyor.yml
-exclude circleci.yml
+exclude circle.yml
 prune .appveyor
 
 recursive-include docs Makefile make.bat *.py *.rst *.empty
