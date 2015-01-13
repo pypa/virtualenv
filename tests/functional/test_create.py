@@ -166,33 +166,48 @@ def assert_env_creation(env):
 
 @pytest.mark.parametrize("options", OPTIONS, ids=[" ".join(opt) for opt in OPTIONS])
 def test_recreate(python, options, tmpdir):
+    _, python = python
+    env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python, options)
+    assert_env_creation(env)
+    print("********* RECREATE *********")
+    # Test to see if recreation doesn't blow up something
+    env.create_virtualenv()
+
+
+@pytest.mark.parametrize("options", OPTIONS, ids=[" ".join(opt) for opt in OPTIONS])
+def test_installation(python, options, tmpdir):
     is_global, python = python
     env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python, options)
-    outside_package = env.has_systemsitepackages and env.has_package('nameless')
+    package_available_outside = env.has_systemsitepackages and env.has_package('nameless')
 
     assert_env_creation(env)
 
     if is_global:
-        if outside_package:
+        # If is_global then were sure that the target is not in a virtualenv. We can reliably expect certain behavior
+        # when an package is installed globally and --system-site-packages is specifed
+        if package_available_outside:
+            # We can expect to be importable
             env.run_inside('python', '-c', 'import nameless')
 
         result = env.run_inside('pip', 'install', 'nameless')
 
-        if outside_package:
+        if package_available_outside:
+            # And we can expect that pip doesn't do anything - it's already installed outside.
             assert env.exepath('nameless') not in result.files_created
+
+            # If so, then we force install it, just to check that the bin is working
             result = env.run_inside('pip', 'install', '--ignore-installed', 'nameless')
 
+        # Have we got the bin created?
         assert env.exepath('nameless') in result.files_created
         env.run_inside('python', '-c', 'import nameless')
+        # And is the bin working?
         env.run_inside('nameless')
-
-    print("********* RECREATE *********")
-
-    result = env.create_virtualenv()
-
-    if env.target_python:
+    else:
+        # This target interpreter is prolly inside a virtualenv (eg, these tests were run inside a virtualenv),
+        # therefore we grossly simplify the assertions to just check that it's importable
+        env.run_inside('pip', 'install', 'nameless')
         env.run_inside('python', '-c', 'import nameless')
-        env.run_inside('nameless')
 
 
 @pytest.mark.skipif(IS_26, reason="Tox doesn't work on Python 2.6")
