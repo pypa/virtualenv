@@ -3,6 +3,14 @@ import os.path
 import pytest
 
 
+@pytest.yield_fixture
+def tmpdir(request, tmpdir):
+    try:
+        yield tmpdir
+    finally:
+        tmpdir.remove(ignore_errors=True)
+
+
 def pytest_collection_modifyitems(items):
     for item in items:
         module_path = os.path.relpath(
