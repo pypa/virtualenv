@@ -98,16 +98,16 @@ class TestVirtualEnvironment(scripttest.TestFileEnvironment):
         return result
 
     def has_package(self, package):
+        print("*************** has_package(%r):" % package)
         if self.target_python:
             result = self.run(
-                self.target_python, "-c", "import " + package,
+                self.target_python, "-c", "import {0}; print({0}.__file__)".format(package),
                 expect_error=True,
                 expect_stderr=True
             )
-            print("*************** has_package(%r) ***************" % package)
-            print(result)
-            print("********************* %s **********************" % result.returncode)
+            print("           => %s" % result.returncode)
             return result.returncode == 0
+        print("           => None")
 
 
 @pytest.yield_fixture(params=PYTHON_BINS)
