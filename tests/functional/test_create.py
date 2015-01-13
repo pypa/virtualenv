@@ -32,14 +32,27 @@ PYTHON_BINS = [
     (True, "C:\\PyPy\\pypy.exe"),
     (True, "C:\\PyPy3\\pypy.exe"),
     (False, None),
-    (True, "/usr/bin/python"),
-    (True, "/usr/bin/python2.6"),
-    (True, "/usr/bin/python2.7"),
-    (True, "/usr/bin/python3.2"),
-    (True, "/usr/bin/python3.3"),
-    (True, "/usr/bin/python3.4"),
-    (True, "/usr/bin/pypy"),
 ]
+if os.environ.get("CIRCLE_BUILD_NUM"):
+    PYTHON_BINS += [
+        (True, "~/.pyenv/shims/python"),
+        (True, "~/.pyenv/shims/python2.6"),
+        (True, "~/.pyenv/shims/python2.7"),
+        (True, "~/.pyenv/shims/python3.2"),
+        (True, "~/.pyenv/shims/python3.3"),
+        (True, "~/.pyenv/shims/python3.4"),
+        (True, "~/.pyenv/shims/pypy"),
+    ]
+else:
+    PYTHON_BINS += [
+        (True, "/usr/bin/python"),
+        (True, "/usr/bin/python2.6"),
+        (True, "/usr/bin/python2.7"),
+        (True, "/usr/bin/python3.2"),
+        (True, "/usr/bin/python3.3"),
+        (True, "/usr/bin/python3.4"),
+        (True, "/usr/bin/pypy"),
+    ]
 for path in [
     locate_on_path("python"),
     locate_on_path("python2.6"),
@@ -127,9 +140,10 @@ class TestVirtualEnvironment(scripttest.TestFileEnvironment):
 
 @pytest.yield_fixture(params=PYTHON_BINS, ids=[i or 'DEFAULT' for _, i in PYTHON_BINS])
 def python(request):
-    _, path = request.param
+    is_blobal, path = request.param
+    path = os.path.expanduser(path)
     if path is None or os.path.exists(path):
-        yield request.param
+        yield is_blobal, path
     else:
         pytest.skip(msg="Implementation at %r not available." % path)
 
