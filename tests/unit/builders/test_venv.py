@@ -23,12 +23,12 @@ def test_venv_builder_check_available_success(monkeypatch):
             "wat",
             "-c",
             textwrap.dedent("""
-                import venv
-                from sysconfig import get_scheme_names
-                from distutils.command.install import INSTALL_SCHEMES
+            import venv
+            from sysconfig import get_scheme_names
+            from distutils.command.install import INSTALL_SCHEMES
 
-                if 'posix_local' in sysconfig.get_scheme_names() or 'deb_system' in INSTALL_SCHEMES:
-                    raise RuntimeError("there are Debian patches")
+            if 'posix_local' in sysconfig.get_scheme_names() or 'deb_system' in INSTALL_SCHEMES:
+                raise RuntimeError("there are Debian patches")
             """)
         ], stderr=subprocess.STDOUT),
     ]
@@ -51,12 +51,12 @@ def test_venv_builder_check_available_fails(monkeypatch):
             "wat",
             "-c",
             textwrap.dedent("""
-                import venv
-                from sysconfig import get_scheme_names
-                from distutils.command.install import INSTALL_SCHEMES
+            import venv
+            from sysconfig import get_scheme_names
+            from distutils.command.install import INSTALL_SCHEMES
 
-                if 'posix_local' in sysconfig.get_scheme_names() or 'deb_system' in INSTALL_SCHEMES:
-                    raise RuntimeError("there are Debian patches")
+            if 'posix_local' in sysconfig.get_scheme_names() or 'deb_system' in INSTALL_SCHEMES:
+                raise RuntimeError("there are Debian patches")
             """)
         ], stderr=subprocess.STDOUT),
     ]
