@@ -251,6 +251,7 @@ class BaseBuilder(object):
         command = [
             python, "-m", "pip" + main_suffix, "install", "--no-index", "--isolated",
             "--ignore-installed",
+            "--disable-pip-version-check",
             # "--verbose",
             "--find-links", WHEEL_DIR,
         ]
