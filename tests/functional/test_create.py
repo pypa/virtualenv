@@ -21,23 +21,26 @@ def locate_on_path(binary):
         if os.path.exists(binpath):
             return binpath
 
-PYTHON_BINS = set([
-    "C:\\Python27\\python.exe",
-    "C:\\Python27-x64\\python.exe",
-    "C:\\Python33\\python.exe",
-    "C:\\Python33-x64\\python.exe",
-    "C:\\Python34\\python.exe",
-    "C:\\Python34-x64\\python.exe",
-    "C:\\PyPy\\pypy.exe",
-    "C:\\PyPy3\\pypy.exe",
-    None,
-    "/usr/bin/python",
-    "/usr/bin/python2.6",
-    "/usr/bin/python2.7",
-    "/usr/bin/python3.2",
-    "/usr/bin/python3.3",
-    "/usr/bin/python3.4",
-    "/usr/bin/pypy",
+
+PYTHON_BINS = [
+    (True, "C:\\Python27\\python.exe"),
+    (True, "C:\\Python27-x64\\python.exe"),
+    (True, "C:\\Python33\\python.exe"),
+    (True, "C:\\Python33-x64\\python.exe"),
+    (True, "C:\\Python34\\python.exe"),
+    (True, "C:\\Python34-x64\\python.exe"),
+    (True, "C:\\PyPy\\pypy.exe"),
+    (True, "C:\\PyPy3\\pypy.exe"),
+    (False, None),
+    (True, "/usr/bin/python"),
+    (True, "/usr/bin/python2.6"),
+    (True, "/usr/bin/python2.7"),
+    (True, "/usr/bin/python3.2"),
+    (True, "/usr/bin/python3.3"),
+    (True, "/usr/bin/python3.4"),
+    (True, "/usr/bin/pypy"),
+]
+for path in [
     locate_on_path("python"),
     locate_on_path("python2.6"),
     locate_on_path("python2.7"),
@@ -45,7 +48,19 @@ PYTHON_BINS = set([
     locate_on_path("python3.3"),
     locate_on_path("python3.4"),
     locate_on_path("pypy"),
-])
+]:
+    # I'm terrible here but I want certain checks disabled for these paths: the --system-site-packages checks, otherwise
+    # I have to reimplement bin resolving here, and it's a bad idea to duplicate logic in tests.
+    if (True, path) not in PYTHON_BINS:
+        PYTHON_BINS.append((False, path))
+
+OPTIONS = [
+    list(chain.from_iterable(i))
+    for i in product(
+        [["python", "-mvirtualenv.__main__" if IS_26 else "-mvirtualenv"], ["virtualenv"]],
+        [['--system-site-packages'], []]
+    )
+]
 
 
 class TestVirtualEnvironment(scripttest.TestFileEnvironment):
@@ -105,17 +120,18 @@ class TestVirtualEnvironment(scripttest.TestFileEnvironment):
                 expect_error=True,
                 expect_stderr=True
             )
-            print("           => %s" % result.returncode)
+            print("             => %s" % result.returncode)
             return result.returncode == 0
-        print("           => None")
+        print("             => None")
 
 
-@pytest.yield_fixture(params=PYTHON_BINS)
+@pytest.yield_fixture(params=PYTHON_BINS, ids=[i or 'DEFAULT' for _, i in PYTHON_BINS])
 def python(request):
-    if request.param is None or os.path.exists(request.param):
+    _, path = request.param
+    if path is None or os.path.exists(path):
         yield request.param
     else:
-        pytest.skip(msg="Implementation at %r not available." % request.param)
+        pytest.skip(msg="Implementation at %r not available." % path)
 
 
 def assert_env_creation(env):
@@ -147,19 +163,16 @@ def assert_env_creation(env):
 # The actual tests
 ########################################################################################################################
 
-@pytest.mark.parametrize("options", [
-    '+'.join(chain.from_iterable(i))
-    for i in product(
-        [["python", "-mvirtualenv.__main__" if IS_26 else "-mvirtualenv"], ["virtualenv"]],
-        [['--system-site-packages'], []]
-    )
-])
+
+@pytest.mark.parametrize("options", OPTIONS, ids=[" ".join(opt) for opt in OPTIONS])
 def test_recreate(python, options, tmpdir):
-    env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python, options.split('+'))
+    is_global, python = python
+    env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python, options)
     outside_package = env.has_systemsitepackages and env.has_package('nameless')
 
     assert_env_creation(env)
-    if env.target_python:
+
+    if is_global:
         if outside_package:
             env.run_inside('python', '-c', 'import nameless')
 
