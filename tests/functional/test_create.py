@@ -212,7 +212,8 @@ def test_installation(python, options, tmpdir):
 
 @pytest.mark.skipif(IS_26, reason="Tox doesn't work on Python 2.6")
 def test_create_from_tox(tmpdir):
-    env = scripttest.TestFileEnvironment(str(tmpdir.join('sandbox')))
+    env = scripttest.TestFileEnvironment(str(tmpdir))
+    tmpdir.chdir()
     result = env.run(
         'tox', '-c', os.path.join(os.path.dirname(__file__), 'test_tox.ini'),
         '--skip-missing-interpreters'
