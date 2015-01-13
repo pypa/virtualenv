@@ -9,5 +9,5 @@ exclude .travis.yml
 exclude appveyor.yml
 prune .appveyor
 
-recursive-include docs Makefile make.bat *.py *.rst *.empty
+recursive-include docs Makefile make.bat *.py *.rst *.empty *.ini
 recursive-include tests *.py
