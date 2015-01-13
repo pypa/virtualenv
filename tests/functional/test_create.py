@@ -156,28 +156,30 @@ def assert_env_creation(env):
 ])
 def test_recreate(python, options, tmpdir):
     env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python, options.split('+'))
+    outside_package = env.has_systemsitepackages and env.has_package('nameless')
 
     assert_env_creation(env)
+    if env.target_python:
+        if outside_package:
+            env.run_inside('python', '-c', 'import nameless')
 
-    if env.has_systemsitepackages and env.has_package('nameless'):
+        result = env.run_inside('pip', 'install', 'nameless')
+
+        if outside_package:
+            assert env.exepath('nameless') not in result.files_created
+            result = env.run_inside('pip', 'install', '--ignore-installed', 'nameless')
+
+        assert env.exepath('nameless') in result.files_created
         env.run_inside('python', '-c', 'import nameless')
-
-    result = env.run_inside('pip', 'install', 'nameless')
-
-    if env.has_systemsitepackages:
-        assert env.exepath('nameless') not in result.files_created
-        result = env.run_inside('pip', 'install', '--ignore-installed', 'nameless')
-
-    assert env.exepath('nameless') in result.files_created
-    env.run_inside('python', '-c', 'import nameless')
-    env.run_inside('nameless')
+        env.run_inside('nameless')
 
     print("********* RECREATE *********")
 
     result = env.create_virtualenv()
 
-    env.run_inside('python', '-c', 'import nameless')
-    env.run_inside('nameless')
+    if env.target_python:
+        env.run_inside('python', '-c', 'import nameless')
+        env.run_inside('nameless')
 
 
 @pytest.mark.skipif(IS_26, reason="Tox doesn't work on Python 2.6")
