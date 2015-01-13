@@ -1,0 +1,6 @@
+test:
+  pre:
+  - ls -al ~/.pyenv
+  - pyenv global 2.6.8 2.7.9 pypy-2.4.0 3.2.5 3.3.3
+  override:
+  - tox --skip-missing-interpreters
