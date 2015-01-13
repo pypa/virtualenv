@@ -138,13 +138,13 @@ class TestVirtualEnvironment(scripttest.TestFileEnvironment):
         print("             => None")
 
 
-@pytest.yield_fixture(params=PYTHON_BINS, ids=[i or 'DEFAULT' for _, i in PYTHON_BINS])
+@pytest.yield_fixture(params=PYTHON_BINS, ids=[i or "CURRENT" for _, i in PYTHON_BINS])
 def python(request):
-    is_blobal, path = request.param
+    is_global, path = request.param
     if path is not None:
         path = os.path.expanduser(path)
     if path is None or os.path.exists(path):
-        yield is_blobal, path
+        yield is_global, path
     else:
         pytest.skip(msg="Implementation at %r not available." % path)
 
