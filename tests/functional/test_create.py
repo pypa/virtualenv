@@ -148,14 +148,14 @@ def assert_env_creation(env):
 ########################################################################################################################
 
 @pytest.mark.parametrize("options", [
-    '_'.join(chain.from_iterable(i))
+    '+'.join(chain.from_iterable(i))
     for i in product(
-        [["python", "-mvirtualenv"], ["virtualenv"]],
+        [["python", "-mvirtualenv.__main__" if IS_26 else "-mvirtualenv"], ["virtualenv"]],
         [['--system-site-packages'], []]
     )
 ])
 def test_recreate(python, options, tmpdir):
-    env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python, options.split('_'))
+    env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python, options.split('+'))
 
     assert_env_creation(env)
 
