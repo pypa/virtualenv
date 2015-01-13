@@ -1,7 +1,12 @@
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
+import logging
 import os
 import subprocess
+
+logger = logging.getLogger(__name__)
 
 
 class BaseFlavor(object):
@@ -97,6 +102,14 @@ class BaseFlavor(object):
         # We want to copy the environment that we"re running in before
         # executing our command, this is because by specifying the env to our
         # subprocess call we break the ability to inherient the environment.
+        logger.debug(
+            "Running %s %s",
+            ' '.join(
+                '%s=%r' % (k, v) if ' ' in v else '%s=%s' % (k, v)
+                for k, v in env.items()
+            ),
+            ' '.join(repr(i) if ' ' in i else i for i in command)
+        )
         real_env = os.environ.copy()
         real_env.update(env)
 
