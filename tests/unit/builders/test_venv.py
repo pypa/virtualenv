@@ -1,4 +1,5 @@
 import subprocess
+import textwrap
 
 import pretend
 import pytest
@@ -18,7 +19,18 @@ def test_venv_builder_check_available_success(monkeypatch):
 
     assert VenvBuilder.check_available("wat")
     assert check_output.calls == [
-        pretend.call(["wat", "-c", "import venv, sys; assert sys.version_info >= (3, 4)"], stderr=subprocess.STDOUT),
+        pretend.call([
+            "wat",
+            "-c",
+            textwrap.dedent("""
+                import venv
+                from sysconfig import get_scheme_names
+                from distutils.command.install import INSTALL_SCHEMES
+
+                if 'posix_local' in sysconfig.get_scheme_names() or 'deb_system' in INSTALL_SCHEMES:
+                    raise RuntimeError("there are Debian patches")
+            """)
+        ], stderr=subprocess.STDOUT),
     ]
 
 
@@ -35,7 +47,18 @@ def test_venv_builder_check_available_fails(monkeypatch):
 
     assert not VenvBuilder.check_available("wat")
     assert check_output.calls == [
-        pretend.call(["wat", "-c", "import venv, sys; assert sys.version_info >= (3, 4)"], stderr=subprocess.STDOUT),
+        pretend.call([
+            "wat",
+            "-c",
+            textwrap.dedent("""
+                import venv
+                from sysconfig import get_scheme_names
+                from distutils.command.install import INSTALL_SCHEMES
+
+                if 'posix_local' in sysconfig.get_scheme_names() or 'deb_system' in INSTALL_SCHEMES:
+                    raise RuntimeError("there are Debian patches")
+            """)
+        ], stderr=subprocess.STDOUT),
     ]
 
 

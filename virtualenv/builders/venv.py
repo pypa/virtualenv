@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function
 
 import subprocess
+import textwrap
 
 from virtualenv._compat import check_output
 from virtualenv.builders.base import BaseBuilder
@@ -32,10 +33,21 @@ class VenvBuilder(BaseBuilder):
     @classmethod
     def check_available(cls, python):
         try:
-            check_output(
-                [python, "-c", "import venv, sys; assert sys.version_info >= (3, 4)"],
-                stderr=subprocess.STDOUT,
-            )
+            check_output([
+                # Bail if any Python has be Debian-ized: venv is broken beyond any workaround we can do here - resulting
+                # venvs will use "local/lib" instead of "lib" and have "dist-packages" instead of "site-packages"
+                # TODO: report this terrible mess upstream
+                python,
+                "-c",
+                textwrap.dedent("""
+                import venv
+                from sysconfig import get_scheme_names
+                from distutils.command.install import INSTALL_SCHEMES
+
+                if 'posix_local' in sysconfig.get_scheme_names() or 'deb_system' in INSTALL_SCHEMES:
+                    raise RuntimeError("there are Debian patches")
+                """)
+            ], stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError:
             return False
         else:
