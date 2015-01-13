@@ -65,7 +65,8 @@ for path in [
     # I'm terrible here but I want certain checks disabled for these paths: the --system-site-packages checks, otherwise
     # I have to reimplement bin resolving here, and it's a bad idea to duplicate logic in tests.
     if (True, path) not in PYTHON_BINS:
-        PYTHON_BINS.append((False, path))
+        if path:
+            PYTHON_BINS.append((False, path))
 
 OPTIONS = [
     list(chain.from_iterable(i))
