@@ -78,6 +78,12 @@ class TestVirtualEnvironment(scripttest.TestFileEnvironment):
         else:
             return os.path.join(self.virtualenv_name, 'bin', *args)
 
+    def run(self, *args):
+        print("******************** RUNNING: %s ********************" % ' '.join(args))
+        result = super(TestVirtualEnvironment, self).run(*args)
+        print(result)
+        return result
+
     def run_inside(self, binary, *args):
         return self.run(self.binpath(binary), *args)
 
@@ -114,7 +120,7 @@ def python(request):
 
 def assert_env_creation(env):
     result = env.create_virtualenv()
-    print(result)
+
     if IS_WINDOWS:
         if env.is_pypy:
             assert 'myenv\\bin\\activate.bat' in result.files_created
@@ -169,7 +175,6 @@ def test_recreate(python, options, tmpdir):
     print("********* RECREATE *********")
 
     result = env.create_virtualenv()
-    print(result)
 
     env.run_inside('python', '-c', 'import nameless')
     env.run_inside('nameless')
