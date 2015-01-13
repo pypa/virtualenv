@@ -78,9 +78,9 @@ class TestVirtualEnvironment(scripttest.TestFileEnvironment):
         else:
             return os.path.join(self.virtualenv_name, 'bin', *args)
 
-    def run(self, *args):
+    def run(self, *args, **kwargs):
         print("******************** RUNNING: %s ********************" % ' '.join(args))
-        result = super(TestVirtualEnvironment, self).run(*args)
+        result = super(TestVirtualEnvironment, self).run(*args, **kwargs)
         print(result)
         return result
 
