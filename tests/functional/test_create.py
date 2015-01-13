@@ -1,10 +1,10 @@
 import os
 import sys
+from itertools import chain
 from itertools import product
 
 import pytest
 import scripttest
-
 
 IS_WINDOWS = (
     sys.platform.startswith("win") or
@@ -48,13 +48,60 @@ PYTHON_BINS = set([
 ])
 
 
-@pytest.yield_fixture
-def env(request):
-    env = scripttest.TestFileEnvironment()
-    try:
-        yield env
-    finally:
-        env.clear()
+class TestVirtualEnvironment(scripttest.TestFileEnvironment):
+    def __init__(self, base_path, target_python, creation_args, virtualenv_name="myenv"):
+        self.creation_args = creation_args
+        self.virtualenv_name = virtualenv_name
+        self.target_python = target_python
+        self.is_pypy = not target_python and IS_PYPY or target_python and "pypy" in target_python
+        super(TestVirtualEnvironment, self).__init__(base_path)
+
+    def __str__(self):
+        return '_'.join(self.creation_args)
+
+    @property
+    def has_systemsitepackages(self):
+        return '--system-site-packages' in self.creation_args
+
+    def binpath(self, *args):
+        if self.is_pypy or not IS_WINDOWS:
+            return os.path.join(self.virtualenv_name, 'bin', *args)
+        else:
+            return os.path.join(self.virtualenv_name, 'Scripts', *args)
+
+    def exepath(self, *args):
+        if IS_WINDOWS:
+            if self.is_pypy:
+                return os.path.join(self.virtualenv_name, 'bin', *args) + '.exe'
+            else:
+                return os.path.join(self.virtualenv_name, 'Scripts', *args) + '.exe'
+        else:
+            return os.path.join(self.virtualenv_name, 'bin', *args)
+
+    def run_inside(self, binary, *args):
+        return self.run(self.binpath(binary), *args)
+
+    def create_virtualenv(self):
+        args = list(self.creation_args)
+        if self.target_python:
+            args += ["--python", self.target_python]
+        args += ["--verbose", self.virtualenv_name]
+        result = self.run(*args)
+        for name in result.files_created:
+            assert name.startswith(self.virtualenv_name)
+        return result
+
+    def has_package(self, package):
+        if self.target_python:
+            result = self.run(
+                self.target_python, "-c", "import " + package,
+                expect_error=True,
+                expect_stderr=True
+            )
+            print("*************** has_package(%r) ***************" % package)
+            print(result)
+            print("********************* %s **********************" % result.returncode)
+            return result.returncode == 0
 
 
 @pytest.yield_fixture(params=PYTHON_BINS)
@@ -65,45 +112,11 @@ def python(request):
         pytest.skip(msg="Implementation at %r not available." % request.param)
 
 
-@pytest.mark.parametrize("systemsitepackages,viascript", product([False, True], repeat=2))
-def test_create(env, python, systemsitepackages, viascript):
-    if viascript:
-        args = ["python", "-mvirtualenv.__main__" if IS_26 else "-mvirtualenv"]
-    else:
-        args = ["virtualenv"]
-
-    args += ["--verbose", "myenv"]
-    if systemsitepackages:
-        args += ["--system-site-packages"]
-    if python:
-        args += ["--python", python]
-    result = assert_no_strays(env.run(*args))  # new env
+def assert_env_creation(env):
+    result = env.create_virtualenv()
     print(result)
-    assert_env_is_created(env, python, systemsitepackages, result)
-    print("********* RECREATE *********")
-    result = assert_no_strays(env.run(*args))  # recreate it
-    print(result)
-    assert_env_is_working(env, python, result)  # on recreated env
-
-
-@pytest.mark.skipif(IS_26, reason="Tox doesn't work on Python 2.6")
-def test_create_from_tox(env):
-    result = env.run(
-        'tox', '-c', os.path.join(os.path.dirname(__file__), 'test_tox.ini'),
-        '--skip-missing-interpreters'
-    )
-    print(result)
-
-
-def assert_no_strays(result):
-    for name in result.files_created:
-        assert name.startswith("myenv")
-    return result
-
-
-def assert_env_is_created(env, python, systemsitepackages, result):
     if IS_WINDOWS:
-        if not python and IS_PYPY or python and "pypy" in python:
+        if env.is_pypy:
             assert 'myenv\\bin\\activate.bat' in result.files_created
             assert 'myenv\\bin\\activate.ps1' in result.files_created
             assert 'myenv\\bin\\activate_this.py' in result.files_created
@@ -123,47 +136,53 @@ def assert_env_is_created(env, python, systemsitepackages, result):
         assert 'myenv/bin/python' in result.files_created
         assert "myenv/bin/pip" in result.files_created
 
-    assert_env_installation(env, python, systemsitepackages)
-    if systemsitepackages:
-        assert_env_installation(env, python, False, '--ignore-installed')
+
+########################################################################################################################
+# The actual tests
+########################################################################################################################
+
+@pytest.mark.parametrize("options", [
+    '_'.join(chain.from_iterable(i))
+    for i in product(
+        [["python", "-mvirtualenv"], ["virtualenv"]],
+        [['--system-site-packages'], []]
+    )
+])
+def test_recreate(python, options, tmpdir):
+    env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python, options.split('_'))
+
+    assert_env_creation(env)
+
+    if env.has_systemsitepackages and env.has_package('nameless'):
+        env.run_inside('python', '-c', 'import nameless')
+
+    result = env.run_inside('pip', 'install', 'nameless')
+
+    if env.has_systemsitepackages:
+        assert env.exepath('nameless') not in result.files_created
+        result = env.run_inside('pip', 'install', '--ignore-installed', 'nameless')
+
+    assert env.exepath('nameless') in result.files_created
+    env.run_inside('python', '-c', 'import nameless')
+    env.run_inside('nameless')
+
+    print("********* RECREATE *********")
+
+    result = env.create_virtualenv()
+    print(result)
+
+    env.run_inside('python', '-c', 'import nameless')
+    env.run_inside('nameless')
 
 
-def assert_env_installation(env, python, already_installed, *extra):
-    if IS_WINDOWS:
-        if not python and IS_PYPY or python and "pypy" in python:
-            result = assert_no_strays(env.run('myenv\\bin\\pip', 'install', 'nameless', *extra))
-            print(result)
-            if already_installed:
-                assert "myenv\\bin\\nameless.exe" not in result.files_created
-            else:
-                assert "myenv\\bin\\nameless.exe" in result.files_created
-        else:
-            result = assert_no_strays(env.run('myenv\\Scripts\\pip', 'install', 'nameless', *extra))
-            print(result)
-            if already_installed:
-                assert "myenv\\Scripts\\nameless.exe" not in result.files_created
-            else:
-                assert "myenv\\Scripts\\nameless.exe" in result.files_created
-    else:
-        result = assert_no_strays(env.run('myenv/bin/pip', 'install', 'nameless', *extra))
-        print(result)
-        if already_installed:
-            assert "myenv/bin/nameless" not in result.files_created
-        else:
-            assert "myenv/bin/nameless" in result.files_created
-    assert_env_is_working(env, python, result)
+@pytest.mark.skipif(IS_26, reason="Tox doesn't work on Python 2.6")
+def test_create_from_tox(tmpdir):
+    env = scripttest.TestFileEnvironment(str(tmpdir.join('sandbox')))
+    result = env.run(
+        'tox', '-c', os.path.join(os.path.dirname(__file__), 'test_tox.ini'),
+        '--skip-missing-interpreters'
+    )
+    print(result)
 
-
-def assert_env_is_working(env, python, result):
-    if IS_WINDOWS:
-        if not python and IS_PYPY or python and "pypy" in python:
-            env.run('myenv\\bin\\python', '-c', 'import nameless')
-            env.run('myenv\\bin\\nameless')
-        else:
-            env.run('myenv\\Scripts\\python', '-c', 'import nameless')
-            env.run('myenv\\Scripts\\nameless')
-    else:
-        env.run('myenv/bin/python', '-c', 'import nameless')
-        env.run('myenv/bin/nameless')
 
 # TODO: Test if source packages with C extensions can be built or installed
