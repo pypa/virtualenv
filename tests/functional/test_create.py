@@ -229,12 +229,12 @@ def test_installation(python, options, tmpdir):
 @pytest.mark.skipif(IS_26, reason="Tox doesn't work on Python 2.6")
 def test_create_from_tox(tmpdir):
     env = scripttest.TestFileEnvironment(str(tmpdir))
-    tmpdir.chdir()
-    result = env.run(
-        'tox', '-c', os.path.join(os.path.dirname(__file__), 'test_tox.ini'),
-        '--skip-missing-interpreters'
-    )
-    print(result)
+    with tmpdir.mkdir('sandbox').as_cwd():
+        result = env.run(
+            'tox', '-c', os.path.join(os.path.dirname(__file__), 'test_tox.ini'),
+            '--skip-missing-interpreters'
+        )
+        print(result)
 
 
 # TODO: Test if source packages with C extensions can be built or installed
