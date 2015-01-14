@@ -120,7 +120,7 @@ class TestVirtualEnvironment(scripttest.TestFileEnvironment):
 
     def run(self, *args, **kwargs):
         print("******************** RUNNING: %s ********************" % ' '.join(args))
-        result = super(TestVirtualEnvironment, self).run(*args, **kwargs)
+        result = super(TestVirtualEnvironment, self).run(*args, expect_stderr=True, **kwargs)
         print(result)
         return result
 
@@ -142,8 +142,7 @@ class TestVirtualEnvironment(scripttest.TestFileEnvironment):
         if self.target_python:
             result = self.run(
                 self.target_python, "-c", "import {0}; print({0}.__file__)".format(package),
-                expect_error=True,
-                expect_stderr=True
+                expect_error=True
             )
             print("             => %s" % result.returncode)
             return result.returncode == 0
