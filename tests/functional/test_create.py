@@ -22,6 +22,12 @@ def locate_on_path(binary):
             return binpath
 
 
+def resolve_path(path):
+    if path is not None:
+        path = os.path.realpath(os.path.expanduser(path))
+    return path
+
+
 PYTHON_BINS = [
     (True, "C:\\Python27\\python.exe"),
     (True, "C:\\Python27-x64\\python.exe"),
@@ -32,18 +38,16 @@ PYTHON_BINS = [
     (True, "C:\\PyPy\\pypy.exe"),
     (True, "C:\\PyPy3\\pypy.exe"),
     (False, None),
+    (True, resolve_path("~/.pyenv/shims/python")),
+    (True, resolve_path("~/.pyenv/shims/python2.6")),
+    (True, resolve_path("~/.pyenv/shims/python2.7")),
+    (True, resolve_path("~/.pyenv/shims/python3.2")),
+    (True, resolve_path("~/.pyenv/shims/python3.3")),
+    (True, resolve_path("~/.pyenv/shims/python3.4")),
+    (True, resolve_path("~/.pyenv/shims/pypy")),
 ]
-if os.environ.get("CIRCLE_BUILD_NUM"):
-    PYTHON_BINS += [
-        (True, "~/.pyenv/shims/python"),
-        (True, "~/.pyenv/shims/python2.6"),
-        (True, "~/.pyenv/shims/python2.7"),
-        (True, "~/.pyenv/shims/python3.2"),
-        (True, "~/.pyenv/shims/python3.3"),
-        (True, "~/.pyenv/shims/python3.4"),
-        (True, "~/.pyenv/shims/pypy"),
-    ]
-else:
+if not os.environ.get("CIRCLE_BUILD_NUM"):
+    # CircleCI messed these up badly ... they use pyenv
     PYTHON_BINS += [
         (True, "/usr/bin/python"),
         (True, "/usr/bin/python2.6"),
@@ -53,6 +57,7 @@ else:
         (True, "/usr/bin/python3.4"),
         (True, "/usr/bin/pypy"),
     ]
+
 for path in [
     locate_on_path("python"),
     locate_on_path("python2.6"),
@@ -67,6 +72,12 @@ for path in [
     if (True, path) not in PYTHON_BINS:
         if path:
             PYTHON_BINS.append((False, path))
+
+PYTHON_BINS = [
+    (is_global, path)
+    for is_global, path in PYTHON_BINS
+    if path is None or os.path.exists(path)
+]
 
 OPTIONS = [
     list(chain.from_iterable(i))
@@ -142,8 +153,6 @@ class TestVirtualEnvironment(scripttest.TestFileEnvironment):
 @pytest.yield_fixture(params=PYTHON_BINS, ids=[i or "CURRENT" for _, i in PYTHON_BINS])
 def python(request):
     is_global, path = request.param
-    if path is not None:
-        path = os.path.expanduser(path)
     if path is None or os.path.exists(path):
         yield is_global, path
     else:
