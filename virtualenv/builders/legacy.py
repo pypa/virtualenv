@@ -73,31 +73,25 @@ sys.path = new_sys_path
 # environment. This will ensure that our copies will only be used for
 # bootstrapping the virtual environment.
 # TODO: is this really necessary? They would be the same modules as the global ones after all ///
-dirty_modules = (
+dirty_modules = [
     # TODO: there might be less packages required but we
     # need to extend the integration tests to see exactly what
     "__builtin__",
     "__main__",
-    "__pypy__",
-    "_codecs",
     "_frozen_importlib",
-    "_struct",
     "builtins",
     "codecs",
     "encodings",
-    "encodings.",
     "site",
     "sitecustomize",
-    "sys",
-)
+]
+dirty_modules.extend(sys.builtin_module_names)
 for key in list(sys.modules):
     # We don't want to purge these modules because if we do, then things break
     # very badly.
-    if key in dirty_modules:
+    parts = key.split('.')
+    if parts[0] in dirty_modules:
         continue
-    for mod in dirty_modules:
-        if key.startswith(mod):
-            break
     else:
         del sys.modules[key]
 
