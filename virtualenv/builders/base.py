@@ -5,6 +5,7 @@ from __future__ import print_function
 import glob
 import json
 import locale
+import logging
 import io
 import os.path
 import shutil
@@ -15,6 +16,7 @@ from virtualenv._compat import check_output
 from virtualenv._compat import FileNotFoundError
 from virtualenv._utils import cached_property
 
+logger = logging.getLogger(__name__)
 
 WHEEL_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "_wheels",
@@ -54,7 +56,8 @@ class BaseBuilder(object):
 
     @cached_property
     def _python_bin(self):
-        return json.loads(
+        logger.debug("Resolving python target %r", self.python)
+        path = json.loads(
             check_output([
                 self.python,
                 "-c",
@@ -85,6 +88,8 @@ class BaseBuilder(object):
                 """)
             ]).decode(locale.getpreferredencoding()),
         )
+        logger.debug("Resolved python path to %r", path)
+        return path
 
     @cached_property
     def _python_info(self):
