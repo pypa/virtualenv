@@ -60,12 +60,12 @@ if not os.environ.get("CIRCLE_BUILD_NUM"):
 
 for path, sitepackages in [
     (locate_on_path("python"), None),
-    (locate_on_path("python2.6"), "lib/python2.6/site-packages"),
-    (locate_on_path("python2.7"), "lib/python2.7/site-packages"),
-    (locate_on_path("python3.2"), "lib/python3.2/site-packages"),
-    (locate_on_path("python3.3"), "lib/python3.3/site-packages"),
-    (locate_on_path("python3.4"), "lib/python3.4/site-packages"),
-    (locate_on_path("pypy"), "site-packages"),
+    (locate_on_path("python2.6"), None),
+    (locate_on_path("python2.7"), None),
+    (locate_on_path("python3.2"), None),
+    (locate_on_path("python3.3"), None),
+    (locate_on_path("python3.4"), None),
+    (locate_on_path("pypy"), None),
 ]:
     # I'm terrible here but I want certain checks disabled for these paths: the --system-site-packages checks, otherwise
     # I have to reimplement bin resolving here, and it's a bad idea to duplicate logic in tests.
