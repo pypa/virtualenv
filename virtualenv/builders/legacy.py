@@ -143,7 +143,7 @@ if global_site_packages is not None:
 # (it will add dist-packages and other crazy stuff).
 # Therefore we need to match pip's install location (site-packages)
 from distutils import sysconfig
-sys.path.append(sysconfig.get_python_lib())
+addsitedir(sysconfig.get_python_lib())
 """
 
 logger = logging.getLogger(__name__)

@@ -29,53 +29,53 @@ def resolve_path(path):
 
 
 PYTHON_BINS = [
-    (True, "C:\\Python27\\python.exe"),
-    (True, "C:\\Python27-x64\\python.exe"),
-    (True, "C:\\Python33\\python.exe"),
-    (True, "C:\\Python33-x64\\python.exe"),
-    (True, "C:\\Python34\\python.exe"),
-    (True, "C:\\Python34-x64\\python.exe"),
-    (True, "C:\\PyPy\\pypy.exe"),
-    (True, "C:\\PyPy3\\pypy.exe"),
-    (False, None),
-    (True, resolve_path("~/.pyenv/shims/python")),
-    (True, resolve_path("~/.pyenv/shims/python2.6")),
-    (True, resolve_path("~/.pyenv/shims/python2.7")),
-    (True, resolve_path("~/.pyenv/shims/python3.2")),
-    (True, resolve_path("~/.pyenv/shims/python3.3")),
-    (True, resolve_path("~/.pyenv/shims/python3.4")),
-    (True, resolve_path("~/.pyenv/shims/pypy")),
+    (True, "C:\\Python27\\python.exe", "lib\\site-packages"),
+    (True, "C:\\Python27-x64\\python.exe", "lib\\site-packages"),
+    (True, "C:\\Python33\\python.exe", "lib\\site-packages"),
+    (True, "C:\\Python33-x64\\python.exe", "lib\\site-packages"),
+    (True, "C:\\Python34\\python.exe", "lib\\site-packages"),
+    (True, "C:\\Python34-x64\\python.exe", "lib\\site-packages"),
+    (True, "C:\\PyPy\\pypy.exe", "site-packages"),
+    (True, "C:\\PyPy3\\pypy.exe", "site-packages"),
+    (False, None, None),
+    (True, resolve_path("~/.pyenv/shims/python"), None),
+    (True, resolve_path("~/.pyenv/shims/python2.6"), "lib/python2.6/site-packages"),
+    (True, resolve_path("~/.pyenv/shims/python2.7"), "lib/python2.7/site-packages"),
+    (True, resolve_path("~/.pyenv/shims/python3.2"), "lib/python3.2/site-packages"),
+    (True, resolve_path("~/.pyenv/shims/python3.3"), "lib/python3.3/site-packages"),
+    (True, resolve_path("~/.pyenv/shims/python3.4"), "lib/python3.4/site-packages"),
+    (True, resolve_path("~/.pyenv/shims/pypy"), "site-packages"),
 ]
 if not os.environ.get("CIRCLE_BUILD_NUM"):
     # CircleCI messed these up badly ... they use pyenv
     PYTHON_BINS += [
-        (True, "/usr/bin/python"),
-        (True, "/usr/bin/python2.6"),
-        (True, "/usr/bin/python2.7"),
-        (True, "/usr/bin/python3.2"),
-        (True, "/usr/bin/python3.3"),
-        (True, "/usr/bin/python3.4"),
-        (True, "/usr/bin/pypy"),
+        (True, "/usr/bin/python", None),
+        (True, "/usr/bin/python2.6", "lib/python2.6/site-packages"),
+        (True, "/usr/bin/python2.7", "lib/python2.7/site-packages"),
+        (True, "/usr/bin/python3.2", "lib/python3.2/site-packages"),
+        (True, "/usr/bin/python3.3", "lib/python3.3/site-packages"),
+        (True, "/usr/bin/python3.4", "lib/python3.4/site-packages"),
+        (True, "/usr/bin/pypy", "site-packages"),
     ]
 
-for path in [
-    locate_on_path("python"),
-    locate_on_path("python2.6"),
-    locate_on_path("python2.7"),
-    locate_on_path("python3.2"),
-    locate_on_path("python3.3"),
-    locate_on_path("python3.4"),
-    locate_on_path("pypy"),
+for path, sitepackages in [
+    (locate_on_path("python"), None),
+    (locate_on_path("python2.6"), "lib/python2.6/site-packages"),
+    (locate_on_path("python2.7"), "lib/python2.7/site-packages"),
+    (locate_on_path("python3.2"), "lib/python3.2/site-packages"),
+    (locate_on_path("python3.3"), "lib/python3.3/site-packages"),
+    (locate_on_path("python3.4"), "lib/python3.4/site-packages"),
+    (locate_on_path("pypy"), "site-packages"),
 ]:
     # I'm terrible here but I want certain checks disabled for these paths: the --system-site-packages checks, otherwise
     # I have to reimplement bin resolving here, and it's a bad idea to duplicate logic in tests.
-    if (True, path) not in PYTHON_BINS:
+    if (True, path, sitepackages) not in PYTHON_BINS:
         if path:
-            PYTHON_BINS.append((False, path))
+            PYTHON_BINS.append((False, path, sitepackages))
 
 PYTHON_BINS = [
-    (is_global, path)
-    for is_global, path in PYTHON_BINS
+    (is_global, path, sitepackages)
+    for is_global, path, sitepackages in PYTHON_BINS
     if path is None or os.path.exists(path)
 ]
 
@@ -149,11 +149,11 @@ class TestVirtualEnvironment(scripttest.TestFileEnvironment):
         print("             => None")
 
 
-@pytest.yield_fixture(params=PYTHON_BINS, ids=[i or "CURRENT" for _, i in PYTHON_BINS])
+@pytest.yield_fixture(params=PYTHON_BINS, ids=[i or "CURRENT" for _, i, _ in PYTHON_BINS])
 def python(request):
-    is_global, path = request.param
+    is_global, path, sitepackages = request.param
     if path is None or os.path.exists(path):
-        yield is_global, path
+        yield is_global, path, sitepackages
     else:
         pytest.skip(msg="Implementation at %r not available." % path)
 
@@ -190,7 +190,7 @@ def assert_env_creation(env):
 
 @pytest.mark.parametrize("options", OPTIONS, ids=[" ".join(opt) for opt in OPTIONS])
 def test_recreate(python, options, tmpdir):
-    _, python = python
+    _, python, _ = python
     env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python, options)
     assert_env_creation(env)
     print("********* RECREATE *********")
@@ -200,7 +200,7 @@ def test_recreate(python, options, tmpdir):
 
 @pytest.mark.parametrize("options", OPTIONS, ids=[" ".join(opt) for opt in OPTIONS])
 def test_installation(python, options, tmpdir):
-    is_global, python = python
+    is_global, python, _ = python
     env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python, options)
     package_available_outside = env.has_systemsitepackages and env.has_package('nameless')
 
@@ -244,4 +244,25 @@ def test_create_from_tox(tmpdir):
     print(result)
 
 
+@pytest.mark.parametrize("options", OPTIONS, ids=[" ".join(opt) for opt in OPTIONS])
+def test_sitepackages(python, options, tmpdir):
+    _, python, sitepackages = python
+    if sitepackages is None:
+        pytest.skip(msg="No site-packages specified for this configuration.")
+    env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python, options)
+    assert_env_creation(env)
+    sitepackages_path = os.path.join(
+        env.base_path, env.virtualenv_name, sitepackages
+    )
+    env.run_inside("python", "-c", "import sys; assert {0!r} in sys.path, '`{0}` not in %r' % sys.path".format(
+        sitepackages_path
+    ))
+    with open(os.path.join(sitepackages_path, "mymodule.pth"), 'w') as fh:
+        fh.write(os.path.join(os.path.dirname(__file__), "testsite"))
+    env.run_inside("python", "-c", "import mymodule")
+    print("********* RECREATE *********")
+    # Test to see if recreation doesn't blow up something
+    env.create_virtualenv()
+
 # TODO: Test if source packages with C extensions can be built or installed
+
