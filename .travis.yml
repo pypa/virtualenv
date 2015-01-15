@@ -24,6 +24,6 @@ env:
 
 install:
   - if [[ $INSTALL_FIRST == yes ]]; then pip install .; fi
-  - pip install tox nameless
+  - pip install tox nameless setuptools
 
 script: tox
