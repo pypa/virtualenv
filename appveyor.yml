@@ -52,4 +52,4 @@ install:
 build: off
 
 test_script:
-    - "%CMD_IN_ENV% %PYTHON%/Scripts/tox.exe"
+    - "%CMD_IN_ENV% %PYTHON%/Scripts/tox.exe -v"

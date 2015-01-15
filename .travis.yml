@@ -26,4 +26,4 @@ install:
   - if [[ $INSTALL_FIRST == yes ]]; then pip install -U .; fi
   - pip install -U tox nameless setuptools
 
-script: tox
+script: tox -v
