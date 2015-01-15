@@ -78,7 +78,11 @@ class BaseBuilder(object):
                     if hasattr(sys, 'pypy_version_info'):
                         bin = os.path.join(prefix, "bin", "pypy-c")
                         if not os.path.exists(bin):
-                            bin = os.path.join(prefix, "bin", name) # TODO: who needs this?
+                            bin = os.path.join(prefix, "bin", "pypy")
+                        if not os.path.exists(bin):
+                            # Note that this branch could be reached when pypy doesn't have any 'pypy' bin. Likely
+                            # that something is terribly broken here.
+                            bin = os.path.join(prefix, "bin", name)
                     else:
                         bindir = sysconfig.get_config_var("BINDIR")
                         if not bindir:
