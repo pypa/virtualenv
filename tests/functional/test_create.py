@@ -265,4 +265,3 @@ def test_sitepackages(python, options, tmpdir):
     env.create_virtualenv()
 
 # TODO: Test if source packages with C extensions can be built or installed
-
