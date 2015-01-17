@@ -160,13 +160,26 @@ class TestVirtualEnvironment(scripttest.TestFileEnvironment):
         print("             => None")
 
 
-@pytest.yield_fixture(params=PYTHON_BINS, ids=[i or "CURRENT" for _, i, _ in PYTHON_BINS])
-def python(request):
+@pytest.fixture(
+    params=PYTHON_BINS,
+    ids=[i or "CURRENT" for _, i, _ in PYTHON_BINS],
+)
+def python_conf(request):
     is_global, path, sitepackages = request.param
     if path is None or os.path.exists(path):
-        yield is_global, path, sitepackages
+        return is_global, path, sitepackages
     else:
         pytest.skip(msg="Implementation at %r not available." % path)
+
+
+@pytest.fixture(
+    params=OPTIONS,
+    ids=[" ".join(opt) for opt in OPTIONS],
+)
+def env(request, python_conf, tmpdir):
+    env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python_conf[1], request.param)
+    assert_env_creation(env)
+    return env
 
 
 def assert_env_creation(env):
@@ -199,23 +212,15 @@ def assert_env_creation(env):
 ########################################################################################################################
 
 
-@pytest.mark.parametrize("options", OPTIONS, ids=[" ".join(opt) for opt in OPTIONS])
-def test_recreate(python, options, tmpdir):
-    _, python, _ = python
-    env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python, options)
-    assert_env_creation(env)
+def test_recreate(env):
     print("********* RECREATE *********")
     # Test to see if recreation doesn't blow up something
     env.create_virtualenv()
 
 
-@pytest.mark.parametrize("options", OPTIONS, ids=[" ".join(opt) for opt in OPTIONS])
-def test_installation(python, options, tmpdir):
-    is_global, python, _ = python
-    env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python, options)
+def test_installation(python, env):
+    is_global, _, _ = python
     package_available_outside = env.has_systemsitepackages and env.has_package('nameless')
-
-    assert_env_creation(env)
 
     if is_global:
         # If is_global then were sure that the target is not in a virtualenv. We can reliably expect certain behavior
@@ -255,13 +260,10 @@ def test_create_from_tox(tmpdir):
     print(result)
 
 
-@pytest.mark.parametrize("options", OPTIONS, ids=[" ".join(opt) for opt in OPTIONS])
-def test_sitepackages(python, options, tmpdir):
+def test_sitepackages(python, env):
     _, python, sitepackages = python
     if sitepackages is None:
         pytest.skip(msg="No site-packages specified for this configuration.")
-    env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python, options)
-    assert_env_creation(env)
     sitepackages_path = os.path.join(
         env.base_path, env.virtualenv_name, sitepackages
     )
@@ -271,8 +273,5 @@ def test_sitepackages(python, options, tmpdir):
     with open(os.path.join(sitepackages_path, "mymodule.pth"), 'w') as fh:
         fh.write(os.path.join(os.path.dirname(__file__), "testsite"))
     env.run_inside("python", "-c", "import mymodule")
-    print("********* RECREATE *********")
-    # Test to see if recreation doesn't blow up something
-    env.create_virtualenv()
 
 # TODO: Test if source packages with C extensions can be built or installed

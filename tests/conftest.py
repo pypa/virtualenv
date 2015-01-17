@@ -3,7 +3,7 @@ import os.path
 import pytest
 
 
-@pytest.yield_fixture(scope="function")
+@pytest.yield_fixture
 def tmpdir(request, tmpdir):
     try:
         yield tmpdir
