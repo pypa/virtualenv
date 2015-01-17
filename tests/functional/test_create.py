@@ -23,12 +23,23 @@ def locate_on_path(binary):
 
 
 def resolve_path(path):
+    """
+    Expands ~ in the path and resolves any symlinks.
+    """
     if path is not None:
         path = os.path.realpath(os.path.expanduser(path))
     return path
 
 
 PYTHON_BINS = [
+    # The values in the tuples:
+    #   is global, bin path, site-package path
+    #
+    # Details:
+    # - is global: If set to False then tests with `--system-site-packages` are disabled as we can't statically infer
+    #              here how a virtualenv with `--system-site-packages` will behave
+    # - bin path: Absolute path to the pythonbin
+    # - site-package path: expected location of site-packages. Used for `test_sitepackages`.
     (True, "C:\\Python27\\python.exe", "lib\\site-packages"),
     (True, "C:\\Python27-x64\\python.exe", "lib\\site-packages"),
     (True, "C:\\Python33\\python.exe", "lib\\site-packages"),
