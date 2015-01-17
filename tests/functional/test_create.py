@@ -254,7 +254,7 @@ def test_sitepackages(python, options, tmpdir):
     sitepackages_path = os.path.join(
         env.base_path, env.virtualenv_name, sitepackages
     )
-    env.run_inside("python", "-c", "import sys; assert {0!r} in sys.path, '`{0}` not in %r' % sys.path".format(
+    env.run_inside("python", "-c", "import sys; assert {0!r} in sys.path, 'is not in %r' % sys.path".format(
         sitepackages_path
     ))
     with open(os.path.join(sitepackages_path, "mymodule.pth"), 'w') as fh:
