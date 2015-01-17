@@ -72,22 +72,25 @@ class BaseBuilder(object):
 
                 prefix = getattr(sys, "real_prefix", sys.prefix)
                 name = os.path.basename(os.path.realpath(sys.executable))
-                if (sys.platform.startswith("win") or sys.platform == "cli" and os.name == "nt"):
+
+                if hasattr(sys, 'pypy_version_info'):
+                    paths = [
+                        os.path.join(prefix, "bin", "pypy-c"),
+                        os.path.join(prefix, "bin", "pypy"),
+                        os.path.join(prefix, "pypy.exe"),
+                    ]
+                    for bin in paths:
+                        if os.path.exists(bin):
+                            break
+                    else:
+                        raise RuntimeError("Could not find any PyPy bin. None of %r exists." % paths)
+                elif sys.platform.startswith("win") or sys.platform == "cli" and os.name == "nt":
                     bin = os.path.join(prefix, name)
                 else:
-                    if hasattr(sys, 'pypy_version_info'):
-                        bin = os.path.join(prefix, "bin", "pypy-c")
-                        if not os.path.exists(bin):
-                            bin = os.path.join(prefix, "bin", "pypy")
-                        if not os.path.exists(bin):
-                            # Note that this branch could be reached when pypy doesn't have any 'pypy' bin. Likely
-                            # that something is terribly broken here.
-                            bin = os.path.join(prefix, "bin", name)
-                    else:
-                        bindir = sysconfig.get_config_var("BINDIR")
-                        if not bindir:
-                            raise RuntimeError("BINDIR missing from sysconfig.")
-                        bin = os.path.join(bindir, name)
+                    bindir = sysconfig.get_config_var("BINDIR")
+                    if not bindir:
+                        raise RuntimeError("BINDIR missing from sysconfig.")
+                    bin = os.path.join(bindir, name)
                 print(json.dumps(bin))
                 """)
             ]).decode(locale.getpreferredencoding()),
