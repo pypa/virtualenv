@@ -116,9 +116,9 @@ class TestVirtualEnvironment(scripttest.TestFileEnvironment):
 
     def binpath(self, *args):
         if self.is_pypy or not IS_WINDOWS:
-            return os.path.join(self.virtualenv_name, 'bin', *args)
+            return os.path.join(self.base_path, self.virtualenv_name, 'bin', *args)
         else:
-            return os.path.join(self.virtualenv_name, 'Scripts', *args)
+            return os.path.join(self.base_path, self.virtualenv_name, 'Scripts', *args)
 
     def exepath(self, *args):
         if IS_WINDOWS:
