@@ -163,6 +163,7 @@ class TestVirtualEnvironment(scripttest.TestFileEnvironment):
 @pytest.fixture(
     params=PYTHON_BINS,
     ids=[i or "CURRENT" for _, i, _ in PYTHON_BINS],
+    scope="session",
 )
 def python_conf(request):
     is_global, path, sitepackages = request.param
@@ -172,18 +173,22 @@ def python_conf(request):
         pytest.skip(msg="Implementation at %r not available." % path)
 
 
-@pytest.fixture(
+@pytest.yield_fixture(
     params=OPTIONS,
     ids=[" ".join(opt) for opt in OPTIONS],
+    scope="session",
 )
-def env(request, python_conf, tmpdir):
+def env(request, python_conf):
     # This exists as a fixture to enable session-scoped virtualenvs
     # (or in other words, reuse virtualenvs for tests => faster tests)
-    # It's currently function scoped because dependency on tmpdir
-    # (we should make our own session scoped tmpdir)
-    env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python_conf[1], request.param)
-    assert_env_creation(env)
-    return env
+    try:
+        tmpdir = request.config._tmpdirhandler.mktemp('env', numbered=True)
+
+        env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python_conf[1], request.param)
+        assert_env_creation(env)
+        yield env
+    finally:
+        tmpdir.remove(ignore_errors=True)
 
 
 def assert_env_creation(env):
@@ -216,13 +221,13 @@ def assert_env_creation(env):
 ########################################################################################################################
 
 
-def test_recreate(env):
+def test_create_2time(env):
     print("********* RECREATE *********")
     # Test to see if recreation doesn't blow up something
     env.create_virtualenv()
 
 
-def test_installation(python_conf, env):
+def test_installation(env, python_conf):
     is_global, _, _ = python_conf
     package_available_outside = env.has_systemsitepackages and env.has_package('nameless')
 
@@ -255,7 +260,7 @@ def test_installation(python_conf, env):
 
 
 @pytest.mark.skipif(IS_26, reason="Tox doesn't work on Python 2.6")
-def test_create_from_tox(tmpdir):
+def test_create_w_tox(tmpdir):
     env = scripttest.TestFileEnvironment(str(tmpdir.join('sandbox')), capture_temp=True)
     result = env.run(
         'tox', '-c', os.path.join(os.path.dirname(__file__), 'test_tox.ini'),
@@ -264,7 +269,7 @@ def test_create_from_tox(tmpdir):
     print(result)
 
 
-def test_sitepackages(python_conf, env):
+def test_sitepackages(env, python_conf):
     _, python, sitepackages = python_conf
     if sitepackages is None:
         pytest.skip(msg="No site-packages specified for this configuration.")
@@ -279,13 +284,13 @@ def test_sitepackages(python_conf, env):
     env.run_inside("python", "-c", "import mymodule")
 
 
-def test_pip_install_cext(env):
+def test_pip_inst_ext(env):
     base_dir = os.path.join(os.path.dirname(__file__), 'testcext')
     env.run_inside('pip', 'install', os.path.join(base_dir, 'test-cext-1.0.zip'))
     env.run_inside('python', '-c', 'import test_cext')
 
 
-def test_setuptools_install_cext(env):
+def test_reg_inst_ext(env):
     base_dir = os.path.join(os.path.dirname(__file__), 'testcext')
     env.run_inside('python', 'setup.py', 'install', cwd=base_dir)
     env.run_inside('python', '-c', 'import test_cext')
