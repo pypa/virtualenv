@@ -11,4 +11,4 @@ exclude circle.yml
 prune .appveyor
 
 recursive-include docs Makefile make.bat *.py *.rst *.empty
-recursive-include tests *.py *.ini
+recursive-include tests *.py *.ini *.zip *.c
