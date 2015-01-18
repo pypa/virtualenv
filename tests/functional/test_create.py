@@ -222,8 +222,8 @@ def test_recreate(env):
     env.create_virtualenv()
 
 
-def test_installation(python, env):
-    is_global, _, _ = python
+def test_installation(python_conf, env):
+    is_global, _, _ = python_conf
     package_available_outside = env.has_systemsitepackages and env.has_package('nameless')
 
     if is_global:
@@ -264,8 +264,8 @@ def test_create_from_tox(tmpdir):
     print(result)
 
 
-def test_sitepackages(python, env):
-    _, python, sitepackages = python
+def test_sitepackages(python_conf, env):
+    _, python, sitepackages = python_conf
     if sitepackages is None:
         pytest.skip(msg="No site-packages specified for this configuration.")
     sitepackages_path = os.path.join(
