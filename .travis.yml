@@ -23,7 +23,7 @@ env:
   - TOXENV=packaging
 
 install:
-  - if [[ $INSTALL_FIRST == yes ]]; then pip install -U .; fi
-  - pip install -U tox nameless setuptools
+  - if [[ $INSTALL_FIRST == yes ]]; then pip install .; fi
+  - pip install tox nameless setuptools
 
 script: tox -v
