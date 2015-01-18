@@ -285,12 +285,16 @@ def test_sitepackages(env, python_conf):
 
 
 def test_pip_inst_ext(env):
+    if IS_WINDOWS and env.target_python:
+        pytest.skip(msg="Disabled on windows. Compiler needs different environment.")
     base_dir = os.path.join(os.path.dirname(__file__), 'testcext')
     env.run_inside('pip', 'install', os.path.join(base_dir, 'test-cext-1.0.zip'))
     env.run_inside('python', '-c', 'import test_cext')
 
 
 def test_reg_inst_ext(env):
+    if IS_WINDOWS and env.target_python:
+        pytest.skip(msg="Disabled on windows. Compiler needs different environment.")
     base_dir = os.path.join(os.path.dirname(__file__), 'testcext')
     env.run_inside('python', 'setup.py', 'install', cwd=base_dir)
     env.run_inside('python', '-c', 'import test_cext')
