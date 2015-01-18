@@ -93,7 +93,7 @@ PYTHON_BINS = [
 OPTIONS = [
     list(chain.from_iterable(i))
     for i in product(
-        [["python", "-mvirtualenv.__main__" if IS_26 else "-mvirtualenv"], ["virtualenv"]],
+        [["virtualenv"], ["python", "-mvirtualenv.__main__" if IS_26 else "-mvirtualenv"]],
         [['--system-site-packages'], []]
     )
 ]
@@ -162,7 +162,7 @@ class TestVirtualEnvironment(scripttest.TestFileEnvironment):
 
 @pytest.fixture(
     params=PYTHON_BINS,
-    ids=[i or "CURRENT" for _, i, _ in PYTHON_BINS],
+    ids=["-python=%s" % (i or "<CURRENT>") for _, i, _ in PYTHON_BINS],
     scope="session",
 )
 def python_conf(request):
@@ -175,7 +175,7 @@ def python_conf(request):
 
 @pytest.yield_fixture(
     params=OPTIONS,
-    ids=[" ".join(opt) for opt in OPTIONS],
+    ids=[" ".join(opt) + " " for opt in OPTIONS],
     scope="session",
 )
 def env(request, python_conf):
