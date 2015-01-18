@@ -138,6 +138,64 @@ if global_site_packages is not None:
 # Therefore we need to match pip's install location (site-packages)
 from distutils import sysconfig
 addsitedir(sysconfig.get_python_lib())
+
+# Apply distutils patches. Originally from virtualenv_embedded/distutils-init.py
+# Support for per virtualenv distutils.cfg is missing.
+def patch(module, name):
+    original = getattr(module, name)
+
+    def decorator(replacement):
+        def wrapper(*args, **kwargs):
+            return replacement(original, *args, **kwargs)
+        wrapper.__doc__ = original.__doc__
+        setattr(module, name, wrapper)
+    return decorator
+
+try:
+    basestring
+except NameError:
+    basestring = str
+
+# Patch build_ext (distutils doesn't know how to get the libs directory
+# path on windows - it hardcodes the paths around the patched sys.prefix)
+if sys.platform == 'win32':
+    from distutils.command.build_ext import build_ext
+
+    @patch(build_ext, 'finalize_options')
+    def finalize_options(original, self):
+        if self.library_dirs is None:
+            self.library_dirs = []
+        elif isinstance(self.library_dirs, basestring):
+            self.library_dirs = self.library_dirs.split(os.pathsep)
+
+        self.library_dirs.insert(0, os.path.join(sys.real_prefix, "Libs"))
+        original(self)
+
+## distutils.sysconfig patches:
+from distutils import sysconfig
+
+@patch(sysconfig, 'get_python_inc')
+def sysconfig_get_python_inc(original, plat_specific=0, prefix=None):
+    if prefix is None:
+        prefix = sys.real_prefix
+    return original(plat_specific, prefix)
+
+@patch(sysconfig, 'get_python_lib')
+def sysconfig_get_python_lib(original, plat_specific=0, standard_lib=0, prefix=None):
+    if standard_lib and prefix is None:
+        prefix = sys.real_prefix
+    return original(plat_specific, standard_lib, prefix)
+
+@patch(sysconfig, 'get_config_vars')
+def sysconfig_get_config_vars(original, *args):
+    real_vars = original(*args)
+    if sys.platform == 'win32':
+        lib_dir = os.path.join(sys.real_prefix, "libs")
+        if isinstance(real_vars, dict) and 'LIBDIR' not in real_vars:
+            real_vars['LIBDIR'] = lib_dir # asked for all
+        elif isinstance(real_vars, list) and 'LIBDIR' in args:
+            real_vars = real_vars + [lib_dir] # asked for list
+    return real_vars
 """
 
 logger = logging.getLogger(__name__)

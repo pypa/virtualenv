@@ -135,8 +135,8 @@ class TestVirtualEnvironment(scripttest.TestFileEnvironment):
         print(result)
         return result
 
-    def run_inside(self, binary, *args):
-        return self.run(self.binpath(binary), *args)
+    def run_inside(self, binary, *args, **kwargs):
+        return self.run(self.binpath(binary), *args, **kwargs)
 
     def create_virtualenv(self):
         args = list(self.creation_args)
@@ -177,6 +177,10 @@ def python_conf(request):
     ids=[" ".join(opt) for opt in OPTIONS],
 )
 def env(request, python_conf, tmpdir):
+    # This exists as a fixture to enable session-scoped virtualenvs
+    # (or in other words, reuse virtualenvs for tests => faster tests)
+    # It's currently function scoped because dependency on tmpdir
+    # (we should make our own session scoped tmpdir)
     env = TestVirtualEnvironment(str(tmpdir.join('sandbox')), python_conf[1], request.param)
     assert_env_creation(env)
     return env
@@ -274,4 +278,14 @@ def test_sitepackages(python, env):
         fh.write(os.path.join(os.path.dirname(__file__), "testsite"))
     env.run_inside("python", "-c", "import mymodule")
 
-# TODO: Test if source packages with C extensions can be built or installed
+
+def test_pip_install_cext(env):
+    base_dir = os.path.join(os.path.dirname(__file__), 'testcext')
+    env.run_inside('pip', 'install', os.path.join(base_dir, 'test-cext-1.0.zip'))
+    env.run_inside('python', '-c', 'import test_cext')
+
+
+def test_setuptools_install_cext(env):
+    base_dir = os.path.join(os.path.dirname(__file__), 'testcext')
+    env.run_inside('python', 'setup.py', 'install', cwd=base_dir)
+    env.run_inside('python', '-c', 'import test_cext')
