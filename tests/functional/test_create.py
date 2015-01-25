@@ -258,6 +258,13 @@ def test_installation(env, python_conf):
         env.run_inside('pip', 'install', 'nameless')
         env.run_inside('python', '-c', 'import nameless')
 
+    # Now downgrade the package. This should always install it in the virtualenv.
+    env.run_inside('pip', 'install', '--ignore-installed', 'nameless==0.1.2')
+    # Now we test that the package is imported from the virtualenv (and not global whatever)
+    env.run_inside('python', '-c',
+                   'import nameless; assert nameless.__version__ == "0.1.2", '
+                   '"Version is not 0.1.2: %r. __file__=%r" % (nameless.__version__, nameless.__file__)')
+
 
 @pytest.mark.skipif(IS_26, reason="Tox doesn't work on Python 2.6")
 def test_create_w_tox(tmpdir):

@@ -118,6 +118,12 @@ with open(__SITE__) as fp:
 # Restore the real sys.flags
 sys.flags = _real_sys_flags
 
+# On Debian-enized platforms the site.py won't add site-packages on sys.path
+# (it will add dist-packages and other crazy stuff).
+# Therefore we need to match pip's install location (site-packages)
+from distutils import sysconfig
+addsitedir(sysconfig.get_python_lib())
+
 # If we're running with the global site-packages enabled, then we'll want to
 # go ahead and enable it here so that it comes after the virtual environment's
 # site-package.
@@ -132,12 +138,6 @@ if global_site_packages is not None:
     # Add the actual global site-packages.
     for path in global_site_packages:
         addsitedir(path)
-
-# On Debian-enized platforms the site.py won't add site-packages on sys.path
-# (it will add dist-packages and other crazy stuff).
-# Therefore we need to match pip's install location (site-packages)
-from distutils import sysconfig
-addsitedir(sysconfig.get_python_lib())
 
 # Apply distutils patches. Originally from virtualenv_embedded/distutils-init.py
 # Support for per virtualenv distutils.cfg is missing.
