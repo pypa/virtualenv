@@ -1044,7 +1044,10 @@ def path_locations(home_dir):
             p = subprocess.Popen(multiarch_exec, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             stdout, stderr = p.communicate()
             # stdout.strip is needed to remove newline character
-            inc_dir = join(home_dir, 'include', stdout.strip(), py_version + abiflags)
+            b = stdout.strip()
+            if type(b) == bytes:
+                b = b.decode('utf-8')
+            inc_dir = join(home_dir, 'include', b, py_version + abiflags)
         else:
             inc_dir = join(home_dir, 'include', py_version + abiflags)
         bin_dir = join(home_dir, 'bin')
