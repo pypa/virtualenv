@@ -2,13 +2,13 @@ Release History
 ===============
 
 12.0.7 (2015-02-04)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 6.0.8
 
 
 12.0.6 (2015-01-28)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 6.0.7
 
@@ -16,7 +16,7 @@ Release History
 
 
 12.0.5 (2015-01-03)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 6.0.6
 
@@ -24,7 +24,7 @@ Release History
 
 
 12.0.4 (2014-22-23)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Revert the fix to ``-p`` on Debian based pythons as it was broken in other
   situations.
@@ -32,7 +32,7 @@ Release History
 * Revert several sys.path changes new in 12.0 which were breaking virtualenv.
 
 12.0.3 (2014-22-23)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Fix an issue where Debian based Pythons would fail when using -p with the
   host Python.
@@ -40,17 +40,17 @@ Release History
 * Upgrade pip to 6.0.3
 
 12.0.2 (2014-12-23)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgraded pip to 6.0.2
 
 12.0.1 (2014-12-22)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgraded pip to 6.0.1
 
 12.0 (2014-12-22)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 * **PROCESS** Version numbers are now simply ``X.Y`` where the leading ``1``
   has been dropped.
@@ -63,38 +63,38 @@ Release History
 * Updated setuptools to 7.0
 
 1.11.6 (2014-05-16)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Updated setuptools to 3.6
 * Updated pip to 1.5.6
 
 1.11.5 (2014-05-03)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Updated setuptools to 3.4.4
 * Updated documentation to use https://virtualenv.pypa.io/
 * Updated pip to 1.5.5
 
 1.11.4 (2014-02-21)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Updated pip to 1.5.4
 
 
 1.11.3 (2014-02-20)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Updated setuptools to 2.2
 * Updated pip to 1.5.3
 
 
 1.11.2 (2014-01-26)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Fixed easy_install installed virtualenvs by updated pip to 1.5.2
 
 1.11.1 (2014-01-20)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Fixed an issue where pip and setuptools were not getting installed when using
   the ``--system-site-packages`` flag.
@@ -104,7 +104,7 @@ Release History
 * Upgraded setuptools to v2.1
 
 1.11 (2014-01-02)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 * **BACKWARDS INCOMPATIBLE** Switched to using wheels for the bundled copies of
   setuptools and pip. Using sdists is no longer supported - users supplying
@@ -119,7 +119,7 @@ Release History
 * Upgraded setuptools to v1.4
 
 1.10.1 (2013-08-07)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * **New Signing Key** Release 1.10.1 is using a different key than normal with
   fingerprint: 7C6B 7C5D 5E2B 6356 A926 F04F 6E3C BCE9 3372 DCFA
@@ -128,7 +128,7 @@ Release History
 
 
 1.10 (2013-07-23)
-~~~~~~~~~~~~~~~~~
+-----------------
 
 * **BACKWARDS INCOMPATIBLE** Dropped support for Python 2.5. The minimum
   supported Python version is now Python 2.6.
@@ -162,14 +162,14 @@ Release History
 .. _Distribute: https://pypi.python.org/pypi/distribute
 
 1.9.1 (2013-03-08)
-~~~~~~~~~~~~~~~~~~
+------------------
 
 * Updated to pip 1.3.1 that fixed a major backward incompatible change of
   parsing URLs to externally hosted packages that got accidentily included
   in pip 1.3.
 
 1.9 (2013-03-07)
-~~~~~~~~~~~~~~~~
+----------------
 
 * Unset VIRTUAL_ENV environment variable in deactivate.bat (Pull #364)
 * Upgraded distribute to 0.6.34.
@@ -181,7 +181,7 @@ Release History
 
 
 1.8.4 (2012-11-25)
-~~~~~~~~~~~~~~~~~~
+------------------
 
 * Updated distribute to 0.6.31. This fixes #359 (numpy install regression) on
   UTF-8 platforms, and provides a workaround on other platforms:
@@ -196,7 +196,7 @@ Release History
   file size.
 
 1.8.3 (2012-11-21)
-~~~~~~~~~~~~~~~~~~
+------------------
 
 * Fixed readline on OS X. Thanks minrk
 
@@ -225,14 +225,14 @@ Release History
   distribute is the default (like in Debian).
 
 1.8.2 (2012-09-06)
-~~~~~~~~~~~~~~~~~~
+------------------
 
 * Updated the included pip version to 1.2.1 to fix regressions introduced
   there in 1.2.
 
 
 1.8.1 (2012-09-03)
-~~~~~~~~~~~~~~~~~~
+------------------
 
 * Fixed distribute version used with `--never-download`. Thanks michr for
   report and patch.
@@ -242,7 +242,7 @@ Release History
 
 
 1.8 (2012-09-01)
-~~~~~~~~~~~~~~~~
+----------------
 
 * **Dropped support for Python 2.4** The minimum supported Python version is
   now Python 2.5.
@@ -273,7 +273,7 @@ Release History
 
 
 1.7.2 (2012-06-22)
-~~~~~~~~~~~~~~~~~~
+------------------
 
 * Updated to distribute 0.6.27.
 
@@ -303,13 +303,13 @@ Release History
 
 
 1.7.1.2 (2012-02-17)
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 * Fixed minor issue in `--relocatable`. Thanks, Cap Petschulat.
 
 
 1.7.1.1 (2012-02-16)
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 
 * Bumped the version string in ``virtualenv.py`` up, too.
 
@@ -317,7 +317,7 @@ Release History
 
 
 1.7.1 (2012-02-16)
-~~~~~~~~~~~~~~~~~~
+------------------
 
 * Update embedded pip to version 1.1.
 
@@ -350,7 +350,7 @@ Release History
 
 
 1.7 (2011-11-30)
-~~~~~~~~~~~~~~~~
+----------------
 
 * Gave user-provided ``--extra-search-dir`` priority over default dirs for
   finding setuptools/distribute (it already had priority for finding pip).
@@ -374,19 +374,19 @@ Release History
 
 
 1.6.4 (2011-07-21)
-~~~~~~~~~~~~~~~~~~
+------------------
 
 * Restored ability to run on Python 2.4, too.
 
 
 1.6.3 (2011-07-16)
-~~~~~~~~~~~~~~~~~~
+------------------
 
 * Restored ability to run on Python < 2.7.
 
 
 1.6.2 (2011-07-16)
-~~~~~~~~~~~~~~~~~~
+------------------
 
 * Updated embedded distribute release to 0.6.19.
 
@@ -406,7 +406,7 @@ Release History
 
 
 1.6.1 (2011-04-30)
-~~~~~~~~~~~~~~~~~~
+------------------
 
 * Start to use git-flow.
 
@@ -421,7 +421,7 @@ Release History
 
 
 1.6
-~~~
+---
 
 * Added Python 3 support! Huge thanks to Vinay Sajip and Vitaly Babiy.
 
@@ -432,7 +432,7 @@ Release History
 
 
 1.5.2
-~~~~~
+-----
 
 * Moved main repository to Github: https://github.com/pypa/virtualenv
 
@@ -448,7 +448,7 @@ Release History
 
 
 1.5.1
-~~~~~
+-----
 
 * Added ``_weakrefset`` requirement for Python 2.7.1.
 
@@ -456,7 +456,7 @@ Release History
 
 
 1.5
-~~~
+---
 
 * Include pip 0.8.1.
 
@@ -474,13 +474,13 @@ Release History
 
 
 1.4.9
-~~~~~
+-----
 
 * Include pip 0.7.2
 
 
 1.4.8
-~~~~~
+-----
 
 * Fix for Mac OS X Framework builds that use
   ``--universal-archs=intel``
@@ -495,20 +495,20 @@ Release History
 
 
 1.4.7
-~~~~~
+-----
 
 * Include pip 0.7
 
 
 1.4.6
-~~~~~
+-----
 
 * Allow ``activate.sh`` to skip updating the prompt (by setting
   ``$VIRTUAL_ENV_DISABLE_PROMPT``).
 
 
 1.4.5
-~~~~~
+-----
 
 * Include pip 0.6.3
 
@@ -517,7 +517,7 @@ Release History
 
 
 1.4.4
-~~~~~
+-----
 
 * Include pip 0.6.2 and Distribute 0.6.10
 
@@ -533,13 +533,13 @@ Release History
 
 
 1.4.3
-~~~~~
+-----
 
 * Include pip 0.6.1
 
 
 1.4.2
-~~~~~
+-----
 
 * Fix pip installation on Windows
 
@@ -550,13 +550,13 @@ Release History
 
 
 1.4.1
-~~~~~
+-----
 
 * Include pip 0.6
 
 
 1.4
-~~~
+---
 
 * Updated setuptools to 0.6c11
 
@@ -566,7 +566,7 @@ Release History
 
 
 1.3.4
-~~~~~
+-----
 
 * Virtualenv now copies the actual embedded Python binary on
   Mac OS X to fix a hang on Snow Leopard (10.6).
@@ -596,7 +596,7 @@ Release History
 
 
 1.3.3
-~~~~~
+-----
 
 * Use Windows newlines in ``activate.bat``, which has been reported to help
   when using non-ASCII directory names.
@@ -619,7 +619,7 @@ Release History
 
 
 1.3.2
-~~~~~
+-----
 
 * Remove the ``[install] prefix = ...`` setting from the virtualenv
   ``distutils.cfg`` -- this has been causing problems for a lot of
@@ -632,7 +632,7 @@ Release History
 
 
 1.3.1
-~~~~~
+-----
 
 * Real Python 2.6 compatibility.  Backported the Python 2.6 updates to
   ``site.py``, including `user directories
@@ -655,7 +655,7 @@ Release History
 
 
 1.3
-~~~
+---
 
 * Update to Setuptools 0.6c9
 * Added an option ``virtualenv --relocatable EXISTING_ENV``, which
@@ -682,7 +682,7 @@ Release History
 
 
 1.2
-~~~
+---
 
 * Added a ``--python`` option to select the Python interpreter.
 * Add ``warnings`` to the modules copied over, for Python 2.6 support.
@@ -691,13 +691,13 @@ Release History
 
 
 1.1.1
-~~~~~
+-----
 
 * Added support for Jython 2.5.
 
 
 1.1
-~~~
+---
 
 * Added support for Python 2.6.
 * Fix a problem with missing ``DLLs/zlib.pyd`` on Windows.  Create
@@ -712,7 +712,7 @@ Release History
 
 
 1.0
-~~~
+---
 
 * Fix build on systems that use ``/usr/lib64``, distinct from
   ``/usr/lib`` (specifically CentOS x64).
@@ -722,7 +722,7 @@ Release History
 
 
 0.9.2
-~~~~~
+-----
 
 * Fix include dir copying on Windows (makes compiling possible).
 * Include the main ``lib-tk`` in the path.
@@ -737,7 +737,7 @@ Release History
 
 
 0.9.1
-~~~~~
+-----
 
 * Improve ability to create a virtualenv from inside a virtualenv.
 * Fix a little bug in ``bin/activate``.
@@ -745,7 +745,7 @@ Release History
 
 
 0.9
-~~~
+---
 
 * Added ``lib-dynload`` and ``config`` to things that need to be
   copied over in an environment.
@@ -761,7 +761,7 @@ Release History
 
 
 0.8.4
-~~~~~
+-----
 
 * Windows installs would sometimes give errors about ``sys.prefix`` that
   were inaccurate.
@@ -769,13 +769,13 @@ Release History
 
 
 0.8.3
-~~~~~
+-----
 
 * Added support for Windows.
 
 
 0.8.2
-~~~~~
+-----
 
 * Give a better warning if you are on an unsupported platform (Mac
   Framework Pythons, and Windows).
@@ -784,12 +784,12 @@ Release History
 
 
 0.8.1
-~~~~~
+-----
 
 Fixed packaging of the library.
 
 
 0.8
-~~~
+---
 
 Initial release.  Everything is changed and new!
