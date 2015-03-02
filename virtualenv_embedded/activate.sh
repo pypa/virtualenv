@@ -4,11 +4,21 @@
 deactivate () {
     unset pydoc
 
-    # reset old environment variables
-    if [ -n "$_OLD_VIRTUAL_PATH" ] ; then
-        PATH="$_OLD_VIRTUAL_PATH"
-        export PATH
-        unset _OLD_VIRTUAL_PATH
+    # Restore old environment variables.
+    if [ -n "$VIRTUAL_ENV" ]; then
+        remove_from_path() {
+            local path_to_remove="$1"
+            local path_before
+            local result=":$PATH:"
+            while [ "$path_before" != "$result" ]; do
+                path_before="$result"
+                result="${result//:$path_to_remove:/:}"
+            done
+            # Trim trailing/leading colons.
+            result="${result%:}"
+            echo "${result#:}"
+        }
+        PATH="$(remove_from_path "$VIRTUAL_ENV/__BIN_NAME__")"
     fi
     if [ -n "$_OLD_VIRTUAL_PYTHONHOME" ] ; then
         PYTHONHOME="$_OLD_VIRTUAL_PYTHONHOME"
@@ -42,7 +52,6 @@ deactivate nondestructive
 VIRTUAL_ENV="__VIRTUAL_ENV__"
 export VIRTUAL_ENV
 
-_OLD_VIRTUAL_PATH="$PATH"
 PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
 export PATH
 
