@@ -13,7 +13,6 @@ import optparse
 import re
 import shutil
 import logging
-import tempfile
 import zlib
 import errno
 import glob
@@ -21,7 +20,6 @@ import distutils.sysconfig
 from distutils.util import strtobool
 import struct
 import subprocess
-import tarfile
 
 if sys.version_info < (2, 6):
     print('ERROR: %s' % sys.exc_info()[1])
@@ -758,14 +756,14 @@ def main():
         help="DEPRECATED. Retained only for backward compatibility. This option has no effect.")
 
     if 'extend_parser' in globals():
-        extend_parser(parser)
+        extend_parser(parser)  # noqa
 
     options, args = parser.parse_args()
 
     global logger
 
     if 'adjust_options' in globals():
-        adjust_options(options, args)
+        adjust_options(options, args)  # noqa
 
     verbosity = options.verbose - options.quiet
     logger = Logger([(Logger.level_for_integer(2 - verbosity), sys.stdout)])
@@ -824,7 +822,7 @@ def main():
                        no_pip=options.no_pip,
                        symlink=options.symlink)
     if 'after_install' in globals():
-        after_install(options, home_dir)
+        after_install(options, home_dir)  # noqa
 
 def call_subprocess(cmd, show_stdout=True,
                     filter_stdout=None, cwd=None,
@@ -1378,7 +1376,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             mach_o_change(py_executable,
                           os.path.join(prefix, 'Python'),
                           '@executable_path/../.Python')
-        except:
+        except:  # noqa
             e = sys.exc_info()[1]
             logger.warn("Could not call mach_o_change: %s. "
                         "Trying to call install_name_tool instead." % e)
@@ -1388,7 +1386,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
                      os.path.join(prefix, 'Python'),
                      '@executable_path/../.Python',
                      py_executable])
-            except:
+            except:  # noqa
                 logger.fatal("Could not call install_name_tool -- you must "
                              "have Apple's development tools installed")
                 raise
