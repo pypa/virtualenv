@@ -206,11 +206,17 @@ def addsitedir(sitedir, known_paths=None):
         known_paths = None
     return known_paths
 
-def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_prefix):
-    """Add site-packages (and possibly site-python) to sys.path"""
-    prefixes = [os.path.join(sys_prefix, "local"), sys_prefix]
-    if exec_prefix != sys_prefix:
-        prefixes.append(os.path.join(exec_prefix, "local"))
+def getsitepackages(prefixes=None):
+    """
+    For each directory present in given `sys_prefix` and `exec_prefix` or 
+    present in the global ``PREFIXES`` if both arguments are not defined, 
+    this function will find its `site-packages` subdirectory depending on the system
+    environment, and will return a list of full paths.
+    """
+    if prefixes is None:
+        prefixes = [os.path.join(PREFIXES[0], 'local'), PREFIXES[0]]
+        if len(set(PREFIXES)) > 1:
+            prefixes.append(os.path.join(PREFIXES[1], 'local'))
 
     for prefix in prefixes:
         if prefix:
@@ -277,11 +283,21 @@ def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_pre
                                          'Python',
                                          sys.version[:3],
                                          'site-packages'))
-            for sitedir in sitedirs:
-                if os.path.isdir(sitedir):
-                    addsitedir(sitedir, known_paths)
-    return None
+    return sitedirs
 
+
+def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_prefix):
+    """Add site-packages (and possibly site-python) to sys.path"""
+    if sys_prefix and exec_prefix:
+        prefixes = [os.path.join(sys_prefix, "local"), sys_prefix]
+        if exec_prefix != sys_prefix:
+            prefixes.append(os.path.join(exec_prefix, "local"))
+
+    for sitedir in getsitepackages(prefixes):
+        if os.path.isdir(sitedir):
+            addsitedir(sitedir, known_paths)
+    return None
+    
 def check_enableusersite():
     """Check if user site directory is safe for inclusion
 
@@ -306,58 +322,69 @@ def check_enableusersite():
 
     return True
 
-def addusersitepackages(known_paths):
-    """Add a per user site-package to sys.path
+def getuserbase():
+    """Returns the `user base` directory path.
 
-    Each user has its own python directory with site-packages in the
-    home directory.
-
-    USER_BASE is the root directory for all Python versions
-
-    USER_SITE is the user specific site-packages directory
-
-    USER_SITE/.. can be used for data.
+    The `user base` directory can be used to store data. If the global
+    variable ``USER_BASE`` is not initialized yet, this function will also set
+    it.
     """
-    global USER_BASE, USER_SITE, ENABLE_USER_SITE
+    global USER_BASE
+    if USER_BASE is not None:
+        return USER_BASE
+
     env_base = os.environ.get("PYTHONUSERBASE", None)
 
     def joinuser(*args):
         return os.path.expanduser(os.path.join(*args))
 
-    #if sys.platform in ('os2emx', 'riscos'):
-    #    # Don't know what to put here
-    #    USER_BASE = ''
-    #    USER_SITE = ''
+    # what about 'os2emx', 'riscos' ?
     if os.name == "nt":
         base = os.environ.get("APPDATA") or "~"
-        if env_base:
-            USER_BASE = env_base
-        else:
-            USER_BASE = joinuser(base, "Python")
-        USER_SITE = os.path.join(USER_BASE,
-                                 "Python" + sys.version[0] + sys.version[2],
-                                 "site-packages")
+        USER_BASE = env_base if env_base else joinuser(base, "Python")
     else:
-        if env_base:
-            USER_BASE = env_base
-        else:
-            USER_BASE = joinuser("~", ".local")
-        USER_SITE = os.path.join(USER_BASE, "lib",
-                                 "python" + sys.version[:3],
-                                 "site-packages")
+        USER_BASE = env_base if env_base else joinuser("~", ".local")
 
-    if ENABLE_USER_SITE and os.path.isdir(USER_SITE):
-        addsitedir(USER_SITE, known_paths)
+    return USER_BASE
+
+def getusersitepackages():
+    """Returns the user-specific site-packages directory path.
+
+    If the global variable ``USER_SITE`` is not initialized yet, this
+    function will also set it.
+    """
+    global USER_SITE
+    user_base = getuserbase() # this will also set USER_BASE
+
+    if USER_SITE is not None:
+        return USER_SITE
+
+    if os.name == "nt":
+        USER_SITE = os.path.join(user_base, "Python" + sys.version[0] +
+                                 sys.version[2], "site-packages")
+    else:
+        USER_SITE = os.path.join(user_base, "lib", "python" + sys.version[:3],
+                                "site-packages")
+
+    return USER_SITE
+
+def addusersitepackages(known_paths):
+    """Add a per user site-package to sys.path
+    Each user has its own python directory with site-packages in the
+    home directory.
+    """
+    user_site = getusersitepackages()
+
+    if ENABLE_USER_SITE and os.path.isdir(user_site):
+        addsitedir(user_site, known_paths)
     if ENABLE_USER_SITE:
-        for dist_libdir in ("lib", "local/lib"):
-            user_site = os.path.join(USER_BASE, dist_libdir,
-                                     "python" + sys.version[:3],
-                                     "dist-packages")
-            if os.path.isdir(user_site):
-                addsitedir(user_site, known_paths)
+        for dist_libdir in ('lib', 'local/lib'):
+            user_site = os.path.join(getuserbase(), dist_libdir,
+                                     'python' + sys.version[:3],
+                                     'dist-packages')
+        if os.path.isdir(user_site):
+            addsitedir(user_site, known_paths)
     return known_paths
-
-
 
 def setBEGINLIBPATH():
     """The OS/2 EMX port has optional extension modules that do double duty
