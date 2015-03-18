@@ -830,7 +830,7 @@ def find_wheels(projects, search_dirs):
     return wheels
 
 def install_wheel(project_names, py_executable, search_dirs=None,
-                  download=False):
+                  download=False, show_stdout=False):
     if search_dirs is None:
         search_dirs = file_search_dirs()
 
@@ -897,7 +897,7 @@ def install_wheel(project_names, py_executable, search_dirs=None,
         env["PIP_NO_INDEX"] = "1"
 
     try:
-        call_subprocess(cmd, show_stdout=False, extra_env=env, stdin=SCRIPT)
+        call_subprocess(cmd, show_stdout=show_stdout, extra_env=env, stdin=SCRIPT)
     finally:
         logger.indent -= 2
         logger.end_progress()
@@ -907,7 +907,7 @@ def create_environment(home_dir, site_packages=False, clear=False,
                        unzip_setuptools=False,
                        prompt=None, search_dirs=None, download=False,
                        no_setuptools=False, no_pip=False, no_wheel=False,
-                       symlink=True):
+                       symlink=True, show_stdout=False):
     """
     Creates a new environment in ``home_dir``.
 
@@ -942,6 +942,7 @@ def create_environment(home_dir, site_packages=False, clear=False,
             py_executable,
             search_dirs,
             download=download,
+            show_stdout=show_stdout,
         )
 
     install_activate(home_dir, bin_dir, prompt)
