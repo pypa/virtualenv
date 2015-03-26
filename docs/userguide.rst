@@ -136,6 +136,12 @@ This can be used if you have control over the global site-packages directory,
 and you want to depend on the packages there. If you want isolation from the
 global system, do not use this flag.
 
+If you need to change this setting after creating a virtual environment, you can remove 
+the file ``no-global-site-packages.txt`` from ``lib/python2.7/`` in the environments
+directory. An easy way to get there is with the ``cdsitepackages`` command with the 
+environment active, followed by ``cd ..``. To NOT use system site packages, simply create
+a file with that name again.
+
 Windows Notes
 ~~~~~~~~~~~~~
 
