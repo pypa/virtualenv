@@ -1681,6 +1681,38 @@ def fixup_scripts(home_dir, bin_dir):
         f.write('\n'.join(script).encode('utf-8'))
         f.close()
 
+
+def detect_encoding_position(lines):
+    """
+    according to https://www.python.org/dev/peps/pep-0263/
+
+    "a magic comment must
+    be placed into the source files either as first or second
+    line in the file."
+
+    and
+
+    "More precisely, the first or second line must match the regular
+    expression "coding[:=]\s*([-\w.]+)"'
+
+    lets try to find this magic comment in our file ...
+    """
+    for idx, line in list(enumerate(lines[:2])):
+        clean_line = line.strip()
+        if clean_line.startswith('#') and re.search(
+                r'coding[:=]\s*([-\w.]+)', line):
+            return idx + 1
+
+
+def detect_shebang_position(lines):
+    """ detecting line which contains shebang string
+    """
+    for idx, line in list(enumerate(lines)):
+        if re.search(r'^#!', line):
+            return idx + 1
+    return 1
+
+
 def relative_script(lines):
     "Return a script that'll work in a relocatable environment."
     activate = "import os; activate_this=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'activate_this.py'); exec(compile(open(activate_this).read(), activate_this, 'exec'), dict(__file__=activate_this)); del os, activate_this"
@@ -1693,7 +1725,17 @@ def relative_script(lines):
             break
     if activate_at is None:
         # Activate after the shebang.
-        activate_at = 1
+        # comments or magic encoding comment can go ahead shebang
+        activate_at = detect_shebang_position(lines)
+
+    # fixing situation, when there are no future imports,
+    # but magic coding comment are placed in first two lines
+    # https://www.python.org/dev/peps/pep-0263/
+
+    activate_at = max(
+        activate_at,
+        detect_encoding_position(lines)
+    )
     return lines[:activate_at] + ['', activate, ''] + lines[activate_at:]
 
 def fixup_pth_and_egg_link(home_dir, sys_path=None):

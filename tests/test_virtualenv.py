@@ -73,6 +73,84 @@ def test_activate_after_future_statements():
         'print("Hello, world!")'
     ]
 
+    # added encoding at second string
+    script = [
+        '#!/usr/bin/env python',
+        '# coding: utf-8',
+        'from __future__ import with_statement',
+        'from __future__ import print_function',
+        'print("Hello, world!")'
+    ]
+    assert virtualenv.relative_script(script) == [
+        '#!/usr/bin/env python',
+        '# coding: utf-8',
+        'from __future__ import with_statement',
+        'from __future__ import print_function',
+        '',
+        "import os; activate_this=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'activate_this.py'); exec(compile(open(activate_this).read(), activate_this, 'exec'), dict(__file__=activate_this)); del os, activate_this",
+        '',
+        'print("Hello, world!")'
+    ]
+
+    # added encoding at first string
+    script = [
+        '# coding: utf-8',
+        '#!/usr/bin/env python',
+        'from __future__ import with_statement',
+        'from __future__ import print_function',
+        'print("Hello, world!")'
+    ]
+    assert virtualenv.relative_script(script) == [
+        '# coding: utf-8',
+        '#!/usr/bin/env python',
+        'from __future__ import with_statement',
+        'from __future__ import print_function',
+        '',
+        "import os; activate_this=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'activate_this.py'); exec(compile(open(activate_this).read(), activate_this, 'exec'), dict(__file__=activate_this)); del os, activate_this",
+        '',
+        'print("Hello, world!")'
+    ]
+
+    # added encoding at first string
+    script = [
+        '# coding: utf-8',
+        '#!/usr/bin/env python',
+        'print("Hello, world!")'
+    ]
+
+    assert virtualenv.relative_script(script) == [
+        '# coding: utf-8',
+        '#!/usr/bin/env python',
+        '',
+        "import os; activate_this=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'activate_this.py'); exec(compile(open(activate_this).read(), activate_this, 'exec'), dict(__file__=activate_this)); del os, activate_this",
+        '',
+        'print("Hello, world!")'
+    ]
+
+    # some comments at the begining of the file and coding before shebang
+    script = [
+        '#################',
+        '# some comment1 #',
+        '#################',
+        '# coding: utf-8',
+        '# ONE MORE COMMENT',
+        '#!/usr/bin/env python',
+        'print("Hello, world!")'
+    ]
+
+    assert virtualenv.relative_script(script) == [
+        '#################',
+        '# some comment1 #',
+        '#################',
+        '# coding: utf-8',
+        '# ONE MORE COMMENT',
+        '#!/usr/bin/env python',
+        '',
+        "import os; activate_this=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'activate_this.py'); exec(compile(open(activate_this).read(), activate_this, 'exec'), dict(__file__=activate_this)); del os, activate_this",
+        '',
+        'print("Hello, world!")'
+    ]
+
 
 def test_cop_update_defaults_with_store_false():
     """store_false options need reverted logic"""
