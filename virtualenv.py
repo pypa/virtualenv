@@ -1702,7 +1702,7 @@ def detect_encoding_position(lines):
         if clean_line.startswith('#') and re.search(
                 r'coding[:=]\s*([-\w.]+)', line):
             return idx + 1
-
+    return 0
 
 def detect_shebang_position(lines):
     """ detecting line which contains shebang string
