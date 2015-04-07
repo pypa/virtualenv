@@ -1,6 +1,14 @@
 Release History
 ===============
 
+12.1.0 (unreleased)
+~~~~~~~~~~~~~~~~~~~
+
+* Upgrade setuptools to 15.0
+
+* Upgrade pip to 6.1.0
+
+
 12.0.7 (2015-02-04)
 -------------------
 
@@ -23,7 +31,7 @@ Release History
 * Upgrade setuptools to 11.0
 
 
-12.0.4 (2014-22-23)
+12.0.4 (2014-12-23)
 -------------------
 
 * Revert the fix to ``-p`` on Debian based pythons as it was broken in other
@@ -31,7 +39,7 @@ Release History
 
 * Revert several sys.path changes new in 12.0 which were breaking virtualenv.
 
-12.0.3 (2014-22-23)
+12.0.3 (2014-12-23)
 -------------------
 
 * Fix an issue where Debian based Pythons would fail when using -p with the
@@ -48,6 +56,7 @@ Release History
 -------------------
 
 * Upgraded pip to 6.0.1
+
 
 12.0 (2014-12-22)
 -----------------
