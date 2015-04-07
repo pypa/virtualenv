@@ -4,6 +4,9 @@ import os
 import shutil
 import sys
 import tempfile
+import pytest
+import platform  # noqa
+
 from mock import patch, Mock
 
 
@@ -123,6 +126,7 @@ def test_install_python_bin():
         shutil.rmtree(tmp_virtualenv)
 
 
+@pytest.mark.skipif("platform.python_implementation() == 'PyPy'")
 def test_always_copy_option():
     """Should be no symlinks in directory tree"""
     tmp_virtualenv = tempfile.mkdtemp()
