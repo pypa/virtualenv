@@ -1,7 +1,7 @@
 Release History
 ===============
 
-12.1.0 (unreleased)
+12.1.0 (2015-04-07)
 ~~~~~~~~~~~~~~~~~~~
 
 * Upgrade setuptools to 15.0
