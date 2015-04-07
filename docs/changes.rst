@@ -6,6 +6,8 @@ Release History
 
 * Upgrade setuptools to 15.0
 
+* Upgrade pip to 6.1.0
+
 
 12.0.7 (2015-02-04)
 -------------------
