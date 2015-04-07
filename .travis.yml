@@ -1,5 +1,7 @@
 language: python
 
+sudo: false
+
 env:
   - TOXENV=py26
   - TOXENV=py27
@@ -9,6 +11,9 @@ env:
   - TOXENV=pypy
   - TOXENV=pypy3
   - TOXENV=docs
+  - TOXENV=pep8
+  - TOXENV=py2pep8
+  - TOXENV=packaging
 
 install: pip install tox
 
