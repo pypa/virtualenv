@@ -990,7 +990,24 @@ def create_environment(home_dir, site_packages=False, clear=False,
         to_install = ['setuptools']
         if not no_pip:
             to_install.append('pip')
-        install_wheel(to_install, py_executable, search_dirs)
+        if is_jython and sys.version_info >= (2,7):
+            # Jython 2.7 MUST use its own pip (http://bugs.jython.org/issue2302)
+            # it also must have a JYTHONPATH instead of a PYTHONPATH, but since
+            # we're not putting wheels on the path anyway it doesn't matter.
+            # Note that there is no way to install a jython with only setuptools but no
+            # pip (since our bundled pip won't work on jython)
+            cmd = [
+                py_executable, '-m', 'ensurepip'
+            ]
+            logger.start_progress('Installing %s...' % (', '.join(to_install)))
+            logger.indent += 2
+            try:
+                call_subprocess(cmd, show_stdout=False)
+            finally:
+                logger.indent -= 2
+                logger.end_progress()
+        else:
+            install_wheel(to_install, py_executable, search_dirs)
 
     install_activate(home_dir, bin_dir, prompt)
 

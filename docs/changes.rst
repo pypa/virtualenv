@@ -4,6 +4,8 @@ Release History
 12.2.0 (unreleased)
 ~~~~~~~~~~~~~~~~~~~
 
+* Support Jython 2.7 using its bundled pip.
+
 
 12.1.1 (2015-04-07)
 ~~~~~~~~~~~~~~~~~~~
