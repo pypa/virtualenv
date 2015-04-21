@@ -955,6 +955,7 @@ def install_wheel(project_names, py_executable, search_dirs=None):
         call_subprocess(cmd, show_stdout=False,
             extra_env = {
                 'PYTHONPATH': pythonpath,
+                'JYTHONPATH': pythonpath,  # for Jython < 3.x
                 'PIP_FIND_LINKS': findlinks,
                 'PIP_USE_WHEEL': '1',
                 'PIP_PRE': '1',
