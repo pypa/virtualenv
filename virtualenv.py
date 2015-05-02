@@ -1349,6 +1349,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             make_exe(secondary_exe)
 
     if '.framework' in prefix:
+        original_python = None
         if 'Python.framework' in prefix:
             logger.debug('MacOSX Python framework detected')
             # Make sure we use the embedded interpreter inside
@@ -1361,38 +1362,39 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         if 'EPD' in prefix:
             logger.debug('EPD framework detected')
             original_python = os.path.join(prefix, 'bin/python')
-        shutil.copy(original_python, py_executable)
+        if original_python:
+            shutil.copy(original_python, py_executable)
 
-        # Copy the framework's dylib into the virtual
-        # environment
-        virtual_lib = os.path.join(home_dir, '.Python')
+            # Copy the framework's dylib into the virtual
+            # environment
+            virtual_lib = os.path.join(home_dir, '.Python')
 
-        if os.path.exists(virtual_lib):
-            os.unlink(virtual_lib)
-        copyfile(
-            os.path.join(prefix, 'Python'),
-            virtual_lib,
-            symlink)
+            if os.path.exists(virtual_lib):
+                os.unlink(virtual_lib)
+            copyfile(
+                os.path.join(prefix, 'Python'),
+                virtual_lib,
+                symlink)
 
-        # And then change the install_name of the copied python executable
-        try:
-            mach_o_change(py_executable,
-                          os.path.join(prefix, 'Python'),
-                          '@executable_path/../.Python')
-        except:
-            e = sys.exc_info()[1]
-            logger.warn("Could not call mach_o_change: %s. "
-                        "Trying to call install_name_tool instead." % e)
+            # And then change the install_name of the copied python executable
             try:
-                call_subprocess(
-                    ["install_name_tool", "-change",
-                     os.path.join(prefix, 'Python'),
-                     '@executable_path/../.Python',
-                     py_executable])
+                mach_o_change(py_executable,
+                              os.path.join(prefix, 'Python'),
+                              '@executable_path/../.Python')
             except:
-                logger.fatal("Could not call install_name_tool -- you must "
-                             "have Apple's development tools installed")
-                raise
+                e = sys.exc_info()[1]
+                logger.warn("Could not call mach_o_change: %s. "
+                            "Trying to call install_name_tool instead." % e)
+                try:
+                    call_subprocess(
+                        ["install_name_tool", "-change",
+                         os.path.join(prefix, 'Python'),
+                         '@executable_path/../.Python',
+                         py_executable])
+                except:
+                    logger.fatal("Could not call install_name_tool -- you must "
+                                 "have Apple's development tools installed")
+                    raise
 
     if not is_win:
         # Ensure that 'python', 'pythonX' and 'pythonX.Y' all exist
