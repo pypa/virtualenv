@@ -46,6 +46,10 @@ is_pypy = hasattr(sys, 'pypy_version_info')
 is_win = (sys.platform == 'win32')
 is_cygwin = (sys.platform == 'cygwin')
 is_darwin = (sys.platform == 'darwin')
+is_lib64 = False
+if [p for p in distutils.sysconfig.get_config_vars().values()
+    if isinstance(p, basestring) and 'lib64' in p]:
+    is_lib64 = True
 abiflags = getattr(sys, 'abiflags', '')
 
 user_dir = os.path.expanduser('~')
@@ -979,11 +983,11 @@ def create_environment(home_dir, site_packages=False, clear=False,
     If ``clear`` is true (default False) then the environment will
     first be cleared.
     """
-    home_dir, lib_dir, inc_dir, bin_dir = path_locations(home_dir)
+    home_dir, lib_dir, inc_dir, bin_dir, lib64_dir = path_locations(home_dir)
 
     py_executable = os.path.abspath(install_python(
         home_dir, lib_dir, inc_dir, bin_dir,
-        site_packages=site_packages, clear=clear, symlink=symlink))
+        site_packages=site_packages, clear=clear, lib64_dir=lib64_dir, symlink=symlink))
 
     install_distutils(home_dir)
 
@@ -1001,6 +1005,7 @@ def is_executable_file(fpath):
 def path_locations(home_dir):
     """Return the path locations for the environment (where libraries are,
     where scripts go, etc)"""
+    lib64_dir = None
     # XXX: We'd use distutils.sysconfig.get_python_inc/lib but its
     # prefix arg is broken: http://bugs.python.org/issue3386
     if is_win:
@@ -1037,6 +1042,7 @@ def path_locations(home_dir):
         bin_dir = join(home_dir, 'bin')
     elif not is_win:
         lib_dir = join(home_dir, 'lib', py_version)
+        lib64_dir = join(home_dir, 'lib64', py_version)
         multiarch_exec = '/usr/bin/multiarch-platform'
         if is_executable_file(multiarch_exec):
             # In Mageia (2) and Mandriva distros the include dir must be like:
@@ -1049,7 +1055,7 @@ def path_locations(home_dir):
         else:
             inc_dir = join(home_dir, 'include', py_version + abiflags)
         bin_dir = join(home_dir, 'bin')
-    return home_dir, lib_dir, inc_dir, bin_dir
+    return home_dir, lib_dir, inc_dir, bin_dir, lib64_dir
 
 
 def change_prefix(filename, dst_prefix):
@@ -1137,7 +1143,7 @@ def subst_path(prefix_path, prefix, home_dir):
     return prefix_path.replace(prefix, home_dir, 1)
 
 
-def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, symlink=True):
+def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, lib64_dir=None, symlink=True):
     """Install just the base environment, no distutils patches etc"""
     if sys.executable.startswith(bin_dir):
         print('Please use the *system* python to run this script')
@@ -1145,6 +1151,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
 
     if clear:
         rmtree(lib_dir)
+        if is_lib64:
+            rmtree(lib64_dir)
         ## FIXME: why not delete it?
         ## Maybe it should delete everything with #!/path/to/venv/python in it
         logger.notify('Not deleting %s', bin_dir)
@@ -1158,7 +1166,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     else:
         prefix = sys.prefix
     mkdir(lib_dir)
-    fix_lib64(lib_dir, symlink)
+    if is_lib64:
+        mkdir(lib64_dir)
     stdlib_dirs = [os.path.dirname(os.__file__)]
     if is_win:
         stdlib_dirs.append(join(os.path.dirname(stdlib_dirs[0]), 'DLLs'))
@@ -1177,12 +1186,18 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             for fn in os.listdir(stdlib_dir):
                 bn = os.path.splitext(fn)[0]
                 if fn != 'site-packages' and bn in REQUIRED_FILES:
-                    copyfile(join(stdlib_dir, fn), join(lib_dir, fn), symlink)
+                    logger.info('stdlib_dir = %s, fn = %s' % (stdlib_dir, fn))
+                    if stdlib_dir.find('lib64') != -1 and is_lib64:
+                        copyfile(join(stdlib_dir, fn), join(lib64_dir, fn), symlink)
+                    else:
+                        copyfile(join(stdlib_dir, fn), join(lib_dir, fn), symlink)
         # ...and modules
         copy_required_modules(home_dir, symlink)
     finally:
         logger.indent -= 2
     mkdir(join(lib_dir, 'site-packages'))
+    if is_lib64:
+        mkdir(join(lib64_dir, 'site-packages'))
     import site
     site_filename = site.__file__
     if site_filename.endswith('.pyc'):
@@ -1550,37 +1565,6 @@ def fix_local_scheme(home_dir, symlink=True):
                     copyfile(os.path.abspath(os.path.join(home_dir, subdir_name)), \
                                                             os.path.join(local_path, subdir_name), symlink)
 
-def fix_lib64(lib_dir, symlink=True):
-    """
-    Some platforms (particularly Gentoo on x64) put things in lib64/pythonX.Y
-    instead of lib/pythonX.Y.  If this is such a platform we'll just create a
-    symlink so lib64 points to lib
-    """
-    if [p for p in distutils.sysconfig.get_config_vars().values()
-        if isinstance(p, basestring) and 'lib64' in p]:
-        # PyPy's library path scheme is not affected by this.
-        # Return early or we will die on the following assert.
-        if is_pypy:
-            logger.debug('PyPy detected, skipping lib64 symlinking')
-            return
-
-        logger.debug('This system uses lib64; symlinking lib64 to lib')
-
-        assert os.path.basename(lib_dir) == 'python%s' % sys.version[:3], (
-            "Unexpected python lib dir: %r" % lib_dir)
-        lib_parent = os.path.dirname(lib_dir)
-        top_level = os.path.dirname(lib_parent)
-        lib_dir = os.path.join(top_level, 'lib')
-        lib64_link = os.path.join(top_level, 'lib64')
-        assert os.path.basename(lib_parent) == 'lib', (
-            "Unexpected parent dir: %r" % lib_parent)
-        if os.path.lexists(lib64_link):
-            return
-        if symlink:
-            os.symlink('lib', lib64_link)
-        else:
-            copyfile('lib', lib64_link)
-
 def resolve_interpreter(exe):
     """
     If the executable given isn't an absolute path, search $PATH for the interpreter
@@ -1617,7 +1601,7 @@ def make_environment_relocatable(home_dir):
     Makes the already-existing environment use relative paths, and takes out
     the #!-based environment selection in scripts.
     """
-    home_dir, lib_dir, inc_dir, bin_dir = path_locations(home_dir)
+    home_dir, lib_dir, inc_dir, bin_dir, lib64_dir = path_locations(home_dir)
     activate_this = os.path.join(bin_dir, 'activate_this.py')
     if not os.path.exists(activate_this):
         logger.fatal(
