@@ -473,6 +473,7 @@ def copyfile(src, dest, symlink=True):
     if symlink and hasattr(os, 'symlink') and not is_win:
         logger.info('Symlinking %s', dest)
         try:
+            srcpath = os.path.relpath(srcpath, os.path.dirname(os.path.abspath(dest)))
             os.symlink(srcpath, dest)
         except (OSError, NotImplementedError):
             logger.info('Symlinking failed, copying to %s', dest)
