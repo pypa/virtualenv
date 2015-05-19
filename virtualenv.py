@@ -1127,6 +1127,13 @@ def copy_required_modules(dst_prefix, symlink):
                         copyfile(filename + 'c', dst_filename + 'c', symlink)
                     if os.path.exists(filename + 'o'):
                         copyfile(filename + 'o', dst_filename + 'o', symlink)
+                    pycachename = join(os.path.dirname(filename),'__pycache__',modname + '.' + imp.get_tag() + '.py')
+                    dst_pycachename = change_prefix(pycachename, dst_prefix)
+                    logger.info("Checking: %s" % pycachename + 'c')
+                    if os.path.exists(pycachename + 'c'):
+                        copyfile(pycachename + 'c', dst_pycachename + 'c', symlink)
+                    if os.path.exists(pycachename + 'o'):
+                        copyfile(pycachename + 'o', dst_pycachename + 'o', symlink)
     finally:
         sys.path = _prev_sys_path
 
