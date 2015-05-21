@@ -1185,7 +1185,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     mkdir(join(lib_dir, 'site-packages'))
     import site
     site_filename = site.__file__
-    if site_filename.endswith('.pyc'):
+    if site_filename.endswith('.pyc') or site_filename.endswith('.pyo'):
         site_filename = site_filename[:-1]
     elif site_filename.endswith('$py.class'):
         site_filename = site_filename.replace('$py.class', '.py')
