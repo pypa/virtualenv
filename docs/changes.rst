@@ -1,7 +1,7 @@
 Release History
 ===============
 
-13.0.0 (unreleased)
+13.0.0 (2015-05-21)
 ~~~~~~~~~~~~~~~~~~~
 
 * Automatically install wheel when creating a new virutalenv. This can be
