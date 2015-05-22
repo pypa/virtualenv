@@ -76,6 +76,10 @@ Options
 
    Do not install pip in the new virtualenv.
 
+.. option:: --no-wheel
+
+   Do not install wheel in the new virtualenv.
+
 .. option:: --extra-search-dir=DIR
 
    Directory to look for setuptools/pip distributions in.
