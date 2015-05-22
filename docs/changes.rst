@@ -7,6 +7,13 @@ Release History
 * Automatically install wheel when creating a new virutalenv. This can be
   disabled by using the ``--no-wheel`` option.
 
+* Don't trust the current directory as a location to discover files to install
+  packages from.
+
+* Upgrade setuptools to 16.0.
+
+* Upgrade pip to 7.0.0.
+
 
 12.1.1 (2015-04-07)
 ~~~~~~~~~~~~~~~~~~~
