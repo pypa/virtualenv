@@ -1,8 +1,12 @@
 Release History
 ===============
 
-13.1.0 (unreleased)
+13.1.0 (2015-06-30)
 ~~~~~~~~~~~~~~~~~~~
+
+* Upgrade pip to 7.1.0
+
+* Upgrade setuptools to 18.0.1
 
 
 13.0.3 (2015-06-01)
