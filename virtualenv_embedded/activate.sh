@@ -36,6 +36,10 @@ deactivate () {
     fi
 }
 
+set_custom_ps1() {
+    PS1="${VIRTUAL_ENV_PS1//VIRTUAL_ENV_NAME/$VIRTUAL_ENV_NAME}"
+}
+
 # unset irrelevant variables
 deactivate nondestructive
 
@@ -56,16 +60,29 @@ fi
 
 if [ -z "$VIRTUAL_ENV_DISABLE_PROMPT" ] ; then
     _OLD_VIRTUAL_PS1="$PS1"
+
     if [ "x__VIRTUAL_PROMPT__" != x ] ; then
         PS1="__VIRTUAL_PROMPT__$PS1"
-    else
-    if [ "`basename \"$VIRTUAL_ENV\"`" = "__" ] ; then
+
+    elif [ "$(basename "$VIRTUAL_ENV")" = "__" ] ; then
         # special case for Aspen magic directories
         # see http://www.zetadev.com/software/aspen/
-        PS1="[`basename \`dirname \"$VIRTUAL_ENV\"\``] $PS1"
+        VIRTUAL_ENV_NAME="$(basename "$(dirname "$VIRTUAL_ENV")")"
+
+        if [ -n "$VIRTUAL_ENV_PS1" ]; then
+            set_custom_ps1
+        else
+            PS1="[$VIRTUAL_ENV_NAME] $PS1"
+        fi
+
     else
-        PS1="(`basename \"$VIRTUAL_ENV\"`)$PS1"
-    fi
+        VIRTUAL_ENV_NAME="$(basename "$VIRTUAL_ENV")"
+
+        if [ -n "$VIRTUAL_ENV_PS1" ]; then
+            set_custom_ps1
+        else
+            PS1="($VIRTUAL_ENV_NAME)$PS1"
+        fi
     fi
     export PS1
 fi
