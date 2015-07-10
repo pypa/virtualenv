@@ -5,12 +5,12 @@ deactivate () {
     unset pydoc
 
     # reset old environment variables
-    if [ -n "$_OLD_VIRTUAL_PATH" ] ; then
+    if ! [ -z "${_OLD_VIRTUAL_PATH+x}" ] ; then
         PATH="$_OLD_VIRTUAL_PATH"
         export PATH
         unset _OLD_VIRTUAL_PATH
     fi
-    if [ -n "$_OLD_VIRTUAL_PYTHONHOME" ] ; then
+    if ! [ -z "${_OLD_VIRTUAL_PYTHONHOME+x}" ] ; then
         PYTHONHOME="$_OLD_VIRTUAL_PYTHONHOME"
         export PYTHONHOME
         unset _OLD_VIRTUAL_PYTHONHOME
@@ -23,7 +23,7 @@ deactivate () {
         hash -r 2>/dev/null
     fi
 
-    if [ -n "$_OLD_VIRTUAL_PS1" ] ; then
+    if ! [ -z "${_OLD_VIRTUAL_PS1+x}" ] ; then
         PS1="$_OLD_VIRTUAL_PS1"
         export PS1
         unset _OLD_VIRTUAL_PS1
@@ -46,10 +46,8 @@ _OLD_VIRTUAL_PATH="$PATH"
 PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
 export PATH
 
-# unset PYTHONHOME if set
-# this will fail if PYTHONHOME is set to the empty string (which is bad anyway)
-# could use `if (set -u; : $PYTHONHOME) ;` in bash
-if [ -n "$PYTHONHOME" ] ; then
+# Unset PYTHONHOME if set.
+if ! [ -z ${PYTHONHOME+x} ] ; then
     _OLD_VIRTUAL_PYTHONHOME="$PYTHONHOME"
     unset PYTHONHOME
 fi
