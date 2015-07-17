@@ -6,13 +6,11 @@ deactivate () {
 
     # reset old environment variables
     if [ -n "$_OLD_VIRTUAL_PATH" ] ; then
-        PATH="$_OLD_VIRTUAL_PATH"
-        export PATH
+        export PATH="$_OLD_VIRTUAL_PATH"
         unset _OLD_VIRTUAL_PATH
     fi
     if [ -n "$_OLD_VIRTUAL_PYTHONHOME" ] ; then
-        PYTHONHOME="$_OLD_VIRTUAL_PYTHONHOME"
-        export PYTHONHOME
+        export PYTHONHOME="$_OLD_VIRTUAL_PYTHONHOME"
         unset _OLD_VIRTUAL_PYTHONHOME
     fi
 
@@ -25,7 +23,6 @@ deactivate () {
 
     if [ -n "$_OLD_VIRTUAL_PS1" ] ; then
         PS1="$_OLD_VIRTUAL_PS1"
-        export PS1
         unset _OLD_VIRTUAL_PS1
     fi
 
@@ -33,42 +30,53 @@ deactivate () {
     if [ ! "$1" = "nondestructive" ] ; then
     # Self destruct!
         unset -f deactivate
+        unset -f set_venv_prompt
+        unalias bash
     fi
 }
+
+# export deactivate for subshells
+typeset -fx deactivate
 
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="__VIRTUAL_ENV__"
-export VIRTUAL_ENV
+export VIRTUAL_ENV="__VIRTUAL_ENV__"
 
-_OLD_VIRTUAL_PATH="$PATH"
-PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
-export PATH
+export _OLD_VIRTUAL_PATH="$PATH"
+export PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
 
 # unset PYTHONHOME if set
 # this will fail if PYTHONHOME is set to the empty string (which is bad anyway)
 # could use `if (set -u; : $PYTHONHOME) ;` in bash
 if [ -n "$PYTHONHOME" ] ; then
-    _OLD_VIRTUAL_PYTHONHOME="$PYTHONHOME"
+    export _OLD_VIRTUAL_PYTHONHOME="$PYTHONHOME"
     unset PYTHONHOME
 fi
 
-if [ -z "$VIRTUAL_ENV_DISABLE_PROMPT" ] ; then
-    _OLD_VIRTUAL_PS1="$PS1"
-    if [ "x__VIRTUAL_PROMPT__" != x ] ; then
-        PS1="__VIRTUAL_PROMPT__$PS1"
-    else
-    if [ "`basename \"$VIRTUAL_ENV\"`" = "__" ] ; then
-        # special case for Aspen magic directories
-        # see http://www.zetadev.com/software/aspen/
-        PS1="[`basename \`dirname \"$VIRTUAL_ENV\"\``] $PS1"
-    else
-        PS1="(`basename \"$VIRTUAL_ENV\"`)$PS1"
+#Sets the prompt to show virtualenv is active
+set_venv_prompt () {
+    if [ -z "$VIRTUAL_ENV_DISABLE_PROMPT" ] && [ -n "$VIRTUAL_ENV" ] ; then
+        export _OLD_VIRTUAL_PS1="$PS1"
+        if [ "x__VIRTUAL_PROMPT__" != x ] ; then
+            PS1="__VIRTUAL_PROMPT__$PS1"
+        else
+            if [ "`basename \"$VIRTUAL_ENV\"`" = "__" ] ; then
+                # special case for Aspen magic directories
+                # see http://www.zetadev.com/software/aspen/
+                PS1="[`basename \`dirname \"$VIRTUAL_ENV\"\``] $PS1"
+            else
+                PS1="(`basename \"$VIRTUAL_ENV\"`)$PS1"
+            fi
+        fi
+	alias bash='tmprc="`mktemp`" && echo -e "if [ -f ~/.bashrc ]; then . ~/.bashrc; fi\nset_venv_prompt" > ${tmprc} && bash --rcfile ${tmprc}'
     fi
-    fi
-    export PS1
-fi
+}
+
+# export set_venv_prompt for subshells
+typeset -fx set_venv_prompt
+
+set_venv_prompt
 
 alias pydoc="python -m pydoc"
 
