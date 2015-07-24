@@ -69,6 +69,7 @@ if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
         if test -n "__VIRTUAL_PROMPT__"
             printf "%s%s" "__VIRTUAL_PROMPT__" (set_color normal)
             _write_prompt $rendered_old_prompt
+            return
         end
         # ...Otherwise, prepend env
         set -l _checkbase (basename "$VIRTUAL_ENV")
