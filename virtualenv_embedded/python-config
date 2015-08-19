@@ -3,14 +3,18 @@
 import sys
 import os
 import getopt
-from distutils import sysconfig
+import sysconfig
 
 valid_opts = ['prefix', 'exec-prefix', 'includes', 'libs', 'cflags',
-              'ldflags', 'help']
+              'ldflags', 'extension-suffix', 'help', 'abiflags', 'configdir']
+
+# sys.abiflags was introduced in Python 3.2
+if not getattr(sys, 'abiflags', None):
+    valid_opts.remove('abiflags')
 
 def exit_with_usage(code=1):
-    print >>sys.stderr, "Usage: %s [%s]" % (sys.argv[0],
-                                            '|'.join('--'+opt for opt in valid_opts))
+    sys.stderr.write("Usage: {0} [{1}]\n".format(
+        sys.argv[0], '|'.join('--'+opt for opt in valid_opts)))
     sys.exit(code)
 
 try:
@@ -31,25 +35,42 @@ if '--help' in opt_flags:
 
 for opt in opt_flags:
     if opt == '--prefix':
-        print sysconfig.PREFIX
+        print(sysconfig.get_config_var('prefix'))
 
     elif opt == '--exec-prefix':
-        print sysconfig.EXEC_PREFIX
+        print(sysconfig.get_config_var('exec_prefix'))
 
     elif opt in ('--includes', '--cflags'):
-        flags = ['-I' + sysconfig.get_python_inc(),
-                 '-I' + sysconfig.get_python_inc(plat_specific=True)]
+        flags = ['-I' + sysconfig.get_path('include'),
+                 '-I' + sysconfig.get_path('platinclude')]
         if opt == '--cflags':
             flags.extend(getvar('CFLAGS').split())
-        print ' '.join(flags)
+        print(' '.join(flags))
 
     elif opt in ('--libs', '--ldflags'):
-        libs = getvar('LIBS').split() + getvar('SYSLIBS').split()
-        libs.append('-lpython'+pyver)
+        abiflags = getattr(sys, 'abiflags', '')
+        libs = ['-lpython' + pyver + abiflags]
+        libs += getvar('LIBS').split()
+        libs += getvar('SYSLIBS').split()
         # add the prefix/lib/pythonX.Y/config dir, but only if there is no
         # shared library in prefix/lib/.
         if opt == '--ldflags':
             if not getvar('Py_ENABLE_SHARED'):
                 libs.insert(0, '-L' + getvar('LIBPL'))
-            libs.extend(getvar('LINKFORSHARED').split())
-        print ' '.join(libs)
+            if not getvar('PYTHONFRAMEWORK'):
+                libs.extend(getvar('LINKFORSHARED').split())
+        print(' '.join(libs))
+
+    elif opt == '--extension-suffix':
+        ext_suffix = sysconfig.get_config_var('EXT_SUFFIX')
+        if ext_suffix is None:
+            ext_suffix = sysconfig.get_config_var('SO')
+        print(ext_suffix)
+
+    elif opt == '--abiflags':
+        if not getattr(sys, 'abiflags', None):
+            exit_with_usage()
+        print(sys.abiflags)
+
+    elif opt == '--configdir':
+        print(sysconfig.get_config_var('LIBPL'))
