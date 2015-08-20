@@ -5,12 +5,12 @@ deactivate () {
     unset pydoc
 
     # reset old environment variables
-    if [ -n "$_OLD_VIRTUAL_PATH" ] ; then
+    if [ -n "${_OLD_VIRTUAL_PATH-}" ] ; then
         PATH="$_OLD_VIRTUAL_PATH"
         export PATH
         unset _OLD_VIRTUAL_PATH
     fi
-    if [ -n "$_OLD_VIRTUAL_PYTHONHOME" ] ; then
+    if [ -n "${_OLD_VIRTUAL_PYTHONHOME-}" ] ; then
         PYTHONHOME="$_OLD_VIRTUAL_PYTHONHOME"
         export PYTHONHOME
         unset _OLD_VIRTUAL_PYTHONHOME
@@ -19,18 +19,18 @@ deactivate () {
     # This should detect bash and zsh, which have a hash command that must
     # be called to get it to forget past commands.  Without forgetting
     # past commands the $PATH changes we made may not be respected
-    if [ -n "$BASH" -o -n "$ZSH_VERSION" ] ; then
+    if [ -n "${BASH-}" -o -n "${ZSH_VERSION-}" ] ; then
         hash -r 2>/dev/null
     fi
 
-    if [ -n "$_OLD_VIRTUAL_PS1" ] ; then
+    if [ -n "${_OLD_VIRTUAL_PS1-}" ] ; then
         PS1="$_OLD_VIRTUAL_PS1"
         export PS1
         unset _OLD_VIRTUAL_PS1
     fi
 
     unset VIRTUAL_ENV
-    if [ ! "$1" = "nondestructive" ] ; then
+    if [ ! "${1-}" = "nondestructive" ] ; then
     # Self destruct!
         unset -f deactivate
     fi
@@ -49,12 +49,12 @@ export PATH
 # unset PYTHONHOME if set
 # this will fail if PYTHONHOME is set to the empty string (which is bad anyway)
 # could use `if (set -u; : $PYTHONHOME) ;` in bash
-if [ -n "$PYTHONHOME" ] ; then
+if [ -n "${PYTHONHOME-}" ] ; then
     _OLD_VIRTUAL_PYTHONHOME="$PYTHONHOME"
     unset PYTHONHOME
 fi
 
-if [ -z "$VIRTUAL_ENV_DISABLE_PROMPT" ] ; then
+if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] ; then
     _OLD_VIRTUAL_PS1="$PS1"
     if [ "x__VIRTUAL_PROMPT__" != x ] ; then
         PS1="__VIRTUAL_PROMPT__$PS1"
@@ -75,6 +75,6 @@ alias pydoc="python -m pydoc"
 # This should detect bash and zsh, which have a hash command that must
 # be called to get it to forget past commands.  Without forgetting
 # past commands the $PATH changes we made may not be respected
-if [ -n "$BASH" -o -n "$ZSH_VERSION" ] ; then
+if [ -n "${BASH-}" -o -n "${ZSH_VERSION-}" ] ; then
     hash -r 2>/dev/null
 fi

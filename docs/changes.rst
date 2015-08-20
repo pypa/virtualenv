@@ -1,6 +1,15 @@
 Release History
 ===============
 
+13.1.1 (2015-08-20)
+~~~~~~~~~~~~~~~~~~~
+
+* Upgrade pip to 7.1.1.
+
+* Upgrade setuptools to 18.2.
+
+* Make the activate script safe to use when bash is running with ``-u``.
+
 13.1.0 (2015-06-30)
 ~~~~~~~~~~~~~~~~~~~
 
