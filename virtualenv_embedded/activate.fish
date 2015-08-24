@@ -51,10 +51,24 @@ if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
     
     # with the original prompt function copied, we can override with our own.
     function fish_prompt
+        # Get the old prompt right away, to capture the $status
+        set -l rendered_old_prompt (_old_fish_prompt)
+        
+        # This function reconstructs a multi-line prompt. It is erased later.
+        # This is needed because fish splits commands into arrays on newline
+        function _write_prompt
+            printf '%s' $argv[1]
+            if test (count $argv) -gt 1
+                for part in $argv[2..-1]
+                    printf '\n%s' $part
+                end
+            end
+        end
+        
         # Prompt override?
         if test -n "__VIRTUAL_PROMPT__"
             printf "%s%s" "__VIRTUAL_PROMPT__" (set_color normal)
-            _old_fish_prompt
+            _write_prompt $rendered_old_prompt
             return
         end
         # ...Otherwise, prepend env
@@ -62,12 +76,13 @@ if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
         if test $_checkbase = "__"
             # special case for Aspen magic directories
             # see http://www.zetadev.com/software/aspen/
-            printf "%s[%s]%s " (set_color -b blue white) (basename (dirname "$VIRTUAL_ENV")) (set_color normal) 
-            _old_fish_prompt
+            printf "%s[%s]%s " (set_color -b blue white) (basename (dirname "$VIRTUAL_ENV")) (set_color normal)
+            _write_prompt $rendered_old_prompt
         else
             printf "%s(%s)%s" (set_color -b blue white) (basename "$VIRTUAL_ENV") (set_color normal)
-            _old_fish_prompt
+            _write_prompt $rendered_old_prompt
         end
+        functions -e _write_prompt
     end 
     
     set -gx _OLD_FISH_PROMPT_OVERRIDE "$VIRTUAL_ENV"
