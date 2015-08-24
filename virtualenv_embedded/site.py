@@ -551,8 +551,10 @@ def execsitecustomize():
 
 def virtual_install_main_packages():
     f = open(os.path.join(os.path.dirname(__file__), 'orig-prefix.txt'))
-    sys.real_prefix = f.read().strip()
+    p, ep = f.readlines()
     f.close()
+    sys.real_prefix = p.strip()
+    sys.real_exec_prefix = ep.strip()
     pos = 2
     hardcoded_relative_dirs = []
     if sys.path[0] == '':

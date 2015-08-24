@@ -74,7 +74,7 @@ dist.Distribution.find_config_files = find_config_files
 old_get_python_inc = sysconfig.get_python_inc
 def sysconfig_get_python_inc(plat_specific=0, prefix=None):
     if prefix is None:
-        prefix = sys.real_prefix
+        prefix = plat_specific and sys.real_exec_prefix or sys.real_prefix
     return old_get_python_inc(plat_specific, prefix)
 sysconfig_get_python_inc.__doc__ = old_get_python_inc.__doc__
 sysconfig.get_python_inc = sysconfig_get_python_inc
@@ -82,7 +82,7 @@ sysconfig.get_python_inc = sysconfig_get_python_inc
 old_get_python_lib = sysconfig.get_python_lib
 def sysconfig_get_python_lib(plat_specific=0, standard_lib=0, prefix=None):
     if standard_lib and prefix is None:
-        prefix = sys.real_prefix
+        prefix = plat_specific and sys.real_exec_prefix or sys.real_prefix
     return old_get_python_lib(plat_specific, standard_lib, prefix)
 sysconfig_get_python_lib.__doc__ = old_get_python_lib.__doc__
 sysconfig.get_python_lib = sysconfig_get_python_lib
