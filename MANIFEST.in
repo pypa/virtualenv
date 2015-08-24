@@ -1,6 +1,7 @@
 recursive-include bin *
 recursive-include docs *
 recursive-include scripts *
+recursive-include tests *.py *.ini *.output *.sh
 recursive-include virtualenv_support *.whl
 recursive-include virtualenv_embedded *
 recursive-exclude docs/_templates *
