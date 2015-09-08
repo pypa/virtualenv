@@ -3,7 +3,10 @@
 
 deactivate () {
     unset pydoc
-
+    if [[ $- =~ 'u' ]] ; then
+        UNSET_OPTION=1
+        set +u
+    fi
     # reset old environment variables
     if [ -n "${_OLD_VIRTUAL_PATH-}" ] ; then
         PATH="$_OLD_VIRTUAL_PATH"
@@ -34,7 +37,17 @@ deactivate () {
     # Self destruct!
         unset -f deactivate
     fi
+    
+    if [ -n $UNSET_OPTION ] ; then 
+        set -u
+        unset UNSET_OPTION
+    fi
 }
+
+if [[ $- =~ 'u' ]] ; then
+    UNSET_OPTION=1
+    set +u
+fi
 
 # unset irrelevant variables
 deactivate nondestructive
@@ -77,4 +90,9 @@ alias pydoc="python -m pydoc"
 # past commands the $PATH changes we made may not be respected
 if [ -n "${BASH-}" -o -n "${ZSH_VERSION-}" ] ; then
     hash -r 2>/dev/null
+fi
+
+if [ -n $UNSET_OPTION ] ; then 
+    set -u
+    unset UNSET_OPTION
 fi
