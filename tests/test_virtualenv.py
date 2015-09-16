@@ -104,10 +104,10 @@ def test_install_python_bin():
     """Should create the right python executables and links"""
     tmp_virtualenv = tempfile.mkdtemp()
     try:
-        home_dir, lib_dir, inc_dir, bin_dir = \
+        home_dir, lib_dir, inc_dir, bin_dir, lib64_dir = \
                                 virtualenv.path_locations(tmp_virtualenv)
         virtualenv.install_python(home_dir, lib_dir, inc_dir, bin_dir, False,
-                                  False)
+                                  False, lib64_dir=lib64_dir)
 
         if virtualenv.is_win:
             required_executables = [ 'python.exe', 'pythonw.exe']
