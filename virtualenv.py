@@ -13,7 +13,6 @@ import optparse
 import re
 import shutil
 import logging
-import tempfile
 import zlib
 import errno
 import glob
@@ -21,7 +20,6 @@ import distutils.sysconfig
 from distutils.util import strtobool
 import struct
 import subprocess
-import tarfile
 
 if sys.version_info < (2, 6):
     print('ERROR: %s' % sys.exc_info()[1])
