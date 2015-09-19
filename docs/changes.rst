@@ -2,7 +2,7 @@ Release History
 ===============
 
 13.2.0 (unreleased)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Added support for ``python-config`` script
 
@@ -13,12 +13,12 @@ Release History
 * Updated activate.fish (PR #589)
 
 13.1.2 (2015-08-23)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 7.1.2.
 
 13.1.1 (2015-08-20)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 7.1.1.
 
@@ -27,7 +27,7 @@ Release History
 * Make the activate script safe to use when bash is running with ``-u``.
 
 13.1.0 (2015-06-30)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 7.1.0
 
@@ -35,13 +35,13 @@ Release History
 
 
 13.0.3 (2015-06-01)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 7.0.3
 
 
 13.0.2 (2015-06-01)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 7.0.2
 
@@ -49,13 +49,13 @@ Release History
 
 
 13.0.1 (2015-05-22)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 7.0.1
 
 
 13.0.0 (2015-05-21)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Automatically install wheel when creating a new virutalenv. This can be
   disabled by using the ``--no-wheel`` option.
@@ -69,13 +69,13 @@ Release History
 
 
 12.1.1 (2015-04-07)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 6.1.1
 
 
 12.1.0 (2015-04-07)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade setuptools to 15.0
 
