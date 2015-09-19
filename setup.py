@@ -15,7 +15,7 @@ try:
 
         def initialize_options(self):
             TestCommand.initialize_options(self)
-            self.pytest_args = None
+            self.pytest_args = []
 
         def finalize_options(self):
             TestCommand.finalize_options(self)
