@@ -14,6 +14,8 @@ Release History
 
 * Account for a ``site.pyo`` correctly in some python implementations
 
+* Properly restore an empty PS1
+
 13.1.2 (2015-08-23)
 -------------------
 
