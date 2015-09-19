@@ -12,6 +12,8 @@ Release History
 
 * Updated activate.fish (PR #589)
 
+* Account for a ``site.pyo`` correctly in some python implementations
+
 13.1.2 (2015-08-23)
 -------------------
 
