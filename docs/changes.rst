@@ -16,6 +16,8 @@ Release History
 
 * Properly restore an empty PS1
 
+* Properly unalias ``pydoc`` when deactivating (PR #724)
+
 13.1.2 (2015-08-23)
 -------------------
 
