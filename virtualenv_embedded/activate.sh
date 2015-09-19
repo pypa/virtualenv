@@ -2,7 +2,7 @@
 # you cannot run it directly
 
 deactivate () {
-    unset pydoc
+    unalias pydoc
 
     # reset old environment variables
     if ! [ -z "${_OLD_VIRTUAL_PATH+_}" ] ; then
