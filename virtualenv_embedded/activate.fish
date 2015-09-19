@@ -45,7 +45,7 @@ if set -q PYTHONHOME
     set -e PYTHONHOME
 end
 
-if test \( -z $VIRTUALENV_DISABLE_PROMPT \) -o \( -z $VIRTUAL_ENV_DISABLE_PROMPT \)
+if test \( -z $VIRTUAL_ENV_DISABLE_PROMPT \)
     # Copy the current `fish_prompt` function as `_old_fish_prompt`.
     functions -c fish_prompt _old_fish_prompt
 
