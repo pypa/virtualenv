@@ -4,11 +4,13 @@ Release History
 13.2.0 (unreleased)
 ~~~~~~~~~~~~~~~~~~~
 
-* Added support for ``python-config`` script 
+* Added support for ``python-config`` script
 
 * Upgrade setuptools to 18.3.1
 
 * Upgrade wheel to 0.26
+
+* Updated activate.fish (PR #589)
 
 13.1.2 (2015-08-23)
 ~~~~~~~~~~~~~~~~~~~
