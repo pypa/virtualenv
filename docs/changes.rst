@@ -1,6 +1,11 @@
 Release History
 ===============
 
+13.2.0 (unreleased)
+~~~~~~~~~~~~~~~~~~~
+
+* Added support for ``python-config`` script 
+
 13.1.2 (2015-08-23)
 ~~~~~~~~~~~~~~~~~~~
 
