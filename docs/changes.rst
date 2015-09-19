@@ -6,7 +6,7 @@ Release History
 
 * Added support for ``python-config`` script
 
-* Upgrade setuptools to 18.3.1
+* Upgrade setuptools to 18.3.2
 
 * Upgrade wheel to 0.26
 
