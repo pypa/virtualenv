@@ -1,16 +1,17 @@
 #!__VIRTUAL_ENV__/__BIN_NAME__/python
 
 import sys
-import os
 import getopt
 import sysconfig
 
 valid_opts = ['prefix', 'exec-prefix', 'includes', 'libs', 'cflags',
-              'ldflags', 'extension-suffix', 'help', 'abiflags', 'configdir']
+              'ldflags', 'help']
 
-# sys.abiflags was introduced in Python 3.2
-if not getattr(sys, 'abiflags', None):
-    valid_opts.remove('abiflags')
+if sys.version_info >= (3, 2):
+    valid_opts += ['extension-suffix', 'abiflags']
+if sys.version_info >= (3, 3):
+    valid_opts += ['configdir']
+
 
 def exit_with_usage(code=1):
     sys.stderr.write("Usage: {0} [{1}]\n".format(
