@@ -1,9 +1,5 @@
 #!/usr/bin/env python
-"""Create a "virtual" Python installation
-"""
-
-__version__ = "13.2.0.dev0"
-virtualenv_version = __version__  # legacy
+"""Create a "virtual" Python installation"""
 
 import base64
 import sys
@@ -13,15 +9,16 @@ import optparse
 import re
 import shutil
 import logging
-import tempfile
 import zlib
 import errno
 import glob
 import distutils.sysconfig
-from distutils.util import strtobool
 import struct
 import subprocess
-import tarfile
+from distutils.util import strtobool
+
+__version__ = "13.2.0.dev0"
+virtualenv_version = __version__  # legacy
 
 if sys.version_info < (2, 6):
     print('ERROR: %s' % sys.exc_info()[1])
@@ -76,7 +73,7 @@ else:
     def get_installed_pythons():
         try:
             python_core = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE,
-                    "Software\\Python\\PythonCore")
+                                           "Software\\Python\\PythonCore")
         except WindowsError:
             # No registered Python installations
             return {}
@@ -298,6 +295,7 @@ if is_pypy:
     # during the bootstrap
     REQUIRED_MODULES.extend(['traceback', 'linecache'])
 
+
 class Logger(object):
 
     """
@@ -322,16 +320,22 @@ class Logger(object):
 
     def debug(self, msg, *args, **kw):
         self.log(self.DEBUG, msg, *args, **kw)
+
     def info(self, msg, *args, **kw):
         self.log(self.INFO, msg, *args, **kw)
+
     def notify(self, msg, *args, **kw):
         self.log(self.NOTIFY, msg, *args, **kw)
+
     def warn(self, msg, *args, **kw):
         self.log(self.WARN, msg, *args, **kw)
+
     def error(self, msg, *args, **kw):
         self.log(self.ERROR, msg, *args, **kw)
+
     def fatal(self, msg, *args, **kw):
         self.log(self.FATAL, msg, *args, **kw)
+
     def log(self, level, msg, *args, **kw):
         if args:
             if kw:
@@ -1005,12 +1009,15 @@ def create_environment(home_dir, site_packages=False, clear=False,
 
     install_activate(home_dir, bin_dir, prompt)
 
+    install_python_config(home_dir, bin_dir, prompt)
+
 def is_executable_file(fpath):
     return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
 def path_locations(home_dir):
     """Return the path locations for the environment (where libraries are,
     where scripts go, etc)"""
+    home_dir = os.path.abspath(home_dir)
     # XXX: We'd use distutils.sysconfig.get_python_inc/lib but its
     # prefix arg is broken: http://bugs.python.org/issue3386
     if is_win:
@@ -1490,7 +1497,6 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
 
 
 def install_activate(home_dir, bin_dir, prompt=None):
-    home_dir = os.path.abspath(home_dir)
     if is_win or is_jython and os._name == 'nt':
         files = {
             'activate.bat': ACTIVATE_BAT,
@@ -1518,6 +1524,10 @@ def install_activate(home_dir, bin_dir, prompt=None):
         files['activate.csh'] = ACTIVATE_CSH
 
     files['activate_this.py'] = ACTIVATE_THIS
+
+    install_files(home_dir, bin_dir, prompt, files)
+
+def install_files(home_dir, bin_dir, prompt, files):
     if hasattr(home_dir, 'decode'):
         home_dir = home_dir.decode(sys.getfilesystemencoding())
     vname = os.path.basename(home_dir)
@@ -1528,6 +1538,15 @@ def install_activate(home_dir, bin_dir, prompt=None):
         content = content.replace('__VIRTUAL_NAME__', vname)
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         writefile(os.path.join(bin_dir, name), content)
+
+def install_python_config(home_dir, bin_dir, prompt=None):
+    if sys.platform == 'win32' or is_jython and os._name == 'nt':
+        files = {}
+    else:
+        files = {'python-config': PYTHON_CONFIG}
+    install_files(home_dir, bin_dir, prompt, files)
+    for name, content in files.items():
+        make_exe(os.path.join(bin_dir, name))
 
 def install_distutils(home_dir):
     distutils_path = change_prefix(distutils.__path__[0], home_dir)
@@ -2220,6 +2239,25 @@ m8eg6WYWqR6SL5OjKMGfSrYt/6kxxQtOpeAgj1LXBNmpE2ElmCSIy5H0zFd8gJ924HWijWhb2hRC
 VF5PnJ+ts3a9/Mz38RpG/AUSzYUW
 """)
 
+##file python-config
+PYTHON_CONFIG = convert("""
+eJyNVV1v2jAUfc+v8NoHJwJSur4hMYlusKIyqIB2rTpkpcQBT2kSOYaCuv73+dpJcDLSlZcY2/fc
+c8/98OknQu6G0/ltb0T64ztCzgi5HI7JuPejL/8ke7GOI8tiz0nMBUr3ab5cUREnwjhYxlHAVpa1
+9ULmE3mWoi56xAmnAdvhJsJ0R5etw18WLcONT1NYh+xJfZdB6K3kykKlHw797ADhNQ0TvJCMAnDq
+bilPWRwRFgUx+tJF9kUTfXY6CsBg0gAqdCdoBLdb6SbIWHhPTEMv3kO8qEHUMfuMAyPLpwGiOybI
+CxNrskm9FbWXsU+755k5wKfCp5y7L5wJap/cwqUOem2/ocfX87fFr+jEDWL+7Am70ACsPL7aPrYX
+kvAf7P6OWWTjVgs3JBMkryP4ssig5zhO4REoKR6OZQm+11TgUhNJWMiSzqWrP3bh77wDDqVKBq5F
+d0ua5Ol3ZSgx14jVyB2VoygWylftnWQvBZccigoCGkQvydbjNr7rT2fDyRg7ljyRO+9ctizpi6iE
+QvHBQuljw0rF4YBOQEiXkFRRFVS2q02Pc1WZbEvGhuAVEwkIB90u4GaV3inymHAWKXVr4swMZOa0
+/7AEZ3bPxzHBitQBywCgjMxGbLWyFnQOPgo5cWuIUaMifuKJtZ03M3aqrQvdW2+WhJ4oTBeFaSnw
+jFCnBKz2XNXQvq3LwsZfB6Pe9xl23DQJZclnLXCQCaOsd5R1nRz5LJIr/x8t8nGhm8YTgoP45hyB
+jjk4BjAtXahHKSihS75RgC3K1xsKW0U0Gl4a8dRemz3Mam6eIs/3kVhTpIvgTJpmQ/3efTjTCUFy
+gDXR00Z2ahTuQX1pwCliqWxfAypde5z64J17fA96GaDu8ezlGpbTlw2GnP/NXr49vctRn8yuetP+
+N1NxM2aXRSnlwm5DekYgpSHUzQgbGT/m5WF+NRkPpvJl+zmZXtc6qVTVaDi+HkymObP/Fhdg1PZw
+5QE6MJBHRG++Owv793Myux0MhvdGkbHANJdZG8cRLQf3QfjZBFfjOlgej6ko/I7JJ9P9eIMAPafK
+r/owlFmoNylDOM7j8BR/fDoWVfMXV3K1WQ==
+""")
+
 MH_MAGIC = 0xfeedface
 MH_CIGAM = 0xcefaedfe
 MH_MAGIC_64 = 0xfeedfacf
@@ -2362,6 +2400,6 @@ def mach_o_change(path, what, value):
 if __name__ == '__main__':
     main()
 
-## TODO:
-## Copy python.exe.manifest
-## Monkeypatch distutils.sysconfig
+# TODO:
+# Copy python.exe.manifest
+# Monkeypatch distutils.sysconfig
