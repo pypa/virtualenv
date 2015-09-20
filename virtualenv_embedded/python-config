@@ -8,9 +8,10 @@ valid_opts = ['prefix', 'exec-prefix', 'includes', 'libs', 'cflags',
               'ldflags', 'help']
 
 if sys.version_info >= (3, 2):
-    valid_opts += ['extension-suffix', 'abiflags']
+    valid_opts.insert(-1, 'extension-suffix')
+    valid_opts.append('abiflags')
 if sys.version_info >= (3, 3):
-    valid_opts += ['configdir']
+    valid_opts.append('configdir')
 
 
 def exit_with_usage(code=1):
