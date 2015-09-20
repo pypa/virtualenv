@@ -1,10 +1,10 @@
 virtualenv
 ==========
 
-.. image:: https://pypip.in/v/virtualenv/badge.png
+.. image:: https://img.shields.io/pypi/v/virtualenv.svg
         :target: https://pypi.python.org/pypi/virtualenv
 
-.. image:: https://secure.travis-ci.org/pypa/virtualenv.png?branch=develop
+.. image:: https://img.shields.io/travis/pypa/virtualenv/develop.svg
    :target: http://travis-ci.org/pypa/virtualenv
 
 For documentation, see https://virtualenv.pypa.io/
