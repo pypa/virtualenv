@@ -68,7 +68,7 @@ if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] ; then
     export PS1
 fi
 
-pydoc() {
+function pydoc {
     exec python -m pydoc "$@"
 }
 
