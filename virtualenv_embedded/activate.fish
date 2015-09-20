@@ -51,6 +51,8 @@ if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
     functions -c fish_prompt _old_fish_prompt
 
     function fish_prompt
+        # Save the current $status, for fish_prompts that display it.
+        set -l old_status $status
 
         # Prompt override provided?
         # If not, just prepend the environment name.
@@ -60,6 +62,8 @@ if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
             printf '%s(%s%s)%s' (set_color normal) (set_color -b black -o white) (basename "$VIRTUAL_ENV") (set_color normal)
         end
 
+        # Restore the original $status
+        echo "exit $old_status" | source
         _old_fish_prompt
     end
 
