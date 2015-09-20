@@ -10,7 +10,7 @@ Release History
 
 * Upgrade wheel to 0.26
 
-* Updated activate.fish (PR #589)
+* Updated activate.fish (PR #589) (PR #799)
 
 * Account for a ``site.pyo`` correctly in some python implementations
 
