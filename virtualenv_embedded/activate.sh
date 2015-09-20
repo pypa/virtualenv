@@ -2,7 +2,7 @@
 # you cannot run it directly
 
 deactivate () {
-    unalias pydoc
+    unset -f pydoc
 
     # reset old environment variables
     if ! [ -z "${_OLD_VIRTUAL_PATH+_}" ] ; then
@@ -68,7 +68,9 @@ if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] ; then
     export PS1
 fi
 
-alias pydoc="python -m pydoc"
+pydoc() {
+    exec python -m pydoc "$@"
+}
 
 # This should detect bash and zsh, which have a hash command that must
 # be called to get it to forget past commands.  Without forgetting
