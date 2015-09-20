@@ -19,7 +19,7 @@ deactivate () {
     # This should detect bash and zsh, which have a hash command that must
     # be called to get it to forget past commands.  Without forgetting
     # past commands the $PATH changes we made may not be respected
-    if [ -n "${BASH-}" -o -n "${ZSH_VERSION-}" ] ; then
+    if [ -n "${BASH-}" ] || [ -n "${ZSH_VERSION-}" ] ; then
         hash -r 2>/dev/null
     fi
 
@@ -62,13 +62,16 @@ if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] ; then
     export PS1
 fi
 
-function pydoc {
+# Make sure to unalias pydoc if it's already there
+alias pydoc 2>/dev/null >/dev/null && unalias pydoc
+
+pydoc () {
     exec python -m pydoc "$@"
 }
 
 # This should detect bash and zsh, which have a hash command that must
 # be called to get it to forget past commands.  Without forgetting
 # past commands the $PATH changes we made may not be respected
-if [ -n "${BASH-}" -o -n "${ZSH_VERSION-}" ] ; then
+if [ -n "${BASH-}" ] || [ -n "${ZSH_VERSION-}" ] ; then
     hash -r 2>/dev/null
 fi
