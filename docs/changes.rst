@@ -1,7 +1,7 @@
 Release History
 ===============
 
-13.2.0 (unreleased)
+14.0.0 (unreleased)
 -------------------
 
 * Added support for ``python-config`` script
@@ -17,6 +17,8 @@ Release History
 * Properly restore an empty PS1
 
 * Properly remove ``pydoc`` when deactivating
+
+* Remove workaround for very old Mageia / Mandriva linuxes (PR #472)
 
 13.1.2 (2015-08-23)
 -------------------
