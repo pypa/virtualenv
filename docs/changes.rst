@@ -4,7 +4,7 @@ Release History
 14.0.0 (unreleased)
 -------------------
 
-* Added support for ``python-config`` script
+* Added support for ``python-config`` script (PR #798)
 
 * Upgrade setuptools to 18.3.2
 
@@ -12,9 +12,9 @@ Release History
 
 * Updated activate.fish (PR #589) (PR #799)
 
-* Account for a ``site.pyo`` correctly in some python implementations
+* Account for a ``site.pyo`` correctly in some python implementations (PR #759)
 
-* Properly restore an empty PS1
+* Properly restore an empty PS1 (issue #407)
 
 * Properly remove ``pydoc`` when deactivating
 
