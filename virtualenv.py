@@ -1017,6 +1017,7 @@ def is_executable_file(fpath):
 def path_locations(home_dir):
     """Return the path locations for the environment (where libraries are,
     where scripts go, etc)"""
+    home_dir = os.path.abspath(home_dir)
     # XXX: We'd use distutils.sysconfig.get_python_inc/lib but its
     # prefix arg is broken: http://bugs.python.org/issue3386
     if is_win:
@@ -1529,7 +1530,6 @@ def install_files(home_dir, bin_dir, prompt, files):
         writefile(os.path.join(bin_dir, name), content)
 
 def install_python_config(home_dir, bin_dir, prompt=None):
-    home_dir = os.path.abspath(home_dir)
     if sys.platform == 'win32' or is_jython and os._name == 'nt':
         files = {}
     else:
