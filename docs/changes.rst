@@ -20,6 +20,8 @@ Release History
 
 * Remove workaround for very old Mageia / Mandriva linuxes (PR #472)
 
+* Added a space after virtualenv name in the prompt: ``(env) $PS1``
+
 13.1.2 (2015-08-23)
 -------------------
 
