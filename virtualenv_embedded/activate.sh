@@ -66,7 +66,7 @@ fi
 alias pydoc 2>/dev/null >/dev/null && unalias pydoc
 
 pydoc () {
-    exec python -m pydoc "$@"
+    python -m pydoc "$@"
 }
 
 # This should detect bash and zsh, which have a hash command that must

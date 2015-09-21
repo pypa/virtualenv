@@ -28,6 +28,7 @@ function deactivate -d 'Exit virtualenv mode and return to the normal environmen
 
     if test "$argv[1]" != 'nondestructive'
         # Self-destruct!
+        functions -e pydoc
         functions -e deactivate
     end
 end
@@ -44,6 +45,10 @@ set -gx PATH "$VIRTUAL_ENV/__BIN_NAME__" $PATH
 if set -q PYTHONHOME
     set -gx _OLD_VIRTUAL_PYTHONHOME $PYTHONHOME
     set -e PYTHONHOME
+end
+
+function pydoc
+    python -m pydoc $argv
 end
 
 if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
