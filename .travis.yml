@@ -1,16 +1,5 @@
 language: python
 
-env:
-  - TOXENV=py26
-  - TOXENV=py27
-  - TOXENV=py32
-  - TOXENV=py33
-  - TOXENV=py34
-  - TOXENV=py35
-  - TOXENV=pypy
-  - TOXENV=pypy3
-  - TOXENV=docs
-
 matrix:
   include:
     - python: 2.6
@@ -35,6 +24,8 @@ matrix:
 install: pip install tox
 
 script: tox
+
+sudo: false # Use container based builds
 
 branches:
   only:
