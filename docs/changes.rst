@@ -22,6 +22,8 @@ Release History
 
 * Added a space after virtualenv name in the prompt: ``(env) $PS1``
 
+* Make sure not to run a --user install when creating the virtualenv (PR #803)
+
 13.1.2 (2015-08-23)
 -------------------
 
