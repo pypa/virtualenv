@@ -644,7 +644,13 @@ def main():
             file = __file__
             if file.endswith('.pyc'):
                 file = file[:-1]
-            popen = subprocess.Popen([interpreter, file] + sys.argv[1:], env=env)
+            # use exec() instead of passing the script name directly to avoid
+            # sys.path pollution
+            popen = subprocess.Popen(
+                [interpreter,
+                 '-c',
+                 'import sys; del sys.argv[0]; s = sys.argv[0]; exec(open(s).read(), {"__file__": s, "__name__": "__main__"})',
+                 file] + sys.argv[1:], env=env)
             raise SystemExit(popen.wait())
 
     if not args:
