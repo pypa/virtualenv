@@ -979,11 +979,22 @@ def copy_required_modules(dst_prefix, symlink):
                     pass
                 else:
                     dst_filename = change_prefix(filename, dst_prefix)
-                copyfile(filename, dst_filename, symlink)
                 if filename.endswith('.pyc'):
-                    pyfile = filename[:-1]
-                    if os.path.exists(pyfile):
-                        copyfile(pyfile, dst_filename[:-1], symlink)
+                    filename = filename[:-1]
+                    dst_filename = dst_filename[:-1]
+                copyfile(filename, dst_filename, symlink)
+                if filename.endswith('.py'):
+                    if os.path.exists(filename + 'c'):
+                        copyfile(filename + 'c', dst_filename + 'c', symlink)
+                    if os.path.exists(filename + 'o'):
+                        copyfile(filename + 'o', dst_filename + 'o', symlink)
+                    if sys.version_info[0] >= 3:
+                        pycachename = join(os.path.dirname(filename),'__pycache__',modname + '.' + imp.get_tag() + '.py')
+                        dst_pycachename = change_prefix(pycachename, dst_prefix)
+                        if os.path.exists(pycachename + 'c'):
+                            copyfile(pycachename + 'c', dst_pycachename + 'c', symlink)
+                        if os.path.exists(pycachename + 'o'):
+                            copyfile(pycachename + 'o', dst_pycachename + 'o', symlink)
     finally:
         sys.path = _prev_sys_path
 
