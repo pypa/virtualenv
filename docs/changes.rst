@@ -24,6 +24,9 @@ Release History
 
 * Make sure not to run a --user install when creating the virtualenv (PR #803)
 
+* Remove virtualenv file's path from directory when executing with a new
+  python. Fixes issue #779, #763 (PR #805)
+
 13.1.2 (2015-08-23)
 -------------------
 

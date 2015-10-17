@@ -1,9 +1,22 @@
 #!/usr/bin/env python
 """Create a "virtual" Python installation"""
 
-import base64
-import sys
 import os
+import sys
+
+# If we are running in a new interpreter to create a virtualenv,
+# we do NOT want paths from our existing location interfering with anything,
+# So we remove this file's directory from sys.path - most likely to be
+# the previous interpreter's site-packages. Solves #705, #763, #779
+if os.environ.get('VIRTUALENV_INTERPRETER_RUNNING'):
+    del_paths = []
+    for path in sys.path:
+        if os.path.realpath(os.path.dirname(__file__)) == os.path.realpath(path):
+            del_paths.append(path)
+    for path in del_paths:
+        sys.path.remove(path)
+
+import base64
 import codecs
 import optparse
 import re
@@ -16,6 +29,11 @@ import distutils.sysconfig
 import struct
 import subprocess
 from distutils.util import strtobool
+
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
 
 __version__ = "13.2.0.dev0"
 virtualenv_version = __version__  # legacy
@@ -30,10 +48,6 @@ try:
 except NameError:
     basestring = str
 
-try:
-    import ConfigParser
-except ImportError:
-    import configparser as ConfigParser
 
 join = os.path.join
 py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
@@ -947,45 +961,34 @@ def change_prefix(filename, dst_prefix):
 
 def copy_required_modules(dst_prefix, symlink):
     import imp
-    # If we are running under -p, we need to remove the current
-    # directory from sys.path temporarily here, so that we
-    # definitely get the modules from the site directory of
-    # the interpreter we are running under, not the one
-    # virtualenv.py is installed under (which might lead to py2/py3
-    # incompatibility issues)
-    _prev_sys_path = sys.path
-    if os.environ.get('VIRTUALENV_INTERPRETER_RUNNING'):
-        sys.path = sys.path[1:]
-    try:
-        for modname in REQUIRED_MODULES:
-            if modname in sys.builtin_module_names:
-                logger.info("Ignoring built-in bootstrap module: %s" % modname)
-                continue
-            try:
-                f, filename, _ = imp.find_module(modname)
-            except ImportError:
-                logger.info("Cannot import bootstrap module: %s" % modname)
+
+    for modname in REQUIRED_MODULES:
+        if modname in sys.builtin_module_names:
+            logger.info("Ignoring built-in bootstrap module: %s" % modname)
+            continue
+        try:
+            f, filename, _ = imp.find_module(modname)
+        except ImportError:
+            logger.info("Cannot import bootstrap module: %s" % modname)
+        else:
+            if f is not None:
+                f.close()
+            # special-case custom readline.so on OS X, but not for pypy:
+            if modname == 'readline' and sys.platform == 'darwin' and not (
+                    is_pypy or filename.endswith(join('lib-dynload', 'readline.so'))):
+                dst_filename = join(dst_prefix, 'lib', 'python%s' % sys.version[:3], 'readline.so')
+            elif modname == 'readline' and sys.platform == 'win32':
+                # special-case for Windows, where readline is not a
+                # standard module, though it may have been installed in
+                # site-packages by a third-party package
+                pass
             else:
-                if f is not None:
-                    f.close()
-                # special-case custom readline.so on OS X, but not for pypy:
-                if modname == 'readline' and sys.platform == 'darwin' and not (
-                        is_pypy or filename.endswith(join('lib-dynload', 'readline.so'))):
-                    dst_filename = join(dst_prefix, 'lib', 'python%s' % sys.version[:3], 'readline.so')
-                elif modname == 'readline' and sys.platform == 'win32':
-                    # special-case for Windows, where readline is not a
-                    # standard module, though it may have been installed in
-                    # site-packages by a third-party package
-                    pass
-                else:
-                    dst_filename = change_prefix(filename, dst_prefix)
-                copyfile(filename, dst_filename, symlink)
-                if filename.endswith('.pyc'):
-                    pyfile = filename[:-1]
-                    if os.path.exists(pyfile):
-                        copyfile(pyfile, dst_filename[:-1], symlink)
-    finally:
-        sys.path = _prev_sys_path
+                dst_filename = change_prefix(filename, dst_prefix)
+            copyfile(filename, dst_filename, symlink)
+            if filename.endswith('.pyc'):
+                pyfile = filename[:-1]
+                if os.path.exists(pyfile):
+                    copyfile(pyfile, dst_filename[:-1], symlink)
 
 
 def subst_path(prefix_path, prefix, home_dir):
