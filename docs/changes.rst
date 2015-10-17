@@ -4,28 +4,28 @@ Release History
 14.0.0 (unreleased)
 -------------------
 
-* Added support for ``python-config`` script (PR #798)
-
 * Upgrade setuptools to 18.4
 
 * Upgrade wheel to 0.26
 
-* Updated activate.fish (PR #589) (PR #799)
+* Added support for ``python-config`` script (:pull:`798`)
 
-* Account for a ``site.pyo`` correctly in some python implementations (PR #759)
+* Updated activate.fish (:pull:`589`) (:pull:`799`)
 
-* Properly restore an empty PS1 (issue #407)
+* Account for a ``site.pyo`` correctly in some python implementations (:pull:`759`)
+
+* Properly restore an empty PS1 (:issue:`407`)
 
 * Properly remove ``pydoc`` when deactivating
 
-* Remove workaround for very old Mageia / Mandriva linuxes (PR #472)
+* Remove workaround for very old Mageia / Mandriva linuxes (:pull:`472`)
 
 * Added a space after virtualenv name in the prompt: ``(env) $PS1``
 
-* Make sure not to run a --user install when creating the virtualenv (PR #803)
+* Make sure not to run a --user install when creating the virtualenv (:pull:`803`)
 
 * Remove virtualenv file's path from directory when executing with a new
-  python. Fixes issue #779, #763 (PR #805)
+  python. Fixes issue :issue:`779`, :issue:`763` (:pull:`805`)
 
 13.1.2 (2015-08-23)
 -------------------

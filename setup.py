@@ -61,7 +61,11 @@ def read_file(*paths):
 long_description = read_file('docs', 'index.rst')
 long_description = long_description.strip().split('split here', 1)[0]
 # Add release history
-long_description += "\n\n" + read_file('docs', 'changes.rst')
+changes = read_file('docs', 'changes.rst')
+# Replace issue/pull directives
+changes = re.sub(r':pull:`(\d+)`', r'PR #\1', changes)
+changes = re.sub(r':issue:`(\d+)`', r'#\1', changes)
+long_description += "\n\n" + changes
 
 
 def get_version():
