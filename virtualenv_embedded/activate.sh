@@ -39,7 +39,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="__VIRTUAL_ENV__"
+VIRTUAL_ENV=$(printf %q "__VIRTUAL_ENV__") || VIRTUAL_ENV=$(echo "__VIRTUAL_ENV__" | sed 's/[ ()$;]/\\&/g')
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
