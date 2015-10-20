@@ -19,14 +19,13 @@ try:
 
         def finalize_options(self):
             TestCommand.finalize_options(self)
-            self.test_args = []
-            self.test_suite = True
+            #self.test_args = []
+            #self.test_suite = True
 
         def run_tests(self):
             # import here, because outside the eggs aren't loaded
             import pytest
-            errno = pytest.main(self.pytest_args)
-            sys.exit(errno)
+            sys.exit(pytest.main(self.pytest_args))
 
     setup_params = {
         'entry_points': {
