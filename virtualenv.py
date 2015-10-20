@@ -9,12 +9,9 @@ import sys
 # So we remove this file's directory from sys.path - most likely to be
 # the previous interpreter's site-packages. Solves #705, #763, #779
 if os.environ.get('VIRTUALENV_INTERPRETER_RUNNING'):
-    del_paths = []
-    for path in sys.path:
+    for path in sys.path[:]:
         if os.path.realpath(os.path.dirname(__file__)) == os.path.realpath(path):
-            del_paths.append(path)
-    for path in del_paths:
-        sys.path.remove(path)
+            sys.path.remove(path)
 
 import base64
 import codecs
@@ -29,6 +26,7 @@ import distutils.sysconfig
 import struct
 import subprocess
 from distutils.util import strtobool
+from os.path import join
 
 try:
     import ConfigParser
@@ -48,8 +46,6 @@ try:
 except NameError:
     basestring = str
 
-
-join = os.path.join
 py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
 
 is_jython = sys.platform.startswith('java')
@@ -1470,8 +1466,8 @@ def resolve_interpreter(exe):
     if os.path.abspath(exe) != exe:
         paths = os.environ.get('PATH', '').split(os.pathsep)
         for path in paths:
-            if os.path.exists(os.path.join(path, exe)):
-                exe = os.path.join(path, exe)
+            if os.path.exists(join(path, exe)):
+                exe = join(path, exe)
                 break
     if not os.path.exists(exe):
         logger.fatal('The executable %s (from --python=%s) does not exist' % (exe, exe))
