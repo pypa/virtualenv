@@ -1428,30 +1428,32 @@ def fix_lib64(lib_dir, symlink=True):
     instead of lib/pythonX.Y.  If this is such a platform we'll just create a
     symlink so lib64 points to lib
     """
-    if [p for p in distutils.sysconfig.get_config_vars().values()
-        if isinstance(p, basestring) and 'lib64' in p]:
-        # PyPy's library path scheme is not affected by this.
-        # Return early or we will die on the following assert.
-        if is_pypy:
-            logger.debug('PyPy detected, skipping lib64 symlinking')
-            return
+    # PyPy's library path scheme is not affected by this.
+    # Return early or we will die on the following assert.
+    if is_pypy:
+        logger.debug('PyPy detected, skipping lib64 symlinking')
+        return
+    # Check we have a lib64 library path
+    if not [p for p in distutils.sysconfig.get_config_vars().values()
+            if isinstance(p, basestring) and 'lib64' in p]:
+        return
 
-        logger.debug('This system uses lib64; symlinking lib64 to lib')
+    logger.debug('This system uses lib64; symlinking lib64 to lib')
 
-        assert os.path.basename(lib_dir) == 'python%s' % sys.version[:3], (
-            "Unexpected python lib dir: %r" % lib_dir)
-        lib_parent = os.path.dirname(lib_dir)
-        top_level = os.path.dirname(lib_parent)
-        lib_dir = os.path.join(top_level, 'lib')
-        lib64_link = os.path.join(top_level, 'lib64')
-        assert os.path.basename(lib_parent) == 'lib', (
-            "Unexpected parent dir: %r" % lib_parent)
-        if os.path.lexists(lib64_link):
-            return
-        if symlink:
-            os.symlink('lib', lib64_link)
-        else:
-            copyfile('lib', lib64_link)
+    assert os.path.basename(lib_dir) == 'python%s' % sys.version[:3], (
+        "Unexpected python lib dir: %r" % lib_dir)
+    lib_parent = os.path.dirname(lib_dir)
+    top_level = os.path.dirname(lib_parent)
+    lib_dir = os.path.join(top_level, 'lib')
+    lib64_link = os.path.join(top_level, 'lib64')
+    assert os.path.basename(lib_parent) == 'lib', (
+        "Unexpected parent dir: %r" % lib_parent)
+    if os.path.lexists(lib64_link):
+        return
+    if symlink:
+        os.symlink('lib', lib64_link)
+    else:
+        copyfile('lib', lib64_link)
 
 def resolve_interpreter(exe):
     """
