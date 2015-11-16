@@ -158,6 +158,26 @@ if is_pypy:
     # during the bootstrap
     REQUIRED_MODULES.extend(['traceback', 'linecache'])
 
+if is_win:
+    import ctypes
+    from ctypes import wintypes
+    _GetShortPathNameW = ctypes.windll.kernel32.GetShortPathNameW
+    _GetShortPathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
+    _GetShortPathNameW.restype = wintypes.DWORD
+    def get_short_path_name(long_name):
+        """
+        Gets the short path name of a given long path.
+        http://stackoverflow.com/a/23598461/200291
+        """
+        output_buf_size = 0
+        while True:
+            output_buf = ctypes.create_unicode_buffer(output_buf_size)
+            needed = _GetShortPathNameW(long_name, output_buf, output_buf_size)
+            if output_buf_size >= needed:
+                return output_buf.value
+            else:
+                output_buf_size = needed
+
 
 class Logger(object):
 
@@ -817,7 +837,13 @@ def install_wheel(project_names, py_executable, search_dirs=None):
 
     wheels = find_wheels(['setuptools', 'pip'], search_dirs)
     pythonpath = os.pathsep.join(wheels)
-    findlinks = ' '.join(search_dirs)
+    if is_win and any(' ' in sd for sd in search_dirs):
+        search_dirs = [get_short_path_name(sd) for sd in search_dirs]
+        findlinks = ' '.join(search_dirs)
+        if majver == 2:
+            findlinks = findlinks.encode('ascii')
+    else:
+        findlinks = ' '.join(search_dirs)
 
     cmd = [
         py_executable, '-c',
@@ -890,21 +916,11 @@ def path_locations(home_dir):
         # format):
         mkdir(home_dir)
         if ' ' in home_dir:
-            import ctypes
-            GetShortPathName = ctypes.windll.kernel32.GetShortPathNameW
-            size = max(len(home_dir)+1, 256)
-            buf = ctypes.create_unicode_buffer(size)
             try:
                 u = unicode
             except NameError:
                 u = str
-            ret = GetShortPathName(u(home_dir), buf, size)
-            if not ret:
-                print('Error: the path "%s" has a space in it' % home_dir)
-                print('We could not determine the short pathname for it.')
-                print('Exiting.')
-                sys.exit(3)
-            home_dir = str(buf.value)
+            home_dir = get_short_path_name(u(home_dir))
         lib_dir = join(home_dir, 'Lib')
         inc_dir = join(home_dir, 'Include')
         bin_dir = join(home_dir, 'Scripts')
