@@ -817,7 +817,20 @@ def install_wheel(project_names, py_executable, search_dirs=None):
 
     wheels = find_wheels(['setuptools', 'pip'], search_dirs)
     pythonpath = os.pathsep.join(wheels)
-    findlinks = ' '.join(search_dirs)
+
+    # PIP_FIND_LINKS uses space as the path separator and thus cannot have paths
+    # with spaces in them. Convert any of those to local file:// URL form.
+    try:
+        from urlparse import urljoin
+        from urllib import pathname2url
+    except ImportError:
+        from urllib.parse import urljoin
+        from urllib.request import pathname2url
+    def space_path2url(p):
+        if ' ' not in p:
+            return p
+        return urljoin('file:', pathname2url(os.path.abspath(p)))
+    findlinks = ' '.join(space_path2url(d) for d in search_dirs)
 
     cmd = [
         py_executable, '-c',
