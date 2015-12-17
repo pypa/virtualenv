@@ -4,9 +4,9 @@ Release History
 14.0.0 (unreleased)
 -------------------
 
-* Upgrade setuptools to 18.4
+* Upgrade setuptools to 19.1.1
 
-* Upgrade wheel to 0.26
+* Upgrade wheel to 0.26.0
 
 * Added support for ``python-config`` script (:pull:`798`)
 
