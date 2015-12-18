@@ -125,6 +125,15 @@ below.
 
 .. _`execution policies`: http://technet.microsoft.com/en-us/library/dd347641.aspx
 
+Removing an Environment
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Removing a virtual environment is simply done by deactivating it and deleting the 
+environment folder with all its contents::
+
+    (ENV)$ deactivate
+    $ rm -r /path/to/ENV
+
 The :option:`--system-site-packages` Option
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

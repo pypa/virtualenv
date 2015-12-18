@@ -1,27 +1,40 @@
 #!/usr/bin/env python
-"""Create a "virtual" Python installation
-"""
+"""Create a "virtual" Python installation"""
 
-__version__ = "13.1.2"
-virtualenv_version = __version__  # legacy
+import os
+import sys
+
+# If we are running in a new interpreter to create a virtualenv,
+# we do NOT want paths from our existing location interfering with anything,
+# So we remove this file's directory from sys.path - most likely to be
+# the previous interpreter's site-packages. Solves #705, #763, #779
+if os.environ.get('VIRTUALENV_INTERPRETER_RUNNING'):
+    for path in sys.path[:]:
+        if os.path.realpath(os.path.dirname(__file__)) == os.path.realpath(path):
+            sys.path.remove(path)
 
 import base64
-import sys
-import os
 import codecs
 import optparse
 import re
 import shutil
 import logging
-import tempfile
 import zlib
 import errno
 import glob
 import distutils.sysconfig
-from distutils.util import strtobool
 import struct
 import subprocess
-import tarfile
+from distutils.util import strtobool
+from os.path import join
+
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
+
+__version__ = "13.2.0.dev0"
+virtualenv_version = __version__  # legacy
 
 if sys.version_info < (2, 6):
     print('ERROR: %s' % sys.exc_info()[1])
@@ -33,12 +46,6 @@ try:
 except NameError:
     basestring = str
 
-try:
-    import ConfigParser
-except ImportError:
-    import configparser as ConfigParser
-
-join = os.path.join
 py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
 
 is_jython = sys.platform.startswith('java')
@@ -76,7 +83,7 @@ else:
     def get_installed_pythons():
         try:
             python_core = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE,
-                    "Software\\Python\\PythonCore")
+                                           "Software\\Python\\PythonCore")
         except WindowsError:
             # No registered Python installations
             return {}
@@ -123,168 +130,21 @@ if majver == 2:
 elif majver == 3:
     # Some extra modules are needed for Python 3, but different ones
     # for different versions.
-    REQUIRED_MODULES.extend(['_abcoll', 'warnings', 'linecache', 'abc', 'io',
-                             '_weakrefset', 'copyreg', 'tempfile', 'random',
-                             '__future__', 'collections', 'keyword', 'tarfile',
-                             'shutil', 'struct', 'copy', 'tokenize', 'token',
-                             'functools', 'heapq', 'bisect', 'weakref',
-                             'reprlib'])
+    REQUIRED_MODULES.extend([
+    	'_abcoll', 'warnings', 'linecache', 'abc', 'io', '_weakrefset',
+    	'copyreg', 'tempfile', 'random', '__future__', 'collections',
+    	'keyword', 'tarfile', 'shutil', 'struct', 'copy', 'tokenize',
+    	'token', 'functools', 'heapq', 'bisect', 'weakref', 'reprlib'
+    ])
     if minver >= 2:
         REQUIRED_FILES[-1] = 'config-%s' % majver
     if minver >= 3:
         import sysconfig
         platdir = sysconfig.get_config_var('PLATDIR')
         REQUIRED_FILES.append(platdir)
-        # The whole list of 3.3 modules is reproduced below - the current
-        # uncommented ones are required for 3.3 as of now, but more may be
-        # added as 3.3 development continues.
         REQUIRED_MODULES.extend([
-            #"aifc",
-            #"antigravity",
-            #"argparse",
-            #"ast",
-            #"asynchat",
-            #"asyncore",
-            "base64",
-            #"bdb",
-            #"binhex",
-            #"bisect",
-            #"calendar",
-            #"cgi",
-            #"cgitb",
-            #"chunk",
-            #"cmd",
-            #"codeop",
-            #"code",
-            #"colorsys",
-            #"_compat_pickle",
-            #"compileall",
-            #"concurrent",
-            #"configparser",
-            #"contextlib",
-            #"cProfile",
-            #"crypt",
-            #"csv",
-            #"ctypes",
-            #"curses",
-            #"datetime",
-            #"dbm",
-            #"decimal",
-            #"difflib",
-            #"dis",
-            #"doctest",
-            #"dummy_threading",
-            "_dummy_thread",
-            #"email",
-            #"filecmp",
-            #"fileinput",
-            #"formatter",
-            #"fractions",
-            #"ftplib",
-            #"functools",
-            #"getopt",
-            #"getpass",
-            #"gettext",
-            #"glob",
-            #"gzip",
-            "hashlib",
-            #"heapq",
-            "hmac",
-            #"html",
-            #"http",
-            #"idlelib",
-            #"imaplib",
-            #"imghdr",
-            "imp",
-            "importlib",
-            #"inspect",
-            #"json",
-            #"lib2to3",
-            #"logging",
-            #"macpath",
-            #"macurl2path",
-            #"mailbox",
-            #"mailcap",
-            #"_markupbase",
-            #"mimetypes",
-            #"modulefinder",
-            #"multiprocessing",
-            #"netrc",
-            #"nntplib",
-            #"nturl2path",
-            #"numbers",
-            #"opcode",
-            #"optparse",
-            #"os2emxpath",
-            #"pdb",
-            #"pickle",
-            #"pickletools",
-            #"pipes",
-            #"pkgutil",
-            #"platform",
-            #"plat-linux2",
-            #"plistlib",
-            #"poplib",
-            #"pprint",
-            #"profile",
-            #"pstats",
-            #"pty",
-            #"pyclbr",
-            #"py_compile",
-            #"pydoc_data",
-            #"pydoc",
-            #"_pyio",
-            #"queue",
-            #"quopri",
-            #"reprlib",
-            "rlcompleter",
-            #"runpy",
-            #"sched",
-            #"shelve",
-            #"shlex",
-            #"smtpd",
-            #"smtplib",
-            #"sndhdr",
-            #"socket",
-            #"socketserver",
-            #"sqlite3",
-            #"ssl",
-            #"stringprep",
-            #"string",
-            #"_strptime",
-            #"subprocess",
-            #"sunau",
-            #"symbol",
-            #"symtable",
-            #"sysconfig",
-            #"tabnanny",
-            #"telnetlib",
-            #"test",
-            #"textwrap",
-            #"this",
-            #"_threading_local",
-            #"threading",
-            #"timeit",
-            #"tkinter",
-            #"tokenize",
-            #"token",
-            #"traceback",
-            #"trace",
-            #"tty",
-            #"turtledemo",
-            #"turtle",
-            #"unittest",
-            #"urllib",
-            #"uuid",
-            #"uu",
-            #"wave",
-            #"weakref",
-            #"webbrowser",
-            #"wsgiref",
-            #"xdrlib",
-            #"xml",
-            #"xmlrpc",
-            #"zipfile",
+        	'base64', '_dummy_thread', 'hashlib', 'hmac',
+        	'imp', 'importlib', 'rlcompleter'
         ])
     if minver >= 4:
         REQUIRED_MODULES.extend([
@@ -297,6 +157,7 @@ if is_pypy:
     # these are needed to correctly display the exceptions that may happen
     # during the bootstrap
     REQUIRED_MODULES.extend(['traceback', 'linecache'])
+
 
 class Logger(object):
 
@@ -322,16 +183,22 @@ class Logger(object):
 
     def debug(self, msg, *args, **kw):
         self.log(self.DEBUG, msg, *args, **kw)
+
     def info(self, msg, *args, **kw):
         self.log(self.INFO, msg, *args, **kw)
+
     def notify(self, msg, *args, **kw):
         self.log(self.NOTIFY, msg, *args, **kw)
+
     def warn(self, msg, *args, **kw):
         self.log(self.WARN, msg, *args, **kw)
+
     def error(self, msg, *args, **kw):
         self.log(self.ERROR, msg, *args, **kw)
+
     def fatal(self, msg, *args, **kw):
         self.log(self.FATAL, msg, *args, **kw)
+
     def log(self, level, msg, *args, **kw):
         if args:
             if kw:
@@ -966,7 +833,8 @@ def install_wheel(project_names, py_executable, search_dirs=None):
                 'PIP_FIND_LINKS': findlinks,
                 'PIP_USE_WHEEL': '1',
                 'PIP_PRE': '1',
-                'PIP_NO_INDEX': '1'
+                'PIP_NO_INDEX': '1',
+                'PIP_USER': '0'
             }
         )
     finally:
@@ -1005,12 +873,15 @@ def create_environment(home_dir, site_packages=False, clear=False,
 
     install_activate(home_dir, bin_dir, prompt)
 
+    install_python_config(home_dir, bin_dir, prompt)
+
 def is_executable_file(fpath):
     return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
 def path_locations(home_dir):
     """Return the path locations for the environment (where libraries are,
     where scripts go, etc)"""
+    home_dir = os.path.abspath(home_dir)
     # XXX: We'd use distutils.sysconfig.get_python_inc/lib but its
     # prefix arg is broken: http://bugs.python.org/issue3386
     if is_win:
@@ -1047,17 +918,7 @@ def path_locations(home_dir):
         bin_dir = join(home_dir, 'bin')
     elif not is_win:
         lib_dir = join(home_dir, 'lib', py_version)
-        multiarch_exec = '/usr/bin/multiarch-platform'
-        if is_executable_file(multiarch_exec):
-            # In Mageia (2) and Mandriva distros the include dir must be like:
-            # virtualenv/include/multiarch-x86_64-linux/python2.7
-            # instead of being virtualenv/include/python2.7
-            p = subprocess.Popen(multiarch_exec, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout, stderr = p.communicate()
-            # stdout.strip is needed to remove newline character
-            inc_dir = join(home_dir, 'include', stdout.strip(), py_version + abiflags)
-        else:
-            inc_dir = join(home_dir, 'include', py_version + abiflags)
+        inc_dir = join(home_dir, 'include', py_version + abiflags)
         bin_dir = join(home_dir, 'bin')
     return home_dir, lib_dir, inc_dir, bin_dir
 
@@ -1096,45 +957,34 @@ def change_prefix(filename, dst_prefix):
 
 def copy_required_modules(dst_prefix, symlink):
     import imp
-    # If we are running under -p, we need to remove the current
-    # directory from sys.path temporarily here, so that we
-    # definitely get the modules from the site directory of
-    # the interpreter we are running under, not the one
-    # virtualenv.py is installed under (which might lead to py2/py3
-    # incompatibility issues)
-    _prev_sys_path = sys.path
-    if os.environ.get('VIRTUALENV_INTERPRETER_RUNNING'):
-        sys.path = sys.path[1:]
-    try:
-        for modname in REQUIRED_MODULES:
-            if modname in sys.builtin_module_names:
-                logger.info("Ignoring built-in bootstrap module: %s" % modname)
-                continue
-            try:
-                f, filename, _ = imp.find_module(modname)
-            except ImportError:
-                logger.info("Cannot import bootstrap module: %s" % modname)
+
+    for modname in REQUIRED_MODULES:
+        if modname in sys.builtin_module_names:
+            logger.info("Ignoring built-in bootstrap module: %s" % modname)
+            continue
+        try:
+            f, filename, _ = imp.find_module(modname)
+        except ImportError:
+            logger.info("Cannot import bootstrap module: %s" % modname)
+        else:
+            if f is not None:
+                f.close()
+            # special-case custom readline.so on OS X, but not for pypy:
+            if modname == 'readline' and sys.platform == 'darwin' and not (
+                    is_pypy or filename.endswith(join('lib-dynload', 'readline.so'))):
+                dst_filename = join(dst_prefix, 'lib', 'python%s' % sys.version[:3], 'readline.so')
+            elif modname == 'readline' and sys.platform == 'win32':
+                # special-case for Windows, where readline is not a
+                # standard module, though it may have been installed in
+                # site-packages by a third-party package
+                pass
             else:
-                if f is not None:
-                    f.close()
-                # special-case custom readline.so on OS X, but not for pypy:
-                if modname == 'readline' and sys.platform == 'darwin' and not (
-                        is_pypy or filename.endswith(join('lib-dynload', 'readline.so'))):
-                    dst_filename = join(dst_prefix, 'lib', 'python%s' % sys.version[:3], 'readline.so')
-                elif modname == 'readline' and sys.platform == 'win32':
-                    # special-case for Windows, where readline is not a
-                    # standard module, though it may have been installed in
-                    # site-packages by a third-party package
-                    pass
-                else:
-                    dst_filename = change_prefix(filename, dst_prefix)
-                copyfile(filename, dst_filename, symlink)
-                if filename.endswith('.pyc'):
-                    pyfile = filename[:-1]
-                    if os.path.exists(pyfile):
-                        copyfile(pyfile, dst_filename[:-1], symlink)
-    finally:
-        sys.path = _prev_sys_path
+                dst_filename = change_prefix(filename, dst_prefix)
+            copyfile(filename, dst_filename, symlink)
+            if filename.endswith('.pyc'):
+                pyfile = filename[:-1]
+                if os.path.exists(pyfile):
+                    copyfile(pyfile, dst_filename[:-1], symlink)
 
 
 def subst_path(prefix_path, prefix, home_dir):
@@ -1195,7 +1045,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     mkdir(join(lib_dir, 'site-packages'))
     import site
     site_filename = site.__file__
-    if site_filename.endswith('.pyc'):
+    if site_filename.endswith('.pyc') or site_filename.endswith('.pyo'):
         site_filename = site_filename[:-1]
     elif site_filename.endswith('$py.class'):
         site_filename = site_filename.replace('$py.class', '.py')
@@ -1490,7 +1340,6 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
 
 
 def install_activate(home_dir, bin_dir, prompt=None):
-    home_dir = os.path.abspath(home_dir)
     if is_win or is_jython and os._name == 'nt':
         files = {
             'activate.bat': ACTIVATE_BAT,
@@ -1518,6 +1367,10 @@ def install_activate(home_dir, bin_dir, prompt=None):
         files['activate.csh'] = ACTIVATE_CSH
 
     files['activate_this.py'] = ACTIVATE_THIS
+
+    install_files(home_dir, bin_dir, prompt, files)
+
+def install_files(home_dir, bin_dir, prompt, files):
     if hasattr(home_dir, 'decode'):
         home_dir = home_dir.decode(sys.getfilesystemencoding())
     vname = os.path.basename(home_dir)
@@ -1528,6 +1381,15 @@ def install_activate(home_dir, bin_dir, prompt=None):
         content = content.replace('__VIRTUAL_NAME__', vname)
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
         writefile(os.path.join(bin_dir, name), content)
+
+def install_python_config(home_dir, bin_dir, prompt=None):
+    if sys.platform == 'win32' or is_jython and os._name == 'nt':
+        files = {}
+    else:
+        files = {'python-config': PYTHON_CONFIG}
+    install_files(home_dir, bin_dir, prompt, files)
+    for name, content in files.items():
+        make_exe(os.path.join(bin_dir, name))
 
 def install_distutils(home_dir):
     distutils_path = change_prefix(distutils.__path__[0], home_dir)
@@ -1566,30 +1428,32 @@ def fix_lib64(lib_dir, symlink=True):
     instead of lib/pythonX.Y.  If this is such a platform we'll just create a
     symlink so lib64 points to lib
     """
-    if [p for p in distutils.sysconfig.get_config_vars().values()
-        if isinstance(p, basestring) and 'lib64' in p]:
-        # PyPy's library path scheme is not affected by this.
-        # Return early or we will die on the following assert.
-        if is_pypy:
-            logger.debug('PyPy detected, skipping lib64 symlinking')
-            return
+    # PyPy's library path scheme is not affected by this.
+    # Return early or we will die on the following assert.
+    if is_pypy:
+        logger.debug('PyPy detected, skipping lib64 symlinking')
+        return
+    # Check we have a lib64 library path
+    if not [p for p in distutils.sysconfig.get_config_vars().values()
+            if isinstance(p, basestring) and 'lib64' in p]:
+        return
 
-        logger.debug('This system uses lib64; symlinking lib64 to lib')
+    logger.debug('This system uses lib64; symlinking lib64 to lib')
 
-        assert os.path.basename(lib_dir) == 'python%s' % sys.version[:3], (
-            "Unexpected python lib dir: %r" % lib_dir)
-        lib_parent = os.path.dirname(lib_dir)
-        top_level = os.path.dirname(lib_parent)
-        lib_dir = os.path.join(top_level, 'lib')
-        lib64_link = os.path.join(top_level, 'lib64')
-        assert os.path.basename(lib_parent) == 'lib', (
-            "Unexpected parent dir: %r" % lib_parent)
-        if os.path.lexists(lib64_link):
-            return
-        if symlink:
-            os.symlink('lib', lib64_link)
-        else:
-            copyfile('lib', lib64_link)
+    assert os.path.basename(lib_dir) == 'python%s' % sys.version[:3], (
+        "Unexpected python lib dir: %r" % lib_dir)
+    lib_parent = os.path.dirname(lib_dir)
+    top_level = os.path.dirname(lib_parent)
+    lib_dir = os.path.join(top_level, 'lib')
+    lib64_link = os.path.join(top_level, 'lib64')
+    assert os.path.basename(lib_parent) == 'lib', (
+        "Unexpected parent dir: %r" % lib_parent)
+    if os.path.lexists(lib64_link):
+        return
+    if symlink:
+        os.symlink('lib', lib64_link)
+    else:
+        copyfile('lib', lib64_link)
 
 def resolve_interpreter(exe):
     """
@@ -1604,8 +1468,8 @@ def resolve_interpreter(exe):
     if os.path.abspath(exe) != exe:
         paths = os.environ.get('PATH', '').split(os.pathsep)
         for path in paths:
-            if os.path.exists(os.path.join(path, exe)):
-                exe = os.path.join(path, exe)
+            if os.path.exists(join(path, exe)):
+                exe = join(path, exe)
                 break
     if not os.path.exists(exe):
         logger.fatal('The executable %s (from --python=%s) does not exist' % (exe, exe))
@@ -2014,56 +1878,51 @@ AVijEPwfucjncQ==
 
 ##file activate.sh
 ACTIVATE_SH = convert("""
-eJytVVFv2jAQfs+vuIY+lGo0Yo+tmEQ1JJBaqBrWaWurYJKDWAo2ShxSWvW/7+yEEAhl0tY8EOI7
-332++75zA8YhT2DGI4RFmiiYIqQJBpBxFYKdyDT2EaZcOMxXfMUU2nA+i+UCpiwJz60GrGUKPhNC
-KohTAVxBwGP0VbS2rAA3u+CsCW8W0JOKBBUs14H0LbPQgBj1kowCQLHisRQLFApWLOZsGmFivPgM
-HqElwD5980Y3372Hwf34R/fGu+uO+613G57hClSIwjjrRxs69mnN2S498GUpY2Ucy7UcXW2Tsc/4
-cSS/xv3RsD+67R3GU5prqEpLHVtpOopw14twFoU1vU1CmVJpA1TUFdM2YCKA1yT8AlnI/RBCtkJg
-9CKTLxcLbVYhU4YRRSjihc+iiJihJMwJATWa/s1krD+WjKhTbE0uAH4Se2SqCrPiYl6E2XHUBYJT
-XV/wQybmmEBGNGSB/lmDphSlJXYsCTkG+9W/7rqm9S1ZLPx2+95D794djIYHW2AO2Irh6zcnwJUj
-0ijaKdiHnXXbh1vqtmu9dNv1Jrrto90rzBsUucvG2hs+bLGdaGgGSwdsIUWAiYpTLTHcg9cAF6MZ
-bBxO9gC0tGmjzU32d4vknNt5HGOEK7Yjw4qad3NbVgVtx/a8yqfn2VZRh+qRrJrEqJK5PIuPirfj
-edeDoTfs3vY877Jwq6q3xL1Vgi4YrZBFaRFkPIpgxnik16teifbSTNZcxMVSrYHORYSFs1wc5DFl
-AUlmnbF1k+L5Rk40JGFCsc5MOdMruCQml3GbcDUBLozarAqtjsyIDxSty7I3H/aPamnm5EledZJq
-9b8P3O71Tc+7ux/d3o3/ktTQuWSwiWi/bLuZx6CGwkkHXj6QQ919GxGjBCuhJ1QdFGyB8LTT7id7
-YgiuM9WSNEBPA84iGkfUAhow0KUVQRNjzv3i7pExL66NYgsihEotLx0ny7KLV1Q0Y1YXNIecRM5U
-xmJ0mI7i7B7msQJxQqEPgn2aTJ7hwCHLKGdHDtrcbiyul+JVmR26vSziLMlvzY69XNN0FdBa5Au2
-5v+njPpPGPP/OeL/dbwfGu1Utz87Sp7q
+eJytVV1v2jAUffevuATUtd0YYo+bmEZVJJBaqBrWaVsn1ySXxlpwkO1Q6Md/n50vElK6h5YHSHyP
+r4/vOffShGnAFcx5iLCIlYYZQqzQhzuuA3BUFEsPYcZFh3mar5hGB47nMlrAjKngmDRhE8XgMSEi
+DTIWwDX4XKKnww0hPua74PAIHgiYTywUamjPYbnxI48ka02QaFej0AcUKy4jsUChYcUkZ7MQVYLi
+c2jAb2jfg9N6oJOzU3o1upx+75/Ri/50+J4+OfAHvoAOUCR4+7GRntOqoZ0CgetlJHUCLNZSjrVN
+SXzO/0fm53Q4GQ8n54M9lIp4jVgRqdMrQi+SrKIM1ay8icgqiGJTYB+1kSfRD5jw4V4FH+Au4F4A
+AVshMPNjQl60WNiwDphOrJGlMgbxWBgai+gIbg0Do7h5mkfSviyZ8VC2VX0E+GFsFMU6C2subrM0
+FaAtELRsicELmLhFBXfGj8y3Xxuw3jLHGo8sDXP0cwFM+YUt/0nfHbaTUj8+Fou/3CG9Gly6o8m4
+/ZwMySXbEj597fi46og4DCtFe0Fgt7tHWbdbk9Tt1rV0uy+KmIVzIikkjw7GV9vrNyy3rr1eDxwR
+CR+VlrFtOdyh1wQXwznkgMYOgbYN5b2an/5ETHuncS4lhrhilZ4sdXf1bEJKbHsOpaVXSh2S1aF8
+JVJrNlPJtFGzlxK6Q+nJaEzH/fMBpZ8zWLmPC97bhrAFMyukImupVde7gu5pLEtrp013jyJWudSe
+ySnl25+O3P7J2YBeXE7OL6Y1Y+4awZ6WOyjJ6Ky31UxzmIJCowfrPXasw7cZMVRYRR/emLGAgi0Q
+rislv3ZujmC7MxuCJUPbOzfhnP1FULFEOxJiwULOVDroLX2u3ylgoUTmbyxViaSMKHUilB4PDqqZ
+CEnhxT/KcmNmjID2IsvjtL45qXnfZOy9wch75bh7zah7bswZrf4B7cdZow==
 """)
 
 ##file activate.fish
 ACTIVATE_FISH = convert("""
-eJydVW2P2jgQ/s6vmAZQoVpA9/WkqqJaTou0u6x2uZVOVWWZZEKsS+yc7UDpr+84bziQbauLxEvs
-eXnsZ56ZIWwTYSAWKUJWGAs7hMJgBEdhEwiMKnSIsBNywUMrDtziPBYmCeBDrFUG7v8HmCTW5n8u
-Fu7NJJim81Bl08EQTqqAkEupLOhCgrAQCY2hTU+DQVxIiqgkRNiEBphFEKy+kd1BaFvwFOUBuIxA
-oy20BKtAKp3xFMo0QNtCK5mhtMEA6BmSpUELKo38TThwLfguRVNaiRgs0llnEoIR29zfstf18/bv
-5T17Wm7vAiiN3ONCzfbfwC3DtWXXDqHfAGX0q6z/bO82j3ebh1VwnbrduwTQbvwcRtesAfMGor/W
-L3fs6Xnz8LRlm9fV8/P61sM0LDNwCZjl9gSpCokJRzpryGQ5t8kNGFUt51QjOZGu0Mj35FlYlXEr
-yC09EVOp4lEXfF84Lz1qbhBsgl59vDedXI3rTV03xipduSgt9kLytI3XmBp3aV6MPoMQGNUU62T6
-uQdeefTy1Hfj10zVHg2pq8fXDoHBiOv94csfXwN49xECqWREy7pwukKfvxdMY2j23vXDPuuxxeE+
-JOdCOhxCE3N44B1ZeSLuZh8Mmkr2wEPAmPfKWHA2uxIRjEopdbQYjDz3BWOf14/scfmwoki1eQvX
-ExBdF60Mqh+Y/QcX4uiH4Amwzx79KOVFtbL63sXJbtcvy8/3q5rupmO5CnE91wBviQAhjUUegYpL
-vVEbpLt2/W+PklRgq5Ku6mp+rpMhhCo/lXthQTxJ2ysO4Ka0ad97S7VT/n6YXus6fzk3fLnBZW5C
-KDC6gSO62QDqgFqLCCtPmjegjnLeAdArtSE8VYGbAJ/aLb+vnQutFhk768E9uRbSxhCMzdgEveYw
-IZ5ZqFKl6+kz7UR4U+buqQZXu9SIujrAfD7f0FXpozB4Q0gwp31H9mVTZGGC4b871/wm7lvyDLu1
-FUyvTj/yvD66k3UPTs08x1AQQaGziOl0S1qRkPG9COtBTSTWM9NzQ4R64B+Px/l3tDzCgxv5C6Ni
-e+QaF9xFWrxx0V/G5uvYQOdiZzvYpQUVQSIsTr1TTghI33GnPbTA7/GCqcE3oE3GZurq4HeQXQD6
-32XS1ITj/qLjN72ob0hc5C9bzw8MhfmL
+eJyFVVFv0zAQfs+vONJO3RDNxCsSQoMVrdK2Vl03CSHkesllMXLsYDvZivjx2GmTOG0YfWhV+7u7
+73z33Y1gnTENKeMIeakNPCKUGhP7xcQTbCJ4ZOKcxoZV1GCUMp1t4O0zMxkTQEGVQjicO4dTyIwp
+Ppyfu386Q86jWOZwBhq1ZlK8jYIRXEoQ0jhDYAYSpjA2fBsFQVoKG0UKSLAJB9MEJrMXi6uYMiXl
+KCrIZYJARQIKTakEGAkmQ+tU5ZSDRTAlRY7CRJMA7GdkgRoNSJ74t1BRxegjR12jWAoGbfpTAeGY
+LK4vycN8tb6/uCbLi/VVWGPcx3maPr2AO4VjYB+HMAxAkQT/i/ptfbW4vVrczAZit3eHDNqL13n0
+Ya+w+Tq/uyLL1eJmuSaLh9lqNb/0+IzgznqnAjAvzBa4jG0BNmNXfdJUkxTU2I6xRaKcy+e6VApz
+WVmoTGFTgwslrYdN03ONrbbMN1E/FQ7H7gOP0UxRjV67TPRBjF3naCMV1mSkYk9MUN7F8cODZzsE
+iIHYviIe6n8WeGQxWKuhl+9Xa49uijq7fehXMRxT9VR9f/8jhDcfYSKkSOyxKp22cNIrIk+nzd2b
+Yc7FNpHx8FUn15ZfzXEE98JxZEohx4r6kosCT+R9ZkHQtLmXGYSEeH8JCTvYkcRgXAutp9Rw7Jmf
+E/J5fktuL25m1tMe3vLdjDt9bNxr2sMo2P3C9BccqGeYhqfQITz6XurXaqdf99LF1mT2YJrvzqCu
+5w7dKvV3PzNyOb+7+Hw923dOuB+AX2SxrZs9Lm0xbCH6kmhjUyuWw+7cC7DX8367H3VzDz6oBtty
+tMIeobE21JT6HaRS+TbaoqhbE7rgdGs3xtE4cOF3xo0TfxwsdyRlhUoxuzes18r+Jp88zDx1G+kd
+/HTrr1BY2CeuyfnbQtAcu9j+pOw6cy9X0k3IuoyKCZPC5ESf6MkgHE5tLiSW3Oa+W2NnrQfkGv/h
+7tR5PNFnMBlw4B9NJTxnzKA9fLTT0aXSb5vw7FUKzcTZPddqYHi2T9/axJmEEN3qHncVCuEPaFmq
+uEtpcBj2Z1wjrqGReJBHrY6/go21NA==
 """)
 
 ##file activate.csh
 ACTIVATE_CSH = convert("""
-eJx9VG1P2zAQ/u5fcYQKNgTNPtN1WxlIQ4KCUEGaxuQ6yYVYSuzKdhqVX7+zk3bpy5YPUXL3PPfc
-ne98DLNCWshliVDV1kGCUFvMoJGugMjq2qQIiVSxSJ1cCofD1BYRnOVGV0CfZ0N2DD91DalQSjsw
-tQLpIJMGU1euvPe7QeJlkKzgWixlhnAt4aoUVsLnLBiy5NtbJWQ5THX1ZciYKKWwkOFaE04dUm6D
-r/zh7pq/3D7Nnid3/HEy+wFHY/gEJydg0aFaQrBFgz1c5DG1IhTs+UZgsBC2GMFBlaeH+8dZXwcW
-VPvCjXdlAvCfQsE7al0+07XjZvrSCUevR5dnkVeKlFYZmUztG4BdzL2u9KyLVabTU0bdfg7a0hgs
-cSmUg6UwUiQl2iHrcbcVGNvPCiLOe7+cRwG13z9qRGgx2z6DHjfm/Op2yqeT+xvOLzs0PTKHDz2V
-tkckFHoQfQRXoGJAj9el0FyJCmEMhzgMS4sB7KPOE2ExoLcSieYwDvR+cP8cg11gKkVJc2wRcm1g
-QhYFlXiTaTfO2ki0fQoiFM4tLuO4aZrhOzqR4dIPcWx17hphMBY+Srwh7RTyN83XOWkcSPh1Pg/k
-TXX/jbJTbMtUmcxZ+/bbqOsy82suFQg/BhdSOTRhMNBHlUarCpU7JzBhmkKmRejKOQzayQe6MWoa
-n1wqWmuh6LZAaHxcdeqIlVLhIBJdO9/kbl0It2oEXQj+eGjJOuvOIR/YGRqvFhttUB2XTvLXYN2H
-37CBdbW2W7j2r2+VsCn0doVWcFG1/4y1VwBjfwAyoZhD
+eJx1U2FP2zAQ/e5f8TAV3Soo+0zXbYUiDQkKQgVp2ibjJNfFUuIg22nVf885SVFLO3+I7Lt3fr6X
+d8eY58ZjYQpCWfuAhFB7yrAyIYf0Ve1SQmLsuU6DWepAw9TnEoOFq0rwdjAUx/hV1Ui1tVWAqy1M
+QGYcpaFYx+yVI67LkKwx1UuTEaYGl4X2Bl+zJpAlP/6V2hTDtCq/DYXQhdEeGW040Q/Eb+t9V/e3
+U/V88zh/mtyqh8n8J47G+IKTE3gKZJdoYrK3h5MRU1tGYS83gqNc+3yEgyyP93cP820evHLvr2H8
+kaYB/peoyY7aVHzpJnE9e+6I5Z+ji4GMTNJWNuOQq6MA1N25p8pW9HWdVWlfsNpPDbdxjgpaahuw
+1M7opCA/FFu1uwxC7L8KUqmto1KyQe3rx0I0Eovdf7BVe67U5c1MzSZ310pddGheZoFPWyytRkzU
+aCA/I+RkBXhFXr5aWV0SxjhUI6jwdAj8kmhPzX7nTfJFkM3MImp2VdVFFq1vLHSU5szYQK4Ri+Jd
+xlW2JBtOGcyYVW7SnB3v6RS91g3gKapZ0oWxbHVteYIIq3iv7QeuSrUj6KSqQ+yqsxDj1ivNQxKF
+YON10Q+NH/ARS95i5Tuqq2Vxfvc23f/FO6zrtXXmJr+ZtMY9/A15ZXFWtmch2rEQ4g1ryVHH
 """)
 
 ##file activate.bat
@@ -2220,6 +2079,25 @@ m8eg6WYWqR6SL5OjKMGfSrYt/6kxxQtOpeAgj1LXBNmpE2ElmCSIy5H0zFd8gJ924HWijWhb2hRC
 VF5PnJ+ts3a9/Mz38RpG/AUSzYUW
 """)
 
+##file python-config
+PYTHON_CONFIG = convert("""
+eJyNVV1P2zAUfc+v8ODBiSABxlulTipbO6p1LWqBgVhlhcZpPYUkctzSivHfd6+dpGloGH2Ja/ue
+e+65Hz78xNhtf3x90xmw7vCWsRPGLvpDNuz87MKfdKMWSWxZ4ilNpCLZJiuWc66SVFUOZkkcirll
+rfxIBAzOMtImDzSVPBRrekwoX/OZu/0r4lm0DHiG60g86u8sjPw5rCyy86NRkB8QuuBRSqfAKESn
+3orLTCQxE3GYkC9tYp8fk89OSwNsmXgizrhUtnumeSgeo5GbLUMk49Rv+2nK48Cm/qMwfp333J2/
+dVcAGE0CIQHBsgIeEr4Wij0LtWDLzJ9ze5YEvH2WI6CHTAVcSu9ZCsXtgxu81CIvp6/k4eXsdfo7
+PvDCRD75yi41QitfzlcPp1OI7i/1/iQitqnr0iMgQ+A6wa+IKwwdxyk9IiXNAzgquTFU8NIxAVjM
+osm1Zz526e+shQ4hKRVci69nPC3Kw4NQEmkQ65E7OodxorSvxjvpBjQHDmWFIQ1mlmzlS5vedseT
+/mgIEsMJ7Lxz2bLAF9M5xeLEhdbHxpWOw0GdkJApMVBRF1y+a0z3c9WZPAXGFcFrJgCIB+024uad
+0CrzmEoRa3Ub4swNIHPGf7QDV+2uj2OiFWsChgCwjKqN6rp5izpbH6Wc1O1TclQTP/XVwi6anTr1
+1sbubjZLI1+VptPSdCfwnFBrB1jvebrTA9uUhU2/9gad7xPqeFkaQcnnLbCViZK8d7R1kxzFrIJV
+8EaLYmKYpvGVkig+3C5HCXbM1jGCGekiM2pRCVPyRyXYdPf6kcbWEQ36F5V4Gq9N7icNNw+JHwRE
+LTgxRXACpvnQv/PuT0xCCAywY/K4hE6Now2qDwaSE5FB+1agsoUveYDepS83qFcF1NufvULD3fTl
+g6Hgf7WBt6lzMeiyyWVn3P1WVbwaczHmTzE9A5SyItTVgFYyvs/L/fXlaNgbw8v3azT+0eikVlWD
+/vBHbzQumP23uBCjsYdrL9OWARwxs/nuLOzeXbPJTa/Xv6sUmQir5pC1YRLz3eA+CD8Z0XpcW8v9
+MZWF36ryyXXf3yBIz6nzqz8Muyz0m5Qj7OexfYo/Ph3LqvkHUg7AuA==
+""")
+
 MH_MAGIC = 0xfeedface
 MH_CIGAM = 0xcefaedfe
 MH_MAGIC_64 = 0xfeedfacf
@@ -2362,6 +2240,6 @@ def mach_o_change(path, what, value):
 if __name__ == '__main__':
     main()
 
-## TODO:
-## Copy python.exe.manifest
-## Monkeypatch distutils.sysconfig
+# TODO:
+# Copy python.exe.manifest
+# Monkeypatch distutils.sysconfig

@@ -1,13 +1,39 @@
 Release History
 ===============
 
+14.0.0 (unreleased)
+-------------------
+
+* Upgrade setuptools to 19.1.1
+
+* Upgrade wheel to 0.26.0
+
+* Added support for ``python-config`` script (:pull:`798`)
+
+* Updated activate.fish (:pull:`589`) (:pull:`799`)
+
+* Account for a ``site.pyo`` correctly in some python implementations (:pull:`759`)
+
+* Properly restore an empty PS1 (:issue:`407`)
+
+* Properly remove ``pydoc`` when deactivating
+
+* Remove workaround for very old Mageia / Mandriva linuxes (:pull:`472`)
+
+* Added a space after virtualenv name in the prompt: ``(env) $PS1``
+
+* Make sure not to run a --user install when creating the virtualenv (:pull:`803`)
+
+* Remove virtualenv file's path from directory when executing with a new
+  python. Fixes issue :issue:`779`, :issue:`763` (:pull:`805`)
+
 13.1.2 (2015-08-23)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 7.1.2.
 
 13.1.1 (2015-08-20)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 7.1.1.
 
@@ -16,7 +42,7 @@ Release History
 * Make the activate script safe to use when bash is running with ``-u``.
 
 13.1.0 (2015-06-30)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 7.1.0
 
@@ -24,13 +50,13 @@ Release History
 
 
 13.0.3 (2015-06-01)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 7.0.3
 
 
 13.0.2 (2015-06-01)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 7.0.2
 
@@ -38,13 +64,13 @@ Release History
 
 
 13.0.1 (2015-05-22)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 7.0.1
 
 
 13.0.0 (2015-05-21)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Automatically install wheel when creating a new virutalenv. This can be
   disabled by using the ``--no-wheel`` option.
@@ -58,13 +84,13 @@ Release History
 
 
 12.1.1 (2015-04-07)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade pip to 6.1.1
 
 
 12.1.0 (2015-04-07)
-~~~~~~~~~~~~~~~~~~~
+-------------------
 
 * Upgrade setuptools to 15.0
 
