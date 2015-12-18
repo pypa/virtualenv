@@ -1,5 +1,5 @@
 @echo off
-set "VIRTUAL_ENV=__VIRTUAL_ENV__"
+set "VIRTUAL_ENV=%~dp0"
 
 if defined _OLD_VIRTUAL_PROMPT (
     set "PROMPT=%_OLD_VIRTUAL_PROMPT%"
@@ -7,7 +7,7 @@ if defined _OLD_VIRTUAL_PROMPT (
     if not defined PROMPT (
         set "PROMPT=$P$G"
     )
-	set "_OLD_VIRTUAL_PROMPT=%PROMPT%"	
+    set "_OLD_VIRTUAL_PROMPT=%PROMPT%"
 )
 set "PROMPT=__VIRTUAL_WINPROMPT__ %PROMPT%"
 
@@ -21,6 +21,6 @@ if defined _OLD_VIRTUAL_PATH (
 ) else (
     set "_OLD_VIRTUAL_PATH=%PATH%"
 )
-set "PATH=%VIRTUAL_ENV%\__BIN_NAME__;%PATH%"
+set "PATH=%VIRTUAL_ENV%;%PATH%"
 
 :END
