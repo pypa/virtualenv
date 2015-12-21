@@ -8,3 +8,12 @@ docs/_build
 .eggs
 .tox
 tests/test_activate_actual.output
+*~
+Include/
+Lib/
+scripts/activate
+scripts/activate.bat
+scripts/activate.ps1
+scripts/activate_this.py
+scripts/deactivate.bat
+scripts/*.exe

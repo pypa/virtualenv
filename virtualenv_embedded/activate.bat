@@ -7,9 +7,13 @@ if defined _OLD_VIRTUAL_PROMPT (
     if not defined PROMPT (
         set "PROMPT=$P$G"
     )
-	set "_OLD_VIRTUAL_PROMPT=%PROMPT%"	
+    set "_OLD_VIRTUAL_PROMPT=%PROMPT%"
 )
 set "PROMPT=__VIRTUAL_WINPROMPT__ %PROMPT%"
+
+if defined VIRTUALENV_OLDTITLE (
+    title __VIRTUAL_NAME__ ^(VirtualEnv^)
+)
 
 if not defined _OLD_VIRTUAL_PYTHONHOME (
     set "_OLD_VIRTUAL_PYTHONHOME=%PYTHONHOME%"
