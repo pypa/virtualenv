@@ -510,10 +510,16 @@ class ConfigOptionParser(optparse.OptionParser):
 
 
 def main():
+    # preprocess the -v, --verbose flag to hide deprecated options
+    suppress_deprecated = optparse.SUPPRESS_HELP
+    if '-v' in sys.argv or '--verbose' in sys.argv:
+        suppress_deprecated = None
+
     parser = ConfigOptionParser(
         version=virtualenv_version,
         usage="%prog [OPTIONS] DEST_DIR",
-        formatter=UpdatingDefaultsHelpFormatter())
+        formatter=UpdatingDefaultsHelpFormatter(),
+        epilog="Specify --verbose to view deprecated options.")
 
     parser.add_option(
         '-v', '--verbose',
@@ -548,7 +554,7 @@ def main():
         '--no-site-packages',
         dest='system_site_packages',
         action='store_false',
-        help="DEPRECATED. Retained only for backward compatibility. "
+        help=suppress_deprecated or "DEPRECATED. Retained only for backward compatibility. "
              "Not having access to global site-packages is now the default behavior.")
 
     parser.add_option(
@@ -610,8 +616,8 @@ def main():
         dest="never_download",
         action="store_true",
         default=True,
-        help="DEPRECATED. Retained only for backward compatibility. This option has no effect. "
-              "Virtualenv never downloads pip or setuptools.")
+        help=suppress_deprecated or "DEPRECATED. Retained only for backward compatibility. "
+             "This option has no effect. Virtualenv never downloads pip or setuptools.")
 
     parser.add_option(
         '--prompt',
@@ -622,13 +628,15 @@ def main():
         '--setuptools',
         dest='setuptools',
         action='store_true',
-        help="DEPRECATED. Retained only for backward compatibility. This option has no effect.")
+        help=suppress_deprecated or "DEPRECATED. Retained only for backward compatibility. "
+             "This option has no effect.")
 
     parser.add_option(
         '--distribute',
         dest='distribute',
         action='store_true',
-        help="DEPRECATED. Retained only for backward compatibility. This option has no effect.")
+        help=suppress_deprecated or "DEPRECATED. Retained only for backward compatibility. "
+             "This option has no effect.")
 
     if 'extend_parser' in globals():
         extend_parser(parser)
