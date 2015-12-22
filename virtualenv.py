@@ -811,7 +811,7 @@ def find_wheels(projects, search_dirs):
 
     return wheels
 
-def install_wheel(project_names, py_executable, search_dirs=None):
+def install_wheel(project_names, py_executable, search_dirs=None, show_stdout=False):
     if search_dirs is None:
         search_dirs = file_search_dirs()
 
@@ -826,7 +826,7 @@ def install_wheel(project_names, py_executable, search_dirs=None):
     logger.start_progress('Installing %s...' % (', '.join(project_names)))
     logger.indent += 2
     try:
-        call_subprocess(cmd, show_stdout=False,
+        call_subprocess(cmd, show_stdout=show_stdout,
             extra_env = {
                 'PYTHONPATH': pythonpath,
                 'JYTHONPATH': pythonpath,  # for Jython < 3.x
@@ -845,7 +845,7 @@ def create_environment(home_dir, site_packages=False, clear=False,
                        unzip_setuptools=False,
                        prompt=None, search_dirs=None, never_download=False,
                        no_setuptools=False, no_pip=False, no_wheel=False,
-                       symlink=True):
+                       symlink=True, show_stdout=False):
     """
     Creates a new environment in ``home_dir``.
 
@@ -869,7 +869,8 @@ def create_environment(home_dir, site_packages=False, clear=False,
             to_install.append('pip')
         if not no_wheel:
             to_install.append('wheel')
-        install_wheel(to_install, py_executable, search_dirs)
+        install_wheel(to_install, py_executable, search_dirs,
+                      show_stdout=show_stdout)
 
     install_activate(home_dir, bin_dir, prompt)
 
