@@ -811,13 +811,73 @@ def find_wheels(projects, search_dirs):
 
     return wheels
 
+_url_quote_function = None
+
+def _url_quote():
+    """Lazy import the urllib quote() function."""
+    global _url_quote_function
+    if not _url_quote_function:
+        if sys.version_info < (3, 0):
+            from urllib import quote as _url_quote_function
+        else:
+            from urllib.parse import quote as _url_quote_function
+    return _url_quote_function
+
+def local_path_to_URL(path, dont_quote):
+    """
+    Convert a local path to a valid file protocol URL.
+
+    Any embedded os.sep or os.altsep separators will be automatically converted
+    to slashes. Does not do any other path structure modifications, i.e. does
+    not normalize it or convert it to its absolute version.
+
+    Resulting value is URL quoted so it contains ASCII characters only and no
+    spaces. Any characters given as the 'dont_quote' string parameters are not
+    URL quoted. See the urllib quote() function for details.
+
+    """
+    # We do not use urllib's builtin pathname2url() function since:
+    #  - it has been commented with 'not recommended for general use'
+    #  - it does not seem to work the same on Windows and non-Windows platforms
+    #    (result starts with /// on Windows but does not on others)
+    #  - urllib implementation prior to Python 2.5 used to quote ':' characters
+    #    as '|' which would confuse pip on Windows.
+    url_quote = _url_quote()
+    for sep in (os.sep, os.altsep):
+        if sep and sep != '/':
+            path = path.replace(sep, '/')
+    return 'file:///' + url_quote(path, safe=dont_quote)
+
+def pip_findlinks_for_dir(dir):
+    """pip findlinks value identifying a given dir."""
+    # Since pip's findlinks parameter is constructed as a space separated list
+    # of dir references, those dir findlinks values must not contain any
+    # spaces. To work around this, dirs with their paths containing spaces are
+    # packed as local file URLs with URL quoted spaces, i.e. with spaces
+    # represented as '%20'.
+    if ' ' not in dir:
+        return dir
+    # findlinks dir URLs must contain absolute paths, must end with a slash and
+    # any ':' or '/' characters embedded in the dir path must not be URL quoted
+    # for pip to be able to recognize them correctly. URL quoting issue
+    # detected on Windows 7 SP1 x64 with Python 3.4.0, but doing this always
+    # does not hurt since both are valid ASCII characters.
+    findlinks = local_path_to_URL(os.path.abspath(dir), dont_quote=':/')
+    if not findlinks.endswith('/'):
+        findlinks += '/'
+    return findlinks
+
+def pip_findlinks_for_dirs(dirs):
+    """pip findlinks value identifying a given set of dirs."""
+    return ' '.join(pip_findlinks_for_dir(x) for x in dirs)
+
 def install_wheel(project_names, py_executable, search_dirs=None):
     if search_dirs is None:
         search_dirs = file_search_dirs()
 
     wheels = find_wheels(['setuptools', 'pip'], search_dirs)
     pythonpath = os.pathsep.join(wheels)
-    findlinks = ' '.join(search_dirs)
+    findlinks = pip_findlinks_for_dirs(search_dirs)
 
     cmd = [
         py_executable, '-c',
