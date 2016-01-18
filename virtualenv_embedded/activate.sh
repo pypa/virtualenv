@@ -5,6 +5,7 @@ deactivate () {
     unset -f pydoc
 
     # reset old environment variables
+    # ! [ -z ${VAR+_} ] returns true if VAR is declared at all
     if ! [ -z "${_OLD_VIRTUAL_PATH+_}" ] ; then
         PATH="$_OLD_VIRTUAL_PATH"
         export PATH
@@ -47,7 +48,7 @@ PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
 export PATH
 
 # unset PYTHONHOME if set
-if ! [ -z "${PYTHONHOME+x}" ] ; then
+if ! [ -z "${PYTHONHOME+_}" ] ; then
     _OLD_VIRTUAL_PYTHONHOME="$PYTHONHOME"
     unset PYTHONHOME
 fi
