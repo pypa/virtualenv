@@ -4,7 +4,7 @@ Release History
 14.0.0 (unreleased)
 -------------------
 
-* Upgrade setuptools to 19.1.1
+* Upgrade setuptools to 19.4
 
 * Upgrade wheel to 0.26.0
 
