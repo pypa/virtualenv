@@ -27,6 +27,8 @@ Release History
 * Remove virtualenv file's path from directory when executing with a new
   python. Fixes issue :issue:`779`, :issue:`763` (:pull:`805`)
 
+* Remove use of () in .bat files so ``Program Files (x86)`` works :issue:`35`
+
 13.1.2 (2015-08-23)
 -------------------
 
