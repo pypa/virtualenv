@@ -29,6 +29,11 @@ Release History
 
 * Remove use of () in .bat files so ``Program Files (x86)`` works :issue:`35`
 
+* Download new releases of the preinstalled software from PyPI when there are
+  new releases available. This behavior can be disabled using
+  ``--no-download``.
+
+
 13.1.2 (2015-08-23)
 -------------------
 

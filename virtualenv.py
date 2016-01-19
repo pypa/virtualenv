@@ -606,12 +606,19 @@ def main():
               "This option can be used multiple times.")
 
     parser.add_option(
-        '--never-download',
-        dest="never_download",
+        "--download",
+        dest="download",
         action="store_true",
-        default=True,
-        help="DEPRECATED. Retained only for backward compatibility. This option has no effect. "
-              "Virtualenv never downloads pip or setuptools.")
+        help="Download preinstalled packages from PyPI.",
+    )
+
+    parser.add_option(
+        "--no-download",
+        '--never-download',
+        dest="download",
+        action="store_false",
+        help="Do not download preinstalled packages from PyPI.",
+    )
 
     parser.add_option(
         '--prompt',
@@ -682,17 +689,13 @@ def main():
         make_environment_relocatable(home_dir)
         return
 
-    if not options.never_download:
-        logger.warn('The --never-download option is for backward compatibility only.')
-        logger.warn('Setting it to false is no longer supported, and will be ignored.')
-
     create_environment(home_dir,
                        site_packages=options.system_site_packages,
                        clear=options.clear,
                        unzip_setuptools=options.unzip_setuptools,
                        prompt=options.prompt,
                        search_dirs=options.search_dirs,
-                       never_download=True,
+                       download=options.download,
                        no_setuptools=options.no_setuptools,
                        no_pip=options.no_pip,
                        no_wheel=options.no_wheel,
@@ -811,7 +814,8 @@ def find_wheels(projects, search_dirs):
 
     return wheels
 
-def install_wheel(project_names, py_executable, search_dirs=None):
+def install_wheel(project_names, py_executable, search_dirs=None,
+                  download=False):
     if search_dirs is None:
         search_dirs = file_search_dirs()
 
@@ -825,25 +829,29 @@ def install_wheel(project_names, py_executable, search_dirs=None):
     ] + project_names
     logger.start_progress('Installing %s...' % (', '.join(project_names)))
     logger.indent += 2
+
+    env = {
+        "PYTHONPATH": pythonpath,
+        "JYTHONPATH": pythonpath,  # for Jython < 3.x
+        "PIP_FIND_LINKS": findlinks,
+        "PIP_USE_WHEEL": "1",
+        "PIP_ONLY_BINARY": ":all:",
+        "PIP_PRE": "1",
+        "PIP_USER": "0",
+    }
+
+    if not download:
+        env["PIP_NO_INDEX"] = "1"
+
     try:
-        call_subprocess(cmd, show_stdout=False,
-            extra_env = {
-                'PYTHONPATH': pythonpath,
-                'JYTHONPATH': pythonpath,  # for Jython < 3.x
-                'PIP_FIND_LINKS': findlinks,
-                'PIP_USE_WHEEL': '1',
-                'PIP_PRE': '1',
-                'PIP_NO_INDEX': '1',
-                'PIP_USER': '0'
-            }
-        )
+        call_subprocess(cmd, show_stdout=False, extra_env=env)
     finally:
         logger.indent -= 2
         logger.end_progress()
 
 def create_environment(home_dir, site_packages=False, clear=False,
                        unzip_setuptools=False,
-                       prompt=None, search_dirs=None, never_download=False,
+                       prompt=None, search_dirs=None, download=False,
                        no_setuptools=False, no_pip=False, no_wheel=False,
                        symlink=True):
     """
@@ -869,7 +877,12 @@ def create_environment(home_dir, site_packages=False, clear=False,
             to_install.append('pip')
         if not no_wheel:
             to_install.append('wheel')
-        install_wheel(to_install, py_executable, search_dirs)
+        install_wheel(
+            to_install,
+            py_executable,
+            search_dirs,
+            download=download,
+        )
 
     install_activate(home_dir, bin_dir, prompt)
 
