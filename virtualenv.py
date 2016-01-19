@@ -581,7 +581,7 @@ def main():
         '--no-setuptools',
         dest='no_setuptools',
         action='store_true',
-        help='Do not install setuptools (or pip) in the new virtualenv.')
+        help='Do not install setuptools in the new virtualenv.')
 
     parser.add_option(
         '--no-pip',
@@ -871,12 +871,18 @@ def create_environment(home_dir, site_packages=False, clear=False,
 
     install_distutils(home_dir)
 
+    to_install = []
+
     if not no_setuptools:
-        to_install = ['setuptools']
-        if not no_pip:
-            to_install.append('pip')
-        if not no_wheel:
-            to_install.append('wheel')
+        to_install.append('setuptools')
+
+    if not no_pip:
+        to_install.append('pip')
+
+    if not no_wheel:
+        to_install.append('wheel')
+
+    if to_install:
         install_wheel(
             to_install,
             py_executable,

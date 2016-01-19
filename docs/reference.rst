@@ -69,8 +69,7 @@ Options
 
 .. option:: --no-setuptools
 
-   Do not install setuptools (or pip) in the new
-   virtualenv.
+   Do not install setuptools in the new virtualenv.
 
 .. option:: --no-pip
 
