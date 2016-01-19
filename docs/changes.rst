@@ -33,6 +33,9 @@ Release History
   new releases available. This behavior can be disabled using
   ``--no-download``.
 
+* Make ``--no-setuptools``, ``--no-pip``, and ``--no-wheel`` independent of
+  each other.
+
 
 13.1.2 (2015-08-23)
 -------------------
