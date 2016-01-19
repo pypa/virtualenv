@@ -90,11 +90,13 @@ Options
    Provides an alternative prompt prefix for this
    environment.
 
-.. option:: --never-download
+.. option:: --download
 
-   DEPRECATED. Retained only for backward compatibility.
-   This option has no effect. Virtualenv never downloads
-   pip or setuptools.
+   Download preinstalled packages from PyPI.
+
+.. option:: --no-download
+
+   Do not download preinstalled packages from PyPI.
 
 .. option:: --no-site-packages
 
