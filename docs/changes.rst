@@ -4,9 +4,15 @@ Release History
 14.0.0 (unreleased)
 -------------------
 
+* **BACKWARDS INCOMPATIBLE** Drop support for Python 3.2.
+
 * Upgrade setuptools to 19.4
 
 * Upgrade wheel to 0.26.0
+
+* Upgrade pip to 8.0.0
+
+* Upgrade argparse to 1.4.0
 
 * Added support for ``python-config`` script (:pull:`798`)
 
