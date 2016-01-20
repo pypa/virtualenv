@@ -1,7 +1,7 @@
 Release History
 ===============
 
-14.0.0 (unreleased)
+14.0.0 (2016-01-19)
 -------------------
 
 * **BACKWARDS INCOMPATIBLE** Drop support for Python 3.2.
