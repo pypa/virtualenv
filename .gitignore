@@ -3,8 +3,8 @@ build
 dist
 docs/_build
 .DS_Store
-*.pyc
-mock-*.egg
-nose-*.egg
+*.py[cod]
+*.egg
+.eggs
 .tox
 tests/test_activate_actual.output

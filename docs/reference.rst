@@ -69,8 +69,7 @@ Options
 
 .. option:: --no-setuptools
 
-   Do not install setuptools (or pip) in the new
-   virtualenv.
+   Do not install setuptools in the new virtualenv.
 
 .. option:: --no-pip
 
@@ -90,11 +89,13 @@ Options
    Provides an alternative prompt prefix for this
    environment.
 
-.. option:: --never-download
+.. option:: --download
 
-   DEPRECATED. Retained only for backward compatibility.
-   This option has no effect. Virtualenv never downloads
-   pip or setuptools.
+   Download preinstalled packages from PyPI.
+
+.. option:: --no-download
+
+   Do not download preinstalled packages from PyPI.
 
 .. option:: --no-site-packages
 
