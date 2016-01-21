@@ -608,6 +608,7 @@ def main():
     parser.add_option(
         "--download",
         dest="download",
+        default=True,
         action="store_true",
         help="Download preinstalled packages from PyPI.",
     )
