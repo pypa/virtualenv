@@ -975,9 +975,10 @@ def change_prefix(filename, dst_prefix):
         prefixes.append(sys.base_prefix)
     prefixes = list(map(os.path.expanduser, prefixes))
     prefixes = list(map(os.path.abspath, prefixes))
+    prefixes = list(map(os.path.normcase, prefixes))
     # Check longer prefixes first so we don't split in the middle of a filename
     prefixes = sorted(prefixes, key=len, reverse=True)
-    filename = os.path.abspath(filename)
+    filename = os.path.normcase(os.path.abspath(filename))
     for src_prefix in prefixes:
         if filename.startswith(src_prefix):
             _, relpath = filename.split(src_prefix, 1)

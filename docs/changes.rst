@@ -6,6 +6,8 @@ Release History
 
 * Supress any errors from `unset` on different shells (:pull:`843`)
 
+* Normalize letter case for prefix path checking. Fixes :issue:`837`
+
 14.0.1 (2016-01-21)
 -------------------
 
