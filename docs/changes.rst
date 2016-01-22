@@ -4,6 +4,7 @@ Release History
 14.1.0 (unreleased)
 -------------------
 
+* Supress any errors from `unset` on different shells (:pull:`843`)
 
 14.0.1 (2016-01-21)
 -------------------
