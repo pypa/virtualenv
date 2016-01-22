@@ -33,7 +33,7 @@ try:
 except ImportError:
     import configparser as ConfigParser
 
-__version__ = "14.0.0"
+__version__ = "14.0.1"
 virtualenv_version = __version__  # legacy
 
 if sys.version_info < (2, 6):
@@ -608,6 +608,7 @@ def main():
     parser.add_option(
         "--download",
         dest="download",
+        default=True,
         action="store_true",
         help="Download preinstalled packages from PyPI.",
     )

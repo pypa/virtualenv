@@ -1,6 +1,14 @@
 Release History
 ===============
 
+14.0.1 (2016-01-21)
+-------------------
+
+* Upgrade from pip 8.0.0 to 8.0.2.
+
+* Fix the default of ``--(no-)download`` to default to downloading.
+
+
 14.0.0 (2016-01-19)
 -------------------
 
