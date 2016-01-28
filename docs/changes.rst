@@ -4,6 +4,8 @@ Release History
 14.1.0 (unreleased)
 -------------------
 
+* Upgrade setuptools to 19.6.1
+
 
 14.0.2 (2016-01-28)
 -------------------
@@ -13,6 +15,7 @@ Release History
 * Supress any errors from `unset` on different shells (:pull:`843`)
 
 * Normalize letter case for prefix path checking. Fixes :issue:`837`
+
 
 14.0.1 (2016-01-21)
 -------------------
@@ -69,6 +72,7 @@ Release History
 
 * Upgrade pip to 7.1.2.
 
+
 13.1.1 (2015-08-20)
 -------------------
 
@@ -77,6 +81,7 @@ Release History
 * Upgrade setuptools to 18.2.
 
 * Make the activate script safe to use when bash is running with ``-u``.
+
 
 13.1.0 (2015-06-30)
 -------------------
