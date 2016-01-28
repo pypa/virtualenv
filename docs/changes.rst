@@ -8,6 +8,8 @@ Release History
 
 * Normalize letter case for prefix path checking. Fixes :issue:`837`
 
+* Upgrade setuptools to 19.6
+
 14.0.1 (2016-01-21)
 -------------------
 
