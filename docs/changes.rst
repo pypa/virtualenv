@@ -1,14 +1,14 @@
 Release History
 ===============
 
-14.1.0 (unreleased)
+14.0.2 (2016-01-28)
 -------------------
+
+* Upgrade setuptools to 19.6
 
 * Supress any errors from `unset` on different shells (:pull:`843`)
 
 * Normalize letter case for prefix path checking. Fixes :issue:`837`
-
-* Upgrade setuptools to 19.6
 
 14.0.1 (2016-01-21)
 -------------------
