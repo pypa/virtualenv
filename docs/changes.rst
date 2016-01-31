@@ -4,6 +4,7 @@ Release History
 14.1.0 (unreleased)
 -------------------
 
+* Homogenize drive letter casing for both prefixes and filenames. :issue:`858`
 
 14.0.4 (2016-01-31)
 -------------------

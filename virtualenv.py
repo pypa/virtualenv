@@ -981,6 +981,9 @@ def change_prefix(filename, dst_prefix):
     # On Windows, make sure drive letter is uppercase
     if is_win and filename[0] in 'abcdefghijklmnopqrstuvwxyz':
         filename = filename[0].upper() + filename[1:]
+    for i, prefix in enumerate(prefixes):
+        if is_win and prefix[0] in 'abcdefghijklmnopqrstuvwxyz':
+            prefixes[i] = prefix[0].upper() + prefix[1:]
     for src_prefix in prefixes:
         if filename.startswith(src_prefix):
             _, relpath = filename.split(src_prefix, 1)
