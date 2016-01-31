@@ -4,6 +4,8 @@ Release History
 14.1.0 (unreleased)
 -------------------
 
+* Upgrade setuptools to 19.6.2
+
 * Revert ac4ea65; only correct drive letter case.
   Fixes :issue:`856`, :issue:`815`
 
