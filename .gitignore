@@ -7,4 +7,5 @@ docs/_build
 *.egg
 .eggs
 .tox
+.cache
 tests/test_activate_actual.output
