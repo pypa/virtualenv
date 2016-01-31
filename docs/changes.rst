@@ -1,6 +1,10 @@
 Release History
 ===============
 
+14.1.0 (unreleased)
+-------------------
+
+
 14.0.4 (2016-01-31)
 -------------------
 
@@ -8,6 +12,7 @@ Release History
 
 * Revert ac4ea65; only correct drive letter case.
   Fixes :issue:`856`, :issue:`815`
+
 
 14.0.3 (2016-01-28)
 -------------------
