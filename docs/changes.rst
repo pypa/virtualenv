@@ -1,7 +1,7 @@
 Release History
 ===============
 
-14.1.0 (unreleased)
+14.0.4 (2016-01-31)
 -------------------
 
 * Upgrade setuptools to 19.6.2
