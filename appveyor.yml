@@ -3,4 +3,4 @@ install:
 
 build_script:
   - cmd: python --version
-  - cmd: puthon -m tox
+  - cmd: python -m tox
