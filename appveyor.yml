@@ -1,6 +1,6 @@
 install:
-  - cmd: pip install tox
+  - cmd: python -m pip install tox
 
 build_script:
   - cmd: python --version
-  - cmd: tox
+  - cmd: puthon -m tox
