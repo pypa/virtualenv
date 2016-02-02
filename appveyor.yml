@@ -16,4 +16,4 @@ install:
 build_script:
   - "%PYTHON%\\python.exe --version"
 test_script:
-  - "%PYTHON%\\python.exe -m tox"
+  - "%PYTHON%\\python.exe -m tox -e"
