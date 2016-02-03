@@ -24,7 +24,7 @@ def test_commandline_explicit_interp(tmpdir):
 def test_commandline_abbrev_interp(tmpdir):
     """Specifying abbreviated forms of the Python interpreter should work"""
     if sys.platform == 'win32':
-        fmt = 'py%s%s'
+        fmt = '%s.%s'
     else:
         fmt = 'python%s.%s'
     abbrev = fmt % (sys.version_info[0], sys.version_info[1])
