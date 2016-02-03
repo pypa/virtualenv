@@ -16,4 +16,5 @@ install:
 build_script:
   - "%PYTHON%\\python.exe --version"
 test_script:
+  - "%PYTHON%\\Scripts\\tox --listenvs"
   - "%PYTHON%\\Scripts\\tox -e py"
