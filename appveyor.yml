@@ -1,0 +1,20 @@
+environment:
+  matrix:
+    - PYTHON: "C:\\Python26"
+    - PYTHON: "C:\\Python27"
+    - PYTHON: "C:\\Python33"
+    - PYTHON: "C:\\Python34"
+    - PYTHON: "C:\\Python35"
+    - PYTHON: "C:\\Python26-x64"
+    - PYTHON: "C:\\Python27-x64"
+    - PYTHON: "C:\\Python33-x64"
+    - PYTHON: "C:\\Python34-x64"
+    - PYTHON: "C:\\Python35-x64"
+    
+install:
+  - "%PYTHON%\\Scripts\\pip install tox"
+build_script:
+  - "%PYTHON%\\python.exe --version"
+test_script:
+  - "%PYTHON%\\Scripts\\tox --listenvs"
+  - "%PYTHON%\\Scripts\\tox -e py"
