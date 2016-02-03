@@ -12,8 +12,8 @@ environment:
     - PYTHON: "C:\\Python35-x64"
     
 install:
-  - "%PYTHON%\\python.exe -m pip install tox"
+  - "%PYTHON%\\Scripts\\pip install tox"
 build_script:
   - "%PYTHON%\\python.exe --version"
 test_script:
-  - "%PYTHON%\\python.exe -m tox -e"
+  - "%PYTHON%\\python.exe -m tox -e py"
