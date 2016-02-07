@@ -25,6 +25,8 @@ import glob
 import distutils.sysconfig
 import struct
 import subprocess
+import pkgutil
+import tempfile
 from distutils.util import strtobool
 from os.path import join
 
@@ -33,7 +35,7 @@ try:
 except ImportError:
     import configparser as ConfigParser
 
-__version__ = "14.0.5"
+__version__ = "14.0.6"
 virtualenv_version = __version__  # legacy
 
 if sys.version_info < (2, 6):
@@ -837,31 +839,49 @@ def install_wheel(project_names, py_executable, search_dirs=None,
         return urljoin('file:', pathname2url(os.path.abspath(p)))
     findlinks = ' '.join(space_path2url(d) for d in search_dirs)
 
-    cmd = [
-        py_executable, '-c',
-        'import sys, pip; sys.exit(pip.main(["install", "--ignore-installed"] + sys.argv[1:]))',
-    ] + project_names
-    logger.start_progress('Installing %s...' % (', '.join(project_names)))
-    logger.indent += 2
+    sys.path = pythonpath.split(os.pathsep) + sys.path
+    cert_data = pkgutil.get_data("pip._vendor.requests", "cacert.pem")
 
-    env = {
-        "PYTHONPATH": pythonpath,
-        "JYTHONPATH": pythonpath,  # for Jython < 3.x
-        "PIP_FIND_LINKS": findlinks,
-        "PIP_USE_WHEEL": "1",
-        "PIP_ONLY_BINARY": ":all:",
-        "PIP_PRE": "1",
-        "PIP_USER": "0",
-    }
-
-    if not download:
-        env["PIP_NO_INDEX"] = "1"
+    if cert_data is not None:
+        cert_file = tempfile.NamedTemporaryFile(delete=False)
+        cert_file.write(cert_data)
+        cert_file.close()
+    else:
+        cert_file = None
 
     try:
-        call_subprocess(cmd, show_stdout=False, extra_env=env)
+        cmd = [
+            py_executable, '-c',
+            'import sys, pip; sys.exit(pip.main(["install", "--ignore-installed"] + sys.argv[1:]))',
+        ] + project_names
+        logger.start_progress('Installing %s...' % (', '.join(project_names)))
+        logger.indent += 2
+
+        env = {
+            "PYTHONPATH": pythonpath,
+            "JYTHONPATH": pythonpath,  # for Jython < 3.x
+            "PIP_FIND_LINKS": findlinks,
+            "PIP_USE_WHEEL": "1",
+            "PIP_ONLY_BINARY": ":all:",
+            "PIP_PRE": "1",
+            "PIP_USER": "0",
+        }
+
+        if not download:
+            env["PIP_NO_INDEX"] = "1"
+
+        if cert_file is not None:
+            env["PIP_CERT"] = cert_file.name
+
+        try:
+            call_subprocess(cmd, show_stdout=False, extra_env=env)
+        finally:
+            logger.indent -= 2
+            logger.end_progress()
     finally:
-        logger.indent -= 2
-        logger.end_progress()
+        if cert_file is not None:
+            os.remove(cert_file.name)
+
 
 def create_environment(home_dir, site_packages=False, clear=False,
                        unzip_setuptools=False,

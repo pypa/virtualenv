@@ -1,10 +1,22 @@
 Release History
 ===============
 
+14.0.6 (2016-02-07)
+-------------------
+
+* Upgrade setuptools to 20.0
+
+* Upgrade wheel to 0.29.0
+
+* Fix an error where virtualenv didn't pass in a working ssl certificate for
+  pip, causing "weird" errors related to ssl.
+
+
 14.0.5 (2016-02-01)
 -------------------
 
 * Homogenize drive letter casing for both prefixes and filenames. :issue:`858`
+
 
 14.0.4 (2016-01-31)
 -------------------
