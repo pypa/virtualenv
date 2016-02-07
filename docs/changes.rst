@@ -4,6 +4,8 @@ Release History
 14.1.0 (unreleased)
 -------------------
 
+* Upgrade setuptools to 20.0
+
 
 14.0.5 (2016-02-01)
 -------------------
