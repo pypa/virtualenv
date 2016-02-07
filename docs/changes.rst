@@ -6,6 +6,8 @@ Release History
 
 * Upgrade setuptools to 20.0
 
+* Upgrade wheel to 0.29.0
+
 
 14.0.5 (2016-02-01)
 -------------------
