@@ -84,7 +84,7 @@ Release History
 
 * Make sure not to run a --user install when creating the virtualenv (:pull:`803`)
 
-* Remove virtualenv file's path from directory when executing with a new
+* Remove virtualenv.py's path from sys.path when executing with a new
   python. Fixes issue :issue:`779`, :issue:`763` (:pull:`805`)
 
 * Remove use of () in .bat files so ``Program Files (x86)`` works :issue:`35`
