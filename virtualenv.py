@@ -731,6 +731,7 @@ def call_subprocess(cmd, show_stdout=True,
                 part = part.decode(sys.getfilesystemencoding())
         cmd_parts.append(part)
     cmd_desc = ' '.join(cmd_parts)
+    cmd_desc = cmd_desc.encode('utf-8')
     if show_stdout:
         stdout = None
     else:
@@ -1371,8 +1372,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             else:
                 copyfile(py_executable, full_pth, symlink)
 
-    cmd = [py_executable, '-c', 'import sys;out=sys.stdout;'
-        'getattr(out, "buffer", out).write(sys.prefix.encode("utf-8"))']
+    cmd = [py_executable, '-c', 'import sys;out=sys.stdout;prefix=sys.prefix;'
+        'prefix=prefix.encode("utf-8") if sys.version_info[0]==3 else prefix;'
+        'getattr(out, "buffer", out).write(prefix)']
     logger.info('Testing executable with %s %s "%s"' % tuple(cmd))
     try:
         proc = subprocess.Popen(cmd,
