@@ -4,6 +4,9 @@ Release History
 14.1.0 (unreleased)
 -------------------
 
+* Remove the `virtualenv-N.N` script from the package; this can no longer be correctly created from a wheel installation.
+  Resolves :issue:`851`, :issue:`692`
+
 
 14.0.6 (2016-02-07)
 -------------------
