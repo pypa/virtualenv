@@ -1,11 +1,18 @@
 Release History
 ===============
 
-14.1.0 (unreleased)
+15.0.0 (unreleased)
 -------------------
 
 * Remove the `virtualenv-N.N` script from the package; this can no longer be correctly created from a wheel installation.
   Resolves :issue:`851`, :issue:`692`
+
+* Remove accidental runtime dependency on pip by extracting certificate in the
+  subprocess.
+
+* Upgrade setuptools 20.2.2.
+
+* Upgrade pip to 8.1.0.
 
 
 14.0.6 (2016-02-07)
