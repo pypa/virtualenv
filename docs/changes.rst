@@ -1,6 +1,20 @@
 Release History
 ===============
 
+15.0.0 (2016-03-05)
+-------------------
+
+* Remove the `virtualenv-N.N` script from the package; this can no longer be correctly created from a wheel installation.
+  Resolves :issue:`851`, :issue:`692`
+
+* Remove accidental runtime dependency on pip by extracting certificate in the
+  subprocess.
+
+* Upgrade setuptools 20.2.2.
+
+* Upgrade pip to 8.1.0.
+
+
 14.0.6 (2016-02-07)
 -------------------
 
@@ -80,7 +94,7 @@ Release History
 
 * Make sure not to run a --user install when creating the virtualenv (:pull:`803`)
 
-* Remove virtualenv file's path from directory when executing with a new
+* Remove virtualenv.py's path from sys.path when executing with a new
   python. Fixes issue :issue:`779`, :issue:`763` (:pull:`805`)
 
 * Remove use of () in .bat files so ``Program Files (x86)`` works :issue:`35`
