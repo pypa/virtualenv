@@ -1,7 +1,7 @@
 Release History
 ===============
 
-15.0.0 (unreleased)
+15.0.0 (2016-03-05)
 -------------------
 
 * Remove the `virtualenv-N.N` script from the package; this can no longer be correctly created from a wheel installation.
