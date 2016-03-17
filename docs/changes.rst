@@ -1,7 +1,7 @@
 Release History
 ===============
 
-15.0.1 (unreleased)
+15.0.1 (2016-03-17)
 -------------------
 
 * Print error message when DEST_DIR exists and is a file
