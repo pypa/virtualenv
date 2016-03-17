@@ -36,7 +36,7 @@ try:
 except ImportError:
     import configparser as ConfigParser
 
-__version__ = "15.0.0"
+__version__ = "15.0.1"
 virtualenv_version = __version__  # legacy
 
 if sys.version_info < (2, 6):
@@ -676,6 +676,11 @@ def main():
         sys.exit(2)
 
     home_dir = args[0]
+
+    if os.path.exists(home_dir) and os.path.isfile(home_dir):
+        logger.fatal('ERROR: File already exists and is not a directory.')
+        logger.fatal('Please provide a different path or delete the file.')
+        sys.exit(3)
 
     if os.environ.get('WORKING_ENV'):
         logger.fatal('ERROR: you cannot run virtualenv while in a workingenv')

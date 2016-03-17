@@ -1,10 +1,21 @@
 Release History
 ===============
 
+15.0.1 (2016-03-17)
+-------------------
+
+* Print error message when DEST_DIR exists and is a file
+
+* Upgrade setuptools to 20.3
+
+* Upgrade pip to 8.1.1.
+
+
 15.0.0 (2016-03-05)
 -------------------
 
-* Remove the `virtualenv-N.N` script from the package; this can no longer be correctly created from a wheel installation.
+* Remove the `virtualenv-N.N` script from the package; this can no longer be
+  correctly created from a wheel installation.
   Resolves :issue:`851`, :issue:`692`
 
 * Remove accidental runtime dependency on pip by extracting certificate in the
