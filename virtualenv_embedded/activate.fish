@@ -68,7 +68,7 @@ if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
         end
 
         # Restore the original $status
-        echo "exit $old_status" | source
+        echo "exit $old_status" | . 
         _old_fish_prompt
     end
 
