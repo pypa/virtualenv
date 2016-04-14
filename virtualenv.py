@@ -1062,6 +1062,16 @@ def copy_required_modules(dst_prefix, symlink):
                 if os.path.exists(pyfile):
                     copyfile(pyfile, dst_filename[:-1], symlink)
 
+def copy_tcltk(src, dest, symlink):
+    """ copy tcl/tk libraries on Windows (issue #93) """
+    if majver == 2:
+        libver = '8.5'
+    else:
+        libver = '8.6'
+    for name in ['tcl', 'tk']:
+        srcdir = src + '/tcl/' + name + libver
+        dstdir = dest + '/tcl/' + name + libver
+        copyfileordir(srcdir, dstdir, symlink)
 
 def subst_path(prefix_path, prefix, home_dir):
     prefix_path = os.path.normpath(prefix_path)
@@ -1118,6 +1128,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         copy_required_modules(home_dir, symlink)
     finally:
         logger.indent -= 2
+    # ...copy tcl/tk
+    if is_win:
+        copy_tcltk(prefix, home_dir, symlink)
     mkdir(join(lib_dir, 'site-packages'))
     import site
     site_filename = site.__file__
