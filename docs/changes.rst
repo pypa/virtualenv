@@ -4,6 +4,9 @@ Release History
 15.1.0 (unreleased)
 -------------------
 
+* Copy Tcl/Tk libs on Windows to allow them to run,
+  fixes :issue:`93` (:pull:`888`)
+
 
 15.0.1 (2016-03-17)
 -------------------
