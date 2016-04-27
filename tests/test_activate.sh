@@ -87,9 +87,26 @@ fi
 
 echo "$0: pydoc is OK." 1>&2
 
+echo "$0: Alterating PATH env variable inbetween 'activate' and 'deactivate' command..." 1>&2
+if echo $PATH | grep 'foobar' > /dev/null; then
+    echo "$0: 'foobar' already in PATH, makes the test irrelevant, please modify alteration done to the PATH" 1>&2
+    exit 8
+fi
+PATH="$PATH:foobar"
+
 echo "$0: Deactivating ${TESTENV}..." 1>&2
 deactivate
 echo "$0: Deactivated ${TESTENV}." 1>&2
+
+echo "$0: Checking PATH still contains alteration..." 1>&2
+
+if ! echo $PATH | grep 'foobar' > /dev/null; then
+    echo "$0: PATH has been reseted!" 1>&2
+    exit 8
+fi
+
+echo "$0: PATH still contains alteration." 1>&2
+
 echo "$0: OK!" 1>&2
 
 rm -rf ${TESTENV}
