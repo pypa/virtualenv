@@ -8,4 +8,5 @@ docs/_build
 .eggs
 .tox
 .cache
-tests/test_activate_actual.output
+tests/test_activate_output.actual
+tests/shunit2
