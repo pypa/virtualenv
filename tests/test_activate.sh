@@ -40,13 +40,14 @@ test_output_of_which_easy_install(){
 test_simple_python_program(){
     TESTENV=${TESTENV} python <<__END__
 import os, sys
+from distutils.sysconfig import get_python_lib
 
-expected_site_packages = os.path.join(os.environ['TESTENV'], 'lib','python%s' % sys.version[:3], 'site-packages')
-site_packages = os.path.join(os.environ['VIRTUAL_ENV'], 'lib', 'python%s' % sys.version[:3], 'site-packages')
+expected_virtualenv_location = os.environ['TESTENV']
+virtualenv_location = os.environ['VIRTUAL_ENV']
 
-assert site_packages == expected_site_packages, 'site_packages did not have expected value; actual value: %r' % site_packages
+assert virtualenv_location == expected_virtualenv_location, 'virtualenv loacation did not have expected value; actual value: %r' % virtualenv_location
 
-open(os.path.join(site_packages, 'pydoc_test.py'), 'w').write('"""This is pydoc_test.py"""\n')
+open(os.path.join(get_python_lib(), 'pydoc_test.py'), 'w').write('"""This is pydoc_test.py"""\n')
 __END__
 
     assertEquals "Python script failed!" 0 "$?"
