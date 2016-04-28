@@ -8,7 +8,7 @@ deactivate () {
     if ! [ -z "${VIRTUAL_ENV+_}" ] ; then
         remove_from_path() {
             local path_to_remove="$1"
-            local path_before
+            local path_before=""
             local result=":$PATH:"
             while [ "$path_before" != "$result" ]; do
                 path_before="$result"
