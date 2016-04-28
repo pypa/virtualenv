@@ -5,7 +5,7 @@ deactivate () {
     unset -f pydoc >/dev/null 2>&1
 
     # Restore old environment variables.
-    if [ -n "$VIRTUAL_ENV" ]; then
+    if ! [ -z "${VIRTUAL_ENV+_}" ] ; then
         remove_from_path() {
             local path_to_remove="$1"
             local path_before
