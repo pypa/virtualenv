@@ -12,7 +12,7 @@ oneTimeSetUp(){
 
 test_virtualenv_creation(){
     assertTrue "Failed to get expected output from ${VIRTUALENV}!" \
-        "diff ${ROOT}/tests/test_activate_output.expected ${ROOT}/tests/test_activate_output.actual"
+        "diff ${ROOT}/tests/test_activate_output.expected ${ROOT}/tests/test_activate_output.actual | grep '^>'"
 }
 
 
