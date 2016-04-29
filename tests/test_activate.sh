@@ -11,6 +11,8 @@ oneTimeSetUp(){
 }
 
 test_virtualenv_creation(){
+    # When pypy, bootstrap virtualenv output
+    sed -i s/pypy/python/ ${ROOT}/tests/test_activate_output.actual
     assertFalse "Failed to get expected output from ${VIRTUALENV}!" \
         "diff ${ROOT}/tests/test_activate_output.expected ${ROOT}/tests/test_activate_output.actual | grep '^<'"
 }
