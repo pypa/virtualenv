@@ -1262,8 +1262,10 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             python_executable = os.path.join(os.path.dirname(py_executable), 'python')
             if sys.platform in ('win32', 'cygwin'):
                 python_executable += '.exe'
-            logger.info('Also created executable %s' % python_executable)
-            copyfile(py_executable, python_executable, symlink)
+            if (not os.path.exists(python_executable) and
+                not os.islink(python_executable)):
+                logger.info('Also created executable %s' % python_executable)
+                copyfile(py_executable, python_executable, symlink)
 
             if is_win:
                 for name in ['libexpat.dll', 'libpypy.dll', 'libpypy-c.dll',
