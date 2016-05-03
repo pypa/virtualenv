@@ -1358,14 +1358,15 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             # Don't try to symlink to yourself.
             required_symlinks.remove(py_executable_base)
 
-        for pth in required_symlinks:
-            full_pth = join(bin_dir, pth)
-            if os.path.exists(full_pth):
-                os.unlink(full_pth)
-            if symlink:
-                os.symlink(py_executable_base, full_pth)
-            else:
-                copyfile(py_executable, full_pth, symlink)
+        if not os.path.islink(py_executable):
+            for pth in required_symlinks:
+                full_pth = join(bin_dir, pth)
+                if os.path.exists(full_pth):
+                    os.unlink(full_pth)
+                if symlink:
+                    os.symlink(py_executable_base, full_pth)
+                else:
+                    copyfile(py_executable, full_pth, symlink)
 
     if is_win and ' ' in py_executable:
         # There's a bug with subprocess on Windows when using a first
