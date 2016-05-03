@@ -1364,8 +1364,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         if not os.path.islink(py_executable):
             for pth in required_symlinks:
                 full_pth = join(bin_dir, pth)
-                if (not os.path.islink(full_pth) and os.readlink(full_pth) != py_executable):
-                    if os.path.exists(full_pth):
+                if os.path.exists(full_pth):
+                    if (not os.path.islink(full_pth) and os.readlink(full_pth) != py_executable):
                         os.unlink(full_pth)
                     if symlink:
                         os.symlink(py_executable_base, full_pth)
