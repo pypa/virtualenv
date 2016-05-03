@@ -1264,7 +1264,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
                 python_executable += '.exe'
             if (not os.path.exists(python_executable) and
                 not os.path.islink(python_executable) and
-                os.path.readlink(python_executable) != py_executable):
+                os.readlink(python_executable) != py_executable):
                 logger.info('Also created executable %s' % python_executable)
                 copyfile(py_executable, python_executable, symlink)
 
