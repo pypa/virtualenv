@@ -1263,7 +1263,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             if sys.platform in ('win32', 'cygwin'):
                 python_executable += '.exe'
             if (not os.path.exists(python_executable) and
-                not os.islink(python_executable)):
+                not os.path.islink(python_executable)):
                 logger.info('Also created executable %s' % python_executable)
                 copyfile(py_executable, python_executable, symlink)
 
