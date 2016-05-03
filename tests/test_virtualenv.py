@@ -143,6 +143,9 @@ def test_install_python_bin_existing_symlink():
                                      py_exe_version_major_minor ]
 
         req_path = os.path.join(bin_dir, required_executables[0])
+        if not os.path.exists(bin_dir):
+            os.makedirs(bin_dir)
+
         with open(req_path, 'w') as fp:
             fp.write('\n')
         os.symlink(req_path, exist_python)
