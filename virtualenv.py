@@ -1374,7 +1374,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         py_executable = '"%s"' % py_executable
     # NOTE: keep this check as one line, cmd.exe doesn't cope with line breaks
     cmd = [py_executable, '-c', 'import sys;out=sys.stdout;'
-        'prefix = sys.prefix.decode(sys.getfilesystemencoding()) if hasattr(sys.prefix, "decode") else sys.prefix;'
+        'prefix = hasattr(sys.prefix, "decode") and sys.prefix.decode(sys.getfilesystemencoding()) or sys.prefix;'
         'getattr(out, "buffer", out).write(prefix.encode("utf-8"))']
     logger.info('Testing executable with %s %s "%s"' % tuple(cmd))
     try:
