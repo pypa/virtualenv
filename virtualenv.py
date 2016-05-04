@@ -1224,8 +1224,11 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     if sys.executable != py_executable:
         ## FIXME: could I just hard link?
         executable = sys.executable
-        shutil.copyfile(executable, py_executable)
-        make_exe(py_executable)
+        if (not os.path.islink(py_executable) and
+            os.readlink(py_executable) != executable and
+            os.path.exists(py_executable)):
+            shutil.copyfile(executable, py_executable)
+            make_exe(py_executable)
         if is_win or is_cygwin:
             pythonw = os.path.join(os.path.dirname(sys.executable), 'pythonw.exe')
             if os.path.exists(pythonw):
@@ -1262,8 +1265,12 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             python_executable = os.path.join(os.path.dirname(py_executable), 'python')
             if sys.platform in ('win32', 'cygwin'):
                 python_executable += '.exe'
-            logger.info('Also created executable %s' % python_executable)
-            copyfile(py_executable, python_executable, symlink)
+
+            if (not os.path.exists(python_executable) and
+                not os.path.islink(python_executable) and
+                os.readlink(python_executable) != py_executable):
+                logger.info('Also created executable %s' % python_executable)
+                copyfile(py_executable, python_executable, symlink)
 
             if is_win:
                 for name in ['libexpat.dll', 'libpypy.dll', 'libpypy-c.dll',
@@ -1358,14 +1365,16 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             # Don't try to symlink to yourself.
             required_symlinks.remove(py_executable_base)
 
-        for pth in required_symlinks:
-            full_pth = join(bin_dir, pth)
-            if os.path.exists(full_pth):
-                os.unlink(full_pth)
-            if symlink:
-                os.symlink(py_executable_base, full_pth)
-            else:
-                copyfile(py_executable, full_pth, symlink)
+        if not os.path.islink(py_executable):
+            for pth in required_symlinks:
+                full_pth = join(bin_dir, pth)
+                if os.path.exists(full_pth):
+                    if (not os.path.islink(full_pth) and os.readlink(full_pth) != py_executable):
+                        os.unlink(full_pth)
+                    if symlink:
+                        os.symlink(py_executable_base, full_pth)
+                    else:
+                        copyfile(py_executable, full_pth, symlink)
 
     if is_win and ' ' in py_executable:
         # There's a bug with subprocess on Windows when using a first

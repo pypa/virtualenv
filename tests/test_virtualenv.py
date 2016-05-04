@@ -122,6 +122,42 @@ def test_install_python_bin():
         shutil.rmtree(tmp_virtualenv)
 
 
+def test_install_python_bin_existing_symlink():
+    """Should create the right python executables and links"""
+    tmp_virtualenv = tempfile.mkdtemp()
+    try:
+        home_dir, lib_dir, inc_dir, bin_dir = \
+                                virtualenv.path_locations(tmp_virtualenv)
+        exist_python = os.path.join(bin_dir, 'python')
+
+        if virtualenv.is_win:
+            required_executables = [ 'python.exe', 'pythonw.exe']
+            exist_python_exe =  exist_python + '.exe'
+        else:
+            exist_python_exe = exist_python
+            py_exe_no_version = 'python'
+            py_exe_version_major = 'python%s' % sys.version_info[0]
+            py_exe_version_major_minor = 'python%s.%s' % (
+                sys.version_info[0], sys.version_info[1])
+            required_executables = [ py_exe_no_version, py_exe_version_major,
+                                     py_exe_version_major_minor ]
+
+        req_path = os.path.join(bin_dir, required_executables[1])
+        if not os.path.exists(bin_dir):
+            os.makedirs(bin_dir)
+
+        with open(req_path, 'w') as fp:
+            fp.write('\n')
+
+        os.symlink(req_path, exist_python)
+        virtualenv.install_python(home_dir, lib_dir, inc_dir, bin_dir, False,
+                                  False)
+
+        assert os.path.islink(exist_python) and os.readlink(exist_python) == req_path
+    finally:
+        shutil.rmtree(tmp_virtualenv)
+
+
 @pytest.mark.skipif("platform.python_implementation() == 'PyPy'")
 def test_always_copy_option():
     """Should be no symlinks in directory tree"""
