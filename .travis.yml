@@ -34,6 +34,7 @@ branches:
     - master
     - develop
     - rewrite
+    - chksymlinks
 
 notifications:
   irc:
