@@ -7,6 +7,10 @@ Release History
 * Copy Tcl/Tk libs on Windows to allow them to run,
   fixes :issue:`93` (:pull:`888`)
 
+* Upgrade setuptools to 21.0.0.
+
+* Upgrade pip to 8.1.2.
+
 
 15.0.1 (2016-03-17)
 -------------------
