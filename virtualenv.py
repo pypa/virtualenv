@@ -1027,8 +1027,8 @@ def change_prefix(filename, dst_prefix):
         if is_win and prefix[0] in 'abcdefghijklmnopqrstuvwxyz':
             prefixes[i] = prefix[0].upper() + prefix[1:]
     for src_prefix in prefixes:
-        if filename.startswith(src_prefix):
-            _, relpath = filename.split(src_prefix, 1)
+        if (is_win and filename.lower().startswith(src_prefix.lower())) or (filename.startswith(src_prefix)):
+            relpath = filename[len(src_prefix):]
             if src_prefix != os.sep: # sys.prefix == "/"
                 assert relpath[0] == os.sep
                 relpath = relpath[1:]
