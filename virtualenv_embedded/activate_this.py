@@ -23,7 +23,9 @@ else:
 prev_sys_path = list(sys.path)
 import site
 site.addsitedir(site_packages)
-sys.real_prefix = sys.prefix
+# if sys has real_prefix, then some virtualenv is already activated and sys.prefix has been modified
+if not hasattr(sys, 'real_prefix'):
+    sys.real_prefix = sys.prefix
 sys.prefix = base
 # Move the added items to the front of the path:
 new_sys_path = []
