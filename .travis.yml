@@ -23,9 +23,16 @@ matrix:
     - python: 2.7
       env: TOXENV=docs
 
-install: pip install tox
+install:
+  - pip install tox
+  - wget https://github.com/aetheric/shunit2/archive/2.1.6.tar.gz
+  - tar -xvf 2.1.6.tar.gz
+  - mv shunit2-2.1.6 tests/shunit2
 
-script: tox
+
+script:
+  - tox
+  - bash tests/test_activate.sh
 
 sudo: false # Use container based builds
 

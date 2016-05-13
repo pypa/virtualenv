@@ -1,96 +1,87 @@
 #!/bin/sh
-
 set -u
-
 ROOT="$(dirname $0)/.."
 VIRTUALENV="${ROOT}/virtualenv.py"
 TESTENV="/tmp/test_virtualenv_activate.venv"
 
-rm -rf ${TESTENV}
+oneTimeSetUp(){
+    rm -rf ${TESTENV}
+    ${VIRTUALENV} ${TESTENV} | tee ${ROOT}/tests/test_activate_output.actual
+    . ${TESTENV}/bin/activate
+}
 
-echo "$0: Creating virtualenv ${TESTENV}..." 1>&2
+test_virtualenv_creation(){
+    # When pypy, bootstrap virtualenv output
+    sed -i s/pypy/python/ ${ROOT}/tests/test_activate_output.actual
+    assertFalse "Failed to get expected output from ${VIRTUALENV}!" \
+        "diff ${ROOT}/tests/test_activate_output.expected ${ROOT}/tests/test_activate_output.actual | grep '^<'"
+}
 
-${VIRTUALENV} ${TESTENV} | tee ${ROOT}/tests/test_activate_output.actual
-if ! diff ${ROOT}/tests/test_activate_output.expected ${ROOT}/tests/test_activate_output.actual; then
-    echo "$0: Failed to get expected output from ${VIRTUALENV}!" 1>&2
-    exit 1
-fi
 
-echo "$0: Created virtualenv ${TESTENV}." 1>&2
+test_value_of_VIRTUAL_ENV(){
+    assertEquals "Expected \$VIRTUAL_ENV to be set to \"${TESTENV}\"; actual value: \"${VIRTUAL_ENV}\"!"\
+        "${TESTENV}" "$VIRTUAL_ENV"
+}
 
-echo "$0: Activating ${TESTENV}..." 1>&2
-. ${TESTENV}/bin/activate
-echo "$0: Activated ${TESTENV}." 1>&2
 
-echo "$0: Checking value of \$VIRTUAL_ENV..." 1>&2
+test_output_of_which_python(){
+    assertEquals "Expected \$(which python) to return \"${TESTENV}/bin/python\"; actual value: \"$(which python)\"!"\
+        "${TESTENV}/bin/python" "$(which python)"
+}
 
-if [ "$VIRTUAL_ENV" != "${TESTENV}" ]; then
-    echo "$0: Expected \$VIRTUAL_ENV to be set to \"${TESTENV}\"; actual value: \"${VIRTUAL_ENV}\"!" 1>&2
-    exit 2
-fi
+test_output_of_which_pip(){
+    assertEquals "Expected \$(which pip) to return \"${TESTENV}/bin/pip\"; actual value: \"$(which pip)\"!"\
+        "${TESTENV}/bin/pip" "$(which pip)"
+}
 
-echo "$0: \$VIRTUAL_ENV = \"${VIRTUAL_ENV}\" -- OK." 1>&2
+test_output_of_which_easy_install(){
+    assertEquals "Expected \$(which easy_install) to return \"${TESTENV}/bin/easy_install\"; actual value: \"$(which easy_install)\"!"\
+        "${TESTENV}/bin/easy_install" "$(which easy_install)"
+}
 
-echo "$0: Checking output of \$(which python)..." 1>&2
-
-if [ "$(which python)" != "${TESTENV}/bin/python" ]; then
-    echo "$0: Expected \$(which python) to return \"${TESTENV}/bin/python\"; actual value: \"$(which python)\"!" 1>&2
-    exit 3
-fi
-
-echo "$0: Output of \$(which python) is OK." 1>&2
-
-echo "$0: Checking output of \$(which pip)..." 1>&2
-
-if [ "$(which pip)" != "${TESTENV}/bin/pip" ]; then
-    echo "$0: Expected \$(which pip) to return \"${TESTENV}/bin/pip\"; actual value: \"$(which pip)\"!" 1>&2
-    exit 4
-fi
-
-echo "$0: Output of \$(which pip) is OK." 1>&2
-
-echo "$0: Checking output of \$(which easy_install)..." 1>&2
-
-if [ "$(which easy_install)" != "${TESTENV}/bin/easy_install" ]; then
-    echo "$0: Expected \$(which easy_install) to return \"${TESTENV}/bin/easy_install\"; actual value: \"$(which easy_install)\"!" 1>&2
-    exit 5
-fi
-
-echo "$0: Output of \$(which easy_install) is OK." 1>&2
-
-echo "$0: Executing a simple Python program..." 1>&2
-
-TESTENV=${TESTENV} python <<__END__
+test_simple_python_program(){
+    TESTENV=${TESTENV} python <<__END__
 import os, sys
+from distutils.sysconfig import get_python_lib
 
-expected_site_packages = os.path.join(os.environ['TESTENV'], 'lib','python%s' % sys.version[:3], 'site-packages')
-site_packages = os.path.join(os.environ['VIRTUAL_ENV'], 'lib', 'python%s' % sys.version[:3], 'site-packages')
+expected_virtualenv_location = os.environ['TESTENV']
+virtualenv_location = os.environ['VIRTUAL_ENV']
 
-assert site_packages == expected_site_packages, 'site_packages did not have expected value; actual value: %r' % site_packages
+assert virtualenv_location == expected_virtualenv_location, 'virtualenv loacation did not have expected value; actual value: %r' % virtualenv_location
 
-open(os.path.join(site_packages, 'pydoc_test.py'), 'w').write('"""This is pydoc_test.py"""\n')
+open(os.path.join(get_python_lib(), 'pydoc_test.py'), 'w').write('"""This is pydoc_test.py"""\n')
 __END__
 
-if [ $? -ne 0 ]; then
-    echo "$0: Python script failed!" 1>&2
-    exit 6
-fi
+    assertEquals "Python script failed!" 0 "$?"
+}
 
-echo "$0: Execution of a simple Python program -- OK." 1>&2
+test_pydoc(){
+    assertTrue "pydoc test failed!"\
+        "PAGER=cat pydoc pydoc_test | grep 'This is pydoc_test.py'"
+}
 
-echo "$0: Testing pydoc..." 1>&2
+test_PATH_alteration(){
+    assertFalse "'foobar' already in PATH, makes the test irrelevant, please modify alteration done to the PATH in $0 and relaunch the test" \
+        "echo $PATH | grep 'foobar'"
+    PATH="$PATH:foobar"
+    assertTrue "echo $PATH | grep 'foobar'"
 
-if ! PAGER=cat pydoc pydoc_test | grep 'This is pydoc_test.py' > /dev/null; then
-    echo "$0: pydoc test failed!" 1>&2
-    exit 7
-fi
+    deactivate
 
-echo "$0: pydoc is OK." 1>&2
+    assertTrue "PATH has been reseted!"\
+        "echo $PATH | grep 'foobar'"
 
-echo "$0: Deactivating ${TESTENV}..." 1>&2
-deactivate
-echo "$0: Deactivated ${TESTENV}." 1>&2
-echo "$0: OK!" 1>&2
+    . ${TESTENV}/bin/activate
+}
 
-rm -rf ${TESTENV}
+oneTimeTearDown(){
+    echo "Deactivating ${TESTENV}..." 1>&2
+    deactivate
+    echo "Deactivated ${TESTENV}." 1>&2
+    rm -rf ${TESTENV}
+}
 
+
+
+# load shunit2
+. ${ROOT}/tests/shunit2/src/shunit2
