@@ -229,7 +229,9 @@ class Logger(object):
                     else:
                         rendered = msg
                     rendered = ' '*self.indent + rendered
-                if hasattr(consumer, 'write'):
+                if hasattr(consumer, 'buffer'):
+                    consumer.buffer.write(rendered.encode('utf-8')+b'\n')
+                elif hasattr(consumer, 'write'):
                     consumer.write(rendered+'\n')
                 else:
                     consumer(rendered)
