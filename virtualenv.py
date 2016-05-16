@@ -720,15 +720,15 @@ def call_subprocess(cmd, show_stdout=True,
                     remove_from_env=None, stdin=None):
     cmd_parts = []
     for part in cmd:
-        if len(part) > 45:
-            part = part[:20]+"..."+part[-20:]
-        if ' ' in part or '\n' in part or '"' in part or "'" in part:
-            part = '"%s"' % part.replace('"', '\\"')
         if hasattr(part, 'decode'):
             try:
                 part = part.decode(sys.getdefaultencoding())
             except UnicodeDecodeError:
                 part = part.decode(sys.getfilesystemencoding())
+        if len(part) > 45:
+            part = part[:20]+"..."+part[-20:]
+        if ' ' in part or '\n' in part or '"' in part or "'" in part:
+            part = '"%s"' % part.replace('"', '\\"')
         cmd_parts.append(part)
     cmd_desc = ' '.join(cmd_parts)
     if show_stdout:
@@ -1379,7 +1379,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         py_executable = '"%s"' % py_executable
     # NOTE: keep this check as one line, cmd.exe doesn't cope with line breaks
     cmd = [py_executable, '-c', 'import sys;out=sys.stdout;'
-        'getattr(out, "buffer", out).write(sys.prefix.encode("utf-8"))']
+        'getattr(out, "buffer", out).write(sys.prefix.encode())']
     logger.info('Testing executable with %s %s "%s"' % tuple(cmd))
     try:
         proc = subprocess.Popen(cmd,
