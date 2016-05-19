@@ -1,3 +1,4 @@
+#-*- coding: utf-8 -*-
 import virtualenv
 import optparse
 import os
@@ -96,31 +97,47 @@ def test_cop_update_defaults_with_store_false():
     cop.update_defaults(defaults)
     assert defaults == {'system_site_packages': 0}
 
-def test_install_python_bin():
-    """Should create the right python executables and links"""
-    tmp_virtualenv = tempfile.mkdtemp()
-    try:
-        home_dir, lib_dir, inc_dir, bin_dir = \
-                                virtualenv.path_locations(tmp_virtualenv)
-        virtualenv.install_python(home_dir, lib_dir, inc_dir, bin_dir, False,
-                                  False)
 
+def install_python_bin(tmp_virtualenv):
+    try:
+        home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(tmp_virtualenv)
+        virtualenv.install_python(home_dir, lib_dir, inc_dir, bin_dir, False, False)
         if virtualenv.is_win:
-            required_executables = [ 'python.exe', 'pythonw.exe']
+            required_executables = ['python.exe', 'pythonw.exe']
         else:
             py_exe_no_version = 'python'
             py_exe_version_major = 'python%s' % sys.version_info[0]
             py_exe_version_major_minor = 'python%s.%s' % (
                 sys.version_info[0], sys.version_info[1])
-            required_executables = [ py_exe_no_version, py_exe_version_major,
-                                     py_exe_version_major_minor ]
-
+            required_executables = [py_exe_no_version, py_exe_version_major,
+                py_exe_version_major_minor]
         for pth in required_executables:
-            assert os.path.exists(os.path.join(bin_dir, pth)), ("%s should "
-                            "exist in bin_dir" % pth)
+            assert os.path.exists(os.path.join(bin_dir, pth)), (
+                "%s should "
+                "exist in bin_dir" %
+                pth)
     finally:
+
         shutil.rmtree(tmp_virtualenv)
 
+def test_install_python_bin():
+    """Should create the right python executables and links"""
+    tmp_virtualenv = tempfile.mkdtemp()
+    install_python_bin(tmp_virtualenv)
+
+def test_install_unicode():
+    """Should be able to install in directories containing Unicode & spaces"""
+    subdir_unicode = "Heävy Mëtal ☃"
+    if sys.version_info[0] == '2' and sys.getfilesystemencoding() == 'mbcs':
+        subdir_unicode = subdir_unicode.decode('utf-8').encode('mbcs')
+    tmp_virtualenv = tempfile.mkdtemp()
+    tmp_virtualenv_unicode = os.path.join(tmp_virtualenv, subdir_unicode)
+
+    try:
+        os.mkdir(tmp_virtualenv_unicode)
+        install_python_bin(tmp_virtualenv_unicode)
+    finally:
+        shutil.rmtree(tmp_virtualenv)
 
 @pytest.mark.skipif("platform.python_implementation() == 'PyPy'")
 def test_always_copy_option():
