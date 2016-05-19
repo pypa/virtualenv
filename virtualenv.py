@@ -1379,7 +1379,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         py_executable = '"%s"' % py_executable
     # NOTE: keep this check as one line, cmd.exe doesn't cope with line breaks
     cmd = [py_executable, '-c', 'import sys;out=sys.stdout;'
-        'getattr(out, "buffer", out).write(sys.prefix.encode("utf-8"))']
+        'prefix = hasattr(sys.prefix, "decode") and sys.prefix.decode(sys.getfilesystemencoding()) or sys.prefix;'
+        'getattr(out, "buffer", out).write(prefix.encode("utf-8"))']
     logger.info('Testing executable with %s %s "%s"' % tuple(cmd))
     try:
         proc = subprocess.Popen(cmd,
@@ -1395,9 +1396,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
 
     proc_stdout = proc_stdout.strip().decode("utf-8")
     proc_stdout = os.path.normcase(os.path.abspath(proc_stdout))
+    if hasattr(home_dir, 'decode'):
+        home_dir = home_dir.decode(sys.getfilesystemencoding())
     norm_home_dir = os.path.normcase(os.path.abspath(home_dir))
-    if hasattr(norm_home_dir, 'decode'):
-        norm_home_dir = norm_home_dir.decode(sys.getfilesystemencoding())
     if proc_stdout != norm_home_dir:
         logger.fatal(
             'ERROR: The executable %s is not functioning' % py_executable)
