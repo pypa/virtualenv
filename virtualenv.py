@@ -302,7 +302,7 @@ class Logger(object):
         else:
             return level >= consumer_level
 
-    #@classmethod
+    @classmethod
     def level_for_integer(cls, level):
         levels = cls.LEVELS
         if level < 0:
@@ -310,8 +310,6 @@ class Logger(object):
         if level >= len(levels):
             return levels[-1]
         return levels[level]
-
-    level_for_integer = classmethod(level_for_integer)
 
 # create a silent logger just to prevent this from being undefined
 # will be overridden with requested verbosity main() is called.
