@@ -350,6 +350,8 @@ Release History
 
 * Added support for PyPy3k
 
+* Added ``--always-copy`` option to suppress use of symlinks (Pull #409)
+
 * Added the option to use a version number with the ``-p`` option to get the
   system copy of that Python version (Windows only)
 
