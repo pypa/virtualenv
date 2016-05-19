@@ -2,6 +2,7 @@ recursive-include docs *
 recursive-include tests *.py *.sh *.expected
 recursive-include virtualenv_support *.whl
 recursive-include virtualenv_embedded *
+recursive-include tests *
 recursive-exclude docs/_templates *
 recursive-exclude docs/_build *
 include virtualenv_support/__init__.py
