@@ -227,7 +227,9 @@ class Logger(object):
                     else:
                         rendered = msg
                     rendered = ' '*self.indent + rendered
-                if hasattr(consumer, 'write'):
+                if hasattr(consumer, 'buffer'):
+                    consumer.buffer.write(rendered.encode('utf-8')+b'\n')
+                elif hasattr(consumer, 'write'):
                     consumer.write(rendered+'\n')
                 else:
                     consumer(rendered)
@@ -731,6 +733,7 @@ def call_subprocess(cmd, show_stdout=True,
                 part = part.decode(sys.getfilesystemencoding())
         cmd_parts.append(part)
     cmd_desc = ' '.join(cmd_parts)
+    cmd_desc = cmd_desc.encode('utf-8')
     if show_stdout:
         stdout = None
     else:
@@ -1378,8 +1381,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         # the value:
         py_executable = '"%s"' % py_executable
     # NOTE: keep this check as one line, cmd.exe doesn't cope with line breaks
-    cmd = [py_executable, '-c', 'import sys;out=sys.stdout;'
-        'getattr(out, "buffer", out).write(sys.prefix.encode("utf-8"))']
+    cmd = [py_executable, '-c', 'import sys;out=sys.stdout;prefix=sys.prefix;'
+        'prefix=prefix.encode("utf-8") if sys.version_info[0]==3 else prefix;'
+        'getattr(out, "buffer", out).write(prefix)']
     logger.info('Testing executable with %s %s "%s"' % tuple(cmd))
     try:
         proc = subprocess.Popen(cmd,

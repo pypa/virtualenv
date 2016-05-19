@@ -1,3 +1,4 @@
+# coding: utf-8
 import sys
 import subprocess
 import virtualenv
@@ -20,6 +21,14 @@ def test_commandline_explicit_interp(tmpdir):
         VIRTUALENV_SCRIPT,
         '-p', sys.executable,
         str(tmpdir.join('venv'))
+    ])
+
+def test_commandline_non_ascii_path(tmpdir):
+    subprocess.check_call([
+        sys.executable,
+        VIRTUALENV_SCRIPT,
+        '-p', sys.executable,
+        str(tmpdir.join('venv中文'))
     ])
 
 # The registry lookups to support the abbreviated "-p 3.5" form of specifying
