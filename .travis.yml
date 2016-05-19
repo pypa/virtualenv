@@ -21,7 +21,22 @@ matrix:
     - python: 2.7
       env: TOXENV=docs
 
-install: pip install tox
+install:
+    - |
+        if [ "$TOXENV" = "pypy" ]; then
+            export PYENV_ROOT="$HOME/.pyenv"
+            if [ -f "$PYENV_ROOT/bin/pyenv" ]; then
+                pushd "$PYENV_ROOT" && git pull && popd
+            else
+                rm -rf "$PYENV_ROOT" && git clone --depth 1 https://github.com/yyuu/pyenv.git "$PYENV_ROOT"
+            fi
+            export PYPY_VERSION="2.5.0"
+            "$PYENV_ROOT/bin/pyenv" install --skip-existing "pypy-$PYPY_VERSION"
+            pushd $PYENV_ROOT/versions/pypy-$PYPY_VERSION &&  patch -i $TRAVIS_BUILD_DIR/external/pypy-subprocess.patch -N -p0 -F0 && popd
+            virtualenv --python="$PYENV_ROOT/versions/pypy-$PYPY_VERSION/bin/python" "$HOME/virtualenvs/pypy-$PYPY_VERSION"
+            source "$HOME/virtualenvs/pypy-$PYPY_VERSION/bin/activate"
+        fi
+    - pip install tox
 
 script: tox
 
