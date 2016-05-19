@@ -1,5 +1,13 @@
 # This file must be used with "source bin/activate" *from bash*
 # you cannot run it directly
+if [ "$(basename $0)" == "activate" ];
+then
+    echo "ERROR: this must be used with used with:"
+    echo "source $0"
+    echo
+    echo "You cannot run it directly."
+    exit 1
+fi
 
 deactivate () {
     unset -f pydoc >/dev/null 2>&1
