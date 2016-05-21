@@ -23,6 +23,8 @@ def test_commandline_explicit_interp(tmpdir):
         str(tmpdir.join('venv'))
     ])
 
+# encodings on PyPy 3 is broken. See https://bitbucket.org/pypy/pypy/issues/2300
+@pytest.mark.skipif("hasattr(sys, 'pypy_version_info') and sys.version_info[0] == 3")
 def test_commandline_non_ascii_path(tmpdir):
     subprocess.check_call([
         sys.executable,
