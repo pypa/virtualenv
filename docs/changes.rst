@@ -1,7 +1,7 @@
 Release History
 ===============
 
-15.1.0 (unreleased)
+15.0.2 (2016-05-28)
 -------------------
 
 * Copy Tcl/Tk libs on Windows to allow them to run,
