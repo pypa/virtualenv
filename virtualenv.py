@@ -358,11 +358,11 @@ def copyfile(src, dest, symlink=True):
         logger.info('Copying to %s', dest)
         copyfileordir(src, dest, symlink)
 
-def writefile(dest, content, overwrite=True):
+def writefile(dest, content, overwrite=True, use_fsenc=False):
     if not os.path.exists(dest):
         logger.info('Writing %s', dest)
         with open(dest, 'wb') as f:
-            f.write(content.encode('utf-8'))
+            f.write(content.encode(sys.getfilesystemencoding() if use_fsenc else 'utf-8'))
         return
     else:
         with open(dest, 'rb') as f:
@@ -1390,7 +1390,11 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         else:
             raise e
 
-    proc_stdout = proc_stdout.strip().decode("utf-8")
+    proc_stdout = proc_stdout.strip()
+    if majver == 2:
+        proc_stdout = proc_stdout.decode(sys.getfilesystemencoding())
+    else:
+        proc_stdout = proc_stdout.decode('utf-8')
     proc_stdout = os.path.normcase(os.path.abspath(proc_stdout))
     norm_home_dir = os.path.normcase(os.path.abspath(home_dir))
     if hasattr(norm_home_dir, 'decode'):
@@ -1445,6 +1449,8 @@ def install_activate(home_dir, bin_dir, prompt=None):
         # Run-time conditional enables (basic) Cygwin compatibility
         home_dir_sh = ("""$(if [ "$OSTYPE" "==" "cygwin" ]; then cygpath -u '%s'; else echo '%s'; fi;)""" %
                        (home_dir, home_dir_msys))
+        if majver == 2:
+            home_dir_sh = home_dir_sh.decode(sys.getfilesystemencoding())
         files['activate'] = ACTIVATE_SH.replace('__VIRTUAL_ENV__', home_dir_sh)
 
     else:
@@ -1471,7 +1477,7 @@ def install_files(home_dir, bin_dir, prompt, files):
         content = content.replace('__VIRTUAL_ENV__', home_dir)
         content = content.replace('__VIRTUAL_NAME__', vname)
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
-        writefile(os.path.join(bin_dir, name), content)
+        writefile(os.path.join(bin_dir, name), content, use_fsenc=(name == 'activate.bat'))
 
 def install_python_config(home_dir, bin_dir, prompt=None):
     if sys.platform == 'win32' or is_jython and os._name == 'nt':
