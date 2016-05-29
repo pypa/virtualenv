@@ -1067,10 +1067,10 @@ def copy_required_modules(dst_prefix, symlink):
 
 def copy_tcltk(src, dest, symlink):
     """ copy tcl/tk libraries on Windows (issue #93) """
-    if majver == 2:
-        libver = '8.5'
+    if os.path.exists(src + '/tcl/tcl8.5'):
+        libver = '8.5'  # python 2, 3.3-
     else:
-        libver = '8.6'
+        libver = '8.6'  # python 3.4+
     for name in ['tcl', 'tk']:
         srcdir = src + '/tcl/' + name + libver
         dstdir = dest + '/tcl/' + name + libver
