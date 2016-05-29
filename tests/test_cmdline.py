@@ -6,6 +6,13 @@ import pytest
 
 VIRTUALENV_SCRIPT = virtualenv.__file__
 
+def get_code_page():
+    try:
+        import ctypes
+        return ctypes.windll.kernel32.GetACP()
+    except (ImportError, AttributeError):
+        pass
+
 def test_commandline_basic(tmpdir):
     """Simple command line usage should work"""
     subprocess.check_call([
@@ -24,7 +31,8 @@ def test_commandline_explicit_interp(tmpdir):
     ])
 
 # encodings on PyPy 3 is broken. See https://bitbucket.org/pypy/pypy/issues/2300
-@pytest.mark.skipif("hasattr(sys, 'pypy_version_info') and sys.version_info[0] == 3")
+# and on Windows, path with Chinese characters are not working without a Chinese code page
+@pytest.mark.skipif("hasattr(sys, 'pypy_version_info') and sys.version_info[0] == 3 or get_code_page() not in (None, 936, 950)")
 def test_commandline_non_ascii_path(tmpdir):
     subprocess.check_call([
         sys.executable,
