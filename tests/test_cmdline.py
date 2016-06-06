@@ -30,9 +30,8 @@ def test_commandline_explicit_interp(tmpdir):
         str(tmpdir.join('venv'))
     ])
 
-# encodings on PyPy 3 is broken. See https://bitbucket.org/pypy/pypy/issues/2300
-# and on Windows, path with Chinese characters are not working without a Chinese code page
-@pytest.mark.skipif("hasattr(sys, 'pypy_version_info') and sys.version_info[0] == 3 or get_code_page() not in (None, 936, 950)")
+# On Windows, path with Chinese characters are not working without a Chinese code page
+@pytest.mark.skipif("get_code_page() not in (None, 936, 950)")
 def test_commandline_non_ascii_path(tmpdir):
     subprocess.check_call([
         sys.executable,

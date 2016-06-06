@@ -23,19 +23,18 @@ matrix:
 
 install:
     - |
-        if [ "$TOXENV" = "pypy" ]; then
-            export PYENV_ROOT="$HOME/.pyenv"
-            if [ -f "$PYENV_ROOT/bin/pyenv" ]; then
-                pushd "$PYENV_ROOT" && git pull && popd
-            else
-                rm -rf "$PYENV_ROOT" && git clone --depth 1 https://github.com/yyuu/pyenv.git "$PYENV_ROOT"
-            fi
-            export PYPY_VERSION="2.5.0"
-            "$PYENV_ROOT/bin/pyenv" install --skip-existing "pypy-$PYPY_VERSION"
-            pushd $PYENV_ROOT/versions/pypy-$PYPY_VERSION &&  patch -i $TRAVIS_BUILD_DIR/external/pypy-subprocess.patch -N -p0 -F0 && popd
-            virtualenv --python="$PYENV_ROOT/versions/pypy-$PYPY_VERSION/bin/python" "$HOME/virtualenvs/pypy-$PYPY_VERSION"
-            source "$HOME/virtualenvs/pypy-$PYPY_VERSION/bin/activate"
-        fi
+        mkdir -p ~/pypy && cd ~/pypy
+        case "$TOXENV" in
+        "pypy")
+            PYPY_VERSION="pypy-2.5.0-linux64"
+            ;;
+        "pypy3")
+            PYPY_VERSION="pypy3.3-v5.2.0-alpha1-linux64"
+            ;;
+        esac
+        pushd "$PYPY_VERSION" && patch -i "$TRAVIS_BUILD_DIR/external/$TOXENV-subprocess.patch" -N -p0 -F0 && popd
+        virtualenv --python="$HOME/pypy/$PYPY_VERSION/bin/python" "$HOME/virtualenvs/$PYPY_VERSION"
+        source "$HOME/virtualenvs/$PYPY_VERSION/bin/activate"
     - pip install tox
 
 script: tox
