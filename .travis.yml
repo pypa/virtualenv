@@ -23,7 +23,6 @@ matrix:
 
 install:
     - |
-        mkdir -p ~/pypy && cd ~/pypy
         case "$TOXENV" in
         "pypy")
             PYPY_VERSION="pypy-2.5.0-linux64"
@@ -33,9 +32,14 @@ install:
             ;;
         esac
         if [ -n "$PYPY_VERSION" ] ; then
+            deactivate
+            mkdir -p ~/pypy && pushd ~/pypy
+            wget "https://bitbucket.org/pypy/pypy/downloads/$PYPY_VERSION.tar.bz2"
+            tar jxf "$PYPY_VERSION.tar.bz2"
             pushd "$PYPY_VERSION" && patch -i "$TRAVIS_BUILD_DIR/external/$TOXENV-subprocess.patch" -N -p0 -F0 && popd
             virtualenv --python="$HOME/pypy/$PYPY_VERSION/bin/python" "$HOME/virtualenvs/$PYPY_VERSION"
             source "$HOME/virtualenvs/$PYPY_VERSION/bin/activate"
+            popd
         fi
     - pip install tox
 
