@@ -35,6 +35,7 @@ install:
         esac
         if [ -n "$PYPY_VERSION" ] ; then
             deactivate
+            pip install --upgrade --ignore-installed --user virtualenv
             mkdir -p ~/pypy && pushd ~/pypy
             wget "https://bitbucket.org/pypy/pypy/downloads/$PYPY_VERSION.tar.bz2"
             tar jxf "$PYPY_VERSION.tar.bz2"
