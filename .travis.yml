@@ -41,6 +41,7 @@ install:
             mkdir -p ~/pypy && pushd ~/pypy
             wget "https://bitbucket.org/pypy/pypy/downloads/$PYPY_VERSION.tar.bz2"
             tar jxf "$PYPY_VERSION.tar.bz2"
+            pushd "$PYPY_VERSION" && patch -i "$TRAVIS_BUILD_DIR/external/$TOXENV-subprocess.patch" -N -p0 -F0 && popd
             virtualenv --python="$HOME/pypy/$PYPY_VERSION/bin/$PYPY_BIN" "$HOME/virtualenvs/$PYPY_VERSION"
             source "$HOME/virtualenvs/$PYPY_VERSION/bin/activate"
             popd

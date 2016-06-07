@@ -1,0 +1,14 @@
+--- lib-python/2.7/subprocess.py.orig	2016-05-20 02:12:48.780386785 +0800
++++ lib-python/2.7/subprocess.py	2016-05-20 02:18:24.743731346 +0800
+@@ -667,7 +667,10 @@
+              "elif hasattr(sys.stdout, 'buffer'):\n"
+              "    sys.stdout = sys.stdout.buffer\nsys.stdout.write(prefix)\n"],
+             ['-c', 'import sys;out=sys.stdout;getattr(out, "buffer"'
+-             ', out).write(sys.prefix.encode("utf-8"))']):  # 1.7.2 a9454bce
++             ', out).write(sys.prefix.encode("utf-8"))'],   # 1.7.2 a9454bce
++            ['-c', 'import sys;out=sys.stdout;prefix=sys.prefix;'
++             'prefix=prefix if sys.version_info[0]==2 else prefix.encode(sys.getfilesystemencoding());'
++             'getattr(out, "buffer", out).write(prefix)']): # virtualenv PR#900
+             _pypy_install_libs_after_virtualenv(args[0])
+ 
+         if not isinstance(bufsize, (int, long)):
