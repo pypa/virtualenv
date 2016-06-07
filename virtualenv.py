@@ -1375,7 +1375,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
                 copyfile(py_executable, full_pth, symlink)
 
     cmd = [py_executable, '-c', 'import sys;out=sys.stdout;prefix=sys.prefix;'
-        'prefix=prefix.encode(sys.getfilesystemencoding()) if sys.version_info[0]==3 else prefix;'
+        'prefix=prefix if sys.version_info[0]==2 else prefix.encode(sys.getfilesystemencoding());'
         'getattr(out, "buffer", out).write(prefix)']
     logger.info('Testing executable with %s %s "%s"' % tuple(cmd))
     try:
