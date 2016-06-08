@@ -1074,7 +1074,8 @@ def copy_tcltk(src, dest, symlink):
     for name in ['tcl', 'tk']:
         srcdir = src + '/tcl/' + name + libver
         dstdir = dest + '/tcl/' + name + libver
-        copyfileordir(srcdir, dstdir, symlink)
+        if os.path.exists(srcdir):
+            copyfileordir(srcdir, dstdir, symlink)
 
 def subst_path(prefix_path, prefix, home_dir):
     prefix_path = os.path.normpath(prefix_path)
