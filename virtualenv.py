@@ -354,22 +354,22 @@ def copyfile(src, dest, symlink=True):
         logger.info('Copying to %s', dest)
         copyfileordir(src, dest, symlink)
 
-def writefile(dest, content, overwrite=True):
+def writefile(dest, content, overwrite=True, encoding='utf-8'):
     if not os.path.exists(dest):
         logger.info('Writing %s', dest)
         with open(dest, 'wb') as f:
-            f.write(content.encode('utf-8'))
+            f.write(content.encode(encoding))
         return
     else:
         with open(dest, 'rb') as f:
             c = f.read()
-        if c != content.encode("utf-8"):
+        if c != content.encode(encoding):
             if not overwrite:
                 logger.notify('File %s exists with different content; not overwriting', dest)
                 return
             logger.notify('Overwriting %s with new content', dest)
             with open(dest, 'wb') as f:
-                f.write(content.encode('utf-8'))
+                f.write(content.encode(encoding))
         else:
             logger.info('Content %s already in place', dest)
 
@@ -1472,7 +1472,10 @@ def install_files(home_dir, bin_dir, prompt, files):
         content = content.replace('__VIRTUAL_ENV__', home_dir)
         content = content.replace('__VIRTUAL_NAME__', vname)
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
-        writefile(os.path.join(bin_dir, name), content)
+        # BAT files must be written in the OEM encoding, which can
+        # be determined as the encoding of sys.stdout.
+        writefile(os.path.join(bin_dir, name), content,
+                encoding=sys.stdout.encoding if name.endswith('.bat') else 'utf-8')
 
 def install_python_config(home_dir, bin_dir, prompt=None):
     if sys.platform == 'win32' or is_jython and os._name == 'nt':
