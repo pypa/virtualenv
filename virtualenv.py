@@ -356,11 +356,11 @@ def copyfile(src, dest, symlink=True):
         logger.info('Copying to %s', dest)
         copyfileordir(src, dest, symlink)
 
-def writefile(dest, content, overwrite=True, use_fsenc=False):
+def writefile(dest, content, overwrite=True, use_system_locale=False):
     if not os.path.exists(dest):
         logger.info('Writing %s', dest)
         with open(dest, 'wb') as f:
-            f.write(content.encode(sys.getfilesystemencoding() if use_fsenc else 'utf-8'))
+            f.write(content.encode(sys.getfilesystemencoding() if use_system_locale else 'utf-8'))
         return
     else:
         with open(dest, 'rb') as f:
@@ -1372,8 +1372,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
                 copyfile(py_executable, full_pth, symlink)
 
     cmd = [py_executable, '-c', 'import sys;out=sys.stdout;prefix=sys.prefix;'
-        'prefix=prefix if sys.version_info[0]==2 else prefix.encode(sys.getfilesystemencoding());'
-        'getattr(out, "buffer", out).write(prefix)']
+        'prefix=prefix.decode(sys.getfilesystemencoding()) if sys.version_info[0]==2 else prefix;'
+        'getattr(out, "buffer", out).write(prefix.encode("utf-8"))']
     logger.info('Testing executable with %s %s "%s"' % tuple(cmd))
     try:
         proc = subprocess.Popen(cmd,
@@ -1387,7 +1387,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         else:
             raise e
 
-    proc_stdout = proc_stdout.strip().decode(sys.getfilesystemencoding())
+    proc_stdout = proc_stdout.strip().decode("utf-8")
     proc_stdout = os.path.normcase(os.path.abspath(proc_stdout))
     norm_home_dir = os.path.normcase(os.path.abspath(home_dir))
     if hasattr(norm_home_dir, 'decode'):
@@ -1470,7 +1470,7 @@ def install_files(home_dir, bin_dir, prompt, files):
         content = content.replace('__VIRTUAL_ENV__', home_dir)
         content = content.replace('__VIRTUAL_NAME__', vname)
         content = content.replace('__BIN_NAME__', os.path.basename(bin_dir))
-        writefile(os.path.join(bin_dir, name), content, use_fsenc=(name == 'activate.bat'))
+        writefile(os.path.join(bin_dir, name), content, use_system_locale=(name.endswith('.bat')))
 
 def install_python_config(home_dir, bin_dir, prompt=None):
     if sys.platform == 'win32' or is_jython and os._name == 'nt':
