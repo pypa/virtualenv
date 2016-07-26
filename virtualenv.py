@@ -229,9 +229,7 @@ class Logger(object):
                     else:
                         rendered = msg
                     rendered = ' '*self.indent + rendered
-                if hasattr(consumer, 'buffer'):
-                    consumer.buffer.write(rendered.encode('utf-8')+b'\n')
-                elif hasattr(consumer, 'write'):
+                if hasattr(consumer, 'write'):
                     consumer.write(rendered+'\n')
                 else:
                     consumer(rendered)
@@ -733,7 +731,6 @@ def call_subprocess(cmd, show_stdout=True,
                 part = part.decode(sys.getfilesystemencoding())
         cmd_parts.append(part)
     cmd_desc = ' '.join(cmd_parts)
-    cmd_desc = cmd_desc.encode('utf-8')
     if show_stdout:
         stdout = None
     else:
