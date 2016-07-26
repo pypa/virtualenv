@@ -5,20 +5,53 @@ environment:
     # http://www.appveyor.com/docs/installed-software#python
 
     - PYTHON: "C:\\Python26"
+      LOCALE: en-US
+    - PYTHON: "C:\\Python26"
+      LOCALE: zh-TW
     - PYTHON: "C:\\Python27"
+      LOCALE: en-US
+    - PYTHON: "C:\\Python27"
+      LOCALE: zh-TW
     - PYTHON: "C:\\Python33"
+      LOCALE: en-US
+    - PYTHON: "C:\\Python33"
+      LOCALE: zh-TW
     - PYTHON: "C:\\Python34"
+      LOCALE: en-US
+    - PYTHON: "C:\\Python34"
+      LOCALE: zh-TW
     - PYTHON: "C:\\Python35"
+      LOCALE: en-US
+    - PYTHON: "C:\\Python35"
+      LOCALE: zh-TW
     - PYTHON: "C:\\Python26-x64"
+      LOCALE: en-US
+    - PYTHON: "C:\\Python26-x64"
+      LOCALE: zh-TW
     - PYTHON: "C:\\Python27-x64"
+      LOCALE: en-US
+    - PYTHON: "C:\\Python27-x64"
+      LOCALE: zh-TW
     - PYTHON: "C:\\Python33-x64"
+      LOCALE: en-US
+    - PYTHON: "C:\\Python33-x64"
+      LOCALE: zh-TW
     - PYTHON: "C:\\Python34-x64"
+      LOCALE: en-US
+    - PYTHON: "C:\\Python34-x64"
+      LOCALE: zh-TW
     - PYTHON: "C:\\Python35-x64"
+      LOCALE: en-US
+    - PYTHON: "C:\\Python35-x64"
+      LOCALE: zh-TW
 
 init:
-    - ps: Set-WinSystemLocale zh-TW
-    - ps: Start-Sleep -s 5
-    - ps: Restart-Computer
+    - ps: >-
+        If ($env:LOCALE.compareTo("en-US") -ne 0) {
+            Set-WinSystemLocale $env:LOCALE
+            Start-Sleep -s 5
+            Restart-Computer
+        }
 
 install:
   # We need tox installed for the tests
