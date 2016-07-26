@@ -8,7 +8,7 @@
 +             ', out).write(sys.prefix.encode("utf-8"))'],   # 1.7.2 a9454bce
 +            ['-c', 'import sys;out=sys.stdout;prefix=sys.prefix;'
 +             'prefix=prefix.decode(sys.getfilesystemencoding()) if sys.version_info[0]==2 else prefix;'
-+             'getattr(out, "buffer", out).write(prefix)']): # virtualenv PR#900
++             'getattr(out, "buffer", out).write(prefix.encode("utf-8"))']): # virtualenv PR#900
              _pypy_install_libs_after_virtualenv(args[0])
  
          if not isinstance(bufsize, (int, long)):
