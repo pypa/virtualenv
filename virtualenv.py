@@ -1285,6 +1285,15 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
                     raise SystemExit(3)
                 logger.info('Copying lib_pypy')
                 copyfile(d, os.path.join(home_dir, 'lib_pypy'), symlink)
+            else:
+                # On Unix-like systems, if PyPy is built with --shared, it
+                # requires libpypy-c.(so|dylib) to run. See
+                # _pypy_install_libs_after_virtualenv() in
+                # lib-python/(2.7|3)/subprocess.py of PyPy
+                for name in ['libpypy-c.so', 'libpypy-c.dylib']:
+                    src = join(prefix, 'bin', name)
+                    if os.path.exists(src):
+                        copyfile(src, join(bin_dir, name), symlink)
 
     if os.path.splitext(os.path.basename(py_executable))[0] != expected_exe:
         secondary_exe = os.path.join(os.path.dirname(py_executable),
