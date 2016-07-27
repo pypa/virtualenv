@@ -720,15 +720,15 @@ def call_subprocess(cmd, show_stdout=True,
                     remove_from_env=None, stdin=None):
     cmd_parts = []
     for part in cmd:
-        if len(part) > 45:
-            part = part[:20]+"..."+part[-20:]
-        if ' ' in part or '\n' in part or '"' in part or "'" in part:
-            part = '"%s"' % part.replace('"', '\\"')
         if hasattr(part, 'decode'):
             try:
                 part = part.decode(sys.getdefaultencoding())
             except UnicodeDecodeError:
                 part = part.decode(sys.getfilesystemencoding())
+        if len(part) > 45:
+            part = part[:20]+"..."+part[-20:]
+        if ' ' in part or '\n' in part or '"' in part or "'" in part:
+            part = '"%s"' % part.replace('"', '\\"')
         cmd_parts.append(part)
     cmd_desc = ' '.join(cmd_parts)
     if show_stdout:
