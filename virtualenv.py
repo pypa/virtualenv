@@ -1398,9 +1398,11 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
 
     proc_stdout = proc_stdout.strip().decode("utf-8")
     proc_stdout = os.path.normcase(os.path.abspath(proc_stdout))
-    norm_home_dir = os.path.normcase(os.path.abspath(home_dir))
-    if hasattr(norm_home_dir, 'decode'):
-        norm_home_dir = norm_home_dir.decode(sys.getfilesystemencoding())
+    if hasattr(home_dir, 'decode'):
+        unicode_home_dir = home_dir.decode(sys.getfilesystemencoding())
+    else:
+        unicode_home_dir = home_dir
+    norm_home_dir = os.path.normcase(os.path.abspath(unicode_home_dir))
     if proc_stdout != norm_home_dir:
         logger.fatal(
             'ERROR: The executable %s is not functioning' % py_executable)
