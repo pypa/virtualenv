@@ -30,7 +30,7 @@ install:
             mkdir -p ~/pypy && pushd ~/pypy
             wget "https://bitbucket.org/pypy/pypy/downloads/$PYPY_VERSION.tar.bz2"
             tar jxf "$PYPY_VERSION.tar.bz2"
-            virtualenv --python="$HOME/pypy/$PYPY_VERSION/bin/pypy3 "$HOME/virtualenvs/$PYPY_VERSION"
+            virtualenv --python="$HOME/pypy/$PYPY_VERSION/bin/pypy3" "$HOME/virtualenvs/$PYPY_VERSION"
             source "$HOME/virtualenvs/$PYPY_VERSION/bin/activate"
             popd
         fi
