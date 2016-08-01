@@ -4,6 +4,12 @@ Release History
 15.1.0 (unreleased)
 -------------------
 
+* Only search for copy actual existing Tcl/Tk directories (:pull:`937`)
+
+* Generically search for correct Tcl/Tk version (:pull:`926`, :pull:`933`)
+
+* Upgrade setuptools to 22.0.5
+
 15.0.2 (2016-05-28)
 -------------------
 
