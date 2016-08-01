@@ -356,11 +356,21 @@ def copyfile(src, dest, symlink=True):
         logger.info('Copying to %s', dest)
         copyfileordir(src, dest, symlink)
 
+def get_system_encoding():
+    if is_win:
+        # .encode('mbcs') is broken on Windows. For example,
+        # u'\u00a3'.encode('mbcs') gives a wrong result in CP437 (en-US), and
+        # u'\uffe1'.encode('mbcs') raises and error in CP950 (zh-TW)
+        import ctypes
+        return 'cp%d' % ctypes.windll.kernel32.GetOEMCP()
+    else:
+        return sys.getfilesystemencoding()
+
 def writefile(dest, content, overwrite=True, use_system_locale=False):
     if not os.path.exists(dest):
         logger.info('Writing %s', dest)
         with open(dest, 'wb') as f:
-            f.write(content.encode(sys.getfilesystemencoding() if use_system_locale else 'utf-8'))
+            f.write(content.encode(get_system_encoding() if use_system_locale else 'utf-8'))
         return
     else:
         with open(dest, 'rb') as f:
