@@ -6,13 +6,6 @@ import pytest
 
 VIRTUALENV_SCRIPT = virtualenv.__file__
 
-def get_code_page():
-    try:
-        import ctypes
-        return ctypes.windll.kernel32.GetACP()
-    except (ImportError, AttributeError):
-        pass
-
 def test_commandline_basic(tmpdir):
     """Simple command line usage should work"""
     subprocess.check_call([
@@ -30,12 +23,11 @@ def test_commandline_explicit_interp(tmpdir):
         str(tmpdir.join('venv'))
     ])
 
-# On Windows, path with Chinese characters are not working without a Chinese code page
-@pytest.mark.skipif("get_code_page() not in (None, 936, 950)")
 def test_commandline_non_ascii_path(tmpdir):
-    target_path = str(tmpdir.join('venv僅是中文'))
+    target_path = str(tmpdir.join('vénv'))
     if sys.version_info[0] == 2:
         target_path = target_path.decode('utf-8').encode(sys.getfilesystemencoding())
+
     subprocess.check_call([
         sys.executable,
         VIRTUALENV_SCRIPT,
