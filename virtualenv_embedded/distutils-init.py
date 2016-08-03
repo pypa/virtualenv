@@ -1,7 +1,7 @@
 import os
 import sys
 import warnings 
-import imp
+import importlib
 import opcode # opcode is not a virtualenv module, so we can use it to find the stdlib
               # Important! To work on pypy, this must be a module that resides in the
               # lib-python/modified-x.y.z directory
@@ -14,7 +14,8 @@ if os.path.normpath(distutils_path) == os.path.dirname(os.path.normpath(__file__
         "The virtualenv distutils package at %s appears to be in the same location as the system distutils?")
 else:
     __path__.insert(0, distutils_path)
-    real_distutils = imp.load_module("_virtualenv_distutils", None, distutils_path, ('', '', imp.PKG_DIRECTORY))
+    real_distutils = importlib.machinery.SourceFileLoader(
+        "_virtualenv_distutils", os.path.join(distutils_path + '/__init__.py')).load_module()
     # Copy the relevant attributes
     try:
         __revision__ = real_distutils.__revision__
