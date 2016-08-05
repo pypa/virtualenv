@@ -1,7 +1,7 @@
 Release History
 ===============
 
-15.1.0 (unreleased)
+15.0.3 (2016-08-05)
 -------------------
 
 * Test for given python path actually being an executable *file*, :issue:`939`
