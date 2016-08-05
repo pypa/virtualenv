@@ -4,6 +4,8 @@ Release History
 15.1.0 (unreleased)
 -------------------
 
+* Test for given python path actually being an executable *file*, :issue:`939`
+
 * Only search for copy actual existing Tcl/Tk directories (:pull:`937`)
 
 * Generically search for correct Tcl/Tk version (:pull:`926`, :pull:`933`)
