@@ -2,10 +2,13 @@
 # Do not run it directly.
 
 function deactivate -d 'Exit virtualenv mode and return to the normal environment.'
-    # reset old environment variables
-    if test -n "$_OLD_VIRTUAL_PATH"
-        set -gx PATH $_OLD_VIRTUAL_PATH
-        set -e _OLD_VIRTUAL_PATH
+    # remove virtualenv from path
+    set -l VIRTUAL_ENV_PATH $VIRTUAL_ENV/bin
+    for i in (seq (count $fish_user_paths))
+        if test "$fish_user_paths[$i]" = "$VIRTUAL_ENV_PATH"
+            set -e fish_user_paths[$i]
+            break
+        end
     end
 
     if test -n "$_OLD_VIRTUAL_PYTHONHOME"
@@ -38,8 +41,7 @@ deactivate nondestructive
 
 set -gx VIRTUAL_ENV "__VIRTUAL_ENV__"
 
-set -gx _OLD_VIRTUAL_PATH $PATH
-set -gx PATH "$VIRTUAL_ENV/__BIN_NAME__" $PATH
+set -gx fish_user_paths "$VIRTUAL_ENV/__BIN_NAME__" $PATH
 
 # Unset `$PYTHONHOME` if set.
 if set -q PYTHONHOME
