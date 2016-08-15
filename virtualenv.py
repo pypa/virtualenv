@@ -919,6 +919,8 @@ def create_environment(home_dir, site_packages=False, clear=False,
     If ``clear`` is true (default False) then the environment will
     first be cleared.
     """
+    mkdir(home_dir)
+    
     home_dir, lib_dir, inc_dir, bin_dir = path_locations(home_dir)
 
     py_executable = os.path.abspath(install_python(
@@ -963,9 +965,9 @@ def path_locations(home_dir):
         # Windows has lots of problems with executables with spaces in
         # the name; this function will remove them (using the ~1
         # format):
-        mkdir(home_dir)
         if ' ' in home_dir:
             import ctypes
+            # home_dir should exist for this to work
             GetShortPathName = ctypes.windll.kernel32.GetShortPathNameW
             size = max(len(home_dir)+1, 256)
             buf = ctypes.create_unicode_buffer(size)
