@@ -1106,7 +1106,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             symlink = False
             logger.info('Symlinks are not supported in this Python version')
         else:
-            name = join(home_dir + '.symlink.test.file')
+            name = join(home_dir, '.symlink.test.file')
             open(name, 'w').close()
             try:
                 os.symlink(name, name + '.link')
