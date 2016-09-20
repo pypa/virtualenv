@@ -8,6 +8,7 @@ Release History
 * pip wheels with removed certifi's ``cacert.pem`` are now supported :pull:`1252`
 * upgrade setuptools from ``40.5.0`` to ``40.6.3``
 * upgrade wheel from ``0.32.2`` to ``0.32.3``
+* bug fix: ``copyfile`` now handles relative symlinks and symlinks to symlinks, avoiding problems when Python was installed using stow or homebrew :issue:`268`
 
 16.1.0 (2018-10-31)
 -------------------
