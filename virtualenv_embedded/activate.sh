@@ -64,7 +64,7 @@ if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] ; then
 fi
 
 # Make sure to unalias pydoc if it's already there
-alias pydoc 2>/dev/null >/dev/null && unalias pydoc
+alias pydoc 2>/dev/null >/dev/null && unalias pydoc || true
 
 pydoc () {
     python -m pydoc "$@"
