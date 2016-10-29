@@ -155,6 +155,8 @@ elif majver == 3:
             '_collections_abc',
             '_bootlocale',
         ])
+    if minver >= 6:
+        REQUIRED_MODULES.extend(['enum'])
 
 if is_pypy:
     # these are needed to correctly display the exceptions that may happen
