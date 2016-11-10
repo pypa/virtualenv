@@ -858,8 +858,6 @@ def install_wheel(project_names, py_executable, search_dirs=None,
         return urljoin('file:', pathname2url(os.path.abspath(p)))
     findlinks = ' '.join(space_path2url(d) for d in search_dirs)
 
-    project_names_string = '[' + ','.join(['"' + name + '"' for name in project_names]) + ']'
-
     SCRIPT = textwrap.dedent("""
         import sys
         import pkgutil
@@ -880,15 +878,15 @@ def install_wheel(project_names, py_executable, search_dirs=None,
             args = ["install", "--ignore-installed"]
             if cert_file is not None:
                 args += ["--cert", cert_file.name]
-            args += {project_names}
+            args += sys.argv[1:]
 
             sys.exit(pip.main(args))
         finally:
             if cert_file is not None:
                 os.remove(cert_file.name)
-    """).format(project_names=project_names_string).encode("utf8")
+    """).encode("utf8")
 
-    cmd = [py_executable]
+    cmd = [py_executable, '-'] + project_names
     logger.start_progress('Installing %s...' % (', '.join(project_names)))
     logger.indent += 2
 
