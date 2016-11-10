@@ -746,7 +746,7 @@ def call_subprocess(cmd, show_stdout=True,
     else:
         env = None
     try:
-        p = subprocess.Popen(['grep', 'f'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
         grep_stdout = p.communicate(input=stdin)
         print(grep_stdout)
         raise BaseException("$$$$$$$$$$$$$$$$$$$$$")
