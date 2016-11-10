@@ -881,7 +881,7 @@ def install_wheel(project_names, py_executable, search_dirs=None,
         finally:
             if cert_file is not None:
                 os.remove(cert_file.name)
-    """).encode("utf8").format(project_names=project_names_string)
+    """).format(project_names=project_names_string).encode("utf8")
 
     cmd = [py_executable]
     logger.start_progress('Installing %s...' % (', '.join(project_names)))
