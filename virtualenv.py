@@ -719,15 +719,6 @@ def call_subprocess(cmd, show_stdout=True,
                     raise_on_returncode=True, extra_env=None,
                     remove_from_env=None, stdin=None):
     cmd_parts = []
-    #####
-    root = logging.getLogger()
-    root.setLevel(logging.DEBUG)
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    ch.setFormatter(formatter)
-    root.addHandler(ch)
-    #####
     for part in cmd:
         if len(part) > 45:
             part = part[:20]+"..."+part[-20:]
@@ -755,12 +746,16 @@ def call_subprocess(cmd, show_stdout=True,
     else:
         env = None
     try:
+        print ("#################")
+        print(cmd)
+        print ("#################")
         proc = subprocess.Popen(
             cmd, stderr=subprocess.STDOUT,
             stdin=None if stdin is None else subprocess.PIPE,
             stdout=stdout,
             cwd=cwd, env=env)
     except Exception:
+        print("############ FATAL")
         e = sys.exc_info()[1]
         logger.fatal(
             "Error %s while executing command %s" % (e, cmd_desc))
@@ -776,6 +771,7 @@ def call_subprocess(cmd, show_stdout=True,
         fs_encoding = sys.getfilesystemencoding()
         while 1:
             line = stdout.readline()
+            print ("@@@@@@@@ " +str(line))
             try:
                 line = line.decode(encoding)
             except UnicodeDecodeError:
