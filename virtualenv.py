@@ -746,22 +746,14 @@ def call_subprocess(cmd, show_stdout=True,
     else:
         env = None
     try:
-        print("#######")
-        print(env)
-        print("#######")
-        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=cwd, env=env)
-        grep_stdout = p.communicate(input=stdin)
-        print("#######")
-        print(grep_stdout)
-        print("#######")
-        raise BaseException("$$$$$$$$$$$$$$$$$$$$$")
-
-        # proc = subprocess.Popen(
-        #     cmd, stderr=subprocess.STDOUT,
-        #     stdin=None if stdin is None else subprocess.PIPE,
-        #     stdout=stdout,
-        #     cwd=cwd, env=env)
+        # temp empty comment
+        proc = subprocess.Popen(
+            cmd, stderr=subprocess.STDOUT,
+            stdin=None if stdin is None else subprocess.PIPE,
+            stdout=stdout,
+            cwd=cwd, env=env)
     except Exception:
+
         e = sys.exc_info()[1]
         logger.fatal(
             "Error %s while executing command %s" % (e, cmd_desc))
