@@ -719,6 +719,15 @@ def call_subprocess(cmd, show_stdout=True,
                     raise_on_returncode=True, extra_env=None,
                     remove_from_env=None, stdin=None):
     cmd_parts = []
+    #####
+    root = logging.getLogger()
+    root.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    root.addHandler(ch)
+    #####
     for part in cmd:
         if len(part) > 45:
             part = part[:20]+"..."+part[-20:]
@@ -901,14 +910,7 @@ def install_wheel(project_names, py_executable, search_dirs=None,
         env["PIP_NO_INDEX"] = "1"
 
     try:
-        print ("###################################################")
-        print (env)
-        print (cmd)
-        print ("###################################################")
-        print (SCRIPT)
-        print ("###################################################")
-        call_subprocess(cmd, show_stdout=True, extra_env=env, stdin=SCRIPT)
-#         call_subprocess(cmd, show_stdout=False, extra_env=env, stdin=SCRIPT)
+        call_subprocess(cmd, show_stdout=False, extra_env=env, stdin=SCRIPT)
     finally:
         logger.indent -= 2
         logger.end_progress()
