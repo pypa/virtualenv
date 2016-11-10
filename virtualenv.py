@@ -901,7 +901,12 @@ def install_wheel(project_names, py_executable, search_dirs=None,
         env["PIP_NO_INDEX"] = "1"
 
     try:
-        call_subprocess(cmd, show_stdout=False, extra_env=env, stdin=SCRIPT)
+        print "###################################################"
+        print env
+        print cmd
+        print "###################################################"
+        call_subprocess(cmd, show_stdout=True, extra_env=env, stdin=SCRIPT)
+#         call_subprocess(cmd, show_stdout=False, extra_env=env, stdin=SCRIPT)
     finally:
         logger.indent -= 2
         logger.end_progress()
