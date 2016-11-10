@@ -746,14 +746,12 @@ def call_subprocess(cmd, show_stdout=True,
     else:
         env = None
     try:
-        # temp empty comment
         proc = subprocess.Popen(
             cmd, stderr=subprocess.STDOUT,
             stdin=None if stdin is None else subprocess.PIPE,
             stdout=stdout,
             cwd=cwd, env=env)
     except Exception:
-
         e = sys.exc_info()[1]
         logger.fatal(
             "Error %s while executing command %s" % (e, cmd_desc))
@@ -855,6 +853,8 @@ def install_wheel(project_names, py_executable, search_dirs=None,
         return urljoin('file:', pathname2url(os.path.abspath(p)))
     findlinks = ' '.join(space_path2url(d) for d in search_dirs)
 
+    project_names_string = '[' + ','.join(['"' + name + '"' for name in project_names]) + ']'
+
     SCRIPT = textwrap.dedent("""
         import sys
         import pkgutil
@@ -875,15 +875,15 @@ def install_wheel(project_names, py_executable, search_dirs=None,
             args = ["install", "--ignore-installed"]
             if cert_file is not None:
                 args += ["--cert", cert_file.name]
-            args += sys.argv[1:]
+            args += {project_names}
 
             sys.exit(pip.main(args))
         finally:
             if cert_file is not None:
                 os.remove(cert_file.name)
-    """).encode("utf8")
+    """).format(project_names=project_names_string).encode("utf8")
 
-    cmd = [py_executable, '-'] + project_names
+    cmd = [py_executable]
     logger.start_progress('Installing %s...' % (', '.join(project_names)))
     logger.indent += 2
 
