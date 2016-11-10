@@ -905,6 +905,8 @@ def install_wheel(project_names, py_executable, search_dirs=None,
         print (env)
         print (cmd)
         print ("###################################################")
+        print (SCRIPT)
+        print ("###################################################")
         call_subprocess(cmd, show_stdout=True, extra_env=env, stdin=SCRIPT)
 #         call_subprocess(cmd, show_stdout=False, extra_env=env, stdin=SCRIPT)
     finally:
