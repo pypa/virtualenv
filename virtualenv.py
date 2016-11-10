@@ -746,16 +746,17 @@ def call_subprocess(cmd, show_stdout=True,
     else:
         env = None
     try:
-        print ("#################")
-        print(cmd)
-        print ("#################")
-        proc = subprocess.Popen(
-            cmd, stderr=subprocess.STDOUT,
-            stdin=None if stdin is None else subprocess.PIPE,
-            stdout=stdout,
-            cwd=cwd, env=env)
+        p = subprocess.Popen(['grep', 'f'], stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.STDOUT)
+        grep_stdout = p.communicate(input=stdin)
+        print(grep_stdout)
+        raise BaseException("$$$$$$$$$$$$$$$$$$$$$")
+
+        # proc = subprocess.Popen(
+        #     cmd, stderr=subprocess.STDOUT,
+        #     stdin=None if stdin is None else subprocess.PIPE,
+        #     stdout=stdout,
+        #     cwd=cwd, env=env)
     except Exception:
-        print("############ FATAL")
         e = sys.exc_info()[1]
         logger.fatal(
             "Error %s while executing command %s" % (e, cmd_desc))
@@ -771,7 +772,6 @@ def call_subprocess(cmd, show_stdout=True,
         fs_encoding = sys.getfilesystemencoding()
         while 1:
             line = stdout.readline()
-            print ("@@@@@@@@ " +str(line))
             try:
                 line = line.decode(encoding)
             except UnicodeDecodeError:
