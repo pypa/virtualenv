@@ -891,7 +891,6 @@ def install_wheel(project_names, py_executable, search_dirs=None,
         "PIP_FIND_LINKS": findlinks,
         "PIP_USE_WHEEL": "1",
         "PIP_ONLY_BINARY": ":all:",
-        "PIP_PRE": "1",
         "PIP_USER": "0",
     }
 
