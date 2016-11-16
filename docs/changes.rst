@@ -1,7 +1,7 @@
 Release History
 ===============
 
-15.1.0 (unreleased)
+15.1.0 (2016-11-15)
 -------------------
 
 * Support Python 3.6.
