@@ -14,8 +14,6 @@ matrix:
       env: TOXENV=python3.5
     - python: pypy
       env: TOXENV=pypy
-    - python: pypy3
-      env: TOXENV=pypy3
     - python: 3.5
       env: TOXENV=crosspython3
     - python: 2.7
