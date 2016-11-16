@@ -853,6 +853,7 @@ def install_wheel(project_names, py_executable, search_dirs=None,
         return urljoin('file:', pathname2url(os.path.abspath(p)))
     findlinks = ' '.join(space_path2url(d) for d in search_dirs)
 
+    # project names provided through format instead of sys.args usage
     project_names_string = '[' + ','.join(['"' + name + '"' for name in project_names]) + ']'
 
     SCRIPT = textwrap.dedent("""
