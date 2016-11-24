@@ -1,8 +1,20 @@
 Release History
 ===============
 
-15.1.0 (unreleased)
+15.2.0 (unreleased)
 -------------------
+
+
+15.1.0 (2016-11-15)
+-------------------
+
+* Support Python 3.6.
+
+* Upgrade setuptools to 28.0.0.
+
+* Upgrade pip to 9.0.1.
+
+* Don't install pre-release versions of pip, setuptools, or wheel from PyPI.
 
 
 15.0.3 (2016-08-05)
