@@ -351,7 +351,7 @@ def copyfile(src, dest, symlink=True):
             os.symlink(srcpath, dest)
         except (OSError, NotImplementedError):
             logger.info('Symlinking failed, copying to %s', dest)
-            copyfileordir(src, dest, symlink)
+            copyfileordir(src, dest, False)
     else:
         logger.info('Copying to %s', dest)
         copyfileordir(src, dest, symlink)
