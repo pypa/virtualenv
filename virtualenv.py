@@ -643,6 +643,13 @@ def main():
         action='store_true',
         help="DEPRECATED. Retained only for backward compatibility. This option has no effect.")
 
+    parser.add_option(
+        '--activate',
+        dest="activate",
+        action="store_true",
+        default=False,
+        help="Activate newly created virtualenv(for ubuntu only).")
+
     if 'extend_parser' in globals():
         extend_parser(parser)
 
@@ -710,7 +717,8 @@ def main():
                        no_setuptools=options.no_setuptools,
                        no_pip=options.no_pip,
                        no_wheel=options.no_wheel,
-                       symlink=options.symlink)
+                       symlink=options.symlink,
+                       activate=options.activate)
     if 'after_install' in globals():
         after_install(options, home_dir)
 
@@ -908,7 +916,7 @@ def create_environment(home_dir, site_packages=False, clear=False,
                        unzip_setuptools=False,
                        prompt=None, search_dirs=None, download=False,
                        no_setuptools=False, no_pip=False, no_wheel=False,
-                       symlink=True):
+                       symlink=True, activate=False):
     """
     Creates a new environment in ``home_dir``.
 
@@ -948,6 +956,10 @@ def create_environment(home_dir, site_packages=False, clear=False,
     install_activate(home_dir, bin_dir, prompt)
 
     install_python_config(home_dir, bin_dir, prompt)
+
+    if(activate):
+        os.system('/bin/bash  --rcfile %s/activate' % (bin_dir,))
+        print('%s is activated'% (home_dir,))
 
 def is_executable_file(fpath):
     return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
