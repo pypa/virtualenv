@@ -12,7 +12,7 @@ class PosixFlavor(BaseFlavor):
 
     @property
     def activation_scripts(self):
-        return set(["activate.sh", "activate.fish", "activate.csh"])
+        return {"activate.sh", "activate.fish", "activate.csh"}
 
     def python_bins(self, version_info):
         return [
