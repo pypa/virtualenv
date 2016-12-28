@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from virtualenv.flavors.posix import PosixFlavor
@@ -25,11 +27,11 @@ def test_python_bins(version_info, expected):
 @pytest.mark.parametrize(
     ("version_info", "expected"),
     [
-        ([2, 6, 9, "final", 0], "lib/python2.6"),
-        ([2, 7, 9, "final", 0], "lib/python2.7"),
-        ([3, 2, 6, "final", 0], "lib/python3.2"),
-        ([3, 3, 6, "final", 0], "lib/python3.3"),
-        ([3, 4, 2, "final", 0], "lib/python3.4"),
+        ([2, 6, 9, "final", 0], os.path.join("lib", "python2.6")),
+        ([2, 7, 9, "final", 0], os.path.join("lib", "python2.7")),
+        ([3, 2, 6, "final", 0], os.path.join("lib", "python3.2")),
+        ([3, 3, 6, "final", 0], os.path.join("lib", "python3.3")),
+        ([3, 4, 2, "final", 0], os.path.join("lib", "python3.4")),
     ],
 )
 def test_lib_dir(version_info, expected):
