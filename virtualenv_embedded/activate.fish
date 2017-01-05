@@ -4,7 +4,7 @@
 function deactivate -d 'Exit virtualenv mode and return to the normal environment.'
     # reset old environment variables
     if test -n "$_OLD_VIRTUAL_PATH"
-        set -gx PATH $_OLD_VIRTUAL_PATH
+        set -gx PATH (echo $_OLD_VIRTUAL_PATH | tr : \n)
         set -e _OLD_VIRTUAL_PATH
     end
 
@@ -38,7 +38,7 @@ deactivate nondestructive
 
 set -gx VIRTUAL_ENV "__VIRTUAL_ENV__"
 
-set -gx _OLD_VIRTUAL_PATH $PATH
+set -gx _OLD_VIRTUAL_PATH (sh -c 'echo $PATH')
 set -gx PATH "$VIRTUAL_ENV/__BIN_NAME__" $PATH
 
 # Unset `$PYTHONHOME` if set.
