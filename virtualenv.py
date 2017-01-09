@@ -28,6 +28,7 @@ import subprocess
 import pkgutil
 import tempfile
 import textwrap
+import stat
 from distutils.util import strtobool
 from os.path import join
 
@@ -904,6 +905,34 @@ def install_wheel(project_names, py_executable, search_dirs=None,
         logger.end_progress()
 
 
+def create_proxies(py_executable, bin_dir):
+    scripts = glob.glob(os.path.join(bin_dir, "pip*"))
+    scripts += glob.glob(os.path.join(bin_dir, "easy_install*"))
+    scripts += glob.glob(os.path.join(bin_dir, "wheel*"))
+
+    execute_bits = stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH
+
+    for script in scripts:
+        head, tail = os.path.split(script)
+        hidden_destination = os.path.join(head, '.' + tail)
+
+        os.rename(script, hidden_destination)
+
+        with open(script, "w") as script_proxy:
+            text = "#!/usr/bin/env sh"
+            text += "\n'%s' '%s' $@" % (
+                py_executable,
+                hidden_destination,
+            )
+            script_proxy.write(text)
+
+        os.chmod(script, os.stat(script).st_mode | execute_bits)
+        os.chmod(
+            hidden_destination,
+            os.stat(hidden_destination).st_mode & ~execute_bits,
+        )
+
+
 def create_environment(home_dir, site_packages=False, clear=False,
                        unzip_setuptools=False,
                        prompt=None, search_dirs=None, download=False,
@@ -945,8 +974,13 @@ def create_environment(home_dir, site_packages=False, clear=False,
             download=download,
         )
 
-    install_activate(home_dir, bin_dir, prompt)
+        if not is_win:
+            create_proxies(
+                py_executable=py_executable,
+                bin_dir=bin_dir
+            )
 
+    install_activate(home_dir, bin_dir, prompt)
     install_python_config(home_dir, bin_dir, prompt)
 
 def is_executable_file(fpath):
