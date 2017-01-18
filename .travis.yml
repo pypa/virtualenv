@@ -21,20 +21,7 @@ matrix:
     - python: 2.7
       env: TOXENV=docs
 
-install:
-    - |
-        if [ "$TOXENV" = "pypy3" ] ; then
-            PYPY_VERSION="pypy3.3-v5.2.0-alpha1-linux64"
-            deactivate
-            pip install --upgrade --ignore-installed --user virtualenv
-            mkdir -p ~/pypy && pushd ~/pypy
-            wget "https://bitbucket.org/pypy/pypy/downloads/$PYPY_VERSION.tar.bz2"
-            tar jxf "$PYPY_VERSION.tar.bz2"
-            virtualenv --python="$HOME/pypy/$PYPY_VERSION/bin/pypy3" "$HOME/virtualenvs/$PYPY_VERSION"
-            source "$HOME/virtualenvs/$PYPY_VERSION/bin/activate"
-            popd
-        fi
-    - pip install tox
+install: pip install tox
 
 script: tox
 
