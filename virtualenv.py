@@ -1538,9 +1538,9 @@ def fix_lib64(lib_dir, symlink=True):
     if os.path.lexists(lib64_link):
         return
     if symlink:
-        os.symlink('lib', lib64_link)
+        os.symlink(lib_dir, lib64_link)
     else:
-        copyfile('lib', lib64_link)
+        copyfile(lib_dir, lib64_link)
 
 def resolve_interpreter(exe):
     """
