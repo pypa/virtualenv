@@ -924,6 +924,7 @@ def create_environment(home_dir, site_packages=False, clear=False,
         home_dir, lib_dir, inc_dir, bin_dir,
         site_packages=site_packages, clear=clear, symlink=symlink))
 
+    install_shared(bin_dir, symlink=symlink)
     install_distutils(home_dir)
 
     to_install = []
@@ -1477,6 +1478,13 @@ def install_python_config(home_dir, bin_dir, prompt=None):
     install_files(home_dir, bin_dir, prompt, files)
     for name, content in files.items():
         make_exe(os.path.join(bin_dir, name))
+
+def install_shared(bin_dir, symlink=True):
+    current_shared = os.path.realpath(join(os.path.dirname(sys.executable), "..", "lib"))
+    target_shared = join(bin_dir, "..", "lib")
+    for libpython in glob.glob(join(current_shared, "libpython*")):
+        target_file = join(target_shared, os.path.basename(libpython))
+        copyfile(libpython, target_file, symlink)
 
 def install_distutils(home_dir):
     distutils_path = change_prefix(distutils.__path__[0], home_dir)
