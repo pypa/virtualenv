@@ -1,27 +1,60 @@
-language: python
-
+language: generic # don't use python here as it breaks osx builds
+os:
+  - linux
+  - osx
+env: # important!
 matrix:
   include:
     - python: 2.6
+      language: python
       env: TOXENV=python2.6
     - python: 2.7
+      language: python
       env: TOXENV=python2.7
     - python: 3.3
+      language: python
       env: TOXENV=python3.3
     - python: 3.4
+      language: python
       env: TOXENV=python3.4
     - python: 3.5
+      language: python
       env: TOXENV=python3.5
+    - python: 3.6
+      language: python
+      env: TOXENV=python3.6
     - python: pypy
+      language: python
       env: TOXENV=pypy
     - python: 3.5
+      language: python
       env: TOXENV=crosspython3
     - python: 2.7
+      language: python
       env: TOXENV=crosspython2
     - python: 2.7
+      language: python
       env: TOXENV=docs
+  allow_failures:
+    # Based on workaround https://github.com/travis-ci/travis-ci/issues/2312#issuecomment-289140791
+    - os: osx
+      language: generic
+      env: TOXENV=python2.7
+      before_install:
+        - brew update
+        - brew install python2.7
+        - virtualenv env -p python2.7
+        - source env/bin/activate
+    - os: osx
+      language: generic
+      env: TOXENV=python3.6
+      before_install:
+        - brew update
+        - brew install python3.6
+        - virtualenv env -p python3.6
+        - source env/bin/activate
 
-install: pip install tox
+install: pip install --user tox
 
 script: tox
 
