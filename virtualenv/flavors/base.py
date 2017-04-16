@@ -6,20 +6,25 @@ import subprocess
 
 class BaseFlavor(object):
 
-    core_modules = set([
-        "posixpath.py", "stat.py", "genericpath.py", "warnings.py",
-        "linecache.py", "types.py", "UserDict.py", "_abcoll.py", "abc.py",
-        "_weakrefset.py", "copy_reg.py",
-    ])
+    def bootstrap_modules(self, base_python):
+        mods = set([
+            # Files
+            "posixpath.py", "stat.py", "genericpath.py", "warnings.py",
+            "linecache.py", "types.py", "UserDict.py", "_abcoll.py", "abc.py",
+            "copy_reg.py",
+        ])
+        if base_python["sys.version_info"][:2] > [2, 6]:
+            mods.add("_weakrefset.py")
+        return mods
 
     @property
     def activation_scripts(self):
         raise NotImplementedError
 
-    def python_bins(self, version_info):
+    def python_bins(self, base_python):
         raise NotImplementedError
 
-    def lib_dir(self, version_info):
+    def lib_dir(self, base_python):
         raise NotImplementedError
 
     def execute(self, command, **env):

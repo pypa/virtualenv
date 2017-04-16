@@ -2,13 +2,14 @@ from __future__ import absolute_import, division, print_function
 
 import io
 import json
+import locale
 import os.path
-import subprocess
 import textwrap
 
 from virtualenv.builders.base import BaseBuilder
-from virtualenv._utils import copyfile, ensure_directory
-
+from virtualenv._utils import copyfile
+from virtualenv._utils import ensure_directory
+from virtualenv._compat import check_output
 
 SITE = """# -*- encoding: utf-8 -*-
 import sys
@@ -39,12 +40,12 @@ for path in sys.path:
     if path.startswith(sys.prefix):
         path = os.path.join(
             sys.base_prefix,
-            path[len(sys.prefix):],
+            path[len(sys.prefix):].lstrip(os.path.sep),
         )
     elif path.startswith(sys.exec_prefix):
         path = os.path.join(
             sys.base_exec_prefix,
-            path[len(sys.exec_prefix):],
+            path[len(sys.exec_prefix):].lstrip(os.path.sep),
         )
 
     new_sys_path.append(path)
@@ -114,8 +115,8 @@ class LegacyBuilder(BaseBuilder):
         # Get information from the base python that we need in order to create
         # a legacy virtual environment.
         return json.loads(
-            subprocess.check_output([
-                self.python,
+            check_output([
+                self._get_base_python_bin(),
                 "-c",
                 textwrap.dedent("""
                 import json
@@ -134,17 +135,22 @@ class LegacyBuilder(BaseBuilder):
                         "sys.prefix": resolve(sys.prefix),
                         "sys.exec_prefix": resolve(sys.exec_prefix),
                         "site.getsitepackages": [
-                            resolve(f) for f in site.getsitepackages()
+                            resolve(f) for f in getattr(site, "getsitepackages", lambda: site.addsitepackages(set()))()
                         ],
                         "lib": resolve(os.path.dirname(os.__file__)),
                         "site.py": os.path.join(
                             resolve(os.path.dirname(site.__file__)),
                             "site.py",
                         ),
+                        "arch": getattr(
+                            getattr(sys, 'implementation', sys),
+                            '_multiarch',
+                            sys.platform
+                        ),
                     })
                 )
                 """),
-            ]).decode("utf8"),
+            ]).decode(locale.getpreferredencoding()),
         )
 
     def create_virtual_environment(self, destination):
@@ -154,8 +160,7 @@ class LegacyBuilder(BaseBuilder):
         # Create our binaries that we'll use to create the virtual environment
         bin_dir = os.path.join(destination, self.flavor.bin_dir)
         ensure_directory(bin_dir)
-        for python_bin in self.flavor.python_bins(
-                base_python["sys.version_info"]):
+        for python_bin in self.flavor.python_bins(base_python):
             copyfile(
                 base_python["sys.executable"],
                 os.path.join(bin_dir, python_bin),
@@ -166,7 +171,7 @@ class LegacyBuilder(BaseBuilder):
         # successfully bootstrap a Python interpreter.
         lib_dir = os.path.join(
             destination,
-            self.flavor.lib_dir(base_python["sys.version_info"])
+            self.flavor.lib_dir(base_python)
         )
         ensure_directory(lib_dir)
 
@@ -195,14 +200,24 @@ class LegacyBuilder(BaseBuilder):
         # list also includes the os module, but since we've already copied
         # that we'll go ahead and omit it.
 
-        for module in self.flavor.core_modules:
+        for module in self.flavor.bootstrap_modules(base_python):
             copyfile(
                 os.path.join(base_python["lib"], module),
                 os.path.join(lib_dir, module),
             )
 
+        include_dir = self.flavor.include_dir(base_python)
+        copyfile(
+            os.path.join(base_python["sys.prefix"], include_dir),
+            os.path.join(destination, include_dir)
+        )
+        copyfile(
+            os.path.join(base_python["sys.prefix"], include_dir),
+            os.path.join(destination, "local", include_dir)
+        )
+
         dst = os.path.join(lib_dir, "site.py")
-        with io.open(dst, "w") as dst_fp:
+        with io.open(dst, "wb") as dst_fp:
             # Get the data from our source file, and replace our special
             # variables with the computed data.
             data = SITE

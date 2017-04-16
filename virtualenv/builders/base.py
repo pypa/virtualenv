@@ -3,10 +3,14 @@ from __future__ import absolute_import, division, print_function
 import glob
 import io
 import os.path
+import locale
+import json
 import shutil
 import sys
+import textwrap
 
 from virtualenv._compat import FileNotFoundError
+from virtualenv._compat import check_output
 
 
 WHEEL_DIR = os.path.join(
@@ -16,6 +20,8 @@ WHEEL_DIR = os.path.join(
 SCRIPT_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "_scripts",
 )
+
+MAIN_SUFFIX = ".__main__" if sys.version_info[:2] == (2, 6) else ""
 
 
 class BaseBuilder(object):
@@ -44,7 +50,35 @@ class BaseBuilder(object):
     def check_available(cls, python):
         raise NotImplementedError
 
+    def _get_base_python_bin(self):
+        bindir = json.loads(
+            check_output([
+                self.python,
+                "-c",
+                textwrap.dedent("""
+                import json
+                import os
+                import sys
+                try:
+                    import sysconfig
+                except ImportError:
+                    from distutils import sysconfig
+
+                if (sys.platform.startswith("win") or sys.platform == "cli" and os.name == "nt"):
+                    bindir = getattr(sys, "real_prefix", sys.prefix)
+                else:
+                    bindir = sysconfig.get_config_var("BINDIR")
+
+                print(json.dumps(bindir))
+                """)
+            ]).decode(locale.getpreferredencoding()),
+        )
+        return os.path.join(bindir, os.path.basename(self.python))
+
     def create(self, destination):
+        # Resolve the destination first, we can't save relative paths
+        destination = os.path.realpath(os.path.abspath(destination))
+
         # Clear the existing virtual environment.
         if self.clear:
             self.clear_virtual_environment(destination)
@@ -135,7 +169,7 @@ class BaseBuilder(object):
         # Construct the command that we're going to use to actually do the
         # installs.
         command = [
-            python, "-m", "pip", "install", "--no-index", "--isolated",
+            python, "-m", "pip" + MAIN_SUFFIX, "install", "--no-index", "--isolated",
             "--find-links", WHEEL_DIR,
         ]
 

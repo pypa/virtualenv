@@ -7,19 +7,26 @@ import stat
 
 
 def ensure_directory(directory, *args, **kwargs):
-    try:
+    # Fail if the destination exists and it's not a directory
+    if not os.path.isdir(directory):
         os.makedirs(directory, *args, **kwargs)
-    except OSError as exc:
-        if exc.errno != errno.EEXIST:
-            raise
 
 
 def copyfile(srcfile, destfile):
-    # We use copyfile (not move, copy, or copy2) to be extra sure that we are
-    # not moving directories over (copyfile fails for directories) as well as
-    # to ensure that we are not copying over any metadata because we want more
-    # control over what metadata we actually copy over.
-    shutil.copyfile(srcfile, destfile)
+    if os.path.isdir(srcfile):
+        # TODO: just use shutil.copytree to avoid bikeshedding
+        ensure_directory(destfile)
+        for name in os.listdir(srcfile):
+            copyfile(
+                os.path.join(srcfile, name),
+                os.path.join(destfile, name)
+            )
+    else:
+        # We use copyfile (not move, copy, or copy2) to be extra sure that we are
+        # not moving directories over (copyfile fails for directories) as well as
+        # to ensure that we are not copying over any metadata because we want more
+        # control over what metadata we actually copy over.
+        shutil.copyfile(srcfile, destfile)
 
     # Grab the stat data for the source file so we can use it to copy over
     # certain metadata to the destination file.

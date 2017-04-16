@@ -53,4 +53,4 @@ class VenvBuilder(BaseBuilder):
         # We use the programatic API instead of the command line because we
         # want to not include pip in this, and Python 3.3's venv module doesn't
         # support the --without-pip flag.
-        subprocess.check_call([self.python, "-c", script])
+        subprocess.check_call([self._get_base_python_bin(), "-c", script])

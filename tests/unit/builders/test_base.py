@@ -7,7 +7,7 @@ import sys
 import pretend
 import pytest
 
-from virtualenv.builders.base import BaseBuilder, WHEEL_DIR
+from virtualenv.builders.base import BaseBuilder, WHEEL_DIR, MAIN_SUFFIX
 from virtualenv.flavors.posix import PosixFlavor
 from virtualenv.flavors.windows import WindowsFlavor
 
@@ -44,13 +44,13 @@ def test_base_builder_create(clear):
     builder.create("/a/")
 
     if clear:
-        assert builder.clear_virtual_environment.calls == [pretend.call("/a/")]
+        assert builder.clear_virtual_environment.calls == [pretend.call(os.path.realpath(os.path.normpath("/a")))]
     else:
         assert builder.clear_virtual_environment.calls == []
 
-    assert builder.create_virtual_environment.calls == [pretend.call("/a/")]
-    assert builder.install_scripts.calls == [pretend.call("/a/")]
-    assert builder.install_tools.calls == [pretend.call("/a/")]
+    assert builder.create_virtual_environment.calls == [pretend.call(os.path.realpath(os.path.normpath("/a")))]
+    assert builder.install_scripts.calls == [pretend.call(os.path.realpath(os.path.normpath("/a")))]
+    assert builder.install_tools.calls == [pretend.call(os.path.realpath(os.path.normpath("/a")))]
 
 
 def test_base_builder_clear_environment_doesnt_exist(tmpdir):
@@ -128,7 +128,7 @@ def test_base_builder_install_tools(tmpdir, flavor, pip, setuptools,
             pretend.call(
                 [
                     str(tmpdir.join(flavor.bin_dir, flavor.python_bin)),
-                    "-m", "pip", "install", "--no-index", "--isolated",
+                    "-m", "pip" + MAIN_SUFFIX, "install", "--no-index", "--isolated",
                     "--find-links", WHEEL_DIR,
                 ]
                 + list(
