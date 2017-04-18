@@ -239,7 +239,7 @@ def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_pre
 
                 if libarch is not None:
                     libXX = "lib" + libarch
-                    libXXdir = os.path.join(prefix, libXX, "python" + sys.version[:3], "site-packages")
+                    libXX_dir = os.path.join(prefix, libXX, "python" + sys.version[:3], "site-packages")
                     if (os.path.exists(libXX_dir) and
                         os.path.realpath(libXX_dir) not in [os.path.realpath(p) for p in sitedirs]):
                             sitedirs.insert(0, libXX_dir)
