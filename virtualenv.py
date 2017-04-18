@@ -1530,7 +1530,7 @@ def fix_libarch(lib_dir, symlink=True):
     # Return early or we will die on the following assert.
     if is_pypy:
         logger.debug('PyPy detected, skipping %s symlinking' % (target_dirname, ))
-        return True
+        return True, None
 
     for arch in '64', '32', 'x32':
         if _do_fix_libarch(lib_dir, symlink, arch):
