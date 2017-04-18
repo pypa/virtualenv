@@ -206,7 +206,7 @@ def addsitedir(sitedir, known_paths=None):
         known_paths = None
     return known_paths
 
-def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_prefix):
+def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_prefix, libarch=None):
     """Add site-packages (and possibly site-python) to sys.path"""
     prefixes = [os.path.join(sys_prefix, "local"), sys_prefix]
     if exec_prefix != sys_prefix:
@@ -236,13 +236,14 @@ def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_pre
                                          "site-packages"),
                             os.path.join(prefix, "lib", "site-python"),
                             os.path.join(prefix, "python" + sys.version[:3], "lib-dynload")]
-                lib64_dir = os.path.join(prefix, "lib64", "python" + sys.version[:3], "site-packages")
-                if (os.path.exists(lib64_dir) and
-                    os.path.realpath(lib64_dir) not in [os.path.realpath(p) for p in sitedirs]):
-                    if _is_64bit:
-                        sitedirs.insert(0, lib64_dir)
-                    else:
-                        sitedirs.append(lib64_dir)
+
+                if libarch is not None:
+                    libXX = "lib" + libarch
+                    libXXdir = os.path.join(prefix, libXX, "python" + sys.version[:3], "site-packages")
+                    if (os.path.exists(libXX_dir) and
+                        os.path.realpath(libXX_dir) not in [os.path.realpath(p) for p in sitedirs]):
+                            sitedirs.insert(0, libXX_dir)
+
                 try:
                     # sys.getobjects only available in --with-pydebug build
                     sys.getobjects
@@ -549,7 +550,7 @@ def execsitecustomize():
     except ImportError:
         pass
 
-def virtual_install_main_packages():
+def virtual_install_main_packages(libarch=None):
     f = open(os.path.join(os.path.dirname(__file__), 'orig-prefix.txt'))
     sys.real_prefix = f.read().strip()
     f.close()
@@ -583,12 +584,13 @@ def virtual_install_main_packages():
     else:
         paths = [os.path.join(sys.real_prefix, 'lib', 'python'+sys.version[:3])]
         hardcoded_relative_dirs = paths[:] # for the special 'darwin' case below
-        lib64_path = os.path.join(sys.real_prefix, 'lib64', 'python'+sys.version[:3])
-        if os.path.exists(lib64_path):
-            if _is_64bit:
-                paths.insert(0, lib64_path)
-            else:
-                paths.append(lib64_path)
+
+        if libarch is not None:
+            libXX = 'lib' + libarch
+            libXX_path = os.path.join(sys.real_prefix, libXX, 'python'+sys.version[:3])
+            if os.path.exists(libXX_path):
+                paths.insert(0, libXX_path)
+
         # This is hardcoded in the Python executable, but relative to
         # sys.prefix.  Debian change: we need to add the multiarch triplet
         # here, which is where the real stuff lives.  As per PEP 421, in
@@ -667,20 +669,30 @@ def execusercustomize():
 
 def main():
     global ENABLE_USER_SITE
-    virtual_install_main_packages()
+
+    libarch = None
+    arch_file = os.path.join(os.path.dirname(__file__), 'libarch.txt')
+    if os.path.exists(arch_file):
+        arch_fp = open(arch_file)
+        try:
+            libarch = arch_fp.read().strip()
+        finally:
+            arch_fp.close()
+
+    virtual_install_main_packages(libarch)
+
     abs__file__()
     paths_in_sys = removeduppaths()
     if (os.name == "posix" and sys.path and
         os.path.basename(sys.path[-1]) == "Modules"):
         addbuilddir()
-    if _is_jython:
         fixclasspath()
     GLOBAL_SITE_PACKAGES = not os.path.exists(os.path.join(os.path.dirname(__file__), 'no-global-site-packages.txt'))
     if not GLOBAL_SITE_PACKAGES:
         ENABLE_USER_SITE = False
     if ENABLE_USER_SITE is None:
         ENABLE_USER_SITE = check_enableusersite()
-    paths_in_sys = addsitepackages(paths_in_sys)
+    paths_in_sys = addsitepackages(paths_in_sys, libarch=libarch)
     paths_in_sys = addusersitepackages(paths_in_sys)
     if GLOBAL_SITE_PACKAGES:
         paths_in_sys = virtual_addsitepackages(paths_in_sys)
