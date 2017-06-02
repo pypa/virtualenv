@@ -570,12 +570,6 @@ def main():
         help="Always copy files rather than symlinking.")
 
     parser.add_option(
-        '--unzip-setuptools',
-        dest='unzip_setuptools',
-        action='store_true',
-        help="Unzip Setuptools when installing it.")
-
-    parser.add_option(
         '--relocatable',
         dest='relocatable',
         action='store_true',
@@ -643,6 +637,11 @@ def main():
         action='store_true',
         help="DEPRECATED. Retained only for backward compatibility. This option has no effect.")
 
+    parser.add_option(
+        '--unzip-setuptools',
+        action='store_true',
+        help="DEPRECATED.  Retained only for backward compatibility. This option has no effect.")
+
     if 'extend_parser' in globals():
         extend_parser(parser)
 
@@ -703,7 +702,6 @@ def main():
     create_environment(home_dir,
                        site_packages=options.system_site_packages,
                        clear=options.clear,
-                       unzip_setuptools=options.unzip_setuptools,
                        prompt=options.prompt,
                        search_dirs=options.search_dirs,
                        download=options.download,
@@ -905,7 +903,6 @@ def install_wheel(project_names, py_executable, search_dirs=None,
 
 
 def create_environment(home_dir, site_packages=False, clear=False,
-                       unzip_setuptools=False,
                        prompt=None, search_dirs=None, download=False,
                        no_setuptools=False, no_pip=False, no_wheel=False,
                        symlink=True):
