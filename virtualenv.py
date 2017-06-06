@@ -538,7 +538,7 @@ def main():
         '-p', '--python',
         dest='python',
         metavar='PYTHON_EXE',
-        help='The Python interpreter to use, e.g., --python=python2.5 will use the python2.5 '
+        help='The Python interpreter to use, e.g., --python=python3.5 will use the python3.5 '
         'interpreter to create the new environment.  The default is the interpreter that '
         'virtualenv was installed with (%s)' % sys.executable)
 
