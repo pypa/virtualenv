@@ -15,6 +15,11 @@ environment:
     - PYTHON: "C:\\Python34-x64"
     - PYTHON: "C:\\Python35-x64"
 
+init:
+    - ps: Set-WinSystemLocale zh-TW
+    - ps: Start-Sleep -s 5
+    - ps: Restart-Computer
+
 install:
   # We need tox installed for the tests
   - "%PYTHON%\\Scripts\\pip.exe install tox"
