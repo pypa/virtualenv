@@ -1142,6 +1142,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     site_filename_dst = change_prefix(site_filename, home_dir)
     site_dir = os.path.dirname(site_filename_dst)
     writefile(site_filename_dst, SITE_PY)
+    if is_win:
+        fixtk_filename = join(site_dir, 'FixTk.py')
+        writefile(fixtk_filename, FIXTK_PY)    
     writefile(join(site_dir, 'orig-prefix.txt'), prefix)
     site_packages_filename = join(site_dir, 'no-global-site-packages.txt')
     if not site_packages:
@@ -1952,6 +1955,31 @@ n6kJTcsp4tG42yeT7nQbtdUFwgVJjwDSUYEAC8F0dKOTILrlLO/xC70bnNd0Ha97whQ6UkHJYj5H
 cA/j+zX4tbtTIfGjujOKpj83aHOgXnIQbvYduNXEC4UMm4T21Bs+GHABuCa7v//LR/TvpjHa7oe7
 /Grb6lVvHSD7spj5iplBLRKZxxEYGdCbY9LWWC5hBB2voWno6DJUMzfkC3T8KJsWL9umDQY5szPt
 AVijEPwfucjncQ==
+""")
+
+##file FixTk.py
+FIXTK_PY = convert("""
+eJy9VltP4zgUfq/U/3AUHkg12dCB1e4ILbMqpTARTEGlMLOiKHJTl3rr2pXtlObf77GTtAlQlofV
++qFK7XP9zpUtllIZ0JkOQOpmo9nYgzPKSQYsf4nNnAlDFaTCMA7PFGZkRUFTA8PuVXwVnQ46g78C
+y6clmBnB+4TH50xMemuapIaMueXRQCCZEZFQMBK4TIihwIy2jFQkcsLEE0yYoomRKgtzS+7EFG1I
+BdLyLLDKEyKENDAX8hmV0aoNW27LyqaWfCLFfoXaJBxWVGkmBUqbsWRWkTlFk0GmxnI/MzPDzxIE
+9CiE86opeINEnFsXKJ+iQ3IOTFjePyo2fR2F4Qi1urv73uA2uu5/DSxSRGRmZn1OuNQWE8tqbVSU
+cCees7EiKsvVTGQBSW+9JGinzhZjyVmCVGKuQQq4Z9qQZsOo7LjZADyF7YnJllTnV/l3+Iyech7O
+qRKUHx2GF9RgvAi/IWbWJwt6mn1DHZz+aDboOqFLA37khPWUkiqAjjGKjVND3f9WoW9Cp5BIgfia
+eImSfF2+2KOoSZUANIRyTT/EQrTGB2CaCXQNM8fHJNVGtfBtz6ZsuFR0ytZWhCFIhDDwDMaZKf21
+J8W0gBPQ4YRillHfW4wT7bW2BLOcYAc2oy2hPV0Mj6HnDMHxreQA2usv7QDtOY+uevGg1zmLO8Ph
+IDq9G/Zu67zV8znYfhe8t986g1zCbra+FDSAoyBnu77p9ePez+h2GPUvdjO11+3DtjsbO8+vOhfx
+aad7eXcT3/a+d/rDqPuOtVZtBTGsrRy0E/jl83GdbQ+6eTnJJRXbkgzgiWHbSJd16m1WlDfjdLoN
+RuLQjlPBbOhifJtS5aeehxgc/v7bl1Y1v/SHg7gz3/2ZCynqCYBT4eNHK9gNywuYW+j8/fXV3fde
+3O/gz9l1BdIdlnVt9efanfI6ys6pE2i/xtgVje1jMCWYjBPwafgUgqDmWap53l/xtfVvcFvQ0MuH
+Y1T1GLpG/EaJ7EH0JKSiCApxjXo0+nNUs1SHWKLKaNs4fW80sgQjr/XCcKtNP/x6/PgO712/+yYf
+CvXgE7IfVdm3HjUbRTc4wUEW2m4S/i2Z8G2fsD01zp8DD9ux9Q0VuzQtaOka+6f2c6JS/x52qBVG
+5SAMD5DNzA+wKedPH1O2eV0S5VLLc2Iwfz2UVEL8ShYZa9cOC2uKeYbzQuMgwJywhjuDA/yEaapw
+cCicyUThREMiQemETpyP7/q3UVxrwhutRXy8ykDznG4mrFwqVkxJUYkVTmsQWFAFAUeV6PULpZXI
+W9pa8F1sjl9XHN7nXbqGdgGyldJ6zVNxnmlrRi7kLfH2bB16qDn8iFpzzjInunKxxOEHw8vN+uNW
+DFsYbgFixi08dppri0ZRqiU/PuF8rw3pcsvKL5HeFopRfnkfVvaHamAuPxaX1Q7kYN/M9z+hunrb
+eZEzNc5VnsORmNC113oJZgXE/a1x+xbDVen+j1dr2RBzcLOW4W6EO9ki1aZMaEtCcftUdFOV201v
+A0X08//KUbZ+O0fZ+j/IUSfkQzlacdjlqONsNv4BOP1jtw==
 """)
 
 ##file activate.sh
