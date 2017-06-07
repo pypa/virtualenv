@@ -584,7 +584,7 @@ def virtual_install_main_packages():
         paths = [os.path.join(sys.real_prefix, 'lib', 'python'+sys.version[:3])]
         hardcoded_relative_dirs = paths[:] # for the special 'darwin' case below
         lib64_path = os.path.join(sys.real_prefix, 'lib64', 'python'+sys.version[:3])
-        if os.path.exists(lib64_path):
+        if os.path.exists(lib64_path) and not os.path.realpath(lib64_path) in paths:
             if _is_64bit:
                 paths.insert(0, lib64_path)
             else:
