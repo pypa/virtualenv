@@ -22,6 +22,7 @@ import logging
 import zlib
 import errno
 import glob
+import distutils.spawn
 import distutils.sysconfig
 import struct
 import subprocess
@@ -1551,11 +1552,7 @@ def resolve_interpreter(exe):
         exe = python_versions[exe]
 
     if os.path.abspath(exe) != exe:
-        paths = os.environ.get('PATH', '').split(os.pathsep)
-        for path in paths:
-            if os.path.exists(join(path, exe)):
-                exe = join(path, exe)
-                break
+        exe = distutils.spawn.find_executable(exe) or exe
     if not os.path.exists(exe):
         logger.fatal('The path %s (from --python=%s) does not exist' % (exe, orig_exe))
         raise SystemExit(3)
