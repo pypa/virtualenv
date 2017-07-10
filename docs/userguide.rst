@@ -62,7 +62,7 @@ virtualenv. But, unlike the activation scripts, the environment variables
 ``PATH`` and ``VIRTUAL_ENV`` will *not* be modified. This means that if
 your Python script uses e.g. ``subprocess`` to run another Python script
 (e.g. via a ``#!/usr/bin/env python`` shebang line) the second script
-*may not be executed with the same Python binary as the first* nor have 
+*may not be executed with the same Python binary as the first* nor have
 the same libraries available to it. To avoid this happening your first
 script will need to modify the environment variables in the same manner
 as the activation scripts, before the second script is executed.
