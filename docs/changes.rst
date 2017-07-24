@@ -4,6 +4,7 @@ Release History
 15.2.0 (unreleased)
 -------------------
 
+* Upgrade wheel to 0.30.0a0
 
 15.1.0 (2016-11-15)
 -------------------
