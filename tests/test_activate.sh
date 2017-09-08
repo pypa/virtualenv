@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -u
+set -ueo pipefail
 
 ROOT="$(dirname $0)/.."
 VIRTUALENV="${ROOT}/virtualenv.py"
@@ -17,6 +17,9 @@ if ! diff ${ROOT}/tests/test_activate_output.expected ${ROOT}/tests/test_activat
 fi
 
 echo "$0: Created virtualenv ${TESTENV}." 1>&2
+
+echo "$0: Testing activation ${TESTENV} in isolated mode..." 1>&2
+env -i bash -c "set -euo pipefail && . ${TESTENV}/bin/activate"
 
 echo "$0: Activating ${TESTENV}..." 1>&2
 . ${TESTENV}/bin/activate
@@ -93,4 +96,3 @@ echo "$0: Deactivated ${TESTENV}." 1>&2
 echo "$0: OK!" 1>&2
 
 rm -rf ${TESTENV}
-
