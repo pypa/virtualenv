@@ -43,8 +43,13 @@ deactivate nondestructive
 VIRTUAL_ENV="__VIRTUAL_ENV__"
 export VIRTUAL_ENV
 
-_OLD_VIRTUAL_PATH="$PATH"
-PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
+if ! [ -z "${PATH+_}" ] ; then
+  _OLD_VIRTUAL_PATH="${PATH}"
+  PATH="$VIRTUAL_ENV/__BIN_NAME__:${PATH}"
+else
+  # shellcheck disable=SC2123
+  PATH="$VIRTUAL_ENV/__BIN_NAME__"
+fi
 export PATH
 
 # unset PYTHONHOME if set
@@ -54,11 +59,12 @@ if ! [ -z "${PYTHONHOME+_}" ] ; then
 fi
 
 if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] ; then
-    _OLD_VIRTUAL_PS1="$PS1"
+    _OLD_VIRTUAL_PS1="${PS1-}"
+    # __VIRTUAL_PROMPT__ is not a variable, is replaced at compile time
     if [ "x__VIRTUAL_PROMPT__" != x ] ; then
-        PS1="__VIRTUAL_PROMPT__$PS1"
+        PS1="__VIRTUAL_PROMPT__${PS1-}"
     else
-        PS1="(`basename \"$VIRTUAL_ENV\"`) $PS1"
+        PS1="(`basename \"$VIRTUAL_ENV\"`) ${PS1-}"
     fi
     export PS1
 fi

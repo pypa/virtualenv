@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -u
+set -ueo pipefail
 
 ROOT="$(dirname $0)/.."
 VIRTUALENV="${ROOT}/virtualenv.py"
@@ -19,7 +19,7 @@ EOL
 # "Path not in prefix" warning is not really an error, being expected under pypy
 # > Path not in prefix '/home/travis/virtualenv/pypy2.7-5.8.0/include' '/opt/python/pypy2.7-5.8.0'
 
-${VIRTUALENV} ${TESTENV} 2>&1 | sed '/^++\|^Also creating executable in\|^Using real prefix\|^Path not in prefix/d' | tee ${ROOT}/tests/test_activate_output.actual
+${VIRTUALENV} ${TESTENV} 2>&1 | sed -E '/(\*^\+\+|^Also creating executable in|^Using real prefix|^Path not in prefix)/d' | tee ${ROOT}/tests/test_activate_output.actual
 if ! diff ${ROOT}/tests/test_activate_output.expected ${ROOT}/tests/test_activate_output.actual; then
     echo "$0: Failed to get expected output from ${VIRTUALENV}!" 1>&2
     exit 1
