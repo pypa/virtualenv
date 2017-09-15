@@ -52,10 +52,20 @@ separate activate files for some other shells, like csh and fish.
 This will change your ``$PATH`` so its first entry is the virtualenv's
 ``bin/`` directory. (You have to use ``source`` because it changes your
 shell environment in-place.) This is all it does; it's purely a
-convenience. If you directly run a script or the python interpreter
+convenience.
+
+If you directly run a script or the python interpreter
 from the virtualenv's ``bin/`` directory (e.g. ``path/to/ENV/bin/pip``
-or ``/path/to/ENV/bin/python-script.py``) there's no need for
-activation.
+or ``/path/to/ENV/bin/python-script.py``) then ``sys.path`` will
+automatically be set to use the Python libraries associated with the
+virtualenv. But, unlike the activation scripts, the environment variables
+``PATH`` and ``VIRTUAL_ENV`` will *not* be modified. This means that if
+your Python script uses e.g. ``subprocess`` to run another Python script
+(e.g. via a ``#!/usr/bin/env python`` shebang line) the second script
+*may not be executed with the same Python binary as the first* nor have 
+the same libraries available to it. To avoid this happening your first
+script will need to modify the environment variables in the same manner
+as the activation scripts, before the second script is executed.
 
 The ``activate`` script will also modify your shell prompt to indicate
 which environment is currently active. To disable this behaviour, see
