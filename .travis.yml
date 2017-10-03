@@ -22,7 +22,18 @@ matrix:
 
 install: pip install tox
 
-script: tox
+script:
+ - ./bin/rebuild-script.py
+ - tox
+ - ./tests/test_activate.sh
+ - |-
+   function check_status() {
+     if ! git diff-index --quiet --ignore-submodules=all HEAD --; then
+       echo 'Uncommitted changes detected:';
+       git diff-index HEAD --;
+       return 1;
+     fi;
+   }
 
 sudo: false # Use container based builds
 
