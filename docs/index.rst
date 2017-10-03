@@ -11,7 +11,9 @@ Dev IRC: #pypa-dev
 Introduction
 ------------
 
-``virtualenv`` is a tool to create isolated Python environments.
+``virtualenv`` is a tool to create isolated Python environments. Since
+Python 3.3 it has been replaced by the `venv
+module <https://docs.python.org/3/library/venv.html>`_.
 
 The basic problem being addressed is one of dependencies and versions,
 and indirectly permissions. Imagine you have an application that
@@ -90,6 +92,9 @@ Compare & Contrast with Alternatives
 ------------------------------------
 
 There are several alternatives that create isolated environments:
+
+* Python 3's `venv module <https://docs.python.org/3/library/venv.html>`_
+  is recommended for projects that no longer need to support Python 2.
 
 * ``workingenv`` (which I do not suggest you use anymore) is the
   predecessor to this library. It used the main Python interpreter,
