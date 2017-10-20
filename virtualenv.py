@@ -858,7 +858,10 @@ def install_wheel(project_names, py_executable, search_dirs=None,
         import tempfile
         import os
 
-        import pip
+        try:
+            from pip._internal import main as _main
+        except ImportError:
+            from pip import main as _main
 
         cert_data = pkgutil.get_data("pip._vendor.requests", "cacert.pem")
         if cert_data is not None:
@@ -874,7 +877,7 @@ def install_wheel(project_names, py_executable, search_dirs=None,
                 args += ["--cert", cert_file.name]
             args += sys.argv[1:]
 
-            sys.exit(pip.main(args))
+            sys.exit(_main(args))
         finally:
             if cert_file is not None:
                 os.remove(cert_file.name)
