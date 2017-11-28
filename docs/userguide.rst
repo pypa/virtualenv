@@ -187,11 +187,16 @@ environment, there is only one interpreter.
 
 Luckily, it's easy. You must use the custom Python interpreter to
 *install* libraries. But to *use* libraries, you just have to be sure
-the path is correct. A script is available to correct the path. You
-can setup the environment like::
+the path is correct. A script is available to correct the path.
+In Python 2, you can setup the environment like::
 
     activate_this = '/path/to/env/bin/activate_this.py'
     execfile(activate_this, dict(__file__=activate_this))
+
+While in Python 3 the correct format is:
+
+    activate_this = '/path/to/env/bin/activate_this.py'
+    exec(open(activate_this).read(), dict(__file__=activate_this))
 
 This will change ``sys.path`` and even change ``sys.prefix``, but also allow
 you to use an existing interpreter. Items in your environment will show up

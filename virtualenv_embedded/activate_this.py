@@ -1,19 +1,23 @@
-"""By using execfile(this_file, dict(__file__=this_file)) you will
-activate this virtualenv environment.
+"""Activate this virtualenv environment by ysubgL
 
-This can be used when you must use an existing Python interpreter, not
-the virtualenv bin/python
+- Python 2: execfile(this_file, dict(__file__=this_file))
+- Python 3: exec(open(this_file).read(), dict(__file__=this_file)) (Python 3)
+
+This can be used when you must use an existing Python interpreter, not the virtual environments bin/python.
 """
+import os
+import site
+import sys
 
 try:
     __file__
 except NameError:
-    raise AssertionError(
-        "You must run this like execfile('path/to/activate_this.py', dict(__file__='path/to/activate_this.py'))"
-    )
-import os
-import site
-import sys
+    usage = "You must run this like "
+    if sys.version_info >= (3, 0):
+        usage += "exec(open('path/to/activate_this.py').read(), dict(__file__='path/to/activate_this.py'))"
+    else:
+        usage += "execfile('path/to/activate_this.py', dict(__file__='path/to/activate_this.py'))"
+    raise AssertionError(usage)
 
 old_os_path = os.environ.get("PATH", "")
 os.environ["PATH"] = os.path.dirname(os.path.abspath(__file__)) + os.pathsep + old_os_path
