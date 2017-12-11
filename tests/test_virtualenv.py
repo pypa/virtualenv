@@ -7,12 +7,154 @@ import tempfile
 import pytest
 import platform  # noqa
 
-from mock import patch, Mock
+from mock import call, Mock, NonCallableMock, patch
 
 
 def test_version():
     """Should have a version string"""
     assert virtualenv.virtualenv_version, "Should have version"
+
+
+class TestGetInstalledPythons:
+    key_local_machine = 'key-local-machine'
+    key_current_user = 'key-current-user'
+
+    @classmethod
+    def mock_virtualenv_winreg(cls, monkeypatch, data):
+        def enum_key(key, index):
+            try:
+                return data.get(key, [])[index]
+            except IndexError:
+                raise WindowsError
+
+        def query_value(key, path):
+            installed_version_tags = data.get(key, [])
+            suffix = '\\InstallPath'
+            if path.endswith(suffix):
+                version_tag = path[:-len(suffix)]
+                if version_tag in installed_version_tags:
+                    return '{}-{}-path'.format(key, version_tag)
+            raise WindowsError
+
+        mock_winreg = NonCallableMock(spec_set=[
+            'HKEY_LOCAL_MACHINE',
+            'HKEY_CURRENT_USER',
+            'CreateKey',
+            'EnumKey',
+            'QueryValue',
+            'CloseKey'])
+        mock_winreg.HKEY_LOCAL_MACHINE = 'HKEY_LOCAL_MACHINE'
+        mock_winreg.HKEY_CURRENT_USER = 'HKEY_CURRENT_USER'
+        mock_winreg.CreateKey.side_effect = [cls.key_local_machine,
+                                             cls.key_current_user]
+        mock_winreg.EnumKey.side_effect = enum_key
+        mock_winreg.QueryValue.side_effect = query_value
+        mock_winreg.CloseKey.return_value = None
+        monkeypatch.setattr(virtualenv, 'winreg', mock_winreg)
+        return mock_winreg
+
+    @pytest.mark.skipif(sys.platform == 'win32',
+                        reason='non-windows specific test')
+    def test_on_non_windows(self, monkeypatch):
+        assert not virtualenv.is_win
+        assert not hasattr(virtualenv, 'winreg')
+        assert virtualenv.get_installed_pythons() == {}
+
+    @pytest.mark.skipif(sys.platform != 'win32',
+                        reason='non-windows specific test')
+    def test_on_windows(self, monkeypatch):
+        assert virtualenv.is_win
+        mock_winreg = self.mock_virtualenv_winreg(monkeypatch, {
+            self.key_local_machine: (
+                '2.4',
+                '2.7',
+                '3.2',
+                '3.4',
+                '3.5',  # 64-bit only
+                '3.6-32',  # 32-bit only
+                '3.7', '3.7-32',  # both 32 & 64-bit with a 64-bit user install
+                '3.8'),  # 64-bit with a 32-bit user install
+            self.key_current_user: (
+                '2.5',
+                '2.7',
+                '3.7',
+                '3.8-32')})
+        monkeypatch.setattr(virtualenv, 'join', '{}\\{}'.format)
+
+        installed_pythons = virtualenv.get_installed_pythons()
+
+        assert installed_pythons == {
+            '2': self.key_current_user + '-2.7-path\\python.exe',
+            '2.4': self.key_local_machine + '-2.4-path\\python.exe',
+            '2.5': self.key_current_user + '-2.5-path\\python.exe',
+            '2.7': self.key_current_user + '-2.7-path\\python.exe',
+            '3': self.key_local_machine + '-3.8-path\\python.exe',
+            '3.2': self.key_local_machine + '-3.2-path\\python.exe',
+            '3.4': self.key_local_machine + '-3.4-path\\python.exe',
+            '3.5': self.key_local_machine + '-3.5-path\\python.exe',
+            '3.5-64': self.key_local_machine + '-3.5-path\\python.exe',
+            '3.6': self.key_local_machine + '-3.6-32-path\\python.exe',
+            '3.6-32': self.key_local_machine + '-3.6-32-path\\python.exe',
+            '3.7': self.key_current_user + '-3.7-path\\python.exe',
+            '3.7-32': self.key_local_machine + '-3.7-32-path\\python.exe',
+            '3.7-64': self.key_current_user + '-3.7-path\\python.exe',
+            '3.8': self.key_local_machine + '-3.8-path\\python.exe',
+            '3.8-32': self.key_current_user + '-3.8-32-path\\python.exe',
+            '3.8-64': self.key_local_machine + '-3.8-path\\python.exe'}
+        assert mock_winreg.mock_calls == [
+            call.CreateKey(mock_winreg.HKEY_LOCAL_MACHINE,
+                           'Software\\Python\\PythonCore'),
+            call.EnumKey(self.key_local_machine, 0),
+            call.QueryValue(self.key_local_machine, '2.4\\InstallPath'),
+            call.EnumKey(self.key_local_machine, 1),
+            call.QueryValue(self.key_local_machine, '2.7\\InstallPath'),
+            call.EnumKey(self.key_local_machine, 2),
+            call.QueryValue(self.key_local_machine, '3.2\\InstallPath'),
+            call.EnumKey(self.key_local_machine, 3),
+            call.QueryValue(self.key_local_machine, '3.4\\InstallPath'),
+            call.EnumKey(self.key_local_machine, 4),
+            call.QueryValue(self.key_local_machine, '3.5\\InstallPath'),
+            call.EnumKey(self.key_local_machine, 5),
+            call.QueryValue(self.key_local_machine, '3.6-32\\InstallPath'),
+            call.EnumKey(self.key_local_machine, 6),
+            call.QueryValue(self.key_local_machine, '3.7\\InstallPath'),
+            call.EnumKey(self.key_local_machine, 7),
+            call.QueryValue(self.key_local_machine, '3.7-32\\InstallPath'),
+            call.EnumKey(self.key_local_machine, 8),
+            call.QueryValue(self.key_local_machine, '3.8\\InstallPath'),
+            call.EnumKey(self.key_local_machine, 9),
+            call.CloseKey(self.key_local_machine),
+            call.CreateKey(mock_winreg.HKEY_CURRENT_USER,
+                           'Software\\Python\\PythonCore'),
+            call.EnumKey(self.key_current_user, 0),
+            call.QueryValue(self.key_current_user, '2.5\\InstallPath'),
+            call.EnumKey(self.key_current_user, 1),
+            call.QueryValue(self.key_current_user, '2.7\\InstallPath'),
+            call.EnumKey(self.key_current_user, 2),
+            call.QueryValue(self.key_current_user, '3.7\\InstallPath'),
+            call.EnumKey(self.key_current_user, 3),
+            call.QueryValue(self.key_current_user, '3.8-32\\InstallPath'),
+            call.EnumKey(self.key_current_user, 4),
+            call.CloseKey(self.key_current_user)]
+
+    @pytest.mark.skipif(sys.platform != 'win32',
+                        reason='windows specific test')
+    def test_on_windows_with_no_installations(self, monkeypatch):
+        assert virtualenv.is_win
+        mock_winreg = self.mock_virtualenv_winreg(monkeypatch, {})
+
+        installed_pythons = virtualenv.get_installed_pythons()
+
+        assert installed_pythons == {}
+        assert mock_winreg.mock_calls == [
+            call.CreateKey(mock_winreg.HKEY_LOCAL_MACHINE,
+                           'Software\\Python\\PythonCore'),
+            call.EnumKey(self.key_local_machine, 0),
+            call.CloseKey(self.key_local_machine),
+            call.CreateKey(mock_winreg.HKEY_CURRENT_USER,
+                           'Software\\Python\\PythonCore'),
+            call.EnumKey(self.key_current_user, 0),
+            call.CloseKey(self.key_current_user)]
 
 
 @patch('distutils.spawn.find_executable')
