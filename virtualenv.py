@@ -85,33 +85,51 @@ else:
         import _winreg as winreg
 
     def get_installed_pythons():
-        try:
-            python_core = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE,
-                                           "Software\\Python\\PythonCore")
-        except WindowsError:
-            # No registered Python installations
-            return {}
-        i = 0
-        versions = []
-        while True:
-            try:
-                versions.append(winreg.EnumKey(python_core, i))
-                i = i + 1
-            except WindowsError:
-                break
         exes = dict()
-        for ver in versions:
+        # If both system and current user installations are found for a
+        # particular Python version, the current user one is used
+        for key in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
             try:
-                path = winreg.QueryValue(python_core, "%s\\InstallPath" % ver)
+                python_core = winreg.CreateKey(key,
+                                               "Software\\Python\\PythonCore")
             except WindowsError:
+                # No registered Python installations
                 continue
-            exes[ver] = join(path, "python.exe")
+            i = 0
+            while True:
+                try:
+                    version = winreg.EnumKey(python_core, i)
+                    i += 1
+                    try:
+                        path = winreg.QueryValue(python_core,
+                                                 "%s\\InstallPath" % version)
+                    except WindowsError:
+                        continue
+                    exes[version] = join(path, "python.exe")
+                except WindowsError:
+                    break
+            winreg.CloseKey(python_core)
 
-        winreg.CloseKey(python_core)
+        # For versions that track separate 32-bit (`X.Y-32`) & 64-bit (`X-Y`)
+        # installation registrations, add a `X.Y-64` version tag and make the
+        # extensionless `X.Y` version tag represent the 64-bit installation if
+        # available or 32-bit if it is not
+        updated = {}
+        for ver in exes:
+            if ver < '3.5':
+                continue
+            if ver.endswith('-32'):
+                base_ver = ver[:-3]
+                if base_ver not in exes:
+                    updated[base_ver] = exes[ver]
+            else:
+                updated[ver + '-64'] = exes[ver]
+        exes.update(updated)
 
         # Add the major versions
         # Sort the keys, then repeatedly update the major version entry
-        # Last executable (i.e., highest version) wins with this approach
+        # Last executable (i.e., highest version) wins with this approach,
+        # 64-bit over 32-bit if both are found
         for ver in sorted(exes):
             exes[ver[0]] = exes[ver]
 
