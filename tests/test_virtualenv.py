@@ -387,3 +387,9 @@ def test_create_environment_from_dir_with_spaces(tmpdir):
     support_dir = os.path.dirname(os.path.abspath(support_dir))
     shutil.copytree(support_dir, spaced_support_dir)
     virtualenv.create_environment(ve_path, search_dirs=[spaced_support_dir])
+
+
+def test_create_environment_in_dir_with_spaces(tmpdir):
+    """Should work with environment path containing spaces."""
+    ve_path = str(tmpdir / 'venv with spaces')
+    virtualenv.create_environment(ve_path)
