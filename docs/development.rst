@@ -46,6 +46,19 @@ Or select just a single test file to run::
 
     $ pytest tests/test_virtualenv
 
+You can also run the tests using ``tox`` which will take care of installing all
+the necessary requirements into its constructed Python environments. You just
+need to install ``tox`` in your environment using::
+
+    $ pyp install tox
+
+and then run the tests with a specific Python version using a call like::
+
+    $ tox -e python3.6
+
+See ``tox.ini`` for a list of all supported Python environments or just run the
+tests in all of the available ones by running just ``tox``.
+
 Status and License
 ------------------
 
