@@ -15,6 +15,35 @@ def test_version():
     assert virtualenv.virtualenv_version, "Should have version"
 
 
+@patch('distutils.spawn.find_executable')
+@patch('virtualenv.is_executable', return_value=True)
+@patch('virtualenv.get_installed_pythons')
+@patch('os.path.exists', return_value=True)
+@patch('os.path.abspath')
+def test_resolve_interpreter_with_installed_python(mock_abspath, mock_exists,
+        mock_get_installed_pythons, mock_is_executable, mock_find_executable):
+    test_tag = 'foo'
+    test_path = '/path/to/foo/python.exe'
+    test_abs_path = 'some-abs-path'
+    test_found_path = 'some-found-path'
+    mock_get_installed_pythons.return_value = {
+        test_tag: test_path,
+        test_tag + '2': test_path + '2'}
+    mock_abspath.return_value = test_abs_path
+    mock_find_executable.return_value = test_found_path
+
+    exe = virtualenv.resolve_interpreter('foo')
+
+    assert exe == test_found_path, \
+        "installed python should be accessible by key"
+
+    mock_get_installed_pythons.assert_called_once_with()
+    mock_abspath.assert_called_once_with(test_path)
+    mock_find_executable.assert_called_once_with(test_path)
+    mock_exists.assert_called_once_with(test_found_path)
+    mock_is_executable.assert_called_once_with(test_found_path)
+
+
 @patch('virtualenv.is_executable', return_value=True)
 @patch('virtualenv.get_installed_pythons', return_value={'foo': 'bar'})
 @patch('os.path.exists', return_value=True)
