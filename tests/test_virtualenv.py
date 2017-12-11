@@ -376,3 +376,14 @@ def test_missing_certifi_pem(tmp_path):
     venvdir = tmp_path / "venv"
     search_dirs = [str(wheeldir), str(support_original)]
     virtualenv.create_environment(str(venvdir), search_dirs=search_dirs)
+
+
+def test_create_environment_from_dir_with_spaces(tmpdir):
+    """Should work with wheel sources read from a dir with spaces."""
+    ve_path = str(tmpdir / "venv")
+    spaced_support_dir = str(tmpdir / "support with spaces")
+    from virtualenv_support import __file__ as support_dir
+
+    support_dir = os.path.dirname(os.path.abspath(support_dir))
+    shutil.copytree(support_dir, spaced_support_dir)
+    virtualenv.create_environment(ve_path, search_dirs=[spaced_support_dir])
