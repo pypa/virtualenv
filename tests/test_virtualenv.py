@@ -15,11 +15,12 @@ def test_version():
     assert virtualenv.virtualenv_version, "Should have version"
 
 
-@patch('os.path.exists')
-def test_resolve_interpreter_with_absolute_path(mock_exists):
+@patch('virtualenv.is_executable', return_value=True)
+@patch('virtualenv.get_installed_pythons', return_value={'foo': 'bar'})
+@patch('os.path.exists', return_value=True)
+def test_resolve_interpreter_with_absolute_path(
+        mock_exists, mock_get_installed_pythons, mock_is_executable):
     """Should return absolute path if given and exists"""
-    mock_exists.return_value = True
-    virtualenv.is_executable = Mock(return_value=True)
     test_abs_path = os.path.abspath("/usr/bin/python53")
 
     exe = virtualenv.resolve_interpreter(test_abs_path)
@@ -27,32 +28,32 @@ def test_resolve_interpreter_with_absolute_path(mock_exists):
     assert exe == test_abs_path, "Absolute path should return as is"
 
     mock_exists.assert_called_with(test_abs_path)
-    virtualenv.is_executable.assert_called_with(test_abs_path)
+    mock_is_executable.assert_called_with(test_abs_path)
 
 
-@patch('os.path.exists')
-def test_resolve_interpreter_with_nonexistent_interpreter(mock_exists):
+@patch('virtualenv.get_installed_pythons', return_value={'foo': 'bar'})
+@patch('os.path.exists', return_value=False)
+def test_resolve_interpreter_with_nonexistent_interpreter(
+        mock_exists, mock_get_installed_pythons):
     """Should SystemExit with an nonexistent python interpreter path"""
-    mock_exists.return_value = False
-
     with pytest.raises(SystemExit):
         virtualenv.resolve_interpreter("/usr/bin/python53")
 
     mock_exists.assert_called_with("/usr/bin/python53")
 
 
-@patch('os.path.exists')
-def test_resolve_interpreter_with_invalid_interpreter(mock_exists):
+@patch('virtualenv.is_executable', return_value=False)
+@patch('os.path.exists', return_value=True)
+def test_resolve_interpreter_with_invalid_interpreter(mock_exists,
+                                                      mock_is_executable):
     """Should exit when with absolute path if not exists"""
-    mock_exists.return_value = True
-    virtualenv.is_executable = Mock(return_value=False)
     invalid = os.path.abspath("/usr/bin/pyt_hon53")
 
     with pytest.raises(SystemExit):
         virtualenv.resolve_interpreter(invalid)
 
     mock_exists.assert_called_with(invalid)
-    virtualenv.is_executable.assert_called_with(invalid)
+    mock_is_executable.assert_called_with(invalid)
 
 
 def test_activate_after_future_statements():
