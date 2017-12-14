@@ -1248,16 +1248,24 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
 
             # we need to copy the DLL to enforce that windows will load the correct one.
             # may not exist if we are cygwin.
-            py_executable_dlls = [
-                (
-                    'python%s.dll' % (sys.version_info[0]),
-                    'python%s_d.dll' % (sys.version_info[0])
-                ),
-                (
-                    'python%s%s.dll' % (sys.version_info[0], sys.version_info[1]),
-                    'python%s%s_d.dll' % (sys.version_info[0], sys.version_info[1])
-                )
-            ]
+            if is_pypy:
+                py_executable_dlls = [
+                    (
+                        'libpypy-c.dll',
+                        'libpypy_d-c.dll',
+                    ),
+                ]
+            else:
+                py_executable_dlls = [
+                    (
+                        'python%s.dll' % (sys.version_info[0]),
+                        'python%s_d.dll' % (sys.version_info[0])
+                    ),
+                    (
+                        'python%s%s.dll' % (sys.version_info[0], sys.version_info[1]),
+                        'python%s%s_d.dll' % (sys.version_info[0], sys.version_info[1])
+                    )
+                ]
 
             for py_executable_dll, py_executable_dll_d in py_executable_dlls:
                 pythondll = os.path.join(os.path.dirname(sys.executable), py_executable_dll)
@@ -1281,7 +1289,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             copyfile(py_executable, python_executable, symlink)
 
             if is_win:
-                for name in ['libexpat.dll', 'libpypy.dll', 'libpypy-c.dll',
+                for name in ['libexpat.dll', 
                             'libeay32.dll', 'ssleay32.dll', 'sqlite3.dll',
                             'tcl85.dll', 'tk85.dll']:
                     src = join(prefix, name)
