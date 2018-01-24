@@ -54,7 +54,8 @@ py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
 
 is_jython = sys.platform.startswith('java')
 is_pypy = hasattr(sys, 'pypy_version_info')
-is_win = (sys.platform == 'win32')
+is_win = sys.platform == 'win32' or os.name == 'nt' or getattr(os, '_name', None) == 'nt'
+is_cpython = not is_jython and not is_pypy
 is_cygwin = (sys.platform == 'cygwin')
 is_darwin = (sys.platform == 'darwin')
 abiflags = getattr(sys, 'abiflags', '')
@@ -75,7 +76,7 @@ else:
 
 # Return a mapping of version -> Python executable
 # Only provided for Windows, where the information in the registry is used
-if not is_win:
+if not is_win or not is_cpython:
     def get_installed_pythons():
         return {}
 else:
@@ -324,6 +325,12 @@ def mkdir(path):
         os.makedirs(path)
     else:
         logger.info('Directory %s already exists', path)
+
+def copyfiles(names, prefix, dest_dir, symlink=True):
+    for name in names:
+        src = join(prefix, name)
+        if os.path.exists(src):
+            copyfile(src, join(dest_dir, name), symlink)
 
 def copyfileordir(src, dest, symlink=True):
     if os.path.isdir(src):
@@ -951,9 +958,6 @@ def create_environment(home_dir, site_packages=False, clear=False,
 
     install_python_config(home_dir, bin_dir, prompt)
 
-def is_executable_file(fpath):
-    return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
-
 def path_locations(home_dir):
     """Return the path locations for the environment (where libraries are,
     where scripts go, etc)"""
@@ -1190,10 +1194,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     if is_jython:
         # Jython has either jython-dev.jar and javalib/ dir, or just
         # jython.jar
-        for name in 'jython-dev.jar', 'javalib', 'jython.jar':
-            src = join(prefix, name)
-            if os.path.exists(src):
-                copyfile(src, join(home_dir, name), symlink)
+        copyfiles(('jython-dev.jar', 'javalib', 'jython.jar'), prefix, home_dir, symlink)
         # XXX: registry should always exist after Jython 2.5rc1
         src = join(prefix, 'registry')
         if os.path.exists(src):
@@ -1232,7 +1233,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         executable = sys.executable
         shutil.copyfile(executable, py_executable)
         make_exe(py_executable)
-        if is_win or is_cygwin:
+        if is_cpython and (is_win or is_cygwin):
             pythonw = os.path.join(os.path.dirname(sys.executable), 'pythonw.exe')
             if os.path.exists(pythonw):
                 logger.info('Also created pythonw.exe')
@@ -1289,12 +1290,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             copyfile(py_executable, python_executable, symlink)
 
             if is_win:
-                for name in ['libexpat.dll', 
+                copyfiles(('libexpat.dll', 
                             'libeay32.dll', 'ssleay32.dll', 'sqlite3.dll',
-                            'tcl85.dll', 'tk85.dll']:
-                    src = join(prefix, name)
-                    if os.path.exists(src):
-                        copyfile(src, join(bin_dir, name), symlink)
+                            'tcl85.dll', 'tk85.dll'), prefix, bin_dir, symlink)
 
                 for d in sys.path:
                     if d.endswith('lib_pypy'):
@@ -1446,7 +1444,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
 
 
 def install_activate(home_dir, bin_dir, prompt=None):
-    if is_win or is_jython and os._name == 'nt':
+    if is_win:
         files = {
             'activate.bat': ACTIVATE_BAT,
             'deactivate.bat': DEACTIVATE_BAT,
