@@ -53,12 +53,23 @@ if ! [ -z "${PYTHONHOME+_}" ] ; then
     unset PYTHONHOME
 fi
 
+newline_regex='(^
++)(.*)'
+
 if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] ; then
     _OLD_VIRTUAL_PS1="$PS1"
     if [ "x__VIRTUAL_PROMPT__" != x ] ; then
         PS1="__VIRTUAL_PROMPT__$PS1"
     else
-        PS1="(`basename \"$VIRTUAL_ENV\"`) $PS1"
+        env_basename=`basename "$VIRTUAL_ENV"`
+        set +u
+        if ! [[ "$PS1" =~ $newline_regex ]]; then
+            PS1="($env_basename) $PS1"
+        elif [ -n "$ZSH_VERSION" ]; then
+            PS1="${match[1]}($env_basename) ${match[2]}"
+        else
+            PS1="${BASH_REMATCH[1]}($env_basename) ${BASH_REMATCH[2]}"
+        fi
     fi
     export PS1
 fi

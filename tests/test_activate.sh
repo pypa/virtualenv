@@ -18,6 +18,11 @@ fi
 
 echo "$0: Created virtualenv ${TESTENV}." 1>&2
 
+saved_PS1="$PS1"
+PS1='
+
+$ '
+
 echo "$0: Activating ${TESTENV}..." 1>&2
 . ${TESTENV}/bin/activate
 echo "$0: Activated ${TESTENV}." 1>&2
@@ -87,10 +92,23 @@ fi
 
 echo "$0: pydoc is OK." 1>&2
 
+expected_PS1='
+
+(test_virtualenv_activate.venv) $ '
+
+if [ "$PS1" != "$expected_PS1" ]; then
+    echo "PS1 was '$PS1'" 1>&2
+    echo "PS1 should have been '$expected_PS1'" 1>&2
+    exit 8
+fi
+
+echo "$0: Replacing PS1 is OK." 1>&2
+
 echo "$0: Deactivating ${TESTENV}..." 1>&2
 deactivate
 echo "$0: Deactivated ${TESTENV}." 1>&2
 echo "$0: OK!" 1>&2
 
-rm -rf ${TESTENV}
+PS1="$saved_PS1"
 
+rm -rf ${TESTENV}
