@@ -27,6 +27,7 @@ install: pip install tox
 script: tox
 
 sudo: false # Use container based builds
+cache: pip
 
 branches:
   only:
