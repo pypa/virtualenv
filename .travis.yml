@@ -39,6 +39,7 @@ script:
    }
 
 sudo: false # Use container based builds
+cache: pip
 
 branches:
   only:
