@@ -2,6 +2,7 @@
 """Create a "virtual" Python installation"""
 
 import os
+import platform
 import sys
 
 # If we are running in a new interpreter to create a virtualenv,
@@ -55,7 +56,7 @@ py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1])
 is_jython = sys.platform.startswith('java')
 is_pypy = hasattr(sys, 'pypy_version_info')
 is_win = sys.platform == 'win32' or os.name == 'nt' or getattr(os, '_name', None) == 'nt'
-is_cpython = not is_jython and not is_pypy
+is_cpython = platform.python_implementation() == 'CPython'
 is_cygwin = (sys.platform == 'cygwin')
 is_darwin = (sys.platform == 'darwin')
 abiflags = getattr(sys, 'abiflags', '')
@@ -76,10 +77,7 @@ else:
 
 # Return a mapping of version -> Python executable
 # Only provided for Windows, where the information in the registry is used
-if not is_win or not is_cpython:
-    def get_installed_pythons():
-        return {}
-else:
+if is_win:
     try:
         import winreg
     except ImportError:
@@ -117,6 +115,9 @@ else:
             exes[ver[0]] = exes[ver]
 
         return exes
+else:
+    def get_installed_pythons():
+        return {}
 
 REQUIRED_MODULES = ['os', 'posix', 'posixpath', 'nt', 'ntpath', 'genericpath',
                     'fnmatch', 'locale', 'encodings', 'codecs',
@@ -1233,7 +1234,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         executable = sys.executable
         shutil.copyfile(executable, py_executable)
         make_exe(py_executable)
-        if is_cpython and (is_win or is_cygwin):
+        if is_win or is_cygwin:
             pythonw = os.path.join(os.path.dirname(sys.executable), 'pythonw.exe')
             if os.path.exists(pythonw):
                 logger.info('Also created pythonw.exe')
