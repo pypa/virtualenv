@@ -644,6 +644,7 @@ def main():
         help="DEPRECATED.  Retained only for backward compatibility. This option has no effect.")
 
     if 'extend_parser' in globals():
+        global extend_parser
         extend_parser(parser)
 
     options, args = parser.parse_args()
@@ -651,6 +652,7 @@ def main():
     global logger
 
     if 'adjust_options' in globals():
+        global adjust_options
         adjust_options(options, args)
 
     verbosity = options.verbose - options.quiet
@@ -711,6 +713,7 @@ def main():
                        no_wheel=options.no_wheel,
                        symlink=options.symlink)
     if 'after_install' in globals():
+        global after_install
         after_install(options, home_dir)
 
 def call_subprocess(cmd, show_stdout=True,
