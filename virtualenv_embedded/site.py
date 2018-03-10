@@ -548,6 +548,12 @@ def execsitecustomize():
         import sitecustomize
     except ImportError:
         pass
+    except Exception:
+        if sys.flags.verbose:
+            sys.excepthook(*sys.exc_info())
+        else:
+            sys.stderr.write(
+                "'import sitecustomize' failed; use -v for traceback\n")
 
 def virtual_install_main_packages():
     f = open(os.path.join(os.path.dirname(__file__), 'orig-prefix.txt'))
@@ -663,6 +669,12 @@ def execusercustomize():
         import usercustomize
     except ImportError:
         pass
+    except Exception:
+        if sys.flags.verbose:
+            sys.excepthook(*sys.exc_info())
+        else:
+            sys.stderr.write(
+                "'import usercustomize' failed; use -v for traceback\n")
 
 
 def main():
