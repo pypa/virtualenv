@@ -3,7 +3,7 @@
 
 # FIXME: clean up unused vars.
 $script:THIS_PATH = $myinvocation.mycommand.path
-$script:BASE_DIR = split-path (resolve-path "$THIS_PATH/..") -Parent
+$script:BASE_DIR = $THIS_PATH | split-path -Parent | split-path -Parent
 $script:DIR_NAME = split-path $BASE_DIR -Leaf
 
 function global:deactivate ( [switch] $NonDestructive ){
@@ -36,7 +36,7 @@ $VIRTUAL_ENV = $BASE_DIR
 $env:VIRTUAL_ENV = $VIRTUAL_ENV
 
 $global:_OLD_VIRTUAL_PATH = $env:PATH
-$env:PATH = "$env:VIRTUAL_ENV/Scripts;" + $env:PATH
+$env:PATH = (join-path (resolve-path $env:VIRTUAL_ENV) "Scripts") + ";" + $env:PATH
 if (! $env:VIRTUAL_ENV_DISABLE_PROMPT) {
     function global:_old_virtual_prompt { "" }
     $function:_old_virtual_prompt = $function:prompt
