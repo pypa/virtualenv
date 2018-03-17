@@ -937,7 +937,10 @@ def create_environment(home_dir, site_packages=False, clear=False,
         to_install.append('pip')
 
     if not no_wheel:
-        to_install.append('wheel')
+        if sys.version_info[:2] == (2, 6):
+            to_install.append("wheel<0.30")
+        else:
+            to_install.append('wheel')
 
     if to_install:
         install_wheel(
