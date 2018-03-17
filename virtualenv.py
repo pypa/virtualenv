@@ -931,13 +931,19 @@ def create_environment(home_dir, site_packages=False, clear=False,
     to_install = []
 
     if not no_setuptools:
-        to_install.append('setuptools')
+        if sys.version_info[:2] == (2, 6):
+            to_install.append('setuptools<37')
+        else:
+            to_install.append('setuptools')
 
     if not no_pip:
         to_install.append('pip')
 
     if not no_wheel:
-        to_install.append('wheel')
+        if sys.version_info[:2] == (2, 6):
+            to_install.append("wheel<0.30")
+        else:
+            to_install.append('wheel')
 
     if to_install:
         install_wheel(
@@ -1289,7 +1295,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             copyfile(py_executable, python_executable, symlink)
 
             if is_win:
-                for name in ['libexpat.dll', 
+                for name in ['libexpat.dll',
                             'libeay32.dll', 'ssleay32.dll', 'sqlite3.dll',
                             'tcl85.dll', 'tk85.dll']:
                     src = join(prefix, name)
