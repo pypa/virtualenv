@@ -1,7 +1,7 @@
 Release History
 ===============
 
-15.2.0 (unreleased)
+15.2.0 (2018-03-21)
 -------------------
 
 * Upgrade setuptools to 39.0.1.
