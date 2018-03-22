@@ -4,9 +4,9 @@ Release History
 15.2.0 (unreleased)
 -------------------
 
-* Upgrade setuptools to 38.6.0.
+* Upgrade setuptools to 39.0.1.
 
-* Upgrade pip to 9.0.2.
+* Upgrade pip to 9.0.3.
 
 * Upgrade wheel to 0.30.0.
 
