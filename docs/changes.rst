@@ -1,8 +1,18 @@
 Release History
 ===============
 
-15.2.0 (unreleased)
+15.3.0 (unreleased)
 -------------------
+
+
+15.2.0 (2018-03-21)
+-------------------
+
+* Upgrade setuptools to 39.0.1.
+
+* Upgrade pip to 9.0.3.
+
+* Upgrade wheel to 0.30.0.
 
 
 15.1.0 (2016-11-15)
