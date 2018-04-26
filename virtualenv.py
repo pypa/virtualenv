@@ -937,7 +937,10 @@ def create_environment(home_dir, site_packages=False, clear=False,
             to_install.append('setuptools')
 
     if not no_pip:
-        to_install.append('pip')
+        if sys.version_info[:2] == (2, 6):
+            to_install.append('pip<10')
+        else:
+            to_install.append('pip')
 
     if not no_wheel:
         if sys.version_info[:2] == (2, 6):
