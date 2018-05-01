@@ -3,6 +3,7 @@ import optparse
 import os
 import shutil
 import sys
+import sysconfig
 import tempfile
 import pytest
 import platform  # noqa
@@ -137,5 +138,20 @@ def test_always_copy_option():
                 full_name = os.path.join(root, f)
                 assert not os.path.islink(full_name), "%s should not be a" \
                     " symlink (to %s)" % (full_name, os.readlink(full_name))
+    finally:
+        shutil.rmtree(tmp_virtualenv)
+
+
+@pytest.mark.skipif("platform.python_implementation() == 'PyPy'")
+def test_no_always_copy_option():
+    """Python standard library and interpreter should be symlinks"""
+    tmp_virtualenv = tempfile.mkdtemp()
+    ve_path = os.path.join(tmp_virtualenv, 'venv')
+    try:
+        virtualenv.create_environment(ve_path, symlink=True)
+
+        assert (sys.version_info[0:2] < (3,3)) ^ os.path.islink(os.path.join(ve_path, 'bin', os.path.basename(sys.executable)))
+        assert os.path.islink(os.path.join(ve_path, 'lib', os.path.basename(sysconfig.get_path('stdlib')), 'os.py'))
+
     finally:
         shutil.rmtree(tmp_virtualenv)

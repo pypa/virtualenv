@@ -1107,6 +1107,13 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         ## Maybe it should delete everything with #!/path/to/venv/python in it
         logger.notify('Not deleting %s', bin_dir)
 
+    symlink_interpreter = False
+    if symlink:
+        if sys.version_info[:2] >= (3, 3):
+            symlink_interpreter = True
+        else:
+            logger.warn('Python does not support symlinked interpreters until version 3.3; falling back to copy')
+
     if hasattr(sys, 'real_prefix'):
         logger.notify('Using real prefix %r' % sys.real_prefix)
         prefix = sys.real_prefix
@@ -1236,8 +1243,11 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     if sys.executable != py_executable:
         ## FIXME: could I just hard link?
         executable = sys.executable
-        shutil.copyfile(executable, py_executable)
-        make_exe(py_executable)
+        if symlink_interpreter:
+            os.symlink(executable, py_executable)
+        else:
+            shutil.copyfile(executable, py_executable)
+            make_exe(py_executable)
         if is_win or is_cygwin:
             pythonw = os.path.join(os.path.dirname(sys.executable), 'pythonw.exe')
             if os.path.exists(pythonw):
@@ -1395,6 +1405,13 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
                 os.symlink(py_executable_base, full_pth)
             else:
                 copyfile(py_executable, full_pth, symlink)
+
+    if symlink_interpreter:
+        with open(os.path.join(home_dir, 'pyvenv.cfg'), 'w') as f:
+            if site_packages:
+                f.write('include-system-site-packages = true\n')
+            else:
+                f.write('include-system-site-packages = false\n')
 
     cmd = [py_executable, '-c', 'import sys;out=sys.stdout;'
         'getattr(out, "buffer", out).write(sys.prefix.encode("utf-8"))']
