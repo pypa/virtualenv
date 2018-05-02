@@ -143,7 +143,7 @@ def test_always_copy_option():
 
 @pytest.mark.skipif("platform.python_implementation() == 'PyPy'")
 def test_no_always_copy_option():
-    """Python standard library and interpreter should be symlinks"""
+    """Python standard library and interpreter should be symlinks (since Python 3.3)"""
     tmp_virtualenv = tempfile.mkdtemp()
     ve_path = os.path.join(tmp_virtualenv, 'venv')
     try:
