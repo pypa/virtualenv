@@ -3,7 +3,6 @@ import optparse
 import os
 import shutil
 import sys
-import sysconfig
 import tempfile
 import pytest
 import platform  # noqa
@@ -151,7 +150,12 @@ def test_no_always_copy_option():
         virtualenv.create_environment(ve_path, symlink=True)
 
         assert (sys.version_info[0:2] < (3,3)) ^ os.path.islink(os.path.join(ve_path, 'bin', os.path.basename(sys.executable)))
-        assert os.path.islink(os.path.join(ve_path, 'lib', os.path.basename(sysconfig.get_path('stdlib')), 'os.py'))
+        try:
+            import sysconfig
+        except ImportError:
+            pass
+        else:
+            assert os.path.islink(os.path.join(ve_path, 'lib', os.path.basename(sysconfig.get_path('stdlib')), 'os.py'))
 
     finally:
         shutil.rmtree(tmp_virtualenv)
