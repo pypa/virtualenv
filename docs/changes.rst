@@ -1,8 +1,10 @@
 Release History
 ===============
 
-15.3.0 (unreleased)
+16.0.0 (unreleased)
 -------------------
+
+* Drop support for Python 2.6.
 
 
 15.2.0 (2018-03-21)
