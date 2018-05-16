@@ -3,8 +3,6 @@ language: python
 matrix:
   include:
     # Based on https://docs.python.org/devguide/#status-of-python-branches
-    - python: 2.6
-      env: TOXENV=python2.6
     - python: 2.7
       env: TOXENV=python2.7
     - python: 3.4
