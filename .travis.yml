@@ -20,7 +20,10 @@ matrix:
     - python: 2.7
       env: TOXENV=docs
 
-install: pip install tox
+install:
+  # detecting invalid commits that missed rebuild-script.
+  - ./bin/rebuild-script.py && git diff-files --quiet || { >&2 echo "Code submitted without running ./bin/rebuild-script.py first."; exit 1; }
+  - pip install tox
 
 script: tox
 
