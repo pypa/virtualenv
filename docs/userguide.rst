@@ -42,7 +42,7 @@ the Command Prompt and Powershell.
 
 On Posix systems, this resides in :file:`/ENV/bin/`, so you can run::
 
-    $ source bin/activate
+    $ source /path/to/ENV/bin/activate
 
 For some shells (e.g. the original Bourne Shell) you may need to use the
 :command:`.` command, when :command:`source` does not exist. There are also
