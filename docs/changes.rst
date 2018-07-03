@@ -10,6 +10,7 @@ Release History
 * upgrade setuptools from ``39.1.0`` to ``40.5.0``
 * upgrade wheel from ``0.31.1`` to ``0.32.2``
 * upgrade pip from ``10.0.1`` to ``18.1``
+* fix failure to copy on platforms that use lib64 :issue:`11189`
 
 16.0.0 (2018-05-16)
 -------------------
