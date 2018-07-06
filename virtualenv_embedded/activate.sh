@@ -11,6 +11,11 @@ deactivate () {
         export PATH
         unset _OLD_VIRTUAL_PATH
     fi
+    if ! [ -z "${_OLD_LD_LIBRARY_PATH+_}" ] ; then
+        LD_LIBRARY_PATH="$_OLD_LD_LIBRARY_PATH"
+        export LD_LIBRARY_PATH
+        unset _OLD_LD_LIBRARY_PATH
+    fi
     if ! [ -z "${_OLD_VIRTUAL_PYTHONHOME+_}" ] ; then
         PYTHONHOME="$_OLD_VIRTUAL_PYTHONHOME"
         export PYTHONHOME
@@ -44,8 +49,11 @@ VIRTUAL_ENV="__VIRTUAL_ENV__"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
-PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
+_OLD_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
+PATH="$VIRTUAL_ENV/bin:$PATH"
+LD_LIBRARY_PATH="$VIRTUAL_ENV/lib:$LD_LIBRARY_PATH"
 export PATH
+export LD_LIBRARY_PATH
 
 # unset PYTHONHOME if set
 if ! [ -z "${PYTHONHOME+_}" ] ; then
