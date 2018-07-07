@@ -49,11 +49,15 @@ VIRTUAL_ENV="__VIRTUAL_ENV__"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
-_OLD_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
 PATH="$VIRTUAL_ENV/bin:$PATH"
-LD_LIBRARY_PATH="$VIRTUAL_ENV/lib:$LD_LIBRARY_PATH"
 export PATH
-export LD_LIBRARY_PATH
+
+# set LD_LIBRARY_PATH only if it was present before
+if ! [ -z "${LD_LIBRARY_PATH+_}" ] ; then
+    _OLD_LD_LIBRARY_PATH="$LD_LIBRARY_PATH"
+    LD_LIBRARY_PATH="$VIRTUAL_ENV/lib:$LD_LIBRARY_PATH"
+    export LD_LIBRARY_PATH
+fi
 
 # unset PYTHONHOME if set
 if ! [ -z "${PYTHONHOME+_}" ] ; then
