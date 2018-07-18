@@ -5,7 +5,7 @@ Contributing
 ------------
 
 Refer to the `pip development`_ documentation - it applies equally to
-virtualenv, except that virtualenv issues should filed on the `virtualenv
+virtualenv, except that virtualenv issues should be filed on the `virtualenv
 repo`_ at GitHub.
 
 Virtualenv's release schedule is tied to pip's -- each time there's a new pip
