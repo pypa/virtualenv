@@ -1262,8 +1262,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             exec_dir = join(sys.exec_prefix, "Lib")
         else:
             exec_dir = join(sys.exec_prefix, "lib", py_version)
-        for fn in os.listdir(exec_dir):
-            copyfile(join(exec_dir, fn), join(lib_dir, fn), symlink)
+        if os.path.isdir(exec_dir):
+            for fn in os.listdir(exec_dir):
+                copyfile(join(exec_dir, fn), join(lib_dir, fn), symlink)
 
     if is_jython:
         # Jython has either jython-dev.jar and javalib/ dir, or just
