@@ -700,7 +700,7 @@ def main():
         make_environment_relocatable(home_dir)
         return
 
-    if majver == 2:
+    if majver == 2 and options.prompt is not None:
         prompt = options.prompt.decode('UTF-8')
     else:
         prompt = options.prompt
