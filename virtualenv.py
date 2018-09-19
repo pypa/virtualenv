@@ -700,10 +700,15 @@ def main():
         make_environment_relocatable(home_dir)
         return
 
+    if majver == 2:
+        prompt = options.prompt.decode('UTF-8')
+    else:
+        prompt = options.prompt
+
     create_environment(home_dir,
                        site_packages=options.system_site_packages,
                        clear=options.clear,
-                       prompt=options.prompt,
+                       prompt=prompt,
                        search_dirs=options.search_dirs,
                        download=options.download,
                        no_setuptools=options.no_setuptools,
