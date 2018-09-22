@@ -895,6 +895,7 @@ def install_wheel(project_names, py_executable, search_dirs=None,
         "PIP_USE_WHEEL": "1",
         "PIP_ONLY_BINARY": ":all:",
         "PIP_USER": "0",
+        "PIP_NO_INPUT": "1"
     }
 
     if not download:
