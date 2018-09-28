@@ -1452,6 +1452,7 @@ def install_activate(home_dir, bin_dir, prompt=None):
             'activate.bat': ACTIVATE_BAT,
             'deactivate.bat': DEACTIVATE_BAT,
             'activate.ps1': ACTIVATE_PS,
+            'activate.xsh': ACTIVATE_XSH,
         }
 
         # MSYS needs paths of the form /c/path/to/file
@@ -1472,6 +1473,9 @@ def install_activate(home_dir, bin_dir, prompt=None):
 
         # same for csh/tcsh support...
         files['activate.csh'] = ACTIVATE_CSH
+
+        # same for xonsh support...
+        files['activate.xsh'] = ACTIVATE_XSH
 
     files['activate_this.py'] = ACTIVATE_THIS
 
@@ -1607,7 +1611,7 @@ def make_environment_relocatable(home_dir):
 
 OK_ABS_SCRIPTS = ['python', 'python%s' % sys.version[:3],
                   'activate', 'activate.bat', 'activate_this.py',
-                  'activate.fish', 'activate.csh']
+                  'activate.fish', 'activate.csh', 'activate.xsh']
 
 def fixup_scripts(home_dir, bin_dir):
     if is_win:
