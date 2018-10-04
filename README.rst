@@ -4,7 +4,7 @@ virtualenv
 A tool for creating isolated 'virtual' python environments.
 
 .. image:: https://img.shields.io/pypi/v/virtualenv.svg
-        :target: https://pypi.python.org/pypi/virtualenv
+        :target: https://pypi.org/project/virtualenv
 
 .. image:: https://img.shields.io/travis/pypa/virtualenv/develop.svg
    :target: http://travis-ci.org/pypa/virtualenv
@@ -13,7 +13,7 @@ A tool for creating isolated 'virtual' python environments.
 * `Documentation <https://virtualenv.pypa.io/>`_
 * `Changelog <https://virtualenv.pypa.io/en/latest/changes.html>`_
 * `Issues <https://github.com/pypa/virtualenv/issues>`_
-* `PyPI <https://pypi.python.org/pypi/virtualenv/>`_
+* `PyPI <https://pypi.org/project/virtualenv/>`_
 * `Github <https://github.com/pypa/virtualenv>`_
 * `User mailing list <http://groups.google.com/group/python-virtualenv>`_
 * `Dev mailing list <http://groups.google.com/group/pypa-dev>`_

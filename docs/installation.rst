@@ -34,7 +34,7 @@ To install version X.X globally from source:
 
 ::
 
- $ curl -O https://pypi.python.org/packages/source/v/virtualenv/virtualenv-X.X.tar.gz
+ $ curl -LO https://pypi.org/packages/source/v/virtualenv/virtualenv-X.X.tar.gz
  $ tar xvfz virtualenv-X.X.tar.gz
  $ cd virtualenv-X.X
  $ [sudo] python setup.py install
@@ -44,7 +44,7 @@ To *use* locally from source:
 
 ::
 
- $ curl -O https://pypi.python.org/packages/source/v/virtualenv/virtualenv-X.X.tar.gz
+ $ curl -LO https://pypi.org/packages/source/v/virtualenv/virtualenv-X.X.tar.gz
  $ tar xvfz virtualenv-X.X.tar.gz
  $ cd virtualenv-X.X
  $ python virtualenv.py myVE

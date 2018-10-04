@@ -4,6 +4,7 @@ Release History
 16.1.0 (unreleased)
 -------------------
 
+* Fixed documentation to use pypi.org and correct curl options; :issue:`1042`
 
 16.0.0 (2018-05-16)
 -------------------
@@ -409,7 +410,7 @@ Release History
 
 * Fixed issue with readline on Windows.
 
-.. _Distribute: https://pypi.python.org/pypi/distribute
+.. _Distribute: https://pypi.org/project/distribute
 
 1.9.1 (2013-03-08)
 ------------------
