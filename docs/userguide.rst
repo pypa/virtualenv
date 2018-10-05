@@ -27,8 +27,8 @@ a number of usual effects (modifiable by many :ref:`options`):
 The python in your new virtualenv is effectively isolated from the python that
 was used to create it.
 
-.. _pip: https://pypi.python.org/pypi/pip
-.. _setuptools: https://pypi.python.org/pypi/setuptools
+.. _pip: https://pypi.org/project/pip
+.. _setuptools: https://pypi.org/project/setuptools
 
 
 .. _activate:

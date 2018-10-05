@@ -111,8 +111,8 @@ Options
    virtualenv. Distribute has now been merged into Setuptools, and the
    latter is always installed.
 
-.. _Distribute: https://pypi.python.org/pypi/distribute
-.. _Setuptools: https://pypi.python.org/pypi/setuptools
+.. _Distribute: https://pypi.org/project/distribute
+.. _Setuptools: https://pypi.org/project/setuptools
 
 
 Configuration
