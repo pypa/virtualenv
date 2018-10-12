@@ -25,7 +25,18 @@ install:
   - ./bin/rebuild-script.py && git diff-files --quiet || { >&2 echo "Code submitted without running ./bin/rebuild-script.py first."; exit 1; }
   - pip install tox
 
-script: tox
+script:
+ - ./bin/rebuild-script.py
+ - tox
+ - ./tests/test_activate.sh
+ - |-
+   function check_status() {
+     if ! git diff-index --quiet --ignore-submodules=all HEAD --; then
+       echo 'Uncommitted changes detected:';
+       git diff-index HEAD --;
+       return 1;
+     fi;
+   }
 
 sudo: false # Use container based builds
 

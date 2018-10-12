@@ -10,7 +10,16 @@ rm -rf ${TESTENV}
 
 echo "$0: Creating virtualenv ${TESTENV}..." 1>&2
 
-${VIRTUALENV} ${TESTENV} | tee ${ROOT}/tests/test_activate_output.actual
+PY_BLEND=$(python -c "import sys; print('pypy' if '__pypy__' in sys.builtin_module_names else 'python');")
+cat >${ROOT}/tests/test_activate_output.expected <<EOL
+New ${PY_BLEND} executable in /tmp/test_virtualenv_activate.venv/bin/python
+Installing setuptools, pip, wheel...done.
+EOL
+
+# "Path not in prefix" warning is not really an error, being expected under pypy
+# > Path not in prefix '/home/travis/virtualenv/pypy2.7-5.8.0/include' '/opt/python/pypy2.7-5.8.0'
+
+${VIRTUALENV} ${TESTENV} 2>&1 | sed '/^++\|^Also creating executable in\|^Using real prefix\|^Path not in prefix/d' | tee ${ROOT}/tests/test_activate_output.actual
 if ! diff ${ROOT}/tests/test_activate_output.expected ${ROOT}/tests/test_activate_output.actual; then
     echo "$0: Failed to get expected output from ${VIRTUALENV}!" 1>&2
     exit 1
@@ -61,10 +70,17 @@ echo "$0: Output of \$(which easy_install) is OK." 1>&2
 echo "$0: Executing a simple Python program..." 1>&2
 
 TESTENV=${TESTENV} python <<__END__
-import os, sys
+import os
+import platform
+import sys
 
-expected_site_packages = os.path.join(os.environ['TESTENV'], 'lib','python%s' % sys.version[:3], 'site-packages')
-site_packages = os.path.join(os.environ['VIRTUAL_ENV'], 'lib', 'python%s' % sys.version[:3], 'site-packages')
+if 'PyPy' == platform.python_implementation():
+  expected_site_packages = os.path.join(os.environ['TESTENV'], 'site-packages')
+  site_packages = os.path.join(os.environ['VIRTUAL_ENV'], 'site-packages')
+
+else:
+  expected_site_packages = os.path.join(os.environ['TESTENV'], 'lib','python%s' % sys.version[:3], 'site-packages')
+  site_packages = os.path.join(os.environ['VIRTUAL_ENV'], 'lib', 'python%s' % sys.version[:3], 'site-packages')
 
 assert site_packages == expected_site_packages, 'site_packages did not have expected value; actual value: %r' % site_packages
 
@@ -93,4 +109,3 @@ echo "$0: Deactivated ${TESTENV}." 1>&2
 echo "$0: OK!" 1>&2
 
 rm -rf ${TESTENV}
-
