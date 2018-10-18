@@ -2027,6 +2027,18 @@ xlW2JBtOGcyYVW7SnB3v6RS91g3gKapZ0oWxbHVteYIIq3iv7QeuSrUj6KSqQ+yqsxDj1ivNQxKF
 YON10Q+NH/ARS95i5Tuqq2Vxfvc23f/FO6zrtXXmJr+ZtMY9/A15ZXFWtmch2rEQ4g1ryVHH
 """)
 
+##file activate.xsh
+ACTIVATE_XSH = convert("""
+eJyFU21rwjAQ/p5fcYuFWtb1Bwh+cExQ0Do2JxsiIbNXLdSkJLFsjP33pdW++LItH0pyz3P3HPdc
+KaWvUugt8LVJcm4Q9FolmYFYKsgTZfY8RZFTSkms5A4+CnJgpEw1JLtMKgMbNExjBlwDO94JiTAG
+FmFVtcvVRns9AvYkMbjZZyTXLiQCeJpwjfoAFSfCtAouj7wVqRKdryAIvgMr06VsNnlgi/HT/GUw
+YY+D+Yj6QKnXVHKKIPTBuWCeiF2B/5d7m49m4Wg2HV6K1tCldA391UBDqsdVYcNwUQ7t0NfpzJwW
+qc6kQooItVH7wgikIKQpp27taNI78IxpDBXx5qoXtHGTWkNIB/ZCo62mFKaYc2Eg5yrh7ylq0rbe
+I7WdTdRd2em0WIS0+7cYZawVYIxaxoVRxYRLw5z2a9lbHQIBj6LuSd3bekW7nn1YkftxyMLBdGgV
+fLArLkx/rvbog8Is5WssXx4hZ9twfQGqmbR2wObZSIn+5nPZ9+lqlIa2N+H8j7A5xd1spXB9cO92
+xfeI/QBgqhsY
+""")
+
 ##file activate.bat
 ACTIVATE_BAT = convert("""
 eJx9Ul9LhEAQfxf8DoOclI/dYyFkaCmcq4gZQTBUrincuZFbff12T133TM+nnd35/Zvxlr7XDFhV
