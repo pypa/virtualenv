@@ -2014,6 +2014,18 @@ kT7AP379lQZLSnFDLtwWihfYxw4nZd+ZR7myfkI2ZTRCuRxmF/bCzkbhcElvYamW9PbDGrvqPKC0
 wYyNuRPSTcd/B48Ppeg=
 """)
 
+##file activate.xsh
+ACTIVATE_XSH = convert("""
+eJyFU21rwjAQ/p5fcYuFWtb1Bwh+cExQ0Do2JxsiIbNXLdSkJLFsjP33pdW++LItH0pyz3P3HPdc
+KaWvUugt8LVJcm4Q9FolmYFYKsgTZfY8RZFTSkms5A4+CnJgpEw1JLtMKgMbNExjBlwDO94JiTAG
+FmFVtcvVRns9AvYkMbjZZyTXLiQCeJpwjfoAFSfCtAouj7wVqRKdryAIvgMr06VsNnlgi/HT/GUw
+YY+D+Yj6QKnXVHKKIPTBuWCeiF2B/5d7m49m4Wg2HV6K1tCldA391UBDqsdVYcNwUQ7t0NfpzJwW
+qc6kQooItVH7wgikIKQpp27taNI78IxpDBXx5qoXtHGTWkNIB/ZCo62mFKaYc2Eg5yrh7ylq0rbe
+I7WdTdRd2em0WIS0+7cYZawVYIxaxoVRxYRLw5z2a9lbHQIBj6LuSd3bekW7nn1YkftxyMLBdGgV
+fLArLkx/rvbog8Is5WssXx4hZ9twfQGqmbR2wObZSIn+5nPZ9+lqlIa2N+H8j7A5xd1spXB9cO92
+xfeI/QBgqhsY
+""")
+
 ##file activate.csh
 ACTIVATE_CSH = convert("""
 eJx1U2FP2zAQ/e5f8TAV3Soo+0zXbYUiDQkKQgVp2ibjJNfFUuIg22nVf885SVFLO3+I7Lt3fr6X
