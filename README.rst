@@ -3,11 +3,23 @@ virtualenv
 
 A tool for creating isolated 'virtual' python environments.
 
-.. image:: https://img.shields.io/pypi/v/virtualenv.svg
-        :target: https://pypi.org/project/virtualenv
-
+.. image:: https://badge.fury.io/py/virtualenv.svg
+  :target: https://badge.fury.io/py/virtualenv
+  :alt: Latest version on PyPi
+.. image:: https://img.shields.io/pypi/pyversions/virtualenv.svg
+  :target: https://pypi.org/project/virtualenv/
+  :alt: Supported Python versions
 .. image:: https://img.shields.io/travis/pypa/virtualenv/develop.svg
    :target: http://travis-ci.org/pypa/virtualenv
+.. image:: https://readthedocs.org/projects/virtualenv/badge/?version=latest&style=flat-square
+  :target: https://virtualenv.readthedocs.io/en/latest/?badge=latest
+  :alt: Documentation status
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+  :target: https://github.com/ambv/black
+  :alt: Code style: black
+.. image:: https://img.shields.io/pypi/v/virtualenv.svg
+   :target: https://pypi.org/project/virtualenv
+
 
 * `Installation <https://virtualenv.pypa.io/en/latest/installation.html>`_
 * `Documentation <https://virtualenv.pypa.io/>`_
