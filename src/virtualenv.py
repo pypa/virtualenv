@@ -26,8 +26,6 @@ import distutils.spawn
 import distutils.sysconfig
 import struct
 import subprocess
-import pkgutil
-import tempfile
 import textwrap
 from distutils.util import strtobool
 from os.path import join

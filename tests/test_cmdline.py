@@ -1,7 +1,9 @@
-import sys
 import subprocess
-import virtualenv
+import sys
+
 import pytest
+
+import virtualenv
 
 VIRTUALENV_SCRIPT = virtualenv.__file__
 

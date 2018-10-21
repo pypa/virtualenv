@@ -1,7 +1,7 @@
 #!__VIRTUAL_ENV__/__BIN_NAME__/python
 
-import sys
 import getopt
+import sys
 import sysconfig
 
 valid_opts = ['prefix', 'exec-prefix', 'includes', 'libs', 'cflags',

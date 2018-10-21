@@ -1,13 +1,13 @@
-import virtualenv
 import optparse
 import os
 import shutil
 import sys
 import tempfile
-import pytest
-import platform  # noqa
 
 from mock import call, Mock, NonCallableMock, patch
+import pytest
+
+import virtualenv
 
 
 def test_version():

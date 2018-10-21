@@ -4,9 +4,9 @@ Helper script to rebuild virtualenv.py from virtualenv_support
 """
 from __future__ import print_function
 
+import codecs
 import os
 import re
-import codecs
 from zlib import crc32 as _crc32
 
 

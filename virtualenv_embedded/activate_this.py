@@ -11,8 +11,8 @@ except NameError:
     raise AssertionError(
         "You must run this like execfile('path/to/activate_this.py', dict(__file__='path/to/activate_this.py'))"
     )
-import sys
 import os
+import sys
 
 old_os_path = os.environ.get("PATH", "")
 os.environ["PATH"] = os.path.dirname(os.path.abspath(__file__)) + os.pathsep + old_os_path

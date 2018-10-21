@@ -1,8 +1,8 @@
+import imp
+import opcode  # opcode is not a virtualenv module, so we can use it to find the stdlib
 import os
 import sys
 import warnings
-import imp
-import opcode  # opcode is not a virtualenv module, so we can use it to find the stdlib
 
 # Important! To work on pypy, this must be a module that resides in the
 # lib-python/modified-x.y.z directory
@@ -29,8 +29,8 @@ try:
 except NameError:
     basestring = str
 
-## patch build_ext (distutils doesn't know how to get the libs directory
-## path on windows - it hardcodes the paths around the patched sys.prefix)
+# patch build_ext (distutils doesn't know how to get the libs directory
+# path on windows - it hardcodes the paths around the patched sys.prefix)
 
 if sys.platform == "win32":
     from distutils.command.build_ext import build_ext as old_build_ext
@@ -49,7 +49,7 @@ if sys.platform == "win32":
 
     build_ext_module.build_ext = build_ext
 
-## distutils.dist patches:
+# distutils.dist patches:
 
 old_find_config_files = dist.Distribution.find_config_files
 
@@ -75,7 +75,7 @@ def find_config_files(self):
 
 dist.Distribution.find_config_files = find_config_files
 
-## distutils.sysconfig patches:
+# distutils.sysconfig patches:
 
 old_get_python_inc = sysconfig.get_python_inc
 
