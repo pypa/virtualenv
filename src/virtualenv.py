@@ -40,7 +40,10 @@ except ImportError:
 __version__ = "16.1.0.dev0"
 virtualenv_version = __version__  # legacy
 
-if sys.version_info < (2, 7):
+MAJOR = sys.version_info[0]
+MINOR = sys.version_info[1]
+
+if MAJOR < 2 and MINOR < 7:
     print("ERROR: %s" % sys.exc_info()[1])
     print("ERROR: this script requires Python 2.7 or greater.")
     sys.exit(101)
@@ -50,7 +53,7 @@ try:
 except NameError:
     basestring = str
 
-py_version = "python%s.%s" % (sys.version_info[0], sys.version_info[1])
+py_version = "python%s.%s" % (MAJOR, MINOR)
 
 is_jython = sys.platform.startswith("java")
 is_pypy = hasattr(sys, "pypy_version_info")
@@ -165,13 +168,12 @@ REQUIRED_MODULES = [
 
 REQUIRED_FILES = ["lib-dynload", "config"]
 
-majver, minver = sys.version_info[:2]
-if majver == 2:
-    if minver >= 6:
+if MAJOR == 2:
+    if MINOR >= 6:
         REQUIRED_MODULES.extend(["warnings", "linecache", "_abcoll", "abc"])
-    if minver >= 7:
+    if MINOR >= 7:
         REQUIRED_MODULES.extend(["_weakrefset"])
-elif majver == 3:
+elif MAJOR == 3:
     # Some extra modules are needed for Python 3, but different ones
     # for different versions.
     REQUIRED_MODULES.extend(
@@ -201,17 +203,17 @@ elif majver == 3:
             "reprlib",
         ]
     )
-    if minver >= 2:
-        REQUIRED_FILES[-1] = "config-%s" % majver
-    if minver >= 3:
+    if MINOR >= 2:
+        REQUIRED_FILES[-1] = "config-%s" % MAJOR
+    if MINOR >= 3:
         import sysconfig
 
         platdir = sysconfig.get_config_var("PLATDIR")
         REQUIRED_FILES.append(platdir)
         REQUIRED_MODULES.extend(["base64", "_dummy_thread", "hashlib", "hmac", "imp", "importlib", "rlcompleter"])
-    if minver >= 4:
+    if MINOR >= 4:
         REQUIRED_MODULES.extend(["operator", "_collections_abc", "_bootlocale"])
-    if minver >= 6:
+    if MINOR >= 6:
         REQUIRED_MODULES.extend(["enum"])
 
 if is_pypy:
@@ -219,7 +221,7 @@ if is_pypy:
     # during the bootstrap
     REQUIRED_MODULES.extend(["traceback", "linecache"])
 
-    if majver == 3:
+    if MAJOR == 3:
         # _functools is needed to import locale during stdio initialization and
         # needs to be copied on PyPy because it's not built in
         REQUIRED_MODULES.append("_functools")
@@ -1324,11 +1326,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
                 py_executable_dlls = [("libpypy-c.dll", "libpypy_d-c.dll")]
             else:
                 py_executable_dlls = [
-                    ("python%s.dll" % (sys.version_info[0]), "python%s_d.dll" % (sys.version_info[0])),
-                    (
-                        "python%s%s.dll" % (sys.version_info[0], sys.version_info[1]),
-                        "python%s%s_d.dll" % (sys.version_info[0], sys.version_info[1]),
-                    ),
+                    ("python%s.dll" % (MAJOR), "python%s_d.dll" % (MAJOR)),
+                    ("python%s%s.dll" % (MAJOR, MINOR), "python%s%s_d.dll" % (MAJOR, MINOR)),
                 ]
 
             for py_executable_dll, py_executable_dll_d in py_executable_dlls:
@@ -1426,8 +1425,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
 
     if not is_win:
         # Ensure that 'python', 'pythonX' and 'pythonX.Y' all exist
-        py_exe_version_major = "python%s" % sys.version_info[0]
-        py_exe_version_major_minor = "python%s.%s" % (sys.version_info[0], sys.version_info[1])
+        py_exe_version_major = "python%s" % MAJOR
+        py_exe_version_major_minor = "python%s.%s" % (MAJOR, MINOR)
         py_exe_no_version = "python"
         required_symlinks = [py_exe_no_version, py_exe_version_major, py_exe_version_major_minor]
 
@@ -2301,7 +2300,7 @@ FAT_MAGIC = 0xcafebabe
 BIG_ENDIAN = ">"
 LITTLE_ENDIAN = "<"
 LC_LOAD_DYLIB = 0xc
-maxint = majver == 3 and getattr(sys, "maxsize") or getattr(sys, "maxint")
+maxint = MAJOR == 3 and getattr(sys, "maxsize") or getattr(sys, "maxint")
 
 
 class fileview(object):
