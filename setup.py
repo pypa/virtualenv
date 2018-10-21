@@ -1,6 +1,5 @@
 import os
 import re
-import shutil
 import sys
 
 if sys.version_info[:2] < (2, 7):
