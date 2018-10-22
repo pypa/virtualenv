@@ -12,6 +12,7 @@ except NameError:
         "You must run this like execfile('path/to/activate_this.py', dict(__file__='path/to/activate_this.py'))"
     )
 import os
+import site
 import sys
 
 old_os_path = os.environ.get("PATH", "")
@@ -22,7 +23,6 @@ if sys.platform == "win32":
 else:
     site_packages = os.path.join(base, "lib", "python%s" % sys.version[:3], "site-packages")
 prev_sys_path = list(sys.path)
-import site
 
 site.addsitedir(site_packages)
 sys.real_prefix = sys.prefix

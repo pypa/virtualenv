@@ -4,8 +4,8 @@ import shutil
 import sys
 import tempfile
 
-from mock import call, Mock, NonCallableMock, patch
 import pytest
+from mock import call, NonCallableMock, patch
 
 import virtualenv
 
@@ -283,7 +283,7 @@ def test_install_python_bin():
         else:
             py_exe_no_version = "python"
             py_exe_version_major = "python%s" % sys.version_info[0]
-            py_exe_version_major_minor = "python%s.%s" % (sys.version_info[0], sys.version_info[1])
+            py_exe_version_major_minor = "python{}.{}".format(sys.version_info[0], sys.version_info[1])
             required_executables = [py_exe_no_version, py_exe_version_major, py_exe_version_major_minor]
 
         for pth in required_executables:

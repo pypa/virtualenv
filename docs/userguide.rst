@@ -255,4 +255,3 @@ As well as the extra directories, the search order includes:
 #. The ``virtualenv_support`` directory relative to virtualenv.py
 #. The directory where virtualenv.py is located.
 #. The current directory.
-

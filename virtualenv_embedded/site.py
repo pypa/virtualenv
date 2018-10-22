@@ -138,7 +138,7 @@ def addbuilddir():
     (especially for Guido :-)"""
     from distutils.util import get_platform
 
-    s = "build/lib.%s-%.3s" % (get_platform(), sys.version)
+    s = "build/lib.{}-{:.3}".format(get_platform(), sys.version)
     if hasattr(sys, "gettotalrefcount"):
         s += "-pydebug"
     s = os.path.join(os.path.dirname(sys.path[-1]), s)
@@ -386,7 +386,7 @@ def setquit():
             self.name = name
 
         def __repr__(self):
-            return "Use %s() or %s to exit" % (self.name, eof)
+            return "Use {}() or {} to exit".format(self.name, eof)
 
         def __call__(self, code=None):
             # Shells like IDLE catch the SystemExit, but listen when their
@@ -730,7 +730,7 @@ def _script():
     if not args:
         print("sys.path = [")
         for dir in sys.path:
-            print("    %r," % (dir,))
+            print("    {!r},".format(dir))
         print("]")
 
         def exists(path):
@@ -739,8 +739,8 @@ def _script():
             else:
                 return "doesn't exist"
 
-        print("USER_BASE: %r (%s)" % (USER_BASE, exists(USER_BASE)))
-        print("USER_SITE: %r (%s)" % (USER_SITE, exists(USER_BASE)))
+        print("USER_BASE: {!r} ({})".format(USER_BASE, exists(USER_BASE)))
+        print("USER_SITE: {!r} ({})".format(USER_SITE, exists(USER_BASE)))
         print("ENABLE_USER_SITE: %r" % ENABLE_USER_SITE)
         sys.exit(0)
 

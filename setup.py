@@ -75,7 +75,7 @@ long_description += "\n\n" + changes
 
 
 def get_version():
-    version_file = read_file("src", virtualenv.py")
+    version_file = read_file("src", "virtualenv.py")
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
         return version_match.group(1)
@@ -116,7 +116,8 @@ setup(
     url="https://virtualenv.pypa.io/",
     license="MIT",
     py_modules=["virtualenv"],
-    packages=["virtualenv_support"],
+    packages=find_packages("src"),
+    package_dir={"": "src"},
     package_data={"virtualenv_support": ["*.whl"]},
     python_requires=">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*",
     **setup_params

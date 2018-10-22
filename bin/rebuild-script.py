@@ -12,7 +12,7 @@ from zlib import crc32 as _crc32
 
 def crc32(data):
     """Python version idempotent"""
-    return _crc32(data) & 0xffffffff
+    return _crc32(data) & 0xFFFFFFFF
 
 
 here = os.path.dirname(__file__)
@@ -21,7 +21,7 @@ script = os.path.join(here, '..', 'src', 'virtualenv.py')
 gzip = codecs.lookup("zlib")
 b64 = codecs.lookup("base64")
 
-file_regex = re.compile(br'##file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+)\s*=\s*convert\("""\n(.*?)"""\)', re.S)
+file_regex = re.compile(br'# file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+)\s*=\s*convert\("""\n(.*?)"""\)', re.S)
 file_template = b'##file %(filename)s\n%(varname)s = convert("""\n%(data)s""")'
 
 
@@ -54,7 +54,7 @@ def rebuild(script_path):
         exit_code = 1
         # Else: content has changed
         crc = crc32(gzip.decode(b64.decode(data)[0])[0])
-        print("  Content changed (crc: %08x -> %08x)" % (crc, new_crc))
+        print("  Content changed (crc: {:08x} -> {:08x})".format(crc, new_crc))
         new_match = file_template % {b"filename": filename, b"varname": varname, b"data": new_data}
         parts += [new_match]
 
