@@ -4,9 +4,8 @@ import sys
 
 if sys.version_info[:2] < (2, 7):
     sys.exit('virtualenv requires Python 2.7 or higher.')
-
 try:
-    from setuptools import setup
+    from setuptools import setup, find_packages
     from setuptools.command.test import test as TestCommand
 
     class PyTest(TestCommand):
@@ -41,7 +40,7 @@ except ImportError:
               'have to use "python -m virtualenv ENV"')
         setup_params = {}
     else:
-        script = 'scripts/virtualenv'
+        script = 'src/scripts/virtualenv'
         setup_params = {'scripts': [script]}
 
 
@@ -50,9 +49,10 @@ def read_file(*paths):
     with open(os.path.join(here, *paths)) as f:
         return f.read()
 
+
 # Get long_description from index.rst:
-long_description = read_file('docs', 'index.rst')
-long_description = long_description.strip().split('split here', 1)[0]
+long_description_full = read_file('docs', 'index.rst')
+long_description = long_description_full.strip().split('split here', 1)[0]
 # Add release history
 changes = read_file('docs', 'changes.rst')
 # Only report last two releases for brevity
@@ -75,7 +75,7 @@ long_description += '\n\n' + changes
 
 
 def get_version():
-    version_file = read_file('virtualenv.py')
+    version_file = read_file(os.path.join('src', 'virtualenv.py'))
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
                               version_file, re.M)
     if version_match:
@@ -116,8 +116,9 @@ setup(
     maintainer_email='python-virtualenv@groups.google.com',
     url='https://virtualenv.pypa.io/',
     license='MIT',
+    package_dir={'': 'src'},
     py_modules=['virtualenv'],
-    packages=['virtualenv_support'],
+    packages=find_packages('src'),
     package_data={'virtualenv_support': ['*.whl']},
     python_requires='>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
     **setup_params)
