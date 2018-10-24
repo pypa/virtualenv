@@ -65,7 +65,7 @@ To undo these changes to your path (and prompt), just run::
 
     $ deactivate
 
-On Windows, the equivalent `activate` script is in the ``Scripts`` folder::
+On Windows, the equivalent ``activate`` script is in the ``Scripts`` folder::
 
     > \path\to\env\Scripts\activate
 

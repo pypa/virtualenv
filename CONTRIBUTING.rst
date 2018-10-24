@@ -10,7 +10,7 @@ Contributor notes
   Use Python 3 print-function syntax, and always ``use sys.exc_info()[1]``
   inside the ``except`` block to get at exception objects.
 
-* Pull requests should be made against `master` branch, which is also our
+* Pull requests should be made against ``master`` branch, which is also our
   latest stable version.
 
 * All changes to files inside virtualenv_embedded should be integrated to

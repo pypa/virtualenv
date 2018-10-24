@@ -15,7 +15,7 @@ distutils_path = os.path.join(os.path.dirname(opcode.__file__), "distutils")
 if os.path.normpath(distutils_path) == os.path.dirname(os.path.normpath(__file__)):
     warnings.warn("The virtualenv distutils package at %s appears to be in the same location as the system distutils?")
 else:
-    __path__.insert(0, distutils_path)
+    __path__.insert(0, distutils_path)  # noqa: F821
     real_distutils = imp.load_module("_virtualenv_distutils", None, distutils_path, ("", "", imp.PKG_DIRECTORY))
     # Copy the relevant attributes
     try:
@@ -57,9 +57,6 @@ old_find_config_files = dist.Distribution.find_config_files
 
 def find_config_files(self):
     found = old_find_config_files(self)
-    system_distutils = os.path.join(distutils_path, "distutils.cfg")
-    # if os.path.exists(system_distutils):
-    #    found.insert(0, system_distutils)
     # What to call the per-user config file
     if os.name == "posix":
         user_filename = ".pydistutils.cfg"

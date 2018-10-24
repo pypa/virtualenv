@@ -17,7 +17,7 @@ Installation
     setuptools < 0.9.7, because easy_install didn't download from PyPI over SSL
     and was broken in some subtle ways.
 
-To install globally with `pip` (if you have pip 1.3 or greater installed globally):
+To install globally with ``pip`` (if you have pip 1.3 or greater installed globally):
 
 ::
 

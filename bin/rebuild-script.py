@@ -16,7 +16,7 @@ def crc32(data):
 
 
 here = os.path.dirname(__file__)
-script = os.path.join(here, '..', 'src', 'virtualenv.py')
+script = os.path.join(here, "..", "src", "virtualenv.py")
 
 gzip = codecs.lookup("zlib")
 b64 = codecs.lookup("base64")

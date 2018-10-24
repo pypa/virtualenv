@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """Create a "virtual" Python installation"""
-import logging
+# fmt: off
 import os  # isort:skip
 import sys  # isort:skip
 
@@ -13,6 +13,7 @@ if os.environ.get("VIRTUALENV_INTERPRETER_RUNNING"):
         if os.path.realpath(os.path.dirname(__file__)) == os.path.realpath(path):
             sys.path.remove(path)
 
+# fmt: on
 
 import base64
 import codecs
@@ -20,6 +21,7 @@ import distutils.spawn
 import distutils.sysconfig
 import errno
 import glob
+import logging
 import optparse
 import os
 import re
@@ -97,8 +99,7 @@ else:
         # particular Python version, the current user one is used
         for key in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
             try:
-                python_core = winreg.CreateKey(key,
-                                               "Software\\Python\\PythonCore")
+                python_core = winreg.CreateKey(key, "Software\\Python\\PythonCore")
             except WindowsError:
                 # No registered Python installations
                 continue
@@ -108,8 +109,7 @@ else:
                     version = winreg.EnumKey(python_core, i)
                     i += 1
                     try:
-                        path = winreg.QueryValue(python_core,
-                                                 "%s\\InstallPath" % version)
+                        path = winreg.QueryValue(python_core, "%s\\InstallPath" % version)
                     except WindowsError:
                         continue
                     exes[version] = join(path, "python.exe")
@@ -123,14 +123,14 @@ else:
         # available or 32-bit if it is not
         updated = {}
         for ver in exes:
-            if ver < '3.5':
+            if ver < "3.5":
                 continue
-            if ver.endswith('-32'):
+            if ver.endswith("-32"):
                 base_ver = ver[:-3]
                 if base_ver not in exes:
                     updated[base_ver] = exes[ver]
             else:
-                updated[ver + '-64'] = exes[ver]
+                updated[ver + "-64"] = exes[ver]
         exes.update(updated)
 
         # Add the major versions
@@ -703,7 +703,7 @@ def main():
 
     if "extend_parser" in globals():
         # noinspection PyUnresolvedReferences
-        extend_parser(parser)
+        extend_parser(parser)  # noqa: F821
 
     options, args = parser.parse_args()
 
@@ -711,7 +711,7 @@ def main():
 
     if "adjust_options" in globals():
         # noinspection PyUnresolvedReferences
-        adjust_options(options, args)
+        adjust_options(options, args)  # noqa: F821
 
     verbosity = options.verbose - options.quiet
     logger = Logger([(Logger.level_for_integer(2 - verbosity), sys.stdout)])
@@ -772,7 +772,7 @@ def main():
         symlink=options.symlink,
     )
     if "after_install" in globals():
-        after_install(options, home_dir)
+        after_install(options, home_dir)  # noqa: F821
 
 
 def call_subprocess(
@@ -1427,7 +1427,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         # noinspection PyBroadException
         try:
             mach_o_change(py_executable, os.path.join(prefix, "Python"), "@executable_path/../.Python")
-        except:
+        except Exception:
             e = sys.exc_info()[1]
             logger.warn("Could not call mach_o_change: {}. " "Trying to call install_name_tool instead.".format(e))
             try:
@@ -1440,7 +1440,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
                         py_executable,
                     ]
                 )
-            except:
+            except BaseException:
                 logger.fatal("Could not call install_name_tool -- you must " "have Apple's development tools installed")
                 raise
 
@@ -1560,7 +1560,7 @@ def install_python_config(home_dir, bin_dir, prompt=None):
     else:
         files = {"python-config": PYTHON_CONFIG}
     install_files(home_dir, bin_dir, prompt, files)
-    for name, content in files.items():
+    for name, _ in files.items():
         make_exe(os.path.join(bin_dir, name))
 
 
@@ -2408,7 +2408,7 @@ def mach_o_change(path, what, value):
         if bits == 64:
             read_data(file, endian)
         # The header is followed by ncmds commands
-        for n in range(ncmds):
+        for _ in range(ncmds):
             where = file.tell()
             # Read command header
             cmd, cmdsize = read_data(file, endian, 2)
@@ -2435,7 +2435,7 @@ def mach_o_change(path, what, value):
         if magic == FAT_MAGIC:
             # Fat binaries contain nfat_arch Mach-O binaries
             nfat_arch = read_data(file, BIG_ENDIAN)
-            for n in range(nfat_arch):
+            for _ in range(nfat_arch):
                 # Read arch header
                 cputype, cpusubtype, offset, size, align = read_data(file, BIG_ENDIAN, 5)
                 do_file(file, offset, size)
