@@ -1846,8 +1846,10 @@ def convert(s):
     b = base64.b64decode(s.encode('ascii'))
     return zlib.decompress(b).decode('utf-8')
 
-##file site.py
-SITE_PY = convert("""
+
+# file site.py
+SITE_PY = convert(
+    """
 eJzFPf1z2zaWv/OvwMqToZTKdOJ0e3tO3RsncVrfuYm3yc7m1vXoKAmyWFMkS5C2tTd3f/u9DwAE
 +CHb2+6cphNLJPDw8PC+8PAeOhqNTopCZkuxyZd1KoWScblYiyKu1kqs8lJU66Rc7hdxWW3h6eIm
 vpZKVLlQWxVhqygInv/GT/BcfF4nyqAA3+K6yjdxlSziNN2KZFPkZSWXYlmXSXYtkiypkjhN/g4t
@@ -1989,10 +1991,12 @@ n6kJTcsp4tG42yeT7nQbtdUFwgVJjwDSUYEAC8F0dKOTILrlLO/xC70bnNd0Ha97whQ6UkHJYj5H
 cA/j+zX4tbtTIfGjujOKpj83aHOgXnIQbvYduNXEC4UMm4T21Bs+GHABuCa7v//LR/TvpjHa7oe7
 /Grb6lVvHSD7spj5iplBLRKZxxEYGdCbY9LWWC5hBB2voWno6DJUMzfkC3T8KJsWL9umDQY5szPt
 AVijEPwfucjncQ==
-""")
+"""
+)
 
-##file activate.sh
-ACTIVATE_SH = convert("""
+# file activate.sh
+ACTIVATE_SH = convert(
+    """
 eJytVd9v2kAMfs9fYQLq2m4MscdNVKMqEkgtVIQxbeuUHolpTgsXdHehpT/+9/mSEBJS2MOaB0ji
 z77P9menDpOAK5jzEGERKw0zhFihD/dcB2CrKJYewoyLFvM0XzGNNpzOZbSAGVPBqVWHdRSDx4SI
 NMhYANfgc4meDteW5ePGC45P4MkCumKhUENzDsu1H3lw1vJx1RJxGMKns6O2lWDqINGgotAHFCsu
@@ -2007,10 +2011,12 @@ YOgOu1c91/2cwYpznPPeDoQpGL2xSm09NKp7BsvQ2hnT3aMs07lUnskpxewvBk73/LLnXo9HV9eT
 ijB3hWBO2ygoiWg/bKuZxqCCQq0DD3vkWIVvI2KosIw+vqW1gIItEG5KJb+xb09g65ktwYKgTc51
 uGJ/EFQs0ayEWLCQM5V9N4g+1+8UbXOJzF8bqhKtIqIwicWvzNFROZJlpfD8A7Vc044R0FxkcezG
 VzsV75usvTdYef+57v5n1b225qhXfwEmxHEs
-""")
+"""
+)
 
-##file activate.fish
-ACTIVATE_FISH = convert("""
+# file activate.fish
+ACTIVATE_FISH = convert(
+    """
 eJyFVVFv2zYQftevuMoOnBS1gr0WGIZ08RADSRw4boBhGGhGOsUcKFIjKbUu9uN7lC2JsrXWDzZM
 fnf38e6+uwlsdsJCLiRCUVkHrwiVxYy+hHqDbQKvQl3z1ImaO0xyYXdbeP9FuJ1QwMFUSnmcP4dL
 2DlXfry+9v/sDqVMUl3AFVi0Vmj1PokmcKtBaecNQTjIhMHUyX0SRXmlKIpWkGEbDuYZzBZfCVcL
@@ -2026,10 +2032,12 @@ Bmo5XuOA0NQ67ir7AXJtQhtLKO7XhC0l39PGOBsHPvzBuHUSjoOnA0ldozGC9gZ5rek3+y3ALHO/
 kT7AP379lQZLSnFDLtwWihfYxw4nZd+ZR7myfkI2ZTRCuRxmF/bCzkbhcElvYamW9PbDGrvqPKC0
 +D/uLi/sFcxGjOHylYagZzzsjjhw206RQwrWIwOxS2dnk+40xOjX8bTPegz/gdWVSXuaowNuOLda
 wYyNuRPSTcd/B48Ppeg=
-""")
+"""
+)
 
-##file activate.csh
-ACTIVATE_CSH = convert("""
+# file activate.csh
+ACTIVATE_CSH = convert(
+    """
 eJx1U2FP2zAQ/e5f8TAV3Soo+0zXbYUiDQkKQgVp2ibjJNfFUuIg22nVf885SVFLO3+I7Lt3fr6X
 d8eY58ZjYQpCWfuAhFB7yrAyIYf0Ve1SQmLsuU6DWepAw9TnEoOFq0rwdjAUx/hV1Ui1tVWAqy1M
 QGYcpaFYx+yVI67LkKwx1UuTEaYGl4X2Bl+zJpAlP/6V2hTDtCq/DYXQhdEeGW040Q/Eb+t9V/e3
@@ -2039,28 +2047,35 @@ kaYB/peoyY7aVHzpJnE9e+6I5Z+ji4GMTNJWNuOQq6MA1N25p8pW9HWdVWlfsNpPDbdxjgpaahuw
 aCA/I+RkBXhFXr5aWV0SxjhUI6jwdAj8kmhPzX7nTfJFkM3MImp2VdVFFq1vLHSU5szYQK4Ri+Jd
 xlW2JBtOGcyYVW7SnB3v6RS91g3gKapZ0oWxbHVteYIIq3iv7QeuSrUj6KSqQ+yqsxDj1ivNQxKF
 YON10Q+NH/ARS95i5Tuqq2Vxfvc23f/FO6zrtXXmJr+ZtMY9/A15ZXFWtmch2rEQ4g1ryVHH
-""")
+"""
+)
 
-##file activate.bat
-ACTIVATE_BAT = convert("""
+
+# file activate.bat
+ACTIVATE_BAT = convert(
+    """
 eJx9Ul9LhEAQfxf8DoOclI/dYyFkaCmcq4gZQTBUrincuZFbff12T133TM+nnd35/Zvxlr7XDFhV
 mUZHOVhFlOWP3g4DUriIWoVomYZpNBWUtGpaWgImO191pFkSpzlcmgaI70jVX7n2Qp8tuByg+46O
 CMHbMq64T+nmlJt082D1T44muCDk2prgEHF4mdI9RaS/QwSt3zSyIAaftRccvqVTBziD1x/WlPD5
 xd729NDBb8Nr4DU9QNMKsJeH9pkhPedhQsIkDuCDCa6A+NF9IevVFAohkqizdHetg/tkWvPoftWJ
 MCqnOxv7/x7Np6yv9P2Ker5dmX8yNyCkkWnbZy3N5LarczlqL8htx2EM9rQ/2H5BvIsIEi8OEG8U
 +g8CsNTr
-""")
+"""
+)
 
-##file deactivate.bat
-DEACTIVATE_BAT = convert("""
+# file deactivate.bat
+DEACTIVATE_BAT = convert(
+    """
 eJyFkN0KgkAUhO8F32EQpHqFQEjQUPAPMaErqVxzId3IrV6/XST/UDx3c86c4WMO5FYysKJQFVVp
 CEfqxsnJ9DI7SA25i20fFqs3HO+GYLsDZ7h8GM3xfLHrg1QNvpSX4CWpQGvokZk4uqrQAjXjyElB
 a5IjCz0r+2dHcehHCe5MZNmB5R7TdqMqECMptHZh6DN/utb7Zs6Cej8OXYE5J04YOKFvD4GkHuJ0
 pilSd1jG6n87tDZ+BUwUOepI6CGSkFMYWf0ihvT33Qj1A+tCkSI=
-""")
+"""
+)
 
-##file activate.ps1
-ACTIVATE_PS = convert("""
+# file activate.ps1
+ACTIVATE_PS = convert(
+    """
 eJylWdmO41hyfW+g/0FTU7C7IXeJIqmtB/3AnZRIStxF2kaBm7gv4ipyMF/mB3+Sf8GXVGVl1tLT
 43ECSqR4b5wbETeWE8z/+a///vNCDaN6cYtSf5G1dbNw/IVXNIu6aCvX9xa3qsgWl0IJ/7IYinbh
 2nkOVqs2X0TNjz/8eeFFle826fBhQRaLBkD9uviw+LCy3Sbq7Mb/UNbrH3+YNtLcVaB+Xbipb+eL
@@ -2148,10 +2163,12 @@ tsd7dVEfJFmc15IYqwHverrpWyS1rFZibDPW1hUUb+85CGUzSBSTK8hpvee/ZxonW51TUXekMy3L
 uy25tMTg4mqbSLQQJ+skiQu2toIfBFYrOWql+EQipgfT15P1aq6FDK3xgSjIGWde0BPftYchDTdM
 i4QdudHFkN0u6fSKiT09QLv2mtSblt5nNzBR6UReePNs+khE4rHcXuoK21igUKHl1c3MXMgPu7y8
 rKQDxR6N/rffXv+lROXet/9Q+l9I4D1U
-""")
+"""
+)
 
-##file distutils-init.py
-DISTUTILS_INIT = convert("""
+# file distutils-init.py
+DISTUTILS_INIT = convert(
+    """
 eJytV1uL4zYUfvevOE0ottuMW9q3gVDa3aUMXXbLMlDKMBiNrSTqOJKRlMxkf33PkXyRbGe7Dw2E
 UXTu37lpxLFV2oIyifAncxmOL0xLIfcG+gv80x9VW6maw7o/CANSWWBwFtqeWMPlGY6qPjV8A0bB
 C4eKSTgZ5LRgFeyErMEeOBhbN+Ipgeizhjtnhkn7DdyjuNLPoCS0l/ayQTG0djwZC08cLXozeMss
@@ -2175,17 +2192,21 @@ kMRBfA1JellfRRKJcyRpxdS4rIl6FdmQCWjo/o9Qz7yKffoP4JHjOvABcRn4CZIT2RH4jnxmfpVG
 qgLaAvQBNfuO6X0/Ux02nb4FKx3vgP+XnkX0QW9pLy/NsXgdN24dD3LxO2Nwil7Zlc1dqtP3d7/h
 kzp1/+7hGBuY4pk0XD/0Ao/oTe/XGrfyM773aB7iUhgkpy+dwAMalxMP0DrBcsVw/6p25+/hobP9
 GBknrWExDhLJ1bwt1NcCNblaFbMKCyvmX0PeRaQ=
-""")
+"""
+)
 
-##file distutils.cfg
-DISTUTILS_CFG = convert("""
+# file distutils.cfg
+DISTUTILS_CFG = convert(
+    """
 eJxNj00KwkAMhfc9xYNuxe4Ft57AjYiUtDO1wXSmNJnK3N5pdSEEAu8nH6lxHVlRhtDHMPATA4uH
 xJ4EFmGbvfJiicSHFRzUSISMY6hq3GLCRLnIvSTnEefN0FIjw5tF0Hkk9Q5dRunBsVoyFi24aaLg
 9FDOlL0FPGluf4QjcInLlxd6f6rqkgPu/5nHLg0cXCscXoozRrP51DRT3j9QNl99AP53T2Q=
-""")
+"""
+)
 
-##file activate_this.py
-ACTIVATE_THIS = convert("""
+# file activate_this.py
+ACTIVATE_THIS = convert(
+    """
 eJyNU01v2zAMvetXEB4K21jnDOstQA4dMGCHbeihlyEIDMWmE62yJEiKE//7kXKdpEWLzYBt8evx
 kRSzLPs6wiEoswM8YdMpjUXcq1Dz6RZa1cSiTkJdr86GsoTRHuCotBayiWqQEYGtMCgfD1KjGYBe
 5a3p0cRKiEe2NtLAFikftnDco0ko/SFEVgEZ8aRCZDIPY9xbA8pE9M4jfW/B2CjiHq9zbJVZuOQq
@@ -2196,10 +2217,12 @@ yZ8jq1Z5Q1UXsyy3gf9nbjTEj7NzQMfCJa/YSmrQ+2D/BqfiOi6sclrGzvoeVivIj8rcfcmnIQRF
 m8eg6WYWqR6SL5OjKMGfSrYt/6kxxQtOpeAgj1LXBNmpE2ElmCSIy5H0zFd8gJ924HWijWhb2hRC
 6wNEm1QdDZtuSZcEprIUBo/XRNcbQe1OUbQ/r3hPTaPJJDNtFLu8KHV5XoNr3Eo6h6YtOKw8e8yw
 VF5PnJ+ts3a9/Mz38RpG/AUSzYUW
-""")
+"""
+)
 
-##file python-config
-PYTHON_CONFIG = convert("""
+# file python-config
+PYTHON_CONFIG = convert(
+    """
 eJyNVV1P2zAUfc+v8ODBiSABxlulTipbO6p1LWqBgVhlhcZpPYUkctzSivHfd6+dpGloGH2Ja/ue
 e+65Hz78xNhtf3x90xmw7vCWsRPGLvpDNuz87MKfdKMWSWxZ4ilNpCLZJiuWc66SVFUOZkkcirll
 rfxIBAzOMtImDzSVPBRrekwoX/OZu/0r4lm0DHiG60g86u8sjPw5rCyy86NRkB8QuuBRSqfAKESn
@@ -2215,7 +2238,8 @@ LTgxRXACpvnQv/PuT0xCCAywY/K4hE6Now2qDwaSE5FB+1agsoUveYDepS83qFcF1NufvULD3fTl
 g6Hgf7WBt6lzMeiyyWVn3P1WVbwaczHmTzE9A5SyItTVgFYyvs/L/fXlaNgbw8v3azT+0eikVlWD
 /vBHbzQumP23uBCjsYdrL9OWARwxs/nuLOzeXbPJTa/Xv6sUmQir5pC1YRLz3eA+CD8Z0XpcW8v9
 MZWF36ryyXXf3yBIz6nzqz8Muyz0m5Qj7OexfYo/Ph3LqvkHUg7AuA==
-""")
+"""
+)
 
 MH_MAGIC = 0xfeedface
 MH_CIGAM = 0xcefaedfe
