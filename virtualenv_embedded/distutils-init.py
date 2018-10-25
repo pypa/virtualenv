@@ -14,7 +14,7 @@ distutils_path = os.path.join(os.path.dirname(opcode.__file__), "distutils")
 if os.path.normpath(distutils_path) == os.path.dirname(os.path.normpath(__file__)):
     warnings.warn("The virtualenv distutils package at %s appears to be in the same location as the system distutils?")
 else:
-    __path__.insert(0, distutils_path)
+    __path__.insert(0, distutils_path)  # noqa: F821
     real_distutils = imp.load_module("_virtualenv_distutils", None, distutils_path, ("", "", imp.PKG_DIRECTORY))
     # Copy the relevant attributes
     try:
@@ -30,8 +30,8 @@ try:
 except NameError:
     basestring = str
 
-## patch build_ext (distutils doesn't know how to get the libs directory
-## path on windows - it hardcodes the paths around the patched sys.prefix)
+# patch build_ext (distutils doesn't know how to get the libs directory
+# path on windows - it hardcodes the paths around the patched sys.prefix)
 
 if sys.platform == "win32":
     from distutils.command.build_ext import build_ext as old_build_ext
@@ -50,17 +50,13 @@ if sys.platform == "win32":
 
     build_ext_module.build_ext = build_ext
 
-## distutils.dist patches:
+# distutils.dist patches:
 
 old_find_config_files = dist.Distribution.find_config_files
 
 
 def find_config_files(self):
     found = old_find_config_files(self)
-    system_distutils = os.path.join(distutils_path, "distutils.cfg")
-    # if os.path.exists(system_distutils):
-    #    found.insert(0, system_distutils)
-    # What to call the per-user config file
     if os.name == "posix":
         user_filename = ".pydistutils.cfg"
     else:
@@ -76,7 +72,7 @@ def find_config_files(self):
 
 dist.Distribution.find_config_files = find_config_files
 
-## distutils.sysconfig patches:
+# distutils.sysconfig patches:
 
 old_get_python_inc = sysconfig.get_python_inc
 

@@ -1,12 +1,11 @@
 import optparse
 import os
-import platform  # noqa
 import shutil
 import sys
 import tempfile
 
 import pytest
-from mock import Mock, NonCallableMock, call, patch
+from mock import NonCallableMock, call, patch
 
 import virtualenv
 
@@ -229,7 +228,10 @@ def test_activate_after_future_statements():
         "from __future__ import with_statement",
         "from __future__ import print_function",
         "",
-        "import os; activate_this=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'activate_this.py'); exec(compile(open(activate_this).read(), activate_this, 'exec'), dict(__file__=activate_this)); del os, activate_this",
+        "import os; "
+        "activate_this=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'activate_this.py'); "
+        "exec(compile(open(activate_this).read(), activate_this, 'exec'), dict(__file__=activate_this)); "
+        "del os, activate_this",
         "",
         'print("Hello, world!")',
     ]
