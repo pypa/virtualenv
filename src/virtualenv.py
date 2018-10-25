@@ -24,13 +24,11 @@ import glob
 import logging
 import optparse
 import os
-import pkgutil
 import re
 import shutil
 import struct
 import subprocess
 import sys
-import tempfile
 import textwrap
 import zlib
 from distutils.util import strtobool
@@ -696,14 +694,14 @@ def main():
     )
 
     if "extend_parser" in globals():
-        extend_parser(parser)
+        extend_parser(parser)  # noqa: F821
 
     options, args = parser.parse_args()
 
     global logger
 
     if "adjust_options" in globals():
-        adjust_options(options, args)
+        adjust_options(options, args)  # noqa: F821
 
     verbosity = options.verbose - options.quiet
     logger = Logger([(Logger.level_for_integer(2 - verbosity), sys.stdout)])
@@ -764,7 +762,7 @@ def main():
         symlink=options.symlink,
     )
     if "after_install" in globals():
-        after_install(options, home_dir)
+        after_install(options, home_dir)  # noqa: F821
 
 
 def call_subprocess(
@@ -1175,8 +1173,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
 
     if clear:
         rmtree(lib_dir)
-        ## FIXME: why not delete it?
-        ## Maybe it should delete everything with #!/path/to/venv/python in it
+        # FIXME: why not delete it?
+        # Maybe it should delete everything with #!/path/to/venv/python in it
         logger.notify("Not deleting %s", bin_dir)
 
     if hasattr(sys, "real_prefix"):
@@ -1304,7 +1302,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             os.unlink(pyd_pth)
 
     if sys.executable != py_executable:
-        ## FIXME: could I just hard link?
+        # FIXME: could I just hard link?
         executable = sys.executable
         shutil.copyfile(executable, py_executable)
         make_exe(py_executable)
@@ -1413,7 +1411,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         # And then change the install_name of the copied python executable
         try:
             mach_o_change(py_executable, os.path.join(prefix, "Python"), "@executable_path/../.Python")
-        except:
+        except Exception:
             e = sys.exc_info()[1]
             logger.warn("Could not call mach_o_change: %s. " "Trying to call install_name_tool instead." % e)
             try:
@@ -1426,7 +1424,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
                         py_executable,
                     ]
                 )
-            except:
+            except Exception:
                 logger.fatal("Could not call install_name_tool -- you must " "have Apple's development tools installed")
                 raise
 
@@ -1493,7 +1491,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     pydistutils = os.path.expanduser("~/.pydistutils.cfg")
     if os.path.exists(pydistutils):
         logger.notify("Please make sure you remove any previous custom paths from " "your %s file." % pydistutils)
-    ## FIXME: really this should be calculated earlier
+    # FIXME: really this should be calculated earlier
 
     fix_local_scheme(home_dir, symlink)
 
@@ -1553,17 +1551,17 @@ def install_python_config(home_dir, bin_dir, prompt=None):
     else:
         files = {"python-config": PYTHON_CONFIG}
     install_files(home_dir, bin_dir, prompt, files)
-    for name, content in files.items():
+    for name, _ in files.items():
         make_exe(os.path.join(bin_dir, name))
 
 
 def install_distutils(home_dir):
     distutils_path = change_prefix(distutils.__path__[0], home_dir)
     mkdir(distutils_path)
-    ## FIXME: maybe this prefix setting should only be put in place if
-    ## there's a local distutils.cfg with a prefix setting?
+    # FIXME: maybe this prefix setting should only be put in place if
+    # there's a local distutils.cfg with a prefix setting?
     home_dir = os.path.abspath(home_dir)
-    ## FIXME: this is breaking things, removing for now:
+    # FIXME: this is breaking things, removing for now:
     # distutils_cfg = DISTUTILS_CFG + "\n[install]\nprefix=%s\n" % home_dir
     writefile(os.path.join(distutils_path, "__init__.py"), DISTUTILS_INIT)
     writefile(os.path.join(distutils_path, "distutils.cfg"), DISTUTILS_CFG, overwrite=False)
@@ -1651,10 +1649,7 @@ def is_executable(exe):
     return os.path.isfile(exe) and os.access(exe, os.X_OK)
 
 
-############################################################
-## Relocating the environment:
-
-
+# Relocating the environment:
 def make_environment_relocatable(home_dir):
     """
     Makes the already-existing environment use relative paths, and takes out
@@ -1669,7 +1664,7 @@ def make_environment_relocatable(home_dir):
         )
     fixup_scripts(home_dir, bin_dir)
     fixup_pth_and_egg_link(home_dir)
-    ## FIXME: need to fix up distutils.cfg
+    # FIXME: need to fix up distutils.cfg
 
 
 OK_ABS_SCRIPTS = [
@@ -1733,7 +1728,12 @@ def fixup_scripts(home_dir, bin_dir):
 
 def relative_script(lines):
     "Return a script that'll work in a relocatable environment."
-    activate = "import os; activate_this=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'activate_this.py'); exec(compile(open(activate_this).read(), activate_this, 'exec'), dict(__file__=activate_this)); del os, activate_this"
+    activate = (
+        "import os; "
+        "activate_this=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'activate_this.py'); "
+        "exec(compile(open(activate_this).read(), activate_this, 'exec'), dict(__file__=activate_this)); "
+        "del os, activate_this"
+    )
     # Find the last future statement in the script. If we insert the activation
     # line before a future statement, Python will raise a SyntaxError.
     activate_at = None
@@ -1843,10 +1843,7 @@ def make_relative_path(source, dest, dest_is_directory=True):
     return os.path.sep.join(full_parts)
 
 
-############################################################
-## Bootstrap script creation:
-
-
+# Bootstrap script creation:
 def create_bootstrap_script(extra_text, python_version=""):
     """
     Creates a bootstrap script, which is like this script but with
@@ -1893,13 +1890,11 @@ def create_bootstrap_script(extra_text, python_version=""):
     with codecs.open(filename, "r", encoding="utf-8") as f:
         content = f.read()
     py_exe = "python%s" % python_version
-    content = ("#!/usr/bin/env %s\n" % py_exe) + "## WARNING: This file is generated\n" + content
+    content = ("#!/usr/bin/env %s\n" % py_exe) + "# WARNING: This file is generated\n" + content
     return content.replace("##EXT" "END##", extra_text)
 
 
-##EXTEND##
-
-
+# EXTEND
 def convert(s):
     b = base64.b64decode(s.encode("ascii"))
     return zlib.decompress(b).decode("utf-8")
@@ -2225,29 +2220,28 @@ rKQDxR6N/rffXv+lROXet/9Q+l9I4D1U
 # file distutils-init.py
 DISTUTILS_INIT = convert(
     """
-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
+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
 """
 )
 
@@ -2390,7 +2384,7 @@ def mach_o_change(path, what, value):
         if bits == 64:
             read_data(file, endian)
         # The header is followed by ncmds commands
-        for n in range(ncmds):
+        for _ in range(ncmds):
             where = file.tell()
             # Read command header
             cmd, cmdsize = read_data(file, endian, 2)
@@ -2417,7 +2411,7 @@ def mach_o_change(path, what, value):
         if magic == FAT_MAGIC:
             # Fat binaries contain nfat_arch Mach-O binaries
             nfat_arch = read_data(file, BIG_ENDIAN)
-            for n in range(nfat_arch):
+            for _ in range(nfat_arch):
                 # Read arch header
                 cputype, cpusubtype, offset, size, align = read_data(file, BIG_ENDIAN, 5)
                 do_file(file, offset, size)
