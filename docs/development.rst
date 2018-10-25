@@ -12,11 +12,11 @@ Virtualenv's release schedule is tied to pip's -- each time there's a new pip
 release, there will be a new virtualenv release that bundles the new version of
 pip.
 
-Files in the `virtualenv_embedded/` subdirectory are embedded into
-`virtualenv.py` itself as base64-encoded strings (in order to support
-single-file use of `virtualenv.py` without installing it). If your patch
-changes any file in `virtualenv_embedded/`, run `bin/rebuild-script.py` to
-update the embedded version of that file in `virtualenv.py`; commit that and
+Files in the ``virtualenv_embedded/`` subdirectory are embedded into
+``virtualenv.py`` itself as base64-encoded strings (in order to support
+single-file use of ``virtualenv.py`` without installing it). If your patch
+changes any file in ``virtualenv_embedded/``, run ``bin/rebuild-script.py`` to
+update the embedded version of that file in ``virtualenv.py``; commit that and
 submit it as part of your patch / pull request.
 
 .. _pip development: https://pip.pypa.io/en/latest/development/
