@@ -16,7 +16,7 @@ def crc32(data):
 
 
 here = os.path.dirname(__file__)
-script = os.path.join(here, '..', 'virtualenv.py')
+script = os.path.join(here, '..', 'src', 'virtualenv.py')
 
 gzip = codecs.lookup('zlib')
 b64 = codecs.lookup('base64')
@@ -28,6 +28,7 @@ file_template = b'##file %(filename)s\n%(varname)s = convert("""\n%(data)s""")'
 
 
 def rebuild(script_path):
+    exit_code = 0
     with open(script_path, 'rb') as f:
         script_content = f.read()
     parts = []
@@ -52,6 +53,7 @@ def rebuild(script_path):
             print('  File up to date (crc: %08x)' % new_crc)
             parts += [match.group(0)]
             continue
+        exit_code = 1
         # Else: content has changed
         crc = crc32(gzip.decode(b64.decode(data)[0])[0])
         print('  Content changed (crc: %08x -> %08x)' %
@@ -75,6 +77,7 @@ def rebuild(script_path):
         print('No changes in content')
     if match is None:
         print('No variables were matched/found')
+    raise SystemExit(exit_code)
 
 if __name__ == '__main__':
     rebuild(script)
