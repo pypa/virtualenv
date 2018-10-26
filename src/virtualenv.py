@@ -1530,6 +1530,9 @@ def install_activate(home_dir, bin_dir, prompt=None):
         # same for csh/tcsh support...
         files["activate.csh"] = ACTIVATE_CSH
 
+        # same for powershell
+        files["activate.ps1"] = ACTIVATE_PS
+
     files["activate_this.py"] = ACTIVATE_THIS
 
     install_files(home_dir, bin_dir, prompt, files)
