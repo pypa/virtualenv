@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 
@@ -9,8 +10,19 @@ VIRTUALENV_SCRIPT = virtualenv.__file__
 
 
 def test_commandline_basic(tmpdir):
-    """Simple command line usage should work"""
-    subprocess.check_call([sys.executable, VIRTUALENV_SCRIPT, str(tmpdir.join("venv"))])
+    """Simple command line usage should work and files should be generated"""
+    venv_dir = str(tmpdir.join("venv"))
+    venv_bin_dir = os.path.join(venv_dir, "bin")
+    subprocess.check_call([sys.executable, VIRTUALENV_SCRIPT, venv_dir])
+
+    assert os.path.exists(venv_dir)
+    assert os.path.exists(venv_bin_dir)
+
+    assert os.path.exists(os.path.join(venv_bin_dir, "activate"))
+    assert os.path.exists(os.path.join(venv_bin_dir, "activate_this.py"))
+    assert os.path.exists(os.path.join(venv_bin_dir, "activate.ps1"))
+
+    assert os.path.exists(os.path.join(venv_bin_dir, os.path.basename(sys.executable)))
 
 
 def test_commandline_explicit_interp(tmpdir):
