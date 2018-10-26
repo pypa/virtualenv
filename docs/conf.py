@@ -14,7 +14,7 @@
 import os
 import sys
 
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
+on_rtd = os.environ.get("READTHEDOCS", None) == "True"
 
 # If your extensions are in another directory, add it here.
 sys.path.insert(0, os.path.abspath(os.pardir))
@@ -24,58 +24,59 @@ sys.path.insert(0, os.path.abspath(os.pardir))
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.extlinks']
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.extlinks"]
 
 # Add any paths that contain templates here, relative to this directory.
-#templates_path = ['_templates']
+# templates_path = ['_templates']
 
 # The suffix of source filenames.
-source_suffix = '.rst'
+source_suffix = ".rst"
 
 # The master toctree document.
-master_doc = 'index'
+master_doc = "index"
 
 # General substitutions.
-project = 'virtualenv'
-copyright = '2007-2014, Ian Bicking, The Open Planning Project, PyPA'
+project = "virtualenv"
+copyright = "2007-2014, Ian Bicking, The Open Planning Project, PyPA"
 
 # The default replacements for |version| and |release|, also used in various
 # other places throughout the built documents.
 try:
     from virtualenv import __version__
+
     # The short X.Y version.
-    version = '.'.join(__version__.split('.')[:2])
+    version = ".".join(__version__.split(".")[:2])
     # The full version, including alpha/beta/rc tags.
     release = __version__
 except ImportError:
-    version = release = 'dev'
+    version = release = "dev"
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
-#today = ''
+# today = ''
 # Else, today_fmt is used as the format for a strftime call.
-today_fmt = '%B %d, %Y'
+today_fmt = "%B %d, %Y"
 
 # List of documents that shouldn't be included in the build.
 unused_docs = []
 
 # If true, '()' will be appended to :func: etc. cross-reference text.
-#add_function_parentheses = True
+# add_function_parentheses = True
 
 # If true, the current module name will be prepended to all description
 # unit titles (such as .. function::).
-#add_module_names = True
+# add_module_names = True
 
 # If true, sectionauthor and moduleauthor directives will be shown in the
 # output. They are ignored by default.
-#show_authors = False
+# show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = "sphinx"
 
 extlinks = {
-    'issue': ('https://github.com/pypa/virtualenv/issues/%s', '#'),
-    'pull': ('https://github.com/pypa/virtualenv/pull/%s', 'PR #'),
+    "issue": ("https://github.com/pypa/virtualenv/issues/%s", "#"),
+    "pull": ("https://github.com/pypa/virtualenv/pull/%s", "PR #"),
 }
 
 
@@ -85,13 +86,14 @@ extlinks = {
 # The style sheet to use for HTML and HTML Help pages. A file of that name
 # must exist either in Sphinx' static/ path, or in one of the custom paths
 # given in html_static_path.
-#html_style = 'default.css'
+# html_style = 'default.css'
 
-html_theme = 'default'
+html_theme = "default"
 if not on_rtd:
     try:
         import sphinx_rtd_theme
-        html_theme = 'sphinx_rtd_theme'
+
+        html_theme = "sphinx_rtd_theme"
         html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
     except ImportError:
         pass
@@ -104,50 +106,50 @@ if not on_rtd:
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
-html_last_updated_fmt = '%b %d, %Y'
+html_last_updated_fmt = "%b %d, %Y"
 
 # If true, SmartyPants will be used to convert quotes and dashes to
 # typographically correct entities.
-#html_use_smartypants = True
+# html_use_smartypants = True
 
 # Content template for the index page.
-#html_index = ''
+# html_index = ''
 
 # Custom sidebar templates, maps document names to template names.
-#html_sidebars = {}
+# html_sidebars = {}
 
 # Additional templates that should be rendered to pages, maps page names to
 # template names.
-#html_additional_pages = {}
+# html_additional_pages = {}
 
 # If false, no module index is generated.
-#html_use_modindex = True
+# html_use_modindex = True
 
 # If true, the reST sources are included in the HTML build as _sources/<name>.
-#html_copy_source = True
+# html_copy_source = True
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'Pastedoc'
+htmlhelp_basename = "Pastedoc"
 
 
 # Options for LaTeX output
 # ------------------------
 
 # The paper size ('letter' or 'a4').
-#latex_paper_size = 'letter'
+# latex_paper_size = 'letter'
 
 # The font size ('10pt', '11pt' or '12pt').
-#latex_font_size = '10pt'
+# latex_font_size = '10pt'
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, document class [howto/manual]).
-#latex_documents = []
+# latex_documents = []
 
 # Additional stuff for the LaTeX preamble.
-#latex_preamble = ''
+# latex_preamble = ''
 
 # Documents to append as an appendix to all manuals.
-#latex_appendices = []
+# latex_appendices = []
 
 # If false, no module index is generated.
-#latex_use_modindex = True
+# latex_use_modindex = True

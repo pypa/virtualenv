@@ -65,7 +65,7 @@ To undo these changes to your path (and prompt), just run::
 
     $ deactivate
 
-On Windows, the equivalent `activate` script is in the ``Scripts`` folder::
+On Windows, the equivalent ``activate`` script is in the ``Scripts`` folder::
 
     > \path\to\env\Scripts\activate
 
@@ -255,4 +255,3 @@ As well as the extra directories, the search order includes:
 #. The ``virtualenv_support`` directory relative to virtualenv.py
 #. The directory where virtualenv.py is located.
 #. The current directory.
-

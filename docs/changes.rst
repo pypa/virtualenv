@@ -75,7 +75,7 @@ Release History
 15.0.0 (2016-03-05)
 -------------------
 
-* Remove the `virtualenv-N.N` script from the package; this can no longer be
+* Remove the ``virtualenv-N.N`` script from the package; this can no longer be
   correctly created from a wheel installation.
   Resolves :issue:`851`, :issue:`692`
 
@@ -124,7 +124,7 @@ Release History
 
 * Upgrade setuptools to 19.6
 
-* Supress any errors from `unset` on different shells (:pull:`843`)
+* Suppress any errors from ``unset`` on different shells (:pull:`843`)
 
 * Normalize letter case for prefix path checking. Fixes :issue:`837`
 
@@ -485,7 +485,7 @@ Release History
 1.8.1 (2012-09-03)
 ------------------
 
-* Fixed distribute version used with `--never-download`. Thanks michr for
+* Fixed distribute version used with ``--never-download``. Thanks michr for
   report and patch.
 
 * Fix creating Python 3.3 based virtualenvs by unsetting the
@@ -498,7 +498,7 @@ Release History
 * **Dropped support for Python 2.4** The minimum supported Python version is
   now Python 2.5.
 
-* Fix `--relocatable` on systems that use lib64. Fixes #78. Thanks Branden
+* Fix ``--relocatable`` on systems that use lib64. Fixes #78. Thanks Branden
   Rolston.
 
 * Symlink some additional modules under Python 3. Fixes #194. Thanks Vinay
@@ -556,7 +556,7 @@ Release History
 1.7.1.2 (2012-02-17)
 --------------------
 
-* Fixed minor issue in `--relocatable`. Thanks, Cap Petschulat.
+* Fixed minor issue in ``--relocatable``. Thanks, Cap Petschulat.
 
 
 1.7.1.1 (2012-02-16)
@@ -572,7 +572,7 @@ Release History
 
 * Update embedded pip to version 1.1.
 
-* Fix `--relocatable` under Python 3. Thanks Doug Hellmann.
+* Fix ``--relocatable`` under Python 3. Thanks Doug Hellmann.
 
 * Added environ PATH modification to activate_this.py. Thanks Doug
   Napoleone. Fixes #14.
@@ -592,8 +592,8 @@ Release History
   Napoleone for testing and confirmation. Fixes #87.
 
 * Fixed creation of virtualenvs using -p in installs where some modules
-  that ought to be in the standard library (e.g. `readline`) are actually
-  installed in `site-packages` next to `virtualenv.py`. Thanks Greg Haskins
+  that ought to be in the standard library (e.g. ``readline``) are actually
+  installed in ``site-packages`` next to ``virtualenv.py``. Thanks Greg Haskins
   for report and fix. Fixes #167.
 
 * Added activation script for Powershell (signed by Jannis Leidel). Many
