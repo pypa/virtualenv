@@ -15,7 +15,7 @@ repos:
     rev: master
     hooks:
     -   id: seed-isort-config
-        args: [--application-directories, "src:tests:virtualenv_embedded"]
+        args: [--application-directories, "src:tests:virtualenv_embedded:docs:bin"]
 -   repo: https://github.com/pre-commit/mirrors-isort
     rev: v4.3.4
     hooks:
