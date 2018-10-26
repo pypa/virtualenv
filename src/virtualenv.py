@@ -1185,6 +1185,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         prefix = sys.base_prefix
     else:
         prefix = sys.prefix
+    prefix = os.path.abspath(prefix)
     mkdir(lib_dir)
     fix_lib64(lib_dir, symlink)
     stdlib_dirs = [os.path.dirname(os.__file__)]
