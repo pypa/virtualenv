@@ -4,12 +4,12 @@ Release History
 
 16.1.0 (unreleased)
 -------------------
-
 * Fixed documentation to use pypi.org and correct curl options; :issue:`1042`
 * bug fix: ensure prefix is absolute when creating a new virtual environment :issue:`1208`
 * upgrade setuptools from ``39.1.0`` to ``40.5.0``
 * upgrade wheel from ``0.31.1`` to ``0.32.2``
 * upgrade pip from ``10.0.1`` to ``18.1``
+* ``activate.csh`` does not use basename and handles newlines :issue:`1200`
 
 16.0.0 (2018-05-16)
 -------------------
