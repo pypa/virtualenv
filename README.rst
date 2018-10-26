@@ -9,8 +9,8 @@ A tool for creating isolated 'virtual' python environments.
 .. image:: https://img.shields.io/pypi/pyversions/virtualenv.svg
   :target: https://pypi.org/project/virtualenv/
   :alt: Supported Python versions
-.. image:: https://dev.azure.com/pypa/virtualenv/_apis/build/status/pypa.virtualenv
-  :target: https://dev.azure.com/pypa/virtualenv/_apis/build/status/pypa.virtualenv?branchName=master
+.. image:: https://dev.azure.com/pypa/virtualenv/_apis/build/status/pypa.virtualenv?branchName=master
+  :target: https://dev.azure.com/pypa/virtualenv/_build/latest?definitionId=11&branchName=master
   :alt: Azure Pipelines build status
 .. image:: https://readthedocs.org/projects/virtualenv/badge/?version=latest&style=flat-square
   :target: https://virtualenv.readthedocs.io/en/latest/?badge=latest

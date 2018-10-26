@@ -119,5 +119,9 @@ setup(
     packages=find_packages("src"),
     package_data={"virtualenv_support": ["*.whl"]},
     python_requires=">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*",
+    extras_require={
+        "testing": ["mock", "pytest >= 3.0.0, <4", "pytest-cov >= 2.5.1, <3", "pytest-timeout >= 1.3.0, <2"],
+        "docs": ["sphinx >= 1.8.0, < 2"],
+    },
     **setup_params
 )
