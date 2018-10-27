@@ -275,7 +275,7 @@ class Logger(object):
             if self.level_matches(level, consumer_level):
                 if self.in_progress_hanging and consumer in (sys.stdout, sys.stderr):
                     self.in_progress_hanging = False
-                    print("\n", end="")
+                    print("")
                     sys.stdout.flush()
                 if rendered is None:
                     if args:
