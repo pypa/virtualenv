@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 """Create a "virtual" Python installation"""
-from __future__ import print_function
 
 # fmt: off
 import os  # isort:skip
@@ -276,7 +275,8 @@ class Logger(object):
             if self.level_matches(level, consumer_level):
                 if self.in_progress_hanging and consumer in (sys.stdout, sys.stderr):
                     self.in_progress_hanging = False
-                    print("", flush=True)
+                    print("\n", end="")
+                    sys.stdout.flush()
                 if rendered is None:
                     if args:
                         rendered = msg % args
@@ -293,7 +293,8 @@ class Logger(object):
             msg, self.in_progress
         )
         if self.level_matches(self.NOTIFY, self._stdout_level()):
-            print(msg, flush=True)
+            print(msg)
+            sys.stdout.flush()
             self.in_progress_hanging = True
         else:
             self.in_progress_hanging = False
@@ -304,9 +305,11 @@ class Logger(object):
         if self.stdout_level_matches(self.NOTIFY):
             if not self.in_progress_hanging:
                 # Some message has been printed out since start_progress
-                print("...{0}{1}".format(self.in_progress, msg), flush=True)
+                print("...%s%s" % (self.in_progress, msg))
+                sys.stdout.flush()
             else:
-                print(msg, flush=True)
+                print(msg)
+                sys.stdout.flush()
         self.in_progress = None
         self.in_progress_hanging = False
 
@@ -314,7 +317,8 @@ class Logger(object):
         """If we are in a progress scope, and no log messages have been
         shown, write out another '.'"""
         if self.in_progress_hanging:
-            print(".", flush=True)
+            print(".")
+            sys.stdout.flush()
 
     def stdout_level_matches(self, level):
         """Returns true if a message at this level will go to stdout"""
