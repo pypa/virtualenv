@@ -304,7 +304,7 @@ class Logger(object):
         if self.stdout_level_matches(self.NOTIFY):
             if not self.in_progress_hanging:
                 # Some message has been printed out since start_progress
-                print("..." + self.in_progress + msg, flush=True)
+                print("...{0}{1}".format(self.in_progress, msg), flush=True)
             else:
                 print(msg, flush=True)
         self.in_progress = None
