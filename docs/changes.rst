@@ -7,16 +7,16 @@ Release History
 
 * Fixed documentation to use pypi.org and correct curl options; :issue:`1042`
 * bug fix: ensure prefix is absolute when creating a new virtual environment :issue:`1208`
+* upgrade setuptools from ``39.1.0`` to ``40.5.0``
+* upgrade wheel from ``0.31.1`` to ``0.32.2``
+* upgrade pip from ``10.0.1`` to ``18.1``
 
 16.0.0 (2018-05-16)
 -------------------
 
 * Drop support for Python 2.6.
-
 * Upgrade pip to 10.0.1.
-
 * Upgrade setuptools to 39.1.0.
-
 * Upgrade wheel to 0.31.1.
 
 
