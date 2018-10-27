@@ -1,6 +1,7 @@
 import optparse
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 
@@ -304,3 +305,25 @@ def test_always_copy_option():
                 )
     finally:
         shutil.rmtree(tmp_virtualenv)
+
+
+def test_activate_with_powershell(tmpdir, monkeypatch):
+    monkeypatch.chdir(tmpdir)
+    ve_path = tmpdir.join("venv")
+    virtualenv.create_environment(str(ve_path), no_pip=True, no_setuptools=True, no_wheel=True)
+    monkeypatch.chdir(ve_path)
+    activate_script = ve_path.join("bin", "activate.ps1")
+    output = subprocess.check_output(
+        [
+            "pwsh",
+            "-c",
+            "python -c 'import sys; print(sys.executable)'; "
+            "{}; python -c 'import sys; print(sys.executable)'; ".format(activate_script),
+            "deactivate; python -c 'import sys; print(sys.executable)'",
+        ],
+        universal_newlines=True,
+    )
+
+    before_activate, after_activate, after_deactivate = output.split()
+    assert after_activate == str(ve_path.join("bin", "python"))
+    assert before_activate == after_deactivate
