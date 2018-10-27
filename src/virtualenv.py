@@ -14,6 +14,7 @@ if os.environ.get("VIRTUALENV_INTERPRETER_RUNNING"):
         if os.path.realpath(os.path.dirname(__file__)) == os.path.realpath(path):
             sys.path.remove(path)
 # fmt: on
+from __future__ import print_function
 
 import base64
 import codecs
@@ -275,7 +276,7 @@ class Logger(object):
             if self.level_matches(level, consumer_level):
                 if self.in_progress_hanging and consumer in (sys.stdout, sys.stderr):
                     self.in_progress_hanging = False
-                    print("\n", flush=True)
+                    print("", flush=True)
                 if rendered is None:
                     if args:
                         rendered = msg % args
