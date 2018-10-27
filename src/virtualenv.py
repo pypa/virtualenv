@@ -275,8 +275,7 @@ class Logger(object):
             if self.level_matches(level, consumer_level):
                 if self.in_progress_hanging and consumer in (sys.stdout, sys.stderr):
                     self.in_progress_hanging = False
-                    sys.stdout.write("\n")
-                    sys.stdout.flush()
+                    print("\n", flush=True)
                 if rendered is None:
                     if args:
                         rendered = msg % args
@@ -293,8 +292,7 @@ class Logger(object):
             msg, self.in_progress
         )
         if self.level_matches(self.NOTIFY, self._stdout_level()):
-            sys.stdout.write(msg)
-            sys.stdout.flush()
+            print(msg, flush=True)
             self.in_progress_hanging = True
         else:
             self.in_progress_hanging = False
@@ -305,11 +303,9 @@ class Logger(object):
         if self.stdout_level_matches(self.NOTIFY):
             if not self.in_progress_hanging:
                 # Some message has been printed out since start_progress
-                sys.stdout.write("..." + self.in_progress + msg + "\n")
-                sys.stdout.flush()
+                print("..." + self.in_progress + msg, flush=True)
             else:
-                sys.stdout.write(msg + "\n")
-                sys.stdout.flush()
+                print(msg, flush=True)
         self.in_progress = None
         self.in_progress_hanging = False
 
@@ -317,8 +313,7 @@ class Logger(object):
         """If we are in a progress scope, and no log messages have been
         shown, write out another '.'"""
         if self.in_progress_hanging:
-            sys.stdout.write(".")
-            sys.stdout.flush()
+            print(".", flush=True)
 
     def stdout_level_matches(self, level):
         """Returns true if a message at this level will go to stdout"""
