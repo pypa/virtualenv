@@ -1023,7 +1023,7 @@ def is_executable_file(fpath):
     return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
 
 
-def path_locations(home_dir):
+def path_locations(home_dir, dry_run=False):
     """Return the path locations for the environment (where libraries are,
     where scripts go, etc)"""
     home_dir = os.path.abspath(home_dir)
@@ -1033,7 +1033,8 @@ def path_locations(home_dir):
         # Windows has lots of problems with executables with spaces in
         # the name; this function will remove them (using the ~1
         # format):
-        mkdir(home_dir)
+        if not dry_run:
+            mkdir(home_dir)
         if " " in home_dir:
             import ctypes
 
