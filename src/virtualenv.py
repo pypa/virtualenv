@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Create a "virtual" Python installation"""
+from __future__ import print_function
 
 # fmt: off
 import os  # isort:skip
@@ -14,7 +15,6 @@ if os.environ.get("VIRTUALENV_INTERPRETER_RUNNING"):
         if os.path.realpath(os.path.dirname(__file__)) == os.path.realpath(path):
             sys.path.remove(path)
 # fmt: on
-from __future__ import print_function
 
 import base64
 import codecs
