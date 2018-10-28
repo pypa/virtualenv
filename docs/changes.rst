@@ -1,6 +1,8 @@
 Release History
 ===============
 
+.. towncrier release notes start
+
 16.2.0 (201Y-MM-DD)
 -------------------
 * The xonsh shell is now supported :pull:`1206`
