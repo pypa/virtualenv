@@ -313,9 +313,10 @@ def test_activate_with_powershell(tmpdir, monkeypatch):
     virtualenv.create_environment(str(ve_path), no_pip=True, no_setuptools=True, no_wheel=True)
     monkeypatch.chdir(ve_path)
     activate_script = ve_path.join("bin", "activate.ps1")
+    executable = "powershell.exe" if sys.platform == "win32" else "pwsh"
     output = subprocess.check_output(
         [
-            "pwsh",
+            executable,
             "-c",
             "python -c 'import sys; print(sys.executable)'; "
             "{}; python -c 'import sys; print(sys.executable)'; ".format(activate_script),
