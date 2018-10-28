@@ -894,7 +894,7 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
         search_dirs = file_search_dirs()
 
     wheels = find_wheels(["setuptools", "pip"], search_dirs)
-    pythonpath = os.pathsep.join(wheels)
+    python_path = os.pathsep.join(wheels)
 
     # PIP_FIND_LINKS uses space as the path separator and thus cannot have paths
     # with spaces in them. Convert any of those to local file:// URL form.
@@ -911,7 +911,6 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
         return urljoin("file:", pathname2url(os.path.abspath(p)))
 
     findlinks = " ".join(space_path2url(d) for d in search_dirs)
-
     SCRIPT = textwrap.dedent(
         """
         import sys
@@ -936,14 +935,16 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
         try:
             args = ["install", "--ignore-installed"]
             if cert_file is not None:
-                args += ["--cert", cert_file.name]
+                args += ["--cert", cert_file.name{}]
             args += sys.argv[1:]
 
             sys.exit(_main(args))
         finally:
             if cert_file is not None:
                 os.remove(cert_file.name)
-    """
+    """.format(
+            ", '--no-cache'" if is_jython else ""
+        )
     ).encode("utf8")
 
     cmd = [py_executable, "-"] + project_names
@@ -951,8 +952,8 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
     logger.indent += 2
 
     env = {
-        "PYTHONPATH": pythonpath,
-        "JYTHONPATH": pythonpath,  # for Jython < 3.x
+        "PYTHONPATH": python_path,
+        "JYTHONPATH": python_path,  # for Jython < 3.x
         "PIP_FIND_LINKS": findlinks,
         "PIP_USE_WHEEL": "1",
         "PIP_ONLY_BINARY": ":all:",
