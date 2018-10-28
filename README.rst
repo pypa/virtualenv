@@ -27,8 +27,8 @@ A tool for creating isolated 'virtual' python environments.
 * `Github <https://github.com/pypa/virtualenv>`_
 * `User mailing list <http://groups.google.com/group/python-virtualenv>`_
 * `Dev mailing list <http://groups.google.com/group/pypa-dev>`_
-* User IRC: `#pypa on Freenode https://webchat.freenode.net/?channels=%23pypa`
-* Dev IRC: `#pypa-dev on Freenode https://webchat.freenode.net/?channels=%23pypa-dev`
+* `User IRC:`_ #pypa on Freenode 
+* `Dev IRC:`_ #pypa-dev on Freenode 
 
 
 Code of Conduct
@@ -39,3 +39,5 @@ chat rooms, and mailing lists is expected to follow the
 `PyPA Code of Conduct`_.
 
 .. _PyPA Code of Conduct: https://www.pypa.io/en/latest/code-of-conduct/
+.. _User IRC: https://webchat.freenode.net/?channels=%23pypa
+.. _Dev IRC: https://webchat.freenode.net/?channels=%23pypa-dev
