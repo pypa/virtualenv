@@ -14,18 +14,25 @@ jobs:
       vmImage: "Ubuntu 16.04"
 
   variables:
-    ${{ if in(parameters.python, 'pypy', 'pypy3') }}:
+    ${{ if in(parameters.python, 'pypy', 'pypy3', 'jython') }}:
       python: ${{ parameters.python }}
-    ${{ if notIn(parameters.python, 'pypy', 'pypy3') }}:
+    ${{ if notIn(parameters.python, 'pypy', 'pypy3', 'jython') }}:
       python: "python"
 
   steps:
   # ensure the required Python versions are available
-  - ${{ if notIn(parameters.python, 'pypy', 'pypy3') }}:
+  - ${{ if notIn(parameters.python, 'pypy', 'pypy3', 'jython') }}:
     - task: UsePythonVersion@0
       displayName: setup python
       inputs:
         versionSpec: ${{ parameters.python }}
+
+  - ${{ if eq(parameters.python, 'jython') }}:
+    - script: "wget http://search.maven.org/remotecontent?filepath=org/python/jython-standalone/2.7.1/jython-standalone-2.7.1.jar"
+      displayName: download jython
+
+    - script: "java -jar ~/Downloads/jython-installer-2.7.1.jar -sd $(Agent.ToolsDirectory) -e demo src doc"
+      displayName: install jython
 
   - script: "$(python) -c \"import sys; print(sys.version); print(sys.executable)\""
     displayName: show python information
