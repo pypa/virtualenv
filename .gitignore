@@ -10,6 +10,7 @@ docs/_build
 
 # python
 *.py[cod]
+*$py.class
 
 # tools
 .tox
