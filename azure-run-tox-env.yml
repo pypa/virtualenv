@@ -21,29 +21,46 @@ jobs:
 
   steps:
   # ensure the required Python versions are available
-  - ${{ if notIn(parameters.python, 'pypy', 'pypy3') }}:
+  - ${{ if notIn(parameters.python, 'pypy', 'pypy3', 'jython') }}:
     - task: UsePythonVersion@0
       displayName: setup python
       inputs:
         versionSpec: ${{ parameters.python }}
 
+  - ${{ if eq(parameters.tox, 'jython') }}:
+    - script: "wget http://search.maven.org/remotecontent?filepath=org/python/jython-installer/2.7.1/jython-installer-2.7.1.jar -O $(Agent.ToolsDirectory)/jython.jar"
+      displayName: download jython
+
+    - script: "java -jar $(Agent.ToolsDirectory)/jython.jar -sd $(Agent.ToolsDirectory)/jython -e demo src doc"
+      displayName: install jython
+
+    - script: echo "##vso[task.setvariable variable=PATH]$(Agent.ToolsDirectory)/jython/bin:$(PATH)"
+      displayName: setvarStep
+
+    - script: echo $(PATH)
+      displayName: show PATH
+
   - script: "$(python) -c \"import sys; print(sys.version); print(sys.executable)\""
     displayName: show python information
 
-  - script: "python -m pip install -U pip setuptools --user -v"
-    displayName: upgrade pip and setuptools
+  - script: "python -m pip install -U pip setuptools --user"
+    displayName: install pip
 
-  - script: "python -m pip install -U tox --pre --user -v"
+  - script: "python -m pip install -U tox --user -v"
     displayName: install tox
 
-  - script: ${{ format('python -m tox -e {0} --notest', parameters.tox) }}
+  - ${{ if eq(parameters.tox, 'jython') }}:
+      - script: "python -m pip install --user $(System.DefaultWorkingDirectory)"
+        displayName: install dev venv for tox
+
+  - script: ${{ format('python -m tox -e {0} --notest --skip-missing-interpreters=false', parameters.tox) }}
     displayName: install test dependencies
 
   - ${{ if startsWith(parameters.tox, 'py') }}:
-    - script: python -m tox -e coverage --notest
+    - script: python -m tox -e coverage --notest --skip-missing-interpreters=false
       displayName: install coverage dependencies
 
-  - script: ${{ format('python -m tox -e {0}', parameters.tox) }}
+  - script: ${{ format('python -m tox --skip-missing-interpreters=false -e {0}', parameters.tox) }}
     displayName: run tests
 
   - ${{ if and( startsWith(parameters.tox, 'py'), eq(variables['system.pullrequest.isfork'], false) ) }}:
@@ -56,7 +73,7 @@ jobs:
         testRunTitle: ${{ format('{0}_{1}', parameters.os, parameters.tox) }}
 
   - ${{ if startsWith(parameters.tox, 'py') }}:
-    - script: "python -m tox -e coverage"
+    - script: "python -m tox --skip-missing-interpreters=false -e coverage"
       displayName: create coverag report
       condition: succeededOrFailed()
 
