@@ -56,14 +56,14 @@ jobs:
   - script: ${{ format('python -m tox -e {0} --notest --skip-missing-interpreters=false', parameters.tox) }}
     displayName: install test dependencies
 
-  - ${{ if startsWith(parameters.tox, 'py') }}:
+  - ${{ if or( startsWith(parameters.tox, 'py'), eq(parameters.tox, 'jython') ) }}:
     - script: python -m tox -e coverage --notest --skip-missing-interpreters=false
       displayName: install coverage dependencies
 
   - script: ${{ format('python -m tox --skip-missing-interpreters=false -e {0}', parameters.tox) }}
     displayName: run tests
 
-  - ${{ if and( startsWith(parameters.tox, 'py'), eq(variables['system.pullrequest.isfork'], false) ) }}:
+  - ${{ if and( or( startsWith(parameters.tox, 'py'), eq(parameters.tox, 'jython') ),  eq(variables['system.pullrequest.isfork'], false) ) }}:
     - task: PublishTestResults@2
       displayName: publish test results via junit
       condition: succeededOrFailed()
@@ -72,12 +72,12 @@ jobs:
         testResultsFiles: ${{ format('$(System.DefaultWorkingDirectory)/.tox/.test.{0}.xml', parameters.tox) }}
         testRunTitle: ${{ format('{0}_{1}', parameters.os, parameters.tox) }}
 
-  - ${{ if startsWith(parameters.tox, 'py') }}:
+  - ${{ if or( startsWith(parameters.tox, 'py'), eq(parameters.tox, 'jython') ) }}:
     - script: "python -m tox --skip-missing-interpreters=false -e coverage"
       displayName: create coverag report
       condition: succeededOrFailed()
 
-  - ${{ if and( startsWith(parameters.tox, 'py'), eq(variables['system.pullrequest.isfork'], false) ) }}:
+  - ${{ if and( or( startsWith(parameters.tox, 'py'), eq(parameters.tox, 'jython') ), eq(variables['system.pullrequest.isfork'], false) ) }}:
     - task: CopyFiles@2
       displayName: move coverage files into staging area
       condition: succeededOrFailed()

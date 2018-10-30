@@ -24,6 +24,12 @@ jobs:
   parameters: {tox: jython, python: 3.7, os: linux}
 
 - template: azure-run-tox-env.yml
+  parameters: {tox: cross_python2, python: 3.7, os: linux}
+
+- template: azure-run-tox-env.yml
+  parameters: {tox: cross_python3, python: 3.7, os: linux}
+
+- template: azure-run-tox-env.yml
   parameters: {tox: fix_lint, python: 3.7}
 - template: azure-run-tox-env.yml
   parameters: {tox: embed, python: 3.7}
