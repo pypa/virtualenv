@@ -23,7 +23,7 @@ To install globally with ``pip`` (if you have pip 1.3 or greater installed globa
 
  $ [sudo] pip install virtualenv
 
-To install locally (to ~/bin and ~/lib) with `pip` (if you have pip 1.3 or greater installed globally):
+To install locally (to ~/bin and ~/lib) with ``pip`` (if you have pip 1.3 or greater installed globally):
 
 ::
 
