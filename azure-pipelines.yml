@@ -21,15 +21,6 @@ trigger:
 
 jobs:
 - template: azure-run-tox-env.yml
-  parameters: {tox: jython, python: 3.7, os: linux}
-
-- template: azure-run-tox-env.yml
-  parameters: {tox: cross_python2, python: 3.7, os: linux}
-
-- template: azure-run-tox-env.yml
-  parameters: {tox: cross_python3, python: 3.7, os: linux}
-
-- template: azure-run-tox-env.yml
   parameters: {tox: fix_lint, python: 3.7}
 - template: azure-run-tox-env.yml
   parameters: {tox: embed, python: 3.7}
@@ -38,6 +29,8 @@ jobs:
 - template: azure-run-tox-env.yml
   parameters: {tox: package_readme, python: 3.7}
 
+- template: azure-run-tox-env.yml
+  parameters: {tox: jython, python: 3.7, os: linux}
 - template: azure-run-tox-env.yml
   parameters: {tox: pypy, python: pypy, os: linux}
 - template: azure-run-tox-env.yml
@@ -69,6 +62,11 @@ jobs:
   parameters: {tox: py36, python: 3.6, os: macOs}
 - template: azure-run-tox-env.yml
   parameters: {tox: py27, python: 2.7, os: macOs}
+
+- template: azure-run-tox-env.yml
+  parameters: {tox: cross_python2, python: 3.7, os: linux}
+- template: azure-run-tox-env.yml
+  parameters: {tox: cross_python3, python: 3.7, os: linux}
 
 - job: report_coverage
   pool: {vmImage: 'Ubuntu 16.04'}
