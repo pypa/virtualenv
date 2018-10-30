@@ -30,23 +30,19 @@ Or to get the latest unreleased dev version:
  $ [sudo] pip install https://github.com/pypa/virtualenv/tarball/master
 
 
-To install version X.X globally from source:
+To install version ``X.X.X`` globally from source:
 
 ::
 
- $ curl -LO https://pypi.org/packages/source/v/virtualenv/virtualenv-X.X.tar.gz
- $ tar xvfz virtualenv-X.X.tar.gz
- $ cd virtualenv-X.X
- $ [sudo] python setup.py install
-
+ $ [sudo] pip install https://github.com/pypa/virtualenv/tarball/X.X.X
 
 To *use* locally from source:
 
 ::
 
- $ curl -LO https://pypi.org/packages/source/v/virtualenv/virtualenv-X.X.tar.gz
- $ tar xvfz virtualenv-X.X.tar.gz
- $ cd virtualenv-X.X
+ $ curl --location --output virtualenv-X.X.X.tar.gz https://github.com/pypa/virtualenv/tarball/X.X.X
+ $ tar xvfz virtualenv-X.X.X.tar.gz
+ $ cd pypa-virtualenv-YYYYYY
  $ python virtualenv.py myVE
 
 .. note::
