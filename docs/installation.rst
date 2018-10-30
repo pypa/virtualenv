@@ -31,7 +31,7 @@ To install locally (to ~/bin and ~/lib) with `pip` (if you have pip 1.3 or great
  $ pip install --user virtualenv
 
 Note: This assumes you have $HOME/bin in your $PATH for later usage of virtualenv.
- 
+
 Or to get the latest unreleased dev version:
 
 ::
