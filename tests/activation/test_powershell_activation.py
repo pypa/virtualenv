@@ -1,6 +1,6 @@
-import os
 import subprocess
-from os.path import join, normcase, normpath
+import sys
+from os.path import join, normcase
 
 import pytest
 
@@ -33,5 +33,17 @@ def test_activate_with_powershell(tmpdir, monkeypatch):
     assert len(content) == 3, output
     before_activate, after_activate, after_deactivate = content
     exe = "python.exe" if virtualenv.is_win else "python"
-    assert normcase(normpath(after_activate)) == normcase(normpath(join(bin_dir, exe)))
+    assert normcase(long_path(after_activate)) == normcase(long_path(join(bin_dir, exe)))
     assert before_activate == after_deactivate
+
+
+def long_path(short_path_name):
+    # python 2 may return Windows short paths, normalize
+    if virtualenv.is_win and sys.version_info < (3,):
+        from ctypes import create_unicode_buffer, windll
+
+        buffer_cont = create_unicode_buffer(256)
+        get_long_path_name = windll.kernel32.GetLongPathNameW
+        get_long_path_name(unicode(short_path_name), buffer_cont, 256)  # noqa: F821
+        return buffer_cont.value
+    return short_path_name
