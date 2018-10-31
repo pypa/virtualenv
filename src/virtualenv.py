@@ -1113,9 +1113,11 @@ def change_prefix(filename, dst_prefix):
 
 def copy_required_modules(dst_prefix, symlink):
     import warnings
+
     with warnings.catch_warnings():
         # Ignore deprecation of the imp module
-        warnings.simplefilter('ignore')
+        # TODO: do not use deprecated imp module
+        warnings.simplefilter("ignore")
         import imp
 
     for modname in REQUIRED_MODULES:
