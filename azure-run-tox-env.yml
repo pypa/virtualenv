@@ -1,0 +1,96 @@
+parameters:
+  tox: ""
+  python: ""
+  os: "linux"
+
+jobs:
+- job: ${{ format('{0}_{1}', parameters.os, parameters.tox) }}
+  pool:
+    ${{ if eq(parameters.os, 'windows') }}:
+      vmImage: "vs2017-win2016"
+    ${{ if eq(parameters.os, 'macOs') }}:
+      vmImage: "macOS 10.13"
+    ${{ if eq(parameters.os, 'linux') }}:
+      vmImage: "Ubuntu 16.04"
+
+  variables:
+    ${{ if in(parameters.python, 'pypy', 'pypy3') }}:
+      python: ${{ parameters.python }}
+    ${{ if notIn(parameters.python, 'pypy', 'pypy3') }}:
+      python: "python"
+
+  steps:
+  # ensure the required Python versions are available
+  - ${{ if notIn(parameters.python, 'pypy', 'pypy3', 'jython') }}:
+    - task: UsePythonVersion@0
+      displayName: setup python
+      inputs:
+        versionSpec: ${{ parameters.python }}
+
+  - ${{ if eq(parameters.tox, 'jython') }}:
+    - script: "wget http://search.maven.org/remotecontent?filepath=org/python/jython-installer/2.7.1/jython-installer-2.7.1.jar -O $(Agent.ToolsDirectory)/jython.jar"
+      displayName: download jython
+
+    - script: "java -jar $(Agent.ToolsDirectory)/jython.jar -sd $(Agent.ToolsDirectory)/jython -e demo src doc"
+      displayName: install jython
+
+    - script: echo "##vso[task.setvariable variable=PATH]$(Agent.ToolsDirectory)/jython/bin:$(PATH)"
+      displayName: setvarStep
+
+    - script: echo $(PATH)
+      displayName: show PATH
+
+  - script: "$(python) -c \"import sys; print(sys.version); print(sys.executable)\""
+    displayName: show python information
+
+  - script: "python -m pip install -U pip setuptools --user"
+    displayName: install pip
+
+  - script: "python -m pip install -U tox --user -v"
+    displayName: install tox
+
+  - ${{ if eq(parameters.tox, 'jython') }}:
+      - script: "python -m pip install --user $(System.DefaultWorkingDirectory)"
+        displayName: install dev venv for tox
+
+  - script: ${{ format('python -m tox -e {0} --notest --skip-missing-interpreters=false', parameters.tox) }}
+    displayName: install test dependencies
+
+  - ${{ if or( startsWith(parameters.tox, 'py'), eq(parameters.tox, 'jython') ) }}:
+    - script: python -m tox -e coverage --notest --skip-missing-interpreters=false
+      displayName: install coverage dependencies
+
+  - script: ${{ format('python -m tox --skip-missing-interpreters=false -e {0}', parameters.tox) }}
+    displayName: run tests
+
+  - ${{ if and( or( startsWith(parameters.tox, 'py'), eq(parameters.tox, 'jython') ),  eq(variables['system.pullrequest.isfork'], false) ) }}:
+    - task: PublishTestResults@2
+      displayName: publish test results via junit
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFormat: "JUnit"
+        testResultsFiles: ${{ format('$(System.DefaultWorkingDirectory)/.tox/.test.{0}.xml', parameters.tox) }}
+        testRunTitle: ${{ format('{0}_{1}', parameters.os, parameters.tox) }}
+
+  - ${{ if or( startsWith(parameters.tox, 'py'), eq(parameters.tox, 'jython') ) }}:
+    - script: "python -m tox --skip-missing-interpreters=false -e coverage"
+      displayName: create coverag report
+      condition: succeededOrFailed()
+
+  - ${{ if and( or( startsWith(parameters.tox, 'py'), eq(parameters.tox, 'jython') ), eq(variables['system.pullrequest.isfork'], false) ) }}:
+    - task: CopyFiles@2
+      displayName: move coverage files into staging area
+      condition: succeededOrFailed()
+      inputs:
+        sourceFolder: $(System.DefaultWorkingDirectory)/.tox
+        contents: |
+          .coverage
+          coverage.xml
+        targetFolder: $(Build.StagingDirectory)
+
+    - task: PublishBuildArtifacts@1
+      displayName: publish coverage file
+      condition: succeededOrFailed()
+      inputs:
+        pathtoPublish: $(Build.ArtifactStagingDirectory)
+        ArtifactName: ${{ format('coverage-{0}-{1}', parameters.os, parameters.tox) }}

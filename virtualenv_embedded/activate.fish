@@ -1,4 +1,4 @@
-# This file must be used using `. bin/activate.fish` *within a running fish ( http://fishshell.com ) session*.
+# This file must be used using `source bin/activate.fish` *within a running fish ( http://fishshell.com ) session*.
 # Do not run it directly.
 
 function deactivate -d 'Exit virtualenv mode and return to the normal environment.'

@@ -1,11 +1,26 @@
+# packaging
 virtualenv.egg-info
 build
 dist
-docs/_build
-.DS_Store
-*.py[cod]
 *.egg
 .eggs
+
+# documentation
+docs/_build
+
+# python
+*.py[cod]
+*$py.class
+
+# tools
 .tox
-.cache
-tests/test_activate_actual.output
+.*_cache
+.DS_Store
+
+# tbd
+/tests/test_activate_output.actual
+/tests/test_activate_output.expected
+
+# IDE
+.idea
+.vscode

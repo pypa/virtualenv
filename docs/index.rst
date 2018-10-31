@@ -4,7 +4,7 @@ Virtualenv
 `Mailing list <http://groups.google.com/group/python-virtualenv>`_ |
 `Issues <https://github.com/pypa/virtualenv/issues>`_ |
 `Github <https://github.com/pypa/virtualenv>`_ |
-`PyPI <https://pypi.python.org/pypi/virtualenv/>`_ |
+`PyPI <https://pypi.org/project/virtualenv/>`_ |
 User IRC: #pypa
 Dev IRC: #pypa-dev
 
@@ -64,14 +64,14 @@ Other Documentation and Links
   your workflow with many virtualenvs even easier. `His initial blog post on it`__.
   He also wrote `an example of using virtualenv to try IPython`__.
 
-  .. _virtualenvwrapper: https://pypi.python.org/pypi/virtualenvwrapper/
+  .. _virtualenvwrapper: https://pypi.org/project/virtualenvwrapper/
   .. __: https://doughellmann.com/blog/2008/05/01/virtualenvwrapper/
   .. __: https://doughellmann.com/blog/2008/02/01/ipython-and-virtualenv/
 
 * `Pew`_ is another wrapper for virtualenv that makes use of a different
   activation technique.
 
-  .. _Pew: https://pypi.python.org/pypi/pew/
+  .. _Pew: https://pypi.org/project/pew/
 
 * `Using virtualenv with mod_wsgi
   <http://code.google.com/p/modwsgi/wiki/VirtualEnvironments>`_.
@@ -113,7 +113,7 @@ There are several alternatives that create isolated environments:
   Setuptools automatically, saving a step and avoiding the need for
   network access.
 
-* `zc.buildout <http://pypi.python.org/pypi/zc.buildout>`_ doesn't
+* `zc.buildout <http://pypi.org/project/zc.buildout>`_ doesn't
   create an isolated Python environment in the same style, but
   achieves similar results through a declarative config file that sets
   up scripts with very particular packages. As a declarative system,

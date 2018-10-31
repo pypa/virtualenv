@@ -111,8 +111,8 @@ Options
    virtualenv. Distribute has now been merged into Setuptools, and the
    latter is always installed.
 
-.. _Distribute: https://pypi.python.org/pypi/distribute
-.. _Setuptools: https://pypi.python.org/pypi/setuptools
+.. _Distribute: https://pypi.org/project/distribute
+.. _Setuptools: https://pypi.org/project/setuptools
 
 
 Configuration
@@ -188,6 +188,15 @@ While this creates an environment, it doesn't put anything into the
 environment. Developers may find it useful to distribute a script
 that sets up a particular environment, for example a script that
 installs a particular web application.
+
+.. note::
+
+    A bootstrap script requires a ``virtualenv_support`` directory containing
+    ``pip`` and ``setuptools`` wheels alongside it, just like the actual virtualenv
+    script. Running a bootstrap script without a ``virtualenv_support`` directory
+    is unsupported (but if you use ``--no-setuptools`` and manually install ``pip``
+    and ``setuptools`` in your virtualenv, it will work).
+
 
 To create a script like this, call
 :py:func:`virtualenv.create_bootstrap_script`, and write the

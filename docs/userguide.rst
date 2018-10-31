@@ -27,8 +27,8 @@ a number of usual effects (modifiable by many :ref:`options`):
 The python in your new virtualenv is effectively isolated from the python that
 was used to create it.
 
-.. _pip: https://pypi.python.org/pypi/pip
-.. _setuptools: https://pypi.python.org/pypi/setuptools
+.. _pip: https://pypi.org/project/pip
+.. _setuptools: https://pypi.org/project/setuptools
 
 
 .. _activate:
@@ -52,10 +52,20 @@ separate activate files for some other shells, like csh and fish.
 This will change your ``$PATH`` so its first entry is the virtualenv's
 ``bin/`` directory. (You have to use ``source`` because it changes your
 shell environment in-place.) This is all it does; it's purely a
-convenience. If you directly run a script or the python interpreter
+convenience.
+
+If you directly run a script or the python interpreter
 from the virtualenv's ``bin/`` directory (e.g. ``path/to/ENV/bin/pip``
-or ``/path/to/ENV/bin/python-script.py``) there's no need for
-activation.
+or ``/path/to/ENV/bin/python-script.py``) then ``sys.path`` will
+automatically be set to use the Python libraries associated with the
+virtualenv. But, unlike the activation scripts, the environment variables
+``PATH`` and ``VIRTUAL_ENV`` will *not* be modified. This means that if
+your Python script uses e.g. ``subprocess`` to run another Python script
+(e.g. via a ``#!/usr/bin/env python`` shebang line) the second script
+*may not be executed with the same Python binary as the first* nor have
+the same libraries available to it. To avoid this happening your first
+script will need to modify the environment variables in the same manner
+as the activation scripts, before the second script is executed.
 
 The ``activate`` script will also modify your shell prompt to indicate
 which environment is currently active. To disable this behaviour, see
@@ -65,7 +75,7 @@ To undo these changes to your path (and prompt), just run::
 
     $ deactivate
 
-On Windows, the equivalent `activate` script is in the ``Scripts`` folder::
+On Windows, the equivalent ``activate`` script is in the ``Scripts`` folder::
 
     > \path\to\env\Scripts\activate
 
@@ -155,7 +165,7 @@ executables on Windows go in ``ENV\Scripts\`` instead of ``ENV/bin/`` and
 libraries go in ``ENV\Lib\`` rather than ``ENV/lib/``.
 
 To create a virtualenv under a path with spaces in it on Windows, you'll need
-the `win32api <http://sourceforge.net/projects/pywin32/>`_ library installed.
+the `win32api <https://github.com/mhammond/pywin32/>`_ library installed.
 
 
 Using Virtualenv without ``bin/python``
@@ -255,4 +265,3 @@ As well as the extra directories, the search order includes:
 #. The ``virtualenv_support`` directory relative to virtualenv.py
 #. The directory where virtualenv.py is located.
 #. The current directory.
-

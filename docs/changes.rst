@@ -1,19 +1,25 @@
 Release History
 ===============
 
-16.1.0 (unreleased)
--------------------
 
+16.1.0 (2018-10-31)
+-------------------
+* Fixed documentation to use pypi.org and correct curl options; :issue:`1042`
+* bug fix: ensure prefix is absolute when creating a new virtual environment :issue:`1208`
+* upgrade setuptools from ``39.1.0`` to ``40.5.0``
+* upgrade wheel from ``0.31.1`` to ``0.32.2``
+* upgrade pip from ``10.0.1`` to ``18.1``
+* ``activate.csh`` does not use basename and handles newlines :issue:`1200`
+* fix failure to copy on platforms that use lib64 :issue:`1189`
+* enable tab-completion in the interactive interpreter by default, thanks to a new ``sys.__interactivehook__`` on Python 3 :issue:`967`
+* suppress warning of usage of the deprecated ``imp`` module :issue:`1238`
 
 16.0.0 (2018-05-16)
 -------------------
 
 * Drop support for Python 2.6.
-
 * Upgrade pip to 10.0.1.
-
 * Upgrade setuptools to 39.1.0.
-
 * Upgrade wheel to 0.31.1.
 
 
@@ -74,7 +80,7 @@ Release History
 15.0.0 (2016-03-05)
 -------------------
 
-* Remove the `virtualenv-N.N` script from the package; this can no longer be
+* Remove the ``virtualenv-N.N`` script from the package; this can no longer be
   correctly created from a wheel installation.
   Resolves :issue:`851`, :issue:`692`
 
@@ -123,7 +129,7 @@ Release History
 
 * Upgrade setuptools to 19.6
 
-* Supress any errors from `unset` on different shells (:pull:`843`)
+* Suppress any errors from ``unset`` on different shells (:pull:`843`)
 
 * Normalize letter case for prefix path checking. Fixes :issue:`837`
 
@@ -409,7 +415,7 @@ Release History
 
 * Fixed issue with readline on Windows.
 
-.. _Distribute: https://pypi.python.org/pypi/distribute
+.. _Distribute: https://pypi.org/project/distribute
 
 1.9.1 (2013-03-08)
 ------------------
@@ -484,7 +490,7 @@ Release History
 1.8.1 (2012-09-03)
 ------------------
 
-* Fixed distribute version used with `--never-download`. Thanks michr for
+* Fixed distribute version used with ``--never-download``. Thanks michr for
   report and patch.
 
 * Fix creating Python 3.3 based virtualenvs by unsetting the
@@ -497,7 +503,7 @@ Release History
 * **Dropped support for Python 2.4** The minimum supported Python version is
   now Python 2.5.
 
-* Fix `--relocatable` on systems that use lib64. Fixes #78. Thanks Branden
+* Fix ``--relocatable`` on systems that use lib64. Fixes #78. Thanks Branden
   Rolston.
 
 * Symlink some additional modules under Python 3. Fixes #194. Thanks Vinay
@@ -555,7 +561,7 @@ Release History
 1.7.1.2 (2012-02-17)
 --------------------
 
-* Fixed minor issue in `--relocatable`. Thanks, Cap Petschulat.
+* Fixed minor issue in ``--relocatable``. Thanks, Cap Petschulat.
 
 
 1.7.1.1 (2012-02-16)
@@ -571,7 +577,7 @@ Release History
 
 * Update embedded pip to version 1.1.
 
-* Fix `--relocatable` under Python 3. Thanks Doug Hellmann.
+* Fix ``--relocatable`` under Python 3. Thanks Doug Hellmann.
 
 * Added environ PATH modification to activate_this.py. Thanks Doug
   Napoleone. Fixes #14.
@@ -591,8 +597,8 @@ Release History
   Napoleone for testing and confirmation. Fixes #87.
 
 * Fixed creation of virtualenvs using -p in installs where some modules
-  that ought to be in the standard library (e.g. `readline`) are actually
-  installed in `site-packages` next to `virtualenv.py`. Thanks Greg Haskins
+  that ought to be in the standard library (e.g. ``readline``) are actually
+  installed in ``site-packages`` next to ``virtualenv.py``. Thanks Greg Haskins
   for report and fix. Fixes #167.
 
 * Added activation script for Powershell (signed by Jannis Leidel). Many
