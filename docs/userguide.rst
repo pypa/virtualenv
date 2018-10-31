@@ -165,7 +165,7 @@ executables on Windows go in ``ENV\Scripts\`` instead of ``ENV/bin/`` and
 libraries go in ``ENV\Lib\`` rather than ``ENV/lib/``.
 
 To create a virtualenv under a path with spaces in it on Windows, you'll need
-the `win32api <http://sourceforge.net/projects/pywin32/>`_ library installed.
+the `win32api <https://github.com/mhammond/pywin32/>`_ library installed.
 
 
 Using Virtualenv without ``bin/python``
