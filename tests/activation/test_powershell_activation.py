@@ -17,7 +17,7 @@ def need_powershell(fn):
 
 
 def print_python_exe_path():
-    return "python -c 'import sys; print(sys.executable)'"
+    return "{} -c 'import sys; print(sys.executable)'".format(virtualenv.expected_exe)
 
 
 @need_powershell
@@ -32,7 +32,7 @@ def test_activate_with_powershell(tmpdir, monkeypatch):
     content = output.split()
     assert len(content) == 3, output
     before_activate, after_activate, after_deactivate = content
-    exe = "python.exe" if virtualenv.is_win else "python"
+    exe = "{}.exe".format(virtualenv.expected_exe) if virtualenv.is_win else virtualenv.expected_exe
     assert normcase(long_path(after_activate)) == normcase(long_path(join(bin_dir, exe)))
     assert before_activate == after_deactivate
 
