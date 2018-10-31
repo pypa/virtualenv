@@ -10,7 +10,9 @@ Release History
 * upgrade wheel from ``0.31.1`` to ``0.32.2``
 * upgrade pip from ``10.0.1`` to ``18.1``
 * ``activate.csh`` does not use basename and handles newlines :issue:`1200`
-* fix failure to copy on platforms that use lib64 :issue:`11189`
+* fix failure to copy on platforms that use lib64 :issue:`1189`
+* enable tab-completion in the interactive interpreter by default, thanks to a new ``sys.__interactivehook__`` on Python 3 :issue:`967`
+
 
 16.0.0 (2018-05-16)
 -------------------
