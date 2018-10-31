@@ -39,7 +39,7 @@ try:
 except ImportError:
     import configparser as ConfigParser
 
-__version__ = "16.1.0.dev0"
+__version__ = "16.1.0"
 virtualenv_version = __version__  # legacy
 
 if sys.version_info < (2, 7):

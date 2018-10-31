@@ -2,7 +2,7 @@ Release History
 ===============
 
 
-16.1.0 (unreleased)
+16.1.0 (2018-10-31)
 -------------------
 * Fixed documentation to use pypi.org and correct curl options; :issue:`1042`
 * bug fix: ensure prefix is absolute when creating a new virtual environment :issue:`1208`
