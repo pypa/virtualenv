@@ -27,7 +27,7 @@ def test_activate_with_powershell(tmpdir, monkeypatch):
     virtualenv.create_environment(home_dir, no_pip=True, no_setuptools=True, no_wheel=True)
     monkeypatch.chdir(home_dir)
     activate_script = join(bin_dir, "activate.xsh")
-    cmd = [XONSH_COMMAND, "-c", "{0}; {1}; {0}; deactivate; {0}".format(print_python_exe_path(), activate_script)]
+    cmd = [XONSH_COMMAND, "-c", "{0}; source {1}; {0}; deactivate; {0}".format(print_python_exe_path(), activate_script)]
     output = subprocess.check_output(cmd, universal_newlines=True, stderr=subprocess.STDOUT)
     content = output.split()
     assert len(content) == 3, output
