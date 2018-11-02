@@ -2139,17 +2139,17 @@ Qqd+g6mF1Uz2LnK3rfX08dulhcFl3vwL0SyW+At+C2qe
 """
 )
 
-##file activate.xsh
+# file activate.xsh
 ACTIVATE_XSH = convert(
     """
-eJyFU21rwjAQ/p5fcYuFWtb1Bwh+cExQ0Do2JxsiIbNXLdSkJLFsjP33pdW++LItH0pyz3P3HPdc
-KaWvUugt8LVJcm4Q9FolmYFYKsgTZfY8RZFTSkms5A4+CnJgpEw1JLtMKgMbNExjBlwDO94JiTAG
-FmFVtcvVRns9AvYkMbjZZyTXLiQCeJpwjfoAFSfCtAouj7wVqRKdryAIvgMr06VsNnlgi/HT/GUw
-YY+D+Yj6QKnXVHKKIPTBuWCeiF2B/5d7m49m4Wg2HV6K1tCldA391UBDqsdVYcNwUQ7t0NfpzJwW
-qc6kQooItVH7wgikIKQpp27taNI78IxpDBXx5qoXtHGTWkNIB/ZCo62mFKaYc2Eg5yrh7ylq0rbe
-I7WdTdRd2em0WIS0+7cYZawVYIxaxoVRxYRLw5z2a9lbHQIBj6LuSd3bekW7nn1YkftxyMLBdGgV
-fLArLkx/rvbog8Is5WssXx4hZ9twfQGqmbR2wObZSIn+5nPZ9+lqlIa2N+H8j7A5xd1spXB9cO92
-xfeI/QBgqhsY
+eJyFU21rwjAQ/p5fcYuFWub6AwQ/OCYoaB2bkw2RkNmrFmpSklg2xv770mpftG7rh5Lc89w913uu
+lNJXKfQO+MbEGTcIeqPi1EAkFWSxMgeeoMgopSRScg8fOdk3UiYa4n0qlYEtGqYxBa6Bnc6EhBgB
+C7Gs2uVqq70+AfvEEbjpZyg3LsQCeBJzjfoI5U+ISRlcnXhrUiY6X77vf/tWpkvZfPrAlpOnxctw
+yh6HizHtAaVeXcnJgzAAp8U8E7sC/y/3thjPg/F8NmqLVlBbuoL+aqAmVeMqsVGwLIZ27Ot8Zk6D
+VGVSIUWI2qhDbgRSENIUU7d21OkdeMYkgpJ4c9ULWrtJrSGkAweh0VZTChPMuDCQcRXz9wQ1aVq/
+umxi7ZHK4Jrnru28GnmENL/IYpSxRoAxahkt6/KZFxY6zduqvz4GfB6G3bO6t9XSdj17sSL3k4AF
+w9nIKvTALr0wg4U6YA8UpgnfYHHzCLnYj+srUU6psRU2z0YK9Dfni77Pl6WwuLkbl/+IzcnPZieF
+2wP3bp+/T9gPIOAiEQ==
 """
 )
 

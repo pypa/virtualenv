@@ -22,7 +22,7 @@ def _deactivate(args):
 
 
 # unset irrelevant variables
-_deactivate()
+_deactivate(["nondestructive"])
 aliases['deactivate'] = _deactivate
 
 $VIRTUAL_ENV = "__VIRTUAL_ENV__"
