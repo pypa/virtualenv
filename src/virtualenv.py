@@ -1515,7 +1515,12 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
 
 def install_activate(home_dir, bin_dir, prompt=None):
     if is_win or is_jython and os._name == "nt":
-        files = {"activate.bat": ACTIVATE_BAT, "deactivate.bat": DEACTIVATE_BAT, "activate.ps1": ACTIVATE_PS, "activate.xsh": ACTIVATE_XSH}
+        files = {
+            "activate.bat": ACTIVATE_BAT,
+            "deactivate.bat": DEACTIVATE_BAT,
+            "activate.ps1": ACTIVATE_PS,
+            "activate.xsh": ACTIVATE_XSH,
+        }
 
         # MSYS needs paths of the form /c/path/to/file
         drive, tail = os.path.splitdrive(home_dir.replace(os.sep, "/"))
@@ -2135,7 +2140,8 @@ Qqd+g6mF1Uz2LnK3rfX08dulhcFl3vwL0SyW+At+C2qe
 )
 
 ##file activate.xsh
-ACTIVATE_XSH = convert("""
+ACTIVATE_XSH = convert(
+    """
 eJyFU21rwjAQ/p5fcYuFWtb1Bwh+cExQ0Do2JxsiIbNXLdSkJLFsjP33pdW++LItH0pyz3P3HPdc
 KaWvUugt8LVJcm4Q9FolmYFYKsgTZfY8RZFTSkms5A4+CnJgpEw1JLtMKgMbNExjBlwDO94JiTAG
 FmFVtcvVRns9AvYkMbjZZyTXLiQCeJpwjfoAFSfCtAouj7wVqRKdryAIvgMr06VsNnlgi/HT/GUw
@@ -2144,7 +2150,8 @@ qc6kQooItVH7wgikIKQpp27taNI78IxpDBXx5qoXtHGTWkNIB/ZCo62mFKaYc2Eg5yrh7ylq0rbe
 I7WdTdRd2em0WIS0+7cYZawVYIxaxoVRxYRLw5z2a9lbHQIBj6LuSd3bekW7nn1YkftxyMLBdGgV
 fLArLkx/rvbog8Is5WssXx4hZ9twfQGqmbR2wObZSIn+5nPZ9+lqlIa2N+H8j7A5xd1spXB9cO92
 xfeI/QBgqhsY
-""")
+"""
+)
 
 # file activate.bat
 ACTIVATE_BAT = convert(
