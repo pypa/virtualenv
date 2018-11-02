@@ -10,8 +10,8 @@ from tests.lib import need_executable
 XONSH_COMMAND = "xonsh.bat" if virtualenv.is_win else "xonsh"
 
 
-def need_powershell(fn):
-    return pytest.mark.powershell(
+def need_xonsh(fn):
+    return pytest.mark.xonsh(
         need_executable("xonsh", (XONSH_COMMAND, "--version"))(fn)
     )
 
@@ -20,8 +20,8 @@ def print_python_exe_path():
     return "{} -c 'import sys; print(sys.executable)'".format(virtualenv.expected_exe)
 
 
-@need_powershell
-def test_activate_with_powershell(tmpdir, monkeypatch):
+@need_xonsh
+def test_activate_with_xonsh(tmpdir, monkeypatch):
     monkeypatch.chdir(tmpdir)
     home_dir, _, __, bin_dir = virtualenv.path_locations(str(tmpdir.join("env")))
     virtualenv.create_environment(home_dir, no_pip=True, no_setuptools=True, no_wheel=True)
