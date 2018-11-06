@@ -1515,11 +1515,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
 
 def install_activate(home_dir, bin_dir, prompt=None):
     if is_win or is_jython and os._name == "nt":
-        files = {
-            "activate.bat": ACTIVATE_BAT,
-            "deactivate.bat": DEACTIVATE_BAT,
-            "activate.ps1": ACTIVATE_PS,
-        }
+        files = {"activate.bat": ACTIVATE_BAT, "deactivate.bat": DEACTIVATE_BAT, "activate.ps1": ACTIVATE_PS}
 
         # MSYS needs paths of the form /c/path/to/file
         drive, tail = os.path.splitdrive(home_dir.replace(os.sep, "/"))
