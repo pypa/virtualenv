@@ -31,11 +31,11 @@ def test_activate_with_xonsh(tmpdir, monkeypatch):
         "-c",
         "{0}; source r'{1}'; {0}; deactivate; {0}".format(print_python_exe_path(), activate_script),
     ]
-    print('COMMAND', cmd)
-    print('Executable', sys.executable)
+    print("COMMAND", cmd)
+    print("Executable", sys.executable)
     env = dict(os.environ)
-    env['XONSH_DEBUG'] = '1'
-    env['XONSH_SHOW_TRACEBACK'] = 'True'
+    env["XONSH_DEBUG"] = "1"
+    env["XONSH_SHOW_TRACEBACK"] = "True"
     output = subprocess.check_output(cmd, universal_newlines=True, stderr=subprocess.STDOUT, env=env)
     content = output.split()
     assert len(content) == 3, output
