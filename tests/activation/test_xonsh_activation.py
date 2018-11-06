@@ -28,7 +28,7 @@ def test_activate_with_xonsh(tmpdir, monkeypatch):
     cmd = [
         XONSH_COMMAND,
         "-c",
-        "{0}; source {1}; {0}; deactivate; {0}".format(print_python_exe_path(), activate_script),
+        "{0}; source r'{1}'; {0}; deactivate; {0}".format(print_python_exe_path(), activate_script),
     ]
     output = subprocess.check_output(cmd, universal_newlines=True, stderr=subprocess.STDOUT)
     content = output.split()
