@@ -1,6 +1,9 @@
 Release History
 ===============
 
+16.2.0 (201Y-MM-DD)
+-------------------
+* The xonsh shell is now supported :pull:`1206`
 
 16.1.0 (2018-10-31)
 -------------------
