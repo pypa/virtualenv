@@ -125,7 +125,7 @@ setup(
             "pytest >= 3.0.0, <4",
             "coverage >= 4.5.0, <5",
             'pytest-timeout >= 1.3.0, <2; platform_python_implementation!="Jython"',
-            'xonsh;python_version>"2.7"',
+            'xonsh;python_version>"3"',
         ],
         "docs": ["sphinx >= 1.8.0, < 2"],
     },

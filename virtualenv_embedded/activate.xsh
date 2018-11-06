@@ -2,8 +2,8 @@
 from xonsh.tools import get_sep as _get_sep
 
 def _deactivate(args):
-    if 'pydoc' in aliases:
-        del aliases['pydoc']
+    if "pydoc" in aliases:
+        del aliases["pydoc"]
 
     if ${...}.get("_OLD_VIRTUAL_PATH", ""):
         $PATH = $_OLD_VIRTUAL_PATH
@@ -13,7 +13,7 @@ def _deactivate(args):
         $PYTHONHOME = $_OLD_VIRTUAL_PYTHONHOME
         del $_OLD_VIRTUAL_PYTHONHOME
 
-    if 'VIRTUAL_ENV' in ${...}:
+    if "VIRTUAL_ENV" in ${...}:
         del $VIRTUAL_ENV
 
     if "nondestructive" not in args:
@@ -23,7 +23,7 @@ def _deactivate(args):
 
 # unset irrelevant variables
 _deactivate(["nondestructive"])
-aliases['deactivate'] = _deactivate
+aliases["deactivate"] = _deactivate
 
 $VIRTUAL_ENV = r"__VIRTUAL_ENV__"
 
@@ -36,4 +36,4 @@ if ${...}.get("PYTHONHOME", ""):
     $_OLD_VIRTUAL_PYTHONHOME = $PYTHONHOME
     del $PYTHONHOME
 
-aliases['pydoc'] = ['python', '-m', 'pydoc']
+aliases["pydoc"] = ["python", "-m", "pydoc"]
