@@ -1519,7 +1519,6 @@ def install_activate(home_dir, bin_dir, prompt=None):
             "activate.bat": ACTIVATE_BAT,
             "deactivate.bat": DEACTIVATE_BAT,
             "activate.ps1": ACTIVATE_PS,
-            "activate.xsh": ACTIVATE_XSH,
         }
 
         # MSYS needs paths of the form /c/path/to/file
@@ -1542,13 +1541,14 @@ def install_activate(home_dir, bin_dir, prompt=None):
         # same for csh/tcsh support...
         files["activate.csh"] = ACTIVATE_CSH
 
-        # same for xonsh support...
-        files["activate.xsh"] = ACTIVATE_XSH
-
         # same for powershell
         files["activate.ps1"] = ACTIVATE_PS
 
     files["activate_this.py"] = ACTIVATE_THIS
+
+    if majver >= 3:
+        # Add xonsh support
+        files["activate.xsh"] = ACTIVATE_XSH
 
     install_files(home_dir, bin_dir, prompt, files)
 
