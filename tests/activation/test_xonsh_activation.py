@@ -12,7 +12,11 @@ XONSH_COMMAND = "xonsh.exe" if virtualenv.is_win else "xonsh"
 
 
 def need_xonsh(fn):
-    return pytest.mark.xonsh(need_executable("xonsh", (XONSH_COMMAND, "--version"))(fn))
+    try:
+        subprocess.check_output([XONSH_COMMAND, "--version"])
+    except OSError:
+        return pytest.mark.skip(reason="xonsh is not available")(fn)
+    return fn
 
 
 def print_python_exe_path():
