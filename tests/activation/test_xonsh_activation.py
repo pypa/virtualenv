@@ -7,7 +7,6 @@ import pytest
 
 import virtualenv
 
-
 XONSH_COMMAND = "xonsh.exe" if virtualenv.is_win else "xonsh"
 
 
