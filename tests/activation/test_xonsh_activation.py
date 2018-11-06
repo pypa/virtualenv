@@ -1,6 +1,6 @@
+import os
 import subprocess
 import sys
-import os
 from os.path import join, normcase
 
 import pytest
