@@ -1542,7 +1542,7 @@ def install_activate(home_dir, bin_dir, prompt=None):
 
     files["activate_this.py"] = ACTIVATE_THIS
 
-    if majver >= 3:
+    if sys.version_info >= (3, 4):
         # Add xonsh support
         files["activate.xsh"] = ACTIVATE_XSH
 
