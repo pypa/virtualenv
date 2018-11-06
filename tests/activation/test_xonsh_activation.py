@@ -6,7 +6,7 @@ from os.path import join, normcase
 import pytest
 
 import virtualenv
-from tests.lib import need_executable
+
 
 XONSH_COMMAND = "xonsh.exe" if virtualenv.is_win else "xonsh"
 
