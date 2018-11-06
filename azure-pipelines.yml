@@ -71,7 +71,6 @@ jobs:
 
 - job: report_coverage
   pool: {vmImage: 'Ubuntu 16.04'}
-  condition: eq(variables['system.pullrequest.isfork'], false)
   dependsOn:
   - windows_py37
   - windows_py36

@@ -63,7 +63,7 @@ jobs:
   - script: ${{ format('python -m tox --skip-missing-interpreters=false -e {0}', parameters.tox) }}
     displayName: run tests
 
-  - ${{ if and( or( startsWith(parameters.tox, 'py'), eq(parameters.tox, 'jython') ),  eq(variables['system.pullrequest.isfork'], false) ) }}:
+  - ${{ if or( startsWith(parameters.tox, 'py'), eq(parameters.tox, 'jython') ) }}:
     - task: PublishTestResults@2
       displayName: publish test results via junit
       condition: succeededOrFailed()
@@ -77,7 +77,7 @@ jobs:
       displayName: create coverag report
       condition: succeededOrFailed()
 
-  - ${{ if and( or( startsWith(parameters.tox, 'py'), eq(parameters.tox, 'jython') ), eq(variables['system.pullrequest.isfork'], false) ) }}:
+  - ${{ if or( startsWith(parameters.tox, 'py'), eq(parameters.tox, 'jython') ) }}:
     - task: CopyFiles@2
       displayName: move coverage files into staging area
       condition: succeededOrFailed()
