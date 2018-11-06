@@ -135,6 +135,15 @@ below.
     Since the ``activate.ps1`` script is generated locally for each virtualenv,
     it is not considered a remote script and can then be executed.
 
+On xonsh, the equivalent ``activate`` script is called ``activate.xsh``, and
+lives in either the ``bin/`` directory (on posix systems) or the ``Scripts\``
+directory (on Windows). For example::
+
+    $ source /path/to/ENV/bin/activate.xsh
+
+With xonsh, you may still run the ``deactivate`` command to undo the changes.
+
+
 .. _`execution policies`: http://technet.microsoft.com/en-us/library/dd347641.aspx
 
 Removing an Environment

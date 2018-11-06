@@ -1542,6 +1542,10 @@ def install_activate(home_dir, bin_dir, prompt=None):
 
     files["activate_this.py"] = ACTIVATE_THIS
 
+    if sys.version_info >= (3, 4):
+        # Add xonsh support
+        files["activate.xsh"] = ACTIVATE_XSH
+
     install_files(home_dir, bin_dir, prompt, files)
 
 
@@ -1689,6 +1693,7 @@ OK_ABS_SCRIPTS = [
     "activate_this.py",
     "activate.fish",
     "activate.csh",
+    "activate.xsh",
 ]
 
 
@@ -2127,6 +2132,20 @@ czmfPtxKGf7L4Ecv8aGj1ZBiuZpE8BEuJSPAj1fn8tKonDDBqRxBWUkng/e6cV6aTKKXHtlNUWWJ
 3wdtoDyZS20c2ZoV+SLaFiYn4y44mGM2qY5TXoOSLtBvxgG8WhUTXfIgJ1CG14qw8XXNwHFWrCxB
 RUXl/HHaGeK47Ubx5ngCPHmt9eDEJ8aIiTex/hh1cseAyR8Mg367VWwYdiuG+4RaSebzs7+jFb7/
 Qqd+g6mF1Uz2LnK3rfX08dulhcFl3vwL0SyW+At+C2qe
+"""
+)
+
+# file activate.xsh
+ACTIVATE_XSH = convert(
+    """
+eJyFU11rwjAUfc+vuIt9sMz1Bwg+OCYoaB2bkw2RkNlbLdSkJLFsjP33JdV+aN2Wh5L7eW7PuaGU
+vkqhd8A3Jsm5QdAblWQGYqkgT5Q58BRFTiklsZJ7+HDJgZEy1ZDsM6kMbNEwjRlwDex0JyTCGFiE
+ZdcuV1vt9wnYk8RAs89IbigkAniacI36GHInwrR0rk55a1IWel9BEHwHFqZL2Xz6wJaTp8XLcMoe
+h4sx7QGlft3Jc04YgNfKPAO7Ev4f7m0xnofj+WzUBq1Cbegq9NcAdVJFVxkbhcuCtONc55x5jaS6
+UkgRoTbq4IRACkKagnUrR13egWdMYygTb65rUavpBCEdOAiNtptSmGLOhYGcq4S/p6hJU/rV5RBr
+n1xtavlq1BHS/CMbU5SxhocxalNa2jnSCw29prXqr4+OgEdR96zxbbW1Xd8aFuR+ErJwOBtZhB7Y
+rRdmsFAH7IHCLOUbLCyfkIsFub4TJU2NtbB11lNEf5O+mPt8WwqNm8tx+UhsjbubnRRugLu9+5YP
+6AcvDiI9
 """
 )
 
