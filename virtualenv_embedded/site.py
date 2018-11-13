@@ -802,7 +802,7 @@ def _script():
                 return "doesn't exist"
 
         print("USER_BASE: {!r} ({})".format(USER_BASE, exists(USER_BASE)))
-        print("USER_SITE: {!r} ({})".format(USER_SITE, exists(USER_BASE)))
+        print("USER_SITE: {!r} ({})".format(USER_SITE, exists(USER_SITE)))
         print("ENABLE_USER_SITE: %r" % ENABLE_USER_SITE)
         sys.exit(0)
 
