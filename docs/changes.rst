@@ -12,6 +12,7 @@ Release History
 * Fix preserving of original path when using fish and a subshell :issue:`904`
 * ``powershell`` now also provides the ``pydoc`` function that uses the virtual environments ``pydoc``
 * ``powershell`` activator is no longer signed :issue:`816`
+* Set VIRTUAL_ENV enviroment variable in activate_this.py. (:pull:`1057`)
 
 16.1.0 (2018-10-31)
 -------------------
