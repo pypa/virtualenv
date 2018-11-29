@@ -307,7 +307,7 @@ def test_always_copy_option():
 
 
 def test_relative_symlink(tmpdir):
-    """Should be no symlinks in directory tree"""
+    """ Test if a virtualenv works correctly if it was created via a symlink and this symlink is removed """
 
     tmpdir = str(tmpdir)
     ve_path = os.path.join(tmpdir, "venv")
