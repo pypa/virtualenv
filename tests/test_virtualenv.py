@@ -306,7 +306,7 @@ def test_always_copy_option():
         shutil.rmtree(tmp_virtualenv)
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="requires working symlink implementation")
+@pytest.mark.skipif(not hasattr(os, "symlink"), reason="requires working symlink implementation")
 def test_relative_symlink(tmpdir):
     """ Test if a virtualenv works correctly if it was created via a symlink and this symlink is removed """
 
