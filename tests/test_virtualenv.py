@@ -309,6 +309,7 @@ def test_always_copy_option():
 def test_relative_symlink(tmpdir):
     """Should be no symlinks in directory tree"""
 
+    tmpdir = str(tmpdir)
     ve_path = os.path.join(tmpdir, "venv")
     os.mkdir(ve_path)
 
