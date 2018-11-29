@@ -1637,7 +1637,7 @@ def fix_lib64(lib_dir, symlink=True):
     if symlink:
         os.symlink("lib", lib64_link)
     else:
-        copyfile(lib_dir, lib64_link)
+        copyfile(lib_dir, lib64_link, symlink=False)
 
 
 def resolve_interpreter(exe):
