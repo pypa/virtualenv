@@ -1478,6 +1478,8 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             raise e
 
     proc_stdout = proc_stdout.strip().decode("utf-8")
+    # normalize paths using realpath to ensure that a virtualenv correctly identifies itself even
+    # when adressed over a symlink
     proc_stdout = os.path.normcase(os.path.realpath(proc_stdout))
     norm_home_dir = os.path.normcase(os.path.realpath(home_dir))
     if hasattr(norm_home_dir, "decode"):
