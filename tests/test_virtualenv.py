@@ -304,3 +304,31 @@ def test_always_copy_option():
                 )
     finally:
         shutil.rmtree(tmp_virtualenv)
+
+
+@pytest.mark.skipif(not hasattr(os, "symlink"), reason="requires working symlink implementation")
+def test_relative_symlink(tmpdir):
+    """ Test if a virtualenv works correctly if it was created via a symlink and this symlink is removed """
+
+    tmpdir = str(tmpdir)
+    ve_path = os.path.join(tmpdir, "venv")
+    os.mkdir(ve_path)
+
+    workdir = os.path.join(tmpdir, "work")
+    os.mkdir(workdir)
+
+    ve_path_linked = os.path.join(workdir, "venv")
+    os.symlink(ve_path, ve_path_linked)
+
+    lib64 = os.path.join(ve_path, "lib64")
+
+    virtualenv.create_environment(ve_path_linked, symlink=True)
+    if not os.path.lexists(lib64):
+        # no lib 64 on this platform
+        return
+
+    assert os.path.exists(lib64)
+
+    shutil.rmtree(workdir)
+
+    assert os.path.exists(lib64)

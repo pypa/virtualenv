@@ -1478,8 +1478,10 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             raise e
 
     proc_stdout = proc_stdout.strip().decode("utf-8")
-    proc_stdout = os.path.normcase(os.path.abspath(proc_stdout))
-    norm_home_dir = os.path.normcase(os.path.abspath(home_dir))
+    # normalize paths using realpath to ensure that a virtualenv correctly identifies itself even
+    # when adressed over a symlink
+    proc_stdout = os.path.normcase(os.path.realpath(proc_stdout))
+    norm_home_dir = os.path.normcase(os.path.realpath(home_dir))
     if hasattr(norm_home_dir, "decode"):
         norm_home_dir = norm_home_dir.decode(sys.getfilesystemencoding())
     if proc_stdout != norm_home_dir:
@@ -1635,9 +1637,9 @@ def fix_lib64(lib_dir, symlink=True):
     if os.path.lexists(lib64_link):
         return
     if symlink:
-        os.symlink(lib_dir, lib64_link)
+        os.symlink("lib", lib64_link)
     else:
-        copyfile(lib_dir, lib64_link)
+        copyfile(lib_dir, lib64_link, symlink=False)
 
 
 def resolve_interpreter(exe):
