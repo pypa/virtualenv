@@ -3,15 +3,18 @@ import os
 import shutil
 import sys
 import tempfile
+import zipfile
 
 import pytest
 
 import virtualenv
 
 try:
+    from pathlib import Path
     from unittest.mock import NonCallableMock, call, patch
 except ImportError:
     from mock import NonCallableMock, call, patch
+    from pathlib2 import Path
 
 
 def test_version():
@@ -332,3 +335,44 @@ def test_relative_symlink(tmpdir):
     shutil.rmtree(workdir)
 
     assert os.path.exists(lib64)
+
+
+def test_missing_certifi_pem(tmp_path):
+    """Make sure that we can still create virtual environment if pip is
+    patched to not use certifi's cacert.pem and the file is removed.
+    This can happen if pip is packaged by Linux distributions."""
+    proj_dir = Path(__file__).parent.parent
+    support_original = proj_dir / "src" / "virtualenv_support"
+    pip_wheel = sorted(support_original.glob("pip*whl"))[0]
+    whl_name = pip_wheel.name
+
+    wheeldir = tmp_path / "wheels"
+    wheeldir.mkdir()
+    tmpcert = tmp_path / "tmpcert.pem"
+    cacert = "pip/_vendor/certifi/cacert.pem"
+    certifi = "pip/_vendor/certifi/core.py"
+    oldpath = b"os.path.join(f, 'cacert.pem')"
+    newpath = "r'{}'".format(tmpcert).encode()
+    removed = False
+    replaced = False
+
+    with zipfile.ZipFile(str(pip_wheel), "r") as whlin:
+        with zipfile.ZipFile(str(wheeldir / whl_name), "w") as whlout:
+            for item in whlin.infolist():
+                buff = whlin.read(item.filename)
+                if item.filename == cacert:
+                    tmpcert.write_bytes(buff)
+                    removed = True
+                    continue
+                if item.filename == certifi:
+                    nbuff = buff.replace(oldpath, newpath)
+                    assert nbuff != buff
+                    buff = nbuff
+                    replaced = True
+                whlout.writestr(item, buff)
+
+    assert removed and replaced
+
+    venvdir = tmp_path / "venv"
+    search_dirs = [str(wheeldir), str(support_original)]
+    virtualenv.create_environment(str(venvdir), search_dirs=search_dirs)
