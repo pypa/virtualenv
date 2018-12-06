@@ -5,6 +5,7 @@ Release History
 -------------------
 * The xonsh shell is now supported :pull:`1206`
 * bug fix: make lib64 symlink relative (as in <``16.1.0``) > :issue:`1248`
+* pip wheels with removed certifi's cacert.pem are now supported :pull:`1252`
 
 16.1.0 (2018-10-31)
 -------------------
