@@ -924,6 +924,8 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
         except ImportError:
             from pip import main as _main
             cert_data = pkgutil.get_data("pip._vendor.requests", "cacert.pem")
+        except IOError:
+            cert_data = None
 
         if cert_data is not None:
             cert_file = tempfile.NamedTemporaryFile(delete=False)
