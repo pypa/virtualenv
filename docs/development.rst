@@ -56,7 +56,7 @@ and then run the tests with a specific Python version using a call like::
 
     $ python -m tox -e python3.6
 
-See ``tox.ini`` for a list of all supported Python environments or just run the
+Run ``python -m tox -av`` for a list of all supported Python environments or just run the
 tests in all of the available ones by running just ``tox``.
 
 Status and License

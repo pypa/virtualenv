@@ -391,5 +391,5 @@ def test_create_environment_from_dir_with_spaces(tmpdir):
 
 def test_create_environment_in_dir_with_spaces(tmpdir):
     """Should work with environment path containing spaces."""
-    ve_path = str(tmpdir / 'venv with spaces')
+    ve_path = str(tmpdir / "venv with spaces")
     virtualenv.create_environment(ve_path)
