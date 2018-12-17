@@ -34,7 +34,7 @@ def need_executable(name, check_cmd):
 
 def requires(on):
     def wrapper(fn):
-        return need_executable(on.cmd.replace(".exe", ""), (on.check))(fn)
+        return need_executable(on.cmd.replace(".exe", ""), on.check)(fn)
 
     return wrapper
 
@@ -42,7 +42,7 @@ def requires(on):
 def norm_path(path):
     # python may return Windows short paths, normalize
     path = realpath(path)
-    if virtualenv.is_win:
+    if virtualenv.IS_WIN:
         from ctypes import create_unicode_buffer, windll
 
         buffer_cont = create_unicode_buffer(256)
@@ -87,10 +87,10 @@ class Activation(object):
         return pipes.quote(s)
 
     def python_cmd(self, cmd):
-        return "{} -c {}".format(self.quote(virtualenv.expected_exe), self.quote(cmd))
+        return "{} -c {}".format(self.quote(virtualenv.EXPECTED_EXE), self.quote(cmd))
 
     def python_script(self, script):
-        return "{} {}".format(self.quote(virtualenv.expected_exe), self.quote(script))
+        return "{} {}".format(self.quote(virtualenv.EXPECTED_EXE), self.quote(script))
 
     def print_python_exe(self):
         return self.python_cmd("import sys; print(sys.executable)")
@@ -104,7 +104,7 @@ class Activation(object):
 
         site_packages = subprocess.check_output(
             [
-                os.path.join(self.bin_dir, virtualenv.expected_exe),
+                os.path.join(self.bin_dir, virtualenv.EXPECTED_EXE),
                 "-c",
                 "from distutils.sysconfig import get_python_lib; print(get_python_lib())",
             ],
@@ -148,7 +148,7 @@ class Activation(object):
         assert out[1] == "None", raw
 
         # post-activation
-        exe = "{}.exe".format(virtualenv.expected_exe) if virtualenv.is_win else virtualenv.expected_exe
+        exe = "{}.exe".format(virtualenv.EXPECTED_EXE) if virtualenv.IS_WIN else virtualenv.EXPECTED_EXE
         assert norm_path(out[2]) == norm_path(join(self.bin_dir, exe)), raw
         assert norm_path(out[3]) == norm_path(str(self.home_dir)).replace("\\\\", "\\"), raw
 
@@ -171,7 +171,7 @@ def get_env():
 
 
 class BashActivation(Activation):
-    cmd = "bash.exe" if virtualenv.is_win else "bash"
+    cmd = "bash.exe" if virtualenv.IS_WIN else "bash"
     invoke_script = [cmd]
     extension = "sh"
     activate_script = "activate"
@@ -185,7 +185,7 @@ def test_bash(activation_env, monkeypatch, tmp_path):
 
 
 class CshActivation(Activation):
-    cmd = "csh.exe" if virtualenv.is_win else "csh"
+    cmd = "csh.exe" if virtualenv.IS_WIN else "csh"
     invoke_script = [cmd]
     extension = "csh"
     activate_script = "activate.csh"
@@ -199,7 +199,7 @@ def test_csh(activation_env, monkeypatch, tmp_path):
 
 
 class FishActivation(Activation):
-    cmd = "fish.exe" if virtualenv.is_win else "fish"
+    cmd = "fish.exe" if virtualenv.IS_WIN else "fish"
     invoke_script = [cmd]
     extension = "fish"
     activate_script = "activate.fish"
@@ -213,15 +213,14 @@ def test_fish(activation_env, monkeypatch, tmp_path):
 
 
 class PowershellActivation(Activation):
-    cmd = "powershell.exe" if virtualenv.is_win else "pwsh"
+    cmd = "powershell.exe" if virtualenv.IS_WIN else "pwsh"
     extension = "ps1"
     invoke_script = [cmd, "-File"]
     activate_script = "activate.ps1"
     activate_cmd = "."
     check = [cmd, "-c", "$PSVersionTable"]
 
-    @staticmethod
-    def quote(s):
+    def quote(self, s):
         """powershell double double quote needed for quotes within single quotes"""
         return pipes.quote(s).replace('"', '""')
 

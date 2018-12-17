@@ -57,13 +57,13 @@ class TestGetInstalledPythons:
 
     @pytest.mark.skipif(sys.platform == "win32", reason="non-windows specific test")
     def test_on_non_windows(self, monkeypatch):
-        assert not virtualenv.is_win
+        assert not virtualenv.IS_WIN
         assert not hasattr(virtualenv, "winreg")
         assert virtualenv.get_installed_pythons() == {}
 
     @pytest.mark.skipif(sys.platform != "win32", reason="windows specific test")
     def test_on_windows(self, monkeypatch):
-        assert virtualenv.is_win
+        assert virtualenv.IS_WIN
         mock_winreg = self.mock_virtualenv_winreg(
             monkeypatch,
             {
@@ -141,7 +141,7 @@ class TestGetInstalledPythons:
 
     @pytest.mark.skipif(sys.platform != "win32", reason="windows specific test")
     def test_on_windows_with_no_installations(self, monkeypatch):
-        assert virtualenv.is_win
+        assert virtualenv.IS_WIN
         mock_winreg = self.mock_virtualenv_winreg(monkeypatch, {})
 
         installed_pythons = virtualenv.get_installed_pythons()
@@ -276,7 +276,7 @@ def test_install_python_bin():
         home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(tmp_virtualenv)
         virtualenv.install_python(home_dir, lib_dir, inc_dir, bin_dir, False, False)
 
-        if virtualenv.is_win:
+        if virtualenv.IS_WIN:
             required_executables = ["python.exe", "pythonw.exe"]
         else:
             py_exe_no_version = "python"
