@@ -5,21 +5,21 @@ Contributing
 ------------
 
 Refer to the `pip development`_ documentation - it applies equally to
-virtualenv, except that virtualenv issues should filed on the `virtualenv
+virtualenv, except that virtualenv issues should be filed on the `virtualenv
 repo`_ at GitHub.
 
 Virtualenv's release schedule is tied to pip's -- each time there's a new pip
 release, there will be a new virtualenv release that bundles the new version of
 pip.
 
-Files in the `virtualenv_embedded/` subdirectory are embedded into
-`virtualenv.py` itself as base64-encoded strings (in order to support
-single-file use of `virtualenv.py` without installing it). If your patch
-changes any file in `virtualenv_embedded/`, run `bin/rebuild-script.py` to
-update the embedded version of that file in `virtualenv.py`; commit that and
+Files in the ``virtualenv_embedded/`` subdirectory are embedded into
+``virtualenv.py`` itself as base64-encoded strings (in order to support
+single-file use of ``virtualenv.py`` without installing it). If your patch
+changes any file in ``virtualenv_embedded/``, run ``bin/rebuild-script.py`` to
+update the embedded version of that file in ``virtualenv.py``; commit that and
 submit it as part of your patch / pull request.
 
-.. _pip development: http://www.pip-installer.org/en/latest/development.html
+.. _pip development: https://pip.pypa.io/en/latest/development/
 .. _virtualenv repo: https://github.com/pypa/virtualenv/
 
 Running the tests
@@ -45,6 +45,19 @@ Run pytest::
 Or select just a single test file to run::
 
     $ pytest tests/test_virtualenv
+
+You can also run the tests using ``tox`` which will take care of installing all
+the necessary requirements into its constructed Python environments. You just
+need to install ``tox`` in your environment using::
+
+    $ python -m pip install tox
+
+and then run the tests with a specific Python version using a call like::
+
+    $ python -m tox -e python3.6
+
+Run ``python -m tox -av`` for a list of all supported Python environments or just run the
+tests in all of the available ones by running just ``tox``.
 
 Status and License
 ------------------

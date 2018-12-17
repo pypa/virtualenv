@@ -17,36 +17,41 @@ Installation
     setuptools < 0.9.7, because easy_install didn't download from PyPI over SSL
     and was broken in some subtle ways.
 
-To install globally with `pip` (if you have pip 1.3 or greater installed globally):
+To install globally with ``pip`` (if you have pip 1.3 or greater installed globally):
 
 ::
 
  $ [sudo] pip install virtualenv
 
+To install locally (to ~/bin and ~/lib) with ``pip`` (if you have pip 1.3 or greater installed globally):
+
+::
+
+ $ export PYTHONUSERBASE=$HOME
+ $ pip install --user virtualenv
+
+Note: This assumes you have $HOME/bin in your $PATH for later usage of virtualenv.
+
 Or to get the latest unreleased dev version:
 
 ::
 
- $ [sudo] pip install https://github.com/pypa/virtualenv/tarball/develop
+ $ [sudo] pip install https://github.com/pypa/virtualenv/tarball/master
 
 
-To install version X.X globally from source:
+To install version ``X.X.X`` globally from source:
 
 ::
 
- $ curl -O https://pypi.python.org/packages/source/v/virtualenv/virtualenv-X.X.tar.gz
- $ tar xvfz virtualenv-X.X.tar.gz
- $ cd virtualenv-X.X
- $ [sudo] python setup.py install
-
+ $ [sudo] pip install https://github.com/pypa/virtualenv/tarball/X.X.X
 
 To *use* locally from source:
 
 ::
 
- $ curl -O https://pypi.python.org/packages/source/v/virtualenv/virtualenv-X.X.tar.gz
- $ tar xvfz virtualenv-X.X.tar.gz
- $ cd virtualenv-X.X
+ $ curl --location --output virtualenv-X.X.X.tar.gz https://github.com/pypa/virtualenv/tarball/X.X.X
+ $ tar xvfz virtualenv-X.X.X.tar.gz
+ $ cd pypa-virtualenv-YYYYYY
  $ python virtualenv.py myVE
 
 .. note::

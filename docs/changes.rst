@@ -1,6 +1,268 @@
 Release History
 ===============
 
+16.2.0 (201Y-MM-DD)
+-------------------
+* The xonsh shell is now supported :pull:`1206`
+* bug fix: make lib64 symlink relative (as in <``16.1.0``) > :issue:`1248`
+* pip wheels with removed certifi's ``cacert.pem`` are now supported :pull:`1252`
+* upgrade setuptools from ``40.5.0`` to ``40.6.3``
+* upgrade wheel from ``0.32.2`` to ``0.32.3``
+
+16.1.0 (2018-10-31)
+-------------------
+* Fixed documentation to use pypi.org and correct curl options; :issue:`1042`
+* bug fix: ensure prefix is absolute when creating a new virtual environment :issue:`1208`
+* upgrade setuptools from ``39.1.0`` to ``40.5.0``
+* upgrade wheel from ``0.31.1`` to ``0.32.2``
+* upgrade pip from ``10.0.1`` to ``18.1``
+* ``activate.csh`` does not use basename and handles newlines :issue:`1200`
+* fix failure to copy on platforms that use lib64 :issue:`1189`
+* enable tab-completion in the interactive interpreter by default, thanks to a new ``sys.__interactivehook__`` on Python 3 :issue:`967`
+* suppress warning of usage of the deprecated ``imp`` module :issue:`1238`
+
+16.0.0 (2018-05-16)
+-------------------
+
+* Drop support for Python 2.6.
+* Upgrade pip to 10.0.1.
+* Upgrade setuptools to 39.1.0.
+* Upgrade wheel to 0.31.1.
+
+
+15.2.0 (2018-03-21)
+-------------------
+
+* Upgrade setuptools to 39.0.1.
+
+* Upgrade pip to 9.0.3.
+
+* Upgrade wheel to 0.30.0.
+
+
+15.1.0 (2016-11-15)
+-------------------
+
+* Support Python 3.6.
+
+* Upgrade setuptools to 28.0.0.
+
+* Upgrade pip to 9.0.1.
+
+* Don't install pre-release versions of pip, setuptools, or wheel from PyPI.
+
+
+15.0.3 (2016-08-05)
+-------------------
+
+* Test for given python path actually being an executable *file*, :issue:`939`
+
+* Only search for copy actual existing Tcl/Tk directories (:pull:`937`)
+
+* Generically search for correct Tcl/Tk version (:pull:`926`, :pull:`933`)
+
+* Upgrade setuptools to 22.0.5
+
+15.0.2 (2016-05-28)
+-------------------
+
+* Copy Tcl/Tk libs on Windows to allow them to run,
+  fixes :issue:`93` (:pull:`888`)
+
+* Upgrade setuptools to 21.2.1.
+
+* Upgrade pip to 8.1.2.
+
+
+15.0.1 (2016-03-17)
+-------------------
+
+* Print error message when DEST_DIR exists and is a file
+
+* Upgrade setuptools to 20.3
+
+* Upgrade pip to 8.1.1.
+
+
+15.0.0 (2016-03-05)
+-------------------
+
+* Remove the ``virtualenv-N.N`` script from the package; this can no longer be
+  correctly created from a wheel installation.
+  Resolves :issue:`851`, :issue:`692`
+
+* Remove accidental runtime dependency on pip by extracting certificate in the
+  subprocess.
+
+* Upgrade setuptools 20.2.2.
+
+* Upgrade pip to 8.1.0.
+
+
+14.0.6 (2016-02-07)
+-------------------
+
+* Upgrade setuptools to 20.0
+
+* Upgrade wheel to 0.29.0
+
+* Fix an error where virtualenv didn't pass in a working ssl certificate for
+  pip, causing "weird" errors related to ssl.
+
+
+14.0.5 (2016-02-01)
+-------------------
+
+* Homogenize drive letter casing for both prefixes and filenames. :issue:`858`
+
+
+14.0.4 (2016-01-31)
+-------------------
+
+* Upgrade setuptools to 19.6.2
+
+* Revert ac4ea65; only correct drive letter case.
+  Fixes :issue:`856`, :issue:`815`
+
+
+14.0.3 (2016-01-28)
+-------------------
+
+* Upgrade setuptools to 19.6.1
+
+
+14.0.2 (2016-01-28)
+-------------------
+
+* Upgrade setuptools to 19.6
+
+* Suppress any errors from ``unset`` on different shells (:pull:`843`)
+
+* Normalize letter case for prefix path checking. Fixes :issue:`837`
+
+
+14.0.1 (2016-01-21)
+-------------------
+
+* Upgrade from pip 8.0.0 to 8.0.2.
+
+* Fix the default of ``--(no-)download`` to default to downloading.
+
+
+14.0.0 (2016-01-19)
+-------------------
+
+* **BACKWARDS INCOMPATIBLE** Drop support for Python 3.2.
+
+* Upgrade setuptools to 19.4
+
+* Upgrade wheel to 0.26.0
+
+* Upgrade pip to 8.0.0
+
+* Upgrade argparse to 1.4.0
+
+* Added support for ``python-config`` script (:pull:`798`)
+
+* Updated activate.fish (:pull:`589`) (:pull:`799`)
+
+* Account for a ``site.pyo`` correctly in some python implementations (:pull:`759`)
+
+* Properly restore an empty PS1 (:issue:`407`)
+
+* Properly remove ``pydoc`` when deactivating
+
+* Remove workaround for very old Mageia / Mandriva linuxes (:pull:`472`)
+
+* Added a space after virtualenv name in the prompt: ``(env) $PS1``
+
+* Make sure not to run a --user install when creating the virtualenv (:pull:`803`)
+
+* Remove virtualenv.py's path from sys.path when executing with a new
+  python. Fixes issue :issue:`779`, :issue:`763` (:pull:`805`)
+
+* Remove use of () in .bat files so ``Program Files (x86)`` works :issue:`35`
+
+* Download new releases of the preinstalled software from PyPI when there are
+  new releases available. This behavior can be disabled using
+  ``--no-download``.
+
+* Make ``--no-setuptools``, ``--no-pip``, and ``--no-wheel`` independent of
+  each other.
+
+
+13.1.2 (2015-08-23)
+-------------------
+
+* Upgrade pip to 7.1.2.
+
+
+13.1.1 (2015-08-20)
+-------------------
+
+* Upgrade pip to 7.1.1.
+
+* Upgrade setuptools to 18.2.
+
+* Make the activate script safe to use when bash is running with ``-u``.
+
+
+13.1.0 (2015-06-30)
+-------------------
+
+* Upgrade pip to 7.1.0
+
+* Upgrade setuptools to 18.0.1
+
+
+13.0.3 (2015-06-01)
+-------------------
+
+* Upgrade pip to 7.0.3
+
+
+13.0.2 (2015-06-01)
+-------------------
+
+* Upgrade pip to 7.0.2
+
+* Upgrade setuptools to 17.0
+
+
+13.0.1 (2015-05-22)
+-------------------
+
+* Upgrade pip to 7.0.1
+
+
+13.0.0 (2015-05-21)
+-------------------
+
+* Automatically install wheel when creating a new virutalenv. This can be
+  disabled by using the ``--no-wheel`` option.
+
+* Don't trust the current directory as a location to discover files to install
+  packages from.
+
+* Upgrade setuptools to 16.0.
+
+* Upgrade pip to 7.0.0.
+
+
+12.1.1 (2015-04-07)
+-------------------
+
+* Upgrade pip to 6.1.1
+
+
+12.1.0 (2015-04-07)
+-------------------
+
+* Upgrade setuptools to 15.0
+
+* Upgrade pip to 6.1.0
+
+
 12.0.7 (2015-02-04)
 -------------------
 
@@ -23,7 +285,7 @@ Release History
 * Upgrade setuptools to 11.0
 
 
-12.0.4 (2014-22-23)
+12.0.4 (2014-12-23)
 -------------------
 
 * Revert the fix to ``-p`` on Debian based pythons as it was broken in other
@@ -31,7 +293,7 @@ Release History
 
 * Revert several sys.path changes new in 12.0 which were breaking virtualenv.
 
-12.0.3 (2014-22-23)
+12.0.3 (2014-12-23)
 -------------------
 
 * Fix an issue where Debian based Pythons would fail when using -p with the
@@ -48,6 +310,7 @@ Release History
 -------------------
 
 * Upgraded pip to 6.0.1
+
 
 12.0 (2014-12-22)
 -----------------
@@ -149,6 +412,8 @@ Release History
 
 * Added support for PyPy3k
 
+* Added ``--always-copy`` option to suppress use of symlinks (Pull #409)
+
 * Added the option to use a version number with the ``-p`` option to get the
   system copy of that Python version (Windows only)
 
@@ -159,7 +424,7 @@ Release History
 
 * Fixed issue with readline on Windows.
 
-.. _Distribute: https://pypi.python.org/pypi/distribute
+.. _Distribute: https://pypi.org/project/distribute
 
 1.9.1 (2013-03-08)
 ------------------
@@ -234,7 +499,7 @@ Release History
 1.8.1 (2012-09-03)
 ------------------
 
-* Fixed distribute version used with `--never-download`. Thanks michr for
+* Fixed distribute version used with ``--never-download``. Thanks michr for
   report and patch.
 
 * Fix creating Python 3.3 based virtualenvs by unsetting the
@@ -247,7 +512,7 @@ Release History
 * **Dropped support for Python 2.4** The minimum supported Python version is
   now Python 2.5.
 
-* Fix `--relocatable` on systems that use lib64. Fixes #78. Thanks Branden
+* Fix ``--relocatable`` on systems that use lib64. Fixes #78. Thanks Branden
   Rolston.
 
 * Symlink some additional modules under Python 3. Fixes #194. Thanks Vinay
@@ -305,7 +570,7 @@ Release History
 1.7.1.2 (2012-02-17)
 --------------------
 
-* Fixed minor issue in `--relocatable`. Thanks, Cap Petschulat.
+* Fixed minor issue in ``--relocatable``. Thanks, Cap Petschulat.
 
 
 1.7.1.1 (2012-02-16)
@@ -321,7 +586,7 @@ Release History
 
 * Update embedded pip to version 1.1.
 
-* Fix `--relocatable` under Python 3. Thanks Doug Hellmann.
+* Fix ``--relocatable`` under Python 3. Thanks Doug Hellmann.
 
 * Added environ PATH modification to activate_this.py. Thanks Doug
   Napoleone. Fixes #14.
@@ -341,8 +606,8 @@ Release History
   Napoleone for testing and confirmation. Fixes #87.
 
 * Fixed creation of virtualenvs using -p in installs where some modules
-  that ought to be in the standard library (e.g. `readline`) are actually
-  installed in `site-packages` next to `virtualenv.py`. Thanks Greg Haskins
+  that ought to be in the standard library (e.g. ``readline``) are actually
+  installed in ``site-packages`` next to ``virtualenv.py``. Thanks Greg Haskins
   for report and fix. Fixes #167.
 
 * Added activation script for Powershell (signed by Jannis Leidel). Many

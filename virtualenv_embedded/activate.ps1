@@ -36,7 +36,7 @@ $VIRTUAL_ENV = $BASE_DIR
 $env:VIRTUAL_ENV = $VIRTUAL_ENV
 
 $global:_OLD_VIRTUAL_PATH = $env:PATH
-$env:PATH = "$env:VIRTUAL_ENV/Scripts;" + $env:PATH
+$env:PATH = "$env:VIRTUAL_ENV/__BIN_NAME____PATH_SEP__" + $env:PATH
 if (! $env:VIRTUAL_ENV_DISABLE_PROMPT) {
     function global:_old_virtual_prompt { "" }
     $function:_old_virtual_prompt = $function:prompt

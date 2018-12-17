@@ -1,0 +1,9 @@
+[build-system]
+requires = [
+    "setuptools >= 40.0.4",
+    "wheel >= 0.29.0",
+]
+build-backend = 'setuptools.build_meta'
+
+[tool.black]
+line-length = 120
