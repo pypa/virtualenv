@@ -11,7 +11,7 @@ function _bashify_path -d "Converts a fish path to something bash can recognize"
 end
 
 function _fishify_path -d "Converts a bash path to something fish can recognize"
-    echo $argv | tr ':' ' '
+    echo $argv | tr ':' '\n'
 end
 
 function deactivate -d 'Exit virtualenv mode and return to the normal environment.'
