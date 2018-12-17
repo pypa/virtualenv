@@ -35,7 +35,6 @@ def test_activate_with_fish(tmpdir, monkeypatch):
         "{0}; source {1}; {0}; deactivate; {0}".format(print_python_exe_path(), activate_script),
     ]
     print("COMMAND", cmd)
-    print("COMMAND string", ' '.join(cmd))
     print("Executable", sys.executable)
     env = dict(os.environ)
     output = subprocess.check_output(cmd, universal_newlines=True, stderr=subprocess.STDOUT, env=env)
