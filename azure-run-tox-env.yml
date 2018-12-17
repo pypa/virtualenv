@@ -49,6 +49,10 @@ jobs:
   - script: "python -m pip install -U tox --user -v"
     displayName: install tox
 
+  - ${{ if eq(parameters.os, 'linux') }}:
+    - script: "sudo apt-get update && sudo apt-get install fish"
+      displayName: install fish
+
   - ${{ if eq(parameters.tox, 'jython') }}:
       - script: "python -m pip install --user $(System.DefaultWorkingDirectory)"
         displayName: install dev venv for tox
