@@ -29,11 +29,7 @@ def test_activate_with_fish(tmpdir, monkeypatch):
     virtualenv.create_environment(home_dir, no_pip=True, no_setuptools=True, no_wheel=True)
     monkeypatch.chdir(home_dir)
     activate_script = join(bin_dir, "activate.fish")
-    cmd = [
-        FISH_COMMAND,
-        "-c",
-        "{0}; source {1}; {0}; deactivate; {0}".format(print_python_exe_path(), activate_script),
-    ]
+    cmd = [FISH_COMMAND, "-c", "{0}; source {1}; {0}; deactivate; {0}".format(print_python_exe_path(), activate_script)]
     print("COMMAND", cmd)
     print("Executable", sys.executable)
     env = dict(os.environ)
