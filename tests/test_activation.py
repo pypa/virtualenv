@@ -65,6 +65,7 @@ def activation_env(tmp_path_factory):
 
 class Activation(object):
     cmd = ""
+    extension = ""
     invoke_script = []
     command_separator = os.linesep
     activate_cmd = "source"
@@ -121,7 +122,7 @@ class Activation(object):
             "",  # just finish with an empty new line
         ]
         script = self.command_separator.join(commands)
-        test_script = self.path / "test"
+        test_script = self.path / ("test{}".format(".{}".format(self.extension) if self.extension else ""))
         test_script.write_text(script)
 
         monkeypatch.chdir(str(self.path))
@@ -190,7 +191,8 @@ def test_fish(activation_env, monkeypatch, tmp_path):
 
 class PowershellActivation(Activation):
     cmd = "powershell.exe" if virtualenv.is_win else "pwsh"
-    invoke_script = [cmd]
+    extension = "ps1"
+    invoke_script = [cmd, "-File"]
     activate_script = "activate.ps1"
     activate_cmd = "."
     check = [cmd, "-c", "$PSVersionTable"]
