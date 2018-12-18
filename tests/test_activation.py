@@ -4,9 +4,10 @@ import os
 import pipes
 import subprocess
 import sys
-from os.path import join, normcase
+from os.path import dirname, join, normcase
 
 import pytest
+import six
 
 import virtualenv
 
@@ -37,17 +38,18 @@ def requires(on):
     return wrapper
 
 
-def long_path(short_path_name):
-    # python 2 may return Windows short paths, normalize
-    if virtualenv.is_win and sys.version_info < (3,):
+def norm_long_path(short_path_name):
+    # python may return Windows short paths, normalize
+    if virtualenv.is_win:
         from ctypes import create_unicode_buffer, windll
 
         buffer_cont = create_unicode_buffer(256)
         get_long_path_name = windll.kernel32.GetLongPathNameW
-        # noinspection PyUnresolvedReferences
-        get_long_path_name(unicode(short_path_name), buffer_cont, 256)  # noqa: F821
-        return buffer_cont.value
-    return short_path_name
+        get_long_path_name(six.text_type(short_path_name), buffer_cont, 256)  # noqa: F821
+        result = buffer_cont.value
+    else:
+        result = short_path_name
+    return normcase(result)
 
 
 @pytest.fixture(scope="session")
@@ -65,7 +67,7 @@ def activation_env(tmp_path_factory):
 
 class Activation(object):
     cmd = ""
-    extension = ""
+    extension = "test"
     invoke_script = []
     command_separator = os.linesep
     activate_cmd = "source"
@@ -95,7 +97,7 @@ class Activation(object):
         return self.python_cmd("import os; print(os.environ.get({}, None))".format(val))
 
     def __call__(self, monkeypatch):
-        absolute_activate_script = normcase(long_path(join(self.bin_dir, self.activate_script)))
+        absolute_activate_script = norm_long_path(join(self.bin_dir, self.activate_script))
 
         site_packages = subprocess.check_output(
             [
@@ -122,15 +124,21 @@ class Activation(object):
             "",  # just finish with an empty new line
         ]
         script = self.command_separator.join(commands)
-        test_script = self.path / ("test{}".format(".{}".format(self.extension) if self.extension else ""))
+        test_script = self.path / "script.{}".format(self.extension)
         test_script.write_text(script)
+        assert test_script.exists()
 
         monkeypatch.chdir(str(self.path))
-        invoke_shell = self.invoke_script + [normcase(long_path(str(test_script)))]
+        invoke_shell = self.invoke_script + [str(test_script)]
 
         monkeypatch.delenv(str("VIRTUAL_ENV"), raising=False)
-        raw = subprocess.check_output(invoke_shell, universal_newlines=True, stderr=subprocess.STDOUT)
-        out = raw.strip().split(os.linesep)
+
+        # in case the tool is provided by the dev environment (e.g. xonosh)
+        env = os.environ.copy()
+        env[str("PATH")] = os.pathsep.join([dirname(sys.executable)] + env.get(str("PATH"), str("")).split(os.pathsep))
+
+        raw = subprocess.check_output(invoke_shell, universal_newlines=True, stderr=subprocess.STDOUT, env=env)
+        out = raw.strip().split("\n")
 
         # pre-activation
         assert out[0], raw
@@ -138,8 +146,8 @@ class Activation(object):
 
         # post-activation
         exe = "{}.exe".format(virtualenv.expected_exe) if virtualenv.is_win else virtualenv.expected_exe
-        assert normcase(long_path(out[2])) == normcase(long_path(join(self.bin_dir, exe))), raw
-        assert out[3] == self.home_dir, raw
+        assert norm_long_path(out[2]) == norm_long_path(join(self.bin_dir, exe)), raw
+        assert norm_long_path(out[3]) == norm_long_path(str(self.home_dir)).replace("\\\\", "\\"), raw
 
         assert out[4] == "wrote pydoc_test.html"
         content = self.path / "pydoc_test.html"
@@ -153,6 +161,7 @@ class Activation(object):
 class BashActivation(Activation):
     cmd = "bash.exe" if virtualenv.is_win else "bash"
     invoke_script = [cmd]
+    extension = "sh"
     activate_script = "activate"
     check = [cmd, "--version"]
 
@@ -166,6 +175,7 @@ def test_bash(activation_env, monkeypatch, tmp_path):
 class CshActivation(Activation):
     cmd = "csh.exe" if virtualenv.is_win else "csh"
     invoke_script = [cmd]
+    extension = "csh"
     activate_script = "activate.csh"
     check = [cmd, "--version"]
 
@@ -179,6 +189,7 @@ def test_csh(activation_env, monkeypatch, tmp_path):
 class FishActivation(Activation):
     cmd = "fish.exe" if virtualenv.is_win else "fish"
     invoke_script = [cmd]
+    extension = "fish"
     activate_script = "activate.fish"
     check = [cmd, "--version"]
 
@@ -209,7 +220,8 @@ def test_powershell(activation_env, monkeypatch, tmp_path):
 
 
 class XonoshActivation(Activation):
-    cmd = "xonsh.exe" if virtualenv.is_win else "xonsh"
+    cmd = "xonsh"
+    extension = "xsh"
     invoke_script = [cmd]
     activate_script = "activate.xsh"
     check = [cmd, "--version"]
