@@ -168,9 +168,7 @@ global system, do not use this flag.
 
 If you need to change this option after creating a virtual environment, you can 
 add (to turn off) or remove (to turn on) the file ``no-global-site-packages.txt`` 
-from ``lib/python2.7/`` or equivalent in the environments directory. If you have 
-virtualenvwrapper installed, an easy way to get to that direcory is with 
-the ``cdsitepackages`` command with the environment active, followed by ``cd ..``. 
+from ``lib/python3.7/`` or equivalent in the environments directory.  
 
 Windows Notes
 ~~~~~~~~~~~~~
