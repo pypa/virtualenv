@@ -27,6 +27,7 @@ jobs:
       inputs:
         versionSpec: ${{ parameters.python }}
 
+  # provision jython
   - ${{ if eq(parameters.tox, 'jython') }}:
     - script: "wget http://search.maven.org/remotecontent?filepath=org/python/jython-installer/2.7.1/jython-installer-2.7.1.jar -O $(Agent.ToolsDirectory)/jython.jar"
       displayName: download jython
@@ -49,9 +50,14 @@ jobs:
   - script: "python -m pip install -U tox --user -v"
     displayName: install tox
 
-  - ${{ if and(startsWith(parameters.tox, 'py'), eq(parameters.os, 'linux')) }}:
-    - script: "sudo apt-get update && sudo apt-get install fish"
-      displayName: install fish
+  # provision fish
+  - ${{ if or( startsWith(parameters.tox, 'py'), eq(parameters.tox, 'jython')) }}:
+      - ${{if eq(parameters.os, 'linux') }}:
+          - script: "sudo apt-get update && sudo apt-get install fish"
+            displayName: install fish
+      - ${{ if eq(parameters.os, 'macOs') }}:
+          - script: "brew install fish"
+            displayName: install fish
 
   - ${{ if eq(parameters.tox, 'jython') }}:
       - script: "python -m pip install --user $(System.DefaultWorkingDirectory)"
