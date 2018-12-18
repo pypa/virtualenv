@@ -122,7 +122,7 @@ setup(
     extras_require={
         "testing": [
             'mock;python_version<"3.3"',
-            "pytest >= 3.0.0, <4",
+            "pytest >= 4.0.0, <5",
             "coverage >= 4.5.0, <5",
             'pytest-timeout >= 1.3.0, <2; platform_python_implementation!="Jython"',
             'xonsh;python_version>="3.4"',

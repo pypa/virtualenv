@@ -3,7 +3,7 @@ name: $(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.rr)
 variables:
   "System.PreferGit": true
   PYTEST_ADDOPTS: "-vv -ra --showlocals"
-  CI_RUN: "true"
+  CI_RUN: "yes"
 
 trigger:
   batch: true

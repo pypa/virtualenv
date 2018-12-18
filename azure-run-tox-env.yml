@@ -50,14 +50,14 @@ jobs:
   - script: "python -m pip install -U tox --user -v"
     displayName: install tox
 
-  # provision fish
+  # provision additional shells
   - ${{ if or( startsWith(parameters.tox, 'py'), eq(parameters.tox, 'jython')) }}:
       - ${{if eq(parameters.os, 'linux') }}:
-          - script: "sudo apt-get update && sudo apt-get install fish"
-            displayName: install fish
+          - script: "sudo apt-get update && sudo apt-get install fish csh"
+            displayName: install fish and csh
       - ${{ if eq(parameters.os, 'macOs') }}:
-          - script: "brew install fish"
-            displayName: install fish
+          - script: "brew install fish tcsh"
+            displayName: install fish and csh
 
   - ${{ if eq(parameters.tox, 'jython') }}:
       - script: "python -m pip install --user $(System.DefaultWorkingDirectory)"
