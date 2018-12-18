@@ -49,7 +49,7 @@ jobs:
   - script: "python -m pip install -U tox --user -v"
     displayName: install tox
 
-  - ${{ if eq(parameters.os, 'linux') }}:
+  - ${{ if and(startsWith(parameters.tox, 'py'), eq(parameters.os, 'linux')) }}:
     - script: "sudo apt-get update && sudo apt-get install fish"
       displayName: install fish
 
