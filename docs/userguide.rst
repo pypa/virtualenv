@@ -166,9 +166,9 @@ This can be used if you have control over the global site-packages directory,
 and you want to depend on the packages there. If you want isolation from the
 global system, do not use this flag.
 
-If you need to change this option after creating a virtual environment, you can 
-add (to turn off) or remove (to turn on) the file ``no-global-site-packages.txt`` 
-from ``lib/python3.7/`` or equivalent in the environments directory.  
+If you need to change this option after creating a virtual environment, you can
+add (to turn off) or remove (to turn on) the file ``no-global-site-packages.txt``
+from ``lib/python3.7/`` or equivalent in the environments directory.
 
 Windows Notes
 ~~~~~~~~~~~~~
