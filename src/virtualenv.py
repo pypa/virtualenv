@@ -398,14 +398,10 @@ def copyfile(src, dest, symlink=True):
     if not os.path.exists(os.path.dirname(dest)):
         logger.info("Creating parent directories for %s", os.path.dirname(dest))
         os.makedirs(os.path.dirname(dest))
-    srcpath = src
-    while os.path.islink(srcpath):
-        srcpath = os.path.join(os.path.dirname(srcpath), os.readlink(srcpath))
-    srcpath = os.path.abspath(srcpath)
     if symlink and hasattr(os, "symlink") and not is_win:
         logger.info("Symlinking %s", dest)
         try:
-            os.symlink(srcpath, dest)
+            os.symlink(os.path.realpath(src), dest)
         except (OSError, NotImplementedError):
             logger.info("Symlinking failed, copying to %s", dest)
             copyfileordir(src, dest, symlink)
