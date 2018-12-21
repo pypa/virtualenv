@@ -39,9 +39,9 @@ try:
 except ImportError:
     import configparser as ConfigParser
 
-__version__ = "16.1.0"
+__version__ = "16.2.0.dev0"
 virtualenv_version = __version__  # legacy
-
+DEBUG = os.environ.get("_VIRTUALENV_DEBUG", None) == "1"
 if sys.version_info < (2, 7):
     print("ERROR: %s" % sys.exc_info()[1])
     print("ERROR: this script requires Python 2.7 or greater.")
@@ -907,6 +907,12 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
         return urljoin("file:", pathname2url(os.path.abspath(p)))
 
     findlinks = " ".join(space_path2url(d) for d in search_dirs)
+
+    extra_args = ["--ignore-installed"]
+    if DEBUG:
+        extra_args.append("-v")
+    if is_jython:
+        extra_args.append("--no-cache")
     SCRIPT = textwrap.dedent(
         """
         import sys
@@ -931,9 +937,9 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
             cert_file = None
 
         try:
-            args = ["install", "--ignore-installed"]
+            args = ["install"] + []
             if cert_file is not None:
-                args += ["--cert", cert_file.name{}]
+                args += ["--cert", cert_file.name]
             args += sys.argv[1:]
 
             sys.exit(_main(args))
@@ -941,7 +947,7 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
             if cert_file is not None:
                 os.remove(cert_file.name)
     """.format(
-            ", '--no-cache'" if is_jython else ""
+            ", ".join(repr(i) for i in extra_args)
         )
     ).encode("utf8")
 

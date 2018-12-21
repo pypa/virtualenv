@@ -4,7 +4,7 @@ import os
 import pipes
 import subprocess
 import sys
-from os.path import dirname, join, normcase
+from os.path import dirname, join, normcase, realpath
 
 import pytest
 import six
@@ -38,17 +38,18 @@ def requires(on):
     return wrapper
 
 
-def norm_long_path(short_path_name):
+def norm_path(path):
     # python may return Windows short paths, normalize
+    path = realpath(path)
     if virtualenv.is_win:
         from ctypes import create_unicode_buffer, windll
 
         buffer_cont = create_unicode_buffer(256)
         get_long_path_name = windll.kernel32.GetLongPathNameW
-        get_long_path_name(six.text_type(short_path_name), buffer_cont, 256)  # noqa: F821
+        get_long_path_name(six.text_type(path), buffer_cont, 256)  # noqa: F821
         result = buffer_cont.value
     else:
-        result = short_path_name
+        result = path
     return normcase(result)
 
 
@@ -97,7 +98,7 @@ class Activation(object):
         return self.python_cmd("import os; print(os.environ.get({}, None))".format(val))
 
     def __call__(self, monkeypatch):
-        absolute_activate_script = norm_long_path(join(self.bin_dir, self.activate_script))
+        absolute_activate_script = norm_path(join(self.bin_dir, self.activate_script))
 
         site_packages = subprocess.check_output(
             [
@@ -146,8 +147,8 @@ class Activation(object):
 
         # post-activation
         exe = "{}.exe".format(virtualenv.expected_exe) if virtualenv.is_win else virtualenv.expected_exe
-        assert norm_long_path(out[2]) == norm_long_path(join(self.bin_dir, exe)), raw
-        assert norm_long_path(out[3]) == norm_long_path(str(self.home_dir)).replace("\\\\", "\\"), raw
+        assert norm_path(out[2]) == norm_path(join(self.bin_dir, exe)), raw
+        assert norm_path(out[3]) == norm_path(str(self.home_dir)).replace("\\\\", "\\"), raw
 
         assert out[4] == "wrote pydoc_test.html"
         content = self.path / "pydoc_test.html"
