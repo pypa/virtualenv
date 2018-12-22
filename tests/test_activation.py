@@ -20,7 +20,8 @@ def need_executable(name, check_cmd):
     def wrapper(fn):
         fn = getattr(pytest.mark, name)(fn)
         try:
-            fn.version = subprocess.check_output(check_cmd)
+            env = get_env()
+            fn.version = subprocess.check_output(check_cmd, env=env)
         except OSError:
             if IS_INSIDE_CI:
                 return fn  # let the test fail in CI
@@ -135,8 +136,7 @@ class Activation(object):
         monkeypatch.delenv(str("VIRTUAL_ENV"), raising=False)
 
         # in case the tool is provided by the dev environment (e.g. xonosh)
-        env = os.environ.copy()
-        env[str("PATH")] = os.pathsep.join([dirname(sys.executable)] + env.get(str("PATH"), str("")).split(os.pathsep))
+        env = get_env()
 
         raw = subprocess.check_output(invoke_shell, universal_newlines=True, stderr=subprocess.STDOUT, env=env)
         out = raw.strip().split("\n")
@@ -157,6 +157,12 @@ class Activation(object):
         # post deactivation, same as before
         assert out[-2] == out[0], raw
         assert out[-1] == "None", raw
+
+
+def get_env():
+    env = os.environ.copy()
+    env[str("PATH")] = os.pathsep.join([dirname(sys.executable)] + env.get(str("PATH"), str("")).split(os.pathsep))
+    return env
 
 
 class BashActivation(Activation):
@@ -221,7 +227,7 @@ def test_powershell(activation_env, monkeypatch, tmp_path):
 
 
 class XonoshActivation(Activation):
-    cmd = "xonsh"
+    cmd = "xonsh.bat" if virtualenv.is_win else "xosh"
     extension = "xsh"
     invoke_script = [cmd]
     activate_script = "activate.xsh"
