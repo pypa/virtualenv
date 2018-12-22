@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 import pipes
+import re
 import subprocess
 import sys
 from os.path import dirname, join, normcase, realpath
@@ -116,7 +117,7 @@ class Activation(object):
         commands = [
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
-            "{} {}".format(pipes.quote(self.activate_cmd), pipes.quote(absolute_activate_script)).strip(),
+            self.activate_call(absolute_activate_script),
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
             # pydoc loads documentation from the virtualenv site packages
@@ -141,7 +142,7 @@ class Activation(object):
         env.update(self.env)
 
         raw = subprocess.check_output(invoke_shell, universal_newlines=True, stderr=subprocess.STDOUT, env=env)
-        out = raw.strip().split("\n")
+        out = re.sub(r'pydev debugger: process \d+ is connecting\n\n', '', raw, re.M).strip().split('\n')
 
         # pre-activation
         assert out[0], raw
@@ -159,6 +160,9 @@ class Activation(object):
         # post deactivation, same as before
         assert out[-2] == out[0], raw
         assert out[-1] == "None", raw
+
+    def activate_call(self, script):
+        return "{} {}".format(pipes.quote(self.activate_cmd), pipes.quote(script)).strip()
 
 
 def get_env():
@@ -235,6 +239,9 @@ class XonoshActivation(Activation):
     activate_script = "activate.xsh"
     check = [sys.executable, "-m", "xonsh", "--version"]
     env = {"XONSH_DEBUG": "1", "XONSH_SHOW_TRACEBACK": "True"}
+
+    def activate_call(self, script):
+        return "{} {}".format(self.activate_cmd, repr(script)).strip()
 
 
 @pytest.mark.skipif(sys.version_info < (3, 4), reason="xonosh requires Python 3.4 at least")
