@@ -76,6 +76,7 @@ class Activation(object):
     activate_script = ""
     check_has_exe = []
     check = []
+    env = {}
 
     def __init__(self, activation_env, tmp_path):
         self.home_dir = activation_env[0]
@@ -137,6 +138,7 @@ class Activation(object):
 
         # in case the tool is provided by the dev environment (e.g. xonosh)
         env = get_env()
+        env.update(self.env)
 
         raw = subprocess.check_output(invoke_shell, universal_newlines=True, stderr=subprocess.STDOUT, env=env)
         out = raw.strip().split("\n")
@@ -227,11 +229,12 @@ def test_powershell(activation_env, monkeypatch, tmp_path):
 
 
 class XonoshActivation(Activation):
-    cmd = "xonsh.bat" if virtualenv.is_win else "xosh"
+    cmd = "xonsh"
     extension = "xsh"
-    invoke_script = [cmd]
+    invoke_script = [sys.executable, "-m", "xonsh"]
     activate_script = "activate.xsh"
-    check = [cmd, "--version"]
+    check = [sys.executable, "-m", "xonsh", "--version"]
+    env = {"XONSH_DEBUG": "1", "XONSH_SHOW_TRACEBACK": "True"}
 
 
 @pytest.mark.skipif(sys.version_info < (3, 4), reason="xonosh requires Python 3.4 at least")
