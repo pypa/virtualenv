@@ -142,7 +142,7 @@ class Activation(object):
         env.update(self.env)
 
         raw = subprocess.check_output(invoke_shell, universal_newlines=True, stderr=subprocess.STDOUT, env=env)
-        out = re.sub(r'pydev debugger: process \d+ is connecting\n\n', '', raw, re.M).strip().split('\n')
+        out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, re.M).strip().split("\n")
 
         # pre-activation
         assert out[0], raw
