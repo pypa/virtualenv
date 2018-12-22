@@ -20,14 +20,13 @@ def need_executable(name, check_cmd):
 
     def wrapper(fn):
         fn = getattr(pytest.mark, name)(fn)
-        try:
-            env = get_env()
-            fn.version = subprocess.check_output(check_cmd, env=env)
-        except (subprocess.CalledProcessError, OSError):
-            if IS_INSIDE_CI:
-                return fn  # let the test fail in CI
+        if not IS_INSIDE_CI:
             # locally we disable, so that contributors don't need to have everything setup
-            return pytest.mark.skip(reason="{} is not available".format(name))(fn)
+            # noinspection PyBroadException
+            try:
+                fn.version = subprocess.check_output(check_cmd, env=get_env())
+            except Exception as exception:
+                return pytest.mark.skip(reason="{} is not available due {}".format(name, exception))(fn)
         return fn
 
     return wrapper
