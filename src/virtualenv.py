@@ -937,7 +937,7 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
             cert_file = None
 
         try:
-            args = ["install"] + []
+            args = ["install"] + [{}]
             if cert_file is not None:
                 args += ["--cert", cert_file.name]
             args += sys.argv[1:]

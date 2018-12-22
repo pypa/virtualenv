@@ -23,7 +23,7 @@ def need_executable(name, check_cmd):
         try:
             env = get_env()
             fn.version = subprocess.check_output(check_cmd, env=env)
-        except OSError:
+        except (subprocess.CalledProcessError, OSError):
             if IS_INSIDE_CI:
                 return fn  # let the test fail in CI
             # locally we disable, so that contributors don't need to have everything setup
