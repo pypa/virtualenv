@@ -84,6 +84,7 @@ jobs:
   - linux_py27
   - linux_pypy3
   - linux_pypy
+  - linux_jython
   - macOS_py36
   - macOS_py27
   steps:
