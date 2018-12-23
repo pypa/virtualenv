@@ -61,7 +61,7 @@ class TestGetInstalledPythons:
         assert not hasattr(virtualenv, "winreg")
         assert virtualenv.get_installed_pythons() == {}
 
-    @pytest.mark.skipif(sys.platform != "win32", reason="non-windows specific test")
+    @pytest.mark.skipif(sys.platform != "win32", reason="windows specific test")
     def test_on_windows(self, monkeypatch):
         assert virtualenv.is_win
         mock_winreg = self.mock_virtualenv_winreg(
