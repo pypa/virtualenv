@@ -1,16 +1,13 @@
-"""By using execfile(this_file, dict(__file__=this_file)) you will
-activate this virtualenv environment.
+"""By using execfile(this_file, dict(__file__=this_file)) you will activate this virtualenv environment.
 
-This can be used when you must use an existing Python interpreter, not
-the virtualenv bin/python
+This can be used when you must use an existing Python interpreter, not the virtualenv bin/python.
 """
 
 try:
     __file__
 except NameError:
-    raise AssertionError(
-        "You must run this like execfile('path/to/activate_this.py', dict(__file__='path/to/activate_this.py'))"
-    )
+    file = "path/to/activate_this.py"
+    raise AssertionError("You must run this like execfile({0:!r}, {'__file__': {0:!r}})".format(file))
 import os
 import site
 import sys
@@ -21,7 +18,7 @@ base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if sys.platform == "win32":
     site_packages = os.path.join(base, "Lib", "site-packages")
 else:
-    site_packages = os.path.join(base, "lib", "python%s" % sys.version[:3], "site-packages")
+    site_packages = os.path.join(base, "lib", "python{}".format(sys.version[:3]), "site-packages")
 prev_sys_path = list(sys.path)
 
 site.addsitedir(site_packages)
