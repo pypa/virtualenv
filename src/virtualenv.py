@@ -1766,7 +1766,7 @@ def relative_script(lines):
     activate = (
         "import os; "
         "activate_this=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'activate_this.py'); "
-        "exec(compile(open(activate_this).read(), activate_this, 'exec'), dict(__file__=activate_this)); "
+        "exec(compile(open(activate_this).read(), activate_this, 'exec'), { '__file__': activate_this}); "
         "del os, activate_this"
     )
     # Find the last future statement in the script. If we insert the activation
@@ -2248,16 +2248,18 @@ xJ4EFmGbvfJiicSHFRzUSISMY6hq3GLCRLnIvSTnEefN0FIjw5tF0Hkk9Q5dRunBsVoyFi24aaLg
 # file activate_this.py
 ACTIVATE_THIS = convert(
     """
-eJyNU21r2zAQ/q5fITRKbZY5Y/0WyIcMCht0pYyuMEIQin1OtNqSkRQn/ve7k6O8dBvMkFjne+65
-u0d3QojPA995bTYcDlDWuoEsbLWXdJrwSpchk9GQcn5y5Dkf7I7vddMwVQbdqwCcvLzXLuxUA6bn
-+NPOmhZMKBh7Jm+pDF8D5oOK77dgIku784E+cXTCQftAxTwNYWsN1yaA6xzg/4QbG1jYwmWOtTbT
-LkKZEIKx4IYZ4/ikmhkcSugCf1Qt3Dtn3eh2SmPChffggrYmerLooUf8TGW5nRn7avQrnBW67VTY
-ToOdpuYlgYpuuH0r2b+ReS5iwpzptrMucOvTyesAp/PgGbNNJa2XxMXnCCyO2hYbCJl4Wjx/ERMu
-RM5QD1lpN4IIXqBlsPcs2Wrt6X2qMM/ZmW85cq0wPjG9T0weOjLOlbC1Qg3/zHSMvOZ9+fr9+cfi
-Qd4/voz0GMt0Te0VXaNCbV3L53Mu9trcfRLjLZEOmKp8VRvwF5l+WW0yYsCmH/SaeifohwRFIaDx
-8P8kzUgyTtKNF/wmFtaD8zgdy9nd6i8pcCx7ibB0LQ2Obhb7QTtnjPCFqip6ox7ZVSE5I6QD1Ujk
-qfUBCWJsNNj5mLR6x7/ZnpYM96SqcH+QrfU82PipRpFxgupoUP4ZM7C/rG65YqhxjMKtelPsqBRe
-R3TjnhHkqr/ZaTkueQvVdWCqjMLyEyLRYnst1nz0pq/L2UcagEsa9hvWn4mj
+eJydVE1v2zAMvetXENqhNpZ5wHoL0EMOBRagC4Kt7VAEgaHYdKzNlgxJSWMU/e8j/dG4Ww/FcohE
+i3x8JJ8kpVxkQR9VQDhqFw6qQnOEwjrIDs6hCaBNQNc4pP+5EHceAU+YRbZBE4VS+7TQFcaJQ5VH
+8QyeLtLuS5pezOHl/DlOhLglCzJlYIdw8JjDY4kGWnuA+uADfwI6xJP2QZs9rNtQWjPNPwNjA4G+
+4rrT5nPTuSZCSil03VgXwPpx53XAl33rhQiunQug38hU4CnDJsBK1XjtnHX9sVOaKC28Rxe0Nd1J
+JB+mfP+rFbGMhfgAVBMF5lwABAvrxe1X6GCA3YBWbbzOsSuYnXLtMAvWtbEgMyUTrqjOpFGhTMgy
+RD8abbXzvEYjhTgWdEQN086ajeRscnuO99gkv6w20WaA3sJHOAckewxRHzQDKePEN5UO0TmY4MVO
+UUf+ZTQAdjUPcwMeHBXo9L4MoHb2+FeFr7jeL7/f3i1u0uvVfUeZ8zCYyvOpGGAIqEm1vpv6p0Zl
+v9Ueub3sWFoaWzPIqhdEjVmpjPa1WP5I1w/rB8IvlVchuIjEQsU2bdOmR3SeJJBqU1iaHvn+XK7I
+lVySplKBLkwNV1cgH7W5/EIiLGDA66XEbNKBjZ/0qGs510OJpow9JcHKYx/do1HG3nwv4I3eyTdw
+OfyM/V6wqgfru/f0LBMuWQVuUjJ0ZzO/3MZvJBSk9CM3C3t3xo4FeyU0Ql5p7tErEnRMjnSRqpSC
+C30ae90Z4rydyOEbq4jHTKD0uBBc7cfJF6QLehOKzuD8M7pcQJPLUBh8JJSKXp0pu2G3mbPiNrp7
+EjUHsTsNRHdvEYNQcXxZ3vQZz8UfOZfTng==
 """
 )
 

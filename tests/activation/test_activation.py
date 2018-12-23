@@ -54,19 +54,6 @@ def norm_path(path):
     return normcase(result)
 
 
-@pytest.fixture(scope="session")
-def activation_env(tmp_path_factory):
-    path = tmp_path_factory.mktemp("activation-test-env")
-    prev_cwd = os.getcwd()
-    try:
-        os.chdir(str(path))
-        home_dir, _, __, bin_dir = virtualenv.path_locations(str(path / "env"))
-        virtualenv.create_environment(home_dir, no_pip=True, no_setuptools=True, no_wheel=True)
-        yield home_dir, bin_dir
-    finally:
-        os.chdir(str(prev_cwd))
-
-
 class Activation(object):
     cmd = ""
     extension = "test"
@@ -101,17 +88,6 @@ class Activation(object):
 
     def __call__(self, monkeypatch):
         absolute_activate_script = norm_path(join(self.bin_dir, self.activate_script))
-
-        site_packages = subprocess.check_output(
-            [
-                os.path.join(self.bin_dir, virtualenv.EXPECTED_EXE),
-                "-c",
-                "from distutils.sysconfig import get_python_lib; print(get_python_lib())",
-            ],
-            universal_newlines=True,
-        ).strip()
-        pydoc_test = self.path.__class__(site_packages) / "pydoc_test.py"
-        pydoc_test.write_text('"""This is pydoc_test.py"""')
 
         commands = [
             self.print_python_exe(),

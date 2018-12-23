@@ -230,18 +230,19 @@ def test_activate_after_future_statements():
         "from __future__ import print_function",
         'print("Hello, world!")',
     ]
-    assert virtualenv.relative_script(script) == [
+    out = virtualenv.relative_script(script)
+    assert out == [
         "#!/usr/bin/env python",
         "from __future__ import with_statement",
         "from __future__ import print_function",
         "",
         "import os; "
         "activate_this=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'activate_this.py'); "
-        "exec(compile(open(activate_this).read(), activate_this, 'exec'), dict(__file__=activate_this)); "
+        "exec(compile(open(activate_this).read(), activate_this, 'exec'), { '__file__': activate_this}); "
         "del os, activate_this",
         "",
         'print("Hello, world!")',
-    ]
+    ], out
 
 
 def test_cop_update_defaults_with_store_false():
