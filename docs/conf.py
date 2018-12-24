@@ -1,10 +1,13 @@
 from __future__ import absolute_import, unicode_literals
+
 import os
 import re
 import subprocess
 import sys
-from virtualenv import __version__
 from pathlib import Path
+
+from virtualenv import __version__
+
 extensions = ["sphinx.ext.autodoc", "sphinx.ext.extlinks"]
 source_suffix = ".rst"
 master_doc = "index"
@@ -45,6 +48,7 @@ release = __version__
 today_fmt = "%B %d, %Y"
 unused_docs = []
 pygments_style = "sphinx"
+exclude_patterns = ["changelog/*"]
 
 extlinks = {
     "issue": ("https://github.com/pypa/virtualenv/issues/%s", "#"),
