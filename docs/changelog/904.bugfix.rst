@@ -1,0 +1,1 @@
+Fix preserving of original path when using fish and a subshell.

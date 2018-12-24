@@ -128,7 +128,7 @@ setup(
             'xonsh; python_version>="3.4"',
             "six >= 1.10.0, < 2",
         ],
-        "docs": ["sphinx >= 1.8.0, < 2"],
+        "docs": ["sphinx >= 1.8.0, < 2", "towncrier >= 18.5.0"],
     },
     **setup_params
 )
