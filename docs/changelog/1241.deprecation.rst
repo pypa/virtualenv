@@ -1,0 +1,1 @@
+Using the project directly from the source layout is now deprecated. Going ahead people wanting to use the project without installing the virtualenv are encouraged to download the wheel from PyPi and extract it to access the ``virtualenv.py`` file. We'll be switching to a ``src`` layout with next release.
