@@ -52,25 +52,7 @@ def read_file(*paths):
 # Get long_description from index.rst:
 long_description_full = read_file("docs", "index.rst")
 long_description = long_description_full.strip().split("split here", 1)[0]
-# Add release history
-changes = read_file("docs", "changes.rst")
-# Only report last two releases for brevity
-releases_found = 0
-change_lines = []
-for line in changes.splitlines():
-    change_lines.append(line)
-    if line.startswith("--------------"):
-        releases_found += 1
-    if releases_found > 2:
-        break
-
-changes = "\n".join(change_lines[:-2]) + "\n"
-changes += "`Full Changelog <https://virtualenv.pypa.io/en/latest/changes.html>`_."
-# Replace issue/pull directives
-changes = re.sub(r":pull:`(\d+)`", r"PR #\1", changes)
-changes = re.sub(r":issue:`(\d+)`", r"#\1", changes)
-
-long_description += "\n\n" + changes
+long_description += "\n\n`Read the changelog here <https://virtualenv.pypa.io/en/latest/changes.html>`_."
 
 
 def get_version():
