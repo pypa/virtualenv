@@ -12,6 +12,10 @@ Release History
 * Fix preserving of original path when using fish and a subshell :issue:`904`
 * ``powershell`` now also provides the ``pydoc`` function that uses the virtual environments ``pydoc``
 * ``powershell`` activator is no longer signed :issue:`816`
+* Set ``VIRTUAL_ENV`` enviroment variable in ``activate_this.py``. (:pull:`1057`)
+* Recommend ``exec(open(this_file).read(), {'__file__': this_file})`` to activate via ``activate_this.py`` as it works both
+  on Python 2 and 3.
+* ``pypy``, ``pypy3`` and ``jython`` supports ``activate_this.py``
 
 16.1.0 (2018-10-31)
 -------------------

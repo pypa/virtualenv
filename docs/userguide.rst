@@ -195,7 +195,7 @@ the path is correct. A script is available to correct the path. You
 can setup the environment like::
 
     activate_this = '/path/to/env/bin/activate_this.py'
-    execfile(activate_this, dict(__file__=activate_this))
+    exec(open(activate_this).read(), {'__file__': activate_this}))
 
 This will change ``sys.path`` and even change ``sys.prefix``, but also allow
 you to use an existing interpreter. Items in your environment will show up
