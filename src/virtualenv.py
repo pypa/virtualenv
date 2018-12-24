@@ -584,7 +584,9 @@ def main():
         version=virtualenv_version, usage="%prog [OPTIONS] DEST_DIR", formatter=UpdatingDefaultsHelpFormatter()
     )
 
-    parser.add_option("-v", "--verbose", action="count", dest="verbose", default=0, help="Increase verbosity.")
+    parser.add_option(
+        "-v", "--verbose", action="count", dest="verbose", default=5 if DEBUG else 0, help="Increase verbosity."
+    )
 
     parser.add_option("-q", "--quiet", action="count", dest="quiet", default=0, help="Decrease verbosity.")
 
@@ -2248,18 +2250,18 @@ xJ4EFmGbvfJiicSHFRzUSISMY6hq3GLCRLnIvSTnEefN0FIjw5tF0Hkk9Q5dRunBsVoyFi24aaLg
 # file activate_this.py
 ACTIVATE_THIS = convert(
     """
-eJydVE1v2zAMvetXENqhNpZ5wHoL0EMOBRagC4Kt7VAEgaHYdKzNlgxJSWMU/e8j/dG4Ww/FcohE
-i3x8JJ8kpVxkQR9VQDhqFw6qQnOEwjrIDs6hCaBNQNc4pP+5EHceAU+YRbZBE4VS+7TQFcaJQ5VH
-8QyeLtLuS5pezOHl/DlOhLglCzJlYIdw8JjDY4kGWnuA+uADfwI6xJP2QZs9rNtQWjPNPwNjA4G+
-4rrT5nPTuSZCSil03VgXwPpx53XAl33rhQiunQug38hU4CnDJsBK1XjtnHX9sVOaKC28Rxe0Nd1J
-JB+mfP+rFbGMhfgAVBMF5lwABAvrxe1X6GCA3YBWbbzOsSuYnXLtMAvWtbEgMyUTrqjOpFGhTMgy
-RD8abbXzvEYjhTgWdEQN086ajeRscnuO99gkv6w20WaA3sJHOAckewxRHzQDKePEN5UO0TmY4MVO
-UUf+ZTQAdjUPcwMeHBXo9L4MoHb2+FeFr7jeL7/f3i1u0uvVfUeZ8zCYyvOpGGAIqEm1vpv6p0Zl
-v9Ueub3sWFoaWzPIqhdEjVmpjPa1WP5I1w/rB8IvlVchuIjEQsU2bdOmR3SeJJBqU1iaHvn+XK7I
-lVySplKBLkwNV1cgH7W5/EIiLGDA66XEbNKBjZ/0qGs510OJpow9JcHKYx/do1HG3nwv4I3eyTdw
-OfyM/V6wqgfru/f0LBMuWQVuUjJ0ZzO/3MZvJBSk9CM3C3t3xo4FeyU0Ql5p7tErEnRMjnSRqpSC
-C30ae90Z4rydyOEbq4jHTKD0uBBc7cfJF6QLehOKzuD8M7pcQJPLUBh8JJSKXp0pu2G3mbPiNrp7
-EjUHsTsNRHdvEYNQcXxZ3vQZz8UfOZfTng==
+eJylVE1v2zAMvetXENqhNpZ5wHoL0EMOBdqh64Kt3RAEhaE4TMzOlgxJ+ULR/z7Sdpr041BsOUSS
+9fj0SD5Jaz0qIq1NRFiTjytToV3DwnkoVt6jjUA2om888v9QqduAgFssEtegTWJJIV9QhWnm0cyT
+dAAPJ3n7Jc9PhvC0/5hmSt3wCgpjYYawCjiHTYkWdm4F9SpE+QS8iVsKkewSxrtYOnt8/gCsi0z6
+TOuM7OemhWZKa62obpyP4MJ+Fiji03wXlIp+N1TAv71ShdsCmwjXpsZz753vtr0hljQKAX0kZ9ud
+RE+O9f5TKVKdKvUBOCcOnEsCEB2MRzcX0NKAwIBHsoHm2CYsoDl5LKLzu1TxMuclnHGeWWNimfHK
+svxkvzazIGOyl5Cmire4YOSdnWo5Td8d4gM22b0jm0x76jv4CIeAbIkx6YIGoHWahaaimByCmV7N
+DFfktaKesM257xtI4zhBT8sygpm59YsMn2n9dfnj5nZ0lZ9f/2olyzlCZubzYzNAH1Cza0Pb9U+N
+Kf6YJUp5BVg6blvT26ozRI1FaSyFWl3+zMeT8YT5SxNMjD5hs3Cyza7Z5Wv0gS2Qk1047h5jv05u
+Lr5fM5pRWVOZyHemzkI0PoYNceH1vVkbxtICnuCdr0Ra3ksLRwVr6y/J8alXNJNKH2cRmAyrjk6U
+vp/sNUvALpqpfl++zALOzkBvyJ5+0S2oO5JxXcx/piDhBwHvJas6sq55D486E6EmSo+yvjnT4eld
++saBii/aWlLEDi7cqRJUxg6SkW2XPBPB2wzke1zlHLyg7b5C7UIdpkdu/CYmFpcxKb9tTFeHvfEW
+bEt+khbtQs4f8N0GrneByuKGWSp+9I7V9bPpUAw/pfZFJgkSODeE2qdQSDg5uatvYvb76i9zKfxE
 """
 )
 

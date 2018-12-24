@@ -24,10 +24,13 @@ os.environ["VIRTUAL_ENV"] = base
 
 # add the virtual environments site-package to the host python import mechanism
 IS_PYPY = hasattr(sys, "pypy_version_info")
-IS_WIN = sys.platform == "win32"
-if IS_PYPY:
+IS_JYTHON = sys.platform.startswith("java")
+if IS_JYTHON:
+    site_packages = os.path.join(base, "Lib", "site-packages")
+elif IS_PYPY:
     site_packages = os.path.join(base, "site-packages")
 else:
+    IS_WIN = sys.platform == "win32"
     if IS_WIN:
         site_packages = os.path.join(base, "Lib", "site-packages")
     else:

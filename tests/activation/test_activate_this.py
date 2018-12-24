@@ -21,12 +21,18 @@ import subprocess
 import sys
 import textwrap
 
+import virtualenv
+
 
 def test_activate_this(activation_env, tmp_path, monkeypatch):
     # to test this, we'll try to use the activation env from this Python
     monkeypatch.delenv(str("VIRTUAL_ENV"), raising=False)
     monkeypatch.delenv(str("PYTHONPATH"), raising=False)
-    start_path = os.pathsep.join([str(tmp_path), str(tmp_path / "other")])
+    paths = [str(tmp_path), str(tmp_path / "other")]
+    if virtualenv.IS_JYTHON:
+        # jython calls OS commands to determine environment, so need path access
+        paths += os.getenv(str("PATH"), "").split(os.pathsep)
+    start_path = os.pathsep.join(paths)
     monkeypatch.setenv(str("PATH"), start_path)
     activator = tmp_path.__class__(activation_env[1]) / "activate_this.py"
     assert activator.exists()
@@ -83,7 +89,7 @@ def test_activate_this(activation_env, tmp_path, monkeypatch):
         assert tmp_path.__class__(extra_start[0]).exists()
 
         # manage to import from activate site package
-        assert out[6] == str(activation_env[2])
+        assert os.path.realpath(out[6]) == os.path.realpath(str(activation_env[2]))
     except subprocess.CalledProcessError as exception:
         assert not exception.returncode, exception.output
 

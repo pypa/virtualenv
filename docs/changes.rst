@@ -15,7 +15,7 @@ Release History
 * Set ``VIRTUAL_ENV`` enviroment variable in ``activate_this.py``. (:pull:`1057`)
 * Recommend ``exec(open(this_file).read(), {'__file__': this_file})`` to activate via ``activate_this.py`` as it works both
   on Python 2 and 3.
-* ``pypy`` and ``pypy3`` supports ``activate_this.py``
+* ``pypy``, ``pypy3`` and ``jython`` supports ``activate_this.py``
 
 16.1.0 (2018-10-31)
 -------------------
