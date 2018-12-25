@@ -15,7 +15,7 @@ repos:
     rev: v1.3.0
     hooks:
     -   id: seed-isort-config
-        args: [--application-directories, '.:src']
+        args: [--application-directories, '.']
 -   repo: https://github.com/pre-commit/mirrors-isort
     rev: v4.3.4
     hooks:

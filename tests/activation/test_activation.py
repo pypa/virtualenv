@@ -156,8 +156,8 @@ class BashActivation(Activation):
 
 @pytest.mark.skipif(sys.platform == "win32", reason="no sane way to provision bash on Windows yet")
 @requires(BashActivation)
-def test_bash(activation_env, monkeypatch, tmp_path):
-    BashActivation(activation_env, tmp_path)(monkeypatch)
+def test_bash(clean_python, monkeypatch, tmp_path):
+    BashActivation(clean_python, tmp_path)(monkeypatch)
 
 
 class CshActivation(Activation):
@@ -170,8 +170,8 @@ class CshActivation(Activation):
 
 @pytest.mark.skipif(sys.platform == "win32", reason="no sane way to provision csh on Windows yet")
 @requires(CshActivation)
-def test_csh(activation_env, monkeypatch, tmp_path):
-    CshActivation(activation_env, tmp_path)(monkeypatch)
+def test_csh(clean_python, monkeypatch, tmp_path):
+    CshActivation(clean_python, tmp_path)(monkeypatch)
 
 
 class FishActivation(Activation):
@@ -184,8 +184,8 @@ class FishActivation(Activation):
 
 @pytest.mark.skipif(sys.platform == "win32", reason="no sane way to provision fish on Windows yet")
 @requires(FishActivation)
-def test_fish(activation_env, monkeypatch, tmp_path):
-    FishActivation(activation_env, tmp_path)(monkeypatch)
+def test_fish(clean_python, monkeypatch, tmp_path):
+    FishActivation(clean_python, tmp_path)(monkeypatch)
 
 
 class PowershellActivation(Activation):
@@ -202,8 +202,8 @@ class PowershellActivation(Activation):
 
 
 @requires(PowershellActivation)
-def test_powershell(activation_env, monkeypatch, tmp_path):
-    PowershellActivation(activation_env, tmp_path)(monkeypatch)
+def test_powershell(clean_python, monkeypatch, tmp_path):
+    PowershellActivation(clean_python, tmp_path)(monkeypatch)
 
 
 class XonoshActivation(Activation):
@@ -220,5 +220,5 @@ class XonoshActivation(Activation):
 
 @pytest.mark.skipif(sys.version_info < (3, 4), reason="xonosh requires Python 3.4 at least")
 @requires(XonoshActivation)
-def test_xonosh(activation_env, monkeypatch, tmp_path):
-    XonoshActivation(activation_env, tmp_path)(monkeypatch)
+def test_xonosh(clean_python, monkeypatch, tmp_path):
+    XonoshActivation(clean_python, tmp_path)(monkeypatch)

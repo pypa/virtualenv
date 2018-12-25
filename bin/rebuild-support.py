@@ -8,7 +8,7 @@ import subprocess
 
 
 def virtualenv_support_path():
-    return os.path.join(os.path.dirname(__file__), "../src/virtualenv_support")
+    return os.path.join(os.path.dirname(__file__), "../virtualenv_support")
 
 
 def collect_wheels():

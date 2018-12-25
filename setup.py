@@ -39,7 +39,7 @@ except ImportError:
         print("Note: without Setuptools installed you will " 'have to use "python -m virtualenv ENV"')
         setup_params = {}
     else:
-        script = "src/scripts/virtualenv"
+        script = "scripts/virtualenv"
         setup_params = {"scripts": [script]}
 
 
@@ -56,7 +56,7 @@ long_description += "\n\n`Read the changelog here <https://virtualenv.pypa.io/en
 
 
 def get_version():
-    version_file = read_file(os.path.join("src", "virtualenv.py"))
+    version_file = read_file(os.path.realpath(os.path.join(".", "virtualenv.py")))
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
     if version_match:
         return version_match.group(1)
@@ -96,9 +96,9 @@ setup(
     maintainer_email="python-virtualenv@groups.google.com",
     url="https://virtualenv.pypa.io/",
     license="MIT",
-    package_dir={"": "src"},
+    package_dir={"": "."},
     py_modules=["virtualenv"],
-    packages=find_packages("src"),
+    packages=find_packages("."),
     package_data={"virtualenv_support": ["*.whl"]},
     python_requires=">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*",
     extras_require={
@@ -110,7 +110,7 @@ setup(
             'xonsh; python_version>="3.4"',
             "six >= 1.10.0, < 2",
         ],
-        "docs": ["sphinx >= 1.8.0, < 2", "towncrier >= 18.5.0"],
+        "docs": ["sphinx >= 1.8.0, < 2", "towncrier >= 18.5.0", "sphinx_rtd_theme >= 0.4.2, < 1"],
     },
     **setup_params
 )

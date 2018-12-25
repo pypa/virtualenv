@@ -55,15 +55,19 @@ extlinks = {
     "pull": ("https://github.com/pypa/virtualenv/pull/%s", "PR #"),
 }
 
-html_theme = "default"
-on_rtd = os.environ.get("READTHEDOCS", None) == "True"
-if not on_rtd:
-    try:
-        import sphinx_rtd_theme
-
-        html_theme = "sphinx_rtd_theme"
-        html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-    except ImportError:
-        pass
+html_theme = "sphinx_rtd_theme"
+html_theme_options = {
+    "canonical_url": "https://virtualenv.pypa.io/en/latest/",
+    "logo_only": False,
+    "display_version": True,
+    "prev_next_buttons_location": "bottom",
+    "style_external_links": True,
+    # Toc options
+    "collapse_navigation": True,
+    "sticky_navigation": True,
+    "navigation_depth": 4,
+    "includehidden": True,
+    "titles_only": False,
+}
 html_last_updated_fmt = "%b %d, %Y"
 htmlhelp_basename = "Pastedoc"

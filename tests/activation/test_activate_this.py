@@ -24,7 +24,7 @@ import textwrap
 import virtualenv
 
 
-def test_activate_this(activation_env, tmp_path, monkeypatch):
+def test_activate_this(clean_python, tmp_path, monkeypatch):
     # to test this, we'll try to use the activation env from this Python
     monkeypatch.delenv(str("VIRTUAL_ENV"), raising=False)
     monkeypatch.delenv(str("PYTHONPATH"), raising=False)
@@ -34,7 +34,7 @@ def test_activate_this(activation_env, tmp_path, monkeypatch):
         paths += os.getenv(str("PATH"), "").split(os.pathsep)
     start_path = os.pathsep.join(paths)
     monkeypatch.setenv(str("PATH"), start_path)
-    activator = tmp_path.__class__(activation_env[1]) / "activate_this.py"
+    activator = tmp_path.__class__(clean_python[1]) / "activate_this.py"
     assert activator.exists()
 
     activator_at = str(activator)
@@ -74,28 +74,28 @@ def test_activate_this(activation_env, tmp_path, monkeypatch):
         assert out[1] == start_path
         prev_sys_path = out[2].split(os.path.pathsep)
 
-        assert out[3] == activation_env[0]  # virtualenv set as the activated env
+        assert out[3] == clean_python[0]  # virtualenv set as the activated env
 
         # PATH updated with activated
         assert out[4].endswith(start_path)
-        assert out[4][: -len(start_path)].split(os.pathsep) == [activation_env[1], ""]
+        assert out[4][: -len(start_path)].split(os.pathsep) == [clean_python[1], ""]
 
         # sys path contains the site package at its start
         new_sys_path = out[5].split(os.path.pathsep)
         assert new_sys_path[-len(prev_sys_path) :] == prev_sys_path
         extra_start = new_sys_path[0 : -len(prev_sys_path)]
         assert len(extra_start) == 1
-        assert extra_start[0].startswith(activation_env[0])
+        assert extra_start[0].startswith(clean_python[0])
         assert tmp_path.__class__(extra_start[0]).exists()
 
         # manage to import from activate site package
-        assert os.path.realpath(out[6]) == os.path.realpath(str(activation_env[2]))
+        assert os.path.realpath(out[6]) == os.path.realpath(str(clean_python[2]))
     except subprocess.CalledProcessError as exception:
         assert not exception.returncode, exception.output
 
 
-def test_activate_this_no_file(activation_env, tmp_path, monkeypatch):
-    activator = tmp_path.__class__(activation_env[1]) / "activate_this.py"
+def test_activate_this_no_file(clean_python, tmp_path, monkeypatch):
+    activator = tmp_path.__class__(clean_python[1]) / "activate_this.py"
     assert activator.exists()
     try:
         subprocess.check_output(

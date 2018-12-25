@@ -9,7 +9,7 @@ import virtualenv
 
 
 @pytest.fixture(scope="session")
-def activation_env(tmp_path_factory):
+def clean_python(tmp_path_factory):
     path = tmp_path_factory.mktemp("activation-test-env")
     prev_cwd = os.getcwd()
     try:
@@ -28,7 +28,7 @@ def activation_env(tmp_path_factory):
 
         pydoc_test = path.__class__(site_packages) / "pydoc_test.py"
         pydoc_test.write_text('"""This is pydoc_test.py"""')
-
-        yield home_dir, bin_dir, pydoc_test
     finally:
         os.chdir(str(prev_cwd))
+
+    yield home_dir, bin_dir, pydoc_test

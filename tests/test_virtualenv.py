@@ -1,3 +1,5 @@
+from __future__ import absolute_import, unicode_literals
+
 import optparse
 import os
 import shutil
@@ -371,7 +373,7 @@ def test_missing_certifi_pem(tmp_path):
     patched to not use certifi's cacert.pem and the file is removed.
     This can happen if pip is packaged by Linux distributions."""
     proj_dir = Path(__file__).parent.parent
-    support_original = proj_dir / "src" / "virtualenv_support"
+    support_original = proj_dir / "virtualenv_support"
     pip_wheel = sorted(support_original.glob("pip*whl"))[0]
     whl_name = pip_wheel.name
 
