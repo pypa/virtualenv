@@ -10,3 +10,4 @@ include scripts/*
 include *.py
 include AUTHORS.txt
 include LICENSE.txt
+include pyproject.toml
