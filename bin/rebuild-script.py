@@ -2,77 +2,86 @@
 """
 Helper script to rebuild virtualenv.py from virtualenv_support
 """
-from __future__ import print_function
+from __future__ import print_function, unicode_literals
 
 import codecs
 import os
 import re
+import sys
 from zlib import crc32 as _crc32
+
+if sys.version_info < (3,):
+    print("requires Python 3 (use tox from Python 3 if invoked via tox)")
+    raise SystemExit(1)
 
 
 def crc32(data):
     """Python version idempotent"""
-    return _crc32(data) & 0xFFFFFFFF
+    return _crc32(data.encode()) & 0xFFFFFFFF
 
 
-here = os.path.dirname(__file__)
-script = os.path.join(here, "..", "virtualenv.py")
+here = os.path.realpath(os.path.dirname(__file__))
+script = os.path.realpath(os.path.join(here, "..", "virtualenv.py"))
 
 gzip = codecs.lookup("zlib")
 b64 = codecs.lookup("base64")
 
-file_regex = re.compile(br'# file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+) = convert\(\n    """\n(.*?)"""\n\)', re.S)
-file_template = b'# file %(filename)s\n%(variable)s = convert(\n    """\n%(data)s"""\n)'
+file_regex = re.compile(r'# file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+) = convert\(\n    """\n(.*?)"""\n\)', re.S)
+file_template = '# file {filename}\n{variable} = convert(\n    """\n{data}"""\n)'
 
 
 def rebuild(script_path):
-    exit_code = 0
-    with open(script_path, "rb") as f:
-        script_content = f.read()
-    parts = []
-    last_pos = 0
-    match = None
-    _count = 0
-    for _count, match in enumerate(file_regex.finditer(script_content)):
-        parts += [script_content[last_pos : match.start()]]
-        last_pos = match.end()
-        filename, fn_decoded = match.group(1), match.group(1).decode()
-        variable = match.group(2)
-        data = match.group(3)
+    with open(script_path, "rt") as current_fh:
+        script_content = current_fh.read()
+    script_parts = []
+    match_end = 0
+    next_match = None
+    _count, did_update = 0, False
+    for _count, next_match in enumerate(file_regex.finditer(script_content)):
+        script_parts += [script_content[match_end : next_match.start()]]
+        match_end = next_match.end()
+        filename, variable_name, previous_encoded = next_match.group(1), next_match.group(2), next_match.group(3)
+        differ, content = handle_file(next_match.group(0), filename, variable_name, previous_encoded)
+        script_parts.append(content)
+        if differ:
+            did_update = True
 
-        print("Found file %s" % fn_decoded)
-        pathname = os.path.join(here, "..", "virtualenv_embedded", fn_decoded)
+    script_parts += [script_content[match_end:]]
+    new_content = "".join(script_parts)
 
-        with open(pathname, "rb") as f:
-            embedded = f.read()
-        new_crc = crc32(embedded)
-        new_data = b64.encode(gzip.encode(embedded)[0])[0]
+    report(1 if not _count or did_update else 0, new_content, next_match, script_content, script_path)
 
-        if new_data == data:
-            print("  File up to date (crc: %08x)" % new_crc)
-            parts += [match.group(0)]
-            continue
-        exit_code = 1
-        # Else: content has changed
-        crc = crc32(gzip.decode(b64.decode(data)[0])[0])
-        print("  Content changed (crc: {:08x} -> {:08x})".format(crc, new_crc))
-        new_match = file_template % {b"filename": filename, b"variable": variable, b"data": new_data}
-        parts += [new_match]
 
-    parts += [script_content[last_pos:]]
-    new_content = b"".join(parts)
+def handle_file(previous_content, filename, variable_name, previous_encoded):
+    print("Found file {}".format(filename))
+    current_path = os.path.realpath(os.path.join(here, "..", "virtualenv_embedded", filename))
+    _, file_type = os.path.splitext(current_path)
+    keep_line_ending = file_type in (".bat", ".ps1")
+    with open(current_path, "rt", encoding="utf-8", newline="" if keep_line_ending else None) as current_fh:
+        current_text = current_fh.read()
+    current_crc = crc32(current_text)
+    current_encoded = b64.encode(gzip.encode(current_text.encode())[0])[0].decode()
+    if current_encoded == previous_encoded:
+        print("  File up to date (crc: {:08x})".format(current_crc))
+        return False, previous_content
+    # Else: content has changed
+    previous_text = gzip.decode(b64.decode(previous_encoded.encode())[0])[0].decode()
+    previous_crc = crc32(previous_text)
+    print("  Content changed (crc: {:08x} -> {:08x})".format(previous_crc, current_crc))
+    new_part = file_template.format(filename=filename, variable=variable_name, data=current_encoded)
+    return True, new_part
 
-    if new_content != script_content:
+
+def report(exit_code, new, next_match, current, script_path):
+    if new != current:
         print("Content updated; overwriting... ", end="")
-        with open(script_path, "wb") as f:
-            f.write(new_content)
+        with open(script_path, "wt") as current_fh:
+            current_fh.write(new)
         print("done.")
     else:
         print("No changes in content")
-    if match is None:
+    if next_match is None:
         print("No variables were matched/found")
-    if not _count:
-        exit_code = 1
     raise SystemExit(exit_code)
 
 
