@@ -1881,6 +1881,9 @@ def make_relative_path(source, dest, dest_is_directory=True):
     return os.path.sep.join(full_parts)
 
 
+FILE_PATH = __file__ if os.path.isabs(__file__) else os.path.join(os.getcwd(), __file__)
+
+
 # Bootstrap script creation:
 def create_bootstrap_script(extra_text, python_version=""):
     """
@@ -1922,17 +1925,20 @@ def create_bootstrap_script(extra_text, python_version=""):
     ``#!/usr/bin/env python``.  You can use this when the script must
     be run with a particular Python version.
     """
-    filename = __file__
+    filename = FILE_PATH
     if filename.endswith(".pyc"):
         filename = filename[:-1]
     with codecs.open(filename, "r", encoding="utf-8") as f:
         content = f.read()
     py_exe = "python{}".format(python_version)
     content = "#!/usr/bin/env {}\n# WARNING: This file is generated\n{}".format(py_exe, content)
-    return content.replace("##EXT" "END##", extra_text)
+    # we build the string as two, to avoid replacing here, but yes further done
+    return content.replace("# EXTEND - " "bootstrap here", extra_text)
 
 
-# EXTEND
+# EXTEND - bootstrap here
+
+
 def convert(s):
     b = base64.b64decode(s.encode("ascii"))
     return zlib.decompress(b).decode("utf-8")
@@ -2429,7 +2435,3 @@ def mach_o_change(at_path, what, value):
 
 if __name__ == "__main__":
     main()
-
-# TODO:
-# Copy python.exe.manifest
-# Monkeypatch distutils.sysconfig
