@@ -1,6 +1,7 @@
 """
 Helper script to rebuild virtualenv_support. Downloads the wheel files using pip
 """
+from __future__ import absolute_import, unicode_literals
 
 import glob
 import os
@@ -8,20 +9,20 @@ import subprocess
 
 
 def virtualenv_support_path():
-    return os.path.join(os.path.dirname(__file__), "../virtualenv_support")
+    return os.path.join(os.path.dirname(__file__), "..", "virtualenv_support")
 
 
 def collect_wheels():
-    for file in glob.glob(virtualenv_support_path() + "/*.whl"):
-        name, version = os.path.basename(file).split("-")[:2]
-        yield file, name, version
+    for filename in glob.glob(os.path.join(virtualenv_support_path(), "*.whl")):
+        name, version = os.path.basename(filename).split("-")[:2]
+        yield filename, name, version
 
 
 def remove_wheel_files():
     old_versions = {}
-    for file, name, version in collect_wheels():
+    for filename, name, version in collect_wheels():
         old_versions[name] = version
-        os.remove(file)
+        os.remove(filename)
     return old_versions
 
 
