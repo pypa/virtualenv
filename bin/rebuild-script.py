@@ -21,13 +21,13 @@ script = os.path.join(here, "..", "virtualenv.py")
 gzip = codecs.lookup("zlib")
 b64 = codecs.lookup("base64")
 
-file_regex = re.compile(br'# file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+) = convert\(\n    """\n(.*?)"""\n\)', re.S)
-file_template = b'# file %(filename)s\n%(variable)s = convert(\n    """\n%(data)s"""\n)'
+file_regex = re.compile(r'# file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+) = convert\(\n    """\n(.*?)"""\n\)', re.S)
+file_template = '# file {filename}\n{variable} = convert(\n    """\n{data}"""\n)'
 
 
 def rebuild(script_path):
     exit_code = 0
-    with open(script_path, "rb") as f:
+    with open(script_path, "rt") as f:
         script_content = f.read()
     parts = []
     last_pos = 0
@@ -36,35 +36,35 @@ def rebuild(script_path):
     for _count, match in enumerate(file_regex.finditer(script_content)):
         parts += [script_content[last_pos : match.start()]]
         last_pos = match.end()
-        filename, fn_decoded = match.group(1), match.group(1).decode()
+        filename, fn_decoded = match.group(1), match.group(1)
         variable = match.group(2)
         data = match.group(3)
 
-        print("Found file %s" % fn_decoded)
+        print("Found file {}".format(fn_decoded))
         pathname = os.path.join(here, "..", "virtualenv_embedded", fn_decoded)
 
         with open(pathname, "rb") as f:
             embedded = f.read()
         new_crc = crc32(embedded)
-        new_data = b64.encode(gzip.encode(embedded)[0])[0]
+        new_data = b64.encode(gzip.encode(embedded)[0])[0].decode()
 
         if new_data == data:
-            print("  File up to date (crc: %08x)" % new_crc)
+            print("  File up to date (crc: {:08x})".format(new_crc))
             parts += [match.group(0)]
             continue
         exit_code = 1
         # Else: content has changed
-        crc = crc32(gzip.decode(b64.decode(data)[0])[0])
+        crc = crc32(gzip.decode(b64.decode(data.encode())[0])[0])
         print("  Content changed (crc: {:08x} -> {:08x})".format(crc, new_crc))
-        new_match = file_template % {b"filename": filename, b"variable": variable, b"data": new_data}
+        new_match = file_template.format(filename=filename, variable=variable, data=new_data)
         parts += [new_match]
 
     parts += [script_content[last_pos:]]
-    new_content = b"".join(parts)
+    new_content = "".join(parts)
 
     if new_content != script_content:
         print("Content updated; overwriting... ", end="")
-        with open(script_path, "wb") as f:
+        with open(script_path, "wt") as f:
             f.write(new_content)
         print("done.")
     else:
