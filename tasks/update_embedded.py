@@ -56,7 +56,7 @@ def handle_file(previous_content, filename, variable_name, previous_encoded):
     print("Found file {}".format(filename))
     current_path = os.path.realpath(os.path.join(here, "..", "virtualenv_embedded", filename))
     _, file_type = os.path.splitext(current_path)
-    keep_line_ending = file_type in (".bat", ".ps1")
+    keep_line_ending = file_type in (".bat",)
     with open(current_path, "rt", encoding="utf-8", newline="" if keep_line_ending else None) as current_fh:
         current_text = current_fh.read()
     current_crc = crc32(current_text)
