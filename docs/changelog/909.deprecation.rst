@@ -1,0 +1,1 @@
+Using ``python setup.py test`` is now marked as deprecated and will be removed in next release. Use ``tox`` instead, always.

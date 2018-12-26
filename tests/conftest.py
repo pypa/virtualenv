@@ -2,10 +2,18 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 import subprocess
+import sys
 
 import pytest
 
 import virtualenv
+
+try:
+    from pathlib import Path
+except ImportError:
+    from pathlib2 import Path
+
+ROOT_DIR = Path(__file__).parents[1]
 
 
 @pytest.fixture(scope="session")
@@ -32,3 +40,57 @@ def clean_python(tmp_path_factory):
         os.chdir(str(prev_cwd))
 
     yield home_dir, bin_dir, pydoc_test
+
+
+@pytest.fixture()
+def sdist(tmp_path):
+    """make assertions on what we package"""
+    import tarfile
+
+    path = os.environ.get("TOX_PACKAGE")
+    if path is not None:
+        dest_path = tmp_path / "sdist"
+        dest_path.mkdir()
+        prev = os.getcwd()
+        try:
+            os.chdir(str(dest_path))
+            tar = tarfile.open(path, "r:gz")
+            tar.extractall()
+            return next(dest_path.iterdir())
+        finally:
+            os.chdir(prev)
+    return None
+
+
+@pytest.fixture(scope="session")
+def wheel(tmp_path_factory):
+    """test that we can create a virtual environment by feeding to a clean python the wheels content"""
+    dest_path = tmp_path_factory.mktemp("wheel")
+    env = os.environ.copy()
+    if virtualenv.IS_JYTHON:
+        env[str("PIP_NO_CACHE_DIR")] = str("off")
+    try:
+        subprocess.check_output(
+            [sys.executable, "-m", "pip", "wheel", "-w", str(dest_path), "--no-deps", str(ROOT_DIR)],
+            universal_newlines=True,
+            stderr=subprocess.STDOUT,
+            env=env,
+        )
+    except subprocess.CalledProcessError as exception:
+        assert not exception.returncode, exception.output
+
+    wheels = list(dest_path.glob("*.whl"))
+    assert len(wheels) == 1
+    wheel = wheels[0]
+    return wheel
+
+
+@pytest.fixture()
+def extracted_wheel(tmp_path, wheel):
+    dest_path = tmp_path / "wheel-extracted"
+
+    import zipfile
+
+    with zipfile.ZipFile(str(wheel), "r") as zip_ref:
+        zip_ref.extractall(str(dest_path))
+    return dest_path

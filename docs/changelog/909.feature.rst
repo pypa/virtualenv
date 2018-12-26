@@ -1,0 +1,1 @@
+``pyproject.toml`` with ``PEP-517`` and ``PEP-518`` is now provided. ``tox.ini`` is now packaged with the ``sdist``. Distributions repackaging the library should use ``tox -e py`` to run the test suite on the ``sdist``.
