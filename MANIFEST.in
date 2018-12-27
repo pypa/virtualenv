@@ -1,4 +1,3 @@
-include scripts/virtualenv
 include virtualenv.py
 recursive-include virtualenv_support *.whl
 recursive-include virtualenv_embedded *

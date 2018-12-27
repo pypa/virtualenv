@@ -1,0 +1,1 @@
+No longer support ``distutils`` build/installation, now ``setuptools >= 40.6.3`` is required.

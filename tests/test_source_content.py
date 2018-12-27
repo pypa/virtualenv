@@ -19,7 +19,6 @@ def test_sdist_contains(sdist):
         "virtualenv_support",
         "setup.py",
         "setup.cfg",
-        "scripts",
         "MANIFEST.in",
         "pyproject.toml",
         # test files
@@ -58,5 +57,4 @@ def test_wheel_contains(extracted_wheel):
         assert any(package in i for i in support)
 
     meta = {i.name for i in (extracted_wheel / "virtualenv-{}.dist-info".format(virtualenv.__version__)).iterdir()}
-    assert "LICENSE.txt" in meta
-    assert "AUTHORS.txt" in meta
+    assert {"entry_points.txt", "WHEEL", "RECORD", "METADATA", "top_level.txt", "zip-safe", "LICENSE.txt"} == meta
