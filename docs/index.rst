@@ -20,7 +20,7 @@ library (e.g. cannot create bootstrap scripts, cannot create virtual
 environments for other python versions than the host python,
 not relocatable, etc.). Tools in general as such still may prefer using
 virtualenv for its ease of upgrading (via pip), unified handling of different
-Python versions and some more advanced features.s
+Python versions and some more advanced features.
 
 The basic problem being addressed is one of dependencies and versions,
 and indirectly permissions. Imagine you have an application that
