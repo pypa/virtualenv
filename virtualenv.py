@@ -931,6 +931,14 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
         import tempfile
         import os
 
+        from pip._internal import configuration
+        config = configuration.Configuration(False)
+        config.load()
+        defined_cert = False
+        for key, value in config.items():
+            if key in ('global.cert', ':env:.cert', 'install.cert') and value:
+                defined_cert = True
+
         try:
             from pip._internal import main as _main
             cert_data = pkgutil.get_data("pip._vendor.certifi", "cacert.pem")
@@ -940,7 +948,7 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
         except IOError:
             cert_data = None
 
-        if cert_data is not None:
+        if not defined_cert and cert_data is not None:
             cert_file = tempfile.NamedTemporaryFile(delete=False)
             cert_file.write(cert_data)
             cert_file.close()
