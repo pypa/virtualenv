@@ -1,1 +1,0 @@
-``activate_this.py`` improvements: set ``VIRTUAL_ENV`` environment variable; ``pypy``, ``pypy3`` and ``jython`` support.

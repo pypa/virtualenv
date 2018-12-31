@@ -1,1 +1,0 @@
-The `xonsh <http://xon.sh/index.html>`_ shell is now supported by generating the ``xon.sh`` activation script.

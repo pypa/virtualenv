@@ -1,1 +1,0 @@
-Clarify how this project relates to the standard libraries ``venv`` and when one would still want to use this tool.

@@ -1,1 +1,0 @@
-``lib64`` symlink is again relative (as was with ``< 16.1.0``).

@@ -5,6 +5,48 @@ Release History
 
 .. towncrier release notes start
 
+v16.2.0 (2018-12-31)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- ``copyfile`` handles relative symlinks and symlinks to symlinks, avoiding problems when Python was installed using ``stow`` or ``homebrew``. (`#268 <https://github.com/pypa/virtualenv/issues/268>`_)
+- Fix preserving of original path when using fish and a subshell. (`#904 <https://github.com/pypa/virtualenv/issues/904>`_)
+- Drop the source layout of the project, going back to how the source was laid out before ``16.1.0``. (`#1241 <https://github.com/pypa/virtualenv/issues/1241>`_)
+- Fix bootstrap script generation broken with ``16.0.0``. Support now both ``CPython``, ``pypy``, ``jython``. (`#1244 <https://github.com/pypa/virtualenv/issues/1244>`_)
+- ``lib64`` symlink is again relative (as was with ``< 16.1.0``). (`#1248 <https://github.com/pypa/virtualenv/issues/1248>`_)
+
+
+Features
+^^^^^^^^
+
+- ``powershell`` activator is no longer signed. (`#816 <https://github.com/pypa/virtualenv/issues/816>`_)
+- ``pyproject.toml`` with ``PEP-517`` and ``PEP-518`` is now provided. ``tox.ini`` is now packaged with the ``sdist``. Distributions repackaging the library should use ``tox -e py`` to run the test suite on the ``sdist``. (`#909 <https://github.com/pypa/virtualenv/issues/909>`_)
+- ``activate_this.py`` improvements: set ``VIRTUAL_ENV`` environment variable; ``pypy``, ``pypy3`` and ``jython`` support. (`#1057 <https://github.com/pypa/virtualenv/issues/1057>`_)
+- The `xonsh <http://xon.sh/index.html>`_ shell is now supported by generating the ``xon.sh`` activation script. (`#1206 <https://github.com/pypa/virtualenv/issues/1206>`_)
+- Support ``pip`` wheels with removed ``certifi's cacert.pem``. (`#1252 <https://github.com/pypa/virtualenv/issues/1252>`_)
+- Upgrade setuptools from ``40.5.0`` to ``40.6.3`` and wheel from ``0.32.2`` to ``0.32.3``. (`#1257 <https://github.com/pypa/virtualenv/issues/1257>`_)
+- ``powershell`` now also provides the ``pydoc`` function that uses the virtual environments ``pydoc``. (`#1258 <https://github.com/pypa/virtualenv/issues/1258>`_)
+- Migrate to a ``setup.cfg`` based build. Minimum ``setuptools`` required to build is ``setuptools >= 40.6.3``, this is automatically acquired for all PEP-518 builders (recommended), or acquired via the old ``setup_requires`` method otherwise. Move exclusively to a ``setuptools`` generated console entry point script, this now does make ``setuptools >= 18.0.0`` a runtime dependency (install requires). Source and issue tracker now is shown on PyPi (supplied as package metadata) beside the homepage. (`#1259 <https://github.com/pypa/virtualenv/issues/1259>`_)
+
+
+Deprecations (removal in next major release)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Using ``python setup.py test`` is now marked as deprecated and will be removed in next release. Use ``tox`` instead, always. (`#909 <https://github.com/pypa/virtualenv/issues/909>`_)
+- Using the project directly from the source layout is now deprecated. Going ahead people wanting to use the project without installing the virtualenv are encouraged to download the wheel from PyPi and extract it to access the ``virtualenv.py`` file. We'll be switching to a ``src`` layout with next release. (`#1241 <https://github.com/pypa/virtualenv/issues/1241>`_)
+- No longer support ``distutils`` build/installation, now ``setuptools >= 40.6.3`` is required. (`#1259 <https://github.com/pypa/virtualenv/issues/1259>`_)
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- ``activate_this.py`` recommend ``exec(open(this_file).read(), {'__file__': this_file})`` as it works both on Python 2 and 3. (`#1057 <https://github.com/pypa/virtualenv/issues/1057>`_)
+- Clarify how this project relates to the standard libraries ``venv`` and when one would still want to use this tool. (`#1086 <https://github.com/pypa/virtualenv/issues/1086>`_)
+- Move to a ``towncrier`` generated changelog to avoid merge conflicts, generate draft changelog documentation. Prefix version string in changelog with ``v`` to make the hyperlinks stable. (`#1234 <https://github.com/pypa/virtualenv/issues/1234>`_)
+
+
 v16.1.0 (2018-10-31)
 --------------------
 * Fixed documentation to use pypi.org and correct curl options; :issue:`1042`
