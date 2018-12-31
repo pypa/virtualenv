@@ -1,1 +1,0 @@
-``copyfile`` handles relative symlinks and symlinks to symlinks, avoiding problems when Python was installed using ``stow`` or ``homebrew``.

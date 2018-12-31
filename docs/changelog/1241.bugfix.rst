@@ -1,1 +1,0 @@
-Drop the source layout of the project, going back to how the source was laid out before ``16.1.0``.

@@ -116,7 +116,10 @@ class Activation(object):
         env = get_env()
         env.update(self.env)
 
-        raw = subprocess.check_output(invoke_shell, universal_newlines=True, stderr=subprocess.STDOUT, env=env)
+        try:
+            raw = subprocess.check_output(invoke_shell, universal_newlines=True, stderr=subprocess.STDOUT, env=env)
+        except subprocess.CalledProcessError as exception:
+            assert not exception.returncode, exception.output
         out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, re.M).strip().split("\n")
 
         # pre-activation

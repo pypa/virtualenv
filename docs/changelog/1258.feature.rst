@@ -1,1 +1,0 @@
-``powershell`` now also provides the ``pydoc`` function that uses the virtual environments ``pydoc``.

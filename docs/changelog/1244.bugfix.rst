@@ -1,1 +1,0 @@
-Fix bootstrap script generation broken with ``16.0.0``. Support now both ``CPython``, ``pypy``, ``jython``.

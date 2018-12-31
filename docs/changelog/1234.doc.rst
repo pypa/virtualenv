@@ -1,1 +1,0 @@
-Move to a ``towncrier`` generated changelog to avoid merge conflicts, generate draft changelog documentation. Prefix version string in changelog with ``v`` to make the hyperlinks stable.
