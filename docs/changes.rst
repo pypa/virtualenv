@@ -21,6 +21,7 @@ Bugfixes
 Features
 ^^^^^^^^
 
+- ``fish`` version 3 support for the activation script. (`#1275 <https://github.com/pypa/virtualenv/issues/1275>`_)
 - ``powershell`` activator is no longer signed. (`#816 <https://github.com/pypa/virtualenv/issues/816>`_)
 - ``pyproject.toml`` with ``PEP-517`` and ``PEP-518`` is now provided. ``tox.ini`` is now packaged with the ``sdist``. Distributions repackaging the library should use ``tox -e py`` to run the test suite on the ``sdist``. (`#909 <https://github.com/pypa/virtualenv/issues/909>`_)
 - ``activate_this.py`` improvements: set ``VIRTUAL_ENV`` environment variable; ``pypy``, ``pypy3`` and ``jython`` support. (`#1057 <https://github.com/pypa/virtualenv/issues/1057>`_)

@@ -129,19 +129,23 @@ jobs:
       reportDirectory: '$(System.DefaultWorkingDirectory)/.tox/htmlcov'
       failIfCoverageEmpty: true
 
-- job: publish
-  dependsOn:
-  - report_coverage
-  - linux_fix_lint
-  - linux_docs
-  - linux_embed
-  - linux_package_readme
-  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'))
-  pool: {vmImage: 'Ubuntu 16.04'}
-  steps:
-  - task: UsePythonVersion@0
-    displayName: setup python3.7
-    inputs: {versionSpec: '3.7'}
-  - script: 'python3.7 -m pip -U install twine pip'
-  - script: 'python3.7 -m pip wheel -w "$(System.DefaultWorkingDirectory)/w" --no-deps'
-  - script: 'python3.7 -m twine -r pypi-gb --config-file $(PYPIRC_PATH) "$(System.DefaultWorkingDirectory)/w/*"'
+- ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
+  - job: publish
+    dependsOn:
+    - report_coverage
+    - linux_fix_lint
+    - linux_docs
+    - linux_embed
+    - linux_package_readme
+    condition: succeeded()
+    pool: {vmImage: 'Ubuntu 16.04'}
+    steps:
+    - task: UsePythonVersion@0
+      displayName: setup python3.7
+      inputs: {versionSpec: '3.7'}
+    - task: TwineAuthenticate@0
+      inputs:
+        externalFeeds: 'gb'
+    - script: 'python3.7 -m pip install -U twine pip'
+    - script: 'python3.7 -m pip wheel -w "$(System.DefaultWorkingDirectory)/w" --no-deps .'
+    - script: 'python3.7 -m twine upload -r pypi-gb --config-file $(PYPIRC_PATH) $(System.DefaultWorkingDirectory)/w/*'
