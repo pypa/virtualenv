@@ -7,7 +7,7 @@ from typing import Tuple
 from git import Commit, Head, Remote, Repo, TagReference
 from packaging.version import Version
 
-ROOT_SRC_DIR = Path(__file__).parents[1]
+ROOT_SRC_DIR = Path(__file__).resolve().parents[1]
 
 
 def main(version_str: str) -> None:
@@ -39,11 +39,14 @@ def create_release_branch(repo: Repo, version: Version) -> Tuple[Remote, Head]:
 
 
 def get_upstream(repo: Repo) -> Remote:
+    upstream_remote = "pypa/virtualenv.git"
+    urls = set()
     for remote in repo.remotes:
         for url in remote.urls:
-            if url.endswith("tox-dev/tox.git"):
+            if url.endswith(upstream_remote):
                 return remote
-    raise RuntimeError("could not find tox-dev/tox.git remote")
+            urls.add(url)
+    raise RuntimeError(f"could not find {upstream_remote} remote, has {urls}")
 
 
 def release_changelog(repo: Repo, version: Version) -> Commit:
