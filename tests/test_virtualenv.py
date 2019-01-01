@@ -1,9 +1,11 @@
 from __future__ import absolute_import, unicode_literals
 
+import glob
 import optparse
 import os
 import shutil
 import sys
+import sysconfig
 import tempfile
 import zipfile
 
@@ -424,3 +426,56 @@ def test_create_environment_in_dir_with_spaces(tmpdir):
     """Should work with environment path containing spaces."""
     ve_path = str(tmpdir / "venv with spaces")
     virtualenv.create_environment(ve_path)
+
+
+@pytest.mark.skipif("platform.system() != 'Linux'")
+@pytest.mark.parametrize(
+    'rpath_val', [
+        r"\$ORIGIN",
+        r"foobar:baz:\$ORIGIN",  # also check with multiple entries
+        r"\${ORIGIN}",
+        r"foobar:baz:\${ORIGIN}",
+    ]
+)
+@pytest.mark.parametrize(
+    'rpath_sep', [',', '=']
+)
+def test_install_relative_lib(rpath_val, rpath_sep):
+    """make sure relative shared lib is well copied"""
+
+    queried_cfg_vars = []
+    orig_get_config_var = sysconfig.get_config_var
+
+    def get_config_var(var):
+        queried_cfg_vars.append(var)
+        ret = orig_get_config_var(var)
+        if var == 'LDFLAGS':
+            ret = ','.join(([ret] if ret else []) + ["-rpath" + rpath_sep + rpath_val])
+        return ret
+
+    globs = []
+    orig_glob = glob.glob
+
+    def fake_glob(path):
+        ret = orig_glob(path)
+        if path.endswith('libpython*'):
+            globs.append(path)
+            ret.append('libpython.so')
+        return ret
+
+    copied = []
+    orig_copy_file = virtualenv.copyfile
+
+    def copy_file(src, dst, *args, **kwargs):
+        if src == 'libpython.so':
+            copied.append(src)
+        return orig_copy_file(src, dst, *args, **kwargs)
+
+    with patch('distutils.sysconfig.get_config_var', side_effect=get_config_var, autospec=True):
+        with patch('glob.glob', side_effect=fake_glob, autospec=True) as mock_glob:
+            with patch('virtualenv.copyfile', side_effect=copy_file, autospec=True):
+                test_install_python_bin()
+
+    # assert 'LDFLAGS' in queried_cfg_vars
+    # assert 1 == len(globs)
+    assert 1 == len(copied)

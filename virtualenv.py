@@ -601,6 +601,13 @@ def main():
     )
 
     parser.add_option(
+        '--install-lib',
+        action='store_true',
+        help="Request to always include the python library (if applicable) to the target virtualenv. "
+             "By default it will be if we detect it needs to: LDFLAGS['-rpath'] contains $ORIGIN or ${ORIGIN}."
+    )
+
+    parser.add_option(
         "--clear", dest="clear", action="store_true", help="Clear out the non-root install and start from scratch."
     )
 
@@ -766,6 +773,7 @@ def main():
         no_pip=options.no_pip,
         no_wheel=options.no_wheel,
         symlink=options.symlink,
+        install_lib=options.install_lib,
     )
     if "after_install" in globals():
         # noinspection PyUnresolvedReferences
@@ -997,6 +1005,7 @@ def create_environment(
     no_pip=False,
     no_wheel=False,
     symlink=True,
+    install_lib=False,
 ):
     """
     Creates a new environment in ``home_dir``.
@@ -1010,7 +1019,8 @@ def create_environment(
     home_dir, lib_dir, inc_dir, bin_dir = path_locations(home_dir)
 
     py_executable = os.path.abspath(
-        install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages=site_packages, clear=clear, symlink=symlink)
+        install_python(home_dir, lib_dir, inc_dir, bin_dir,
+                       site_packages=site_packages, clear=clear, symlink=symlink, install_lib=include_lib)
     )
 
     install_distutils(home_dir)
@@ -1190,7 +1200,8 @@ def subst_path(prefix_path, prefix, home_dir):
     return prefix_path.replace(prefix, home_dir, 1)
 
 
-def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, symlink=True):
+def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear,
+                   symlink=True, install_lib=False):
     """Install just the base environment, no distutils patches etc"""
     if sys.executable.startswith(bin_dir):
         print("Please use the *system* python to run this script")
@@ -1478,6 +1489,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             else:
                 copyfile(py_executable, full_pth, symlink)
 
+    if install_lib or is_relative_lib():
+        install_shared(bin_dir, symlink=symlink)
+
     cmd = [
         py_executable,
         "-c",
@@ -1531,6 +1545,46 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             os.unlink(site_packages_filename)
 
     return py_executable
+
+
+def is_relative_lib():
+    """
+    Check if the python was compiled with LDFLAGS -rpath and some $ORIGIN form
+    """
+    ldflags_var = distutils.sysconfig.get_config_var('LDFLAGS')
+    if ldflags_var is None:
+        return False
+    ldflags = ldflags_var.split(',')  # ldfags are ',' separated
+    n_flags = len(ldflags)
+    idx = 0
+    while idx < n_flags:
+        flag = ldflags[idx]
+        idx += 1
+        # nb: -rpath value can also be '=' or ',' separated ; handle both cases:
+        if flag.startswith('-rpath='):
+            rpath_var = flag.split('=', 1)[1]
+        elif flag == '-rpath' and idx < n_flags:
+            rpath_var = ldflags[idx]
+            idx += 1
+        else:  # not an -rpath
+            continue
+        # rpath can even contain multiple entries, os.pathsep separated:
+        for rpath in rpath_var.split(os.pathsep):
+            rpath = rpath.strip()
+            if rpath.startswith("\${ORIGIN}") or rpath.startswith(r'\$ORIGIN'):
+                return True
+    return False
+
+
+def install_shared(bin_dir, symlink=True):
+    """copy (symlink by default) the python shared library to the target"""
+    logger.start_progress("Installing shared lib...")
+    current_shared = os.path.realpath(join(os.path.dirname(sys.executable), "..", "lib"))
+    target_shared = join(bin_dir, "..", "lib")
+    for libpython in glob.glob(join(current_shared, "libpython*")):
+        target_file = join(target_shared, os.path.basename(libpython))
+        copyfile(libpython, target_file, symlink=symlink)
+    logger.end_progress("done.")
 
 
 def install_activate(home_dir, bin_dir, prompt=None):
