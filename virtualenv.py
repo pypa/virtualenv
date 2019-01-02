@@ -825,31 +825,31 @@ def call_subprocess(
     all_output = []
     if stdout is not None:
         if stdin is not None:
-            proc.stdin.write(stdin)
-            proc.stdin.close()
+            with proc.stdin:
+                proc.stdin.write(stdin)
 
-        stdout = proc.stdout
         encoding = sys.getdefaultencoding()
         fs_encoding = sys.getfilesystemencoding()
-        while 1:
-            line = stdout.readline()
-            try:
-                line = line.decode(encoding)
-            except UnicodeDecodeError:
-                line = line.decode(fs_encoding)
-            if not line:
-                break
-            line = line.rstrip()
-            all_output.append(line)
-            if filter_stdout:
-                level = filter_stdout(line)
-                if isinstance(level, tuple):
-                    level, line = level
-                logger.log(level, line)
-                if not logger.stdout_level_matches(level):
-                    logger.show_progress()
-            else:
-                logger.info(line)
+        with proc.stdout as stdout:
+            while 1:
+                line = stdout.readline()
+                try:
+                    line = line.decode(encoding)
+                except UnicodeDecodeError:
+                    line = line.decode(fs_encoding)
+                if not line:
+                    break
+                line = line.rstrip()
+                all_output.append(line)
+                if filter_stdout:
+                    level = filter_stdout(line)
+                    if isinstance(level, tuple):
+                        level, line = level
+                    logger.log(level, line)
+                    if not logger.stdout_level_matches(level):
+                        logger.show_progress()
+                else:
+                    logger.info(line)
     else:
         proc.communicate(stdin)
     proc.wait()
