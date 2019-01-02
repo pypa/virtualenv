@@ -1,1 +1,1 @@
-fixed a ``ResourceWarning: unclosed file`` in ``call_subprocess()`` - by :user:`BoboTiG`
+fixed a ``ResourceWarning: unclosed file`` in ``call_subprocess()`` - by Mickaël Schoentgen
