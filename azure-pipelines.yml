@@ -146,6 +146,11 @@ jobs:
     - task: TwineAuthenticate@0
       inputs:
         externalFeeds: 'gb'
-    - script: 'python3.7 -m pip install -U twine pip'
+    - script: 'python3.7 -m pip install -U twine pip tox'
+      displayName: "acquire build tools"
     - script: 'python3.7 -m pip wheel -w "$(System.DefaultWorkingDirectory)/w" --no-deps .'
-    - script: 'python3.7 -m twine upload -r pypi-gb --config-file $(PYPIRC_PATH) $(System.DefaultWorkingDirectory)/w/*'
+      displayName: "build wheel"
+    - script: 'python3.7 -m tox -e py --sdistonly'
+      displayName: "build sdist"
+    - script: 'python3.7 -m twine upload -r pypi-gb --config-file $(PYPIRC_PATH) .tox/dist/* $(System.DefaultWorkingDirectory)/w/*'
+      displayName: "upload sdist and wheel to PyPi"
