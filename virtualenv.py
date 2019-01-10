@@ -928,11 +928,7 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
         extra_args.append("--no-cache")
 
     config = _pip_config(py_executable, python_path)
-    defined_cert = bool(
-        config.get("install.cert")
-        or config.get(":env:.cert")
-        or config.get("global.cert")
-    )
+    defined_cert = bool(config.get("install.cert") or config.get(":env:.cert") or config.get("global.cert"))
 
     script = textwrap.dedent(
         """
@@ -970,8 +966,7 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
             if cert_file is not None:
                 os.remove(cert_file.name)
     """.format(
-            defined_cert=defined_cert,
-            extra_args=", ".join(repr(i) for i in extra_args)
+            defined_cert=defined_cert, extra_args=", ".join(repr(i) for i in extra_args)
         )
     ).encode("utf8")
 
