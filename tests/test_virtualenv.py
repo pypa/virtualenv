@@ -7,7 +7,9 @@ import sys
 import tempfile
 import zipfile
 
+import pypiserver
 import pytest
+import pytest_localserver.http
 
 import virtualenv
 
@@ -424,3 +426,45 @@ def test_create_environment_in_dir_with_spaces(tmpdir):
     """Should work with environment path containing spaces."""
     ve_path = str(tmpdir / "venv with spaces")
     virtualenv.create_environment(ve_path)
+
+
+def test_create_environment_with_local_https_pypi(tmpdir):
+    """Create virtual environment using local PyPI listening https with
+    certificate signed with custom certificate authority
+    """
+    test_dir = Path(__file__).parent
+    ssl_dir = test_dir / "ssl"
+    proj_dir = test_dir.parent
+    support_dir = proj_dir / "virtualenv_support"
+    local_pypi_app = pypiserver.app(root=str(support_dir))
+    local_pypi = pytest_localserver.http.WSGIServer(
+        host="localhost",
+        port=0,
+        application=local_pypi_app,
+        ssl_context=(str(ssl_dir / "server.crt"), str(ssl_dir / "server.key")),
+    )
+    local_pypi.start()
+    local_pypi_url = "https://localhost:{}/".format(local_pypi.server_address[1])
+    venvdir = tmpdir / "venv"
+    pip_log = tmpdir / "pip.log"
+    env_addition = {
+        "PIP_CERT": str(ssl_dir / "rootCA.pem"),
+        "PIP_INDEX_URL": local_pypi_url,
+        "PIP_LOG": str(pip_log),
+        "PIP_RETRIES": "0",
+    }
+    env_backup = {}
+    for key, value in env_addition.items():
+        if key in os.environ:
+            env_backup[key] = os.environ[key]
+        os.environ[key] = value
+    try:
+        virtualenv.create_environment(str(venvdir), download=True)
+        with pip_log.open("rb") as f:
+            assert b"SSLError" not in f.read()
+    finally:
+        local_pypi.stop()
+        for key, value in env_addition.items():
+            os.environ.pop(key)
+            if key in env_backup:
+                os.environ[key] = env_backup[key]
