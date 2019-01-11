@@ -10,6 +10,7 @@ import zipfile
 import pypiserver
 import pytest
 import pytest_localserver.http
+import six
 
 import virtualenv
 
@@ -453,6 +454,8 @@ def test_create_environment_with_local_https_pypi(tmpdir):
         "PIP_LOG": str(pip_log),
         "PIP_RETRIES": "0",
     }
+    if six.PY2:
+        env_addition = {key.encode("utf-8"): value.encode("utf-8") for key, value in env_addition.items()}
     env_backup = {}
     for key, value in env_addition.items():
         if key in os.environ:
