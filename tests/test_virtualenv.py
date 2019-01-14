@@ -1,10 +1,13 @@
 from __future__ import absolute_import, unicode_literals
 
+import inspect
 import optparse
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
+import textwrap
 import zipfile
 
 import pypiserver
@@ -471,3 +474,40 @@ def test_create_environment_with_local_https_pypi(tmpdir):
             os.environ.pop(key)
             if key in env_backup:
                 os.environ[key] = env_backup[key]
+
+
+def check_pypy_pre_import():
+    import sys
+
+    missing_str = "missing %r in sys.modules"
+
+    assert "encodings" in sys.modules, missing_str % ("encodings",)
+
+    if "exceptions" in sys.builtin_module_names:
+        assert "exceptions" in sys.modules, missing_str % ("exceptions",)
+
+    if "zipimport" in sys.builtin_module_names:
+        assert "zipimport" in sys.modules, missing_str % ("zipimport",)
+
+
+@pytest.mark.skipif("platform.python_implementation() != 'PyPy'")
+def test_pypy_pre_import(tmpdir):
+    check_code = inspect.getsource(check_pypy_pre_import)
+    check_code = textwrap.dedent(check_code[check_code.index("\n") + 1 :])
+
+    check_prog = tmpdir / "check-pre-import.py"
+    check_prog.write(check_code)
+
+    ve_path = str(tmpdir / "venv")
+    virtualenv.create_environment(ve_path)
+
+    bin_dir = virtualenv.path_locations(ve_path)[-1]
+
+    try:
+        cmd = [
+            str(os.path.join(bin_dir, "{}{}".format(virtualenv.EXPECTED_EXE, ".exe" if virtualenv.IS_WIN else ""))),
+            str(check_prog),
+        ]
+        subprocess.check_output(cmd, universal_newlines=True, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as exception:
+        assert not exception.returncode, exception.output
