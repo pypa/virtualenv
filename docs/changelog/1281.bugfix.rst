@@ -1,0 +1,1 @@
+pre-import some built-in modules in ``site.py`` on PyPy according to PyPy's ``site.py`` - by microdog
