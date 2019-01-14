@@ -736,7 +736,10 @@ def enablerlcompleter():
 if _is_pypy:
 
     def import_builtin_stuff():
-        """PyPy specific: pre-import some built-in modules to match CPython."""
+        """PyPy specific: some built-in modules should be pre-imported because
+        some programs expect them to be in sys.modules on startup. This is ported
+        from PyPy's site.py.
+        """
         import encodings
 
         if "exceptions" in sys.builtin_module_names:
