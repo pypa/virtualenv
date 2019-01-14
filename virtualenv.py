@@ -1395,6 +1395,20 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
                 elif os.path.exists(python_dll_d_dest):
                     logger.info("Removed %s as the source does not exist", python_dll_d_dest)
                     os.unlink(python_dll_d_dest)
+
+            if not IS_PYPY:
+                # considering that on windows, python import libraries are located in
+                # the  "<root>/libs" directory, the following code will look for and
+                # copy "pythonXY.lib".
+                pythonlib_name = "python{}{}.lib".format(sys.version_info[0], sys.version_info[1])
+                pythonlib = os.path.join(os.path.dirname(sys.executable), "libs", pythonlib_name)
+                pythonlib_dest_dir = os.path.join(lib_dir, "..", "libs")
+                pythonlib_dest = os.path.join(pythonlib_dest_dir, pythonlib_name)
+                if os.path.exists(pythonlib):
+                    logger.info("Also created %s" % pythonlib_name)
+                    mkdir(pythonlib_dest_dir)
+                    shutil.copyfile(pythonlib, pythonlib_dest)
+
         if IS_PYPY:
             # make a symlink python --> pypy-c
             python_executable = os.path.join(os.path.dirname(py_executable), "python")
