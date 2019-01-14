@@ -467,7 +467,7 @@ def test_create_environment_with_local_https_pypi(tmpdir):
             assert b"SSLError" not in f.read()
     finally:
         local_pypi.stop()
-        for key, value in env_addition.items():
+        for key in env_addition.keys():
             os.environ.pop(key)
             if key in env_backup:
                 os.environ[key] = env_backup[key]
