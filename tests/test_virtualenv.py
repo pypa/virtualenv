@@ -529,10 +529,13 @@ def test_create_environment_with_exec_prefix_pointing_to_prefix(tmpdir):
     venvdir = str(tmpdir / "venv")
     python_dir = tmpdir / "python"
     python_dir.mkdir()
-    old_path = os.environ["PATH"]
+    path_key = "PATH"
+    if six.PY2:
+        path_key = path_key.encode()
+    old_path = os.environ[path_key]
     if hasattr(sys, "real_prefix"):
-        os.environ["PATH"] = os.pathsep.join(
-            p for p in os.environ["PATH"].split(os.pathsep) if not p.startswith(sys.prefix)
+        os.environ[path_key] = os.pathsep.join(
+            p for p in os.environ[path_key].split(os.pathsep) if not p.startswith(sys.prefix)
         )
     python = virtualenv.resolve_interpreter(os.path.basename(sys.executable))
     try:
@@ -540,4 +543,4 @@ def test_create_environment_with_exec_prefix_pointing_to_prefix(tmpdir):
         home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(venvdir)
         assert not os.path.islink(os.path.join(lib_dir, "distutils"))
     finally:
-        os.environ["PATH"] = old_path
+        os.environ[path_key] = old_path
