@@ -738,7 +738,9 @@ if _is_pypy:
     def import_builtin_stuff():
         """PyPy specific: pre-import some built-in modules to match CPython."""
         import encodings
-        import exceptions
+
+        if "exceptions" in sys.builtin_module_names:
+            import exceptions
 
         if "zipimport" in sys.builtin_module_names:
             import zipimport
