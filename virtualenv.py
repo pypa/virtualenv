@@ -1302,7 +1302,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             copyfile(platform_include_dir, platform_include_dest, symlink)
 
     # pypy never uses exec_prefix, just ignore it
-    if sys.exec_prefix != prefix and not IS_PYPY:
+    if os.path.realpath(sys.exec_prefix) != os.path.realpath(prefix) and not IS_PYPY:
         if IS_WIN:
             exec_dir = join(sys.exec_prefix, "lib")
         elif IS_JYTHON:
