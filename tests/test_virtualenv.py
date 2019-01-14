@@ -479,33 +479,40 @@ def test_create_environment_with_local_https_pypi(tmpdir):
 def check_pypy_pre_import():
     import sys
 
-    missing_str = "missing %r in sys.modules"
+    # These modules(module_name, optional) are taken from PyPy's site.py:
+    # https://bitbucket.org/pypy/pypy/src/d0187cf2f1b70ec4b60f10673ff081bdd91e9a17/lib-python/2.7/site.py#lines-532:539
+    modules = [
+        ("encodings", False),
+        ("exceptions", True),  # "exceptions" module does not exist in Python3
+        ("zipimport", True),
+    ]
 
-    assert "encodings" in sys.modules, missing_str % ("encodings",)
-
-    if "exceptions" in sys.builtin_module_names:
-        assert "exceptions" in sys.modules, missing_str % ("exceptions",)
-
-    if "zipimport" in sys.builtin_module_names:
-        assert "zipimport" in sys.modules, missing_str % ("zipimport",)
+    for module, optional in modules:
+        if not optional or module in sys.builtin_module_names:
+            assert module in sys.modules, "missing {!r} in sys.modules".format(module)
 
 
 @pytest.mark.skipif("platform.python_implementation() != 'PyPy'")
-def test_pypy_pre_import(tmpdir):
+def test_pypy_pre_import(tmp_path):
+    """For PyPy, some built-in modules should be pre-imported because
+    some programs expect them to be in sys.modules on startup.
+    """
     check_code = inspect.getsource(check_pypy_pre_import)
     check_code = textwrap.dedent(check_code[check_code.index("\n") + 1 :])
+    if six.PY2:
+        check_code = check_code.decode()
 
-    check_prog = tmpdir / "check-pre-import.py"
-    check_prog.write(check_code)
+    check_prog = tmp_path / "check-pre-import.py"
+    check_prog.write_text(check_code)
 
-    ve_path = str(tmpdir / "venv")
+    ve_path = str(tmp_path / "venv")
     virtualenv.create_environment(ve_path)
 
     bin_dir = virtualenv.path_locations(ve_path)[-1]
 
     try:
         cmd = [
-            str(os.path.join(bin_dir, "{}{}".format(virtualenv.EXPECTED_EXE, ".exe" if virtualenv.IS_WIN else ""))),
+            os.path.join(bin_dir, "{}{}".format(virtualenv.EXPECTED_EXE, ".exe" if virtualenv.IS_WIN else "")),
             str(check_prog),
         ]
         subprocess.check_output(cmd, universal_newlines=True, stderr=subprocess.STDOUT)
