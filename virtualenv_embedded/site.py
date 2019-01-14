@@ -733,9 +733,27 @@ def enablerlcompleter():
     sys.__interactivehook__ = register_readline
 
 
+if _is_pypy:
+
+    def import_builtin_stuff():
+        """PyPy specific: some built-in modules should be pre-imported because
+        some programs expect them to be in sys.modules on startup. This is ported
+        from PyPy's site.py.
+        """
+        import encodings
+
+        if "exceptions" in sys.builtin_module_names:
+            import exceptions
+
+        if "zipimport" in sys.builtin_module_names:
+            import zipimport
+
+
 def main():
     global ENABLE_USER_SITE
     virtual_install_main_packages()
+    if _is_pypy:
+        import_builtin_stuff()
     abs__file__()
     paths_in_sys = removeduppaths()
     if os.name == "posix" and sys.path and os.path.basename(sys.path[-1]) == "Modules":
