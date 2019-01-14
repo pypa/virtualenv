@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import optparse
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import zipfile
@@ -471,3 +472,26 @@ def test_create_environment_with_local_https_pypi(tmpdir):
             os.environ.pop(key)
             if key in env_backup:
                 os.environ[key] = env_backup[key]
+
+
+@pytest.mark.skipif(not hasattr(os, "symlink"), reason="requires working symlink implementation")
+def test_create_environment_with_exec_prefix_pointing_to_prefix(tmpdir):
+    """Create virtual environment for Python with ``sys.exec_prefix`` pointing
+    to ``sys.prefix`` or ``sys.base_prefix`` or ``sys.real_prefix`` under a
+    different name
+    """
+    venvdir = str(tmpdir / "venv")
+    python_dir = tmpdir / "python"
+    python_dir.mkdir()
+    old_path = os.environ["PATH"]
+    if hasattr(sys, "real_prefix"):
+        os.environ["PATH"] = os.pathsep.join(
+            p for p in os.environ["PATH"].split(os.pathsep) if not p.startswith(sys.prefix)
+        )
+    python = virtualenv.resolve_interpreter(os.path.basename(sys.executable))
+    try:
+        subprocess.check_call([sys.executable, "-m", "virtualenv", "-p", python, venvdir])
+        home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(venvdir)
+        assert not os.path.islink(os.path.join(lib_dir, "distutils"))
+    finally:
+        os.environ["PATH"] = old_path
