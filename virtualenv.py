@@ -15,6 +15,7 @@ if os.environ.get("VIRTUALENV_INTERPRETER_RUNNING"):
             sys.path.remove(path)
 # fmt: on
 
+import ast
 import base64
 import codecs
 import distutils.spawn
@@ -861,6 +862,7 @@ def call_subprocess(
             raise OSError("Command {} failed with error code {}".format(cmd_desc, proc.returncode))
         else:
             logger.warn("Command {} had error code {}".format(cmd_desc, proc.returncode))
+    return all_output
 
 
 def filter_install_output(line):
@@ -924,12 +926,18 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
         extra_args.append("-v")
     if IS_JYTHON:
         extra_args.append("--no-cache")
+
+    config = _pip_config(py_executable, python_path)
+    defined_cert = bool(config.get("install.cert") or config.get(":env:.cert") or config.get("global.cert"))
+
     script = textwrap.dedent(
         """
         import sys
         import pkgutil
         import tempfile
         import os
+
+        defined_cert = {defined_cert}
 
         try:
             from pip._internal import main as _main
@@ -940,7 +948,7 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
         except IOError:
             cert_data = None
 
-        if cert_data is not None:
+        if not defined_cert and cert_data is not None:
             cert_file = tempfile.NamedTemporaryFile(delete=False)
             cert_file.write(cert_data)
             cert_file.close()
@@ -948,7 +956,7 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
             cert_file = None
 
         try:
-            args = ["install"] + [{}]
+            args = ["install"] + [{extra_args}]
             if cert_file is not None:
                 args += ["--cert", cert_file.name]
             args += sys.argv[1:]
@@ -958,7 +966,7 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
             if cert_file is not None:
                 os.remove(cert_file.name)
     """.format(
-            ", ".join(repr(i) for i in extra_args)
+            defined_cert=defined_cert, extra_args=", ".join(repr(i) for i in extra_args)
         )
     ).encode("utf8")
 
@@ -984,6 +992,21 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
     finally:
         logger.indent -= 2
         logger.end_progress()
+
+
+def _pip_config(py_executable, python_path):
+    cmd = [py_executable, "-m", "pip", "config", "list"]
+    config = {}
+    for line in call_subprocess(
+        cmd,
+        show_stdout=False,
+        extra_env={"PYTHONPATH": python_path, "JYTHONPATH": python_path},
+        remove_from_env=["PIP_VERBOSE", "PIP_QUIET"],
+    ):
+        key, _, value = line.partition("=")
+        if value:
+            config[key] = ast.literal_eval(value)
+    return config
 
 
 def create_environment(
