@@ -1,11 +1,13 @@
 from __future__ import absolute_import, unicode_literals
 
+import inspect
 import optparse
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+import textwrap
 import zipfile
 
 import pypiserver
@@ -472,6 +474,50 @@ def test_create_environment_with_local_https_pypi(tmpdir):
             os.environ.pop(key)
             if key in env_backup:
                 os.environ[key] = env_backup[key]
+
+
+def check_pypy_pre_import():
+    import sys
+
+    # These modules(module_name, optional) are taken from PyPy's site.py:
+    # https://bitbucket.org/pypy/pypy/src/d0187cf2f1b70ec4b60f10673ff081bdd91e9a17/lib-python/2.7/site.py#lines-532:539
+    modules = [
+        ("encodings", False),
+        ("exceptions", True),  # "exceptions" module does not exist in Python3
+        ("zipimport", True),
+    ]
+
+    for module, optional in modules:
+        if not optional or module in sys.builtin_module_names:
+            assert module in sys.modules, "missing {!r} in sys.modules".format(module)
+
+
+@pytest.mark.skipif("platform.python_implementation() != 'PyPy'")
+def test_pypy_pre_import(tmp_path):
+    """For PyPy, some built-in modules should be pre-imported because
+    some programs expect them to be in sys.modules on startup.
+    """
+    check_code = inspect.getsource(check_pypy_pre_import)
+    check_code = textwrap.dedent(check_code[check_code.index("\n") + 1 :])
+    if six.PY2:
+        check_code = check_code.decode()
+
+    check_prog = tmp_path / "check-pre-import.py"
+    check_prog.write_text(check_code)
+
+    ve_path = str(tmp_path / "venv")
+    virtualenv.create_environment(ve_path)
+
+    bin_dir = virtualenv.path_locations(ve_path)[-1]
+
+    try:
+        cmd = [
+            os.path.join(bin_dir, "{}{}".format(virtualenv.EXPECTED_EXE, ".exe" if virtualenv.IS_WIN else "")),
+            str(check_prog),
+        ]
+        subprocess.check_output(cmd, universal_newlines=True, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as exception:
+        assert not exception.returncode, exception.output
 
 
 @pytest.mark.skipif(not hasattr(os, "symlink"), reason="requires working symlink implementation")
