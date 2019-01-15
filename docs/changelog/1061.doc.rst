@@ -1,1 +1,1 @@
-discourage installation as ``root``, including ``sudo`` - by :user:`altendky`
+discourage installation as ``root``, including ``sudo`` - by ``altendky``
