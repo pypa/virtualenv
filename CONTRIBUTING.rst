@@ -14,7 +14,7 @@ Contributor notes
   latest stable version.
 
 * All changes to files inside virtualenv_embedded should be integrated to
-  ``virtualenv.py`` with ``bin/rebuild-script.py``.
+  ``virtualenv.py`` with ``tox -e embed``
 
 .. _git-flow: https://github.com/nvie/gitflow
 .. _coordinate development: http://nvie.com/posts/a-successful-git-branching-model/

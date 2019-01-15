@@ -15,9 +15,9 @@ pip.
 Files in the ``virtualenv_embedded/`` subdirectory are embedded into
 ``virtualenv.py`` itself as base64-encoded strings (in order to support
 single-file use of ``virtualenv.py`` without installing it). If your patch
-changes any file in ``virtualenv_embedded/``, run ``bin/rebuild-script.py`` to
-update the embedded version of that file in ``virtualenv.py``; commit that and
-submit it as part of your patch / pull request.
+changes any file in ``virtualenv_embedded/``, run ``tox -e embed`` to update
+the embedded version of that file in ``virtualenv.py``; commit that and submit
+it as part of your patch / pull request.
 
 .. _pip development: https://pip.pypa.io/en/latest/development/
 .. _virtualenv repo: https://github.com/pypa/virtualenv/
