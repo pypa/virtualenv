@@ -544,3 +544,13 @@ def test_create_environment_with_exec_prefix_pointing_to_prefix(tmpdir):
         assert not os.path.islink(os.path.join(lib_dir, "distutils"))
     finally:
         os.environ[path_key] = old_path
+
+
+@pytest.mark.skipif(not hasattr(sys, "real_prefix"), reason="requires running from inside virtualenv")
+def test_create_environment_from_virtual_environment(tmpdir):
+    """Create virtual environment using Python from another virtual environment
+    """
+    venvdir = str(tmpdir / "venv")
+    home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(venvdir)
+    virtualenv.create_environment(venvdir)
+    assert not os.path.islink(os.path.join(lib_dir, "distutils"))
