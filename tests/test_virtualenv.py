@@ -529,9 +529,7 @@ def test_create_environment_with_exec_prefix_pointing_to_prefix(tmpdir):
     venvdir = str(tmpdir / "venv")
     python_dir = tmpdir / "python"
     python_dir.mkdir()
-    path_key = "PATH"
-    if six.PY2:
-        path_key = path_key.encode()
+    path_key = str("PATH")
     old_path = os.environ[path_key]
     if hasattr(sys, "real_prefix"):
         os.environ[path_key] = os.pathsep.join(
