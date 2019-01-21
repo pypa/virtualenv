@@ -1100,14 +1100,14 @@ def change_prefix(filename, dst_prefix):
     # On Windows, make sure string compare case insensitive
     if is_win:
         filename = os.path.normcase(filename)
-    for i, prefix in enumerate(prefixes):
-        if is_win and prefix[0] in "abcdefghijklmnopqrstuvwxyz":
-            prefixes[i] = prefix[0].upper() + prefix[1:]
+        if filename[0] in "abcdefghijklmnopqrstuvwxyz":
+            filename = filename[0].upper() + filename[1:]
+        for i, prefix in enumerate(prefixes):
+            prefixes[i] = os.path.normcase(prefix)
+            if prefix[0] in "abcdefghijklmnopqrstuvwxyz":
+                prefixes[i] = prefix[0].upper() + prefix[1:]
     for src_prefix in prefixes:
         if filename.startswith(src_prefix):
-            # On Windows, make sure string compare case insensitive
-            if is_win:
-                src_prefix = os.path.normcase(src_prefix)
             _, relpath = filename.split(src_prefix, 1)
             if src_prefix != os.sep:  # sys.prefix == "/"
                 assert relpath[0] == os.sep
