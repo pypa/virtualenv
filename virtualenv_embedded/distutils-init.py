@@ -1,4 +1,3 @@
-import imp
 import os
 import sys
 import warnings
@@ -15,7 +14,26 @@ if os.path.normpath(distutils_path) == os.path.dirname(os.path.normpath(__file__
     warnings.warn("The virtualenv distutils package at %s appears to be in the same location as the system distutils?")
 else:
     __path__.insert(0, distutils_path)  # noqa: F821
-    real_distutils = imp.load_module("_virtualenv_distutils", None, distutils_path, ("", "", imp.PKG_DIRECTORY))
+    if sys.version_info < (3, 4):
+        import imp
+
+        real_distutils = imp.load_module("_virtualenv_distutils", None, distutils_path, ("", "", imp.PKG_DIRECTORY))
+    else:
+        import importlib.machinery
+
+        distutils_path = os.path.join(distutils_path, "__init__.py")
+        loader = importlib.machinery.SourceFileLoader("_virtualenv_distutils", distutils_path)
+        if sys.version_info < (3, 5):
+            import types
+
+            real_distutils = types.ModuleType(loader.name)
+        else:
+            import importlib.util
+
+            spec = importlib.util.spec_from_loader(loader.name, loader)
+            real_distutils = importlib.util.module_from_spec(spec)
+        loader.exec_module(real_distutils)
+
     # Copy the relevant attributes
     try:
         __revision__ = real_distutils.__revision__
