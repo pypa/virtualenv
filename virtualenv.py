@@ -932,97 +932,100 @@ def install_wheel(project_names, py_executable, search_dirs=None, download=False
             yield search_dirs
 
     with search_dirs_context() as search_dirs:
-        wheels = find_wheels(["setuptools", "pip"], search_dirs)
-        python_path = os.pathsep.join(wheels)
+        _install_wheel_with_search_dir(download, project_names, py_executable, search_dirs)
 
-        # PIP_FIND_LINKS uses space as the path separator and thus cannot have
-        # paths with spaces in them. Convert any of those to local file:// URL
-        # form.
+
+def _install_wheel_with_search_dir(download, project_names, py_executable, search_dirs):
+    wheels = find_wheels(["setuptools", "pip"], search_dirs)
+    python_path = os.pathsep.join(wheels)
+
+    # PIP_FIND_LINKS uses space as the path separator and thus cannot have paths
+    # with spaces in them. Convert any of those to local file:// URL form.
+    try:
+        from urlparse import urljoin
+        from urllib import pathname2url
+    except ImportError:
+        from urllib.parse import urljoin
+        from urllib.request import pathname2url
+
+    def space_path2url(p):
+        if " " not in p:
+            return p
+        return urljoin("file:", pathname2url(os.path.abspath(p)))
+
+    find_links = " ".join(space_path2url(d) for d in search_dirs)
+
+    extra_args = ["--ignore-installed"]
+    if DEBUG:
+        extra_args.append("-v")
+    if IS_JYTHON:
+        extra_args.append("--no-cache")
+
+    config = _pip_config(py_executable, python_path)
+    defined_cert = bool(config.get("install.cert") or config.get(":env:.cert") or config.get("global.cert"))
+
+    script = textwrap.dedent(
+        """
+        import sys
+        import pkgutil
+        import tempfile
+        import os
+
+        defined_cert = {defined_cert}
+
         try:
-            from urlparse import urljoin
-            from urllib import pathname2url
+            from pip._internal import main as _main
+            cert_data = pkgutil.get_data("pip._vendor.certifi", "cacert.pem")
         except ImportError:
-            from urllib.parse import urljoin
-            from urllib.request import pathname2url
+            from pip import main as _main
+            cert_data = pkgutil.get_data("pip._vendor.requests", "cacert.pem")
+        except IOError:
+            cert_data = None
 
-        def space_path2url(p):
-            if " " not in p:
-                return p
-            return urljoin("file:", pathname2url(os.path.abspath(p)))
-
-        find_links = " ".join(space_path2url(d) for d in search_dirs)
-
-        extra_args = ["--ignore-installed"]
-        if DEBUG:
-            extra_args.append("-v")
-        if IS_JYTHON:
-            extra_args.append("--no-cache")
-
-        config = _pip_config(py_executable, python_path)
-        defined_cert = bool(config.get("install.cert") or config.get(":env:.cert") or config.get("global.cert"))
-
-        script = textwrap.dedent(
-            """
-            import sys
-            import pkgutil
-            import tempfile
-            import os
-
-            defined_cert = {defined_cert}
-
-            try:
-                from pip._internal import main as _main
-                cert_data = pkgutil.get_data("pip._vendor.certifi", "cacert.pem")
-            except ImportError:
-                from pip import main as _main
-                cert_data = pkgutil.get_data("pip._vendor.requests", "cacert.pem")
-            except IOError:
-                cert_data = None
-
-            if not defined_cert and cert_data is not None:
-                cert_file = tempfile.NamedTemporaryFile(delete=False)
-                cert_file.write(cert_data)
-                cert_file.close()
-            else:
-                cert_file = None
-
-            try:
-                args = ["install"] + [{extra_args}]
-                if cert_file is not None:
-                    args += ["--cert", cert_file.name]
-                args += sys.argv[1:]
-
-                sys.exit(_main(args))
-            finally:
-                if cert_file is not None:
-                    os.remove(cert_file.name)
-        """.format(
-                defined_cert=defined_cert, extra_args=", ".join(repr(i) for i in extra_args)
-            )
-        ).encode("utf8")
-
-        cmd = [py_executable, "-"] + project_names
-        logger.start_progress("Installing {}...".format(", ".join(project_names)))
-        logger.indent += 2
-
-        env = {
-            "PYTHONPATH": python_path,
-            "JYTHONPATH": python_path,  # for Jython < 3.x
-            "PIP_FIND_LINKS": find_links,
-            "PIP_USE_WHEEL": "1",
-            "PIP_ONLY_BINARY": ":all:",
-            "PIP_USER": "0",
-            "PIP_NO_INPUT": "1",
-        }
-
-        if not download:
-            env["PIP_NO_INDEX"] = "1"
+        if not defined_cert and cert_data is not None:
+            cert_file = tempfile.NamedTemporaryFile(delete=False)
+            cert_file.write(cert_data)
+            cert_file.close()
+        else:
+            cert_file = None
 
         try:
-            call_subprocess(cmd, show_stdout=False, extra_env=env, stdin=script)
+            args = ["install"] + [{extra_args}]
+            if cert_file is not None:
+                args += ["--cert", cert_file.name]
+            args += sys.argv[1:]
+
+            sys.exit(_main(args))
         finally:
-            logger.indent -= 2
-            logger.end_progress()
+            if cert_file is not None:
+                os.remove(cert_file.name)
+    """.format(
+            defined_cert=defined_cert, extra_args=", ".join(repr(i) for i in extra_args)
+        )
+    ).encode("utf8")
+
+    cmd = [py_executable, "-"] + project_names
+    logger.start_progress("Installing {}...".format(", ".join(project_names)))
+    logger.indent += 2
+
+    env = {
+        "PYTHONPATH": python_path,
+        "JYTHONPATH": python_path,  # for Jython < 3.x
+        "PIP_FIND_LINKS": find_links,
+        "PIP_USE_WHEEL": "1",
+        "PIP_ONLY_BINARY": ":all:",
+        "PIP_USER": "0",
+        "PIP_NO_INPUT": "1",
+    }
+
+    if not download:
+        env["PIP_NO_INDEX"] = "1"
+
+    try:
+        call_subprocess(cmd, show_stdout=False, extra_env=env, stdin=script)
+    finally:
+        logger.indent -= 2
+        logger.end_progress()
 
 
 def _pip_config(py_executable, python_path):
