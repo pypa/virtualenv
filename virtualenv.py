@@ -18,6 +18,7 @@ if os.environ.get("VIRTUALENV_INTERPRETER_RUNNING"):
 import ast
 import base64
 import codecs
+import contextlib
 import distutils.spawn
 import distutils.sysconfig
 import errno
@@ -30,7 +31,9 @@ import shutil
 import struct
 import subprocess
 import sys
+import tempfile
 import textwrap
+import zipfile
 import zlib
 from distutils.util import strtobool
 from os.path import join
@@ -48,6 +51,9 @@ if sys.version_info < (2, 7):
     print("ERROR: {}".format(sys.exc_info()[1]))
     print("ERROR: this script requires Python 2.7 or greater.")
     sys.exit(101)
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+IS_ZIPAPP = os.path.isfile(HERE)
 
 try:
     # noinspection PyUnresolvedReferences,PyUnboundLocalVariable
@@ -459,19 +465,35 @@ def _find_file(filename, folders):
     return False, filename
 
 
-def file_search_dirs():
-    here = os.path.dirname(os.path.abspath(__file__))
-    dirs = [here, join(here, "virtualenv_support")]
-    if os.path.splitext(os.path.dirname(__file__))[0] != "virtualenv":
-        # Probably some boot script; just in case virtualenv is installed...
+@contextlib.contextmanager
+def virtualenv_support_dirs():
+    """Context manager yielding either [virtualenv_support_dir] or []"""
+
+    # normal filesystem installation
+    if os.path.isdir(join(HERE, "virtualenv_support")):
+        yield [join(HERE, "virtualenv_support")]
+    elif IS_ZIPAPP:
+        tmpdir = tempfile.mkdtemp()
+        try:
+            with zipfile.ZipFile(HERE) as zipf:
+                for member in zipf.namelist():
+                    if os.path.dirname(member) == "virtualenv_support":
+                        zipf.extract(member, tmpdir)
+            yield [join(tmpdir, "virtualenv_support")]
+        finally:
+            shutil.rmtree(tmpdir)
+    # probably a bootstrap script
+    elif os.path.splitext(os.path.dirname(__file__))[0] != "virtualenv":
         try:
             # noinspection PyUnresolvedReferences
             import virtualenv
         except ImportError:
-            pass
+            yield []
         else:
-            dirs.append(os.path.join(os.path.dirname(virtualenv.__file__), "virtualenv_support"))
-    return [d for d in dirs if os.path.isdir(d)]
+            yield [join(os.path.dirname(virtualenv.__file__), "virtualenv_support")]
+    # we tried!
+    else:
+        yield []
 
 
 class UpdatingDefaultsHelpFormatter(optparse.IndentedHelpFormatter):
@@ -650,13 +672,12 @@ def main():
         "--no-wheel", dest="no_wheel", action="store_true", help="Do not install wheel in the new virtualenv."
     )
 
-    default_search_dirs = file_search_dirs()
     parser.add_option(
         "--extra-search-dir",
         dest="search_dirs",
         action="append",
         metavar="DIR",
-        default=default_search_dirs,
+        default=[],
         help="Directory to look for setuptools/pip distributions in. " "This option can be used multiple times.",
     )
 
@@ -724,6 +745,8 @@ def main():
             file = __file__
             if file.endswith(".pyc"):
                 file = file[:-1]
+            elif IS_ZIPAPP:
+                file = HERE
             sub_process_call = subprocess.Popen([interpreter, file] + sys.argv[1:], env=env)
             raise SystemExit(sub_process_call.wait())
 
@@ -756,18 +779,19 @@ def main():
         make_environment_relocatable(home_dir)
         return
 
-    create_environment(
-        home_dir,
-        site_packages=options.system_site_packages,
-        clear=options.clear,
-        prompt=options.prompt,
-        search_dirs=options.search_dirs,
-        download=options.download,
-        no_setuptools=options.no_setuptools,
-        no_pip=options.no_pip,
-        no_wheel=options.no_wheel,
-        symlink=options.symlink,
-    )
+    with virtualenv_support_dirs() as search_dirs:
+        create_environment(
+            home_dir,
+            site_packages=options.system_site_packages,
+            clear=options.clear,
+            prompt=options.prompt,
+            search_dirs=search_dirs + options.search_dirs,
+            download=options.download,
+            no_setuptools=options.no_setuptools,
+            no_pip=options.no_pip,
+            no_wheel=options.no_wheel,
+            symlink=options.symlink,
+        )
     if "after_install" in globals():
         # noinspection PyUnresolvedReferences
         after_install(options, home_dir)  # noqa: F821
@@ -900,8 +924,18 @@ def find_wheels(projects, search_dirs):
 
 def install_wheel(project_names, py_executable, search_dirs=None, download=False):
     if search_dirs is None:
-        search_dirs = file_search_dirs()
+        search_dirs_context = virtualenv_support_dirs
+    else:
 
+        @contextlib.contextmanager
+        def search_dirs_context():
+            yield search_dirs
+
+    with search_dirs_context() as search_dirs:
+        _install_wheel_with_search_dir(download, project_names, py_executable, search_dirs)
+
+
+def _install_wheel_with_search_dir(download, project_names, py_executable, search_dirs):
     wheels = find_wheels(["setuptools", "pip"], search_dirs)
     python_path = os.pathsep.join(wheels)
 
