@@ -1,2 +1,0 @@
-Copy files from ``sys.exec_prefix`` only if it is really different path than
-used prefix, bugfix for #1270

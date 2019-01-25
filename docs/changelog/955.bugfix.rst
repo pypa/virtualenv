@@ -1,1 +1,0 @@
-Use ``importlib`` over deprecated ``imp` in ``distutils/__init__.py`` for python 3 - by Anthony Sottile
