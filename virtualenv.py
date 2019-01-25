@@ -1192,6 +1192,15 @@ def copy_required_modules(dst_prefix, symlink):
                     copyfile(py_file, dst_filename[:-1], symlink)
 
 
+def copy_required_files(src_dir, lib_dir, symlink):
+    if not os.path.isdir(src_dir):
+        return
+    for fn in os.listdir(src_dir):
+        bn = os.path.splitext(fn)[0]
+        if fn != "site-packages" and bn in REQUIRED_FILES:
+            copyfile(join(src_dir, fn), join(lib_dir, fn), symlink)
+
+
 def copy_tcltk(src, dest, symlink):
     """ copy tcl/tk libraries on Windows (issue #93) """
     for lib_version in "8.5", "8.6":
@@ -1249,12 +1258,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     try:
         # copy required files...
         for stdlib_dir in stdlib_dirs:
-            if not os.path.isdir(stdlib_dir):
-                continue
-            for fn in os.listdir(stdlib_dir):
-                bn = os.path.splitext(fn)[0]
-                if fn != "site-packages" and bn in REQUIRED_FILES:
-                    copyfile(join(stdlib_dir, fn), join(lib_dir, fn), symlink)
+            copy_required_files(stdlib_dir, lib_dir, symlink)
         # ...and modules
         copy_required_modules(home_dir, symlink)
     finally:
@@ -1302,16 +1306,14 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             copyfile(platform_include_dir, platform_include_dest, symlink)
 
     # pypy never uses exec_prefix, just ignore it
-    if sys.exec_prefix != prefix and not IS_PYPY:
+    if os.path.realpath(sys.exec_prefix) != os.path.realpath(prefix) and not IS_PYPY:
         if IS_WIN:
             exec_dir = join(sys.exec_prefix, "lib")
         elif IS_JYTHON:
             exec_dir = join(sys.exec_prefix, "Lib")
         else:
             exec_dir = join(sys.exec_prefix, "lib", PY_VERSION)
-        if os.path.isdir(exec_dir):
-            for fn in os.listdir(exec_dir):
-                copyfile(join(exec_dir, fn), join(lib_dir, fn), symlink)
+        copy_required_files(exec_dir, lib_dir, symlink)
 
     if IS_JYTHON:
         # Jython has either jython-dev.jar and javalib/ dir, or just

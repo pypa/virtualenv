@@ -518,3 +518,37 @@ def test_pypy_pre_import(tmp_path):
         subprocess.check_output(cmd, universal_newlines=True, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as exception:
         assert not exception.returncode, exception.output
+
+
+@pytest.mark.skipif(not hasattr(os, "symlink"), reason="requires working symlink implementation")
+def test_create_environment_with_exec_prefix_pointing_to_prefix(tmpdir):
+    """Create virtual environment for Python with ``sys.exec_prefix`` pointing
+    to ``sys.prefix`` or ``sys.base_prefix`` or ``sys.real_prefix`` under a
+    different name
+    """
+    venvdir = str(tmpdir / "venv")
+    python_dir = tmpdir / "python"
+    python_dir.mkdir()
+    path_key = str("PATH")
+    old_path = os.environ[path_key]
+    if hasattr(sys, "real_prefix"):
+        os.environ[path_key] = os.pathsep.join(
+            p for p in os.environ[path_key].split(os.pathsep) if not p.startswith(sys.prefix)
+        )
+    python = virtualenv.resolve_interpreter(os.path.basename(sys.executable))
+    try:
+        subprocess.check_call([sys.executable, "-m", "virtualenv", "-p", python, venvdir])
+        home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(venvdir)
+        assert not os.path.islink(os.path.join(lib_dir, "distutils"))
+    finally:
+        os.environ[path_key] = old_path
+
+
+@pytest.mark.skipif(not hasattr(sys, "real_prefix"), reason="requires running from inside virtualenv")
+def test_create_environment_from_virtual_environment(tmpdir):
+    """Create virtual environment using Python from another virtual environment
+    """
+    venvdir = str(tmpdir / "venv")
+    home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(venvdir)
+    virtualenv.create_environment(venvdir)
+    assert not os.path.islink(os.path.join(lib_dir, "distutils"))
