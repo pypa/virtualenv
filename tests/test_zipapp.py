@@ -1,3 +1,6 @@
+from __future__ import unicode_literals
+
+import json
 import os.path
 import subprocess
 import sys
@@ -11,14 +14,6 @@ HERE = os.path.dirname(os.path.dirname(__file__))
 
 def _python(v):
     return virtualenv.get_installed_pythons().get(v, "python{}".format(v))
-
-
-def _major_version(venv):
-    _, _, _, bin_dir = virtualenv.path_locations(venv)
-    exe = os.path.join(bin_dir, "python")
-    cmd = (exe, "-c", "import sys; print(sys.version_info[0])")
-    out = subprocess.check_output(cmd)
-    return int(out)
 
 
 @pytest.fixture(scope="session")
@@ -42,24 +37,17 @@ def call_zipapp(tmp_path_factory):
 @pytest.fixture(scope="session")
 def call_wheel(tmp_path_factory):
     wheels = tmp_path_factory.mktemp(basename="wheel")
-    subprocess.check_call((sys.executable, "-mpip", "wheel", "--no-deps", "-w", str(wheels), HERE))
+    subprocess.check_call((sys.executable, "-m", "pip", "wheel", "--no-deps", "-w", str(wheels), HERE))
     wheel, = wheels.iterdir()
 
     def wheel_make_env(path, python=None):
-        cmd = (sys.executable, "-mvirtualenv", "--no-download", path)
+        cmd = (sys.executable, "-m", "virtualenv", "--no-download", path)
         if python:
             cmd += ("-p", python)
         env = dict(os.environ, PYTHONPATH=str(wheel))
         subprocess.check_call(cmd, env=env)
 
     return wheel_make_env
-
-
-def _test_basic_invocation(make_env, tmp_path):
-    venv = tmp_path / "venv"
-    make_env(str(venv))
-    assert venv.exists()
-    assert _major_version(str(venv)) == sys.version_info[0]
 
 
 def test_zipapp_basic_invocation(call_zipapp, tmp_path):
@@ -70,13 +58,36 @@ def test_wheel_basic_invocation(call_wheel, tmp_path):
     _test_basic_invocation(call_wheel, tmp_path)
 
 
+def _test_basic_invocation(make_env, tmp_path):
+    venv = tmp_path / "venv"
+    make_env(str(venv))
+    assert_venv_looks_good(
+        venv, list(sys.version_info), "{}{}".format(virtualenv.EXPECTED_EXE, ".exe" if virtualenv.IS_WIN else "")
+    )
+
+
+def version_exe(venv, exe_name):
+    _, _, _, bin_dir = virtualenv.path_locations(str(venv))
+    exe = os.path.join(bin_dir, exe_name)
+    script = "import sys; import json; print(json.dumps(dict(v=list(sys.version_info), e=sys.executable)))"
+    cmd = [exe, "-c", script]
+    out = json.loads(subprocess.check_output(cmd, env=dict(), universal_newlines=True))
+    return out["v"], out["e"]
+
+
+def assert_venv_looks_good(venv, version_info, exe_name):
+    assert venv.exists()
+    version, exe = version_exe(venv, exe_name=exe_name)
+    assert version[: len(version_info)] == version_info
+    assert exe != sys.executable
+
+
 def _test_invocation_dash_p(make_env, tmp_path):
     venv = tmp_path / "venv"
     python = {2: _python("3"), 3: _python("2.7")}[sys.version_info[0]]
     make_env(str(venv), python)
-    assert venv.exists()
     expected = {3: 2, 2: 3}[sys.version_info[0]]
-    assert _major_version(str(venv)) == expected
+    assert_venv_looks_good(venv, [expected], "python{}".format(".exe" if virtualenv.IS_WIN else ""))
 
 
 def test_zipapp_invocation_dash_p(call_zipapp, tmp_path):
