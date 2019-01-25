@@ -34,9 +34,11 @@ def test_sdist_contains(sdist):
         "LICENSE.txt",
     }
 
-    assert not (must_have - names)
+    missing = must_have - names
+    assert not missing
 
-    assert not (names - must_have - {"PKG-INFO", "virtualenv.egg-info"})
+    extra = names - must_have - {"PKG-INFO", "virtualenv.egg-info"}
+    assert not extra, " | ".join(extra)
 
 
 def test_wheel_contains(extracted_wheel):

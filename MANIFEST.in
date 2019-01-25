@@ -11,3 +11,12 @@ recursive-include tests *
 recursive-include docs *
 include tasks/*
 include tox.ini
+
+exclude readthedocs.yml
+exclude CONTRIBUTING.rst
+exclude .pre-commit-config.yaml
+exclude azure-run-tox-env.yml
+exclude azure-pipelines.yml
+exclude .gitignore
+exclude .gitattributes
+recursive-exclude .github *
