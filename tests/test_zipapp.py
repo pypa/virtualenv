@@ -71,7 +71,7 @@ def version_exe(venv, exe_name):
     exe = os.path.join(bin_dir, exe_name)
     script = "import sys; import json; print(json.dumps(dict(v=list(sys.version_info), e=sys.executable)))"
     cmd = [exe, "-c", script]
-    out = json.loads(subprocess.check_output(cmd, env=dict(), universal_newlines=True))
+    out = json.loads(subprocess.check_output(cmd, universal_newlines=True))
     return out["v"], out["e"]
 
 
