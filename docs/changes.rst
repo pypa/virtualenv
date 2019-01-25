@@ -5,6 +5,35 @@ Release History
 
 .. towncrier release notes start
 
+v16.3.0 (2019-01-25)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Use ``importlib`` over deprecated ``imp` in ``distutils/__init__.py`` for python 3 - by Anthony Sottile (`#955 <https://github.com/pypa/virtualenv/issues/955>`_)
+- Preserve ``cert`` option defined in ``pip.conf`` or environment variable. (`#1273 <https://github.com/pypa/virtualenv/issues/1273>`_)
+- fixed a ``ResourceWarning: unclosed file`` in ``call_subprocess()`` - by Mickaël Schoentgen (`#1277 <https://github.com/pypa/virtualenv/issues/1277>`_)
+- pre-import some built-in modules in ``site.py`` on PyPy according to PyPy's ``site.py`` - by microdog (`#1281 <https://github.com/pypa/virtualenv/issues/1281>`_)
+- Copy files from ``sys.exec_prefix`` only if it is really different path than
+  used prefix, bugfix for #1270 (`#1282 <https://github.com/pypa/virtualenv/issues/1282>`_)
+
+
+Features
+^^^^^^^^
+
+- Enable virtualenv to be distributed as a ``zipapp`` or to be run as a
+  wheel with ``PYTHONPATH=virtualenv...any.whl python -mvirtualenv`` - by
+  Anthony Sottile (`#1092 <https://github.com/pypa/virtualenv/issues/1092>`_)
+- bump vendored pip from ``18.1`` to ``19.0.1`` (`#1291 <https://github.com/pypa/virtualenv/issues/1291>`_)
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- discourage installation as ``root``, including ``sudo`` - by ``altendky`` (`#1061 <https://github.com/pypa/virtualenv/issues/1061>`_)
+
+
 v16.2.0 (2018-12-31)
 --------------------
 

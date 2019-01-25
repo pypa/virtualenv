@@ -1,1 +1,0 @@
-bump vendored pip from ``18.1`` to ``19.0.1``

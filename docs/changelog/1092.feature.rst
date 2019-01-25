@@ -1,3 +1,0 @@
-Enable virtualenv to be distributed as a ``zipapp`` or to be run as a
-wheel with ``PYTHONPATH=virtualenv...any.whl python -mvirtualenv`` - by
-Anthony Sottile
