@@ -31,7 +31,19 @@ def test_commandline_basic(tmpdir):
     assert os.path.exists(os.path.join(bin_dir, "activate_this.py"))
     assert os.path.exists(os.path.join(bin_dir, "activate.ps1"))
 
-    assert os.path.exists(os.path.join(bin_dir, os.path.basename(sys.executable)))
+    exe = os.path.join(bin_dir, os.path.basename(sys.executable))
+    assert os.path.exists(exe)
+
+    def _check_no_warnings(module):
+        subprocess.check_call((exe, "-Werror", "-c", "import {}".format(module)))
+
+    # pypy3's `distutils.sysconfig_pypy` imports `imp`
+    # https://bitbucket.org/pypy/pypy/pull-requests/634/remove-unused-and-deprecated-import-of-imp/diff
+    if virtualenv.IS_PYPY and sys.version_info > (3,):
+        with pytest.raises(subprocess.CalledProcessError):
+            _check_no_warnings("distutils")
+    else:
+        _check_no_warnings("distutils")
 
 
 def test_commandline_explicit_interp(tmpdir):
