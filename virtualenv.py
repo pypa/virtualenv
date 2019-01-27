@@ -1185,26 +1185,55 @@ def change_prefix(filename, dst_prefix):
     assert False, "Filename {} does not start with any of these prefixes: {}".format(filename, prefixes)
 
 
+if sys.version_info < (3, 4):
+    import imp
+
+    def find_module_filename(modname):
+        try:
+            f, filename, _ = imp.find_module(modname)
+        except ImportError:
+            return None
+        else:
+            if f is not None:
+                f.close()
+            return filename
+
+
+else:
+    import importlib.util
+
+    if sys.version_info < (3, 5):
+
+        def find_spec(modname):
+            loader = importlib.find_loader(modname)
+            if loader is None:
+                return None
+            else:
+                return importlib.util.spec_from_loader(modname, loader)
+
+    else:
+        find_spec = importlib.util.find_spec
+
+    def find_module_filename(modname):
+        spec = importlib.util.find_spec(modname)
+        # on pypy3, some builtin modules have a bogus build-time file path
+        if spec is None or not os.path.exists(spec.origin):
+            return None
+        elif os.path.basename(spec.origin) == "__init__.py":
+            return os.path.dirname(spec.origin)
+        else:
+            return spec.origin
+
+
 def copy_required_modules(dst_prefix, symlink):
-    import warnings
-
-    with warnings.catch_warnings():
-        # Ignore deprecation of the imp module
-        # TODO: do not use deprecated imp module
-        warnings.simplefilter("ignore")
-        import imp
-
     for modname in REQUIRED_MODULES:
         if modname in sys.builtin_module_names:
             logger.info("Ignoring built-in bootstrap module: %s" % modname)
             continue
-        try:
-            f, filename, _ = imp.find_module(modname)
-        except ImportError:
+        filename = find_module_filename(modname)
+        if filename is None:
             logger.info("Cannot import bootstrap module: %s" % modname)
         else:
-            if f is not None:
-                f.close()
             # special-case custom readline.so on OS X, but not for pypy:
             if (
                 modname == "readline"
