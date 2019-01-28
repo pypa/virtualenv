@@ -398,7 +398,7 @@ def copy_file_or_folder(src, dest, symlink=True):
         shutil.copy2(src, dest)
 
 
-def copyfile(src, dest, symlink=True):
+def copyfile(src, dest, symlink=True, symlink_resolve=True):
     if not os.path.exists(src):
         # Some bad symlink in the src
         logger.warn("Cannot find file %s (bad symlink)", src)
@@ -411,8 +411,9 @@ def copyfile(src, dest, symlink=True):
         os.makedirs(os.path.dirname(dest))
     if symlink and hasattr(os, "symlink") and not IS_WIN:
         logger.info("Symlinking %s", dest)
+        src_path = os.path.realpath(src) if symlink_resolve else src
         try:
-            os.symlink(os.path.realpath(src), dest)
+            os.symlink(src_path, dest)
         except (OSError, NotImplementedError):
             logger.info("Symlinking failed, copying to %s", dest)
             copy_file_or_folder(src, dest, symlink)
@@ -652,6 +653,14 @@ def main():
     )
 
     parser.add_option(
+        "--symlink-no-resolve",
+        dest="symlink_resolve",
+        action="store_false",
+        default=True,
+        help="Do not resolve symlink source link when symlinking.",
+    )
+
+    parser.add_option(
         "--relocatable",
         dest="relocatable",
         action="store_true",
@@ -791,6 +800,7 @@ def main():
             no_pip=options.no_pip,
             no_wheel=options.no_wheel,
             symlink=options.symlink,
+            symlink_resolve=options.symlink_resolve,
         )
     if "after_install" in globals():
         # noinspection PyUnresolvedReferences
@@ -1055,6 +1065,7 @@ def create_environment(
     no_pip=False,
     no_wheel=False,
     symlink=True,
+    symlink_resolve=True,
 ):
     """
     Creates a new environment in ``home_dir``.
@@ -1068,7 +1079,16 @@ def create_environment(
     home_dir, lib_dir, inc_dir, bin_dir = path_locations(home_dir)
 
     py_executable = os.path.abspath(
-        install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages=site_packages, clear=clear, symlink=symlink)
+        install_python(
+            home_dir,
+            lib_dir,
+            inc_dir,
+            bin_dir,
+            site_packages=site_packages,
+            clear=clear,
+            symlink=symlink,
+            symlink_resolve=symlink_resolve,
+        )
     )
 
     install_distutils(home_dir)
@@ -1230,7 +1250,7 @@ def find_module_filename(modname):
         return filepath
 
 
-def copy_required_modules(dst_prefix, symlink):
+def copy_required_modules(dst_prefix, symlink, symlink_resolve=True):
     for modname in REQUIRED_MODULES:
         if modname in sys.builtin_module_names:
             logger.info("Ignoring built-in bootstrap module: %s" % modname)
@@ -1253,23 +1273,23 @@ def copy_required_modules(dst_prefix, symlink):
             else:
                 dst_filename = change_prefix(filename, dst_prefix)
             if dst_filename is not None:
-                copyfile(filename, dst_filename, symlink)
+                copyfile(filename, dst_filename, symlink, symlink_resolve)
             if filename.endswith(".pyc"):
                 py_file = filename[:-1]
                 if os.path.exists(py_file):
-                    copyfile(py_file, dst_filename[:-1], symlink)
+                    copyfile(py_file, dst_filename[:-1], symlink, symlink_resolve)
 
 
-def copy_required_files(src_dir, lib_dir, symlink):
+def copy_required_files(src_dir, lib_dir, symlink, symlink_resolve=True):
     if not os.path.isdir(src_dir):
         return
     for fn in os.listdir(src_dir):
         bn = os.path.splitext(fn)[0]
         if fn != "site-packages" and bn in REQUIRED_FILES:
-            copyfile(join(src_dir, fn), join(lib_dir, fn), symlink)
+            copyfile(join(src_dir, fn), join(lib_dir, fn), symlink, symlink_resolve)
 
 
-def copy_include_dir(include_src, include_dest, symlink):
+def copy_include_dir(include_src, include_dest, symlink, symlink_resolve=True):
     """Copy headers from *include_src* to *include_dest* symlinking if required"""
     if not os.path.isdir(include_src):
         return
@@ -1277,9 +1297,9 @@ def copy_include_dir(include_src, include_dest, symlink):
     # avoids making ``venv-dir/include`` symlink to it
     if IS_PYPY:
         for fn in os.listdir(include_src):
-            copyfile(join(include_src, fn), join(include_dest, fn), symlink)
+            copyfile(join(include_src, fn), join(include_dest, fn), symlink, symlink_resolve)
     else:
-        copyfile(include_src, include_dest, symlink)
+        copyfile(include_src, include_dest, symlink, symlink_resolve)
 
 
 def copy_tcltk(src, dest, symlink):
@@ -1303,7 +1323,7 @@ def subst_path(prefix_path, prefix, home_dir):
     return prefix_path.replace(prefix, home_dir, 1)
 
 
-def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, symlink=True):
+def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, symlink=True, symlink_resolve=True):
     """Install just the base environment, no distutils patches etc"""
     if sys.executable.startswith(bin_dir):
         print("Please use the *system* python to run this script")
@@ -1339,9 +1359,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     try:
         # copy required files...
         for stdlib_dir in stdlib_dirs:
-            copy_required_files(stdlib_dir, lib_dir, symlink)
+            copy_required_files(stdlib_dir, lib_dir, symlink, symlink_resolve)
         # ...and modules
-        copy_required_modules(home_dir, symlink)
+        copy_required_modules(home_dir, symlink, symlink_resolve)
     finally:
         logger.indent -= 2
     # ...copy tcl/tk
@@ -1368,7 +1388,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     else:
         standard_lib_include_dir = join(prefix, "include", PY_VERSION + ABI_FLAGS)
     if os.path.exists(standard_lib_include_dir):
-        copy_include_dir(standard_lib_include_dir, inc_dir, symlink)
+        copy_include_dir(standard_lib_include_dir, inc_dir, symlink, symlink_resolve)
     else:
         logger.debug("No include dir %s", standard_lib_include_dir)
 
@@ -1384,7 +1404,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             # (traversing virtualenvs), whereas the platinc_dir is relative to
             # the inner virtualenv and ignores the prefix argument.
             # This seems more evolved than designed.
-            copy_include_dir(platform_include_dir, platform_include_dest, symlink)
+            copy_include_dir(platform_include_dir, platform_include_dest, symlink, symlink_resolve)
 
     # pypy never uses exec_prefix, just ignore it
     if os.path.realpath(sys.exec_prefix) != os.path.realpath(prefix) and not IS_PYPY:
@@ -1394,7 +1414,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             exec_dir = join(sys.exec_prefix, "Lib")
         else:
             exec_dir = join(sys.exec_prefix, "lib", PY_VERSION)
-        copy_required_files(exec_dir, lib_dir, symlink)
+        copy_required_files(exec_dir, lib_dir, symlink, symlink_resolve)
 
     if IS_JYTHON:
         # Jython has either jython-dev.jar and javalib/ dir, or just
@@ -1402,7 +1422,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         for name in "jython-dev.jar", "javalib", "jython.jar":
             src = join(prefix, name)
             if os.path.exists(src):
-                copyfile(src, join(home_dir, name), symlink)
+                copyfile(src, join(home_dir, name), symlink, symlink_resolve)
         # XXX: registry should always exist after Jython 2.5rc1
         src = join(prefix, "registry")
         if os.path.exists(src):
@@ -1484,13 +1504,13 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             if sys.platform in ("win32", "cygwin"):
                 python_executable += ".exe"
             logger.info("Also created executable %s", python_executable)
-            copyfile(py_executable, python_executable, symlink)
+            copyfile(py_executable, python_executable, symlink, symlink_resolve)
 
             if IS_WIN:
                 for name in ["libexpat.dll", "libeay32.dll", "ssleay32.dll", "sqlite3.dll", "tcl85.dll", "tk85.dll"]:
                     src = join(prefix, name)
                     if os.path.exists(src):
-                        copyfile(src, join(bin_dir, name), symlink)
+                        copyfile(src, join(bin_dir, name), symlink, symlink_resolve)
 
                 for d in sys.path:
                     if d.endswith("lib_pypy"):
@@ -1499,7 +1519,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
                     logger.fatal("Could not find lib_pypy in sys.path")
                     raise SystemExit(3)
                 logger.info("Copying lib_pypy")
-                copyfile(d, os.path.join(home_dir, "lib_pypy"), symlink)
+                copyfile(d, os.path.join(home_dir, "lib_pypy"), symlink, symlink_resolve)
 
     if os.path.splitext(os.path.basename(py_executable))[0] != EXPECTED_EXE:
         secondary_exe = os.path.join(os.path.dirname(py_executable), EXPECTED_EXE)
@@ -1539,7 +1559,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
 
         if os.path.exists(virtual_lib):
             os.unlink(virtual_lib)
-        copyfile(os.path.join(prefix, "Python"), virtual_lib, symlink)
+        copyfile(os.path.join(prefix, "Python"), virtual_lib, symlink, symlink_resolve)
 
         # And then change the install_name of the copied python executable
         # noinspection PyBroadException
@@ -1582,7 +1602,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             if symlink:
                 os.symlink(py_executable_base, full_pth)
             else:
-                copyfile(py_executable, full_pth, symlink)
+                copyfile(py_executable, full_pth, symlink, symlink_resolve)
 
     cmd = [
         py_executable,
@@ -1629,7 +1649,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         logger.notify("Please make sure you remove any previous custom paths from " "your %s file.", pydistutils)
     # FIXME: really this should be calculated earlier
 
-    fix_local_scheme(home_dir, symlink)
+    fix_local_scheme(home_dir, symlink, symlink_resolve)
 
     if site_packages:
         if os.path.exists(site_packages_filename):
@@ -1704,7 +1724,7 @@ def install_distutils(home_dir):
     writefile(os.path.join(distutils_path, "distutils.cfg"), DISTUTILS_CFG, overwrite=False)
 
 
-def fix_local_scheme(home_dir, symlink=True):
+def fix_local_scheme(home_dir, symlink=True, symlink_resolve=True):
     """
     Platforms that use the "posix_local" install scheme (like Ubuntu with
     Python 2.7) need to be given an additional "local" location, sigh.
@@ -1726,6 +1746,7 @@ def fix_local_scheme(home_dir, symlink=True):
                         os.path.abspath(os.path.join(home_dir, subdir_name)),
                         os.path.join(local_path, subdir_name),
                         symlink,
+                        symlink_resolve,
                     )
 
 

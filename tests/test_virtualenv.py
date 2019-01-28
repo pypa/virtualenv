@@ -351,7 +351,7 @@ def test_relative_symlink(tmpdir):
 
 
 @pytest.mark.skipif(not hasattr(os, "symlink"), reason="requires working symlink implementation")
-def test_copyfile_from_symlink(tmp_path):
+def test_copyfile_content_with_symlink_chain_resolving_source(tmp_path):
     """Test that copyfile works correctly when the source is a symlink with a
     relative target, and a symlink to a symlink. (This can occur when creating
     an environment if Python was installed using stow or homebrew.)"""
@@ -373,6 +373,77 @@ def test_copyfile_from_symlink(tmp_path):
     virtualenv.copyfile(str(src_dir / "link2"), str(copy_path))
     with open(str(copy_path), "r") as f:
         assert f.read() == "contents"
+
+    shutil.rmtree(str(src_dir))
+    os.remove(str(copy_path))
+
+
+@pytest.mark.skipif(not hasattr(os, "symlink"), reason="requires working symlink implementation")
+def test_copyfile_content_with_symlink_chain_without_resolving_source(tmp_path):
+    """Test that copyfile works correctly when the source is a symlink and we do
+    want to create a symlink to the symlink using symlink_resolve=False."""
+
+    # Set up src/link2 -> ../src/link1 -> file (containing "contents").
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    with open(str(src_dir / "file"), "w") as f:
+        f.write("contents")
+    os.symlink("file", str(src_dir / "link1"))
+    os.symlink(str(Path("..") / "src" / "link1"), str(src_dir / "link2"))
+
+    # Check that copyfile works on link2.
+    copy_path = tmp_path / "copy"
+    virtualenv.copyfile(str(src_dir / "link2"), str(copy_path), symlink_resolve=False)
+    with open(str(copy_path), "r") as f:
+        assert f.read() == "contents"
+
+    shutil.rmtree(str(src_dir))
+    os.remove(str(copy_path))
+
+
+@pytest.mark.skipif(
+    not hasattr(os, "symlink") or sys.platform == "win32", reason="requires working symlink implementation"
+)
+def test_copyfile_link_target_when_resolving_source(tmp_path):
+    """Test that copyfile actually resolve link chains when using default
+    parameters."""
+
+    # Set up src/link2 -> ../src/link1 -> file.
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    open(str(src_dir / "file"), "a").close()
+    os.symlink("file", str(src_dir / "link1"))
+    os.symlink(str(Path("..") / "src" / "link1"), str(src_dir / "link2"))
+
+    # Check that copyfile works on link2.
+    # This may produce a symlink or a regular file depending on the platform --
+    # which doesn't matter as long as it has the right contents.
+    copy_path = tmp_path / "copy"
+    virtualenv.copyfile(str(src_dir / "link2"), str(copy_path))
+    assert os.readlink(str(copy_path)) == str(src_dir / "file")
+
+    shutil.rmtree(str(src_dir))
+    os.remove(str(copy_path))
+
+
+@pytest.mark.skipif(
+    not hasattr(os, "symlink") or sys.platform == "win32", reason="requires working symlink implementation"
+)
+def test_copyfile_link_target_when_not_resolving_source(tmp_path):
+    """Test that copyfile do not resolve source link when specifically called
+    with symlink_resolve=False parameter."""
+
+    # Set up src/link2 -> ../src/link1 -> file (containing "contents").
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    open(str(src_dir / "file"), "a").close()
+    os.symlink("file", str(src_dir / "link1"))
+    os.symlink(str(Path("..") / "src" / "link1"), str(src_dir / "link2"))
+
+    # Check that copyfile works on link2.
+    copy_path = tmp_path / "copy"
+    virtualenv.copyfile(str(src_dir / "link2"), str(copy_path), symlink_resolve=False)
+    assert os.readlink(str(copy_path)) == str(src_dir / "link2")
 
     shutil.rmtree(str(src_dir))
     os.remove(str(copy_path))
