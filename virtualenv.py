@@ -1185,44 +1185,48 @@ def change_prefix(filename, dst_prefix):
     assert False, "Filename {} does not start with any of these prefixes: {}".format(filename, prefixes)
 
 
-if sys.version_info < (3, 4):
-    import imp
+def find_module_filename(modname):
 
-    def find_module_filename(modname):
+    if sys.version_info < (3, 4):
+        # noinspection PyDeprecation
+        import imp
+
         try:
-            f, filename, _ = imp.find_module(modname)
+            file_handler, filepath, _ = imp.find_module(modname)
         except ImportError:
             return None
         else:
-            if f is not None:
-                f.close()
-            return filename
-
-
-else:
-    import importlib.util
-
-    if sys.version_info < (3, 5):
-
-        def find_spec(modname):
-            loader = importlib.find_loader(modname)
-            if loader is None:
-                return None
-            else:
-                return importlib.util.spec_from_loader(modname, loader)
-
+            if file_handler is not None:
+                file_handler.close()
+            return filepath
     else:
-        find_spec = importlib.util.find_spec
+        import importlib.util
 
-    def find_module_filename(modname):
-        spec = importlib.util.find_spec(modname)
-        # on pypy3, some builtin modules have a bogus build-time file path
-        if spec is None or not os.path.exists(spec.origin):
-            return None
-        elif os.path.basename(spec.origin) == "__init__.py":
-            return os.path.dirname(spec.origin)
+        if sys.version_info < (3, 5):
+
+            def find_spec(modname):
+                # noinspection PyDeprecation
+                loader = importlib.find_loader(modname)
+                if loader is None:
+                    return None
+                else:
+                    return importlib.util.spec_from_loader(modname, loader)
+
         else:
-            return spec.origin
+            find_spec = importlib.util.find_spec
+
+        spec = find_spec(modname)
+        if spec is None:
+            return None
+        if not os.path.exists(spec.origin):
+            # https://bitbucket.org/pypy/pypy/issues/2944/origin-for-several-builtin-modules
+            # on pypy3, some builtin modules have a bogus build-time file path, ignore them
+            return None
+        filepath = spec.origin
+        # https://www.python.org/dev/peps/pep-3147/#file guarantee to be non-cached
+        if os.path.basename(filepath) == "__init__.py":
+            filepath = os.path.dirname(filepath)
+        return filepath
 
 
 def copy_required_modules(dst_prefix, symlink):
