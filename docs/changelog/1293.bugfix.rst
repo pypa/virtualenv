@@ -1,0 +1,1 @@
+Use ``importlib`` over ``imp`` in ``virtualenv.py`` for ``python >= 3.4`` - by Anthony Sottile
