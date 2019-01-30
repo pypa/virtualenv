@@ -1,1 +1,1 @@
-Copy or link Python header files instead of include directory itself
+Copy or link PyPy header files instead of include directory itself
