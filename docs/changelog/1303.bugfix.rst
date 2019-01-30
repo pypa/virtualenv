@@ -1,0 +1,1 @@
+Allow virtualenv creation with older pip not having ``config`` command.
