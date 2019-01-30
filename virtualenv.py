@@ -1268,12 +1268,17 @@ def copy_required_files(src_dir, lib_dir, symlink):
             copyfile(join(src_dir, fn), join(lib_dir, fn), symlink)
 
 
-def copy_directory_contents(src_dir, dst_dir, symlink):
-    """Copy all files from *src_dir* to *dst_dir* symlinking if required"""
-    if not os.path.isdir(src_dir):
+def copy_include_dir(include_src, include_dest, symlink):
+    """Copy headers from *include_src* to *include_dest* symlinking if required"""
+    if not os.path.isdir(include_src):
         return
-    for fn in os.listdir(src_dir):
-        copyfile(join(src_dir, fn), join(dst_dir, fn), symlink)
+    # PyPy headers are located in ``pypy-dir/include`` and following code
+    # avoids making ``venv-dir/include`` symlink to it
+    if IS_PYPY:
+        for fn in os.listdir(include_src):
+            copyfile(join(include_src, fn), join(include_dest, fn), symlink)
+    else:
+        copyfile(include_src, include_dest, symlink)
 
 
 def copy_tcltk(src, dest, symlink):
@@ -1362,7 +1367,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     else:
         standard_lib_include_dir = join(prefix, "include", PY_VERSION + ABI_FLAGS)
     if os.path.exists(standard_lib_include_dir):
-        copy_directory_contents(standard_lib_include_dir, inc_dir, symlink)
+        copy_include_dir(standard_lib_include_dir, inc_dir, symlink)
     else:
         logger.debug("No include dir %s", standard_lib_include_dir)
 
@@ -1378,7 +1383,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             # (traversing virtualenvs), whereas the platinc_dir is relative to
             # the inner virtualenv and ignores the prefix argument.
             # This seems more evolved than designed.
-            copy_directory_contents(platform_include_dir, platform_include_dest, symlink)
+            copy_include_dir(platform_include_dir, platform_include_dest, symlink)
 
     # pypy never uses exec_prefix, just ignore it
     if os.path.realpath(sys.exec_prefix) != os.path.realpath(prefix) and not IS_PYPY:
