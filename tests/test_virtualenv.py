@@ -552,3 +552,15 @@ def test_create_environment_from_virtual_environment(tmpdir):
     home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(venvdir)
     virtualenv.create_environment(venvdir)
     assert not os.path.islink(os.path.join(lib_dir, "distutils"))
+
+
+def test_create_environment_with_old_pip(tmpdir):
+    old = Path(__file__).parent / "old-wheels"
+    old_pip = old / "pip-9.0.1-py2.py3-none-any.whl"
+    old_setuptools = old / "setuptools-30.4.0-py2.py3-none-any.whl"
+    support_dir = str(tmpdir / "virtualenv_support")
+    os.makedirs(support_dir)
+    for old_dep in [old_pip, old_setuptools]:
+        shutil.copy(str(old_dep), support_dir)
+    venvdir = str(tmpdir / "venv")
+    virtualenv.create_environment(venvdir, search_dirs=[support_dir], no_wheel=True)
