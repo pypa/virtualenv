@@ -1268,6 +1268,14 @@ def copy_required_files(src_dir, lib_dir, symlink):
             copyfile(join(src_dir, fn), join(lib_dir, fn), symlink)
 
 
+def copy_directory_contents(src_dir, dst_dir, symlink):
+    """Copy all files from *src_dir* to *dst_dir* symlinking if required"""
+    if not os.path.isdir(src_dir):
+        return
+    for fn in os.listdir(src_dir):
+        copyfile(join(src_dir, fn), join(dst_dir, fn), symlink)
+
+
 def copy_tcltk(src, dest, symlink):
     """ copy tcl/tk libraries on Windows (issue #93) """
     for lib_version in "8.5", "8.6":
@@ -1354,7 +1362,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     else:
         standard_lib_include_dir = join(prefix, "include", PY_VERSION + ABI_FLAGS)
     if os.path.exists(standard_lib_include_dir):
-        copyfile(standard_lib_include_dir, inc_dir, symlink)
+        copy_directory_contents(standard_lib_include_dir, inc_dir, symlink)
     else:
         logger.debug("No include dir %s", standard_lib_include_dir)
 
@@ -1370,7 +1378,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
             # (traversing virtualenvs), whereas the platinc_dir is relative to
             # the inner virtualenv and ignores the prefix argument.
             # This seems more evolved than designed.
-            copyfile(platform_include_dir, platform_include_dest, symlink)
+            copy_directory_contents(platform_include_dir, platform_include_dest, symlink)
 
     # pypy never uses exec_prefix, just ignore it
     if os.path.realpath(sys.exec_prefix) != os.path.realpath(prefix) and not IS_PYPY:
