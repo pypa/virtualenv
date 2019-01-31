@@ -295,6 +295,10 @@ def test_install_python_bin():
 
         for pth in required_executables:
             assert os.path.exists(os.path.join(bin_dir, pth)), "%s should exist in bin_dir" % pth
+        if not virtualenv.IS_JYTHON:
+            assert os.path.exists(inc_dir)
+        root_inc_dir = os.path.join(home_dir, "include")
+        assert not os.path.islink(root_inc_dir)
     finally:
         shutil.rmtree(tmp_virtualenv)
 
