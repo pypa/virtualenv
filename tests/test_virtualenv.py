@@ -548,6 +548,33 @@ def test_create_environment_with_exec_prefix_pointing_to_prefix(tmpdir):
         os.environ[path_key] = old_path
 
 
+@pytest.mark.skipif(not hasattr(os, "symlink"), reason="requires working symlink implementation")
+def test_relative_symlink(tmp_path):
+    """Test that copyfile works correctly when the source is a symlink with a
+    relative target, and a symlink to a symlink."""
+
+    # Set up src/link2 -> ../src/link1 -> file.
+    # We will copy to a different directory, so misinterpreting either symlink
+    # will be detected.
+    src_dir = tmp_path / "src"
+    src_dir.mkdir()
+    with open(str(src_dir / "file"), "w") as f:
+        f.write("contents")
+    os.symlink("file", str(src_dir / "link1"))
+    os.symlink(str(Path("..") / "src" / "link1"), str(src_dir / "link2"))
+
+    # Check that copyfile works on link2.
+    # This may produce a symlink or a regular file depending on the platform --
+    # which doesn't matter as long as it has the right contents.
+    copy_path = tmp_path / "copy"
+    virtualenv.copyfile(str(src_dir / "link2"), str(copy_path))
+    with open(str(copy_path), "r") as f:
+        assert f.read() == "contents"
+
+    shutil.rmtree(str(src_dir))
+    os.remove(str(copy_path))
+
+
 @pytest.mark.skipif(not hasattr(sys, "real_prefix"), reason="requires running from inside virtualenv")
 def test_create_environment_from_virtual_environment(tmpdir):
     """Create virtual environment using Python from another virtual environment
