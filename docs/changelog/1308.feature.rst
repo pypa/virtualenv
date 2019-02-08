@@ -1,0 +1,1 @@
+Add an option to virtualenv to prevent source symbolic link resolution when creating symbolic links. This allows to use per major-minor links targeting python builds in virtualenvs and not to be forced to rebuild virtualenvs to upgrade.
