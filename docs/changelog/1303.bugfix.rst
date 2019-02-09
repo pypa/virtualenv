@@ -1,3 +1,0 @@
-Allow virtualenv creation with older pip not having ``config`` command
-correspondingly disabling configuration related features (such as pip cert
-setting) in this case.

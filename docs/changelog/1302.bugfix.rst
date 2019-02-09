@@ -1,1 +1,0 @@
-Copy or link PyPy header files instead of include directory itself
