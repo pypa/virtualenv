@@ -5,6 +5,26 @@ Release History
 
 .. towncrier release notes start
 
+v16.4.0 (2019-02-09)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- fixes the scenario where the python base install is symlinked with relative symlinks (`#490 <https://github.com/pypa/virtualenv/issues/490>`_)
+- Use ``importlib`` over ``imp`` in ``virtualenv.py`` for ``python >= 3.4`` - by Anthony Sottile (`#1293 <https://github.com/pypa/virtualenv/issues/1293>`_)
+- Copy or link PyPy header files instead of include directory itself (`#1302 <https://github.com/pypa/virtualenv/issues/1302>`_)
+- Allow virtualenv creation with older pip not having ``config`` command
+  correspondingly disabling configuration related features (such as pip cert
+  setting) in this case. (`#1303 <https://github.com/pypa/virtualenv/issues/1303>`_)
+
+
+Features
+^^^^^^^^
+
+- upgrade to pip ``19.0.2`` and setuptools ``40.8.0`` (`#1312 <https://github.com/pypa/virtualenv/issues/1312>`_)
+
+
 v16.3.0 (2019-01-25)
 --------------------
 
