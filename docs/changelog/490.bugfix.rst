@@ -1,0 +1,1 @@
+fixes the scenario where the python base install is symlinked with relative symlinks

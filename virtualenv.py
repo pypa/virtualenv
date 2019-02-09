@@ -398,7 +398,32 @@ def copy_file_or_folder(src, dest, symlink=True):
         shutil.copy2(src, dest)
 
 
+def symlink_file_or_folder(src, dest):
+    if os.path.exists(dest):
+        return
+    if os.path.isdir(src):
+        if not os.path.exists(dest):
+            os.makedirs(dest)
+        for fn in os.listdir(src):
+            symlink_file_or_folder(os.path.join(src, fn), os.path.join(dest, fn))
+    else:
+        if not os.path.exists(os.path.dirname(dest)):
+            os.makedirs(os.path.dirname(dest))
+        if not os.path.islink(src):
+            srcpath = os.path.abspath(src)
+        else:
+            srcpath = os.readlink(src)
+            if not srcpath[0] == "/":
+                # relative symlink, needs to be prefixed with absolute source path
+                srcpath = os.path.join(os.path.dirname(src), srcpath)
+                srcpath = os.path.abspath(srcpath)
+        logger.info("Symlinking %s :: %s -> %s", src, srcpath, dest)
+        os.symlink(srcpath, dest)
+
+
 def copyfile(src, dest, symlink=True):
+    if symlink and hasattr(os, "symlink") and not IS_WIN:
+        return symlink_file_or_folder(src, dest)
     if not os.path.exists(src):
         # Some bad symlink in the src
         logger.warn("Cannot find file %s (bad symlink)", src)
@@ -409,16 +434,8 @@ def copyfile(src, dest, symlink=True):
     if not os.path.exists(os.path.dirname(dest)):
         logger.info("Creating parent directories for %s", os.path.dirname(dest))
         os.makedirs(os.path.dirname(dest))
-    if symlink and hasattr(os, "symlink") and not IS_WIN:
-        logger.info("Symlinking %s", dest)
-        try:
-            os.symlink(os.path.realpath(src), dest)
-        except (OSError, NotImplementedError):
-            logger.info("Symlinking failed, copying to %s", dest)
-            copy_file_or_folder(src, dest, symlink)
-    else:
-        logger.info("Copying to %s", dest)
-        copy_file_or_folder(src, dest, symlink)
+    logger.info("Copying to %s", dest)
+    copy_file_or_folder(src, dest, symlink)
 
 
 def writefile(dest, content, overwrite=True):
