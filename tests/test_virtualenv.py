@@ -549,7 +549,7 @@ def test_create_environment_with_exec_prefix_pointing_to_prefix(tmpdir):
 
 
 @pytest.mark.skipif(not hasattr(os, "symlink"), reason="requires working symlink implementation")
-def test_relative_symlink(tmp_path):
+def test_relative_symlink_relative_target(tmp_path):
     """Test that copyfile works correctly when the source is a symlink with a
     relative target, and a symlink to a symlink."""
 
