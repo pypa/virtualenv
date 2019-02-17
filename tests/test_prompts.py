@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 import subprocess
+import sys
 
 import pytest
 
@@ -43,21 +44,18 @@ def fix_PS1_return(result, trim_newline=True):
     result = result.replace(b"\x1b", b"\\e")
     result = result.replace(b"\x07", b"\\a")
 
-    if trim_newline and result[-1:] == b'\n':
+    if trim_newline and result[-1:] == b"\n":
         return result[:-1]
     else:
         return result
 
 
-def test_functional_env_root(tmp_root):
-    assert subprocess.call("ls", cwd=str(tmp_root), shell=True) == 0
+@pytest.mark.parametrize(["command", "code"], [("dir", 0), ("exit 1", 1)])
+def test_exit_code(command, code, tmp_root):
+    assert subprocess.call(command, cwd=str(tmp_root), shell=True) == code
 
 
-def test_nonzero_exit(tmp_root):
-    assert subprocess.call("exit 1", cwd=str(tmp_root), shell=True) == 1
-
-
-@pytest.mark.skipif(os.name.startswith("win"), reason="Invalid on Windows")
+@pytest.mark.skipif(sys.platform.startswith("win"), reason="Invalid on Windows")
 class TestBashPrompts:
     @staticmethod
     @pytest.fixture(scope="class")
