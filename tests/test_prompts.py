@@ -43,9 +43,7 @@ def fix_PS1_return(result, trim_newline=True):
     result = result.replace(b"\x1b", b"\\e")
     result = result.replace(b"\x07", b"\\a")
 
-    # For some reason, indexing a single value into a bytes string
-    # gives the underlying integer value. b'\n' --> 10
-    if trim_newline and result[-1] == 10:
+    if trim_newline and result[-1:] == b'\n':
         return result[:-1]
     else:
         return result
@@ -59,6 +57,7 @@ def test_nonzero_exit(tmp_root):
     assert subprocess.call("exit 1", cwd=str(tmp_root), shell=True) == 1
 
 
+@pytest.mark.skipif(os.name.startswith("win"), reason="Invalid on Windows")
 class TestBashPrompts:
     @staticmethod
     @pytest.fixture(scope="class")
