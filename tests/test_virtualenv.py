@@ -595,3 +595,14 @@ def test_create_environment_with_old_pip(tmpdir):
         shutil.copy(str(old_dep), support_dir)
     venvdir = str(tmpdir / "venv")
     virtualenv.create_environment(venvdir, search_dirs=[support_dir], no_wheel=True)
+
+
+def test_license_builtin(clean_python):
+    _, bin_dir, _ = clean_python
+    proc = subprocess.Popen(
+        (os.path.join(bin_dir, "python"), "-c", "license()"), stdin=subprocess.PIPE, stdout=subprocess.PIPE
+    )
+    out_b, _ = proc.communicate(b"q\n")
+    out = out_b.decode()
+    assert not proc.returncode
+    assert "Ian Bicking and Contributors" not in out

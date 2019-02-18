@@ -485,7 +485,7 @@ def setcopyright():
         "license",
         "See https://www.python.org/psf/license/",
         ["LICENSE.txt", "LICENSE"],
-        [os.path.join(here, os.pardir), here, os.curdir],
+        [sys.prefix, os.path.join(here, os.pardir), here, os.curdir],
     )
 
 
