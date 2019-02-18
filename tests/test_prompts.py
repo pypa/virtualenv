@@ -63,7 +63,14 @@ class TestBashPrompts:
         return os.environ.get("PS1")
 
     @staticmethod
-    def test_suppressed_prompt_default_env(tmp_root, PS1, clean_env):
+    def test_suppressed_prompt_default_env_output(tmp_root, PS1, clean_env):
+        """Check correct form of PS1 via subprocess.check_output().
+
+        Duplicates test_suppressed_prompt_default_env_file, but demonstrates
+        how to go about handling a test like this without using a temporary
+        file, in case that's useful later.
+
+        """
         clean_env.update({VIRTUAL_ENV_DISABLE_PROMPT: "1"})
         command = '. {0}/bin/activate && echo "$PS1"'.format(ENV_DEFAULT)
         result = subprocess.check_output(command, cwd=str(tmp_root), shell=True, env=clean_env)
@@ -73,3 +80,30 @@ class TestBashPrompts:
         # result. Python's decoding machinery mangles the content of the
         # returned $PS1 ~irretrievably.
         assert result == PS1.encode()
+
+    @staticmethod
+    def test_suppressed_prompt_default_env_file(tmp_root, clean_env):
+        clean_env.update({VIRTUAL_ENV_DISABLE_PROMPT: "1"})
+        command = 'echo "$PS1" > {1} && . {0}/bin/activate && echo "$PS1" >> {1}'.format(ENV_DEFAULT, OUTPUT_FILE)
+
+        assert 0 == subprocess.call(command, cwd=str(tmp_root), shell=True, env=clean_env)
+
+        lines = (tmp_root / OUTPUT_FILE).read_bytes().split(b"\n")
+        assert lines[0] == lines[1]
+
+    @staticmethod
+    @pytest.mark.parametrize(["env", "prefix"], [(ENV_DEFAULT, PREFIX_DEFAULT), (ENV_CUSTOM, PREFIX_CUSTOM)])
+    def test_activated_prompt(env, prefix, tmp_root):
+        command = (
+            'echo "$PS1" > {1} && . {0}/bin/activate && echo "$PS1" >> {1} ' '&& deactivate && echo "$PS1" >> {1}'
+        ).format(env, OUTPUT_FILE)
+
+        assert 0 == subprocess.call(command, cwd=str(tmp_root), shell=True)
+
+        lines = (tmp_root / OUTPUT_FILE).read_bytes().split(b"\n")
+
+        # Before activation and after deactivation
+        assert lines[0] == lines[2]
+
+        # Activated prompt
+        assert lines[1] == prefix.encode("utf-8") + lines[0]
