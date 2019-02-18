@@ -9,7 +9,6 @@ import pytest
 
 import virtualenv
 
-
 ENV_DEFAULT = "env"
 ENV_CUSTOM = "env_custom"
 
@@ -39,7 +38,7 @@ def clean_env():
     return os.environ.copy()
 
 
-@pytest.mark.parametrize(["command", "code"], [("dir", 0), ("exit 1", 1)])
+@pytest.mark.parametrize(["command", "code"], [("echo test", 0), ("exit 1", 1)])
 def test_exit_code(command, code, tmp_root):
     """Confirm subprocess.call exit codes work as expected at the unit test level."""
     assert subprocess.call(command, cwd=str(tmp_root), shell=True) == code
