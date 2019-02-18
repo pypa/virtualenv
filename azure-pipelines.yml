@@ -119,7 +119,7 @@ jobs:
     displayName: install tox
 
   - script: 'python -m tox -e coverage'
-    displayName: create coverag report via tox
+    displayName: create coverage report via tox
 
   - task: PublishCodeCoverageResults@1
     displayName: publish overall coverage report to Azure
