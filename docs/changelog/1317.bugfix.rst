@@ -1,1 +1,0 @@
-Fix ``license()`` builtin by copying the ``LICENSE`` file into the virtualenv - by ``asottile``.
