@@ -5,6 +5,21 @@ Release History
 
 .. towncrier release notes start
 
+v16.4.1 (2019-02-22)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Fix ``license()`` builtin by copying the ``LICENSE`` file into the virtualenv - by ``asottile``. (`#1317 <https://github.com/pypa/virtualenv/issues/1317>`_)
+
+
+Features
+^^^^^^^^
+
+- bump vendored pip to ``19.0.3`` and wheel to ``0.33.1`` (`#1321 <https://github.com/pypa/virtualenv/issues/1321>`_)
+
+
 v16.4.0 (2019-02-09)
 --------------------
 
