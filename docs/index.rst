@@ -13,7 +13,7 @@ Introduction
 
 
 ``virtualenv`` is a tool to create isolated Python environments. Since
-Python 3.3 a subset of it has been integrated into the standard
+Python 3.3, a subset of it has been integrated into the standard
 library under the  `venv module <https://docs.python.org/3/library/venv.html>`_.
 Note though, that the ``venv`` module does not offer all features of this
 library (e.g. cannot create bootstrap scripts, cannot create virtual
