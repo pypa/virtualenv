@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v16.4.3 (2019-03-01)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Revert the symlink fix, causing debian packaging issues. (`#1390 <https://github.com/pypa/virtualenv/issues/1390>`_)
+
+
 v16.4.1 (2019-02-22)
 --------------------
 
