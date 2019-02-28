@@ -1,0 +1,1 @@
+Revert the symlink fix, causing debian packaging issues.
