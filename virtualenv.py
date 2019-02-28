@@ -44,7 +44,7 @@ except ImportError:
     # noinspection PyPep8Naming
     import configparser as ConfigParser
 
-__version__ = "16.4.2.dev0"
+__version__ = "16.4.3"
 virtualenv_version = __version__  # legacy
 DEBUG = os.environ.get("_VIRTUALENV_DEBUG", None) == "1"
 if sys.version_info < (2, 7):
