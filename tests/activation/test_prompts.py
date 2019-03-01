@@ -28,8 +28,12 @@ PREFIX_DEFAULT = "({}) ".format(ENV_DEFAULT)
 # Arbitrary prefix for the environment that's provided a 'prompt' arg
 PREFIX_CUSTOM = "---ENV---"
 
-VIRTUAL_ENV_DISABLE_PROMPT = "VIRTUAL_ENV_DISABLE_PROMPT"
-VIRTUAL_ENV = "VIRTUAL_ENV"
+# Py2 doesn't like unicode in the environment
+def env_compat(s):
+    return s.encode("utf-8") if sys.version_info.major < 3 else s
+
+
+VIRTUAL_ENV_DISABLE_PROMPT = env_compat("VIRTUAL_ENV_DISABLE_PROMPT")
 
 # Filename template: {shell}.script.(normal|suppress).(default|custom)[extension]
 SCRIPT_TEMPLATE = "{}.script.{}.{}{}"
@@ -175,37 +179,39 @@ def test_suppressed_prompt(shell, env, get_work_root, clean_env, shell_info, pla
     script_name = SCRIPT_TEMPLATE.format(shell, "suppress", env, shell_info[shell].testscript_extension)
     output_name = OUTPUT_TEMPLATE.format(shell, "suppress", env)
 
-    clean_env.update({VIRTUAL_ENV_DISABLE_PROMPT: "1"})
+    clean_env.update({VIRTUAL_ENV_DISABLE_PROMPT: env_compat("1")})
 
     work_root = get_work_root(env)
 
     # The extra "{prompt}" here copes with some oddity of xonsh in certain emulated terminal
     # contexts: xonsh can dump stuff into the first line of the recorded script output,
     # so we have to include a dummy line of output that can get munged w/o consequence.
-    (work_root[0] / script_name).write_text(
-        dedent(
-            """\
+    with open(str(work_root[0] / script_name), "w") as f:
+        f.write(
+            dedent(
+                """\
         {preamble}
         {prompt}
         {prompt}
         {act_cmd}{env}/{bindir}/{act_script}
         {prompt}
     """.format(
-                env=env,
-                act_cmd=shell_info[shell].activate_cmd,
-                preamble=shell_info[shell].preamble_cmd,
-                prompt=shell_info[shell].prompt_cmd,
-                act_script=shell_info[shell].activate_script,
-                bindir=work_root[1],
+                    env=env,
+                    act_cmd=shell_info[shell].activate_cmd,
+                    preamble=shell_info[shell].preamble_cmd,
+                    prompt=shell_info[shell].prompt_cmd,
+                    act_script=shell_info[shell].activate_script,
+                    bindir=work_root[1],
+                )
             )
         )
-    )
 
     command = "{} {} > {}".format(shell_info[shell].execute_cmd, script_name, output_name)
 
     assert 0 == subprocess.call(command, cwd=str(work_root[0]), shell=True, env=clean_env)
 
-    lines = (work_root[0] / output_name).read_bytes().split(b"\n")
+    with open(str(work_root[0] / output_name), "rb") as f:
+        lines = f.read().split(b"\n")
 
     # Is the prompt suppressed?
     assert lines[1] == lines[2], lines
@@ -225,9 +231,10 @@ def test_activated_prompt(shell, env, prefix, get_work_root, shell_info, platfor
     # The extra "{prompt}" here copes with some oddity of xonsh in certain emulated terminal
     # contexts: xonsh can dump stuff into the first line of the recorded script output,
     # so we have to include a dummy line of output that can get munged w/o consequence.
-    (work_root[0] / script_name).write_text(
-        dedent(
-            """\
+    with open(str(work_root[0] / script_name), "w") as f:
+        f.write(
+            dedent(
+                """\
         {preamble}
         {prompt}
         {prompt}
@@ -236,22 +243,23 @@ def test_activated_prompt(shell, env, prefix, get_work_root, shell_info, platfor
         {deactivate}
         {prompt}
         """.format(
-                env=env,
-                act_cmd=shell_info[shell].activate_cmd,
-                deactivate=shell_info[shell].deactivate_cmd,
-                preamble=shell_info[shell].preamble_cmd,
-                prompt=shell_info[shell].prompt_cmd,
-                act_script=shell_info[shell].activate_script,
-                bindir=work_root[1],
+                    env=env,
+                    act_cmd=shell_info[shell].activate_cmd,
+                    deactivate=shell_info[shell].deactivate_cmd,
+                    preamble=shell_info[shell].preamble_cmd,
+                    prompt=shell_info[shell].prompt_cmd,
+                    act_script=shell_info[shell].activate_script,
+                    bindir=work_root[1],
+                )
             )
         )
-    )
 
     command = "{} {} > {}".format(shell_info[shell].execute_cmd, script_name, output_name)
 
     assert 0 == subprocess.call(command, cwd=str(work_root[0]), shell=True)
 
-    lines = (work_root[0] / output_name).read_bytes().split(b"\n")
+    with open(str(work_root[0] / output_name), "rb") as f:
+        lines = f.read().split(b"\n")
 
     # Before activation and after deactivation
     assert lines[1] == lines[3], lines
