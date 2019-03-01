@@ -28,21 +28,18 @@ PREFIX_DEFAULT = "({}) ".format(ENV_DEFAULT)
 # Arbitrary prefix for the environment that's provided a 'prompt' arg
 PREFIX_CUSTOM = "---ENV---"
 
-# Py2 doesn't like unicode in the environment
-def env_compat(s):
-    return s.encode("utf-8") if sys.version_info.major < 3 else s
-
-
-VIRTUAL_ENV_DISABLE_PROMPT = env_compat("VIRTUAL_ENV_DISABLE_PROMPT")
-
 # Filename template: {shell}.script.(normal|suppress).(default|custom)[extension]
 SCRIPT_TEMPLATE = "{}.script.{}.{}{}"
 
 # Filename template: {shell}.out.(normal|suppress).(default|custom)
 OUTPUT_TEMPLATE = "{}.out.{}.{}"
 
-
 SHELL_LIST = ["bash", "fish", "csh", "xonsh", "cmd", "powershell"]
+
+
+# Py2 doesn't like unicode in the environment
+def env_compat(s):
+    return s.encode("utf-8") if sys.version_info.major < 3 else s
 
 
 @pytest.fixture(scope="module")
@@ -172,14 +169,15 @@ def clean_env():
 
 @pytest.mark.parametrize("shell", SHELL_LIST)
 @pytest.mark.parametrize("env", [ENV_DEFAULT, ENV_CUSTOM])
-def test_suppressed_prompt(shell, env, get_work_root, clean_env, shell_info, platform_check_skip):
-    """Confirm VIRTUAL_ENV_DISABLE_PROMPT suppresses prompt changes on activate."""
+@pytest.mark.parametrize(("value", "disable"), [("", False), ("0", True), ("1", True)])
+def test_suppressed_prompt(shell, env, value, disable, get_work_root, clean_env, shell_info, platform_check_skip):
+    """Confirm non-empty VIRTUAL_ENV_DISABLE_PROMPT suppresses prompt changes on activate."""
     platform_check_skip(sys.platform, shell)
 
     script_name = SCRIPT_TEMPLATE.format(shell, "suppress", env, shell_info[shell].testscript_extension)
     output_name = OUTPUT_TEMPLATE.format(shell, "suppress", env)
 
-    clean_env.update({VIRTUAL_ENV_DISABLE_PROMPT: env_compat("1")})
+    clean_env.update({env_compat("VIRTUAL_ENV_DISABLE_PROMPT"): env_compat(value)})
 
     work_root = get_work_root(env)
 
@@ -213,8 +211,8 @@ def test_suppressed_prompt(shell, env, get_work_root, clean_env, shell_info, pla
     with open(str(work_root[0] / output_name), "rb") as f:
         lines = f.read().split(b"\n")
 
-    # Is the prompt suppressed?
-    assert lines[1] == lines[2], lines
+    # Is the prompt suppressed based on the env var value?
+    assert (lines[1] == lines[2]) == disable, lines
 
 
 @pytest.mark.parametrize("shell", SHELL_LIST)
