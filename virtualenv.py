@@ -1693,7 +1693,7 @@ def install_files(home_dir, bin_dir, prompt, files):
     virtualenv_name = os.path.basename(home_dir)
     for name, content in files.items():
         content = content.replace("__VIRTUAL_PROMPT__", prompt or "")
-        content = content.replace("__VIRTUAL_WINPROMPT__", prompt or "({})".format(virtualenv_name))
+        content = content.replace("__VIRTUAL_WINPROMPT__", prompt or "({}) ".format(virtualenv_name))
         content = content.replace("__VIRTUAL_ENV__", home_dir)
         content = content.replace("__VIRTUAL_NAME__", virtualenv_name)
         content = content.replace("__BIN_NAME__", os.path.basename(bin_dir))
@@ -2307,12 +2307,12 @@ rRdmsFAH7IHCLOUbLCyfkIsFub4TJU2NtbB11lNEf5O+mPt8WwqNm8tx+UhsjbubnRRugLu9+5YP
 # file activate.bat
 ACTIVATE_BAT = convert(
     """
-eJx9Ul9LhEAQfxf8DoOclI/dYyFkaCmcq4gZQTBUrincuZFbff12T133TM+nnd35/Zvxlr7XDFhV
-mUZHOVhFlOWP3g4DUriIWoVomYZpNBWUtGpaWgImO191pFkSpzlcmgaI70jVX7n2Qp8tuByg+46O
-CMHbMq64T+nmlJt082D1T44muCDk2prgEHF4mdI9RaS/QwSt3zSyIAaftRccvqVTBziD1x/WlPD5
-xd729NDBb8Nr4DU9QNMKsJeH9pkhPedhQsIkDuCDCa6A+NF9IevVFAohkqizdHetg/tkWvPoftWJ
-MCqnOxv7/x7Np6yv9P2Ker5dmX8yNyCkkWnbZy3N5LarczlqL8htx2EM9rQ/2H5BvIsIEi8OEG8U
-+g8CsNTr
+eJyVk1FLhEAUhd8X/A8XWSkf28dCyMUpBR3FzAiCS+WYwq4TOdXfb0Z3dTJdyCfveO85n8frNXut
+OPCyNFbGqmUCzDxIs3s3REJzB1GrEE3VVJdQsLJuWAEYh97QkaRxlGRwbqxAXp1Uf+RYM32W1LKB
+7Vp2nJC6DReD9m+5qeQ6Wd+a/SN7dlzn9oI7dxsSXJCcoXOskfLgYXdv/j8LnXiM8iGg/RmiZmOr
+bFMSgcebMwGfKhgbBIfnL14X8P7BX3Zs38J3LSoQFdtD3YCVuJlvnfgmj5kfUz+OCLxxqUWoF9zk
+qtYAFyZkBsO9ArzUh/td0ZqP9IskElTFMsnwb4/GqeoLPUlZT5dJvf8Id5hQIONynUSa2G0Wc+m8
+Z+w2w4/Tt2hbYT0hbgOK1I0I4tUw/QOTZfLE
 """
 )
 
