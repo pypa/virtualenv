@@ -10,6 +10,7 @@ from textwrap import dedent
 import pytest
 
 import virtualenv
+from virtualenv import IS_WIN
 
 try:
     from pathlib import Path
@@ -38,36 +39,60 @@ SHELL_LIST = ["bash", "fish", "csh", "xonsh", "cmd", "powershell"]
 
 
 # Py2 doesn't like unicode in the environment
-def env_compat(s):
-    return s.encode("utf-8") if sys.version_info.major < 3 else s
+def env_compat(string):
+    return string.encode("utf-8") if sys.version_info.major < 3 else string
 
 
 @pytest.fixture(scope="module")
-def platform_check_skip(tmp_path_factory):
-    """Return function triggering skip based on platform & shell."""
+def posh_execute_enabled(tmp_path_factory):
+    if not IS_WIN:
+        return False
+
+    test_ps1 = tmp_path_factory.mktemp("posh_test") / "test.ps1"
+    with open(str(test_ps1), "w") as f:
+        f.write("echo foo\n")
+
+    return 0 == subprocess.call("powershell -File {}".format(str(test_ps1)), shell=True)
+
+
+@pytest.fixture(scope="module")
+def platform_check_skip(posh_execute_enabled):
+    """Check whether to skip based on platform & shell.
+
+    Returns a string if test should be skipped, or None if test should proceed.
+
+    """
     platform_incompat = "No sane provision for {} on {} yet"
 
     def check(platform, shell):
 
-        if (sys.platform.startswith("win") and shell in ["bash", "csh", "fish"]) or (
-            sys.platform.startswith("linux") and shell in ["cmd", "powershell"]
-        ):
-            pytest.skip(platform_incompat.format(shell, platform))
+        if shell == "bash":
+            if IS_WIN:
+                return platform_incompat.format(shell, platform)
+        elif shell == "csh":
+            if IS_WIN:
+                return platform_incompat.format(shell, platform)
+        elif shell == "fish":
+            if IS_WIN:
+                return platform_incompat.format(shell, platform)
+        elif shell == "cmd":
+            if not IS_WIN:
+                return platform_incompat.format(shell, platform)
+        elif shell == "powershell":
+            if not IS_WIN:
+                return platform_incompat.format(shell, platform)
 
-        if sys.platform.startswith("win") and shell == "xonsh":
-            pytest.skip("Provisioning xonsh on windows is unreliable")
-
-        if shell == "xonsh" and sys.version_info < (3, 4):
-            pytest.skip("xonsh requires Python 3.4 at least")
-
-        if shell == "powershell":
-            test_ps1 = tmp_path_factory.mktemp("posh_test") / "test.ps1"
-            test_ps1.write_text("echo foo\n")
-
-            if 0 != subprocess.call("powershell -File {}".format(str(test_ps1)), shell=True):
-                pytest.skip("powershell script execution fails; is it enabled?")
+            if not posh_execute_enabled:
+                return "powershell script execution fails; is it enabled?"
                 # Enable with:  PS> Set-ExecutionPolicy -scope currentuser -ExecutionPolicy Bypass -Force;
                 # Disable with: PS> Set-ExecutionPolicy -scope currentuser -ExecutionPolicy Restricted -Force;
+
+        elif shell == "xonsh":
+            if IS_WIN:
+                return "Provisioning xonsh on windows is unreliable"
+
+            if sys.version_info < (3, 4):
+                return "xonsh requires Python 3.4 at least"
 
     return check
 
@@ -123,31 +148,49 @@ def shell_info():
         ],
     )
 
-    # execute_cmd, prompt_cmd, activate_script are required.
-    # Defaults here are for testscript_extension, preamble_cmd, activate_cmd, and deactivate_cmd.
-    ShellInfo.__new__.__defaults__ = ("", "", "source ", "deactivate")
-
     return {
-        "bash": ShellInfo(execute_cmd="bash", prompt_cmd='echo "$PS1"', activate_script="activate"),
-        "fish": ShellInfo(execute_cmd="fish", prompt_cmd="fish_prompt; echo ' '", activate_script="activate.fish"),
+        "bash": ShellInfo(
+            execute_cmd="bash",
+            prompt_cmd='echo "$PS1"',
+            activate_script="activate",
+            testscript_extension="",
+            preamble_cmd="",
+            activate_cmd="source ",
+            deactivate_cmd="deactivate",
+        ),
+        "fish": ShellInfo(
+            execute_cmd="fish",
+            prompt_cmd="fish_prompt; echo ' '",
+            activate_script="activate.fish",
+            testscript_extension="",
+            preamble_cmd="",
+            activate_cmd="source ",
+            deactivate_cmd="deactivate",
+        ),
         "csh": ShellInfo(
             execute_cmd="csh",
             prompt_cmd=r"set | grep -E 'prompt\s' | sed -E 's/^prompt\s+(.*)$/\1/'",
             activate_script="activate.csh",
+            testscript_extension="",
             preamble_cmd="set prompt=%",
+            activate_cmd="source ",
+            deactivate_cmd="deactivate",
         ),
         "xonsh": ShellInfo(
             execute_cmd="xonsh",
             prompt_cmd="print(__xonsh__.shell.prompt)",
             activate_script="activate.xsh",
+            testscript_extension="",
             preamble_cmd="$VIRTUAL_ENV = ''; $PROMPT = '{env_name}$ '",
+            activate_cmd="source ",
+            deactivate_cmd="deactivate",
         ),
         "cmd": ShellInfo(
             execute_cmd="",
             prompt_cmd="echo %PROMPT%",
             activate_script="activate.bat",
-            preamble_cmd="@echo off & set PROMPT=$P$G",
             testscript_extension=".bat",
+            preamble_cmd="@echo off & set PROMPT=$P$G",
             activate_cmd="call ",
             deactivate_cmd="call deactivate",
         ),
@@ -156,7 +199,9 @@ def shell_info():
             prompt_cmd="prompt",
             activate_script="activate.ps1",
             testscript_extension=".ps1",
+            preamble_cmd="",
             activate_cmd=". ",
+            deactivate_cmd="deactivate",
         ),
     }
 
@@ -172,7 +217,9 @@ def clean_env():
 @pytest.mark.parametrize(("value", "disable"), [("", False), ("0", True), ("1", True)])
 def test_suppressed_prompt(shell, env, value, disable, get_work_root, clean_env, shell_info, platform_check_skip):
     """Confirm non-empty VIRTUAL_ENV_DISABLE_PROMPT suppresses prompt changes on activate."""
-    platform_check_skip(sys.platform, shell)
+    skip_test = platform_check_skip(sys.platform, shell)
+    if skip_test:
+        pytest.skip(skip_test)
 
     script_name = SCRIPT_TEMPLATE.format(shell, "suppress", env, shell_info[shell].testscript_extension)
     output_name = OUTPUT_TEMPLATE.format(shell, "suppress", env)
@@ -219,7 +266,9 @@ def test_suppressed_prompt(shell, env, value, disable, get_work_root, clean_env,
 @pytest.mark.parametrize(["env", "prefix"], [(ENV_DEFAULT, PREFIX_DEFAULT), (ENV_CUSTOM, PREFIX_CUSTOM)])
 def test_activated_prompt(shell, env, prefix, get_work_root, shell_info, platform_check_skip):
     """Confirm prompt modification behavior with and without --prompt specified."""
-    platform_check_skip(sys.platform, shell)
+    skip_test = platform_check_skip(sys.platform, shell)
+    if skip_test:
+        pytest.skip(skip_test)
 
     script_name = SCRIPT_TEMPLATE.format(shell, "normal", env, shell_info[shell].testscript_extension)
     output_name = OUTPUT_TEMPLATE.format(shell, "normal", env)
