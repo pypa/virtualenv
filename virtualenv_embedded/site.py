@@ -550,9 +550,20 @@ def setencoding():
 def execsitecustomize():
     """Run custom site specific code, if available."""
     try:
-        import sitecustomize
-    except ImportError:
-        pass
+        try:
+            import sitecustomize
+        except ImportError as exc:
+            if sys.version_info > (3, 5) and exc.name != "sitecustomize":
+                raise
+            else:
+                pass
+    except Exception as err:
+        if sys.flags.verbose:
+            sys.excepthook(*sys.exc_info())
+        else:
+            sys.stderr.write(
+                "Error in sitecustomize; set PYTHONVERBOSE for traceback:\n" "%s: %s\n" % (err.__class__.__name__, err)
+            )
 
 
 def virtual_install_main_packages():
@@ -668,9 +679,20 @@ def fixclasspath():
 def execusercustomize():
     """Run custom user specific code, if available."""
     try:
-        import usercustomize
-    except ImportError:
-        pass
+        try:
+            import usercustomize
+        except ImportError as exc:
+            if sys.version_info > (3, 5) and exc.name != "usercustomize":
+                raise
+            else:
+                pass
+    except Exception as err:
+        if sys.flags.verbose:
+            sys.excepthook(*sys.exc_info())
+        else:
+            sys.stderr.write(
+                "Error in usercustomize; set PYTHONVERBOSE for traceback:\n" "%s: %s\n" % (err.__class__.__name__, err)
+            )
 
 
 def enablerlcompleter():

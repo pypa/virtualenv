@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import textwrap
+import time
 import zipfile
 
 import pypiserver
@@ -376,6 +377,41 @@ def test_copyfile_from_symlink(tmp_path):
 
     shutil.rmtree(str(src_dir))
     os.remove(str(copy_path))
+
+
+def test_customize_startup_hook(tmp_path):
+    ve_path = str(tmp_path / "venv")
+    virtualenv.create_environment(ve_path)
+    lib_dir = virtualenv.path_locations(ve_path)[1]
+    sitecustomize = os.path.join(lib_dir, "sitecustomize.py")
+    usercustomize = os.path.join(lib_dir, "usercustomize.py")
+    with open(sitecustomize, "w") as f1, open(usercustomize, "w") as f2:
+        f1.write("raise RuntimeError")
+        f2.write("raise RuntimeError")
+    bin_dir = virtualenv.path_locations(ve_path)[-1]
+    cmd = [
+        os.path.join(bin_dir, "{}{}".format(virtualenv.EXPECTED_EXE, ".exe" if virtualenv.IS_WIN else "")),
+        "-S",
+        "-c",
+        "import site; site.execsitecustomize(); site.execusercustomize()",
+    ]
+    try:
+        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        assert b"RuntimeError" in output, output
+    except subprocess.CalledProcessError as exception:
+        assert not exception.returncode, exception.output
+    time.sleep(1.5)  # force interpreter to invalidate pyc files
+    with open(sitecustomize, "w") as f1, open(usercustomize, "w") as f2:
+        f1.write("import notexistmodule")
+        f2.write("import notexistmodule")
+    try:
+        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+        if sys.version_info > (3, 5):
+            assert b"notexistmodule" in output, output
+        else:
+            assert not output, output
+    except subprocess.CalledProcessError as exception:
+        assert not exception.returncode, exception.output
 
 
 def test_missing_certifi_pem(tmp_path):
