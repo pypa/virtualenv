@@ -17,6 +17,8 @@ try:
 except ImportError:
     from pathlib2 import Path
 
+VIRTUAL_ENV_DISABLE_PROMPT = "VIRTUAL_ENV_DISABLE_PROMPT"
+
 # This must match the DEST_DIR provided in the ../conftest.py:clean_python fixture
 ENV_DEFAULT = "env"
 
@@ -29,10 +31,10 @@ PREFIX_DEFAULT = "({}) ".format(ENV_DEFAULT)
 # Arbitrary prefix for the environment that's provided a 'prompt' arg
 PREFIX_CUSTOM = "---ENV---"
 
-# Filename template: {shell}.script.(normal|suppress).(default|custom)[extension]
+# Temp script filename template: {shell}.script.(normal|suppress).(default|custom)[extension]
 SCRIPT_TEMPLATE = "{}.script.{}.{}{}"
 
-# Filename template: {shell}.out.(normal|suppress).(default|custom)
+# Temp output filename template: {shell}.out.(normal|suppress).(default|custom)
 OUTPUT_TEMPLATE = "{}.out.{}.{}"
 
 SHELL_LIST = ["bash", "fish", "csh", "xonsh", "cmd", "powershell"]
@@ -172,7 +174,7 @@ def shell_info():
             prompt_cmd=r"set | grep -E 'prompt\s' | sed -E 's/^prompt\s+(.*)$/\1/'",
             activate_script="activate.csh",
             testscript_extension="",
-            preamble_cmd="set prompt=%",
+            preamble_cmd="set prompt=%",  # csh defaults to an unset 'prompt' in non-interactive shells
             activate_cmd="source ",
             deactivate_cmd="deactivate",
         ),
@@ -181,7 +183,7 @@ def shell_info():
             prompt_cmd="print(__xonsh__.shell.prompt)",
             activate_script="activate.xsh",
             testscript_extension="",
-            preamble_cmd="$VIRTUAL_ENV = ''; $PROMPT = '{env_name}$ '",
+            preamble_cmd="$VIRTUAL_ENV = ''; $PROMPT = '{env_name}$ '",  # Sets consistent initial state
             activate_cmd="source ",
             deactivate_cmd="deactivate",
         ),
@@ -190,7 +192,7 @@ def shell_info():
             prompt_cmd="echo %PROMPT%",
             activate_script="activate.bat",
             testscript_extension=".bat",
-            preamble_cmd="@echo off & set PROMPT=$P$G",
+            preamble_cmd="@echo off & set PROMPT=$P$G",  # Sets consistent initial state
             activate_cmd="call ",
             deactivate_cmd="call deactivate",
         ),
@@ -208,8 +210,15 @@ def shell_info():
 
 @pytest.fixture(scope="function")
 def clean_env():
-    """Provide a fresh copy of the shell environment."""
-    return os.environ.copy()
+    """Provide a fresh copy of the shell environment.
+
+    VIRTUAL_ENV_DISABLE_PROMPT is always removed, if present, because
+    the prompt tests assume it to be unset.
+
+    """
+    clean_env = os.environ.copy()
+    clean_env.pop(env_compat(VIRTUAL_ENV_DISABLE_PROMPT), None)
+    return clean_env
 
 
 @pytest.mark.parametrize("shell", SHELL_LIST)
@@ -224,7 +233,7 @@ def test_suppressed_prompt(shell, env, value, disable, get_work_root, clean_env,
     script_name = SCRIPT_TEMPLATE.format(shell, "suppress", env, shell_info[shell].testscript_extension)
     output_name = OUTPUT_TEMPLATE.format(shell, "suppress", env)
 
-    clean_env.update({env_compat("VIRTUAL_ENV_DISABLE_PROMPT"): env_compat(value)})
+    clean_env.update({env_compat(VIRTUAL_ENV_DISABLE_PROMPT): env_compat(value)})
 
     work_root = get_work_root(env)
 
@@ -264,11 +273,15 @@ def test_suppressed_prompt(shell, env, value, disable, get_work_root, clean_env,
 
 @pytest.mark.parametrize("shell", SHELL_LIST)
 @pytest.mark.parametrize(["env", "prefix"], [(ENV_DEFAULT, PREFIX_DEFAULT), (ENV_CUSTOM, PREFIX_CUSTOM)])
-def test_activated_prompt(shell, env, prefix, get_work_root, shell_info, platform_check_skip):
+def test_activated_prompt(shell, env, prefix, get_work_root, shell_info, platform_check_skip, clean_env):
     """Confirm prompt modification behavior with and without --prompt specified."""
     skip_test = platform_check_skip(sys.platform, shell)
     if skip_test:
         pytest.skip(skip_test)
+
+    # Cope with Azure DevOps terminal oddness for fish
+    if shell == "fish":
+        clean_env.update({env_compat("TERM"): env_compat("linux")})
 
     script_name = SCRIPT_TEMPLATE.format(shell, "normal", env, shell_info[shell].testscript_extension)
     output_name = OUTPUT_TEMPLATE.format(shell, "normal", env)
@@ -303,7 +316,7 @@ def test_activated_prompt(shell, env, prefix, get_work_root, shell_info, platfor
 
     command = "{} {} > {}".format(shell_info[shell].execute_cmd, script_name, output_name)
 
-    assert 0 == subprocess.call(command, cwd=str(work_root[0]), shell=True)
+    assert 0 == subprocess.call(command, cwd=str(work_root[0]), shell=True, env=clean_env)
 
     with open(str(work_root[0] / output_name), "rb") as f:
         lines = f.read().split(b"\n")
