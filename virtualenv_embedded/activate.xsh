@@ -16,6 +16,9 @@ def _deactivate(args):
     if "VIRTUAL_ENV" in ${...}:
         del $VIRTUAL_ENV
 
+    if "VIRTUAL_ENV_PROMPT" in ${...}:
+        del $VIRTUAL_ENV_PROMPT
+
     if "nondestructive" not in args:
         # Self destruct!
         del aliases["deactivate"]
@@ -35,5 +38,9 @@ if ${...}.get("PYTHONHOME", ""):
     # unset PYTHONHOME if set
     $_OLD_VIRTUAL_PYTHONHOME = $PYTHONHOME
     del $PYTHONHOME
+
+$VIRTUAL_ENV_PROMPT = "__VIRTUAL_PROMPT__"
+if not $VIRTUAL_ENV_PROMPT:
+    del $VIRTUAL_ENV_PROMPT
 
 aliases["pydoc"] = ["python", "-m", "pydoc"]
