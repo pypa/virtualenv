@@ -17,7 +17,12 @@ Files in the ``virtualenv_embedded/`` subdirectory are embedded into
 single-file use of ``virtualenv.py`` without installing it). If your patch
 changes any file in ``virtualenv_embedded/``, run ``tox -e embed`` to update
 the embedded version of that file in ``virtualenv.py``; commit that and submit
-it as part of your patch / pull request.
+it as part of your patch / pull request. The tox run will report failure
+when changes are embedded, as a flag for CI.
+
+The codebase should be linted before a pull request is merged by running
+``tox -e fix_lint``. The tox run will report failure when any linting
+revisions are required, as a flag for CI.
 
 .. _pip development: https://pip.pypa.io/en/latest/development/
 .. _virtualenv repo: https://github.com/pypa/virtualenv/
