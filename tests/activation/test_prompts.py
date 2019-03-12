@@ -342,6 +342,7 @@ def test_activated_prompt(shell, env, prefix, get_work_root, shell_info, platfor
         # Looser assert
         assert lines[1] in after, lines
     elif shell == "csh" and IS_DARWIN:
+        # Looser assert
         assert lines[1].endswith(after), lines
     else:
         # Stricter assert
