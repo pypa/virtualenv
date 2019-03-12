@@ -58,7 +58,7 @@ def posh_execute_enabled(tmp_path_factory):
 
 
 @pytest.fixture(scope="module")
-def platform_check_skip(posh_execute_enabled):
+def platform_check_skip(posh_execute_enabled, pytestconfig):
     """Check whether to skip based on platform & shell.
 
     Returns a string if test should be skipped, or None if test should proceed.
@@ -95,6 +95,9 @@ def platform_check_skip(posh_execute_enabled):
 
             if sys.version_info < (3, 4):
                 return "xonsh requires Python 3.4 at least"
+
+            if not pytestconfig.getoption("--xonsh-prompt"):
+                return "'--xonsh-prompt' command line option not specified"
 
     return check
 
