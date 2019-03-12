@@ -10,7 +10,7 @@ from textwrap import dedent
 import pytest
 
 import virtualenv
-from virtualenv import IS_WIN
+from virtualenv import IS_DARWIN, IS_WIN
 
 try:
     from pathlib import Path
@@ -336,10 +336,13 @@ def test_activated_prompt(shell, env, prefix, get_work_root, shell_info, platfor
     assert env_marker != b"", lines
 
     # Separate handling for fish, which has color coding commands built into activate.fish that are
-    # painful to work around
+    # painful to work around; and for (t)csh on MacOS, which prepends extra text to
+    # what gets sent to stdout
     if shell == "fish":
         # Looser assert
         assert lines[1] in after, lines
+    elif shell == "csh" and IS_DARWIN:
+        assert lines[1].endswith(after), lines
     else:
         # Stricter assert
         assert after == lines[1], lines
