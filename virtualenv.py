@@ -145,7 +145,7 @@ else:
                         continue
                     # Remove bitness from version
                     if version.endswith(bitness):
-                        version = version[:-len(bitness)]
+                        version = version[: -len(bitness)]
                     exes[(version, bitness)] = join(at_path, "python.exe")
                 except WindowsError:
                     break

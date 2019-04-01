@@ -54,14 +54,29 @@ class TestGetInstalledPythons:
             raise WindowsError
 
         mock_winreg = NonCallableMock(
-            spec_set=["HKEY_LOCAL_MACHINE", "HKEY_CURRENT_USER", "KEY_READ", "KEY_WOW64_32KEY", "KEY_WOW64_64KEY", "OpenKey", "EnumKey", "QueryValue", "CloseKey"]
+            spec_set=[
+                "HKEY_LOCAL_MACHINE",
+                "HKEY_CURRENT_USER",
+                "KEY_READ",
+                "KEY_WOW64_32KEY",
+                "KEY_WOW64_64KEY",
+                "OpenKey",
+                "EnumKey",
+                "QueryValue",
+                "CloseKey",
+            ]
         )
         mock_winreg.HKEY_LOCAL_MACHINE = "HKEY_LOCAL_MACHINE"
         mock_winreg.HKEY_CURRENT_USER = "HKEY_CURRENT_USER"
         mock_winreg.KEY_READ = 0x10
         mock_winreg.KEY_WOW64_32KEY = 0x1
         mock_winreg.KEY_WOW64_64KEY = 0x2
-        mock_winreg.OpenKey.side_effect = [cls.key_local_machine, cls.key_current_user, cls.key_local_machine_64, cls.key_current_user_64]
+        mock_winreg.OpenKey.side_effect = [
+            cls.key_local_machine,
+            cls.key_current_user,
+            cls.key_local_machine_64,
+            cls.key_current_user_64,
+        ]
         mock_winreg.EnumKey.side_effect = enum_key
         mock_winreg.QueryValue.side_effect = query_value
         mock_winreg.CloseKey.return_value = None
@@ -95,7 +110,7 @@ class TestGetInstalledPythons:
                     "3.7",
                     "3.8",  # 64-bit with a 32-bit user install
                 ),
-                self.key_current_user_64: ("3.7", ),
+                self.key_current_user_64: ("3.7",),
             },
         )
         monkeypatch.setattr(virtualenv, "join", "{}\\{}".format)
