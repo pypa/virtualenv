@@ -104,9 +104,11 @@ else:
 
         # Grab exes from 32-bit registry view
         exes = _get_installed_pythons_for_view("-32", winreg.KEY_WOW64_32KEY)
-        # For 64-bit OS grab exes from 64-bit registry view
-        if sys.maxsize > 2**32 or "PROGRAMFILES(X86)" in os.environ:
-            exes.update(_get_installed_pythons_for_view("-64", winreg.KEY_WOW64_64KEY))
+        # Grab exes from 64-bit registry view
+        exes_64 = _get_installed_pythons_for_view("-64", winreg.KEY_WOW64_64KEY)
+        # Check if exes are unique
+        if set(exes.values()) != set(exes_64.values()):
+            exes.update(exes_64)
 
         # Create dict with all versions found
         for version, bitness in sorted(exes):
