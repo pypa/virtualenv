@@ -100,12 +100,37 @@ else:
         import _winreg as winreg
 
     def get_installed_pythons():
+        final_exes = dict()
+
+        # Grab exes from 32-bit registry view
+        exes = _get_installed_pythons_for_view("-32", winreg.KEY_WOW64_32KEY)
+        # Grab exes from 64-bit registry view
+        exes_64 = _get_installed_pythons_for_view("-64", winreg.KEY_WOW64_64KEY)
+        # Check if exes are unique
+        if set(exes.values()) != set(exes_64.values()):
+            exes.update(exes_64)
+
+        # Create dict with all versions found
+        for version, bitness in sorted(exes):
+            exe = exes[(version, bitness)]
+            # Add minor version (X.Y-32 or X.Y-64)
+            final_exes[version + bitness] = exe
+            # Add minor extensionless version (X.Y); 3.2-64 wins over 3.2-32
+            final_exes[version] = exe
+            # Add major version (X-32 or X-64)
+            final_exes[version[0] + bitness] = exe
+            # Add major extensionless version (X); 3.3-32 wins over 3.2-64
+            final_exes[version[0]] = exe
+
+        return final_exes
+
+    def _get_installed_pythons_for_view(bitness, view):
         exes = dict()
         # If both system and current user installations are found for a
         # particular Python version, the current user one is used
         for key in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
             try:
-                python_core = winreg.CreateKey(key, "Software\\Python\\PythonCore")
+                python_core = winreg.OpenKey(key, "Software\\Python\\PythonCore", 0, view | winreg.KEY_READ)
             except WindowsError:
                 # No registered Python installations
                 continue
@@ -118,33 +143,13 @@ else:
                         at_path = winreg.QueryValue(python_core, "{}\\InstallPath".format(version))
                     except WindowsError:
                         continue
-                    exes[version] = join(at_path, "python.exe")
+                    # Remove bitness from version
+                    if version.endswith(bitness):
+                        version = version[: -len(bitness)]
+                    exes[(version, bitness)] = join(at_path, "python.exe")
                 except WindowsError:
                     break
             winreg.CloseKey(python_core)
-
-        # For versions that track separate 32-bit (`X.Y-32`) & 64-bit (`X-Y`)
-        # installation registrations, add a `X.Y-64` version tag and make the
-        # extensionless `X.Y` version tag represent the 64-bit installation if
-        # available or 32-bit if it is not
-        updated = {}
-        for ver in exes:
-            if ver < "3.5":
-                continue
-            if ver.endswith("-32"):
-                base_ver = ver[:-3]
-                if base_ver not in exes:
-                    updated[base_ver] = exes[ver]
-            else:
-                updated[ver + "-64"] = exes[ver]
-        exes.update(updated)
-
-        # Add the major versions
-        # Sort the keys, then repeatedly update the major version entry
-        # Last executable (i.e., highest version) wins with this approach,
-        # 64-bit over 32-bit if both are found
-        for ver in sorted(exes):
-            exes[ver[0]] = exes[ver]
 
         return exes
 

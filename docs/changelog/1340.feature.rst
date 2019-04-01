@@ -1,0 +1,1 @@
+``-p`` option accepts Python version in following formats now: ``X``, ``X-ZZ``, ``X.Y`` and ``X.Y-ZZ``, where ``ZZ`` is ``32`` or ``64``. (Windows only)

@@ -33,6 +33,8 @@ def test_version():
 class TestGetInstalledPythons:
     key_local_machine = "key-local-machine"
     key_current_user = "key-current-user"
+    key_local_machine_64 = "key-local-machine-64"
+    key_current_user_64 = "key-current-user-64"
 
     @classmethod
     def mock_virtualenv_winreg(cls, monkeypatch, data):
@@ -52,11 +54,29 @@ class TestGetInstalledPythons:
             raise WindowsError
 
         mock_winreg = NonCallableMock(
-            spec_set=["HKEY_LOCAL_MACHINE", "HKEY_CURRENT_USER", "CreateKey", "EnumKey", "QueryValue", "CloseKey"]
+            spec_set=[
+                "HKEY_LOCAL_MACHINE",
+                "HKEY_CURRENT_USER",
+                "KEY_READ",
+                "KEY_WOW64_32KEY",
+                "KEY_WOW64_64KEY",
+                "OpenKey",
+                "EnumKey",
+                "QueryValue",
+                "CloseKey",
+            ]
         )
         mock_winreg.HKEY_LOCAL_MACHINE = "HKEY_LOCAL_MACHINE"
         mock_winreg.HKEY_CURRENT_USER = "HKEY_CURRENT_USER"
-        mock_winreg.CreateKey.side_effect = [cls.key_local_machine, cls.key_current_user]
+        mock_winreg.KEY_READ = 0x10
+        mock_winreg.KEY_WOW64_32KEY = 0x1
+        mock_winreg.KEY_WOW64_64KEY = 0x2
+        mock_winreg.OpenKey.side_effect = [
+            cls.key_local_machine,
+            cls.key_current_user,
+            cls.key_local_machine_64,
+            cls.key_current_user_64,
+        ]
         mock_winreg.EnumKey.side_effect = enum_key
         mock_winreg.QueryValue.side_effect = query_value
         mock_winreg.CloseKey.return_value = None
@@ -80,13 +100,17 @@ class TestGetInstalledPythons:
                     "2.7",
                     "3.2",
                     "3.4",
-                    "3.5",  # 64-bit only
                     "3.6-32",  # 32-bit only
-                    "3.7",
                     "3.7-32",  # both 32 & 64-bit with a 64-bit user install
-                    "3.8",
-                ),  # 64-bit with a 32-bit user install
-                self.key_current_user: ("2.5", "2.7", "3.7", "3.8-32"),
+                ),
+                self.key_current_user: ("2.5", "2.7", "3.8-32"),
+                self.key_local_machine_64: (
+                    "2.6",
+                    "3.5",  # 64-bit only
+                    "3.7",
+                    "3.8",  # 64-bit with a 32-bit user install
+                ),
+                self.key_current_user_64: ("3.7",),
             },
         )
         monkeypatch.setattr(virtualenv, "join", "{}\\{}".format)
@@ -95,25 +119,36 @@ class TestGetInstalledPythons:
 
         assert installed_pythons == {
             "2": self.key_current_user + "-2.7-path\\python.exe",
+            "2-32": self.key_current_user + "-2.7-path\\python.exe",
+            "2-64": self.key_local_machine_64 + "-2.6-path\\python.exe",
             "2.4": self.key_local_machine + "-2.4-path\\python.exe",
+            "2.4-32": self.key_local_machine + "-2.4-path\\python.exe",
             "2.5": self.key_current_user + "-2.5-path\\python.exe",
+            "2.5-32": self.key_current_user + "-2.5-path\\python.exe",
+            "2.6": self.key_local_machine_64 + "-2.6-path\\python.exe",
+            "2.6-64": self.key_local_machine_64 + "-2.6-path\\python.exe",
             "2.7": self.key_current_user + "-2.7-path\\python.exe",
-            "3": self.key_local_machine + "-3.8-path\\python.exe",
+            "2.7-32": self.key_current_user + "-2.7-path\\python.exe",
+            "3": self.key_local_machine_64 + "-3.8-path\\python.exe",
+            "3-32": self.key_current_user + "-3.8-32-path\\python.exe",
+            "3-64": self.key_local_machine_64 + "-3.8-path\\python.exe",
             "3.2": self.key_local_machine + "-3.2-path\\python.exe",
+            "3.2-32": self.key_local_machine + "-3.2-path\\python.exe",
             "3.4": self.key_local_machine + "-3.4-path\\python.exe",
-            "3.5": self.key_local_machine + "-3.5-path\\python.exe",
-            "3.5-64": self.key_local_machine + "-3.5-path\\python.exe",
+            "3.4-32": self.key_local_machine + "-3.4-path\\python.exe",
+            "3.5": self.key_local_machine_64 + "-3.5-path\\python.exe",
+            "3.5-64": self.key_local_machine_64 + "-3.5-path\\python.exe",
             "3.6": self.key_local_machine + "-3.6-32-path\\python.exe",
             "3.6-32": self.key_local_machine + "-3.6-32-path\\python.exe",
-            "3.7": self.key_current_user + "-3.7-path\\python.exe",
+            "3.7": self.key_current_user_64 + "-3.7-path\\python.exe",
             "3.7-32": self.key_local_machine + "-3.7-32-path\\python.exe",
-            "3.7-64": self.key_current_user + "-3.7-path\\python.exe",
-            "3.8": self.key_local_machine + "-3.8-path\\python.exe",
+            "3.7-64": self.key_current_user_64 + "-3.7-path\\python.exe",
+            "3.8": self.key_local_machine_64 + "-3.8-path\\python.exe",
             "3.8-32": self.key_current_user + "-3.8-32-path\\python.exe",
-            "3.8-64": self.key_local_machine + "-3.8-path\\python.exe",
+            "3.8-64": self.key_local_machine_64 + "-3.8-path\\python.exe",
         }
         assert mock_winreg.mock_calls == [
-            call.CreateKey(mock_winreg.HKEY_LOCAL_MACHINE, "Software\\Python\\PythonCore"),
+            call.OpenKey(mock_winreg.HKEY_LOCAL_MACHINE, "Software\\Python\\PythonCore", 0, 0x11),
             call.EnumKey(self.key_local_machine, 0),
             call.QueryValue(self.key_local_machine, "2.4\\InstallPath"),
             call.EnumKey(self.key_local_machine, 1),
@@ -123,28 +158,36 @@ class TestGetInstalledPythons:
             call.EnumKey(self.key_local_machine, 3),
             call.QueryValue(self.key_local_machine, "3.4\\InstallPath"),
             call.EnumKey(self.key_local_machine, 4),
-            call.QueryValue(self.key_local_machine, "3.5\\InstallPath"),
-            call.EnumKey(self.key_local_machine, 5),
             call.QueryValue(self.key_local_machine, "3.6-32\\InstallPath"),
-            call.EnumKey(self.key_local_machine, 6),
-            call.QueryValue(self.key_local_machine, "3.7\\InstallPath"),
-            call.EnumKey(self.key_local_machine, 7),
+            call.EnumKey(self.key_local_machine, 5),
             call.QueryValue(self.key_local_machine, "3.7-32\\InstallPath"),
-            call.EnumKey(self.key_local_machine, 8),
-            call.QueryValue(self.key_local_machine, "3.8\\InstallPath"),
-            call.EnumKey(self.key_local_machine, 9),
+            call.EnumKey(self.key_local_machine, 6),
             call.CloseKey(self.key_local_machine),
-            call.CreateKey(mock_winreg.HKEY_CURRENT_USER, "Software\\Python\\PythonCore"),
+            call.OpenKey(mock_winreg.HKEY_CURRENT_USER, "Software\\Python\\PythonCore", 0, 0x11),
             call.EnumKey(self.key_current_user, 0),
             call.QueryValue(self.key_current_user, "2.5\\InstallPath"),
             call.EnumKey(self.key_current_user, 1),
             call.QueryValue(self.key_current_user, "2.7\\InstallPath"),
             call.EnumKey(self.key_current_user, 2),
-            call.QueryValue(self.key_current_user, "3.7\\InstallPath"),
-            call.EnumKey(self.key_current_user, 3),
             call.QueryValue(self.key_current_user, "3.8-32\\InstallPath"),
-            call.EnumKey(self.key_current_user, 4),
+            call.EnumKey(self.key_current_user, 3),
             call.CloseKey(self.key_current_user),
+            call.OpenKey(mock_winreg.HKEY_LOCAL_MACHINE, "Software\\Python\\PythonCore", 0, 0x12),
+            call.EnumKey(self.key_local_machine_64, 0),
+            call.QueryValue(self.key_local_machine_64, "2.6\\InstallPath"),
+            call.EnumKey(self.key_local_machine_64, 1),
+            call.QueryValue(self.key_local_machine_64, "3.5\\InstallPath"),
+            call.EnumKey(self.key_local_machine_64, 2),
+            call.QueryValue(self.key_local_machine_64, "3.7\\InstallPath"),
+            call.EnumKey(self.key_local_machine_64, 3),
+            call.QueryValue(self.key_local_machine_64, "3.8\\InstallPath"),
+            call.EnumKey(self.key_local_machine_64, 4),
+            call.CloseKey(self.key_local_machine_64),
+            call.OpenKey(mock_winreg.HKEY_CURRENT_USER, "Software\\Python\\PythonCore", 0, 0x12),
+            call.EnumKey(self.key_current_user_64, 0),
+            call.QueryValue(self.key_current_user_64, "3.7\\InstallPath"),
+            call.EnumKey(self.key_current_user_64, 1),
+            call.CloseKey(self.key_current_user_64),
         ]
 
     @pytest.mark.skipif(sys.platform != "win32", reason="windows specific test")
@@ -156,12 +199,18 @@ class TestGetInstalledPythons:
 
         assert installed_pythons == {}
         assert mock_winreg.mock_calls == [
-            call.CreateKey(mock_winreg.HKEY_LOCAL_MACHINE, "Software\\Python\\PythonCore"),
+            call.OpenKey(mock_winreg.HKEY_LOCAL_MACHINE, "Software\\Python\\PythonCore", 0, 0x11),
             call.EnumKey(self.key_local_machine, 0),
             call.CloseKey(self.key_local_machine),
-            call.CreateKey(mock_winreg.HKEY_CURRENT_USER, "Software\\Python\\PythonCore"),
+            call.OpenKey(mock_winreg.HKEY_CURRENT_USER, "Software\\Python\\PythonCore", 0, 0x11),
             call.EnumKey(self.key_current_user, 0),
             call.CloseKey(self.key_current_user),
+            call.OpenKey(mock_winreg.HKEY_LOCAL_MACHINE, "Software\\Python\\PythonCore", 0, 0x12),
+            call.EnumKey(self.key_local_machine_64, 0),
+            call.CloseKey(self.key_local_machine_64),
+            call.OpenKey(mock_winreg.HKEY_CURRENT_USER, "Software\\Python\\PythonCore", 0, 0x12),
+            call.EnumKey(self.key_current_user_64, 0),
+            call.CloseKey(self.key_current_user_64),
         ]
 
 
