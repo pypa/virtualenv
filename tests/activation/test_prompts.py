@@ -96,9 +96,6 @@ def platform_check_skip(posh_execute_enabled, pytestconfig):
             if sys.version_info < (3, 4):
                 return "xonsh requires Python 3.4 at least"
 
-            if not pytestconfig.getoption("--xonsh-prompt"):
-                return "'--xonsh-prompt' command line option not specified"
-
     return check
 
 
