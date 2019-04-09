@@ -45,7 +45,7 @@ def env_compat(string):
     return string.encode("utf-8") if sys.version_info.major < 3 else string
 
 
-class ShellInfo:
+class ShellInfo(object):
     """Parent class for shell information for prompt testing."""
 
     # Typo insurance
