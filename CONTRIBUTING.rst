@@ -13,8 +13,13 @@ Contributor notes
 * Pull requests should be made against ``master`` branch, which is also our
   latest stable version.
 
-* All changes to files inside virtualenv_embedded should be integrated to
-  ``virtualenv.py`` with ``tox -e embed``
+* All changes to files inside virtualenv_embedded must be integrated to
+  ``virtualenv.py`` with ``tox -e embed``. The tox run will report failure
+  when changes are integrated, as a flag for CI.
+
+* The codebase must be linted with ``tox -e fix_lint`` before being merged.
+  The tox run will report failure when the linters revise code, as a flag
+  for CI.
 
 .. _git-flow: https://github.com/nvie/gitflow
 .. _coordinate development: http://nvie.com/posts/a-successful-git-branching-model/

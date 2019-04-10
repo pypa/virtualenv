@@ -1,4 +1,4 @@
-﻿# This file must be dot sourced from PoSh; you cannot run it directly. Do this: . ./activate.ps1
+# This file must be dot sourced from PoSh; you cannot run it directly. Do this: . ./activate.ps1
 
 $script:THIS_PATH = $myinvocation.mycommand.path
 $script:BASE_DIR = split-path (resolve-path "$THIS_PATH/..") -Parent
@@ -51,10 +51,22 @@ if (!$env:VIRTUAL_ENV_DISABLE_PROMPT)
         ""
     }
     $function:_old_virtual_prompt = $function:prompt
-    function global:prompt
+    if ("__VIRTUAL_PROMPT__" -ne "")
     {
-        # Add a prefix to the current prompt, but don't discard it.
-        write-host "($( split-path $env:VIRTUAL_ENV -leaf )) " -nonewline
-        & $function:_old_virtual_prompt
+        function global:prompt
+        {
+            # Add the custom prefix to the existing prompt
+            write-host "__VIRTUAL_PROMPT__" -nonewline
+            & $function:_old_virtual_prompt
+        }
+    }
+    else
+    {
+        function global:prompt
+        {
+            # Add a prefix to the current prompt, but don't discard it.
+            write-host "($( split-path $env:VIRTUAL_ENV -leaf )) " -nonewline
+            & $function:_old_virtual_prompt
+        }
     }
 }

@@ -148,8 +148,10 @@ is the same as calling::
 
 .. envvar:: VIRTUAL_ENV_DISABLE_PROMPT
 
-   Any virtualenv created when this is set to a non-empty value will not have
-   it's :ref:`activate` modify the shell prompt.
+   Any virtualenv *activated* when this is set to a non-empty value will leave
+   the shell prompt unchanged during processing of the
+   :ref:`activate script <activate>`, rather than modifying it to indicate
+   the newly activated environment.
 
 
 Configuration File

@@ -20,22 +20,35 @@ setenv PATH "$VIRTUAL_ENV:q/__BIN_NAME__:$PATH:q"
 if ("__VIRTUAL_PROMPT__" != "") then
     set env_name = "__VIRTUAL_PROMPT__"
 else
-    set env_name = "$VIRTUAL_ENV:t:q"
+    set env_name = '('"$VIRTUAL_ENV:t:q"') '
 endif
 
-# Could be in a non-interactive environment,
-# in which case, $prompt is undefined and we wouldn't
-# care about the prompt anyway.
-if ( $?prompt ) then
-    set _OLD_VIRTUAL_PROMPT="$prompt:q"
-if ( "$prompt:q" =~ *"$newline:q"* ) then
-    :
+if ( $?VIRTUAL_ENV_DISABLE_PROMPT ) then
+    if ( $VIRTUAL_ENV_DISABLE_PROMPT == "" ) then
+        set do_prompt = "1"
+    else
+        set do_prompt = "0"
+    endif
 else
-    set prompt = "[$env_name:q] $prompt:q"
+    set do_prompt = "1"
 endif
+
+if ( $do_prompt == "1" ) then
+    # Could be in a non-interactive environment,
+    # in which case, $prompt is undefined and we wouldn't
+    # care about the prompt anyway.
+    if ( $?prompt ) then
+        set _OLD_VIRTUAL_PROMPT="$prompt:q"
+        if ( "$prompt:q" =~ *"$newline:q"* ) then
+            :
+        else
+            set prompt = "$env_name:q$prompt:q"
+        endif
+    endif
 endif
 
 unset env_name
+unset do_prompt
 
 alias pydoc python -m pydoc
 
