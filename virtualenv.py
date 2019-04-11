@@ -1331,6 +1331,22 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         print("Please use the *system* python to run this script")
         return
 
+    try:
+        import venv
+    except ImportError:
+        venv = None
+
+    if venv:
+        assert sys.version_info[0] == 3
+        builder = venv.EnvBuilder(system_site_packages=site_packages, clear=clear, symlinks=False, with_pip=False)
+        env_dir = os.path.abspath(home_dir)
+        context = builder.ensure_directories(env_dir)
+        builder.create_configuration(context)
+        # TODO: For Python 3.7.2, the work of setup>python is done in setup_scripts :-()
+        builder.setup_python(context)
+        # TODO: Look at whether we need to skip setting up our site.py and distutils hacks
+        return context.env_exe
+
     if clear:
         rm_tree(lib_dir)
         # FIXME: why not delete it?
