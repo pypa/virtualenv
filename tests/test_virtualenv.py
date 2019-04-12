@@ -356,7 +356,7 @@ def test_install_python_bin():
 def test_always_copy_option():
     """Should be no symlinks in directory tree"""
     tmp_virtualenv = tempfile.mkdtemp()
-    ve_path = os.path.join(tmp_virtualenv, "venv")
+    ve_path = os.path.join(tmp_virtualenv, "ve")
     try:
         virtualenv.create_environment(ve_path, symlink=False)
 

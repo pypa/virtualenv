@@ -21,7 +21,7 @@ VIRTUALENV_SCRIPT = get_src(virtualenv.__file__)
 
 def test_commandline_basic(tmpdir):
     """Simple command line usage should work and files should be generated"""
-    home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(str(tmpdir.join("venv")))
+    home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(str(tmpdir.join("ve")))
     subprocess.check_call([sys.executable, VIRTUALENV_SCRIPT, home_dir])
 
     assert os.path.exists(home_dir)
@@ -42,7 +42,7 @@ def test_commandline_basic(tmpdir):
 
 def test_commandline_explicit_interp(tmpdir):
     """Specifying the Python interpreter should work"""
-    subprocess.check_call([sys.executable, VIRTUALENV_SCRIPT, "-p", sys.executable, str(tmpdir.join("venv"))])
+    subprocess.check_call([sys.executable, VIRTUALENV_SCRIPT, "-p", sys.executable, str(tmpdir.join("ve"))])
 
 
 # The registry lookups to support the abbreviated "-p 3.5" form of specifying
@@ -54,4 +54,4 @@ def test_commandline_explicit_interp(tmpdir):
 def test_commandline_abbrev_interp(tmpdir):
     """Specifying abbreviated forms of the Python interpreter should work"""
     abbrev = "{}{}.{}".format("" if sys.platform == "win32" else "python", *sys.version_info[0:2])
-    subprocess.check_call([sys.executable, VIRTUALENV_SCRIPT, "-p", abbrev, str(tmpdir.join("venv"))])
+    subprocess.check_call([sys.executable, VIRTUALENV_SCRIPT, "-p", abbrev, str(tmpdir.join("ve"))])

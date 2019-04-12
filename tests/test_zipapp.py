@@ -59,7 +59,7 @@ def test_wheel_basic_invocation(call_wheel, tmp_path):
 
 
 def _test_basic_invocation(make_env, tmp_path):
-    venv = tmp_path / "venv"
+    venv = tmp_path / "ve"
     make_env(str(venv))
     assert_venv_looks_good(
         venv, list(sys.version_info), "{}{}".format(virtualenv.EXPECTED_EXE, ".exe" if virtualenv.IS_WIN else "")
@@ -83,7 +83,7 @@ def assert_venv_looks_good(venv, version_info, exe_name):
 
 
 def _test_invocation_dash_p(make_env, tmp_path):
-    venv = tmp_path / "venv"
+    venv = tmp_path / "ve"
     python = {2: _python("3"), 3: _python("2.7")}[sys.version_info[0]]
     make_env(str(venv), python)
     expected = {3: 2, 2: 3}[sys.version_info[0]]
