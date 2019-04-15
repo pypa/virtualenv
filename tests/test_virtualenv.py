@@ -626,7 +626,8 @@ def test_create_environment_from_venv(tmpdir):
     subprocess.check_call([ctx.env_exe, virtualenv.__file__, '--no-setuptools', '--no-pip', '--no-wheel', ve_venv_dir])
     ve_exe = os.path.join(bin_dir, 'python')
     out = subprocess.check_output([ve_exe, '-c', 'import sys; print(sys.real_prefix)'], universal_newlines=True)
-    assert out.strip() == sys.executable
+    # Test against real_prefix if present - we might be running the test from a virtualenv (e.g. tox).
+    assert out.strip() == getattr(sys, 'real_prefix', sys.prefix)
 
 
 def test_create_environment_with_old_pip(tmpdir):
