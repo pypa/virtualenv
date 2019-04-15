@@ -1461,7 +1461,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         executable = sys.executable
         # If sys.executable is a redirector (for example, on Windows)
         # get the real exe to copy using the semi-private sys._base_executable attribute)
-        if hasattr(sys, '_base_executable'):
+        if hasattr(sys, "_base_executable"):
             executable = sys._base_executable
         shutil.copyfile(executable, py_executable)
         make_exe(py_executable)
