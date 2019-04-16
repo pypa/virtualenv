@@ -745,10 +745,7 @@ def main():
         if options.python and not os.environ.get("VIRTUALENV_INTERPRETER_RUNNING"):
             return options.python
         # 2. Are we running from a venv-style virtual environment with a redirector?
-        # TODO: Do we need VIRTUALENV_INTERPRETER_RUNNING?
-        # TODO: This won't work if we set _base_executable
-        # TODO: Python 3.7.2 on Windows (redirector but no _base_executable)
-        if hasattr(sys, '_base_executable'):
+        if hasattr(sys, "_base_executable"):
             return sys._base_executable
         # 3. Special case for Windows venv under Python 3.7.2, where we have
         #    a redirector but sys._base_executable does not exist.
