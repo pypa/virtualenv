@@ -31,14 +31,6 @@ except ImportError:
     std_venv = None
 
 
-# We cannot use the stdlib venv on Python 3.7.2 on Windows,
-# as that version has the redirector executable but does not
-# have sys._base_executable
-# (see https://github.com/pypa/virtualenv/issues/1339)
-if sys.platform == "win32" and sys.version_info[:3] == (3, 7, 2):
-    std_venv = None
-
-
 def test_version():
     """Should have a version string"""
     assert virtualenv.virtualenv_version, "Should have version"

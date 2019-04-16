@@ -739,9 +739,35 @@ def main():
     verbosity = options.verbose - options.quiet
     logger = Logger([(Logger.level_for_integer(2 - verbosity), sys.stdout)])
 
-    if options.python and not os.environ.get("VIRTUALENV_INTERPRETER_RUNNING"):
+    def should_reinvoke(options):
+        """Do we need to reinvoke ourself?"""
+        # 1. Did the user specify the --python option?
+        if options.python and not os.environ.get("VIRTUALENV_INTERPRETER_RUNNING"):
+            return options.python
+        # 2. Are we running from a venv-style virtual environment with a redirector?
+        # TODO: Do we need VIRTUALENV_INTERPRETER_RUNNING?
+        # TODO: This won't work if we set _base_executable
+        # TODO: Python 3.7.2 on Windows (redirector but no _base_executable)
+        if hasattr(sys, '_base_executable'):
+            return sys._base_executable
+        # 3. Special case for Windows venv under Python 3.7.2, where we have
+        #    a redirector but sys._base_executable does not exist.
+        if sys.platform == "win32" and sys.version_info[:3] == (3, 7, 2):
+            # We are in a venv if base_prefix != prefix
+            if sys.base_prefix != sys.prefix:
+                # We have to guess where the Python executable is. In a
+                # normal installation, it's in sys.prefix, so we assume that.
+                # If that file doesn't exist, we give up and don't reinvoke.
+                base_exe = os.path.join(sys.base_prefix, "python.exe")
+                if os.path.exists(base_exe):
+                    return base_exe
+        # We don't need to reinvoke
+        return None
+
+    interpreter = should_reinvoke(options)
+    if interpreter:
         env = os.environ.copy()
-        interpreter = resolve_interpreter(options.python)
+        interpreter = resolve_interpreter(interpreter)
         if interpreter == sys.executable:
             logger.warn("Already using interpreter {}".format(interpreter))
         else:
@@ -1459,10 +1485,6 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     if sys.executable != py_executable:
         # FIXME: could I just hard link?
         executable = sys.executable
-        # If sys.executable is a redirector (for example, on Windows)
-        # get the real exe to copy using the semi-private sys._base_executable attribute)
-        if hasattr(sys, "_base_executable"):
-            executable = sys._base_executable
         shutil.copyfile(executable, py_executable)
         make_exe(py_executable)
         if IS_WIN or IS_CYGWIN:
