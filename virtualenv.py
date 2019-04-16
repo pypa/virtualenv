@@ -744,20 +744,22 @@ def main():
         # 1. Did the user specify the --python option?
         if options.python and not os.environ.get("VIRTUALENV_INTERPRETER_RUNNING"):
             return options.python
-        # 2. Are we running from a venv-style virtual environment with a redirector?
-        if hasattr(sys, "_base_executable"):
-            return sys._base_executable
-        # 3. Special case for Windows venv under Python 3.7.2, where we have
-        #    a redirector but sys._base_executable does not exist.
-        if sys.platform == "win32" and sys.version_info[:3] == (3, 7, 2):
-            # We are in a venv if base_prefix != prefix
-            if sys.base_prefix != sys.prefix:
-                # We have to guess where the Python executable is. In a
-                # normal installation, it's in sys.prefix, so we assume that.
-                # If that file doesn't exist, we give up and don't reinvoke.
-                base_exe = os.path.join(sys.base_prefix, "python.exe")
-                if os.path.exists(base_exe):
-                    return base_exe
+        # All of the remaining cases are only for Windows
+        if sys.platform == "win32":
+            # 2. Are we running from a venv-style virtual environment with a redirector?
+            if hasattr(sys, "_base_executable"):
+                return sys._base_executable
+            # 3. Special case for Python 3.7.2, where we have a redirector,
+            #    but sys._base_executable does not exist.
+            if sys.version_info[:3] == (3, 7, 2):
+                # We are in a venv if base_prefix != prefix
+                if sys.base_prefix != sys.prefix:
+                    # We have to guess where the Python executable is. In a
+                    # normal installation, it's in sys.prefix, so we assume that.
+                    # If that file doesn't exist, we give up and don't reinvoke.
+                    base_exe = os.path.join(sys.base_prefix, "python.exe")
+                    if os.path.exists(base_exe):
+                        return base_exe
         # We don't need to reinvoke
         return None
 
