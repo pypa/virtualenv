@@ -270,3 +270,62 @@ Here's a more concrete example of how you could use this::
 Another example is available `here`__.
 
 .. __: https://github.com/socialplanning/fassembler/blob/master/fassembler/create-venv-script.py
+
+
+Compatibility with the stdlib venv module
+-----------------------------------------
+
+Starting with Python 3.3, the Python standard library includes a ``venv``
+module that provides similar functionality to ``virtualenv`` - however, the
+mechanisms used by the two modules are very different.
+
+Problems arise when environments get "nested" (a virtual environment is
+created from within another one - for example, running the virtualenv tests
+using tox, where tox creates a virtual environemnt to run the tests, and the
+tests themselves create further virtual environments).
+
+``virtualenv`` supports creating virtual environments from within another one
+(the ``sys.real_prefix`` variable allows ``virtualenv`` to locate the "base"
+environment) but stdlib-style ``venv`` environments don't use that mechanism,
+so explicit support is needed for those environments.
+
+A standard library virtual environment is most easily identified by checking
+``sys.prefix`` and ``sys.base_prefix``. If these differ, the interpreter is
+running in a virtual environment and the base interpreter is located in the
+directory specified by ``sys.base_prefix``. Therefore, when
+``sys.base_prefix`` is set, virtualenv gets the interpreter files from there
+rather than from ``sys.prefix`` (in the same way as ``sys.real_prefix`` is
+used for virtualenv-style environments). In practice, this is sufficient for
+all platforms other than Windows.
+
+On Windows from Python 3.7.2 onwards, a stdlib-style virtual environment does
+not contain an actual Python interpreter executable, but rather a "redirector"
+which launches the actual interpreter from the base environment (this
+redirector is based on the same code as the standard ``py.exe`` launcher). As
+a result, the virtualenv approach of copying the interpreter from the starting
+environment fails. In order to correctly set up the virtualenv, therefore, we
+need to be running from a "full" environment. To ensure that, we re-invoke the
+``virtualenv.py`` script using the "base" interpreter, in the same way as we
+do with the ``--python`` command line option.
+
+The process of identifying the base interpreter is complicated by the fact
+that the implementation changed between different Python versions. The
+logic used is as follows:
+
+1. If the (private) attribute ``sys._base_executable`` is present, this is
+   the base interpreter. This is the long-term solution and should be stable
+   in the future (the attribute may become public, and have the leading
+   underscore removed, in a Python 3.8, but that is not confirmed yet).
+2. In the absence of ``sys._base_executable`` (only the case for Python 3.7.2)
+   we check for the existence of the environment variable
+   ``__PYVENV_LAUNCHER__``. This is used by the redirector, and if it is
+   present, we know that we are in a stdlib-style virtual environment and need
+   to locate the base Python. In most cases, the base environment is located
+   at ``sys.base_prefix`` - however, in the case where the user creates a
+   virtualenv, and then creates a venv from that virtualenv,
+   ``sys.base_prefix`` is not correct - in that case, though, we have
+   ``sys.real_prefix`` (set by virtualenv) which *is* correct.
+
+There is one further complication - as noted above, the environment variable
+``__PYVENV_LAUNCHER__`` affects how the interpreter works, so before we
+re-invoke the virtualenv script, we remove this from the environment.
