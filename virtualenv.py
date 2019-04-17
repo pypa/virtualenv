@@ -774,7 +774,8 @@ def main():
             env["VIRTUALENV_INTERPRETER_RUNNING"] = "true"
             # Remove the variable __PYVENV_LAUNCHER__ as it causes the interpreter
             # to redirect back to the virtual environment.
-            del env["__PYVENV_LAUNCHER__"]
+            if "__PYVENV_LAUNCHER__" in env:
+                del env["__PYVENV_LAUNCHER__"]
             file = __file__
             if file.endswith(".pyc"):
                 file = file[:-1]
