@@ -739,14 +739,50 @@ def main():
     verbosity = options.verbose - options.quiet
     logger = Logger([(Logger.level_for_integer(2 - verbosity), sys.stdout)])
 
-    if options.python and not os.environ.get("VIRTUALENV_INTERPRETER_RUNNING"):
+    def should_reinvoke(options):
+        """Do we need to reinvoke ourself?"""
+        # 1. Did the user specify the --python option?
+        if options.python and not os.environ.get("VIRTUALENV_INTERPRETER_RUNNING"):
+            return options.python
+        # All of the remaining cases are only for Windows
+        if sys.platform == "win32":
+            # 2. Are we running from a venv-style virtual environment with a redirector?
+            if hasattr(sys, "_base_executable"):
+                return sys._base_executable
+            # 3. Special case for Python 3.7.2, where we have a redirector,
+            #    but sys._base_executable does not exist.
+            if sys.version_info[:3] == (3, 7, 2):
+                # We are in a venv if the environment variable __PYVENV_LAUNCHER__ is set.
+                if "__PYVENV_LAUNCHER__" in os.environ:
+                    # The base environment is either sys.real_prefix (if
+                    # we were invoked from a venv built from a virtualenv) or
+                    # sys.base_prefix if real_prefix doesn't exist (a simple venv).
+                    base_prefix = getattr(sys, "real_prefix", sys.base_prefix)
+                    # We assume the Python executable is directly under the prefix
+                    # directory. The only known case where that won't be the case is
+                    # an in-place source build, which we don't support. We don't need
+                    # to consider virtuale environments (where python.exe is in "Scripts"
+                    # because we've just followed the links back to a non-virtual
+                    # environment - we hope!)
+                    base_exe = os.path.join(base_prefix, "python.exe")
+                    if os.path.exists(base_exe):
+                        return base_exe
+        # We don't need to reinvoke
+        return None
+
+    interpreter = should_reinvoke(options)
+    if interpreter:
         env = os.environ.copy()
-        interpreter = resolve_interpreter(options.python)
+        interpreter = resolve_interpreter(interpreter)
         if interpreter == sys.executable:
             logger.warn("Already using interpreter {}".format(interpreter))
         else:
             logger.notify("Running virtualenv with interpreter {}".format(interpreter))
             env["VIRTUALENV_INTERPRETER_RUNNING"] = "true"
+            # Remove the variable __PYVENV_LAUNCHER__ if it's present, as it causes the
+            # interpreter to redirect back to the virtual environment.
+            if "__PYVENV_LAUNCHER__" in env:
+                del env["__PYVENV_LAUNCHER__"]
             file = __file__
             if file.endswith(".pyc"):
                 file = file[:-1]

@@ -1,0 +1,2 @@
+Handle running virtualenv from within a virtual environment created
+using the stdlib ``venv`` module. Fixes #1339.

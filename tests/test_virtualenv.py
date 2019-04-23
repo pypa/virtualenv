@@ -25,6 +25,12 @@ except ImportError:
     from pathlib2 import Path
 
 
+try:
+    import venv as std_venv
+except ImportError:
+    std_venv = None
+
+
 def test_version():
     """Should have a version string"""
     assert virtualenv.virtualenv_version, "Should have version"
@@ -605,6 +611,23 @@ def test_create_environment_from_virtual_environment(tmpdir):
     home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(venvdir)
     virtualenv.create_environment(venvdir)
     assert not os.path.islink(os.path.join(lib_dir, "distutils"))
+
+
+@pytest.mark.skipif(std_venv is None, reason="needs standard venv module")
+def test_create_environment_from_venv(tmpdir):
+    std_venv_dir = str(tmpdir / "stdvenv")
+    ve_venv_dir = str(tmpdir / "vevenv")
+    home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(ve_venv_dir)
+    builder = std_venv.EnvBuilder()
+    ctx = builder.ensure_directories(std_venv_dir)
+    builder.create_configuration(ctx)
+    builder.setup_python(ctx)
+    builder.setup_scripts(ctx)
+    subprocess.check_call([ctx.env_exe, virtualenv.__file__, "--no-setuptools", "--no-pip", "--no-wheel", ve_venv_dir])
+    ve_exe = os.path.join(bin_dir, "python")
+    out = subprocess.check_output([ve_exe, "-c", "import sys; print(sys.real_prefix)"], universal_newlines=True)
+    # Test against real_prefix if present - we might be running the test from a virtualenv (e.g. tox).
+    assert out.strip() == getattr(sys, "real_prefix", sys.prefix)
 
 
 def test_create_environment_with_old_pip(tmpdir):
