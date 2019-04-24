@@ -2,7 +2,10 @@ name: $(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.rr)
 
 variables:
   "System.PreferGit": true
+  PIP_NO_WARN_SCRIPT_LOCATION: '0'
+  PIP_DISABLE_PIP_VERSION_CHECK: '1'
   PYTEST_ADDOPTS: "-vv -ra --showlocals"
+  PYTEST_XDIST_PROC_NR: 'auto'
   CI_RUN: "yes"
 
 trigger:
@@ -70,7 +73,7 @@ jobs:
   parameters: {tox: cross_python3, python: 3.7, os: linux}
 
 - job: report_coverage
-  pool: {vmImage: 'Ubuntu 16.04'}
+  pool: {vmImage: "Ubuntu-16.04"}
   dependsOn:
   - windows_py37
   - windows_py36
@@ -115,7 +118,7 @@ jobs:
           shutil.copy(str(coverage_file), str(destination))'
     displayName: move coverage files into .tox
 
-  - script: 'python -m pip install -U tox --pre'
+  - script: 'python -m pip install -U pip tox --pre'
     displayName: install tox
 
   - script: 'python -m tox -e coverage'
@@ -124,9 +127,8 @@ jobs:
   - task: PublishCodeCoverageResults@1
     displayName: publish overall coverage report to Azure
     inputs:
-      codeCoverageTool: 'cobertura'
+      codeCoverageTool: 'Cobertura'
       summaryFileLocation: '$(System.DefaultWorkingDirectory)/.tox/coverage.xml'
-      reportDirectory: '$(System.DefaultWorkingDirectory)/.tox/htmlcov'
       failIfCoverageEmpty: true
 
 - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
@@ -138,7 +140,7 @@ jobs:
     - linux_embed
     - linux_package_readme
     condition: succeeded()
-    pool: {vmImage: 'Ubuntu 16.04'}
+    pool: {vmImage: "Ubuntu-16.04"}
     steps:
     - task: UsePythonVersion@0
       displayName: setup python3.7
