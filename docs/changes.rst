@@ -5,6 +5,26 @@ Release History
 
 .. towncrier release notes start
 
+v16.5.0 (2019-04-24)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Add tests covering prompt manipulation during activation/deactivation,
+  and harmonize behavior of all supported shells - by ``bskinn`` (`#1330 <https://github.com/pypa/virtualenv/issues/1330>`_)
+- Handle running virtualenv from within a virtual environment created
+  using the stdlib ``venv`` module. Fixes #1339. (`#1345 <https://github.com/pypa/virtualenv/issues/1345>`_)
+
+
+Features
+^^^^^^^^
+
+- ``-p`` option accepts Python version in following formats now: ``X``, ``X-ZZ``, ``X.Y`` and ``X.Y-ZZ``, where ``ZZ`` is ``32`` or ``64``. (Windows only) (`#1340 <https://github.com/pypa/virtualenv/issues/1340>`_)
+- upgrade pip from ``19.0.3`` to ``19.1`` (`#1346 <https://github.com/pypa/virtualenv/issues/1346>`_)
+- upgrade setuptools from ``40.8.0 to ``41.0.1`` (`#1346 <https://github.com/pypa/virtualenv/issues/1346>`_)
+
+
 v16.4.3 (2019-03-01)
 --------------------
 

@@ -1,2 +1,0 @@
-Add tests covering prompt manipulation during activation/deactivation,
-and harmonize behavior of all supported shells - by ``bskinn``

@@ -1,2 +1,0 @@
-* upgrade pip from 19.0.3 to 19.1
-* upgrade setuptools from 40.8.0 to 41.0.1
