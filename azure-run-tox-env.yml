@@ -7,13 +7,15 @@ jobs:
 - job: ${{ format('{0}_{1}', parameters.os, parameters.tox) }}
   pool:
     ${{ if eq(parameters.os, 'windows') }}:
-      vmImage: "vs2017-win2016"
+      vmImage: "windows-2019"
     ${{ if eq(parameters.os, 'macOs') }}:
-      vmImage: "macOS 10.13"
+      vmImage: "macOS-latest"
     ${{ if eq(parameters.os, 'linux') }}:
-      vmImage: "Ubuntu 16.04"
+      vmImage: "Ubuntu-16.04"
 
   variables:
+    ${{ if in(parameters.tox, 'pypy', 'py27', 'py34') }}:
+      PYTHONWARNINGS: 'ignore:::pip._internal.cli.base_command'
     ${{ if in(parameters.python, 'pypy', 'pypy3') }}:
       python: ${{ parameters.python }}
     ${{ if notIn(parameters.python, 'pypy', 'pypy3') }}:
@@ -47,7 +49,7 @@ jobs:
   - script: "python -m pip install -U pip setuptools --user"
     displayName: install pip
 
-  - script: "python -m pip install -U tox --user -v"
+  - script: "python -m pip install -U tox --user"
     displayName: install tox
 
   # provision additional shells
