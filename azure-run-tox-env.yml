@@ -13,17 +13,13 @@ jobs:
     ${{ if eq(parameters.os, 'linux') }}:
       vmImage: "Ubuntu-16.04"
 
-  variables:
-    ${{ if in(parameters.tox, 'pypy', 'py27', 'py34') }}:
+  ${{ if in(parameters.tox, 'pypy', 'py27', 'py34') }}:
+    variables:
       PYTHONWARNINGS: 'ignore:::pip._internal.cli.base_command'
-    ${{ if in(parameters.python, 'pypy', 'pypy3') }}:
-      python: ${{ parameters.python }}
-    ${{ if notIn(parameters.python, 'pypy', 'pypy3') }}:
-      python: "python"
 
   steps:
   # ensure the required Python versions are available
-  - ${{ if notIn(parameters.python, 'pypy', 'pypy3', 'jython') }}:
+  - ${{ if notIn(parameters.python, 'jython') }}:
     - task: UsePythonVersion@0
       displayName: setup python
       inputs:
@@ -43,7 +39,7 @@ jobs:
     - script: echo $(PATH)
       displayName: show PATH
 
-  - script: "$(python) -c \"import sys; print(sys.version); print(sys.executable)\""
+  - script: "python -c \"import sys; print(sys.version); print(sys.executable)\""
     displayName: show python information
 
   - script: "python -m pip install -U pip setuptools --user"
