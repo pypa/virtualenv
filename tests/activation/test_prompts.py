@@ -202,8 +202,8 @@ class XonshInfo(ShellInfo):
         if IS_WIN:
             return "Provisioning xonsh on windows is unreliable"
 
-        if sys.version_info < (3, 4):
-            return "xonsh requires Python 3.4 at least"
+        if sys.version_info < (3, 5):
+            return "xonsh requires Python 3.5 at least"
 
 
 class CmdInfo(ShellInfo):
@@ -375,10 +375,11 @@ def test_suppressed_prompt(shell_info, shell_avail, env, value, disable, get_wor
     assert 0 == subprocess.call(command, cwd=str(work_root[0]), shell=True, env=clean_env)
 
     with open(str(work_root[0] / output_name), "rb") as f:
-        lines = f.read().split(b"\n")
+        text = f.read()
+        lines = text.split(b"\n")
 
     # Is the prompt suppressed based on the env var value?
-    assert (lines[1] == lines[2]) == disable, lines
+    assert (lines[1] == lines[2]) == disable, text
 
 
 @pytest.mark.parametrize("shell_info", SHELL_INFO_LIST, ids=[i.name for i in SHELL_INFO_LIST])
