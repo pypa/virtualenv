@@ -15,6 +15,7 @@ if os.environ.get("VIRTUALENV_INTERPRETER_RUNNING"):
             sys.path.remove(path)
 # fmt: on
 
+import argparse
 import ast
 import base64
 import codecs
@@ -24,7 +25,6 @@ import distutils.sysconfig
 import errno
 import glob
 import logging
-import optparse
 import os
 import re
 import shutil
@@ -35,7 +35,6 @@ import tempfile
 import textwrap
 import zipfile
 import zlib
-from distutils.util import strtobool
 from os.path import join
 
 try:
@@ -498,240 +497,222 @@ def virtualenv_support_dirs():
         yield []
 
 
-class UpdatingDefaultsHelpFormatter(optparse.IndentedHelpFormatter):
-    """
-    Custom help formatter for use in ConfigOptionParser that updates
-    the defaults before expanding them, allowing them to show up correctly
-    in the help listing
-    """
-
-    def expand_default(self, option):
-        if self.parser is not None:
-            self.parser.update_defaults(self.parser.defaults)
-        return optparse.IndentedHelpFormatter.expand_default(self, option)
-
-
-class ConfigOptionParser(optparse.OptionParser):
+class ConfigOptionParser(argparse.ArgumentParser):
     """
     Custom option parser which updates its defaults by checking the
     configuration files and environmental variables
     """
 
+    VIRTUALENV_CONFIG_FILE_ENV_VAR = "VIRTUALENV_CONFIG_FILE"
+
     def __init__(self, *args, **kwargs):
-        self.config = ConfigParser.RawConfigParser()
-        self.files = self.get_config_files()
-        self.config.read(self.files)
-        optparse.OptionParser.__init__(self, *args, **kwargs)
+        self.config_parser = ConfigParser.ConfigParser()
 
-    @staticmethod
-    def get_config_files():
-        config_file = os.environ.get("VIRTUALENV_CONFIG_FILE", False)
-        if config_file and os.path.exists(config_file):
-            return [config_file]
-        return [DEFAULT_CONFIG_FILE]
+        config_file = os.environ.get(self.VIRTUALENV_CONFIG_FILE_ENV_VAR, None)
+        via_env_var = "is"
+        if config_file is None:
+            config_file = DEFAULT_CONFIG_FILE
+            via_env_var = "not"
+        self.config_parser.read([config_file])
+        self.section = "virtualenv"
+        kwargs["epilog"] = "{}{} config file {} (change via env var {} - {} set)".format(
+            os.linesep,
+            "active" if os.path.exists(config_file) else "not present",
+            os.path.abspath(config_file),
+            self.VIRTUALENV_CONFIG_FILE_ENV_VAR,
+            via_env_var,
+        )
+        super(ConfigOptionParser, self).__init__(*args, **kwargs)
+        previous = self.add_argument
+        self.add_argument = lambda *a, **k: self.fix_default(previous(*a, **k))
 
-    def update_defaults(self, defaults):
-        """
-        Updates the given defaults with values from the config files and
-        the environ. Does a little special handling for certain types of
-        options (lists).
-        """
-        # Then go and look for the other sources of configuration:
-        config = {}
-        # 1. config files
-        config.update(dict(self.get_config_section("virtualenv")))
-        # 2. environmental variables
-        config.update(dict(self.get_environ_vars()))
-        # Then set the options with those values
-        for key, val in config.items():
-            key = key.replace("_", "-")
-            if not key.startswith("--"):
-                key = "--{}".format(key)  # only prefer long opts
-            option = self.get_option(key)
-            if option is not None:
-                # ignore empty values
-                if not val:
-                    continue
-                # handle multiline configs
-                if option.action == "append":
-                    val = val.split()
-                else:
-                    option.nargs = 1
-                if option.action == "store_false":
-                    val = not strtobool(val)
-                elif option.action in ("store_true", "count"):
-                    val = strtobool(val)
+    def add_argument_group(self, *args, **kwargs):
+        result = super(ConfigOptionParser, self).add_argument_group(*args, **kwargs)
+        previous = self.add_argument
+        result.add_argument = lambda *a, **k: self.fix_default(previous(*a, **k))
+        return result
+
+    def add_argument(self, *args, **kwargs):
+        return self.fix_default(super(ConfigOptionParser, self).add_argument(*args, **kwargs))
+
+    def fix_default(self, action):
+        if hasattr(action, "default") and hasattr(action, "dest"):
+            environ_key = "VIRTUALENV_{}".format(action.dest.upper())
+            if isinstance(action.default, bool):
+
+                def _convert_to_boolean(value):
+                    BOOLEAN_STATES = {
+                        "1": True,
+                        "yes": True,
+                        "true": True,
+                        "on": True,
+                        "0": False,
+                        "no": False,
+                        "false": False,
+                        "off": False,
+                    }
+                    if value.lower() not in BOOLEAN_STATES:
+                        raise ValueError("Not a boolean: %s" % value)
+                    return BOOLEAN_STATES[value.lower()]
+
+                getter = _convert_to_boolean
+            elif isinstance(action.default, int):
+                getter = int
+            elif isinstance(action.default, float):
+                getter = float
+            elif isinstance(action.default, list):
+
+                def aslist_cronly(value):
+                    if isinstance(value, (str, bytes)):
+                        value = filter(None, [x.strip() for x in value.splitlines()])
+                    return list(value)
+
+                def aslist(value, flatten=True):
+                    values = aslist_cronly(value)
+                    if not flatten:
+                        return values
+                    result = []
+                    for value in values:
+                        subvalues = value.split()
+                        result.extend(subvalues)
+                    return result
+
+                getter = aslist
+            if environ_key in os.environ:
                 try:
-                    val = option.convert_value(key, val)
-                except optparse.OptionValueError:
-                    e = sys.exc_info()[1]
-                    print("An error occurred during configuration: {!r}".format(e))
-                    sys.exit(3)
-                defaults[option.dest] = val
-        return defaults
-
-    def get_config_section(self, name):
-        """
-        Get a section of a configuration
-        """
-        if self.config.has_section(name):
-            return self.config.items(name)
-        return []
-
-    def get_environ_vars(self, prefix="VIRTUALENV_"):
-        """
-        Returns a generator with all environmental vars with prefix VIRTUALENV
-        """
-        for key, val in os.environ.items():
-            if key.startswith(prefix):
-                yield (key.replace(prefix, "").lower(), val)
-
-    def get_default_values(self):
-        """
-        Overriding to make updating the defaults after instantiation of
-        the option parser possible, update_defaults() does the dirty work.
-        """
-        if not self.process_default_values:
-            # Old, pre-Optik 1.5 behaviour.
-            return optparse.Values(self.defaults)
-
-        defaults = self.update_defaults(self.defaults.copy())  # ours
-        for option in self._get_all_options():
-            default = defaults.get(option.dest)
-            if isinstance(default, basestring):
-                opt_str = option.get_opt_string()
-                defaults[option.dest] = option.check_value(opt_str, default)
-        return optparse.Values(defaults)
+                    action.default = getter(os.environ[environ_key])
+                    action.default_source = "env var {}".format(environ_key)
+                    return
+                except Exception:
+                    pass
+            if self.config_parser.has_section(self.section):
+                try:
+                    read_value = self.config_parser.get(self.section, action.dest.lower())
+                    action.default = getter(read_value)
+                    action.default_source = "file"
+                except Exception:
+                    pass
+        return action
 
 
 def main():
-    parser = ConfigOptionParser(
-        version=virtualenv_version, usage="%prog [OPTIONS] DEST_DIR", formatter=UpdatingDefaultsHelpFormatter()
+    class HelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
+        def __init__(self, prog):
+            super(HelpFormatter, self).__init__(prog, max_help_position=38, width=190)
+
+        def _get_help_string(self, action):
+            help = super(HelpFormatter, self)._get_help_string(action)
+            if hasattr(action, "default_source"):
+                default = " (default: %(default)s)"
+                if help.endswith(default):
+                    help = "{} (default: %(default)s -> from %(default_source)s)".format(help[: -len(default)])
+            return help
+
+    parser = ConfigOptionParser(prog="virtualenv", formatter_class=HelpFormatter)
+    parser.add_argument("--version", action="version", version="{} {}".format(os.path.abspath(__file__), __version__))
+    parser.add_argument(
+        "-v", "--verbose", action="count", dest="verbose", default=5 if DEBUG else 0, help="increase verbosity"
     )
 
-    parser.add_option(
-        "-v", "--verbose", action="count", dest="verbose", default=5 if DEBUG else 0, help="Increase verbosity."
+    parser.add_argument("-q", "--quiet", action="count", dest="quiet", default=0, help="decrease verbosity")
+
+    parser.add_argument(
+        "--clear", dest="clear", action="store_true", help="clear out the non-root install and start from scratch"
     )
-
-    parser.add_option("-q", "--quiet", action="count", dest="quiet", default=0, help="Decrease verbosity.")
-
-    parser.add_option(
+    parser.add_argument(
         "-p",
         "--python",
         dest="python",
         metavar="PYTHON_EXE",
-        help="The Python interpreter to use, e.g., --python=python3.5 will use the python3.5 "
-        "interpreter to create the new environment.  The default is the interpreter that "
-        "virtualenv was installed with ({})".format(sys.executable),
+        help="the python interpreter to replicate(--python=python37 will use the python3.7)",
+        default=sys.executable,
     )
-
-    parser.add_option(
-        "--clear", dest="clear", action="store_true", help="Clear out the non-root install and start from scratch."
-    )
-
-    parser.set_defaults(system_site_packages=False)
-    parser.add_option(
-        "--no-site-packages",
-        dest="system_site_packages",
-        action="store_false",
-        help="DEPRECATED. Retained only for backward compatibility. "
-        "Not having access to global site-packages is now the default behavior.",
-    )
-
-    parser.add_option(
+    parser.add_argument(
         "--system-site-packages",
         dest="system_site_packages",
         action="store_true",
-        help="Give the virtual environment access to the global site-packages.",
+        help="give the virtual environment access to the global site-packages",
     )
-
-    parser.add_option(
+    parser.add_argument(
         "--always-copy",
         dest="symlink",
         action="store_false",
         default=True,
-        help="Always copy files rather than symlinking.",
+        help="always copy files rather than symlinking",
     )
 
-    parser.add_option(
-        "--relocatable",
-        dest="relocatable",
-        action="store_true",
-        help="Make an EXISTING virtualenv environment relocatable. "
-        "This fixes up scripts and makes all .pth files relative.",
+    parser.add_argument(
+        "--relocatable", dest="relocatable", action="store_true", help="ensure the virtualenv environment relocatable"
     )
 
-    parser.add_option(
+    seed = parser.add_argument_group("seed packages to be installed after creation")
+
+    class AppendClear(argparse._AppendAction):
+        first_call = True
+
+        def __call__(self, *args, **kwargs):
+            if self.first_call:
+                self.first_call = False
+                self.default.clear()
+            return super(AppendClear, self).__call__(*args, **kwargs)
+
+    seed.add_argument(
+        "-s",
+        dest="seed_packages",
+        action=AppendClear,
+        default=["pip", "setuptools", "wheel"],
+        help="specify the seed packages for the virtualenv to be created with (default clears if specified)",
+    )
+
+    seed.add_argument(
         "--no-setuptools",
         dest="no_setuptools",
         action="store_true",
-        help="Do not install setuptools in the new virtualenv.",
+        help="do not install setuptools in the new virtualenv (will remove from seed list)",
     )
-
-    parser.add_option("--no-pip", dest="no_pip", action="store_true", help="Do not install pip in the new virtualenv.")
-
-    parser.add_option(
-        "--no-wheel", dest="no_wheel", action="store_true", help="Do not install wheel in the new virtualenv."
+    seed.add_argument(
+        "--no-pip",
+        dest="no_pip",
+        action="store_true",
+        help="do not install pip in the new virtualenv (will remove from seed list)",
     )
-
-    parser.add_option(
+    seed.add_argument(
+        "--no-wheel",
+        dest="no_wheel",
+        action="store_true",
+        help="do not install wheel in the new virtualenv (will remove from seed list)",
+    )
+    seed.add_argument(
         "--extra-search-dir",
         dest="search_dirs",
-        action="append",
         metavar="DIR",
+        action="append",
         default=[],
-        help="Directory to look for setuptools/pip distributions in. " "This option can be used multiple times.",
+        help="folder to look for seed package distributions in.",
     )
 
-    parser.add_option(
-        "--download",
-        dest="download",
-        default=True,
-        action="store_true",
-        help="Download pre-installed packages from PyPI.",
-    )
-
-    parser.add_option(
+    seed.add_argument(
         "--no-download",
         "--never-download",
         dest="download",
         action="store_false",
-        help="Do not download pre-installed packages from PyPI.",
+        help="do not download pre-installed packages from PyPI (pip/setuptools/wheel only valid seed values)",
     )
 
-    parser.add_option("--prompt", dest="prompt", help="Provides an alternative prompt prefix for this environment.")
-
-    parser.add_option(
-        "--setuptools",
-        dest="setuptools",
-        action="store_true",
-        help="DEPRECATED. Retained only for backward compatibility. This option has no effect.",
-    )
-
-    parser.add_option(
-        "--distribute",
-        dest="distribute",
-        action="store_true",
-        help="DEPRECATED. Retained only for backward compatibility. This option has no effect.",
-    )
-
-    parser.add_option(
-        "--unzip-setuptools",
-        action="store_true",
-        help="DEPRECATED.  Retained only for backward compatibility. This option has no effect.",
-    )
+    parser.add_argument("--prompt", dest="prompt", help="ptrovides an alternative prompt prefix for this environment")
+    parser.add_argument("dest_dir", help="folder to create virtualenv at")
 
     if "extend_parser" in globals():
         # noinspection PyUnresolvedReferences
         extend_parser(parser)  # noqa: F821
 
-    options, args = parser.parse_args()
+    options = parser.parse_args()
 
     global logger
 
     if "adjust_options" in globals():
         # noinspection PyUnresolvedReferences
-        adjust_options(options, args)  # noqa: F821
+        adjust_options(options, [])  # noqa: F821
 
     verbosity = options.verbose - options.quiet
     logger = Logger([(Logger.level_for_integer(2 - verbosity), sys.stdout)])
@@ -758,7 +739,7 @@ def main():
                     # We assume the Python executable is directly under the prefix
                     # directory. The only known case where that won't be the case is
                     # an in-place source build, which we don't support. We don't need
-                    # to consider virtuale environments (where python.exe is in "Scripts"
+                    # to consider virtualenv environments (where python.exe is in "Scripts"
                     # because we've just followed the links back to a non-virtual
                     # environment - we hope!)
                     base_exe = os.path.join(base_prefix, "python.exe")
@@ -788,16 +769,7 @@ def main():
             sub_process_call = subprocess.Popen([interpreter, file] + sys.argv[1:], env=env)
             raise SystemExit(sub_process_call.wait())
 
-    if not args:
-        print("You must provide a DEST_DIR")
-        parser.print_help()
-        sys.exit(2)
-    if len(args) > 1:
-        print("There must be only one argument: DEST_DIR (you gave {})".format(" ".join(args)))
-        parser.print_help()
-        sys.exit(2)
-
-    home_dir = args[0]
+    home_dir = options.dest_dir
 
     if os.path.exists(home_dir) and os.path.isfile(home_dir):
         logger.fatal("ERROR: File already exists and is not a directory.")
@@ -829,6 +801,7 @@ def main():
             no_pip=options.no_pip,
             no_wheel=options.no_wheel,
             symlink=options.symlink,
+            seed_packages=options.seed_packages,
         )
     if "after_install" in globals():
         # noinspection PyUnresolvedReferences
@@ -1090,6 +1063,7 @@ def create_environment(
     no_pip=False,
     no_wheel=False,
     symlink=True,
+    seed_packages=None,
 ):
     """
     Creates a new environment in ``home_dir``.
@@ -1107,18 +1081,23 @@ def create_environment(
     )
 
     install_distutils(home_dir)
+    if seed_packages is None:
+        seed_packages = ["pip", "wheel", "setuptools"]
 
     to_install = []
-
-    if not no_setuptools:
-        to_install.append("setuptools")
-
-    if not no_pip:
-        to_install.append("pip")
-
-    if not no_wheel:
-        to_install.append("wheel")
-
+    for pkg in seed_packages:
+        if pkg:
+            if no_setuptools or no_pip or no_wheel:
+                match = re.match(r"([a-zA-Z0-9][a-zA-Z0-9-_.]*).*", pkg)
+                if match:
+                    raw_pkg = match.group(0)
+                    if (
+                        (no_pip and raw_pkg == "pip")
+                        or (no_setuptools and raw_pkg == "setuptools")
+                        or (no_wheel and raw_pkg == "wheel")
+                    ):
+                        continue
+            to_install.append(pkg)
     if to_install:
         install_wheel(to_install, py_executable, search_dirs, download=download)
 

@@ -1,7 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import inspect
-import optparse
 import os
 import shutil
 import subprocess
@@ -308,31 +307,6 @@ def test_activate_after_future_statements():
     ], out
 
 
-def test_cop_update_defaults_with_store_false():
-    """store_false options need reverted logic"""
-
-    class MyConfigOptionParser(virtualenv.ConfigOptionParser):
-        def __init__(self, *args, **kwargs):
-            self.config = virtualenv.ConfigParser.RawConfigParser()
-            self.files = []
-            optparse.OptionParser.__init__(self, *args, **kwargs)
-
-        def get_environ_vars(self, prefix="VIRTUALENV_"):
-            yield ("no_site_packages", "1")
-
-    cop = MyConfigOptionParser()
-    cop.add_option(
-        "--no-site-packages",
-        dest="system_site_packages",
-        action="store_false",
-        help="Don't give access to the global site-packages dir to the " "virtual environment (default)",
-    )
-
-    defaults = {}
-    cop.update_defaults(defaults)
-    assert defaults == {"system_site_packages": 0}
-
-
 def test_install_python_bin():
     """Should create the right python executables and links"""
     tmp_virtualenv = tempfile.mkdtemp()
@@ -621,11 +595,35 @@ def test_create_environment_from_venv(tmpdir):
     builder.create_configuration(ctx)
     builder.setup_python(ctx)
     builder.setup_scripts(ctx)
-    subprocess.check_call([ctx.env_exe, virtualenv.__file__, "--no-setuptools", "--no-pip", "--no-wheel", ve_venv_dir])
-    ve_exe = os.path.join(bin_dir, "python")
-    out = subprocess.check_output([ve_exe, "-c", "import sys; print(sys.real_prefix)"], universal_newlines=True)
     # Test against real_prefix if present - we might be running the test from a virtualenv (e.g. tox).
-    assert out.strip() == getattr(sys, "real_prefix", sys.prefix)
+    prefix = getattr(sys, "real_prefix", sys.prefix)
+
+    try:
+        process = subprocess.Popen(
+            [ctx.env_exe, virtualenv.__file__, "--no-setuptools", "--no-pip", "--no-wheel", ve_venv_dir],
+            universal_newlines=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+        )
+        out, err = process.communicate()
+        assert not process.returncode, "stdout:\n{}stderr:\n{}".format(out, err)
+    except subprocess.CalledProcessError as exception:
+        assert False, "stdout:\n{}stderr:\n{}".format(exception.stdout, exception.stderr)
+    ve_exe = os.path.join(bin_dir, "python")
+    try:
+        process = subprocess.Popen(
+            [ve_exe, "-c", "import sys; print(sys.real_prefix)"],
+            universal_newlines=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            stdin=subprocess.PIPE,
+        )
+        out, err = process.communicate()
+        assert not process.returncode, "stdout:\n{}stderr:\n{}".format(out, err)
+    except subprocess.CalledProcessError as exception:
+        assert False, "stdout:\n{}stderr:\n{}".format(exception.stdout, exception.stderr)
+    assert out.strip() == prefix
 
 
 def test_create_environment_with_old_pip(tmpdir):
@@ -649,3 +647,34 @@ def test_license_builtin(clean_python):
     out = out_b.decode()
     assert not proc.returncode
     assert "Ian Bicking and Contributors" not in out
+
+
+@pytest.mark.parametrize("help", ["-h", "--help"])
+def test_help(help):
+    process = subprocess.Popen(
+        [sys.executable, virtualenv.__file__, str(help)],
+        universal_newlines=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+    )
+    out, err = process.communicate()
+    max_length = max(len(i) for i in out.splitlines())
+    assert max_length < 190
+    assert out
+    assert not err
+
+
+def test_help_incorrect():
+    process = subprocess.Popen(
+        [sys.executable, virtualenv.__file__],
+        universal_newlines=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+    )
+    out, err = process.communicate()
+    if six.PY2:
+        out, err = out, err
+    assert not out
+    assert err

@@ -1,0 +1,12 @@
+Seed packages and new CLI parser:
+
+    * Users can now better control the packages seeded into a new virtual environment (via the
+      seed_packages config option, ``VIRTUALENV_SEED_PACKAGES`` env var, or -s append cli option).
+      This allows you to specify exactly versions of the core packages (``pip``, ``setuptools`` and ``wheel``)
+      or to add additional packages to seed. The pip used to install these packages is the current
+      bundled pip version.
+
+    * The CLI help now shows if an option is influenced by either the config file or environment variables,
+      and shows clearly where the configuration file is read form.
+
+Note you can use this to specify any PEP-508 compliant dependencies.

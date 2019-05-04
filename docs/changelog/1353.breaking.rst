@@ -1,0 +1,2 @@
+Moved the CLI argument parser to the argparse module (no longer using the deprecated optparse). If you have
+bootstrap scripts that add additional arguments these will break.

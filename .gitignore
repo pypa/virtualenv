@@ -19,3 +19,4 @@ dist
 .vscode
 
 /docs/_draft.rst
+/pip-wheel-metadata

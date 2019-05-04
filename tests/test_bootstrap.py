@@ -20,7 +20,9 @@ def bootstrap():
     # noinspection PyUnusedLocal
     def extend_parser(opt_parse_parser):
         print("extend parser with count")
-        opt_parse_parser.add_option("-c", action="count", dest="count", default=0, help="Count number of times passed")
+        opt_parse_parser.add_argument(
+            "-c", action="count", dest="count", default=0, help="Count number of times passed"
+        )
 
     # noinspection PyUnusedLocal
     def adjust_options(options, args):
