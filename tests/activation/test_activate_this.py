@@ -21,17 +21,12 @@ import subprocess
 import sys
 import textwrap
 
-import virtualenv
-
 
 def test_activate_this(clean_python, tmp_path, monkeypatch):
     # to test this, we'll try to use the activation env from this Python
     monkeypatch.delenv(str("VIRTUAL_ENV"), raising=False)
     monkeypatch.delenv(str("PYTHONPATH"), raising=False)
     paths = [str(tmp_path), str(tmp_path / "other")]
-    if virtualenv.IS_JYTHON:
-        # jython calls OS commands to determine environment, so need path access
-        paths += os.getenv(str("PATH"), "").split(os.pathsep)
     start_path = os.pathsep.join(paths)
     monkeypatch.setenv(str("PATH"), start_path)
     activator = tmp_path.__class__(clean_python[1]) / "activate_this.py"

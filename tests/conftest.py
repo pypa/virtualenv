@@ -67,8 +67,6 @@ def wheel(tmp_path_factory):
     """test that we can create a virtual environment by feeding to a clean python the wheels content"""
     dest_path = tmp_path_factory.mktemp("wheel")
     env = os.environ.copy()
-    if virtualenv.IS_JYTHON:
-        env[str("PIP_NO_CACHE_DIR")] = str("off")
     try:
         subprocess.check_output(
             [sys.executable, "-m", "pip", "wheel", "-w", str(dest_path), "--no-deps", str(ROOT_DIR)],

@@ -22,7 +22,7 @@ VIRTUAL_ENV_DISABLE_PROMPT = "VIRTUAL_ENV_DISABLE_PROMPT"
 ENV_DEFAULT = "env"
 
 # This can be anything
-ENV_CUSTOM = "env_custom"
+ENV_CUSTOM = "envy"
 
 # Standard prefix, surround the env name in parentheses and separate by a space
 PREFIX_DEFAULT = "({}) ".format(ENV_DEFAULT)
@@ -197,7 +197,8 @@ class XonshInfo(ShellInfo):
         "$PROMPT_FIELDS['env_prefix'] = '('; $PROMPT_FIELDS['env_postfix'] = ') '"
     )
 
-    def platform_check_skip(self):
+    @staticmethod
+    def platform_check_skip():
         if IS_WIN:
             return "Provisioning xonsh on windows is unreliable"
 
@@ -223,7 +224,7 @@ class CmdInfo(ShellInfo):
 
 
 class PoshInfo(ShellInfo):
-    name = "posh"
+    name = "powershell"
     avail_cmd = "powershell 'echo foo'"
     execute_cmd = "powershell -File "
     prompt_cmd = "prompt"
@@ -237,7 +238,7 @@ class PoshInfo(ShellInfo):
             return self.platform_incompat_msg.format(sys.platform)
 
 
-SHELLINFO_LIST = [BashInfo(), FishInfo(), CshInfo(), XonshInfo(), CmdInfo(), PoshInfo()]
+SHELL_INFO_LIST = [BashInfo(), FishInfo(), CshInfo(), XonshInfo(), CmdInfo(), PoshInfo()]
 
 
 @pytest.fixture(scope="module")
@@ -265,8 +266,8 @@ def posh_execute_enabled(tmp_path_factory):
 @pytest.fixture(scope="module")
 def shell_avail(posh_execute_enabled):
     """Generate mapping of ShellInfo.name strings to bools of shell availability."""
-    retvals = {si.name: subprocess.call(si.avail_cmd, shell=True) for si in SHELLINFO_LIST}
-    avails = {si.name: retvals[si.name] == 0 for si in SHELLINFO_LIST}
+    retvals = {si.name: subprocess.call(si.avail_cmd, shell=True) for si in SHELL_INFO_LIST}
+    avails = {si.name: retvals[si.name] == 0 for si in SHELL_INFO_LIST}
 
     # Extra check for whether powershell scripts are enabled
     avails[PoshInfo().name] = avails[PoshInfo().name] and posh_execute_enabled
@@ -323,11 +324,8 @@ def clean_env():
     return clean_env
 
 
-SHELLINFO_LIST = [BashInfo(), FishInfo(), CshInfo(), XonshInfo(), CmdInfo(), PoshInfo()]
-
-
-@pytest.mark.parametrize("shell_info", SHELLINFO_LIST, ids=(lambda si: si.name))
-@pytest.mark.parametrize("env", [ENV_DEFAULT, ENV_CUSTOM])
+@pytest.mark.parametrize("shell_info", SHELL_INFO_LIST, ids=[i.name for i in SHELL_INFO_LIST])
+@pytest.mark.parametrize("env", [ENV_DEFAULT, ENV_CUSTOM], ids=["default", "custom"])
 @pytest.mark.parametrize(("value", "disable"), [("", False), ("0", True), ("1", True)])
 def test_suppressed_prompt(shell_info, shell_avail, env, value, disable, get_work_root, clean_env):
     """Confirm non-empty VIRTUAL_ENV_DISABLE_PROMPT suppresses prompt changes on activate."""
@@ -337,8 +335,9 @@ def test_suppressed_prompt(shell_info, shell_avail, env, value, disable, get_wor
 
     if not IS_INSIDE_CI and not shell_avail[shell_info.name]:
         pytest.skip(
-            "Shell '{}' not provisioned".format(shell_info.name)
-            + (" - is Powershell script execution disabled?" if shell_info == PoshInfo() else "")
+            "Shell '{}' not provisioned{}".format(
+                shell_info.name, " - is Powershell script execution disabled?" if shell_info == PoshInfo() else ""
+            )
         )
 
     script_name = SCRIPT_TEMPLATE.format(shell_info.name, "suppress", env, shell_info.testscript_extension)
@@ -382,7 +381,7 @@ def test_suppressed_prompt(shell_info, shell_avail, env, value, disable, get_wor
     assert (lines[1] == lines[2]) == disable, lines
 
 
-@pytest.mark.parametrize("shell_info", SHELLINFO_LIST, ids=(lambda si: si.name))
+@pytest.mark.parametrize("shell_info", SHELL_INFO_LIST, ids=[i.name for i in SHELL_INFO_LIST])
 @pytest.mark.parametrize(["env", "prefix"], [(ENV_DEFAULT, PREFIX_DEFAULT), (ENV_CUSTOM, PREFIX_CUSTOM)])
 def test_activated_prompt(shell_info, shell_avail, env, prefix, get_work_root, clean_env):
     """Confirm prompt modification behavior with and without --prompt specified."""

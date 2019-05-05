@@ -11,8 +11,6 @@ import virtualenv
 
 def get_src(path):
     base, _ = os.path.splitext(path)
-    if virtualenv.IS_JYTHON and base.endswith("$py"):
-        base = base[:-3]  # strip away Jython ext
     return "{}.py".format(base)
 
 

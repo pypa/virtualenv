@@ -34,8 +34,6 @@ jobs:
   parameters: {tox: package_readme, python: '3.7'}
 
 - template: azure-run-tox-env.yml
-  parameters: {tox: jython, python: '3.7', os: linux}
-- template: azure-run-tox-env.yml
   parameters: {tox: pypy, python: pypy2, os: linux}
 - template: azure-run-tox-env.yml
   parameters: {tox: pypy3, python: pypy3, os: linux}
@@ -87,7 +85,6 @@ jobs:
   - linux_py27
   - linux_pypy3
   - linux_pypy
-  - linux_jython
   - macOS_py36
   - macOS_py27
   steps:
