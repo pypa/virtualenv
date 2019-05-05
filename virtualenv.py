@@ -44,7 +44,7 @@ except ImportError:
     # noinspection PyPep8Naming
     import configparser as ConfigParser
 
-__version__ = "16.5.0"
+__version__ = "17.0.0"
 virtualenv_version = __version__  # legacy
 DEBUG = os.environ.get("_VIRTUALENV_DEBUG", None) == "1"
 if sys.version_info < (2, 7):
@@ -63,7 +63,6 @@ except NameError:
 
 PY_VERSION = "python{}.{}".format(sys.version_info[0], sys.version_info[1])
 
-IS_JYTHON = sys.platform.startswith("java")
 IS_PYPY = hasattr(sys, "pypy_version_info")
 IS_WIN = sys.platform == "win32"
 IS_CYGWIN = sys.platform == "cygwin"
@@ -79,8 +78,6 @@ DEFAULT_CONFIG_FILE = os.path.join(DEFAULT_STORAGE_DIR, "virtualenv.ini")
 
 if IS_PYPY:
     EXPECTED_EXE = "pypy"
-elif IS_JYTHON:
-    EXPECTED_EXE = "jython"
 else:
     EXPECTED_EXE = "python"
 
@@ -745,7 +742,7 @@ def main():
         if options.python and not os.environ.get("VIRTUALENV_INTERPRETER_RUNNING"):
             return options.python
         # All of the remaining cases are only for Windows
-        if sys.platform == "win32":
+        if IS_WIN:
             # 2. Are we running from a venv-style virtual environment with a redirector?
             if hasattr(sys, "_base_executable"):
                 return sys._base_executable
@@ -999,8 +996,6 @@ def _install_wheel_with_search_dir(download, project_names, py_executable, searc
     extra_args = ["--ignore-installed"]
     if DEBUG:
         extra_args.append("-v")
-    if IS_JYTHON:
-        extra_args.append("--no-cache")
 
     config = _pip_config(py_executable, python_path)
     defined_cert = bool(config.get("install.cert") or config.get(":env:.cert") or config.get("global.cert"))
@@ -1051,7 +1046,6 @@ def _install_wheel_with_search_dir(download, project_names, py_executable, searc
 
     env = {
         "PYTHONPATH": python_path,
-        "JYTHONPATH": python_path,  # for Jython < 3.x
         "PIP_FIND_LINKS": find_links,
         "PIP_USE_WHEEL": "1",
         "PIP_ONLY_BINARY": ":all:",
@@ -1075,7 +1069,7 @@ def _pip_config(py_executable, python_path):
     for line in call_subprocess(
         cmd,
         show_stdout=False,
-        extra_env={"PYTHONPATH": python_path, "JYTHONPATH": python_path},
+        extra_env={"PYTHONPATH": python_path},
         remove_from_env=["PIP_VERBOSE", "PIP_QUIET"],
         raise_on_return_code=False,
     ):
@@ -1171,10 +1165,6 @@ def path_locations(home_dir, dry_run=False):
         lib_dir = join(home_dir, "Lib")
         inc_dir = join(home_dir, "Include")
         bin_dir = join(home_dir, "Scripts")
-    if IS_JYTHON:
-        lib_dir = join(home_dir, "Lib")
-        inc_dir = join(home_dir, "Include")
-        bin_dir = join(home_dir, "bin")
     elif IS_PYPY:
         lib_dir = home_dir
         inc_dir = join(home_dir, "include")
@@ -1283,11 +1273,11 @@ def copy_required_modules(dst_prefix, symlink):
             # special-case custom readline.so on OS X, but not for pypy:
             if (
                 modname == "readline"
-                and sys.platform == "darwin"
+                and IS_DARWIN
                 and not (IS_PYPY or filename.endswith(join("lib-dynload", "readline.so")))
             ):
                 dst_filename = join(dst_prefix, "lib", "python{}".format(sys.version[:3]), "readline.so")
-            elif modname == "readline" and sys.platform == "win32":
+            elif modname == "readline" and IS_WIN:
                 # special-case for Windows, where readline is not a standard module, though it may have been installed
                 # in site-packages by a third-party package
                 dst_filename = None
@@ -1449,24 +1439,9 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
     if os.path.realpath(sys.exec_prefix) != os.path.realpath(prefix) and not IS_PYPY:
         if IS_WIN:
             exec_dir = join(sys.exec_prefix, "lib")
-        elif IS_JYTHON:
-            exec_dir = join(sys.exec_prefix, "Lib")
         else:
             exec_dir = join(sys.exec_prefix, "lib", PY_VERSION)
         copy_required_files(exec_dir, lib_dir, symlink)
-
-    if IS_JYTHON:
-        # Jython has either jython-dev.jar and javalib/ dir, or just
-        # jython.jar
-        for name in "jython-dev.jar", "javalib", "jython.jar":
-            src = join(prefix, name)
-            if os.path.exists(src):
-                copyfile(src, join(home_dir, name), symlink)
-        # XXX: registry should always exist after Jython 2.5rc1
-        src = join(prefix, "registry")
-        if os.path.exists(src):
-            copyfile(src, join(home_dir, "registry"), symlink=False)
-        copyfile(join(prefix, "cachedir"), join(home_dir, "cachedir"), symlink=False)
 
     mkdir(bin_dir)
     py_executable = join(bin_dir, os.path.basename(sys.executable))
@@ -1540,7 +1515,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         if IS_PYPY:
             # make a symlink python --> pypy-c
             python_executable = os.path.join(os.path.dirname(py_executable), "python")
-            if sys.platform in ("win32", "cygwin"):
+            if IS_WIN or IS_CYGWIN:
                 python_executable += ".exe"
             logger.info("Also created executable %s", python_executable)
             copyfile(py_executable, python_executable, symlink)
@@ -1699,7 +1674,7 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
 
 
 def install_activate(home_dir, bin_dir, prompt=None):
-    if IS_WIN or IS_JYTHON and getattr(os, "_name", None) == "nt":
+    if IS_WIN:
         files = {"activate.bat": ACTIVATE_BAT, "deactivate.bat": DEACTIVATE_BAT, "activate.ps1": ACTIVATE_PS}
 
         # MSYS needs paths of the form /c/path/to/file
@@ -1743,7 +1718,7 @@ def install_files(home_dir, bin_dir, prompt, files):
 
 
 def install_python_config(home_dir, bin_dir, prompt=None):
-    if sys.platform == "win32" or IS_JYTHON and getattr(os, "_name", None) == "nt":
+    if IS_WIN:
         files = {}
     else:
         files = {"python-config": PYTHON_CONFIG}
