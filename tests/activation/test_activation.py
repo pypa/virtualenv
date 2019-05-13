@@ -221,7 +221,7 @@ class XonoshActivation(Activation):
         return "{} {}".format(self.activate_cmd, repr(script)).strip()
 
 
-@pytest.mark.skipif(sys.version_info < (3, 4), reason="xonosh requires Python 3.4 at least")
+@pytest.mark.skipif(sys.version_info < (3, 5), reason="xonosh requires Python 3.5 at least")
 @requires(XonoshActivation)
 def test_xonosh(clean_python, monkeypatch, tmp_path):
     XonoshActivation(clean_python, tmp_path)(monkeypatch)
