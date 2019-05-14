@@ -1,5 +1,4 @@
 name: $(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.rr)
-
 resources:
   repositories:
   - repository: tox
@@ -14,6 +13,10 @@ trigger:
     include:
     - master
     - refs/tags/*
+pr:
+  branches:
+    include:
+    - master
 
 variables:
   PYTEST_ADDOPTS: "-v -v -ra --showlocals"
@@ -42,7 +45,7 @@ jobs:
       dev: null
       package_readme: null
     before:
-      - script: 'sudo apt-get update && sudo apt-get install fish csh'
+      - script: 'sudo apt-get update -y && sudo apt-get install fish csh'
         condition: and(succeeded(), eq(variables['image_name'], 'linux'), in(variables['TOXENV'], 'py37', 'py36', 'py35', 'py34', 'py27'))
         displayName: install fish and csh via apt-get
       - script: 'brew update -vvv && brew install fish tcsh'
