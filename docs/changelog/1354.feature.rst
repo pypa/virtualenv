@@ -1,3 +1,0 @@
-Drop Jython support. Jython became slower and slower in the last few months and significantly holds back our
-CI and development. As there's very little user base for it decided to drop support for it. If there are Jython
-developers reach out to us to see how we can add back support.
