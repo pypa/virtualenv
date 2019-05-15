@@ -1,4 +1,0 @@
-Upgrade embeded packages:
-
-    * upgrade wheel from ``0.33.1`` to ``0.33.4``
-    * upgrade pip from ``19.1`` to ``19.1.1``

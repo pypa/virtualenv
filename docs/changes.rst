@@ -5,6 +5,21 @@ Release History
 
 .. towncrier release notes start
 
+v16.6.0 (2019-05-15)
+--------------------
+
+Features
+^^^^^^^^
+
+- Drop Jython support. Jython became slower and slower in the last few months and significantly holds back our
+  CI and development. As there's very little user base for it decided to drop support for it. If there are Jython
+  developers reach out to us to see how we can add back support. (`#1354 <https://github.com/pypa/virtualenv/issues/1354>`_)
+- Upgrade embedded packages:
+
+      * upgrade wheel from ``0.33.1`` to ``0.33.4``
+      * upgrade pip from ``19.1`` to ``19.1.1`` (`#1356 <https://github.com/pypa/virtualenv/issues/1356>`_)
+
+
 v16.5.0 (2019-04-24)
 --------------------
 
