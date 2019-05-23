@@ -38,6 +38,14 @@ def test_commandline_basic(tmpdir):
     _check_no_warnings("distutils")
 
 
+def test_commandline_ospathsep(tmpdir):
+    path = str(tmpdir.join("pathsepvenv" + os.pathsep + "0"))
+    assert not os.path.exists(path)
+    ret = subprocess.call([sys.executable, VIRTUALENV_SCRIPT, path])
+    assert ret != 0
+    assert not os.path.exists(path)
+
+
 def test_commandline_explicit_interp(tmpdir):
     """Specifying the Python interpreter should work"""
     subprocess.check_call([sys.executable, VIRTUALENV_SCRIPT, "-p", sys.executable, str(tmpdir.join("venv"))])
