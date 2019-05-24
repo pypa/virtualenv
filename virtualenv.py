@@ -804,6 +804,11 @@ def main():
         logger.fatal("Please provide a different path or delete the file.")
         sys.exit(3)
 
+    if os.pathsep in home_dir:
+        logger.fatal("ERROR: target path contains the operating system path separator '{}'".format(os.pathsep))
+        logger.fatal("This is not allowed as would make the activation scripts unusable.".format(os.pathsep))
+        sys.exit(3)
+
     if os.environ.get("WORKING_ENV"):
         logger.fatal("ERROR: you cannot run virtualenv while in a working env")
         logger.fatal("Please deactivate your working env, then re-run this script")
