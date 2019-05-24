@@ -9,18 +9,10 @@ import pytest
 import virtualenv
 
 
-def get_src(path):
-    base, _ = os.path.splitext(path)
-    return "{}.py".format(base)
-
-
-VIRTUALENV_SCRIPT = get_src(virtualenv.__file__)
-
-
 def test_commandline_basic(tmpdir):
     """Simple command line usage should work and files should be generated"""
     home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(str(tmpdir.join("venv")))
-    subprocess.check_call([sys.executable, VIRTUALENV_SCRIPT, home_dir])
+    subprocess.check_call([sys.executable, "-m", "virtualenv", home_dir])
 
     assert os.path.exists(home_dir)
     assert os.path.exists(bin_dir)
@@ -38,17 +30,31 @@ def test_commandline_basic(tmpdir):
     _check_no_warnings("distutils")
 
 
-def test_commandline_ospathsep(tmpdir):
-    path = str(tmpdir.join("pathsepvenv" + os.pathsep + "0"))
-    assert not os.path.exists(path)
-    ret = subprocess.call([sys.executable, VIRTUALENV_SCRIPT, path])
-    assert ret != 0
-    assert not os.path.exists(path)
+def test_commandline_os_path_sep(tmp_path):
+    path = tmp_path / "bad{}0".format(os.pathsep)
+    assert not path.exists()
+    process = subprocess.Popen(
+        [sys.executable, "-m", "virtualenv", str(path)],
+        cwd=str(tmp_path),
+        universal_newlines=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        stdin=subprocess.PIPE,
+    )
+    out, err = process.communicate()
+    assert process.returncode == 3
+    msg = (
+        "ERROR: target path contains the operating system path separator '{}'\n"
+        "This is not allowed as would make the activation scripts unusable.\n".format(os.pathsep)
+    )
+    assert not err
+    assert out == msg
+    assert not path.exists()
 
 
 def test_commandline_explicit_interp(tmpdir):
     """Specifying the Python interpreter should work"""
-    subprocess.check_call([sys.executable, VIRTUALENV_SCRIPT, "-p", sys.executable, str(tmpdir.join("venv"))])
+    subprocess.check_call([sys.executable, "-m", "virtualenv", "-p", sys.executable, str(tmpdir.join("venv"))])
 
 
 # The registry lookups to support the abbreviated "-p 3.5" form of specifying
@@ -60,4 +66,4 @@ def test_commandline_explicit_interp(tmpdir):
 def test_commandline_abbrev_interp(tmpdir):
     """Specifying abbreviated forms of the Python interpreter should work"""
     abbrev = "{}{}.{}".format("" if sys.platform == "win32" else "python", *sys.version_info[0:2])
-    subprocess.check_call([sys.executable, VIRTUALENV_SCRIPT, "-p", abbrev, str(tmpdir.join("venv"))])
+    subprocess.check_call([sys.executable, "-m", "virtualenv", "-p", abbrev, str(tmpdir.join("venv"))])

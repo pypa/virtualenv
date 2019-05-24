@@ -805,8 +805,8 @@ def main():
         sys.exit(3)
 
     if os.pathsep in home_dir:
-        logger.fatal("ERROR: path contains the operating system path seperator '{}'".format(os.pathsep))
-        logger.fatal("Please provide a different path that does not contain os.pathsep.".format(os.pathsep))
+        logger.fatal("ERROR: target path contains the operating system path separator '{}'".format(os.pathsep))
+        logger.fatal("This is not allowed as would make the activation scripts unusable.".format(os.pathsep))
         sys.exit(3)
 
     if os.environ.get("WORKING_ENV"):

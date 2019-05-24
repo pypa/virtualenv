@@ -1,1 +1,1 @@
-No longer allow os.pathsep (':' on Linux, ';' on Windows) for target path.
+Raise an error if the target path contains the operating systems path separator (using this would break our activation scripts) - by @rrauenza.
