@@ -785,6 +785,7 @@ def main():
 
             if "__PYVENV_LAUNCHER__" in os.environ:
                 import _winapi
+
                 del os.environ["__PYVENV_LAUNCHER__"]
                 return _winapi.GetModuleFileName(0)
 
