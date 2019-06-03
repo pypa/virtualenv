@@ -1,0 +1,2 @@
+Fix an additional issue with #1339, where the user specifies ``--python``
+pointing to a venv redirector executable.
