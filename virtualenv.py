@@ -738,7 +738,7 @@ def main():
 
     def should_reinvoke(options):
         """Do we need to reinvoke ourself?"""
-        # 1. Did the user specify the --python option?
+        # Did the user specify the --python option?
         if options.python and not os.environ.get("VIRTUALENV_INTERPRETER_RUNNING"):
             interpreter = resolve_interpreter(options.python)
             if interpreter != sys.executable:
@@ -750,27 +750,43 @@ def main():
         # in which case we still need to locate the underlying actual interpreter, and
         # reinvoke using that.
         if IS_WIN:
-            # 2. Are we running from a venv-style virtual environment with a redirector?
+            # OK. Now things get really fun...
+            #
+            # If we are running from a venv, with a redirector, then what happens is as
+            # follows:
+            #
+            #   1. The redirector sets __PYVENV_LAUNCHER__ in the environment to point
+            #      to the redirector executable.
+            #   2. The redirector launches the "base" Python (from the home value in
+            #      pyvenv.cfg).
+            #   3. The base Python executable sees __PYVENV_LAUNCHER__ in the environment
+            #      and sets sys.executable to that value.
+            #   4. If site.py gets run, it sees __PYVENV_LAUNCHER__, and sets
+            #      sys._base_executable to _winapi.GetModuleFileName(0) and removes
+            #      __PYVENV_LAUNCHER__.
+            #
+            # Unfortunately, that final step (site.py) may not happen. There are 2 key
+            # times when that is the case:
+            #
+            #   1. Python 3.7.2, which had the redirector but not the site.py code.
+            #   2. Running a venv from a virtualenv, which uses virtualenv's custom
+            #      site.py.
+            #
+            # So, we check for sys._base_executable, but if it's not present and yet we
+            # hand __PYVENV_LAUNCHER__, we do what site.py would have done and get our
+            # interpreter from GetModuleFileName(0). We also remove __PYVENV_LAUNCHER__
+            # from the environment, to avoid loops (actually, mainly because site.py
+            # does so, and my head hurts enough buy now that I just want to be safe!)
+
+            # Phew.
+
             if hasattr(sys, "_base_executable"):
                 return sys._base_executable
-            # 3. Special case for Python 3.7.2, where we have a redirector,
-            #    but sys._base_executable does not exist.
-            if sys.version_info[:3] == (3, 7, 2):
-                # We are in a venv if the environment variable __PYVENV_LAUNCHER__ is set.
-                if "__PYVENV_LAUNCHER__" in os.environ:
-                    # The base environment is either sys.real_prefix (if
-                    # we were invoked from a venv built from a virtualenv) or
-                    # sys.base_prefix if real_prefix doesn't exist (a simple venv).
-                    base_prefix = getattr(sys, "real_prefix", sys.base_prefix)
-                    # We assume the Python executable is directly under the prefix
-                    # directory. The only known case where that won't be the case is
-                    # an in-place source build, which we don't support. We don't need
-                    # to consider virtual environments (where python.exe is in "Scripts")
-                    # because we've just followed the links back to a non-virtual
-                    # environment - we hope!
-                    base_exe = os.path.join(base_prefix, "python.exe")
-                    if os.path.exists(base_exe):
-                        return base_exe
+
+            if "__PYVENV_LAUNCHER__" in os.environ:
+                import _winapi
+                del os.environ["__PYVENV_LAUNCHER__"]
+                return _winapi.GetModuleFileName(0)
 
         # We don't need to reinvoke
         return None
@@ -779,7 +795,8 @@ def main():
     if interpreter is None:
         # We don't need to reinvoke - if the user asked us to, tell them why we
         # aren't.
-        logger.warn("Already using interpreter {}".format(sys.executable))
+        if options.python:
+            logger.warn("Already using interpreter {}".format(sys.executable))
     else:
         env = os.environ.copy()
         logger.notify("Running virtualenv with interpreter {}".format(interpreter))
