@@ -1345,7 +1345,6 @@ def copy_license(prefix, dst_prefix, lib_dir, symlink):
             dest = subst_path(license_path, prefix, dst_prefix)
             copyfile(license_path, dest, symlink)
             return
-    logger.warn("No LICENSE.txt / LICENSE found in source")
 
 
 def copy_include_dir(include_src, include_dest, symlink):
