@@ -5,6 +5,17 @@ Release History
 
 .. towncrier release notes start
 
+v16.6.1 (2019-06-16)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- Raise an error if the target path contains the operating systems path separator (using this would break our activation scripts) - by @rrauenza. (`#395 <https://github.com/pypa/virtualenv/issues/395>`_)
+- Fix an additional issue with #1339, where the user specifies ``--python``
+  pointing to a venv redirector executable. (`#1364 <https://github.com/pypa/virtualenv/issues/1364>`_)
+
+
 v16.6.0 (2019-05-15)
 --------------------
 
