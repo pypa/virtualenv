@@ -40,7 +40,7 @@ Options
 .. option:: -p PYTHON_EXE, --python=PYTHON_EXE
 
    The Python interpreter to use, e.g.,
-   --python=python2.5 will use the python2.5 interpreter
+   ``--python=python2.5`` will use the python2.5 interpreter
    to create the new environment.  The default is the
    interpreter that virtualenv was installed with
    (like ``/usr/bin/python``)
