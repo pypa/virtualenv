@@ -5,6 +5,17 @@ Release History
 
 .. towncrier release notes start
 
+v16.6.3 (2019-07-21)
+--------------------
+
+Features
+^^^^^^^^
+
+- Report error when running activate scripts directly, instead of sourcing. By
+  reporting an error instead of running silently, the user get immediate feedback
+  that the script was not used correctly. Only Bash and PowerShell are supported
+  (`#1372 <https://github.com/pypa/virtualenv/issues/1372>`_)
+
 v16.6.2 (2019-07-14)
 --------------------
 

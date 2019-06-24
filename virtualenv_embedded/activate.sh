@@ -1,12 +1,18 @@
 # This file must be used with "source bin/activate" *from bash*
 # you cannot run it directly
 
+
+if [[ "${BASH_SOURCE-}" = "$0" ]]; then
+    echo "You must source this script: \$ source $0" >&2
+    exit 33
+fi
+
 deactivate () {
     unset -f pydoc >/dev/null 2>&1
 
     # reset old environment variables
     # ! [ -z ${VAR+_} ] returns true if VAR is declared at all
-    if ! [ -z "${_OLD_VIRTUAL_PATH+_}" ] ; then
+    if ! [ -z "${_OLD_VIRTUAL_PATH:+_}" ] ; then
         PATH="$_OLD_VIRTUAL_PATH"
         export PATH
         unset _OLD_VIRTUAL_PATH
