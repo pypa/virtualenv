@@ -86,7 +86,7 @@ USER_BASE = None
 
 _is_64bit = (getattr(sys, "maxsize", None) or getattr(sys, "maxint")) > 2 ** 32
 _is_pypy = hasattr(sys, "pypy_version_info")
-
+_is_ironpython = hasattr(sys, "implementation") and sys.implementation.name == "ironpython"
 
 def makepath(*paths):
     dir = os.path.join(*paths)
@@ -569,7 +569,7 @@ def virtual_install_main_packages():
             plat_path = os.path.join(path, "plat-%s" % sys.platform)
             if os.path.exists(plat_path):
                 paths.append(plat_path)
-    elif sys.platform == "win32":
+    elif sys.platform == "win32" or _is_ironpython and os.name == "nt":
         paths = [os.path.join(sys.real_prefix, "Lib"), os.path.join(sys.real_prefix, "DLLs")]
     else:
         paths = [os.path.join(sys.real_prefix, "lib", "python" + sys.version[:3])]
