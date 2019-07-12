@@ -1333,9 +1333,12 @@ def copy_required_files(src_dir, lib_dir, symlink):
 
 def copy_license(prefix, dst_prefix, lib_dir, symlink):
     """Copy the license file so `license()` builtin works"""
+    lib64_dir = lib_dir.replace("lib", "lib64")
     for license_path in (
         # posix cpython
         os.path.join(prefix, os.path.relpath(lib_dir, dst_prefix), "LICENSE.txt"),
+        # posix cpython installed in /usr/lib64
+        os.path.join(prefix, os.path.relpath(lib64_dir, dst_prefix), "LICENSE.txt"),
         # windows cpython
         os.path.join(prefix, "LICENSE.txt"),
         # pypy

@@ -1,0 +1,3 @@
+Extend the LICESNE search paths list by ``lib64/pythonX.Y`` to support Linux
+vendors who install their Python to ``/usr/lib64/pythonX.Y`` (Gentoo, Fedora,
+openSUSE, RHEL and others) - by ``hroncok``
