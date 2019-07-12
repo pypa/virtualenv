@@ -773,14 +773,19 @@ def main():
             #      site.py.
             #
             # So, we check for sys._base_executable, but if it's not present and yet we
-            # hand __PYVENV_LAUNCHER__, we do what site.py would have done and get our
+            # have __PYVENV_LAUNCHER__, we do what site.py would have done and get our
             # interpreter from GetModuleFileName(0). We also remove __PYVENV_LAUNCHER__
             # from the environment, to avoid loops (actually, mainly because site.py
             # does so, and my head hurts enough buy now that I just want to be safe!)
 
+            # In Python 3.7.4, the rules changed so that sys._base_executable is always
+            # set. So we now only return sys._base_executable if it's set *and does not
+            # match sys.executable* (we still have to check that it's set, as we need to
+            # support Python 3.7.3 and earlier).
+
             # Phew.
 
-            if hasattr(sys, "_base_executable"):
+            if getattr(sys, "_base_executable", sys.executable) != sys.executable:
                 return sys._base_executable
 
             if "__PYVENV_LAUNCHER__" in os.environ:
