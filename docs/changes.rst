@@ -11,7 +11,7 @@ v16.6.2 (2019-07-14)
 Bugfixes
 ^^^^^^^^
 
-- Extend the LICESNE search paths list by ``lib64/pythonX.Y`` to support Linux
+- Extend the LICENSE search paths list by ``lib64/pythonX.Y`` to support Linux
   vendors who install their Python to ``/usr/lib64/pythonX.Y`` (Gentoo, Fedora,
   openSUSE, RHEL and others) - by ``hroncok`` (`#1382 <https://github.com/pypa/virtualenv/issues/1382>`_)
 
