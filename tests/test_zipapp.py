@@ -22,7 +22,7 @@ def call_zipapp(tmp_path_factory):
         pytest.skip("zipapp was introduced in python3.5")
     pyz = str(tmp_path_factory.mktemp(basename="zipapp") / "virtualenv.pyz")
     subprocess.check_call(
-        (sys.executable, os.path.join(HERE, "tasks/make_zipapp.py"), "--root", virtualenv.HERE, "--dest", pyz)
+        (_python("3"), os.path.join(HERE, "tasks/make_zipapp.py"), "--root", virtualenv.HERE, "--dest", pyz)
     )
 
     def zipapp_make_env(path, python=None):
