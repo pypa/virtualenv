@@ -9,6 +9,8 @@ import sys  # isort:skip
 # we do NOT want paths from our existing location interfering with anything,
 # So we remove this file's directory from sys.path - most likely to be
 # the previous interpreter's site-packages. Solves #705, #763, #779
+
+
 if os.environ.get("VIRTUALENV_INTERPRETER_RUNNING"):
     for path in sys.path[:]:
         if os.path.realpath(os.path.dirname(__file__)) == os.path.realpath(path):
@@ -986,9 +988,16 @@ def find_wheels(projects, search_dirs):
         for dirname in search_dirs:
             # This relies on only having "universal" wheels available.
             # The pattern could be tightened to require -py2.py3-none-any.whl.
-            files = glob.glob(os.path.join(dirname, project + "-*.whl"))
+            files = glob.glob(os.path.join(dirname, "{}-*.whl".format(project)))
             if files:
-                wheels.append(os.path.abspath(files[0]))
+                versions = sorted(
+                    [(tuple(int(i) for i in os.path.basename(f).split("-")[1].split(".")), f) for f in files]
+                )
+                if project == "pip" and sys.version_info[0:2] == (3, 4):
+                    wheel = next(p for v, p in versions if v <= (19, 1, 1))
+                else:
+                    wheel = versions[0][1]
+                wheels.append(wheel)
                 break
         else:
             # We're out of luck, so quit with a suitable error
@@ -1030,7 +1039,7 @@ def _install_wheel_with_search_dir(download, project_names, py_executable, searc
 
     find_links = " ".join(space_path2url(d) for d in search_dirs)
 
-    extra_args = ["--ignore-installed"]
+    extra_args = ["--ignore-installed", "-v"]
     if DEBUG:
         extra_args.append("-v")
 
@@ -1076,6 +1085,10 @@ def _install_wheel_with_search_dir(download, project_names, py_executable, searc
             defined_cert=defined_cert, extra_args=", ".join(repr(i) for i in extra_args)
         )
     ).encode("utf8")
+
+    if sys.version_info[0:2] == (3, 4):
+        at = project_names.index("pip")
+        project_names[at] = "pip<19.2"
 
     cmd = [py_executable, "-"] + project_names
     logger.start_progress("Installing {}...".format(", ".join(project_names)))
