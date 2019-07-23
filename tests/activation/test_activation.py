@@ -64,6 +64,7 @@ class Activation(object):
     check_has_exe = []
     check = []
     env = {}
+    also_test_error_if_not_sourced = False
 
     def __init__(self, activation_env, tmp_path):
         self.home_dir = activation_env[0]
@@ -139,6 +140,13 @@ class Activation(object):
         assert out[-2] == out[0], raw
         assert out[-1] == "None", raw
 
+        if self.also_test_error_if_not_sourced:
+            invoke_shell = self.invoke_script + [absolute_activate_script]
+
+            with pytest.raises(subprocess.CalledProcessError) as c:
+                subprocess.check_output(invoke_shell, stderr=subprocess.STDOUT, env=env)
+            assert c.value.returncode, c
+
     def activate_call(self, script):
         return "{} {}".format(pipes.quote(self.activate_cmd), pipes.quote(script)).strip()
 
@@ -155,6 +163,7 @@ class BashActivation(Activation):
     extension = "sh"
     activate_script = "activate"
     check = [cmd, "--version"]
+    also_test_error_if_not_sourced = True
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="no sane way to provision bash on Windows yet")
@@ -198,6 +207,7 @@ class PowershellActivation(Activation):
     activate_script = "activate.ps1"
     activate_cmd = "."
     check = [cmd, "-c", "$PSVersionTable"]
+    also_test_error_if_not_sourced = True
 
     def quote(self, s):
         """powershell double double quote needed for quotes within single quotes"""
