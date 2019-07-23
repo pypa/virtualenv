@@ -34,7 +34,7 @@ else:
     if IS_WIN:
         site_packages = os.path.join(base, "Lib", "site-packages")
     else:
-        site_packages = os.path.join(base, "lib", "python{}".format(sys.version[:3]), "site-packages")
+        site_packages = os.path.join(base, "lib", "python{}.{}".format(*sys.version_info), "site-packages")
 
 prev = set(sys.path)
 site.addsitedir(site_packages)

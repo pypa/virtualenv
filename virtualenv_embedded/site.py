@@ -129,7 +129,7 @@ def addbuilddir():
     (especially for Guido :-)"""
     from distutils.util import get_platform
 
-    s = "build/lib.{}-{:.3}".format(get_platform(), sys.version)
+    s = "build/lib.{}-{}.{}".format(get_platform(), *sys.version_info)
     if hasattr(sys, "gettotalrefcount"):
         s += "-pydebug"
     s = os.path.join(os.path.dirname(sys.path[-1]), s)
@@ -222,20 +222,20 @@ def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_pre
                 if prefix.startswith("/System/Library/Frameworks/"):  # Apple's Python
 
                     sitedirs = [
-                        os.path.join("/Library/Python", sys.version[:3], "site-packages"),
+                        os.path.join("/Library/Python", "{}.{}".format(*sys.version_info), "site-packages"),
                         os.path.join(prefix, "Extras", "lib", "python"),
                     ]
 
                 else:  # any other Python distros on OSX work this way
-                    sitedirs = [os.path.join(prefix, "lib", "python" + sys.version[:3], "site-packages")]
+                    sitedirs = [os.path.join(prefix, "lib", "python{}.{}".format(*sys.version_info), "site-packages")]
 
             elif os.sep == "/":
                 sitedirs = [
-                    os.path.join(prefix, "lib", "python" + sys.version[:3], "site-packages"),
+                    os.path.join(prefix, "lib", "python{}.{}".format(*sys.version_info), "site-packages"),
                     os.path.join(prefix, "lib", "site-python"),
-                    os.path.join(prefix, "python" + sys.version[:3], "lib-dynload"),
+                    os.path.join(prefix, "python{}.{}".format(*sys.version_info), "lib-dynload"),
                 ]
-                lib64_dir = os.path.join(prefix, "lib64", "python" + sys.version[:3], "site-packages")
+                lib64_dir = os.path.join(prefix, "lib64", "python{}.{}".format(*sys.version_info), "site-packages")
                 if os.path.exists(lib64_dir) and os.path.realpath(lib64_dir) not in [
                     os.path.realpath(p) for p in sitedirs
                 ]:
@@ -250,11 +250,17 @@ def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_pre
                 except AttributeError:
                     pass
                 # Debian-specific dist-packages directories:
-                sitedirs.append(os.path.join(prefix, "local/lib", "python" + sys.version[:3], "dist-packages"))
-                if sys.version[0] == "2":
-                    sitedirs.append(os.path.join(prefix, "lib", "python" + sys.version[:3], "dist-packages"))
+                sitedirs.append(
+                    os.path.join(prefix, "local/lib", "python{}.{}".format(*sys.version_info), "dist-packages")
+                )
+                if sys.version_info[0] == 2:
+                    sitedirs.append(
+                        os.path.join(prefix, "lib", "python{}.{}".format(*sys.version_info), "dist-packages")
+                    )
                 else:
-                    sitedirs.append(os.path.join(prefix, "lib", "python" + sys.version[0], "dist-packages"))
+                    sitedirs.append(
+                        os.path.join(prefix, "lib", "python{}".format(sys.version_info[0]), "dist-packages")
+                    )
                 sitedirs.append(os.path.join(prefix, "lib", "dist-python"))
             else:
                 sitedirs = [prefix, os.path.join(prefix, "lib", "site-packages")]
@@ -265,7 +271,9 @@ def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_pre
                 if "Python.framework" in prefix:
                     home = os.environ.get("HOME")
                     if home:
-                        sitedirs.append(os.path.join(home, "Library", "Python", sys.version[:3], "site-packages"))
+                        sitedirs.append(
+                            os.path.join(home, "Library", "Python", "{}.{}".format(*sys.version_info), "site-packages")
+                        )
             for sitedir in sitedirs:
                 if os.path.isdir(sitedir):
                     addsitedir(sitedir, known_paths)
@@ -325,19 +333,19 @@ def addusersitepackages(known_paths):
             USER_BASE = env_base
         else:
             USER_BASE = joinuser(base, "Python")
-        USER_SITE = os.path.join(USER_BASE, "Python" + sys.version[0] + sys.version[2], "site-packages")
+        USER_SITE = os.path.join(USER_BASE, "Python{}{}".format(*sys.version_info), "site-packages")
     else:
         if env_base:
             USER_BASE = env_base
         else:
             USER_BASE = joinuser("~", ".local")
-        USER_SITE = os.path.join(USER_BASE, "lib", "python" + sys.version[:3], "site-packages")
+        USER_SITE = os.path.join(USER_BASE, "lib", "python{}.{}".format(*sys.version_info), "site-packages")
 
     if ENABLE_USER_SITE and os.path.isdir(USER_SITE):
         addsitedir(USER_SITE, known_paths)
     if ENABLE_USER_SITE:
         for dist_libdir in ("lib", "local/lib"):
-            user_site = os.path.join(USER_BASE, dist_libdir, "python" + sys.version[:3], "dist-packages")
+            user_site = os.path.join(USER_BASE, dist_libdir, "python{}.{}".format(*sys.version_info), "dist-packages")
             if os.path.isdir(user_site):
                 addsitedir(user_site, known_paths)
     return known_paths
@@ -572,9 +580,9 @@ def virtual_install_main_packages():
     elif sys.platform == "win32":
         paths = [os.path.join(sys.real_prefix, "Lib"), os.path.join(sys.real_prefix, "DLLs")]
     else:
-        paths = [os.path.join(sys.real_prefix, "lib", "python" + sys.version[:3])]
+        paths = [os.path.join(sys.real_prefix, "lib", "python{}.{}".format(*sys.version_info))]
         hardcoded_relative_dirs = paths[:]  # for the special 'darwin' case below
-        lib64_path = os.path.join(sys.real_prefix, "lib64", "python" + sys.version[:3])
+        lib64_path = os.path.join(sys.real_prefix, "lib64", "python{}.{}".format(*sys.version_info))
         if os.path.exists(lib64_path):
             if _is_64bit:
                 paths.insert(0, lib64_path)
@@ -590,7 +598,7 @@ def virtual_install_main_packages():
         except AttributeError:
             # This is a non-multiarch aware Python.  Fallback to the old way.
             arch = sys.platform
-        plat_path = os.path.join(sys.real_prefix, "lib", "python" + sys.version[:3], "plat-%s" % arch)
+        plat_path = os.path.join(sys.real_prefix, "lib", "python{}.{}".format(*sys.version_info), "plat-%s" % arch)
         if os.path.exists(plat_path):
             paths.append(plat_path)
     # This is hardcoded in the Python executable, but
