@@ -12,7 +12,7 @@ import virtualenv
 def test_commandline_basic(tmpdir):
     """Simple command line usage should work and files should be generated"""
     home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(str(tmpdir.join("venv")))
-    subprocess.check_call([sys.executable, "-m", "virtualenv", home_dir])
+    subprocess.check_call([sys.executable, "-m", "virtualenv", "-vvv", home_dir, "--no-download"])
 
     assert os.path.exists(home_dir)
     assert os.path.exists(bin_dir)
