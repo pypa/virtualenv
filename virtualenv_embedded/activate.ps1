@@ -1,7 +1,7 @@
 # This file must be dot sourced from PoSh; you cannot run it directly. Do this: . ./activate.ps1
 
 if (@($null,"Internal") -notcontains $myinvocation.commandorigin) {
-    write-host -foreground red "You must 'source' this script: PS> . $($myinvocation.invocationname)"
+    Write-Host -Foreground red "You must 'source' this script: PS> . $($myinvocation.invocationname)"
     exit 33
 }
 
