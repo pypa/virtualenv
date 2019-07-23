@@ -1,1 +1,0 @@
-``activate.ps1`` syntax and style updated to follow ``PSStyleAnalyzer`` rules

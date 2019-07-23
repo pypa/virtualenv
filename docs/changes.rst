@@ -5,6 +5,18 @@ Release History
 
 .. towncrier release notes start
 
+v16.7.0 (2019-07-23)
+--------------------
+
+Features
+^^^^^^^^
+
+- ``activate.ps1`` syntax and style updated to follow ``PSStyleAnalyzer`` rules (`#1371 <https://github.com/pypa/virtualenv/issues/1371>`_)
+- Allow creating virtual environments for ``3.xy``. (`#1385 <https://github.com/pypa/virtualenv/issues/1385>`_)
+- Report error when running activate scripts directly, instead of sourcing. By reporting an error instead of running silently, the user get immediate feedback that the script was not used correctly. Only Bash and PowerShell are supported for now. (`#1388 <https://github.com/pypa/virtualenv/issues/1388>`_)
+- * add pip 19.2 (19.1.1 is kept to still support python 3.4 dropped by latest pip) (`#1389 <https://github.com/pypa/virtualenv/issues/1389>`_)
+
+
 v16.6.2 (2019-07-14)
 --------------------
 

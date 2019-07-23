@@ -1,1 +1,0 @@
-* add pip 19.2 (19.1.1 is kept to still support python 3.4 dropped by latest pip)
