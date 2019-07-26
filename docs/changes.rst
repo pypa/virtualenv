@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v16.7.2 (2019-07-26)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- fix regression - sh activation script not working under sh (only bash) (`#1396 <https://github.com/pypa/virtualenv/issues/1396>`_)
+
+
 v16.7.1 (2019-07-25)
 --------------------
 
