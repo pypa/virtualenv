@@ -1,1 +1,0 @@
-fix regression - sh activation script not working under sh (only bash)
