@@ -2,7 +2,7 @@
 # you cannot run it directly
 
 
-if [[ "${BASH_SOURCE-}" = "$0" ]]; then
+if [ "${BASH_SOURCE-}" = "$0" ]; then
     echo "You must source this script: \$ source $0" >&2
     exit 33
 fi
