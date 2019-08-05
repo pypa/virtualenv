@@ -1215,7 +1215,7 @@ def path_locations(home_dir, dry_run=False):
         lib_dir = join(home_dir, "Lib")
         inc_dir = join(home_dir, "Include")
         bin_dir = join(home_dir, "Scripts")
-    elif IS_PYPY:
+    if IS_PYPY:
         lib_dir = home_dir
         inc_dir = join(home_dir, "include")
         bin_dir = join(home_dir, "bin")
