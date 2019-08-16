@@ -1,1 +1,0 @@
-upgrade pip from ``19.1.1`` to ``19.2.2`` and setuptools from ``41.0.1`` to ``41.1.0``
