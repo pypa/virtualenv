@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v16.7.3 (2019-08-16)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- upgrade pip from ``19.1.1`` to ``19.2.2`` and setuptools from ``41.0.1`` to ``41.1.0`` (`#1404 <https://github.com/pypa/virtualenv/issues/1404>`_)
+
+
 v16.7.2 (2019-07-26)
 --------------------
 
