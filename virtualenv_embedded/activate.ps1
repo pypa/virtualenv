@@ -1,10 +1,3 @@
-# This file must be dot sourced from PoSh; you cannot run it directly. Do this: . ./activate.ps1
-
-if (@($null,"Internal") -notcontains $myinvocation.commandorigin) {
-    Write-Host -Foreground red "You must 'source' this script: PS> . $($myinvocation.invocationname)"
-    exit 33
-}
-
 $script:THIS_PATH = $myinvocation.mycommand.path
 $script:BASE_DIR = Split-Path (Resolve-Path "$THIS_PATH/..") -Parent
 
