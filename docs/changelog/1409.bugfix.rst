@@ -1,0 +1,1 @@
+* upgrade wheel from ``0.33.4`` to ``0.33.6`` and setuptools from ``41.1.0`` to ``41.2.0``
