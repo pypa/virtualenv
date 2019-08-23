@@ -5,6 +5,16 @@ Release History
 
 .. towncrier release notes start
 
+v16.7.4 (2019-08-23)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- * fix powershell activation when sourced (`#1398 <https://github.com/pypa/virtualenv/issues/1398>`_)
+- * upgrade wheel from ``0.33.4`` to ``0.33.6`` and setuptools from ``41.1.0`` to ``41.2.0`` (`#1409 <https://github.com/pypa/virtualenv/issues/1409>`_)
+
+
 v16.7.3 (2019-08-16)
 --------------------
 

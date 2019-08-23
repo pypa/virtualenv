@@ -207,7 +207,6 @@ class PowershellActivation(Activation):
     activate_script = "activate.ps1"
     activate_cmd = "."
     check = [cmd, "-c", "$PSVersionTable"]
-    also_test_error_if_not_sourced = True
 
     def quote(self, s):
         """powershell double double quote needed for quotes within single quotes"""
