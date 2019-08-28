@@ -281,7 +281,7 @@ mechanisms used by the two modules are very different.
 
 Problems arise when environments get "nested" (a virtual environment is
 created from within another one - for example, running the virtualenv tests
-using tox, where tox creates a virtual environemnt to run the tests, and the
+using tox, where tox creates a virtual environment to run the tests, and the
 tests themselves create further virtual environments).
 
 ``virtualenv`` supports creating virtual environments from within another one
