@@ -1,1 +1,0 @@
-upgrade pip from ``19.2.2`` to ``19.2.3``
