@@ -9,7 +9,7 @@ Virtualenv has one basic command::
 
     $ virtualenv ENV
 
-Where ``ENV`` is a directory to place the new virtual environment. It has
+Where ``ENV`` is a directory in which to place the new virtual environment. It has
 a number of usual effects (modifiable by many :ref:`options`):
 
  - :file:`ENV/lib/` and :file:`ENV/include/` are created, containing supporting
