@@ -12,6 +12,7 @@ extensions = ["sphinx.ext.autodoc", "sphinx.ext.extlinks"]
 source_suffix = ".rst"
 master_doc = "index"
 project = "virtualenv"
+# noinspection PyShadowingBuiltins
 copyright = "2007-2018, Ian Bicking, The Open Planning Project, PyPA"
 
 ROOT_SRC_TREE_DIR = Path(__file__).parents[1]
