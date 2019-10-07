@@ -1,0 +1,27 @@
+[coverage:report]
+skip_covered = False
+show_missing = True
+exclude_lines =
+    \#\s*pragma: no cover
+    ^\s*raise AssertionError\b
+    ^\s*raise NotImplementedError\b
+    ^\s*raise$
+    ^if __name__ == ['"]__main__['"]:$
+omit =
+    # site.py is ran before the coverage can be enabled, no way to measure coverage on this
+    src/virtualenv/interpreters/create/impl/cpython/site.py
+
+[coverage:paths]
+source =
+    src
+    .tox/*/lib/python*/site-packages
+    .tox/pypy*/site-packages
+    .tox\*\Lib\site-packages\
+    */src
+    *\src
+
+[coverage:run]
+branch = false
+parallel = true
+source =
+    ${_COVERAGE_SRC}
