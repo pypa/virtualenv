@@ -1,22 +1,12 @@
-include virtualenv.py
-recursive-include virtualenv_support *.whl
-recursive-include virtualenv_embedded *
-include virtualenv_support/__init__.py
-include pyproject.toml
-
-include AUTHORS.txt
-include LICENSE.txt
-
-recursive-include tests *
-recursive-include docs *
-include tasks/*
-include tox.ini
-
-exclude readthedocs.yml
-exclude CONTRIBUTING.rst
-exclude .pre-commit-config.yaml
-exclude azure-run-tox-env.yml
-exclude azure-pipelines.yml
-exclude .gitignore
+# setuptools-scm by default adds all SCM tracked files, we prune the following maintenance related ones (sdist only)
 exclude .gitattributes
-recursive-exclude .github *
+exclude .gitignore
+exclude .github/*
+
+exclude azure-pipelines.yml
+exclude CONTRIBUTING.rst
+exclude readthedocs.yml
+exclude MANIFEST.in
+
+exclude tasks/release.py
+exclude tasks/upgrade_wheels.py
