@@ -19,3 +19,7 @@ dist
 .vscode
 
 /docs/_draft.rst
+/pip-wheel-metadata
+/src/virtualenv/version.py
+/src/virtualenv/out
+/*env*

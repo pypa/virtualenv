@@ -17,16 +17,17 @@ def main():
     else:
         dest = os.path.join(args.root, "virtualenv.pyz")
 
+    filenames = {"LICENSE.txt": "LICENSE.txt", os.path.join("src", "virtualenv.py"): "virtualenv.py"}
+    for support in os.listdir(os.path.join(args.root, "src", "virtualenv_support")):
+        support_file = os.path.join("virtualenv_support", support)
+        filenames[os.path.join("src", support_file)] = support_file
+
     bio = io.BytesIO()
-    with zipfile.ZipFile(bio, "w") as zipf:
-        filenames = ["LICENSE.txt", "virtualenv.py"]
-        for whl in os.listdir(os.path.join(args.root, "virtualenv_support")):
-            filenames.append(os.path.join("virtualenv_support", whl))
-
+    with zipfile.ZipFile(bio, "w") as zip_file:
         for filename in filenames:
-            zipf.write(os.path.join(args.root, filename), filename)
+            zip_file.write(os.path.join(args.root, filename), filename)
 
-        zipf.writestr("__main__.py", "import virtualenv; virtualenv.main()")
+        zip_file.writestr("__main__.py", "import virtualenv; virtualenv.main()")
 
     bio.seek(0)
     zipapp.create_archive(bio, dest)

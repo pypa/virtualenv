@@ -21,12 +21,12 @@ def crc32(data):
 
 
 here = os.path.realpath(os.path.dirname(__file__))
-script = os.path.realpath(os.path.join(here, "..", "virtualenv.py"))
+script = os.path.realpath(os.path.join(here, "..", "src", "virtualenv.py"))
 
 gzip = codecs.lookup("zlib")
 b64 = codecs.lookup("base64")
 
-file_regex = re.compile(r'# file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+) = convert\(\n    """\n(.*?)"""\n\)', re.S)
+file_regex = re.compile(r'# file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+) = convert\(\n {4}"""\n(.*?)"""\n\)', re.S)
 file_template = '# file {filename}\n{variable} = convert(\n    """\n{data}"""\n)'
 
 
@@ -54,7 +54,7 @@ def rebuild(script_path):
 
 def handle_file(previous_content, filename, variable_name, previous_encoded):
     print("Found file {}".format(filename))
-    current_path = os.path.realpath(os.path.join(here, "..", "virtualenv_embedded", filename))
+    current_path = os.path.realpath(os.path.join(here, "..", "src", "virtualenv_embedded", filename))
     _, file_type = os.path.splitext(current_path)
     keep_line_ending = file_type in (".bat",)
     with open(current_path, "rt", encoding="utf-8", newline="" if keep_line_ending else None) as current_fh:

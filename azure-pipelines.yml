@@ -28,19 +28,15 @@ schedules:
   always: true
 
 variables:
-  PYTEST_ADDOPTS: "-v -v -ra --showlocals"
+  PYTEST_ADDOPTS: "-v -v -ra --showlocals --durations=15"
   PYTEST_XDIST_PROC_NR: 'auto'
   CI_RUN: 'yes'
+  UPGRADE_ADVISORY: 'yes'
 
 jobs:
 - template: run-tox-env.yml@tox
   parameters:
     jobs:
-      fix_lint: null
-      embed: null
-      cross_python2: null
-      cross_python3: null
-      docs: null
       py38:
         image: [linux, windows, macOs]
       py37:
@@ -51,8 +47,15 @@ jobs:
         image: [linux, windows, macOs]
       py27:
         image: [linux, windows, macOs]
+      fix_lint:
+        image: [linux, windows]
+      docs:
+        image: [linux, windows]
+      package_readme:
+        image: [linux, windows]
+      upgrade:
+        image: [linux, windows]
       dev: null
-      package_readme: null
     before:
       - script: 'sudo apt-get update -y && sudo apt-get install fish csh'
         condition: and(succeeded(), eq(variables['image_name'], 'linux'), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35', 'py34', 'py27'))
