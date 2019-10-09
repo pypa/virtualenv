@@ -1630,10 +1630,10 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         copyfile(os.path.join(prefix, lib_name), virtual_lib, symlink)
 
         # And then change the install_name of the copied python executable
-        # noinspection PyBroadException
         search = (
             "@executable_path/../../../../Python3" if "Python3.framework" in prefix else os.path.join(prefix, lib_name)
         )
+        # noinspection PyBroadException
         try:
             mach_o_change(py_executable, search, "@executable_path/../.Python")
         except Exception:
