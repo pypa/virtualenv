@@ -1075,7 +1075,7 @@ def _install_wheel_with_search_dir(download, project_names, py_executable, searc
             args = ["install"] + [{extra_args}]
             if cert_file is not None:
                 args += ["--cert", cert_file.name]
-            args += sys.argv[1:]
+            args += sys.argv[-3:]
 
             sys.exit(_main(args))
         finally:
