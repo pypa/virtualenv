@@ -268,7 +268,7 @@ def addsitepackages(known_paths, sys_prefix=sys.prefix, exec_prefix=sys.exec_pre
                 # for framework builds *only* we add the standard Apple
                 # locations. Currently only per-user, but /Library and
                 # /Network/Library could be added too
-                if "Python.framework" in prefix:
+                if "Python.framework" in prefix or "Python3.framework" in prefix:
                     home = os.environ.get("HOME")
                     if home:
                         sitedirs.append(
