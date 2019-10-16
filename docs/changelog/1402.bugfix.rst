@@ -1,1 +1,0 @@
-fix to support for Python 3 on MacOS 10.15 provided by Xcode

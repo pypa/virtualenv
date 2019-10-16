@@ -46,7 +46,7 @@ except ImportError:
     # noinspection PyPep8Naming
     import configparser as ConfigParser
 
-__version__ = "16.7.5"
+__version__ = "16.7.6"
 virtualenv_version = __version__  # legacy
 DEBUG = os.environ.get("_VIRTUALENV_DEBUG", None) == "1"
 if sys.version_info < (2, 7):
@@ -1264,7 +1264,7 @@ def change_prefix(filename, dst_prefix):
                 assert relative_path[0] == os.sep
                 relative_path = relative_path[1:]
             return join(dst_prefix, relative_path)
-    assert False, "Filename {} does not start with any of these prefixes: {}".format(filename, prefixes)
+    raise AssertionError("Filename {} does not start with any of these prefixes: {}".format(filename, prefixes))
 
 
 def find_module_filename(modname):
@@ -2379,10 +2379,10 @@ Z+w2w4/Tt2hbYT0hbgOK1I0I4tUw/QOTZfLE
 # file deactivate.bat
 DEACTIVATE_BAT = convert(
     """
-eJyFkN0KgkAUhO8X9h0GQapXCIQEDQX/EBO6kso1F9KN3Or1201Si6JzN+fMGT5mxQ61gKgqSijp
-mETup9nGDgo3yi29S90QjmhnEteOYb6AFNjdBC9xvoj9iTUd7lzWkDVrwFuYiZ15JiW8QiskSlbx
-lpUo4sApXtlJGodJhqNQWW7k+Ou831ACNZrC6BeW+eXPNEbfl7OiXr6H/oHZZl4ceXHoToG0nuIM
-pk+k4fAba/wd0Pr4P2CqyLeOlJ4iKfkJo6v/iaH9YzfPMEoeMG2RUA==
+eJyFkN0KgkAUhO8F32EQpHqFQEjQUPAPMaErqVxzId3IrV6/3ST/UDp3c86c4WN25FIysKJQFVVp
+CEfqxsnB9DI7SA25i20fFqtXHM+GYL0BZzi9GM1xf7DzjVQN3pSX4CWpQGvokZk4uqrQAjXjyElB
+a5IjCz0r+2VHcehHCa5MZNmB5e7TdqMqECMptHZh6DN/utb7Zs6CejsO/QNzTJwwcELfHgJJPcTp
+TFOk7rCM1f92aG38HzBR5KgjoYdIQk5hZPWLGNLfd/MN+wANyJE5
 """
 )
 
@@ -2491,7 +2491,7 @@ FAT_MAGIC = 0xCAFEBABE
 BIG_ENDIAN = ">"
 LITTLE_ENDIAN = "<"
 LC_LOAD_DYLIB = 0xC
-maxint = MAJOR == 3 and getattr(sys, "maxsize") or getattr(sys, "maxint")
+maxint = getattr(sys, "maxsize", getattr(sys, "maxint", None))
 
 
 class FileView(object):

@@ -5,6 +5,16 @@ Release History
 
 .. towncrier release notes start
 
+v16.7.6 (2019-10-16)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- fix to support for Python 3 on MacOS 10.15 provided by Xcode (`#1402 <https://github.com/pypa/virtualenv/issues/1402>`_)
+- bump bundled pip from ``19.2.3`` to ``19.3`` and setuptools from ``41.2.0`` to ``41.4.0`` (`#1428 <https://github.com/pypa/virtualenv/issues/1428>`_)
+
+
 v16.7.5 (2019-09-03)
 --------------------
 
