@@ -1,1 +1,0 @@
-bump bundled pip from ``19.2.3`` to ``19.3`` and setuptools from ``41.2.0`` to ``41.4.0``
