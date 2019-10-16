@@ -2594,7 +2594,7 @@ def mach_o_change(at_path, what, value):
                 # If the string is what is being replaced, overwrite it.
                 if load == what:
                     file.seek(where + name_offset, os.SEEK_SET)
-                    file.write(value.encode() + "\0".encode())
+                    file.write(value.encode() + b"\0")
             # Seek to the next command
             file.seek(where + cmd_size, os.SEEK_SET)
 
