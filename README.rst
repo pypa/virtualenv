@@ -18,6 +18,9 @@ A tool for creating isolated 'virtual' python environments.
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
   :target: https://github.com/ambv/black
   :alt: Code style: black
+.. image:: https://pepy.tech/badge/virtualenv/month
+  :target: https://pepy.tech/project/virtualenv/month
+  :alt: Downloads
 
 * `Installation <https://virtualenv.pypa.io/en/latest/installation.html>`_
 * `Documentation <https://virtualenv.pypa.io/>`_
