@@ -36,7 +36,7 @@ def test_bad_exe_py_info_no_raise(tmp_path, caplog, capsys):
     assert not out
     assert len(caplog.messages) == 1
     msg = caplog.messages[0]
-    assert repr(exe) in msg
+    assert str(exe) in msg
     assert "code" in msg
 
 
@@ -88,3 +88,24 @@ def test_satisfy_not_version(spec):
     parsed_spec = PythonSpec.from_string_spec("{}{}".format(CURRENT.implementation, spec))
     matches = CURRENT.satisfies(parsed_spec, True)
     assert matches is False
+
+
+def test_py_info_cached(mocker, tmp_path):
+    mocker.spy(PythonInfo, "_load_for_exe")
+    with pytest.raises(RuntimeError):
+        PythonInfo.from_exe(str(tmp_path))
+    with pytest.raises(RuntimeError):
+        PythonInfo.from_exe(str(tmp_path))
+    assert PythonInfo._load_for_exe.call_count == 1
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="symlink is not guaranteed to work on windows")
+def test_py_info_cached_symlink(mocker, tmp_path):
+    mocker.spy(PythonInfo, "_load_for_exe")
+    with pytest.raises(RuntimeError):
+        PythonInfo.from_exe(str(tmp_path))
+    symlinked = tmp_path / "a"
+    symlinked.symlink_to(tmp_path)
+    with pytest.raises(RuntimeError):
+        PythonInfo.from_exe(str(symlinked))
+    assert PythonInfo._load_for_exe.call_count == 1

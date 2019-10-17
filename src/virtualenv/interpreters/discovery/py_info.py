@@ -120,46 +120,67 @@ class PythonInfo(object):
         if env_prefix:
             if self.real_prefix is None and self.base_executable is not None:
                 return self.base_executable
-            return self.find_exe(env_prefix)
+            return self.find_exe_based_of(inside_folder=env_prefix)
         else:
             return self.executable
 
-    def find_exe(self, home):
+    def find_exe_based_of(self, inside_folder):
         # we don't know explicitly here, do some guess work - our executable name should tell
-        exe_base_name = os.path.basename(self.executable)
-        possible_names = self._find_possible_exe_names(exe_base_name)
-        possible_folders = self._find_possible_folders(exe_base_name, home)
+        possible_names = self._find_possible_exe_names()
+        possible_folders = self._find_possible_folders(inside_folder)
         for folder in possible_folders:
             for name in possible_names:
                 candidate = os.path.join(folder, name)
                 if os.path.exists(candidate):
-                    return candidate
+                    info = PythonInfo.from_exe(candidate)
+                    keys = {"implementation", "architecture", "version_info"}
+                    if all(getattr(info, k) == getattr(self, k) for k in keys):
+                        return candidate
         what = "|".join(possible_names)  # pragma: no cover
         raise RuntimeError("failed to detect {} in {}".format(what, "|".join(possible_folders)))  # pragma: no cover
 
-    def _find_possible_folders(self, exe_base_name, home):
+    def _find_possible_folders(self, inside_folder):
         candidate_folder = OrderedDict()
-        if self.executable.startswith(self.prefix):
-            relative = self.executable[len(self.prefix) : -len(exe_base_name)]
-            candidate_folder["{}{}".format(home, relative)] = None
-        candidate_folder[home] = None
+        base = os.path.dirname(self.executable)
+        # following path pattern of the current
+        if base.startswith(self.prefix):
+            relative = base[len(self.prefix) :]
+            candidate_folder["{}{}".format(inside_folder, relative)] = None
+
+        # or at root level
+        candidate_folder[inside_folder] = None
         return list(candidate_folder.keys())
 
-    @staticmethod
-    def _find_possible_exe_names(exe_base_name):
-        exe_no_suffix = os.path.splitext(exe_base_name)[0]
+    def _find_possible_exe_names(self):
         name_candidate = OrderedDict()
-        for ext in EXTENSIONS:
+        for name in [self.implementation, "python"]:
             for at in range(3, -1, -1):
-                cur_ver = sys.version_info[0:at]
-                version = ".".join(str(i) for i in cur_ver)
-                name = "{}{}{}".format(exe_no_suffix, version, ext)
-                name_candidate[name] = None
+                version = ".".join(str(i) for i in self.version_info[:at])
+                for arch in ["-{}".format(self.architecture), ""]:
+                    for ext in EXTENSIONS:
+                        candidate = "{}{}{}{}".format(name, version, arch, ext)
+                        name_candidate[candidate] = None
         return list(name_candidate.keys())
+
+    __cache_from_exe = {}
 
     @classmethod
     def from_exe(cls, exe, raise_on_error=True):
+        key = os.path.realpath(exe)
+        if key in cls.__cache_from_exe:
+            result, failure = cls.__cache_from_exe[key]
+        else:
+            failure, result = cls._load_for_exe(exe)
+            cls.__cache_from_exe[key] = result, failure
+        if failure is not None:
+            if raise_on_error:
+                raise failure
+            else:
+                logging.debug("%s", str(failure))
+        return result
 
+    @classmethod
+    def _load_for_exe(cls, exe):
         path = "{}.py".format(os.path.splitext(__file__)[0])
         cmd = [exe, path]
         # noinspection DuplicatedCode
@@ -172,19 +193,16 @@ class PythonInfo(object):
             code = process.returncode
         except OSError as os_error:
             out, err, code = "", os_error.strerror, os_error.errno
-        if code != 0:
-            if raise_on_error:
-                msg = "failed to query {} with code {}{}{}".format(
-                    exe, code, " out: []".format(out) if out else "", " err: []".format(err) if err else ""
-                )
-                raise RuntimeError(msg)
-            else:
-                logging.debug("failed %s with code %s out %s err %s", cmd, code, out, err)
-                return None
-
-        result = cls.from_json(out)
-        result.executable = exe  # keep original executable as this may contain initialization code
-        return result
+        result, failure = None, None
+        if code == 0:
+            result = cls.from_json(out)
+            result.executable = exe  # keep original executable as this may contain initialization code
+        else:
+            msg = "failed to query {} with code {}{}{}".format(
+                exe, code, " out: []".format(out) if out else "", " err: []".format(err) if err else ""
+            )
+            failure = RuntimeError(msg)
+        return failure, result
 
     def satisfies(self, spec, impl_must_match):
         """check if a given specification can be satisfied by the this python interpreter instance"""
