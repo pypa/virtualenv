@@ -628,6 +628,23 @@ def test_create_environment_from_venv(tmpdir):
     assert out.strip() == getattr(sys, "real_prefix", sys.prefix)
 
 
+@pytest.mark.skipif(std_venv is None, reason="needs standard venv module")
+def test_create_environment_from_venv_no_pip(tmpdir):
+    std_venv_dir = str(tmpdir / "stdvenv")
+    ve_venv_dir = str(tmpdir / "vevenv")
+    home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(ve_venv_dir)
+    builder = std_venv.EnvBuilder()
+    ctx = builder.ensure_directories(std_venv_dir)
+    builder.create_configuration(ctx)
+    builder.setup_python(ctx)
+    builder.setup_scripts(ctx)
+    subprocess.check_call([ctx.env_exe, virtualenv.__file__, "--no-pip", ve_venv_dir])
+    ve_exe = os.path.join(bin_dir, "python")
+    out = subprocess.check_output([ve_exe, "-c", "import sys; print(sys.real_prefix)"], universal_newlines=True)
+    # Test against real_prefix if present - we might be running the test from a virtualenv (e.g. tox).
+    assert out.strip() == getattr(sys, "real_prefix", sys.prefix)
+
+
 def test_create_environment_with_old_pip(tmpdir):
     old = Path(__file__).parent / "old-wheels"
     old_pip = old / "pip-9.0.1-py2.py3-none-any.whl"

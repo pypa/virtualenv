@@ -1086,7 +1086,7 @@ def _install_wheel_with_search_dir(download, project_names, py_executable, searc
         )
     ).encode("utf8")
 
-    if sys.version_info[0:2] == (3, 4):
+    if sys.version_info[0:2] == (3, 4) and "pip" in project_names:
         at = project_names.index("pip")
         project_names[at] = "pip<19.2"
 
