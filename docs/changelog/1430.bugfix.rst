@@ -1,1 +1,1 @@
-* fix virtualenv creation when `--no-pip` argument used.
+* fix virtualenv creation when ``--no-pip`` argument used.
