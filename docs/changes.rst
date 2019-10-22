@@ -5,6 +5,16 @@ Release History
 
 .. towncrier release notes start
 
+v16.7.7 (2019-10-22)
+--------------------
+
+Bugfixes
+^^^^^^^^
+
+- * fix virtualenv creation when ``--no-pip`` argument used. (`#1430 <https://github.com/pypa/virtualenv/issues/1430>`_)
+- upgrade bundled pip from ``19.3`` to ``19.3.1`` (`#1433 <https://github.com/pypa/virtualenv/issues/1433>`_)
+
+
 v16.7.6 (2019-10-16)
 --------------------
 
