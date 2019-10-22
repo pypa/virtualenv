@@ -40,7 +40,7 @@ In a newly created virtualenv there will also be a :command:`activate` shell
 script. For Windows systems, activation scripts are provided for
 the Command Prompt and Powershell.
 
-On Posix systems, this resides in :file:`/ENV/bin/`, so you can run::
+On Posix systems, this resides in :file:`ENV/bin/`, so you can run::
 
     $ source /path/to/ENV/bin/activate
 
