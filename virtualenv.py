@@ -1057,6 +1057,8 @@ def _install_wheel_with_search_dir(download, project_names, py_executable, searc
 
         try:
             from pip._internal import main as _main
+            if type(_main) is type(sys):  # <type 'module'>
+                _main = _main.main  # nested starting in Pip 19.3
             cert_data = pkgutil.get_data("pip._vendor.certifi", "cacert.pem")
         except ImportError:
             from pip import main as _main
