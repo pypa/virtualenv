@@ -39,7 +39,7 @@ jobs:
       py35:
         image: [linux, windows, macOs]
       py34:
-        image: [linux, windows, macOs]
+        image: [linux, windows]
       py27:
         image: [linux, windows, macOs]
       dev: null
