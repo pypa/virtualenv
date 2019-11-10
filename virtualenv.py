@@ -28,6 +28,7 @@ import glob
 import logging
 import optparse
 import os
+import platform
 import re
 import shutil
 import struct
@@ -1620,7 +1621,17 @@ def install_python(home_dir, lib_dir, inc_dir, bin_dir, site_packages, clear, sy
         if "EPD" in prefix:
             logger.debug("EPD framework detected")
             original_python = os.path.join(prefix, "bin/python")
-        shutil.copy(original_python, py_executable)
+        original_maxsize = int(
+            call_subprocess([original_python, "-c", "import sys; print(sys.maxsize)"], show_stdout=False)[0]
+        )
+        if sys.maxsize < original_maxsize and platform.machine() == "x86_64":
+            try:
+                call_subprocess(["lipo", original_python, "-thin", "i386", "-output", py_executable])
+            except Exception:
+                logger.fatal("Could not call lipo -- you must have Apple's development tools installed")
+                raise
+        else:
+            shutil.copy(original_python, py_executable)
 
         # Copy the framework's dylib into the virtual
         # environment

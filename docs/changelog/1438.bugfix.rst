@@ -1,0 +1,1 @@
+Fix creation of 32-bit environment with dual-architecture python on macOS

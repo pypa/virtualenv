@@ -666,3 +666,36 @@ def test_license_builtin(clean_python):
     out = out_b.decode()
     assert not proc.returncode
     assert "Ian Bicking and Contributors" not in out
+
+
+@pytest.mark.skipif(
+    sys.platform != "darwin" or sys.version_info[:2] not in ((2, 7), (3, 5), (3, 6), (3, 7)),
+    reason="macOS specific test on python 2.7, 3.5, 3.6 & 3.7",
+)
+def test_dual_arch_macosx(tmpdir):
+    lookup = {
+        "2.7": "https://www.python.org/ftp/python/2.7.17/python-2.7.17-macosx10.6.pkg",
+        "3.5": "https://www.python.org/ftp/python/3.5.4/python-3.5.4-macosx10.6.pkg",
+        "3.6": "https://www.python.org/ftp/python/3.6.8/python-3.6.8-macosx10.6.pkg",
+        "3.7": "https://www.python.org/ftp/python/3.7.5/python-3.7.5-macosx10.6.pkg",
+    }
+    version = ".".join(str(part) for part in sys.version_info[:2])
+    url = lookup[version]
+    installer = str(tmpdir / "Python.pkg")
+    subprocess.check_call(["curl", "-L", "-o", installer, url])
+    subprocess.check_call(["sudo", "installer", "-pkg", installer, "-target", "/"])
+    installation_bin_path = "/Library/Frameworks/Python.framework/Versions/{}/bin/python{}".format(
+        version, sys.version_info[0]
+    )
+
+    venvdir = str(tmpdir / "venv64")
+    subprocess.check_call([sys.executable, "-m", "virtualenv", "-p", installation_bin_path, venvdir])
+    home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(venvdir)
+    ve_exe = os.path.join(bin_dir, "python")
+    subprocess.check_call([ve_exe, "-c", "import sys; assert sys.maxsize > 2**32"])
+
+    venvdir = str(tmpdir / "venv32")
+    subprocess.check_call([sys.executable, "-m", "virtualenv", "-p", installation_bin_path + "-32", venvdir])
+    home_dir, lib_dir, inc_dir, bin_dir = virtualenv.path_locations(venvdir)
+    ve_exe = os.path.join(bin_dir, "python")
+    subprocess.check_call([ve_exe, "-c", "import sys; assert sys.maxsize < 2**32"])
