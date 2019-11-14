@@ -39,7 +39,7 @@ def call_zipapp(tmp_path_factory, call_subprocess):
 def call_wheel(tmp_path_factory, call_subprocess):
     wheels = tmp_path_factory.mktemp(basename="wheel")
     call_subprocess((sys.executable, "-m", "pip", "wheel", "--no-deps", "-w", str(wheels), HERE))
-    wheel, = wheels.iterdir()
+    (wheel,) = wheels.iterdir()
 
     def wheel_make_env(path, python=None):
         cmd = (sys.executable, "-m", "virtualenv", "--no-download", path)
