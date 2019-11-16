@@ -12,11 +12,13 @@ trigger:
   branches:
     include:
     - master
+    - rewrite
     - refs/tags/*
 pr:
   branches:
     include:
     - master
+    - rewrite
 
 variables:
   PYTEST_ADDOPTS: "-v -v -ra --showlocals"
