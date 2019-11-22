@@ -990,8 +990,12 @@ def find_wheels(projects, search_dirs):
             # The pattern could be tightened to require -py2.py3-none-any.whl.
             files = glob.glob(os.path.join(dirname, "{}-*.whl".format(project)))
             if files:
-                versions = sorted(
-                    [(tuple(int(i) for i in os.path.basename(f).split("-")[1].split(".")), f) for f in files]
+                versions = list(
+                    reversed(
+                        sorted(
+                            [(tuple(int(i) for i in os.path.basename(f).split("-")[1].split(".")), f) for f in files]
+                        )
+                    )
                 )
                 if project == "pip" and sys.version_info[0:2] == (3, 4):
                     wheel = next(p for v, p in versions if v <= (19, 1, 1))
