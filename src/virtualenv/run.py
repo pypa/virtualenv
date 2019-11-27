@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
+from argparse import ArgumentTypeError
 
 from entrypoints import get_group_named
 
@@ -134,17 +135,28 @@ def _collect_seeders():
 
 def _get_activation(interpreter, parser, options):
     activator_parser = parser.add_argument_group("activation script generator")
-    activators = _collect_activators(interpreter)
+    compatible = _collect_activators(interpreter)
+    default = ",".join(compatible.keys())
+
+    def _extract_activators(entered_str):
+        elements = [e.strip() for e in entered_str.split(",") if e.strip()]
+        missing = [e for e in elements if e not in compatible]
+        if missing:
+            raise ArgumentTypeError("the following activators are not available {}".format(",".join(missing)))
+        return elements
+
     activator_parser.add_argument(
         "--activators",
-        choices=list(activators.keys()),
-        default=list(activators.keys()),
+        default=default,
+        metavar="comma_separated_list",
         required=False,
-        nargs="*",
-        help="activators to generate",
+        help="activators to generate together with virtual environment - default is all available and compatible",
+        type=_extract_activators,
     )
     yield
-    active_activators = {k: v for k, v in activators.items() if k in options.activators}
+
+    selected_activators = _extract_activators(default) if options.activators is default else options.activators
+    active_activators = {k: v for k, v in compatible.items() if k in selected_activators}
     activator_parser.add_argument(
         "--prompt",
         dest="prompt",

@@ -80,7 +80,7 @@ def cleanup_sys_path(path):
     "use_venv", [False, True] if six.PY3 else [False], ids=["no_venv", "venv"] if six.PY3 else ["no_venv"]
 )
 def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env):
-    cmd = ["-v", "-v", "-p", str(python), str(tmp_path), "--without-pip"]
+    cmd = ["-v", "-v", "-p", str(python), str(tmp_path), "--without-pip", "--activators", ""]
     if global_access:
         cmd.append("--system-site-packages")
     if use_venv:
