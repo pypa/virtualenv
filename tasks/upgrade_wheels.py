@@ -17,7 +17,7 @@ STRICT = "UPGRADE_ADVISORY" not in os.environ
 
 BUNDLED = ["pip", "setuptools"]
 SUPPORT = list(reversed([(2, 7)] + [(3, i) for i in range(4, 10)]))
-DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "wheels"
+DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "embed" / "wheels"
 
 
 def download(ver, dest, package):
