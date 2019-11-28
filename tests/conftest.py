@@ -9,8 +9,6 @@ import coverage
 import pytest
 from pathlib2 import Path
 
-from virtualenv.interpreters.discovery.py_info import CURRENT
-
 
 @pytest.fixture(scope="session")
 def has_symlink_support(tmp_path_factory):
@@ -177,33 +175,35 @@ def coverage_env(monkeypatch, link):
 
 
 class EnableCoverage(object):
-    _COV = Path(coverage.__file__).parents[1]
-    ENTRIES = [i for i in _COV.iterdir() if i.name.startswith("coverage")]
-    _COV_DEVICE = _COV.stat().st_dev
+    _COV_FILE = Path(coverage.__file__)
+    _COV_SITE_PACKAGES = _COV_FILE.parents[1]
+    _ROOT_COV_FILES_AND_FOLDERS = [i for i in _COV_SITE_PACKAGES.iterdir() if i.name.startswith("coverage")]
+    _SUBPROCESS_TRIGGER_PTH_NAME = "coverage-virtual-sub.pth"
 
     def __init__(self, link):
         self.link = link
         self.targets = []
-        self._entered = False
+        self.cov_pth = self._COV_SITE_PACKAGES / self._SUBPROCESS_TRIGGER_PTH_NAME
 
     def __enter__(self, creator):
-        self._entered = True
+        assert not self.cov_pth.exists()
         site_packages = creator.site_packages[0]
-        if str(site_packages) not in CURRENT.path:
-            for entry in self.ENTRIES:
+        p_th = site_packages / self._SUBPROCESS_TRIGGER_PTH_NAME
+
+        if not str(p_th).startswith(str(self._COV_SITE_PACKAGES)):
+            p_th.write_text("import coverage; coverage.process_startup()")
+            self.targets.append((p_th, p_th.unlink))
+            for entry in self._ROOT_COV_FILES_AND_FOLDERS:
                 target = site_packages / entry.name
                 if not target.exists():
                     clean = self.link(entry, target)
                     self.targets.append((target, clean))
-            p_th = site_packages / "coverage-virtualenv.pth"
-            if str(p_th.resolve()).startswith(r"C:\Users\traveler\git\virtualenv\.tox"):
-                raise ValueError(site_packages)
-            p_th.write_text("import coverage; coverage.process_startup()")
-            self.targets.append((p_th, p_th.unlink))
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self._entered:
-            for target, clean in self.targets:
-                if target.exists():
-                    clean()
+        assert self._COV_FILE.exists()
+        for target, clean in self.targets:
+            if target.exists():
+                clean()
+        assert not self.cov_pth.exists()
+        assert self._COV_FILE.exists()
