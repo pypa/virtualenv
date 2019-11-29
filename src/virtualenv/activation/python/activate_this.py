@@ -28,7 +28,10 @@ prev = set(sys.path)
 
 # fmt: off
 # turn formatter off as json dumps will contain " characters - so we really need here ' black
-for site_package in json.loads('__SITE_PACKAGES__'):
+site_packages = r'''
+__SITE_PACKAGES__
+'''
+for site_package in json.loads(site_packages):
     site.addsitedir(site_package)
 # fmt: on
 

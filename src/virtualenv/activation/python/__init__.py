@@ -13,5 +13,5 @@ class PythonActivator(ViaTemplateActivator):
 
     def replacements(self, creator):
         replacements = super(PythonActivator, self).replacements(creator)
-        replacements.update({"__SITE_PACKAGES__": json.dumps(list(str(i) for i in creator.site_packages))})
+        replacements.update({"__SITE_PACKAGES__": json.dumps(list(str(i) for i in creator.site_packages), indent=2)})
         return replacements
