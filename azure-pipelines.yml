@@ -14,11 +14,18 @@ trigger:
     - master
     - rewrite
     - refs/tags/*
+
 pr:
   branches:
     include:
-    - master
-    - rewrite
+    - '*'
+
+schedules:
+- cron: "12 0 * * *"
+  displayName: Daily build
+  branches:
+    include: [ master, rewrite ]
+  always: true
 
 variables:
   PYTEST_ADDOPTS: "-v -v -ra --showlocals"
