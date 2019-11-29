@@ -135,7 +135,7 @@ def _collect_seeders():
 
 def _get_activation(interpreter, parser, options):
     activator_parser = parser.add_argument_group("activation script generator")
-    compatible = _collect_activators(interpreter)
+    compatible = collect_activators(interpreter)
     default = ",".join(compatible.keys())
 
     def _extract_activators(entered_str):
@@ -172,7 +172,7 @@ def _get_activation(interpreter, parser, options):
     yield activator_instances
 
 
-def _collect_activators(interpreter):
+def collect_activators(interpreter):
     all_activators = {e.name: e.load() for e in get_group_named("virtualenv.activate").values()}
     activators = {k: v for k, v in all_activators.items() if v.supports(interpreter)}
     return activators

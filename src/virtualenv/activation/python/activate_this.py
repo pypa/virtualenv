@@ -31,8 +31,10 @@ prev = set(sys.path)
 site_packages = r'''
 __SITE_PACKAGES__
 '''
+
 for site_package in json.loads(site_packages):
-    site.addsitedir(site_package)
+    path = os.path.realpath(os.path.join(os.path.dirname(__file__), site_package))
+    site.addsitedir(path)
 # fmt: on
 
 sys.real_prefix = sys.prefix

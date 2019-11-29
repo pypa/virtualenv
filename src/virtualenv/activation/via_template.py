@@ -16,14 +16,15 @@ class ViaTemplateActivator(Activator):
         raise NotImplementedError
 
     def generate(self, creator):
-        self._generate(self.replacements(creator), self.templates(), creator.bin_dir)
+        dest_folder = creator.bin_dir
+        self._generate(self.replacements(creator, dest_folder), self.templates(), dest_folder)
         if self.flag_prompt is not None:
             creator.pyenv_cfg["prompt"] = self.flag_prompt
 
-    def replacements(self, creator):
+    def replacements(self, creator, dest_folder):
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
-            "__VIRTUAL_ENV__": str(creator.env_dir),
+            "__VIRTUAL_ENV__": str(creator.dest_dir),
             "__VIRTUAL_NAME__": str(creator.env_name),
             "__BIN_NAME__": str(creator.bin_name),
             "__PATH_SEP__": os.pathsep,
