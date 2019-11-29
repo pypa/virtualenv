@@ -12,6 +12,6 @@ class PythonActivator(ViaTemplateActivator):
         yield Path("activate_this.py")
 
     def replacements(self, creator):
-        replacements = super().replacements(creator)
+        replacements = super(PythonActivator, self).replacements(creator)
         replacements.update({"__SITE_PACKAGES__": json.dumps(list(str(i) for i in creator.site_packages))})
         return replacements
