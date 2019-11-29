@@ -14,6 +14,7 @@ import six
 from virtualenv.activation import (
     BashActivator,
     CShellActivator,
+    DOSActivator,
     FishActivator,
     PowerShellActivator,
     PythonActivator,
@@ -41,14 +42,12 @@ def norm_path(path):
 class ActivationTester(object):
     def __init__(self, session, cmd, activate_script, extension):
         self._creator = session.creator
-        self._env = None
         self.cmd = cmd
         self._version_cmd = [cmd, "--version"]
         self._invoke_script = [cmd]
         self.activate_script = activate_script
         self.activate_cmd = "source"
         self.extension = extension
-        self.non_source_raise = False
 
     def get_version(self, raise_on_fail):
         # locally we disable, so that contributors don't need to have everything setup
@@ -65,35 +64,22 @@ class ActivationTester(object):
         monkeypatch.chdir(tmp_path)
 
         monkeypatch.delenv(str("VIRTUAL_ENV"), raising=False)
-        invoke = self._invoke_script + [str(test_script)]
+        invoke, env = self._invoke_script + [str(test_script)], self.env(tmp_path)
 
         try:
-            raw = subprocess.check_output(invoke, universal_newlines=True, stderr=subprocess.STDOUT, env=self._env)
+            raw = subprocess.check_output(invoke, universal_newlines=True, stderr=subprocess.STDOUT, env=env)
         except subprocess.CalledProcessError as exception:
             assert not exception.returncode, exception.output
             return
         out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, re.M).strip().split("\n")
         self.assert_output(out, raw, tmp_path)
+        return env, activate_script
 
-        if self.non_source_raise:
-            with pytest.raises(subprocess.CalledProcessError) as context:
-                invoke = self._invoke_script + [str(activate_script)]
-                subprocess.check_output(invoke, stderr=subprocess.STDOUT, env=self._env)
-            assert context.value.returncode, context
+    def non_source_activate(self, activate_script):
+        return self._invoke_script + [str(activate_script)]
 
-    def assert_output(self, out, raw, tmp_path):
-        # pre-activation
-        assert out[0], raw
-        assert out[1] == "None", raw
-        # post-activation
-        assert norm_path(out[2]) == norm_path(self._creator.exe), raw
-        assert norm_path(out[3]) == norm_path(self._creator.dest_dir).replace("\\\\", "\\"), raw
-        assert out[4] == "wrote pydoc_test.html"
-        content = tmp_path / "pydoc_test.html"
-        assert content.exists(), raw
-        # post deactivation, same as before
-        assert out[-2] == out[0], raw
-        assert out[-1] == "None", raw
+    def env(self, tmp_path):
+        return None
 
     def _generate_test_script(self, activate_script, tmp_path):
         commands = self._get_test_lines(activate_script)
@@ -118,6 +104,20 @@ class ActivationTester(object):
         ]
         return commands
 
+    def assert_output(self, out, raw, tmp_path):
+        # pre-activation
+        assert out[0], raw
+        assert out[1] == "None", raw
+        # post-activation
+        assert norm_path(out[2]) == norm_path(self._creator.exe), raw
+        assert norm_path(out[3]) == norm_path(self._creator.dest_dir).replace("\\\\", "\\"), raw
+        assert out[4] == "wrote pydoc_test.html"
+        content = tmp_path / "pydoc_test.html"
+        assert content.exists(), raw
+        # post deactivation, same as before
+        assert out[-2] == out[0], raw
+        assert out[-1] == "None", raw
+
     def quote(self, s):
         return pipes.quote(s)
 
@@ -135,15 +135,38 @@ class ActivationTester(object):
         return "{} {}".format(pipes.quote(str(self.activate_cmd)), pipes.quote(str(script))).strip()
 
 
-class Bash(ActivationTester):
+class RaiseOnNonSourceCall(ActivationTester):
+    def __init__(self, session, cmd, activate_script, extension, non_source_fail_message):
+        super(RaiseOnNonSourceCall, self).__init__(session, cmd, activate_script, extension)
+        self.non_source_fail_message = non_source_fail_message
+
+    def __call__(self, monkeypatch, tmp_path):
+        env, activate_script = super(RaiseOnNonSourceCall, self).__call__(monkeypatch, tmp_path)
+        process = subprocess.Popen(
+            self.non_source_activate(activate_script),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=env,
+            universal_newlines=True,
+        )
+        out, err = process.communicate()
+        assert process.returncode
+        assert self.non_source_fail_message in err
+
+
+class Bash(RaiseOnNonSourceCall):
     def __init__(self, session):
-        super(Bash, self).__init__(session, "bash", "activate.sh", "sh")
-        self.non_source_raise = True
+        super(Bash, self).__init__(session, "bash", "activate.sh", "sh", "You must source this script: $ source ")
 
 
 class Csh(ActivationTester):
     def __init__(self, session):
         super(Csh, self).__init__(session, "csh", "activate.csh", "csh")
+
+
+class DOS(ActivationTester):
+    def __init__(self, session):
+        super(DOS, self).__init__(session, "bat", "activate.bat", "cmd")
 
 
 class Fish(ActivationTester):
@@ -175,19 +198,33 @@ class Xonosh(ActivationTester):
         super(Xonosh, self).__init__(session, "xonsh", "activate.xsh", "xsh")
         self._invoke_script = [sys.executable, "-m", "xonsh"]
         self.__version_cmd = [sys.executable, "-m", "xonsh", "--version"]
+
+    def env(self, tmp_path):
         env = os.environ.copy()
         env[str("PATH")] = os.pathsep.join([dirname(sys.executable)] + env.get(str("PATH"), str("")).split(os.pathsep))
         env.update({"XONSH_DEBUG": "1", "XONSH_SHOW_TRACEBACK": "True"})
-        self._env = env
+        return env
 
     def activate_call(self, script):
-        return "{} {}".format(self.activate_cmd, repr(script)).strip()
+        return "{} {}".format(self.activate_cmd, repr(str(script))).strip()
 
 
-class Python(ActivationTester):
+class Python(RaiseOnNonSourceCall):
     def __init__(self, session):
-        cmd = sys.executable
-        super(Python, self).__init__(session, cmd, "activate_this.py", "py")
+        super(Python, self).__init__(
+            session,
+            sys.executable,
+            activate_script="activate_this.py",
+            extension="py",
+            non_source_fail_message="You must use exec(open(this_file).read(), {'__file__': this_file}))",
+        )
+
+    def env(self, tmp_path):
+        env = os.environ.copy()
+        for key in {"VIRTUAL_ENV", "PYTHONPATH"}:
+            env.pop(str(key), None)
+        env[str("PATH")] = os.pathsep.join([str(tmp_path), str(tmp_path / "other")])
+        return env
 
     def _get_test_lines(self, activate_script):
         raw = inspect.getsource(self.activate_this_test)
@@ -231,11 +268,8 @@ class Python(ActivationTester):
         # manage to import from activate site package
         assert norm_path(out[6]) == norm_path(self._creator.site_packages[0] / "pydoc_test.py")
 
-    def __call__(self, monkeypatch, tmp_path):
-        monkeypatch.delenv(str("VIRTUAL_ENV"), raising=False)
-        monkeypatch.delenv(str("PYTHONPATH"), raising=False)
-        monkeypatch.setenv(str("PATH"), os.pathsep.join([str(tmp_path), str(tmp_path / "other")]))
-        super(Python, self).__call__(monkeypatch, tmp_path)
+    def non_source_activate(self, activate_script):
+        return self._invoke_script + ["-c", 'exec(open(r"{}").read())'.format(activate_script)]
 
 
 ACTIVATION_TEST = {
@@ -245,6 +279,7 @@ ACTIVATION_TEST = {
     XonoshActivator: Xonosh,
     FishActivator: Fish,
     PythonActivator: Python,
+    DOSActivator: DOS,
 }
 IS_INSIDE_CI = "CI_RUN" in os.environ
 
