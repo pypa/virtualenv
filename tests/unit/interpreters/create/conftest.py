@@ -28,7 +28,9 @@ def get_venv(tmp_path_factory):
         root_python = get_root(tmp_path_factory)
         dest = tmp_path_factory.mktemp("venv")
         subprocess.check_call([str(root_python), "-m", "venv", "--without-pip", str(dest)])
-        return CURRENT.find_exe(str(dest))
+        # sadly creating a virtual environment does not tell us where the executable lives in general case
+        # so discover using some heuristic
+        return CURRENT.find_exe_based_of(inside_folder=str(dest))
 
 
 def get_virtualenv(tmp_path_factory):
@@ -41,14 +43,14 @@ def get_virtualenv(tmp_path_factory):
         virtualenv_at = str(tmp_path_factory.mktemp("venv-for-virtualenv"))
         builder = EnvBuilder(symlinks=not IS_WIN)
         builder.create(virtualenv_at)
-        venv_for_virtualenv = CURRENT.find_exe(virtualenv_at)
+        venv_for_virtualenv = CURRENT.find_exe_based_of(inside_folder=virtualenv_at)
         cmd = venv_for_virtualenv, "-m", "pip", "install", "virtualenv==16.6.1"
         subprocess.check_call(cmd)
 
         virtualenv_python = tmp_path_factory.mktemp("virtualenv")
         cmd = venv_for_virtualenv, "-m", "virtualenv", virtualenv_python
         subprocess.check_call(cmd)
-        return CURRENT.find_exe(virtualenv_python)
+        return CURRENT.find_exe_based_of(inside_folder=virtualenv_python)
 
 
 PYTHON = {"root": get_root, "venv": get_venv, "virtualenv": get_virtualenv}
