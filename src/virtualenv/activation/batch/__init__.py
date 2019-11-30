@@ -5,7 +5,7 @@ from pathlib2 import Path
 from ..via_template import ViaTemplateActivator
 
 
-class DOSActivator(ViaTemplateActivator):
+class BatchActivator(ViaTemplateActivator):
     @classmethod
     def supports(cls, interpreter):
         return interpreter.os == "nt"
