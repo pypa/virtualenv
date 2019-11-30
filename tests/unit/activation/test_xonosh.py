@@ -2,11 +2,15 @@ from __future__ import absolute_import, unicode_literals
 
 import sys
 
+from virtualenv.activation import XonoshActivator
+
 
 def test_xonosh(activation_tester_class, activation_tester):
     class Xonosh(activation_tester_class):
         def __init__(self, session):
-            super(Xonosh, self).__init__(session, "xonsh", "activate.xsh", "xsh")
+            super(Xonosh, self).__init__(
+                XonoshActivator, session, "xonsh.exe" if sys.platform == "win32" else "xonsh", "activate.xsh", "xsh"
+            )
             self._invoke_script = [sys.executable, "-m", "xonsh"]
             self.__version_cmd = [sys.executable, "-m", "xonsh", "--version"]
 

@@ -14,7 +14,8 @@ from virtualenv.run import run_via_cli
 
 
 class ActivationTester(object):
-    def __init__(self, session, cmd, activate_script, extension):
+    def __init__(self, of_class, session, cmd, activate_script, extension):
+        self.of_class = of_class
         self._creator = session.creator
         self.cmd = cmd
         self._version_cmd = [cmd, "--version"]
@@ -128,8 +129,8 @@ class ActivationTester(object):
 
 
 class RaiseOnNonSourceCall(ActivationTester):
-    def __init__(self, session, cmd, activate_script, extension, non_source_fail_message):
-        super(RaiseOnNonSourceCall, self).__init__(session, cmd, activate_script, extension)
+    def __init__(self, of_class, session, cmd, activate_script, extension, non_source_fail_message):
+        super(RaiseOnNonSourceCall, self).__init__(of_class, session, cmd, activate_script, extension)
         self.non_source_fail_message = non_source_fail_message
 
     def __call__(self, monkeypatch, tmp_path):
@@ -172,6 +173,8 @@ IS_INSIDE_CI = "CI_RUN" in os.environ
 def activation_tester(activation_python, monkeypatch, tmp_path):
     def _tester(tester_class):
         tester = tester_class(activation_python)
+        if not tester.of_class.supports(activation_python.creator.interpreter):
+            pytest.skip("{} not supported on current environment".format(tester.of_class.__name__))
         version = tester.get_version(raise_on_fail=IS_INSIDE_CI)
         if not isinstance(version, six.string_types):
             pytest.skip(msg=six.text_type(version))

@@ -2,6 +2,8 @@ from __future__ import absolute_import, unicode_literals
 
 import pipes
 
+from virtualenv.activation import BatchActivator
+
 
 def test_batch(activation_tester_class, activation_tester, tmp_path, activation_python):
     version_script = tmp_path / "version.bat"
@@ -9,7 +11,7 @@ def test_batch(activation_tester_class, activation_tester, tmp_path, activation_
 
     class Batch(activation_tester_class):
         def __init__(self, session):
-            super(Batch, self).__init__(session, None, "activate.bat", "bat")
+            super(Batch, self).__init__(BatchActivator, session, None, "activate.bat", "bat")
             self._version_cmd = [str(version_script)]
             self._invoke_script = []
             self.deactivate = "call {}".format(self.quote(str(activation_python.creator.bin_dir / "deactivate.bat")))

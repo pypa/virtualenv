@@ -4,11 +4,14 @@ import inspect
 import os
 import sys
 
+from virtualenv.activation import PythonActivator
+
 
 def test_python(raise_on_non_source_class, activation_tester):
     class Python(raise_on_non_source_class):
         def __init__(self, session):
             super(Python, self).__init__(
+                PythonActivator,
                 session,
                 sys.executable,
                 activate_script="activate_this.py",
