@@ -5,7 +5,7 @@ import pipes
 import re
 import subprocess
 import sys
-from os.path import normcase, realpath
+from os.path import dirname, normcase, realpath
 
 import pytest
 import six
@@ -54,7 +54,9 @@ class ActivationTester(object):
         return self._invoke_script + [str(activate_script)]
 
     def env(self, tmp_path):
-        return None
+        env = os.environ.copy()
+        env[str("PATH")] = os.pathsep.join([dirname(sys.executable)] + env.get(str("PATH"), str("")).split(os.pathsep))
+        return env
 
     def _generate_test_script(self, activate_script, tmp_path):
         commands = self._get_test_lines(activate_script)
@@ -70,7 +72,7 @@ class ActivationTester(object):
             self.activate_call(activate_script),
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
-            # pydoc loads documentation from the virtualenv site packages
+            # \\ loads documentation from the virtualenv site packages
             "pydoc -w pydoc_test",
             self.deactivate,
             self.print_python_exe(),
@@ -97,7 +99,7 @@ class ActivationTester(object):
         return pipes.quote(s)
 
     def python_cmd(self, cmd):
-        return "{} -c {}".format(self.quote(str(self._creator.exe)), self.quote(cmd))
+        return "{} -c {}".format(os.path.basename(sys.executable), self.quote(cmd))
 
     def print_python_exe(self):
         return self.python_cmd("import sys; print(sys.executable)")
@@ -107,7 +109,7 @@ class ActivationTester(object):
         return self.python_cmd("import os; print(os.environ.get({}, None))".format(val))
 
     def activate_call(self, script):
-        return "{} {}".format(pipes.quote(str(self.activate_cmd)), pipes.quote(str(script))).strip()
+        return "{} {}".format(self.quote(str(self.activate_cmd)), self.quote(str(script))).strip()
 
     @staticmethod
     def norm_path(path):

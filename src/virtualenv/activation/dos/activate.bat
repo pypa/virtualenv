@@ -33,3 +33,5 @@ if defined _OLD_VIRTUAL_PATH goto ENDIFVPATH2
 :ENDIFVPATH2
 
 set "PATH=%VIRTUAL_ENV%\__BIN_NAME__;%PATH%"
+
+doskey pydoc=python -m pydoc

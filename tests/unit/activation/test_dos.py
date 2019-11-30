@@ -12,13 +12,11 @@ def test_dos(activation_tester_class, activation_tester, tmp_path, activation_py
             super(DOS, self).__init__(session, None, "activate.bat", "bat")
             self._version_cmd = [str(version_script)]
             self._invoke_script = []
-            self.deactivate = str(activation_python.creator.bin_dir / "deactivate.bat")
+            self.deactivate = "call {}".format(self.quote(str(activation_python.creator.bin_dir / "deactivate.bat")))
+            self.activate_cmd = "call"
 
         def _get_test_lines(self, activate_script):
             return ["@echo off", ""] + super(DOS, self)._get_test_lines(activate_script)
-
-        def activate_call(self, script):
-            return str(script)
 
         def quote(self, s):
             """double quotes needs to be single, and single need to be double"""
