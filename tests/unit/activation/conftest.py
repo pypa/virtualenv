@@ -17,7 +17,6 @@ class ActivationTester(object):
     def __init__(self, of_class, session, cmd, activate_script, extension):
         self.of_class = of_class
         self._creator = session.creator
-        self.cmd = cmd
         self._version_cmd = [cmd, "--version"]
         self._invoke_script = [cmd]
         self.activate_script = activate_script

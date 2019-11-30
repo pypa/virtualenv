@@ -11,7 +11,8 @@ def test_powershell(activation_tester_class, activation_tester):
         def __init__(self, session):
             cmd = "powershell.exe" if sys.platform == "win32" else "pwsh"
             super(PowerShell, self).__init__(PowerShellActivator, session, cmd, "activate.ps1", "ps1")
-            self._version_cmd = [self.cmd, "-c", "$PSVersionTable"]
+            self._version_cmd = [cmd, "-c", "$PSVersionTable"]
+            self._invoke_script = [cmd, "-ExecutionPolicy", "ByPass", "-File"]
             self.activate_cmd = "."
 
         def quote(self, s):

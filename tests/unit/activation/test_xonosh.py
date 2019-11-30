@@ -12,7 +12,7 @@ def test_xonosh(activation_tester_class, activation_tester):
                 XonoshActivator, session, "xonsh.exe" if sys.platform == "win32" else "xonsh", "activate.xsh", "xsh"
             )
             self._invoke_script = [sys.executable, "-m", "xonsh"]
-            self.__version_cmd = [sys.executable, "-m", "xonsh", "--version"]
+            self._version_cmd = [sys.executable, "-m", "xonsh", "--version"]
 
         def env(self, tmp_path):
             env = super(Xonosh, self).env(tmp_path)
