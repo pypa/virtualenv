@@ -13,3 +13,4 @@ class BatchActivator(ViaTemplateActivator):
     def templates(self):
         yield Path("activate.bat")
         yield Path("deactivate.bat")
+        yield Path("pydoc.bat")
