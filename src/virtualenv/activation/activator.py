@@ -12,13 +12,12 @@ class Activator(object):
 
     @classmethod
     def add_parser_arguments(cls, parser):
-        pass
+        """add activator options"""
 
-    def run(self, creator):
-        self.generate()
-        if self.flag_prompt is not None:
-            creator.pyenv_cfg["prompt"] = self.flag_prompt
+    @classmethod
+    def supports(cls, interpreter):
+        return True
 
     @abstractmethod
-    def generate(self):
+    def generate(self, creator):
         raise NotImplementedError

@@ -103,12 +103,8 @@ class Creator(object):
         }
 
     @property
-    def env_dir(self):
-        return Path(self.dest_dir)
-
-    @property
     def env_name(self):
-        return self.env_dir.parts[-1]
+        return self.dest_dir.parts[-1]
 
     @property
     def bin_name(self):
@@ -116,7 +112,7 @@ class Creator(object):
 
     @property
     def bin_dir(self):
-        return self.env_dir / self.bin_name
+        return self.dest_dir / self.bin_name
 
     @property
     def lib_dir(self):
@@ -127,13 +123,13 @@ class Creator(object):
         return [self.lib_dir / "site-packages"]
 
     @property
-    def env_exe(self):
+    def exe(self):
         return self.bin_dir / "python{}".format(".exe" if IS_WIN else "")
 
     @property
     def debug(self):
         if self._debug is None:
-            self._debug = get_env_debug_info(self.env_exe, self.debug_script())
+            self._debug = get_env_debug_info(self.exe, self.debug_script())
         return self._debug
 
     # noinspection PyMethodMayBeStatic

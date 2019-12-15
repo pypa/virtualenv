@@ -52,7 +52,7 @@ class VirtualEnvConfigParser(ArgumentParser):
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
     def __init__(self, prog):
-        super(HelpFormatter, self).__init__(prog, max_help_position=35, width=240)
+        super(HelpFormatter, self).__init__(prog, max_help_position=37, width=240)
 
     def _get_help_string(self, action):
         # noinspection PyProtectedMember

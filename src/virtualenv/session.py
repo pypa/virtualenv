@@ -29,7 +29,7 @@ class Session(object):
 
     def _activate(self):
         for activator in self.activators:
-            activator.run(self.creator)
+            activator.generate(self.creator)
 
 
 _DEBUG_MARKER = "=" * 30 + " target debug " + "=" * 30

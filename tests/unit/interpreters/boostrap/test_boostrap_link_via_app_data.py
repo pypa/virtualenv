@@ -32,7 +32,7 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env):
     assert pip in files_post_first_create
     assert setuptools in files_post_first_create
 
-    env_exe = result.creator.env_exe
+    env_exe = result.creator.exe
     for pip_exe in [
         env_exe.with_name("pip{}{}".format(suffix, env_exe.suffix))
         for suffix in (
