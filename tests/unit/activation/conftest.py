@@ -23,6 +23,7 @@ class ActivationTester(object):
         self.extension = extension
         self.activate_cmd = "source"
         self.deactivate = "deactivate"
+        self.pydoc_call = "pydoc -w pydoc_test"
 
     def get_version(self, raise_on_fail):
         # locally we disable, so that contributors don't need to have everything setup
@@ -53,9 +54,15 @@ class ActivationTester(object):
     def non_source_activate(self, activate_script):
         return self._invoke_script + [str(activate_script)]
 
+    # noinspection PyMethodMayBeStatic
     def env(self, tmp_path):
         env = os.environ.copy()
+        # add the current python executable folder to the path so we already have another python on the path
+        # also keep the path so the shells (fish, bash, etc can be discovered)
         env[str("PATH")] = os.pathsep.join([dirname(sys.executable)] + env.get(str("PATH"), str("")).split(os.pathsep))
+        # clear up some environment variables so they don't affect the tests
+        for key in [k for k in env.keys() if k.startswith("_OLD") or k.startswith("VIRTUALENV_")]:
+            del env[key]
         return env
 
     def _generate_test_script(self, activate_script, tmp_path):
@@ -73,7 +80,7 @@ class ActivationTester(object):
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
             # \\ loads documentation from the virtualenv site packages
-            "pydoc -w pydoc_test",
+            self.pydoc_call,
             self.deactivate,
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),

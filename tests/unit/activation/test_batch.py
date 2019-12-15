@@ -14,8 +14,9 @@ def test_batch(activation_tester_class, activation_tester, tmp_path, activation_
             super(Batch, self).__init__(BatchActivator, session, None, "activate.bat", "bat")
             self._version_cmd = [str(version_script)]
             self._invoke_script = []
-            self.deactivate = "call {}".format(self.quote(str(activation_python.creator.bin_dir / "deactivate.bat")))
+            self.deactivate = "call deactivate"
             self.activate_cmd = "call"
+            self.pydoc_call = "call {}".format(self.pydoc_call)
 
         def _get_test_lines(self, activate_script):
             return ["@echo off", ""] + super(Batch, self)._get_test_lines(activate_script)
