@@ -34,7 +34,7 @@ class CPython(ViaGlobalRef):
                 self.system_site_package = true_system_site
 
     def ensure_directories(self):
-        dirs = [self.env_dir, self.bin_dir]
+        dirs = [self.dest_dir, self.bin_dir]
         dirs.extend(self.site_packages)
         return dirs
 
@@ -53,7 +53,7 @@ class CPython(ViaGlobalRef):
 
     @property
     def lib_dir(self):
-        return self.env_dir / self.lib_base
+        return self.dest_dir / self.lib_base
 
     @property
     def system_stdlib(self):

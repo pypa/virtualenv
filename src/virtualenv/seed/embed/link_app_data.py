@@ -35,7 +35,7 @@ class LinkFromAppData(BaseEmbed):
 
 
 def pip_install(wheels, creator, cache):
-    site_package, bin_dir, env_exe = creator.site_packages[0], creator.bin_dir, creator.env_exe
+    site_package, bin_dir, env_exe = creator.site_packages[0], creator.bin_dir, creator.exe
     folder_link_method, folder_linked = link_folder()
     for name, wheel in wheels.items():
         logging.debug("install %s from wheel %s", name, wheel)
