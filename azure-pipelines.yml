@@ -45,8 +45,6 @@ jobs:
         image: [linux, windows, macOs]
       py35:
         image: [linux, windows, macOs]
-      py34:
-        image: [linux, windows]
       py27:
         image: [linux, windows, macOs]
       fix_lint:
@@ -67,7 +65,7 @@ jobs:
         displayName: install fish and csh via brew
     coverage:
       with_toxenv: 'coverage' # generate .tox/.coverage, .tox/coverage.xml after tests run
-      for_envs: [py37, py36, py35, py34, py27]
+      for_envs: [py38, py37, py36, py35, py27]
 
 - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
   - template: publish-pypi.yml@tox
