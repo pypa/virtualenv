@@ -1,6 +1,7 @@
 """Bootstrap"""
 from __future__ import absolute_import, unicode_literals
 
+import subprocess
 from collections import defaultdict
 from shutil import copy2
 
@@ -39,9 +40,8 @@ def download_wheel(version_str, must_download, wheel_download):
         str(wheel_download),
     ]
     cmd.extend(must_download)
-    from pip._internal import main
-
-    main(cmd)
+    # pip has no interface in python - must be a new sub-process
+    subprocess.call(cmd)
 
 
 def check_if_must_download(packages, wheel_download):
@@ -87,8 +87,12 @@ def _get_wheels_for_package(inside_folder, package):
 
 def ensure_bundle_cached(packages, version_release, wheel_download):
     for package in packages:
-        bundle = (BUNDLE_SUPPORT.get(version_release, {}) or BUNDLE_SUPPORT[MAX]).get(package)
+        bundle = get_bundled_wheel(package, version_release)
         if bundle is not None:
-            bundled_wheel_file = wheel_download / bundle
+            bundled_wheel_file = wheel_download / bundle.name
             if not bundled_wheel_file.exists():
-                copy2(str(BUNDLE_FOLDER / bundle), str(bundled_wheel_file))
+                copy2(str(bundle), str(bundled_wheel_file))
+
+
+def get_bundled_wheel(package, version_release):
+    return BUNDLE_FOLDER / (BUNDLE_SUPPORT.get(version_release, {}) or BUNDLE_SUPPORT[MAX]).get(package)
