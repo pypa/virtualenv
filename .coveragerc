@@ -10,6 +10,7 @@ exclude_lines =
 omit =
     # site.py is ran before the coverage can be enabled, no way to measure coverage on this
     src/virtualenv/interpreters/create/impl/cpython/site.py
+    src/virtualenv/seed/embed/wheels/pip-*.whl/*
 
 [coverage:paths]
 source =

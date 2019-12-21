@@ -13,6 +13,8 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env):
     bundle_ver = BUNDLE_SUPPORT[CURRENT.version_release_str]
     create_cmd = [
         str(tmp_path / "env"),
+        "--seeder",
+        "link-app-data",
         "--download",
         "--pip",
         bundle_ver["pip"].split("-")[1],
