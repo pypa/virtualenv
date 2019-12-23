@@ -9,6 +9,8 @@ import coverage
 import pytest
 from pathlib2 import Path
 
+from virtualenv.interpreters.discovery.py_info import PythonInfo
+
 
 @pytest.fixture(scope="session")
 def has_symlink_support(tmp_path_factory):
@@ -77,6 +79,12 @@ def check_cwd_not_changed_by_test():
     new = os.getcwd()
     if old != new:
         pytest.fail("tests changed cwd: {!r} => {!r}".format(old, new))
+
+
+@pytest.fixture(autouse=True)
+def ensure_py_info_cache_empty():
+    yield
+    PythonInfo._cache_from_exe.clear()
 
 
 @pytest.fixture(autouse=True)
@@ -207,3 +215,8 @@ class EnableCoverage(object):
                 clean()
         assert not self.cov_pth.exists()
         assert self._COV_FILE.exists()
+
+
+@pytest.fixture(scope="session")
+def is_inside_ci():
+    yield "CI_RUN" in os.environ

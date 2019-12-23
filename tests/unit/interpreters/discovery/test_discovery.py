@@ -11,13 +11,13 @@ from virtualenv.interpreters.discovery.py_info import CURRENT
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="symlink is not guaranteed to work on windows")
-@pytest.mark.parametrize("lower", [None, True, False])
-def test_discovery_via_path(tmp_path, monkeypatch, lower):
+@pytest.mark.parametrize("case", ["mixed", "lower", "upper"])
+def test_discovery_via_path(tmp_path, monkeypatch, case):
     core = "somethingVeryCryptic{}".format(".".join(str(i) for i in CURRENT.version_info[0:3]))
     name = "somethingVeryCryptic"
-    if lower is True:
+    if case == "lower":
         name = name.lower()
-    elif lower is False:
+    elif case == "upper":
         name = name.upper()
     exe_name = "{}{}{}".format(name, CURRENT.version_info.major, ".exe" if sys.platform == "win32" else "")
     executable = tmp_path / exe_name
