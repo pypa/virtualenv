@@ -6,7 +6,7 @@ import re
 import sys
 from collections import OrderedDict
 
-PATTERN = re.compile(r"^(?P<impl>[a-zA-Z]+)(?P<version>[0-9.]+)?(?:-(?P<arch>32|64))?$")
+PATTERN = re.compile(r"^(?P<impl>[a-zA-Z]+)?(?P<version>[0-9.]+)?(?:-(?P<arch>32|64))?$")
 IS_WIN = sys.platform == "win32"
 
 

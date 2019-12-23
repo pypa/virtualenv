@@ -117,12 +117,15 @@ class PythonInfo(object):
     @property
     def system_executable(self):
         env_prefix = self.real_prefix or self.base_prefix
-        if env_prefix:
-            if self.real_prefix is None and self.base_executable is not None:
+        if env_prefix:  # if this is a virtual environment
+            if self.real_prefix is None and self.base_executable is not None:  # use the saved host if present
                 return self.base_executable
+            # otherwise fallback to discovery mechanism
             return self.find_exe_based_of(inside_folder=env_prefix)
         else:
-            return self.executable
+            # need original executable here, as if we need to copy we want to copy the interpreter itself, not the
+            # setup script things may be wrapped up in
+            return self.original_executable
 
     def find_exe_based_of(self, inside_folder):
         # we don't know explicitly here, do some guess work - our executable name should tell

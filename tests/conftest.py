@@ -207,3 +207,8 @@ class EnableCoverage(object):
                 clean()
         assert not self.cov_pth.exists()
         assert self._COV_FILE.exists()
+
+
+@pytest.fixture(scope="session")
+def is_inside_ci():
+    yield "CI_RUN" in os.environ

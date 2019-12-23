@@ -11,7 +11,8 @@ from pathlib2 import Path
 
 from virtualenv.__main__ import run
 from virtualenv.interpreters.create.creator import DEBUG_SCRIPT, get_env_debug_info
-from virtualenv.interpreters.discovery.py_info import CURRENT
+from virtualenv.interpreters.discovery.builtin import get_interpreter
+from virtualenv.interpreters.discovery.py_info import CURRENT, PythonInfo
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.run import run_via_cli, session_via_cli
 
@@ -169,7 +170,7 @@ def test_debug_bad_virtualenv(tmp_path):
 @pytest.mark.parametrize("clear", [True, False], ids=["clear", "no_clear"])
 def test_create_clear_resets(tmp_path, use_venv, clear):
     marker = tmp_path / "magic"
-    cmd = [str(tmp_path), "--without-pip"]
+    cmd = [str(tmp_path), "--seeder", "none"]
     if use_venv:
         cmd.extend(["--creator", "venv"])
     run_via_cli(cmd)
@@ -181,13 +182,12 @@ def test_create_clear_resets(tmp_path, use_venv, clear):
     assert marker.exists() is not clear
 
 
-@pytest.mark.skip
 @pytest.mark.parametrize(
     "use_venv", [False, True] if six.PY3 else [False], ids=["no_venv", "venv"] if six.PY3 else ["no_venv"]
 )
 @pytest.mark.parametrize("prompt", [None, "magic"])
 def test_prompt_set(tmp_path, use_venv, prompt):
-    cmd = [str(tmp_path), "--without-pip"]
+    cmd = [str(tmp_path), "--seeder", "--none"]
     if prompt is not None:
         cmd.extend(["--prompt", "magic"])
     if not use_venv:
@@ -202,3 +202,23 @@ def test_prompt_set(tmp_path, use_venv, prompt):
         if use_venv is False:
             assert "prompt" in cfg, list(cfg.content.keys())
             assert cfg["prompt"] == actual_prompt
+
+
+@pytest.fixture(scope="session")
+def cross_python(is_inside_ci):
+    spec = "{}{}".format(CURRENT.implementation, 2 if CURRENT.version_info.major == 3 else 2)
+    interpreter = get_interpreter(spec)
+    if interpreter is None:
+        msg = "could not find {}".format(spec)
+        if is_inside_ci:
+            raise RuntimeError(msg)
+        pytest.skip(msg=msg)
+    yield interpreter
+
+
+def test_cross_major(cross_python, coverage_env, tmp_path):
+    cmd = ["-v", "-v", "-p", str(cross_python.executable), str(tmp_path), "--seeder", "none", "--activators", ""]
+    result = run_via_cli(cmd)
+    coverage_env()
+    env = PythonInfo.from_exe(result.creator.exe)
+    assert env.version_info.major != CURRENT.version_info.major
