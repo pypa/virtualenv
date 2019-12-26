@@ -26,6 +26,7 @@ def session_via_cli(args):
     options, verbosity = _do_report_setup(parser, args)
     discover = _get_discover(parser, args, options)
     interpreter = discover.interpreter
+    logging.debug("target interpreter %r", interpreter)
     if interpreter is None:
         raise RuntimeError("failed to find interpreter for {}".format(discover))
     elements = [
@@ -83,8 +84,9 @@ def _get_creator(interpreter, parser, options):
     creator_parser = parser.add_argument_group("creator options")
     creator_parser.add_argument(
         "--creator",
-        choices=list(creators.keys()),
-        default=next((c for c in creators if c != "venv"), None),
+        choices=list(creators),
+        # prefer the built-in venv if present, otherwise fallback to first defined type
+        default="venv" if "venv" in creators else next(iter(creators), None),
         required=False,
         help="create environment via",
     )

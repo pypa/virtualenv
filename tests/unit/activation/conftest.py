@@ -172,16 +172,13 @@ def activation_python(tmp_path_factory):
     return session
 
 
-IS_INSIDE_CI = "CI_RUN" in os.environ
-
-
 @pytest.fixture()
-def activation_tester(activation_python, monkeypatch, tmp_path):
+def activation_tester(activation_python, monkeypatch, tmp_path, is_inside_ci):
     def _tester(tester_class):
         tester = tester_class(activation_python)
         if not tester.of_class.supports(activation_python.creator.interpreter):
             pytest.skip("{} not supported on current environment".format(tester.of_class.__name__))
-        version = tester.get_version(raise_on_fail=IS_INSIDE_CI)
+        version = tester.get_version(raise_on_fail=is_inside_ci)
         if not isinstance(version, six.string_types):
             pytest.skip(msg=six.text_type(version))
         return tester(monkeypatch, tmp_path)
