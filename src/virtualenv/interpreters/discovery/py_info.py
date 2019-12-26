@@ -84,13 +84,34 @@ class PythonInfo(object):
         return self.base_prefix is not None and self.version_info.major == 3
 
     def __repr__(self):
-        return "PythonInfo({!r})".format(self.__dict__)
+        return "{}({!r})".format(self.__class__.__name__, self.__dict__)
 
     def __str__(self):
-        content = copy.copy(self.__dict__)
-        for elem in ["path", "prefix", "base_prefix", "exec_prefix", "real_prefix", "base_exec_prefix"]:
-            del content[elem]
-        return "PythonInfo({!r})".format(content)
+        return "{}({})".format(
+            self.__class__.__name__,
+            ", ".join(
+                "{}={}".format(k, v)
+                for k, v in (
+                    (
+                        "spec",
+                        "{}{}-{}".format(
+                            self.implementation, ".".join(str(i) for i in self.version_info), self.architecture
+                        ),
+                    ),
+                    ("exe", self.executable),
+                    ("original" if self.original_executable != self.executable else None, self.original_executable),
+                    (
+                        "base"
+                        if self.base_executable is not None and self.base_executable != self.executable
+                        else None,
+                        self.base_executable,
+                    ),
+                    ("platform", self.platform),
+                    ("version", repr(self.version)),
+                )
+                if k is not None
+            ),
+        )
 
     def to_json(self):
         data = copy.deepcopy(self.__dict__)
@@ -117,12 +138,15 @@ class PythonInfo(object):
     @property
     def system_executable(self):
         env_prefix = self.real_prefix or self.base_prefix
-        if env_prefix:
-            if self.real_prefix is None and self.base_executable is not None:
+        if env_prefix:  # if this is a virtual environment
+            if self.real_prefix is None and self.base_executable is not None:  # use the saved host if present
                 return self.base_executable
+            # otherwise fallback to discovery mechanism
             return self.find_exe_based_of(inside_folder=env_prefix)
         else:
-            return self.executable
+            # need original executable here, as if we need to copy we want to copy the interpreter itself, not the
+            # setup script things may be wrapped up in
+            return self.original_executable
 
     def find_exe_based_of(self, inside_folder):
         # we don't know explicitly here, do some guess work - our executable name should tell
@@ -162,16 +186,16 @@ class PythonInfo(object):
                         name_candidate[candidate] = None
         return list(name_candidate.keys())
 
-    __cache_from_exe = {}
+    _cache_from_exe = {}
 
     @classmethod
     def from_exe(cls, exe, raise_on_error=True):
         key = os.path.realpath(exe)
-        if key in cls.__cache_from_exe:
-            result, failure = cls.__cache_from_exe[key]
+        if key in cls._cache_from_exe:
+            result, failure = cls._cache_from_exe[key]
         else:
             failure, result = cls._load_for_exe(exe)
-            cls.__cache_from_exe[key] = result, failure
+            cls._cache_from_exe[key] = result, failure
         if failure is not None:
             if raise_on_error:
                 raise failure

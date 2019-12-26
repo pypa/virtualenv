@@ -5,13 +5,17 @@ from ..py_spec import PythonSpec
 from .pep514 import discover_pythons
 
 
+class Pep514PythonInfo(PythonInfo):
+    """"""
+
+
 def propose_interpreters(spec):
     # see if PEP-514 entries are good
     for name, major, minor, arch, exe, _ in discover_pythons():
         # pre-filter
         registry_spec = PythonSpec(None, name, major, minor, None, arch, exe)
         if registry_spec.satisfies(spec):
-            interpreter = PythonInfo.from_exe(exe, raise_on_error=False)
+            interpreter = Pep514PythonInfo.from_exe(exe, raise_on_error=False)
             if interpreter is not None:
                 if interpreter.satisfies(spec, impl_must_match=True):
                     yield interpreter

@@ -1,8 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 
+import logging
 import os
 import sys
-from distutils.spawn import find_executable
+
+from pathlib2 import Path
 
 from virtualenv.info import IS_WIN
 
@@ -36,16 +38,21 @@ class Builtin(Discover):
 
 def get_interpreter(key):
     spec = PythonSpec.from_string_spec(key)
+    logging.debug("find interpreter for spec %r", spec)
+    proposed_paths = set()
     for interpreter, impl_must_match in propose_interpreters(spec):
-        if interpreter.satisfies(spec, impl_must_match):
-            return interpreter
+        if interpreter.executable not in proposed_paths:
+            logging.debug("proposed %s", interpreter)
+            if interpreter.satisfies(spec, impl_must_match):
+                return interpreter
+            proposed_paths.add(interpreter.executable)
 
 
 def propose_interpreters(spec):
     # 1. we always try with the lowest hanging fruit first, the current interpreter
     yield CURRENT, True
 
-    # 2. if it's an absolut path and exists, use that
+    # 2. if it's an absolute path and exists, use that
     if spec.is_abs and os.path.exists(spec.path):
         yield PythonInfo.from_exe(spec.path), True
 
@@ -56,21 +63,75 @@ def propose_interpreters(spec):
         for interpreter in propose_interpreters(spec):
             yield interpreter, True
 
-    # 4. then maybe it's something exact on PATH - if it was direct lookup implementation no longer counts
-    interpreter = find_on_path(spec.str_spec)
-    if interpreter is not None:
-        yield interpreter, False
+    paths = get_paths()
+    for path in paths:  # find on path, the path order matters (as the candidates are less easy to control by end user)
+        for candidate, match in possible_specs(spec):
+            found = check_path(candidate, path)
+            if found is not None:
+                exe = os.path.abspath(found)
+                interpreter = PathPythonInfo.from_exe(exe, raise_on_error=False)
+                if interpreter is not None:
+                    yield interpreter, match
 
+
+def get_paths():
+    path = os.environ.get(str("PATH"), None)
+    if path is None:
+        try:
+            path = os.confstr("CS_PATH")
+        except (AttributeError, ValueError):
+            path = os.defpath
+    if not path:
+        paths = []
+    else:
+        paths = [p for p in path.split(os.pathsep) if os.path.exists(p)]
+    logging.debug(LazyPathDump(paths))
+    return paths
+
+
+class LazyPathDump(object):
+    def __init__(self, paths):
+        self.paths = paths
+
+    def __str__(self):
+        content = "PATH =>{}".format(os.linesep)
+        for i, p in enumerate(self.paths):
+            files = []
+            for file in Path(p).iterdir():
+                try:
+                    if file.is_dir():
+                        continue
+                except OSError:
+                    pass
+                files.append(file.name)
+            content += str(i)
+            content += " "
+            content += str(p)
+            content += " with "
+            content += " ".join(files)
+            content += os.linesep
+        return content
+
+
+def check_path(candidate, path):
+    _, ext = os.path.splitext(candidate)
+    if sys.platform == "win32" and ext != ".exe":
+        candidate = candidate + ".exe"
+    if os.path.isfile(candidate):
+        return candidate
+    candidate = os.path.join(path, candidate)
+    if os.path.isfile(candidate):
+        return candidate
+    return None
+
+
+def possible_specs(spec):
+    # 4. then maybe it's something exact on PATH - if it was direct lookup implementation no longer counts
+    yield spec.str_spec, False
     # 5. or from the spec we can deduce a name on path  that matches
     for exe, match in spec.generate_names():
-        interpreter = find_on_path(exe)
-        if interpreter is not None:
-            yield interpreter, match
+        yield exe, match
 
 
-def find_on_path(key):
-    exe = find_executable(key)
-    if exe is not None:
-        exe = os.path.abspath(exe)
-        interpreter = PythonInfo.from_exe(str(exe), raise_on_error=False)
-        return interpreter
+class PathPythonInfo(PythonInfo):
+    """"""

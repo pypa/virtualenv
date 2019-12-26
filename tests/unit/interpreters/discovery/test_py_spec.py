@@ -22,7 +22,7 @@ def test_bad_py_spec():
 
 
 def test_py_spec_first_digit_only_major():
-    spec = PythonSpec.from_string_spec("python278")
+    spec = PythonSpec.from_string_spec("278")
     assert spec.major == 2
     assert spec.minor == 78
 
