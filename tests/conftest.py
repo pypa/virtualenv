@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
 import os
@@ -220,3 +221,8 @@ class EnableCoverage(object):
 @pytest.fixture(scope="session")
 def is_inside_ci():
     yield "CI_RUN" in os.environ
+
+
+@pytest.fixture(scope="session")
+def special_char_name():
+    return "🚒èрт$♞"

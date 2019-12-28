@@ -12,8 +12,8 @@ import six
 
 def ensure_dir(path):
     if not path.exists():
-        logging.debug("created %s", path)
-        makedirs(six.text_type(path))
+        logging.debug("created %s", six.ensure_text(str(path)))
+        makedirs(str(path))
 
 
 HAS_SYMLINK = hasattr(os, "symlink")
@@ -30,16 +30,21 @@ def symlink_or_copy(do_copy, src, dst, relative_symlinks_ok=False):
             if not dst.is_symlink():  # can't link to itself!
                 if relative_symlinks_ok:
                     assert src.parent == dst.parent
-                    os.symlink(src.name, six.text_type(dst))
+                    os.symlink(src.name, str(dst))
                 else:
-                    os.symlink(six.text_type(src), six.text_type(dst))
+                    os.symlink(str(src), str(dst))
         except OSError as exception:
-            logging.warning("symlink failed %r, for %s to %s, will try copy", exception, src, dst)
+            logging.warning(
+                "symlink failed %r, for %s to %s, will try copy",
+                exception,
+                six.ensure_text(str(src)),
+                six.ensure_text(str(dst)),
+            )
             do_copy = True
     if do_copy:
         copier = shutil.copy2 if src.is_file() else shutil.copytree
-        copier(six.text_type(src), six.text_type(dst))
-    logging.debug("%s %s to %s", "copy" if do_copy else "symlink", src, dst)
+        copier(str(src), str(dst))
+    logging.debug("%s %s to %s", "copy" if do_copy else "symlink", six.ensure_text(str(src)), six.ensure_text(str(dst)))
 
 
 def run_cmd(cmd):

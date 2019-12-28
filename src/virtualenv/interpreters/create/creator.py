@@ -7,6 +7,7 @@ import shutil
 from abc import ABCMeta, abstractmethod
 from argparse import ArgumentTypeError
 
+import six
 from pathlib2 import Path
 from six import add_metaclass
 
@@ -104,7 +105,7 @@ class Creator(object):
 
     @property
     def env_name(self):
-        return self.dest_dir.parts[-1]
+        return six.ensure_text(self.dest_dir.parts[-1])
 
     @property
     def bin_name(self):
@@ -139,7 +140,7 @@ class Creator(object):
 
 def get_env_debug_info(env_exe, debug_script):
     cmd = [str(env_exe), str(debug_script)]
-    logging.debug(" ".join(cmd))
+    logging.debug(" ".join(six.ensure_text(i) for i in cmd))
     env = os.environ.copy()
     env.pop("PYTHONPATH", None)
     code, out, err = run_cmd(cmd)
