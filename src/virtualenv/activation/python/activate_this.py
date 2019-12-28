@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Activate virtualenv for current interpreter:
 
 Use exec(open(this_file).read(), {'__file__': this_file}).
@@ -33,6 +34,8 @@ __SITE_PACKAGES__
 '''
 
 for site_package in json.loads(site_packages):
+    if sys.version_info[0] == 2:
+        site_package = site_package.encode('utf-8')
     path = os.path.realpath(os.path.join(os.path.dirname(__file__), site_package))
     site.addsitedir(path)
 # fmt: on

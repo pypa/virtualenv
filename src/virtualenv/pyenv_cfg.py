@@ -35,7 +35,7 @@ class PyEnvCfg(object):
             for key, value in self.content.items():
                 line = "{} = {}".format(key, value)
                 logging.debug("\t%s", line)
-                file_handler.write(line)
+                file_handler.write(six.ensure_str(line))
                 file_handler.write("\n")
 
     def refresh(self):

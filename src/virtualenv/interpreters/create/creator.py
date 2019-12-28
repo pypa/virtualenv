@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import shutil
+import sys
 from abc import ABCMeta, abstractmethod
 from argparse import ArgumentTypeError
 
@@ -47,17 +48,22 @@ class Creator(object):
             help="Give the virtual environment access to the system site-packages dir.",
         )
 
-        def validate_dest_dir(value):
+        def validate_dest_dir(raw_value):
             """No path separator in the path and must be write-able"""
-            if os.pathsep in value:
+            if os.pathsep in raw_value:
                 raise ArgumentTypeError(
                     "destination {!r} must not contain the path separator ({}) as this would break "
-                    "the activation scripts".format(value, os.pathsep)
+                    "the activation scripts".format(raw_value, os.pathsep)
                 )
-            value = Path(value)
+            value = Path(raw_value)
             if value.exists() and value.is_file():
                 raise ArgumentTypeError("the destination {} already exists and is a file".format(value))
-            value = dest = value.resolve()
+            if (3, 3) <= sys.version_info <= (3, 6):
+                # pre 3.6 resolve is always strict, aka must exists, sidestep by using os.path operation
+                dest = Path(os.path.realpath(raw_value))
+            else:
+                dest = value.resolve()
+            value = dest
             while dest:
                 if dest.exists():
                     if os.access(str(dest), os.W_OK):

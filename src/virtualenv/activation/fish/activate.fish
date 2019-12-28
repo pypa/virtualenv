@@ -11,23 +11,23 @@ function _bashify_path -d "Converts a fish path to something bash can recognize"
 end
 
 function _fishify_path -d "Converts a bash path to something fish can recognize"
-    echo $argv | tr ':' '\n'
+    echo $argv | string replace ':' '\n'
 end
 
 function deactivate -d 'Exit virtualenv mode and return to the normal environment.'
     # reset old environment variables
     if test -n "$_OLD_VIRTUAL_PATH"
         # https://github.com/fish-shell/fish-shell/issues/436 altered PATH handling
-        if test (echo $FISH_VERSION | tr "." "\n")[1] -lt 3
-            set -gx PATH (_fishify_path $_OLD_VIRTUAL_PATH)
+        if test (echo $FISH_VERSION | head -c 1) -lt 3
+            set -gx PATH (_fishify_path "$_OLD_VIRTUAL_PATH")
         else
-            set -gx PATH $_OLD_VIRTUAL_PATH
+            set -gx PATH "$_OLD_VIRTUAL_PATH"
         end
         set -e _OLD_VIRTUAL_PATH
     end
 
     if test -n "$_OLD_VIRTUAL_PYTHONHOME"
-        set -gx PYTHONHOME $_OLD_VIRTUAL_PYTHONHOME
+        set -gx PYTHONHOME "$_OLD_VIRTUAL_PYTHONHOME"
         set -e _OLD_VIRTUAL_PYTHONHOME
     end
 
@@ -57,15 +57,15 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV "__VIRTUAL_ENV__"
+set -gx VIRTUAL_ENV '__VIRTUAL_ENV__'
 
 # https://github.com/fish-shell/fish-shell/issues/436 altered PATH handling
-if test (echo $FISH_VERSION | tr "." "\n")[1] -lt 3
-   set -gx _OLD_VIRTUAL_PATH (_bashify_path $PATH)
+if test (echo $FISH_VERSION | head -c 1) -lt 3
+   set -gx _OLD_VIRTUAL_PATH (_bashify_path "$PATH")
 else
-    set -gx _OLD_VIRTUAL_PATH $PATH
+    set -gx _OLD_VIRTUAL_PATH "$PATH"
 end
-set -gx PATH "$VIRTUAL_ENV/__BIN_NAME__" $PATH
+set -gx PATH "$VIRTUAL_ENV"'/__BIN_NAME__' "$PATH"
 
 # Unset `$PYTHONHOME` if set.
 if set -q PYTHONHOME
@@ -87,10 +87,10 @@ if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
 
         # Prompt override provided?
         # If not, just prepend the environment name.
-        if test -n "__VIRTUAL_PROMPT__"
-            printf '%s%s' "__VIRTUAL_PROMPT__" (set_color normal)
+        if test -n '__VIRTUAL_PROMPT__'
+            printf '%s%s' '__VIRTUAL_PROMPT__' (set_color normal)
         else
-            printf '%s(%s) ' (set_color normal) (basename "$VIRTUAL_ENV")
+            printf '%s(%s) ' (set_color normal) (basename '$VIRTUAL_ENV')
         end
 
         # Restore the original $status

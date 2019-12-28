@@ -11,6 +11,7 @@ import pytest
 import six
 
 from virtualenv.run import run_via_cli
+from virtualenv.util import Path
 
 
 class ActivationTester(object):
@@ -28,7 +29,13 @@ class ActivationTester(object):
     def get_version(self, raise_on_fail):
         # locally we disable, so that contributors don't need to have everything setup
         try:
-            return subprocess.check_output(self._version_cmd, universal_newlines=True)
+            process = subprocess.Popen(
+                self._version_cmd, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            out, err = process.communicate()
+            if out:
+                return out
+            return err
         except Exception as exception:
             if raise_on_fail:
                 raise
@@ -43,10 +50,12 @@ class ActivationTester(object):
         invoke, env = self._invoke_script + [str(test_script)], self.env(tmp_path)
 
         try:
-            raw = subprocess.check_output(invoke, universal_newlines=True, stderr=subprocess.STDOUT, env=env)
+            _raw = subprocess.check_output(invoke, universal_newlines=True, stderr=subprocess.STDOUT, env=env)
+            raw = "\n{}".format(six.ensure_text(_raw))
         except subprocess.CalledProcessError as exception:
-            assert not exception.returncode, exception.output
+            assert not exception.returncode, six.ensure_text(exception.output)
             return
+
         out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, re.M).strip().split("\n")
         self.assert_output(out, raw, tmp_path)
         return env, activate_script
@@ -116,12 +125,14 @@ class ActivationTester(object):
         return self.python_cmd("import os; print(os.environ.get({}, None))".format(val))
 
     def activate_call(self, script):
-        return "{} {}".format(self.quote(str(self.activate_cmd)), self.quote(str(script))).strip()
+        cmd = self.quote(six.ensure_text(str(self.activate_cmd)))
+        scr = self.quote(six.ensure_text(str(script)))
+        return "{} {}".format(cmd, scr).strip()
 
     @staticmethod
     def norm_path(path):
         # python may return Windows short paths, normalize
-        path = realpath(str(path))
+        path = realpath(six.ensure_text(str(path)) if isinstance(path, Path) else path)
         if sys.platform == "win32":
             from ctypes import create_unicode_buffer, windll
 
@@ -150,7 +161,7 @@ class RaiseOnNonSourceCall(ActivationTester):
         )
         out, err = process.communicate()
         assert process.returncode
-        assert self.non_source_fail_message in err
+        assert self.non_source_fail_message in six.ensure_text(err)
 
 
 @pytest.fixture(scope="session")
@@ -164,16 +175,16 @@ def raise_on_non_source_class():
 
 
 @pytest.fixture(scope="session")
-def activation_python(tmp_path_factory):
-    dest = tmp_path_factory.mktemp("a")
-    session = run_via_cli(["--seed", "none", str(dest)])
+def activation_python(tmp_path_factory, special_char_name):
+    dest = tmp_path_factory.mktemp(six.ensure_str(special_char_name))
+    session = run_via_cli(["--seed", "none", str(dest), "--prompt", special_char_name])
     pydoc_test = session.creator.site_packages[0] / "pydoc_test.py"
     pydoc_test.write_text('"""This is pydoc_test.py"""')
     return session
 
 
 @pytest.fixture()
-def activation_tester(activation_python, monkeypatch, tmp_path, is_inside_ci):
+def activation_tester(activation_python, monkeypatch, tmp_path, special_char_name, is_inside_ci):
     def _tester(tester_class):
         tester = tester_class(activation_python)
         if not tester.of_class.supports(activation_python.creator.interpreter):
@@ -181,6 +192,8 @@ def activation_tester(activation_python, monkeypatch, tmp_path, is_inside_ci):
         version = tester.get_version(raise_on_fail=is_inside_ci)
         if not isinstance(version, six.string_types):
             pytest.skip(msg=six.text_type(version))
-        return tester(monkeypatch, tmp_path)
+        folder = tmp_path / special_char_name
+        folder.mkdir()
+        return tester(monkeypatch, folder)
 
     return _tester
