@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
 import os
@@ -7,9 +8,9 @@ from functools import partial
 
 import coverage
 import pytest
-from pathlib2 import Path
 
 from virtualenv.interpreters.discovery.py_info import PythonInfo
+from virtualenv.util import Path
 
 
 @pytest.fixture(scope="session")
@@ -220,3 +221,8 @@ class EnableCoverage(object):
 @pytest.fixture(scope="session")
 def is_inside_ci():
     yield "CI_RUN" in os.environ
+
+
+@pytest.fixture(scope="session")
+def special_char_name():
+    return "🚒èрт$♞中片"

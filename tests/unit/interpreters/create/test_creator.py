@@ -7,7 +7,6 @@ import sys
 
 import pytest
 import six
-from pathlib2 import Path
 
 from virtualenv.__main__ import run
 from virtualenv.interpreters.create.creator import DEBUG_SCRIPT, get_env_debug_info
@@ -15,6 +14,7 @@ from virtualenv.interpreters.discovery.builtin import get_interpreter
 from virtualenv.interpreters.discovery.py_info import CURRENT, PythonInfo
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.run import run_via_cli, session_via_cli
+from virtualenv.util import Path
 
 
 def test_os_path_sep_not_allowed(tmp_path, capsys):
@@ -80,8 +80,9 @@ def cleanup_sys_path(path):
 @pytest.mark.parametrize(
     "use_venv", [False, True] if six.PY3 else [False], ids=["no_venv", "venv"] if six.PY3 else ["no_venv"]
 )
-def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env):
-    cmd = ["-v", "-v", "-p", str(python), str(tmp_path), "--without-pip", "--activators", ""]
+def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env, special_char_name):
+    dest = tmp_path / special_char_name
+    cmd = ["-v", "-v", "-p", str(python), str(dest), "--without-pip", "--activators", ""]
     if global_access:
         cmd.append("--system-site-packages")
     if use_venv:
@@ -91,7 +92,7 @@ def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env)
     for site_package in result.creator.site_packages:
         content = list(site_package.iterdir())
         assert not content, "\n".join(str(i) for i in content)
-    assert result.creator.env_name == tmp_path.name
+    assert result.creator.env_name == special_char_name
     sys_path = cleanup_sys_path(result.creator.debug["sys"]["path"])
     system_sys_path = cleanup_sys_path(SYSTEM["sys"]["path"])
     our_paths = set(sys_path) - set(system_sys_path)
@@ -101,7 +102,7 @@ def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env)
     assert len(our_paths) >= 1, our_paths_repr
     # ensure all additional paths are related to the virtual environment
     for path in our_paths:
-        assert str(path).startswith(str(tmp_path)), path
+        assert str(path).startswith(str(dest)), path
     # ensure there's at least a site-packages folder as part of the virtual environment added
     assert any(p for p in our_paths if p.parts[-1] == "site-packages"), our_paths_repr
 
@@ -116,7 +117,7 @@ def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env)
                 break
 
         def list_to_str(iterable):
-            return [str(i) for i in iterable]
+            return [six.ensure_text(str(i)) for i in iterable]
 
         assert common, "\n".join(difflib.unified_diff(list_to_str(sys_path), list_to_str(system_sys_path)))
     else:

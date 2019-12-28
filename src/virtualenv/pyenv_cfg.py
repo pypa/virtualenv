@@ -2,6 +2,8 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
+import six
+
 
 class PyEnvCfg(object):
     def __init__(self, content, path):
@@ -29,7 +31,7 @@ class PyEnvCfg(object):
 
     def write(self):
         with open(str(self.path), "wt") as file_handler:
-            logging.debug("write %s", self.path)
+            logging.debug("write %s", six.ensure_text(str(self.path)))
             for key, value in self.content.items():
                 line = "{} = {}".format(key, value)
                 logging.debug("\t%s", line)

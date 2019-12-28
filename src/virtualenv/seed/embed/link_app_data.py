@@ -9,10 +9,10 @@ import zipfile
 from shutil import copytree
 from textwrap import dedent
 
-from pathlib2 import Path
 from six import PY3
 
 from virtualenv.info import get_default_data_dir
+from virtualenv.util import Path
 
 from .base_embed import BaseEmbed
 from .wheels.acquire import get_wheel

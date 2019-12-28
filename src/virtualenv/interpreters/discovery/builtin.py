@@ -4,9 +4,8 @@ import logging
 import os
 import sys
 
-from pathlib2 import Path
-
 from virtualenv.info import IS_WIN
+from virtualenv.util import Path
 
 from .discover import Discover
 from .py_info import CURRENT, PythonInfo

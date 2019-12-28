@@ -3,9 +3,8 @@ from __future__ import absolute_import, unicode_literals
 import abc
 
 import six
-from pathlib2 import Path
 
-from virtualenv.util import copy
+from virtualenv.util import Path, copy
 
 from .common import CPython, CPythonPosix, CPythonWindows
 

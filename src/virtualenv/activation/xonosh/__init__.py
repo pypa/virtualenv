@@ -1,6 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
-from pathlib2 import Path
+from virtualenv.util import Path
 
 from ..via_template import ViaTemplateActivator
 
