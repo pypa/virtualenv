@@ -225,4 +225,4 @@ def is_inside_ci():
 
 @pytest.fixture(scope="session")
 def special_char_name():
-    return "🚒èрт$♞中片"
+    return "🚒èрт$♞中片 "
