@@ -1,9 +1,10 @@
 import six
+import sys
 
 if six.PY3:
     from pathlib import Path
 
-    if six.PY34:
+    if sys.version_info[0:2] == (3, 4):
         BuiltinPath = Path
 
         class Path(type(BuiltinPath())):

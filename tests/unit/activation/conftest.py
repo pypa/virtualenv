@@ -78,7 +78,7 @@ class ActivationTester(object):
         commands = self._get_test_lines(activate_script)
         script = os.linesep.join(commands)
         test_script = tmp_path / "script.{}".format(self.extension)
-        test_script.write_text(script)
+        test_script.write_text(script, encoding='utf-8')
         return test_script
 
     def _get_test_lines(self, activate_script):

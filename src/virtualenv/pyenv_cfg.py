@@ -30,7 +30,7 @@ class PyEnvCfg(object):
         return content
 
     def write(self):
-        with open(str(self.path), "wt") as file_handler:
+        with open(str(self.path), "w", encoding='utf-8') as file_handler:
             logging.debug("write %s", six.ensure_text(str(self.path)))
             for key, value in self.content.items():
                 line = "{} = {}".format(key, value)
