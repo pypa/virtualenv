@@ -9,10 +9,7 @@ from os import makedirs
 
 import six
 
-if six.PY3:
-    from pathlib import Path
-else:
-    from pathlib2 import Path
+from .path import Path
 
 
 def ensure_dir(path):
@@ -66,6 +63,5 @@ def run_cmd(cmd):
 
 symlink = partial(symlink_or_copy, False)
 copy = partial(symlink_or_copy, True)
-
 
 __all__ = ("Path", "symlink", "copy", "run_cmd", "ensure_dir")
