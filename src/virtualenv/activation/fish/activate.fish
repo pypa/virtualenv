@@ -11,7 +11,7 @@ function _bashify_path -d "Converts a fish path to something bash can recognize"
 end
 
 function _fishify_path -d "Converts a bash path to something fish can recognize"
-    echo $argv | string replace ':' '\n'
+    echo $argv | tr ':' '\n'
 end
 
 function deactivate -d 'Exit virtualenv mode and return to the normal environment.'
@@ -61,11 +61,11 @@ set -gx VIRTUAL_ENV '__VIRTUAL_ENV__'
 
 # https://github.com/fish-shell/fish-shell/issues/436 altered PATH handling
 if test (echo $FISH_VERSION | head -c 1) -lt 3
-   set -gx _OLD_VIRTUAL_PATH (_bashify_path "$PATH")
+   set -gx _OLD_VIRTUAL_PATH (_bashify_path $PATH)
 else
     set -gx _OLD_VIRTUAL_PATH "$PATH"
 end
-set -gx PATH "$VIRTUAL_ENV"'/__BIN_NAME__' "$PATH"
+set -gx PATH "$VIRTUAL_ENV"'/__BIN_NAME__' $PATH
 
 # Unset `$PYTHONHOME` if set.
 if set -q PYTHONHOME
