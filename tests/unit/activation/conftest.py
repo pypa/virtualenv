@@ -25,6 +25,7 @@ class ActivationTester(object):
         self.activate_cmd = "source"
         self.deactivate = "deactivate"
         self.pydoc_call = "pydoc -w pydoc_test"
+        self.script_encoding = "utf-8"
 
     def get_version(self, raise_on_fail):
         # locally we disable, so that contributors don't need to have everything setup
@@ -78,7 +79,7 @@ class ActivationTester(object):
         commands = self._get_test_lines(activate_script)
         script = os.linesep.join(commands)
         test_script = tmp_path / "script.{}".format(self.extension)
-        test_script.write_text(script, encoding="utf-8")
+        test_script.write_text(script, encoding=self.script_encoding)
         return test_script
 
     def _get_test_lines(self, activate_script):
