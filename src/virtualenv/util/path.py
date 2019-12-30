@@ -29,4 +29,8 @@ if six.PY3:
 else:
     from pathlib2 import Path
 
+    if sys.platform == "win32":
+        # workaround for https://github.com/mcmtroffaes/pathlib2/issues/56
+        sys.modules["pathlib2"].sys.getfilesystemencoding = lambda: "utf-8"
+
 __all__ = ("Path",)

@@ -30,13 +30,13 @@ class PyEnvCfg(object):
         return content
 
     def write(self):
-        with open(str(self.path), "w", encoding="utf-8") as file_handler:
+        with open(str(self.path), "wb") as file_handler:
             logging.debug("write %s", six.ensure_text(str(self.path)))
             for key, value in self.content.items():
                 line = "{} = {}".format(key, value)
                 logging.debug("\t%s", line)
-                file_handler.write(six.ensure_str(line))
-                file_handler.write("\n")
+                file_handler.write(line.encode("utf-8"))
+                file_handler.write(b"\n")
 
     def refresh(self):
         self.content = self._read_values(self.path)
