@@ -45,10 +45,10 @@ class ActivationTester(object):
     def __call__(self, monkeypatch, tmp_path):
         activate_script = self._creator.bin_dir / self.activate_script
         test_script = self._generate_test_script(activate_script, tmp_path)
-        monkeypatch.chdir(tmp_path)
+        monkeypatch.chdir(six.ensure_text(str(tmp_path)))
 
         monkeypatch.delenv(str("VIRTUAL_ENV"), raising=False)
-        invoke, env = self._invoke_script + [str(test_script)], self.env(tmp_path)
+        invoke, env = self._invoke_script + [six.ensure_text(str(test_script))], self.env(tmp_path)
 
         try:
             _raw = subprocess.check_output(invoke, stderr=subprocess.STDOUT, env=env)
@@ -69,7 +69,7 @@ class ActivationTester(object):
         env = os.environ.copy()
         # add the current python executable folder to the path so we already have another python on the path
         # also keep the path so the shells (fish, bash, etc can be discovered)
-        env[str("PYTHONIOENCODING")] = "utf-8"
+        env[str("PYTHONIOENCODING")] = str("utf-8")
         env[str("PATH")] = os.pathsep.join([dirname(sys.executable)] + env.get(str("PATH"), str("")).split(os.pathsep))
         # clear up some environment variables so they don't affect the tests
         for key in [k for k in env.keys() if k.startswith("_OLD") or k.startswith("VIRTUALENV_")]:
@@ -80,7 +80,8 @@ class ActivationTester(object):
         commands = self._get_test_lines(activate_script)
         script = os.linesep.join(commands)
         test_script = tmp_path / "script.{}".format(self.extension)
-        test_script.write_text(script, encoding=self.script_encoding)
+        with open(six.ensure_text(str(test_script)), 'wb') as file_handler:
+            file_handler.write(script.encode(self.script_encoding))
         return test_script
 
     def _get_test_lines(self, activate_script):
@@ -174,10 +175,11 @@ def raise_on_non_source_class():
 
 @pytest.fixture(scope="session")
 def activation_python(tmp_path_factory, special_char_name):
-    dest = tmp_path_factory.mktemp(six.ensure_str("env-{}-v".format(special_char_name)))
-    session = run_via_cli(["--seed", "none", str(dest), "--prompt", special_char_name])
+    dest = tmp_path_factory.mktemp('activation-tester-env') / six.ensure_text("env-{}-v".format(special_char_name))
+    session = run_via_cli(["--seed", "none", six.ensure_text(str(dest)), "--prompt", special_char_name])
     pydoc_test = session.creator.site_packages[0] / "pydoc_test.py"
-    pydoc_test.write_text('"""This is pydoc_test.py"""')
+    with open(six.ensure_text(str(pydoc_test)), 'wb') as file_handler:
+        file_handler.write('"""This is pydoc_test.py"""'.encode('utf-8'))
     return session
 
 
@@ -190,8 +192,6 @@ def activation_tester(activation_python, monkeypatch, tmp_path, special_char_nam
         version = tester.get_version(raise_on_fail=is_inside_ci)
         if not isinstance(version, six.string_types):
             pytest.skip(msg=six.text_type(version))
-        folder = tmp_path / "test-{}-env".format(special_char_name)
-        folder.mkdir()
-        return tester(monkeypatch, folder)
+        return tester(monkeypatch, tmp_path)
 
     return _tester

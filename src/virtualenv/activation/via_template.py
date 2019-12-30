@@ -35,4 +35,5 @@ class ViaTemplateActivator(Activator):
             text = pkgutil.get_data(self.__module__, str(template)).decode("utf-8")
             for start, end in replacements.items():
                 text = text.replace(start, end)
-            (to_folder / template).write_text(text, encoding="utf-8")
+            with open(six.ensure_text(str(to_folder / template)), 'wb') as file_handler:
+                file_handler.write(text.encode('utf-8'))
