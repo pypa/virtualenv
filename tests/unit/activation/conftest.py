@@ -69,6 +69,7 @@ class ActivationTester(object):
         env = os.environ.copy()
         # add the current python executable folder to the path so we already have another python on the path
         # also keep the path so the shells (fish, bash, etc can be discovered)
+        env[str("PYTHONIOENCODING")] = "utf-8"
         env[str("PATH")] = os.pathsep.join([dirname(sys.executable)] + env.get(str("PATH"), str("")).split(os.pathsep))
         # clear up some environment variables so they don't affect the tests
         for key in [k for k in env.keys() if k.startswith("_OLD") or k.startswith("VIRTUALENV_")]:

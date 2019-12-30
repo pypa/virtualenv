@@ -4,8 +4,9 @@ import logging
 import os
 import sys
 
+import six
+
 from virtualenv.info import IS_WIN
-from virtualenv.util import Path
 
 from .discover import Discover
 from .py_info import CURRENT, PythonInfo
@@ -63,7 +64,9 @@ def propose_interpreters(spec):
             yield interpreter, True
 
     paths = get_paths()
-    for path in paths:  # find on path, the path order matters (as the candidates are less easy to control by end user)
+    # find on path, the path order matters (as the candidates are less easy to control by end user)
+    for pos, path in enumerate(paths):
+        logging.debug(LazyPathDump(pos, path))
         for candidate, match in possible_specs(spec):
             found = check_path(candidate, path)
             if found is not None:
@@ -84,31 +87,25 @@ def get_paths():
         paths = []
     else:
         paths = [p for p in path.split(os.pathsep) if os.path.exists(p)]
-    logging.debug(LazyPathDump(paths))
     return paths
 
 
 class LazyPathDump(object):
-    def __init__(self, paths):
-        self.paths = paths
+    def __init__(self, pos, path):
+        self.pos = pos
+        self.path = path
 
     def __str__(self):
-        content = "PATH =>{}".format(os.linesep)
-        for i, p in enumerate(self.paths):
-            files = []
-            for file in Path(p).iterdir():
-                try:
-                    if file.is_dir():
-                        continue
-                except OSError:
-                    pass
-                files.append(file.name)
-            content += str(i)
+        content = "discover from PATH[{}]:{} with =>".format(self.pos, self.path)
+        for file in os.listdir(six.ensure_text(self.path)):
+            try:
+                file_path = os.path.join(self.path, file)
+                if os.path.isdir(file_path) or not os.access(file_path, os.X_OK):
+                    continue
+            except OSError:
+                pass
             content += " "
-            content += str(p)
-            content += " with "
-            content += " ".join(files)
-            content += os.linesep
+            content += file
         return content
 
 
