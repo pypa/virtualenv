@@ -22,7 +22,7 @@ class PyEnvCfg(object):
     @staticmethod
     def _read_values(path):
         content = {}
-        for line in path.read_text().splitlines():
+        for line in path.read_text(encoding="utf-8").splitlines():
             equals_at = line.index("=")
             key = line[:equals_at].strip()
             value = line[equals_at + 1 :].strip()
@@ -30,7 +30,7 @@ class PyEnvCfg(object):
         return content
 
     def write(self):
-        with open(str(self.path), "w", encoding='utf-8') as file_handler:
+        with open(str(self.path), "w", encoding="utf-8") as file_handler:
             logging.debug("write %s", six.ensure_text(str(self.path)))
             for key, value in self.content.items():
                 line = "{} = {}".format(key, value)

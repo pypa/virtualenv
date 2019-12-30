@@ -172,7 +172,7 @@ def create_console_entry_point(bin_dir, name, value, env_exe, creator):
             "{}-{}.{}".format(name, version.major, version.minor),
         ):
             exe = bin_dir / new_name
-            exe.write_text(content, encoding='utf-8')
+            exe.write_text(content, encoding="utf-8")
             exe.chmod(0o755)
             result.append(exe)
     return result
@@ -210,7 +210,7 @@ def fix_records(creator, dist_info, site_package, folder_linked, added, extra_fi
 
     record = dist_info / "RECORD"
     content = ("" if folder_linked else record.read_text()) + "\n".join(new_records)
-    record.write_text(content, encoding='utf-8')
+    record.write_text(content, encoding="utf-8")
 
 
 def add_record_line(name):

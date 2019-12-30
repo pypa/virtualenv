@@ -50,13 +50,13 @@ class ActivationTester(object):
         invoke, env = self._invoke_script + [str(test_script)], self.env(tmp_path)
 
         try:
-            _raw = subprocess.check_output(invoke, universal_newlines=True, stderr=subprocess.STDOUT, env=env)
-            raw = "\n{}".format(six.ensure_text(_raw))
+            _raw = subprocess.check_output(invoke, stderr=subprocess.STDOUT, env=env)
+            raw = "\n{}".format(_raw.decode("utf-8"))
         except subprocess.CalledProcessError as exception:
             assert not exception.returncode, six.ensure_text(exception.output)
             return
 
-        out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, re.M).strip().split("\n")
+        out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, re.M).strip().split(os.linesep)
         self.assert_output(out, raw, tmp_path)
         return env, activate_script
 
@@ -78,7 +78,7 @@ class ActivationTester(object):
         commands = self._get_test_lines(activate_script)
         script = os.linesep.join(commands)
         test_script = tmp_path / "script.{}".format(self.extension)
-        test_script.write_text(script, encoding='utf-8')
+        test_script.write_text(script, encoding="utf-8")
         return test_script
 
     def _get_test_lines(self, activate_script):
@@ -153,15 +153,11 @@ class RaiseOnNonSourceCall(ActivationTester):
     def __call__(self, monkeypatch, tmp_path):
         env, activate_script = super(RaiseOnNonSourceCall, self).__call__(monkeypatch, tmp_path)
         process = subprocess.Popen(
-            self.non_source_activate(activate_script),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=env,
-            universal_newlines=True,
+            self.non_source_activate(activate_script), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
         )
         out, err = process.communicate()
         assert process.returncode
-        assert self.non_source_fail_message in six.ensure_text(err)
+        assert self.non_source_fail_message in err.decode("utf-8")
 
 
 @pytest.fixture(scope="session")
@@ -176,7 +172,7 @@ def raise_on_non_source_class():
 
 @pytest.fixture(scope="session")
 def activation_python(tmp_path_factory, special_char_name):
-    dest = tmp_path_factory.mktemp(six.ensure_str(special_char_name))
+    dest = tmp_path_factory.mktemp(six.ensure_str("env-{}-v".format(special_char_name)))
     session = run_via_cli(["--seed", "none", str(dest), "--prompt", special_char_name])
     pydoc_test = session.creator.site_packages[0] / "pydoc_test.py"
     pydoc_test.write_text('"""This is pydoc_test.py"""')
@@ -192,7 +188,7 @@ def activation_tester(activation_python, monkeypatch, tmp_path, special_char_nam
         version = tester.get_version(raise_on_fail=is_inside_ci)
         if not isinstance(version, six.string_types):
             pytest.skip(msg=six.text_type(version))
-        folder = tmp_path / special_char_name
+        folder = tmp_path / "test-{}-env".format(special_char_name)
         folder.mkdir()
         return tester(monkeypatch, folder)
 

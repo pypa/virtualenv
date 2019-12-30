@@ -1,5 +1,6 @@
-import six
 import sys
+
+import six
 
 if six.PY3:
     from pathlib import Path
