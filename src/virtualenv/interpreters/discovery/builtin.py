@@ -66,6 +66,7 @@ def propose_interpreters(spec):
     paths = get_paths()
     # find on path, the path order matters (as the candidates are less easy to control by end user)
     for pos, path in enumerate(paths):
+        path = six.ensure_text(path)
         logging.debug(LazyPathDump(pos, path))
         for candidate, match in possible_specs(spec):
             found = check_path(candidate, path)
@@ -97,15 +98,15 @@ class LazyPathDump(object):
 
     def __str__(self):
         content = "discover from PATH[{}]:{} with =>".format(self.pos, self.path)
-        for file in os.listdir(six.ensure_text(self.path)):
+        for file_name in os.listdir(self.path):
             try:
-                file_path = os.path.join(self.path, file)
+                file_path = os.path.join(self.path, file_name)
                 if os.path.isdir(file_path) or not os.access(file_path, os.X_OK):
                     continue
             except OSError:
                 pass
             content += " "
-            content += file
+            content += file_name
         return content
 
 

@@ -218,7 +218,17 @@ def cross_python(is_inside_ci):
 
 
 def test_cross_major(cross_python, coverage_env, tmp_path):
-    cmd = ["-v", "-v", "-p", str(cross_python.executable), str(tmp_path), "--seeder", "none", "--activators", ""]
+    cmd = [
+        "-v",
+        "-v",
+        "-p",
+        six.ensure_text(cross_python.executable),
+        six.ensure_text(str(tmp_path)),
+        "--seeder",
+        "none",
+        "--activators",
+        "",
+    ]
     result = run_via_cli(cmd)
     coverage_env()
     env = PythonInfo.from_exe(str(result.creator.exe))

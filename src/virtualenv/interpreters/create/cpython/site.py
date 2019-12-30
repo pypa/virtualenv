@@ -9,9 +9,9 @@ import sys
 def main():
     """Patch what needed, and invoke the original site.py"""
     config = read_pyvenv()
-    sys.real_prefix = sys.base_prefix = config[u"base-prefix"]
-    sys.base_exec_prefix = config[u"base-exec-prefix"]
-    global_site_package_enabled = config.get(u"include-system-site-packages", False) == u"true"
+    sys.real_prefix = sys.base_prefix = config["base-prefix"]
+    sys.base_exec_prefix = config["base-exec-prefix"]
+    global_site_package_enabled = config.get("include-system-site-packages", False) == "true"
     rewrite_standard_library_sys_path()
     disable_user_site_package()
     load_host_site()
@@ -38,14 +38,14 @@ def load_host_site():
 
 def read_pyvenv():
     """read pyvenv.cfg"""
-    os_sep = u"\\" if sys.platform == "win32" else u"/"  # no os module here yet - poor mans version
-    config_file = u"{}{}pyvenv.cfg".format(sys.prefix.decode(sys.getfilesystemencoding()), os_sep)
-    with open(config_file, 'rb') as file_handler:
-        lines = file_handler.read().decode('utf-8').splitlines()
+    os_sep = "\\" if sys.platform == "win32" else "/"  # no os module here yet - poor mans version
+    config_file = "{}{}pyvenv.cfg".format(sys.prefix, os_sep)
+    with open(config_file) as file_handler:
+        lines = file_handler.readlines()
     config = {}
     for line in lines:
         try:
-            split_at = line.index(u"=")
+            split_at = line.index("=")
         except ValueError:
             continue  # ignore bad/empty lines
         else:
@@ -55,9 +55,8 @@ def read_pyvenv():
 
 def rewrite_standard_library_sys_path():
     """Once this site file is loaded the standard library paths have already been set, fix them up"""
-    sep = u"\\" if sys.platform == "win32" else u"/"
-    exe = sys.executable.decode(sys.getfilesystemencoding())
-    exe_dir = exe[: exe.rfind(sep)]
+    sep = "\\" if sys.platform == "win32" else "/"
+    exe_dir = sys.executable[: sys.executable.rfind(sep)]
     for at, value in enumerate(sys.path):
         # replace old sys prefix path starts with new
         if value == exe_dir:
