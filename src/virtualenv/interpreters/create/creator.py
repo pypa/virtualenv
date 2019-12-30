@@ -55,6 +55,13 @@ class Creator(object):
                     "destination {!r} must not contain the path separator ({}) as this would break "
                     "the activation scripts".format(raw_value, os.pathsep)
                 )
+            if six.PY2 and sys.platform == "win32":
+                path_converted = raw_value.encode("mbcs")
+                if path_converted != raw_value:
+                    raise ArgumentTypeError(
+                        "mbcs (path encoder for CPython2.7 on Windows) does not support one or more characters"
+                    )
+
             value = Path(raw_value)
             if value.exists() and value.is_file():
                 raise ArgumentTypeError("the destination {} already exists and is a file".format(value))

@@ -31,6 +31,8 @@ else:
 
     if sys.platform == "win32":
         # workaround for https://github.com/mcmtroffaes/pathlib2/issues/56
-        sys.modules["pathlib2"].sys.getfilesystemencoding = lambda: "utf-8"
+        class Path(object):
+            pass
+
 
 __all__ = ("Path",)
