@@ -73,7 +73,7 @@ class Creator(object):
             value = dest
             while dest:
                 if dest.exists():
-                    if os.access(str(dest), os.W_OK):
+                    if os.access(six.ensure_text(str(dest)), os.W_OK):
                         break
                     else:
                         non_write_able(dest, value)
