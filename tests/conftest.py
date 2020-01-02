@@ -227,14 +227,16 @@ def is_inside_ci():
 @pytest.fixture(scope="session")
 def special_char_name():
     base = "$ èрт🚒♞中片"
+    encoding = sys.getfilesystemencoding()
     if sys.platform == "win32" and six.PY2:
-        # PY2 windows uses mbcs as path encoder, so don't try to use what's not encode-able by that
+        # let's not include characters that the file system cannot encode)
         result = ""
         for char in base:
-            encoded = char.encode("mbcs", errors="ignore")
+            encoded = char.encode(encoding, errors="ignore")
             if char == "?" or encoded != six.ensure_str("?"):
                 result += char
         base = result
+        assert base
     return base
 
 

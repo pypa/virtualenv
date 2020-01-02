@@ -54,13 +54,26 @@ class Creator(object):
 
     @classmethod
     def validate_dest_dir(cls, raw_value):
+        """No path separator in the path, valid chars and must be write-able"""
+
         def non_write_able(dest, value):
             common = Path(*os.path.commonprefix([value.parts, dest.parts]))
             raise ArgumentTypeError(
                 "the destination {} is not write-able at {}".format(dest.relative_to(common), common)
             )
 
-        """No path separator in the path and must be write-able"""
+        # the file system must be able to encode
+        encoding = sys.getfilesystemencoding()
+        path_converted = raw_value.encode(encoding, errors="ignore").decode(encoding)
+        if path_converted != raw_value:
+            refused = set(raw_value) - {
+                c
+                for c, i in ((char, char.encode(encoding)) for char in raw_value)
+                if c == "?" or i != six.ensure_str("?")
+            }
+            raise ArgumentTypeError(
+                "the file system codec ({}) does not support characters {!r}".format(encoding, refused)
+            )
         if os.pathsep in raw_value:
             raise ArgumentTypeError(
                 "destination {!r} must not contain the path separator ({}) as this would break "
