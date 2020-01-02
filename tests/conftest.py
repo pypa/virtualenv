@@ -228,16 +228,17 @@ def is_inside_ci():
 def special_char_name():
     base = "$ èрт🚒♞中片"
     encoding = sys.getfilesystemencoding()
-    if sys.platform == "win32" and six.PY2:
-        # let's not include characters that the file system cannot encode)
-        result = ""
-        for char in base:
-            encoded = char.encode(encoding, errors="ignore")
-            if char == "?" or encoded != six.ensure_str("?"):
+    # let's not include characters that the file system cannot encode)
+    result = ""
+    for char in base:
+        try:
+            encoded = char.encode(encoding, errors="strict")
+            if char == "?" or encoded != b"?":  # mbcs notably on Python 2 uses replace even for strict
                 result += char
-        base = result
-        assert base
-    return base
+        except ValueError:
+            continue
+    assert result
+    return result
 
 
 @pytest.fixture()
