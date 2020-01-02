@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import os
 import pipes
 import re
+import shutil
 import subprocess
 import sys
 from os.path import dirname, normcase, realpath
@@ -11,6 +12,8 @@ import pytest
 import six
 
 from virtualenv.run import run_via_cli
+from virtualenv.util import Path
+from virtualenv.util.subprocess import Popen
 
 
 class ActivationTester(object):
@@ -24,11 +27,16 @@ class ActivationTester(object):
         self.activate_cmd = "source"
         self.deactivate = "deactivate"
         self.pydoc_call = "pydoc -w pydoc_test"
+        self.script_encoding = "utf-8"
 
     def get_version(self, raise_on_fail):
         # locally we disable, so that contributors don't need to have everything setup
         try:
-            return subprocess.check_output(self._version_cmd, universal_newlines=True)
+            process = Popen(self._version_cmd, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = process.communicate()
+            if out:
+                return out
+            return err
         except Exception as exception:
             if raise_on_fail:
                 raise
@@ -37,16 +45,19 @@ class ActivationTester(object):
     def __call__(self, monkeypatch, tmp_path):
         activate_script = self._creator.bin_dir / self.activate_script
         test_script = self._generate_test_script(activate_script, tmp_path)
-        monkeypatch.chdir(tmp_path)
+        monkeypatch.chdir(six.ensure_text(str(tmp_path)))
 
         monkeypatch.delenv(str("VIRTUAL_ENV"), raising=False)
-        invoke, env = self._invoke_script + [str(test_script)], self.env(tmp_path)
+        invoke, env = self._invoke_script + [six.ensure_text(str(test_script))], self.env(tmp_path)
 
         try:
-            raw = subprocess.check_output(invoke, universal_newlines=True, stderr=subprocess.STDOUT, env=env)
+            process = Popen(invoke, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
+            _raw, _ = process.communicate()
+            raw = "\n{}".format(_raw.decode("utf-8")).replace("\r\n", "\n")
         except subprocess.CalledProcessError as exception:
-            assert not exception.returncode, exception.output
+            assert not exception.returncode, six.ensure_text(exception.output)
             return
+
         out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, re.M).strip().split("\n")
         self.assert_output(out, raw, tmp_path)
         return env, activate_script
@@ -59,6 +70,7 @@ class ActivationTester(object):
         env = os.environ.copy()
         # add the current python executable folder to the path so we already have another python on the path
         # also keep the path so the shells (fish, bash, etc can be discovered)
+        env[str("PYTHONIOENCODING")] = str("utf-8")
         env[str("PATH")] = os.pathsep.join([dirname(sys.executable)] + env.get(str("PATH"), str("")).split(os.pathsep))
         # clear up some environment variables so they don't affect the tests
         for key in [k for k in env.keys() if k.startswith("_OLD") or k.startswith("VIRTUALENV_")]:
@@ -69,7 +81,8 @@ class ActivationTester(object):
         commands = self._get_test_lines(activate_script)
         script = os.linesep.join(commands)
         test_script = tmp_path / "script.{}".format(self.extension)
-        test_script.write_text(script)
+        with open(six.ensure_text(str(test_script)), "wb") as file_handler:
+            file_handler.write(script.encode(self.script_encoding))
         return test_script
 
     def _get_test_lines(self, activate_script):
@@ -109,19 +122,28 @@ class ActivationTester(object):
         return "{} -c {}".format(os.path.basename(sys.executable), self.quote(cmd))
 
     def print_python_exe(self):
-        return self.python_cmd("import sys; print(sys.executable)")
+        return self.python_cmd(
+            "import sys; e = sys.executable;"
+            "print(e.decode(sys.getfilesystemencoding()) if sys.version_info[0] == 2 else e)"
+        )
 
     def print_os_env_var(self, var):
         val = '"{}"'.format(var)
-        return self.python_cmd("import os; print(os.environ.get({}, None))".format(val))
+        return self.python_cmd(
+            "import os; import sys; v = os.environ.get({}, None);"
+            "print(v if v is None else "
+            "(v.decode(sys.getfilesystemencoding()) if sys.version_info[0] == 2 else v))".format(val)
+        )
 
     def activate_call(self, script):
-        return "{} {}".format(self.quote(str(self.activate_cmd)), self.quote(str(script))).strip()
+        cmd = self.quote(six.ensure_text(str(self.activate_cmd)))
+        scr = self.quote(six.ensure_text(str(script)))
+        return "{} {}".format(cmd, scr).strip()
 
     @staticmethod
     def norm_path(path):
         # python may return Windows short paths, normalize
-        path = realpath(str(path))
+        path = realpath(six.ensure_text(str(path)) if isinstance(path, Path) else path)
         if sys.platform == "win32":
             from ctypes import create_unicode_buffer, windll
 
@@ -141,16 +163,12 @@ class RaiseOnNonSourceCall(ActivationTester):
 
     def __call__(self, monkeypatch, tmp_path):
         env, activate_script = super(RaiseOnNonSourceCall, self).__call__(monkeypatch, tmp_path)
-        process = subprocess.Popen(
-            self.non_source_activate(activate_script),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=env,
-            universal_newlines=True,
+        process = Popen(
+            self.non_source_activate(activate_script), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
         )
         out, err = process.communicate()
         assert process.returncode
-        assert self.non_source_fail_message in err
+        assert self.non_source_fail_message in err.decode("utf-8")
 
 
 @pytest.fixture(scope="session")
@@ -164,12 +182,18 @@ def raise_on_non_source_class():
 
 
 @pytest.fixture(scope="session")
-def activation_python(tmp_path_factory):
-    dest = tmp_path_factory.mktemp("a")
-    session = run_via_cli(["--seed", "none", str(dest)])
+def activation_python(tmp_path_factory, special_char_name):
+    dest = os.path.join(
+        six.ensure_text(str(tmp_path_factory.mktemp("activation-tester-env"))),
+        six.ensure_text("env-{}-v".format(special_char_name)),
+    )
+    session = run_via_cli(["--seed", "none", dest, "--prompt", special_char_name])
     pydoc_test = session.creator.site_packages[0] / "pydoc_test.py"
-    pydoc_test.write_text('"""This is pydoc_test.py"""')
-    return session
+    with open(six.ensure_text(str(pydoc_test)), "wb") as file_handler:
+        file_handler.write(b'"""This is pydoc_test.py"""')
+    yield session
+    if six.PY2 and sys.platform == "win32":  # PY2 windows does not support unicode delete
+        shutil.rmtree(dest)
 
 
 @pytest.fixture()

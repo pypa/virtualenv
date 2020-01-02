@@ -3,9 +3,8 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import os
 
-from pathlib2 import Path
-
 from virtualenv.info import PY3, get_default_config_dir
+from virtualenv.util import Path
 
 from .convert import convert
 

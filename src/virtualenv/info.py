@@ -3,7 +3,8 @@ from __future__ import absolute_import, unicode_literals
 import sys
 
 from appdirs import user_config_dir, user_data_dir
-from pathlib2 import Path
+
+from virtualenv.util import Path
 
 IS_PYPY = hasattr(sys, "pypy_version_info")
 PY3 = sys.version_info[0] == 3

@@ -4,10 +4,9 @@ import abc
 from os import X_OK, access, chmod
 
 import six
-from pathlib2 import Path
 
 from virtualenv.interpreters.create.via_global_ref import ViaGlobalRef
-from virtualenv.util import copy, ensure_dir, symlink
+from virtualenv.util import Path, copy, ensure_dir, symlink
 
 
 @six.add_metaclass(abc.ABCMeta)

@@ -47,7 +47,7 @@ class Venv(ViaGlobalRef):
             raise ProcessCallFailed(code, out, err, cmd)
 
     def get_host_create_cmd(self):
-        cmd = [str(self.interpreter.system_executable), "-m", "venv", "--without-pip"]
+        cmd = [self.interpreter.system_executable, "-m", "venv", "--without-pip"]
         if self.system_site_package:
             cmd.append("--system-site-packages")
         cmd.append("--symlinks" if self.symlinks else "--copies")

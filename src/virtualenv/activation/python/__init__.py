@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import json
 import os
 
-from pathlib2 import Path
+from virtualenv.util import Path
 
 from ..via_template import ViaTemplateActivator
 

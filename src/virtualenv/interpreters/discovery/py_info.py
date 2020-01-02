@@ -10,11 +10,8 @@ import json
 import logging
 import os
 import platform
-import subprocess
 import sys
 from collections import OrderedDict, namedtuple
-
-IS_WIN = sys.platform == "win32"
 
 VersionInfo = namedtuple("VersionInfo", ["major", "minor", "micro", "releaselevel", "serial"])
 
@@ -205,12 +202,14 @@ class PythonInfo(object):
 
     @classmethod
     def _load_for_exe(cls, exe):
+        from virtualenv.util.subprocess import subprocess, Popen
+
         path = "{}.py".format(os.path.splitext(__file__)[0])
         cmd = [exe, path]
         # noinspection DuplicatedCode
         # this is duplicated here because this file is executed on its own, so cannot be refactored otherwise
         try:
-            process = subprocess.Popen(
+            process = Popen(
                 cmd, universal_newlines=True, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE
             )
             out, err = process.communicate()

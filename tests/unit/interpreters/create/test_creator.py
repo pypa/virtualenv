@@ -7,7 +7,6 @@ import sys
 
 import pytest
 import six
-from pathlib2 import Path
 
 from virtualenv.__main__ import run
 from virtualenv.interpreters.create.creator import DEBUG_SCRIPT, get_env_debug_info
@@ -15,6 +14,7 @@ from virtualenv.interpreters.discovery.builtin import get_interpreter
 from virtualenv.interpreters.discovery.py_info import CURRENT, PythonInfo
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.run import run_via_cli, session_via_cli
+from virtualenv.util import Path
 
 
 def test_os_path_sep_not_allowed(tmp_path, capsys):
@@ -57,31 +57,28 @@ def test_destination_not_write_able(tmp_path, capsys):
         target.chmod(prev_mod)
 
 
-SYSTEM = get_env_debug_info(CURRENT.system_executable, DEBUG_SCRIPT)
+SYSTEM = get_env_debug_info(Path(CURRENT.system_executable), DEBUG_SCRIPT)
 
 
-def cleanup_sys_path(path):
+def cleanup_sys_path(paths):
     from virtualenv.interpreters.create.creator import HERE
 
-    path = [Path(i).absolute() for i in path]
+    paths = [Path(i).absolute() for i in paths]
     to_remove = [Path(HERE)]
     if str("PYCHARM_HELPERS_DIR") in os.environ:
-        to_remove.append(Path(os.environ[str("PYCHARM_HELPERS_DIR")]).parent / "pydev")
-    for elem in to_remove:
-        try:
-            index = path.index(elem)
-            del path[index]
-        except ValueError:
-            pass
-    return path
+        to_remove.append(Path(os.environ[str("PYCHARM_HELPERS_DIR")]).parent)
+        to_remove.append(Path(os.path.expanduser("~")) / ".PyCharm")
+    result = [i for i in paths if not any(str(i).startswith(str(t)) for t in to_remove)]
+    return result
 
 
 @pytest.mark.parametrize("global_access", [False, True], ids=["no_global", "ok_global"])
 @pytest.mark.parametrize(
     "use_venv", [False, True] if six.PY3 else [False], ids=["no_venv", "venv"] if six.PY3 else ["no_venv"]
 )
-def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env):
-    cmd = ["-v", "-v", "-p", str(python), str(tmp_path), "--without-pip", "--activators", ""]
+def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env, special_name_dir):
+    dest = special_name_dir
+    cmd = ["-v", "-v", "-p", six.ensure_text(python), six.ensure_text(str(dest)), "--without-pip", "--activators", ""]
     if global_access:
         cmd.append("--system-site-packages")
     if use_venv:
@@ -91,17 +88,20 @@ def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env)
     for site_package in result.creator.site_packages:
         content = list(site_package.iterdir())
         assert not content, "\n".join(str(i) for i in content)
-    assert result.creator.env_name == tmp_path.name
-    sys_path = cleanup_sys_path(result.creator.debug["sys"]["path"])
+    assert result.creator.env_name == six.ensure_text(dest.name)
+    debug = result.creator.debug
+    sys_path = cleanup_sys_path(debug["sys"]["path"])
     system_sys_path = cleanup_sys_path(SYSTEM["sys"]["path"])
     our_paths = set(sys_path) - set(system_sys_path)
-    our_paths_repr = "\n".join(repr(i) for i in our_paths)
+    our_paths_repr = "\n".join(six.ensure_text(repr(i)) for i in our_paths)
 
     # ensure we have at least one extra path added
     assert len(our_paths) >= 1, our_paths_repr
     # ensure all additional paths are related to the virtual environment
     for path in our_paths:
-        assert str(path).startswith(str(tmp_path)), path
+        assert str(path).startswith(str(dest)), "{} does not start with {}".format(
+            six.ensure_text(str(path)), six.ensure_text(str(dest))
+        )
     # ensure there's at least a site-packages folder as part of the virtual environment added
     assert any(p for p in our_paths if p.parts[-1] == "site-packages"), our_paths_repr
 
@@ -116,7 +116,7 @@ def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env)
                 break
 
         def list_to_str(iterable):
-            return [str(i) for i in iterable]
+            return [six.ensure_text(str(i)) for i in iterable]
 
         assert common, "\n".join(difflib.unified_diff(list_to_str(sys_path), list_to_str(system_sys_path)))
     else:
@@ -217,7 +217,17 @@ def cross_python(is_inside_ci):
 
 
 def test_cross_major(cross_python, coverage_env, tmp_path):
-    cmd = ["-v", "-v", "-p", str(cross_python.executable), str(tmp_path), "--seeder", "none", "--activators", ""]
+    cmd = [
+        "-v",
+        "-v",
+        "-p",
+        six.ensure_text(cross_python.executable),
+        six.ensure_text(str(tmp_path)),
+        "--seeder",
+        "none",
+        "--activators",
+        "",
+    ]
     result = run_via_cli(cmd)
     coverage_env()
     env = PythonInfo.from_exe(str(result.creator.exe))

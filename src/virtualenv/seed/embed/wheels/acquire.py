@@ -1,11 +1,11 @@
 """Bootstrap"""
 from __future__ import absolute_import, unicode_literals
 
-import subprocess
 from collections import defaultdict
 from shutil import copy2
 
-from pathlib2 import Path
+from virtualenv.util import Path
+from virtualenv.util.subprocess import subprocess
 
 from . import BUNDLE_SUPPORT, MAX
 
