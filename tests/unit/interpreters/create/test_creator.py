@@ -88,7 +88,7 @@ def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env,
     for site_package in result.creator.site_packages:
         content = list(site_package.iterdir())
         assert not content, "\n".join(str(i) for i in content)
-    assert result.creator.env_name == dest.name
+    assert result.creator.env_name == six.ensure_text(dest.name)
     debug = result.creator.debug
     sys_path = cleanup_sys_path(debug["sys"]["path"])
     system_sys_path = cleanup_sys_path(SYSTEM["sys"]["path"])

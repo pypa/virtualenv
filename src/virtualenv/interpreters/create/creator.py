@@ -63,6 +63,7 @@ class Creator(object):
             )
 
         # the file system must be able to encode
+        # note in newer CPython this is always utf-8 https://www.python.org/dev/peps/pep-0529/
         encoding = sys.getfilesystemencoding()
         path_converted = raw_value.encode(encoding, errors="ignore").decode(encoding)
         if path_converted != raw_value:
