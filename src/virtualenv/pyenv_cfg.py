@@ -2,6 +2,8 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
+import six
+
 
 class PyEnvCfg(object):
     def __init__(self, content, path):
@@ -20,7 +22,7 @@ class PyEnvCfg(object):
     @staticmethod
     def _read_values(path):
         content = {}
-        for line in path.read_text().splitlines():
+        for line in path.read_text(encoding="utf-8").splitlines():
             equals_at = line.index("=")
             key = line[:equals_at].strip()
             value = line[equals_at + 1 :].strip()
@@ -28,13 +30,13 @@ class PyEnvCfg(object):
         return content
 
     def write(self):
-        with open(str(self.path), "wt") as file_handler:
-            logging.debug("write %s", self.path)
+        with open(six.ensure_text(str(self.path)), "wb") as file_handler:
+            logging.debug("write %s", six.ensure_text(str(self.path)))
             for key, value in self.content.items():
                 line = "{} = {}".format(key, value)
                 logging.debug("\t%s", line)
-                file_handler.write(line)
-                file_handler.write("\n")
+                file_handler.write(line.encode("utf-8"))
+                file_handler.write(b"\n")
 
     def refresh(self):
         self.content = self._read_values(self.path)

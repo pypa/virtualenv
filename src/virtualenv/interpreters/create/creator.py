@@ -4,15 +4,16 @@ import json
 import logging
 import os
 import shutil
+import sys
 from abc import ABCMeta, abstractmethod
 from argparse import ArgumentTypeError
 
-from pathlib2 import Path
+import six
 from six import add_metaclass
 
 from virtualenv.info import IS_WIN
 from virtualenv.pyenv_cfg import PyEnvCfg
-from virtualenv.util import run_cmd
+from virtualenv.util import Path, run_cmd
 from virtualenv.version import __version__
 
 HERE = Path(__file__).absolute().parent
@@ -47,28 +48,13 @@ class Creator(object):
             help="Give the virtual environment access to the system site-packages dir.",
         )
 
-        def validate_dest_dir(value):
-            """No path separator in the path and must be write-able"""
-            if os.pathsep in value:
-                raise ArgumentTypeError(
-                    "destination {!r} must not contain the path separator ({}) as this would break "
-                    "the activation scripts".format(value, os.pathsep)
-                )
-            value = Path(value)
-            if value.exists() and value.is_file():
-                raise ArgumentTypeError("the destination {} already exists and is a file".format(value))
-            value = dest = value.resolve()
-            while dest:
-                if dest.exists():
-                    if os.access(str(dest), os.W_OK):
-                        break
-                    else:
-                        non_write_able(dest, value)
-                base, _ = dest.parent, dest.name
-                if base == dest:
-                    non_write_able(dest, value)  # pragma: no cover
-                dest = base
-            return str(value)
+        parser.add_argument(
+            "dest_dir", help="directory to create virtualenv at", type=cls.validate_dest_dir, default="env", nargs="?",
+        )
+
+    @classmethod
+    def validate_dest_dir(cls, raw_value):
+        """No path separator in the path, valid chars and must be write-able"""
 
         def non_write_able(dest, value):
             common = Path(*os.path.commonprefix([value.parts, dest.parts]))
@@ -76,9 +62,45 @@ class Creator(object):
                 "the destination {} is not write-able at {}".format(dest.relative_to(common), common)
             )
 
-        parser.add_argument(
-            "dest_dir", help="directory to create virtualenv at", type=validate_dest_dir, default="env", nargs="?",
-        )
+        # the file system must be able to encode
+        # note in newer CPython this is always utf-8 https://www.python.org/dev/peps/pep-0529/
+        encoding = sys.getfilesystemencoding()
+        path_converted = raw_value.encode(encoding, errors="ignore").decode(encoding)
+        if path_converted != raw_value:
+            refused = set(raw_value) - {
+                c
+                for c, i in ((char, char.encode(encoding)) for char in raw_value)
+                if c == "?" or i != six.ensure_str("?")
+            }
+            raise ArgumentTypeError(
+                "the file system codec ({}) does not support characters {!r}".format(encoding, refused)
+            )
+        if os.pathsep in raw_value:
+            raise ArgumentTypeError(
+                "destination {!r} must not contain the path separator ({}) as this would break "
+                "the activation scripts".format(raw_value, os.pathsep)
+            )
+
+        value = Path(raw_value)
+        if value.exists() and value.is_file():
+            raise ArgumentTypeError("the destination {} already exists and is a file".format(value))
+        if (3, 3) <= sys.version_info <= (3, 6):
+            # pre 3.6 resolve is always strict, aka must exists, sidestep by using os.path operation
+            dest = Path(os.path.realpath(raw_value))
+        else:
+            dest = value.resolve()
+        value = dest
+        while dest:
+            if dest.exists():
+                if os.access(six.ensure_text(str(dest)), os.W_OK):
+                    break
+                else:
+                    non_write_able(dest, value)
+            base, _ = dest.parent, dest.name
+            if base == dest:
+                non_write_able(dest, value)  # pragma: no cover
+            dest = base
+        return str(value)
 
     def run(self):
         if self.dest_dir.exists() and self.clear:
@@ -104,7 +126,7 @@ class Creator(object):
 
     @property
     def env_name(self):
-        return self.dest_dir.parts[-1]
+        return six.ensure_text(self.dest_dir.parts[-1])
 
     @property
     def bin_name(self):
@@ -138,8 +160,8 @@ class Creator(object):
 
 
 def get_env_debug_info(env_exe, debug_script):
-    cmd = [str(env_exe), str(debug_script)]
-    logging.debug(" ".join(cmd))
+    cmd = [six.ensure_text(str(env_exe)), six.ensure_text(str(debug_script))]
+    logging.debug(" ".join(six.ensure_text(i) for i in cmd))
     env = os.environ.copy()
     env.pop("PYTHONPATH", None)
     code, out, err = run_cmd(cmd)

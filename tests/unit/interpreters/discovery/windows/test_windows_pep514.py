@@ -7,7 +7,8 @@ from contextlib import contextmanager
 
 import pytest
 import six
-from pathlib2 import Path
+
+from virtualenv.util import Path
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows registry only on Windows platform")

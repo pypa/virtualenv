@@ -24,9 +24,9 @@ class ViaTemplateActivator(Activator):
     def replacements(self, creator, dest_folder):
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
-            "__VIRTUAL_ENV__": str(creator.dest_dir),
-            "__VIRTUAL_NAME__": str(creator.env_name),
-            "__BIN_NAME__": str(creator.bin_name),
+            "__VIRTUAL_ENV__": six.ensure_text(str(creator.dest_dir)),
+            "__VIRTUAL_NAME__": creator.env_name,
+            "__BIN_NAME__": six.ensure_text(str(creator.bin_name)),
             "__PATH_SEP__": os.pathsep,
         }
 
@@ -35,4 +35,4 @@ class ViaTemplateActivator(Activator):
             text = pkgutil.get_data(self.__module__, str(template)).decode("utf-8")
             for start, end in replacements.items():
                 text = text.replace(start, end)
-            (to_folder / template).write_text(text)
+            (to_folder / template).write_text(text, encoding="utf-8")

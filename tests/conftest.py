@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
 import os
@@ -7,9 +8,10 @@ from functools import partial
 
 import coverage
 import pytest
-from pathlib2 import Path
+import six
 
 from virtualenv.interpreters.discovery.py_info import PythonInfo
+from virtualenv.util import Path
 
 
 @pytest.fixture(scope="session")
@@ -220,3 +222,28 @@ class EnableCoverage(object):
 @pytest.fixture(scope="session")
 def is_inside_ci():
     yield "CI_RUN" in os.environ
+
+
+@pytest.fixture(scope="session")
+def special_char_name():
+    base = "$ èрт🚒♞中片"
+    encoding = sys.getfilesystemencoding()
+    # let's not include characters that the file system cannot encode)
+    result = ""
+    for char in base:
+        try:
+            encoded = char.encode(encoding, errors="strict")
+            if char == "?" or encoded != b"?":  # mbcs notably on Python 2 uses replace even for strict
+                result += char
+        except ValueError:
+            continue
+    assert result
+    return result
+
+
+@pytest.fixture()
+def special_name_dir(tmp_path, special_char_name):
+    dest = Path(str(tmp_path)) / special_char_name
+    yield dest
+    if six.PY2 and sys.platform == "win32":  # pytest python2 windows does not support unicode delete
+        shutil.rmtree(six.ensure_text(str(dest)))

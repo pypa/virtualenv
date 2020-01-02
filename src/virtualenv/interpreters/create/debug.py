@@ -2,6 +2,20 @@
 import sys  # built-in
 
 
+def encode_path(value):
+    if value is None:
+        return None
+    if isinstance(value, bytes):
+        return value.decode(sys.getfilesystemencoding())
+    if isinstance(value, type):
+        return repr(value)
+    return value
+
+
+def encode_list_path(value):
+    return [encode_path(i) for i in value]
+
+
 def run():
     """print debug data about the virtual environment"""
     try:
@@ -11,7 +25,7 @@ def run():
         # noinspection PyPep8Naming
         OrderedDict = dict  # pragma: no cover
     result = OrderedDict([("sys", OrderedDict())])
-    for key in (
+    path_keys = (
         "executable",
         "_base_executable",
         "prefix",
@@ -21,13 +35,15 @@ def run():
         "base_exec_prefix",
         "path",
         "meta_path",
-        "version",
-    ):
+    )
+    for key in path_keys:
         value = getattr(sys, key, None)
-        if key == "meta_path" and value is not None:
-            value = [repr(i) for i in value]
+        if isinstance(value, list):
+            value = encode_list_path(value)
+        else:
+            value = encode_path(value)
         result["sys"][key] = value
-
+    result["version"] = sys.version
     import os  # landmark
 
     result["os"] = os.__file__
@@ -45,7 +61,7 @@ def run():
 
         result["json"] = repr(json)
         print(json.dumps(result, indent=2))
-    except ImportError as exception:  # pragma: no cover
+    except (ImportError, ValueError, TypeError) as exception:  # pragma: no cover
         result["json"] = repr(exception)  # pragma: no cover
         print(repr(result))  # pragma: no cover
         raise SystemExit(1)  # pragma: no cover
