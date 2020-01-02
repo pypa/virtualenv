@@ -3,6 +3,8 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import sys
 
+import six
+
 LEVELS = {
     0: logging.CRITICAL,
     1: logging.ERROR,
@@ -23,11 +25,11 @@ def setup_report(verbose, quiet):
         verbosity = MAX_LEVEL  # pragma: no cover
     level = LEVELS[verbosity]
     msg_format = "%(message)s"
-    if level >= logging.DEBUG:
-        locate = "pathname" if level > logging.DEBUG else "module"
-        msg_format += "[%(asctime)s] %(levelname)s [%({})s:%(lineno)d]".format(locate)
+    if level <= logging.DEBUG:
+        locate = "pathname" if level < logging.DEBUG else "module"
+        msg_format = " [%(asctime)s] %(levelname)s {} [%({})s:%(lineno)d]".format(msg_format, locate)
 
-    formatter = logging.Formatter(str(msg_format))
+    formatter = logging.Formatter(six.ensure_str(msg_format))
     stream_handler = logging.StreamHandler(stream=sys.stdout)
     stream_handler.setLevel(level)
     LOGGER.setLevel(logging.NOTSET)

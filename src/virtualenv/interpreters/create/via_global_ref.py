@@ -27,6 +27,7 @@ class ViaGlobalRef(Creator):
         )
         group.add_argument(
             "--copies",
+            "--always-copy",
             default=not symlink,
             action="store_false",
             dest="symlinks",

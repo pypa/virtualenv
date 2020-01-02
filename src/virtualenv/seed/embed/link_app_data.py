@@ -33,6 +33,12 @@ class LinkFromAppData(BaseEmbed):
         name_to_whl = get_wheel(version, cache, self.download, self.pip_version, self.setuptools_version)
         pip_install(name_to_whl, creator, cache)
 
+    def __str__(self):
+        return "LinkFromAppData {} {}".format(
+            "pip{}".format("" if self.pip_version is None else "={}".format(self.pip_version)),
+            "setuptools{}".format("" if self.setuptools_version is None else "={}".format(self.setuptools_version)),
+        )
+
 
 def pip_install(wheels, creator, cache):
     site_package, bin_dir, env_exe = creator.site_packages[0], creator.bin_dir, creator.exe

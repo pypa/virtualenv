@@ -25,11 +25,16 @@ class Session(object):
 
     def _seed(self):
         if self.seeder is not None:
+            logging.info("add seed packages via %s", self.seeder)
             self.seeder.run(self.creator)
 
     def _activate(self):
-        for activator in self.activators:
-            activator.generate(self.creator)
+        if self.activators:
+            logging.info(
+                "add activators for %s", "|".join(type(i).__name__.replace("Activator", "") for i in self.activators)
+            )
+            for activator in self.activators:
+                activator.generate(self.creator)
 
 
 _DEBUG_MARKER = "=" * 30 + " target debug " + "=" * 30

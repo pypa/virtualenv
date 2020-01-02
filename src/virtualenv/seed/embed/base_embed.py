@@ -28,6 +28,7 @@ class BaseEmbed(Seeder):
         )
         group.add_argument(
             "--no-download",
+            "--never-download",
             dest="download",
             action="store_false",
             help="do not download latest pip/setuptools from PyPi",

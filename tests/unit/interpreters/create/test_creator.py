@@ -78,7 +78,16 @@ def cleanup_sys_path(paths):
 )
 def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env, special_name_dir):
     dest = special_name_dir
-    cmd = ["-v", "-v", "-p", six.ensure_text(python), six.ensure_text(str(dest)), "--without-pip", "--activators", ""]
+    cmd = [
+        "-v",
+        "-v",
+        "-p",
+        six.ensure_text(python),
+        six.ensure_text(str(dest)),
+        "--without-pip",
+        "--activators",
+        "",
+    ]
     if global_access:
         cmd.append("--system-site-packages")
     if use_venv:
