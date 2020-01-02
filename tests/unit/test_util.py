@@ -5,7 +5,8 @@ import os
 
 import pytest
 
-from virtualenv.util import run_cmd, symlink_or_copy
+from virtualenv.util.path import symlink_or_copy
+from virtualenv.util.subprocess import run_cmd
 
 
 @pytest.mark.skipif(not hasattr(os, "symlink"), reason="requires symlink support")

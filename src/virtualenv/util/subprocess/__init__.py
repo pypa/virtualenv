@@ -6,10 +6,27 @@ import sys
 import six
 
 if six.PY2 and sys.platform == "win32":
-    from . import win_subprocess
+    from . import _win_subprocess
 
-    Popen = win_subprocess.Popen
+    Popen = _win_subprocess.Popen
 else:
     Popen = subprocess.Popen
 
-__all__ = ("subprocess", "Popen")
+
+def run_cmd(cmd):
+    try:
+        process = Popen(
+            cmd, universal_newlines=True, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE
+        )
+        out, err = process.communicate()  # input disabled
+        code = process.returncode
+    except OSError as os_error:
+        code, out, err = os_error.errno, "", os_error.strerror
+    return code, out, err
+
+
+__all__ = (
+    "subprocess",
+    "Popen",
+    "run_cmd",
+)

@@ -9,29 +9,45 @@ import zipfile
 from shutil import copytree
 from textwrap import dedent
 
+import six
 from six import PY3
 
 from virtualenv.info import get_default_data_dir
-from virtualenv.util import Path
+from virtualenv.util import ConfigParser
+from virtualenv.util.path import Path
 
 from .base_embed import BaseEmbed
 from .wheels.acquire import get_wheel
 
-try:
-    import ConfigParser
-except ImportError:
-    # noinspection PyPep8Naming
-    import configparser as ConfigParser
-
 
 class LinkFromAppData(BaseEmbed):
+    def __init__(self, options):
+        super(LinkFromAppData, self).__init__(options)
+        self.clear_app_data = options.clear_app_data
+
     def run(self, creator):
         if not self.enabled:
             return
         cache = get_default_data_dir() / "seed-v1"
+        if self.clear_app_data:
+            logging.debug("delete %s", cache)
+            shutil.rmtree(six.ensure_text(str(cache)))
         version = creator.interpreter.version_release_str
-        name_to_whl = get_wheel(version, cache, self.download, self.pip_version, self.setuptools_version)
+        name_to_whl = get_wheel(
+            version, cache, self.extra_search_dir, self.download, self.pip_version, self.setuptools_version,
+        )
         pip_install(name_to_whl, creator, cache)
+
+    @classmethod
+    def add_parser_arguments(cls, parser):
+        super(LinkFromAppData, cls).add_parser_arguments(parser)
+        parser.add_argument(
+            "--clear-app-data",
+            dest="clear_app_data",
+            action="store_true",
+            help="clear the app data folder",
+            default=False,
+        )
 
 
 def pip_install(wheels, creator, cache):

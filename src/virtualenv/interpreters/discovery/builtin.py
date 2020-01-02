@@ -38,12 +38,13 @@ class Builtin(Discover):
 
 def get_interpreter(key):
     spec = PythonSpec.from_string_spec(key)
-    logging.debug("find interpreter for spec %r", spec)
+    logging.info("find interpreter for spec %r", spec)
     proposed_paths = set()
     for interpreter, impl_must_match in propose_interpreters(spec):
         if interpreter.executable not in proposed_paths:
             logging.debug("proposed %s", interpreter)
             if interpreter.satisfies(spec, impl_must_match):
+                logging.info("accepted target interpreter %s", interpreter)
                 return interpreter
             proposed_paths.add(interpreter.executable)
 

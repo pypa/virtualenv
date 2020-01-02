@@ -4,16 +4,10 @@ import logging
 import os
 
 from virtualenv.info import PY3, get_default_config_dir
-from virtualenv.util import Path
+from virtualenv.util import ConfigParser
+from virtualenv.util.path import Path
 
 from .convert import convert
-
-try:
-    import ConfigParser
-except ImportError:
-    # noinspection PyPep8Naming
-    import configparser as ConfigParser
-
 
 DEFAULT_CONFIG_FILE = get_default_config_dir() / "virtualenv.ini"
 
