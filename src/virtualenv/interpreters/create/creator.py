@@ -48,50 +48,45 @@ class Creator(object):
             help="Give the virtual environment access to the system site-packages dir.",
         )
 
-        def validate_dest_dir(raw_value):
-            """No path separator in the path and must be write-able"""
-            if os.pathsep in raw_value:
-                raise ArgumentTypeError(
-                    "destination {!r} must not contain the path separator ({}) as this would break "
-                    "the activation scripts".format(raw_value, os.pathsep)
-                )
-            if six.PY2 and sys.platform == "win32":
-                path_converted = raw_value.encode("mbcs")
-                if path_converted != raw_value:
-                    raise ArgumentTypeError(
-                        "mbcs (path encoder for CPython2.7 on Windows) does not support one or more characters"
-                    )
+        parser.add_argument(
+            "dest_dir", help="directory to create virtualenv at", type=cls.validate_dest_dir, default="env", nargs="?",
+        )
 
-            value = Path(raw_value)
-            if value.exists() and value.is_file():
-                raise ArgumentTypeError("the destination {} already exists and is a file".format(value))
-            if (3, 3) <= sys.version_info <= (3, 6):
-                # pre 3.6 resolve is always strict, aka must exists, sidestep by using os.path operation
-                dest = Path(os.path.realpath(raw_value))
-            else:
-                dest = value.resolve()
-            value = dest
-            while dest:
-                if dest.exists():
-                    if os.access(six.ensure_text(str(dest)), os.W_OK):
-                        break
-                    else:
-                        non_write_able(dest, value)
-                base, _ = dest.parent, dest.name
-                if base == dest:
-                    non_write_able(dest, value)  # pragma: no cover
-                dest = base
-            return str(value)
-
+    @classmethod
+    def validate_dest_dir(cls, raw_value):
         def non_write_able(dest, value):
             common = Path(*os.path.commonprefix([value.parts, dest.parts]))
             raise ArgumentTypeError(
                 "the destination {} is not write-able at {}".format(dest.relative_to(common), common)
             )
 
-        parser.add_argument(
-            "dest_dir", help="directory to create virtualenv at", type=validate_dest_dir, default="env", nargs="?",
-        )
+        """No path separator in the path and must be write-able"""
+        if os.pathsep in raw_value:
+            raise ArgumentTypeError(
+                "destination {!r} must not contain the path separator ({}) as this would break "
+                "the activation scripts".format(raw_value, os.pathsep)
+            )
+
+        value = Path(raw_value)
+        if value.exists() and value.is_file():
+            raise ArgumentTypeError("the destination {} already exists and is a file".format(value))
+        if (3, 3) <= sys.version_info <= (3, 6):
+            # pre 3.6 resolve is always strict, aka must exists, sidestep by using os.path operation
+            dest = Path(os.path.realpath(raw_value))
+        else:
+            dest = value.resolve()
+        value = dest
+        while dest:
+            if dest.exists():
+                if os.access(six.ensure_text(str(dest)), os.W_OK):
+                    break
+                else:
+                    non_write_able(dest, value)
+            base, _ = dest.parent, dest.name
+            if base == dest:
+                non_write_able(dest, value)  # pragma: no cover
+            dest = base
+        return str(value)
 
     def run(self):
         if self.dest_dir.exists() and self.clear:
@@ -151,7 +146,7 @@ class Creator(object):
 
 
 def get_env_debug_info(env_exe, debug_script):
-    cmd = [str(env_exe), str(debug_script)]
+    cmd = [six.ensure_text(str(env_exe)), six.ensure_text(str(debug_script))]
     logging.debug(" ".join(six.ensure_text(i) for i in cmd))
     env = os.environ.copy()
     env.pop("PYTHONPATH", None)

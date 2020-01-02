@@ -8,6 +8,7 @@ from functools import partial
 
 import coverage
 import pytest
+import six
 
 from virtualenv.interpreters.discovery.py_info import PythonInfo
 from virtualenv.util import Path
@@ -225,4 +226,21 @@ def is_inside_ci():
 
 @pytest.fixture(scope="session")
 def special_char_name():
-    return "🚒 èрт$♞中片"
+    base = "$ èрт🚒♞中片"
+    if sys.platform == "win32" and six.PY2:
+        # PY2 windows uses mbcs as path encoder, so don't try to use what's not encode-able by that
+        result = ""
+        for char in base:
+            encoded = char.encode("mbcs", errors="ignore")
+            if char == "?" or encoded != six.ensure_str("?"):
+                result += char
+        base = result
+    return base
+
+
+@pytest.fixture()
+def special_name_dir(tmp_path, special_char_name):
+    dest = Path(str(tmp_path)) / special_char_name
+    yield dest
+    if six.PY2 and sys.platform == "win32":  # pytest python2 windows does not support unicode delete
+        shutil.rmtree(six.ensure_text(str(dest)))

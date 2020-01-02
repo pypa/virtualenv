@@ -1,12 +1,14 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-import subprocess
 import sys
+
+import six
 
 from virtualenv.interpreters.discovery.py_info import CURRENT
 from virtualenv.run import run_via_cli
 from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
+from virtualenv.util.subprocess import Popen
 
 
 def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env):
@@ -44,7 +46,9 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env):
         )
     ]:
         assert pip_exe.exists()
-        subprocess.check_output([str(pip_exe), "--version", "--disable-pip-version-check"])
+        process = Popen([six.ensure_text(str(pip_exe)), "--version", "--disable-pip-version-check"])
+        _, __ = process.communicate()
+        assert not process.returncode
 
     remove_cmd = [
         str(env_exe),
@@ -56,7 +60,9 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env):
         "-y",
         "setuptools",
     ]
-    assert not subprocess.check_call(remove_cmd)
+    process = Popen(remove_cmd)
+    _, __ = process.communicate()
+    assert not process.returncode
     assert site_package.exists()
 
     files_post_first_uninstall = list(site_package.iterdir())
@@ -70,7 +76,9 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env):
     files_post_second_create = list(site_package.iterdir())
     assert files_post_first_create == files_post_second_create
 
-    assert not subprocess.check_call(remove_cmd + ["pip"])
+    process = Popen(remove_cmd + ["pip"])
+    _, __ = process.communicate()
+    assert not process.returncode
     # pip is greedy here, removing all packages removes the site-package too
     if site_package.exists():
         post_run = list(site_package.iterdir())

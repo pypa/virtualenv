@@ -31,8 +31,9 @@ def test_python(raise_on_non_source_class, activation_tester):
 
         def _get_test_lines(self, activate_script):
             raw = inspect.getsource(self.activate_this_test)
-            return ["# -*- coding: utf-8 -*-"] + [
-                i[12:] for i in raw.replace("__FILENAME__", six.ensure_text(str(activate_script))).splitlines()[2:]
+            return [
+                i[12:]
+                for i in raw.replace('"__FILENAME__"', repr(six.ensure_text(str(activate_script)))).splitlines()[2:]
             ]
 
         # noinspection PyUnresolvedReferences
@@ -41,20 +42,25 @@ def test_python(raise_on_non_source_class, activation_tester):
             import os
             import sys
 
-            print(os.environ.get("VIRTUAL_ENV"))
-            print(os.environ.get("PATH"))
-            print(os.pathsep.join(sys.path))
-            file_at = r"__FILENAME__"
-            with open(file_at, "rt") as file_handler:
+            def print_path(value):
+                if value is not None and sys.version_info[0] == 2:
+                    value = value.decode(sys.getfilesystemencoding())
+                print(value)
+
+            print_path(os.environ.get("VIRTUAL_ENV"))
+            print_path(os.environ.get("PATH"))
+            print_path(os.pathsep.join(sys.path))
+            file_at = "__FILENAME__"
+            with open(file_at, "rb") as file_handler:
                 content = file_handler.read()
             exec(content, {"__file__": file_at})
-            print(os.environ.get("VIRTUAL_ENV"))
-            print(os.environ.get("PATH"))
-            print(os.pathsep.join(sys.path))
+            print_path(os.environ.get("VIRTUAL_ENV"))
+            print_path(os.environ.get("PATH"))
+            print_path(os.pathsep.join(sys.path))
             import inspect
             import pydoc_test
 
-            print(inspect.getsourcefile(pydoc_test))
+            print_path(inspect.getsourcefile(pydoc_test))
 
         def assert_output(self, out, raw, tmp_path):
             assert out[0] == "None"  # start with VIRTUAL_ENV None

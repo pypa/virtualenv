@@ -3,11 +3,12 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import os
 import shutil
-import subprocess
 from functools import partial
 from os import makedirs
 
 import six
+
+from virtualenv.util.subprocess import Popen, subprocess
 
 from .path import Path
 
@@ -51,7 +52,7 @@ def symlink_or_copy(do_copy, src, dst, relative_symlinks_ok=False):
 
 def run_cmd(cmd):
     try:
-        process = subprocess.Popen(
+        process = Popen(
             cmd, universal_newlines=True, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE
         )
         out, err = process.communicate()  # input disabled

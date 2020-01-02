@@ -57,32 +57,28 @@ def test_destination_not_write_able(tmp_path, capsys):
         target.chmod(prev_mod)
 
 
-SYSTEM = get_env_debug_info(CURRENT.system_executable, DEBUG_SCRIPT)
+SYSTEM = get_env_debug_info(Path(CURRENT.system_executable), DEBUG_SCRIPT)
 
 
-def cleanup_sys_path(path):
+def cleanup_sys_path(paths):
     from virtualenv.interpreters.create.creator import HERE
 
-    path = [Path(i).absolute() for i in path]
+    paths = [Path(i).absolute() for i in paths]
     to_remove = [Path(HERE)]
     if str("PYCHARM_HELPERS_DIR") in os.environ:
-        to_remove.append(Path(os.environ[str("PYCHARM_HELPERS_DIR")]).parent / "pydev")
-    for elem in to_remove:
-        try:
-            index = path.index(elem)
-            del path[index]
-        except ValueError:
-            pass
-    return path
+        to_remove.append(Path(os.environ[str("PYCHARM_HELPERS_DIR")]).parent)
+        to_remove.append(Path(os.path.expanduser("~")) / ".PyCharm")
+    result = [i for i in paths if not any(str(i).startswith(str(t)) for t in to_remove)]
+    return result
 
 
 @pytest.mark.parametrize("global_access", [False, True], ids=["no_global", "ok_global"])
 @pytest.mark.parametrize(
     "use_venv", [False, True] if six.PY3 else [False], ids=["no_venv", "venv"] if six.PY3 else ["no_venv"]
 )
-def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env, special_char_name):
-    dest = tmp_path / special_char_name
-    cmd = ["-v", "-v", "-p", str(python), str(dest), "--without-pip", "--activators", ""]
+def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env, special_name_dir):
+    dest = special_name_dir
+    cmd = ["-v", "-v", "-p", six.ensure_text(python), six.ensure_text(str(dest)), "--without-pip", "--activators", ""]
     if global_access:
         cmd.append("--system-site-packages")
     if use_venv:
@@ -92,17 +88,20 @@ def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env,
     for site_package in result.creator.site_packages:
         content = list(site_package.iterdir())
         assert not content, "\n".join(str(i) for i in content)
-    assert result.creator.env_name == special_char_name
-    sys_path = cleanup_sys_path(result.creator.debug["sys"]["path"])
+    assert result.creator.env_name == dest.name
+    debug = result.creator.debug
+    sys_path = cleanup_sys_path(debug["sys"]["path"])
     system_sys_path = cleanup_sys_path(SYSTEM["sys"]["path"])
     our_paths = set(sys_path) - set(system_sys_path)
-    our_paths_repr = "\n".join(repr(i) for i in our_paths)
+    our_paths_repr = "\n".join(six.ensure_text(repr(i)) for i in our_paths)
 
     # ensure we have at least one extra path added
     assert len(our_paths) >= 1, our_paths_repr
     # ensure all additional paths are related to the virtual environment
     for path in our_paths:
-        assert str(path).startswith(str(dest)), path
+        assert str(path).startswith(str(dest)), "{} does not start with {}".format(
+            six.ensure_text(str(path)), six.ensure_text(str(dest))
+        )
     # ensure there's at least a site-packages folder as part of the virtual environment added
     assert any(p for p in our_paths if p.parts[-1] == "site-packages"), our_paths_repr
 

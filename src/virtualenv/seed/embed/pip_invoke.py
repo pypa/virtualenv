@@ -1,10 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-import subprocess
 
 from virtualenv.seed.embed.base_embed import BaseEmbed
 from virtualenv.seed.embed.wheels.acquire import get_bundled_wheel
+from virtualenv.util.subprocess import Popen
 
 
 class PipInvoke(BaseEmbed):
@@ -39,4 +39,5 @@ class PipInvoke(BaseEmbed):
             }
         )
 
-        subprocess.call(cmd, env=env)
+        process = Popen(cmd, env=env)
+        process.communicate()

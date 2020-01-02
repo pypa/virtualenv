@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import abc
+from argparse import ArgumentTypeError
 
 import six
 
@@ -67,3 +68,17 @@ class CPython2Posix(CPython2, CPythonPosix):
 
 class CPython2Windows(CPython2, CPythonWindows):
     """CPython 2 on Windows"""
+
+    @classmethod
+    def validate_dest_dir(cls, raw_value):
+        # the python prefix discovery mechanism on Windows python 2 uses mbcs - so anything that's not encode-able
+        # needs to be refused
+        path_converted = raw_value.encode("mbcs", errors="ignore").decode("mbcs")
+        if path_converted != raw_value:
+            refused = set(raw_value) - {
+                c for c, i in ((char, char.encode("mbcs")) for char in raw_value) if c == "?" or i != "?"
+            }
+            raise ArgumentTypeError(
+                "mbcs (path encoder for CPython2.7 on Windows) does not support characters %r".format(refused)
+            )
+        return super(CPython2Windows, cls).validate_dest_dir(raw_value)

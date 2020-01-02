@@ -35,4 +35,4 @@ class ViaTemplateActivator(Activator):
             text = pkgutil.get_data(self.__module__, str(template)).decode("utf-8")
             for start, end in replacements.items():
                 text = text.replace(start, end)
-            (to_folder / template).write_text(text)
+            (to_folder / template).write_text(text, encoding="utf-8")
