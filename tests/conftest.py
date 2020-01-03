@@ -11,7 +11,7 @@ import pytest
 import six
 
 from virtualenv.interpreters.discovery.py_info import PythonInfo
-from virtualenv.util import Path
+from virtualenv.util.path import Path
 
 
 @pytest.fixture(scope="session")

@@ -14,7 +14,7 @@ from virtualenv.interpreters.discovery.builtin import get_interpreter
 from virtualenv.interpreters.discovery.py_info import CURRENT, PythonInfo
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.run import run_via_cli, session_via_cli
-from virtualenv.util import Path
+from virtualenv.util.path import Path
 
 
 def test_os_path_sep_not_allowed(tmp_path, capsys):
@@ -78,7 +78,16 @@ def cleanup_sys_path(paths):
 )
 def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env, special_name_dir):
     dest = special_name_dir
-    cmd = ["-v", "-v", "-p", six.ensure_text(python), six.ensure_text(str(dest)), "--without-pip", "--activators", ""]
+    cmd = [
+        "-v",
+        "-v",
+        "-p",
+        six.ensure_text(python),
+        six.ensure_text(str(dest)),
+        "--without-pip",
+        "--activators",
+        "",
+    ]
     if global_access:
         cmd.append("--system-site-packages")
     if use_venv:

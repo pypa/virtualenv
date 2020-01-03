@@ -12,7 +12,7 @@ import pytest
 import six
 
 from virtualenv.run import run_via_cli
-from virtualenv.util import Path
+from virtualenv.util.path import Path
 from virtualenv.util.subprocess import Popen
 
 

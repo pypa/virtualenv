@@ -5,7 +5,7 @@ from copy import copy
 
 from virtualenv.error import ProcessCallFailed
 from virtualenv.interpreters.discovery.py_info import CURRENT
-from virtualenv.util import run_cmd
+from virtualenv.util.subprocess import run_cmd
 
 from .via_global_ref import ViaGlobalRef
 
@@ -41,7 +41,7 @@ class Venv(ViaGlobalRef):
 
     def create_via_sub_process(self):
         cmd = self.get_host_create_cmd()
-        logging.info("create with venv %s", " ".join(cmd))
+        logging.info("using host built-in venv to create via %s", " ".join(cmd))
         code, out, err = run_cmd(cmd)
         if code != 0:
             raise ProcessCallFailed(code, out, err, cmd)

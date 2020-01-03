@@ -4,7 +4,7 @@ import abc
 
 import six
 
-from virtualenv.util import Path, copy
+from virtualenv.util.path import Path, copy
 
 from .common import CPython, CPythonPosix, CPythonWindows
 

@@ -13,7 +13,8 @@ from six import add_metaclass
 
 from virtualenv.info import IS_WIN
 from virtualenv.pyenv_cfg import PyEnvCfg
-from virtualenv.util import Path, run_cmd
+from virtualenv.util.path import Path
+from virtualenv.util.subprocess import run_cmd
 from virtualenv.version import __version__
 
 HERE = Path(__file__).absolute().parent
@@ -104,6 +105,7 @@ class Creator(object):
 
     def run(self):
         if self.dest_dir.exists() and self.clear:
+            logging.debug("delete %s", self.dest_dir)
             shutil.rmtree(str(self.dest_dir), ignore_errors=True)
         self.create()
         self.set_pyenv_cfg()
