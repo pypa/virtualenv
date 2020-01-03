@@ -18,11 +18,8 @@ from . import BUNDLE_SUPPORT, MAX
 BUNDLE_FOLDER = Path(__file__).parent
 
 
-def get_wheel(for_py_version, cache, extra_search_dir, download, pip, setuptools):
+def get_wheels(for_py_version, wheel_cache_dir, extra_search_dir, download, pip, setuptools):
     # not all wheels are compatible with all python versions, so we need to py version qualify it
-    wheel_cache_dir = cache / "acquired" / for_py_version
-    wheel_cache_dir.mkdir(parents=True, exist_ok=True)
-
     packages = {"pip": pip, "setuptools": setuptools}
 
     # 1. acquire from bundle
@@ -30,7 +27,7 @@ def get_wheel(for_py_version, cache, extra_search_dir, download, pip, setuptools
     # 2. acquire from extra search dir
     acquire_from_dir(packages, for_py_version, wheel_cache_dir, extra_search_dir)
     # 3. download from the internet
-    if download:
+    if download and packages:
         download_wheel(packages, for_py_version, wheel_cache_dir)
 
     # in the end just get the wheels

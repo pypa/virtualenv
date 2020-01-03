@@ -8,20 +8,24 @@ import six
 from virtualenv.interpreters.discovery.py_info import CURRENT
 from virtualenv.run import run_via_cli
 from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
+from virtualenv.seed.embed.wheels.acquire import BUNDLE_FOLDER
 from virtualenv.util.subprocess import Popen
 
 
 def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env):
     bundle_ver = BUNDLE_SUPPORT[CURRENT.version_release_str]
     create_cmd = [
-        str(tmp_path / "env"),
+        six.ensure_text(str(tmp_path / "env")),
         "--seeder",
-        "link-app-data",
+        "app-data",
+        "--extra-search-dir",
+        six.ensure_text(str(BUNDLE_FOLDER)),
         "--download",
         "--pip",
         bundle_ver["pip"].split("-")[1],
         "--setuptools",
         bundle_ver["setuptools"].split("-")[1],
+        "--clear-app-data",
     ]
     result = run_via_cli(create_cmd)
     coverage_env()

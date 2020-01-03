@@ -12,8 +12,8 @@ from ..seeder import Seeder
 @six.add_metaclass(ABCMeta)
 class BaseEmbed(Seeder):
     def __init__(self, options):
-        super(Seeder, self).__init__()
-        self.enabled = options.without_pip is False
+        super(BaseEmbed, self).__init__(options, enabled=options.without_pip is False)
+
         self.download = options.download
         self.extra_search_dir = [i.resolve() for i in options.extra_search_dir if i.exists()]
         self.pip_version = None if options.pip == "latest" else options.pip

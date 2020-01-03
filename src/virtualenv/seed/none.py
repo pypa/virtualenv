@@ -4,6 +4,9 @@ from virtualenv.seed.seeder import Seeder
 
 
 class NoneSeeder(Seeder):
+    def __init__(self, options):
+        super(NoneSeeder, self).__init__(options, False)
+
     @classmethod
     def add_parser_arguments(cls, parser):
         pass
