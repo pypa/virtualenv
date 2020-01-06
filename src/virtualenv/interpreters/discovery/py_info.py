@@ -65,7 +65,7 @@ class PythonInfo(object):
 
     @property
     def version_release_str(self):
-        return ".".join(str(i) for i in self.version_info[0:2])
+        return ".".join(str(i) for i in self.version_info[:2])
 
     @property
     def python_name(self):
