@@ -106,5 +106,10 @@ class Path(object):
     def is_symlink(self):
         return os.path.islink(self._path)
 
+    def relative_to(self, other):
+        if not self._path.startswith(other._path):
+            raise ValueError("{} does not start with {}".format(self._path, other._path))
+        return Path(os.sep.join(self.parts[len(other.parts) :]))
+
 
 __all__ = ("Path",)
