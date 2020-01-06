@@ -8,7 +8,7 @@ from ..ini import IniConfig
 
 class VirtualEnvConfigParser(ArgumentParser):
     """
-    Custom option parser which updates its defaults by checking the configuration files and environmental variables
+    Custom option parser which updates its defaults by checking the configuration files and environment variables
     """
 
     def __init__(self, *args, **kwargs):
