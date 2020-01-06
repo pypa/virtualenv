@@ -10,13 +10,13 @@ class PipInvoke(BaseEmbed):
         super(PipInvoke, self).__init__(options)
 
     def run(self, creator):
-        if not self.enabled:
-            return
+        cmd = self.get_pip_install_cmd(creator.exe, creator.interpreter.version_release_str)
+        env = pip_wheel_env_run(creator.interpreter.version_release_str)
+        process = Popen(cmd, env=env)
+        process.communicate()
 
-        version = creator.interpreter.version_release_str
-
-        cmd = [str(creator.exe), "-m", "pip", "install", "--only-binary", ":all:"]
-
+    def get_pip_install_cmd(self, exe, version):
+        cmd = [str(exe), "-m", "pip", "install", "--only-binary", ":all:"]
         for folder in {get_bundled_wheel(p, version).parent for p in ("pip", "setuptools")}:
             cmd.extend(["--find-links", str(folder)])
             cmd.extend(self.extra_search_dir)
@@ -24,6 +24,4 @@ class PipInvoke(BaseEmbed):
             cmd.append("--no-index")
         for key, version in {"pip": self.pip_version, "setuptools": self.setuptools_version}.items():
             cmd.append("{}{}".format(key, "=={}".format(version) if version is not None else ""))
-
-        process = Popen(cmd, env=pip_wheel_env_run(version))
-        process.communicate()
+        return cmd

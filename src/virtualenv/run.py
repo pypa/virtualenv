@@ -122,7 +122,7 @@ def _get_seeder(parser, options):
     seed_parser.add_argument(
         "--seeder",
         choices=list(seeder_types.keys()),
-        default="link-app-data",
+        default="app-data",
         required=False,
         help="seed packages install method",
     )

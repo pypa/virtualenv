@@ -24,7 +24,7 @@ class Session(object):
         logging.debug("%s", _Debug(self.creator))
 
     def _seed(self):
-        if self.seeder is not None:
+        if self.seeder is not None and self.seeder.enabled:
             logging.info("add seed packages via %s", self.seeder)
             self.seeder.run(self.creator)
 
