@@ -39,10 +39,9 @@ class FromAppData(BaseEmbed):
             logging.debug("install %s from wheel %s", name, wheel)
             image_folder = base_cache / "image" / installer_class.__name__ / wheel.stem
             installer = installer_class(wheel, creator, image_folder)
-            if self.clear and installer.image_folder.exists():
-                installer.free_image()
-                shutil.rmtree(six.ensure_text(str(image_folder)))
-            if not installer.image_folder.exists() or next(installer.image_folder.iterdir()) is None:
+            if self.clear:
+                installer.clear()
+            if not installer:
                 installer.build_image()
             installer.install()
 
