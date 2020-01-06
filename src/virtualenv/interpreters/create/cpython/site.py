@@ -27,7 +27,7 @@ def load_host_site():
     std_lib = os.path.dirname(os.__file__)
     std_lib_suffix = std_lib[len(sys.real_prefix) :]  # strip away the real prefix to keep just the suffix
 
-    reload(sys.modules["site"])  # noqa
+    reload(sys.modules["site"])  # noqa: F821
 
     # ensure standard library suffix/site-packages is on the new path
     # notably Debian derivatives change site-packages constant to dist-packages, so will not get added
