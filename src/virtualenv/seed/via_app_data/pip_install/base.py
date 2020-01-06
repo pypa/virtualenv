@@ -24,7 +24,7 @@ class PipInstall(object):
         self._creator = creator
         self._image_dir = image_folder
         self._extracted = False
-        self._dist_info = None
+        self.__dist_info = None
         self._console_entry_points = None
 
     @abstractmethod
@@ -97,14 +97,14 @@ class PipInstall(object):
     def _dist_info(self):
         if self._extracted is False:
             return None
-        if self._dist_info is None:
+        if self.__dist_info is None:
             for filename in self._image_dir.iterdir():
                 if filename.suffix == ".dist-info":
-                    self._dist_info = filename
+                    self.__dist_info = filename
                     break
             else:
                 raise RuntimeError("no dist info")
-        return self._dist_info
+        return self.__dist_info
 
     @abstractmethod
     def _fix_records(self, extra_record_data):
