@@ -6,6 +6,8 @@ import re
 import sys
 from collections import OrderedDict
 
+from virtualenv.info import FS_CASE_SENSITIVE
+
 PATTERN = re.compile(r"^(?P<impl>[a-zA-Z]+)?(?P<version>[0-9.]+)?(?:-(?P<arch>32|64))?$")
 IS_WIN = sys.platform == "win32"
 
@@ -70,10 +72,11 @@ class PythonSpec(object):
         if self.implementation:
             # first consider implementation as it is
             impls[self.implementation] = False
-            # for case sensitive file systems consider lower and upper case versions too
-            # trivia: MacBooks and all pre 2018 Windows-es were case insensitive by default
-            impls[self.implementation.lower()] = False
-            impls[self.implementation.upper()] = False
+            if FS_CASE_SENSITIVE:
+                # for case sensitive file systems consider lower and upper case versions too
+                # trivia: MacBooks and all pre 2018 Windows-es were case insensitive by default
+                impls[self.implementation.lower()] = False
+                impls[self.implementation.upper()] = False
         impls["python"] = True  # finally consider python as alias, implementation must match now
         version = self.major, self.minor, self.patch
         try:

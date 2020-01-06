@@ -7,6 +7,7 @@ import sys
 
 import pytest
 
+from virtualenv.info import IS_PYPY
 from virtualenv.interpreters.discovery.py_info import CURRENT, PythonInfo
 from virtualenv.interpreters.discovery.py_spec import PythonSpec
 
@@ -34,8 +35,10 @@ def test_bad_exe_py_info_no_raise(tmp_path, caplog, capsys):
     assert result is None
     out, _ = capsys.readouterr()
     assert not out
-    assert len(caplog.messages) == 1
+    assert len(caplog.messages) == 2
     msg = caplog.messages[0]
+    assert "get interpreter info via cmd: " in msg
+    msg = caplog.messages[1]
     assert str(exe) in msg
     assert "code" in msg
 
@@ -90,6 +93,7 @@ def test_satisfy_not_version(spec):
     assert matches is False
 
 
+@pytest.mark.skipif(IS_PYPY, reason="mocker in pypy does not allow to spy on class methods")
 def test_py_info_cached(mocker, tmp_path):
     mocker.spy(PythonInfo, "_load_for_exe")
     with pytest.raises(RuntimeError):
@@ -99,6 +103,7 @@ def test_py_info_cached(mocker, tmp_path):
     assert PythonInfo._load_for_exe.call_count == 1
 
 
+@pytest.mark.skipif(IS_PYPY, reason="mocker in pypy does not allow to spy on class methods")
 @pytest.mark.skipif(sys.platform == "win32", reason="symlink is not guaranteed to work on windows")
 def test_py_info_cached_symlink(mocker, tmp_path):
     mocker.spy(PythonInfo, "_load_for_exe")

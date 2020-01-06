@@ -1,6 +1,8 @@
 from __future__ import absolute_import, unicode_literals
 
+import os
 import sys
+import tempfile
 
 from appdirs import user_config_dir, user_data_dir
 
@@ -23,4 +25,11 @@ def get_default_config_dir():
     return _CONFIG_DIR
 
 
-__all__ = ("IS_PYPY", "PY3", "IS_WIN", "get_default_data_dir", "get_default_config_dir")
+def _is_fs_case_sensitive():
+    with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:
+        return not os.path.exists(tmp_file.name.lower())
+
+
+FS_CASE_SENSITIVE = _is_fs_case_sensitive()
+
+__all__ = ("IS_PYPY", "PY3", "IS_WIN", "get_default_data_dir", "get_default_config_dir", "FS_CASE_SENSITIVE")

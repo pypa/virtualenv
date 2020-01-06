@@ -106,7 +106,8 @@ class ActivationTester(object):
         assert out[0], raw
         assert out[1] == "None", raw
         # post-activation
-        assert self.norm_path(out[2]) == self.norm_path(self._creator.exe), raw
+        expected = self._creator.exe.parent / os.path.basename(sys.executable)
+        assert self.norm_path(out[2]) == self.norm_path(expected), raw
         assert self.norm_path(out[3]) == self.norm_path(self._creator.dest_dir).replace("\\\\", "\\"), raw
         assert out[4] == "wrote pydoc_test.html"
         content = tmp_path / "pydoc_test.html"
@@ -123,8 +124,8 @@ class ActivationTester(object):
 
     def print_python_exe(self):
         return self.python_cmd(
-            "import sys; e = sys.executable;"
-            "print(e.decode(sys.getfilesystemencoding()) if sys.version_info[0] == 2 else e)"
+            "import sys; v = sys.executable;"
+            "print(v.decode(sys.getfilesystemencoding()) if sys.version_info[0] == 2 and isinstance(v, str) else v)"
         )
 
     def print_os_env_var(self, var):
@@ -132,7 +133,8 @@ class ActivationTester(object):
         return self.python_cmd(
             "import os; import sys; v = os.environ.get({}, None);"
             "print(v if v is None else "
-            "(v.decode(sys.getfilesystemencoding()) if sys.version_info[0] == 2 else v))".format(val)
+            "(v.decode(sys.getfilesystemencoding()) if sys.version_info[0] == 2 and isinstance(v, str)"
+            " else v))".format(val)
         )
 
     def activate_call(self, script):
@@ -187,7 +189,7 @@ def activation_python(tmp_path_factory, special_char_name):
         six.ensure_text(str(tmp_path_factory.mktemp("activation-tester-env"))),
         six.ensure_text("env-{}-v".format(special_char_name)),
     )
-    session = run_via_cli(["--seed", "none", dest, "--prompt", special_char_name])
+    session = run_via_cli(["--seed", "none", dest, "--prompt", special_char_name, "--creator", "self-do"])
     pydoc_test = session.creator.site_packages[0] / "pydoc_test.py"
     with open(six.ensure_text(str(pydoc_test)), "wb") as file_handler:
         file_handler.write(b'"""This is pydoc_test.py"""')

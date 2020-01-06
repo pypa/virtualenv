@@ -30,6 +30,8 @@ class PythonInfo(object):
         # qualifies the python
         self.platform = sys.platform
         self.implementation = platform.python_implementation()
+        if self.implementation == "PyPy":
+            self.pypy_version_info = tuple(sys.pypy_version_info)
 
         # this is a tuple in earlier, struct later, unify to our own named tuple
         self.version_info = VersionInfo(*list(sys.version_info))
@@ -162,14 +164,19 @@ class PythonInfo(object):
 
     def _find_possible_folders(self, inside_folder):
         candidate_folder = OrderedDict()
-        base = os.path.dirname(self.executable)
-        # following path pattern of the current
-        if base.startswith(self.prefix):
-            relative = base[len(self.prefix) :]
-            candidate_folder["{}{}".format(inside_folder, relative)] = None
+        executables = OrderedDict()
+        executables[self.executable] = None
+        executables[self.original_executable] = None
+        for exe in executables.keys():
+            base = os.path.dirname(exe)
+            # following path pattern of the current
+            if base.startswith(self.prefix):
+                relative = base[len(self.prefix) :]
+                candidate_folder["{}{}".format(inside_folder, relative)] = None
 
         # or at root level
         candidate_folder[inside_folder] = None
+
         return list(candidate_folder.keys())
 
     def _find_possible_exe_names(self):
@@ -186,6 +193,10 @@ class PythonInfo(object):
     _cache_from_exe = {}
 
     @classmethod
+    def clear_cache(cls):
+        cls._cache_from_exe.clear()
+
+    @classmethod
     def from_exe(cls, exe, raise_on_error=True):
         key = os.path.realpath(exe)
         if key in cls._cache_from_exe:
@@ -197,7 +208,7 @@ class PythonInfo(object):
             if raise_on_error:
                 raise failure
             else:
-                logging.debug("%s", str(failure))
+                logging.warn("%s", str(failure))
         return result
 
     @classmethod
@@ -205,9 +216,17 @@ class PythonInfo(object):
         from virtualenv.util.subprocess import subprocess, Popen
 
         path = "{}.py".format(os.path.splitext(__file__)[0])
-        cmd = [exe, path]
+        cmd = [exe, "-s", path]
         # noinspection DuplicatedCode
         # this is duplicated here because this file is executed on its own, so cannot be refactored otherwise
+
+        class Cmd(object):
+            def __str__(self):
+                import pipes
+
+                return " ".join(pipes.quote(c) for c in cmd)
+
+        logging.debug("get interpreter info via cmd: %s", Cmd())
         try:
             process = Popen(
                 cmd, universal_newlines=True, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE
@@ -222,7 +241,7 @@ class PythonInfo(object):
             result.executable = exe  # keep original executable as this may contain initialization code
         else:
             msg = "failed to query {} with code {}{}{}".format(
-                exe, code, " out: []".format(out) if out else "", " err: []".format(err) if err else ""
+                exe, code, " out: {!r}".format(out) if out else "", " err: {!r}".format(err) if err else ""
             )
             failure = RuntimeError(msg)
         return failure, result

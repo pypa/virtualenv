@@ -47,6 +47,10 @@ jobs:
         image: [linux, windows, macOs]
       py27:
         image: [linux, windows, macOs]
+      pypy:
+        image: [linux, windows, macOs]
+      pypy3:
+        image: [linux, windows, macOs]
       fix_lint:
         image: [linux, windows]
       docs:

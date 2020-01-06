@@ -1,3 +1,5 @@
+from __future__ import absolute_import, unicode_literals
+
 import logging
 import os
 import sys
@@ -26,7 +28,8 @@ def test_discover_ok(tmp_path, monkeypatch, suffix, impl, version, arch, into, c
     os.symlink(CURRENT.executable, str(dest))
     inside_folder = str(tmp_path)
     assert CURRENT.find_exe_based_of(inside_folder) == str(dest)
-    assert not caplog.text
+    assert len(caplog.messages) == 1
+    assert "get interpreter info via cmd: " in caplog.text
 
     dest.rename(dest.parent / (dest.name + "-1"))
     with pytest.raises(RuntimeError):

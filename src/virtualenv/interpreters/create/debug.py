@@ -55,6 +55,15 @@ def run():
         result["site"] = site.__file__
     except ImportError as exception:  # pragma: no cover
         result["site"] = repr(exception)  # pragma: no cover
+
+    try:
+        # noinspection PyUnresolvedReferences
+        import datetime  # site
+
+        result["pip"] = datetime.__file__
+    except ImportError as exception:  # pragma: no cover
+        result["datetime"] = repr(exception)  # pragma: no cover
+
     # try to print out, this will validate if other core modules are available (json in this case)
     try:
         import json

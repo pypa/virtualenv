@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import difflib
+import gc
 import os
 import stat
 import sys
@@ -9,6 +10,7 @@ import pytest
 import six
 
 from virtualenv.__main__ import run
+from virtualenv.info import IS_PYPY
 from virtualenv.interpreters.create.creator import DEBUG_SCRIPT, get_env_debug_info
 from virtualenv.interpreters.discovery.builtin import get_interpreter
 from virtualenv.interpreters.discovery.py_info import CURRENT, PythonInfo
@@ -87,13 +89,17 @@ def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env,
         "--without-pip",
         "--activators",
         "",
+        "--creator",
+        "venv" if use_venv else "self-do",
     ]
     if global_access:
         cmd.append("--system-site-packages")
-    if use_venv:
-        cmd.extend(["--creator", "venv"])
     result = run_via_cli(cmd)
     coverage_env()
+    if IS_PYPY:
+        # pypy cleans up file descriptors periodically so our (many) subprocess calls impact file descriptor limits
+        # force a cleanup of these on system where the limit is low-ish (e.g. MacOS 256)
+        gc.collect()
     for site_package in result.creator.site_packages:
         content = list(site_package.iterdir())
         assert not content, "\n".join(str(i) for i in content)
@@ -108,8 +114,8 @@ def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env,
     assert len(our_paths) >= 1, our_paths_repr
     # ensure all additional paths are related to the virtual environment
     for path in our_paths:
-        assert str(path).startswith(str(dest)), "{} does not start with {}".format(
-            six.ensure_text(str(path)), six.ensure_text(str(dest))
+        assert str(path).startswith(str(dest)), "\n{}\ndoes not start with {}\nhas:{}".format(
+            six.ensure_text(str(path)), six.ensure_text(str(dest)), "\n".join(system_sys_path)
         )
     # ensure there's at least a site-packages folder as part of the virtual environment added
     assert any(p for p in our_paths if p.parts[-1] == "site-packages"), our_paths_repr
@@ -179,9 +185,7 @@ def test_debug_bad_virtualenv(tmp_path):
 @pytest.mark.parametrize("clear", [True, False], ids=["clear", "no_clear"])
 def test_create_clear_resets(tmp_path, use_venv, clear):
     marker = tmp_path / "magic"
-    cmd = [str(tmp_path), "--seeder", "none"]
-    if use_venv:
-        cmd.extend(["--creator", "venv"])
+    cmd = [str(tmp_path), "--seeder", "none", "--creator", "venv" if use_venv else "self-do"]
     run_via_cli(cmd)
 
     marker.write_text("")  # if we a marker file this should be gone on a clear run, remain otherwise
@@ -196,11 +200,9 @@ def test_create_clear_resets(tmp_path, use_venv, clear):
 )
 @pytest.mark.parametrize("prompt", [None, "magic"])
 def test_prompt_set(tmp_path, use_venv, prompt):
-    cmd = [str(tmp_path), "--seeder", "none"]
+    cmd = [str(tmp_path), "--seeder", "none", "--creator", "venv" if use_venv else "self-do"]
     if prompt is not None:
         cmd.extend(["--prompt", "magic"])
-    if not use_venv and six.PY3:
-        cmd.extend(["--creator", "venv"])
 
     result = run_via_cli(cmd)
     actual_prompt = tmp_path.name if prompt is None else prompt
@@ -236,6 +238,8 @@ def test_cross_major(cross_python, coverage_env, tmp_path):
         "none",
         "--activators",
         "",
+        "--creator",
+        "self-do",
     ]
     result = run_via_cli(cmd)
     coverage_env()

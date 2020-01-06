@@ -85,8 +85,9 @@ def check_cwd_not_changed_by_test():
 
 @pytest.fixture(autouse=True)
 def ensure_py_info_cache_empty():
+    PythonInfo.clear_cache()
     yield
-    PythonInfo._cache_from_exe.clear()
+    PythonInfo.clear_cache()
 
 
 @pytest.fixture(autouse=True)

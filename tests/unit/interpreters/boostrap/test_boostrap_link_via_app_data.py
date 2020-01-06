@@ -26,6 +26,8 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env):
         "--setuptools",
         bundle_ver["setuptools"].split("-")[1],
         "--clear-app-data",
+        "--creator",
+        "self-do",
     ]
     result = run_via_cli(create_cmd)
     coverage_env()

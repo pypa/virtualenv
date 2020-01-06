@@ -19,6 +19,7 @@ class Session(object):
         self.creator.pyenv_cfg.write()
 
     def _create(self):
+        logging.info("create virtual environment via %s", self.creator)
         self.creator.run()
         logging.debug(_DEBUG_MARKER)
         logging.debug("%s", _Debug(self.creator))

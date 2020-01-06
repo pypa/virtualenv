@@ -43,7 +43,9 @@ def test_python(raise_on_non_source_class, activation_tester):
             import sys
 
             def print_path(value):
-                if value is not None and sys.version_info[0] == 2:
+                if value is not None and (
+                    sys.version_info[0] == 2 and isinstance(value, str) and not hasattr(sys, "pypy_version_info")
+                ):
                     value = value.decode(sys.getfilesystemencoding())
                 print(value)
 
