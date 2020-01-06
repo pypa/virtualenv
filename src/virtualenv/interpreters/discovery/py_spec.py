@@ -24,7 +24,7 @@ class PythonSpec(object):
 
     @classmethod
     def from_string_spec(cls, string_spec):
-        impl, major, minor, patch, arch, path = None, None, None, None, None, None
+        impl = major = minor = patch = arch = path = None
         if os.path.isabs(string_spec):
             path = string_spec
         else:
