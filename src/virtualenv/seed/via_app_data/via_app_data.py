@@ -41,7 +41,7 @@ class FromAppData(BaseEmbed):
             installer = installer_class(wheel, creator, image_folder)
             if self.clear:
                 installer.clear()
-            if not installer:
+            if not installer.has_image():
                 installer.build_image()
             installer.install()
 
@@ -62,7 +62,7 @@ class FromAppData(BaseEmbed):
 
     @staticmethod
     def installer_class(pip_version):
-        # on Windows symlinks are unreliable, but we have junctions for folders
+        # tbd: on Windows symlinks are unreliable, we have junctions for folders, however pip does not work well with it
         if not IS_WIN:
             # symlink support requires pip 19.3+
             pip_version_int = tuple(int(i) for i in pip_version.split(".")[0:2])

@@ -87,7 +87,8 @@ class PipInstall(object):
             )
             for name, module in self._console_scripts.items():
                 new_files.update(
-                    self._image_dir / rel / i.name for i in self._create_console_entry_point(name, module, to_folder)
+                    Path(os.path.normpath(six.ensure_text(str(self._image_dir / rel / i.name))))
+                    for i in self._create_console_entry_point(name, module, to_folder)
                 )
         finally:
             shutil.rmtree(folder, ignore_errors=True)
@@ -96,14 +97,14 @@ class PipInstall(object):
     @property
     def _dist_info(self):
         if self._extracted is False:
-            return None
+            return None  # pragma: no cover
         if self.__dist_info is None:
             for filename in self._image_dir.iterdir():
                 if filename.suffix == ".dist-info":
                     self.__dist_info = filename
                     break
             else:
-                raise RuntimeError("no dist info")
+                raise RuntimeError("no dist info")  # pragma: no cover
         return self.__dist_info
 
     @abstractmethod
@@ -113,7 +114,7 @@ class PipInstall(object):
     @property
     def _console_scripts(self):
         if self._extracted is False:
-            return None
+            return None  # pragma: no cover
         if self._console_entry_points is None:
             self._console_entry_points = {}
             entry_points = self._dist_info / "entry_points.txt"
@@ -181,5 +182,5 @@ class PipInstall(object):
         if self._image_dir.exists():
             shutil.rmtree(six.ensure_text(str(self._image_dir)))
 
-    def __bool__(self):
+    def has_image(self):
         return self._image_dir.exists() and next(self._image_dir.iterdir()) is not None

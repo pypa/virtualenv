@@ -15,7 +15,7 @@ class CopyPipInstall(PipInstall):
         src_str = six.ensure_text(str(src))
         dest_str = six.ensure_text(str(dst))
         if src.is_dir():
-            shutil.copytree(src_str, dest_str, copy_function=shutil.copy)
+            shutil.copytree(src_str, dest_str)
         else:
             shutil.copy(src_str, dest_str)
 

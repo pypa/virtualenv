@@ -26,15 +26,28 @@ class SymlinkPipInstall(PipInstall):
             stderr=subprocess.PIPE,
         )
         process.communicate()
+        # the root pyc is shared, so we'll not symlink that - but still add the pyc files to the RECORD for cleanup
         root_py_cache = self._image_dir / "__pycache__"
+        new_files = set()
         if root_py_cache.exists():
+            new_files.update(root_py_cache.iterdir())
+            new_files.add(root_py_cache)
             shutil.rmtree(six.ensure_text(str(root_py_cache)))
-        return super(SymlinkPipInstall, self)._generate_new_files()
+        core_new_files = super(SymlinkPipInstall, self)._generate_new_files()
+        # remove files that are within the image folder deeper than one level (as these will be not linked directly)
+        for file in core_new_files:
+            try:
+                rel = file.relative_to(self._image_dir)
+                if len(rel.parts) > 1:
+                    continue
+            except ValueError:
+                pass
+            new_files.add(file)
+        return new_files
 
     def _fix_records(self, new_files):
-        new_files_sym = {i for i in new_files if ".." in i.parts}
-        new_files_sym.update(i for i in self._image_dir.iterdir())
-        extra_record_data_str = self._records_text(sorted(new_files_sym, key=str))
+        new_files.update(i for i in self._image_dir.iterdir())
+        extra_record_data_str = self._records_text(sorted(new_files, key=str))
         with open(six.ensure_text(str(self._dist_info / "RECORD")), "wb") as file_handler:
             file_handler.write(extra_record_data_str.encode("utf-8"))
 

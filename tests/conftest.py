@@ -93,7 +93,7 @@ def ensure_py_info_cache_empty():
 def clean_data_dir(tmp_path, monkeypatch):
     from virtualenv import info
 
-    monkeypatch.setattr(info, "_DATA_DIR", tmp_path)
+    monkeypatch.setattr(info, "_DATA_DIR", Path(str(tmp_path)))
     yield
 
 
