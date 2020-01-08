@@ -5,7 +5,6 @@ Note: this file is also used to query target interpreters, so can only use stand
 """
 from __future__ import absolute_import, print_function, unicode_literals
 
-import copy
 import json
 import logging
 import os
@@ -30,8 +29,7 @@ class PythonInfo(object):
         # qualifies the python
         self.platform = sys.platform
         self.implementation = platform.python_implementation()
-        if self.implementation == "PyPy":
-            self.pypy_version_info = tuple(sys.pypy_version_info)
+        self.pypy_version_info = tuple(sys.pypy_version_info) if self.implementation == "PyPy" else None
 
         # this is a tuple in earlier, struct later, unify to our own named tuple
         self.version_info = VersionInfo(*list(sys.version_info))
@@ -113,7 +111,7 @@ class PythonInfo(object):
         )
 
     def to_json(self):
-        data = copy.deepcopy(self.__dict__)
+        data = {var: getattr(self, var) for var in vars(self)}
         # noinspection PyProtectedMember
         data["version_info"] = data["version_info"]._asdict()  # namedtuple to dictionary
         return json.dumps(data, indent=2)
@@ -122,9 +120,10 @@ class PythonInfo(object):
     def from_json(cls, payload):
         data = json.loads(payload)
         data["version_info"] = VersionInfo(**data["version_info"])  # restore this to a named tuple structure
-        info = copy.deepcopy(CURRENT)
-        info.__dict__ = data
-        return info
+        result = cls()
+        for var in vars(result):
+            setattr(result, var, data[var])
+        return result
 
     @property
     def system_prefix(self):
