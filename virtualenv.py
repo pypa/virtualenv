@@ -884,6 +884,9 @@ def call_subprocess(
     remove_from_env=None,
     stdin=None,
 ):
+    
+    sys._enablelegacywindowsfsencoding()
+    
     cmd_parts = []
     for part in cmd:
         if len(part) > 45:
