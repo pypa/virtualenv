@@ -11,6 +11,7 @@ from os.path import dirname, normcase, realpath
 import pytest
 import six
 
+from virtualenv.info import IS_PYPY
 from virtualenv.run import run_via_cli
 from virtualenv.util.path import Path
 from virtualenv.util.subprocess import Popen
@@ -53,7 +54,7 @@ class ActivationTester(object):
         try:
             process = Popen(invoke, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
             _raw, _ = process.communicate()
-            raw = "\n{}".format(_raw.decode("utf-8")).replace("\r\n", "\n")
+            raw = "\n{}".format(_raw.decode(sys.getfilesystemencoding())).replace("\r\n", "\n")
         except subprocess.CalledProcessError as exception:
             assert not exception.returncode, six.ensure_text(exception.output)
             return
@@ -109,7 +110,7 @@ class ActivationTester(object):
         expected = self._creator.exe.parent / os.path.basename(sys.executable)
         assert self.norm_path(out[2]) == self.norm_path(expected), raw
         assert self.norm_path(out[3]) == self.norm_path(self._creator.dest_dir).replace("\\\\", "\\"), raw
-        assert out[4] == "wrote pydoc_test.html"
+        assert out[4] == "wrote pydoc_test.html", raw
         content = tmp_path / "pydoc_test.html"
         assert content.exists(), raw
         # post deactivation, same as before
@@ -124,17 +125,17 @@ class ActivationTester(object):
 
     def print_python_exe(self):
         return self.python_cmd(
-            "import sys; v = sys.executable;"
-            "print(v.decode(sys.getfilesystemencoding()) if sys.version_info[0] == 2 and isinstance(v, str) else v)"
+            "import sys; print(sys.executable{})".format(
+                "" if six.PY3 or IS_PYPY else ".decode(sys.getfilesystemencoding())"
+            )
         )
 
     def print_os_env_var(self, var):
         val = '"{}"'.format(var)
         return self.python_cmd(
-            "import os; import sys; v = os.environ.get({}, None);"
-            "print(v if v is None else "
-            "(v.decode(sys.getfilesystemencoding()) if sys.version_info[0] == 2 and isinstance(v, str)"
-            " else v))".format(val)
+            "import os; import sys; v = os.environ.get({}); print({})".format(
+                val, "v" if six.PY3 or IS_PYPY else "None if v is None else v.decode(sys.getfilesystemencoding())"
+            )
         )
 
     def activate_call(self, script):

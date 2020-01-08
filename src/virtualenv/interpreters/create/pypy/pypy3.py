@@ -4,7 +4,6 @@ import abc
 
 import six
 
-from virtualenv.info import IS_WIN
 from virtualenv.interpreters.create.support import PosixSupports, Python3Supports, WindowsSupports
 from virtualenv.util.path import Path
 
@@ -16,7 +15,7 @@ class PyPy3(PyPy, Python3Supports):
     """"""
 
     @property
-    def exe_name(self):
+    def exe_base(self):
         return "pypy3"
 
     @property
@@ -26,10 +25,6 @@ class PyPy3(PyPy, Python3Supports):
     @property
     def lib_base(self):
         return Path(self.lib_name) / self.interpreter.python_name
-
-    @property
-    def exe(self):
-        return self.bin_dir / "pypy3{}".format(".exe" if IS_WIN else "")
 
     def _shared_lib_to(self):
         return super(PyPy3, self)._shared_lib_to() + [self.dest_dir / self.lib_name]

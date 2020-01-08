@@ -39,7 +39,7 @@ def link_folder(has_symlink_support):
         # on Windows junctions may be used instead
         import _winapi  # Cpython3.5 has builtin implementation for junctions
 
-        return getattr(_winapi, 'CreateJunction', None)
+        return getattr(_winapi, "CreateJunction", None)
     else:
         return None
 
@@ -233,8 +233,8 @@ def special_char_name():
     result = ""
     for char in base:
         try:
-            encoded = char.encode(encoding, errors="strict")
-            if char == "?" or encoded != b"?":  # mbcs notably on Python 2 uses replace even for strict
+            trip = char.encode(encoding, errors="strict").decode(encoding)
+            if char == trip:
                 result += char
         except ValueError:
             continue

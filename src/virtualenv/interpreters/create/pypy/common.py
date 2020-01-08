@@ -25,7 +25,14 @@ class PyPy(ViaGlobalRefSelfDo):
     def link_exe(self):
         host = Path(self.interpreter.system_executable)
         return {
-            host: sorted({host.name, self.exe_name, "python", "python{}".format(self.interpreter.version_info.major)})
+            host: sorted(
+                {
+                    host.name,
+                    self.exe.name,
+                    "python{}".format(self.suffix),
+                    "python{}{}".format(self.interpreter.version_info.major, self.suffix),
+                }
+            )
         }
 
     def setup_python(self):

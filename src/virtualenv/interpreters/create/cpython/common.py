@@ -16,7 +16,7 @@ class CPython(ViaGlobalRefSelfDo):
         return interpreter.implementation == "CPython" and super(CPython, cls).supports(interpreter)
 
     @property
-    def exe_name(self):
+    def exe_base(self):
         return "python"
 
 

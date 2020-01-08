@@ -33,5 +33,13 @@ class SelfDo(ViaGlobalRefApi):
         raise NotImplementedError
 
     @property
+    def exe_base(self):
+        raise NotImplementedError
+
+    @property
     def exe(self):
-        return self.bin_dir / "{}{}".format(self.exe_name, ".exe" if IS_WIN else "")
+        return self.bin_dir / "{}{}".format(self.exe_base, self.suffix)
+
+    @property
+    def suffix(self):
+        return ".exe" if IS_WIN else ""

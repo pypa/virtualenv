@@ -77,15 +77,18 @@ class Creator(object):
         # the file system must be able to encode
         # note in newer CPython this is always utf-8 https://www.python.org/dev/peps/pep-0529/
         encoding = sys.getfilesystemencoding()
-        path_converted = raw_value.encode(encoding, errors="ignore").decode(encoding)
-        if path_converted != raw_value:
-            refused = set(raw_value) - {
-                c
-                for c, i in ((char, char.encode(encoding)) for char in raw_value)
-                if c == "?" or i != six.ensure_str("?")
-            }
+        refused = set()
+        for char in raw_value:
+            try:
+                trip = char.encode(encoding, errors="ignore").decode(encoding)
+                if trip == char:
+                    continue
+                raise ValueError
+            except ValueError:
+                refused.add(char)
+        if refused:
             raise ArgumentTypeError(
-                "the file system codec ({}) does not support characters {!r}".format(encoding, refused)
+                "the file system codec ({}) does not support characters {!r}".format(encoding, list(refused))
             )
         if os.pathsep in raw_value:
             raise ArgumentTypeError(

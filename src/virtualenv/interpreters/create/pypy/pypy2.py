@@ -16,7 +16,7 @@ class PyPy2(PyPy, Python2):
     """"""
 
     @property
-    def exe_name(self):
+    def exe_base(self):
         return "pypy"
 
     @property
