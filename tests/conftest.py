@@ -23,7 +23,7 @@ def has_symlink_support(tmp_path_factory):
         src = test_folder / "src"
         try:
             src.symlink_to(test_folder / "dest")
-        except OSError:
+        except (OSError, NotImplementedError):
             return False
         finally:
             shutil.rmtree(str(test_folder))
@@ -37,9 +37,9 @@ def link_folder(has_symlink_support):
         return os.symlink
     elif sys.platform == "win32" and sys.version_info[0:2] > (3, 4):
         # on Windows junctions may be used instead
-        import _winapi  # python3.5 has builtin implementation for junctions
+        import _winapi  # Cpython3.5 has builtin implementation for junctions
 
-        return _winapi.CreateJunction
+        return getattr(_winapi, 'CreateJunction', None)
     else:
         return None
 
