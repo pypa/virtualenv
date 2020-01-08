@@ -51,6 +51,10 @@ class PyPy2(PyPy, Python2):
 class PyPy2Posix(PyPy2, PosixSupports):
     """PyPy 2 on POSIX"""
 
+    @property
+    def bin_name(self):
+        return "bin"
+
     def modules(self):
         return super(PyPy2Posix, self).modules() + ["posixpath"]
 
@@ -61,6 +65,10 @@ class PyPy2Posix(PyPy2, PosixSupports):
 
 class Pypy2Windows(PyPy2, WindowsSupports):
     """PyPy 2 on Windows"""
+
+    @property
+    def bin_name(self):
+        return "Scripts"
 
     def modules(self):
         return super(Pypy2Windows, self).modules() + ["ntpath"]

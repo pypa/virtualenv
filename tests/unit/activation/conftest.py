@@ -29,19 +29,28 @@ class ActivationTester(object):
         self.deactivate = "deactivate"
         self.pydoc_call = "pydoc -w pydoc_test"
         self.script_encoding = "utf-8"
+        self.__version = None
 
     def get_version(self, raise_on_fail):
-        # locally we disable, so that contributors don't need to have everything setup
-        try:
-            process = Popen(self._version_cmd, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = process.communicate()
-            if out:
-                return out
-            return err
-        except Exception as exception:
-            if raise_on_fail:
-                raise
-            return RuntimeError("{} is not available due {}".format(self, exception))
+        if self.__version is None:
+            # locally we disable, so that contributors don't need to have everything setup
+            try:
+                process = Popen(
+                    self._version_cmd, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                )
+                out, err = process.communicate()
+                result = out if out else err
+                self.__version = result
+                return result
+            except Exception as exception:
+                self.__version = exception
+                if raise_on_fail:
+                    raise
+                return RuntimeError("{} is not available due {}".format(self, exception))
+        return self.__version
+
+    def __repr__(self):
+        return "{}(version={}, creator={})".format(self.__class__.__name__, self.__version, self._creator)
 
     def __call__(self, monkeypatch, tmp_path):
         activate_script = self._creator.bin_dir / self.activate_script
@@ -54,7 +63,8 @@ class ActivationTester(object):
         try:
             process = Popen(invoke, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
             _raw, _ = process.communicate()
-            raw = "\n{}".format(_raw.decode(sys.getfilesystemencoding())).replace("\r\n", "\n")
+            encoding = sys.getfilesystemencoding() if IS_PYPY else "utf-8"
+            raw = "\n{}".format(_raw.decode(encoding)).replace("\r\n", "\n")
         except subprocess.CalledProcessError as exception:
             assert not exception.returncode, six.ensure_text(exception.output)
             return
@@ -80,7 +90,7 @@ class ActivationTester(object):
 
     def _generate_test_script(self, activate_script, tmp_path):
         commands = self._get_test_lines(activate_script)
-        script = os.linesep.join(commands)
+        script = six.ensure_text(os.linesep).join(commands)
         test_script = tmp_path / "script.{}".format(self.extension)
         with open(six.ensure_text(str(test_script)), "wb") as file_handler:
             file_handler.write(script.encode(self.script_encoding))
@@ -125,16 +135,14 @@ class ActivationTester(object):
 
     def print_python_exe(self):
         return self.python_cmd(
-            "import sys; print(sys.executable{})".format(
-                "" if six.PY3 or IS_PYPY else ".decode(sys.getfilesystemencoding())"
-            )
+            "import sys; print(sys.executable{})".format("" if six.PY3 else ".decode(sys.getfilesystemencoding())")
         )
 
     def print_os_env_var(self, var):
         val = '"{}"'.format(var)
         return self.python_cmd(
             "import os; import sys; v = os.environ.get({}); print({})".format(
-                val, "v" if six.PY3 or IS_PYPY else "None if v is None else v.decode(sys.getfilesystemencoding())"
+                val, "v" if six.PY3 else "None if v is None else v.decode(sys.getfilesystemencoding())"
             )
         )
 
@@ -147,15 +155,15 @@ class ActivationTester(object):
     def norm_path(path):
         # python may return Windows short paths, normalize
         path = realpath(six.ensure_text(str(path)) if isinstance(path, Path) else path)
-        if sys.platform == "win32":
+        if sys.platform != "win32":
+            result = path
+        else:
             from ctypes import create_unicode_buffer, windll
 
             buffer_cont = create_unicode_buffer(256)
             get_long_path_name = windll.kernel32.GetLongPathNameW
             get_long_path_name(six.text_type(path), buffer_cont, 256)  # noqa: F821
-            result = buffer_cont.value
-        else:
-            result = path
+            result = buffer_cont.value or path
         return normcase(result)
 
 
@@ -186,10 +194,7 @@ def raise_on_non_source_class():
 
 @pytest.fixture(scope="session")
 def activation_python(tmp_path_factory, special_char_name):
-    dest = os.path.join(
-        six.ensure_text(str(tmp_path_factory.mktemp("activation-tester-env"))),
-        six.ensure_text("env-{}-v".format(special_char_name)),
-    )
+    dest = os.path.join(six.ensure_text(str(tmp_path_factory.mktemp("activation-tester-env"))), special_char_name)
     session = run_via_cli(["--seed", "none", dest, "--prompt", special_char_name, "--creator", "self-do"])
     pydoc_test = session.creator.site_packages[0] / "pydoc_test.py"
     with open(six.ensure_text(str(pydoc_test)), "wb") as file_handler:

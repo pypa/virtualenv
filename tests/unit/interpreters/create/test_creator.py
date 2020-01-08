@@ -59,9 +59,6 @@ def test_destination_not_write_able(tmp_path, capsys):
         target.chmod(prev_mod)
 
 
-SYSTEM = get_env_debug_info(Path(CURRENT.system_executable), DEBUG_SCRIPT)
-
-
 def cleanup_sys_path(paths):
     from virtualenv.interpreters.create.creator import HERE
 
@@ -74,11 +71,16 @@ def cleanup_sys_path(paths):
     return result
 
 
+@pytest.fixture(scope="session")
+def system():
+    return get_env_debug_info(Path(CURRENT.system_executable), DEBUG_SCRIPT)
+
+
 @pytest.mark.parametrize("global_access", [False, True], ids=["no_global", "ok_global"])
 @pytest.mark.parametrize(
     "use_venv", [False, True] if six.PY3 else [False], ids=["no_venv", "venv"] if six.PY3 else ["no_venv"]
 )
-def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env, special_name_dir):
+def test_create_no_seed(python, use_venv, global_access, system, coverage_env, special_name_dir):
     dest = special_name_dir
     cmd = [
         "-v",
@@ -106,7 +108,7 @@ def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env,
     assert result.creator.env_name == six.ensure_text(dest.name)
     debug = result.creator.debug
     sys_path = cleanup_sys_path(debug["sys"]["path"])
-    system_sys_path = cleanup_sys_path(SYSTEM["sys"]["path"])
+    system_sys_path = cleanup_sys_path(system["sys"]["path"])
     our_paths = set(sys_path) - set(system_sys_path)
     our_paths_repr = "\n".join(six.ensure_text(repr(i)) for i in our_paths)
 
@@ -121,7 +123,7 @@ def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env,
     assert any(p for p in our_paths if p.parts[-1] == "site-packages"), our_paths_repr
 
     # ensure the global site package is added or not, depending on flag
-    last_from_system_path = next(i for i in reversed(system_sys_path) if str(i).startswith(SYSTEM["sys"]["prefix"]))
+    last_from_system_path = next(i for i in reversed(system_sys_path) if str(i).startswith(system["sys"]["prefix"]))
     if global_access:
         common = []
         for left, right in zip(reversed(system_sys_path), reversed(sys_path)):

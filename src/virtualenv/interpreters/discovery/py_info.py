@@ -58,6 +58,8 @@ class PythonInfo(object):
             has = False
         self.has_venv = has
         self.path = sys.path
+        self.file_system_encoding = sys.getfilesystemencoding()
+        self.stdout_encoding = getattr(sys.stdout, "encoding", None)
 
     @property
     def version_str(self):
@@ -105,6 +107,7 @@ class PythonInfo(object):
                     ),
                     ("platform", self.platform),
                     ("version", repr(self.version)),
+                    ("encoding_fs_io", "{}-{}".format(self.file_system_encoding, self.stdout_encoding)),
                 )
                 if k is not None
             ),
@@ -207,7 +210,7 @@ class PythonInfo(object):
             if raise_on_error:
                 raise failure
             else:
-                logging.warn("%s", str(failure))
+                logging.warning("%s", str(failure))
         return result
 
     @classmethod
@@ -216,6 +219,7 @@ class PythonInfo(object):
 
         path = "{}.py".format(os.path.splitext(__file__)[0])
         cmd = [exe, "-s", path]
+
         # noinspection DuplicatedCode
         # this is duplicated here because this file is executed on its own, so cannot be refactored otherwise
 

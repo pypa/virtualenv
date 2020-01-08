@@ -9,7 +9,7 @@ from stat import S_IXGRP, S_IXOTH, S_IXUSR
 import six
 from six import add_metaclass
 
-from virtualenv.info import FS_CASE_SENSITIVE
+from virtualenv.info import is_fs_case_sensitive
 from virtualenv.interpreters.create.self_do import SelfDo
 from virtualenv.util.path import Path, copy, ensure_dir, symlink
 
@@ -57,7 +57,7 @@ class ViaGlobalRefSelfDo(SelfDo):
 
             aliases = do_link
         for src, targets in self.link_exe().items():
-            if not FS_CASE_SENSITIVE:
+            if not is_fs_case_sensitive():
                 targets = list(OrderedDict((i.lower(), None) for i in targets).keys())
             to = self.bin_dir / targets[0]
             method(src, to)

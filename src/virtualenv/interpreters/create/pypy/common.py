@@ -15,24 +15,18 @@ class PyPy(ViaGlobalRefSelfDo):
         return interpreter.implementation == "PyPy" and super(PyPy, cls).supports(interpreter)
 
     @property
-    def bin_name(self):
-        return "bin"
-
-    @property
     def site_packages(self):
         return [self.dest_dir / "site-packages"]
 
     def link_exe(self):
         host = Path(self.interpreter.system_executable)
+        return {host: sorted("{}{}".format(name, self.suffix) for name in self.exe_names())}
+
+    def exe_names(self):
         return {
-            host: sorted(
-                {
-                    host.name,
-                    self.exe.name,
-                    "python{}".format(self.suffix),
-                    "python{}{}".format(self.interpreter.version_info.major, self.suffix),
-                }
-            )
+            self.exe.stem,
+            "python",
+            "python{}".format(self.interpreter.version_info.major),
         }
 
     def setup_python(self):

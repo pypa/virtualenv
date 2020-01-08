@@ -6,7 +6,7 @@ import re
 import sys
 from collections import OrderedDict
 
-from virtualenv.info import FS_CASE_SENSITIVE
+from virtualenv.info import is_fs_case_sensitive
 
 PATTERN = re.compile(r"^(?P<impl>[a-zA-Z]+)?(?P<version>[0-9.]+)?(?:-(?P<arch>32|64))?$")
 IS_WIN = sys.platform == "win32"
@@ -72,7 +72,7 @@ class PythonSpec(object):
         if self.implementation:
             # first consider implementation as it is
             impls[self.implementation] = False
-            if FS_CASE_SENSITIVE:
+            if is_fs_case_sensitive():
                 # for case sensitive file systems consider lower and upper case versions too
                 # trivia: MacBooks and all pre 2018 Windows-es were case insensitive by default
                 impls[self.implementation.lower()] = False

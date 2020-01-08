@@ -7,6 +7,7 @@ import shutil
 import sys
 from abc import ABCMeta, abstractmethod
 from argparse import ArgumentTypeError
+from collections import OrderedDict
 
 import six
 from six import add_metaclass
@@ -77,18 +78,21 @@ class Creator(object):
         # the file system must be able to encode
         # note in newer CPython this is always utf-8 https://www.python.org/dev/peps/pep-0529/
         encoding = sys.getfilesystemencoding()
-        refused = set()
-        for char in raw_value:
+        refused = OrderedDict()
+        kwargs = {"errors": "ignore"} if encoding != "mbcs" else {}
+        for char in six.ensure_text(raw_value):
             try:
-                trip = char.encode(encoding, errors="ignore").decode(encoding)
+                trip = char.encode(encoding, **kwargs).decode(encoding)
                 if trip == char:
                     continue
-                raise ValueError
+                raise ValueError(trip)
             except ValueError:
-                refused.add(char)
+                refused[char] = None
         if refused:
             raise ArgumentTypeError(
-                "the file system codec ({}) does not support characters {!r}".format(encoding, list(refused))
+                "the file system codec ({}) cannot handle characters {!r} within {!r}".format(
+                    encoding, "".join(refused.keys()), raw_value
+                )
             )
         if os.pathsep in raw_value:
             raise ArgumentTypeError(

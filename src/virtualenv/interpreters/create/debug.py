@@ -43,6 +43,8 @@ def run():
         else:
             value = encode_path(value)
         result["sys"][key] = value
+    result["sys"]["fs_encoding"] = sys.getfilesystemencoding()
+    result["sys"]["io_encoding"] = getattr(sys.stdout, "encoding", None)
     result["version"] = sys.version
     import os  # landmark
 
@@ -52,7 +54,7 @@ def run():
         # noinspection PyUnresolvedReferences
         import site  # site
 
-        result["site"] = site.__file__
+        result["site"] = repr(site)
     except ImportError as exception:  # pragma: no cover
         result["site"] = repr(exception)  # pragma: no cover
 
