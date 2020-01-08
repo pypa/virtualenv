@@ -36,7 +36,11 @@ class Creator(object):
         )
 
     def _args(self):
-        return [("dest", self.dest_dir), ("global", self.enable_system_site_package), ("clear", self.clear)]
+        return [
+            ("dest", six.ensure_text(str(self.dest_dir))),
+            ("global", self.enable_system_site_package),
+            ("clear", self.clear),
+        ]
 
     @classmethod
     def add_parser_arguments(cls, parser, interpreter):

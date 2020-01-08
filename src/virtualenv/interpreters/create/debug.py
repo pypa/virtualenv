@@ -46,7 +46,7 @@ def run():
     result["version"] = sys.version
     import os  # landmark
 
-    result["os"] = os.__file__
+    result["os"] = repr(os)
 
     try:
         # noinspection PyUnresolvedReferences
@@ -60,7 +60,7 @@ def run():
         # noinspection PyUnresolvedReferences
         import datetime  # site
 
-        result["pip"] = datetime.__file__
+        result["datetime"] = repr(datetime)
     except ImportError as exception:  # pragma: no cover
         result["datetime"] = repr(exception)  # pragma: no cover
 

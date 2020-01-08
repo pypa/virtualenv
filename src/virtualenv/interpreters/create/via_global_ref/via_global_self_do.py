@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import abc
 from abc import ABCMeta
 from collections import OrderedDict
-from os import chmod, link, stat
+from os import chmod, stat
 from stat import S_IXGRP, S_IXOTH, S_IXUSR
 
 import six
@@ -48,7 +48,14 @@ class ViaGlobalRefSelfDo(SelfDo):
         return dirs
 
     def setup_python(self):
-        method = self.add_exe_method()
+        aliases = method = self.add_exe_method()
+        if six.PY3:
+            from os import link
+
+            def do_link(src, dst):
+                link(six.ensure_text(str(src)), six.ensure_text(str(dst)))
+
+            aliases = do_link
         for src, targets in self.link_exe().items():
             if not FS_CASE_SENSITIVE:
                 targets = list(OrderedDict((i.lower(), None) for i in targets).keys())
@@ -58,7 +65,7 @@ class ViaGlobalRefSelfDo(SelfDo):
                 link_file = self.bin_dir / extra
                 if link_file.exists():
                     link_file.unlink()
-                link(six.ensure_text(str(to)), six.ensure_text(str(link_file)))
+                aliases(to, link_file)
 
     def add_exe_method(self):
         if self.copier is symlink:

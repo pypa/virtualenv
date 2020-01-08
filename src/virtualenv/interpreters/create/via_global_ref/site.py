@@ -28,7 +28,7 @@ def load_host_site():
     # ensure that our expected site packages is on the sys.path
     import os
 
-    site_packages = """
+    site_packages = r"""
     ___EXPECTED_SITE_PACKAGES___
     """
     import json

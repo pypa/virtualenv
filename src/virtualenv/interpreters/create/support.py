@@ -32,4 +32,4 @@ class PosixSupports(Creator):
 class WindowsSupports(Creator):
     @classmethod
     def supports(cls, interpreter):
-        return interpreter.os == "win32" and super(WindowsSupports, cls).supports(interpreter)
+        return interpreter.os == "nt" and super(WindowsSupports, cls).supports(interpreter)
