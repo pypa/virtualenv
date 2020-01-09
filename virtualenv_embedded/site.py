@@ -752,7 +752,7 @@ def main():
     setquit()
     setcopyright()
     sethelper()
-    if sys.version_info[0] == 3:
+    if sys.version_info[0] >= 3:
         enablerlcompleter()
     aliasmbcs()
     setencoding()
