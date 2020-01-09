@@ -6,6 +6,7 @@ import re
 import shutil
 import zipfile
 from abc import ABCMeta, abstractmethod
+from stat import S_IXGRP, S_IXOTH, S_IXUSR
 from tempfile import mkdtemp
 from textwrap import dedent
 
@@ -174,7 +175,7 @@ class PipInstall(object):
             ):
                 exe = to_folder / new_name
                 exe.write_text(content, encoding="utf-8")
-                exe.chmod(0o755)
+                exe.chmod(exe.stat() | S_IXUSR | S_IXGRP | S_IXOTH)
                 result.append(exe)
         return result
 
