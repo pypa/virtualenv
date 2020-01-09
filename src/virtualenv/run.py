@@ -1,15 +1,19 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
+import sys
 from argparse import ArgumentTypeError
 from collections import OrderedDict
-
-from entrypoints import get_group_named
 
 from .config.cli.parser import VirtualEnvConfigParser
 from .report import LEVELS, setup_report
 from .session import Session
 from .version import __version__
+
+if sys.version_info >= (3, 8):
+    from importlib.metadata import entry_points
+else:
+    from importlib_metadata import entry_points
 
 
 def run_via_cli(args):
@@ -85,12 +89,20 @@ def _get_discover(parser, args, options):
 
 
 _DISCOVERY = None
+_ENTRY_POINTS = None
+
+
+def plugins(key):
+    global _ENTRY_POINTS
+    if _ENTRY_POINTS is None:
+        _ENTRY_POINTS = entry_points()
+    return _ENTRY_POINTS[key]
 
 
 def _collect_discovery_types():
     global _DISCOVERY
     if _DISCOVERY is None:
-        _DISCOVERY = {e.name: e.load() for e in get_group_named("virtualenv.discovery").values()}
+        _DISCOVERY = {e.name: e.load() for e in plugins("virtualenv.discovery")}
     return _DISCOVERY
 
 
@@ -132,7 +144,7 @@ _CREATORS = None
 def _collect_creators(interpreter):
     global _CREATORS
     if _CREATORS is None:
-        _CREATORS = {e.name: e.load() for e in get_group_named("virtualenv.create").values()}
+        _CREATORS = {e.name: e.load() for e in plugins("virtualenv.create")}
     creators = OrderedDict()
     for name, class_type in _CREATORS.items():
         if class_type.supports(interpreter):
@@ -170,7 +182,7 @@ _SEEDERS = None
 def _collect_seeders():
     global _SEEDERS
     if _SEEDERS is None:
-        _SEEDERS = {e.name: e.load() for e in get_group_named("virtualenv.seed").values()}
+        _SEEDERS = {e.name: e.load() for e in plugins("virtualenv.seed")}
     return _SEEDERS
 
 
@@ -219,6 +231,6 @@ _ACTIVATORS = None
 def collect_activators(interpreter):
     global _ACTIVATORS
     if _ACTIVATORS is None:
-        _ACTIVATORS = {e.name: e.load() for e in get_group_named("virtualenv.activate").values()}
+        _ACTIVATORS = {e.name: e.load() for e in plugins("virtualenv.activate")}
     activators = {k: v for k, v in _ACTIVATORS.items() if v.supports(interpreter)}
     return activators
