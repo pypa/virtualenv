@@ -34,20 +34,18 @@ set_env("VIRTUAL_ENV", base, sys.getfilesystemencoding())
 # add the virtual environments site-packages to the host python import mechanism
 prev = set(sys.path)
 
-# fmt: off
-# turn formatter off as json dumps will contain " characters - so we really need here ' black
-site_packages = r'''
+site_packages = r"""
 __SITE_PACKAGES__
-'''
+"""
 
 for site_package in json.loads(site_packages):
     if sys.version_info[0] == 2:
-        site_package = site_package.encode('utf-8').decode(sys.getfilesystemencoding())
+        site_package = site_package.encode("utf-8").decode(sys.getfilesystemencoding())
     path = os.path.realpath(os.path.join(os.path.dirname(__file__), site_package))
     if sys.version_info[0] == 2:
         path = path.encode(sys.getfilesystemencoding())
     site.addsitedir(path)
-# fmt: on
+
 
 sys.real_prefix = sys.prefix
 sys.prefix = base
