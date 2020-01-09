@@ -13,6 +13,9 @@ class Path(object):
     def __repr__(self):
         return six.ensure_str("Path({})".format(self._path))
 
+    def __unicode__(self):
+        return self._path
+
     def __str__(self):
         return six.ensure_str(self._path)
 

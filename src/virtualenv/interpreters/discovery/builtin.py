@@ -32,7 +32,10 @@ class Builtin(Discover):
     def run(self):
         return get_interpreter(self.python_spec)
 
-    def __str__(self):
+    def __repr__(self):
+        return six.ensure_str(self.__unicode__())
+
+    def __unicode__(self):
         return "{} discover of python_spec={!r}".format(self.__class__.__name__, self.python_spec)
 
 
@@ -42,7 +45,7 @@ def get_interpreter(key):
     proposed_paths = set()
     for interpreter, impl_must_match in propose_interpreters(spec):
         if interpreter.executable not in proposed_paths:
-            logging.debug("proposed %s", interpreter)
+            logging.info("proposed %s", interpreter)
             if interpreter.satisfies(spec, impl_must_match):
                 logging.info("accepted target interpreter %s", interpreter)
                 return interpreter
@@ -66,6 +69,7 @@ def propose_interpreters(spec):
 
     paths = get_paths()
     # find on path, the path order matters (as the candidates are less easy to control by end user)
+    tested_exes = set()
     for pos, path in enumerate(paths):
         path = six.ensure_text(path)
         logging.debug(LazyPathDump(pos, path))
@@ -73,9 +77,11 @@ def propose_interpreters(spec):
             found = check_path(candidate, path)
             if found is not None:
                 exe = os.path.abspath(found)
-                interpreter = PathPythonInfo.from_exe(exe, raise_on_error=False)
-                if interpreter is not None:
-                    yield interpreter, match
+                if exe not in tested_exes:
+                    tested_exes.add(exe)
+                    interpreter = PathPythonInfo.from_exe(exe, raise_on_error=False)
+                    if interpreter is not None:
+                        yield interpreter, match
 
 
 def get_paths():
@@ -97,7 +103,10 @@ class LazyPathDump(object):
         self.pos = pos
         self.path = path
 
-    def __str__(self):
+    def __repr__(self):
+        return six.ensure_str(self.__unicode__())
+
+    def __unicode__(self):
         content = "discover from PATH[{}]:{} with =>".format(self.pos, self.path)
         for file_name in os.listdir(self.path):
             try:
