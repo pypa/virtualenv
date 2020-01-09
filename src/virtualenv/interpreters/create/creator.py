@@ -8,6 +8,7 @@ import sys
 from abc import ABCMeta, abstractmethod
 from argparse import ArgumentTypeError
 from collections import OrderedDict
+from stat import S_IWUSR
 
 import six
 from six import add_metaclass
@@ -126,7 +127,15 @@ class Creator(object):
     def run(self):
         if self.dest_dir.exists() and self.clear:
             logging.debug("delete %s", self.dest_dir)
-            shutil.rmtree(str(self.dest_dir), ignore_errors=True)
+
+            def onerror(func, path, exc_info):
+                if not os.access(path, os.W_OK):
+                    os.chmod(path, S_IWUSR)
+                    func(path)
+                else:
+                    raise
+
+            shutil.rmtree(str(self.dest_dir), ignore_errors=True, onerror=onerror)
         self.create()
         self.set_pyenv_cfg()
 
