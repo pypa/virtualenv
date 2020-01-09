@@ -7,6 +7,7 @@ import shutil
 import sys
 from abc import ABCMeta, abstractmethod
 from argparse import ArgumentTypeError
+from ast import literal_eval
 from collections import OrderedDict
 from stat import S_IWUSR
 
@@ -183,7 +184,7 @@ def get_env_debug_info(env_exe, debug_script):
     # noinspection PyBroadException
     try:
         if code != 0:
-            result = eval(out)
+            result = literal_eval(out)
         else:
             result = json.loads(out)
         if err:
