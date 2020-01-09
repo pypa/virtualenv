@@ -207,6 +207,7 @@ class PythonInfo(object):
 
     @classmethod
     def from_exe(cls, exe, raise_on_error=True):
+        # this method is not used by itself, so here and called functions can import stuff locally
         key = os.path.realpath(exe)
         if key in cls._cache_from_exe:
             result, failure = cls._cache_from_exe[key]
