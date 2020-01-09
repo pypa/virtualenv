@@ -29,10 +29,10 @@ class ActivationTester(object):
         self.deactivate = "deactivate"
         self.pydoc_call = "pydoc -w pydoc_test"
         self.script_encoding = "utf-8"
-        self.__version = None
+        self._version = None
 
     def get_version(self, raise_on_fail):
-        if self.__version is None:
+        if self._version is None:
             # locally we disable, so that contributors don't need to have everything setup
             try:
                 process = Popen(
@@ -40,20 +40,27 @@ class ActivationTester(object):
                 )
                 out, err = process.communicate()
                 result = out if out else err
-                self.__version = result
+                self._version = result
                 return result
             except Exception as exception:
-                self.__version = exception
+                self._version = exception
                 if raise_on_fail:
                     raise
                 return RuntimeError("{} is not available due {}".format(self, exception))
-        return self.__version
+        return self._version
+
+    def __unicode__(self):
+        return "{}(\nversion={!r},\ncreator={},\ninterpreter={})".format(
+            self.__class__.__name__,
+            self._version,
+            six.text_type(self._creator),
+            six.text_type(self._creator.interpreter),
+        )
 
     def __repr__(self):
-        return "{}(version={}, creator={})".format(self.__class__.__name__, self.__version, self._creator)
+        return six.ensure_str(self.__unicode__())
 
     def __call__(self, monkeypatch, tmp_path):
-        print(repr(self))
         activate_script = self._creator.bin_dir / self.activate_script
         test_script = self._generate_test_script(activate_script, tmp_path)
         monkeypatch.chdir(six.ensure_text(str(tmp_path)))
@@ -136,14 +143,16 @@ class ActivationTester(object):
 
     def print_python_exe(self):
         return self.python_cmd(
-            "import sys; print(sys.executable{})".format("" if six.PY3 else ".decode(sys.getfilesystemencoding())")
+            "import sys; print(sys.executable{})".format(
+                "" if six.PY3 or IS_PYPY else ".decode(sys.getfilesystemencoding())"
+            )
         )
 
     def print_os_env_var(self, var):
         val = '"{}"'.format(var)
         return self.python_cmd(
             "import os; import sys; v = os.environ.get({}); print({})".format(
-                val, "v" if six.PY3 else "None if v is None else v.decode(sys.getfilesystemencoding())"
+                val, "v" if six.PY3 or IS_PYPY else "None if v is None else v.decode(sys.getfilesystemencoding())"
             )
         )
 

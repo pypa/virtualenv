@@ -49,5 +49,8 @@ class _Debug(object):
     def __init__(self, creator):
         self.creator = creator
 
-    def __str__(self):
+    def __unicode__(self):
+        return six.ensure_text(repr(self))
+
+    def __repr__(self):
         return json.dumps(self.creator.debug, indent=2)

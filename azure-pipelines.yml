@@ -28,7 +28,7 @@ schedules:
   always: true
 
 variables:
-  PYTEST_ADDOPTS: "-vv --tb=long --durations=10"
+  PYTEST_ADDOPTS: "-vv --durations=10"
   CI_RUN: 'yes'
   UPGRADE_ADVISORY: 'yes'
 

@@ -3,7 +3,7 @@ The PythonInfo contains information about a concrete instance of a Python interp
 
 Note: this file is also used to query target interpreters, so can only use standard library methods
 """
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, print_function
 
 import json
 import logging
@@ -82,11 +82,17 @@ class PythonInfo(object):
     def is_venv(self):
         return self.base_prefix is not None and self.version_info.major == 3
 
+    def __unicode__(self):
+        content = repr(self)
+        if sys.version_info == 2:
+            content = content.decode("utf-8")
+        return content
+
     def __repr__(self):
         return "{}({!r})".format(self.__class__.__name__, self.__dict__)
 
     def __str__(self):
-        return "{}({})".format(
+        content = "{}({})".format(
             self.__class__.__name__,
             ", ".join(
                 "{}={}".format(k, v)
@@ -112,6 +118,7 @@ class PythonInfo(object):
                 if k is not None
             ),
         )
+        return content
 
     def to_json(self):
         data = {var: getattr(self, var) for var in vars(self)}
@@ -224,7 +231,7 @@ class PythonInfo(object):
         # this is duplicated here because this file is executed on its own, so cannot be refactored otherwise
 
         class Cmd(object):
-            def __str__(self):
+            def __repr__(self):
                 import pipes
 
                 return " ".join(pipes.quote(c) for c in cmd)

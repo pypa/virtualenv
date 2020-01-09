@@ -32,7 +32,10 @@ class Builtin(Discover):
     def run(self):
         return get_interpreter(self.python_spec)
 
-    def __str__(self):
+    def __repr__(self):
+        return six.ensure_str(self.__unicode__())
+
+    def __unicode__(self):
         return "{} discover of python_spec={!r}".format(self.__class__.__name__, self.python_spec)
 
 
@@ -100,7 +103,10 @@ class LazyPathDump(object):
         self.pos = pos
         self.path = path
 
-    def __str__(self):
+    def __repr__(self):
+        return six.ensure_str(self.__unicode__())
+
+    def __unicode__(self):
         content = "discover from PATH[{}]:{} with =>".format(self.pos, self.path)
         for file_name in os.listdir(self.path):
             try:

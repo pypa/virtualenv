@@ -68,7 +68,7 @@ class BaseEmbed(Seeder):
                 default=False,
             )
 
-    def __str__(self):
+    def __unicode__(self):
         result = self.__class__.__name__
         if self.extra_search_dir:
             result += " extra search dirs = {}".format(
@@ -79,3 +79,6 @@ class BaseEmbed(Seeder):
         if self.no_setuptools is False:
             result += " setuptools{}".format("={}".format(self.setuptools_version or "latest"))
         return result
+
+    def __repr__(self):
+        return six.ensure_str(self.__unicode__())

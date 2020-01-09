@@ -31,10 +31,11 @@ class Creator(object):
         self.clear = options.clear
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest_dir)
 
-    def __str__(self):
-        return six.ensure_str(
-            "{}({})".format(self.__class__.__name__, ", ".join("{}={}".format(k, v) for k, v in self._args()))
-        )
+    def __repr__(self):
+        return six.ensure_str(self.__unicode__())
+
+    def __unicode__(self):
+        return "{}({})".format(self.__class__.__name__, ", ".join("{}={}".format(k, v) for k, v in self._args()))
 
     def _args(self):
         return [

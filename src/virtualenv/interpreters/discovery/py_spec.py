@@ -6,6 +6,8 @@ import re
 import sys
 from collections import OrderedDict
 
+import six
+
 from virtualenv.info import is_fs_case_sensitive
 
 PATTERN = re.compile(r"^(?P<impl>[a-zA-Z]+)?(?P<version>[0-9.]+)?(?:-(?P<arch>32|64))?$")
@@ -107,7 +109,7 @@ class PythonSpec(object):
                 return False
         return True
 
-    def __repr__(self):
+    def __unicode__(self):
         return "{}({})".format(
             type(self).__name__,
             ", ".join(
@@ -116,3 +118,6 @@ class PythonSpec(object):
                 if getattr(self, k) is not None
             ),
         )
+
+    def __repr__(self):
+        return six.ensure_str(self.__unicode__())
