@@ -5,7 +5,7 @@ from virtualenv.util.path import Path
 from ..via_template import ViaTemplateActivator
 
 
-class XonoshActivator(ViaTemplateActivator):
+class XonshActivator(ViaTemplateActivator):
     def templates(self):
         yield Path("activate.xsh")
 

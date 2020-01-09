@@ -6,12 +6,12 @@ from .cshell import CShellActivator
 from .fish import FishActivator
 from .powershell import PowerShellActivator
 from .python import PythonActivator
-from .xonosh import XonoshActivator
+from .xonsh import XonshActivator
 
 __all__ = [
     BashActivator,
     PowerShellActivator,
-    XonoshActivator,
+    XonshActivator,
     CShellActivator,
     PythonActivator,
     BatchActivator,
