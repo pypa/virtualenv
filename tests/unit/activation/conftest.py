@@ -53,6 +53,7 @@ class ActivationTester(object):
         return "{}(version={}, creator={})".format(self.__class__.__name__, self.__version, self._creator)
 
     def __call__(self, monkeypatch, tmp_path):
+        print(repr(self))
         activate_script = self._creator.bin_dir / self.activate_script
         test_script = self._generate_test_script(activate_script, tmp_path)
         monkeypatch.chdir(six.ensure_text(str(tmp_path)))
