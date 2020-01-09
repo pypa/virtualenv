@@ -191,7 +191,7 @@ class PythonInfo(object):
     def _find_possible_exe_names(self):
         name_candidate = OrderedDict()
         for name in [self.implementation, "python"]:
-            for at in range(3, -1, -1):
+            for at in (3, 2, 1, 0):
                 version = ".".join(str(i) for i in self.version_info[:at])
                 for arch in ["-{}".format(self.architecture), ""]:
                     for ext in EXTENSIONS:
