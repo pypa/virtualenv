@@ -12,7 +12,7 @@ from virtualenv.activation import PowerShellActivator
 
 
 @pytest.mark.xfail(
-    condition=IS_PYPY and PY2 and IS_WIN and "CI_RUN" in os.environ,
+    condition=IS_PYPY and PY2 and IS_WIN and os.environ.get("CI_RUN"),
     strict=False,
     reason="this fails in the CI only, nor sure how, if anyone can reproduce help",
 )

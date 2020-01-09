@@ -223,7 +223,7 @@ class EnableCoverage(object):
 
 @pytest.fixture(scope="session")
 def is_inside_ci():
-    yield "CI_RUN" in os.environ
+    yield bool(os.environ.get(str("CI_RUN")))
 
 
 @pytest.fixture(scope="session")
