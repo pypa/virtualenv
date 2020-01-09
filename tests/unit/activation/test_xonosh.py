@@ -2,9 +2,13 @@ from __future__ import absolute_import, unicode_literals
 
 import sys
 
+import pytest
+
 from virtualenv.activation import XonoshActivator
+from virtualenv.info import IS_PYPY, PY3
 
 
+@pytest.mark.skipif(sys.platform == "win32" and IS_PYPY and PY3, reason="xonsh on Windows blocks indefinitely")
 def test_xonosh(activation_tester_class, activation_tester):
     class Xonosh(activation_tester_class):
         def __init__(self, session):

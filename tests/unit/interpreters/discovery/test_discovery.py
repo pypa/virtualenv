@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import logging
 import os
 import sys
 from uuid import uuid4
@@ -13,7 +14,8 @@ from virtualenv.interpreters.discovery.py_info import CURRENT
 
 @pytest.mark.skipif(sys.platform == "win32", reason="symlink is not guaranteed to work on windows")
 @pytest.mark.parametrize("case", ["mixed", "lower", "upper"])
-def test_discovery_via_path(monkeypatch, case, special_name_dir):
+def test_discovery_via_path(monkeypatch, case, special_name_dir, caplog):
+    caplog.set_level(logging.DEBUG)
     core = "somethingVeryCryptic{}".format(".".join(str(i) for i in CURRENT.version_info[0:3]))
     name = "somethingVeryCryptic"
     if case == "lower":

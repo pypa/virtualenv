@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import difflib
+import gc
 import os
 import stat
 import sys
@@ -9,6 +10,7 @@ import pytest
 import six
 
 from virtualenv.__main__ import run
+from virtualenv.info import IS_PYPY
 from virtualenv.interpreters.create.creator import DEBUG_SCRIPT, get_env_debug_info
 from virtualenv.interpreters.discovery.builtin import get_interpreter
 from virtualenv.interpreters.discovery.py_info import CURRENT, PythonInfo
@@ -57,9 +59,6 @@ def test_destination_not_write_able(tmp_path, capsys):
         target.chmod(prev_mod)
 
 
-SYSTEM = get_env_debug_info(Path(CURRENT.system_executable), DEBUG_SCRIPT)
-
-
 def cleanup_sys_path(paths):
     from virtualenv.interpreters.create.creator import HERE
 
@@ -72,11 +71,16 @@ def cleanup_sys_path(paths):
     return result
 
 
+@pytest.fixture(scope="session")
+def system():
+    return get_env_debug_info(Path(CURRENT.system_executable), DEBUG_SCRIPT)
+
+
 @pytest.mark.parametrize("global_access", [False, True], ids=["no_global", "ok_global"])
 @pytest.mark.parametrize(
     "use_venv", [False, True] if six.PY3 else [False], ids=["no_venv", "venv"] if six.PY3 else ["no_venv"]
 )
-def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env, special_name_dir):
+def test_create_no_seed(python, use_venv, global_access, system, coverage_env, special_name_dir):
     dest = special_name_dir
     cmd = [
         "-v",
@@ -87,20 +91,24 @@ def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env,
         "--without-pip",
         "--activators",
         "",
+        "--creator",
+        "venv" if use_venv else "self-do",
     ]
     if global_access:
         cmd.append("--system-site-packages")
-    if use_venv:
-        cmd.extend(["--creator", "venv"])
     result = run_via_cli(cmd)
     coverage_env()
+    if IS_PYPY:
+        # pypy cleans up file descriptors periodically so our (many) subprocess calls impact file descriptor limits
+        # force a cleanup of these on system where the limit is low-ish (e.g. MacOS 256)
+        gc.collect()
     for site_package in result.creator.site_packages:
         content = list(site_package.iterdir())
         assert not content, "\n".join(str(i) for i in content)
     assert result.creator.env_name == six.ensure_text(dest.name)
     debug = result.creator.debug
     sys_path = cleanup_sys_path(debug["sys"]["path"])
-    system_sys_path = cleanup_sys_path(SYSTEM["sys"]["path"])
+    system_sys_path = cleanup_sys_path(system["sys"]["path"])
     our_paths = set(sys_path) - set(system_sys_path)
     our_paths_repr = "\n".join(six.ensure_text(repr(i)) for i in our_paths)
 
@@ -108,14 +116,14 @@ def test_create_no_seed(python, use_venv, global_access, tmp_path, coverage_env,
     assert len(our_paths) >= 1, our_paths_repr
     # ensure all additional paths are related to the virtual environment
     for path in our_paths:
-        assert str(path).startswith(str(dest)), "{} does not start with {}".format(
-            six.ensure_text(str(path)), six.ensure_text(str(dest))
+        assert str(path).startswith(str(dest)), "\n{}\ndoes not start with {}\nhas:{}".format(
+            six.ensure_text(str(path)), six.ensure_text(str(dest)), "\n".join(system_sys_path)
         )
     # ensure there's at least a site-packages folder as part of the virtual environment added
     assert any(p for p in our_paths if p.parts[-1] == "site-packages"), our_paths_repr
 
     # ensure the global site package is added or not, depending on flag
-    last_from_system_path = next(i for i in reversed(system_sys_path) if str(i).startswith(SYSTEM["sys"]["prefix"]))
+    last_from_system_path = next(i for i in reversed(system_sys_path) if str(i).startswith(system["sys"]["prefix"]))
     if global_access:
         common = []
         for left, right in zip(reversed(system_sys_path), reversed(sys_path)):
@@ -179,9 +187,7 @@ def test_debug_bad_virtualenv(tmp_path):
 @pytest.mark.parametrize("clear", [True, False], ids=["clear", "no_clear"])
 def test_create_clear_resets(tmp_path, use_venv, clear):
     marker = tmp_path / "magic"
-    cmd = [str(tmp_path), "--seeder", "none"]
-    if use_venv:
-        cmd.extend(["--creator", "venv"])
+    cmd = [str(tmp_path), "--seeder", "none", "--creator", "venv" if use_venv else "self-do"]
     run_via_cli(cmd)
 
     marker.write_text("")  # if we a marker file this should be gone on a clear run, remain otherwise
@@ -196,11 +202,9 @@ def test_create_clear_resets(tmp_path, use_venv, clear):
 )
 @pytest.mark.parametrize("prompt", [None, "magic"])
 def test_prompt_set(tmp_path, use_venv, prompt):
-    cmd = [str(tmp_path), "--seeder", "none"]
+    cmd = [str(tmp_path), "--seeder", "none", "--creator", "venv" if use_venv else "self-do"]
     if prompt is not None:
         cmd.extend(["--prompt", "magic"])
-    if not use_venv and six.PY3:
-        cmd.extend(["--creator", "venv"])
 
     result = run_via_cli(cmd)
     actual_prompt = tmp_path.name if prompt is None else prompt
@@ -236,6 +240,8 @@ def test_cross_major(cross_python, coverage_env, tmp_path):
         "none",
         "--activators",
         "",
+        "--creator",
+        "self-do",
     ]
     result = run_via_cli(cmd)
     coverage_env()

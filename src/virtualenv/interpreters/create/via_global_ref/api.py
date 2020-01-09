@@ -4,18 +4,18 @@ from abc import ABCMeta
 
 from six import add_metaclass
 
-from .creator import Creator
+from virtualenv.interpreters.create.creator import Creator
 
 
 @add_metaclass(ABCMeta)
-class ViaGlobalRef(Creator):
+class ViaGlobalRefApi(Creator):
     def __init__(self, options, interpreter):
-        super(ViaGlobalRef, self).__init__(options, interpreter)
+        super(ViaGlobalRefApi, self).__init__(options, interpreter)
         self.symlinks = options.symlinks
 
     @classmethod
     def add_parser_arguments(cls, parser, interpreter):
-        super(ViaGlobalRef, cls).add_parser_arguments(parser, interpreter)
+        super(ViaGlobalRefApi, cls).add_parser_arguments(parser, interpreter)
         group = parser.add_mutually_exclusive_group()
         symlink = False if interpreter.os == "nt" else True
         group.add_argument(

@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 from argparse import ArgumentTypeError
+from collections import OrderedDict
 
 from entrypoints import get_group_named
 
@@ -28,7 +29,6 @@ def session_via_cli(args):
     options, verbosity = _do_report_setup(parser, args)
     discover = _get_discover(parser, args, options)
     interpreter = discover.interpreter
-    logging.debug("target interpreter %r", interpreter)
     if interpreter is None:
         raise RuntimeError("failed to find interpreter for {}".format(discover))
     elements = [
@@ -84,35 +84,59 @@ def _get_discover(parser, args, options):
     return discover
 
 
+_DISCOVERY = None
+
+
 def _collect_discovery_types():
-    discover_types = {e.name: e.load() for e in get_group_named("virtualenv.discovery").values()}
-    return discover_types
+    global _DISCOVERY
+    if _DISCOVERY is None:
+        _DISCOVERY = {e.name: e.load() for e in get_group_named("virtualenv.discovery").values()}
+    return _DISCOVERY
 
 
 def _get_creator(interpreter, parser, options):
     creators = _collect_creators(interpreter)
     creator_parser = parser.add_argument_group("creator options")
+    choices = list(creators)
+    from virtualenv.interpreters.create.self_do import SelfDo
+
+    if "self-do" in creators:
+        del creators["self-do"]
+    self_do = next((i for i, v in creators.items() if issubclass(v, SelfDo)), None)
+    if self_do is not None:
+        choices.append("self-do")
     creator_parser.add_argument(
         "--creator",
-        choices=list(creators),
+        choices=choices,
         # prefer the built-in venv if present, otherwise fallback to first defined type
         default="venv" if "venv" in creators else next(iter(creators), None),
         required=False,
-        help="create environment via",
+        help="create environment via{}".format("" if self_do is None else " (self-do = {})".format(self_do)),
     )
     yield
-    if options.creator not in creators:
+    selected = self_do if options.creator == "self-do" else options.creator
+    if selected not in creators:
         raise RuntimeError("No virtualenv implementation for {}".format(interpreter))
-    creator_class = creators[options.creator]
+    creator_class = creators[selected]
     creator_class.add_parser_arguments(creator_parser, interpreter)
     yield
+    if selected == "venv":
+        options.self_do = None if self_do is None else creators[self_do](options, interpreter)
     creator = creator_class(options, interpreter)
     yield creator
 
 
+_CREATORS = None
+
+
 def _collect_creators(interpreter):
-    all_creators = {e.name: e.load() for e in get_group_named("virtualenv.create").values()}
-    creators = {k: v for k, v in all_creators.items() if v.supports(interpreter)}
+    global _CREATORS
+    if _CREATORS is None:
+        _CREATORS = {e.name: e.load() for e in get_group_named("virtualenv.create").values()}
+    creators = OrderedDict()
+    for name, class_type in _CREATORS.items():
+        if class_type.supports(interpreter):
+            creators[name] = class_type
     return creators
 
 
@@ -140,9 +164,14 @@ def _get_seeder(parser, options):
     yield seeder
 
 
+_SEEDERS = None
+
+
 def _collect_seeders():
-    seeder_types = {e.name: e.load() for e in get_group_named("virtualenv.seed").values()}
-    return seeder_types
+    global _SEEDERS
+    if _SEEDERS is None:
+        _SEEDERS = {e.name: e.load() for e in get_group_named("virtualenv.seed").values()}
+    return _SEEDERS
 
 
 def _get_activation(interpreter, parser, options):
@@ -184,7 +213,12 @@ def _get_activation(interpreter, parser, options):
     yield activator_instances
 
 
+_ACTIVATORS = None
+
+
 def collect_activators(interpreter):
-    all_activators = {e.name: e.load() for e in get_group_named("virtualenv.activate").values()}
-    activators = {k: v for k, v in all_activators.items() if v.supports(interpreter)}
+    global _ACTIVATORS
+    if _ACTIVATORS is None:
+        _ACTIVATORS = {e.name: e.load() for e in get_group_named("virtualenv.activate").values()}
+    activators = {k: v for k, v in _ACTIVATORS.items() if v.supports(interpreter)}
     return activators

@@ -4,16 +4,15 @@ import abc
 
 import six
 
+from virtualenv.interpreters.create.support import Python3Supports
 from virtualenv.util.path import Path, copy
 
 from .common import CPython, CPythonPosix, CPythonWindows
 
 
 @six.add_metaclass(abc.ABCMeta)
-class CPython3(CPython):
-    @classmethod
-    def supports(cls, interpreter):
-        return super(CPython3, cls).supports(interpreter) and interpreter.version_info.major == 3
+class CPython3(CPython, Python3Supports):
+    """"""
 
 
 class CPython3Posix(CPythonPosix, CPython3):

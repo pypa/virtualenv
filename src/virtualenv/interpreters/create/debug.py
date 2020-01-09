@@ -43,18 +43,29 @@ def run():
         else:
             value = encode_path(value)
         result["sys"][key] = value
+    result["sys"]["fs_encoding"] = sys.getfilesystemencoding()
+    result["sys"]["io_encoding"] = getattr(sys.stdout, "encoding", None)
     result["version"] = sys.version
     import os  # landmark
 
-    result["os"] = os.__file__
+    result["os"] = repr(os)
 
     try:
         # noinspection PyUnresolvedReferences
         import site  # site
 
-        result["site"] = site.__file__
+        result["site"] = repr(site)
     except ImportError as exception:  # pragma: no cover
         result["site"] = repr(exception)  # pragma: no cover
+
+    try:
+        # noinspection PyUnresolvedReferences
+        import datetime  # site
+
+        result["datetime"] = repr(datetime)
+    except ImportError as exception:  # pragma: no cover
+        result["datetime"] = repr(exception)  # pragma: no cover
+
     # try to print out, this will validate if other core modules are available (json in this case)
     try:
         import json

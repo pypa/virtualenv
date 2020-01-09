@@ -11,4 +11,4 @@ class XonoshActivator(ViaTemplateActivator):
 
     @classmethod
     def supports(cls, interpreter):
-        return True if interpreter.version_info >= (3, 5) else False
+        return interpreter.version_info >= (3, 5)

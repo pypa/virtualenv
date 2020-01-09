@@ -3,6 +3,8 @@ from __future__ import absolute_import, unicode_literals
 import json
 import logging
 
+import six
+
 
 class Session(object):
     def __init__(self, verbosity, interpreter, creator, seeder, activators):
@@ -19,6 +21,7 @@ class Session(object):
         self.creator.pyenv_cfg.write()
 
     def _create(self):
+        logging.info("create virtual environment via %s", six.ensure_text(str(self.creator)))
         self.creator.run()
         logging.debug(_DEBUG_MARKER)
         logging.debug("%s", _Debug(self.creator))
@@ -46,5 +49,8 @@ class _Debug(object):
     def __init__(self, creator):
         self.creator = creator
 
-    def __str__(self):
+    def __unicode__(self):
+        return six.ensure_text(repr(self))
+
+    def __repr__(self):
         return json.dumps(self.creator.debug, indent=2)

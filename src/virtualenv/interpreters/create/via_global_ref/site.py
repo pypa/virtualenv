@@ -22,18 +22,21 @@ def main():
 def load_host_site():
     """trigger reload of site.py - now it will use the standard library instance that will take care of init"""
     # the standard library will be the first element starting with the real prefix, not zip, must be present
-    import os
-
-    std_lib = os.path.dirname(os.__file__)
-    std_lib_suffix = std_lib[len(sys.real_prefix) :]  # strip away the real prefix to keep just the suffix
-
+    custom_site_package_path = __file__
     reload(sys.modules["site"])  # noqa
 
-    # ensure standard library suffix/site-packages is on the new path
-    # notably Debian derivatives change site-packages constant to dist-packages, so will not get added
-    target = os.path.join("{}{}".format(sys.prefix, std_lib_suffix), "site-packages")
-    if target not in reversed(sys.path):  # if wasn't automatically added do it explicitly
-        sys.path.append(target)
+    # ensure that our expected site packages is on the sys.path
+    import os
+
+    site_packages = r"""
+    ___EXPECTED_SITE_PACKAGES___
+    """
+    import json
+
+    for path in json.loads(site_packages):
+        full_path = os.path.abspath(os.path.join(custom_site_package_path, path.encode("utf-8")))
+        if full_path not in sys.path:
+            sys.path.append(full_path)
 
 
 def read_pyvenv():

@@ -23,17 +23,10 @@ def test_value_ok(monkeypatch, empty_conf):
     assert result.verbosity == 5
 
 
-def _exc(of):
-    try:
-        int(of)
-    except ValueError as exception:
-        return exception
-
-
 def test_value_bad(monkeypatch, caplog, empty_conf):
     monkeypatch.setenv(str("VIRTUALENV_VERBOSE"), str("a"))
     result = parse_cli([])
     assert result.verbosity == 2
-    msg = "env var VIRTUALENV_VERBOSE failed to convert 'a' as {!r} because {!r}".format(int, _exc("a"))
-    # one for the core parse, one for the normal one
-    assert caplog.messages == [msg], "{}{}".format(caplog.text, msg)
+    assert len(caplog.messages) == 1
+    assert "env var VIRTUALENV_VERBOSE failed to convert" in caplog.messages[0]
+    assert "invalid literal" in caplog.messages[0]

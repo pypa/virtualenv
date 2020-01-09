@@ -7,11 +7,11 @@ import shutil
 import sys
 from abc import ABCMeta, abstractmethod
 from argparse import ArgumentTypeError
+from collections import OrderedDict
 
 import six
 from six import add_metaclass
 
-from virtualenv.info import IS_WIN
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.util.path import Path
 from virtualenv.util.subprocess import run_cmd
@@ -27,9 +27,22 @@ class Creator(object):
         self.interpreter = interpreter
         self._debug = None
         self.dest_dir = Path(options.dest_dir)
-        self.system_site_package = options.system_site
+        self.enable_system_site_package = options.system_site
         self.clear = options.clear
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest_dir)
+
+    def __repr__(self):
+        return six.ensure_str(self.__unicode__())
+
+    def __unicode__(self):
+        return "{}({})".format(self.__class__.__name__, ", ".join("{}={}".format(k, v) for k, v in self._args()))
+
+    def _args(self):
+        return [
+            ("dest", six.ensure_text(str(self.dest_dir))),
+            ("global", self.enable_system_site_package),
+            ("clear", self.clear),
+        ]
 
     @classmethod
     def add_parser_arguments(cls, parser, interpreter):
@@ -66,15 +79,21 @@ class Creator(object):
         # the file system must be able to encode
         # note in newer CPython this is always utf-8 https://www.python.org/dev/peps/pep-0529/
         encoding = sys.getfilesystemencoding()
-        path_converted = raw_value.encode(encoding, errors="ignore").decode(encoding)
-        if path_converted != raw_value:
-            refused = set(raw_value) - {
-                c
-                for c, i in ((char, char.encode(encoding)) for char in raw_value)
-                if c == "?" or i != six.ensure_str("?")
-            }
+        refused = OrderedDict()
+        kwargs = {"errors": "ignore"} if encoding != "mbcs" else {}
+        for char in six.ensure_text(raw_value):
+            try:
+                trip = char.encode(encoding, **kwargs).decode(encoding)
+                if trip == char:
+                    continue
+                raise ValueError(trip)
+            except ValueError:
+                refused[char] = None
+        if refused:
             raise ArgumentTypeError(
-                "the file system codec ({}) does not support characters {!r}".format(encoding, refused)
+                "the file system codec ({}) cannot handle characters {!r} within {!r}".format(
+                    encoding, "".join(refused.keys()), raw_value
+                )
             )
         if os.pathsep in raw_value:
             raise ArgumentTypeError(
@@ -116,12 +135,12 @@ class Creator(object):
 
     @classmethod
     def supports(cls, interpreter):
-        raise NotImplementedError
+        return True
 
     def set_pyenv_cfg(self):
         self.pyenv_cfg.content = {
             "home": self.interpreter.system_exec_prefix,
-            "include-system-site-packages": "true" if self.system_site_package else "false",
+            "include-system-site-packages": "true" if self.enable_system_site_package else "false",
             "implementation": self.interpreter.implementation,
             "virtualenv": __version__,
         }
@@ -131,34 +150,18 @@ class Creator(object):
         return six.ensure_text(self.dest_dir.parts[-1])
 
     @property
-    def bin_name(self):
-        raise NotImplementedError
-
-    @property
-    def bin_dir(self):
-        return self.dest_dir / self.bin_name
-
-    @property
-    def lib_dir(self):
-        raise NotImplementedError
-
-    @property
-    def site_packages(self):
-        return [self.lib_dir / "site-packages"]
-
-    @property
-    def exe(self):
-        return self.bin_dir / "python{}".format(".exe" if IS_WIN else "")
-
-    @property
     def debug(self):
-        if self._debug is None:
+        if self._debug is None and self.exe is not None:
             self._debug = get_env_debug_info(self.exe, self.debug_script())
         return self._debug
 
     # noinspection PyMethodMayBeStatic
     def debug_script(self):
         return DEBUG_SCRIPT
+
+    @property
+    def exe(self):
+        return None
 
 
 def get_env_debug_info(env_exe, debug_script):

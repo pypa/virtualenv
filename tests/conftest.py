@@ -10,6 +10,7 @@ import coverage
 import pytest
 import six
 
+from virtualenv.info import IS_PYPY
 from virtualenv.interpreters.discovery.py_info import PythonInfo
 from virtualenv.util.path import Path
 
@@ -23,7 +24,7 @@ def has_symlink_support(tmp_path_factory):
         src = test_folder / "src"
         try:
             src.symlink_to(test_folder / "dest")
-        except OSError:
+        except (OSError, NotImplementedError):
             return False
         finally:
             shutil.rmtree(str(test_folder))
@@ -37,9 +38,9 @@ def link_folder(has_symlink_support):
         return os.symlink
     elif sys.platform == "win32" and sys.version_info[0:2] > (3, 4):
         # on Windows junctions may be used instead
-        import _winapi  # python3.5 has builtin implementation for junctions
+        import _winapi  # Cpython3.5 has builtin implementation for junctions
 
-        return _winapi.CreateJunction
+        return getattr(_winapi, "CreateJunction", None)
     else:
         return None
 
@@ -85,8 +86,9 @@ def check_cwd_not_changed_by_test():
 
 @pytest.fixture(autouse=True)
 def ensure_py_info_cache_empty():
+    PythonInfo.clear_cache()
     yield
-    PythonInfo._cache_from_exe.clear()
+    PythonInfo.clear_cache()
 
 
 @pytest.fixture(autouse=True)
@@ -226,14 +228,15 @@ def is_inside_ci():
 
 @pytest.fixture(scope="session")
 def special_char_name():
-    base = "$ èрт🚒♞中片"
-    encoding = sys.getfilesystemencoding()
+    base = "e-$ èрт🚒♞中片-j"
+    # workaround for pypy3 https://bitbucket.org/pypy/pypy/issues/3147/venv-non-ascii-support-windows
+    encoding = "ascii" if IS_PYPY and six.PY3 else sys.getfilesystemencoding()
     # let's not include characters that the file system cannot encode)
     result = ""
     for char in base:
         try:
-            encoded = char.encode(encoding, errors="strict")
-            if char == "?" or encoded != b"?":  # mbcs notably on Python 2 uses replace even for strict
+            trip = char.encode(encoding, errors="strict").decode(encoding)
+            if char == trip:
                 result += char
         except ValueError:
             continue
