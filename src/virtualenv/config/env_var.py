@@ -13,7 +13,7 @@ def get_env_var(key, as_type):
     :return:
     """
     environ_key = "VIRTUALENV_{}".format(key.upper())
-    if environ_key in os.environ:
+    if os.environ.get(environ_key):
         value = os.environ[environ_key]
         # noinspection PyBroadException
         try:

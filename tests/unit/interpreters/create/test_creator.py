@@ -64,7 +64,7 @@ def cleanup_sys_path(paths):
 
     paths = [Path(i).absolute() for i in paths]
     to_remove = [Path(HERE)]
-    if str("PYCHARM_HELPERS_DIR") in os.environ:
+    if os.environ.get(str("PYCHARM_HELPERS_DIR")):
         to_remove.append(Path(os.environ[str("PYCHARM_HELPERS_DIR")]).parent)
         to_remove.append(Path(os.path.expanduser("~")) / ".PyCharm")
     result = [i for i in paths if not any(str(i).startswith(str(t)) for t in to_remove)]
