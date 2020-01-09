@@ -20,7 +20,7 @@ def get_env_var(key, as_type):
             source = "env var {}".format(environ_key)
             as_type = convert(value, as_type, source)
             return as_type, source
-        except Exception:
+        except Exception:  # note the converter already logs a warning when failures happen
             pass
 
 
