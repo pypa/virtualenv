@@ -19,8 +19,9 @@ from virtualenv.run import run_via_cli, session_via_cli
 from virtualenv.util.path import Path
 
 
-def test_os_path_sep_not_allowed(tmp_path, capsys):
-    target = str(tmp_path / "a{}b".format(os.pathsep))
+@pytest.mark.parametrize("sep", [i for i in (os.pathsep, os.altsep) if i is not None])
+def test_os_path_sep_not_allowed(tmp_path, capsys, sep):
+    target = str(tmp_path / "a{}b".format(sep))
     err = _non_success_exit_code(capsys, target)
     msg = (
         "destination {!r} must not contain the path separator ({}) as this"
