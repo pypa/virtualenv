@@ -23,7 +23,7 @@ class ViaGlobalRefApi(Creator):
             default=symlink,
             action="store_true",
             dest="symlinks",
-            help="Try to use symlinks rather than copies, when symlinks are not the default for the platform.",
+            help="try to use symlinks rather than copies, when symlinks are not the default for the platform",
         )
         group.add_argument(
             "--copies",
@@ -31,5 +31,5 @@ class ViaGlobalRefApi(Creator):
             default=not symlink,
             action="store_false",
             dest="symlinks",
-            help="Try to use copies rather than symlinks, even when symlinks are the default for the platform.",
+            help="try to use copies rather than symlinks, even when symlinks are the default for the platform",
         )

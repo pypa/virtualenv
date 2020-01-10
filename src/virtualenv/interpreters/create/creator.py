@@ -49,7 +49,7 @@ class Creator(object):
     @classmethod
     def add_parser_arguments(cls, parser, interpreter):
         parser.add_argument(
-            "dest_dir", help="directory to create virtualenv at", type=cls.validate_dest_dir, default="env", nargs="?",
+            "dest_dir", help="directory to create virtualenv at", type=cls.validate_dest_dir, default="venv", nargs="?",
         )
         parser.add_argument(
             "--clear",
@@ -63,7 +63,7 @@ class Creator(object):
             default=False,
             action="store_true",
             dest="system_site",
-            help="Give the virtual environment access to the system site-packages dir.",
+            help="give the virtual environment access to the system site-packages dir",
         )
 
     @classmethod
@@ -177,7 +177,7 @@ def get_env_debug_info(env_exe, debug_script):
     cmd = [six.ensure_text(str(env_exe)), six.ensure_text(str(debug_script))]
     logging.debug(" ".join(six.ensure_text(i) for i in cmd))
     env = os.environ.copy()
-    env.pop("PYTHONPATH", None)
+    env.pop(str("PYTHONPATH"), None)
     code, out, err = run_cmd(cmd)
     # noinspection PyBroadException
     try:

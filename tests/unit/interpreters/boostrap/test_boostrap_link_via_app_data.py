@@ -90,5 +90,5 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env):
         post_run = list(site_package.iterdir())
         assert not post_run, "\n".join(str(i) for i in post_run)
 
-    if sys.version_info[0:2] == (3, 4) and os.environ.get("PIP_REQ_TRACKER"):
-        os.environ.pop("PIP_REQ_TRACKER")
+    if sys.version_info[0:2] == (3, 4) and os.environ.get(str("PIP_REQ_TRACKER")):
+        os.environ.pop(str("PIP_REQ_TRACKER"))
