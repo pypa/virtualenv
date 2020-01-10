@@ -145,7 +145,7 @@ def pip_wheel_env_run(version):
     env = os.environ.copy()
     env.update(
         {
-            str(k): str(v)  # python 2 requires these to be string only (non-unicode)
+            six.ensure_str(k): str(v)  # python 2 requires these to be string only (non-unicode)
             for k, v in {
                 # put the bundled wheel onto the path, and use it to do the bootstrap operation
                 "PYTHONPATH": get_bundled_wheel("pip", version),

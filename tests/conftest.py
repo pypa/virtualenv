@@ -104,7 +104,9 @@ def check_os_environ_stable():
     old = os.environ.copy()
     # ensure we don't inherit parent env variables
     to_clean = {
-        k for k in os.environ.keys() if k.startswith("VIRTUALENV_") or "VIRTUAL_ENV" in k or k.startswith("TOX_")
+        k
+        for k in os.environ.keys()
+        if k.startswith(str("VIRTUALENV_")) or str("VIRTUAL_ENV") in k or k.startswith(str("TOX_"))
     }
     cleaned = {k: os.environ[k] for k, v in os.environ.items()}
     os.environ[str("VIRTUALENV_NO_DOWNLOAD")] = str("1")
@@ -124,7 +126,7 @@ def check_os_environ_stable():
                 diff = {
                     "{} = {} vs {}".format(k, old[k], new[k])
                     for k in set(old) & set(new)
-                    if old[k] != new[k] and not k.startswith("PYTEST_")
+                    if old[k] != new[k] and not k.startswith(str("PYTEST_"))
                 }
                 if extra or miss or diff:
                     msg = "tests changed environ"
@@ -140,7 +142,7 @@ def check_os_environ_stable():
 
 
 COV_ENV_VAR = "COVERAGE_PROCESS_START"
-COVERAGE_RUN = os.environ.get(COV_ENV_VAR)
+COVERAGE_RUN = os.environ.get(str(COV_ENV_VAR))
 
 
 @pytest.fixture(autouse=True)

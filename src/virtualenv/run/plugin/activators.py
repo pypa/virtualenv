@@ -19,7 +19,7 @@ class ActivationSelector(ComponentBuilder):
             default=self.default,
             metavar="comma_separated_list",
             required=False,
-            help="activators to generate together with virtual environment - default is all available and compatible",
+            help="activators to generate - default is all supported",
             type=self._extract_activators,
         )
 

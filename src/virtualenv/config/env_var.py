@@ -2,6 +2,8 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 
+import six
+
 from .convert import convert
 
 
@@ -12,12 +14,12 @@ def get_env_var(key, as_type):
     :param as_type: the type we would like to convert it to
     :return:
     """
-    environ_key = "VIRTUALENV_{}".format(key.upper())
+    environ_key = six.ensure_str("VIRTUALENV_{}".format(key.upper()))
     if os.environ.get(environ_key):
         value = os.environ[environ_key]
         # noinspection PyBroadException
         try:
-            source = "env var {}".format(environ_key)
+            source = "env var {}".format(six.ensure_text(environ_key))
             as_type = convert(value, as_type, source)
             return as_type, source
         except Exception:  # note the converter already logs a warning when failures happen
