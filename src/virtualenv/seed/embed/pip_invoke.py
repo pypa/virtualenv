@@ -17,11 +17,11 @@ class PipInvoke(BaseEmbed):
 
     def get_pip_install_cmd(self, exe, version):
         cmd = [str(exe), "-m", "pip", "install", "--only-binary", ":all:"]
-        for folder in {get_bundled_wheel(p, version).parent for p in ("pip", "setuptools")}:
+        for folder in {get_bundled_wheel(p, version).parent for p in self.packages}:
             cmd.extend(["--find-links", str(folder)])
             cmd.extend(self.extra_search_dir)
         if not self.download:
             cmd.append("--no-index")
-        for key, version in {"pip": self.pip_version, "setuptools": self.setuptools_version}.items():
+        for key, version in self.package_version().items():
             cmd.append("{}{}".format(key, "=={}".format(version) if version is not None else ""))
         return cmd

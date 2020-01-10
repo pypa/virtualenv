@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 from collections import defaultdict
+from copy import copy
 from shutil import copy2
 from zipfile import ZipFile
 
@@ -18,20 +19,19 @@ from . import BUNDLE_SUPPORT, MAX
 BUNDLE_FOLDER = Path(__file__).parent
 
 
-def get_wheels(for_py_version, wheel_cache_dir, extra_search_dir, download, pip, setuptools):
+def get_wheels(for_py_version, wheel_cache_dir, extra_search_dir, download, packages):
     # not all wheels are compatible with all python versions, so we need to py version qualify it
-    packages = {"pip": pip, "setuptools": setuptools}
-
+    processed = copy(packages)
     # 1. acquire from bundle
-    acquire_from_bundle(packages, for_py_version, wheel_cache_dir)
+    acquire_from_bundle(processed, for_py_version, wheel_cache_dir)
     # 2. acquire from extra search dir
-    acquire_from_dir(packages, for_py_version, wheel_cache_dir, extra_search_dir)
+    acquire_from_dir(processed, for_py_version, wheel_cache_dir, extra_search_dir)
     # 3. download from the internet
-    if download and packages:
-        download_wheel(packages, for_py_version, wheel_cache_dir)
+    if download and processed:
+        download_wheel(processed, for_py_version, wheel_cache_dir)
 
     # in the end just get the wheels
-    wheels = _get_wheels(wheel_cache_dir, {"pip": pip, "setuptools": setuptools})
+    wheels = _get_wheels(wheel_cache_dir, packages)
     return {p: next(iter(ver_to_files))[1] for p, ver_to_files in wheels.items()}
 
 

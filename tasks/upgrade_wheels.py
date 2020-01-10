@@ -8,14 +8,13 @@ import shutil
 import subprocess
 import sys
 from collections import OrderedDict, defaultdict
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from threading import Thread
 
-from pathlib2 import Path
-
 STRICT = "UPGRADE_ADVISORY" not in os.environ
 
-BUNDLED = ["pip", "setuptools"]
+BUNDLED = ["pip", "setuptools", "wheel"]
 SUPPORT = list(reversed([(2, 7)] + [(3, i) for i in range(4, 10)]))
 DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "embed" / "wheels"
 
