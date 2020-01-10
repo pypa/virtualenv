@@ -4,12 +4,12 @@ import abc
 
 import six
 
-from virtualenv.interpreters.create.via_global_ref.via_global_self_do import ViaGlobalRefSelfDo
+from virtualenv.interpreters.create.via_global_ref.via_global_self_do import ViaGlobalRefVirtualenvBuiltin
 from virtualenv.util.path import Path
 
 
 @six.add_metaclass(abc.ABCMeta)
-class PyPy(ViaGlobalRefSelfDo):
+class PyPy(ViaGlobalRefVirtualenvBuiltin):
     @classmethod
     def supports(cls, interpreter):
         return interpreter.implementation == "PyPy" and super(PyPy, cls).supports(interpreter)

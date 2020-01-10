@@ -16,10 +16,12 @@ class Venv(ViaGlobalRefApi):
         super(Venv, self).__init__(options, interpreter)
         self.can_be_inline = interpreter is CURRENT and interpreter.executable == interpreter.system_executable
         self._context = None
-        self.self_do = options.self_do
+        self.builtin_way = options.builtin_way
 
     def _args(self):
-        return super(Venv, self)._args() + ([("self_do", self.self_do.__class__.__name__)] if self.self_do else [])
+        return super(Venv, self)._args() + (
+            [("builtin_way", self.builtin_way.__class__.__name__)] if self.builtin_way else []
+        )
 
     @classmethod
     def supports(cls, interpreter):
@@ -31,8 +33,8 @@ class Venv(ViaGlobalRefApi):
         else:
             self.create_via_sub_process()
             # TODO: cleanup activation scripts
-        if self.self_do is not None:
-            for site_package in self.self_do.site_packages:
+        if self.builtin_way is not None:
+            for site_package in self.builtin_way.site_packages:
                 ensure_dir(site_package)
 
     def create_inline(self):
@@ -68,27 +70,27 @@ class Venv(ViaGlobalRefApi):
         super(Venv, self).set_pyenv_cfg()
         self.pyenv_cfg.update(venv_content)
 
-    def _delegate_to_self_do(self, key):
-        if self.self_do is None:
+    def _delegate_to_builtin_way(self, key):
+        if self.builtin_way is None:
             return None
-        return getattr(self.self_do, key)
+        return getattr(self.builtin_way, key)
 
     @property
     def exe(self):
-        return self._delegate_to_self_do("exe")
+        return self._delegate_to_builtin_way("exe")
 
     @property
     def site_packages(self):
-        return self._delegate_to_self_do("site_packages")
+        return self._delegate_to_builtin_way("site_packages")
 
     @property
     def bin_dir(self):
-        return self._delegate_to_self_do("bin_dir")
+        return self._delegate_to_builtin_way("bin_dir")
 
     @property
     def bin_name(self):
-        return self._delegate_to_self_do("bin_name")
+        return self._delegate_to_builtin_way("bin_name")
 
     @property
     def lib_dir(self):
-        return self._delegate_to_self_do("lib_dir")
+        return self._delegate_to_builtin_way("lib_dir")

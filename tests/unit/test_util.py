@@ -35,7 +35,7 @@ def _try_symlink(caplog, tmp_path, level):
     return dst, src
 
 
-@pytest.mark.skipif(hasattr(os, "symlink"), reason="requires no symlink")
+@pytest.mark.skipif(hasattr(os, "symlink"), reason="requires lack of symlink")
 def test_os_no_symlink_use_copy(caplog, tmp_path):
     dst, src = _try_symlink(caplog, tmp_path, level=logging.DEBUG)
     assert caplog.messages == ["copy {} to {}".format(src, dst)]

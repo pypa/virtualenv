@@ -175,7 +175,7 @@ class PipInstall(object):
             ):
                 exe = to_folder / new_name
                 exe.write_text(content, encoding="utf-8")
-                exe.chmod(exe.stat() | S_IXUSR | S_IXGRP | S_IXOTH)
+                exe.chmod(exe.stat().st_mode | S_IXUSR | S_IXGRP | S_IXOTH)
                 result.append(exe)
         return result
 

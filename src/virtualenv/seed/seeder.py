@@ -11,7 +11,7 @@ class Seeder(object):
         self.enabled = enabled
 
     @classmethod
-    def add_parser_arguments(cls, parser):
+    def add_parser_arguments(cls, parser, interpreter):
         raise NotImplementedError
 
     @abstractmethod

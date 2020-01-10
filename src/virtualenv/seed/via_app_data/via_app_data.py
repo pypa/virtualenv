@@ -21,8 +21,8 @@ class FromAppData(BaseEmbed):
         self.app_data_dir = get_default_data_dir() / "seed-v1"
 
     @classmethod
-    def add_parser_arguments(cls, parser):
-        super(FromAppData, cls).add_parser_arguments(parser)
+    def add_parser_arguments(cls, parser, interpreter):
+        super(FromAppData, cls).add_parser_arguments(parser, interpreter)
         parser.add_argument(
             "--clear-app-data",
             dest="clear_app_data",

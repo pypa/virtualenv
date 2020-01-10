@@ -5,12 +5,12 @@ import abc
 import six
 
 from virtualenv.interpreters.create.support import PosixSupports, WindowsSupports
-from virtualenv.interpreters.create.via_global_ref.via_global_self_do import ViaGlobalRefSelfDo
+from virtualenv.interpreters.create.via_global_ref.via_global_self_do import ViaGlobalRefVirtualenvBuiltin
 from virtualenv.util.path import Path
 
 
 @six.add_metaclass(abc.ABCMeta)
-class CPython(ViaGlobalRefSelfDo):
+class CPython(ViaGlobalRefVirtualenvBuiltin):
     @classmethod
     def supports(cls, interpreter):
         return interpreter.implementation == "CPython" and super(CPython, cls).supports(interpreter)

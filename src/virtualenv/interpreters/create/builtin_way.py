@@ -9,7 +9,7 @@ from virtualenv.interpreters.create.via_global_ref.api import ViaGlobalRefApi
 
 
 @add_metaclass(ABCMeta)
-class SelfDo(ViaGlobalRefApi):
+class VirtualenvBuiltin(ViaGlobalRefApi):
     """A creator that does operations itself without delegation"""
 
     @property

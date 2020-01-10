@@ -7,14 +7,14 @@ import os
 import six
 
 from virtualenv.interpreters.create.support import Python2Supports
-from virtualenv.interpreters.create.via_global_ref.via_global_self_do import ViaGlobalRefSelfDo
+from virtualenv.interpreters.create.via_global_ref.via_global_self_do import ViaGlobalRefVirtualenvBuiltin
 from virtualenv.util.path import Path, copy
 
 HERE = Path(__file__).absolute().parent
 
 
 @six.add_metaclass(abc.ABCMeta)
-class Python2(ViaGlobalRefSelfDo, Python2Supports):
+class Python2(ViaGlobalRefVirtualenvBuiltin, Python2Supports):
     def setup_python(self):
         super(Python2, self).setup_python()  # install the core first
         self.fixup_python2()  # now patch

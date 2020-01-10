@@ -49,23 +49,21 @@ class Creator(object):
     @classmethod
     def add_parser_arguments(cls, parser, interpreter):
         parser.add_argument(
+            "dest_dir", help="directory to create virtualenv at", type=cls.validate_dest_dir, default="env", nargs="?",
+        )
+        parser.add_argument(
             "--clear",
             dest="clear",
             action="store_true",
             help="clear out the non-root install and start from scratch",
             default=False,
         )
-
         parser.add_argument(
             "--system-site-packages",
             default=False,
             action="store_true",
             dest="system_site",
             help="Give the virtual environment access to the system site-packages dir.",
-        )
-
-        parser.add_argument(
-            "dest_dir", help="directory to create virtualenv at", type=cls.validate_dest_dir, default="env", nargs="?",
         )
 
     @classmethod

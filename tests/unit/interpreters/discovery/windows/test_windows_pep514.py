@@ -11,7 +11,7 @@ import six
 from virtualenv.util.path import Path
 
 
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows registry only on Windows platform")
+@pytest.mark.skipif(sys.platform != "win32", reason="no Windows registry")
 def test_pep517(_mock_registry):
     from virtualenv.interpreters.discovery.windows.pep514 import discover_pythons
 
@@ -30,7 +30,7 @@ def test_pep517(_mock_registry):
     ]
 
 
-@pytest.mark.skipif(sys.platform != "win32", reason="Windows registry only on Windows platform")
+@pytest.mark.skipif(sys.platform != "win32", reason="no Windows registry")
 def test_pep517_run(_mock_registry, capsys, caplog):
     from virtualenv.interpreters.discovery.windows import pep514
 

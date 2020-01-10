@@ -10,14 +10,14 @@ import six
 from six import add_metaclass
 
 from virtualenv.info import is_fs_case_sensitive
-from virtualenv.interpreters.create.self_do import SelfDo
+from virtualenv.interpreters.create.builtin_way import VirtualenvBuiltin
 from virtualenv.util.path import Path, copy, ensure_dir, symlink
 
 
 @add_metaclass(ABCMeta)
-class ViaGlobalRefSelfDo(SelfDo):
+class ViaGlobalRefVirtualenvBuiltin(VirtualenvBuiltin):
     def __init__(self, options, interpreter):
-        super(ViaGlobalRefSelfDo, self).__init__(options, interpreter)
+        super(ViaGlobalRefVirtualenvBuiltin, self).__init__(options, interpreter)
         self.copier = symlink if self.symlinks is True else copy
 
     def create(self):
@@ -38,7 +38,7 @@ class ViaGlobalRefSelfDo(SelfDo):
         We directly inject the base prefix and base exec prefix to avoid site.py needing to discover these
         from home (which usually is done within the interpreter itself)
          """
-        super(ViaGlobalRefSelfDo, self).set_pyenv_cfg()
+        super(ViaGlobalRefVirtualenvBuiltin, self).set_pyenv_cfg()
         self.pyenv_cfg["base-prefix"] = self.interpreter.system_prefix
         self.pyenv_cfg["base-exec-prefix"] = self.interpreter.system_exec_prefix
 
