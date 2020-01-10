@@ -82,7 +82,7 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env):
     files_post_second_create = list(site_package.iterdir())
     assert files_post_first_create == files_post_second_create
 
-    process = Popen(remove_cmd + ["pip"])
+    process = Popen(remove_cmd + ["pip", "wheel"])
     _, __ = process.communicate()
     assert not process.returncode
     # pip is greedy here, removing all packages removes the site-package too

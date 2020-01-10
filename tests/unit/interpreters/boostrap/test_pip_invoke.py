@@ -27,7 +27,9 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env):
     site_package = result.creator.site_packages[0]
     pip = site_package / "pip"
     setuptools = site_package / "setuptools"
+    wheel = site_package / "wheel"
 
     files_post_first_create = list(site_package.iterdir())
     assert pip in files_post_first_create
     assert setuptools in files_post_first_create
+    assert wheel in files_post_first_create

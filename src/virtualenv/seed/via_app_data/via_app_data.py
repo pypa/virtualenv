@@ -55,8 +55,7 @@ class FromAppData(BaseEmbed):
             wheels_to,
             self.extra_search_dir,
             self.download,
-            self.pip_version,
-            self.setuptools_version,
+            self.package_version(),
         )
         return name_to_whl
 
