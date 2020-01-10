@@ -11,6 +11,7 @@ def main():
     config = read_pyvenv()
     sys.real_prefix = sys.base_prefix = config["base-prefix"]
     sys.base_exec_prefix = config["base-exec-prefix"]
+    sys.base_executable = config["base-executable"]
     global_site_package_enabled = config.get("include-system-site-packages", False) == "true"
     rewrite_standard_library_sys_path()
     disable_user_site_package()
@@ -64,6 +65,10 @@ def rewrite_standard_library_sys_path():
         # replace old sys prefix path starts with new
         if value == exe_dir:
             pass  # don't fix the current executable location, notably on Windows this gets added
+        elif value.startswith(exe_dir):
+            # content inside the exe folder needs to remap to original executables folder
+            orig_exe_folder = sys.base_executable[: sys.base_executable.rfind(sep)]
+            value = "{}{}".format(orig_exe_folder, value[len(exe_dir) :])
         elif value.startswith(sys.prefix):
             value = "{}{}".format(sys.base_prefix, value[len(sys.prefix) :])
         elif value.startswith(sys.exec_prefix):

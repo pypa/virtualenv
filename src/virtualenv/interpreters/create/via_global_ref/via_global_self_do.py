@@ -41,6 +41,7 @@ class ViaGlobalRefVirtualenvBuiltin(VirtualenvBuiltin):
         super(ViaGlobalRefVirtualenvBuiltin, self).set_pyenv_cfg()
         self.pyenv_cfg["base-prefix"] = self.interpreter.system_prefix
         self.pyenv_cfg["base-exec-prefix"] = self.interpreter.system_exec_prefix
+        self.pyenv_cfg["base-executable"] = self.interpreter.system_executable
 
     def ensure_directories(self):
         dirs = {self.dest_dir, self.bin_dir, self.lib_dir}

@@ -117,9 +117,12 @@ def test_create_no_seed(python, use_venv, global_access, system, coverage_env, s
     assert len(our_paths) >= 1, our_paths_repr
     # ensure all additional paths are related to the virtual environment
     for path in our_paths:
-        assert str(path).startswith(str(dest)), "\n{}\ndoes not start with {}\nhas:{}".format(
-            six.ensure_text(str(path)), six.ensure_text(str(dest)), "\n".join(system_sys_path)
+        msg = "\n{}\ndoes not start with {}\nhas:\n{}".format(
+            six.ensure_text(str(path)),
+            six.ensure_text(str(dest)),
+            "\n".join(six.ensure_text(str(p)) for p in system_sys_path),
         )
+        assert str(path).startswith(str(dest)), msg
     # ensure there's at least a site-packages folder as part of the virtual environment added
     assert any(p for p in our_paths if p.parts[-1] == "site-packages"), our_paths_repr
 

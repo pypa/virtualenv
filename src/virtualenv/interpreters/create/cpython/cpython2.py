@@ -5,6 +5,7 @@ import abc
 import six
 
 from virtualenv.interpreters.create.via_global_ref.python2 import Python2
+from virtualenv.util.path import Path, copy
 
 from .common import CPython, CPythonPosix, CPythonWindows
 
@@ -28,3 +29,10 @@ class CPython2Posix(CPython2, CPythonPosix):
 
 class CPython2Windows(CPython2, CPythonWindows):
     """CPython 2 on Windows"""
+
+    def fixup_python2(self):
+        super(CPython2Windows, self).fixup_python2()
+        dll_name = "python27.dll"
+        py27_dll = Path(self.interpreter.system_executable).parent / dll_name
+        if py27_dll.exists():
+            copy(py27_dll, self.bin_dir / dll_name)
