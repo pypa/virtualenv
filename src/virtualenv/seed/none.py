@@ -8,7 +8,7 @@ class NoneSeeder(Seeder):
         super(NoneSeeder, self).__init__(options, False)
 
     @classmethod
-    def add_parser_arguments(cls, parser):
+    def add_parser_arguments(cls, parser, interpreter):
         pass
 
     def run(self, creator):

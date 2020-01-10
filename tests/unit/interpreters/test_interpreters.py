@@ -19,7 +19,7 @@ def test_failed_to_find_bad_spec():
 
 @pytest.mark.parametrize("of_id", [sys.executable, CURRENT.implementation])
 def test_failed_to_find_implementation(of_id, mocker):
-    mocker.patch("virtualenv.run._collect_creators", return_value={})
+    mocker.patch("virtualenv.run.plugin.creators.CreatorSelector._OPTIONS", return_value={})
     with pytest.raises(RuntimeError) as context:
         run_via_cli(["-p", of_id])
     assert repr(context.value) == repr(RuntimeError("No virtualenv implementation for {}".format(CURRENT)))

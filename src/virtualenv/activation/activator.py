@@ -11,7 +11,7 @@ class Activator(object):
         self.flag_prompt = options.prompt
 
     @classmethod
-    def add_parser_arguments(cls, parser):
+    def add_parser_arguments(cls, parser, interpreter):
         """add activator options"""
 
     @classmethod

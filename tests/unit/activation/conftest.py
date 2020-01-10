@@ -205,7 +205,7 @@ def raise_on_non_source_class():
 @pytest.fixture(scope="session")
 def activation_python(tmp_path_factory, special_char_name):
     dest = os.path.join(six.ensure_text(str(tmp_path_factory.mktemp("activation-tester-env"))), special_char_name)
-    session = run_via_cli(["--seed", "none", dest, "--prompt", special_char_name, "--creator", "self-do"])
+    session = run_via_cli(["--seed", "none", dest, "--prompt", special_char_name, "--creator", "builtin"])
     pydoc_test = session.creator.site_packages[0] / "pydoc_test.py"
     with open(six.ensure_text(str(pydoc_test)), "wb") as file_handler:
         file_handler.write(b'"""This is pydoc_test.py"""')
@@ -219,7 +219,7 @@ def activation_tester(activation_python, monkeypatch, tmp_path, is_inside_ci):
     def _tester(tester_class):
         tester = tester_class(activation_python)
         if not tester.of_class.supports(activation_python.creator.interpreter):
-            pytest.skip("{} not supported on current environment".format(tester.of_class.__name__))
+            pytest.skip("{} not supported".format(tester.of_class.__name__))
         version = tester.get_version(raise_on_fail=is_inside_ci)
         if not isinstance(version, six.string_types):
             pytest.skip(msg=six.text_type(version))

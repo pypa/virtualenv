@@ -22,7 +22,7 @@ class BaseEmbed(Seeder):
         self.no_setuptools = options.no_setuptools
 
     @classmethod
-    def add_parser_arguments(cls, parser):
+    def add_parser_arguments(cls, parser, interpreter):
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
             "--download",

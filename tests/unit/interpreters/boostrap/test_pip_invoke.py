@@ -17,7 +17,7 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env):
         "--setuptools",
         bundle_ver["setuptools"].split("-")[1],
         "--creator",
-        "self-do",
+        "builtin",
     ]
     result = run_via_cli(create_cmd)
     coverage_env()

@@ -93,7 +93,7 @@ def test_create_no_seed(python, use_venv, global_access, system, coverage_env, s
         "--activators",
         "",
         "--creator",
-        "venv" if use_venv else "self-do",
+        "venv" if use_venv else "builtin",
     ]
     if global_access:
         cmd.append("--system-site-packages")
@@ -141,7 +141,7 @@ def test_create_no_seed(python, use_venv, global_access, system, coverage_env, s
         assert last_from_system_path not in sys_path
 
 
-@pytest.mark.skipif(not CURRENT.has_venv, reason="requires venv interpreter")
+@pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
 def test_venv_fails_not_inline(tmp_path, capsys, mocker):
     def _session_via_cli(args):
         session = session_via_cli(args)
@@ -188,7 +188,7 @@ def test_debug_bad_virtualenv(tmp_path):
 @pytest.mark.parametrize("clear", [True, False], ids=["clear", "no_clear"])
 def test_create_clear_resets(tmp_path, use_venv, clear):
     marker = tmp_path / "magic"
-    cmd = [str(tmp_path), "--seeder", "none", "--creator", "venv" if use_venv else "self-do"]
+    cmd = [str(tmp_path), "--seeder", "none", "--creator", "venv" if use_venv else "builtin"]
     run_via_cli(cmd)
 
     marker.write_text("")  # if we a marker file this should be gone on a clear run, remain otherwise
@@ -203,7 +203,7 @@ def test_create_clear_resets(tmp_path, use_venv, clear):
 )
 @pytest.mark.parametrize("prompt", [None, "magic"])
 def test_prompt_set(tmp_path, use_venv, prompt):
-    cmd = [str(tmp_path), "--seeder", "none", "--creator", "venv" if use_venv else "self-do"]
+    cmd = [str(tmp_path), "--seeder", "none", "--creator", "venv" if use_venv else "builtin"]
     if prompt is not None:
         cmd.extend(["--prompt", "magic"])
 
@@ -242,7 +242,7 @@ def test_cross_major(cross_python, coverage_env, tmp_path):
         "--activators",
         "",
         "--creator",
-        "self-do",
+        "builtin",
     ]
     result = run_via_cli(cmd)
     coverage_env()
