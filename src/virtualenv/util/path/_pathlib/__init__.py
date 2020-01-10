@@ -28,6 +28,11 @@ if six.PY3:
                 with self.open(mode="w", encoding=encoding, errors=errors) as f:
                     return f.write(data)
 
+            def mkdir(self, mode=0o777, parents=False, exist_ok=False):
+                if exist_ok and self.exists():
+                    return
+                super(type(BuiltinPath()), self).mkdir(mode, parents)
+
 
 else:
     if sys.platform == "win32":
