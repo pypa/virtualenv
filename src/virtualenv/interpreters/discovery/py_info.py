@@ -190,7 +190,7 @@ class PythonInfo(object):
 
     def _find_possible_exe_names(self):
         name_candidate = OrderedDict()
-        for name in [self.implementation, "python"]:
+        for name in self._possible_base():
             for at in (3, 2, 1, 0):
                 version = ".".join(str(i) for i in self.version_info[:at])
                 for arch in ["-{}".format(self.architecture), ""]:
@@ -198,6 +198,26 @@ class PythonInfo(object):
                         candidate = "{}{}{}{}".format(name, version, arch, ext)
                         name_candidate[candidate] = None
         return list(name_candidate.keys())
+
+    def _possible_base(self):
+        possible_base = OrderedDict()
+        possible_base[os.path.splitext(os.path.basename(self.executable))[0]] = None
+        possible_base[self.implementation] = None
+        # python is always the final option as in practice is used by multiple implementation as exe name
+        if "python" in possible_base:
+            del possible_base["python"]
+        possible_base["python"] = None
+        for base in possible_base:
+            lower = base.lower()
+            yield lower
+            from virtualenv.info import is_fs_case_sensitive
+
+            if is_fs_case_sensitive():
+                if base != lower:
+                    yield base
+                upper = base.upper()
+                if upper != base:
+                    yield upper
 
     _cache_from_exe = {}
 

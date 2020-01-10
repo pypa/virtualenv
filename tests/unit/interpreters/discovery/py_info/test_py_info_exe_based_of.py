@@ -6,6 +6,7 @@ import sys
 
 import pytest
 
+from virtualenv.info import is_fs_case_sensitive
 from virtualenv.interpreters.discovery.py_info import CURRENT, EXTENSIONS
 
 
@@ -27,8 +28,13 @@ def test_discover_ok(tmp_path, monkeypatch, suffix, impl, version, arch, into, c
     dest = folder / "{}{}".format(impl, version, arch, suffix)
     os.symlink(CURRENT.executable, str(dest))
     inside_folder = str(tmp_path)
-    assert CURRENT.find_exe_based_of(inside_folder) == str(dest)
-    assert len(caplog.messages) == 1
+    found = CURRENT.find_exe_based_of(inside_folder)
+    dest_str = str(dest)
+    if not is_fs_case_sensitive():
+        found = found.lower()
+        dest_str = dest_str.lower()
+    assert found == dest_str
+    assert len(caplog.messages) >= 1, caplog.text
     assert "get interpreter info via cmd: " in caplog.text
 
     dest.rename(dest.parent / (dest.name + "-1"))
