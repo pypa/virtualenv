@@ -70,27 +70,27 @@ class Venv(ViaGlobalRefApi):
         super(Venv, self).set_pyenv_cfg()
         self.pyenv_cfg.update(venv_content)
 
-    def _delegate_to_builtin_way(self, key):
+    def _proxy_builtin_way(self, key):
         if self.builtin_way is None:
             return None
         return getattr(self.builtin_way, key)
 
     @property
     def exe(self):
-        return self._delegate_to_builtin_way("exe")
+        return self._proxy_builtin_way("exe")
 
     @property
     def site_packages(self):
-        return self._delegate_to_builtin_way("site_packages")
+        return self._proxy_builtin_way("site_packages")
 
     @property
     def bin_dir(self):
-        return self._delegate_to_builtin_way("bin_dir")
+        return self._proxy_builtin_way("bin_dir")
 
     @property
     def bin_name(self):
-        return self._delegate_to_builtin_way("bin_name")
+        return self._proxy_builtin_way("bin_name")
 
     @property
     def lib_dir(self):
-        return self._delegate_to_builtin_way("lib_dir")
+        return self._proxy_builtin_way("lib_dir")
