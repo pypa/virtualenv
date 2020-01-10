@@ -1,0 +1,75 @@
+name: $(BuildDefinitionName)_$(Date:yyyyMMdd)$(Rev:.rr)
+resources:
+  repositories:
+  - repository: tox
+    type: github
+    endpoint: github-gb
+    name: tox-dev/azure-pipelines-template
+    ref: master
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+    - rewrite
+    - refs/tags/*
+
+pr:
+  branches:
+    include:
+    - '*'
+
+schedules:
+- cron: "12 0 * * *"
+  displayName: Daily build
+  branches:
+    include: [ master, rewrite ]
+  always: true
+
+variables:
+  PYTEST_ADDOPTS: "-v -v -ra --showlocals --durations=15"
+  PYTEST_XDIST_PROC_NR: 'auto'
+  CI_RUN: 'yes'
+  UPGRADE_ADVISORY: 'yes'
+
+jobs:
+- template: run-tox-env.yml@tox
+  parameters:
+    jobs:
+      py38:
+        image: [linux, windows, macOs]
+      py37:
+        image: [linux, windows, macOs]
+      py36:
+        image: [linux, windows, macOs]
+      py35:
+        image: [linux, windows, macOs]
+      py27:
+        image: [linux, windows, macOs]
+      fix_lint:
+        image: [linux, windows]
+      docs:
+        image: [linux, windows]
+      package_readme:
+        image: [linux, windows]
+      upgrade:
+        image: [linux, windows]
+      dev: null
+    before:
+      - script: 'sudo apt-get update -y && sudo apt-get install fish csh'
+        condition: and(succeeded(), eq(variables['image_name'], 'linux'), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35', 'py34', 'py27'))
+        displayName: install fish and csh via apt-get
+      - script: 'brew update -vvv && brew install fish tcsh'
+        condition: and(succeeded(), eq(variables['image_name'], 'macOs'), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35', 'py34', 'py27'))
+        displayName: install fish and csh via brew
+    coverage:
+      with_toxenv: 'coverage' # generate .tox/.coverage, .tox/coverage.xml after test run
+      for_envs: [py38, py37, py36, py35, py27]
+
+- ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
+  - template: publish-pypi.yml@tox
+    parameters:
+      external_feed: 'gb'
+      pypi_remote: 'pypi-gb'
+      dependsOn: [fix_lint, embed, cross_python3, cross_python3, docs, report_coverage, dev, package_readme]

@@ -1,0 +1,11 @@
+daysUntilStale: 90
+daysUntilClose: 7
+exemptLabels:
+  - pinned
+  - security
+staleLabel: wontfix
+markComment: >
+  This issue has been automatically marked as stale because it has not had
+  recent activity. It will be closed if no further activity occurs. Just add a comment
+  if you want to keep it open. Thank you for your contributions.
+closeComment: false

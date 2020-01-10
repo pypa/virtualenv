@@ -1,0 +1,25 @@
+# packaging
+virtualenv.egg-info
+build
+dist
+*.egg
+.eggs
+
+# python
+*.py[cod]
+*$py.class
+
+# tools
+.tox
+.*_cache
+.DS_Store
+
+# IDE
+.idea
+.vscode
+
+/docs/_draft.rst
+/pip-wheel-metadata
+/src/virtualenv/version.py
+/src/virtualenv/out
+/*env*
