@@ -25,33 +25,34 @@ class IniConfig(object):
         self.is_env_var = config_file is not None
         self.config_file = Path(config_file) if config_file is not None else DEFAULT_CONFIG_FILE
         self._cache = {}
-
         self.has_config_file = self.config_file.exists()
         if self.has_config_file:
             self.config_file = self.config_file.resolve()
             self.config_parser = ConfigParser.ConfigParser()
             try:
-                with self.config_file.open("rt") as file_handler:
-                    reader = getattr(self.config_parser, "read_file" if PY3 else "readfp")
-                    reader(file_handler)
+                self._load()
                 self.has_virtualenv_section = self.config_parser.has_section(self.section)
             except Exception as exception:
                 logging.error("failed to read config file %s because %r", config_file, exception)
                 self.has_config_file = None
 
+    def _load(self):
+        with self.config_file.open("rt") as file_handler:
+            reader = getattr(self.config_parser, "read_file" if PY3 else "readfp")
+            reader(file_handler)
+
     def get(self, key, as_type):
         cache_key = key, as_type
         if cache_key in self._cache:
-            result = self._cache[cache_key]
-        else:
-            # noinspection PyBroadException
-            try:
-                source = "file"
-                raw_value = self.config_parser.get(self.section, key.lower())
-                value = convert(raw_value, as_type, source)
-                result = value, source
-            except Exception:
-                result = None
+            return self._cache[cache_key]
+        # noinspection PyBroadException
+        try:
+            source = "file"
+            raw_value = self.config_parser.get(self.section, key.lower())
+            value = convert(raw_value, as_type, source)
+            result = value, source
+        except Exception:
+            result = None
         self._cache[cache_key] = result
         return result
 
