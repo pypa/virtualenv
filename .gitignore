@@ -6,7 +6,7 @@ dist
 .eggs
 
 # python
-*.py[cod]
+*.py[codz]
 *$py.class
 
 # tools
@@ -24,3 +24,5 @@ dist
 /src/virtualenv/out
 /*env*
 .python-version
+
+*wheel-store*

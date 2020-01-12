@@ -81,7 +81,7 @@ def system():
 @pytest.mark.parametrize(
     "use_venv", [False, True] if six.PY3 else [False], ids=["no_venv", "venv"] if six.PY3 else ["no_venv"]
 )
-def test_create(python, use_venv, global_access, system, coverage_env, special_name_dir):
+def test_create_no_seed(python, use_venv, global_access, system, coverage_env, special_name_dir):
     dest = special_name_dir
     cmd = [
         "-v",
@@ -190,8 +190,6 @@ def test_debug_bad_virtualenv(tmp_path):
 )
 @pytest.mark.parametrize("clear", [True, False], ids=["clear", "no_clear"])
 def test_create_clear_resets(tmp_path, use_venv, clear):
-    if sys.version_info[0:2] == (3, 4) and use_venv and clear is False and CURRENT.implementation == "CPython":
-        pytest.skip("python 3.4 does not support overwrite venv without clear")
     marker = tmp_path / "magic"
     cmd = [str(tmp_path), "--seeder", "none", "--creator", "venv" if use_venv else "builtin"]
     run_via_cli(cmd)
@@ -235,6 +233,7 @@ def cross_python(is_inside_ci):
     yield interpreter
 
 
+@pytest.mark.slow
 def test_cross_major(cross_python, coverage_env, tmp_path):
     cmd = [
         "-v",

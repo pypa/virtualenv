@@ -7,8 +7,8 @@ import sys
 import pytest
 import six
 
-from src.virtualenv.info import IS_PYPY, IS_WIN
 from virtualenv.activation import PythonActivator
+from virtualenv.info import IS_PYPY, IS_WIN
 
 
 @pytest.mark.xfail(

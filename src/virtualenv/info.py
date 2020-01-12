@@ -13,7 +13,8 @@ IS_PYPY = IMPLEMENTATION == "PyPy"
 IS_CPYTHON = IMPLEMENTATION == "CPython"
 PY3 = sys.version_info[0] == 3
 IS_WIN = sys.platform == "win32"
-
+ROOT = os.path.realpath(os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir))
+IS_ZIPAPP = os.path.isfile(ROOT)
 _FS_CASE_SENSITIVE = _CFG_DIR = _DATA_DIR = None
 
 
@@ -22,7 +23,9 @@ def get_default_data_dir():
 
     global _DATA_DIR
     if _DATA_DIR is None:
-        _DATA_DIR = Path(user_data_dir(appname="virtualenv", appauthor="pypa"))
+        key = str("_VIRTUALENV_OVERRIDE_APP_DATA")
+        folder = os.environ[key] if key in os.environ else user_data_dir(appname="virtualenv", appauthor="pypa")
+        _DATA_DIR = Path(folder)
     return _DATA_DIR
 
 
@@ -47,4 +50,14 @@ def is_fs_case_sensitive():
     return _FS_CASE_SENSITIVE
 
 
-__all__ = ("IS_PYPY", "PY3", "IS_WIN", "get_default_data_dir", "get_default_config_dir", "_FS_CASE_SENSITIVE")
+__all__ = (
+    "IS_PYPY",
+    "IS_CPYTHON",
+    "PY3",
+    "IS_WIN",
+    "get_default_data_dir",
+    "get_default_config_dir",
+    "is_fs_case_sensitive",
+    "ROOT",
+    "IS_ZIPAPP",
+)

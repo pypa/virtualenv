@@ -3,16 +3,20 @@ from __future__ import absolute_import, unicode_literals
 import os
 import sys
 
+import pytest
 import six
 
 from virtualenv.interpreters.discovery.py_info import CURRENT
 from virtualenv.run import run_via_cli
 from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
 from virtualenv.seed.embed.wheels.acquire import BUNDLE_FOLDER
+from virtualenv.util.path import Path
 from virtualenv.util.subprocess import Popen
 
 
-def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env):
+@pytest.mark.slow
+def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, mocker):
+    mocker.patch("virtualenv.seed.via_app_data.via_app_data.get_default_data_dir", return_value=Path(str(tmp_path)))
     bundle_ver = BUNDLE_SUPPORT[CURRENT.version_release_str]
     create_cmd = [
         six.ensure_text(str(tmp_path / "env")),

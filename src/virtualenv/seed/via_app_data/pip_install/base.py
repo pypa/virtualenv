@@ -6,7 +6,6 @@ import re
 import shutil
 import zipfile
 from abc import ABCMeta, abstractmethod
-from stat import S_IXGRP, S_IXOTH, S_IXUSR
 from tempfile import mkdtemp
 from textwrap import dedent
 
@@ -15,7 +14,7 @@ from six import PY3
 
 from virtualenv.info import IS_WIN
 from virtualenv.util import ConfigParser
-from virtualenv.util.path import Path
+from virtualenv.util.path import Path, make_exe
 
 
 @six.add_metaclass(ABCMeta)
@@ -38,7 +37,7 @@ class PipInstall(object):
         site_package = self._creator.site_packages[0]
         for filename in self._image_dir.iterdir():
             into = site_package / filename.name
-            logging.debug("link %s of %s", filename, into)
+            logging.debug("%s %s from %s", self.__class__.__name__, into, filename)
             if into.exists():
                 if into.is_dir() and not into.is_symlink():
                     shutil.rmtree(str(into))
@@ -175,7 +174,7 @@ class PipInstall(object):
             ):
                 exe = to_folder / new_name
                 exe.write_text(content, encoding="utf-8")
-                exe.chmod(exe.stat().st_mode | S_IXUSR | S_IXGRP | S_IXOTH)
+                make_exe(exe)
                 result.append(exe)
         return result
 

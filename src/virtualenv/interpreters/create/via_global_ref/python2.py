@@ -6,9 +6,11 @@ import os
 
 import six
 
+from virtualenv.info import IS_ZIPAPP
 from virtualenv.interpreters.create.support import Python2Supports
 from virtualenv.interpreters.create.via_global_ref.via_global_self_do import ViaGlobalRefVirtualenvBuiltin
 from virtualenv.util.path import Path, copy
+from virtualenv.util.zipapp import read as read_from_zipapp
 
 HERE = Path(__file__).absolute().parent
 
@@ -29,9 +31,12 @@ class Python2(ViaGlobalRefVirtualenvBuiltin, Python2Supports):
         relative_site_packages = [
             os.path.relpath(six.ensure_text(str(s)), six.ensure_text(str(site_py))) for s in self.site_packages
         ]
-        site_py.write_text(
-            get_custom_site().read_text().replace("___EXPECTED_SITE_PACKAGES___", json.dumps(relative_site_packages))
-        )
+        custom_site = get_custom_site()
+        if IS_ZIPAPP:
+            custom_site_text = read_from_zipapp(custom_site)
+        else:
+            custom_site_text = custom_site.read_text()
+        site_py.write_text(custom_site_text.replace("___EXPECTED_SITE_PACKAGES___", json.dumps(relative_site_packages)))
 
     @abc.abstractmethod
     def modules(self):

@@ -1,5 +1,5 @@
 [coverage:report]
-skip_covered = False
+skip_covered = True
 show_missing = True
 exclude_lines =
     \#\s*pragma: no cover

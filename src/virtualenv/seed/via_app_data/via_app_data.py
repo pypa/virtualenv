@@ -36,7 +36,7 @@ class FromAppData(BaseEmbed):
         name_to_whl = self._get_seed_wheels(creator, base_cache)
         installer_class = self.installer_class(name_to_whl["pip"].stem.split("-")[1])
         for name, wheel in name_to_whl.items():
-            logging.debug("install %s from wheel %s", name, wheel)
+            logging.debug("install %s from wheel %s via %s", name, wheel, installer_class.__name__)
             image_folder = base_cache / "image" / installer_class.__name__ / wheel.stem
             installer = installer_class(wheel, creator, image_folder)
             if self.clear:
@@ -68,3 +68,6 @@ class FromAppData(BaseEmbed):
             if pip_version_int >= (19, 3):
                 return SymlinkPipInstall
         return CopyPipInstall
+
+    def __unicode__(self):
+        return super(FromAppData, self).__unicode__() + " app_data_dir={}".format(self.app_data_dir)
