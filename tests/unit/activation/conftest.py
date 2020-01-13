@@ -172,7 +172,7 @@ class ActivationTester(object):
 
             buffer_cont = create_unicode_buffer(256)
             get_long_path_name = windll.kernel32.GetLongPathNameW
-            get_long_path_name(six.text_type(path), buffer_cont, 256)  # noqa: F821
+            get_long_path_name(six.text_type(path), buffer_cont, 256)
             result = buffer_cont.value or path
         return normcase(result)
 
