@@ -8,6 +8,7 @@ from __future__ import absolute_import, print_function
 import json
 import logging
 import os
+import pipes
 import platform
 import sys
 from collections import OrderedDict, namedtuple
@@ -245,19 +246,10 @@ class PythonInfo(object):
     def _load_for_exe(cls, exe):
         from virtualenv.util.subprocess import subprocess, Popen
 
-        path = "{}.py".format(os.path.splitext(__file__)[0])
-        cmd = [exe, "-s", path]
-
+        cmd = cls._get_exe_cmd(exe)
         # noinspection DuplicatedCode
         # this is duplicated here because this file is executed on its own, so cannot be refactored otherwise
-
-        class Cmd(object):
-            def __repr__(self):
-                import pipes
-
-                return " ".join(pipes.quote(c) for c in cmd)
-
-        logging.debug("get interpreter info via cmd: %s", Cmd())
+        logging.debug("get interpreter info via cmd: %s", Cmd(cmd))
         try:
             process = Popen(
                 cmd, universal_newlines=True, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE
@@ -276,6 +268,22 @@ class PythonInfo(object):
             )
             failure = RuntimeError(msg)
         return failure, result
+
+    @classmethod
+    def _get_exe_cmd(cls, exe):
+        cmd = [exe, "-s"]
+        from virtualenv.info import IS_ZIPAPP
+
+        self_path = os.path.abspath(__file__)
+        if IS_ZIPAPP:
+            from virtualenv.util.zipapp import extract_to_app_data
+            from virtualenv.util.path import Path
+
+            path = str(extract_to_app_data(Path(self_path)))
+        else:
+            path = "{}.py".format(os.path.splitext(self_path)[0])
+        cmd.append(path)
+        return cmd
 
     def satisfies(self, spec, impl_must_match):
         """check if a given specification can be satisfied by the this python interpreter instance"""
@@ -298,6 +306,18 @@ class PythonInfo(object):
             if req is not None and our is not None and our != req:
                 return False
         return True
+
+
+class Cmd(object):
+    def __init__(self, cmd, env=None):
+        self.cmd = cmd
+        self.env = env
+
+    def __repr__(self):
+        cmd_repr = " ".join(pipes.quote(c) for c in self.cmd)
+        if self.env is not None:
+            cmd_repr += " env of {!r}".format(self.env)
+        return cmd_repr
 
 
 CURRENT = PythonInfo()

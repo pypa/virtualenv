@@ -15,6 +15,23 @@ from virtualenv.interpreters.discovery.py_info import PythonInfo
 from virtualenv.util.path import Path
 
 
+def pytest_addoption(parser):
+    parser.addoption("--int", action="store_true", default=False, help="run integration tests")
+
+
+def pytest_collection_modifyitems(config, items):
+    int_location = os.path.join("tests", "integration", "").rstrip()
+    if len(items) == 1:
+        return
+
+    items.sort(key=lambda i: 2 if i.location[0].startswith(int_location) else (1 if "slow" in i.keywords else 0))
+
+    if not config.getoption("--int"):
+        for item in items:
+            if item.location[0].startswith(int_location):
+                item.add_marker(pytest.mark.skip(reason="need --int option to run"))
+
+
 @pytest.fixture(scope="session")
 def has_symlink_support(tmp_path_factory):
     platform_supports = hasattr(os, "symlink")

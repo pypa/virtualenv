@@ -9,6 +9,7 @@ from virtualenv.interpreters.discovery.py_info import CURRENT
 from virtualenv.run import run_via_cli
 
 
+@pytest.mark.slow
 def test_failed_to_find_bad_spec():
     of_id = uuid4().hex
     with pytest.raises(RuntimeError) as context:

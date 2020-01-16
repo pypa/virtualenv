@@ -41,13 +41,9 @@ class Venv(ViaGlobalRefApi):
         from venv import EnvBuilder
 
         builder = EnvBuilder(
-            system_site_packages=self.enable_system_site_package,
-            clear=False,
-            symlinks=self.symlinks,
-            with_pip=False,
-            prompt=None,
+            system_site_packages=self.enable_system_site_package, clear=False, symlinks=self.symlinks, with_pip=False,
         )
-        builder.create(self.dest_dir)
+        builder.create(str(self.dest_dir))
 
     def create_via_sub_process(self):
         cmd = self.get_host_create_cmd()

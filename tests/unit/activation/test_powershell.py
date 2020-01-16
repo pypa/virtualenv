@@ -7,10 +7,11 @@ import sys
 import pytest
 from six import PY2
 
-from src.virtualenv.info import IS_PYPY, IS_WIN
 from virtualenv.activation import PowerShellActivator
+from virtualenv.info import IS_PYPY, IS_WIN
 
 
+@pytest.mark.slow
 @pytest.mark.xfail(
     condition=IS_PYPY and PY2 and IS_WIN and bool(os.environ.get(str("CI_RUN"))),
     strict=False,

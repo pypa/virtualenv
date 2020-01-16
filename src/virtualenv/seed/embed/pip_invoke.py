@@ -1,7 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 
+import logging
+
+from virtualenv.interpreters.discovery.py_info import Cmd
 from virtualenv.seed.embed.base_embed import BaseEmbed
-from virtualenv.seed.embed.wheels.acquire import get_bundled_wheel, pip_wheel_env_run
+from virtualenv.seed.embed.wheels.acquire import get_bundled_wheel_non_zipped, pip_wheel_env_run
 from virtualenv.util.subprocess import Popen
 
 
@@ -12,12 +15,15 @@ class PipInvoke(BaseEmbed):
     def run(self, creator):
         cmd = self.get_pip_install_cmd(creator.exe, creator.interpreter.version_release_str)
         env = pip_wheel_env_run(creator.interpreter.version_release_str)
+        logging.debug("pip seed by running: %s", Cmd(cmd, env))
         process = Popen(cmd, env=env)
         process.communicate()
+        if process.returncode != 0:
+            raise RuntimeError("failed seed")
 
     def get_pip_install_cmd(self, exe, version):
-        cmd = [str(exe), "-m", "pip", "install", "--only-binary", ":all:"]
-        for folder in {get_bundled_wheel(p, version).parent for p in self.packages}:
+        cmd = [str(exe), "-m", "pip", "-q", "install", "--only-binary", ":all:"]
+        for folder in {get_bundled_wheel_non_zipped(p, version).parent for p in self.packages}:
             cmd.extend(["--find-links", str(folder)])
             cmd.extend(self.extra_search_dir)
         if not self.download:

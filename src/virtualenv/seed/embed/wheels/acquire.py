@@ -11,12 +11,14 @@ from zipfile import ZipFile
 
 import six
 
+from virtualenv.info import IS_ZIPAPP
 from virtualenv.util.path import Path
 from virtualenv.util.subprocess import Popen, subprocess
+from virtualenv.util.zipapp import extract_to_app_data
 
 from . import BUNDLE_SUPPORT, MAX
 
-BUNDLE_FOLDER = Path(__file__).parent
+BUNDLE_FOLDER = Path(os.path.abspath(__file__)).parent
 
 
 def get_wheels(for_py_version, wheel_cache_dir, extra_search_dir, download, packages):
@@ -47,11 +49,23 @@ def acquire_from_bundle(packages, for_py_version, to_folder):
                 bundled_wheel_file = to_folder / bundle.name
                 if not bundled_wheel_file.exists():
                     logging.debug("get bundled wheel %s", bundle)
-                    copy2(str(bundle), str(bundled_wheel_file))
+                    if IS_ZIPAPP:
+                        from virtualenv.util.zipapp import extract
+
+                        extract(bundle, bundled_wheel_file)
+                    else:
+                        copy2(str(bundle), str(bundled_wheel_file))
 
 
 def get_bundled_wheel(package, version_release):
     return BUNDLE_FOLDER / (BUNDLE_SUPPORT.get(version_release, {}) or BUNDLE_SUPPORT[MAX]).get(package)
+
+
+def get_bundled_wheel_non_zipped(package, version_release):
+    bundle = get_bundled_wheel(package, version_release)
+    if not IS_ZIPAPP:
+        return bundle
+    return extract_to_app_data(bundle)
 
 
 def acquire_from_dir(packages, for_py_version, to_folder, extra_search_dir):
@@ -139,6 +153,8 @@ def download_wheel(packages, for_py_version, to_folder):
     # pip has no interface in python - must be a new sub-process
     process = Popen(cmd, env=pip_wheel_env_run("{}{}".format(*sys.version_info[0:2])), stdout=subprocess.PIPE)
     process.communicate()
+    if process.returncode != 0:
+        raise RuntimeError("failed to download wheels")
 
 
 def pip_wheel_env_run(version):
@@ -148,7 +164,7 @@ def pip_wheel_env_run(version):
             six.ensure_str(k): str(v)  # python 2 requires these to be string only (non-unicode)
             for k, v in {
                 # put the bundled wheel onto the path, and use it to do the bootstrap operation
-                "PYTHONPATH": get_bundled_wheel("pip", version),
+                "PYTHONPATH": get_bundled_wheel_non_zipped("pip", version),
                 "PIP_USE_WHEEL": "1",
                 "PIP_USER": "0",
                 "PIP_NO_INPUT": "1",

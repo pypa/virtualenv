@@ -1,10 +1,13 @@
 from __future__ import absolute_import, unicode_literals
 
+import pytest
+
 from virtualenv.interpreters.discovery.py_info import CURRENT
 from virtualenv.run import run_via_cli
 from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
 
 
+@pytest.mark.slow
 def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env):
     bundle_ver = BUNDLE_SUPPORT[CURRENT.version_release_str]
     create_cmd = [

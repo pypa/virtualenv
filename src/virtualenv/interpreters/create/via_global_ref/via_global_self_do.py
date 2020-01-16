@@ -3,15 +3,13 @@ from __future__ import absolute_import, unicode_literals
 import abc
 from abc import ABCMeta
 from collections import OrderedDict
-from os import chmod, stat
-from stat import S_IXGRP, S_IXOTH, S_IXUSR
 
 import six
 from six import add_metaclass
 
 from virtualenv.info import is_fs_case_sensitive
 from virtualenv.interpreters.create.builtin_way import VirtualenvBuiltin
-from virtualenv.util.path import Path, copy, ensure_dir, symlink
+from virtualenv.util.path import Path, copy, ensure_dir, make_exe, symlink
 
 
 @add_metaclass(ABCMeta)
@@ -80,9 +78,7 @@ class ViaGlobalRefVirtualenvBuiltin(VirtualenvBuiltin):
     @staticmethod
     def symlink_exe(src, dest):
         symlink(src, dest)
-        dest_str = six.ensure_text(str(dest))
-        original_mode = stat(dest_str).st_mode
-        chmod(dest_str, original_mode | S_IXUSR | S_IXGRP | S_IXOTH)
+        make_exe(dest)
 
     @property
     def lib_base(self):
