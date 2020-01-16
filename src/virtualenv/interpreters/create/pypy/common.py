@@ -14,10 +14,6 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin):
     def supports(cls, interpreter):
         return interpreter.implementation == "PyPy" and super(PyPy, cls).supports(interpreter)
 
-    @property
-    def site_packages(self):
-        return [self.dest_dir / "site-packages"]
-
     def link_exe(self):
         host = Path(self.interpreter.system_executable)
         return {host: sorted("{}{}".format(name, self.suffix) for name in self.exe_names())}

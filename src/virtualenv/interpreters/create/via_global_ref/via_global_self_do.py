@@ -9,7 +9,7 @@ from six import add_metaclass
 
 from virtualenv.info import is_fs_case_sensitive
 from virtualenv.interpreters.create.builtin_way import VirtualenvBuiltin
-from virtualenv.util.path import Path, copy, ensure_dir, make_exe, symlink
+from virtualenv.util.path import copy, ensure_dir, make_exe, symlink
 
 
 @add_metaclass(ABCMeta)
@@ -42,9 +42,7 @@ class ViaGlobalRefVirtualenvBuiltin(VirtualenvBuiltin):
         self.pyenv_cfg["base-executable"] = self.interpreter.system_executable
 
     def ensure_directories(self):
-        dirs = {self.dest_dir, self.bin_dir, self.lib_dir}
-        dirs.update(self.site_packages)
-        return dirs
+        return {self.dest_dir, self.bin_dir, self.script_dir, self.stdlib} | set(self.libs)
 
     def setup_python(self):
         aliases = method = self.add_exe_method()
@@ -79,19 +77,3 @@ class ViaGlobalRefVirtualenvBuiltin(VirtualenvBuiltin):
     def symlink_exe(src, dest):
         symlink(src, dest)
         make_exe(dest)
-
-    @property
-    def lib_base(self):
-        raise NotImplementedError
-
-    @property
-    def system_stdlib(self):
-        return Path(self.interpreter.system_prefix) / self.lib_base
-
-    @property
-    def lib_dir(self):
-        return self.dest_dir / self.lib_base
-
-    @abc.abstractmethod
-    def lib_name(self):
-        raise NotImplementedError

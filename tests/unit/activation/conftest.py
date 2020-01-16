@@ -206,7 +206,7 @@ def raise_on_non_source_class():
 def activation_python(tmp_path_factory, special_char_name):
     dest = os.path.join(six.ensure_text(str(tmp_path_factory.mktemp("activation-tester-env"))), special_char_name)
     session = run_via_cli(["--seed", "none", dest, "--prompt", special_char_name, "--creator", "builtin"])
-    pydoc_test = session.creator.site_packages[0] / "pydoc_test.py"
+    pydoc_test = session.creator.purelib / "pydoc_test.py"
     with open(six.ensure_text(str(pydoc_test)), "wb") as file_handler:
         file_handler.write(b'"""This is pydoc_test.py"""')
     yield session

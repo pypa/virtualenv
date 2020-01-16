@@ -103,9 +103,8 @@ def test_create_no_seed(python, use_venv, global_access, system, coverage_env, s
         # pypy cleans up file descriptors periodically so our (many) subprocess calls impact file descriptor limits
         # force a cleanup of these on system where the limit is low-ish (e.g. MacOS 256)
         gc.collect()
-    for site_package in result.creator.site_packages:
-        content = list(site_package.iterdir())
-        assert not content, "\n".join(str(i) for i in content)
+    content = list(result.creator.purelib.iterdir())
+    assert not content, "\n".join(six.ensure_text(str(i)) for i in content)
     assert result.creator.env_name == six.ensure_text(dest.name)
     debug = result.creator.debug
     sys_path = cleanup_sys_path(debug["sys"]["path"])
@@ -174,7 +173,7 @@ def test_debug_bad_virtualenv(tmp_path):
     cmd = [str(tmp_path), "--without-pip"]
     result = run_via_cli(cmd)
     # if the site.py is removed/altered the debug should fail as no one is around to fix the paths
-    site_py = result.creator.lib_dir / "site.py"
+    site_py = result.creator.stdlib / "site.py"
     site_py.unlink()
     # insert something that writes something on the stdout
     site_py.write_text('import sys; sys.stdout.write(repr("std-out")); sys.stderr.write("std-err"); raise ValueError')

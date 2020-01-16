@@ -54,3 +54,6 @@ class PyEnvCfg(object):
     def update(self, other):
         self.content.update(other)
         return self
+
+    def __repr__(self):
+        return "{}(path={})".format(self.__class__.__name__, self.path)

@@ -66,6 +66,14 @@ def run():
     except ImportError as exception:  # pragma: no cover
         result["datetime"] = repr(exception)  # pragma: no cover
 
+    try:
+        # noinspection PyUnresolvedReferences
+        import math  # site
+
+        result["math"] = repr(math)
+    except ImportError as exception:  # pragma: no cover
+        result["math"] = repr(exception)  # pragma: no cover
+
     # try to print out, this will validate if other core modules are available (json in this case)
     try:
         import json

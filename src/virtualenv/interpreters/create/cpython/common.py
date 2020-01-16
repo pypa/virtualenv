@@ -24,18 +24,6 @@ class CPython(ViaGlobalRefVirtualenvBuiltin):
 class CPythonPosix(CPython, PosixSupports):
     """Create a CPython virtual environment on POSIX platforms"""
 
-    @property
-    def bin_name(self):
-        return "bin"
-
-    @property
-    def lib_name(self):
-        return "lib"
-
-    @property
-    def lib_base(self):
-        return Path(self.lib_name) / self.interpreter.python_name
-
     def link_exe(self):
         host = Path(self.interpreter.system_executable)
         major, minor = self.interpreter.version_info.major, self.interpreter.version_info.minor
@@ -44,18 +32,6 @@ class CPythonPosix(CPython, PosixSupports):
 
 @six.add_metaclass(abc.ABCMeta)
 class CPythonWindows(CPython, WindowsSupports):
-    @property
-    def bin_name(self):
-        return "Scripts"
-
-    @property
-    def lib_name(self):
-        return "Lib"
-
-    @property
-    def lib_base(self):
-        return Path(self.lib_name)
-
     def link_exe(self):
         host = Path(self.interpreter.system_executable)
         return {p: [p.name] for p in (host.parent / n for n in ("python.exe", "pythonw.exe", host.name)) if p.exists()}

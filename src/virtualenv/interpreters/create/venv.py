@@ -13,10 +13,10 @@ from .via_global_ref.api import ViaGlobalRefApi
 
 class Venv(ViaGlobalRefApi):
     def __init__(self, options, interpreter):
+        self.builtin_way = options.builtin_way
         super(Venv, self).__init__(options, interpreter)
         self.can_be_inline = interpreter is CURRENT and interpreter.executable == interpreter.system_executable
         self._context = None
-        self.builtin_way = options.builtin_way
 
     def _args(self):
         return super(Venv, self)._args() + (
@@ -33,9 +33,8 @@ class Venv(ViaGlobalRefApi):
         else:
             self.create_via_sub_process()
             # TODO: cleanup activation scripts
-        if self.builtin_way is not None:
-            for site_package in self.builtin_way.site_packages:
-                ensure_dir(site_package)
+        for lib in self.libs:
+            ensure_dir(lib)
 
     def create_inline(self):
         from venv import EnvBuilder
@@ -66,27 +65,10 @@ class Venv(ViaGlobalRefApi):
         super(Venv, self).set_pyenv_cfg()
         self.pyenv_cfg.update(venv_content)
 
-    def _proxy_builtin_way(self, key):
-        if self.builtin_way is None:
-            return None
-        return getattr(self.builtin_way, key)
-
-    @property
-    def exe(self):
-        return self._proxy_builtin_way("exe")
-
-    @property
-    def site_packages(self):
-        return self._proxy_builtin_way("site_packages")
-
-    @property
-    def bin_dir(self):
-        return self._proxy_builtin_way("bin_dir")
-
-    @property
-    def bin_name(self):
-        return self._proxy_builtin_way("bin_name")
-
-    @property
-    def lib_dir(self):
-        return self._proxy_builtin_way("lib_dir")
+    def __getattribute__(self, item):
+        builtin = object.__getattribute__(self, "builtin_way")
+        if builtin is not None and hasattr(builtin, item):
+            element = getattr(builtin, item)
+            if not callable(element):
+                return element
+        return object.__getattribute__(self, item)

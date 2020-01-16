@@ -38,17 +38,15 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, mocker):
     assert result
 
     # uninstalling pip/setuptools now should leave us with a clean env
-    site_package = result.creator.site_packages[0]
+    site_package = result.creator.purelib
     pip = site_package / "pip"
     setuptools = site_package / "setuptools"
 
     files_post_first_create = list(site_package.iterdir())
     assert pip in files_post_first_create
     assert setuptools in files_post_first_create
-
-    env_exe = result.creator.exe
     for pip_exe in [
-        env_exe.with_name("pip{}{}".format(suffix, env_exe.suffix))
+        result.creator.script_dir / "pip{}{}".format(suffix, result.creator.exe.suffix)
         for suffix in (
             "",
             "{}".format(CURRENT.version_info.major),
@@ -61,7 +59,7 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, mocker):
         assert not process.returncode
 
     remove_cmd = [
-        str(env_exe),
+        str(result.creator.exe),
         "-m",
         "pip",
         "--verbose",

@@ -218,7 +218,7 @@ class EnableCoverage(object):
 
     def __enter__(self, creator):
         assert not self.cov_pth.exists()
-        site_packages = creator.site_packages[0]
+        site_packages = creator.purelib
         p_th = site_packages / self._SUBPROCESS_TRIGGER_PTH_NAME
 
         if not str(p_th).startswith(str(self._COV_SITE_PACKAGES)):

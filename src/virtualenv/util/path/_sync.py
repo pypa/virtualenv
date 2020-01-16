@@ -23,6 +23,10 @@ def symlink_or_copy(do_copy, src, dst, relative_symlinks_ok=False):
     """
     Try symlinking a target, and if that fails, fall back to copying.
     """
+    if not src.exists():
+        raise RuntimeError("source {} does not exists".format(src))
+    if src == dst:
+        raise RuntimeError("source {} is same as destination ".format(src))
 
     def norm(val):
         if IS_PYPY and six.PY3:

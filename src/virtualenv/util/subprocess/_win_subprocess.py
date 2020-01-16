@@ -5,7 +5,6 @@
 import ctypes
 import os
 import subprocess
-import sys
 from ctypes import Structure, WinError, byref, c_char_p, c_void_p, c_wchar, c_wchar_p, sizeof, windll
 from ctypes.wintypes import BOOL, BYTE, DWORD, HANDLE, LPVOID, LPWSTR, WORD
 
