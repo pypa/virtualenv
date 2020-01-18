@@ -36,6 +36,55 @@ class Creator(object):
         self.clear = options.clear
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest_dir)
 
+        self._stdlib = None
+        self._system_stdlib = None
+        self._conf_vars = None
+
+    @property
+    def bin_dir(self):
+        return self.script_dir
+
+    @property
+    def script_dir(self):
+        return self.dest_dir / Path(self.interpreter.distutils_install["scripts"])
+
+    @property
+    def purelib(self):
+        return self.dest_dir / self.interpreter.distutils_install["purelib"]
+
+    @property
+    def platlib(self):
+        return self.dest_dir / self.interpreter.distutils_install["platlib"]
+
+    @property
+    def libs(self):
+        return list(OrderedDict(((self.platlib, None), (self.purelib, None))).keys())
+
+    @property
+    def stdlib(self):
+        if self._stdlib is None:
+            self._stdlib = Path(self.interpreter.sysconfig_path("stdlib", config_var=self._config_vars))
+        return self._stdlib
+
+    @property
+    def system_stdlib(self):
+        if self._system_stdlib is None:
+            conf_vars = self._calc_config_vars(self.interpreter.system_prefix)
+            self._system_stdlib = Path(self.interpreter.sysconfig_path("stdlib", conf_vars))
+        return self._system_stdlib
+
+    @property
+    def _config_vars(self):
+        if self._conf_vars is None:
+            self._conf_vars = self._calc_config_vars(six.ensure_text(str(self.dest_dir)))
+        return self._conf_vars
+
+    def _calc_config_vars(self, to):
+        return {
+            k: (to if v.startswith(self.interpreter.prefix) else v)
+            for k, v in self.interpreter.sysconfig_config_vars.items()
+        }
+
     def __repr__(self):
         return six.ensure_str(self.__unicode__())
 
@@ -154,6 +203,7 @@ class Creator(object):
             "home": self.interpreter.system_exec_prefix,
             "include-system-site-packages": "true" if self.enable_system_site_package else "false",
             "implementation": self.interpreter.implementation,
+            "version_info": ".".join(str(i) for i in self.interpreter.version_info),
             "virtualenv": __version__,
         }
 

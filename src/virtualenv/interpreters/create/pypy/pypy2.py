@@ -6,7 +6,6 @@ import six
 
 from virtualenv.interpreters.create.support import PosixSupports, WindowsSupports
 from virtualenv.interpreters.create.via_global_ref.python2 import Python2
-from virtualenv.util.path import Path
 
 from .common import PyPy
 
@@ -20,21 +19,17 @@ class PyPy2(PyPy, Python2):
         return "pypy"
 
     @property
-    def lib_name(self):
-        return "lib-python"
-
-    @property
     def lib_pypy(self):
         return self.dest_dir / "lib_pypy"
 
-    @property
-    def lib_base(self):
-        return Path(self.lib_name) / self.interpreter.version_release_str
+    def _calc_config_vars(self, to):
+        base = super(PyPy, self)._calc_config_vars(to)
+        # for some reason pypy seems to provide the wrong information for implementation_lower, fix it
+        base["implementation_lower"] = "python"
+        return base
 
     def ensure_directories(self):
-        dirs = super(PyPy, self).ensure_directories()
-        dirs.add(self.lib_pypy)
-        return dirs
+        return super(PyPy, self).ensure_directories() | {self.lib_pypy}
 
     def modules(self):
         return [
@@ -51,10 +46,6 @@ class PyPy2(PyPy, Python2):
 class PyPy2Posix(PyPy2, PosixSupports):
     """PyPy 2 on POSIX"""
 
-    @property
-    def bin_name(self):
-        return "bin"
-
     def modules(self):
         return super(PyPy2Posix, self).modules() + ["posixpath"]
 
@@ -65,10 +56,6 @@ class PyPy2Posix(PyPy2, PosixSupports):
 
 class Pypy2Windows(PyPy2, WindowsSupports):
     """PyPy 2 on Windows"""
-
-    @property
-    def bin_name(self):
-        return "Scripts"
 
     def modules(self):
         return super(Pypy2Windows, self).modules() + ["ntpath"]

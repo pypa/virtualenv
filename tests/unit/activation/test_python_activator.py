@@ -1,8 +1,8 @@
 from __future__ import absolute_import, unicode_literals
 
-import inspect
 import os
 import sys
+from textwrap import dedent
 
 import pytest
 import six
@@ -36,17 +36,9 @@ def test_python(raise_on_non_source_class, activation_tester):
             env[str("PATH")] = os.pathsep.join([str(tmp_path), str(tmp_path / "other")])
             return env
 
-        def _get_test_lines(self, activate_script):
-            raw = inspect.getsource(self.activate_this_test)
-            return [
-                i[12:]
-                for i in raw.replace('"__FILENAME__"', repr(six.ensure_text(str(activate_script)))).splitlines()[2:]
-            ]
-
-        # noinspection PyUnresolvedReferences
         @staticmethod
-        def activate_this_test():
-            """Used as template for the test - unicode literals don't apply"""
+        def _get_test_lines(activate_script):
+            raw = """
             import os
             import sys
 
@@ -60,10 +52,10 @@ def test_python(raise_on_non_source_class, activation_tester):
             print_path(os.environ.get("VIRTUAL_ENV"))
             print_path(os.environ.get("PATH"))
             print_path(os.pathsep.join(sys.path))
-            file_at = "__FILENAME__"
+            file_at = {}
             with open(file_at, "rb") as file_handler:
                 content = file_handler.read()
-            exec(content, {"__file__": file_at})
+            exec(content, {{"__file__": file_at}})
             print_path(os.environ.get("VIRTUAL_ENV"))
             print_path(os.environ.get("PATH"))
             print_path(os.pathsep.join(sys.path))
@@ -71,6 +63,11 @@ def test_python(raise_on_non_source_class, activation_tester):
             import pydoc_test
 
             print_path(inspect.getsourcefile(pydoc_test))
+            """.format(
+                repr(six.ensure_text(str(activate_script)))
+            )
+            result = dedent(raw).splitlines()
+            return result
 
         def assert_output(self, out, raw, tmp_path):
             assert out[0] == "None"  # start with VIRTUAL_ENV None
@@ -87,10 +84,13 @@ def test_python(raise_on_non_source_class, activation_tester):
 
             # sys path contains the site package at its start
             new_sys_path = out[5].split(os.path.pathsep)
-            assert ([six.ensure_text(str(i)) for i in self._creator.site_packages] + prev_sys_path) == new_sys_path
+
+            new_lib_paths = {six.ensure_text(str(i)) for i in self._creator.libs}
+            assert prev_sys_path == new_sys_path[len(new_lib_paths) :]
+            assert new_lib_paths == set(new_sys_path[: len(new_lib_paths)])
 
             # manage to import from activate site package
-            assert self.norm_path(out[6]) == self.norm_path(self._creator.site_packages[0] / "pydoc_test.py")
+            assert self.norm_path(out[6]) == self.norm_path(self._creator.purelib / "pydoc_test.py")
 
         def non_source_activate(self, activate_script):
             return self._invoke_script + [

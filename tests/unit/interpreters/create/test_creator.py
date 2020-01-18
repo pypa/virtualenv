@@ -10,7 +10,7 @@ import pytest
 import six
 
 from virtualenv.__main__ import run
-from virtualenv.info import IS_PYPY
+from virtualenv.info import IS_PYPY, IS_WIN
 from virtualenv.interpreters.create.creator import DEBUG_SCRIPT, get_env_debug_info
 from virtualenv.interpreters.discovery.builtin import get_interpreter
 from virtualenv.interpreters.discovery.py_info import CURRENT, PythonInfo
@@ -77,11 +77,10 @@ def system():
     return get_env_debug_info(Path(CURRENT.system_executable), DEBUG_SCRIPT)
 
 
-@pytest.mark.parametrize("global_access", [False, True], ids=["no_global", "ok_global"])
-@pytest.mark.parametrize(
-    "use_venv", [False, True] if six.PY3 else [False], ids=["no_venv", "venv"] if six.PY3 else ["no_venv"]
-)
-def test_create_no_seed(python, use_venv, global_access, system, coverage_env, special_name_dir):
+@pytest.mark.parametrize("isolated", [True, False], ids=["isolated", "with_global_site"])
+@pytest.mark.parametrize("method", (["copies"] + ([] if IS_WIN else ["symlinks"])))
+@pytest.mark.parametrize("creator", (["builtin"] + (["venv"] if six.PY3 else [])))
+def test_create_no_seed(python, creator, isolated, system, coverage_env, special_name_dir, method):
     dest = special_name_dir
     cmd = [
         "-v",
@@ -93,9 +92,10 @@ def test_create_no_seed(python, use_venv, global_access, system, coverage_env, s
         "--activators",
         "",
         "--creator",
-        "venv" if use_venv else "builtin",
+        creator,
+        "--{}".format(method),
     ]
-    if global_access:
+    if not isolated:
         cmd.append("--system-site-packages")
     result = run_via_cli(cmd)
     coverage_env()
@@ -103,9 +103,8 @@ def test_create_no_seed(python, use_venv, global_access, system, coverage_env, s
         # pypy cleans up file descriptors periodically so our (many) subprocess calls impact file descriptor limits
         # force a cleanup of these on system where the limit is low-ish (e.g. MacOS 256)
         gc.collect()
-    for site_package in result.creator.site_packages:
-        content = list(site_package.iterdir())
-        assert not content, "\n".join(str(i) for i in content)
+    content = list(result.creator.purelib.iterdir())
+    assert not content, "\n".join(six.ensure_text(str(i)) for i in content)
     assert result.creator.env_name == six.ensure_text(dest.name)
     debug = result.creator.debug
     sys_path = cleanup_sys_path(debug["sys"]["path"])
@@ -128,7 +127,9 @@ def test_create_no_seed(python, use_venv, global_access, system, coverage_env, s
 
     # ensure the global site package is added or not, depending on flag
     last_from_system_path = next(i for i in reversed(system_sys_path) if str(i).startswith(system["sys"]["prefix"]))
-    if global_access:
+    if isolated:
+        assert last_from_system_path not in sys_path
+    else:
         common = []
         for left, right in zip(reversed(system_sys_path), reversed(sys_path)):
             if left == right:
@@ -140,8 +141,6 @@ def test_create_no_seed(python, use_venv, global_access, system, coverage_env, s
             return [six.ensure_text(str(i)) for i in iterable]
 
         assert common, "\n".join(difflib.unified_diff(list_to_str(sys_path), list_to_str(system_sys_path)))
-    else:
-        assert last_from_system_path not in sys_path
 
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
@@ -174,7 +173,7 @@ def test_debug_bad_virtualenv(tmp_path):
     cmd = [str(tmp_path), "--without-pip"]
     result = run_via_cli(cmd)
     # if the site.py is removed/altered the debug should fail as no one is around to fix the paths
-    site_py = result.creator.lib_dir / "site.py"
+    site_py = result.creator.stdlib / "site.py"
     site_py.unlink()
     # insert something that writes something on the stdout
     site_py.write_text('import sys; sys.stdout.write(repr("std-out")); sys.stderr.write("std-err"); raise ValueError')
