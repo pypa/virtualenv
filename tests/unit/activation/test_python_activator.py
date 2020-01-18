@@ -84,7 +84,10 @@ def test_python(raise_on_non_source_class, activation_tester):
 
             # sys path contains the site package at its start
             new_sys_path = out[5].split(os.path.pathsep)
-            assert ([six.ensure_text(str(i)) for i in [self._creator.purelib]] + prev_sys_path) == new_sys_path
+
+            new_lib_paths = {six.ensure_text(str(i)) for i in self._creator.libs}
+            assert prev_sys_path == new_sys_path[len(new_lib_paths) :]
+            assert new_lib_paths == set(new_sys_path[: len(new_lib_paths)])
 
             # manage to import from activate site package
             assert self.norm_path(out[6]) == self.norm_path(self._creator.purelib / "pydoc_test.py")

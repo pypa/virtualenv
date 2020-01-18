@@ -58,7 +58,7 @@ class Creator(object):
 
     @property
     def libs(self):
-        return list({self.platlib, self.purelib})
+        return list(OrderedDict(((self.platlib, None), (self.purelib, None))).keys())
 
     @property
     def stdlib(self):
@@ -203,6 +203,7 @@ class Creator(object):
             "home": self.interpreter.system_exec_prefix,
             "include-system-site-packages": "true" if self.enable_system_site_package else "false",
             "implementation": self.interpreter.implementation,
+            "version_info": ".".join(str(i) for i in self.interpreter.version_info),
             "virtualenv": __version__,
         }
 

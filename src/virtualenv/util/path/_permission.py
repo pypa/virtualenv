@@ -13,7 +13,7 @@ def make_exe(filename):
                 mode |= level
             filename.chmod(mode)
             break
-        except PermissionError:
+        except OSError:
             continue
 
 
