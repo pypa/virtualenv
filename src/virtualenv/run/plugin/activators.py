@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 from argparse import ArgumentTypeError
+from collections import OrderedDict
 
 from .base import ComponentBuilder
 
@@ -8,7 +9,10 @@ from .base import ComponentBuilder
 class ActivationSelector(ComponentBuilder):
     def __init__(self, interpreter, parser):
         self.default = None
-        super(ActivationSelector, self).__init__(interpreter, parser, "virtualenv.activate", "activators", True)
+        possible = OrderedDict(
+            (k, v) for k, v in self.options("virtualenv.activate").items() if v.supports(interpreter)
+        )
+        super(ActivationSelector, self).__init__(interpreter, parser, "activators", possible)
         self.active = None
 
     def add_selector_arg_parse(self, name, choices):

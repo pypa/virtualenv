@@ -127,7 +127,7 @@ class ActivationTester(object):
         # post-activation
         expected = self._creator.exe.parent / os.path.basename(sys.executable)
         assert self.norm_path(out[2]) == self.norm_path(expected), raw
-        assert self.norm_path(out[3]) == self.norm_path(self._creator.dest_dir).replace("\\\\", "\\"), raw
+        assert self.norm_path(out[3]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
         assert out[4] == "wrote pydoc_test.html", raw
         content = tmp_path / "pydoc_test.html"
         assert content.exists(), raw

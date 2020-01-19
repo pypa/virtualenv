@@ -6,7 +6,7 @@ import shutil
 
 import six
 
-from virtualenv.info import IS_WIN, get_default_data_dir
+from virtualenv.info import IS_WIN, default_data_dir
 from virtualenv.seed.embed.base_embed import BaseEmbed
 from virtualenv.seed.embed.wheels.acquire import get_wheels
 
@@ -18,7 +18,7 @@ class FromAppData(BaseEmbed):
     def __init__(self, options):
         super(FromAppData, self).__init__(options)
         self.clear = options.clear_app_data
-        self.app_data_dir = get_default_data_dir() / "seed-v1"
+        self.app_data_dir = default_data_dir() / "seed-v1"
 
     @classmethod
     def add_parser_arguments(cls, parser, interpreter):

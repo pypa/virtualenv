@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
-from virtualenv.interpreters.discovery.py_info import Cmd
+from virtualenv.discovery.py_info import Cmd
 from virtualenv.seed.embed.base_embed import BaseEmbed
 from virtualenv.seed.embed.wheels.acquire import get_bundled_wheel_non_zipped, pip_wheel_env_run
 from virtualenv.util.subprocess import Popen

@@ -15,10 +15,11 @@ PY3 = sys.version_info[0] == 3
 IS_WIN = sys.platform == "win32"
 ROOT = os.path.realpath(os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir))
 IS_ZIPAPP = os.path.isfile(ROOT)
-_FS_CASE_SENSITIVE = _CFG_DIR = _DATA_DIR = None
+
+_CAN_SYMLINK = _FS_CASE_SENSITIVE = _CFG_DIR = _DATA_DIR = None
 
 
-def get_default_data_dir():
+def default_data_dir():
     from virtualenv.util.path import Path
 
     global _DATA_DIR
@@ -29,7 +30,7 @@ def get_default_data_dir():
     return _DATA_DIR
 
 
-def get_default_config_dir():
+def default_config_dir():
     from virtualenv.util.path import Path
 
     global _CFG_DIR
@@ -38,7 +39,7 @@ def get_default_config_dir():
     return _CFG_DIR
 
 
-def is_fs_case_sensitive():
+def fs_is_case_sensitive():
     global _FS_CASE_SENSITIVE
 
     if _FS_CASE_SENSITIVE is None:
@@ -50,14 +51,36 @@ def is_fs_case_sensitive():
     return _FS_CASE_SENSITIVE
 
 
+def fs_supports_symlink():
+    global _CAN_SYMLINK
+
+    if _CAN_SYMLINK is None:
+        can = False
+        if hasattr(os, "symlink"):
+            if IS_WIN:
+                with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:
+                    temp_dir = os.path.dirname(tmp_file)
+                    dest = os.path.join(temp_dir, "{}-{}".format(tmp_file.name, "b"))
+                    try:
+                        os.symlink(tmp_file, dest)
+                        can = True
+                    except OSError:
+                        pass
+            else:
+                can = True
+        _CAN_SYMLINK = can
+    return _CAN_SYMLINK
+
+
 __all__ = (
     "IS_PYPY",
     "IS_CPYTHON",
     "PY3",
     "IS_WIN",
-    "get_default_data_dir",
-    "get_default_config_dir",
-    "is_fs_case_sensitive",
+    "default_data_dir",
+    "default_config_dir",
+    "fs_is_case_sensitive",
+    "fs_supports_symlink",
     "ROOT",
     "IS_ZIPAPP",
 )

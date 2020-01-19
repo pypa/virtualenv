@@ -5,13 +5,13 @@ import os
 
 import six
 
-from virtualenv.info import PY3, get_default_config_dir
+from virtualenv.info import PY3, default_config_dir
 from virtualenv.util import ConfigParser
 from virtualenv.util.path import Path
 
 from .convert import convert
 
-DEFAULT_CONFIG_FILE = get_default_config_dir() / "virtualenv.ini"
+DEFAULT_CONFIG_FILE = default_config_dir() / "virtualenv.ini"
 
 
 class IniConfig(object):

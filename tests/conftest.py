@@ -10,8 +10,8 @@ import coverage
 import pytest
 import six
 
+from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_PYPY
-from virtualenv.interpreters.discovery.py_info import PythonInfo
 from virtualenv.util.path import Path
 
 
