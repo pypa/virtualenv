@@ -8,9 +8,9 @@ from functools import partial
 
 import six
 
-from virtualenv.info import IS_PYPY
+from virtualenv.info import IS_PYPY, fs_supports_symlink
 
-HAS_SYMLINK = hasattr(os, "symlink")
+HAS_SYMLINK = fs_supports_symlink()
 
 
 def ensure_dir(path):

@@ -87,4 +87,6 @@ def python(request, tmp_path_factory):
     result = request.param(tmp_path_factory)
     if isinstance(result, Exception):
         pytest.skip("could not resolve interpreter based on {} because {}".format(request.param.__name__, result))
+    if result is None:
+        pytest.skip("requires interpreter with {}".format(request.param.__name__))
     return result

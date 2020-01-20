@@ -9,7 +9,7 @@ import pytest
 
 from virtualenv.discovery.py_info import CURRENT, PythonInfo
 from virtualenv.discovery.py_spec import PythonSpec
-from virtualenv.info import IS_PYPY
+from virtualenv.info import IS_PYPY, fs_supports_symlink
 
 
 def test_current_as_json():
@@ -104,7 +104,7 @@ def test_py_info_cached(mocker, tmp_path):
 
 
 @pytest.mark.skipif(IS_PYPY, reason="mocker in pypy does not allow to spy on class methods")
-@pytest.mark.skipif(sys.platform == "win32", reason="symlink is not guaranteed to work on windows")
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
 def test_py_info_cached_symlink(mocker, tmp_path):
     mocker.spy(PythonInfo, "_load_for_exe")
     with pytest.raises(RuntimeError):

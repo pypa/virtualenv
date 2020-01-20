@@ -62,7 +62,7 @@ def fs_supports_symlink():
                     try:
                         os.symlink(tmp_file.name, dest)
                         can = True
-                    except OSError:
+                    except (OSError, NotImplementedError):
                         pass
                 logging.debug("symlink on filesystem does%s work", "" if can else " not")
             else:

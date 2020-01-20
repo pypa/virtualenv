@@ -10,9 +10,10 @@ import six
 
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import CURRENT
+from virtualenv.info import fs_supports_symlink
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="symlink is not guaranteed to work on windows")
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlink not supported")
 @pytest.mark.parametrize("case", ["mixed", "lower", "upper"])
 def test_discovery_via_path(monkeypatch, case, special_name_dir, caplog):
     caplog.set_level(logging.DEBUG)

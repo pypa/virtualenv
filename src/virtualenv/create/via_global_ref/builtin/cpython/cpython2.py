@@ -41,4 +41,6 @@ class CPython2Windows(CPython2, CPythonWindows):
     def sources(cls, interpreter):
         for src in super(CPython2Windows, cls).sources(interpreter):
             yield src
-        yield RefToDest(Path(interpreter.system_executable).parent / "python27.dll", dest=cls.to_bin)
+        py27_dll = Path(interpreter.system_executable).parent / "python27.dll"
+        if py27_dll.exists():  # this might be global in the Windows folder in which case it's alright to be missing
+            yield RefToDest(py27_dll, dest=cls.to_bin)

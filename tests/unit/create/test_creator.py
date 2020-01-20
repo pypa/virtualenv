@@ -77,9 +77,12 @@ def system():
     return get_env_debug_info(Path(CURRENT.system_executable), DEBUG_SCRIPT)
 
 
+CURRENT_CREATORS = list(i for i in CURRENT.creators().key_to_class.keys() if i != "builtin")
+
+
 @pytest.mark.parametrize("isolated", [True, False], ids=["isolated", "with_global_site"])
 @pytest.mark.parametrize("method", (["copies"] + (["symlinks"] if fs_supports_symlink() else [])))
-@pytest.mark.parametrize("creator", list(CURRENT.creators().key_to_class.keys()))
+@pytest.mark.parametrize("creator", CURRENT_CREATORS)
 def test_create_no_seed(python, creator, isolated, system, coverage_env, special_name_dir, method):
     dest = special_name_dir
     cmd = [
@@ -184,9 +187,11 @@ def test_debug_bad_virtualenv(tmp_path):
     assert debug_info["exception"]
 
 
-@pytest.mark.parametrize("creator", list(CURRENT.creators().key_to_class.keys()))
+@pytest.mark.parametrize("creator", CURRENT_CREATORS)
 @pytest.mark.parametrize("clear", [True, False], ids=["clear", "no_clear"])
 def test_create_clear_resets(tmp_path, creator, clear):
+    if creator == "venv" and clear is False:
+        pytest.skip("venv without clear might fail")
     marker = tmp_path / "magic"
     cmd = [str(tmp_path), "--seeder", "none", "--creator", creator]
     run_via_cli(cmd)
@@ -198,7 +203,7 @@ def test_create_clear_resets(tmp_path, creator, clear):
     assert marker.exists() is not clear
 
 
-@pytest.mark.parametrize("creator", list(CURRENT.creators().key_to_class.keys()))
+@pytest.mark.parametrize("creator", CURRENT_CREATORS)
 @pytest.mark.parametrize("prompt", [None, "magic"])
 def test_prompt_set(tmp_path, creator, prompt):
     cmd = [str(tmp_path), "--seeder", "none", "--creator", creator]
