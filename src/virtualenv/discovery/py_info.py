@@ -86,6 +86,7 @@ class PythonInfo(object):
             "stdlib",
             {k: (self.system_prefix if v.startswith(self.prefix) else v) for k, v in self.sysconfig_vars.items()},
         )
+        self._creators = None
 
     @staticmethod
     def _distutils_install():
@@ -159,7 +160,7 @@ class PythonInfo(object):
 
     def to_json(self):
         # don't save calculated paths, as these are non primitive types
-        data = {var: (getattr(self, var) if var not in ("_system_stdlib",) else None) for var in vars(self)}
+        data = {var: (getattr(self, var) if var not in ("_creators",) else None) for var in vars(self)}
         # noinspection PyProtectedMember
         data["version_info"] = data["version_info"]._asdict()  # namedtuple to dictionary
         return json.dumps(data, indent=2)
@@ -206,7 +207,9 @@ class PythonInfo(object):
                     if all(getattr(info, k) == getattr(self, k) for k in keys):
                         return candidate
         what = "|".join(possible_names)  # pragma: no cover
-        raise RuntimeError("failed to detect {} in {}".format(what, "|".join(possible_folders)))  # pragma: no cover
+        raise RuntimeError(
+            "failed to detect {} in {}".format(what, os.pathsep.join(possible_folders))
+        )  # pragma: no cover
 
     def _find_possible_folders(self, inside_folder):
         candidate_folder = OrderedDict()
@@ -352,6 +355,13 @@ class PythonInfo(object):
             base.update(config_var)
             config_var = base
         return pattern.format(**config_var).replace(u"/", sep)
+
+    def creators(self, refresh=False):
+        if self._creators is None or refresh is True:
+            from virtualenv.run.plugin.creators import CreatorSelector
+
+            self._creators = CreatorSelector.for_interpreter(self)
+        return self._creators
 
 
 class Cmd(object):

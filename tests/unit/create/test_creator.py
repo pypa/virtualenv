@@ -13,7 +13,7 @@ from virtualenv.__main__ import run
 from virtualenv.create.creator import DEBUG_SCRIPT, get_env_debug_info
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import CURRENT, PythonInfo
-from virtualenv.info import IS_PYPY, IS_WIN
+from virtualenv.info import IS_PYPY, fs_supports_symlink
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.run import run_via_cli, session_via_cli
 from virtualenv.util.path import Path
@@ -78,8 +78,8 @@ def system():
 
 
 @pytest.mark.parametrize("isolated", [True, False], ids=["isolated", "with_global_site"])
-@pytest.mark.parametrize("method", (["copies"] + ([] if IS_WIN else ["symlinks"])))
-@pytest.mark.parametrize("creator", (["builtin"] + (["venv"] if six.PY3 else [])))
+@pytest.mark.parametrize("method", (["copies"] + (["symlinks"] if fs_supports_symlink() else [])))
+@pytest.mark.parametrize("creator", list(CURRENT.creators().key_to_class.keys()))
 def test_create_no_seed(python, creator, isolated, system, coverage_env, special_name_dir, method):
     dest = special_name_dir
     cmd = [
@@ -184,13 +184,11 @@ def test_debug_bad_virtualenv(tmp_path):
     assert debug_info["exception"]
 
 
-@pytest.mark.parametrize(
-    "use_venv", [False, True] if six.PY3 else [False], ids=["no_venv", "venv"] if six.PY3 else ["no_venv"]
-)
+@pytest.mark.parametrize("creator", list(CURRENT.creators().key_to_class.keys()))
 @pytest.mark.parametrize("clear", [True, False], ids=["clear", "no_clear"])
-def test_create_clear_resets(tmp_path, use_venv, clear):
+def test_create_clear_resets(tmp_path, creator, clear):
     marker = tmp_path / "magic"
-    cmd = [str(tmp_path), "--seeder", "none", "--creator", "venv" if use_venv else "builtin"]
+    cmd = [str(tmp_path), "--seeder", "none", "--creator", creator]
     run_via_cli(cmd)
 
     marker.write_text("")  # if we a marker file this should be gone on a clear run, remain otherwise
@@ -200,12 +198,10 @@ def test_create_clear_resets(tmp_path, use_venv, clear):
     assert marker.exists() is not clear
 
 
-@pytest.mark.parametrize(
-    "use_venv", [False, True] if six.PY3 else [False], ids=["no_venv", "venv"] if six.PY3 else ["no_venv"]
-)
+@pytest.mark.parametrize("creator", list(CURRENT.creators().key_to_class.keys()))
 @pytest.mark.parametrize("prompt", [None, "magic"])
-def test_prompt_set(tmp_path, use_venv, prompt):
-    cmd = [str(tmp_path), "--seeder", "none", "--creator", "venv" if use_venv else "builtin"]
+def test_prompt_set(tmp_path, creator, prompt):
+    cmd = [str(tmp_path), "--seeder", "none", "--creator", creator]
     if prompt is not None:
         cmd.extend(["--prompt", "magic"])
 
@@ -215,7 +211,7 @@ def test_prompt_set(tmp_path, use_venv, prompt):
     if prompt is None:
         assert "prompt" not in cfg
     else:
-        if use_venv is False:
+        if creator != "venv":
             assert "prompt" in cfg, list(cfg.content.keys())
             assert cfg["prompt"] == actual_prompt
 
@@ -233,7 +229,7 @@ def cross_python(is_inside_ci):
 
 
 @pytest.mark.slow
-def test_cross_major(cross_python, coverage_env, tmp_path):
+def test_cross_major(cross_python, coverage_env, tmp_path, current_fastest):
     cmd = [
         "-v",
         "-v",
@@ -245,7 +241,7 @@ def test_cross_major(cross_python, coverage_env, tmp_path):
         "--activators",
         "",
         "--creator",
-        "builtin",
+        current_fastest,
     ]
     result = run_via_cli(cmd)
     coverage_env()

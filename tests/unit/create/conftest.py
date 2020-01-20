@@ -8,12 +8,14 @@ It's possible to use multiple types of host pythons to create virtual environmen
 """
 from __future__ import absolute_import, unicode_literals
 
+import subprocess
 import sys
 
 import pytest
 
 from virtualenv.discovery.py_info import CURRENT
-from virtualenv.info import IS_WIN
+from virtualenv.run import run_via_cli
+from virtualenv.util.path import Path
 from virtualenv.util.subprocess import Popen
 
 
@@ -35,36 +37,54 @@ def venv(tmp_path_factory):
         return CURRENT.find_exe_based_of(inside_folder=str(dest))
 
 
-def virtualenv(tmp_path_factory):
+def old_virtualenv(tmp_path_factory):
     if CURRENT.is_old_virtualenv:
         return CURRENT.executable
-    elif CURRENT.version_info.major == 3:
-        # noinspection PyCompatibility
-        from venv import EnvBuilder
+    else:
+        env_for_old_virtualenv = tmp_path_factory.mktemp("env-for-old-virtualenv")
+        result = run_via_cli(["--no-download", "--activators", "", str(env_for_old_virtualenv)])
+        # noinspection PyBroadException
+        try:
+            process = Popen(
+                [
+                    str(result.creator.exe.parent / "pip"),
+                    "install",
+                    "--no-index",
+                    "--disable-pip-version-check",
+                    str(Path(__file__).resolve().parent / "virtualenv-16.7.9-py2.py3-none-any.whl"),
+                    "-v",
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            _, __ = process.communicate()
+            assert not process.returncode
+        except Exception:
+            return RuntimeError("failed to install old virtualenv")
+        # noinspection PyBroadException
+        try:
+            old_virtualenv_at = tmp_path_factory.mktemp("old-virtualenv")
+            cmd = [
+                str(result.creator.exe.parent / "virtualenv"),
+                str(old_virtualenv_at),
+                "--no-pip",
+                "--no-setuptools",
+                "--no-wheel",
+            ]
+            process = Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            _, __ = process.communicate()
+            assert not process.returncode
+            return CURRENT.find_exe_based_of(inside_folder=str(old_virtualenv_at))
+        except Exception:
+            return RuntimeError("failed to create old virtualenv")
 
-        virtualenv_at = str(tmp_path_factory.mktemp("venv-for-virtualenv"))
-        builder = EnvBuilder(symlinks=not IS_WIN)
-        builder.create(virtualenv_at)
-        venv_for_virtualenv = CURRENT.find_exe_based_of(inside_folder=virtualenv_at)
-        cmd = venv_for_virtualenv, "-m", "pip", "install", "virtualenv==16.6.1"
-        process = Popen(cmd)
-        _, __ = process.communicate()
-        assert not process.returncode
 
-        virtualenv_python = tmp_path_factory.mktemp("virtualenv")
-        cmd = venv_for_virtualenv, "-m", "virtualenv", virtualenv_python
-        process = Popen(cmd)
-        _, __ = process.communicate()
-        assert not process.returncode
-        return CURRENT.find_exe_based_of(inside_folder=virtualenv_python)
-
-
-PYTHON = {"root": root, "venv": venv, "virtualenv": virtualenv}
+PYTHON = {"root": root, "venv": venv, "old_virtualenv": old_virtualenv}
 
 
 @pytest.fixture(params=list(PYTHON.values()), ids=list(PYTHON.keys()), scope="session")
 def python(request, tmp_path_factory):
     result = request.param(tmp_path_factory)
-    if result is None:
-        pytest.skip("could not resolve interpreter based on {}".format(request.param.__name__))
+    if isinstance(result, Exception):
+        pytest.skip("could not resolve interpreter based on {} because {}".format(request.param.__name__, result))
     return result

@@ -1,39 +1,41 @@
 from __future__ import absolute_import, unicode_literals
 
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 
 from virtualenv.create.describe import Describe
 from virtualenv.create.via_global_ref.builtin.builtin_way import VirtualenvBuiltin
 
 from .base import ComponentBuilder
 
+CreatorInfo = namedtuple("CreatorInfo", ["key_to_class", "key_to_meta", "describe", "builtin_key"])
+
 
 class CreatorSelector(ComponentBuilder):
     def __init__(self, interpreter, parser):
-        creators = OrderedDict()
-        self.describe = None
-        self.builtin_key = None
-        self.can_create_results = {}
-        for key, creator_class in self.options("virtualenv.create").items():
+        creators, self.key_to_meta, self.describe, self.builtin_key = self.for_interpreter(interpreter)
+        if not creators:
+            raise RuntimeError("No virtualenv implementation for {}".format(interpreter))
+        super(CreatorSelector, self).__init__(interpreter, parser, "creator", creators)
+
+    @classmethod
+    def for_interpreter(cls, interpreter):
+        key_to_class, key_to_meta, builtin_key, describe = OrderedDict(), {}, None, None
+        for key, creator_class in cls.options("virtualenv.create").items():
             if key == "builtin":
                 raise RuntimeError("builtin creator is a reserved name")
             meta = creator_class.can_create(interpreter)
             if meta:
-                if "builtin" not in creators and issubclass(creator_class, VirtualenvBuiltin):
-                    self.builtin_key = key
-                    creators["builtin"] = creator_class
-                    self.can_create_results["builtin"] = meta
-                creators[key] = creator_class
-                self.can_create_results[key] = meta
-            if (
-                self.describe is None
-                and issubclass(creator_class, Describe)
-                and creator_class.can_describe(interpreter)
-            ):
-                self.describe = creator_class
-        if not creators:
-            raise RuntimeError("No virtualenv implementation for {}".format(interpreter))
-        super(CreatorSelector, self).__init__(interpreter, parser, "creator", creators)
+                if "builtin" not in key_to_class and issubclass(creator_class, VirtualenvBuiltin):
+                    builtin_key = key
+                    key_to_class["builtin"] = creator_class
+                    key_to_meta["builtin"] = meta
+                key_to_class[key] = creator_class
+                key_to_meta[key] = meta
+            if describe is None and issubclass(creator_class, Describe) and creator_class.can_describe(interpreter):
+                describe = creator_class
+        return CreatorInfo(
+            key_to_class=key_to_class, key_to_meta=key_to_meta, describe=describe, builtin_key=builtin_key
+        )
 
     def add_selector_arg_parse(self, name, choices):
         # prefer the built-in venv if present, otherwise fallback to first defined type
@@ -49,10 +51,10 @@ class CreatorSelector(ComponentBuilder):
         )
 
     def populate_selected_argparse(self, selected):
-        self._impl_class.add_parser_arguments(self.parser, self.interpreter, self.can_create_results[selected])
+        self._impl_class.add_parser_arguments(self.parser, self.interpreter, self.key_to_meta[selected])
 
     def create(self, options):
-        options.meta = self.can_create_results[getattr(options, self.name)]
+        options.meta = self.key_to_meta[getattr(options, self.name)]
         if not issubclass(self._impl_class, Describe):
             options.describe = self.describe(options, self.interpreter)
         return super(CreatorSelector, self).create(options)

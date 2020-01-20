@@ -11,17 +11,16 @@ from ..creator import Creator
 class ViaGlobalRefApi(Creator):
     def __init__(self, options, interpreter):
         super(ViaGlobalRefApi, self).__init__(options, interpreter)
-        self.symlinks = options.symlinks
+        self.symlinks = getattr(options, "copies", False) is False
 
     @classmethod
     def add_parser_arguments(cls, parser, interpreter, meta):
         super(ViaGlobalRefApi, cls).add_parser_arguments(parser, interpreter, meta)
         group = parser.add_mutually_exclusive_group()
-        symlink = meta.can_symlink
         if meta.can_symlink:
             group.add_argument(
                 "--symlinks",
-                default=symlink,
+                default=True,
                 action="store_true",
                 dest="symlinks",
                 help="try to use symlinks rather than copies, when symlinks are not the default for the platform",
@@ -30,8 +29,8 @@ class ViaGlobalRefApi(Creator):
             group.add_argument(
                 "--copies",
                 "--always-copy",
-                default=not symlink,
-                action="store_false",
-                dest="symlinks",
+                default=not meta.can_symlink,
+                action="store_true",
+                dest="copies",
                 help="try to use copies rather than symlinks, even when symlinks are the default for the platform",
             )

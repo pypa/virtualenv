@@ -4,7 +4,6 @@ import logging
 import os
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
-from os import link
 from stat import S_IXGRP, S_IXOTH, S_IXUSR
 
 from six import add_metaclass, ensure_text
@@ -12,10 +11,12 @@ from six import add_metaclass, ensure_text
 from virtualenv.info import PY3, fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.util.path import copy, make_exe, symlink
 
+if PY3:
+    from os import link
+
 
 @add_metaclass(ABCMeta)
 class Ref(object):
-
     FS_SUPPORTS_SYMLINK = fs_supports_symlink()
     FS_CASE_SENSITIVE = fs_is_case_sensitive()
 
@@ -32,7 +33,14 @@ class Ref(object):
     @property
     def can_read(self):
         if self._can_read is None:
-            self._can_read = os.access(ensure_text(str(self.src)), os.R_OK)
+            if self.src.is_file():
+                try:
+                    with self.src.open("rb"):
+                        self._can_read = True
+                except OSError:
+                    self._can_read = False
+            else:
+                self._can_read = os.access(ensure_text(str(self.src)), os.R_OK)
         return self._can_read
 
     @property

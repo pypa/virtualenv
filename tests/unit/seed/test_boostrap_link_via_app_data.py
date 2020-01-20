@@ -15,7 +15,7 @@ from virtualenv.util.subprocess import Popen
 
 
 @pytest.mark.slow
-def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, mocker):
+def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, mocker, current_fastest):
     mocker.patch("virtualenv.seed.via_app_data.via_app_data.default_data_dir", return_value=Path(str(tmp_path)))
     bundle_ver = BUNDLE_SUPPORT[CURRENT.version_release_str]
     create_cmd = [
@@ -31,7 +31,7 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, mocker):
         bundle_ver["setuptools"].split("-")[1],
         "--clear-app-data",
         "--creator",
-        "builtin",
+        current_fastest,
     ]
     result = run_via_cli(create_cmd)
     coverage_env()

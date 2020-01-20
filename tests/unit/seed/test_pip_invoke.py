@@ -8,7 +8,7 @@ from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
 
 
 @pytest.mark.slow
-def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env):
+def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, current_fastest):
     bundle_ver = BUNDLE_SUPPORT[CURRENT.version_release_str]
     create_cmd = [
         "--seeder",
@@ -20,7 +20,7 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env):
         "--setuptools",
         bundle_ver["setuptools"].split("-")[1],
         "--creator",
-        "builtin",
+        current_fastest,
     ]
     result = run_via_cli(create_cmd)
     coverage_env()

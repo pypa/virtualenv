@@ -45,9 +45,7 @@ def fs_is_case_sensitive():
     if _FS_CASE_SENSITIVE is None:
         with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:
             _FS_CASE_SENSITIVE = not os.path.exists(tmp_file.name.lower())
-            logging.debug(
-                "filesystem under %r is %scase-sensitive", tmp_file.name, "" if _FS_CASE_SENSITIVE else "not "
-            )
+            logging.debug("filesystem is %scase-sensitive", "" if _FS_CASE_SENSITIVE else "not ")
     return _FS_CASE_SENSITIVE
 
 
@@ -59,13 +57,14 @@ def fs_supports_symlink():
         if hasattr(os, "symlink"):
             if IS_WIN:
                 with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:
-                    temp_dir = os.path.dirname(tmp_file)
+                    temp_dir = os.path.dirname(tmp_file.name)
                     dest = os.path.join(temp_dir, "{}-{}".format(tmp_file.name, "b"))
                     try:
-                        os.symlink(tmp_file, dest)
+                        os.symlink(tmp_file.name, dest)
                         can = True
                     except OSError:
                         pass
+                logging.debug("symlink on filesystem does%s work", "" if can else " not")
             else:
                 can = True
         _CAN_SYMLINK = can

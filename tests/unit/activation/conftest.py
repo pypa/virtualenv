@@ -203,9 +203,9 @@ def raise_on_non_source_class():
 
 
 @pytest.fixture(scope="session")
-def activation_python(tmp_path_factory, special_char_name):
+def activation_python(tmp_path_factory, special_char_name, current_fastest):
     dest = os.path.join(six.ensure_text(str(tmp_path_factory.mktemp("activation-tester-env"))), special_char_name)
-    session = run_via_cli(["--seed", "none", dest, "--prompt", special_char_name, "--creator", "builtin"])
+    session = run_via_cli(["--seed", "none", dest, "--prompt", special_char_name, "--creator", current_fastest])
     pydoc_test = session.creator.purelib / "pydoc_test.py"
     with open(six.ensure_text(str(pydoc_test)), "wb") as file_handler:
         file_handler.write(b'"""This is pydoc_test.py"""')

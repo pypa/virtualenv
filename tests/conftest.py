@@ -10,7 +10,7 @@ import coverage
 import pytest
 import six
 
-from virtualenv.discovery.py_info import PythonInfo
+from virtualenv.discovery.py_info import CURRENT, PythonInfo
 from virtualenv.info import IS_PYPY
 from virtualenv.util.path import Path
 
@@ -269,3 +269,13 @@ def special_name_dir(tmp_path, special_char_name):
     yield dest
     if six.PY2 and sys.platform == "win32":  # pytest python2 windows does not support unicode delete
         shutil.rmtree(six.ensure_text(str(dest)))
+
+
+@pytest.fixture(scope="session")
+def current_creators():
+    return CURRENT.creators()
+
+
+@pytest.fixture(scope="session")
+def current_fastest(current_creators):
+    return "builtin" if "builtin" in current_creators.key_to_class else next(iter(current_creators.key_to_class))
