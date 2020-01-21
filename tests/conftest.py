@@ -10,8 +10,8 @@ import coverage
 import pytest
 import six
 
-from virtualenv.info import IS_PYPY
-from virtualenv.interpreters.discovery.py_info import PythonInfo
+from virtualenv.discovery.py_info import CURRENT, PythonInfo
+from virtualenv.info import IS_PYPY, fs_supports_symlink
 from virtualenv.util.path import Path
 
 
@@ -34,19 +34,7 @@ def pytest_collection_modifyitems(config, items):
 
 @pytest.fixture(scope="session")
 def has_symlink_support(tmp_path_factory):
-    platform_supports = hasattr(os, "symlink")
-    if platform_supports and sys.platform == "win32":
-        # on Windows correct functioning of this is tied to SeCreateSymbolicLinkPrivilege, try if it works
-        test_folder = tmp_path_factory.mktemp("symlink-tests")
-        src = test_folder / "src"
-        try:
-            src.symlink_to(test_folder / "dest")
-        except (OSError, NotImplementedError):
-            return False
-        finally:
-            shutil.rmtree(str(test_folder))
-
-    return platform_supports
+    return fs_supports_symlink()
 
 
 @pytest.fixture(scope="session")
@@ -269,3 +257,13 @@ def special_name_dir(tmp_path, special_char_name):
     yield dest
     if six.PY2 and sys.platform == "win32":  # pytest python2 windows does not support unicode delete
         shutil.rmtree(six.ensure_text(str(dest)))
+
+
+@pytest.fixture(scope="session")
+def current_creators():
+    return CURRENT.creators()
+
+
+@pytest.fixture(scope="session")
+def current_fastest(current_creators):
+    return "builtin" if "builtin" in current_creators.key_to_class else next(iter(current_creators.key_to_class))

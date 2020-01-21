@@ -12,7 +12,7 @@ from virtualenv.activation import (
     PowerShellActivator,
     PythonActivator,
 )
-from virtualenv.interpreters.discovery.py_info import PythonInfo
+from virtualenv.discovery.py_info import PythonInfo
 
 
 @pytest.mark.parametrize("activator_class", [BatchActivator, PowerShellActivator, PythonActivator])

@@ -5,7 +5,8 @@ from .base import ComponentBuilder
 
 class SeederSelector(ComponentBuilder):
     def __init__(self, interpreter, parser):
-        super(SeederSelector, self).__init__(interpreter, parser, "virtualenv.seed", "seeder", False)
+        possible = self.options("virtualenv.seed")
+        super(SeederSelector, self).__init__(interpreter, parser, "seeder", possible)
 
     def add_selector_arg_parse(self, name, choices):
         self.parser.add_argument(

@@ -76,7 +76,7 @@ def test_python(raise_on_non_source_class, activation_tester):
             prev_sys_path = out[2].split(os.path.pathsep)
 
             assert out[3] == six.ensure_text(
-                str(self._creator.dest_dir)
+                str(self._creator.dest)
             )  # VIRTUAL_ENV now points to the virtual env folder
 
             new_path = out[4].split(os.pathsep)  # PATH now starts with bin path of current

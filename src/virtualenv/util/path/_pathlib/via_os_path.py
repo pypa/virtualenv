@@ -114,5 +114,11 @@ class Path(object):
             raise ValueError("{} does not start with {}".format(self._path, other._path))
         return Path(os.sep.join(self.parts[len(other.parts) :]))
 
+    def stat(self):
+        return os.stat(self._path)
+
+    def chmod(self, mode):
+        os.chmod(self._path, mode)
+
 
 __all__ = ("Path",)

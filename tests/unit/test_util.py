@@ -1,15 +1,15 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
-import os
 
 import pytest
 
+from virtualenv.info import fs_supports_symlink
 from virtualenv.util.path import symlink_or_copy
 from virtualenv.util.subprocess import run_cmd
 
 
-@pytest.mark.skipif(not hasattr(os, "symlink"), reason="requires symlink support")
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
 def test_fallback_to_copy_if_symlink_fails(caplog, capsys, tmp_path, mocker):
     caplog.set_level(logging.DEBUG)
     mocker.patch("os.symlink", side_effect=OSError())
@@ -35,7 +35,7 @@ def _try_symlink(caplog, tmp_path, level):
     return dst, src
 
 
-@pytest.mark.skipif(hasattr(os, "symlink"), reason="requires lack of symlink")
+@pytest.mark.skipif(fs_supports_symlink(), reason="symlink is supported")
 def test_os_no_symlink_use_copy(caplog, tmp_path):
     dst, src = _try_symlink(caplog, tmp_path, level=logging.DEBUG)
     assert caplog.messages == ["copy {} to {}".format(src, dst)]

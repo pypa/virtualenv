@@ -8,14 +8,14 @@ from functools import partial
 
 import six
 
-from virtualenv.info import IS_PYPY
+from virtualenv.info import IS_PYPY, fs_supports_symlink
 
-HAS_SYMLINK = hasattr(os, "symlink")
+HAS_SYMLINK = fs_supports_symlink()
 
 
 def ensure_dir(path):
     if not path.exists():
-        logging.debug("created %s", six.ensure_text(str(path)))
+        logging.debug("create folder %s", six.ensure_text(str(path)))
         os.makedirs(six.ensure_text(str(path)))
 
 

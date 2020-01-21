@@ -7,7 +7,7 @@ import sys
 import pytest
 import six
 
-from virtualenv.interpreters.discovery.py_info import CURRENT
+from virtualenv.discovery.py_info import CURRENT
 from virtualenv.run import run_via_cli
 from virtualenv.util.path import Path
 

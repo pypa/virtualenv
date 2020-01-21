@@ -6,7 +6,7 @@ import zipfile
 
 import six
 
-from virtualenv.info import IS_WIN, ROOT, get_default_data_dir
+from virtualenv.info import IS_WIN, ROOT, default_data_dir
 from virtualenv.version import __version__
 
 
@@ -35,7 +35,7 @@ def _get_path_within_zip(full_path):
 
 
 def extract_to_app_data(full_path):
-    base = get_default_data_dir() / "zipapp" / "extract" / __version__
+    base = default_data_dir() / "zipapp" / "extract" / __version__
     base.mkdir(parents=True, exist_ok=True)
     dest = base / full_path.name
     if not dest.exists():

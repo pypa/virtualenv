@@ -25,14 +25,11 @@ class PluginLoader(object):
 
 
 class ComponentBuilder(PluginLoader):
-    def __init__(self, interpreter, parser, key, name, needs_support):
+    def __init__(self, interpreter, parser, name, possible):
         self.interpreter = interpreter
         self.name = name
         self._impl_class = None
-        opts = self.options(key)
-        self.possible = self._build_options(
-            OrderedDict((k, v) for k, v in opts.items() if v.supports(interpreter)) if needs_support else opts
-        )
+        self.possible = possible
         self.parser = parser.add_argument_group("{} options".format(name))
         self.add_selector_arg_parse(name, list(self.possible))
 
@@ -45,16 +42,16 @@ class ComponentBuilder(PluginLoader):
     def add_selector_arg_parse(self, name, choices):
         raise NotImplementedError
 
-    def _build_options(self, options):
-        return options
-
     def handle_selected_arg_parse(self, options):
         selected = getattr(options, self.name)
         if selected not in self.possible:
             raise RuntimeError("No implementation for {}".format(self.interpreter))
         self._impl_class = self.possible[selected]
-        self._impl_class.add_parser_arguments(self.parser, self.interpreter)
+        self.populate_selected_argparse(selected)
         return selected
+
+    def populate_selected_argparse(self, selected):
+        self._impl_class.add_parser_arguments(self.parser, self.interpreter)
 
     def create(self, options):
         return self._impl_class(options, self.interpreter)

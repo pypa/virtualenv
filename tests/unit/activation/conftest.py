@@ -127,7 +127,7 @@ class ActivationTester(object):
         # post-activation
         expected = self._creator.exe.parent / os.path.basename(sys.executable)
         assert self.norm_path(out[2]) == self.norm_path(expected), raw
-        assert self.norm_path(out[3]) == self.norm_path(self._creator.dest_dir).replace("\\\\", "\\"), raw
+        assert self.norm_path(out[3]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
         assert out[4] == "wrote pydoc_test.html", raw
         content = tmp_path / "pydoc_test.html"
         assert content.exists(), raw
@@ -203,9 +203,9 @@ def raise_on_non_source_class():
 
 
 @pytest.fixture(scope="session")
-def activation_python(tmp_path_factory, special_char_name):
+def activation_python(tmp_path_factory, special_char_name, current_fastest):
     dest = os.path.join(six.ensure_text(str(tmp_path_factory.mktemp("activation-tester-env"))), special_char_name)
-    session = run_via_cli(["--seed", "none", dest, "--prompt", special_char_name, "--creator", "builtin"])
+    session = run_via_cli(["--seed", "none", dest, "--prompt", special_char_name, "--creator", current_fastest])
     pydoc_test = session.creator.purelib / "pydoc_test.py"
     with open(six.ensure_text(str(pydoc_test)), "wb") as file_handler:
         file_handler.write(b'"""This is pydoc_test.py"""')
