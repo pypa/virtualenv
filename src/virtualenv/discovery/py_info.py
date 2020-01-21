@@ -268,12 +268,14 @@ class PythonInfo(object):
     @classmethod
     def from_exe(cls, exe, raise_on_error=True):
         # this method is not used by itself, so here and called functions can import stuff locally
-        key = os.path.realpath(exe)
-        if key in cls._cache_from_exe:
-            result, failure = cls._cache_from_exe[key]
+        from virtualenv.util.path import Path
+
+        path = Path(exe).resolve()
+        if path in cls._cache_from_exe:
+            result, failure = cls._cache_from_exe[path]
         else:
             failure, result = cls._load_for_exe(exe)
-            cls._cache_from_exe[key] = result, failure
+            cls._cache_from_exe[path] = result, failure
         if failure is not None:
             if raise_on_error:
                 raise failure
