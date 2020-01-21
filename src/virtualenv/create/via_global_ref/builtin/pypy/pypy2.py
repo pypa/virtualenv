@@ -1,10 +1,13 @@
 from __future__ import absolute_import, unicode_literals
 
 import abc
+import logging
 
 import six
 
 from virtualenv.create.describe import PosixSupports, WindowsSupports
+from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
+from virtualenv.util.path import Path
 
 from ..python2.python2 import Python2
 from .common import PyPy
@@ -18,25 +21,49 @@ class PyPy2(PyPy, Python2):
     def exe_stem(cls):
         return "pypy"
 
-    @property
-    def lib_pypy(self):
-        return self.dest / "lib_pypy"
+    @classmethod
+    def sources(cls, interpreter):
+        for src in super(PyPy2, cls).sources(interpreter):
+            yield src
+        # include folder needed on Python 2 as we don't have pyenv.cfg
+        host_include_marker = cls.host_include_marker(interpreter)
+        if host_include_marker.exists():
+            yield PathRefToDest(host_include_marker.parent, dest=lambda self, _: self.include)
 
-    def ensure_directories(self):
-        return super(PyPy, self).ensure_directories() | {self.lib_pypy}
+    @classmethod
+    def host_include_marker(cls, interpreter):
+        return Path(interpreter.system_include) / "PyPy.h"
+
+    @property
+    def include(self):
+        return self.dest / self.interpreter.distutils_install["headers"]
 
     @classmethod
     def modules(cls):
         # pypy2 uses some modules before the site.py loads, so we need to include these too
         return super(PyPy2, cls).modules() + [
+            "os",
             "copy_reg",
             "genericpath",
             "linecache",
-            "os",
             "stat",
             "UserDict",
             "warnings",
         ]
+
+    @property
+    def lib_pypy(self):
+        return self.dest / "lib_pypy"
+
+    def ensure_directories(self):
+        dirs = super(PyPy2, self).ensure_directories()
+        dirs.add(self.lib_pypy)
+        host_include_marker = self.host_include_marker(self.interpreter)
+        if host_include_marker.exists():
+            dirs.add(self.include.parent)
+        else:
+            logging.debug("no include folders as can't find include marker %s", host_include_marker)
+        return dirs
 
 
 class PyPy2Posix(PyPy2, PosixSupports):

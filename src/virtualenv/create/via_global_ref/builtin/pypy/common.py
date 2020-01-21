@@ -4,7 +4,7 @@ import abc
 
 import six
 
-from virtualenv.create.via_global_ref.builtin.ref import RefToDest
+from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
 from virtualenv.util.path import Path
 
 from ..via_global_self_do import ViaGlobalRefVirtualenvBuiltin
@@ -35,7 +35,7 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin):
         for src in super(PyPy, cls).sources(interpreter):
             yield src
         for host in cls._add_shared_libs(interpreter):
-            yield RefToDest(host, dest=cls.to_shared_lib)
+            yield PathRefToDest(host, dest=cls.to_shared_lib)
 
     @classmethod
     def _add_shared_libs(cls, interpreter):
@@ -47,7 +47,7 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin):
                 yield src
 
     def to_shared_lib(self, src):
-        return [self.bin_dir]
+        return [self.bin_dir / src.name]
 
     @classmethod
     def _shared_libs(cls):

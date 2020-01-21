@@ -1,6 +1,5 @@
 from __future__ import absolute_import, unicode_literals
 
-import logging
 import os
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
@@ -9,14 +8,11 @@ from stat import S_IXGRP, S_IXOTH, S_IXUSR
 from six import add_metaclass, ensure_text
 
 from virtualenv.info import PY3, fs_is_case_sensitive, fs_supports_symlink
-from virtualenv.util.path import copy, make_exe, symlink
-
-if PY3:
-    from os import link
+from virtualenv.util.path import copy, link, make_exe, symlink
 
 
 @add_metaclass(ABCMeta)
-class Ref(object):
+class PathRef(object):
     FS_SUPPORTS_SYMLINK = fs_supports_symlink()
     FS_CASE_SENSITIVE = fs_is_case_sensitive()
 
@@ -59,14 +55,11 @@ class Ref(object):
     def run(self, creator, symlinks):
         raise NotImplementedError
 
-    def method(self, via_symlink):
-        pass
-
 
 @add_metaclass(ABCMeta)
-class ExeRef(Ref):
+class ExePathRef(PathRef):
     def __init__(self, src):
-        super(ExeRef, self).__init__(src)
+        super(ExePathRef, self).__init__(src)
         self._can_run = None
 
     @property
@@ -88,22 +81,26 @@ class ExeRef(Ref):
         return self._can_run
 
 
-class RefToDest(Ref):
+class PathRefToDest(PathRef):
     def __init__(self, src, dest):
-        super(RefToDest, self).__init__(src)
+        super(PathRefToDest, self).__init__(src)
         self.dest = dest
 
-    def run(self, creator, method):
+    def run(self, creator, symlinks):
         dest = self.dest(creator, self.src)
-        if not isinstance(dest, list):
-            dest = [dest]
-        for dst in dest:
+        method = symlink if symlinks else copy
+        dest_iterable = dest if isinstance(dest, list) else (dest,)
+        for dst in dest_iterable:
             method(self.src, dst)
 
 
-class ExeRefToDest(ExeRef):
+alias_via = link if PY3 else (symlink if PathRef.FS_SUPPORTS_SYMLINK else copy)
+
+
+class ExePathRefToDest(PathRefToDest, ExePathRef):
     def __init__(self, src, targets, dest, must_copy=False):
-        super(ExeRefToDest, self).__init__(src)
+        ExePathRef.__init__(self, src)
+        PathRefToDest.__init__(self, src, dest)
         if not self.FS_CASE_SENSITIVE:
             targets = list(OrderedDict((i.lower(), None) for i in targets).keys())
         self.base = targets[0]
@@ -111,24 +108,15 @@ class ExeRefToDest(ExeRef):
         self.dest = dest
         self.must_copy = must_copy
 
-    def run(self, creator, method):
-        to = self.dest(creator, self.src).parent
-        dest = to / self.base
-        if self.must_copy:
-            method = copy
+    def run(self, creator, symlinks):
+        bin_dir = self.dest(creator, self.src).parent
+        method = symlink if self.must_copy is False and symlinks else copy
+        dest = bin_dir / self.base
         method(self.src, dest)
         make_exe(dest)
-
         for extra in self.aliases:
-            link_file = to / extra
+            link_file = bin_dir / extra
             if link_file.exists():
                 link_file.unlink()
-            self.alias_via(dest, link_file)
+            alias_via(dest, link_file)
             make_exe(link_file)
-
-    @staticmethod
-    def do_link(src, dst):
-        logging.debug("hard link %s as %s", dst.name, src)
-        link(ensure_text(str(src)), ensure_text(str(dst)))
-
-    alias_via = do_link if PY3 else (symlink if Ref.FS_SUPPORTS_SYMLINK else copy)

@@ -3,61 +3,68 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import os
 import shutil
-import sys
-from functools import partial
 
-import six
+from six import PY2, PY3, ensure_text
 
-from virtualenv.info import IS_PYPY, fs_supports_symlink
+from virtualenv.info import IS_CPYTHON, IS_WIN
 
-HAS_SYMLINK = fs_supports_symlink()
+if PY3:
+    from os import link as os_link
+
+if PY2 and IS_CPYTHON and IS_WIN:  # CPython2 on Windows supports unicode paths if passed as unicode
+    norm = lambda src: ensure_text(str(src))  # noqa
+else:
+    norm = str
 
 
 def ensure_dir(path):
     if not path.exists():
-        logging.debug("create folder %s", six.ensure_text(str(path)))
-        os.makedirs(six.ensure_text(str(path)))
+        logging.debug("create folder %s", ensure_text(str(path)))
+        os.makedirs(norm(path))
 
 
-def symlink_or_copy(do_copy, src, dst, relative_symlinks_ok=False):
-    """
-    Try symlinking a target, and if that fails, fall back to copying.
-    """
-    if not src.exists():
-        raise RuntimeError("source {} does not exists".format(src))
-    if src == dst:
-        raise RuntimeError("source {} is same as destination ".format(src))
-
-    def norm(val):
-        if IS_PYPY and six.PY3:
-            return str(val).encode(sys.getfilesystemencoding())
-        return six.ensure_text(str(val))
-
-    if do_copy is False and HAS_SYMLINK is False:  # if no symlink, always use copy
-        do_copy = True
-    if not do_copy:
-        try:
-            if not dst.is_symlink():  # can't link to itself!
-                if relative_symlinks_ok:
-                    assert src.parent == dst.parent
-                    os.symlink(norm(src.name), norm(dst))
-                else:
-                    os.symlink(norm(str(src)), norm(dst))
-        except OSError as exception:
-            logging.warning(
-                "symlink failed %r, for %s to %s, will try copy",
-                exception,
-                six.ensure_text(str(src)),
-                six.ensure_text(str(dst)),
-            )
-            do_copy = True
-    if do_copy:
-        copier = shutil.copy2 if src.is_file() else shutil.copytree
-        copier(norm(src), norm(dst))
-    logging.debug("%s %s to %s", "copy" if do_copy else "symlink", six.ensure_text(str(src)), six.ensure_text(str(dst)))
+def ensure_safe_to_do(src, dest):
+    if src == dest:
+        raise ValueError("source and destination is the same {}".format(src))
+    if not dest.exists():
+        return
+    if dest.is_dir() and not dest.is_symlink():
+        shutil.rmtree(norm(dest))
+        logging.debug("remove directory %s", dest)
+    else:
+        logging.debug("remove file %s", dest)
+        dest.unlink()
 
 
-symlink = partial(symlink_or_copy, False)
-copy = partial(symlink_or_copy, True)
+def symlink(src, dest):
+    ensure_safe_to_do(src, dest)
+    logging.debug("symlink %s", _Debug(src, dest))
+    dest.symlink_to(src, target_is_directory=src.is_dir())
 
-__all__ = ("ensure_dir", "symlink", "copy", "symlink_or_copy")
+
+def copy(src, dest):
+    ensure_safe_to_do(src, dest)
+    is_dir = src.is_dir()
+    method = shutil.copytree if is_dir else shutil.copy2
+    logging.debug("copy %s", _Debug(src, dest))
+    method(norm(src), norm(dest))
+
+
+def link(src, dest):
+    ensure_safe_to_do(src, dest)
+    logging.debug("hard link %s", _Debug(src, dest.name))
+    os_link(norm(src), norm(dest))
+
+
+class _Debug(object):
+    def __init__(self, src, dest):
+        self.src = src
+        self.dest = dest
+
+    def __str__(self):
+        return "{}{} to {}".format(
+            "directory " if self.src.is_dir() else "", ensure_text(str(self.src)), ensure_text(str(self.dest))
+        )
+
+
+__all__ = ("ensure_dir", "symlink", "copy", "link", "symlink", "link")

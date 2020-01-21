@@ -36,7 +36,7 @@ class PyPy3Posix(PyPy3, PosixSupports):
         return ["libpypy3-c.so", "libpypy3-c.dylib"]
 
     def to_shared_lib(self, src):
-        return super(PyPy3, self).to_shared_lib(src) + [self.stdlib.parent.parent]
+        return super(PyPy3, self).to_shared_lib(src) + [self.stdlib.parent.parent / src.name]
 
 
 class Pypy3Windows(PyPy3, WindowsSupports):

@@ -6,7 +6,7 @@ import re
 import shutil
 import subprocess
 import sys
-from os.path import dirname, normcase, realpath
+from os.path import dirname, normcase
 
 import pytest
 import six
@@ -164,7 +164,9 @@ class ActivationTester(object):
     @staticmethod
     def norm_path(path):
         # python may return Windows short paths, normalize
-        path = realpath(six.ensure_text(str(path)) if isinstance(path, Path) else path)
+        if not isinstance(path, Path):
+            path = Path(path)
+        path = six.ensure_text(str(path.resolve()))
         if sys.platform != "win32":
             result = path
         else:

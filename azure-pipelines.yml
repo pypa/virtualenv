@@ -37,13 +37,13 @@ jobs:
   parameters:
     jobs:
       py38:
-        image: [linux, windows, macOs]
+        image: [linux, vs2017-win2016, macOs]
       py37:
-        image: [linux, windows, macOs]
+        image: [linux, vs2017-win2016, macOs]
       py36:
-        image: [linux, windows, macOs]
+        image: [linux, vs2017-win2016, macOs]
       py35:
-        image: [linux, windows, macOs]
+        image: [linux, vs2017-win2016, macOs]
       py27:
         image: [linux, windows, macOs]
       pypy:
@@ -88,6 +88,9 @@ jobs:
         displayName: provision pypy 2
         inputs:
           versionSpec: 'pypy2'
+      - script: choco install vcpython27 --yes -f
+        condition: and(succeeded(), eq(variables['image_name'], 'windows'), in(variables['TOXENV'], 'py27', 'pypy'))
+        displayName: Install Visual C++ for Python 2.7
     coverage:
       with_toxenv: 'coverage' # generate .tox/.coverage, .tox/coverage.xml after test run
       for_envs: [py38, py37, py36, py35, py27, pypy, pypy3]

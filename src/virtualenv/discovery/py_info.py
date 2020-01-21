@@ -16,6 +16,7 @@ import sysconfig
 from collections import OrderedDict, namedtuple
 from distutils.command.install import SCHEME_KEYS
 from distutils.dist import Distribution
+from string import digits
 
 VersionInfo = namedtuple("VersionInfo", ["major", "minor", "micro", "releaselevel", "serial"])
 
@@ -127,7 +128,9 @@ class PythonInfo(object):
         return content
 
     def __repr__(self):
-        return "{}({!r})".format(self.__class__.__name__, self.__dict__)
+        return "{}({!r})".format(
+            self.__class__.__name__, {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
+        )
 
     def __str__(self):
         content = "{}({})".format(
@@ -214,7 +217,9 @@ class PythonInfo(object):
     def _find_possible_folders(self, inside_folder):
         candidate_folder = OrderedDict()
         executables = OrderedDict()
+        executables[os.path.realpath(self.executable)] = None
         executables[self.executable] = None
+        executables[os.path.realpath(self.original_executable)] = None
         executables[self.original_executable] = None
         for exe in executables.keys():
             base = os.path.dirname(exe)
@@ -241,7 +246,8 @@ class PythonInfo(object):
 
     def _possible_base(self):
         possible_base = OrderedDict()
-        possible_base[os.path.splitext(os.path.basename(self.executable))[0]] = None
+        basename = os.path.splitext(os.path.basename(self.executable))[0].rstrip(digits)
+        possible_base[basename] = None
         possible_base[self.implementation] = None
         # python is always the final option as in practice is used by multiple implementation as exe name
         if "python" in possible_base:
@@ -364,6 +370,13 @@ class PythonInfo(object):
 
             self._creators = CreatorSelector.for_interpreter(self)
         return self._creators
+
+    @property
+    def system_include(self):
+        return self.sysconfig_path(
+            "include",
+            {k: (self.system_prefix if v.startswith(self.prefix) else v) for k, v in self.sysconfig_vars.items()},
+        )
 
 
 class Cmd(object):

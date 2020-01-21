@@ -47,7 +47,7 @@ def old_virtualenv(tmp_path_factory):
         try:
             process = Popen(
                 [
-                    str(result.creator.exe.parent / "pip"),
+                    str(result.creator.script("pip")),
                     "install",
                     "--no-index",
                     "--disable-pip-version-check",
@@ -65,7 +65,7 @@ def old_virtualenv(tmp_path_factory):
         try:
             old_virtualenv_at = tmp_path_factory.mktemp("old-virtualenv")
             cmd = [
-                str(result.creator.exe.parent / "virtualenv"),
+                str(result.creator.script("virtualenv")),
                 str(old_virtualenv_at),
                 "--no-pip",
                 "--no-setuptools",

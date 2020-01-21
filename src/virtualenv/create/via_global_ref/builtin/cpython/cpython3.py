@@ -5,7 +5,7 @@ import abc
 import six
 
 from virtualenv.create.describe import Python3Supports
-from virtualenv.create.via_global_ref.builtin.ref import RefToDest
+from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
 from virtualenv.util.path import Path
 
 from .common import CPython, CPythonPosix, CPythonWindows
@@ -37,7 +37,7 @@ class CPython3Windows(CPythonWindows, CPython3):
         for folder in [host_exe_folder, dll_folder]:
             for file in folder.iterdir():
                 if file.suffix in (".pyd", ".dll"):
-                    yield RefToDest(file, dest=cls.to_dll_and_pyd)
+                    yield PathRefToDest(file, dest=cls.to_dll_and_pyd)
 
     def to_dll_and_pyd(self, src):
         return self.bin_dir / src.name

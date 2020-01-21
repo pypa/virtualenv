@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import difflib
 import gc
+import logging
 import os
 import stat
 import sys
@@ -189,11 +190,12 @@ def test_debug_bad_virtualenv(tmp_path):
 
 @pytest.mark.parametrize("creator", CURRENT_CREATORS)
 @pytest.mark.parametrize("clear", [True, False], ids=["clear", "no_clear"])
-def test_create_clear_resets(tmp_path, creator, clear):
+def test_create_clear_resets(tmp_path, creator, clear, caplog):
+    caplog.set_level(logging.DEBUG)
     if creator == "venv" and clear is False:
         pytest.skip("venv without clear might fail")
     marker = tmp_path / "magic"
-    cmd = [str(tmp_path), "--seeder", "none", "--creator", creator]
+    cmd = [str(tmp_path), "--seeder", "none", "--creator", creator, "-vvv"]
     run_via_cli(cmd)
 
     marker.write_text("")  # if we a marker file this should be gone on a clear run, remain otherwise
