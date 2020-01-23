@@ -14,8 +14,8 @@ from stat import S_IWUSR
 import six
 from six import add_metaclass
 
-from virtualenv.discovery.py_info import Cmd
-from virtualenv.info import IS_PYPY, IS_ZIPAPP
+from virtualenv.discovery.cached_py_info import LogCmd
+from virtualenv.info import IS_ZIPAPP, WIN_CPYTHON_2
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.util.path import Path
 from virtualenv.util.subprocess import run_cmd
@@ -174,9 +174,9 @@ def get_env_debug_info(env_exe, debug_script):
     if IS_ZIPAPP:
         debug_script = extract_to_app_data(debug_script)
     cmd = [str(env_exe), str(debug_script)]
-    if not IS_PYPY and six.PY2:
+    if WIN_CPYTHON_2:
         cmd = [six.ensure_text(i) for i in cmd]
-    logging.debug(str("debug via %r"), Cmd(cmd))
+    logging.debug(str("debug via %r"), LogCmd(cmd))
     env = os.environ.copy()
     env.pop(str("PYTHONPATH"), None)
     code, out, err = run_cmd(cmd)

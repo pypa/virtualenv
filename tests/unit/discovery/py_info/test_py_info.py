@@ -7,6 +7,7 @@ import sys
 
 import pytest
 
+from virtualenv.discovery import cached_py_info
 from virtualenv.discovery.py_info import CURRENT, PythonInfo
 from virtualenv.discovery.py_spec import PythonSpec
 from virtualenv.info import IS_PYPY, fs_supports_symlink
@@ -35,10 +36,11 @@ def test_bad_exe_py_info_no_raise(tmp_path, caplog, capsys):
     assert result is None
     out, _ = capsys.readouterr()
     assert not out
-    assert len(caplog.messages) == 2
-    msg = caplog.messages[0]
+    messages = [r.message for r in caplog.records if r.filename != "filelock.py"]
+    assert len(messages) == 2
+    msg = messages[0]
     assert "get interpreter info via cmd: " in msg
-    msg = caplog.messages[1]
+    msg = messages[1]
     assert str(exe) in msg
     assert "code" in msg
 
@@ -95,22 +97,32 @@ def test_satisfy_not_version(spec):
 
 @pytest.mark.skipif(IS_PYPY, reason="mocker in pypy does not allow to spy on class methods")
 def test_py_info_cached(mocker, tmp_path):
-    mocker.spy(PythonInfo, "_load_for_exe")
+    spy = mocker.spy(cached_py_info, "_run_subprocess")
     with pytest.raises(RuntimeError):
         PythonInfo.from_exe(str(tmp_path))
     with pytest.raises(RuntimeError):
         PythonInfo.from_exe(str(tmp_path))
-    assert PythonInfo._load_for_exe.call_count == 1
+    assert spy.call_count == 1
+
+
+@pytest.mark.skipif(IS_PYPY, reason="mocker in pypy does not allow to spy on class methods")
+def test_py_info_cache_clear(mocker, tmp_path):
+    spy = mocker.spy(cached_py_info, "_run_subprocess")
+    assert PythonInfo.from_exe(sys.executable) is not None
+    assert spy.call_count == 1
+    PythonInfo.clear_cache()
+    assert PythonInfo.from_exe(sys.executable) is not None
+    assert spy.call_count == 2
 
 
 @pytest.mark.skipif(IS_PYPY, reason="mocker in pypy does not allow to spy on class methods")
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
 def test_py_info_cached_symlink(mocker, tmp_path):
-    mocker.spy(PythonInfo, "_load_for_exe")
+    spy = mocker.spy(cached_py_info, "_run_subprocess")
     with pytest.raises(RuntimeError):
         PythonInfo.from_exe(str(tmp_path))
     symlinked = tmp_path / "a"
     symlinked.symlink_to(tmp_path)
     with pytest.raises(RuntimeError):
         PythonInfo.from_exe(str(symlinked))
-    assert PythonInfo._load_for_exe.call_count == 1
+    assert spy.call_count == 1

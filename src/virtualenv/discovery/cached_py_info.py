@@ -1,0 +1,156 @@
+"""
+
+We acquire the python information by running an interrogation script via subprocess trigger. This operation is not
+cheap, especially not on Windows. To not have to pay this hefty cost every time we apply multiple levels of
+caching.
+"""
+from __future__ import absolute_import, unicode_literals
+
+import json
+import logging
+import pipes
+from collections import OrderedDict
+from hashlib import sha256
+
+from filelock import FileLock
+from six import ensure_text
+
+from virtualenv.info import IS_ZIPAPP, PY2, PY3, default_data_dir
+from virtualenv.util.path import Path
+from virtualenv.util.subprocess import Popen, subprocess
+from virtualenv.util.zipapp import extract_to_app_data
+from virtualenv.version import __version__
+
+from .py_info import PythonInfo
+
+_CACHE = OrderedDict()
+_FS_PATH = default_data_dir() / "py-info" / __version__
+
+
+def from_exe(exe, raise_on_error=True, ignore_cache=False):
+    """"""
+    result = _get_from_cache(exe, ignore_cache=ignore_cache)
+    if isinstance(result, Exception):
+        if raise_on_error:
+            raise result
+        else:
+            logging.warning("%s", str(result))
+        result = None
+    return result
+
+
+def _get_from_cache(exe, ignore_cache=True):
+    # first, we ensure that we resolve symlinks, we reuse paths that have been resolved under different name
+    resolved_resolved_path = Path(exe).resolve()
+    if not ignore_cache and resolved_resolved_path in _CACHE:  # check in the in-memory cache
+        result = _CACHE[resolved_resolved_path]
+    else:  # then check the persisted cache
+        py_info = _get_via_file_cache(resolved_resolved_path, exe)
+        result = _CACHE[resolved_resolved_path] = py_info
+    return result
+
+
+def _get_via_file_cache(resolved_path, exe):
+    key = sha256(str(resolved_path).encode("utf-8") if PY3 else str(resolved_path)).hexdigest()
+    py_info = None
+    resolved_path_text = ensure_text(str(resolved_path))
+    resolved_path_modified_timestamp = resolved_path.stat().st_mtime
+    data_file = _FS_PATH / "{}.json".format(key)
+    _FS_PATH.mkdir(parents=True, exist_ok=True)
+    with FileLock(str(_FS_PATH / "{}.lock".format(key))):
+        if data_file.exists():  # if exists and matches load
+            try:
+                data = json.loads(data_file.read_text())
+                if data["path"] == resolved_path_text and data["st_mtime"] == resolved_path_modified_timestamp:
+                    logging.debug("get PythonInfo from %s for %s", data_file, exe)
+                    py_info = PythonInfo.from_dict({k: v for k, v in data["content"].items()})
+                else:
+                    raise ValueError("force cleanup as stale")
+            except (KeyError, ValueError, OSError):
+                logging.debug("remove PythonInfo %s for %s", data_file, exe)
+                data_file.unlink()  # cleanup out of date files
+        if py_info is None:  # if not loaded run and save
+            failure, py_info = _run_subprocess(exe)
+            if failure is None:
+                file_cache_content = {
+                    "st_mtime": resolved_path_modified_timestamp,
+                    "path": resolved_path_text,
+                    "content": py_info.to_dict(),
+                }
+                logging.debug("write PythonInfo to %s for %s", data_file, exe)
+                data_file.write_text(ensure_text(json.dumps(file_cache_content, indent=2)))
+            else:
+                py_info = failure
+    return py_info
+
+
+def _run_subprocess(exe):
+    cmd = _subprocess_cmd(exe)
+    logging.debug("get interpreter info via cmd: %s", LogCmd(cmd))
+    try:
+        process = Popen(
+            cmd, universal_newlines=True, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE
+        )
+        out, err = process.communicate()
+        code = process.returncode
+    except OSError as os_error:
+        out, err, code = "", os_error.strerror, os_error.errno
+    result, failure = None, None
+    if code == 0:
+        result = PythonInfo.from_json(out)
+        result.executable = exe  # keep original executable as this may contain initialization code
+    else:
+        msg = "failed to query {} with code {}{}{}".format(
+            exe, code, " out: {!r}".format(out) if out else "", " err: {!r}".format(err) if err else ""
+        )
+        failure = RuntimeError(msg)
+    return failure, result
+
+
+def _subprocess_cmd(exe):
+    resolved_path = Path(__file__).parent.absolute().absolute() / "py_info.py"
+    if IS_ZIPAPP:
+        resolved_path = extract_to_app_data(resolved_path)
+    return [exe, "-s", str(resolved_path)]
+
+
+class LogCmd(object):
+    def __init__(self, cmd, env=None):
+        self.cmd = cmd
+        self.env = env
+
+    def __repr__(self):
+        def e(v):
+            return v.decode("utf-8") if isinstance(v, bytes) else v
+
+        cmd_repr = e(" ").join(pipes.quote(e(c)) for c in self.cmd)
+        if self.env is not None:
+            cmd_repr += e(" env of {!r}").format(self.env)
+        if PY2:
+            return cmd_repr.encode("utf-8")
+        return cmd_repr
+
+    def __unicode__(self):
+        raw = repr(self)
+        if PY2:
+            return raw.decode("utf-8")
+        return raw
+
+
+def clear():
+    _FS_PATH.mkdir(parents=True, exist_ok=True)
+    fs_resolved_path_lock = FileLock(str(_FS_PATH / "global.lock"))
+    with fs_resolved_path_lock:
+        for filename in _FS_PATH.iterdir():
+            if filename.suffix == ".json":
+                with FileLock(str(filename.parent / "{}.lock".format(filename.stem))):
+                    if filename.exists():
+                        filename.unlink()
+    _CACHE.clear()
+
+
+___all___ = (
+    "from_exe",
+    "clear",
+    "LogCmd",
+)

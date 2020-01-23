@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
-from virtualenv.discovery.py_info import Cmd
+from virtualenv.discovery.cached_py_info import LogCmd
 from virtualenv.seed.embed.base_embed import BaseEmbed
 from virtualenv.seed.embed.wheels.acquire import get_bundled_wheel_non_zipped, pip_wheel_env_run
 from virtualenv.util.subprocess import Popen
@@ -15,7 +15,7 @@ class PipInvoke(BaseEmbed):
     def run(self, creator):
         cmd = self.get_pip_install_cmd(creator.exe, creator.interpreter.version_release_str)
         env = pip_wheel_env_run(creator.interpreter.version_release_str)
-        logging.debug("pip seed by running: %s", Cmd(cmd, env))
+        logging.debug("pip seed by running: %s", LogCmd(cmd, env))
         process = Popen(cmd, env=env)
         process.communicate()
         if process.returncode != 0:

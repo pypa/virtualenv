@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import logging
 import os
 import shutil
 import sys
@@ -12,6 +13,7 @@ import six
 
 from virtualenv.discovery.py_info import CURRENT, PythonInfo
 from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
+from virtualenv.report import LOGGER
 from virtualenv.util.path import Path
 
 
@@ -78,6 +80,21 @@ def link(link_folder, link_file):
         return clean
 
     return _link
+
+
+@pytest.fixture(autouse=True)
+def ensure_logging_stable():
+    logger_level = LOGGER.level
+    handlers = [i for i in LOGGER.handlers]
+    filelock_logger = logging.getLogger("filelock")
+    fl_level = filelock_logger.level
+    yield
+    filelock_logger.setLevel(fl_level)
+    for handler in LOGGER.handlers:
+        LOGGER.removeHandler(handler)
+    for handler in handlers:
+        LOGGER.addHandler(handler)
+    LOGGER.setLevel(logger_level)
 
 
 @pytest.fixture(autouse=True)

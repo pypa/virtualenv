@@ -6,9 +6,7 @@ Note: this file is also used to query target interpreters, so can only use stand
 from __future__ import absolute_import, print_function
 
 import json
-import logging
 import os
-import pipes
 import platform
 import re
 import sys
@@ -88,6 +86,7 @@ class PythonInfo(object):
             {k: (self.system_prefix if v.startswith(self.prefix) else v) for k, v in self.sysconfig_vars.items()},
         )
         self._creators = None
+        self._system_executable = None
 
     @staticmethod
     def _distutils_install():
@@ -163,14 +162,21 @@ class PythonInfo(object):
 
     def to_json(self):
         # don't save calculated paths, as these are non primitive types
+        return json.dumps(self.to_dict(), indent=2)
+
+    def to_dict(self):
         data = {var: (getattr(self, var) if var not in ("_creators",) else None) for var in vars(self)}
         # noinspection PyProtectedMember
         data["version_info"] = data["version_info"]._asdict()  # namedtuple to dictionary
-        return json.dumps(data, indent=2)
+        return data
 
     @classmethod
     def from_json(cls, payload):
-        data = json.loads(payload)
+        # the dictionary unroll here is to protect against pypy bug of interpreter crashing
+        return cls.from_dict({k: v for k, v in json.loads(payload).items()})
+
+    @classmethod
+    def from_dict(cls, data):
         data["version_info"] = VersionInfo(**data["version_info"])  # restore this to a named tuple structure
         result = cls()
         result.__dict__ = {k: v for k, v in data.items()}
@@ -186,16 +192,20 @@ class PythonInfo(object):
 
     @property
     def system_executable(self):
-        env_prefix = self.real_prefix or self.base_prefix
-        if env_prefix:  # if this is a virtual environment
-            if self.real_prefix is None and self.base_executable is not None:  # use the saved host if present
-                return self.base_executable
-            # otherwise fallback to discovery mechanism
-            return self.find_exe_based_of(inside_folder=env_prefix)
-        else:
-            # need original executable here, as if we need to copy we want to copy the interpreter itself, not the
-            # setup script things may be wrapped up in
-            return self.original_executable
+        if self._system_executable is None:
+            env_prefix = self.real_prefix or self.base_prefix
+            if env_prefix:  # if this is a virtual environment
+                if self.real_prefix is None and self.base_executable is not None:  # use the saved host if present
+                    result = self.base_executable
+                else:
+                    # otherwise fallback to discovery mechanism
+                    result = self.find_exe_based_of(inside_folder=env_prefix)
+            else:
+                # need original executable here, as if we need to copy we want to copy the interpreter itself, not the
+                # setup script things may be wrapped up in
+                result = self.original_executable
+            self._system_executable = result
+        return self._system_executable
 
     def find_exe_based_of(self, inside_folder):
         # we don't know explicitly here, do some guess work - our executable name should tell
@@ -265,72 +275,20 @@ class PythonInfo(object):
                 if upper != base:
                     yield upper
 
-    _cache_from_exe = {}
+    @classmethod
+    def from_exe(cls, exe, raise_on_error=True, ignore_cache=False):
+        """Given a path to an executable get the python information"""
+        # this method is not used by itself, so here and called functions can import stuff locally
+        from .cached_py_info import from_exe
+
+        return from_exe(exe, raise_on_error=raise_on_error, ignore_cache=ignore_cache)
 
     @classmethod
     def clear_cache(cls):
-        cls._cache_from_exe.clear()
-
-    @classmethod
-    def from_exe(cls, exe, raise_on_error=True):
         # this method is not used by itself, so here and called functions can import stuff locally
-        from virtualenv.util.path import Path
+        from .cached_py_info import clear
 
-        path = Path(exe).resolve()
-        if path in cls._cache_from_exe:
-            result, failure = cls._cache_from_exe[path]
-        else:
-            failure, result = cls._load_for_exe(exe)
-            cls._cache_from_exe[path] = result, failure
-        if failure is not None:
-            if raise_on_error:
-                raise failure
-            else:
-                logging.warning("%s", str(failure))
-        return result
-
-    @classmethod
-    def _load_for_exe(cls, exe):
-        from virtualenv.util.subprocess import subprocess, Popen
-
-        cmd = cls._get_exe_cmd(exe)
-        # noinspection DuplicatedCode
-        # this is duplicated here because this file is executed on its own, so cannot be refactored otherwise
-        logging.debug(u"get interpreter info via cmd: %s", Cmd(cmd))
-        try:
-            process = Popen(
-                cmd, universal_newlines=True, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE
-            )
-            out, err = process.communicate()
-            code = process.returncode
-        except OSError as os_error:
-            out, err, code = "", os_error.strerror, os_error.errno
-        result, failure = None, None
-        if code == 0:
-            result = cls.from_json(out)
-            result.executable = exe  # keep original executable as this may contain initialization code
-        else:
-            msg = "failed to query {} with code {}{}{}".format(
-                exe, code, " out: {!r}".format(out) if out else "", " err: {!r}".format(err) if err else ""
-            )
-            failure = RuntimeError(msg)
-        return failure, result
-
-    @classmethod
-    def _get_exe_cmd(cls, exe):
-        cmd = [exe, "-s"]
-        from virtualenv.info import IS_ZIPAPP
-
-        self_path = os.path.abspath(__file__)
-        if IS_ZIPAPP:
-            from virtualenv.util.zipapp import extract_to_app_data
-            from virtualenv.util.path import Path
-
-            path = str(extract_to_app_data(Path(self_path)))
-        else:
-            path = "{}.py".format(os.path.splitext(self_path)[0])
-        cmd.append(path)
-        return cmd
+        clear()
 
     def satisfies(self, spec, impl_must_match):
         """check if a given specification can be satisfied by the this python interpreter instance"""
@@ -377,29 +335,6 @@ class PythonInfo(object):
             "include",
             {k: (self.system_prefix if v.startswith(self.prefix) else v) for k, v in self.sysconfig_vars.items()},
         )
-
-
-class Cmd(object):
-    def __init__(self, cmd, env=None):
-        self.cmd = cmd
-        self.env = env
-
-    def __repr__(self):
-        def e(v):
-            return v.decode("utf-8") if isinstance(v, bytes) else v
-
-        cmd_repr = e(" ").join(pipes.quote(e(c)) for c in self.cmd)
-        if self.env is not None:
-            cmd_repr += e(" env of {!r}").format(self.env)
-        if sys.version_info[0] == 2:
-            return cmd_repr.encode("utf-8")
-        return cmd_repr
-
-    def __unicode__(self):
-        raw = repr(self)
-        if sys.version_info[0] == 2:
-            return raw.decode("utf-8")
-        return raw
 
 
 CURRENT = PythonInfo()

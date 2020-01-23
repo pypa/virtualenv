@@ -39,7 +39,7 @@ class CreatorSelector(ComponentBuilder):
 
     def add_selector_arg_parse(self, name, choices):
         # prefer the built-in venv if present, otherwise fallback to first defined type
-        choices = sorted(choices, key=lambda a: 0 if a == "venv" else 1)
+        choices = sorted(choices, key=lambda a: 0 if a == "builtin" else 1)
         self.parser.add_argument(
             "--{}".format(name),
             choices=choices,
