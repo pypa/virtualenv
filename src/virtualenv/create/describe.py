@@ -78,7 +78,7 @@ class Describe(object):
         raise NotImplementedError
 
     def script(self, name):
-        return self.bin_dir / "{}{}".format(name, self.suffix)
+        return self.script_dir / "{}{}".format(name, self.suffix)
 
 
 @add_metaclass(ABCMeta)

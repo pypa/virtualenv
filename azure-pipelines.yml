@@ -49,7 +49,7 @@ jobs:
       pypy:
         image: [linux, windows, macOs]
       pypy3:
-        image: [linux, windows, macOs]
+        image: [linux, vs2017-win2016, macOs]
       fix_lint:
         image: [linux, windows]
       zipapp:

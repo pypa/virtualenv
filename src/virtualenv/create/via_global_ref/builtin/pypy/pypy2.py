@@ -77,6 +77,16 @@ class PyPy2Posix(PyPy2, PosixSupports):
     def _shared_libs(cls):
         return ["libpypy-c.so", "libpypy-c.dylib"]
 
+    @property
+    def lib(self):
+        return self.dest / "lib"
+
+    @classmethod
+    def sources(cls, interpreter):
+        for src in super(PyPy2Posix, cls).sources(interpreter):
+            yield src
+        yield PathRefToDest(Path(interpreter.system_prefix) / "lib", dest=lambda self, _: self.lib)
+
 
 class Pypy2Windows(PyPy2, WindowsSupports):
     """PyPy 2 on Windows"""
