@@ -45,8 +45,9 @@ class PyPy3Posix(PyPy3, PosixSupports):
         for src in super(PyPy3Posix, cls).sources(interpreter):
             yield src
         host_lib = Path(interpreter.system_prefix) / "lib"
-        for path in host_lib.iterdir():
-            yield PathRefToDest(path, dest=cls.to_lib)
+        if host_lib.exists() and host_lib.is_dir():
+            for path in host_lib.iterdir():
+                yield PathRefToDest(path, dest=cls.to_lib)
 
 
 class Pypy3Windows(PyPy3, WindowsSupports):

@@ -49,7 +49,7 @@ jobs:
       pypy:
         image: [linux, windows, macOs]
       pypy3:
-        image: [linux, vs2017-win2016, macOs]
+        image: [linux, windows, macOs]
       fix_lint:
         image: [linux, windows]
       zipapp:
@@ -65,9 +65,13 @@ jobs:
       - script: 'sudo apt-get update -y && sudo apt-get install fish csh'
         condition: and(succeeded(), eq(variables['image_name'], 'linux'), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35', 'py27', 'pypy', 'pypy3'))
         displayName: install fish and csh via apt-get
-      - script: 'brew update -vvv && brew install fish tcsh'
+      - script: 'brew update -vvv && brew install fish tcsh tree'
         condition: and(succeeded(), eq(variables['image_name'], 'macOs'), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35', 'py27', 'pypy', 'pypy3'))
         displayName: install fish and csh via brew
+      - script: 'tree /Users/runner/hostedtoolcache/PyPy/2.7.13/x64'
+        condition: and(succeeded(), eq(variables['image_name'], 'macOs'), in(variables['TOXENV'], 'pypy'))
+      - script: 'tree /Users/runner/hostedtoolcache/PyPy/3.6.9/x64'
+        condition: and(succeeded(), eq(variables['image_name'], 'macOs'), in(variables['TOXENV'], 'pypy3'))
       - task: UsePythonVersion@0
         condition: and(succeeded(), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35'))
         displayName: provision cpython 2

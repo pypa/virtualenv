@@ -72,4 +72,7 @@ class CPython2Windows(CPython2, CPythonWindows):
         py27_dll = Path(interpreter.system_executable).parent / "python27.dll"
         if py27_dll.exists():  # this might be global in the Windows folder in which case it's alright to be missing
             yield PathRefToDest(py27_dll, dest=cls.to_bin)
-        yield PathRefToDest(Path(interpreter.system_prefix) / "libs", dest=lambda self, s: self.dest / s.name)
+
+        libs = Path(interpreter.system_prefix) / "libs"
+        if libs.exists():
+            yield PathRefToDest(libs, dest=lambda self, s: self.dest / s.name)

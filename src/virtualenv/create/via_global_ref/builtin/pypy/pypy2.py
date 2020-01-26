@@ -85,7 +85,9 @@ class PyPy2Posix(PyPy2, PosixSupports):
     def sources(cls, interpreter):
         for src in super(PyPy2Posix, cls).sources(interpreter):
             yield src
-        yield PathRefToDest(Path(interpreter.system_prefix) / "lib", dest=lambda self, _: self.lib)
+        host_lib = Path(interpreter.system_prefix) / "lib"
+        if host_lib.exists():
+            yield PathRefToDest(host_lib, dest=lambda self, _: self.lib)
 
 
 class Pypy2Windows(PyPy2, WindowsSupports):
