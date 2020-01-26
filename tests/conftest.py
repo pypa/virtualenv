@@ -255,7 +255,7 @@ def special_char_name():
 def special_name_dir(tmp_path, special_char_name):
     dest = Path(str(tmp_path)) / special_char_name
     yield dest
-    if six.PY2 and sys.platform == "win32":  # pytest python2 windows does not support unicode delete
+    if six.PY2 and sys.platform == "win32" and not IS_PYPY:  # pytest python2 windows does not support unicode delete
         shutil.rmtree(six.ensure_text(str(dest)))
 
 

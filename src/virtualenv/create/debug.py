@@ -6,7 +6,7 @@ def encode_path(value):
     if value is None:
         return None
     if isinstance(value, bytes):
-        return value.decode(sys.getfilesystemencoding())
+        return value.decode("utf-8")
     elif not isinstance(value, str):
         return repr(value if isinstance(value, type) else type(value))
     return value

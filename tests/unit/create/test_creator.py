@@ -205,7 +205,7 @@ def test_debug_bad_virtualenv(tmp_path):
     debug_info = result.creator.debug
     assert debug_info["returncode"]
     assert debug_info["err"].startswith("std-err")
-    assert debug_info["out"] == "'std-out'"
+    assert "std-out" in debug_info["out"]
     assert debug_info["exception"]
 
 

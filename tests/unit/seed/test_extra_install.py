@@ -1,5 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
+import subprocess
+
 import pytest
 
 from virtualenv.discovery.py_info import CURRENT
@@ -36,8 +38,17 @@ def test_can_build_c_extensions(creator, tmp_path, coverage_env):
         "--no-deps",
         "--disable-pip-version-check",
         "-vvv",
-        str(Path(__file__).parent.resolve() / "netifaces-0.10.9.tar.gz"),
+        str(Path(__file__).parent.resolve() / "greet"),
     ]
     process = Popen(cmd)
     process.communicate()
     assert process.returncode == 0
+
+    process = Popen(
+        [str(session.creator.exe), "-c", "import greet; greet.greet('World')"],
+        universal_newlines=True,
+        stdout=subprocess.PIPE,
+    )
+    out, _ = process.communicate()
+    assert process.returncode == 0
+    assert out == "Hello World!\n"

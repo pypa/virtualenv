@@ -391,6 +391,8 @@ class Cmd(object):
         cmd_repr = e(" ").join(pipes.quote(e(c)) for c in self.cmd)
         if self.env is not None:
             cmd_repr += e(" env of {!r}").format(self.env)
+        if sys.version_info[0] == 2:
+            return cmd_repr.encode("utf-8")
         return cmd_repr
 
 
