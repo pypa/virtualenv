@@ -176,7 +176,7 @@ def get_env_debug_info(env_exe, debug_script):
     cmd = [str(env_exe), str(debug_script)]
     if not IS_PYPY and six.PY2:
         cmd = [six.ensure_text(i) for i in cmd]
-    logging.debug("debug via %r", Cmd(cmd))
+    logging.debug(str("debug via %r"), Cmd(cmd))
     env = os.environ.copy()
     env.pop(str("PYTHONPATH"), None)
     code, out, err = run_cmd(cmd)

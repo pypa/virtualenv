@@ -395,6 +395,12 @@ class Cmd(object):
             return cmd_repr.encode("utf-8")
         return cmd_repr
 
+    def __unicode__(self):
+        raw = repr(self)
+        if sys.version_info[0] == 2:
+            return raw.decode("utf-8")
+        return raw
+
 
 CURRENT = PythonInfo()
 

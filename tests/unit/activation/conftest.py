@@ -209,8 +209,7 @@ def activation_python(tmp_path_factory, special_char_name, current_fastest):
     dest = os.path.join(six.ensure_text(str(tmp_path_factory.mktemp("activation-tester-env"))), special_char_name)
     session = run_via_cli(["--seed", "none", dest, "--prompt", special_char_name, "--creator", current_fastest])
     pydoc_test = session.creator.purelib / "pydoc_test.py"
-    with open(str(pydoc_test), "wb") as file_handler:
-        file_handler.write(b'"""This is pydoc_test.py"""')
+    pydoc_test.write_text('"""This is pydoc_test.py"""')
     yield session
     if not IS_PYPY and six.PY2 and sys.platform == "win32":  # PY2 windows does not support unicode delete
         shutil.rmtree(dest)

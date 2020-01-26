@@ -5,10 +5,13 @@ import sys  # built-in
 def encode_path(value):
     if value is None:
         return None
+    if not isinstance(value, (str, bytes)):
+        if isinstance(value, type):
+            value = repr(value)
+        else:
+            value = repr(type(value))
     if isinstance(value, bytes):
-        return value.decode("utf-8")
-    elif not isinstance(value, str):
-        return repr(value if isinstance(value, type) else type(value))
+        value = value.decode(sys.getfilesystemencoding())
     return value
 
 
