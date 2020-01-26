@@ -37,7 +37,7 @@ class PyEnvCfg(object):
             logging.debug("\t%s", line)
             text += line
             text += "\n"
-        self.path.write_text(text)
+        self.path.write_text(text, encoding="utf-8")
 
     def refresh(self):
         self.content = self._read_values(self.path)
