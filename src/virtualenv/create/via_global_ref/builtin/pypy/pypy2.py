@@ -98,3 +98,9 @@ class Pypy2Windows(PyPy2, WindowsSupports):
     @classmethod
     def _shared_libs(cls):
         return ["libpypy-c.dll"]
+
+    @classmethod
+    def sources(cls, interpreter):
+        for src in super(Pypy2Windows, cls).sources(interpreter):
+            yield src
+        yield PathRefToDest(Path(interpreter.system_prefix) / "libs", dest=lambda self, s: self.dest / s.name)
