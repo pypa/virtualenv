@@ -1,5 +1,6 @@
 import sys
-from distutils.core import Extension, setup
+
+from setuptools import Extension, setup
 
 setup(
     name="greet",  # package name
