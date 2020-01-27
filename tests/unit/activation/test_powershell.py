@@ -1,22 +1,14 @@
 from __future__ import absolute_import, unicode_literals
 
-import os
 import pipes
 import sys
 
 import pytest
-from six import PY2
 
 from virtualenv.activation import PowerShellActivator
-from virtualenv.info import IS_PYPY, IS_WIN
 
 
 @pytest.mark.slow
-@pytest.mark.xfail(
-    condition=IS_PYPY and PY2 and IS_WIN and bool(os.environ.get(str("CI_RUN"))),
-    strict=False,
-    reason="this fails in the CI only, nor sure how, if anyone can reproduce help",
-)
 def test_powershell(activation_tester_class, activation_tester):
     class PowerShell(activation_tester_class):
         def __init__(self, session):
