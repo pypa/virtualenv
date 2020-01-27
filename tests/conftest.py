@@ -11,7 +11,7 @@ import pytest
 import six
 
 from virtualenv.discovery.py_info import CURRENT, PythonInfo
-from virtualenv.info import IS_PYPY, fs_supports_symlink
+from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
 from virtualenv.util.path import Path
 
 
@@ -237,7 +237,7 @@ def is_inside_ci():
 def special_char_name():
     base = "e-$ èрт🚒♞中片-j"
     # workaround for pypy3 https://bitbucket.org/pypy/pypy/issues/3147/venv-non-ascii-support-windows
-    encoding = "ascii" if IS_PYPY and six.PY3 else sys.getfilesystemencoding()
+    encoding = "ascii" if IS_PYPY and IS_WIN else sys.getfilesystemencoding()
     # let's not include characters that the file system cannot encode)
     result = ""
     for char in base:
