@@ -26,7 +26,6 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, current_fastest):
     coverage_env()
     assert result
 
-    # uninstalling pip/setuptools now should leave us with a clean env
     site_package = result.creator.purelib
     pip = site_package / "pip"
     setuptools = site_package / "setuptools"

@@ -37,7 +37,7 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, mocker, curren
     coverage_env()
     assert result
 
-    # uninstalling pip/setuptools now should leave us with a clean env
+    # uninstalling pip/setuptools now should leave us with a ensure_safe_to_do env
     site_package = result.creator.purelib
     pip = site_package / "pip"
     setuptools = site_package / "setuptools"

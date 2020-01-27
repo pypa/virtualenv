@@ -26,7 +26,7 @@ def setup_report(verbose, quiet):
     level = LEVELS[verbosity]
     msg_format = "%(message)s"
     if level <= logging.DEBUG:
-        locate = "pathname" if level < logging.DEBUG else "module"
+        locate = "module"
         msg_format = "%(relativeCreated)d {} [%(levelname)s %({})s:%(lineno)d]".format(msg_format, locate)
 
     formatter = logging.Formatter(six.ensure_str(msg_format))

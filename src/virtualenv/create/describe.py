@@ -77,6 +77,9 @@ class Describe(object):
         """executable name without suffix - there seems to be no standard way to get this without creating it"""
         raise NotImplementedError
 
+    def script(self, name):
+        return self.script_dir / "{}{}".format(name, self.suffix)
+
 
 @add_metaclass(ABCMeta)
 class Python2Supports(Describe):

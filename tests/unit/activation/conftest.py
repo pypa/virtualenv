@@ -6,12 +6,12 @@ import re
 import shutil
 import subprocess
 import sys
-from os.path import dirname, normcase, realpath
+from os.path import dirname, normcase
 
 import pytest
 import six
 
-from virtualenv.info import IS_PYPY
+from virtualenv.info import IS_PYPY, WIN_CPYTHON_2
 from virtualenv.run import run_via_cli
 from virtualenv.util.path import Path
 from virtualenv.util.subprocess import Popen
@@ -71,13 +71,12 @@ class ActivationTester(object):
         try:
             process = Popen(invoke, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
             _raw, _ = process.communicate()
-            encoding = sys.getfilesystemencoding() if IS_PYPY else "utf-8"
-            raw = "\n{}".format(_raw.decode(encoding)).replace("\r\n", "\n")
+            raw = _raw.decode("utf-8")
         except subprocess.CalledProcessError as exception:
             assert not exception.returncode, six.ensure_text(exception.output)
             return
 
-        out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, re.M).strip().split("\n")
+        out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, re.M).strip().splitlines()
         self.assert_output(out, raw, tmp_path)
         return env, activate_script
 
@@ -164,7 +163,9 @@ class ActivationTester(object):
     @staticmethod
     def norm_path(path):
         # python may return Windows short paths, normalize
-        path = realpath(six.ensure_text(str(path)) if isinstance(path, Path) else path)
+        if not isinstance(path, Path):
+            path = Path(path)
+        path = six.ensure_text(str(path.resolve()))
         if sys.platform != "win32":
             result = path
         else:
@@ -187,9 +188,10 @@ class RaiseOnNonSourceCall(ActivationTester):
         process = Popen(
             self.non_source_activate(activate_script), stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
         )
-        out, err = process.communicate()
+        out, _err = process.communicate()
+        err = _err.decode("utf-8")
         assert process.returncode
-        assert self.non_source_fail_message in err.decode("utf-8")
+        assert self.non_source_fail_message in err
 
 
 @pytest.fixture(scope="session")
@@ -205,12 +207,11 @@ def raise_on_non_source_class():
 @pytest.fixture(scope="session")
 def activation_python(tmp_path_factory, special_char_name, current_fastest):
     dest = os.path.join(six.ensure_text(str(tmp_path_factory.mktemp("activation-tester-env"))), special_char_name)
-    session = run_via_cli(["--seed", "none", dest, "--prompt", special_char_name, "--creator", current_fastest])
+    session = run_via_cli(["--seed", "none", dest, "--prompt", special_char_name, "--creator", current_fastest, "-vv"])
     pydoc_test = session.creator.purelib / "pydoc_test.py"
-    with open(six.ensure_text(str(pydoc_test)), "wb") as file_handler:
-        file_handler.write(b'"""This is pydoc_test.py"""')
+    pydoc_test.write_text('"""This is pydoc_test.py"""')
     yield session
-    if six.PY2 and sys.platform == "win32":  # PY2 windows does not support unicode delete
+    if WIN_CPYTHON_2:  # PY2 windows does not support unicode delete
         shutil.rmtree(dest)
 
 

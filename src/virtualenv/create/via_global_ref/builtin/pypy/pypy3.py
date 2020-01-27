@@ -5,6 +5,8 @@ import abc
 import six
 
 from virtualenv.create.describe import PosixSupports, Python3Supports, WindowsSupports
+from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
+from virtualenv.util.path import Path
 
 from .common import PyPy
 
@@ -35,8 +37,17 @@ class PyPy3Posix(PyPy3, PosixSupports):
     def _shared_libs(cls):
         return ["libpypy3-c.so", "libpypy3-c.dylib"]
 
-    def to_shared_lib(self, src):
-        return super(PyPy3, self).to_shared_lib(src) + [self.stdlib.parent.parent]
+    def to_lib(self, src):
+        return self.dest / "lib" / src.name
+
+    @classmethod
+    def sources(cls, interpreter):
+        for src in super(PyPy3Posix, cls).sources(interpreter):
+            yield src
+        host_lib = Path(interpreter.system_prefix) / "lib"
+        if host_lib.exists() and host_lib.is_dir():
+            for path in host_lib.iterdir():
+                yield PathRefToDest(path, dest=cls.to_lib)
 
 
 class Pypy3Windows(PyPy3, WindowsSupports):

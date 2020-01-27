@@ -22,7 +22,8 @@ class ViaTemplateActivator(Activator):
 
     def generate(self, creator):
         dest_folder = creator.bin_dir
-        self._generate(self.replacements(creator, dest_folder), self.templates(), dest_folder)
+        replacements = self.replacements(creator, dest_folder)
+        self._generate(replacements, self.templates(), dest_folder, creator)
         if self.flag_prompt is not None:
             creator.pyenv_cfg["prompt"] = self.flag_prompt
 
@@ -32,17 +33,23 @@ class ViaTemplateActivator(Activator):
             "__VIRTUAL_ENV__": six.ensure_text(str(creator.dest)),
             "__VIRTUAL_NAME__": creator.env_name,
             "__BIN_NAME__": six.ensure_text(str(creator.bin_dir.relative_to(creator.dest))),
-            "__PATH_SEP__": os.pathsep,
+            "__PATH_SEP__": six.ensure_text(os.pathsep),
         }
 
-    def _generate(self, replacements, templates, to_folder):
+    def _generate(self, replacements, templates, to_folder, creator):
         for template in templates:
-            text = self.instantiate_template(replacements, template)
+            text = self.instantiate_template(replacements, template, creator)
             (to_folder / template).write_text(text, encoding="utf-8")
 
-    def instantiate_template(self, replacements, template):
+    def instantiate_template(self, replacements, template, creator):
         # read text and do replacements
         text = read_text(self.__module__, str(template), encoding="utf-8", errors="strict")
-        for start, end in replacements.items():
-            text = text.replace(start, end)
+        for key, value in replacements.items():
+            value = self._repr_unicode(creator, value)
+            text = text.replace(key, value)
         return text
+
+    @staticmethod
+    def _repr_unicode(creator, value):
+        # by default we just let it be unicode
+        return value

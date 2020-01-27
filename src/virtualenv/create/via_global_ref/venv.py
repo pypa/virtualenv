@@ -73,6 +73,6 @@ class Venv(ViaGlobalRefApi):
         describe = object.__getattribute__(self, "describe")
         if describe is not None and hasattr(describe, item):
             element = getattr(describe, item)
-            if not callable(element):
+            if not callable(element) or item in ("script",):
                 return element
         return object.__getattribute__(self, item)

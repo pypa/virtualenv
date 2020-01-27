@@ -4,14 +4,14 @@ import logging
 from abc import ABCMeta
 from collections import namedtuple
 
-from six import PY2, add_metaclass
+from six import add_metaclass
 
+from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest
 from virtualenv.info import fs_supports_symlink
-from virtualenv.util.path import copy, ensure_dir, symlink
+from virtualenv.util.path import ensure_dir
 
 from ..api import ViaGlobalRefApi
 from .builtin_way import VirtualenvBuiltin
-from .ref import ExeRefToDest
 
 Meta = namedtuple("Meta", ["sources", "can_copy", "can_symlink"])
 
@@ -50,8 +50,9 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin):
 
     @classmethod
     def sources(cls, interpreter):
+        is_py2 = interpreter.version_info.major == 2
         for host_exe, targets in cls._executables(interpreter):
-            yield ExeRefToDest(host_exe, dest=cls.to_bin, targets=targets, must_copy=PY2)
+            yield ExePathRefToDest(host_exe, dest=cls.to_bin, targets=targets, must_copy=is_py2)
 
     def to_bin(self, src):
         return self.bin_dir / src.name
@@ -73,9 +74,8 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin):
         true_system_site = self.enable_system_site_package
         try:
             self.enable_system_site_package = False
-            method = symlink if self.symlinks else copy
             for src in self._sources:
-                src.run(self, method)
+                src.run(self, self.symlinks)
         finally:
             if true_system_site != self.enable_system_site_package:
                 self.enable_system_site_package = true_system_site

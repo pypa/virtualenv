@@ -1,26 +1,41 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
+import platform
 from contextlib import contextmanager
 
 import six
 
+IS_PYPY = platform.python_implementation() == "PyPy"
+
 
 class Path(object):
     def __init__(self, path):
-        self._path = path._path if isinstance(path, Path) else six.ensure_text(path)
+        if isinstance(path, Path):
+            _path = path._path
+        else:
+            _path = six.ensure_text(path)
+            if IS_PYPY:
+                _path = _path.encode("utf-8")
+        self._path = _path
 
     def __repr__(self):
-        return six.ensure_str("Path({})".format(self._path))
+        return six.ensure_str("Path({})".format(six.ensure_text(self._path)))
 
     def __unicode__(self):
-        return self._path
+        return six.ensure_text(self._path)
 
     def __str__(self):
         return six.ensure_str(self._path)
 
     def __div__(self, other):
-        return Path(os.path.join(self._path, other._path if isinstance(other, Path) else six.ensure_text(other)))
+        if isinstance(other, Path):
+            right = other._path
+        else:
+            right = six.ensure_text(other)
+            if IS_PYPY:
+                right = right.encode("utf-8")
+        return Path(os.path.join(self._path, right))
 
     def __truediv__(self, other):
         return self.__div__(other)

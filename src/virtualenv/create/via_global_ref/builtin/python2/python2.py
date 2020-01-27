@@ -7,11 +7,11 @@ import os
 import six
 
 from virtualenv.create.describe import Python2Supports
+from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
 from virtualenv.info import IS_ZIPAPP
 from virtualenv.util.path import Path
 from virtualenv.util.zipapp import read as read_from_zipapp
 
-from ..ref import RefToDest
 from ..via_global_self_do import ViaGlobalRefVirtualenvBuiltin
 
 HERE = Path(__file__).absolute().parent
@@ -41,9 +41,10 @@ class Python2(ViaGlobalRefVirtualenvBuiltin, Python2Supports):
             yield src
         # install files needed to run site.py
         for req in cls.modules():
-            for ext in ["py", "pyc"]:
-                file_path = "{}.{}".format(req, ext)
-                yield RefToDest(Path(interpreter.system_stdlib) / file_path, dest=cls.to_stdlib)
+            yield PathRefToDest(Path(interpreter.system_stdlib) / "{}.py".format(req), dest=cls.to_stdlib)
+            comp = Path(interpreter.system_stdlib) / "{}.pyc".format(req)
+            if comp.exists():
+                yield PathRefToDest(comp, dest=cls.to_stdlib)
 
     def to_stdlib(self, src):
         return self.stdlib / src.name

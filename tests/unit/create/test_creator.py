@@ -2,9 +2,11 @@ from __future__ import absolute_import, unicode_literals
 
 import difflib
 import gc
+import logging
 import os
 import stat
 import sys
+from itertools import product
 
 import pytest
 import six
@@ -78,11 +80,31 @@ def system():
 
 
 CURRENT_CREATORS = list(i for i in CURRENT.creators().key_to_class.keys() if i != "builtin")
+_VENV_BUG_ON = (
+    IS_PYPY
+    and CURRENT.version_info[0:3] == (3, 6, 9)
+    and CURRENT.pypy_version_info[0:2] == (7, 3)
+    and CURRENT.platform == "linux"
+)
 
 
-@pytest.mark.parametrize("isolated", [True, False], ids=["isolated", "with_global_site"])
-@pytest.mark.parametrize("method", (["copies"] + (["symlinks"] if fs_supports_symlink() else [])))
-@pytest.mark.parametrize("creator", CURRENT_CREATORS)
+@pytest.mark.parametrize(
+    "creator, method, isolated",
+    [
+        pytest.param(
+            *i,
+            marks=pytest.mark.xfail(
+                reason="https://bitbucket.org/pypy/pypy/issues/3159/pypy36-730-venv-fails-with-copies-on-linux",
+                strict=True,
+            )
+        )
+        if _VENV_BUG_ON and i[0] == "venv" and i[1] == "copies"
+        else i
+        for i in product(
+            CURRENT_CREATORS, (["copies"] + (["symlinks"] if fs_supports_symlink() else [])), ["isolated", "global"]
+        )
+    ],
+)
 def test_create_no_seed(python, creator, isolated, system, coverage_env, special_name_dir, method):
     dest = special_name_dir
     cmd = [
@@ -98,7 +120,7 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
         creator,
         "--{}".format(method),
     ]
-    if not isolated:
+    if isolated == "global":
         cmd.append("--system-site-packages")
     result = run_via_cli(cmd)
     coverage_env()
@@ -130,7 +152,7 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
 
     # ensure the global site package is added or not, depending on flag
     last_from_system_path = next(i for i in reversed(system_sys_path) if str(i).startswith(system["sys"]["prefix"]))
-    if isolated:
+    if isolated == "isolated":
         assert last_from_system_path not in sys_path
     else:
         common = []
@@ -183,17 +205,18 @@ def test_debug_bad_virtualenv(tmp_path):
     debug_info = result.creator.debug
     assert debug_info["returncode"]
     assert debug_info["err"].startswith("std-err")
-    assert debug_info["out"] == "'std-out'"
+    assert "std-out" in debug_info["out"]
     assert debug_info["exception"]
 
 
 @pytest.mark.parametrize("creator", CURRENT_CREATORS)
 @pytest.mark.parametrize("clear", [True, False], ids=["clear", "no_clear"])
-def test_create_clear_resets(tmp_path, creator, clear):
+def test_create_clear_resets(tmp_path, creator, clear, caplog):
+    caplog.set_level(logging.DEBUG)
     if creator == "venv" and clear is False:
         pytest.skip("venv without clear might fail")
     marker = tmp_path / "magic"
-    cmd = [str(tmp_path), "--seeder", "none", "--creator", creator]
+    cmd = [str(tmp_path), "--seeder", "none", "--creator", creator, "-vvv"]
     run_via_cli(cmd)
 
     marker.write_text("")  # if we a marker file this should be gone on a clear run, remain otherwise
