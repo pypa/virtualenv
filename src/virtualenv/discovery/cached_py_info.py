@@ -12,19 +12,19 @@ import pipes
 from collections import OrderedDict
 from hashlib import sha256
 
-from filelock import FileLock
 from six import ensure_text
 
-from virtualenv.info import IS_ZIPAPP, PY2, PY3, default_data_dir
+from virtualenv.dirs import default_data_dir
+from virtualenv.info import PY2, PY3
 from virtualenv.util.path import Path
 from virtualenv.util.subprocess import Popen, subprocess
-from virtualenv.util.zipapp import extract_to_app_data
+from virtualenv.util.zipapp import ensure_file_on_disk
 from virtualenv.version import __version__
 
 from .py_info import PythonInfo
 
 _CACHE = OrderedDict()
-_FS_PATH = default_data_dir() / "py-info" / __version__
+_FS_PATH = None
 
 
 def from_exe(exe, raise_on_error=True, ignore_cache=False):
@@ -55,20 +55,22 @@ def _get_via_file_cache(resolved_path, exe):
     py_info = None
     resolved_path_text = ensure_text(str(resolved_path))
     resolved_path_modified_timestamp = resolved_path.stat().st_mtime
-    data_file = _FS_PATH / "{}.json".format(key)
-    _FS_PATH.mkdir(parents=True, exist_ok=True)
-    with FileLock(str(_FS_PATH / "{}.lock".format(key))):
-        if data_file.exists():  # if exists and matches load
+    fs_path = _get_fs_path()
+    data_file = fs_path / "{}.json".format(key)
+
+    with fs_path.lock_for_key(key):
+        data_file_path = data_file.path
+        if data_file_path.exists():  # if exists and matches load
             try:
-                data = json.loads(data_file.read_text())
+                data = json.loads(data_file_path.read_text())
                 if data["path"] == resolved_path_text and data["st_mtime"] == resolved_path_modified_timestamp:
-                    logging.debug("get PythonInfo from %s for %s", data_file, exe)
+                    logging.debug("get PythonInfo from %s for %s", data_file_path, exe)
                     py_info = PythonInfo.from_dict({k: v for k, v in data["content"].items()})
                 else:
                     raise ValueError("force cleanup as stale")
             except (KeyError, ValueError, OSError):
-                logging.debug("remove PythonInfo %s for %s", data_file, exe)
-                data_file.unlink()  # cleanup out of date files
+                logging.debug("remove PythonInfo %s for %s", data_file_path, exe)
+                data_file_path.unlink()  # cleanup out of date files
         if py_info is None:  # if not loaded run and save
             failure, py_info = _run_subprocess(exe)
             if failure is None:
@@ -77,24 +79,34 @@ def _get_via_file_cache(resolved_path, exe):
                     "path": resolved_path_text,
                     "content": py_info.to_dict(),
                 }
-                logging.debug("write PythonInfo to %s for %s", data_file, exe)
-                data_file.write_text(ensure_text(json.dumps(file_cache_content, indent=2)))
+                logging.debug("write PythonInfo to %s for %s", data_file_path, exe)
+                data_file_path.write_text(ensure_text(json.dumps(file_cache_content, indent=2)))
             else:
                 py_info = failure
     return py_info
 
 
+def _get_fs_path():
+    global _FS_PATH
+    if _FS_PATH is None:
+        _FS_PATH = default_data_dir() / "py-info" / __version__
+    return _FS_PATH
+
+
 def _run_subprocess(exe):
-    cmd = _subprocess_cmd(exe)
-    logging.debug("get interpreter info via cmd: %s", LogCmd(cmd))
-    try:
-        process = Popen(
-            cmd, universal_newlines=True, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE
-        )
-        out, err = process.communicate()
-        code = process.returncode
-    except OSError as os_error:
-        out, err, code = "", os_error.strerror, os_error.errno
+    resolved_path = Path(__file__).parent.absolute().absolute() / "py_info.py"
+    with ensure_file_on_disk(resolved_path) as resolved_path:
+        cmd = [exe, "-s", str(resolved_path)]
+
+        logging.debug("get interpreter info via cmd: %s", LogCmd(cmd))
+        try:
+            process = Popen(
+                cmd, universal_newlines=True, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE
+            )
+            out, err = process.communicate()
+            code = process.returncode
+        except OSError as os_error:
+            out, err, code = "", os_error.strerror, os_error.errno
     result, failure = None, None
     if code == 0:
         result = PythonInfo.from_json(out)
@@ -105,13 +117,6 @@ def _run_subprocess(exe):
         )
         failure = RuntimeError(msg)
     return failure, result
-
-
-def _subprocess_cmd(exe):
-    resolved_path = Path(__file__).parent.absolute().absolute() / "py_info.py"
-    if IS_ZIPAPP:
-        resolved_path = extract_to_app_data(resolved_path)
-    return [exe, "-s", str(resolved_path)]
 
 
 class LogCmd(object):
@@ -138,12 +143,11 @@ class LogCmd(object):
 
 
 def clear():
-    _FS_PATH.mkdir(parents=True, exist_ok=True)
-    fs_resolved_path_lock = FileLock(str(_FS_PATH / "global.lock"))
-    with fs_resolved_path_lock:
-        for filename in _FS_PATH.iterdir():
+    fs_path = _get_fs_path()
+    with fs_path:
+        for filename in fs_path.path.iterdir():
             if filename.suffix == ".json":
-                with FileLock(str(filename.parent / "{}.lock".format(filename.stem))):
+                with fs_path.lock_for_key(filename.stem):
                     if filename.exists():
                         filename.unlink()
     _CACHE.clear()

@@ -34,6 +34,7 @@ def builtin_shows_marker_missing():
     reason="Building C-Extensions requires header files with host python",
 )
 @pytest.mark.parametrize("creator", list(i for i in CREATOR_CLASSES.keys() if i != "builtin"))
+@pytest.mark.timeout(30)
 def test_can_build_c_extensions(creator, tmp_path, coverage_env):
     session = run_via_cli(["--creator", creator, "--seed", "app-data", str(tmp_path), "-vvv"])
     coverage_env()

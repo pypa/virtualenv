@@ -15,11 +15,11 @@ import six
 from six import add_metaclass
 
 from virtualenv.discovery.cached_py_info import LogCmd
-from virtualenv.info import IS_ZIPAPP, WIN_CPYTHON_2
+from virtualenv.info import WIN_CPYTHON_2
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.util.path import Path
 from virtualenv.util.subprocess import run_cmd
-from virtualenv.util.zipapp import extract_to_app_data
+from virtualenv.util.zipapp import ensure_file_on_disk
 from virtualenv.version import __version__
 
 HERE = Path(__file__).absolute().parent
@@ -171,15 +171,16 @@ class Creator(object):
 
 
 def get_env_debug_info(env_exe, debug_script):
-    if IS_ZIPAPP:
-        debug_script = extract_to_app_data(debug_script)
-    cmd = [str(env_exe), str(debug_script)]
-    if WIN_CPYTHON_2:
-        cmd = [six.ensure_text(i) for i in cmd]
-    logging.debug(str("debug via %r"), LogCmd(cmd))
     env = os.environ.copy()
     env.pop(str("PYTHONPATH"), None)
-    code, out, err = run_cmd(cmd)
+
+    with ensure_file_on_disk(debug_script) as debug_script:
+        cmd = [str(env_exe), str(debug_script)]
+        if WIN_CPYTHON_2:
+            cmd = [six.ensure_text(i) for i in cmd]
+        logging.debug(str("debug via %r"), LogCmd(cmd))
+        code, out, err = run_cmd(cmd)
+
     # noinspection PyBroadException
     try:
         if code != 0:

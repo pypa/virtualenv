@@ -3,10 +3,12 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import os
 import zipfile
+from contextlib import contextmanager
 
 import six
 
-from virtualenv.info import IS_WIN, ROOT, default_data_dir
+from virtualenv.dirs import default_data_dir
+from virtualenv.info import IS_WIN, IS_ZIPAPP, ROOT
 from virtualenv.version import __version__
 
 
@@ -34,10 +36,14 @@ def _get_path_within_zip(full_path):
     return sub_file
 
 
-def extract_to_app_data(full_path):
-    base = default_data_dir() / "zipapp" / "extract" / __version__
-    base.mkdir(parents=True, exist_ok=True)
-    dest = base / full_path.name
-    if not dest.exists():
-        extract(full_path, dest)
-    return dest
+@contextmanager
+def ensure_file_on_disk(path):
+    if IS_ZIPAPP:
+        base = default_data_dir() / "zipapp" / "extract" / __version__
+        with base.lock_for_key(path.name):
+            dest = base.path / path.name
+            if not dest.exists():
+                extract(path, dest)
+            yield dest
+    else:
+        yield path

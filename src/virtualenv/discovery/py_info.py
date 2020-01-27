@@ -173,7 +173,8 @@ class PythonInfo(object):
     @classmethod
     def from_json(cls, payload):
         # the dictionary unroll here is to protect against pypy bug of interpreter crashing
-        return cls.from_dict({k: v for k, v in json.loads(payload).items()})
+        raw = json.loads(payload)
+        return cls.from_dict({k: v for k, v in raw.items()})
 
     @classmethod
     def from_dict(cls, data):
