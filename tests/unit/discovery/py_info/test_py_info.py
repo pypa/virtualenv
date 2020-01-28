@@ -10,7 +10,7 @@ import pytest
 from virtualenv.discovery import cached_py_info
 from virtualenv.discovery.py_info import CURRENT, PythonInfo
 from virtualenv.discovery.py_spec import PythonSpec
-from virtualenv.info import IS_PYPY, fs_supports_symlink
+from virtualenv.info import fs_supports_symlink
 
 
 def test_current_as_json():
@@ -95,8 +95,7 @@ def test_satisfy_not_version(spec):
     assert matches is False
 
 
-@pytest.mark.skipif(IS_PYPY, reason="mocker in pypy does not allow to spy on class methods")
-def test_py_info_cached(mocker, tmp_path):
+def test_py_info_cached_error(mocker, tmp_path):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
     with pytest.raises(RuntimeError):
         PythonInfo.from_exe(str(tmp_path))
@@ -105,7 +104,18 @@ def test_py_info_cached(mocker, tmp_path):
     assert spy.call_count == 1
 
 
-@pytest.mark.skipif(IS_PYPY, reason="mocker in pypy does not allow to spy on class methods")
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
+def test_py_info_cached_symlink_error(mocker, tmp_path):
+    spy = mocker.spy(cached_py_info, "_run_subprocess")
+    with pytest.raises(RuntimeError):
+        PythonInfo.from_exe(str(tmp_path))
+    symlinked = tmp_path / "a"
+    symlinked.symlink_to(tmp_path)
+    with pytest.raises(RuntimeError):
+        PythonInfo.from_exe(str(symlinked))
+    assert spy.call_count == 1
+
+
 def test_py_info_cache_clear(mocker, tmp_path):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
     assert PythonInfo.from_exe(sys.executable) is not None
@@ -115,14 +125,16 @@ def test_py_info_cache_clear(mocker, tmp_path):
     assert spy.call_count == 2
 
 
-@pytest.mark.skipif(IS_PYPY, reason="mocker in pypy does not allow to spy on class methods")
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
 def test_py_info_cached_symlink(mocker, tmp_path):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
-    with pytest.raises(RuntimeError):
-        PythonInfo.from_exe(str(tmp_path))
-    symlinked = tmp_path / "a"
-    symlinked.symlink_to(tmp_path)
-    with pytest.raises(RuntimeError):
-        PythonInfo.from_exe(str(symlinked))
+    first_result = PythonInfo.from_exe(sys.executable)
+    assert first_result is not None
+    assert spy.call_count == 1
+
+    new_exe = tmp_path / "a"
+    new_exe.symlink_to(sys.executable)
+    new_exe_str = str(new_exe)
+    second_result = PythonInfo.from_exe(new_exe_str)
+    assert second_result.original_executable == new_exe_str
     assert spy.call_count == 1

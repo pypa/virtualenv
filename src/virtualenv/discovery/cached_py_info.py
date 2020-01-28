@@ -47,6 +47,9 @@ def _get_from_cache(exe, ignore_cache=True):
     else:  # then check the persisted cache
         py_info = _get_via_file_cache(resolved_resolved_path, exe)
         result = _CACHE[resolved_resolved_path] = py_info
+    # independent if it was from the file or in-memory cache fix the original executable location
+    if isinstance(result, PythonInfo):
+        result.original_executable = exe
     return result
 
 
@@ -66,7 +69,6 @@ def _get_via_file_cache(resolved_path, exe):
                 if data["path"] == resolved_path_text and data["st_mtime"] == resolved_path_modified_timestamp:
                     logging.debug("get PythonInfo from %s for %s", data_file_path, exe)
                     py_info = PythonInfo.from_dict({k: v for k, v in data["content"].items()})
-                    py_info.original_executable = exe
                 else:
                     raise ValueError("force cleanup as stale")
             except (KeyError, ValueError, OSError):
