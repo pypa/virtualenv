@@ -114,7 +114,7 @@ class PythonSpec(object):
             type(self).__name__,
             ", ".join(
                 "{}={}".format(k, getattr(self, k))
-                for k in ("str_spec", "implementation", "major", "minor", "patch", "architecture", "path")
+                for k in ("implementation", "major", "minor", "patch", "architecture", "path")
                 if getattr(self, k) is not None
             ),
         )

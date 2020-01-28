@@ -47,7 +47,7 @@ def get_interpreter(key):
         if interpreter.executable not in proposed_paths:
             logging.info("proposed %s", interpreter)
             if interpreter.satisfies(spec, impl_must_match):
-                logging.info("accepted target interpreter %s", interpreter)
+                logging.debug("accepted target interpreter %s", interpreter)
                 return interpreter
             proposed_paths.add(interpreter.executable)
 

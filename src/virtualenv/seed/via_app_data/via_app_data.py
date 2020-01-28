@@ -95,4 +95,4 @@ class FromAppData(BaseEmbed):
         return CopyPipInstall
 
     def __unicode__(self):
-        return super(FromAppData, self).__unicode__() + " app_data_dir={}".format(self.app_data_dir)
+        return super(FromAppData, self).__unicode__() + " app_data_dir={}".format(self.app_data_dir.path)
