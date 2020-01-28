@@ -9,7 +9,6 @@ from virtualenv.info import IS_PYPY, PY3
 
 
 @pytest.mark.slow
-@pytest.mark.timeout(40)
 @pytest.mark.skipif(sys.platform == "win32" and IS_PYPY and PY3, reason="xonsh on Windows blocks indefinitely")
 def test_xonsh(activation_tester_class, activation_tester):
     class Xonsh(activation_tester_class):

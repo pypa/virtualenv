@@ -14,7 +14,6 @@ from virtualenv.util.subprocess import Popen
 
 
 @pytest.mark.slow
-@pytest.mark.timeout(60)
 def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastest):
     bundle_ver = BUNDLE_SUPPORT[CURRENT.version_release_str]
     create_cmd = [

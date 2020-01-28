@@ -27,19 +27,19 @@ class PipInvoke(BaseEmbed):
                 process = Popen(cmd, env=env)
                 process.communicate()
         if process.returncode != 0:
-            raise RuntimeError("failed seed")
+            raise RuntimeError("failed seed with code {}".format(process.returncode))
 
     @contextmanager
     def get_pip_install_cmd(self, exe, version):
         cmd = [str(exe), "-m", "pip", "-q", "install", "--only-binary", ":all:"]
         if not self.download:
             cmd.append("--no-index")
-        for key, version in self.package_version().items():
-            cmd.append("{}{}".format(key, "=={}".format(version) if version is not None else ""))
+        for key, ver in self.package_version().items():
+            cmd.append("{}{}".format(key, "=={}".format(ver) if ver is not None else ""))
         with ExitStack() as stack:
             folders = set()
             for context in (ensure_file_on_disk(get_bundled_wheel(p, version)) for p in self.packages):
-                folders.add(stack.enter_context(context))
+                folders.add(stack.enter_context(context).parent)
             for folder in folders:
                 cmd.extend(["--find-links", str(folder)])
                 cmd.extend(self.extra_search_dir)

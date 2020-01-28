@@ -66,7 +66,6 @@ def zipapp_test_env(tmp_path_factory):
 
 
 @pytest.fixture()
-@pytest.mark.timeout(100)
 def call_zipapp(zipapp, monkeypatch, tmp_path, zipapp_test_env):
     def _run(*args):
         monkeypatch.setenv(str("_VIRTUALENV_OVERRIDE_APP_DATA"), str(tmp_path / "app_data"))
@@ -76,7 +75,6 @@ def call_zipapp(zipapp, monkeypatch, tmp_path, zipapp_test_env):
     return _run
 
 
-@pytest.mark.timeout(100)
 def test_zipapp_help(call_zipapp, capsys):
     call_zipapp("-h")
     out, err = capsys.readouterr()
@@ -84,6 +82,5 @@ def test_zipapp_help(call_zipapp, capsys):
 
 
 @pytest.mark.parametrize("seeder", ["none", "app-data", "pip"])
-@pytest.mark.timeout(100)
 def test_zipapp_create(call_zipapp, seeder):
     call_zipapp("--seeder", seeder)

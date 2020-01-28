@@ -20,7 +20,7 @@ from virtualenv.report import LOGGER
 from virtualenv.util.path import Path
 
 _TEST_SETUP_DIR = tempfile.mkdtemp()
-dirs._DATA_DIR = dirs.FSLock(_TEST_SETUP_DIR)
+dirs._DATA_DIR = dirs.ReentrantFileLock(_TEST_SETUP_DIR)
 atexit.register(lambda: shutil.rmtree(_TEST_SETUP_DIR))
 
 
@@ -118,13 +118,6 @@ def ensure_py_info_cache_empty():
     PythonInfo.clear_cache()
     yield
     PythonInfo.clear_cache()
-
-
-@pytest.fixture(autouse=True)
-def clean_data_dir(tmp_path, monkeypatch):
-    monkeypatch.setattr(dirs, "_DATA_DIR", None)
-    monkeypatch.setenv(str("_VIRTUALENV_OVERRIDE_APP_DATA"), str(tmp_path / "app-data"))
-    yield
 
 
 @pytest.fixture(autouse=True)

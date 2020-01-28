@@ -9,7 +9,6 @@ from virtualenv.activation import PowerShellActivator
 
 
 @pytest.mark.slow
-@pytest.mark.timeout(30)
 def test_powershell(activation_tester_class, activation_tester):
     class PowerShell(activation_tester_class):
         def __init__(self, session):

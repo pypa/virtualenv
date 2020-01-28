@@ -34,7 +34,8 @@ def test_discovery_via_path(monkeypatch, case, special_name_dir, caplog):
     assert interpreter is not None
 
 
-@pytest.mark.timeout(40)
 def test_discovery_via_path_not_found():
+    # this can be really slow as it will potentially exhaust all discoverable interpreters
+    # with py info invocation where each can take 2s+
     interpreter = get_interpreter(uuid4().hex)
     assert interpreter is None

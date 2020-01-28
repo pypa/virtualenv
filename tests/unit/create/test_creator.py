@@ -257,7 +257,6 @@ def cross_python(is_inside_ci):
 
 
 @pytest.mark.slow
-@pytest.mark.timeout(30)
 def test_cross_major(cross_python, coverage_env, tmp_path, current_fastest):
     cmd = [
         "-v",

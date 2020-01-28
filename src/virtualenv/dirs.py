@@ -2,7 +2,7 @@ import os
 
 from appdirs import user_config_dir, user_data_dir
 
-from virtualenv.util.lock import FSLock
+from virtualenv.util.lock import ReentrantFileLock
 
 _DATA_DIR = None
 _CFG_DIR = None
@@ -13,7 +13,7 @@ def default_data_dir():
     global _DATA_DIR
     if _DATA_DIR is None:
         folder = _get_default_data_folder()
-        _DATA_DIR = FSLock(folder)
+        _DATA_DIR = ReentrantFileLock(folder)
     return _DATA_DIR
 
 
