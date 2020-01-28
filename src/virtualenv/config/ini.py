@@ -5,7 +5,8 @@ import os
 
 import six
 
-from virtualenv.info import PY3, default_config_dir
+from virtualenv.dirs import default_config_dir
+from virtualenv.info import PY3
 from virtualenv.util import ConfigParser
 from virtualenv.util.path import Path
 

@@ -25,9 +25,13 @@ def setup_report(verbose, quiet):
         verbosity = MAX_LEVEL  # pragma: no cover
     level = LEVELS[verbosity]
     msg_format = "%(message)s"
+    filelock_logger = logging.getLogger("filelock")
     if level <= logging.DEBUG:
         locate = "module"
         msg_format = "%(relativeCreated)d {} [%(levelname)s %({})s:%(lineno)d]".format(msg_format, locate)
+        filelock_logger.setLevel(level)
+    else:
+        filelock_logger.setLevel(logging.WARN)
 
     formatter = logging.Formatter(six.ensure_str(msg_format))
     stream_handler = logging.StreamHandler(stream=sys.stdout)

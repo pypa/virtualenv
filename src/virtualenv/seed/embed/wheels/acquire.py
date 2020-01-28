@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 from collections import defaultdict
+from contextlib import contextmanager
 from copy import copy
 from shutil import copy2
 from zipfile import ZipFile
@@ -14,7 +15,7 @@ import six
 from virtualenv.info import IS_ZIPAPP
 from virtualenv.util.path import Path
 from virtualenv.util.subprocess import Popen, subprocess
-from virtualenv.util.zipapp import extract_to_app_data
+from virtualenv.util.zipapp import ensure_file_on_disk
 
 from . import BUNDLE_SUPPORT, MAX
 
@@ -59,13 +60,6 @@ def acquire_from_bundle(packages, for_py_version, to_folder):
 
 def get_bundled_wheel(package, version_release):
     return BUNDLE_FOLDER / (BUNDLE_SUPPORT.get(version_release, {}) or BUNDLE_SUPPORT[MAX]).get(package)
-
-
-def get_bundled_wheel_non_zipped(package, version_release):
-    bundle = get_bundled_wheel(package, version_release)
-    if not IS_ZIPAPP:
-        return bundle
-    return extract_to_app_data(bundle)
 
 
 def acquire_from_dir(packages, for_py_version, to_folder, extra_search_dir):
@@ -151,24 +145,24 @@ def download_wheel(packages, for_py_version, to_folder):
     ]
     cmd.extend(to_download)
     # pip has no interface in python - must be a new sub-process
-    process = Popen(cmd, env=pip_wheel_env_run("{}{}".format(*sys.version_info[0:2])), stdout=subprocess.PIPE)
-    process.communicate()
-    if process.returncode != 0:
-        raise RuntimeError("failed to download wheels")
+
+    with pip_wheel_env_run("{}{}".format(*sys.version_info[0:2])) as env:
+        process = Popen(cmd, env=env, stdout=subprocess.PIPE)
+        process.communicate()
+        if process.returncode != 0:
+            raise RuntimeError("failed to download wheels")
 
 
+@contextmanager
 def pip_wheel_env_run(version):
     env = os.environ.copy()
     env.update(
         {
             six.ensure_str(k): str(v)  # python 2 requires these to be string only (non-unicode)
-            for k, v in {
-                # put the bundled wheel onto the path, and use it to do the bootstrap operation
-                "PYTHONPATH": get_bundled_wheel_non_zipped("pip", version),
-                "PIP_USE_WHEEL": "1",
-                "PIP_USER": "0",
-                "PIP_NO_INPUT": "1",
-            }.items()
+            for k, v in {"PIP_USE_WHEEL": "1", "PIP_USER": "0", "PIP_NO_INPUT": "1"}.items()
         }
     )
-    return env
+    with ensure_file_on_disk(get_bundled_wheel("pip", version)) as pip_wheel_path:
+        # put the bundled wheel onto the path, and use it to do the bootstrap operation
+        env[str("PYTHONPATH")] = str(pip_wheel_path)
+        yield env

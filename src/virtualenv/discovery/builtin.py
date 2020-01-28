@@ -107,16 +107,18 @@ class LazyPathDump(object):
         return six.ensure_str(self.__unicode__())
 
     def __unicode__(self):
-        content = "discover from PATH[{}]:{} with =>".format(self.pos, self.path)
-        for file_name in os.listdir(self.path):
-            try:
-                file_path = os.path.join(self.path, file_name)
-                if os.path.isdir(file_path) or not os.access(file_path, os.X_OK):
-                    continue
-            except OSError:
-                pass
-            content += " "
-            content += file_name
+        content = "discover PATH[{}]={}".format(self.pos, self.path)
+        if os.environ.get(str("_VIRTUALENV_DEBUG")):  # this is the over the board debug
+            content += " with =>"
+            for file_name in os.listdir(self.path):
+                try:
+                    file_path = os.path.join(self.path, file_name)
+                    if os.path.isdir(file_path) or not os.access(file_path, os.X_OK):
+                        continue
+                except OSError:
+                    pass
+                content += " "
+                content += file_name
         return content
 
 

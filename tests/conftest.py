@@ -1,18 +1,27 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import atexit
+import logging
 import os
 import shutil
 import sys
+import tempfile
 from functools import partial
 
 import coverage
 import pytest
 import six
 
+from virtualenv import dirs
 from virtualenv.discovery.py_info import CURRENT, PythonInfo
 from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
+from virtualenv.report import LOGGER
 from virtualenv.util.path import Path
+
+_TEST_SETUP_DIR = tempfile.mkdtemp()
+dirs._DATA_DIR = dirs.ReentrantFileLock(_TEST_SETUP_DIR)
+atexit.register(lambda: shutil.rmtree(_TEST_SETUP_DIR))
 
 
 def pytest_addoption(parser):
@@ -81,6 +90,21 @@ def link(link_folder, link_file):
 
 
 @pytest.fixture(autouse=True)
+def ensure_logging_stable():
+    logger_level = LOGGER.level
+    handlers = [i for i in LOGGER.handlers]
+    filelock_logger = logging.getLogger("filelock")
+    fl_level = filelock_logger.level
+    yield
+    filelock_logger.setLevel(fl_level)
+    for handler in LOGGER.handlers:
+        LOGGER.removeHandler(handler)
+    for handler in handlers:
+        LOGGER.addHandler(handler)
+    LOGGER.setLevel(logger_level)
+
+
+@pytest.fixture(autouse=True)
 def check_cwd_not_changed_by_test():
     old = os.getcwd()
     yield
@@ -97,10 +121,9 @@ def ensure_py_info_cache_empty():
 
 
 @pytest.fixture(autouse=True)
-def clean_data_dir(tmp_path, monkeypatch):
-    from virtualenv import info
-
-    monkeypatch.setattr(info, "_DATA_DIR", Path(str(tmp_path)))
+def ignore_global_config(tmp_path, mocker):
+    mocker.patch("virtualenv.dirs._CFG_DIR", None)
+    mocker.patch("virtualenv.dirs.user_config_dir", return_value=tmp_path / "this-should-never-exist")
     yield
 
 

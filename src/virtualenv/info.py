@@ -6,8 +6,6 @@ import platform
 import sys
 import tempfile
 
-from appdirs import user_config_dir, user_data_dir
-
 IMPLEMENTATION = platform.python_implementation()
 IS_PYPY = IMPLEMENTATION == "PyPy"
 IS_CPYTHON = IMPLEMENTATION == "CPython"
@@ -19,26 +17,6 @@ IS_ZIPAPP = os.path.isfile(ROOT)
 WIN_CPYTHON_2 = IS_CPYTHON and IS_WIN and PY2
 
 _CAN_SYMLINK = _FS_CASE_SENSITIVE = _CFG_DIR = _DATA_DIR = None
-
-
-def default_data_dir():
-    from virtualenv.util.path import Path
-
-    global _DATA_DIR
-    if _DATA_DIR is None:
-        key = str("_VIRTUALENV_OVERRIDE_APP_DATA")
-        folder = os.environ[key] if key in os.environ else user_data_dir(appname="virtualenv", appauthor="pypa")
-        _DATA_DIR = Path(folder)
-    return _DATA_DIR
-
-
-def default_config_dir():
-    from virtualenv.util.path import Path
-
-    global _CFG_DIR
-    if _CFG_DIR is None:
-        _CFG_DIR = Path(user_config_dir(appname="virtualenv", appauthor="pypa"))
-    return _CFG_DIR
 
 
 def fs_is_case_sensitive():
@@ -77,9 +55,8 @@ __all__ = (
     "IS_PYPY",
     "IS_CPYTHON",
     "PY3",
+    "PY2",
     "IS_WIN",
-    "default_data_dir",
-    "default_config_dir",
     "fs_is_case_sensitive",
     "fs_supports_symlink",
     "ROOT",
