@@ -39,7 +39,11 @@ class ViaTemplateActivator(Activator):
     def _generate(self, replacements, templates, to_folder, creator):
         for template in templates:
             text = self.instantiate_template(replacements, template, creator)
-            (to_folder / template).write_text(text, encoding="utf-8")
+            dest = to_folder / self.as_name(template)
+            dest.write_text(text, encoding="utf-8")
+
+    def as_name(self, template):
+        return template.name
 
     def instantiate_template(self, replacements, template, creator):
         # read text and do replacements
