@@ -66,6 +66,7 @@ def _get_via_file_cache(resolved_path, exe):
                 if data["path"] == resolved_path_text and data["st_mtime"] == resolved_path_modified_timestamp:
                     logging.debug("get PythonInfo from %s for %s", data_file_path, exe)
                     py_info = PythonInfo.from_dict({k: v for k, v in data["content"].items()})
+                    py_info.original_executable = exe
                 else:
                     raise ValueError("force cleanup as stale")
             except (KeyError, ValueError, OSError):
