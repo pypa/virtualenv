@@ -1,0 +1,1 @@
+pth files were not processed under Debian CPython2 interpreters - by ``gaborbernat``.
