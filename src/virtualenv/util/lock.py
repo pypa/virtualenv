@@ -2,12 +2,13 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
+import os
 from contextlib import contextmanager
 from threading import Lock
 
 from filelock import FileLock, Timeout
 
-from virtualenv.util.path import Path, ensure_dir
+from virtualenv.util.path import Path
 
 
 class _CountedFileLock(FileLock):
@@ -72,11 +73,17 @@ class ReentrantFileLock(object):
         self._release(self._lock)
 
     def _lock_file(self, lock):
-        ensure_dir(self.path)
+        # multiple processes might be trying to get a first lock... so we cannot check if this directory exist without
+        # a lock, but that lock might then become expensive, and it's not clear where that lock should live.
+        # Instead here we just ignore if we fail to create the directory.
+        try:
+            os.makedirs(str(self.path))
+        except OSError:
+            pass
         try:
             lock.acquire(0.0001)
         except Timeout:
-            logging.debug("lock file %s present, will block until released", self._lock.lock_file)
+            logging.debug("lock file %s present, will block until released", lock.lock_file)
             lock.release()  # release the acquire try from above
             lock.acquire()
 

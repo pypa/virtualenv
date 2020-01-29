@@ -5,8 +5,10 @@ import gc
 import logging
 import os
 import stat
+import subprocess
 import sys
 from itertools import product
+from threading import Thread
 
 import pytest
 import six
@@ -275,3 +277,16 @@ def test_cross_major(cross_python, coverage_env, tmp_path, current_fastest):
     coverage_env()
     env = PythonInfo.from_exe(str(result.creator.exe))
     assert env.version_info.major != CURRENT.version_info.major
+
+
+def test_create_parallel(tmp_path, monkeypatch):
+    monkeypatch.setenv(str("_VIRTUALENV_OVERRIDE_APP_DATA"), str(tmp_path))
+
+    def create(count):
+        subprocess.check_call([sys.executable, "-m", "virtualenv", str(tmp_path / "venv{}".format(count))])
+
+    threads = [Thread(target=create, args=(i,)) for i in range(1, 4)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
