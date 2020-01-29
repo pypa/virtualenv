@@ -61,7 +61,7 @@ def zipapp(zipapp_build_env, tmp_path_factory):
 @pytest.fixture(scope="session")
 def zipapp_test_env(tmp_path_factory):
     base_path = tmp_path_factory.mktemp("zipapp-test")
-    session = run_via_cli(["-v", "--activators", "", "--seed", "none", str(base_path / "env")])
+    session = run_via_cli(["-v", "--activators", "", "--without-pip", str(base_path / "env")])
     yield session.creator.exe
     shutil.rmtree(str(base_path))
 
@@ -82,6 +82,6 @@ def test_zipapp_help(call_zipapp, capsys):
     assert not err
 
 
-@pytest.mark.parametrize("seeder", ["none", "app-data", "pip"])
+@pytest.mark.parametrize("seeder", ["app-data", "pip"])
 def test_zipapp_create(call_zipapp, seeder):
     call_zipapp("--seeder", seeder)

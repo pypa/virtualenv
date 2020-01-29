@@ -1,1 +1,1 @@
-Support relative paths for ``-p`` - by ``gaborbernat``.
+Support relative paths for ``-p`` - by :user:`gaborbernat`.

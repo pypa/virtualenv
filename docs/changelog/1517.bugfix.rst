@@ -1,1 +1,1 @@
-pth files were not processed under Debian CPython2 interpreters - by ``gaborbernat``.
+pth files were not processed under Debian CPython2 interpreters - by :user:`gaborbernat`.

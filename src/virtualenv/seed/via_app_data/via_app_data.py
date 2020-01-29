@@ -30,11 +30,13 @@ class FromAppData(BaseEmbed):
             "--clear-app-data",
             dest="clear_app_data",
             action="store_true",
-            help="clear the app data folder",
+            help="clear the app data folder of seed images {}".format(default_data_dir() / "seed-v1"),
             default=False,
         )
 
     def run(self, creator):
+        if not self.enabled:
+            return
         base_cache = self.app_data_dir / creator.interpreter.version_release_str
         with self._get_seed_wheels(creator, base_cache) as name_to_whl:
             pip_version = name_to_whl["pip"].stem.split("-")[1]

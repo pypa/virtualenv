@@ -1,0 +1,7 @@
+Show less information when we run with a single verbosity (``-v``):
+
+- no longer shows accepted interpreters information (as the last proposed one is always the accepted one),
+- do not display the ``str_spec`` attribute for ``PythonSpec`` as these can be deduced from the other attributes,
+- for the ``app-data`` seeder do not show the type of lock, only the path to the app data directory,
+
+By :user:`gaborbernat`.

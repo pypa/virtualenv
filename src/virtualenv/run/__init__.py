@@ -23,41 +23,53 @@ def run_via_cli(args):
     return session
 
 
+# noinspection PyProtectedMember
 def session_via_cli(args):
+    parser = build_parser(args)
+    parser.parse_args(args, namespace=parser._options)
+    creator, seeder, activators = tuple(e.create(parser._options) for e in parser._elements)  # create types
+    session = Session(parser._verbosity, parser._interpreter, creator, seeder, activators)
+    return session
+
+
+# noinspection PyProtectedMember
+def build_parser(args=None):
     parser = VirtualEnvConfigParser()
     add_version_flag(parser)
-    options, verbosity = _do_report_setup(parser, args)
-    discover = get_discover(parser, args, options)
-    interpreter = discover.interpreter
+    parser._options, parser._verbosity = _do_report_setup(parser, args)
+    discover = get_discover(parser, args, parser._options)
+    parser._interpreter = interpreter = discover.interpreter
     if interpreter is None:
         raise RuntimeError("failed to find interpreter for {}".format(discover))
-    elements = [
+    parser._elements = [
         CreatorSelector(interpreter, parser),
         SeederSelector(interpreter, parser),
         ActivationSelector(interpreter, parser),
     ]
-    parser.parse_known_args(args, namespace=options)
-    for element in elements:
-        element.handle_selected_arg_parse(options)
+    parser.parse_known_args(args, namespace=parser._options)
+    for element in parser._elements:
+        element.handle_selected_arg_parse(parser._options)
     parser.enable_help()
-    parser.parse_args(args, namespace=options)
-    creator, seeder, activators = tuple(e.create(options) for e in elements)  # create types
-    session = Session(verbosity, interpreter, creator, seeder, activators)
-    return session
+    return parser
 
 
 def add_version_flag(parser):
     import virtualenv
 
     parser.add_argument(
-        "--version", action="version", version="%(prog)s {} from {}".format(__version__, virtualenv.__file__)
+        "--version",
+        action="version",
+        version="%(prog)s {} from {}".format(__version__, virtualenv.__file__),
+        help="display the version of the virtualenv package and it's location, then exit",
     )
 
 
 def _do_report_setup(parser, args):
     level_map = ", ".join("{}:{}".format(c, logging.getLevelName(l)) for c, l in sorted(list(LEVELS.items())))
     msg = "verbosity = verbose - quiet, default {}, count mapping = {{{}}}"
-    verbosity_group = parser.add_argument_group(msg.format(logging.getLevelName(LEVELS[3]), level_map))
+    verbosity_group = parser.add_argument_group(
+        title="verbosity", description=msg.format(logging.getLevelName(LEVELS[3]), level_map)
+    )
     verbosity = verbosity_group.add_mutually_exclusive_group()
     verbosity.add_argument("-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=2)
     verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)

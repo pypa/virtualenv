@@ -1,2 +1,2 @@
 Generate ``bash`` and ``fish`` activators on Windows too (as these can be available with git bash, cygwin or mysys2)
-- by ``gaborbernat``.
+- by :user:`gaborbernat`.

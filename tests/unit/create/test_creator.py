@@ -220,7 +220,7 @@ def test_create_clear_resets(tmp_path, creator, clear, caplog):
     if creator == "venv" and clear is False:
         pytest.skip("venv without clear might fail")
     marker = tmp_path / "magic"
-    cmd = [str(tmp_path), "--seeder", "none", "--creator", creator, "-vvv"]
+    cmd = [str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", creator, "-vvv"]
     run_via_cli(cmd)
 
     marker.write_text("")  # if we a marker file this should be gone on a clear run, remain otherwise
@@ -233,7 +233,7 @@ def test_create_clear_resets(tmp_path, creator, clear, caplog):
 @pytest.mark.parametrize("creator", CURRENT_CREATORS)
 @pytest.mark.parametrize("prompt", [None, "magic"])
 def test_prompt_set(tmp_path, creator, prompt):
-    cmd = [str(tmp_path), "--seeder", "none", "--creator", creator]
+    cmd = [str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", creator]
     if prompt is not None:
         cmd.extend(["--prompt", "magic"])
 
@@ -268,8 +268,7 @@ def test_cross_major(cross_python, coverage_env, tmp_path, current_fastest):
         "-p",
         six.ensure_text(cross_python.executable),
         six.ensure_text(str(tmp_path)),
-        "--seeder",
-        "none",
+        "--no-seed",
         "--activators",
         "",
         "--creator",

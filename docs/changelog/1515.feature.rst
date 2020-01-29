@@ -11,4 +11,4 @@ Improve base executable discovery mechanism:
   system pythons version - these two can differ if the OS upgraded the system python underneath and the virtualenv
   host was created via copy),
 
-by ``gaborbernat``.
+by :user:`gaborbernat`.

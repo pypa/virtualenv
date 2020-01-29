@@ -20,6 +20,10 @@ class VirtualEnvConfigParser(ArgumentParser):
         kwargs["prog"] = "virtualenv"
         super(VirtualEnvConfigParser, self).__init__(*args, **kwargs)
         self._fixed = set()
+        self._elements = None
+        self._verbosity = None
+        self._options = None
+        self._interpreter = None
 
     def _fix_defaults(self):
         for action in self._actions:
@@ -52,7 +56,7 @@ class VirtualEnvConfigParser(ArgumentParser):
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
     def __init__(self, prog):
-        super(HelpFormatter, self).__init__(prog, max_help_position=37, width=240)
+        super(HelpFormatter, self).__init__(prog, max_help_position=35, width=240)
 
     def _get_help_string(self, action):
         # noinspection PyProtectedMember

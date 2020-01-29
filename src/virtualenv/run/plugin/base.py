@@ -30,7 +30,7 @@ class ComponentBuilder(PluginLoader):
         self.name = name
         self._impl_class = None
         self.possible = possible
-        self.parser = parser.add_argument_group("{} options".format(name))
+        self.parser = parser.add_argument_group(title=name)
         self.add_selector_arg_parse(name, list(self.possible))
 
     @classmethod
@@ -51,6 +51,7 @@ class ComponentBuilder(PluginLoader):
         return selected
 
     def populate_selected_argparse(self, selected):
+        self.parser.description = "options for {} {}".format(self.name, selected)
         self._impl_class.add_parser_arguments(self.parser, self.interpreter)
 
     def create(self, options):

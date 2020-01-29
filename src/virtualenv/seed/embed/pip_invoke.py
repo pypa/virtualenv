@@ -21,6 +21,8 @@ class PipInvoke(BaseEmbed):
         super(PipInvoke, self).__init__(options)
 
     def run(self, creator):
+        if not self.enabled:
+            return
         with self.get_pip_install_cmd(creator.exe, creator.interpreter.version_release_str) as cmd:
             with pip_wheel_env_run(creator.interpreter.version_release_str) as env:
                 logging.debug("pip seed by running: %s", LogCmd(cmd, env))
