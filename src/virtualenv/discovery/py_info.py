@@ -224,18 +224,19 @@ class PythonInfo(object):
                         searched = getattr(self, item)
                         if found != searched:
                             logging.debug("refused interpreter because %s differs %s != %s", item, found, searched)
-                            discovered.append(info)
+                            discovered.append((info, candidate))
                             break
                     else:
                         return candidate
         if discovered:
-            most_likely = self._select_most_likely(discovered, self)
+            path, info = self._select_most_likely(discovered, self)
             logging.debug(
-                "no exact match found, chosen most similar %s within base folders %s",
-                most_likely,
+                "no exact match found, chosen most similar %s of %s within base folders %s",
+                path,
+                info,
                 os.pathsep.join(possible_folders),
             )
-            return most_likely
+            return path
         what = "|".join(possible_names)  # pragma: no cover
         raise RuntimeError(
             "failed to detect {} in {}".format(what, os.pathsep.join(possible_folders))
@@ -246,16 +247,17 @@ class PythonInfo(object):
         # no exact match found, start relaxing our requirements then to facilitate system package upgrades that
         # could cause this (when using copy strategy of the host python)
         def sort_by(item):
+            info, _ = item
             # we need to setup some priority of traits, this is as follows:
-            # implementation, major, minor, patch, architecture, tag, serial
+            # implementation, major, minor, micro, architecture, tag, serial
             matches = [
-                item.implementation == target.implementation,
-                item.version_info.major == target.version_info.major,
-                item.version_info.minor == target.version_info.minor,
-                item.architecture == target.architecture,
-                item.version_info.micro == target.version_info.micro,
-                item.version_info.releaselevel == target.version_info.releaselevel,
-                item.version_info.serial == target.version_info.serial,
+                info.implementation == target.implementation,
+                info.version_info.major == target.version_info.major,
+                info.version_info.minor == target.version_info.minor,
+                info.architecture == target.architecture,
+                info.version_info.micro == target.version_info.micro,
+                info.version_info.releaselevel == target.version_info.releaselevel,
+                info.version_info.serial == target.version_info.serial,
             ]
             priority = sum((1 << pos if match else 0) for pos, match in enumerate(reversed(matches)))
             return priority
