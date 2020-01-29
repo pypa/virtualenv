@@ -55,13 +55,6 @@ class Creator(object):
             "dest", help="directory to create virtualenv at", type=cls.validate_dest, default="venv", nargs="?",
         )
         parser.add_argument(
-            "--clear",
-            dest="clear",
-            action="store_true",
-            help="clear out the non-root install and start from scratch",
-            default=False,
-        )
-        parser.add_argument(
             "--system-site-packages",
             default=False,
             action="store_true",

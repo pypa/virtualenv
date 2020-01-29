@@ -1,0 +1,2 @@
+Bash activation script should have no extensions instead of ``.sh`` (this fixes the :pypi:`virtualenvwrapper`
+integration) - by :user:`gaborbernat`.

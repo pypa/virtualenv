@@ -20,6 +20,10 @@ class VirtualEnvConfigParser(ArgumentParser):
         kwargs["prog"] = "virtualenv"
         super(VirtualEnvConfigParser, self).__init__(*args, **kwargs)
         self._fixed = set()
+        self._elements = None
+        self._verbosity = None
+        self._options = None
+        self._interpreter = None
 
     def _fix_defaults(self):
         for action in self._actions:

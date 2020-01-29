@@ -1,119 +1,24 @@
-Reference Guide
-===============
-
-``virtualenv`` Command
-----------------------
+CLI interface
+=============
 
 .. _usage:
 
 Usage
 ~~~~~
 
-:command:`virtualenv [OPTIONS] ENV_DIR`
+``virtualenv`` is primarily a command line interface application. It's mainly aimed to be used from a command line, as
+such you'll need to to have a shell to run it. Then you can type in ``virtualenv`` (name of the application) followed by
+flags that control its behaviour. All options do have a sensible default, so if you pass no options you'll get a
+virtual environment in the current working directories ``venv`` folder. Below you can see the options you can pass in,
+together with its default value, and a short description of what it does:
 
-    Where ``ENV_DIR`` is an absolute or relative path to a directory to create
-    the virtual environment in.
+:command:`virtualenv [OPTIONS]`
 
 .. _options:
 
-Options
-~~~~~~~
-
-.. program: virtualenv
-
-.. option:: --version
-
-   show program's version number and exit
-
-.. option:: -h, --help
-
-   show this help message and exit
-
-.. option:: -v, --verbose
-
-   Increase verbosity.
-
-.. option:: -q, --quiet
-
-   Decrease verbosity.
-
-.. option:: -p PYTHON_EXE, --python=PYTHON_EXE
-
-   The Python interpreter to use, e.g.,
-   ``--python=python2.5`` will use the python2.5 interpreter
-   to create the new environment.  The default is the
-   interpreter that virtualenv was installed with
-   (like ``/usr/bin/python``)
-
-.. option:: --clear
-
-   Clear out the non-root install and start from scratch.
-
-.. option:: --system-site-packages
-
-   Give the virtual environment access to the global
-   site-packages.
-
-.. option:: --always-copy
-
-   Always copy files rather than symlinking.
-
-.. option:: --relocatable
-
-   Make an EXISTING virtualenv environment relocatable.
-   This fixes up scripts and makes all .pth files relative.
-
-.. option:: --unzip-setuptools
-
-   Unzip Setuptools when installing it.
-
-.. option:: --no-setuptools
-
-   Do not install setuptools in the new virtualenv.
-
-.. option:: --no-pip
-
-   Do not install pip in the new virtualenv.
-
-.. option:: --no-wheel
-
-   Do not install wheel in the new virtualenv.
-
-.. option:: --extra-search-dir=DIR
-
-   Directory to look for setuptools/pip distributions in.
-   This option can be specified multiple times.
-
-.. option:: --prompt=PROMPT
-
-   Provides an alternative prompt prefix for this
-   environment.
-
-.. option:: --download
-
-   Download preinstalled packages from PyPI.
-
-.. option:: --no-download
-
-   Do not download preinstalled packages from PyPI.
-
-.. option:: --no-site-packages
-
-   DEPRECATED. Retained only for backward compatibility.
-   Not having access to global site-packages is now the
-   default behavior.
-
-.. option:: --distribute
-.. option:: --setuptools
-
-   Legacy; now have no effect.  Before version 1.10 these could be used
-   to choose whether to install Distribute_ or Setuptools_ into the created
-   virtualenv. Distribute has now been merged into Setuptools, and the
-   latter is always installed.
-
-.. _Distribute: https://pypi.org/project/distribute
-.. _Setuptools: https://pypi.org/project/setuptools
-
+.. table_cli::
+   :module: virtualenv.run
+   :func: build_parser
 
 Configuration
 -------------
