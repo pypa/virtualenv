@@ -22,11 +22,24 @@ def main():
 
 def load_host_site():
     """trigger reload of site.py - now it will use the standard library instance that will take care of init"""
-    # the standard library will be the first element starting with the real prefix, not zip, must be present
-    custom_site_package_path = __file__
+    # we have a duality here, we generate the platform and pure library path based on what distutils.install specifies
+    # because this is what pip will be using; the host site.py though may contain it's own pattern for where the
+    # platform and pure library paths should exist
+
+    # notably on Ubuntu there's a patch for getsitepackages to point to
+    # - prefix + local/lib/pythonx.y/dist-packages
+    # - prefix + lib/pythonx.y/dist-packages
+    # while distutils.install.cmd still points both of these to
+    # - prefix + lib/python2.7/site-packages
+
+    # to facilitate when the two match, or not we first reload the site.py, now triggering the import of host site.py,
+    # as this will ensure that initialization code within host site.py runs
+
+    here = __file__  # the distutils.install patterns will be injected relative to this site.py, save it here
     reload(sys.modules["site"])  # noqa
 
-    # ensure that our expected site packages is on the sys.path
+    # and then if the distutils site packages are not on the sys.path we add them via add_site_dir; note we must add
+    # them by invoking add_site_dir to trigger the processing of pth files
     import os
 
     site_packages = r"""
@@ -34,10 +47,11 @@ def load_host_site():
     """
     import json
 
+    add_site_dir = sys.modules["site"].addsitedir
     for path in json.loads(site_packages):
-        full_path = os.path.abspath(os.path.join(custom_site_package_path, path.encode("utf-8")))
+        full_path = os.path.abspath(os.path.join(here, path.encode("utf-8")))
         if full_path not in sys.path:
-            sys.path.append(full_path)
+            add_site_dir(full_path)
 
 
 def read_pyvenv():
