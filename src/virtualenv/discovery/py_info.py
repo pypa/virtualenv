@@ -253,7 +253,7 @@ class PythonInfo(object):
                 item.version_info.major == target.version_info.major,
                 item.version_info.minor == target.version_info.minor,
                 item.architecture == target.architecture,
-                item.version_info.patch == target.version_info.patch,
+                item.version_info.micro == target.version_info.micro,
                 item.version_info.releaselevel == target.version_info.releaselevel,
                 item.version_info.serial == target.version_info.serial,
             ]
