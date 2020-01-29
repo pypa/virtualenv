@@ -1,0 +1,1 @@
+Support relative paths for ``-p`` - by ``gaborbernat``.

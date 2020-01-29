@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import itertools
+import os
 import sys
 from copy import copy
 
@@ -104,3 +105,10 @@ def test_version_satisfies_nok(req, spec):
     req_spec = PythonSpec.from_string_spec("python{}".format(req))
     sat_spec = PythonSpec.from_string_spec("python{}".format(spec))
     assert sat_spec.satisfies(req_spec) is False
+
+
+def test_relative_spec(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    a_relative_path = str((tmp_path / "a" / "b").relative_to(tmp_path))
+    spec = PythonSpec.from_string_spec(a_relative_path)
+    assert spec.path == os.path.abspath(str(tmp_path / a_relative_path))

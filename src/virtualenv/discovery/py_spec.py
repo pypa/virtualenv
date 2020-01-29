@@ -65,7 +65,7 @@ class PythonSpec(object):
                     arch = _int_or_none(groups["arch"])
 
             if not ok:
-                path = string_spec
+                path = os.path.abspath(string_spec)
 
         return cls(string_spec, impl, major, minor, patch, arch, path)
 
