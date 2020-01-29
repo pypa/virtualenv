@@ -5,7 +5,7 @@ A tool for creating isolated 'virtual' python environments.
 
 .. image:: https://img.shields.io/pypi/v/virtualenv.svg
   :target: https://pypi.org/project/virtualenv
-  :alt: Latest version on PyPi
+  :alt: Latest version on PyPI
 .. image:: https://img.shields.io/pypi/pyversions/virtualenv.svg
   :target: https://pypi.org/project/virtualenv/
   :alt: Supported Python versions
