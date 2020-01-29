@@ -136,5 +136,5 @@ def test_py_info_cached_symlink(mocker, tmp_path):
     new_exe.symlink_to(sys.executable)
     new_exe_str = str(new_exe)
     second_result = PythonInfo.from_exe(new_exe_str)
-    assert second_result.original_executable == new_exe_str
+    assert second_result.executable == new_exe_str
     assert spy.call_count == 1

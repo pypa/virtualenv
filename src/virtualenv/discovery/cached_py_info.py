@@ -49,7 +49,7 @@ def _get_from_cache(exe, ignore_cache=True):
         result = _CACHE[resolved_resolved_path] = py_info
     # independent if it was from the file or in-memory cache fix the original executable location
     if isinstance(result, PythonInfo):
-        result.original_executable = exe
+        result.executable = exe
     return result
 
 
