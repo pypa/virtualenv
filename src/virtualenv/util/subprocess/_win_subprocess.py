@@ -4,6 +4,7 @@
 
 import ctypes
 import os
+import platform
 import subprocess
 from ctypes import Structure, WinError, byref, c_char_p, c_void_p, c_wchar, c_wchar_p, sizeof, windll
 from ctypes.wintypes import BOOL, BYTE, DWORD, HANDLE, LPVOID, LPWSTR, WORD
@@ -133,7 +134,10 @@ class Popen(subprocess.Popen):
         if startupinfo is None:
             startupinfo = subprocess.STARTUPINFO()
         if not isinstance(args, subprocess.types.StringTypes):
+            args = [i if isinstance(i, bytes) else i.encode('utf-8') for i in args]
             args = subprocess.list2cmdline(args)
+            if platform.python_implementation() == "CPython":
+                args = args.decode('utf-8')
         startupinfo.dwFlags |= _subprocess.STARTF_USESHOWWINDOW
         startupinfo.wShowWindow = _subprocess.SW_HIDE
         comspec = os.environ.get("COMSPEC", unicode("cmd.exe"))

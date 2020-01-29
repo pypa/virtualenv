@@ -36,6 +36,6 @@ def test_discovery_via_path(monkeypatch, case, special_name_dir, caplog):
 
 
 def test_discovery_via_path_not_found(tmp_path, monkeypatch):
-    monkeypatch.setenv("PATH", str(tmp_path))
+    monkeypatch.setenv(str("PATH"), str(tmp_path))
     interpreter = get_interpreter(uuid4().hex)
     assert interpreter is None
