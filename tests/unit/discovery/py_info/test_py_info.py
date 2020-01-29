@@ -4,11 +4,12 @@ import itertools
 import json
 import logging
 import sys
+from collections import namedtuple
 
 import pytest
 
 from virtualenv.discovery import cached_py_info
-from virtualenv.discovery.py_info import CURRENT, PythonInfo
+from virtualenv.discovery.py_info import CURRENT, PythonInfo, VersionInfo
 from virtualenv.discovery.py_spec import PythonSpec
 from virtualenv.info import fs_supports_symlink
 
@@ -138,3 +139,40 @@ def test_py_info_cached_symlink(mocker, tmp_path):
     second_result = PythonInfo.from_exe(new_exe_str)
     assert second_result.executable == new_exe_str
     assert spy.call_count == 1
+
+
+PyInfoMock = namedtuple("PyInfoMock", ["implementation", "architecture", "version_info"])
+
+
+@pytest.mark.parametrize(
+    "target, position, discovered",
+    [
+        (
+            PyInfoMock("CPython", 64, VersionInfo(3, 6, 8, "final", 0)),
+            0,
+            [
+                PyInfoMock("CPython", 64, VersionInfo(3, 6, 9, "final", 0)),
+                PyInfoMock("PyPy", 64, VersionInfo(3, 6, 8, "final", 0)),
+            ],
+        ),
+        (
+            PyInfoMock("CPython", 64, VersionInfo(3, 6, 8, "final", 0)),
+            0,
+            [
+                PyInfoMock("CPython", 64, VersionInfo(3, 6, 9, "final", 0)),
+                PyInfoMock("CPython", 32, VersionInfo(3, 6, 9, "final", 0)),
+            ],
+        ),
+        (
+            PyInfoMock("CPython", 64, VersionInfo(3, 8, 1, "final", 0)),
+            0,
+            [
+                PyInfoMock("CPython", 32, VersionInfo(2, 7, 12, "rc", 2)),
+                PyInfoMock("PyPy", 64, VersionInfo(3, 8, 1, "final", 0)),
+            ],
+        ),
+    ],
+)
+def test_select_refused(target, discovered, position):
+    selected = discovered[position]
+    assert selected == PythonInfo._select_most_likely(discovered, target)

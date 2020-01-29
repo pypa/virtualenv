@@ -201,7 +201,7 @@ class PythonInfo(object):
                     result = self.base_executable
                 else:
                     # otherwise fallback to discovery mechanism
-                    result = self.find_exe_based_of(inside_folder=env_prefix)
+                    result = self._find_exe_based_of(inside_folder=env_prefix)
             else:
                 # need original executable here, as if we need to copy we want to copy the interpreter itself, not the
                 # setup script things may be wrapped up in
@@ -209,28 +209,60 @@ class PythonInfo(object):
             self._system_executable = result
         return self._system_executable
 
-    def find_exe_based_of(self, inside_folder):
+    def _find_exe_based_of(self, inside_folder):
         # we don't know explicitly here, do some guess work - our executable name should tell
         possible_names = self._find_possible_exe_names()
         possible_folders = self._find_possible_folders(inside_folder)
+        discovered = []
         for folder in possible_folders:
             for name in possible_names:
                 candidate = os.path.join(folder, name)
                 if os.path.exists(candidate):
                     info = PythonInfo.from_exe(candidate)
-                    items = {"implementation", "architecture", "version_info"}
-                    for item in items:
+                    for item in ["implementation", "architecture", "version_info"]:
                         found = getattr(info, item)
                         searched = getattr(self, item)
                         if found != searched:
                             logging.debug("refused interpreter because %s differs %s != %s", item, found, searched)
+                            discovered.append(info)
                             break
                     else:
                         return candidate
+        if discovered:
+            most_likely = self._select_most_likely(discovered, self)
+            logging.debug(
+                "no exact match found, chosen most similar %s within base folders %s",
+                most_likely,
+                os.pathsep.join(possible_folders),
+            )
+            return most_likely
         what = "|".join(possible_names)  # pragma: no cover
         raise RuntimeError(
             "failed to detect {} in {}".format(what, os.pathsep.join(possible_folders))
         )  # pragma: no cover
+
+    @staticmethod
+    def _select_most_likely(discovered, target):
+        # no exact match found, start relaxing our requirements then to facilitate system package upgrades that
+        # could cause this (when using copy strategy of the host python)
+        def sort_by(item):
+            # we need to setup some priority of traits, this is as follows:
+            # implementation, major, minor, patch, architecture, tag, serial
+            matches = [
+                item.implementation == target.implementation,
+                item.version_info.major == target.version_info.major,
+                item.version_info.minor == target.version_info.minor,
+                item.architecture == target.architecture,
+                item.version_info.patch == target.version_info.patch,
+                item.version_info.releaselevel == target.version_info.releaselevel,
+                item.version_info.serial == target.version_info.serial,
+            ]
+            priority = sum((1 << pos if match else 0) for pos, match in enumerate(reversed(matches)))
+            return priority
+
+        sorted_discovered = sorted(discovered, key=sort_by, reverse=True)  # sort by priority in decreasing order
+        most_likely = sorted_discovered[0]
+        return most_likely
 
     def _find_possible_folders(self, inside_folder):
         candidate_folder = OrderedDict()

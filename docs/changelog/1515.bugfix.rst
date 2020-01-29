@@ -1,0 +1,8 @@
+Improve base executable discovery mechanism:
+
+- print at debug level why we refuse some candidates,
+- when no candidates match exactly, instead of hard failing fallback to the closest match where the priority of
+  matching attributes is: python implementation, major version, minor version, architecture, patch version,
+  release level and serial.
+
+By ``gaborbernat``.
