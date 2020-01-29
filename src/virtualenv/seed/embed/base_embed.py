@@ -41,7 +41,7 @@ class BaseEmbed(Seeder):
             "--download",
             dest="download",
             action="store_true",
-            help="download latest {} from PyPi".format("/".join(cls.packages)),
+            help="download latest {} from PyPI".format("/".join(cls.packages)),
             default=False,
         )
         group.add_argument(
@@ -49,7 +49,7 @@ class BaseEmbed(Seeder):
             "--never-download",
             dest="download",
             action="store_false",
-            help="download latest {} from PyPi".format("/".join(cls.packages)),
+            help="download latest {} from PyPI".format("/".join(cls.packages)),
             default=True,
         )
         parser.add_argument(

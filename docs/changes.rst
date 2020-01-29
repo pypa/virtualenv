@@ -255,14 +255,14 @@ Features
 - Support ``pip`` wheels with removed ``certifi's cacert.pem``. (`#1252 <https://github.com/pypa/virtualenv/issues/1252>`_)
 - Upgrade setuptools from ``40.5.0`` to ``40.6.3`` and wheel from ``0.32.2`` to ``0.32.3``. (`#1257 <https://github.com/pypa/virtualenv/issues/1257>`_)
 - ``powershell`` now also provides the ``pydoc`` function that uses the virtual environments ``pydoc``. (`#1258 <https://github.com/pypa/virtualenv/issues/1258>`_)
-- Migrate to a ``setup.cfg`` based build. Minimum ``setuptools`` required to build is ``setuptools >= 40.6.3``, this is automatically acquired for all PEP-518 builders (recommended), or acquired via the old ``setup_requires`` method otherwise. Move exclusively to a ``setuptools`` generated console entry point script, this now does make ``setuptools >= 18.0.0`` a runtime dependency (install requires). Source and issue tracker now is shown on PyPi (supplied as package metadata) beside the homepage. (`#1259 <https://github.com/pypa/virtualenv/issues/1259>`_)
+- Migrate to a ``setup.cfg`` based build. Minimum ``setuptools`` required to build is ``setuptools >= 40.6.3``, this is automatically acquired for all PEP-518 builders (recommended), or acquired via the old ``setup_requires`` method otherwise. Move exclusively to a ``setuptools`` generated console entry point script, this now does make ``setuptools >= 18.0.0`` a runtime dependency (install requires). Source and issue tracker now is shown on PyPI (supplied as package metadata) beside the homepage. (`#1259 <https://github.com/pypa/virtualenv/issues/1259>`_)
 
 
 Deprecations (removal in next major release)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Using ``python setup.py test`` is now marked as deprecated and will be removed in next release. Use ``tox`` instead, always. (`#909 <https://github.com/pypa/virtualenv/issues/909>`_)
-- Using the project directly from the source layout is now deprecated. Going ahead people wanting to use the project without installing the virtualenv are encouraged to download the wheel from PyPi and extract it to access the ``virtualenv.py`` file. We'll be switching to a ``src`` layout with next release. (`#1241 <https://github.com/pypa/virtualenv/issues/1241>`_)
+- Using the project directly from the source layout is now deprecated. Going ahead people wanting to use the project without installing the virtualenv are encouraged to download the wheel from PyPI and extract it to access the ``virtualenv.py`` file. We'll be switching to a ``src`` layout with next release. (`#1241 <https://github.com/pypa/virtualenv/issues/1241>`_)
 - No longer support ``distutils`` build/installation, now ``setuptools >= 40.6.3`` is required. (`#1259 <https://github.com/pypa/virtualenv/issues/1259>`_)
 
 
