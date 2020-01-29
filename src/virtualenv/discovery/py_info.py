@@ -6,6 +6,7 @@ Note: this file is also used to query target interpreters, so can only use stand
 from __future__ import absolute_import, print_function
 
 import json
+import logging
 import os
 import platform
 import re
@@ -217,8 +218,14 @@ class PythonInfo(object):
                 candidate = os.path.join(folder, name)
                 if os.path.exists(candidate):
                     info = PythonInfo.from_exe(candidate)
-                    keys = {"implementation", "architecture", "version_info"}
-                    if all(getattr(info, k) == getattr(self, k) for k in keys):
+                    items = {"implementation", "architecture", "version_info"}
+                    for item in items:
+                        found = getattr(info, item)
+                        searched = getattr(self, item)
+                        if found != searched:
+                            logging.debug("refused interpreter because %s differs %s != %s", item, found, searched)
+                            break
+                    else:
                         return candidate
         what = "|".join(possible_names)  # pragma: no cover
         raise RuntimeError(
