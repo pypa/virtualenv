@@ -16,8 +16,8 @@ from virtualenv.info import fs_supports_symlink
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink not supported")
 @pytest.mark.parametrize("case", ["mixed", "lower", "upper"])
 def test_discovery_via_path(monkeypatch, case, special_name_dir, caplog):
-    current = PythonInfo.current_system()
     caplog.set_level(logging.DEBUG)
+    current = PythonInfo.current_system()
     core = "somethingVeryCryptic{}".format(".".join(str(i) for i in current.version_info[0:3]))
     name = "somethingVeryCryptic"
     if case == "lower":
@@ -35,8 +35,7 @@ def test_discovery_via_path(monkeypatch, case, special_name_dir, caplog):
     assert interpreter is not None
 
 
-def test_discovery_via_path_not_found():
-    # this can be really slow as it will potentially exhaust all discoverable interpreters
-    # with py info invocation where each can take 2s+
+def test_discovery_via_path_not_found(tmp_path, monkeypatch):
+    monkeypatch.setenv("PATH", str(tmp_path))
     interpreter = get_interpreter(uuid4().hex)
     assert interpreter is None

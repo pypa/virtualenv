@@ -23,4 +23,6 @@ def test_failed_to_find_implementation(of_id, mocker):
     mocker.patch("virtualenv.run.plugin.creators.CreatorSelector._OPTIONS", return_value={})
     with pytest.raises(RuntimeError) as context:
         run_via_cli(["-p", of_id])
-    assert repr(context.value) == repr(RuntimeError("No virtualenv implementation for {}".format(PythonInfo.current_system())))
+    assert repr(context.value) == repr(
+        RuntimeError("No virtualenv implementation for {}".format(PythonInfo.current_system()))
+    )

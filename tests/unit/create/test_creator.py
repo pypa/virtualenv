@@ -87,7 +87,7 @@ CURRENT_CREATORS = list(i for i in CURRENT.creators().key_to_class.keys() if i !
 _VENV_BUG_ON = (
     IS_PYPY
     and CURRENT.version_info[0:3] == (3, 6, 9)
-    and CURRENT.pypy_version_info[0:2] == (7, 3)
+    and CURRENT.pypy_version_info[0:2] == [7, 3]
     and CURRENT.platform == "linux"
 )
 

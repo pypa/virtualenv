@@ -4,12 +4,12 @@ import logging
 import sys
 from datetime import datetime
 
-from virtualenv.error import ProcessCallFailed
-from virtualenv.run import run_via_cli
-
 
 def run(args=None):
     start = datetime.now()
+    from virtualenv.error import ProcessCallFailed
+    from virtualenv.run import run_via_cli
+
     if args is None:
         args = sys.argv[1:]
     try:
@@ -23,5 +23,13 @@ def run(args=None):
         logging.info("done in %.0fms", (datetime.now() - start).total_seconds() * 1000)
 
 
+def run_with_catch(args=None):
+    try:
+        run(args)
+    except (KeyboardInterrupt, Exception) as exception:
+        logging.error("%s: %s", type(exception).__name__, exception)
+        sys.exit(1)
+
+
 if __name__ == "__main__":
-    run()
+    run_with_catch()

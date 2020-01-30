@@ -44,12 +44,14 @@ def get_interpreter(key):
     logging.info("find interpreter for spec %r", spec)
     proposed_paths = set()
     for interpreter, impl_must_match in propose_interpreters(spec):
-        if interpreter.executable not in proposed_paths:
-            logging.info("proposed %s", interpreter)
-            if interpreter.satisfies(spec, impl_must_match):
-                logging.debug("accepted %s", interpreter)
-                return interpreter
-            proposed_paths.add(interpreter.executable)
+        key = interpreter.system_executable, impl_must_match
+        if key in proposed_paths:
+            continue
+        logging.info("proposed %s", interpreter)
+        if interpreter.satisfies(spec, impl_must_match):
+            logging.debug("accepted %s", interpreter)
+            return interpreter
+        proposed_paths.add(key)
 
 
 def propose_interpreters(spec):

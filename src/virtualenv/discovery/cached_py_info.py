@@ -41,15 +41,16 @@ def from_exe(cls, exe, raise_on_error=True, ignore_cache=False):
 
 
 def _get_from_cache(cls, exe, ignore_cache=True):
-    # first, we ensure that we resolve symlinks, we reuse paths that have been resolved under different name
-    resolved_resolved_path = Path(exe).resolve()
-    if not ignore_cache and resolved_resolved_path in _CACHE:  # check in the in-memory cache
-        result = _CACHE[resolved_resolved_path]
+    # note here we cannot resolve symlinks, as the symlink may trigger different prefix information if there's a
+    # pyenv.cfg somewhere alongside on python3.4+
+    exe_path = Path(exe)
+    if not ignore_cache and exe_path in _CACHE:  # check in the in-memory cache
+        result = _CACHE[exe_path]
     else:  # then check the persisted cache
-        py_info = _get_via_file_cache(cls, resolved_resolved_path, exe)
-        result = _CACHE[resolved_resolved_path] = py_info
+        py_info = _get_via_file_cache(cls, exe_path, exe)
+        result = _CACHE[exe_path] = py_info
     # independent if it was from the file or in-memory cache fix the original executable location
-    if isinstance(result, cls):
+    if isinstance(result, PythonInfo):
         result.executable = exe
     return result
 

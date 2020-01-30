@@ -117,16 +117,16 @@ def test_py_info_cached_symlink_error(mocker, tmp_path):
     symlinked.symlink_to(tmp_path)
     with pytest.raises(RuntimeError):
         PythonInfo.from_exe(str(symlinked))
-    assert spy.call_count == 1
+    assert spy.call_count == 2
 
 
 def test_py_info_cache_clear(mocker, tmp_path):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
     assert PythonInfo.from_exe(sys.executable) is not None
-    assert spy.call_count == 1
+    assert spy.call_count == 2  # at least two, one for the venv, one more for the host
     PythonInfo.clear_cache()
     assert PythonInfo.from_exe(sys.executable) is not None
-    assert spy.call_count == 2
+    assert spy.call_count == 4
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
@@ -134,14 +134,14 @@ def test_py_info_cached_symlink(mocker, tmp_path):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
     first_result = PythonInfo.from_exe(sys.executable)
     assert first_result is not None
-    assert spy.call_count == 1
+    assert spy.call_count == 2  # at least two, one for the venv, one more for the host
 
     new_exe = tmp_path / "a"
     new_exe.symlink_to(sys.executable)
     new_exe_str = str(new_exe)
     second_result = PythonInfo.from_exe(new_exe_str)
     assert second_result.executable == new_exe_str
-    assert spy.call_count == 1
+    assert spy.call_count == 3  # no longer needed the host invocation, but the new symlink is must
 
 
 PyInfoMock = namedtuple("PyInfoMock", ["implementation", "architecture", "version_info"])
@@ -194,6 +194,9 @@ def test_system_executable_no_exact_match(target, discovered, position, tmp_path
         path = tmp_path / str(pos)
         path.write_text("")
         py_info = _make_py_info(i)
+        py_info.system_executable = CURRENT.system_executable
+        py_info.executable = CURRENT.system_executable
+        py_info.base_executable = str(path)
         if pos == position:
             selected = py_info
         discovered_with_path[str(path)] = py_info
@@ -202,19 +205,21 @@ def test_system_executable_no_exact_match(target, discovered, position, tmp_path
     target_py_info = _make_py_info(target)
     mocker.patch.object(target_py_info, "_find_possible_exe_names", return_value=names)
     mocker.patch.object(target_py_info, "_find_possible_folders", return_value=[str(tmp_path)])
-    mocker.patch.object(target_py_info, "from_exe", side_effect=lambda k: discovered_with_path[k])
-    target_py_info._system_executable = None
+    mocker.patch.object(target_py_info, "from_exe", side_effect=lambda k, resolve_to_host: discovered_with_path[k])
     target_py_info.real_prefix = str(tmp_path)
 
-    path = target_py_info.system_executable
-
-    found = discovered_with_path[path]
+    target_py_info.system_executable = None
+    target_py_info.executable = str(tmp_path)
+    mapped = target_py_info._resolve_to_system(target_py_info)
+    assert mapped.system_executable == CURRENT.system_executable
+    found = discovered_with_path[mapped.base_executable]
     assert found is selected
 
-    for record in caplog.records[:-1]:
-        assert record.message.startswith("refused interpreter because")
+    assert caplog.records[0].msg == "discover system for %s in %s"
+    for record in caplog.records[1:-1]:
+        assert record.message.startswith("refused interpreter ")
         assert record.levelno == logging.DEBUG
 
     warn_similar = caplog.records[-1]
     assert warn_similar.levelno == logging.DEBUG
-    assert warn_similar.message.startswith("no exact match found, chosen most similar")
+    assert warn_similar.msg.startswith("no exact match found, chosen most similar")

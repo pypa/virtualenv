@@ -90,12 +90,14 @@ class PythonInfo(object):
 
     def _fast_get_system_executable(self):
         """Try to get the system executable by just looking at properties"""
-        if self.real_prefix or self.base_prefix:  # if this is a virtual environment
+        if self.real_prefix or (
+            self.base_prefix is not None and self.base_prefix != self.prefix
+        ):  # if this is a virtual environment
             if self.real_prefix is None:
                 base_executable = getattr(sys, "_base_executable", None)  # some platforms may set this to help us
                 if base_executable is not None:  # use the saved system executable if present
                     return base_executable
-            return None  # in this case we just can't tell easily without poking around the FS, too expensive
+            return None  # in this case we just can't tell easily without poking around FS and calling them, bail
         # if we're not in a virtual environment, this is already a system python, so return the original executable
         # note we must choose the original and not the pure executable as shim scripts might throw us off
         return self.original_executable
@@ -194,7 +196,12 @@ class PythonInfo(object):
                         self.system_executable,
                     ),
                     (
-                        "original" if self.original_executable != self.system_executable else None,
+                        "original"
+                        if (
+                            self.original_executable != self.system_executable
+                            and self.original_executable != self.executable
+                        )
+                        else None,
                         self.original_executable,
                     ),
                     ("exe", self.executable),
@@ -298,8 +305,17 @@ class PythonInfo(object):
     @classmethod
     def _resolve_to_system(cls, target):
         start_executable = target.executable
+        prefixes = OrderedDict()
         while target.system_executable is None:
-            target = target.discover_exe(prefix=target.real_prefix or target.base_prefix, exact=False)
+            prefix = target.real_prefix or target.base_prefix or target.prefix
+            if prefix in prefixes:
+                for at, (p, t) in enumerate(prefixes.items(), start=1):
+                    logging.error("%d: prefix=%s, info=%r", at, p, t)
+                logging.error("%d: prefix=%s, info=%r", len(prefixes) + 1, prefix, target)
+                raise RuntimeError("prefixes are causing a circle {}".format("|".join(prefixes.keys())))
+            prefixes[prefix] = target
+            target = target.discover_exe(prefix=prefix, exact=False)
+
         if target.executable != target.system_executable:
             target = cls.from_exe(target.system_executable)
         target.executable = start_executable
@@ -309,7 +325,8 @@ class PythonInfo(object):
 
     def discover_exe(self, prefix, exact=True):
         key = prefix, exact
-        if key in self._cache_exe_discovery:
+        if key in self._cache_exe_discovery and prefix:
+            logging.debug("discover exe cache %r via %r", key, self._cache_exe_discovery[key])
             return self._cache_exe_discovery[key]
         logging.debug("discover system for %s in %s", self, prefix)
         # we don't know explicitly here, do some guess work - our executable name should tell
@@ -325,7 +342,15 @@ class PythonInfo(object):
                         found = getattr(info, item)
                         searched = getattr(self, item)
                         if found != searched:
-                            logging.debug("refused interpreter because %s differs %s != %s", item, found, searched)
+                            if item == "version_info":
+                                found, searched = ".".join(str(i) for i in found), ".".join(str(i) for i in searched)
+                            logging.debug(
+                                "refused interpreter %s because %s differs %s != %s",
+                                info.executable,
+                                item,
+                                found,
+                                searched,
+                            )
                             if exact is False:
                                 discovered.append(info)
                             break
@@ -335,7 +360,7 @@ class PythonInfo(object):
         if exact is False and discovered:
             info = self._select_most_likely(discovered, self)
             logging.debug(
-                "no exact match found, chosen most similar %s of %s within base folders %s",
+                "no exact match found, chosen most similar of %s within base folders %s",
                 info,
                 os.pathsep.join(possible_folders),
             )

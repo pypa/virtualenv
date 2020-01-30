@@ -19,6 +19,8 @@ from virtualenv.util.path import Path
 from virtualenv.util.subprocess import Popen
 
 CURRENT = PythonInfo.current_system()
+
+
 # noinspection PyUnusedLocal
 def root(tmp_path_factory):
     return CURRENT.system_executable
