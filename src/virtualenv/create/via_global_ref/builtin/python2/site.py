@@ -26,7 +26,7 @@ def load_host_site():
     # because this is what pip will be using; the host site.py though may contain it's own pattern for where the
     # platform and pure library paths should exist
 
-    # notably on Ubuntu there's a micro for getsitepackages to point to
+    # notably on Ubuntu there's a patch for getsitepackages to point to
     # - prefix + local/lib/pythonx.y/dist-packages
     # - prefix + lib/pythonx.y/dist-packages
     # while distutils.install.cmd still points both of these to
@@ -92,7 +92,7 @@ def rewrite_standard_library_sys_path():
 
 def disable_user_site_package():
     """Flip the switch on enable user site package"""
-    # sys.flags is a c-extension type, so we cannot monkey micro it, replace it with a python class to flip it
+    # sys.flags is a c-extension type, so we cannot monkeypatch it, replace it with a python class to flip it
     sys.original_flags = sys.flags
 
     class Flags(object):
