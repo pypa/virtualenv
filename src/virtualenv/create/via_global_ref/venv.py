@@ -4,7 +4,7 @@ import logging
 from collections import namedtuple
 from copy import copy
 
-from virtualenv.discovery.py_info import CURRENT
+from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.error import ProcessCallFailed
 from virtualenv.info import fs_supports_symlink
 from virtualenv.util.path import ensure_dir
@@ -19,7 +19,9 @@ class Venv(ViaGlobalRefApi):
     def __init__(self, options, interpreter):
         self.describe = options.describe
         super(Venv, self).__init__(options, interpreter)
-        self.can_be_inline = interpreter is CURRENT and interpreter.executable == interpreter.system_executable
+        self.can_be_inline = (
+            interpreter is PythonInfo.current() and interpreter.executable == interpreter.system_executable
+        )
         self._context = None
 
     def _args(self):

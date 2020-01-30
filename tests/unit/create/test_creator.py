@@ -16,11 +16,13 @@ import six
 from virtualenv.__main__ import run
 from virtualenv.create.creator import DEBUG_SCRIPT, get_env_debug_info
 from virtualenv.discovery.builtin import get_interpreter
-from virtualenv.discovery.py_info import CURRENT, PythonInfo
+from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_PYPY, fs_supports_symlink
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.run import run_via_cli, session_via_cli
 from virtualenv.util.path import Path
+
+CURRENT = PythonInfo.current_system()
 
 
 @pytest.mark.parametrize("sep", [i for i in (os.pathsep, os.altsep) if i is not None])
@@ -85,7 +87,7 @@ CURRENT_CREATORS = list(i for i in CURRENT.creators().key_to_class.keys() if i !
 _VENV_BUG_ON = (
     IS_PYPY
     and CURRENT.version_info[0:3] == (3, 6, 9)
-    and CURRENT.pypy_version_info[0:2] == (7, 3)
+    and CURRENT.pypy_version_info[0:2] == [7, 3]
     and CURRENT.platform == "linux"
 )
 

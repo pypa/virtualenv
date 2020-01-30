@@ -2,14 +2,14 @@ from __future__ import absolute_import, unicode_literals
 
 import pytest
 
-from virtualenv.discovery.py_info import CURRENT
+from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.run import run_via_cli
 from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
 
 
 @pytest.mark.slow
 def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, current_fastest):
-    bundle_ver = BUNDLE_SUPPORT[CURRENT.version_release_str]
+    bundle_ver = BUNDLE_SUPPORT[PythonInfo.current_system().version_release_str]
     create_cmd = [
         "--seeder",
         "pip",

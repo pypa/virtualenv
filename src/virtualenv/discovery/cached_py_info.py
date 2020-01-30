@@ -9,27 +9,28 @@ from __future__ import absolute_import, unicode_literals
 import json
 import logging
 import pipes
+import sys
 from collections import OrderedDict
 from hashlib import sha256
 
 from six import ensure_text
 
 from virtualenv.dirs import default_data_dir
+from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import PY2, PY3
 from virtualenv.util.path import Path
 from virtualenv.util.subprocess import Popen, subprocess
 from virtualenv.util.zipapp import ensure_file_on_disk
 from virtualenv.version import __version__
 
-from .py_info import PythonInfo
-
 _CACHE = OrderedDict()
+_CACHE[Path(sys.executable)] = PythonInfo()
 _FS_PATH = None
 
 
-def from_exe(exe, raise_on_error=True, ignore_cache=False):
+def from_exe(cls, exe, raise_on_error=True, ignore_cache=False):
     """"""
-    result = _get_from_cache(exe, ignore_cache=ignore_cache)
+    result = _get_from_cache(cls, exe, ignore_cache=ignore_cache)
     if isinstance(result, Exception):
         if raise_on_error:
             raise result
@@ -39,21 +40,22 @@ def from_exe(exe, raise_on_error=True, ignore_cache=False):
     return result
 
 
-def _get_from_cache(exe, ignore_cache=True):
-    # first, we ensure that we resolve symlinks, we reuse paths that have been resolved under different name
-    resolved_resolved_path = Path(exe).resolve()
-    if not ignore_cache and resolved_resolved_path in _CACHE:  # check in the in-memory cache
-        result = _CACHE[resolved_resolved_path]
+def _get_from_cache(cls, exe, ignore_cache=True):
+    # note here we cannot resolve symlinks, as the symlink may trigger different prefix information if there's a
+    # pyenv.cfg somewhere alongside on python3.4+
+    exe_path = Path(exe)
+    if not ignore_cache and exe_path in _CACHE:  # check in the in-memory cache
+        result = _CACHE[exe_path]
     else:  # then check the persisted cache
-        py_info = _get_via_file_cache(resolved_resolved_path, exe)
-        result = _CACHE[resolved_resolved_path] = py_info
+        py_info = _get_via_file_cache(cls, exe_path, exe)
+        result = _CACHE[exe_path] = py_info
     # independent if it was from the file or in-memory cache fix the original executable location
     if isinstance(result, PythonInfo):
         result.executable = exe
     return result
 
 
-def _get_via_file_cache(resolved_path, exe):
+def _get_via_file_cache(cls, resolved_path, exe):
     key = sha256(str(resolved_path).encode("utf-8") if PY3 else str(resolved_path)).hexdigest()
     py_info = None
     resolved_path_text = ensure_text(str(resolved_path))
@@ -68,19 +70,19 @@ def _get_via_file_cache(resolved_path, exe):
                 data = json.loads(data_file_path.read_text())
                 if data["path"] == resolved_path_text and data["st_mtime"] == resolved_path_modified_timestamp:
                     logging.debug("get PythonInfo from %s for %s", data_file_path, exe)
-                    py_info = PythonInfo.from_dict({k: v for k, v in data["content"].items()})
+                    py_info = cls._from_dict({k: v for k, v in data["content"].items()})
                 else:
                     raise ValueError("force cleanup as stale")
             except (KeyError, ValueError, OSError):
                 logging.debug("remove PythonInfo %s for %s", data_file_path, exe)
                 data_file_path.unlink()  # cleanup out of date files
         if py_info is None:  # if not loaded run and save
-            failure, py_info = _run_subprocess(exe)
+            failure, py_info = _run_subprocess(cls, exe)
             if failure is None:
                 file_cache_content = {
                     "st_mtime": resolved_path_modified_timestamp,
                     "path": resolved_path_text,
-                    "content": py_info.to_dict(),
+                    "content": py_info._to_dict(),
                 }
                 logging.debug("write PythonInfo to %s for %s", data_file_path, exe)
                 data_file_path.write_text(ensure_text(json.dumps(file_cache_content, indent=2)))
@@ -96,7 +98,7 @@ def _get_fs_path():
     return _FS_PATH
 
 
-def _run_subprocess(exe):
+def _run_subprocess(cls, exe):
     resolved_path = Path(__file__).parent.absolute().absolute() / "py_info.py"
     with ensure_file_on_disk(resolved_path) as resolved_path:
         cmd = [exe, "-s", str(resolved_path)]
@@ -112,7 +114,7 @@ def _run_subprocess(exe):
             out, err, code = "", os_error.strerror, os_error.errno
     result, failure = None, None
     if code == 0:
-        result = PythonInfo.from_json(out)
+        result = cls._from_json(out)
         result.executable = exe  # keep original executable as this may contain initialization code
     else:
         msg = "failed to query {} with code {}{}{}".format(

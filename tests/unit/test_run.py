@@ -9,7 +9,7 @@ from virtualenv.run import run_via_cli
 
 def test_help(capsys):
     with pytest.raises(SystemExit) as context:
-        run_via_cli(args=["-h"])
+        run_via_cli(args=["-h", "-vvv"])
     assert context.value.code == 0
 
     out, err = capsys.readouterr()

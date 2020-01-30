@@ -13,10 +13,12 @@ import sys
 
 import pytest
 
-from virtualenv.discovery.py_info import CURRENT
+from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.run import run_via_cli
 from virtualenv.util.path import Path
 from virtualenv.util.subprocess import Popen
+
+CURRENT = PythonInfo.current_system()
 
 
 # noinspection PyUnusedLocal
@@ -34,7 +36,8 @@ def venv(tmp_path_factory):
         process.communicate()
         # sadly creating a virtual environment does not tell us where the executable lives in general case
         # so discover using some heuristic
-        return CURRENT.find_exe_based_of(inside_folder=str(dest))
+        exe_path = CURRENT.discover_exe(prefix=str(dest)).original_executable
+        return exe_path
 
 
 def old_virtualenv(tmp_path_factory):
@@ -74,7 +77,8 @@ def old_virtualenv(tmp_path_factory):
             process = Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             _, __ = process.communicate()
             assert not process.returncode
-            return CURRENT.find_exe_based_of(inside_folder=str(old_virtualenv_at))
+            exe_path = CURRENT.discover_exe(prefix=str(old_virtualenv_at)).original_executable
+            return exe_path
         except Exception:
             return RuntimeError("failed to create old virtualenv")
 

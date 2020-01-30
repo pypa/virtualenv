@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-from virtualenv.discovery.py_info import CURRENT
+from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.run import run_via_cli
 
 
@@ -18,9 +18,11 @@ def test_failed_to_find_bad_spec():
     assert repr(context.value) == msg
 
 
-@pytest.mark.parametrize("of_id", [sys.executable, CURRENT.implementation])
+@pytest.mark.parametrize("of_id", [sys.executable, PythonInfo.current_system().implementation])
 def test_failed_to_find_implementation(of_id, mocker):
     mocker.patch("virtualenv.run.plugin.creators.CreatorSelector._OPTIONS", return_value={})
     with pytest.raises(RuntimeError) as context:
         run_via_cli(["-p", of_id])
-    assert repr(context.value) == repr(RuntimeError("No virtualenv implementation for {}".format(CURRENT)))
+    assert repr(context.value) == repr(
+        RuntimeError("No virtualenv implementation for {}".format(PythonInfo.current_system()))
+    )

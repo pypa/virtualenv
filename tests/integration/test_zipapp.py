@@ -7,11 +7,12 @@ import sys
 import pytest
 import six
 
-from virtualenv.discovery.py_info import CURRENT
+from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.run import run_via_cli
 from virtualenv.util.path import Path
 
 HERE = Path(__file__).parent
+CURRENT = PythonInfo.current_system()
 
 
 @pytest.fixture(scope="session")

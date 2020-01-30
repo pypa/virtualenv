@@ -17,18 +17,18 @@ IS_WIN = sys.platform == "win32"
 class PythonSpec(object):
     """Contains specification about a Python Interpreter"""
 
-    def __init__(self, str_spec, implementation, major, minor, patch, architecture, path):
+    def __init__(self, str_spec, implementation, major, minor, micro, architecture, path):
         self.str_spec = str_spec
         self.implementation = implementation
         self.major = major
         self.minor = minor
-        self.patch = patch
+        self.micro = micro
         self.architecture = architecture
         self.path = path
 
     @classmethod
     def from_string_spec(cls, string_spec):
-        impl, major, minor, patch, arch, path = None, None, None, None, None, None
+        impl, major, minor, micro, arch, path = None, None, None, None, None, None
         if os.path.isabs(string_spec):
             path = string_spec
         else:
@@ -47,7 +47,7 @@ class PythonSpec(object):
                         if len(versions) > 3:
                             raise ValueError
                         if len(versions) == 3:
-                            major, minor, patch = versions
+                            major, minor, micro = versions
                         elif len(versions) == 2:
                             major, minor = versions
                         elif len(versions) == 1:
@@ -67,7 +67,7 @@ class PythonSpec(object):
             if not ok:
                 path = os.path.abspath(string_spec)
 
-        return cls(string_spec, impl, major, minor, patch, arch, path)
+        return cls(string_spec, impl, major, minor, micro, arch, path)
 
     def generate_names(self):
         impls = OrderedDict()
@@ -80,7 +80,7 @@ class PythonSpec(object):
                 impls[self.implementation.lower()] = False
                 impls[self.implementation.upper()] = False
         impls["python"] = True  # finally consider python as alias, implementation must match now
-        version = self.major, self.minor, self.patch
+        version = self.major, self.minor, self.micro
         try:
             version = version[: version.index(None)]
         except ValueError:
@@ -104,7 +104,7 @@ class PythonSpec(object):
         if spec.architecture is not None and spec.architecture != self.architecture:
             return False
 
-        for our, req in zip((self.major, self.minor, self.patch), (spec.major, spec.minor, spec.patch)):
+        for our, req in zip((self.major, self.minor, self.micro), (spec.major, spec.minor, spec.micro)):
             if req is not None and our is not None and our != req:
                 return False
         return True
@@ -114,7 +114,7 @@ class PythonSpec(object):
             type(self).__name__,
             ", ".join(
                 "{}={}".format(k, getattr(self, k))
-                for k in ("implementation", "major", "minor", "patch", "architecture", "path")
+                for k in ("implementation", "major", "minor", "micro", "architecture", "path")
                 if getattr(self, k) is not None
             ),
         )

@@ -92,7 +92,7 @@ def rewrite_standard_library_sys_path():
 
 def disable_user_site_package():
     """Flip the switch on enable user site package"""
-    # sys.flags is a c-extension type, so we cannot monkey patch it, replace it with a python class to flip it
+    # sys.flags is a c-extension type, so we cannot monkeypatch it, replace it with a python class to flip it
     sys.original_flags = sys.flags
 
     class Flags(object):
