@@ -9,7 +9,7 @@ import six
 from virtualenv.info import IS_WIN
 
 from .discover import Discover
-from .py_info import CURRENT, PythonInfo
+from .py_info import PythonInfo
 from .py_spec import PythonSpec
 
 
@@ -47,18 +47,18 @@ def get_interpreter(key):
         if interpreter.executable not in proposed_paths:
             logging.info("proposed %s", interpreter)
             if interpreter.satisfies(spec, impl_must_match):
-                logging.debug("accepted target interpreter %s", interpreter)
+                logging.debug("accepted %s", interpreter)
                 return interpreter
             proposed_paths.add(interpreter.executable)
 
 
 def propose_interpreters(spec):
-    # 1. we always try with the lowest hanging fruit first, the current interpreter
-    yield CURRENT, True
-
-    # 2. if it's an absolute path and exists, use that
+    # 1. if it's an absolute path and exists, use that
     if spec.is_abs and os.path.exists(spec.path):
         yield PythonInfo.from_exe(spec.path), True
+
+    # 2. try with the current
+    yield PythonInfo.current_system(), True
 
     # 3. otherwise fallback to platform default logic
     if IS_WIN:

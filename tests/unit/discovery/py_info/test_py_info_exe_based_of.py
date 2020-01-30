@@ -5,13 +5,15 @@ import os
 
 import pytest
 
-from virtualenv.discovery.py_info import CURRENT, EXTENSIONS
+from virtualenv.discovery.py_info import EXTENSIONS, PythonInfo
 from virtualenv.info import fs_is_case_sensitive, fs_supports_symlink
+
+CURRENT = PythonInfo.current_system()
 
 
 def test_discover_empty_folder(tmp_path, monkeypatch):
     with pytest.raises(RuntimeError):
-        CURRENT._find_exe_based_of(inside_folder=str(tmp_path))
+        CURRENT.discover_exe(prefix=str(tmp_path))
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
@@ -27,7 +29,7 @@ def test_discover_ok(tmp_path, monkeypatch, suffix, impl, version, arch, into, c
     dest = folder / "{}{}".format(impl, version, arch, suffix)
     os.symlink(CURRENT.executable, str(dest))
     inside_folder = str(tmp_path)
-    found = CURRENT._find_exe_based_of(inside_folder)
+    found = CURRENT.discover_exe(inside_folder).system_executable
     dest_str = str(dest)
     if not fs_is_case_sensitive():
         found = found.lower()
@@ -38,4 +40,4 @@ def test_discover_ok(tmp_path, monkeypatch, suffix, impl, version, arch, into, c
 
     dest.rename(dest.parent / (dest.name + "-1"))
     with pytest.raises(RuntimeError):
-        CURRENT._find_exe_based_of(inside_folder)
+        CURRENT.discover_exe(inside_folder)

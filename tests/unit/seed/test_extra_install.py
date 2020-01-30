@@ -5,11 +5,12 @@ import subprocess
 
 import pytest
 
-from virtualenv.discovery.py_info import CURRENT
+from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.run import run_via_cli
 from virtualenv.util.path import Path
 from virtualenv.util.subprocess import Popen
 
+CURRENT = PythonInfo.current_system()
 CREATOR_CLASSES = CURRENT.creators().key_to_class
 
 

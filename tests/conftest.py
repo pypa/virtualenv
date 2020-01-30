@@ -14,7 +14,7 @@ import pytest
 import six
 
 from virtualenv import dirs
-from virtualenv.discovery.py_info import CURRENT, PythonInfo
+from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
 from virtualenv.report import LOGGER
 from virtualenv.util.path import Path
@@ -284,7 +284,7 @@ def special_name_dir(tmp_path, special_char_name):
 
 @pytest.fixture(scope="session")
 def current_creators():
-    return CURRENT.creators()
+    return PythonInfo.current_system().creators()
 
 
 @pytest.fixture(scope="session")

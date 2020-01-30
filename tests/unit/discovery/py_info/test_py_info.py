@@ -10,13 +10,15 @@ from collections import namedtuple
 import pytest
 
 from virtualenv.discovery import cached_py_info
-from virtualenv.discovery.py_info import CURRENT, PythonInfo, VersionInfo
+from virtualenv.discovery.py_info import PythonInfo, VersionInfo
 from virtualenv.discovery.py_spec import PythonSpec
 from virtualenv.info import fs_supports_symlink
 
+CURRENT = PythonInfo.current_system()
+
 
 def test_current_as_json():
-    result = CURRENT.to_json()
+    result = CURRENT._to_json()
     parsed = json.loads(result)
     a, b, c, d, e = sys.version_info
     assert parsed["version_info"] == {"major": a, "minor": b, "micro": c, "releaselevel": d, "serial": e}
@@ -176,6 +178,7 @@ PyInfoMock = namedtuple("PyInfoMock", ["implementation", "architecture", "versio
 )
 def test_system_executable_no_exact_match(target, discovered, position, tmp_path, mocker, caplog):
     """Here we should fallback to other compatible"""
+    caplog.set_level(logging.DEBUG)
 
     def _make_py_info(of):
         base = copy.deepcopy(CURRENT)
@@ -208,4 +211,10 @@ def test_system_executable_no_exact_match(target, discovered, position, tmp_path
     found = discovered_with_path[path]
     assert found is selected
 
-    assert caplog.text
+    for record in caplog.records[:-1]:
+        assert record.message.startswith("refused interpreter because")
+        assert record.levelno == logging.DEBUG
+
+    warn_similar = caplog.records[-1]
+    assert warn_similar.levelno == logging.DEBUG
+    assert warn_similar.message.startswith("no exact match found, chosen most similar")

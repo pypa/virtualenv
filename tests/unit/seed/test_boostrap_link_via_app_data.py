@@ -6,7 +6,7 @@ import sys
 import pytest
 import six
 
-from virtualenv.discovery.py_info import CURRENT
+from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.run import run_via_cli
 from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
 from virtualenv.seed.embed.wheels.acquire import BUNDLE_FOLDER
@@ -15,7 +15,8 @@ from virtualenv.util.subprocess import Popen
 
 @pytest.mark.slow
 def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastest):
-    bundle_ver = BUNDLE_SUPPORT[CURRENT.version_release_str]
+    current = PythonInfo.current_system()
+    bundle_ver = BUNDLE_SUPPORT[current.version_release_str]
     create_cmd = [
         six.ensure_text(str(tmp_path / "env")),
         "--seeder",
@@ -48,8 +49,8 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastes
         result.creator.script_dir / "pip{}{}".format(suffix, result.creator.exe.suffix)
         for suffix in (
             "",
-            "{}".format(CURRENT.version_info.major),
-            "-{}.{}".format(CURRENT.version_info.major, CURRENT.version_info.minor),
+            "{}".format(current.version_info.major),
+            "-{}.{}".format(current.version_info.major, current.version_info.minor),
         )
     ]:
         assert pip_exe.exists()

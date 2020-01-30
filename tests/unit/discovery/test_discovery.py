@@ -9,21 +9,22 @@ import pytest
 import six
 
 from virtualenv.discovery.builtin import get_interpreter
-from virtualenv.discovery.py_info import CURRENT
+from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import fs_supports_symlink
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink not supported")
 @pytest.mark.parametrize("case", ["mixed", "lower", "upper"])
 def test_discovery_via_path(monkeypatch, case, special_name_dir, caplog):
+    current = PythonInfo.current_system()
     caplog.set_level(logging.DEBUG)
-    core = "somethingVeryCryptic{}".format(".".join(str(i) for i in CURRENT.version_info[0:3]))
+    core = "somethingVeryCryptic{}".format(".".join(str(i) for i in current.version_info[0:3]))
     name = "somethingVeryCryptic"
     if case == "lower":
         name = name.lower()
     elif case == "upper":
         name = name.upper()
-    exe_name = "{}{}{}".format(name, CURRENT.version_info.major, ".exe" if sys.platform == "win32" else "")
+    exe_name = "{}{}{}".format(name, current.version_info.major, ".exe" if sys.platform == "win32" else "")
     special_name_dir.mkdir()
     executable = special_name_dir / exe_name
     os.symlink(sys.executable, six.ensure_text(str(executable)))
