@@ -218,7 +218,7 @@ class PythonInfo(object):
             for name in possible_names:
                 candidate = os.path.join(folder, name)
                 if os.path.exists(candidate):
-                    info = PythonInfo.from_exe(candidate)
+                    info = self.from_exe(candidate)
                     for item in ["implementation", "architecture", "version_info"]:
                         found = getattr(info, item)
                         searched = getattr(self, item)
@@ -229,7 +229,7 @@ class PythonInfo(object):
                     else:
                         return candidate
         if discovered:
-            path, info = self._select_most_likely(discovered, self)
+            info, path = self._select_most_likely(discovered, self)
             logging.debug(
                 "no exact match found, chosen most similar %s of %s within base folders %s",
                 path,

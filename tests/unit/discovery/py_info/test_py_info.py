@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import copy
 import itertools
 import json
 import logging
@@ -173,6 +174,38 @@ PyInfoMock = namedtuple("PyInfoMock", ["implementation", "architecture", "versio
         ),
     ],
 )
-def test_select_refused(target, discovered, position):
-    selected = discovered[position]
-    assert selected == PythonInfo._select_most_likely(discovered, target)
+def test_system_executable_no_exact_match(target, discovered, position, tmp_path, mocker, caplog):
+    """Here we should fallback to other compatible"""
+
+    def _make_py_info(of):
+        base = copy.deepcopy(CURRENT)
+        base.implementation = of.implementation
+        base.version_info = of.version_info
+        base.architecture = of.architecture
+        return base
+
+    discovered_with_path = {}
+    names = []
+    selected = None
+    for pos, i in enumerate(discovered):
+        path = tmp_path / str(pos)
+        path.write_text("")
+        py_info = _make_py_info(i)
+        if pos == position:
+            selected = py_info
+        discovered_with_path[str(path)] = py_info
+        names.append(path.name)
+
+    target_py_info = _make_py_info(target)
+    mocker.patch.object(target_py_info, "_find_possible_exe_names", return_value=names)
+    mocker.patch.object(target_py_info, "_find_possible_folders", return_value=[str(tmp_path)])
+    mocker.patch.object(target_py_info, "from_exe", side_effect=lambda k: discovered_with_path[k])
+    target_py_info._system_executable = None
+    target_py_info.real_prefix = str(tmp_path)
+
+    path = target_py_info.system_executable
+
+    found = discovered_with_path[path]
+    assert found is selected
+
+    assert caplog.text
