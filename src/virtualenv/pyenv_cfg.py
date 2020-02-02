@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
+from collections import OrderedDict
 
 import six
 
@@ -16,12 +17,12 @@ class PyEnvCfg(object):
 
     @classmethod
     def from_file(cls, path):
-        content = cls._read_values(path) if path.exists() else {}
+        content = cls._read_values(path) if path.exists() else OrderedDict()
         return PyEnvCfg(content, path)
 
     @staticmethod
     def _read_values(path):
-        content = {}
+        content = OrderedDict()
         for line in path.read_text(encoding="utf-8").splitlines():
             equals_at = line.index("=")
             key = line[:equals_at].strip()
