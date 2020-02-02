@@ -77,6 +77,11 @@ Other Documentation and Links
   .. __: https://doughellmann.com/blog/2008/05/01/virtualenvwrapper/
   .. __: https://doughellmann.com/blog/2008/02/01/ipython-and-virtualenv/
 
+* Allison Kaptur's 2013 blog post: `There's no magic: virtualenv edition
+  <https://www.recurse.com/blog/14-there-is-no-magic-virtualenv-edition>`_
+  explains how virtualenv uses bash and Python and PATH and PYTHONHOME
+  to isolate virtual environments' paths.
+
 * `Pew`_ is another wrapper for virtualenv that makes use of a different
   activation technique.
 
