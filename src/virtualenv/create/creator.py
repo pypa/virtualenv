@@ -32,7 +32,6 @@ class Creator(object):
         self.interpreter = interpreter
         self._debug = None
         self.dest = Path(options.dest)
-        self.enable_system_site_package = options.system_site
         self.clear = options.clear
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest)
 
@@ -45,7 +44,6 @@ class Creator(object):
     def _args(self):
         return [
             ("dest", six.ensure_text(str(self.dest))),
-            ("global", self.enable_system_site_package),
             ("clear", self.clear),
         ]
 
@@ -58,15 +56,8 @@ class Creator(object):
             "--clear",
             dest="clear",
             action="store_true",
-            help="clear out the non-root install and start from scratch",
+            help="remove the destination directory if exist before starting (will overwrite files otherwise)",
             default=False,
-        )
-        parser.add_argument(
-            "--system-site-packages",
-            default=False,
-            action="store_true",
-            dest="system_site",
-            help="give the virtual environment access to the system site-packages dir",
         )
 
     @classmethod
@@ -151,13 +142,11 @@ class Creator(object):
         return True
 
     def set_pyenv_cfg(self):
-        self.pyenv_cfg.content = {
-            "home": self.interpreter.system_exec_prefix,
-            "include-system-site-packages": "true" if self.enable_system_site_package else "false",
-            "implementation": self.interpreter.implementation,
-            "version_info": ".".join(str(i) for i in self.interpreter.version_info),
-            "virtualenv": __version__,
-        }
+        self.pyenv_cfg.content = OrderedDict()
+        self.pyenv_cfg["home"] = self.interpreter.system_exec_prefix
+        self.pyenv_cfg["implementation"] = self.interpreter.implementation
+        self.pyenv_cfg["version_info"] = ".".join(str(i) for i in self.interpreter.version_info)
+        self.pyenv_cfg["virtualenv"] = __version__
 
     @property
     def debug(self):
