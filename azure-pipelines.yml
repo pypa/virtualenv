@@ -56,7 +56,7 @@ jobs:
         image: [linux, windows]
       docs:
         image: [linux, windows]
-      package_readme:
+      readme:
         image: [linux, windows]
       upgrade:
         image: [linux, windows]
@@ -100,4 +100,4 @@ jobs:
     parameters:
       external_feed: 'gb'
       pypi_remote: 'pypi-gb'
-      dependsOn: [fix_lint, embed, docs, report_coverage, dev, package_readme]
+      dependsOn: [fix_lint, embed, docs, report_coverage, dev, readme]
