@@ -1,10 +1,17 @@
 [build-system]
 requires = [
-    "setuptools >= 40.0.0",
-    "wheel >= 0.29.0",
-    "setuptools-scm >= 2, < 4",
+    "setuptools >= 41.0.0",
+    "wheel >= 0.30.0",
+    "setuptools_scm[toml]>=3.4",
 ]
 build-backend = 'setuptools.build_meta'
+
+[tool.setuptools_scm]
+write_to = "src/virtualenv/version.py"
+write_to_template = """
+\"\"\" Version information \"\"\"
+__version__ = "{version}"
+"""
 
 [tool.black]
 line-length = 120
