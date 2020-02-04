@@ -1,0 +1,65 @@
+.wy-nav-content {
+    max-width: 51.5em;
+    padding: 1em;
+}
+
+#virtualenv img {
+    margin-bottom: 6px;
+}
+
+/* override table width restrictions */
+.wy-table-responsive table th, .wy-table-responsive table td {
+    /* !important prevents the common CSS stylesheets from
+       overriding this as on RTD they are loaded after this stylesheet */
+    white-space: normal !important;
+    padding: 6px !important;
+}
+
+.wy-table-responsive {
+    overflow: visible !important;
+}
+
+.rst-content table.docutils td ol {
+    margin-bottom: 0;
+}
+
+.rst-content table.docutils td ul {
+    margin-bottom: 0;
+}
+
+.rst-content table.docutils td p {
+    margin-bottom: 0;
+}
+
+div[class*="highlight-"] {
+    margin-bottom: 12px;
+}
+
+table {
+    margin-left: 20px !important;
+}
+
+#release-history p {
+    margin-bottom: 0;
+    margin-top: 0;
+}
+
+#release-history h3 {
+    margin-bottom: 6px;
+}
+
+#release-history ul {
+    margin-bottom: 12px;
+}
+
+#release-history ul ul {
+    margin-bottom: 0;
+}
+
+#release-history h2 {
+    margin-bottom: 12px;
+}
+
+.rst-content code {
+    padding: 2px;
+}

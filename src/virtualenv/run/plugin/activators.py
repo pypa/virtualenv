@@ -13,11 +13,11 @@ class ActivationSelector(ComponentBuilder):
             (k, v) for k, v in self.options("virtualenv.activate").items() if v.supports(interpreter)
         )
         super(ActivationSelector, self).__init__(interpreter, parser, "activators", possible)
+        self.parser.description = "options for activation scripts"
         self.active = None
 
     def add_selector_arg_parse(self, name, choices):
         self.default = ",".join(choices)
-
         self.parser.add_argument(
             "--{}".format(name),
             default=self.default,

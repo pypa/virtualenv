@@ -12,20 +12,19 @@ class SeederSelector(ComponentBuilder):
         self.parser.add_argument(
             "--{}".format(name),
             choices=choices,
-            default="app-data",
+            default=self._get_default(),
             required=False,
             help="seed packages install method",
         )
         self.parser.add_argument(
-            "--without-pip",
-            help="if set forces the none seeder, used for compatibility with venv",
-            action="store_true",
-            dest="without_pip",
+            "--no-seed", "--without-pip", help="do not install seed packages", action="store_true", dest="no_seed",
         )
 
+    @staticmethod
+    def _get_default():
+        return "app-data"
+
     def handle_selected_arg_parse(self, options):
-        if options.without_pip is True:
-            setattr(options, self.name, "none")
         return super(SeederSelector, self).handle_selected_arg_parse(options)
 
     def create(self, options):

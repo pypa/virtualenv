@@ -40,17 +40,23 @@ class CreatorSelector(ComponentBuilder):
     def add_selector_arg_parse(self, name, choices):
         # prefer the built-in venv if present, otherwise fallback to first defined type
         choices = sorted(choices, key=lambda a: 0 if a == "builtin" else 1)
+        default_value = self._get_default(choices)
         self.parser.add_argument(
             "--{}".format(name),
             choices=choices,
-            default=next(iter(choices)),
+            default=default_value,
             required=False,
             help="create environment via{}".format(
                 "" if self.builtin_key is None else " (builtin = {})".format(self.builtin_key)
             ),
         )
 
+    @staticmethod
+    def _get_default(choices):
+        return next(iter(choices))
+
     def populate_selected_argparse(self, selected):
+        self.parser.description = "options for {} {}".format(self.name, selected)
         self._impl_class.add_parser_arguments(self.parser, self.interpreter, self.key_to_meta[selected])
 
     def create(self, options):

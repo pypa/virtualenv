@@ -1,31 +1,36 @@
-{% for section, _ in sections.items() %}
-{% set underline = underlines[0] %}
-{% if section %}
-{{section}}
-{{ underline * section|length }}
-{% set underline = underlines[1] %}
+{% set top_underline = underlines[0] %}
+{% if versiondata.name %}
+v{{ versiondata.version }} ({{ versiondata.date }})
+{{ top_underline * ((versiondata.version + versiondata.date)|length + 4)}}
+{% else %}
+{{ versiondata.version }} ({{ versiondata.date }})
+{{ top_underline * ((versiondata.version + versiondata.date)|length + 3)}}
 {% endif %}
 
+{% for section, _ in sections.items() %}
+{% set underline = underlines[1] %}
 {% if sections[section] %}
-{% for category, val in definitions.items() if category in sections[section] %}
-{{ definitions[category]['name'] }}
-{{ underline * definitions[category]['name']|length }}
+{% for category, val in definitions.items() if category in sections[section]%}
+{{ definitions[category]['name'] }} - {{ versiondata.version }}
+{{ underline * ((definitions[category]['name']  + versiondata.version)|length + 3)}}
 {% if definitions[category]['showcontent'] %}
-
 {% for text, values in sections[section][category].items() %}
 - {{ text }} ({{ values|join(', ') }})
 {% endfor %}
 
 {% else %}
 - {{ sections[section][category]['']|join(', ') }}
-{% endif %}
 
+{% endif %}
 {% if sections[section][category]|length == 0 %}
 No significant changes.
-{% endif %}
-{% endfor %}
 
 {% else %}
+{% endif %}
+{% endfor %}
+{% else %}
 No significant changes.
+
+
 {% endif %}
 {% endfor %}

@@ -15,7 +15,7 @@ from .py_spec import PythonSpec
 
 class Builtin(Discover):
     def __init__(self, options):
-        super(Builtin, self).__init__()
+        super(Builtin, self).__init__(options)
         self.python_spec = options.python
 
     @classmethod

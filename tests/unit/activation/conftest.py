@@ -207,7 +207,7 @@ def raise_on_non_source_class():
 @pytest.fixture(scope="session")
 def activation_python(tmp_path_factory, special_char_name, current_fastest):
     dest = os.path.join(six.ensure_text(str(tmp_path_factory.mktemp("activation-tester-env"))), special_char_name)
-    session = run_via_cli(["--seed", "none", dest, "--prompt", special_char_name, "--creator", current_fastest, "-vv"])
+    session = run_via_cli(["--without-pip", dest, "--prompt", special_char_name, "--creator", current_fastest, "-vv"])
     pydoc_test = session.creator.purelib / "pydoc_test.py"
     pydoc_test.write_text('"""This is pydoc_test.py"""')
     yield session

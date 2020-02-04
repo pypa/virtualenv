@@ -9,10 +9,12 @@ class Discovery(PluginLoader):
 
 def get_discover(parser, args, options):
     discover_types = Discovery.entry_points_for("virtualenv.discovery")
-    discovery_parser = parser.add_argument_group("target interpreter identifier")
+    discovery_parser = parser.add_argument_group(
+        title="discovery", description="discover and provide a target interpreter"
+    )
     discovery_parser.add_argument(
         "--discovery",
-        choices=list(discover_types.keys()),
+        choices=_get_default_discovery(discover_types),
         default=next(i for i in discover_types.keys()),
         required=False,
         help="interpreter discovery method",
@@ -23,3 +25,7 @@ def get_discover(parser, args, options):
     options, _ = parser.parse_known_args(args, namespace=options)
     discover = discover_class(options)
     return discover
+
+
+def _get_default_discovery(discover_types):
+    return list(discover_types.keys())

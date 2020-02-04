@@ -14,7 +14,7 @@ class BaseEmbed(Seeder):
     packages = ["pip", "setuptools", "wheel"]
 
     def __init__(self, options):
-        super(BaseEmbed, self).__init__(options, enabled=options.without_pip is False)
+        super(BaseEmbed, self).__init__(options, enabled=options.no_seed is False)
 
         self.download = options.download
         self.extra_search_dir = [i.resolve() for i in options.extra_search_dir if i.exists()]
@@ -41,7 +41,7 @@ class BaseEmbed(Seeder):
             "--download",
             dest="download",
             action="store_true",
-            help="download latest {} from PyPI".format("/".join(cls.packages)),
+            help="pass to enable download of the latest {} from PyPI".format("/".join(cls.packages)),
             default=False,
         )
         group.add_argument(
@@ -49,7 +49,7 @@ class BaseEmbed(Seeder):
             "--never-download",
             dest="download",
             action="store_false",
-            help="download latest {} from PyPI".format("/".join(cls.packages)),
+            help="pass to disable download of the latest {} from PyPI".format("/".join(cls.packages)),
             default=True,
         )
         parser.add_argument(
@@ -57,7 +57,7 @@ class BaseEmbed(Seeder):
             metavar="d",
             type=Path,
             nargs="+",
-            help="a location containing wheels candidates to install from",
+            help="a path containing wheels the seeder may also use beside bundled (can be set 1+ times)",
             default=[],
         )
         for package in cls.packages:

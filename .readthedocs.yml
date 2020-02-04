@@ -1,0 +1,18 @@
+version: 2
+build:
+  image: latest
+formats:
+  - htmlzip
+  - epub
+  - pdf
+python:
+   version: 3.7
+   install:
+      - method: pip
+        path: .
+        extra_requirements:
+            - docs
+sphinx:
+  builder: html
+  configuration: docs/conf.py
+  fail_on_warning: true

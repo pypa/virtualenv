@@ -1,74 +1,87 @@
-from __future__ import absolute_import, unicode_literals
-
-import os
-import re
 import subprocess
 import sys
+from datetime import date, datetime
 from pathlib import Path
 
-from virtualenv import __version__
+import sphinx_rtd_theme
 
-extensions = ["sphinx.ext.autodoc", "sphinx.ext.extlinks"]
-source_suffix = ".rst"
-master_doc = "index"
-project = "virtualenv"
-# noinspection PyShadowingBuiltins
-copyright = "2007-2018, Ian Bicking, The Open Planning Project, PyPA"
+from virtualenv.version import __version__
 
-ROOT_SRC_TREE_DIR = Path(__file__).parents[1]
-
-
-def generate_draft_news():
-    home = "https://github.com"
-    issue = "{}/issue".format(home)
-    fragments_path = ROOT_SRC_TREE_DIR / "docs" / "changelog"
-    for pattern, replacement in (
-        (r"[^`]@([^,\s]+)", r"`@\1 <{}/\1>`_".format(home)),
-        (r"[^`]#([\d]+)", r"`#pr\1 <{}/\1>`_".format(issue)),
-    ):
-        for path in fragments_path.glob("*.rst"):
-            path.write_text(re.sub(pattern, replacement, path.read_text()))
-    env = os.environ.copy()
-    env["PATH"] += os.pathsep.join([os.path.dirname(sys.executable)] + env["PATH"].split(os.pathsep))
-    changelog = subprocess.check_output(
-        ["towncrier", "--draft", "--version", "DRAFT"], cwd=str(ROOT_SRC_TREE_DIR), env=env, universal_newlines=True
-    )
-    if "No significant changes" in changelog:
-        content = ""
-    else:
-        note = "*Changes in master, but not released yet are under the draft section*."
-        content = "{}\n\n{}".format(note, changelog)
-    (ROOT_SRC_TREE_DIR / "docs" / "_draft.rst").write_text(content)
-
-
-generate_draft_news()
-
+company = "PyPA"
+name = "virtualenv"
 version = ".".join(__version__.split(".")[:2])
 release = __version__
+copyright = f"2007-{date.today().year}, {company}, PyPA"
 
-today_fmt = "%B %d, %Y"
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosectionlabel",
+    "sphinx.ext.extlinks",
+]
+
+templates_path = []
 unused_docs = []
-pygments_style = "sphinx"
-exclude_patterns = ["changelog/*"]
+source_suffix = ".rst"
+exclude_patterns = ["_build", "changelog/*", "_draft.rst"]
+
+master_doc = "index"
+pygments_style = "default"
+always_document_param_types = True
+project = name
+today_fmt = "%B %d, %Y"
+
+html_theme = "sphinx_rtd_theme"
+html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_theme_options = {
+    "canonical_url": "https://virtualenv.pypa.io/",
+    "logo_only": False,
+    "display_version": True,
+    "prev_next_buttons_location": "bottom",
+    "collapse_navigation": False,
+    "sticky_navigation": True,
+    "navigation_depth": 6,
+    "includehidden": True,
+}
+html_static_path = ["_static"]
+html_last_updated_fmt = datetime.now().isoformat()
+htmlhelp_basename = "Pastedoc"
+autoclass_content = "both"  # Include __init__ in class documentation
+autodoc_member_order = "bysource"
+autosectionlabel_prefix_document = True
 
 extlinks = {
     "issue": ("https://github.com/pypa/virtualenv/issues/%s", "#"),
     "pull": ("https://github.com/pypa/virtualenv/pull/%s", "PR #"),
+    "user": ("https://github.com/%s", "@"),
+    "pypi": ("https://pypi.org/project/%s", ""),
 }
 
-html_theme = "sphinx_rtd_theme"
-html_theme_options = {
-    "canonical_url": "https://virtualenv.pypa.io/en/latest/",
-    "logo_only": False,
-    "display_version": True,
-    "prev_next_buttons_location": "bottom",
-    "style_external_links": True,
-    # Toc options
-    "collapse_navigation": True,
-    "sticky_navigation": True,
-    "navigation_depth": 4,
-    "includehidden": True,
-    "titles_only": False,
-}
-html_last_updated_fmt = "%b %d, %Y"
-htmlhelp_basename = "Pastedoc"
+
+def generate_draft_news():
+    root = Path(__file__).parents[1]
+    exe = Path(sys.executable)
+    towncrier = exe.with_name("towncrier{}".format(exe.suffix))
+    new = subprocess.check_output([str(towncrier), "--draft", "--version", "NEXT"], cwd=root, universal_newlines=True)
+    (root / "docs" / "_draft.rst").write_text("" if "No significant changes" in new else new)
+
+
+generate_draft_news()
+
+
+def setup(app):
+    # the CLI arguments are dynamically generated
+    doc_tree = Path(app.doctreedir)
+    cli_interface_doctree = doc_tree / "cli_interface.doctree"
+    if cli_interface_doctree.exists():
+        cli_interface_doctree.unlink()
+
+    HERE = Path(__file__).parent
+    if str(HERE) not in sys.path:
+        sys.path.append(str(HERE))
+
+    # noinspection PyUnresolvedReferences
+    from render_cli import CliTable, literal_data
+
+    app.add_css_file("custom.css")
+    app.add_directive(CliTable.name, CliTable)
+    app.add_role("literal_data", literal_data)

@@ -28,7 +28,14 @@ DEBUG_SCRIPT = HERE / "debug.py"
 
 @add_metaclass(ABCMeta)
 class Creator(object):
+    """A class that given a python Interpreter creates a virtual environment"""
+
     def __init__(self, options, interpreter):
+        """Construct a new virtual environment creator.
+
+        :param options: the CLI option as parsed from :meth:`add_parser_arguments`
+        :param interpreter: the interpreter to create virtual environment from
+        """
         self.interpreter = interpreter
         self._debug = None
         self.dest = Path(options.dest)
@@ -48,7 +55,23 @@ class Creator(object):
         ]
 
     @classmethod
+    def can_create(cls, interpreter):
+        """Determine if we can create a virtual environment.
+
+        :param interpreter: the interpreter in question
+        :return: ``None`` if we can't create, any other object otherwise that will be forwarded to \
+                  :meth:`add_parser_arguments`
+        """
+        return True
+
+    @classmethod
     def add_parser_arguments(cls, parser, interpreter, meta):
+        """Add CLI arguments for the creator.
+
+        :param parser: the CLI parser
+        :param interpreter: the interpreter we're asked to create virtual environment for
+        :param meta: value as returned by :meth:`can_create`
+        """
         parser.add_argument(
             "dest", help="directory to create virtualenv at", type=cls.validate_dest, default="venv", nargs="?",
         )
@@ -59,6 +82,11 @@ class Creator(object):
             help="remove the destination directory if exist before starting (will overwrite files otherwise)",
             default=False,
         )
+
+    @abstractmethod
+    def create(self):
+        """Perform the virtual environment creation."""
+        raise NotImplementedError
 
     @classmethod
     def validate_dest(cls, raw_value):
@@ -132,15 +160,6 @@ class Creator(object):
         self.create()
         self.set_pyenv_cfg()
 
-    @abstractmethod
-    def create(self):
-        raise NotImplementedError
-
-    @classmethod
-    def can_create(cls, interpreter):
-        """Default is that we can"""
-        return True
-
     def set_pyenv_cfg(self):
         self.pyenv_cfg.content = OrderedDict()
         self.pyenv_cfg["home"] = self.interpreter.system_exec_prefix
@@ -150,6 +169,9 @@ class Creator(object):
 
     @property
     def debug(self):
+        """
+        :return: debug information about the virtual environment (only valid after :meth:`create` has run)
+        """
         if self._debug is None and self.exe is not None:
             self._debug = get_env_debug_info(self.exe, self.debug_script())
         return self._debug
