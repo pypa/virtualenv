@@ -30,7 +30,7 @@ class FromAppData(BaseEmbed):
             "--clear-app-data",
             dest="clear_app_data",
             action="store_true",
-            help="clear the app data folder of seed images {}".format(default_data_dir() / "seed-v1"),
+            help="clear the app data folder of seed images ({})".format((default_data_dir() / "seed-v1").path),
             default=False,
         )
 

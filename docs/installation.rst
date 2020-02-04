@@ -10,8 +10,8 @@ benefit that later you'll be able to upgrade virtualenv without affecting other 
 
 .. code-block:: console
 
-    $ pipx install virtualenv
-    $ virtualenv --help
+    pipx install virtualenv
+    virtualenv --help
 
 via pip
 -------
@@ -22,8 +22,8 @@ inconsistent state.
 
 .. code-block:: console
 
-    $ python -m pip --user install virtualenv
-    $ python -m virtualenv --help
+    python -m pip --user install virtualenv
+    python -m virtualenv --help
 
 via zipapp
 ----------
@@ -35,7 +35,7 @@ with a python interpreter:
 
 .. code-block:: console
 
-    $ python virtualenv.pyz --help
+    python virtualenv.pyz --help
 
 The root level zipapp is always the current latest release. To get the last supported zipapp against a given python
 minor release use the link ``https://bootstrap.pypa.io/x.y/virtualenv.pyz``, e.g. for the last virtualenv supporting

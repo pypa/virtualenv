@@ -1,6 +1,10 @@
 .wy-nav-content {
-    max-width: none;
+    max-width: 51.5em;
     padding: 1em;
+}
+
+#virtualenv img {
+    margin-bottom: 6px;
 }
 
 /* override table width restrictions */
@@ -8,6 +12,7 @@
     /* !important prevents the common CSS stylesheets from
        overriding this as on RTD they are loaded after this stylesheet */
     white-space: normal !important;
+    padding: 6px !important;
 }
 
 .wy-table-responsive {

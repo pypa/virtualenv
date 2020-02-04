@@ -21,7 +21,7 @@ virtualenv is a command line application written in Python, as such you'll need:
   .. code-block:: console
 
       git clone https://github.com/pypa/virtualenv
-      cd pip
+      cd virtualenv
 - a **Python interpreter** is needed, we recommend using ``CPython``, you can use
   `this guide <https://realpython.com/installing-python/>`_ to do that
 - to automatically get the projects development dependencies and run the test suite you can use the :pypi:`tox` tool,
@@ -112,8 +112,8 @@ Submitting pull requests
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
 Submit pull requests against the ``master`` branch, providing a good description of what you're doing and why. You must
-have legal permission to distribute any code you contribute to pip and it must be available under the MIT License.
-Provide tests that cover your changes and run the tests locally first. virtualenv
+have legal permission to distribute any code you contribute to virtualenv and it must be available under the MIT
+License. Provide tests that cover your changes and run the tests locally first. virtualenv
 :ref:`supports <compatibility-requirements>` multiple Python versions and operating systems. Any pull request must
 consider and work on all these platforms.
 

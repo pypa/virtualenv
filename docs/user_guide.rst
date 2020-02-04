@@ -88,10 +88,12 @@ format is either:
    all the data from the system Python. The version of the python executable is hardcoded within the python exe itself.
    Therefore if you upgrade your system Python, your virtual environment will still report the version before the
    upgrade, even though now other than the executable all additional content (standard library, binary libs, etc) are
-   of the new version. Baring any major incompatibilities (rarely the case) the virtual environment will continue
-   working, but other than the content embedded within the python executable it will behave like the upgraded version.
-   If a such virtual environment python is specified as the target python interpreter, we will create virtual
-   environments that match the new system Python version, not the version reported by the virtual environment.
+   of the new version.
+
+   Baring any major incompatibilities (rarely the case) the virtual environment will continue working, but other than
+   the content embedded within the python executable it will behave like the upgraded version. If a such virtual
+   environment python is specified as the target python interpreter, we will create virtual environments that match the
+   new system Python version, not the version reported by the virtual environment.
 
 Creators
 --------
@@ -161,9 +163,10 @@ also provisions a ``decativate`` command that will allow you to undo the operati
     If using Powershell, the ``activate`` script is subject to the
     `execution policies <http://technet.microsoft.com/en-us/library/dd347641.aspx>`_ on the system. By default Windows
     7 and later, the system's execution policy is set to ``Restricted``, meaning no scripts like the ``activate`` script
-    are allowed to be executed. But that can't stop us from changing that slightly to allow it to be executed. You may
-    relax the system execution policy to allow running of local scripts without verifying the code signature using the
-    following:
+    are allowed to be executed.
+
+    However, that can't stop us from changing that slightly to allow it to be executed. You may relax the system
+    execution policy to allow running of local scripts without verifying the code signature using the following:
 
     .. code-block:: powershell
 

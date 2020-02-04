@@ -166,7 +166,7 @@ class CliTable(SphinxDirective):
     @staticmethod
     def _get_help_text(row):
         name = row.names[0]
-        if name == "--creator":
+        if name in ("--creator", "--clear-app-data"):
             content = row.help[: row.help.index("(") - 1]
         else:
             content = row.help
