@@ -53,14 +53,14 @@ libraries either).
 Useful links
 ------------
 
-**Related projects, abstsractions on top of it**
+**Related projects, that build abstractions on top of virtualenv**
 
-* :pypi:`virtualenvwrapper` is a useful set of scripts to make your workflow with many virtualenv even easier
-* :pypi:`pew` is another wrapper for virtualenv that makes use of a different activation technique
-* :pypi:`tox` - integrates setting up and running tests within virtual environments driven by a ``tox.ini``
+* :pypi:`virtualenvwrapper` - a useful set of scripts for creating and deleting virtual environments
+* :pypi:`pew` - provides a set of commands to manage multiple virtual environments
+* :pypi:`tox` - a generic virtualenv management and test automation command line tool, driven by a ``tox.ini``
   configuration file
-* :pypi:`nox` - integrates setting up and running tests within virtual environments driven by a ``nox.py``
-  python file
+* :pypi:`nox` - a tool that automates testing in multiple Python environments, similar to tox,
+  driven by a ``noxfile.py`` configuration file
 
 **Tutorials**
 
