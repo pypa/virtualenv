@@ -1,1 +1,0 @@
-Project readme is now of type MarkDown instead of reStructuredText - by :user:`gaborbernat`.

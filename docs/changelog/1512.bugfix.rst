@@ -1,2 +1,0 @@
-Fixed cannot discover a python interpreter that has already been discovered under a different path (such is the case
-when we have multiple symlinks to the same interpreter) - by :user:`gaborbernat`.

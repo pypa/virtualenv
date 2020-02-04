@@ -1,2 +1,0 @@
-Fix prompt not displayed correctly with upcoming fish 3.10 due to us not preserving ``$pipestatus`` - by
-:user:`krobelus`.

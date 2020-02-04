@@ -1,2 +1,0 @@
-Stable order within ``pyenv.cfg`` and add ``include-system-site-packages`` only for creators that reference a global
-Python - by user:`gaborbernat`.

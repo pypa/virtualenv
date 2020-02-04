@@ -1,1 +1,0 @@
-Creating virtual environments in parallel fail with cannot acquire lock within app data - by :user:`gaborbernat`.

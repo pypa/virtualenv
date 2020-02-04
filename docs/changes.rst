@@ -5,6 +5,56 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.0b2 (2020-02-04)
+----------------------
+
+Features - 20.0.0b2
+~~~~~~~~~~~~~~~~~~~
+- Improve base executable discovery mechanism:
+
+  - print at debug level why we refuse some candidates,
+  - when no candidates match exactly, instead of hard failing fallback to the closest match where the priority of
+    matching attributes is: python implementation, major version, minor version, architecture, patch version,
+    release level and serial (this is to facilitate things to still work when the OS upgrade replace/upgrades the system
+    python with a never version, than what the virtualenv host python was created with),
+  - always resolve system_executable information during the interpreter discovery, and the discovered environment is the
+    system interpreter instead of the venv/virtualenv (this happened before lazily the first time we accessed, and caused
+    reporting that the created virtual environment is of type of the virtualenv host python version, instead of the
+    system pythons version - these two can differ if the OS upgraded the system python underneath and the virtualenv
+    host was created via copy),
+
+  by :user:`gaborbernat`. (`#1515 <https://github.com/pypa/virtualenv/issues/1515>`_)
+- Generate ``bash`` and ``fish`` activators on Windows too (as these can be available with git bash, cygwin or mysys2)
+  - by :user:`gaborbernat`. (`#1527 <https://github.com/pypa/virtualenv/issues/1527>`_)
+- Upgrade the bundled ``wheel`` package from ``0.34.0`` to ``0.34.2`` - by :user:`gaborbernat`. (`#1531 <https://github.com/pypa/virtualenv/issues/1531>`_)
+
+Bugfixes - 20.0.0b2
+~~~~~~~~~~~~~~~~~~~
+- Bash activation script should have no extensions instead of ``.sh`` (this fixes the :pypi:`virtualenvwrapper`
+  integration) - by :user:`gaborbernat`. (`#1508 <https://github.com/pypa/virtualenv/issues/1508>`_)
+- Show less information when we run with a single verbosity (``-v``):
+
+  - no longer shows accepted interpreters information (as the last proposed one is always the accepted one),
+  - do not display the ``str_spec`` attribute for ``PythonSpec`` as these can be deduced from the other attributes,
+  - for the ``app-data`` seeder do not show the type of lock, only the path to the app data directory,
+
+  By :user:`gaborbernat`. (`#1510 <https://github.com/pypa/virtualenv/issues/1510>`_)
+- Fixed cannot discover a python interpreter that has already been discovered under a different path (such is the case
+  when we have multiple symlinks to the same interpreter) - by :user:`gaborbernat`. (`#1512 <https://github.com/pypa/virtualenv/issues/1512>`_)
+- Support relative paths for ``-p`` - by :user:`gaborbernat`. (`#1514 <https://github.com/pypa/virtualenv/issues/1514>`_)
+- Creating virtual environments in parallel fail with cannot acquire lock within app data - by :user:`gaborbernat`. (`#1516 <https://github.com/pypa/virtualenv/issues/1516>`_)
+- pth files were not processed under Debian CPython2 interpreters - by :user:`gaborbernat`. (`#1517 <https://github.com/pypa/virtualenv/issues/1517>`_)
+- Fix prompt not displayed correctly with upcoming fish 3.10 due to us not preserving ``$pipestatus`` - by
+  :user:`krobelus`. (`#1530 <https://github.com/pypa/virtualenv/issues/1530>`_)
+- Stable order within ``pyenv.cfg`` and add ``include-system-site-packages`` only for creators that reference a global
+  Python - by user:`gaborbernat`. (`#1535 <https://github.com/pypa/virtualenv/issues/1535>`_)
+
+Improved Documentation - 20.0.0b2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Create the first iteration of the new documentation - by :user:`gaborbernat`. (`#1465 <https://github.com/pypa/virtualenv/issues/1465>`_)
+- Project readme is now of type MarkDown instead of reStructuredText - by :user:`gaborbernat`. (`#1531 <https://github.com/pypa/virtualenv/issues/1531>`_)
+
+
 v20.0.0b1 (2020-01-28)
 ----------------------
 
