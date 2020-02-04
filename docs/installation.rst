@@ -15,6 +15,7 @@ benefit that later you'll be able to upgrade virtualenv without affecting other 
 
 via pip
 -------
+
 Alternatively you can install it within the global Python interpreter itself (perhaps as a user package via the
 ``--user`` flag). Be cautious if you are using a python install that is managed by your operating system or
 another package manager. ``pip`` might not coordinate with those tools, and may leave your system in an
