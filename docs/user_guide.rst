@@ -10,7 +10,7 @@ Virtualenv has one basic command:
 
     virtualenv
 
-this will create a python virtual environment of the same version as virtualenv is installed into under path
+This will create a python virtual environment of the same version as virtualenv is installed into under path
 ``venv``. The path where to generate the virtual environment can be changed via a positional argument being passed in,
 see the :option:`dest` flag. The command line tool has quite a few of flags that modify the components behaviour, for a
 full list make sure to check out :ref:`cli_flags`.
