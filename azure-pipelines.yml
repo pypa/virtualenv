@@ -52,8 +52,6 @@ jobs:
         image: [linux, windows, macOs]
       fix_lint:
         image: [linux, windows]
-      zipapp:
-        image: [linux, windows]
       docs:
         image: [linux, windows]
       readme:
@@ -61,6 +59,23 @@ jobs:
       upgrade:
         image: [linux, windows]
       dev: null
+      zipapp:
+        image: [linux, windows]
+        after:
+          - task: CopyFiles@2
+            displayName: move generated zipapp
+            condition: eq(variables['image_name'], 'linux')
+            inputs:
+              sourceFolder: $(System.DefaultWorkingDirectory)
+              contents: |
+                virtualenv.pyz
+              targetFolder: $(Build.StagingDirectory)
+          - task: PublishBuildArtifacts@1
+            displayName: publish zipapp
+            condition: eq(variables['image_name'], 'linux')
+            inputs:
+              pathtoPublish: $(Build.ArtifactStagingDirectory)
+              ArtifactName: virtualenv.pyz
     before:
       - script: 'sudo apt-get update -y && sudo apt-get install fish csh'
         condition: and(succeeded(), eq(variables['image_name'], 'linux'), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35', 'py27', 'pypy', 'pypy3'))
