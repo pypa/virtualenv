@@ -4,6 +4,7 @@ Development
 Getting started
 ---------------
 
+
 ``virtualenv`` is a volunteer maintained open source project and we welcome contributions of all forms. The sections
 below will help you get started with development, testing, and documentation. We’re pleased that you are interested in
 working on virtualenv. This document is meant to get you setup to work on virtualenv and to act as a guide and reference
@@ -13,19 +14,22 @@ the issue tracker.
 
 Setup
 ~~~~~
-virtualenv is a command line application written in Python, as such you'll need:
 
-- **the source code**  is available on `GitHub <https://github.com/pypa/pip>`_, so use some client to clone the
-  repository via:
+virtualenv is a command line application written in Python. To work on it, you'll need:
+
+- **Source code**: available on `GitHub <https://github.com/pypa/pip>`_. You can use ``git`` to clone the
+    repository:
 
   .. code-block:: console
 
       git clone https://github.com/pypa/virtualenv
       cd virtualenv
-- a **Python interpreter** is needed, we recommend using ``CPython``, you can use
-  `this guide <https://realpython.com/installing-python/>`_ to do that
-- to automatically get the projects development dependencies and run the test suite you can use the :pypi:`tox` tool,
-  we recommend using the `pipx <https://pipxproject.github.io/pipx/>`_ project to achieve this.
+
+- **Python interpreter**: We recommend using ``CPython``. You can use
+  `this guide <https://realpython.com/installing-python/>`_ to set it up.
+
+- To automatically get the projects development dependencies and run the test suite. You can use the :pypi:`tox` which
+  we recommend installing using `pipx <https://pipxproject.github.io/pipx/>`_.
 
 Running from source tree
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,8 +55,8 @@ To run tests locally execute:
 
     tox -e py
 
-This will run the test suite for the same Python version as under what ``tox`` is installed. Alternatively you can
-specify a specific version of python by using the ``pyxy`` format, such as: ``py38``, ``pypy3``, etc.
+This will run the test suite for the same Python version as under which ``tox`` is installed. Alternatively you can
+specify a specific version of python by using the ``pyNN`` format, such as: ``py38``, ``pypy3``, etc.
 
 ``tox`` has been configured to forward any additional arguments it is given to ``pytest``.
 This enables the use of pytest's
@@ -68,7 +72,7 @@ select tests using the various ways that pytest provides:
 
 Some tests require additional dependencies to be run, such is the various shell activators (``bash``, ``fish``,
 ``powershell``, etc). These tests will automatically be skipped if these are not present, note however that in CI
-all tests are run; so if all tests succeed locally it may still fail in the CI.
+all tests are run; so even if all tests succeed locally for you, they may still fail in the CI.
 
 Running linters
 ~~~~~~~~~~~~~~~
@@ -101,7 +105,8 @@ that folder.
 
 Release
 ~~~~~~~
-Virtualenv's release schedule is tied to ``pip``, ``setuptools`` and ``wheel``. We bundle the latest version of these
+
+virtualenv's release schedule is tied to ``pip``, ``setuptools`` and ``wheel``. We bundle the latest version of these
 libraries so each time there's a new version of any of these, there will be a new virtualenv release shortly afterwards
 (we usually wait just a few days to avoid pulling in any broken releases).
 
@@ -184,7 +189,6 @@ A trivial change is anything that does not warrant an entry in the news file. So
 don't change anything as far as the public is concerned, typo fixes, white space modification, etc. To mark a PR
 as trivial a contributor simply needs to add a randomly named, empty file to the ``news/`` directory with the extension
 of ``.trivial``.
-
 
 Becoming a maintainer
 ~~~~~~~~~~~~~~~~~~~~~
