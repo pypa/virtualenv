@@ -62,8 +62,8 @@ Each command line option has a corresponding environment variables with the name
 ``VIRTUALENV_<UPPER_NAME>``. The ``UPPER_NAME`` is the name of the command line options capitalized and
 dashes (``'-'``) replaced with underscores (``'_'``).
 
-For example, to use a custom Python binary, instead of the one virtualenv is run with, you can do set the
-environment variable ``VIRTUALENV_PYTHON`` like:
+For example, to use a custom Python binary, instead of the one virtualenv is run with, you can set the environment
+variable ``VIRTUALENV_PYTHON`` like:
 
 .. code-block:: console
 
