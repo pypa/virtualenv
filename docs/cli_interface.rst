@@ -9,12 +9,12 @@ CLI flags
 ``virtualenv`` is primarily a command line application.
 
 It modifies the environment variables in a shell to create an isolated Python environment, so you'll need to have a
-"shell" to run it. You can type in ``virtualenv`` (name of the application) followed by flags that control its
+shell to run it. You can type in ``virtualenv`` (name of the application) followed by flags that control its
 behaviour. All options have sensible defaults, so you'll get a working virtual environment in a ``venv`` folder even
-if you don't pass any options. The default values for the command line options can be overridden either via the
+if you don't pass any options. The default values for the command line options can be overridden via the
 :ref:`conf_file` or :ref:`env_vars`. Environment variables takes priority over the configuration file values
 (``--help`` will show if a default comes from the environment variable as the help message will end in this case
-either with ``via env var`` or ``via config file``).
+with environment variables or the configuration file).
 
 The options that can be passed to virtualenv, along with their default values and a short description are listed below.
 
