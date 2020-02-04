@@ -28,8 +28,8 @@ virtualenv is a command line application written in Python. To work on it, you'l
 - **Python interpreter**: We recommend using ``CPython``. You can use
   `this guide <https://realpython.com/installing-python/>`_ to set it up.
 
-- To automatically get the projects development dependencies and run the test suite. You can use the :pypi:`tox` which
-  we recommend installing using `pipx <https://pipxproject.github.io/pipx/>`_.
+- :pypi:`tox`: to automatically get the projects development dependencies and run the test suite. We recommend
+  installing it using `pipx <https://pipxproject.github.io/pipx/>`_.
 
 Running from source tree
 ~~~~~~~~~~~~~~~~~~~~~~~~
