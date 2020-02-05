@@ -42,10 +42,10 @@ python ``3.8``, virtualenv will by default create virtual environments that are 
 
 Created python virtual environments are usually not self-contained. A complete python packaging is usually made up of
 thousand of files, so it's not efficient to install the entire python again into a new folder. Instead virtual
-environments are mere shells, that contain very little within itself, and borrow most from the system python (this is
-what you installed, when you installed python itself). This does mean that if you upgrade your system python your
-virtual environments *might* break, so watch out. The upside of this referring to the system python is that creating
-virtual environments can be very fast.
+environments are mere shells, that contain little within itself, and borrow most from the system python (this is what
+you installed, when you installed python itself). This does mean that if you upgrade your system python your virtual
+environments *might* break, so watch out. The upside of this referring to the system python is that creating virtual
+environments can be fast.
 
 Here we'll describe the builtin mechanism (note this can be extended though by plugins). The CLI flag :option:`p` or
 :option:`python` allows you to specify a python specifier for what type of virtual environment you would like, the

@@ -17,7 +17,7 @@ Setup
 
 virtualenv is a command line application written in Python. To work on it, you'll need:
 
-- **Source code**: available on `GitHub <https://github.com/pypa/pip>`_. You can use ``git`` to clone the
+- **Source code**: available on `GitHub <https://github.com/pypa/virtualenv>`_. You can use ``git`` to clone the
     repository:
 
   .. code-block:: console
@@ -122,12 +122,11 @@ License. Provide tests that cover your changes and run the tests locally first. 
 :ref:`supports <compatibility-requirements>` multiple Python versions and operating systems. Any pull request must
 consider and work on all these platforms.
 
-Pull Requests should be small to facilitate easier review. Keep them self-contained, and limited in scope.
-`Studies have shown <https://www.kessler.de/prd/smartbear/BestPracticesForPeerCodeReview.pdf>`_ that review quality
-falls off as patch size grows. Sometimes this will result in many small PRs to land a single large feature. In
-particular, pull requests must not be treated as "feature branches", with ongoing development work happening within the
-PR. Instead, the feature should be broken up into smaller, independent parts which can be reviewed and merged
-individually.
+Pull Requests should be small to facilitate review. Keep them self-contained, and limited in scope. `Studies have shown
+<https://www.kessler.de/prd/smartbear/BestPracticesForPeerCodeReview.pdf>`_ that review quality falls off as patch size
+grows. Sometimes this will result in many small PRs to land a single large feature. In particular, pull requests must
+not be treated as "feature branches", with ongoing development work happening within the PR. Instead, the feature should
+be broken up into smaller, independent parts which can be reviewed and merged individually.
 
 Additionally, avoid including "cosmetic" changes to code that is unrelated to your change, as these make reviewing the
 PR more difficult. Examples include re-flowing text in comments or documentation, or addition or removal of blank lines
@@ -149,7 +148,7 @@ NEWS entries
 ~~~~~~~~~~~~
 
 The ``changes.rst`` file is managed using :pypi:`towncrier` and all non trivial changes must be accompanied by a news
-entry.  To add an entry to the news file, first you need to have created an issue describing the change you want to
+entry. To add an entry to the news file, first you need to have created an issue describing the change you want to
 make. A Pull Request itself *may* function as such, but it is preferred to have a dedicated issue (for example, in case
 the PR ends up rejected due to code quality reasons).
 
@@ -166,7 +165,7 @@ Thus if your issue or PR number is ``1234`` and this change is fixing a bug, the
 ``docs/changelog/1234.bugfix.rst``. PRs can span multiple categories by creating multiple files (for instance, if you
 added a feature and deprecated/removed the old feature at the same time, you would create
 ``docs/changelog/1234.bugfix.rst`` and ``docs/changelog/1234.remove.rst``). Likewise if a PR touches multiple issues/PRs
-you may create a file for each of them with the exact same contents and :pypi:`towncrier` will deduplicate them.
+you may create a file for each of them with the same contents and :pypi:`towncrier` will deduplicate them.
 
 Contents of a NEWS entry
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -177,7 +176,7 @@ the affected issues when rendering the news file.
 
 In order to maintain a consistent style in the ``changes.rst`` file, it is preferred to keep the news entry to the
 point, in sentence case, shorter than 120 characters and in an imperative tone -- an entry should complete the sentence
-``This change will ...``. In rare cases, where one line is not enough, use a summary line in an imperative tone followed
+``This change will …``. In rare cases, where one line is not enough, use a summary line in an imperative tone followed
 by a blank line separating it from a description of the feature/change in one or more paragraphs, each wrapped
 at 120 characters. Remember that a news entry is meant for end users and should only contain details relevant to an end
 user.
