@@ -1,0 +1,3 @@
+Fixes typos, repeated words and inconsistent heading spacing. Rephrase parts of the development documentation and CLI
+documentation. Expands shorthands like ``env var`` and ``config`` to their full forms. Uses descriptions from respective
+documentation, for projects listed in ``related links`` - by :user:`pradyunsg`.
