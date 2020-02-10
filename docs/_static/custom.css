@@ -57,6 +57,8 @@ div[class*="highlight-"] {
     margin-top: 24px;
 }
 
+/* Reduce whitespace on the inline-code snippets and add softer corners */
 .rst-content code {
-    padding: 2px;
+    padding: 2px 3px;
+    border-radius: 3px;
 }
