@@ -2,16 +2,20 @@
     margin-bottom: 6px;
 }
 
-/* override table width restrictions */
+/* Allow table content to wrap around */
 .wy-table-responsive table th, .wy-table-responsive table td {
-    /* !important prevents the common CSS stylesheets from
-       overriding this as on RTD they are loaded after this stylesheet */
+    /* !important because RTD has conflicting stylesheets */
     white-space: normal !important;
-    padding: 6px !important;
+    padding: 8px 6px !important;
 }
 
+/* Override table width restrictions */
 .wy-table-responsive {
     overflow: visible !important;
+}
+.wy-table-responsive table {
+    margin-left: -1em !important;
+    width: calc(100% + 3em);
 }
 
 .rst-content table.docutils td ol {
@@ -28,10 +32,6 @@
 
 div[class*="highlight-"] {
     margin-bottom: 12px;
-}
-
-table {
-    margin-left: 20px !important;
 }
 
 #release-history p {
