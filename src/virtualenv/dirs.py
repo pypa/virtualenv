@@ -18,7 +18,7 @@ def default_data_dir():
 
 
 def _get_default_data_folder():
-    key = str("_VIRTUALENV_OVERRIDE_APP_DATA")
+    key = str("VIRTUALENV_OVERRIDE_APP_DATA")
     if key in os.environ:
         folder = os.environ[key]
     else:

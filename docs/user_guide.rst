@@ -127,6 +127,8 @@ main seed mechanism available:
   we can just link into the virtual environments install directory we can achieve speedups of shaving the initial
   1 minutes 10 seconds down to just 8 seconds in case of copy, or ``0.8`` seconds in case symlinks are available -
   this is on Windows, Linux/macOS with symlinks this can be as low as ``100ms`` from 3+ seconds).
+  To override the filesystem location of the seed cache, one can use the
+  ``VIRTUALENV_OVERRIDE_APP_DATA`` environment variable.
 
 Activators
 ----------
