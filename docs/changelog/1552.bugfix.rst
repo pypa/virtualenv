@@ -1,1 +1,0 @@
-Virtual environments created via relative path on Windows creates bad console executables - by :user:`gaborbernat`.
