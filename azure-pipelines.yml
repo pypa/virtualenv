@@ -77,6 +77,8 @@ jobs:
               pathtoPublish: $(Build.ArtifactStagingDirectory)
               ArtifactName: virtualenv.pyz
     before:
+      - script: '$(toxPython.pythonLocation)/python -m pip install .'
+        displayName: tox uses this virtualenv (eat our own dogfood)
       - script: 'sudo apt-get update -y && sudo apt-get install fish csh'
         condition: and(succeeded(), eq(variables['image_name'], 'linux'), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35', 'py27', 'pypy', 'pypy3'))
         displayName: install fish and csh via apt-get
