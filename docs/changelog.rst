@@ -5,6 +5,20 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.1 (2020-02-10)
+--------------------
+
+Features - 20.0.1
+~~~~~~~~~~~~~~~~~
+- upgrade embedded setuptools to ``45.2.0`` from ``45.1.0`` for Python ``3.4+`` - by :user:`gaborbernat`. (`#1554 <https://github.com/pypa/virtualenv/issues/1554>`_)
+
+Bugfixes - 20.0.1
+~~~~~~~~~~~~~~~~~
+- Virtual environments created via relative path on Windows creates bad console executables - by :user:`gaborbernat`. (`#1552 <https://github.com/pypa/virtualenv/issues/1552>`_)
+- Seems sometimes venvs created set their base executable to themselves; we accept these without question, so we handle
+  virtual environments as system pythons causing issues - by :user:`gaborbernat`. (`#1553 <https://github.com/pypa/virtualenv/issues/1553>`_)
+
+
 v20.0.0. (2020-02-10)
 ---------------------
 
