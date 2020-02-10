@@ -4,6 +4,7 @@ Development
 Getting started
 ---------------
 
+
 ``virtualenv`` is a volunteer maintained open source project and we welcome contributions of all forms. The sections
 below will help you get started with development, testing, and documentation. We’re pleased that you are interested in
 working on virtualenv. This document is meant to get you setup to work on virtualenv and to act as a guide and reference
@@ -13,19 +14,22 @@ the issue tracker.
 
 Setup
 ~~~~~
-virtualenv is a command line application written in Python, as such you'll need:
 
-- **the source code**  is available on `GitHub <https://github.com/pypa/pip>`_, so use some client to clone the
-  repository via:
+virtualenv is a command line application written in Python. To work on it, you'll need:
+
+- **Source code**: available on `GitHub <https://github.com/pypa/virtualenv>`_. You can use ``git`` to clone the
+    repository:
 
   .. code-block:: console
 
       git clone https://github.com/pypa/virtualenv
       cd virtualenv
-- a **Python interpreter** is needed, we recommend using ``CPython``, you can use
-  `this guide <https://realpython.com/installing-python/>`_ to do that
-- to automatically get the projects development dependencies and run the test suite you can use the :pypi:`tox` tool,
-  we recommend using the `pipx <https://pipxproject.github.io/pipx/>`_ project to achieve this.
+
+- **Python interpreter**: We recommend using ``CPython``. You can use
+  `this guide <https://realpython.com/installing-python/>`_ to set it up.
+
+- :pypi:`tox`: to automatically get the projects development dependencies and run the test suite. We recommend
+  installing it using `pipx <https://pipxproject.github.io/pipx/>`_.
 
 Running from source tree
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,8 +55,8 @@ To run tests locally execute:
 
     tox -e py
 
-This will run the test suite for the same Python version as under what ``tox`` is installed. Alternatively you can
-specify a specific version of python by using the ``pyxy`` format, such as: ``py38``, ``pypy3``, etc.
+This will run the test suite for the same Python version as under which ``tox`` is installed. Alternatively you can
+specify a specific version of python by using the ``pyNN`` format, such as: ``py38``, ``pypy3``, etc.
 
 ``tox`` has been configured to forward any additional arguments it is given to ``pytest``.
 This enables the use of pytest's
@@ -68,7 +72,7 @@ select tests using the various ways that pytest provides:
 
 Some tests require additional dependencies to be run, such is the various shell activators (``bash``, ``fish``,
 ``powershell``, etc). These tests will automatically be skipped if these are not present, note however that in CI
-all tests are run; so if all tests succeed locally it may still fail in the CI.
+all tests are run; so even if all tests succeed locally for you, they may still fail in the CI.
 
 Running linters
 ~~~~~~~~~~~~~~~
@@ -101,7 +105,8 @@ that folder.
 
 Release
 ~~~~~~~
-Virtualenv's release schedule is tied to ``pip``, ``setuptools`` and ``wheel``. We bundle the latest version of these
+
+virtualenv's release schedule is tied to ``pip``, ``setuptools`` and ``wheel``. We bundle the latest version of these
 libraries so each time there's a new version of any of these, there will be a new virtualenv release shortly afterwards
 (we usually wait just a few days to avoid pulling in any broken releases).
 
@@ -117,12 +122,11 @@ License. Provide tests that cover your changes and run the tests locally first. 
 :ref:`supports <compatibility-requirements>` multiple Python versions and operating systems. Any pull request must
 consider and work on all these platforms.
 
-Pull Requests should be small to facilitate easier review. Keep them self-contained, and limited in scope.
-`Studies have shown <https://www.kessler.de/prd/smartbear/BestPracticesForPeerCodeReview.pdf>`_ that review quality
-falls off as patch size grows. Sometimes this will result in many small PRs to land a single large feature. In
-particular, pull requests must not be treated as "feature branches", with ongoing development work happening within the
-PR. Instead, the feature should be broken up into smaller, independent parts which can be reviewed and merged
-individually.
+Pull Requests should be small to facilitate review. Keep them self-contained, and limited in scope. `Studies have shown
+<https://www.kessler.de/prd/smartbear/BestPracticesForPeerCodeReview.pdf>`_ that review quality falls off as patch size
+grows. Sometimes this will result in many small PRs to land a single large feature. In particular, pull requests must
+not be treated as "feature branches", with ongoing development work happening within the PR. Instead, the feature should
+be broken up into smaller, independent parts which can be reviewed and merged individually.
 
 Additionally, avoid including "cosmetic" changes to code that is unrelated to your change, as these make reviewing the
 PR more difficult. Examples include re-flowing text in comments or documentation, or addition or removal of blank lines
@@ -144,7 +148,7 @@ NEWS entries
 ~~~~~~~~~~~~
 
 The ``changes.rst`` file is managed using :pypi:`towncrier` and all non trivial changes must be accompanied by a news
-entry.  To add an entry to the news file, first you need to have created an issue describing the change you want to
+entry. To add an entry to the news file, first you need to have created an issue describing the change you want to
 make. A Pull Request itself *may* function as such, but it is preferred to have a dedicated issue (for example, in case
 the PR ends up rejected due to code quality reasons).
 
@@ -161,7 +165,7 @@ Thus if your issue or PR number is ``1234`` and this change is fixing a bug, the
 ``docs/changelog/1234.bugfix.rst``. PRs can span multiple categories by creating multiple files (for instance, if you
 added a feature and deprecated/removed the old feature at the same time, you would create
 ``docs/changelog/1234.bugfix.rst`` and ``docs/changelog/1234.remove.rst``). Likewise if a PR touches multiple issues/PRs
-you may create a file for each of them with the exact same contents and :pypi:`towncrier` will deduplicate them.
+you may create a file for each of them with the same contents and :pypi:`towncrier` will deduplicate them.
 
 Contents of a NEWS entry
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -172,7 +176,7 @@ the affected issues when rendering the news file.
 
 In order to maintain a consistent style in the ``changes.rst`` file, it is preferred to keep the news entry to the
 point, in sentence case, shorter than 120 characters and in an imperative tone -- an entry should complete the sentence
-``This change will ...``. In rare cases, where one line is not enough, use a summary line in an imperative tone followed
+``This change will …``. In rare cases, where one line is not enough, use a summary line in an imperative tone followed
 by a blank line separating it from a description of the feature/change in one or more paragraphs, each wrapped
 at 120 characters. Remember that a news entry is meant for end users and should only contain details relevant to an end
 user.
@@ -184,7 +188,6 @@ A trivial change is anything that does not warrant an entry in the news file. So
 don't change anything as far as the public is concerned, typo fixes, white space modification, etc. To mark a PR
 as trivial a contributor simply needs to add a randomly named, empty file to the ``news/`` directory with the extension
 of ``.trivial``.
-
 
 Becoming a maintainer
 ~~~~~~~~~~~~~~~~~~~~~

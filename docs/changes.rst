@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.0. (2020-02-10)
+---------------------
+
+Improved Documentation - 20.0.0.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Fixes typos, repeated words and inconsistent heading spacing. Rephrase parts of the development documentation and CLI
+  documentation. Expands shorthands like ``env var`` and ``config`` to their full forms. Uses descriptions from respective
+  documentation, for projects listed in ``related links`` - by :user:`pradyunsg`. (`#1540 <https://github.com/pypa/virtualenv/issues/1540>`_)
+
 v20.0.0b2 (2020-02-04)
 ----------------------
 

@@ -115,4 +115,4 @@ jobs:
     parameters:
       external_feed: 'gb'
       pypi_remote: 'pypi-gb'
-      dependsOn: [fix_lint, embed, docs, report_coverage, dev, readme]
+      dependsOn: [fix_lint, docs, report_coverage, dev, readme, zipapp, upgrade]
