@@ -87,4 +87,5 @@ v20.0.0b1 (2020-01-28)
 
    The current virtualenv is the second iteration of implementation. From version ``0.8`` all the way to ``16.7.9``
    we numbered the first iteration. Version ``20.0.0b1`` is a complete rewrite of the package, and as such this release
-   history starts from there. The old changelog is still available in the `virtualenv < 20.0.0 documentation <https://virtualenv.pypa.io/en/16.7.9/changes.html>`_.
+   history starts from there. The old changelog is still available in the
+   `legacy branch documentation <https://virtualenv.pypa.io/en/legacy/changes.html>`_.
