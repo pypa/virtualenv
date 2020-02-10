@@ -12,7 +12,7 @@ trigger:
   branches:
     include:
     - master
-    - rewrite
+    - legacy
     - refs/tags/*
 
 pr:

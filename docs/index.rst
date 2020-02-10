@@ -83,4 +83,4 @@ Useful links
    cli_interface
    extend
    development
-   changes
+   changelog
