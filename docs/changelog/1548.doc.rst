@@ -1,0 +1,2 @@
+Fine tune the documentation layout: default width of theme, allow tables to wrap around, soft corners for code snippets
+- by :user:`pradyunsg`.
