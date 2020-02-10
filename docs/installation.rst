@@ -15,6 +15,7 @@ benefit that later you'll be able to upgrade virtualenv without affecting other 
 
 via pip
 -------
+
 Alternatively you can install it within the global Python interpreter itself (perhaps as a user package via the
 ``--user`` flag). Be cautious if you are using a python install that is managed by your operating system or
 another package manager. ``pip`` might not coordinate with those tools, and may leave your system in an
@@ -38,8 +39,9 @@ with a python interpreter:
     python virtualenv.pyz --help
 
 The root level zipapp is always the current latest release. To get the last supported zipapp against a given python
-minor release use the link ``https://bootstrap.pypa.io/x.y/virtualenv.pyz``, e.g. for the last virtualenv supporting
-Python 2.7 use `https://bootstrap.pypa.io/2.7/virtualenv.pyz <https://bootstrap.pypa.io/2.7/virtualenv.pyz>`_.
+minor release use the link ``https://bootstrap.pypa.io/virtualenv/x.y/virtualenv.pyz``, e.g. for the last virtualenv
+supporting Python 2.7 use
+`https://bootstrap.pypa.io/virtualenv/2.7/virtualenv.pyz <https://bootstrap.pypa.io/2.7/virtualenv/virtualenv.pyz>`_.
 
 .. _compatibility-requirements:
 

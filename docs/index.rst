@@ -32,17 +32,17 @@ integrated into the standard library under the `venv module <https://docs.python
 ``venv`` module does not offer all features of this library, to name just a few more prominent:
 
 - is slower (by not having the ``app-data`` seed method),
-- is not as extensible,
+- is not as extendable,
 - cannot create virtual environments for arbitrarily installed python versions (and automatically discover these),
 - is not upgrade-able via `pip <https://pip.pypa.io/en/stable/installing/>`_,
 - does not have as rich programmatic API (describe virtual environments without creating them).
 
 The basic problem being addressed is one of dependencies and versions, and indirectly permissions.
 Imagine you have an application that needs version ``1`` of ``LibFoo``, but another application requires version
-``2``. How can you use both these libraries?  If you install everything into your host python (e.g. ``python3.8``)
+``2``. How can you use both these libraries? If you install everything into your host python (e.g. ``python3.8``)
 it's easy to end up in a situation where two packages have conflicting requirements.
 
-Or more generally, what if you want to install an application *and leave it be*?  If an application works, any change
+Or more generally, what if you want to install an application *and leave it be*? If an application works, any change
 in its libraries or the versions of those libraries can break the application. Also, what if you can't install packages
 into the global ``site-packages`` directory, due to not having permissions to change the host python environment?
 
@@ -53,14 +53,14 @@ libraries either).
 Useful links
 ------------
 
-**Related projects, abstsractions on top of it**
+**Related projects, that build abstractions on top of virtualenv**
 
-* :pypi:`virtualenvwrapper` is a useful set of scripts to make your workflow with many virtualenv even easier
-* :pypi:`pew` is another wrapper for virtualenv that makes use of a different activation technique
-* :pypi:`tox` - integrates setting up and running tests within virtual environments driven by a ``tox.ini``
+* :pypi:`virtualenvwrapper` - a useful set of scripts for creating and deleting virtual environments
+* :pypi:`pew` - provides a set of commands to manage multiple virtual environments
+* :pypi:`tox` - a generic virtualenv management and test automation command line tool, driven by a ``tox.ini``
   configuration file
-* :pypi:`nox` - integrates setting up and running tests within virtual environments driven by a ``nox.py``
-  python file
+* :pypi:`nox` - a tool that automates testing in multiple Python environments, similar to tox,
+  driven by a ``noxfile.py`` configuration file
 
 **Tutorials**
 
@@ -83,4 +83,4 @@ Useful links
    cli_interface
    extend
    development
-   changes
+   changelog

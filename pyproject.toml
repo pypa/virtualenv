@@ -19,7 +19,7 @@ line-length = 120
 [tool.towncrier]
     package = "virtualenv"
     package_dir = ""  # we purposfully do not set this as src, forcing import from site-package that has version.py
-    filename = "docs/changes.rst"
+    filename = "docs/changelog.rst"
     directory = "docs/changelog"
     title_format = false
     issue_format = "`#{issue} <https://github.com/pypa/virtualenv/issues/{issue}>`_"
