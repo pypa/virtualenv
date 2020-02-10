@@ -1,2 +1,2 @@
-Add link to the `legacy branch documentation <https://virtualenv.pypa.io/en/legacy>`_ for the changelog -
-by :user:`jezdez `.
+Fine tune the documentation layout: default width of theme, allow tables to wrap around, soft corners for code snippets
+- by :user:`pradyunsg`.

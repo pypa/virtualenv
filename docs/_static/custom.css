@@ -1,3 +1,7 @@
+.wy-nav-content {
+    padding: 1em;
+}
+
 #virtualenv img {
     margin-bottom: 6px;
 }
@@ -9,13 +13,9 @@
     padding: 8px 6px !important;
 }
 
-/* Override table width restrictions */
-.wy-table-responsive {
-    overflow: visible !important;
-}
 .wy-table-responsive table {
-    margin-left: -1em !important;
     width: calc(100% + 3em);
+    margin-left: 20px !important;
 }
 
 .rst-content table.docutils td ol {
@@ -36,12 +36,12 @@ div[class*="highlight-"] {
 
 /* Tweak whitespace on the release history page */
 #release-history p {
-    margin-bottom: 2px;
-    margin-top: 2px;
+    margin-bottom: 0;
+    margin-top: 0;
 }
 
 #release-history h3 {
-    margin-bottom: 12px;
+    margin-bottom: 6px;
 }
 
 #release-history ul {
@@ -54,7 +54,6 @@ div[class*="highlight-"] {
 
 #release-history h2 {
     margin-bottom: 12px;
-    margin-top: 24px;
 }
 
 /* Reduce whitespace on the inline-code snippets and add softer corners */
