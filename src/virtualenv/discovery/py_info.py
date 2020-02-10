@@ -96,7 +96,8 @@ class PythonInfo(object):
             if self.real_prefix is None:
                 base_executable = getattr(sys, "_base_executable", None)  # some platforms may set this to help us
                 if base_executable is not None:  # use the saved system executable if present
-                    return base_executable
+                    if sys.executable != base_executable:  # we know we're in a virtual environment, cannot be us
+                        return base_executable
             return None  # in this case we just can't tell easily without poking around FS and calling them, bail
         # if we're not in a virtual environment, this is already a system python, so return the original executable
         # note we must choose the original and not the pure executable as shim scripts might throw us off

@@ -131,7 +131,7 @@ class Creator(object):
             # pre 3.6 resolve is always strict, aka must exists, sidestep by using os.path operation
             dest = Path(os.path.realpath(raw_value))
         else:
-            dest = value.resolve()
+            dest = value.resolve().absolute()  # on Windows absolute does not imply resolve so use both
         value = dest
         while dest:
             if dest.exists():
