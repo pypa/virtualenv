@@ -1,0 +1,2 @@
+Add link to the `legacy branch documentation <https://virtualenv.pypa.io/en/legacy>`_ for the changelog -
+by :user:`jezdez `.
