@@ -22,7 +22,7 @@ from virtualenv.util.subprocess import run_cmd
 from virtualenv.util.zipapp import ensure_file_on_disk
 from virtualenv.version import __version__
 
-HERE = Path(__file__).absolute().parent
+HERE = Path(os.path.abspath(__file__)).parent
 DEBUG_SCRIPT = HERE / "debug.py"
 
 
@@ -131,7 +131,7 @@ class Creator(object):
             # pre 3.6 resolve is always strict, aka must exists, sidestep by using os.path operation
             dest = Path(os.path.realpath(raw_value))
         else:
-            dest = value.resolve()
+            dest = Path(os.path.abspath(str(value))).resolve()  # on Windows absolute does not imply resolve so use both
         value = dest
         while dest:
             if dest.exists():

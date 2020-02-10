@@ -52,9 +52,6 @@ class Path(object):
     def exists(self):
         return os.path.exists(self._path)
 
-    def absolute(self):
-        return Path(os.path.abspath(self._path))
-
     @property
     def parent(self):
         return Path(os.path.abspath(os.path.join(self._path, os.path.pardir)))

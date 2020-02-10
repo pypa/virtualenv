@@ -1,0 +1,2 @@
+Seems sometimes venvs created set their base executable to themselves; we accept these without question, so we handle
+virtual environments as system pythons causing issues - by :user:`gaborbernat`.

@@ -8,6 +8,7 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 import logging
+import os
 import pipes
 import sys
 from collections import OrderedDict
@@ -99,7 +100,7 @@ def _get_fs_path():
 
 
 def _run_subprocess(cls, exe):
-    resolved_path = Path(__file__).parent.absolute().absolute() / "py_info.py"
+    resolved_path = Path(os.path.abspath(__file__)).parent / "py_info.py"
     with ensure_file_on_disk(resolved_path) as resolved_path:
         cmd = [exe, "-s", str(resolved_path)]
 

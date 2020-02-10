@@ -14,7 +14,7 @@ import pytest
 import six
 
 from virtualenv.__main__ import run
-from virtualenv.create.creator import DEBUG_SCRIPT, get_env_debug_info
+from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_PYPY, fs_supports_symlink
@@ -69,7 +69,7 @@ def test_destination_not_write_able(tmp_path, capsys):
 def cleanup_sys_path(paths):
     from virtualenv.create.creator import HERE
 
-    paths = [Path(i).absolute() for i in paths]
+    paths = [Path(os.path.abspath(i)) for i in paths]
     to_remove = [Path(HERE)]
     if os.environ.get(str("PYCHARM_HELPERS_DIR")):
         to_remove.append(Path(os.environ[str("PYCHARM_HELPERS_DIR")]).parent)
@@ -291,3 +291,9 @@ def test_create_parallel(tmp_path, monkeypatch):
         thread.start()
     for thread in threads:
         thread.join()
+
+
+def test_creator_input_passed_is_abs(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    result = Creator.validate_dest("venv")
+    assert str(result) == str(tmp_path / "venv")
