@@ -281,7 +281,7 @@ def test_cross_major(cross_python, coverage_env, tmp_path, current_fastest):
 
 
 def test_create_parallel(tmp_path, monkeypatch):
-    monkeypatch.setenv(str("_VIRTUALENV_OVERRIDE_APP_DATA"), str(tmp_path))
+    monkeypatch.setenv(str("VIRTUALENV_OVERRIDE_APP_DATA"), str(tmp_path))
 
     def create(count):
         subprocess.check_call([sys.executable, "-m", "virtualenv", str(tmp_path / "venv{}".format(count))])
