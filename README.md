@@ -1,4 +1,3 @@
-![GitHub commits since latest release](https://img.shields.io/github/commits-since/pypa/virtualenv/master)
 ![PyPI](https://img.shields.io/pypi/v/virtualenv?style=flat-square)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/virtualenv?style=flat-square)
 ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/virtualenv?style=flat-square)
