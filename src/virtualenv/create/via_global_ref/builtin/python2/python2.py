@@ -14,7 +14,7 @@ from virtualenv.util.zipapp import read as read_from_zipapp
 
 from ..via_global_self_do import ViaGlobalRefVirtualenvBuiltin
 
-HERE = Path(__file__).absolute().parent
+HERE = Path(os.path.abspath(__file__)).parent
 
 
 @six.add_metaclass(abc.ABCMeta)
