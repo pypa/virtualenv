@@ -1,0 +1,1 @@
+Passing in the virtual environment name/path is now required (no longer defaults to ``venv``) - by :user:`gaborbernat`.
