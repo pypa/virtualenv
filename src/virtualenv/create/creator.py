@@ -73,7 +73,7 @@ class Creator(object):
         :param meta: value as returned by :meth:`can_create`
         """
         parser.add_argument(
-            "dest", help="directory to create virtualenv at", type=cls.validate_dest, default="venv", nargs="?",
+            "dest", help="directory to create virtualenv at", type=cls.validate_dest,
         )
         parser.add_argument(
             "--clear",
