@@ -7,14 +7,12 @@ import shutil
 import zipfile
 from abc import ABCMeta, abstractmethod
 from tempfile import mkdtemp
-from textwrap import dedent
 
 import six
 from six import PY3
 
-from virtualenv.info import IS_WIN
 from virtualenv.util import ConfigParser
-from virtualenv.util.path import Path, make_exe
+from virtualenv.util.path import Path
 
 
 @six.add_metaclass(ABCMeta)
@@ -131,49 +129,16 @@ class PipInstall(object):
 
     def _create_console_entry_point(self, name, value, to_folder):
         result = []
-        if IS_WIN:
-            # windows doesn't support simple script files, so fallback to more complicated exe generator
-            from distlib.scripts import ScriptMaker
+        from distlib.scripts import ScriptMaker
 
-            maker = ScriptMaker(None, str(to_folder))
-            maker.clobber = True  # overwrite
-            maker.variants = {"", "X", "X.Y"}  # create all variants
-            maker.set_mode = True  # ensure they are executable
-            maker.executable = str(self._creator.exe)
-            specification = "{} = {}".format(name, value)
-            new_files = maker.make(specification)
-            result.extend(Path(i) for i in new_files)
-        else:
-            module, func = value.split(":")
-            content = (
-                dedent(
-                    """
-            #!{0}
-            # -*- coding: utf-8 -*-
-            import re
-            import sys
-
-            from {1} import {2}
-
-            if __name__ == "__main__":
-                sys.argv[0] = re.sub(r"(-script.pyw?|.exe)?$", "", sys.argv[0])
-                sys.exit({2}())
-            """
-                )
-                .lstrip()
-                .format(self._creator.exe, module, func)
-            )
-
-            version = self._creator.interpreter.version_info
-            for new_name in (
-                name,
-                "{}{}".format(name, version.major),
-                "{}-{}.{}".format(name, version.major, version.minor),
-            ):
-                exe = to_folder / new_name
-                exe.write_text(content, encoding="utf-8")
-                make_exe(exe)
-                result.append(exe)
+        maker = ScriptMaker(None, str(to_folder))
+        maker.clobber = True  # overwrite
+        maker.variants = {"", "X", "X.Y"}  # create all variants
+        maker.set_mode = True  # ensure they are executable
+        maker.executable = str(self._creator.exe)
+        specification = "{} = {}".format(name, value)
+        new_files = maker.make(specification)
+        result.extend(Path(i) for i in new_files)
         return result
 
     def clear(self):
