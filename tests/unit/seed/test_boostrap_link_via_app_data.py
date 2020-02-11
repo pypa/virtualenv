@@ -7,6 +7,7 @@ import pytest
 import six
 
 from virtualenv.discovery.py_info import PythonInfo
+from virtualenv.info import fs_supports_symlink
 from virtualenv.run import run_via_cli
 from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
 from virtualenv.seed.embed.wheels.acquire import BUNDLE_FOLDER
@@ -14,7 +15,8 @@ from virtualenv.util.subprocess import Popen
 
 
 @pytest.mark.slow
-def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastest):
+@pytest.mark.parametrize("copies", [True, False] if fs_supports_symlink() else [True])
+def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastest, copies):
     current = PythonInfo.current_system()
     bundle_ver = BUNDLE_SUPPORT[current.version_release_str]
     create_cmd = [
@@ -33,6 +35,8 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastes
         current_fastest,
         "-vv",
     ]
+    if not copies:
+        create_cmd.append("--symlink-app-data")
     result = run_via_cli(create_cmd)
     coverage_env()
     assert result
