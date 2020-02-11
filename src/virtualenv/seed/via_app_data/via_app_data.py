@@ -9,6 +9,7 @@ from threading import Lock, Thread
 import six
 
 from virtualenv.dirs import default_data_dir
+from virtualenv.info import fs_supports_symlink
 from virtualenv.seed.embed.base_embed import BaseEmbed
 from virtualenv.seed.embed.wheels.acquire import get_wheels
 
@@ -21,7 +22,7 @@ class FromAppData(BaseEmbed):
         super(FromAppData, self).__init__(options)
         self.clear = options.clear_app_data
         self.app_data_dir = default_data_dir() / "seed-v1"
-        self.symlinks = getattr(options, "copies", False) is False
+        self.symlinks = options.symlink_app_data
 
     @classmethod
     def add_parser_arguments(cls, parser, interpreter):
@@ -31,6 +32,16 @@ class FromAppData(BaseEmbed):
             dest="clear_app_data",
             action="store_true",
             help="clear the app data folder of seed images ({})".format((default_data_dir() / "seed-v1").path),
+            default=False,
+        )
+        can_symlink = fs_supports_symlink()
+        parser.add_argument(
+            "--symlink-app-data",
+            dest="symlink_app_data",
+            action="store_true" if can_symlink else "store_false",
+            help="{} symlink the python packages from the app-data folder (requires seed pip>=19.3)".format(
+                "" if can_symlink else "not supported - "
+            ),
             default=False,
         )
 
@@ -95,4 +106,6 @@ class FromAppData(BaseEmbed):
         return CopyPipInstall
 
     def __unicode__(self):
-        return super(FromAppData, self).__unicode__() + " app_data_dir={}".format(self.app_data_dir.path)
+        return super(FromAppData, self).__unicode__() + " app_data_dir={} via={}".format(
+            self.app_data_dir.path, "symlink" if self.symlinks else "copy"
+        )
