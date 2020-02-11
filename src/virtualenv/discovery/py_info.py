@@ -338,7 +338,9 @@ class PythonInfo(object):
             for name in possible_names:
                 exe_path = os.path.join(folder, name)
                 if os.path.exists(exe_path):
-                    info = self.from_exe(exe_path, resolve_to_host=False)
+                    info = self.from_exe(exe_path, resolve_to_host=False, raise_on_error=False)
+                    if info is None:  # ignore if for some reason we can't query
+                        continue
                     for item in ["implementation", "architecture", "version_info"]:
                         found = getattr(info, item)
                         searched = getattr(self, item)
@@ -411,6 +413,9 @@ class PythonInfo(object):
 
         # or at root level
         candidate_folder[inside_folder] = None
+        if self.executable.startswith(self.prefix):
+            binary_within = os.path.relpath(os.path.dirname(self.executable), self.prefix)
+            candidate_folder[os.path.join(inside_folder, binary_within)] = None
 
         return list(candidate_folder.keys())
 
