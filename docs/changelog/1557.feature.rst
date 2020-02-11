@@ -1,2 +1,0 @@
-Print out a one line message about the created virtual environment when no :option:`verbose` is set, this can now be
-silenced to get back the original behaviour via the :option:`quiet` flag - by :user:`pradyunsg`.

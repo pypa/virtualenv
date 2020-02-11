@@ -311,4 +311,4 @@ def test_create_long_path(current_fastest, tmp_path):
 
     cmd = [str(folder)]
     result = run_via_cli(cmd)
-    subprocess.check_call([str(result.creator.exe.parent / "pip"), "--version"])
+    subprocess.check_call([str(result.creator.script("pip")), "--version"])

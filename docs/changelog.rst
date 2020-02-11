@@ -5,6 +5,45 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.2 (2020-02-11)
+--------------------
+
+Features - 20.0.2
+~~~~~~~~~~~~~~~~~
+- Print out a one line message about the created virtual environment when no :option:`verbose` is set, this can now be
+  silenced to get back the original behaviour via the :option:`quiet` flag - by :user:`pradyunsg`. (`#1557 <https://github.com/pypa/virtualenv/issues/1557>`_)
+- Allow virtualenv's app data cache to be overridden by ``VIRTUALENV_OVERRIDE_APP_DATA`` - by :user:`asottile`. (`#1559 <https://github.com/pypa/virtualenv/issues/1559>`_)
+- Passing in the virtual environment name/path is now required (no longer defaults to ``venv``) - by :user:`gaborbernat`. (`#1568 <https://github.com/pypa/virtualenv/issues/1568>`_)
+- Add a CLI flag :option:`with-traceback` that allows displaying the stacktrace of the virtualenv when a failure occurs
+  - by :user:`gaborbernat`. (`#1572 <https://github.com/pypa/virtualenv/issues/1572>`_)
+
+Bugfixes - 20.0.2
+~~~~~~~~~~~~~~~~~
+- Support long path names for generated virtual environment console entry points (such as ``pip``) when using the
+  ``app-data`` :option:`seeder` - by :user:`gaborbernat`. (`#997 <https://github.com/pypa/virtualenv/issues/997>`_)
+- Improve python discovery mechanism:
+
+  - do not fail if there are executables that fail to query (e.g. for not having execute access to it) on the ``PATH``,
+  - beside the prefix folder also try with the platform dependent binary folder within that,
+
+  by :user:`gaborbernat`. (`#1545 <https://github.com/pypa/virtualenv/issues/1545>`_)
+- When copying (either files or trees) do not copy the permission bits, last access time, last modification time, and
+  flags as access to these might be forbidden (for example in case of the macOs Framework Python) and these are not needed
+  for the user to use the virtual environment - by :user:`gaborbernat`. (`#1561 <https://github.com/pypa/virtualenv/issues/1561>`_)
+- While discovering a python executables interpreters that cannot be queried are now displayed with info level rather
+  than warning, so now they're no longer shown by default (these can be just executables to which we don't have access
+  or that are broken, don't warn if it's not the target Python we want) - by :user:`gaborbernat`. (`#1574 <https://github.com/pypa/virtualenv/issues/1574>`_)
+- The ``app-data`` :option:`seeder` no longer symlinks the packages on UNIX and copies on Windows. Instead by default
+  always copies, however now has the :option:`symlink-app-data` flag allowing users to request this less robust but faster
+  method - by :user:`gaborbernat`. (`#1575 <https://github.com/pypa/virtualenv/issues/1575>`_)
+
+Improved Documentation - 20.0.2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Add link to the `legacy documentation <https://virtualenv.pypa.io/en/legacy>`_ for the changelog by :user:`jezdez`. (`#1547 <https://github.com/pypa/virtualenv/issues/1547>`_)
+- Fine tune the documentation layout: default width of theme, allow tables to wrap around, soft corners for code snippets
+  - by :user:`pradyunsg`. (`#1548 <https://github.com/pypa/virtualenv/issues/1548>`_)
+
+
 v20.0.1 (2020-02-10)
 --------------------
 

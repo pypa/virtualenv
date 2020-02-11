@@ -1,3 +1,0 @@
-The ``app-data`` :option:`seeder` no longer symlinks the packages on UNIX and copies on Windows. Instead by default
-always copies, however now has the :option:`symlink-app-data` flag allowing users to request this less robust but faster
-method - by :user:`gaborbernat`.
