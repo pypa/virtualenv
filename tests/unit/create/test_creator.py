@@ -297,3 +297,18 @@ def test_creator_input_passed_is_abs(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     result = Creator.validate_dest("venv")
     assert str(result) == str(tmp_path / "venv")
+
+
+def test_create_long_path(current_fastest, tmp_path):
+    if sys.platform == "darwin":
+        max_shebang_length = 512
+    else:
+        max_shebang_length = 127
+    # filenames can be at most 255 long on macOS, so split to to levels
+    count = max_shebang_length - len(str(tmp_path))
+    folder = tmp_path / ("a" * (count // 2)) / ("b" * (count // 2)) / "c"
+    folder.mkdir(parents=True)
+
+    cmd = [str(folder)]
+    result = run_via_cli(cmd)
+    subprocess.check_call([str(result.creator.exe.parent / "pip"), "--version"])
