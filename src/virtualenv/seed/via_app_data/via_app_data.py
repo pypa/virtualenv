@@ -9,7 +9,6 @@ from threading import Lock, Thread
 import six
 
 from virtualenv.dirs import default_data_dir
-from virtualenv.info import IS_WIN
 from virtualenv.seed.embed.base_embed import BaseEmbed
 from virtualenv.seed.embed.wheels.acquire import get_wheels
 
@@ -22,6 +21,7 @@ class FromAppData(BaseEmbed):
         super(FromAppData, self).__init__(options)
         self.clear = options.clear_app_data
         self.app_data_dir = default_data_dir() / "seed-v1"
+        self.symlinks = getattr(options, "copies", False) is False
 
     @classmethod
     def add_parser_arguments(cls, parser, interpreter):
@@ -86,10 +86,8 @@ class FromAppData(BaseEmbed):
 
             yield name_to_whl
 
-    @staticmethod
-    def installer_class(pip_version):
-        # tbd: on Windows symlinks are unreliable, we have junctions for folders, however pip does not work well with it
-        if not IS_WIN:
+    def installer_class(self, pip_version):
+        if self.symlinks:
             # symlink support requires pip 19.3+
             pip_version_int = tuple(int(i) for i in pip_version.split(".")[0:2])
             if pip_version_int >= (19, 3):

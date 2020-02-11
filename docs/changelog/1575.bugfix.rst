@@ -1,0 +1,1 @@
+Respect the :option:`copies` flag inside the ``app-data`` :option:`seeder` by :user:`gaborbernat`.
