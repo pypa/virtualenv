@@ -1,0 +1,2 @@
+Add a CLI flag :option:`with-traceback` that allows displaying the stacktrace of the virtualenv when a failure occurs
+- by :user:`gaborbernat`.
