@@ -1,23 +1,17 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-import shutil
 
 import six
 
-from virtualenv.util.path import Path
+from virtualenv.util.path import Path, copy
 
 from .base import PipInstall
 
 
 class CopyPipInstall(PipInstall):
     def _sync(self, src, dst):
-        src_str = six.ensure_text(str(src))
-        dest_str = six.ensure_text(str(dst))
-        if src.is_dir():
-            shutil.copytree(src_str, dest_str)
-        else:
-            shutil.copy(src_str, dest_str)
+        copy(src, dst)
 
     def _generate_new_files(self):
         # create the pyc files

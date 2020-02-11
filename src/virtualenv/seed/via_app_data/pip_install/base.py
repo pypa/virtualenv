@@ -36,7 +36,6 @@ class PipInstall(object):
         # sync image
         for filename in self._image_dir.iterdir():
             into = self._creator.purelib / filename.name
-            logging.debug("%s %s from %s", self.__class__.__name__, into, filename)
             if into.exists():
                 if into.is_dir() and not into.is_symlink():
                     shutil.rmtree(str(into))

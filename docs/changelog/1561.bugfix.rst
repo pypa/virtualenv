@@ -1,0 +1,3 @@
+When copying (either files or trees) do not copy the permission bits, last access time, last modification time, and
+flags as access to these might be forbidden (for example in case of the macOs Framework Python) and these are not needed
+for the user to use the virtual environment - by :user:`gaborbernat`.

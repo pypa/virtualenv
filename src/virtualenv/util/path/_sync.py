@@ -45,9 +45,20 @@ def symlink(src, dest):
 def copy(src, dest):
     ensure_safe_to_do(src, dest)
     is_dir = src.is_dir()
-    method = shutil.copytree if is_dir else shutil.copy2
+    method = copytree if is_dir else shutil.copy
     logging.debug("copy %s", _Debug(src, dest))
     method(norm(src), norm(dest))
+
+
+def copytree(src, dest):
+    for root, _, files in os.walk(src):
+        dest_dir = os.path.join(dest, os.path.relpath(src, root))
+        if not os.path.exists(dest_dir):
+            os.makedirs(dest_dir)
+        for name in files:
+            src_f = os.path.join(root, name)
+            dest_f = os.path.join(dest_dir, name)
+            shutil.copy(src_f, dest_f)
 
 
 def link(src, dest):
@@ -67,4 +78,12 @@ class _Debug(object):
         )
 
 
-__all__ = ("ensure_dir", "symlink", "copy", "link", "symlink", "link")
+__all__ = (
+    "ensure_dir",
+    "symlink",
+    "copy",
+    "link",
+    "symlink",
+    "link",
+    "copytree",
+)
