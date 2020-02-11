@@ -12,20 +12,20 @@ from .plugin.discovery import get_discover
 from .plugin.seeders import SeederSelector
 
 
-def run_via_cli(args):
+def run_via_cli(args, options=None):
     """Run the virtual environment creation via CLI arguments
 
     :param args: the command line arguments
     :return: the creator used
     """
-    session = session_via_cli(args)
+    session = session_via_cli(args, options)
     session.run()
     return session
 
 
 # noinspection PyProtectedMember
-def session_via_cli(args):
-    parser = build_parser(args)
+def session_via_cli(args, options=None):
+    parser = build_parser(args, options)
     parser.parse_args(args, namespace=parser._options)
     creator, seeder, activators = tuple(e.create(parser._options) for e in parser._elements)  # create types
     session = Session(parser._verbosity, parser._interpreter, creator, seeder, activators)
@@ -33,9 +33,16 @@ def session_via_cli(args):
 
 
 # noinspection PyProtectedMember
-def build_parser(args=None):
-    parser = VirtualEnvConfigParser()
+def build_parser(args=None, options=None):
+    parser = VirtualEnvConfigParser(options)
     add_version_flag(parser)
+    parser.add_argument(
+        "--with-traceback",
+        dest="with_traceback",
+        action="store_true",
+        default=False,
+        help="on failure also display the stacktrace internals of virtualenv",
+    )
     parser._options, parser._verbosity = _do_report_setup(parser, args)
     discover = get_discover(parser, args, parser._options)
     parser._interpreter = interpreter = discover.interpreter
@@ -73,6 +80,6 @@ def _do_report_setup(parser, args):
     verbosity = verbosity_group.add_mutually_exclusive_group()
     verbosity.add_argument("-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=2)
     verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
-    options, _ = parser.parse_known_args(args)
+    options, _ = parser.parse_known_args(args, namespace=parser._options)
     verbosity_value = setup_report(options.verbose, options.quiet)
     return options, verbosity_value

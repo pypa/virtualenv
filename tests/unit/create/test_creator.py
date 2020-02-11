@@ -174,8 +174,8 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
 def test_venv_fails_not_inline(tmp_path, capsys, mocker):
-    def _session_via_cli(args):
-        session = session_via_cli(args)
+    def _session_via_cli(args, options=None):
+        session = session_via_cli(args, options)
         assert session.creator.can_be_inline is False
         return session
 

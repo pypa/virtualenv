@@ -11,7 +11,7 @@ class VirtualEnvConfigParser(ArgumentParser):
     Custom option parser which updates its defaults by checking the configuration files and environmental variables
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, options=None, *args, **kwargs):
         self.file_config = IniConfig()
         self.epilog_list = []
         kwargs["epilog"] = self.file_config.epilog
@@ -22,7 +22,7 @@ class VirtualEnvConfigParser(ArgumentParser):
         self._fixed = set()
         self._elements = None
         self._verbosity = None
-        self._options = None
+        self._options = options
         self._interpreter = None
 
     def _fix_defaults(self):
