@@ -205,7 +205,12 @@ def test_system_executable_no_exact_match(target, discovered, position, tmp_path
     target_py_info = _make_py_info(target)
     mocker.patch.object(target_py_info, "_find_possible_exe_names", return_value=names)
     mocker.patch.object(target_py_info, "_find_possible_folders", return_value=[str(tmp_path)])
-    mocker.patch.object(target_py_info, "from_exe", side_effect=lambda k, resolve_to_host: discovered_with_path[k])
+
+    # noinspection PyUnusedLocal
+    def func(k, resolve_to_host, raise_on_error):
+        return discovered_with_path[k]
+
+    mocker.patch.object(target_py_info, "from_exe", side_effect=func)
     target_py_info.real_prefix = str(tmp_path)
 
     target_py_info.system_executable = None
