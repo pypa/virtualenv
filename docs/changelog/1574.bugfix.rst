@@ -1,0 +1,3 @@
+While discovering a python executables interpreters that cannot be queried are now displayed with info level rather
+than warning, so now they're no longer shown by default (these can be just executables to which we don't have access
+or that are broken, don't warn if it's not the target Python we want) - by :user:`gaborbernat`.

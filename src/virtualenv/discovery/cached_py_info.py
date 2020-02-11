@@ -36,7 +36,7 @@ def from_exe(cls, exe, raise_on_error=True, ignore_cache=False):
         if raise_on_error:
             raise result
         else:
-            logging.warning("%s", str(result))
+            logging.info("%s", str(result))
         result = None
     return result
 
