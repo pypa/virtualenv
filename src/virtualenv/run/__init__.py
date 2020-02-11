@@ -2,6 +2,8 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
+import six
+
 from ..config.cli.parser import VirtualEnvConfigParser
 from ..report import LEVELS, setup_report
 from ..session import Session
@@ -20,6 +22,12 @@ def run_via_cli(args, options=None):
     """
     session = session_via_cli(args, options)
     session.run()
+
+    logging.warning(
+        "created virtual environment %s with seeder %s",
+        six.ensure_text(str(session.creator)),
+        six.ensure_text(str(session.seeder)),
+    )
     return session
 
 
