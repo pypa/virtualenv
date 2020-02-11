@@ -1,2 +1,0 @@
-Support long path names for generated virtual environment console entry points (such as ``pip``) when using the
-``app-data`` :option:`seeder` - by :user:`gaborbernat`.

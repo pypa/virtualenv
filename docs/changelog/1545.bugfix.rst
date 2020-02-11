@@ -1,6 +1,0 @@
-Improve python discovery mechanism:
-
-- do not fail if there are executables that fail to query (e.g. for not having execute access to it) on the ``PATH``,
-- beside the prefix folder also try with the platform dependent binary folder within that,
-
-by :user:`gaborbernat`.
