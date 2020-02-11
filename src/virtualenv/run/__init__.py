@@ -20,6 +20,12 @@ def run_via_cli(args, options=None):
     """
     session = session_via_cli(args, options)
     session.run()
+
+    logging.warn(
+        "Created virtual environment via %s, using %s",
+        six.ensure_text(str(session.creator)),
+        six.ensure_text(str(session.seeder)),
+    )
     return session
 
 
