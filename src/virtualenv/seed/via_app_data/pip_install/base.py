@@ -70,9 +70,8 @@ class PipInstall(object):
         installer = self._dist_info / "INSTALLER"
         installer.write_text("pip\n")
         new_files.add(installer)
-        # inject a no-op root element, as workaround for bug added
-        # by https://github.com/pypa/pip/commit/c7ae06c79#r35523722
-        marker = self._image_dir / "{}.virtualenv".format(self._dist_info.name)
+        # inject a no-op root element, as workaround for bug in https://github.com/pypa/pip/issues/7226
+        marker = self._image_dir / "{}.virtualenv".format(self._dist_info.stem)
         marker.write_text("")
         new_files.add(marker)
         folder = mkdtemp()
