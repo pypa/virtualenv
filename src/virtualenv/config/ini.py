@@ -12,8 +12,6 @@ from virtualenv.util.path import Path
 
 from .convert import convert
 
-DEFAULT_CONFIG_FILE = default_config_dir() / "virtualenv.ini"
-
 
 class IniConfig(object):
     VIRTUALENV_CONFIG_FILE_ENV_VAR = six.ensure_str("VIRTUALENV_CONFIG_FILE")
@@ -24,18 +22,26 @@ class IniConfig(object):
     def __init__(self):
         config_file = os.environ.get(self.VIRTUALENV_CONFIG_FILE_ENV_VAR, None)
         self.is_env_var = config_file is not None
-        self.config_file = Path(config_file) if config_file is not None else DEFAULT_CONFIG_FILE
+        self.config_file = Path(config_file) if config_file is not None else (default_config_dir() / "virtualenv.ini")
         self._cache = {}
-        self.has_config_file = self.config_file.exists()
-        if self.has_config_file:
-            self.config_file = self.config_file.resolve()
-            self.config_parser = ConfigParser.ConfigParser()
-            try:
-                self._load()
-                self.has_virtualenv_section = self.config_parser.has_section(self.section)
-            except Exception as exception:
-                logging.error("failed to read config file %s because %r", config_file, exception)
-                self.has_config_file = None
+
+        exception = None
+        self.has_config_file = None
+        try:
+            self.has_config_file = self.config_file.exists()
+        except OSError as exc:
+            exception = exc
+        else:
+            if self.has_config_file:
+                self.config_file = self.config_file.resolve()
+                self.config_parser = ConfigParser.ConfigParser()
+                try:
+                    self._load()
+                    self.has_virtualenv_section = self.config_parser.has_section(self.section)
+                except Exception as exc:
+                    exception = exc
+        if exception is not None:
+            logging.error("failed to read config file %s because %r", config_file, exception)
 
     def _load(self):
         with self.config_file.open("rt") as file_handler:

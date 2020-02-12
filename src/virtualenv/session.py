@@ -7,12 +7,39 @@ import six
 
 
 class Session(object):
+    """Represents a virtual environment creation session"""
+
     def __init__(self, verbosity, interpreter, creator, seeder, activators):
-        self.verbosity = verbosity
-        self.interpreter = interpreter
-        self.creator = creator
-        self.seeder = seeder
-        self.activators = activators
+        self._verbosity = verbosity
+        self._interpreter = interpreter
+        self._creator = creator
+        self._seeder = seeder
+        self._activators = activators
+
+    @property
+    def verbosity(self):
+        """The verbosity of the run"""
+        return self._verbosity
+
+    @property
+    def interpreter(self):
+        """Create a virtual environment based on this reference interpreter"""
+        return self._interpreter
+
+    @property
+    def creator(self):
+        """The creator used to build the virtual environment (must be compatible with the interpreter)"""
+        return self._creator
+
+    @property
+    def seeder(self):
+        """The mechanism used to provide the seed packages (pip, setuptools, wheel)"""
+        return self._seeder
+
+    @property
+    def activators(self):
+        """Activators used to generate activations scripts"""
+        return self._activators
 
     def run(self):
         self._create()

@@ -6,7 +6,7 @@ import subprocess
 import pytest
 
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.run import run_via_cli
+from virtualenv.run import cli_run
 from virtualenv.util.path import Path
 from virtualenv.util.subprocess import Popen
 
@@ -36,7 +36,7 @@ def builtin_shows_marker_missing():
 )
 @pytest.mark.parametrize("creator", list(i for i in CREATOR_CLASSES.keys() if i != "builtin"))
 def test_can_build_c_extensions(creator, tmp_path, coverage_env):
-    session = run_via_cli(["--creator", creator, "--seed", "app-data", str(tmp_path), "-vvv"])
+    session = cli_run(["--creator", creator, "--seed", "app-data", str(tmp_path), "-vvv"])
     coverage_env()
     cmd = [
         str(session.creator.script("pip")),

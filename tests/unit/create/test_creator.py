@@ -13,13 +13,13 @@ from threading import Thread
 import pytest
 import six
 
-from virtualenv.__main__ import run
+from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_PYPY, fs_supports_symlink
 from virtualenv.pyenv_cfg import PyEnvCfg
-from virtualenv.run import run_via_cli, session_via_cli
+from virtualenv.run import cli_run, session_via_cli
 from virtualenv.util.path import Path
 
 CURRENT = PythonInfo.current_system()
@@ -38,7 +38,7 @@ def test_os_path_sep_not_allowed(tmp_path, capsys, sep):
 
 def _non_success_exit_code(capsys, target):
     with pytest.raises(SystemExit) as context:
-        run_via_cli(args=[target])
+        run_with_catch(args=[target])
     assert context.value.code != 0
     out, err = capsys.readouterr()
     assert not out, out
@@ -126,7 +126,7 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     ]
     if isolated == "global":
         cmd.append("--system-site-packages")
-    result = run_via_cli(cmd)
+    result = cli_run(cmd)
     coverage_env()
     if IS_PYPY:
         # pypy cleans up file descriptors periodically so our (many) subprocess calls impact file descriptor limits
@@ -202,7 +202,7 @@ def test_venv_fails_not_inline(tmp_path, capsys, mocker):
 @pytest.mark.skipif(not sys.version_info[0] == 2, reason="python 2 only tests")
 def test_debug_bad_virtualenv(tmp_path):
     cmd = [str(tmp_path), "--without-pip"]
-    result = run_via_cli(cmd)
+    result = cli_run(cmd)
     # if the site.py is removed/altered the debug should fail as no one is around to fix the paths
     site_py = result.creator.stdlib / "site.py"
     site_py.unlink()
@@ -223,12 +223,12 @@ def test_create_clear_resets(tmp_path, creator, clear, caplog):
         pytest.skip("venv without clear might fail")
     marker = tmp_path / "magic"
     cmd = [str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", creator, "-vvv"]
-    run_via_cli(cmd)
+    cli_run(cmd)
 
     marker.write_text("")  # if we a marker file this should be gone on a clear run, remain otherwise
     assert marker.exists()
 
-    run_via_cli(cmd + (["--clear"] if clear else []))
+    cli_run(cmd + (["--clear"] if clear else []))
     assert marker.exists() is not clear
 
 
@@ -239,7 +239,7 @@ def test_prompt_set(tmp_path, creator, prompt):
     if prompt is not None:
         cmd.extend(["--prompt", "magic"])
 
-    result = run_via_cli(cmd)
+    result = cli_run(cmd)
     actual_prompt = tmp_path.name if prompt is None else prompt
     cfg = PyEnvCfg.from_file(result.creator.pyenv_cfg.path)
     if prompt is None:
@@ -276,7 +276,7 @@ def test_cross_major(cross_python, coverage_env, tmp_path, current_fastest):
         "--creator",
         current_fastest,
     ]
-    result = run_via_cli(cmd)
+    result = cli_run(cmd)
     coverage_env()
     env = PythonInfo.from_exe(str(result.creator.exe))
     assert env.version_info.major != CURRENT.version_info.major
@@ -312,5 +312,5 @@ def test_create_long_path(current_fastest, tmp_path):
     folder.mkdir(parents=True)
 
     cmd = [str(folder)]
-    result = run_via_cli(cmd)
+    result = cli_run(cmd)
     subprocess.check_call([str(result.creator.script("pip")), "--version"])

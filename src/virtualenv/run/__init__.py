@@ -12,11 +12,12 @@ from .plugin.discovery import get_discover
 from .plugin.seeders import SeederSelector
 
 
-def run_via_cli(args, options=None):
-    """Run the virtual environment creation via CLI arguments
+def cli_run(args, options=None):
+    """Create a virtual environment given some command line interface arguments
 
     :param args: the command line arguments
-    :return: the creator used
+    :param options: passing in a ``argparse.Namespace`` object allows return of the parsed options
+    :return: the session object of the creation (its structure for now is experimental and might change on short notice)
     """
     session = session_via_cli(args, options)
     session.run()

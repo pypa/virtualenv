@@ -14,7 +14,7 @@ import sys
 import pytest
 
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.run import run_via_cli
+from virtualenv.run import cli_run
 from virtualenv.util.path import Path
 from virtualenv.util.subprocess import Popen
 
@@ -45,7 +45,7 @@ def old_virtualenv(tmp_path_factory):
         return CURRENT.executable
     else:
         env_for_old_virtualenv = tmp_path_factory.mktemp("env-for-old-virtualenv")
-        result = run_via_cli(["--no-download", "--activators", "", str(env_for_old_virtualenv)])
+        result = cli_run(["--no-download", "--activators", "", str(env_for_old_virtualenv)])
         # noinspection PyBroadException
         try:
             process = Popen(

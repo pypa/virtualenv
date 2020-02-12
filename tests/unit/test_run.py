@@ -4,12 +4,12 @@ import pytest
 import six
 
 from virtualenv import __version__
-from virtualenv.run import run_via_cli
+from virtualenv.run import cli_run
 
 
 def test_help(capsys):
     with pytest.raises(SystemExit) as context:
-        run_via_cli(args=["-h", "-vvv"])
+        cli_run(args=["-h", "-vvv"])
     assert context.value.code == 0
 
     out, err = capsys.readouterr()
@@ -19,7 +19,7 @@ def test_help(capsys):
 
 def test_version(capsys):
     with pytest.raises(SystemExit) as context:
-        run_via_cli(args=["--version"])
+        cli_run(args=["--version"])
     assert context.value.code == 0
 
     out, err = capsys.readouterr()

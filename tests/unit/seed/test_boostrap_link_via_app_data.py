@@ -8,7 +8,7 @@ import six
 
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import fs_supports_symlink
-from virtualenv.run import run_via_cli
+from virtualenv.run import cli_run
 from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
 from virtualenv.seed.embed.wheels.acquire import BUNDLE_FOLDER
 from virtualenv.util.subprocess import Popen
@@ -37,7 +37,7 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastes
     ]
     if not copies:
         create_cmd.append("--symlink-app-data")
-    result = run_via_cli(create_cmd)
+    result = cli_run(create_cmd)
     coverage_env()
     assert result
 
@@ -82,7 +82,7 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastes
     assert setuptools not in files_post_first_uninstall
 
     # check we can run it again and will work - checks both overwrite and reuse cache
-    result = run_via_cli(create_cmd)
+    result = cli_run(create_cmd)
     coverage_env()
     assert result
     files_post_second_create = list(site_package.iterdir())

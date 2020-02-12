@@ -12,7 +12,7 @@ import pytest
 import six
 
 from virtualenv.info import IS_PYPY, WIN_CPYTHON_2
-from virtualenv.run import run_via_cli
+from virtualenv.run import cli_run
 from virtualenv.util.path import Path
 from virtualenv.util.subprocess import Popen
 
@@ -207,7 +207,7 @@ def raise_on_non_source_class():
 @pytest.fixture(scope="session")
 def activation_python(tmp_path_factory, special_char_name, current_fastest):
     dest = os.path.join(six.ensure_text(str(tmp_path_factory.mktemp("activation-tester-env"))), special_char_name)
-    session = run_via_cli(["--without-pip", dest, "--prompt", special_char_name, "--creator", current_fastest, "-vv"])
+    session = cli_run(["--without-pip", dest, "--prompt", special_char_name, "--creator", current_fastest, "-vv"])
     pydoc_test = session.creator.purelib / "pydoc_test.py"
     pydoc_test.write_text('"""This is pydoc_test.py"""')
     yield session
