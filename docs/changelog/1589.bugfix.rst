@@ -1,2 +1,0 @@
-Fix ``app-data`` :option:`seeder` injects a extra ``.dist-info.virtualenv`` path that breaks ``importlib.metadata``,
-now we inject an extra ``.virtualenv`` - by :user:`gaborbernat`.
