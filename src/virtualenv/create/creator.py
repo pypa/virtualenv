@@ -117,12 +117,11 @@ class Creator(object):
                     encoding, "".join(refused.keys()), raw_value
                 )
             )
-        for char in (i for i in (os.pathsep, os.altsep) if i is not None):
-            if char in raw_value:
-                raise ArgumentTypeError(
-                    "destination {!r} must not contain the path separator ({}) as this would break "
-                    "the activation scripts".format(raw_value, char)
-                )
+        if os.pathsep in raw_value:
+            raise ArgumentTypeError(
+                "destination {!r} must not contain the path separator ({}) as this would break "
+                "the activation scripts".format(raw_value, os.pathsep)
+            )
 
         value = Path(raw_value)
         if value.exists() and value.is_file():

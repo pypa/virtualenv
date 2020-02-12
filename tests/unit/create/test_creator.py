@@ -25,13 +25,12 @@ from virtualenv.util.path import Path
 CURRENT = PythonInfo.current_system()
 
 
-@pytest.mark.parametrize("sep", [i for i in (os.pathsep, os.altsep) if i is not None])
-def test_os_path_sep_not_allowed(tmp_path, capsys, sep):
-    target = "{}{}".format(str(tmp_path / "a"), "{}b".format(sep))
+def test_os_path_sep_not_allowed(tmp_path, capsys):
+    target = str(tmp_path / "a{}b".format(os.pathsep))
     err = _non_success_exit_code(capsys, target)
     msg = (
         "destination {!r} must not contain the path separator ({}) as this"
-        " would break the activation scripts".format(target, sep)
+        " would break the activation scripts".format(target, os.pathsep)
     )
     assert msg in err, err
 
