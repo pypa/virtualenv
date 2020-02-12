@@ -35,6 +35,9 @@ class PythonInfo(object):
         def u(v):
             return v.decode("utf-8") if isinstance(v, bytes) else v
 
+        def abs_path(v):
+            return None if v is None else os.path.abspath(v)  # unroll relative elements from path (e.g. ..)
+
         # qualifies the python
         self.platform = u(sys.platform)
         self.implementation = u(platform.python_implementation())
@@ -49,16 +52,16 @@ class PythonInfo(object):
         self.os = u(os.name)
 
         # information about the prefix - determines python home
-        self.prefix = u(getattr(sys, "prefix", None))  # prefix we think
-        self.base_prefix = u(getattr(sys, "base_prefix", None))  # venv
-        self.real_prefix = u(getattr(sys, "real_prefix", None))  # old virtualenv
+        self.prefix = u(abs_path(getattr(sys, "prefix", None)))  # prefix we think
+        self.base_prefix = u(abs_path(getattr(sys, "base_prefix", None)))  # venv
+        self.real_prefix = u(abs_path(getattr(sys, "real_prefix", None)))  # old virtualenv
 
         # information about the exec prefix - dynamic stdlib modules
-        self.base_exec_prefix = u(getattr(sys, "base_exec_prefix", None))
-        self.exec_prefix = u(getattr(sys, "exec_prefix", None))
+        self.base_exec_prefix = u(abs_path(getattr(sys, "base_exec_prefix", None)))
+        self.exec_prefix = u(abs_path(getattr(sys, "exec_prefix", None)))
 
-        self.executable = u(sys.executable)  # the executable we were invoked via
-        self.original_executable = u(self.executable)  # the executable as known by the interpreter
+        self.executable = u(abs_path(sys.executable))  # the executable we were invoked via
+        self.original_executable = u(abs_path(self.executable))  # the executable as known by the interpreter
         self.system_executable = self._fast_get_system_executable()  # the executable we are based of (if available)
 
         try:
@@ -413,10 +416,6 @@ class PythonInfo(object):
 
         # or at root level
         candidate_folder[inside_folder] = None
-        if self.executable.startswith(self.prefix):
-            binary_within = os.path.relpath(os.path.dirname(self.executable), self.prefix)
-            candidate_folder[os.path.join(inside_folder, binary_within)] = None
-
         return list(candidate_folder.keys())
 
     def _find_possible_exe_names(self):
