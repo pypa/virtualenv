@@ -36,7 +36,9 @@ def load_host_site():
     # as this will ensure that initialization code within host site.py runs
 
     here = __file__  # the distutils.install patterns will be injected relative to this site.py, save it here
-    reload(sys.modules["site"])  # noqa
+
+    with PatchForAppleFrameworkBuilds():
+        reload(sys.modules["site"])  # noqa
 
     # and then if the distutils site packages are not on the sys.path we add them via add_site_dir; note we must add
     # them by invoking add_site_dir to trigger the processing of pth files
@@ -52,6 +54,24 @@ def load_host_site():
         full_path = os.path.abspath(os.path.join(here, path.encode("utf-8")))
         if full_path not in sys.path:
             add_site_dir(full_path)
+
+
+class PatchForAppleFrameworkBuilds(object):
+    """Apple Framework builds unconditionally add the global site-package, escape this behaviour"""
+
+    framework = None
+
+    def __enter__(self):
+        if sys.platform == "darwin":
+            from sysconfig import get_config_var
+
+            self.framework = get_config_var("PYTHONFRAMEWORK")
+            if self.framework:
+                sys.modules["sysconfig"]._CONFIG_VARS["PYTHONFRAMEWORK"] = None
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.framework:
+            sys.modules["sysconfig"]._CONFIG_VARS["PYTHONFRAMEWORK"] = self.framework
 
 
 def read_pyvenv():
