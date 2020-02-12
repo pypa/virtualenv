@@ -1,2 +1,0 @@
-Fix system python discovery mechanism when prefixes contain relative parts (e.g. ``..``) by resolving paths within the
-python information query - by :user:`gaborbernat`.

@@ -1,2 +1,0 @@
-On Python 2 with Apple Framework builds the global site package is no longer added when the
-:option:`system-site-packages` is not specified - by :user:`gaborbernat`.

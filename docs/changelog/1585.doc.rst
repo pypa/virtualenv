@@ -1,2 +1,0 @@
-Document a programmatic API as ``from virtualenv import cli_run`` under :ref:`programmatic_api` -
-by :user:`gaborbernat`.

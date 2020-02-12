@@ -5,6 +5,25 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.3 (2020-02-12)
+--------------------
+
+Bugfixes - 20.0.3
+~~~~~~~~~~~~~~~~~
+- On Python 2 with Apple Framework builds the global site package is no longer added when the
+  :option:`system-site-packages` is not specified - by :user:`gaborbernat`. (`#1561 <https://github.com/pypa/virtualenv/issues/1561>`_)
+- Fix system python discovery mechanism when prefixes contain relative parts (e.g. ``..``) by resolving paths within the
+  python information query - by :user:`gaborbernat`. (`#1583 <https://github.com/pypa/virtualenv/issues/1583>`_)
+- Expose a programmatic API as ``from virtualenv import cli_run`` - by :user:`gaborbernat`. (`#1585 <https://github.com/pypa/virtualenv/issues/1585>`_)
+- Fix ``app-data`` :option:`seeder` injects a extra ``.dist-info.virtualenv`` path that breaks ``importlib.metadata``,
+  now we inject an extra ``.virtualenv`` - by :user:`gaborbernat`. (`#1589 <https://github.com/pypa/virtualenv/issues/1589>`_)
+
+Improved Documentation - 20.0.3
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Document a programmatic API as ``from virtualenv import cli_run`` under :ref:`programmatic_api` -
+  by :user:`gaborbernat`. (`#1585 <https://github.com/pypa/virtualenv/issues/1585>`_)
+
+
 v20.0.2 (2020-02-11)
 --------------------
 
