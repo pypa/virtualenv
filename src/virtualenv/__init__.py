@@ -1,5 +1,9 @@
 from __future__ import absolute_import, unicode_literals
 
+from .run import cli_run
 from .version import __version__
 
-__all__ = ("__version__", "run")
+__all__ = (
+    "__version__",
+    "cli_run",
+)

@@ -180,3 +180,27 @@ also provisions a ``decativate`` command that will allow you to undo the operati
 A  longer explanation of this can be found within Allison Kaptur's 2013 blog post: `There's no magic: virtualenv
 edition <https://www.recurse.com/blog/14-there-is-no-magic-virtualenv-edition>`_ explains how virtualenv uses bash and
 Python and ``PATH`` and ``PYTHONHOME`` to isolate virtual environments' paths.
+
+.. _programmatic_api:
+
+Programmatic API
+----------------
+
+At the moment ``virtualenv`` offers only CLI level interface. If you want to trigger invocation of Python environments
+from within Python you should be using the ``virtualenv.cli_run`` method; this takes an ``args`` argument where you can
+pass the options the same way you would from the command line. The run will return a session object containing data
+about the created virtual environment.
+
+.. code-block:: python
+
+   from virtualenv import cli_run
+
+   cli_run(["venv"])
+
+.. automodule:: virtualenv
+   :members:
+
+.. currentmodule:: virtualenv.session
+
+.. autoclass:: Session
+    :members:

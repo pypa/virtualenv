@@ -117,7 +117,7 @@ class CliTable(SphinxDirective):
             names = option["name"]
             default = option["default"]
             if default is not None:
-                if isinstance(default, str) and default[0] == default[-1] and default[0] == '"':
+                if isinstance(default, str) and default and default[0] == default[-1] and default[0] == '"':
                     default = default[1:-1]
                     if default == SUPPRESS:
                         default = None

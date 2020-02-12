@@ -11,12 +11,12 @@ import six
 def run(args=None, options=None):
     start = datetime.now()
     from virtualenv.error import ProcessCallFailed
-    from virtualenv.run import run_via_cli
+    from virtualenv.run import cli_run
 
     if args is None:
         args = sys.argv[1:]
     try:
-        session = run_via_cli(args, options)
+        session = cli_run(args, options)
         logging.warning(
             "created virtual environment in %.0fms %s with seeder %s",
             (datetime.now() - start).total_seconds() * 1000,
@@ -35,7 +35,7 @@ def run_with_catch(args=None):
     try:
         run(args, options)
     except (KeyboardInterrupt, Exception) as exception:
-        if options.with_traceback:
+        if getattr(options, "with_traceback", False):
             logging.shutdown()  # force flush of log messages before the trace is printed
             raise
         else:

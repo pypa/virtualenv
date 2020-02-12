@@ -1,0 +1,1 @@
+Expose a programmatic API as ``from virtualenv import cli_run`` - by :user:`gaborbernat`.

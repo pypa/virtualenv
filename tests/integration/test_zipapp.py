@@ -8,7 +8,7 @@ import pytest
 import six
 
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.run import run_via_cli
+from virtualenv.run import cli_run
 from virtualenv.util.path import Path
 
 HERE = Path(__file__).parent
@@ -28,7 +28,7 @@ def zipapp_build_env(tmp_path_factory):
             for version in range(8, 4, -1):
                 try:
                     # create a virtual environment which is also guaranteed to contain a recent enough pip (bundled)
-                    session = run_via_cli(
+                    session = cli_run(
                         ["-vvv", "-p", "{}3.{}".format(impl, version), "--activators", "", str(create_env_path)]
                     )
                     exe = str(session.creator.exe)
@@ -61,7 +61,7 @@ def zipapp(zipapp_build_env, tmp_path_factory):
 @pytest.fixture(scope="session")
 def zipapp_test_env(tmp_path_factory):
     base_path = tmp_path_factory.mktemp("zipapp-test")
-    session = run_via_cli(["-v", "--activators", "", "--without-pip", str(base_path / "env")])
+    session = cli_run(["-v", "--activators", "", "--without-pip", str(base_path / "env")])
     yield session.creator.exe
     shutil.rmtree(str(base_path))
 

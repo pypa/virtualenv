@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import pytest
 
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.run import run_via_cli
+from virtualenv.run import cli_run
 from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
 
 
@@ -22,7 +22,7 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, current_fastest):
         "--creator",
         current_fastest,
     ]
-    result = run_via_cli(create_cmd)
+    result = cli_run(create_cmd)
     coverage_env()
     assert result
 

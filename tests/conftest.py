@@ -121,9 +121,9 @@ def ensure_py_info_cache_empty():
 
 
 @pytest.fixture(autouse=True)
-def ignore_global_config(tmp_path, mocker):
+def ignore_global_config(tmp_path, mocker, monkeypatch):
     mocker.patch("virtualenv.dirs._CFG_DIR", None)
-    mocker.patch("virtualenv.dirs.user_config_dir", return_value=tmp_path / "this-should-never-exist")
+    mocker.patch("virtualenv.dirs.user_config_dir", return_value=Path(str(tmp_path / "this-should-never-exist")))
     yield
 
 
