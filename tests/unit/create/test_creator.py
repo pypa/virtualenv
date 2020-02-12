@@ -155,9 +155,11 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     assert any(p for p in our_paths if p.parts[-1] == "site-packages"), our_paths_repr
 
     # ensure the global site package is added or not, depending on flag
-    last_from_system_path = next(i for i in reversed(system_sys_path) if str(i).startswith(system["sys"]["prefix"]))
+    last_from_system_path = next(j for j in reversed(system_sys_path) if str(j).startswith(system["sys"]["prefix"]))
     if isolated == "isolated":
-        assert last_from_system_path not in sys_path
+        assert last_from_system_path not in sys_path, "last from system sys path {} is in venv sys path:\n{}".format(
+            six.ensure_text(str(last_from_system_path)), "\n".join(six.ensure_text(str(j)) for j in sys_path)
+        )
     else:
         common = []
         for left, right in zip(reversed(system_sys_path), reversed(sys_path)):
