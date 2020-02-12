@@ -5,6 +5,8 @@ import logging
 import sys
 from datetime import datetime
 
+import six
+
 
 def run(args=None, options=None):
     start = datetime.now()
@@ -14,14 +16,18 @@ def run(args=None, options=None):
     if args is None:
         args = sys.argv[1:]
     try:
-        run_via_cli(args, options)
+        session = run_via_cli(args, options)
+        logging.warning(
+            "created virtual environment in %.0fms %s with seeder %s",
+            (datetime.now() - start).total_seconds() * 1000,
+            six.ensure_text(str(session.creator)),
+            six.ensure_text(str(session.seeder)),
+        )
     except ProcessCallFailed as exception:
         print("subprocess call failed for {}".format(exception.cmd))
         print(exception.out, file=sys.stdout, end="")
         print(exception.err, file=sys.stderr, end="")
         raise SystemExit(exception.code)
-    finally:
-        logging.info("done in %.0fms", (datetime.now() - start).total_seconds() * 1000)
 
 
 def run_with_catch(args=None):
