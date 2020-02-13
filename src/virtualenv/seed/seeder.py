@@ -2,10 +2,10 @@ from __future__ import absolute_import, unicode_literals
 
 from abc import ABCMeta, abstractmethod
 
-import six
+from six import add_metaclass
 
 
-@six.add_metaclass(ABCMeta)
+@add_metaclass(ABCMeta)
 class Seeder(object):
     """A seeder will install some seed packages into a virtual environment."""
 

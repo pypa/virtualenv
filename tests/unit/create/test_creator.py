@@ -11,7 +11,6 @@ from itertools import product
 from threading import Thread
 
 import pytest
-import six
 
 from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
@@ -21,6 +20,7 @@ from virtualenv.info import IS_PYPY, fs_supports_symlink
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.util.path import Path
+from virtualenv.util.six import ensure_text
 
 CURRENT = PythonInfo.current_system()
 
@@ -115,8 +115,8 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
         "-v",
         "-v",
         "-p",
-        six.ensure_text(python),
-        six.ensure_text(str(dest)),
+        ensure_text(python),
+        ensure_text(str(dest)),
         "--without-pip",
         "--activators",
         "",
@@ -133,22 +133,20 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
         # force a cleanup of these on system where the limit is low-ish (e.g. MacOS 256)
         gc.collect()
     content = list(result.creator.purelib.iterdir())
-    assert not content, "\n".join(six.ensure_text(str(i)) for i in content)
-    assert result.creator.env_name == six.ensure_text(dest.name)
+    assert not content, "\n".join(ensure_text(str(i)) for i in content)
+    assert result.creator.env_name == ensure_text(dest.name)
     debug = result.creator.debug
     sys_path = cleanup_sys_path(debug["sys"]["path"])
     system_sys_path = cleanup_sys_path(system["sys"]["path"])
     our_paths = set(sys_path) - set(system_sys_path)
-    our_paths_repr = "\n".join(six.ensure_text(repr(i)) for i in our_paths)
+    our_paths_repr = "\n".join(ensure_text(repr(i)) for i in our_paths)
 
     # ensure we have at least one extra path added
     assert len(our_paths) >= 1, our_paths_repr
     # ensure all additional paths are related to the virtual environment
     for path in our_paths:
         msg = "\n{}\ndoes not start with {}\nhas:\n{}".format(
-            six.ensure_text(str(path)),
-            six.ensure_text(str(dest)),
-            "\n".join(six.ensure_text(str(p)) for p in system_sys_path),
+            ensure_text(str(path)), ensure_text(str(dest)), "\n".join(ensure_text(str(p)) for p in system_sys_path),
         )
         assert str(path).startswith(str(dest)), msg
     # ensure there's at least a site-packages folder as part of the virtual environment added
@@ -158,7 +156,7 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     last_from_system_path = next(j for j in reversed(system_sys_path) if str(j).startswith(system["sys"]["prefix"]))
     if isolated == "isolated":
         assert last_from_system_path not in sys_path, "last from system sys path {} is in venv sys path:\n{}".format(
-            six.ensure_text(str(last_from_system_path)), "\n".join(six.ensure_text(str(j)) for j in sys_path)
+            ensure_text(str(last_from_system_path)), "\n".join(ensure_text(str(j)) for j in sys_path)
         )
     else:
         common = []
@@ -169,7 +167,7 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
                 break
 
         def list_to_str(iterable):
-            return [six.ensure_text(str(i)) for i in iterable]
+            return [ensure_text(str(i)) for i in iterable]
 
         assert common, "\n".join(difflib.unified_diff(list_to_str(sys_path), list_to_str(system_sys_path)))
 
@@ -184,7 +182,7 @@ def test_venv_fails_not_inline(tmp_path, capsys, mocker):
     mocker.patch("virtualenv.run.session_via_cli", side_effect=_session_via_cli)
     before = tmp_path.stat().st_mode
     cfg_path = tmp_path / "pyvenv.cfg"
-    cfg_path.write_text(six.ensure_text(""))
+    cfg_path.write_text(ensure_text(""))
     cfg = str(cfg_path)
     try:
         os.chmod(cfg, stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
@@ -268,8 +266,8 @@ def test_cross_major(cross_python, coverage_env, tmp_path, current_fastest):
         "-v",
         "-v",
         "-p",
-        six.ensure_text(cross_python.executable),
-        six.ensure_text(str(tmp_path)),
+        ensure_text(cross_python.executable),
+        ensure_text(str(tmp_path)),
         "--no-seed",
         "--activators",
         "",

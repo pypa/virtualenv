@@ -5,10 +5,9 @@ import sys
 from ast import literal_eval
 from textwrap import dedent
 
-import six
-
 from virtualenv.activation import PythonActivator
 from virtualenv.info import WIN_CPYTHON_2
+from virtualenv.util.six import ensure_text
 
 
 def test_python(raise_on_non_source_class, activation_tester):
@@ -77,7 +76,7 @@ def test_python(raise_on_non_source_class, activation_tester):
             # sys path contains the site package at its start
             new_sys_path = out[5]
 
-            new_lib_paths = {six.ensure_text(j) if WIN_CPYTHON_2 else j for j in {str(i) for i in self._creator.libs}}
+            new_lib_paths = {ensure_text(j) if WIN_CPYTHON_2 else j for j in {str(i) for i in self._creator.libs}}
             assert prev_sys_path == new_sys_path[len(new_lib_paths) :]
             assert new_lib_paths == set(new_sys_path[: len(new_lib_paths)])
 
@@ -89,7 +88,7 @@ def test_python(raise_on_non_source_class, activation_tester):
         def non_source_activate(self, activate_script):
             act = str(activate_script)
             if WIN_CPYTHON_2:
-                act = six.ensure_text(act)
+                act = ensure_text(act)
             cmd = self._invoke_script + [
                 "-c",
                 "exec(open({}).read())".format(repr(act)),

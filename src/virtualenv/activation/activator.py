@@ -2,10 +2,10 @@ from __future__ import absolute_import, unicode_literals
 
 from abc import ABCMeta, abstractmethod
 
-import six
+from six import add_metaclass
 
 
-@six.add_metaclass(ABCMeta)
+@add_metaclass(ABCMeta)
 class Activator(object):
     """Generates an activate script for the virtual environment"""
 

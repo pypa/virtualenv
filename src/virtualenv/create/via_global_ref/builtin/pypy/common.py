@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import abc
 
-import six
+from six import add_metaclass
 
 from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
 from virtualenv.util.path import Path
@@ -10,7 +10,7 @@ from virtualenv.util.path import Path
 from ..via_global_self_do import ViaGlobalRefVirtualenvBuiltin
 
 
-@six.add_metaclass(abc.ABCMeta)
+@add_metaclass(abc.ABCMeta)
 class PyPy(ViaGlobalRefVirtualenvBuiltin):
     @classmethod
     def can_describe(cls, interpreter):

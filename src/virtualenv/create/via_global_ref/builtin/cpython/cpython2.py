@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import abc
 import logging
 
-import six
+from six import add_metaclass
 
 from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
 from virtualenv.util.path import Path
@@ -12,7 +12,7 @@ from ..python2.python2 import Python2
 from .common import CPython, CPythonPosix, CPythonWindows
 
 
-@six.add_metaclass(abc.ABCMeta)
+@add_metaclass(abc.ABCMeta)
 class CPython2(CPython, Python2):
     """Create a CPython version 2  virtual environment"""
 

@@ -5,7 +5,7 @@ import logging
 import sys
 from datetime import datetime
 
-import six
+from virtualenv.util.six import ensure_text
 
 
 def run(args=None, options=None):
@@ -20,8 +20,8 @@ def run(args=None, options=None):
         logging.warning(
             "created virtual environment in %.0fms %s with seeder %s",
             (datetime.now() - start).total_seconds() * 1000,
-            six.ensure_text(str(session.creator)),
-            six.ensure_text(str(session.seeder)),
+            ensure_text(str(session.creator)),
+            ensure_text(str(session.seeder)),
         )
     except ProcessCallFailed as exception:
         print("subprocess call failed for {}".format(exception.cmd))

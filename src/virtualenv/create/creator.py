@@ -11,13 +11,13 @@ from ast import literal_eval
 from collections import OrderedDict
 from stat import S_IWUSR
 
-import six
 from six import add_metaclass
 
 from virtualenv.discovery.cached_py_info import LogCmd
 from virtualenv.info import WIN_CPYTHON_2
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.util.path import Path
+from virtualenv.util.six import ensure_str, ensure_text
 from virtualenv.util.subprocess import run_cmd
 from virtualenv.util.zipapp import ensure_file_on_disk
 from virtualenv.version import __version__
@@ -43,14 +43,14 @@ class Creator(object):
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest)
 
     def __repr__(self):
-        return six.ensure_str(self.__unicode__())
+        return ensure_str(self.__unicode__())
 
     def __unicode__(self):
         return "{}({})".format(self.__class__.__name__, ", ".join("{}={}".format(k, v) for k, v in self._args()))
 
     def _args(self):
         return [
-            ("dest", six.ensure_text(str(self.dest))),
+            ("dest", ensure_text(str(self.dest))),
             ("clear", self.clear),
         ]
 
@@ -103,7 +103,7 @@ class Creator(object):
         encoding = sys.getfilesystemencoding()
         refused = OrderedDict()
         kwargs = {"errors": "ignore"} if encoding != "mbcs" else {}
-        for char in six.ensure_text(raw_value):
+        for char in ensure_text(raw_value):
             try:
                 trip = char.encode(encoding, **kwargs).decode(encoding)
                 if trip == char:
@@ -135,7 +135,7 @@ class Creator(object):
         value = dest
         while dest:
             if dest.exists():
-                if os.access(six.ensure_text(str(dest)), os.W_OK):
+                if os.access(ensure_text(str(dest)), os.W_OK):
                     break
                 else:
                     non_write_able(dest, value)
@@ -188,7 +188,7 @@ def get_env_debug_info(env_exe, debug_script):
     with ensure_file_on_disk(debug_script) as debug_script:
         cmd = [str(env_exe), str(debug_script)]
         if WIN_CPYTHON_2:
-            cmd = [six.ensure_text(i) for i in cmd]
+            cmd = [ensure_text(i) for i in cmd]
         logging.debug(str("debug via %r"), LogCmd(cmd))
         code, out, err = run_cmd(cmd)
 

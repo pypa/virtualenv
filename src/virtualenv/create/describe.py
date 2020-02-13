@@ -3,10 +3,11 @@ from __future__ import absolute_import, print_function, unicode_literals
 from abc import ABCMeta
 from collections import OrderedDict
 
-from six import add_metaclass, ensure_text
+from six import add_metaclass
 
 from virtualenv.info import IS_WIN
 from virtualenv.util.path import Path
+from virtualenv.util.six import ensure_text
 
 
 @add_metaclass(ABCMeta)

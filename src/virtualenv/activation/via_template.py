@@ -4,7 +4,9 @@ import os
 import sys
 from abc import ABCMeta, abstractmethod
 
-import six
+from six import add_metaclass
+
+from virtualenv.util.six import ensure_text
 
 from .activator import Activator
 
@@ -14,7 +16,7 @@ else:
     from importlib_resources import read_text
 
 
-@six.add_metaclass(ABCMeta)
+@add_metaclass(ABCMeta)
 class ViaTemplateActivator(Activator):
     @abstractmethod
     def templates(self):
@@ -30,10 +32,10 @@ class ViaTemplateActivator(Activator):
     def replacements(self, creator, dest_folder):
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
-            "__VIRTUAL_ENV__": six.ensure_text(str(creator.dest)),
+            "__VIRTUAL_ENV__": ensure_text(str(creator.dest)),
             "__VIRTUAL_NAME__": creator.env_name,
-            "__BIN_NAME__": six.ensure_text(str(creator.bin_dir.relative_to(creator.dest))),
-            "__PATH_SEP__": six.ensure_text(os.pathsep),
+            "__BIN_NAME__": ensure_text(str(creator.bin_dir.relative_to(creator.dest))),
+            "__PATH_SEP__": ensure_text(os.pathsep),
         }
 
     def _generate(self, replacements, templates, to_folder, creator):

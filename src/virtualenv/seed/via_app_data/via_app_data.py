@@ -6,12 +6,11 @@ import shutil
 from contextlib import contextmanager
 from threading import Lock, Thread
 
-import six
-
 from virtualenv.dirs import default_data_dir
 from virtualenv.info import fs_supports_symlink
 from virtualenv.seed.embed.base_embed import BaseEmbed
 from virtualenv.seed.embed.wheels.acquire import get_wheels
+from virtualenv.util.six import ensure_text
 
 from .pip_install.copy import CopyPipInstall
 from .pip_install.symlink import SymlinkPipInstall
@@ -74,7 +73,7 @@ class FromAppData(BaseEmbed):
         with base_cache.lock_for_key("wheels"):
             wheels_to = base_cache.path / "wheels"
             if self.clear and wheels_to.exists():
-                shutil.rmtree(six.ensure_text(str(wheels_to)))
+                shutil.rmtree(ensure_text(str(wheels_to)))
             wheels_to.mkdir(parents=True, exist_ok=True)
             name_to_whl, lock = {}, Lock()
 

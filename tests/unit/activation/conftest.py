@@ -14,6 +14,7 @@ import six
 from virtualenv.info import IS_PYPY, WIN_CPYTHON_2
 from virtualenv.run import cli_run
 from virtualenv.util.path import Path
+from virtualenv.util.six import ensure_str, ensure_text
 from virtualenv.util.subprocess import Popen
 
 
@@ -58,22 +59,22 @@ class ActivationTester(object):
         )
 
     def __repr__(self):
-        return six.ensure_str(self.__unicode__())
+        return ensure_str(self.__unicode__())
 
     def __call__(self, monkeypatch, tmp_path):
         activate_script = self._creator.bin_dir / self.activate_script
         test_script = self._generate_test_script(activate_script, tmp_path)
-        monkeypatch.chdir(six.ensure_text(str(tmp_path)))
+        monkeypatch.chdir(ensure_text(str(tmp_path)))
 
         monkeypatch.delenv(str("VIRTUAL_ENV"), raising=False)
-        invoke, env = self._invoke_script + [six.ensure_text(str(test_script))], self.env(tmp_path)
+        invoke, env = self._invoke_script + [ensure_text(str(test_script))], self.env(tmp_path)
 
         try:
             process = Popen(invoke, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
             _raw, _ = process.communicate()
             raw = _raw.decode("utf-8")
         except subprocess.CalledProcessError as exception:
-            assert not exception.returncode, six.ensure_text(exception.output)
+            assert not exception.returncode, ensure_text(exception.output)
             return
 
         out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, re.M).strip().splitlines()
@@ -97,9 +98,9 @@ class ActivationTester(object):
 
     def _generate_test_script(self, activate_script, tmp_path):
         commands = self._get_test_lines(activate_script)
-        script = six.ensure_text(os.linesep).join(commands)
+        script = ensure_text(os.linesep).join(commands)
         test_script = tmp_path / "script.{}".format(self.extension)
-        with open(six.ensure_text(str(test_script)), "wb") as file_handler:
+        with open(ensure_text(str(test_script)), "wb") as file_handler:
             file_handler.write(script.encode(self.script_encoding))
         return test_script
 
@@ -156,8 +157,8 @@ class ActivationTester(object):
         )
 
     def activate_call(self, script):
-        cmd = self.quote(six.ensure_text(str(self.activate_cmd)))
-        scr = self.quote(six.ensure_text(str(script)))
+        cmd = self.quote(ensure_text(str(self.activate_cmd)))
+        scr = self.quote(ensure_text(str(script)))
         return "{} {}".format(cmd, scr).strip()
 
     @staticmethod
@@ -165,7 +166,7 @@ class ActivationTester(object):
         # python may return Windows short paths, normalize
         if not isinstance(path, Path):
             path = Path(path)
-        path = six.ensure_text(str(path.resolve()))
+        path = ensure_text(str(path.resolve()))
         if sys.platform != "win32":
             result = path
         else:
@@ -206,7 +207,7 @@ def raise_on_non_source_class():
 
 @pytest.fixture(scope="session")
 def activation_python(tmp_path_factory, special_char_name, current_fastest):
-    dest = os.path.join(six.ensure_text(str(tmp_path_factory.mktemp("activation-tester-env"))), special_char_name)
+    dest = os.path.join(ensure_text(str(tmp_path_factory.mktemp("activation-tester-env"))), special_char_name)
     session = cli_run(["--without-pip", dest, "--prompt", special_char_name, "--creator", current_fastest, "-vv"])
     pydoc_test = session.creator.purelib / "pydoc_test.py"
     pydoc_test.write_text('"""This is pydoc_test.py"""')

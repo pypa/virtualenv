@@ -18,6 +18,7 @@ from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
 from virtualenv.report import LOGGER
 from virtualenv.util.path import Path
+from virtualenv.util.six import ensure_text
 
 _TEST_SETUP_DIR = tempfile.mkdtemp()
 dirs._DATA_DIR = dirs.ReentrantFileLock(_TEST_SETUP_DIR)
@@ -279,7 +280,7 @@ def special_name_dir(tmp_path, special_char_name):
     dest = Path(str(tmp_path)) / special_char_name
     yield dest
     if six.PY2 and sys.platform == "win32" and not IS_PYPY:  # pytest python2 windows does not support unicode delete
-        shutil.rmtree(six.ensure_text(str(dest)))
+        shutil.rmtree(ensure_text(str(dest)))
 
 
 @pytest.fixture(scope="session")

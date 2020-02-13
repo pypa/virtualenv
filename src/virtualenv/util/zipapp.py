@@ -5,10 +5,9 @@ import os
 import zipfile
 from contextlib import contextmanager
 
-import six
-
 from virtualenv.dirs import default_data_dir
 from virtualenv.info import IS_WIN, IS_ZIPAPP, ROOT
+from virtualenv.util.six import ensure_text
 from virtualenv.version import __version__
 
 
@@ -25,7 +24,7 @@ def extract(full_path, dest):
     with zipfile.ZipFile(ROOT, "r") as zip_file:
         info = zip_file.getinfo(sub_file)
         info.filename = dest.name
-        zip_file.extract(info, six.ensure_text(str(dest.parent)))
+        zip_file.extract(info, ensure_text(str(dest.parent)))
 
 
 def _get_path_within_zip(full_path):
