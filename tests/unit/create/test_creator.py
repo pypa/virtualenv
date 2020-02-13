@@ -300,6 +300,13 @@ def test_creator_input_passed_is_abs(tmp_path, monkeypatch):
     assert str(result) == str(tmp_path / "venv")
 
 
+@pytest.mark.skipif(os.altsep is None, reason="OS does not have an altsep")
+def test_creator_replaces_altsep_in_dest(tmp_path):
+    dest = str(tmp_path / "venv{}foobar")
+    result = Creator.validate_dest(dest.format(os.altsep))
+    assert str(result) == dest.format(os.sep)
+
+
 def test_create_long_path(current_fastest, tmp_path):
     if sys.platform == "darwin":
         max_shebang_length = 512
