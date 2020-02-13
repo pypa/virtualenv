@@ -1,0 +1,1 @@
+Allow the use of ``/`` as pathname component separator on Windows - by ``vphilippon``

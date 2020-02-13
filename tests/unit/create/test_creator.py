@@ -25,13 +25,12 @@ from virtualenv.util.six import ensure_text
 CURRENT = PythonInfo.current_system()
 
 
-@pytest.mark.parametrize("sep", [i for i in (os.pathsep, os.altsep) if i is not None])
-def test_os_path_sep_not_allowed(tmp_path, capsys, sep):
-    target = "{}{}".format(str(tmp_path / "a"), "{}b".format(sep))
+def test_os_path_sep_not_allowed(tmp_path, capsys):
+    target = str(tmp_path / "a{}b".format(os.pathsep))
     err = _non_success_exit_code(capsys, target)
     msg = (
         "destination {!r} must not contain the path separator ({}) as this"
-        " would break the activation scripts".format(target, sep)
+        " would break the activation scripts".format(target, os.pathsep)
     )
     assert msg in err, err
 
@@ -297,6 +296,13 @@ def test_creator_input_passed_is_abs(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     result = Creator.validate_dest("venv")
     assert str(result) == str(tmp_path / "venv")
+
+
+@pytest.mark.skipif(os.altsep is None, reason="OS does not have an altsep")
+def test_creator_replaces_altsep_in_dest(tmp_path):
+    dest = str(tmp_path / "venv{}foobar")
+    result = Creator.validate_dest(dest.format(os.altsep))
+    assert str(result) == dest.format(os.sep)
 
 
 def test_create_long_path(current_fastest, tmp_path):
