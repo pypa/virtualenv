@@ -3,18 +3,17 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import os
 
-import six
-
 from virtualenv.dirs import default_config_dir
 from virtualenv.info import PY3
 from virtualenv.util import ConfigParser
 from virtualenv.util.path import Path
+from virtualenv.util.six import ensure_str
 
 from .convert import convert
 
 
 class IniConfig(object):
-    VIRTUALENV_CONFIG_FILE_ENV_VAR = six.ensure_str("VIRTUALENV_CONFIG_FILE")
+    VIRTUALENV_CONFIG_FILE_ENV_VAR = ensure_str("VIRTUALENV_CONFIG_FILE")
     STATE = {None: "failed to parse", True: "active", False: "missing"}
 
     section = "virtualenv"

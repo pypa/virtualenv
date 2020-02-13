@@ -2,14 +2,15 @@ from __future__ import absolute_import, unicode_literals
 
 from abc import ABCMeta
 
-import six
+from six import add_metaclass
 
 from virtualenv.util.path import Path
+from virtualenv.util.six import ensure_str, ensure_text
 
 from ..seeder import Seeder
 
 
-@six.add_metaclass(ABCMeta)
+@add_metaclass(ABCMeta)
 class BaseEmbed(Seeder):
     packages = ["pip", "setuptools", "wheel"]
 
@@ -80,9 +81,7 @@ class BaseEmbed(Seeder):
     def __unicode__(self):
         result = self.__class__.__name__
         if self.extra_search_dir:
-            result += " extra search dirs = {}".format(
-                ", ".join(six.ensure_text(str(i)) for i in self.extra_search_dir)
-            )
+            result += " extra search dirs = {}".format(", ".join(ensure_text(str(i)) for i in self.extra_search_dir))
         for package in self.packages:
             result += " {}{}".format(
                 package, "={}".format(getattr(self, "{}_version".format(package), None) or "latest")
@@ -90,4 +89,4 @@ class BaseEmbed(Seeder):
         return result
 
     def __repr__(self):
-        return six.ensure_str(self.__unicode__())
+        return ensure_str(self.__unicode__())

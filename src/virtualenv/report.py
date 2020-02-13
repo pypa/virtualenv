@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import sys
 
-import six
+from virtualenv.util.six import ensure_str
 
 LEVELS = {
     0: logging.CRITICAL,
@@ -33,7 +33,7 @@ def setup_report(verbose, quiet):
     else:
         filelock_logger.setLevel(logging.WARN)
 
-    formatter = logging.Formatter(six.ensure_str(msg_format))
+    formatter = logging.Formatter(ensure_str(msg_format))
     stream_handler = logging.StreamHandler(stream=sys.stdout)
     stream_handler.setLevel(level)
     LOGGER.setLevel(logging.NOTSET)

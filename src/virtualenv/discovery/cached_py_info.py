@@ -14,12 +14,11 @@ import sys
 from collections import OrderedDict
 from hashlib import sha256
 
-from six import ensure_text
-
 from virtualenv.dirs import default_data_dir
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import PY2, PY3
 from virtualenv.util.path import Path
+from virtualenv.util.six import ensure_text
 from virtualenv.util.subprocess import Popen, subprocess
 from virtualenv.util.zipapp import ensure_file_on_disk
 from virtualenv.version import __version__

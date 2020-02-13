@@ -4,7 +4,7 @@ import os
 import platform
 from contextlib import contextmanager
 
-import six
+from virtualenv.util.six import ensure_str, ensure_text
 
 IS_PYPY = platform.python_implementation() == "PyPy"
 
@@ -14,25 +14,25 @@ class Path(object):
         if isinstance(path, Path):
             _path = path._path
         else:
-            _path = six.ensure_text(path)
+            _path = ensure_text(path)
             if IS_PYPY:
                 _path = _path.encode("utf-8")
         self._path = _path
 
     def __repr__(self):
-        return six.ensure_str("Path({})".format(six.ensure_text(self._path)))
+        return ensure_str("Path({})".format(ensure_text(self._path)))
 
     def __unicode__(self):
-        return six.ensure_text(self._path)
+        return ensure_text(self._path)
 
     def __str__(self):
-        return six.ensure_str(self._path)
+        return ensure_str(self._path)
 
     def __div__(self, other):
         if isinstance(other, Path):
             right = other._path
         else:
-            right = six.ensure_text(other)
+            right = ensure_text(other)
             if IS_PYPY:
                 right = right.encode("utf-8")
         return Path(os.path.join(self._path, right))

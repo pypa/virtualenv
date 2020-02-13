@@ -10,10 +10,9 @@ from copy import copy
 from shutil import copy2
 from zipfile import ZipFile
 
-import six
-
 from virtualenv.info import IS_ZIPAPP
 from virtualenv.util.path import Path
+from virtualenv.util.six import ensure_str, ensure_text
 from virtualenv.util.subprocess import Popen, subprocess
 from virtualenv.util.zipapp import ensure_file_on_disk
 
@@ -85,7 +84,7 @@ def acquire_from_dir(packages, for_py_version, to_folder, extra_search_dir):
 
 def wheel_support_py(filename, py_version):
     name = "{}.dist-info/METADATA".format("-".join(filename.stem.split("-")[0:2]))
-    with ZipFile(six.ensure_text(str(filename)), "r") as zip_file:
+    with ZipFile(ensure_text(str(filename)), "r") as zip_file:
         metadata = zip_file.read(name).decode("utf-8")
     marker = "Requires-Python:"
     requires = next(i[len(marker) :] for i in metadata.splitlines() if i.startswith(marker))
@@ -158,7 +157,7 @@ def pip_wheel_env_run(version):
     env = os.environ.copy()
     env.update(
         {
-            six.ensure_str(k): str(v)  # python 2 requires these to be string only (non-unicode)
+            ensure_str(k): str(v)  # python 2 requires these to be string only (non-unicode)
             for k, v in {"PIP_USE_WHEEL": "1", "PIP_USER": "0", "PIP_NO_INPUT": "1"}.items()
         }
     )

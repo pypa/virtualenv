@@ -6,9 +6,8 @@ import re
 import sys
 from collections import OrderedDict
 
-import six
-
 from virtualenv.info import fs_is_case_sensitive
+from virtualenv.util.six import ensure_str
 
 PATTERN = re.compile(r"^(?P<impl>[a-zA-Z]+)?(?P<version>[0-9.]+)?(?:-(?P<arch>32|64))?$")
 IS_WIN = sys.platform == "win32"
@@ -120,4 +119,4 @@ class PythonSpec(object):
         )
 
     def __repr__(self):
-        return six.ensure_str(self.__unicode__())
+        return ensure_str(self.__unicode__())

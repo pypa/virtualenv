@@ -4,9 +4,8 @@ import logging
 import os
 import sys
 
-import six
-
 from virtualenv.info import IS_WIN
+from virtualenv.util.six import ensure_str, ensure_text
 
 from .discover import Discover
 from .py_info import PythonInfo
@@ -33,7 +32,7 @@ class Builtin(Discover):
         return get_interpreter(self.python_spec)
 
     def __repr__(self):
-        return six.ensure_str(self.__unicode__())
+        return ensure_str(self.__unicode__())
 
     def __unicode__(self):
         return "{} discover of python_spec={!r}".format(self.__class__.__name__, self.python_spec)
@@ -73,7 +72,7 @@ def propose_interpreters(spec):
     # find on path, the path order matters (as the candidates are less easy to control by end user)
     tested_exes = set()
     for pos, path in enumerate(paths):
-        path = six.ensure_text(path)
+        path = ensure_text(path)
         logging.debug(LazyPathDump(pos, path))
         for candidate, match in possible_specs(spec):
             found = check_path(candidate, path)
@@ -106,7 +105,7 @@ class LazyPathDump(object):
         self.path = path
 
     def __repr__(self):
-        return six.ensure_str(self.__unicode__())
+        return ensure_str(self.__unicode__())
 
     def __unicode__(self):
         content = "discover PATH[{}]={}".format(self.pos, self.path)

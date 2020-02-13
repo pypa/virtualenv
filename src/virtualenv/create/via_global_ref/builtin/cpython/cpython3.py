@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import abc
 
-import six
+from six import add_metaclass
 
 from virtualenv.create.describe import Python3Supports
 from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
@@ -11,7 +11,7 @@ from virtualenv.util.path import Path
 from .common import CPython, CPythonPosix, CPythonWindows
 
 
-@six.add_metaclass(abc.ABCMeta)
+@add_metaclass(abc.ABCMeta)
 class CPython3(CPython, Python3Supports):
     """"""
 

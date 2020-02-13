@@ -4,12 +4,13 @@ import abc
 import json
 import os
 
-import six
+from six import add_metaclass
 
 from virtualenv.create.describe import Python2Supports
 from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
 from virtualenv.info import IS_ZIPAPP
 from virtualenv.util.path import Path
+from virtualenv.util.six import ensure_text
 from virtualenv.util.zipapp import read as read_from_zipapp
 
 from ..via_global_self_do import ViaGlobalRefVirtualenvBuiltin
@@ -17,7 +18,7 @@ from ..via_global_self_do import ViaGlobalRefVirtualenvBuiltin
 HERE = Path(os.path.abspath(__file__)).parent
 
 
-@six.add_metaclass(abc.ABCMeta)
+@add_metaclass(abc.ABCMeta)
 class Python2(ViaGlobalRefVirtualenvBuiltin, Python2Supports):
     def create(self):
         """Perform operations needed to make the created environment work on Python 2"""
@@ -30,9 +31,7 @@ class Python2(ViaGlobalRefVirtualenvBuiltin, Python2Supports):
             custom_site_text = read_from_zipapp(custom_site)
         else:
             custom_site_text = custom_site.read_text()
-        expected = json.dumps(
-            [os.path.relpath(six.ensure_text(str(i)), six.ensure_text(str(site_py))) for i in self.libs]
-        )
+        expected = json.dumps([os.path.relpath(ensure_text(str(i)), ensure_text(str(site_py))) for i in self.libs])
         site_py.write_text(custom_site_text.replace("___EXPECTED_SITE_PACKAGES___", expected))
 
     @classmethod

@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 from collections import OrderedDict
 
-import six
+from virtualenv.util.six import ensure_text
 
 
 class PyEnvCfg(object):
@@ -31,7 +31,7 @@ class PyEnvCfg(object):
         return content
 
     def write(self):
-        logging.debug("write %s", six.ensure_text(str(self.path)))
+        logging.debug("write %s", ensure_text(str(self.path)))
         text = ""
         for key, value in self.content.items():
             line = "{} = {}".format(key, value)

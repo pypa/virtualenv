@@ -5,10 +5,11 @@ from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 from stat import S_IXGRP, S_IXOTH, S_IXUSR
 
-from six import add_metaclass, ensure_text
+from six import add_metaclass
 
 from virtualenv.info import PY3, fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.util.path import copy, link, make_exe, symlink
+from virtualenv.util.six import ensure_text
 
 
 @add_metaclass(ABCMeta)

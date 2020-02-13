@@ -5,8 +5,7 @@ import shutil
 import subprocess
 from stat import S_IREAD, S_IRGRP, S_IROTH, S_IWUSR
 
-import six
-
+from virtualenv.util.six import ensure_text
 from virtualenv.util.subprocess import Popen
 
 from .base import PipInstall
@@ -14,14 +13,14 @@ from .base import PipInstall
 
 class SymlinkPipInstall(PipInstall):
     def _sync(self, src, dst):
-        src_str = six.ensure_text(str(src))
-        dest_str = six.ensure_text(str(dst))
+        src_str = ensure_text(str(src))
+        dest_str = ensure_text(str(dst))
         os.symlink(src_str, dest_str)
 
     def _generate_new_files(self):
         # create the pyc files, as the build image will be R/O
         process = Popen(
-            [six.ensure_text(str(self._creator.exe)), "-m", "compileall", six.ensure_text(str(self._image_dir))],
+            [ensure_text(str(self._creator.exe)), "-m", "compileall", ensure_text(str(self._image_dir))],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
@@ -32,7 +31,7 @@ class SymlinkPipInstall(PipInstall):
         if root_py_cache.exists():
             new_files.update(root_py_cache.iterdir())
             new_files.add(root_py_cache)
-            shutil.rmtree(six.ensure_text(str(root_py_cache)))
+            shutil.rmtree(ensure_text(str(root_py_cache)))
         core_new_files = super(SymlinkPipInstall, self)._generate_new_files()
         # remove files that are within the image folder deeper than one level (as these will be not linked directly)
         for file in core_new_files:
@@ -48,7 +47,7 @@ class SymlinkPipInstall(PipInstall):
     def _fix_records(self, new_files):
         new_files.update(i for i in self._image_dir.iterdir())
         extra_record_data_str = self._records_text(sorted(new_files, key=str))
-        with open(six.ensure_text(str(self._dist_info / "RECORD")), "wb") as file_handler:
+        with open(ensure_text(str(self._dist_info / "RECORD")), "wb") as file_handler:
             file_handler.write(extra_record_data_str.encode("utf-8"))
 
     def build_image(self):
@@ -63,6 +62,6 @@ class SymlinkPipInstall(PipInstall):
 
     @staticmethod
     def _set_tree(folder, stat):
-        for root, _, files in os.walk(six.ensure_text(str(folder))):
+        for root, _, files in os.walk(ensure_text(str(folder))):
             for filename in files:
                 os.chmod(os.path.join(root, filename), stat)

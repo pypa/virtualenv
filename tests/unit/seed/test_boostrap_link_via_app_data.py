@@ -4,13 +4,13 @@ import os
 import sys
 
 import pytest
-import six
 
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
 from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
 from virtualenv.seed.embed.wheels.acquire import BUNDLE_FOLDER
+from virtualenv.util.six import ensure_text
 from virtualenv.util.subprocess import Popen
 
 
@@ -20,11 +20,11 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastes
     current = PythonInfo.current_system()
     bundle_ver = BUNDLE_SUPPORT[current.version_release_str]
     create_cmd = [
-        six.ensure_text(str(tmp_path / "env")),
+        ensure_text(str(tmp_path / "env")),
         "--seeder",
         "app-data",
         "--extra-search-dir",
-        six.ensure_text(str(BUNDLE_FOLDER)),
+        ensure_text(str(BUNDLE_FOLDER)),
         "--download",
         "--pip",
         bundle_ver["pip"].split("-")[1],
@@ -58,7 +58,7 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastes
         )
     ]:
         assert pip_exe.exists()
-        process = Popen([six.ensure_text(str(pip_exe)), "--version", "--disable-pip-version-check"])
+        process = Popen([ensure_text(str(pip_exe)), "--version", "--disable-pip-version-check"])
         _, __ = process.communicate()
         assert not process.returncode
 

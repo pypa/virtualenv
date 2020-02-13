@@ -4,9 +4,10 @@ import logging
 import os
 import shutil
 
-from six import PY2, PY3, ensure_text
+from six import PY2, PY3
 
 from virtualenv.info import IS_CPYTHON, IS_WIN
+from virtualenv.util.six import ensure_text
 
 if PY3:
     from os import link as os_link

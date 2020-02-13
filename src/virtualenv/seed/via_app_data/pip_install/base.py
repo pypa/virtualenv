@@ -8,14 +8,14 @@ import zipfile
 from abc import ABCMeta, abstractmethod
 from tempfile import mkdtemp
 
-import six
-from six import PY3
+from six import PY3, add_metaclass
 
 from virtualenv.util import ConfigParser
 from virtualenv.util.path import Path
+from virtualenv.util.six import ensure_text
 
 
-@six.add_metaclass(ABCMeta)
+@add_metaclass(ABCMeta)
 class PipInstall(object):
     def __init__(self, wheel, creator, image_folder):
         self._wheel = wheel
@@ -60,8 +60,7 @@ class PipInstall(object):
 
     def _records_text(self, files):
         record_data = "\n".join(
-            "{},,".format(os.path.relpath(six.ensure_text(str(rec)), six.ensure_text(str(self._image_dir))))
-            for rec in files
+            "{},,".format(os.path.relpath(ensure_text(str(rec)), ensure_text(str(self._image_dir)))) for rec in files
         )
         return record_data
 
@@ -77,12 +76,10 @@ class PipInstall(object):
         folder = mkdtemp()
         try:
             to_folder = Path(folder)
-            rel = os.path.relpath(
-                six.ensure_text(str(self._creator.script_dir)), six.ensure_text(str(self._creator.purelib))
-            )
+            rel = os.path.relpath(ensure_text(str(self._creator.script_dir)), ensure_text(str(self._creator.purelib)))
             for name, module in self._console_scripts.items():
                 new_files.update(
-                    Path(os.path.normpath(six.ensure_text(str(self._image_dir / rel / i.name))))
+                    Path(os.path.normpath(ensure_text(str(self._image_dir / rel / i.name))))
                     for i in self._create_console_entry_point(name, module, to_folder)
                 )
         finally:
@@ -142,7 +139,7 @@ class PipInstall(object):
 
     def clear(self):
         if self._image_dir.exists():
-            shutil.rmtree(six.ensure_text(str(self._image_dir)))
+            shutil.rmtree(ensure_text(str(self._image_dir)))
 
     def has_image(self):
         return self._image_dir.exists() and next(self._image_dir.iterdir()) is not None
