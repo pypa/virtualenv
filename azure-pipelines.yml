@@ -4,7 +4,7 @@ resources:
   - repository: tox
     type: github
     endpoint: github-gb
-    name: tox-dev/azure-pipelines-template
+    name: ssbarnea/azure-pipelines-template
     ref: master
 
 trigger:
@@ -46,6 +46,11 @@ jobs:
         image: [linux, vs2017-win2016, macOs]
       py27:
         image: [linux, windows, macOs]
+      py27_constaint:
+        image: [linux]
+        tox_env: py27
+        variables:
+          PIP_CONSTRAINT: "pip-constraint.txt"
       pypy:
         image: [linux, windows, macOs]
       pypy3:

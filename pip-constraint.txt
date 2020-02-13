@@ -1,0 +1,2 @@
+# Used to test compatibility with oldest supported dependencies
+six==1.9.0  # shipped with centos-7
