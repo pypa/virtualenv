@@ -7,8 +7,8 @@ from stat import S_IXGRP, S_IXOTH, S_IXUSR
 
 from six import add_metaclass
 
-from virtualenv.info import PY3, fs_is_case_sensitive, fs_supports_symlink
-from virtualenv.util.path import copy, link, make_exe, symlink
+from virtualenv.info import fs_is_case_sensitive, fs_supports_symlink
+from virtualenv.util.path import copy, make_exe, symlink
 from virtualenv.util.six import ensure_text
 
 
@@ -95,9 +95,6 @@ class PathRefToDest(PathRef):
             method(self.src, dst)
 
 
-alias_via = link if PY3 else (symlink if PathRef.FS_SUPPORTS_SYMLINK else copy)
-
-
 class ExePathRefToDest(PathRefToDest, ExePathRef):
     def __init__(self, src, targets, dest, must_copy=False):
         ExePathRef.__init__(self, src)
@@ -119,5 +116,8 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
             link_file = bin_dir / extra
             if link_file.exists():
                 link_file.unlink()
-            alias_via(dest, link_file)
+            if symlinks:
+                link_file.symlink_to(self.base)
+            else:
+                copy(self.src, link_file)
             make_exe(link_file)
