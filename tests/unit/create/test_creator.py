@@ -177,8 +177,7 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     if sys.platform == "win32":
         exes = ("python.exe",)
     else:
-        # TODO: also test "python{}.{}" once fixed
-        exes = ("python", "python{}".format(sys.version_info[0]))
+        exes = ("python", "python{}".format(*sys.version_info), "python{}.{}".format(*sys.version_info))
     for exe in exes:
         exe_path = result.creator.bin_dir / exe
         assert exe_path.exists()

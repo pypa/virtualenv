@@ -28,6 +28,7 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin):
             cls.exe_stem(),
             "python",
             "python{}".format(interpreter.version_info.major),
+            "python{}.{}".format(*interpreter.version_info),
         }
 
     @classmethod
