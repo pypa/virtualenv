@@ -1,0 +1,10 @@
+# Used to test compatibility with oldest supported dependencies
+appdirs==1.4.3
+six==1.9.0
+contextlib2==0.6.0;python_version<"3.3"
+importlib-metadata==0.12;python_version<"3.8"
+importlib-resources==1.0;python_version<"3.7"
+pathlib2==2.3.3;python_version < '3.4' and sys.platform != 'win32'
+# Not eanbled yet as they break test_zipapp tests
+# distlib==0.3.0  # ERROR: Could not satisfy constraints for 'distlib': installation from path or url cannot be constrained to a version
+# filelock==3.0.0  # ERROR: Could not satisfy constraints for 'filelock': installation from path or url cannot be constrained to a version

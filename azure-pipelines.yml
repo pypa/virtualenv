@@ -38,19 +38,41 @@ jobs:
     jobs:
       py38:
         image: [linux, vs2017-win2016, macOs]
+      py38-lower:
+        name: py38_lower
+        image: [linux, vs2017-win2016, macOs]
       py37:
+        image: [linux, vs2017-win2016, macOs]
+      py37-lower:
+        name: py37_lower
         image: [linux, vs2017-win2016, macOs]
       py36:
         image: [linux, vs2017-win2016, macOs]
+      py36-lower:
+        name: py36_lower
+        image: [linux, vs2017-win2016, macOs]
       py35:
+        image: [linux, vs2017-win2016, macOs]
+      py35-lower:
+        name: py35_lower
         image: [linux, vs2017-win2016, macOs]
       py27:
         image: [linux, windows, macOs]
+      py27-lower:
+        name: py27_lower
+        image: [linux, windows, macOs]
       pypy:
+        image: [linux, windows, macOs]
+      pypy-lower:
+        name: pypy_lower
         image: [linux, windows, macOs]
       pypy3:
         image: [linux, windows, macOs]
-      fix_lint:
+      pypy3-lower:
+        name: pypy3_lower
+        image: [linux, windows, macOs]
+      fix-lint:
+        name: fix_lint
         image: [linux, windows]
       docs:
         image: [linux, windows]
@@ -79,38 +101,38 @@ jobs:
     before:
       - script: '$(toxPython.pythonLocation)/python -m pip install "virtualenv < 20"'
         displayName: pypy3 tox needs fix to accomodate separate bin and Script
-        condition: and(succeeded(), eq(variables['image_name'], 'windows'), in(variables['TOXENV'], 'pypy3'))
+        condition: and(succeeded(), eq(variables['image_name'], 'windows'), in(variables['TOXENV'], 'pypy3', 'pypy3-lower'))
       - script: '$(toxPython.pythonLocation)/python -m pip install .'
         displayName: tox uses this virtualenv (eat our own dogfood)
-        condition: not(and(succeeded(), eq(variables['image_name'], 'windows'), in(variables['TOXENV'], 'pypy3')))
+        condition: not(and(succeeded(), eq(variables['image_name'], 'windows'), in(variables['TOXENV'], 'pypy3', 'pypy3-lower')))
       - script: 'sudo apt-get update -y && sudo apt-get install fish csh'
-        condition: and(succeeded(), eq(variables['image_name'], 'linux'), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35', 'py27', 'pypy', 'pypy3'))
+        condition: and(succeeded(), eq(variables['image_name'], 'linux'), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35', 'py27', 'pypy', 'pypy3', 'py38-lower', 'py37-lower', 'py36-lower', 'py35-lower', 'py27-lower', 'pypy-lower', 'pypy3-lower'))
         displayName: install fish and csh via apt-get
       - script: 'brew update -vvv && brew install fish tcsh'
-        condition: and(succeeded(), eq(variables['image_name'], 'macOs'), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35', 'py27', 'pypy', 'pypy3'))
+        condition: and(succeeded(), eq(variables['image_name'], 'macOs'), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35', 'py27', 'pypy', 'pypy3', 'py38-lower', 'py37-lower', 'py36-lower', 'py35-lower', 'py27-lower', 'pypy-lower', 'pypy3-lower'))
         displayName: install fish and csh via brew
       - task: UsePythonVersion@0
-        condition: and(succeeded(), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35'))
+        condition: and(succeeded(), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35', 'py38-lower', 'py37-lower', 'py36-lower', 'py35-lower'))
         displayName: provision cpython 2
         inputs:
           versionSpec: '2.7'
       - task: UsePythonVersion@0
-        condition: and(succeeded(), in(variables['TOXENV'], 'py27'))
+        condition: and(succeeded(), in(variables['TOXENV'], 'py27', 'py27-lower'))
         displayName: provision cpython 3
         inputs:
           versionSpec: '3.8'
       - task: UsePythonVersion@0
-        condition: and(succeeded(), in(variables['TOXENV'], 'pypy'))
+        condition: and(succeeded(), in(variables['TOXENV'], 'pypy', 'pypy-lower'))
         displayName: provision pypy 3
         inputs:
           versionSpec: 'pypy3'
       - task: UsePythonVersion@0
-        condition: and(succeeded(), in(variables['TOXENV'], 'pypy3'))
+        condition: and(succeeded(), in(variables['TOXENV'], 'pypy3', 'pypy3-lower'))
         displayName: provision pypy 2
         inputs:
           versionSpec: 'pypy2'
       - script: choco install vcpython27 --yes -f
-        condition: and(succeeded(), eq(variables['image_name'], 'windows'), in(variables['TOXENV'], 'py27', 'pypy'))
+        condition: and(succeeded(), eq(variables['image_name'], 'windows'), in(variables['TOXENV'], 'py27', 'py27-lower', 'pypy', 'pypy-lower'))
         displayName: Install Visual C++ for Python 2.7
     coverage:
       with_toxenv: 'coverage' # generate .tox/.coverage, .tox/coverage.xml after test run
