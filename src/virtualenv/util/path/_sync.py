@@ -4,13 +4,10 @@ import logging
 import os
 import shutil
 
-from six import PY2, PY3
+from six import PY2
 
 from virtualenv.info import IS_CPYTHON, IS_WIN
 from virtualenv.util.six import ensure_text
-
-if PY3:
-    from os import link as os_link
 
 if PY2 and IS_CPYTHON and IS_WIN:  # CPython2 on Windows supports unicode paths if passed as unicode
     norm = lambda src: ensure_text(str(src))  # noqa
@@ -62,12 +59,6 @@ def copytree(src, dest):
             shutil.copy(src_f, dest_f)
 
 
-def link(src, dest):
-    ensure_safe_to_do(src, dest)
-    logging.debug("hard link %s", _Debug(src, dest.name))
-    os_link(norm(src), norm(dest))
-
-
 class _Debug(object):
     def __init__(self, src, dest):
         self.src = src
@@ -83,8 +74,6 @@ __all__ = (
     "ensure_dir",
     "symlink",
     "copy",
-    "link",
     "symlink",
-    "link",
     "copytree",
 )

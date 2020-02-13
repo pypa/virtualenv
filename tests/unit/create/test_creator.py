@@ -170,6 +170,26 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
 
         assert common, "\n".join(difflib.unified_diff(list_to_str(sys_path), list_to_str(system_sys_path)))
 
+    # test that the python executables in the bin directory are either:
+    # - files
+    # - absolute symlinks outside of the venv
+    # - relative symlinks inside of the venv
+    if sys.platform == "win32":
+        exes = ("python.exe",)
+    else:
+        # TODO: also test "python{}.{}" once fixed
+        exes = ("python", "python{}".format(sys.version_info[0]))
+    for exe in exes:
+        exe_path = result.creator.bin_dir / exe
+        assert exe_path.exists()
+        if not exe_path.is_symlink():  # option 1: a real file
+            continue  # it was a file
+        link = os.readlink(str(exe_path))
+        if not os.path.isabs(link):  # option 2: a relative symlink
+            continue
+        # option 3: an absolute symlink, should point outside the venv
+        assert not link.startswith(str(result.creator.dest))
+
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
 def test_venv_fails_not_inline(tmp_path, capsys, mocker):
