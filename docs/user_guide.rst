@@ -102,7 +102,7 @@ These are what actually setup the virtual environment, usually as a reference ag
 at the moment has two types of virtual environments:
 
 - ``venv`` - this delegates the creation process towards the ``venv`` module, as described in
-  `PEP 404 <https://www.python.org/dev/peps/pep-0405>`_. This is only available on Python interpreters having version
+  `PEP 405 <https://www.python.org/dev/peps/pep-0405>`_. This is only available on Python interpreters having version
   ``3.4`` or later, and also has the downside that virtualenv **must** create a process to invoke that module (unless
   virtualenv is installed in the system python), which can be an expensive operation (especially true on Windows).
 
