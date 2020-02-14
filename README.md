@@ -2,6 +2,7 @@
 [![PyPI - Implementation](https://img.shields.io/pypi/implementation/virtualenv?style=flat-square)](https://pypi.org/project/virtualenv)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/virtualenv?style=flat-square)](https://pypi.org/project/virtualenv)
 [![Documentation](https://readthedocs.org/projects/virtualenv/badge/?version=latest&style=flat-square)](http://virtualenv.pypa.io)
+[![Gitter Chat](https://img.shields.io/gitter/room/pypa/virtualenv?color=FF004F&style=flat-square)](https://gitter.im/pypa/virtualenv)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/virtualenv?style=flat-square)](https://pypistats.org/packages/virtualenv)
 [![PyPI - License](https://img.shields.io/pypi/l/virtualenv?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Build Status](https://dev.azure.com/pypa/virtualenv/_apis/build/status/pypa.virtualenv?branchName=master)](https://dev.azure.com/pypa/virtualenv/_build/latest?definitionId=11&branchName=master)
