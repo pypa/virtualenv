@@ -45,6 +45,15 @@ supporting Python 2.7 use
 
 .. _compatibility-requirements:
 
+from source
+-----------
+
+If you want to test unreleased version you can run `tox -e packaging` which will produce source and wheel inside
+`dist/` folder.
+
+If you have `pip>=20` you can just do a `pip install git+https://github.com/pypa/virtualenv.git`, older versions will
+fail with confusing errors.
+
 Python and OS Compatibility
 ---------------------------
 
