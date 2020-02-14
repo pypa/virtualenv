@@ -1,0 +1,2 @@
+Fail with better error message if trying to install source with unsupported ``setuptools``, allow ``setuptools-scm >= 2``
+and move to legacy ``setuptools-scm`` format to support better older platforms (``CentOS 7`` and such) - by :user:`gaborbernat`.
