@@ -48,7 +48,8 @@ def test_spec_satisfies_arch():
 
 
 @pytest.mark.parametrize(
-    "req, spec", list(itertools.combinations(["py", "CPython", "python"], 2)) + [("jython", "jython")]
+    "req, spec",
+    list(itertools.combinations(["py", "CPython", "python"], 2)) + [("jython", "jython")] + [("CPython", "cpython")],
 )
 def test_spec_satisfies_implementation_ok(req, spec):
     spec_1 = PythonSpec.from_string_spec(req)

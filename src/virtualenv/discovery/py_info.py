@@ -237,7 +237,7 @@ class PythonInfo(object):
                 return False
 
         if impl_must_match:
-            if spec.implementation is not None and spec.implementation != self.implementation:
+            if spec.implementation is not None and spec.implementation.lower() != self.implementation.lower():
                 return False
 
         if spec.architecture is not None and spec.architecture != self.architecture:

@@ -98,7 +98,7 @@ class PythonSpec(object):
         """called when there's a candidate metadata spec to see if compatible - e.g. PEP-514 on Windows"""
         if spec.is_abs and self.is_abs and self.path != spec.path:
             return False
-        if spec.implementation is not None and spec.implementation != self.implementation:
+        if spec.implementation is not None and spec.implementation.lower() != self.implementation.lower():
             return False
         if spec.architecture is not None and spec.architecture != self.architecture:
             return False
