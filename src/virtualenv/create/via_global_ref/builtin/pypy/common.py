@@ -28,6 +28,7 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin):
             cls.exe_stem(),
             "python",
             "python{}".format(interpreter.version_info.major),
+            "python{}.{}".format(*interpreter.version_info),
         }
 
     @classmethod
@@ -40,7 +41,7 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin):
     @classmethod
     def _add_shared_libs(cls, interpreter):
         # https://bitbucket.org/pypy/pypy/issue/1922/future-proofing-virtualenv
-        python_dir = Path(interpreter.system_executable).parent
+        python_dir = Path(interpreter.system_executable).resolve().parent
         for libname in cls._shared_libs():
             src = python_dir / libname
             if src.exists():

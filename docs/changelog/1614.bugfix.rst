@@ -1,0 +1,1 @@
+Fix losing of libpypy-c.so when the pypy executable is a symlink - by :user:`asottile`
