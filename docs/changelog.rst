@@ -5,6 +5,19 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.4 (2020-02-14)
+--------------------
+
+Features - 20.0.4
+~~~~~~~~~~~~~~~~~
+- When aliasing interpreters, use relative symlinks - by :user:`asottile`. (`#1596 <https://github.com/pypa/virtualenv/issues/1596>`_)
+
+Bugfixes - 20.0.4
+~~~~~~~~~~~~~~~~~
+- Allow the use of ``/`` as pathname component separator on Windows - by ``vphilippon`` (`#1582 <https://github.com/pypa/virtualenv/issues/1582>`_)
+- Lower minimal version of six required to 1.9 - by ``ssbarnea`` (`#1606 <https://github.com/pypa/virtualenv/issues/1606>`_)
+
+
 v20.0.3 (2020-02-12)
 --------------------
 

@@ -1,1 +1,0 @@
-Lower minimal version of six required to 1.9 - by ``ssbarnea``
