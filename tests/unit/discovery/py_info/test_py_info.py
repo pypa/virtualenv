@@ -56,7 +56,15 @@ def test_bad_exe_py_info_no_raise(tmp_path, caplog, capsys):
         list(
             "{}{}{}".format(impl, ".".join(str(i) for i in ver), arch)
             for impl, ver, arch in itertools.product(
-                ([CURRENT.implementation] + (["python"] if CURRENT.implementation == "CPython" else [])),
+                (
+                    [CURRENT.implementation]
+                    + (["python"] if CURRENT.implementation == "CPython" else [])
+                    + (
+                        [CURRENT.implementation.lower()]
+                        if CURRENT.implementation != CURRENT.implementation.lower()
+                        else []
+                    )
+                ),
                 [sys.version_info[0 : i + 1] for i in range(3)],
                 ["", "-{}".format(CURRENT.architecture)],
             )
