@@ -153,7 +153,7 @@ need to type out the path to the executables, rather than relying on your shell 
 environment.
 
 The ``activate`` script will also modify your shell prompt to indicate which environment is currently active. The script
-also provisions a ``decativate`` command that will allow you to undo the operation:
+also provisions a ``deactivate`` command that will allow you to undo the operation:
 
 .. code-block:: console
 
