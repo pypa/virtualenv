@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 A simple shim module to fix up things on Python 2 only.
 
@@ -37,8 +38,7 @@ def load_host_site():
 
     here = __file__  # the distutils.install patterns will be injected relative to this site.py, save it here
 
-    with PatchForAppleFrameworkBuilds():
-        reload(sys.modules["site"])  # noqa
+    reload(sys.modules["site"])  # noqa # call system site.py to setup import libraries
 
     # and then if the distutils site packages are not on the sys.path we add them via add_site_dir; note we must add
     # them by invoking add_site_dir to trigger the processing of pth files
@@ -56,28 +56,12 @@ def load_host_site():
             add_site_dir(full_path)
 
 
-class PatchForAppleFrameworkBuilds(object):
-    """Apple Framework builds unconditionally add the global site-package, escape this behaviour"""
-
-    framework = None
-
-    def __enter__(self):
-        if sys.platform == "darwin":
-            from sysconfig import get_config_var
-
-            self.framework = get_config_var("PYTHONFRAMEWORK")
-            if self.framework:
-                sys.modules["sysconfig"]._CONFIG_VARS["PYTHONFRAMEWORK"] = None
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.framework:
-            sys.modules["sysconfig"]._CONFIG_VARS["PYTHONFRAMEWORK"] = self.framework
+sep = "\\" if sys.platform == "win32" else "/"  # no os module here yet - poor mans version
 
 
 def read_pyvenv():
     """read pyvenv.cfg"""
-    os_sep = "\\" if sys.platform == "win32" else "/"  # no os module here yet - poor mans version
-    config_file = "{}{}pyvenv.cfg".format(sys.prefix, os_sep)
+    config_file = "{}{}pyvenv.cfg".format(sys.prefix, sep)
     with open(config_file) as file_handler:
         lines = file_handler.readlines()
     config = {}
@@ -93,21 +77,39 @@ def read_pyvenv():
 
 def rewrite_standard_library_sys_path():
     """Once this site file is loaded the standard library paths have already been set, fix them up"""
-    sep = "\\" if sys.platform == "win32" else "/"
-    exe_dir = sys.executable[: sys.executable.rfind(sep)]
+    exe = abs_path(sys.executable)
+    exe_dir = exe[: exe.rfind(sep)]
+    prefix, exec_prefix = abs_path(sys.prefix), abs_path(sys.exec_prefix)
+    base_prefix, base_exec_prefix = abs_path(sys.base_prefix), abs_path(sys.base_exec_prefix)
+    base_executable = abs_path(sys.base_executable)
     for at, value in enumerate(sys.path):
+        value = abs_path(value)
         # replace old sys prefix path starts with new
         if value == exe_dir:
             pass  # don't fix the current executable location, notably on Windows this gets added
         elif value.startswith(exe_dir):
             # content inside the exe folder needs to remap to original executables folder
-            orig_exe_folder = sys.base_executable[: sys.base_executable.rfind(sep)]
+            orig_exe_folder = base_executable[: base_executable.rfind(sep)]
             value = "{}{}".format(orig_exe_folder, value[len(exe_dir) :])
-        elif value.startswith(sys.prefix):
-            value = "{}{}".format(sys.base_prefix, value[len(sys.prefix) :])
-        elif value.startswith(sys.exec_prefix):
-            value = "{}{}".format(sys.base_exec_prefix, value[len(sys.exec_prefix) :])
+        elif value.startswith(prefix):
+            value = "{}{}".format(base_prefix, value[len(prefix) :])
+        elif value.startswith(exec_prefix):
+            value = "{}{}".format(base_exec_prefix, value[len(exec_prefix) :])
         sys.path[at] = value
+
+
+def abs_path(value):
+    keep = []
+    values = value.split(sep)
+    i = len(values) - 1
+    while i >= 0:
+        if values[i] == "..":
+            i -= 1
+        else:
+            keep.append(values[i])
+        i -= 1
+    value = sep.join(keep[::-1])
+    return value
 
 
 def disable_user_site_package():

@@ -80,14 +80,15 @@ class BaseEmbed(Seeder):
 
     def __unicode__(self):
         result = self.__class__.__name__
+        result += "("
         if self.extra_search_dir:
-            result += " extra search dirs = {}".format(", ".join(ensure_text(str(i)) for i in self.extra_search_dir))
-        result += " download={}".format(self.download)
+            result += "extra_search_dir={},".format(", ".join(ensure_text(str(i)) for i in self.extra_search_dir))
+        result += "download={},".format(self.download)
         for package in self.packages:
-            result += " {}{}".format(
+            result += " {}{},".format(
                 package, "={}".format(getattr(self, "{}_version".format(package), None) or "latest")
             )
-        return result
+        return result[:-1] + ")"
 
     def __repr__(self):
         return ensure_str(self.__unicode__())

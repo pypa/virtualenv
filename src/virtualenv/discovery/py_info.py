@@ -79,16 +79,18 @@ class PythonInfo(object):
         for element in self.sysconfig_paths.values():
             for k in _CONF_VAR_RE.findall(element):
                 config_var_keys.add(u(k[1:-1]))
+        config_var_keys.add("PYTHONFRAMEWORK")
 
-        self.sysconfig_vars = {u(i): u(sysconfig.get_config_var(i)) for i in config_var_keys}
+        self.sysconfig_vars = {u(i): u(sysconfig.get_config_var(i) or "") for i in config_var_keys}
         if self.implementation == "PyPy" and sys.version_info.major == 2:
-            self.sysconfig_vars7[u"implementation_lower"] = u"python"
+            self.sysconfig_vars[u"implementation_lower"] = u"python"
 
         self.distutils_install = {u(k): u(v) for k, v in self._distutils_install().items()}
         self.system_stdlib = self.sysconfig_path(
             "stdlib",
             {k: (self.system_prefix if v.startswith(self.prefix) else v) for k, v in self.sysconfig_vars.items()},
         )
+        self.max_size = getattr(sys, "maxsize", getattr(sys, "maxint", None))
         self._creators = None
 
     def _fast_get_system_executable(self):

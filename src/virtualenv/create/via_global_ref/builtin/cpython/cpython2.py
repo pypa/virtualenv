@@ -50,8 +50,17 @@ class CPython2(CPython, Python2):
         return dirs
 
 
+def is_mac_os_framework(interpreter):
+    framework = bool(interpreter.sysconfig_vars["PYTHONFRAMEWORK"])
+    return framework and interpreter.platform == "darwin"
+
+
 class CPython2Posix(CPython2, CPythonPosix):
-    """CPython 2 on POSIX"""
+    """CPython 2 on POSIX (excluding macOs framework builds)"""
+
+    @classmethod
+    def can_describe(cls, interpreter):
+        return is_mac_os_framework(interpreter) is False and super(CPython2Posix, cls).can_describe(interpreter)
 
     @classmethod
     def sources(cls, interpreter):

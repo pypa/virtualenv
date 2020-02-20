@@ -32,7 +32,8 @@ class Python2(ViaGlobalRefVirtualenvBuiltin, Python2Supports):
         else:
             custom_site_text = custom_site.read_text()
         expected = json.dumps([os.path.relpath(ensure_text(str(i)), ensure_text(str(site_py))) for i in self.libs])
-        site_py.write_text(custom_site_text.replace("___EXPECTED_SITE_PACKAGES___", expected))
+        custom_site_text = custom_site_text.replace("___EXPECTED_SITE_PACKAGES___", expected)
+        site_py.write_text(custom_site_text)
 
     @classmethod
     def sources(cls, interpreter):
