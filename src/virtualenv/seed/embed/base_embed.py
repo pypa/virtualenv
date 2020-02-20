@@ -82,6 +82,7 @@ class BaseEmbed(Seeder):
         result = self.__class__.__name__
         if self.extra_search_dir:
             result += " extra search dirs = {}".format(", ".join(ensure_text(str(i)) for i in self.extra_search_dir))
+        result += " download={}".format(self.download)
         for package in self.packages:
             result += " {}{}".format(
                 package, "={}".format(getattr(self, "{}_version".format(package), None) or "latest")

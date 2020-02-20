@@ -82,7 +82,7 @@ class PythonInfo(object):
 
         self.sysconfig_vars = {u(i): u(sysconfig.get_config_var(i)) for i in config_var_keys}
         if self.implementation == "PyPy" and sys.version_info.major == 2:
-            self.sysconfig_vars[u"implementation_lower"] = u"python"
+            self.sysconfig_vars7[u"implementation_lower"] = u"python"
 
         self.distutils_install = {u(k): u(v) for k, v in self._distutils_install().items()}
         self.system_stdlib = self.sysconfig_path(
@@ -187,12 +187,7 @@ class PythonInfo(object):
             ", ".join(
                 "{}={}".format(k, v)
                 for k, v in (
-                    (
-                        "spec",
-                        "{}{}-{}".format(
-                            self.implementation, ".".join(str(i) for i in self.version_info), self.architecture
-                        ),
-                    ),
+                    ("spec", self.spec,),
                     (
                         "system"
                         if self.system_executable is not None and self.system_executable != self.executable
@@ -217,6 +212,10 @@ class PythonInfo(object):
             ),
         )
         return content
+
+    @property
+    def spec(self):
+        return "{}{}-{}".format(self.implementation, ".".join(str(i) for i in self.version_info), self.architecture)
 
     @classmethod
     def clear_cache(cls):

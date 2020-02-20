@@ -105,6 +105,6 @@ class FromAppData(BaseEmbed):
         return CopyPipInstall
 
     def __unicode__(self):
-        return super(FromAppData, self).__unicode__() + " app_data_dir={} via={}".format(
-            self.app_data_dir.path, "symlink" if self.symlinks else "copy"
+        return super(FromAppData, self).__unicode__() + " via={} app_data_dir={}".format(
+            "symlink" if self.symlinks else "copy", self.app_data_dir.path
         )
