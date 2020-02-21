@@ -5,6 +5,25 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.5 (2020-02-21)
+--------------------
+
+Features - 20.0.5
+~~~~~~~~~~~~~~~~~
+- Also create ``pythonX.X`` executables when creating pypy virtualenvs - by :user:`asottile` (`#1612 <https://github.com/pypa/virtualenv/issues/1612>`_)
+- Fail with better error message if trying to install source with unsupported ``setuptools``, allow ``setuptools-scm >= 2``
+  and move to legacy ``setuptools-scm`` format to support better older platforms (``CentOS 7`` and such) - by :user:`gaborbernat`. (`#1621 <https://github.com/pypa/virtualenv/issues/1621>`_)
+- Report of the created virtual environment is now split across four short lines rather than one long - by :user:`gaborbernat` (`#1641 <https://github.com/pypa/virtualenv/issues/1641>`_)
+
+Bugfixes - 20.0.5
+~~~~~~~~~~~~~~~~~
+- Add macOs Python 2 Framework support (now we test it with the CI via brew) - by :user:`gaborbernat` (`#1561 <https://github.com/pypa/virtualenv/issues/1561>`_)
+- Fix losing of libpypy-c.so when the pypy executable is a symlink - by :user:`asottile` (`#1614 <https://github.com/pypa/virtualenv/issues/1614>`_)
+- Discover python interpreter in a case insensitive manner - by :user:`PrajwalM2212` (`#1624 <https://github.com/pypa/virtualenv/issues/1624>`_)
+- Fix cross interpreter support when the host python sets ``sys.base_executable`` based on ``__PYVENV_LAUNCHER__`` -
+  by :user:`cjolowicz` (`#1643 <https://github.com/pypa/virtualenv/issues/1643>`_)
+
+
 v20.0.4 (2020-02-14)
 --------------------
 

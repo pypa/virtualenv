@@ -1,1 +1,0 @@
-Report of the created virtual environment is now split across four short lines rather than one long - by :user:`gaborbernat`

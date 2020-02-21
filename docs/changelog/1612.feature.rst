@@ -1,1 +1,0 @@
-Also create ``pythonX.X`` executables when creating pypy virtualenvs - by :user:`asottile`
