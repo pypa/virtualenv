@@ -104,12 +104,18 @@ def _run_subprocess(cls, exe):
         cmd = [exe, "-s", str(resolved_path)]
 
         # Prevent sys.prefix from leaking into the child process.
-        os.environ.pop("__PYVENV_LAUNCHER__", None)
+        env = os.environ.copy()
+        env.pop("__PYVENV_LAUNCHER__", None)
 
         logging.debug("get interpreter info via cmd: %s", LogCmd(cmd))
         try:
             process = Popen(
-                cmd, universal_newlines=True, stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE
+                cmd,
+                universal_newlines=True,
+                stdin=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                env=env,
             )
             out, err = process.communicate()
             code = process.returncode
