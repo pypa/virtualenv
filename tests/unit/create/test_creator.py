@@ -68,7 +68,7 @@ def test_destination_not_write_able(tmp_path, capsys):
 def cleanup_sys_path(paths):
     from virtualenv.create.creator import HERE
 
-    paths = [p.resolve() if p.exists() else p for p in (Path(os.path.abspath(i)) for i in paths)]
+    paths = [p.resolve() for p in (Path(os.path.abspath(i)) for i in paths) if p.exists()]
     to_remove = [Path(HERE)]
     if os.environ.get(str("PYCHARM_HELPERS_DIR")):
         to_remove.append(Path(os.environ[str("PYCHARM_HELPERS_DIR")]).parent)

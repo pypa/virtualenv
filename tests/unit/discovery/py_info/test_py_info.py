@@ -131,10 +131,10 @@ def test_py_info_cached_symlink_error(mocker, tmp_path):
 def test_py_info_cache_clear(mocker, tmp_path):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
     assert PythonInfo.from_exe(sys.executable) is not None
-    assert spy.call_count == 2  # at least two, one for the venv, one more for the host
+    assert spy.call_count >= 2  # at least two, one for the venv, one more for the host
     PythonInfo.clear_cache()
     assert PythonInfo.from_exe(sys.executable) is not None
-    assert spy.call_count == 4
+    assert spy.call_count >= 4
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
@@ -142,14 +142,15 @@ def test_py_info_cached_symlink(mocker, tmp_path):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
     first_result = PythonInfo.from_exe(sys.executable)
     assert first_result is not None
-    assert spy.call_count == 2  # at least two, one for the venv, one more for the host
+    count = spy.call_count
+    assert count >= 2  # at least two, one for the venv, one more for the host
 
     new_exe = tmp_path / "a"
     new_exe.symlink_to(sys.executable)
     new_exe_str = str(new_exe)
     second_result = PythonInfo.from_exe(new_exe_str)
     assert second_result.executable == new_exe_str
-    assert spy.call_count == 3  # no longer needed the host invocation, but the new symlink is must
+    assert spy.call_count == count + 1  # no longer needed the host invocation, but the new symlink is must
 
 
 PyInfoMock = namedtuple("PyInfoMock", ["implementation", "architecture", "version_info"])
