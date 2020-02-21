@@ -19,6 +19,7 @@ def main():
     load_host_site()
     if global_site_package_enabled:
         add_global_site_package()
+    fix_distutils()
 
 
 def load_host_site():
@@ -140,6 +141,21 @@ def add_global_site_package():
         site.main()
     finally:
         site.PREFIXES = orig_prefixes
+
+
+def fix_distutils():
+    from distutils import dist
+
+    old_parse_config_files = dist.Distribution.parse_config_files
+
+    def parse_config_files(self, filenames=None):
+        old_parse_config_files(self, filenames)
+        # we cannot allow the prefix override as that would get packages installed outside of the virtual environment
+        install_dict = self.get_option_dict("install")
+        if "prefix" in install_dict:
+            install_dict["prefix"] = "virtualenv.patch", abs_path(sys.prefix)
+
+    dist.Distribution.parse_config_files = parse_config_files
 
 
 main()
