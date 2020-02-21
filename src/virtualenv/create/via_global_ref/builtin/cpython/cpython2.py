@@ -51,7 +51,7 @@ class CPython2(CPython, Python2):
 
 
 def is_mac_os_framework(interpreter):
-    framework = bool(interpreter.sysconfig_vars["PYTHONFRAMEWORK"])
+    framework = bool(interpreter.sysconfig_vars.get("PYTHONFRAMEWORK"))
     return framework and interpreter.platform == "darwin"
 
 
