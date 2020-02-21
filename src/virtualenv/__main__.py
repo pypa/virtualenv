@@ -2,6 +2,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 
 import argparse
 import logging
+import os
 import sys
 from datetime import datetime
 
@@ -17,17 +18,30 @@ def run(args=None, options=None):
         args = sys.argv[1:]
     try:
         session = cli_run(args, options)
-        logging.warning(
-            "created virtual environment in %.0fms %s with seeder %s",
-            (datetime.now() - start).total_seconds() * 1000,
-            ensure_text(str(session.creator)),
-            ensure_text(str(session.seeder)),
-        )
+        logging.warning(LogSession(session, start))
     except ProcessCallFailed as exception:
         print("subprocess call failed for {}".format(exception.cmd))
         print(exception.out, file=sys.stdout, end="")
         print(exception.err, file=sys.stderr, end="")
         raise SystemExit(exception.code)
+
+
+class LogSession(object):
+    def __init__(self, session, start):
+        self.session = session
+        self.start = start
+
+    def __str__(self):
+        spec = self.session.creator.interpreter.spec
+        elapsed = (datetime.now() - self.start).total_seconds() * 1000
+        lines = [
+            "created virtual environment {} in {:.0f}ms".format(spec, elapsed),
+            "  creator {}".format(ensure_text(str(self.session.creator))),
+            "  seeder {}".format(ensure_text(str(self.session.seeder)),),
+        ]
+        if self.session.activators:
+            lines.append("  activators {}".format(",".join(i.__class__.__name__ for i in self.session.activators)))
+        return os.linesep.join(lines)
 
 
 def run_with_catch(args=None):

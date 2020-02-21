@@ -50,6 +50,14 @@ jobs:
         image: [linux, windows, macOs]
       pypy3:
         image: [linux, windows, macOs]
+      homebrew_py3:
+        image: [macOs]
+        py: brew@python3
+        toxenv: py37
+      homebrew_py2:
+        image: [macOs]
+        py: brew@python2
+        toxenv: py27
       fix_lint:
         image: [linux, windows]
       docs:

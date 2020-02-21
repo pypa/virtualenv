@@ -79,8 +79,9 @@ class PythonInfo(object):
         for element in self.sysconfig_paths.values():
             for k in _CONF_VAR_RE.findall(element):
                 config_var_keys.add(u(k[1:-1]))
+        config_var_keys.add("PYTHONFRAMEWORK")
 
-        self.sysconfig_vars = {u(i): u(sysconfig.get_config_var(i)) for i in config_var_keys}
+        self.sysconfig_vars = {u(i): u(sysconfig.get_config_var(i) or "") for i in config_var_keys}
         if self.implementation == "PyPy" and sys.version_info.major == 2:
             self.sysconfig_vars[u"implementation_lower"] = u"python"
 
@@ -89,6 +90,7 @@ class PythonInfo(object):
             "stdlib",
             {k: (self.system_prefix if v.startswith(self.prefix) else v) for k, v in self.sysconfig_vars.items()},
         )
+        self.max_size = getattr(sys, "maxsize", getattr(sys, "maxint", None))
         self._creators = None
 
     def _fast_get_system_executable(self):
@@ -187,12 +189,7 @@ class PythonInfo(object):
             ", ".join(
                 "{}={}".format(k, v)
                 for k, v in (
-                    (
-                        "spec",
-                        "{}{}-{}".format(
-                            self.implementation, ".".join(str(i) for i in self.version_info), self.architecture
-                        ),
-                    ),
+                    ("spec", self.spec,),
                     (
                         "system"
                         if self.system_executable is not None and self.system_executable != self.executable
@@ -217,6 +214,10 @@ class PythonInfo(object):
             ),
         )
         return content
+
+    @property
+    def spec(self):
+        return "{}{}-{}".format(self.implementation, ".".join(str(i) for i in self.version_info), self.architecture)
 
     @classmethod
     def clear_cache(cls):
