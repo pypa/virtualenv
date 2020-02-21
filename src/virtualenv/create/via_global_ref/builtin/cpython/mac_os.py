@@ -8,6 +8,7 @@ import subprocess
 from virtualenv.create.via_global_ref.builtin.cpython.common import CPythonPosix
 from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
 from virtualenv.util.path import Path
+from virtualenv.util.six import ensure_text
 
 from .cpython2 import CPython2, is_mac_os_framework
 
@@ -73,7 +74,7 @@ def fix_mach_o(exe, current, new, max_size):
     unneeded bits of information, however Mac OS X 10.5 and earlier cannot read this new Link Edit table format.
     """
     try:
-        logging.debug("change Mach-O for %s from %s to %s", exe, current, new)
+        logging.debug(u"change Mach-O for %s from %s to %s", ensure_text(exe), current, ensure_text(new))
         _builtin_change_mach_o(max_size)(exe, current, new)
     except Exception as e:
         logging.warning("Could not call _builtin_change_mac_o: %s. " "Trying to call install_name_tool instead.", e)

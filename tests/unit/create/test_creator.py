@@ -68,7 +68,7 @@ def test_destination_not_write_able(tmp_path, capsys):
 def cleanup_sys_path(paths):
     from virtualenv.create.creator import HERE
 
-    paths = [Path(os.path.abspath(i)) for i in paths]
+    paths = [p.resolve() if p.exists() else p for p in (Path(os.path.abspath(i)) for i in paths)]
     to_remove = [Path(HERE)]
     if os.environ.get(str("PYCHARM_HELPERS_DIR")):
         to_remove.append(Path(os.environ[str("PYCHARM_HELPERS_DIR")]).parent)
@@ -152,11 +152,12 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     assert any(p for p in our_paths if p.parts[-1] == "site-packages"), our_paths_repr
 
     # ensure the global site package is added or not, depending on flag
-    last_from_system_path = next(j for j in reversed(system_sys_path) if str(j).startswith(system["sys"]["prefix"]))
+    global_sys_path = system_sys_path[-1]
     if isolated == "isolated":
-        assert last_from_system_path not in sys_path, "last from system sys path {} is in venv sys path:\n{}".format(
-            ensure_text(str(last_from_system_path)), "\n".join(ensure_text(str(j)) for j in sys_path)
+        msg = "global sys path {} is in virtual environment sys path:\n{}".format(
+            ensure_text(str(global_sys_path)), "\n".join(ensure_text(str(j)) for j in sys_path)
         )
+        assert global_sys_path not in sys_path, msg
     else:
         common = []
         for left, right in zip(reversed(system_sys_path), reversed(sys_path)):

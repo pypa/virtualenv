@@ -19,7 +19,7 @@ def main():
     load_host_site()
     if global_site_package_enabled:
         add_global_site_package()
-    fix_distutils()
+    fix_install()
 
 
 def load_host_site():
@@ -143,19 +143,29 @@ def add_global_site_package():
         site.PREFIXES = orig_prefixes
 
 
-def fix_distutils():
+def fix_install():
+    def patch(dist_of):
+        # we cannot allow the prefix override as that would get packages installed outside of the virtual environment
+        old_parse_config_files = dist_of.Distribution.parse_config_files
+
+        def parse_config_files(self, *args, **kwargs):
+            result = old_parse_config_files(self, *args, **kwargs)
+            install_dict = self.get_option_dict("install")
+            if "prefix" in install_dict:
+                install_dict["prefix"] = "virtualenv.patch", abs_path(sys.prefix)
+            return result
+
+        dist_of.Distribution.parse_config_files = parse_config_files
+
     from distutils import dist
 
-    old_parse_config_files = dist.Distribution.parse_config_files
+    patch(dist)
+    try:
+        from setuptools import dist
 
-    def parse_config_files(self, filenames=None):
-        old_parse_config_files(self, filenames)
-        # we cannot allow the prefix override as that would get packages installed outside of the virtual environment
-        install_dict = self.get_option_dict("install")
-        if "prefix" in install_dict:
-            install_dict["prefix"] = "virtualenv.patch", abs_path(sys.prefix)
-
-    dist.Distribution.parse_config_files = parse_config_files
+        patch(dist)
+    except ImportError:
+        pass  # if setuptools is not around that's alright, just don't patch
 
 
 main()
