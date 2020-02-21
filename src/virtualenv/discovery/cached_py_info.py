@@ -103,6 +103,10 @@ def _run_subprocess(cls, exe):
     with ensure_file_on_disk(resolved_path) as resolved_path:
         cmd = [exe, "-s", str(resolved_path)]
 
+        # Prevent sys.prefix from leaking into the child process on macOS.
+        if sys.platform == "darwin":
+            os.environ.pop("__PYVENV_LAUNCHER__", None)
+
         logging.debug("get interpreter info via cmd: %s", LogCmd(cmd))
         try:
             process = Popen(
