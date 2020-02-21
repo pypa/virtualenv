@@ -1,0 +1,2 @@
+Fix cross interpreter support when the host python sets ``sys.base_executable`` based on ``__PYVENV_LAUNCHER__`` -
+by :user:`cjolowicz`

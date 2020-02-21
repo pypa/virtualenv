@@ -101,9 +101,9 @@ def _get_fs_path():
 def _run_subprocess(cls, exe):
     resolved_path = Path(os.path.abspath(__file__)).parent / "py_info.py"
     with ensure_file_on_disk(resolved_path) as resolved_path:
-        cmd = [exe, "-s", str(resolved_path)]
 
-        # Prevent sys.prefix from leaking into the child process.
+        cmd = [exe, "-s", str(resolved_path)]
+        # prevent sys.prefix from leaking into the child process - see https://bugs.python.org/issue22490
         env = os.environ.copy()
         env.pop("__PYVENV_LAUNCHER__", None)
 
