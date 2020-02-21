@@ -1,0 +1,1 @@
+Add macOs Python 2 Framework support (now we test it with the CI via brew) - by :user:`gaborbernat`
