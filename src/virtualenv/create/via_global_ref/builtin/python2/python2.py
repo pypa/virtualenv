@@ -33,7 +33,14 @@ class Python2(ViaGlobalRefVirtualenvBuiltin, Python2Supports):
             custom_site_text = custom_site.read_text()
         expected = json.dumps([os.path.relpath(ensure_text(str(i)), ensure_text(str(site_py))) for i in self.libs])
         custom_site_text = custom_site_text.replace("___EXPECTED_SITE_PACKAGES___", expected)
+        custom_site_text = custom_site_text.replace(
+            "# ___RELOAD_CODE___", os.linesep.join("    {}".format(i) for i in self.reload_code.splitlines()).lstrip()
+        )
         site_py.write_text(custom_site_text)
+
+    @property
+    def reload_code(self):
+        return 'reload(sys.modules["site"])  # noqa # call system site.py to setup import libraries'
 
     @classmethod
     def sources(cls, interpreter):

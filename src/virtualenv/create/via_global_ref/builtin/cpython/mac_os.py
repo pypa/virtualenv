@@ -4,6 +4,7 @@ import logging
 import os
 import struct
 import subprocess
+from textwrap import dedent
 
 from virtualenv.create.via_global_ref.builtin.cpython.common import CPythonPosix
 from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
@@ -47,6 +48,27 @@ class CPython2macOsFramework(CPython2, CPythonPosix):
             # See http://groups.google.com/group/python-virtualenv/browse_thread/thread/17cab2f85da75951
             fixed_host_exe = Path(interpreter.prefix) / "Resources" / "Python.app" / "Contents" / "MacOS" / "Python"
             yield fixed_host_exe, targets
+
+    @property
+    def reload_code(self):
+        result = super(CPython2macOsFramework, self).reload_code
+        result = dedent(
+            """
+        # the bundled site.py always adds the global site package if we're on python framework build, escape this
+        import sysconfig
+
+        config = sysconfig.get_config_vars()
+        before = config["PYTHONFRAMEWORK"]
+        try:
+            config["PYTHONFRAMEWORK"] = ""
+            {}
+        finally:
+            config["PYTHONFRAMEWORK"] = before
+        """.format(
+                result
+            )
+        )
+        return result
 
 
 def fix_mach_o(exe, current, new, max_size):

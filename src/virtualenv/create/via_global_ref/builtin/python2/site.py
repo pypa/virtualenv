@@ -39,7 +39,7 @@ def load_host_site():
 
     here = __file__  # the distutils.install patterns will be injected relative to this site.py, save it here
 
-    reload(sys.modules["site"])  # noqa # call system site.py to setup import libraries
+    # ___RELOAD_CODE___
 
     # and then if the distutils site packages are not on the sys.path we add them via add_site_dir; note we must add
     # them by invoking add_site_dir to trigger the processing of pth files
