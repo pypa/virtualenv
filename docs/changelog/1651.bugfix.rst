@@ -1,0 +1,1 @@
+fix error printing in bailout for Python < 2.7 - by ``AdamWill`
