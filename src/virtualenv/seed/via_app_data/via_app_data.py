@@ -60,7 +60,7 @@ class FromAppData(BaseEmbed):
                     installer.clear()
                 if not installer.has_image():
                     installer.build_image()
-                installer.install()
+                installer.install(creator.interpreter.version_info)
 
             threads = list(Thread(target=_install, args=(n, w)) for n, w in name_to_whl.items())
             for thread in threads:

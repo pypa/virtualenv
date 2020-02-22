@@ -4,9 +4,12 @@ import logging
 import os
 import re
 import shutil
+import sys
 import zipfile
 from abc import ABCMeta, abstractmethod
+from contextlib import contextmanager
 from tempfile import mkdtemp
+from threading import Lock
 
 from six import PY3, add_metaclass
 
@@ -17,6 +20,8 @@ from virtualenv.util.six import ensure_text
 
 @add_metaclass(ABCMeta)
 class PipInstall(object):
+    lock = Lock()
+
     def __init__(self, wheel, creator, image_folder):
         self._wheel = wheel
         self._creator = creator
@@ -29,7 +34,7 @@ class PipInstall(object):
     def _sync(self, src, dst):
         raise NotImplementedError
 
-    def install(self):
+    def install(self, version_info):
         self._extracted = True
         # sync image
         for filename in self._image_dir.iterdir():
@@ -44,7 +49,7 @@ class PipInstall(object):
         consoles = set()
         script_dir = self._creator.script_dir
         for name, module in self._console_scripts.items():
-            consoles.update(self._create_console_entry_point(name, module, script_dir))
+            consoles.update(self._create_console_entry_point(name, module, script_dir, version_info))
         logging.debug("generated console scripts %s", " ".join(i.name for i in consoles))
 
     def build_image(self):
@@ -77,10 +82,11 @@ class PipInstall(object):
         try:
             to_folder = Path(folder)
             rel = os.path.relpath(ensure_text(str(self._creator.script_dir)), ensure_text(str(self._creator.purelib)))
+            version_info = self._creator.interpreter.version_info
             for name, module in self._console_scripts.items():
                 new_files.update(
                     Path(os.path.normpath(ensure_text(str(self._image_dir / rel / i.name))))
-                    for i in self._create_console_entry_point(name, module, to_folder)
+                    for i in self._create_console_entry_point(name, module, to_folder, version_info)
                 )
         finally:
             shutil.rmtree(folder, ignore_errors=True)
@@ -123,7 +129,7 @@ class PipInstall(object):
                         self._console_entry_points[name] = value
         return self._console_entry_points
 
-    def _create_console_entry_point(self, name, value, to_folder):
+    def _create_console_entry_point(self, name, value, to_folder, version_info):
         result = []
         from distlib.scripts import ScriptMaker
 
@@ -133,9 +139,24 @@ class PipInstall(object):
         maker.set_mode = True  # ensure they are executable
         maker.executable = str(self._creator.exe)
         specification = "{} = {}".format(name, value)
-        new_files = maker.make(specification)
+        with self.switch_sys_version(version_info):
+            new_files = maker.make(specification)
         result.extend(Path(i) for i in new_files)
         return result
+
+    @contextmanager
+    def switch_sys_version(self, version_info):
+        """
+        Patch until upstream distutils supports creating scripts with different python target
+        https://bitbucket.org/pypa/distlib/issues/134/allow-specifying-the-version-information
+        """
+        previous = sys.version_info
+        with self.lock:
+            sys.version_info = version_info
+            try:
+                yield
+            finally:
+                sys.version_info = previous
 
     def clear(self):
         if self._image_dir.exists():

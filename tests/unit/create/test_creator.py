@@ -290,13 +290,17 @@ def test_cross_major(cross_python, coverage_env, tmp_path, current_fastest):
         "-p",
         ensure_text(cross_python.executable),
         ensure_text(str(tmp_path)),
-        "--no-seed",
+        "--no-setuptools",
+        "--no-wheel",
         "--activators",
         "",
         "--creator",
         current_fastest,
     ]
     result = cli_run(cmd)
+    pip_scripts = {i.name.replace(".exe", "") for i in result.creator.script_dir.iterdir() if i.name.startswith("pip")}
+    major, minor = cross_python.version_info[0:2]
+    assert pip_scripts == {"pip", "pip-{}.{}".format(major, minor), "pip{}".format(major)}
     coverage_env()
     env = PythonInfo.from_exe(str(result.creator.exe))
     assert env.version_info.major != CURRENT.version_info.major
