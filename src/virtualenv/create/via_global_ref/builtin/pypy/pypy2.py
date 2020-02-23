@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import abc
 import logging
+import os
 
 from six import add_metaclass
 
@@ -64,6 +65,14 @@ class PyPy2(PyPy, Python2):
         else:
             logging.debug("no include folders as can't find include marker %s", host_include_marker)
         return dirs
+
+    @property
+    def skip_rewrite(self):
+        """
+        PyPy2 built-in imports are handled by this path entry, don't overwrite to not disable it
+        see: https://github.com/pypa/virtualenv/issues/1652
+        """
+        return 'or value.endswith("lib_pypy{}__extensions__")'.format(os.sep)
 
 
 class PyPy2Posix(PyPy2, PosixSupports):

@@ -4,7 +4,6 @@ import logging
 import os
 import re
 import shutil
-import sys
 import zipfile
 from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
@@ -135,28 +134,38 @@ class PipInstall(object):
 
         maker = ScriptMaker(None, str(to_folder))
         maker.clobber = True  # overwrite
-        maker.variants = {"", "X", "X.Y"}  # create all variants
+        maker.variants = {""}
         maker.set_mode = True  # ensure they are executable
         maker.executable = str(self._creator.exe)
         specification = "{} = {}".format(name, value)
-        with self.switch_sys_version(version_info):
+        with self.patch_distlib_correct_variants(version_info, maker):
             new_files = maker.make(specification)
         result.extend(Path(i) for i in new_files)
         return result
 
     @contextmanager
-    def switch_sys_version(self, version_info):
+    def patch_distlib_correct_variants(self, version_info, maker):
         """
         Patch until upstream distutils supports creating scripts with different python target
         https://bitbucket.org/pypa/distlib/issues/134/allow-specifying-the-version-information
         """
-        previous = sys.version_info
+
+        def _write_script(scriptnames, shebang, script, filenames, ext):
+            name = next(iter(scriptnames))
+            scriptnames = {  # add our variants '', 'X', '-X.Y'
+                name,
+                "{}{}".format(name, version_info.major),
+                "{}-{}.{}".format(name, version_info.major, version_info.minor),
+            }
+            return previous(scriptnames, shebang, script, filenames, ext)
+
+        previous = maker._write_script
         with self.lock:
-            sys.version_info = version_info
+            maker._write_script = _write_script
             try:
                 yield
             finally:
-                sys.version_info = previous
+                maker._write_script = previous
 
     def clear(self):
         if self._image_dir.exists():

@@ -86,16 +86,17 @@ def rewrite_standard_library_sys_path():
     for at, value in enumerate(sys.path):
         value = abs_path(value)
         # replace old sys prefix path starts with new
-        if value == exe_dir:
-            pass  # don't fix the current executable location, notably on Windows this gets added
-        elif value.startswith(exe_dir):
-            # content inside the exe folder needs to remap to original executables folder
-            orig_exe_folder = base_executable[: base_executable.rfind(sep)]
-            value = "{}{}".format(orig_exe_folder, value[len(exe_dir) :])
-        elif value.startswith(prefix):
-            value = "{}{}".format(base_prefix, value[len(prefix) :])
-        elif value.startswith(exec_prefix):
-            value = "{}{}".format(base_exec_prefix, value[len(exec_prefix) :])
+        skip_rewrite = value == exe_dir  # don't fix the current executable location, notably on Windows this gets added
+        skip_rewrite = skip_rewrite  # ___SKIP_REWRITE____
+        if not skip_rewrite:
+            if value.startswith(exe_dir):
+                # content inside the exe folder needs to remap to original executables folder
+                orig_exe_folder = base_executable[: base_executable.rfind(sep)]
+                value = "{}{}".format(orig_exe_folder, value[len(exe_dir) :])
+            elif value.startswith(prefix):
+                value = "{}{}".format(base_prefix, value[len(prefix) :])
+            elif value.startswith(exec_prefix):
+                value = "{}{}".format(base_exec_prefix, value[len(exec_prefix) :])
         sys.path[at] = value
 
 

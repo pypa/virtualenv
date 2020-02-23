@@ -1,0 +1,1 @@
+Fix PyPy 2 builtin modules are imported from standard library, rather than from builtin  - by :user:`gaborbernat`.
