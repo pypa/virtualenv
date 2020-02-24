@@ -79,6 +79,7 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin):
         finally:
             if true_system_site != self.enable_system_site_package:
                 self.enable_system_site_package = true_system_site
+        super(ViaGlobalRefVirtualenvBuiltin, self).create()
 
     def ensure_directories(self):
         return {self.dest, self.bin_dir, self.script_dir, self.stdlib} | set(self.libs)

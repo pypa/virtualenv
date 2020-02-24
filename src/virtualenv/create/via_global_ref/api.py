@@ -1,8 +1,13 @@
 from __future__ import absolute_import, unicode_literals
 
+import logging
+import os
 from abc import ABCMeta
 
 from six import add_metaclass
+
+from virtualenv.util.path import Path
+from virtualenv.util.zipapp import ensure_file_on_disk
 
 from ..creator import Creator
 
@@ -42,6 +47,23 @@ class ViaGlobalRefApi(Creator):
                 dest="copies",
                 help="try to use copies rather than symlinks, even when symlinks are the default for the platform",
             )
+
+    def create(self):
+        self.patch_distutils_via_pth()
+
+    def patch_distutils_via_pth(self):
+        """Patch the distutils package to not be derailed by its configuration files"""
+        patch_file = Path(__file__).parent / "_distutils_patch_virtualenv.py"
+        with ensure_file_on_disk(patch_file) as resolved_path:
+            text = resolved_path.read_text()
+        text = text.replace('"__SCRIPT_DIR__"', repr(os.path.relpath(str(self.script_dir), str(self.purelib))))
+        patch_path = self.purelib / "_distutils_patch_virtualenv.py"
+        logging.debug("add distutils patch file %s", patch_path)
+        patch_path.write_text(text)
+
+        pth = self.purelib / "_distutils_patch_virtualenv.pth"
+        logging.debug("add distutils patch file %s", pth)
+        pth.write_text("import _distutils_patch_virtualenv")
 
     def _args(self):
         return super(ViaGlobalRefApi, self)._args() + [("global", self.enable_system_site_package)]
