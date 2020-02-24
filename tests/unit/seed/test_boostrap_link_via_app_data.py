@@ -93,7 +93,8 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastes
     assert not process.returncode
     # pip is greedy here, removing all packages removes the site-package too
     if site_package.exists():
-        post_run = list(site_package.iterdir())
+        patch_files = {result.creator.purelib / "{}.{}".format("_distutils_patch_virtualenv", i) for i in ("py", "pth")}
+        post_run = set(site_package.iterdir()) - patch_files
         assert not post_run, "\n".join(str(i) for i in post_run)
 
     if sys.version_info[0:2] == (3, 4) and os.environ.get(str("PIP_REQ_TRACKER")):

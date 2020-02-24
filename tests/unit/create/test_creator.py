@@ -4,10 +4,12 @@ import difflib
 import gc
 import logging
 import os
+import shutil
 import stat
 import subprocess
 import sys
 from itertools import product
+from textwrap import dedent
 from threading import Thread
 
 import pytest
@@ -131,7 +133,8 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
         # pypy cleans up file descriptors periodically so our (many) subprocess calls impact file descriptor limits
         # force a cleanup of these on system where the limit is low-ish (e.g. MacOS 256)
         gc.collect()
-    content = list(result.creator.purelib.iterdir())
+    patch_files = {result.creator.purelib / "{}.{}".format("_distutils_patch_virtualenv", i) for i in ("py", "pth")}
+    content = set(result.creator.purelib.iterdir()) - patch_files
     assert not content, "\n".join(ensure_text(str(i)) for i in content)
     assert result.creator.env_name == ensure_text(dest.name)
     debug = result.creator.debug
@@ -345,3 +348,39 @@ def test_create_long_path(current_fastest, tmp_path):
     cmd = [str(folder)]
     result = cli_run(cmd)
     subprocess.check_call([str(result.creator.script("pip")), "--version"])
+
+
+@pytest.mark.parametrize("creator", set(PythonInfo.current_system().creators().key_to_class) - {"builtin"})
+def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
+    cmd = [
+        ensure_text(str(tmp_path)),
+        "--activators",
+        "",
+        "--creator",
+        creator,
+    ]
+    result = cli_run(cmd)
+
+    app = Path(__file__).parent / "console_app"
+    dest = tmp_path / "console_app"
+    shutil.copytree(str(app), str(dest))
+
+    setup_cfg = dest / "setup.cfg"
+    conf = dedent(
+        """
+    [install]
+    prefix={}/a
+    install_scripts={}/b
+    """
+    ).format(tmp_path, tmp_path)
+    setup_cfg.write_text(setup_cfg.read_text() + conf)
+
+    monkeypatch.chdir(dest)  # distutils will read the setup.cfg from the cwd, so change to that
+    install_demo_cmd = [str(result.creator.script("pip")), "install", str(dest), "--no-use-pep517"]
+    subprocess.check_call(install_demo_cmd)
+
+    magic = result.creator.script("magic")  # console scripts are created in the right location
+    assert magic.exists()
+
+    package_folder = result.creator.platlib / "demo"  # prefix is set to the virtualenv prefix for install
+    assert package_folder.exists()
