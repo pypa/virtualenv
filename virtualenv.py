@@ -50,7 +50,6 @@ __version__ = "16.7.9"
 virtualenv_version = __version__  # legacy
 DEBUG = os.environ.get("_VIRTUALENV_DEBUG", None) == "1"
 if sys.version_info < (2, 7):
-    print("ERROR: {0}".format(sys.exc_info()[1]))
     print("ERROR: this script requires Python 2.7 or greater.")
     sys.exit(101)
 
