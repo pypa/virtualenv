@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v16.7.10 (2020-02-24)
+---------------------
+
+Bugfixes
+^^^^^^^^
+
+- fix error printing in bailout for Python < 2.7 - by ``AdamWill` and ``hroncok`` (`#1651 <https://github.com/pypa/virtualenv/issues/1651>`_)
+
+
 v16.7.9 (2019-12-15)
 --------------------
 
