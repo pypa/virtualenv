@@ -133,7 +133,9 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
         # pypy cleans up file descriptors periodically so our (many) subprocess calls impact file descriptor limits
         # force a cleanup of these on system where the limit is low-ish (e.g. MacOS 256)
         gc.collect()
-    patch_files = {result.creator.purelib / "{}.{}".format("_distutils_patch_virtualenv", i) for i in ("py", "pth")}
+    purelib = result.creator.purelib
+    patch_files = {purelib / "{}.{}".format("_distutils_patch_virtualenv", i) for i in ("py", "pyc", "pth")}
+    patch_files.add(purelib / "__pycache__")
     content = set(result.creator.purelib.iterdir()) - patch_files
     assert not content, "\n".join(ensure_text(str(i)) for i in content)
     assert result.creator.env_name == ensure_text(dest.name)

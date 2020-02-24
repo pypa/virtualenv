@@ -5,5 +5,8 @@ if int(__version__.split(".")[0]) < 41:
 
 setup(
     use_scm_version={"write_to": "src/virtualenv/version.py", "write_to_template": '__version__ = "{version}"'},
-    setup_requires=["setuptools_scm >= 2"],
+    setup_requires=[
+        # this cannot be enabled until https://github.com/pypa/pip/issues/7778 is addressed
+        # "setuptools_scm >= 2"
+    ],
 )
