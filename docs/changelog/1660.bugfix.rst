@@ -1,0 +1,1 @@
+Fix creation of entry points when path contains spaces - by :user:`nsoranzo`.

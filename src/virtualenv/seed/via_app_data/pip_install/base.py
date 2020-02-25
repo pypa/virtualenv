@@ -129,13 +129,13 @@ class PipInstall(object):
 
     def _create_console_entry_point(self, name, value, to_folder, version_info):
         result = []
-        from distlib.scripts import ScriptMaker
+        from distlib.scripts import _enquote_executable, ScriptMaker
 
         maker = ScriptMaker(None, str(to_folder))
         maker.clobber = True  # overwrite
         maker.variants = {""}
         maker.set_mode = True  # ensure they are executable
-        maker.executable = str(self._creator.exe)
+        maker.executable = _enquote_executable(str(self._creator.exe))
         specification = "{} = {}".format(name, value)
         with self.patch_distlib_correct_variants(version_info, maker):
             new_files = maker.make(specification)
