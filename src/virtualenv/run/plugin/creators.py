@@ -55,9 +55,9 @@ class CreatorSelector(ComponentBuilder):
     def _get_default(choices):
         return next(iter(choices))
 
-    def populate_selected_argparse(self, selected):
+    def populate_selected_argparse(self, selected, app_data):
         self.parser.description = "options for {} {}".format(self.name, selected)
-        self._impl_class.add_parser_arguments(self.parser, self.interpreter, self.key_to_meta[selected])
+        self._impl_class.add_parser_arguments(self.parser, self.interpreter, self.key_to_meta[selected], app_data)
 
     def create(self, options):
         options.meta = self.key_to_meta[getattr(options, self.name)]

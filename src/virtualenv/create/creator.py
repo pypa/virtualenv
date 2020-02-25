@@ -41,6 +41,7 @@ class Creator(object):
         self.dest = Path(options.dest)
         self.clear = options.clear
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest)
+        self.app_data = options.app_data.folder
 
     def __repr__(self):
         return ensure_str(self.__unicode__())
@@ -65,7 +66,7 @@ class Creator(object):
         return True
 
     @classmethod
-    def add_parser_arguments(cls, parser, interpreter, meta):
+    def add_parser_arguments(cls, parser, interpreter, meta, app_data):
         """Add CLI arguments for the creator.
 
         :param parser: the CLI parser
@@ -172,7 +173,7 @@ class Creator(object):
         :return: debug information about the virtual environment (only valid after :meth:`create` has run)
         """
         if self._debug is None and self.exe is not None:
-            self._debug = get_env_debug_info(self.exe, self.debug_script())
+            self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data)
         return self._debug
 
     # noinspection PyMethodMayBeStatic
@@ -180,11 +181,11 @@ class Creator(object):
         return DEBUG_SCRIPT
 
 
-def get_env_debug_info(env_exe, debug_script):
+def get_env_debug_info(env_exe, debug_script, app_data):
     env = os.environ.copy()
     env.pop(str("PYTHONPATH"), None)
 
-    with ensure_file_on_disk(debug_script) as debug_script:
+    with ensure_file_on_disk(debug_script, app_data) as debug_script:
         cmd = [str(env_exe), str(debug_script)]
         if WIN_CPYTHON_2:
             cmd = [ensure_text(i) for i in cmd]

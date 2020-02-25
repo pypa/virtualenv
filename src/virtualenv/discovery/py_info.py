@@ -220,11 +220,11 @@ class PythonInfo(object):
         return "{}{}-{}".format(self.implementation, ".".join(str(i) for i in self.version_info), self.architecture)
 
     @classmethod
-    def clear_cache(cls):
+    def clear_cache(cls, app_data):
         # this method is not used by itself, so here and called functions can import stuff locally
         from virtualenv.discovery.cached_py_info import clear
 
-        clear()
+        clear(app_data)
         cls._cache_exe_discovery.clear()
 
     def satisfies(self, spec, impl_must_match):
@@ -253,23 +253,23 @@ class PythonInfo(object):
     _current = None
 
     @classmethod
-    def current(cls):
+    def current(cls, app_data=None):
         """
         This locates the current host interpreter information. This might be different than what we run into in case
         the host python has been upgraded from underneath us.
         """
         if cls._current is None:
-            cls._current = cls.from_exe(sys.executable, raise_on_error=True, resolve_to_host=False)
+            cls._current = cls.from_exe(sys.executable, app_data, raise_on_error=True, resolve_to_host=False)
         return cls._current
 
     @classmethod
-    def current_system(cls):
+    def current_system(cls, app_data=None):
         """
         This locates the current host interpreter information. This might be different than what we run into in case
         the host python has been upgraded from underneath us.
         """
         if cls._current_system is None:
-            cls._current_system = cls.from_exe(sys.executable, raise_on_error=True, resolve_to_host=True)
+            cls._current_system = cls.from_exe(sys.executable, app_data, raise_on_error=True, resolve_to_host=True)
         return cls._current_system
 
     def _to_json(self):
@@ -283,15 +283,15 @@ class PythonInfo(object):
         return data
 
     @classmethod
-    def from_exe(cls, exe, raise_on_error=True, ignore_cache=False, resolve_to_host=True):
+    def from_exe(cls, exe, app_data=None, raise_on_error=True, ignore_cache=False, resolve_to_host=True):
         """Given a path to an executable get the python information"""
         # this method is not used by itself, so here and called functions can import stuff locally
         from virtualenv.discovery.cached_py_info import from_exe
 
-        proposed = from_exe(cls, exe, raise_on_error=raise_on_error, ignore_cache=ignore_cache)
+        proposed = from_exe(cls, app_data, exe, raise_on_error=raise_on_error, ignore_cache=ignore_cache)
         # noinspection PyProtectedMember
         if isinstance(proposed, PythonInfo) and resolve_to_host:
-            proposed = proposed._resolve_to_system(proposed)
+            proposed = proposed._resolve_to_system(app_data, proposed)
         return proposed
 
     @classmethod
@@ -308,7 +308,7 @@ class PythonInfo(object):
         return result
 
     @classmethod
-    def _resolve_to_system(cls, target):
+    def _resolve_to_system(cls, app_data, target):
         start_executable = target.executable
         prefixes = OrderedDict()
         while target.system_executable is None:
@@ -324,63 +324,60 @@ class PythonInfo(object):
                 logging.error("%d: prefix=%s, info=%r", len(prefixes) + 1, prefix, target)
                 raise RuntimeError("prefixes are causing a circle {}".format("|".join(prefixes.keys())))
             prefixes[prefix] = target
-            target = target.discover_exe(prefix=prefix, exact=False)
+            target = target.discover_exe(app_data, prefix=prefix, exact=False)
         if target.executable != target.system_executable:
-            target = cls.from_exe(target.system_executable)
+            target = cls.from_exe(target.system_executable, app_data)
         target.executable = start_executable
         return target
 
     _cache_exe_discovery = {}
 
-    def discover_exe(self, prefix, exact=True):
+    def discover_exe(self, app_data, prefix, exact=True):
         key = prefix, exact
         if key in self._cache_exe_discovery and prefix:
-            logging.debug("discover exe cache %r via %r", key, self._cache_exe_discovery[key])
+            logging.debug("discover exe from cache %s - exact %s: %r", prefix, exact, self._cache_exe_discovery[key])
             return self._cache_exe_discovery[key]
-        logging.debug("discover system for %s in %s", self, prefix)
+        logging.debug("discover exe for %s in %s", self, prefix)
         # we don't know explicitly here, do some guess work - our executable name should tell
         possible_names = self._find_possible_exe_names()
         possible_folders = self._find_possible_folders(prefix)
         discovered = []
         for folder in possible_folders:
             for name in possible_names:
-                exe_path = os.path.join(folder, name)
-                if os.path.exists(exe_path):
-                    info = self.from_exe(exe_path, resolve_to_host=False, raise_on_error=False)
-                    if info is None:  # ignore if for some reason we can't query
-                        continue
-                    for item in ["implementation", "architecture", "version_info"]:
-                        found = getattr(info, item)
-                        searched = getattr(self, item)
-                        if found != searched:
-                            if item == "version_info":
-                                found, searched = ".".join(str(i) for i in found), ".".join(str(i) for i in searched)
-                            logging.debug(
-                                "refused interpreter %s because %s differs %s != %s",
-                                info.executable,
-                                item,
-                                found,
-                                searched,
-                            )
-                            if exact is False:
-                                discovered.append(info)
-                            break
-                    else:
-                        self._cache_exe_discovery[key] = info
-                        return info
+                info = self._check_exe(app_data, folder, name, exact, discovered)
+                if info is not None:
+                    self._cache_exe_discovery[key] = info
+                    return info
         if exact is False and discovered:
             info = self._select_most_likely(discovered, self)
-            logging.debug(
-                "no exact match found, chosen most similar of %s within base folders %s",
-                info,
-                os.pathsep.join(possible_folders),
-            )
+            folders = os.pathsep.join(possible_folders)
             self._cache_exe_discovery[key] = info
+            logging.debug("no exact match found, chosen most similar of %s within base folders %s", info, folders)
             return info
-        what = "|".join(possible_names)  # pragma: no cover
-        raise RuntimeError(
-            "failed to detect {} in {}".format(what, os.pathsep.join(possible_folders))
-        )  # pragma: no cover
+        msg = "failed to detect {} in {}".format("|".join(possible_names), os.pathsep.join(possible_folders))
+        raise RuntimeError(msg)
+
+    def _check_exe(self, app_data, folder, name, exact, discovered):
+        exe_path = os.path.join(folder, name)
+        if not os.path.exists(exe_path):
+            return None
+        info = self.from_exe(exe_path, app_data, resolve_to_host=False, raise_on_error=False)
+        if info is None:  # ignore if for some reason we can't query
+            return None
+        for item in ["implementation", "architecture", "version_info"]:
+            found = getattr(info, item)
+            searched = getattr(self, item)
+            if found != searched:
+                if item == "version_info":
+                    found, searched = ".".join(str(i) for i in found), ".".join(str(i) for i in searched)
+                executable = info.executable
+                logging.debug("refused interpreter %s because %s differs %s != %s", executable, item, found, searched)
+                if exact is False:
+                    discovered.append(info)
+                break
+        else:
+            return info
+        return None
 
     @staticmethod
     def _select_most_likely(discovered, target):

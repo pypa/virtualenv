@@ -21,7 +21,7 @@ class ActivationSelector(ComponentBuilder):
         self.parser.add_argument(
             "--{}".format(name),
             default=self.default,
-            metavar="comma_separated_list",
+            metavar="comma_sep_list",
             required=False,
             help="activators to generate - default is all supported",
             type=self._extract_activators,

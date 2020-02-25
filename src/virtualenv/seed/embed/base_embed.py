@@ -31,12 +31,13 @@ class BaseEmbed(Seeder):
         self.no_pip = options.no_pip
         self.no_setuptools = options.no_setuptools
         self.no_wheel = options.no_wheel
+        self.app_data = options.app_data.folder
 
     def package_version(self):
         return {package: getattr(self, "{}_version".format(package)) for package in self.packages}
 
     @classmethod
-    def add_parser_arguments(cls, parser, interpreter):
+    def add_parser_arguments(cls, parser, interpreter, app_data):
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
             "--download",

@@ -24,7 +24,7 @@ class PipInvoke(BaseEmbed):
         if not self.enabled:
             return
         with self.get_pip_install_cmd(creator.exe, creator.interpreter.version_release_str) as cmd:
-            with pip_wheel_env_run(creator.interpreter.version_release_str) as env:
+            with pip_wheel_env_run(creator.interpreter.version_release_str, self.app_data) as env:
                 logging.debug("pip seed by running: %s", LogCmd(cmd, env))
                 process = Popen(cmd, env=env)
                 process.communicate()
@@ -40,7 +40,7 @@ class PipInvoke(BaseEmbed):
             cmd.append("{}{}".format(key, "=={}".format(ver) if ver is not None else ""))
         with ExitStack() as stack:
             folders = set()
-            for context in (ensure_file_on_disk(get_bundled_wheel(p, version)) for p in self.packages):
+            for context in (ensure_file_on_disk(get_bundled_wheel(p, version), self.app_data) for p in self.packages):
                 folders.add(stack.enter_context(context).parent)
             for folder in folders:
                 cmd.extend(["--find-links", str(folder)])

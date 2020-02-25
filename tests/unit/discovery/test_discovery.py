@@ -15,9 +15,9 @@ from virtualenv.util.six import ensure_text
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink not supported")
 @pytest.mark.parametrize("case", ["mixed", "lower", "upper"])
-def test_discovery_via_path(monkeypatch, case, special_name_dir, caplog):
+def test_discovery_via_path(monkeypatch, case, special_name_dir, caplog, session_app_data):
     caplog.set_level(logging.DEBUG)
-    current = PythonInfo.current_system()
+    current = PythonInfo.current_system(session_app_data)
     core = "somethingVeryCryptic{}".format(".".join(str(i) for i in current.version_info[0:3]))
     name = "somethingVeryCryptic"
     if case == "lower":

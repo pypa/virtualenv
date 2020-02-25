@@ -24,6 +24,7 @@ class VirtualEnvConfigParser(ArgumentParser):
         self._verbosity = None
         self._options = options
         self._interpreter = None
+        self._app_data = None
 
     def _fix_defaults(self):
         for action in self._actions:
@@ -56,7 +57,7 @@ class VirtualEnvConfigParser(ArgumentParser):
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
     def __init__(self, prog):
-        super(HelpFormatter, self).__init__(prog, max_help_position=35, width=240)
+        super(HelpFormatter, self).__init__(prog, max_help_position=32, width=240)
 
     def _get_help_string(self, action):
         # noinspection PyProtectedMember

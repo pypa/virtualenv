@@ -6,7 +6,6 @@ import shutil
 from contextlib import contextmanager
 from threading import Lock, Thread
 
-from virtualenv.dirs import default_data_dir
 from virtualenv.info import fs_supports_symlink
 from virtualenv.seed.embed.base_embed import BaseEmbed
 from virtualenv.seed.embed.wheels.acquire import get_wheels
@@ -19,21 +18,13 @@ from .pip_install.symlink import SymlinkPipInstall
 class FromAppData(BaseEmbed):
     def __init__(self, options):
         super(FromAppData, self).__init__(options)
-        self.clear = options.clear_app_data
-        self.app_data_dir = default_data_dir() / "seed-v1"
         self.symlinks = options.symlink_app_data
+        self.base_cache = self.app_data / "seed-app-data" / "v1"
 
     @classmethod
-    def add_parser_arguments(cls, parser, interpreter):
-        super(FromAppData, cls).add_parser_arguments(parser, interpreter)
-        parser.add_argument(
-            "--clear-app-data",
-            dest="clear_app_data",
-            action="store_true",
-            help="clear the app data folder of seed images ({})".format((default_data_dir() / "seed-v1").path),
-            default=False,
-        )
-        can_symlink = fs_supports_symlink()
+    def add_parser_arguments(cls, parser, interpreter, app_data):
+        super(FromAppData, cls).add_parser_arguments(parser, interpreter, app_data)
+        can_symlink = app_data.transient is False and fs_supports_symlink()
         parser.add_argument(
             "--symlink-app-data",
             dest="symlink_app_data",
@@ -47,7 +38,7 @@ class FromAppData(BaseEmbed):
     def run(self, creator):
         if not self.enabled:
             return
-        base_cache = self.app_data_dir / creator.interpreter.version_release_str
+        base_cache = self.base_cache / creator.interpreter.version_release_str
         with self._get_seed_wheels(creator, base_cache) as name_to_whl:
             pip_version = name_to_whl["pip"].stem.split("-")[1]
             installer_class = self.installer_class(pip_version)
@@ -56,8 +47,6 @@ class FromAppData(BaseEmbed):
                 logging.debug("install %s from wheel %s via %s", name, wheel, installer_class.__name__)
                 image_folder = base_cache.path / "image" / installer_class.__name__ / wheel.stem
                 installer = installer_class(wheel, creator, image_folder)
-                if self.clear:
-                    installer.clear()
                 if not installer.has_image():
                     installer.build_image()
                 installer.install(creator.interpreter.version_info)
@@ -72,7 +61,7 @@ class FromAppData(BaseEmbed):
     def _get_seed_wheels(self, creator, base_cache):
         with base_cache.lock_for_key("wheels"):
             wheels_to = base_cache.path / "wheels"
-            if self.clear and wheels_to.exists():
+            if wheels_to.exists():
                 shutil.rmtree(ensure_text(str(wheels_to)))
             wheels_to.mkdir(parents=True, exist_ok=True)
             name_to_whl, lock = {}, Lock()
@@ -84,6 +73,7 @@ class FromAppData(BaseEmbed):
                     self.extra_search_dir,
                     self.download,
                     {package: version},
+                    self.app_data,
                 )
                 with lock:
                     name_to_whl.update(result)
@@ -106,8 +96,5 @@ class FromAppData(BaseEmbed):
 
     def __unicode__(self):
         base = super(FromAppData, self).__unicode__()
-        return (
-            base[:-1]
-            + ", via={}, app_data_dir={}".format("symlink" if self.symlinks else "copy", self.app_data_dir.path)
-            + base[-1]
-        )
+        msg = ", via={}, app_data_dir={}".format("symlink" if self.symlinks else "copy", self.app_data)
+        return base[:-1] + msg + base[-1]

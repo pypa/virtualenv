@@ -47,12 +47,12 @@ class ComponentBuilder(PluginLoader):
         if selected not in self.possible:
             raise RuntimeError("No implementation for {}".format(self.interpreter))
         self._impl_class = self.possible[selected]
-        self.populate_selected_argparse(selected)
+        self.populate_selected_argparse(selected, options.app_data)
         return selected
 
-    def populate_selected_argparse(self, selected):
+    def populate_selected_argparse(self, selected, app_data):
         self.parser.description = "options for {} {}".format(self.name, selected)
-        self._impl_class.add_parser_arguments(self.parser, self.interpreter)
+        self._impl_class.add_parser_arguments(self.parser, self.interpreter, app_data)
 
     def create(self, options):
         return self._impl_class(options, self.interpreter)

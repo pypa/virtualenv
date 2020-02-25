@@ -67,9 +67,8 @@ def zipapp_test_env(tmp_path_factory):
 
 
 @pytest.fixture()
-def call_zipapp(zipapp, monkeypatch, tmp_path, zipapp_test_env):
+def call_zipapp(zipapp, monkeypatch, tmp_path, zipapp_test_env, temp_app_data):
     def _run(*args):
-        monkeypatch.setenv(str("VIRTUALENV_OVERRIDE_APP_DATA"), str(tmp_path / "app_data"))
         cmd = [str(zipapp_test_env), str(zipapp), "-vv", ensure_text(str(tmp_path / "env"))] + list(args)
         subprocess.check_call(cmd)
 

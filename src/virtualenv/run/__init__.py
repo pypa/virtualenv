@@ -1,6 +1,9 @@
 from __future__ import absolute_import, unicode_literals
 
+import argparse
 import logging
+
+from virtualenv.run.app_data import AppDataAction
 
 from ..config.cli.parser import VirtualEnvConfigParser
 from ..report import LEVELS, setup_report
@@ -19,17 +22,20 @@ def cli_run(args, options=None):
     :param options: passing in a ``argparse.Namespace`` object allows return of the parsed options
     :return: the session object of the creation (its structure for now is experimental and might change on short notice)
     """
+    if options is None:
+        options = argparse.Namespace()
     session = session_via_cli(args, options)
-    session.run()
+    with session:
+        session.run()
     return session
 
 
 # noinspection PyProtectedMember
-def session_via_cli(args, options=None):
+def session_via_cli(args, options):
     parser = build_parser(args, options)
     parser.parse_args(args, namespace=parser._options)
     creator, seeder, activators = tuple(e.create(parser._options) for e in parser._elements)  # create types
-    session = Session(parser._verbosity, parser._interpreter, creator, seeder, activators)
+    session = Session(parser._verbosity, options.app_data, parser._interpreter, creator, seeder, activators)
     return session
 
 
@@ -45,6 +51,22 @@ def build_parser(args=None, options=None):
         help="on failure also display the stacktrace internals of virtualenv",
     )
     parser._options, parser._verbosity = _do_report_setup(parser, args)
+    # here we need a write-able application data (e.g. the zipapp might need this for discovery cache)
+    default_app_data = AppDataAction.default()
+    parser.add_argument(
+        "--app-data",
+        dest="app_data",
+        action=AppDataAction,
+        default="<temp folder>" if default_app_data is None else default_app_data,
+        help="a data folder used as cache by the virtualenv",
+    )
+    parser.add_argument(
+        "--clear-app-data",
+        dest="clear_app_data",
+        action="store_true",
+        help="start with empty app data folder",
+        default=False,
+    )
     discover = get_discover(parser, args, parser._options)
     parser._interpreter = interpreter = discover.interpreter
     if interpreter is None:

@@ -9,8 +9,9 @@ from virtualenv.util.six import ensure_text
 class Session(object):
     """Represents a virtual environment creation session"""
 
-    def __init__(self, verbosity, interpreter, creator, seeder, activators):
+    def __init__(self, verbosity, app_data, interpreter, creator, seeder, activators):
         self._verbosity = verbosity
+        self._app_data = app_data
         self._interpreter = interpreter
         self._creator = creator
         self._seeder = seeder
@@ -65,6 +66,12 @@ class Session(object):
             )
             for activator in self.activators:
                 activator.generate(self.creator)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._app_data.close()
 
 
 _DEBUG_MARKER = "=" * 30 + " target debug " + "=" * 30
