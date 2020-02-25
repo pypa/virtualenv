@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 from appdirs import user_config_dir, user_data_dir
 
@@ -23,7 +24,21 @@ def _get_default_data_folder():
         folder = os.environ[key]
     else:
         folder = user_data_dir(appname="virtualenv", appauthor="pypa")
+
+    if not _writable(folder):
+        folder = os.path.join(tempfile.gettempdir(), "virtualenv")
     return folder
+
+
+def _writable(folder) -> bool:
+    head = os.path.normpath(folder)
+
+    while not (os.path.exists(head) and os.access(head, os.W_OK)):
+        head, tail = os.path.split(head)
+        if not tail:
+            return False
+
+    return True
 
 
 def default_config_dir():
