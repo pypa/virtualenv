@@ -1,6 +1,6 @@
 # Contributing to ``virtualenv``
 
-Thank you for your interest in contributing to pip! There are many ways to contribute, and we appreciate all of them.
+Thank you for your interest in contributing to virtualenv! There are many ways to contribute, and we appreciate all of them.
 As a reminder, all contributors are expected to follow our [Code of Conduct][coc].
 
 [coc]: https://www.pypa.io/en/latest/code-of-conduct/
