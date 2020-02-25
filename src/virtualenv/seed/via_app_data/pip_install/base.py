@@ -133,7 +133,7 @@ class PipInstall(object):
         result = []
         maker = ScriptMaker(None, str(to_folder))
         maker.clobber = True  # overwrite
-        maker.variants = {""}
+        maker.variants = {""}  # set within patch_distlib_correct_variants
         maker.set_mode = True  # ensure they are executable
         # calling private until https://bitbucket.org/pypa/distlib/issues/135/expose-_enquote_executable-as-public
         maker.executable = _enquote_executable(str(self._creator.exe))
