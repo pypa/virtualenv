@@ -53,6 +53,8 @@ class ViaGlobalRefApi(Creator):
 
     def patch_distutils_via_pth(self):
         """Patch the distutils package to not be derailed by its configuration files"""
+        if self.interpreter.version_info.major == 3:
+            return  # TODO: remove this, for her to bypass: https://github.com/pypa/pip/issues/7778
         patch_file = Path(__file__).parent / "_distutils_patch_virtualenv.py"
         with ensure_file_on_disk(patch_file, self.app_data) as resolved_path:
             text = resolved_path.read_text()

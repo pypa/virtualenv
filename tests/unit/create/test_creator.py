@@ -19,7 +19,7 @@ from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import IS_PYPY, fs_supports_symlink
+from virtualenv.info import IS_PYPY, PY3, fs_supports_symlink
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.util.path import Path
@@ -351,6 +351,7 @@ def test_create_long_path(current_fastest, tmp_path):
     subprocess.check_call([str(result.creator.script("pip")), "--version"])
 
 
+@pytest.mark.skipif(PY3, reason="https://github.com/pypa/pip/issues/7778")
 @pytest.mark.parametrize("creator", set(PythonInfo.current_system().creators().key_to_class) - {"builtin"})
 def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
     cmd = [
