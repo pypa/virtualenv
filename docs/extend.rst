@@ -18,7 +18,7 @@ Python discovery
 ----------------
 
 The python discovery mechanism is a component that needs to answer the following answer: based on some type of user
-input give me a Python interpreter on the machine that matches that. The builtin interpreter achieves tries to discover
+input give me a Python interpreter on the machine that matches that. The builtin interpreter tries to discover
 an installed Python interpreter (based on PEP-515 and ``PATH`` discovery) on the users machine where the user input is a
 python specification. An alternative such discovery mechanism for example would be to use the popular
 `pyenv <https://github.com/pyenv/pyenv>`_ project to discover, and if not present install the requested Python
