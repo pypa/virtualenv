@@ -97,7 +97,7 @@ def rewrite_standard_library_sys_path():
                 value = "{}{}".format(base_prefix, value[len(prefix) :])
             elif dir_starts_with(value, exec_prefix):
                 value = "{}{}".format(base_exec_prefix, value[len(exec_prefix) :])
-        sys.path[at] = value
+            sys.path[at] = value
 
 
 def dir_starts_with(directory, prefix):
