@@ -2,14 +2,13 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
-import shutil
 from contextlib import contextmanager
 from threading import Lock, Thread
 
 from virtualenv.info import fs_supports_symlink
 from virtualenv.seed.embed.base_embed import BaseEmbed
 from virtualenv.seed.embed.wheels.acquire import get_wheels
-from virtualenv.util.six import ensure_text
+from virtualenv.util.path import safe_delete
 
 from .pip_install.copy import CopyPipInstall
 from .pip_install.symlink import SymlinkPipInstall
@@ -62,7 +61,7 @@ class FromAppData(BaseEmbed):
         with base_cache.lock_for_key("wheels"):
             wheels_to = base_cache.path / "wheels"
             if wheels_to.exists():
-                shutil.rmtree(ensure_text(str(wheels_to)))
+                safe_delete(wheels_to)
             wheels_to.mkdir(parents=True, exist_ok=True)
             name_to_whl, lock = {}, Lock()
 
@@ -96,5 +95,5 @@ class FromAppData(BaseEmbed):
 
     def __unicode__(self):
         base = super(FromAppData, self).__unicode__()
-        msg = ", via={}, app_data_dir={}".format("symlink" if self.symlinks else "copy", self.app_data)
+        msg = ", via={}, app_data_dir={}".format("symlink" if self.symlinks else "copy", self.base_cache.path)
         return base[:-1] + msg + base[-1]

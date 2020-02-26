@@ -1,11 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-import shutil
 import subprocess
-from stat import S_IREAD, S_IRGRP, S_IROTH, S_IWUSR
+from stat import S_IREAD, S_IRGRP, S_IROTH
 
-from virtualenv.util.path import set_tree
+from virtualenv.util.path import safe_delete, set_tree
 from virtualenv.util.six import ensure_text
 from virtualenv.util.subprocess import Popen
 
@@ -32,7 +31,7 @@ class SymlinkPipInstall(PipInstall):
         if root_py_cache.exists():
             new_files.update(root_py_cache.iterdir())
             new_files.add(root_py_cache)
-            shutil.rmtree(ensure_text(str(root_py_cache)))
+            safe_delete(root_py_cache)
         core_new_files = super(SymlinkPipInstall, self)._generate_new_files()
         # remove files that are within the image folder deeper than one level (as these will be not linked directly)
         for file in core_new_files:
@@ -58,5 +57,5 @@ class SymlinkPipInstall(PipInstall):
 
     def clear(self):
         if self._image_dir.exists():
-            self._set_tree(self._image_dir, S_IWUSR)
+            safe_delete(self._image_dir)
         super(SymlinkPipInstall, self).clear()

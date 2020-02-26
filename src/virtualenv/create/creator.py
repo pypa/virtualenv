@@ -3,20 +3,18 @@ from __future__ import absolute_import, print_function, unicode_literals
 import json
 import logging
 import os
-import shutil
 import sys
 from abc import ABCMeta, abstractmethod
 from argparse import ArgumentTypeError
 from ast import literal_eval
 from collections import OrderedDict
-from stat import S_IWUSR
 
 from six import add_metaclass
 
 from virtualenv.discovery.cached_py_info import LogCmd
 from virtualenv.info import WIN_CPYTHON_2
 from virtualenv.pyenv_cfg import PyEnvCfg
-from virtualenv.util.path import Path
+from virtualenv.util.path import Path, safe_delete
 from virtualenv.util.six import ensure_str, ensure_text
 from virtualenv.util.subprocess import run_cmd
 from virtualenv.util.zipapp import ensure_file_on_disk
@@ -148,15 +146,7 @@ class Creator(object):
     def run(self):
         if self.dest.exists() and self.clear:
             logging.debug("delete %s", self.dest)
-
-            def onerror(func, path, exc_info):
-                if not os.access(path, os.W_OK):
-                    os.chmod(path, S_IWUSR)
-                    func(path)
-                else:
-                    raise
-
-            shutil.rmtree(str(self.dest), ignore_errors=True, onerror=onerror)
+            safe_delete(self.dest)
         self.create()
         self.set_pyenv_cfg()
 

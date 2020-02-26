@@ -1,14 +1,12 @@
 import logging
 import os
-import shutil
 from argparse import Action, ArgumentError
-from stat import S_IWUSR
 from tempfile import mkdtemp
 
 from appdirs import user_data_dir
 
 from virtualenv.util.lock import ReentrantFileLock
-from virtualenv.util.path import set_tree
+from virtualenv.util.path import safe_delete
 
 
 class AppData(object):
@@ -21,15 +19,10 @@ class AppData(object):
 
     def clean(self):
         logging.debug("clean app data folder %s", self.folder.path)
-        self._remove(self.folder.path)
+        safe_delete(self.folder.path)
 
     def close(self):
         """"""
-
-    @staticmethod
-    def _remove(folder):
-        set_tree(folder, S_IWUSR)
-        shutil.rmtree(str(folder))
 
 
 class TempAppData(AppData):
@@ -40,7 +33,7 @@ class TempAppData(AppData):
 
     def close(self):
         logging.debug("remove temporary app data folder %s", self.folder.path)
-        self._remove(self.folder.path)
+        safe_delete(self.folder.path)
 
 
 class AppDataAction(Action):

@@ -55,6 +55,7 @@ def test_destination_exists_file(tmp_path, capsys):
     assert msg in err, err
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
 def test_destination_not_write_able(tmp_path, capsys):
     target = tmp_path
     prev_mod = target.stat().st_mode

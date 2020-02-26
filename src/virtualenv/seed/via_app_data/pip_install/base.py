@@ -3,7 +3,6 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import os
 import re
-import shutil
 import zipfile
 from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
@@ -13,7 +12,7 @@ from threading import Lock
 from six import PY3, add_metaclass
 
 from virtualenv.util import ConfigParser
-from virtualenv.util.path import Path
+from virtualenv.util.path import Path, safe_delete
 from virtualenv.util.six import ensure_text
 
 
@@ -40,7 +39,7 @@ class PipInstall(object):
             into = self._creator.purelib / filename.name
             if into.exists():
                 if into.is_dir() and not into.is_symlink():
-                    shutil.rmtree(str(into))
+                    safe_delete(into)
                 else:
                     into.unlink()
             self._sync(filename, into)
@@ -88,7 +87,7 @@ class PipInstall(object):
                     for i in self._create_console_entry_point(name, module, to_folder, version_info)
                 )
         finally:
-            shutil.rmtree(folder, ignore_errors=True)
+            safe_delete(folder)
         return new_files
 
     @property
@@ -169,7 +168,7 @@ class PipInstall(object):
 
     def clear(self):
         if self._image_dir.exists():
-            shutil.rmtree(ensure_text(str(self._image_dir)))
+            safe_delete(self._image_dir)
 
     def has_image(self):
         return self._image_dir.exists() and next(self._image_dir.iterdir()) is not None

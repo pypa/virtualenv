@@ -114,6 +114,7 @@ def read_only_folder(temp_app_data):
         os.chmod(str(temp_app_data), S_IWUSR | S_IREAD)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
 def test_base_bootstrap_link_via_app_data_not_writable(tmp_path, current_fastest, read_only_folder, monkeypatch):
     dest = tmp_path / "venv"
     result = cli_run(["--seeder", "app-data", "--creator", current_fastest, "--clear-app-data", "-vv", str(dest)])
