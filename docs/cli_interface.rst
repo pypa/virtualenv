@@ -33,8 +33,8 @@ Configuration file
 ^^^^^^^^^^^^^^^^^^
 
 virtualenv looks for a standard ini configuration file. The exact location depends on the operating system you're using,
-as determined by :pypi:`appdirs` application data definition. The configuration file location is printed as at the end of
-the output when ``--help`` is passed.
+as determined by :pypi:`appdirs` application configuration definition. The configuration file location is printed as at
+the end of the output when ``--help`` is passed.
 
 The keys of the settings are derived from the long command line option. For example, :option:`--python <python>`
 would be specified as:
@@ -42,7 +42,7 @@ would be specified as:
 .. code-block:: ini
 
   [virtualenv]
-  python = /opt/python-3.3/bin/python
+  python = /opt/python-3.8/bin/python
 
 Options that take multiple values, like :option:`extra-search-dir` can be specified as:
 

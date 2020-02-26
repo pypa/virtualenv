@@ -15,7 +15,7 @@ class AppData(object):
         self.transient = False
 
     def __repr__(self):
-        return "{}(folder={})".format(self.__class__.__name__, self.folder.path)
+        return "{}".format(self.folder.path)
 
     def clean(self):
         logging.debug("clean app data folder %s", self.folder.path)
