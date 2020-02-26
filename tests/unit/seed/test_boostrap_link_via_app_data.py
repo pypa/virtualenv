@@ -16,7 +16,7 @@ from virtualenv.util.subprocess import Popen
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("copies", [True, False] if fs_supports_symlink() else [True])
+@pytest.mark.parametrize("copies", [False, True] if fs_supports_symlink() else [True])
 def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastest, copies):
     current = PythonInfo.current_system()
     bundle_ver = BUNDLE_SUPPORT[current.version_release_str]
@@ -87,6 +87,9 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastes
     files_post_second_create = list(site_package.iterdir())
     assert files_post_first_create == files_post_second_create
 
+    # Windows does not allow removing a executable while running it, so when uninstalling pip we need to do it via
+    # python -m pip
+    remove_cmd = [str(result.creator.exe), "-m", "pip"] + remove_cmd[1:]
     process = Popen(remove_cmd + ["pip", "wheel"])
     _, __ = process.communicate()
     assert not process.returncode
