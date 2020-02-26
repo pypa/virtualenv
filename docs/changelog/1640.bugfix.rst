@@ -1,9 +1,0 @@
-Handle the case when the application data folder is read-only:
-
-- the application data folder is now controllable via :option:`app-data`,
-- :option:`clear-app-data` now cleans the entire application data folder, not just the ``app-data`` seeder path,
-- check if the application data path passed in does not exist or is read-only, and fallback to a temporary directory,
-- temporary directory application data is automatically cleaned up at the end of execution,
-- :option:`symlink-app-data` is always ``False`` when the application data is temporary
-
-by :user:`gaborbernat`.
