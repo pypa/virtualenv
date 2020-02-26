@@ -14,8 +14,8 @@
 }
 
 .wy-table-responsive table {
-    width: calc(100% + 3em);
-    margin-left: 20px !important;
+    width: 100%;
+    margin-left: 0 !important;
 }
 
 .rst-content table.docutils td ol {

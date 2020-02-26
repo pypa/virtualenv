@@ -1,5 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
+from virtualenv.run.app_data import TempAppData
+
 from .base import PluginLoader
 
 
@@ -20,6 +22,10 @@ def get_discover(parser, args, options):
         help="interpreter discovery method",
     )
     options, _ = parser.parse_known_args(args, namespace=options)
+    if options.app_data == "<temp folder>":
+        options.app_data = TempAppData()
+    if options.clear_app_data:
+        options.app_data.clean()
     discover_class = discover_types[options.discovery]
     discover_class.add_parser_arguments(discovery_parser)
     options, _ = parser.parse_known_args(args, namespace=options)

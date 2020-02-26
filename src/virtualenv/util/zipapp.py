@@ -4,9 +4,10 @@ import logging
 import os
 import zipfile
 from contextlib import contextmanager
+from tempfile import TemporaryFile
 
-from virtualenv.dirs import default_data_dir
 from virtualenv.info import IS_WIN, IS_ZIPAPP, ROOT
+from virtualenv.util.path import Path
 from virtualenv.util.six import ensure_text
 from virtualenv.version import __version__
 
@@ -36,13 +37,19 @@ def _get_path_within_zip(full_path):
 
 
 @contextmanager
-def ensure_file_on_disk(path):
+def ensure_file_on_disk(path, app_data):
     if IS_ZIPAPP:
-        base = default_data_dir() / "zipapp" / "extract" / __version__
-        with base.lock_for_key(path.name):
-            dest = base.path / path.name
-            if not dest.exists():
+        if app_data is None:
+            with TemporaryFile() as temp_file:
+                dest = Path(temp_file.name)
                 extract(path, dest)
-            yield dest
+                yield Path(dest)
+        else:
+            base = app_data / "zipapp" / "extract" / __version__
+            with base.lock_for_key(path.name):
+                dest = base.path / path.name
+                if not dest.exists():
+                    extract(path, dest)
+                yield dest
     else:
         yield path

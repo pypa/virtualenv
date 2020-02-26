@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import os
 import shutil
+from stat import S_IWUSR
 
 from six import PY2
 
@@ -27,8 +28,8 @@ def ensure_safe_to_do(src, dest):
     if not dest.exists():
         return
     if dest.is_dir() and not dest.is_symlink():
-        shutil.rmtree(norm(dest))
         logging.debug("remove directory %s", dest)
+        safe_delete(dest)
     else:
         logging.debug("remove file %s", dest)
         dest.unlink()
@@ -59,6 +60,17 @@ def copytree(src, dest):
             shutil.copy(src_f, dest_f)
 
 
+def safe_delete(dest):
+    def onerror(func, path, exc_info):
+        if not os.access(path, os.W_OK):
+            os.chmod(path, S_IWUSR)
+            func(path)
+        else:
+            raise
+
+    shutil.rmtree(ensure_text(str(dest)), ignore_errors=True, onerror=onerror)
+
+
 class _Debug(object):
     def __init__(self, src, dest):
         self.src = src
@@ -76,4 +88,5 @@ __all__ = (
     "copy",
     "symlink",
     "copytree",
+    "safe_delete",
 )

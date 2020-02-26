@@ -3,20 +3,18 @@ from __future__ import absolute_import, print_function, unicode_literals
 import json
 import logging
 import os
-import shutil
 import sys
 from abc import ABCMeta, abstractmethod
 from argparse import ArgumentTypeError
 from ast import literal_eval
 from collections import OrderedDict
-from stat import S_IWUSR
 
 from six import add_metaclass
 
 from virtualenv.discovery.cached_py_info import LogCmd
 from virtualenv.info import WIN_CPYTHON_2
 from virtualenv.pyenv_cfg import PyEnvCfg
-from virtualenv.util.path import Path
+from virtualenv.util.path import Path, safe_delete
 from virtualenv.util.six import ensure_str, ensure_text
 from virtualenv.util.subprocess import run_cmd
 from virtualenv.util.zipapp import ensure_file_on_disk
@@ -41,6 +39,7 @@ class Creator(object):
         self.dest = Path(options.dest)
         self.clear = options.clear
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest)
+        self.app_data = options.app_data.folder
 
     def __repr__(self):
         return ensure_str(self.__unicode__())
@@ -65,7 +64,7 @@ class Creator(object):
         return True
 
     @classmethod
-    def add_parser_arguments(cls, parser, interpreter, meta):
+    def add_parser_arguments(cls, parser, interpreter, meta, app_data):
         """Add CLI arguments for the creator.
 
         :param parser: the CLI parser
@@ -147,15 +146,7 @@ class Creator(object):
     def run(self):
         if self.dest.exists() and self.clear:
             logging.debug("delete %s", self.dest)
-
-            def onerror(func, path, exc_info):
-                if not os.access(path, os.W_OK):
-                    os.chmod(path, S_IWUSR)
-                    func(path)
-                else:
-                    raise
-
-            shutil.rmtree(str(self.dest), ignore_errors=True, onerror=onerror)
+            safe_delete(self.dest)
         self.create()
         self.set_pyenv_cfg()
 
@@ -172,7 +163,7 @@ class Creator(object):
         :return: debug information about the virtual environment (only valid after :meth:`create` has run)
         """
         if self._debug is None and self.exe is not None:
-            self._debug = get_env_debug_info(self.exe, self.debug_script())
+            self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data)
         return self._debug
 
     # noinspection PyMethodMayBeStatic
@@ -180,11 +171,11 @@ class Creator(object):
         return DEBUG_SCRIPT
 
 
-def get_env_debug_info(env_exe, debug_script):
+def get_env_debug_info(env_exe, debug_script, app_data):
     env = os.environ.copy()
     env.pop(str("PYTHONPATH"), None)
 
-    with ensure_file_on_disk(debug_script) as debug_script:
+    with ensure_file_on_disk(debug_script, app_data) as debug_script:
         cmd = [str(env_exe), str(debug_script)]
         if WIN_CPYTHON_2:
             cmd = [ensure_text(i) for i in cmd]

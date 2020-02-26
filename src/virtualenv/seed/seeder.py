@@ -19,11 +19,12 @@ class Seeder(object):
         self.enabled = enabled
 
     @classmethod
-    def add_parser_arguments(cls, parser, interpreter):
+    def add_parser_arguments(cls, parser, interpreter, app_data):
         """
         Add CLI arguments for this seed mechanisms.
 
         :param parser: the CLI parser
+        :param app_data: the CLI parser
         :param interpreter: the interpreter this virtual environment is based of
         """
         raise NotImplementedError

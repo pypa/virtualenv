@@ -24,19 +24,19 @@ def test_current_as_json():
     assert parsed["version_info"] == {"major": a, "minor": b, "micro": c, "releaselevel": d, "serial": e}
 
 
-def test_bad_exe_py_info_raise(tmp_path):
+def test_bad_exe_py_info_raise(tmp_path, session_app_data):
     exe = str(tmp_path)
     with pytest.raises(RuntimeError) as context:
-        PythonInfo.from_exe(exe)
+        PythonInfo.from_exe(exe, session_app_data)
     msg = str(context.value)
     assert "code" in msg
     assert exe in msg
 
 
-def test_bad_exe_py_info_no_raise(tmp_path, caplog, capsys):
+def test_bad_exe_py_info_no_raise(tmp_path, caplog, capsys, session_app_data):
     caplog.set_level(logging.NOTSET)
     exe = str(tmp_path)
-    result = PythonInfo.from_exe(exe, raise_on_error=False)
+    result = PythonInfo.from_exe(exe, session_app_data, raise_on_error=False)
     assert result is None
     out, _ = capsys.readouterr()
     assert not out
@@ -107,40 +107,40 @@ def test_satisfy_not_version(spec):
     assert matches is False
 
 
-def test_py_info_cached_error(mocker, tmp_path):
+def test_py_info_cached_error(mocker, tmp_path, session_app_data):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
     with pytest.raises(RuntimeError):
-        PythonInfo.from_exe(str(tmp_path))
+        PythonInfo.from_exe(str(tmp_path), session_app_data)
     with pytest.raises(RuntimeError):
-        PythonInfo.from_exe(str(tmp_path))
+        PythonInfo.from_exe(str(tmp_path), session_app_data)
     assert spy.call_count == 1
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
-def test_py_info_cached_symlink_error(mocker, tmp_path):
+def test_py_info_cached_symlink_error(mocker, tmp_path, session_app_data):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
     with pytest.raises(RuntimeError):
-        PythonInfo.from_exe(str(tmp_path))
+        PythonInfo.from_exe(str(tmp_path), session_app_data)
     symlinked = tmp_path / "a"
     symlinked.symlink_to(tmp_path)
     with pytest.raises(RuntimeError):
-        PythonInfo.from_exe(str(symlinked))
+        PythonInfo.from_exe(str(symlinked), session_app_data)
     assert spy.call_count == 2
 
 
-def test_py_info_cache_clear(mocker, tmp_path):
+def test_py_info_cache_clear(mocker, tmp_path, session_app_data):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
-    assert PythonInfo.from_exe(sys.executable) is not None
+    assert PythonInfo.from_exe(sys.executable, session_app_data) is not None
     assert spy.call_count >= 2  # at least two, one for the venv, one more for the host
-    PythonInfo.clear_cache()
-    assert PythonInfo.from_exe(sys.executable) is not None
+    PythonInfo.clear_cache(session_app_data)
+    assert PythonInfo.from_exe(sys.executable, session_app_data) is not None
     assert spy.call_count >= 4
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
-def test_py_info_cached_symlink(mocker, tmp_path):
+def test_py_info_cached_symlink(mocker, tmp_path, session_app_data):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
-    first_result = PythonInfo.from_exe(sys.executable)
+    first_result = PythonInfo.from_exe(sys.executable, session_app_data)
     assert first_result is not None
     count = spy.call_count
     assert count >= 2  # at least two, one for the venv, one more for the host
@@ -148,7 +148,7 @@ def test_py_info_cached_symlink(mocker, tmp_path):
     new_exe = tmp_path / "a"
     new_exe.symlink_to(sys.executable)
     new_exe_str = str(new_exe)
-    second_result = PythonInfo.from_exe(new_exe_str)
+    second_result = PythonInfo.from_exe(new_exe_str, session_app_data)
     assert second_result.executable == new_exe_str
     assert spy.call_count == count + 1  # no longer needed the host invocation, but the new symlink is must
 
@@ -185,7 +185,7 @@ PyInfoMock = namedtuple("PyInfoMock", ["implementation", "architecture", "versio
         ),
     ],
 )
-def test_system_executable_no_exact_match(target, discovered, position, tmp_path, mocker, caplog):
+def test_system_executable_no_exact_match(target, discovered, position, tmp_path, mocker, caplog, session_app_data):
     """Here we should fallback to other compatible"""
     caplog.set_level(logging.DEBUG)
 
@@ -216,7 +216,7 @@ def test_system_executable_no_exact_match(target, discovered, position, tmp_path
     mocker.patch.object(target_py_info, "_find_possible_folders", return_value=[str(tmp_path)])
 
     # noinspection PyUnusedLocal
-    def func(k, resolve_to_host, raise_on_error):
+    def func(k, app_data, resolve_to_host, raise_on_error):
         return discovered_with_path[k]
 
     mocker.patch.object(target_py_info, "from_exe", side_effect=func)
@@ -224,12 +224,12 @@ def test_system_executable_no_exact_match(target, discovered, position, tmp_path
 
     target_py_info.system_executable = None
     target_py_info.executable = str(tmp_path)
-    mapped = target_py_info._resolve_to_system(target_py_info)
+    mapped = target_py_info._resolve_to_system(session_app_data, target_py_info)
     assert mapped.system_executable == CURRENT.system_executable
     found = discovered_with_path[mapped.base_executable]
     assert found is selected
 
-    assert caplog.records[0].msg == "discover system for %s in %s"
+    assert caplog.records[0].msg == "discover exe for %s in %s"
     for record in caplog.records[1:-1]:
         assert record.message.startswith("refused interpreter ")
         assert record.levelno == logging.DEBUG

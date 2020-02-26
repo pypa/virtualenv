@@ -21,7 +21,7 @@ from . import BUNDLE_SUPPORT, MAX
 BUNDLE_FOLDER = Path(os.path.abspath(__file__)).parent
 
 
-def get_wheels(for_py_version, wheel_cache_dir, extra_search_dir, download, packages):
+def get_wheels(for_py_version, wheel_cache_dir, extra_search_dir, download, packages, app_data):
     # not all wheels are compatible with all python versions, so we need to py version qualify it
     processed = copy(packages)
     # 1. acquire from bundle
@@ -30,7 +30,7 @@ def get_wheels(for_py_version, wheel_cache_dir, extra_search_dir, download, pack
     acquire_from_dir(processed, for_py_version, wheel_cache_dir, extra_search_dir)
     # 3. download from the internet
     if download and processed:
-        download_wheel(processed, for_py_version, wheel_cache_dir)
+        download_wheel(processed, for_py_version, wheel_cache_dir, app_data)
 
     # in the end just get the wheels
     wheels = _get_wheels(wheel_cache_dir, packages)
@@ -126,7 +126,7 @@ def _get_wheels(from_folder, packages):
     return wheels
 
 
-def download_wheel(packages, for_py_version, to_folder):
+def download_wheel(packages, for_py_version, to_folder, app_data):
     to_download = list(p if v is None else "{}={}".format(p, v) for p, v in packages.items())
     logging.debug("download wheels %s", to_download)
     cmd = [
@@ -145,7 +145,7 @@ def download_wheel(packages, for_py_version, to_folder):
     cmd.extend(to_download)
     # pip has no interface in python - must be a new sub-process
 
-    with pip_wheel_env_run("{}{}".format(*sys.version_info[0:2])) as env:
+    with pip_wheel_env_run("{}{}".format(*sys.version_info[0:2]), app_data) as env:
         process = Popen(cmd, env=env, stdout=subprocess.PIPE)
         process.communicate()
         if process.returncode != 0:
@@ -153,7 +153,7 @@ def download_wheel(packages, for_py_version, to_folder):
 
 
 @contextmanager
-def pip_wheel_env_run(version):
+def pip_wheel_env_run(version, app_data):
     env = os.environ.copy()
     env.update(
         {
@@ -161,7 +161,7 @@ def pip_wheel_env_run(version):
             for k, v in {"PIP_USE_WHEEL": "1", "PIP_USER": "0", "PIP_NO_INPUT": "1"}.items()
         }
     )
-    with ensure_file_on_disk(get_bundled_wheel("pip", version)) as pip_wheel_path:
+    with ensure_file_on_disk(get_bundled_wheel("pip", version), app_data) as pip_wheel_path:
         # put the bundled wheel onto the path, and use it to do the bootstrap operation
         env[str("PYTHONPATH")] = str(pip_wheel_path)
         yield env

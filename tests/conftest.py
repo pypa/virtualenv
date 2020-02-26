@@ -1,28 +1,23 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-import atexit
 import logging
 import os
 import shutil
 import sys
-import tempfile
+from contextlib import contextmanager
 from functools import partial
 
 import coverage
 import pytest
 import six
 
-from virtualenv import dirs
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
 from virtualenv.report import LOGGER
+from virtualenv.run.app_data import AppData
 from virtualenv.util.path import Path
-from virtualenv.util.six import ensure_text
-
-_TEST_SETUP_DIR = tempfile.mkdtemp()
-dirs._DATA_DIR = dirs.ReentrantFileLock(_TEST_SETUP_DIR)
-atexit.register(lambda: shutil.rmtree(_TEST_SETUP_DIR))
+from virtualenv.util.six import ensure_str, ensure_text
 
 
 def pytest_addoption(parser):
@@ -115,17 +110,15 @@ def check_cwd_not_changed_by_test():
 
 
 @pytest.fixture(autouse=True)
-def ensure_py_info_cache_empty():
-    PythonInfo.clear_cache()
+def ensure_py_info_cache_empty(session_app_data):
+    PythonInfo.clear_cache(session_app_data)
     yield
-    PythonInfo.clear_cache()
+    PythonInfo.clear_cache(session_app_data)
 
 
 @pytest.fixture(autouse=True)
-def ignore_global_config(tmp_path, mocker, monkeypatch):
-    mocker.patch("virtualenv.dirs._CFG_DIR", None)
-    mocker.patch("virtualenv.dirs.user_config_dir", return_value=Path(str(tmp_path / "this-should-never-exist")))
-    yield
+def ignore_global_config(tmp_path, monkeypatch):
+    monkeypatch.setenv(ensure_str("VIRTUALENV_CONFIG_FILE"), str(tmp_path / "this-should-never-exist"))
 
 
 @pytest.fixture(autouse=True)
@@ -183,7 +176,7 @@ def coverage_env(monkeypatch, link):
         # we inject right after creation, we cannot collect coverage on site.py - used for helper scripts, such as debug
         from virtualenv import run
 
-        def via_cli(args, options=None):
+        def via_cli(args, options):
             session = prev_run(args, options)
             old_run = session.creator.run
 
@@ -284,10 +277,42 @@ def special_name_dir(tmp_path, special_char_name):
 
 
 @pytest.fixture(scope="session")
-def current_creators():
-    return PythonInfo.current_system().creators()
+def current_creators(session_app_data):
+    return PythonInfo.current_system(session_app_data).creators()
 
 
 @pytest.fixture(scope="session")
 def current_fastest(current_creators):
     return "builtin" if "builtin" in current_creators.key_to_class else next(iter(current_creators.key_to_class))
+
+
+@pytest.fixture(scope="session")
+def session_app_data(tmp_path_factory):
+    app_data = AppData(folder=str(tmp_path_factory.mktemp("session-app-data")))
+    with change_env_var("VIRTUALENV_OVERRIDE_APP_DATA", str(app_data.folder.path)):
+        yield app_data.folder
+
+
+@contextmanager
+def change_env_var(key, value):
+    """Temporarily change an environment variable.
+    :param key: the key of the env var
+    :param value: the value of the env var
+    """
+    already_set = key in os.environ
+    prev_value = os.environ.get(key)
+    os.environ[key] = value
+    try:
+        yield
+    finally:
+        if already_set:
+            os.environ[key] = prev_value  # type: ignore
+        else:
+            del os.environ[key]  # pragma: no cover
+
+
+@pytest.fixture()
+def temp_app_data(monkeypatch, tmp_path):
+    app_data = tmp_path / "app-data"
+    monkeypatch.setenv(str("VIRTUALENV_OVERRIDE_APP_DATA"), str(app_data))
+    return app_data

@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 import sys
+from stat import S_IREAD, S_IRGRP, S_IROTH, S_IWUSR
 
 import pytest
 
@@ -101,3 +102,20 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastes
 
     if sys.version_info[0:2] == (3, 4) and os.environ.get(str("PIP_REQ_TRACKER")):
         os.environ.pop(str("PIP_REQ_TRACKER"))
+
+
+@pytest.fixture()
+def read_only_folder(temp_app_data):
+    temp_app_data.mkdir()
+    try:
+        os.chmod(str(temp_app_data), S_IREAD | S_IRGRP | S_IROTH)
+        yield temp_app_data
+    finally:
+        os.chmod(str(temp_app_data), S_IWUSR | S_IREAD)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
+def test_base_bootstrap_link_via_app_data_not_writable(tmp_path, current_fastest, read_only_folder, monkeypatch):
+    dest = tmp_path / "venv"
+    result = cli_run(["--seeder", "app-data", "--creator", current_fastest, "--clear-app-data", "-vv", str(dest)])
+    assert result

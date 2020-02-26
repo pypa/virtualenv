@@ -16,6 +16,7 @@ class Builtin(Discover):
     def __init__(self, options):
         super(Builtin, self).__init__(options)
         self.python_spec = options.python
+        self.app_data = options.app_data
 
     @classmethod
     def add_parser_arguments(cls, parser):
@@ -29,7 +30,7 @@ class Builtin(Discover):
         )
 
     def run(self):
-        return get_interpreter(self.python_spec)
+        return get_interpreter(self.python_spec, self.app_data.folder)
 
     def __repr__(self):
         return ensure_str(self.__unicode__())
@@ -38,11 +39,11 @@ class Builtin(Discover):
         return "{} discover of python_spec={!r}".format(self.__class__.__name__, self.python_spec)
 
 
-def get_interpreter(key):
+def get_interpreter(key, app_data=None):
     spec = PythonSpec.from_string_spec(key)
     logging.info("find interpreter for spec %r", spec)
     proposed_paths = set()
-    for interpreter, impl_must_match in propose_interpreters(spec):
+    for interpreter, impl_must_match in propose_interpreters(spec, app_data):
         key = interpreter.system_executable, impl_must_match
         if key in proposed_paths:
             continue
@@ -53,19 +54,19 @@ def get_interpreter(key):
         proposed_paths.add(key)
 
 
-def propose_interpreters(spec):
+def propose_interpreters(spec, app_data):
     # 1. if it's an absolute path and exists, use that
     if spec.is_abs and os.path.exists(spec.path):
-        yield PythonInfo.from_exe(spec.path), True
+        yield PythonInfo.from_exe(spec.path, app_data), True
 
     # 2. try with the current
-    yield PythonInfo.current_system(), True
+    yield PythonInfo.current_system(app_data), True
 
     # 3. otherwise fallback to platform default logic
     if IS_WIN:
         from .windows import propose_interpreters
 
-        for interpreter in propose_interpreters(spec):
+        for interpreter in propose_interpreters(spec, app_data):
             yield interpreter, True
 
     paths = get_paths()
@@ -80,7 +81,7 @@ def propose_interpreters(spec):
                 exe = os.path.abspath(found)
                 if exe not in tested_exes:
                     tested_exes.add(exe)
-                    interpreter = PathPythonInfo.from_exe(exe, raise_on_error=False)
+                    interpreter = PathPythonInfo.from_exe(exe, app_data, raise_on_error=False)
                     if interpreter is not None:
                         yield interpreter, match
 

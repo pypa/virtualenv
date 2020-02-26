@@ -166,7 +166,7 @@ class CliTable(SphinxDirective):
     @staticmethod
     def _get_help_text(row):
         name = row.names[0]
-        if name in ("--creator", "--clear-app-data"):
+        if name in ("--creator",):
             content = row.help[: row.help.index("(") - 1]
         else:
             content = row.help
@@ -196,6 +196,8 @@ class CliTable(SphinxDirective):
         name = row.names[0]
         if name == "-p":
             default_body = n.Text("the python executable virtualenv is installed into")
+        elif name == "--app-data":
+            default_body = n.Text("platform specific application data folder")
         elif name == "--activators":
             default_body = n.Text("comma separated list of activators supported")
         elif name == "--creator":

@@ -9,6 +9,7 @@ import stat
 import subprocess
 import sys
 from itertools import product
+from stat import S_IREAD, S_IRGRP, S_IROTH
 from textwrap import dedent
 from threading import Thread
 
@@ -54,11 +55,11 @@ def test_destination_exists_file(tmp_path, capsys):
     assert msg in err, err
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="no chmod on Windows")
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
 def test_destination_not_write_able(tmp_path, capsys):
     target = tmp_path
     prev_mod = target.stat().st_mode
-    target.chmod(0o444)
+    target.chmod(S_IREAD | S_IRGRP | S_IROTH)
     try:
         err = _non_success_exit_code(capsys, str(target))
         msg = "the destination . is not write-able at {}".format(str(target))
@@ -80,8 +81,8 @@ def cleanup_sys_path(paths):
 
 
 @pytest.fixture(scope="session")
-def system():
-    return get_env_debug_info(Path(CURRENT.system_executable), DEBUG_SCRIPT)
+def system(session_app_data):
+    return get_env_debug_info(Path(CURRENT.system_executable), DEBUG_SCRIPT, session_app_data)
 
 
 CURRENT_CREATORS = list(i for i in CURRENT.creators().key_to_class.keys() if i != "builtin")
@@ -131,7 +132,7 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     coverage_env()
     if IS_PYPY:
         # pypy cleans up file descriptors periodically so our (many) subprocess calls impact file descriptor limits
-        # force a cleanup of these on system where the limit is low-ish (e.g. MacOS 256)
+        # force a close of these on system where the limit is low-ish (e.g. MacOS 256)
         gc.collect()
     purelib = result.creator.purelib
     patch_files = {purelib / "{}.{}".format("_distutils_patch_virtualenv", i) for i in ("py", "pyc", "pth")}
@@ -276,9 +277,9 @@ def test_prompt_set(tmp_path, creator, prompt):
 
 
 @pytest.fixture(scope="session")
-def cross_python(is_inside_ci):
+def cross_python(is_inside_ci, session_app_data):
     spec = "{}{}".format(CURRENT.implementation, 2 if CURRENT.version_info.major == 3 else 3)
-    interpreter = get_interpreter(spec)
+    interpreter = get_interpreter(spec, session_app_data)
     if interpreter is None:
         msg = "could not find {}".format(spec)
         if is_inside_ci:
@@ -288,7 +289,7 @@ def cross_python(is_inside_ci):
 
 
 @pytest.mark.slow
-def test_cross_major(cross_python, coverage_env, tmp_path, current_fastest):
+def test_cross_major(cross_python, coverage_env, tmp_path, current_fastest, session_app_data):
     cmd = [
         "-v",
         "-v",
@@ -307,13 +308,11 @@ def test_cross_major(cross_python, coverage_env, tmp_path, current_fastest):
     major, minor = cross_python.version_info[0:2]
     assert pip_scripts == {"pip", "pip-{}.{}".format(major, minor), "pip{}".format(major)}
     coverage_env()
-    env = PythonInfo.from_exe(str(result.creator.exe))
+    env = PythonInfo.from_exe(str(result.creator.exe), session_app_data)
     assert env.version_info.major != CURRENT.version_info.major
 
 
-def test_create_parallel(tmp_path, monkeypatch):
-    monkeypatch.setenv(str("VIRTUALENV_OVERRIDE_APP_DATA"), str(tmp_path))
-
+def test_create_parallel(tmp_path, monkeypatch, temp_app_data):
     def create(count):
         subprocess.check_call([sys.executable, "-m", "virtualenv", str(tmp_path / "venv{}".format(count))])
 

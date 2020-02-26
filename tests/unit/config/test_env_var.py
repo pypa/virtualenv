@@ -1,5 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
+from argparse import Namespace
+
 import pytest
 
 from virtualenv.config.ini import IniConfig
@@ -7,7 +9,8 @@ from virtualenv.run import session_via_cli
 
 
 def parse_cli(args):
-    return session_via_cli(args)
+    options = Namespace()
+    return session_via_cli(args, options)
 
 
 @pytest.fixture()

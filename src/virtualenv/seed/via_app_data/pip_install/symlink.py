@@ -1,10 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-import shutil
 import subprocess
-from stat import S_IREAD, S_IRGRP, S_IROTH, S_IWUSR
+from stat import S_IREAD, S_IRGRP, S_IROTH
 
+from virtualenv.util.path import safe_delete, set_tree
 from virtualenv.util.six import ensure_text
 from virtualenv.util.subprocess import Popen
 
@@ -25,13 +25,13 @@ class SymlinkPipInstall(PipInstall):
             stderr=subprocess.PIPE,
         )
         process.communicate()
-        # the root pyc is shared, so we'll not symlink that - but still add the pyc files to the RECORD for cleanup
+        # the root pyc is shared, so we'll not symlink that - but still add the pyc files to the RECORD for close
         root_py_cache = self._image_dir / "__pycache__"
         new_files = set()
         if root_py_cache.exists():
             new_files.update(root_py_cache.iterdir())
             new_files.add(root_py_cache)
-            shutil.rmtree(ensure_text(str(root_py_cache)))
+            safe_delete(root_py_cache)
         core_new_files = super(SymlinkPipInstall, self)._generate_new_files()
         # remove files that are within the image folder deeper than one level (as these will be not linked directly)
         for file in core_new_files:
@@ -53,15 +53,9 @@ class SymlinkPipInstall(PipInstall):
     def build_image(self):
         super(SymlinkPipInstall, self).build_image()
         # protect the image by making it read only
-        self._set_tree(self._image_dir, S_IREAD | S_IRGRP | S_IROTH)
+        set_tree(self._image_dir, S_IREAD | S_IRGRP | S_IROTH)
 
     def clear(self):
         if self._image_dir.exists():
-            self._set_tree(self._image_dir, S_IWUSR)
+            safe_delete(self._image_dir)
         super(SymlinkPipInstall, self).clear()
-
-    @staticmethod
-    def _set_tree(folder, stat):
-        for root, _, files in os.walk(ensure_text(str(folder))):
-            for filename in files:
-                os.chmod(os.path.join(root, filename), stat)
