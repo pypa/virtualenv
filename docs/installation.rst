@@ -23,7 +23,7 @@ inconsistent state.
 
 .. code-block:: console
 
-    python -m pip --user install virtualenv
+    python -m pip install --user virtualenv
     python -m virtualenv --help
 
 via zipapp
