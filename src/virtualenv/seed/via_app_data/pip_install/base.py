@@ -9,6 +9,8 @@ from contextlib import contextmanager
 from tempfile import mkdtemp
 from threading import Lock
 
+# noinspection PyProtectedMember
+from distlib.scripts import ScriptMaker, _enquote_executable
 from six import PY3, add_metaclass
 
 from virtualenv.util import ConfigParser
@@ -129,13 +131,12 @@ class PipInstall(object):
 
     def _create_console_entry_point(self, name, value, to_folder, version_info):
         result = []
-        from distlib.scripts import ScriptMaker
-
         maker = ScriptMaker(None, str(to_folder))
         maker.clobber = True  # overwrite
-        maker.variants = {""}
+        maker.variants = {""}  # set within patch_distlib_correct_variants
         maker.set_mode = True  # ensure they are executable
-        maker.executable = str(self._creator.exe)
+        # calling private until https://bitbucket.org/pypa/distlib/issues/135/expose-_enquote_executable-as-public
+        maker.executable = _enquote_executable(str(self._creator.exe))
         specification = "{} = {}".format(name, value)
         with self.patch_distlib_correct_variants(version_info, maker):
             new_files = maker.make(specification)
