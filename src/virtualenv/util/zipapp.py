@@ -29,7 +29,8 @@ def extract(full_path, dest):
 
 
 def _get_path_within_zip(full_path):
-    sub_file = str(full_path)[len(ROOT) + 1 :]
+    full_path = os.path.abspath(str(full_path))
+    sub_file = full_path[len(ROOT) + 1 :]
     if IS_WIN:
         # paths are always UNIX separators, even on Windows, though __file__ still follows platform default
         sub_file = sub_file.replace(os.sep, "/")
