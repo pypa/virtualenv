@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.7 (2020-02-26)
+--------------------
+
+Bugfixes - 20.0.7
+~~~~~~~~~~~~~~~~~
+- Disable distutils fixup for python 3 until `pypa/pip #7778 <https://github.com/pypa/pip/issues/7778>`_ is fixed and
+  released - by :user:`gaborbernat`. (`#1669 <https://github.com/pypa/virtualenv/issues/1669>`_)
+
+
 v20.0.6 (2020-02-26)
 --------------------
 

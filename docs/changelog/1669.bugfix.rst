@@ -1,2 +1,0 @@
-Disable distutils fixup for python 3 until `pypa/pip #7778 <https://github.com/pypa/pip/issues/7778>`_ is fixed and
-released - by :user:`gaborbernat`.
