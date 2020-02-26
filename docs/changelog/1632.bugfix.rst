@@ -1,2 +1,0 @@
-Fix circular prefix reference with single elements (accept these as if they were system executables, print a info about
-them referencing themselves) - by :user:`gaborbernat`.

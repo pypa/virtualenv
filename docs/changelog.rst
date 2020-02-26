@@ -5,6 +5,28 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.6 (2020-02-26)
+--------------------
+
+Bugfixes - 20.0.6
+~~~~~~~~~~~~~~~~~
+- Fix global site package always being added with bundled macOs python framework builds - by :user:`gaborbernat`. (`#1561 <https://github.com/pypa/virtualenv/issues/1561>`_)
+- Fix generated scripts use host version info rather than target - by :user:`gaborbernat`. (`#1600 <https://github.com/pypa/virtualenv/issues/1600>`_)
+- Fix circular prefix reference with single elements (accept these as if they were system executables, print a info about
+  them referencing themselves) - by :user:`gaborbernat`. (`#1632 <https://github.com/pypa/virtualenv/issues/1632>`_)
+- Handle the case when the application data folder is read-only:
+
+  - the application data folder is now controllable via :option:`app-data`,
+  - :option:`clear-app-data` now cleans the entire application data folder, not just the ``app-data`` seeder path,
+  - check if the application data path passed in does not exist or is read-only, and fallback to a temporary directory,
+  - temporary directory application data is automatically cleaned up at the end of execution,
+  - :option:`symlink-app-data` is always ``False`` when the application data is temporary
+
+  by :user:`gaborbernat`. (`#1640 <https://github.com/pypa/virtualenv/issues/1640>`_)
+- Fix PyPy 2 builtin modules are imported from standard library, rather than from builtin  - by :user:`gaborbernat`. (`#1652 <https://github.com/pypa/virtualenv/issues/1652>`_)
+- Fix creation of entry points when path contains spaces - by :user:`nsoranzo`. (`#1660 <https://github.com/pypa/virtualenv/issues/1660>`_)
+- Fix relative paths for the zipapp (for python ``3.7+``) - by :user:`gaborbernat`. (`#1666 <https://github.com/pypa/virtualenv/issues/1666>`_)
+
 v20.0.5 (2020-02-21)
 --------------------
 

@@ -1,1 +1,0 @@
-Fix global site package always being added with bundled macOs python framework builds - by :user:`gaborbernat`.
