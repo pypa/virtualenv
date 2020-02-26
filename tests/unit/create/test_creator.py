@@ -23,7 +23,7 @@ from virtualenv.info import IS_PYPY, PY3, fs_supports_symlink
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.util.path import Path
-from virtualenv.util.six import ensure_text
+from virtualenv.util.six import ensure_str, ensure_text
 
 CURRENT = PythonInfo.current_system()
 
@@ -111,7 +111,7 @@ _VENV_BUG_ON = (
         )
     ],
 )
-def test_create_no_seed(python, creator, isolated, system, coverage_env, special_name_dir, method):
+def test_create_no_seed(python, creator, isolated, system, coverage_env, special_name_dir, method, override_env_var):
     dest = special_name_dir
     cmd = [
         "-v",
@@ -128,6 +128,9 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     ]
     if isolated == "global":
         cmd.append("--system-site-packages")
+    # Set a path that is inside the virtualenv
+    python_path = dest / "foobar"
+    override_env_var("PYTHONPATH", ensure_str(str(python_path)))
     result = cli_run(cmd)
     coverage_env()
     if IS_PYPY:
@@ -141,6 +144,8 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     assert not content, "\n".join(ensure_text(str(i)) for i in content)
     assert result.creator.env_name == ensure_text(dest.name)
     debug = result.creator.debug
+    # Check the PYTHONPATH has not been modified
+    assert ensure_text(str(python_path)) in debug["sys"]["path"]
     sys_path = cleanup_sys_path(debug["sys"]["path"])
     system_sys_path = cleanup_sys_path(system["sys"]["path"])
     our_paths = set(sys_path) - set(system_sys_path)

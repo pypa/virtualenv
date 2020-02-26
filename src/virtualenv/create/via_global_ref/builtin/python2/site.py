@@ -89,19 +89,25 @@ def rewrite_standard_library_sys_path():
         skip_rewrite = value == exe_dir  # don't fix the current executable location, notably on Windows this gets added
         skip_rewrite = skip_rewrite  # ___SKIP_REWRITE____
         if not skip_rewrite:
-            if dir_starts_with(value, exe_dir):
-                # content inside the exe folder needs to remap to original executables folder
-                orig_exe_folder = base_executable[: base_executable.rfind(sep)]
-                value = "{}{}".format(orig_exe_folder, value[len(exe_dir) :])
-            elif dir_starts_with(value, prefix):
-                value = "{}{}".format(base_prefix, value[len(prefix) :])
-            elif dir_starts_with(value, exec_prefix):
-                value = "{}{}".format(base_exec_prefix, value[len(exec_prefix) :])
-            sys.path[at] = value
+            sys.path[at] = translate_directory(
+                value, base_executable, exe_dir, exec_prefix, base_prefix, prefix, base_exec_prefix
+            )
 
+    # Now that we can access os.environ["PYTHONPATH"], we can revert our
+    # rewrite of thoses paths done above
+    import os
 
-def dir_starts_with(directory, prefix):
-    return directory == prefix or directory.startswith(prefix + sep)
+    python_paths = os.environ.get("PYTHONPATH", "").split(":")
+    for ppath in map(abs_path, python_paths):
+        translated_ppath = translate_directory(
+            ppath, base_executable, exe_dir, exec_prefix, base_prefix, prefix, base_exec_prefix
+        )
+        try:
+            at = sys.path.index(translated_ppath)
+        except ValueError:
+            pass
+        else:
+            sys.path[at] = ppath
 
 
 def abs_path(value):
@@ -116,6 +122,22 @@ def abs_path(value):
         i -= 1
     value = sep.join(keep[::-1])
     return value
+
+
+def translate_directory(directory, base_executable, exe_dir, exec_prefix, base_prefix, prefix, base_exec_prefix):
+    if dir_starts_with(directory, exe_dir):
+        # content inside the exe folder needs to remap to original executables folder
+        orig_exe_folder = base_executable[: base_executable.rfind(sep)]
+        return "{}{}".format(orig_exe_folder, directory[len(exe_dir) :])
+    elif dir_starts_with(directory, prefix):
+        return "{}{}".format(base_prefix, directory[len(prefix) :])
+    elif dir_starts_with(directory, exec_prefix):
+        return "{}{}".format(base_exec_prefix, directory[len(exec_prefix) :])
+    return directory
+
+
+def dir_starts_with(directory, prefix):
+    return directory == prefix or directory.startswith(prefix + sep)
 
 
 def disable_user_site_package():
