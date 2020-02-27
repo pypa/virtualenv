@@ -998,6 +998,8 @@ def find_wheels(projects, search_dirs):
                 )
                 if project == "pip" and sys.version_info[0:2] == (3, 4):
                     wheel = next(p for v, p in versions if v <= (19, 1, 1))
+                elif project == "setuptools" and sys.version_info[0:2] == (3, 4):
+                    wheel = next(p for v, p in versions if v < (44,))
                 else:
                     wheel = versions[0][1]
                 wheels.append(wheel)
@@ -1091,9 +1093,13 @@ def _install_wheel_with_search_dir(download, project_names, py_executable, searc
         )
     ).encode("utf8")
 
-    if sys.version_info[0:2] == (3, 4) and "pip" in project_names:
-        at = project_names.index("pip")
-        project_names[at] = "pip<19.2"
+    if sys.version_info[0:2] == (3, 4):
+        if "pip" in project_names:
+            at = project_names.index("pip")
+            project_names[at] = "pip<19.2"
+        if "setuptools" in project_names:
+            at = project_names.index("setuptools")
+            project_names[at] = "setuptools<44"
 
     cmd = [py_executable, "-"] + project_names
     logger.start_progress("Installing {}...".format(", ".join(project_names)))
