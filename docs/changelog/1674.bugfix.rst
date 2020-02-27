@@ -1,0 +1,1 @@
+Fix list configuration value parsing from config file or environment variable - by :user:`gaborbernat`.

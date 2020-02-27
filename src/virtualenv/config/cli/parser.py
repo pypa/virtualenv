@@ -2,6 +2,8 @@ from __future__ import absolute_import, unicode_literals
 
 from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser
 
+from virtualenv.config.convert import get_type
+
 from ..env_var import get_env_var
 from ..ini import IniConfig
 
@@ -35,7 +37,7 @@ class VirtualEnvConfigParser(ArgumentParser):
 
     def _fix_default(self, action):
         if hasattr(action, "default") and hasattr(action, "dest") and action.default != SUPPRESS:
-            as_type = type(action.default)
+            as_type = get_type(action)
             outcome = get_env_var(action.dest, as_type)
             if outcome is None and self.file_config:
                 outcome = self.file_config.get(action.dest, as_type)
