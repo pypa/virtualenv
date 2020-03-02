@@ -48,11 +48,12 @@ def test_batch(activation_tester_class, activation_tester, tmp_path, activation_
             assert out[2] == "None", raw
             # post-activation
             expected = self._creator.exe.parent / os.path.basename(sys.executable)
+            venv_path = self.norm_path(self._creator.dest).replace("\\\\", "\\")
             assert self.norm_path(out[3]) == self.norm_path(expected), raw
-            assert self.norm_path(out[4]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
+            assert self.norm_path(out[4]) == venv_path, raw
             assert out[5] == "wrote pydoc_test.html", raw
             content = tmp_path / "pydoc_test.html"
-            assert os.path.basename(self._creator.dest) in out[6]
+            assert os.path.basename(venv_path) in out[6]
             assert content.exists(), raw
             # post deactivation, same as before
             assert out[-3] == out[0], raw
