@@ -1,1 +1,1 @@
-    fix windows batch (cmd.exe) shell prompt to display environment name by default, simliar to bash behaviour.
+    Fix windows batch (cmd.exe) shell prompt to display environment name by default, simliar to bash behaviour. - by :user:`spetafree`.
