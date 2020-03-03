@@ -2,12 +2,14 @@ from __future__ import absolute_import, unicode_literals
 
 import difflib
 import gc
+import json
 import logging
 import os
 import shutil
 import stat
 import subprocess
 import sys
+from collections import OrderedDict
 from itertools import product
 from stat import S_IREAD, S_IRGRP, S_IROTH
 from textwrap import dedent
@@ -111,7 +113,7 @@ _VENV_BUG_ON = (
         )
     ],
 )
-def test_create_no_seed(python, creator, isolated, system, coverage_env, special_name_dir, method, override_env_var):
+def test_create_no_seed(python, creator, isolated, system, coverage_env, special_name_dir, method):
     dest = special_name_dir
     cmd = [
         "-v",
@@ -128,9 +130,6 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     ]
     if isolated == "global":
         cmd.append("--system-site-packages")
-    # Set a path that is inside the virtualenv
-    python_path = dest / "foobar"
-    override_env_var("PYTHONPATH", ensure_str(str(python_path)))
     result = cli_run(cmd)
     coverage_env()
     if IS_PYPY:
@@ -144,8 +143,6 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     assert not content, "\n".join(ensure_text(str(i)) for i in content)
     assert result.creator.env_name == ensure_text(dest.name)
     debug = result.creator.debug
-    # Check the PYTHONPATH has not been modified
-    assert ensure_text(str(python_path)) in debug["sys"]["path"]
     sys_path = cleanup_sys_path(debug["sys"]["path"])
     system_sys_path = cleanup_sys_path(system["sys"]["path"])
     our_paths = set(sys_path) - set(system_sys_path)
@@ -391,3 +388,58 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
 
     package_folder = result.creator.platlib / "demo"  # prefix is set to the virtualenv prefix for install
     assert package_folder.exists()
+
+
+@pytest.mark.parametrize("python_path_on", [True, False], ids=["on", "off"])
+@pytest.mark.skipif(PY3, reason="we rewrite sys.path only on PY2")
+def test_python_path(monkeypatch, tmp_path, python_path_on):
+    result = cli_run([ensure_text(str(tmp_path)), "--without-pip", "--activators", ""])
+    monkeypatch.chdir(tmp_path)
+
+    def _get_sys_path(flag=None):
+        cmd = [str(result.creator.exe)]
+        if flag:
+            cmd.append(flag)
+        cmd.extend(["-c", "import json; import sys; print(json.dumps(sys.path))"])
+        print(cmd)
+        return json.loads(subprocess.check_output(cmd))
+
+    monkeypatch.delenv(str("PYTHONPATH"), raising=False)
+    base = _get_sys_path()
+
+    # note the value result.creator.interpreter.system_stdlib cannot be set, as that would disable our custom site.py
+    python_paths = [
+        str(Path(result.creator.interpreter.prefix)),
+        str(Path(result.creator.interpreter.system_stdlib) / "b"),
+        str(result.creator.purelib / "a"),
+        str(result.creator.purelib),
+        str(result.creator.bin_dir),
+        str(tmp_path / "base"),
+        str(tmp_path / "base_sep") + os.sep,
+        "name",
+        "name{}".format(os.sep),
+        str(tmp_path.parent / (ensure_text(tmp_path.name) + "_suffix")),
+        ".",
+        "..",
+        "",
+    ]
+    python_path_env = os.pathsep.join(ensure_str(i) for i in python_paths)
+    monkeypatch.setenv(str("PYTHONPATH"), python_path_env)
+
+    extra_all = _get_sys_path(None if python_path_on else "-E")
+    if python_path_on:
+        assert extra_all[0] == ""  # the cwd is always injected at start as ''
+        extra_all = extra_all[1:]
+        assert base[0] == ""
+        base = base[1:]
+
+        assert not (set(base) - set(extra_all))  # all base paths are present
+        abs_python_paths = list(OrderedDict((os.path.abspath(ensure_text(i)), None) for i in python_paths).keys())
+
+        extra_as_python_path = extra_all[: len(abs_python_paths)]
+        assert abs_python_paths == extra_as_python_path  # python paths are there at the start
+
+        non_python_path = extra_all[len(abs_python_paths) :]
+        assert non_python_path == [i for i in base if i not in extra_as_python_path]
+    else:
+        assert base == extra_all

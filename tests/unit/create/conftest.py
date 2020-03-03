@@ -22,11 +22,11 @@ CURRENT = PythonInfo.current_system()
 
 
 # noinspection PyUnusedLocal
-def root(tmp_path_factory):
+def root(tmp_path_factory, session_app_data):
     return CURRENT.system_executable
 
 
-def venv(tmp_path_factory):
+def venv(tmp_path_factory, session_app_data):
     if CURRENT.is_venv:
         return sys.executable
     elif CURRENT.version_info.major == 3:
@@ -40,7 +40,7 @@ def venv(tmp_path_factory):
         return exe_path
 
 
-def old_virtualenv(tmp_path_factory):
+def old_virtualenv(tmp_path_factory, session_app_data):
     if CURRENT.is_old_virtualenv:
         return CURRENT.executable
     else:
@@ -77,18 +77,18 @@ def old_virtualenv(tmp_path_factory):
             process = Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             _, __ = process.communicate()
             assert not process.returncode
-            exe_path = CURRENT.discover_exe(prefix=str(old_virtualenv_at)).original_executable
+            exe_path = CURRENT.discover_exe(session_app_data, prefix=str(old_virtualenv_at)).original_executable
             return exe_path
-        except Exception:
-            return RuntimeError("failed to create old virtualenv")
+        except Exception as exception:
+            return RuntimeError("failed to create old virtualenv %r".format(exception))
 
 
 PYTHON = {"root": root, "venv": venv, "old_virtualenv": old_virtualenv}
 
 
 @pytest.fixture(params=list(PYTHON.values()), ids=list(PYTHON.keys()), scope="session")
-def python(request, tmp_path_factory):
-    result = request.param(tmp_path_factory)
+def python(request, tmp_path_factory, session_app_data):
+    result = request.param(tmp_path_factory, session_app_data)
     if isinstance(result, Exception):
         pytest.skip("could not resolve interpreter based on {} because {}".format(request.param.__name__, result))
     if result is None:

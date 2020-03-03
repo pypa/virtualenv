@@ -72,7 +72,7 @@ class PyPy2(PyPy, Python2):
         PyPy2 built-in imports are handled by this path entry, don't overwrite to not disable it
         see: https://github.com/pypa/virtualenv/issues/1652
         """
-        return 'or value.endswith("lib_pypy{}__extensions__")'.format(os.sep)
+        return 'or path.endswith("lib_pypy{}__extensions__") # PyPy2 built-in import marker'.format(os.sep)
 
 
 class PyPy2Posix(PyPy2, PosixSupports):

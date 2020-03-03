@@ -311,28 +311,6 @@ def change_env_var(key, value):
             del os.environ[key]  # pragma: no cover
 
 
-_ENV_EMPTY = object()
-
-
-@pytest.fixture
-def override_env_var():
-
-    original_env = {}
-
-    def _environ_override(var, value):
-        original_env.setdefault(var, os.environ.get(var, _ENV_EMPTY))
-        os.environ[var] = value
-
-    try:
-        yield _environ_override
-    finally:
-        for var, value in original_env.items():
-            if value is _ENV_EMPTY:
-                del os.environ[var]
-            else:
-                os.environ[var] = value
-
-
 @pytest.fixture()
 def temp_app_data(monkeypatch, tmp_path):
     app_data = tmp_path / "app-data"
