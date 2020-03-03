@@ -70,7 +70,7 @@ format is either:
 
     - ``python3.8.1`` means any python implementation having the version ``3.8.1``,
     - ``3`` means any python implementation having the major version ``3``,
-    - ``cpython3`` means a ``CPython`` implementation havin the version ``3``,
+    - ``cpython3`` means a ``CPython`` implementation having the version ``3``,
     - ``pypy2`` means a python interpreter with the ``PyPy`` implementation and major version ``2``.
 
   Given the specifier ``virtualenv`` will apply the following strategy to discover/find the system executable:
@@ -177,7 +177,7 @@ also provisions a ``deactivate`` command that will allow you to undo the operati
     Since the ``activate.ps1`` script is generated locally for each virtualenv, it is not considered a remote script and
     can then be executed.
 
-A  longer explanation of this can be found within Allison Kaptur's 2013 blog post: `There's no magic: virtualenv
+A longer explanation of this can be found within Allison Kaptur's 2013 blog post: `There's no magic: virtualenv
 edition <https://www.recurse.com/blog/14-there-is-no-magic-virtualenv-edition>`_ explains how virtualenv uses bash and
 Python and ``PATH`` and ``PYTHONHOME`` to isolate virtual environments' paths.
 
