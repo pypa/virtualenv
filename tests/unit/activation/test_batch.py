@@ -1,8 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
-import os
 import pipes
-import sys
 
 from virtualenv.activation import BatchActivator
 
@@ -22,43 +20,7 @@ def test_batch(activation_tester_class, activation_tester, tmp_path, activation_
 
         def _get_test_lines(self, activate_script):
             # for BATCH utf-8 support need change the character code page to 650001
-            return [
-                "@echo off",
-                "",
-                "chcp 65001 1>NUL",
-                self.print_python_exe(),
-                self.print_os_env_var("PROMPT"),
-                self.print_os_env_var("VIRTUAL_ENV"),
-                self.activate_call(activate_script),
-                self.print_python_exe(),
-                self.print_os_env_var("VIRTUAL_ENV"),
-                # \\ loads documentation from the virtualenv site packages
-                self.pydoc_call,
-                self.print_os_env_var("PROMPT"),
-                self.deactivate,
-                self.print_python_exe(),
-                self.print_os_env_var("VIRTUAL_ENV"),
-                self.print_os_env_var("PROMPT"),
-                "",  # just finish with an empty new line
-            ]
-
-        def assert_output(self, out, raw, tmp_path):
-            # pre-activation
-            assert out[0], raw
-            assert out[2] == "None", raw
-            # post-activation
-            expected = self._creator.exe.parent / os.path.basename(sys.executable)
-            venv_path = self.norm_path(self._creator.dest).replace("\\\\", "\\")
-            assert self.norm_path(out[3]) == self.norm_path(expected), raw
-            assert self.norm_path(out[4]) == venv_path, raw
-            assert out[5] == "wrote pydoc_test.html", raw
-            content = tmp_path / "pydoc_test.html"
-            assert os.path.basename(venv_path) in out[6]
-            assert content.exists(), raw
-            # post deactivation, same as before
-            assert out[-3] == out[0], raw
-            assert out[-2] == "None", raw
-            assert out[1] == out[-1], raw
+            return ["@echo off", "", "chcp 65001 1>NUL"] + super(Batch, self)._get_test_lines(activate_script)
 
         def quote(self, s):
             """double quotes needs to be single, and single need to be double"""
