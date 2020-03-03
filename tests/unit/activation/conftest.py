@@ -205,7 +205,7 @@ def raise_on_non_source_class():
     return RaiseOnNonSourceCall
 
 
-@pytest.fixture(scope="session", params=[True, False])
+@pytest.fixture(scope="session", params=[True, False], ids=["with_prompt", "no_prompt"])
 def activation_python(request, tmp_path_factory, special_char_name, current_fastest):
     dest = os.path.join(ensure_text(str(tmp_path_factory.mktemp("activation-tester-env"))), special_char_name)
     cmd = ["--without-pip", dest, "--creator", current_fastest, "-vv"]
