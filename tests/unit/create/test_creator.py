@@ -21,7 +21,7 @@ from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import IS_PYPY, PY3, fs_supports_symlink
+from virtualenv.info import IS_PYPY, PY3, fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.util.path import Path
@@ -395,14 +395,14 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
 def test_python_path(monkeypatch, tmp_path, python_path_on):
     result = cli_run([ensure_text(str(tmp_path)), "--without-pip", "--activators", ""])
     monkeypatch.chdir(tmp_path)
+    case_sensitive = fs_is_case_sensitive()
 
     def _get_sys_path(flag=None):
         cmd = [str(result.creator.exe)]
         if flag:
             cmd.append(flag)
         cmd.extend(["-c", "import json; import sys; print(json.dumps(sys.path))"])
-        print(cmd)
-        return json.loads(subprocess.check_output(cmd))
+        return [i if case_sensitive else i.lower() for i in json.loads(subprocess.check_output(cmd))]
 
     monkeypatch.delenv(str("PYTHONPATH"), raising=False)
     base = _get_sys_path()
@@ -435,6 +435,7 @@ def test_python_path(monkeypatch, tmp_path, python_path_on):
 
         assert not (set(base) - set(extra_all))  # all base paths are present
         abs_python_paths = list(OrderedDict((os.path.abspath(ensure_text(i)), None) for i in python_paths).keys())
+        abs_python_paths = [i if case_sensitive else i.lower() for i in abs_python_paths]
 
         extra_as_python_path = extra_all[: len(abs_python_paths)]
         assert abs_python_paths == extra_as_python_path  # python paths are there at the start
