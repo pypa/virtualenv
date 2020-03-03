@@ -78,40 +78,59 @@ def read_pyvenv():
 
 def rewrite_standard_library_sys_path():
     """Once this site file is loaded the standard library paths have already been set, fix them up"""
-    exe = abs_path(sys.executable)
+    exe, prefix, exec_prefix = get_exe_prefixes(base=False)
+    base_exe, base_prefix, base_exec = get_exe_prefixes(base=True)
     exe_dir = exe[: exe.rfind(sep)]
-    prefix, exec_prefix = abs_path(sys.prefix), abs_path(sys.exec_prefix)
-    base_prefix, base_exec_prefix = abs_path(sys.base_prefix), abs_path(sys.base_exec_prefix)
-    base_executable = abs_path(sys.base_executable)
-    for at, value in enumerate(sys.path):
-        value = abs_path(value)
-        # replace old sys prefix path starts with new
-        skip_rewrite = value == exe_dir  # don't fix the current executable location, notably on Windows this gets added
+    for at, path in enumerate(sys.path):
+        path = abs_path(path)  # replace old sys prefix path starts with new
+        skip_rewrite = path == exe_dir  # don't fix the current executable location, notably on Windows this gets added
         skip_rewrite = skip_rewrite  # ___SKIP_REWRITE____
         if not skip_rewrite:
-            if value.startswith(exe_dir):
-                # content inside the exe folder needs to remap to original executables folder
-                orig_exe_folder = base_executable[: base_executable.rfind(sep)]
-                value = "{}{}".format(orig_exe_folder, value[len(exe_dir) :])
-            elif value.startswith(prefix):
-                value = "{}{}".format(base_prefix, value[len(prefix) :])
-            elif value.startswith(exec_prefix):
-                value = "{}{}".format(base_exec_prefix, value[len(exec_prefix) :])
-        sys.path[at] = value
+            sys.path[at] = map_path(path, base_exe, exe_dir, exec_prefix, base_prefix, prefix, base_exec)
+
+    # the rewrite above may have changed elements from PYTHONPATH, revert these if on
+    if sys.flags.ignore_environment:
+        return
+    import os
+
+    python_paths = []
+    if "PYTHONPATH" in os.environ and os.environ["PYTHONPATH"]:
+        for path in os.environ["PYTHONPATH"].split(os.pathsep):
+            if path not in python_paths:
+                python_paths.append(path)
+    sys.path[: len(python_paths)] = python_paths
+
+
+def get_exe_prefixes(base=False):
+    return tuple(abs_path(getattr(sys, ("base_" if base else "") + i)) for i in ("executable", "prefix", "exec_prefix"))
 
 
 def abs_path(value):
-    keep = []
-    values = value.split(sep)
-    i = len(values) - 1
-    while i >= 0:
-        if values[i] == "..":
-            i -= 1
+    values, keep = value.split(sep), []
+    at = len(values) - 1
+    while at >= 0:
+        if values[at] == "..":
+            at -= 1
         else:
-            keep.append(values[i])
-        i -= 1
-    value = sep.join(keep[::-1])
-    return value
+            keep.append(values[at])
+        at -= 1
+    return sep.join(keep[::-1])
+
+
+def map_path(path, base_executable, exe_dir, exec_prefix, base_prefix, prefix, base_exec_prefix):
+    if path_starts_with(path, exe_dir):
+        # content inside the exe folder needs to remap to original executables folder
+        orig_exe_folder = base_executable[: base_executable.rfind(sep)]
+        return "{}{}".format(orig_exe_folder, path[len(exe_dir) :])
+    elif path_starts_with(path, prefix):
+        return "{}{}".format(base_prefix, path[len(prefix) :])
+    elif path_starts_with(path, exec_prefix):
+        return "{}{}".format(base_exec_prefix, path[len(exec_prefix) :])
+    return path
+
+
+def path_starts_with(directory, value):
+    return directory.startswith(value if value[-1] == sep else value + sep)
 
 
 def disable_user_site_package():

@@ -2,12 +2,14 @@ from __future__ import absolute_import, unicode_literals
 
 import difflib
 import gc
+import json
 import logging
 import os
 import shutil
 import stat
 import subprocess
 import sys
+from collections import OrderedDict
 from itertools import product
 from stat import S_IREAD, S_IRGRP, S_IROTH
 from textwrap import dedent
@@ -19,11 +21,11 @@ from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import IS_PYPY, PY3, fs_supports_symlink
+from virtualenv.info import IS_PYPY, PY3, fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.util.path import Path
-from virtualenv.util.six import ensure_text
+from virtualenv.util.six import ensure_str, ensure_text
 
 CURRENT = PythonInfo.current_system()
 
@@ -386,3 +388,59 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
 
     package_folder = result.creator.platlib / "demo"  # prefix is set to the virtualenv prefix for install
     assert package_folder.exists()
+
+
+@pytest.mark.parametrize("python_path_on", [True, False], ids=["on", "off"])
+@pytest.mark.skipif(PY3, reason="we rewrite sys.path only on PY2")
+def test_python_path(monkeypatch, tmp_path, python_path_on):
+    result = cli_run([ensure_text(str(tmp_path)), "--without-pip", "--activators", ""])
+    monkeypatch.chdir(tmp_path)
+    case_sensitive = fs_is_case_sensitive()
+
+    def _get_sys_path(flag=None):
+        cmd = [str(result.creator.exe)]
+        if flag:
+            cmd.append(flag)
+        cmd.extend(["-c", "import json; import sys; print(json.dumps(sys.path))"])
+        return [i if case_sensitive else i.lower() for i in json.loads(subprocess.check_output(cmd))]
+
+    monkeypatch.delenv(str("PYTHONPATH"), raising=False)
+    base = _get_sys_path()
+
+    # note the value result.creator.interpreter.system_stdlib cannot be set, as that would disable our custom site.py
+    python_paths = [
+        str(Path(result.creator.interpreter.prefix)),
+        str(Path(result.creator.interpreter.system_stdlib) / "b"),
+        str(result.creator.purelib / "a"),
+        str(result.creator.purelib),
+        str(result.creator.bin_dir),
+        str(tmp_path / "base"),
+        str(tmp_path / "base_sep") + os.sep,
+        "name",
+        "name{}".format(os.sep),
+        str(tmp_path.parent / (ensure_text(tmp_path.name) + "_suffix")),
+        ".",
+        "..",
+        "",
+    ]
+    python_path_env = os.pathsep.join(ensure_str(i) for i in python_paths)
+    monkeypatch.setenv(str("PYTHONPATH"), python_path_env)
+
+    extra_all = _get_sys_path(None if python_path_on else "-E")
+    if python_path_on:
+        assert extra_all[0] == ""  # the cwd is always injected at start as ''
+        extra_all = extra_all[1:]
+        assert base[0] == ""
+        base = base[1:]
+
+        assert not (set(base) - set(extra_all))  # all base paths are present
+        abs_python_paths = list(OrderedDict((os.path.abspath(ensure_text(i)), None) for i in python_paths).keys())
+        abs_python_paths = [i if case_sensitive else i.lower() for i in abs_python_paths]
+
+        extra_as_python_path = extra_all[: len(abs_python_paths)]
+        assert abs_python_paths == extra_as_python_path  # python paths are there at the start
+
+        non_python_path = extra_all[len(abs_python_paths) :]
+        assert non_python_path == [i for i in base if i not in extra_as_python_path]
+    else:
+        assert base == extra_all
