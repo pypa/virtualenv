@@ -13,7 +13,12 @@ if defined _OLD_VIRTUAL_PROMPT (
     )
 )
 if not defined VIRTUAL_ENV_DISABLE_PROMPT (
-    set "PROMPT=__VIRTUAL_PROMPT__%PROMPT%"
+    set "ENV_PROMPT=__VIRTUAL_PROMPT__"
+    if NOT DEFINED ENV_PROMPT (
+        for %%d in ("%VIRTUAL_ENV%") do set "ENV_PROMPT=(%%~nxd) "
+    )
+    )
+    set "PROMPT=%ENV_PROMPT%%PROMPT%"
 )
 
 REM Don't use () to avoid problems with them in %PATH%

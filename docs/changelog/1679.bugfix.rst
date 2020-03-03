@@ -1,0 +1,1 @@
+Fix Batch activation script shell prompt to display environment name by default - by :user:`spetafree`.
