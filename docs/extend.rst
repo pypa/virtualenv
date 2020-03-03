@@ -4,7 +4,7 @@ Extend functionality
 ``virtualenv`` allows one to extend the builtin functionality via a plugin system. To add a plugin you need to:
 
 - write a python file containing the plugin code which follows our expected interface,
-- package is a a python library,
+- package it as a python library,
 - install it alongside the virtual environment.
 
 .. warning::
