@@ -137,7 +137,7 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
         # force a close of these on system where the limit is low-ish (e.g. MacOS 256)
         gc.collect()
     purelib = result.creator.purelib
-    patch_files = {purelib / "{}.{}".format("_distutils_patch_virtualenv", i) for i in ("py", "pyc", "pth")}
+    patch_files = {purelib / "{}.{}".format("_virtualenv", i) for i in ("py", "pyc", "pth")}
     patch_files.add(purelib / "__pycache__")
     content = set(result.creator.purelib.iterdir()) - patch_files
     assert not content, "\n".join(ensure_text(str(i)) for i in content)
@@ -353,17 +353,9 @@ def test_create_long_path(current_fastest, tmp_path):
     subprocess.check_call([str(result.creator.script("pip")), "--version"])
 
 
-@pytest.mark.skipif(PY3, reason="https://github.com/pypa/pip/issues/7778")
 @pytest.mark.parametrize("creator", set(PythonInfo.current_system().creators().key_to_class) - {"builtin"})
 def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
-    cmd = [
-        ensure_text(str(tmp_path)),
-        "--activators",
-        "",
-        "--creator",
-        creator,
-    ]
-    result = cli_run(cmd)
+    result = cli_run([ensure_text(str(tmp_path)), "--activators", "", "--creator", creator])
 
     app = Path(__file__).parent / "console_app"
     dest = tmp_path / "console_app"
@@ -380,6 +372,7 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
     setup_cfg.write_text(setup_cfg.read_text() + conf)
 
     monkeypatch.chdir(dest)  # distutils will read the setup.cfg from the cwd, so change to that
+
     install_demo_cmd = [str(result.creator.script("pip")), "install", str(dest), "--no-use-pep517"]
     subprocess.check_call(install_demo_cmd)
 

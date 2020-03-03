@@ -1,0 +1,2 @@
+Fix startup on Python 2 is slower for virtualenv - this was due to setuptools calculating it's working set distribution
+- by :user:`gaborbernat`.
