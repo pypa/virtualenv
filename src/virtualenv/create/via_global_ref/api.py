@@ -53,19 +53,15 @@ class ViaGlobalRefApi(Creator):
 
     def patch_distutils_via_pth(self):
         """Patch the distutils package to not be derailed by its configuration files"""
-        if self.interpreter.version_info.major == 3:
-            return  # TODO: remove this, for her to bypass: https://github.com/pypa/pip/issues/7778
-        patch_file = Path(__file__).parent / "_distutils_patch_virtualenv.py"
-        with ensure_file_on_disk(patch_file, self.app_data) as resolved_path:
+        with ensure_file_on_disk(Path(__file__).parent / "_virtualenv.py", self.app_data) as resolved_path:
             text = resolved_path.read_text()
-        text = text.replace('"__SCRIPT_DIR__"', repr(os.path.relpath(str(self.script_dir), str(self.purelib))))
-        patch_path = self.purelib / "_distutils_patch_virtualenv.py"
-        logging.debug("add distutils patch file %s", patch_path)
-        patch_path.write_text(text)
-
-        pth = self.purelib / "_distutils_patch_virtualenv.pth"
-        logging.debug("add distutils patch file %s", pth)
-        pth.write_text("import _distutils_patch_virtualenv")
+            text = text.replace('"__SCRIPT_DIR__"', repr(os.path.relpath(str(self.script_dir), str(self.purelib))))
+        dest_path = self.purelib / "_virtualenv.py"
+        logging.debug("create %s", dest_path)
+        dest_path.write_text(text)
+        pth = self.purelib / "_virtualenv.pth"
+        logging.debug("create virtualenv import hook file %s", pth)
+        pth.write_text("import _virtualenv")
 
     def _args(self):
         return super(ViaGlobalRefApi, self)._args() + [("global", self.enable_system_site_package)]

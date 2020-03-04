@@ -96,7 +96,7 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastes
     # pip is greedy here, removing all packages removes the site-package too
     if site_package.exists():
         purelib = result.creator.purelib
-        patch_files = {purelib / "{}.{}".format("_distutils_patch_virtualenv", i) for i in ("py", "pyc", "pth")}
+        patch_files = {purelib / "{}.{}".format("_virtualenv", i) for i in ("py", "pyc", "pth")}
         patch_files.add(purelib / "__pycache__")
         post_run = set(site_package.iterdir()) - patch_files
         assert not post_run, "\n".join(str(i) for i in post_run)

@@ -1,0 +1,1 @@
+Fix ``attr:`` import fails for setuptools - by :user:`gaborbernat`.

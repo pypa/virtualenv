@@ -1,0 +1,3 @@
+Having `distutils configuration <https://docs.python.org/3/install/index.html#distutils-configuration-files>`_
+files that set ``prefix`` and ``install_scripts`` cause installation of packages in the wrong location -
+by :user:`gaborbernat`.
