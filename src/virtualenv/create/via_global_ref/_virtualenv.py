@@ -45,6 +45,7 @@ if sys.version_info > (3, 4):
             super().exec_module(module)
             if module.__name__ in _DISTUTILS_PATCH:
                 patch_dist(module)
+            module.__loader__ = None  # distlib fallback
 
     sys.path_hooks.insert(0, FileFinder.path_hook((_VirtualEnvLoader, SOURCE_SUFFIXES)))
 else:
@@ -71,8 +72,9 @@ else:
             ImpLoader.__init__(self, fullname, file, filename, etc)
 
         def load_module(self, fullname):
-            result = super(_VirtualenvLoader, self).load_module(fullname)
-            patch_dist(result)
-            return result
+            module = super(_VirtualenvLoader, self).load_module(fullname)
+            patch_dist(module)
+            module.__loader__ = None  # distlib fallback
+            return module
 
     sys.meta_path.append(_VirtualenvImporter())
