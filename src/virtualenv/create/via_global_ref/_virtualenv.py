@@ -38,16 +38,35 @@ def patch_dist(dist):
 _DISTUTILS_PATCH = "distutils.dist", "setuptools.dist"
 if sys.version_info > (3, 4):
     # https://docs.python.org/3/library/importlib.html#setting-up-an-importer
-    from importlib.machinery import SOURCE_SUFFIXES, FileFinder, SourceFileLoader
+    from importlib.abc import MetaPathFinder
+    from importlib.util import find_spec
+    from threading import Lock
 
-    class _VirtualEnvLoader(SourceFileLoader):
-        def exec_module(self, module):
-            super().exec_module(module)
-            if module.__name__ in _DISTUTILS_PATCH:
-                patch_dist(module)
-            module.__loader__ = None  # distlib fallback
+    class _Finder(MetaPathFinder):
+        """A meta path finder that allows patching the imported distutils modules"""
 
-    sys.path_hooks.insert(0, FileFinder.path_hook((_VirtualEnvLoader, SOURCE_SUFFIXES)))
+        fullname = None
+        lock = Lock()
+
+        def find_spec(self, fullname, path, target=None):
+            if fullname in _DISTUTILS_PATCH and self.fullname is None:
+                with self.lock:
+                    self.fullname = fullname
+                    try:
+                        spec = find_spec(fullname, path)
+                        if spec is not None:
+                            old = spec.loader.exec_module
+
+                            def exec_module(module):
+                                old(module)
+                                patch_dist(module)
+
+                            spec.loader.exec_module = exec_module
+                            return spec
+                    finally:
+                        self.fullname = None
+
+    sys.meta_path.insert(0, _Finder())
 else:
     # https://www.python.org/dev/peps/pep-0302/
     from imp import find_module

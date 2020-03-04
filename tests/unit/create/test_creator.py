@@ -355,7 +355,7 @@ def test_create_long_path(current_fastest, tmp_path):
 
 @pytest.mark.parametrize("creator", set(PythonInfo.current_system().creators().key_to_class) - {"builtin"})
 def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
-    result = cli_run([ensure_text(str(tmp_path)), "--activators", "", "--creator", creator])
+    result = cli_run([ensure_text(str(tmp_path / "venv")), "--activators", "", "--creator", creator])
 
     app = Path(__file__).parent / "console_app"
     dest = tmp_path / "console_app"
