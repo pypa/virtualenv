@@ -1,1 +1,0 @@
-Fix ``PYTHONPATH`` being overriden on Python 2 — by :user:`jd`.
