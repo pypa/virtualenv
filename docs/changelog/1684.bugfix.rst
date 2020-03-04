@@ -1,2 +1,0 @@
-Fix entry points are not populated for editable installs on Python 2 due to setuptools working set being calculated
-before ``easy_install.pth`` runs - by :user:`gaborbernat`.

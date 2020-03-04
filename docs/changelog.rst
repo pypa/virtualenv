@@ -5,6 +5,24 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.8 (2020-03-04)
+--------------------
+
+Bugfixes - 20.0.8
+~~~~~~~~~~~~~~~~~
+- Having `distutils configuration <https://docs.python.org/3/install/index.html#distutils-configuration-files>`_
+  files that set ``prefix`` and ``install_scripts`` cause installation of packages in the wrong location -
+  by :user:`gaborbernat`. (`#1663 <https://github.com/pypa/virtualenv/issues/1663>`_)
+- Fix ``PYTHONPATH`` being overriden on Python 2 — by :user:`jd`. (`#1673 <https://github.com/pypa/virtualenv/issues/1673>`_)
+- Fix list configuration value parsing from config file or environment variable - by :user:`gaborbernat`. (`#1674 <https://github.com/pypa/virtualenv/issues/1674>`_)
+- Fix Batch activation script shell prompt to display environment name by default - by :user:`spetafree`. (`#1679 <https://github.com/pypa/virtualenv/issues/1679>`_)
+- Fix startup on Python 2 is slower for virtualenv - this was due to setuptools calculating it's working set distribution
+  - by :user:`gaborbernat`. (`#1682 <https://github.com/pypa/virtualenv/issues/1682>`_)
+- Fix entry points are not populated for editable installs on Python 2 due to setuptools working set being calculated
+  before ``easy_install.pth`` runs - by :user:`gaborbernat`. (`#1684 <https://github.com/pypa/virtualenv/issues/1684>`_)
+- Fix ``attr:`` import fails for setuptools - by :user:`gaborbernat`. (`#1685 <https://github.com/pypa/virtualenv/issues/1685>`_)
+
+
 v20.0.7 (2020-02-26)
 --------------------
 
