@@ -55,13 +55,19 @@ if sys.version_info > (3, 4):
                     try:
                         spec = find_spec(fullname, path)
                         if spec is not None:
-                            old = spec.loader.exec_module
+                            # https://www.python.org/dev/peps/pep-0451/#how-loading-will-work
+                            loader = spec.loader
 
                             def exec_module(module):
                                 old(module)
                                 patch_dist(module)
 
-                            spec.loader.exec_module = exec_module
+                            if hasattr(loader, "exec_module"):
+                                old = loader.exec_module
+                                loader.exec_module = exec_module
+                            else:
+                                old = loader.load_module
+                                loader.load_module = exec_module
                             return spec
                     finally:
                         self.fullname = None
