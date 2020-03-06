@@ -60,7 +60,7 @@ class ReentrantFileLock(object):
             if lock is not None:
                 with lock.thread_safe:
                     if lock.count == 0:
-                        self._lock_store.pop(lock.lock_file)
+                        self._lock_store.pop(lock.lock_file, None)
 
     def __del__(self):
         self._del_lock(self._lock)
