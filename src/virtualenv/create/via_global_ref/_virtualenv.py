@@ -3,6 +3,7 @@
 
 import os
 import sys
+from copy import deepcopy
 
 VIRTUALENV_PATCH_FILE = os.path.join(__file__)
 
@@ -55,13 +56,24 @@ if sys.version_info > (3, 4):
                     try:
                         spec = find_spec(fullname, path)
                         if spec is not None:
-                            old = spec.loader.exec_module
+                            # https://www.python.org/dev/peps/pep-0451/#how-loading-will-work
+                            spec.loader = deepcopy(spec.loader)  # loaders may be shared, create new that also patches
+                            func_name = "exec_module" if hasattr(spec.loader, "exec_module") else "load_module"
+                            if func_name == "exec_module":  # new API
 
-                            def exec_module(module):
-                                old(module)
-                                patch_dist(module)
+                                def patch_module_load(module):
+                                    old(module)
+                                    patch_dist(module)
 
-                            spec.loader.exec_module = exec_module
+                            else:  # legacy API
+
+                                def patch_module_load(name):
+                                    module = old(name)
+                                    patch_dist(module)
+                                    return module
+
+                            old = getattr(spec.loader, func_name)
+                            setattr(spec.loader, func_name, patch_module_load)
                             return spec
                     finally:
                         self.fullname = None
