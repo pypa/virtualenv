@@ -33,7 +33,7 @@ class CPython2macOsFramework(CPython2, CPythonPosix):
 
         # landmark for exec_prefix
         name = "lib-dynload"
-        yield PathRefToDest(Path(interpreter.system_stdlib) / name, dest=cls.to_stdlib)
+        yield PathRefToDest(interpreter.stdlib_path(name), dest=cls.to_stdlib)
 
         # this must symlink to the host prefix Python
         marker = Path(interpreter.prefix) / "Python"

@@ -57,8 +57,9 @@ class Python2(ViaGlobalRefVirtualenvBuiltin, Python2Supports):
             yield src
         # install files needed to run site.py
         for req in cls.modules():
-            yield PathRefToDest(Path(interpreter.system_stdlib) / "{}.py".format(req), dest=cls.to_stdlib)
-            comp = Path(interpreter.system_stdlib) / "{}.pyc".format(req)
+            stdlib_path = interpreter.stdlib_path("{}.py".format(req))
+            yield PathRefToDest(stdlib_path, dest=cls.to_stdlib)
+            comp = stdlib_path.parent / "{}.pyc".format(req)
             if comp.exists():
                 yield PathRefToDest(comp, dest=cls.to_stdlib)
 
