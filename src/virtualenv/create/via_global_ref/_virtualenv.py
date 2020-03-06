@@ -3,7 +3,6 @@
 
 import os
 import sys
-from copy import deepcopy
 
 VIRTUALENV_PATCH_FILE = os.path.join(__file__)
 
@@ -42,6 +41,7 @@ if sys.version_info > (3, 4):
     from importlib.abc import MetaPathFinder
     from importlib.util import find_spec
     from threading import Lock
+    from functools import partial
 
     class _Finder(MetaPathFinder):
         """A meta path finder that allows patching the imported distutils modules"""
@@ -57,26 +57,28 @@ if sys.version_info > (3, 4):
                         spec = find_spec(fullname, path)
                         if spec is not None:
                             # https://www.python.org/dev/peps/pep-0451/#how-loading-will-work
-                            spec.loader = deepcopy(spec.loader)  # loaders may be shared, create new that also patches
-                            func_name = "exec_module" if hasattr(spec.loader, "exec_module") else "load_module"
-                            if func_name == "exec_module":  # new API
-
-                                def patch_module_load(module):
-                                    old(module)
-                                    patch_dist(module)
-
-                            else:  # legacy API
-
-                                def patch_module_load(name):
-                                    module = old(name)
-                                    patch_dist(module)
-                                    return module
-
+                            is_new_api = hasattr(spec.loader, "exec_module")
+                            func_name = "exec_module" if is_new_api else "load_module"
                             old = getattr(spec.loader, func_name)
-                            setattr(spec.loader, func_name, patch_module_load)
+                            func = self.exec_module if is_new_api else self.load_module
+                            if old is not func:
+                                setattr(spec.loader, func_name, partial(func, old))
                             return spec
                     finally:
                         self.fullname = None
+
+        @staticmethod
+        def exec_module(old, module):
+            old(module)
+            if module.__name__ in _DISTUTILS_PATCH:
+                patch_dist(module)
+
+        @staticmethod
+        def load_module(old, name):
+            module = old(name)
+            if module.__name__ in _DISTUTILS_PATCH:
+                patch_dist(module)
+            return module
 
     sys.meta_path.insert(0, _Finder())
 else:
