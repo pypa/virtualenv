@@ -68,7 +68,7 @@ class CPython2Posix(CPython2, CPythonPosix):
             yield src
         # landmark for exec_prefix
         name = "lib-dynload"
-        yield PathRefToDest(Path(interpreter.system_stdlib) / name, dest=cls.to_stdlib)
+        yield PathRefToDest(interpreter.stdlib_path(name), dest=cls.to_stdlib)
 
 
 class CPython2Windows(CPython2, CPythonWindows):
