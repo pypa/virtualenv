@@ -3,27 +3,27 @@ from __future__ import absolute_import, unicode_literals
 BUNDLE_SUPPORT = {
     "3.9": {
         "pip": "pip-20.0.2-py2.py3-none-any.whl",
-        "setuptools": "setuptools-45.2.0-py3-none-any.whl",
+        "setuptools": "setuptools-45.3.0-py3-none-any.whl",
         "wheel": "wheel-0.34.2-py2.py3-none-any.whl",
     },
     "3.8": {
         "pip": "pip-20.0.2-py2.py3-none-any.whl",
-        "setuptools": "setuptools-45.2.0-py3-none-any.whl",
+        "setuptools": "setuptools-45.3.0-py3-none-any.whl",
         "wheel": "wheel-0.34.2-py2.py3-none-any.whl",
     },
     "3.7": {
         "pip": "pip-20.0.2-py2.py3-none-any.whl",
-        "setuptools": "setuptools-45.2.0-py3-none-any.whl",
+        "setuptools": "setuptools-45.3.0-py3-none-any.whl",
         "wheel": "wheel-0.34.2-py2.py3-none-any.whl",
     },
     "3.6": {
         "pip": "pip-20.0.2-py2.py3-none-any.whl",
-        "setuptools": "setuptools-45.2.0-py3-none-any.whl",
+        "setuptools": "setuptools-45.3.0-py3-none-any.whl",
         "wheel": "wheel-0.34.2-py2.py3-none-any.whl",
     },
     "3.5": {
         "pip": "pip-20.0.2-py2.py3-none-any.whl",
-        "setuptools": "setuptools-45.2.0-py3-none-any.whl",
+        "setuptools": "setuptools-45.3.0-py3-none-any.whl",
         "wheel": "wheel-0.34.2-py2.py3-none-any.whl",
     },
     "3.4": {
