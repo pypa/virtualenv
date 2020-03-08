@@ -78,7 +78,7 @@ class Path(object):
             os.makedirs(self._path)
 
     def read_text(self, encoding="utf-8"):
-        self.read_bytes().decode(encoding)
+        return self.read_bytes().decode(encoding)
 
     def read_bytes(self):
         with open(self._path, "rb") as file_handler:
