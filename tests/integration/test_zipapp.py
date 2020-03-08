@@ -75,6 +75,7 @@ def call_zipapp(zipapp, monkeypatch, tmp_path, zipapp_test_env, temp_app_data):
     return _run
 
 
+@pytest.mark.timeout(timeout=300)
 def test_zipapp_help(call_zipapp, capsys):
     call_zipapp("-h")
     out, err = capsys.readouterr()

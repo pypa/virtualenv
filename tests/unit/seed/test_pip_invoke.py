@@ -8,6 +8,7 @@ from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
 
 
 @pytest.mark.slow
+@pytest.mark.timeout(timeout=60)
 def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, current_fastest):
     bundle_ver = BUNDLE_SUPPORT[PythonInfo.current_system().version_release_str]
     create_cmd = [
