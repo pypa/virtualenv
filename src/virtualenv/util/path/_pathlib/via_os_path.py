@@ -78,8 +78,11 @@ class Path(object):
             os.makedirs(self._path)
 
     def read_text(self, encoding="utf-8"):
+        return self.read_bytes().decode(encoding)
+
+    def read_bytes(self):
         with open(self._path, "rb") as file_handler:
-            return file_handler.read().decode(encoding)
+            return file_handler.read()
 
     def write_text(self, text, encoding="utf-8"):
         with open(self._path, "wb") as file_handler:

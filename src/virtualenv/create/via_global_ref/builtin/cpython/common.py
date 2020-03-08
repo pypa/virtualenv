@@ -41,5 +41,8 @@ class CPythonWindows(CPython, WindowsSupports):
     @classmethod
     def _executables(cls, interpreter):
         host = Path(interpreter.system_executable)
-        for path in (host.parent / n for n in ("python.exe", "pythonw.exe", host.name)):
+        for path in (host.parent / n for n in {"python.exe", host.name}):
             yield host, [path.name]
+        # for more info on pythonw.exe see https://stackoverflow.com/a/30313091
+        python_w = host.parent / "pythonw.exe"
+        yield python_w, [python_w.name]
