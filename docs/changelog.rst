@@ -5,6 +5,18 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.9 (2020-03-08)
+--------------------
+
+Bugfixes - 20.0.9
+~~~~~~~~~~~~~~~~~
+- ``pythonw.exe`` works as ``python.exe`` on Windows - by :user:`gaborbernat`. (`#1686 <https://github.com/pypa/virtualenv/issues/1686>`_)
+- Handle legacy loaders for virtualenv import hooks used to patch distutils configuration load - by :user:`gaborbernat`. (`#1690 <https://github.com/pypa/virtualenv/issues/1690>`_)
+- Support for python 2 platforms that store landmark files in ``platstdlib`` over ``stdlib`` (e.g. RHEL) - by
+  :user:`gaborbernat`. (`#1694 <https://github.com/pypa/virtualenv/issues/1694>`_)
+- Upgrade embedded setuptools to ``45.3.0`` from ``45.2.0`` for Python ``3.5+``  - by :user:`gaborbernat`. (`#1699 <https://github.com/pypa/virtualenv/issues/1699>`_)
+
+
 v20.0.8 (2020-03-04)
 --------------------
 

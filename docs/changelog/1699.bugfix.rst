@@ -1,1 +1,0 @@
-Upgrade embedded setuptools to ``45.3.0`` from ``45.2.0`` for Python ``3.5+``  - by :user:`gaborbernat`.
