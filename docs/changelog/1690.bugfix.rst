@@ -1,1 +1,0 @@
-Handle legacy loaders for virtualenv import hooks used to patch distutils configuration load - by :user:`gaborbernat`.

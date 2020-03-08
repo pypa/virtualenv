@@ -1,2 +1,0 @@
-Support for python 2 platforms that store landmark files in ``platstdlib`` over ``stdlib`` (e.g. RHEL) - by
-:user:`gaborbernat`.
