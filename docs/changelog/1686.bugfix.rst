@@ -1,1 +1,1 @@
-``pythonw.exe`` works as ``python.exe`` on Windows - by user:`gaborbernat`.
+``pythonw.exe`` works as ``python.exe`` on Windows - by :user:`gaborbernat`.
