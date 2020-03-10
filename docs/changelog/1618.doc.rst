@@ -1,0 +1,2 @@
+Document requirements (pip + index server) when installing via pip under the installation section - by
+:user:`gaborbernat`.
