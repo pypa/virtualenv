@@ -7,7 +7,6 @@ import pytest
 
 from virtualenv.discovery.py_info import EXTENSIONS, PythonInfo
 from virtualenv.info import IS_WIN, fs_is_case_sensitive, fs_supports_symlink
-from virtualenv.util.path import Path
 
 CURRENT = PythonInfo.current()
 
@@ -17,7 +16,7 @@ def test_discover_empty_folder(tmp_path, monkeypatch, session_app_data):
         CURRENT.discover_exe(session_app_data, prefix=str(tmp_path))
 
 
-BASE = {str(Path(CURRENT.executable).parent.relative_to(Path(CURRENT.prefix))), "."}
+BASE = {CURRENT.distutils_install["scripts"], "."}
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
