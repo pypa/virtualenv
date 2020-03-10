@@ -24,6 +24,11 @@ HERE = Path(os.path.abspath(__file__)).parent
 DEBUG_SCRIPT = HERE / "debug.py"
 
 
+class CreatorMeta(object):
+    def __init__(self):
+        self.error = None
+
+
 @add_metaclass(ABCMeta)
 class Creator(object):
     """A class that given a python Interpreter creates a virtual environment"""

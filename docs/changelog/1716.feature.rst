@@ -1,0 +1,5 @@
+Improve error message when the host python does not satisfy invariants needed to create virtual environments (now we
+print which host files are incompatible/missing and for which creators when no supported creator can be matched, however
+we found creators that can describe the given Python interpreter - will still print no supported creator for Jython,
+but print exactly what host files do not allow creation of virtual environments in case of CPython/PyPy)
+- by :user:`gaborbernat`.

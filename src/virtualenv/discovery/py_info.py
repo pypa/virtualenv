@@ -419,7 +419,7 @@ class PythonInfo(object):
 
         # or at root level
         candidate_folder[inside_folder] = None
-        return list(candidate_folder.keys())
+        return list(i for i in candidate_folder.keys() if os.path.exists(i))
 
     def _find_possible_exe_names(self):
         name_candidate = OrderedDict()

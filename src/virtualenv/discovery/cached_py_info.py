@@ -65,11 +65,14 @@ def _get_via_file_cache(cls, py_info_cache, app_data, resolved_path, exe):
     key = sha256(str(resolved_path).encode("utf-8") if PY3 else str(resolved_path)).hexdigest()
     py_info = None
     resolved_path_text = ensure_text(str(resolved_path))
-    resolved_path_modified_timestamp = resolved_path.stat().st_mtime
+    try:
+        resolved_path_modified_timestamp = resolved_path.stat().st_mtime
+    except OSError:
+        resolved_path_modified_timestamp = -1
     data_file = py_info_cache / "{}.json".format(key)
     with py_info_cache.lock_for_key(key):
         data_file_path = data_file.path
-        if data_file_path.exists():  # if exists and matches load
+        if data_file_path.exists() and resolved_path_modified_timestamp != 1:  # if exists and matches load
             try:
                 data = json.loads(data_file_path.read_text())
                 if data["path"] == resolved_path_text and data["st_mtime"] == resolved_path_modified_timestamp:

@@ -15,6 +15,7 @@ from virtualenv.discovery import cached_py_info
 from virtualenv.discovery.py_info import PythonInfo, VersionInfo
 from virtualenv.discovery.py_spec import PythonSpec
 from virtualenv.info import fs_supports_symlink
+from virtualenv.util.path import Path
 
 CURRENT = PythonInfo.current_system()
 
@@ -149,6 +150,9 @@ def test_py_info_cached_symlink(mocker, tmp_path, session_app_data):
 
     new_exe = tmp_path / "a"
     new_exe.symlink_to(sys.executable)
+    pyvenv = Path(sys.executable).parents[1] / "pyvenv.cfg"
+    if pyvenv.exists():
+        (tmp_path / pyvenv.name).write_text(pyvenv.read_text())
     new_exe_str = str(new_exe)
     second_result = PythonInfo.from_exe(new_exe_str, session_app_data)
     assert second_result.executable == new_exe_str

@@ -1,19 +1,20 @@
 from __future__ import absolute_import, unicode_literals
 
-import logging
 from abc import ABCMeta
-from collections import namedtuple
 
 from six import add_metaclass
 
 from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest
-from virtualenv.info import fs_supports_symlink
 from virtualenv.util.path import ensure_dir
 
-from ..api import ViaGlobalRefApi
+from ..api import ViaGlobalRefApi, ViaGlobalRefMeta
 from .builtin_way import VirtualenvBuiltin
 
-Meta = namedtuple("Meta", ["sources", "can_copy", "can_symlink"])
+
+class BuiltinViaGlobalRefMeta(ViaGlobalRefMeta):
+    def __init__(self):
+        super(BuiltinViaGlobalRefMeta, self).__init__()
+        self.sources = []
 
 
 @add_metaclass(ABCMeta)
@@ -27,26 +28,29 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin):
         """By default all built-in methods assume that if we can describe it we can create it"""
         # first we must be able to describe it
         if cls.can_describe(interpreter):
-            sources = []
-            can_copy = True
-            can_symlink = fs_supports_symlink()
-            for src in cls.sources(interpreter):
-                if src.exists:
-                    if can_copy and not src.can_copy:
-                        can_copy = False
-                        logging.debug("%s cannot copy %s", cls.__name__, src)
-                    if can_symlink and not src.can_symlink:
-                        can_symlink = False
-                        logging.debug("%s cannot symlink %s", cls.__name__, src)
-                    if not (can_copy or can_symlink):
+            meta = cls.setup_meta(interpreter)
+            if meta is not None and meta:
+                for src in cls.sources(interpreter):
+                    if src.exists:
+                        if meta.can_copy and not src.can_copy:
+                            meta.copy_error = "cannot copy {}".format(src)
+                        if meta.can_symlink and not src.can_symlink:
+                            meta.symlink_error = "cannot symlink {}".format(src)
+                        if not meta.can_copy and not meta.can_symlink:
+                            meta.error = "neither copy or symlink supported: {}".format(
+                                meta.copy_error, meta.symlink_error
+                            )
+                    else:
+                        meta.error = "missing required file {}".format(src)
+                    if meta.error:
                         break
-                else:
-                    logging.debug("%s missing %s", cls.__name__, src)
-                    break
-                sources.append(src)
-            else:
-                return Meta(sources, can_copy, can_symlink)
+                    meta.sources.append(src)
+            return meta
         return None
+
+    @classmethod
+    def setup_meta(cls, interpreter):
+        return BuiltinViaGlobalRefMeta()
 
     @classmethod
     def sources(cls, interpreter):

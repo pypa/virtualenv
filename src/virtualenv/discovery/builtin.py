@@ -55,22 +55,29 @@ def get_interpreter(key, app_data=None):
 
 
 def propose_interpreters(spec, app_data):
-    # 1. if it's an absolute path and exists, use that
-    if spec.is_abs and os.path.exists(spec.path):
-        yield PythonInfo.from_exe(spec.path, app_data), True
+    # 1. if it's a path and exists
+    if spec.path is not None:
+        try:
+            os.lstat(spec.path)  # Windows Store Python does not work with os.path.exists, but does for os.lstat
+        except OSError:
+            if spec.is_abs:
+                raise
+        else:
+            yield PythonInfo.from_exe(os.path.abspath(spec.path), app_data), True
+        if spec.is_abs:
+            return
+    else:
+        # 2. otherwise try with the current
+        yield PythonInfo.current_system(app_data), True
 
-    # 2. try with the current
-    yield PythonInfo.current_system(app_data), True
+        # 3. otherwise fallback to platform default logic
+        if IS_WIN:
+            from .windows import propose_interpreters
 
-    # 3. otherwise fallback to platform default logic
-    if IS_WIN:
-        from .windows import propose_interpreters
-
-        for interpreter in propose_interpreters(spec, app_data):
-            yield interpreter, True
-
+            for interpreter in propose_interpreters(spec, app_data):
+                yield interpreter, True
+    # finally just find on path, the path order matters (as the candidates are less easy to control by end user)
     paths = get_paths()
-    # find on path, the path order matters (as the candidates are less easy to control by end user)
     tested_exes = set()
     for pos, path in enumerate(paths):
         path = ensure_text(path)

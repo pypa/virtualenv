@@ -6,10 +6,28 @@ from abc import ABCMeta
 
 from six import add_metaclass
 
+from virtualenv.info import fs_supports_symlink
 from virtualenv.util.path import Path
 from virtualenv.util.zipapp import ensure_file_on_disk
 
-from ..creator import Creator
+from ..creator import Creator, CreatorMeta
+
+
+class ViaGlobalRefMeta(CreatorMeta):
+    def __init__(self):
+        super(ViaGlobalRefMeta, self).__init__()
+        self.copy_error = None
+        self.symlink_error = None
+        if not fs_supports_symlink():
+            self.symlink = "the filesystem does not supports symlink"
+
+    @property
+    def can_copy(self):
+        return not self.copy_error
+
+    @property
+    def can_symlink(self):
+        return not self.symlink_error
 
 
 @add_metaclass(ABCMeta)

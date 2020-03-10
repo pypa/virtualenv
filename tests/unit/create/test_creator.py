@@ -21,7 +21,7 @@ from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import IS_PYPY, IS_WIN, PY2, PY3, fs_is_case_sensitive, fs_supports_symlink
+from virtualenv.info import IS_PYPY, IS_WIN, PY2, PY3, fs_is_case_sensitive
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.util.path import Path
@@ -88,6 +88,13 @@ def system(session_app_data):
 
 
 CURRENT_CREATORS = list(i for i in CURRENT.creators().key_to_class.keys() if i != "builtin")
+CREATE_METHODS = []
+for k, v in CURRENT.creators().key_to_meta.items():
+    if k in CURRENT_CREATORS:
+        if v.can_copy:
+            CREATE_METHODS.append((k, "copies"))
+        if v.can_symlink:
+            CREATE_METHODS.append((k, "symlinks"))
 _VENV_BUG_ON = (
     IS_PYPY
     and CURRENT.version_info[0:3] == (3, 6, 9)
@@ -97,7 +104,7 @@ _VENV_BUG_ON = (
 
 
 @pytest.mark.parametrize(
-    "creator, method, isolated",
+    "creator, isolated",
     [
         pytest.param(
             *i,
@@ -108,13 +115,13 @@ _VENV_BUG_ON = (
         )
         if _VENV_BUG_ON and i[0] == "venv" and i[1] == "copies"
         else i
-        for i in product(
-            CURRENT_CREATORS, (["copies"] + (["symlinks"] if fs_supports_symlink() else [])), ["isolated", "global"]
-        )
+        for i in product(CREATE_METHODS, ["isolated", "global"])
     ],
+    ids=lambda i: "-".join(i) if isinstance(i, tuple) else i,
 )
-def test_create_no_seed(python, creator, isolated, system, coverage_env, special_name_dir, method):
+def test_create_no_seed(python, creator, isolated, system, coverage_env, special_name_dir):
     dest = special_name_dir
+    creator_key, method = creator
     cmd = [
         "-v",
         "-v",
@@ -125,7 +132,7 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
         "--activators",
         "",
         "--creator",
-        creator,
+        creator_key,
         "--{}".format(method),
     ]
     if isolated == "global":
@@ -188,11 +195,11 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     else:
         exes = ("python", "python{}".format(*sys.version_info), "python{}.{}".format(*sys.version_info))
         # pypy3<=7.3: https://bitbucket.org/pypy/pypy/pull-requests/697
-        if IS_PYPY and CURRENT.pypy_version_info[:3] <= [7, 3, 0] and creator == "venv":
+        if IS_PYPY and creator_key == "venv":
             exes = exes[:-1]
     for exe in exes:
         exe_path = result.creator.bin_dir / exe
-        assert exe_path.exists()
+        assert exe_path.exists(), "\n".join(str(i) for i in result.creator.bin_dir.iterdir())
         if not exe_path.is_symlink():  # option 1: a real file
             continue  # it was a file
         link = os.readlink(str(exe_path))

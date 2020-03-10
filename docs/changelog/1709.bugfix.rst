@@ -1,0 +1,2 @@
+Fix Windows Store Python support, do not allow creation via symlink as that's not going to work by design
+- by :user:`gaborbernat`.

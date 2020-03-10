@@ -28,7 +28,10 @@ class PathRef(object):
         self.must_symlink = must_symlink
         self.must_copy = must_copy
         self.src = src
-        self.exists = src.exists()
+        try:
+            self.exists = src.exists()
+        except OSError:
+            self.exists = False
         self._can_read = None if self.exists else False
         self._can_copy = None if self.exists else False
         self._can_symlink = None if self.exists else False
@@ -141,7 +144,8 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
         dest = bin_dir / self.base
         method = self.method(symlinks)
         method(self.src, dest)
-        make_exe(dest)
+        if not symlinks:
+            make_exe(dest)
         for extra in self.aliases:
             link_file = bin_dir / extra
             if link_file.exists():
@@ -150,4 +154,8 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
                 link_file.symlink_to(self.base)
             else:
                 copy(self.src, link_file)
-            make_exe(link_file)
+            if not symlinks:
+                make_exe(link_file)
+
+    def __repr__(self):
+        return "{}(src={}, alias={})".format(self.__class__.__name__, self.src, self.aliases)
