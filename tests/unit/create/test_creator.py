@@ -369,11 +369,17 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
     setup_cfg = dest / "setup.cfg"
     conf = dedent(
         """
-    [install]
-    prefix={}/a
-    install_scripts={}/b
-    """
-    ).format(tmp_path, tmp_path)
+            [install]
+            prefix={0}{1}prefix
+            install_purelib={0}{1}purelib
+            install_platlib={0}{1}platlib
+            install_headers={0}{1}headers
+            install_scripts={0}{1}scripts
+            install_data={0}{1}data
+            """.format(
+            tmp_path, os.sep
+        )
+    )
     setup_cfg.write_text(setup_cfg.read_text() + conf)
 
     monkeypatch.chdir(dest)  # distutils will read the setup.cfg from the cwd, so change to that

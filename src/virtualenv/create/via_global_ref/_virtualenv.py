@@ -23,11 +23,10 @@ def patch_dist(dist):
 
         if "prefix" in install:  # the prefix governs where to install the libraries
             install["prefix"] = VIRTUALENV_PATCH_FILE, os.path.abspath(sys.prefix)
-
-        if "install_scripts" in install:  # the install_scripts governs where to generate console scripts
-            script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "__SCRIPT_DIR__"))
-            install["install_scripts"] = VIRTUALENV_PATCH_FILE, script_path
-
+        for base in ("purelib", "platlib", "headers", "scripts", "data"):
+            key = "install_{}".format(base)
+            if key in install:  # do not allow global configs to hijack venv paths
+                install.pop(key, None)
         return result
 
     dist.Distribution.parse_config_files = parse_config_files
