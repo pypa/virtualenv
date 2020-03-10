@@ -4,8 +4,10 @@ import copy
 import itertools
 import json
 import logging
+import os
 import sys
 from collections import namedtuple
+from textwrap import dedent
 
 import pytest
 
@@ -237,3 +239,26 @@ def test_system_executable_no_exact_match(target, discovered, position, tmp_path
     warn_similar = caplog.records[-1]
     assert warn_similar.levelno == logging.DEBUG
     assert warn_similar.msg.startswith("no exact match found, chosen most similar")
+
+
+def test_py_info_ignores_distutils_config(monkeypatch, tmp_path):
+    (tmp_path / "setup.cfg").write_text(
+        dedent(
+            """
+            [install]
+            prefix={0}{1}prefix
+            install_purelib={0}{1}purelib
+            install_platlib={0}{1}platlib
+            install_headers={0}{1}headers
+            install_scripts={0}{1}scripts
+            install_data={0}{1}data
+            """.format(
+                tmp_path, os.sep
+            )
+        )
+    )
+    monkeypatch.chdir(tmp_path)
+    py_info = PythonInfo.from_exe(sys.executable)
+    distutils = py_info.distutils_install
+    for key, value in distutils.items():
+        assert not value.startswith(str(tmp_path)), "{}={}".format(key, value)

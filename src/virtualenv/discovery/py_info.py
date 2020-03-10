@@ -111,10 +111,9 @@ class PythonInfo(object):
     @staticmethod
     def _distutils_install():
         # follow https://github.com/pypa/pip/blob/master/src/pip/_internal/locations.py#L95
-        d = Distribution({"script_args": "--no-user-cfg"})
-        d.parse_config_files()
+        d = Distribution({"script_args": "--no-user-cfg"})  # configuration files not parsed so they do not hijack paths
         i = d.get_command_obj("install", create=True)
-        i.prefix = "a"
+        i.prefix = os.sep  # paths generated are relative to prefix that contains the path sep, this makes it relative
         i.finalize_options()
         result = {key: (getattr(i, "install_{}".format(key))[1:]).lstrip(os.sep) for key in SCHEME_KEYS}
         return result
