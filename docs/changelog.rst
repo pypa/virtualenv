@@ -5,6 +5,23 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.10 (2020-03-10)
+---------------------
+
+Bugfixes - 20.0.10
+~~~~~~~~~~~~~~~~~~
+- Fix acquiring python information might be altered by distutils configuration files generating incorrect layout virtual
+  environments - by :user:`gaborbernat`. (`#1663 <https://github.com/pypa/virtualenv/issues/1663>`_)
+- Upgrade embedded setuptools to ``46.0.0`` from ``45.3.0`` on Python ``3.5+`` - by :user:`gaborbernat`. (`#1702 <https://github.com/pypa/virtualenv/issues/1702>`_)
+
+Improved Documentation - 20.0.10
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Document requirements (pip + index server) when installing via pip under the installation section - by
+  :user:`gaborbernat`. (`#1618 <https://github.com/pypa/virtualenv/issues/1618>`_)
+- Document installing from non PEP-518 systems - :user:`gaborbernat`. (`#1619 <https://github.com/pypa/virtualenv/issues/1619>`_)
+- Document installing latest unreleased version from Github - :user:`gaborbernat`. (`#1620 <https://github.com/pypa/virtualenv/issues/1620>`_)
+
+
 v20.0.9 (2020-03-08)
 --------------------
 

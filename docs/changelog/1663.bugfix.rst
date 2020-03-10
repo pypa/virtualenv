@@ -1,2 +1,0 @@
-Fix acquiring python information might be altered by distutils configuration files generating incorrect layout virtual
-environments - by :user:`gaborbernat`.
