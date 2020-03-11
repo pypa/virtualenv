@@ -1,0 +1,1 @@
+Allow missing ``.py`` files if a compiled ``.pyc`` version is available - by :user:`tucked`.
