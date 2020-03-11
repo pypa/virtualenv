@@ -46,3 +46,11 @@ class CPythonWindows(CPython, WindowsSupports):
         # for more info on pythonw.exe see https://stackoverflow.com/a/30313091
         python_w = host.parent / "pythonw.exe"
         yield python_w, [python_w.name]
+
+
+def is_mac_os_framework(interpreter):
+    if interpreter.platform == "darwin":
+        framework_var = interpreter.sysconfig_vars.get("PYTHONFRAMEWORK")
+        value = "Python3" if interpreter.version_info.major == 3 else "Python"
+        return framework_var == value
+    return False

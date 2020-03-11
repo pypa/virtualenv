@@ -4,50 +4,81 @@ import logging
 import os
 import struct
 import subprocess
+from abc import ABCMeta, abstractmethod
 from textwrap import dedent
 
-from virtualenv.create.via_global_ref.builtin.cpython.common import CPythonPosix
-from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
+from six import add_metaclass
+
+from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest, PathRefToDest
 from virtualenv.util.path import Path
 from virtualenv.util.six import ensure_text
 
-from .cpython2 import CPython2, is_mac_os_framework
+from .common import CPython, CPythonPosix, is_mac_os_framework
+from .cpython2 import CPython2
+from .cpython3 import CPython3
 
 
-class CPython2macOsFramework(CPython2, CPythonPosix):
+@add_metaclass(ABCMeta)
+class CPythonmacOsFramework(CPython):
     @classmethod
     def can_describe(cls, interpreter):
-        return is_mac_os_framework(interpreter) and super(CPython2macOsFramework, cls).can_describe(interpreter)
-
-    def create(self):
-        super(CPython2macOsFramework, self).create()
-
-        # change the install_name of the copied python executable
-        current = os.path.join(self.interpreter.prefix, "Python")
-        fix_mach_o(str(self.exe), current, "@executable_path/../.Python", self.interpreter.max_size)
+        return is_mac_os_framework(interpreter) and super(CPythonmacOsFramework, cls).can_describe(interpreter)
 
     @classmethod
     def sources(cls, interpreter):
-        for src in super(CPython2macOsFramework, cls).sources(interpreter):
+        for src in super(CPythonmacOsFramework, cls).sources(interpreter):
             yield src
-
-        # landmark for exec_prefix
-        name = "lib-dynload"
-        yield PathRefToDest(interpreter.stdlib_path(name), dest=cls.to_stdlib)
-
-        # this must symlink to the host prefix Python
-        marker = Path(interpreter.prefix) / "Python"
-        ref = PathRefToDest(marker, dest=lambda self, _: self.dest / ".Python", must_symlink=True)
+        # add a symlink to the host python image
+        ref = PathRefToDest(cls.image_ref(interpreter), dest=lambda self, _: self.dest / ".Python", must_symlink=True)
         yield ref
+
+    def create(self):
+        super(CPythonmacOsFramework, self).create()
+
+        # change the install_name of the copied python executables
+        target = "@executable_path/../.Python"
+        current = self.current_mach_o_image_path()
+        for src in self._sources:
+            if isinstance(src, ExePathRefToDest):
+                if src.must_copy or not self.symlinks:
+                    exes = [self.bin_dir / src.base]
+                    if not self.symlinks:
+                        exes.extend(self.bin_dir / a for a in src.aliases)
+                    for exe in exes:
+                        fix_mach_o(str(exe), current, target, self.interpreter.max_size)
 
     @classmethod
     def _executables(cls, interpreter):
-        for _, targets in super(CPython2macOsFramework, cls)._executables(interpreter):
+        for _, targets in super(CPythonmacOsFramework, cls)._executables(interpreter):
             # Make sure we use the embedded interpreter inside the framework, even if sys.executable points to the
             # stub executable in ${sys.prefix}/bin.
             # See http://groups.google.com/group/python-virtualenv/browse_thread/thread/17cab2f85da75951
             fixed_host_exe = Path(interpreter.prefix) / "Resources" / "Python.app" / "Contents" / "MacOS" / "Python"
             yield fixed_host_exe, targets
+
+    @abstractmethod
+    def current_mach_o_image_path(self):
+        raise NotImplementedError
+
+    @classmethod
+    def image_ref(cls, interpreter):
+        raise NotImplementedError
+
+
+class CPython2macOsFramework(CPythonmacOsFramework, CPython2, CPythonPosix):
+    @classmethod
+    def image_ref(cls, interpreter):
+        return Path(interpreter.prefix) / "Python"
+
+    def current_mach_o_image_path(self):
+        return os.path.join(self.interpreter.prefix, "Python")
+
+    @classmethod
+    def sources(cls, interpreter):
+        for src in super(CPython2macOsFramework, cls).sources(interpreter):
+            yield src
+        name = "lib-dynload"  # landmark for exec_prefix
+        yield PathRefToDest(interpreter.stdlib_path(name), dest=cls.to_stdlib)
 
     @property
     def reload_code(self):
@@ -56,7 +87,6 @@ class CPython2macOsFramework(CPython2, CPythonPosix):
             """
         # the bundled site.py always adds the global site package if we're on python framework build, escape this
         import sysconfig
-
         config = sysconfig.get_config_vars()
         before = config["PYTHONFRAMEWORK"]
         try:
@@ -64,6 +94,34 @@ class CPython2macOsFramework(CPython2, CPythonPosix):
             {}
         finally:
             config["PYTHONFRAMEWORK"] = before
+        """.format(
+                result
+            )
+        )
+        return result
+
+
+class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
+    @classmethod
+    def image_ref(cls, interpreter):
+        return Path(interpreter.prefix) / "Python3"
+
+    def current_mach_o_image_path(self):
+        return "@executable_path/../../../../Python3"
+
+    @property
+    def reload_code(self):
+        result = super(CPython3macOsFramework, self).reload_code
+        result = dedent(
+            """
+        # the bundled site.py always adds the global site package if we're on python framework build, escape this
+        import sys
+        before = sys._framework
+        try:
+            sys._framework = None
+            {}
+        finally:
+            sys._framework = before
         """.format(
                 result
             )
