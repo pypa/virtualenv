@@ -9,7 +9,8 @@ from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
 
 @pytest.mark.slow
 @pytest.mark.timeout(timeout=60)
-def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, current_fastest):
+@pytest.mark.parametrize("no", ["pip", "setuptools", "wheel", ""])
+def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, current_fastest, no):
     bundle_ver = BUNDLE_SUPPORT[PythonInfo.current_system().version_release_str]
     create_cmd = [
         "--seeder",
@@ -23,6 +24,8 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, current_fastest):
         "--creator",
         current_fastest,
     ]
+    if no:
+        create_cmd.append("--no-{}".format(no))
     result = cli_run(create_cmd)
     coverage_env()
     assert result
@@ -31,8 +34,13 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, current_fastest):
     pip = site_package / "pip"
     setuptools = site_package / "setuptools"
     wheel = site_package / "wheel"
-
     files_post_first_create = list(site_package.iterdir())
-    assert pip in files_post_first_create
-    assert setuptools in files_post_first_create
-    assert wheel in files_post_first_create
+
+    if no:
+        no_file = locals()[no]
+        assert no not in files_post_first_create
+
+    for key in ("pip", "setuptools", "wheel"):
+        if key == no:
+            continue
+        assert locals()[key] in files_post_first_create

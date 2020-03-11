@@ -16,7 +16,6 @@ class BaseEmbed(Seeder):
 
     def __init__(self, options):
         super(BaseEmbed, self).__init__(options, enabled=options.no_seed is False)
-
         self.download = options.download
         self.extra_search_dir = [i.resolve() for i in options.extra_search_dir if i.exists()]
 
@@ -33,8 +32,15 @@ class BaseEmbed(Seeder):
         self.no_wheel = options.no_wheel
         self.app_data = options.app_data.folder
 
+        if not self.package_version():
+            self.enabled = False
+
     def package_version(self):
-        return {package: getattr(self, "{}_version".format(package)) for package in self.packages}
+        return {
+            package: getattr(self, "{}_version".format(package))
+            for package in self.packages
+            if getattr(self, "no_{}".format(package)) is False
+        }
 
     @classmethod
     def add_parser_arguments(cls, parser, interpreter, app_data):
@@ -86,6 +92,8 @@ class BaseEmbed(Seeder):
             result += "extra_search_dir={},".format(", ".join(ensure_text(str(i)) for i in self.extra_search_dir))
         result += "download={},".format(self.download)
         for package in self.packages:
+            if getattr(self, "no_{}".format(package)):
+                continue
             result += " {}{},".format(
                 package, "={}".format(getattr(self, "{}_version".format(package), None) or "latest")
             )

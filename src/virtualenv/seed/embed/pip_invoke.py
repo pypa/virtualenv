@@ -36,11 +36,12 @@ class PipInvoke(BaseEmbed):
         cmd = [str(exe), "-m", "pip", "-q", "install", "--only-binary", ":all:"]
         if not self.download:
             cmd.append("--no-index")
-        for key, ver in self.package_version().items():
+        pkg_versions = self.package_version()
+        for key, ver in pkg_versions.items():
             cmd.append("{}{}".format(key, "=={}".format(ver) if ver is not None else ""))
         with ExitStack() as stack:
             folders = set()
-            for context in (ensure_file_on_disk(get_bundled_wheel(p, version), self.app_data) for p in self.packages):
+            for context in (ensure_file_on_disk(get_bundled_wheel(p, version), self.app_data) for p in pkg_versions):
                 folders.add(stack.enter_context(context).parent)
             for folder in folders:
                 cmd.extend(["--find-links", str(folder)])

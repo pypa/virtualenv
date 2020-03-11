@@ -37,8 +37,9 @@ class LogSession(object):
         lines = [
             "created virtual environment {} in {:.0f}ms".format(spec, elapsed),
             "  creator {}".format(ensure_text(str(self.session.creator))),
-            "  seeder {}".format(ensure_text(str(self.session.seeder)),),
         ]
+        if self.session.seeder.enabled:
+            lines += ("  seeder {}".format(ensure_text(str(self.session.seeder)),),)
         if self.session.activators:
             lines.append("  activators {}".format(",".join(i.__class__.__name__ for i in self.session.activators)))
         return os.linesep.join(lines)
