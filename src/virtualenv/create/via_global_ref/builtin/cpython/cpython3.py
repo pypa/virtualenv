@@ -8,7 +8,7 @@ from virtualenv.create.describe import Python3Supports
 from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
 from virtualenv.util.path import Path
 
-from .common import CPython, CPythonPosix, CPythonWindows
+from .common import CPython, CPythonPosix, CPythonWindows, is_mac_os_framework
 
 
 @add_metaclass(abc.ABCMeta)
@@ -17,7 +17,9 @@ class CPython3(CPython, Python3Supports):
 
 
 class CPython3Posix(CPythonPosix, CPython3):
-    """"""
+    @classmethod
+    def can_describe(cls, interpreter):
+        return is_mac_os_framework(interpreter) is False and super(CPython3Posix, cls).can_describe(interpreter)
 
 
 class CPython3Windows(CPythonWindows, CPython3):

@@ -9,7 +9,7 @@ from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
 from virtualenv.util.path import Path
 
 from ..python2.python2 import Python2
-from .common import CPython, CPythonPosix, CPythonWindows
+from .common import CPython, CPythonPosix, CPythonWindows, is_mac_os_framework
 
 
 @add_metaclass(abc.ABCMeta)
@@ -48,11 +48,6 @@ class CPython2(CPython, Python2):
         else:
             logging.debug("no include folders as can't find include marker %s", host_include_marker)
         return dirs
-
-
-def is_mac_os_framework(interpreter):
-    framework = bool(interpreter.sysconfig_vars.get("PYTHONFRAMEWORK"))
-    return framework and interpreter.platform == "darwin"
 
 
 class CPython2Posix(CPython2, CPythonPosix):

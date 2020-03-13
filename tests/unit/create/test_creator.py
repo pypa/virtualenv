@@ -296,7 +296,7 @@ def cross_python(is_inside_ci, session_app_data):
 
 
 @pytest.mark.slow
-def test_cross_major(cross_python, coverage_env, tmp_path, current_fastest, session_app_data):
+def test_cross_major(cross_python, coverage_env, tmp_path, session_app_data, current_fastest):
     cmd = [
         "-v",
         "-v",
@@ -307,8 +307,6 @@ def test_cross_major(cross_python, coverage_env, tmp_path, current_fastest, sess
         "--no-wheel",
         "--activators",
         "",
-        "--creator",
-        current_fastest,
     ]
     result = cli_run(cmd)
     pip_scripts = {i.name.replace(".exe", "") for i in result.creator.script_dir.iterdir() if i.name.startswith("pip")}
