@@ -89,8 +89,39 @@ virtualenv works with the following Python interpreter implementations:
 - `PyPy <https://pypy.org/>`_ 2.7 and 3.4+.
 
 This means virtualenv works on the latest patch version of each of these minor versions. Previous patch versions are
-supported on a best effort approach. virtualenv works on the following platforms:
+supported on a best effort approach.
 
-- Unix/Linux,
-- macOS,
-- Windows.
+CPython is shipped in multiple forms, and each OS repackages it, often applying some customization along the way.
+Therefore we cannot say universally that we support all platforms, but rather specify some we test against. In case
+of ones not specified here the support is unknown, though likely will work. If you find some cases please open a feature
+request on our issue tracker.
+
+Linux
+~~~~~
+- installations from `python.org <https://www.python.org/downloads/>`_
+- Ubuntu 16.04+ (both upstream and `deasnakes <https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa>`_ builds)
+- Fedora
+- RHEL and CentOS
+- OpenSuse
+- Arch Linux
+
+macOS
+~~~~~
+In case of macOs we support:
+- installations from `python.org <https://www.python.org/downloads/>`_
+- python versions installed via `brew <https://docs.brew.sh/Homebrew-and-Python>`_ (both older python2.7 and python3)
+- Python 3 part of XCode (Python framework - ``/Library/Frameworks/Python3.framework/``)
+- Python 2 part of the OS (``/System/Library/Frameworks/Python.framework/Versions/``)
+
+Windows
+~~~~~~~
+- Installations from `python.org <https://www.python.org/downloads/>`_
+- Windows Store Python - note only `version 3.8+ <https://www.microsoft.com/en-us/p/python-38/9mssztt1n39l>`_ (``3.7``
+  was marked experimental and contains many bugs that would make it very hard for us to support it)
+
+Packaging variants
+~~~~~~~~~~~~~~~~~~
+- Normal variant (file structure as comes from `python.org <https://www.python.org/downloads/>`_).
+- We support system installations that do not contain the python files for the standard library if the respective
+  compiled files are present (e.g. only ``os.pyc``, not ``os.py``) - relevant mostly for ``Python 2.7``. This can be
+  used by custom systems may want to maximize available storage or obfuscate source code by removing ``.py`` files.

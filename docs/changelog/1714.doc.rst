@@ -1,0 +1,2 @@
+:ref:`supports <compatibility-requirements>` details now explicitly what Python installations we support
+- by :user:`gaborbernat`.
