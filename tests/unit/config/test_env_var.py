@@ -40,7 +40,7 @@ def test_value_bad(monkeypatch, caplog, empty_conf):
 def test_extra_search_dir(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     value = "a{}0{}b{}c".format(os.linesep, os.linesep, os.pathsep)
-    monkeypatch.setenv(str("VIRTUALENV_EXTRA_SEARCH_DIR"), value)
+    monkeypatch.setenv(str("VIRTUALENV_EXTRA_SEARCH_DIR"), str(value))
     (tmp_path / "a").mkdir()
     (tmp_path / "b").mkdir()
     (tmp_path / "c").mkdir()

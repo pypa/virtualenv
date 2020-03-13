@@ -4,7 +4,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import os
 from contextlib import contextmanager
-from threading import Lock
+from threading import Lock, RLock
 
 from filelock import FileLock, Timeout
 
@@ -15,7 +15,7 @@ class _CountedFileLock(FileLock):
     def __init__(self, lock_file):
         super(_CountedFileLock, self).__init__(lock_file)
         self.count = 0
-        self.thread_safe = Lock()
+        self.thread_safe = RLock()
 
     def acquire(self, timeout=None, poll_intervall=0.05):
         with self.thread_safe:
@@ -28,6 +28,10 @@ class _CountedFileLock(FileLock):
             if self.count == 1:
                 super(_CountedFileLock, self).release()
             self.count = max(self.count - 1, 0)
+
+
+_lock_store = {}
+_store_lock = Lock()
 
 
 class ReentrantFileLock(object):
@@ -45,22 +49,20 @@ class ReentrantFileLock(object):
     def __truediv__(self, other):
         return self.__div__(other)
 
-    _lock_store = {}
-    _store_lock = Lock()
-
     def _create_lock(self, name=""):
         lock_file = str(self.path / "{}.lock".format(name))
-        with self._store_lock:
-            if lock_file not in self._lock_store:
-                self._lock_store[lock_file] = _CountedFileLock(lock_file)
-            return self._lock_store[lock_file]
+        with _store_lock:
+            if lock_file not in _lock_store:
+                _lock_store[lock_file] = _CountedFileLock(lock_file)
+            return _lock_store[lock_file]
 
-    def _del_lock(self, lock):
-        with self._store_lock:
+    @staticmethod
+    def _del_lock(lock):
+        with _store_lock:
             if lock is not None:
                 with lock.thread_safe:
                     if lock.count == 0:
-                        self._lock_store.pop(lock.lock_file, None)
+                        _lock_store.pop(lock.lock_file, None)
 
     def __del__(self):
         self._del_lock(self._lock)
