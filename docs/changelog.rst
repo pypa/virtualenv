@@ -250,6 +250,7 @@ v20.0.0b1 (2020-01-28)
 ----------------------
 
 * First public release of the rewrite. Everything is brand new and just added.
+* ``--download`` defaults to ``False``
 
 .. warning::
 
