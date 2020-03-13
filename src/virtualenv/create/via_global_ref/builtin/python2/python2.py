@@ -57,11 +57,27 @@ class Python2(ViaGlobalRefVirtualenvBuiltin, Python2Supports):
             yield src
         # install files needed to run site.py
         for req in cls.modules():
-            stdlib_path = interpreter.stdlib_path("{}.py".format(req))
-            yield PathRefToDest(stdlib_path, dest=cls.to_stdlib)
-            comp = stdlib_path.parent / "{}.pyc".format(req)
-            if comp.exists():
-                yield PathRefToDest(comp, dest=cls.to_stdlib)
+
+            # the compiled path is optional, but refer to it if exists
+            module_compiled_path = interpreter.stdlib_path("{}.pyc".format(req))
+            has_compile = module_compiled_path.exists()
+            if has_compile:
+                yield PathRefToDest(module_compiled_path, dest=cls.to_stdlib)
+
+            # stdlib module src may be missing if the interpreter allows it by falling back to the compiled
+            module_path = interpreter.stdlib_path("{}.py".format(req))
+            add_py_module = cls.needs_stdlib_py_module()
+            if add_py_module is False:
+                if module_path.exists():  # if present add it
+                    add_py_module = True
+                else:
+                    add_py_module = not has_compile  # otherwise only add it if the pyc is not present
+            if add_py_module:
+                yield PathRefToDest(module_path, dest=cls.to_stdlib)
+
+    @classmethod
+    def needs_stdlib_py_module(cls):
+        raise NotImplementedError
 
     def to_stdlib(self, src):
         return self.stdlib / src.name
