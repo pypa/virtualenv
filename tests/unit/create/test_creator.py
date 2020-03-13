@@ -19,10 +19,9 @@ import pytest
 
 from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
-from virtualenv.create.via_global_ref.builtin.cpython.cpython2 import CPython2
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import IS_PYPY, IS_WIN, PY3, fs_is_case_sensitive, fs_supports_symlink
+from virtualenv.info import IS_PYPY, IS_WIN, PY2, PY3, fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.util.path import Path
@@ -451,29 +450,33 @@ def test_python_path(monkeypatch, tmp_path, python_path_on):
         assert base == extra_all
 
 
-@pytest.fixture
-def creator_with_pyc_only_cp2_modules(tmp_path, monkeypatch, current_creators):
-    """
-    Get a current_creator in a context where CPython2.modules only
-    references modules that have .pyc files (and no corresponding .py file).
-    """
-    monkeypatch.chdir(tmp_path)
-    creator = current_creators[2]
-    module_name = os.path.relpath("CPython2_patch_modules_module", CURRENT.system_stdlib)
-    module_path = Path(CURRENT.system_stdlib) / "{}.pyc".format(module_name)
-    with module_path.open(mode="w"):
-        pass  # just a touch
+@pytest.mark.skipif(
+    not PY2 or not ("builtin" in CURRENT.creators().key_to_class), reason="stdlib python files only needed for Python 2"
+)
+def test_pyc_only(tmp_path, mocker, session_app_data):
+    """Ensure that creation can succeed if os.pyc exists (even if os.py has been deleted)"""
+    interpreter = PythonInfo.from_exe(sys.executable, session_app_data)
+    host_pyc = interpreter.stdlib_path("os.pyc")
+    if not host_pyc.exists():
+        pytest.skip("missing system os.pyc at {}".format(host_pyc))
+    previous = interpreter.stdlib_path
 
-    @classmethod
-    def modules(cls):
-        return [module_name]
+    def stdlib_path(name):
+        path = previous(name)
+        if name.endswith(".py"):
 
-    monkeypatch.setattr(CPython2, "modules", modules)
-    yield creator
-    module_path.unlink()
+            class _Path(type(path)):
+                @staticmethod
+                def exists():
+                    return False
 
+            return _Path(path)
+        return path
 
-@pytest.mark.skipif(PY3, reason=".py files are only checked for in py2.")
-def test_pyc_only(creator_with_pyc_only_cp2_modules):
-    """Ensure that creation can succeed if os.pyc exists (even if os.py has been deleted)."""
-    assert creator_with_pyc_only_cp2_modules.can_create(CURRENT) is not None
+    mocker.patch.object(interpreter, "stdlib_path", side_effect=stdlib_path)
+
+    result = cli_run([ensure_text(str(tmp_path)), "--without-pip", "--activators", ""])
+
+    assert not (result.creator.stdlib / "os.py").exists()
+    assert (result.creator.stdlib / "os.pyc").exists()
+    assert "os.pyc" in result.creator.debug["os"]
