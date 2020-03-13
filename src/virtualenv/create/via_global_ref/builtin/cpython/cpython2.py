@@ -26,6 +26,10 @@ class CPython2(CPython, Python2):
             yield PathRefToDest(host_include_marker.parent, dest=lambda self, _: self.include)
 
     @classmethod
+    def needs_stdlib_py_module(cls):
+        return False
+
+    @classmethod
     def host_include_marker(cls, interpreter):
         return Path(interpreter.system_include) / "Python.h"
 

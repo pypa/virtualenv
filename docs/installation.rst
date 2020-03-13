@@ -122,6 +122,6 @@ Windows
 Packaging variants
 ~~~~~~~~~~~~~~~~~~
 - Normal variant (file structure as comes from `python.org <https://www.python.org/downloads/>`_).
-- We support system installations that do not contain the python files for the standard library if the respective
-  compiled files are present (e.g. only ``os.pyc``, not ``os.py``) - relevant mostly for ``Python 2.7``. This can be
-  used by custom systems may want to maximize available storage or obfuscate source code by removing ``.py`` files.
+- We support CPython 2 system installations that do not contain the python files for the standard library if the
+  respective compiled files are present (e.g. only ``os.pyc``, not ``os.py``). This can be used by custom systems may
+  want to maximize available storage or obfuscate source code by removing ``.py`` files.

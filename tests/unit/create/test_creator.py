@@ -451,7 +451,8 @@ def test_python_path(monkeypatch, tmp_path, python_path_on):
 
 
 @pytest.mark.skipif(
-    not PY2 or not ("builtin" in CURRENT.creators().key_to_class), reason="stdlib python files only needed for Python 2"
+    not (CURRENT.implementation == "CPython" and PY2),
+    reason="stdlib components without py files only possible on CPython2",
 )
 def test_pyc_only(tmp_path, mocker, session_app_data):
     """Ensure that creation can succeed if os.pyc exists (even if os.py has been deleted)"""
