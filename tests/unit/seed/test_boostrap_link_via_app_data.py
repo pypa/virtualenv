@@ -121,3 +121,14 @@ def test_base_bootstrap_link_via_app_data_not_writable(tmp_path, current_fastest
     dest = tmp_path / "venv"
     result = cli_run(["--seeder", "app-data", "--creator", current_fastest, "--clear-app-data", "-vv", str(dest)])
     assert result
+
+
+@pytest.mark.slow
+@pytest.mark.timeout(timeout=60)
+@pytest.mark.parametrize("pkg", ["pip", "setuptools", "wheel"])
+def test_base_bootstrap_link_via_app_data_no(tmp_path, coverage_env, current_fastest, session_app_data, pkg):
+    create_cmd = [str(tmp_path), "--seeder", "app-data", "--no-{}".format(pkg)]
+    result = cli_run(create_cmd)
+    assert not (result.creator.purelib / pkg).exists()
+    for key in {"pip", "setuptools", "wheel"} - {pkg}:
+        assert (result.creator.purelib / key).exists()

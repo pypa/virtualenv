@@ -39,7 +39,7 @@ class FromAppData(BaseEmbed):
             return
         base_cache = self.base_cache / creator.interpreter.version_release_str
         with self._get_seed_wheels(creator, base_cache) as name_to_whl:
-            pip_version = name_to_whl["pip"].stem.split("-")[1]
+            pip_version = name_to_whl["pip"].stem.split("-")[1] if "pip" in name_to_whl else None
             installer_class = self.installer_class(pip_version)
 
             def _install(name, wheel):
@@ -86,7 +86,7 @@ class FromAppData(BaseEmbed):
             yield name_to_whl
 
     def installer_class(self, pip_version):
-        if self.symlinks:
+        if self.symlinks and pip_version:
             # symlink support requires pip 19.3+
             pip_version_int = tuple(int(i) for i in pip_version.split(".")[0:2])
             if pip_version_int >= (19, 3):
