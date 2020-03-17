@@ -69,8 +69,6 @@ class PythonSpec(object):
         return cls(string_spec, impl, major, minor, micro, arch, path)
 
     def generate_names(self):
-        if self.implementation is None:
-            return
         impls = OrderedDict()
         if self.implementation:
             # first consider implementation as it is

@@ -24,8 +24,15 @@ class Python2(ViaGlobalRefVirtualenvBuiltin, Python2Supports):
         """Perform operations needed to make the created environment work on Python 2"""
         super(Python2, self).create()
         # install a patched site-package, the default Python 2 site.py is not smart enough to understand pyvenv.cfg,
-        # so we inject a small shim that can do this
-        site_py = self.stdlib / "site.py"
+        # so we inject a small shim that can do this, the location of this depends where it's on host
+        sys_std_plat = Path(self.interpreter.system_stdlib_platform)
+        site_py_in = (
+            self.stdlib_platform
+            if ((sys_std_plat / "site.py").exists() or (sys_std_plat / "site.pyc").exists())
+            else self.stdlib
+        )
+        site_py = site_py_in / "site.py"
+
         custom_site = get_custom_site()
         if IS_ZIPAPP:
             custom_site_text = read_from_zipapp(custom_site)
@@ -55,32 +62,44 @@ class Python2(ViaGlobalRefVirtualenvBuiltin, Python2Supports):
     def sources(cls, interpreter):
         for src in super(Python2, cls).sources(interpreter):
             yield src
-        # install files needed to run site.py
+        # install files needed to run site.py, either from stdlib or stdlib_platform, at least pyc, but both if exists
+        # if neither exists return the module file to trigger failure
+        mappings, needs_py_module = (
+            cls.mappings(interpreter),
+            cls.needs_stdlib_py_module(),
+        )
         for req in cls.modules():
+            module_file, to_module, module_exists = cls.from_stdlib(mappings, "{}.py".format(req))
+            compiled_file, to_compiled, compiled_exists = cls.from_stdlib(mappings, "{}.pyc".format(req))
+            if needs_py_module or module_exists or not compiled_exists:
+                yield PathRefToDest(module_file, dest=to_module)
+            if compiled_exists:
+                yield PathRefToDest(compiled_file, dest=to_compiled)
 
-            # the compiled path is optional, but refer to it if exists
-            module_compiled_path = interpreter.stdlib_path("{}.pyc".format(req))
-            has_compile = module_compiled_path.exists()
-            if has_compile:
-                yield PathRefToDest(module_compiled_path, dest=cls.to_stdlib)
+    @staticmethod
+    def from_stdlib(mappings, name):
+        for from_std, to_std in mappings:
+            src = from_std / name
+            if src.exists():
+                return src, to_std, True
+        return mappings[0] / name, mappings[1], False
 
-            # stdlib module src may be missing if the interpreter allows it by falling back to the compiled
-            module_path = interpreter.stdlib_path("{}.py".format(req))
-            add_py_module = cls.needs_stdlib_py_module()
-            if add_py_module is False:
-                if module_path.exists():  # if present add it
-                    add_py_module = True
-                else:
-                    add_py_module = not has_compile  # otherwise only add it if the pyc is not present
-            if add_py_module:
-                yield PathRefToDest(module_path, dest=cls.to_stdlib)
+    @classmethod
+    def mappings(cls, interpreter):
+        mappings = [(Path(interpreter.system_stdlib_platform), cls.to_stdlib_platform)]
+        if interpreter.system_stdlib_platform != interpreter.system_stdlib:
+            mappings.append((Path(interpreter.system_stdlib), cls.to_stdlib),)
+        return mappings
+
+    def to_stdlib(self, src):
+        return self.stdlib / src.name
+
+    def to_stdlib_platform(self, src):
+        return self.stdlib_platform / src.name
 
     @classmethod
     def needs_stdlib_py_module(cls):
         raise NotImplementedError
-
-    def to_stdlib(self, src):
-        return self.stdlib / src.name
 
     @classmethod
     def modules(cls):
