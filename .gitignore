@@ -26,3 +26,6 @@ venv*
 .python-version
 
 *wheel-store*
+
+Dockerfile
+.dockerignore
