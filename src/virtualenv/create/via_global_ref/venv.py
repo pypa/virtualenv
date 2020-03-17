@@ -1,18 +1,15 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
-from collections import namedtuple
 from copy import copy
 
+from virtualenv.create.via_global_ref.store import handle_store_python
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.error import ProcessCallFailed
-from virtualenv.info import fs_supports_symlink
 from virtualenv.util.path import ensure_dir
 from virtualenv.util.subprocess import run_cmd
 
-from .api import ViaGlobalRefApi
-
-Meta = namedtuple("Meta", ["can_symlink", "can_copy"])
+from .api import ViaGlobalRefApi, ViaGlobalRefMeta
 
 
 class Venv(ViaGlobalRefApi):
@@ -30,7 +27,10 @@ class Venv(ViaGlobalRefApi):
     @classmethod
     def can_create(cls, interpreter):
         if interpreter.has_venv:
-            return Meta(can_symlink=fs_supports_symlink(), can_copy=True)
+            meta = ViaGlobalRefMeta()
+            if interpreter.platform == "win32" and interpreter.version_info.major == 3:
+                meta = handle_store_python(meta, interpreter)
+            return meta
         return None
 
     def create(self):

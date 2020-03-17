@@ -10,6 +10,7 @@ import pytest
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import fs_supports_symlink
+from virtualenv.util.path import Path
 from virtualenv.util.six import ensure_text
 
 
@@ -25,10 +26,14 @@ def test_discovery_via_path(monkeypatch, case, special_name_dir, caplog, session
     elif case == "upper":
         name = name.upper()
     exe_name = "{}{}{}".format(name, current.version_info.major, ".exe" if sys.platform == "win32" else "")
-    special_name_dir.mkdir()
-    executable = special_name_dir / exe_name
+    target = special_name_dir / current.distutils_install["scripts"]
+    target.mkdir(parents=True)
+    executable = target / exe_name
     os.symlink(sys.executable, ensure_text(str(executable)))
-    new_path = os.pathsep.join([str(special_name_dir)] + os.environ.get(str("PATH"), str("")).split(os.pathsep))
+    pyvenv_cfg = Path(sys.executable).parents[1] / "pyvenv.cfg"
+    if pyvenv_cfg.exists():
+        (target / pyvenv_cfg.name).write_bytes(pyvenv_cfg.read_bytes())
+    new_path = os.pathsep.join([str(target)] + os.environ.get(str("PATH"), str("")).split(os.pathsep))
     monkeypatch.setenv(str("PATH"), new_path)
     interpreter = get_interpreter(core)
 

@@ -1,7 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import itertools
-import os
 import sys
 from copy import copy
 
@@ -15,7 +14,7 @@ def test_bad_py_spec():
     spec = PythonSpec.from_string_spec(text)
     assert text in repr(spec)
     assert spec.str_spec == text
-    assert spec.path == os.path.abspath(text)
+    assert spec.path == text
     content = vars(spec)
     del content[str("str_spec")]
     del content[str("path")]
@@ -112,4 +111,4 @@ def test_relative_spec(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     a_relative_path = str((tmp_path / "a" / "b").relative_to(tmp_path))
     spec = PythonSpec.from_string_spec(a_relative_path)
-    assert spec.path == os.path.abspath(str(tmp_path / a_relative_path))
+    assert spec.path == a_relative_path

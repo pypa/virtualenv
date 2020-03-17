@@ -64,11 +64,13 @@ class PythonSpec(object):
                     arch = _int_or_none(groups["arch"])
 
             if not ok:
-                path = os.path.abspath(string_spec)
+                path = string_spec
 
         return cls(string_spec, impl, major, minor, micro, arch, path)
 
     def generate_names(self):
+        if self.implementation is None:
+            return
         impls = OrderedDict()
         if self.implementation:
             # first consider implementation as it is

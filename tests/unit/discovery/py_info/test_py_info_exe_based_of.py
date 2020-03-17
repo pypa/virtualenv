@@ -7,6 +7,7 @@ import pytest
 
 from virtualenv.discovery.py_info import EXTENSIONS, PythonInfo
 from virtualenv.info import IS_WIN, fs_is_case_sensitive, fs_supports_symlink
+from virtualenv.util.path import Path
 
 CURRENT = PythonInfo.current()
 
@@ -31,6 +32,9 @@ def test_discover_ok(tmp_path, monkeypatch, suffix, impl, version, arch, into, c
     folder.mkdir(parents=True, exist_ok=True)
     dest = folder / "{}{}".format(impl, version, arch, suffix)
     os.symlink(CURRENT.executable, str(dest))
+    pyvenv = Path(CURRENT.executable).parents[1] / "pyvenv.cfg"
+    if pyvenv.exists():
+        (folder / pyvenv.name).write_text(pyvenv.read_text())
     inside_folder = str(tmp_path)
     base = CURRENT.discover_exe(session_app_data, inside_folder)
     found = base.executable

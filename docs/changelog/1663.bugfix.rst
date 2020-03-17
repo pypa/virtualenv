@@ -1,0 +1,1 @@
+Support Python 3 Framework distributed via XCode in macOs Catalina and before - by :user:`gaborbernat`.

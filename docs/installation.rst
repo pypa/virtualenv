@@ -116,8 +116,7 @@ In case of macOs we support:
 Windows
 ~~~~~~~
 - Installations from `python.org <https://www.python.org/downloads/>`_
-- Windows Store Python - note only `version 3.8+ <https://www.microsoft.com/en-us/p/python-38/9mssztt1n39l>`_ (``3.7``
-  was marked experimental and contains many bugs that would make it very hard for us to support it)
+- Windows Store Python - note only `version 3.7+ <https://www.microsoft.com/en-us/p/python-38/9mssztt1n39l>`_
 
 Packaging variants
 ~~~~~~~~~~~~~~~~~~
