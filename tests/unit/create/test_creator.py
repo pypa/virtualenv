@@ -113,7 +113,7 @@ _VENV_BUG_ON = (
                 strict=True,
             )
         )
-        if _VENV_BUG_ON and i[0] == "venv" and i[1] == "copies"
+        if _VENV_BUG_ON and i[0][0] == "venv" and i[0][1] == "copies"
         else i
         for i in product(CREATE_METHODS, ["isolated", "global"])
     ],
