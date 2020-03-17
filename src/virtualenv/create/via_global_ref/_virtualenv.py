@@ -61,7 +61,10 @@ if sys.version_info > (3, 4):
                             old = getattr(spec.loader, func_name)
                             func = self.exec_module if is_new_api else self.load_module
                             if old is not func:
-                                setattr(spec.loader, func_name, partial(func, old))
+                                try:
+                                    setattr(spec.loader, func_name, partial(func, old))
+                                except AttributeError:
+                                    pass  # C-Extension loaders are r/o such as zipimporter with <python 3.7
                             return spec
                     finally:
                         self.fullname = None

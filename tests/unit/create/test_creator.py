@@ -9,6 +9,7 @@ import shutil
 import stat
 import subprocess
 import sys
+import zipfile
 from collections import OrderedDict
 from itertools import product
 from stat import S_IREAD, S_IRGRP, S_IROTH
@@ -486,3 +487,25 @@ def test_pyc_only(tmp_path, mocker, session_app_data):
     assert not (result.creator.stdlib / "os.py").exists()
     assert (result.creator.stdlib / "os.pyc").exists()
     assert "os.pyc" in result.creator.debug["os"]
+
+
+def test_zip_importer_can_import_setuptools(tmp_path):
+    """We're patching the loaders so might fail on r/o loaders, such as zipimporter on CPython<3.8"""
+    result = cli_run([str(tmp_path / "venv"), "--activators", "", "--no-pip", "--no-wheel", "--copies"])
+    zip_path = tmp_path / "site-packages.zip"
+    with zipfile.ZipFile(str(zip_path), "w", zipfile.ZIP_DEFLATED) as zip_handler:
+        lib = str(result.creator.purelib)
+        for root, _, files in os.walk(lib):
+            base = root[len(lib) :].lstrip(os.pathsep)
+            for file in files:
+                if not file.startswith("_virtualenv"):
+                    zip_handler.write(filename=os.path.join(root, file), arcname=os.path.join(base, file))
+    for folder in result.creator.purelib.iterdir():
+        if not folder.name.startswith("_virtualenv"):
+            if folder.is_dir():
+                shutil.rmtree(str(folder), ignore_errors=True)
+            else:
+                folder.unlink()
+    env = os.environ.copy()
+    env[str("PYTHONPATH")] = str(zip_path)
+    subprocess.check_call([str(result.creator.exe), "-c", "from setuptools.dist import Distribution"], env=env)
