@@ -133,11 +133,13 @@ def test_py_info_cached_symlink_error(mocker, tmp_path, session_app_data):
 
 def test_py_info_cache_clear(mocker, tmp_path, session_app_data):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
-    assert PythonInfo.from_exe(sys.executable, session_app_data) is not None
-    assert spy.call_count >= 2  # at least two, one for the venv, one more for the host
+    result = PythonInfo.from_exe(sys.executable, session_app_data)
+    assert result is not None
+    count = 1 if result.executable == sys.executable else 2  # at least two, one for the venv, one more for the host
+    assert spy.call_count >= count
     PythonInfo.clear_cache(session_app_data)
     assert PythonInfo.from_exe(sys.executable, session_app_data) is not None
-    assert spy.call_count >= 4
+    assert spy.call_count >= 2 * count
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
@@ -146,7 +148,9 @@ def test_py_info_cached_symlink(mocker, tmp_path, session_app_data):
     first_result = PythonInfo.from_exe(sys.executable, session_app_data)
     assert first_result is not None
     count = spy.call_count
-    assert count >= 2  # at least two, one for the venv, one more for the host
+    # at least two, one for the venv, one more for the host
+    exp_count = 1 if first_result.executable == sys.executable else 2
+    assert count >= exp_count  # at least two, one for the venv, one more for the host
 
     new_exe = tmp_path / "a"
     new_exe.symlink_to(sys.executable)

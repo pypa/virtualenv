@@ -61,6 +61,10 @@ def test_destination_exists_file(tmp_path, capsys):
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
 def test_destination_not_write_able(tmp_path, capsys):
+    if hasattr(os, "geteuid"):
+        if os.geteuid() == 0:
+            pytest.skip("no way to check permission restriction when running under root")
+
     target = tmp_path
     prev_mod = target.stat().st_mode
     target.chmod(S_IREAD | S_IRGRP | S_IROTH)
@@ -196,8 +200,8 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
         exes = ("python.exe",)
     else:
         exes = ("python", "python{}".format(*sys.version_info), "python{}.{}".format(*sys.version_info))
-        # pypy3<=7.3: https://bitbucket.org/pypy/pypy/pull-requests/697
-        if IS_PYPY and creator_key == "venv":
+        if creator_key == "venv":
+            # for venv some repackaging does not includes the pythonx.y
             exes = exes[:-1]
     for exe in exes:
         exe_path = result.creator.bin_dir / exe
@@ -218,6 +222,10 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
 def test_venv_fails_not_inline(tmp_path, capsys, mocker):
+    if hasattr(os, "geteuid"):
+        if os.geteuid() == 0:
+            pytest.skip("no way to check permission restriction when running under root")
+
     def _session_via_cli(args, options=None):
         session = session_via_cli(args, options)
         assert session.creator.can_be_inline is False
@@ -396,14 +404,33 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
 
     monkeypatch.chdir(dest)  # distutils will read the setup.cfg from the cwd, so change to that
 
-    install_demo_cmd = [str(result.creator.script("pip")), "install", str(dest), "--no-use-pep517"]
+    install_demo_cmd = [
+        str(result.creator.script("pip")),
+        "--disable-pip-version-check",
+        "install",
+        str(dest),
+        "--no-use-pep517",
+        "-vv",
+    ]
     subprocess.check_call(install_demo_cmd)
 
     magic = result.creator.script("magic")  # console scripts are created in the right location
     assert magic.exists()
 
-    package_folder = result.creator.platlib / "demo"  # prefix is set to the virtualenv prefix for install
-    assert package_folder.exists()
+    package_folder = result.creator.purelib / "demo"  # prefix is set to the virtualenv prefix for install
+    assert package_folder.exists(), list_files(str(tmp_path))
+
+
+def list_files(path):
+    result = ""
+    for root, _, files in os.walk(path):
+        level = root.replace(path, "").count(os.sep)
+        indent = " " * 4 * level
+        result += "{}{}/\n".format(indent, os.path.basename(root))
+        sub = " " * 4 * (level + 1)
+        for f in files:
+            result += "{}{}\n".format(sub, f)
+    return result
 
 
 @pytest.mark.parametrize("python_path_on", [True, False], ids=["on", "off"])

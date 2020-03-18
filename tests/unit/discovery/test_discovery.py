@@ -16,7 +16,7 @@ from virtualenv.util.six import ensure_text
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink not supported")
 @pytest.mark.parametrize("case", ["mixed", "lower", "upper"])
-def test_discovery_via_path(monkeypatch, case, special_name_dir, caplog, session_app_data):
+def test_discovery_via_path(monkeypatch, case, tmp_path, caplog, session_app_data):
     caplog.set_level(logging.DEBUG)
     current = PythonInfo.current_system(session_app_data)
     core = "somethingVeryCryptic{}".format(".".join(str(i) for i in current.version_info[0:3]))
@@ -26,7 +26,7 @@ def test_discovery_via_path(monkeypatch, case, special_name_dir, caplog, session
     elif case == "upper":
         name = name.upper()
     exe_name = "{}{}{}".format(name, current.version_info.major, ".exe" if sys.platform == "win32" else "")
-    target = special_name_dir / current.distutils_install["scripts"]
+    target = tmp_path / current.distutils_install["scripts"]
     target.mkdir(parents=True)
     executable = target / exe_name
     os.symlink(sys.executable, ensure_text(str(executable)))
