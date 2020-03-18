@@ -3,7 +3,6 @@ from __future__ import absolute_import, unicode_literals
 import os
 from collections import OrderedDict
 
-from virtualenv.info import WIN_CPYTHON_2
 from virtualenv.util.path import Path
 from virtualenv.util.six import ensure_text
 
@@ -17,10 +16,11 @@ class PythonActivator(ViaTemplateActivator):
     def replacements(self, creator, dest_folder):
         replacements = super(PythonActivator, self).replacements(creator, dest_folder)
         lib_folders = OrderedDict((os.path.relpath(str(i), str(dest_folder)), None) for i in creator.libs)
+        win_py2 = creator.interpreter.platform == "win32" and creator.interpreter.version_info.major == 2
         replacements.update(
             {
                 "__LIB_FOLDERS__": ensure_text(os.pathsep.join(lib_folders.keys())),
-                "__DECODE_PATH__": ("yes" if WIN_CPYTHON_2 else ""),
+                "__DECODE_PATH__": ("yes" if win_py2 else ""),
             }
         )
         return replacements

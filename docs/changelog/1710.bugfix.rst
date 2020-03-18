@@ -1,0 +1,2 @@
+Fix ``activate_this.py`` throws ``AttributeError`` on Windows when virtual environment was created via cross python
+mechanism - by :user:`gaborbernat`.
