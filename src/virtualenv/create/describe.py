@@ -20,6 +20,7 @@ class Describe(object):
         self.interpreter = interpreter
         self.dest = dest
         self._stdlib = None
+        self._stdlib_platform = None
         self._system_stdlib = None
         self._conf_vars = None
 
@@ -48,6 +49,12 @@ class Describe(object):
         if self._stdlib is None:
             self._stdlib = Path(self.interpreter.sysconfig_path("stdlib", config_var=self._config_vars))
         return self._stdlib
+
+    @property
+    def stdlib_platform(self):
+        if self._stdlib_platform is None:
+            self._stdlib_platform = Path(self.interpreter.sysconfig_path("platstdlib", config_var=self._config_vars))
+        return self._stdlib_platform
 
     @property
     def _config_vars(self):

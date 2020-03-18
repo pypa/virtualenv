@@ -20,6 +20,7 @@ import pytest
 
 from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
+from virtualenv.create.via_global_ref.builtin.python2.python2 import Python2
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_PYPY, IS_WIN, PY2, PY3, fs_is_case_sensitive
@@ -463,24 +464,18 @@ def test_python_path(monkeypatch, tmp_path, python_path_on):
 def test_pyc_only(tmp_path, mocker, session_app_data):
     """Ensure that creation can succeed if os.pyc exists (even if os.py has been deleted)"""
     interpreter = PythonInfo.from_exe(sys.executable, session_app_data)
-    host_pyc = interpreter.stdlib_path("os.pyc")
-    if not host_pyc.exists():
+    host_pyc, _, host_pyc_exists = Python2.from_stdlib(Python2.mappings(interpreter), "os.pyc")
+    if not host_pyc_exists:
         pytest.skip("missing system os.pyc at {}".format(host_pyc))
-    previous = interpreter.stdlib_path
+    previous = Python2.from_stdlib
 
-    def stdlib_path(name):
-        path = previous(name)
+    def from_stdlib(mappings, name):
+        path, to, exists = previous(mappings, name)
         if name.endswith(".py"):
+            exists = False
+        return path, to, exists
 
-            class _Path(type(path)):
-                @staticmethod
-                def exists():
-                    return False
-
-            return _Path(path)
-        return path
-
-    mocker.patch.object(interpreter, "stdlib_path", side_effect=stdlib_path)
+    mocker.patch.object(Python2, "from_stdlib", side_effect=from_stdlib)
 
     result = cli_run([ensure_text(str(tmp_path)), "--without-pip", "--activators", ""])
 

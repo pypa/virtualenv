@@ -91,7 +91,6 @@ class PythonInfo(object):
         self.system_stdlib_platform = self.sysconfig_path("platstdlib", confs)
         self.max_size = getattr(sys, "maxsize", getattr(sys, "maxint", None))
         self._creators = None
-        self._stdlib_paths = None
 
     def _fast_get_system_executable(self):
         """Try to get the system executable by just looking at properties"""
@@ -278,7 +277,7 @@ class PythonInfo(object):
         return json.dumps(self._to_dict(), indent=2)
 
     def _to_dict(self):
-        data = {var: (getattr(self, var) if var not in ("_creators", "_stdlib_paths") else None) for var in vars(self)}
+        data = {var: (getattr(self, var) if var not in ("_creators",) else None) for var in vars(self)}
         # noinspection PyProtectedMember
         data["version_info"] = data["version_info"]._asdict()  # namedtuple to dictionary
         return data
@@ -452,19 +451,6 @@ class PythonInfo(object):
                 upper = base.upper()
                 if upper != base:
                     yield upper
-
-    def stdlib_path(self, name):
-        if self._stdlib_paths is None:
-            from collections import OrderedDict
-            from virtualenv.util.path import Path
-
-            pat = OrderedDict((Path(i), None) for i in (self.system_stdlib, self.system_stdlib_platform))
-            self._stdlib_paths = list(pat.keys())
-        for path in self._stdlib_paths:
-            std_path = path / name
-            if std_path.exists():
-                return std_path
-        return self._stdlib_paths[0] / name
 
 
 if __name__ == "__main__":

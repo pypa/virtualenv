@@ -77,8 +77,9 @@ class CPython2macOsFramework(CPythonmacOsFramework, CPython2, CPythonPosix):
     def sources(cls, interpreter):
         for src in super(CPython2macOsFramework, cls).sources(interpreter):
             yield src
-        name = "lib-dynload"  # landmark for exec_prefix
-        yield PathRefToDest(interpreter.stdlib_path(name), dest=cls.to_stdlib)
+        # landmark for exec_prefix
+        exec_marker_file, to_path, _ = cls.from_stdlib(cls.mappings(interpreter), "lib-dynload")
+        yield PathRefToDest(exec_marker_file, dest=to_path)
 
     @property
     def reload_code(self):

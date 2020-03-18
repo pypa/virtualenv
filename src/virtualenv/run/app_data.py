@@ -48,7 +48,7 @@ class AppDataAction(Action):
         folder = os.path.abspath(folder)
         if not os.path.exists(folder):
             try:
-                os.mkdir(folder)
+                os.makedirs(folder)
                 logging.debug("created app data folder %s", folder)
             except OSError as exception:
                 logging.info("could not create app data folder %s due to %r", folder, exception)
