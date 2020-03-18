@@ -157,6 +157,8 @@ class PipInstall(object):
                 "{}{}".format(name, version_info.major),
                 "{}-{}.{}".format(name, version_info.major, version_info.minor),
             }
+            if name == "pip":
+                scriptnames.add("{}{}.{}".format(name, version_info.major, version_info.minor))
             return previous(scriptnames, shebang, script, filenames, ext)
 
         previous = maker._write_script

@@ -320,7 +320,12 @@ def test_cross_major(cross_python, coverage_env, tmp_path, session_app_data, cur
     result = cli_run(cmd)
     pip_scripts = {i.name.replace(".exe", "") for i in result.creator.script_dir.iterdir() if i.name.startswith("pip")}
     major, minor = cross_python.version_info[0:2]
-    assert pip_scripts == {"pip", "pip-{}.{}".format(major, minor), "pip{}".format(major)}
+    assert pip_scripts == {
+        "pip",
+        "pip{}".format(major),
+        "pip-{}.{}".format(major, minor),
+        "pip{}.{}".format(major, minor),
+    }
     coverage_env()
     env = PythonInfo.from_exe(str(result.creator.exe), session_app_data)
     assert env.version_info.major != CURRENT.version_info.major

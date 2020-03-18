@@ -18,7 +18,7 @@ class FromAppData(BaseEmbed):
     def __init__(self, options):
         super(FromAppData, self).__init__(options)
         self.symlinks = options.symlink_app_data
-        self.base_cache = self.app_data / "seed-app-data" / "v1"
+        self.base_cache = self.app_data / "seed-app-data" / "v1.0.1"
 
     @classmethod
     def add_parser_arguments(cls, parser, interpreter, app_data):

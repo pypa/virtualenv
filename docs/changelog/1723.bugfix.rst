@@ -1,0 +1,2 @@
+Also generate ``pipx.y`` console script beside ``pip-x.y`` to be compatible with how pip installs itself -
+by :user:`gaborbernat`.

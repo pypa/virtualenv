@@ -18,7 +18,7 @@ from virtualenv.util.subprocess import Popen
 @pytest.mark.slow
 @pytest.mark.timeout(timeout=60)
 @pytest.mark.parametrize("copies", [False, True] if fs_supports_symlink() else [True])
-def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastest, copies):
+def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies):
     current = PythonInfo.current_system()
     bundle_ver = BUNDLE_SUPPORT[current.version_release_str]
     create_cmd = [
@@ -56,6 +56,7 @@ def test_base_bootstrap_link_via_app_data(tmp_path, coverage_env, current_fastes
         for suffix in (
             "",
             "{}".format(current.version_info.major),
+            "{}.{}".format(current.version_info.major, current.version_info.minor),
             "-{}.{}".format(current.version_info.major, current.version_info.minor),
         )
     ]:
