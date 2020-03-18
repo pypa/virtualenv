@@ -5,6 +5,43 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.11 (2020-03-18)
+---------------------
+
+Features - 20.0.11
+~~~~~~~~~~~~~~~~~~
+- Improve error message when the host python does not satisfy invariants needed to create virtual environments (now we
+  print which host files are incompatible/missing and for which creators when no supported creator can be matched, however
+  we found creators that can describe the given Python interpreter - will still print no supported creator for Jython,
+  but print exactly what host files do not allow creation of virtual environments in case of CPython/PyPy)
+  - by :user:`gaborbernat`. (`#1716 <https://github.com/pypa/virtualenv/issues/1716>`_)
+
+Bugfixes - 20.0.11
+~~~~~~~~~~~~~~~~~~
+- Support Python 3 Framework distributed via XCode in macOs Catalina and before - by :user:`gaborbernat`. (`#1663 <https://github.com/pypa/virtualenv/issues/1663>`_)
+- Fix Windows Store Python support, do not allow creation via symlink as that's not going to work by design
+  - by :user:`gaborbernat`. (`#1709 <https://github.com/pypa/virtualenv/issues/1709>`_)
+- Fix ``activate_this.py`` throws ``AttributeError`` on Windows when virtual environment was created via cross python
+  mechanism - by :user:`gaborbernat`. (`#1710 <https://github.com/pypa/virtualenv/issues/1710>`_)
+- Fix ``--no-pip``, ``--no-setuptools``, ``--no-wheel`` not being respected - by :user:`gaborbernat`. (`#1712 <https://github.com/pypa/virtualenv/issues/1712>`_)
+- Allow missing ``.py`` files if a compiled ``.pyc`` version is available - by :user:`tucked`. (`#1714 <https://github.com/pypa/virtualenv/issues/1714>`_)
+- Do not fail if the distutils/setuptools patch happens on a C-extension loader (such as ``zipimporter`` on Python 3.7 or
+  earlier) - by :user:`gaborbernat`. (`#1715 <https://github.com/pypa/virtualenv/issues/1715>`_)
+- Support Python 2 implementations that require the landmark files and ``site.py`` to be in platform standard library
+  instead of the standard library path of the virtual environment (notably some RHEL ones, such as the Docker
+  image ``amazonlinux:1``) - by :user:`gaborbernat`. (`#1719 <https://github.com/pypa/virtualenv/issues/1719>`_)
+- Allow the test suite to pass even when called with the system Python - to help repackaging of the tool for Linux
+  distributions -  by :user:`gaborbernat`. (`#1721 <https://github.com/pypa/virtualenv/issues/1721>`_)
+- Also generate ``pipx.y`` console script beside ``pip-x.y`` to be compatible with how pip installs itself -
+  by :user:`gaborbernat`. (`#1723 <https://github.com/pypa/virtualenv/issues/1723>`_)
+- Automatically create the application data folder if it does not exists - by :user:`gaborbernat`. (`#1728 <https://github.com/pypa/virtualenv/issues/1728>`_)
+
+Improved Documentation - 20.0.11
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- :ref:`supports <compatibility-requirements>` details now explicitly what Python installations we support
+  - by :user:`gaborbernat`. (`#1714 <https://github.com/pypa/virtualenv/issues/1714>`_)
+
+
 v20.0.10 (2020-03-10)
 ---------------------
 

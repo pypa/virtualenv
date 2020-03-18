@@ -1,3 +1,0 @@
-Support Python 2 implementations that require the landmark files and ``site.py`` to be in platform standard library
-instead of the standard library path of the virtual environment (notably some RHEL ones, such as the Docker
-image ``amazonlinux:1``) - by :user:`gaborbernat`.

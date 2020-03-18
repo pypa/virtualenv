@@ -1,2 +1,0 @@
-Do not fail if the distutils/setuptools patch happens on a C-extension loader (such as ``zipimporter`` on Python 3.7 or
-earlier) - by :user:`gaborbernat`.
