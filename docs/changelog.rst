@@ -5,6 +5,16 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.13 (2020-03-19)
+---------------------
+
+Bugfixes - 20.0.13
+~~~~~~~~~~~~~~~~~~
+- Do not fail when the pyc files is missing for the host Python 2 - by :user:`gaborbernat`. (`#1738 <https://github.com/pypa/virtualenv/issues/1738>`_)
+- Support broken Packaging pythons that put the include headers under distutils pattern rather than sysconfig one
+  - by :user:`gaborbernat`. (`#1739 <https://github.com/pypa/virtualenv/issues/1739>`_)
+
+
 v20.0.12 (2020-03-19)
 ---------------------
 
