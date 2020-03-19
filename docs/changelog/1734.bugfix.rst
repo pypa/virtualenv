@@ -1,0 +1,1 @@
+Fix relative path discovery of interpreters - by :user:`gaborbernat`.

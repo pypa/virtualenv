@@ -44,3 +44,12 @@ def test_discovery_via_path_not_found(tmp_path, monkeypatch):
     monkeypatch.setenv(str("PATH"), str(tmp_path))
     interpreter = get_interpreter(uuid4().hex)
     assert interpreter is None
+
+
+def test_relative_path(tmp_path, session_app_data, monkeypatch):
+    sys_executable = Path(PythonInfo.current_system(app_data=session_app_data).system_executable)
+    cwd = sys_executable.parents[1]
+    monkeypatch.chdir(str(cwd))
+    relative = str(sys_executable.relative_to(cwd))
+    result = get_interpreter(relative, session_app_data)
+    assert result is not None
