@@ -493,27 +493,36 @@ def test_python_path(monkeypatch, tmp_path, python_path_on):
     not (CURRENT.implementation == "CPython" and PY2),
     reason="stdlib components without py files only possible on CPython2",
 )
-def test_pyc_only(tmp_path, mocker, session_app_data):
+@pytest.mark.parametrize(
+    "py, pyc",
+    list(
+        product(
+            [True, False] if Python2.from_stdlib(Python2.mappings(CURRENT), "os.py")[2] else [False],
+            [True, False] if Python2.from_stdlib(Python2.mappings(CURRENT), "os.pyc")[2] else [False],
+        )
+    ),
+)
+def test_py_pyc_missing(tmp_path, mocker, session_app_data, py, pyc):
     """Ensure that creation can succeed if os.pyc exists (even if os.py has been deleted)"""
-    interpreter = PythonInfo.from_exe(sys.executable, session_app_data)
-    host_pyc, _, host_pyc_exists = Python2.from_stdlib(Python2.mappings(interpreter), "os.pyc")
-    if not host_pyc_exists:
-        pytest.skip("missing system os.pyc at {}".format(host_pyc))
     previous = Python2.from_stdlib
 
     def from_stdlib(mappings, name):
         path, to, exists = previous(mappings, name)
-        if name.endswith(".py"):
-            exists = False
+        if name.endswith("py"):
+            exists = py
+        elif name.endswith("pyc"):
+            exists = pyc
         return path, to, exists
 
     mocker.patch.object(Python2, "from_stdlib", side_effect=from_stdlib)
 
-    result = cli_run([ensure_text(str(tmp_path)), "--without-pip", "--activators", ""])
+    result = cli_run([ensure_text(str(tmp_path)), "--without-pip", "--activators", "", "-vv"])
+    py_at = Python2.from_stdlib(Python2.mappings(CURRENT), "os.py")[1](result.creator, Path("os.py"))
+    py = pyc is False or py  # if pyc is False we fallback to serve the py, which will exist (as we only mock the check)
+    assert py_at.exists() is py
 
-    assert not (result.creator.stdlib / "os.py").exists()
-    assert (result.creator.stdlib / "os.pyc").exists()
-    assert "os.pyc" in result.creator.debug["os"]
+    pyc_at = Python2.from_stdlib(Python2.mappings(CURRENT), "osc.py")[1](result.creator, Path("os.pyc"))
+    assert pyc_at.exists() is pyc
 
 
 def test_zip_importer_can_import_setuptools(tmp_path):

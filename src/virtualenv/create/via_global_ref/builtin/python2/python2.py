@@ -82,7 +82,8 @@ class Python2(ViaGlobalRefVirtualenvBuiltin, Python2Supports):
             src = from_std / name
             if src.exists():
                 return src, to_std, True
-        return mappings[0] / name, mappings[1], False
+        # if not exists, fallback to first in list
+        return mappings[0][0] / name, mappings[0][1], False
 
     @classmethod
     def mappings(cls, interpreter):
