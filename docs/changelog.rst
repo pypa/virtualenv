@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.12 (2020-03-19)
+---------------------
+
+Bugfixes - 20.0.12
+~~~~~~~~~~~~~~~~~~
+- Fix relative path discovery of interpreters - by :user:`gaborbernat`. (`#1734 <https://github.com/pypa/virtualenv/issues/1734>`_)
+
+
 v20.0.11 (2020-03-18)
 ---------------------
 
