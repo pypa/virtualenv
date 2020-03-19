@@ -229,8 +229,8 @@ class PythonInfo(object):
 
     def satisfies(self, spec, impl_must_match):
         """check if a given specification can be satisfied by the this python interpreter instance"""
-        if self.executable == spec.path:  # if the path is a our own executable path we're done
-            return True
+        if spec.path and self.executable == os.path.abspath(spec.path):
+            return True  # if the path is a our own executable path we're done
 
         if spec.path is not None:  # if path set, and is not our original executable name, this does not match
             root, _ = os.path.splitext(os.path.basename(self.original_executable))
