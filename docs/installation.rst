@@ -99,7 +99,7 @@ request on our issue tracker.
 Linux
 ~~~~~
 - installations from `python.org <https://www.python.org/downloads/>`_
-- Ubuntu 16.04+ (both upstream and `deasnakes <https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa>`_ builds)
+- Ubuntu 16.04+ (both upstream and `deadsnakes <https://launchpad.net/~deadsnakes/+archive/ubuntu/ppa>`_ builds)
 - Fedora
 - RHEL and CentOS
 - OpenSuse
