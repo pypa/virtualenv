@@ -159,10 +159,16 @@ class PythonInfo(object):
 
     @property
     def system_include(self):
-        return self.sysconfig_path(
+        path = self.sysconfig_path(
             "include",
             {k: (self.system_prefix if v.startswith(self.prefix) else v) for k, v in self.sysconfig_vars.items()},
         )
+        if not os.path.exists(path):  # some broken packaging don't respect the sysconfig, fallback to distutils path
+            # the pattern include the distribution name too at the end, remove that via the parent call
+            fallback = os.path.join(self.prefix, os.path.dirname(self.distutils_install["headers"]))
+            if os.path.exists(fallback):
+                path = fallback
+        return path
 
     @property
     def system_prefix(self):
