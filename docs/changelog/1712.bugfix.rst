@@ -1,1 +1,0 @@
-Fix ``--no-pip``, ``--no-setuptools``, ``--no-wheel`` not being respected - by :user:`gaborbernat`.

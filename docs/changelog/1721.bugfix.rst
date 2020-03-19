@@ -1,2 +1,0 @@
-Allow the test suite to pass even when called with the system Python - to help repackaging of the tool for Linux
-distributions -  by :user:`gaborbernat`.

@@ -1,1 +1,0 @@
-Automatically create the application data folder if it does not exists - by :user:`gaborbernat`.
