@@ -1,0 +1,2 @@
+Support broken Packaging pythons that put the include headers under distutils pattern rather than sysconfig one
+- by :user:`gaborbernat`.
