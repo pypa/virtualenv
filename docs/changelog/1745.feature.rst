@@ -1,0 +1,1 @@
+Upgrade embeded setuptools for Python ``3.5+`` to ``46.1.1``, for Python ``2.7`` to ``44.1.0`` - by :user:`gaborbernat`.
