@@ -1,0 +1,1 @@
+Fix discovery of interpreter by name from ``PATH`` that does not match a spec format - by :user:`gaborbernat`.

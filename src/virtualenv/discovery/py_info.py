@@ -235,13 +235,19 @@ class PythonInfo(object):
 
     def satisfies(self, spec, impl_must_match):
         """check if a given specification can be satisfied by the this python interpreter instance"""
-        if spec.path and self.executable == os.path.abspath(spec.path):
-            return True  # if the path is a our own executable path we're done
-
-        if spec.path is not None:  # if path set, and is not our original executable name, this does not match
-            root, _ = os.path.splitext(os.path.basename(self.original_executable))
-            if root != spec.path:
-                return False
+        if spec.path:
+            if self.executable == os.path.abspath(spec.path):
+                return True  # if the path is a our own executable path we're done
+            if not spec.is_abs:
+                # if path set, and is not our original executable name, this does not match
+                basename = os.path.basename(self.original_executable)
+                spec_path = spec.path
+                if sys.platform == "win32":
+                    basename, suffix = os.path.splitext(basename)
+                    if spec_path.endswith(suffix):
+                        spec_path = spec_path[: -len(suffix)]
+                if basename != spec_path:
+                    return False
 
         if impl_must_match:
             if spec.implementation is not None and spec.implementation.lower() != self.implementation.lower():
