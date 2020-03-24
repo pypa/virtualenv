@@ -270,3 +270,23 @@ def test_py_info_ignores_distutils_config(monkeypatch, tmp_path):
     distutils = py_info.distutils_install
     for key, value in distutils.items():
         assert not value.startswith(str(tmp_path)), "{}={}".format(key, value)
+
+
+def test_discover_exe_on_path_non_spec_name_match(mocker):
+    suffixed_name = "python{}.{}m".format(CURRENT.version_info.major, CURRENT.version_info.minor)
+    if sys.platform == "win32":
+        suffixed_name += Path(CURRENT.original_executable).suffix
+    spec = PythonSpec.from_string_spec(suffixed_name)
+    mocker.patch.object(CURRENT, "original_executable", str(Path(CURRENT.executable).parent / suffixed_name))
+    assert CURRENT.satisfies(spec, impl_must_match=True) is True
+
+
+def test_discover_exe_on_path_non_spec_name_not_match(mocker):
+    suffixed_name = "python{}.{}m".format(CURRENT.version_info.major, CURRENT.version_info.minor)
+    if sys.platform == "win32":
+        suffixed_name += Path(CURRENT.original_executable).suffix
+    spec = PythonSpec.from_string_spec(suffixed_name)
+    mocker.patch.object(
+        CURRENT, "original_executable", str(Path(CURRENT.executable).parent / "e{}".format(suffixed_name))
+    )
+    assert CURRENT.satisfies(spec, impl_must_match=True) is False
