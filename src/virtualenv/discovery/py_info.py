@@ -241,9 +241,12 @@ class PythonInfo(object):
             if not spec.is_abs:
                 # if path set, and is not our original executable name, this does not match
                 basename = os.path.basename(self.original_executable)
+                spec_path = spec.path
                 if sys.platform == "win32":
-                    basename, _ = os.path.splitext(basename)
-                if basename != spec.path:
+                    basename, suffix = os.path.splitext(basename)
+                    if spec_path.endswith(suffix):
+                        spec_path = spec_path[: -len(suffix)]
+                if basename != spec_path:
                     return False
 
         if impl_must_match:
