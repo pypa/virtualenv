@@ -20,6 +20,7 @@ import pytest
 
 from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
+from virtualenv.create.via_global_ref.builtin.cpython.cpython3 import CPython3Posix
 from virtualenv.create.via_global_ref.builtin.python2.python2 import Python2
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
@@ -218,6 +219,13 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
         python_w = result.creator.exe.parent / "pythonw.exe"
         assert python_w.exists()
         assert python_w.read_bytes() != result.creator.exe.read_bytes()
+
+    if CPython3Posix.pyvenv_launch_patch_active(PythonInfo.from_exe(python)) and creator_key != "venv":
+        result = subprocess.check_output(
+            [str(result.creator.exe), "-c", 'import os; print(os.environ.get("__PYVENV_LAUNCHER__"))'],
+            universal_newlines=True,
+        ).strip()
+        assert result == "None"
 
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
