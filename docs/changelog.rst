@@ -5,6 +5,20 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.14 (2020-03-25)
+---------------------
+
+Features - 20.0.14
+~~~~~~~~~~~~~~~~~~
+- Remove ``__PYVENV_LAUNCHER__`` on macOs for Python ``3.7.(<8)`` and ``3.8.(<3)`` on interpreter startup via ``pth``
+  file, this pulls in the `upstream patch <https://github.com/python/cpython/pull/9516>`_ - by :user:`gaborbernat`. (`#1704 <https://github.com/pypa/virtualenv/issues/1704>`_)
+- Upgrade embeded setuptools for Python ``3.5+`` to ``46.1.1``, for Python ``2.7`` to ``44.1.0`` - by :user:`gaborbernat`. (`#1745 <https://github.com/pypa/virtualenv/issues/1745>`_)
+
+Bugfixes - 20.0.14
+~~~~~~~~~~~~~~~~~~
+- Fix discovery of interpreter by name from ``PATH`` that does not match a spec format - by :user:`gaborbernat`. (`#1746 <https://github.com/pypa/virtualenv/issues/1746>`_)
+
+
 v20.0.13 (2020-03-19)
 ---------------------
 
