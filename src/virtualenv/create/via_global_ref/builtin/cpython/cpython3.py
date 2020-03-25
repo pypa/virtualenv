@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import abc
+from textwrap import dedent
 
 from six import add_metaclass
 
@@ -21,6 +22,24 @@ class CPython3Posix(CPythonPosix, CPython3):
     @classmethod
     def can_describe(cls, interpreter):
         return is_mac_os_framework(interpreter) is False and super(CPython3Posix, cls).can_describe(interpreter)
+
+    def env_patch_text(self):
+        text = super(CPython3Posix, self).env_patch_text()
+        if self.pyvenv_launch_patch_active(self.interpreter):
+            text += dedent(
+                """
+                # for https://github.com/python/cpython/pull/9516, see https://github.com/pypa/virtualenv/issues/1704
+                import os
+                if "__PYVENV_LAUNCHER__" in os.environ:
+                    del os.environ["__PYVENV_LAUNCHER__"]
+                """
+            )
+        return text
+
+    @classmethod
+    def pyvenv_launch_patch_active(cls, interpreter):
+        ver = interpreter.version_info
+        return interpreter.platform == "darwin" and ((3, 7, 8) > ver >= (3, 7) or (3, 8, 3) > ver >= (3, 8))
 
 
 class CPython3Windows(CPythonWindows, CPython3):

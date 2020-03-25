@@ -67,19 +67,23 @@ class ViaGlobalRefApi(Creator):
             )
 
     def create(self):
-        self.patch_distutils_via_pth()
+        self.install_patch()
 
-    def patch_distutils_via_pth(self):
+    def install_patch(self):
+        text = self.env_patch_text()
+        if text:
+            pth = self.purelib / "_virtualenv.pth"
+            logging.debug("create virtualenv import hook file %s", pth)
+            pth.write_text("import _virtualenv")
+            dest_path = self.purelib / "_virtualenv.py"
+            logging.debug("create %s", dest_path)
+            dest_path.write_text(text)
+
+    def env_patch_text(self):
         """Patch the distutils package to not be derailed by its configuration files"""
         with ensure_file_on_disk(Path(__file__).parent / "_virtualenv.py", self.app_data) as resolved_path:
             text = resolved_path.read_text()
-            text = text.replace('"__SCRIPT_DIR__"', repr(os.path.relpath(str(self.script_dir), str(self.purelib))))
-        dest_path = self.purelib / "_virtualenv.py"
-        logging.debug("create %s", dest_path)
-        dest_path.write_text(text)
-        pth = self.purelib / "_virtualenv.pth"
-        logging.debug("create virtualenv import hook file %s", pth)
-        pth.write_text("import _virtualenv")
+            return text.replace('"__SCRIPT_DIR__"', repr(os.path.relpath(str(self.script_dir), str(self.purelib))))
 
     def _args(self):
         return super(ViaGlobalRefApi, self)._args() + [("global", self.enable_system_site_package)]
