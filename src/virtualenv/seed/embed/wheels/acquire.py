@@ -87,7 +87,9 @@ def wheel_support_py(filename, py_version):
     with ZipFile(ensure_text(str(filename)), "r") as zip_file:
         metadata = zip_file.read(name).decode("utf-8")
     marker = "Requires-Python:"
-    requires = next(i[len(marker) :] for i in metadata.splitlines() if i.startswith(marker))
+    requires = next((i[len(marker) :] for i in metadata.splitlines() if i.startswith(marker)), None)
+    if requires is None:  # if it does not specify a python requires the assumption is compatible
+        return True
     py_version_int = tuple(int(i) for i in py_version.split("."))
     for require in (i.strip() for i in requires.split(",")):
         # https://www.python.org/dev/peps/pep-0345/#version-specifiers
