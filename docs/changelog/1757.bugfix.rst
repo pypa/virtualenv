@@ -1,2 +1,0 @@
-Allow seed wheel files inside the :option:`extra-search-dir` folders that do not have ``Requires-Python``
-metadata specified, these are considered compatible with all python versions - by :user:`gaborbernat`.
