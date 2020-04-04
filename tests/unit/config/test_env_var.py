@@ -37,7 +37,7 @@ def test_value_bad(monkeypatch, caplog, empty_conf):
     assert "invalid literal" in caplog.messages[0]
 
 
-def test_extra_search_dir(tmp_path, monkeypatch):
+def test_extra_search_dir_via_env_var(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     value = "a{}0{}b{}c".format(os.linesep, os.linesep, os.pathsep)
     monkeypatch.setenv(str("VIRTUALENV_EXTRA_SEARCH_DIR"), str(value))
