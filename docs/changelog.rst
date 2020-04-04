@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.16 (2020-04-04)
+---------------------
+
+Bugfixes - 20.0.16
+~~~~~~~~~~~~~~~~~~
+- Allow seed wheel files inside the :option:`extra-search-dir` folders that do not have ``Requires-Python``
+  metadata specified, these are considered compatible with all python versions - by :user:`gaborbernat`. (`#1757 <https://github.com/pypa/virtualenv/issues/1757>`_)
+
+
 v20.0.15 (2020-03-27)
 ---------------------
 
