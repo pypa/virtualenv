@@ -8,7 +8,7 @@
 [![Build Status](https://dev.azure.com/pypa/virtualenv/_apis/build/status/pypa.virtualenv?branchName=master)](https://dev.azure.com/pypa/virtualenv/_build/latest?definitionId=11&branchName=master)
 [![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/pypa/virtualenv/11?style=flat-square)](https://dev.azure.com/pypa/virtualenv/_build?definitionId=11&_a=summary)
 [![Code style:
-black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square)](https://github.com/psf/black)
 
 virtualenv
 ==========
