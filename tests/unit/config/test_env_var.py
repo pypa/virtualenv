@@ -46,3 +46,24 @@ def test_extra_search_dir_via_env_var(tmp_path, monkeypatch):
     (tmp_path / "c").mkdir()
     result = parse_cli(["venv"])
     assert result.seeder.extra_search_dir == [Path("a").resolve(), Path("b").resolve(), Path("c").resolve()]
+
+
+def test_value_alias(monkeypatch, mocker, empty_conf):
+    from virtualenv.config.cli.parser import VirtualEnvConfigParser
+
+    prev = VirtualEnvConfigParser._fix_default
+
+    def func(self, action):
+        if action.dest == "symlinks":
+            action.default = True  # force symlink to be true
+        elif action.dest == "copies":
+            action.default = False  # force default copy to be False, we expect env-var to flip it
+        return prev(self, action)
+
+    mocker.patch("virtualenv.run.VirtualEnvConfigParser._fix_default", side_effect=func, autospec=True)
+
+    monkeypatch.delenv(str("SYMLINKS"), raising=False)
+    monkeypatch.delenv(str("VIRTUALENV_COPIES"), raising=False)
+    monkeypatch.setenv(str("VIRTUALENV_ALWAYS_COPY"), str("1"))
+    result = parse_cli(["venv"])
+    assert result.creator.symlinks is False

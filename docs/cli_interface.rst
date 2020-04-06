@@ -36,8 +36,10 @@ virtualenv looks for a standard ini configuration file. The exact location depen
 as determined by :pypi:`appdirs` application configuration definition. The configuration file location is printed as at
 the end of the output when ``--help`` is passed.
 
-The keys of the settings are derived from the long command line option. For example, :option:`--python <python>`
-would be specified as:
+The keys of the settings are derived from th command line option (left strip the ``-`` characters, and replace ``-``
+with ``_``). Where multiple flags are available first found wins (where order is as it shows up under the ``--help``).
+
+For example, :option:`--python <python>` would be specified as:
 
 .. code-block:: ini
 
@@ -58,9 +60,9 @@ Options that take multiple values, like :option:`extra-search-dir` can be specif
 Environment Variables
 ^^^^^^^^^^^^^^^^^^^^^
 
-Each command line option has a corresponding environment variables with the name format
-``VIRTUALENV_<UPPER_NAME>``. The ``UPPER_NAME`` is the name of the command line options capitalized and
-dashes (``'-'``) replaced with underscores (``'_'``).
+Default values may be also specified via environment variables. The keys of the settings are derived from the
+command line option (left strip the ``-`` characters, and replace ``-`` with ``_``, finally capitalize the name). Where
+multiple flags are available first found wins (where order is as it shows up under the ``--help``).
 
 For example, to use a custom Python binary, instead of the one virtualenv is run with, you can set the environment
 variable ``VIRTUALENV_PYTHON`` like:

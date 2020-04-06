@@ -34,7 +34,9 @@ class ViaGlobalRefMeta(CreatorMeta):
 class ViaGlobalRefApi(Creator):
     def __init__(self, options, interpreter):
         super(ViaGlobalRefApi, self).__init__(options, interpreter)
-        self.symlinks = getattr(options, "copies", False) is False
+        copies = getattr(options, "copies", False)
+        symlinks = getattr(options, "symlinks", False)
+        self.symlinks = symlinks is True and copies is False
         self.enable_system_site_package = options.system_site
 
     @classmethod

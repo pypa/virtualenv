@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser
+from collections import OrderedDict
 
 from virtualenv.config.convert import get_type
 
@@ -38,9 +39,17 @@ class VirtualEnvConfigParser(ArgumentParser):
     def _fix_default(self, action):
         if hasattr(action, "default") and hasattr(action, "dest") and action.default != SUPPRESS:
             as_type = get_type(action)
-            outcome = get_env_var(action.dest, as_type)
+            names = OrderedDict((i.lstrip("-").replace("-", "_"), None) for i in action.option_strings)
+            outcome = None
+            for name in names:
+                outcome = get_env_var(name, as_type)
+                if outcome is not None:
+                    break
             if outcome is None and self.file_config:
-                outcome = self.file_config.get(action.dest, as_type)
+                for name in names:
+                    outcome = self.file_config.get(name, as_type)
+                    if outcome is not None:
+                        break
             if outcome is not None:
                 action.default, action.default_source = outcome
 
