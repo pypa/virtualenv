@@ -1,2 +1,0 @@
-Extend environment variables checked for configuration to also check aliases (e.g. setting either
-``VIRTUALENV_COPIES`` or ``VIRTUALENV_ALWAYS_COPY`` will work) - by :user:`gaborbernat`.

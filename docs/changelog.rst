@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.17 (2020-04-09)
+---------------------
+
+Features - 20.0.17
+~~~~~~~~~~~~~~~~~~
+- Extend environment variables checked for configuration to also check aliases (e.g. setting either
+  ``VIRTUALENV_COPIES`` or ``VIRTUALENV_ALWAYS_COPY`` will work) - by :user:`gaborbernat`. (`#1763 <https://github.com/pypa/virtualenv/issues/1763>`_)
+
+
 v20.0.16 (2020-04-04)
 ---------------------
 
