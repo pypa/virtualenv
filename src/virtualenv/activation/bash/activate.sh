@@ -46,6 +46,12 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
+# Create a deactivate script so deactivation can occur with `source bin/deactivate` as well
+__ACTIVATE_SCRIPT_PATH__=$(readlink -e "$0")
+__ACTIVATE_SCRIPT_DIR__=$(dirname "$__ACTIVATE_SCRIPT_PATH__")
+# Create the deactivate "script" file, which just calls the deactivate function
+echo "deactivate" > "$__ACTIVATE_SCRIPT_DIR__/deactivate"
+
 VIRTUAL_ENV='__VIRTUAL_ENV__'
 export VIRTUAL_ENV
 
