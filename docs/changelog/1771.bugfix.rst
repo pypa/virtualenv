@@ -1,2 +1,0 @@
-Importing setuptools before cli_run could cause our python information query to fail due to setuptools patching
-``distutils.dist.Distribution`` - by :user:`gaborbernat`.

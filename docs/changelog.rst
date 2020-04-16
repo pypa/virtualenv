@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.18 (2020-04-16)
+---------------------
+
+Bugfixes - 20.0.18
+~~~~~~~~~~~~~~~~~~
+- Importing setuptools before cli_run could cause our python information query to fail due to setuptools patching
+  ``distutils.dist.Distribution`` - by :user:`gaborbernat`. (`#1771 <https://github.com/pypa/virtualenv/issues/1771>`_)
+
+
 v20.0.17 (2020-04-09)
 ---------------------
 
