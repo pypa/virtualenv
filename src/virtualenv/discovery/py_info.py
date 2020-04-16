@@ -13,8 +13,8 @@ import re
 import sys
 import sysconfig
 from collections import OrderedDict, namedtuple
+from distutils import dist
 from distutils.command.install import SCHEME_KEYS
-from distutils.dist import Distribution
 from string import digits
 
 VersionInfo = namedtuple("VersionInfo", ["major", "minor", "micro", "releaselevel", "serial"])
@@ -110,7 +110,8 @@ class PythonInfo(object):
     @staticmethod
     def _distutils_install():
         # follow https://github.com/pypa/pip/blob/master/src/pip/_internal/locations.py#L95
-        d = Distribution({"script_args": "--no-user-cfg"})  # configuration files not parsed so they do not hijack paths
+        # note here we don't import Distribution directly to allow setuptools to patch it
+        d = dist.Distribution({"script_args": "--no-user-cfg"})  # conf files not parsed so they do not hijack paths
         if hasattr(sys, "_framework"):
             sys._framework = None  # disable macOS static paths for framework
         i = d.get_command_obj("install", create=True)

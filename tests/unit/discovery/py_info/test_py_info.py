@@ -290,3 +290,10 @@ def test_discover_exe_on_path_non_spec_name_not_match(mocker):
         CURRENT, "original_executable", str(Path(CURRENT.executable).parent / "e{}".format(suffixed_name))
     )
     assert CURRENT.satisfies(spec, impl_must_match=True) is False
+
+
+def test_py_info_setuptools():
+    from setuptools.dist import Distribution
+
+    assert Distribution
+    PythonInfo()
