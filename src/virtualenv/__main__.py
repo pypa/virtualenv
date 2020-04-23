@@ -1,11 +1,11 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
-import argparse
 import logging
 import os
 import sys
 from datetime import datetime
 
+from virtualenv.config.cli.parser import VirtualEnvOptions
 from virtualenv.util.six import ensure_text
 
 
@@ -46,7 +46,7 @@ class LogSession(object):
 
 
 def run_with_catch(args=None):
-    options = argparse.Namespace()
+    options = VirtualEnvOptions()
     try:
         run(args, options)
     except (KeyboardInterrupt, Exception) as exception:

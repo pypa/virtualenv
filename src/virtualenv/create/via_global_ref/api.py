@@ -34,10 +34,25 @@ class ViaGlobalRefMeta(CreatorMeta):
 class ViaGlobalRefApi(Creator):
     def __init__(self, options, interpreter):
         super(ViaGlobalRefApi, self).__init__(options, interpreter)
-        copies = getattr(options, "copies", False)
-        symlinks = getattr(options, "symlinks", False)
-        self.symlinks = symlinks is True and copies is False
+        self.symlinks = self._should_symlink(options)
         self.enable_system_site_package = options.system_site
+
+    @staticmethod
+    def _should_symlink(options):
+        # Priority of where the option is set to follow the order: CLI, env var, file, hardcoded.
+        # If both set at same level prefers copy over symlink.
+        copies, symlinks = getattr(options, "copies", False), getattr(options, "symlinks", False)
+        copy_src, sym_src = options.get_source("copies"), options.get_source("symlinks")
+        for level in ["cli", "env var", "file", "default"]:
+            s_opt = symlinks if sym_src == level else None
+            c_opt = copies if copy_src == level else None
+            if s_opt is True and c_opt is True:
+                return False
+            if s_opt is True:
+                return True
+            if c_opt is True:
+                return False
+        return False  # fallback to copy
 
     @classmethod
     def add_parser_arguments(cls, parser, interpreter, meta, app_data):
@@ -50,6 +65,8 @@ class ViaGlobalRefApi(Creator):
             help="give the virtual environment access to the system site-packages dir",
         )
         group = parser.add_mutually_exclusive_group()
+        if not meta.can_symlink and not meta.can_copy:
+            raise RuntimeError("neither symlink or copy method supported")
         if meta.can_symlink:
             group.add_argument(
                 "--symlinks",

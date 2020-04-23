@@ -1,12 +1,44 @@
 from __future__ import absolute_import, unicode_literals
 
-from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser
+from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from collections import OrderedDict
 
 from virtualenv.config.convert import get_type
 
 from ..env_var import get_env_var
 from ..ini import IniConfig
+
+
+class VirtualEnvOptions(Namespace):
+    def __init__(self, **kwargs):
+        super(VirtualEnvOptions, self).__init__(**kwargs)
+        self._src = None
+        self._sources = {}
+
+    def set_src(self, key, value, src):
+        setattr(self, key, value)
+        if src.startswith("env var"):
+            src = "env var"
+        self._sources[key] = src
+
+    def __setattr__(self, key, value):
+        if getattr(self, "_src", None) is not None:
+            self._sources[key] = self._src
+        super(VirtualEnvOptions, self).__setattr__(key, value)
+
+    def get_source(self, key):
+        return self._sources.get(key)
+
+    @property
+    def verbosity(self):
+        if not hasattr(self, "verbose") and not hasattr(self, "quiet"):
+            return None
+        return max(self.verbose - self.quiet, 0)
+
+    def __repr__(self):
+        return "{}({})".format(
+            type(self).__name__, ", ".join("{}={}".format(k, v) for k, v in vars(self).items() if not k.startswith("_"))
+        )
 
 
 class VirtualEnvConfigParser(ArgumentParser):
@@ -24,8 +56,9 @@ class VirtualEnvConfigParser(ArgumentParser):
         super(VirtualEnvConfigParser, self).__init__(*args, **kwargs)
         self._fixed = set()
         self._elements = None
-        self._verbosity = None
-        self._options = options
+        if options is not None and not isinstance(options, VirtualEnvOptions):
+            raise TypeError("options must be of type VirtualEnvOptions")
+        self.options = VirtualEnvOptions() if options is None else options
         self._interpreter = None
         self._app_data = None
 
@@ -52,18 +85,25 @@ class VirtualEnvConfigParser(ArgumentParser):
                         break
             if outcome is not None:
                 action.default, action.default_source = outcome
+            else:
+                outcome = action.default, "default"
+            self.options.set_src(action.dest, *outcome)
 
     def enable_help(self):
         self._fix_defaults()
         self.add_argument("-h", "--help", action="help", default=SUPPRESS, help="show this help message and exit")
 
     def parse_known_args(self, args=None, namespace=None):
+        if namespace is None:
+            namespace = self.options
+        elif namespace is not self.options:
+            raise ValueError("can only pass in parser.options")
         self._fix_defaults()
-        return super(VirtualEnvConfigParser, self).parse_known_args(args, namespace=namespace)
-
-    def parse_args(self, args=None, namespace=None):
-        self._fix_defaults()
-        return super(VirtualEnvConfigParser, self).parse_args(args, namespace=namespace)
+        self.options._src = "cli"
+        try:
+            return super(VirtualEnvConfigParser, self).parse_known_args(args, namespace=namespace)
+        finally:
+            self.options._src = None
 
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):

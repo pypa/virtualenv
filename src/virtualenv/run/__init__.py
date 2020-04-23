@@ -1,6 +1,5 @@
 from __future__ import absolute_import, unicode_literals
 
-import argparse
 import logging
 
 from virtualenv.run.app_data import AppDataAction
@@ -19,11 +18,9 @@ def cli_run(args, options=None):
     """Create a virtual environment given some command line interface arguments
 
     :param args: the command line arguments
-    :param options: passing in a ``argparse.Namespace`` object allows return of the parsed options
+    :param options: passing in a ``VirtualEnvOptions`` object allows return of the parsed options
     :return: the session object of the creation (its structure for now is experimental and might change on short notice)
     """
-    if options is None:
-        options = argparse.Namespace()
     session = session_via_cli(args, options)
     with session:
         session.run()
@@ -31,11 +28,11 @@ def cli_run(args, options=None):
 
 
 # noinspection PyProtectedMember
-def session_via_cli(args, options):
+def session_via_cli(args, options=None):
     parser = build_parser(args, options)
-    parser.parse_args(args, namespace=parser._options)
-    creator, seeder, activators = tuple(e.create(parser._options) for e in parser._elements)  # create types
-    session = Session(parser._verbosity, options.app_data, parser._interpreter, creator, seeder, activators)
+    options = parser.parse_args(args)
+    creator, seeder, activators = tuple(e.create(options) for e in parser._elements)  # create types
+    session = Session(options.verbosity, options.app_data, parser._interpreter, creator, seeder, activators)
     return session
 
 
@@ -50,7 +47,7 @@ def build_parser(args=None, options=None):
         default=False,
         help="on failure also display the stacktrace internals of virtualenv",
     )
-    parser._options, parser._verbosity = _do_report_setup(parser, args)
+    _do_report_setup(parser, args)
     # here we need a write-able application data (e.g. the zipapp might need this for discovery cache)
     default_app_data = AppDataAction.default()
     parser.add_argument(
@@ -67,7 +64,7 @@ def build_parser(args=None, options=None):
         help="start with empty app data folder",
         default=False,
     )
-    discover = get_discover(parser, args, parser._options)
+    discover = get_discover(parser, args)
     parser._interpreter = interpreter = discover.interpreter
     if interpreter is None:
         raise RuntimeError("failed to find interpreter for {}".format(discover))
@@ -76,9 +73,9 @@ def build_parser(args=None, options=None):
         SeederSelector(interpreter, parser),
         ActivationSelector(interpreter, parser),
     ]
-    parser.parse_known_args(args, namespace=parser._options)
+    options, _ = parser.parse_known_args(args)
     for element in parser._elements:
-        element.handle_selected_arg_parse(parser._options)
+        element.handle_selected_arg_parse(options)
     parser.enable_help()
     return parser
 
@@ -103,6 +100,5 @@ def _do_report_setup(parser, args):
     verbosity = verbosity_group.add_mutually_exclusive_group()
     verbosity.add_argument("-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=2)
     verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
-    options, _ = parser.parse_known_args(args, namespace=parser._options)
-    verbosity_value = setup_report(options.verbose, options.quiet)
-    return options, verbosity_value
+    option, _ = parser.parse_known_args(args)
+    setup_report(option.verbosity)
