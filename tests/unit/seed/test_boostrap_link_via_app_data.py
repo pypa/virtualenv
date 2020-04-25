@@ -16,7 +16,6 @@ from virtualenv.util.subprocess import Popen
 
 
 @pytest.mark.slow
-@pytest.mark.timeout(timeout=120)
 @pytest.mark.parametrize("copies", [False, True] if fs_supports_symlink() else [True])
 def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies):
     current = PythonInfo.current_system()
@@ -125,7 +124,6 @@ def test_base_bootstrap_link_via_app_data_not_writable(tmp_path, current_fastest
 
 
 @pytest.mark.slow
-@pytest.mark.timeout(timeout=60)
 @pytest.mark.parametrize("pkg", ["pip", "setuptools", "wheel"])
 def test_base_bootstrap_link_via_app_data_no(tmp_path, coverage_env, current_fastest, session_app_data, pkg):
     create_cmd = [str(tmp_path), "--seeder", "app-data", "--no-{}".format(pkg)]
