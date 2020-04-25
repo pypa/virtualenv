@@ -51,6 +51,14 @@ def run():
     result["sys"]["fs_encoding"] = sys.getfilesystemencoding()
     result["sys"]["io_encoding"] = getattr(sys.stdout, "encoding", None)
     result["version"] = sys.version
+
+    try:
+        import sysconfig
+
+        result["makefile_filename"] = sysconfig.get_makefile_filename()
+    except ImportError:
+        pass
+
     import os  # landmark
 
     result["os"] = repr(os)

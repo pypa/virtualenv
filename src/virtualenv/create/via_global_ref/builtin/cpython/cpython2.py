@@ -54,7 +54,23 @@ class CPython2(CPython, Python2):
         return dirs
 
 
-class CPython2Posix(CPython2, CPythonPosix):
+@add_metaclass(abc.ABCMeta)
+class CPython2PosixBase(CPython2, CPythonPosix):
+    """common to macOs framework builds and other posix CPython2"""
+
+    @classmethod
+    def sources(cls, interpreter):
+        for src in super(CPython2PosixBase, cls).sources(interpreter):
+            yield src
+
+        # check if the makefile exists and if so make it available under the virtual environment
+        make_file = Path(interpreter.sysconfig["makefile_filename"])
+        if make_file.exists() and str(make_file).startswith(interpreter.prefix):
+            under_prefix = make_file.relative_to(Path(interpreter.prefix))
+            yield PathRefToDest(make_file, dest=lambda self, s: self.dest / under_prefix)
+
+
+class CPython2Posix(CPython2PosixBase):
     """CPython 2 on POSIX (excluding macOs framework builds)"""
 
     @classmethod

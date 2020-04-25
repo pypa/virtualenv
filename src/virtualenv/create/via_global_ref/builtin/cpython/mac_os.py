@@ -14,7 +14,7 @@ from virtualenv.util.path import Path
 from virtualenv.util.six import ensure_text
 
 from .common import CPython, CPythonPosix, is_mac_os_framework
-from .cpython2 import CPython2
+from .cpython2 import CPython2PosixBase
 from .cpython3 import CPython3
 
 
@@ -65,7 +65,7 @@ class CPythonmacOsFramework(CPython):
         raise NotImplementedError
 
 
-class CPython2macOsFramework(CPythonmacOsFramework, CPython2, CPythonPosix):
+class CPython2macOsFramework(CPythonmacOsFramework, CPython2PosixBase):
     @classmethod
     def image_ref(cls, interpreter):
         return Path(interpreter.prefix) / "Python"

@@ -20,6 +20,7 @@ import pytest
 
 from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
+from virtualenv.create.via_global_ref.builtin.cpython.cpython2 import CPython2PosixBase
 from virtualenv.create.via_global_ref.builtin.cpython.cpython3 import CPython3Posix
 from virtualenv.create.via_global_ref.builtin.python2.python2 import Python2
 from virtualenv.discovery.builtin import get_interpreter
@@ -145,18 +146,19 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     if isolated == "global":
         cmd.append("--system-site-packages")
     result = cli_run(cmd)
+    creator = result.creator
     coverage_env()
     if IS_PYPY:
         # pypy cleans up file descriptors periodically so our (many) subprocess calls impact file descriptor limits
         # force a close of these on system where the limit is low-ish (e.g. MacOS 256)
         gc.collect()
-    purelib = result.creator.purelib
+    purelib = creator.purelib
     patch_files = {purelib / "{}.{}".format("_virtualenv", i) for i in ("py", "pyc", "pth")}
     patch_files.add(purelib / "__pycache__")
-    content = set(result.creator.purelib.iterdir()) - patch_files
+    content = set(creator.purelib.iterdir()) - patch_files
     assert not content, "\n".join(ensure_text(str(i)) for i in content)
-    assert result.creator.env_name == ensure_text(dest.name)
-    debug = result.creator.debug
+    assert creator.env_name == ensure_text(dest.name)
+    debug = creator.debug
     sys_path = cleanup_sys_path(debug["sys"]["path"])
     system_sys_path = cleanup_sys_path(system["sys"]["path"])
     our_paths = set(sys_path) - set(system_sys_path)
@@ -205,27 +207,31 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
             # for venv some repackaging does not includes the pythonx.y
             exes = exes[:-1]
     for exe in exes:
-        exe_path = result.creator.bin_dir / exe
-        assert exe_path.exists(), "\n".join(str(i) for i in result.creator.bin_dir.iterdir())
+        exe_path = creator.bin_dir / exe
+        assert exe_path.exists(), "\n".join(str(i) for i in creator.bin_dir.iterdir())
         if not exe_path.is_symlink():  # option 1: a real file
             continue  # it was a file
         link = os.readlink(str(exe_path))
         if not os.path.isabs(link):  # option 2: a relative symlink
             continue
         # option 3: an absolute symlink, should point outside the venv
-        assert not link.startswith(str(result.creator.dest))
+        assert not link.startswith(str(creator.dest))
 
     if IS_WIN and CURRENT.implementation == "CPython":
-        python_w = result.creator.exe.parent / "pythonw.exe"
+        python_w = creator.exe.parent / "pythonw.exe"
         assert python_w.exists()
-        assert python_w.read_bytes() != result.creator.exe.read_bytes()
+        assert python_w.read_bytes() != creator.exe.read_bytes()
 
     if CPython3Posix.pyvenv_launch_patch_active(PythonInfo.from_exe(python)) and creator_key != "venv":
         result = subprocess.check_output(
-            [str(result.creator.exe), "-c", 'import os; print(os.environ.get("__PYVENV_LAUNCHER__"))'],
+            [str(creator.exe), "-c", 'import os; print(os.environ.get("__PYVENV_LAUNCHER__"))'],
             universal_newlines=True,
         ).strip()
         assert result == "None"
+
+    if isinstance(creator, CPython2PosixBase):
+        make_file = debug["makefile_filename"]
+        assert os.path.exists(make_file)
 
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
