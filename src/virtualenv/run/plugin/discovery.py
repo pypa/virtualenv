@@ -9,7 +9,7 @@ class Discovery(PluginLoader):
     """"""
 
 
-def get_discover(parser, args, options):
+def get_discover(parser, args):
     discover_types = Discovery.entry_points_for("virtualenv.discovery")
     discovery_parser = parser.add_argument_group(
         title="discovery", description="discover and provide a target interpreter"
@@ -21,7 +21,7 @@ def get_discover(parser, args, options):
         required=False,
         help="interpreter discovery method",
     )
-    options, _ = parser.parse_known_args(args, namespace=options)
+    options, _ = parser.parse_known_args(args)
     if options.app_data == "<temp folder>":
         options.app_data = TempAppData()
     if options.clear_app_data:

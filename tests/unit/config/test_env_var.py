@@ -1,18 +1,12 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-from argparse import Namespace
 
 import pytest
 
 from virtualenv.config.ini import IniConfig
 from virtualenv.run import session_via_cli
 from virtualenv.util.path import Path
-
-
-def parse_cli(args):
-    options = Namespace()
-    return session_via_cli(args, options)
 
 
 @pytest.fixture()
@@ -24,13 +18,13 @@ def empty_conf(tmp_path, monkeypatch):
 
 def test_value_ok(monkeypatch, empty_conf):
     monkeypatch.setenv(str("VIRTUALENV_VERBOSE"), str("5"))
-    result = parse_cli(["venv"])
+    result = session_via_cli(["venv"])
     assert result.verbosity == 5
 
 
 def test_value_bad(monkeypatch, caplog, empty_conf):
     monkeypatch.setenv(str("VIRTUALENV_VERBOSE"), str("a"))
-    result = parse_cli(["venv"])
+    result = session_via_cli(["venv"])
     assert result.verbosity == 2
     assert len(caplog.messages) == 1
     assert "env var VIRTUALENV_VERBOSE failed to convert" in caplog.messages[0]
@@ -44,7 +38,7 @@ def test_extra_search_dir_via_env_var(tmp_path, monkeypatch):
     (tmp_path / "a").mkdir()
     (tmp_path / "b").mkdir()
     (tmp_path / "c").mkdir()
-    result = parse_cli(["venv"])
+    result = session_via_cli(["venv"])
     assert result.seeder.extra_search_dir == [Path("a").resolve(), Path("b").resolve(), Path("c").resolve()]
 
 
@@ -65,5 +59,5 @@ def test_value_alias(monkeypatch, mocker, empty_conf):
     monkeypatch.delenv(str("SYMLINKS"), raising=False)
     monkeypatch.delenv(str("VIRTUALENV_COPIES"), raising=False)
     monkeypatch.setenv(str("VIRTUALENV_ALWAYS_COPY"), str("1"))
-    result = parse_cli(["venv"])
+    result = session_via_cli(["venv"])
     assert result.creator.symlinks is False

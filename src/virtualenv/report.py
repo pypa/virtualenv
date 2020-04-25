@@ -18,8 +18,7 @@ MAX_LEVEL = max(LEVELS.keys())
 LOGGER = logging.getLogger()
 
 
-def setup_report(verbose, quiet):
-    verbosity = max(verbose - quiet, 0)
+def setup_report(verbosity):
     _clean_handlers(LOGGER)
     if verbosity > MAX_LEVEL:
         verbosity = MAX_LEVEL  # pragma: no cover

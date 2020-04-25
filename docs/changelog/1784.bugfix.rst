@@ -1,0 +1,3 @@
+Better handling of optionlicting :option:`copies` and :option:`symlinks`. Introduce priority of where the option is set
+to follow the order: CLI, env var, file, hardcoded. If both set at same level prefers copy over symlink. - by
+user:`gaborbernat`.

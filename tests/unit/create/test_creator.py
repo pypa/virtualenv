@@ -349,7 +349,9 @@ def test_cross_major(cross_python, coverage_env, tmp_path, session_app_data, cur
 
 def test_create_parallel(tmp_path, monkeypatch, temp_app_data):
     def create(count):
-        subprocess.check_call([sys.executable, "-m", "virtualenv", str(tmp_path / "venv{}".format(count))])
+        subprocess.check_call(
+            [sys.executable, "-m", "virtualenv", "-vvv", str(tmp_path / "venv{}".format(count)), "--without-pip"]
+        )
 
     threads = [Thread(target=create, args=(i,)) for i in range(1, 4)]
     for thread in threads:
@@ -386,6 +388,7 @@ def test_create_long_path(current_fastest, tmp_path):
     subprocess.check_call([str(result.creator.script("pip")), "--version"])
 
 
+@pytest.mark.timeout(timeout=60)
 @pytest.mark.parametrize("creator", set(PythonInfo.current_system().creators().key_to_class) - {"builtin"})
 def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
     result = cli_run([ensure_text(str(tmp_path / "venv")), "--activators", "", "--creator", creator])
