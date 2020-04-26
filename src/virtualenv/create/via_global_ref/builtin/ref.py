@@ -122,6 +122,8 @@ class PathRefToDest(PathRef):
         dest = self.dest(creator, self.src)
         method = self.method(symlinks)
         dest_iterable = dest if isinstance(dest, list) else (dest,)
+        if not dest.parent.exists():
+            dest.parent.mkdir(parents=True, exist_ok=True)
         for dst in dest_iterable:
             method(self.src, dst)
 

@@ -51,6 +51,14 @@ def run():
     result["sys"]["fs_encoding"] = sys.getfilesystemencoding()
     result["sys"]["io_encoding"] = getattr(sys.stdout, "encoding", None)
     result["version"] = sys.version
+
+    try:
+        import sysconfig
+
+        result["makefile_filename"] = encode_path(sysconfig.get_makefile_filename())
+    except ImportError:
+        pass
+
     import os  # landmark
 
     result["os"] = repr(os)
@@ -84,11 +92,16 @@ def run():
         import json
 
         result["json"] = repr(json)
-        print(json.dumps(result, indent=2))
-    except (ImportError, ValueError, TypeError) as exception:  # pragma: no cover
-        result["json"] = repr(exception)  # pragma: no cover
-        print(repr(result))  # pragma: no cover
-        raise SystemExit(1)  # pragma: no cover
+    except ImportError as exception:
+        result["json"] = repr(exception)
+    else:
+        try:
+            content = json.dumps(result, indent=2)
+            sys.stdout.write(content)
+        except (ValueError, TypeError) as exception:  # pragma: no cover
+            sys.stderr.write(repr(exception))
+            sys.stdout.write(repr(result))  # pragma: no cover
+            raise SystemExit(1)  # pragma: no cover
 
 
 if __name__ == "__main__":

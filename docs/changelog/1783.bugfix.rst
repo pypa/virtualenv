@@ -1,0 +1,1 @@
+On CPython2 POSIX platforms ensure ``syconfig.get_makefile_filename`` exists within the virtual environment (this is used by some c-extension based libraries - e.g. numpy - for building) - by :user:`gaborbernat`.
