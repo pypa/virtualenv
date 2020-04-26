@@ -129,7 +129,7 @@ def _get_wheels(from_folder, packages):
 
 
 def download_wheel(packages, for_py_version, to_folder, app_data):
-    to_download = list(p if v is None else "{}={}".format(p, v) for p, v in packages.items())
+    to_download = list(p if v is None else "{}=={}".format(p, v) for p, v in packages.items())
     logging.debug("download wheels %s", to_download)
     cmd = [
         sys.executable,

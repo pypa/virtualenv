@@ -1,0 +1,1 @@
+Fix pinning seed packages via ``app-data`` seeder raised ``Invalid Requirement`` - by :user:`gaborbernat`.
