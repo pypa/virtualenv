@@ -159,6 +159,7 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     assert not content, "\n".join(ensure_text(str(i)) for i in content)
     assert creator.env_name == ensure_text(dest.name)
     debug = creator.debug
+    assert "exception" not in debug, "{}\n{}\n{}".format(debug.get("exception"), debug.get("out"), debug.get("err"))
     sys_path = cleanup_sys_path(debug["sys"]["path"])
     system_sys_path = cleanup_sys_path(system["sys"]["path"])
     our_paths = set(sys_path) - set(system_sys_path)
