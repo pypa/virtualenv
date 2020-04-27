@@ -313,7 +313,13 @@ class PythonInfo(object):
         proposed = from_exe(cls, app_data, exe, raise_on_error=raise_on_error, ignore_cache=ignore_cache)
         # noinspection PyProtectedMember
         if isinstance(proposed, PythonInfo) and resolve_to_host:
-            proposed = proposed._resolve_to_system(app_data, proposed)
+            try:
+                proposed = proposed._resolve_to_system(app_data, proposed)
+            except Exception as exception:
+                if raise_on_error:
+                    raise exception
+                logging.info("ignore %s due cannot resolve system due to %r", proposed.original_executable, exception)
+                proposed = None
         return proposed
 
     @classmethod
