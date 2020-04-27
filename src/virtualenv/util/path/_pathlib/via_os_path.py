@@ -111,9 +111,9 @@ class Path(object):
     def parents(self):
         result = []
         parts = self.parts
-        for i in range(len(parts)):
+        for i in range(len(parts) - 1):
             result.append(Path(os.sep.join(parts[0 : i + 1])))
-        return result
+        return result[::-1]
 
     def unlink(self):
         os.remove(self._path)
