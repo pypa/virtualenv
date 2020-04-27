@@ -1,3 +1,5 @@
+from __future__ import absolute_import, unicode_literals
+
 from virtualenv import cli_run
 from virtualenv.util.six import ensure_text
 from virtualenv.util.subprocess import run_cmd
