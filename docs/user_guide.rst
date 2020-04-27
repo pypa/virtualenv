@@ -8,11 +8,10 @@ Virtualenv has one basic command:
 
 .. code-block:: console
 
-    virtualenv
+    virtualenv venv
 
 This will create a python virtual environment of the same version as virtualenv is installed into under path
-``venv``. The path where to generate the virtual environment can be changed via a positional argument being passed in,
-see the :option:`dest` flag. The command line tool has quite a few of flags that modify the components behaviour, for a
+``venv``. The command line tool has quite a few of flags that modify the tool's behaviour, for a
 full list make sure to check out :ref:`cli_flags`.
 
 The tool works in two phases:
