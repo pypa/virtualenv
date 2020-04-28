@@ -297,3 +297,14 @@ def test_py_info_setuptools():
 
     assert Distribution
     PythonInfo()
+
+
+def test_py_info_to_system_raises(session_app_data, mocker, caplog):
+    caplog.set_level(logging.DEBUG)
+    mocker.patch.object(PythonInfo, "_find_possible_folders", return_value=[])
+    result = PythonInfo.from_exe(sys.executable, app_data=session_app_data, raise_on_error=False)
+    assert result is None
+    log = caplog.records[-1]
+    assert log.levelno == logging.INFO
+    expected = "ignore {} due cannot resolve system due to RuntimeError('failed to detect ".format(sys.executable)
+    assert expected in log.message

@@ -1,0 +1,2 @@
+Do not stop interpreter discovery if we fail to find the system interpreter for a executable during discovery
+- by :user:`gaborbernat`.
