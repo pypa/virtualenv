@@ -107,7 +107,8 @@ Linux
 
 macOS
 ~~~~~
-In case of macOS we support::
+In case of macOS we support:
+
 - installations from `python.org <https://www.python.org/downloads/>`_
 - python versions installed via `brew <https://docs.brew.sh/Homebrew-and-Python>`_ (both older python2.7 and python3)
 - Python 3 part of XCode (Python framework - ``/Library/Frameworks/Python3.framework/``)
