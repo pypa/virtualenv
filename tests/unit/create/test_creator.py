@@ -23,7 +23,6 @@ from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.create.via_global_ref.builtin.cpython.cpython2 import CPython2PosixBase
 from virtualenv.create.via_global_ref.builtin.cpython.cpython3 import CPython3Posix
 from virtualenv.create.via_global_ref.builtin.python2.python2 import Python2
-from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_PYPY, IS_WIN, PY2, PY3, fs_is_case_sensitive
 from virtualenv.pyenv_cfg import PyEnvCfg
@@ -313,18 +312,6 @@ def test_prompt_set(tmp_path, creator, prompt):
         if creator != "venv":
             assert "prompt" in cfg, list(cfg.content.keys())
             assert cfg["prompt"] == actual_prompt
-
-
-@pytest.fixture(scope="session")
-def cross_python(is_inside_ci, session_app_data):
-    spec = "{}{}".format(CURRENT.implementation, 2 if CURRENT.version_info.major == 3 else 3)
-    interpreter = get_interpreter(spec, session_app_data)
-    if interpreter is None:
-        msg = "could not find {}".format(spec)
-        if is_inside_ci:
-            raise RuntimeError(msg)
-        pytest.skip(msg=msg)
-    yield interpreter
 
 
 @pytest.mark.slow

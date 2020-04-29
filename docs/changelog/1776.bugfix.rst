@@ -1,0 +1,1 @@
+Fix generating a Python 2 environment from Python 3 creates invalid python activator - by :user:`gaborbernat`.
