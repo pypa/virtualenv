@@ -25,9 +25,10 @@ class ViaTemplateActivator(Activator):
     def generate(self, creator):
         dest_folder = creator.bin_dir
         replacements = self.replacements(creator, dest_folder)
-        self._generate(replacements, self.templates(), dest_folder, creator)
+        at_path = self._generate(replacements, self.templates(), dest_folder, creator)
         if self.flag_prompt is not None:
             creator.pyenv_cfg["prompt"] = self.flag_prompt
+        return at_path
 
     def replacements(self, creator, dest_folder):
         return {
@@ -43,6 +44,7 @@ class ViaTemplateActivator(Activator):
             text = self.instantiate_template(replacements, template, creator)
             dest = to_folder / self.as_name(template)
             dest.write_text(text, encoding="utf-8")
+            return dest
 
     def as_name(self, template):
         return template.name
