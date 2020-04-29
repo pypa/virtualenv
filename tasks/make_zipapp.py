@@ -206,13 +206,10 @@ class WheelDownloader(object):
                 finally:
                     # permission error on Windows <3.7 https://bugs.python.org/issue26660
                     def onerror(func, path, exc_info):
-                        if not os.access(path, os.W_OK):
-                            os.chmod(path, S_IWUSR)
-                            func(path)
-                        else:
-                            raise
+                        os.chmod(path, S_IWUSR)
+                        func(path)
 
-                    shutil.rmtree(folder, onerror=onerror)
+                    shutil.rmtree(str(folder), onerror=onerror)
 
         else:
             return self._build_sdist(target.parent / target.stem, target)
