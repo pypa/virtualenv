@@ -29,7 +29,15 @@ def zipapp_build_env(tmp_path_factory):
                 try:
                     # create a virtual environment which is also guaranteed to contain a recent enough pip (bundled)
                     session = cli_run(
-                        ["-vvv", "-p", "{}3.{}".format(impl, version), "--activators", "", str(create_env_path)]
+                        [
+                            "-vvv",
+                            "-p",
+                            "{}3.{}".format(impl, version),
+                            "--activators",
+                            "",
+                            str(create_env_path),
+                            "--no-download",
+                        ]
                     )
                     exe = str(session.creator.exe)
                     found = True
