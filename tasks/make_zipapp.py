@@ -12,12 +12,13 @@ import zipfile
 from collections import defaultdict, deque
 from email import message_from_string
 from pathlib import Path, PurePosixPath
+from stat import S_IWUSR
 from tempfile import TemporaryDirectory
 
 from packaging.markers import Marker
 from packaging.requirements import Requirement
 
-HERE = Path(__file__).parent
+HERE = Path(__file__).parent.absolute()
 
 VERSIONS = ["3.{}".format(i) for i in range(9, 3, -1)] + ["2.7"]
 
@@ -194,9 +195,26 @@ class WheelDownloader(object):
 
     def build_sdist(self, target):
         if target.is_dir():
-            folder = self.into
+            # pip 20.1 no longer guarantees this to be parallel safe, need to copy/lock
+            with TemporaryDirectory() as temp_folder:
+                folder = Path(temp_folder) / target.name
+                shutil.copytree(
+                    str(target), str(folder), ignore=shutil.ignore_patterns(".tox", "venv", "__pycache__", "*.pyz"),
+                )
+                try:
+                    return self._build_sdist(self.into, folder)
+                finally:
+                    # permission error on Windows <3.7 https://bugs.python.org/issue26660
+                    def onerror(func, path, exc_info):
+                        os.chmod(path, S_IWUSR)
+                        func(path)
+
+                    shutil.rmtree(str(folder), onerror=onerror)
+
         else:
-            folder = target.parent / target.stem
+            return self._build_sdist(target.parent / target.stem, target)
+
+    def _build_sdist(self, folder, target):
         if not folder.exists() or not list(folder.iterdir()):
             cmd = self.pip_cmd + ["wheel", "-w", str(folder), "--no-deps", str(target), "-q"]
             run_suppress_output(cmd, stop_print_on_fail=True)
