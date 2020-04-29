@@ -12,6 +12,7 @@ import zipfile
 from collections import defaultdict, deque
 from email import message_from_string
 from pathlib import Path, PurePosixPath
+from stat import S_IWUSR
 from tempfile import TemporaryDirectory
 
 from packaging.markers import Marker
@@ -198,12 +199,21 @@ class WheelDownloader(object):
             with TemporaryDirectory() as temp_folder:
                 folder = Path(temp_folder) / target.name
                 shutil.copytree(
-                    str(target),
-                    str(folder),
-                    ignore=shutil.ignore_patterns(".tox", "venv", "__pycache__", "*.pyz"),
-                    copy_function=shutil.copy,
+                    str(target), str(folder), ignore=shutil.ignore_patterns(".tox", "venv", "__pycache__", "*.pyz"),
                 )
-                return self._build_sdist(self.into, folder)
+                try:
+                    return self._build_sdist(self.into, folder)
+                finally:
+                    # permission error on Windows <3.7 https://bugs.python.org/issue26660
+                    def onerror(func, path, exc_info):
+                        if not os.access(path, os.W_OK):
+                            os.chmod(path, S_IWUSR)
+                            func(path)
+                        else:
+                            raise
+
+                    shutil.rmtree(folder, onerror=onerror)
+
         else:
             return self._build_sdist(target.parent / target.stem, target)
 
