@@ -17,16 +17,16 @@ def test_pep514(_mock_registry):
 
     interpreters = list(discover_pythons())
     assert interpreters == [
-        ("ContinuumAnalytics", 3, 7, 32, "C:\\Users\\traveler\\Miniconda3\\python.exe", None),
-        ("ContinuumAnalytics", 3, 7, 64, "C:\\Users\\traveler\\Miniconda3-64\\python.exe", None),
-        ("python", 3, 6, 64, "C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
-        ("python", 3, 6, 64, "C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
-        ("python", 3, 5, 64, "C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python35\\python.exe", None),
-        ("python", 3, 6, 64, "C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
-        ("python", 3, 7, 32, "C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python37-32\\python.exe", None),
-        ("python", 3, 9, 64, "C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
-        ("python", 2, 7, 64, "C:\\Python27\\python.exe", None),
-        ("python", 3, 4, 64, "C:\\Python34\\python.exe", None),
+        ("ContinuumAnalytics", 3, 7, 32, "C:\\Users\\user\\Miniconda3\\python.exe", None),
+        ("ContinuumAnalytics", 3, 7, 64, "C:\\Users\\user\\Miniconda3-64\\python.exe", None),
+        ("PythonCore", 3, 6, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
+        ("PythonCore", 3, 6, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
+        ("PythonCore", 3, 5, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python35\\python.exe", None),
+        ("PythonCore", 3, 6, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
+        ("PythonCore", 3, 7, 32, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python37-32\\python.exe", None),
+        ("PythonCore", 3, 9, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
+        ("PythonCore", 2, 7, 64, "C:\\Python27\\python.exe", None),
+        ("PythonCore", 3, 4, 64, "C:\\Python34\\python.exe", None),
     ]
 
 
@@ -38,16 +38,16 @@ def test_pep514_run(_mock_registry, capsys, caplog):
     out, err = capsys.readouterr()
     expected = textwrap.dedent(
         r"""
-    ('ContinuumAnalytics', 3, 7, 32, 'C:\\Users\\traveler\\Miniconda3\\python.exe', None)
-    ('ContinuumAnalytics', 3, 7, 64, 'C:\\Users\\traveler\\Miniconda3-64\\python.exe', None)
-    ('python', 2, 7, 64, 'C:\\Python27\\python.exe', None)
-    ('python', 3, 4, 64, 'C:\\Python34\\python.exe', None)
-    ('python', 3, 5, 64, 'C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python35\\python.exe', None)
-    ('python', 3, 6, 64, 'C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
-    ('python', 3, 6, 64, 'C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
-    ('python', 3, 6, 64, 'C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
-    ('python', 3, 7, 32, 'C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python37-32\\python.exe', None)
-    ('python', 3, 9, 64, 'C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
+    ('ContinuumAnalytics', 3, 7, 32, 'C:\\Users\\user\\Miniconda3\\python.exe', None)
+    ('ContinuumAnalytics', 3, 7, 64, 'C:\\Users\\user\\Miniconda3-64\\python.exe', None)
+    ('PythonCore', 2, 7, 64, 'C:\\Python27\\python.exe', None)
+    ('PythonCore', 3, 4, 64, 'C:\\Python34\\python.exe', None)
+    ('PythonCore', 3, 5, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python35\\python.exe', None)
+    ('PythonCore', 3, 6, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
+    ('PythonCore', 3, 6, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
+    ('PythonCore', 3, 6, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
+    ('PythonCore', 3, 7, 32, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python37-32\\python.exe', None)
+    ('PythonCore', 3, 9, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
     """
     ).strip()
     assert out.strip() == expected

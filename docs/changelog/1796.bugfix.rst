@@ -1,0 +1,1 @@
+Fix CPython 2 is not discovered from Windows registry - by :user:`gaborbernat`.

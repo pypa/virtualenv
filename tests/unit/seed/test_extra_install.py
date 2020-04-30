@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
+import shutil
 import subprocess
 
 import pytest
@@ -36,7 +37,9 @@ def builtin_shows_marker_missing():
 )
 @pytest.mark.parametrize("creator", list(i for i in CREATOR_CLASSES.keys() if i != "builtin"))
 def test_can_build_c_extensions(creator, tmp_path, coverage_env):
-    session = cli_run(["--creator", creator, "--seed", "app-data", str(tmp_path), "-vvv"])
+    env, greet = tmp_path / "env", str(tmp_path / "greet")
+    shutil.copytree(str(Path(__file__).parent.resolve() / "greet"), greet)
+    session = cli_run(["--creator", creator, "--seed", "app-data", str(env), "-vvv"])
     coverage_env()
     cmd = [
         str(session.creator.script("pip")),
@@ -45,7 +48,7 @@ def test_can_build_c_extensions(creator, tmp_path, coverage_env):
         "--no-deps",
         "--disable-pip-version-check",
         "-vvv",
-        str(Path(__file__).parent.resolve() / "greet"),
+        greet,
     ]
     process = Popen(cmd)
     process.communicate()

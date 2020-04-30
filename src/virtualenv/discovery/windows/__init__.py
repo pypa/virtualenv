@@ -13,6 +13,8 @@ def propose_interpreters(spec, cache_dir):
     # see if PEP-514 entries are good
     for name, major, minor, arch, exe, _ in discover_pythons():
         # pre-filter
+        if name in ("PythonCore",):
+            name = "CPython"
         registry_spec = PythonSpec(None, name, major, minor, None, arch, exe)
         if registry_spec.satisfies(spec):
             interpreter = Pep514PythonInfo.from_exe(exe, cache_dir, raise_on_error=False)
