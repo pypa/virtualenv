@@ -24,6 +24,19 @@ def pytest_addoption(parser):
     parser.addoption("--int", action="store_true", default=False, help="run integration tests")
 
 
+def pytest_configure(config):
+    """Ensure randomly is called before we re-order"""
+    manager = config.pluginmanager
+    # noinspection PyProtectedMember
+    order = manager.hook.pytest_collection_modifyitems._nonwrappers
+    dest = next((i for i, p in enumerate(order) if p.plugin is manager.getplugin("randomly")), None)
+    if dest is not None:
+        from_pos = next(i for i, p in enumerate(order) if p.plugin is manager.getplugin(__file__))
+        temp = order[dest]
+        order[dest] = order[from_pos]
+        order[from_pos] = temp
+
+
 def pytest_collection_modifyitems(config, items):
     int_location = os.path.join("tests", "integration", "").rstrip()
     if len(items) == 1:
