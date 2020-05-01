@@ -330,8 +330,6 @@ def cross_python(is_inside_ci, session_app_data):
 @pytest.mark.slow
 def test_cross_major(cross_python, coverage_env, tmp_path, session_app_data, current_fastest):
     cmd = [
-        "-v",
-        "-v",
         "-p",
         ensure_text(cross_python.executable),
         ensure_text(str(tmp_path)),
