@@ -11,9 +11,14 @@ class Pep514PythonInfo(PythonInfo):
 
 def propose_interpreters(spec, cache_dir):
     # see if PEP-514 entries are good
-    for name, major, minor, arch, exe, _ in discover_pythons():
+
+    # start with higher python versions in an effort to use the latest version available
+    existing = list(discover_pythons())
+    existing.sort(key=lambda i: tuple(-1 if j is None else j for j in i[1:4]), reverse=True)
+
+    for name, major, minor, arch, exe, _ in existing:
         # pre-filter
-        if name in ("PythonCore",):
+        if name in ("PythonCore", "ContinuumAnalytics"):
             name = "CPython"
         registry_spec = PythonSpec(None, name, major, minor, None, arch, exe)
         if registry_spec.satisfies(spec):
