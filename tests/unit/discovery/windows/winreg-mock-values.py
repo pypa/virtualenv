@@ -46,22 +46,22 @@ key_open = {
 value_collect = {
     78703568: {"SysVersion": ("3.7", 1), "SysArchitecture": ("32bit", 1)},
     78703200: {
-        "ExecutablePath": ("C:\\Users\\traveler\\Miniconda3\\python.exe", 1),
+        "ExecutablePath": ("C:\\Users\\user\\Miniconda3\\python.exe", 1),
         "ExecutableArguments": OSError(2, "The system cannot find the file specified"),
     },
     78702368: {"SysVersion": ("3.7", 1), "SysArchitecture": ("64bit", 1)},
     78703520: {
-        "ExecutablePath": ("C:\\Users\\traveler\\Miniconda3-64\\python.exe", 1),
+        "ExecutablePath": ("C:\\Users\\user\\Miniconda3-64\\python.exe", 1),
         "ExecutableArguments": OSError(2, "The system cannot find the file specified"),
     },
     78700704: {"SysVersion": ("3.6", 1), "SysArchitecture": ("magic", 1)},
     78701824: {
-        "ExecutablePath": ("C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", 1),
+        "ExecutablePath": ("C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", 1),
         "ExecutableArguments": OSError(2, "The system cannot find the file specified"),
     },
     78704368: {"SysVersion": ("3.6", 1), "SysArchitecture": (100, 4)},
     78704048: {
-        "ExecutablePath": ("C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", 1),
+        "ExecutablePath": ("C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", 1),
         "ExecutableArguments": OSError(2, "The system cannot find the file specified"),
     },
     78703024: {"SysVersion": ("3.6", 1), "SysArchitecture": ("64bit", 1)},
@@ -74,17 +74,17 @@ value_collect = {
         "SysArchitecture": OSError(2, "The system cannot find the file specified"),
     },
     78703792: {
-        "ExecutablePath": ("C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python35\\python.exe", 1),
+        "ExecutablePath": ("C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python35\\python.exe", 1),
         "ExecutableArguments": OSError(2, "The system cannot find the file specified"),
     },
     78703424: {"SysVersion": ("3.6", 1), "SysArchitecture": ("64bit", 1)},
     78701888: {
-        "ExecutablePath": ("C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", 1),
+        "ExecutablePath": ("C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", 1),
         "ExecutableArguments": OSError(2, "The system cannot find the file specified"),
     },
     78704512: {"SysVersion": ("3.7", 1), "SysArchitecture": ("32bit", 1)},
     78703600: {
-        "ExecutablePath": ("C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python37-32\\python.exe", 1),
+        "ExecutablePath": ("C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python37-32\\python.exe", 1),
         "ExecutableArguments": OSError(2, "The system cannot find the file specified"),
     },
     78700656: {
@@ -93,7 +93,7 @@ value_collect = {
     },
     78702608: {"SysVersion": ("magic", 1), "SysArchitecture": ("64bit", 1)},
     78703632: {
-        "ExecutablePath": ("C:\\Users\\traveler\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", 1),
+        "ExecutablePath": ("C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", 1),
         "ExecutableArguments": OSError(2, "The system cannot find the file specified"),
     },
     78703088: {"SysVersion": (2778, 11)},

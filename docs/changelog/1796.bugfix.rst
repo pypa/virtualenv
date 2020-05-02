@@ -1,0 +1,2 @@
+Fix CPython is not discovered from Windows registry, and discover pythons from Windows registry in decreasing order
+by version - by :user:`gaborbernat`.

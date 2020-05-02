@@ -73,8 +73,7 @@ def process_tag(hive_name, company, company_key, tag, default_arch):
                 exe_data = load_exe(hive_name, company, company_key, tag)
                 if exe_data is not None:
                     exe, args = exe_data
-                    name = str("python") if company == "PythonCore" else company
-                    return name, major, minor, arch, exe, args
+                    return company, major, minor, arch, exe, args
 
 
 def load_exe(hive_name, company, company_key, tag):
