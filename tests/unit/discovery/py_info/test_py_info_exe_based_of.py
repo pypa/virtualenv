@@ -17,11 +17,11 @@ def test_discover_empty_folder(tmp_path, monkeypatch, session_app_data):
         CURRENT.discover_exe(session_app_data, prefix=str(tmp_path))
 
 
-BASE = {CURRENT.distutils_install["scripts"], "."}
+BASE = (CURRENT.distutils_install["scripts"], ".")
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
-@pytest.mark.parametrize("suffix", {".exe", ".cmd", ""} & set(EXTENSIONS) if IS_WIN else [""])
+@pytest.mark.parametrize("suffix", sorted({".exe", ".cmd", ""} & set(EXTENSIONS) if IS_WIN else [""]))
 @pytest.mark.parametrize("into", BASE)
 @pytest.mark.parametrize("arch", [CURRENT.architecture, ""])
 @pytest.mark.parametrize("version", [".".join(str(i) for i in CURRENT.version_info[0:i]) for i in range(3, 0, -1)])
