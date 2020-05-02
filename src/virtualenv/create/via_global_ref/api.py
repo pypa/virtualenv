@@ -19,7 +19,7 @@ class ViaGlobalRefMeta(CreatorMeta):
         self.copy_error = None
         self.symlink_error = None
         if not fs_supports_symlink():
-            self.symlink = "the filesystem does not supports symlink"
+            self.symlink_error = "the filesystem does not supports symlink"
 
     @property
     def can_copy(self):
