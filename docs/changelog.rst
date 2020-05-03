@@ -5,6 +5,25 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.19 (2020-05-03)
+---------------------
+
+Bugfixes - 20.0.19
+~~~~~~~~~~~~~~~~~~
+- Fix generating a Python 2 environment from Python 3 creates invalid python activator - by :user:`gaborbernat`. (`#1776 <https://github.com/pypa/virtualenv/issues/1776>`_)
+- Fix pinning seed packages via ``app-data`` seeder raised ``Invalid Requirement`` - by :user:`gaborbernat`. (`#1779 <https://github.com/pypa/virtualenv/issues/1779>`_)
+- Do not stop interpreter discovery if we fail to find the system interpreter for a executable during discovery
+  - by :user:`gaborbernat`. (`#1781 <https://github.com/pypa/virtualenv/issues/1781>`_)
+- On CPython2 POSIX platforms ensure ``syconfig.get_makefile_filename`` exists within the virtual environment (this is used by some c-extension based libraries - e.g. numpy - for building) - by :user:`gaborbernat`. (`#1783 <https://github.com/pypa/virtualenv/issues/1783>`_)
+- Better handling of options :option:`copies` and :option:`symlinks`. Introduce priority of where the option is set
+  to follow the order: CLI, env var, file, hardcoded. If both set at same level prefers copy over symlink. - by
+  :user:`gaborbernat`. (`#1784 <https://github.com/pypa/virtualenv/issues/1784>`_)
+- Upgrade pip for Python ``2.7`` and ``3.5+`` from ``20.0.2`` to ``20.1`` - by :user:`gaborbernat`. (`#1793 <https://github.com/pypa/virtualenv/issues/1793>`_)
+- Fix CPython is not discovered from Windows registry, and discover pythons from Windows registry in decreasing order
+  by version - by :user:`gaborbernat`. (`#1796 <https://github.com/pypa/virtualenv/issues/1796>`_)
+- Fix symlink detection for creators - by :user:`asottile` (`#1803 <https://github.com/pypa/virtualenv/issues/1803>`_)
+
+
 v20.0.18 (2020-04-16)
 ---------------------
 
