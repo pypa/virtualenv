@@ -315,18 +315,6 @@ def test_prompt_set(tmp_path, creator, prompt):
             assert cfg["prompt"] == actual_prompt
 
 
-@pytest.fixture(scope="session")
-def cross_python(is_inside_ci, session_app_data):
-    spec = "{}{}".format(CURRENT.implementation, 2 if CURRENT.version_info.major == 3 else 3)
-    interpreter = get_interpreter(spec, session_app_data)
-    if interpreter is None:
-        msg = "could not find {}".format(spec)
-        if is_inside_ci:
-            raise RuntimeError(msg)
-        pytest.skip(msg=msg)
-    yield interpreter
-
-
 @pytest.mark.slow
 def test_cross_major(cross_python, coverage_env, tmp_path, session_app_data, current_fastest):
     cmd = [
