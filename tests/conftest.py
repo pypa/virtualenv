@@ -11,8 +11,8 @@ from functools import partial
 import coverage
 import pytest
 import six
-from virtualenv.discovery.builtin import get_interpreter
 
+from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
 from virtualenv.report import LOGGER
@@ -323,7 +323,7 @@ def temp_app_data(monkeypatch, tmp_path):
 
 @pytest.fixture(scope="session")
 def cross_python(is_inside_ci, session_app_data):
-    spec = "{}{}".format(sys.implementation, 2 if sys.version_info[0] == 3 else 3)
+    spec = str(2 if sys.version_info[0] == 3 else 3)
     interpreter = get_interpreter(spec, session_app_data)
     if interpreter is None:
         msg = "could not find {}".format(spec)

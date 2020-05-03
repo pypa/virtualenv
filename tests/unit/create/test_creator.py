@@ -23,7 +23,6 @@ from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.create.via_global_ref.builtin.cpython.cpython2 import CPython2PosixBase
 from virtualenv.create.via_global_ref.builtin.cpython.cpython3 import CPython3Posix
 from virtualenv.create.via_global_ref.builtin.python2.python2 import Python2
-from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_PYPY, IS_WIN, PY2, PY3, fs_is_case_sensitive
 from virtualenv.pyenv_cfg import PyEnvCfg
