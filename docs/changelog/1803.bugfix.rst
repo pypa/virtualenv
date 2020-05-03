@@ -1,1 +1,0 @@
-Fix symlink detection for creators - by :user:`asottile`
