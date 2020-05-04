@@ -154,6 +154,15 @@ class Creator(object):
             safe_delete(self.dest)
         self.create()
         self.set_pyenv_cfg()
+        self._ensure_gitignore()
+
+    def _ensure_gitignore(self):
+        """
+        Ignore the virtualenv directory from git.
+        """
+        self.dest.joinpath(".gitignore").write_text(
+            "# placed by virtualenv automatically, do not change\n*", encoding="UTF-8"
+        )
 
     def set_pyenv_cfg(self):
         self.pyenv_cfg.content = OrderedDict()

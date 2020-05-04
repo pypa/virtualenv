@@ -1,0 +1,1 @@
+Ensure that the virtualenv dir created is ignored by Git
