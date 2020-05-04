@@ -55,7 +55,14 @@ def run():
     try:
         import sysconfig
 
-        result["makefile_filename"] = encode_path(sysconfig.get_makefile_filename())
+        try:
+            get_makefile_filename = sysconfig.get_makefile_filename
+        except AttributeError:
+            # On some platforms, get_makefile_filename doesn't exist
+            #  https://bugs.python.org/issue22199
+            get_makefile_filename = sysconfig._get_makefile_filename
+
+        result["makefile_filename"] = encode_path(get_makefile_filename())
     except ImportError:
         pass
 

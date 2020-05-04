@@ -24,6 +24,14 @@ def _get_path_extensions():
     return list(OrderedDict.fromkeys([""] + os.environ.get("PATHEXT", "").lower().split(os.pathsep)))
 
 
+try:
+    get_makefile_filename = sysconfig.get_makefile_filename
+except AttributeError:
+    # On some platforms, get_makefile_filename doesn't exist
+    #  https://bugs.python.org/issue22199
+    get_makefile_filename = sysconfig._get_makefile_filename
+
+
 EXTENSIONS = _get_path_extensions()
 _CONF_VAR_RE = re.compile(r"\{\w+\}")
 
@@ -78,8 +86,9 @@ class PythonInfo(object):
 
         self.sysconfig = {
             u(k): u(v)
-            for k, v in [  # a list of content to store from sysconfig
-                ("makefile_filename", sysconfig.get_makefile_filename()),
+            for k, v in [
+                # a list of content to store from sysconfig
+                ("makefile_filename", get_makefile_filename()),
             ]
             if k is not None
         }
