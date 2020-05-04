@@ -21,7 +21,16 @@ from . import BUNDLE_SUPPORT, MAX
 BUNDLE_FOLDER = Path(os.path.abspath(__file__)).parent
 
 
-def get_wheels(for_py_version, wheel_cache_dir, extra_search_dir, download, packages, app_data):
+class WheelDownloadFail(ValueError):
+    def __init__(self, packages, for_py_version, exit_code, out, err):
+        self.packages = packages
+        self.for_py_version = for_py_version
+        self.exit_code = exit_code
+        self.out = out.strip()
+        self.err = err.strip()
+
+
+def get_wheels(for_py_version, wheel_cache_dir, extra_search_dir, packages, app_data, download):
     # not all wheels are compatible with all python versions, so we need to py version qualify it
     processed = copy(packages)
     # 1. acquire from bundle
@@ -147,11 +156,11 @@ def download_wheel(packages, for_py_version, to_folder, app_data):
     cmd.extend(to_download)
     # pip has no interface in python - must be a new sub-process
 
-    with pip_wheel_env_run("{}{}".format(*sys.version_info[0:2]), app_data) as env:
-        process = Popen(cmd, env=env, stdout=subprocess.PIPE)
-        process.communicate()
+    with pip_wheel_env_run("{}.{}".format(*sys.version_info[0:2]), app_data) as env:
+        process = Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        out, err = process.communicate()
         if process.returncode != 0:
-            raise RuntimeError("failed to download wheels")
+            raise WheelDownloadFail(packages, for_py_version, process.returncode, out, err)
 
 
 @contextmanager

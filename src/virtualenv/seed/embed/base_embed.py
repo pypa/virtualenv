@@ -46,19 +46,19 @@ class BaseEmbed(Seeder):
     def add_parser_arguments(cls, parser, interpreter, app_data):
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
-            "--download",
-            dest="download",
-            action="store_true",
-            help="pass to enable download of the latest {} from PyPI".format("/".join(cls.packages)),
-            default=False,
-        )
-        group.add_argument(
             "--no-download",
             "--never-download",
             dest="download",
             action="store_false",
             help="pass to disable download of the latest {} from PyPI".format("/".join(cls.packages)),
             default=True,
+        )
+        group.add_argument(
+            "--download",
+            dest="download",
+            action="store_true",
+            help="pass to enable download of the latest {} from PyPI".format("/".join(cls.packages)),
+            default=False,
         )
         parser.add_argument(
             "--extra-search-dir",
