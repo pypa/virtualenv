@@ -2,12 +2,13 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
+import os
 from contextlib import contextmanager
 from threading import Lock, Thread
 
 from virtualenv.info import fs_supports_symlink
 from virtualenv.seed.embed.base_embed import BaseEmbed
-from virtualenv.seed.embed.wheels.acquire import get_wheels
+from virtualenv.seed.embed.wheels.acquire import get_wheels, WheelDownloadFail
 from virtualenv.util.path import safe_delete
 
 from .pip_install.copy import CopyPipInstall
@@ -63,26 +64,41 @@ class FromAppData(BaseEmbed):
             if wheels_to.exists():
                 safe_delete(wheels_to)
             wheels_to.mkdir(parents=True, exist_ok=True)
-            name_to_whl, lock = {}, Lock()
+            name_to_whl, lock, fail = {}, Lock(), {}
 
             def _get(package, version):
-                result = get_wheels(
-                    creator.interpreter.version_release_str,
-                    wheels_to,
-                    self.extra_search_dir,
-                    self.download,
-                    {package: version},
-                    self.app_data,
-                )
-                with lock:
-                    name_to_whl.update(result)
+                try:
+                    result = get_wheels(
+                        creator.interpreter.version_release_str,
+                        wheels_to,
+                        self.extra_search_dir,
+                        self.download,
+                        {package: version},
+                        self.app_data,
+                    )
+                except WheelDownloadFail as exception:
+                    msg = "failed to download {}".format(package)
+                    if version is not None:
+                        msg += " version {}".format(version)
+                    msg += ", pip download exit code {}".format(exception.exit_code)
+                    output = exception.out + exception.err
+                    if output:
+                        msg += "\n"
+                        msg += output
+                    logging.error(msg)
+                    with lock:
+                        fail[package] = version
+                else:
+                    with lock:
+                        name_to_whl.update(result)
 
             threads = list(Thread(target=_get, args=(pkg, v)) for pkg, v in self.package_version().items())
             for thread in threads:
                 thread.start()
             for thread in threads:
                 thread.join()
-
+            if fail:
+                raise RuntimeError("seed failed due to failing to download wheels {}".format(", ".join(fail.keys())))
             yield name_to_whl
 
     def installer_class(self, pip_version):
