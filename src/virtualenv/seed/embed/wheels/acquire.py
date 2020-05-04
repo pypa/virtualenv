@@ -30,7 +30,7 @@ class WheelDownloadFail(ValueError):
         self.err = err.strip()
 
 
-def get_wheels(for_py_version, wheel_cache_dir, extra_search_dir, download, packages, app_data):
+def get_wheels(for_py_version, wheel_cache_dir, extra_search_dir, packages, app_data, download):
     # not all wheels are compatible with all python versions, so we need to py version qualify it
     processed = copy(packages)
     # 1. acquire from bundle

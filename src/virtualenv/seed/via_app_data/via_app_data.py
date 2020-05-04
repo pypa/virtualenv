@@ -2,13 +2,13 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
-import os
 from contextlib import contextmanager
+from functools import partial
 from threading import Lock, Thread
 
 from virtualenv.info import fs_supports_symlink
 from virtualenv.seed.embed.base_embed import BaseEmbed
-from virtualenv.seed.embed.wheels.acquire import get_wheels, WheelDownloadFail
+from virtualenv.seed.embed.wheels.acquire import WheelDownloadFail, get_wheels
 from virtualenv.util.path import safe_delete
 
 from .pip_install.copy import CopyPipInstall
@@ -67,24 +67,36 @@ class FromAppData(BaseEmbed):
             name_to_whl, lock, fail = {}, Lock(), {}
 
             def _get(package, version):
-                try:
-                    result = get_wheels(
-                        creator.interpreter.version_release_str,
-                        wheels_to,
-                        self.extra_search_dir,
-                        self.download,
-                        {package: version},
-                        self.app_data,
-                    )
-                except WheelDownloadFail as exception:
-                    msg = "failed to download {}".format(package)
-                    if version is not None:
-                        msg += " version {}".format(version)
-                    msg += ", pip download exit code {}".format(exception.exit_code)
-                    output = exception.out + exception.err
-                    if output:
-                        msg += "\n"
-                        msg += output
+                wheel_loader = partial(
+                    get_wheels,
+                    creator.interpreter.version_release_str,
+                    wheels_to,
+                    self.extra_search_dir,
+                    {package: version},
+                    self.app_data,
+                )
+                failure, result = None, None
+                # fallback to download in case the exact version is not available
+                for download in [True] if self.download else [False, True]:
+                    failure = None
+                    try:
+                        result = wheel_loader(download)
+                        if result:
+                            break
+                    except Exception as exception:
+                        failure = exception
+                if failure:
+                    if isinstance(failure, WheelDownloadFail):
+                        msg = "failed to download {}".format(package)
+                        if version is not None:
+                            msg += " version {}".format(version)
+                        msg += ", pip download exit code {}".format(failure.exit_code)
+                        output = failure.out + failure.err
+                        if output:
+                            msg += "\n"
+                            msg += output
+                    else:
+                        msg = repr(failure)
                     logging.error(msg)
                     with lock:
                         fail[package] = version
@@ -92,7 +104,8 @@ class FromAppData(BaseEmbed):
                     with lock:
                         name_to_whl.update(result)
 
-            threads = list(Thread(target=_get, args=(pkg, v)) for pkg, v in self.package_version().items())
+            package_versions = self.package_version()
+            threads = list(Thread(target=_get, args=(pkg, v)) for pkg, v in package_versions.items())
             for thread in threads:
                 thread.start()
             for thread in threads:
