@@ -1,1 +1,0 @@
-Fixes older CPython2 versions use ``_get_makefile_filename`` instead of ``get_makefile_filename`` on ``sysconfig`` - by :user:`ianw`.
