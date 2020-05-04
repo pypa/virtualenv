@@ -5,6 +5,17 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.20 (2020-05-04)
+---------------------
+
+Bugfixes - 20.0.20
+~~~~~~~~~~~~~~~~~~
+- Fix download fails with python 3.4 - by :user:`gaborbernat`. (`#1809 <https://github.com/pypa/virtualenv/issues/1809>`_)
+- Fixes older CPython2 versions use ``_get_makefile_filename`` instead of ``get_makefile_filename`` on ``sysconfig`` - by :user:`ianw`. (`#1810 <https://github.com/pypa/virtualenv/issues/1810>`_)
+- Fix download is ``True`` by default - by :user:`gaborbernat`. (`#1813 <https://github.com/pypa/virtualenv/issues/1813>`_)
+- Fail ``app-data`` seed operation when wheel download fails and better error message - by :user:`gaborbernat`. (`#1814 <https://github.com/pypa/virtualenv/issues/1814>`_)
+
+
 v20.0.19 (2020-05-03)
 ---------------------
 

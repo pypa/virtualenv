@@ -1,1 +1,0 @@
-Fail ``app-data`` seed operation when wheel download fails and better error message - by :user:`gaborbernat`.
