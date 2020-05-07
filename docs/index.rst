@@ -34,25 +34,25 @@ virtualenv - Isolated Python Environments
 a working Python environment that is isolated from the rest of the system.
 
 .. note::
-  Since Python ``3.3``, a subset of it has been integrated into the standard library under the `venv module <https://docs.python.org/3/library/venv.html>`_. The
+  Since Python ``3.3``, a subset of it has been integrated into the standard library under the `venv module <https://docs.Python.org/3/library/venv.html>`_. The
   ``venv`` module does not offer all features of this library. See the :doc:`differences <differences_with_venv>` betwwen virtualenv and venv.
 
-The need for isolation of python environments comes when there are two python
-applications with their own set of dependencies, python versions and permissions.
-Imagine you have an application that needs version ``1`` of ``LibFoo``, but another application requires version
-``2``. How can you use both these libraries? If you install everything into your host python (e.g. ``python3.8``)
-it's easy to end up in a situation where two packages have conflicting requirements.
+The need for isolation of Python environments comes when there are two Python
+libraries with their own set of dependencies, Python versions and permissions.
+Python applications will often use external libraries that are not part of the standard Python
+library. The applications will often require a specific version  of that library where a particular
+bug has been fixed. Imagine you have an application that needs version ``1.2.3`` of ``foo``,
+but another application requires version ``2.3.4``. Installing one version of the library would
+make the other application unable to run. So, If you install everything into your system Python
+it's easy to end up in a situation where two applications have conflicting requirements.
 
 Or more generally, what if you want to install an application *and leave it be*? If an application works, any change
 in its libraries or the versions of those libraries can break the application. Also, what if you can't install packages
-into the global ``site-packages`` directory, due to not having permissions to change the host python environment?
+into the global ``site-packages`` directory, due to not having permissions to change the system Python environment?
 
 In all these cases, ``virtualenv`` can help you. It creates an environment that has its own installation directories,
 that doesn't share libraries with other virtualenv environments (and optionally doesn't access the globally installed
 libraries either).
-
-Quick Start
------------
 
 .. _differences: differences_with_venv
 
