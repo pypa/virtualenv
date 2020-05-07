@@ -35,7 +35,7 @@ a working Python environment that is isolated from the rest of the system.
 
 .. note::
   Since Python ``3.3``, a subset of it has been integrated into the standard library under the `venv module <https://docs.python.org/3/library/venv.html>`_. The
-  ``venv`` module does not offer all features of this library. <Difference link here>
+  ``venv`` module does not offer all features of this library. See the :doc:`differences <differences_with_venv>` betwwen virtualenv and venv.
 
 The need for isolation of python environments comes when there are two python
 applications with their own set of dependencies, python versions and permissions.
@@ -54,7 +54,7 @@ libraries either).
 Quick Start
 -----------
 
-TODO
+.. _differences: differences_with_venv
 
 .. comment: split here
 
@@ -67,3 +67,5 @@ TODO
    extend
    development
    changelog
+   differences_with_venv
+   useful_links
