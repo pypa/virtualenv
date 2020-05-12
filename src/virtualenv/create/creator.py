@@ -8,6 +8,7 @@ from abc import ABCMeta, abstractmethod
 from argparse import ArgumentTypeError
 from ast import literal_eval
 from collections import OrderedDict
+from textwrap import dedent
 
 from six import add_metaclass
 
@@ -154,6 +155,7 @@ class Creator(object):
             safe_delete(self.dest)
         self.create()
         self.set_pyenv_cfg()
+        self.setup_ignore_vcs()
 
     def set_pyenv_cfg(self):
         self.pyenv_cfg.content = OrderedDict()
@@ -161,6 +163,23 @@ class Creator(object):
         self.pyenv_cfg["implementation"] = self.interpreter.implementation
         self.pyenv_cfg["version_info"] = ".".join(str(i) for i in self.interpreter.version_info)
         self.pyenv_cfg["virtualenv"] = __version__
+
+    def setup_ignore_vcs(self):
+        """Generate ignore instructions for version control systems."""
+        # mark this folder to be ignored by VCS, handle https://www.python.org/dev/peps/pep-0610/#registered-vcs
+        (self.dest / ".gitignore").write_text(
+            dedent(
+                """
+                # created by virtualenv automatically
+                *
+                """,
+            ).lstrip(),
+        )
+        # Mercurial - does not support the .hgignore file inside a subdirectory directly, but only if included via the
+        # subinclude directive from root, at which point on might as well ignore the directory itself, see
+        # https://www.selenic.com/mercurial/hgignore.5.html for more details
+        # Bazaar - does not support ignore files in sub-directories, only at root level via .bzrignore
+        # Subversion - does not support ignore files, requires direct manipulation with the svn tool
 
     @property
     def debug(self):

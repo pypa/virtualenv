@@ -233,6 +233,9 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
         make_file = debug["makefile_filename"]
         assert os.path.exists(make_file)
 
+    git_ignore = (dest / ".gitignore").read_text()
+    assert git_ignore.splitlines() == ["# created by virtualenv automatically", "*"]
+
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
 def test_venv_fails_not_inline(tmp_path, capsys, mocker):
