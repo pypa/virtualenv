@@ -32,7 +32,7 @@ class CPython3Posix(CPythonPosix, CPython3):
                 import os
                 if "__PYVENV_LAUNCHER__" in os.environ:
                     del os.environ["__PYVENV_LAUNCHER__"]
-                """
+                """,
             )
         return text
 

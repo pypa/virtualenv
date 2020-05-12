@@ -37,8 +37,8 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin):
                         if meta.can_symlink and not src.can_symlink:
                             meta.symlink_error = "cannot symlink {}".format(src)
                         if not meta.can_copy and not meta.can_symlink:
-                            meta.error = "neither copy or symlink supported: {}".format(
-                                meta.copy_error, meta.symlink_error
+                            meta.error = "neither copy or symlink supported, copy: {} symlink: {}".format(
+                                meta.copy_error, meta.symlink_error,
                             )
                     else:
                         meta.error = "missing required file {}".format(src)

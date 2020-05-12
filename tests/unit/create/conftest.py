@@ -80,7 +80,7 @@ def old_virtualenv(tmp_path_factory, session_app_data):
             exe_path = CURRENT.discover_exe(session_app_data, prefix=str(old_virtualenv_at)).original_executable
             return exe_path
         except Exception as exception:
-            return RuntimeError("failed to create old virtualenv %r".format(exception))
+            return RuntimeError("failed to create old virtualenv {}".format(exception))
 
 
 PYTHON = {"root": root, "venv": venv, "old_virtualenv": old_virtualenv}

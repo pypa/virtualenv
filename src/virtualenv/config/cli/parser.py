@@ -37,7 +37,8 @@ class VirtualEnvOptions(Namespace):
 
     def __repr__(self):
         return "{}({})".format(
-            type(self).__name__, ", ".join("{}={}".format(k, v) for k, v in vars(self).items() if not k.startswith("_"))
+            type(self).__name__,
+            ", ".join("{}={}".format(k, v) for k, v in vars(self).items() if not k.startswith("_")),
         )
 
 

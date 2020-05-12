@@ -74,9 +74,11 @@ CreateProcessW.restype = BOOL
 ## Patched functions/classes
 ##
 
-def CreateProcess(executable, args, _p_attr, _t_attr,
-                  inherit_handles, creation_flags, env, cwd,
-                  startup_info):
+def CreateProcess(
+    executable, args, _p_attr, _t_attr,
+    inherit_handles, creation_flags, env, cwd,
+    startup_info,
+):
     """Create a process supporting unicode executable and args for win32
 
     Python implementation of CreateProcess using CreateProcessW for Win32
@@ -96,32 +98,41 @@ def CreateProcess(executable, args, _p_attr, _t_attr,
     wenv = None
     if env is not None:
         ## LPCWSTR seems to be c_wchar_p, so let's say CWSTR is c_wchar
-        env = (unicode("").join([
+        env = (
+            unicode("").join([
             unicode("%s=%s\0") % (k, v)
-            for k, v in env.items()])) + unicode("\0")
+            for k, v in env.items()
+            ])
+        ) + unicode("\0")
         wenv = (c_wchar * len(env))()
         wenv.value = env
 
     pi = PROCESS_INFORMATION()
     creation_flags |= CREATE_UNICODE_ENVIRONMENT
 
-    if CreateProcessW(executable, args, None, None,
-                      inherit_handles, creation_flags,
-                      wenv, cwd, byref(si), byref(pi)):
-        return (DUMMY_HANDLE(pi.hProcess), DUMMY_HANDLE(pi.hThread),
-                pi.dwProcessId, pi.dwThreadId)
+    if CreateProcessW(
+        executable, args, None, None,
+        inherit_handles, creation_flags,
+        wenv, cwd, byref(si), byref(pi),
+    ):
+        return (
+            DUMMY_HANDLE(pi.hProcess), DUMMY_HANDLE(pi.hThread),
+            pi.dwProcessId, pi.dwThreadId,
+        )
     raise WinError()
 
 
 class Popen(subprocess.Popen):
     """This superseeds Popen and corrects a bug in cPython 2.7 implem"""
 
-    def _execute_child(self, args, executable, preexec_fn, close_fds,
-                       cwd, env, universal_newlines,
-                       startupinfo, creationflags, shell, to_close,
-                       p2cread, p2cwrite,
-                       c2pread, c2pwrite,
-                       errread, errwrite):
+    def _execute_child(
+        self, args, executable, preexec_fn, close_fds,
+        cwd, env, universal_newlines,
+        startupinfo, creationflags, shell, to_close,
+        p2cread, p2cwrite,
+        c2pread, c2pwrite,
+        errread, errwrite,
+    ):
         """Code from part of _execute_child from Python 2.7 (9fbb65e)
 
         There are only 2 little changes concerning the construction of
@@ -141,16 +152,20 @@ class Popen(subprocess.Popen):
         startupinfo.dwFlags |= _subprocess.STARTF_USESHOWWINDOW
         startupinfo.wShowWindow = _subprocess.SW_HIDE
         comspec = os.environ.get("COMSPEC", unicode("cmd.exe"))
-        if (_subprocess.GetVersion() >= 0x80000000 or
-                os.path.basename(comspec).lower() == "command.com"):
+        if (
+            _subprocess.GetVersion() >= 0x80000000 or
+            os.path.basename(comspec).lower() == "command.com"
+        ):
             w9xpopen = self._find_w9xpopen()
             args = unicode('"%s" %s') % (w9xpopen, args)
             creationflags |= _subprocess.CREATE_NEW_CONSOLE
 
-        super(Popen, self)._execute_child(args, executable,
+        super(Popen, self)._execute_child(
+            args, executable,
             preexec_fn, close_fds, cwd, env, universal_newlines,
             startupinfo, creationflags, False, to_close, p2cread,
-            p2cwrite, c2pread, c2pwrite, errread, errwrite)
+            p2cwrite, c2pread, c2pwrite, errread, errwrite,
+        )
 
 _subprocess.CreateProcess = CreateProcess
 # fmt: on

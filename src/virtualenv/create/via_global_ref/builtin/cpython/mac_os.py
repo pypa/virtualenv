@@ -96,8 +96,8 @@ class CPython2macOsFramework(CPythonmacOsFramework, CPython2PosixBase):
         finally:
             config["PYTHONFRAMEWORK"] = before
         """.format(
-                result
-            )
+                result,
+            ),
         )
         return result
 
@@ -124,8 +124,8 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
         finally:
             sys._framework = before
         """.format(
-                result
-            )
+                result,
+            ),
         )
         return result
 

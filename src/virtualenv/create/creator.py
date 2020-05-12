@@ -99,7 +99,7 @@ class Creator(object):
         def non_write_able(dest, value):
             common = Path(*os.path.commonprefix([value.parts, dest.parts]))
             raise ArgumentTypeError(
-                "the destination {} is not write-able at {}".format(dest.relative_to(common), common)
+                "the destination {} is not write-able at {}".format(dest.relative_to(common), common),
             )
 
         # the file system must be able to encode
@@ -118,13 +118,13 @@ class Creator(object):
         if refused:
             raise ArgumentTypeError(
                 "the file system codec ({}) cannot handle characters {!r} within {!r}".format(
-                    encoding, "".join(refused.keys()), raw_value
-                )
+                    encoding, "".join(refused.keys()), raw_value,
+                ),
             )
         if os.pathsep in raw_value:
             raise ArgumentTypeError(
                 "destination {!r} must not contain the path separator ({}) as this would break "
-                "the activation scripts".format(raw_value, os.pathsep)
+                "the activation scripts".format(raw_value, os.pathsep),
             )
 
         value = Path(raw_value)

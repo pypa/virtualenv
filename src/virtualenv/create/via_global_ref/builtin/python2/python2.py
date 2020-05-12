@@ -89,7 +89,7 @@ class Python2(ViaGlobalRefVirtualenvBuiltin, Python2Supports):
     def mappings(cls, interpreter):
         mappings = [(Path(interpreter.system_stdlib_platform), cls.to_stdlib_platform)]
         if interpreter.system_stdlib_platform != interpreter.system_stdlib:
-            mappings.append((Path(interpreter.system_stdlib), cls.to_stdlib),)
+            mappings.append((Path(interpreter.system_stdlib), cls.to_stdlib))
         return mappings
 
     def to_stdlib(self, src):

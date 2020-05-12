@@ -95,7 +95,7 @@ class BaseEmbed(Seeder):
             if getattr(self, "no_{}".format(package)):
                 continue
             result += " {}{},".format(
-                package, "={}".format(getattr(self, "{}_version".format(package), None) or "latest")
+                package, "={}".format(getattr(self, "{}_version".format(package), None) or "latest"),
             )
         return result[:-1] + ")"
 

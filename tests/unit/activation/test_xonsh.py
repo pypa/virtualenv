@@ -14,7 +14,7 @@ def test_xonsh(activation_tester_class, activation_tester):
     class Xonsh(activation_tester_class):
         def __init__(self, session):
             super(Xonsh, self).__init__(
-                XonshActivator, session, "xonsh.exe" if sys.platform == "win32" else "xonsh", "activate.xsh", "xsh"
+                XonshActivator, session, "xonsh.exe" if sys.platform == "win32" else "xonsh", "activate.xsh", "xsh",
             )
             self._invoke_script = [sys.executable, "-m", "xonsh"]
             self._version_cmd = [sys.executable, "-m", "xonsh", "--version"]

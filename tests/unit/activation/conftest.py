@@ -37,7 +37,7 @@ class ActivationTester(object):
             # locally we disable, so that contributors don't need to have everything setup
             try:
                 process = Popen(
-                    self._version_cmd, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+                    self._version_cmd, universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 )
                 out, err = process.communicate()
                 result = out if out else err
@@ -144,16 +144,16 @@ class ActivationTester(object):
     def print_python_exe(self):
         return self.python_cmd(
             "import sys; print(sys.executable{})".format(
-                "" if six.PY3 or IS_PYPY else ".decode(sys.getfilesystemencoding())"
-            )
+                "" if six.PY3 or IS_PYPY else ".decode(sys.getfilesystemencoding())",
+            ),
         )
 
     def print_os_env_var(self, var):
         val = '"{}"'.format(var)
         return self.python_cmd(
             "import os; import sys; v = os.environ.get({}); print({})".format(
-                val, "v" if six.PY3 or IS_PYPY else "None if v is None else v.decode(sys.getfilesystemencoding())"
-            )
+                val, "v" if six.PY3 or IS_PYPY else "None if v is None else v.decode(sys.getfilesystemencoding())",
+            ),
         )
 
     def activate_call(self, script):

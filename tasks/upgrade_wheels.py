@@ -21,7 +21,7 @@ DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "em
 
 def download(ver, dest, package):
     subprocess.call(
-        [sys.executable, "-m", "pip", "download", "--only-binary=:all:", "--python-version", ver, "-d", dest, package]
+        [sys.executable, "-m", "pip", "download", "--only-binary=:all:", "--python-version", ver, "-d", dest, package],
     )
 
 
