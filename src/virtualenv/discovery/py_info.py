@@ -198,7 +198,7 @@ class PythonInfo(object):
 
     def __repr__(self):
         return "{}({!r})".format(
-            self.__class__.__name__, {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
+            self.__class__.__name__, {k: v for k, v in self.__dict__.items() if not k.startswith("_")},
         )
 
     def __str__(self):
@@ -207,7 +207,7 @@ class PythonInfo(object):
             ", ".join(
                 "{}={}".format(k, v)
                 for k, v in (
-                    ("spec", self.spec,),
+                    ("spec", self.spec),
                     (
                         "system"
                         if self.system_executable is not None and self.system_executable != self.executable

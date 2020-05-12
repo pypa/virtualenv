@@ -22,7 +22,7 @@ class PythonActivator(ViaTemplateActivator):
             {
                 "__LIB_FOLDERS__": ensure_text(os.pathsep.join(lib_folders.keys())),
                 "__DECODE_PATH__": ("yes" if win_py2 else ""),
-            }
+            },
         )
         return replacements
 

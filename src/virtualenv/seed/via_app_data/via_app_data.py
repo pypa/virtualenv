@@ -30,7 +30,7 @@ class FromAppData(BaseEmbed):
             dest="symlink_app_data",
             action="store_true" if can_symlink else "store_false",
             help="{} symlink the python packages from the app-data folder (requires seed pip>=19.3)".format(
-                "" if can_symlink else "not supported - "
+                "" if can_symlink else "not supported - ",
             ),
             default=False,
         )

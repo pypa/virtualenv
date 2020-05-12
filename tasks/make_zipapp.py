@@ -95,7 +95,7 @@ class WheelDownloader(object):
     def run(self, target, versions):
         whl = self.build_sdist(target)
         todo = deque((version, None, whl) for version in versions)
-        wheel_store = dict()
+        wheel_store = {}
         while todo:
             version, platform, dep = todo.popleft()
             dep_str = dep.name.split("-")[0] if isinstance(dep, Path) else dep.name
@@ -147,7 +147,7 @@ class WheelDownloader(object):
             return
         for dep in deps:
             req = Requirement(dep)
-            markers = getattr(req.marker, "_markers", tuple()) or tuple()
+            markers = getattr(req.marker, "_markers", tuple()) or ()
             if any(m for m in markers if isinstance(m, tuple) and len(m) == 3 and m[0].value == "extra"):
                 continue
             py_versions = WheelDownloader._marker_at(markers, "python_version")

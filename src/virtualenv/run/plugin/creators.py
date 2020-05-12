@@ -40,12 +40,12 @@ class CreatorSelector(ComponentBuilder):
                 raise RuntimeError(
                     "\n".join(
                         "{} for creators {}".format(k, ", ".join(i.__name__ for i in v)) for k, v in errored.items()
-                    )
+                    ),
                 )
             else:
                 raise RuntimeError("No virtualenv implementation for {}".format(interpreter))
         return CreatorInfo(
-            key_to_class=key_to_class, key_to_meta=key_to_meta, describe=describe, builtin_key=builtin_key
+            key_to_class=key_to_class, key_to_meta=key_to_meta, describe=describe, builtin_key=builtin_key,
         )
 
     def add_selector_arg_parse(self, name, choices):
@@ -58,7 +58,7 @@ class CreatorSelector(ComponentBuilder):
             default=default_value,
             required=False,
             help="create environment via{}".format(
-                "" if self.builtin_key is None else " (builtin = {})".format(self.builtin_key)
+                "" if self.builtin_key is None else " (builtin = {})".format(self.builtin_key),
             ),
         )
 

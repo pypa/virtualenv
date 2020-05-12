@@ -93,7 +93,7 @@ def load_exe(hive_name, company, company_key, tag):
                     args = get_value(ip_key, "ExecutableArguments")
                     return exe, args
                 else:
-                    msg(key_path, "exe does not exists {}".format(key_path, exe))
+                    msg(key_path, "could not load exe with value {}".format(exe))
     except OSError:
         msg("{}/{}".format(key_path, "InstallPath"), "missing")
     return None

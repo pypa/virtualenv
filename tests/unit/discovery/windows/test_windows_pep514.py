@@ -48,7 +48,7 @@ def test_pep514_run(_mock_registry, capsys, caplog):
     ('PythonCore', 3, 6, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
     ('PythonCore', 3, 7, 32, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python37-32\\python.exe', None)
     ('PythonCore', 3, 9, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
-    """
+    """,
     ).strip()
     assert out.strip() == expected
     assert not err
@@ -57,7 +57,7 @@ def test_pep514_run(_mock_registry, capsys, caplog):
         "{}HKEY_CURRENT_USER/PythonCore/3.1/SysArchitecture error: invalid format magic".format(prefix),
         "{}HKEY_CURRENT_USER/PythonCore/3.2/SysArchitecture error: arch is not string: 100".format(prefix),
         "{}HKEY_CURRENT_USER/PythonCore/3.3 error: no ExecutablePath or default for it".format(prefix),
-        "{}HKEY_CURRENT_USER/PythonCore/3.3 error: exe does not exists HKEY_CURRENT_USER/PythonCore/3.3".format(prefix),
+        "{}HKEY_CURRENT_USER/PythonCore/3.3 error: could not load exe with value None".format(prefix),
         "{}HKEY_CURRENT_USER/PythonCore/3.8/InstallPath error: missing".format(prefix),
         "{}HKEY_CURRENT_USER/PythonCore/3.9/SysVersion error: invalid format magic".format(prefix),
         "{}HKEY_CURRENT_USER/PythonCore/3.X/SysVersion error: version is not string: 2778".format(prefix),

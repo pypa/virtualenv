@@ -30,7 +30,11 @@ def test_discover_ok(tmp_path, monkeypatch, suffix, impl, version, arch, into, c
     caplog.set_level(logging.DEBUG)
     folder = tmp_path / into
     folder.mkdir(parents=True, exist_ok=True)
-    dest = folder / "{}{}".format(impl, version, arch, suffix)
+    name = "{}{}".format(impl, version)
+    if arch:
+        name += "-{}".format(arch)
+    name += suffix
+    dest = folder / name
     os.symlink(CURRENT.executable, str(dest))
     pyvenv = Path(CURRENT.executable).parents[1] / "pyvenv.cfg"
     if pyvenv.exists():

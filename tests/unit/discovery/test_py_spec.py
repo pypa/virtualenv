@@ -87,14 +87,14 @@ def test_version_satisfies_ok(req, spec):
 def _version_not_satisfies_pairs():
     target = set()
     version = tuple(str(i) for i in sys.version_info[0:3])
-    for i in range(len(version)):
-        req = ".".join(version[0 : i + 1])
-        for j in range(i + 1):
-            sat_ver = list(sys.version_info[0 : j + 1])
-            for l in range(j + 1):
+    for major in range(len(version)):
+        req = ".".join(version[0 : major + 1])
+        for minor in range(major + 1):
+            sat_ver = list(sys.version_info[0 : minor + 1])
+            for patch in range(minor + 1):
                 for o in [1, -1]:
                     temp = copy(sat_ver)
-                    temp[l] += o
+                    temp[patch] += o
                     sat = ".".join(str(i) for i in temp)
                     target.add((req, sat))
     return sorted(target)

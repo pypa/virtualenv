@@ -105,7 +105,7 @@ for k, v in CURRENT.creators().key_to_meta.items():
 _VENV_BUG_ON = (
     IS_PYPY
     and CURRENT.version_info[0:3] == (3, 6, 9)
-    and CURRENT.pypy_version_info[0:2] == [7, 3]
+    and CURRENT.pypy_version_info[0:2] == [7, 3, 0]
     and CURRENT.platform == "linux"
 )
 
@@ -179,7 +179,7 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     global_sys_path = system_sys_path[-1]
     if isolated == "isolated":
         msg = "global sys path {} is in virtual environment sys path:\n{}".format(
-            ensure_text(str(global_sys_path)), "\n".join(ensure_text(str(j)) for j in sys_path)
+            ensure_text(str(global_sys_path)), "\n".join(ensure_text(str(j)) for j in sys_path),
         )
         assert global_sys_path not in sys_path, msg
     else:
@@ -342,7 +342,7 @@ def test_cross_major(cross_python, coverage_env, tmp_path, session_app_data, cur
 def test_create_parallel(tmp_path, monkeypatch, temp_app_data):
     def create(count):
         subprocess.check_call(
-            [sys.executable, "-m", "virtualenv", "-vvv", str(tmp_path / "venv{}".format(count)), "--without-pip"]
+            [sys.executable, "-m", "virtualenv", "-vvv", str(tmp_path / "venv{}".format(count)), "--without-pip"],
         )
 
     threads = [Thread(target=create, args=(i,)) for i in range(1, 4)]
@@ -399,8 +399,8 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
             install_scripts={0}{1}scripts
             install_data={0}{1}data
             """.format(
-            tmp_path, os.sep
-        )
+            tmp_path, os.sep,
+        ),
     )
     setup_cfg.write_text(setup_cfg.read_text() + conf)
 
@@ -501,7 +501,7 @@ def test_python_path(monkeypatch, tmp_path, python_path_on):
         product(
             [True, False] if Python2.from_stdlib(Python2.mappings(CURRENT), "os.py")[2] else [False],
             [True, False] if Python2.from_stdlib(Python2.mappings(CURRENT), "os.pyc")[2] else [False],
-        )
+        ),
     ),
 )
 def test_py_pyc_missing(tmp_path, mocker, session_app_data, py, pyc):

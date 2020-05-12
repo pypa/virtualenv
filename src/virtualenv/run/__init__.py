@@ -95,7 +95,7 @@ def _do_report_setup(parser, args):
     level_map = ", ".join("{}={}".format(logging.getLevelName(l), c) for c, l in sorted(list(LEVELS.items())))
     msg = "verbosity = verbose - quiet, default {}, mapping => {}"
     verbosity_group = parser.add_argument_group(
-        title="verbosity", description=msg.format(logging.getLevelName(LEVELS[3]), level_map)
+        title="verbosity", description=msg.format(logging.getLevelName(LEVELS[3]), level_map),
     )
     verbosity = verbosity_group.add_mutually_exclusive_group()
     verbosity.add_argument("-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=2)

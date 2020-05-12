@@ -170,7 +170,7 @@ def pip_wheel_env_run(version, app_data):
         {
             ensure_str(k): str(v)  # python 2 requires these to be string only (non-unicode)
             for k, v in {"PIP_USE_WHEEL": "1", "PIP_USER": "0", "PIP_NO_INPUT": "1"}.items()
-        }
+        },
     )
     with ensure_file_on_disk(get_bundled_wheel("pip", version), app_data) as pip_wheel_path:
         # put the bundled wheel onto the path, and use it to do the bootstrap operation

@@ -11,7 +11,11 @@ from virtualenv.info import IS_CPYTHON, IS_WIN
 from virtualenv.util.six import ensure_text
 
 if PY2 and IS_CPYTHON and IS_WIN:  # CPython2 on Windows supports unicode paths if passed as unicode
-    norm = lambda src: ensure_text(str(src))  # noqa
+
+    def norm(src):
+        return ensure_text(str(src))
+
+
 else:
     norm = str
 
@@ -78,7 +82,7 @@ class _Debug(object):
 
     def __str__(self):
         return "{}{} to {}".format(
-            "directory " if self.src.is_dir() else "", ensure_text(str(self.src)), ensure_text(str(self.dest))
+            "directory " if self.src.is_dir() else "", ensure_text(str(self.src)), ensure_text(str(self.dest)),
         )
 
 

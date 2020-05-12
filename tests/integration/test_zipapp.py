@@ -37,7 +37,7 @@ def zipapp_build_env(tmp_path_factory):
                             "",
                             str(create_env_path),
                             "--no-download",
-                        ]
+                        ],
                     )
                     exe = str(session.creator.exe)
                     found = True

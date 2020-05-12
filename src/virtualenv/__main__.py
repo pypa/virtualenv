@@ -39,7 +39,7 @@ class LogSession(object):
             "  creator {}".format(ensure_text(str(self.session.creator))),
         ]
         if self.session.seeder.enabled:
-            lines += ("  seeder {}".format(ensure_text(str(self.session.seeder)),),)
+            lines += ("  seeder {}".format(ensure_text(str(self.session.seeder))),)
         if self.session.activators:
             lines.append("  activators {}".format(",".join(i.__class__.__name__ for i in self.session.activators)))
         return os.linesep.join(lines)

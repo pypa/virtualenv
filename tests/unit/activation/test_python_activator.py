@@ -57,7 +57,7 @@ def test_python(raise_on_non_source_class, activation_tester):
             import pydoc_test
             print_r(pydoc_test.__file__)
             """.format(
-                str(activate_script), ".decode('utf-8')" if WIN_CPYTHON_2 else ""
+                str(activate_script), ".decode('utf-8')" if WIN_CPYTHON_2 else "",
             )
             result = dedent(raw).splitlines()
             return result
