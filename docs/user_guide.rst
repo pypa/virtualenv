@@ -19,13 +19,15 @@ The tool works in two phases:
 - **Phase 1** discovers a python interpreter to create a virtual environment from (by default this is the same python
   as the one ``virtualenv`` is running from, however we can change this via the :option:`p` option).
 - **Phase 2** creates a virtual environment at the specified destination (:option:`dest`), this can be broken down into
-  three further sub-steps:
+  four further sub-steps:
 
   - create a python that matches the target python interpreter from phase 1,
   - install (bootstrap) seed packages (one or more of :pypi:`pip`, :pypi:`setuptools`, :pypi:`wheel`) in the created
     virtual environment,
   - install activation scripts into the binary directory of the virtual environment (these will allow end user to
     *activate* the virtual environment from various shells).
+  - create files that mark the virtual environment as to be ignored by version control systems (currently we support
+    Git only, as Mercurial, Bazaar or SVN does not support ignore files in subdirectories).
 
 The python in your new virtualenv is effectively isolated from the python that was used to create it.
 
