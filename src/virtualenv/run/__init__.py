@@ -58,8 +58,8 @@ def build_parser(args=None, options=None):
         help="a data folder used as cache by the virtualenv",
     )
     parser.add_argument(
-        "--clear-app-data",
-        dest="clear_app_data",
+        "--reset-app-data",
+        dest="reset_app_data",
         action="store_true",
         help="start with empty app data folder",
         default=False,

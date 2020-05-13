@@ -5,8 +5,9 @@ from contextlib import contextmanager
 
 import pytest
 
-from virtualenv.config.cli.parser import VirtualEnvConfigParser
+from virtualenv.config.cli.parser import VirtualEnvConfigParser, VirtualEnvOptions
 from virtualenv.config.ini import IniConfig
+from virtualenv.run import session_via_cli
 
 
 @pytest.fixture()
@@ -36,3 +37,10 @@ def test_flag(gen_parser_no_conf_env):
     assert result.clear is False
     result = run("--clear")
     assert result.clear is True
+
+
+def test_reset_app_data_does_not_conflict_clear():
+    options = VirtualEnvOptions()
+    session_via_cli(["--clear", "venv"], options=options)
+    assert options.clear is True
+    assert options.reset_app_data is False
