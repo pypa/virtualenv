@@ -110,7 +110,7 @@ Features - 20.0.11
 - Improve error message when the host python does not satisfy invariants needed to create virtual environments (now we
   print which host files are incompatible/missing and for which creators when no supported creator can be matched, however
   we found creators that can describe the given Python interpreter - will still print no supported creator for Jython,
-  but print exactly what host files do not allow creation of virtual environments in case of CPython/PyPy)
+  however print exactly what host files do not allow creation of virtual environments in case of CPython/PyPy)
   - by :user:`gaborbernat`. (`#1716 <https://github.com/pypa/virtualenv/issues/1716>`_)
 
 Bugfixes - 20.0.11
@@ -207,7 +207,7 @@ Bugfixes - 20.0.6
 - Handle the case when the application data folder is read-only:
 
   - the application data folder is now controllable via :option:`app-data`,
-  - :option:`clear-app-data` now cleans the entire application data folder, not just the ``app-data`` seeder path,
+  - ``clear-app-data`` now cleans the entire application data folder, not just the ``app-data`` seeder path,
   - check if the application data path passed in does not exist or is read-only, and fallback to a temporary directory,
   - temporary directory application data is automatically cleaned up at the end of execution,
   - :option:`symlink-app-data` is always ``False`` when the application data is temporary

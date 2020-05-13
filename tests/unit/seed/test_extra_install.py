@@ -39,7 +39,7 @@ def builtin_shows_marker_missing():
 def test_can_build_c_extensions(creator, tmp_path, coverage_env):
     env, greet = tmp_path / "env", str(tmp_path / "greet")
     shutil.copytree(str(Path(__file__).parent.resolve() / "greet"), greet)
-    session = cli_run(["--creator", creator, "--seed", "app-data", str(env), "-vvv"])
+    session = cli_run(["--creator", creator, "--seeder", "app-data", str(env), "-vvv"])
     coverage_env()
     cmd = [
         str(session.creator.script("pip")),

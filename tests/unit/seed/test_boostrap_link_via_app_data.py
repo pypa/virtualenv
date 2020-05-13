@@ -31,7 +31,7 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
         bundle_ver["pip"].split("-")[1],
         "--setuptools",
         bundle_ver["setuptools"].split("-")[1],
-        "--clear-app-data",
+        "--reset-app-data",
         "--creator",
         current_fastest,
         "-vv",
@@ -119,7 +119,7 @@ def read_only_folder(temp_app_data):
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
 def test_base_bootstrap_link_via_app_data_not_writable(tmp_path, current_fastest, read_only_folder, monkeypatch):
     dest = tmp_path / "venv"
-    result = cli_run(["--seeder", "app-data", "--creator", current_fastest, "--clear-app-data", "-vv", str(dest)])
+    result = cli_run(["--seeder", "app-data", "--creator", current_fastest, "--reset-app-data", "-vv", str(dest)])
     assert result
 
 
