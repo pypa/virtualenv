@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from virtualenv.discovery.cached_py_info import LogCmd
 from virtualenv.info import PY3
 from virtualenv.seed.embed.base_embed import BaseEmbed
-from virtualenv.seed.embed.wheels.acquire import get_bundled_wheel, pip_wheel_env_run
+from virtualenv.seed.embed.wheels.acquire import Version, get_bundled_wheel, pip_wheel_env_run
 from virtualenv.util.subprocess import Popen
 from virtualenv.util.zipapp import ensure_file_on_disk
 
@@ -32,18 +32,20 @@ class PipInvoke(BaseEmbed):
             raise RuntimeError("failed seed with code {}".format(process.returncode))
 
     @contextmanager
-    def get_pip_install_cmd(self, exe, version):
+    def get_pip_install_cmd(self, exe, for_py_version):
         cmd = [str(exe), "-m", "pip", "-q", "install", "--only-binary", ":all:"]
         if not self.download:
             cmd.append("--no-index")
-        pkg_versions = self.package_version()
-        for key, ver in pkg_versions.items():
-            cmd.append("{}{}".format(key, "=={}".format(ver) if ver is not None else ""))
+        distribution_to_version = self.distribution_to_versions()
+        cmd.extend(Version.as_pip_req(key, Version.of_version(ver)) for key, ver in distribution_to_version.items())
         with ExitStack() as stack:
             folders = set()
-            for context in (ensure_file_on_disk(get_bundled_wheel(p, version), self.app_data) for p in pkg_versions):
+            for context in (
+                ensure_file_on_disk(get_bundled_wheel(distribution, for_py_version).path, self.app_data)
+                for distribution in distribution_to_version
+            ):
                 folders.add(stack.enter_context(context).parent)
+            folders.update(set(self.extra_search_dir))
             for folder in folders:
                 cmd.extend(["--find-links", str(folder)])
-                cmd.extend(self.extra_search_dir)
             yield cmd

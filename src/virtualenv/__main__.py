@@ -39,7 +39,18 @@ class LogSession(object):
             "  creator {}".format(ensure_text(str(self.session.creator))),
         ]
         if self.session.seeder.enabled:
-            lines += ("  seeder {}".format(ensure_text(str(self.session.seeder))),)
+            lines += (
+                "  seeder {}".format(ensure_text(str(self.session.seeder))),
+                "    added seed packages: {}".format(
+                    ", ".join(
+                        sorted(
+                            "==".join(i.stem.split("-"))
+                            for i in self.session.creator.purelib.iterdir()
+                            if i.suffix == ".dist-info"
+                        ),
+                    ),
+                ),
+            )
         if self.session.activators:
             lines.append("  activators {}".format(",".join(i.__class__.__name__ for i in self.session.activators)))
         return os.linesep.join(lines)

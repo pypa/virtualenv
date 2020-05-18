@@ -74,7 +74,8 @@ class ActivationTester(object):
             _raw, _ = process.communicate()
             raw = _raw.decode("utf-8")
         except subprocess.CalledProcessError as exception:
-            assert not exception.returncode, ensure_text(exception.output)
+            output = ensure_text((exception.output + exception.stderr) if six.PY3 else exception.output)
+            assert not exception.returncode, output
             return
 
         out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, re.M).strip().splitlines()

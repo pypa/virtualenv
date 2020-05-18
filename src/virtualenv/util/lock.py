@@ -104,3 +104,9 @@ class ReentrantFileLock(object):
                 self._release(lock)
         finally:
             self._del_lock(lock)
+
+
+__all__ = (
+    "Timeout",
+    "ReentrantFileLock",
+)

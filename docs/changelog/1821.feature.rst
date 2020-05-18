@@ -1,0 +1,1 @@
+Display the installed seed package versions in the final summary output - by :user:`gaborbernat`.

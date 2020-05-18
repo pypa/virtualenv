@@ -4,142 +4,116 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import os
 import sys
-from collections import defaultdict
 from contextlib import contextmanager
-from copy import copy
+from operator import attrgetter
 from shutil import copy2
-from zipfile import ZipFile
+
+import six
 
 from virtualenv.info import IS_ZIPAPP
 from virtualenv.util.path import Path
-from virtualenv.util.six import ensure_str, ensure_text
+from virtualenv.util.six import ensure_str
 from virtualenv.util.subprocess import Popen, subprocess
 from virtualenv.util.zipapp import ensure_file_on_disk
 
 from . import BUNDLE_SUPPORT, MAX
+from .util import Wheel
 
 BUNDLE_FOLDER = Path(os.path.abspath(__file__)).parent
 
 
-class WheelDownloadFail(ValueError):
-    def __init__(self, packages, for_py_version, exit_code, out, err):
-        self.packages = packages
-        self.for_py_version = for_py_version
-        self.exit_code = exit_code
-        self.out = out.strip()
-        self.err = err.strip()
+class Version:
+    #: the version bundled with virtualenv
+    bundle = "bundle"
+    #: custom version handlers
+    non_version = (bundle,)
+
+    @staticmethod
+    def of_version(value):
+        return None if value in Version.non_version else value
+
+    @staticmethod
+    def as_pip_req(distribution, version):
+        return "{}{}".format(distribution, "" if version is None else "=={}".format(version))
 
 
-def get_wheels(for_py_version, wheel_cache_dir, extra_search_dir, packages, app_data, download):
+def get_wheel(distribution, version, for_py_version, search_dirs, download, cache_dir, app_data):
+    """
+    Get a wheel with the given distribution-version-for_py_version trio, by using the extra search dir + download
+    """
     # not all wheels are compatible with all python versions, so we need to py version qualify it
-    processed = copy(packages)
-    # 1. acquire from bundle
-    acquire_from_bundle(processed, for_py_version, wheel_cache_dir)
+    of_version = Version.of_version(version)  # remove special placeholder version numbers
+    # 1. acquire from embed
+    wheel = from_bundle(distribution, of_version, for_py_version, cache_dir)
+
     # 2. acquire from extra search dir
-    acquire_from_dir(processed, for_py_version, wheel_cache_dir, extra_search_dir)
+    found_wheel = from_dir(distribution, of_version, for_py_version, cache_dir, search_dirs)
+    if found_wheel is not None and (wheel is None or found_wheel.version_tuple >= wheel.version_tuple):
+        wheel = found_wheel
+
     # 3. download from the internet
-    if download and processed:
-        download_wheel(processed, for_py_version, wheel_cache_dir, app_data)
+    if download:
+        download_wheel(distribution, of_version, for_py_version, cache_dir, app_data)
+        wheel = _get_wheels(cache_dir, distribution, of_version)[0]  # get latest from cache post download
 
-    # in the end just get the wheels
-    wheels = _get_wheels(wheel_cache_dir, packages)
-    return {p: next(iter(ver_to_files))[1] for p, ver_to_files in wheels.items()}
-
-
-def acquire_from_bundle(packages, for_py_version, to_folder):
-    for pkg, version in list(packages.items()):
-        bundle = get_bundled_wheel(pkg, for_py_version)
-        if bundle is not None:
-            pkg_version = bundle.stem.split("-")[1]
-            exact_version_match = version == pkg_version
-            if exact_version_match:
-                del packages[pkg]
-            if version is None or exact_version_match:
-                bundled_wheel_file = to_folder / bundle.name
-                if not bundled_wheel_file.exists():
-                    logging.debug("get bundled wheel %s", bundle)
-                    if IS_ZIPAPP:
-                        from virtualenv.util.zipapp import extract
-
-                        extract(bundle, bundled_wheel_file)
-                    else:
-                        copy2(str(bundle), str(bundled_wheel_file))
+    return wheel
 
 
-def get_bundled_wheel(package, version_release):
-    return BUNDLE_FOLDER / (BUNDLE_SUPPORT.get(version_release, {}) or BUNDLE_SUPPORT[MAX]).get(package)
+def from_bundle(distribution, version, for_py_version, wheel_cache_dir):
+    """
+    Load the bundled wheel to a cache directory.
+    """
+    bundle = get_bundled_wheel(distribution, for_py_version)
+    if bundle is None:
+        return None
+    if version is None or version == bundle.version:
+        bundled_wheel_file = wheel_cache_dir / bundle.path.name
+        if not bundled_wheel_file.exists():
+            logging.debug("materialize bundled wheel %s to %s", bundle, bundled_wheel_file)
+            if IS_ZIPAPP:
+                from virtualenv.util.zipapp import extract
+
+                extract(bundle, bundled_wheel_file)
+            else:
+                copy2(str(bundle), str(bundled_wheel_file))
+        return Wheel(bundled_wheel_file)
 
 
-def acquire_from_dir(packages, for_py_version, to_folder, extra_search_dir):
-    if not packages:
-        return
-    for search_dir in extra_search_dir:
-        wheels = _get_wheels(search_dir, packages)
-        for pkg, ver_wheels in wheels.items():
-            stop = False
-            for _, filename in ver_wheels:
-                dest = to_folder / filename.name
+def get_bundled_wheel(distribution, for_py_version):
+    path = BUNDLE_FOLDER / (BUNDLE_SUPPORT.get(for_py_version, {}) or BUNDLE_SUPPORT[MAX]).get(distribution)
+    if path is None:
+        return None
+    return Wheel.from_path(path)
+
+
+def from_dir(distribution, version, for_py_version, cache_dir, directories):
+    """
+    Load a compatible wheel from a given folder.
+    """
+    for folder in directories:
+        for wheel in _get_wheels(folder, distribution, version):
+            dest = cache_dir / wheel.name
+            if wheel.support_py(for_py_version):
+                logging.debug("copy extra search dir wheel %s to %s", wheel.path, dest)
                 if not dest.exists():
-                    if wheel_support_py(filename, for_py_version):
-                        logging.debug("get extra search dir wheel %s", filename)
-                        copy2(str(filename), str(dest))
-                        stop = True
-                else:
-                    stop = True
-                if stop and packages[pkg] is not None:
-                    del packages[pkg]
-                    break
+                    copy2(str(wheel.path), str(dest))
+                return Wheel(dest)
+    return None
 
 
-def wheel_support_py(filename, py_version):
-    name = "{}.dist-info/METADATA".format("-".join(filename.stem.split("-")[0:2]))
-    with ZipFile(ensure_text(str(filename)), "r") as zip_file:
-        metadata = zip_file.read(name).decode("utf-8")
-    marker = "Requires-Python:"
-    requires = next((i[len(marker) :] for i in metadata.splitlines() if i.startswith(marker)), None)
-    if requires is None:  # if it does not specify a python requires the assumption is compatible
-        return True
-    py_version_int = tuple(int(i) for i in py_version.split("."))
-    for require in (i.strip() for i in requires.split(",")):
-        # https://www.python.org/dev/peps/pep-0345/#version-specifiers
-        for operator, check in [
-            ("!=", lambda v: py_version_int != v),
-            ("==", lambda v: py_version_int == v),
-            ("<=", lambda v: py_version_int <= v),
-            (">=", lambda v: py_version_int >= v),
-            ("<", lambda v: py_version_int < v),
-            (">", lambda v: py_version_int > v),
-        ]:
-            if require.startswith(operator):
-                ver_str = require[len(operator) :].strip()
-                version = tuple((int(i) if i != "*" else None) for i in ver_str.split("."))[0:2]
-                if not check(version):
-                    return False
-                break
-    return True
-
-
-def _get_wheels(from_folder, packages):
-    wheels = defaultdict(list)
+def _get_wheels(from_folder, distribution, version):
+    wheels = []
     for filename in from_folder.iterdir():
-        if filename.suffix == ".whl":
-            data = filename.stem.split("-")
-            if len(data) >= 2:
-                pkg, version = data[0:2]
-                if pkg in packages:
-                    pkg_version = packages[pkg]
-                    if pkg_version is None or pkg_version == version:
-                        wheels[pkg].append((version, filename))
-    for versions in wheels.values():
-        versions.sort(
-            key=lambda a: tuple(int(i) if i.isdigit() else i for i in a[0].split(".")), reverse=True,
-        )
-    return wheels
+        wheel = Wheel.from_path(filename)
+        if wheel and wheel.distribution == distribution:
+            if version is None or wheel.version == version:
+                wheels.append(wheel)
+    return sorted(wheels, key=attrgetter("version_tuple", "distribution"), reverse=True)
 
 
-def download_wheel(packages, for_py_version, to_folder, app_data):
-    to_download = list(p if v is None else "{}=={}".format(p, v) for p, v in packages.items())
-    logging.debug("download wheels %s", to_download)
+def download_wheel(distribution, version, for_py_version, to_folder, app_data):
+    to_download = Version.as_pip_req(distribution, version)
+    logging.debug("download wheel %s", to_download)
     cmd = [
         sys.executable,
         "-m",
@@ -152,15 +126,19 @@ def download_wheel(packages, for_py_version, to_folder, app_data):
         for_py_version,
         "-d",
         str(to_folder),
+        to_download,
     ]
-    cmd.extend(to_download)
     # pip has no interface in python - must be a new sub-process
-
     with pip_wheel_env_run("{}.{}".format(*sys.version_info[0:2]), app_data) as env:
         process = Popen(cmd, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         out, err = process.communicate()
         if process.returncode != 0:
-            raise WheelDownloadFail(packages, for_py_version, process.returncode, out, err)
+            kwargs = {"output": out}
+            if six.PY2:
+                kwargs["output"] += err
+            else:
+                kwargs["stderr"] = err
+            raise subprocess.CalledProcessError(process.returncode, cmd, **kwargs)
 
 
 @contextmanager
@@ -172,7 +150,7 @@ def pip_wheel_env_run(version, app_data):
             for k, v in {"PIP_USE_WHEEL": "1", "PIP_USER": "0", "PIP_NO_INPUT": "1"}.items()
         },
     )
-    with ensure_file_on_disk(get_bundled_wheel("pip", version), app_data) as pip_wheel_path:
+    with ensure_file_on_disk(get_bundled_wheel("pip", version).path, app_data) as pip_wheel_path:
         # put the bundled wheel onto the path, and use it to do the bootstrap operation
         env[str("PYTHONPATH")] = str(pip_wheel_path)
         yield env

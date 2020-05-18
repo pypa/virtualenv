@@ -1,0 +1,2 @@
+By default install only bundled packages (latest compatible wheel between the embed packages that come with virtualenv,
+and wheels found inside the provided :option:`extra-search-dir`) - by :user:`gaborbernat`.
