@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v2.5.0
+  rev: v3.0.0
   hooks:
   - id: check-ast
   - id: check-builtin-literals
@@ -15,10 +15,6 @@ repos:
   rev: v2.0.1
   hooks:
   - id: add-trailing-comma
-- repo: https://github.com/asottile/yesqa
-  rev: v1.1.0
-  hooks:
-  - id: yesqa
 - repo: https://github.com/asottile/pyupgrade
   rev: v2.4.1
   hooks:

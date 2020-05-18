@@ -12,6 +12,8 @@ if six.PY2 and sys.platform == "win32":
 else:
     Popen = subprocess.Popen
 
+DETACHED_PROCESS = 0x00000008
+
 
 def run_cmd(cmd):
     try:
@@ -29,4 +31,5 @@ __all__ = (
     "subprocess",
     "Popen",
     "run_cmd",
+    "DETACHED_PROCESS",
 )

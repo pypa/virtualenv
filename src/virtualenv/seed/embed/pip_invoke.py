@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from virtualenv.discovery.cached_py_info import LogCmd
 from virtualenv.info import PY3
 from virtualenv.seed.embed.base_embed import BaseEmbed
-from virtualenv.seed.embed.wheels.acquire import get_bundled_wheel, pip_wheel_env_run
+from virtualenv.seed.embed.wheels.acquire import Version, get_bundled_wheel, pip_wheel_env_run
 from virtualenv.util.subprocess import Popen
 from virtualenv.util.zipapp import ensure_file_on_disk
 
@@ -17,6 +17,13 @@ else:
 
 
 class PipInvoke(BaseEmbed):
+
+    packages = {
+        "pip": Version.latest,
+        "setuptools": Version.latest,
+        "wheel": Version.latest,
+    }
+
     def __init__(self, options):
         super(PipInvoke, self).__init__(options)
 
@@ -38,10 +45,12 @@ class PipInvoke(BaseEmbed):
             cmd.append("--no-index")
         pkg_versions = self.package_version()
         for key, ver in pkg_versions.items():
-            cmd.append("{}{}".format(key, "=={}".format(ver) if ver is not None else ""))
+            cmd.append("{}{}".format(key, "" if ver == Version.latest else "=={}".format(ver)))
         with ExitStack() as stack:
             folders = set()
-            for context in (ensure_file_on_disk(get_bundled_wheel(p, version), self.app_data) for p in pkg_versions):
+            for context in (
+                ensure_file_on_disk(get_bundled_wheel(p, version).path, self.app_data) for p in pkg_versions
+            ):
                 folders.add(stack.enter_context(context).parent)
             for folder in folders:
                 cmd.extend(["--find-links", str(folder)])

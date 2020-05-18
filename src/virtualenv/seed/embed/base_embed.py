@@ -12,20 +12,19 @@ from ..seeder import Seeder
 
 @add_metaclass(ABCMeta)
 class BaseEmbed(Seeder):
-    packages = ["pip", "setuptools", "wheel"]
+    def validate_version(self):
+        pass
+
+    packages = {}
 
     def __init__(self, options):
         super(BaseEmbed, self).__init__(options, enabled=options.no_seed is False)
         self.download = options.download
         self.extra_search_dir = [i.resolve() for i in options.extra_search_dir if i.exists()]
 
-        def latest_is_none(key):
-            value = getattr(options, key)
-            return None if value == "latest" else value
-
-        self.pip_version = latest_is_none("pip")
-        self.setuptools_version = latest_is_none("setuptools")
-        self.wheel_version = latest_is_none("wheel")
+        self.pip_version = options.pip
+        self.setuptools_version = options.setuptools
+        self.wheel_version = options.wheel
 
         self.no_pip = options.no_pip
         self.no_setuptools = options.no_setuptools
@@ -68,13 +67,13 @@ class BaseEmbed(Seeder):
             help="a path containing wheels the seeder may also use beside bundled (can be set 1+ times)",
             default=[],
         )
-        for package in cls.packages:
+        for package, default in cls.packages.items():
             parser.add_argument(
                 "--{}".format(package),
                 dest=package,
                 metavar="version",
                 help="{} version to install, bundle for bundled".format(package),
-                default="latest",
+                default=default,
             )
         for package in cls.packages:
             parser.add_argument(
