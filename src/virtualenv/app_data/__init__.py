@@ -1,39 +1,17 @@
+"""
+Application data stored by virtualenv.
+"""
+from __future__ import absolute_import, unicode_literals
+
 import logging
 import os
 from argparse import Action, ArgumentError
-from tempfile import mkdtemp
 
 from appdirs import user_data_dir
 
-from virtualenv.util.lock import ReentrantFileLock
-from virtualenv.util.path import safe_delete
-
-
-class AppData(object):
-    def __init__(self, folder):
-        self.folder = ReentrantFileLock(folder)
-        self.transient = False
-
-    def __repr__(self):
-        return "{}".format(self.folder.path)
-
-    def clean(self):
-        logging.debug("clean app data folder %s", self.folder.path)
-        safe_delete(self.folder.path)
-
-    def close(self):
-        """"""
-
-
-class TempAppData(AppData):
-    def __init__(self):
-        super(TempAppData, self).__init__(folder=mkdtemp())
-        self.transient = True
-        logging.debug("created temporary app data folder %s", self.folder.path)
-
-    def close(self):
-        logging.debug("remove temporary app data folder %s", self.folder.path)
-        safe_delete(self.folder.path)
+from .na import AppDataDisabled
+from .via_disk_folder import AppDataDiskFolder
+from .via_tempdir import TempAppData
 
 
 class AppDataAction(Action):
@@ -41,7 +19,7 @@ class AppDataAction(Action):
         folder = self._check_folder(values)
         if folder is None:
             raise ArgumentError("app data path {} is not valid".format(values))
-        setattr(namespace, self.dest, AppData(folder))
+        setattr(namespace, self.dest, AppDataDiskFolder(folder))
 
     @staticmethod
     def _check_folder(folder):
@@ -64,8 +42,8 @@ class AppDataAction(Action):
         for folder in AppDataAction._app_data_candidates():
             folder = AppDataAction._check_folder(folder)
             if folder is not None:
-                return AppData(folder)
-        return None
+                return AppDataDiskFolder(folder)
+        return AppDataDisabled()
 
     @staticmethod
     def _app_data_candidates():
@@ -77,7 +55,8 @@ class AppDataAction(Action):
 
 
 __all__ = (
-    "AppData",
+    "AppDataDiskFolder",
     "TempAppData",
     "AppDataAction",
+    "AppDataDisabled",
 )

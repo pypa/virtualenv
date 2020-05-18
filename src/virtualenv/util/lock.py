@@ -74,7 +74,7 @@ class ReentrantFileLock(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._release(self._lock)
 
-    def _lock_file(self, lock):
+    def _lock_file(self, lock, no_block=False):
         # multiple processes might be trying to get a first lock... so we cannot check if this directory exist without
         # a lock, but that lock might then become expensive, and it's not clear where that lock should live.
         # Instead here we just ignore if we fail to create the directory.
@@ -85,6 +85,8 @@ class ReentrantFileLock(object):
         try:
             lock.acquire(0.0001)
         except Timeout:
+            if no_block:
+                raise
             logging.debug("lock file %s present, will block until released", lock.lock_file)
             lock.release()  # release the acquire try from above
             lock.acquire()
@@ -94,13 +96,19 @@ class ReentrantFileLock(object):
         lock.release()
 
     @contextmanager
-    def lock_for_key(self, name):
+    def lock_for_key(self, name, no_block=False):
         lock = self._create_lock(name)
         try:
             try:
-                self._lock_file(lock)
+                self._lock_file(lock, no_block)
                 yield
             finally:
                 self._release(lock)
         finally:
             self._del_lock(lock)
+
+
+__all__ = (
+    "Timeout",
+    "ReentrantFileLock",
+)

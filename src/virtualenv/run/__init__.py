@@ -2,11 +2,11 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
-from virtualenv.run.app_data import AppDataAction
-
+from ..app_data import AppDataAction, AppDataDisabled, TempAppData
 from ..config.cli.parser import VirtualEnvConfigParser
 from ..report import LEVELS, setup_report
-from ..session import Session
+from ..run.session import Session
+from ..seed.wheels.periodic_update import manual_upgrade
 from ..version import __version__
 from .plugin.activators import ActivationSelector
 from .plugin.creators import CreatorSelector
@@ -29,9 +29,9 @@ def cli_run(args, options=None):
 
 # noinspection PyProtectedMember
 def session_via_cli(args, options=None):
-    parser = build_parser(args, options)
+    parser, elements = build_parser(args, options)
     options = parser.parse_args(args)
-    creator, seeder, activators = tuple(e.create(options) for e in parser._elements)  # create types
+    creator, seeder, activators = tuple(e.create(options) for e in elements)  # create types
     session = Session(options.verbosity, options.app_data, parser._interpreter, creator, seeder, activators)
     return session
 
@@ -48,13 +48,44 @@ def build_parser(args=None, options=None):
         help="on failure also display the stacktrace internals of virtualenv",
     )
     _do_report_setup(parser, args)
+    options = load_app_data(args, parser, options)
+    handle_extra_commands(options)
+
+    discover = get_discover(parser, args)
+    parser._interpreter = interpreter = discover.interpreter
+    if interpreter is None:
+        raise RuntimeError("failed to find interpreter for {}".format(discover))
+    elements = [
+        CreatorSelector(interpreter, parser),
+        SeederSelector(interpreter, parser),
+        ActivationSelector(interpreter, parser),
+    ]
+    options, _ = parser.parse_known_args(args)
+    for element in elements:
+        element.handle_selected_arg_parse(options)
+    parser.enable_help()
+    return parser, elements
+
+
+def build_parser_only(args=None):
+    """Used to provide a parser for the doc generation"""
+    return build_parser(args)[0]
+
+
+def handle_extra_commands(options):
+    if options.upgrade_embed_wheels:
+        result = manual_upgrade(options.app_data)
+        raise SystemExit(result)
+
+
+def load_app_data(args, parser, options):
     # here we need a write-able application data (e.g. the zipapp might need this for discovery cache)
     default_app_data = AppDataAction.default()
     parser.add_argument(
         "--app-data",
         dest="app_data",
         action=AppDataAction,
-        default="<temp folder>" if default_app_data is None else default_app_data,
+        default="<temp folder>" if isinstance(default_app_data, AppDataDisabled) else default_app_data,
         help="a data folder used as cache by the virtualenv",
     )
     parser.add_argument(
@@ -64,20 +95,19 @@ def build_parser(args=None, options=None):
         help="start with empty app data folder",
         default=False,
     )
-    discover = get_discover(parser, args)
-    parser._interpreter = interpreter = discover.interpreter
-    if interpreter is None:
-        raise RuntimeError("failed to find interpreter for {}".format(discover))
-    parser._elements = [
-        CreatorSelector(interpreter, parser),
-        SeederSelector(interpreter, parser),
-        ActivationSelector(interpreter, parser),
-    ]
-    options, _ = parser.parse_known_args(args)
-    for element in parser._elements:
-        element.handle_selected_arg_parse(options)
-    parser.enable_help()
-    return parser
+    parser.add_argument(
+        "--upgrade-embed-wheels",
+        dest="upgrade_embed_wheels",
+        action="store_true",
+        help="trigger a manual update of the embedded wheels",
+        default=False,
+    )
+    options, _ = parser.parse_known_args(args, namespace=options)
+    if options.app_data == "<temp folder>":
+        options.app_data = TempAppData()
+    if options.reset_app_data:
+        options.app_data.reset()
+    return options
 
 
 def add_version_flag(parser):

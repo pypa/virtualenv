@@ -56,7 +56,6 @@ class VirtualEnvConfigParser(ArgumentParser):
         kwargs["prog"] = "virtualenv"
         super(VirtualEnvConfigParser, self).__init__(*args, **kwargs)
         self._fixed = set()
-        self._elements = None
         if options is not None and not isinstance(options, VirtualEnvOptions):
             raise TypeError("options must be of type VirtualEnvOptions")
         self.options = VirtualEnvOptions() if options is None else options

@@ -5,13 +5,10 @@ import os
 import sys
 from datetime import datetime
 
-from virtualenv.config.cli.parser import VirtualEnvOptions
-from virtualenv.util.six import ensure_text
-
 
 def run(args=None, options=None):
     start = datetime.now()
-    from virtualenv.error import ProcessCallFailed
+    from virtualenv.util.error import ProcessCallFailed
     from virtualenv.run import cli_run
 
     if args is None:
@@ -32,6 +29,8 @@ class LogSession(object):
         self.start = start
 
     def __str__(self):
+        from virtualenv.util.six import ensure_text
+
         spec = self.session.creator.interpreter.spec
         elapsed = (datetime.now() - self.start).total_seconds() * 1000
         lines = [
@@ -39,13 +38,26 @@ class LogSession(object):
             "  creator {}".format(ensure_text(str(self.session.creator))),
         ]
         if self.session.seeder.enabled:
-            lines += ("  seeder {}".format(ensure_text(str(self.session.seeder))),)
+            lines += (
+                "  seeder {}".format(ensure_text(str(self.session.seeder))),
+                "    added seed packages: {}".format(
+                    ", ".join(
+                        sorted(
+                            "==".join(i.stem.split("-"))
+                            for i in self.session.creator.purelib.iterdir()
+                            if i.suffix == ".dist-info"
+                        ),
+                    ),
+                ),
+            )
         if self.session.activators:
             lines.append("  activators {}".format(",".join(i.__class__.__name__ for i in self.session.activators)))
         return os.linesep.join(lines)
 
 
 def run_with_catch(args=None):
+    from virtualenv.config.cli.parser import VirtualEnvOptions
+
     options = VirtualEnvOptions()
     try:
         run(args, options)

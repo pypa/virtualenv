@@ -120,7 +120,7 @@ enables you to install additional python packages into the created virtual envir
 main seed mechanism available:
 
 - ``pip`` - this method uses the bundled pip with virtualenv to install the seed packages (note, a new child process
-  needs to be created to do this).
+  needs to be created to do this, which can be expensive especially on Windows).
 - ``app-data`` - this method uses the user application data directory to create install images. These images are needed
   to be created only once, and subsequent virtual environments can just link/copy those images into their pure python
   library path (the ``site-packages`` folder). This allows all but the first virtual environment creation to be blazing
@@ -130,6 +130,39 @@ main seed mechanism available:
   this is on Windows, Linux/macOS with symlinks this can be as low as ``100ms`` from 3+ seconds).
   To override the filesystem location of the seed cache, one can use the
   ``VIRTUALENV_OVERRIDE_APP_DATA`` environment variable.
+
+Bundled wheels
+~~~~~~~~~~~~~~
+
+What qualifies as bundled wheel? The following three sets together:
+
+- ``virtualenv`` ships out of box with a set of ``wheels`` for all three seed packages (:pypi:`pip`, :pypi:`setuptools`,
+  :pypi:`wheel`). We refer to these as embedded wheels. Different Python versions require different versions of these,
+  and because virtualenv supports a wide range of Python versions, the number of embedded wheels out of box is greater
+  than 3.
+- ``virtualenv`` updates the embedded wheels fairly quickly after the upstream packages release a new version, however
+  end users might not be able to upgrade virtualenv at the same speed. Therefore, a user might request to upgrade the
+  list of embedded wheels by invoking virtualenv with the :option:`upgrade-embed-wheels` flag. This operation will
+  trigger automatically, as a background process, if no upgrade has been performed in the last 14 days and upgrade the
+  embedded wheels if they have been our for more than 28 days. This 28 days period should guarantee end users are not
+  pulling in automatically releases that have known bugs within. This automatic behaviour might be disabled via the
+  :option:`no-periodic-update` configuration flag/option. To acquire the release date of a package virtualenv will
+  perform the following:
+
+  - lookup ``https://pypi.org/pypi/<distribution>/json`` (primary truth source),
+  - save the date the version was first discovered, and wait until 28 days passed.
+
+- Users can specify a set of local paths containing these wheels by using the :option:`extra-search-dir` command line
+  argument flag.
+
+When searching for a wheel to use we look in the following order:
+
+- embedded wheels,
+- upgraded embedded wheels,
+- extra search dir.
+
+If neither of the locations contain the requested wheel or :option:`download` option is set will use ``pip`` download to
+load the latest version available from the index server.
 
 Activators
 ----------

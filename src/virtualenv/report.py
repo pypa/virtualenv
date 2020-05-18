@@ -40,6 +40,7 @@ def setup_report(verbosity):
     LOGGER.addHandler(stream_handler)
     level_name = logging.getLevelName(level)
     logging.debug("setup logging to %s", level_name)
+    logging.getLogger("distlib").setLevel(logging.ERROR)
     return verbosity
 
 

@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v2.5.0
+  rev: v3.1.0
   hooks:
   - id: check-ast
   - id: check-builtin-literals
@@ -15,12 +15,8 @@ repos:
   rev: v2.0.1
   hooks:
   - id: add-trailing-comma
-- repo: https://github.com/asottile/yesqa
-  rev: v1.1.0
-  hooks:
-  - id: yesqa
 - repo: https://github.com/asottile/pyupgrade
-  rev: v2.4.1
+  rev: v2.4.4
   hooks:
   - id: pyupgrade
 - repo: https://github.com/asottile/seed-isort-config
@@ -54,8 +50,8 @@ repos:
   - id: setup-cfg-fmt
     args: [--min-py3-version, "3.4"]
 - repo: https://gitlab.com/pycqa/flake8
-  rev: "3.8.1"
+  rev: "3.8.2"
   hooks:
   - id: flake8
-    additional_dependencies: ["flake8-bugbear == 20.1.2"]
+    additional_dependencies: ["flake8-bugbear == 20.1.4"]
     language_version: python3.8

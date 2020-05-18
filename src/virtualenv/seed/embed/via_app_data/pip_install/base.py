@@ -54,11 +54,11 @@ class PipInstall(object):
 
     def build_image(self):
         # 1. first extract the wheel
-        logging.debug("build install image to %s of %s", self._image_dir, self._wheel.name)
+        logging.debug("build install image for %s to %s", self._wheel.name, self._image_dir)
         with zipfile.ZipFile(str(self._wheel)) as zip_ref:
             zip_ref.extractall(str(self._image_dir))
             self._extracted = True
-        # 2. now add additional files not present in the package
+        # 2. now add additional files not present in the distribution
         new_files = self._generate_new_files()
         # 3. finally fix the records file
         self._fix_records(new_files)

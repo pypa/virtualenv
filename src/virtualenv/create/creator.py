@@ -14,12 +14,12 @@ from six import add_metaclass
 
 from virtualenv.discovery.cached_py_info import LogCmd
 from virtualenv.info import WIN_CPYTHON_2
-from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.util.path import Path, safe_delete
 from virtualenv.util.six import ensure_str, ensure_text
 from virtualenv.util.subprocess import run_cmd
-from virtualenv.util.zipapp import ensure_file_on_disk
 from virtualenv.version import __version__
+
+from .pyenv_cfg import PyEnvCfg
 
 HERE = Path(os.path.abspath(__file__)).parent
 DEBUG_SCRIPT = HERE / "debug.py"
@@ -45,7 +45,7 @@ class Creator(object):
         self.dest = Path(options.dest)
         self.clear = options.clear
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest)
-        self.app_data = options.app_data.folder
+        self.app_data = options.app_data
 
     def __repr__(self):
         return ensure_str(self.__unicode__())
@@ -74,6 +74,7 @@ class Creator(object):
         """Add CLI arguments for the creator.
 
         :param parser: the CLI parser
+        :param app_data: the application data folder
         :param interpreter: the interpreter we're asked to create virtual environment for
         :param meta: value as returned by :meth:`can_create`
         """
@@ -199,7 +200,7 @@ def get_env_debug_info(env_exe, debug_script, app_data):
     env = os.environ.copy()
     env.pop(str("PYTHONPATH"), None)
 
-    with ensure_file_on_disk(debug_script, app_data) as debug_script:
+    with app_data.ensure_extracted(debug_script) as debug_script:
         cmd = [str(env_exe), str(debug_script)]
         if WIN_CPYTHON_2:
             cmd = [ensure_text(i) for i in cmd]

@@ -13,6 +13,9 @@ else:
     Popen = subprocess.Popen
 
 
+DETACHED_PROCESS = 0x00000008
+
+
 def run_cmd(cmd):
     try:
         process = Popen(
@@ -29,4 +32,5 @@ __all__ = (
     "subprocess",
     "Popen",
     "run_cmd",
+    "DETACHED_PROCESS",
 )

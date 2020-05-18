@@ -5,7 +5,7 @@ from copy import copy
 
 from virtualenv.create.via_global_ref.store import handle_store_python
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.error import ProcessCallFailed
+from virtualenv.util.error import ProcessCallFailed
 from virtualenv.util.path import ensure_dir
 from virtualenv.util.subprocess import run_cmd
 
