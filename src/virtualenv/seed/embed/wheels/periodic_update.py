@@ -33,16 +33,13 @@ def periodic_update(distribution, for_py_version, wheel, cache_dir, app_data):
     if needs_update:
         trigger_update(distribution, for_py_version, wheel, app_data)
     # TODO: only upgrade when an hour passed since periodic update - to keep most CI stable
-    for filename, release_date in (
-        (update_log.updated, update_log.updated_release_date),
-        (update_log.previous_updated, update_log.previous_updated_release_date),
-    ):
-        if filename is None or filename == wheel.name:
+    for version in update_log.versions:
+        if version.filename is None or version.filename == wheel.name:
             continue
-        updated_wheel = Wheel(cache_dir / filename)
+        updated_wheel = Wheel(cache_dir / version.filename)
         # use it only if released long enough time ago - use version number to approximate release
         # only use if it has been released for at least 28 days
-        if datetime.now() - release_date > timedelta(days=28):
+        if datetime.now() - version.release_date > timedelta(days=28):
             logging.debug("using periodically updated wheel %s", updated_wheel)
             return updated_wheel
     return wheel
@@ -53,16 +50,61 @@ def update_log_for_distribution(folder, distribution, no_block=False):
     root_lock, lock_name = ReentrantFileLock(folder), "{}.update.lock".format(distribution)
     try:
         with root_lock.lock_for_key(lock_name, no_block=no_block):
-            update_log = UpdateLog(folder / "{}.update.json".format(distribution))
+            update_log = UpdateLog.from_path(folder / "{}.update.json".format(distribution))
             yield update_log
     except Timeout:
         return
 
 
-class UpdateLog(object):
-    datetime_fmt = "%Y-%m-%dT%H:%M:%SZ"
+DATETIME_FMT = "%Y-%m-%dT%H:%M:%SZ"
 
-    def __init__(self, path):
+
+def dump_datetime(value):
+    if value is None:
+        return None
+    return datetime.strftime(value, DATETIME_FMT)
+
+
+def load_datetime(value):
+    if value is None:
+        return None
+    return datetime.strptime(value, DATETIME_FMT)
+
+
+class NewVersion(object):
+    def __init__(self, filename, release_date):
+        self.filename = filename
+        self.release_date = release_date
+
+    @classmethod
+    def from_dict(cls, dictionary):
+        return cls(filename=dictionary["filename"], release_date=load_datetime(dictionary["release_date"]))
+
+    def to_dict(self):
+        return {
+            "filename": self.filename,
+            "release_date": dump_datetime(self.release_date),
+        }
+
+
+class UpdateLog(object):
+    def __init__(self, path, started, completed, versions):
+        self.path = path
+        self.started = started
+        self.completed = completed
+        self.versions = versions
+
+    @classmethod
+    def from_dict(cls, path, dictionary):
+        return cls(
+            path,
+            load_datetime(dictionary.get("started")),
+            load_datetime(dictionary.get("completed")),
+            [NewVersion.from_dict(v) for v in dictionary.get("versions", [])],
+        )
+
+    @classmethod
+    def from_path(cls, path):
         content = {}
         if path.exists():
             try:
@@ -70,26 +112,18 @@ class UpdateLog(object):
                     content = json.load(file_handler)
             except (IOError, ValueError):
                 pass
-        self.started = self._load_datetime(content, "started")
-        self.completed = self._load_datetime(content, "completed")
+        return cls.from_dict(path, content)
 
-        self.updated = content.get("updated")
-        self.updated_release_date = content.get("updated_release_date")
+    def to_dict(self):
+        return {
+            "started": dump_datetime(self.started),
+            "completed": dump_datetime(self.completed),
+            "versions": [r.to_dict() for r in self.versions],
+        }
 
-        self.previous_updated = content.get("previous_updated")
-        self.previous_updated_release_date = content.get("previous_updated_release_date")
-        self.path = path
-
-    def _load_datetime(self, content, key):
-        value = content.get(key)
-        if value:
-            return datetime.strptime(value, self.datetime_fmt)
-        return None
-
-    def _dump_datetime(self, value):
-        if value is None:
-            return None
-        return datetime.strftime(value, self.datetime_fmt)
+    def update(self):
+        with open(str(self.path), "wt") as file_handler:
+            json.dump(self.to_dict(), file_handler, sort_keys=True, indent=4)
 
     @property
     def needs_update(self):
@@ -97,30 +131,12 @@ class UpdateLog(object):
         if self.completed is None:  # never completed
             return self._check_start(now)
         else:
-            delta_since_last_completed = now - self.completed
-            if delta_since_last_completed < timedelta(days=13):
+            if now - self.completed <= timedelta(days=14):
                 return False
             return self._check_start(now)
 
     def _check_start(self, now):
-        if self.started is None:  # never started
-            return True
-        delta_since_last_start = now - self.started
-        if delta_since_last_start >= timedelta(hours=1):  # over an hour ago -> operations crashed, try again
-            return True
-        return False
-
-    def update(self):
-        content = {
-            "started": self._dump_datetime(self.started),
-            "completed": self._dump_datetime(self.completed),
-            "updated": self.updated,
-            "updated_release_date": self._dump_datetime(self.updated_release_date),
-            "previous_updated": self.previous_updated,
-            "previous_updated_release_date": self._dump_datetime(self.previous_updated_release_date),
-        }
-        with open(str(self.path), "wt") as file_handler:
-            json.dump(content, file_handler, sort_keys=True, indent=4)
+        return self.started is None or now - self.started >= timedelta(hours=1)
 
 
 def trigger_update(distribution, for_py_version, wheel, app_data):
@@ -141,27 +157,29 @@ def trigger_update(distribution, for_py_version, wheel, app_data):
         for_py_version,
         process.pid,
     )
-    # process.communicate()
+    process.communicate()  # on purpose not called to make it detached
 
 
 def do_update(distribution, for_py_version, wheel_filename, app_data):
     temp_dir = Path(tempfile.mkdtemp())
     try:
         copy2(wheel_filename, temp_dir)
+        local_wheel = Wheel(Path(wheel_filename))
         from .acquire import download_wheel
 
-        download_wheel(distribution, None, for_py_version, temp_dir, ReentrantFileLock(app_data))
-        local_wheel = Path(wheel_filename)
-        new_wheels = [f for f in temp_dir.iterdir() if f.name != local_wheel.name]
-        if new_wheels:
-            new_wheel = new_wheels[0]
-            dest = local_wheel.parent / new_wheel.name
-            if not dest.exists():
-                copy2(new_wheel, dest)
-        else:
-            dest = local_wheel
-        release_date = _get_release_date(dest)
-        with update_log_for_distribution(local_wheel.parent.parent, distribution, no_block=False) as u_log:
+        with update_log_for_distribution(local_wheel.path.parent.parent, distribution) as u_log:
+
+            download_wheel(distribution, None, for_py_version, temp_dir, ReentrantFileLock(app_data))
+
+            new_wheels = [f for f in temp_dir.iterdir() if f.name != local_wheel.name]
+            if new_wheels:
+                new_wheel = new_wheels[0]
+                dest = local_wheel.path.parent / new_wheel.name
+                if not dest.exists():
+                    copy2(new_wheel, dest)
+            else:
+                dest = local_wheel.path
+            release_date = _get_release_date(dest)
             if u_log.updated is not None:
                 u_log.previous_updated = u_log.updated
                 u_log.previous_updated_release_date = u_log.updated_release_date
