@@ -43,7 +43,7 @@ class PipInvoke(BaseEmbed):
             folders = set()
             for context in (ensure_file_on_disk(get_bundled_wheel(p, version), self.app_data) for p in pkg_versions):
                 folders.add(stack.enter_context(context).parent)
+            folders.update(set(self.extra_search_dir))
             for folder in folders:
                 cmd.extend(["--find-links", str(folder)])
-                cmd.extend(self.extra_search_dir)
             yield cmd
