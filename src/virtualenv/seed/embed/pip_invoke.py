@@ -25,11 +25,16 @@ class PipInvoke(BaseEmbed):
             return
         with self.get_pip_install_cmd(creator.exe, creator.interpreter.version_release_str) as cmd:
             with pip_wheel_env_run(creator.interpreter.version_release_str, self.app_data) as env:
-                logging.debug("pip seed by running: %s", LogCmd(cmd, env))
-                process = Popen(cmd, env=env)
-                process.communicate()
+                self._execute(cmd, env)
+
+    @staticmethod
+    def _execute(cmd, env):
+        logging.debug("pip seed by running: %s", LogCmd(cmd, env))
+        process = Popen(cmd, env=env)
+        process.communicate()
         if process.returncode != 0:
             raise RuntimeError("failed seed with code {}".format(process.returncode))
+        return process
 
     @contextmanager
     def get_pip_install_cmd(self, exe, version):
