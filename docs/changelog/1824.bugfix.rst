@@ -1,3 +1,0 @@
-Fix virtualenv fails sometimes when run concurrently, ``--clear-app-data`` conflicts with :option:`clear` flag when
-abbreviation is turned on. To bypass this while allowing abbreviated flags on the command line we had to move it to
-:option:`reset-app-data` - by :user:`gaborbernat`.
