@@ -25,11 +25,16 @@ class PipInvoke(BaseEmbed):
             return
         with self.get_pip_install_cmd(creator.exe, creator.interpreter.version_release_str) as cmd:
             with pip_wheel_env_run(creator.interpreter.version_release_str, self.app_data) as env:
-                logging.debug("pip seed by running: %s", LogCmd(cmd, env))
-                process = Popen(cmd, env=env)
-                process.communicate()
+                self._execute(cmd, env)
+
+    @staticmethod
+    def _execute(cmd, env):
+        logging.debug("pip seed by running: %s", LogCmd(cmd, env))
+        process = Popen(cmd, env=env)
+        process.communicate()
         if process.returncode != 0:
             raise RuntimeError("failed seed with code {}".format(process.returncode))
+        return process
 
     @contextmanager
     def get_pip_install_cmd(self, exe, version):
@@ -43,7 +48,7 @@ class PipInvoke(BaseEmbed):
             folders = set()
             for context in (ensure_file_on_disk(get_bundled_wheel(p, version), self.app_data) for p in pkg_versions):
                 folders.add(stack.enter_context(context).parent)
+            folders.update(set(self.extra_search_dir))
             for folder in folders:
                 cmd.extend(["--find-links", str(folder)])
-                cmd.extend(self.extra_search_dir)
             yield cmd
