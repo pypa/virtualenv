@@ -5,6 +5,23 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.21 (2020-05-20)
+---------------------
+
+Features - 20.0.21
+~~~~~~~~~~~~~~~~~~
+- Generate ignore file for version control systems to avoid tracking virtual environments by default. Users should
+  remove these files if still want to track. For now we support only **git** by :user:`gaborbernat`. (`#1806 <https://github.com/pypa/virtualenv/issues/1806>`_)
+
+Bugfixes - 20.0.21
+~~~~~~~~~~~~~~~~~~
+- Fix virtualenv fails sometimes when run concurrently, ``--clear-app-data`` conflicts with :option:`clear` flag when
+  abbreviation is turned on. To bypass this while allowing abbreviated flags on the command line we had to move it to
+  :option:`reset-app-data` - by :user:`gaborbernat`. (`#1824 <https://github.com/pypa/virtualenv/issues/1824>`_)
+- Upgrade embeded ``setuptools`` to ``46.4.0`` from ``46.1.3`` on Python ``3.5+``, and ``pip`` from ``20.1`` to ``20.1.1`` - by :user:`gaborbernat`. (`#1827 <https://github.com/pypa/virtualenv/issues/1827>`_)
+- Seeder pip now correctly handles ``--extra-search-dir`` - by :user:`frenzymadness`. (`#1834 <https://github.com/pypa/virtualenv/issues/1834>`_)
+
+
 v20.0.20 (2020-05-04)
 ---------------------
 

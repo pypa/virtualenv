@@ -1,2 +1,0 @@
-Generate ignore file for version control systems to avoid tracking virtual environments by default. Users should
-remove these files if still want to track. For now we support only **git** by :user:`gaborbernat`.
