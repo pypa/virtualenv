@@ -1,0 +1,1 @@
+Seeder pip now correctly handles ``--extra-search-dir`` - by :user:`frenzymadness`.
