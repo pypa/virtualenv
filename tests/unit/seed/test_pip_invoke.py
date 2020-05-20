@@ -5,6 +5,7 @@ import pytest
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.run import cli_run
 from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
+from virtualenv.seed.embed.wheels.acquire import BUNDLE_FOLDER
 
 
 @pytest.mark.slow
@@ -12,6 +13,8 @@ from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
 def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, current_fastest, no):
     bundle_ver = BUNDLE_SUPPORT[PythonInfo.current_system().version_release_str]
     create_cmd = [
+        "--extra-search-dir",
+        str(BUNDLE_FOLDER),
         "--seeder",
         "pip",
         str(tmp_path / "env"),
