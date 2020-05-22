@@ -5,6 +5,7 @@ import subprocess
 import sys
 
 import pytest
+from flaky import flaky
 
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.run import cli_run
@@ -83,6 +84,7 @@ def call_zipapp(zipapp, monkeypatch, tmp_path, zipapp_test_env, temp_app_data):
     return _run
 
 
+@flaky(max_runs=2, min_passes=1)
 def test_zipapp_help(call_zipapp, capsys):
     call_zipapp("-h")
     out, err = capsys.readouterr()

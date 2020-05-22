@@ -95,6 +95,8 @@ def _version_not_satisfies_pairs():
                 for o in [1, -1]:
                     temp = copy(sat_ver)
                     temp[patch] += o
+                    if temp[patch] < 0:
+                        continue
                     sat = ".".join(str(i) for i in temp)
                     target.add((req, sat))
     return sorted(target)

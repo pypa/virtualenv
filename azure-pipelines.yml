@@ -36,6 +36,8 @@ jobs:
 - template: run-tox-env.yml@tox
   parameters:
     jobs:
+      py39:
+        image: [linux]
       py38:
         image: [linux, vs2017-win2016, macOs]
       py37:
@@ -92,13 +94,13 @@ jobs:
         displayName: tox uses this virtualenv (eat our own dogfood)
         condition: not(and(succeeded(), eq(variables['image_name'], 'windows'), in(variables['TOXENV'], 'pypy3')))
       - script: 'sudo apt-get update -y && sudo apt-get install fish csh'
-        condition: and(succeeded(), eq(variables['image_name'], 'linux'), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35', 'py27', 'pypy', 'pypy3'))
+        condition: and(succeeded(), eq(variables['image_name'], 'linux'), in(variables['TOXENV'], 'py39', 'py38', 'py37', 'py36', 'py35', 'py27', 'pypy', 'pypy3'))
         displayName: install fish and csh via apt-get
       - script: 'brew update -vvv && brew install fish tcsh'
-        condition: and(succeeded(), eq(variables['image_name'], 'macOs'), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35', 'py27', 'pypy', 'pypy3'))
+        condition: and(succeeded(), eq(variables['image_name'], 'macOs'), in(variables['TOXENV'], 'py39', 'py38', 'py37', 'py36', 'py35', 'py27', 'pypy', 'pypy3'))
         displayName: install fish and csh via brew
       - task: UsePythonVersion@0
-        condition: and(succeeded(), in(variables['TOXENV'], 'py38', 'py37', 'py36', 'py35'))
+        condition: and(succeeded(), in(variables['TOXENV'], 'py39', 'py38', 'py37', 'py36', 'py35'))
         displayName: provision cpython 2
         inputs:
           versionSpec: '2.7'
@@ -122,7 +124,7 @@ jobs:
         displayName: Install Visual C++ for Python 2.7
     coverage:
       with_toxenv: 'coverage' # generate .tox/.coverage, .tox/coverage.xml after test run
-      for_envs: [py38, py37, py36, py35, py27, pypy, pypy3]
+      for_envs: [py39, py38, py37, py36, py35, py27, pypy, pypy3]
 
 - ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/') }}:
   - template: publish-pypi.yml@tox
