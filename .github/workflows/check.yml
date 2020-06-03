@@ -55,7 +55,11 @@ jobs:
     - uses: actions/checkout@v2
     - name: pick to environment to run
       run: |
-        python -c "print('::set-env name=TOXENV::' + {'3.8': 'py38', '3.7': 'py37', '3.6': 'py36', '3.5': 'py35', '2.7': 'py27', 'pypy2': 'pypy', 'pypy3': 'pypy3'}['${{ matrix.py}}'])"
+        print(
+            '::set-env name=TOXENV::' +
+            {'3.8': 'py38', '3.7': 'py37', '3.6': 'py36', '3.5': 'py35', '2.7': 'py27', 'pypy2': 'pypy', 'pypy3': 'pypy3'}['${{ matrix.py }}']
+        )
+      shell: python
     - name: setup python for test ${{ matrix.py }}
       uses: actions/setup-python@v2
       with:
