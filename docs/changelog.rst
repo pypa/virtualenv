@@ -18,7 +18,7 @@ Bugfixes - 20.0.21
 - Fix virtualenv fails sometimes when run concurrently, ``--clear-app-data`` conflicts with :option:`clear` flag when
   abbreviation is turned on. To bypass this while allowing abbreviated flags on the command line we had to move it to
   :option:`reset-app-data` - by :user:`gaborbernat`. (`#1824 <https://github.com/pypa/virtualenv/issues/1824>`_)
-- Upgrade embeded ``setuptools`` to ``46.4.0`` from ``46.1.3`` on Python ``3.5+``, and ``pip`` from ``20.1`` to ``20.1.1`` - by :user:`gaborbernat`. (`#1827 <https://github.com/pypa/virtualenv/issues/1827>`_)
+- Upgrade embedded ``setuptools`` to ``46.4.0`` from ``46.1.3`` on Python ``3.5+``, and ``pip`` from ``20.1`` to ``20.1.1`` - by :user:`gaborbernat`. (`#1827 <https://github.com/pypa/virtualenv/issues/1827>`_)
 - Seeder pip now correctly handles ``--extra-search-dir`` - by :user:`frenzymadness`. (`#1834 <https://github.com/pypa/virtualenv/issues/1834>`_)
 
 
@@ -94,7 +94,7 @@ Features - 20.0.14
 ~~~~~~~~~~~~~~~~~~
 - Remove ``__PYVENV_LAUNCHER__`` on macOs for Python ``3.7.(<8)`` and ``3.8.(<3)`` on interpreter startup via ``pth``
   file, this pulls in the `upstream patch <https://github.com/python/cpython/pull/9516>`_ - by :user:`gaborbernat`. (`#1704 <https://github.com/pypa/virtualenv/issues/1704>`_)
-- Upgrade embeded setuptools for Python ``3.5+`` to ``46.1.1``, for Python ``2.7`` to ``44.1.0`` - by :user:`gaborbernat`. (`#1745 <https://github.com/pypa/virtualenv/issues/1745>`_)
+- Upgrade embedded setuptools for Python ``3.5+`` to ``46.1.1``, for Python ``2.7`` to ``44.1.0`` - by :user:`gaborbernat`. (`#1745 <https://github.com/pypa/virtualenv/issues/1745>`_)
 
 Bugfixes - 20.0.14
 ~~~~~~~~~~~~~~~~~~
@@ -193,7 +193,7 @@ Bugfixes - 20.0.8
 - Having `distutils configuration <https://docs.python.org/3/install/index.html#distutils-configuration-files>`_
   files that set ``prefix`` and ``install_scripts`` cause installation of packages in the wrong location -
   by :user:`gaborbernat`. (`#1663 <https://github.com/pypa/virtualenv/issues/1663>`_)
-- Fix ``PYTHONPATH`` being overriden on Python 2 — by :user:`jd`. (`#1673 <https://github.com/pypa/virtualenv/issues/1673>`_)
+- Fix ``PYTHONPATH`` being overridden on Python 2 — by :user:`jd`. (`#1673 <https://github.com/pypa/virtualenv/issues/1673>`_)
 - Fix list configuration value parsing from config file or environment variable - by :user:`gaborbernat`. (`#1674 <https://github.com/pypa/virtualenv/issues/1674>`_)
 - Fix Batch activation script shell prompt to display environment name by default - by :user:`spetafree`. (`#1679 <https://github.com/pypa/virtualenv/issues/1679>`_)
 - Fix startup on Python 2 is slower for virtualenv - this was due to setuptools calculating it's working set distribution
