@@ -65,7 +65,7 @@ jobs:
         import os; import subprocess
         version = "${{matrix.py}}"[-1]
         subprocess.check_call(["brew", "install", f"python@{version}"])
-        print('::set-env name=PATH::' + (":".join([f"/usr/local/opt/python@{version}"] + os.environ["PATH"].split(":"))))
+        print(f'::add-path::/usr/local/opt/python@{version}')
       shell: python
     - name: pick environment to run
       run: |
