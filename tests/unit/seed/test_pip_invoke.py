@@ -5,14 +5,14 @@ import pytest
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.run import cli_run
 from virtualenv.seed.embed.pip_invoke import PipInvoke
-from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
+from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT, MAX
 from virtualenv.seed.embed.wheels.acquire import BUNDLE_FOLDER
 
 
 @pytest.mark.slow
 @pytest.mark.parametrize("no", ["pip", "setuptools", "wheel", ""])
 def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_fastest, no):
-    bundle_ver = BUNDLE_SUPPORT[PythonInfo.current_system().version_release_str]
+    bundle_ver = BUNDLE_SUPPORT.get(PythonInfo.current_system().version_release_str) or BUNDLE_SUPPORT.get(MAX)
 
     extra_search_dir = tmp_path / "extra"
     extra_search_dir.mkdir()
