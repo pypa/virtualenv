@@ -53,7 +53,7 @@ jobs:
       run: python -m pip install tox
     - uses: actions/checkout@v2
     - name: use local virtualenv for tox
-      run: python -m pip install ${{ runner.os == 'Windows' && matrix.py == 'pypy3' && 'virtualenv<20' || '.'}}
+      run: python -m pip install .
     - name: setup python for test ${{ matrix.py }}
       if: "!startsWith(matrix.py,'brew@py')"
       uses: actions/setup-python@v2
