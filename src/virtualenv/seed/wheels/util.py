@@ -39,6 +39,8 @@ class Wheel(object):
                 result.append(int(part))
             except ValueError:
                 break
+        if not result:
+            raise ValueError(version)
         return tuple(result)
 
     @property

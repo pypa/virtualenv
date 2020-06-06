@@ -48,7 +48,7 @@ def _non_success_exit_code(capsys, target):
         run_with_catch(args=[target])
     assert context.value.code != 0
     out, err = capsys.readouterr()
-    assert not out, out
+    assert "SystemExit: " in out
     return err
 
 

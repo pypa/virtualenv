@@ -1,3 +1,8 @@
+ignore:
+- "src/virtualenv/create/via_global_ref/builtin/python2/site.py"
+- "src/virtualenv/create/via_global_ref/_virtualenv.py"
+- "src/virtualenv/activation/python/activate_this.py"
+
 coverage:
   range: "80...100"
   coverage:

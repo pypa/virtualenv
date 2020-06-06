@@ -61,14 +61,17 @@ def run_with_catch(args=None):
     options = VirtualEnvOptions()
     try:
         run(args, options)
-    except (KeyboardInterrupt, Exception) as exception:
-        if getattr(options, "with_traceback", False):
+    except (KeyboardInterrupt, SystemExit, Exception) as exception:
+        try:
+            if getattr(options, "with_traceback", False):
+                raise
+            else:
+                logging.error("%s: %s", type(exception).__name__, exception)
+                code = exception.code if isinstance(exception, SystemExit) else 1
+                sys.exit(code)
+        finally:
             logging.shutdown()  # force flush of log messages before the trace is printed
-            raise
-        else:
-            logging.error("%s: %s", type(exception).__name__, exception)
-            sys.exit(1)
 
 
-if __name__ == "__main__":
-    run_with_catch()
+if __name__ == "__main__":  # pragma: no cov
+    run_with_catch()  # pragma: no cov

@@ -27,8 +27,8 @@ if PY2:
     # Failed to import _strptime because the import lock is held by
     try:
         import _strptime  # noqa
-    except ImportError:
-        pass
+    except ImportError:  # pragma: no cov
+        pass  # pragma: no cov
 
 
 def periodic_update(distribution, for_py_version, wheel, search_dirs, app_data, do_periodic_update):
@@ -165,7 +165,7 @@ def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, p
     pipe = subprocess.PIPE if False else None
     kwargs = {"stdout": pipe, "stderr": pipe}
     if sys.platform == "win32":
-        kwargs["creation_flags"] = DETACHED_PROCESS
+        kwargs["creationflags"] = DETACHED_PROCESS
     process = Popen(cmd, **kwargs)
     logging.info(
         "triggered periodic upgrade of %s%s (for python %s) via background process having PID %d",
@@ -275,4 +275,5 @@ __all__ = (
     "periodic_update",
     "do_update",
     "manual_upgrade",
+    "NewVersion",
 )
