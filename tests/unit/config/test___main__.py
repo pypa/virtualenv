@@ -1,6 +1,5 @@
 from __future__ import absolute_import, unicode_literals
 
-import os
 import re
 import sys
 
@@ -58,20 +57,26 @@ def test_session_report_full(session_app_data, tmp_path, capsys):
     run_with_catch([str(tmp_path)])
     out, err = capsys.readouterr()
     assert err == ""
-    regex = re.compile(
-        (
-            r"^created virtual environment .* in \d+ms{0}"
-            r"  creator .*{0}"
-            r"  seeder .*{0}"
-            r"    added seed packages: .*pip==.*, setuptools==.*, wheel==.*{0}"
-            r"  activators .*{0}$"
-        ).format(os.linesep),
-    )
-    assert regex.match(out), out
+    lines = out.splitlines()
+    regexes = [
+        r"created virtual environment .* in \d+ms",
+        r"  creator .*",
+        r"  seeder .*",
+        r"    added seed packages: .*pip==.*, setuptools==.*, wheel==.*",
+        r"  activators .*",
+    ]
+    for line, regex in zip(lines, regexes):
+        assert re.match(regex, line), line
 
 
 def test_session_report_minimal(session_app_data, tmp_path, capsys):
     run_with_catch([str(tmp_path), "--activators", "", "--without-pip"])
     out, err = capsys.readouterr()
     assert err == ""
-    assert re.match(r"^created virtual environment .* in \d+ms{0}" r"  creator .*{0}".format(os.linesep), out), out
+    lines = out.splitlines()
+    regexes = [
+        r"created virtual environment .* in \d+ms",
+        r"  creator .*",
+    ]
+    for line, regex in zip(lines, regexes):
+        assert re.match(regex, line), line
