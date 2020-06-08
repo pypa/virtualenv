@@ -1,11 +1,12 @@
 from __future__ import absolute_import, unicode_literals
 
 from datetime import datetime, timedelta
-from itertools import zip_longest
+
+from six.moves import zip_longest
 
 from virtualenv import cli_run
 from virtualenv.seed.wheels.embed import BUNDLE_SUPPORT, get_embed_wheel
-from virtualenv.seed.wheels.periodic_update import NewVersion, manual_upgrade, UpdateLog, periodic_update
+from virtualenv.seed.wheels.periodic_update import NewVersion, UpdateLog, manual_upgrade, periodic_update
 
 
 def test_manual_upgrade(session_app_data, caplog, mocker, for_py_version):
@@ -75,7 +76,7 @@ def test_periodic_update_latest_per_patch(mocker, session_app_data, for_py_versi
         versions=[
             NewVersion(wheel_path(current, (0, 1, 2)), completed, now - timedelta(days=1)),
             NewVersion(wheel_path(current, (0, 1, 1)), completed, now - timedelta(days=30)),
-            NewVersion(filename=current.path, found_date=completed, release_date=now - timedelta(days=2)),
+            NewVersion(filename=str(current.path), found_date=completed, release_date=now - timedelta(days=2)),
         ],
         periodic=True,
     )
@@ -88,4 +89,4 @@ def test_periodic_update_latest_per_patch(mocker, session_app_data, for_py_versi
 def wheel_path(wheel, of):
     new_version = ".".join(str(i) for i in (tuple(sum(x) for x in zip_longest(wheel.version_tuple, of, fillvalue=0))))
     new_name = wheel.name.replace(wheel.version, new_version)
-    return wheel.path.parent / new_name
+    return str(wheel.path.parent / new_name)

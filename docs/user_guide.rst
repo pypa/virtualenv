@@ -144,7 +144,7 @@ What qualifies as bundled wheel? The following three sets together:
   end users might not be able to upgrade virtualenv at the same speed. Therefore, a user might request to upgrade the
   list of embedded wheels by invoking virtualenv with the :option:`upgrade-embed-wheels` flag. This operation will
   trigger automatically, as a background process, if no upgrade has been performed in the last 14 days and upgrade the
-  embedded wheels if they have been our for more than 28 days. This 28 days period should guarantee end users are not
+  embedded wheels if they have been out for more than 28 days. This 28 days period should guarantee end users are not
   pulling in automatically releases that have known bugs within. This automatic behaviour might be disabled via the
   :option:`no-periodic-update` configuration flag/option. To acquire the release date of a package virtualenv will
   perform the following:
