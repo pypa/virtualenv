@@ -6,11 +6,13 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 import logging
+import os
 import subprocess
 import sys
 from datetime import datetime, timedelta
 from itertools import groupby
 from shutil import copy2
+from threading import Thread
 
 from six.moves.urllib.request import urlopen
 
@@ -40,7 +42,7 @@ def periodic_update(distribution, for_py_version, wheel, search_dirs, app_data, 
     u_log = UpdateLog.from_app_data(app_data, distribution, for_py_version)
     for _, group in groupby(u_log.versions, key=lambda v: v.wheel.version_tuple[0:2]):
         version = next(group)  # use only latest patch version per minor, earlier assumed to be buggy
-        if wheel is not None and version.filename == wheel.name:
+        if wheel is not None and version.filename.name == wheel.name:
             break
         if u_log.periodic is False or version.use(now):
             updated_wheel = Wheel(app_data.house / version.filename)
@@ -127,7 +129,8 @@ class UpdateLog(object):
 
     @classmethod
     def from_app_data(cls, app_data, distribution, for_py_version):
-        return cls.from_dict(app_data.embed_update_log(distribution, for_py_version).read())
+        raw_json = app_data.embed_update_log(distribution, for_py_version).read()
+        return cls.from_dict(raw_json)
 
     def to_dict(self):
         return {
@@ -174,7 +177,8 @@ def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, p
         for_py_version,
         process.pid,
     )
-    # process.communicate()  # on purpose not called to make it detached
+    if os.environ.get(str("_VIRTUALENV_PERIODIC_UPDATE_INLINE")) == str("1"):
+        process.communicate()  # on purpose not called to make it a background process
 
 
 def do_update(distribution, for_py_version, embed_filename, app_data, search_dirs, periodic):
@@ -230,45 +234,56 @@ def _get_release_date(dest):
 
 
 def manual_upgrade(app_data):
-    from .bundle import from_bundle
+    threads = []
 
     for for_py_version, distribution_to_package in BUNDLE_SUPPORT.items():
         # load extra search dir for the given for_py
         for distribution in distribution_to_package.keys():
-            start = datetime.now()
-            current = from_bundle(
-                distribution=distribution,
-                version=None,
-                for_py_version=for_py_version,
-                search_dirs=[],
-                app_data=app_data,
-                do_periodic_update=False,
-            )
-            logging.warning(
-                "upgrade %s for python %s with current %s",
-                distribution,
-                for_py_version,
-                "" if current is None else current.name,
-            )
-            versions = do_update(
-                distribution=distribution,
-                for_py_version=for_py_version,
-                embed_filename=current.path,
-                app_data=app_data,
-                search_dirs=[],
-                periodic=False,
-            )
-            msg = "upgraded %s for python %s in %s {}".format(
-                "new entries found:\n%s" if versions else "no new versions found",
-            )
-            args = [
-                distribution,
-                for_py_version,
-                datetime.now() - start,
-            ]
-            if versions:
-                args.append("\n".join("\t{}".format(v) for v in versions))
-            logging.warning(msg, *args)
+            thread = Thread(target=_run_manual_upgrade, args=(app_data, distribution, for_py_version))
+            thread.start()
+            threads.append(thread)
+
+    for thread in threads:
+        thread.join()
+
+
+def _run_manual_upgrade(app_data, distribution, for_py_version):
+    start = datetime.now()
+    from .bundle import from_bundle
+
+    current = from_bundle(
+        distribution=distribution,
+        version=None,
+        for_py_version=for_py_version,
+        search_dirs=[],
+        app_data=app_data,
+        do_periodic_update=False,
+    )
+    logging.warning(
+        "upgrade %s for python %s with current %s",
+        distribution,
+        for_py_version,
+        "" if current is None else current.name,
+    )
+    versions = do_update(
+        distribution=distribution,
+        for_py_version=for_py_version,
+        embed_filename=current.path,
+        app_data=app_data,
+        search_dirs=[],
+        periodic=False,
+    )
+    msg = "upgraded %s for python %s in %s {}".format(
+        "new entries found:\n%s" if versions else "no new versions found",
+    )
+    args = [
+        distribution,
+        for_py_version,
+        datetime.now() - start,
+    ]
+    if versions:
+        args.append("\n".join("\t{}".format(v) for v in versions))
+    logging.warning(msg, *args)
 
 
 __all__ = (
