@@ -1,1 +1,0 @@
-Relax ``importlib.resources`` requirement to also allow version 2 - by :user:`asottile`.
