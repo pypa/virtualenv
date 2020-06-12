@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.22 (2020-06-12)
+---------------------
+
+Bugfixes - 20.0.22
+~~~~~~~~~~~~~~~~~~
+- Relax ``importlib.resources`` requirement to also allow version 2 - by :user:`asottile`. (`#1846 <https://github.com/pypa/virtualenv/issues/1846>`_)
+- Upgrade embedded setuptools to ``44.1.1`` for python 2 and ``47.1.1`` for python3.5+ - by :user:`gaborbernat`. (`#1855 <https://github.com/pypa/virtualenv/issues/1855>`_)
+
+
 v20.0.21 (2020-05-20)
 ---------------------
 
