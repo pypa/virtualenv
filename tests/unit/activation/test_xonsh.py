@@ -9,9 +9,9 @@ from virtualenv.info import IS_PYPY, PY3
 
 
 @pytest.mark.slow
-@pytest.mark.skipif(sys.platform == "win32" and IS_PYPY and PY3, reason="xonsh on Windows blocks indefinitely")
-@pytest.mark.xfail(
-    condition=sys.version_info[0:2] == (3, 9), strict=True, reason="https://bugs.python.org/issue40726",
+@pytest.mark.skipif(
+    (sys.platform == "win32" and IS_PYPY and PY3) or sys.version_info[0:2] == (3, 9),
+    reason="xonsh on Windows blocks indefinitely and is not stable yet on 3.9",
 )
 def test_xonsh(activation_tester_class, activation_tester):
     class Xonsh(activation_tester_class):
