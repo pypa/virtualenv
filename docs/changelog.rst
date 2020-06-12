@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.23 (2020-06-12)
+---------------------
+
+Bugfixes - 20.0.23
+~~~~~~~~~~~~~~~~~~
+- Fix typo in ``setup.cfg`` - by :user:`RowdyHowell`. (`#1857 <https://github.com/pypa/virtualenv/issues/1857>`_)
+
+
 v20.0.22 (2020-06-12)
 ---------------------
 
