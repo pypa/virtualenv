@@ -63,7 +63,7 @@ def handle_auto_update(distribution, for_py_version, wheel, search_dirs, app_dat
         trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, periodic=True)
 
 
-DATETIME_FMT = "%Y-%m-%dT%H:%M:%SZ"
+DATETIME_FMT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 def dump_datetime(value):
@@ -151,11 +151,10 @@ class UpdateLog(object):
             return self._check_start(now)
 
     def _check_start(self, now):
-        return self.started is None or now - self.started >= timedelta(hours=1)
+        return self.started is None or now - self.started > timedelta(hours=1)
 
 
 def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, periodic):
-
     wheel_path = None if wheel is None else str(wheel.path)
     cmd = [
         sys.executable,
@@ -165,9 +164,10 @@ def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, p
             distribution, for_py_version, wheel_path, str(app_data), [str(p) for p in search_dirs], periodic,
         ),
     ]
-    pipe = subprocess.PIPE if False else None
+    debug = os.environ.get(str("_VIRTUALENV_PERIODIC_UPDATE_INLINE")) == str("1")
+    pipe = None if debug else subprocess.PIPE
     kwargs = {"stdout": pipe, "stderr": pipe}
-    if sys.platform == "win32":
+    if not debug and sys.platform == "win32":
         kwargs["creationflags"] = DETACHED_PROCESS
     process = Popen(cmd, **kwargs)
     logging.info(
@@ -177,7 +177,7 @@ def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, p
         for_py_version,
         process.pid,
     )
-    if os.environ.get(str("_VIRTUALENV_PERIODIC_UPDATE_INLINE")) == str("1"):
+    if debug:
         process.communicate()  # on purpose not called to make it a background process
 
 
@@ -291,4 +291,8 @@ __all__ = (
     "do_update",
     "manual_upgrade",
     "NewVersion",
+    "UpdateLog",
+    "load_datetime",
+    "dump_datetime",
+    "trigger_update",
 )
