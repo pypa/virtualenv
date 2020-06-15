@@ -67,7 +67,7 @@ DATETIME_FMT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 def dump_datetime(value):
-    return None if value is None else datetime.strftime(value, DATETIME_FMT)
+    return None if value is None else value.strftime(DATETIME_FMT)
 
 
 def load_datetime(value):
@@ -100,9 +100,17 @@ class NewVersion(object):
         return now - compare_from >= timedelta(days=28)
 
     def __repr__(self):
-        return "{}(filename={}), found_date={}, release_dater={})".format(
+        return "{}(filename={}), found_date={}, release_date={})".format(
             self.__class__.__name__, self.filename, self.found_date, self.release_date,
         )
+
+    def __eq__(self, other):
+        return type(self) == type(other) and all(
+            getattr(self, k) == getattr(other, k) for k in ["filename", "release_date", "found_date"]
+        )
+
+    def __ne__(self, other):
+        return not (self == other)
 
     @property
     def wheel(self):
@@ -182,7 +190,8 @@ def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, p
 
 
 def do_update(distribution, for_py_version, embed_filename, app_data, search_dirs, periodic):
-    from .acquire import download_wheel
+
+    from virtualenv.seed.wheels import acquire
 
     wheel_filename = None if embed_filename is None else Path(embed_filename)
     app_data = AppDataDiskFolder(app_data) if isinstance(app_data, str) else app_data
@@ -192,24 +201,27 @@ def do_update(distribution, for_py_version, embed_filename, app_data, search_dir
     u_log = UpdateLog.from_dict(embed_update_log.read())
 
     now = datetime.now()
-    if wheel_filename is not None and not wheelhouse.exists():
-        copy2(str(wheel_filename), wheelhouse)
+
+    if wheel_filename is not None:
+        dest = wheelhouse / wheel_filename.name
+        if not dest.exists():
+            copy2(str(wheel_filename), str(wheelhouse))
 
     last, versions = None, []
     while last is None or not last.use(now):
         download_time = datetime.now()
-        dest = download_wheel(
+        dest = acquire.download_wheel(
             distribution=distribution,
             version_spec=None if last is None else "<{}".format(Wheel(Path(last.filename)).version),
             for_py_version=for_py_version,
             search_dirs=search_dirs,
             app_data=app_data,
             to_folder=wheelhouse,
-        ).path
-        if u_log.versions and u_log.versions[0].filename == dest.name:
+        )
+        if dest is None or (u_log.versions and u_log.versions[0].filename == dest.name):
             break
-        release_date = _get_release_date(dest)
-        last = NewVersion(filename=dest.name, release_date=release_date, found_date=download_time)
+        release_date = _get_release_date(dest.path)
+        last = NewVersion(filename=dest.path.name, release_date=release_date, found_date=download_time)
         logging.info("detected %s in %s", last, datetime.now() - download_time)
         versions.append(last)
     u_log.periodic = periodic

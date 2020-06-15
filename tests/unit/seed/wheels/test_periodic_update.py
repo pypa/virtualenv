@@ -1,22 +1,30 @@
 from __future__ import absolute_import, unicode_literals
 
+import json
 import subprocess
 import sys
+from contextlib import contextmanager
 from datetime import datetime, timedelta
 
 import pytest
+from six import StringIO
 from six.moves import zip_longest
 
 from virtualenv import cli_run
+from virtualenv.app_data import AppDataDiskFolder
+from virtualenv.seed.wheels import Wheel
 from virtualenv.seed.wheels.embed import BUNDLE_SUPPORT, get_embed_wheel
 from virtualenv.seed.wheels.periodic_update import (
     NewVersion,
     UpdateLog,
+    do_update,
+    dump_datetime,
     load_datetime,
     manual_upgrade,
     periodic_update,
     trigger_update,
 )
+from virtualenv.util.path import Path
 from virtualenv.util.subprocess import DETACHED_PROCESS
 
 
@@ -176,16 +184,13 @@ def test_trigger_update_no_debug(for_py_version, session_app_data, tmp_path, moc
 
     assert Popen.call_count == 1
     args, kwargs = Popen.call_args
-    assert args == (
-        [
-            sys.executable,
-            "-c",
-            "from virtualenv.seed.wheels.periodic_update import do_update;"
-            "do_update('setuptools', '{}', '{}', '{}', ['{}', '{}'], True)".format(
-                for_py_version, current.path, session_app_data, tmp_path / "a", tmp_path / "b",
-            ),
-        ],
+    cmd = (
+        "from virtualenv.seed.wheels.periodic_update import do_update;"
+        "do_update({!r}, {!r}, '{}', '{}', ['{}', '{}'], True)".format(
+            "setuptools", for_py_version, current.path, session_app_data, tmp_path / "a", tmp_path / "b",
+        )
     )
+    assert args == ([sys.executable, "-c", cmd],)
     expected = {"stdout": subprocess.PIPE, "stderr": subprocess.PIPE}
     if sys.platform == "win32":
         expected["creationflags"] = DETACHED_PROCESS
@@ -205,18 +210,139 @@ def test_trigger_update_debug(for_py_version, session_app_data, tmp_path, mocker
 
     assert Popen.call_count == 1
     args, kwargs = Popen.call_args
-    assert args == (
-        [
-            sys.executable,
-            "-c",
-            "from virtualenv.seed.wheels.periodic_update import do_update;"
-            "do_update('pip', '{}', '{}', '{}', ['{}', '{}'], False)".format(
-                for_py_version, current.path, session_app_data, tmp_path / "a", tmp_path / "b",
-            ),
-        ],
+    cmd = (
+        "from virtualenv.seed.wheels.periodic_update import do_update;"
+        "do_update({!r}, {!r}, '{}', '{}', ['{}', '{}'], False)".format(
+            "pip", for_py_version, current.path, session_app_data, tmp_path / "a", tmp_path / "b",
+        )
     )
+    assert args == ([sys.executable, "-c", cmd],)
     expected = {"stdout": None, "stderr": None}
     if sys.platform == "win32":
         expected["creationflags"] = DETACHED_PROCESS
     assert kwargs == expected
     assert process.communicate.call_count == 1
+
+
+def test_do_update_first(tmp_path, mocker, freezer):
+    freezer.move_to(_UP_NOW)
+    wheel = get_embed_wheel("pip", "3.9")
+    app_data_outer = AppDataDiskFolder(str(tmp_path / "app"))
+    extra = tmp_path / "extra"
+    extra.mkdir()
+
+    pip_version_remote = [
+        (wheel_path(wheel, (1, 0, 0)), None),
+        (wheel_path(wheel, (0, 1, 0)), _UP_NOW - timedelta(days=1)),
+        (wheel_path(wheel, (0, 0, 1)), _UP_NOW - timedelta(days=2)),
+        (wheel.path, _UP_NOW - timedelta(days=3)),
+        (wheel_path(wheel, (-1, 0, 0)), _UP_NOW - timedelta(days=30)),
+    ]
+    download_wheels = (Wheel(Path(i[0])) for i in pip_version_remote)
+
+    def _download_wheel(distribution, version_spec, for_py_version, search_dirs, app_data, to_folder):
+        assert distribution == "pip"
+        assert for_py_version == "3.9"
+        assert [str(i) for i in search_dirs] == [str(extra)]
+        assert isinstance(app_data, AppDataDiskFolder)
+        assert to_folder == app_data_outer.house
+        return next(download_wheels)
+
+    download_wheel = mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", side_effect=_download_wheel)
+    releases = {
+        Wheel(Path(wheel)).version: [
+            {"upload_time": datetime.strftime(release_date, "%Y-%m-%dT%H:%M:%S") if release_date is not None else None},
+        ]
+        for wheel, release_date in pip_version_remote
+    }
+    pypi_release = json.dumps({"releases": releases})
+
+    @contextmanager
+    def _release(of):
+        assert of == "https://pypi.org/pypi/pip/json"
+        yield StringIO(pypi_release)
+
+    url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=_release)
+
+    last_update = _UP_NOW - timedelta(days=14)
+    u_log = UpdateLog(started=last_update, completed=last_update, versions=[], periodic=True)
+    read_dict = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict())
+    write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write")
+
+    versions = do_update("pip", "3.9", str(pip_version_remote[-1][0]), str(app_data_outer), [str(extra)], True)
+
+    assert download_wheel.call_count == len(pip_version_remote)
+    assert url_o.call_count == len(pip_version_remote)
+
+    expected = [
+        NewVersion(Path(wheel).name, _UP_NOW, None if release is None else release.replace(microsecond=0))
+        for wheel, release in pip_version_remote
+    ]
+    assert versions == expected
+
+    assert read_dict.call_count == 1
+    assert write.call_count == 1
+    wrote_json = write.call_args[0][0]
+    assert wrote_json == {
+        "started": dump_datetime(last_update),
+        "completed": dump_datetime(_UP_NOW),
+        "periodic": True,
+        "versions": [e.to_dict() for e in expected],
+    }
+
+
+def test_do_update_skip_already_done(tmp_path, mocker, freezer):
+    freezer.move_to(_UP_NOW + timedelta(hours=1))
+    wheel = get_embed_wheel("pip", "3.9")
+    app_data_outer = AppDataDiskFolder(str(tmp_path / "app"))
+    extra = tmp_path / "extra"
+    extra.mkdir()
+
+    def _download_wheel(distribution, version_spec, for_py_version, search_dirs, app_data, to_folder):  # noqa
+        return wheel.path
+
+    download_wheel = mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", side_effect=_download_wheel)
+    url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=RuntimeError)
+
+    released = _UP_NOW - timedelta(days=30)
+    u_log = UpdateLog(
+        started=_UP_NOW - timedelta(days=31),
+        completed=released,
+        versions=[NewVersion(filename=wheel.path.name, found_date=released, release_date=released)],
+        periodic=True,
+    )
+    read_dict = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict())
+    write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write")
+
+    versions = do_update("pip", "3.9", str(wheel.path), str(app_data_outer), [str(extra)], False)
+
+    assert download_wheel.call_count == 1
+    assert read_dict.call_count == 1
+    assert not url_o.call_count
+    assert versions == []
+
+    assert write.call_count == 1
+    wrote_json = write.call_args[0][0]
+    assert wrote_json == {
+        "started": dump_datetime(_UP_NOW + timedelta(hours=1)),
+        "completed": dump_datetime(_UP_NOW + timedelta(hours=1)),
+        "periodic": False,
+        "versions": [
+            {
+                "filename": wheel.path.name,
+                "release_date": dump_datetime(released),
+                "found_date": dump_datetime(released),
+            },
+        ],
+    }
+
+
+def test_new_version_eq():
+    value = NewVersion("a", datetime.now(), datetime.now())
+    assert value == value
+
+
+def test_new_version_ne():
+    assert NewVersion("a", datetime.now(), datetime.now()) != NewVersion(
+        "a", datetime.now(), datetime.now() + timedelta(hours=1),
+    )
