@@ -131,38 +131,65 @@ main seed mechanism available:
   To override the filesystem location of the seed cache, one can use the
   ``VIRTUALENV_OVERRIDE_APP_DATA`` environment variable.
 
-Bundled wheels
-~~~~~~~~~~~~~~
+Wheels
+~~~~~~
 
-What qualifies as bundled wheel? The following three sets together:
+To install a seed package via either ``pip`` or ``app-data`` method virtualenv needs to acquire a wheel of the target
+package. These wheels may be acquired from multiple locations as follows:
 
-- ``virtualenv`` ships out of box with a set of ``wheels`` for all three seed packages (:pypi:`pip`, :pypi:`setuptools`,
-  :pypi:`wheel`). We refer to these as embedded wheels. Different Python versions require different versions of these,
-  and because virtualenv supports a wide range of Python versions, the number of embedded wheels out of box is greater
-  than 3.
-- ``virtualenv`` updates the embedded wheels fairly quickly after the upstream packages release a new version, however
-  end users might not be able to upgrade virtualenv at the same speed. Therefore, a user might request to upgrade the
-  list of embedded wheels by invoking virtualenv with the :option:`upgrade-embed-wheels` flag. This operation will
-  trigger automatically, as a background process, if no upgrade has been performed in the last 14 days and upgrade the
-  embedded wheels if they have been out for more than 28 days. This 28 days period should guarantee end users are not
-  pulling in automatically releases that have known bugs within. This automatic behaviour might be disabled via the
-  :option:`no-periodic-update` configuration flag/option. To acquire the release date of a package virtualenv will
-  perform the following:
+- ``virtualenv`` ships out of box with a set of embed ``wheels`` for all three seed packages (:pypi:`pip`,
+  :pypi:`setuptools`, :pypi:`wheel`). These are packaged together with the virtualenv source files, and only change upon
+  upgrading virtualenv. Different Python versions require different versions of these, and because virtualenv supports a
+  wide range of Python versions, the number of embedded wheels out of box is greater than 3. Whenever newer versions of
+  these embedded packages are released upstream ``virtualenv`` project upgrades them, and does a new release. Therefore,
+  upgrading virtualenv periodically will also upgrade the version of the seed packages.
+- However, end users might not be able to upgrade virtualenv at the same speed as we do new releases. Therefore, a user
+  might request to upgrade the list of embedded wheels by invoking virtualenv with the :option:`upgrade-embed-wheels`
+  flag. If the operation is triggered in such manual way subsequent runs of virtualenv will always use the upgraded
+  embed wheels.
+
+  The operation can trigger automatically too, as a background process upon invocation of virtualenv, if no such upgrade
+  has been performed in the last 14 days. It will only start using automatically upgraded wheel if they have been
+  released for more than 28 days, and the automatic upgrade finished at least an hour ago:
+
+  - the 28 days period should guarantee end users are not pulling in automatically releases that have known bugs within,
+  - the one hour period after the automatic upgrade finished is implemented so that continuous integration services do
+    not start using a new embedded versions half way through.
+
+
+  The automatic behaviour might be disabled via the :option:`no-periodic-update` configuration flag/option. To acquire
+  the release date of a package virtualenv will perform the following:
 
   - lookup ``https://pypi.org/pypi/<distribution>/json`` (primary truth source),
   - save the date the version was first discovered, and wait until 28 days passed.
+- Users can specify a set of local paths containing additional wheels by using the :option:`extra-search-dir` command
+  line argument flag.
 
-- Users can specify a set of local paths containing these wheels by using the :option:`extra-search-dir` command line
-  argument flag.
-
-When searching for a wheel to use we look in the following order:
+When searching for a wheel to use virtualenv performs lookup in the following order:
 
 - embedded wheels,
 - upgraded embedded wheels,
 - extra search dir.
 
-If neither of the locations contain the requested wheel or :option:`download` option is set will use ``pip`` download to
-load the latest version available from the index server.
+Bundled wheels are all three above together. If neither of the locations contain the requested wheel version or
+:option:`download` option is set will use ``pip`` download to load the latest version available from the index server.
+
+Embed wheels for distributions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Custom distributions often want to use their own set of wheel versions to distribute instead of the one virtualenv
+releases on PyPi. The reason for this is trying to keep the system versions of those package in sync with what
+virtualenv uses. In such cases they should patch the module `virtualenv.seed.wheels.embed
+<https://github.com/pypa/virtualenv/tree/bundle/src/virtualenv/seed/wheels/embed>`_, making sure to provide the function
+``get_embed_wheel`` (which returns the wheel to use given a distribution/python version). The ``BUNDLE_FOLDER``,
+``BUNDLE_SUPPORT`` and ``MAX`` variables are needed if they want to use virtualenvs test suite to validate.
+
+Furthermore, they might want to disable the periodic update by patching the
+`virtualenv.seed.embed.base_embed.PERIODIC_UPDATE_ON_BY_DEFAULT
+<https://github.com/pypa/virtualenv/tree/bundle/src/virtualenv/seed/embed/base_embed.py>`_
+to ``False``, and letting the system update mechanism to handle this. Note in this case the user might still request an
+upgrade of the embedded wheels by invoking virtualenv via :option:`upgrade-embed-wheels`, but no longer happens
+automatically, and will not alter the OS provided wheels.
 
 Activators
 ----------

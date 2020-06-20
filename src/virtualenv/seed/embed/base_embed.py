@@ -10,6 +10,8 @@ from virtualenv.util.six import ensure_str, ensure_text
 from ..seeder import Seeder
 from ..wheels import Version
 
+PERIODIC_UPDATE_ON_BY_DEFAULT = True
+
 
 @add_metaclass(ABCMeta)
 class BaseEmbed(Seeder):
@@ -70,7 +72,7 @@ class BaseEmbed(Seeder):
             metavar="d",
             type=Path,
             nargs="+",
-            help="a path containing wheels that extend the bundled list (can be set 1+ times)",
+            help="a path containing wheels to extend the internal wheel list (can be set 1+ times)",
             default=[],
         )
         for distribution, default in cls.distributions().items():
@@ -78,7 +80,7 @@ class BaseEmbed(Seeder):
                 "--{}".format(distribution),
                 dest=distribution,
                 metavar="version",
-                help="{} version to install, bundle for bundled".format(distribution),
+                help="version of {} to install as seed: embed, bundle or exact version".format(distribution),
                 default=default,
             )
         for distribution in cls.distributions():
@@ -94,7 +96,7 @@ class BaseEmbed(Seeder):
             dest="no_periodic_update",
             action="store_true",
             help="disable the periodic (once every 14 days) update of the embedded wheels",
-            default=False,
+            default=not PERIODIC_UPDATE_ON_BY_DEFAULT,
         )
 
     def __unicode__(self):
