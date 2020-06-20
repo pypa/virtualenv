@@ -186,8 +186,13 @@ def test_trigger_update_no_debug(for_py_version, session_app_data, tmp_path, moc
     args, kwargs = Popen.call_args
     cmd = (
         "from virtualenv.seed.wheels.periodic_update import do_update;"
-        "do_update({!r}, {!r}, '{}', '{}', ['{}', '{}'], True)".format(
-            "setuptools", for_py_version, current.path, session_app_data, tmp_path / "a", tmp_path / "b",
+        "do_update({!r}, {!r}, {!r}, {!r}, [{!r}, {!r}], True)".format(
+            "setuptools",
+            for_py_version,
+            str(current.path),
+            str(session_app_data),
+            str(tmp_path / "a"),
+            str(tmp_path / "b"),
         )
     )
     assert args == ([sys.executable, "-c", cmd],)
@@ -212,14 +217,12 @@ def test_trigger_update_debug(for_py_version, session_app_data, tmp_path, mocker
     args, kwargs = Popen.call_args
     cmd = (
         "from virtualenv.seed.wheels.periodic_update import do_update;"
-        "do_update({!r}, {!r}, '{}', '{}', ['{}', '{}'], False)".format(
-            "pip", for_py_version, current.path, session_app_data, tmp_path / "a", tmp_path / "b",
+        "do_update({!r}, {!r}, {!r}, {!r}, [{!r}, {!r}], False)".format(
+            "pip", for_py_version, str(current.path), str(session_app_data), str(tmp_path / "a"), str(tmp_path / "b"),
         )
     )
     assert args == ([sys.executable, "-c", cmd],)
     expected = {"stdout": None, "stderr": None}
-    if sys.platform == "win32":
-        expected["creationflags"] = DETACHED_PROCESS
     assert kwargs == expected
     assert process.communicate.call_count == 1
 

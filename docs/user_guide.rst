@@ -234,7 +234,7 @@ about the created virtual environment.
 .. automodule:: virtualenv
    :members:
 
-.. currentmodule:: virtualenv.session
+.. currentmodule:: virtualenv.run.session
 
 .. autoclass:: Session
     :members:
