@@ -10,7 +10,7 @@ def test_python_activator_cross(session_app_data, cross_python, special_name_dir
         "-p",
         str(cross_python.executable),
         "--app-data",
-        str(session_app_data.path),
+        str(session_app_data.lock.path),
         "--without-pip",
         "--activators",
         "",

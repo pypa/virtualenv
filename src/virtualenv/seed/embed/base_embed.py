@@ -8,38 +8,45 @@ from virtualenv.util.path import Path
 from virtualenv.util.six import ensure_str, ensure_text
 
 from ..seeder import Seeder
+from ..wheels import Version
+
+PERIODIC_UPDATE_ON_BY_DEFAULT = True
 
 
 @add_metaclass(ABCMeta)
 class BaseEmbed(Seeder):
-    packages = ["pip", "setuptools", "wheel"]
-
     def __init__(self, options):
         super(BaseEmbed, self).__init__(options, enabled=options.no_seed is False)
+
         self.download = options.download
         self.extra_search_dir = [i.resolve() for i in options.extra_search_dir if i.exists()]
 
-        def latest_is_none(key):
-            value = getattr(options, key)
-            return None if value == "latest" else value
-
-        self.pip_version = latest_is_none("pip")
-        self.setuptools_version = latest_is_none("setuptools")
-        self.wheel_version = latest_is_none("wheel")
+        self.pip_version = options.pip
+        self.setuptools_version = options.setuptools
+        self.wheel_version = options.wheel
 
         self.no_pip = options.no_pip
         self.no_setuptools = options.no_setuptools
         self.no_wheel = options.no_wheel
-        self.app_data = options.app_data.folder
+        self.app_data = options.app_data
+        self.periodic_update = not options.no_periodic_update
 
-        if not self.package_version():
+        if not self.distribution_to_versions():
             self.enabled = False
 
-    def package_version(self):
+    @classmethod
+    def distributions(cls):
         return {
-            package: getattr(self, "{}_version".format(package))
-            for package in self.packages
-            if getattr(self, "no_{}".format(package)) is False
+            "pip": Version.bundle,
+            "setuptools": Version.bundle,
+            "wheel": Version.bundle,
+        }
+
+    def distribution_to_versions(self):
+        return {
+            distribution: getattr(self, "{}_version".format(distribution))
+            for distribution in self.distributions()
+            if getattr(self, "no_{}".format(distribution)) is False
         }
 
     @classmethod
@@ -50,14 +57,14 @@ class BaseEmbed(Seeder):
             "--never-download",
             dest="download",
             action="store_false",
-            help="pass to disable download of the latest {} from PyPI".format("/".join(cls.packages)),
+            help="pass to disable download of the latest {} from PyPI".format("/".join(cls.distributions())),
             default=True,
         )
         group.add_argument(
             "--download",
             dest="download",
             action="store_true",
-            help="pass to enable download of the latest {} from PyPI".format("/".join(cls.packages)),
+            help="pass to enable download of the latest {} from PyPI".format("/".join(cls.distributions())),
             default=False,
         )
         parser.add_argument(
@@ -65,25 +72,32 @@ class BaseEmbed(Seeder):
             metavar="d",
             type=Path,
             nargs="+",
-            help="a path containing wheels the seeder may also use beside bundled (can be set 1+ times)",
+            help="a path containing wheels to extend the internal wheel list (can be set 1+ times)",
             default=[],
         )
-        for package in cls.packages:
+        for distribution, default in cls.distributions().items():
             parser.add_argument(
-                "--{}".format(package),
-                dest=package,
+                "--{}".format(distribution),
+                dest=distribution,
                 metavar="version",
-                help="{} version to install, bundle for bundled".format(package),
-                default="latest",
+                help="version of {} to install as seed: embed, bundle or exact version".format(distribution),
+                default=default,
             )
-        for package in cls.packages:
+        for distribution in cls.distributions():
             parser.add_argument(
-                "--no-{}".format(package),
-                dest="no_{}".format(package),
+                "--no-{}".format(distribution),
+                dest="no_{}".format(distribution),
                 action="store_true",
-                help="do not install {}".format(package),
+                help="do not install {}".format(distribution),
                 default=False,
             )
+        parser.add_argument(
+            "--no-periodic-update",
+            dest="no_periodic_update",
+            action="store_true",
+            help="disable the periodic (once every 14 days) update of the embedded wheels",
+            default=not PERIODIC_UPDATE_ON_BY_DEFAULT,
+        )
 
     def __unicode__(self):
         result = self.__class__.__name__
@@ -91,11 +105,11 @@ class BaseEmbed(Seeder):
         if self.extra_search_dir:
             result += "extra_search_dir={},".format(", ".join(ensure_text(str(i)) for i in self.extra_search_dir))
         result += "download={},".format(self.download)
-        for package in self.packages:
-            if getattr(self, "no_{}".format(package)):
+        for distribution in self.distributions():
+            if getattr(self, "no_{}".format(distribution)):
                 continue
             result += " {}{},".format(
-                package, "={}".format(getattr(self, "{}_version".format(package), None) or "latest"),
+                distribution, "={}".format(getattr(self, "{}_version".format(distribution), None) or "latest"),
             )
         return result[:-1] + ")"
 

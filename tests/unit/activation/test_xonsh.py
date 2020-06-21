@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import sys
 
 import pytest
+from flaky import flaky
 
 from virtualenv.activation import XonshActivator
 from virtualenv.info import IS_PYPY, PY3
@@ -13,6 +14,7 @@ from virtualenv.info import IS_PYPY, PY3
     (sys.platform == "win32" and IS_PYPY and PY3) or sys.version_info[0:2] == (3, 9),
     reason="xonsh on Windows blocks indefinitely and is not stable yet on 3.9",
 )
+@flaky(max_runs=2, min_passes=1)
 def test_xonsh(activation_tester_class, activation_tester):
     class Xonsh(activation_tester_class):
         def __init__(self, session):

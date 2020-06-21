@@ -10,18 +10,31 @@ import sys
 from collections import OrderedDict, defaultdict
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from textwrap import dedent
 from threading import Thread
 
 STRICT = "UPGRADE_ADVISORY" not in os.environ
 
 BUNDLED = ["pip", "setuptools", "wheel"]
-SUPPORT = list(reversed([(2, 7)] + [(3, i) for i in range(4, 10)]))
-DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "embed" / "wheels"
+SUPPORT = list(reversed([(2, 7)] + [(3, i) for i in range(4, 11)]))
+DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "wheels" / "embed"
 
 
 def download(ver, dest, package):
     subprocess.call(
-        [sys.executable, "-m", "pip", "download", "--only-binary=:all:", "--python-version", ver, "-d", dest, package],
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "--disable-pip-version-check",
+            "download",
+            "--only-binary=:all:",
+            "--python-version",
+            ver,
+            "-d",
+            dest,
+            package,
+        ],
     )
 
 
@@ -72,12 +85,37 @@ def run():
                     support_table[version].append(package)
         support_table = {k: OrderedDict((i.split("-")[0], i) for i in v) for k, v in support_table.items()}
 
-        msg = "from __future__ import absolute_import, unicode_literals; BUNDLE_SUPPORT = {{ {} }}; MAX = {!r}".format(
-            ",".join(
-                "{!r}: {{ {} }}".format(v, ",".join("{!r}: {!r}".format(p, f) for p, f in l.items()))
-                for v, l in support_table.items()
+        msg = dedent(
+            """
+        from __future__ import absolute_import, unicode_literals
+
+        from virtualenv.seed.wheels.util import Wheel
+        from virtualenv.util.path import Path
+
+        BUNDLE_FOLDER = Path(__file__).absolute().parent
+        BUNDLE_SUPPORT = {{ {0} }}
+        MAX = {1}
+
+
+        def get_embed_wheel(distribution, for_py_version):
+            path = BUNDLE_FOLDER / (BUNDLE_SUPPORT.get(for_py_version, {{}}) or BUNDLE_SUPPORT[MAX]).get(distribution)
+            return Wheel.from_path(path)
+
+
+        __all__ = (
+            "get_embed_wheel",
+            "BUNDLE_SUPPORT",
+            "MAX",
+            "BUNDLE_FOLDER",
+        )
+
+        """.format(
+                ",".join(
+                    "{!r}: {{ {} }}".format(v, ",".join("{!r}: {!r}".format(p, f) for p, f in l.items()))
+                    for v, l in support_table.items()
+                ),
+                repr(next(iter(support_table.keys()))),
             ),
-            next(iter(support_table.keys())),
         )
         dest_target = DEST / "__init__.py"
         dest_target.write_text(msg)

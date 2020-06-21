@@ -30,7 +30,7 @@ def venv(tmp_path_factory, session_app_data):
     if CURRENT.is_venv:
         return sys.executable
     elif CURRENT.version_info.major == 3:
-        root_python = root(tmp_path_factory)
+        root_python = root(tmp_path_factory, session_app_data)
         dest = tmp_path_factory.mktemp("venv")
         process = Popen([str(root_python), "-m", "venv", "--without-pip", str(dest)])
         process.communicate()
@@ -45,7 +45,7 @@ def old_virtualenv(tmp_path_factory, session_app_data):
         return CURRENT.executable
     else:
         env_for_old_virtualenv = tmp_path_factory.mktemp("env-for-old-virtualenv")
-        result = cli_run(["--no-download", "--activators", "", str(env_for_old_virtualenv)])
+        result = cli_run(["--no-download", "--activators", "", str(env_for_old_virtualenv), "--no-periodic-update"])
         # noinspection PyBroadException
         try:
             process = Popen(

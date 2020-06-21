@@ -9,8 +9,7 @@ import pytest
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
-from virtualenv.seed.embed.wheels import BUNDLE_SUPPORT
-from virtualenv.seed.embed.wheels.acquire import BUNDLE_FOLDER
+from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
 from virtualenv.util.six import ensure_text
 from virtualenv.util.subprocess import Popen
 
@@ -107,7 +106,7 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
 
 
 @pytest.fixture()
-def read_only_folder(temp_app_data):
+def read_only_app_data(temp_app_data):
     temp_app_data.mkdir()
     try:
         os.chmod(str(temp_app_data), S_IREAD | S_IRGRP | S_IROTH)
@@ -117,7 +116,7 @@ def read_only_folder(temp_app_data):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
-def test_base_bootstrap_link_via_app_data_not_writable(tmp_path, current_fastest, read_only_folder, monkeypatch):
+def test_base_bootstrap_link_via_app_data_not_writable(tmp_path, current_fastest, read_only_app_data, monkeypatch):
     dest = tmp_path / "venv"
     result = cli_run(["--seeder", "app-data", "--creator", current_fastest, "--reset-app-data", "-vv", str(dest)])
     assert result

@@ -74,8 +74,11 @@ class Path(object):
         return os.path.isdir(self._path)
 
     def mkdir(self, parents=True, exist_ok=True):
-        if not self.exists() and exist_ok:
+        try:
             os.makedirs(self._path)
+        except OSError:
+            if not exist_ok:
+                raise
 
     def read_text(self, encoding="utf-8"):
         return self.read_bytes().decode(encoding)
@@ -134,6 +137,9 @@ class Path(object):
 
     def chmod(self, mode):
         os.chmod(self._path, mode)
+
+    def absolute(self):
+        return Path(os.path.abspath(self._path))
 
 
 __all__ = ("Path",)

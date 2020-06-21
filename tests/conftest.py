@@ -12,11 +12,11 @@ import coverage
 import pytest
 import six
 
+from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
 from virtualenv.report import LOGGER
-from virtualenv.run.app_data import AppData
 from virtualenv.util.path import Path
 from virtualenv.util.six import ensure_str, ensure_text
 
@@ -145,7 +145,12 @@ def check_os_environ_stable():
         if k.startswith(str("VIRTUALENV_")) or str("VIRTUAL_ENV") in k or k.startswith(str("TOX_"))
     }
     cleaned = {k: os.environ[k] for k, v in os.environ.items()}
-    os.environ[str("VIRTUALENV_NO_DOWNLOAD")] = str("1")
+    override = {
+        "VIRTUALENV_NO_PERIODIC_UPDATE": "1",
+        "VIRTUALENV_NO_DOWNLOAD": "1",
+    }
+    for key, value in override.items():
+        os.environ[str(key)] = str(value)
     is_exception = False
     try:
         yield
@@ -154,7 +159,8 @@ def check_os_environ_stable():
         raise
     finally:
         try:
-            del os.environ[str("VIRTUALENV_NO_DOWNLOAD")]
+            for key in override.keys():
+                del os.environ[str(key)]
             if is_exception is False:
                 new = os.environ
                 extra = {k: new[k] for k in set(new) - set(old)}
@@ -291,9 +297,9 @@ def current_fastest(current_creators):
 
 @pytest.fixture(scope="session")
 def session_app_data(tmp_path_factory):
-    app_data = AppData(folder=str(tmp_path_factory.mktemp("session-app-data")))
-    with change_env_var(str("VIRTUALENV_OVERRIDE_APP_DATA"), str(app_data.folder.path)):
-        yield app_data.folder
+    app_data = AppDataDiskFolder(folder=str(tmp_path_factory.mktemp("session-app-data")))
+    with change_env_var(str("VIRTUALENV_OVERRIDE_APP_DATA"), str(app_data.lock.path)):
+        yield app_data
 
 
 @contextmanager
@@ -331,3 +337,8 @@ def cross_python(is_inside_ci, session_app_data):
             raise RuntimeError(msg)
         pytest.skip(msg=msg)
     yield interpreter
+
+
+@pytest.fixture(scope="session")
+def for_py_version():
+    return "{}.{}".format(*sys.version_info[0:2])

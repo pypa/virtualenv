@@ -30,7 +30,7 @@ class Builtin(Discover):
         )
 
     def run(self):
-        return get_interpreter(self.python_spec, self.app_data.folder)
+        return get_interpreter(self.python_spec, self.app_data)
 
     def __repr__(self):
         return ensure_str(self.__unicode__())

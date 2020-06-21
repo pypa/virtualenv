@@ -1,5 +1,4 @@
 [coverage:report]
-skip_covered = True
 show_missing = True
 exclude_lines =
     \#\s*pragma: no cover
@@ -9,8 +8,10 @@ exclude_lines =
     ^if __name__ == ['"]__main__['"]:$
 omit =
     # site.py is ran before the coverage can be enabled, no way to measure coverage on this
-    src/virtualenv/interpreters/create/impl/cpython/site.py
-    src/virtualenv/seed/embed/wheels/pip-*.whl/*
+    src/virtualenv/create/via_global_ref/builtin/python2/site.py
+    src/virtualenv/create/via_global_ref/_virtualenv.py
+    src/virtualenv/activation/python/activate_this.py
+    src/virtualenv/seed/wheels/embed/pip-*.whl/*
 
 [coverage:paths]
 source =
@@ -24,5 +25,9 @@ source =
 [coverage:run]
 branch = false
 parallel = true
+dynamic_context = test_function
 source =
     ${_COVERAGE_SRC}
+
+[coverage:html]
+show_contexts = true

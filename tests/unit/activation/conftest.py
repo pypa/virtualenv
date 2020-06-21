@@ -74,7 +74,8 @@ class ActivationTester(object):
             _raw, _ = process.communicate()
             raw = _raw.decode("utf-8")
         except subprocess.CalledProcessError as exception:
-            assert not exception.returncode, ensure_text(exception.output)
+            output = ensure_text((exception.output + exception.stderr) if six.PY3 else exception.output)
+            assert not exception.returncode, output
             return
 
         out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, re.M).strip().splitlines()
@@ -208,7 +209,7 @@ def raise_on_non_source_class():
 @pytest.fixture(scope="session", params=[True, False], ids=["with_prompt", "no_prompt"])
 def activation_python(request, tmp_path_factory, special_char_name, current_fastest):
     dest = os.path.join(ensure_text(str(tmp_path_factory.mktemp("activation-tester-env"))), special_char_name)
-    cmd = ["--without-pip", dest, "--creator", current_fastest, "-vv"]
+    cmd = ["--without-pip", dest, "--creator", current_fastest, "-vv", "--no-periodic-update"]
     if request.param:
         cmd += ["--prompt", special_char_name]
     session = cli_run(cmd)

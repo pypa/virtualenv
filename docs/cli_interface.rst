@@ -22,7 +22,7 @@ The options that can be passed to virtualenv, along with their default values an
 
 .. table_cli::
    :module: virtualenv.run
-   :func: build_parser
+   :func: build_parser_only
 
 Defaults
 ~~~~~~~~

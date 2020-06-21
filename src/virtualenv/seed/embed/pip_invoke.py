@@ -4,16 +4,10 @@ import logging
 from contextlib import contextmanager
 
 from virtualenv.discovery.cached_py_info import LogCmd
-from virtualenv.info import PY3
 from virtualenv.seed.embed.base_embed import BaseEmbed
-from virtualenv.seed.embed.wheels.acquire import get_bundled_wheel, pip_wheel_env_run
 from virtualenv.util.subprocess import Popen
-from virtualenv.util.zipapp import ensure_file_on_disk
 
-if PY3:
-    from contextlib import ExitStack
-else:
-    from contextlib2 import ExitStack
+from ..wheels import Version, get_wheel, pip_wheel_env_run
 
 
 class PipInvoke(BaseEmbed):
@@ -23,9 +17,10 @@ class PipInvoke(BaseEmbed):
     def run(self, creator):
         if not self.enabled:
             return
-        with self.get_pip_install_cmd(creator.exe, creator.interpreter.version_release_str) as cmd:
-            with pip_wheel_env_run(creator.interpreter.version_release_str, self.app_data) as env:
-                self._execute(cmd, env)
+        for_py_version = creator.interpreter.version_release_str
+        with self.get_pip_install_cmd(creator.exe, for_py_version) as cmd:
+            env = pip_wheel_env_run(self.extra_search_dir, self.app_data)
+            self._execute(cmd, env)
 
     @staticmethod
     def _execute(cmd, env):
@@ -37,18 +32,25 @@ class PipInvoke(BaseEmbed):
         return process
 
     @contextmanager
-    def get_pip_install_cmd(self, exe, version):
-        cmd = [str(exe), "-m", "pip", "-q", "install", "--only-binary", ":all:"]
+    def get_pip_install_cmd(self, exe, for_py_version):
+        cmd = [str(exe), "-m", "pip", "-q", "install", "--only-binary", ":all:", "--disable-pip-version-check"]
         if not self.download:
             cmd.append("--no-index")
-        pkg_versions = self.package_version()
-        for key, ver in pkg_versions.items():
-            cmd.append("{}{}".format(key, "=={}".format(ver) if ver is not None else ""))
-        with ExitStack() as stack:
-            folders = set()
-            for context in (ensure_file_on_disk(get_bundled_wheel(p, version), self.app_data) for p in pkg_versions):
-                folders.add(stack.enter_context(context).parent)
-            folders.update(set(self.extra_search_dir))
-            for folder in folders:
-                cmd.extend(["--find-links", str(folder)])
-            yield cmd
+        folders = set()
+        for dist, version in self.distribution_to_versions().items():
+            wheel = get_wheel(
+                distribution=dist,
+                version=version,
+                for_py_version=for_py_version,
+                search_dirs=self.extra_search_dir,
+                download=False,
+                app_data=self.app_data,
+                do_periodic_update=self.periodic_update,
+            )
+            if wheel is None:
+                raise RuntimeError("could not get wheel for distribution {}".format(dist))
+            folders.add(str(wheel.path.parent))
+            cmd.append(Version.as_pip_req(dist, wheel.version))
+        for folder in sorted(folders):
+            cmd.extend(["--find-links", str(folder)])
+        yield cmd

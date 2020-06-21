@@ -20,12 +20,12 @@ import pytest
 
 from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
+from virtualenv.create.pyenv_cfg import PyEnvCfg
 from virtualenv.create.via_global_ref.builtin.cpython.cpython2 import CPython2PosixBase
 from virtualenv.create.via_global_ref.builtin.cpython.cpython3 import CPython3Posix
 from virtualenv.create.via_global_ref.builtin.python2.python2 import Python2
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_PYPY, IS_WIN, PY2, PY3, fs_is_case_sensitive
-from virtualenv.pyenv_cfg import PyEnvCfg
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.util.path import Path
 from virtualenv.util.six import ensure_str, ensure_text
@@ -48,7 +48,7 @@ def _non_success_exit_code(capsys, target):
         run_with_catch(args=[target])
     assert context.value.code != 0
     out, err = capsys.readouterr()
-    assert not out, out
+    assert "SystemExit: " in out
     return err
 
 
@@ -384,7 +384,7 @@ def test_create_long_path(current_fastest, tmp_path):
 
 
 @pytest.mark.parametrize("creator", sorted(set(PythonInfo.current_system().creators().key_to_class) - {"builtin"}))
-def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
+def test_create_distutils_cfg(creator, tmp_path, monkeypatch, session_app_data):
     result = cli_run([ensure_text(str(tmp_path / "venv")), "--activators", "", "--creator", creator])
 
     app = Path(__file__).parent / "console_app"

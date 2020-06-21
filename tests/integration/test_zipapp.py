@@ -38,6 +38,7 @@ def zipapp_build_env(tmp_path_factory):
                             "",
                             str(create_env_path),
                             "--no-download",
+                            "--no-periodic-update",
                         ],
                     )
                     exe = str(session.creator.exe)
@@ -70,7 +71,7 @@ def zipapp(zipapp_build_env, tmp_path_factory):
 @pytest.fixture(scope="session")
 def zipapp_test_env(tmp_path_factory):
     base_path = tmp_path_factory.mktemp("zipapp-test")
-    session = cli_run(["-v", "--activators", "", "--without-pip", str(base_path / "env")])
+    session = cli_run(["-v", "--activators", "", "--without-pip", str(base_path / "env"), "--no-periodic-update"])
     yield session.creator.exe
     shutil.rmtree(str(base_path))
 
