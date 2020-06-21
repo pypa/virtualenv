@@ -1,0 +1,10 @@
+Display the installed seed package versions in the final summary output, for example:
+
+.. code-block:: console
+
+    created virtual environment CPython3.8.3.final.0-64 in 350ms
+      creator CPython3Posix(dest=/x, clear=True, global=False)
+      seeder FromAppData(download=False, pip=bundle, setuptools=bundle, wheel=bundle, via=copy, app_data_dir=/y/virtualenv)
+        added seed packages: pip==20.1.1, setuptools==47.3.1, wheel==0.34.2
+
+by :user:`gaborbernat`.

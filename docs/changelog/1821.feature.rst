@@ -1,8 +1,7 @@
-Better handling of bundled wheel installation:
+Ensure that the seeded packages do not get too much out of date:
 
-- display the installed seed package versions in the final summary output
-- add a manual upgrade of embedded wheels feature via :option:`upgrade-embed-wheels` CLI flag
-- periodically (once every 14 days) try to automatically upgrade the embedded wheels in the background, can be disabled
-  via :option:`no-periodic-update`
+- add a CLI flag that triggers upgrade of embedded wheels under :option:`upgrade-embed-wheels`
+- periodically (once every 14 days) upgrade the embedded wheels in a background process, and use them if they have been
+  released for more than 28 days (can be disabled via :option:`no-periodic-update`)
 
-by :user:`gaborbernat`.
+More details under :ref:`wheels` - by :user:`gaborbernat`.

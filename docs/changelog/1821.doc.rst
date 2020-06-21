@@ -1,1 +1,1 @@
-Document how bundled wheels are handled and (potentially automatically) kept up to date - by :user:`gaborbernat`.
+How seeding mechanisms discover (and automatically keep it up to date) wheels at :ref:`wheels` - by :user:`gaborbernat`.

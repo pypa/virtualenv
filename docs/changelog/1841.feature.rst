@@ -1,7 +1,6 @@
-Bump embed wheel content:
+Upgrade embed wheel content:
 
-- ship wheels for Python ``3.9``
-- upgrade embedded setuptools for Python ``3.5+`` from ``46.4.0`` to ``47.1.1``
-- upgrade embedded setuptools for Python ``2.7`` from ``44.1.0`` to ``44.1.1``
+- ship wheels for Python ``3.9`` and ``3.10``
+- upgrade setuptools for Python ``3.5+`` from ``47.1.1`` to ``47.3.1``
 
 by :user:`gaborbernat`.
