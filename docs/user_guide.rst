@@ -131,6 +131,8 @@ main seed mechanism available:
   To override the filesystem location of the seed cache, one can use the
   ``VIRTUALENV_OVERRIDE_APP_DATA`` environment variable.
 
+.. _wheels:
+
 Wheels
 ~~~~~~
 
@@ -173,6 +175,8 @@ When searching for a wheel to use virtualenv performs lookup in the following or
 
 Bundled wheels are all three above together. If neither of the locations contain the requested wheel version or
 :option:`download` option is set will use ``pip`` download to load the latest version available from the index server.
+
+.. _distribution_wheels:
 
 Embed wheels for distributions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

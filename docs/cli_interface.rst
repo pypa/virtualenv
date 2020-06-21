@@ -76,7 +76,7 @@ is used to separate the values:
 
 .. code-block:: console
 
-  env VIRTUALENV_EXTRA_SEARCH_DIR="/path/to/dists\n/path/to/other/dists" virtualenv
+  env VIRTUALENV_EXTRA_SEARCH_DIR=/path/to/dists\n/path/to/other/dists virtualenv
 
 The equivalent CLI-flags based invocation, for the above example, would be:
 
