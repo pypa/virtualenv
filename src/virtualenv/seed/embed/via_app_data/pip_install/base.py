@@ -97,12 +97,15 @@ class PipInstall(object):
         if self._extracted is False:
             return None  # pragma: no cover
         if self.__dist_info is None:
+            files = []
             for filename in self._image_dir.iterdir():
+                files.append(filename.name)
                 if filename.suffix == ".dist-info":
                     self.__dist_info = filename
                     break
             else:
-                raise RuntimeError("no dist info")  # pragma: no cover
+                msg = "no .dist-info at {}, has {}".format(self._image_dir, ", ".join(files))  # pragma: no cover
+                raise RuntimeError(msg)  # pragma: no cover
         return self.__dist_info
 
     @abstractmethod

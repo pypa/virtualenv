@@ -1,0 +1,1 @@
+Improve error message for no ``.dist-info`` inside the ``app-data`` copy seeder - by :user:`gaborbernat`.
