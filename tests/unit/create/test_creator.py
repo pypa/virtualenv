@@ -237,6 +237,13 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     assert git_ignore.splitlines() == ["# created by virtualenv automatically", "*"]
 
 
+def test_create_gitignore_exists(tmp_path):
+    git_ignore = tmp_path / ".gitignore"
+    git_ignore.write_text("magic")
+    cli_run([str(tmp_path), "--without-pip", "--activators", ""])
+    assert git_ignore.read_text() == "magic"
+
+
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
 def test_venv_fails_not_inline(tmp_path, capsys, mocker):
     if hasattr(os, "geteuid"):
