@@ -184,13 +184,13 @@ Embed wheels for distributions
 Custom distributions often want to use their own set of wheel versions to distribute instead of the one virtualenv
 releases on PyPi. The reason for this is trying to keep the system versions of those package in sync with what
 virtualenv uses. In such cases they should patch the module `virtualenv.seed.wheels.embed
-<https://github.com/pypa/virtualenv/tree/bundle/src/virtualenv/seed/wheels/embed>`_, making sure to provide the function
+<https://github.com/pypa/virtualenv/tree/master/src/virtualenv/seed/wheels/embed>`_, making sure to provide the function
 ``get_embed_wheel`` (which returns the wheel to use given a distribution/python version). The ``BUNDLE_FOLDER``,
 ``BUNDLE_SUPPORT`` and ``MAX`` variables are needed if they want to use virtualenvs test suite to validate.
 
 Furthermore, they might want to disable the periodic update by patching the
 `virtualenv.seed.embed.base_embed.PERIODIC_UPDATE_ON_BY_DEFAULT
-<https://github.com/pypa/virtualenv/tree/bundle/src/virtualenv/seed/embed/base_embed.py>`_
+<https://github.com/pypa/virtualenv/tree/master/src/virtualenv/seed/embed/base_embed.py>`_
 to ``False``, and letting the system update mechanism to handle this. Note in this case the user might still request an
 upgrade of the embedded wheels by invoking virtualenv via :option:`upgrade-embed-wheels`, but no longer happens
 automatically, and will not alter the OS provided wheels.
