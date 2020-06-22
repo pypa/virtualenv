@@ -1,1 +1,0 @@
-How distributions should handle shipping their own embedded wheels at  :ref:`distribution_wheels` - by :user:`gaborbernat`.

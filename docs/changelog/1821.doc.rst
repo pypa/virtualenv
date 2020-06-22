@@ -1,1 +1,0 @@
-How seeding mechanisms discover (and automatically keep it up to date) wheels at :ref:`wheels` - by :user:`gaborbernat`.
