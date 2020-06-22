@@ -1,7 +1,0 @@
-Ensure that the seeded packages do not get too much out of date:
-
-- add a CLI flag that triggers upgrade of embedded wheels under :option:`upgrade-embed-wheels`
-- periodically (once every 14 days) upgrade the embedded wheels in a background process, and use them if they have been
-  released for more than 28 days (can be disabled via :option:`no-periodic-update`)
-
-More details under :ref:`wheels` - by :user:`gaborbernat`.

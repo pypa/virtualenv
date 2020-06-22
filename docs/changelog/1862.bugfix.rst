@@ -1,1 +1,0 @@
-Do not generate/overwrite ``.gitignore`` if it already exists at destination path - by :user:`gaborbernat`.

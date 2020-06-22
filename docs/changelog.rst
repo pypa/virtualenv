@@ -5,6 +5,46 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.24 (2020-06-22)
+---------------------
+
+Features - 20.0.24
+~~~~~~~~~~~~~~~~~~
+- Ensure that the seeded packages do not get too much out of date:
+
+  - add a CLI flag that triggers upgrade of embedded wheels under :option:`upgrade-embed-wheels`
+  - periodically (once every 14 days) upgrade the embedded wheels in a background process, and use them if they have been
+    released for more than 28 days (can be disabled via :option:`no-periodic-update`)
+
+  More details under :ref:`wheels` - by :user:`gaborbernat`. (`#1821 <https://github.com/pypa/virtualenv/issues/1821>`_)
+- Upgrade embed wheel content:
+
+  - ship wheels for Python ``3.9`` and ``3.10``
+  - upgrade setuptools for Python ``3.5+`` from ``47.1.1`` to ``47.3.1``
+
+  by :user:`gaborbernat`. (`#1841 <https://github.com/pypa/virtualenv/issues/1841>`_)
+- Display the installed seed package versions in the final summary output, for example:
+
+  .. code-block:: console
+
+      created virtual environment CPython3.8.3.final.0-64 in 350ms
+        creator CPython3Posix(dest=/x, clear=True, global=False)
+        seeder FromAppData(download=False, pip=bundle, setuptools=bundle, wheel=bundle, via=copy, app_data_dir=/y/virtualenv)
+          added seed packages: pip==20.1.1, setuptools==47.3.1, wheel==0.34.2
+
+  by :user:`gaborbernat`. (`#1864 <https://github.com/pypa/virtualenv/issues/1864>`_)
+
+Bugfixes - 20.0.24
+~~~~~~~~~~~~~~~~~~
+- Do not generate/overwrite ``.gitignore`` if it already exists at destination path - by :user:`gaborbernat`. (`#1862 <https://github.com/pypa/virtualenv/issues/1862>`_)
+- Improve error message for no ``.dist-info`` inside the ``app-data`` copy seeder - by :user:`gaborbernat`. (`#1867 <https://github.com/pypa/virtualenv/issues/1867>`_)
+
+Improved Documentation - 20.0.24
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- How seeding mechanisms discover (and automatically keep it up to date) wheels at :ref:`wheels` - by :user:`gaborbernat`. (`#1821 <https://github.com/pypa/virtualenv/issues/1821>`_)
+- How distributions should handle shipping their own embedded wheels at  :ref:`distribution_wheels` - by :user:`gaborbernat`. (`#1840 <https://github.com/pypa/virtualenv/issues/1840>`_)
+
+
 v20.0.23 (2020-06-12)
 ---------------------
 

@@ -1,6 +1,0 @@
-Upgrade embed wheel content:
-
-- ship wheels for Python ``3.9`` and ``3.10``
-- upgrade setuptools for Python ``3.5+`` from ``47.1.1`` to ``47.3.1``
-
-by :user:`gaborbernat`.
