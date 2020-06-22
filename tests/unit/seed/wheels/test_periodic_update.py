@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import json
 import subprocess
 import sys
+from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 
@@ -37,14 +38,20 @@ def test_manual_upgrade(session_app_data, caplog, mocker, for_py_version):
             return [new_version]
         return []
 
-    do_update = mocker.patch("virtualenv.seed.wheels.periodic_update.do_update", side_effect=_do_update)
+    do_update_mock = mocker.patch("virtualenv.seed.wheels.periodic_update.do_update", side_effect=_do_update)
     manual_upgrade(session_app_data)
 
     assert "upgrade pip" in caplog.text
     assert "upgraded pip" in caplog.text
     assert " new entries found:\n\tNewVersion" in caplog.text
     assert " no new versions found" in caplog.text
-    assert do_update.call_count == 3 * len(BUNDLE_SUPPORT)
+    packages = defaultdict(list)
+    for i in do_update_mock.call_args_list:
+        packages[i[1]["distribution"]].append(i[1]["for_py_version"])
+    packages = {key: sorted(value) for key, value in packages.items()}
+    versions = list(sorted(BUNDLE_SUPPORT.keys()))
+    expected = {"setuptools": versions, "wheel": versions, "pip": versions}
+    assert packages == expected
 
 
 def test_pick_periodic_update(tmp_path, session_app_data, mocker, for_py_version):
