@@ -2,6 +2,8 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
+import sys
+import traceback
 from contextlib import contextmanager
 from subprocess import CalledProcessError
 from threading import Lock, Thread
@@ -11,7 +13,9 @@ import six
 from virtualenv.info import fs_supports_symlink
 from virtualenv.seed.embed.base_embed import BaseEmbed
 from virtualenv.seed.wheels import get_wheel
+from virtualenv.util.lock import _CountedFileLock
 from virtualenv.util.path import Path
+from virtualenv.util.six import ensure_text
 
 from .pip_install.copy import CopyPipInstall
 from .pip_install.symlink import SymlinkPipInstall
@@ -42,21 +46,32 @@ class FromAppData(BaseEmbed):
         with self._get_seed_wheels(creator) as name_to_whl:
             pip_version = name_to_whl["pip"].version_tuple if "pip" in name_to_whl else None
             installer_class = self.installer_class(pip_version)
+            exceptions = {}
 
             def _install(name, wheel):
-                logging.debug("install %s from wheel %s via %s", name, wheel, installer_class.__name__)
-                key = Path(installer_class.__name__) / wheel.path.stem
-                wheel_img = self.app_data.wheel_image(creator.interpreter.version_release_str, key)
-                installer = installer_class(wheel.path, creator, wheel_img)
-                if not installer.has_image():
-                    installer.build_image()
-                installer.install(creator.interpreter.version_info)
+                try:
+                    logging.debug("install %s from wheel %s via %s", name, wheel, installer_class.__name__)
+                    key = Path(installer_class.__name__) / wheel.path.stem
+                    wheel_img = self.app_data.wheel_image(creator.interpreter.version_release_str, key)
+                    installer = installer_class(wheel.path, creator, wheel_img)
+                    with _CountedFileLock(ensure_text(str(wheel_img.parent / "{}.lock".format(wheel_img.name)))):
+                        if not installer.has_image():
+                            installer.build_image()
+                    installer.install(creator.interpreter.version_info)
+                except Exception:  # noqa
+                    exceptions[name] = sys.exc_info()
 
             threads = list(Thread(target=_install, args=(n, w)) for n, w in name_to_whl.items())
             for thread in threads:
                 thread.start()
             for thread in threads:
                 thread.join()
+            if exceptions:
+                messages = ["failed to build image {} because:".format(", ".join(exceptions.keys()))]
+                for value in exceptions.values():
+                    exc_type, exc_value, exc_traceback = value
+                    messages.append("".join(traceback.format_exception(exc_type, exc_value, exc_traceback)))
+                raise RuntimeError("\n".join(messages))
 
     @contextmanager
     def _get_seed_wheels(self, creator):
