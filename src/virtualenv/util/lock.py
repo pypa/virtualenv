@@ -13,6 +13,12 @@ from virtualenv.util.path import Path
 
 class _CountedFileLock(FileLock):
     def __init__(self, lock_file):
+        parent = os.path.dirname(lock_file)
+        if not os.path.exists(parent):
+            try:
+                os.makedirs(parent)
+            except OSError:
+                pass
         super(_CountedFileLock, self).__init__(lock_file)
         self.count = 0
         self.thread_safe = RLock()

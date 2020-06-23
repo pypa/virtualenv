@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import os
 import sys
 from stat import S_IREAD, S_IRGRP, S_IROTH, S_IWUSR
+from threading import Thread
 
 import pytest
 
@@ -130,3 +131,35 @@ def test_base_bootstrap_link_via_app_data_no(tmp_path, coverage_env, current_fas
     assert not (result.creator.purelib / pkg).exists()
     for key in {"pip", "setuptools", "wheel"} - {pkg}:
         assert (result.creator.purelib / key).exists()
+
+
+def test_app_data_parallel_ok(tmp_path, temp_app_data):
+    exceptions = _run_parallel_threads(tmp_path)
+    assert not exceptions, "\n".join(exceptions)
+
+
+def test_app_data_parallel_fail(tmp_path, temp_app_data, mocker):
+    mocker.patch("virtualenv.seed.embed.via_app_data.pip_install.base.PipInstall.build_image", side_effect=RuntimeError)
+    exceptions = _run_parallel_threads(tmp_path)
+    assert len(exceptions) == 2
+    for exception in exceptions:
+        assert exception.startswith("failed to build image wheel because:\nTraceback")
+        assert "RuntimeError" in exception, exception
+
+
+def _run_parallel_threads(tmp_path):
+    exceptions = []
+
+    def _run(name):
+        try:
+            cli_run(["--seeder", "app-data", str(tmp_path / name), "--no-pip", "--no-setuptools"])
+        except Exception as exception:  # noqa
+            as_str = str(exception)
+            exceptions.append(as_str)
+
+    threads = [Thread(target=_run, args=("env{}".format(i),)) for i in range(1, 3)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    return exceptions
