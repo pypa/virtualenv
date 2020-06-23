@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.25 (2020-06-23)
+---------------------
+
+Bugfixes - 20.0.25
+~~~~~~~~~~~~~~~~~~
+- Fix that when the ``app-data`` seeders image creation fails the exception is silently ignored. Avoid two virtual environment creations to step on each others toes by using a lock while creating the base images. By :user:`gaborbernat`. (`#1869 <https://github.com/pypa/virtualenv/issues/1869>`_)
+
+
 v20.0.24 (2020-06-22)
 ---------------------
 
