@@ -84,7 +84,7 @@ jobs:
     - name: setup test suite
       run: tox -vv --notest
     - name: run test suite
-      run: tox
+      run: tox --skip-pkg-install
       env:
         PYTEST_ADDOPTS: "-vv --durations=20"
         CI_RUN: 'yes'
