@@ -5,12 +5,9 @@ import os
 import re
 import zipfile
 from abc import ABCMeta, abstractmethod
-from contextlib import contextmanager
 from tempfile import mkdtemp
-from threading import Lock
 
-# noinspection PyProtectedMember
-from distlib.scripts import ScriptMaker, _enquote_executable
+from distlib.scripts import ScriptMaker, enquote_executable
 from six import PY3, add_metaclass
 
 from virtualenv.util import ConfigParser
@@ -20,8 +17,6 @@ from virtualenv.util.six import ensure_text
 
 @add_metaclass(ABCMeta)
 class PipInstall(object):
-    lock = Lock()
-
     def __init__(self, wheel, creator, image_folder):
         self._wheel = wheel
         self._creator = creator
@@ -134,43 +129,11 @@ class PipInstall(object):
 
     def _create_console_entry_point(self, name, value, to_folder, version_info):
         result = []
-        maker = ScriptMaker(None, str(to_folder))
-        maker.clobber = True  # overwrite
-        maker.variants = {""}  # set within patch_distlib_correct_variants
-        maker.set_mode = True  # ensure they are executable
-        # calling private until https://bitbucket.org/pypa/distlib/issues/135/expose-_enquote_executable-as-public
-        maker.executable = _enquote_executable(str(self._creator.exe))
+        maker = ScriptMakerCustom(to_folder, version_info, self._creator.exe, name)
         specification = "{} = {}".format(name, value)
-        with self.patch_distlib_correct_variants(version_info, maker):
-            new_files = maker.make(specification)
+        new_files = maker.make(specification)
         result.extend(Path(i) for i in new_files)
         return result
-
-    @contextmanager
-    def patch_distlib_correct_variants(self, version_info, maker):
-        """
-        Patch until upstream distutils supports creating scripts with different python target
-        https://bitbucket.org/pypa/distlib/issues/134/allow-specifying-the-version-information
-        """
-
-        def _write_script(scriptnames, shebang, script, filenames, ext):
-            name = next(iter(scriptnames))
-            scriptnames = {  # add our variants '', 'X', '-X.Y'
-                name,
-                "{}{}".format(name, version_info.major),
-                "{}-{}.{}".format(name, version_info.major, version_info.minor),
-            }
-            if name == "pip":
-                scriptnames.add("{}{}.{}".format(name, version_info.major, version_info.minor))
-            return previous(scriptnames, shebang, script, filenames, ext)
-
-        previous = maker._write_script
-        with self.lock:
-            maker._write_script = _write_script
-            try:
-                yield
-            finally:
-                maker._write_script = previous
 
     def clear(self):
         if self._image_dir.exists():
@@ -178,3 +141,18 @@ class PipInstall(object):
 
     def has_image(self):
         return self._image_dir.exists() and next(self._image_dir.iterdir()) is not None
+
+
+class ScriptMakerCustom(ScriptMaker):
+    def __init__(self, target_dir, version_info, executable, name):
+        super(ScriptMakerCustom, self).__init__(None, str(target_dir))
+        self.clobber = True  # overwrite
+        self.set_mode = True  # ensure they are executable
+        self.executable = enquote_executable(str(executable))
+        self.version_info = version_info.major, version_info.minor
+        self.variants = {"", "X", "X.Y"}
+        self._name = name
+
+    def _write_script(self, names, shebang, script_bytes, filenames, ext):
+        names.add("{}{}.{}".format(self._name, *self.version_info))
+        super(ScriptMakerCustom, self)._write_script(names, shebang, script_bytes, filenames, ext)
