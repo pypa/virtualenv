@@ -299,7 +299,7 @@ def test_py_info_setuptools():
     PythonInfo()
 
 
-def test_py_info_to_system_raises(session_app_data, mocker, caplog):
+def test_py_info_to_system_raises(session_app_data, mocker, caplog, skip_if_test_in_system):
     caplog.set_level(logging.DEBUG)
     mocker.patch.object(PythonInfo, "_find_possible_folders", return_value=[])
     result = PythonInfo.from_exe(sys.executable, app_data=session_app_data, raise_on_error=False)
