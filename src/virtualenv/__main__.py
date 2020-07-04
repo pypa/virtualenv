@@ -66,7 +66,8 @@ def run_with_catch(args=None):
             if getattr(options, "with_traceback", False):
                 raise
             else:
-                logging.error("%s: %s", type(exception).__name__, exception)
+                if not (isinstance(exception, SystemExit) and exception.code == 0):
+                    logging.error("%s: %s", type(exception).__name__, exception)
                 code = exception.code if isinstance(exception, SystemExit) else 1
                 sys.exit(code)
         finally:
