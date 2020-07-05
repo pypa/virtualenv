@@ -72,7 +72,7 @@ jobs:
       run: |
         import os; import subprocess
         version = "${{matrix.py}}"[-1]
-        subprocess.check_call(["brew", "install", f"python@{version}"])
+        subprocess.check_call(["bash", "-c", f"brew list python@{version} && brew upgrade python@{version} || brew install python@{version}"])
         print(f"::add-path::/usr/local/opt/python@{version}")
       shell: python
     - name: pick environment to run
