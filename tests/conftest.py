@@ -342,3 +342,10 @@ def cross_python(is_inside_ci, session_app_data):
 @pytest.fixture(scope="session")
 def for_py_version():
     return "{}.{}".format(*sys.version_info[0:2])
+
+
+@pytest.fixture()
+def skip_if_test_in_system(session_app_data):
+    current = PythonInfo.current(session_app_data)
+    if current.system_executable is not None:
+        pytest.skip("test not valid if run under system")
