@@ -1,1 +1,0 @@
-Upgrade embedded setuptools from ``47.3.1`` to ``49.1.0`` for Python ``3.5+`` - by :user:`gaborbernat`.

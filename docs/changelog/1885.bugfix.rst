@@ -1,1 +1,0 @@
-Do not print error message if the application exists with ``SystemExit(0)`` - by :user:`gaborbernat`.
