@@ -5,6 +5,24 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.26 (2020-07-07)
+---------------------
+
+Bugfixes - 20.0.26
+~~~~~~~~~~~~~~~~~~
+- Bump dependency ``distutils >= 0.3.1`` - by :user:`gaborbernat`. (`#1880 <https://github.com/pypa/virtualenv/issues/1880>`_)
+- Improve periodic update handling:
+
+  - better logging output while running and enable logging on background process call (
+    ``_VIRTUALENV_PERIODIC_UPDATE_INLINE`` may be used to debug behaviour inline)
+  - fallback to unverified context when querying the PyPi for release date,
+  - stop downloading wheels once we reach the embedded version,
+
+  by :user:`gaborbernat`. (`#1883 <https://github.com/pypa/virtualenv/issues/1883>`_)
+- Do not print error message if the application exists with ``SystemExit(0)`` - by :user:`gaborbernat`. (`#1885 <https://github.com/pypa/virtualenv/issues/1885>`_)
+- Upgrade embedded setuptools from ``47.3.1`` to ``49.1.0`` for Python ``3.5+`` - by :user:`gaborbernat`. (`#1887 <https://github.com/pypa/virtualenv/issues/1887>`_)
+
+
 v20.0.25 (2020-06-23)
 ---------------------
 

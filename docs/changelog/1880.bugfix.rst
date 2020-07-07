@@ -1,1 +1,0 @@
-Bump dependency ``distutils >= 0.3.1`` - by :user:`gaborbernat`.
