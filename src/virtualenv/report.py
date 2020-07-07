@@ -18,7 +18,7 @@ MAX_LEVEL = max(LEVELS.keys())
 LOGGER = logging.getLogger()
 
 
-def setup_report(verbosity):
+def setup_report(verbosity, show_pid=False):
     _clean_handlers(LOGGER)
     if verbosity > MAX_LEVEL:
         verbosity = MAX_LEVEL  # pragma: no cover
@@ -31,7 +31,8 @@ def setup_report(verbosity):
         filelock_logger.setLevel(level)
     else:
         filelock_logger.setLevel(logging.WARN)
-
+    if show_pid:
+        msg_format = "[%(process)d] " + msg_format
     formatter = logging.Formatter(ensure_str(msg_format))
     stream_handler = logging.StreamHandler(stream=sys.stdout)
     stream_handler.setLevel(level)
@@ -47,3 +48,10 @@ def setup_report(verbosity):
 def _clean_handlers(log):
     for log_handler in list(log.handlers):  # remove handlers of libraries
         log.removeHandler(log_handler)
+
+
+__all__ = (
+    "LEVELS",
+    "MAX_LEVEL",
+    "setup_report",
+)

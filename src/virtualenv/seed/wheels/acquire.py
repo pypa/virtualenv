@@ -39,12 +39,14 @@ def get_wheel(distribution, version, for_py_version, search_dirs, download, app_
 
 def download_wheel(distribution, version_spec, for_py_version, search_dirs, app_data, to_folder):
     to_download = "{}{}".format(distribution, version_spec or "")
-    logging.debug("download wheel %s", to_download)
+    logging.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
     cmd = [
         sys.executable,
         "-m",
         "pip",
         "download",
+        "--progress-bar",
+        "off",
         "--disable-pip-version-check",
         "--only-binary=:all:",
         "--no-deps",
@@ -65,6 +67,13 @@ def download_wheel(distribution, version_spec, for_py_version, search_dirs, app_
         else:
             kwargs["stderr"] = err
         raise subprocess.CalledProcessError(process.returncode, cmd, **kwargs)
+    print(out, err)
+    result = _find_downloaded_wheel(out)
+    logging.debug("downloaded wheel %s", result.name)
+    return result
+
+
+def _find_downloaded_wheel(out):
     for line in out.splitlines():
         line = line.lstrip()
         for marker in ("Saved ", "File was already downloaded "):

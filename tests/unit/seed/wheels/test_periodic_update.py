@@ -6,6 +6,8 @@ import sys
 from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from textwrap import dedent
+from urllib.error import URLError
 
 import pytest
 from six import StringIO
@@ -23,10 +25,18 @@ from virtualenv.seed.wheels.periodic_update import (
     load_datetime,
     manual_upgrade,
     periodic_update,
+    release_date_for_wheel_path,
     trigger_update,
 )
 from virtualenv.util.path import Path
 from virtualenv.util.subprocess import DETACHED_PROCESS
+
+
+@pytest.fixture(autouse=True)
+def clear_pypi_info_cache():
+    from virtualenv.seed.wheels.periodic_update import _PYPI_CACHE
+
+    _PYPI_CACHE.clear()
 
 
 def test_manual_upgrade(session_app_data, caplog, mocker, for_py_version):
@@ -192,16 +202,25 @@ def test_trigger_update_no_debug(for_py_version, session_app_data, tmp_path, moc
     assert Popen.call_count == 1
     args, kwargs = Popen.call_args
     cmd = (
-        "from virtualenv.seed.wheels.periodic_update import do_update;"
-        "do_update({!r}, {!r}, {!r}, {!r}, [{!r}, {!r}], True)".format(
+        dedent(
+            """
+        from virtualenv.report import setup_report, MAX_LEVEL
+        from virtualenv.seed.wheels.periodic_update import do_update
+        setup_report(MAX_LEVEL, show_pid=True)
+        do_update({!r}, {!r}, {!r}, {!r}, {!r}, {!r})
+        """,
+        )
+        .strip()
+        .format(
             "setuptools",
             for_py_version,
             str(current.path),
             str(session_app_data),
-            str(tmp_path / "a"),
-            str(tmp_path / "b"),
+            [str(tmp_path / "a"), str(tmp_path / "b")],
+            True,
         )
     )
+
     assert args == ([sys.executable, "-c", cmd],)
     expected = {"stdout": subprocess.PIPE, "stderr": subprocess.PIPE}
     if sys.platform == "win32":
@@ -223,9 +242,22 @@ def test_trigger_update_debug(for_py_version, session_app_data, tmp_path, mocker
     assert Popen.call_count == 1
     args, kwargs = Popen.call_args
     cmd = (
-        "from virtualenv.seed.wheels.periodic_update import do_update;"
-        "do_update({!r}, {!r}, {!r}, {!r}, [{!r}, {!r}], False)".format(
-            "pip", for_py_version, str(current.path), str(session_app_data), str(tmp_path / "a"), str(tmp_path / "b"),
+        dedent(
+            """
+        from virtualenv.report import setup_report, MAX_LEVEL
+        from virtualenv.seed.wheels.periodic_update import do_update
+        setup_report(MAX_LEVEL, show_pid=True)
+        do_update({!r}, {!r}, {!r}, {!r}, {!r}, {!r})
+        """,
+        )
+        .strip()
+        .format(
+            "pip",
+            for_py_version,
+            str(current.path),
+            str(session_app_data),
+            [str(tmp_path / "a"), str(tmp_path / "b")],
+            False,
         )
     )
     assert args == ([sys.executable, "-c", cmd],)
@@ -268,8 +300,9 @@ def test_do_update_first(tmp_path, mocker, freezer):
     pypi_release = json.dumps({"releases": releases})
 
     @contextmanager
-    def _release(of):
+    def _release(of, context):
         assert of == "https://pypi.org/pypi/pip/json"
+        assert context is None
         yield StringIO(pypi_release)
 
     url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=_release)
@@ -282,7 +315,7 @@ def test_do_update_first(tmp_path, mocker, freezer):
     versions = do_update("pip", "3.9", str(pip_version_remote[-1][0]), str(app_data_outer), [str(extra)], True)
 
     assert download_wheel.call_count == len(pip_version_remote)
-    assert url_o.call_count == len(pip_version_remote)
+    assert url_o.call_count == 1
 
     expected = [
         NewVersion(Path(wheel).name, _UP_NOW, None if release is None else release.replace(microsecond=0))
@@ -356,3 +389,33 @@ def test_new_version_ne():
     assert NewVersion("a", datetime.now(), datetime.now()) != NewVersion(
         "a", datetime.now(), datetime.now() + timedelta(hours=1),
     )
+
+
+def test_get_release_unsecure(mocker, caplog):
+    @contextmanager
+    def _release(of, context):
+        assert of == "https://pypi.org/pypi/pip/json"
+        if context is None:
+            raise URLError("insecure")
+        assert context
+        yield StringIO(json.dumps({"releases": {"20.1": [{"upload_time": "2020-12-22T12:12:12"}]}}))
+
+    url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=_release)
+
+    result = release_date_for_wheel_path(Path("pip-20.1.whl"))
+
+    assert result == datetime(year=2020, month=12, day=22, hour=12, minute=12, second=12)
+    assert url_o.call_count == 2
+    assert "insecure" in caplog.text
+    assert " failed " in caplog.text
+
+
+def test_get_release_fails(mocker, caplog):
+    exc = RuntimeError("oh no")
+    url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=exc)
+
+    result = release_date_for_wheel_path(Path("pip-20.1.whl"))
+
+    assert result is None
+    assert url_o.call_count == 1
+    assert repr(exc) in caplog.text
