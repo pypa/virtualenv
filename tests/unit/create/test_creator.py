@@ -295,15 +295,20 @@ def test_create_clear_resets(tmp_path, creator, clear, caplog):
     caplog.set_level(logging.DEBUG)
     if creator == "venv" and clear is False:
         pytest.skip("venv without clear might fail")
-    marker = tmp_path / "magic"
+    marker = tmp_path / "bin" / "transient"
+    static_marker = tmp_path / "magic"
     cmd = [str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", creator, "-vvv"]
     cli_run(cmd)
 
     marker.write_text("")  # if we a marker file this should be gone on a clear run, remain otherwise
+    static_marker.write_text("")
+
     assert marker.exists()
+    assert static_marker.exists()
 
     cli_run(cmd + (["--clear"] if clear else []))
     assert marker.exists() is not clear
+    assert static_marker.exists()
 
 
 @pytest.mark.parametrize("creator", CURRENT_CREATORS)

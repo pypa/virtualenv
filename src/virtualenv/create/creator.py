@@ -85,7 +85,7 @@ class Creator(object):
             "--clear",
             dest="clear",
             action="store_true",
-            help="remove the destination directory if exist before starting (will overwrite files otherwise)",
+            help="clear out the non-root install and start from scratch",
             default=False,
         )
 
@@ -152,8 +152,13 @@ class Creator(object):
 
     def run(self):
         if self.dest.exists() and self.clear:
-            logging.debug("delete %s", self.dest)
-            safe_delete(self.dest)
+            # Ignore Python* paths due to their dynamic nature
+            created = ("Include", "Lib", "Scripts", "bin", "include", "lib")
+            for subdir in created:
+                createdpath = os.path.join(str(self.dest), subdir)
+                if os.path.isdir(createdpath):
+                    logging.debug("clear %s", createdpath)
+                    safe_delete(createdpath)
         self.create()
         self.set_pyenv_cfg()
         self.setup_ignore_vcs()
