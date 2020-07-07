@@ -7,13 +7,16 @@ from __future__ import absolute_import, unicode_literals
 import json
 import logging
 import os
+import ssl
 import subprocess
 import sys
 from datetime import datetime, timedelta
 from itertools import groupby
 from shutil import copy2
+from textwrap import dedent
 from threading import Thread
 
+from six.moves.urllib.error import URLError
 from six.moves.urllib.request import urlopen
 
 from virtualenv.app_data import AppDataDiskFolder
@@ -168,10 +171,16 @@ def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, p
     cmd = [
         sys.executable,
         "-c",
-        "from virtualenv.seed.wheels.periodic_update import do_update;"
-        "do_update({!r}, {!r}, {!r}, {!r}, {!r}, {!r})".format(
-            distribution, for_py_version, wheel_path, str(app_data), [str(p) for p in search_dirs], periodic,
-        ),
+        dedent(
+            """
+        from virtualenv.report import setup_report, MAX_LEVEL
+        from virtualenv.seed.wheels.periodic_update import do_update
+        setup_report(MAX_LEVEL, show_pid=True)
+        do_update({!r}, {!r}, {!r}, {!r}, {!r}, {!r})
+        """,
+        )
+        .strip()
+        .format(distribution, for_py_version, wheel_path, str(app_data), [str(p) for p in search_dirs], periodic),
     ]
     debug = os.environ.get(str("_VIRTUALENV_PERIODIC_UPDATE_INLINE")) == str("1")
     pipe = None if debug else subprocess.PIPE
@@ -191,29 +200,35 @@ def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, p
 
 
 def do_update(distribution, for_py_version, embed_filename, app_data, search_dirs, periodic):
+    versions = None
+    try:
+        versions = _run_do_update(app_data, distribution, embed_filename, for_py_version, periodic, search_dirs)
+    finally:
+        logging.debug("done %s %s with %s", distribution, for_py_version, versions)
+    return versions
 
+
+def _run_do_update(app_data, distribution, embed_filename, for_py_version, periodic, search_dirs):
     from virtualenv.seed.wheels import acquire
 
     wheel_filename = None if embed_filename is None else Path(embed_filename)
+    embed_version = None if wheel_filename is None else Wheel(wheel_filename).version_tuple
     app_data = AppDataDiskFolder(app_data) if isinstance(app_data, str) else app_data
     search_dirs = [Path(p) if isinstance(p, str) else p for p in search_dirs]
     wheelhouse = app_data.house
     embed_update_log = app_data.embed_update_log(distribution, for_py_version)
     u_log = UpdateLog.from_dict(embed_update_log.read())
-
     now = datetime.now()
-
     if wheel_filename is not None:
         dest = wheelhouse / wheel_filename.name
         if not dest.exists():
             copy2(str(wheel_filename), str(wheelhouse))
-
-    last, versions = None, []
+    last, last_version, versions = None, None, []
     while last is None or not last.use(now):
         download_time = datetime.now()
         dest = acquire.download_wheel(
             distribution=distribution,
-            version_spec=None if last is None else "<{}".format(Wheel(Path(last.filename)).version),
+            version_spec=None if last_version is None else "<{}".format(last_version),
             for_py_version=for_py_version,
             search_dirs=search_dirs,
             app_data=app_data,
@@ -221,10 +236,15 @@ def do_update(distribution, for_py_version, embed_filename, app_data, search_dir
         )
         if dest is None or (u_log.versions and u_log.versions[0].filename == dest.name):
             break
-        release_date = _get_release_date(dest.path)
+        release_date = release_date_for_wheel_path(dest.path)
         last = NewVersion(filename=dest.path.name, release_date=release_date, found_date=download_time)
         logging.info("detected %s in %s", last, datetime.now() - download_time)
         versions.append(last)
+        last_wheel = Wheel(Path(last.filename))
+        last_version = last_wheel.version
+        if embed_version is not None:
+            if embed_version >= last_wheel.version_tuple:  # stop download if we reach the embed version
+                break
     u_log.periodic = periodic
     if not u_log.periodic:
         u_log.started = now
@@ -234,16 +254,48 @@ def do_update(distribution, for_py_version, embed_filename, app_data, search_dir
     return versions
 
 
-def _get_release_date(dest):
+def release_date_for_wheel_path(dest):
     wheel = Wheel(dest)
     # the most accurate is to ask PyPi - e.g. https://pypi.org/pypi/pip/json,
     # see https://warehouse.pypa.io/api-reference/json/ for more details
+    content = _pypi_get_distribution_info_cached(wheel.distribution)
+    if content is not None:
+        try:
+            upload_time = content["releases"][wheel.version][0]["upload_time"]
+            return datetime.strptime(upload_time, "%Y-%m-%dT%H:%M:%S")
+        except Exception as exception:
+            logging.error("could not load release date %s because %r", content, exception)
+    return None
+
+
+def _request_context():
+    yield None
+    # fallback to non verified HTTPS (the information we request is not sensitive, so fallback)
+    yield ssl._create_unverified_context()  # noqa
+
+
+_PYPI_CACHE = {}
+
+
+def _pypi_get_distribution_info_cached(distribution):
+    if distribution not in _PYPI_CACHE:
+        _PYPI_CACHE[distribution] = _pypi_get_distribution_info(distribution)
+    return _PYPI_CACHE[distribution]
+
+
+def _pypi_get_distribution_info(distribution):
+    content, url = None, "https://pypi.org/pypi/{}/json".format(distribution)
     try:
-        with urlopen("https://pypi.org/pypi/{}/json".format(wheel.distribution)) as file_handler:
-            content = json.load(file_handler)
-        return datetime.strptime(content["releases"][wheel.version][0]["upload_time"], "%Y-%m-%dT%H:%M:%S")
-    except Exception:  # noqa
-        return None
+        for context in _request_context():
+            try:
+                with urlopen(url, context=context) as file_handler:
+                    content = json.load(file_handler)
+                break
+            except URLError as exception:
+                logging.error("failed to access %s because %r", url, exception)
+    except Exception as exception:
+        logging.error("failed to access %s because %r", url, exception)
+    return content
 
 
 def manual_upgrade(app_data):
@@ -308,4 +360,5 @@ __all__ = (
     "load_datetime",
     "dump_datetime",
     "trigger_update",
+    "release_date_for_wheel_path",
 )

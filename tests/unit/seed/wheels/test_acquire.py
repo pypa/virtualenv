@@ -55,6 +55,8 @@ def test_download_fails(mocker, for_py_version, session_app_data):
         "-m",
         "pip",
         "download",
+        "--progress-bar",
+        "off",
         "--disable-pip-version-check",
         "--only-binary=:all:",
         "--no-deps",
