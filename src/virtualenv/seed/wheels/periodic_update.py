@@ -15,8 +15,8 @@ from itertools import groupby
 from shutil import copy2
 from textwrap import dedent
 from threading import Thread
-from urllib.error import URLError
 
+from six.moves.urllib.error import URLError
 from six.moves.urllib.request import urlopen
 
 from virtualenv.app_data import AppDataDiskFolder

@@ -1,1 +1,8 @@
-Fix test suite failing if run from system Python - by :user:`gaborbernat`.
+Improve periodic update handling:
+
+- better logging output while running and enable logging on background process call (
+  ``_VIRTUALENV_PERIODIC_UPDATE_INLINE`` may be used to debug behaviour inline)
+- fallback to unverified context when querying the PyPi for release date,
+- stop downloading wheels once we reach the embedded version,
+
+by :user:`gaborbernat`.

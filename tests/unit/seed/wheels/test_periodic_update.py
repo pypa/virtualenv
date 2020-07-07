@@ -7,11 +7,11 @@ from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from textwrap import dedent
-from urllib.error import URLError
 
 import pytest
 from six import StringIO
 from six.moves import zip_longest
+from six.moves.urllib.error import URLError
 
 from virtualenv import cli_run
 from virtualenv.app_data import AppDataDiskFolder
