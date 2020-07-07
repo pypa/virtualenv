@@ -67,13 +67,12 @@ def download_wheel(distribution, version_spec, for_py_version, search_dirs, app_
         else:
             kwargs["stderr"] = err
         raise subprocess.CalledProcessError(process.returncode, cmd, **kwargs)
-    print(out, err)
-    result = _find_downloaded_wheel(out)
+    result = _find_downloaded_wheel(distribution, version_spec, for_py_version, to_folder, out)
     logging.debug("downloaded wheel %s", result.name)
     return result
 
 
-def _find_downloaded_wheel(out):
+def _find_downloaded_wheel(distribution, version_spec, for_py_version, to_folder, out):
     for line in out.splitlines():
         line = line.lstrip()
         for marker in ("Saved ", "File was already downloaded "):

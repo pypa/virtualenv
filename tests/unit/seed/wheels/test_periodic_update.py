@@ -419,3 +419,34 @@ def test_get_release_fails(mocker, caplog):
     assert result is None
     assert url_o.call_count == 1
     assert repr(exc) in caplog.text
+
+
+def test_download_stop_with_embed(tmp_path, mocker, freezer):
+    freezer.move_to(_UP_NOW)
+    wheel = get_embed_wheel("pip", "3.9")
+    app_data_outer = AppDataDiskFolder(str(tmp_path / "app"))
+    pip_version_remote = [wheel_path(wheel, (0, 0, 2)), wheel_path(wheel, (0, 0, 1)), wheel_path(wheel, (-1, 0, 0))]
+    at = {"index": 0}
+
+    def download():
+        while True:
+            path = pip_version_remote[at["index"]]
+            at["index"] += 1
+            yield Wheel(Path(path))
+
+    do = download()
+    download_wheel = mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", side_effect=lambda *a, **k: next(do))
+    url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=URLError("unavailable"))
+
+    last_update = _UP_NOW - timedelta(days=14)
+    u_log = UpdateLog(started=last_update, completed=last_update, versions=[], periodic=True)
+    read_dict = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict())
+    write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write")
+
+    do_update("pip", "3.9", str(wheel.path), str(app_data_outer), [], True)
+
+    assert download_wheel.call_count == 3
+    assert url_o.call_count == 2
+
+    assert read_dict.call_count == 1
+    assert write.call_count == 1
