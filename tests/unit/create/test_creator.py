@@ -564,7 +564,7 @@ def test_zip_importer_can_import_setuptools(tmp_path):
 def test_no_preimport_threading(tmp_path):
     session = cli_run([ensure_text(str(tmp_path))])
     out = subprocess.check_output(
-        [session.creator.exe, "-c", r"import sys; print('\n'.join(sorted(sys.modules)))"], universal_newlines=True,
+        [str(session.creator.exe), "-c", r"import sys; print('\n'.join(sorted(sys.modules)))"], universal_newlines=True,
     )
     preimport = set()
     for mod in out.splitlines():
