@@ -46,9 +46,8 @@ if sys.version_info > (3, 4):
 
         fullname = None
 
-        # lock[0] is threading.Lock(), but initialized lazily to avoid importing
-        # threading very early at startup, because there are gevent-based
-        # applications that need to be first to import threading by themselves.
+        # lock[0] is threading.Lock(), but initialized lazily to avoid importing threading very early at startup,
+        # because there are gevent-based applications that need to be first to import threading by themselves.
         # See https://github.com/pypa/virtualenv/issues/1895 for details.
         lock = []
 
@@ -59,12 +58,10 @@ if sys.version_info > (3, 4):
                     import threading
 
                     lock = threading.Lock()
-                    # there is possibility that two threads T1 and T2 are
-                    # simultaneously running into find_spec, observing .lock as
-                    # empty, and further going into hereby initialization.
-                    # However due to the GIL, list.append() operation is atomic
-                    # and this way only one of the threads will "win" to put
-                    # the lock - that every thread will use - into .lock[0].
+                    # there is possibility that two threads T1 and T2 are simultaneously running into find_spec,
+                    # observing .lock as empty, and further going into hereby initialization. However due to the GIL,
+                    # list.append() operation is atomic and this way only one of the threads will "win" to put the lock
+                    # - that every thread will use - into .lock[0].
                     # https://docs.python.org/3/faq/library.html#what-kinds-of-global-value-mutation-are-thread-safe
                     self.lock.append(lock)
 

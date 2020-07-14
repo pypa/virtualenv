@@ -1,4 +1,1 @@
-No longer preimport threading to fix support for gpython__ and gevent__ - by :user:`navytux`.
-
-__ https://pypi.org/project/pygolang/#gpython
-__ https://www.gevent.org/
+No longer preimport threading to fix support for `gpython <https://pypi.org/project/pygolang/#gpython>`_ and `gevent <https://www.gevent.org/>`_ - by :user:`navytux`.

@@ -563,10 +563,12 @@ def test_zip_importer_can_import_setuptools(tmp_path):
 # https://github.com/pypa/virtualenv/issues/1895
 def test_no_preimport_threading(tmp_path):
     session = cli_run([ensure_text(str(tmp_path))])
+    # disable coverage for spawned subprocess.
+    # When coverage is active, it imports threading in default mode.
+    env = os.environ.copy()
+    env.pop("COVERAGE_PROCESS_START", None)
     out = subprocess.check_output(
-        [str(session.creator.exe), "-c", r"import sys; print('\n'.join(sorted(sys.modules)))"], universal_newlines=True,
+        [str(session.creator.exe), "-c", r"import sys; print('\n'.join(sorted(sys.modules)))"], universal_newlines=True, env=env,
     )
-    preimport = set()
-    for mod in out.splitlines():
-        preimport.add(mod)
-    assert "threading" not in preimport
+    imported = set(out.splitlines())
+    assert "threading" not in imported
