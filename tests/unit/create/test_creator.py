@@ -557,3 +557,16 @@ def test_zip_importer_can_import_setuptools(tmp_path):
     env = os.environ.copy()
     env[str("PYTHONPATH")] = str(zip_path)
     subprocess.check_call([str(result.creator.exe), "-c", "from setuptools.dist import Distribution"], env=env)
+
+
+# verify that python in created virtualenv does not preimport threading.
+# https://github.com/pypa/virtualenv/issues/1895
+def test_no_preimport_threading(tmp_path):
+    session = cli_run([ensure_text(str(tmp_path))])
+    out = subprocess.check_output(
+        [session.creator.exe, "-c", r"import sys; print('\n'.join(sorted(sys.modules)))"], universal_newlines=True,
+    )
+    preimport = set()
+    for mod in out.splitlines():
+        preimport.add(mod)
+    assert "threading" not in preimport
