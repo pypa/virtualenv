@@ -1,1 +1,0 @@
-Upgrade setuptools from ``49.2.0`` on ``Python 3.5+`` - by :user:`gaborbernat`.

@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.27 (2020-07-15)
+---------------------
+
+Bugfixes - 20.0.27
+~~~~~~~~~~~~~~~~~~
+- No longer preimport threading to fix support for `gpython <https://pypi.org/project/pygolang/#gpython>`_ and `gevent <https://www.gevent.org/>`_ - by :user:`navytux`. (`#1897 <https://github.com/pypa/virtualenv/issues/1897>`_)
+- Upgrade setuptools from ``49.2.0`` on ``Python 3.5+`` - by :user:`gaborbernat`. (`#1898 <https://github.com/pypa/virtualenv/issues/1898>`_)
+
+
 v20.0.26 (2020-07-07)
 ---------------------
 
