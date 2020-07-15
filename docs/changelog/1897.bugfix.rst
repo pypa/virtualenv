@@ -1,0 +1,1 @@
+No longer preimport threading to fix support for `gpython <https://pypi.org/project/pygolang/#gpython>`_ and `gevent <https://www.gevent.org/>`_ - by :user:`navytux`.

@@ -557,3 +557,19 @@ def test_zip_importer_can_import_setuptools(tmp_path):
     env = os.environ.copy()
     env[str("PYTHONPATH")] = str(zip_path)
     subprocess.check_call([str(result.creator.exe), "-c", "from setuptools.dist import Distribution"], env=env)
+
+
+# verify that python in created virtualenv does not preimport threading.
+# https://github.com/pypa/virtualenv/issues/1895
+#
+# coverage is disabled, because when coverage is active, it imports threading in default mode.
+@pytest.mark.xfail(
+    IS_PYPY and PY3 and sys.platform.startswith("darwin"), reason="https://foss.heptapod.net/pypy/pypy/-/issues/3269",
+)
+def test_no_preimport_threading(tmp_path, no_coverage):
+    session = cli_run([ensure_text(str(tmp_path))])
+    out = subprocess.check_output(
+        [str(session.creator.exe), "-c", r"import sys; print('\n'.join(sorted(sys.modules)))"], universal_newlines=True,
+    )
+    imported = set(out.splitlines())
+    assert "threading" not in imported

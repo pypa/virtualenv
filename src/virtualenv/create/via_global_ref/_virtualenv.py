@@ -39,18 +39,33 @@ if sys.version_info > (3, 4):
     # https://docs.python.org/3/library/importlib.html#setting-up-an-importer
     from importlib.abc import MetaPathFinder
     from importlib.util import find_spec
-    from threading import Lock
     from functools import partial
 
     class _Finder(MetaPathFinder):
         """A meta path finder that allows patching the imported distutils modules"""
 
         fullname = None
-        lock = Lock()
+
+        # lock[0] is threading.Lock(), but initialized lazily to avoid importing threading very early at startup,
+        # because there are gevent-based applications that need to be first to import threading by themselves.
+        # See https://github.com/pypa/virtualenv/issues/1895 for details.
+        lock = []
 
         def find_spec(self, fullname, path, target=None):
             if fullname in _DISTUTILS_PATCH and self.fullname is None:
-                with self.lock:
+                # initialize lock[0] lazily
+                if len(self.lock) == 0:
+                    import threading
+
+                    lock = threading.Lock()
+                    # there is possibility that two threads T1 and T2 are simultaneously running into find_spec,
+                    # observing .lock as empty, and further going into hereby initialization. However due to the GIL,
+                    # list.append() operation is atomic and this way only one of the threads will "win" to put the lock
+                    # - that every thread will use - into .lock[0].
+                    # https://docs.python.org/3/faq/library.html#what-kinds-of-global-value-mutation-are-thread-safe
+                    self.lock.append(lock)
+
+                with self.lock[0]:
                     self.fullname = fullname
                     try:
                         spec = find_spec(fullname, path)
