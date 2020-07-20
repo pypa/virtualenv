@@ -116,10 +116,9 @@ def versioned_distribution_class():
 
 if NEW_IMPORT_SYSTEM:
     # noinspection PyCompatibility
-    from importlib.util import spec_from_file_location
-
     # noinspection PyCompatibility
     from importlib.abc import SourceLoader
+    from importlib.util import spec_from_file_location
 
     class VersionedFindLoad(VersionPlatformSelect, SourceLoader):
         def find_spec(self, fullname, path, target=None):

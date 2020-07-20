@@ -8,8 +8,8 @@ from datetime import datetime
 
 def run(args=None, options=None):
     start = datetime.now()
-    from virtualenv.util.error import ProcessCallFailed
     from virtualenv.run import cli_run
+    from virtualenv.util.error import ProcessCallFailed
 
     if args is None:
         args = sys.argv[1:]

@@ -37,9 +37,9 @@ def patch_dist(dist):
 _DISTUTILS_PATCH = "distutils.dist", "setuptools.dist"
 if sys.version_info > (3, 4):
     # https://docs.python.org/3/library/importlib.html#setting-up-an-importer
+    from functools import partial
     from importlib.abc import MetaPathFinder
     from importlib.util import find_spec
-    from functools import partial
 
     class _Finder(MetaPathFinder):
         """A meta path finder that allows patching the imported distutils modules"""
