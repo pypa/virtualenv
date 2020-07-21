@@ -149,7 +149,7 @@ _UPDATE_SKIP = {
 }
 
 
-@pytest.mark.parametrize("u_log", _UPDATE_SKIP.values(), ids=_UPDATE_SKIP.keys())
+@pytest.mark.parametrize("u_log", list(_UPDATE_SKIP.values()), ids=list(_UPDATE_SKIP.keys()))
 def test_periodic_update_skip(u_log, mocker, for_py_version, session_app_data, freezer):
     freezer.move_to(_UP_NOW)
     mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict())
@@ -173,7 +173,7 @@ _UPDATE_YES = {
 }
 
 
-@pytest.mark.parametrize("u_log", _UPDATE_YES.values(), ids=_UPDATE_YES.keys())
+@pytest.mark.parametrize("u_log", list(_UPDATE_YES.values()), ids=list(_UPDATE_YES.keys()))
 def test_periodic_update_trigger(u_log, mocker, for_py_version, session_app_data, freezer):
     freezer.move_to(_UP_NOW)
     mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict())
