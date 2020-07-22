@@ -117,7 +117,7 @@ def add_version_flag(parser):
         "--version",
         action="version",
         version="%(prog)s {} from {}".format(__version__, virtualenv.__file__),
-        help="display the version of the virtualenv package and it's location, then exit",
+        help="display the version of the virtualenv package and its location, then exit",
     )
 
 
