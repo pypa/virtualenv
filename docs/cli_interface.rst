@@ -51,7 +51,7 @@ Options that take multiple values, like :option:`extra-search-dir` can be specif
 .. code-block:: ini
 
   [virtualenv]
-  extra-search-dir =
+  extra_search_dir =
       /path/to/dists
       /path/to/other/dists
 
