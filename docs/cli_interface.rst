@@ -36,7 +36,7 @@ virtualenv looks for a standard ini configuration file. The exact location depen
 as determined by :pypi:`appdirs` application configuration definition. The configuration file location is printed as at
 the end of the output when ``--help`` is passed.
 
-The keys of the settings are derived from th command line option (left strip the ``-`` characters, and replace ``-``
+The keys of the settings are derived from the command line option (left strip the ``-`` characters, and replace ``-``
 with ``_``). Where multiple flags are available first found wins (where order is as it shows up under the ``--help``).
 
 For example, :option:`--python <python>` would be specified as:
