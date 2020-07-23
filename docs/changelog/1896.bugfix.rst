@@ -1,0 +1,2 @@
+Provide ``setup_logging`` flag to python API so that users can bypass logging handling if their application already
+performs this - by :user:`gaborbernat`.

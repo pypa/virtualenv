@@ -1,10 +1,12 @@
 from __future__ import absolute_import, unicode_literals
 
+import logging
+
 import pytest
 import six
 
 from virtualenv import __version__
-from virtualenv.run import cli_run
+from virtualenv.run import cli_run, session_via_cli
 
 
 def test_help(capsys):
@@ -31,3 +33,14 @@ def test_version(capsys):
     import virtualenv
 
     assert virtualenv.__file__ in content
+
+
+@pytest.mark.parametrize("on", [True, False])
+def test_logging_setup(caplog, on):
+    caplog.set_level(logging.DEBUG)
+    session_via_cli(["env"], setup_logging=on)
+    # DEBUG only level output is generated during this phase, default output is WARN, so if on no records should be
+    if on:
+        assert not caplog.records
+    else:
+        assert caplog.records

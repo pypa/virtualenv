@@ -196,8 +196,8 @@ def coverage_env(monkeypatch, link, request):
         # we inject right after creation, we cannot collect coverage on site.py - used for helper scripts, such as debug
         from virtualenv import run
 
-        def via_cli(args, options):
-            session = prev_run(args, options)
+        def _session_via_cli(args, options, setup_logging):
+            session = prev_run(args, options, setup_logging)
             old_run = session.creator.run
 
             def create_run():
@@ -211,7 +211,7 @@ def coverage_env(monkeypatch, link, request):
 
         obj = {"cov": None}
         prev_run = run.session_via_cli
-        monkeypatch.setattr(run, "session_via_cli", via_cli)
+        monkeypatch.setattr(run, "session_via_cli", _session_via_cli)
 
         def finish():
             cov = obj["cov"]
