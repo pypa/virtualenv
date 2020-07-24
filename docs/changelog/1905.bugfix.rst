@@ -1,2 +1,0 @@
-Use ``\n`` instead if ``\r\n`` as line separator for report (because Python already performs this transformation
-automatically upon write to the logging pipe) - by :user:`gaborbernat`.
