@@ -14,30 +14,39 @@ from .plugin.discovery import get_discover
 from .plugin.seeders import SeederSelector
 
 
-def cli_run(args, options=None):
-    """Create a virtual environment given some command line interface arguments
+def cli_run(args, options=None, setup_logging=True):
+    """
+    Create a virtual environment given some command line interface arguments.
 
     :param args: the command line arguments
     :param options: passing in a ``VirtualEnvOptions`` object allows return of the parsed options
+    :param setup_logging: ``True`` if setup logging handlers, ``False`` to use handlers already registered
     :return: the session object of the creation (its structure for now is experimental and might change on short notice)
     """
-    session = session_via_cli(args, options)
-    with session:
-        session.run()
-    return session
+    of_session = session_via_cli(args, options, setup_logging)
+    with of_session:
+        of_session.run()
+    return of_session
 
 
-# noinspection PyProtectedMember
-def session_via_cli(args, options=None):
-    parser, elements = build_parser(args, options)
+def session_via_cli(args, options=None, setup_logging=True):
+    """
+    Create a virtualenv session (same as cli_run, but this does not perform the creation). Use this if you just want to
+    query what the virtual environment would look like, but not actually create it.
+
+    :param args: the command line arguments
+    :param options: passing in a ``VirtualEnvOptions`` object allows return of the parsed options
+    :param setup_logging: ``True`` if setup logging handlers, ``False`` to use handlers already registered
+    :return: the session object of the creation (its structure for now is experimental and might change on short notice)
+    """
+    parser, elements = build_parser(args, options, setup_logging)
     options = parser.parse_args(args)
     creator, seeder, activators = tuple(e.create(options) for e in elements)  # create types
-    session = Session(options.verbosity, options.app_data, parser._interpreter, creator, seeder, activators)
-    return session
+    of_session = Session(options.verbosity, options.app_data, parser._interpreter, creator, seeder, activators)  # noqa
+    return of_session
 
 
-# noinspection PyProtectedMember
-def build_parser(args=None, options=None):
+def build_parser(args=None, options=None, setup_logging=True):
     parser = VirtualEnvConfigParser(options)
     add_version_flag(parser)
     parser.add_argument(
@@ -47,7 +56,7 @@ def build_parser(args=None, options=None):
         default=False,
         help="on failure also display the stacktrace internals of virtualenv",
     )
-    _do_report_setup(parser, args)
+    _do_report_setup(parser, args, setup_logging)
     options = load_app_data(args, parser, options)
     handle_extra_commands(options)
 
@@ -121,7 +130,7 @@ def add_version_flag(parser):
     )
 
 
-def _do_report_setup(parser, args):
+def _do_report_setup(parser, args, setup_logging):
     level_map = ", ".join("{}={}".format(logging.getLevelName(l), c) for c, l in sorted(list(LEVELS.items())))
     msg = "verbosity = verbose - quiet, default {}, mapping => {}"
     verbosity_group = parser.add_argument_group(
@@ -131,4 +140,11 @@ def _do_report_setup(parser, args):
     verbosity.add_argument("-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=2)
     verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
     option, _ = parser.parse_known_args(args)
-    setup_report(option.verbosity)
+    if setup_logging:
+        setup_report(option.verbosity)
+
+
+__all__ = (
+    "cli_run",
+    "session_via_cli",
+)
