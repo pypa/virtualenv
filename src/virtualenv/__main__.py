@@ -1,7 +1,6 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 import logging
-import os
 import sys
 from datetime import datetime
 
@@ -52,7 +51,7 @@ class LogSession(object):
             )
         if self.session.activators:
             lines.append("  activators {}".format(",".join(i.__class__.__name__ for i in self.session.activators)))
-        return os.linesep.join(lines)
+        return "\n".join(lines)
 
 
 def run_with_catch(args=None):
