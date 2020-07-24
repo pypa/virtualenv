@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import os
 import re
 import sys
 
@@ -65,8 +66,13 @@ def test_session_report_full(session_app_data, tmp_path, capsys):
         r"    added seed packages: .*pip==.*, setuptools==.*, wheel==.*",
         r"  activators .*",
     ]
+    _match_regexes(lines, regexes)
+
+
+def _match_regexes(lines, regexes):
     for line, regex in zip(lines, regexes):
-        assert re.match(regex, line), line
+        comp_regex = re.compile(r"^{}$".format(regex))
+        assert comp_regex.match(line), line
 
 
 def test_session_report_minimal(session_app_data, tmp_path, capsys):
@@ -78,5 +84,18 @@ def test_session_report_minimal(session_app_data, tmp_path, capsys):
         r"created virtual environment .* in \d+ms",
         r"  creator .*",
     ]
-    for line, regex in zip(lines, regexes):
-        assert re.match(regex, line), line
+    _match_regexes(lines, regexes)
+
+
+def test_session_report_subprocess(session_app_data, tmp_path):
+    # when called via a subprocess the logging framework should flush and POSIX line normalization happen
+    out = subprocess.check_output(
+        [sys.executable, "-m", "virtualenv", str(tmp_path), "--activators", "powershell", "--without-pip"],
+    )
+    lines = out.decode().split(os.linesep)
+    regexes = [
+        r"created virtual environment .* in \d+ms",
+        r"  creator .*",
+        r"  activators .*",
+    ]
+    _match_regexes(lines, regexes)

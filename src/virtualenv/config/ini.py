@@ -75,7 +75,7 @@ class IniConfig(object):
     def epilog(self):
         msg = "{}config file {} {} (change{} via env var {})"
         return msg.format(
-            os.linesep,
+            "\n",
             self.config_file,
             self.STATE[self.has_config_file],
             "d" if self.is_env_var else "",
