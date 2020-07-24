@@ -5,6 +5,18 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.28 (2020-07-24)
+---------------------
+
+Bugfixes - 20.0.28
+~~~~~~~~~~~~~~~~~~
+- Fix test suite failing if run from system Python - by :user:`gaborbernat`. (`#1882 <https://github.com/pypa/virtualenv/issues/1882>`_)
+- Provide ``setup_logging`` flag to python API so that users can bypass logging handling if their application already
+  performs this - by :user:`gaborbernat`. (`#1896 <https://github.com/pypa/virtualenv/issues/1896>`_)
+- Use ``\n`` instead if ``\r\n`` as line separator for report (because Python already performs this transformation
+  automatically upon write to the logging pipe) - by :user:`gaborbernat`. (`#1905 <https://github.com/pypa/virtualenv/issues/1905>`_)
+
+
 v20.0.27 (2020-07-15)
 ---------------------
 
