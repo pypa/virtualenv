@@ -1,0 +1,1 @@
+Upgrade embedded pip from version ``20.1.2`` to ``20.2`` - by :user:`gaborbernat`.
