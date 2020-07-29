@@ -1,3 +1,5 @@
+# virtualenv
+
 [![PyPI](https://img.shields.io/pypi/v/virtualenv?style=flat-square)](https://pypi.org/project/virtualenv)
 [![PyPI - Implementation](https://img.shields.io/pypi/implementation/virtualenv?style=flat-square)](https://pypi.org/project/virtualenv)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/virtualenv?style=flat-square)](https://pypi.org/project/virtualenv)
@@ -10,10 +12,7 @@
 [![Code style:
 black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square)](https://github.com/psf/black)
 
-virtualenv
-==========
-
-A tool for creating isolated ``virtual`` python environments.
+A tool for creating isolated `virtual` python environments.
 
 - [Installation](https://virtualenv.pypa.io/en/latest/installation.html)
 - [Documentation](https://virtualenv.pypa.io)
@@ -22,8 +21,7 @@ A tool for creating isolated ``virtual`` python environments.
 - [PyPI](https://pypi.org/project/virtualenv)
 - [Github](https://github.com/pypa/virtualenv)
 
-Code of Conduct
----------------
+## Code of Conduct
 
 Everyone interacting in the virtualenv project's codebases, issue trackers, chat rooms, and mailing lists is expected to
-follow the [PyPA Code of Conduct](https://www.pypa.io/en/latest/code-of-conduct/).
+follow the [PSF Code of Conduct](https://www.python.org/psf/conduct/).
