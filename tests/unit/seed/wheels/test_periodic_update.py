@@ -311,11 +311,13 @@ def test_do_update_first(tmp_path, mocker, freezer):
     u_log = UpdateLog(started=last_update, completed=last_update, versions=[], periodic=True)
     read_dict = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict())
     write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write")
+    copy = mocker.patch("virtualenv.seed.wheels.periodic_update.copy2")
 
     versions = do_update("pip", "3.9", str(pip_version_remote[-1][0]), str(app_data_outer), [str(extra)], True)
 
     assert download_wheel.call_count == len(pip_version_remote)
     assert url_o.call_count == 1
+    assert copy.call_count == 1
 
     expected = [
         NewVersion(Path(wheel).name, _UP_NOW, None if release is None else release.replace(microsecond=0))
