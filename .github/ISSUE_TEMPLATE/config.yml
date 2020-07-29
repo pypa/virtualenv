@@ -8,6 +8,6 @@ contact_links:
   url: https://discuss.python.org/c/packaging
   about: |
     Please ask typical Q&A here: general ideas for Python packaging, questions about structuring projects and so on
-- name: 📝 PyPA Code of Conduct
-  url: https://www.pypa.io/en/latest/code-of-conduct/
+- name: 📝 PSF Code of Conduct
+  url: https://github.com/pypa/.github/blob/main/CODE_OF_CONDUCT.md
   about: ❤ Be nice to other members of the community. ☮ Behave.
