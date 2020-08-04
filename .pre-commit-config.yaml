@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v3.1.0
+  rev: v3.2.0
   hooks:
   - id: check-ast
   - id: check-builtin-literals
@@ -25,7 +25,7 @@ repos:
   - id: seed-isort-config
     args: [--application-directories, '.:src']
 - repo: https://github.com/pre-commit/mirrors-isort
-  rev: v5.2.0
+  rev: v5.2.2
   hooks:
   - id: isort
 - repo: https://github.com/ambv/black
