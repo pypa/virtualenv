@@ -25,7 +25,7 @@ repos:
   - id: seed-isort-config
     args: [--application-directories, '.:src']
 - repo: https://github.com/pre-commit/mirrors-isort
-  rev: v5.2.2
+  rev: v5.4.1
   hooks:
   - id: isort
 - repo: https://github.com/ambv/black
@@ -41,7 +41,7 @@ repos:
     additional_dependencies: [black==19.10b0]
     language_version: python3.8
 - repo: https://github.com/pre-commit/pygrep-hooks
-  rev: v1.5.1
+  rev: v1.5.2
   hooks:
   - id: rst-backticks
 - repo: https://github.com/asottile/setup-cfg-fmt
