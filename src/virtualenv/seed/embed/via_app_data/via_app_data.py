@@ -117,9 +117,9 @@ class FromAppData(BaseEmbed):
                 with lock:
                     name_to_whl[distribution] = result
 
+        distributions = self.get_expanded_distributions(creator)
         threads = list(
-            Thread(target=_get, args=(distribution, version))
-            for distribution, version in self.distribution_to_versions().items()
+            Thread(target=_get, args=(distribution, version)) for distribution, version in distributions.items()
         )
         for thread in threads:
             thread.start()

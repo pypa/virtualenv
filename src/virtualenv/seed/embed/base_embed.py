@@ -4,6 +4,7 @@ from abc import ABCMeta
 
 from six import add_metaclass
 
+from virtualenv.seed.wheels.embed import get_wheel_deps
 from virtualenv.util.path import Path
 from virtualenv.util.six import ensure_str, ensure_text
 
@@ -48,6 +49,13 @@ class BaseEmbed(Seeder):
             for distribution in self.distributions()
             if getattr(self, "no_{}".format(distribution)) is False
         }
+
+    def get_expanded_distributions(self, creator):
+        distributions = self.distribution_to_versions()
+        for dist, value in list(distributions.items()):
+            for dep in get_wheel_deps(dist, creator.interpreter.version_release_str):
+                distributions[dep] = value
+        return distributions
 
     @classmethod
     def add_parser_arguments(cls, parser, interpreter, app_data):

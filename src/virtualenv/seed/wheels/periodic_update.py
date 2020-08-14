@@ -46,10 +46,12 @@ def periodic_update(distribution, for_py_version, wheel, search_dirs, app_data, 
     u_log_older_than_hour = now - u_log.completed > timedelta(hours=1) if u_log.completed is not None else False
     for _, group in groupby(u_log.versions, key=lambda v: v.wheel.version_tuple[0:2]):
         version = next(group)  # use only latest patch version per minor, earlier assumed to be buggy
-        if wheel is not None and Path(version.filename).name == wheel.name:
+        updated_wheel = Wheel(app_data.house / version.filename)
+        if wheel is not None and (
+            Path(version.filename).name == wheel.name or wheel.version_tuple > updated_wheel.version_tuple
+        ):
             break
         if u_log.periodic is False or (u_log_older_than_hour and version.use(now)):
-            updated_wheel = Wheel(app_data.house / version.filename)
             logging.debug("using %supdated wheel %s", "periodically " if updated_wheel else "", updated_wheel)
             wheel = updated_wheel
             break

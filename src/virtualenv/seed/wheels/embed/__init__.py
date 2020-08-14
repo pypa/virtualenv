@@ -47,6 +47,16 @@ BUNDLE_SUPPORT = {
     },
 }
 MAX = "3.10"
+VERSION_DEPS = {
+    "3.10": {"pip": [], "setuptools": [], "wheel": []},
+    "3.9": {"pip": [], "setuptools": [], "wheel": []},
+    "3.8": {"pip": [], "setuptools": [], "wheel": []},
+    "3.7": {"pip": [], "setuptools": [], "wheel": []},
+    "3.6": {"pip": [], "setuptools": [], "wheel": []},
+    "3.5": {"pip": [], "setuptools": [], "wheel": []},
+    "3.4": {"pip": [], "setuptools": [], "wheel": []},
+    "2.7": {"pip": [], "setuptools": [], "wheel": []},
+}
 
 
 def get_embed_wheel(distribution, for_py_version):
@@ -57,6 +67,7 @@ def get_embed_wheel(distribution, for_py_version):
 __all__ = (
     "get_embed_wheel",
     "BUNDLE_SUPPORT",
+    "VERSION_DEPS",
     "MAX",
     "BUNDLE_FOLDER",
 )

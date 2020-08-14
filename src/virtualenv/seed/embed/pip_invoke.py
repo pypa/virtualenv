@@ -18,7 +18,7 @@ class PipInvoke(BaseEmbed):
         if not self.enabled:
             return
         for_py_version = creator.interpreter.version_release_str
-        with self.get_pip_install_cmd(creator.exe, for_py_version) as cmd:
+        with self.get_pip_install_cmd(creator.exe, for_py_version, creator) as cmd:
             env = pip_wheel_env_run(self.extra_search_dir, self.app_data)
             self._execute(cmd, env)
 
@@ -32,12 +32,12 @@ class PipInvoke(BaseEmbed):
         return process
 
     @contextmanager
-    def get_pip_install_cmd(self, exe, for_py_version):
+    def get_pip_install_cmd(self, exe, for_py_version, creator):
         cmd = [str(exe), "-m", "pip", "-q", "install", "--only-binary", ":all:", "--disable-pip-version-check"]
         if not self.download:
             cmd.append("--no-index")
         folders = set()
-        for dist, version in self.distribution_to_versions().items():
+        for dist, version in self.get_expanded_distributions(creator).items():
             wheel = get_wheel(
                 distribution=dist,
                 version=version,
