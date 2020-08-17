@@ -1,1 +1,0 @@
-Upgrade embedded pip to ``20.2.1``, setuptools to ``49.6.0`` and wheel to ``0.35.1``  - by :user:`gaborbernat`.
