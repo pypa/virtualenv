@@ -6,13 +6,12 @@ import pytest
 from flaky import flaky
 
 from virtualenv.activation import XonshActivator
-from virtualenv.info import IS_PYPY, PY3
 
 
 @pytest.mark.slow
 @pytest.mark.skipif(
-    (sys.platform == "win32" and IS_PYPY and PY3) or sys.version_info[0:2] == (3, 9),
-    reason="xonsh on Windows blocks indefinitely and is not stable yet on 3.9",
+    sys.platform == "win32" or sys.version_info[0:2] == (3, 9),
+    reason="xonsh on 3.9 or Windows is broken - https://github.com/xonsh/xonsh/issues/3689",
 )
 @flaky(max_runs=2, min_passes=1)
 def test_xonsh(activation_tester_class, activation_tester):
