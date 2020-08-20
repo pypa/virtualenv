@@ -17,6 +17,7 @@ def test_batch(activation_tester_class, activation_tester, tmp_path, activation_
             self.deactivate = "call deactivate"
             self.activate_cmd = "call"
             self.pydoc_call = "call {}".format(self.pydoc_call)
+            self.unix_line_ending = False
 
         def _get_test_lines(self, activate_script):
             # for BATCH utf-8 support need change the character code page to 650001
