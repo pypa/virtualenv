@@ -6,7 +6,7 @@ from ast import literal_eval
 from textwrap import dedent
 
 from virtualenv.activation import PythonActivator
-from virtualenv.info import WIN_CPYTHON_2
+from virtualenv.info import IS_WIN, WIN_CPYTHON_2
 from virtualenv.util.six import ensure_text
 
 
@@ -21,6 +21,7 @@ def test_python(raise_on_non_source_class, activation_tester):
                 extension="py",
                 non_source_fail_message="You must use exec(open(this_file).read(), {'__file__': this_file}))",
             )
+            self.unix_line_ending = not IS_WIN
 
         def env(self, tmp_path):
             env = os.environ.copy()

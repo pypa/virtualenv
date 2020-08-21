@@ -67,12 +67,11 @@ class ActivationTester(object):
 
         # check line endings are correct type
         script_content = activate_script.read_bytes()
-        for line in script_content.split(b"\n"):
-            if line:
-                if self.unix_line_ending:
-                    assert line[-1] != b"\r"
-                else:
-                    assert line[-1] == b"\r"
+        for line in script_content.split(b"\n")[:-1]:
+            if self.unix_line_ending:
+                assert not line or line[-1] != 13, script_content.decode("utf-8")
+            else:
+                assert line[-1] == 13, script_content.decode("utf-8")
 
         test_script = self._generate_test_script(activate_script, tmp_path)
         monkeypatch.chdir(ensure_text(str(tmp_path)))

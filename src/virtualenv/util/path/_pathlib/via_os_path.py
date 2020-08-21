@@ -88,8 +88,11 @@ class Path(object):
             return file_handler.read()
 
     def write_text(self, text, encoding="utf-8"):
+        self.write_bytes(text.encode(encoding))
+
+    def write_bytes(self, content):
         with open(self._path, "wb") as file_handler:
-            file_handler.write(text.encode(encoding))
+            file_handler.write(content)
 
     def iterdir(self):
         for p in os.listdir(self._path):
