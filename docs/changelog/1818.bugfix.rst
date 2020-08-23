@@ -1,0 +1,1 @@
+For activation scripts always use UNIX line endings (unless it's BATCH shell related) - by :user:`saytosid`.

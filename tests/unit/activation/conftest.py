@@ -31,6 +31,7 @@ class ActivationTester(object):
         self.pydoc_call = "pydoc -w pydoc_test"
         self.script_encoding = "utf-8"
         self._version = None
+        self.unix_line_ending = True
 
     def get_version(self, raise_on_fail):
         if self._version is None:
@@ -63,6 +64,16 @@ class ActivationTester(object):
 
     def __call__(self, monkeypatch, tmp_path):
         activate_script = self._creator.bin_dir / self.activate_script
+
+        # check line endings are correct type
+        script_content = activate_script.read_bytes()
+        for line in script_content.split(b"\n")[:-1]:
+            cr = b"\r" if sys.version_info.major == 2 else 13
+            if self.unix_line_ending:
+                assert line == b"" or line[-1] != cr, script_content.decode("utf-8")
+            else:
+                assert line[-1] == cr, script_content.decode("utf-8")
+
         test_script = self._generate_test_script(activate_script, tmp_path)
         monkeypatch.chdir(ensure_text(str(tmp_path)))
 
