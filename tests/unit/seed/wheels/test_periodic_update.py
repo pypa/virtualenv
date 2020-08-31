@@ -29,7 +29,7 @@ from virtualenv.seed.wheels.periodic_update import (
     trigger_update,
 )
 from virtualenv.util.path import Path
-from virtualenv.util.subprocess import DETACHED_PROCESS
+from virtualenv.util.subprocess import CREATE_NO_WINDOW
 
 
 @pytest.fixture(autouse=True)
@@ -224,7 +224,7 @@ def test_trigger_update_no_debug(for_py_version, session_app_data, tmp_path, moc
     assert args == ([sys.executable, "-c", cmd],)
     expected = {"stdout": subprocess.PIPE, "stderr": subprocess.PIPE}
     if sys.platform == "win32":
-        expected["creationflags"] = DETACHED_PROCESS
+        expected["creationflags"] = CREATE_NO_WINDOW
     assert kwargs == expected
     assert process.communicate.call_count == 0
 
