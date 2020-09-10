@@ -79,7 +79,9 @@ class Creator(object):
         :param meta: value as returned by :meth:`can_create`
         """
         parser.add_argument(
-            "dest", help="directory to create virtualenv at", type=cls.validate_dest,
+            "dest",
+            help="directory to create virtualenv at",
+            type=cls.validate_dest,
         )
         parser.add_argument(
             "--clear",
@@ -120,7 +122,9 @@ class Creator(object):
         if refused:
             raise ArgumentTypeError(
                 "the file system codec ({}) cannot handle characters {!r} within {!r}".format(
-                    encoding, "".join(refused.keys()), raw_value,
+                    encoding,
+                    "".join(refused.keys()),
+                    raw_value,
                 ),
             )
         if os.pathsep in raw_value:

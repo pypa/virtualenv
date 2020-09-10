@@ -38,7 +38,8 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin):
                             meta.symlink_error = "cannot symlink {}".format(src)
                         if not meta.can_copy and not meta.can_symlink:
                             meta.error = "neither copy or symlink supported, copy: {} symlink: {}".format(
-                                meta.copy_error, meta.symlink_error,
+                                meta.copy_error,
+                                meta.symlink_error,
                             )
                     else:
                         meta.error = "missing required file {}".format(src)
@@ -92,7 +93,7 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin):
         """
         We directly inject the base prefix and base exec prefix to avoid site.py needing to discover these
         from home (which usually is done within the interpreter itself)
-         """
+        """
         super(ViaGlobalRefVirtualenvBuiltin, self).set_pyenv_cfg()
         self.pyenv_cfg["base-prefix"] = self.interpreter.system_prefix
         self.pyenv_cfg["base-exec-prefix"] = self.interpreter.system_exec_prefix

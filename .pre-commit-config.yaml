@@ -11,25 +11,16 @@ repos:
   - id: debug-statements
   - id: end-of-file-fixer
   - id: trailing-whitespace
-- repo: https://github.com/asottile/add-trailing-comma
-  rev: v2.0.1
-  hooks:
-  - id: add-trailing-comma
 - repo: https://github.com/asottile/pyupgrade
   rev: v2.7.2
   hooks:
   - id: pyupgrade
-- repo: https://github.com/asottile/seed-isort-config
-  rev: v2.2.0
-  hooks:
-  - id: seed-isort-config
-    args: [--application-directories, '.:src']
-- repo: https://github.com/pre-commit/mirrors-isort
-  rev: v5.4.2
+- repo: https://github.com/PyCQA/isort
+  rev: 5.5.2
   hooks:
   - id: isort
 - repo: https://github.com/ambv/black
-  rev: 19.10b0
+  rev: 20.8b1
   hooks:
   - id: black
     args: [--safe]
@@ -38,7 +29,7 @@ repos:
   rev: v1.8.0
   hooks:
   - id: blacken-docs
-    additional_dependencies: [black==19.10b0]
+    additional_dependencies: [black==20.8b1]
     language_version: python3.8
 - repo: https://github.com/pre-commit/pygrep-hooks
   rev: v1.6.0
@@ -49,7 +40,7 @@ repos:
   hooks:
   - id: setup-cfg-fmt
     args: [--min-py3-version, "3.4"]
-- repo: https://gitlab.com/pycqa/flake8
+- repo: https://github.com/PyCQA/flake8
   rev: "3.8.3"
   hooks:
   - id: flake8

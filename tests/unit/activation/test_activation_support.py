@@ -16,7 +16,8 @@ from virtualenv.discovery.py_info import PythonInfo
 
 
 @pytest.mark.parametrize(
-    "activator_class", [BatchActivator, PowerShellActivator, PythonActivator, BashActivator, FishActivator],
+    "activator_class",
+    [BatchActivator, PowerShellActivator, PythonActivator, BashActivator, FishActivator],
 )
 def test_activator_support_windows(mocker, activator_class):
     activator = activator_class(Namespace(prompt=None))
@@ -36,7 +37,8 @@ def test_activator_no_support_windows(mocker, activator_class):
 
 
 @pytest.mark.parametrize(
-    "activator_class", [BashActivator, CShellActivator, FishActivator, PowerShellActivator, PythonActivator],
+    "activator_class",
+    [BashActivator, CShellActivator, FishActivator, PowerShellActivator, PythonActivator],
 )
 def test_activator_support_posix(mocker, activator_class):
     activator = activator_class(Namespace(prompt=None))

@@ -198,7 +198,8 @@ class PythonInfo(object):
 
     def __repr__(self):
         return "{}({!r})".format(
-            self.__class__.__name__, {k: v for k, v in self.__dict__.items() if not k.startswith("_")},
+            self.__class__.__name__,
+            {k: v for k, v in self.__dict__.items() if not k.startswith("_")},
         )
 
     def __str__(self):

@@ -14,6 +14,7 @@ import sys
 import pytest
 
 from virtualenv.discovery.py_info import PythonInfo
+from virtualenv.info import IS_WIN
 from virtualenv.run import cli_run
 from virtualenv.util.path import Path
 from virtualenv.util.subprocess import Popen
@@ -77,13 +78,20 @@ def old_virtualenv(tmp_path_factory, session_app_data):
             process = Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             _, __ = process.communicate()
             assert not process.returncode
+            if result.creator.interpreter.implementation == "PyPy" and IS_WIN:
+                # old virtualenv creates pypy paths wrong on windows, so have to hardcode it
+                return str(old_virtualenv_at / "bin" / "pypy.exe")
             exe_path = CURRENT.discover_exe(session_app_data, prefix=str(old_virtualenv_at)).original_executable
             return exe_path
         except Exception as exception:
             return RuntimeError("failed to create old virtualenv {}".format(exception))
 
 
-PYTHON = {"root": root, "venv": venv, "old_virtualenv": old_virtualenv}
+PYTHON = {
+    "root": root,
+    "venv": venv,
+    "old_virtualenv": old_virtualenv,
+}
 
 
 @pytest.fixture(params=list(PYTHON.values()), ids=list(PYTHON.keys()), scope="session")

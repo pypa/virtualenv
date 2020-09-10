@@ -105,7 +105,10 @@ class NewVersion(object):
 
     def __repr__(self):
         return "{}(filename={}), found_date={}, release_date={})".format(
-            self.__class__.__name__, self.filename, self.found_date, self.release_date,
+            self.__class__.__name__,
+            self.filename,
+            self.found_date,
+            self.release_date,
         )
 
     def __eq__(self, other):
