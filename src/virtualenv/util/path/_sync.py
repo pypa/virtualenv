@@ -82,7 +82,9 @@ class _Debug(object):
 
     def __str__(self):
         return "{}{} to {}".format(
-            "directory " if self.src.is_dir() else "", ensure_text(str(self.src)), ensure_text(str(self.dest)),
+            "directory " if self.src.is_dir() else "",
+            ensure_text(str(self.src)),
+            ensure_text(str(self.dest)),
         )
 
 

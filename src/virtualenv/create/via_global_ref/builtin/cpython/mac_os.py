@@ -241,7 +241,7 @@ def _builtin_change_mach_o(maxint):
 
     def mach_o_change(at_path, what, value):
         """Replace a given name (what) in any LC_LOAD_DYLIB command found in the given binary with a new name (value),
-         provided it's shorter."""
+        provided it's shorter."""
 
         def do_macho(file, bits, endian):
             # Read Mach-O header (the magic number is assumed read by the caller)

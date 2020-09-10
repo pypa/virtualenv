@@ -10,7 +10,8 @@ hive_open = {
     (winreg.HKEY_CURRENT_USER, "Software\\Python", 0, winreg.KEY_READ): 78701856,
     (winreg.HKEY_LOCAL_MACHINE, "Software\\Python", 0, winreg.KEY_READ | winreg.KEY_WOW64_64KEY): 78701840,
     (winreg.HKEY_LOCAL_MACHINE, "Software\\Python", 0, winreg.KEY_READ | winreg.KEY_WOW64_32KEY): OSError(
-        2, "The system cannot find the file specified",
+        2,
+        "The system cannot find the file specified",
     ),
 }
 key_open = {

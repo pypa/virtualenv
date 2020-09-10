@@ -45,7 +45,10 @@ class CreatorSelector(ComponentBuilder):
             else:
                 raise RuntimeError("No virtualenv implementation for {}".format(interpreter))
         return CreatorInfo(
-            key_to_class=key_to_class, key_to_meta=key_to_meta, describe=describe, builtin_key=builtin_key,
+            key_to_class=key_to_class,
+            key_to_meta=key_to_meta,
+            describe=describe,
+            builtin_key=builtin_key,
         )
 
     def add_selector_arg_parse(self, name, choices):

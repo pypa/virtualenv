@@ -169,7 +169,9 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     # ensure all additional paths are related to the virtual environment
     for path in our_paths:
         msg = "\n{}\ndoes not start with {}\nhas:\n{}".format(
-            ensure_text(str(path)), ensure_text(str(dest)), "\n".join(ensure_text(str(p)) for p in system_sys_path),
+            ensure_text(str(path)),
+            ensure_text(str(dest)),
+            "\n".join(ensure_text(str(p)) for p in system_sys_path),
         )
         assert str(path).startswith(str(dest)), msg
     # ensure there's at least a site-packages folder as part of the virtual environment added
@@ -179,7 +181,8 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     global_sys_path = system_sys_path[-1]
     if isolated == "isolated":
         msg = "global sys path {} is in virtual environment sys path:\n{}".format(
-            ensure_text(str(global_sys_path)), "\n".join(ensure_text(str(j)) for j in sys_path),
+            ensure_text(str(global_sys_path)),
+            "\n".join(ensure_text(str(j)) for j in sys_path),
         )
         assert global_sys_path not in sys_path, msg
     else:
@@ -409,7 +412,8 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch, session_app_data):
             install_scripts={0}{1}scripts
             install_data={0}{1}data
             """.format(
-            tmp_path, os.sep,
+            tmp_path,
+            os.sep,
         ),
     )
     setup_cfg.write_text(setup_cfg.read_text() + conf)
@@ -564,12 +568,14 @@ def test_zip_importer_can_import_setuptools(tmp_path):
 #
 # coverage is disabled, because when coverage is active, it imports threading in default mode.
 @pytest.mark.xfail(
-    IS_PYPY and PY3 and sys.platform.startswith("darwin"), reason="https://foss.heptapod.net/pypy/pypy/-/issues/3269",
+    IS_PYPY and PY3 and sys.platform.startswith("darwin"),
+    reason="https://foss.heptapod.net/pypy/pypy/-/issues/3269",
 )
 def test_no_preimport_threading(tmp_path, no_coverage):
     session = cli_run([ensure_text(str(tmp_path))])
     out = subprocess.check_output(
-        [str(session.creator.exe), "-c", r"import sys; print('\n'.join(sorted(sys.modules)))"], universal_newlines=True,
+        [str(session.creator.exe), "-c", r"import sys; print('\n'.join(sorted(sys.modules)))"],
+        universal_newlines=True,
     )
     imported = set(out.splitlines())
     assert "threading" not in imported

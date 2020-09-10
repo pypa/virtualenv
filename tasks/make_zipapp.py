@@ -199,7 +199,9 @@ class WheelDownloader(object):
             with TemporaryDirectory() as temp_folder:
                 folder = Path(temp_folder) / target.name
                 shutil.copytree(
-                    str(target), str(folder), ignore=shutil.ignore_patterns(".tox", "venv", "__pycache__", "*.pyz"),
+                    str(target),
+                    str(folder),
+                    ignore=shutil.ignore_patterns(".tox", "venv", "__pycache__", "*.pyz"),
                 )
                 try:
                     return self._build_sdist(self.into, folder)

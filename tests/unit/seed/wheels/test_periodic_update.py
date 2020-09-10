@@ -132,13 +132,22 @@ _UP_NOW = datetime.now()
 _UPDATE_SKIP = {
     "started_just_now_no_complete": UpdateLog(started=_UP_NOW, completed=None, versions=[], periodic=True),
     "started_1_hour_no_complete": UpdateLog(
-        started=_UP_NOW - timedelta(hours=1), completed=None, versions=[], periodic=True,
+        started=_UP_NOW - timedelta(hours=1),
+        completed=None,
+        versions=[],
+        periodic=True,
     ),
     "completed_under_two_weeks": UpdateLog(
-        started=None, completed=_UP_NOW - timedelta(days=14), versions=[], periodic=True,
+        started=None,
+        completed=_UP_NOW - timedelta(days=14),
+        versions=[],
+        periodic=True,
     ),
     "started_just_now_completed_two_weeks": UpdateLog(
-        started=_UP_NOW, completed=_UP_NOW - timedelta(days=14, seconds=1), versions=[], periodic=True,
+        started=_UP_NOW,
+        completed=_UP_NOW - timedelta(days=14, seconds=1),
+        versions=[],
+        periodic=True,
     ),
     "started_1_hour_completed_two_weeks": UpdateLog(
         started=_UP_NOW - timedelta(hours=1),
@@ -162,7 +171,10 @@ def test_periodic_update_skip(u_log, mocker, for_py_version, session_app_data, f
 _UPDATE_YES = {
     "never_started": UpdateLog(started=None, completed=None, versions=[], periodic=False),
     "started_1_hour": UpdateLog(
-        started=_UP_NOW - timedelta(hours=1, microseconds=1), completed=None, versions=[], periodic=False,
+        started=_UP_NOW - timedelta(hours=1, microseconds=1),
+        completed=None,
+        versions=[],
+        periodic=False,
     ),
     "completed_two_week": UpdateLog(
         started=_UP_NOW - timedelta(days=14, microseconds=2),
@@ -389,7 +401,9 @@ def test_new_version_eq():
 
 def test_new_version_ne():
     assert NewVersion("a", datetime.now(), datetime.now()) != NewVersion(
-        "a", datetime.now(), datetime.now() + timedelta(hours=1),
+        "a",
+        datetime.now(),
+        datetime.now() + timedelta(hours=1),
     )
 
 

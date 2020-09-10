@@ -261,7 +261,8 @@ def test_py_info_ignores_distutils_config(monkeypatch, tmp_path):
             install_scripts={0}{1}scripts
             install_data={0}{1}data
             """.format(
-                tmp_path, os.sep,
+                tmp_path,
+                os.sep,
             ),
         ),
     )
@@ -287,7 +288,9 @@ def test_discover_exe_on_path_non_spec_name_not_match(mocker):
         suffixed_name += Path(CURRENT.original_executable).suffix
     spec = PythonSpec.from_string_spec(suffixed_name)
     mocker.patch.object(
-        CURRENT, "original_executable", str(Path(CURRENT.executable).parent / "e{}".format(suffixed_name)),
+        CURRENT,
+        "original_executable",
+        str(Path(CURRENT.executable).parent / "e{}".format(suffixed_name)),
     )
     assert CURRENT.satisfies(spec, impl_must_match=True) is False
 

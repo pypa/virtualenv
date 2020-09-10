@@ -168,5 +168,8 @@ class PyInfoStoreDisk(JSONStoreDisk):
 class EmbedDistributionUpdateStoreDisk(JSONStoreDisk):
     def __init__(self, in_folder, distribution):
         super(EmbedDistributionUpdateStoreDisk, self).__init__(
-            in_folder, distribution, "embed update of distribution %s", (distribution,),
+            in_folder,
+            distribution,
+            "embed update of distribution %s",
+            (distribution,),
         )
