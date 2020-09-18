@@ -137,7 +137,10 @@ class JSONStoreDisk(ContentStore):
         except Exception:  # noqa
             pass
         if bad_format:
-            self.remove()
+            try:
+                self.remove()
+            except OSError:  # reading and writing on the same file may cause race on multiple processes
+                pass
         return None
 
     def remove(self):
