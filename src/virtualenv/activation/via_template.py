@@ -1,7 +1,9 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
+import re
 import sys
+import sysconfig
 from abc import ABCMeta, abstractmethod
 
 from six import add_metaclass
@@ -31,9 +33,18 @@ class ViaTemplateActivator(Activator):
         return generated
 
     def replacements(self, creator, dest_folder):
+        if "mingw" or "cygwin" or "msys" in sysconfig.get_platform():
+            pattern = re.compile("^([A-Za-z]):(.*)")
+            match = pattern.match(str(creator.dest))
+            if match:
+                virtual_env = "/" + match.group(1).lower() + match.group(2)
+            else:
+                virtual_env = str(creator.dest)
+        else:
+            virtual_env = str(creator.dest)
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
-            "__VIRTUAL_ENV__": ensure_text(str(creator.dest)),
+            "__VIRTUAL_ENV__": ensure_text(virtual_env),
             "__VIRTUAL_NAME__": creator.env_name,
             "__BIN_NAME__": ensure_text(str(creator.bin_dir.relative_to(creator.dest))),
             "__PATH_SEP__": ensure_text(os.pathsep),
