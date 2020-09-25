@@ -12,11 +12,4 @@ coverage:
       project:
         default:
           target: '80'
-  notify:
-    after_n_builds: 24
-    wait_for_ci: yes
-
-comment:
-  layout: "diff, files"
-  behavior: default
-  require_changes: no
+comment: false

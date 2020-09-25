@@ -26,9 +26,9 @@ jobs:
       fail-fast: false
       matrix:
         os:
-        - Ubuntu
-        - Windows
-        - MacOs
+        - ubuntu
+        - windows
+        - macos
         py:
         - 3.8
         - 3.7
@@ -39,7 +39,6 @@ jobs:
         - pypy2
         include:
         - {os: MacOs, py: brew@py3}
-        - {os: MacOs, py: "https://raw.githubusercontent.com/Homebrew/homebrew-core/86a44a0a552c673a05f11018459c9f5faae3becc/Formula/python@2.rb"}
         - {os: Ubuntu, py: 3.9-dev}
     steps:
     - name: install OS dependencies
@@ -70,10 +69,9 @@ jobs:
     - name: setup brew python for test ${{ matrix.py }}
       if: startsWith(matrix.py,'brew@py')
       run: |
-        import os; import subprocess
-        version = "${{matrix.py}}"[-1]
-        subprocess.check_call(["bash", "-c", f"brew list python@{version} && brew upgrade python@{version} || brew install python@{version}"])
-        print(f"::add-path::/usr/local/opt/python@{version}")
+        import subprocess
+        subprocess.check_call(["bash", "-c", f"brew upgrade python@3 || brew install python@3"])
+        print(f"::add-path::/usr/local/opt/python@3")
       shell: python
     - name: pick environment to run
       run: |
