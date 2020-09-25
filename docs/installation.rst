@@ -41,7 +41,7 @@ sdist
 When installing via a source distribution you need an installer that handles the
 `PEP-517 <https://www.python.org/dev/peps/pep-0517/>`_ specification. In case of ``pip`` this is version ``18.0.0`` or
 later (released on 2018 July). If you cannot upgrade your pip to support this you need to ensure that the build
-requirements from `pyproject.toml <https://github.com/pypa/virtualenv/blob/master/pyproject.toml#L2>`_ are satisfied
+requirements from `pyproject.toml <https://github.com/pypa/virtualenv/blob/main/pyproject.toml#L2>`_ are satisfied
 before triggering the install.
 
 via zipapp
@@ -76,7 +76,7 @@ a pip version of at least ``18.0.0`` and use the following command:
 
 .. code-block:: console
 
-    pip install git+https://github.com/pypa/virtualenv.git@master
+    pip install git+https://github.com/pypa/virtualenv.git@main
 
 .. _compatibility-requirements:
 

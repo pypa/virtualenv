@@ -24,7 +24,7 @@ unused_docs = []
 source_suffix = ".rst"
 exclude_patterns = ["_build", "changelog/*", "_draft.rst"]
 
-master_doc = "index"
+main_doc = "index"
 pygments_style = "default"
 always_document_param_types = True
 project = name

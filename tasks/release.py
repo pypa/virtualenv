@@ -27,11 +27,11 @@ def main(version_str: str) -> None:
 
 
 def create_release_branch(repo: Repo, version: Version) -> Tuple[Remote, Head]:
-    print("create release branch from upstream master")
+    print("create release branch from upstream main")
     upstream = get_upstream(repo)
     upstream.fetch()
     branch_name = f"release-{version}"
-    release_branch = repo.create_head(branch_name, upstream.refs.master, force=True)
+    release_branch = repo.create_head(branch_name, upstream.refs.main, force=True)
     upstream.push(refspec=f"{branch_name}:{branch_name}", force=True)
     release_branch.set_tracking_branch(repo.refs[f"{upstream.name}/{branch_name}"])
     release_branch.checkout()

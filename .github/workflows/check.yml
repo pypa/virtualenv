@@ -145,7 +145,7 @@ jobs:
     - name: build package
       run: python -m pep517.build -s -b . -o dist
     - name: publish to PyPi
-      uses: pypa/gh-action-pypi-publish@master
+      uses: pypa/gh-action-pypi-publish@main
       with:
         skip_existing: true
         user: __token__
