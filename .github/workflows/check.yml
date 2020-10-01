@@ -11,13 +11,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
-    - name: set PY
-      run: echo "::set-env name=PY::$(python -c 'import hashlib, sys;print(hashlib.sha256(sys.version.encode()+sys.executable.encode()).hexdigest())')"
-    - uses: actions/cache@v2
-      with:
-        path: ~/.cache/pre-commit
-        key: pre-commit|${{ env.PY }}|${{ hashFiles('.pre-commit-config.yaml') }}
-    - uses: pre-commit/action@v1.1.0
+    - uses: pre-commit/action@v2.0.0
 
   test:
     name: test ${{ matrix.py }} - ${{ matrix.os }}
@@ -30,6 +24,7 @@ jobs:
         - windows
         - macos
         py:
+        - 3.9.0-rc.2
         - 3.8
         - 3.7
         - 3.6
@@ -39,18 +34,22 @@ jobs:
         - pypy2
         include:
         - {os: MacOs, py: brew@py3}
-        - {os: Ubuntu, py: 3.9-dev}
-    steps:
+    steps:    
     - name: install OS dependencies
       run:   |
-        ${{ runner.os == 'Linux' && 'sudo apt-get update -y; sudo apt-get install fish csh' || true}}
-        ${{ runner.os == 'macOS' && 'brew update -vvv; brew install fish tcsh' || true}}
-        ${{ runner.os == 'Windows' && ( matrix.py == '2.7' || matrix.py == 'pypy2' ) && 'choco install vcpython27 --yes -f' || true }}
+        for i in 1 2 3; do
+          echo "try $i" && \
+          ${{ runner.os == 'Linux' && 'sudo apt-get update -y && sudo apt-get install fish csh' || true}} && \
+          ${{ runner.os == 'macOS' && 'brew update -vvv && brew install fish tcsh' || true}} && \
+          ${{ runner.os == 'Windows' && ( matrix.py == '2.7' || matrix.py == 'pypy2' ) && 'choco install vcpython27 --yes -f' || true }} && \
+          exit 0;
+        done
+        exit 1
       shell: bash
     - name: setup python for tox
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: 3.9.0-rc.2
     - name: install tox
       run: python -m pip install tox
     - uses: actions/checkout@v2
@@ -59,11 +58,6 @@ jobs:
     - name: setup python for test ${{ matrix.py }}
       if: "!( startsWith(matrix.py,'brew@py') || endsWith(matrix.py, '-dev') )"
       uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.py }}
-    - name: setup DEV python for test ${{ matrix.py }}
-      uses: deadsnakes/action@v1.0.0
-      if: endsWith(matrix.py, '-dev')
       with:
         python-version: ${{ matrix.py }}
     - name: setup brew python for test ${{ matrix.py }}
@@ -104,8 +98,8 @@ jobs:
       fail-fast: false
       matrix:
         os:
-        - Ubuntu
-        - Windows
+        - ubuntu
+        - windows
         tox_env:
         - dev
         - docs
@@ -113,14 +107,14 @@ jobs:
         - upgrade
         - zipapp
         exclude:
-        - {os: Windows, tox_env: readme}
-        - {os: Windows, tox_env: docs}
+        - {os: windows, tox_env: readme}
+        - {os: windows, tox_env: docs}
     steps:
     - uses: actions/checkout@v2
-    - name: setup Python 3.8
+    - name: setup Python 3.9.0-rc.2
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: 3.9.0-rc.2
     - name: install tox
       run: python -m pip install tox
     - name: run check for ${{ matrix.tox_env }}
@@ -136,12 +130,12 @@ jobs:
     - name: setup python to build package
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
-    - name: install pep517
-      run: python -m pip install pep517
+        python-version: 3.9.0-rc.2
+    - name: install https://pypi.org/project/build
+      run: python -m pip install build
     - uses: actions/checkout@v2
     - name: build package
-      run: python -m pep517.build -s -b . -o dist
+      run: python -m build -s -w . -o dist
     - name: publish to PyPi
       uses: pypa/gh-action-pypi-publish@main
       with:
