@@ -21,7 +21,7 @@ A tool for creating isolated `virtual` python environments.
 - [PyPI](https://pypi.org/project/virtualenv)
 - [Github](https://github.com/pypa/virtualenv)
 
-## Code of Conduct
+## Code of Conduct.
 
 Everyone interacting in the virtualenv project's codebases, issue trackers, chat rooms, and mailing lists is expected to
 follow the [PSF Code of Conduct](https://github.com/pypa/.github/blob/main/CODE_OF_CONDUCT.md).
