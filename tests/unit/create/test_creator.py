@@ -579,3 +579,25 @@ def test_no_preimport_threading(tmp_path, no_coverage):
     )
     imported = set(out.splitlines())
     assert "threading" not in imported
+
+
+# verify that .pth files in site-packages/ are always processed even if $PYTHONPATH points to it.
+def test_pth_in_site_vs_PYTHONPATH(tmp_path):
+    session = cli_run([ensure_text(str(tmp_path))])
+    site_packages = str(session.creator.purelib)
+    # install test.pth that sets sys.testpth='ok'
+    with open(os.path.join(site_packages, "test.pth"), "w") as f:
+        f.write('import sys; sys.testpth="ok"\n')
+    # verify that test.pth is activated when interpreter is run
+    out = subprocess.check_output(
+        [str(session.creator.exe), "-c", r"import sys; print(sys.testpth)"],
+        universal_newlines=True,
+    )
+    assert out == "ok\n"
+    # same with $PYTHONPATH pointing to site_packages
+    out = subprocess.check_output(
+        [str(session.creator.exe), "-c", r"import sys; print(sys.testpth)"],
+        universal_newlines=True,
+        env={"PYTHONPATH": site_packages},
+    )
+    assert out == "ok\n"
