@@ -1,1 +1,0 @@
-Upgrade embedded setuptools to ``50.2.0`` and pip to ``20.2.3`` - by :user:`gaborbernat`.

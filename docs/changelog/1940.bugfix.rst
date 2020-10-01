@@ -1,1 +1,0 @@
-Provide correct path for bash activator in cygwin or msys2 - by :user:`danyeaw`.

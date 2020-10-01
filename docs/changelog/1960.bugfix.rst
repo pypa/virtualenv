@@ -1,1 +1,0 @@
-pth files were not processed on CPython2 if $PYTHONPATH was pointing to site-packages/ - by :user:`navytux`. (`#1959 <https://github.com/pypa/virtualenv/issues/1959>`_)

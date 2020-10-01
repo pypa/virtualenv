@@ -5,6 +5,21 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.32 (2020-10-01)
+---------------------
+
+Bugfixes - 20.0.32
+~~~~~~~~~~~~~~~~~~
+- For activation scripts always use UNIX line endings (unless it's BATCH shell related) - by :user:`saytosid`. (`#1818 <https://github.com/pypa/virtualenv/issues/1818>`_)
+- Upgrade embedded pip to ``20.2.1`` and setuptools to ``49.4.0`` - by :user:`gaborbernat`. (`#1918 <https://github.com/pypa/virtualenv/issues/1918>`_)
+- Avoid spawning new windows when doing seed package upgrades in the background on Windows - by :user:`gaborbernat`. (`#1928 <https://github.com/pypa/virtualenv/issues/1928>`_)
+- Fix a bug that reading and writing on the same file may cause race on multiple processes. (`#1938 <https://github.com/pypa/virtualenv/issues/1938>`_)
+- Upgrade embedded setuptools to ``50.2.0`` and pip to ``20.2.3`` - by :user:`gaborbernat`. (`#1939 <https://github.com/pypa/virtualenv/issues/1939>`_)
+- Provide correct path for bash activator in cygwin or msys2 - by :user:`danyeaw`. (`#1940 <https://github.com/pypa/virtualenv/issues/1940>`_)
+- Relax importlib requirement to allow version<3 - by :user:`usamasadiq` (`#1953 <https://github.com/pypa/virtualenv/issues/1953>`_)
+- pth files were not processed on CPython2 if $PYTHONPATH was pointing to site-packages/ - by :user:`navytux`. (`#1959 <https://github.com/pypa/virtualenv/issues/1959>`_) (`#1960 <https://github.com/pypa/virtualenv/issues/1960>`_)
+
+
 v20.0.31 (2020-08-17)
 ---------------------
 

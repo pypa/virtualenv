@@ -1,1 +1,0 @@
-Relax importlib requirement to allow version<3 - by :user:`usamasadiq`
