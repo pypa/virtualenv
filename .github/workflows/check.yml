@@ -3,15 +3,15 @@ on:
   push:
   pull_request:
   schedule:
-  - cron:  '0 8 * * *'
+    - cron: "0 8 * * *"
 
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
-    - uses: pre-commit/action@v2.0.0
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - uses: pre-commit/action@v2.0.0
 
   test:
     name: test ${{ matrix.py }} - ${{ matrix.os }}
@@ -20,125 +20,125 @@ jobs:
       fail-fast: false
       matrix:
         os:
-        - ubuntu
-        - windows
-        - macos
+          - ubuntu
+          - windows
+          - macos
         py:
-        - 3.9.0-rc.2
-        - 3.8
-        - 3.7
-        - 3.6
-        - 3.5
-        - pypy3
-        - 2.7
-        - pypy2
+          - 3.9.0-rc.2
+          - 3.8
+          - 3.7
+          - 3.6
+          - 3.5
+          - pypy3
+          - 2.7
+          - pypy2
         include:
-        - {os: MacOs, py: brew@py3}
-    steps:    
-    - name: install OS dependencies
-      run:   |
-        for i in 1 2 3; do
-          echo "try $i" && \
-          ${{ runner.os == 'Linux' && 'sudo apt-get update -y && sudo apt-get install fish csh' || true}} && \
-          ${{ runner.os == 'macOS' && 'brew update -vvv && brew install fish tcsh' || true}} && \
-          ${{ runner.os == 'Windows' && ( matrix.py == '2.7' || matrix.py == 'pypy2' ) && 'choco install vcpython27 --yes -f' || true }} && \
-          exit 0;
-        done
-        exit 1
-      shell: bash
-    - name: setup python for tox
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9.0-rc.2
-    - name: install tox
-      run: python -m pip install tox
-    - uses: actions/checkout@v2
-    - name: use local virtualenv for tox
-      run: python -m pip install .
-    - name: setup python for test ${{ matrix.py }}
-      if: "!( startsWith(matrix.py,'brew@py') || endsWith(matrix.py, '-dev') )"
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.py }}
-    - name: setup brew python for test ${{ matrix.py }}
-      if: startsWith(matrix.py,'brew@py')
-      run: |
-        import subprocess
-        subprocess.check_call(["bash", "-c", f"brew upgrade python@3 || brew install python@3"])
-        print(f"::add-path::/usr/local/opt/python@3")
-      shell: python
-    - name: pick environment to run
-      run: |
-        import subprocess; import json
-        major, minor, impl = json.loads(subprocess.check_output(["python", "-c", "import json; import sys; import platform; print(json.dumps([sys.version_info[0], sys.version_info[1], platform.python_implementation()]));"], universal_newlines=True))
-        print('::set-env name=TOXENV::' + ("py" if impl == "CPython" else "pypy") + ("{}{}".format(major, minor) if impl == "CPython" else ("3" if major == 3 else "")))
-      shell: python
-    - name: setup test suite
-      run: tox -vv --notest
-    - name: run test suite
-      run: tox --skip-pkg-install
-      env:
-        PYTEST_ADDOPTS: "-vv --durations=20"
-        CI_RUN: 'yes'
-        DIFF_AGAINST: HEAD
-    - name: rename coverage report file
-      run: |
-        import os; os.rename('.tox/coverage.{}.xml'.format(os.environ['TOXENV']), '.tox/coverage.xml')
-      shell: python
-    - uses: codecov/codecov-action@v1
-      with:
-        file: ./.tox/coverage.xml
-        flags: tests
-        name: ${{ matrix.py }} - ${{ matrix.os }}
+          - { os: MacOs, py: brew@py3 }
+    steps:
+      - name: install OS dependencies
+        run: |
+          for i in 1 2 3; do
+            echo "try $i" && \
+            ${{ runner.os == 'Linux' && 'sudo apt-get update -y && sudo apt-get install fish csh' || true}} && \
+            ${{ runner.os == 'macOS' && 'brew update -vvv && brew install fish tcsh' || true}} && \
+            ${{ runner.os == 'Windows' && ( matrix.py == '2.7' || matrix.py == 'pypy2' ) && 'choco install vcpython27 --yes -f' || true }} && \
+            exit 0;
+          done
+          exit 1
+        shell: bash
+      - name: setup python for tox
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9.0-rc.2
+      - name: install tox
+        run: python -m pip install tox
+      - uses: actions/checkout@v2
+      - name: use local virtualenv for tox
+        run: python -m pip install .
+      - name: setup python for test ${{ matrix.py }}
+        if: "!( startsWith(matrix.py,'brew@py') || endsWith(matrix.py, '-dev') )"
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.py }}
+      - name: setup brew python for test ${{ matrix.py }}
+        if: startsWith(matrix.py,'brew@py')
+        run: |
+          import subprocess
+          subprocess.check_call(["bash", "-c", f"brew upgrade python@3 || brew install python@3"])
+          print(f"::add-path::/usr/local/opt/python@3")
+        shell: python
+      - name: pick environment to run
+        run: |
+          import subprocess; import json
+          major, minor, impl = json.loads(subprocess.check_output(["python", "-c", "import json; import sys; import platform; print(json.dumps([sys.version_info[0], sys.version_info[1], platform.python_implementation()]));"], universal_newlines=True))
+          print('::set-env name=TOXENV::' + ("py" if impl == "CPython" else "pypy") + ("{}{}".format(major, minor) if impl == "CPython" else ("3" if major == 3 else "")))
+        shell: python
+      - name: setup test suite
+        run: tox -vv --notest
+      - name: run test suite
+        run: tox --skip-pkg-install
+        env:
+          PYTEST_ADDOPTS: "-vv --durations=20"
+          CI_RUN: "yes"
+          DIFF_AGAINST: HEAD
+      - name: rename coverage report file
+        run: |
+          import os; os.rename('.tox/coverage.{}.xml'.format(os.environ['TOXENV']), '.tox/coverage.xml')
+        shell: python
+      - uses: codecov/codecov-action@v1
+        with:
+          file: ./.tox/coverage.xml
+          flags: tests
+          name: ${{ matrix.py }} - ${{ matrix.os }}
 
   check:
-    name: check ${{ matrix.tox_env }} - ${{ matrix.os }}
+    name: ${{ matrix.tox_env }} - ${{ matrix.os }}
     runs-on: ${{ matrix.os }}-latest
     strategy:
       fail-fast: false
       matrix:
         os:
-        - ubuntu
-        - windows
+          - ubuntu
+          - windows
         tox_env:
-        - dev
-        - docs
-        - readme
-        - upgrade
-        - zipapp
+          - dev
+          - docs
+          - readme
+          - upgrade
+          - zipapp
         exclude:
-        - {os: windows, tox_env: readme}
-        - {os: windows, tox_env: docs}
+          - { os: windows, tox_env: readme }
+          - { os: windows, tox_env: docs }
     steps:
-    - uses: actions/checkout@v2
-    - name: setup Python 3.9.0-rc.2
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9.0-rc.2
-    - name: install tox
-      run: python -m pip install tox
-    - name: run check for ${{ matrix.tox_env }}
-      run: python -m tox -e ${{ matrix.tox_env }}
-      env:
-        UPGRADE_ADVISORY: 'yes'
+      - uses: actions/checkout@v2
+      - name: setup Python 3.9.0-rc.2
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9.0-rc.2
+      - name: install tox
+        run: python -m pip install tox
+      - name: run check for ${{ matrix.tox_env }}
+        run: python -m tox -e ${{ matrix.tox_env }}
+        env:
+          UPGRADE_ADVISORY: "yes"
 
   publish:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
     needs: [check, test, lint]
     runs-on: ubuntu-latest
     steps:
-    - name: setup python to build package
-      uses: actions/setup-python@v2
-      with:
-        python-version: 3.9.0-rc.2
-    - name: install https://pypi.org/project/build
-      run: python -m pip install build
-    - uses: actions/checkout@v2
-    - name: build package
-      run: python -m build -s -w . -o dist
-    - name: publish to PyPi
-      uses: pypa/gh-action-pypi-publish@main
-      with:
-        skip_existing: true
-        user: __token__
-        password: ${{ secrets.pypi_password }}
+      - name: setup python to build package
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9.0-rc.2
+      - name: install https://pypi.org/project/build
+        run: python -m pip install build
+      - uses: actions/checkout@v2
+      - name: build package
+        run: python -m build -s -w . -o dist
+      - name: publish to PyPi
+        uses: pypa/gh-action-pypi-publish@main
+        with:
+          skip_existing: true
+          user: __token__
+          password: ${{ secrets.pypi_password }}
