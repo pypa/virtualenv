@@ -595,9 +595,14 @@ def test_pth_in_site_vs_PYTHONPATH(tmp_path):
     )
     assert out == "ok\n"
     # same with $PYTHONPATH pointing to site_packages
+    env = os.environ.copy()
+    path = [site_packages]
+    if "PYTHONPATH" in env:
+        path.append(env["PYTHONPATH"])
+    env["PYTHONPATH"] = os.pathsep.join(path)
     out = subprocess.check_output(
         [str(session.creator.exe), "-c", r"import sys; print(sys.testpth)"],
         universal_newlines=True,
-        env={"PYTHONPATH": site_packages},
+        env=env,
     )
     assert out == "ok\n"
