@@ -5,7 +5,6 @@ from subprocess import CalledProcessError
 
 import pytest
 
-from virtualenv.info import PY2
 from virtualenv.seed.wheels.acquire import download_wheel, pip_wheel_env_run
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, get_embed_wheel
 from virtualenv.seed.wheels.util import discover_wheels
@@ -44,7 +43,7 @@ def test_download_fails(mocker, for_py_version, session_app_data):
     with pytest.raises(CalledProcessError) as context:
         download_wheel("pip", "==1", for_py_version, [], session_app_data, as_path),
     exc = context.value
-    if PY2:
+    if sys.version_info < (3, 5):
         assert exc.output == "outerr"
     else:
         assert exc.output == "out"

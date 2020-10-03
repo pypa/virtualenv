@@ -60,7 +60,7 @@ def download_wheel(distribution, version_spec, for_py_version, search_dirs, app_
     out, err = process.communicate()
     if process.returncode != 0:
         kwargs = {"output": out}
-        if sys.version_info > (3, 4):
+        if sys.version_info < (3, 5):
             kwargs["output"] += err
         else:
             kwargs["stderr"] = err
