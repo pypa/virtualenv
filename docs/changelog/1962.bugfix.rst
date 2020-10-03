@@ -1,0 +1,1 @@
+Fix Nonetype error in cygwin if POSIX path in dest - by :user:`danyeaw`.

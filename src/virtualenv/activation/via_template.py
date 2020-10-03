@@ -38,7 +38,10 @@ class ViaTemplateActivator(Activator):
         if any(platform in current_platform for platform in platforms):
             pattern = re.compile("^([A-Za-z]):(.*)")
             match = pattern.match(str(creator.dest))
-            virtual_env = "/" + match.group(1).lower() + match.group(2)
+            if match:
+                virtual_env = "/" + match.group(1).lower() + match.group(2)
+            else:
+                virtual_env = str(creator.dest)
         else:
             virtual_env = str(creator.dest)
         return {
