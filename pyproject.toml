@@ -17,6 +17,3 @@ directory = "docs/changelog"
 title_format = false
 issue_format = "`#{issue} <https://github.com/pypa/virtualenv/issues/{issue}>`_"
 template = "docs/changelog/template.jinja2"
-
-[tool.coverage.html]
-show_contexts = true
