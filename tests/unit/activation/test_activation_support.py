@@ -84,3 +84,16 @@ def test_win_path_no_conversion(mocker, activator_class):
     mocker.stub(creator.bin_dir.relative_to)
     resource = activator.replacements(creator, "")
     assert resource["__VIRTUAL_ENV__"] == "C:/tools/msys64/home"
+
+
+@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
+@pytest.mark.parametrize("activator_class", [BashActivator])
+def test_cygwin_path_no_conversion(mocker, activator_class):
+    mocker.patch("sysconfig.get_platform", return_value="cygwin")
+    activator = activator_class(Namespace(prompt=None))
+    creator = Creator()
+    creator.dest = "/c/tools/msys64/home"
+    creator.bin_dir = Path("/c/tools/msys64/home/bin")
+    mocker.stub(creator.bin_dir.relative_to)
+    resource = activator.replacements(creator, "")
+    assert resource["__VIRTUAL_ENV__"] == "/c/tools/msys64/home"
