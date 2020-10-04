@@ -29,12 +29,12 @@ jobs:
           - 3.7
           - 3.6
           - 3.5
-          - 3.4
           - pypy3
           - 2.7
           - pypy2
         include:
-          - { os: MacOs, py: brew@py3 }
+          - { os: macos, py: brew@py3 }
+          - { os: ubuntu, py: 3.4.10 }
     steps:
       - name: Install OS dependencies
         run: |

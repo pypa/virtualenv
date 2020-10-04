@@ -53,8 +53,9 @@ def test_manual_upgrade(session_app_data, caplog, mocker, for_py_version):
 
     assert "upgrade pip" in caplog.text
     assert "upgraded pip" in caplog.text
-    assert " new entries found:\n\tNewVersion" in caplog.text
     assert " no new versions found" in caplog.text
+    assert " new entries found:\n" in caplog.text
+    assert "\tNewVersion(" in caplog.text
     packages = defaultdict(list)
     for i in do_update_mock.call_args_list:
         packages[i[1]["distribution"]].append(i[1]["for_py_version"])
