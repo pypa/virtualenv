@@ -8,8 +8,6 @@ from contextlib import contextmanager
 from subprocess import CalledProcessError
 from threading import Lock, Thread
 
-import six
-
 from virtualenv.info import fs_supports_symlink
 from virtualenv.seed.embed.base_embed import BaseEmbed
 from virtualenv.seed.wheels import get_wheel
@@ -104,7 +102,7 @@ class FromAppData(BaseEmbed):
                     if version is not None:
                         msg += " version {}".format(version)
                     msg += ", pip download exit code {}".format(failure.returncode)
-                    output = failure.output if six.PY2 else (failure.output + failure.stderr)
+                    output = failure.output if sys.version_info < (3, 5) else (failure.output + failure.stderr)
                     if output:
                         msg += "\n"
                         msg += output

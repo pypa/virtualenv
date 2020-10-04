@@ -25,9 +25,5 @@ source =
 [coverage:run]
 branch = false
 parallel = true
-dynamic_context = test_function
 source =
     ${_COVERAGE_SRC}
-
-[coverage:html]
-show_contexts = true

@@ -22,6 +22,7 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
     bundle_ver = BUNDLE_SUPPORT[current.version_release_str]
     create_cmd = [
         ensure_text(str(tmp_path / "en v")),  # space in the name to ensure generated scripts work when path has space
+        "--no-periodic-update",
         "--seeder",
         "app-data",
         "--extra-search-dir",
