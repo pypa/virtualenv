@@ -1,1 +1,0 @@
-Fix Python 3.4 incompatibilities (added back to the CI) - by :user:`gaborbernat`.
