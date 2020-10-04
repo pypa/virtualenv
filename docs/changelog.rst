@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.33 (2020-10-04)
+---------------------
+
+Bugfixes - 20.0.33
+~~~~~~~~~~~~~~~~~~
+- Fix ``None`` type error in cygwin if POSIX path in dest - by :user:`danyeaw`. (`#1962 <https://github.com/pypa/virtualenv/issues/1962>`_)
+- Fix Python 3.4 incompatibilities (added back to the CI) - by :user:`gaborbernat`. (`#1963 <https://github.com/pypa/virtualenv/issues/1963>`_)
+
+
 v20.0.32 (2020-10-01)
 ---------------------
 
