@@ -1,9 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-import re
 import sys
-import sysconfig
 from abc import ABCMeta, abstractmethod
 
 from six import add_metaclass
