@@ -65,9 +65,9 @@ class Creator:
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
-@pytest.mark.parametrize("activator_class", [BashActivator])
-def test_cygwin_msys2_path_conversion(mocker, activator_class):
-    mocker.patch("sysconfig.get_platform", return_value="mingw")
+@pytest.mark.parametrize("activator_class,platform", [(BashActivator,"mingw"),(BashActivator,"msys")])
+def test_mingw_path_conversion(mocker, activator_class, platform):
+    mocker.patch("sysconfig.get_platform", return_value=platform)
     activator = activator_class(Namespace(prompt=None))
     creator = Creator()
     mocker.stub(creator.bin_dir.relative_to)
@@ -87,9 +87,9 @@ def test_win_path_no_conversion(mocker, activator_class):
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
-@pytest.mark.parametrize("activator_class", [BashActivator])
-def test_cygwin_path_no_conversion(mocker, activator_class):
-    mocker.patch("sysconfig.get_platform", return_value="cygwin")
+@pytest.mark.parametrize("activator_class,platform", [(BashActivator,"mingw"),(BashActivator,"msys")])
+def test_mingw_path_no_conversion(mocker, activator_class, platform):
+    mocker.patch("sysconfig.get_platform", return_value=platform)
     activator = activator_class(Namespace(prompt=None))
     creator = Creator()
     creator.dest = "/c/tools/msys64/home"
