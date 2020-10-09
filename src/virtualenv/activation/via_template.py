@@ -34,7 +34,7 @@ class ViaTemplateActivator(Activator):
 
     def replacements(self, creator, dest_folder):
         current_platform = sysconfig.get_platform()
-        platforms = ["mingw", "cygwin", "msys"]
+        platforms = ["mingw", "msys"]
         if any(platform in current_platform for platform in platforms):
             pattern = re.compile("^([A-Za-z]):(.*)")
             match = pattern.match(str(creator.dest))
