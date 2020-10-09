@@ -1,7 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-import re
 import sys
 import sysconfig
 from abc import ABCMeta, abstractmethod
@@ -9,6 +8,7 @@ from abc import ABCMeta, abstractmethod
 from six import add_metaclass
 
 from virtualenv.util.six import ensure_text
+from virtualenv.util.subprocess import run_cmd
 
 from .activator import Activator
 
@@ -36,12 +36,8 @@ class ViaTemplateActivator(Activator):
         current_platform = sysconfig.get_platform()
         platforms = ["mingw", "cygwin", "msys"]
         if any(platform in current_platform for platform in platforms):
-            pattern = re.compile("^([A-Za-z]):(.*)")
-            match = pattern.match(str(creator.dest))
-            if match:
-                virtual_env = "/" + match.group(1).lower() + match.group(2)
-            else:
-                virtual_env = str(creator.dest)
+            code, out, err = run_cmd(["cygpath", str(creator.dest)])
+            virtual_env = out.decode().strip()
         else:
             virtual_env = str(creator.dest)
         return {
