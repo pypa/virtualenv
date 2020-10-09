@@ -65,7 +65,7 @@ class Creator:
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
-@pytest.mark.parametrize("activator_class,platform", [(BashActivator,"mingw"),(BashActivator,"msys")])
+@pytest.mark.parametrize("activator_class,platform", [(BashActivator, "mingw"), (BashActivator, "msys")])
 def test_mingw_path_conversion(mocker, activator_class, platform):
     mocker.patch("sysconfig.get_platform", return_value=platform)
     activator = activator_class(Namespace(prompt=None))
@@ -87,7 +87,7 @@ def test_win_path_no_conversion(mocker, activator_class):
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
-@pytest.mark.parametrize("activator_class,platform", [(BashActivator,"mingw"),(BashActivator,"msys")])
+@pytest.mark.parametrize("activator_class,platform", [(BashActivator, "mingw"), (BashActivator, "msys")])
 def test_mingw_path_no_conversion(mocker, activator_class, platform):
     mocker.patch("sysconfig.get_platform", return_value=platform)
     activator = activator_class(Namespace(prompt=None))
