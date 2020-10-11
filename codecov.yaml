@@ -9,11 +9,7 @@ coverage:
   round: down
   range: 80..90
   status:
-    project:
-      enabled: yes
-      target: auto
-      threshold: 3%
-    # do not run coverage on patch nor changes
+    project: no
     patch: no
     changes: no
 
