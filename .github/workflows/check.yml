@@ -70,9 +70,13 @@ jobs:
         shell: python
       - name: Pick environment to run
         run: |
-          import subprocess; import json
-          major, minor, impl = json.loads(subprocess.check_output(["python", "-c", "import json; import sys; import platform; print(json.dumps([sys.version_info[0], sys.version_info[1], platform.python_implementation()]));"], universal_newlines=True))
-          print('::set-env name=TOXENV::' + ("py" if impl == "CPython" else "pypy") + ("{}{}".format(major, minor) if impl == "CPython" else ("3" if major == 3 else "")))
+          import platform; import os; import sys; import codecs
+          cpy = platform.python_implementation() == "CPython"
+          base =("{}{}{}" if cpy else "{}{}").format("py" if cpy else "pypy", *sys.version_info[0:2])
+          env = "TOXENV={}\n".format(base)
+          print("Picked:\n{}for{}".format(env, sys.version))
+          with codecs.open(os.environ["GITHUB_ENV"], "a", "utf-8") as file_handler:
+               file_handler.write(env)
         shell: python
       - name: Setup test suite
         run: tox -vv --notest
