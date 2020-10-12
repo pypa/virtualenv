@@ -1,0 +1,2 @@
+Align with venv module when creating virtual environments with builtin creator on Windows 3.7 and later
+- by :user:`gaborbernat`.
