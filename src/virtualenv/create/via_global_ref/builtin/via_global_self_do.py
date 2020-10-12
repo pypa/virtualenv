@@ -4,7 +4,7 @@ from abc import ABCMeta
 
 from six import add_metaclass
 
-from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest, RefMust
+from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest, RefMust, RefWhen
 from virtualenv.util.path import ensure_dir
 
 from ..api import ViaGlobalRefApi, ViaGlobalRefMeta
@@ -89,7 +89,12 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin):
         try:
             self.enable_system_site_package = False
             for src in self._sources:
-                src.run(self, self.symlinks)
+                if (
+                    src.when == RefWhen.ANY
+                    or (src.when == RefWhen.SYMLINK and self.symlinks is True)
+                    or (src.when == RefWhen.COPY and self.symlinks is False)
+                ):
+                    src.run(self, self.symlinks)
         finally:
             if true_system_site != self.enable_system_site_package:
                 self.enable_system_site_package = true_system_site
