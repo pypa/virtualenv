@@ -1,13 +1,12 @@
 from __future__ import absolute_import, unicode_literals
 
 import abc
-from itertools import chain
 from textwrap import dedent
 
 from six import add_metaclass
 
 from virtualenv.create.describe import Python3Supports
-from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest, RefMust, RefWhen
+from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
 from virtualenv.create.via_global_ref.store import is_store_python
 from virtualenv.util.path import Path
 
@@ -56,29 +55,21 @@ class CPython3Windows(CPythonWindows, CPython3):
     def sources(cls, interpreter):
         for src in super(CPython3Windows, cls).sources(interpreter):
             yield src
-        if cls.venv_37p(interpreter):
-            for dll in (i for i in Path(interpreter.system_executable).parent.iterdir() if i.suffix == ".dll"):
-                yield PathRefToDest(dll, cls.to_bin, RefMust.SYMLINK, RefWhen.SYMLINK)
-        else:
+        if not cls.venv_37p(interpreter):
             for src in cls.include_dll_and_pyd(interpreter):
                 yield src
 
-    @classmethod
-    def _executables(cls, interpreter):
-        system_exe = Path(interpreter.system_executable)
-        if cls.venv_37p(interpreter):
-            # starting with CPython 3.7 Windows ships with a venvlauncher.exe that avoids the need for dll/pyd copies
-            launcher = Path(interpreter.system_stdlib) / "venv" / "scripts" / "nt" / "python.exe"
-            executables = cls._win_executables(launcher, interpreter, RefWhen.COPY)
-            executables = chain(executables, cls._win_executables(system_exe, interpreter, RefWhen.SYMLINK))
-        else:
-            executables = cls._win_executables(system_exe, interpreter, RefWhen.ANY)
-        for src, targets, must, when in executables:
-            yield src, targets, must, when
-
     @staticmethod
     def venv_37p(interpreter):
-        return interpreter.version_info.minor > 6
+        return interpreter.version_info.minor >= 7
+
+    @classmethod
+    def host_python(cls, interpreter):
+        if cls.venv_37p(interpreter):
+            # starting with CPython 3.7 Windows ships with a venvlauncher.exe that avoids the need for dll/pyd copies
+            # it also means the wrapper must be copied to avoid bugs such as https://bugs.python.org/issue42013
+            return Path(interpreter.system_stdlib) / "venv" / "scripts" / "nt" / "python.exe"
+        return super(CPython3Windows, cls).host_python(interpreter)
 
     @classmethod
     def include_dll_and_pyd(cls, interpreter):
