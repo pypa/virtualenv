@@ -1,1 +1,0 @@
-Handle Cygwin path conversion in the activation script - by :user:`davidcoghlan`.
