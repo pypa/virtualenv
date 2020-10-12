@@ -35,8 +35,10 @@ class PythonInfo(object):
         def u(v):
             return v.decode("utf-8") if isinstance(v, bytes) else v
 
-        def abs_path(v):
-            return None if v is None else os.path.abspath(v)  # unroll relative elements from path (e.g. ..)
+        def real_path(v):
+            return (
+                None if v is None else os.path.realpath(v)
+            )  # unroll relative elements from path (e.g. ..) and resolve symlinks
 
         # qualifies the python
         self.platform = u(sys.platform)
@@ -52,16 +54,16 @@ class PythonInfo(object):
         self.os = u(os.name)
 
         # information about the prefix - determines python home
-        self.prefix = u(abs_path(getattr(sys, "prefix", None)))  # prefix we think
-        self.base_prefix = u(abs_path(getattr(sys, "base_prefix", None)))  # venv
-        self.real_prefix = u(abs_path(getattr(sys, "real_prefix", None)))  # old virtualenv
+        self.prefix = u(real_path(getattr(sys, "prefix", None)))  # prefix we think
+        self.base_prefix = u(real_path(getattr(sys, "base_prefix", None)))  # venv
+        self.real_prefix = u(real_path(getattr(sys, "real_prefix", None)))  # old virtualenv
 
         # information about the exec prefix - dynamic stdlib modules
-        self.base_exec_prefix = u(abs_path(getattr(sys, "base_exec_prefix", None)))
-        self.exec_prefix = u(abs_path(getattr(sys, "exec_prefix", None)))
+        self.base_exec_prefix = u(real_path(getattr(sys, "base_exec_prefix", None)))
+        self.exec_prefix = u(real_path(getattr(sys, "exec_prefix", None)))
 
-        self.executable = u(abs_path(sys.executable))  # the executable we were invoked via
-        self.original_executable = u(abs_path(self.executable))  # the executable as known by the interpreter
+        self.executable = u(real_path(sys.executable))  # the executable we were invoked via
+        self.original_executable = u(real_path(self.executable))  # the executable as known by the interpreter
         self.system_executable = self._fast_get_system_executable()  # the executable we are based of (if available)
 
         try:

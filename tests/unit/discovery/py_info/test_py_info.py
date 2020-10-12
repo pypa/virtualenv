@@ -309,5 +309,7 @@ def test_py_info_to_system_raises(session_app_data, mocker, caplog, skip_if_test
     assert result is None
     log = caplog.records[-1]
     assert log.levelno == logging.INFO
-    expected = "ignore {} due cannot resolve system due to RuntimeError('failed to detect ".format(sys.executable)
+    expected = "ignore {} due cannot resolve system due to RuntimeError('failed to detect ".format(
+        os.path.realpath(sys.executable)
+    )
     assert expected in log.message
