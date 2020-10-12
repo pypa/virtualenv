@@ -5,6 +5,16 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.34 (2020-10-12)
+---------------------
+
+Bugfixes - 20.0.34
+~~~~~~~~~~~~~~~~~~
+- Align with venv module when creating virtual environments with builtin creator on Windows 3.7 and later
+  - by :user:`gaborbernat`. (`#1782 <https://github.com/pypa/virtualenv/issues/1782>`_)
+- Handle Cygwin path conversion in the activation script - by :user:`davidcoghlan`. (`#1969 <https://github.com/pypa/virtualenv/issues/1969>`_)
+
+
 v20.0.33 (2020-10-04)
 ---------------------
 
