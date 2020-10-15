@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.0.35 (2020-10-15)
+---------------------
+
+Bugfixes - 20.0.35
+~~~~~~~~~~~~~~~~~~
+- Bump embedded setuptools from ``50.3.0`` to ``50.3.1`` - by :user:`gaborbernat`. (`#1982 <https://github.com/pypa/virtualenv/issues/1982>`_)
+- After importing virtualenv passing cwd to a subprocess calls breaks with ``invalid directory`` - by :user:`gaborbernat`. (`#1983 <https://github.com/pypa/virtualenv/issues/1983>`_)
+
+
 v20.0.34 (2020-10-12)
 ---------------------
 
