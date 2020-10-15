@@ -1,1 +1,1 @@
-Bump embeded setuptools from ``50.3.0`` to ``50.3.1`` - by :user:`gaborbernat`.
+Bump embedded setuptools from ``50.3.0`` to ``50.3.1`` - by :user:`gaborbernat`.
