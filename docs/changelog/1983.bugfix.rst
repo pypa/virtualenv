@@ -1,0 +1,1 @@
+After importing virtualenv passing cwd to a subprocess calls breaks with ``invalid directory`` - by :user:`gaborbernat`.
