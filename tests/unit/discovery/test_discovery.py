@@ -3,11 +3,12 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import os
 import sys
+from argparse import Namespace
 from uuid import uuid4
 
 import pytest
 
-from virtualenv.discovery.builtin import get_interpreter
+from virtualenv.discovery.builtin import Builtin, get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import fs_supports_symlink
 from virtualenv.util.path import Path
@@ -53,3 +54,24 @@ def test_relative_path(tmp_path, session_app_data, monkeypatch):
     relative = str(sys_executable.relative_to(cwd))
     result = get_interpreter(relative, session_app_data)
     assert result is not None
+
+
+def test_discovery_fallback_fail(session_app_data, caplog):
+    caplog.set_level(logging.DEBUG)
+    builtin = Builtin(Namespace(app_data=session_app_data, python=["magic-one", "magic-two"]))
+
+    result = builtin.run()
+    assert result is None
+
+    assert "accepted" not in caplog.text
+
+
+def test_discovery_fallback_ok(session_app_data, caplog):
+    caplog.set_level(logging.DEBUG)
+    builtin = Builtin(Namespace(app_data=session_app_data, python=["magic-one", sys.executable]))
+
+    result = builtin.run()
+    assert result is not None, caplog.text
+    assert result.executable == sys.executable, caplog.text
+
+    assert "accepted" in caplog.text

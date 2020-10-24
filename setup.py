@@ -6,7 +6,7 @@ if int(__version__.split(".")[0]) < 41:
 setup(
     use_scm_version={
         "write_to": "src/virtualenv/version.py",
-        "write_to_template": 'from __future__ import  unicode_literals;\n\n__version__ = "{version}"',
+        "write_to_template": 'from __future__ import  unicode_literals\n\n__version__ = "{version}"\n',
     },
     setup_requires=["setuptools_scm >= 2"],
 )
