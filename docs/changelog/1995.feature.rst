@@ -1,2 +1,0 @@
-The python specification can now take one or more values, first found is used to create the virtual environment - by
-:user:`gaborbernat`.

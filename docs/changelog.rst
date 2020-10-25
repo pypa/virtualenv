@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.1.0 (2020-10-25)
+--------------------
+
+Features - 20.1.0
+~~~~~~~~~~~~~~~~~
+- The python specification can now take one or more values, first found is used to create the virtual environment - by
+  :user:`gaborbernat`. (`#1995 <https://github.com/pypa/virtualenv/issues/1995>`_)
+
+
 v20.0.35 (2020-10-15)
 ---------------------
 
