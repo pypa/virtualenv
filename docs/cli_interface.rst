@@ -72,8 +72,11 @@ variable ``VIRTUALENV_PYTHON`` like:
    env VIRTUALENV_PYTHON=/opt/python-3.8/bin/python virtualenv
 
 Where the option accepts multiple values, for example for :option:`python` or
-:option:`extra-search-dir`, the values can be separated either by comma or a
-literal newline:
+:option:`extra-search-dir`, the values can be separated either by literal
+newlines or commas. Newlines and commas can not be mixed and if both are
+present only the newline is used for separating values. Examples for multiple
+values:
+
 
 .. code-block:: console
 
