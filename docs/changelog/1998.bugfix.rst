@@ -1,0 +1,1 @@
+Fix processing of the ``VIRTUALENV_PYTHON`` environment variable
