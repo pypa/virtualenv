@@ -25,6 +25,7 @@ class Builtin(Discover):
             "--python",
             dest="python",
             metavar="py",
+            type=str,
             action="append",
             default=[],
             help="interpreter based on what to create environment (path/identifier) "
