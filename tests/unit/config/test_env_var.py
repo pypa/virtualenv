@@ -4,6 +4,7 @@ import os
 
 import pytest
 
+from virtualenv.config.cli.parser import VirtualEnvOptions
 from virtualenv.config.ini import IniConfig
 from virtualenv.run import session_via_cli
 from virtualenv.util.path import Path
@@ -29,6 +30,34 @@ def test_value_bad(monkeypatch, caplog, empty_conf):
     assert len(caplog.messages) == 1
     assert "env var VIRTUALENV_VERBOSE failed to convert" in caplog.messages[0]
     assert "invalid literal" in caplog.messages[0]
+
+
+def test_python_via_env_var(monkeypatch):
+    options = VirtualEnvOptions()
+    monkeypatch.setenv(str("VIRTUALENV_PYTHON"), str("python3"))
+    session_via_cli(["venv"], options=options)
+    assert options.python == ["python3"]
+
+
+def test_python_multi_value_via_env_var(monkeypatch):
+    options = VirtualEnvOptions()
+    monkeypatch.setenv(str("VIRTUALENV_PYTHON"), str("python3,python2"))
+    session_via_cli(["venv"], options=options)
+    assert options.python == ["python3", "python2"]
+
+
+def test_python_multi_value_newline_via_env_var(monkeypatch):
+    options = VirtualEnvOptions()
+    monkeypatch.setenv(str("VIRTUALENV_PYTHON"), str("python3\npython2"))
+    session_via_cli(["venv"], options=options)
+    assert options.python == ["python3", "python2"]
+
+
+def test_python_multi_value_prefer_newline_via_env_var(monkeypatch):
+    options = VirtualEnvOptions()
+    monkeypatch.setenv(str("VIRTUALENV_PYTHON"), str("python3\npython2,python27"))
+    session_via_cli(["venv"], options=options)
+    assert options.python == ["python3", "python2,python27"]
 
 
 def test_extra_search_dir_via_env_var(tmp_path, monkeypatch):
