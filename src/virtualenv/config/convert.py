@@ -57,19 +57,21 @@ class ListType(TypeData):
     def split_values(self, value):
         """Split the provided value into a list.
 
-        For strings this is a comma-separated. For more complex types (`Path`
-        for example) this is newline-separated.
+        First this is done by newlines. If there were no newlines in the text,
+        then we next try to split by comma.
         """
         if isinstance(value, (str, bytes)):
-            if self.as_type is str:
-                # Simple split
-                value = value.split(",")
-            else:
-                value = value.splitlines()
+            # Use `splitlines` rather than a custom check for whether there is
+            # more than one line. This ensures that the full `splitlines()`
+            # logic is supported here.
+            values = value.splitlines()
+            if len(values) <= 1:
+                values = value.split(",")
+            values = filter(None, [x.strip() for x in values])
+        else:
+            values = list(value)
 
-            value = filter(None, [x.strip() for x in value])
-
-        return list(value)
+        return values
 
 
 def convert(value, as_type, source):

@@ -71,21 +71,18 @@ variable ``VIRTUALENV_PYTHON`` like:
 
    env VIRTUALENV_PYTHON=/opt/python-3.8/bin/python virtualenv
 
-Multiple values can be provided separated with a comma:
+Where the option accepts multiple values, for example for :option:`python` or
+:option:`extra-search-dir`, the values can be separated either by comma or a
+literal newline:
 
 .. code-block:: console
 
    env VIRTUALENV_PYTHON=/opt/python-3.8/bin/python,python3.8 virtualenv
+   env VIRTUALENV_EXTRA_SEARCH_DIR=/path/to/dists\n/path/to/other/dists virtualenv
 
-This also works for appending command line options, like :option:`extra-search-dir`, where a literal newline
-is used to separate the values:
-
-.. code-block:: console
-
-  env VIRTUALENV_EXTRA_SEARCH_DIR=/path/to/dists\n/path/to/other/dists virtualenv
-
-The equivalent CLI-flags based invocation, for the above example, would be:
+The equivalent CLI-flags based invocation for the above examples would be:
 
 .. code-block:: console
 
+   virtualenv --python=/opt/python-3.8/bin/python --python=python3.8
    virtualenv --extra-search-dir=/path/to/dists --extra-search-dir=/path/to/other/dists
