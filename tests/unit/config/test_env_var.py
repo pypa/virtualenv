@@ -39,6 +39,13 @@ def test_python_via_env_var(monkeypatch):
     assert options.python == ["python3"]
 
 
+def test_python_multi_value_via_env_var(monkeypatch):
+    options = VirtualEnvOptions()
+    monkeypatch.setenv(str("VIRTUALENV_PYTHON"), str("python3,python2"))
+    session_via_cli(["venv"], options=options)
+    assert options.python == ["python3", "python2"]
+
+
 def test_extra_search_dir_via_env_var(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     value = "a{}0{}b{}c".format(os.linesep, os.linesep, os.pathsep)

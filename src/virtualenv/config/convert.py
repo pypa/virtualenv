@@ -46,15 +46,30 @@ class ListType(TypeData):
         """"""
 
     def convert(self, value, flatten=True):
-        if isinstance(value, (str, bytes)):
-            value = filter(None, [x.strip() for x in value.splitlines()])
-        values = list(value)
+        values = self.split_values(value)
         result = []
         for value in values:
             sub_values = value.split(os.pathsep)
             result.extend(sub_values)
         converted = [self.as_type(i) for i in result]
         return converted
+
+    def split_values(self, value):
+        """Split the provided value into a list.
+
+        For strings this is a comma-separated. For more complex types (`Path`
+        for example) this is newline-separated.
+        """
+        if isinstance(value, (str, bytes)):
+            if self.as_type is str:
+                # Simple split
+                value = value.split(",")
+            else:
+                value = value.splitlines()
+
+            value = filter(None, [x.strip() for x in value])
+
+        return list(value)
 
 
 def convert(value, as_type, source):
