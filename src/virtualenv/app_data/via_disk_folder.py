@@ -154,10 +154,7 @@ class JSONStoreDisk(ContentStore):
 
     def write(self, content):
         folder = self.file.parent
-        try:
-            folder.mkdir(parents=True, exist_ok=True)
-        except OSError:
-            pass
+        folder.mkdir(parents=True, exist_ok=True)
         self.file.write_text(ensure_text(json.dumps(content, sort_keys=True, indent=2)))
         logging.debug("wrote {} at %s".format(self.msg), *self.msg_args)
 

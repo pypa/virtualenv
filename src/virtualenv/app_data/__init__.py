@@ -24,7 +24,7 @@ class AppDataAction(Action):
     @staticmethod
     def _check_folder(folder):
         folder = os.path.abspath(folder)
-        if not os.path.exists(folder):
+        if not os.path.isdir(folder):
             try:
                 os.makedirs(folder)
                 logging.debug("created app data folder %s", folder)
