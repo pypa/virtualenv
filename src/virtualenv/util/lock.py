@@ -14,7 +14,7 @@ from virtualenv.util.path import Path
 class _CountedFileLock(FileLock):
     def __init__(self, lock_file):
         parent = os.path.dirname(lock_file)
-        if not os.path.exists(parent):
+        if not os.path.isdir(parent):
             try:
                 os.makedirs(parent)
             except OSError:
@@ -32,7 +32,7 @@ class _CountedFileLock(FileLock):
     def release(self, force=False):
         with self.thread_safe:
             if self.count == 1:
-                super(_CountedFileLock, self).release()
+                super(_CountedFileLock, self).release(force=force)
             self.count = max(self.count - 1, 0)
 
 

@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 import sys
-from stat import S_IREAD, S_IRGRP, S_IROTH, S_IWUSR
+from stat import S_IRGRP, S_IROTH, S_IRUSR, S_IXUSR
 from threading import Thread
 
 import pytest
@@ -110,17 +110,18 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
 @pytest.fixture()
 def read_only_app_data(temp_app_data):
     temp_app_data.mkdir()
+    orig_mode = os.stat(str(temp_app_data)).st_mode
     try:
-        os.chmod(str(temp_app_data), S_IREAD | S_IRGRP | S_IROTH)
+        os.chmod(str(temp_app_data), S_IRUSR | S_IXUSR | S_IRGRP | S_IROTH)
         yield temp_app_data
     finally:
-        os.chmod(str(temp_app_data), S_IWUSR | S_IREAD)
+        os.chmod(str(temp_app_data), orig_mode)
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
 def test_base_bootstrap_link_via_app_data_not_writable(tmp_path, current_fastest, read_only_app_data, monkeypatch):
     dest = tmp_path / "venv"
-    result = cli_run(["--seeder", "app-data", "--creator", current_fastest, "--reset-app-data", "-vv", str(dest)])
+    result = cli_run(["--seeder", "app-data", "--creator", current_fastest, "-vv", str(dest)])
     assert result
 
 
