@@ -249,6 +249,19 @@ def test_create_gitignore_exists(tmp_path):
     assert git_ignore.read_text() == "magic"
 
 
+def test_create_gitignore_override(tmp_path):
+    git_ignore = tmp_path / ".gitignore"
+    cli_run([str(tmp_path), "--without-pip", "--no-gitignore", "--activators", ""])
+    assert not git_ignore.exists()
+
+
+def test_create_gitignore_exists_override(tmp_path):
+    git_ignore = tmp_path / ".gitignore"
+    git_ignore.write_text("magic")
+    cli_run([str(tmp_path), "--without-pip", "--no-gitignore", "--activators", ""])
+    assert git_ignore.read_text() == "magic"
+
+
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
 def test_venv_fails_not_inline(tmp_path, capsys, mocker):
     if hasattr(os, "geteuid"):

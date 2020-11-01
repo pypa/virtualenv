@@ -44,6 +44,7 @@ class Creator(object):
         self._debug = None
         self.dest = Path(options.dest)
         self.clear = options.clear
+        self.gitignore = options.gitignore
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest)
         self.app_data = options.app_data
 
@@ -57,6 +58,7 @@ class Creator(object):
         return [
             ("dest", ensure_text(str(self.dest))),
             ("clear", self.clear),
+            ("gitignore", self.gitignore),
         ]
 
     @classmethod
@@ -89,6 +91,13 @@ class Creator(object):
             action="store_true",
             help="remove the destination directory if exist before starting (will overwrite files otherwise)",
             default=False,
+        )
+        parser.add_argument(
+            "--no-gitignore",
+            dest="gitignore",
+            action="store_false",
+            help="skip creation of coverall .gitignore in destination directory",
+            default=True,
         )
 
     @abstractmethod
@@ -160,7 +169,8 @@ class Creator(object):
             safe_delete(self.dest)
         self.create()
         self.set_pyenv_cfg()
-        self.setup_ignore_vcs()
+        if self.gitignore:
+            self.setup_ignore_vcs()
 
     def set_pyenv_cfg(self):
         self.pyenv_cfg.content = OrderedDict()

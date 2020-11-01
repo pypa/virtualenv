@@ -1,0 +1,3 @@
+Optionally skip generation of ``.gitignore`` with * directive in virtualenv
+directory, using command line option :option:`no-gitignore`.
+Default behavior is to generate the file as before.
