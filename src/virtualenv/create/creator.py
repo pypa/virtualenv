@@ -44,7 +44,7 @@ class Creator(object):
         self._debug = None
         self.dest = Path(options.dest)
         self.clear = options.clear
-        self.gitignore = options.gitignore
+        self.vcsignore = options.vcsignore
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest)
         self.app_data = options.app_data
 
@@ -58,7 +58,7 @@ class Creator(object):
         return [
             ("dest", ensure_text(str(self.dest))),
             ("clear", self.clear),
-            ("gitignore", self.gitignore),
+            ("vcsignore", self.vcsignore),
         ]
 
     @classmethod
@@ -93,10 +93,10 @@ class Creator(object):
             default=False,
         )
         parser.add_argument(
-            "--no-gitignore",
-            dest="gitignore",
+            "--no-vcsignore",
+            dest="vcsignore",
             action="store_false",
-            help="skip creation of coverall .gitignore in destination directory",
+            help="skip creation of coverall VCS ignore directive in destination directory",
             default=True,
         )
 
@@ -169,7 +169,7 @@ class Creator(object):
             safe_delete(self.dest)
         self.create()
         self.set_pyenv_cfg()
-        if self.gitignore:
+        if self.vcsignore:
             self.setup_ignore_vcs()
 
     def set_pyenv_cfg(self):

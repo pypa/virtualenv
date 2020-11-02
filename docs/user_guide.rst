@@ -28,7 +28,7 @@ The tool works in two phases:
     *activate* the virtual environment from various shells).
   - create files that mark the virtual environment as to be ignored by version control systems (currently we support
     Git only, as Mercurial, Bazaar or SVN do not support ignore files in subdirectories). This step can be skipped
-    with the :option:`no-gitignore` command line option.
+    with the :option:`no-vcsignore` command line option.
 
 
 The python in your new virtualenv is effectively isolated from the python that was used to create it.
