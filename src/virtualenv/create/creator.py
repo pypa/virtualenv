@@ -44,7 +44,7 @@ class Creator(object):
         self._debug = None
         self.dest = Path(options.dest)
         self.clear = options.clear
-        self.vcs_ignore = options.vcs_ignore
+        self.no_vcs_ignore = options.no_vcs_ignore
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest)
         self.app_data = options.app_data
 
@@ -58,7 +58,7 @@ class Creator(object):
         return [
             ("dest", ensure_text(str(self.dest))),
             ("clear", self.clear),
-            ("vcs_ignore", self.vcs_ignore),
+            ("no_vcs_ignore", self.no_vcs_ignore),
         ]
 
     @classmethod
@@ -94,10 +94,10 @@ class Creator(object):
         )
         parser.add_argument(
             "--no-vcs-ignore",
-            dest="vcs_ignore",
-            action="store_false",
+            dest="no_vcs_ignore",
+            action="store_true",
             help="don't create VCS ignore directive in the destination directory",
-            default=True,
+            default=False,
         )
 
     @abstractmethod
@@ -169,7 +169,7 @@ class Creator(object):
             safe_delete(self.dest)
         self.create()
         self.set_pyenv_cfg()
-        if self.vcs_ignore:
+        if not self.no_vcs_ignore:
             self.setup_ignore_vcs()
 
     def set_pyenv_cfg(self):
