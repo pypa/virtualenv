@@ -27,7 +27,9 @@ The tool works in two phases:
   - install activation scripts into the binary directory of the virtual environment (these will allow end user to
     *activate* the virtual environment from various shells).
   - create files that mark the virtual environment as to be ignored by version control systems (currently we support
-    Git only, as Mercurial, Bazaar or SVN does not support ignore files in subdirectories).
+    Git only, as Mercurial, Bazaar or SVN do not support ignore files in subdirectories). This step can be skipped
+    with the :option:`no-vcs-ignore` option.
+
 
 The python in your new virtualenv is effectively isolated from the python that was used to create it.
 

@@ -242,10 +242,23 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     assert git_ignore.splitlines() == ["# created by virtualenv automatically", "*"]
 
 
-def test_create_gitignore_exists(tmp_path):
+def test_create_vcs_ignore_exists(tmp_path):
     git_ignore = tmp_path / ".gitignore"
     git_ignore.write_text("magic")
     cli_run([str(tmp_path), "--without-pip", "--activators", ""])
+    assert git_ignore.read_text() == "magic"
+
+
+def test_create_vcs_ignore_override(tmp_path):
+    git_ignore = tmp_path / ".gitignore"
+    cli_run([str(tmp_path), "--without-pip", "--no-vcs-ignore", "--activators", ""])
+    assert not git_ignore.exists()
+
+
+def test_create_vcs_ignore_exists_override(tmp_path):
+    git_ignore = tmp_path / ".gitignore"
+    git_ignore.write_text("magic")
+    cli_run([str(tmp_path), "--without-pip", "--no-vcs-ignore", "--activators", ""])
     assert git_ignore.read_text() == "magic"
 
 
