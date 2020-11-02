@@ -1,3 +1,1 @@
-Optionally skip VCS ignore directive for entire virtualenv
-directory, using command line option :option:`no-vcsignore`.
-Default behavior is to generate the file as before.
+Optionally skip VCS ignore directive for entire virtualenv directory, using option :option:`no-vcs-ignore`, by default ``False``.
