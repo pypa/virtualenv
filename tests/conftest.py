@@ -8,7 +8,6 @@ import sys
 from contextlib import contextmanager
 from functools import partial
 
-import coverage
 import pytest
 import six
 
@@ -236,28 +235,31 @@ def no_coverage():
     pass
 
 
-class EnableCoverage(object):
-    _COV_FILE = Path(coverage.__file__)
-    _ROOT_COV_FILES_AND_FOLDERS = [i for i in _COV_FILE.parents[1].iterdir() if i.name.startswith("coverage")]
+if COVERAGE_RUN:
+    import coverage
 
-    def __init__(self, link):
-        self.link = link
-        self.targets = []
+    class EnableCoverage(object):
+        _COV_FILE = Path(coverage.__file__)
+        _ROOT_COV_FILES_AND_FOLDERS = [i for i in _COV_FILE.parents[1].iterdir() if i.name.startswith("coverage")]
 
-    def __enter__(self, creator):
-        site_packages = creator.purelib
-        for entry in self._ROOT_COV_FILES_AND_FOLDERS:
-            target = site_packages / entry.name
-            if not target.exists():
-                clean = self.link(entry, target)
-                self.targets.append((target, clean))
-        return self
+        def __init__(self, link):
+            self.link = link
+            self.targets = []
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        for target, clean in self.targets:
-            if target.exists():
-                clean()
-        assert self._COV_FILE.exists()
+        def __enter__(self, creator):
+            site_packages = creator.purelib
+            for entry in self._ROOT_COV_FILES_AND_FOLDERS:
+                target = site_packages / entry.name
+                if not target.exists():
+                    clean = self.link(entry, target)
+                    self.targets.append((target, clean))
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            for target, clean in self.targets:
+                if target.exists():
+                    clean()
+            assert self._COV_FILE.exists()
 
 
 @pytest.fixture(scope="session")
