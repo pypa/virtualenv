@@ -3,10 +3,12 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 import os
+from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 from threading import Lock, RLock
 
 from filelock import FileLock, Timeout
+from six import add_metaclass
 
 from virtualenv.util.path import Path
 
@@ -40,9 +42,9 @@ _lock_store = {}
 _store_lock = Lock()
 
 
-class ReentrantFileLock(object):
+@add_metaclass(ABCMeta)
+class PathLockBase(object):
     def __init__(self, folder):
-        self._lock = None
         path = Path(folder)
         self.path = path.resolve() if path.exists() else path
 
@@ -50,10 +52,34 @@ class ReentrantFileLock(object):
         return "{}({})".format(self.__class__.__name__, self.path)
 
     def __div__(self, other):
-        return ReentrantFileLock(self.path / other)
+        return type(self)(self.path / other)
 
     def __truediv__(self, other):
         return self.__div__(other)
+
+    @abstractmethod
+    def __enter__(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        raise NotImplementedError
+
+    @abstractmethod
+    @contextmanager
+    def lock_for_key(self, name, no_block=False):
+        raise NotImplementedError
+
+    @abstractmethod
+    @contextmanager
+    def non_reentrant_lock_for_key(name):
+        raise NotImplementedError
+
+
+class ReentrantFileLock(PathLockBase):
+    def __init__(self, folder):
+        super(ReentrantFileLock, self).__init__(folder)
+        self._lock = None
 
     def _create_lock(self, name=""):
         lock_file = str(self.path / "{}.lock".format(name))
@@ -113,8 +139,30 @@ class ReentrantFileLock(object):
         finally:
             self._del_lock(lock)
 
+    @contextmanager
+    def non_reentrant_lock_for_key(self, name):
+        with _CountedFileLock(str(self.path / "{}.lock".format(name))):
+            yield
+
+
+class NoOpFileLock(PathLockBase):
+    def __enter__(self):
+        raise NotImplementedError
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        raise NotImplementedError
+
+    @contextmanager
+    def lock_for_key(self, name, no_block=False):
+        yield
+
+    @contextmanager
+    def non_reentrant_lock_for_key(self, name):
+        yield
+
 
 __all__ = (
-    "Timeout",
+    "NoOpFileLock",
     "ReentrantFileLock",
+    "Timeout",
 )

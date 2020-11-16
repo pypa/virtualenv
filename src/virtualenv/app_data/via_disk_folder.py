@@ -46,15 +46,17 @@ class AppDataDiskFolder(AppData):
     Store the application data on the disk within a folder layout.
     """
 
+    transient = False
+    can_update = True
+
     def __init__(self, folder):
         self.lock = ReentrantFileLock(folder)
 
     def __repr__(self):
-        return "{}".format(self.lock.path)
+        return "{}({})".format(type(self).__name__, self.lock.path)
 
-    @property
-    def transient(self):
-        return False
+    def __str__(self):
+        return str(self.lock.path)
 
     def reset(self):
         logging.debug("reset app data folder %s", self.lock.path)
