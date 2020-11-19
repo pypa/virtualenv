@@ -50,8 +50,10 @@ MAX = "3.10"
 
 
 def get_embed_wheel(distribution, for_py_version):
-    path = BUNDLE_FOLDER / (BUNDLE_SUPPORT.get(for_py_version, {}) or BUNDLE_SUPPORT[MAX]).get(distribution)
-    return Wheel.from_path(path)
+    wheel_name = (BUNDLE_SUPPORT.get(for_py_version, {}) or BUNDLE_SUPPORT[MAX]).get(distribution)
+    if wheel_name is None:
+        return None
+    return Wheel.from_path(BUNDLE_FOLDER / wheel_name)
 
 
 __all__ = (

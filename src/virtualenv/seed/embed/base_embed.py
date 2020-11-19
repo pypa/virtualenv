@@ -13,6 +13,13 @@ from ..wheels import Version
 PERIODIC_UPDATE_ON_BY_DEFAULT = True
 
 
+def _parse_basic_req(line):
+    parts = line.split("==")
+    if len(parts) == 1:
+        return (line, None)
+    return (parts[0], parts[1])
+
+
 @add_metaclass(ABCMeta)
 class BaseEmbed(Seeder):
     def __init__(self, options):
@@ -30,6 +37,7 @@ class BaseEmbed(Seeder):
         self.no_wheel = options.no_wheel
         self.app_data = options.app_data
         self.periodic_update = not options.no_periodic_update
+        self.seed_package = options.seed_package
 
         if not self.distribution_to_versions():
             self.enabled = False
@@ -43,11 +51,14 @@ class BaseEmbed(Seeder):
         }
 
     def distribution_to_versions(self):
-        return {
-            distribution: getattr(self, "{}_version".format(distribution))
-            for distribution in self.distributions()
-            if getattr(self, "no_{}".format(distribution)) is False
-        }
+        distributions = dict(self.seed_package)
+        for distribution in self.distributions():
+            if getattr(self, "no_{}".format(distribution)):
+                distributions.pop(distribution, None)
+            else:
+                version = getattr(self, "{}_version".format(distribution))
+                distributions[distribution] = version
+        return distributions
 
     @classmethod
     def add_parser_arguments(cls, parser, interpreter, app_data):
@@ -97,6 +108,15 @@ class BaseEmbed(Seeder):
             action="store_true",
             help="disable the periodic (once every 14 days) update of the embedded wheels",
             default=not PERIODIC_UPDATE_ON_BY_DEFAULT,
+        )
+        parser.add_argument(
+            "--seed-package",
+            metavar="package[==version]",
+            dest="seed_package",
+            nargs="+",
+            type=_parse_basic_req,
+            help="a list of extra packages to install",
+            default=[],
         )
 
     def __unicode__(self):
