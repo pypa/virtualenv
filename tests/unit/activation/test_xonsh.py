@@ -10,7 +10,7 @@ from virtualenv.activation import XonshActivator
 
 @pytest.mark.slow
 @pytest.mark.skipif(
-    sys.platform == "win32" or sys.version_info[0:2] == (3, 9),
+    sys.platform == "win32" or sys.version_info[0:2] >= (3, 9),
     reason="xonsh on 3.9 or Windows is broken - https://github.com/xonsh/xonsh/issues/3689",
 )
 @flaky(max_runs=2, min_passes=1)
