@@ -64,9 +64,10 @@ jobs:
       - name: Setup brew python for test ${{ matrix.py }}
         if: startsWith(matrix.py,'brew@py')
         run: |
-          import subprocess
+          import subprocess; import codecs; import os
           subprocess.check_call(["bash", "-c", f"brew upgrade python@3 || brew install python@3"])
-          print(f"::add-path::/usr/local/opt/python@3")
+          with codecs.open(os.environ["GITHUB_PATH"], "a", "utf-8") as file_handler:
+               file_handler.write("/usr/local/opt/python@3")
         shell: python
       - name: Pick environment to run
         run: |
