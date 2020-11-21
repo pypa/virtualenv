@@ -5,6 +5,35 @@ Release History
 
 .. towncrier release notes start
 
+v20.2.0 (2020-11-21)
+--------------------
+
+Features - 20.2.0
+~~~~~~~~~~~~~~~~~
+- Optionally skip VCS ignore directive for entire virtualenv directory, using option :option:`no-vcs-ignore`, by default ``False``. (`#2003 <https://github.com/pypa/virtualenv/issues/2003>`_)
+- Add ``--read-only-app-data`` option to allow for creation based on an existing
+  app data cache which is non-writable.  This may be useful (for example) to
+  produce a docker image where the app-data is pre-populated.
+
+  .. code-block:: dockerfile
+
+      ENV \
+          VIRTUALENV_OVERRIDE_APP_DATA=/opt/virtualenv/cache \
+          VIRTUALENV_SYMLINK_APP_DATA=1
+      RUN virtualenv venv && rm -rf venv
+      ENV VIRTUALENV_READ_ONLY_APP_DATA=1
+      USER nobody
+      # this virtualenv has symlinks into the read-only app-data cache
+      RUN virtualenv /tmp/venv
+
+  Patch by :user:`asottile`. (`#2009 <https://github.com/pypa/virtualenv/issues/2009>`_)
+
+Bugfixes - 20.2.0
+~~~~~~~~~~~~~~~~~
+- Fix processing of the ``VIRTUALENV_PYTHON`` environment variable and make it
+  multi-value as well (separated by comma) - by :user:`pneff`. (`#1998 <https://github.com/pypa/virtualenv/issues/1998>`_)
+
+
 v20.1.0 (2020-10-25)
 --------------------
 
