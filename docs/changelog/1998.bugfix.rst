@@ -1,2 +1,0 @@
-Fix processing of the ``VIRTUALENV_PYTHON`` environment variable and make it
-multi-value as well (separated by comma) - by :user:`pneff`.
