@@ -1,16 +1,20 @@
 from __future__ import absolute_import, unicode_literals
 
+import contextlib
 import os
+import subprocess
 import sys
-from stat import S_IRGRP, S_IROTH, S_IRUSR, S_IXUSR
+from stat import S_IWGRP, S_IWOTH, S_IWUSR
 from threading import Thread
 
 import pytest
 
+from virtualenv.discovery import cached_py_info
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
+from virtualenv.util.path import safe_delete
 from virtualenv.util.six import ensure_text
 from virtualenv.util.subprocess import Popen
 
@@ -107,15 +111,29 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
         os.environ.pop(str("PIP_REQ_TRACKER"))
 
 
+@contextlib.contextmanager
+def read_only_dir(d):
+    write = S_IWUSR | S_IWGRP | S_IWOTH
+    for root, _, filenames in os.walk(str(d)):
+        os.chmod(root, os.stat(root).st_mode & ~write)
+        for filename in filenames:
+            filename = os.path.join(root, filename)
+            os.chmod(filename, os.stat(filename).st_mode & ~write)
+    try:
+        yield
+    finally:
+        for root, _, filenames in os.walk(str(d)):
+            os.chmod(root, os.stat(root).st_mode | write)
+            for filename in filenames:
+                filename = os.path.join(root, filename)
+                os.chmod(filename, os.stat(filename).st_mode | write)
+
+
 @pytest.fixture()
 def read_only_app_data(temp_app_data):
     temp_app_data.mkdir()
-    orig_mode = os.stat(str(temp_app_data)).st_mode
-    try:
-        os.chmod(str(temp_app_data), S_IRUSR | S_IXUSR | S_IRGRP | S_IROTH)
+    with read_only_dir(temp_app_data):
         yield temp_app_data
-    finally:
-        os.chmod(str(temp_app_data), orig_mode)
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
@@ -123,6 +141,55 @@ def test_base_bootstrap_link_via_app_data_not_writable(tmp_path, current_fastest
     dest = tmp_path / "venv"
     result = cli_run(["--seeder", "app-data", "--creator", current_fastest, "-vv", str(dest)])
     assert result
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
+def test_populated_read_only_cache_and_symlinked_app_data(tmp_path, current_fastest, temp_app_data, monkeypatch):
+    dest = tmp_path / "venv"
+    cmd = [
+        "--seeder",
+        "app-data",
+        "--creator",
+        current_fastest,
+        "--symlink-app-data",
+        "-vv",
+        str(dest),
+    ]
+
+    assert cli_run(cmd)
+    subprocess.check_call((str(dest.joinpath("bin/python")), "-c", "import pip"))
+
+    cached_py_info._CACHE.clear()  # necessary to re-trigger py info discovery
+    safe_delete(dest)
+
+    # should succeed with special flag when read-only
+    with read_only_dir(temp_app_data):
+        assert cli_run(["--read-only-app-data"] + cmd)
+        subprocess.check_call((str(dest.joinpath("bin/python")), "-c", "import pip"))
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
+def test_populated_read_only_cache_and_copied_app_data(tmp_path, current_fastest, temp_app_data, monkeypatch):
+    dest = tmp_path / "venv"
+    cmd = [
+        "--seeder",
+        "app-data",
+        "--creator",
+        current_fastest,
+        "-vv",
+        "-p",
+        "python",
+        str(dest),
+    ]
+
+    assert cli_run(cmd)
+
+    cached_py_info._CACHE.clear()  # necessary to re-trigger py info discovery
+    safe_delete(dest)
+
+    # should succeed with special flag when read-only
+    with read_only_dir(temp_app_data):
+        assert cli_run(["--read-only-app-data"] + cmd)
 
 
 @pytest.mark.slow
