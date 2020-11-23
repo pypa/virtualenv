@@ -5,6 +5,12 @@ Release History
 
 .. towncrier release notes start
 
+v20.2.1 (2020-11-23)
+--------------------
+
+No significant changes.
+
+
 v20.2.0 (2020-11-21)
 --------------------
 
