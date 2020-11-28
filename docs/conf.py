@@ -28,6 +28,7 @@ always_document_param_types = True
 project = name
 today_fmt = "%B %d, %Y"
 
+html_title = "virtualenv"
 html_theme = "furo"
 html_static_path = ["_static"]
 html_last_updated_fmt = datetime.now().isoformat()
