@@ -3,8 +3,6 @@ import sys
 from datetime import date, datetime
 from pathlib import Path
 
-import sphinx_rtd_theme
-
 from virtualenv.version import __version__
 
 company = "PyPA"
@@ -30,18 +28,7 @@ always_document_param_types = True
 project = name
 today_fmt = "%B %d, %Y"
 
-html_theme = "sphinx_rtd_theme"
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-html_theme_options = {
-    "canonical_url": "https://virtualenv.pypa.io/",
-    "logo_only": False,
-    "display_version": True,
-    "prev_next_buttons_location": "bottom",
-    "collapse_navigation": False,
-    "sticky_navigation": True,
-    "navigation_depth": 6,
-    "includehidden": True,
-}
+html_theme = "furo"
 html_static_path = ["_static"]
 html_last_updated_fmt = datetime.now().isoformat()
 htmlhelp_basename = "Pastedoc"
