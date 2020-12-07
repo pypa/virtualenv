@@ -1,0 +1,1 @@
+Bump pip to ``20.3.1``, setuptools to ``51.0.0`` and wheel to ``0.36.1`` - by :user:`gaborbernat`.
