@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.2.2 (2020-12-07)
+--------------------
+
+Bugfixes - 20.2.2
+~~~~~~~~~~~~~~~~~
+- Bump pip to ``20.3.1``, setuptools to ``51.0.0`` and wheel to ``0.36.1`` - by :user:`gaborbernat`. (`#2029 <https://github.com/pypa/virtualenv/issues/2029>`_)
+
+
 v20.2.1 (2020-11-23)
 --------------------
 
