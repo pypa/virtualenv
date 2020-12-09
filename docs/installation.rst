@@ -85,7 +85,7 @@ Python and OS Compatibility
 
 virtualenv works with the following Python interpreter implementations:
 
-- `CPython <https://www.python.org/>`_ versions 2.7, 3.4, 3.5, 3.6, 3.7, 3.8
+- `CPython <https://www.python.org/>`_ versions 2.7, 3.4, 3.5, 3.6, 3.7, 3.8, 3.9
 - `PyPy <https://pypy.org/>`_ 2.7 and 3.4+.
 
 This means virtualenv works on the latest patch version of each of these minor versions. Previous patch versions are
