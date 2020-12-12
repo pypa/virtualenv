@@ -7,7 +7,7 @@ if [ "${BASH_SOURCE-}" = "$0" ]; then
     exit 33
 fi
 
-deactivate () {
+_deactivate () {
     unset -f pydoc >/dev/null 2>&1
 
     # reset old environment variables
@@ -37,14 +37,11 @@ deactivate () {
     fi
 
     unset VIRTUAL_ENV
-    if [ ! "${1-}" = "nondestructive" ] ; then
-    # Self destruct!
-        unset -f deactivate
-    fi
 }
+alias deactivate="\_deactivate; unset -f _deactivate; unalias deactivate"
 
 # unset irrelevant variables
-deactivate nondestructive
+_deactivate
 
 VIRTUAL_ENV='__VIRTUAL_ENV__'
 if ([ "$OSTYPE" = "cygwin" ] || [ "$OSTYPE" = "msys" ]) && $(command -v cygpath &> /dev/null) ; then
