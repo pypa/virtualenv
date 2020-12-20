@@ -201,7 +201,7 @@ class WheelDownloader(object):
                 shutil.copytree(
                     str(target),
                     str(folder),
-                    ignore=shutil.ignore_patterns(".tox", "venv", "__pycache__", "*.pyz"),
+                    ignore=shutil.ignore_patterns(".tox", ".tox4", "venv", "__pycache__", "*.pyz"),
                 )
                 try:
                     return self._build_sdist(self.into, folder)

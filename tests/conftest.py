@@ -129,9 +129,38 @@ def ensure_py_info_cache_empty(session_app_data):
     PythonInfo.clear_cache(session_app_data)
 
 
-@pytest.fixture(autouse=True)
-def ignore_global_config(tmp_path, monkeypatch):
-    monkeypatch.setenv(ensure_str("VIRTUALENV_CONFIG_FILE"), str(tmp_path / "this-should-never-exist"))
+@contextmanager
+def change_os_environ(key, value):
+    env_var = key
+    previous = os.environ[env_var] if env_var in os.environ else None
+    os.environ[env_var] = value
+    try:
+        yield
+    finally:
+        if previous is not None:
+            os.environ[env_var] = previous
+
+
+@pytest.fixture(autouse=True, scope="session")
+def ignore_global_config(tmp_path_factory):
+    filename = str(tmp_path_factory.mktemp("folder") / "virtualenv-test-suite.ini")
+    with change_os_environ(ensure_str("VIRTUALENV_CONFIG_FILE"), filename):
+        yield
+
+
+@pytest.fixture(autouse=True, scope="session")
+def pip_cert(tmp_path_factory):
+    # workaround for https://github.com/pypa/pip/issues/8984 - if the certificate is explicitly set no error can happen
+    key = ensure_str("PIP_CERT")
+    if key in os.environ:
+        return
+    cert = tmp_path_factory.mktemp("folder") / "cert"
+    import pkgutil
+
+    cert_data = pkgutil.get_data("pip._vendor.certifi", "cacert.pem")
+    cert.write_bytes(cert_data)
+    with change_os_environ(key, str(cert)):
+        yield
 
 
 @pytest.fixture(autouse=True)
