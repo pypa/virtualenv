@@ -1,0 +1,3 @@
+Drop ``xonsh`` support from virtualenv due to recurring difficulties in testing the activator. The ``xonsh`` developers
+are encouraged to provide a virtualenv plugin instead, please
+`see here <https://github.com/xonsh/xonsh/issues/3689>`_ for more information - by :user:`gaborbernat`.
