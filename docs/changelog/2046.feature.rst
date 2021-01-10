@@ -1,3 +1,0 @@
-The builtin discovery takes now a ``--try-first-with`` argument and is first attempted as valid interpreters. One can
-use this to force discovery of a given python executable when the discovery order/mechanism raises errors -
-by :user:`gaborbernat`.

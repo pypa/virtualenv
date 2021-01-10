@@ -5,6 +5,22 @@ Release History
 
 .. towncrier release notes start
 
+v20.3.0 (2021-01-10)
+--------------------
+
+Features - 20.3.0
+~~~~~~~~~~~~~~~~~
+- The builtin discovery takes now a ``--try-first-with`` argument and is first attempted as valid interpreters. One can
+  use this to force discovery of a given python executable when the discovery order/mechanism raises errors -
+  by :user:`gaborbernat`. (`#2046 <https://github.com/pypa/virtualenv/issues/2046>`_)
+
+Bugfixes - 20.3.0
+~~~~~~~~~~~~~~~~~
+- On Windows python ``3.7+`` distributions where the exe shim is missing fallback to the old ways - by :user:`gaborbernat`. (`#1986 <https://github.com/pypa/virtualenv/issues/1986>`_)
+- When discovering interpreters on Windows, via the PEP-514, prefer ``PythonCore`` releases over other ones. virtualenv
+  is used via pip mostly by this distribution, so prefer it over other such as conda - by :user:`gaborbernat`. (`#2046 <https://github.com/pypa/virtualenv/issues/2046>`_)
+
+
 v20.2.2 (2020-12-07)
 --------------------
 

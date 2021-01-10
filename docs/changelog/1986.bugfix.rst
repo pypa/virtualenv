@@ -1,1 +1,0 @@
-On Windows python ``3.7+`` distributions where the exe shim is missing fallback to the old ways - by :user:`gaborbernat`.
