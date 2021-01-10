@@ -36,14 +36,14 @@ def test_discovery_via_path(monkeypatch, case, tmp_path, caplog, session_app_dat
         (target / pyvenv_cfg.name).write_bytes(pyvenv_cfg.read_bytes())
     new_path = os.pathsep.join([str(target)] + os.environ.get(str("PATH"), str("")).split(os.pathsep))
     monkeypatch.setenv(str("PATH"), new_path)
-    interpreter = get_interpreter(core)
+    interpreter = get_interpreter(core, [])
 
     assert interpreter is not None
 
 
 def test_discovery_via_path_not_found(tmp_path, monkeypatch):
     monkeypatch.setenv(str("PATH"), str(tmp_path))
-    interpreter = get_interpreter(uuid4().hex)
+    interpreter = get_interpreter(uuid4().hex, [])
     assert interpreter is None
 
 
@@ -52,13 +52,13 @@ def test_relative_path(tmp_path, session_app_data, monkeypatch):
     cwd = sys_executable.parents[1]
     monkeypatch.chdir(str(cwd))
     relative = str(sys_executable.relative_to(cwd))
-    result = get_interpreter(relative, session_app_data)
+    result = get_interpreter(relative, [], session_app_data)
     assert result is not None
 
 
 def test_discovery_fallback_fail(session_app_data, caplog):
     caplog.set_level(logging.DEBUG)
-    builtin = Builtin(Namespace(app_data=session_app_data, python=["magic-one", "magic-two"]))
+    builtin = Builtin(Namespace(app_data=session_app_data, try_first_with=[], python=["magic-one", "magic-two"]))
 
     result = builtin.run()
     assert result is None
@@ -68,7 +68,7 @@ def test_discovery_fallback_fail(session_app_data, caplog):
 
 def test_discovery_fallback_ok(session_app_data, caplog):
     caplog.set_level(logging.DEBUG)
-    builtin = Builtin(Namespace(app_data=session_app_data, python=["magic-one", sys.executable]))
+    builtin = Builtin(Namespace(app_data=session_app_data, try_first_with=[], python=["magic-one", sys.executable]))
 
     result = builtin.run()
     assert result is not None, caplog.text

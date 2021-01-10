@@ -1,0 +1,2 @@
+When discovering interpreters on Windows, via the PEP-514, prefer ``PythonCore`` releases over other ones. virtualenv
+is used via pip mostly by this distribution, so prefer it over other such as conda - by :user:`gaborbernat`.

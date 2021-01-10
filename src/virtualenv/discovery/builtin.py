@@ -17,6 +17,7 @@ class Builtin(Discover):
         super(Builtin, self).__init__(options)
         self.python_spec = options.python if options.python else [sys.executable]
         self.app_data = options.app_data
+        self.try_first_with = options.try_first_with
 
     @classmethod
     def add_parser_arguments(cls, parser):
@@ -31,10 +32,19 @@ class Builtin(Discover):
             help="interpreter based on what to create environment (path/identifier) "
             "- by default use the interpreter where the tool is installed - first found wins",
         )
+        parser.add_argument(
+            "--try-first-with",
+            dest="try_first_with",
+            metavar="py_exe",
+            type=str,
+            action="append",
+            default=[],
+            help="try first these interpreters before starting the discovery",
+        )
 
     def run(self):
         for python_spec in self.python_spec:
-            result = get_interpreter(python_spec, self.app_data)
+            result = get_interpreter(python_spec, self.try_first_with, self.app_data)
             if result is not None:
                 return result
         return None
@@ -47,11 +57,11 @@ class Builtin(Discover):
         return "{} discover of python_spec={!r}".format(self.__class__.__name__, spec)
 
 
-def get_interpreter(key, app_data=None):
+def get_interpreter(key, try_first_with, app_data=None):
     spec = PythonSpec.from_string_spec(key)
     logging.info("find interpreter for spec %r", spec)
     proposed_paths = set()
-    for interpreter, impl_must_match in propose_interpreters(spec, app_data):
+    for interpreter, impl_must_match in propose_interpreters(spec, try_first_with, app_data):
         key = interpreter.system_executable, impl_must_match
         if key in proposed_paths:
             continue
@@ -62,7 +72,17 @@ def get_interpreter(key, app_data=None):
         proposed_paths.add(key)
 
 
-def propose_interpreters(spec, app_data):
+def propose_interpreters(spec, try_first_with, app_data):
+    # 0. try with first
+    for py_exe in try_first_with:
+        path = os.path.abspath(py_exe)
+        try:
+            os.lstat(path)  # Windows Store Python does not work with os.path.exists, but does for os.lstat
+        except OSError:
+            pass
+        else:
+            yield PythonInfo.from_exe(os.path.abspath(path), app_data), True
+
     # 1. if it's a path and exists
     if spec.path is not None:
         try:
