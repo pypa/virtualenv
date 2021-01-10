@@ -367,7 +367,7 @@ def temp_app_data(monkeypatch, tmp_path):
 @pytest.fixture(scope="session")
 def cross_python(is_inside_ci, session_app_data):
     spec = str(2 if sys.version_info[0] == 3 else 3)
-    interpreter = get_interpreter(spec, session_app_data)
+    interpreter = get_interpreter(spec, [], session_app_data)
     if interpreter is None:
         msg = "could not find {}".format(spec)
         if is_inside_ci:
