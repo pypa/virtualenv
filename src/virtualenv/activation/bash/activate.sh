@@ -8,7 +8,7 @@ if [ "${BASH_SOURCE-}" = "$0" ]; then
 fi
 
 deactivate () {
-    unset -f pydoc >/dev/null 2>&1
+    unset -f pydoc >/dev/null 2>&1 || true
 
     # reset old environment variables
     # ! [ -z ${VAR+_} ] returns true if VAR is declared at all
