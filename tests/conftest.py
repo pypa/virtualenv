@@ -334,7 +334,8 @@ def current_fastest(current_creators):
 
 @pytest.fixture(scope="session")
 def session_app_data(tmp_path_factory):
-    app_data = AppDataDiskFolder(folder=str(tmp_path_factory.mktemp("session-app-data")))
+    temp_folder = tmp_path_factory.mktemp("session-app-data")
+    app_data = AppDataDiskFolder(folder=str(temp_folder))
     with change_env_var(str("VIRTUALENV_OVERRIDE_APP_DATA"), str(app_data.lock.path)):
         yield app_data
 
