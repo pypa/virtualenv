@@ -1,0 +1,4 @@
+Allow unfunctioning of pydoc to fail freely so that virtualenvs can be
+activated under Zsh with set -e (since otherwise ``unset -f`` and
+``unfunction`` exit with 1 if the function does not exist in Zsh) - by
+:user:`d125q`.
