@@ -5,6 +5,20 @@ Release History
 
 .. towncrier release notes start
 
+v20.3.1 (2021-01-13)
+--------------------
+
+Bugfixes - 20.3.1
+~~~~~~~~~~~~~~~~~
+- Bump embed pip to ``20.3.3``, setuptools to ``51.1.1`` and wheel to ``0.36.2`` - by :user:`gaborbernat`. (`#2036 <https://github.com/pypa/virtualenv/issues/2036>`_)
+- Allow unfunctioning of pydoc to fail freely so that virtualenvs can be
+  activated under Zsh with set -e (since otherwise ``unset -f`` and
+  ``unfunction`` exit with 1 if the function does not exist in Zsh) - by
+  :user:`d125q`. (`#2049 <https://github.com/pypa/virtualenv/issues/2049>`_)
+- Drop cached python information if the system executable is no longer present (for example when the executable is a
+  shim and the mapped executable is replaced - such is the case with pyenv) - by :user:`gaborbernat`. (`#2050 <https://github.com/pypa/virtualenv/issues/2050>`_)
+
+
 v20.3.0 (2021-01-10)
 --------------------
 
