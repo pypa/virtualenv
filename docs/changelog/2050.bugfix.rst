@@ -1,0 +1,2 @@
+Drop cached python information if the system executable is no longer present (for example when the executable is a
+shim and the mapped executable is replaced - such is the case with pyenv) - by :user:`gaborbernat`.
