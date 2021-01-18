@@ -25,8 +25,8 @@ def raise_on_session_done(mocker):
 
         prev_session = session_via_cli
 
-        def _session_via_cli(args, options=None, setup_logging=True):
-            prev_session(args, options, setup_logging)
+        def _session_via_cli(args, options=None, setup_logging=True, env=None):
+            prev_session(args, options, setup_logging, env)
             raise exception
 
         mocker.patch("virtualenv.run.session_via_cli", side_effect=_session_via_cli)

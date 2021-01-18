@@ -91,7 +91,7 @@ def cleanup_sys_path(paths):
 
 @pytest.fixture(scope="session")
 def system(session_app_data):
-    return get_env_debug_info(Path(CURRENT.system_executable), DEBUG_SCRIPT, session_app_data)
+    return get_env_debug_info(Path(CURRENT.system_executable), DEBUG_SCRIPT, session_app_data, os.environ)
 
 
 CURRENT_CREATORS = list(i for i in CURRENT.creators().key_to_class.keys() if i != "builtin")
@@ -268,8 +268,8 @@ def test_venv_fails_not_inline(tmp_path, capsys, mocker):
         if os.geteuid() == 0:
             pytest.skip("no way to check permission restriction when running under root")
 
-    def _session_via_cli(args, options=None, setup_logging=True):
-        session = session_via_cli(args, options, setup_logging)
+    def _session_via_cli(args, options=None, setup_logging=True, env=None):
+        session = session_via_cli(args, options, setup_logging, env)
         assert session.creator.can_be_inline is False
         return session
 
