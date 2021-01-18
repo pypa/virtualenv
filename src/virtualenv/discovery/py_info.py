@@ -308,12 +308,13 @@ class PythonInfo(object):
         return data
 
     @classmethod
-    def from_exe(cls, exe, app_data=None, raise_on_error=True, ignore_cache=False, resolve_to_host=True):
+    def from_exe(cls, exe, app_data=None, raise_on_error=True, ignore_cache=False, resolve_to_host=True, env=None):
         """Given a path to an executable get the python information"""
         # this method is not used by itself, so here and called functions can import stuff locally
         from virtualenv.discovery.cached_py_info import from_exe
 
-        proposed = from_exe(cls, app_data, exe, raise_on_error=raise_on_error, ignore_cache=ignore_cache)
+        env = os.environ if env is None else env
+        proposed = from_exe(cls, app_data, exe, env=env, raise_on_error=raise_on_error, ignore_cache=ignore_cache)
         # noinspection PyProtectedMember
         if isinstance(proposed, PythonInfo) and resolve_to_host:
             try:
@@ -363,7 +364,7 @@ class PythonInfo(object):
 
     _cache_exe_discovery = {}
 
-    def discover_exe(self, app_data, prefix, exact=True):
+    def discover_exe(self, app_data, prefix, exact=True, env=None):
         key = prefix, exact
         if key in self._cache_exe_discovery and prefix:
             logging.debug("discover exe from cache %s - exact %s: %r", prefix, exact, self._cache_exe_discovery[key])
@@ -373,9 +374,10 @@ class PythonInfo(object):
         possible_names = self._find_possible_exe_names()
         possible_folders = self._find_possible_folders(prefix)
         discovered = []
+        env = os.environ if env is None else env
         for folder in possible_folders:
             for name in possible_names:
-                info = self._check_exe(app_data, folder, name, exact, discovered)
+                info = self._check_exe(app_data, folder, name, exact, discovered, env)
                 if info is not None:
                     self._cache_exe_discovery[key] = info
                     return info
@@ -388,11 +390,11 @@ class PythonInfo(object):
         msg = "failed to detect {} in {}".format("|".join(possible_names), os.pathsep.join(possible_folders))
         raise RuntimeError(msg)
 
-    def _check_exe(self, app_data, folder, name, exact, discovered):
+    def _check_exe(self, app_data, folder, name, exact, discovered, env):
         exe_path = os.path.join(folder, name)
         if not os.path.exists(exe_path):
             return None
-        info = self.from_exe(exe_path, app_data, resolve_to_host=False, raise_on_error=False)
+        info = self.from_exe(exe_path, app_data, resolve_to_host=False, raise_on_error=False, env=env)
         if info is None:  # ignore if for some reason we can't query
             return None
         for item in ["implementation", "architecture", "version_info"]:

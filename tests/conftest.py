@@ -224,8 +224,8 @@ def coverage_env(monkeypatch, link, request):
         # we inject right after creation, we cannot collect coverage on site.py - used for helper scripts, such as debug
         from virtualenv import run
 
-        def _session_via_cli(args, options, setup_logging):
-            session = prev_run(args, options, setup_logging)
+        def _session_via_cli(args, options, setup_logging, env=None):
+            session = prev_run(args, options, setup_logging, env)
             old_run = session.creator.run
 
             def create_run():

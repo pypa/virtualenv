@@ -226,7 +226,7 @@ def test_system_executable_no_exact_match(target, discovered, position, tmp_path
     mocker.patch.object(target_py_info, "_find_possible_folders", return_value=[str(tmp_path)])
 
     # noinspection PyUnusedLocal
-    def func(k, app_data, resolve_to_host, raise_on_error):
+    def func(k, app_data, resolve_to_host, raise_on_error, env):
         return discovered_with_path[k]
 
     mocker.patch.object(target_py_info, "from_exe", side_effect=func)

@@ -44,7 +44,7 @@ class Builtin(Discover):
 
     def run(self):
         for python_spec in self.python_spec:
-            result = get_interpreter(python_spec, self.try_first_with, self.app_data)
+            result = get_interpreter(python_spec, self.try_first_with, self.app_data, self._env)
             if result is not None:
                 return result
         return None
@@ -57,11 +57,12 @@ class Builtin(Discover):
         return "{} discover of python_spec={!r}".format(self.__class__.__name__, spec)
 
 
-def get_interpreter(key, try_first_with, app_data=None):
+def get_interpreter(key, try_first_with, app_data=None, env=None):
     spec = PythonSpec.from_string_spec(key)
     logging.info("find interpreter for spec %r", spec)
     proposed_paths = set()
-    for interpreter, impl_must_match in propose_interpreters(spec, try_first_with, app_data):
+    env = os.environ if env is None else env
+    for interpreter, impl_must_match in propose_interpreters(spec, try_first_with, app_data, env):
         key = interpreter.system_executable, impl_must_match
         if key in proposed_paths:
             continue
@@ -72,8 +73,9 @@ def get_interpreter(key, try_first_with, app_data=None):
         proposed_paths.add(key)
 
 
-def propose_interpreters(spec, try_first_with, app_data):
+def propose_interpreters(spec, try_first_with, app_data, env=None):
     # 0. try with first
+    env = os.environ if env is None else env
     for py_exe in try_first_with:
         path = os.path.abspath(py_exe)
         try:
@@ -81,7 +83,7 @@ def propose_interpreters(spec, try_first_with, app_data):
         except OSError:
             pass
         else:
-            yield PythonInfo.from_exe(os.path.abspath(path), app_data), True
+            yield PythonInfo.from_exe(os.path.abspath(path), app_data, env=env), True
 
     # 1. if it's a path and exists
     if spec.path is not None:
@@ -91,7 +93,7 @@ def propose_interpreters(spec, try_first_with, app_data):
             if spec.is_abs:
                 raise
         else:
-            yield PythonInfo.from_exe(os.path.abspath(spec.path), app_data), True
+            yield PythonInfo.from_exe(os.path.abspath(spec.path), app_data, env=env), True
         if spec.is_abs:
             return
     else:
@@ -102,27 +104,27 @@ def propose_interpreters(spec, try_first_with, app_data):
         if IS_WIN:
             from .windows import propose_interpreters
 
-            for interpreter in propose_interpreters(spec, app_data):
+            for interpreter in propose_interpreters(spec, app_data, env):
                 yield interpreter, True
     # finally just find on path, the path order matters (as the candidates are less easy to control by end user)
-    paths = get_paths()
+    paths = get_paths(env)
     tested_exes = set()
     for pos, path in enumerate(paths):
         path = ensure_text(path)
-        logging.debug(LazyPathDump(pos, path))
+        logging.debug(LazyPathDump(pos, path, env))
         for candidate, match in possible_specs(spec):
             found = check_path(candidate, path)
             if found is not None:
                 exe = os.path.abspath(found)
                 if exe not in tested_exes:
                     tested_exes.add(exe)
-                    interpreter = PathPythonInfo.from_exe(exe, app_data, raise_on_error=False)
+                    interpreter = PathPythonInfo.from_exe(exe, app_data, raise_on_error=False, env=env)
                     if interpreter is not None:
                         yield interpreter, match
 
 
-def get_paths():
-    path = os.environ.get(str("PATH"), None)
+def get_paths(env):
+    path = env.get(str("PATH"), None)
     if path is None:
         try:
             path = os.confstr("CS_PATH")
@@ -136,16 +138,17 @@ def get_paths():
 
 
 class LazyPathDump(object):
-    def __init__(self, pos, path):
+    def __init__(self, pos, path, env):
         self.pos = pos
         self.path = path
+        self.env = env
 
     def __repr__(self):
         return ensure_str(self.__unicode__())
 
     def __unicode__(self):
         content = "discover PATH[{}]={}".format(self.pos, self.path)
-        if os.environ.get(str("_VIRTUALENV_DEBUG")):  # this is the over the board debug
+        if self.env.get(str("_VIRTUALENV_DEBUG")):  # this is the over the board debug
             content += " with =>"
             for file_name in os.listdir(self.path):
                 try:

@@ -9,7 +9,7 @@ class Pep514PythonInfo(PythonInfo):
     """"""
 
 
-def propose_interpreters(spec, cache_dir):
+def propose_interpreters(spec, cache_dir, env):
     # see if PEP-514 entries are good
 
     # start with higher python versions in an effort to use the latest version available
@@ -25,7 +25,7 @@ def propose_interpreters(spec, cache_dir):
             name = "CPython"
         registry_spec = PythonSpec(None, name, major, minor, None, arch, exe)
         if registry_spec.satisfies(spec):
-            interpreter = Pep514PythonInfo.from_exe(exe, cache_dir, raise_on_error=False)
+            interpreter = Pep514PythonInfo.from_exe(exe, cache_dir, env=env, raise_on_error=False)
             if interpreter is not None:
                 if interpreter.satisfies(spec, impl_must_match=True):
                     yield interpreter

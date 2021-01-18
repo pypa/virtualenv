@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import json
+import os
 import subprocess
 import sys
 from collections import defaultdict
@@ -49,7 +50,7 @@ def test_manual_upgrade(session_app_data, caplog, mocker, for_py_version):
         return []
 
     do_update_mock = mocker.patch("virtualenv.seed.wheels.periodic_update.do_update", side_effect=_do_update)
-    manual_upgrade(session_app_data)
+    manual_upgrade(session_app_data, os.environ)
 
     assert "upgrade pip" in caplog.text
     assert "upgraded pip" in caplog.text
@@ -100,7 +101,7 @@ def test_periodic_update_stops_at_current(mocker, session_app_data, for_py_versi
     )
     mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict())
 
-    result = periodic_update("setuptools", for_py_version, current, [], session_app_data, False)
+    result = periodic_update("setuptools", for_py_version, current, [], session_app_data, False, os.environ)
     assert result.path == current.path
 
 
@@ -119,7 +120,7 @@ def test_periodic_update_latest_per_patch(mocker, session_app_data, for_py_versi
     )
     mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict())
 
-    result = periodic_update("setuptools", for_py_version, current, [], session_app_data, False)
+    result = periodic_update("setuptools", for_py_version, current, [], session_app_data, False, os.environ)
     assert result.path == current.path
 
 
@@ -165,7 +166,7 @@ def test_periodic_update_skip(u_log, mocker, for_py_version, session_app_data, f
     mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict())
     mocker.patch("virtualenv.seed.wheels.periodic_update.trigger_update", side_effect=RuntimeError)
 
-    result = periodic_update("setuptools", for_py_version, None, [], session_app_data, True)
+    result = periodic_update("setuptools", for_py_version, None, [], session_app_data, os.environ, True)
     assert result is None
 
 
@@ -193,7 +194,7 @@ def test_periodic_update_trigger(u_log, mocker, for_py_version, session_app_data
     write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write")
     trigger_update_ = mocker.patch("virtualenv.seed.wheels.periodic_update.trigger_update")
 
-    result = periodic_update("setuptools", for_py_version, None, [], session_app_data, True)
+    result = periodic_update("setuptools", for_py_version, None, [], session_app_data, os.environ, True)
 
     assert result is None
     assert trigger_update_.call_count
@@ -210,7 +211,9 @@ def test_trigger_update_no_debug(for_py_version, session_app_data, tmp_path, moc
     process.communicate.return_value = None, None
     Popen = mocker.patch("virtualenv.seed.wheels.periodic_update.Popen", return_value=process)
 
-    trigger_update("setuptools", for_py_version, current, [tmp_path / "a", tmp_path / "b"], session_app_data, True)
+    trigger_update(
+        "setuptools", for_py_version, current, [tmp_path / "a", tmp_path / "b"], session_app_data, os.environ, True
+    )
 
     assert Popen.call_count == 1
     args, kwargs = Popen.call_args
@@ -250,7 +253,9 @@ def test_trigger_update_debug(for_py_version, session_app_data, tmp_path, mocker
     process.communicate.return_value = None, None
     Popen = mocker.patch("virtualenv.seed.wheels.periodic_update.Popen", return_value=process)
 
-    trigger_update("pip", for_py_version, current, [tmp_path / "a", tmp_path / "b"], session_app_data, False)
+    trigger_update(
+        "pip", for_py_version, current, [tmp_path / "a", tmp_path / "b"], session_app_data, os.environ, False
+    )
 
     assert Popen.call_count == 1
     args, kwargs = Popen.call_args
