@@ -1,6 +1,5 @@
 from __future__ import absolute_import, unicode_literals
 
-import os
 import re
 import sys
 
@@ -91,8 +90,9 @@ def test_session_report_subprocess(session_app_data, tmp_path):
     # when called via a subprocess the logging framework should flush and POSIX line normalization happen
     out = subprocess.check_output(
         [sys.executable, "-m", "virtualenv", str(tmp_path), "--activators", "powershell", "--without-pip"],
+        universal_newlines=True,
     )
-    lines = out.decode().split(os.linesep)
+    lines = out.split("\n")
     regexes = [
         r"created virtual environment .* in \d+ms",
         r"  creator .*",
