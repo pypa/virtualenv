@@ -7,27 +7,27 @@ BUNDLE_FOLDER = Path(__file__).absolute().parent
 BUNDLE_SUPPORT = {
     "3.10": {
         "pip": "pip-20.3.3-py2.py3-none-any.whl",
-        "setuptools": "setuptools-51.1.2-py3-none-any.whl",
+        "setuptools": "setuptools-51.3.3-py3-none-any.whl",
         "wheel": "wheel-0.36.2-py2.py3-none-any.whl",
     },
     "3.9": {
         "pip": "pip-20.3.3-py2.py3-none-any.whl",
-        "setuptools": "setuptools-51.1.2-py3-none-any.whl",
+        "setuptools": "setuptools-51.3.3-py3-none-any.whl",
         "wheel": "wheel-0.36.2-py2.py3-none-any.whl",
     },
     "3.8": {
         "pip": "pip-20.3.3-py2.py3-none-any.whl",
-        "setuptools": "setuptools-51.1.2-py3-none-any.whl",
+        "setuptools": "setuptools-51.3.3-py3-none-any.whl",
         "wheel": "wheel-0.36.2-py2.py3-none-any.whl",
     },
     "3.7": {
         "pip": "pip-20.3.3-py2.py3-none-any.whl",
-        "setuptools": "setuptools-51.1.2-py3-none-any.whl",
+        "setuptools": "setuptools-51.3.3-py3-none-any.whl",
         "wheel": "wheel-0.36.2-py2.py3-none-any.whl",
     },
     "3.6": {
         "pip": "pip-20.3.3-py2.py3-none-any.whl",
-        "setuptools": "setuptools-51.1.2-py3-none-any.whl",
+        "setuptools": "setuptools-51.3.3-py3-none-any.whl",
         "wheel": "wheel-0.36.2-py2.py3-none-any.whl",
     },
     "3.5": {
