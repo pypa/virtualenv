@@ -1,2 +1,0 @@
-On the programmatic API allow passing in the environment variable dictionary to use, defaults to ``os.environ`` if not
-specified - by :user:`gaborbernat`.
