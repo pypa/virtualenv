@@ -5,6 +5,19 @@ Release History
 
 .. towncrier release notes start
 
+v20.4.0 (2021-01-19)
+--------------------
+
+Features - 20.4.0
+~~~~~~~~~~~~~~~~~
+- On the programmatic API allow passing in the environment variable dictionary to use, defaults to ``os.environ`` if not
+  specified - by :user:`gaborbernat`. (`#2054 <https://github.com/pypa/virtualenv/issues/2054>`_)
+
+Bugfixes - 20.4.0
+~~~~~~~~~~~~~~~~~
+- Upgrade embedded setuptools to ``51.3.3`` from ``51.1.2`` - by :user:`gaborbernat`. (`#2055 <https://github.com/pypa/virtualenv/issues/2055>`_)
+
+
 v20.3.1 (2021-01-13)
 --------------------
 
