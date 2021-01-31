@@ -1,0 +1,1 @@
+Bump embedded pip and setuptools packages to latest upstream supported (``21.0.1`` and ``52.0.0``) - by :user:`gaborbernat`.
