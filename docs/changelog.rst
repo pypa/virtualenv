@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.4.2 (2021-02-01)
+--------------------
+
+Bugfixes - 20.4.2
+~~~~~~~~~~~~~~~~~
+- Running virtualenv ``--upgrade-embed-wheels`` crashes - by :user:`gaborbernat`. (`#2058 <https://github.com/pypa/virtualenv/issues/2058>`_)
+
+
 v20.4.1 (2021-01-31)
 --------------------
 
