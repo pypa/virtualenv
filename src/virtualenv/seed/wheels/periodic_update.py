@@ -6,6 +6,7 @@ from __future__ import absolute_import, unicode_literals
 
 import json
 import logging
+import os
 import ssl
 import subprocess
 import sys
@@ -235,6 +236,7 @@ def _run_do_update(app_data, distribution, embed_filename, for_py_version, perio
             search_dirs=search_dirs,
             app_data=app_data,
             to_folder=wheelhouse,
+            env=os.environ,
         )
         if dest is None or (u_log.versions and u_log.versions[0].filename == dest.name):
             break

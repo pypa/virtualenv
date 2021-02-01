@@ -300,7 +300,7 @@ def test_do_update_first(tmp_path, mocker, freezer):
     ]
     download_wheels = (Wheel(Path(i[0])) for i in pip_version_remote)
 
-    def _download_wheel(distribution, version_spec, for_py_version, search_dirs, app_data, to_folder):
+    def _download_wheel(distribution, version_spec, for_py_version, search_dirs, app_data, to_folder, env):
         assert distribution == "pip"
         assert for_py_version == "3.9"
         assert [str(i) for i in search_dirs] == [str(extra)]
@@ -361,7 +361,7 @@ def test_do_update_skip_already_done(tmp_path, mocker, freezer):
     extra = tmp_path / "extra"
     extra.mkdir()
 
-    def _download_wheel(distribution, version_spec, for_py_version, search_dirs, app_data, to_folder):  # noqa
+    def _download_wheel(distribution, version_spec, for_py_version, search_dirs, app_data, to_folder, env):  # noqa
         return wheel.path
 
     download_wheel = mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", side_effect=_download_wheel)
