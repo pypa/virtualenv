@@ -10,7 +10,7 @@ Virtualenv has one basic command:
 
     virtualenv venv
 
-This will create a python virtual environment of the same version as virtualenv is installed into under path
+This will create a python virtual environment of the same version as virtualenv, installed into the subdirectory
 ``venv``. The command line tool has quite a few of flags that modify the tool's behaviour, for a
 full list make sure to check out :ref:`cli_flags`.
 
@@ -24,7 +24,7 @@ The tool works in two phases:
   - create a python that matches the target python interpreter from phase 1,
   - install (bootstrap) seed packages (one or more of :pypi:`pip`, :pypi:`setuptools`, :pypi:`wheel`) in the created
     virtual environment,
-  - install activation scripts into the binary directory of the virtual environment (these will allow end user to
+  - install activation scripts into the binary directory of the virtual environment (these will allow end users to
     *activate* the virtual environment from various shells).
   - create files that mark the virtual environment as to be ignored by version control systems (currently we support
     Git only, as Mercurial, Bazaar or SVN do not support ignore files in subdirectories). This step can be skipped
@@ -40,17 +40,17 @@ The first thing we need to be able to create a virtual environment is a python i
 tool what type of virtual environment you would like to create, think of it as: version, architecture, implementation.
 
 ``virtualenv`` being a python application has always at least one such available, the one ``virtualenv`` itself is
-using it, and as such this is the default discovered element. This means that if you install ``virtualenv`` under
+using, and as such this is the default discovered element. This means that if you install ``virtualenv`` under
 python ``3.8``, virtualenv will by default create virtual environments that are also of version ``3.8``.
 
 Created python virtual environments are usually not self-contained. A complete python packaging is usually made up of
-thousand of files, so it's not efficient to install the entire python again into a new folder. Instead virtual
-environments are mere shells, that contain little within itself, and borrow most from the system python (this is what
+thousands of files, so it's not efficient to install the entire python again into a new folder. Instead virtual
+environments are mere shells, that contain little within themselves, and borrow most from the system python (this is what
 you installed, when you installed python itself). This does mean that if you upgrade your system python your virtual
-environments *might* break, so watch out. The upside of this referring to the system python is that creating virtual
+environments *might* break, so watch out. The upside of this, referring to the system python, is that creating virtual
 environments can be fast.
 
-Here we'll describe the builtin mechanism (note this can be extended though by plugins). The CLI flag :option:`p` or
+Here we'll describe the built-in mechanism (note this can be extended though by plugins). The CLI flag :option:`p` or
 :option:`python` allows you to specify a python specifier for what type of virtual environment you would like, the
 format is either:
 
@@ -87,14 +87,14 @@ format is either:
 
 .. warning::
 
-   As detailed above virtual environments usually just borrow things from the system Python, they don't actually contain
+   As detailed above, virtual environments usually just borrow things from the system Python, they don't actually contain
    all the data from the system Python. The version of the python executable is hardcoded within the python exe itself.
-   Therefore if you upgrade your system Python, your virtual environment will still report the version before the
+   Therefore, if you upgrade your system Python, your virtual environment will still report the version before the
    upgrade, even though now other than the executable all additional content (standard library, binary libs, etc) are
    of the new version.
 
-   Baring any major incompatibilities (rarely the case) the virtual environment will continue working, but other than
-   the content embedded within the python executable it will behave like the upgraded version. If a such virtual
+   Barring any major incompatibilities (rarely the case) the virtual environment will continue working, but other than
+   the content embedded within the python executable it will behave like the upgraded version. If such a virtual
    environment python is specified as the target python interpreter, we will create virtual environments that match the
    new system Python version, not the version reported by the virtual environment.
 
@@ -110,14 +110,14 @@ at the moment has two types of virtual environments:
   virtualenv is installed in the system python), which can be an expensive operation (especially true on Windows).
 
 - ``builtin`` - this means ``virtualenv`` is able to do the creation operation itself (by knowing exactly what files to
-  create and what system files needs to be referenced). The creator with name ``builtin`` is an alias on the first
+  create and what system files need to be referenced). The creator with name ``builtin`` is an alias on the first
   creator that's of this type (we provide creators for various target environments, that all differ in actual create
   operations, such as CPython 2 on Windows, PyPy2 on Windows, CPython3 on Posix, PyPy3 on Posix, and so on; for a full
   list see :option:`creator`).
 
 Seeders
 -------
-These will install for you some seed packages (one or more of the: :pypi:`pip`, :pypi:`setuptools`, :pypi:`wheel`) that
+These will install for you some seed packages (one or more of: :pypi:`pip`, :pypi:`setuptools`, :pypi:`wheel`) that
 enables you to install additional python packages into the created virtual environment (by invoking pip). There are two
 main seed mechanism available:
 
@@ -128,7 +128,7 @@ main seed mechanism available:
   library path (the ``site-packages`` folder). This allows all but the first virtual environment creation to be blazing
   fast (a ``pip`` mechanism takes usually 98% of the virtualenv creation time, so by creating this install image that
   we can just link into the virtual environments install directory we can achieve speedups of shaving the initial
-  1 minutes 10 seconds down to just 8 seconds in case of copy, or ``0.8`` seconds in case symlinks are available -
+  1 minute and 10 seconds down to just 8 seconds in case of a copy, or ``0.8`` seconds in case symlinks are available -
   this is on Windows, Linux/macOS with symlinks this can be as low as ``100ms`` from 3+ seconds).
   To override the filesystem location of the seed cache, one can use the
   ``VIRTUALENV_OVERRIDE_APP_DATA`` environment variable.
@@ -149,7 +149,7 @@ package. These wheels may be acquired from multiple locations as follows:
   upgrading virtualenv periodically will also upgrade the version of the seed packages.
 - However, end users might not be able to upgrade virtualenv at the same speed as we do new releases. Therefore, a user
   might request to upgrade the list of embedded wheels by invoking virtualenv with the :option:`upgrade-embed-wheels`
-  flag. If the operation is triggered in such manual way subsequent runs of virtualenv will always use the upgraded
+  flag. If the operation is triggered in such a manual way subsequent runs of virtualenv will always use the upgraded
   embed wheels.
 
   The operation can trigger automatically too, as a background process upon invocation of virtualenv, if no such upgrade
@@ -184,11 +184,11 @@ Embed wheels for distributions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Custom distributions often want to use their own set of wheel versions to distribute instead of the one virtualenv
-releases on PyPi. The reason for this is trying to keep the system versions of those package in sync with what
+releases on PyPi. The reason for this is trying to keep the system versions of those packages in sync with what
 virtualenv uses. In such cases they should patch the module `virtualenv.seed.wheels.embed
 <https://github.com/pypa/virtualenv/tree/main/src/virtualenv/seed/wheels/embed>`_, making sure to provide the function
 ``get_embed_wheel`` (which returns the wheel to use given a distribution/python version). The ``BUNDLE_FOLDER``,
-``BUNDLE_SUPPORT`` and ``MAX`` variables are needed if they want to use virtualenvs test suite to validate.
+``BUNDLE_SUPPORT`` and ``MAX`` variables are needed if they want to use virtualenv's test suite to validate.
 
 Furthermore, they might want to disable the periodic update by patching the
 `virtualenv.seed.embed.base_embed.PERIODIC_UPDATE_ON_BY_DEFAULT
@@ -199,10 +199,10 @@ automatically, and will not alter the OS provided wheels.
 
 Activators
 ----------
-These are activation scripts that will mangle with your shells settings to ensure that commands from within the python
-virtual environment take priority over your system paths. For example if invoking ``pip`` from your shell returned the
-system pythons pip before activation, once you do the activation this should refer to the virtual environments ``pip``.
-Note, though that all we do is change priority; so if your virtual environments ``bin``/``Scripts`` folder does not
+These are activation scripts that will mangle with your shell's settings to ensure that commands from within the python
+virtual environment take priority over your system paths. For example, if invoking ``pip`` from your shell returned the
+system python's pip before activation, once you do the activation this should refer to the virtual environments ``pip``.
+Note, though that all we do is change priority; so, if your virtual environments ``bin``/``Scripts`` folder does not
 contain some executable, this will still resolve to the same executable it would have resolved before the activation.
 
 For a list of shells we provide activators see :option:`activators`. The location of these is right alongside the python
@@ -214,7 +214,7 @@ command might vary by shell - e.g. bash is ``.``):
 
    source bin/activate
 
-This is all it does; it's purely a convenience of prepending the virtual environments binary folder onto the ``PATH``
+This is all it does; it's purely a convenience of prepending the virtual environment's binary folder onto the ``PATH``
 environment variable. Note you don't have to activate a virtual environment to use it. In this case though you would
 need to type out the path to the executables, rather than relying on your shell to resolve them to your virtual
 environment.
@@ -230,7 +230,7 @@ also provisions a ``deactivate`` command that will allow you to undo the operati
 .. note::
 
     If using Powershell, the ``activate`` script is subject to the
-    `execution policies <http://technet.microsoft.com/en-us/library/dd347641.aspx>`_ on the system. By default Windows
+    `execution policies <http://technet.microsoft.com/en-us/library/dd347641.aspx>`_ on the system. By default, Windows
     7 and later, the system's execution policy is set to ``Restricted``, meaning no scripts like the ``activate`` script
     are allowed to be executed.
 
