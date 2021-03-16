@@ -1,1 +1,0 @@
-Fix PyPy3 stdlib on Windows is incorrect - by :user:`gaborbernat`.
