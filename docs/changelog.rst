@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.4.3 (2021-03-16)
+--------------------
+
+Bugfixes - 20.4.3
+~~~~~~~~~~~~~~~~~
+- Bump embeded setuptools from ``52.0.0`` to ``54.1.2`` - by :user:`gaborbernat` (`#2069 <https://github.com/pypa/virtualenv/issues/2069>`_)
+- Fix PyPy3 stdlib on Windows is incorrect - by :user:`gaborbernat`. (`#2071 <https://github.com/pypa/virtualenv/issues/2071>`_)
+
+
 v20.4.2 (2021-02-01)
 --------------------
 
