@@ -153,14 +153,15 @@ def pip_cert(tmp_path_factory):
     # workaround for https://github.com/pypa/pip/issues/8984 - if the certificate is explicitly set no error can happen
     key = ensure_str("PIP_CERT")
     if key in os.environ:
-        return
-    cert = tmp_path_factory.mktemp("folder") / "cert"
-    import pkgutil
-
-    cert_data = pkgutil.get_data("pip._vendor.certifi", "cacert.pem")
-    cert.write_bytes(cert_data)
-    with change_os_environ(key, str(cert)):
         yield
+    else:
+        cert = tmp_path_factory.mktemp("folder") / "cert"
+        import pkgutil
+
+        cert_data = pkgutil.get_data("pip._vendor.certifi", "cacert.pem")
+        cert.write_bytes(cert_data)
+        with change_os_environ(key, str(cert)):
+            yield
 
 
 @pytest.fixture(autouse=True)
