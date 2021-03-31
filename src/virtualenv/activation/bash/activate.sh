@@ -24,7 +24,7 @@ deactivate () {
     fi
 
     # The hash command must be called to get it to forget past
-    # commands. Without forgetting past commands the $PATH changes 
+    # commands. Without forgetting past commands the $PATH changes
     # we made may not be respected
     hash -r 2>/dev/null
 
@@ -78,6 +78,6 @@ pydoc () {
 }
 
 # The hash command must be called to get it to forget past
-# commands. Without forgetting past commands the $PATH changes 
+# commands. Without forgetting past commands the $PATH changes
 # we made may not be respected
 hash -r 2>/dev/null
