@@ -2,7 +2,7 @@
 blank_issues_enabled: true  # default
 contact_links:
 - name: '💬 pypa/virtualenv @ Discord'
-  url: https://discord.gg/uufxTxAMCX
+  url: https://discord.gg/tox
   about: Chat with the devs
 - name: 🤷💻🤦 Discourse
   url: https://discuss.python.org/c/packaging
