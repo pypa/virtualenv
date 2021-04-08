@@ -1,9 +1,9 @@
 # Ref: https://help.github.com/en/github/building-a-strong-community/configuring-issue-templates-for-your-repository#configuring-the-template-chooser
 blank_issues_enabled: true  # default
 contact_links:
-- name: '💬 pypa/virtualenv @ Gitter'
-  url: https://gitter.im/pypa/virtualenv
-  about: Chat with devs
+- name: '💬 pypa/virtualenv @ Discord'
+  url: https://discord.gg/pypa
+  about: Chat with the devs
 - name: 🤷💻🤦 Discourse
   url: https://discuss.python.org/c/packaging
   about: |
