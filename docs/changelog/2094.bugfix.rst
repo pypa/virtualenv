@@ -1,1 +1,0 @@
-Upgrade embeded setuptools to ``56.0.0`` by :user:`gaborbernat`.

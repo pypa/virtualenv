@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.4.4 (2021-04-20)
+--------------------
+
+Bugfixes - 20.4.4
+~~~~~~~~~~~~~~~~~
+- Built in discovery class is always preferred over plugin supplied classes. (`#2087 <https://github.com/pypa/virtualenv/issues/2087>`_)
+- Upgrade embeded setuptools to ``56.0.0`` by :user:`gaborbernat`. (`#2094 <https://github.com/pypa/virtualenv/issues/2094>`_)
+
+
 v20.4.3 (2021-03-16)
 --------------------
 
