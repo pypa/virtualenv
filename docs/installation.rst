@@ -61,6 +61,9 @@ minor release use the link ``https://bootstrap.pypa.io/virtualenv/x.y/virtualenv
 supporting Python 2.7 use
 `https://bootstrap.pypa.io/virtualenv/2.7/virtualenv.pyz <https://bootstrap.pypa.io/virtualenv/2.7/virtualenv.pyz>`_.
 
+If you are looking for past version of virtualenv.pyz they are available here:
+https://github.com/pypa/get-virtualenv/blob/<virtualenv version>/public/<python version>/virtualenv.pyz?raw=true
+
 via ``setup.py``
 ----------------
 We don't recommend and officially support this method. One should prefer using an installer that supports
