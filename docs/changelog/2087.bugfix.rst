@@ -1,1 +1,0 @@
-Built in discovery class is always preferred over plugin supplied classes.
