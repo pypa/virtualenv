@@ -44,3 +44,14 @@ def test_reset_app_data_does_not_conflict_clear():
     session_via_cli(["--clear", "venv"], options=options)
     assert options.clear is True
     assert options.reset_app_data is False
+
+
+def test_builtin_discovery_class_preferred(mocker):
+    mocker.patch(
+        "virtualenv.run.plugin.discovery._get_default_discovery",
+        return_value=["pluginA", "pluginX", "builtin", "Aplugin", "Xplugin"],
+    )
+
+    options = VirtualEnvOptions()
+    session_via_cli(["venv"], options=options)
+    assert options.discovery == "builtin"
