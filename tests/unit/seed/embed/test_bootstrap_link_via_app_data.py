@@ -52,7 +52,7 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
     pip = site_package / "pip"
     setuptools = site_package / "setuptools"
 
-    files_post_first_create = list(site_package.iterdir())
+    files_post_first_create = sorted(list(site_package.iterdir()))
     assert pip in files_post_first_create
     assert setuptools in files_post_first_create
     for pip_exe in [
@@ -90,7 +90,7 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
     result = cli_run(create_cmd)
     coverage_env()
     assert result
-    files_post_second_create = list(site_package.iterdir())
+    files_post_second_create = sorted(list(site_package.iterdir()))
     assert files_post_first_create == files_post_second_create
 
     # Windows does not allow removing a executable while running it, so when uninstalling pip we need to do it via
