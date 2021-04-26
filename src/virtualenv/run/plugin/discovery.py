@@ -4,7 +4,7 @@ from .base import PluginLoader
 
 
 class Discovery(PluginLoader):
-    """"""
+    """ """
 
 
 def get_discover(parser, args):

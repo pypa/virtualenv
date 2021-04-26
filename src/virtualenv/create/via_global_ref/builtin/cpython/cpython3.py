@@ -15,7 +15,7 @@ from .common import CPython, CPythonPosix, CPythonWindows, is_mac_os_framework
 
 @add_metaclass(abc.ABCMeta)
 class CPython3(CPython, Python3Supports):
-    """"""
+    """ """
 
 
 class CPython3Posix(CPythonPosix, CPython3):
@@ -43,7 +43,7 @@ class CPython3Posix(CPythonPosix, CPython3):
 
 
 class CPython3Windows(CPythonWindows, CPython3):
-    """"""
+    """ """
 
     @classmethod
     def setup_meta(cls, interpreter):

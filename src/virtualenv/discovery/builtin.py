@@ -183,4 +183,4 @@ def possible_specs(spec):
 
 
 class PathPythonInfo(PythonInfo):
-    """"""
+    """ """
