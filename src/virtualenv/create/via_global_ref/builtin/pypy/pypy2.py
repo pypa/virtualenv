@@ -16,7 +16,7 @@ from .common import PyPy
 
 @add_metaclass(abc.ABCMeta)
 class PyPy2(PyPy, Python2):
-    """"""
+    """ """
 
     @classmethod
     def exe_stem(cls):

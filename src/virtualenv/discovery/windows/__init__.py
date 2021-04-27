@@ -6,7 +6,7 @@ from .pep514 import discover_pythons
 
 
 class Pep514PythonInfo(PythonInfo):
-    """"""
+    """ """
 
 
 def propose_interpreters(spec, cache_dir, env):
