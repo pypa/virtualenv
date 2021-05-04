@@ -19,6 +19,7 @@ def main():
     load_host_site()
     if global_site_package_enabled:
         add_global_site_package()
+    rewrite_getsitepackages()
 
 
 def load_host_site():
@@ -159,6 +160,24 @@ def add_global_site_package():
         site.main()
     finally:
         site.PREFIXES = orig_prefixes + site.PREFIXES
+
+
+# Debian and it's derivatives patch this function. We undo the damage
+def rewrite_getsitepackages():
+    site = sys.modules["site"]
+
+    orig_getsitepackages = site.getsitepackages
+
+    def getsitepackages():
+        sitepackages = orig_getsitepackages()
+        for prefix in (sys.prefix, sys.exec_prefix):
+            path = os.path.join(prefix, "lib", "python" + sys.version[:3], "site-packages")
+            if path not in sitepackages:
+                sitepackages.insert(0, path)
+
+        return sitepackages
+
+    site.getsitepackages = getsitepackages
 
 
 main()

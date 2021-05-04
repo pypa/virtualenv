@@ -653,3 +653,16 @@ def test_getsitepackages_system_site(tmp_path):
 
     for system_site_package in system_site_packages:
         assert system_site_package in site_packages
+
+
+def test_getsitepackages(tmp_path):
+    session = cli_run([ensure_text(str(tmp_path))])
+    env_site_packages = [str(session.creator.purelib), str(session.creator.platlib)]
+    out = subprocess.check_output(
+        [str(session.creator.exe), "-c", r"import site; print(site.getsitepackages())"],
+        universal_newlines=True,
+    )
+    site_packages = ast.literal_eval(out)
+
+    for env_site_package in env_site_packages:
+        assert env_site_package in site_packages
