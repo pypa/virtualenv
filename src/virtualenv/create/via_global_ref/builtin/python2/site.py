@@ -158,7 +158,7 @@ def add_global_site_package():
         site.PREFIXES = [sys.base_prefix, sys.base_exec_prefix]
         site.main()
     finally:
-        site.PREFIXES = orig_prefixes
+        site.PREFIXES = orig_prefixes + site.PREFIXES
 
 
 main()

@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import ast
 import difflib
 import gc
 import json
@@ -621,3 +622,34 @@ def test_pth_in_site_vs_PYTHONPATH(tmp_path):
         env=env,
     )
     assert out == "ok\n"
+
+
+def test_getsitepackages_system_site(tmp_path):
+    import site
+
+    old_prefixes = site.PREFIXES
+    site.PREFIXES = [sys.base_prefix, sys.base_exec_prefix]
+    system_site_packages = site.getsitepackages()
+    site.PREFIXES = old_prefixes
+
+    # Test without --system-site-packages
+    session = cli_run([ensure_text(str(tmp_path))])
+    out = subprocess.check_output(
+        [str(session.creator.exe), "-c", r"import site; print(site.getsitepackages())"],
+        universal_newlines=True,
+    )
+    site_packages = ast.literal_eval(out)
+
+    for system_site_package in system_site_packages:
+        assert system_site_package not in site_packages
+
+    # Test with --system-site-packages
+    session = cli_run([ensure_text(str(tmp_path)), "--system-site-packages"])
+    out = subprocess.check_output(
+        [str(session.creator.exe), "-c", r"import site; print(site.getsitepackages())"],
+        universal_newlines=True,
+    )
+    site_packages = ast.literal_eval(out)
+
+    for system_site_package in system_site_packages:
+        assert system_site_package in site_packages
