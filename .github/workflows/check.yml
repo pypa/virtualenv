@@ -42,7 +42,6 @@ jobs:
             echo "try $i" && \
             ${{ runner.os == 'Linux' && 'sudo apt-get update -y && sudo apt-get install fish csh' || true}} && \
             ${{ runner.os == 'macOS' && 'brew install fish tcsh' || true}} && \
-            ${{ runner.os == 'Windows' && ( matrix.py == '2.7' || matrix.py == 'pypy2' ) && 'choco install vcpython27 --yes -f' || true }} && \
             exit 0 || true;
           done
           exit 1
