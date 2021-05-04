@@ -171,7 +171,8 @@ def rewrite_getsitepackages():
     def getsitepackages():
         sitepackages = orig_getsitepackages()
         for prefix in (sys.prefix, sys.exec_prefix):
-            path = os.path.join(prefix, "lib", "python" + sys.version[:3], "site-packages")
+            # os is not defined here, but will be in site.py, where we monkey-patch this function.
+            path = os.path.join(prefix, "lib", "python" + sys.version[:3], "site-packages")  # noqa: F821
             if path not in sitepackages:
                 sitepackages.insert(0, path)
 
