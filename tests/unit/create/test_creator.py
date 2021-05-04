@@ -626,6 +626,7 @@ def test_pth_in_site_vs_PYTHONPATH(tmp_path):
 
 def test_getsitepackages_system_site(tmp_path):
     import site
+
     old_prefixes = site.PREFIXES
     site.PREFIXES = [sys.base_prefix, sys.base_exec_prefix]
     system_site_packages = site.getsitepackages()
