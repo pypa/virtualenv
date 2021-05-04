@@ -655,7 +655,7 @@ def test_getsitepackages_system_site(tmp_path):
         assert system_site_package in site_packages
 
 
-def test_getsitepackages(tmp_path):
+def test_get_site_packages(tmp_path):
     session = cli_run([ensure_text(str(tmp_path))])
     env_site_packages = [str(session.creator.purelib), str(session.creator.platlib)]
     out = subprocess.check_output(
