@@ -656,6 +656,7 @@ def test_getsitepackages_system_site(tmp_path):
 
 
 def test_get_site_packages(tmp_path):
+    case_sensitive = fs_is_case_sensitive()
     session = cli_run([ensure_text(str(tmp_path))])
     env_site_packages = [str(session.creator.purelib), str(session.creator.platlib)]
     out = subprocess.check_output(
@@ -663,6 +664,10 @@ def test_get_site_packages(tmp_path):
         universal_newlines=True,
     )
     site_packages = ast.literal_eval(out)
+
+    if not case_sensitive:
+        env_site_packages = [x.lower() for x in env_site_packages]
+        site_packages = [x.lower() for x in site_packages]
 
     for env_site_package in env_site_packages:
         assert env_site_package in site_packages
