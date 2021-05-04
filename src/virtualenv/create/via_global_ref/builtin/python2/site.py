@@ -164,6 +164,10 @@ def add_global_site_package():
 
 # Debian and it's derivatives patch this function. We undo the damage
 def rewrite_getsitepackages():
+    # This mirrors the check in python's site.py
+    if sys.platform in ("os2emx", "riscos") or sep != "/":
+        return
+
     site = sys.modules["site"]
 
     orig_getsitepackages = site.getsitepackages
