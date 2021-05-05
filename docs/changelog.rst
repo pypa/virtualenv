@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.4.5 (2021-05-05)
+--------------------
+
+Bugfixes - 20.4.5
+~~~~~~~~~~~~~~~~~
+- Bump pip to ``21.1.1`` from ``21.0.1`` - by :user:`gaborbernat`. (`#2104 <https://github.com/pypa/virtualenv/issues/2104>`_)
+- Fix ``site.getsitepackages()`` ignoring ``--system-site-packages`` on python2 - by :user:`freundTech`. (`#2106 <https://github.com/pypa/virtualenv/issues/2106>`_)
+
+
 v20.4.4 (2021-04-20)
 --------------------
 
