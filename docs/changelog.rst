@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.4.6 (2021-05-05)
+--------------------
+
+Bugfixes - 20.4.6
+~~~~~~~~~~~~~~~~~
+- Fix ``site.getsitepackages()`` broken on python2 on debian - by :user:`freundTech`. (`#2105 <https://github.com/pypa/virtualenv/issues/2105>`_)
+
+
 v20.4.5 (2021-05-05)
 --------------------
 
