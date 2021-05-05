@@ -175,6 +175,9 @@ def rewrite_getsitepackages(here):
 
     def getsitepackages():
         sitepackages = orig_getsitepackages()
+        if sys.prefix not in site.PREFIXES or sys.exec_prefix not in site.PREFIXES:
+            # Someone messed with the prefixes, so we stop patching
+            return sitepackages
         for path in site_package_dirs:
             if path not in sitepackages:
                 sitepackages.insert(0, path)

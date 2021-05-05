@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import shutil
+import site
 import stat
 import subprocess
 import sys
@@ -625,15 +626,11 @@ def test_pth_in_site_vs_PYTHONPATH(tmp_path):
 
 
 def test_getsitepackages_system_site(tmp_path):
-    import site
-
-    old_prefixes = site.PREFIXES
-    site.PREFIXES = [sys.base_prefix, sys.base_exec_prefix]
-    system_site_packages = site.getsitepackages()
-    site.PREFIXES = old_prefixes
-
     # Test without --system-site-packages
     session = cli_run([ensure_text(str(tmp_path))])
+
+    system_site_packages = get_expected_system_site_packages(session)
+
     out = subprocess.check_output(
         [str(session.creator.exe), "-c", r"import site; print(site.getsitepackages())"],
         universal_newlines=True,
@@ -645,6 +642,9 @@ def test_getsitepackages_system_site(tmp_path):
 
     # Test with --system-site-packages
     session = cli_run([ensure_text(str(tmp_path)), "--system-site-packages"])
+
+    system_site_packages = get_expected_system_site_packages(session)
+
     out = subprocess.check_output(
         [str(session.creator.exe), "-c", r"import site; print(site.getsitepackages())"],
         universal_newlines=True,
@@ -653,6 +653,17 @@ def test_getsitepackages_system_site(tmp_path):
 
     for system_site_package in system_site_packages:
         assert system_site_package in site_packages
+
+
+def get_expected_system_site_packages(session):
+    base_prefix = session.creator.pyenv_cfg["base-prefix"]
+    base_exec_prefix = session.creator.pyenv_cfg["base-exec-prefix"]
+    old_prefixes = site.PREFIXES
+    site.PREFIXES = [base_prefix, base_exec_prefix]
+    system_site_packages = site.getsitepackages()
+    site.PREFIXES = old_prefixes
+
+    return system_site_packages
 
 
 def test_get_site_packages(tmp_path):
