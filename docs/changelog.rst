@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.4.7 (2021-05-24)
+--------------------
+
+Bugfixes - 20.4.7
+~~~~~~~~~~~~~~~~~
+- Upgrade embedded pip to ``21.1.2`` and setuptools to ``57.0.0`` - by :user:`gaborbernat`. (`#2123 <https://github.com/pypa/virtualenv/issues/2123>`_)
+
+
 v20.4.6 (2021-05-05)
 --------------------
 
