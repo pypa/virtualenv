@@ -14,9 +14,9 @@ class PluginLoader(object):
         return OrderedDict((e.name, e.load()) for e in cls.entry_points(group=key))
 
     @staticmethod
-    def entry_points():
+    def entry_points(**kwargs):
         if PluginLoader._ENTRY_POINTS is None:
-            PluginLoader._ENTRY_POINTS = entry_points()
+            PluginLoader._ENTRY_POINTS = entry_points(**kwargs)
         return PluginLoader._ENTRY_POINTS
 
 
