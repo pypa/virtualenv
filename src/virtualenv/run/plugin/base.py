@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import sys
 from collections import OrderedDict
 
-if sys.version_info >= (3, 8):
+if sys.version_info >= (3, 10):
     from importlib.metadata import entry_points
 else:
     from importlib_metadata import entry_points
@@ -15,7 +15,7 @@ class PluginLoader(object):
 
     @classmethod
     def entry_points_for(cls, key):
-        return OrderedDict((e.name, e.load()) for e in cls.entry_points().get(key, {}))
+        return OrderedDict((e.name, e.load()) for e in cls.entry_points(group=key))
 
     @staticmethod
     def entry_points():
