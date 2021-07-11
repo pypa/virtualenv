@@ -62,4 +62,4 @@ class Pypy3Windows(PyPy3, WindowsSupports):
 
     @classmethod
     def _shared_libs(cls):
-        return ["libpypy3-c.dll"]
+        return ["libpypy3-c.dll", "libffi-7.dll"]
