@@ -25,7 +25,7 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_f
     def _load_embed_wheel(app_data, distribution, for_py_version, version):
         return load_embed_wheel(app_data, distribution, old_ver, version)
 
-    old_ver = "3.4"
+    old_ver = "2.7"
     old = BUNDLE_SUPPORT[old_ver]
     mocker.patch("virtualenv.seed.wheels.bundle.load_embed_wheel", side_effect=_load_embed_wheel)
 
@@ -36,7 +36,9 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_f
                 continue
             if with_version == "embed":
                 expected.add(BUNDLE_FOLDER)
-            elif old[dist] != new[dist]:
+            elif old[distribution] == new[distribution]:
+                expected.add(BUNDLE_FOLDER)
+            else:
                 expected.add(extra_search_dir)
         expected_list = list(
             itertools.chain.from_iterable(["--find-links", str(e)] for e in sorted(expected, key=lambda x: str(x))),

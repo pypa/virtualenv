@@ -37,7 +37,7 @@ def from_exe(cls, app_data, exe, env=None, raise_on_error=True, ignore_cache=Fal
 
 def _get_from_cache(cls, app_data, exe, env, ignore_cache=True):
     # note here we cannot resolve symlinks, as the symlink may trigger different prefix information if there's a
-    # pyenv.cfg somewhere alongside on python3.4+
+    # pyenv.cfg somewhere alongside on python3.5+
     exe_path = Path(exe)
     if not ignore_cache and exe_path in _CACHE:  # check in the in-memory cache
         result = _CACHE[exe_path]

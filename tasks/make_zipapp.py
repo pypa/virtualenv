@@ -20,7 +20,7 @@ from packaging.requirements import Requirement
 
 HERE = Path(__file__).parent.absolute()
 
-VERSIONS = ["3.{}".format(i) for i in range(9, 3, -1)] + ["2.7"]
+VERSIONS = ["3.{}".format(i) for i in range(10, 4, -1)] + ["2.7"]
 
 
 def main():

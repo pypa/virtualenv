@@ -67,7 +67,7 @@ def test_manual_upgrade(session_app_data, caplog, mocker, for_py_version):
 
 
 def test_pick_periodic_update(tmp_path, session_app_data, mocker, for_py_version):
-    embed, current = get_embed_wheel("setuptools", "3.4"), get_embed_wheel("setuptools", for_py_version)
+    embed, current = get_embed_wheel("setuptools", "3.5"), get_embed_wheel("setuptools", for_py_version)
     mocker.patch("virtualenv.seed.wheels.bundle.load_embed_wheel", return_value=embed)
     completed = datetime.now() - timedelta(days=29)
     u_log = UpdateLog(

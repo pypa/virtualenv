@@ -1,0 +1,1 @@
+Drop python ``3.4`` support as it has been over 2 years since EOL - by :user:`gaborbernat`.
