@@ -5,6 +5,24 @@ Release History
 
 .. towncrier release notes start
 
+v20.5.0 (2021-07-13)
+--------------------
+
+Features - 20.5.0
+~~~~~~~~~~~~~~~~~
+- Plugins now use 'selectable' entry points - by :user:`jaraco`. (`#2093 <https://github.com/pypa/virtualenv/issues/2093>`_)
+- add libffi-7.dll to the hard-coded list of dlls for PyPy (`#2141 <https://github.com/pypa/virtualenv/issues/2141>`_)
+- Use the better maintained ``platformdirs`` instead of ``appdirs`` - by :user:`gaborbernat`. (`#2142 <https://github.com/pypa/virtualenv/issues/2142>`_)
+
+Bugfixes - 20.5.0
+~~~~~~~~~~~~~~~~~
+- Bump pip the embedded pip ``21.1.3`` and setuptools to ``57.1.0`` - by :user:`gaborbernat`. (`#2135 <https://github.com/pypa/virtualenv/issues/2135>`_)
+
+Deprecations and Removals - 20.5.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Drop python ``3.4`` support as it has been over 2 years since EOL - by :user:`gaborbernat`. (`#2141 <https://github.com/pypa/virtualenv/issues/2141>`_)
+
+
 v20.4.7 (2021-05-24)
 --------------------
 
