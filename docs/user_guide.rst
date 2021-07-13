@@ -106,7 +106,7 @@ at the moment has two types of virtual environments:
 
 - ``venv`` - this delegates the creation process towards the ``venv`` module, as described in
   `PEP 405 <https://www.python.org/dev/peps/pep-0405>`_. This is only available on Python interpreters having version
-  ``3.4`` or later, and also has the downside that virtualenv **must** create a process to invoke that module (unless
+  ``3.5`` or later, and also has the downside that virtualenv **must** create a process to invoke that module (unless
   virtualenv is installed in the system python), which can be an expensive operation (especially true on Windows).
 
 - ``builtin`` - this means ``virtualenv`` is able to do the creation operation itself (by knowing exactly what files to

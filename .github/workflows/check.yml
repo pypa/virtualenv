@@ -34,7 +34,6 @@ jobs:
           - pypy2
         include:
           - { os: macos-latest, py: brew@py3 }
-          - { os: "ubuntu-18.04", py: 3.4.10 }
     steps:
       - name: Install OS dependencies
         run: |

@@ -129,8 +129,6 @@ _VENV_BUG_ON = (
     ids=lambda i: "-".join(i) if isinstance(i, tuple) else i,
 )
 def test_create_no_seed(python, creator, isolated, system, coverage_env, special_name_dir):
-    if creator[0] == "venv" and sys.version_info[0:2] == (3, 4):  # venv on python3.4 only supports ascii chars
-        special_name_dir = special_name_dir.with_name(special_name_dir.name.encode("ascii", errors="ignore").decode())
     dest = special_name_dir
     creator_key, method = creator
     cmd = [
