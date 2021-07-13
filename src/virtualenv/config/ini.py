@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import os
 
-from appdirs import user_config_dir
+from platformdirs import user_config_dir
 
 from virtualenv.info import PY3
 from virtualenv.util import ConfigParser

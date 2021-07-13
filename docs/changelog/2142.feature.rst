@@ -1,0 +1,1 @@
+Use the better maintained ``platformdirs`` instead of ``appdirs`` - by :user:`gaborbernat`.

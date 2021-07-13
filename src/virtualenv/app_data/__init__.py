@@ -6,7 +6,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 import os
 
-from appdirs import user_data_dir
+from platformdirs import user_data_dir
 
 from .na import AppDataDisabled
 from .read_only import ReadOnlyAppData

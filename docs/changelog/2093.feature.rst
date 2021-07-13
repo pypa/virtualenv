@@ -1,0 +1,1 @@
+Plugins now use 'selectable' entry points - by :user:`jaraco`.

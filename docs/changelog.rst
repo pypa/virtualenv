@@ -128,7 +128,7 @@ Features - 20.2.0
 ~~~~~~~~~~~~~~~~~
 - Optionally skip VCS ignore directive for entire virtualenv directory, using option :option:`no-vcs-ignore`, by default ``False``. (`#2003 <https://github.com/pypa/virtualenv/issues/2003>`_)
 - Add ``--read-only-app-data`` option to allow for creation based on an existing
-  app data cache which is non-writable.  This may be useful (for example) to
+  app data cache which is non-writable. This may be useful (for example) to
   produce a docker image where the app-data is pre-populated.
 
   .. code-block:: dockerfile
