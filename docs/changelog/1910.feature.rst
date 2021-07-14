@@ -1,2 +1,0 @@
-Support Python interpreters without ``distutils`` (fallback to ``syconfig`` in these cases) - by :user:`gaborbernat`.
-

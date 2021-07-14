@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.6.0 (2021-07-14)
+--------------------
+
+Features - 20.6.0
+~~~~~~~~~~~~~~~~~
+- Support Python interpreters without ``distutils`` (fallback to ``syconfig`` in these cases) - by :user:`gaborbernat`. (`#1910 <https://github.com/pypa/virtualenv/issues/1910>`_)
+
+
 v20.5.0 (2021-07-13)
 --------------------
 
