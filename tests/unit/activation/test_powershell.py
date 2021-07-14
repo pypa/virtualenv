@@ -10,7 +10,8 @@ from virtualenv.activation import PowerShellActivator
 
 @pytest.mark.slow
 def test_powershell(activation_tester_class, activation_tester, monkeypatch):
-    monkeypatch.setenv('TERM', 'xterm')
+    monkeypatch.setenv("TERM", "xterm")
+
     class PowerShell(activation_tester_class):
         def __init__(self, session):
             cmd = "powershell.exe" if sys.platform == "win32" else "pwsh"
