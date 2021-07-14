@@ -17,7 +17,7 @@ def test_discover_empty_folder(tmp_path, monkeypatch, session_app_data):
         CURRENT.discover_exe(session_app_data, prefix=str(tmp_path))
 
 
-BASE = (CURRENT.distutils_install["scripts"], ".")
+BASE = (CURRENT.install_path("scripts"), ".")
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
