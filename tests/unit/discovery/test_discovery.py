@@ -27,7 +27,7 @@ def test_discovery_via_path(monkeypatch, case, tmp_path, caplog, session_app_dat
     elif case == "upper":
         name = name.upper()
     exe_name = "{}{}{}".format(name, current.version_info.major, ".exe" if sys.platform == "win32" else "")
-    target = tmp_path / current.distutils_install["scripts"]
+    target = tmp_path / current.install_path("scripts")
     target.mkdir(parents=True)
     executable = target / exe_name
     os.symlink(sys.executable, ensure_text(str(executable)))

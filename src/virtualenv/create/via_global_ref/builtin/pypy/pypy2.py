@@ -41,7 +41,7 @@ class PyPy2(PyPy, Python2):
 
     @property
     def include(self):
-        return self.dest / self.interpreter.distutils_install["headers"]
+        return self.dest / self.interpreter.install_path("headers")
 
     @classmethod
     def modules(cls):

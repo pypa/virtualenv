@@ -12,9 +12,8 @@ import platform
 import re
 import sys
 import sysconfig
+import warnings
 from collections import OrderedDict, namedtuple
-from distutils import dist
-from distutils.command.install import SCHEME_KEYS
 from string import digits
 
 VersionInfo = namedtuple("VersionInfo", ["major", "minor", "micro", "releaselevel", "serial"])
@@ -118,10 +117,28 @@ class PythonInfo(object):
         # note we must choose the original and not the pure executable as shim scripts might throw us off
         return self.original_executable
 
+    def install_path(self, key):
+        result = self.distutils_install.get(key)
+        if result is None:  # use sysconfig if distutils is unavailable
+            # set prefixes to empty => result is relative from cwd
+            prefixes = self.prefix, self.exec_prefix, self.base_prefix, self.base_exec_prefix
+            config_var = {k: "" if v in prefixes else v for k, v in self.sysconfig_vars}
+            result = self.sysconfig_path(key, config_var=config_var).lstrip(os.sep)
+        return result
+
     @staticmethod
     def _distutils_install():
-        # follow https://github.com/pypa/pip/blob/main/src/pip/_internal/locations.py#L95
+        # use distutils primarily because that's what pip does
+        # https://github.com/pypa/pip/blob/main/src/pip/_internal/locations.py#L95
         # note here we don't import Distribution directly to allow setuptools to patch it
+        with warnings.catch_warnings():  # disable warning for PEP-632
+            warnings.simplefilter("ignore")
+            try:
+                from distutils import dist
+                from distutils.command.install import SCHEME_KEYS
+            except ImportError:  # if removed or not installed ignore
+                return {}
+
         d = dist.Distribution({"script_args": "--no-user-cfg"})  # conf files not parsed so they do not hijack paths
         if hasattr(sys, "_framework"):
             sys._framework = None  # disable macOS static paths for framework
@@ -177,7 +194,7 @@ class PythonInfo(object):
         )
         if not os.path.exists(path):  # some broken packaging don't respect the sysconfig, fallback to distutils path
             # the pattern include the distribution name too at the end, remove that via the parent call
-            fallback = os.path.join(self.prefix, os.path.dirname(self.distutils_install["headers"]))
+            fallback = os.path.join(self.prefix, os.path.dirname(self.install_path("headers")))
             if os.path.exists(fallback):
                 path = fallback
         return path
