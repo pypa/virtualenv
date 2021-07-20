@@ -998,8 +998,12 @@ def find_wheels(projects, search_dirs):
                 )
                 if project == "pip" and sys.version_info[0:2] == (3, 4):
                     wheel = next(p for v, p in versions if v <= (19, 1, 1))
+                elif project == "pip" and sys.version_info[0:2] == (3, 5):
+                    wheel = next(p for v, p in versions if v <= (20, 3, 4))
                 elif project == "setuptools" and sys.version_info[0:2] == (3, 4):
                     wheel = next(p for v, p in versions if v < (44,))
+                elif project == "setuptools" and sys.version_info[0:2] == (3, 5):
+                    wheel = next(p for v, p in versions if v < (51,))
                 else:
                     wheel = versions[0][1]
                 wheels.append(wheel)
