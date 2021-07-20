@@ -1,1 +1,0 @@
-Don't attempt to use setuptools 44+ with Python 3.4 - by ``hroncok``

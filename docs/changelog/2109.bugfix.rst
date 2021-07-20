@@ -1,1 +1,0 @@
-Preserve compatibility with Python 3.10 - by ``hroncok``
