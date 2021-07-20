@@ -11,9 +11,9 @@ Virtualenv
 .. image:: https://readthedocs.org/projects/virtualenv/badge/?version=latest&style=flat-square
   :target: https://virtualenv.pypa.io
   :alt: Documentation status
-.. image:: https://img.shields.io/gitter/room/pypa/virtualenv?color=FF004F&style=flat-square
-  :target: https://gitter.im/pypa/virtualenv
-  :alt: Gitter
+.. image:: https://img.shields.io/discord/803025117553754132
+  :target: https://discord.gg/pypa
+  :alt: Discord
 .. image:: https://img.shields.io/pypi/dm/virtualenv?style=flat-square
   :target: https://pypistats.org/packages/virtualenv
   :alt: PyPI - Downloads
