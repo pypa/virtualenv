@@ -971,6 +971,23 @@ def filter_install_output(line):
     return Logger.DEBUG
 
 
+MAX_VER = {
+    "pip": {
+        (2, 7): (20, 3, 4),
+        (3, 4): (19, 1, 1),
+        (3, 5): (20, 3, 4),
+    },
+    "setuptools": {
+        (2, 7): (44, 1, 1),
+        (3, 4): (43, 0, 0),
+        (3, 5): (50, 3, 2),
+    },
+    "wheel": {
+        (3, 4): (0, 33, 6),
+    },
+}
+
+
 def find_wheels(projects, search_dirs):
     """Find wheels from which we can import PROJECTS.
 
@@ -996,14 +1013,9 @@ def find_wheels(projects, search_dirs):
                         )
                     )
                 )
-                if project == "pip" and sys.version_info[0:2] == (3, 4):
-                    wheel = next(p for v, p in versions if v <= (19, 1, 1))
-                elif project == "pip" and sys.version_info[0:2] == (3, 5):
-                    wheel = next(p for v, p in versions if v <= (20, 3, 4))
-                elif project == "setuptools" and sys.version_info[0:2] == (3, 4):
-                    wheel = next(p for v, p in versions if v < (44,))
-                elif project == "setuptools" and sys.version_info[0:2] == (3, 5):
-                    wheel = next(p for v, p in versions if v < (51,))
+                max_ver = MAX_VER.get(project, {}).get(sys.version_info[0:2])
+                if max_ver is not None:
+                    wheel = next(p for v, p in versions if v <= max_ver)
                 else:
                     wheel = versions[0][1]
                 wheels.append(wheel)
@@ -1035,8 +1047,8 @@ def _install_wheel_with_search_dir(download, project_names, py_executable, searc
     # PIP_FIND_LINKS uses space as the path separator and thus cannot have paths
     # with spaces in them. Convert any of those to local file:// URL form.
     try:
-        from urlparse import urljoin
         from urllib import pathname2url
+        from urlparse import urljoin
     except ImportError:
         from urllib.parse import urljoin
         from urllib.request import pathname2url
@@ -1097,13 +1109,13 @@ def _install_wheel_with_search_dir(download, project_names, py_executable, searc
         )
     ).encode("utf8")
 
-    if sys.version_info[0:2] == (3, 4):
-        if "pip" in project_names:
-            at = project_names.index("pip")
-            project_names[at] = "pip<19.2"
-        if "setuptools" in project_names:
-            at = project_names.index("setuptools")
-            project_names[at] = "setuptools<44"
+    def _get_max(project):
+        max_ver = MAX_VER.get(project, {}).get(sys.version_info[0:2])
+        if max_ver is not None:
+            project = '{}<={}'.format(project, '.'.join(str(i) for i in max_ver))
+        return project
+
+    project_names = [_get_max(p) for p in project_names]
 
     cmd = [py_executable, "-"] + project_names
     logger.start_progress("Installing {}...".format(", ".join(project_names)))
@@ -1399,7 +1411,7 @@ def copy_include_dir(include_src, include_dest, symlink):
 
 
 def copy_tcltk(src, dest, symlink):
-    """ copy tcl/tk libraries on Windows (issue #93) """
+    """copy tcl/tk libraries on Windows (issue #93)"""
     for lib_version in "8.5", "8.6":
         for libname in "tcl", "tk":
             src_dir = join(src, "tcl", libname + lib_version)

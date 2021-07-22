@@ -5,19 +5,24 @@ Release History
 
 .. towncrier release notes start
 
-v16.7.11 (2021-07-20)
+v16.7.12 (2020-07-22)
+---------------------
+
 Bugfixes
 ^^^^^^^^
 
-- Preserve compatibility with Python 3.10 - by ``hroncok`` (`#2109 <https://github.com/pypa/virtualenv/issues/2109>`_)
-- Bump embedded pip/setuptools/wheel - by :user:`gaborbernat`. (`#2151 <https://github.com/pypa/virtualenv/issues/2151>`_)
+- Fix Python 2.7, 3.4 and 3.5 failing - by ``gaborbernat``
 
 
-Miscellaneous
-^^^^^^^^^^^^^
+v16.7.11 (2020-07-20)
+---------------------
+
+Bugfixes
+^^^^^^^^
 
 - Don't attempt to use setuptools 44+ with Python 3.4 - by ``hroncok`` (`#1677 <https://github.com/pypa/virtualenv/issues/1677>`_)
-
+- Preserve compatibility with Python 3.10 - by ``hroncok`` (`#2109 <https://github.com/pypa/virtualenv/issues/2109>`_)
+- Bump embedded pip/setuptools/wheel - by ``gaborbernat`` (`#2151 <https://github.com/pypa/virtualenv/issues/2151>`_)
 
 v16.7.10 (2020-02-24)
 ---------------------
@@ -25,7 +30,7 @@ v16.7.10 (2020-02-24)
 Bugfixes
 ^^^^^^^^
 
-- fix error printing in bailout for Python < 2.7 - by ``AdamWill` and ``hroncok`` (`#1651 <https://github.com/pypa/virtualenv/issues/1651>`_)
+- fix error printing in bailout for Python < 2.7 - by ``AdamWill`` and ``hroncok`` (`#1651 <https://github.com/pypa/virtualenv/issues/1651>`_)
 
 
 v16.7.9 (2019-12-15)
