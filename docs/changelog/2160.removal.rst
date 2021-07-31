@@ -1,0 +1,3 @@
+Removed ``xonsh`` activator due to this breaking fairly often the CI and lack of support from those packages
+maintainers, upstream is encouraged to continue supporting the project as a
+`plugin <https://github.com/xonsh/xonsh/issues/3689>`_  - by :user:`gaborbernat`.
