@@ -5,6 +5,20 @@ Release History
 
 .. towncrier release notes start
 
+v20.7.0 (2021-07-31)
+--------------------
+
+Bugfixes - 20.7.0
+~~~~~~~~~~~~~~~~~
+- upgrade embedded pip to ``21.2.2`` from ``21.1.3`` and setuptools to ``57.4.0`` from ``57.1.0`` - by :user:`gaborbernat` (`#2159 <https://github.com/pypa/virtualenv/issues/2159>`_)
+
+Deprecations and Removals - 20.7.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+- Removed ``xonsh`` activator due to this breaking fairly often the CI and lack of support from those packages
+  maintainers, upstream is encouraged to continue supporting the project as a
+  `plugin <https://github.com/xonsh/xonsh/issues/3689>`_  - by :user:`gaborbernat`. (`#2160 <https://github.com/pypa/virtualenv/issues/2160>`_)
+
+
 v20.6.0 (2021-07-14)
 --------------------
 
