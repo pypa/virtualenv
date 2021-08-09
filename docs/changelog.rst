@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.7.1 (2021-08-09)
+--------------------
+
+Bugfixes - 20.7.1
+~~~~~~~~~~~~~~~~~
+- Fix unpacking dictionary items in PythonInfo.install_path (`#2165 <https://github.com/pypa/virtualenv/issues/2165>`_)
+
+
 v20.7.0 (2021-07-31)
 --------------------
 

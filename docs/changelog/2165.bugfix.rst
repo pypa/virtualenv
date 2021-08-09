@@ -1,1 +1,0 @@
-Fix unpacking dictionary items in PythonInfo.install_path
