@@ -122,7 +122,7 @@ class PythonInfo(object):
         if result is None:  # use sysconfig if distutils is unavailable
             # set prefixes to empty => result is relative from cwd
             prefixes = self.prefix, self.exec_prefix, self.base_prefix, self.base_exec_prefix
-            config_var = {k: "" if v in prefixes else v for k, v in self.sysconfig_vars}
+            config_var = {k: "" if v in prefixes else v for k, v in self.sysconfig_vars.items()}
             result = self.sysconfig_path(key, config_var=config_var).lstrip(os.sep)
         return result
 
