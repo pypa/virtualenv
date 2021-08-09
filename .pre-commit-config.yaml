@@ -12,7 +12,7 @@ repos:
   - id: end-of-file-fixer
   - id: trailing-whitespace
 - repo: https://github.com/asottile/pyupgrade
-  rev: v2.23.1
+  rev: v2.23.3
   hooks:
   - id: pyupgrade
 - repo: https://github.com/PyCQA/isort
