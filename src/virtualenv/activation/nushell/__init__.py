@@ -8,6 +8,4 @@ from ..via_template import ViaTemplateActivator
 class NushellActivator(ViaTemplateActivator):
     def templates(self):
         yield Path("activate.nu")
-
-    def as_name(self, template):
-        return template.stem
+        yield Path("deactivate.nu")
