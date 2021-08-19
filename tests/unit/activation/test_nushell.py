@@ -23,5 +23,9 @@ def test_nushell(activation_tester_class, activation_tester):
 
 # @elferherrera You could use this to get the name of the latest release
 # tarball: curl -s https://api.github.com/repos/nushell/nushell/releases/latest | grep 'browser_' | cut -d\" -f4 | grep .tar.gz.
+<<<<<<< HEAD
 # You call wget $(curl ...) to actually download it.
 # Source: https://stackoverflow.com/questions/24085978/github-url-for-latest-release-of-the-download-file
+=======
+# You call wget $(curl ...) to actually download it. Source: https://stackoverflow.com/questions/24085978/github-url-for-latest-release-of-the-download-file
+>>>>>>> aa53639603112fbc27e03d8e908b3aed0911dc68
