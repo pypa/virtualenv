@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
+
 from virtualenv.util.path import Path
 from virtualenv.util.six import ensure_text
 
