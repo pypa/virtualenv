@@ -10,7 +10,7 @@ from virtualenv.info import IS_WIN
 def test_nushell(activation_tester_class, activation_tester):
     class Nushell(activation_tester_class):
         def __init__(self, session):
-            cmd = "C:\\Users\Benzaa\\Documents\\cargo-target\\debug\\nu"
+            cmd = "C:\\Users\\Benzaa\\Documents\\cargo-target\\debug\\nu"
             # cmd = "nu"
             super(Nushell, self).__init__(NushellActivator, session, cmd, "activate.nu", "nu")
             self.activate_cmd = "source"
