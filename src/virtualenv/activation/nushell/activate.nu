@@ -37,4 +37,4 @@ let new_prompt = ($"build-string '(char lparen)' '($virtual_prompt)' '(char rpar
 let-env PROMPT_STRING = $new_prompt
 
 alias pydoc = python -m pydoc
-alias deactivate = source "__VIRTUAL_ENV__\__BIN_NAME__\deactivate.nu"
+alias deactivate = source "__DEACTIVATE_PATH__"
