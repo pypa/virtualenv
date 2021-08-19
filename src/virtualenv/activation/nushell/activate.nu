@@ -35,3 +35,6 @@ let virtual_prompt = (if ("__VIRTUAL_PROMPT__" != "") {
 
 let new_prompt = ($"build-string '(char lparen)' '($virtual_prompt)' '(char rparen) ' (config get prompt | str find-replace "build-string" "")")
 let-env PROMPT_STRING = $new_prompt
+
+alias pydoc = python -m pydoc
+alias deactivate = source "__VIRTUAL_ENV__\__BIN_NAME__\deactivate.nu"
