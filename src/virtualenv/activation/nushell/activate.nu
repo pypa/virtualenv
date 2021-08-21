@@ -1,40 +1,38 @@
 # Setting all environment variables for the venv
-let virtual_env = "__VIRTUAL_ENV__"
+let virtual-env = "__VIRTUAL_ENV__"
+let bin = "__BIN_NAME__"
+let path-sep = "__PATH_SEP__"
 
-let is_windows = (sys).host.name == "Windows"
-let path-sep = (if $is_windows { ";" } { ":" })
-
-let venv-abs-dir = ($virtual_env | path expand)
-let venv-name = ($venv-abs-dir | path basename)
 let old-path = ($nu.path | str collect ($path-sep))
 
-let new-path = (if ($is_windows) {
-    let venv-path = ([$virtual_env "__BIN_NAME__"] | path join)
-    let new-path = ($nu.path | prepend $venv-path | str collect ($path-sep))
+let venv-path = ([$virtual-env $bin] | path join)
+let new-path = ($nu.path | prepend $venv-path | str collect ($path-sep))
 
-    [[name, value]; [Path $new-path]]
-} {
-    let venv-path = ([$virtual_env "bin"] | path join)
-    let new-path = ($nu.path | prepend $venv-path | str collect ($path-sep))
+let python_executable = ([$virtual-env $bin "python.exe"] | path join)
 
-    [[name, value]; [PATH $new-path]]
-}
-)
+# environment variables that will be batched loaded to the virtual env
+let new-env = ([
+    [name, value];
+    [PATH $new-path]
+    [_OLD_VIRTUAL_PATH $old-path]
+    [VIRTUAL_ENV $virtual-env]
+    [PYTHONEXECUTABLE $python_executable]
+])
 
-let new-env = [[name, value]; [VENV_OLD_PATH $old-path] [VIRTUAL_ENV $venv-name]]
-
-load-env ($new-env | append $new-path)
+load-env $new-env
 
 # Creating the new prompt for the session
 let virtual_prompt = (if ("__VIRTUAL_PROMPT__" != "") {
     "__VIRTUAL_PROMPT__"
 } {
-    $virtual_env | path basename
+    $virtual-env | path basename
 }
 )
 
 let new_prompt = ($"build-string '(char lparen)' '($virtual_prompt)' '(char rparen) ' (config get prompt | str find-replace "build-string" "")")
 let-env PROMPT_STRING = $new_prompt
 
+# We are using alias as the function definitions because only aliases can be
+# removed from the scope
 alias pydoc = python -m pydoc
 alias deactivate = source "__DEACTIVATE_PATH__"

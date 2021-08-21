@@ -6,13 +6,11 @@ from virtualenv.activation import NushellActivator, nushell
 from virtualenv.info import IS_WIN
 
 
-# @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
+@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
 def test_nushell(activation_tester_class, activation_tester):
     class Nushell(activation_tester_class):
         def __init__(self, session):
-            cmd = "C:\\Users\\Benzaa\\Documents\\cargo-target\\debug\\nu"
-            # cmd = "nu"
-            super(Nushell, self).__init__(NushellActivator, session, cmd, "activate.nu", "nu")
+            super(Nushell, self).__init__(NushellActivator, session, "nu", "activate.nu", "nu")
             self.activate_cmd = "source"
 
             deactivate = session.creator.dest / session.creator.bin_dir / "deactivate.nu"
