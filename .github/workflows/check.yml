@@ -41,7 +41,7 @@ jobs:
           for i in 1 2 3; do
             echo "try $i" && \
             ${{ runner.os == 'Linux' && 'sudo apt-get update -y && sudo apt-get install fish csh &&
-              apt-get install curl wget -y &&
+              sudo apt-get install curl wget -y &&
               nushell_url=$(curl -s https://api.github.com/repos/nushell/nushell/releases/latest | grep "browser_" | cut -d\" -f4 | grep .tar.gz) &&
               folder_name=$(echo $nushell_url | awk -F"/" "{ print $9 }" | cut -d "." -f 1) &&
               version=$(echo $nushell_url | awk -F"/" "{ print $8 }") &&
