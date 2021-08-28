@@ -40,7 +40,16 @@ jobs:
         run: |
           for i in 1 2 3; do
             echo "try $i" && \
-            ${{ runner.os == 'Linux' && 'sudo apt-get update -y && sudo apt-get install fish csh || true}} && \
+            ${{ runner.os == 'Linux' && 'sudo apt-get update -y && sudo apt-get install fish csh &&
+              sudo apt-get install curl wget -y &&
+              nushell_url=$(curl -s https://api.github.com/repos/nushell/nushell/releases/latest | grep "browser_" | cut -d\" -f4 | grep .tar.gz) &&
+              folder_name=$(echo $nushell_url | cut -d"/" -f9 | cut -d"." -f 1) &&
+              version=$(echo $nushell_url | cut -d"/" -f8) &&
+              wget -O nushell.tar.gz $nushell_url &&
+              mkdir nushell &&
+              tar -xzf nushell.tar.gz -C nushell &&
+              export PATH="nushell/$folder_name/nushell-$version":$PATH' &&
+            || true}} && \
             ${{ runner.os == 'macOS' && 'brew install fish tcsh nushell' || true}} && \
             exit 0 || true;
           done
