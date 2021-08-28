@@ -14,6 +14,7 @@ def test_nushell(activation_tester_class, activation_tester):
             self.activate_cmd = "source"
 
             deactivate = session.creator.dest / session.creator.bin_dir / "deactivate.nu"
+
             self.deactivate = "source '{}'".format(deactivate)
 
     activation_tester(Nushell)
