@@ -48,7 +48,8 @@ jobs:
               wget -O nushell.tar.gz $nushell_url &&
               mkdir nushell &&
               tar -xzf nushell.tar.gz -C nushell &&
-              export PATH="nushell/$folder_name/nushell-$version":$PATH' || true}} && \
+              cp nushell/$folder_name/nushell-$version/nu /usr/bin &&
+              cp nushell/$folder_name/nushell-$version/nu_plugin_sys /usr/bin || true}} && \
             ${{ runner.os == 'macOS' && 'brew install fish tcsh nushell' || true}} && \
             exit 0 || true;
           done
