@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import pytest
 
-from virtualenv.activation import NushellActivator, nushell
+from virtualenv.activation import NushellActivator
 from virtualenv.info import IS_WIN
 
 
