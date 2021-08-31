@@ -11,10 +11,5 @@ def test_nushell(activation_tester_class, activation_tester):
     class Nushell(activation_tester_class):
         def __init__(self, session):
             super(Nushell, self).__init__(NushellActivator, session, "nu", "activate.nu", "nu")
-            self.activate_cmd = "source"
-
-            deactivate = session.creator.dest / session.creator.bin_dir / "deactivate.nu"
-
-            self.deactivate = "source '{}'".format(deactivate)
 
     activation_tester(Nushell)
