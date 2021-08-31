@@ -48,7 +48,7 @@ jobs:
             ${{ runner.os == 'Linux' && 'sudo cp nushell/nu /usr/bin' || true }} && \
             ${{ runner.os == 'Linux' && 'sudo cp nushell/nu_plugin_sys /usr/bin' || true}}  && \
             ${{ runner.os == 'macOS' && 'brew install fish tcsh nushell' || true }} && \
-            ${{ runner.os == 'Windows' && 'iwr -useb get.scoop.sh | iex' || true }} && \
+            ${{ runner.os == 'Windows' && 'Invoke-Expression (New-Object System.Net.WebClient).DownloadString("https://get.scoop.sh")' || true }} && \
             ${{ runner.os == 'Windows' && 'Set-ExecutionPolicy RemoteSigned -scope CurrentUser' || true }} && \
             ${{ runner.os == 'Windows' && 'scoop install nu' || true }} && \
             exit 0 || true;
