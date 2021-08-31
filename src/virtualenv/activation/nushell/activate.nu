@@ -29,7 +29,12 @@ let virtual_prompt = (if ("__VIRTUAL_PROMPT__" != "") {
 }
 )
 
-let new_prompt = ($"build-string '(char lparen)' '($virtual_prompt)' '(char rparen) ' (config get prompt | str find-replace "build-string" "")")
+# If there is no default prompt, then only the env is printed in the prompt
+let new_prompt = (if ( config | select prompt | empty? ) {
+    ($"build-string '(char lparen)' '($virtual_prompt)' '(char rparen) ' ")
+} {
+    ($"build-string '(char lparen)' '($virtual_prompt)' '(char rparen) ' (config get prompt | str find-replace "build-string" "")")
+})
 let-env PROMPT_STRING = $new_prompt
 
 # We are using alias as the function definitions because only aliases can be
