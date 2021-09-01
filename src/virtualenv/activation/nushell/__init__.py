@@ -24,5 +24,5 @@ class NushellActivator(ViaTemplateActivator):
             "__VIRTUAL_NAME__": creator.env_name,
             "__BIN_NAME__": ensure_text(str(creator.bin_dir.relative_to(creator.dest))),
             "__PATH_SEP__": ensure_text(os.pathsep),
-            "__DEACTIVATE_PATH__": ensure_text(str(Path(dest_folder, "deactivate.nu"))),
+            "__DEACTIVATE_PATH__": ensure_text(os.path.join(dest_folder, "deactivate.nu")),
         }
