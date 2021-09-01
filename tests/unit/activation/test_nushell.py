@@ -1,7 +1,8 @@
 from __future__ import absolute_import, unicode_literals
 
-from virtualenv.activation import NushellActivator
 import sys
+
+from virtualenv.activation import NushellActivator
 
 
 def test_nushell(activation_tester_class, activation_tester):
