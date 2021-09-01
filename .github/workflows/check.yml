@@ -49,7 +49,6 @@ jobs:
             ${{ runner.os == 'Linux' && 'sudo cp nushell/nu_plugin_sys /usr/bin' || true}}  && \
             ${{ runner.os == 'Windows' && 'choco install nushell' || true }} && \
             ${{ runner.os == 'macOS' && 'brew install fish tcsh' || true }} && \
-            ${{ runner.os == 'macOS' && 'brew install gnu-tar' || true }} && \
             ${{ runner.os == 'macOS' && 'echo "curl github"' || true }} && \
             ${{ runner.os == 'macOS' && 'nushell_url=$(curl -s https://api.github.com/repos/nushell/nushell/releases/latest | grep "browser_" | cut -d\" -f4 | grep .tar.gz)' || true }} && \
             ${{ runner.os == 'macOS' && 'echo "wget"' || true }} && \
