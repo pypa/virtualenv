@@ -17,6 +17,7 @@ class NushellActivator(ViaTemplateActivator):
         # Due to nushell scoping, it isn't easy to create a function that will
         # deactivate the environment. For that reason a __DEACTIVATE_PATH__
         # replacement pointing to the deactivate.nu file is created
+        #
 
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
