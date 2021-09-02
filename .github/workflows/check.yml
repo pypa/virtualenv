@@ -48,8 +48,7 @@ jobs:
             ${{ runner.os == 'Linux' && 'sudo cp nushell/nu /usr/bin' || true }} && \
             ${{ runner.os == 'Linux' && 'sudo cp nushell/nu_plugin_sys /usr/bin' || true}}  && \
             ${{ runner.os == 'Windows' && 'choco install nushell' || true }} && \
-            ${{ runner.os == 'macOS' && 'brew update' || true }} && \
-            ${{ runner.os == 'macOS' && 'brew install fish tcsh nushell' || true }} && \
+            ${{ runner.os == 'macOS' && ''brew update && brew install fish tcsh nushell' || true }} && \
             exit 0 || true;
           done
           exit 1
