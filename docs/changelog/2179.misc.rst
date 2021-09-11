@@ -1,0 +1,1 @@
+Show an error instead of creating non-working env for Python 2 on Apple Silicon (M1) Macs.
