@@ -10,6 +10,7 @@ from textwrap import dedent
 from six import add_metaclass
 
 from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest, PathRefToDest, RefMust
+from virtualenv.info import IS_MAC_ARM64
 from virtualenv.util.path import Path
 from virtualenv.util.six import ensure_text
 
@@ -101,6 +102,13 @@ class CPython2macOsFramework(CPythonmacOsFramework, CPython2PosixBase):
             ),
         )
         return result
+
+    @classmethod
+    def can_create(cls, interpreter):
+        if IS_MAC_ARM64:
+            return False
+        else:
+            return super(CPythonmacOsFramework, cls).can_create(interpreter)
 
 
 class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
