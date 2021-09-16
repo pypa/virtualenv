@@ -1,6 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
-import shutil
+from distutils.spawn import find_executable
 
 from virtualenv.activation import NushellActivator
 from virtualenv.info import IS_WIN
@@ -9,7 +9,7 @@ from virtualenv.info import IS_WIN
 def test_nushell(activation_tester_class, activation_tester):
     class Nushell(activation_tester_class):
         def __init__(self, session):
-            cmd = shutil.which("nu")
+            cmd = find_executable("nu")
             if cmd is None and IS_WIN:
                 cmd = "c:\\program files\\nu\\bin\\nu.exe"
 
