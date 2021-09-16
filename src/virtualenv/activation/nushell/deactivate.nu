@@ -6,7 +6,6 @@ let-env $path-name = $nu.env._OLD_VIRTUAL_PATH
 unlet-env VIRTUAL_ENV
 unlet-env _OLD_VIRTUAL_PATH
 unlet-env PROMPT_STRING
-unlet-env PYTHONEXECUTABLE
 
 unalias pydoc
 unalias deactivate
