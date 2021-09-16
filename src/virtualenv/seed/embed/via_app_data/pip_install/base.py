@@ -31,6 +31,16 @@ class PipInstall(object):
 
     def install(self, version_info):
         self._extracted = True
+        # cleanup existing version's .dist-info if exists
+        # TODO: This still could leave extra packages hanging around but those should be inert
+        dist_name = self._dist_info.stem[: self._dist_info.stem.index("-")]
+        for filename in self._creator.purelib.iterdir():
+            if filename.name.startswith(dist_name) and filename.suffix == ".dist-info" and filename.is_dir():
+                logging.debug(
+                    "removing %s of the present version of %s from %s", filename.name, dist_name, self._creator.purelib
+                )
+                safe_delete(filename)
+                break
         # sync image
         for filename in self._image_dir.iterdir():
             into = self._creator.purelib / filename.name
