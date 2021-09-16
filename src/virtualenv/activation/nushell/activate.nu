@@ -8,15 +8,12 @@ let old-path = ($nu.path | str collect ($path-sep))
 let venv-path = ([$virtual-env $bin] | path join)
 let new-path = ($nu.path | prepend $venv-path | str collect ($path-sep))
 
-let python_executable = ([$virtual-env $bin "python.exe"] | path join)
-
 # environment variables that will be batched loaded to the virtual env
 let new-env = ([
     [name, value];
     [PATH $new-path]
     [_OLD_VIRTUAL_PATH $old-path]
     [VIRTUAL_ENV $virtual-env]
-    [PYTHONEXECUTABLE $python_executable]
 ])
 
 load-env $new-env
