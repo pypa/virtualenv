@@ -35,7 +35,7 @@ let new_prompt = (if ( config | select prompt | empty? ) {
 } {
     ($"build-string '(char lparen)' '($virtual_prompt)' '(char rparen) ' (config get prompt | str find-replace "build-string" "")")
 })
-let-env PROMPT_STRING = $new_prompt
+let-env PROMPT_COMMAND = $new_prompt
 
 # We are using alias as the function definitions because only aliases can be
 # removed from the scope
