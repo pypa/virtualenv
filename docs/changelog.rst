@@ -5,6 +5,12 @@ Release History
 
 .. towncrier release notes start
 
+v20.8.0 (2021-09-16)
+--------------------
+
+* upgrade embedded setuptools to ``58.0.4`` from ``57.4.0`` and pip to ``21.2.4`` from ``21.2.3``
+* Add nushell activation script
+
 v20.7.2 (2021-08-10)
 --------------------
 
