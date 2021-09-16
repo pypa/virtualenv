@@ -46,7 +46,6 @@ jobs:
             ${{ runner.os == 'Linux' && 'wget -O nushell.tar.gz $nushell_url' || true }} && \
             ${{ runner.os == 'Linux' && 'tar -zxf nushell.tar.gz --one-top-level=nushell --strip-components=2' || true }} && \
             ${{ runner.os == 'Linux' && 'sudo cp nushell/nu /usr/bin' || true }} && \
-            ${{ runner.os == 'Linux' && 'sudo cp nushell/nu_plugin_sys /usr/bin' || true}}  && \
             ${{ runner.os == 'Windows' && 'choco install nushell' || true }} && \
             ${{ runner.os == 'macOS' && 'brew update && brew install fish tcsh nushell' || true }} && \
             exit 0 || true;
