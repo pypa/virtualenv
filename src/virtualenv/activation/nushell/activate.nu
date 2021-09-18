@@ -1,4 +1,5 @@
 # Setting all environment variables for the venv
+let path-name = (if ((sys).host.name == "Windows") { "Path" } { "PATH" })
 let virtual-env = "__VIRTUAL_ENV__"
 let bin = "__BIN_NAME__"
 let path-sep = "__PATH_SEP__"
@@ -11,7 +12,7 @@ let new-path = ($nu.path | prepend $venv-path | str collect ($path-sep))
 # environment variables that will be batched loaded to the virtual env
 let new-env = ([
     [name, value];
-    [PATH $new-path]
+    [$path-name $new-path]
     [_OLD_VIRTUAL_PATH $old-path]
     [VIRTUAL_ENV $virtual-env]
 ])
@@ -20,7 +21,7 @@ load-env $new-env
 
 # Creating the new prompt for the session
 let virtual_prompt = (if ("__VIRTUAL_PROMPT__" != "") {
-    "__VIRTUAL_PROMPT__"
+    "__VIRTUAL_PROMPT__" | str find-replace -a "[\(\)]" "" | str trim
 } {
     $virtual-env | path basename
 }
