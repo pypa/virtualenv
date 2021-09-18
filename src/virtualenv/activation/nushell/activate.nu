@@ -1,5 +1,4 @@
 # Setting all environment variables for the venv
-let path-name = (if ((sys).host.name == "Windows") { "PATH" } { "PATH" })
 let virtual-env = "__VIRTUAL_ENV__"
 let bin = "__BIN_NAME__"
 let path-sep = "__PATH_SEP__"
@@ -12,7 +11,7 @@ let new-path = ($nu.path | prepend $venv-path | str collect ($path-sep))
 # environment variables that will be batched loaded to the virtual env
 let new-env = ([
     [name, value];
-    [$path-name $new-path]
+    [PATH $new-path]
     [_OLD_VIRTUAL_PATH $old-path]
     [VIRTUAL_ENV $virtual-env]
 ])
@@ -23,15 +22,15 @@ load-env $new-env
 let virtual_prompt = (if ("__VIRTUAL_PROMPT__" != "") {
     "__VIRTUAL_PROMPT__"
 } {
-    (build-string '(' ($virtual-env | path basename) ') ')
+    $virtual-env | path basename
 }
 )
 
 # If there is no default prompt, then only the env is printed in the prompt
 let new_prompt = (if ( config | select prompt | empty? ) {
-    ($"build-string '($virtual_prompt)'")
+    ($"build-string '(char lparen)' '($virtual_prompt)' '(char rparen) ' ")
 } {
-    ($"build-string '($virtual_prompt)' (config get prompt | str find-replace "build-string" "")")
+    ($"build-string '(char lparen)' '($virtual_prompt)' '(char rparen) ' (config get prompt | str find-replace "build-string" "")")
 })
 let-env PROMPT_COMMAND = $new_prompt
 
