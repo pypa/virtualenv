@@ -21,17 +21,17 @@ load-env $new-env
 
 # Creating the new prompt for the session
 let virtual_prompt = (if ("__VIRTUAL_PROMPT__" != "") {
-    "__VIRTUAL_PROMPT__" | str find-replace -a "[\(\)]" "" | str trim
+    "__VIRTUAL_PROMPT__"
 } {
-    $virtual-env | path basename
+    (build-string '(' ($virtual-env | path basename) ') ')
 }
 )
 
 # If there is no default prompt, then only the env is printed in the prompt
 let new_prompt = (if ( config | select prompt | empty? ) {
-    ($"build-string '(char lparen)' '($virtual_prompt)' '(char rparen) ' ")
+    ($"build-string '($virtual_prompt)'")
 } {
-    ($"build-string '(char lparen)' '($virtual_prompt)' '(char rparen) ' (config get prompt | str find-replace "build-string" "")")
+    ($"build-string '($virtual_prompt)' (config get prompt | str find-replace "build-string" "")")
 })
 let-env PROMPT_COMMAND = $new_prompt
 
