@@ -31,24 +31,11 @@ class PipInstall(object):
 
     def install(self, version_info):
         self._extracted = True
-        # cleanup existing version's .dist-info if exists
-        # TODO: This still could leave extra packages hanging around but those should be inert
-        dist_name = self._dist_info.stem[: self._dist_info.stem.index("-")]
-        for filename in self._creator.purelib.iterdir():
-            if filename.name.startswith(dist_name) and filename.suffix == ".dist-info" and filename.is_dir():
-                logging.debug(
-                    "removing %s of the present version of %s from %s", filename.name, dist_name, self._creator.purelib
-                )
-                safe_delete(filename)
-                break
+        self._remove_existing_dist()
         # sync image
         for filename in self._image_dir.iterdir():
             into = self._creator.purelib / filename.name
-            if into.exists():
-                if into.is_dir() and not into.is_symlink():
-                    safe_delete(into)
-                else:
-                    into.unlink()
+            self._delete_target(into)
             self._sync(filename, into)
         # generate console executables
         consoles = set()
@@ -159,6 +146,58 @@ class PipInstall(object):
         new_files = maker.make(specification)
         result.extend(Path(i) for i in new_files)
         return result
+
+    def _delete_target(self, target):
+        if target.exists():
+            if target.is_dir() and not target.is_symlink():
+                safe_delete(target)
+            else:
+                target.unlink()
+
+    def _remove_existing_dist(self):
+        dist_name = self._dist_info.stem[: self._dist_info.stem.index("-")]
+        existing_dist = None
+        for filename in self._creator.purelib.iterdir():
+            if filename.name.startswith(dist_name) and filename.suffix == ".dist-info" and filename.is_dir():
+                existing_dist = filename
+                break
+
+        if existing_dist:
+            top_level_packages = []
+            files_to_remove = []
+            logging.debug("will be removing %s from %s", existing_dist.stem, self._creator.purelib)
+
+            # Remove top-level packages as directories - it's faster
+            top_level = existing_dist / "top_level.txt"
+            if top_level.exists():
+                with top_level.open() as top_level_f:
+                    for pkg in top_level_f:
+                        pkg = pkg.strip()
+                        top_level_packages.append(pkg)
+                        files_to_remove.append(self._creator.purelib / pkg)
+
+            # Remove recorded files NOT in top-level packages
+            record = existing_dist / "RECORD"
+            if record.exists():
+                with record.open() as record_f:
+                    for r in record_f:
+                        pkg_found = False
+                        for pkg in top_level_packages:
+                            # If it's a package or dist-info file we're removing them as directory
+                            if r.startswith(pkg + "/") or r.startswith(existing_dist.name + "/"):
+                                pkg_found = True
+                                break
+                        if not pkg_found:
+                            file_to_remove = self._creator.purelib / r[: r.index(",")]
+                            files_to_remove.append(file_to_remove.resolve())
+
+            # Remove dist-info itself
+            files_to_remove.append(existing_dist)
+
+            # Actually remove stuff
+            for file_to_remove in files_to_remove:
+                logging.debug("removing %s", file_to_remove)
+                self._delete_target(file_to_remove)
 
     def clear(self):
         if self._image_dir.exists():
