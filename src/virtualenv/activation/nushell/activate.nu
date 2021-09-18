@@ -1,5 +1,5 @@
 # Setting all environment variables for the venv
-let path-name = (if ((sys).host.name == "Windows") { "Path" } { "PATH" })
+let path-name = (if ((sys).host.name == "Windows") { "PATH" } { "PATH" })
 let virtual-env = "__VIRTUAL_ENV__"
 let bin = "__BIN_NAME__"
 let path-sep = "__PATH_SEP__"
