@@ -189,7 +189,7 @@ class PipInstall(object):
                                 break
                         if not pkg_found:
                             file_to_remove = self._creator.purelib / r[: r.index(",")]
-                            files_to_remove.append(file_to_remove.resolve())
+                            files_to_remove.append(file_to_remove)
 
             # Remove dist-info itself
             files_to_remove.append(existing_dist)
