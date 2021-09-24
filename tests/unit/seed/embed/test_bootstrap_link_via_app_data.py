@@ -86,15 +86,11 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
     assert pip in files_post_first_uninstall
     assert setuptools not in files_post_first_uninstall
 
-    install_cmd = [
-        str(result.creator.script("pip")),
-        "--verbose",
-        "--disable-pip-version-check",
-        "install",
-        "setuptools<" + bundle_ver["setuptools"].split("-")[1],
-    ]
+    # install a different setuptools to test that virtualenv removes this before installing new
+    version = "setuptools<{}".format(bundle_ver["setuptools"].split("-")[1])
+    install_cmd = [str(result.creator.script("pip")), "--verbose", "--disable-pip-version-check", "install", version]
     process = Popen(install_cmd)
-    _, __ = process.communicate()
+    process.communicate()
     assert not process.returncode
     assert site_package.exists()
     files_post_downgrade = set(site_package.iterdir())
