@@ -52,7 +52,7 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
     pip = site_package / "pip"
     setuptools = site_package / "setuptools"
 
-    files_post_first_create = list(site_package.iterdir())
+    files_post_first_create = set(site_package.iterdir())
     assert pip in files_post_first_create
     assert setuptools in files_post_first_create
     for pip_exe in [
@@ -82,15 +82,25 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
     assert not process.returncode
     assert site_package.exists()
 
-    files_post_first_uninstall = list(site_package.iterdir())
+    files_post_first_uninstall = set(site_package.iterdir())
     assert pip in files_post_first_uninstall
     assert setuptools not in files_post_first_uninstall
+
+    # install a different setuptools to test that virtualenv removes this before installing new
+    version = "setuptools<{}".format(bundle_ver["setuptools"].split("-")[1])
+    install_cmd = [str(result.creator.script("pip")), "--verbose", "--disable-pip-version-check", "install", version]
+    process = Popen(install_cmd)
+    process.communicate()
+    assert not process.returncode
+    assert site_package.exists()
+    files_post_downgrade = set(site_package.iterdir())
+    assert setuptools in files_post_downgrade
 
     # check we can run it again and will work - checks both overwrite and reuse cache
     result = cli_run(create_cmd)
     coverage_env()
     assert result
-    files_post_second_create = list(site_package.iterdir())
+    files_post_second_create = set(site_package.iterdir())
     assert files_post_first_create == files_post_second_create
 
     # Windows does not allow removing a executable while running it, so when uninstalling pip we need to do it via
