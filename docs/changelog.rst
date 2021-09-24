@@ -5,6 +5,21 @@ Release History
 
 .. towncrier release notes start
 
+v20.8.1 (2021-09-24)
+--------------------
+
+Bugfixes - 20.8.1
+~~~~~~~~~~~~~~~~~
+- Fixed a bug where while creating a venv on top of an existing one, without cleaning, when seeded
+  wheel version mismatch occurred, multiple ``.dist-info`` directories may be present, confounding entrypoint
+  discovery - by :user:`arcivanov` (`#2185 <https://github.com/pypa/virtualenv/issues/2185>`_)
+- Bump embed setuptools from ``58.0.4`` to ``58.1.0`` - by :user:`gaborbernat`. (`#2195 <https://github.com/pypa/virtualenv/issues/2195>`_)
+
+Misc - 20.8.1
+~~~~~~~~~~~~~
+- `#2189 <https://github.com/pypa/virtualenv/issues/2189>`_
+
+
 v20.8.0 (2021-09-16)
 --------------------
 

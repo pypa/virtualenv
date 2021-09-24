@@ -1,1 +1,0 @@
-Bump embed setuptools from ``58.0.4`` to ``58.1.0`` - by :user:`gaborbernat`.
