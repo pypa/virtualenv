@@ -36,6 +36,8 @@ class PipInstall(object):
         # sync image
         for filename in self._image_dir.iterdir():
             into = self._creator.purelib / filename.name
+            # The `into` path may still be dirty due to partial/broken installs - clean it up
+            self._delete_path(into)
             self._sync(filename, into)
         # generate console executables
         consoles = set()
@@ -149,11 +151,20 @@ class PipInstall(object):
 
     def _uninstall_previous_version(self):
         dist_name = self._dist_info.stem.split("-")[0]
-        in_folders = chain.from_iterable([i.iterdir() for i in {self._creator.purelib, self._creator.platlib}])
+        # Only uninstall purelib as it's the only one that VirtualEnv installs into
+        in_folders = chain.from_iterable([i.iterdir() for i in {self._creator.purelib}])
         paths = (p for p in in_folders if p.stem.split("-")[0] == dist_name and p.suffix == ".dist-info" and p.is_dir())
         existing_dist = next(paths, None)
         if existing_dist is not None:
             self._uninstall_dist(existing_dist)
+
+    @staticmethod
+    def _delete_path(path):
+        if path.exists():
+            if path.is_dir() and not path.is_symlink():
+                safe_delete(path)
+            else:
+                path.unlink()
 
     @staticmethod
     def _uninstall_dist(dist):
@@ -171,11 +182,7 @@ class PipInstall(object):
                 paths.add(path)
 
         for path in sorted(paths):  # actually remove stuff in a stable order
-            if path.exists():
-                if path.is_dir() and not path.is_symlink():
-                    safe_delete(path)
-                else:
-                    path.unlink()
+            PipInstall._delete_path(path)
 
     def clear(self):
         if self._image_dir.exists():

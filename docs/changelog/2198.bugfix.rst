@@ -1,0 +1,1 @@
+Restore unintentionally-modified pre-``2186`` cleanup behaviors - by :user:`arcivanov`
