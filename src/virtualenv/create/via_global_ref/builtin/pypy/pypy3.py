@@ -44,6 +44,8 @@ class PyPy3Posix(PyPy3, PosixSupports):
         host_lib = Path(interpreter.system_prefix) / "lib"
         if host_lib.exists() and host_lib.is_dir():
             for path in host_lib.iterdir():
+                if path.is_dir():
+                    continue
                 yield PathRefToDest(path, dest=cls.to_lib)
 
 
