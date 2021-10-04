@@ -1,0 +1,6 @@
+coverage:
+  status:
+    patch:
+      default:
+        informational: true
+comment: false
