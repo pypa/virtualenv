@@ -43,7 +43,7 @@ def test_bad_exe_py_info_no_raise(tmp_path, caplog, capsys, session_app_data):
     assert result is None
     out, _ = capsys.readouterr()
     assert not out
-    messages = [r.message for r in caplog.records if r.filename != "filelock.py"]
+    messages = [r.message for r in caplog.records if r.name != "filelock"]
     assert len(messages) == 2
     msg = messages[0]
     assert "get interpreter info via cmd: " in msg
