@@ -28,7 +28,7 @@ class PyPy3Posix(PyPy3, PosixSupports):
     @property
     def stdlib(self):
         """PyPy3 respects sysconfig only for the host python, virtual envs is instead lib/pythonx.y/site-packages"""
-        return self.dest / "lib" / "python{}".format(self.interpreter.version_release_str) / "site-packages"
+        return self.dest / "lib" / "pypy{}".format(self.interpreter.version_release_str) / "site-packages"
 
     @classmethod
     def _shared_libs(cls):
