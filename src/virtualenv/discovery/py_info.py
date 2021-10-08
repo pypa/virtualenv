@@ -73,7 +73,18 @@ class PythonInfo(object):
         self.file_system_encoding = u(sys.getfilesystemencoding())
         self.stdout_encoding = u(getattr(sys.stdout, "encoding", None))
 
-        self.sysconfig_paths = {u(i): u(sysconfig.get_path(i, expand=False)) for i in sysconfig.get_path_names()}
+        if "venv" in sysconfig.get_scheme_names():
+            self.sysconfig_scheme = "venv"
+            self.sysconfig_paths = {
+                u(i): u(sysconfig.get_path(i, expand=False, scheme="venv")) for i in sysconfig.get_path_names()
+            }
+            # we cannot use distutils at all if "venv" exists, distutils don't know it
+            self.distutils_install = {}
+        else:
+            self.sysconfig_scheme = None
+            self.sysconfig_paths = {u(i): u(sysconfig.get_path(i, expand=False)) for i in sysconfig.get_path_names()}
+            self.distutils_install = {u(k): u(v) for k, v in self._distutils_install().items()}
+
         # https://bugs.python.org/issue22199
         makefile = getattr(sysconfig, "get_makefile_filename", getattr(sysconfig, "_get_makefile_filename", None))
         self.sysconfig = {
@@ -95,7 +106,6 @@ class PythonInfo(object):
         if self.implementation == "PyPy" and sys.version_info.major == 2:
             self.sysconfig_vars[u"implementation_lower"] = u"python"
 
-        self.distutils_install = {u(k): u(v) for k, v in self._distutils_install().items()}
         confs = {k: (self.system_prefix if v.startswith(self.prefix) else v) for k, v in self.sysconfig_vars.items()}
         self.system_stdlib = self.sysconfig_path("stdlib", confs)
         self.system_stdlib_platform = self.sysconfig_path("platstdlib", confs)
@@ -119,7 +129,7 @@ class PythonInfo(object):
 
     def install_path(self, key):
         result = self.distutils_install.get(key)
-        if result is None:  # use sysconfig if distutils is unavailable
+        if result is None:  # use sysconfig if sysconfig_scheme is set or distutils is unavailable
             # set prefixes to empty => result is relative from cwd
             prefixes = self.prefix, self.exec_prefix, self.base_prefix, self.base_exec_prefix
             config_var = {k: "" if v in prefixes else v for k, v in self.sysconfig_vars.items()}
