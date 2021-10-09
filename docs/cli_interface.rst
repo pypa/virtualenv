@@ -33,7 +33,7 @@ Configuration file
 ^^^^^^^^^^^^^^^^^^
 
 virtualenv looks for a standard ini configuration file. The exact location depends on the operating system you're using,
-as determined by :pypi:`appdirs` application configuration definition. The configuration file location is printed as at
+as determined by :pypi:`platformdirs` application configuration definition. The configuration file location is printed as at
 the end of the output when ``--help`` is passed.
 
 The keys of the settings are derived from the command line option (left strip the ``-`` characters, and replace ``-``
