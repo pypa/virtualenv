@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: "0 8 * * *"
 
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   lint:
     runs-on: ubuntu-latest
