@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import os
 from abc import ABCMeta, abstractmethod
 
 from six import add_metaclass
@@ -14,7 +15,12 @@ class Activator(object):
 
         :param options: the parsed options as defined within :meth:`add_parser_arguments`
         """
-        self.flag_prompt = options.prompt
+
+        prompt = options.prompt
+        if prompt == ".":
+            prompt = "({}) ".format(os.path.basename(os.getcwd()))
+
+        self.flag_prompt = prompt
 
     @classmethod
     def supports(cls, interpreter):

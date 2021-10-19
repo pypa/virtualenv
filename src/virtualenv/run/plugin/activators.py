@@ -43,7 +43,10 @@ class ActivationSelector(ComponentBuilder):
             "--prompt",
             dest="prompt",
             metavar="prompt",
-            help="provides an alternative prompt prefix for this environment",
+            help=(
+                "provides an alternative prompt prefix for this environment. "
+                "A value of '.' will be replaced with the name of the current directory"
+            ),
             default=None,
         )
         for activator in self.active.values():
