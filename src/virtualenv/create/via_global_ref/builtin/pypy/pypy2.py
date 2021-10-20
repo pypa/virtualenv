@@ -112,7 +112,7 @@ class Pypy2Windows(PyPy2, WindowsSupports):
 
     @classmethod
     def _shared_libs(cls):
-        return ["libpypy-c.dll", "libffi-7.dll"]
+        return ["libpypy-c.dll", "libffi-7.dll", "libffi-8.dll"]
 
     @classmethod
     def sources(cls, interpreter):
