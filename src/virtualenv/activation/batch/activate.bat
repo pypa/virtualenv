@@ -17,7 +17,6 @@ if not defined VIRTUAL_ENV_DISABLE_PROMPT (
     if NOT DEFINED ENV_PROMPT (
         for %%d in ("%VIRTUAL_ENV%") do set "ENV_PROMPT=(%%~nxd) "
     )
-    )
     set "PROMPT=%ENV_PROMPT%%PROMPT%"
 )
 
