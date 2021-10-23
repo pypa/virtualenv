@@ -48,7 +48,7 @@ class PyPy3Posix(PyPy3, PosixSupports):
 
 
 class Pypy3Windows(PyPy3, WindowsSupports):
-    """PyPy 2 on Windows"""
+    """PyPy 3 on Windows"""
 
     @property
     def stdlib(self):
@@ -62,4 +62,4 @@ class Pypy3Windows(PyPy3, WindowsSupports):
 
     @classmethod
     def _shared_libs(cls):
-        return ["libpypy3-c.dll", "libffi-7.dll"]
+        return ["libpypy3-c.dll", "libffi-7.dll", "libffi-8.dll"]
