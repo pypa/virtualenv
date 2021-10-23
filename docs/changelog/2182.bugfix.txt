@@ -1,0 +1,2 @@
+Fixed path collision that could lead to a PermissionError or writing to system
+directories when using PyPy3.8 - by :user:`mgorny`.
