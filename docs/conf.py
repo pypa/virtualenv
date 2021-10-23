@@ -64,7 +64,8 @@ def generate_draft_news():
         cwd=root,
         universal_newlines=True,
     )
-    (root / "docs" / "_draft.rst").write_text("" if "No significant changes" in new else new)
+    dest = root / "docs" / "_draft.rst"
+    dest.write_text("" if "No significant changes" in new else new)
 
 
 generate_draft_news()

@@ -1,1 +1,0 @@
-Remove stray closing parenthesis in activate.bat - by :user:`SiggyBar`.

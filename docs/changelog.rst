@@ -5,6 +5,23 @@ Release History
 
 .. towncrier release notes start
 
+v20.9.0 (2021-10-23)
+--------------------
+
+Features - 20.9.0
+~~~~~~~~~~~~~~~~~
+- Special-case ``--prompt .`` to the name of the current directory - by :user:`rkm`. (`#2220 <https://github.com/pypa/virtualenv/issues/2220>`_)
+- Add libffi-8.dll to pypy windows `#2218 <https://github.com/pypa/virtualenv/issues/2218>`_ - by :user:`mattip`
+
+Bugfixes - 20.9.0
+~~~~~~~~~~~~~~~~~
+- Fixed path collision that could lead to a PermissionError or writing to system
+  directories when using PyPy3.8 - by :user:`mgorny`. (`#2182 <https://github.com/pypa/virtualenv/issues/2182>`_)
+- Upgrade embedded setuptools to ``58.3.0`` from ``58.1.0`` and pip to ``21.3.1`` from ``21.2.4`` - by
+  :user:`gaborbernat`. (`#2205 <https://github.com/pypa/virtualenv/issues/2205>`_)
+- Remove stray closing parenthesis in activate.bat - by :user:`SiggyBar`. (`#2221 <https://github.com/pypa/virtualenv/issues/2221>`_)
+
+
 v20.8.1 (2021-09-24)
 --------------------
 

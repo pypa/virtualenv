@@ -1,1 +1,0 @@
-add libffi-8.dll to the hard-coded list of dlls for PyPy on Windows
