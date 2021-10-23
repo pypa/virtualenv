@@ -1,0 +1,1 @@
+Special-case ``--prompt .`` to the name of the current directory - by :user:`rkm`.
