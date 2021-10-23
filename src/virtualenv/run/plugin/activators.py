@@ -44,8 +44,8 @@ class ActivationSelector(ComponentBuilder):
             dest="prompt",
             metavar="prompt",
             help=(
-                "provides an alternative prompt prefix for this environment. "
-                "A value of '.' will be replaced with the name of the current directory"
+                "provides an alternative prompt prefix for this environment "
+                "(value of . means name of the current working directory)"
             ),
             default=None,
         )
