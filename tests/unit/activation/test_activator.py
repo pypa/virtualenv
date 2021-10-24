@@ -15,4 +15,4 @@ def test_activator_prompt_cwd(monkeypatch, tmp_path):
     monkeypatch.chdir(cwd)
 
     activator = FakeActivator(Namespace(prompt="."))
-    assert activator.flag_prompt == "magic"
+    assert activator.flag_prompt == "(magic) "
