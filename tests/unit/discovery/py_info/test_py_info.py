@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import sys
+import sysconfig
 from collections import namedtuple
 from textwrap import dedent
 
@@ -311,3 +312,64 @@ def test_py_info_to_system_raises(session_app_data, mocker, caplog, skip_if_test
     assert log.levelno == logging.INFO
     expected = "ignore {} due cannot resolve system due to RuntimeError('failed to detect ".format(sys.executable)
     assert expected in log.message
+
+
+def _stringify_schemes_dict(schemes_dict):
+    """
+    Since this file has from __future__ import unicode_literals, we manually cast all values of mocked install_schemes
+    to str() as the original schemes are not unicode on Python 2.
+    """
+    return {str(n): {str(k): str(v) for k, v in s.items()} for n, s in schemes_dict.items()}
+
+
+def test_custom_venv_install_scheme_is_prefered(mocker):
+    # The paths in this test are Fedora paths, but we set them for nt as well, so the test also works on Windows,
+    # despite the actual values are nonsense there.
+    # Values were simplified to be compatible with all the supported Python versions.
+    default_scheme = {
+        "stdlib": "{base}/lib/python{py_version_short}",
+        "platstdlib": "{platbase}/lib/python{py_version_short}",
+        "purelib": "{base}/local/lib/python{py_version_short}/site-packages",
+        "platlib": "{platbase}/local/lib/python{py_version_short}/site-packages",
+        "include": "{base}/include/python{py_version_short}",
+        "platinclude": "{platbase}/include/python{py_version_short}",
+        "scripts": "{base}/local/bin",
+        "data": "{base}/local",
+    }
+    venv_scheme = {key: path.replace("local", "") for key, path in default_scheme.items()}
+    sysconfig_install_schemes = {
+        "posix_prefix": default_scheme,
+        "nt": default_scheme,
+        "pypy": default_scheme,
+        "pypy_nt": default_scheme,
+        "venv": venv_scheme,
+    }
+    if getattr(sysconfig, "get_preferred_scheme", None):
+        sysconfig_install_schemes[sysconfig.get_preferred_scheme("prefix")] = default_scheme
+
+    if sys.version_info[0] == 2:
+        sysconfig_install_schemes = _stringify_schemes_dict(sysconfig_install_schemes)
+    mocker.patch("sysconfig._INSTALL_SCHEMES", sysconfig_install_schemes)
+
+    # On Python < 3.10, the distutils schemes are not derived from sysconfig schemes
+    # So we mock them as well to assert the custom "venv" install scheme has priority
+    distutils_scheme = {
+        "purelib": "$base/local/lib/python$py_version_short/site-packages",
+        "platlib": "$platbase/local/lib/python$py_version_short/site-packages",
+        "headers": "$base/include/python$py_version_short/$dist_name",
+        "scripts": "$base/local/bin",
+        "data": "$base/local",
+    }
+    distutils_schemes = {
+        "unix_prefix": distutils_scheme,
+        "nt": distutils_scheme,
+    }
+
+    if sys.version_info[0] == 2:
+        distutils_schemes = _stringify_schemes_dict(distutils_schemes)
+    mocker.patch("distutils.command.install.INSTALL_SCHEMES", distutils_schemes)
+
+    pyinfo = PythonInfo()
+    pyver = "{}.{}".format(pyinfo.version_info.major, pyinfo.version_info.minor)
+    assert pyinfo.install_path("scripts") == "bin"
+    assert pyinfo.install_path("purelib").replace(os.sep, "/") == "lib/python{}/site-packages".format(pyver)
