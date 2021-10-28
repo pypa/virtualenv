@@ -126,6 +126,7 @@ class ActivationTester(object):
             self.activate_call(activate_script),
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
+            self.print_os_env_var("PS1"),
             # \\ loads documentation from the virtualenv site packages
             self.pydoc_call,
             self.deactivate,
@@ -143,7 +144,8 @@ class ActivationTester(object):
         expected = self._creator.exe.parent / os.path.basename(sys.executable)
         assert self.norm_path(out[2]) == self.norm_path(expected), raw
         assert self.norm_path(out[3]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
-        assert out[4] == "wrote pydoc_test.html", raw
+        assert out[4] == "({}) ".format(self._creator.env_name), raw
+        assert out[5] == "wrote pydoc_test.html", raw
         content = tmp_path / "pydoc_test.html"
         assert content.exists(), raw
         # post deactivation, same as before
