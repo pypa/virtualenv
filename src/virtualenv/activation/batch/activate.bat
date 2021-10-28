@@ -14,7 +14,7 @@ if defined _OLD_VIRTUAL_PROMPT (
 )
 if not defined VIRTUAL_ENV_DISABLE_PROMPT (
     if "__VIRTUAL_PROMPT__" NEQ "" (
-        set "PROMPT=__VIRTUAL_PROMPT__%PROMPT%"
+        set "PROMPT=(__VIRTUAL_PROMPT__) %PROMPT%"
     ) else (
         for %%d in ("%VIRTUAL_ENV%") do set "PROMPT=(%%~nxd) %PROMPT%"
     )
