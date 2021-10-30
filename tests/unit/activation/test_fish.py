@@ -18,10 +18,6 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
             super(Fish, self).__init__(FishActivator, session, "fish", "activate.fish", "fish")
 
         def print_prompt(self):
-            return self.python_cmd(
-                "import os;"
-                "venv_path = os.environ.get('VIRTUAL_ENV');"
-                r"""os.system("fish -c '. '\"'\"'{}/bin/activate.fish'\"'\"'; fish_prompt'".format(venv_path))"""
-            )
+            return "fish -c '. $VIRTUAL_ENV/bin/activate.fish; fish_prompt'"
 
     activation_tester(Fish)
