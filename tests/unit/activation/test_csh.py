@@ -9,6 +9,6 @@ def test_csh(activation_tester_class, activation_tester):
             super(Csh, self).__init__(CShellActivator, session, "csh", "activate.csh", "csh")
 
         def print_prompt(self):
-            return "echo $prompt"
+            return "echo 'source \"$VIRTUAL_ENV/bin/activate.csh\"; echo $prompt' | csh -i"
 
     activation_tester(Csh)

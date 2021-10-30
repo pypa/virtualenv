@@ -144,8 +144,11 @@ class ActivationTester(object):
         expected = self._creator.exe.parent / os.path.basename(sys.executable)
         assert self.norm_path(out[2]) == self.norm_path(expected), raw
         assert self.norm_path(out[3]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
-        assert "({}) ".format(self._creator.env_name) in out[4], raw
-        assert out[5] == "wrote pydoc_test.html", raw
+        # Some attempts to test the prompt output print more than 1 line out. Need
+        prompt_text = "({}) ".format(self._creator.env_name)
+        assert any(prompt_text in line for line in out[4:-3]), raw
+
+        assert out[-3] == "wrote pydoc_test.html", raw
         content = tmp_path / "pydoc_test.html"
         assert content.exists(), raw
         # post deactivation, same as before
