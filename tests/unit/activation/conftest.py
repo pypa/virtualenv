@@ -126,7 +126,7 @@ class ActivationTester(object):
             self.activate_call(activate_script),
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
-            self.print_os_env_var("PS1"),
+            self.print_prompt(),
             # \\ loads documentation from the virtualenv site packages
             self.pydoc_call,
             self.deactivate,
@@ -144,7 +144,7 @@ class ActivationTester(object):
         expected = self._creator.exe.parent / os.path.basename(sys.executable)
         assert self.norm_path(out[2]) == self.norm_path(expected), raw
         assert self.norm_path(out[3]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
-        assert out[4] == "({}) ".format(self._creator.env_name), raw
+        assert "({}) ".format(self._creator.env_name) in out[4], raw
         assert out[5] == "wrote pydoc_test.html", raw
         content = tmp_path / "pydoc_test.html"
         assert content.exists(), raw
@@ -173,6 +173,9 @@ class ActivationTester(object):
                 "v" if six.PY3 or IS_PYPY else "None if v is None else v.decode(sys.getfilesystemencoding())",
             ),
         )
+
+    def print_prompt(self):
+        return NotImplemented
 
     def activate_call(self, script):
         cmd = self.quote(ensure_text(str(self.activate_cmd)))
