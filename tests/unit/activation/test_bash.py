@@ -19,4 +19,7 @@ def test_bash(raise_on_non_source_class, activation_tester):
                 "You must source this script: $ source ",
             )
 
+        def print_prompt(self):
+            return self.print_os_env_var("PS1")
+
     activation_tester(Bash)

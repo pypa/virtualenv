@@ -17,4 +17,7 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
         def __init__(self, session):
             super(Fish, self).__init__(FishActivator, session, "fish", "activate.fish", "fish")
 
+        def print_prompt(self):
+            return "fish_prompt"
+
     activation_tester(Fish)

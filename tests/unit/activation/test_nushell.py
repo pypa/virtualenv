@@ -23,4 +23,7 @@ def test_nushell(activation_tester_class, activation_tester):
 
             self.unix_line_ending = not IS_WIN
 
+        def print_prompt(self):
+            return r"echo $virtual_prompt; printf '\n'"
+
     activation_tester(Nushell)

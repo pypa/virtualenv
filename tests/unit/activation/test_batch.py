@@ -27,4 +27,7 @@ def test_batch(activation_tester_class, activation_tester, tmp_path, activation_
             """double quotes needs to be single, and single need to be double"""
             return "".join(("'" if c == '"' else ('"' if c == "'" else c)) for c in pipes.quote(s))
 
+        def print_prompt(self):
+            return "echo %PROMPT%"
+
     activation_tester(Batch)

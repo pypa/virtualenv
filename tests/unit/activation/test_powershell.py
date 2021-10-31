@@ -32,4 +32,7 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch):
         def invoke_script(self):
             return [self.cmd, "-File"]
 
+        def print_prompt(self):
+            return "prompt"
+
     activation_tester(PowerShell)

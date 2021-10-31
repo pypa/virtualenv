@@ -88,9 +88,9 @@ if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
         # Prompt override provided?
         # If not, just prepend the environment name.
         if test -n '__VIRTUAL_PROMPT__'
-            printf '%s%s' '__VIRTUAL_PROMPT__' (set_color normal)
+            printf '(%s) ' '__VIRTUAL_PROMPT__'
         else
-            printf '%s(%s) ' (set_color normal) (basename "$VIRTUAL_ENV")
+            printf '(%s) ' (basename "$VIRTUAL_ENV")
         end
 
         string join -- \n $prompt # handle multi-line prompts

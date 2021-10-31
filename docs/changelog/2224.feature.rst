@@ -1,0 +1,3 @@
+The activated virtualenv prompt is now always wrapped in parentheses. This
+affects venvs created with the ``--prompt`` attribute, and matches virtualenv's
+behaviour on par with venv.

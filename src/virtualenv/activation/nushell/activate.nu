@@ -21,7 +21,7 @@ load-env $new-env
 
 # Creating the new prompt for the session
 let virtual_prompt = (if ("__VIRTUAL_PROMPT__" != "") {
-    "__VIRTUAL_PROMPT__"
+    "(__VIRTUAL_PROMPT__) "
 } {
     (build-string '(' ($virtual-env | path basename) ') ')
 }
