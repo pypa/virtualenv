@@ -144,7 +144,8 @@ class ActivationTester(object):
         expected = self._creator.exe.parent / os.path.basename(sys.executable)
         assert self.norm_path(out[2]) == self.norm_path(expected), raw
         assert self.norm_path(out[3]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
-        # Some attempts to test the prompt output print more than 1 line out. Need
+        # Some attempts to test the prompt output print more than 1 line.
+        # So we need to check if the prompt exists on any of them.
         prompt_text = "({}) ".format(self._creator.env_name)
         assert any(prompt_text in line for line in out[4:-3]), raw
 
