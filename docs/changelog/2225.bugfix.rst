@@ -1,1 +1,0 @@
-Fix broken prompt set up by activate.bat - by :user:`SiggyBar`.
