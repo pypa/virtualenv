@@ -1,4 +1,0 @@
-If a ``"venv"`` install scheme exists in ``sysconfig``, virtualenv now uses it to create new virtual environments.
-This allows Python distributors, such as Fedora, to patch/replace the default install scheme without affecting
-the paths in new virtual environments.
-A similar technique `was proposed to Python, for the venv module <https://bugs.python.org/issue45413>`_ - by ``hroncok``

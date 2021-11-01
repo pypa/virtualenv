@@ -5,6 +5,24 @@ Release History
 
 .. towncrier release notes start
 
+v20.10.0 (2021-11-01)
+---------------------
+
+Features - 20.10.0
+~~~~~~~~~~~~~~~~~~
+- If a ``"venv"`` install scheme exists in ``sysconfig``, virtualenv now uses it to create new virtual environments.
+  This allows Python distributors, such as Fedora, to patch/replace the default install scheme without affecting
+  the paths in new virtual environments.
+  A similar technique `was proposed to Python, for the venv module <https://bugs.python.org/issue45413>`_ - by ``hroncok`` (`#2208 <https://github.com/pypa/virtualenv/issues/2208>`_)
+- The activated virtualenv prompt is now always wrapped in parentheses. This
+  affects venvs created with the ``--prompt`` attribute, and matches virtualenv's
+  behaviour on par with venv. (`#2224 <https://github.com/pypa/virtualenv/issues/2224>`_)
+
+Bugfixes - 20.10.0
+~~~~~~~~~~~~~~~~~~
+- Fix broken prompt set up by activate.bat - by :user:`SiggyBar`. (`#2225 <https://github.com/pypa/virtualenv/issues/2225>`_)
+
+
 v20.9.0 (2021-10-23)
 --------------------
 
