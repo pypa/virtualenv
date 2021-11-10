@@ -48,6 +48,8 @@ class CPythonmacOsFramework(CPython):
                         exes.extend(self.bin_dir / a for a in src.aliases)
                     for exe in exes:
                         fix_mach_o(str(exe), current, target, self.interpreter.max_size)
+                        if IS_MAC_ARM64:
+                            fix_signature(str(exe))
 
     @classmethod
     def _executables(cls, interpreter):
@@ -105,10 +107,7 @@ class CPython2macOsFramework(CPythonmacOsFramework, CPython2PosixBase):
 
     @classmethod
     def can_create(cls, interpreter):
-        if IS_MAC_ARM64:
-            return False
-        else:
-            return super(CPythonmacOsFramework, cls).can_create(interpreter)
+        return super(CPythonmacOsFramework, cls).can_create(interpreter)
 
 
 class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
@@ -174,6 +173,33 @@ def fix_mach_o(exe, current, new, max_size):
         except Exception:
             logging.fatal("Could not call install_name_tool -- you must " "have Apple's development tools installed")
             raise
+
+
+def fix_signature(exe):
+    """
+    On Apple M1 machines (arm64 chips),  rewriting the python executable invalidates it's signature.
+    In python2 this results in a unusable python exe which just dies.
+    As a temporary workaround we can codesign the python exe during the createion process.
+    """
+    try:
+        logging.debug("Changing signature of copied python exe %s" % exe)
+        bak_dir = os.path.join(os.path.dirname(exe), "bk")
+        bk_python = os.path.join(bak_dir, os.path.basename(exe))
+
+        # hack to reset the signing on Darwin since the exe has been modified.
+        # codesign fails on the original exe, it needs to be copied and moved back.
+        os.makedirs(bak_dir)
+        subprocess.check_call(["cp", exe, bak_dir])
+        subprocess.check_call(["mv", bk_python, exe])
+        os.rmdir(bak_dir)
+
+        cmd = ["codesign", "-s", "-", "--preserve-metadata=identifier,entitlements,flags,runtime", "-f", exe]
+        logging.debug("Changing Signature: %s" % cmd)
+        subprocess.check_call(cmd)
+
+    except Exception:
+        logging.fatal("Could not change MacOS code signing on copied python exe at %s" % exe)
+        raise
 
 
 def _builtin_change_mach_o(maxint):
