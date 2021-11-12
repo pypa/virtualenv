@@ -48,8 +48,6 @@ class CPythonmacOsFramework(CPython):
                         exes.extend(self.bin_dir / a for a in src.aliases)
                     for exe in exes:
                         fix_mach_o(str(exe), current, target, self.interpreter.max_size)
-                        if IS_MAC_ARM64:
-                            fix_signature(str(exe))
 
     @classmethod
     def _executables(cls, interpreter):
@@ -105,9 +103,17 @@ class CPython2macOsFramework(CPythonmacOsFramework, CPython2PosixBase):
         )
         return result
 
+
+class CPython2macOsArmFramework(CPython2macOsFramework, CPythonmacOsFramework, CPython2PosixBase):
     @classmethod
-    def can_create(cls, interpreter):
-        return super(CPythonmacOsFramework, cls).can_create(interpreter)
+    def can_describe(cls, interpreter):
+        return IS_MAC_ARM64 and super(CPythonmacOsFramework, cls).can_describe(interpreter)
+
+    def create(self):
+        super(CPython2macOsFramework, self).create()
+        # re-sign the newly copied/modified python binary
+        python_exe = os.path.join(str(self.dest), "bin", "python")
+        fix_signature(python_exe)
 
 
 class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
