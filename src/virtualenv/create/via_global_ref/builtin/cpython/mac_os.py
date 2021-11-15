@@ -113,7 +113,33 @@ class CPython2macOsArmFramework(CPython2macOsFramework, CPythonmacOsFramework, C
         super(CPython2macOsFramework, self).create()
         # re-sign the newly copied/modified python binary
         python_exe = os.path.join(str(self.dest), "bin", "python")
-        fix_signature(python_exe)
+        self.fix_signature(python_exe)
+
+    def fix_signature(self, exe):
+        """
+        On Apple M1 machines (arm64 chips),  rewriting the python executable invalidates it's signature.
+        In python2 this results in a unusable python exe which just dies.
+        As a temporary workaround we can codesign the python exe during the createion process.
+        """
+        try:
+            logging.debug("Changing signature of copied python exe %s", exe)
+            bak_dir = os.path.join(os.path.dirname(exe), "bk")
+            bk_python = os.path.join(bak_dir, os.path.basename(exe))
+
+            # hack to reset the signing on Darwin since the exe has been modified.
+            # codesign fails on the original exe, it needs to be copied and moved back.
+            os.makedirs(bak_dir)
+            subprocess.check_call(["cp", exe, bak_dir])
+            subprocess.check_call(["mv", bk_python, exe])
+            os.rmdir(bak_dir)
+
+            cmd = ["codesign", "-s", "-", "--preserve-metadata=identifier,entitlements,flags,runtime", "-f", exe]
+            logging.debug("Changing Signature: %s", cmd)
+            subprocess.check_call(cmd)
+
+        except Exception:
+            logging.fatal("Could not change MacOS code signing on copied python exe at %s", exe)
+            raise
 
 
 class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
@@ -179,33 +205,6 @@ def fix_mach_o(exe, current, new, max_size):
         except Exception:
             logging.fatal("Could not call install_name_tool -- you must " "have Apple's development tools installed")
             raise
-
-
-def fix_signature(exe):
-    """
-    On Apple M1 machines (arm64 chips),  rewriting the python executable invalidates it's signature.
-    In python2 this results in a unusable python exe which just dies.
-    As a temporary workaround we can codesign the python exe during the createion process.
-    """
-    try:
-        logging.debug("Changing signature of copied python exe %s" % exe)
-        bak_dir = os.path.join(os.path.dirname(exe), "bk")
-        bk_python = os.path.join(bak_dir, os.path.basename(exe))
-
-        # hack to reset the signing on Darwin since the exe has been modified.
-        # codesign fails on the original exe, it needs to be copied and moved back.
-        os.makedirs(bak_dir)
-        subprocess.check_call(["cp", exe, bak_dir])
-        subprocess.check_call(["mv", bk_python, exe])
-        os.rmdir(bak_dir)
-
-        cmd = ["codesign", "-s", "-", "--preserve-metadata=identifier,entitlements,flags,runtime", "-f", exe]
-        logging.debug("Changing Signature: %s" % cmd)
-        subprocess.check_call(cmd)
-
-    except Exception:
-        logging.fatal("Could not change MacOS code signing on copied python exe at %s" % exe)
-        raise
 
 
 def _builtin_change_mach_o(maxint):
