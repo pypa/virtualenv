@@ -28,7 +28,7 @@ class _CountedFileLock(FileLock):
     def acquire(self, timeout=None, poll_interval=0.05):
         with self.thread_safe:
             if self.count == 0:
-                super(_CountedFileLock, self).acquire(timeout=timeout, poll_interval=poll_interval)
+                super(_CountedFileLock, self).acquire(timeout, poll_interval)
             self.count += 1
 
     def release(self, force=False):
