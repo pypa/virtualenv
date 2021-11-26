@@ -1,8 +1,12 @@
 from __future__ import absolute_import, unicode_literals
 
+import sys
 from collections import OrderedDict
 
-from backports.entry_points_selectable import entry_points
+if sys.version_info >= (3, 10):
+    from importlib.metadata import entry_points
+else:
+    from backports.entry_points_selectable import entry_points
 
 
 class PluginLoader(object):
