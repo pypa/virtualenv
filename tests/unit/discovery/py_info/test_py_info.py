@@ -349,7 +349,6 @@ def test_custom_venv_install_scheme_is_prefered(mocker):
 
     if sys.version_info[0] == 2:
         sysconfig_install_schemes = _stringify_schemes_dict(sysconfig_install_schemes)
-    mocker.patch("sysconfig._INSTALL_SCHEMES", sysconfig_install_schemes)
 
     # On Python < 3.10, the distutils schemes are not derived from sysconfig schemes
     # So we mock them as well to assert the custom "venv" install scheme has priority
@@ -367,7 +366,15 @@ def test_custom_venv_install_scheme_is_prefered(mocker):
 
     if sys.version_info[0] == 2:
         distutils_schemes = _stringify_schemes_dict(distutils_schemes)
+
+    # We need to mock distutils first, so they don't see the mocked sysconfig,
+    # if imported for the first time.
+    # That can happen if the actual interpreter has the "venv" INSTALL_SCHEME
+    # and hence this is the first time we are touching distutils in this process.
+    # If distutils saw our mocked sysconfig INSTALL_SCHEMES, we would need
+    # to define all install schemes.
     mocker.patch("distutils.command.install.INSTALL_SCHEMES", distutils_schemes)
+    mocker.patch("sysconfig._INSTALL_SCHEMES", sysconfig_install_schemes)
 
     pyinfo = PythonInfo()
     pyver = "{}.{}".format(pyinfo.version_info.major, pyinfo.version_info.minor)
