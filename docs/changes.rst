@@ -5,12 +5,19 @@ Release History
 
 .. towncrier release notes start
 
+Beyond v16.7.11
+---------------
+
+Releases for the rewrite and beyond are available `here <https://virtualenv.pypa.io/en/latest/changelog.html>`_.
+
 v16.7.11 (2021-07-20)
+---------------------
+
 Bugfixes
 ^^^^^^^^
 
 - Preserve compatibility with Python 3.10 - by ``hroncok`` (`#2109 <https://github.com/pypa/virtualenv/issues/2109>`_)
-- Bump embedded pip/setuptools/wheel - by :user:`gaborbernat`. (`#2151 <https://github.com/pypa/virtualenv/issues/2151>`_)
+- Bump embedded pip/setuptools/wheel - by ``gaborbernat``. (`#2151 <https://github.com/pypa/virtualenv/issues/2151>`_)
 
 
 Miscellaneous
@@ -25,7 +32,7 @@ v16.7.10 (2020-02-24)
 Bugfixes
 ^^^^^^^^
 
-- fix error printing in bailout for Python < 2.7 - by ``AdamWill` and ``hroncok`` (`#1651 <https://github.com/pypa/virtualenv/issues/1651>`_)
+- fix error printing in bailout for Python < 2.7 - by ``AdamWill`` and ``hroncok`` (`#1651 <https://github.com/pypa/virtualenv/issues/1651>`_)
 
 
 v16.7.9 (2019-12-15)
@@ -52,7 +59,7 @@ v16.7.7 (2019-10-22)
 Bugfixes
 ^^^^^^^^
 
-- * fix virtualenv creation when ``--no-pip`` argument used. (`#1430 <https://github.com/pypa/virtualenv/issues/1430>`_)
+- fix virtualenv creation when ``--no-pip`` argument used. (`#1430 <https://github.com/pypa/virtualenv/issues/1430>`_)
 - upgrade bundled pip from ``19.3`` to ``19.3.1`` (`#1433 <https://github.com/pypa/virtualenv/issues/1433>`_)
 
 
@@ -81,8 +88,8 @@ v16.7.4 (2019-08-23)
 Bugfixes
 ^^^^^^^^
 
-- * fix powershell activation when sourced (`#1398 <https://github.com/pypa/virtualenv/issues/1398>`_)
-- * upgrade wheel from ``0.33.4`` to ``0.33.6`` and setuptools from ``41.1.0`` to ``41.2.0`` (`#1409 <https://github.com/pypa/virtualenv/issues/1409>`_)
+- fix powershell activation when sourced (`#1398 <https://github.com/pypa/virtualenv/issues/1398>`_)
+- upgrade wheel from ``0.33.4`` to ``0.33.6`` and setuptools from ``41.1.0`` to ``41.2.0`` (`#1409 <https://github.com/pypa/virtualenv/issues/1409>`_)
 
 
 v16.7.3 (2019-08-16)
@@ -121,7 +128,7 @@ Features
 - ``activate.ps1`` syntax and style updated to follow ``PSStyleAnalyzer`` rules (`#1371 <https://github.com/pypa/virtualenv/issues/1371>`_)
 - Allow creating virtual environments for ``3.xy``. (`#1385 <https://github.com/pypa/virtualenv/issues/1385>`_)
 - Report error when running activate scripts directly, instead of sourcing. By reporting an error instead of running silently, the user get immediate feedback that the script was not used correctly. Only Bash and PowerShell are supported for now. (`#1388 <https://github.com/pypa/virtualenv/issues/1388>`_)
-- * add pip 19.2 (19.1.1 is kept to still support python 3.4 dropped by latest pip) (`#1389 <https://github.com/pypa/virtualenv/issues/1389>`_)
+- add pip 19.2 (19.1.1 is kept to still support python 3.4 dropped by latest pip) (`#1389 <https://github.com/pypa/virtualenv/issues/1389>`_)
 
 
 v16.6.2 (2019-07-14)
