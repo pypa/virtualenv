@@ -21,7 +21,7 @@ function deactivate -d 'Exit virtualenv mode and return to the normal environmen
         if test (echo $FISH_VERSION | head -c 1) -lt 3
             set -gx PATH (_fishify_path "$_OLD_VIRTUAL_PATH")
         else
-            set -gx PATH "$_OLD_VIRTUAL_PATH"
+            set -gx PATH $_OLD_VIRTUAL_PATH
         end
         set -e _OLD_VIRTUAL_PATH
     end
@@ -63,7 +63,7 @@ set -gx VIRTUAL_ENV '__VIRTUAL_ENV__'
 if test (echo $FISH_VERSION | head -c 1) -lt 3
    set -gx _OLD_VIRTUAL_PATH (_bashify_path $PATH)
 else
-    set -gx _OLD_VIRTUAL_PATH "$PATH"
+    set -gx _OLD_VIRTUAL_PATH $PATH
 end
 set -gx PATH "$VIRTUAL_ENV"'/__BIN_NAME__' $PATH
 
