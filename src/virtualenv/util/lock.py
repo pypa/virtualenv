@@ -25,10 +25,10 @@ class _CountedFileLock(FileLock):
         self.count = 0
         self.thread_safe = RLock()
 
-    def acquire(self, timeout=None, poll_intervall=0.05):
+    def acquire(self, timeout=None, poll_interval=0.05):
         with self.thread_safe:
             if self.count == 0:
-                super(_CountedFileLock, self).acquire(timeout=timeout, poll_intervall=poll_intervall)
+                super(_CountedFileLock, self).acquire(timeout, poll_interval)
             self.count += 1
 
     def release(self, force=False):
