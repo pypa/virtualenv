@@ -28,16 +28,16 @@ jobs:
           - windows-latest
           - macos-latest
         py:
-          - 3.10.0-rc.1
-          - 3.9
-          - 3.8
-          - 3.7
-          - 3.6
-          - 3.5
+          - "3.10"
+          - "3.9"
+          - "3.8"
+          - "3.7"
+          - "3.6"
+          - "3.5"
           - pypy-3.6-v7.3.7
           - pypy-3.7-v7.3.7
           - pypy-3.8-v7.3.7
-          - 2.7
+          - "2.7"
           - pypy-2.7
         include:
           - { os: macos-latest, py: brew@py3 }
@@ -73,7 +73,7 @@ jobs:
         if: "!( startsWith(matrix.py,'brew@py') || endsWith(matrix.py, '-dev') )"
         uses: actions/setup-python@v2
         with:
-          python-version: ${{ matrix.py }}
+          python-version: "${{ matrix.py }}"
       - name: Setup brew python for test ${{ matrix.py }}
         if: startsWith(matrix.py,'brew@py')
         run: |
