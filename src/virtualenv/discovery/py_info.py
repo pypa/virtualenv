@@ -152,7 +152,11 @@ class PythonInfo(object):
         d = dist.Distribution({"script_args": "--no-user-cfg"})  # conf files not parsed so they do not hijack paths
         if hasattr(sys, "_framework"):
             sys._framework = None  # disable macOS static paths for framework
-        i = d.get_command_obj("install", create=True)
+
+        with warnings.catch_warnings():  # disable warning for PEP-632
+            warnings.simplefilter("ignore")
+            i = d.get_command_obj("install", create=True)
+
         i.prefix = os.sep  # paths generated are relative to prefix that contains the path sep, this makes it relative
         i.finalize_options()
         result = {key: (getattr(i, "install_{}".format(key))[1:]).lstrip(os.sep) for key in SCHEME_KEYS}
