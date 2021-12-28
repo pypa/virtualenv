@@ -36,7 +36,7 @@ if PY2:
         pass  # pragma: no cov
 
 
-def periodic_update(distribution, for_py_version, wheel, search_dirs, app_data, do_periodic_update, env):
+def periodic_update(distribution, of_version, for_py_version, wheel, search_dirs, app_data, do_periodic_update, env):
     if do_periodic_update:
         handle_auto_update(distribution, for_py_version, wheel, search_dirs, app_data, env)
 
@@ -44,15 +44,23 @@ def periodic_update(distribution, for_py_version, wheel, search_dirs, app_data, 
 
     u_log = UpdateLog.from_app_data(app_data, distribution, for_py_version)
     u_log_older_than_hour = now - u_log.completed > timedelta(hours=1) if u_log.completed is not None else False
-    for _, group in groupby(u_log.versions, key=lambda v: v.wheel.version_tuple[0:2]):
-        version = next(group)  # use only latest patch version per minor, earlier assumed to be buggy
-        if wheel is not None and Path(version.filename).name == wheel.name:
-            break
-        if u_log.periodic is False or (u_log_older_than_hour and version.use(now)):
-            updated_wheel = Wheel(app_data.house / version.filename)
-            logging.debug("using %supdated wheel %s", "periodically " if updated_wheel else "", updated_wheel)
-            wheel = updated_wheel
-            break
+    if of_version is None:
+        for _, group in groupby(u_log.versions, key=lambda v: v.wheel.version_tuple[0:2]):
+            version = next(group)  # use only latest patch version per minor, earlier assumed to be buggy
+            if wheel is not None and Path(version.filename).name == wheel.name:
+                break
+            if u_log.periodic is False or (u_log_older_than_hour and version.use(now)):
+                updated_wheel = Wheel(app_data.house / version.filename)
+                logging.debug("using %supdated wheel %s", "periodically " if updated_wheel else "", updated_wheel)
+                wheel = updated_wheel
+                break
+    elif u_log.periodic is False or u_log_older_than_hour:
+        for version in u_log.versions:
+            if version.wheel.version == of_version:
+                updated_wheel = Wheel(app_data.house / version.filename)
+                logging.debug("using %supdated wheel %s", "periodically " if updated_wheel else "", updated_wheel)
+                wheel = updated_wheel
+                break
 
     return wheel
 
