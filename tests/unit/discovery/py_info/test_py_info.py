@@ -15,7 +15,7 @@ import pytest
 from virtualenv.discovery import cached_py_info
 from virtualenv.discovery.py_info import PythonInfo, VersionInfo
 from virtualenv.discovery.py_spec import PythonSpec
-from virtualenv.info import fs_supports_symlink
+from virtualenv.info import IS_PYPY, fs_supports_symlink
 from virtualenv.util.path import Path
 
 CURRENT = PythonInfo.current_system()
@@ -296,6 +296,7 @@ def test_discover_exe_on_path_non_spec_name_not_match(mocker):
     assert CURRENT.satisfies(spec, impl_must_match=True) is False
 
 
+@pytest.mark.skipif(IS_PYPY, reason="setuptools distutil1s patching does not work")
 def test_py_info_setuptools():
     from setuptools.dist import Distribution
 
