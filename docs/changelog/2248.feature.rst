@@ -1,1 +1,0 @@
-Fish: PATH variables should not be quoted when being set - by :user:`hroncok`.

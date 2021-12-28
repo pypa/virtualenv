@@ -1,1 +1,0 @@
-Upgrade embedded setuptools to ``59.4.0`` from ``58.3.0`` - by :user:`gaborbernat`.

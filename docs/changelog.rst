@@ -5,6 +5,17 @@ Release History
 
 .. towncrier release notes start
 
+v20.11.0 (2021-12-28)
+---------------------
+
+Features - 20.11.0
+~~~~~~~~~~~~~~~~~~
+- Avoid deprecation warning from py-filelock argument - by :user:`ofek`. (`#2237 <https://github.com/pypa/virtualenv/issues/2237>`_)
+- Upgrade embedded setuptools to ``59.4.0`` from ``58.3.0`` - by :user:`gaborbernat`. (`#2240 <https://github.com/pypa/virtualenv/issues/2240>`_)
+- Drop the runtime dependency of ``backports.entry-points-selectable`` - by :user:`hroncok`. (`#2246 <https://github.com/pypa/virtualenv/issues/2246>`_)
+- Fish: PATH variables should not be quoted when being set - by :user:`hroncok`. (`#2248 <https://github.com/pypa/virtualenv/issues/2248>`_)
+
+
 v20.10.0 (2021-11-01)
 ---------------------
 
