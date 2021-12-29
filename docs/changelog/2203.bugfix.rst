@@ -1,0 +1,1 @@
+Fix installation of pinned versions of ``pip``, ``setuptools`` & ``wheel`` - by :user:`mayeut`.
