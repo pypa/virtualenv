@@ -42,6 +42,11 @@ def periodic_update(distribution, of_version, for_py_version, wheel, search_dirs
 
     now = datetime.now()
 
+    def _update_wheel(ver):
+        updated_wheel = Wheel(app_data.house / ver.filename)
+        logging.debug("using %supdated wheel %s", "periodically " if updated_wheel else "", updated_wheel)
+        return updated_wheel
+
     u_log = UpdateLog.from_app_data(app_data, distribution, for_py_version)
     u_log_older_than_hour = now - u_log.completed > timedelta(hours=1) if u_log.completed is not None else False
     if of_version is None:
@@ -50,16 +55,12 @@ def periodic_update(distribution, of_version, for_py_version, wheel, search_dirs
             if wheel is not None and Path(version.filename).name == wheel.name:
                 break
             if u_log.periodic is False or (u_log_older_than_hour and version.use(now)):
-                updated_wheel = Wheel(app_data.house / version.filename)
-                logging.debug("using %supdated wheel %s", "periodically " if updated_wheel else "", updated_wheel)
-                wheel = updated_wheel
+                wheel = _update_wheel(version)
                 break
     elif u_log.periodic is False or u_log_older_than_hour:
         for version in u_log.versions:
             if version.wheel.version == of_version:
-                updated_wheel = Wheel(app_data.house / version.filename)
-                logging.debug("using %supdated wheel %s", "periodically " if updated_wheel else "", updated_wheel)
-                wheel = updated_wheel
+                wheel = _update_wheel(version)
                 break
 
     return wheel
