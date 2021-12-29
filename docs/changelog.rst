@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.11.2 (2021-12-29)
+---------------------
+
+Bugfixes - 20.11.2
+~~~~~~~~~~~~~~~~~~
+- Fix installation of pinned versions of ``pip``, ``setuptools`` & ``wheel`` - by :user:`mayeut`. (`#2203 <https://github.com/pypa/virtualenv/issues/2203>`_)
+
+
 v20.11.1 (2021-12-29)
 ---------------------
 
