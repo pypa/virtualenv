@@ -1,1 +1,0 @@
-Bump embed setuptools to ``60.1.1`` from ``60.1.0`` - by :user:`gaborbernat`.
