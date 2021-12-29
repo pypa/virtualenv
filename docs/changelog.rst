@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.11.1 (2021-12-29)
+---------------------
+
+Bugfixes - 20.11.1
+~~~~~~~~~~~~~~~~~~
+- Bump embed setuptools to ``60.1.1`` from ``60.1.0`` - by :user:`gaborbernat`. (`#2258 <https://github.com/pypa/virtualenv/issues/2258>`_)
+
+
 v20.11.0 (2021-12-28)
 ---------------------
 
