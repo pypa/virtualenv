@@ -18,11 +18,14 @@ def get_wheel(distribution, version, for_py_version, search_dirs, download, app_
     Get a wheel with the given distribution-version-for_py_version trio, by using the extra search dir + download
     """
     # not all wheels are compatible with all python versions, so we need to py version qualify it
-    # 1. acquire from bundle
-    wheel = from_bundle(distribution, version, for_py_version, search_dirs, app_data, do_periodic_update, env)
+    wheel = None
 
-    # 2. download from the internet
-    if version not in Version.non_version and download:
+    if not download or version != Version.bundle:
+        # 1. acquire from bundle
+        wheel = from_bundle(distribution, version, for_py_version, search_dirs, app_data, do_periodic_update, env)
+
+    if download and wheel is None and version != Version.embed:
+        # 2. download from the internet
         wheel = download_wheel(
             distribution=distribution,
             version_spec=Version.as_version_spec(version),
@@ -32,6 +35,7 @@ def get_wheel(distribution, version, for_py_version, search_dirs, download, app_
             to_folder=app_data.house,
             env=env,
         )
+
     return wheel
 
 

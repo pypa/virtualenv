@@ -6,9 +6,10 @@ from subprocess import CalledProcessError
 
 import pytest
 
-from virtualenv.seed.wheels.acquire import download_wheel, pip_wheel_env_run
+from virtualenv.seed.wheels.acquire import download_wheel, get_wheel, pip_wheel_env_run
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, get_embed_wheel
-from virtualenv.seed.wheels.util import discover_wheels
+from virtualenv.seed.wheels.util import Wheel, discover_wheels
+from virtualenv.util.path import Path
 
 
 def test_pip_wheel_env_run_could_not_find(session_app_data, mocker):
@@ -68,3 +69,29 @@ def test_download_fails(mocker, for_py_version, session_app_data):
         str(as_path),
         "pip==1",
     ] == exc.cmd
+
+
+@pytest.fixture
+def downloaded_wheel(mocker):
+    wheel = Wheel.from_path(Path("setuptools-0.0.0-py2.py3-none-any.whl"))
+    mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", return_value=wheel)
+    yield wheel
+
+
+@pytest.mark.parametrize("version", ["bundle", "0.0.0"])
+def test_get_wheel_download_called(for_py_version, session_app_data, downloaded_wheel, version):
+    distribution = "setuptools"
+    wheel = get_wheel(distribution, version, for_py_version, [], True, session_app_data, False, os.environ)
+    assert wheel is not None
+    assert wheel.name == downloaded_wheel.name
+
+
+@pytest.mark.parametrize("version", ["embed", "pinned"])
+def test_get_wheel_download_not_called(for_py_version, session_app_data, downloaded_wheel, version):
+    distribution = "setuptools"
+    expected = get_embed_wheel(distribution, for_py_version)
+    if version == "pinned":
+        version = expected.version
+    wheel = get_wheel(distribution, version, for_py_version, [], True, session_app_data, False, os.environ)
+    assert wheel is not None
+    assert wheel.name == expected.name
