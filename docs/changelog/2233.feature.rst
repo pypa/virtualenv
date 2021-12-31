@@ -1,1 +1,0 @@
-Sign the python2 exe on Darwin arm64 - by :user:`tmspicer`.
