@@ -1,1 +1,0 @@
-Fix ``--download`` option - by :user:`mayeut`.

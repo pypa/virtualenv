@@ -5,6 +5,19 @@ Release History
 
 .. towncrier release notes start
 
+v20.12.0 (2021-12-31)
+---------------------
+
+Features - 20.12.0
+~~~~~~~~~~~~~~~~~~
+- Sign the python2 exe on Darwin arm64 - by :user:`tmspicer`. (`#2233 <https://github.com/pypa/virtualenv/issues/2233>`_)
+
+Bugfixes - 20.12.0
+~~~~~~~~~~~~~~~~~~
+- Fix ``--download`` option - by :user:`mayeut`. (`#2120 <https://github.com/pypa/virtualenv/issues/2120>`_)
+- Ugrade embedded setuptools to ``60.2.0`` from ``60.1.1`` - by :user:`gaborbernat`. (`#2263 <https://github.com/pypa/virtualenv/issues/2263>`_)
+
+
 v20.11.2 (2021-12-29)
 ---------------------
 
