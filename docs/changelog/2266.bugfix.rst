@@ -1,0 +1,2 @@
+New patch versions of ``pip``, ``setuptools`` & ``wheel`` are now
+returned in the expected timeframe. - by :user:`mayeut`.

@@ -1,0 +1,3 @@
+Try using previous updates of ``pip``, ``setuptools`` & ``wheel``
+when inside an update grace period rather than always falling back
+to embedded wheels - by :user:`mayeut`.

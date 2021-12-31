@@ -1,0 +1,2 @@
+Manual upgrades of ``pip``, ``setuptools`` & ``wheel`` are
+not discarded by a periodic update - by :user:`mayeut`.
