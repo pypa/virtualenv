@@ -69,6 +69,10 @@ class CPythonmacOsFramework(CPython):
 
 class CPython2macOsFramework(CPythonmacOsFramework, CPython2PosixBase):
     @classmethod
+    def can_create(cls, interpreter):
+        return not IS_MAC_ARM64 and super(CPython2macOsFramework, cls).can_describe(interpreter)
+
+    @classmethod
     def image_ref(cls, interpreter):
         return Path(interpreter.prefix) / "Python"
 
@@ -103,12 +107,38 @@ class CPython2macOsFramework(CPythonmacOsFramework, CPython2PosixBase):
         )
         return result
 
+
+class CPython2macOsArmFramework(CPython2macOsFramework, CPythonmacOsFramework, CPython2PosixBase):
     @classmethod
     def can_create(cls, interpreter):
-        if IS_MAC_ARM64:
-            return False
-        else:
-            return super(CPythonmacOsFramework, cls).can_create(interpreter)
+        return IS_MAC_ARM64 and super(CPythonmacOsFramework, cls).can_describe(interpreter)
+
+    def create(self):
+        super(CPython2macOsFramework, self).create()
+        self.fix_signature()
+
+    def fix_signature(self):
+        """
+        On Apple M1 machines (arm64 chips),  rewriting the python executable invalidates its signature.
+        In python2 this results in a unusable python exe which just dies.
+        As a temporary workaround we can codesign the python exe during the creation process.
+        """
+        exe = self.exe
+        try:
+            logging.debug("Changing signature of copied python exe %s", exe)
+            bak_dir = exe.parent / "bk"
+            # Reset the signing on Darwin since the exe has been modified.
+            # Note codesign fails on the original exe, it needs to be copied and moved back.
+            bak_dir.mkdir(parents=True, exist_ok=True)
+            subprocess.check_call(["cp", exe, bak_dir])
+            subprocess.check_call(["mv", bak_dir / exe.name, exe])
+            bak_dir.unlink()
+            cmd = ["codesign", "-s", "-", "--preserve-metadata=identifier,entitlements,flags,runtime", "-f", exe]
+            logging.debug("Changing Signature: %s", cmd)
+            subprocess.check_call(cmd)
+        except Exception:
+            logging.fatal("Could not change MacOS code signing on copied python exe at %s", exe)
+            raise
 
 
 class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
