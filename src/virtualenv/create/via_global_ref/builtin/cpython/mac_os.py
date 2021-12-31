@@ -70,7 +70,9 @@ class CPythonmacOsFramework(CPython):
 class CPython2macOsFramework(CPythonmacOsFramework, CPython2PosixBase):
     @classmethod
     def can_create(cls, interpreter):
-        return not IS_MAC_ARM64 and super(CPython2macOsFramework, cls).can_describe(interpreter)
+        if not IS_MAC_ARM64 and super(CPython2macOsFramework, cls).can_describe(interpreter):
+            return super(CPython2macOsFramework, cls).can_create(interpreter)
+        return False
 
     @classmethod
     def image_ref(cls, interpreter):
@@ -111,7 +113,9 @@ class CPython2macOsFramework(CPythonmacOsFramework, CPython2PosixBase):
 class CPython2macOsArmFramework(CPython2macOsFramework, CPythonmacOsFramework, CPython2PosixBase):
     @classmethod
     def can_create(cls, interpreter):
-        return IS_MAC_ARM64 and super(CPythonmacOsFramework, cls).can_describe(interpreter)
+        if IS_MAC_ARM64 and super(CPythonmacOsFramework, cls).can_describe(interpreter):
+            return super(CPythonmacOsFramework, cls).can_create(interpreter)
+        return False
 
     def create(self):
         super(CPython2macOsFramework, self).create()
