@@ -170,9 +170,9 @@ def test_manual_update_honored(mocker, session_app_data, for_py_version):
     assert str(result.path) == expected_path
 
 
-def wheel_path(wheel, of):
+def wheel_path(wheel, of, pre_release=""):
     new_version = ".".join(str(i) for i in (tuple(sum(x) for x in zip_longest(wheel.version_tuple, of, fillvalue=0))))
-    new_name = wheel.name.replace(wheel.version, new_version)
+    new_name = wheel.name.replace(wheel.version, new_version + pre_release)
     return str(wheel.path.parent / new_name)
 
 
@@ -488,21 +488,25 @@ def test_get_release_fails(mocker, caplog):
     assert repr(exc) in caplog.text
 
 
+def mock_download(mocker, pip_version_remote):
+    def download():
+        index = 0
+        while True:
+            path = pip_version_remote[index]
+            index += 1
+            yield Wheel(Path(path))
+
+    do = download()
+    return mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", side_effect=lambda *a, **k: next(do))
+
+
 def test_download_stop_with_embed(tmp_path, mocker, freezer):
     freezer.move_to(_UP_NOW)
     wheel = get_embed_wheel("pip", "3.9")
     app_data_outer = AppDataDiskFolder(str(tmp_path / "app"))
     pip_version_remote = [wheel_path(wheel, (0, 0, 2)), wheel_path(wheel, (0, 0, 1)), wheel_path(wheel, (-1, 0, 0))]
-    at = {"index": 0}
 
-    def download():
-        while True:
-            path = pip_version_remote[at["index"]]
-            at["index"] += 1
-            yield Wheel(Path(path))
-
-    do = download()
-    download_wheel = mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", side_effect=lambda *a, **k: next(do))
+    download_wheel = mock_download(mocker, pip_version_remote)
     url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=URLError("unavailable"))
 
     last_update = _UP_NOW - timedelta(days=14)
@@ -519,32 +523,71 @@ def test_download_stop_with_embed(tmp_path, mocker, freezer):
     assert write.call_count == 1
 
 
+def test_download_manual_stop_after_one_download(tmp_path, mocker, freezer):
+    freezer.move_to(_UP_NOW)
+    wheel = get_embed_wheel("pip", "3.9")
+    app_data_outer = AppDataDiskFolder(str(tmp_path / "app"))
+    pip_version_remote = [wheel_path(wheel, (0, 1, 1))]
+
+    download_wheel = mock_download(mocker, pip_version_remote)
+    url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=URLError("unavailable"))
+
+    last_update = _UP_NOW - timedelta(days=14)
+    u_log = UpdateLog(started=last_update, completed=last_update, versions=[], periodic=True)
+    read_dict = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict())
+    write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write")
+
+    do_update("pip", "3.9", str(wheel.path), str(app_data_outer), [], False)
+
+    assert download_wheel.call_count == 1
+    assert url_o.call_count == 2
+    assert read_dict.call_count == 1
+    assert write.call_count == 1
+
+
+def test_download_manual_ignores_pre_release(tmp_path, mocker, freezer):
+    freezer.move_to(_UP_NOW)
+    wheel = get_embed_wheel("pip", "3.9")
+    app_data_outer = AppDataDiskFolder(str(tmp_path / "app"))
+    pip_version_remote = [wheel_path(wheel, (0, 0, 1))]
+    pip_version_pre = NewVersion(Path(wheel_path(wheel, (0, 1, 0), "b1")).name, _UP_NOW, None, "downloaded")
+
+    download_wheel = mock_download(mocker, pip_version_remote)
+    url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=URLError("unavailable"))
+
+    last_update = _UP_NOW - timedelta(days=14)
+    u_log = UpdateLog(started=last_update, completed=last_update, versions=[pip_version_pre], periodic=True)
+    read_dict = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict())
+    write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write")
+
+    do_update("pip", "3.9", str(wheel.path), str(app_data_outer), [], False)
+
+    assert download_wheel.call_count == 1
+    assert url_o.call_count == 2
+    assert read_dict.call_count == 1
+    assert write.call_count == 1
+    wrote_json = write.call_args[0][0]
+    assert wrote_json["versions"] == [
+        {
+            "filename": Path(pip_version_remote[0]).name,
+            "release_date": None,
+            "found_date": dump_datetime(_UP_NOW),
+            "source": "manual",
+        },
+        pip_version_pre.to_dict(),
+    ]
+
+
 def test_download_periodic_stop_at_first_usable(tmp_path, mocker, freezer):
     freezer.move_to(_UP_NOW)
     wheel = get_embed_wheel("pip", "3.9")
     app_data_outer = AppDataDiskFolder(str(tmp_path / "app"))
     pip_version_remote = [wheel_path(wheel, (0, 1, 1)), wheel_path(wheel, (0, 1, 0))]
     rel_date_remote = [_UP_NOW - timedelta(days=1), _UP_NOW - timedelta(days=30)]
-    at = {"download": 0, "release_date": 0}
 
-    def download():
-        while True:
-            path = pip_version_remote[at["download"]]
-            at["download"] += 1
-            yield Wheel(Path(path))
+    download_wheel = mock_download(mocker, pip_version_remote)
 
-    download_gen = download()
-    download_wheel = mocker.patch(
-        "virtualenv.seed.wheels.acquire.download_wheel", side_effect=lambda *a, **k: next(download_gen)
-    )
-
-    def rel_date():
-        while True:
-            value = rel_date_remote[at["release_date"]]
-            at["release_date"] += 1
-            yield value
-
-    rel_date_gen = rel_date()
+    rel_date_gen = iter(rel_date_remote)
     release_date = mocker.patch(
         "virtualenv.seed.wheels.periodic_update.release_date_for_wheel_path",
         side_effect=lambda *a, **k: next(rel_date_gen),
@@ -559,51 +602,58 @@ def test_download_periodic_stop_at_first_usable(tmp_path, mocker, freezer):
 
     assert download_wheel.call_count == 2
     assert release_date.call_count == 2
-
     assert read_dict.call_count == 1
     assert write.call_count == 1
 
 
-def test_download_manual_stop_at_first_usable(tmp_path, mocker, freezer):
+def test_download_periodic_stop_at_first_usable2(tmp_path, mocker, freezer):
     freezer.move_to(_UP_NOW)
     wheel = get_embed_wheel("pip", "3.9")
     app_data_outer = AppDataDiskFolder(str(tmp_path / "app"))
-    pip_version_remote = [wheel_path(wheel, (0, 1, 1))]
-    rel_date_remote = [_UP_NOW + timedelta(hours=1)]
-    at = {"download": 0, "release_date": 0}
+    pip_version_remote = [wheel_path(wheel, (0, 1, 1)), wheel_path(wheel, (0, 1, 0)), wheel_path(wheel, (0, -1, 0))]
+    rel_date_remote = [_UP_NOW - timedelta(days=1), _UP_NOW - timedelta(days=30), _UP_NOW - timedelta(days=40)]
+    downloaded_versions = [
+        NewVersion(Path(pip_version_remote[2]).name, rel_date_remote[2], None, "download"),
+        NewVersion(Path(pip_version_remote[0]).name, rel_date_remote[0], None, "download"),
+    ]
 
-    def download():
-        while True:
-            path = pip_version_remote[at["download"]]
-            at["download"] += 1
-            yield Wheel(Path(path))
+    download_wheel = mock_download(mocker, pip_version_remote)
 
-    download_gen = download()
-    download_wheel = mocker.patch(
-        "virtualenv.seed.wheels.acquire.download_wheel", side_effect=lambda *a, **k: next(download_gen)
-    )
-
-    def rel_date():
-        while True:
-            value = rel_date_remote[at["release_date"]]
-            at["release_date"] += 1
-            yield value
-
-    rel_date_gen = rel_date()
+    rel_date_gen = iter(rel_date_remote)
     release_date = mocker.patch(
         "virtualenv.seed.wheels.periodic_update.release_date_for_wheel_path",
         side_effect=lambda *a, **k: next(rel_date_gen),
     )
 
     last_update = _UP_NOW - timedelta(days=14)
-    u_log = UpdateLog(started=last_update, completed=last_update, versions=[], periodic=True)
+    u_log = UpdateLog(
+        started=last_update,
+        completed=last_update,
+        versions=downloaded_versions,
+        periodic=True,
+    )
     read_dict = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict())
     write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write")
 
-    do_update("pip", "3.9", str(wheel.path), str(app_data_outer), [], False)
+    do_update("pip", "3.9", str(wheel.path), str(app_data_outer), [], True)
 
-    assert download_wheel.call_count == 1
-    assert release_date.call_count == 1
-
+    assert download_wheel.call_count == 2
+    assert release_date.call_count == 2
     assert read_dict.call_count == 1
     assert write.call_count == 1
+    wrote_json = write.call_args[0][0]
+    assert wrote_json["versions"] == [
+        {
+            "filename": Path(pip_version_remote[0]).name,
+            "release_date": dump_datetime(rel_date_remote[0]),
+            "found_date": dump_datetime(_UP_NOW),
+            "source": "periodic",
+        },
+        {
+            "filename": Path(pip_version_remote[1]).name,
+            "release_date": dump_datetime(rel_date_remote[1]),
+            "found_date": dump_datetime(_UP_NOW),
+            "source": "periodic",
+        },
+        downloaded_versions[0].to_dict(),
+    ]

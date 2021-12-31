@@ -82,6 +82,19 @@ def handle_auto_update(distribution, for_py_version, wheel, search_dirs, app_dat
         trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, periodic=True, env=env)
 
 
+def add_wheel_to_update_log(wheel, for_py_version, app_data):
+    embed_update_log = app_data.embed_update_log(wheel.distribution, for_py_version)
+    logging.debug("adding %s information to %s", wheel.name, embed_update_log.file)
+    u_log = UpdateLog.from_dict(embed_update_log.read())
+    if any(version.filename == wheel.name for version in u_log.versions):
+        logging.warning("%s already present in %s", wheel.name, embed_update_log.file)
+        return
+    # we don't need a release date for sources other than "periodic"
+    version = NewVersion(wheel.name, datetime.now(), None, "download")
+    u_log.versions.append(version)  # always write at the end for proper updates
+    embed_update_log.write(u_log.to_dict())
+
+
 DATETIME_FMT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
@@ -248,23 +261,27 @@ def _run_do_update(app_data, distribution, embed_filename, for_py_version, perio
     embed_update_log = app_data.embed_update_log(distribution, for_py_version)
     u_log = UpdateLog.from_dict(embed_update_log.read())
     now = datetime.now()
+
+    update_versions, other_versions = [], []
+    for version in u_log.versions:
+        if version.source in {"periodic", "manual"}:
+            update_versions.append(version)
+        else:
+            other_versions.append(version)
+
     if periodic:
         source = "periodic"
-        # mark everything not updated manually as source "periodic"
-        for version in u_log.versions:
-            if version.source != "manual":
-                version.source = source
     else:
         source = "manual"
-        # mark everything as source "manual"
-        for version in u_log.versions:
-            version.source = source
+        # mark the most recent one as source "manual"
+        if update_versions:
+            update_versions[0].source = source
 
     if wheel_filename is not None:
         dest = wheelhouse / wheel_filename.name
         if not dest.exists():
             copy2(str(wheel_filename), str(wheelhouse))
-    last, last_version, versions = None, None, []
+    last, last_version, versions, filenames = None, None, [], set()
     while last is None or not last.use(now, ignore_grace_period_ci=True):
         download_time = datetime.now()
         dest = acquire.download_wheel(
@@ -276,13 +293,14 @@ def _run_do_update(app_data, distribution, embed_filename, for_py_version, perio
             to_folder=wheelhouse,
             env=os.environ,
         )
-        if dest is None or (u_log.versions and u_log.versions[0].filename == dest.name):
+        if dest is None or (update_versions and update_versions[0].filename == dest.name):
             break
         release_date = release_date_for_wheel_path(dest.path)
         last = NewVersion(filename=dest.path.name, release_date=release_date, found_date=download_time, source=source)
         logging.info("detected %s in %s", last, datetime.now() - download_time)
         versions.append(last)
-        last_wheel = Wheel(Path(last.filename))
+        filenames.add(last.filename)
+        last_wheel = last.wheel
         last_version = last_wheel.version
         if embed_version is not None:
             if embed_version >= last_wheel.version_tuple:  # stop download if we reach the embed version
@@ -290,7 +308,9 @@ def _run_do_update(app_data, distribution, embed_filename, for_py_version, perio
     u_log.periodic = periodic
     if not u_log.periodic:
         u_log.started = now
-    u_log.versions = versions + u_log.versions
+    # update other_versions by removing version we just found
+    other_versions = [version for version in other_versions if version.filename not in filenames]
+    u_log.versions = versions + update_versions + other_versions
     u_log.completed = datetime.now()
     embed_update_log.write(u_log.to_dict())
     return versions
@@ -395,6 +415,7 @@ def _run_manual_upgrade(app_data, distribution, for_py_version, env):
 
 
 __all__ = (
+    "add_wheel_to_update_log",
     "periodic_update",
     "do_update",
     "manual_upgrade",
