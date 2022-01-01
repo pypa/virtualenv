@@ -23,7 +23,7 @@ class PyPy3(PyPy, Python3Supports):
 
 
 class PyPy3Posix(PyPy3, PosixSupports):
-    """PyPy 2 on POSIX"""
+    """PyPy 3 on POSIX"""
 
     @property
     def stdlib(self):
@@ -32,7 +32,8 @@ class PyPy3Posix(PyPy3, PosixSupports):
 
     @classmethod
     def _shared_libs(cls):
-        return ["libpypy3-c.so", "libpypy3-c.dylib"]
+        # glob for libpypy3-c.so, libpypy3-c.dylib, libpypy3.9-c.so ...
+        return ["libpypy3*.*"]
 
     def to_lib(self, src):
         return self.dest / "lib" / src.name
@@ -72,4 +73,5 @@ class Pypy3Windows(PyPy3, WindowsSupports):
 
     @classmethod
     def _shared_libs(cls):
-        return ["libpypy3-c.dll", "libffi-7.dll", "libffi-8.dll"]
+        # glob for libpypy*.dll and libffi*.dll
+        return ["libpypy*.dll", "libffi*.dll"]

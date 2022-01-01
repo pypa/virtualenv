@@ -44,9 +44,13 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin):
         # https://bitbucket.org/pypy/pypy/issue/1922/future-proofing-virtualenv
         python_dir = Path(interpreter.system_executable).resolve().parent
         for libname in cls._shared_libs():
-            src = python_dir / libname
-            if src.exists():
+            # Windows needs two dlls
+            found = False
+            for src in python_dir.glob(libname):
+                found = True
                 yield src
+            if not found:
+                raise RuntimeError(f"could not find {python_dir / libname}, aborting")
 
     @classmethod
     def _shared_libs(cls):

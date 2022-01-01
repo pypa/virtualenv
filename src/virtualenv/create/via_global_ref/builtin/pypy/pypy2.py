@@ -88,7 +88,8 @@ class PyPy2Posix(PyPy2, PosixSupports):
 
     @classmethod
     def _shared_libs(cls):
-        return ["libpypy-c.so", "libpypy-c.dylib"]
+        # glob for libpypy-c.so, libpypy-c.dylib, ...
+        return ["libpypy*.*"]
 
     @property
     def lib(self):
@@ -112,7 +113,8 @@ class Pypy2Windows(PyPy2, WindowsSupports):
 
     @classmethod
     def _shared_libs(cls):
-        return ["libpypy-c.dll", "libffi-7.dll", "libffi-8.dll"]
+        # glob for libpypy*.dll and libffi*.dll
+        return ["libpypy*.dll", "libffi*.dll"]
 
     @classmethod
     def sources(cls, interpreter):
