@@ -87,9 +87,8 @@ class PyPy2Posix(PyPy2, PosixSupports):
         return super(PyPy2Posix, cls).modules() + ["posixpath"]
 
     @classmethod
-    def _shared_libs(cls):
-        # glob for libpypy-c.so, libpypy-c.dylib, ...
-        return ["libpypy*.*"]
+    def _shared_libs(cls, python_dir):
+        return  python_dir.glob("libpypy*.*")
 
     @property
     def lib(self):
@@ -112,9 +111,12 @@ class Pypy2Windows(PyPy2, WindowsSupports):
         return super(Pypy2Windows, cls).modules() + ["ntpath"]
 
     @classmethod
-    def _shared_libs(cls):
-        # glob for libpypy*.dll and libffi*.dll
-        return ["libpypy*.dll", "libffi*.dll"]
+    def _shared_libs(cls, python_dir):
+        # No glob in python2 PathLib
+        for candidate in ["libpypy-c.dll", "libffi-7.dll", "libffi-8.dll"]:
+            dll = python_dir / candidate
+            if dll.exists():
+                yield dll
 
     @classmethod
     def sources(cls, interpreter):
