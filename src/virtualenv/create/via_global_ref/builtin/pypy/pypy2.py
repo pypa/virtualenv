@@ -88,7 +88,7 @@ class PyPy2Posix(PyPy2, PosixSupports):
 
     @classmethod
     def _shared_libs(cls, python_dir):
-        return  python_dir.glob("libpypy*.*")
+        return python_dir.glob("libpypy*.*")
 
     @property
     def lib(self):
