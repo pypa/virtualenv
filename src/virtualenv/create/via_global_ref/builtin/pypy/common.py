@@ -45,12 +45,8 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin):
         python_dir = Path(interpreter.system_executable).resolve().parent
         for libname in cls._shared_libs():
             # Windows needs two dlls
-            found = False
             for src in python_dir.glob(libname):
-                found = True
                 yield src
-            if not found:
-                raise RuntimeError(f"could not find {python_dir / libname}, aborting")
 
     @classmethod
     def _shared_libs(cls):
