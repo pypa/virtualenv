@@ -5,6 +5,20 @@ Release History
 
 .. towncrier release notes start
 
+v20.12.1 (2022-01-01)
+---------------------
+
+Bugfixes - 20.12.1
+~~~~~~~~~~~~~~~~~~
+- Try using previous updates of ``pip``, ``setuptools`` & ``wheel``
+  when inside an update grace period rather than always falling back
+  to embedded wheels - by :user:`mayeut`. (`#2265 <https://github.com/pypa/virtualenv/issues/2265>`_)
+- New patch versions of ``pip``, ``setuptools`` & ``wheel`` are now
+  returned in the expected timeframe. - by :user:`mayeut`. (`#2266 <https://github.com/pypa/virtualenv/issues/2266>`_)
+- Manual upgrades of ``pip``, ``setuptools`` & ``wheel`` are
+  not discarded by a periodic update - by :user:`mayeut`. (`#2267 <https://github.com/pypa/virtualenv/issues/2267>`_)
+
+
 v20.12.0 (2021-12-31)
 ---------------------
 
