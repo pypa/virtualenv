@@ -36,6 +36,12 @@ if PY2:
         pass  # pragma: no cov
 
 
+GRACE_PERIOD_CI = timedelta(hours=1)  # prevent version switch in the middle of a CI run
+GRACE_PERIOD_MINOR = timedelta(days=28)
+UPDATE_PERIOD = timedelta(days=14)
+UPDATE_ABORTED_DELAY = timedelta(hours=1)
+
+
 def periodic_update(distribution, of_version, for_py_version, wheel, search_dirs, app_data, do_periodic_update, env):
     if do_periodic_update:
         handle_auto_update(distribution, for_py_version, wheel, search_dirs, app_data, env)
@@ -48,20 +54,20 @@ def periodic_update(distribution, of_version, for_py_version, wheel, search_dirs
         return updated_wheel
 
     u_log = UpdateLog.from_app_data(app_data, distribution, for_py_version)
-    u_log_older_than_hour = now - u_log.completed > timedelta(hours=1) if u_log.completed is not None else False
     if of_version is None:
         for _, group in groupby(u_log.versions, key=lambda v: v.wheel.version_tuple[0:2]):
-            version = next(group)  # use only latest patch version per minor, earlier assumed to be buggy
-            if wheel is not None and Path(version.filename).name == wheel.name:
-                break
-            if u_log.periodic is False or (u_log_older_than_hour and version.use(now)):
-                wheel = _update_wheel(version)
-                break
-    elif u_log.periodic is False or u_log_older_than_hour:
+            # use only latest patch version per minor, earlier assumed to be buggy
+            all_patches = list(group)
+            ignore_grace_period_minor = any(version for version in all_patches if version.use(now))
+            for version in all_patches:
+                if wheel is not None and Path(version.filename).name == wheel.name:
+                    return wheel
+                if version.use(now, ignore_grace_period_minor):
+                    return _update_wheel(version)
+    else:
         for version in u_log.versions:
             if version.wheel.version == of_version:
-                wheel = _update_wheel(version)
-                break
+                return _update_wheel(version)
 
     return wheel
 
@@ -88,10 +94,11 @@ def load_datetime(value):
 
 
 class NewVersion(object):
-    def __init__(self, filename, found_date, release_date):
+    def __init__(self, filename, found_date, release_date, source):
         self.filename = filename
         self.found_date = found_date
         self.release_date = release_date
+        self.source = source
 
     @classmethod
     def from_dict(cls, dictionary):
@@ -99,6 +106,7 @@ class NewVersion(object):
             filename=dictionary["filename"],
             found_date=load_datetime(dictionary["found_date"]),
             release_date=load_datetime(dictionary["release_date"]),
+            source=dictionary["source"],
         )
 
     def to_dict(self):
@@ -106,23 +114,32 @@ class NewVersion(object):
             "filename": self.filename,
             "release_date": dump_datetime(self.release_date),
             "found_date": dump_datetime(self.found_date),
+            "source": self.source,
         }
 
-    def use(self, now):
-        compare_from = self.release_date or self.found_date
-        return now - compare_from >= timedelta(days=28)
+    def use(self, now, ignore_grace_period_minor=False, ignore_grace_period_ci=False):
+        if self.source == "manual":
+            return True
+        elif self.source == "periodic":
+            if self.found_date < now - GRACE_PERIOD_CI or ignore_grace_period_ci:
+                if not ignore_grace_period_minor:
+                    compare_from = self.release_date or self.found_date
+                    return now - compare_from >= GRACE_PERIOD_MINOR
+                return True
+        return False
 
     def __repr__(self):
-        return "{}(filename={}), found_date={}, release_date={})".format(
+        return "{}(filename={}), found_date={}, release_date={}, source={})".format(
             self.__class__.__name__,
             self.filename,
             self.found_date,
             self.release_date,
+            self.source,
         )
 
     def __eq__(self, other):
         return type(self) == type(other) and all(
-            getattr(self, k) == getattr(other, k) for k in ["filename", "release_date", "found_date"]
+            getattr(self, k) == getattr(other, k) for k in ["filename", "release_date", "found_date", "source"]
         )
 
     def __ne__(self, other):
@@ -170,12 +187,12 @@ class UpdateLog(object):
         if self.completed is None:  # never completed
             return self._check_start(now)
         else:
-            if now - self.completed <= timedelta(days=14):
+            if now - self.completed <= UPDATE_PERIOD:
                 return False
             return self._check_start(now)
 
     def _check_start(self, now):
-        return self.started is None or now - self.started > timedelta(hours=1)
+        return self.started is None or now - self.started > UPDATE_ABORTED_DELAY
 
 
 def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, env, periodic):
@@ -231,12 +248,24 @@ def _run_do_update(app_data, distribution, embed_filename, for_py_version, perio
     embed_update_log = app_data.embed_update_log(distribution, for_py_version)
     u_log = UpdateLog.from_dict(embed_update_log.read())
     now = datetime.now()
+    if periodic:
+        source = "periodic"
+        # mark everything not updated manually as source "periodic"
+        for version in u_log.versions:
+            if version.source != "manual":
+                version.source = source
+    else:
+        source = "manual"
+        # mark everything as source "manual"
+        for version in u_log.versions:
+            version.source = source
+
     if wheel_filename is not None:
         dest = wheelhouse / wheel_filename.name
         if not dest.exists():
             copy2(str(wheel_filename), str(wheelhouse))
     last, last_version, versions = None, None, []
-    while last is None or not last.use(now):
+    while last is None or not last.use(now, ignore_grace_period_ci=True):
         download_time = datetime.now()
         dest = acquire.download_wheel(
             distribution=distribution,
@@ -250,7 +279,7 @@ def _run_do_update(app_data, distribution, embed_filename, for_py_version, perio
         if dest is None or (u_log.versions and u_log.versions[0].filename == dest.name):
             break
         release_date = release_date_for_wheel_path(dest.path)
-        last = NewVersion(filename=dest.path.name, release_date=release_date, found_date=download_time)
+        last = NewVersion(filename=dest.path.name, release_date=release_date, found_date=download_time, source=source)
         logging.info("detected %s in %s", last, datetime.now() - download_time)
         versions.append(last)
         last_wheel = Wheel(Path(last.filename))
