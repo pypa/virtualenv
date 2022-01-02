@@ -23,7 +23,7 @@ class PyPy3(PyPy, Python3Supports):
 
 
 class PyPy3Posix(PyPy3, PosixSupports):
-    """PyPy 2 on POSIX"""
+    """PyPy 3 on POSIX"""
 
     @property
     def stdlib(self):
@@ -31,8 +31,9 @@ class PyPy3Posix(PyPy3, PosixSupports):
         return self.dest / "lib" / "pypy{}".format(self.interpreter.version_release_str) / "site-packages"
 
     @classmethod
-    def _shared_libs(cls):
-        return ["libpypy3-c.so", "libpypy3-c.dylib"]
+    def _shared_libs(cls, python_dir):
+        # glob for libpypy3-c.so, libpypy3-c.dylib, libpypy3.9-c.so ...
+        return python_dir.glob("libpypy3*.*")
 
     def to_lib(self, src):
         return self.dest / "lib" / src.name
@@ -71,5 +72,9 @@ class Pypy3Windows(PyPy3, WindowsSupports):
         return self.dest / "Scripts"
 
     @classmethod
-    def _shared_libs(cls):
-        return ["libpypy3-c.dll", "libffi-7.dll", "libffi-8.dll"]
+    def _shared_libs(cls, python_dir):
+        # glob for libpypy*.dll and libffi*.dll
+        for pattern in ["libpypy*.dll", "libffi*.dll"]:
+            srcs = python_dir.glob(pattern)
+            for src in srcs:
+                yield src

@@ -43,11 +43,9 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin):
     def _add_shared_libs(cls, interpreter):
         # https://bitbucket.org/pypy/pypy/issue/1922/future-proofing-virtualenv
         python_dir = Path(interpreter.system_executable).resolve().parent
-        for libname in cls._shared_libs():
-            src = python_dir / libname
-            if src.exists():
-                yield src
+        for src in cls._shared_libs(python_dir):
+            yield src
 
     @classmethod
-    def _shared_libs(cls):
+    def _shared_libs(cls, python_dir):
         raise NotImplementedError
