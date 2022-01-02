@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.13.0 (2022-01-02)
+---------------------
+
+Features - 20.13.0
+~~~~~~~~~~~~~~~~~~
+- Add downloaded wheel information in the relevant JSON embed file to
+  prevent additional downloads of the same wheel. - by :user:`mayeut`. (`#2268 <https://github.com/pypa/virtualenv/issues/2268>`_)
+
+
 v20.12.1 (2022-01-01)
 ---------------------
 
