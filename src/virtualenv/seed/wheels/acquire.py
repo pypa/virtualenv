@@ -10,6 +10,7 @@ from virtualenv.util.six import ensure_str
 from virtualenv.util.subprocess import Popen, subprocess
 
 from .bundle import from_bundle
+from .periodic_update import add_wheel_to_update_log
 from .util import Version, Wheel, discover_wheels
 
 
@@ -35,6 +36,8 @@ def get_wheel(distribution, version, for_py_version, search_dirs, download, app_
             to_folder=app_data.house,
             env=env,
         )
+        if wheel is not None and app_data.can_update:
+            add_wheel_to_update_log(wheel, for_py_version, app_data)
 
     return wheel
 
