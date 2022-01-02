@@ -606,7 +606,7 @@ def test_download_periodic_stop_at_first_usable(tmp_path, mocker, freezer):
     assert write.call_count == 1
 
 
-def test_download_periodic_stop_at_first_usable2(tmp_path, mocker, freezer):
+def test_download_periodic_stop_at_first_usable_with_previous_minor(tmp_path, mocker, freezer):
     freezer.move_to(_UP_NOW)
     wheel = get_embed_wheel("pip", "3.9")
     app_data_outer = AppDataDiskFolder(str(tmp_path / "app"))
