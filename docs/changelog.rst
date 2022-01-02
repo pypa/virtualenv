@@ -13,6 +13,13 @@ Features - 20.13.0
 - Add downloaded wheel information in the relevant JSON embed file to
   prevent additional downloads of the same wheel. - by :user:`mayeut`. (`#2268 <https://github.com/pypa/virtualenv/issues/2268>`_)
 
+Bugfixes - 20.13.0
+~~~~~~~~~~~~~~~~~~
+- Fix ``AttributeError: 'bool' object has no attribute 'error'`` when creating a
+  Python 2.x virtualenv on macOS - by ``moreati``. (`#2269 <https://github.com/pypa/virtualenv/issues/2269>`_)
+- Fix ``PermissionError: [Errno 1] Operation not permitted`` when creating a
+  Python 2.x virtualenv on macOS/arm64 - by ``moreati``. (`#2271 <https://github.com/pypa/virtualenv/issues/2271>`_)
+
 
 v20.12.1 (2022-01-01)
 ---------------------
