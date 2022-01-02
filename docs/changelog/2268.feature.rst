@@ -1,2 +1,0 @@
-Add downloaded wheel information in the relevant JSON embed file to
-prevent additional downloads of the same wheel. - by :user:`mayeut`.
