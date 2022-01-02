@@ -136,7 +136,7 @@ class CPython2macOsArmFramework(CPython2macOsFramework, CPythonmacOsFramework, C
             bak_dir.mkdir(parents=True, exist_ok=True)
             subprocess.check_call(["cp", exe, bak_dir])
             subprocess.check_call(["mv", bak_dir / exe.name, exe])
-            bak_dir.unlink()
+            bak_dir.rmdir()
             cmd = ["codesign", "-s", "-", "--preserve-metadata=identifier,entitlements,flags,runtime", "-f", exe]
             logging.debug("Changing Signature: %s", cmd)
             subprocess.check_call(cmd)
