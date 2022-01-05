@@ -5,6 +5,76 @@ Release History
 
 .. towncrier release notes start
 
+v20.13.0 (2022-01-02)
+---------------------
+
+Features - 20.13.0
+~~~~~~~~~~~~~~~~~~
+- Add downloaded wheel information in the relevant JSON embed file to
+  prevent additional downloads of the same wheel. - by :user:`mayeut`. (`#2268 <https://github.com/pypa/virtualenv/issues/2268>`_)
+
+Bugfixes - 20.13.0
+~~~~~~~~~~~~~~~~~~
+- Fix ``AttributeError: 'bool' object has no attribute 'error'`` when creating a
+  Python 2.x virtualenv on macOS - by ``moreati``. (`#2269 <https://github.com/pypa/virtualenv/issues/2269>`_)
+- Fix ``PermissionError: [Errno 1] Operation not permitted`` when creating a
+  Python 2.x virtualenv on macOS/arm64 - by ``moreati``. (`#2271 <https://github.com/pypa/virtualenv/issues/2271>`_)
+
+
+v20.12.1 (2022-01-01)
+---------------------
+
+Bugfixes - 20.12.1
+~~~~~~~~~~~~~~~~~~
+- Try using previous updates of ``pip``, ``setuptools`` & ``wheel``
+  when inside an update grace period rather than always falling back
+  to embedded wheels - by :user:`mayeut`. (`#2265 <https://github.com/pypa/virtualenv/issues/2265>`_)
+- New patch versions of ``pip``, ``setuptools`` & ``wheel`` are now
+  returned in the expected timeframe. - by :user:`mayeut`. (`#2266 <https://github.com/pypa/virtualenv/issues/2266>`_)
+- Manual upgrades of ``pip``, ``setuptools`` & ``wheel`` are
+  not discarded by a periodic update - by :user:`mayeut`. (`#2267 <https://github.com/pypa/virtualenv/issues/2267>`_)
+
+
+v20.12.0 (2021-12-31)
+---------------------
+
+Features - 20.12.0
+~~~~~~~~~~~~~~~~~~
+- Sign the python2 exe on Darwin arm64 - by :user:`tmspicer`. (`#2233 <https://github.com/pypa/virtualenv/issues/2233>`_)
+
+Bugfixes - 20.12.0
+~~~~~~~~~~~~~~~~~~
+- Fix ``--download`` option - by :user:`mayeut`. (`#2120 <https://github.com/pypa/virtualenv/issues/2120>`_)
+- Ugrade embedded setuptools to ``60.2.0`` from ``60.1.1`` - by :user:`gaborbernat`. (`#2263 <https://github.com/pypa/virtualenv/issues/2263>`_)
+
+
+v20.11.2 (2021-12-29)
+---------------------
+
+Bugfixes - 20.11.2
+~~~~~~~~~~~~~~~~~~
+- Fix installation of pinned versions of ``pip``, ``setuptools`` & ``wheel`` - by :user:`mayeut`. (`#2203 <https://github.com/pypa/virtualenv/issues/2203>`_)
+
+
+v20.11.1 (2021-12-29)
+---------------------
+
+Bugfixes - 20.11.1
+~~~~~~~~~~~~~~~~~~
+- Bump embed setuptools to ``60.1.1`` from ``60.1.0`` - by :user:`gaborbernat`. (`#2258 <https://github.com/pypa/virtualenv/issues/2258>`_)
+
+
+v20.11.0 (2021-12-28)
+---------------------
+
+Features - 20.11.0
+~~~~~~~~~~~~~~~~~~
+- Avoid deprecation warning from py-filelock argument - by :user:`ofek`. (`#2237 <https://github.com/pypa/virtualenv/issues/2237>`_)
+- Upgrade embedded setuptools to ``61.1.0`` from ``58.3.0`` - by :user:`gaborbernat`. (`#2240 <https://github.com/pypa/virtualenv/issues/2240>`_)
+- Drop the runtime dependency of ``backports.entry-points-selectable`` - by :user:`hroncok`. (`#2246 <https://github.com/pypa/virtualenv/issues/2246>`_)
+- Fish: PATH variables should not be quoted when being set - by :user:`hroncok`. (`#2248 <https://github.com/pypa/virtualenv/issues/2248>`_)
+
+
 v20.10.0 (2021-11-01)
 ---------------------
 
@@ -630,7 +700,7 @@ Bugfixes - 20.0.8
 - Having `distutils configuration <https://docs.python.org/3/install/index.html#distutils-configuration-files>`_
   files that set ``prefix`` and ``install_scripts`` cause installation of packages in the wrong location -
   by :user:`gaborbernat`. (`#1663 <https://github.com/pypa/virtualenv/issues/1663>`_)
-- Fix ``PYTHONPATH`` being overridden on Python 2 — by :user:`jd`. (`#1673 <https://github.com/pypa/virtualenv/issues/1673>`_)
+- Fix ``PYTHONPATH`` being overridden on Python 2 — by :user:`jd`. (`#1673 <https://github.com/pypa/virtualenv/issues/1673>`_)
 - Fix list configuration value parsing from config file or environment variable - by :user:`gaborbernat`. (`#1674 <https://github.com/pypa/virtualenv/issues/1674>`_)
 - Fix Batch activation script shell prompt to display environment name by default - by :user:`spetafree`. (`#1679 <https://github.com/pypa/virtualenv/issues/1679>`_)
 - Fix startup on Python 2 is slower for virtualenv - this was due to setuptools calculating it's working set distribution
