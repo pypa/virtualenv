@@ -7,7 +7,7 @@ import subprocess
 from abc import ABCMeta, abstractmethod
 from textwrap import dedent
 
-from six import add_metaclass
+from six import add_metaclass, text_type
 
 from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest, PathRefToDest, RefMust
 from virtualenv.info import IS_MAC_ARM64
@@ -134,10 +134,17 @@ class CPython2macOsArmFramework(CPython2macOsFramework, CPythonmacOsFramework, C
             # Reset the signing on Darwin since the exe has been modified.
             # Note codesign fails on the original exe, it needs to be copied and moved back.
             bak_dir.mkdir(parents=True, exist_ok=True)
-            subprocess.check_call(["cp", exe, bak_dir])
-            subprocess.check_call(["mv", bak_dir / exe.name, exe])
+            subprocess.check_call(["cp", text_type(exe), text_type(bak_dir)])
+            subprocess.check_call(["mv", text_type(bak_dir / exe.name), text_type(exe)])
             bak_dir.rmdir()
-            cmd = ["codesign", "-s", "-", "--preserve-metadata=identifier,entitlements,flags,runtime", "-f", exe]
+            cmd = [
+                "codesign",
+                "-s",
+                "-",
+                "--preserve-metadata=identifier,entitlements,flags,runtime",
+                "-f",
+                text_type(exe),
+            ]
             logging.debug("Changing Signature: %s", cmd)
             subprocess.check_call(cmd)
         except Exception:
