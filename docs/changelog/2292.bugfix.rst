@@ -1,0 +1,1 @@
+Ugrade embedded pip to ``22.0`` from ``21.3.1`` - by :user:`mayeut`.
