@@ -45,7 +45,7 @@ class PythonInfo(object):
 
         # this is a tuple in earlier, struct later, unify to our own named tuple
         self.version_info = VersionInfo(*list(u(i) for i in sys.version_info))
-        self.architecture = 64 if sys.maxsize > 2 ** 32 else 32
+        self.architecture = 64 if sys.maxsize > 2**32 else 32
 
         self.version = u(sys.version)
         self.os = u(os.name)
@@ -104,7 +104,7 @@ class PythonInfo(object):
 
         self.sysconfig_vars = {u(i): u(sysconfig.get_config_var(i) or "") for i in config_var_keys}
         if self.implementation == "PyPy" and sys.version_info.major == 2:
-            self.sysconfig_vars[u"implementation_lower"] = u"python"
+            self.sysconfig_vars["implementation_lower"] = "python"
 
         confs = {k: (self.system_prefix if v.startswith(self.prefix) else v) for k, v in self.sysconfig_vars.items()}
         self.system_stdlib = self.sysconfig_path("stdlib", confs)
@@ -191,7 +191,7 @@ class PythonInfo(object):
             base = {k: v for k, v in self.sysconfig_vars.items()}
             base.update(config_var)
             config_var = base
-        return pattern.format(**config_var).replace(u"/", sep)
+        return pattern.format(**config_var).replace("/", sep)
 
     def creators(self, refresh=False):
         if self._creators is None or refresh is True:
