@@ -1,11 +1,22 @@
-# Setting the old path
-let path-name = (if ((sys).host.name == "Windows") { "Path" } { "PATH" })
-let-env $path-name = $nu.env._OLD_VIRTUAL_PATH
+def-env deactivate-virtualenv [] {
+    let is-windows = ((sys).host.name | str downcase) == "windows"
 
-# Unleting the environment variables that were created when activating the env
-unlet-env VIRTUAL_ENV
-unlet-env _OLD_VIRTUAL_PATH
-unlet-env PROMPT_COMMAND
+    let path-name = if $is-windows {
+        "Path"
+    } else {
+        "PATH"
+    }
 
-unalias pydoc
-unalias deactivate
+    load-env { $path-name : $env._OLD_VIRTUAL_PATH }
+
+    # Hiding the environment variables that were created when activating the env
+    hide _OLD_VIRTUAL_PATH
+    hide VIRTUAL_ENV
+    hide PROMPT_COMMAND
+    hide VIRTUAL_PROMPT
+}
+
+deactivate-virtualenv
+
+hide pydoc
+hide deactivate
