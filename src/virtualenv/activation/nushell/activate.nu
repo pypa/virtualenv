@@ -81,9 +81,11 @@ def-env activate-virtualenv [] {
     load-env $new-env
 }
 
-def pydoc [] {
-    python -m pydoc
-}
+# def pydoc [] {
+#     python -m pydoc
+# }
+
+alias pydoc = python -m pydoc
 
 def-env deactivate [] {
     source "__DEACTIVATE_PATH__"
