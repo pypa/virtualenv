@@ -1,1 +1,1 @@
-Upgrade embedded pip to ``22.0.3`` and setuptools to ``60.7.1`` - by :user:`gaborbernat`.
+Upgrade embedded pip to ``22.0.3`` and setuptools to ``60.6.0`` - by :user:`gaborbernat` and :user:`asottile`.
