@@ -32,7 +32,7 @@ def-env activate-virtualenv [] {
     )
 
     let venv-path = ([$virtual-env $bin] | path join)
-    let new-path = ($old-path | prepend $venv-path)
+    let new-path = ($old-path | prepend $venv-path | str collect $path-sep)
 
     # Creating the new prompt for the session
     let virtual-prompt = (
@@ -57,9 +57,9 @@ def-env activate-virtualenv [] {
     # If there is no default prompt, then only the env is printed in the prompt
     let new-prompt = if (has-env "PROMPT_COMMAND") {
         if ($env.PROMPT_COMMAND | describe) == "block" {
-            { $"($virtual-prompt)(do $env.PROMPT_COMMAND)" }
+            { $"($virtual-prompt)(do $env._OLD_PROMPT_COMMAND)" }
         } else {
-            { $"($virtual-prompt)($env.PROMPT_COMMAND)" }
+            { $"($virtual-prompt)($env._OLD_PROMPT_COMMAND)" }
         }
     } else {
         { $"($virtual-prompt)" }
