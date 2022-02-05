@@ -137,14 +137,8 @@ class CPython2macOsArmFramework(CPython2macOsFramework, CPythonmacOsFramework, C
             subprocess.check_call(["cp", text_type(exe), text_type(bak_dir)])
             subprocess.check_call(["mv", text_type(bak_dir / exe.name), text_type(exe)])
             bak_dir.rmdir()
-            cmd = [
-                "codesign",
-                "-s",
-                "-",
-                "--preserve-metadata=identifier,entitlements,flags,runtime",
-                "-f",
-                text_type(exe),
-            ]
+            metadata = "--preserve-metadata=identifier,entitlements,flags,runtime"
+            cmd = ["codesign", "-s", "-", metadata, "-f", text_type(exe)]
             logging.debug("Changing Signature: %s", cmd)
             subprocess.check_call(cmd)
         except Exception:
@@ -205,7 +199,7 @@ def fix_mach_o(exe, current, new, max_size):
     unneeded bits of information, however Mac OS X 10.5 and earlier cannot read this new Link Edit table format.
     """
     try:
-        logging.debug(u"change Mach-O for %s from %s to %s", ensure_text(exe), current, ensure_text(new))
+        logging.debug("change Mach-O for %s from %s to %s", ensure_text(exe), current, ensure_text(new))
         _builtin_change_mach_o(max_size)(exe, current, new)
     except Exception as e:
         logging.warning("Could not call _builtin_change_mac_o: %s. " "Trying to call install_name_tool instead.", e)
