@@ -1,1 +1,0 @@
-fix "execv() arg 2 must contain only strings" error on M1 MacOS

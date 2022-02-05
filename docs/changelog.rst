@@ -5,6 +5,16 @@ Release History
 
 .. towncrier release notes start
 
+v20.13.1 (2022-02-05)
+---------------------
+
+Bugfixes - 20.13.1
+~~~~~~~~~~~~~~~~~~
+- fix "execv() arg 2 must contain only strings" error on M1 MacOS (`#2282 <https://github.com/pypa/virtualenv/issues/2282>`_)
+- Ugrade embedded setuptools to ``60.5.0`` from ``60.2.0`` - by :user:`asottile`. (`#2289 <https://github.com/pypa/virtualenv/issues/2289>`_)
+- Upgrade embedded pip to ``22.0.3`` and setuptools to ``60.7.1`` - by :user:`gaborbernat`. (`#2294 <https://github.com/pypa/virtualenv/issues/2294>`_)
+
+
 v20.13.0 (2022-01-02)
 ---------------------
 
