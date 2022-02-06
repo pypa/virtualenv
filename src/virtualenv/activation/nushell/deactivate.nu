@@ -1,8 +1,16 @@
 def-env deactivate-virtualenv [] {
+    def has-env [name: string] {
+        $name in (env).name
+    }
+
     let is-windows = ((sys).host.name | str downcase) == "windows"
 
     let path-name = if $is-windows {
-        "Path"
+        if (has-env "Path") {
+            "Path"
+        } else {
+            "PATH"
+        }
     } else {
         "PATH"
     }

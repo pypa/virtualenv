@@ -13,7 +13,11 @@ def-env activate-virtualenv [] {
     let bin = "__BIN_NAME__"
     let path-sep = "__PATH_SEP__"
     let path-name = if $is-windows {
-        "Path"
+        if (has-env "Path") {
+            "Path"
+        } else {
+            "PATH"
+        }
     } else {
         "PATH"
     }
