@@ -20,7 +20,11 @@ def-env activate-virtualenv [] {
 
     let old-path = (
         if $is-windows {
-            $env.Path
+            if (has-env "Path") {
+                $env.Path
+            } else {
+                $env.PATH
+            }
         } else {
             $env.PATH
         } | if (is-string $in) {
@@ -68,7 +72,7 @@ def-env activate-virtualenv [] {
     # Environment variables that will be batched loaded to the virtual env
     let new-env = {
         $path-name          : $new-path
-        _OLD_VIRTUAL_PATH   : $old-path
+        _OLD_VIRTUAL_PATH   : ($old-path | str collect $path-sep)
         VIRTUAL_ENV         : $virtual-env
         _OLD_PROMPT_COMMAND : $old-prompt-command
         PROMPT_COMMAND      : $new-prompt
