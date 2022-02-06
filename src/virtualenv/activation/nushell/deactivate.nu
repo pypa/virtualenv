@@ -19,6 +19,7 @@ def-env deactivate-virtualenv [] {
 
     # Hiding the environment variables that were created when activating the env
     hide _OLD_VIRTUAL_PATH
+    hide _OLD_PROMPT_COMMAND
     hide VIRTUAL_ENV
     hide PROMPT_COMMAND
     hide VIRTUAL_PROMPT

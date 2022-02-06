@@ -43,16 +43,14 @@ def-env activate-virtualenv [] {
     let new-path = ($old-path | prepend $venv-path | str collect $path-sep)
 
     # Creating the new prompt for the session
-    let virtual-prompt = (
-        if ("__VIRTUAL_PROMPT__" == "") {
-            $"(char lparen)($virtual-env | path basename)(char rparen) "
-        } else {
-            "(__VIRTUAL_PROMPT__) "
-        }
-    )
+    let virtual-prompt = if ("__VIRTUAL_PROMPT__" == "") {
+        $"(char lparen)($virtual-env | path basename)(char rparen) "
+    } else {
+        "(__VIRTUAL_PROMPT__) "
+    }
 
     # Back up the old prompt builder
-    let old-prompt-command = if (has-env "VIRTUAL_ENV") {
+    let old-prompt-command = if (has-env "VIRTUAL_ENV") && (has-env "_OLD_PROMPT_COMMAND") {
         $env._OLD_PROMPT_COMMAND
     } else {
         if (has-env "PROMPT_COMMAND") {
@@ -64,10 +62,10 @@ def-env activate-virtualenv [] {
 
     # If there is no default prompt, then only the env is printed in the prompt
     let new-prompt = if (has-env "PROMPT_COMMAND") {
-        if ($env._OLD_PROMPT_COMMAND | describe) == "block" {
-            { $"($virtual-prompt)(do $env._OLD_PROMPT_COMMAND)" }
+        if ($old-prompt-command | describe) == "block" {
+            { $"($virtual-prompt)(do $old-prompt-command)" }
         } else {
-            { $"($virtual-prompt)($env._OLD_PROMPT_COMMAND)" }
+            { $"($virtual-prompt)($old-prompt-command)" }
         }
     } else {
         { $"($virtual-prompt)" }
@@ -76,8 +74,8 @@ def-env activate-virtualenv [] {
     # Environment variables that will be batched loaded to the virtual env
     let new-env = {
         $path-name          : $new-path
-        _OLD_VIRTUAL_PATH   : ($old-path | str collect $path-sep)
         VIRTUAL_ENV         : $virtual-env
+        _OLD_VIRTUAL_PATH   : ($old-path | str collect $path-sep)
         _OLD_PROMPT_COMMAND : $old-prompt-command
         PROMPT_COMMAND      : $new-prompt
         VIRTUAL_PROMPT      : $virtual-prompt
