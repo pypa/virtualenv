@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import sys
 from collections import OrderedDict
 
-if sys.version_info >= (3, 8):
+if sys.version_info >= (3, 10):
     from importlib.metadata import entry_points
 
     importlib_metadata_version = ()

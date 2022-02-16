@@ -92,7 +92,7 @@ _VER_DISTRIBUTION_CLASS = None
 def versioned_distribution_class():
     global _VER_DISTRIBUTION_CLASS
     if _VER_DISTRIBUTION_CLASS is None:
-        if sys.version_info >= (3, 8):
+        if sys.version_info >= (3, 10):
             # noinspection PyCompatibility
             from importlib.metadata import Distribution
         else:
