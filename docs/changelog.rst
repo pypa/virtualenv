@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.13.2 (2022-02-24)
+---------------------
+
+Bugfixes - 20.13.2
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded setuptools to ``60.9.3`` from ``60.6.0`` - by :user:`gaborbernat`. (`#2306 <https://github.com/pypa/virtualenv/issues/2306>`_)
+
+
 v20.13.1 (2022-02-05)
 ---------------------
 
