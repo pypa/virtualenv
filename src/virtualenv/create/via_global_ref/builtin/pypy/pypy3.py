@@ -42,6 +42,11 @@ class PyPy3Posix(PyPy3, PosixSupports):
     def sources(cls, interpreter):
         for src in super(PyPy3Posix, cls).sources(interpreter):
             yield src
+        # PyPy >= 3.8 supports a standard prefix installation, where older
+        # versions always used a portable/developent style installation.
+        # If this is a standard prefix installation, skip the below:
+        if interpreter.system_prefix == "/usr":
+            return
         # Also copy/symlink anything under prefix/lib, which, for "portable"
         # PyPy builds, includes the tk,tcl runtime and a number of shared
         # objects. In distro-specific builds or on conda this should be empty
