@@ -28,5 +28,5 @@ def-env deactivate-virtualenv [] {
 
 deactivate-virtualenv
 
-hide pydoc
+# hide pydoc
 hide deactivate
