@@ -17,11 +17,12 @@ def-env deactivate-virtualenv [] {
 
     load-env { $path-name : $env._OLD_VIRTUAL_PATH }
 
+    let-env PROMPT_COMMAND = $env._OLD_PROMPT_COMMAND
+
     # Hiding the environment variables that were created when activating the env
     hide _OLD_VIRTUAL_PATH
     hide _OLD_PROMPT_COMMAND
     hide VIRTUAL_ENV
-    hide PROMPT_COMMAND
     hide VIRTUAL_PROMPT
 }
 
