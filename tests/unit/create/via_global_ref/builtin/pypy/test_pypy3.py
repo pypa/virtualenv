@@ -1,7 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import fnmatch
-import json
 
 from virtualenv.create.via_global_ref.builtin.pypy.pypy3 import PyPy3Posix
 from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest, PathRefToDest
@@ -69,7 +68,7 @@ def inject_fake_path(mocker, existing_paths):
 
 
 def _load_pypi_info(name):
-    return PythonInfo._from_dict(json.loads((Path(__file__).parent / "{}.json".format(name)).read_text()))
+    return PythonInfo._from_json((Path(__file__).parent / "{}.json".format(name)).read_text())
 
 
 def test_portable_pypy3_virtualenvs_get_their_libs(mocker):
