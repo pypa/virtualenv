@@ -1,0 +1,64 @@
+{
+  "platform": "linux",
+  "implementation": "PyPy",
+  "pypy_version_info": [7, 3, 7, "final", 0],
+  "version_info": {
+    "major": 3,
+    "minor": 7,
+    "micro": 12,
+    "releaselevel": "final",
+    "serial": 0
+  },
+  "architecture": 64,
+  "version": "3.7.12 (7.3.7+dfsg-5, Jan 27 2022, 12:27:44)\\n[PyPy 7.3.7 with GCC 11.2.0]",
+  "os": "posix",
+  "prefix": "/usr/lib/pypy3",
+  "base_prefix": "/usr/lib/pypy3",
+  "real_prefix": null,
+  "base_exec_prefix": "/usr/lib/pypy3",
+  "exec_prefix": "/usr/lib/pypy3",
+  "executable": "/usr/bin/pypy3",
+  "original_executable": "/usr/bin/pypy3",
+  "system_executable": "/usr/bin/pypy3",
+  "has_venv": true,
+  "path": [
+    "/usr/lib/pypy3/lib_pypy/__extensions__",
+    "/usr/lib/pypy3/lib_pypy",
+    "/usr/lib/pypy3/lib-python/3",
+    "/usr/lib/pypy3/lib-python/3/lib-tk",
+    "/usr/lib/pypy3/lib-python/3/plat-linux2",
+    "/usr/local/lib/pypy3.7/dist-packages",
+    "/usr/lib/python3/dist-packages"
+  ],
+  "file_system_encoding": "utf-8",
+  "stdout_encoding": "UTF-8",
+  "sysconfig_scheme": null,
+  "sysconfig_paths": {
+    "stdlib": "{base}/lib-python/{py_version_short}",
+    "platstdlib": "{base}/lib-python/{py_version_short}",
+    "purelib": "{base}/../../local/lib/pypy{py_version_short}/lib-python",
+    "platlib": "{base}/../../local/lib/pypy{py_version_short}/lib-python",
+    "include": "{base}/include",
+    "scripts": "{base}/../../local/bin",
+    "data": "{base}/../../local"
+  },
+  "distutils_install": {
+    "purelib": "site-packages",
+    "platlib": "site-packages",
+    "headers": "include/UNKNOWN",
+    "scripts": "bin",
+    "data": ""
+  },
+  "sysconfig": {
+    "makefile_filename": "/usr/lib/pypy3/lib-python/3.7/config-3.7-x86_64-linux-gnu/Makefile"
+  },
+  "sysconfig_vars": {
+    "base": "/usr/lib/pypy3",
+    "py_version_short": "3.7",
+    "PYTHONFRAMEWORK": ""
+  },
+  "system_stdlib": "/usr/lib/pypy3/lib-python/3.7",
+  "system_stdlib_platform": "/usr/lib/pypy3/lib-python/3.7",
+  "max_size": 9223372036854775807,
+  "_creators": null
+}

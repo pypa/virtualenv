@@ -1,0 +1,60 @@
+{
+  "platform": "linux",
+  "implementation": "PyPy",
+  "pypy_version_info": [7, 3, 8, "final", 0],
+  "version_info": {
+    "major": 3,
+    "minor": 8,
+    "micro": 12,
+    "releaselevel": "final",
+    "serial": 0
+  },
+  "architecture": 64,
+  "version": "3.8.12 (d00b0afd2a5dd3c13fcda75d738262c864c62fa7, Feb 18 2022, 09:52:33)\\n[PyPy 7.3.8 with GCC 10.2.1 20210130 (Red Hat 10.2.1-11)]",
+  "os": "posix",
+  "prefix": "/tmp/pypy3.8-v7.3.8-linux64",
+  "base_prefix": "/tmp/pypy3.8-v7.3.8-linux64",
+  "real_prefix": null,
+  "base_exec_prefix": "/tmp/pypy3.8-v7.3.8-linux64",
+  "exec_prefix": "/tmp/pypy3.8-v7.3.8-linux64",
+  "executable": "/tmp/pypy3.8-v7.3.8-linux64/bin/pypy",
+  "original_executable": "/tmp/pypy3.8-v7.3.8-linux64/bin/pypy",
+  "system_executable": "/tmp/pypy3.8-v7.3.8-linux64/bin/pypy",
+  "has_venv": true,
+  "path": ["/tmp/pypy3.8-v7.3.8-linux64/lib/pypy3.8", "/tmp/pypy3.8-v7.3.8-linux64/lib/pypy3.8/site-packages"],
+  "file_system_encoding": "utf-8",
+  "stdout_encoding": "UTF-8",
+  "sysconfig_scheme": null,
+  "sysconfig_paths": {
+    "stdlib": "{installed_base}/lib/{implementation_lower}{py_version_short}",
+    "platstdlib": "{platbase}/lib/{implementation_lower}{py_version_short}",
+    "purelib": "{base}/lib/{implementation_lower}{py_version_short}/site-packages",
+    "platlib": "{platbase}/lib/{implementation_lower}{py_version_short}/site-packages",
+    "include": "{installed_base}/include/{implementation_lower}{py_version_short}{abiflags}",
+    "scripts": "{base}/bin",
+    "data": "{base}"
+  },
+  "distutils_install": {
+    "purelib": "lib/pypy3.8/site-packages",
+    "platlib": "lib/pypy3.8/site-packages",
+    "headers": "include/pypy3.8/UNKNOWN",
+    "scripts": "bin",
+    "data": ""
+  },
+  "sysconfig": {
+    "makefile_filename": "/tmp/pypy3.8-v7.3.8-linux64/lib/pypy3.8/config-3.8-x86_64-linux-gnu/Makefile"
+  },
+  "sysconfig_vars": {
+    "installed_base": "/tmp/pypy3.8-v7.3.8-linux64",
+    "implementation_lower": "pypy",
+    "py_version_short": "3.8",
+    "platbase": "/tmp/pypy3.8-v7.3.8-linux64",
+    "base": "/tmp/pypy3.8-v7.3.8-linux64",
+    "abiflags": "",
+    "PYTHONFRAMEWORK": ""
+  },
+  "system_stdlib": "/tmp/pypy3.8-v7.3.8-linux64/lib/pypy3.8",
+  "system_stdlib_platform": "/tmp/pypy3.8-v7.3.8-linux64/lib/pypy3.8",
+  "max_size": 9223372036854775807,
+  "_creators": null
+}
