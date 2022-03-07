@@ -1,1 +1,0 @@
-Bump embed pip from ``22.0.3`` to ``22.0.4`` - by :user:`gaborbernat`.

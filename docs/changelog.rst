@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.13.3 (2022-03-07)
+---------------------
+
+Bugfixes - 20.13.3
+~~~~~~~~~~~~~~~~~~
+- Avoid symlinking the contents of ``/usr`` into PyPy3.8+ virtualenvs - by :user:`stefanor`. (`#2310 <https://github.com/pypa/virtualenv/issues/2310>`_)
+- Bump embed pip from ``22.0.3`` to ``22.0.4`` - by :user:`gaborbernat`. (`#2311 <https://github.com/pypa/virtualenv/issues/2311>`_)
+
+
 v20.13.2 (2022-02-24)
 ---------------------
 
