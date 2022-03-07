@@ -49,6 +49,9 @@ class Path(object):
     def __hash__(self):
         return hash(self._path)
 
+    def as_posix(self):
+        return str(self).replace(os.sep, "/")
+
     def exists(self):
         return os.path.exists(self._path)
 

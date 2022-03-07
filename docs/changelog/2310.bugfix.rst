@@ -1,0 +1,1 @@
+Avoid symlinking the contents of ``/usr`` into PyPy3.8+ virtualenvs - by :user:`stefanor`.

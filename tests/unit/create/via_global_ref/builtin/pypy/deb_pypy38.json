@@ -1,0 +1,60 @@
+{
+  "platform": "linux",
+  "implementation": "PyPy",
+  "pypy_version_info": [7, 3, 8, "final", 0],
+  "version_info": {
+    "major": 3,
+    "minor": 8,
+    "micro": 12,
+    "releaselevel": "final",
+    "serial": 0
+  },
+  "architecture": 64,
+  "version": "3.8.12 (7.3.8+dfsg-2, Mar 05 2022, 02:04:42)\\n[PyPy 7.3.8 with GCC 11.2.0]",
+  "os": "posix",
+  "prefix": "/usr",
+  "base_prefix": "/usr",
+  "real_prefix": null,
+  "base_exec_prefix": "/usr",
+  "exec_prefix": "/usr",
+  "executable": "/usr/bin/pypy3",
+  "original_executable": "/usr/bin/pypy3",
+  "system_executable": "/usr/bin/pypy3",
+  "has_venv": true,
+  "path": ["/usr/lib/pypy3.8", "/usr/local/lib/pypy3.8/dist-packages", "/usr/lib/python3/dist-packages"],
+  "file_system_encoding": "utf-8",
+  "stdout_encoding": "UTF-8",
+  "sysconfig_scheme": null,
+  "sysconfig_paths": {
+    "stdlib": "{installed_base}/lib/{implementation_lower}{py_version_short}",
+    "platstdlib": "{platbase}/lib/{implementation_lower}{py_version_short}",
+    "purelib": "{base}/local/lib/{implementation_lower}{py_version_short}/dist-packages",
+    "platlib": "{platbase}/local/lib/{implementation_lower}{py_version_short}/dist-packages",
+    "include": "{installed_base}/local/include/{implementation_lower}{py_version_short}{abiflags}",
+    "scripts": "{base}/local/bin",
+    "data": "{base}"
+  },
+  "distutils_install": {
+    "purelib": "lib/pypy3.8/site-packages",
+    "platlib": "lib/pypy3.8/site-packages",
+    "headers": "include/pypy3.8/UNKNOWN",
+    "scripts": "bin",
+    "data": ""
+  },
+  "sysconfig": {
+    "makefile_filename": "/usr/lib/pypy3.8/config-3.8-x86_64-linux-gnu/Makefile"
+  },
+  "sysconfig_vars": {
+    "installed_base": "/usr",
+    "implementation_lower": "pypy",
+    "py_version_short": "3.8",
+    "platbase": "/usr",
+    "base": "/usr",
+    "abiflags": "",
+    "PYTHONFRAMEWORK": ""
+  },
+  "system_stdlib": "/usr/lib/pypy3.8",
+  "system_stdlib_platform": "/usr/lib/pypy3.8",
+  "max_size": 9223372036854775807,
+  "_creators": null
+}
