@@ -6,27 +6,27 @@ from virtualenv.util.path import Path
 BUNDLE_FOLDER = Path(__file__).absolute().parent
 BUNDLE_SUPPORT = {
     "3.11": {
-        "pip": "pip-22.0.3-py3-none-any.whl",
+        "pip": "pip-22.0.4-py3-none-any.whl",
         "setuptools": "setuptools-60.9.3-py3-none-any.whl",
         "wheel": "wheel-0.37.1-py2.py3-none-any.whl",
     },
     "3.10": {
-        "pip": "pip-22.0.3-py3-none-any.whl",
+        "pip": "pip-22.0.4-py3-none-any.whl",
         "setuptools": "setuptools-60.9.3-py3-none-any.whl",
         "wheel": "wheel-0.37.1-py2.py3-none-any.whl",
     },
     "3.9": {
-        "pip": "pip-22.0.3-py3-none-any.whl",
+        "pip": "pip-22.0.4-py3-none-any.whl",
         "setuptools": "setuptools-60.9.3-py3-none-any.whl",
         "wheel": "wheel-0.37.1-py2.py3-none-any.whl",
     },
     "3.8": {
-        "pip": "pip-22.0.3-py3-none-any.whl",
+        "pip": "pip-22.0.4-py3-none-any.whl",
         "setuptools": "setuptools-60.9.3-py3-none-any.whl",
         "wheel": "wheel-0.37.1-py2.py3-none-any.whl",
     },
     "3.7": {
-        "pip": "pip-22.0.3-py3-none-any.whl",
+        "pip": "pip-22.0.4-py3-none-any.whl",
         "setuptools": "setuptools-60.9.3-py3-none-any.whl",
         "wheel": "wheel-0.37.1-py2.py3-none-any.whl",
     },
