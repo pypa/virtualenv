@@ -85,8 +85,8 @@ def-env activate-virtualenv [] {
     load-env $new-env
 }
 
-alias pydoc = python -m pydoc
-alias deactivate = (source "__DEACTIVATE_PATH__")
-
 # Activate the virtualenv
 activate-virtualenv
+
+alias pydoc = python -m pydoc
+alias deactivate = source "__DEACTIVATE_PATH__"
