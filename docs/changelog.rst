@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.13.4 (2022-03-18)
+---------------------
+
+Bugfixes - 20.13.4
+~~~~~~~~~~~~~~~~~~
+- Improve performance of python startup inside created virtualenvs - by :user:`asottile`. (`#2317 <https://github.com/pypa/virtualenv/issues/2317>`_)
+- Upgrade embedded setuptools to ``60.10.0`` from ``60.9.3`` - by :user:`gaborbernat`. (`#2320 <https://github.com/pypa/virtualenv/issues/2320>`_)
+
+
 v20.13.3 (2022-03-07)
 ---------------------
 
