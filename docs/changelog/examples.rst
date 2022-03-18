@@ -2,17 +2,17 @@
 
 file ``544.doc.rst``::
 
-    explain everything much better - by ``passionate_technicalwriter``
+    explain everything much better - by :user:`passionate_technicalwriter`.
 
 file ``544.feature.rst``::
 
-    ``tox --version`` now shows information about all registered plugins - by ``obestwalter``
+    ``tox --version`` now shows information about all registered plugins - by :user:`obestwalter`.
 
 
 file ``571.bugfix.rst``::
 
     ``skip_install`` overrides ``usedevelop`` (``usedevelop`` is an option to choose the
     installation type if the package is installed and ``skip_install`` determines if it should be
-    installed at all) - by ``ferdonline``
+    installed at all) - by :user:`ferdonline`.
 
 .. see pyproject.toml for all available categories
