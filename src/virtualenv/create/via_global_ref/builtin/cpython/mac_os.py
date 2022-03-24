@@ -25,20 +25,11 @@ class CPythonmacOsFramework(CPython):
     def can_describe(cls, interpreter):
         return is_mac_os_framework(interpreter) and super(CPythonmacOsFramework, cls).can_describe(interpreter)
 
-    @classmethod
-    def sources(cls, interpreter):
-        for src in super(CPythonmacOsFramework, cls).sources(interpreter):
-            yield src
-        # add a symlink to the host python image
-        exe = cls.image_ref(interpreter)
-        ref = PathRefToDest(exe, dest=lambda self, _: self.dest / ".Python", must=RefMust.SYMLINK)
-        yield ref
-
     def create(self):
         super(CPythonmacOsFramework, self).create()
 
         # change the install_name of the copied python executables
-        target = "@executable_path/../.Python"
+        target = self.desired_mach_o_image_path()
         current = self.current_mach_o_image_path()
         for src in self._sources:
             if isinstance(src, ExePathRefToDest):
@@ -62,8 +53,8 @@ class CPythonmacOsFramework(CPython):
     def current_mach_o_image_path(self):
         raise NotImplementedError
 
-    @classmethod
-    def image_ref(cls, interpreter):
+    @abstractmethod
+    def desired_mach_o_image_path(self):
         raise NotImplementedError
 
 
@@ -74,12 +65,11 @@ class CPython2macOsFramework(CPythonmacOsFramework, CPython2PosixBase):
             return super(CPython2macOsFramework, cls).can_create(interpreter)
         return False
 
-    @classmethod
-    def image_ref(cls, interpreter):
-        return Path(interpreter.prefix) / "Python"
-
     def current_mach_o_image_path(self):
         return os.path.join(self.interpreter.prefix, "Python")
+
+    def desired_mach_o_image_path(self):
+        return "@executable_path/../Python"
 
     @classmethod
     def sources(cls, interpreter):
@@ -88,6 +78,14 @@ class CPython2macOsFramework(CPythonmacOsFramework, CPython2PosixBase):
         # landmark for exec_prefix
         exec_marker_file, to_path, _ = cls.from_stdlib(cls.mappings(interpreter), "lib-dynload")
         yield PathRefToDest(exec_marker_file, dest=to_path)
+
+        # add a copy of the host python image
+        exe = Path(interpreter.prefix) / "Python"
+        yield PathRefToDest(exe, dest=lambda self, _: self.dest / "Python", must=RefMust.COPY)
+
+        # add a symlink to the Resources dir
+        resources = Path(interpreter.prefix) / "Resources"
+        yield PathRefToDest(resources, dest=lambda self, _: self.dest / "Resources")
 
     @property
     def reload_code(self):
@@ -147,12 +145,20 @@ class CPython2macOsArmFramework(CPython2macOsFramework, CPythonmacOsFramework, C
 
 
 class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
-    @classmethod
-    def image_ref(cls, interpreter):
-        return Path(interpreter.prefix) / "Python3"
-
     def current_mach_o_image_path(self):
         return "@executable_path/../../../../Python3"
+
+    def desired_mach_o_image_path(self):
+        return "@executable_path/../.Python"
+
+    @classmethod
+    def sources(cls, interpreter):
+        for src in super(CPython3macOsFramework, cls).sources(interpreter):
+            yield src
+
+        # add a symlink to the host python image
+        exe = Path(interpreter.prefix) / "Python3"
+        yield PathRefToDest(exe, dest=lambda self, _: self.dest / ".Python", must=RefMust.SYMLINK)
 
     @property
     def reload_code(self):
