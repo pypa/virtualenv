@@ -1,1 +1,0 @@
-Support Nushell activation scripts with nu version ``0.60`` - by :user:`kubouch`.
