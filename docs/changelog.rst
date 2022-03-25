@@ -5,6 +5,25 @@ Release History
 
 .. towncrier release notes start
 
+v20.14.0 (2022-03-25)
+---------------------
+
+Features - 20.14.0
+~~~~~~~~~~~~~~~~~~
+- Support Nushell activation scripts with nu version ``0.60`` - by :user:`kubouch`. (`#2321 <https://github.com/pypa/virtualenv/issues/2321>`_)
+
+Bugfixes - 20.14.0
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded setuptools to ``61.0.0`` from ``60.10.0`` - by :user:`gaborbernat`. (`#2322 <https://github.com/pypa/virtualenv/issues/2322>`_)
+
+v20.13.4 (2022-03-18)
+---------------------
+
+Bugfixes - 20.14.0
+~~~~~~~~~~~~~~~~~~
+- Improve performance of python startup inside created virtualenvs - by :user:`asottile`. (`#2317 <https://github.com/pypa/virtualenv/issues/2317>`_)
+- Upgrade embedded setuptools to ``60.10.0`` from ``60.9.3`` - by :user:`gaborbernat`. (`#2320 <https://github.com/pypa/virtualenv/issues/2320>`_)
+
 v20.13.3 (2022-03-07)
 ---------------------
 
