@@ -1,1 +1,0 @@
-Upgrade embedded setuptools to ``62.1.0`` from ``61.0.0`` - by :user:`gaborbernat`.

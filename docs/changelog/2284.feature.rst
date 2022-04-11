@@ -1,1 +1,0 @@
-Support for creating a virtual environment from a Python 2.7 framework on macOS 12 - by :user:`nickhutchinson`.

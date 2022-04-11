@@ -5,6 +5,18 @@ Release History
 
 .. towncrier release notes start
 
+v20.14.1 (2022-04-11)
+---------------------
+
+Features - 20.14.1
+~~~~~~~~~~~~~~~~~~
+- Support for creating a virtual environment from a Python 2.7 framework on macOS 12 - by :user:`nickhutchinson`. (`#2284 <https://github.com/pypa/virtualenv/issues/2284>`_)
+
+Bugfixes - 20.14.1
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded setuptools to ``62.1.0`` from ``61.0.0`` - by :user:`gaborbernat`. (`#2327 <https://github.com/pypa/virtualenv/issues/2327>`_)
+
+
 v20.14.0 (2022-03-25)
 ---------------------
 
