@@ -89,3 +89,11 @@ The equivalent CLI-flags based invocation for the above examples would be:
 
    virtualenv --python=/opt/python-3.8/bin/python --python=python3.8
    virtualenv --extra-search-dir=/path/to/dists --extra-search-dir=/path/to/other/dists
+
+
+.. envvar:: VIRTUAL_ENV_DISABLE_PROMPT
+
+   Any virtualenv *activated* when this is set to a non-empty value will leave
+   the shell prompt unchanged during processing of the
+   :ref:`activate script <user_guide:activators>`, rather than modifying it to indicate
+   the newly activated environment.
