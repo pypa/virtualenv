@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import abc
+import re
 from textwrap import dedent
 
 from six import add_metaclass
@@ -58,6 +59,9 @@ class CPython3Windows(CPythonWindows, CPython3):
         if not cls.has_shim(interpreter):
             for src in cls.include_dll_and_pyd(interpreter):
                 yield src
+            python_zip = WindowsPythonZipRef(cls, interpreter)
+            if python_zip.exists:
+                yield python_zip
 
     @classmethod
     def has_shim(cls, interpreter):
@@ -89,3 +93,40 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     def to_dll_and_pyd(self, src):
         return self.bin_dir / src.name
+
+
+class WindowsPythonZipRef(PathRefToDest):
+    def __init__(self, creator, interpreter):
+        super().__init__(Path(windows_python_zip(interpreter)), creator.to_bin)
+
+
+def windows_python_zip(interpreter):
+    """
+    This is a path to the "python<VERSION>.zip", which contains the compiled
+    *.pyc packages from the Python std lib.
+    :see: https://docs.python.org/3/using/windows.html#the-embeddable-package
+
+    The <VERSION> is the `py_version_nodot` var from the `sysconfig` module.
+    For example, for the Python 3.10 the `py_version_nodot` would be "310" and
+    the `python_zip` value should be "python310.zip".
+    :see: `python -m sysconfig` output.
+    :see: `discovery.py_info.PythonInfo` class (interpreter).
+
+    :note: By default, the embeddable Python distribution for Windows includes
+    the "python<VERSION>.zip" and the "python<VERSION>._pth" files in the
+    Python bin dir. User can move/rename *zip* file and edit `sys.path` by
+    editing *_pth* file. This function can only recognize the std name of the
+    embeddable *zip* file!
+
+    :return: (str) first matched `python_zip_path` or `python_zip` file name.
+    :note: Don't return an empty str, because it will be turned into an
+    existing current path `.` and will cause a recursion err.
+    """
+    python_zip = "python{}.zip".format(interpreter.version_nodot)
+    # Any str ends with `python_zip` file name.
+    python_zip_path = ".*{}$".format(python_zip)
+    path_re = re.compile(python_zip_path, re.IGNORECASE)
+    path_matches = filter(None, map(path_re.match, interpreter.path))
+    # Return first matched `python_zip_path` or `python_zip` file name.
+    path_match = next(path_matches, None)
+    return path_match.group() if path_match else python_zip
