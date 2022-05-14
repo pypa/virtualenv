@@ -89,10 +89,7 @@ class CPython3Windows(CPythonWindows, CPython3):
         for folder in [host_exe_folder, dll_folder]:
             for file in folder.iterdir():
                 if file.suffix in (".pyd", ".dll"):
-                    yield PathRefToDest(file, dest=cls.to_dll_and_pyd)
-
-    def to_dll_and_pyd(self, src):
-        return self.bin_dir / src.name
+                    yield PathRefToDest(file, dest=cls.to_bin)
 
 
 class WindowsPythonZipRef(PathRefToDest):
