@@ -1,10 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 
 import fnmatch
+import pytest
 
 from virtualenv.create.via_global_ref.builtin.pypy.pypy3 import PyPy3Posix
 from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest, PathRefToDest
-from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.util.path import Path
 
 
@@ -67,38 +67,38 @@ def inject_fake_path(mocker, existing_paths):
     mocker.patch("virtualenv.create.via_global_ref.builtin.pypy.pypy3.Path", FakePath)
 
 
-def _load_pypi_info(name):
-    return PythonInfo._from_json((Path(__file__).parent / "{}.json".format(name)).read_text())
-
-
-def test_portable_pypy3_virtualenvs_get_their_libs(mocker):
+@pytest.mark.parametrize("fixture_name", ["portable_pypy38"])
+def test_portable_pypy3_virtualenvs_get_their_libs(mocker, py_info):
     paths = ["/tmp/pypy3.8-v7.3.8-linux64/bin/pypy", "/tmp/pypy3.8-v7.3.8-linux64/lib/libgdbm.so.4"]
     inject_fake_path(mocker, paths)
     path = Path("/tmp/pypy3.8-v7.3.8-linux64/bin/libpypy3-c.so")
     mocker.patch.object(PyPy3Posix, "_shared_libs", return_value=[path])
 
-    sources = list(PyPy3Posix.sources(interpreter=_load_pypi_info("portable_pypy38")))
+    sources = list(PyPy3Posix.sources(interpreter=py_info))
     assert_contains_exe(sources, "/tmp/pypy3.8-v7.3.8-linux64/bin/pypy")
     assert len(sources) > 2
     assert_contains_ref(sources, "/tmp/pypy3.8-v7.3.8-linux64/bin/libpypy3-c.so")
     assert_contains_ref(sources, "/tmp/pypy3.8-v7.3.8-linux64/lib/libgdbm.so.4")
 
 
-def test_debian_pypy37_virtualenvs(mocker):
+@pytest.mark.parametrize("fixture_name", ["deb_pypy37"])
+def test_debian_pypy37_virtualenvs(mocker, py_info):
     # Debian's pypy3 layout, installed to /usr, before 3.8 allowed a /usr prefix
     inject_fake_path(mocker, ["/usr/bin/pypy3"])
     mocker.patch.object(PyPy3Posix, "_shared_libs", return_value=[Path("/usr/lib/pypy3/bin/libpypy3-c.so")])
-    sources = list(PyPy3Posix.sources(interpreter=_load_pypi_info("deb_pypy37")))
+
+    sources = list(PyPy3Posix.sources(interpreter=py_info))
     assert_contains_exe(sources, "/usr/bin/pypy3")
     assert_contains_ref(sources, "/usr/lib/pypy3/bin/libpypy3-c.so")
     assert len(sources) == 2
 
 
-def test_debian_pypy38_virtualenvs_exclude_usr(mocker):
+@pytest.mark.parametrize("fixture_name", ["deb_pypy38"])
+def test_debian_pypy38_virtualenvs_exclude_usr(mocker, py_info):
     inject_fake_path(mocker, ["/usr/bin/pypy3", "/usr/lib/foo"])
     # libpypy3-c.so lives on the ld search path
     mocker.patch.object(PyPy3Posix, "_shared_libs", return_value=[])
 
-    sources = list(PyPy3Posix.sources(interpreter=_load_pypi_info("deb_pypy38")))
+    sources = list(PyPy3Posix.sources(interpreter=py_info))
     assert_contains_exe(sources, "/usr/bin/pypy3")
     assert len(sources) == 1
