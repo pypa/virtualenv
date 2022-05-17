@@ -16,7 +16,7 @@ def fixture_file(fixture_name):
 
 
 @pytest.fixture
-def py_info(fixture_name):
-    py_info_file = fixture_file(fixture_name)
+def py_info(py_info_name):
+    py_info_file = fixture_file(py_info_name)
     py_info_json = py_info_file.read_text()
     return PythonInfo._from_json(py_info_json)
