@@ -60,3 +60,14 @@ def path_mock(paths):
     based on the `PathMockBase`.
     """
     return type("PathMock", (PathMockBase,), {"mocked_paths": paths})
+
+
+def files(mocker, path_list, file_list):
+    PathMock = path_mock(file_list)
+    for path in path_list:
+        mocker.patch(path, PathMock)
+
+
+def pypy_libs(mocker, pypy_creator_class, libs):
+    paths = tuple(map(Path, libs))
+    mocker.patch.object(pypy_creator_class, "_shared_libs", return_value=paths)
