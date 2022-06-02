@@ -3,7 +3,13 @@ from __future__ import absolute_import, unicode_literals
 from virtualenv.seed.wheels.util import Wheel
 from virtualenv.util.path import Path
 
-BUNDLE_FOLDER = Path(__file__).absolute().parent
+try:
+    BUNDLE_FOLDER = Path(__file__).absolute().parent
+except NameError:
+    from virtualenv.util.resources import PackagePath
+
+    BUNDLE_FOLDER = PackagePath(__package__)
+
 BUNDLE_SUPPORT = {
     "3.11": {
         "pip": "pip-22.1.2-py3-none-any.whl",

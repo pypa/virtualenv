@@ -21,7 +21,13 @@ from virtualenv.version import __version__
 
 from .pyenv_cfg import PyEnvCfg
 
-HERE = Path(os.path.abspath(__file__)).parent
+try:
+    HERE = Path(os.path.abspath(__file__)).parent
+except NameError:
+    from virtualenv.util.resources import PackagePath
+
+    HERE = PackagePath(__package__)
+
 DEBUG_SCRIPT = HERE / "debug.py"
 
 

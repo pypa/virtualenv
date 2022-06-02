@@ -4,7 +4,10 @@
 import os
 import sys
 
-VIRTUALENV_PATCH_FILE = os.path.join(__file__)
+try:
+    VIRTUALENV_PATCH_FILE = os.path.join(__file__)
+except NameError:
+    VIRTUALENV_PATCH_FILE = None
 
 
 def patch_dist(dist):

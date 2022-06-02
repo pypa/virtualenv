@@ -12,6 +12,13 @@ from virtualenv.util.six import ensure_text
 
 from ..creator import Creator, CreatorMeta
 
+try:
+    HERE = Path(__file__).parent
+except NameError:
+    from virtualenv.util.resources import PackagePath
+
+    HERE = PackagePath(__package__)
+
 
 class ViaGlobalRefMeta(CreatorMeta):
     def __init__(self):
@@ -100,7 +107,7 @@ class ViaGlobalRefApi(Creator):
 
     def env_patch_text(self):
         """Patch the distutils package to not be derailed by its configuration files"""
-        with self.app_data.ensure_extracted(Path(__file__).parent / "_virtualenv.py") as resolved_path:
+        with self.app_data.ensure_extracted(HERE / "_virtualenv.py") as resolved_path:
             text = resolved_path.read_text()
             return text.replace('"__SCRIPT_DIR__"', repr(os.path.relpath(str(self.script_dir), str(self.purelib))))
 

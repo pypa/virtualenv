@@ -1,13 +1,19 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
-from contextlib import contextmanager
+import sys
 
 from virtualenv.discovery.cached_py_info import LogCmd
 from virtualenv.seed.embed.base_embed import BaseEmbed
+from virtualenv.util.path import path_accessor
 from virtualenv.util.subprocess import Popen
 
 from ..wheels import Version, get_wheel, pip_wheel_env_run
+
+if sys.version_info >= (3, 3):
+    from contextlib import ExitStack, contextmanager
+else:
+    from contextlib2 import ExitStack, contextmanager
 
 
 class PipInvoke(BaseEmbed):
@@ -37,21 +43,23 @@ class PipInvoke(BaseEmbed):
         if not self.download:
             cmd.append("--no-index")
         folders = set()
-        for dist, version in self.distribution_to_versions().items():
-            wheel = get_wheel(
-                distribution=dist,
-                version=version,
-                for_py_version=for_py_version,
-                search_dirs=self.extra_search_dir,
-                download=False,
-                app_data=self.app_data,
-                do_periodic_update=self.periodic_update,
-                env=self.env,
-            )
-            if wheel is None:
-                raise RuntimeError("could not get wheel for distribution {}".format(dist))
-            folders.add(str(wheel.path.parent))
-            cmd.append(Version.as_pip_req(dist, wheel.version))
-        for folder in sorted(folders):
-            cmd.extend(["--find-links", str(folder)])
-        yield cmd
+        with ExitStack() as stack:
+            for dist, version in self.distribution_to_versions().items():
+                wheel = get_wheel(
+                    distribution=dist,
+                    version=version,
+                    for_py_version=for_py_version,
+                    search_dirs=self.extra_search_dir,
+                    download=False,
+                    app_data=self.app_data,
+                    do_periodic_update=self.periodic_update,
+                    env=self.env,
+                )
+                if wheel is None:
+                    raise RuntimeError("could not get wheel for distribution {}".format(dist))
+                stack.enter_context(path_accessor(wheel.path))
+                folders.add(str(wheel.path.parent))
+                cmd.append(Version.as_pip_req(dist, wheel.version))
+            for folder in sorted(folders):
+                cmd.extend(["--find-links", str(folder)])
+            yield cmd

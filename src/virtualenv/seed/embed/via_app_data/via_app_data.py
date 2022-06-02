@@ -11,7 +11,7 @@ from threading import Lock, Thread
 from virtualenv.info import fs_supports_symlink
 from virtualenv.seed.embed.base_embed import BaseEmbed
 from virtualenv.seed.wheels import get_wheel
-from virtualenv.util.path import Path
+from virtualenv.util.path import Path, path_accessor
 
 from .pip_install.copy import CopyPipInstall
 from .pip_install.symlink import SymlinkPipInstall
@@ -47,14 +47,15 @@ class FromAppData(BaseEmbed):
             def _install(name, wheel):
                 try:
                     logging.debug("install %s from wheel %s via %s", name, wheel, installer_class.__name__)
-                    key = Path(installer_class.__name__) / wheel.path.stem
-                    wheel_img = self.app_data.wheel_image(creator.interpreter.version_release_str, key)
-                    installer = installer_class(wheel.path, creator, wheel_img)
-                    parent = self.app_data.lock / wheel_img.parent
-                    with parent.non_reentrant_lock_for_key(wheel_img.name):
-                        if not installer.has_image():
-                            installer.build_image()
-                    installer.install(creator.interpreter.version_info)
+                    with path_accessor(wheel.path):
+                        key = Path(installer_class.__name__) / wheel.path.stem
+                        wheel_img = self.app_data.wheel_image(creator.interpreter.version_release_str, key)
+                        installer = installer_class(wheel.path, creator, wheel_img)
+                        parent = self.app_data.lock / wheel_img.parent
+                        with parent.non_reentrant_lock_for_key(wheel_img.name):
+                            if not installer.has_image():
+                                installer.build_image()
+                        installer.install(creator.interpreter.version_info)
                 except Exception:  # noqa
                     exceptions[name] = sys.exc_info()
 

@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from operator import attrgetter
 from zipfile import ZipFile
 
+from virtualenv.util.path import path_accessor
 from virtualenv.util.six import ensure_text
 
 
@@ -49,8 +50,9 @@ class Wheel(object):
 
     def support_py(self, py_version):
         name = "{}.dist-info/METADATA".format("-".join(self.path.stem.split("-")[0:2]))
-        with ZipFile(ensure_text(str(self.path)), "r") as zip_file:
-            metadata = zip_file.read(name).decode("utf-8")
+        with path_accessor(self.path) as path:
+            with ZipFile(ensure_text(str(path)), "r") as zip_file:
+                metadata = zip_file.read(name).decode("utf-8")
         marker = "Requires-Python:"
         requires = next((i[len(marker) :] for i in metadata.splitlines() if i.startswith(marker)), None)
         if requires is None:  # if it does not specify a python requires the assumption is compatible

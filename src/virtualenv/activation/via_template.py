@@ -6,14 +6,10 @@ from abc import ABCMeta, abstractmethod
 
 from six import add_metaclass
 
+from virtualenv.util.resources import ResourcePath
 from virtualenv.util.six import ensure_text
 
 from .activator import Activator
-
-if sys.version_info >= (3, 7):
-    from importlib.resources import read_binary
-else:
-    from importlib_resources import read_binary
 
 
 @add_metaclass(ABCMeta)
@@ -54,7 +50,7 @@ class ViaTemplateActivator(Activator):
 
     def instantiate_template(self, replacements, template, creator):
         # read content as binary to avoid platform specific line normalization (\n -> \r\n)
-        binary = read_binary(self.__module__, str(template))
+        binary = ResourcePath(self.__module__, str(template)).read_bytes()
         text = binary.decode("utf-8", errors="strict")
         for key, value in replacements.items():
             value = self._repr_unicode(creator, value)

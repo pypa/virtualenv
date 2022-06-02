@@ -127,10 +127,15 @@ def load_app_data(args, parser, options):
 def add_version_flag(parser):
     import virtualenv
 
+    try:
+        source = virtualenv.__file__
+    except AttributeError:
+        source = "virtualenv"
+
     parser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s {} from {}".format(__version__, virtualenv.__file__),
+        version="%(prog)s {} from {}".format(__version__, source),
         help="display the version of the virtualenv package and its location, then exit",
     )
 
