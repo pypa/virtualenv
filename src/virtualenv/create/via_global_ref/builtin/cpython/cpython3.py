@@ -54,7 +54,7 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     def sources(cls, interpreter):
-        for src in super(CPython3Windows, cls).sources(interpreter):
+        for src in cls.exe_sources(interpreter):
             yield src
         if not cls.has_shim(interpreter):
             for src in cls.include_dll_and_pyd(interpreter):
@@ -62,6 +62,10 @@ class CPython3Windows(CPythonWindows, CPython3):
             python_zip = WindowsPythonZipRef(cls, interpreter)
             if python_zip.exists:
                 yield python_zip
+
+    @classmethod
+    def exe_sources(cls, interpreter):
+        return super(CPython3Windows, cls).sources(interpreter)
 
     @classmethod
     def has_shim(cls, interpreter):
@@ -111,9 +115,9 @@ def windows_python_zip(interpreter):
 
     :note: By default, the embeddable Python distribution for Windows includes
     the "python<VERSION>.zip" and the "python<VERSION>._pth" files in the
-    Python bin dir. User can move/rename *zip* file and edit `sys.path` by
-    editing *_pth* file. This function can only recognize the std name of the
-    embeddable *zip* file!
+    Python base dir. User can move/rename *zip* file and edit `sys.path` by
+    editing *_pth* file. This function can only recognize the default name of
+    the *zip* file!
 
     :return: (str) first matched `python_zip_path` or `python_zip` file name.
     :note: Don't return an empty str, because it will be turned into an
