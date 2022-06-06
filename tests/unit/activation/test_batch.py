@@ -1,8 +1,12 @@
 from __future__ import absolute_import, unicode_literals
 
-import pipes
-
 from virtualenv.activation import BatchActivator
+from virtualenv.info import PY2
+
+if PY2:
+    from pipes import quote
+else:
+    from shlex import quote
 
 
 def test_batch(activation_tester_class, activation_tester, tmp_path, activation_python):
@@ -25,7 +29,7 @@ def test_batch(activation_tester_class, activation_tester, tmp_path, activation_
 
         def quote(self, s):
             """double quotes needs to be single, and single need to be double"""
-            return "".join(("'" if c == '"' else ('"' if c == "'" else c)) for c in pipes.quote(s))
+            return "".join(("'" if c == '"' else ('"' if c == "'" else c)) for c in quote(s))
 
         def print_prompt(self):
             return "echo %PROMPT%"
