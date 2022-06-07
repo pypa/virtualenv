@@ -1,7 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-import pipes
 import re
 import shutil
 import subprocess
@@ -11,11 +10,16 @@ from os.path import dirname, normcase
 import pytest
 import six
 
-from virtualenv.info import IS_PYPY, WIN_CPYTHON_2
+from virtualenv.info import IS_PYPY, PY2, WIN_CPYTHON_2
 from virtualenv.run import cli_run
 from virtualenv.util.path import Path
 from virtualenv.util.six import ensure_str, ensure_text
 from virtualenv.util.subprocess import Popen
+
+if PY2:
+    from pipes import quote
+else:
+    from shlex import quote
 
 
 class ActivationTester(object):
@@ -157,7 +161,7 @@ class ActivationTester(object):
         assert out[-1] == "None", raw
 
     def quote(self, s):
-        return pipes.quote(s)
+        return quote(s)
 
     def python_cmd(self, cmd):
         return "{} -c {}".format(os.path.basename(sys.executable), self.quote(cmd))
