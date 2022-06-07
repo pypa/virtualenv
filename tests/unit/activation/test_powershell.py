@@ -1,11 +1,16 @@
 from __future__ import absolute_import, unicode_literals
 
-import pipes
 import sys
 
 import pytest
 
 from virtualenv.activation import PowerShellActivator
+from virtualenv.info import PY2
+
+if PY2:
+    from pipes import quote
+else:
+    from shlex import quote
 
 
 @pytest.mark.slow
@@ -23,7 +28,7 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch):
 
         def quote(self, s):
             """powershell double double quote needed for quotes within single quotes"""
-            return pipes.quote(s).replace('"', '""')
+            return quote(s).replace('"', '""')
 
         def _get_test_lines(self, activate_script):
             # for BATCH utf-8 support need change the character code page to 650001

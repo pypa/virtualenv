@@ -3,7 +3,6 @@ import argparse
 import io
 import json
 import os
-import pipes
 import shutil
 import subprocess
 import sys
@@ -17,6 +16,11 @@ from tempfile import TemporaryDirectory
 
 from packaging.markers import Marker
 from packaging.requirements import Requirement
+
+if sys.version_info[0] == 2:
+    from pipes import quote
+else:
+    from shlex import quote
 
 HERE = Path(__file__).parent.absolute()
 
@@ -227,7 +231,7 @@ def run_suppress_output(cmd, stop_print_on_fail=False):
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     out, err = process.communicate()
     if stop_print_on_fail and process.returncode != 0:
-        print("exit with {} of {}".format(process.returncode, " ".join(pipes.quote(i) for i in cmd)), file=sys.stdout)
+        print("exit with {} of {}".format(process.returncode, " ".join(quote(i) for i in cmd)), file=sys.stdout)
         if out:
             print(out, file=sys.stdout)
         if err:
