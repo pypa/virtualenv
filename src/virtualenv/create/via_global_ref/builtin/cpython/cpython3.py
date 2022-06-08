@@ -1,7 +1,9 @@
 from __future__ import absolute_import, unicode_literals
 
 import abc
-import re
+import fnmatch
+from itertools import chain
+from operator import methodcaller as method
 from textwrap import dedent
 
 from six import add_metaclass
@@ -54,17 +56,19 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     def sources(cls, interpreter):
-        for src in cls.exe_sources(interpreter):
-            yield src
-        if not cls.has_shim(interpreter):
-            for src in cls.include_dll_and_pyd(interpreter):
-                yield src
-            python_zip = WindowsPythonZipRef(cls, interpreter)
-            if python_zip.exists:
-                yield python_zip
+        if cls.has_shim(interpreter):
+            refs = cls.executables(interpreter)
+        else:
+            refs = chain(
+                cls.executables(interpreter),
+                cls.dll_and_pyd(interpreter),
+                cls.python_zip(interpreter),
+            )
+        for ref in refs:
+            yield ref
 
     @classmethod
-    def exe_sources(cls, interpreter):
+    def executables(cls, interpreter):
         return super(CPython3Windows, cls).sources(interpreter)
 
     @classmethod
@@ -87,47 +91,32 @@ class CPython3Windows(CPythonWindows, CPython3):
         return super(CPython3Windows, cls).host_python(interpreter)
 
     @classmethod
-    def include_dll_and_pyd(cls, interpreter):
+    def dll_and_pyd(cls, interpreter):
         dll_folder = Path(interpreter.system_prefix) / "DLLs"
         host_exe_folder = Path(interpreter.system_executable).parent
         for folder in [host_exe_folder, dll_folder]:
             for file in folder.iterdir():
                 if file.suffix in (".pyd", ".dll"):
-                    yield PathRefToDest(file, dest=cls.to_bin)
+                    yield PathRefToDest(file, cls.to_bin)
 
+    @classmethod
+    def python_zip(cls, interpreter):
+        """
+        "python{VERSION}.zip" contains compiled *.pyc std lib packages, where
+        "VERSION" is `py_version_nodot` var from the `sysconfig` module.
+        :see: https://docs.python.org/3/using/windows.html#the-embeddable-package
+        :see: `discovery.py_info.PythonInfo` class (interpreter).
+        :see: `python -m sysconfig` output.
 
-class WindowsPythonZipRef(PathRefToDest):
-    def __init__(self, creator, interpreter):
-        super().__init__(Path(windows_python_zip(interpreter)), creator.to_bin)
-
-
-def windows_python_zip(interpreter):
-    """
-    This is a path to the "python<VERSION>.zip", which contains the compiled
-    *.pyc packages from the Python std lib.
-    :see: https://docs.python.org/3/using/windows.html#the-embeddable-package
-
-    The <VERSION> is the `py_version_nodot` var from the `sysconfig` module.
-    For example, for the Python 3.10 the `py_version_nodot` would be "310" and
-    the `python_zip` value should be "python310.zip".
-    :see: `python -m sysconfig` output.
-    :see: `discovery.py_info.PythonInfo` class (interpreter).
-
-    :note: By default, the embeddable Python distribution for Windows includes
-    the "python<VERSION>.zip" and the "python<VERSION>._pth" files in the
-    Python base dir. User can move/rename *zip* file and edit `sys.path` by
-    editing *_pth* file. This function can only recognize the default name of
-    the *zip* file!
-
-    :return: (str) first matched `python_zip_path` or `python_zip` file name.
-    :note: Don't return an empty str, because it will be turned into an
-    existing current path `.` and will cause a recursion err.
-    """
-    python_zip = "python{}.zip".format(interpreter.version_nodot)
-    # Any str ends with `python_zip` file name.
-    python_zip_path = ".*{}$".format(python_zip)
-    path_re = re.compile(python_zip_path, re.IGNORECASE)
-    path_matches = filter(None, map(path_re.match, interpreter.path))
-    # Return first matched `python_zip_path` or `python_zip` file name.
-    path_match = next(path_matches, None)
-    return path_match.group() if path_match else python_zip
+        :note: The embeddable Python distribution for Windows includes
+        "python{VERSION}.zip" and "python{VERSION}._pth" files. User can
+        move/rename *zip* file and edit `sys.path` by editing *_pth* file.
+        Here the `pattern` is used only for the default *zip* file name!
+        """
+        pattern = "*python{}.zip".format(interpreter.version_nodot)
+        matches = fnmatch.filter(interpreter.path, pattern)
+        matched_paths = map(Path, matches)
+        existing_paths = filter(method("exists"), matched_paths)
+        path = next(existing_paths, None)
+        if path is not None:
+            yield PathRefToDest(path, cls.to_bin)

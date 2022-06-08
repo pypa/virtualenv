@@ -48,7 +48,7 @@ class PythonInfo(object):
         self.architecture = 64 if sys.maxsize > 2**32 else 32
 
         # Used to determine some file names.
-        # See `windows_embed_zip()`.
+        # See `CPython3Windows.python_zip()`.
         self.version_nodot = sysconfig.get_config_var("py_version_nodot")
 
         self.version = u(sys.version)

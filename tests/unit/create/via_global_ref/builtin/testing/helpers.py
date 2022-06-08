@@ -29,17 +29,10 @@ def filterby(filters, sources):
 
 
 def contains_exe(sources, src, target=None):
-    """
-    Does `sources` contains `ExePathRefToDest` which has the given `src` and
-    (optionally) `target`.
-    """
-    filters = is_exe, has_src(src), has_target(target) if target else None
+    filters = is_exe, has_src(src), target and has_target(target)
     return any(filterby(filters, sources))
 
 
 def contains_ref(sources, src):
-    """
-    Does `sources` contains `PathRefToDest` which has the given `src`.
-    """
     filters = is_ref, has_src(src)
     return any(filterby(filters, sources))

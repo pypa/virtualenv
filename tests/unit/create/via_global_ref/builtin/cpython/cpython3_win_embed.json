@@ -23,7 +23,7 @@
   "has_venv": false,
   "path": [
     "c:\\path\\to\\python\\Scripts\\virtualenv.exe",
-    "c:\\path\\to\\python\\python31.zip",
+    "c:\\path\\to\\python\\python310.zip",
     "c:\\path\\to\\python",
     "c:\\path\\to\\python\\Lib\\site-packages"
   ],

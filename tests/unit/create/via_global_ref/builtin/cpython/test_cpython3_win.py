@@ -65,3 +65,35 @@ def test_exe_dll_pyd_without_shim(py_info, mock_files):
     assert contains_exe(sources, py_info.system_executable)
     for file in py_files:
         assert contains_ref(sources, file)
+
+
+@pytest.mark.parametrize("py_info_name", ["cpython3_win_embed"])
+def test_python_zip_if_exists_and_set_in_path(py_info, mock_files):
+    python_zip_name = "python{}.zip".format(py_info.version_nodot)
+    python_zip = path(py_info.prefix, python_zip_name)
+    mock_files(CPYTHON3_PATH, [python_zip])
+    sources = tuple(CPython3Windows.sources(interpreter=py_info))
+    assert python_zip in py_info.path
+    assert contains_ref(sources, python_zip)
+
+
+@pytest.mark.parametrize("py_info_name", ["cpython3_win_embed"])
+def test_no_python_zip_if_exists_and_not_set_in_path(py_info, mock_files):
+    python_zip_name = "python{}.zip".format(py_info.version_nodot)
+    python_zip = path(py_info.prefix, python_zip_name)
+    py_info.path.remove(python_zip)
+    mock_files(CPYTHON3_PATH, [python_zip])
+    sources = tuple(CPython3Windows.sources(interpreter=py_info))
+    assert python_zip not in py_info.path
+    assert not contains_ref(sources, python_zip)
+
+
+@pytest.mark.parametrize("py_info_name", ["cpython3_win_embed"])
+def test_no_python_zip_if_not_exists(py_info, mock_files):
+    python_zip_name = "python{}.zip".format(py_info.version_nodot)
+    python_zip = path(py_info.prefix, python_zip_name)
+    # No `python_zip`, just python.exe file.
+    mock_files(CPYTHON3_PATH, [py_info.system_executable])
+    sources = tuple(CPython3Windows.sources(interpreter=py_info))
+    assert python_zip in py_info.path
+    assert not contains_ref(sources, python_zip)
