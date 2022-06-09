@@ -62,7 +62,8 @@ class PathMockABC(FakeDataABC, Path):
         return self
 
     def iterdir(self):
-        yield from map(self.joinpath, self.contained_fake_names)
+        for path in map(self.joinpath, self.contained_fake_names):
+            yield path
 
 
 def MetaPathMock(filelist):
