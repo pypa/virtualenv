@@ -6,7 +6,10 @@ from testing.path import join as path
 
 from virtualenv.create.via_global_ref.builtin.pypy.pypy3 import PyPy3Posix
 
-PYPY3_PATH = ("virtualenv.create.via_global_ref.builtin.pypy.pypy3.Path",)
+PYPY3_PATH = (
+    "virtualenv.create.via_global_ref.builtin.pypy.common.Path",
+    "virtualenv.create.via_global_ref.builtin.pypy.pypy3.Path",
+)
 
 
 @pytest.mark.parametrize("py_info_name", ["portable_pypy38"])
