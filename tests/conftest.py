@@ -14,7 +14,7 @@ import six
 from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
+from virtualenv.info import IS_PYPY, IS_WIN, PY2, fs_supports_symlink
 from virtualenv.report import LOGGER
 from virtualenv.util.path import Path
 from virtualenv.util.six import ensure_str, ensure_text
@@ -388,3 +388,11 @@ def skip_if_test_in_system(session_app_data):
     current = PythonInfo.current(session_app_data)
     if current.system_executable is not None:
         pytest.skip("test not valid if run under system")
+
+
+def pytest_ignore_collect(path):
+    """
+    We can't just skip these tests due to syntax errors that occurs during
+    collecting tests under a Python 2 host.
+    """
+    return PY2 and str(path).endswith("test_cpython3_win.py")
