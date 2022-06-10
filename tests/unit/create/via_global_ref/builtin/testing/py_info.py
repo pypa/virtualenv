@@ -1,4 +1,5 @@
 from virtualenv.discovery.py_info import PythonInfo
+from virtualenv.info import PY2
 from virtualenv.util.path import Path
 
 
@@ -9,7 +10,8 @@ def fixture_file(fixture_name):
         return next(files)
     except StopIteration:
         # Fixture file was not found in the testing root and its subdirs.
-        raise FileNotFoundError(file_mask)
+        error = NameError if PY2 else FileNotFoundError
+        raise error(file_mask)
 
 
 def read_fixture(fixture_name):

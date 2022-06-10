@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import fnmatch
 import os
 import platform
 from contextlib import contextmanager
@@ -146,6 +147,14 @@ class Path(object):
 
     def absolute(self):
         return Path(os.path.abspath(self._path))
+
+    def rglob(self, pattern):
+        """
+        Rough emulation of the origin method. Just for searching fixture files.
+        """
+        for root, _dirs, files in os.walk(self._path):
+            for filename in fnmatch.filter(files, pattern):
+                yield Path(os.path.join(root, filename))
 
 
 __all__ = ("Path",)
