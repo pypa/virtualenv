@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.14.2 (2022-06-10)
+---------------------
+
+Bugfixes - 20.14.2
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded setuptools to ``62.3.3`` from ``62.1.0`` and pip to ``22.1.2`` from ``22.0.4`` - by :user:`gaborbernat`. (`#2348 <https://github.com/pypa/virtualenv/issues/2348>`_)
+- Use ``shlex.quote`` instead of deprecated ``pipes.quote`` in Python 3. - by :user:`frenzymadness`. (`#2351 <https://github.com/pypa/virtualenv/issues/2351>`_)
+
+
 v20.14.1 (2022-04-11)
 ---------------------
 
