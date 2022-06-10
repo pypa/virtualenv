@@ -1,6 +1,8 @@
-from abc import ABC, abstractmethod
+from abc import ABCMeta, abstractmethod
 from itertools import chain
 from operator import attrgetter as attr
+
+from six import add_metaclass
 
 from virtualenv.util.path import Path
 
@@ -9,7 +11,8 @@ def is_name(path):
     return str(path) == path.name
 
 
-class FakeDataABC(ABC):
+@add_metaclass(ABCMeta)
+class FakeDataABC(object):
     """Provides data to mock the `Path`"""
 
     @property
