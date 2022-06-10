@@ -133,7 +133,7 @@ jobs:
       - name: Build package
         run: pyproject-build --wheel .
       - name: Download coverage data
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: coverage-data
           path: .tox
