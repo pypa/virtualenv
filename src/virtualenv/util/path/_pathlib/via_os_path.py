@@ -10,7 +10,7 @@ IS_PYPY = platform.python_implementation() == "PyPy"
 
 
 class Path(object):
-    def __init__(self, path):
+    def __init__(self, path=""):
         if isinstance(path, Path):
             _path = path._path
         else:
