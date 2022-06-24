@@ -67,8 +67,14 @@ class Pypy3Windows(PyPy3, WindowsSupports):
     """PyPy 3 on Windows"""
 
     @property
+    def less_v37(self):
+        return self.interpreter.version_info.minor < 7
+
+    @property
     def stdlib(self):
         """PyPy3 respects sysconfig only for the host python, virtual envs is instead Lib/site-packages"""
+        if self.less_v37:
+            return self.dest / "site-packages"
         return self.dest / "Lib" / "site-packages"
 
     @property

@@ -24,6 +24,11 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin):
         yield host, targets, must, RefWhen.ANY
 
     @classmethod
+    def executables(cls, interpreter):
+        for src in super(PyPy, cls).sources(interpreter):
+            yield src
+
+    @classmethod
     def exe_names(cls, interpreter):
         return {
             cls.exe_stem(),
@@ -34,8 +39,8 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin):
 
     @classmethod
     def sources(cls, interpreter):
-        for src in super(PyPy, cls).sources(interpreter):
-            yield src
+        for exe in cls.executables(interpreter):
+            yield exe
         for host in cls._add_shared_libs(interpreter):
             yield PathRefToDest(host, dest=lambda self, s: self.bin_dir / s.name)
 
