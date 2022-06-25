@@ -1,0 +1,61 @@
+{
+  "platform": "win32",
+  "implementation": "CPython",
+  "version_info": {
+    "major": 3,
+    "minor": 10,
+    "micro": 4,
+    "releaselevel": "final",
+    "serial": 0
+  },
+  "architecture": 64,
+  "version_nodot": "310",
+  "version": "3.10.4 (tags/v3.10.4:9d38120, Mar 23 2022, 23:13:41) [MSC v.1929 64 bit (AMD64)]",
+  "os": "nt",
+  "prefix": "c:\\path\\to\\python",
+  "base_prefix": "c:\\path\\to\\python",
+  "real_prefix": null,
+  "base_exec_prefix": "c:\\path\\to\\python",
+  "exec_prefix": "c:\\path\\to\\python",
+  "executable": "c:\\path\\to\\python\\python.exe",
+  "original_executable": "c:\\path\\to\\python\\python.exe",
+  "system_executable": "c:\\path\\to\\python\\python.exe",
+  "has_venv": false,
+  "path": [
+    "c:\\path\\to\\python\\Scripts\\virtualenv.exe",
+    "c:\\path\\to\\python\\python310.zip",
+    "c:\\path\\to\\python",
+    "c:\\path\\to\\python\\Lib\\site-packages"
+  ],
+  "file_system_encoding": "utf-8",
+  "stdout_encoding": "utf-8",
+  "sysconfig_scheme": null,
+  "sysconfig_paths": {
+    "stdlib": "{installed_base}/Lib",
+    "platstdlib": "{base}/Lib",
+    "purelib": "{base}/Lib/site-packages",
+    "platlib": "{base}/Lib/site-packages",
+    "include": "{installed_base}/Include",
+    "scripts": "{base}/Scripts",
+    "data": "{base}"
+  },
+  "distutils_install": {
+    "purelib": "Lib\\site-packages",
+    "platlib": "Lib\\site-packages",
+    "headers": "Include\\UNKNOWN",
+    "scripts": "Scripts",
+    "data": ""
+  },
+  "sysconfig": {
+    "makefile_filename": "c:\\path\\to\\python\\Lib\\config\\Makefile"
+  },
+  "sysconfig_vars": {
+    "PYTHONFRAMEWORK": "",
+    "installed_base": "c:\\path\\to\\python",
+    "base": "c:\\path\\to\\python"
+  },
+  "system_stdlib": "c:\\path\\to\\python\\Lib",
+  "system_stdlib_platform": "c:\\path\\to\\python\\Lib",
+  "max_size": 9223372036854775807,
+  "_creators": null
+}
