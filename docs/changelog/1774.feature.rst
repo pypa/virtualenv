@@ -1,2 +1,0 @@
-Support for Windows embeddable Python package: includes ``python<VERSION>.zip`` in the creator sources
-- by :user:`reksarka`.
