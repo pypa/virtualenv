@@ -1,1 +1,2 @@
-Upgrade embedded setuptools to ``62.3.3`` from ``62.6.0`` and pip to ``22.1.2`` from ``22.0.4`` - by :user:`gaborbernat`.
+Upgrade embedded setuptools to ``62.3.3`` from ``62.6.0`` and pip to ``22.1.2`` from ``22.0.4``
+- by :user:`gaborbernat`.
