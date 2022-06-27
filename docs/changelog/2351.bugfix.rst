@@ -1,1 +1,0 @@
-Use ``shlex.quote`` instead of deprecated ``pipes.quote`` in Python 3. - by :user:`frenzymadness`.
