@@ -92,9 +92,15 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     def dll_and_pyd(cls, interpreter):
+        folders = [Path(interpreter.system_executable).parent]
+
+        # May be missing on some Python hosts.
+        # See https://github.com/pypa/virtualenv/issues/2368
         dll_folder = Path(interpreter.system_prefix) / "DLLs"
-        host_exe_folder = Path(interpreter.system_executable).parent
-        for folder in [host_exe_folder, dll_folder]:
+        if dll_folder.is_dir():
+            folders.append(dll_folder)
+
+        for folder in folders:
             for file in folder.iterdir():
                 if file.suffix in (".pyd", ".dll"):
                     yield PathRefToDest(file, cls.to_bin)
