@@ -1,0 +1,1 @@
+CPython3Windows creator ignores missing ``DLLs`` dir.
