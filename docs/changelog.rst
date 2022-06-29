@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.15.1 (2022-06-28)
+---------------------
+
+Bugfixes - 20.15.1
+~~~~~~~~~~~~~~~~~~
+- Fix the incorrect operation when ``setuptools`` plugins output something into ``stdout``. (`#2335 <https://github.com/pypa/virtualenv/issues/2335>`_)
+- CPython3Windows creator ignores missing ``DLLs`` dir. (`#2368 <https://github.com/pypa/virtualenv/issues/2368>`_)
+
+
 v20.15.0 (2022-06-25)
 ---------------------
 
