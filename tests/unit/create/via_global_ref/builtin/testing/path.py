@@ -18,6 +18,7 @@ class FakeDataABC(object):
     @property
     @abstractmethod
     def filelist(self):
+        """To mock a dir, just mock any child file."""
         raise NotImplementedError("Collection of (str) file paths to mock")
 
     @property
@@ -65,6 +66,8 @@ class PathMockABC(FakeDataABC, Path):
         return self
 
     def iterdir(self):
+        if not self.is_dir():
+            raise FileNotFoundError("No such mocked dir: '{}'".format(self))
         for path in map(self.joinpath, self.contained_fake_names):
             yield path
 
