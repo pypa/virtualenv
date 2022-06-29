@@ -1,1 +1,0 @@
-Fix the incorrect operation when ``setuptools`` plugins output something into ``stdout``.
