@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import logging
 import os
 from functools import partial
@@ -69,7 +67,7 @@ def build_parser(args=None, options=None, setup_logging=True, env=None):
     discover = get_discover(parser, args)
     parser._interpreter = interpreter = discover.interpreter
     if interpreter is None:
-        raise RuntimeError("failed to find interpreter for {}".format(discover))
+        raise RuntimeError(f"failed to find interpreter for {discover}")
     elements = [
         CreatorSelector(interpreter, parser),
         SeederSelector(interpreter, parser),
@@ -130,13 +128,13 @@ def add_version_flag(parser):
     parser.add_argument(
         "--version",
         action="version",
-        version="%(prog)s {} from {}".format(__version__, virtualenv.__file__),
+        version=f"%(prog)s {__version__} from {virtualenv.__file__}",
         help="display the version of the virtualenv package and its location, then exit",
     )
 
 
 def _do_report_setup(parser, args, setup_logging):
-    level_map = ", ".join("{}={}".format(logging.getLevelName(l), c) for c, l in sorted(list(LEVELS.items())))
+    level_map = ", ".join(f"{logging.getLevelName(l)}={c}" for c, l in sorted(list(LEVELS.items())))
     msg = "verbosity = verbose - quiet, default {}, mapping => {}"
     verbosity_group = parser.add_argument_group(
         title="verbosity",
@@ -150,7 +148,7 @@ def _do_report_setup(parser, args, setup_logging):
         setup_report(option.verbosity)
 
 
-__all__ = (
+__all__ = [
     "cli_run",
     "session_via_cli",
-)
+]

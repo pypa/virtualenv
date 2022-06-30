@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from .bash import BashActivator
 from .batch import BatchActivator
 from .cshell import CShellActivator

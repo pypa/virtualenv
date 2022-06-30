@@ -4,26 +4,19 @@ We acquire the python information by running an interrogation script via subproc
 cheap, especially not on Windows. To not have to pay this hefty cost every time we apply multiple levels of
 caching.
 """
-from __future__ import absolute_import, unicode_literals
 
 import logging
 import os
 import random
 import sys
 from collections import OrderedDict
+from pathlib import Path
+from shlex import quote
 from string import ascii_lowercase, ascii_uppercase, digits
 
 from virtualenv.app_data import AppDataDisabled
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import PY2
-from virtualenv.util.path import Path
-from virtualenv.util.six import ensure_text
 from virtualenv.util.subprocess import Popen, subprocess
-
-if PY2:
-    from pipes import quote
-else:
-    from shlex import quote
 
 _CACHE = OrderedDict()
 _CACHE[Path(sys.executable)] = PythonInfo()
@@ -36,7 +29,7 @@ def from_exe(cls, app_data, exe, env=None, raise_on_error=True, ignore_cache=Fal
         if raise_on_error:
             raise result
         else:
-            logging.info("%s", str(result))
+            logging.info("%s", result)
         result = None
     return result
 
@@ -57,7 +50,7 @@ def _get_from_cache(cls, app_data, exe, env, ignore_cache=True):
 
 
 def _get_via_file_cache(cls, app_data, path, exe, env):
-    path_text = ensure_text(str(path))
+    path_text = str(path)
     try:
         path_modified = path.stat().st_mtime
     except OSError:
@@ -87,7 +80,7 @@ def _get_via_file_cache(cls, app_data, path, exe, env):
     return py_info
 
 
-COOKIE_LENGTH = 32  # type: int
+COOKIE_LENGTH: int = 32
 
 
 def gen_cookie():
@@ -150,37 +143,21 @@ def _run_subprocess(cls, exe, app_data, env):
         result = cls._from_json(out)
         result.executable = exe  # keep original executable as this may contain initialization code
     else:
-        msg = "failed to query {} with code {}{}{}".format(
-            exe,
-            code,
-            " out: {!r}".format(out) if out else "",
-            " err: {!r}".format(err) if err else "",
-        )
-        failure = RuntimeError(msg)
+        msg = f"{exe} with code {code}{f' out: {out!r}' if out else ''}{f' err: {err!r}' if err else ''}"
+        failure = RuntimeError(f"failed to query {msg}")
     return failure, result
 
 
-class LogCmd(object):
+class LogCmd:
     def __init__(self, cmd, env=None):
         self.cmd = cmd
         self.env = env
 
     def __repr__(self):
-        def e(v):
-            return v.decode("utf-8") if isinstance(v, bytes) else v
-
-        cmd_repr = e(" ").join(quote(e(c)) for c in self.cmd)
+        cmd_repr = " ".join(quote(str(c)) for c in self.cmd)
         if self.env is not None:
-            cmd_repr += e(" env of {!r}").format(self.env)
-        if PY2:
-            return cmd_repr.encode("utf-8")
+            cmd_repr = f"{cmd_repr} env of {self.env!r}"
         return cmd_repr
-
-    def __unicode__(self):
-        raw = repr(self)
-        if PY2:
-            return raw.decode("utf-8")
-        return raw
 
 
 def clear(app_data):
@@ -188,8 +165,8 @@ def clear(app_data):
     _CACHE.clear()
 
 
-___all___ = (
+___all___ = [
     "from_exe",
     "clear",
     "LogCmd",
-)
+]

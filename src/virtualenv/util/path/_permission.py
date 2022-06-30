@@ -1,9 +1,5 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
 from stat import S_IXGRP, S_IXOTH, S_IXUSR
-
-from virtualenv.util.six import ensure_text
 
 
 def make_exe(filename):
@@ -21,7 +17,7 @@ def make_exe(filename):
 
 
 def set_tree(folder, stat):
-    for root, _, files in os.walk(ensure_text(str(folder))):
+    for root, _, files in os.walk(str(folder)):
         for filename in files:
             os.chmod(os.path.join(root, filename), stat)
 

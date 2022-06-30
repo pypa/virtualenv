@@ -1,17 +1,9 @@
 """Implement https://www.python.org/dev/peps/pep-0514/ to discover interpreters - Windows only"""
-from __future__ import absolute_import, print_function, unicode_literals
 
 import os
 import re
+import winreg
 from logging import basicConfig, getLogger
-
-import six
-
-if six.PY3:
-    import winreg
-else:
-    # noinspection PyUnresolvedReferences
-    import _winreg as winreg
 
 LOGGER = getLogger(__name__)
 
@@ -39,8 +31,7 @@ def discover_pythons():
         (winreg.HKEY_LOCAL_MACHINE, "HKEY_LOCAL_MACHINE", r"Software\Python", winreg.KEY_WOW64_64KEY, 64),
         (winreg.HKEY_LOCAL_MACHINE, "HKEY_LOCAL_MACHINE", r"Software\Python", winreg.KEY_WOW64_32KEY, 32),
     ]:
-        for spec in process_set(hive, hive_name, key, flags, default_arch):
-            yield spec
+        yield from process_set(hive, hive_name, key, flags, default_arch)
 
 
 def process_set(hive, hive_name, key, flags, default_arch):
@@ -49,8 +40,7 @@ def process_set(hive, hive_name, key, flags, default_arch):
             for company in enum_keys(root_key):
                 if company == "PyLauncher":  # reserved
                     continue
-                for spec in process_company(hive_name, company, root_key, default_arch):
-                    yield spec
+                yield from process_company(hive_name, company, root_key, default_arch)
     except OSError:
         pass
 
@@ -77,9 +67,9 @@ def process_tag(hive_name, company, company_key, tag, default_arch):
 
 
 def load_exe(hive_name, company, company_key, tag):
-    key_path = "{}/{}/{}".format(hive_name, company, tag)
+    key_path = f"{hive_name}/{company}/{tag}"
     try:
-        with winreg.OpenKeyEx(company_key, r"{}\InstallPath".format(tag)) as ip_key:
+        with winreg.OpenKeyEx(company_key, rf"{tag}\InstallPath") as ip_key:
             with ip_key:
                 exe = get_value(ip_key, "ExecutablePath")
                 if exe is None:
@@ -88,21 +78,21 @@ def load_exe(hive_name, company, company_key, tag):
                         msg(key_path, "no ExecutablePath or default for it")
 
                     else:
-                        exe = os.path.join(ip, str("python.exe"))
+                        exe = os.path.join(ip, "python.exe")
                 if exe is not None and os.path.exists(exe):
                     args = get_value(ip_key, "ExecutableArguments")
                     return exe, args
                 else:
-                    msg(key_path, "could not load exe with value {}".format(exe))
+                    msg(key_path, f"could not load exe with value {exe}")
     except OSError:
-        msg("{}/{}".format(key_path, "InstallPath"), "missing")
+        msg(f"{key_path}/InstallPath", "missing")
     return None
 
 
 def load_arch_data(hive_name, company, tag, tag_key, default_arch):
     arch_str = get_value(tag_key, "SysArchitecture")
     if arch_str is not None:
-        key_path = "{}/{}/{}/SysArchitecture".format(hive_name, company, tag)
+        key_path = f"{hive_name}/{company}/{tag}/SysArchitecture"
         try:
             return parse_arch(arch_str)
         except ValueError as sys_arch:
@@ -111,20 +101,20 @@ def load_arch_data(hive_name, company, tag, tag_key, default_arch):
 
 
 def parse_arch(arch_str):
-    if isinstance(arch_str, six.string_types):
+    if isinstance(arch_str, str):
         match = re.match(r"^(\d+)bit$", arch_str)
         if match:
             return int(next(iter(match.groups())))
-        error = "invalid format {}".format(arch_str)
+        error = f"invalid format {arch_str}"
     else:
-        error = "arch is not string: {}".format(repr(arch_str))
+        error = f"arch is not string: {repr(arch_str)}"
     raise ValueError(error)
 
 
 def load_version_data(hive_name, company, tag, tag_key):
     for candidate, key_path in [
-        (get_value(tag_key, "SysVersion"), "{}/{}/{}/SysVersion".format(hive_name, company, tag)),
-        (tag, "{}/{}/{}".format(hive_name, company, tag)),
+        (get_value(tag_key, "SysVersion"), f"{hive_name}/{company}/{tag}/SysVersion"),
+        (tag, f"{hive_name}/{company}/{tag}"),
     ]:
         if candidate is not None:
             try:
@@ -135,18 +125,18 @@ def load_version_data(hive_name, company, tag, tag_key):
 
 
 def parse_version(version_str):
-    if isinstance(version_str, six.string_types):
+    if isinstance(version_str, str):
         match = re.match(r"^(\d+)(?:\.(\d+))?(?:\.(\d+))?$", version_str)
         if match:
             return tuple(int(i) if i is not None else None for i in match.groups())
-        error = "invalid format {}".format(version_str)
+        error = f"invalid format {version_str}"
     else:
-        error = "version is not string: {}".format(repr(version_str))
+        error = f"version is not string: {version_str!r}"
     raise ValueError(error)
 
 
 def msg(path, what):
-    LOGGER.warning("PEP-514 violation in Windows Registry at {} error: {}".format(path, what))
+    LOGGER.warning(f"PEP-514 violation in Windows Registry at {path} error: {what}")
 
 
 def _run():

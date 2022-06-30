@@ -1,5 +1,3 @@
-from __future__ import absolute_import, print_function, unicode_literals
-
 import logging
 import os
 import sys
@@ -18,41 +16,32 @@ def run(args=None, options=None, env=None):
         session = cli_run(args, options, env)
         logging.warning(LogSession(session, start))
     except ProcessCallFailed as exception:
-        print("subprocess call failed for {} with code {}".format(exception.cmd, exception.code))
+        print(f"subprocess call failed for {exception.cmd} with code {exception.code}")
         print(exception.out, file=sys.stdout, end="")
         print(exception.err, file=sys.stderr, end="")
         raise SystemExit(exception.code)
 
 
-class LogSession(object):
+class LogSession:
     def __init__(self, session, start):
         self.session = session
         self.start = start
 
     def __str__(self):
-        from virtualenv.util.six import ensure_text
-
         spec = self.session.creator.interpreter.spec
         elapsed = (datetime.now() - self.start).total_seconds() * 1000
         lines = [
-            "created virtual environment {} in {:.0f}ms".format(spec, elapsed),
-            "  creator {}".format(ensure_text(str(self.session.creator))),
+            f"created virtual environment {spec} in {elapsed:.0f}ms",
+            f"  creator {str(self.session.creator)}",
         ]
         if self.session.seeder.enabled:
-            lines += (
-                "  seeder {}".format(ensure_text(str(self.session.seeder))),
-                "    added seed packages: {}".format(
-                    ", ".join(
-                        sorted(
-                            "==".join(i.stem.split("-"))
-                            for i in self.session.creator.purelib.iterdir()
-                            if i.suffix == ".dist-info"
-                        ),
-                    ),
-                ),
-            )
+            lines.append(f"  seeder {str(self.session.seeder)}")
+            path = self.session.creator.purelib.iterdir()
+            packages = sorted("==".join(i.stem.split("-")) for i in path if i.suffix == ".dist-info")
+            lines.append(f"    added seed packages: {', '.join(packages)}")
+
         if self.session.activators:
-            lines.append("  activators {}".format(",".join(i.__class__.__name__ for i in self.session.activators)))
+            lines.append(f"  activators {','.join(i.__class__.__name__ for i in self.session.activators)}")
         return "\n".join(lines)
 
 

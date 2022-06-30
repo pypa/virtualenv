@@ -1,33 +1,28 @@
-from __future__ import absolute_import, unicode_literals
-
 import abc
 import fnmatch
 from itertools import chain
 from operator import methodcaller as method
+from pathlib import Path
 from textwrap import dedent
-
-from six import add_metaclass
 
 from virtualenv.create.describe import Python3Supports
 from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
 from virtualenv.create.via_global_ref.store import is_store_python
-from virtualenv.util.path import Path
 
 from .common import CPython, CPythonPosix, CPythonWindows, is_mac_os_framework
 
 
-@add_metaclass(abc.ABCMeta)
-class CPython3(CPython, Python3Supports):
-    """ """
+class CPython3(CPython, Python3Supports, metaclass=abc.ABCMeta):
+    """CPython 3 or later"""
 
 
 class CPython3Posix(CPythonPosix, CPython3):
     @classmethod
     def can_describe(cls, interpreter):
-        return is_mac_os_framework(interpreter) is False and super(CPython3Posix, cls).can_describe(interpreter)
+        return is_mac_os_framework(interpreter) is False and super().can_describe(interpreter)
 
     def env_patch_text(self):
-        text = super(CPython3Posix, self).env_patch_text()
+        text = super().env_patch_text()
         if self.pyvenv_launch_patch_active(self.interpreter):
             text += dedent(
                 """
@@ -52,7 +47,7 @@ class CPython3Windows(CPythonWindows, CPython3):
     def setup_meta(cls, interpreter):
         if is_store_python(interpreter):  # store python is not supported here
             return None
-        return super(CPython3Windows, cls).setup_meta(interpreter)
+        return super().setup_meta(interpreter)
 
     @classmethod
     def sources(cls, interpreter):
@@ -64,12 +59,11 @@ class CPython3Windows(CPythonWindows, CPython3):
                 cls.dll_and_pyd(interpreter),
                 cls.python_zip(interpreter),
             )
-        for ref in refs:
-            yield ref
+        yield from refs
 
     @classmethod
     def executables(cls, interpreter):
-        return super(CPython3Windows, cls).sources(interpreter)
+        return super().sources(interpreter)
 
     @classmethod
     def has_shim(cls, interpreter):
@@ -88,7 +82,7 @@ class CPython3Windows(CPythonWindows, CPython3):
             # starting with CPython 3.7 Windows ships with a venvlauncher.exe that avoids the need for dll/pyd copies
             # it also means the wrapper must be copied to avoid bugs such as https://bugs.python.org/issue42013
             return cls.shim(interpreter)
-        return super(CPython3Windows, cls).host_python(interpreter)
+        return super().host_python(interpreter)
 
     @classmethod
     def dll_and_pyd(cls, interpreter):
@@ -119,10 +113,17 @@ class CPython3Windows(CPythonWindows, CPython3):
         move/rename *zip* file and edit `sys.path` by editing *_pth* file.
         Here the `pattern` is used only for the default *zip* file name!
         """
-        pattern = "*python{}.zip".format(interpreter.version_nodot)
+        pattern = f"*python{interpreter.version_nodot}.zip"
         matches = fnmatch.filter(interpreter.path, pattern)
         matched_paths = map(Path, matches)
         existing_paths = filter(method("exists"), matched_paths)
         path = next(existing_paths, None)
         if path is not None:
             yield PathRefToDest(path, cls.to_bin)
+
+
+__all__ = [
+    "CPython3",
+    "CPython3Posix",
+    "CPython3Windows",
+]

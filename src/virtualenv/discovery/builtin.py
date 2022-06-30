@@ -1,11 +1,8 @@
-from __future__ import absolute_import, unicode_literals
-
 import logging
 import os
 import sys
 
 from virtualenv.info import IS_WIN
-from virtualenv.util.six import ensure_str, ensure_text
 
 from .discover import Discover
 from .py_info import PythonInfo
@@ -14,7 +11,7 @@ from .py_spec import PythonSpec
 
 class Builtin(Discover):
     def __init__(self, options):
-        super(Builtin, self).__init__(options)
+        super().__init__(options)
         self.python_spec = options.python if options.python else [sys.executable]
         self.app_data = options.app_data
         self.try_first_with = options.try_first_with
@@ -50,11 +47,8 @@ class Builtin(Discover):
         return None
 
     def __repr__(self):
-        return ensure_str(self.__unicode__())
-
-    def __unicode__(self):
         spec = self.python_spec[0] if len(self.python_spec) == 1 else self.python_spec
-        return "{} discover of python_spec={!r}".format(self.__class__.__name__, spec)
+        return f"{self.__class__.__name__} discover of python_spec={spec!r}"
 
 
 def get_interpreter(key, try_first_with, app_data=None, env=None):
@@ -110,10 +104,10 @@ def propose_interpreters(spec, try_first_with, app_data, env=None):
     paths = get_paths(env)
     tested_exes = set()
     for pos, path in enumerate(paths):
-        path = ensure_text(path)
-        logging.debug(LazyPathDump(pos, path, env))
+        path_str = str(path)
+        logging.debug(LazyPathDump(pos, path_str, env))
         for candidate, match in possible_specs(spec):
-            found = check_path(candidate, path)
+            found = check_path(candidate, path_str)
             if found is not None:
                 exe = os.path.abspath(found)
                 if exe not in tested_exes:
@@ -124,7 +118,7 @@ def propose_interpreters(spec, try_first_with, app_data, env=None):
 
 
 def get_paths(env):
-    path = env.get(str("PATH"), None)
+    path = env.get("PATH", None)
     if path is None:
         try:
             path = os.confstr("CS_PATH")
@@ -137,18 +131,15 @@ def get_paths(env):
     return paths
 
 
-class LazyPathDump(object):
+class LazyPathDump:
     def __init__(self, pos, path, env):
         self.pos = pos
         self.path = path
         self.env = env
 
     def __repr__(self):
-        return ensure_str(self.__unicode__())
-
-    def __unicode__(self):
-        content = "discover PATH[{}]={}".format(self.pos, self.path)
-        if self.env.get(str("_VIRTUALENV_DEBUG")):  # this is the over the board debug
+        content = f"discover PATH[{self.pos}]={self.path}"
+        if self.env.get("_VIRTUALENV_DEBUG"):  # this is the over the board debug
             content += " with =>"
             for file_name in os.listdir(self.path):
                 try:
@@ -178,9 +169,15 @@ def possible_specs(spec):
     # 4. then maybe it's something exact on PATH - if it was direct lookup implementation no longer counts
     yield spec.str_spec, False
     # 5. or from the spec we can deduce a name on path  that matches
-    for exe, match in spec.generate_names():
-        yield exe, match
+    yield from spec.generate_names()
 
 
 class PathPythonInfo(PythonInfo):
-    """ """
+    """python info from path"""
+
+
+__all__ = [
+    "get_interpreter",
+    "Builtin",
+    "PathPythonInfo",
+]

@@ -1,7 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
-from virtualenv.util.six import ensure_str, ensure_text
-
 from .convert import convert
 
 
@@ -13,16 +9,18 @@ def get_env_var(key, as_type, env):
     :param env: environment variables to use
     :return:
     """
-    environ_key = ensure_str("VIRTUALENV_{}".format(key.upper()))
+    environ_key = f"VIRTUALENV_{key.upper()}"
     if env.get(environ_key):
         value = env[environ_key]
-        # noinspection PyBroadException
+
         try:
-            source = "env var {}".format(ensure_text(environ_key))
+            source = f"env var {environ_key}"
             as_type = convert(value, as_type, source)
             return as_type, source
         except Exception:  # note the converter already logs a warning when failures happen
             pass
 
 
-__all__ = ("get_env_var",)
+__all__ = [
+    "get_env_var",
+]

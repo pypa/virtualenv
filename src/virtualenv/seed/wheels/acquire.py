@@ -1,12 +1,10 @@
 """Bootstrap"""
-from __future__ import absolute_import, unicode_literals
 
 import logging
 import sys
 from operator import eq, lt
+from pathlib import Path
 
-from virtualenv.util.path import Path
-from virtualenv.util.six import ensure_str
 from virtualenv.util.subprocess import Popen, subprocess
 
 from .bundle import from_bundle
@@ -67,10 +65,7 @@ def download_wheel(distribution, version_spec, for_py_version, search_dirs, app_
     out, err = process.communicate()
     if process.returncode != 0:
         kwargs = {"output": out}
-        if sys.version_info < (3, 5):
-            kwargs["output"] += err
-        else:
-            kwargs["stderr"] = err
+        kwargs["stderr"] = err
         raise subprocess.CalledProcessError(process.returncode, cmd, **kwargs)
     result = _find_downloaded_wheel(distribution, version_spec, for_py_version, to_folder, out)
     logging.debug("downloaded wheel %s", result.name)
@@ -106,12 +101,7 @@ def find_compatible_in_house(distribution, version_spec, for_py_version, in_fold
 def pip_wheel_env_run(search_dirs, app_data, env):
     for_py_version = "{}.{}".format(*sys.version_info[0:2])
     env = env.copy()
-    env.update(
-        {
-            ensure_str(k): str(v)  # python 2 requires these to be string only (non-unicode)
-            for k, v in {"PIP_USE_WHEEL": "1", "PIP_USER": "0", "PIP_NO_INPUT": "1"}.items()
-        },
-    )
+    env.update({"PIP_USE_WHEEL": "1", "PIP_USER": "0", "PIP_NO_INPUT": "1"})
     wheel = get_wheel(
         distribution="pip",
         version=None,
@@ -124,5 +114,12 @@ def pip_wheel_env_run(search_dirs, app_data, env):
     )
     if wheel is None:
         raise RuntimeError("could not find the embedded pip")
-    env[str("PYTHONPATH")] = str(wheel.path)
+    env["PYTHONPATH"] = str(wheel.path)
     return env
+
+
+__all__ = [
+    "get_wheel",
+    "download_wheel",
+    "pip_wheel_env_run",
+]

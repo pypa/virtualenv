@@ -8,15 +8,16 @@ from .via_disk_folder import AppDataDiskFolder, PyInfoStoreDisk
 class ReadOnlyAppData(AppDataDiskFolder):
     can_update = False
 
-    def __init__(self, folder):  # type: (str) -> None
+    def __init__(self, folder: str) -> None:
         if not os.path.isdir(folder):
-            raise RuntimeError("read-only app data directory {} does not exist".format(folder))
+            raise RuntimeError(f"read-only app data directory {folder} does not exist")
         self.lock = NoOpFileLock(folder)
+        super().__init__(folder)
 
-    def reset(self):  # type: () -> None
+    def reset(self) -> None:
         raise RuntimeError("read-only app data does not support reset")
 
-    def py_info_clear(self):  # type: () -> None
+    def py_info_clear(self) -> None:
         raise NotImplementedError
 
     def py_info(self, path):
@@ -31,4 +32,6 @@ class _PyInfoStoreDiskReadOnly(PyInfoStoreDisk):
         raise RuntimeError("read-only app data python info cannot be updated")
 
 
-__all__ = ("ReadOnlyAppData",)
+__all__ = [
+    "ReadOnlyAppData",
+]

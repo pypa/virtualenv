@@ -1,9 +1,5 @@
-from __future__ import absolute_import, unicode_literals
-
 import logging
 import sys
-
-from virtualenv.util.six import ensure_str
 
 LEVELS = {
     0: logging.CRITICAL,
@@ -26,10 +22,10 @@ def setup_report(verbosity, show_pid=False):
     msg_format = "%(message)s"
     if level <= logging.DEBUG:
         locate = "module"
-        msg_format = "%(relativeCreated)d {} [%(levelname)s %({})s:%(lineno)d]".format(msg_format, locate)
+        msg_format = f"%(relativeCreated)d {msg_format} [%(levelname)s %({locate})s:%(lineno)d]"
     if show_pid:
-        msg_format = "[%(process)d] " + msg_format
-    formatter = logging.Formatter(ensure_str(msg_format))
+        msg_format = f"[%(process)d] {msg_format}"
+    formatter = logging.Formatter(msg_format)
     stream_handler = logging.StreamHandler(stream=sys.stdout)
     stream_handler.setLevel(level)
     LOGGER.setLevel(logging.NOTSET)
@@ -46,8 +42,8 @@ def _clean_handlers(log):
         log.removeHandler(log_handler)
 
 
-__all__ = (
+__all__ = [
     "LEVELS",
     "MAX_LEVEL",
     "setup_report",
-)
+]

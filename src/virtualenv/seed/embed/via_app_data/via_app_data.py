@@ -1,17 +1,16 @@
 """Bootstrap"""
-from __future__ import absolute_import, unicode_literals
 
 import logging
 import sys
 import traceback
 from contextlib import contextmanager
+from pathlib import Path
 from subprocess import CalledProcessError
 from threading import Lock, Thread
 
 from virtualenv.info import fs_supports_symlink
 from virtualenv.seed.embed.base_embed import BaseEmbed
 from virtualenv.seed.wheels import get_wheel
-from virtualenv.util.path import Path
 
 from .pip_install.copy import CopyPipInstall
 from .pip_install.symlink import SymlinkPipInstall
@@ -19,20 +18,19 @@ from .pip_install.symlink import SymlinkPipInstall
 
 class FromAppData(BaseEmbed):
     def __init__(self, options):
-        super(FromAppData, self).__init__(options)
+        super().__init__(options)
         self.symlinks = options.symlink_app_data
 
     @classmethod
     def add_parser_arguments(cls, parser, interpreter, app_data):
-        super(FromAppData, cls).add_parser_arguments(parser, interpreter, app_data)
+        super().add_parser_arguments(parser, interpreter, app_data)
         can_symlink = app_data.transient is False and fs_supports_symlink()
+        sym = "" if can_symlink else "not supported - "
         parser.add_argument(
             "--symlink-app-data",
             dest="symlink_app_data",
             action="store_true" if can_symlink else "store_false",
-            help="{} symlink the python packages from the app-data folder (requires seed pip>=19.3)".format(
-                "" if can_symlink else "not supported - ",
-            ),
+            help=f"{sym} symlink the python packages from the app-data folder (requires seed pip>=19.3)",
             default=False,
         )
 
@@ -98,11 +96,11 @@ class FromAppData(BaseEmbed):
                     failure = exception
             if failure:
                 if isinstance(failure, CalledProcessError):
-                    msg = "failed to download {}".format(distribution)
+                    msg = f"failed to download {distribution}"
                     if version is not None:
-                        msg += " version {}".format(version)
-                    msg += ", pip download exit code {}".format(failure.returncode)
-                    output = failure.output if sys.version_info < (3, 5) else (failure.output + failure.stderr)
+                        msg += f" version {version}"
+                    msg += f", pip download exit code {failure.returncode}"
+                    output = failure.output + failure.stderr
                     if output:
                         msg += "\n"
                         msg += output
@@ -124,7 +122,7 @@ class FromAppData(BaseEmbed):
         for thread in threads:
             thread.join()
         if fail:
-            raise RuntimeError("seed failed due to failing to download wheels {}".format(", ".join(fail.keys())))
+            raise RuntimeError(f"seed failed due to failing to download wheels {', '.join(fail.keys())}")
         yield name_to_whl
 
     def installer_class(self, pip_version_tuple):
@@ -134,7 +132,12 @@ class FromAppData(BaseEmbed):
                 return SymlinkPipInstall
         return CopyPipInstall
 
-    def __unicode__(self):
-        base = super(FromAppData, self).__unicode__()
-        msg = ", via={}, app_data_dir={}".format("symlink" if self.symlinks else "copy", self.app_data)
-        return base[:-1] + msg + base[-1]
+    def __repr__(self):
+        msg = f", via={'symlink' if self.symlinks else 'copy'}, app_data_dir={self.app_data}"
+        base = super().__repr__()
+        return f"{base[:-1]}{msg}{base[-1]}"
+
+
+__all__ = [
+    "FromAppData",
+]

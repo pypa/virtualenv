@@ -34,8 +34,6 @@ jobs:
           - pypy-3.6-v7.3.3
           - pypy-3.7-v7.3.7
           - pypy-3.8-v7.3.7
-          - "2.7"
-          - pypy-2.7
         os:
           - ubuntu-20.04
           - macos-10.15

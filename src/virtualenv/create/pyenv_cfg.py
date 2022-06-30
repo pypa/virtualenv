@@ -1,12 +1,8 @@
-from __future__ import absolute_import, unicode_literals
-
 import logging
 from collections import OrderedDict
 
-from virtualenv.util.six import ensure_text
 
-
-class PyEnvCfg(object):
+class PyEnvCfg:
     def __init__(self, content, path):
         self.content = content
         self.path = path
@@ -31,10 +27,10 @@ class PyEnvCfg(object):
         return content
 
     def write(self):
-        logging.debug("write %s", ensure_text(str(self.path)))
+        logging.debug("write %s", self.path)
         text = ""
         for key, value in self.content.items():
-            line = "{} = {}".format(key, value)
+            line = f"{key} = {value}"
             logging.debug("\t%s", line)
             text += line
             text += "\n"
@@ -58,4 +54,9 @@ class PyEnvCfg(object):
         return self
 
     def __repr__(self):
-        return "{}(path={})".format(self.__class__.__name__, self.path)
+        return f"{self.__class__.__name__}(path={self.path})"
+
+
+__all__ = [
+    "PyEnvCfg",
+]

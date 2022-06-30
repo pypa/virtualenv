@@ -1,25 +1,19 @@
-from __future__ import absolute_import, unicode_literals
-
 import abc
 import logging
-
-from six import add_metaclass
+from pathlib import Path
 
 from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
-from virtualenv.util.path import Path
 
 from ..python2.python2 import Python2
 from .common import CPython, CPythonPosix, CPythonWindows, is_mac_os_framework
 
 
-@add_metaclass(abc.ABCMeta)
-class CPython2(CPython, Python2):
+class CPython2(CPython, Python2, metaclass=abc.ABCMeta):
     """Create a CPython version 2  virtual environment"""
 
     @classmethod
     def sources(cls, interpreter):
-        for src in super(CPython2, cls).sources(interpreter):
-            yield src
+        yield from super().sources(interpreter)
         # include folder needed on Python 2 as we don't have pyenv.cfg
         host_include_marker = cls.host_include_marker(interpreter)
         if host_include_marker.exists():
@@ -40,12 +34,10 @@ class CPython2(CPython, Python2):
 
     @classmethod
     def modules(cls):
-        return [
-            "os",  # landmark to set sys.prefix
-        ]
+        return ["os"]  # landmark to set sys.prefix
 
     def ensure_directories(self):
-        dirs = super(CPython2, self).ensure_directories()
+        dirs = super().ensure_directories()
         host_include_marker = self.host_include_marker(self.interpreter)
         if host_include_marker.exists():
             dirs.add(self.include.parent)
@@ -54,14 +46,12 @@ class CPython2(CPython, Python2):
         return dirs
 
 
-@add_metaclass(abc.ABCMeta)
-class CPython2PosixBase(CPython2, CPythonPosix):
+class CPython2PosixBase(CPython2, CPythonPosix, metaclass=abc.ABCMeta):
     """common to macOs framework builds and other posix CPython2"""
 
     @classmethod
     def sources(cls, interpreter):
-        for src in super(CPython2PosixBase, cls).sources(interpreter):
-            yield src
+        yield from super().sources(interpreter)
 
         # check if the makefile exists and if so make it available under the virtual environment
         make_file = Path(interpreter.sysconfig["makefile_filename"])
@@ -75,12 +65,11 @@ class CPython2Posix(CPython2PosixBase):
 
     @classmethod
     def can_describe(cls, interpreter):
-        return is_mac_os_framework(interpreter) is False and super(CPython2Posix, cls).can_describe(interpreter)
+        return is_mac_os_framework(interpreter) is False and super().can_describe(interpreter)
 
     @classmethod
     def sources(cls, interpreter):
-        for src in super(CPython2Posix, cls).sources(interpreter):
-            yield src
+        yield from super().sources(interpreter)
         # landmark for exec_prefix
         exec_marker_file, to_path, _ = cls.from_stdlib(cls.mappings(interpreter), "lib-dynload")
         yield PathRefToDest(exec_marker_file, dest=to_path)
@@ -91,8 +80,7 @@ class CPython2Windows(CPython2, CPythonWindows):
 
     @classmethod
     def sources(cls, interpreter):
-        for src in super(CPython2Windows, cls).sources(interpreter):
-            yield src
+        yield from super().sources(interpreter)
         py27_dll = Path(interpreter.system_executable).parent / "python27.dll"
         if py27_dll.exists():  # this might be global in the Windows folder in which case it's alright to be missing
             yield PathRefToDest(py27_dll, dest=cls.to_bin)
@@ -100,3 +88,11 @@ class CPython2Windows(CPython2, CPythonWindows):
         libs = Path(interpreter.system_prefix) / "libs"
         if libs.exists():
             yield PathRefToDest(libs, dest=lambda self, s: self.dest / s.name)
+
+
+__all__ = [
+    "CPython2",
+    "CPython2PosixBase",
+    "CPython2Posix",
+    "CPython2Windows",
+]

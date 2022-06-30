@@ -1,14 +1,9 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
 from abc import ABCMeta, abstractmethod
 
-from six import add_metaclass
 
-
-@add_metaclass(ABCMeta)
-class Activator(object):
-    """Generates an activate script for the virtual environment"""
+class Activator(metaclass=ABCMeta):
+    """Generates activate script for the virtual environment"""
 
     def __init__(self, options):
         """Create a new activator generator.
@@ -37,9 +32,14 @@ class Activator(object):
 
     @abstractmethod
     def generate(self, creator):
-        """Generate the activate script for the given creator.
+        """Generate activate script for the given creator.
 
         :param creator: the creator (based of :class:`virtualenv.create.creator.Creator`) we used to create this \
         virtual environment
         """
         raise NotImplementedError
+
+
+__all__ = [
+    "Activator",
+]

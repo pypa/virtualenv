@@ -1,16 +1,14 @@
-from __future__ import absolute_import, unicode_literals
-
 import logging
 import os
 
 
-class TypeData(object):
+class TypeData:
     def __init__(self, default_type, as_type):
         self.default_type = default_type
         self.as_type = as_type
 
     def __repr__(self):
-        return "{}(base={}, as={})".format(self.__class__.__name__, self.default_type, self.as_type)
+        return f"{self.__class__.__name__}(base={self.default_type}, as={self.as_type})"
 
     def convert(self, value):
         return self.default_type(value)
@@ -30,7 +28,7 @@ class BoolType(TypeData):
 
     def convert(self, value):
         if value.lower() not in self.BOOLEAN_STATES:
-            raise ValueError("Not a boolean: %s" % value)
+            raise ValueError(f"Not a boolean: {value}")
         return self.BOOLEAN_STATES[value.lower()]
 
 
@@ -92,7 +90,7 @@ def get_type(action):
     return _CONVERT.get(default_type, TypeData)(default_type, as_type)
 
 
-__all__ = (
+__all__ = [
     "convert",
     "get_type",
-)
+]

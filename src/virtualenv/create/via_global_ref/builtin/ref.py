@@ -3,34 +3,29 @@ Virtual environments in the traditional sense are built as reference to the host
 references to elements on the file system, allowing our system to automatically detect what modes it can support given
 the constraints: e.g. can the file system symlink, can the files be read, executed, etc.
 """
-from __future__ import absolute_import, unicode_literals
 
 import os
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 from stat import S_IXGRP, S_IXOTH, S_IXUSR
 
-from six import add_metaclass
-
 from virtualenv.info import fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.util.path import copy, make_exe, symlink
-from virtualenv.util.six import ensure_text
 
 
-class RefMust(object):
+class RefMust:
     NA = "NA"
     COPY = "copy"
     SYMLINK = "symlink"
 
 
-class RefWhen(object):
+class RefWhen:
     ANY = "ANY"
     COPY = "copy"
     SYMLINK = "symlink"
 
 
-@add_metaclass(ABCMeta)
-class PathRef(object):
+class PathRef(metaclass=ABCMeta):
     """Base class that checks if a file reference can be symlink/copied"""
 
     FS_SUPPORTS_SYMLINK = fs_supports_symlink()
@@ -49,7 +44,7 @@ class PathRef(object):
         self._can_symlink = None if self.exists else False
 
     def __repr__(self):
-        return "{}(src={})".format(self.__class__.__name__, self.src)
+        return f"{self.__class__.__name__}(src={self.src})"
 
     @property
     def can_read(self):
@@ -61,7 +56,7 @@ class PathRef(object):
                 except OSError:
                     self._can_read = False
             else:
-                self._can_read = os.access(ensure_text(str(self.src)), os.R_OK)
+                self._can_read = os.access(str(self.src), os.R_OK)
         return self._can_read
 
     @property
@@ -94,12 +89,11 @@ class PathRef(object):
         return symlink if symlinks else copy
 
 
-@add_metaclass(ABCMeta)
-class ExePathRef(PathRef):
+class ExePathRef(PathRef, metaclass=ABCMeta):
     """Base class that checks if a executable can be references via symlink/copy"""
 
     def __init__(self, src, must=RefMust.NA, when=RefWhen.ANY):
-        super(ExePathRef, self).__init__(src, must, when)
+        super().__init__(src, must, when)
         self._can_run = None
 
     @property
@@ -125,7 +119,7 @@ class PathRefToDest(PathRef):
     """Link a path on the file system"""
 
     def __init__(self, src, dest, must=RefMust.NA, when=RefWhen.ANY):
-        super(PathRefToDest, self).__init__(src, must, when)
+        super().__init__(src, must, when)
         self.dest = dest
 
     def run(self, creator, symlinks):
@@ -169,4 +163,14 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
                 make_exe(link_file)
 
     def __repr__(self):
-        return "{}(src={}, alias={})".format(self.__class__.__name__, self.src, self.aliases)
+        return f"{self.__class__.__name__}(src={self.src}, alias={self.aliases})"
+
+
+__all__ = [
+    "ExePathRef",
+    "ExePathRefToDest",
+    "PathRefToDest",
+    "PathRef",
+    "RefWhen",
+    "RefMust",
+]
