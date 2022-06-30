@@ -1,6 +1,6 @@
 """
-Utilities for accessing files within the virtualenv package without using __file__ so
-there is no assumption of a filesystem.
+Utilities for accessing files within the virtualenv package without using __file__ so there is no assumption of a
+file system.
 """
 from __future__ import absolute_import, unicode_literals
 
