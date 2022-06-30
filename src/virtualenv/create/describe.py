@@ -1,17 +1,11 @@
-from __future__ import absolute_import, print_function, unicode_literals
-
 from abc import ABCMeta
 from collections import OrderedDict
-
-from six import add_metaclass
+from pathlib import Path
 
 from virtualenv.info import IS_WIN
-from virtualenv.util.path import Path
-from virtualenv.util.six import ensure_text
 
 
-@add_metaclass(ABCMeta)
-class Describe(object):
+class Describe(metaclass=ABCMeta):
     """Given a host interpreter tell us information about what the created interpreter might look like"""
 
     suffix = ".exe" if IS_WIN else ""
@@ -59,13 +53,12 @@ class Describe(object):
     @property
     def _config_vars(self):
         if self._conf_vars is None:
-            self._conf_vars = self._calc_config_vars(ensure_text(str(self.dest)))
+            self._conf_vars = self._calc_config_vars(self.dest)
         return self._conf_vars
 
     def _calc_config_vars(self, to):
-        return {
-            k: (to if v.startswith(self.interpreter.prefix) else v) for k, v in self.interpreter.sysconfig_vars.items()
-        }
+        sys_vars = self.interpreter.sysconfig_vars
+        return {k: (to if v.startswith(self.interpreter.prefix) else v) for k, v in sys_vars.items()}
 
     @classmethod
     def can_describe(cls, interpreter):
@@ -74,11 +67,11 @@ class Describe(object):
 
     @property
     def env_name(self):
-        return ensure_text(self.dest.parts[-1])
+        return self.dest.parts[-1]
 
     @property
     def exe(self):
-        return self.bin_dir / "{}{}".format(self.exe_stem(), self.suffix)
+        return self.bin_dir / f"{self.exe_stem()}{self.suffix}"
 
     @classmethod
     def exe_stem(cls):
@@ -86,32 +79,37 @@ class Describe(object):
         raise NotImplementedError
 
     def script(self, name):
-        return self.script_dir / "{}{}".format(name, self.suffix)
+        return self.script_dir / f"{name}{self.suffix}"
 
 
-@add_metaclass(ABCMeta)
-class Python2Supports(Describe):
+class Python2Supports(Describe, metaclass=ABCMeta):
     @classmethod
     def can_describe(cls, interpreter):
-        return interpreter.version_info.major == 2 and super(Python2Supports, cls).can_describe(interpreter)
+        return interpreter.version_info.major == 2 and super().can_describe(interpreter)
 
 
-@add_metaclass(ABCMeta)
-class Python3Supports(Describe):
+class Python3Supports(Describe, metaclass=ABCMeta):
     @classmethod
     def can_describe(cls, interpreter):
-        return interpreter.version_info.major == 3 and super(Python3Supports, cls).can_describe(interpreter)
+        return interpreter.version_info.major == 3 and super().can_describe(interpreter)
 
 
-@add_metaclass(ABCMeta)
-class PosixSupports(Describe):
+class PosixSupports(Describe, metaclass=ABCMeta):
     @classmethod
     def can_describe(cls, interpreter):
-        return interpreter.os == "posix" and super(PosixSupports, cls).can_describe(interpreter)
+        return interpreter.os == "posix" and super().can_describe(interpreter)
 
 
-@add_metaclass(ABCMeta)
-class WindowsSupports(Describe):
+class WindowsSupports(Describe, metaclass=ABCMeta):
     @classmethod
     def can_describe(cls, interpreter):
-        return interpreter.os == "nt" and super(WindowsSupports, cls).can_describe(interpreter)
+        return interpreter.os == "nt" and super().can_describe(interpreter)
+
+
+__all__ = [
+    "Describe",
+    "Python2Supports",
+    "Python3Supports",
+    "PosixSupports",
+    "WindowsSupports",
+]

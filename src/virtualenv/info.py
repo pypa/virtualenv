@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import logging
 import os
 import platform
@@ -9,13 +7,10 @@ import tempfile
 IMPLEMENTATION = platform.python_implementation()
 IS_PYPY = IMPLEMENTATION == "PyPy"
 IS_CPYTHON = IMPLEMENTATION == "CPython"
-PY3 = sys.version_info[0] == 3
-PY2 = sys.version_info[0] == 2
 IS_WIN = sys.platform == "win32"
 IS_MAC_ARM64 = sys.platform == "darwin" and platform.machine() == "arm64"
 ROOT = os.path.realpath(os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir))
 IS_ZIPAPP = os.path.isfile(ROOT)
-WIN_CPYTHON_2 = IS_CPYTHON and IS_WIN and PY2
 
 _CAN_SYMLINK = _FS_CASE_SENSITIVE = _CFG_DIR = _DATA_DIR = None
 
@@ -55,12 +50,10 @@ def fs_supports_symlink():
 __all__ = (
     "IS_PYPY",
     "IS_CPYTHON",
-    "PY3",
-    "PY2",
     "IS_WIN",
     "fs_is_case_sensitive",
     "fs_supports_symlink",
     "ROOT",
     "IS_ZIPAPP",
-    "WIN_CPYTHON_2",
+    "IS_MAC_ARM64",
 )

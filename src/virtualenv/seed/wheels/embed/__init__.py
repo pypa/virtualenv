@@ -1,7 +1,6 @@
-from __future__ import absolute_import, unicode_literals
+from pathlib import Path
 
 from virtualenv.seed.wheels.util import Wheel
-from virtualenv.util.path import Path
 
 BUNDLE_FOLDER = Path(__file__).absolute().parent
 BUNDLE_SUPPORT = {
@@ -54,9 +53,9 @@ def get_embed_wheel(distribution, for_py_version):
     return Wheel.from_path(path)
 
 
-__all__ = (
+__all__ = [
     "get_embed_wheel",
     "BUNDLE_SUPPORT",
     "MAX",
     "BUNDLE_FOLDER",
-)
+]

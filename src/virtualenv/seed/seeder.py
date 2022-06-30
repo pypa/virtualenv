@@ -1,15 +1,9 @@
-from __future__ import absolute_import, unicode_literals
-
 from abc import ABCMeta, abstractmethod
 
-from six import add_metaclass
 
-
-@add_metaclass(ABCMeta)
-class Seeder(object):
+class Seeder(metaclass=ABCMeta):
     """A seeder will install some seed packages into a virtual environment."""
 
-    # noinspection PyUnusedLocal
     def __init__(self, options, enabled):
         """
 
@@ -38,3 +32,8 @@ class Seeder(object):
         virtual environment
         """
         raise NotImplementedError
+
+
+__all__ = [
+    "Seeder",
+]

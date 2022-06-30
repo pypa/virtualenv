@@ -1,7 +1,6 @@
 """
 Application data stored by virtualenv.
 """
-from __future__ import absolute_import, unicode_literals
 
 import logging
 import os
@@ -15,7 +14,7 @@ from .via_tempdir import TempAppData
 
 
 def _default_app_data_dir(env):
-    key = str("VIRTUALENV_OVERRIDE_APP_DATA")
+    key = "VIRTUALENV_OVERRIDE_APP_DATA"
     if key in env:
         return env[key]
     else:
@@ -23,7 +22,7 @@ def _default_app_data_dir(env):
 
 
 def make_app_data(folder, **kwargs):
-    read_only = kwargs.pop("read_only")
+    is_read_only = kwargs.pop("read_only")
     env = kwargs.pop("env")
     if kwargs:  # py3+ kwonly
         raise TypeError("unexpected keywords: {}")
@@ -32,7 +31,7 @@ def make_app_data(folder, **kwargs):
         folder = _default_app_data_dir(env)
     folder = os.path.abspath(folder)
 
-    if read_only:
+    if is_read_only:
         return ReadOnlyAppData(folder)
 
     if not os.path.isdir(folder):

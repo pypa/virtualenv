@@ -1,33 +1,18 @@
-from __future__ import absolute_import, unicode_literals
-
 import logging
 import os
 import shutil
 from stat import S_IWUSR
 
-from six import PY2
-
-from virtualenv.info import IS_CPYTHON, IS_WIN
-from virtualenv.util.six import ensure_text
-
-if PY2 and IS_CPYTHON and IS_WIN:  # CPython2 on Windows supports unicode paths if passed as unicode
-
-    def norm(src):
-        return ensure_text(str(src))
-
-else:
-    norm = str
-
 
 def ensure_dir(path):
     if not path.exists():
-        logging.debug("create folder %s", ensure_text(str(path)))
-        os.makedirs(norm(path))
+        logging.debug("create folder %s", str(path))
+        os.makedirs(str(path))
 
 
 def ensure_safe_to_do(src, dest):
     if src == dest:
-        raise ValueError("source and destination is the same {}".format(src))
+        raise ValueError(f"source and destination is the same {src}")
     if not dest.exists():
         return
     if dest.is_dir() and not dest.is_symlink():
@@ -49,7 +34,7 @@ def copy(src, dest):
     is_dir = src.is_dir()
     method = copytree if is_dir else shutil.copy
     logging.debug("copy %s", _Debug(src, dest))
-    method(norm(src), norm(dest))
+    method(str(src), str(dest))
 
 
 def copytree(src, dest):
@@ -71,27 +56,23 @@ def safe_delete(dest):
         else:
             raise
 
-    shutil.rmtree(ensure_text(str(dest)), ignore_errors=True, onerror=onerror)
+    shutil.rmtree(str(dest), ignore_errors=True, onerror=onerror)
 
 
-class _Debug(object):
+class _Debug:
     def __init__(self, src, dest):
         self.src = src
         self.dest = dest
 
     def __str__(self):
-        return "{}{} to {}".format(
-            "directory " if self.src.is_dir() else "",
-            ensure_text(str(self.src)),
-            ensure_text(str(self.dest)),
-        )
+        return f"{'directory ' if self.src.is_dir() else ''}{str(self.src)} to {str(self.dest)}"
 
 
-__all__ = (
+__all__ = [
     "ensure_dir",
     "symlink",
     "copy",
     "symlink",
     "copytree",
     "safe_delete",
-)
+]

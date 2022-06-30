@@ -17,3 +17,8 @@ def get_short_path_name(long_name):
             return output_buf.value
         else:
             output_buf_size = needed
+
+
+__all__ = [
+    "get_short_path_name",
+]

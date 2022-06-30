@@ -1,9 +1,5 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
-
-from virtualenv.util.path import Path
-from virtualenv.util.six import ensure_text
+from pathlib import Path
 
 from ..via_template import ViaTemplateActivator
 
@@ -20,9 +16,14 @@ class NushellActivator(ViaTemplateActivator):
 
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
-            "__VIRTUAL_ENV__": ensure_text(str(creator.dest)),
+            "__VIRTUAL_ENV__": str(creator.dest),
             "__VIRTUAL_NAME__": creator.env_name,
-            "__BIN_NAME__": ensure_text(str(creator.bin_dir.relative_to(creator.dest))),
-            "__PATH_SEP__": ensure_text(os.pathsep),
-            "__DEACTIVATE_PATH__": ensure_text(str(Path(dest_folder) / "deactivate.nu")),
+            "__BIN_NAME__": str(creator.bin_dir.relative_to(creator.dest)),
+            "__PATH_SEP__": os.pathsep,
+            "__DEACTIVATE_PATH__": str(Path(dest_folder) / "deactivate.nu"),
         }
+
+
+__all__ = [
+    "NushellActivator",
+]

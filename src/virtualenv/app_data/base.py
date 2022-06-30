@@ -1,18 +1,14 @@
 """
 Application data stored by virtualenv.
 """
-from __future__ import absolute_import, unicode_literals
 
 from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 
-import six
-
 from virtualenv.info import IS_ZIPAPP
 
 
-@six.add_metaclass(ABCMeta)
-class AppData(object):
+class AppData(metaclass=ABCMeta):
     """Abstract storage interface for the virtualenv application"""
 
     @abstractmethod
@@ -71,8 +67,7 @@ class AppData(object):
         raise NotImplementedError
 
 
-@six.add_metaclass(ABCMeta)
-class ContentStore(object):
+class ContentStore(metaclass=ABCMeta):
     @abstractmethod
     def exists(self):
         raise NotImplementedError
@@ -93,3 +88,9 @@ class ContentStore(object):
     @contextmanager
     def locked(self):
         pass
+
+
+__all__ = [
+    "ContentStore",
+    "AppData",
+]

@@ -1,11 +1,8 @@
-from __future__ import absolute_import, unicode_literals
-
 import logging
 import os
 import zipfile
 
 from virtualenv.info import IS_WIN, ROOT
-from virtualenv.util.six import ensure_text
 
 
 def read(full_path):
@@ -21,7 +18,7 @@ def extract(full_path, dest):
     with zipfile.ZipFile(ROOT, "r") as zip_file:
         info = zip_file.getinfo(sub_file)
         info.filename = dest.name
-        zip_file.extract(info, ensure_text(str(dest.parent)))
+        zip_file.extract(info, str(dest.parent))
 
 
 def _get_path_within_zip(full_path):
@@ -31,3 +28,9 @@ def _get_path_within_zip(full_path):
         # paths are always UNIX separators, even on Windows, though __file__ still follows platform default
         sub_file = sub_file.replace(os.sep, "/")
     return sub_file
+
+
+__all__ = [
+    "read",
+    "extract",
+]

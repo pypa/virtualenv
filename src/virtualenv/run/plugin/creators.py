@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from collections import OrderedDict, defaultdict, namedtuple
 
 from virtualenv.create.describe import Describe
@@ -13,7 +11,7 @@ CreatorInfo = namedtuple("CreatorInfo", ["key_to_class", "key_to_meta", "describ
 class CreatorSelector(ComponentBuilder):
     def __init__(self, interpreter, parser):
         creators, self.key_to_meta, self.describe, self.builtin_key = self.for_interpreter(interpreter)
-        super(CreatorSelector, self).__init__(interpreter, parser, "creator", creators)
+        super().__init__(interpreter, parser, "creator", creators)
 
     @classmethod
     def for_interpreter(cls, interpreter):
@@ -40,7 +38,7 @@ class CreatorSelector(ComponentBuilder):
                 rows = ["{} for creators {}".format(k, ", ".join(i.__name__ for i in v)) for k, v in errors.items()]
                 raise RuntimeError("\n".join(rows))
             else:
-                raise RuntimeError("No virtualenv implementation for {}".format(interpreter))
+                raise RuntimeError(f"No virtualenv implementation for {interpreter}")
         return CreatorInfo(
             key_to_class=key_to_class,
             key_to_meta=key_to_meta,
@@ -53,12 +51,12 @@ class CreatorSelector(ComponentBuilder):
         choices = sorted(choices, key=lambda a: 0 if a == "builtin" else 1)
         default_value = self._get_default(choices)
         self.parser.add_argument(
-            "--{}".format(name),
+            f"--{name}",
             choices=choices,
             default=default_value,
             required=False,
             help="create environment via{}".format(
-                "" if self.builtin_key is None else " (builtin = {})".format(self.builtin_key),
+                "" if self.builtin_key is None else f" (builtin = {self.builtin_key})",
             ),
         )
 
@@ -67,11 +65,17 @@ class CreatorSelector(ComponentBuilder):
         return next(iter(choices))
 
     def populate_selected_argparse(self, selected, app_data):
-        self.parser.description = "options for {} {}".format(self.name, selected)
+        self.parser.description = f"options for {self.name} {selected}"
         self._impl_class.add_parser_arguments(self.parser, self.interpreter, self.key_to_meta[selected], app_data)
 
     def create(self, options):
         options.meta = self.key_to_meta[getattr(options, self.name)]
         if not issubclass(self._impl_class, Describe):
             options.describe = self.describe(options, self.interpreter)
-        return super(CreatorSelector, self).create(options)
+        return super().create(options)
+
+
+__all__ = [
+    "CreatorSelector",
+    "CreatorInfo",
+]
