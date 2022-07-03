@@ -7,6 +7,7 @@ def make_exe():
     policy = dist.make_python_packaging_policy()
 
     python_config = dist.make_python_interpreter_config()
+    python_config.executable = "python"
     python_config.run_module = "virtualenv"
 
     exe = dist.to_python_executable(
