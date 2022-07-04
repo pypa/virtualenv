@@ -7,13 +7,6 @@ Extend functionality
 - package it as a python library,
 - install it alongside the virtual environment.
 
-.. warning::
-
-   The public API of some of these components is still to be finalized, consider the current interface a beta one
-   until we get some feedback on how well we planned ahead. We expect to do this by end of Q3 2020. Consider the class
-   interface explained below as initial draft proposal. We reserve the right to change the API until then, however such
-   changes will be communicated in a timely fashion, and you'll have time to migrate. Thank you for your understanding.
-
 Python discovery
 ----------------
 
