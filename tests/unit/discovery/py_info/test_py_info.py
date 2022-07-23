@@ -346,7 +346,8 @@ def test_custom_venv_install_scheme_is_prefered(mocker):
         "venv": venv_scheme,
     }
     if getattr(sysconfig, "get_preferred_scheme", None):
-        sysconfig_install_schemes[sysconfig.get_preferred_scheme("prefix")] = default_scheme
+        # define the prefix as sysconfig.get_preferred_scheme did before 3.11
+        sysconfig_install_schemes["nt" if os.name == "nt" else "posix_prefix"] = default_scheme
 
     if sys.version_info[0] == 2:
         sysconfig_install_schemes = _stringify_schemes_dict(sysconfig_install_schemes)
