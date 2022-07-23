@@ -1,16 +1,13 @@
-from __future__ import absolute_import, unicode_literals
-
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 from flaky import flaky
 
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.run import cli_run
-from virtualenv.util.path import Path
-from virtualenv.util.six import ensure_text
 
 HERE = Path(__file__).parent
 CURRENT = PythonInfo.current_system()
@@ -33,7 +30,7 @@ def zipapp_build_env(tmp_path_factory):
                         [
                             "-vvv",
                             "-p",
-                            "{}3.{}".format(impl, version),
+                            f"{impl}3.{version}",
                             "--activators",
                             "",
                             str(create_env_path),
@@ -60,7 +57,7 @@ def zipapp_build_env(tmp_path_factory):
 @pytest.fixture(scope="session")
 def zipapp(zipapp_build_env, tmp_path_factory):
     into = tmp_path_factory.mktemp("zipapp")
-    path = Path(HERE).parent.parent / "tasks" / "make_zipapp.py"
+    path = HERE.parent.parent / "tasks" / "make_zipapp.py"
     filename = into / "virtualenv.pyz"
     cmd = [zipapp_build_env, str(path), "--dest", str(filename)]
     subprocess.check_call(cmd)
@@ -79,7 +76,7 @@ def zipapp_test_env(tmp_path_factory):
 @pytest.fixture()
 def call_zipapp(zipapp, monkeypatch, tmp_path, zipapp_test_env, temp_app_data):
     def _run(*args):
-        cmd = [str(zipapp_test_env), str(zipapp), "-vv", ensure_text(str(tmp_path / "env"))] + list(args)
+        cmd = [str(zipapp_test_env), str(zipapp), "-vv", str(tmp_path / "env")] + list(args)
         subprocess.check_call(cmd)
 
     return _run

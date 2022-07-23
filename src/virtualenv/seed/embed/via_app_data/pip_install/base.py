@@ -3,13 +3,13 @@ import os
 import re
 import zipfile
 from abc import ABCMeta, abstractmethod
+from configparser import ConfigParser
 from itertools import chain
 from pathlib import Path
 from tempfile import mkdtemp
 
 from distlib.scripts import ScriptMaker, enquote_executable
 
-from virtualenv.util import ConfigParser
 from virtualenv.util.path import safe_delete
 
 
@@ -119,7 +119,7 @@ class PipInstall(metaclass=ABCMeta):
             self._console_entry_points = {}
             entry_points = self._dist_info / "entry_points.txt"
             if entry_points.exists():
-                parser = ConfigParser.ConfigParser()
+                parser = ConfigParser()
                 with entry_points.open() as file_handler:
                     parser.read_file(file_handler)
                 if "console_scripts" in parser.sections():
@@ -187,7 +187,7 @@ class ScriptMakerCustom(ScriptMaker):
         self._name = name
 
     def _write_script(self, names, shebang, script_bytes, filenames, ext):
-        names.add("{}{}.{}".format(self._name, *self.version_info))
+        names.add(f"{self._name}{self.version_info[0]}.{self.version_info[1]}")
         super()._write_script(names, shebang, script_bytes, filenames, ext)
 
 

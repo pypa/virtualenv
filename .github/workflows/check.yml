@@ -10,14 +10,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - uses: pre-commit/action@v3.0.0
   test:
     name: test ${{ matrix.py }} - ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -30,7 +22,6 @@ jobs:
           - "3.8"
           - "3.7"
           - "3.6"
-          - "3.5"
           - pypy-3.6-v7.3.3
           - pypy-3.7-v7.3.7
           - pypy-3.8-v7.3.7
@@ -179,7 +170,7 @@ jobs:
 
   publish:
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-    needs: [check, coverage, lint]
+    needs: [check, coverage]
     runs-on: ubuntu-20.04
     steps:
       - name: Setup python to build package

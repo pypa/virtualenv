@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 A simple shim module to fix up things on Python 2 only.
 
@@ -64,7 +65,7 @@ sep = "\\" if sys.platform == "win32" else "/"  # no os module here yet - poor m
 
 def read_pyvenv():
     """read pyvenv.cfg"""
-    config_file = f"{sys.prefix}{sep}pyvenv.cfg"
+    config_file = "{}{}pyvenv.cfg".format(sys.prefix, sep)
     with open(config_file) as file_handler:
         lines = file_handler.readlines()
     config = {}
@@ -123,11 +124,11 @@ def map_path(path, base_executable, exe_dir, exec_prefix, base_prefix, prefix, b
     if path_starts_with(path, exe_dir):
         # content inside the exe folder needs to remap to original executables folder
         orig_exe_folder = base_executable[: base_executable.rfind(sep)]
-        return f"{orig_exe_folder}{path[len(exe_dir) :]}"
+        return "{}{}".format(orig_exe_folder, path[len(exe_dir) :])
     elif path_starts_with(path, prefix):
-        return f"{base_prefix}{path[len(prefix) :]}"
+        return "{}{}".format(base_prefix, path[len(prefix) :])
     elif path_starts_with(path, exec_prefix):
-        return f"{base_exec_prefix}{path[len(exec_prefix) :]}"
+        return "{}{}".format(base_exec_prefix, path[len(exec_prefix) :])
     return path
 
 
@@ -140,7 +141,7 @@ def disable_user_site_package():
     # sys.flags is a c-extension type, so we cannot monkeypatch it, replace it with a python class to flip it
     sys.original_flags = sys.flags
 
-    class Flags:
+    class Flags(object):
         def __init__(self):
             self.__dict__ = {key: getattr(sys.flags, key) for key in dir(sys.flags) if not key.startswith("_")}
 

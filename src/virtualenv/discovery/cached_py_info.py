@@ -13,10 +13,11 @@ from collections import OrderedDict
 from pathlib import Path
 from shlex import quote
 from string import ascii_lowercase, ascii_uppercase, digits
+from subprocess import Popen
 
 from virtualenv.app_data import AppDataDisabled
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.util.subprocess import Popen, subprocess
+from virtualenv.util.subprocess import subprocess
 
 _CACHE = OrderedDict()
 _CACHE[Path(sys.executable)] = PythonInfo()

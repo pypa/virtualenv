@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import ast
 import difflib
 import gc
@@ -14,6 +12,7 @@ import sys
 import zipfile
 from collections import OrderedDict
 from itertools import product
+from pathlib import Path
 from stat import S_IREAD, S_IRGRP, S_IROTH
 from textwrap import dedent
 from threading import Thread
@@ -27,20 +26,18 @@ from virtualenv.create.via_global_ref.builtin.cpython.cpython2 import CPython2Po
 from virtualenv.create.via_global_ref.builtin.cpython.cpython3 import CPython3Posix
 from virtualenv.create.via_global_ref.builtin.python2.python2 import Python2
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import IS_PYPY, IS_WIN, PY2, PY3, fs_is_case_sensitive
+from virtualenv.info import IS_PYPY, IS_WIN, fs_is_case_sensitive
 from virtualenv.run import cli_run, session_via_cli
-from virtualenv.util.path import Path
-from virtualenv.util.six import ensure_str, ensure_text
 
 CURRENT = PythonInfo.current_system()
 
 
 def test_os_path_sep_not_allowed(tmp_path, capsys):
-    target = str(tmp_path / "a{}b".format(os.pathsep))
+    target = str(tmp_path / f"a{os.pathsep}b")
     err = _non_success_exit_code(capsys, target)
     msg = (
-        "destination {!r} must not contain the path separator ({}) as this"
-        " would break the activation scripts".format(target, os.pathsep)
+        f"destination {target!r} must not contain the path separator ({os.pathsep})"
+        f" as this would break the activation scripts"
     )
     assert msg in err, err
 
@@ -58,7 +55,7 @@ def test_destination_exists_file(tmp_path, capsys):
     target = tmp_path / "out"
     target.write_text("")
     err = _non_success_exit_code(capsys, str(target))
-    msg = "the destination {} already exists and is a file".format(str(target))
+    msg = f"the destination {str(target)} already exists and is a file"
     assert msg in err, err
 
 
@@ -73,7 +70,7 @@ def test_destination_not_write_able(tmp_path, capsys):
     target.chmod(S_IREAD | S_IRGRP | S_IROTH)
     try:
         err = _non_success_exit_code(capsys, str(target))
-        msg = "the destination . is not write-able at {}".format(str(target))
+        msg = f"the destination . is not write-able at {str(target)}"
         assert msg in err, err
     finally:
         target.chmod(prev_mod)
@@ -84,8 +81,8 @@ def cleanup_sys_path(paths):
 
     paths = [p.resolve() for p in (Path(os.path.abspath(i)) for i in paths) if p.exists()]
     to_remove = [Path(HERE)]
-    if os.environ.get(str("PYCHARM_HELPERS_DIR")):
-        to_remove.append(Path(os.environ[str("PYCHARM_HELPERS_DIR")]).parent)
+    if os.environ.get("PYCHARM_HELPERS_DIR"):
+        to_remove.append(Path(os.environ["PYCHARM_HELPERS_DIR"]).parent)
         to_remove.append(Path(os.path.expanduser("~")) / ".PyCharm")
     result = [i for i in paths if not any(str(i).startswith(str(t)) for t in to_remove)]
     return result
@@ -120,7 +117,7 @@ _VENV_BUG_ON = (
             marks=pytest.mark.xfail(
                 reason="https://bitbucket.org/pypy/pypy/issues/3159/pypy36-730-venv-fails-with-copies-on-linux",
                 strict=True,
-            )
+            ),
         )
         if _VENV_BUG_ON and i[0][0] == "venv" and i[0][1] == "copies"
         else i
@@ -135,14 +132,14 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
         "-v",
         "-v",
         "-p",
-        ensure_text(python),
-        ensure_text(str(dest)),
+        str(python),
+        str(dest),
         "--without-pip",
         "--activators",
         "",
         "--creator",
         creator_key,
-        "--{}".format(method),
+        f"--{method}",
     ]
     if isolated == "global":
         cmd.append("--system-site-packages")
@@ -154,27 +151,24 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
         # force a close of these on system where the limit is low-ish (e.g. MacOS 256)
         gc.collect()
     purelib = creator.purelib
-    patch_files = {purelib / "{}.{}".format("_virtualenv", i) for i in ("py", "pyc", "pth")}
+    patch_files = {purelib / f"{'_virtualenv'}.{i}" for i in ("py", "pyc", "pth")}
     patch_files.add(purelib / "__pycache__")
     content = set(creator.purelib.iterdir()) - patch_files
-    assert not content, "\n".join(ensure_text(str(i)) for i in content)
-    assert creator.env_name == ensure_text(dest.name)
+    assert not content, "\n".join(str(i) for i in content)
+    assert creator.env_name == str(dest.name)
     debug = creator.debug
-    assert "exception" not in debug, "{}\n{}\n{}".format(debug.get("exception"), debug.get("out"), debug.get("err"))
+    assert "exception" not in debug, f"{debug.get('exception')}\n{debug.get('out')}\n{debug.get('err')}"
     sys_path = cleanup_sys_path(debug["sys"]["path"])
     system_sys_path = cleanup_sys_path(system["sys"]["path"])
     our_paths = set(sys_path) - set(system_sys_path)
-    our_paths_repr = "\n".join(ensure_text(repr(i)) for i in our_paths)
+    our_paths_repr = "\n".join(repr(i) for i in our_paths)
 
     # ensure we have at least one extra path added
     assert len(our_paths) >= 1, our_paths_repr
     # ensure all additional paths are related to the virtual environment
     for path in our_paths:
-        msg = "\n{}\ndoes not start with {}\nhas:\n{}".format(
-            ensure_text(str(path)),
-            ensure_text(str(dest)),
-            "\n".join(ensure_text(str(p)) for p in system_sys_path),
-        )
+        msg = "\n".join(str(p) for p in system_sys_path)
+        msg = f"\n{str(path)}\ndoes not start with {str(dest)}\nhas:\n{msg}"
         assert str(path).startswith(str(dest)), msg
     # ensure there's at least a site-packages folder as part of the virtual environment added
     assert any(p for p in our_paths if p.parts[-1] == "site-packages"), our_paths_repr
@@ -182,10 +176,8 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     # ensure the global site package is added or not, depending on flag
     global_sys_path = system_sys_path[-1]
     if isolated == "isolated":
-        msg = "global sys path {} is in virtual environment sys path:\n{}".format(
-            ensure_text(str(global_sys_path)),
-            "\n".join(ensure_text(str(j)) for j in sys_path),
-        )
+        msg = "\n".join(str(j) for j in sys_path)
+        msg = f"global sys path {str(global_sys_path)} is in virtual environment sys path:\n{msg}"
         assert global_sys_path not in sys_path, msg
     else:
         common = []
@@ -196,7 +188,7 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
                 break
 
         def list_to_str(iterable):
-            return [ensure_text(str(i)) for i in iterable]
+            return [str(i) for i in iterable]
 
         assert common, "\n".join(difflib.unified_diff(list_to_str(sys_path), list_to_str(system_sys_path)))
 
@@ -207,7 +199,7 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     if sys.platform == "win32":
         exes = ("python.exe",)
     else:
-        exes = ("python", "python{}".format(*sys.version_info), "python{}.{}".format(*sys.version_info))
+        exes = ("python", f"python{sys.version_info.major}", f"python{sys.version_info.major}.{sys.version_info.minor}")
         if creator_key == "venv":
             # for venv some repackaging does not includes the pythonx.y
             exes = exes[:-1]
@@ -276,7 +268,7 @@ def test_venv_fails_not_inline(tmp_path, capsys, mocker):
     mocker.patch("virtualenv.run.session_via_cli", side_effect=_session_via_cli)
     before = tmp_path.stat().st_mode
     cfg_path = tmp_path / "pyvenv.cfg"
-    cfg_path.write_text(ensure_text(""))
+    cfg_path.write_text("")
     cfg = str(cfg_path)
     try:
         os.chmod(cfg, stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
@@ -346,8 +338,8 @@ def test_prompt_set(tmp_path, creator, prompt):
 def test_cross_major(cross_python, coverage_env, tmp_path, session_app_data, current_fastest):
     cmd = [
         "-p",
-        ensure_text(cross_python.executable),
-        ensure_text(str(tmp_path)),
+        cross_python.executable,
+        str(tmp_path),
         "--no-setuptools",
         "--no-wheel",
         "--activators",
@@ -358,9 +350,9 @@ def test_cross_major(cross_python, coverage_env, tmp_path, session_app_data, cur
     major, minor = cross_python.version_info[0:2]
     assert pip_scripts == {
         "pip",
-        "pip{}".format(major),
-        "pip-{}.{}".format(major, minor),
-        "pip{}.{}".format(major, minor),
+        f"pip{major}",
+        f"pip-{major}.{minor}",
+        f"pip{major}.{minor}",
     }
     coverage_env()
     env = PythonInfo.from_exe(str(result.creator.exe), session_app_data)
@@ -370,7 +362,7 @@ def test_cross_major(cross_python, coverage_env, tmp_path, session_app_data, cur
 def test_create_parallel(tmp_path, monkeypatch, temp_app_data):
     def create(count):
         subprocess.check_call(
-            [sys.executable, "-m", "virtualenv", "-vvv", str(tmp_path / "venv{}".format(count)), "--without-pip"],
+            [sys.executable, "-m", "virtualenv", "-vvv", str(tmp_path / f"venv{count}"), "--without-pip"],
         )
 
     threads = [Thread(target=create, args=(i,)) for i in range(1, 4)]
@@ -410,7 +402,7 @@ def test_create_long_path(current_fastest, tmp_path):
 
 @pytest.mark.parametrize("creator", sorted(set(PythonInfo.current_system().creators().key_to_class) - {"builtin"}))
 def test_create_distutils_cfg(creator, tmp_path, monkeypatch, session_app_data):
-    result = cli_run([ensure_text(str(tmp_path / "venv")), "--activators", "", "--creator", creator])
+    result = cli_run([str(tmp_path / "venv"), "--activators", "", "--creator", creator])
 
     app = Path(__file__).parent / "console_app"
     dest = tmp_path / "console_app"
@@ -418,18 +410,15 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch, session_app_data):
 
     setup_cfg = dest / "setup.cfg"
     conf = dedent(
-        """
+        f"""
             [install]
-            prefix={0}{1}prefix
-            install_purelib={0}{1}purelib
-            install_platlib={0}{1}platlib
-            install_headers={0}{1}headers
-            install_scripts={0}{1}scripts
-            install_data={0}{1}data
-            """.format(
-            tmp_path,
-            os.sep,
-        ),
+            prefix={tmp_path}{os.sep}prefix
+            install_purelib={tmp_path}{os.sep}purelib
+            install_platlib={tmp_path}{os.sep}platlib
+            install_headers={tmp_path}{os.sep}headers
+            install_scripts={tmp_path}{os.sep}scripts
+            install_data={tmp_path}{os.sep}data
+            """,
     )
     setup_cfg.write_text(setup_cfg.read_text() + conf)
 
@@ -457,17 +446,17 @@ def list_files(path):
     for root, _, files in os.walk(path):
         level = root.replace(path, "").count(os.sep)
         indent = " " * 4 * level
-        result += "{}{}/\n".format(indent, os.path.basename(root))
+        result += f"{indent}{os.path.basename(root)}/\n"
         sub = " " * 4 * (level + 1)
         for f in files:
-            result += "{}{}\n".format(sub, f)
+            result += f"{sub}{f}\n"
     return result
 
 
 @pytest.mark.parametrize("python_path_on", [True, False], ids=["on", "off"])
-@pytest.mark.skipif(PY3, reason="we rewrite sys.path only on PY2")
+@pytest.mark.skipif(True, reason="we rewrite sys.path only on PY2 - make it cross python call")
 def test_python_path(monkeypatch, tmp_path, python_path_on):
-    result = cli_run([ensure_text(str(tmp_path)), "--without-pip", "--activators", ""])
+    result = cli_run([str(tmp_path), "--without-pip", "--activators", ""])
     monkeypatch.chdir(tmp_path)
     case_sensitive = fs_is_case_sensitive()
 
@@ -478,7 +467,7 @@ def test_python_path(monkeypatch, tmp_path, python_path_on):
         cmd.extend(["-c", "import json; import sys; print(json.dumps(sys.path))"])
         return [i if case_sensitive else i.lower() for i in json.loads(subprocess.check_output(cmd))]
 
-    monkeypatch.delenv(str("PYTHONPATH"), raising=False)
+    monkeypatch.delenv("PYTHONPATH", raising=False)
     base = _get_sys_path()
 
     # note the value result.creator.interpreter.system_stdlib cannot be set, as that would disable our custom site.py
@@ -489,16 +478,16 @@ def test_python_path(monkeypatch, tmp_path, python_path_on):
         str(result.creator.purelib),
         str(result.creator.bin_dir),
         str(tmp_path / "base"),
-        str(tmp_path / "base_sep") + os.sep,
+        f"{str(tmp_path / 'base_sep')}{os.sep}",
         "name",
-        "name{}".format(os.sep),
-        str(tmp_path.parent / (ensure_text(tmp_path.name) + "_suffix")),
+        f"name{os.sep}",
+        f"{tmp_path.parent}{f'{tmp_path.name}_suffix'}",
         ".",
         "..",
         "",
     ]
-    python_path_env = os.pathsep.join(ensure_str(i) for i in python_paths)
-    monkeypatch.setenv(str("PYTHONPATH"), python_path_env)
+    python_path_env = os.pathsep.join(python_paths)
+    monkeypatch.setenv("PYTHONPATH", python_path_env)
 
     extra_all = _get_sys_path(None if python_path_on else "-E")
     if python_path_on:
@@ -508,7 +497,7 @@ def test_python_path(monkeypatch, tmp_path, python_path_on):
         base = base[1:]
 
         assert not (set(base) - set(extra_all))  # all base paths are present
-        abs_python_paths = list(OrderedDict((os.path.abspath(ensure_text(i)), None) for i in python_paths).keys())
+        abs_python_paths = list(OrderedDict((os.path.abspath(str(i)), None) for i in python_paths).keys())
         abs_python_paths = [i if case_sensitive else i.lower() for i in abs_python_paths]
 
         extra_as_python_path = extra_all[: len(abs_python_paths)]
@@ -521,8 +510,8 @@ def test_python_path(monkeypatch, tmp_path, python_path_on):
 
 
 @pytest.mark.skipif(
-    not (CURRENT.implementation == "CPython" and PY2),
-    reason="stdlib components without py files only possible on CPython2",
+    True,
+    reason="stdlib components without py files only possible on CPython2 - make it cross version call",
 )
 @pytest.mark.parametrize(
     "py, pyc",
@@ -547,7 +536,7 @@ def test_py_pyc_missing(tmp_path, mocker, session_app_data, py, pyc):
 
     mocker.patch.object(Python2, "from_stdlib", side_effect=from_stdlib)
 
-    result = cli_run([ensure_text(str(tmp_path)), "--without-pip", "--activators", "", "-vv"])
+    result = cli_run([str(tmp_path), "--without-pip", "--activators", "", "-vv"])
     py_at = Python2.from_stdlib(Python2.mappings(CURRENT), "os.py")[1](result.creator, Path("os.py"))
     py = pyc is False or py  # if pyc is False we fallback to serve the py, which will exist (as we only mock the check)
     assert py_at.exists() is py
@@ -574,7 +563,7 @@ def test_zip_importer_can_import_setuptools(tmp_path):
             else:
                 folder.unlink()
     env = os.environ.copy()
-    env[str("PYTHONPATH")] = str(zip_path)
+    env["PYTHONPATH"] = str(zip_path)
     subprocess.check_call([str(result.creator.exe), "-c", "from setuptools.dist import Distribution"], env=env)
 
 
@@ -583,11 +572,11 @@ def test_zip_importer_can_import_setuptools(tmp_path):
 #
 # coverage is disabled, because when coverage is active, it imports threading in default mode.
 @pytest.mark.xfail(
-    IS_PYPY and PY3 and sys.platform.startswith("darwin"),
+    IS_PYPY and sys.platform.startswith("darwin"),
     reason="https://foss.heptapod.net/pypy/pypy/-/issues/3269",
 )
 def test_no_preimport_threading(tmp_path, no_coverage):
-    session = cli_run([ensure_text(str(tmp_path))])
+    session = cli_run([str(tmp_path)])
     out = subprocess.check_output(
         [str(session.creator.exe), "-c", r"import sys; print('\n'.join(sorted(sys.modules)))"],
         universal_newlines=True,
@@ -598,7 +587,7 @@ def test_no_preimport_threading(tmp_path, no_coverage):
 
 # verify that .pth files in site-packages/ are always processed even if $PYTHONPATH points to it.
 def test_pth_in_site_vs_PYTHONPATH(tmp_path):
-    session = cli_run([ensure_text(str(tmp_path))])
+    session = cli_run([str(tmp_path)])
     site_packages = str(session.creator.purelib)
     # install test.pth that sets sys.testpth='ok'
     with open(os.path.join(site_packages, "test.pth"), "w") as f:
@@ -625,7 +614,7 @@ def test_pth_in_site_vs_PYTHONPATH(tmp_path):
 
 def test_getsitepackages_system_site(tmp_path):
     # Test without --system-site-packages
-    session = cli_run([ensure_text(str(tmp_path))])
+    session = cli_run([str(tmp_path)])
 
     system_site_packages = get_expected_system_site_packages(session)
 
@@ -639,7 +628,7 @@ def test_getsitepackages_system_site(tmp_path):
         assert system_site_package not in site_packages
 
     # Test with --system-site-packages
-    session = cli_run([ensure_text(str(tmp_path)), "--system-site-packages"])
+    session = cli_run([str(tmp_path), "--system-site-packages"])
 
     system_site_packages = get_expected_system_site_packages(session)
 
@@ -666,7 +655,7 @@ def get_expected_system_site_packages(session):
 
 def test_get_site_packages(tmp_path):
     case_sensitive = fs_is_case_sensitive()
-    session = cli_run([ensure_text(str(tmp_path))])
+    session = cli_run([str(tmp_path)])
     env_site_packages = [str(session.creator.purelib), str(session.creator.platlib)]
     out = subprocess.check_output(
         [str(session.creator.exe), "-c", r"import site; print(site.getsitepackages())"],

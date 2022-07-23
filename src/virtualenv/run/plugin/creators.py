@@ -35,7 +35,7 @@ class CreatorSelector(ComponentBuilder):
                 describe = creator_class
         if not key_to_meta:
             if errors:
-                rows = ["{} for creators {}".format(k, ", ".join(i.__name__ for i in v)) for k, v in errors.items()]
+                rows = [f"{k} for creators {', '.join(i.__name__ for i in v)}" for k, v in errors.items()]
                 raise RuntimeError("\n".join(rows))
             else:
                 raise RuntimeError(f"No virtualenv implementation for {interpreter}")
@@ -55,9 +55,7 @@ class CreatorSelector(ComponentBuilder):
             choices=choices,
             default=default_value,
             required=False,
-            help="create environment via{}".format(
-                "" if self.builtin_key is None else f" (builtin = {self.builtin_key})",
-            ),
+            help=f"create environment via{'' if self.builtin_key is None else f' (builtin = {self.builtin_key})'}",
         )
 
     @staticmethod

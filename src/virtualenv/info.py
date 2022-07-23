@@ -34,7 +34,7 @@ def fs_supports_symlink():
             if IS_WIN:
                 with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:
                     temp_dir = os.path.dirname(tmp_file.name)
-                    dest = os.path.join(temp_dir, "{}-{}".format(tmp_file.name, "b"))
+                    dest = os.path.join(temp_dir, f"{tmp_file.name}-{'b'}")
                     try:
                         os.symlink(tmp_file.name, dest)
                         can = True

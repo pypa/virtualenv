@@ -1,13 +1,11 @@
-from __future__ import absolute_import, unicode_literals
-
 import logging
 import os
+from pathlib import Path
 
 import pytest
 
 from virtualenv.discovery.py_info import EXTENSIONS, PythonInfo
 from virtualenv.info import IS_WIN, fs_is_case_sensitive, fs_supports_symlink
-from virtualenv.util.path import Path
 
 CURRENT = PythonInfo.current()
 
@@ -30,9 +28,9 @@ def test_discover_ok(tmp_path, monkeypatch, suffix, impl, version, arch, into, c
     caplog.set_level(logging.DEBUG)
     folder = tmp_path / into
     folder.mkdir(parents=True, exist_ok=True)
-    name = "{}{}".format(impl, version)
+    name = f"{impl}{version}"
     if arch:
-        name += "-{}".format(arch)
+        name += f"-{arch}"
     name += suffix
     dest = folder / name
     os.symlink(CURRENT.executable, str(dest))

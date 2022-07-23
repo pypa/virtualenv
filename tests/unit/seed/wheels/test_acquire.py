@@ -1,19 +1,16 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
 import sys
 from datetime import datetime
+from pathlib import Path
 from subprocess import CalledProcessError
 
 import pytest
 
 from virtualenv.app_data import AppDataDiskFolder
-from virtualenv.info import IS_PYPY, PY2
 from virtualenv.seed.wheels.acquire import download_wheel, get_wheel, pip_wheel_env_run
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, get_embed_wheel
 from virtualenv.seed.wheels.periodic_update import dump_datetime
 from virtualenv.seed.wheels.util import Wheel, discover_wheels
-from virtualenv.util.path import Path
 
 
 @pytest.fixture(autouse=True)
@@ -41,7 +38,7 @@ def test_download_wheel_bad_output(mocker, for_py_version, session_app_data):
     as_path.iterdir.return_value = [i.path for i in available]
 
     result = download_wheel(
-        distribution, "=={}".format(embed.version), for_py_version, [], session_app_data, as_path, os.environ
+        distribution, f"=={embed.version}", for_py_version, [], session_app_data, as_path, os.environ
     )
     assert result.path == embed.path
 
@@ -56,11 +53,8 @@ def test_download_fails(mocker, for_py_version, session_app_data):
     with pytest.raises(CalledProcessError) as context:
         download_wheel("pip", "==1", for_py_version, [], session_app_data, as_path, os.environ),
     exc = context.value
-    if sys.version_info < (3, 5):
-        assert exc.output == "outerr"
-    else:
-        assert exc.output == "out"
-        assert exc.stderr == "err"
+    assert exc.output == "out"
+    assert exc.stderr == "err"
     assert exc.returncode == 1
     assert [
         sys.executable,
@@ -111,7 +105,6 @@ def test_get_wheel_download_not_called(mocker, for_py_version, session_app_data,
     assert write.call_count == 0
 
 
-@pytest.mark.skipif(IS_PYPY and PY2, reason="mocker.spy failing on PyPy 2.x")
 def test_get_wheel_download_cached(tmp_path, freezer, mocker, for_py_version, downloaded_wheel):
     from virtualenv.app_data.via_disk_folder import JSONStoreDisk
 

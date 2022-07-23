@@ -1,10 +1,9 @@
 import sys
+from pathlib import Path
 
 import pytest
 from testing import path
 from testing.py_info import read_fixture
-
-from virtualenv.util.path import Path
 
 # Allows to import from `testing` into test submodules.
 sys.path.append(str(Path(__file__).parent))

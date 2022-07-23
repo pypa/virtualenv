@@ -1,19 +1,16 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
 import sys
 from ast import literal_eval
 from textwrap import dedent
 
 from virtualenv.activation import PythonActivator
-from virtualenv.info import IS_WIN, WIN_CPYTHON_2
-from virtualenv.util.six import ensure_text
+from virtualenv.info import IS_WIN
 
 
 def test_python(raise_on_non_source_class, activation_tester):
     class Python(raise_on_non_source_class):
         def __init__(self, session):
-            super(Python, self).__init__(
+            super().__init__(
                 PythonActivator,
                 session,
                 sys.executable,
@@ -25,15 +22,15 @@ def test_python(raise_on_non_source_class, activation_tester):
 
         def env(self, tmp_path):
             env = os.environ.copy()
-            env[str("PYTHONIOENCODING")] = str("utf-8")
+            env["PYTHONIOENCODING"] = "utf-8"
             for key in {"VIRTUAL_ENV", "PYTHONPATH"}:
                 env.pop(str(key), None)
-            env[str("PATH")] = os.pathsep.join([str(tmp_path), str(tmp_path / "other")])
+            env["PATH"] = os.pathsep.join([str(tmp_path), str(tmp_path / "other")])
             return env
 
         @staticmethod
         def _get_test_lines(activate_script):
-            raw = """
+            raw = f"""
             import os
             import sys
             import platform
@@ -45,9 +42,9 @@ def test_python(raise_on_non_source_class, activation_tester):
             print_r(os.environ.get("PATH").split(os.pathsep))
             print_r(sys.path)
 
-            file_at = {!r}
+            file_at = {str(activate_script)!r}
             # CPython 2 requires non-ascii path open to be unicode
-            with open(file_at{}, "r") as file_handler:
+            with open(file_at, "r") as file_handler:
                 content = file_handler.read()
             exec(content, {{"__file__": file_at}})
 
@@ -57,10 +54,7 @@ def test_python(raise_on_non_source_class, activation_tester):
 
             import pydoc_test
             print_r(pydoc_test.__file__)
-            """.format(
-                str(activate_script),
-                ".decode('utf-8')" if WIN_CPYTHON_2 else "",
-            )
+            """
             result = dedent(raw).splitlines()
             return result
 
@@ -78,23 +72,18 @@ def test_python(raise_on_non_source_class, activation_tester):
             # sys path contains the site package at its start
             new_sys_path = out[5]
 
-            new_lib_paths = {ensure_text(j) if WIN_CPYTHON_2 else j for j in {str(i) for i in self._creator.libs}}
+            new_lib_paths = {j for j in {str(i) for i in self._creator.libs}}
             assert prev_sys_path == new_sys_path[len(new_lib_paths) :]
             assert new_lib_paths == set(new_sys_path[: len(new_lib_paths)])
 
             # manage to import from activate site package
             dest = self.norm_path(self._creator.purelib / "pydoc_test.py")
-            found = self.norm_path(out[6].decode(sys.getfilesystemencoding()) if WIN_CPYTHON_2 else out[6])
+            found = self.norm_path(out[6])
             assert found.startswith(dest)
 
         def non_source_activate(self, activate_script):
             act = str(activate_script)
-            if WIN_CPYTHON_2:
-                act = ensure_text(act)
-            cmd = self._invoke_script + [
-                "-c",
-                "exec(open({}).read())".format(repr(act)),
-            ]
+            cmd = self._invoke_script + ["-c", f"exec(open({act!r}).read())"]
             return cmd
 
     activation_tester(Python)

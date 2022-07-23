@@ -7,19 +7,19 @@ import json
 import logging
 import os
 import ssl
-import subprocess
 import sys
 from datetime import datetime, timedelta
 from itertools import groupby
 from pathlib import Path
 from shutil import copy2
+from subprocess import PIPE, Popen
 from textwrap import dedent
 from threading import Thread
 from urllib.error import URLError
 from urllib.request import urlopen
 
 from virtualenv.app_data import AppDataDiskFolder
-from virtualenv.util.subprocess import CREATE_NO_WINDOW, Popen
+from virtualenv.util.subprocess import CREATE_NO_WINDOW
 
 from ..wheels.embed import BUNDLE_SUPPORT
 from ..wheels.util import Wheel
@@ -130,12 +130,9 @@ class NewVersion:
         return False
 
     def __repr__(self):
-        return "{}(filename={}), found_date={}, release_date={}, source={})".format(
-            self.__class__.__name__,
-            self.filename,
-            self.found_date,
-            self.release_date,
-            self.source,
+        return (
+            f"{self.__class__.__name__}(filename={self.filename}), found_date={self.found_date}, "
+            f"release_date={self.release_date}, source={self.source})"
         )
 
     def __eq__(self, other):
@@ -213,7 +210,7 @@ def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, e
         .format(distribution, for_py_version, wheel_path, str(app_data), [str(p) for p in search_dirs], periodic),
     ]
     debug = env.get("_VIRTUALENV_PERIODIC_UPDATE_INLINE") == "1"
-    pipe = None if debug else subprocess.PIPE
+    pipe = None if debug else PIPE
     kwargs = {"stdout": pipe, "stderr": pipe}
     if not debug and sys.platform == "win32":
         kwargs["creationflags"] = CREATE_NO_WINDOW
