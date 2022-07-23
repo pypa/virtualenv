@@ -992,6 +992,7 @@ v20.0.0b1 (2020-01-28)
 
 * First public release of the rewrite. Everything is brand new and just added.
 * ``--download`` defaults to ``False``
+* No longer replaces builtin ``site`` module with `custom version baked within virtualenv code itself <https://github.com/pypa/virtualenv/blob/legacy/virtualenv_embedded/site.py>`_. A simple shim module is used to fix up things on Python 2 only.
 
 .. warning::
 
