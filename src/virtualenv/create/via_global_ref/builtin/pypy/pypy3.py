@@ -43,7 +43,7 @@ class PyPy3Posix(PyPy3, PosixSupports):
         for src in super(PyPy3Posix, cls).sources(interpreter):
             yield src
         # PyPy >= 3.8 supports a standard prefix installation, where older
-        # versions always used a portable/developent style installation.
+        # versions always used a portable/development style installation.
         # If this is a standard prefix installation, skip the below:
         if interpreter.system_prefix == "/usr":
             return
