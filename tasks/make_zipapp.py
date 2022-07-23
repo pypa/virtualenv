@@ -11,20 +11,16 @@ import zipfile
 from collections import defaultdict, deque
 from email import message_from_string
 from pathlib import Path, PurePosixPath
+from shlex import quote
 from stat import S_IWUSR
 from tempfile import TemporaryDirectory
 
 from packaging.markers import Marker
 from packaging.requirements import Requirement
 
-if sys.version_info[0] == 2:
-    from pipes import quote
-else:
-    from shlex import quote
-
 HERE = Path(__file__).parent.absolute()
 
-VERSIONS = ["3.{}".format(i) for i in range(10, 4, -1)] + ["2.7"]
+VERSIONS = [f"3.{i}" for i in range(10, 4, -1)] + ["2.7"]
 
 
 def main():
@@ -50,7 +46,7 @@ def create_zipapp(dest, packages):
         zip_app.writestr("__main__.py", (HERE / "__main__zipapp.py").read_bytes())
     bio.seek(0)
     zipapp.create_archive(bio, dest)
-    print("zipapp created at {}".format(dest))
+    print(f"zipapp created at {dest}")
 
 
 def write_packages_to_zipapp(base, dist, modules, packages, zip_app):
@@ -86,7 +82,7 @@ def write_packages_to_zipapp(base, dist, modules, packages, zip_app):
                         del content
 
 
-class WheelDownloader(object):
+class WheelDownloader:
     def __init__(self, into):
         if into.exists():
             shutil.rmtree(into)
@@ -108,7 +104,7 @@ class WheelDownloader(object):
             whl = self._get_wheel(dep, platform[2:] if platform and platform.startswith("==") else None, version)
             if whl is None:
                 if dep_str not in wheel_store:
-                    raise RuntimeError("failed to get {}, have {}".format(dep_str, wheel_store))
+                    raise RuntimeError(f"failed to get {dep_str}, have {wheel_store}")
                 whl = wheel_store[dep_str]
             else:
                 wheel_store[dep_str] = whl
@@ -143,7 +139,7 @@ class WheelDownloader(object):
     @staticmethod
     def get_dependencies(whl, version):
         with zipfile.ZipFile(str(whl), "r") as zip_file:
-            name = "/".join(["{}.dist-info".format("-".join(whl.name.split("-")[0:2])), "METADATA"])
+            name = "/".join([f"{'-'.join(whl.name.split('-')[0:2])}.dist-info", "METADATA"])
             with zip_file.open(name) as file_handler:
                 metadata = message_from_string(file_handler.read().decode("utf-8"))
         deps = metadata.get_all("Requires-Dist")
@@ -171,7 +167,7 @@ class WheelDownloader(object):
             platform_positions = WheelDownloader._marker_at(markers, "sys_platform")
             deleted = 0
             for pos in platform_positions:  # can only be ore meaningfully
-                platform = "{}{}".format(markers[pos][1].value, markers[pos][2].value)
+                platform = f"{markers[pos][1].value}{markers[pos][2].value}"
                 deleted += WheelDownloader._del_marker_at(markers, pos - deleted)
                 platforms.append(platform)
             if not platforms:
@@ -231,7 +227,7 @@ def run_suppress_output(cmd, stop_print_on_fail=False):
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     out, err = process.communicate()
     if stop_print_on_fail and process.returncode != 0:
-        print("exit with {} of {}".format(process.returncode, " ".join(quote(i) for i in cmd)), file=sys.stdout)
+        print(f"exit with {process.returncode} of {' '.join(quote(i) for i in cmd)}", file=sys.stdout)
         if out:
             print(out, file=sys.stdout)
         if err:
@@ -254,19 +250,19 @@ def get_wheels_for_support_versions(folder):
                 wheel_versions.wheel = wheel
     for name, p_w_v in packages.items():
         for platform, w_v in p_w_v.items():
-            print("{} - {}".format(name, platform))
+            print(f"{name} - {platform}")
             for wheel, wheel_versions in w_v.items():
-                print("{} of {} (use {})".format(" ".join(wheel_versions.versions), wheel, wheel_versions.wheel))
+                print(f"{' '.join(wheel_versions.versions)} of {wheel} (use {wheel_versions.wheel})")
     return packages
 
 
-class WheelForVersion(object):
+class WheelForVersion:
     def __init__(self, wheel=None, versions=None):
         self.wheel = wheel
         self.versions = versions if versions else []
 
     def __repr__(self):
-        return "{}({!r}, {!r})".format(self.__class__.__name__, self.wheel, self.versions)
+        return f"{self.__class__.__name__}({self.wheel!r}, {self.versions!r})"
 
 
 if __name__ == "__main__":

@@ -1,18 +1,9 @@
-#!/usr/bin/env python
-"""
-Helper script to rebuild virtualenv.py from virtualenv_support
-"""
-from __future__ import print_function, unicode_literals
+"""Helper script to rebuild virtualenv.py from virtualenv_support"""
 
 import codecs
 import os
 import re
-import sys
 from zlib import crc32 as _crc32
-
-if sys.version_info < (3,):
-    print("requires Python 3 (use tox from Python 3 if invoked via tox)")
-    raise SystemExit(1)
 
 
 def crc32(data):
@@ -31,7 +22,7 @@ file_template = '# file {filename}\n{variable} = convert(\n    """\n{data}"""\n)
 
 
 def rebuild(script_path):
-    with open(script_path, "rt") as current_fh:
+    with open(script_path) as current_fh:
         script_content = current_fh.read()
     script_parts = []
     match_end = 0
@@ -53,21 +44,21 @@ def rebuild(script_path):
 
 
 def handle_file(previous_content, filename, variable_name, previous_encoded):
-    print("Found file {}".format(filename))
+    print(f"Found file {filename}")
     current_path = os.path.realpath(os.path.join(here, "..", "src", "virtualenv_embedded", filename))
     _, file_type = os.path.splitext(current_path)
     keep_line_ending = file_type in (".bat",)
-    with open(current_path, "rt", encoding="utf-8", newline="" if keep_line_ending else None) as current_fh:
+    with open(current_path, encoding="utf-8", newline="" if keep_line_ending else None) as current_fh:
         current_text = current_fh.read()
     current_crc = crc32(current_text)
     current_encoded = b64.encode(gzip.encode(current_text.encode())[0])[0].decode()
     if current_encoded == previous_encoded:
-        print("  File up to date (crc: {:08x})".format(current_crc))
+        print(f"  File up to date (crc: {current_crc:08x})")
         return False, previous_content
     # Else: content has changed
     previous_text = gzip.decode(b64.decode(previous_encoded.encode())[0])[0].decode()
     previous_crc = crc32(previous_text)
-    print("  Content changed (crc: {:08x} -> {:08x})".format(previous_crc, current_crc))
+    print(f"  Content changed (crc: {previous_crc:08x} -> {current_crc:08x})")
     new_part = file_template.format(filename=filename, variable=variable_name, data=current_encoded)
     return True, new_part
 
