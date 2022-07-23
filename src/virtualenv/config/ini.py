@@ -1,10 +1,9 @@
 import logging
 import os
+from configparser import ConfigParser
 from pathlib import Path
 
 from platformdirs import user_config_dir
-
-from virtualenv.util import ConfigParser
 
 from .convert import convert
 
@@ -35,7 +34,7 @@ class IniConfig:
         else:
             if self.has_config_file:
                 self.config_file = self.config_file.resolve()
-                self.config_parser = ConfigParser.ConfigParser()
+                self.config_parser = ConfigParser()
                 try:
                     self._load()
                     self.has_virtualenv_section = self.config_parser.has_section(self.section)

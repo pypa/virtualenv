@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import json
 import os
 import subprocess
@@ -7,12 +5,13 @@ import sys
 from collections import defaultdict
 from contextlib import contextmanager
 from datetime import datetime, timedelta
+from io import StringIO
+from itertools import zip_longest
+from pathlib import Path
 from textwrap import dedent
+from urllib.error import URLError
 
 import pytest
-from six import StringIO
-from six.moves import zip_longest
-from six.moves.urllib.error import URLError
 
 from virtualenv import cli_run
 from virtualenv.app_data import AppDataDiskFolder
@@ -29,7 +28,6 @@ from virtualenv.seed.wheels.periodic_update import (
     release_date_for_wheel_path,
     trigger_update,
 )
-from virtualenv.util.path import Path
 from virtualenv.util.subprocess import CREATE_NO_WINDOW
 
 
@@ -82,7 +80,7 @@ def test_pick_periodic_update(tmp_path, session_app_data, mocker, for_py_version
 
     assert read_dict.call_count == 1
     installed = list(i.name for i in result.creator.purelib.iterdir() if i.suffix == ".dist-info")
-    assert "setuptools-{}.dist-info".format(current.version) in installed
+    assert f"setuptools-{current.version}.dist-info" in installed
 
 
 def test_periodic_update_stops_at_current(mocker, session_app_data, for_py_version):
@@ -251,7 +249,7 @@ def test_periodic_update_trigger(u_log, mocker, for_py_version, session_app_data
 
 
 def test_trigger_update_no_debug(for_py_version, session_app_data, tmp_path, mocker, monkeypatch):
-    monkeypatch.delenv(str("_VIRTUALENV_PERIODIC_UPDATE_INLINE"), raising=False)
+    monkeypatch.delenv("_VIRTUALENV_PERIODIC_UPDATE_INLINE", raising=False)
     current = get_embed_wheel("setuptools", for_py_version)
     process = mocker.MagicMock()
     process.communicate.return_value = None, None
@@ -292,7 +290,7 @@ def test_trigger_update_no_debug(for_py_version, session_app_data, tmp_path, moc
 
 
 def test_trigger_update_debug(for_py_version, session_app_data, tmp_path, mocker, monkeypatch):
-    monkeypatch.setenv(str("_VIRTUALENV_PERIODIC_UPDATE_INLINE"), str("1"))
+    monkeypatch.setenv("_VIRTUALENV_PERIODIC_UPDATE_INLINE", "1")
     current = get_embed_wheel("pip", for_py_version)
 
     process = mocker.MagicMock()

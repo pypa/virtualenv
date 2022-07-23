@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
 from contextlib import contextmanager
 
@@ -12,7 +10,7 @@ from virtualenv.run import session_via_cli
 
 @pytest.fixture()
 def gen_parser_no_conf_env(monkeypatch, tmp_path):
-    keys_to_delete = {key for key in os.environ if key.startswith(str("VIRTUALENV_"))}
+    keys_to_delete = {key for key in os.environ if key.startswith("VIRTUALENV_")}
     for key in keys_to_delete:
         monkeypatch.delenv(key)
     monkeypatch.setenv(IniConfig.VIRTUALENV_CONFIG_FILE_ENV_VAR, str(tmp_path / "missing"))

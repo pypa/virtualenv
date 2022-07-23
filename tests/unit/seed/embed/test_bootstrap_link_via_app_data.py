@@ -1,10 +1,8 @@
-from __future__ import absolute_import, unicode_literals
-
 import contextlib
 import os
-import subprocess
 import sys
 from stat import S_IWGRP, S_IWOTH, S_IWUSR
+from subprocess import Popen, check_call
 from threading import Thread
 
 import pytest
@@ -15,8 +13,6 @@ from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
 from virtualenv.util.path import safe_delete
-from virtualenv.util.six import ensure_text
-from virtualenv.util.subprocess import Popen
 
 
 @pytest.mark.slow
@@ -25,12 +21,12 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
     current = PythonInfo.current_system()
     bundle_ver = BUNDLE_SUPPORT[current.version_release_str]
     create_cmd = [
-        ensure_text(str(tmp_path / "en v")),  # space in the name to ensure generated scripts work when path has space
+        str(tmp_path / "en v"),  # space in the name to ensure generated scripts work when path has space
         "--no-periodic-update",
         "--seeder",
         "app-data",
         "--extra-search-dir",
-        ensure_text(str(BUNDLE_FOLDER)),
+        str(BUNDLE_FOLDER),
         "--download",
         "--pip",
         bundle_ver["pip"].split("-")[1],
@@ -56,16 +52,16 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
     assert pip in files_post_first_create
     assert setuptools in files_post_first_create
     for pip_exe in [
-        result.creator.script_dir / "pip{}{}".format(suffix, result.creator.exe.suffix)
+        result.creator.script_dir / f"pip{suffix}{result.creator.exe.suffix}"
         for suffix in (
             "",
-            "{}".format(current.version_info.major),
-            "{}.{}".format(current.version_info.major, current.version_info.minor),
-            "-{}.{}".format(current.version_info.major, current.version_info.minor),
+            f"{current.version_info.major}",
+            f"{current.version_info.major}.{current.version_info.minor}",
+            f"-{current.version_info.major}.{current.version_info.minor}",
         )
     ]:
         assert pip_exe.exists()
-        process = Popen([ensure_text(str(pip_exe)), "--version", "--disable-pip-version-check"])
+        process = Popen([str(pip_exe), "--version", "--disable-pip-version-check"])
         _, __ = process.communicate()
         assert not process.returncode
 
@@ -87,7 +83,7 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
     assert setuptools not in files_post_first_uninstall
 
     # install a different setuptools to test that virtualenv removes this before installing new
-    version = "setuptools<{}".format(bundle_ver["setuptools"].split("-")[1])
+    version = f"setuptools<{bundle_ver['setuptools'].split('-')[1]}"
     install_cmd = [str(result.creator.script("pip")), "--verbose", "--disable-pip-version-check", "install", version]
     process = Popen(install_cmd)
     process.communicate()
@@ -112,13 +108,13 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
     # pip is greedy here, removing all packages removes the site-package too
     if site_package.exists():
         purelib = result.creator.purelib
-        patch_files = {purelib / "{}.{}".format("_virtualenv", i) for i in ("py", "pyc", "pth")}
+        patch_files = {purelib / f"{'_virtualenv'}.{i}" for i in ("py", "pyc", "pth")}
         patch_files.add(purelib / "__pycache__")
         post_run = set(site_package.iterdir()) - patch_files
         assert not post_run, "\n".join(str(i) for i in post_run)
 
-    if sys.version_info[0:2] == (3, 4) and os.environ.get(str("PIP_REQ_TRACKER")):
-        os.environ.pop(str("PIP_REQ_TRACKER"))
+    if sys.version_info[0:2] == (3, 4) and os.environ.get("PIP_REQ_TRACKER"):
+        os.environ.pop("PIP_REQ_TRACKER")
 
 
 @contextlib.contextmanager
@@ -167,7 +163,7 @@ def test_populated_read_only_cache_and_symlinked_app_data(tmp_path, current_fast
     ]
 
     assert cli_run(cmd)
-    subprocess.check_call((str(dest.joinpath("bin/python")), "-c", "import pip"))
+    check_call((str(dest.joinpath("bin/python")), "-c", "import pip"))
 
     cached_py_info._CACHE.clear()  # necessary to re-trigger py info discovery
     safe_delete(dest)
@@ -175,7 +171,7 @@ def test_populated_read_only_cache_and_symlinked_app_data(tmp_path, current_fast
     # should succeed with special flag when read-only
     with read_only_dir(temp_app_data):
         assert cli_run(["--read-only-app-data"] + cmd)
-        subprocess.check_call((str(dest.joinpath("bin/python")), "-c", "import pip"))
+        check_call((str(dest.joinpath("bin/python")), "-c", "import pip"))
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
@@ -205,7 +201,7 @@ def test_populated_read_only_cache_and_copied_app_data(tmp_path, current_fastest
 @pytest.mark.slow
 @pytest.mark.parametrize("pkg", ["pip", "setuptools", "wheel"])
 def test_base_bootstrap_link_via_app_data_no(tmp_path, coverage_env, current_fastest, session_app_data, pkg):
-    create_cmd = [str(tmp_path), "--seeder", "app-data", "--no-{}".format(pkg)]
+    create_cmd = [str(tmp_path), "--seeder", "app-data", f"--no-{pkg}"]
     result = cli_run(create_cmd)
     assert not (result.creator.purelib / pkg).exists()
     for key in {"pip", "setuptools", "wheel"} - {pkg}:
@@ -236,7 +232,7 @@ def _run_parallel_threads(tmp_path):
             as_str = str(exception)
             exceptions.append(as_str)
 
-    threads = [Thread(target=_run, args=("env{}".format(i),)) for i in range(1, 3)]
+    threads = [Thread(target=_run, args=(f"env{i}",)) for i in range(1, 3)]
     for thread in threads:
         thread.start()
     for thread in threads:

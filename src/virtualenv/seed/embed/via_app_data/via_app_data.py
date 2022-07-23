@@ -62,7 +62,7 @@ class FromAppData(BaseEmbed):
             for thread in threads:
                 thread.join()
             if exceptions:
-                messages = ["failed to build image {} because:".format(", ".join(exceptions.keys()))]
+                messages = [f"failed to build image {', '.join(exceptions.keys())} because:"]
                 for value in exceptions.values():
                     exc_type, exc_value, exc_traceback = value
                     messages.append("".join(traceback.format_exception(exc_type, exc_value, exc_traceback)))

@@ -1,7 +1,7 @@
 from functools import reduce
+from pathlib import Path
 
 from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest, PathRef
-from virtualenv.util.path import Path
 
 
 def is_ref(source):

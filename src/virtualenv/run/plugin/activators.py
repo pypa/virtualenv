@@ -29,7 +29,7 @@ class ActivationSelector(ComponentBuilder):
         elements = [e.strip() for e in entered_str.split(",") if e.strip()]
         missing = [e for e in elements if e not in self.possible]
         if missing:
-            raise ArgumentTypeError("the following activators are not available {}".format(",".join(missing)))
+            raise ArgumentTypeError(f"the following activators are not available {','.join(missing)}")
         return elements
 
     def handle_selected_arg_parse(self, options):

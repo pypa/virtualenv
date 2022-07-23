@@ -11,8 +11,8 @@ class ReadOnlyAppData(AppDataDiskFolder):
     def __init__(self, folder: str) -> None:
         if not os.path.isdir(folder):
             raise RuntimeError(f"read-only app data directory {folder} does not exist")
-        self.lock = NoOpFileLock(folder)
         super().__init__(folder)
+        self.lock = NoOpFileLock(folder)
 
     def reset(self) -> None:
         raise RuntimeError("read-only app data does not support reset")
