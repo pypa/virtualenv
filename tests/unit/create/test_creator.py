@@ -283,22 +283,6 @@ def test_venv_fails_not_inline(tmp_path, capsys, mocker):
     assert "Error:" in err, err
 
 
-@pytest.mark.skipif(not sys.version_info[0] == 2, reason="python 2 only tests")
-def test_debug_bad_virtualenv(tmp_path):
-    cmd = [str(tmp_path), "--without-pip"]
-    result = cli_run(cmd)
-    # if the site.py is removed/altered the debug should fail as no one is around to fix the paths
-    site_py = result.creator.stdlib / "site.py"
-    site_py.unlink()
-    # insert something that writes something on the stdout
-    site_py.write_text('import sys; sys.stdout.write(repr("std-out")); sys.stderr.write("std-err"); raise ValueError')
-    debug_info = result.creator.debug
-    assert debug_info["returncode"]
-    assert debug_info["err"].startswith("std-err")
-    assert "std-out" in debug_info["out"]
-    assert debug_info["exception"]
-
-
 @pytest.mark.parametrize("creator", CURRENT_CREATORS)
 @pytest.mark.parametrize("clear", [True, False], ids=["clear", "no_clear"])
 def test_create_clear_resets(tmp_path, creator, clear, caplog):
@@ -453,98 +437,6 @@ def list_files(path):
     return result
 
 
-@pytest.mark.parametrize("python_path_on", [True, False], ids=["on", "off"])
-@pytest.mark.skipif(True, reason="we rewrite sys.path only on PY2 - make it cross python call")
-def test_python_path(monkeypatch, tmp_path, python_path_on):
-    result = cli_run([str(tmp_path), "--without-pip", "--activators", ""])
-    monkeypatch.chdir(tmp_path)
-    case_sensitive = fs_is_case_sensitive()
-
-    def _get_sys_path(flag=None):
-        cmd = [str(result.creator.exe)]
-        if flag:
-            cmd.append(flag)
-        cmd.extend(["-c", "import json; import sys; print(json.dumps(sys.path))"])
-        return [i if case_sensitive else i.lower() for i in json.loads(subprocess.check_output(cmd))]
-
-    monkeypatch.delenv("PYTHONPATH", raising=False)
-    base = _get_sys_path()
-
-    # note the value result.creator.interpreter.system_stdlib cannot be set, as that would disable our custom site.py
-    python_paths = [
-        str(Path(result.creator.interpreter.prefix)),
-        str(Path(result.creator.interpreter.system_stdlib) / "b"),
-        str(result.creator.purelib / "a"),
-        str(result.creator.purelib),
-        str(result.creator.bin_dir),
-        str(tmp_path / "base"),
-        f"{str(tmp_path / 'base_sep')}{os.sep}",
-        "name",
-        f"name{os.sep}",
-        f"{tmp_path.parent}{f'{tmp_path.name}_suffix'}",
-        ".",
-        "..",
-        "",
-    ]
-    python_path_env = os.pathsep.join(python_paths)
-    monkeypatch.setenv("PYTHONPATH", python_path_env)
-
-    extra_all = _get_sys_path(None if python_path_on else "-E")
-    if python_path_on:
-        assert extra_all[0] == ""  # the cwd is always injected at start as ''
-        extra_all = extra_all[1:]
-        assert base[0] == ""
-        base = base[1:]
-
-        assert not (set(base) - set(extra_all))  # all base paths are present
-        abs_python_paths = list(OrderedDict((os.path.abspath(str(i)), None) for i in python_paths).keys())
-        abs_python_paths = [i if case_sensitive else i.lower() for i in abs_python_paths]
-
-        extra_as_python_path = extra_all[: len(abs_python_paths)]
-        assert abs_python_paths == extra_as_python_path  # python paths are there at the start
-
-        non_python_path = extra_all[len(abs_python_paths) :]
-        assert non_python_path == [i for i in base if i not in extra_as_python_path]
-    else:
-        assert base == extra_all
-
-
-@pytest.mark.skipif(
-    True,
-    reason="stdlib components without py files only possible on CPython2 - make it cross version call",
-)
-@pytest.mark.parametrize(
-    "py, pyc",
-    list(
-        product(
-            [True, False] if Python2.from_stdlib(Python2.mappings(CURRENT), "os.py")[2] else [False],
-            [True, False] if Python2.from_stdlib(Python2.mappings(CURRENT), "os.pyc")[2] else [False],
-        ),
-    ),
-)
-def test_py_pyc_missing(tmp_path, mocker, session_app_data, py, pyc):
-    """Ensure that creation can succeed if os.pyc exists (even if os.py has been deleted)"""
-    previous = Python2.from_stdlib
-
-    def from_stdlib(mappings, name):
-        path, to, exists = previous(mappings, name)
-        if name.endswith("py"):
-            exists = py
-        elif name.endswith("pyc"):
-            exists = pyc
-        return path, to, exists
-
-    mocker.patch.object(Python2, "from_stdlib", side_effect=from_stdlib)
-
-    result = cli_run([str(tmp_path), "--without-pip", "--activators", "", "-vv"])
-    py_at = Python2.from_stdlib(Python2.mappings(CURRENT), "os.py")[1](result.creator, Path("os.py"))
-    py = pyc is False or py  # if pyc is False we fallback to serve the py, which will exist (as we only mock the check)
-    assert py_at.exists() is py
-
-    pyc_at = Python2.from_stdlib(Python2.mappings(CURRENT), "osc.py")[1](result.creator, Path("os.pyc"))
-    assert pyc_at.exists() is pyc
-
-
 def test_zip_importer_can_import_setuptools(tmp_path):
     """We're patching the loaders so might fail on r/o loaders, such as zipimporter on CPython<3.8"""
     result = cli_run([str(tmp_path / "venv"), "--activators", "", "--no-pip", "--no-wheel", "--copies"])
@@ -669,3 +561,103 @@ def test_get_site_packages(tmp_path):
 
     for env_site_package in env_site_packages:
         assert env_site_package in site_packages
+
+
+def test_debug_bad_virtualenv(tmp_path):
+    cmd = [str(tmp_path), "--without-pip"]
+    result = cli_run(cmd)
+    # if the site.py is removed/altered the debug should fail as no one is around to fix the paths
+    cust = result.creator.purelib / "_a.pth"
+    cust.write_text('import sys; sys.stdout.write("std-out"); sys.stderr.write("std-err"); raise SystemExit(1)')
+    debug_info = result.creator.debug
+    assert debug_info["returncode"] == 1
+    assert "std-err" in debug_info["err"]
+    assert "std-out" in debug_info["out"]
+    assert debug_info["exception"]
+
+
+@pytest.mark.parametrize("python_path_on", [True, False], ids=["on", "off"])
+def test_python_path(monkeypatch, tmp_path, python_path_on):
+    result = cli_run([str(tmp_path), "--without-pip", "--activators", ""])
+    monkeypatch.chdir(tmp_path)
+    case_sensitive = fs_is_case_sensitive()
+
+    def _get_sys_path(flag=None):
+        cmd = [str(result.creator.exe)]
+        if flag:
+            cmd.append(flag)
+        cmd.extend(["-c", "import json; import sys; print(json.dumps(sys.path))"])
+        return [i if case_sensitive else i.lower() for i in json.loads(subprocess.check_output(cmd))]
+
+    monkeypatch.delenv("PYTHONPATH", raising=False)
+    base = _get_sys_path()
+
+    # note the value result.creator.interpreter.system_stdlib cannot be set, as that would disable our custom site.py
+    python_paths = [
+        str(Path(result.creator.interpreter.prefix)),
+        str(Path(result.creator.interpreter.system_stdlib) / "b"),
+        str(result.creator.purelib / "a"),
+        str(result.creator.purelib),
+        str(result.creator.bin_dir),
+        str(tmp_path / "base"),
+        f"{str(tmp_path / 'base_sep')}{os.sep}",
+        "name",
+        f"name{os.sep}",
+        f"{tmp_path.parent}{f'{tmp_path.name}_suffix'}",
+        ".",
+        "..",
+        "",
+    ]
+    python_path_env = os.pathsep.join(python_paths)
+    monkeypatch.setenv("PYTHONPATH", python_path_env)
+
+    extra_all = _get_sys_path(None if python_path_on else "-E")
+    if python_path_on:
+        assert extra_all[0] == ""  # the cwd is always injected at start as ''
+        extra_all = extra_all[1:]
+        assert base[0] == ""
+        base = base[1:]
+
+        assert not (set(base) - set(extra_all))  # all base paths are present
+        abs_python_paths = list(OrderedDict((os.path.abspath(str(i)), None) for i in python_paths).keys())
+        abs_python_paths = [i if case_sensitive else i.lower() for i in abs_python_paths]
+
+        extra_as_python_path = extra_all[: len(abs_python_paths)]
+        assert abs_python_paths == extra_as_python_path  # python paths are there at the start
+
+        non_python_path = extra_all[len(abs_python_paths) :]
+        assert non_python_path == [i for i in base if i not in extra_as_python_path]
+    else:
+        assert base == extra_all
+
+
+@pytest.mark.parametrize(
+    "py, pyc",
+    list(
+        product(
+            [True, False] if Python2.from_stdlib(Python2.mappings(CURRENT), "os.py")[2] else [False],
+            [True, False] if Python2.from_stdlib(Python2.mappings(CURRENT), "os.pyc")[2] else [False],
+        ),
+    ),
+)
+def test_py_pyc_missing(tmp_path, mocker, session_app_data, py, pyc):
+    """Ensure that creation can succeed if os.pyc exists (even if os.py has been deleted)"""
+    previous = Python2.from_stdlib
+
+    def from_stdlib(mappings, name):
+        path, to, exists = previous(mappings, name)
+        if name.endswith("py"):
+            exists = py
+        elif name.endswith("pyc"):
+            exists = pyc
+        return path, to, exists
+
+    mocker.patch.object(Python2, "from_stdlib", side_effect=from_stdlib)
+
+    result = cli_run([str(tmp_path), "--without-pip", "--activators", "", "-vv", "-p", "2"])
+    py_at = Python2.from_stdlib(Python2.mappings(CURRENT), "os.py")[1](result.creator, Path("os.py"))
+    py = pyc is False or py  # if pyc is False we fallback to serve the py, which will exist (as we only mock the check)
+    assert py_at.exists() is py
+
+    pyc_at = Python2.from_stdlib(Python2.mappings(CURRENT), "osc.py")[1](result.creator, Path("os.pyc"))
+    assert pyc_at.exists() is pyc
