@@ -630,13 +630,13 @@ def test_getsitepackages_system_site(tmp_path):
     # Test with --system-site-packages
     session = cli_run([str(tmp_path), "--system-site-packages"])
 
-    system_site_packages = get_expected_system_site_packages(session)
+    system_site_packages = [str(Path(i).resolve()) for i in get_expected_system_site_packages(session)]
 
     out = subprocess.check_output(
         [str(session.creator.exe), "-c", r"import site; print(site.getsitepackages())"],
         universal_newlines=True,
     )
-    site_packages = ast.literal_eval(out)
+    site_packages = [str(Path(i).resolve()) for i in ast.literal_eval(out)]
 
     for system_site_package in system_site_packages:
         assert system_site_package in site_packages
