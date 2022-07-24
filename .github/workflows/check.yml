@@ -29,10 +29,13 @@ jobs:
           - ubuntu-20.04
           - macos-12
           - windows-2022
+        exclude:
+          - { os: macos-12, py: "pypy-3.6-v7.3.3" }
         include:
-          - { os: macos-12, py: "brew@3.8" }
-          - { os: macos-12, py: "brew@3.9" }
+          - { os: macos-11, py: "pypy-3.6-v7.3.3" }
           - { os: macos-12, py: "brew@3.10" }
+          - { os: macos-12, py: "brew@3.9" }
+          - { os: macos-12, py: "brew@3.8" }
     steps:
       - name: Install OS dependencies
         run: |
@@ -73,7 +76,7 @@ jobs:
           python-version: ${{ matrix.py }}
       - name: Pick environment to run
         run: |
-          import os;  import platform; import sys; from pathlib import Path
+          import os; import platform; import sys; from pathlib import Path
           env = f'TOXENV=py{"" if platform.python_implementation() == "CPython" else "py"}3{sys.version_info.minor}'
           print(f"Picked: {env} for {sys.version} based of {sys.executable}")
           with Path(os.environ["GITHUB_ENV"]).open("ta") as file_handler:
@@ -96,7 +99,7 @@ jobs:
           DIFF_AGAINST: HEAD
       - name: Rename coverage report file
         run: |
-          import os; import sys 
+          import os; import sys
           os.rename(f".tox/.coverage.{os.environ['TOXENV']}", f".tox/.coverage.{os.environ['TOXENV']}-{sys.platform}")
         shell: python
       - name: Upload coverage data

@@ -1,0 +1,1 @@
+Drop support for running under Python 2 (still can generate Python 2 environments) - by :user:`gaborbernat`.
