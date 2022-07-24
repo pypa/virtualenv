@@ -5,8 +5,9 @@ Describe what's the expected behaviour and what you're observing.
 **Environment**
 
 Provide at least:
+
 - OS:
-- ``pip list`` of the host python where ``virtualenv`` is installed:
+- `pip list` of the host python where `virtualenv` is installed:
 
   ```console
 
