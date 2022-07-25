@@ -1,2 +1,0 @@
-Upgrade embedded pip to ``22.2`` from ``22.1.2`` and  setuptools to ``63.2.0`` from ``62.6.0`` -
-by :user:`gaborbernat`.
