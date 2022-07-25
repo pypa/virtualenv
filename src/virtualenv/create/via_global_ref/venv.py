@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import logging
 from copy import copy
 
@@ -16,14 +14,13 @@ from .builtin.pypy.pypy3 import Pypy3Windows
 class Venv(ViaGlobalRefApi):
     def __init__(self, options, interpreter):
         self.describe = options.describe
-        super(Venv, self).__init__(options, interpreter)
-        self.can_be_inline = (
-            interpreter is PythonInfo.current() and interpreter.executable == interpreter.system_executable
-        )
+        super().__init__(options, interpreter)
+        current = PythonInfo.current()
+        self.can_be_inline = interpreter is current and interpreter.executable == interpreter.system_executable
         self._context = None
 
     def _args(self):
-        return super(Venv, self)._args() + ([("describe", self.describe.__class__.__name__)] if self.describe else [])
+        return super()._args() + ([("describe", self.describe.__class__.__name__)] if self.describe else [])
 
     @classmethod
     def can_create(cls, interpreter):
@@ -41,7 +38,7 @@ class Venv(ViaGlobalRefApi):
             self.create_via_sub_process()
         for lib in self.libs:
             ensure_dir(lib)
-        super(Venv, self).create()
+        super().create()
         self.executables_for_win_pypy_less_v37()
 
     def executables_for_win_pypy_less_v37(self):
@@ -84,7 +81,7 @@ class Venv(ViaGlobalRefApi):
     def set_pyenv_cfg(self):
         # prefer venv options over ours, but keep our extra
         venv_content = copy(self.pyenv_cfg.refresh())
-        super(Venv, self).set_pyenv_cfg()
+        super().set_pyenv_cfg()
         self.pyenv_cfg.update(venv_content)
 
     def __getattribute__(self, item):
@@ -94,3 +91,8 @@ class Venv(ViaGlobalRefApi):
             if not callable(element) or item in ("script",):
                 return element
         return object.__getattribute__(self, item)
+
+
+__all__ = [
+    "Venv",
+]

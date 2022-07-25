@@ -1,18 +1,16 @@
-from __future__ import absolute_import, unicode_literals
-
 import logging
 from contextlib import contextmanager
+from subprocess import Popen
 
 from virtualenv.discovery.cached_py_info import LogCmd
 from virtualenv.seed.embed.base_embed import BaseEmbed
-from virtualenv.util.subprocess import Popen
 
 from ..wheels import Version, get_wheel, pip_wheel_env_run
 
 
 class PipInvoke(BaseEmbed):
     def __init__(self, options):
-        super(PipInvoke, self).__init__(options)
+        super().__init__(options)
 
     def run(self, creator):
         if not self.enabled:
@@ -28,7 +26,7 @@ class PipInvoke(BaseEmbed):
         process = Popen(cmd, env=env)
         process.communicate()
         if process.returncode != 0:
-            raise RuntimeError("failed seed with code {}".format(process.returncode))
+            raise RuntimeError(f"failed seed with code {process.returncode}")
         return process
 
     @contextmanager
@@ -49,9 +47,14 @@ class PipInvoke(BaseEmbed):
                 env=self.env,
             )
             if wheel is None:
-                raise RuntimeError("could not get wheel for distribution {}".format(dist))
+                raise RuntimeError(f"could not get wheel for distribution {dist}")
             folders.add(str(wheel.path.parent))
             cmd.append(Version.as_pip_req(dist, wheel.version))
         for folder in sorted(folders):
             cmd.extend(["--find-links", str(folder)])
         yield cmd
+
+
+__all__ = [
+    "PipInvoke",
+]

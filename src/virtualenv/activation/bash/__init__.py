@@ -1,6 +1,4 @@
-from __future__ import absolute_import, unicode_literals
-
-from virtualenv.util.path import Path
+from pathlib import Path
 
 from ..via_template import ViaTemplateActivator
 
@@ -11,3 +9,8 @@ class BashActivator(ViaTemplateActivator):
 
     def as_name(self, template):
         return template.stem
+
+
+__all__ = [
+    "BashActivator",
+]

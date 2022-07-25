@@ -1,7 +1,6 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
 from datetime import datetime
+from pathlib import Path
 
 import pytest
 
@@ -10,7 +9,6 @@ from virtualenv.seed.wheels.bundle import from_bundle
 from virtualenv.seed.wheels.embed import get_embed_wheel
 from virtualenv.seed.wheels.periodic_update import dump_datetime
 from virtualenv.seed.wheels.util import Version, Wheel
-from virtualenv.util.path import Path
 
 
 @pytest.fixture(scope="module")

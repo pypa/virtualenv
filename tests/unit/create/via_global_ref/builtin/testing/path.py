@@ -1,18 +1,14 @@
 from abc import ABCMeta, abstractmethod
 from itertools import chain
 from operator import attrgetter as attr
-
-from six import add_metaclass
-
-from virtualenv.util.path import Path
+from pathlib import Path
 
 
 def is_name(path):
     return str(path) == path.name
 
 
-@add_metaclass(ABCMeta)
-class FakeDataABC(object):
+class FakeDataABC(metaclass=ABCMeta):
     """Provides data to mock the `Path`"""
 
     @property
@@ -67,9 +63,8 @@ class PathMockABC(FakeDataABC, Path):
 
     def iterdir(self):
         if not self.is_dir():
-            raise FileNotFoundError("No such mocked dir: '{}'".format(self))
-        for path in map(self.joinpath, self.contained_fake_names):
-            yield path
+            raise FileNotFoundError(f"No such mocked dir: '{self}'")
+        yield from map(self.joinpath, self.contained_fake_names)
 
 
 def MetaPathMock(filelist):

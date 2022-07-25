@@ -6,18 +6,17 @@ It's possible to use multiple types of host pythons to create virtual environmen
 - invoking from an old style virtualenv (<17.0.0)
 - invoking from our own venv
 """
-from __future__ import absolute_import, unicode_literals
 
 import subprocess
 import sys
+from pathlib import Path
+from subprocess import Popen
 
 import pytest
 
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_WIN
 from virtualenv.run import cli_run
-from virtualenv.util.path import Path
-from virtualenv.util.subprocess import Popen
 
 CURRENT = PythonInfo.current_system()
 
@@ -84,7 +83,7 @@ def old_virtualenv(tmp_path_factory, session_app_data):
             exe_path = CURRENT.discover_exe(session_app_data, prefix=str(old_virtualenv_at)).original_executable
             return exe_path
         except Exception as exception:
-            return RuntimeError("failed to create old virtualenv {}".format(exception))
+            return RuntimeError(f"failed to create old virtualenv {exception}")
 
 
 PYTHON = {
@@ -98,7 +97,7 @@ PYTHON = {
 def python(request, tmp_path_factory, session_app_data):
     result = request.param(tmp_path_factory, session_app_data)
     if isinstance(result, Exception):
-        pytest.skip("could not resolve interpreter based on {} because {}".format(request.param.__name__, result))
+        pytest.skip(f"could not resolve interpreter based on {request.param.__name__} because {result}")
     if result is None:
-        pytest.skip("requires interpreter with {}".format(request.param.__name__))
+        pytest.skip(f"requires interpreter with {request.param.__name__}")
     return result

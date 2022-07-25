@@ -35,7 +35,7 @@ class CliTable(SphinxDirective):
         for i in core_result["action_groups"]:
             content.append(self._build_table(i["options"], i["title"], i["description"]))
         for key, name_to_class in CUSTOM.items():
-            section = n.section("", ids=["section-{}".format(key)])
+            section = n.section("", ids=[f"section-{key}"])
             title = n.title("", key)
             section += title
             self.state.document.note_implicit_target(title)
@@ -44,7 +44,7 @@ class CliTable(SphinxDirective):
 
             for name, class_n in name_to_class.items():
                 with self._run_parser(class_n, key, name):
-                    cmd = ["--{}".format(key), name]
+                    cmd = [f"--{key}", name]
                     parser_result = parse_parser(parser_creator(cmd))
                     opt_group = next(i["options"] for i in parser_result["action_groups"] if i["title"] == key)
                     results[name] = opt_group
@@ -52,13 +52,13 @@ class CliTable(SphinxDirective):
             if core_names:
                 rows = [i for i in next(iter(results.values())) if tuple(i["name"]) in core_names]
                 content.append(
-                    self._build_table(rows, title="core", description="options shared across all {}".format(key)),
+                    self._build_table(rows, title="core", description=f"options shared across all {key}"),
                 )
             for name, group in results.items():
                 rows = [i for i in group if tuple(i["name"]) not in core_names]
                 if rows:
                     content.append(
-                        self._build_table(rows, title=name, description="options specific to {} {}".format(key, name)),
+                        self._build_table(rows, title=name, description=f"options specific to {key} {name}"),
                     )
         return content
 

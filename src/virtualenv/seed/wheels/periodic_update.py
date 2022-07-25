@@ -2,39 +2,27 @@
 Periodically update bundled versions.
 """
 
-from __future__ import absolute_import, unicode_literals
 
 import json
 import logging
 import os
 import ssl
-import subprocess
 import sys
 from datetime import datetime, timedelta
 from itertools import groupby
+from pathlib import Path
 from shutil import copy2
+from subprocess import PIPE, Popen
 from textwrap import dedent
 from threading import Thread
-
-from six.moves.urllib.error import URLError
-from six.moves.urllib.request import urlopen
+from urllib.error import URLError
+from urllib.request import urlopen
 
 from virtualenv.app_data import AppDataDiskFolder
-from virtualenv.info import PY2
-from virtualenv.util.path import Path
-from virtualenv.util.subprocess import CREATE_NO_WINDOW, Popen
+from virtualenv.util.subprocess import CREATE_NO_WINDOW
 
 from ..wheels.embed import BUNDLE_SUPPORT
 from ..wheels.util import Wheel
-
-if PY2:
-    # on Python 2 datetime.strptime throws the error below if the import did not trigger on main thread
-    # Failed to import _strptime because the import lock is held by
-    try:
-        import _strptime  # noqa
-    except ImportError:  # pragma: no cov
-        pass  # pragma: no cov
-
 
 GRACE_PERIOD_CI = timedelta(hours=1)  # prevent version switch in the middle of a CI run
 GRACE_PERIOD_MINOR = timedelta(days=28)
@@ -106,7 +94,7 @@ def load_datetime(value):
     return None if value is None else datetime.strptime(value, DATETIME_FMT)
 
 
-class NewVersion(object):
+class NewVersion:
     def __init__(self, filename, found_date, release_date, source):
         self.filename = filename
         self.found_date = found_date
@@ -142,12 +130,9 @@ class NewVersion(object):
         return False
 
     def __repr__(self):
-        return "{}(filename={}), found_date={}, release_date={}, source={})".format(
-            self.__class__.__name__,
-            self.filename,
-            self.found_date,
-            self.release_date,
-            self.source,
+        return (
+            f"{self.__class__.__name__}(filename={self.filename}), found_date={self.found_date}, "
+            f"release_date={self.release_date}, source={self.source})"
         )
 
     def __eq__(self, other):
@@ -163,7 +148,7 @@ class NewVersion(object):
         return Wheel(Path(self.filename))
 
 
-class UpdateLog(object):
+class UpdateLog:
     def __init__(self, started, completed, versions, periodic):
         self.started = started
         self.completed = completed
@@ -224,8 +209,8 @@ def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, e
         .strip()
         .format(distribution, for_py_version, wheel_path, str(app_data), [str(p) for p in search_dirs], periodic),
     ]
-    debug = env.get(str("_VIRTUALENV_PERIODIC_UPDATE_INLINE")) == str("1")
-    pipe = None if debug else subprocess.PIPE
+    debug = env.get("_VIRTUALENV_PERIODIC_UPDATE_INLINE") == "1"
+    pipe = None if debug else PIPE
     kwargs = {"stdout": pipe, "stderr": pipe}
     if not debug and sys.platform == "win32":
         kwargs["creationflags"] = CREATE_NO_WINDOW
@@ -233,7 +218,7 @@ def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, e
     logging.info(
         "triggered periodic upgrade of %s%s (for python %s) via background process having PID %d",
         distribution,
-        "" if wheel is None else "=={}".format(wheel.version),
+        "" if wheel is None else f"=={wheel.version}",
         for_py_version,
         process.pid,
     )
@@ -286,7 +271,7 @@ def _run_do_update(app_data, distribution, embed_filename, for_py_version, perio
         download_time = datetime.now()
         dest = acquire.download_wheel(
             distribution=distribution,
-            version_spec=None if last_version is None else "<{}".format(last_version),
+            version_spec=None if last_version is None else f"<{last_version}",
             for_py_version=for_py_version,
             search_dirs=search_dirs,
             app_data=app_data,
@@ -346,7 +331,7 @@ def _pypi_get_distribution_info_cached(distribution):
 
 
 def _pypi_get_distribution_info(distribution):
-    content, url = None, "https://pypi.org/pypi/{}/json".format(distribution)
+    content, url = None, f"https://pypi.org/pypi/{distribution}/json"
     try:
         for context in _request_context():
             try:
@@ -401,20 +386,19 @@ def _run_manual_upgrade(app_data, distribution, for_py_version, env):
         search_dirs=[],
         periodic=False,
     )
-    msg = "upgraded %s for python %s in %s {}".format(
-        "new entries found:\n%s" if versions else "no new versions found",
-    )
+
     args = [
         distribution,
         for_py_version,
         datetime.now() - start,
     ]
     if versions:
-        args.append("\n".join("\t{}".format(v) for v in versions))
-    logging.warning(msg, *args)
+        args.append("\n".join(f"\t{v}" for v in versions))
+    ver_update = "new entries found:\n%s" if versions else "no new versions found"
+    logging.warning(f"upgraded %s for python %s in %s {ver_update}", *args)
 
 
-__all__ = (
+__all__ = [
     "add_wheel_to_update_log",
     "periodic_update",
     "do_update",
@@ -425,4 +409,4 @@ __all__ = (
     "dump_datetime",
     "trigger_update",
     "release_date_for_wheel_path",
-)
+]

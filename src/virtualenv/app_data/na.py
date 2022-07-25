@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from contextlib import contextmanager
 
 from .base import AppData, ContentStore
@@ -44,7 +42,7 @@ class AppDataDisabled(AppData):
         raise self.error
 
     def py_info_clear(self):
-        """ """
+        """nothing to clear"""
 
 
 class ContentStoreNA(ContentStore):
@@ -52,15 +50,21 @@ class ContentStoreNA(ContentStore):
         return False
 
     def read(self):
-        """ """
+        """nothing to read"""
         return None
 
     def write(self, content):
-        """ """
+        """nothing to write"""
 
     def remove(self):
-        """ """
+        """nothing to remove"""
 
     @contextmanager
     def locked(self):
         yield
+
+
+__all__ = [
+    "AppDataDisabled",
+    "ContentStoreNA",
+]

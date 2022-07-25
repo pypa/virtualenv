@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """Handles creating a release PR"""
 from pathlib import Path
 from subprocess import check_call
@@ -60,9 +59,9 @@ def tag_release_commit(release_commit, repo, version) -> TagReference:
     print("tag release commit")
     existing_tags = [x.name for x in repo.tags]
     if version in existing_tags:
-        print("delete existing tag {}".format(version))
+        print(f"delete existing tag {version}")
         repo.delete_tag(version)
-    print("create tag {}".format(version))
+    print(f"create tag {version}")
     tag = repo.create_tag(version, ref=release_commit, force=True)
     return tag
 

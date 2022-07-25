@@ -1,5 +1,3 @@
-from __future__ import absolute_import, print_function, unicode_literals
-
 import json
 import logging
 import os
@@ -8,14 +6,10 @@ from abc import ABCMeta, abstractmethod
 from argparse import ArgumentTypeError
 from ast import literal_eval
 from collections import OrderedDict
-from textwrap import dedent
-
-from six import add_metaclass
+from pathlib import Path
 
 from virtualenv.discovery.cached_py_info import LogCmd
-from virtualenv.info import WIN_CPYTHON_2
-from virtualenv.util.path import Path, safe_delete
-from virtualenv.util.six import ensure_str, ensure_text
+from virtualenv.util.path import safe_delete
 from virtualenv.util.subprocess import run_cmd
 from virtualenv.version import __version__
 
@@ -25,13 +19,12 @@ HERE = Path(os.path.abspath(__file__)).parent
 DEBUG_SCRIPT = HERE / "debug.py"
 
 
-class CreatorMeta(object):
+class CreatorMeta:
     def __init__(self):
         self.error = None
 
 
-@add_metaclass(ABCMeta)
-class Creator(object):
+class Creator(metaclass=ABCMeta):
     """A class that given a python Interpreter creates a virtual environment"""
 
     def __init__(self, options, interpreter):
@@ -50,14 +43,11 @@ class Creator(object):
         self.env = options.env
 
     def __repr__(self):
-        return ensure_str(self.__unicode__())
-
-    def __unicode__(self):
-        return "{}({})".format(self.__class__.__name__, ", ".join("{}={}".format(k, v) for k, v in self._args()))
+        return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self._args())})"
 
     def _args(self):
         return [
-            ("dest", ensure_text(str(self.dest))),
+            ("dest", str(self.dest)),
             ("clear", self.clear),
             ("no_vcs_ignore", self.no_vcs_ignore),
         ]
@@ -112,16 +102,14 @@ class Creator(object):
 
         def non_write_able(dest, value):
             common = Path(*os.path.commonprefix([value.parts, dest.parts]))
-            raise ArgumentTypeError(
-                "the destination {} is not write-able at {}".format(dest.relative_to(common), common),
-            )
+            raise ArgumentTypeError(f"the destination {dest.relative_to(common)} is not write-able at {common}")
 
         # the file system must be able to encode
         # note in newer CPython this is always utf-8 https://www.python.org/dev/peps/pep-0529/
         encoding = sys.getfilesystemencoding()
         refused = OrderedDict()
         kwargs = {"errors": "ignore"} if encoding != "mbcs" else {}
-        for char in ensure_text(raw_value):
+        for char in str(raw_value):
             try:
                 trip = char.encode(encoding, **kwargs).decode(encoding)
                 if trip == char:
@@ -130,23 +118,17 @@ class Creator(object):
             except ValueError:
                 refused[char] = None
         if refused:
-            raise ArgumentTypeError(
-                "the file system codec ({}) cannot handle characters {!r} within {!r}".format(
-                    encoding,
-                    "".join(refused.keys()),
-                    raw_value,
-                ),
-            )
+            bad = "".join(refused.keys())
+            msg = f"the file system codec ({encoding}) cannot handle characters {bad!r} within {raw_value!r}"
+            raise ArgumentTypeError(msg)
         if os.pathsep in raw_value:
-            raise ArgumentTypeError(
-                "destination {!r} must not contain the path separator ({}) as this would break "
-                "the activation scripts".format(raw_value, os.pathsep),
-            )
+            msg = f"destination {raw_value!r} must not contain the path separator ({os.pathsep})"
+            raise ArgumentTypeError(f"{msg} as this would break the activation scripts")
 
         value = Path(raw_value)
         if value.exists() and value.is_file():
-            raise ArgumentTypeError("the destination {} already exists and is a file".format(value))
-        if (3, 3) <= sys.version_info <= (3, 6):
+            raise ArgumentTypeError(f"the destination {value} already exists and is a file")
+        if sys.version_info <= (3, 6):
             # pre 3.6 resolve is always strict, aka must exists, sidestep by using os.path operation
             dest = Path(os.path.realpath(raw_value))
         else:
@@ -154,7 +136,7 @@ class Creator(object):
         value = dest
         while dest:
             if dest.exists():
-                if os.access(ensure_text(str(dest)), os.W_OK):
+                if os.access(str(dest), os.W_OK):
                     break
                 else:
                     non_write_able(dest, value)
@@ -185,14 +167,7 @@ class Creator(object):
         # mark this folder to be ignored by VCS, handle https://www.python.org/dev/peps/pep-0610/#registered-vcs
         git_ignore = self.dest / ".gitignore"
         if not git_ignore.exists():
-            git_ignore.write_text(
-                dedent(
-                    """
-                    # created by virtualenv automatically
-                    *
-                    """,
-                ).lstrip(),
-            )
+            git_ignore.write_text("# created by virtualenv automatically\n*\n")
         # Mercurial - does not support the .hgignore file inside a subdirectory directly, but only if included via the
         # subinclude directive from root, at which point on might as well ignore the directory itself, see
         # https://www.selenic.com/mercurial/hgignore.5.html for more details
@@ -208,23 +183,20 @@ class Creator(object):
             self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data, self.env)
         return self._debug
 
-    # noinspection PyMethodMayBeStatic
-    def debug_script(self):
+    @staticmethod
+    def debug_script():
         return DEBUG_SCRIPT
 
 
 def get_env_debug_info(env_exe, debug_script, app_data, env):
     env = env.copy()
-    env.pop(str("PYTHONPATH"), None)
+    env.pop("PYTHONPATH", None)
 
     with app_data.ensure_extracted(debug_script) as debug_script:
         cmd = [str(env_exe), str(debug_script)]
-        if WIN_CPYTHON_2:
-            cmd = [ensure_text(i) for i in cmd]
-        logging.debug(str("debug via %r"), LogCmd(cmd))
+        logging.debug("debug via %r", LogCmd(cmd))
         code, out, err = run_cmd(cmd)
 
-    # noinspection PyBroadException
     try:
         if code != 0:
             if out:
@@ -243,3 +215,9 @@ def get_env_debug_info(env_exe, debug_script, app_data, env):
     if "sys" in result and "path" in result["sys"]:
         del result["sys"]["path"][0]
     return result
+
+
+__all__ = [
+    "Creator",
+    "CreatorMeta",
+]

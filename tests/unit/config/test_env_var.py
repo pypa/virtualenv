@@ -1,13 +1,11 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
+from pathlib import Path
 
 import pytest
 
 from virtualenv.config.cli.parser import VirtualEnvOptions
 from virtualenv.config.ini import IniConfig
 from virtualenv.run import session_via_cli
-from virtualenv.util.path import Path
 
 
 @pytest.fixture()
@@ -18,13 +16,13 @@ def empty_conf(tmp_path, monkeypatch):
 
 
 def test_value_ok(monkeypatch, empty_conf):
-    monkeypatch.setenv(str("VIRTUALENV_VERBOSE"), str("5"))
+    monkeypatch.setenv("VIRTUALENV_VERBOSE", "5")
     result = session_via_cli(["venv"])
     assert result.verbosity == 5
 
 
 def test_value_bad(monkeypatch, caplog, empty_conf):
-    monkeypatch.setenv(str("VIRTUALENV_VERBOSE"), str("a"))
+    monkeypatch.setenv("VIRTUALENV_VERBOSE", "a")
     result = session_via_cli(["venv"])
     assert result.verbosity == 2
     assert len(caplog.messages) == 1
@@ -34,36 +32,36 @@ def test_value_bad(monkeypatch, caplog, empty_conf):
 
 def test_python_via_env_var(monkeypatch):
     options = VirtualEnvOptions()
-    monkeypatch.setenv(str("VIRTUALENV_PYTHON"), str("python3"))
+    monkeypatch.setenv("VIRTUALENV_PYTHON", "python3")
     session_via_cli(["venv"], options=options)
     assert options.python == ["python3"]
 
 
 def test_python_multi_value_via_env_var(monkeypatch):
     options = VirtualEnvOptions()
-    monkeypatch.setenv(str("VIRTUALENV_PYTHON"), str("python3,python2"))
+    monkeypatch.setenv("VIRTUALENV_PYTHON", "python3,python2")
     session_via_cli(["venv"], options=options)
     assert options.python == ["python3", "python2"]
 
 
 def test_python_multi_value_newline_via_env_var(monkeypatch):
     options = VirtualEnvOptions()
-    monkeypatch.setenv(str("VIRTUALENV_PYTHON"), str("python3\npython2"))
+    monkeypatch.setenv("VIRTUALENV_PYTHON", "python3\npython2")
     session_via_cli(["venv"], options=options)
     assert options.python == ["python3", "python2"]
 
 
 def test_python_multi_value_prefer_newline_via_env_var(monkeypatch):
     options = VirtualEnvOptions()
-    monkeypatch.setenv(str("VIRTUALENV_PYTHON"), str("python3\npython2,python27"))
+    monkeypatch.setenv("VIRTUALENV_PYTHON", "python3\npython2,python27")
     session_via_cli(["venv"], options=options)
     assert options.python == ["python3", "python2,python27"]
 
 
 def test_extra_search_dir_via_env_var(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
-    value = "a{}0{}b{}c".format(os.linesep, os.linesep, os.pathsep)
-    monkeypatch.setenv(str("VIRTUALENV_EXTRA_SEARCH_DIR"), str(value))
+    value = f"a{os.linesep}0{os.linesep}b{os.pathsep}c"
+    monkeypatch.setenv("VIRTUALENV_EXTRA_SEARCH_DIR", str(value))
     (tmp_path / "a").mkdir()
     (tmp_path / "b").mkdir()
     (tmp_path / "c").mkdir()
@@ -85,8 +83,8 @@ def test_value_alias(monkeypatch, mocker, empty_conf):
 
     mocker.patch("virtualenv.run.VirtualEnvConfigParser._fix_default", side_effect=func, autospec=True)
 
-    monkeypatch.delenv(str("SYMLINKS"), raising=False)
-    monkeypatch.delenv(str("VIRTUALENV_COPIES"), raising=False)
-    monkeypatch.setenv(str("VIRTUALENV_ALWAYS_COPY"), str("1"))
+    monkeypatch.delenv("SYMLINKS", raising=False)
+    monkeypatch.delenv("VIRTUALENV_COPIES", raising=False)
+    monkeypatch.setenv("VIRTUALENV_ALWAYS_COPY", "1")
     result = session_via_cli(["venv"])
     assert result.creator.symlinks is False

@@ -1,6 +1,4 @@
-from __future__ import absolute_import, unicode_literals
-
-from virtualenv.util.path import Path
+from pathlib import Path
 
 from ..via_template import ViaTemplateActivator
 
@@ -12,3 +10,8 @@ class CShellActivator(ViaTemplateActivator):
 
     def templates(self):
         yield Path("activate.csh")
+
+
+__all__ = [
+    "CShellActivator",
+]

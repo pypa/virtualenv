@@ -1,12 +1,8 @@
-from __future__ import absolute_import, unicode_literals
-
 from operator import attrgetter
 from zipfile import ZipFile
 
-from virtualenv.util.six import ensure_text
 
-
-class Wheel(object):
+class Wheel:
     def __init__(self, path):
         # https://www.python.org/dev/peps/pep-0427/#file-name-convention
         # The wheel filename is {distribution}-{version}(-{build tag})?-{python tag}-{abi tag}-{platform tag}.whl
@@ -48,8 +44,8 @@ class Wheel(object):
         return self.path.name
 
     def support_py(self, py_version):
-        name = "{}.dist-info/METADATA".format("-".join(self.path.stem.split("-")[0:2]))
-        with ZipFile(ensure_text(str(self.path)), "r") as zip_file:
+        name = f"{'-'.join(self.path.stem.split('-')[0:2])}.dist-info/METADATA"
+        with ZipFile(str(self.path), "r") as zip_file:
             metadata = zip_file.read(name).decode("utf-8")
         marker = "Requires-Python:"
         requires = next((i[len(marker) :] for i in metadata.splitlines() if i.startswith(marker)), None)
@@ -75,7 +71,7 @@ class Wheel(object):
         return True
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, self.path)
+        return f"{self.__class__.__name__}({self.path})"
 
     def __str__(self):
         return str(self.path)
@@ -97,10 +93,7 @@ class Version:
     bundle = "bundle"
     embed = "embed"
     #: custom version handlers
-    non_version = (
-        bundle,
-        embed,
-    )
+    non_version = (bundle, embed)
 
     @staticmethod
     def of_version(value):
@@ -108,9 +101,16 @@ class Version:
 
     @staticmethod
     def as_pip_req(distribution, version):
-        return "{}{}".format(distribution, Version.as_version_spec(version))
+        return f"{distribution}{Version.as_version_spec(version)}"
 
     @staticmethod
     def as_version_spec(version):
         of_version = Version.of_version(version)
-        return "" if of_version is None else "=={}".format(of_version)
+        return "" if of_version is None else f"=={of_version}"
+
+
+__all__ = [
+    "discover_wheels",
+    "Version",
+    "Wheel",
+]

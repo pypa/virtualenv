@@ -1,8 +1,5 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
-
-from virtualenv.util.path import Path
+from pathlib import Path
 
 from ..via_template import ViaTemplateActivator
 
@@ -19,5 +16,10 @@ class BatchActivator(ViaTemplateActivator):
 
     def instantiate_template(self, replacements, template, creator):
         # ensure the text has all newlines as \r\n - required by batch
-        base = super(BatchActivator, self).instantiate_template(replacements, template, creator)
+        base = super().instantiate_template(replacements, template, creator)
         return base.replace(os.linesep, "\n").replace("\n", os.linesep)
+
+
+__all__ = [
+    "BatchActivator",
+]

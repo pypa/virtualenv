@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from argparse import ArgumentTypeError
 from collections import OrderedDict
 
@@ -12,14 +10,14 @@ class ActivationSelector(ComponentBuilder):
         possible = OrderedDict(
             (k, v) for k, v in self.options("virtualenv.activate").items() if v.supports(interpreter)
         )
-        super(ActivationSelector, self).__init__(interpreter, parser, "activators", possible)
+        super().__init__(interpreter, parser, "activators", possible)
         self.parser.description = "options for activation scripts"
         self.active = None
 
     def add_selector_arg_parse(self, name, choices):
         self.default = ",".join(choices)
         self.parser.add_argument(
-            "--{}".format(name),
+            f"--{name}",
             default=self.default,
             metavar="comma_sep_list",
             required=False,
@@ -31,7 +29,7 @@ class ActivationSelector(ComponentBuilder):
         elements = [e.strip() for e in entered_str.split(",") if e.strip()]
         missing = [e for e in elements if e not in self.possible]
         if missing:
-            raise ArgumentTypeError("the following activators are not available {}".format(",".join(missing)))
+            raise ArgumentTypeError(f"the following activators are not available {','.join(missing)}")
         return elements
 
     def handle_selected_arg_parse(self, options):
@@ -54,3 +52,8 @@ class ActivationSelector(ComponentBuilder):
 
     def create(self, options):
         return [activator_class(options) for activator_class in self.active.values()]
+
+
+__all__ = [
+    "ActivationSelector",
+]

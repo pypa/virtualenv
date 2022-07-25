@@ -1,16 +1,13 @@
 """holds locking functionality that works across processes"""
-from __future__ import absolute_import, unicode_literals
 
 import logging
 import os
 from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
+from pathlib import Path
 from threading import Lock, RLock
 
 from filelock import FileLock, Timeout
-from six import add_metaclass
-
-from virtualenv.util.path import Path
 
 
 class _CountedFileLock(FileLock):
@@ -21,20 +18,20 @@ class _CountedFileLock(FileLock):
                 os.makedirs(parent)
             except OSError:
                 pass
-        super(_CountedFileLock, self).__init__(lock_file)
+        super().__init__(lock_file)
         self.count = 0
         self.thread_safe = RLock()
 
     def acquire(self, timeout=None, poll_interval=0.05):
         with self.thread_safe:
             if self.count == 0:
-                super(_CountedFileLock, self).acquire(timeout, poll_interval)
+                super().acquire(timeout, poll_interval)
             self.count += 1
 
     def release(self, force=False):
         with self.thread_safe:
             if self.count == 1:
-                super(_CountedFileLock, self).release(force=force)
+                super().release(force=force)
             self.count = max(self.count - 1, 0)
 
 
@@ -42,14 +39,13 @@ _lock_store = {}
 _store_lock = Lock()
 
 
-@add_metaclass(ABCMeta)
-class PathLockBase(object):
+class PathLockBase(metaclass=ABCMeta):
     def __init__(self, folder):
         path = Path(folder)
         self.path = path.resolve() if path.exists() else path
 
     def __repr__(self):
-        return "{}({})".format(self.__class__.__name__, self.path)
+        return f"{self.__class__.__name__}({self.path})"
 
     def __div__(self, other):
         return type(self)(self.path / other)
@@ -78,11 +74,11 @@ class PathLockBase(object):
 
 class ReentrantFileLock(PathLockBase):
     def __init__(self, folder):
-        super(ReentrantFileLock, self).__init__(folder)
+        super().__init__(folder)
         self._lock = None
 
     def _create_lock(self, name=""):
-        lock_file = str(self.path / "{}.lock".format(name))
+        lock_file = str(self.path / f"{name}.lock")
         with _store_lock:
             if lock_file not in _lock_store:
                 _lock_store[lock_file] = _CountedFileLock(lock_file)
@@ -144,7 +140,7 @@ class ReentrantFileLock(PathLockBase):
 
     @contextmanager
     def non_reentrant_lock_for_key(self, name):
-        with _CountedFileLock(str(self.path / "{}.lock".format(name))):
+        with _CountedFileLock(str(self.path / f"{name}.lock")):
             yield
 
 
@@ -164,8 +160,8 @@ class NoOpFileLock(PathLockBase):
         yield
 
 
-__all__ = (
+__all__ = [
     "NoOpFileLock",
     "ReentrantFileLock",
     "Timeout",
-)
+]

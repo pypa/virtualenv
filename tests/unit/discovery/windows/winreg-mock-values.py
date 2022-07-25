@@ -1,10 +1,4 @@
-import six
-
-if six.PY3:
-    import winreg
-else:
-    # noinspection PyUnresolvedReferences
-    import _winreg as winreg
+import winreg
 
 hive_open = {
     (winreg.HKEY_CURRENT_USER, "Software\\Python", 0, winreg.KEY_READ): 78701856,

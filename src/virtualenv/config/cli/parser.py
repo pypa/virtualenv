@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import os
 from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from collections import OrderedDict
@@ -12,7 +10,7 @@ from ..ini import IniConfig
 
 class VirtualEnvOptions(Namespace):
     def __init__(self, **kwargs):
-        super(VirtualEnvOptions, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._src = None
         self._sources = {}
 
@@ -25,7 +23,7 @@ class VirtualEnvOptions(Namespace):
     def __setattr__(self, key, value):
         if getattr(self, "_src", None) is not None:
             self._sources[key] = self._src
-        super(VirtualEnvOptions, self).__setattr__(key, value)
+        super().__setattr__(key, value)
 
     def get_source(self, key):
         return self._sources.get(key)
@@ -37,10 +35,7 @@ class VirtualEnvOptions(Namespace):
         return max(self.verbose - self.quiet, 0)
 
     def __repr__(self):
-        return "{}({})".format(
-            type(self).__name__,
-            ", ".join("{}={}".format(k, v) for k, v in vars(self).items() if not k.startswith("_")),
-        )
+        return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_'))})"
 
 
 class VirtualEnvConfigParser(ArgumentParser):
@@ -57,7 +52,7 @@ class VirtualEnvConfigParser(ArgumentParser):
         kwargs["add_help"] = False
         kwargs["formatter_class"] = HelpFormatter
         kwargs["prog"] = "virtualenv"
-        super(VirtualEnvConfigParser, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._fixed = set()
         if options is not None and not isinstance(options, VirtualEnvOptions):
             raise TypeError("options must be of type VirtualEnvOptions")
@@ -105,20 +100,27 @@ class VirtualEnvConfigParser(ArgumentParser):
         self.options._src = "cli"
         try:
             namespace.env = self.env
-            return super(VirtualEnvConfigParser, self).parse_known_args(args, namespace=namespace)
+            return super().parse_known_args(args, namespace=namespace)
         finally:
             self.options._src = None
 
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
     def __init__(self, prog):
-        super(HelpFormatter, self).__init__(prog, max_help_position=32, width=240)
+        super().__init__(prog, max_help_position=32, width=240)
 
     def _get_help_string(self, action):
-        # noinspection PyProtectedMember
-        text = super(HelpFormatter, self)._get_help_string(action)
+
+        text = super()._get_help_string(action)
         if hasattr(action, "default_source"):
             default = " (default: %(default)s)"
             if text.endswith(default):
-                text = "{} (default: %(default)s -> from %(default_source)s)".format(text[: -len(default)])
+                text = f"{text[: -len(default)]} (default: %(default)s -> from %(default_source)s)"
         return text
+
+
+__all__ = [
+    "HelpFormatter",
+    "VirtualEnvConfigParser",
+    "VirtualEnvOptions",
+]
