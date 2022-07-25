@@ -5,6 +5,16 @@ Release History
 
 .. towncrier release notes start
 
+v20.16.0 (2022-07-25)
+---------------------
+
+Features - 20.16.0
+~~~~~~~~~~~~~~~~~~
+- Drop support for running under Python 2 (still can generate Python 2 environments) - by :user:`gaborbernat`. (`#2382 <https://github.com/pypa/virtualenv/issues/2382>`_)
+- Upgrade embedded pip to ``22.2`` from ``22.1.2`` and  setuptools to ``63.2.0`` from ``62.6.0`` -
+  by :user:`gaborbernat`. (`#2383 <https://github.com/pypa/virtualenv/issues/2383>`_)
+
+
 v20.15.1 (2022-06-28)
 ---------------------
 
