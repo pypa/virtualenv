@@ -3,9 +3,9 @@ def-env deactivate-virtualenv [] {
         $name in (env).name
     }
 
-    let is-windows = ((sys).host.name | str downcase) == 'windows'
+    let is_windows = ((sys).host.name | str downcase) == 'windows'
 
-    let path-name = if $is-windows {
+    let path_name = if $is_windows {
         if (has-env 'Path') {
             'Path'
         } else {
@@ -15,7 +15,7 @@ def-env deactivate-virtualenv [] {
         'PATH'
     }
 
-    load-env { $path-name : $env._OLD_VIRTUAL_PATH }
+    load-env { $path_name : $env._OLD_VIRTUAL_PATH }
 
     let-env PROMPT_COMMAND = $env._OLD_PROMPT_COMMAND
 
