@@ -1,0 +1,1 @@
+Update Nushell activation scripts to version 0.66 - by :user:`kubouch`.
