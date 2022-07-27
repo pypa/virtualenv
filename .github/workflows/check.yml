@@ -28,7 +28,7 @@ jobs:
           - pypy-3.7-v7.3.9
           - pypy-3.6-v7.3.3
         os:
-          - ubuntu-22.04
+          - ubuntu-20.04
           - macos-12
           - windows-2022
         exclude:

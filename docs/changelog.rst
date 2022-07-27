@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.16.2 (2022-07-27)
+---------------------
+
+Bugfixes - 20.16.2
+~~~~~~~~~~~~~~~~~~
+- Bump embeded pip from ``22.2`` to ``22.2.1`` - by :user:`gaborbernat`. (`#2391 <https://github.com/pypa/virtualenv/issues/2391>`_)
+
+
 v20.16.1 (2022-07-26)
 ---------------------
 

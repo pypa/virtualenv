@@ -1,1 +1,0 @@
-Bump embeded pip from ``22.2`` to ``22.2.1`` - by :user:`gaborbernat`.
