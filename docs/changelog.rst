@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.16.1 (2022-07-26)
+---------------------
+
+Features - 20.16.1
+~~~~~~~~~~~~~~~~~~
+- Update Nushell activation scripts to version 0.67 - by :user:`kubouch`. (`#2386 <https://github.com/pypa/virtualenv/issues/2386>`_)
+
+
 v20.16.0 (2022-07-25)
 ---------------------
 
