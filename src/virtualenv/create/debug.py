@@ -28,7 +28,7 @@ def run():
     except ImportError:  # pragma: no cover
         # this is possible if the standard library cannot be accessed
         # noinspection PyPep8Naming
-        OrderedDict = dict  # pragma: no cover
+        OrderedDict = dict  # pragma: no cover  # noqa: N806
     result = OrderedDict([("sys", OrderedDict())])
     path_keys = (
         "executable",

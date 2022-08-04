@@ -23,7 +23,7 @@ CUSTOM = {
 
 class CliTable(SphinxDirective):
     name = "table_cli"
-    option_spec = dict(module=unchanged_required, func=unchanged_required)
+    option_spec = {"module": unchanged_required, "func": unchanged_required}
 
     def run(self):
         module_name, attr_name = self.options["module"], self.options["func"]
@@ -48,7 +48,7 @@ class CliTable(SphinxDirective):
                     parser_result = parse_parser(parser_creator(cmd))
                     opt_group = next(i["options"] for i in parser_result["action_groups"] if i["title"] == key)
                     results[name] = opt_group
-            core_names = set.intersection(*list({tuple(i["name"]) for i in v} for v in results.values()))
+            core_names = set.intersection(*[{tuple(i["name"]) for i in v} for v in results.values()])
             if core_names:
                 rows = [i for i in next(iter(results.values())) if tuple(i["name"]) in core_names]
                 content.append(
@@ -223,7 +223,7 @@ class CliTable(SphinxDirective):
             domain.add_program_option(None, key, self.env.docname, key)
 
 
-def literal_data(rawtext, app, type, slug, options):
+def literal_data(rawtext, app, type, slug, options):  # noqa: U100
     """Create a link to a BitBucket resource."""
     of_class = type.split(".")
     data = getattr(__import__(".".join(of_class[:-1]), fromlist=[of_class[-1]]), of_class[-1])

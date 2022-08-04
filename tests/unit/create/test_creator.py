@@ -93,7 +93,7 @@ def system(session_app_data):
     return get_env_debug_info(Path(CURRENT.system_executable), DEBUG_SCRIPT, session_app_data, os.environ)
 
 
-CURRENT_CREATORS = list(i for i in CURRENT.creators().key_to_class.keys() if i != "builtin")
+CURRENT_CREATORS = [i for i in CURRENT.creators().key_to_class.keys() if i != "builtin"]
 CREATE_METHODS = []
 for k, v in CURRENT.creators().key_to_meta.items():
     if k in CURRENT_CREATORS:
@@ -110,7 +110,7 @@ _VENV_BUG_ON = (
 
 
 @pytest.mark.parametrize(
-    "creator, isolated",
+    ("creator", "isolated"),
     [
         pytest.param(
             *i,
@@ -318,8 +318,9 @@ def test_prompt_set(tmp_path, creator, prompt):
             assert cfg["prompt"] == actual_prompt
 
 
-@pytest.mark.slow
-def test_cross_major(cross_python, coverage_env, tmp_path, session_app_data, current_fastest):
+@pytest.mark.slow()
+@pytest.mark.usefixtures("current_fastest")
+def test_cross_major(cross_python, coverage_env, tmp_path, session_app_data):
     cmd = [
         "-p",
         cross_python.executable,
@@ -343,7 +344,8 @@ def test_cross_major(cross_python, coverage_env, tmp_path, session_app_data, cur
     assert env.version_info.major != CURRENT.version_info.major
 
 
-def test_create_parallel(tmp_path, monkeypatch, temp_app_data):
+@pytest.mark.usefixtures("temp_app_data")
+def test_create_parallel(tmp_path):
     def create(count):
         subprocess.check_call(
             [sys.executable, "-m", "virtualenv", "-vvv", str(tmp_path / f"venv{count}"), "--without-pip"],
@@ -369,7 +371,8 @@ def test_creator_replaces_altsep_in_dest(tmp_path):
     assert str(result) == dest.format(os.sep)
 
 
-def test_create_long_path(current_fastest, tmp_path):
+@pytest.mark.usefixtures("current_fastest")
+def test_create_long_path(tmp_path):
     if sys.platform == "darwin":
         max_shebang_length = 512
     else:
@@ -385,7 +388,8 @@ def test_create_long_path(current_fastest, tmp_path):
 
 
 @pytest.mark.parametrize("creator", sorted(set(PythonInfo.current_system().creators().key_to_class) - {"builtin"}))
-def test_create_distutils_cfg(creator, tmp_path, monkeypatch, session_app_data):
+@pytest.mark.usefixtures("session_app_data")
+def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
     result = cli_run([str(tmp_path / "venv"), "--activators", "", "--creator", creator])
 
     app = Path(__file__).parent / "console_app"
@@ -467,7 +471,8 @@ def test_zip_importer_can_import_setuptools(tmp_path):
     IS_PYPY and sys.platform.startswith("darwin"),
     reason="https://foss.heptapod.net/pypy/pypy/-/issues/3269",
 )
-def test_no_preimport_threading(tmp_path, no_coverage):
+@pytest.mark.usefixtures("_no_coverage")
+def test_no_preimport_threading(tmp_path):
     session = cli_run([str(tmp_path)])
     out = subprocess.check_output(
         [str(session.creator.exe), "-c", r"import sys; print('\n'.join(sorted(sys.modules)))"],
@@ -478,7 +483,7 @@ def test_no_preimport_threading(tmp_path, no_coverage):
 
 
 # verify that .pth files in site-packages/ are always processed even if $PYTHONPATH points to it.
-def test_pth_in_site_vs_PYTHONPATH(tmp_path):
+def test_pth_in_site_vs_python_path(tmp_path):
     session = cli_run([str(tmp_path)])
     site_packages = str(session.creator.purelib)
     # install test.pth that sets sys.testpth='ok'
@@ -632,15 +637,14 @@ def test_python_path(monkeypatch, tmp_path, python_path_on):
 
 
 @pytest.mark.parametrize(
-    "py, pyc",
-    list(
-        product(
-            [True, False] if Python2.from_stdlib(Python2.mappings(CURRENT), "os.py")[2] else [False],
-            [True, False] if Python2.from_stdlib(Python2.mappings(CURRENT), "os.pyc")[2] else [False],
-        ),
+    ("py", "pyc"),
+    product(
+        [True, False] if Python2.from_stdlib(Python2.mappings(CURRENT), "os.py")[2] else [False],
+        [True, False] if Python2.from_stdlib(Python2.mappings(CURRENT), "os.pyc")[2] else [False],
     ),
 )
-def test_py_pyc_missing(tmp_path, mocker, session_app_data, py, pyc):
+@pytest.mark.usefixtures("session_app_data")
+def test_py_pyc_missing(tmp_path, mocker, py, pyc):
     """Ensure that creation can succeed if os.pyc exists (even if os.py has been deleted)"""
     previous = Python2.from_stdlib
 

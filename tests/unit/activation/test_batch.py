@@ -1,9 +1,12 @@
 from shlex import quote
 
+import pytest
+
 from virtualenv.activation import BatchActivator
 
 
-def test_batch(activation_tester_class, activation_tester, tmp_path, activation_python):
+@pytest.mark.usefixtures("activation_python")
+def test_batch(activation_tester_class, activation_tester, tmp_path):
     version_script = tmp_path / "version.bat"
     version_script.write_text("ver")
 

@@ -58,7 +58,7 @@ def test_python(raise_on_non_source_class, activation_tester):
             result = dedent(raw).splitlines()
             return result
 
-        def assert_output(self, out, raw, tmp_path):
+        def assert_output(self, out, raw, tmp_path):  # noqa: U100
             out = [literal_eval(i) for i in out]
             assert out[0] is None  # start with VIRTUAL_ENV None
 
@@ -72,7 +72,7 @@ def test_python(raise_on_non_source_class, activation_tester):
             # sys path contains the site package at its start
             new_sys_path = out[5]
 
-            new_lib_paths = {j for j in {str(i) for i in self._creator.libs}}
+            new_lib_paths = {str(i) for i in self._creator.libs}
             assert prev_sys_path == new_sys_path[len(new_lib_paths) :]
             assert new_lib_paths == set(new_sys_path[: len(new_lib_paths)])
 

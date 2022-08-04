@@ -5,7 +5,7 @@ class Discover(metaclass=ABCMeta):
     """Discover and provide the requested Python interpreter"""
 
     @classmethod
-    def add_parser_arguments(cls, parser):
+    def add_parser_arguments(cls, parser):  # noqa: U100
         """Add CLI arguments for this discovery mechanisms.
 
         :param parser: the CLI parser

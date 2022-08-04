@@ -51,7 +51,8 @@ def test_fail_with_traceback(raise_on_session_done, tmp_path, capsys):
     assert err == ""
 
 
-def test_session_report_full(session_app_data, tmp_path, capsys):
+@pytest.mark.usefixtures("session_app_data")
+def test_session_report_full(tmp_path, capsys):
     run_with_catch([str(tmp_path)])
     out, err = capsys.readouterr()
     assert err == ""
@@ -72,7 +73,8 @@ def _match_regexes(lines, regexes):
         assert comp_regex.match(line), line
 
 
-def test_session_report_minimal(session_app_data, tmp_path, capsys):
+@pytest.mark.usefixtures("session_app_data")
+def test_session_report_minimal(tmp_path, capsys):
     run_with_catch([str(tmp_path), "--activators", "", "--without-pip"])
     out, err = capsys.readouterr()
     assert err == ""
@@ -84,7 +86,8 @@ def test_session_report_minimal(session_app_data, tmp_path, capsys):
     _match_regexes(lines, regexes)
 
 
-def test_session_report_subprocess(session_app_data, tmp_path):
+@pytest.mark.usefixtures("session_app_data")
+def test_session_report_subprocess(tmp_path):
     # when called via a subprocess the logging framework should flush and POSIX line normalization happen
     out = check_output(
         [sys.executable, "-m", "virtualenv", str(tmp_path), "--activators", "powershell", "--without-pip"],

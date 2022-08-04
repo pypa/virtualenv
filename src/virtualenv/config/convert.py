@@ -43,7 +43,7 @@ class ListType(TypeData):
     def _validate(self):
         """ """
 
-    def convert(self, value, flatten=True):
+    def convert(self, value, flatten=True):  # noqa: U100
         values = self.split_values(value)
         result = []
         for value in values:

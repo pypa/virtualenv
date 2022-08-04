@@ -58,17 +58,17 @@ class PathLockBase(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: U100
         raise NotImplementedError
 
     @abstractmethod
     @contextmanager
-    def lock_for_key(self, name, no_block=False):
+    def lock_for_key(self, name, no_block=False):  # noqa: U100
         raise NotImplementedError
 
     @abstractmethod
     @contextmanager
-    def non_reentrant_lock_for_key(name):
+    def non_reentrant_lock_for_key(self, name):  # noqa: U100
         raise NotImplementedError
 
 
@@ -99,7 +99,7 @@ class ReentrantFileLock(PathLockBase):
         self._lock = self._create_lock()
         self._lock_file(self._lock)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: U100
         self._release(self._lock)
         self._del_lock(self._lock)
         self._lock = None
@@ -148,15 +148,15 @@ class NoOpFileLock(PathLockBase):
     def __enter__(self):
         raise NotImplementedError
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: U100
         raise NotImplementedError
 
     @contextmanager
-    def lock_for_key(self, name, no_block=False):
+    def lock_for_key(self, name, no_block=False):  # noqa: U100
         yield
 
     @contextmanager
-    def non_reentrant_lock_for_key(self, name):
+    def non_reentrant_lock_for_key(self, name):  # noqa: U100
         yield
 
 

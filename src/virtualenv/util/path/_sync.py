@@ -49,7 +49,7 @@ def copytree(src, dest):
 
 
 def safe_delete(dest):
-    def onerror(func, path, exc_info):
+    def onerror(func, path, exc_info):  # noqa: U100
         if not os.access(path, os.W_OK):
             os.chmod(path, S_IWUSR)
             func(path)

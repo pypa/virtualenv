@@ -23,7 +23,7 @@ class PyPy2(PyPy, Python2, metaclass=abc.ABCMeta):
         # include folder needed on Python 2 as we don't have pyenv.cfg
         host_include_marker = cls.host_include_marker(interpreter)
         if host_include_marker.exists():
-            yield PathRefToDest(host_include_marker.parent, dest=lambda self, _: self.include)
+            yield PathRefToDest(host_include_marker.parent, dest=lambda self, _: self.include)  # noqa: U101
 
     @classmethod
     def needs_stdlib_py_module(cls):
@@ -93,7 +93,7 @@ class PyPy2Posix(PyPy2, PosixSupports):
         yield from super().sources(interpreter)
         host_lib = Path(interpreter.system_prefix) / "lib"
         if host_lib.exists():
-            yield PathRefToDest(host_lib, dest=lambda self, _: self.lib)
+            yield PathRefToDest(host_lib, dest=lambda self, _: self.lib)  # noqa: U101
 
 
 class Pypy2Windows(PyPy2, WindowsSupports):

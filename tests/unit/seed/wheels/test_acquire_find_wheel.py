@@ -16,13 +16,13 @@ def test_find_exact(for_py_version):
     assert result.path == expected.path
 
 
-def test_find_less_than(for_py_version):
+def test_find_less_than():
     latest = get_embed_wheel("setuptools", MAX)
     result = find_compatible_in_house("setuptools", f"<{latest.version}", MAX, BUNDLE_FOLDER)
     assert result is not None
     assert result.path != latest.path
 
 
-def test_find_bad_spec(for_py_version):
+def test_find_bad_spec():
     with pytest.raises(ValueError, match="bad"):
         find_compatible_in_house("setuptools", "bad", MAX, BUNDLE_FOLDER)

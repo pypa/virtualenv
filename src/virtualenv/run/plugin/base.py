@@ -44,7 +44,7 @@ class ComponentBuilder(PluginLoader):
             cls._OPTIONS = cls.entry_points_for(key)
         return cls._OPTIONS
 
-    def add_selector_arg_parse(self, name, choices):
+    def add_selector_arg_parse(self, name, choices):  # noqa: U100
         raise NotImplementedError
 
     def handle_selected_arg_parse(self, options):

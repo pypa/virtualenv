@@ -75,11 +75,11 @@ class CPython2macOsFramework(CPythonmacOsFramework, CPython2PosixBase):
 
         # add a copy of the host python image
         exe = Path(interpreter.prefix) / "Python"
-        yield PathRefToDest(exe, dest=lambda self, _: self.dest / "Python", must=RefMust.COPY)
+        yield PathRefToDest(exe, dest=lambda self, _: self.dest / "Python", must=RefMust.COPY)  # noqa: U101
 
         # add a symlink to the Resources dir
         resources = Path(interpreter.prefix) / "Resources"
-        yield PathRefToDest(resources, dest=lambda self, _: self.dest / "Resources")
+        yield PathRefToDest(resources, dest=lambda self, _: self.dest / "Resources")  # noqa: U101
 
     @property
     def reload_code(self):
@@ -149,7 +149,7 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
 
         # add a symlink to the host python image
         exe = Path(interpreter.prefix) / "Python3"
-        yield PathRefToDest(exe, dest=lambda self, _: self.dest / ".Python", must=RefMust.SYMLINK)
+        yield PathRefToDest(exe, dest=lambda self, _: self.dest / ".Python", must=RefMust.SYMLINK)  # noqa: U101
 
     @property
     def reload_code(self):
@@ -207,14 +207,14 @@ def fix_mach_o(exe, current, new, max_size):
 
 
 def _builtin_change_mach_o(maxint):
-    MH_MAGIC = 0xFEEDFACE
-    MH_CIGAM = 0xCEFAEDFE
-    MH_MAGIC_64 = 0xFEEDFACF
-    MH_CIGAM_64 = 0xCFFAEDFE
-    FAT_MAGIC = 0xCAFEBABE
-    BIG_ENDIAN = ">"
-    LITTLE_ENDIAN = "<"
-    LC_LOAD_DYLIB = 0xC
+    MH_MAGIC = 0xFEEDFACE  # noqa: N806
+    MH_CIGAM = 0xCEFAEDFE  # noqa: N806
+    MH_MAGIC_64 = 0xFEEDFACF  # noqa: N806
+    MH_CIGAM_64 = 0xCFFAEDFE  # noqa: N806
+    FAT_MAGIC = 0xCAFEBABE  # noqa: N806
+    BIG_ENDIAN = ">"  # noqa: N806
+    LITTLE_ENDIAN = "<"  # noqa: N806
+    LC_LOAD_DYLIB = 0xC  # noqa: N806
 
     class FileView:
         """A proxy for file-like objects that exposes a given view of a file. Modified from macholib."""

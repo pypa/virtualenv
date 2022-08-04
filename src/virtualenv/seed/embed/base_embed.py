@@ -43,7 +43,7 @@ class BaseEmbed(Seeder, metaclass=ABCMeta):
         }
 
     @classmethod
-    def add_parser_arguments(cls, parser, interpreter, app_data):
+    def add_parser_arguments(cls, parser, interpreter, app_data):  # noqa: U100
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
             "--no-download",

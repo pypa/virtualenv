@@ -22,7 +22,7 @@ CURRENT = PythonInfo.current_system()
 
 
 # noinspection PyUnusedLocal
-def root(tmp_path_factory, session_app_data):
+def root(tmp_path_factory, session_app_data):  # noqa: U100
     return CURRENT.system_executable
 
 

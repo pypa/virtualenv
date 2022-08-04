@@ -40,7 +40,7 @@ def app_data(tmp_path_factory, for_py_version, next_pip_wheel):
             ],
         }
     )
-    yield app_data_
+    return app_data_
 
 
 def test_version_embed(app_data, for_py_version):

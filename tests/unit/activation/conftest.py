@@ -77,7 +77,7 @@ class ActivationTester:
             raw = raw_.decode()
         except subprocess.CalledProcessError as exception:
             output = exception.output + exception.stderr
-            assert not exception.returncode, output
+            assert not exception.returncode, output  # noqa: PT017
             return
 
         out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, re.M).strip().splitlines()
@@ -88,7 +88,7 @@ class ActivationTester:
         return self._invoke_script + [str(activate_script)]
 
     # noinspection PyMethodMayBeStatic
-    def env(self, tmp_path):
+    def env(self, tmp_path):  # noqa: U100
         env = os.environ.copy()
         # add the current python executable folder to the path so we already have another python on the path
         # also keep the path so the shells (fish, bash, etc can be discovered)
@@ -221,7 +221,7 @@ def activation_python(request, tmp_path_factory, special_char_name, current_fast
     session = cli_run(cmd)
     pydoc_test = session.creator.purelib / "pydoc_test.py"
     pydoc_test.write_text('"""This is pydoc_test.py"""')
-    yield session
+    return session
 
 
 @pytest.fixture()

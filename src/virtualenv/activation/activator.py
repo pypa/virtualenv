@@ -13,7 +13,7 @@ class Activator(metaclass=ABCMeta):
         self.flag_prompt = os.path.basename(os.getcwd()) if options.prompt == "." else options.prompt
 
     @classmethod
-    def supports(cls, interpreter):
+    def supports(cls, interpreter):  # noqa: U100
         """Check if the activation script is supported in the given interpreter.
 
         :param interpreter: the interpreter we need to support
@@ -22,7 +22,7 @@ class Activator(metaclass=ABCMeta):
         return True
 
     @classmethod
-    def add_parser_arguments(cls, parser, interpreter):
+    def add_parser_arguments(cls, parser, interpreter):  # noqa: U100
         """
         Add CLI arguments for this activation script.
 
@@ -31,7 +31,7 @@ class Activator(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def generate(self, creator):
+    def generate(self, creator):  # noqa: U100
         """Generate activate script for the given creator.
 
         :param creator: the creator (based of :class:`virtualenv.create.creator.Creator`) we used to create this \

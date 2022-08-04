@@ -55,7 +55,7 @@ def test_bad_exe_py_info_no_raise(tmp_path, caplog, capsys, session_app_data):
     "spec",
     itertools.chain(
         [sys.executable],
-        list(
+        [
             f"{impl}{'.'.join(str(i) for i in ver)}{arch}"
             for impl, ver, arch in itertools.product(
                 (
@@ -70,7 +70,7 @@ def test_bad_exe_py_info_no_raise(tmp_path, caplog, capsys, session_app_data):
                 [sys.version_info[0 : i + 1] for i in range(3)],
                 ["", f"-{CURRENT.architecture}"],
             )
-        ),
+        ],
     ),
 )
 def test_satisfy_py_info(spec):
@@ -130,7 +130,7 @@ def test_py_info_cached_symlink_error(mocker, tmp_path, session_app_data):
     assert spy.call_count == 2
 
 
-def test_py_info_cache_clear(mocker, tmp_path, session_app_data):
+def test_py_info_cache_clear(mocker, session_app_data):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
     result = PythonInfo.from_exe(sys.executable, session_app_data)
     assert result is not None
@@ -166,7 +166,7 @@ PyInfoMock = namedtuple("PyInfoMock", ["implementation", "architecture", "versio
 
 
 @pytest.mark.parametrize(
-    "target, position, discovered",
+    ("target", "position", "discovered"),
     [
         (
             PyInfoMock("CPython", 64, VersionInfo(3, 6, 8, "final", 0)),
@@ -225,7 +225,7 @@ def test_system_executable_no_exact_match(target, discovered, position, tmp_path
     mocker.patch.object(target_py_info, "_find_possible_folders", return_value=[str(tmp_path)])
 
     # noinspection PyUnusedLocal
-    def func(k, app_data, resolve_to_host, raise_on_error, env):
+    def func(k, app_data, resolve_to_host, raise_on_error, env):  # noqa: U100
         return discovered_with_path[k]
 
     mocker.patch.object(target_py_info, "from_exe", side_effect=func)
@@ -296,7 +296,8 @@ def test_py_info_setuptools():
     PythonInfo()
 
 
-def test_py_info_to_system_raises(session_app_data, mocker, caplog, skip_if_test_in_system):
+@pytest.mark.usefixtures("_skip_if_test_in_system")
+def test_py_info_to_system_raises(session_app_data, mocker, caplog):
     caplog.set_level(logging.DEBUG)
     mocker.patch.object(PythonInfo, "_find_possible_folders", return_value=[])
     result = PythonInfo.from_exe(sys.executable, app_data=session_app_data, raise_on_error=False)

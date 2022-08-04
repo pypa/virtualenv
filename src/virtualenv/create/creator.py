@@ -53,7 +53,7 @@ class Creator(metaclass=ABCMeta):
         ]
 
     @classmethod
-    def can_create(cls, interpreter):
+    def can_create(cls, interpreter):  # noqa: U100
         """Determine if we can create a virtual environment.
 
         :param interpreter: the interpreter in question
@@ -63,7 +63,7 @@ class Creator(metaclass=ABCMeta):
         return True
 
     @classmethod
-    def add_parser_arguments(cls, parser, interpreter, meta, app_data):
+    def add_parser_arguments(cls, parser, interpreter, meta, app_data):  # noqa: U100
         """Add CLI arguments for the creator.
 
         :param parser: the CLI parser

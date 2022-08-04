@@ -44,7 +44,7 @@ class PythonInfo(object):
             self.pypy_version_info = tuple(u(i) for i in sys.pypy_version_info)
 
         # this is a tuple in earlier, struct later, unify to our own named tuple
-        self.version_info = VersionInfo(*list(u(i) for i in sys.version_info))
+        self.version_info = VersionInfo(*[u(i) for i in sys.version_info])
         self.architecture = 64 if sys.maxsize > 2**32 else 32
 
         # Used to determine some file names.
@@ -486,7 +486,7 @@ class PythonInfo(object):
 
         # or at root level
         candidate_folder[inside_folder] = None
-        return list(i for i in candidate_folder.keys() if os.path.exists(i))
+        return [i for i in candidate_folder.keys() if os.path.exists(i)]
 
     def _find_possible_exe_names(self):
         name_candidate = OrderedDict()
