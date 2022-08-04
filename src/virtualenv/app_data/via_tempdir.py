@@ -21,7 +21,7 @@ class TempAppData(AppDataDiskFolder):
         logging.debug("remove temporary app data folder %s", self.lock.path)
         safe_delete(self.lock.path)
 
-    def embed_update_log(self, distribution, for_py_version):
+    def embed_update_log(self, distribution, for_py_version):  # noqa: U100
         raise NotImplementedError
 
 

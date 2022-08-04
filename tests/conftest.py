@@ -46,7 +46,7 @@ def pytest_collection_modifyitems(config, items):
 
 
 @pytest.fixture(scope="session")
-def has_symlink_support(tmp_path_factory):
+def has_symlink_support(tmp_path_factory):  # noqa: U100
     return fs_supports_symlink()
 
 
@@ -94,9 +94,9 @@ def link(link_folder, link_file):
 
 
 @pytest.fixture(autouse=True)
-def ensure_logging_stable():
+def _ensure_logging_stable():
     logger_level = LOGGER.level
-    handlers = [i for i in LOGGER.handlers]
+    handlers = list(LOGGER.handlers)
     filelock_logger = logging.getLogger("filelock")
     fl_level = filelock_logger.level
     yield
@@ -109,7 +109,7 @@ def ensure_logging_stable():
 
 
 @pytest.fixture(autouse=True)
-def check_cwd_not_changed_by_test():
+def _check_cwd_not_changed_by_test():
     old = os.getcwd()
     yield
     new = os.getcwd()
@@ -118,7 +118,7 @@ def check_cwd_not_changed_by_test():
 
 
 @pytest.fixture(autouse=True)
-def ensure_py_info_cache_empty(session_app_data):
+def _ensure_py_info_cache_empty(session_app_data):
     PythonInfo.clear_cache(session_app_data)
     yield
     PythonInfo.clear_cache(session_app_data)
@@ -137,14 +137,14 @@ def change_os_environ(key, value):
 
 
 @pytest.fixture(autouse=True, scope="session")
-def ignore_global_config(tmp_path_factory):
+def _ignore_global_config(tmp_path_factory):
     filename = str(tmp_path_factory.mktemp("folder") / "virtualenv-test-suite.ini")
     with change_os_environ("VIRTUALENV_CONFIG_FILE", filename):
         yield
 
 
 @pytest.fixture(autouse=True, scope="session")
-def pip_cert(tmp_path_factory):
+def _pip_cert(tmp_path_factory):
     # workaround for https://github.com/pypa/pip/issues/8984 - if the certificate is explicitly set no error can happen
     key = "PIP_CERT"
     if key in os.environ:
@@ -160,7 +160,7 @@ def pip_cert(tmp_path_factory):
 
 
 @pytest.fixture(autouse=True)
-def check_os_environ_stable():
+def _check_os_environ_stable():
     old = os.environ.copy()
     # ensure we don't inherit parent env variables
     to_clean = {
@@ -214,7 +214,7 @@ def coverage_env(monkeypatch, link, request):
     """
     Enable coverage report collection on the created virtual environments by injecting the coverage project
     """
-    if COVERAGE_RUN and "no_coverage" not in request.fixturenames:
+    if COVERAGE_RUN and "_no_coverage" not in request.fixturenames:
         # we inject right after creation, we cannot collect coverage on site.py - used for helper scripts, such as debug
         from virtualenv import run
 
@@ -252,9 +252,9 @@ def coverage_env(monkeypatch, link, request):
         yield finish
 
 
-# no_coverage tells coverage_env to disable coverage injection for no_coverage user.
-@pytest.fixture
-def no_coverage():
+# _no_coverage tells coverage_env to disable coverage injection for _no_coverage user.
+@pytest.fixture()
+def _no_coverage():
     pass
 
 
@@ -278,7 +278,7 @@ if COVERAGE_RUN:
                     self.targets.append((target, clean))
             return self
 
-        def __exit__(self, exc_type, exc_val, exc_tb):
+        def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: U100
             for target, clean in self.targets:
                 if target.exists():
                     clean()
@@ -287,7 +287,7 @@ if COVERAGE_RUN:
 
 @pytest.fixture(scope="session")
 def is_inside_ci():
-    yield bool(os.environ.get("CI_RUN"))
+    return bool(os.environ.get("CI_RUN"))
 
 
 @pytest.fixture(scope="session")
@@ -311,7 +311,7 @@ def special_char_name():
 @pytest.fixture()
 def special_name_dir(tmp_path, special_char_name):
     dest = Path(str(tmp_path)) / special_char_name
-    yield dest
+    return dest
 
 
 @pytest.fixture(scope="session")
@@ -366,7 +366,7 @@ def cross_python(is_inside_ci, session_app_data):
         if is_inside_ci:
             raise RuntimeError(msg)
         pytest.skip(msg=msg)
-    yield interpreter
+    return interpreter
 
 
 @pytest.fixture(scope="session")
@@ -375,7 +375,7 @@ def for_py_version():
 
 
 @pytest.fixture()
-def skip_if_test_in_system(session_app_data):
+def _skip_if_test_in_system(session_app_data):
     current = PythonInfo.current(session_app_data)
     if current.system_executable is not None:
         pytest.skip("test not valid if run under system")

@@ -77,7 +77,7 @@ def run():
         for key, versions in removed.items():
             print(f"* removed embedded {key} of {fmt_version(versions)}")
 
-        support_table = OrderedDict((".".join(str(j) for j in i), list()) for i in SUPPORT)
+        support_table = OrderedDict((".".join(str(j) for j in i), []) for i in SUPPORT)
         for package in sorted(new_batch.keys()):
             for folder, version in sorted(folders.items()):
                 if (folder / package).exists():

@@ -147,15 +147,14 @@ class WheelDownloader:
             return
         for dep in deps:
             req = Requirement(dep)
-            markers = getattr(req.marker, "_markers", tuple()) or ()
+            markers = getattr(req.marker, "_markers", ()) or ()
             if any(m for m in markers if isinstance(m, tuple) and len(m) == 3 and m[0].value == "extra"):
                 continue
             py_versions = WheelDownloader._marker_at(markers, "python_version")
             if py_versions:
                 marker = Marker('python_version < "1"')
                 marker._markers = [
-                    markers[ver]
-                    for ver in sorted(list(i for i in set(py_versions) | {i - 1 for i in py_versions} if i >= 0))
+                    markers[ver] for ver in sorted(i for i in set(py_versions) | {i - 1 for i in py_versions} if i >= 0)
                 ]
                 matches_python = marker.evaluate({"python_version": version})
                 if not matches_python:
@@ -207,7 +206,7 @@ class WheelDownloader:
                     return self._build_sdist(self.into, folder)
                 finally:
                     # permission error on Windows <3.7 https://bugs.python.org/issue26660
-                    def onerror(func, path, exc_info):
+                    def onerror(func, path, exc_info):  # noqa: U100
                         os.chmod(path, S_IWUSR)
                         func(path)
 

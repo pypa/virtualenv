@@ -23,12 +23,12 @@ class ReadOnlyAppData(AppDataDiskFolder):
     def py_info(self, path):
         return _PyInfoStoreDiskReadOnly(self.py_info_at, path)
 
-    def embed_update_log(self, distribution, for_py_version):
+    def embed_update_log(self, distribution, for_py_version):  # noqa: U100
         raise NotImplementedError
 
 
 class _PyInfoStoreDiskReadOnly(PyInfoStoreDisk):
-    def write(self, content):
+    def write(self, content):  # noqa: U100
         raise RuntimeError("read-only app data python info cannot be updated")
 
 

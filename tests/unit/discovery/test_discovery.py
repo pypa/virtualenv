@@ -44,7 +44,7 @@ def test_discovery_via_path_not_found(tmp_path, monkeypatch):
     assert interpreter is None
 
 
-def test_relative_path(tmp_path, session_app_data, monkeypatch):
+def test_relative_path(session_app_data, monkeypatch):
     sys_executable = Path(PythonInfo.current_system(app_data=session_app_data).system_executable)
     cwd = sys_executable.parents[1]
     monkeypatch.chdir(str(cwd))

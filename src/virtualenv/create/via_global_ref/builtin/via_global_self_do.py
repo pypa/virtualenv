@@ -52,7 +52,7 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, metaclas
             meta.sources.append(src)
 
     @classmethod
-    def setup_meta(cls, interpreter):
+    def setup_meta(cls, interpreter):  # noqa: U100
         return BuiltinViaGlobalRefMeta()
 
     @classmethod
@@ -64,7 +64,7 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, metaclas
         return self.bin_dir / src.name
 
     @classmethod
-    def _executables(cls, interpreter):
+    def _executables(cls, interpreter):  # noqa: U100
         raise NotImplementedError
 
     def create(self):

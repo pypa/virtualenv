@@ -130,7 +130,7 @@ class JSONStoreDisk(ContentStore, metaclass=ABCMeta):
             return data
         except ValueError:
             bad_format = True
-        except Exception:  # noqa
+        except Exception:
             pass
         if bad_format:
             try:

@@ -53,10 +53,10 @@ class FromAppData(BaseEmbed):
                         if not installer.has_image():
                             installer.build_image()
                     installer.install(creator.interpreter.version_info)
-                except Exception:  # noqa
+                except Exception:
                     exceptions[name] = sys.exc_info()
 
-            threads = list(Thread(target=_install, args=(n, w)) for n, w in name_to_whl.items())
+            threads = [Thread(target=_install, args=(n, w)) for n, w in name_to_whl.items()]
             for thread in threads:
                 thread.start()
             for thread in threads:
@@ -91,7 +91,7 @@ class FromAppData(BaseEmbed):
                     )
                     if result is not None:
                         break
-                except Exception as exception:  # noqa
+                except Exception as exception:
                     logging.exception("fail")
                     failure = exception
             if failure:
@@ -113,10 +113,10 @@ class FromAppData(BaseEmbed):
                 with lock:
                     name_to_whl[distribution] = result
 
-        threads = list(
+        threads = [
             Thread(target=_get, args=(distribution, version))
             for distribution, version in self.distribution_to_versions().items()
-        )
+        ]
         for thread in threads:
             thread.start()
         for thread in threads:

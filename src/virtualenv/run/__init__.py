@@ -46,7 +46,7 @@ def session_via_cli(args, options=None, setup_logging=True, env=None):
     parser, elements = build_parser(args, options, setup_logging, env)
     options = parser.parse_args(args)
     creator, seeder, activators = tuple(e.create(options) for e in elements)  # create types
-    of_session = Session(options.verbosity, options.app_data, parser._interpreter, creator, seeder, activators)  # noqa
+    of_session = Session(options.verbosity, options.app_data, parser._interpreter, creator, seeder, activators)
     return of_session
 
 
@@ -134,7 +134,7 @@ def add_version_flag(parser):
 
 
 def _do_report_setup(parser, args, setup_logging):
-    level_map = ", ".join(f"{logging.getLevelName(l)}={c}" for c, l in sorted(list(LEVELS.items())))
+    level_map = ", ".join(f"{logging.getLevelName(l)}={c}" for c, l in sorted(LEVELS.items()))
     msg = "verbosity = verbose - quiet, default {}, mapping => {}"
     verbosity_group = parser.add_argument_group(
         title="verbosity",

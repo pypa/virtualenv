@@ -61,7 +61,7 @@ class Describe(metaclass=ABCMeta):
         return {k: (to if v.startswith(self.interpreter.prefix) else v) for k, v in sys_vars.items()}
 
     @classmethod
-    def can_describe(cls, interpreter):
+    def can_describe(cls, interpreter):  # noqa: U100
         """Knows means it knows how the output will look"""
         return True
 

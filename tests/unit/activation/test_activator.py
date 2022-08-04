@@ -5,7 +5,7 @@ from virtualenv.activation.activator import Activator
 
 def test_activator_prompt_cwd(monkeypatch, tmp_path):
     class FakeActivator(Activator):
-        def generate(self, creator):
+        def generate(self, creator):  # noqa: U100
             raise NotImplementedError
 
     cwd = tmp_path / "magic"

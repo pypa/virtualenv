@@ -8,7 +8,8 @@ import pytest
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="no Windows registry")
-def test_pep514(_mock_registry):
+@pytest.mark.usefixtures("_mock_registry")
+def test_pep514():
     from virtualenv.discovery.windows.pep514 import discover_pythons
 
     interpreters = list(discover_pythons())
@@ -27,7 +28,8 @@ def test_pep514(_mock_registry):
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="no Windows registry")
-def test_pep514_run(_mock_registry, capsys, caplog):
+@pytest.mark.usefixtures("_mock_registry")
+def test_pep514_run(capsys, caplog):
     from virtualenv.discovery.windows import pep514
 
     pep514._run()
@@ -99,7 +101,7 @@ def _mock_registry(mocker):
         def __enter__(self):
             return self
 
-        def __exit__(self, exc_type, exc_val, exc_tb):
+        def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: U100
             return None
 
     @contextmanager

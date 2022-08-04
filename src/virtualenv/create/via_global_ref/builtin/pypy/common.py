@@ -44,7 +44,7 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin, metaclass=abc.ABCMeta):
         yield from cls._shared_libs(python_dir)
 
     @classmethod
-    def _shared_libs(cls, python_dir):
+    def _shared_libs(cls, python_dir):  # noqa: U100
         raise NotImplementedError
 
 

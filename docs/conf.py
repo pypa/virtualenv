@@ -78,9 +78,9 @@ def setup(app):
     if cli_interface_doctree.exists():
         cli_interface_doctree.unlink()
 
-    HERE = Path(__file__).parent
-    if str(HERE) not in sys.path:
-        sys.path.append(str(HERE))
+    here = Path(__file__).parent
+    if str(here) not in sys.path:
+        sys.path.append(str(here))
 
     # noinspection PyUnresolvedReferences
     from render_cli import CliTable, literal_data

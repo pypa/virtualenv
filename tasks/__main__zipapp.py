@@ -30,7 +30,7 @@ class VersionPlatformSelect(object):
     def __enter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: U100
         self._zip_file.close()
 
     def find_mod(self, fullname):
@@ -121,13 +121,13 @@ if NEW_IMPORT_SYSTEM:
     from importlib.util import spec_from_file_location
 
     class VersionedFindLoad(VersionPlatformSelect, SourceLoader):
-        def find_spec(self, fullname, path, target=None):
+        def find_spec(self, fullname, path, target=None):  # noqa: U100
             zip_path = self.find_mod(fullname)
             if zip_path is not None:
                 spec = spec_from_file_location(name=fullname, loader=self)
                 return spec
 
-        def module_repr(self, module):
+        def module_repr(self, module):  # noqa: U100
             raise NotImplementedError
 
 else:
@@ -135,7 +135,7 @@ else:
     from imp import new_module
 
     class VersionedFindLoad(VersionPlatformSelect):
-        def find_module(self, fullname, path=None):
+        def find_module(self, fullname, path=None):  # noqa: U100
             return self if self.find_mod(fullname) else None
 
         def load_module(self, fullname):

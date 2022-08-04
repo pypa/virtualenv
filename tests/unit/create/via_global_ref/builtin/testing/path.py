@@ -67,7 +67,7 @@ class PathMockABC(FakeDataABC, Path):
         yield from map(self.joinpath, self.contained_fake_names)
 
 
-def MetaPathMock(filelist):
+def MetaPathMock(filelist):  # noqa: N802
     """
     Metaclass that creates a `PathMock` class with the `filelist` defined.
     """
@@ -75,7 +75,7 @@ def MetaPathMock(filelist):
 
 
 def mock_files(mocker, pathlist, filelist):
-    PathMock = MetaPathMock(set(filelist))
+    PathMock = MetaPathMock(set(filelist))  # noqa: N806
     for path in pathlist:
         mocker.patch(path, PathMock)
 

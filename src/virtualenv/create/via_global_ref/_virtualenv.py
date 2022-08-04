@@ -48,7 +48,7 @@ if sys.version_info > (3, 4):
         # See https://github.com/pypa/virtualenv/issues/1895 for details.
         lock = []
 
-        def find_spec(self, fullname, path, target=None):
+        def find_spec(self, fullname, path, target=None):  # noqa: U100
             if fullname in _DISTUTILS_PATCH and self.fullname is None:
                 # initialize lock[0] lazily
                 if len(self.lock) == 0:

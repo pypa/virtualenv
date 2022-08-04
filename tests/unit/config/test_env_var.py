@@ -9,19 +9,21 @@ from virtualenv.run import session_via_cli
 
 
 @pytest.fixture()
-def empty_conf(tmp_path, monkeypatch):
+def _empty_conf(tmp_path, monkeypatch):
     conf = tmp_path / "conf.ini"
     monkeypatch.setenv(IniConfig.VIRTUALENV_CONFIG_FILE_ENV_VAR, str(conf))
     conf.write_text("[virtualenv]")
 
 
-def test_value_ok(monkeypatch, empty_conf):
+@pytest.mark.usefixtures("_empty_conf")
+def test_value_ok(monkeypatch):
     monkeypatch.setenv("VIRTUALENV_VERBOSE", "5")
     result = session_via_cli(["venv"])
     assert result.verbosity == 5
 
 
-def test_value_bad(monkeypatch, caplog, empty_conf):
+@pytest.mark.usefixtures("_empty_conf")
+def test_value_bad(monkeypatch, caplog):
     monkeypatch.setenv("VIRTUALENV_VERBOSE", "a")
     result = session_via_cli(["venv"])
     assert result.verbosity == 2
@@ -69,7 +71,8 @@ def test_extra_search_dir_via_env_var(tmp_path, monkeypatch):
     assert result.seeder.extra_search_dir == [Path("a").resolve(), Path("b").resolve(), Path("c").resolve()]
 
 
-def test_value_alias(monkeypatch, mocker, empty_conf):
+@pytest.mark.usefixtures("_empty_conf")
+def test_value_alias(monkeypatch, mocker):
     from virtualenv.config.cli.parser import VirtualEnvConfigParser
 
     prev = VirtualEnvConfigParser._fix_default

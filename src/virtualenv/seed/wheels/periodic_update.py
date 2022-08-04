@@ -318,7 +318,7 @@ def release_date_for_wheel_path(dest):
 def _request_context():
     yield None
     # fallback to non verified HTTPS (the information we request is not sensitive, so fallback)
-    yield ssl._create_unverified_context()  # noqa
+    yield ssl._create_unverified_context()
 
 
 _PYPI_CACHE = {}

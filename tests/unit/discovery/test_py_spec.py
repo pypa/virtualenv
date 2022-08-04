@@ -45,7 +45,7 @@ def test_spec_satisfies_arch():
 
 
 @pytest.mark.parametrize(
-    "req, spec",
+    ("req", "spec"),
     list(itertools.combinations(["py", "CPython", "python"], 2)) + [("jython", "jython")] + [("CPython", "cpython")],
 )
 def test_spec_satisfies_implementation_ok(req, spec):
@@ -75,7 +75,7 @@ def _version_satisfies_pairs():
     return sorted(target)
 
 
-@pytest.mark.parametrize("req, spec", _version_satisfies_pairs())
+@pytest.mark.parametrize(("req", "spec"), _version_satisfies_pairs())
 def test_version_satisfies_ok(req, spec):
     req_spec = PythonSpec.from_string_spec(f"python{req}")
     sat_spec = PythonSpec.from_string_spec(f"python{spec}")
@@ -100,7 +100,7 @@ def _version_not_satisfies_pairs():
     return sorted(target)
 
 
-@pytest.mark.parametrize("req, spec", _version_not_satisfies_pairs())
+@pytest.mark.parametrize(("req", "spec"), _version_not_satisfies_pairs())
 def test_version_satisfies_nok(req, spec):
     req_spec = PythonSpec.from_string_spec(f"python{req}")
     sat_spec = PythonSpec.from_string_spec(f"python{spec}")

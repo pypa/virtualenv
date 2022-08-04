@@ -17,7 +17,7 @@ class CPython2(CPython, Python2, metaclass=abc.ABCMeta):
         # include folder needed on Python 2 as we don't have pyenv.cfg
         host_include_marker = cls.host_include_marker(interpreter)
         if host_include_marker.exists():
-            yield PathRefToDest(host_include_marker.parent, dest=lambda self, _: self.include)
+            yield PathRefToDest(host_include_marker.parent, dest=lambda self, _: self.include)  # noqa: U101
 
     @classmethod
     def needs_stdlib_py_module(cls):
@@ -57,7 +57,7 @@ class CPython2PosixBase(CPython2, CPythonPosix, metaclass=abc.ABCMeta):
         make_file = Path(interpreter.sysconfig["makefile_filename"])
         if make_file.exists() and str(make_file).startswith(interpreter.prefix):
             under_prefix = make_file.relative_to(Path(interpreter.prefix))
-            yield PathRefToDest(make_file, dest=lambda self, s: self.dest / under_prefix)
+            yield PathRefToDest(make_file, dest=lambda self, s: self.dest / under_prefix)  # noqa: U100
 
 
 class CPython2Posix(CPython2PosixBase):
