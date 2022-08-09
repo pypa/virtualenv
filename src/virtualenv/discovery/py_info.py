@@ -136,7 +136,10 @@ class PythonInfo(object):
         if result is None:  # use sysconfig if sysconfig_scheme is set or distutils is unavailable
             # set prefixes to empty => result is relative from cwd
             prefixes = self.prefix, self.exec_prefix, self.base_prefix, self.base_exec_prefix
-            config_var = {k: "" if v in prefixes else v for k, v in self.sysconfig_vars.items()}
+            # Fedora-based distributions mangle the default value of some of those to /usr/local
+            # so we are extra careful here: we set them to empty based on value and key
+            prefix_vars = "prefix", "exec_prefix", "installed_base", "base", "installed_platbase", "platbase"
+            config_var = {k: "" if v in prefixes or k in prefix_vars else v for k, v in self.sysconfig_vars.items()}
             result = self.sysconfig_path(key, config_var=config_var).lstrip(os.sep)
         return result
 
