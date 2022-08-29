@@ -63,6 +63,7 @@ dword
 dylib
 endian
 enquote
+ensurepip
 epilog
 exe
 executables
@@ -85,6 +86,10 @@ getoption
 getplugin
 getsitepackages
 gevent
+graal
+graalpy
+graalpy22
+graalpython
 groupby
 hgignore
 hkey

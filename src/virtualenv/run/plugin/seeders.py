@@ -22,9 +22,8 @@ class SeederSelector(ComponentBuilder):
             dest="no_seed",
         )
 
-    @staticmethod
-    def _get_default():
-        return "app-data"
+    def _get_default(self):
+        return "ensurepip" if self.interpreter.implementation == "GraalVM" else "app-data"
 
     def handle_selected_arg_parse(self, options):
         return super().handle_selected_arg_parse(options)

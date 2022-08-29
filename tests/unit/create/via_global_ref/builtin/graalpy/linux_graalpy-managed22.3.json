@@ -1,0 +1,65 @@
+{
+  "platform": "linux",
+  "implementation": "GraalVM",
+  "version_info": {
+    "major": 3,
+    "minor": 8,
+    "micro": 5,
+    "releaselevel": "alpha",
+    "serial": 0
+  },
+  "architecture": 32,
+  "version_nodot": "38",
+  "version": "3.8.5 (Mon Sep 26 19:58:09 UTC 2022)\n[Graal, GraalVM EE, Java 17.0.5]",
+  "os": "posix",
+  "prefix": "/graalvm-ee-java17-22.3.0/languages/python",
+  "base_prefix": "/graalvm-ee-java17-22.3.0/languages/python",
+  "real_prefix": null,
+  "base_exec_prefix": "/graalvm-ee-java17-22.3.0/languages/python",
+  "exec_prefix": "/graalvm-ee-java17-22.3.0/languages/python",
+  "executable": "/graalvm-ee-java17-22.3.0/bin/graalpy-managed",
+  "original_executable": "/graalvm-ee-java17-22.3.0/bin/graalpy-managed",
+  "system_executable": "/graalvm-ee-java17-22.3.0/bin/graalpy-managed",
+  "has_venv": true,
+  "path": [
+    "/graalvm-ee-java17-22.3.0/languages/python/lib-python/3",
+    "/graalvm-ee-java17-22.3.0/languages/python/lib-graalpython/modules"
+  ],
+  "file_system_encoding": "utf-8",
+  "stdout_encoding": "utf-8",
+  "sysconfig_scheme": null,
+  "sysconfig_paths": {
+    "stdlib": "{installed_base}/lib-python/3",
+    "platstdlib": "{base}/lib-python/3",
+    "purelib": "{base}/lib/python{py_version_short}/site-packages",
+    "platlib": "{base}/lib/python{py_version_short}/site-packages",
+    "include": "{installed_base}/include",
+    "scripts": "{base}/bin",
+    "data": "{base}"
+  },
+  "distutils_install": {
+    "purelib": "lib/python3.8/site-packages",
+    "platlib": "lib/python3.8/site-packages",
+    "headers": "include/UNKNOWN",
+    "scripts": "bin",
+    "data": ""
+  },
+  "sysconfig": {
+    "makefile_filename": "/graalvm-ee-java17-22.3.0/languages/python/lib-python/3/config-3.8-x86_64-linux/Makefile"
+  },
+  "sysconfig_vars": {
+    "installed_base": "/graalvm-ee-java17-22.3.0/languages/python",
+    "base": "/graalvm-ee-java17-22.3.0/languages/python",
+    "py_version_short": "3.8",
+    "PYTHONFRAMEWORK": ""
+  },
+  "extra_tools": {
+    "/graalvm-ee-java17-22.3.0/languages/llvm/managed/bin/graalvm-managed-clang": [
+      "cc"
+    ]
+  },
+  "system_stdlib": "/graalvm-ee-java17-22.3.0/languages/python/lib-python/3",
+  "system_stdlib_platform": "/graalvm-ee-java17-22.3.0/languages/python/lib-python/3",
+  "max_size": 2147483647,
+  "_creators": null
+}

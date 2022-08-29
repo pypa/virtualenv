@@ -110,6 +110,10 @@ class PythonInfo(object):
         if self.implementation == "PyPy" and sys.version_info.major == 2:
             self.sysconfig_vars["implementation_lower"] = "python"
 
+        if self.implementation == "GraalVM":
+            getter = getattr(__graalpython__, "get_toolchain_tools_for_venv", None)  # noqa: F821
+            self.extra_tools = getter() if getter else None
+
         confs = {k: (self.system_prefix if v.startswith(self.prefix) else v) for k, v in self.sysconfig_vars.items()}
         self.system_stdlib = self.sysconfig_path("stdlib", confs)
         self.system_stdlib_platform = self.sysconfig_path("platstdlib", confs)
