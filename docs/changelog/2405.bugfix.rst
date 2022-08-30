@@ -1,1 +1,0 @@
-Bump embed setuptools to ``65.3`` - by :user:`gaborbernat`.
