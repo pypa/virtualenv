@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.16.5 (2022-09-07)
+---------------------
+
+Bugfixes - 20.16.5
+~~~~~~~~~~~~~~~~~~
+- Do not turn echo off for subsequent commands in batch activators
+  (``activate.bat`` and ``deactivate.bat``) - by :user:`pawelszramowski`. (`#2411 <https://github.com/pypa/virtualenv/issues/2411>`_)
+
+
 v20.16.4 (2022-08-29)
 ---------------------
 
