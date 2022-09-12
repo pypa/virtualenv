@@ -77,10 +77,23 @@ class PythonInfo(object):
         self.file_system_encoding = u(sys.getfilesystemencoding())
         self.stdout_encoding = u(getattr(sys.stdout, "encoding", None))
 
-        if "venv" in sysconfig.get_scheme_names():
+        scheme_names = sysconfig.get_scheme_names()
+
+        if "venv" in scheme_names:
             self.sysconfig_scheme = "venv"
             self.sysconfig_paths = {
-                u(i): u(sysconfig.get_path(i, expand=False, scheme="venv")) for i in sysconfig.get_path_names()
+                u(i): u(sysconfig.get_path(i, expand=False, scheme=self.sysconfig_scheme))
+                for i in sysconfig.get_path_names()
+            }
+            # we cannot use distutils at all if "venv" exists, distutils don't know it
+            self.distutils_install = {}
+        # debian / ubuntu python 3.10 without `python3-distutils` will report
+        # mangled `local/bin` / etc. names for the default prefix
+        # intentionally select `posix_prefix` which is the unaltered posix-like paths
+        elif sys.version_info[:2] == (3, 10) and "deb_system" in scheme_names:
+            self.sysconfig_scheme = "posix_prefix"
+            self.sysconfig_paths = {
+                i: sysconfig.get_path(i, expand=False, scheme=self.sysconfig_scheme) for i in sysconfig.get_path_names()
             }
             # we cannot use distutils at all if "venv" exists, distutils don't know it
             self.distutils_install = {}
