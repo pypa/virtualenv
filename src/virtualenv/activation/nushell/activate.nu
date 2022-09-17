@@ -47,7 +47,7 @@ export-env {
     )
 
     let venv_path = ([$virtual_env $bin] | path join)
-    let new_path = ($old_path | prepend $venv_path | str join $path_sep)
+    let new_path = ($old_path | prepend $venv_path | str collect $path_sep)
 
     # Creating the new prompt for the session
     let virtual_prompt = if ('__VIRTUAL_PROMPT__' == '') {
@@ -82,7 +82,7 @@ export-env {
     load-env {
         $path_name          : $new_path
         VIRTUAL_ENV         : $virtual_env
-        _OLD_VIRTUAL_PATH   : ($old_path | str join $path_sep)
+        _OLD_VIRTUAL_PATH   : ($old_path | str collect $path_sep)
         _OLD_PROMPT_COMMAND : $old_prompt_command
         PROMPT_COMMAND      : $new_prompt
         VIRTUAL_PROMPT      : $virtual_prompt
