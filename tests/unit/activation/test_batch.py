@@ -21,8 +21,7 @@ def test_batch(activation_tester_class, activation_tester, tmp_path):
             self.unix_line_ending = False
 
         def _get_test_lines(self, activate_script):
-            # for BATCH utf-8 support need change the character code page to 650001
-            return ["@echo off", "", "chcp 65001 1>NUL"] + super()._get_test_lines(activate_script)
+            return ["@echo off", ""] + super()._get_test_lines(activate_script)
 
         def quote(self, s):
             """double quotes needs to be single, and single need to be double"""
