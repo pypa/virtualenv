@@ -161,7 +161,7 @@ class ActivationTester:
         return NotImplemented
 
     def activate_call(self, script):
-        cmd = " ".join([str(cmd) for cmd in self.activate_cmd])
+        cmd = " ".join([self.quote(str(cmd)) for cmd in self.activate_cmd])
         scr = self.quote(str(script))
         return f"{cmd} {scr}".strip()
 

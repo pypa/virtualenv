@@ -18,4 +18,9 @@ def test_nushell(activation_tester_class, activation_tester):
         def print_prompt(self):
             return r"$env.VIRTUAL_PROMPT"
 
+        def activate_call(self, script):
+            cmd = " ".join([str(cmd) for cmd in self.activate_cmd])
+            scr = self.quote(str(script))
+            return f"{cmd} {scr}".strip()
+
     activation_tester(Nushell)
