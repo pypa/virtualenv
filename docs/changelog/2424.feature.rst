@@ -1,0 +1,1 @@
+Change shell test activation command to be a list of commands.
