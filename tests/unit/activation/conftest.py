@@ -20,7 +20,7 @@ class ActivationTester:
         self._invoke_script = [cmd]
         self.activate_script = activate_script
         self.extension = extension
-        self.activate_cmd = "source"
+        self.activate_cmd = ["source"]
         self.deactivate = "deactivate"
         self.pydoc_call = "pydoc -w pydoc_test"
         self.script_encoding = "utf-8"
@@ -161,7 +161,7 @@ class ActivationTester:
         return NotImplemented
 
     def activate_call(self, script):
-        cmd = self.quote(str(self.activate_cmd))
+        cmd = " ".join([str(cmd) for cmd in self.activate_cmd])
         scr = self.quote(str(script))
         return f"{cmd} {scr}".strip()
 
