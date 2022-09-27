@@ -11,7 +11,7 @@ import pytest
 from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import IS_WIN, fs_supports_symlink
+from virtualenv.info import fs_supports_symlink
 from virtualenv.report import LOGGER
 
 
@@ -294,7 +294,7 @@ def is_inside_ci():
 def special_char_name():
     base = "e-$ èрт🚒♞中片-j"
     # workaround for pypy3 https://bitbucket.org/pypy/pypy/issues/3147/venv-non-ascii-support-windows
-    encoding = "ascii" if IS_WIN else sys.getfilesystemencoding()
+    encoding = sys.getfilesystemencoding()
     # let's not include characters that the file system cannot encode)
     result = ""
     for char in base:
