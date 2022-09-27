@@ -20,8 +20,31 @@ def test_batch(activation_tester_class, activation_tester, tmp_path):
             self.pydoc_call = f"call {self.pydoc_call}"
             self.unix_line_ending = False
 
+        def set_code_page_utf8(self):
+            return """
+            for /f "tokens=2 delims=:." %%a in ('"%SystemRoot%\\System32\\chcp.com"') do (
+                set _OLD_CODEPAGE=%%a
+            )
+            if defined _OLD_CODEPAGE (
+                "%SystemRoot%\\System32\\chcp.com" 65001 > nul
+            )
+            """.strip().splitlines()
+
+        def unset_code_page_utf8(self):
+            return """
+            if defined _OLD_CODEPAGE (
+                "%SystemRoot%\\System32\\chcp.com" %_OLD_CODEPAGE% > nul
+                set _OLD_CODEPAGE=
+            )
+            """.strip().splitlines()
+
         def _get_test_lines(self, activate_script):
-            return ["@echo off", ""] + super()._get_test_lines(activate_script)
+            return (
+                ["@echo off", ""]
+                + self.set_code_page_utf8()
+                + super()._get_test_lines(activate_script)
+                + self.unset_code_page_utf8()
+            )
 
         def quote(self, s):
             """double quotes needs to be single, and single need to be double"""
