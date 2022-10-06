@@ -1,1 +1,1 @@
-Drop support for PyPy3.6, PyPy3.7 which are no longer supported upstream.
+Drop unneeded shims for PyPy3 directory structure
