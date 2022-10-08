@@ -83,7 +83,7 @@ def _find_downloaded_wheel(distribution, version_spec, for_py_version, to_folder
 def find_compatible_in_house(distribution, version_spec, for_py_version, in_folder):
     wheels = discover_wheels(in_folder, distribution, None, for_py_version)
     start, end = 0, len(wheels)
-    if version_spec is not None:
+    if version_spec is not None and version_spec != "":
         if version_spec.startswith("<"):
             from_pos, op = 1, lt
         elif version_spec.startswith("=="):
