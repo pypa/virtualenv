@@ -3,7 +3,6 @@ The PythonInfo contains information about a concrete instance of a Python interp
 
 Note: this file is also used to query target interpreters, so can only use standard library methods
 """
-from __future__ import absolute_import, print_function
 
 import json
 import logging
@@ -27,7 +26,7 @@ EXTENSIONS = _get_path_extensions()
 _CONF_VAR_RE = re.compile(r"\{\w+\}")
 
 
-class PythonInfo(object):
+class PythonInfo:
     """Contains information for a Python interpreter"""
 
     def __init__(self):

@@ -1,5 +1,4 @@
 """Patches that are applied at runtime to the virtual environment"""
-# -*- coding: utf-8 -*-
 
 import os
 import sys
@@ -103,7 +102,7 @@ else:
     from imp import find_module
     from pkgutil import ImpImporter, ImpLoader
 
-    class _VirtualenvImporter(object, ImpImporter):
+    class _VirtualenvImporter(ImpImporter):
         def __init__(self, path=None):
             object.__init__(self)
             ImpImporter.__init__(self, path)
@@ -116,13 +115,13 @@ else:
                     pass
             return None
 
-    class _VirtualenvLoader(object, ImpLoader):
+    class _VirtualenvLoader(ImpLoader):
         def __init__(self, fullname, file, filename, etc):
             object.__init__(self)
             ImpLoader.__init__(self, fullname, file, filename, etc)
 
         def load_module(self, fullname):
-            module = super(_VirtualenvLoader, self).load_module(fullname)
+            module = super().load_module(fullname)
             patch_dist(module)
             module.__loader__ = None  # distlib fallback
             return module

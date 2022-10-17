@@ -66,7 +66,7 @@ def handle_file(previous_content, filename, variable_name, previous_encoded):
 def report(exit_code, new, next_match, current, script_path):
     if new != current:
         print("Content updated; overwriting... ", end="")
-        with open(script_path, "wt") as current_fh:
+        with open(script_path, "w") as current_fh:
             current_fh.write(new)
         print("done.")
     else:
