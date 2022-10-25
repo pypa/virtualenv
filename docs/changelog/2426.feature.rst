@@ -1,0 +1,1 @@
+Drop unneeded shims for PyPy3 directory structure
