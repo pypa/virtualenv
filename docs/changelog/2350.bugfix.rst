@@ -1,1 +1,0 @@
-Fix selected scheme on debian derivatives for python 3.10 when ``python3-distutils`` is not installed or the ``venv`` scheme is not avaiable - by :user:`asottile`.

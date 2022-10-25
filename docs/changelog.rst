@@ -5,6 +5,21 @@ Release History
 
 .. towncrier release notes start
 
+v20.16.6 (2022-10-25)
+---------------------
+
+Features - 20.16.6
+~~~~~~~~~~~~~~~~~~
+- Drop unneeded shims for PyPy3 directory structure (`#2426 <https://github.com/pypa/virtualenv/issues/2426>`_)
+
+Bugfixes - 20.16.6
+~~~~~~~~~~~~~~~~~~
+- Fix selected scheme on debian derivatives for python 3.10 when ``python3-distutils`` is not installed or the ``venv`` scheme is not avaiable - by :user:`asottile`. (`#2350 <https://github.com/pypa/virtualenv/issues/2350>`_)
+- Allow the test suite to pass even with the original C shell (rather than ``tcsh``) - by :user:`kulikjak`. (`#2418 <https://github.com/pypa/virtualenv/issues/2418>`_)
+- Fix fallback handling of downloading wheels for bundled packages - by :user:`schaap`. (`#2429 <https://github.com/pypa/virtualenv/issues/2429>`_)
+- Upgrade embedded setuptools to ``65.5.0`` from ``65.3.0`` and pip to ``22.3`` from ``22.2.2`` - by :user:`gaborbernat`. (`#2434 <https://github.com/pypa/virtualenv/issues/2434>`_)
+
+
 v20.16.5 (2022-09-07)
 ---------------------
 

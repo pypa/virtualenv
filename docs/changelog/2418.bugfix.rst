@@ -1,1 +1,0 @@
-Allow the test suite to pass even with the original C shell (rather than ``tcsh``) - by :user:`kulikjak`.
