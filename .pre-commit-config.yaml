@@ -32,7 +32,7 @@ repos:
   rev: v1.12.1
   hooks:
   - id: blacken-docs
-    additional_dependencies: [black==22.6]
+    additional_dependencies: [black==22.10]
 - repo: https://github.com/pre-commit/pygrep-hooks
   rev: v1.9.0
   hooks:
@@ -52,10 +52,10 @@ repos:
   hooks:
   - id: flake8
     additional_dependencies:
-      - flake8-bugbear==22.7.1
+      - flake8-bugbear==22.10.25
       - flake8-comprehensions==3.10
       - flake8-pytest-style==1.6
       - flake8-spellcheck==0.28
-      - flake8-unused-arguments==0.0.11
+      - flake8-unused-arguments==0.0.12
       - flake8-noqa==1.2.9
       - pep8-naming==0.13.2

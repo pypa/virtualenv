@@ -22,7 +22,7 @@ class Activator(metaclass=ABCMeta):
         return True
 
     @classmethod
-    def add_parser_arguments(cls, parser, interpreter):  # noqa: U100
+    def add_parser_arguments(cls, parser, interpreter):  # noqa: U100,B027
         """
         Add CLI arguments for this activation script.
 
