@@ -1,0 +1,1 @@
+Upgrade embedded setuptools to ``65.5.0`` from ``65.3.0`` and pip to ``22.3`` from ``22.2.2`` - by :user:`gaborbernat`.
