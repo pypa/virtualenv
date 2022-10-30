@@ -55,8 +55,8 @@ repos:
   hooks:
   - id: flake8
     additional_dependencies:
-      - flake8-bugbear==22.10.25
-      - flake8-comprehensions==3.10
+      - flake8-bugbear==22.10.27
+      - flake8-comprehensions==3.10.1
       - flake8-pytest-style==1.6
       - flake8-spellcheck==0.28
       - flake8-unused-arguments==0.0.12
