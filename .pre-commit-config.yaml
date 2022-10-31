@@ -12,13 +12,13 @@ repos:
   - id: end-of-file-fixer
   - id: trailing-whitespace
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.1.0
+  rev: v3.2.0
   hooks:
   - id: pyupgrade
     args: ["--py36-plus"]
     exclude: "^(src/virtualenv/create/via_global_ref/_virtualenv.py|src/virtualenv/create/via_global_ref/builtin/python2/site.py|src/virtualenv/discovery/py_info.py|tasks/__main__zipapp.py)$"
 - repo: https://github.com/asottile/pyupgrade
-  rev: v2.38.4
+  rev: v3.2.0
   hooks:
   - id: pyupgrade
     files: "^(src/virtualenv/create/via_global_ref/_virtualenv.py|src/virtualenv/create/via_global_ref/builtin/python2/site.py|src/virtualenv/discovery/py_info.py|tasks/__main__zipapp.py)$"
