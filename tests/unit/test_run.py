@@ -1,7 +1,6 @@
 import logging
 
 import pytest
-import six
 
 from virtualenv import __version__
 from virtualenv.run import cli_run, session_via_cli
@@ -22,10 +21,8 @@ def test_version(capsys):
         cli_run(args=["--version"])
     assert context.value.code == 0
 
-    out, err = capsys.readouterr()
-    extra = out if six.PY2 else err
-    content = out if six.PY3 else err
-    assert not extra
+    content, err = capsys.readouterr()
+    assert not err
 
     assert __version__ in content
     import virtualenv
