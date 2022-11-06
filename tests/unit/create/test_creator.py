@@ -318,6 +318,28 @@ def test_prompt_set(tmp_path, creator, prompt):
             assert cfg["prompt"] == actual_prompt
 
 
+@pytest.mark.parametrize("creator", CURRENT_CREATORS)
+def test_home_path_is_exe_parent(tmp_path, creator):
+    cmd = [str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", creator]
+
+    result = cli_run(cmd)
+    cfg = PyEnvCfg.from_file(result.creator.pyenv_cfg.path)
+
+    # Cannot assume "home" path is a specific value as path resolution may change
+    # between versions (symlinks, framework paths, etc) but we can check that a
+    # python executable is present from the configured path per PEP 405
+    if sys.platform == "win32":
+        exes = ("python.exe",)
+    else:
+        exes = (
+            "python",
+            f"python{sys.version_info.major}",
+            f"python{sys.version_info.major}.{sys.version_info.minor}",
+        )
+
+    assert any(os.path.exists(os.path.join(cfg["home"], exe)) for exe in exes)
+
+
 @pytest.mark.slow()
 @pytest.mark.usefixtures("current_fastest")
 def test_cross_major(cross_python, coverage_env, tmp_path, session_app_data):

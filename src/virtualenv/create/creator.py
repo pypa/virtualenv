@@ -157,7 +157,7 @@ class Creator(metaclass=ABCMeta):
 
     def set_pyenv_cfg(self):
         self.pyenv_cfg.content = OrderedDict()
-        self.pyenv_cfg["home"] = self.interpreter.system_exec_prefix
+        self.pyenv_cfg["home"] = os.path.dirname(os.path.abspath(self.interpreter.system_executable))
         self.pyenv_cfg["implementation"] = self.interpreter.implementation
         self.pyenv_cfg["version_info"] = ".".join(str(i) for i in self.interpreter.version_info)
         self.pyenv_cfg["virtualenv"] = __version__
