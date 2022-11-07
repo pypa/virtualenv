@@ -378,6 +378,29 @@ def test_custom_venv_install_scheme_is_prefered(mocker):
     assert pyinfo.install_path("purelib").replace(os.sep, "/") == f"lib/python{pyver}/site-packages"
 
 
+@pytest.mark.skipif(not (os.name == "posix" and sys.version_info[:2] >= (3, 11)), reason="POSIX 3.11+ specific")
+def test_fallback_existent_system_executable(mocker):
+    current = PythonInfo()
+    # Posix may execute a "python" out of a venv but try to set the base_executable
+    # to "python" out of the system installation path. PEP 394 informs distributions
+    # that "python" is not required and the standard `make install` does not provide one
+
+    # Falsify some data to look like we're in a venv
+    current.prefix = current.exec_prefix = "/tmp/tmp.izZNCyINRj/venv"
+    current.executable = current.original_executable = os.path.join(current.prefix, "bin/python")
+
+    # Since we don't know if the distribution we're on provides python, use a binary that should not exist
+    mocker.patch.object(sys, "_base_executable", os.path.join(os.path.dirname(current.system_executable), "idontexist"))
+    mocker.patch.object(sys, "executable", current.executable)
+
+    # ensure it falls back to an alternate binary name that exists
+    current._fast_get_system_executable()
+    assert os.path.basename(current.system_executable) in [
+        f"python{v}" for v in (current.version_info.major, f"{current.version_info.major}.{current.version_info.minor}")
+    ]
+    assert os.path.exists(current.system_executable)
+
+
 @pytest.mark.skipif(sys.version_info[:2] != (3, 10), reason="3.10 specific")
 def test_uses_posix_prefix_on_debian_3_10_without_venv(mocker):
     # this is taken from ubuntu 22.04 /usr/lib/python3.10/sysconfig.py
