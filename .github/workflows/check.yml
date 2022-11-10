@@ -23,16 +23,16 @@ jobs:
           - "3.8"
           - "3.7"
           - "3.6"
-          - pypy-3.9-v7.3.9
-          - pypy-3.8-v7.3.9
-          - pypy-3.7-v7.3.9
-          - pypy-3.6-v7.3.3
+          - pypy-3.9
+          - pypy-3.8
+          - pypy-3.7
+          - pypy-3.6
         os:
           - ubuntu-20.04
           - macos-12
           - windows-2022
         exclude:
-          - { os: macos-12, py: "pypy-3.6-v7.3.3" } # PyPy 3.6 does not support macOS 11/12
+          - { os: macos-12, py: "pypy-3.6" } # PyPy 3.6 does not support macOS 11/12
         include:
           - { os: macos-12, py: "brew@3.9" }
           - { os: macos-12, py: "brew@3.8" }
