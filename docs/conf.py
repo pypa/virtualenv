@@ -50,10 +50,10 @@ autodoc_member_order = "bysource"
 autosectionlabel_prefix_document = True
 
 extlinks = {
-    "issue": ("https://github.com/pypa/virtualenv/issues/%s", "#"),
-    "pull": ("https://github.com/pypa/virtualenv/pull/%s", "PR #"),
-    "user": ("https://github.com/%s", "@"),
-    "pypi": ("https://pypi.org/project/%s", ""),
+    "issue": ("https://github.com/pypa/virtualenv/issues/%s", "#%s"),
+    "pull": ("https://github.com/pypa/virtualenv/pull/%s", "PR #%s"),
+    "user": ("https://github.com/%s", "@%s"),
+    "pypi": ("https://pypi.org/project/%s", "%s"),
 }
 
 
