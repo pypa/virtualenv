@@ -1,0 +1,1 @@
+In POSIX virtual environments, try alternate binary names if ``sys._base_executable`` does not exist - by :user:`vfazio`.

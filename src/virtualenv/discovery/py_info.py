@@ -138,7 +138,24 @@ class PythonInfo(object):
                 base_executable = getattr(sys, "_base_executable", None)  # some platforms may set this to help us
                 if base_executable is not None:  # use the saved system executable if present
                     if sys.executable != base_executable:  # we know we're in a virtual environment, cannot be us
-                        return base_executable
+                        if os.path.exists(base_executable):
+                            return base_executable
+                        # Python may return "python" because it was invoked from the POSIX virtual environment
+                        # however some installs/distributions do not provide a version-less "python" binary in
+                        # the system install location (see PEP 394) so try to fallback to a versioned binary.
+                        #
+                        # Gate this to Python 3.11 as `sys._base_executable` path resolution is now relative to
+                        # the 'home' key from pyvenv.cfg which often points to the system install location.
+                        major, minor = self.version_info.major, self.version_info.minor
+                        if self.os == "posix" and (major, minor) >= (3, 11):
+                            # search relative to the directory of sys._base_executable
+                            base_dir = os.path.dirname(base_executable)
+                            for base_executable in [
+                                os.path.join(base_dir, exe)
+                                for exe in ("python{}".format(major), "python{}.{}".format(major, minor))
+                            ]:
+                                if os.path.exists(base_executable):
+                                    return base_executable
             return None  # in this case we just can't tell easily without poking around FS and calling them, bail
         # if we're not in a virtual environment, this is already a system python, so return the original executable
         # note we must choose the original and not the pure executable as shim scripts might throw us off
