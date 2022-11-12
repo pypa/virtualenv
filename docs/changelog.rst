@@ -5,6 +5,17 @@ Release History
 
 .. towncrier release notes start
 
+v20.16.7 (2022-11-12)
+---------------------
+
+Bugfixes - 20.16.7
+~~~~~~~~~~~~~~~~~~
+- Use parent directory of python executable for pyvenv.cfg "home" value per PEP 405 - by :user:`vfazio`. (`#2440 <https://github.com/pypa/virtualenv/issues/2440>`_)
+- In POSIX virtual environments, try alternate binary names if ``sys._base_executable`` does not exist - by :user:`vfazio`. (`#2442 <https://github.com/pypa/virtualenv/issues/2442>`_)
+- Upgrade embedded wheel to ``0.38.4`` and  pip to ``22.3.1`` from ``22.3`` and setuptools to ``65.5.1`` from
+  ``65.5.0`` - by :user:`gaborbernat`. (`#2443 <https://github.com/pypa/virtualenv/issues/2443>`_)
+
+
 v20.16.6 (2022-10-25)
 ---------------------
 

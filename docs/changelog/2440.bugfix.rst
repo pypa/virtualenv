@@ -1,1 +1,0 @@
-Use parent directory of python executable for pyvenv.cfg "home" value per PEP 405 - by :user:`vfazio`.
