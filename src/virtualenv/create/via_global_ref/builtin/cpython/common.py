@@ -25,7 +25,7 @@ class CPythonPosix(CPython, PosixSupports, metaclass=ABCMeta):
     def _executables(cls, interpreter):
         host_exe = Path(interpreter.system_executable)
         major, minor = interpreter.version_info.major, interpreter.version_info.minor
-        targets = OrderedDict((i, None) for i in ["python", f"python{major}", f"python{major}.{minor}", host_exe.name])
+        targets = OrderedDict((i, None) for i in [host_exe.name, f"python{major}.{minor}", f"python{major}", "python"])
         must = RefMust.COPY if interpreter.version_info.major == 2 else RefMust.NA
         yield host_exe, list(targets.keys()), must, RefWhen.ANY
 
