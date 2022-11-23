@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from ..via_template import ViaTemplateActivator
 
 
@@ -9,7 +7,7 @@ class CShellActivator(ViaTemplateActivator):
         return interpreter.os != "nt"
 
     def templates(self):
-        yield Path("activate.csh")
+        yield "activate.csh"
 
 
 __all__ = [

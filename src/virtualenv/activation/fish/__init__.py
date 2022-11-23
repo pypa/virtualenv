@@ -1,11 +1,9 @@
-from pathlib import Path
-
 from ..via_template import ViaTemplateActivator
 
 
 class FishActivator(ViaTemplateActivator):
     def templates(self):
-        yield Path("activate.fish")
+        yield "activate.fish"
 
 
 __all__ = [

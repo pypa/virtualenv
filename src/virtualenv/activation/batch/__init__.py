@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 from ..via_template import ViaTemplateActivator
 
@@ -10,9 +9,9 @@ class BatchActivator(ViaTemplateActivator):
         return interpreter.os == "nt"
 
     def templates(self):
-        yield Path("activate.bat")
-        yield Path("deactivate.bat")
-        yield Path("pydoc.bat")
+        yield "activate.bat"
+        yield "deactivate.bat"
+        yield "pydoc.bat"
 
     def instantiate_template(self, replacements, template, creator):
         # ensure the text has all newlines as \r\n - required by batch

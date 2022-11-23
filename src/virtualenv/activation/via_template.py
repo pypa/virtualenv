@@ -4,10 +4,17 @@ from abc import ABCMeta, abstractmethod
 
 from .activator import Activator
 
-if sys.version_info >= (3, 7):
-    from importlib.resources import read_binary
+if sys.version_info >= (3, 10) or sys.version_info <= (3, 7):
+    if sys.version_info >= (3, 10):
+        from importlib.resources import files
+    else:
+        from importlib_resources import files
+
+    def read_binary(module_name: str, filename: str) -> bytes:
+        return (files(module_name) / filename).read_bytes()
+
 else:
-    from importlib_resources import read_binary
+    from importlib.resources import read_binary
 
 
 class ViaTemplateActivator(Activator, metaclass=ABCMeta):
@@ -43,11 +50,11 @@ class ViaTemplateActivator(Activator, metaclass=ABCMeta):
         return generated
 
     def as_name(self, template):
-        return template.name
+        return template
 
     def instantiate_template(self, replacements, template, creator):
         # read content as binary to avoid platform specific line normalization (\n -> \r\n)
-        binary = read_binary(self.__module__, str(template))
+        binary = read_binary(self.__module__, template)
         text = binary.decode("utf-8", errors="strict")
         for key, value in replacements.items():
             value = self._repr_unicode(creator, value)

@@ -1,14 +1,13 @@
 import os
 import sys
 from collections import OrderedDict
-from pathlib import Path
 
 from ..via_template import ViaTemplateActivator
 
 
 class PythonActivator(ViaTemplateActivator):
     def templates(self):
-        yield Path("activate_this.py")
+        yield "activate_this.py"
 
     def replacements(self, creator, dest_folder):
         replacements = super().replacements(creator, dest_folder)
