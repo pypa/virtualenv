@@ -4,10 +4,14 @@ from abc import ABCMeta, abstractmethod
 
 from .activator import Activator
 
-if sys.version_info >= (3, 7):
-    from importlib.resources import read_binary
-else:
-    from importlib_resources import read_binary
+try:
+    from importlib.resources import files
+    read_binary = lambda package, resource: files(package).joinpath(resource).read_bytes()
+except ImportError:
+    if sys.version_info >= (3, 7):
+        from importlib.resources import read_binary
+    else:
+        from importlib_resources import read_binary
 
 
 class ViaTemplateActivator(Activator, metaclass=ABCMeta):
