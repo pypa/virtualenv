@@ -6,6 +6,7 @@ from .activator import Activator
 
 try:
     from importlib.resources import files
+
     read_binary = lambda package, resource: files(package).joinpath(resource).read_bytes()
 except ImportError:
     if sys.version_info >= (3, 7):
