@@ -1,5 +1,12 @@
-# This command prepares the required environment variables
-def-env activate-virtualenv [] {
+# virtualenv activation module
+# Activate with `overlay use activate.nu`
+# Deactivate with `deactivate`, as usual
+#
+# To customize the overlay name, you can call `overlay use activate.nu as foo`,
+# but then simply `deactivate` won't work because it is just an alias to hide
+# the "activate" overlay. You'd need to call `overlay hide foo` manually.
+
+export-env {
     def is-string [x] {
         ($x | describe) == 'string'
     }
@@ -8,10 +15,10 @@ def-env activate-virtualenv [] {
         $name in (env).name
     }
 
-    let is_windows = ((sys).host.name | str downcase) == 'windows'
+    let is_windows = ($nu.os-info.name | str downcase) == 'windows'
     let virtual_env = '__VIRTUAL_ENV__'
     let bin = '__BIN_NAME__'
-    let path_sep = '__PATH_SEP__'
+    let path_sep = (char esep)
     let path_name = if $is_windows {
         if (has-env 'Path') {
             'Path'
@@ -50,7 +57,7 @@ def-env activate-virtualenv [] {
     }
 
     # Back up the old prompt builder
-    let old_prompt_command = if (has-env 'VIRTUAL_ENV') && (has-env '_OLD_PROMPT_COMMAND') {
+    let old_prompt_command = if (has-env 'VIRTUAL_ENV') and (has-env '_OLD_PROMPT_COMMAND') {
         $env._OLD_PROMPT_COMMAND
     } else {
         if (has-env 'PROMPT_COMMAND') {
@@ -71,8 +78,8 @@ def-env activate-virtualenv [] {
         { $'($virtual_prompt)' }
     }
 
-    # Environment variables that will be batched loaded to the virtual env
-    let new_env = {
+    # Environment variables that will be loaded as the virtual env
+    load-env {
         $path_name          : $new_path
         VIRTUAL_ENV         : $virtual_env
         _OLD_VIRTUAL_PATH   : ($old_path | str collect $path_sep)
@@ -80,13 +87,7 @@ def-env activate-virtualenv [] {
         PROMPT_COMMAND      : $new_prompt
         VIRTUAL_PROMPT      : $virtual_prompt
     }
-
-    # Activate the environment variables
-    load-env $new_env
 }
 
-# Activate the virtualenv
-activate-virtualenv
-
-alias pydoc = python -m pydoc
-alias deactivate = source '__DEACTIVATE_PATH__'
+export alias pydoc = python -m pydoc
+export alias deactivate = overlay hide activate

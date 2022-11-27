@@ -1,0 +1,1 @@
+Change Nushell activation script to be a module meant to be activated as an overlay.

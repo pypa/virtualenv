@@ -13,9 +13,16 @@ def test_nushell(activation_tester_class, activation_tester):
 
             super().__init__(NushellActivator, session, cmd, "activate.nu", "nu")
 
+            self.activate_cmd = "overlay use"
             self.unix_line_ending = not IS_WIN
 
         def print_prompt(self):
             return r"$env.VIRTUAL_PROMPT"
+
+        def activate_call(self, script):
+            # Commands are called without quotes in Nushell
+            cmd = self.activate_cmd
+            scr = self.quote(str(script))
+            return f"{cmd} {scr}".strip()
 
     activation_tester(Nushell)
