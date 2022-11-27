@@ -1,0 +1,1 @@
+Update operator used in Nushell activation script to be compatible with future versions.
