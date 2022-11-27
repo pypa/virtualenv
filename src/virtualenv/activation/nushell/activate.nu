@@ -50,7 +50,7 @@ def-env activate-virtualenv [] {
     }
 
     # Back up the old prompt builder
-    let old_prompt_command = if (has-env 'VIRTUAL_ENV') && (has-env '_OLD_PROMPT_COMMAND') {
+    let old_prompt_command = if (has-env 'VIRTUAL_ENV') and (has-env '_OLD_PROMPT_COMMAND') {
         $env._OLD_PROMPT_COMMAND
     } else {
         if (has-env 'PROMPT_COMMAND') {
