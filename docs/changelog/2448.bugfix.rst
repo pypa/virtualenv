@@ -1,0 +1,1 @@
+Do not use deprecated API from ``importlib.resources`` on Python 3.10 or later - by :user:`gaborbernat`.
