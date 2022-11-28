@@ -1,11 +1,9 @@
-from pathlib import Path
-
 from ..via_template import ViaTemplateActivator
 
 
 class NushellActivator(ViaTemplateActivator):
     def templates(self):
-        yield Path("activate.nu")
+        yield "activate.nu"
 
     def replacements(self, creator, dest_folder):  # noqa: U100
         return {

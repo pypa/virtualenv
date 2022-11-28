@@ -60,5 +60,5 @@ repos:
       - flake8-pytest-style==1.6
       - flake8-spellcheck==0.28
       - flake8-unused-arguments==0.0.12
-      - flake8-noqa==1.2.9
+      - flake8-noqa==1.3
       - pep8-naming==0.13.2
