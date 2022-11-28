@@ -5,6 +5,20 @@ Release History
 
 .. towncrier release notes start
 
+v20.17.0 (2022-11-27)
+---------------------
+
+Features - 20.17.0
+~~~~~~~~~~~~~~~~~~
+- Change Nushell activation script to be a module meant to be activated as an overlay. (`#2422 <https://github.com/pypa/virtualenv/issues/2422>`_)
+- Update operator used in Nushell activation script to be compatible with future versions. (`#2450 <https://github.com/pypa/virtualenv/issues/2450>`_)
+
+Bugfixes - 20.17.0
+~~~~~~~~~~~~~~~~~~
+- Do not use deprecated API from ``importlib.resources`` on Python 3.10 or later - by :user:`gaborbernat`. (`#2448 <https://github.com/pypa/virtualenv/issues/2448>`_)
+- Upgrade embedded setuptools to ``65.6.3`` from ``65.5.1`` - by :user:`gaborbernat`. (`#2451 <https://github.com/pypa/virtualenv/issues/2451>`_)
+
+
 v20.16.7 (2022-11-12)
 ---------------------
 

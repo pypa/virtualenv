@@ -1,1 +1,0 @@
-Upgrade embedded setuptools to ``65.6.3`` from ``65.5.1`` - by :user:`gaborbernat`.
