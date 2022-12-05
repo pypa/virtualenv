@@ -1,1 +1,0 @@
-A ``py`` or ``python`` spec means any Python rather than ``CPython`` - by :user:`gaborbernat`.

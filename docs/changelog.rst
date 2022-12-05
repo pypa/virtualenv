@@ -5,6 +5,15 @@ Release History
 
 .. towncrier release notes start
 
+v20.17.1 (2022-12-05)
+---------------------
+
+Bugfixes - 20.17.1
+~~~~~~~~~~~~~~~~~~
+- A ``py`` or ``python`` spec means any Python rather than ``CPython`` - by :user:`gaborbernat`. (`#2460 <https://github.com/pypa/virtualenv/issues/2460>`_)
+- Make ``activate.nu`` respect ``VIRTUAL_ENV_DISABLE_PROMPT`` and not set the prompt if reqeusted - by :user:`m-lima`. (`#2461 <https://github.com/pypa/virtualenv/issues/2461>`_)
+
+
 v20.17.0 (2022-11-27)
 ---------------------
 
