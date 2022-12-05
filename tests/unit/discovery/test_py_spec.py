@@ -1,4 +1,3 @@
-import itertools
 import sys
 from copy import copy
 
@@ -46,7 +45,7 @@ def test_spec_satisfies_arch():
 
 @pytest.mark.parametrize(
     ("req", "spec"),
-    list(itertools.combinations(["py", "CPython", "python"], 2)) + [("jython", "jython")] + [("CPython", "cpython")],
+    [("py", "python"), ("jython", "jython"), ("CPython", "cpython")],
 )
 def test_spec_satisfies_implementation_ok(req, spec):
     spec_1 = PythonSpec.from_string_spec(req)
@@ -56,7 +55,7 @@ def test_spec_satisfies_implementation_ok(req, spec):
 
 
 def test_spec_satisfies_implementation_nok():
-    spec_1 = PythonSpec.from_string_spec("python")
+    spec_1 = PythonSpec.from_string_spec("cpython")
     spec_2 = PythonSpec.from_string_spec("jython")
     assert spec_2.satisfies(spec_1) is False
     assert spec_1.satisfies(spec_2) is False
