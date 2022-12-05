@@ -101,7 +101,7 @@ export-env {
           { $'($virtual_prompt)' }
       }
 
-      $new_env | insert {
+      $new_env | merge {
         _OLD_VIRTUAL_PATH   : ($old_path | str collect $path_sep)
         _OLD_PROMPT_COMMAND : $old_prompt_command
         PROMPT_COMMAND      : $new_prompt
