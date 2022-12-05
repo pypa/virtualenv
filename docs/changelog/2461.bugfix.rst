@@ -1,0 +1,1 @@
+Make ``activate.nu`` respect ``VIRTUAL_ENV_DISABLE_PROMPT`` and not set the prompt if reqeusted - by :user:`m-lima`.
