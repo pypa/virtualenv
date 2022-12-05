@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.3.0
+  rev: v4.4.0
   hooks:
   - id: check-ast
   - id: check-builtin-literals
@@ -12,13 +12,13 @@ repos:
   - id: end-of-file-fixer
   - id: trailing-whitespace
 - repo: https://github.com/asottile/pyupgrade
-  rev: v3.2.1
+  rev: v3.3.0
   hooks:
   - id: pyupgrade
     args: ["--py36-plus"]
     exclude: "^(src/virtualenv/create/via_global_ref/_virtualenv.py|src/virtualenv/create/via_global_ref/builtin/python2/site.py|src/virtualenv/discovery/py_info.py|tasks/__main__zipapp.py)$"
 - repo: https://github.com/asottile/pyupgrade
-  rev: v2.38.4
+  rev: v3.3.0
   hooks:
   - id: pyupgrade
     files: "^(src/virtualenv/create/via_global_ref/_virtualenv.py|src/virtualenv/create/via_global_ref/builtin/python2/site.py|src/virtualenv/discovery/py_info.py|tasks/__main__zipapp.py)$"
@@ -51,7 +51,7 @@ repos:
   - id: setup-cfg-fmt
     args: [--min-py3-version, "3.6  ", "--max-py-version", "3.10"]
 - repo: https://github.com/PyCQA/flake8
-  rev: "5.0.4"
+  rev: "6.0.0"
   hooks:
   - id: flake8
     additional_dependencies:
