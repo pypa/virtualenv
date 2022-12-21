@@ -24,4 +24,3 @@ A tool for creating isolated `virtual` python environments.
 
 Everyone interacting in the virtualenv project's codebases, issue trackers, chat rooms, and mailing lists is expected to
 follow the [PSF Code of Conduct](https://github.com/pypa/.github/blob/main/CODE_OF_CONDUCT.md).
-
