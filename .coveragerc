@@ -11,14 +11,14 @@ omit =
     src/virtualenv/create/via_global_ref/builtin/python2/site.py
     src/virtualenv/create/via_global_ref/_virtualenv.py
     src/virtualenv/activation/python/activate_this.py
-    src/virtualenv/seed/wheels/embed/pip-*.whl/**
+    src/virtualenv/seed/wheels/embed/pip-*.whl/*
 
 [coverage:paths]
 source =
     src
-    .tox/**/lib/python*/site-packages
+    .tox/*/lib/python*/site-packages
     .tox/pypy*/site-packages
-    .tox\**\Lib\site-packages
+    .tox\*\Lib\site-packages
     .tox\py\site-packages
     **/src
     **\src
