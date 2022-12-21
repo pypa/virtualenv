@@ -26,7 +26,6 @@ jobs:
           - pypy-3.9
           - pypy-3.8
           - pypy-3.7
-          - pypy-3.6
         os:
           - ubuntu-20.04
           - macos-12
