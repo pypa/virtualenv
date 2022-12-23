@@ -16,10 +16,10 @@ omit =
 [coverage:paths]
 source =
     src
-    .tox/*/lib/python*/site-packages
-    .tox/pypy*/site-packages
-    .tox\*\Lib\site-packages
-    .tox\py\site-packages
+    **/.tox/*/lib/python*/site-packages
+    **/.tox/pypy*/site-packages
+    **/.tox\*\Lib\site-packages
+    **/.tox\py\site-packages
     **/src
     **\src
 
