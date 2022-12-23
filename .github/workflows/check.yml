@@ -18,24 +18,24 @@ jobs:
       fail-fast: false
       matrix:
         py:
-          - "3.11"
+          #- "3.11"
           - "3.10"
-          - "3.9"
-          - "3.8"
-          - "3.7"
-          - "3.6"
-          - pypy-3.9
-          - pypy-3.8
-          - pypy-3.7
+          #- "3.9"
+          #- "3.8"
+          #- "3.7"
+          #- "3.6"
+          #- pypy-3.9
+          #- pypy-3.8
+          #- pypy-3.7
         os:
           - ubuntu-20.04
-          - macos-12
-          - windows-2022
-        exclude:
-          - { os: macos-12, py: "pypy-3.6" } # PyPy 3.6 does not support macOS 11/12
-        include:
-          - { os: macos-12, py: "brew@3.9" }
-          - { os: macos-12, py: "brew@3.8" }
+          #- macos-12
+          #- windows-2022
+        #exclude:
+        #  - { os: macos-12, py: "pypy-3.6" } # PyPy 3.6 does not support macOS 11/12
+        #include:
+        #  - { os: macos-12, py: "brew@3.9" }
+        #  - { os: macos-12, py: "brew@3.8" }
     steps:
       - name: Install OS dependencies
         run: |
