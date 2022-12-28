@@ -189,7 +189,7 @@ jobs:
       - name: Build sdist and wheel
         run: python -m build -s -w . -o dist
       - name: Publish to PyPi
-        uses: pypa/gh-action-pypi-publish@v1.6.3
+        uses: pypa/gh-action-pypi-publish@v1.6.4
         with:
           skip_existing: true
           user: __token__
