@@ -22,7 +22,6 @@ jobs:
           - "3.9"
           - "3.8"
           - "3.7"
-          - "3.6"
           - pypy-3.9
           - pypy-3.8
           - pypy-3.7
@@ -30,8 +29,6 @@ jobs:
           - ubuntu-20.04
           - macos-12
           - windows-2022
-        exclude:
-          - { os: macos-12, py: "pypy-3.6" } # PyPy 3.6 does not support macOS 11/12
         include:
           - { os: macos-12, py: "brew@3.9" }
           - { os: macos-12, py: "brew@3.8" }
@@ -39,6 +36,7 @@ jobs:
       - uses: taiki-e/install-action@cargo-binstall
       - name: Install OS dependencies
         run: |
+          set -x
           for i in 1 2 3; do
             echo "try $i" && \
             ${{ runner.os == 'Linux' && 'sudo apt-get update -y && sudo apt-get install snapd fish csh -y' || true }} && \
@@ -46,6 +44,7 @@ jobs:
             ${{ runner.os == 'macOS' && 'brew install fish tcsh nushell' || true }} && \
             ${{ runner.os == 'Windows' && 'choco install nushell' || true }} && \
             exit 0 || true;
+            sleep 1
           done
           exit 1
         shell: bash
@@ -53,6 +52,13 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
+      - name: Install tox
+        run: python -m pip install tox pip -U
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Use local virtualenv for tox
+        run: python -m pip install .
       - name: Install Python 2 for cross test
         uses: actions/setup-python@v4
         with:
@@ -78,13 +84,6 @@ jobs:
           with Path(os.environ["GITHUB_ENV"]).open("ta") as file_handler:
               file_handler.write(env)
         shell: python
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - name: Install tox
-        run: python -m pip install tox
-      - name: Use local virtualenv for tox
-        run: python -m pip install .
       - name: Setup test suite
         run: tox -vv --notest
       - name: Run test suite

@@ -20,7 +20,7 @@ class AppData(metaclass=ABCMeta):
         """called when the user passes in the reset app data"""
 
     @abstractmethod
-    def py_info(self, path):  # noqa: U100
+    def py_info(self, path):
         raise NotImplementedError
 
     @abstractmethod
@@ -32,7 +32,7 @@ class AppData(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def embed_update_log(self, distribution, for_py_version):  # noqa: U100
+    def embed_update_log(self, distribution, for_py_version):
         raise NotImplementedError
 
     @property
@@ -44,7 +44,7 @@ class AppData(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def wheel_image(self, for_py_version, name):  # noqa: U100
+    def wheel_image(self, for_py_version, name):
         raise NotImplementedError
 
     @contextmanager
@@ -58,12 +58,12 @@ class AppData(metaclass=ABCMeta):
 
     @abstractmethod
     @contextmanager
-    def extract(self, path, to_folder):  # noqa: U100
+    def extract(self, path, to_folder):
         raise NotImplementedError
 
     @abstractmethod
     @contextmanager
-    def locked(self, path):  # noqa: U100
+    def locked(self, path):
         raise NotImplementedError
 
 
@@ -77,7 +77,7 @@ class ContentStore(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def write(self, content):  # noqa: U100
+    def write(self, content):
         raise NotImplementedError
 
     @abstractmethod

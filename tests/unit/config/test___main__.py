@@ -91,7 +91,7 @@ def test_session_report_subprocess(tmp_path):
     # when called via a subprocess the logging framework should flush and POSIX line normalization happen
     out = check_output(
         [sys.executable, "-m", "virtualenv", str(tmp_path), "--activators", "powershell", "--without-pip"],
-        universal_newlines=True,
+        text=True,
     )
     lines = out.split("\n")
     regexes = [

@@ -1,4 +1,4 @@
-### Thanks for contributing, make sure you address all the checklists (for details on how see [development documentation](https://virtualenv.pypa.io/en/latest/development.html#development))!
+### Thanks for contributing, make sure you address all the checklists (for details on how see [development documentation](https://virtualenv.pypa.io/en/latest/development.html#development))
 
 - [ ] ran the linter to address style issues (`tox -e fix_lint`)
 - [ ] wrote descriptive pull request text

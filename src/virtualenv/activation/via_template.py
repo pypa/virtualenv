@@ -4,11 +4,8 @@ from abc import ABCMeta, abstractmethod
 
 from .activator import Activator
 
-if sys.version_info >= (3, 10) or sys.version_info <= (3, 7):
-    if sys.version_info >= (3, 10):
-        from importlib.resources import files
-    else:
-        from importlib_resources import files
+if sys.version_info >= (3, 10):
+    from importlib.resources import files
 
     def read_binary(module_name: str, filename: str) -> bytes:
         return (files(module_name) / filename).read_bytes()

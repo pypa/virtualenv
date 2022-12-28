@@ -1,6 +1,10 @@
 from abc import ABCMeta
 
-from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest, RefMust, RefWhen
+from virtualenv.create.via_global_ref.builtin.ref import (
+    ExePathRefToDest,
+    RefMust,
+    RefWhen,
+)
 from virtualenv.util.path import ensure_dir
 
 from ..api import ViaGlobalRefApi, ViaGlobalRefMeta

@@ -36,9 +36,9 @@ def app_data(tmp_path_factory, for_py_version, next_pip_wheel):
                     "found_date": "2000-01-01T00:00:00.000000Z",
                     "release_date": "2000-01-01T00:00:00.000000Z",
                     "source": "periodic",
-                }
+                },
             ],
-        }
+        },
     )
     return app_data_
 

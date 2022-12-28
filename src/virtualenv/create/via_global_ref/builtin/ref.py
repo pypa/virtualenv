@@ -78,7 +78,7 @@ class PathRef(metaclass=ABCMeta):
         return self._can_symlink
 
     @abstractmethod
-    def run(self, creator, symlinks):  # noqa: U100
+    def run(self, creator, symlinks):
         raise NotImplementedError
 
     def method(self, symlinks):

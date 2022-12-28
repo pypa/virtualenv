@@ -15,7 +15,7 @@ from threading import Thread
 STRICT = "UPGRADE_ADVISORY" not in os.environ
 
 BUNDLED = ["pip", "setuptools", "wheel"]
-SUPPORT = list(reversed([(2, 7)] + [(3, i) for i in range(5, 12)]))
+SUPPORT = list(reversed([(2, 7)] + [(3, i) for i in range(5, 13)]))
 DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "wheels" / "embed"
 
 

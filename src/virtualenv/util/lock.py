@@ -58,17 +58,17 @@ class PathLockBase(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: U100
+    def __exit__(self, exc_type, exc_val, exc_tb):
         raise NotImplementedError
 
     @abstractmethod
     @contextmanager
-    def lock_for_key(self, name, no_block=False):  # noqa: U100
+    def lock_for_key(self, name, no_block=False):
         raise NotImplementedError
 
     @abstractmethod
     @contextmanager
-    def non_reentrant_lock_for_key(self, name):  # noqa: U100
+    def non_reentrant_lock_for_key(self, name):
         raise NotImplementedError
 
 

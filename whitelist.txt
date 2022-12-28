@@ -182,7 +182,6 @@ rmdir
 rpartition
 rst
 rtd
-scm
 scr
 sdist
 setenv

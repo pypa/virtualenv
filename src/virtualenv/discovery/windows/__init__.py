@@ -14,7 +14,8 @@ def propose_interpreters(spec, cache_dir, env):
     # and prefer PythonCore over conda pythons (as virtualenv is mostly used by non conda tools)
     existing = list(discover_pythons())
     existing.sort(
-        key=lambda i: tuple(-1 if j is None else j for j in i[1:4]) + (1 if i[0] == "PythonCore" else 0,), reverse=True
+        key=lambda i: tuple(-1 if j is None else j for j in i[1:4]) + (1 if i[0] == "PythonCore" else 0,),
+        reverse=True,
     )
 
     for name, major, minor, arch, exe, _ in existing:

@@ -1,18 +1,146 @@
 [build-system]
-requires = [
-    "setuptools>=59.6",
-    "setuptools-scm>=6.4.2",
+build-backend = "hatchling.build"
+requires = ["hatch-vcs>=0.3", "hatchling>=1.11.1"]
+
+[project]
+name = "virtualenv"
+description = "Virtual Python Environment builder"
+readme = "README.md"
+license = "MIT"
+maintainers = [{ name = "Bernat Gabor", email = "gaborjbernat@gmail.com" }]
+urls.Documentation = "https://virtualenv.pypa.io"
+urls.Homepage = "https://github.com/pypa/virtualenv"
+urls.Source = "https://github.com/pypa/virtualenv"
+urls.Tracker = "https://github.com/pypa/virtualenv/issues"
+scripts.virtualenv = "virtualenv.__main__:run_with_catch"
+requires-python = ">=3.7"
+dependencies = [
+  "distlib<1,>=0.3.6",
+  "filelock<4,>=3.4.1",
+  'importlib-metadata>=4.8.3; python_version < "3.8"',
+  "platformdirs<3,>=2.4",
 ]
-build-backend = 'setuptools.build_meta'
+optional-dependencies.test = [
+  "covdefaults>=2.2.2",
+  "coverage>=7.0.1",
+  "coverage-enable-subprocess>=1",
+  "flaky>=3.7",
+  "packaging>=22",
+  "pytest>=7.2",
+  "pytest-env>=0.8.1",
+  "pytest-freezegun>=0.4.2",
+  "pytest-mock>=3.10",
+  "pytest-randomly>=3.12",
+  "pytest-timeout>=2.1",
+]
+optional-dependencies.docs = [
+  "proselint>=0.13",
+  "sphinx>=5.3",
+  "sphinx-argparse>=0.4",
+  "sphinx-rtd-theme>=1.1.1",
+  "towncrier>=22.12",
+]
+keywords = ["environments", "isolated", "virtual"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: MacOS :: MacOS X",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Software Development :: Testing",
+  "Topic :: Utilities",
+]
+dynamic = ["version"]
+
+[project.entry-points."virtualenv.activate"]
+bash = "virtualenv.activation.bash:BashActivator"
+batch = "virtualenv.activation.batch:BatchActivator"
+cshell = "virtualenv.activation.cshell:CShellActivator"
+fish = "virtualenv.activation.fish:FishActivator"
+nushell = "virtualenv.activation.nushell:NushellActivator"
+powershell = "virtualenv.activation.powershell:PowerShellActivator"
+python = "virtualenv.activation.python:PythonActivator"
+
+[project.entry-points."virtualenv.create"]
+cpython2-mac-arm-framework = "virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython2macOsArmFramework"
+cpython2-mac-framework = "virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython2macOsFramework"
+cpython2-posix = "virtualenv.create.via_global_ref.builtin.cpython.cpython2:CPython2Posix"
+cpython2-win = "virtualenv.create.via_global_ref.builtin.cpython.cpython2:CPython2Windows"
+cpython3-mac-framework = "virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython3macOsFramework"
+cpython3-posix = "virtualenv.create.via_global_ref.builtin.cpython.cpython3:CPython3Posix"
+cpython3-win = "virtualenv.create.via_global_ref.builtin.cpython.cpython3:CPython3Windows"
+pypy2-posix = "virtualenv.create.via_global_ref.builtin.pypy.pypy2:PyPy2Posix"
+pypy2-win = "virtualenv.create.via_global_ref.builtin.pypy.pypy2:Pypy2Windows"
+pypy3-posix = "virtualenv.create.via_global_ref.builtin.pypy.pypy3:PyPy3Posix"
+pypy3-win = "virtualenv.create.via_global_ref.builtin.pypy.pypy3:Pypy3Windows"
+venv = "virtualenv.create.via_global_ref.venv:Venv"
+
+[project.entry-points."virtualenv.discovery"]
+builtin = "virtualenv.discovery.builtin:Builtin"
+
+[project.entry-points."virtualenv.seed"]
+app-data = "virtualenv.seed.embed.via_app_data.via_app_data:FromAppData"
+pip = "virtualenv.seed.embed.pip_invoke:PipInvoke"
+
+[tool.hatch]
+build.hooks.vcs.version-file = "src/virtualenv/version.py"
+build.targets.sdist.include = ["/src", "/tests"]
+version.source = "vcs"
+
+[tool.coverage]
+html.show_contexts = true
+html.skip_covered = false
+report.omit = [
+  # site.py is ran before the coverage can be enabled, no way to measure coverage on this
+  "src/virtualenv/create/via_global_ref/builtin/python2/site.py",
+  "src/virtualenv/create/via_global_ref/_virtualenv.py",
+  "src/virtualenv/activation/python/activate_this.py",
+  "src/virtualenv/seed/wheels/embed/pip-*.whl/*",
+]
+paths.source = [
+  "src",
+  ".tox/*/lib/*/site-packages",  # pypy3.8 + cpython
+  ".tox/*/site-packages",        # pypy3.7
+  ".tox\\*\\Lib\\site-packages", # pypy3.8 + cpython
+  ".tox\\*\\site-packages",      # pypy3.7
+]
+paths.other = [".", "*/virtualenv", "*\\virtualenv"]
+report.fail_under = 76
+run.source = ["${_COVERAGE_SRC}", "tests"]
+run.dynamic_context = "test_function"
+run.parallel = true
+run.plugins = ["covdefaults"]
 
 [tool.black]
 line-length = 120
 
-[tool.towncrier]
-package = "virtualenv"
-package_dir = ""  # we purposfully do not set this as src, forcing import from site-package that has version.py
-filename = "docs/changelog.rst"
-directory = "docs/changelog"
-title_format = false
-issue_format = "`#{issue} <https://github.com/pypa/virtualenv/issues/{issue}>`_"
-template = "docs/changelog/template.jinja2"
+[tool.isort]
+profile = "black"
+known_first_party = ["virtualenv"]
+
+[tool.pep8]
+max-line-length = "120"
+
+[tool.flake8]
+max-complexity = 22
+max-line-length = 120
+unused-arguments-ignore-abstract-functions = true
+noqa-require-code = true
+dictionaries = ["en_US", "python", "technical", "django"]
+ignore = [
+  "E203", #  whitespace before ':'
+  "C901", # is too complex
+  "W503", # line break before binary operator
+]
+
+[tool.pytest.ini_options]
+markers = ["slow"]
+timeout = 600
+addopts = "--tb=auto -ra --showlocals --no-success-flaky-report"
+env = ["PYTHONWARNINGS=ignore:DEPRECATION::pip._internal.cli.base_command", "PYTHONIOENCODING=utf-8"]

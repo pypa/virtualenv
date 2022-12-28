@@ -1,0 +1,10 @@
+MD013:
+  code_blocks: false
+  headers: false
+  line_length: 120
+  tables: false
+
+MD046:
+  style: fenced
+no-emphasis-as-header: false
+first-line-h1: false

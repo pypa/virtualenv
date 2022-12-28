@@ -25,7 +25,7 @@ class Seeder(metaclass=ABCMeta):
         raise NotImplementedError
 
     @abstractmethod
-    def run(self, creator):  # noqa: U100
+    def run(self, creator):
         """Perform the seed operation.
 
         :param creator: the creator (based of :class:`virtualenv.create.creator.Creator`) we used to create this \

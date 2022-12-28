@@ -257,7 +257,13 @@ def test_trigger_update_no_debug(for_py_version, session_app_data, tmp_path, moc
     Popen = mocker.patch("virtualenv.seed.wheels.periodic_update.Popen", return_value=process)  # noqa: N806
 
     trigger_update(
-        "setuptools", for_py_version, current, [tmp_path / "a", tmp_path / "b"], session_app_data, os.environ, True
+        "setuptools",
+        for_py_version,
+        current,
+        [tmp_path / "a", tmp_path / "b"],
+        session_app_data,
+        os.environ,
+        True,
     )
 
     assert Popen.call_count == 1
@@ -299,7 +305,13 @@ def test_trigger_update_debug(for_py_version, session_app_data, tmp_path, mocker
     Popen = mocker.patch("virtualenv.seed.wheels.periodic_update.Popen", return_value=process)  # noqa: N806
 
     trigger_update(
-        "pip", for_py_version, current, [tmp_path / "a", tmp_path / "b"], session_app_data, os.environ, False
+        "pip",
+        for_py_version,
+        current,
+        [tmp_path / "a", tmp_path / "b"],
+        session_app_data,
+        os.environ,
+        False,
     )
 
     assert Popen.call_count == 1
@@ -346,7 +358,13 @@ def test_do_update_first(tmp_path, mocker, freezer):
     download_wheels = (Wheel(Path(i[0])) for i in pip_version_remote)
 
     def _download_wheel(
-        distribution, version_spec, for_py_version, search_dirs, app_data, to_folder, env  # noqa: U100
+        distribution,
+        version_spec,  # noqa: U100
+        for_py_version,
+        search_dirs,
+        app_data,
+        to_folder,
+        env,  # noqa: U100
     ):
         assert distribution == "pip"
         assert for_py_version == "3.9"
@@ -409,7 +427,13 @@ def test_do_update_skip_already_done(tmp_path, mocker, freezer):
     extra.mkdir()
 
     def _download_wheel(
-        distribution, version_spec, for_py_version, search_dirs, app_data, to_folder, env  # noqa: U100
+        distribution,  # noqa: U100
+        version_spec,  # noqa: U100
+        for_py_version,  # noqa: U100
+        search_dirs,  # noqa: U100
+        app_data,  # noqa: U100
+        to_folder,  # noqa: U100
+        env,  # noqa: U100
     ):
         return wheel.path
 
@@ -457,7 +481,10 @@ def test_new_version_eq():
 
 def test_new_version_ne():
     assert NewVersion("a", datetime.now(), datetime.now(), "periodic") != NewVersion(
-        "a", datetime.now(), datetime.now() + timedelta(hours=1), "manual"
+        "a",
+        datetime.now(),
+        datetime.now() + timedelta(hours=1),
+        "manual",
     )
 
 
@@ -501,7 +528,8 @@ def mock_download(mocker, pip_version_remote):
 
     do = download()
     return mocker.patch(
-        "virtualenv.seed.wheels.acquire.download_wheel", side_effect=lambda *a, **k: next(do)  # noqa: U100
+        "virtualenv.seed.wheels.acquire.download_wheel",
+        side_effect=lambda *a, **k: next(do),  # noqa: U100
     )
 
 
