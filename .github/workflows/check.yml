@@ -42,14 +42,8 @@ jobs:
           for i in 1 2 3; do
             echo "try $i" && \
             ${{ runner.os == 'Linux' && 'sudo apt-get update -y && sudo apt-get install snapd fish csh -y' || true }} && \
-            # ${{ runner.os == 'Linux' && 'sudo apt-get install curl wget -y' || true }} && \
-            # ${{ runner.os == 'Linux' && 'nushell_url=$(curl -s https://api.github.com/repos/nushell/nushell/releases/latest | grep "browser_" | grep "x86_64" | grep "linux" | grep "gnu" | cut -d\" -f4 )' || true }} && \
-            # ${{ runner.os == 'Linux' && 'wget -O nushell.tar.gz $nushell_url' || true }} && \
-            # ${{ runner.os == 'Linux' && 'tar -zxf nushell.tar.gz' || true }} && \
-            # ${{ runner.os == 'Linux' && 'sudo cp nu-*-x86_64-unknown-linux-gnu/nu /usr/bin' || true }} && \
-            ${{ 'cargo binstall -y nu' || true }} && \
-            # ${{ runner.os == 'Windows' && 'choco install nushell' || true }} && \
             ${{ runner.os == 'macOS' && 'brew install fish tcsh' || true }} && \
+            ${{ 'cargo binstall -y nu' || true }} && \
             exit 0 || true;
           done
           exit 1
