@@ -42,8 +42,9 @@ jobs:
           for i in 1 2 3; do
             echo "try $i" && \
             ${{ runner.os == 'Linux' && 'sudo apt-get update -y && sudo apt-get install snapd fish csh -y' || true }} && \
-            ${{ runner.os == 'macOS' && 'brew install fish tcsh' || true }} && \
-            ${{ 'cargo binstall -y nu' || true }} && \
+            ${{ runner.os == 'Linux' && 'cargo binstall -y nu' || true }} && \
+            ${{ runner.os == 'macOS' && 'brew install fish tcsh nushell' || true }} && \
+            ${{ runner.os == 'Windows' && 'choco install nushell' || true }} && \
             exit 0 || true;
           done
           exit 1
