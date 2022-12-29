@@ -36,18 +36,15 @@ jobs:
           - { os: macos-12, py: "brew@3.9" }
           - { os: macos-12, py: "brew@3.8" }
     steps:
+      - uses: taiki-e/install-action@cargo-binstall
       - name: Install OS dependencies
         run: |
           for i in 1 2 3; do
             echo "try $i" && \
             ${{ runner.os == 'Linux' && 'sudo apt-get update -y && sudo apt-get install snapd fish csh -y' || true }} && \
-            ${{ runner.os == 'Linux' && 'sudo apt-get install curl wget -y' || true }} && \
-            ${{ runner.os == 'Linux' && 'nushell_url=$(curl -s https://api.github.com/repos/nushell/nushell/releases/latest | grep "browser_" | grep "x86_64" | grep "linux" | grep "gnu" | cut -d\" -f4 )' || true }} && \
-            ${{ runner.os == 'Linux' && 'wget -O nushell.tar.gz $nushell_url' || true }} && \
-            ${{ runner.os == 'Linux' && 'tar -zxf nushell.tar.gz' || true }} && \
-            ${{ runner.os == 'Linux' && 'sudo cp nu-*-x86_64-unknown-linux-gnu/nu /usr/bin' || true }} && \
-            ${{ runner.os == 'Windows' && 'choco install nushell' || true }} && \
+            ${{ runner.os == 'Linux' && 'cargo binstall -y nu' || true }} && \
             ${{ runner.os == 'macOS' && 'brew install fish tcsh nushell' || true }} && \
+            ${{ runner.os == 'Windows' && 'choco install nushell' || true }} && \
             exit 0 || true;
           done
           exit 1
