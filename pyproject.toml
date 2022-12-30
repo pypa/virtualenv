@@ -22,7 +22,7 @@ dependencies = [
 ]
 optional-dependencies.test = [
   "covdefaults>=2.2.2",
-  "coverage>=7.0.1",
+  "coverage>=7.0.2",
   "coverage-enable-subprocess>=1",
   "flaky>=3.7",
   "packaging>=22",
@@ -98,20 +98,13 @@ html.show_contexts = true
 html.skip_covered = false
 report.omit = [
   # site.py is ran before the coverage can be enabled, no way to measure coverage on this
-  "src/virtualenv/create/via_global_ref/builtin/python2/site.py",
-  "src/virtualenv/create/via_global_ref/_virtualenv.py",
-  "src/virtualenv/activation/python/activate_this.py",
-  "src/virtualenv/seed/wheels/embed/pip-*.whl/*",
+  "**/src/virtualenv/create/via_global_ref/builtin/python2/site.py",
+  "**/src/virtualenv/create/via_global_ref/_virtualenv.py",
+  "**/src/virtualenv/activation/python/activate_this.py",
+  "**/src/virtualenv/seed/wheels/embed/pip-*.whl/pip/**",
 ]
-paths.source = [
-  "src",
-  ".tox/*/lib/*/site-packages",  # pypy3.8 + cpython
-  ".tox/*/site-packages",        # pypy3.7
-  ".tox\\*\\Lib\\site-packages", # pypy3.8 + cpython
-  ".tox\\*\\site-packages",      # pypy3.7
-]
-paths.other = [".", "*/virtualenv", "*\\virtualenv"]
-report.fail_under = 10
+paths.source = ["src", "**/site-packages"]
+report.fail_under = 76
 run.source = ["${_COVERAGE_SRC}", "tests"]
 run.dynamic_context = "test_function"
 run.parallel = true
