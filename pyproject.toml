@@ -110,13 +110,12 @@ paths.source = [
   ".tox\\*\\Lib\\site-packages", # pypy3.8 + cpython
   ".tox\\*\\site-packages",      # pypy3.7
 ]
-paths.other = [".", "*/virtualenv", "*\\virtualenv"]
+paths.other = [".", "**/virtualenv", "**\\virtualenv"]
 report.fail_under = 10
 run.source = ["${_COVERAGE_SRC}", "tests"]
 run.dynamic_context = "test_function"
 run.parallel = true
 run.plugins = ["covdefaults"]
-run.relative_files = true
 
 [tool.black]
 line-length = 120
