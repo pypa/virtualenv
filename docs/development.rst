@@ -83,7 +83,7 @@ run:
 
 .. code-block:: console
 
-    tox -e fix_lint
+    tox -e fix
 
 .. note::
 

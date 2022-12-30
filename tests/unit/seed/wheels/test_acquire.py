@@ -38,7 +38,13 @@ def test_download_wheel_bad_output(mocker, for_py_version, session_app_data):
     as_path.iterdir.return_value = [i.path for i in available]
 
     result = download_wheel(
-        distribution, f"=={embed.version}", for_py_version, [], session_app_data, as_path, os.environ
+        distribution,
+        f"=={embed.version}",
+        for_py_version,
+        [],
+        session_app_data,
+        as_path,
+        os.environ,
     )
     assert result.path == embed.path
 

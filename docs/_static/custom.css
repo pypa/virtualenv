@@ -1,64 +1,65 @@
 .wy-nav-content {
-    padding: 1em;
+  padding: 1em;
 }
 
 #virtualenv img {
-    margin-bottom: 6px;
+  margin-bottom: 6px;
 }
 
 /* Allow table content to wrap around */
-.wy-table-responsive table th, .wy-table-responsive table td {
-    /* !important because RTD has conflicting stylesheets */
-    white-space: normal !important;
-    padding: 8px 6px !important;
+.wy-table-responsive table th,
+.wy-table-responsive table td {
+  /* !important because RTD has conflicting stylesheets */
+  white-space: normal !important;
+  padding: 8px 6px !important;
 }
 
 .wy-table-responsive table {
-    width: 100%;
-    margin-left: 0 !important;
+  width: 100%;
+  margin-left: 0 !important;
 }
 
 .rst-content table.docutils td ol {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 .rst-content table.docutils td ul {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 .rst-content table.docutils td p {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 div[class*="highlight-"] {
-    margin-bottom: 12px;
+  margin-bottom: 12px;
 }
 
 /* Tweak whitespace on the release history page */
 #release-history p {
-    margin-bottom: 0;
-    margin-top: 0;
+  margin-bottom: 0;
+  margin-top: 0;
 }
 
 #release-history h3 {
-    margin-bottom: 6px;
+  margin-bottom: 6px;
 }
 
 #release-history ul {
-    margin-bottom: 12px;
+  margin-bottom: 12px;
 }
 
 #release-history ul ul {
-    margin-bottom: 0;
-    margin-top: 0;
+  margin-bottom: 0;
+  margin-top: 0;
 }
 
 #release-history h2 {
-    margin-bottom: 12px;
+  margin-bottom: 12px;
 }
 
 /* Reduce whitespace on the inline-code snippets and add softer corners */
 .rst-content code {
-    padding: 2px 3px;
-    border-radius: 3px;
+  padding: 2px 3px;
+  border-radius: 3px;
 }

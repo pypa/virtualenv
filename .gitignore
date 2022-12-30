@@ -22,7 +22,6 @@ dist
 /pip-wheel-metadata
 /src/virtualenv/version.py
 /src/virtualenv/out
-venv*
 .python-version
 
 *wheel-store*

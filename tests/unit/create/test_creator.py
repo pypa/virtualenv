@@ -222,7 +222,7 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     if CPython3Posix.pyvenv_launch_patch_active(PythonInfo.from_exe(python)) and creator_key != "venv":
         result = subprocess.check_output(
             [str(creator.exe), "-c", 'import os; print(os.environ.get("__PYVENV_LAUNCHER__"))'],
-            universal_newlines=True,
+            text=True,
         ).strip()
         assert result == "None"
 
@@ -498,7 +498,7 @@ def test_no_preimport_threading(tmp_path):
     session = cli_run([str(tmp_path)])
     out = subprocess.check_output(
         [str(session.creator.exe), "-c", r"import sys; print('\n'.join(sorted(sys.modules)))"],
-        universal_newlines=True,
+        text=True,
     )
     imported = set(out.splitlines())
     assert "threading" not in imported
@@ -514,7 +514,7 @@ def test_pth_in_site_vs_python_path(tmp_path):
     # verify that test.pth is activated when interpreter is run
     out = subprocess.check_output(
         [str(session.creator.exe), "-c", r"import sys; print(sys.testpth)"],
-        universal_newlines=True,
+        text=True,
     )
     assert out == "ok\n"
     # same with $PYTHONPATH pointing to site_packages
@@ -525,7 +525,7 @@ def test_pth_in_site_vs_python_path(tmp_path):
     env["PYTHONPATH"] = os.pathsep.join(path)
     out = subprocess.check_output(
         [str(session.creator.exe), "-c", r"import sys; print(sys.testpth)"],
-        universal_newlines=True,
+        text=True,
         env=env,
     )
     assert out == "ok\n"
@@ -539,7 +539,7 @@ def test_getsitepackages_system_site(tmp_path):
 
     out = subprocess.check_output(
         [str(session.creator.exe), "-c", r"import site; print(site.getsitepackages())"],
-        universal_newlines=True,
+        text=True,
     )
     site_packages = ast.literal_eval(out)
 
@@ -553,7 +553,7 @@ def test_getsitepackages_system_site(tmp_path):
 
     out = subprocess.check_output(
         [str(session.creator.exe), "-c", r"import site; print(site.getsitepackages())"],
-        universal_newlines=True,
+        text=True,
     )
     site_packages = [str(Path(i).resolve()) for i in ast.literal_eval(out)]
 
@@ -578,7 +578,7 @@ def test_get_site_packages(tmp_path):
     env_site_packages = [str(session.creator.purelib), str(session.creator.platlib)]
     out = subprocess.check_output(
         [str(session.creator.exe), "-c", r"import site; print(site.getsitepackages())"],
-        universal_newlines=True,
+        text=True,
     )
     site_packages = ast.literal_eval(out)
 

@@ -56,7 +56,7 @@ def test_relative_path(session_app_data, monkeypatch):
 def test_discovery_fallback_fail(session_app_data, caplog):
     caplog.set_level(logging.DEBUG)
     builtin = Builtin(
-        Namespace(app_data=session_app_data, try_first_with=[], python=["magic-one", "magic-two"], env=os.environ)
+        Namespace(app_data=session_app_data, try_first_with=[], python=["magic-one", "magic-two"], env=os.environ),
     )
 
     result = builtin.run()
@@ -68,7 +68,7 @@ def test_discovery_fallback_fail(session_app_data, caplog):
 def test_discovery_fallback_ok(session_app_data, caplog):
     caplog.set_level(logging.DEBUG)
     builtin = Builtin(
-        Namespace(app_data=session_app_data, try_first_with=[], python=["magic-one", sys.executable], env=os.environ)
+        Namespace(app_data=session_app_data, try_first_with=[], python=["magic-one", sys.executable], env=os.environ),
     )
 
     result = builtin.run()

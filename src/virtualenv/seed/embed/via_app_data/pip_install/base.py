@@ -23,7 +23,7 @@ class PipInstall(metaclass=ABCMeta):
         self._console_entry_points = None
 
     @abstractmethod
-    def _sync(self, src, dst):  # noqa: U100
+    def _sync(self, src, dst):
         raise NotImplementedError
 
     def install(self, version_info):
@@ -108,7 +108,7 @@ class PipInstall(metaclass=ABCMeta):
         return self.__dist_info
 
     @abstractmethod
-    def _fix_records(self, extra_record_data):  # noqa: U100
+    def _fix_records(self, extra_record_data):
         raise NotImplementedError
 
     @property

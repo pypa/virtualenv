@@ -62,7 +62,7 @@ def generate_draft_news():
     new = subprocess.check_output(
         [sys.executable, "-m", "towncrier", "--draft", "--version", "NEXT"],
         cwd=root,
-        universal_newlines=True,
+        text=True,
     )
     dest = root / "docs" / "_draft.rst"
     dest.write_text("" if "No significant changes" in new else new)

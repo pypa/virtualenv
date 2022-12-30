@@ -64,13 +64,6 @@ supporting Python 2.7 use
 If you are looking for past version of virtualenv.pyz they are available here:
 https://github.com/pypa/get-virtualenv/blob/<virtualenv version>/public/<python version>/virtualenv.pyz?raw=true
 
-via ``setup.py``
-----------------
-We don't recommend and officially support this method. One should prefer using an installer that supports
-`PEP-517 <https://www.python.org/dev/peps/pep-0517/>`_ interface, such as pip ``19.0.0`` or later. That being said you
-might be able to still install a package via this method if you satisfy build dependencies before calling the install
-command (as described under :ref:`sdist`).
-
 latest unreleased
 -----------------
 Installing an unreleased version is discouraged and should be only done for testing purposes. If you do so you'll need
@@ -88,8 +81,8 @@ Python and OS Compatibility
 
 virtualenv works with the following Python interpreter implementations:
 
-- `CPython <https://www.python.org/>`_ versions 2.7, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10
-- `PyPy <https://pypy.org/>`_ 2.7, 3.6, 3.7, 3.8, 3.9
+- `CPython <https://www.python.org/>`_ versions 3.7, 3.8, 3.9, 3.10, 3.11, 3.12
+- `PyPy <https://pypy.org/>`_ 3.7, 3.8, 3.9
 
 This means virtualenv works on the latest patch version of each of these minor versions. Previous patch versions are
 supported on a best effort approach.
@@ -97,7 +90,7 @@ supported on a best effort approach.
 CPython is shipped in multiple forms, and each OS repackages it, often applying some customization along the way.
 Therefore we cannot say universally that we support all platforms, but rather specify some we test against. In case
 of ones not specified here the support is unknown, though likely will work. If you find some cases please open a feature
-request on our issue tracker. Note, as of ``20.16.0`` we no longer support running under Python less than 3.6, however
+request on our issue tracker. Note, as of ``20.18.0`` we no longer support running under Python less than 3.7, however
 we still support creating environments for 2.7 and 3.5.
 
 Linux

@@ -128,11 +128,7 @@ class Creator(metaclass=ABCMeta):
         value = Path(raw_value)
         if value.exists() and value.is_file():
             raise ArgumentTypeError(f"the destination {value} already exists and is a file")
-        if sys.version_info <= (3, 6):
-            # pre 3.6 resolve is always strict, aka must exists, sidestep by using os.path operation
-            dest = Path(os.path.realpath(raw_value))
-        else:
-            dest = Path(os.path.abspath(str(value))).resolve()  # on Windows absolute does not imply resolve so use both
+        dest = Path(os.path.abspath(str(value))).resolve()  # on Windows absolute does not imply resolve so use both
         value = dest
         while dest:
             if dest.exists():

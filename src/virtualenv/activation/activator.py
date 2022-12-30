@@ -31,7 +31,7 @@ class Activator(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def generate(self, creator):  # noqa: U100
+    def generate(self, creator):
         """Generate activate script for the given creator.
 
         :param creator: the creator (based of :class:`virtualenv.create.creator.Creator`) we used to create this \
