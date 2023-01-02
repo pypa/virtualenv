@@ -105,12 +105,9 @@ report.omit = [
 ]
 paths.source = [
   "src",
-  ".tox/*/lib/*/site-packages",  # pypy3.8 + cpython
-  ".tox/*/site-packages",        # pypy3.7
-  ".tox\\*\\Lib\\site-packages", # pypy3.8 + cpython
-  ".tox\\*\\site-packages",      # pypy3.7
+  "**/site-packages",
 ]
-paths.other = [".", "**/virtualenv", "**\\virtualenv"]
+run.relative_files = true
 report.fail_under = 10
 run.source = ["${_COVERAGE_SRC}", "tests"]
 run.dynamic_context = "test_function"
