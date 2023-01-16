@@ -17,13 +17,13 @@ repos:
       - id: add-trailing-comma
         args: [--py36-plus]
   - repo: https://github.com/asottile/pyupgrade
-    rev: v3.2.1
+    rev: v3.3.1
     hooks:
       - id: pyupgrade
         args: ["--py37-plus"]
         exclude: "^(src/virtualenv/create/via_global_ref/_virtualenv.py|src/virtualenv/create/via_global_ref/builtin/python2/site.py|src/virtualenv/discovery/py_info.py|tasks/__main__zipapp.py)$"
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.38.4
+    rev: v3.3.1
     hooks:
       - id: pyupgrade
         files: "^(src/virtualenv/create/via_global_ref/_virtualenv.py|src/virtualenv/create/via_global_ref/builtin/python2/site.py|src/virtualenv/discovery/py_info.py|tasks/__main__zipapp.py)$"
@@ -37,16 +37,16 @@ repos:
       - id: black
         args: [--safe]
   - repo: https://github.com/asottile/blacken-docs
-    rev: v1.12.1
+    rev: 1.13.0
     hooks:
       - id: blacken-docs
         additional_dependencies: [black==22.12]
   - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: v1.9.0
+    rev: v1.10.0
     hooks:
       - id: rst-backticks
   - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: "0.5.2"
+    rev: "0.6.1"
     hooks:
       - id: tox-ini-fmt
         args: ["-p", "fix"]
@@ -64,7 +64,7 @@ repos:
           - pep8-naming==0.13.3
           - flake8-pyproject==1.2.2
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v2.7.1"
+    rev: "v3.0.0-alpha.4"
     hooks:
       - id: prettier
         additional_dependencies:
@@ -72,7 +72,7 @@ repos:
           - "@prettier/plugin-xml@2.2"
         args: ["--print-width=120", "--prose-wrap=always"]
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.32.2
+    rev: v0.33.0
     hooks:
       - id: markdownlint
   - repo: meta
