@@ -205,27 +205,30 @@ system python's pip before activation, once you do the activation this should re
 Note, though that all we do is change priority; so, if your virtual environments ``bin``/``Scripts`` folder does not
 contain some executable, this will still resolve to the same executable it would have resolved before the activation.
 
-For a list of shells we provide activators see :option:`activators`. The location of these is right alongside the python
-executables ( usually ``Scripts`` folder on Windows, ``bin`` on POSIX), and are named as ``activate`` (and some
-extension that's specific per activator; no extension is bash). You can invoke them, usually by source-ing (the source
-command might vary by shell - e.g. bash is ``.``):
+For a list of shells we provide activators see :option:`activators`. The location of these is right alongside the Python
+executables: usually ``Scripts`` folder on Windows, ``bin`` on POSIX. They are called ``activate``, plus an
+extension that's specific per activator, with no extension for Bash. You can invoke them, usally by source-ing them.
+The source command might vary by shell - e.g. on Bash it’s ``source`` (or ``.``):
 
 .. code-block:: console
 
-   source bin/activate
+   source venv/bin/activate
 
-This is all it does; it's purely a convenience of prepending the virtual environment's binary folder onto the ``PATH``
-environment variable. Note you don't have to activate a virtual environment to use it. In this case though you would
-need to type out the path to the executables, rather than relying on your shell to resolve them to your virtual
-environment.
+The activate script prepends the virtual environment’s binary folder onto the ``PATH`` environment variable. It’s
+really just convenience for doing so, since you could do the same yourself.
 
-The ``activate`` script will also modify your shell prompt to indicate which environment is currently active. The script
-also provisions a ``deactivate`` command that will allow you to undo the operation:
+Note that you don't have to activate a virtual environment to use it. You can instead use the full paths to its
+executables, rather than relying on your shell to resolve them to your virtual environment.
+
+Activator scripts also modify your shell prompt to indicate which environment is currently active, by prepending the
+environment name in brackets, like ``(venv)``. You can disable this behaviour by setting the environment variable
+``VIRTUAL_ENV_DISABLE_PROMPT`` to any value.
+
+The scripts also provision a ``deactivate`` command that will allow you to undo the operation:
 
 .. code-block:: console
 
    deactivate
-
 
 .. note::
 
