@@ -1,6 +1,5 @@
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -16,14 +15,14 @@ CURRENT = PythonInfo.current_system()
 @pytest.fixture(scope="session")
 def zipapp_build_env(tmp_path_factory):
     create_env_path = None
-    if sys.version_info[0:2] >= (3, 5) and CURRENT.implementation != "PyPy":
+    if CURRENT.implementation != "PyPy":
         exe = CURRENT.executable  # guaranteed to contain a recent enough pip (tox.ini)
     else:
         create_env_path = tmp_path_factory.mktemp("zipapp-create-env")
         exe, found = None, False
         # prefer CPython as builder as pypy is slow
         for impl in ["cpython", ""]:
-            for version in range(8, 4, -1):
+            for version in range(11, 6, -1):
                 try:
                     # create a virtual environment which is also guaranteed to contain a recent enough pip (bundled)
                     session = cli_run(
@@ -47,7 +46,7 @@ def zipapp_build_env(tmp_path_factory):
                 break
         else:
             raise RuntimeError("could not find a python to build zipapp")
-        cmd = [str(Path(exe).parent / "pip"), "install", "pip>=19.3", "packaging>=20"]
+        cmd = [str(Path(exe).parent / "pip"), "install", "pip>=23", "packaging>=23"]
         subprocess.check_call(cmd)
     yield exe
     if create_env_path is not None:

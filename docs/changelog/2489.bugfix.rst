@@ -1,0 +1,1 @@
+Bump embedded pip to ``23.0`` and setuptools to ``67.1`` - by :user:`gaborbernat`.
