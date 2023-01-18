@@ -12,6 +12,7 @@ concurrency:
 jobs:
   test:
     name: test ${{ matrix.py }} - ${{ matrix.os }}
+    if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -137,6 +138,7 @@ jobs:
 
   check:
     name: ${{ matrix.tox_env }} - ${{ matrix.os }}
+    if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -169,7 +171,6 @@ jobs:
           UPGRADE_ADVISORY: "yes"
 
   publish:
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
     needs: [check, coverage]
     runs-on: ubuntu-22.04
     steps:
@@ -185,6 +186,7 @@ jobs:
       - name: Build sdist and wheel
         run: python -m build -s -w . -o dist
       - name: Publish to PyPi
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && github.repository_owner == 'pypa'
         uses: pypa/gh-action-pypi-publish@v1.6.4
         with:
           skip_existing: true
