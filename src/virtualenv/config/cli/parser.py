@@ -110,7 +110,6 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
         super().__init__(prog, max_help_position=32, width=240)
 
     def _get_help_string(self, action):
-
         text = super()._get_help_string(action)
         if hasattr(action, "default_source"):
             default = " (default: %(default)s)"
