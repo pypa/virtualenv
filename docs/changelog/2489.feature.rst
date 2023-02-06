@@ -1,1 +1,0 @@
-Drop ``3.6`` runtime support (can still create ``2.7+``) - by :user:`gaborbernat`.
