@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatch-vcs>=0.3", "hatchling>=1.11.1"]
+requires = ["hatch-vcs>=0.3", "hatchling>=1.12.2"]
 
 [project]
 name = "virtualenv"
@@ -16,17 +16,17 @@ scripts.virtualenv = "virtualenv.__main__:run_with_catch"
 requires-python = ">=3.7"
 dependencies = [
   "distlib<1,>=0.3.6",
-  "filelock<4,>=3.4.1",
-  'importlib-metadata>=4.8.3; python_version < "3.8"',
-  "platformdirs<3,>=2.4",
+  "filelock<4,>=3.9",
+  'importlib-metadata>=6; python_version < "3.8"',
+  "platformdirs<3,>=2.6.2",
 ]
 optional-dependencies.test = [
   "covdefaults>=2.2.2",
-  "coverage>=7.0.2",
+  "coverage>=7.1",
   "coverage-enable-subprocess>=1",
   "flaky>=3.7",
-  "packaging>=22",
-  "pytest>=7.2",
+  "packaging>=23",
+  "pytest>=7.2.1",
   "pytest-env>=0.8.1",
   "pytest-freezegun>=0.4.2",
   "pytest-mock>=3.10",
@@ -35,7 +35,7 @@ optional-dependencies.test = [
 ]
 optional-dependencies.docs = [
   "proselint>=0.13",
-  "sphinx>=5.3",
+  "sphinx>=6.1.3",
   "sphinx-argparse>=0.4",
   "sphinx-rtd-theme>=1.1.1",
   "towncrier>=22.12",
