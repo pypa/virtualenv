@@ -42,10 +42,11 @@ dependencies = [
   "platformdirs<3,>=2.4",
 ]
 optional-dependencies.docs = [
+  "furo>=2022.12.7",
   "proselint>=0.13",
-  "sphinx>=5.3",
+  "sphinx>=6.1.3",
   "sphinx-argparse>=0.4",
-  "sphinx-rtd-theme>=1.1.1",
+  "sphinxcontrib-towncrier>=0.2.1a0",
   "towncrier>=22.12",
 ]
 optional-dependencies.test = [
@@ -147,3 +148,11 @@ markers = ["slow"]
 timeout = 600
 addopts = "--tb=auto -ra --showlocals --no-success-flaky-report"
 env = ["PYTHONIOENCODING=utf-8"]
+
+[tool.towncrier]
+name = "tox"
+filename = "docs/changelog.rst"
+directory = "docs/changelog"
+title_format = false
+issue_format = ":issue:`{issue}`"
+template = "docs/changelog/template.jinja2"

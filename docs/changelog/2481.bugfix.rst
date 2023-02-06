@@ -1,1 +1,1 @@
-Fix broken prompt in Nushell when activating virtual environment.
+Fix broken prompt in Nushell when activating virtual environment - by :user:`kubouc`.

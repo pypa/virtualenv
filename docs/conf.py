@@ -3,8 +3,6 @@ import sys
 from datetime import date, datetime
 from pathlib import Path
 
-import sphinx_rtd_theme
-
 from virtualenv.version import __version__
 
 company = "PyPA"
@@ -30,21 +28,11 @@ always_document_param_types = True
 project = name
 today_fmt = "%B %d, %Y"
 
-html_theme = "sphinx_rtd_theme"
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-html_theme_options = {
-    "canonical_url": "https://virtualenv.pypa.io/",
-    "logo_only": False,
-    "display_version": True,
-    "prev_next_buttons_location": "bottom",
-    "collapse_navigation": False,
-    "sticky_navigation": True,
-    "navigation_depth": 6,
-    "includehidden": True,
-}
-html_static_path = ["_static"]
-html_last_updated_fmt = datetime.now().isoformat()
-htmlhelp_basename = "Pastedoc"
+html_theme = "furo"
+html_title, html_last_updated_fmt = "tox", datetime.now().isoformat()
+pygments_style, pygments_dark_style = "sphinx", "monokai"
+html_static_path, html_css_files = ["_static"], ["custom.css"]
+
 autoclass_content = "both"  # Include __init__ in class documentation
 autodoc_member_order = "bysource"
 autosectionlabel_prefix_document = True
@@ -57,21 +45,14 @@ extlinks = {
 }
 
 
-def generate_draft_news():
-    root = Path(__file__).parents[1]
-    new = subprocess.check_output(
-        [sys.executable, "-m", "towncrier", "--draft", "--version", "NEXT"],
-        cwd=root,
-        text=True,
-    )
-    dest = root / "docs" / "_draft.rst"
-    dest.write_text("" if "No significant changes" in new else new)
-
-
-generate_draft_news()
-
-
 def setup(app):
+    here = Path(__file__).parent
+    root, exe = here.parent, Path(sys.executable)
+    towncrier = exe.with_name(f"towncrier{exe.suffix}")
+    cmd = [str(towncrier), "build", "--draft", "--version", "NEXT"]
+    new = subprocess.check_output(cmd, cwd=root, text=True, stderr=subprocess.DEVNULL)
+    (root / "docs" / "_draft.rst").write_text("" if "No significant changes" in new else new)
+
     # the CLI arguments are dynamically generated
     doc_tree = Path(app.doctreedir)
     cli_interface_doctree = doc_tree / "cli_interface.doctree"
