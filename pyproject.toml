@@ -1,46 +1,22 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatch-vcs>=0.3", "hatchling>=1.11.1"]
+requires = [
+  "hatch-vcs>=0.3",
+  "hatchling>=1.12.2",
+]
 
 [project]
 name = "virtualenv"
 description = "Virtual Python Environment builder"
 readme = "README.md"
+keywords = [
+  "environments",
+  "isolated",
+  "virtual",
+]
 license = "MIT"
 maintainers = [{ name = "Bernat Gabor", email = "gaborjbernat@gmail.com" }]
-urls.Documentation = "https://virtualenv.pypa.io"
-urls.Homepage = "https://github.com/pypa/virtualenv"
-urls.Source = "https://github.com/pypa/virtualenv"
-urls.Tracker = "https://github.com/pypa/virtualenv/issues"
-scripts.virtualenv = "virtualenv.__main__:run_with_catch"
 requires-python = ">=3.7"
-dependencies = [
-  "distlib<1,>=0.3.6",
-  "filelock<4,>=3.4.1",
-  'importlib-metadata>=4.8.3; python_version < "3.8"',
-  "platformdirs<3,>=2.4",
-]
-optional-dependencies.test = [
-  "covdefaults>=2.2.2",
-  "coverage>=7.0.2",
-  "coverage-enable-subprocess>=1",
-  "flaky>=3.7",
-  "packaging>=22",
-  "pytest>=7.2",
-  "pytest-env>=0.8.1",
-  "pytest-freezegun>=0.4.2",
-  "pytest-mock>=3.10",
-  "pytest-randomly>=3.12",
-  "pytest-timeout>=2.1",
-]
-optional-dependencies.docs = [
-  "proselint>=0.13",
-  "sphinx>=5.3",
-  "sphinx-argparse>=0.4",
-  "sphinx-rtd-theme>=1.1.1",
-  "towncrier>=22.12",
-]
-keywords = ["environments", "isolated", "virtual"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
@@ -56,7 +32,40 @@ classifiers = [
   "Topic :: Software Development :: Testing",
   "Topic :: Utilities",
 ]
-dynamic = ["version"]
+dynamic = [
+  "version",
+]
+dependencies = [
+  "distlib<1,>=0.3.6",
+  "filelock<4,>=3.4.1",
+  'importlib-metadata>=4.8.3; python_version < "3.8"',
+  "platformdirs<3,>=2.4",
+]
+optional-dependencies.docs = [
+  "proselint>=0.13",
+  "sphinx>=5.3",
+  "sphinx-argparse>=0.4",
+  "sphinx-rtd-theme>=1.1.1",
+  "towncrier>=22.12",
+]
+optional-dependencies.test = [
+  "covdefaults>=2.2.2",
+  "coverage>=7.1",
+  "coverage-enable-subprocess>=1",
+  "flaky>=3.7",
+  "packaging>=23",
+  "pytest>=7.2.1",
+  "pytest-env>=0.8.1",
+  "pytest-freezegun>=0.4.2",
+  "pytest-mock>=3.10",
+  "pytest-randomly>=3.12",
+  "pytest-timeout>=2.1",
+]
+urls.Documentation = "https://virtualenv.pypa.io"
+urls.Homepage = "https://github.com/pypa/virtualenv"
+urls.Source = "https://github.com/pypa/virtualenv"
+urls.Tracker = "https://github.com/pypa/virtualenv/issues"
+scripts.virtualenv = "virtualenv.__main__:run_with_catch"
 
 [project.entry-points."virtualenv.activate"]
 bash = "virtualenv.activation.bash:BashActivator"
@@ -137,4 +146,4 @@ ignore = [
 markers = ["slow"]
 timeout = 600
 addopts = "--tb=auto -ra --showlocals --no-success-flaky-report"
-env = ["PYTHONWARNINGS=ignore:DEPRECATION::pip._internal.cli.base_command", "PYTHONIOENCODING=utf-8"]
+env = ["PYTHONIOENCODING=utf-8"]

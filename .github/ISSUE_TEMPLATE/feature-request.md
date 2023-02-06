@@ -18,7 +18,8 @@ assignees: ""
 
 **Alternative Solutions**
 
-<!-- Have you tried to workaround the problem using virtualenv or other tools? Or a different approach to solving this issue? Please elaborate here. -->
+<!-- Have you tried to workaround the problem using virtualenv or other tools? Or a different approach to solving this
+issue? Please elaborate here. -->
 
 **Additional context**
 
