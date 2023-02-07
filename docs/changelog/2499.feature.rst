@@ -1,0 +1,1 @@
+Allow platformdirs version ``3`` - by :user:`cdce8p`.
