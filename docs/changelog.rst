@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.19.0 (2023-02-07)
+---------------------
+
+Features - 20.19.0
+~~~~~~~~~~~~~~~~~~
+- Allow platformdirs version ``3`` - by :user:`cdce8p`. (:issue:`2499`)
+
+
 v20.18.0 (2023-02-06)
 ---------------------
 
