@@ -29,7 +29,7 @@ project = name
 today_fmt = "%B %d, %Y"
 
 html_theme = "furo"
-html_title, html_last_updated_fmt = "tox", datetime.now().isoformat()
+html_title, html_last_updated_fmt = project, datetime.now().isoformat()
 pygments_style, pygments_dark_style = "sphinx", "monokai"
 html_static_path, html_css_files = ["_static"], ["custom.css"]
 
