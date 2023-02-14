@@ -1,5 +1,4 @@
 from ..py_info import PythonInfo
-from ..py_spec import PythonSpec
 from .pep514 import discover_pythons
 
 
