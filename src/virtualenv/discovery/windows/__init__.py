@@ -19,15 +19,10 @@ def propose_interpreters(spec, cache_dir, env):
     )
 
     for name, major, minor, arch, exe, _ in existing:
-        # pre-filter
-        if name in ("PythonCore", "ContinuumAnalytics"):
-            name = "CPython"
-        registry_spec = PythonSpec(None, name, major, minor, None, arch, exe)
-        if registry_spec.satisfies(spec):
-            interpreter = Pep514PythonInfo.from_exe(exe, cache_dir, env=env, raise_on_error=False)
-            if interpreter is not None:
-                if interpreter.satisfies(spec, impl_must_match=True):
-                    yield interpreter
+        interpreter = Pep514PythonInfo.from_exe(exe, cache_dir, env=env, raise_on_error=False)
+        if interpreter is not None:
+            if interpreter.satisfies(spec, impl_must_match=True):
+                yield interpreter
 
 
 __all__ = [
