@@ -19,13 +19,20 @@ def propose_interpreters(spec, cache_dir, env):
     )
 
     for name, major, minor, arch, exe, _ in existing:
-        # pre-filter
+        # Map well-known/most common organizations to CPython
         if name in ("PythonCore", "ContinuumAnalytics"):
-            name = "CPython"
-        registry_spec = PythonSpec(None, name, major, minor, None, arch, exe)
-        if registry_spec.satisfies(spec):
+            implementation = "CPython"
+        else:
+            # Historic logic which takes the implementation from the organization name
+            implementation = name
+
+        # Pre-filtering based on Windows Registry metadata, only for CPython
+        skip_pre_filter = implementation != "CPython"
+        registry_spec = PythonSpec(None, implementation, major, minor, None, arch, exe)
+        if skip_pre_filter or registry_spec.satisfies(spec):
             interpreter = Pep514PythonInfo.from_exe(exe, cache_dir, env=env, raise_on_error=False)
             if interpreter is not None:
+                # Final filtering/matching using interpreter metadata
                 if interpreter.satisfies(spec, impl_must_match=True):
                     yield interpreter
 
