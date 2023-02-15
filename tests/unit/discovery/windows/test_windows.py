@@ -10,9 +10,9 @@ from virtualenv.discovery.windows import propose_interpreters
 @pytest.mark.usefixtures("_mock_registry")
 @pytest.mark.usefixtures("_populate_pyinfo_cache")
 @pytest.mark.parametrize(
-    "string_spec, expected_exe",
+    ("string_spec", "expected_exe"),
     [
-        # 64bit over 32bit
+        # 64-bit over 32-bit
         ("python3.7", "C:\\Users\\user\\Miniconda3-64\\python.exe"),
         ("cpython3.7", "C:\\Users\\user\\Miniconda3-64\\python.exe"),
         # 1 installation of 3.9 available
