@@ -3,6 +3,13 @@ from ..py_spec import PythonSpec
 from .pep514 import discover_pythons
 
 
+# Map of well-known organizations (as per PEP 514 Company Windows Registry key part) versus Python implementation
+_IMPLEMENTATION_BY_ORG = {
+    "ContinuumAnalytics": "CPython",
+    "PythonCore": "CPython",
+}
+
+
 class Pep514PythonInfo(PythonInfo):
     """A Python information acquired from PEP-514"""
 
@@ -19,14 +26,11 @@ def propose_interpreters(spec, cache_dir, env):
     )
 
     for name, major, minor, arch, exe, _ in existing:
-        # Map well-known/most common organizations to CPython
-        if name in ("PythonCore", "ContinuumAnalytics"):
-            implementation = "CPython"
-        else:
-            # Historic logic which takes the implementation from the organization name
-            implementation = name
+        # Map well-known/most common organizations to a Python implementation, use the org name as a fallback for
+        # backwards compatibility.
+        implementation = _IMPLEMENTATION_BY_ORG.get(name, name)
 
-        # Pre-filtering based on Windows Registry metadata, only for CPython
+        # Pre-filtering based on Windows Registry metadata, for CPython only
         skip_pre_filter = implementation != "CPython"
         registry_spec = PythonSpec(None, implementation, major, minor, None, arch, exe)
         if skip_pre_filter or registry_spec.satisfies(spec):
