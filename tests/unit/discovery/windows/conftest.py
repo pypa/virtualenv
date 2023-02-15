@@ -141,7 +141,7 @@ def _mock_pyinfo(major, minor, arch, exe):
     info.executable = info.original_executable = info.system_executable = exe
     info.implementation = "CPython"
     info.architecture = arch
-    info.version_info = VersionInfo(major, minor, 0, 'final', 0)
+    info.version_info = VersionInfo(major, minor, 0, "final", 0)
     return info
 
 
