@@ -15,7 +15,7 @@ key_open = {
         "Anaconda37-64\\InstallPath": 78703520,
         "Anaconda37-64": 78702368,
     },
-    78701856: {"ContinuumAnalytics": 78701152, "PythonCore": 78702656},
+    78701856: {"ContinuumAnalytics": 78701152, "PythonCore": 78702656, "CompanyA": 88800000},
     78702656: {
         "3.1\\InstallPath": 78701824,
         "3.1": 78700704,
@@ -37,6 +37,10 @@ key_open = {
     },
     78702960: {"2.7\\InstallPath": 78700912, "2.7": 78703136, "3.4\\InstallPath": 78703648, "3.4": 78704032},
     78701840: {"PythonCore": 78702960},
+    88800000: {
+        "3.3\\InstallPath": 88810000,
+        "3.3": 88820000,
+    },
 }
 value_collect = {
     78703568: {"SysVersion": ("3.7", 1), "SysArchitecture": ("32bit", 1)},
@@ -110,9 +114,14 @@ value_collect = {
         None: ("C:\\Python34\\", 1),
         "ExecutableArguments": OSError(2, "The system cannot find the file specified"),
     },
+    88810000: {
+        "ExecutablePath": ("Z:\\CompanyA\\Python\\3.3\\python.exe", 1),
+        "ExecutableArguments": OSError(2, "The system cannot find the file specified"),
+    },
+    88820000: {"SysVersion": ("3.3", 1), "SysArchitecture": ("64bit", 1)},
 }
 enum_collect = {
-    78701856: ["ContinuumAnalytics", "PythonCore", OSError(22, "No more data is available", None, 259, None)],
+    78701856: ["ContinuumAnalytics", "PythonCore", "CompanyA", OSError(22, "No more data is available", None, 259, None)],
     78701152: ["Anaconda37-32", "Anaconda37-64", OSError(22, "No more data is available", None, 259, None)],
     78702656: [
         "3.1",
@@ -128,4 +137,5 @@ enum_collect = {
     ],
     78701840: ["PyLauncher", "PythonCore", OSError(22, "No more data is available", None, 259, None)],
     78702960: ["2.7", "3.4", OSError(22, "No more data is available", None, 259, None)],
+    88800000: ["3.3", OSError(22, "No more data is available", None, 259, None)],
 }

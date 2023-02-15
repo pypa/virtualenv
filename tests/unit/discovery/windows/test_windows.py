@@ -21,6 +21,9 @@ from virtualenv.discovery.windows import propose_interpreters
         # resolves to highest available version
         ("python", "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe"),
         ("cpython", "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe"),
+        # Non-standard org name
+        ("python3.3", "Z:\\CompanyA\\Python\\3.3\\python.exe"),
+        ("cpython3.3", "Z:\\CompanyA\\Python\\3.3\\python.exe"),
     ],
 )
 def test_propose_interpreters(string_spec, expected_exe):

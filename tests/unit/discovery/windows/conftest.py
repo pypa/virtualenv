@@ -162,6 +162,7 @@ def _populate_pyinfo_cache(monkeypatch):
         ("PythonCore", 3, 9, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
         ("PythonCore", 2, 7, 64, "C:\\Python27\\python.exe", None),
         ("PythonCore", 3, 4, 64, "C:\\Python34\\python.exe", None),
+        ("CompanyA", 3, 3, 64, "Z:\\CompanyA\\Python\\3.3\\python.exe", None),
     ]
     for _, major, minor, arch, exe, _ in interpreters:
         info = _mock_pyinfo(major, minor, arch, exe)
