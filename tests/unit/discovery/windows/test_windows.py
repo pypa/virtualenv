@@ -3,7 +3,6 @@ import sys
 import pytest
 
 from virtualenv.discovery.py_spec import PythonSpec
-from virtualenv.discovery.windows import propose_interpreters
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="no Windows registry")
@@ -27,6 +26,8 @@ from virtualenv.discovery.windows import propose_interpreters
     ],
 )
 def test_propose_interpreters(string_spec, expected_exe):
+    from virtualenv.discovery.windows import propose_interpreters
+
     spec = PythonSpec.from_string_spec(string_spec)
     interpreter = next(propose_interpreters(spec=spec, cache_dir=None, env=None))
     assert interpreter.executable == expected_exe
