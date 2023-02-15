@@ -121,7 +121,12 @@ value_collect = {
     88820000: {"SysVersion": ("3.3", 1), "SysArchitecture": ("64bit", 1)},
 }
 enum_collect = {
-    78701856: ["ContinuumAnalytics", "PythonCore", "CompanyA", OSError(22, "No more data is available", None, 259, None)],
+    78701856: [
+        "ContinuumAnalytics",
+        "PythonCore",
+        "CompanyA",
+        OSError(22, "No more data is available", None, 259, None),
+    ],
     78701152: ["Anaconda37-32", "Anaconda37-64", OSError(22, "No more data is available", None, 259, None)],
     78702656: [
         "3.1",
