@@ -2,7 +2,6 @@ from ..py_info import PythonInfo
 from ..py_spec import PythonSpec
 from .pep514 import discover_pythons
 
-
 # Map of well-known organizations (as per PEP 514 Company Windows Registry key part) versus Python implementation
 _IMPLEMENTATION_BY_ORG = {
     "ContinuumAnalytics": "CPython",
