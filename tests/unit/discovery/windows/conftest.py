@@ -1,4 +1,3 @@
-from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -62,74 +61,6 @@ def _mock_registry(mocker):
 
     mocker.patch.object(winreg, "OpenKeyEx", side_effect=_open_key_ex)
     mocker.patch("os.path.exists", return_value=True)
-
-
-@pytest.fixture()
-def _collect_winreg_access(mocker):
-    # noinspection PyUnresolvedReferences
-    from winreg import EnumKey, OpenKeyEx, QueryValueEx
-
-    from virtualenv.discovery.windows.pep514 import winreg
-
-    hive_open = {}
-    key_open = defaultdict(dict)
-
-    @contextmanager
-    def _c(*args):
-        res = None
-        key_id = id(args[0]) if len(args) == 2 else None
-        try:
-            with OpenKeyEx(*args) as c:
-                res = id(c)
-                yield c
-        except Exception as exception:
-            res = exception
-            raise exception
-        finally:
-            if len(args) == 4:
-                hive_open[args] = res
-            elif len(args) == 2:
-                key_open[key_id][args[1]] = res
-
-    enum_collect = defaultdict(list)
-
-    def _e(key, at):
-        result = None
-        key_id = id(key)
-        try:
-            result = EnumKey(key, at)
-            return result
-        except Exception as exception:
-            result = exception
-            raise result
-        finally:
-            enum_collect[key_id].append(result)
-
-    value_collect = defaultdict(dict)
-
-    def _v(key, value_name):
-        result = None
-        key_id = id(key)
-        try:
-            result = QueryValueEx(key, value_name)
-            return result
-        except Exception as exception:
-            result = exception
-            raise result
-        finally:
-            value_collect[key_id][value_name] = result
-
-    mocker.patch.object(winreg, "EnumKey", side_effect=_e)
-    mocker.patch.object(winreg, "QueryValueEx", side_effect=_v)
-    mocker.patch.object(winreg, "OpenKeyEx", side_effect=_c)
-
-    yield
-
-    print("")
-    print(f"hive_open = {hive_open}")
-    print(f"key_open = {dict(key_open.items())}")
-    print(f"value_collect = {dict(value_collect.items())}")
-    print(f"enum_collect = {dict(enum_collect.items())}")
 
 
 def _mock_pyinfo(major, minor, arch, exe):
