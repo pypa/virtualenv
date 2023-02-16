@@ -17,23 +17,23 @@ def _mock_registry(mocker):
     key_open = loc["key_open"]
     hive_open = loc["hive_open"]
 
-    def _e(key, at):
+    def _enum_key(key, at):
         key_id = key.value if isinstance(key, Key) else key
         result = enum_collect[key_id][at]
         if isinstance(result, OSError):
             raise result
         return result
 
-    mocker.patch.object(winreg, "EnumKey", side_effect=_e)
+    mocker.patch.object(winreg, "EnumKey", side_effect=_enum_key)
 
-    def _v(key, value_name):
+    def _query_value_ex(key, value_name):
         key_id = key.value if isinstance(key, Key) else key
         result = value_collect[key_id][value_name]
         if isinstance(result, OSError):
             raise result
         return result
 
-    mocker.patch.object(winreg, "QueryValueEx", side_effect=_v)
+    mocker.patch.object(winreg, "QueryValueEx", side_effect=_query_value_ex)
 
     class Key:
         def __init__(self, value):
@@ -46,7 +46,7 @@ def _mock_registry(mocker):
             return None
 
     @contextmanager
-    def _o(*args):
+    def _open_key_ex(*args):
         if len(args) == 2:
             key, value = args
             key_id = key.value if isinstance(key, Key) else key
@@ -60,7 +60,7 @@ def _mock_registry(mocker):
             raise value
         yield result
 
-    mocker.patch.object(winreg, "OpenKeyEx", side_effect=_o)
+    mocker.patch.object(winreg, "OpenKeyEx", side_effect=_open_key_ex)
     mocker.patch("os.path.exists", return_value=True)
 
 
