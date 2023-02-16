@@ -38,8 +38,8 @@ key_open = {
     78702960: {"2.7\\InstallPath": 78700912, "2.7": 78703136, "3.7\\InstallPath": 78703648, "3.7": 78704032},
     78701840: {"PythonCore": 78702960},
     88800000: {
-        "3.3\\InstallPath": 88810000,
-        "3.3": 88820000,
+        "3.6\\InstallPath": 88810000,
+        "3.6": 88820000,
     },
 }
 value_collect = {
@@ -115,10 +115,10 @@ value_collect = {
         "ExecutableArguments": OSError(2, "The system cannot find the file specified"),
     },
     88810000: {
-        "ExecutablePath": ("Z:\\CompanyA\\Python\\3.3\\python.exe", 1),
+        "ExecutablePath": ("Z:\\CompanyA\\Python\\3.6\\python.exe", 1),
         "ExecutableArguments": OSError(2, "The system cannot find the file specified"),
     },
-    88820000: {"SysVersion": ("3.3", 1), "SysArchitecture": ("64bit", 1)},
+    88820000: {"SysVersion": ("3.6", 1), "SysArchitecture": ("64bit", 1)},
 }
 enum_collect = {
     78701856: [
@@ -142,5 +142,5 @@ enum_collect = {
     ],
     78701840: ["PyLauncher", "PythonCore", OSError(22, "No more data is available", None, 259, None)],
     78702960: ["2.7", "3.7", OSError(22, "No more data is available", None, 259, None)],
-    88800000: ["3.3", OSError(22, "No more data is available", None, 259, None)],
+    88800000: ["3.6", OSError(22, "No more data is available", None, 259, None)],
 }
