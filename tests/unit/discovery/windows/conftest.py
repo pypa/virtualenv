@@ -90,7 +90,7 @@ def _populate_pyinfo_cache(monkeypatch):
         ("PythonCore", 3, 5, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python35\\python.exe", None),
         ("PythonCore", 3, 6, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
         ("PythonCore", 3, 7, 32, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python37-32\\python.exe", None),
-        ("PythonCore", 3, 9, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
+        ("PythonCore", 3, 12, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe", None),
         ("PythonCore", 2, 7, 64, "C:\\Python27\\python.exe", None),
         ("PythonCore", 3, 4, 64, "C:\\Python34\\python.exe", None),
         ("CompanyA", 3, 3, 64, "Z:\\CompanyA\\Python\\3.3\\python.exe", None),

@@ -15,11 +15,11 @@ from virtualenv.discovery.py_spec import PythonSpec
         ("python3.7", "C:\\Users\\user\\Miniconda3-64\\python.exe"),
         ("cpython3.7", "C:\\Users\\user\\Miniconda3-64\\python.exe"),
         # 1 installation of 3.9 available
-        ("python3.9", "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe"),
-        ("cpython3.9", "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe"),
+        ("python3.12", "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"),
+        ("cpython3.12", "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"),
         # resolves to highest available version
-        ("python", "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe"),
-        ("cpython", "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe"),
+        ("python", "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"),
+        ("cpython", "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"),
         # Non-standard org name
         ("python3.3", "Z:\\CompanyA\\Python\\3.3\\python.exe"),
         ("cpython3.3", "Z:\\CompanyA\\Python\\3.3\\python.exe"),

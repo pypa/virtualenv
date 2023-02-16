@@ -18,7 +18,7 @@ def test_pep514():
         ("PythonCore", 3, 5, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python35\\python.exe", None),
         ("PythonCore", 3, 6, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
         ("PythonCore", 3, 7, 32, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python37-32\\python.exe", None),
-        ("PythonCore", 3, 9, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
+        ("PythonCore", 3, 12, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe", None),
         ("CompanyA", 3, 3, 64, "Z:\\CompanyA\\Python\\3.3\\python.exe", None),
         ("PythonCore", 2, 7, 64, "C:\\Python27\\python.exe", None),
         ("PythonCore", 3, 4, 64, "C:\\Python34\\python.exe", None),
@@ -38,13 +38,13 @@ def test_pep514_run(capsys, caplog):
     ('ContinuumAnalytics', 3, 7, 32, 'C:\\Users\\user\\Miniconda3\\python.exe', None)
     ('ContinuumAnalytics', 3, 7, 64, 'C:\\Users\\user\\Miniconda3-64\\python.exe', None)
     ('PythonCore', 2, 7, 64, 'C:\\Python27\\python.exe', None)
+    ('PythonCore', 3, 12, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', None)
     ('PythonCore', 3, 4, 64, 'C:\\Python34\\python.exe', None)
     ('PythonCore', 3, 5, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python35\\python.exe', None)
     ('PythonCore', 3, 6, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
     ('PythonCore', 3, 6, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
     ('PythonCore', 3, 6, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
     ('PythonCore', 3, 7, 32, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python37-32\\python.exe', None)
-    ('PythonCore', 3, 9, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
     """,
     ).strip()
     assert out.strip() == expected
@@ -56,7 +56,7 @@ def test_pep514_run(capsys, caplog):
         f"{prefix}HKEY_CURRENT_USER/PythonCore/3.3 error: no ExecutablePath or default for it",
         f"{prefix}HKEY_CURRENT_USER/PythonCore/3.3 error: could not load exe with value None",
         f"{prefix}HKEY_CURRENT_USER/PythonCore/3.8/InstallPath error: missing",
-        f"{prefix}HKEY_CURRENT_USER/PythonCore/3.9/SysVersion error: invalid format magic",
+        f"{prefix}HKEY_CURRENT_USER/PythonCore/3.12/SysVersion error: invalid format magic",
         f"{prefix}HKEY_CURRENT_USER/PythonCore/3.X/SysVersion error: version is not string: 2778",
         f"{prefix}HKEY_CURRENT_USER/PythonCore/3.X error: invalid format 3.X",
     ]
