@@ -12,8 +12,8 @@ from virtualenv.discovery.py_spec import PythonSpec
     ("string_spec", "expected_exe"),
     [
         # 64-bit over 32-bit
-        ("python3.7", "C:\\Users\\user\\Miniconda3-64\\python.exe"),
-        ("cpython3.7", "C:\\Users\\user\\Miniconda3-64\\python.exe"),
+        ("python3.10", "C:\\Users\\user\\Miniconda3-64\\python.exe"),
+        ("cpython3.10", "C:\\Users\\user\\Miniconda3-64\\python.exe"),
         # 1 installation of 3.9 available
         ("python3.12", "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"),
         ("cpython3.12", "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe"),

@@ -11,13 +11,13 @@ def test_pep514():
 
     interpreters = list(discover_pythons())
     assert interpreters == [
-        ("ContinuumAnalytics", 3, 7, 32, "C:\\Users\\user\\Miniconda3\\python.exe", None),
-        ("ContinuumAnalytics", 3, 7, 64, "C:\\Users\\user\\Miniconda3-64\\python.exe", None),
+        ("ContinuumAnalytics", 3, 10, 32, "C:\\Users\\user\\Miniconda3\\python.exe", None),
+        ("ContinuumAnalytics", 3, 10, 64, "C:\\Users\\user\\Miniconda3-64\\python.exe", None),
         ("PythonCore", 3, 6, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
         ("PythonCore", 3, 6, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
         ("PythonCore", 3, 5, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python35\\python.exe", None),
         ("PythonCore", 3, 6, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
-        ("PythonCore", 3, 7, 32, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python37-32\\python.exe", None),
+        ("PythonCore", 3, 10, 32, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python310-32\\python.exe", None),
         ("PythonCore", 3, 12, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe", None),
         ("CompanyA", 3, 3, 64, "Z:\\CompanyA\\Python\\3.3\\python.exe", None),
         ("PythonCore", 2, 7, 64, "C:\\Python27\\python.exe", None),
@@ -35,16 +35,16 @@ def test_pep514_run(capsys, caplog):
     expected = textwrap.dedent(
         r"""
     ('CompanyA', 3, 3, 64, 'Z:\\CompanyA\\Python\\3.3\\python.exe', None)
-    ('ContinuumAnalytics', 3, 7, 32, 'C:\\Users\\user\\Miniconda3\\python.exe', None)
-    ('ContinuumAnalytics', 3, 7, 64, 'C:\\Users\\user\\Miniconda3-64\\python.exe', None)
+    ('ContinuumAnalytics', 3, 10, 32, 'C:\\Users\\user\\Miniconda3\\python.exe', None)
+    ('ContinuumAnalytics', 3, 10, 64, 'C:\\Users\\user\\Miniconda3-64\\python.exe', None)
     ('PythonCore', 2, 7, 64, 'C:\\Python27\\python.exe', None)
+    ('PythonCore', 3, 10, 32, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python310-32\\python.exe', None)
     ('PythonCore', 3, 12, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', None)
     ('PythonCore', 3, 4, 64, 'C:\\Python34\\python.exe', None)
     ('PythonCore', 3, 5, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python35\\python.exe', None)
     ('PythonCore', 3, 6, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
     ('PythonCore', 3, 6, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
     ('PythonCore', 3, 6, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe', None)
-    ('PythonCore', 3, 7, 32, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python37-32\\python.exe', None)
     """,
     ).strip()
     assert out.strip() == expected

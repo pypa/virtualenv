@@ -83,8 +83,8 @@ def _populate_pyinfo_cache(monkeypatch):
 
     # Data matches _mock_registry fixture
     interpreters = [
-        ("ContinuumAnalytics", 3, 7, 32, "C:\\Users\\user\\Miniconda3\\python.exe", None),
-        ("ContinuumAnalytics", 3, 7, 64, "C:\\Users\\user\\Miniconda3-64\\python.exe", None),
+        ("ContinuumAnalytics", 3, 10, 32, "C:\\Users\\user\\Miniconda3\\python.exe", None),
+        ("ContinuumAnalytics", 3, 10, 64, "C:\\Users\\user\\Miniconda3-64\\python.exe", None),
         ("PythonCore", 3, 6, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
         ("PythonCore", 3, 6, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
         ("PythonCore", 3, 5, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python35\\python.exe", None),
