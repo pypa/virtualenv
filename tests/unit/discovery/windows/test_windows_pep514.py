@@ -55,7 +55,7 @@ def test_pep514_run(capsys, caplog):
         f"{prefix}HKEY_CURRENT_USER/PythonCore/3.2/SysArchitecture error: arch is not string: 100",
         f"{prefix}HKEY_CURRENT_USER/PythonCore/3.3 error: no ExecutablePath or default for it",
         f"{prefix}HKEY_CURRENT_USER/PythonCore/3.3 error: could not load exe with value None",
-        f"{prefix}HKEY_CURRENT_USER/PythonCore/3.8/InstallPath error: missing",
+        f"{prefix}HKEY_CURRENT_USER/PythonCore/3.11/InstallPath error: missing",
         f"{prefix}HKEY_CURRENT_USER/PythonCore/3.12/SysVersion error: invalid format magic",
         f"{prefix}HKEY_CURRENT_USER/PythonCore/3.X/SysVersion error: version is not string: 2778",
         f"{prefix}HKEY_CURRENT_USER/PythonCore/3.X error: invalid format 3.X",
