@@ -12,7 +12,7 @@ export-env {
     }
 
     def has-env [name: string] {
-        $name in (env).name
+        $name in $env
     }
 
     # Emulates a `test -z`, but btter as it handles e.g 'false'
