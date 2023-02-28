@@ -5,6 +5,19 @@ Release History
 
 .. towncrier release notes start
 
+v20.20.0 (2023-02-28)
+---------------------
+
+Features - 20.20.0
+~~~~~~~~~~~~~~~~~~
+- Change environment variable existence check in Nushell activation script to not use deprecated command. (:issue:`2506`)
+
+Bugfixes - 20.20.0
+~~~~~~~~~~~~~~~~~~
+- Discover CPython implementations distributed on Windows by any organization - by :user:`faph`. (:issue:`2504`)
+- Upgrade embedded setuptools to ``67.4.0`` from ``67.1.0`` and pip to ``23.0.1`` from ``23.0`` - by :user:`gaborbernat`. (:issue:`2510`)
+
+
 v20.19.0 (2023-02-07)
 ---------------------
 

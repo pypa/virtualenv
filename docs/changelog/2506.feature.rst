@@ -1,1 +1,0 @@
-Change environment variable existence check in Nushell activation script to not use deprecated command.
