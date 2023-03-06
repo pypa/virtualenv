@@ -7,7 +7,7 @@ ABS_HERE = os.path.abspath(os.path.dirname(__file__))
 NEW_IMPORT_SYSTEM = sys.version_info[0] == 3
 
 
-class VersionPlatformSelect(object):
+class VersionPlatformSelect:
     def __init__(self):
         self.archive = ABS_HERE
         self._zip_file = zipfile.ZipFile(ABS_HERE, "r")
@@ -67,13 +67,13 @@ class VersionPlatformSelect(object):
         if "distlib" not in self.modules:
             return
 
-        class DistlibFinder(object):
+        class DistlibFinder:
             def __init__(self, path, loader):
                 self.path = path
                 self.loader = loader
 
             def find(self, name):
-                class Resource(object):
+                class Resource:
                     def __init__(self, content):
                         self.bytes = content
 
