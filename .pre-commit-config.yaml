@@ -23,7 +23,7 @@ repos:
         args: ["--py37-plus"]
         exclude: "^(src/virtualenv/create/via_global_ref/_virtualenv.py|src/virtualenv/create/via_global_ref/builtin/python2/site.py|src/virtualenv/discovery/py_info.py|tasks/__main__zipapp.py)$"
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.38.4
+    rev: v3.3.1
     hooks:
       - id: pyupgrade
         files: "^(src/virtualenv/create/via_global_ref/_virtualenv.py|src/virtualenv/create/via_global_ref/builtin/python2/site.py|src/virtualenv/discovery/py_info.py|tasks/__main__zipapp.py)$"
@@ -64,7 +64,7 @@ repos:
           - pep8-naming==0.13.3
           - flake8-pyproject==1.2.2
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v2.7.1"
+    rev: "v3.0.0-alpha.6"
     hooks:
       - id: prettier
         additional_dependencies:
