@@ -1,0 +1,2 @@
+Add `print` command to nushell print_prompt to ensure compatibility with future release of nushell,
+where intermediate commands no longer print their result to stdout.
