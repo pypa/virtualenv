@@ -93,12 +93,12 @@ export-env {
       # If there is no default prompt, then only the env is printed in the prompt
       let new_prompt = if (has-env 'PROMPT_COMMAND') {
           if 'closure' in ($old_prompt_command | describe) {
-              { $'($virtual_prompt)(do $old_prompt_command)' }
+              {|| $'($virtual_prompt)(do $old_prompt_command)' }
           } else {
-              { $'($virtual_prompt)($old_prompt_command)' }
+              {|| $'($virtual_prompt)($old_prompt_command)' }
           }
       } else {
-          { $'($virtual_prompt)' }
+          {|| $'($virtual_prompt)' }
       }
 
       $new_env | merge {
