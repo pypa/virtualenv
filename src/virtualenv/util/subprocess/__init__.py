@@ -11,6 +11,7 @@ def run_cmd(cmd):
             stdin=subprocess.PIPE,
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE,
+            encoding="utf-8",
         )
         out, err = process.communicate()  # input disabled
         code = process.returncode

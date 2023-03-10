@@ -125,7 +125,7 @@ class JSONStoreDisk(ContentStore, metaclass=ABCMeta):
     def read(self):
         data, bad_format = None, False
         try:
-            data = json.loads(self.file.read_text())
+            data = json.loads(self.file.read_text(encoding="utf-8"))
             logging.debug(f"got {self.msg} from %s", *self.msg_args)
             return data
         except ValueError:
@@ -151,7 +151,7 @@ class JSONStoreDisk(ContentStore, metaclass=ABCMeta):
     def write(self, content):
         folder = self.file.parent
         folder.mkdir(parents=True, exist_ok=True)
-        self.file.write_text(json.dumps(content, sort_keys=True, indent=2))
+        self.file.write_text(json.dumps(content, sort_keys=True, indent=2), encoding="utf-8")
         logging.debug(f"wrote {self.msg} at %s", *self.msg_args)
 
 
