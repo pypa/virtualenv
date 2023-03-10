@@ -44,7 +44,7 @@ def test_python(raise_on_non_source_class, activation_tester):
 
             file_at = {str(activate_script)!r}
             # CPython 2 requires non-ascii path open to be unicode
-            with open(file_at, "r") as file_handler:
+            with open(file_at, "r", encoding='utf-8') as file_handler:
                 content = file_handler.read()
             exec(content, {{"__file__": file_at}})
 

@@ -9,7 +9,12 @@ from virtualenv.util.error import ProcessCallFailed
 
 
 def test_main():
-    process = Popen([sys.executable, "-m", "virtualenv", "--help"], universal_newlines=True, stdout=PIPE)
+    process = Popen(
+        [sys.executable, "-m", "virtualenv", "--help"],
+        universal_newlines=True,
+        stdout=PIPE,
+        encoding="utf-8",
+    )
     out, _ = process.communicate()
     assert not process.returncode
     assert out
@@ -92,6 +97,7 @@ def test_session_report_subprocess(tmp_path):
     out = check_output(
         [sys.executable, "-m", "virtualenv", str(tmp_path), "--activators", "powershell", "--without-pip"],
         text=True,
+        encoding="utf-8",
     )
     lines = out.split("\n")
     regexes = [

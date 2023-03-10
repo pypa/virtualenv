@@ -156,7 +156,7 @@ def test_py_info_cached_symlink(mocker, tmp_path, session_app_data):
     new_exe.symlink_to(sys.executable)
     pyvenv = Path(sys.executable).parents[1] / "pyvenv.cfg"
     if pyvenv.exists():
-        (tmp_path / pyvenv.name).write_text(pyvenv.read_text())
+        (tmp_path / pyvenv.name).write_text(pyvenv.read_text(encoding="utf-8"), encoding="utf-8")
     new_exe_str = str(new_exe)
     second_result = PythonInfo.from_exe(new_exe_str, session_app_data)
     assert second_result.executable == new_exe_str
@@ -211,7 +211,7 @@ def test_system_executable_no_exact_match(target, discovered, position, tmp_path
     selected = None
     for pos, i in enumerate(discovered):
         path = tmp_path / str(pos)
-        path.write_text("")
+        path.write_text("", encoding="utf-8")
         py_info = _make_py_info(i)
         py_info.system_executable = CURRENT.system_executable
         py_info.executable = CURRENT.system_executable
@@ -259,7 +259,7 @@ def test_py_info_ignores_distutils_config(monkeypatch, tmp_path):
     install_scripts={tmp_path}{os.sep}scripts
     install_data={tmp_path}{os.sep}data
     """
-    (tmp_path / "setup.cfg").write_text(dedent(raw))
+    (tmp_path / "setup.cfg").write_text(dedent(raw), encoding="utf-8")
     monkeypatch.chdir(tmp_path)
     py_info = PythonInfo.from_exe(sys.executable)
     distutils = py_info.distutils_install

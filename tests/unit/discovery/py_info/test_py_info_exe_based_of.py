@@ -36,7 +36,7 @@ def test_discover_ok(tmp_path, suffix, impl, version, arch, into, caplog, sessio
     os.symlink(CURRENT.executable, str(dest))
     pyvenv = Path(CURRENT.executable).parents[1] / "pyvenv.cfg"
     if pyvenv.exists():
-        (folder / pyvenv.name).write_text(pyvenv.read_text())
+        (folder / pyvenv.name).write_text(pyvenv.read_text(encoding="utf-8"), encoding="utf-8")
     inside_folder = str(tmp_path)
     base = CURRENT.discover_exe(session_app_data, inside_folder)
     found = base.executable

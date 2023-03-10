@@ -53,7 +53,7 @@ def _non_success_exit_code(capsys, target):
 
 def test_destination_exists_file(tmp_path, capsys):
     target = tmp_path / "out"
-    target.write_text("")
+    target.write_text("", encoding="utf-8")
     err = _non_success_exit_code(capsys, str(target))
     msg = f"the destination {str(target)} already exists and is a file"
     assert msg in err, err
@@ -230,15 +230,15 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
         make_file = debug["makefile_filename"]
         assert os.path.exists(make_file)
 
-    git_ignore = (dest / ".gitignore").read_text()
+    git_ignore = (dest / ".gitignore").read_text(encoding="utf-8")
     assert git_ignore.splitlines() == ["# created by virtualenv automatically", "*"]
 
 
 def test_create_vcs_ignore_exists(tmp_path):
     git_ignore = tmp_path / ".gitignore"
-    git_ignore.write_text("magic")
+    git_ignore.write_text("magic", encoding="utf-8")
     cli_run([str(tmp_path), "--without-pip", "--activators", ""])
-    assert git_ignore.read_text() == "magic"
+    assert git_ignore.read_text(encoding="utf-8") == "magic"
 
 
 def test_create_vcs_ignore_override(tmp_path):
@@ -249,9 +249,9 @@ def test_create_vcs_ignore_override(tmp_path):
 
 def test_create_vcs_ignore_exists_override(tmp_path):
     git_ignore = tmp_path / ".gitignore"
-    git_ignore.write_text("magic")
+    git_ignore.write_text("magic", encoding="utf-8")
     cli_run([str(tmp_path), "--without-pip", "--no-vcs-ignore", "--activators", ""])
-    assert git_ignore.read_text() == "magic"
+    assert git_ignore.read_text(encoding="utf-8") == "magic"
 
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
@@ -268,7 +268,7 @@ def test_venv_fails_not_inline(tmp_path, capsys, mocker):
     mocker.patch("virtualenv.run.session_via_cli", side_effect=_session_via_cli)
     before = tmp_path.stat().st_mode
     cfg_path = tmp_path / "pyvenv.cfg"
-    cfg_path.write_text("")
+    cfg_path.write_text("", encoding="utf-8")
     cfg = str(cfg_path)
     try:
         os.chmod(cfg, stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
@@ -293,7 +293,7 @@ def test_create_clear_resets(tmp_path, creator, clear, caplog):
     cmd = [str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", creator, "-vvv"]
     cli_run(cmd)
 
-    marker.write_text("")  # if we a marker file this should be gone on a clear run, remain otherwise
+    marker.write_text("", encoding="utf-8")  # if we a marker file this should be gone on a clear run, remain otherwise
     assert marker.exists()
 
     cli_run(cmd + (["--clear"] if clear else []))
@@ -430,7 +430,7 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
             install_data={tmp_path}{os.sep}data
             """,
     )
-    setup_cfg.write_text(setup_cfg.read_text() + conf)
+    setup_cfg.write_text(setup_cfg.read_text(encoding="utf-8") + conf, encoding="utf-8")
 
     monkeypatch.chdir(dest)  # distutils will read the setup.cfg from the cwd, so change to that
 
@@ -509,7 +509,7 @@ def test_pth_in_site_vs_python_path(tmp_path):
     session = cli_run([str(tmp_path)])
     site_packages = str(session.creator.purelib)
     # install test.pth that sets sys.testpth='ok'
-    with open(os.path.join(site_packages, "test.pth"), "w") as f:
+    with open(os.path.join(site_packages, "test.pth"), "w", encoding="utf-8") as f:
         f.write('import sys; sys.testpth="ok"\n')
     # verify that test.pth is activated when interpreter is run
     out = subprocess.check_output(
@@ -595,7 +595,10 @@ def test_debug_bad_virtualenv(tmp_path):
     result = cli_run(cmd)
     # if the site.py is removed/altered the debug should fail as no one is around to fix the paths
     cust = result.creator.purelib / "_a.pth"
-    cust.write_text('import sys; sys.stdout.write("std-out"); sys.stderr.write("std-err"); raise SystemExit(1)')
+    cust.write_text(
+        'import sys; sys.stdout.write("std-out"); sys.stderr.write("std-err"); raise SystemExit(1)',
+        encoding="utf-8",
+    )
     debug_info = result.creator.debug
     assert debug_info["returncode"] == 1
     assert "std-err" in debug_info["err"]

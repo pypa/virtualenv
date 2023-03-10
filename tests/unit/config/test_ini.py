@@ -16,6 +16,7 @@ def test_ini_can_be_overwritten_by_flag(tmp_path, monkeypatch):
         copies = True
         """,
         ),
+        encoding="utf-8",
     )
     monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(custom_ini))
 

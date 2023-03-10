@@ -36,6 +36,7 @@ class ActivationTester:
                     universal_newlines=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
+                    encoding="utf-8",
                 )
                 out, err = process.communicate()
                 result = out if out else err
@@ -220,7 +221,7 @@ def activation_python(request, tmp_path_factory, special_char_name, current_fast
         cmd += ["--prompt", special_char_name]
     session = cli_run(cmd)
     pydoc_test = session.creator.purelib / "pydoc_test.py"
-    pydoc_test.write_text('"""This is pydoc_test.py"""')
+    pydoc_test.write_text('"""This is pydoc_test.py"""', encoding="utf-8")
     return session
 
 
