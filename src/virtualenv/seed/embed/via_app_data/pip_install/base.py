@@ -72,11 +72,11 @@ class PipInstall(metaclass=ABCMeta):
     def _generate_new_files(self):
         new_files = set()
         installer = self._dist_info / "INSTALLER"
-        installer.write_text("pip\n")
+        installer.write_text("pip\n", encoding="utf-8")
         new_files.add(installer)
         # inject a no-op root element, as workaround for bug in https://github.com/pypa/pip/issues/7226
         marker = self._image_dir / f"{self._dist_info.stem}.virtualenv"
-        marker.write_text("")
+        marker.write_text("", encoding="utf-8")
         new_files.add(marker)
         folder = mkdtemp()
         try:
@@ -120,7 +120,7 @@ class PipInstall(metaclass=ABCMeta):
             entry_points = self._dist_info / "entry_points.txt"
             if entry_points.exists():
                 parser = ConfigParser()
-                with entry_points.open() as file_handler:
+                with entry_points.open(encoding="utf-8") as file_handler:
                     parser.read_file(file_handler)
                 if "console_scripts" in parser.sections():
                     for name, value in parser.items("console_scripts"):
@@ -152,11 +152,17 @@ class PipInstall(metaclass=ABCMeta):
         logging.debug("uninstall existing distribution %s from %s", dist.stem, dist_base)
 
         top_txt = dist / "top_level.txt"  # add top level packages at folder level
-        paths = {dist.parent / i.strip() for i in top_txt.read_text().splitlines()} if top_txt.exists() else set()
+        paths = (
+            {dist.parent / i.strip() for i in top_txt.read_text(encoding="utf-8").splitlines()}
+            if top_txt.exists()
+            else set()
+        )
         paths.add(dist)  # add the dist-info folder itself
 
         base_dirs, record = paths.copy(), dist / "RECORD"  # collect entries in record that we did not register yet
-        for name in (i.split(",")[0] for i in record.read_text().splitlines()) if record.exists() else ():
+        for name in (
+            (i.split(",")[0] for i in record.read_text(encoding="utf-8").splitlines()) if record.exists() else ()
+        ):
             path = dist_base / name
             if not any(p in base_dirs for p in path.parents):  # only add if not already added as a base dir
                 paths.add(path)

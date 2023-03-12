@@ -87,15 +87,15 @@ class ViaGlobalRefApi(Creator, metaclass=ABCMeta):
         if text:
             pth = self.purelib / "_virtualenv.pth"
             logging.debug("create virtualenv import hook file %s", pth)
-            pth.write_text("import _virtualenv")
+            pth.write_text("import _virtualenv", encoding="utf-8")
             dest_path = self.purelib / "_virtualenv.py"
             logging.debug("create %s", dest_path)
-            dest_path.write_text(text)
+            dest_path.write_text(text, encoding="utf-8")
 
     def env_patch_text(self):
         """Patch the distutils package to not be derailed by its configuration files"""
         with self.app_data.ensure_extracted(Path(__file__).parent / "_virtualenv.py") as resolved_path:
-            text = resolved_path.read_text()
+            text = resolved_path.read_text(encoding="utf-8")
             return text.replace('"__SCRIPT_DIR__"', repr(os.path.relpath(str(self.script_dir), str(self.purelib))))
 
     def _args(self):

@@ -163,7 +163,7 @@ class Creator(metaclass=ABCMeta):
         # mark this folder to be ignored by VCS, handle https://www.python.org/dev/peps/pep-0610/#registered-vcs
         git_ignore = self.dest / ".gitignore"
         if not git_ignore.exists():
-            git_ignore.write_text("# created by virtualenv automatically\n*\n")
+            git_ignore.write_text("# created by virtualenv automatically\n*\n", encoding="utf-8")
         # Mercurial - does not support the .hgignore file inside a subdirectory directly, but only if included via the
         # subinclude directive from root, at which point on might as well ignore the directory itself, see
         # https://www.selenic.com/mercurial/hgignore.5.html for more details

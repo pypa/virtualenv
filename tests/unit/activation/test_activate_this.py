@@ -21,6 +21,6 @@ def test_python_activator_cross(session_app_data, cross_python, special_name_dir
     results = activator.generate(session.creator)
     assert len(results) == 1
     result = results[0]
-    content = result.read_text()
+    content = result.read_text(encoding="utf-8")
     # check that the repr strings have been correctly stripped
     assert "\"'" not in content

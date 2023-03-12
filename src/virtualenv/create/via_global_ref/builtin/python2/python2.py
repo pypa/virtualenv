@@ -31,7 +31,7 @@ class Python2(ViaGlobalRefVirtualenvBuiltin, Python2Supports, metaclass=abc.ABCM
         if IS_ZIPAPP:
             custom_site_text = read_from_zipapp(custom_site)
         else:
-            custom_site_text = custom_site.read_text()
+            custom_site_text = custom_site.read_text(encoding="utf-8")
         expected = json.dumps([os.path.relpath(str(i), str(site_py)) for i in self.libs])
 
         custom_site_text = custom_site_text.replace("___EXPECTED_SITE_PACKAGES___", expected)
@@ -42,7 +42,7 @@ class Python2(ViaGlobalRefVirtualenvBuiltin, Python2Supports, metaclass=abc.ABCM
         skip_rewrite = os.linesep.join(f"            {i}" for i in self.skip_rewrite.splitlines()).lstrip()
         custom_site_text = custom_site_text.replace("# ___SKIP_REWRITE____", skip_rewrite)
 
-        site_py.write_text(custom_site_text)
+        site_py.write_text(custom_site_text, encoding="utf-8")
 
     @property
     def reload_code(self):
