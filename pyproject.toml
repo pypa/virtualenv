@@ -67,7 +67,6 @@ urls.Homepage = "https://github.com/pypa/virtualenv"
 urls.Source = "https://github.com/pypa/virtualenv"
 urls.Tracker = "https://github.com/pypa/virtualenv/issues"
 scripts.virtualenv = "virtualenv.__main__:run_with_catch"
-
 [project.entry-points."virtualenv.activate"]
 bash = "virtualenv.activation.bash:BashActivator"
 batch = "virtualenv.activation.batch:BatchActivator"
@@ -76,7 +75,6 @@ fish = "virtualenv.activation.fish:FishActivator"
 nushell = "virtualenv.activation.nushell:NushellActivator"
 powershell = "virtualenv.activation.powershell:PowerShellActivator"
 python = "virtualenv.activation.python:PythonActivator"
-
 [project.entry-points."virtualenv.create"]
 cpython2-mac-arm-framework = "virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython2macOsArmFramework"
 cpython2-mac-framework = "virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython2macOsFramework"
@@ -90,10 +88,8 @@ pypy2-win = "virtualenv.create.via_global_ref.builtin.pypy.pypy2:Pypy2Windows"
 pypy3-posix = "virtualenv.create.via_global_ref.builtin.pypy.pypy3:PyPy3Posix"
 pypy3-win = "virtualenv.create.via_global_ref.builtin.pypy.pypy3:Pypy3Windows"
 venv = "virtualenv.create.via_global_ref.venv:Venv"
-
 [project.entry-points."virtualenv.discovery"]
 builtin = "virtualenv.discovery.builtin:Builtin"
-
 [project.entry-points."virtualenv.seed"]
 app-data = "virtualenv.seed.embed.via_app_data.via_app_data:FromAppData"
 pip = "virtualenv.seed.embed.pip_invoke:PipInvoke"
@@ -102,6 +98,31 @@ pip = "virtualenv.seed.embed.pip_invoke:PipInvoke"
 build.hooks.vcs.version-file = "src/virtualenv/version.py"
 build.targets.sdist.include = ["/src", "/tests"]
 version.source = "vcs"
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+known_first_party = ["virtualenv"]
+
+[tool.flake8]
+max-complexity = 22
+max-line-length = 120
+unused-arguments-ignore-abstract-functions = true
+noqa-require-code = true
+dictionaries = ["en_US", "python", "technical", "django"]
+ignore = [
+  "E203", #  whitespace before ':'
+  "C901", # is too complex
+  "W503", # line break before binary operator
+]
+
+[tool.pytest.ini_options]
+markers = ["slow"]
+timeout = 600
+addopts = "--tb=auto -ra --showlocals --no-success-flaky-report"
+env = ["PYTHONIOENCODING=utf-8"]
 
 [tool.coverage]
 html.show_contexts = true
@@ -121,33 +142,8 @@ run.parallel = true
 run.plugins = ["covdefaults"]
 run.relative_files = true
 
-[tool.black]
-line-length = 120
-
-[tool.isort]
-profile = "black"
-known_first_party = ["virtualenv"]
-
 [tool.pep8]
 max-line-length = "120"
-
-[tool.flake8]
-max-complexity = 22
-max-line-length = 120
-unused-arguments-ignore-abstract-functions = true
-noqa-require-code = true
-dictionaries = ["en_US", "python", "technical", "django"]
-ignore = [
-  "E203", #  whitespace before ':'
-  "C901", # is too complex
-  "W503", # line break before binary operator
-]
-
-[tool.pytest.ini_options]
-markers = ["slow"]
-timeout = 600
-addopts = "--tb=auto -ra --showlocals --no-success-flaky-report"
-env = ["PYTHONIOENCODING=utf-8"]
 
 [tool.towncrier]
 name = "tox"
