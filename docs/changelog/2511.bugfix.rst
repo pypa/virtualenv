@@ -1,0 +1,1 @@
+Add ``tox.ini`` to sdist - by :user:`mtelka`.
