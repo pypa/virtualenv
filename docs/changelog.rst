@@ -5,6 +5,22 @@ Release History
 
 .. towncrier release notes start
 
+v20.21.0 (2023-03-12)
+---------------------
+
+Features - 20.21.0
+~~~~~~~~~~~~~~~~~~
+- Make closure syntax explicitly starts with {||. (:issue:`2512`)
+
+Bugfixes - 20.21.0
+~~~~~~~~~~~~~~~~~~
+- Add ``print`` command to nushell print_prompt to ensure compatibility with future release of nushell,
+  where intermediate commands no longer print their result to stdout. (:issue:`2514`)
+- Do not assume the default encoding. (:issue:`2515`)
+- Make ``ReentrantFileLock`` thread-safe and,
+  thereby, fix race condition in ``virtualenv.cli_run`` - by :user:`radoering`. (:issue:`2516`)
+
+
 v20.20.0 (2023-02-28)
 ---------------------
 

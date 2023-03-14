@@ -1,1 +1,0 @@
-Make closure syntax explicitly starts with {||.

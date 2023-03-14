@@ -1,2 +1,0 @@
-Make ``ReentrantFileLock`` thread-safe and,
-thereby, fix race condition in ``virtualenv.cli_run`` - by :user:`radoering`.
