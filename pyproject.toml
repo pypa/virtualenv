@@ -96,7 +96,7 @@ pip = "virtualenv.seed.embed.pip_invoke:PipInvoke"
 
 [tool.hatch]
 build.hooks.vcs.version-file = "src/virtualenv/version.py"
-build.targets.sdist.include = ["/src", "/tests"]
+build.targets.sdist.include = ["/src", "/tests", "/tox.ini"]
 version.source = "vcs"
 
 [tool.black]
