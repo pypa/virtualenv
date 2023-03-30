@@ -62,7 +62,7 @@ export-env {
     )
 
     let venv_path = ([$virtual_env $bin] | path join)
-    let new_path = ($old_path | prepend $venv_path | str collect $path_sep)
+    let new_path = ($old_path | prepend $venv_path | str join $path_sep)
 
     let new_env = {
         $path_name  : $new_path
@@ -102,7 +102,7 @@ export-env {
       })
 
       $new_env | merge {
-        _OLD_VIRTUAL_PATH   : ($old_path | str collect $path_sep)
+        _OLD_VIRTUAL_PATH   : ($old_path | str join $path_sep)
         _OLD_PROMPT_COMMAND : $old_prompt_command
         PROMPT_COMMAND      : $new_prompt
         VIRTUAL_PROMPT      : $virtual_prompt
