@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 A simple shim module to fix up things on Python 2 only.
 
@@ -141,7 +140,7 @@ def disable_user_site_package():
     # sys.flags is a c-extension type, so we cannot monkeypatch it, replace it with a python class to flip it
     sys.original_flags = sys.flags
 
-    class Flags(object):
+    class Flags:
         def __init__(self):
             self.__dict__ = {key: getattr(sys.flags, key) for key in dir(sys.flags) if not key.startswith("_")}
 
