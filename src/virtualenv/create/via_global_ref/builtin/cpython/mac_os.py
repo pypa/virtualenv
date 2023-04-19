@@ -1,4 +1,6 @@
 """The Apple Framework builds require their own customization"""
+from __future__ import annotations
+
 import logging
 import os
 import struct
@@ -12,10 +14,8 @@ from virtualenv.create.via_global_ref.builtin.ref import (
     PathRefToDest,
     RefMust,
 )
-from virtualenv.info import IS_MAC_ARM64
 
 from .common import CPython, CPythonPosix, is_mac_os_framework
-from .cpython2 import CPython2PosixBase
 from .cpython3 import CPython3
 
 
@@ -55,89 +55,6 @@ class CPythonmacOsFramework(CPython, metaclass=ABCMeta):
     @abstractmethod
     def desired_mach_o_image_path(self):
         raise NotImplementedError
-
-
-class CPython2macOsFramework(CPythonmacOsFramework, CPython2PosixBase):
-    @classmethod
-    def can_create(cls, interpreter):
-        if not IS_MAC_ARM64 and super().can_describe(interpreter):
-            return super().can_create(interpreter)
-        return False
-
-    def current_mach_o_image_path(self):
-        return os.path.join(self.interpreter.prefix, "Python")
-
-    def desired_mach_o_image_path(self):
-        return "@executable_path/../Python"
-
-    @classmethod
-    def sources(cls, interpreter):
-        yield from super().sources(interpreter)
-        # landmark for exec_prefix
-        exec_marker_file, to_path, _ = cls.from_stdlib(cls.mappings(interpreter), "lib-dynload")
-        yield PathRefToDest(exec_marker_file, dest=to_path)
-
-        # add a copy of the host python image
-        exe = Path(interpreter.prefix) / "Python"
-        yield PathRefToDest(exe, dest=lambda self, _: self.dest / "Python", must=RefMust.COPY)  # noqa: U101
-
-        # add a symlink to the Resources dir
-        resources = Path(interpreter.prefix) / "Resources"
-        yield PathRefToDest(resources, dest=lambda self, _: self.dest / "Resources")  # noqa: U101
-
-    @property
-    def reload_code(self):
-        result = super().reload_code
-        result = dedent(
-            f"""
-        # the bundled site.py always adds the global site package if we're on python framework build, escape this
-        import sysconfig
-        config = sysconfig.get_config_vars()
-        before = config["PYTHONFRAMEWORK"]
-        try:
-            config["PYTHONFRAMEWORK"] = ""
-            {result}
-        finally:
-            config["PYTHONFRAMEWORK"] = before
-        """,
-        )
-        return result
-
-
-class CPython2macOsArmFramework(CPython2macOsFramework, CPythonmacOsFramework, CPython2PosixBase):
-    @classmethod
-    def can_create(cls, interpreter):
-        if IS_MAC_ARM64 and super(CPythonmacOsFramework, cls).can_describe(interpreter):
-            return super(CPythonmacOsFramework, cls).can_create(interpreter)
-        return False
-
-    def create(self):
-        super(CPython2macOsFramework, self).create()
-        self.fix_signature()
-
-    def fix_signature(self):
-        """
-        On Apple M1 machines (arm64 chips),  rewriting the python executable invalidates its signature.
-        In python2 this results in a unusable python exe which just dies.
-        As a temporary workaround we can codesign the python exe during the creation process.
-        """
-        exe = self.exe
-        try:
-            logging.debug("Changing signature of copied python exe %s", exe)
-            bak_dir = exe.parent / "bk"
-            # Reset the signing on Darwin since the exe has been modified.
-            # Note codesign fails on the original exe, it needs to be copied and moved back.
-            bak_dir.mkdir(parents=True, exist_ok=True)
-            subprocess.check_call(["cp", str(exe), str(bak_dir)])
-            subprocess.check_call(["mv", str(bak_dir / exe.name), str(exe)])
-            bak_dir.rmdir()
-            metadata = "--preserve-metadata=identifier,entitlements,flags,runtime"
-            cmd = ["codesign", "-s", "-", metadata, "-f", str(exe)]
-            logging.debug("Changing Signature: %s", cmd)
-            subprocess.check_call(cmd)
-        except Exception:
-            logging.fatal("Could not change MacOS code signing on copied python exe at %s", exe)
-            raise
 
 
 class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
@@ -342,6 +259,5 @@ def _builtin_change_mach_o(maxint):
 
 __all__ = [
     "CPythonmacOsFramework",
-    "CPython2macOsFramework",
     "CPython3macOsFramework",
 ]

@@ -1,4 +1,4 @@
-import sys
+from __future__ import annotations
 
 import pytest
 
@@ -9,7 +9,7 @@ from virtualenv.util.subprocess import run_cmd
 
 @pytest.mark.skipif(IS_PYPY, reason="setuptools distutils patching does not work")
 def test_app_data_pinning(tmp_path):
-    version = "19.1.1" if sys.version_info[0:2] == (3, 4) else "19.3.1"
+    version = "19.3.1"
     result = cli_run([str(tmp_path), "--pip", version, "--activators", "", "--seeder", "app-data"])
     code, out, _ = run_cmd([str(result.creator.script("pip")), "list", "--disable-pip-version-check"])
     assert not code

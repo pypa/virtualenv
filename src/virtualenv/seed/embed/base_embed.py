@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABCMeta
 from pathlib import Path
 

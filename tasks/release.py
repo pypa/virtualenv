@@ -1,7 +1,8 @@
 """Handles creating a release PR"""
+from __future__ import annotations
+
 from pathlib import Path
 from subprocess import check_call
-from typing import Tuple
 
 from git import Commit, Head, Remote, Repo, TagReference
 from packaging.version import Version
@@ -25,7 +26,7 @@ def main(version_str: str) -> None:
     print("All done! ✨ 🍰 ✨")
 
 
-def create_release_branch(repo: Repo, version: Version) -> Tuple[Remote, Head]:
+def create_release_branch(repo: Repo, version: Version) -> tuple[Remote, Head]:
     print("create release branch from upstream main")
     upstream = get_upstream(repo)
     upstream.fetch()

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 from testing.helpers import contains_exe, contains_ref
 from testing.path import join as path

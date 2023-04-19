@@ -4,6 +4,8 @@ references to elements on the file system, allowing our system to automatically 
 the constraints: e.g. can the file system symlink, can the files be read, executed, etc.
 """
 
+from __future__ import annotations
+
 import os
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict

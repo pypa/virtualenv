@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from argparse import SUPPRESS
 from collections import namedtuple
 from contextlib import contextmanager

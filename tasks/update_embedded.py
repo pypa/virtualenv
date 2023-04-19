@@ -1,5 +1,7 @@
 """Helper script to rebuild virtualenv.py from virtualenv_support"""
 
+from __future__ import annotations
+
 import codecs
 import os
 import re

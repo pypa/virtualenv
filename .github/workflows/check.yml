@@ -27,7 +27,7 @@ jobs:
           - pypy-3.8
           - pypy-3.7
         os:
-          - ubuntu-20.04
+          - ubuntu-22.04
           - macos-12
           - windows-2022
         include:
@@ -60,10 +60,6 @@ jobs:
           fetch-depth: 0
       - name: Use local virtualenv for tox
         run: python -m pip install .
-      - name: Install Python 2 for cross test
-        uses: actions/setup-python@v4
-        with:
-          python-version: "2.7"
       - name: Setup brew python for test ${{ matrix.py }}
         if: startsWith(matrix.py,'brew@')
         run: |

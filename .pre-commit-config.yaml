@@ -21,12 +21,6 @@ repos:
     hooks:
       - id: pyupgrade
         args: ["--py37-plus"]
-        exclude: "^(src/virtualenv/create/via_global_ref/_virtualenv.py|src/virtualenv/create/via_global_ref/builtin/python2/site.py|src/virtualenv/discovery/py_info.py|tasks/__main__zipapp.py)$"
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v2.38.4
-    hooks:
-      - id: pyupgrade
-        files: "^(src/virtualenv/create/via_global_ref/_virtualenv.py|src/virtualenv/create/via_global_ref/builtin/python2/site.py|src/virtualenv/discovery/py_info.py|tasks/__main__zipapp.py)$"
   - repo: https://github.com/PyCQA/isort
     rev: 5.12.0
     hooks:

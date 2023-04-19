@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import copy
 import functools
 import itertools
@@ -343,9 +345,6 @@ def test_custom_venv_install_scheme_is_prefered(mocker):
         # define the prefix as sysconfig.get_preferred_scheme did before 3.11
         sysconfig_install_schemes["nt" if os.name == "nt" else "posix_prefix"] = default_scheme
 
-    if sys.version_info[0] == 2:
-        sysconfig_install_schemes = _stringify_schemes_dict(sysconfig_install_schemes)
-
     # On Python < 3.10, the distutils schemes are not derived from sysconfig schemes
     # So we mock them as well to assert the custom "venv" install scheme has priority
     distutils_scheme = {
@@ -359,9 +358,6 @@ def test_custom_venv_install_scheme_is_prefered(mocker):
         "unix_prefix": distutils_scheme,
         "nt": distutils_scheme,
     }
-
-    if sys.version_info[0] == 2:
-        distutils_schemes = _stringify_schemes_dict(distutils_schemes)
 
     # We need to mock distutils first, so they don't see the mocked sysconfig,
     # if imported for the first time.

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import subprocess
 import sys
 from datetime import date, datetime

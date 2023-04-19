@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABCMeta
 from collections import OrderedDict
 from pathlib import Path
@@ -26,8 +28,7 @@ class CPythonPosix(CPython, PosixSupports, metaclass=ABCMeta):
         host_exe = Path(interpreter.system_executable)
         major, minor = interpreter.version_info.major, interpreter.version_info.minor
         targets = OrderedDict((i, None) for i in ["python", f"python{major}", f"python{major}.{minor}", host_exe.name])
-        must = RefMust.COPY if interpreter.version_info.major == 2 else RefMust.NA
-        yield host_exe, list(targets.keys()), must, RefWhen.ANY
+        yield host_exe, list(targets.keys()), RefMust.NA, RefWhen.ANY
 
 
 class CPythonWindows(CPython, WindowsSupports, metaclass=ABCMeta):
@@ -50,9 +51,7 @@ class CPythonWindows(CPython, WindowsSupports, metaclass=ABCMeta):
 
 def is_mac_os_framework(interpreter):
     if interpreter.platform == "darwin":
-        framework_var = interpreter.sysconfig_vars.get("PYTHONFRAMEWORK")
-        value = "Python3" if interpreter.version_info.major == 3 else "Python"
-        return framework_var == value
+        return interpreter.sysconfig_vars.get("PYTHONFRAMEWORK") == "Python3"
     return False
 
 
