@@ -1,2 +1,0 @@
-Move the use of 'let' in nushell to ensure compatibility with future releases of nushell, where 'let' no longer
-assumes that its initializer is a full expressions.
