@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 
 from virtualenv.seed.wheels.acquire import find_compatible_in_house
@@ -20,13 +22,6 @@ def test_find_exact(for_py_version):
     expected = get_embed_wheel("setuptools", for_py_version)
     result = find_compatible_in_house("setuptools", f"=={expected.version}", for_py_version, BUNDLE_FOLDER)
     assert result.path == expected.path
-
-
-def test_find_less_than():
-    latest = get_embed_wheel("setuptools", MAX)
-    result = find_compatible_in_house("setuptools", f"<{latest.version}", MAX, BUNDLE_FOLDER)
-    assert result is not None
-    assert result.path != latest.path
 
 
 def test_find_bad_spec():

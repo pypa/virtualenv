@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from collections import OrderedDict, defaultdict, namedtuple
 
 from virtualenv.create.describe import Describe

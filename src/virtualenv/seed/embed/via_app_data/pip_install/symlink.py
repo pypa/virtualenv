@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from stat import S_IREAD, S_IRGRP, S_IROTH
 from subprocess import PIPE, Popen

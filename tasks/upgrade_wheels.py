@@ -2,6 +2,8 @@
 Helper script to rebuild virtualenv_support. Downloads the wheel files using pip
 """
 
+from __future__ import annotations
+
 import os
 import shutil
 import subprocess
@@ -15,7 +17,7 @@ from threading import Thread
 STRICT = "UPGRADE_ADVISORY" not in os.environ
 
 BUNDLED = ["pip", "setuptools", "wheel"]
-SUPPORT = list(reversed([(2, 7)] + [(3, i) for i in range(5, 13)]))
+SUPPORT = [(3, i) for i in range(7, 13)]
 DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "wheels" / "embed"
 
 
@@ -81,7 +83,7 @@ def run():
         lines.append("")
         changelog = "\n".join(lines)
         print(changelog)
-        if len(lines) >= 3:
+        if len(lines) >= 4:
             (Path(__file__).parents[1] / "docs" / "changelog" / "u.bugfix.rst").write_text(changelog, encoding="utf-8")
         support_table = OrderedDict((".".join(str(j) for j in i), []) for i in SUPPORT)
         for package in sorted(new_batch.keys()):

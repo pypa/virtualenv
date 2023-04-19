@@ -5,6 +5,8 @@ cheap, especially not on Windows. To not have to pay this hefty cost every time 
 caching.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import random

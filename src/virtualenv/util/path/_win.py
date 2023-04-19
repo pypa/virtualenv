@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def get_short_path_name(long_name):
     """
     Gets the short path name of a given long path.

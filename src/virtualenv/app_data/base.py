@@ -2,6 +2,8 @@
 Application data stored by virtualenv.
 """
 
+from __future__ import annotations
+
 from abc import ABCMeta, abstractmethod
 from contextlib import contextmanager
 

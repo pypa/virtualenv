@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 import sys
 from subprocess import PIPE, Popen, check_output

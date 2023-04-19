@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .bash import BashActivator
 from .batch import BatchActivator
 from .cshell import CShellActivator
