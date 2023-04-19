@@ -222,7 +222,7 @@ class PythonInfo(object):
         if config_var is None:
             config_var = self.sysconfig_vars
         else:
-            base = {k: v for k, v in self.sysconfig_vars.items()}
+            base = self.sysconfig_vars.copy()
             base.update(config_var)
             config_var = base
         return pattern.format(**config_var).replace("/", sep)
@@ -395,13 +395,13 @@ class PythonInfo(object):
     def _from_json(cls, payload):
         # the dictionary unroll here is to protect against pypy bug of interpreter crashing
         raw = json.loads(payload)
-        return cls._from_dict({k: v for k, v in raw.items()})
+        return cls._from_dict(raw.copy())
 
     @classmethod
     def _from_dict(cls, data):
         data["version_info"] = VersionInfo(**data["version_info"])  # restore this to a named tuple structure
         result = cls()
-        result.__dict__ = {k: v for k, v in data.items()}
+        result.__dict__ = data.copy()
         return result
 
     @classmethod
