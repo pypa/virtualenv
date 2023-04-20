@@ -10,7 +10,7 @@ v20.22.0 (2023-04-19)
 
 Features - 20.22.0
 ~~~~~~~~~~~~~~~~~~
-- Drop support for creating Python <3.6 (including 2) interpreters. Removed pip of ``20.3.4``, ``21.3.1``; wheel of
+- Drop support for creating Python <=3.6 (including 2) interpreters. Removed pip of ``20.3.4``, ``21.3.1``; wheel of
   ``0.37.1``; setuptools of ``59.6.0``, ``44.1.1``, ``50.3.2``- by :user:`gaborbernat`. (:issue:`2548`)
 
 
