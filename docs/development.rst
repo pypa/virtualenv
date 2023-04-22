@@ -31,6 +31,10 @@ virtualenv is a command line application written in Python. To work on it, you'l
 - :pypi:`tox`: to automatically get the projects development dependencies and run the test suite. We recommend
   installing it using `pipx <https://pipxproject.github.io/pipx/>`_.
 
+.. note::
+
+    Debian/Ubuntu users are required to install :pypi:`tox` using the alternative installation methods and not the version provided by the package manager. Otherwise ``tox`` will break. See `this issue <https://github.com/pypa/virtualenv/issues/1873>`_ for more information.
+
 Running from source tree
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
