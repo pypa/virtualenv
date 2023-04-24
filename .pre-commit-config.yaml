@@ -58,7 +58,7 @@ repos:
           - pep8-naming==0.13.3
           - flake8-pyproject==1.2.3
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v2.7.1"
+    rev: "v3.0.0-alpha.9-for-vscode"
     hooks:
       - id: prettier
         additional_dependencies:
@@ -74,6 +74,6 @@ repos:
       - id: check-hooks-apply
       - id: check-useless-excludes
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "0.9.2"
+    rev: "0.10.0"
     hooks:
       - id: pyproject-fmt
