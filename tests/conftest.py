@@ -12,7 +12,7 @@ import pytest
 
 from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import IS_WIN, fs_supports_symlink
+from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
 from virtualenv.report import LOGGER
 
 
@@ -142,22 +142,6 @@ def _ignore_global_config(tmp_path_factory):
     filename = str(tmp_path_factory.mktemp("folder") / "virtualenv-test-suite.ini")
     with change_os_environ("VIRTUALENV_CONFIG_FILE", filename):
         yield
-
-
-@pytest.fixture(autouse=True, scope="session")
-def _pip_cert(tmp_path_factory):
-    # workaround for https://github.com/pypa/pip/issues/8984 - if the certificate is explicitly set no error can happen
-    key = "PIP_CERT"
-    if key in os.environ:
-        yield
-    else:
-        cert = tmp_path_factory.mktemp("folder") / "cert"
-        import pkgutil
-
-        cert_data = pkgutil.get_data("pip._vendor.certifi", "cacert.pem")
-        cert.write_bytes(cert_data)
-        with change_os_environ(key, str(cert)):
-            yield
 
 
 @pytest.fixture(autouse=True)
@@ -368,3 +352,16 @@ def _skip_if_test_in_system(session_app_data):
     current = PythonInfo.current(session_app_data)
     if current.system_executable is not None:
         pytest.skip("test not valid if run under system")
+
+
+if IS_PYPY:
+
+    @pytest.fixture()
+    def time_freeze(freezer):
+        return freezer.move_to
+
+else:
+
+    @pytest.fixture()
+    def time_freeze(time_machine):
+        return lambda s: time_machine.move_to(s, tick=False)

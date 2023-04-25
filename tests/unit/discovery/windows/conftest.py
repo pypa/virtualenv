@@ -11,7 +11,7 @@ def _mock_registry(mocker):
     from virtualenv.discovery.windows.pep514 import winreg
 
     loc, glob = {}, {}
-    mock_value_str = (Path(__file__).parent / "winreg-mock-values.py").read_text()
+    mock_value_str = (Path(__file__).parent / "winreg-mock-values.py").read_text(encoding="utf-8")
     exec(mock_value_str, glob, loc)
     enum_collect = loc["enum_collect"]
     value_collect = loc["value_collect"]

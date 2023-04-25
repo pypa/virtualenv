@@ -180,15 +180,7 @@ class CliTable(SphinxDirective):
             content = row.help[: row.help.index("(") - 1]
         else:
             content = row.help
-        if name in ("--setuptools", "--pip", "--wheel"):
-            text = row.help
-            at = text.index(" bundle ")
-            help_body = n.paragraph("")
-            help_body += n.Text(text[: at + 1])
-            help_body += n.literal(text="bundle")
-            help_body += n.Text(text[at + 7 :])
-        else:
-            help_body = n.paragraph("", "", n.Text(content))
+        help_body = n.paragraph("", "", n.Text(content))
         if row.choices is not None:
             help_body += n.Text("; choice of: ")
             first = True

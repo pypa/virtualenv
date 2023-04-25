@@ -1,0 +1,6 @@
+Do not install ``wheel`` and ``setuptools`` seed packages for Python 3.12+. To restore the old behaviour use:
+
+- for ``wheel`` use ``VIRTUALENV_WHEEL=bundle`` environment variable or ``--wheel=bundle`` CLI flag,
+- for ``setuptools`` use ``VIRTUALENV_SETUPTOOLS=bundle`` environment variable or ``--setuptools=bundle`` CLI flag.
+
+By :user:`chrysle`.

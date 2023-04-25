@@ -5,8 +5,11 @@ import sys
 from datetime import datetime
 from pathlib import Path
 from subprocess import CalledProcessError
+from typing import Callable
+from unittest.mock import MagicMock
 
 import pytest
+from pytest_mock import MockerFixture
 
 from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.seed.wheels.acquire import download_wheel, get_wheel, pip_wheel_env_run
@@ -113,8 +116,14 @@ def test_get_wheel_download_not_called(mocker, for_py_version, session_app_data,
     assert write.call_count == 0
 
 
-@pytest.mark.usefixtures("freezer")
-def test_get_wheel_download_cached(tmp_path, mocker, for_py_version, downloaded_wheel):
+def test_get_wheel_download_cached(
+    tmp_path: Path,
+    mocker: MockerFixture,
+    for_py_version: str,
+    downloaded_wheel: tuple[Wheel, MagicMock],
+    time_freeze: Callable[[datetime], None],
+) -> None:
+    time_freeze(datetime.now())
     from virtualenv.app_data.via_disk_folder import JSONStoreDisk
 
     app_data = AppDataDiskFolder(folder=str(tmp_path))

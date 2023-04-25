@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import sys
+from pathlib import Path
 from subprocess import PIPE, Popen, check_output
 
 import pytest
@@ -59,8 +60,8 @@ def test_fail_with_traceback(raise_on_session_done, tmp_path, capsys):
 
 
 @pytest.mark.usefixtures("session_app_data")
-def test_session_report_full(tmp_path, capsys):
-    run_with_catch([str(tmp_path)])
+def test_session_report_full(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    run_with_catch([str(tmp_path), "--setuptools", "bundle", "--wheel", "bundle"])
     out, err = capsys.readouterr()
     assert err == ""
     lines = out.splitlines()

@@ -30,18 +30,18 @@ class BaseEmbed(Seeder, metaclass=ABCMeta):
             self.enabled = False
 
     @classmethod
-    def distributions(cls):
+    def distributions(cls) -> dict[str, Version]:
         return {
             "pip": Version.bundle,
             "setuptools": Version.bundle,
             "wheel": Version.bundle,
         }
 
-    def distribution_to_versions(self):
+    def distribution_to_versions(self) -> dict[str, str]:
         return {
             distribution: getattr(self, f"{distribution}_version")
             for distribution in self.distributions()
-            if getattr(self, f"no_{distribution}") is False
+            if getattr(self, f"no_{distribution}") is False and getattr(self, f"{distribution}_version") != "none"
         }
 
     @classmethod
@@ -71,11 +71,13 @@ class BaseEmbed(Seeder, metaclass=ABCMeta):
             default=[],
         )
         for distribution, default in cls.distributions().items():
+            if interpreter.version_info[:2] >= (3, 12) and distribution in {"wheel", "setuptools"}:
+                default = "none"
             parser.add_argument(
                 f"--{distribution}",
                 dest=distribution,
                 metavar="version",
-                help=f"version of {distribution} to install as seed: embed, bundle or exact version",
+                help=f"version of {distribution} to install as seed: embed, bundle, none or exact version",
                 default=default,
             )
         for distribution in cls.distributions():
@@ -94,7 +96,7 @@ class BaseEmbed(Seeder, metaclass=ABCMeta):
             default=not PERIODIC_UPDATE_ON_BY_DEFAULT,
         )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         result = self.__class__.__name__
         result += "("
         if self.extra_search_dir:
@@ -103,7 +105,10 @@ class BaseEmbed(Seeder, metaclass=ABCMeta):
         for distribution in self.distributions():
             if getattr(self, f"no_{distribution}"):
                 continue
-            ver = f"={getattr(self, f'{distribution}_version', None) or 'latest'}"
+            version = getattr(self, f"{distribution}_version", None)
+            if version == "none":
+                continue
+            ver = f"={version or 'latest'}"
             result += f" {distribution}{ver},"
         return result[:-1] + ")"
 

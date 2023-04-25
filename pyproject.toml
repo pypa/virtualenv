@@ -57,10 +57,12 @@ optional-dependencies.test = [
   "packaging>=23.1",
   "pytest>=7.3.1",
   "pytest-env>=0.8.1",
-  "pytest-freezegun>=0.4.2",
+  'pytest-freezegun>=0.4.2; platform_python_implementation == "PyPy"',
   "pytest-mock>=3.10",
   "pytest-randomly>=3.12",
   "pytest-timeout>=2.1",
+  "setuptools>=67.7.1",
+  'time-machine>=2.9; platform_python_implementation == "CPython"',
 ]
 urls.Documentation = "https://virtualenv.pypa.io"
 urls.Homepage = "https://github.com/pypa/virtualenv"
@@ -116,7 +118,7 @@ ignore = [
 [tool.pytest.ini_options]
 markers = ["slow"]
 timeout = 600
-addopts = "--tb=auto -ra --showlocals --no-success-flaky-report"
+addopts = "--showlocals --no-success-flaky-report"
 env = ["PYTHONIOENCODING=utf-8"]
 
 [tool.coverage]
