@@ -1,7 +1,7 @@
 """Inspect a target Python interpreter virtual environment wise"""
-import sys  # built-in
+from __future__ import annotations
 
-PYPY2_WIN = hasattr(sys, "pypy_version_info") and sys.platform != "win32" and sys.version_info[0] == 2
+import sys  # built-in
 
 
 def encode_path(value):
@@ -12,7 +12,7 @@ def encode_path(value):
             value = repr(value)
         else:
             value = repr(type(value))
-    if isinstance(value, bytes) and not PYPY2_WIN:
+    if isinstance(value, bytes):
         value = value.decode(sys.getfilesystemencoding())
     return value
 

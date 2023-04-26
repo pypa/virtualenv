@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from collections import OrderedDict

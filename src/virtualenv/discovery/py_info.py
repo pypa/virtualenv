@@ -3,7 +3,8 @@ The PythonInfo contains information about a concrete instance of a Python interp
 
 Note: this file is also used to query target interpreters, so can only use standard library methods
 """
-from __future__ import absolute_import, print_function
+
+from __future__ import annotations
 
 import json
 import logging
@@ -27,44 +28,41 @@ EXTENSIONS = _get_path_extensions()
 _CONF_VAR_RE = re.compile(r"\{\w+\}")
 
 
-class PythonInfo(object):
+class PythonInfo:
     """Contains information for a Python interpreter"""
 
     def __init__(self):
-        def u(v):
-            return v.decode("utf-8") if isinstance(v, bytes) else v
-
         def abs_path(v):
             return None if v is None else os.path.abspath(v)  # unroll relative elements from path (e.g. ..)
 
         # qualifies the python
-        self.platform = u(sys.platform)
-        self.implementation = u(platform.python_implementation())
+        self.platform = sys.platform
+        self.implementation = platform.python_implementation()
         if self.implementation == "PyPy":
-            self.pypy_version_info = tuple(u(i) for i in sys.pypy_version_info)
+            self.pypy_version_info = tuple(sys.pypy_version_info)
 
         # this is a tuple in earlier, struct later, unify to our own named tuple
-        self.version_info = VersionInfo(*[u(i) for i in sys.version_info])
+        self.version_info = VersionInfo(*sys.version_info)
         self.architecture = 64 if sys.maxsize > 2**32 else 32
 
         # Used to determine some file names.
         # See `CPython3Windows.python_zip()`.
         self.version_nodot = sysconfig.get_config_var("py_version_nodot")
 
-        self.version = u(sys.version)
-        self.os = u(os.name)
+        self.version = sys.version
+        self.os = os.name
 
         # information about the prefix - determines python home
-        self.prefix = u(abs_path(getattr(sys, "prefix", None)))  # prefix we think
-        self.base_prefix = u(abs_path(getattr(sys, "base_prefix", None)))  # venv
-        self.real_prefix = u(abs_path(getattr(sys, "real_prefix", None)))  # old virtualenv
+        self.prefix = abs_path(getattr(sys, "prefix", None))  # prefix we think
+        self.base_prefix = abs_path(getattr(sys, "base_prefix", None))  # venv
+        self.real_prefix = abs_path(getattr(sys, "real_prefix", None))  # old virtualenv
 
         # information about the exec prefix - dynamic stdlib modules
-        self.base_exec_prefix = u(abs_path(getattr(sys, "base_exec_prefix", None)))
-        self.exec_prefix = u(abs_path(getattr(sys, "exec_prefix", None)))
+        self.base_exec_prefix = abs_path(getattr(sys, "base_exec_prefix", None))
+        self.exec_prefix = abs_path(getattr(sys, "exec_prefix", None))
 
-        self.executable = u(abs_path(sys.executable))  # the executable we were invoked via
-        self.original_executable = u(abs_path(self.executable))  # the executable as known by the interpreter
+        self.executable = abs_path(sys.executable)  # the executable we were invoked via
+        self.original_executable = abs_path(self.executable)  # the executable as known by the interpreter
         self.system_executable = self._fast_get_system_executable()  # the executable we are based of (if available)
 
         try:
@@ -73,17 +71,16 @@ class PythonInfo(object):
         except ImportError:
             has = False
         self.has_venv = has
-        self.path = [u(i) for i in sys.path]
-        self.file_system_encoding = u(sys.getfilesystemencoding())
-        self.stdout_encoding = u(getattr(sys.stdout, "encoding", None))
+        self.path = sys.path
+        self.file_system_encoding = sys.getfilesystemencoding()
+        self.stdout_encoding = getattr(sys.stdout, "encoding", None)
 
         scheme_names = sysconfig.get_scheme_names()
 
         if "venv" in scheme_names:
             self.sysconfig_scheme = "venv"
             self.sysconfig_paths = {
-                u(i): u(sysconfig.get_path(i, expand=False, scheme=self.sysconfig_scheme))
-                for i in sysconfig.get_path_names()
+                i: sysconfig.get_path(i, expand=False, scheme=self.sysconfig_scheme) for i in sysconfig.get_path_names()
             }
             # we cannot use distutils at all if "venv" exists, distutils don't know it
             self.distutils_install = {}
@@ -99,13 +96,13 @@ class PythonInfo(object):
             self.distutils_install = {}
         else:
             self.sysconfig_scheme = None
-            self.sysconfig_paths = {u(i): u(sysconfig.get_path(i, expand=False)) for i in sysconfig.get_path_names()}
-            self.distutils_install = {u(k): u(v) for k, v in self._distutils_install().items()}
+            self.sysconfig_paths = {i: sysconfig.get_path(i, expand=False) for i in sysconfig.get_path_names()}
+            self.distutils_install = self._distutils_install().copy()
 
         # https://bugs.python.org/issue22199
         makefile = getattr(sysconfig, "get_makefile_filename", getattr(sysconfig, "_get_makefile_filename", None))
         self.sysconfig = {
-            u(k): u(v)
+            k: v
             for k, v in [
                 # a list of content to store from sysconfig
                 ("makefile_filename", makefile()),
@@ -116,14 +113,15 @@ class PythonInfo(object):
         config_var_keys = set()
         for element in self.sysconfig_paths.values():
             for k in _CONF_VAR_RE.findall(element):
-                config_var_keys.add(u(k[1:-1]))
+                config_var_keys.add(k[1:-1])
         config_var_keys.add("PYTHONFRAMEWORK")
 
-        self.sysconfig_vars = {u(i): u(sysconfig.get_config_var(i) or "") for i in config_var_keys}
-        if self.implementation == "PyPy" and sys.version_info.major == 2:
-            self.sysconfig_vars["implementation_lower"] = "python"
+        self.sysconfig_vars = {i: sysconfig.get_config_var(i or "") for i in config_var_keys}
 
-        confs = {k: (self.system_prefix if v.startswith(self.prefix) else v) for k, v in self.sysconfig_vars.items()}
+        confs = {
+            k: (self.system_prefix if v is not None and v.startswith(self.prefix) else v)
+            for k, v in self.sysconfig_vars.items()
+        }
         self.system_stdlib = self.sysconfig_path("stdlib", confs)
         self.system_stdlib_platform = self.sysconfig_path("platstdlib", confs)
         self.max_size = getattr(sys, "maxsize", getattr(sys, "maxint", None))
@@ -151,8 +149,7 @@ class PythonInfo(object):
                             # search relative to the directory of sys._base_executable
                             base_dir = os.path.dirname(base_executable)
                             for base_executable in [
-                                os.path.join(base_dir, exe)
-                                for exe in ("python{}".format(major), "python{}.{}".format(major, minor))
+                                os.path.join(base_dir, exe) for exe in (f"python{major}", f"python{major}.{minor}")
                             ]:
                                 if os.path.exists(base_executable):
                                     return base_executable
@@ -193,7 +190,7 @@ class PythonInfo(object):
 
         i.prefix = os.sep  # paths generated are relative to prefix that contains the path sep, this makes it relative
         i.finalize_options()
-        result = {key: (getattr(i, "install_{}".format(key))[1:]).lstrip(os.sep) for key in SCHEME_KEYS}
+        result = {key: (getattr(i, f"install_{key}")[1:]).lstrip(os.sep) for key in SCHEME_KEYS}
         return result
 
     @property
@@ -207,7 +204,7 @@ class PythonInfo(object):
     @property
     def python_name(self):
         version_info = self.version_info
-        return "python{}.{}".format(version_info.major, version_info.minor)
+        return f"python{version_info.major}.{version_info.minor}"
 
     @property
     def is_old_virtualenv(self):
@@ -215,14 +212,14 @@ class PythonInfo(object):
 
     @property
     def is_venv(self):
-        return self.base_prefix is not None and self.version_info.major == 3
+        return self.base_prefix is not None
 
     def sysconfig_path(self, key, config_var=None, sep=os.sep):
         pattern = self.sysconfig_paths[key]
         if config_var is None:
             config_var = self.sysconfig_vars
         else:
-            base = {k: v for k, v in self.sysconfig_vars.items()}
+            base = self.sysconfig_vars.copy()
             base.update(config_var)
             config_var = base
         return pattern.format(**config_var).replace("/", sep)
@@ -238,7 +235,10 @@ class PythonInfo(object):
     def system_include(self):
         path = self.sysconfig_path(
             "include",
-            {k: (self.system_prefix if v.startswith(self.prefix) else v) for k, v in self.sysconfig_vars.items()},
+            {
+                k: (self.system_prefix if v is not None and v.startswith(self.prefix) else v)
+                for k, v in self.sysconfig_vars.items()
+            },
         )
         if not os.path.exists(path):  # some broken packaging don't respect the sysconfig, fallback to distutils path
             # the pattern include the distribution name too at the end, remove that via the parent call
@@ -257,8 +257,6 @@ class PythonInfo(object):
 
     def __unicode__(self):
         content = repr(self)
-        if sys.version_info == 2:
-            content = content.decode("utf-8")
         return content
 
     def __repr__(self):
@@ -271,7 +269,7 @@ class PythonInfo(object):
         content = "{}({})".format(
             self.__class__.__name__,
             ", ".join(
-                "{}={}".format(k, v)
+                f"{k}={v}"
                 for k, v in (
                     ("spec", self.spec),
                     (
@@ -292,7 +290,7 @@ class PythonInfo(object):
                     ("exe", self.executable),
                     ("platform", self.platform),
                     ("version", repr(self.version)),
-                    ("encoding_fs_io", "{}-{}".format(self.file_system_encoding, self.stdout_encoding)),
+                    ("encoding_fs_io", f"{self.file_system_encoding}-{self.stdout_encoding}"),
                 )
                 if k is not None
             ),
@@ -395,13 +393,13 @@ class PythonInfo(object):
     def _from_json(cls, payload):
         # the dictionary unroll here is to protect against pypy bug of interpreter crashing
         raw = json.loads(payload)
-        return cls._from_dict({k: v for k, v in raw.items()})
+        return cls._from_dict(raw.copy())
 
     @classmethod
     def _from_dict(cls, data):
         data["version_info"] = VersionInfo(**data["version_info"])  # restore this to a named tuple structure
         result = cls()
-        result.__dict__ = {k: v for k, v in data.items()}
+        result.__dict__ = data.copy()
         return result
 
     @classmethod
@@ -512,7 +510,7 @@ class PythonInfo(object):
             # following path pattern of the current
             if base.startswith(self.prefix):
                 relative = base[len(self.prefix) :]
-                candidate_folder["{}{}".format(inside_folder, relative)] = None
+                candidate_folder[f"{inside_folder}{relative}"] = None
 
         # or at root level
         candidate_folder[inside_folder] = None
@@ -523,9 +521,9 @@ class PythonInfo(object):
         for name in self._possible_base():
             for at in (3, 2, 1, 0):
                 version = ".".join(str(i) for i in self.version_info[:at])
-                for arch in ["-{}".format(self.architecture), ""]:
+                for arch in [f"-{self.architecture}", ""]:
                     for ext in EXTENSIONS:
-                        candidate = "{}{}{}{}".format(name, version, arch, ext)
+                        candidate = f"{name}{version}{arch}{ext}"
                         name_candidate[candidate] = None
         return list(name_candidate.keys())
 

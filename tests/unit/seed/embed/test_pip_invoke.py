@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import itertools
 import sys
 from shutil import copy2
@@ -23,7 +25,7 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_f
     def _load_embed_wheel(app_data, distribution, for_py_version, version):  # noqa: U100
         return load_embed_wheel(app_data, distribution, old_ver, version)
 
-    old_ver = "2.7"
+    old_ver = "3.7"
     old = BUNDLE_SUPPORT[old_ver]
     mocker.patch("virtualenv.seed.wheels.bundle.load_embed_wheel", side_effect=_load_embed_wheel)
 

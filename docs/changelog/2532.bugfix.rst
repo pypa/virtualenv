@@ -1,2 +1,0 @@
-The nushell command 'str collect' has been superseded by the 'str join' command. The activate.nu script has
-been updated to reflect this change.

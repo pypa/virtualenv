@@ -2,6 +2,8 @@
 Application data stored by virtualenv.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import subprocess
 
 CREATE_NO_WINDOW = 0x80000000

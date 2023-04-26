@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import contextlib
 import os
 import sys
@@ -112,9 +114,6 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
         patch_files.add(purelib / "__pycache__")
         post_run = set(site_package.iterdir()) - patch_files
         assert not post_run, "\n".join(str(i) for i in post_run)
-
-    if sys.version_info[0:2] == (3, 4) and os.environ.get("PIP_REQ_TRACKER"):
-        os.environ.pop("PIP_REQ_TRACKER")
 
 
 @contextlib.contextmanager

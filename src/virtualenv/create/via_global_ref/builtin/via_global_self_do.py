@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABCMeta
 
 from virtualenv.create.via_global_ref.builtin.ref import (

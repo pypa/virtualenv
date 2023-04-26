@@ -5,6 +5,32 @@ Release History
 
 .. towncrier release notes start
 
+v20.22.0 (2023-04-19)
+---------------------
+
+Features - 20.22.0
+~~~~~~~~~~~~~~~~~~
+- Drop support for creating Python <=3.6 (including 2) interpreters. Removed pip of ``20.3.4``, ``21.3.1``; wheel of
+  ``0.37.1``; setuptools of ``59.6.0``, ``44.1.1``, ``50.3.2``- by :user:`gaborbernat`. (:issue:`2548`)
+
+
+v20.21.1 (2023-04-19)
+---------------------
+
+Bugfixes - 20.21.1
+~~~~~~~~~~~~~~~~~~
+- Add ``tox.ini`` to sdist - by :user:`mtelka`. (:issue:`2511`)
+- Move the use of 'let' in nushell to ensure compatibility with future releases of nushell, where 'let' no longer
+  assumes that its initializer is a full expressions. (:issue:`2527`)
+- The nushell command 'str collect' has been superseded by the 'str join' command. The activate.nu script has
+  been updated to reflect this change. (:issue:`2532`)
+- Upgrade embedded wheels:
+
+  * wheel to ``0.40.0`` from ``0.38.4``
+  * setuptools to ``67.6.1`` from ``67.4.0``
+  * pip to ``23.1`` from ``23.0.1`` (:issue:`2546`)
+
+
 v20.21.0 (2023-03-12)
 ---------------------
 

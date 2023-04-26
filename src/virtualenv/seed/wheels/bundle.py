@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ..wheels.embed import get_embed_wheel
 from .periodic_update import periodic_update
 from .util import Version, Wheel, discover_wheels

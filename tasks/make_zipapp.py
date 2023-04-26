@@ -1,4 +1,6 @@
 """https://docs.python.org/3/library/zipapp.html"""
+from __future__ import annotations
+
 import argparse
 import io
 import json
@@ -20,7 +22,7 @@ from packaging.requirements import Requirement
 
 HERE = Path(__file__).parent.absolute()
 
-VERSIONS = [f"3.{i}" for i in range(10, 5, -1)]
+VERSIONS = [f"3.{i}" for i in range(10, 6, -1)]
 
 
 def main():
@@ -223,7 +225,13 @@ class WheelDownloader:
 
 
 def run_suppress_output(cmd, stop_print_on_fail=False):
-    process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    process = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+        encoding="utf-8",
+    )
     out, err = process.communicate()
     if stop_print_on_fail and process.returncode != 0:
         print(f"exit with {process.returncode} of {' '.join(quote(i) for i in cmd)}", file=sys.stdout)

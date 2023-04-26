@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABCMeta
 from collections import OrderedDict
 from pathlib import Path
@@ -58,7 +60,7 @@ class Describe(metaclass=ABCMeta):
 
     def _calc_config_vars(self, to):
         sys_vars = self.interpreter.sysconfig_vars
-        return {k: (to if v.startswith(self.interpreter.prefix) else v) for k, v in sys_vars.items()}
+        return {k: (to if v is not None and v.startswith(self.interpreter.prefix) else v) for k, v in sys_vars.items()}
 
     @classmethod
     def can_describe(cls, interpreter):  # noqa: U100
@@ -82,12 +84,6 @@ class Describe(metaclass=ABCMeta):
         return self.script_dir / f"{name}{self.suffix}"
 
 
-class Python2Supports(Describe, metaclass=ABCMeta):
-    @classmethod
-    def can_describe(cls, interpreter):
-        return interpreter.version_info.major == 2 and super().can_describe(interpreter)
-
-
 class Python3Supports(Describe, metaclass=ABCMeta):
     @classmethod
     def can_describe(cls, interpreter):
@@ -108,7 +104,6 @@ class WindowsSupports(Describe, metaclass=ABCMeta):
 
 __all__ = [
     "Describe",
-    "Python2Supports",
     "Python3Supports",
     "PosixSupports",
     "WindowsSupports",

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from virtualenv.create.via_global_ref import api
 
 

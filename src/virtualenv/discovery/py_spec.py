@@ -1,5 +1,7 @@
 """A Python specification is an abstract requirement definition of an interpreter"""
 
+from __future__ import annotations
+
 import os
 import re
 from collections import OrderedDict

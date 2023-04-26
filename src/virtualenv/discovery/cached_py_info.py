@@ -5,6 +5,8 @@ cheap, especially not on Windows. To not have to pay this hefty cost every time 
 caching.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import random
@@ -64,7 +66,7 @@ def _get_via_file_cache(cls, app_data, path, exe, env):
             data = py_info_store.read()
             of_path, of_st_mtime, of_content = data["path"], data["st_mtime"], data["content"]
             if of_path == path_text and of_st_mtime == path_modified:
-                py_info = cls._from_dict({k: v for k, v in of_content.items()})
+                py_info = cls._from_dict(of_content.copy())
                 sys_exe = py_info.system_executable
                 if sys_exe is not None and not os.path.exists(sys_exe):
                     py_info_store.remove()

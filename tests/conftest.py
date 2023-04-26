@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import shutil
@@ -9,7 +11,6 @@ from pathlib import Path
 import pytest
 
 from virtualenv.app_data import AppDataDiskFolder
-from virtualenv.discovery.builtin import get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_WIN, fs_supports_symlink
 from virtualenv.report import LOGGER
@@ -54,9 +55,9 @@ def has_symlink_support(tmp_path_factory):  # noqa: U100
 def link_folder(has_symlink_support):
     if has_symlink_support:
         return os.symlink
-    elif sys.platform == "win32" and sys.version_info[0:2] > (3, 4):
+    elif sys.platform == "win32":
         # on Windows junctions may be used instead
-        import _winapi  # Cpython3.5 has builtin implementation for junctions
+        import _winapi
 
         return getattr(_winapi, "CreateJunction", None)
     else:
@@ -355,18 +356,6 @@ def temp_app_data(monkeypatch, tmp_path):
     app_data = tmp_path / "app-data"
     monkeypatch.setenv("VIRTUALENV_OVERRIDE_APP_DATA", str(app_data))
     return app_data
-
-
-@pytest.fixture(scope="session")
-def cross_python(is_inside_ci, session_app_data):
-    spec = str(2 if sys.version_info[0] == 3 else 3)
-    interpreter = get_interpreter(spec, [], session_app_data)
-    if interpreter is None:
-        msg = f"could not find {spec}"
-        if is_inside_ci:
-            raise RuntimeError(msg)
-        pytest.skip(msg=msg)
-    return interpreter
 
 
 @pytest.fixture(scope="session")

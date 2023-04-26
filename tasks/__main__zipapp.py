@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 import os
 import sys
@@ -7,7 +9,7 @@ ABS_HERE = os.path.abspath(os.path.dirname(__file__))
 NEW_IMPORT_SYSTEM = sys.version_info[0] == 3
 
 
-class VersionPlatformSelect(object):
+class VersionPlatformSelect:
     def __init__(self):
         self.archive = ABS_HERE
         self._zip_file = zipfile.ZipFile(ABS_HERE, "r")
@@ -20,11 +22,11 @@ class VersionPlatformSelect(object):
         per_version = json.loads(self.get_data(of_file).decode("utf-8"))
         all_platforms = per_version[version] if version in per_version else per_version["3.9"]
         content = all_platforms.get("==any", {})  # start will all platforms
-        not_us = "!={}".format(sys.platform)
+        not_us = f"!={sys.platform}"
         for key, value in all_platforms.items():  # now override that with not platform
             if key.startswith("!=") and key != not_us:
                 content.update(value)
-        content.update(all_platforms.get("=={}".format(sys.platform), {}))  # and finish it off with our platform
+        content.update(all_platforms.get(f"=={sys.platform}", {}))  # and finish it off with our platform
         return content
 
     def __enter__(self):
@@ -61,19 +63,19 @@ class VersionPlatformSelect(object):
             yield result
 
     def __repr__(self):
-        return "{}(path={})".format(self.__class__.__name__, ABS_HERE)
+        return f"{self.__class__.__name__}(path={ABS_HERE})"
 
     def _register_distutils_finder(self):
         if "distlib" not in self.modules:
             return
 
-        class DistlibFinder(object):
+        class DistlibFinder:
             def __init__(self, path, loader):
                 self.path = path
                 self.loader = loader
 
             def find(self, name):
-                class Resource(object):
+                class Resource:
                     def __init__(self, content):
                         self.bytes = content
 

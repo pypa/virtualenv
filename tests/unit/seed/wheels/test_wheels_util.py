@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import pytest
 
 from virtualenv.seed.wheels.embed import MAX, get_embed_wheel

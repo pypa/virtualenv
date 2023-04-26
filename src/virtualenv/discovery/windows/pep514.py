@@ -1,5 +1,7 @@
 """Implement https://www.python.org/dev/peps/pep-0514/ to discover interpreters - Windows only"""
 
+from __future__ import annotations
+
 import os
 import re
 import winreg

@@ -2,6 +2,8 @@
 Helper script to rebuild virtualenv_support. Downloads the wheel files using pip
 """
 
+from __future__ import annotations
+
 import os
 import shutil
 import subprocess
@@ -15,7 +17,7 @@ from threading import Thread
 STRICT = "UPGRADE_ADVISORY" not in os.environ
 
 BUNDLED = ["pip", "setuptools", "wheel"]
-SUPPORT = list(reversed([(2, 7)] + [(3, i) for i in range(5, 13)]))
+SUPPORT = [(3, i) for i in range(7, 13)]
 DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "wheels" / "embed"
 
 
@@ -68,15 +70,21 @@ def run():
         removed = collect_package_versions(remove_packages)
 
         outcome = (1 if STRICT else 0) if (added or removed) else 0
+        lines = ["Upgrade embedded wheels:", ""]
         for key, versions in added.items():
-            text = f"* upgrade embedded {key} to {fmt_version(versions)}"
+            text = f"* {key} to {fmt_version(versions)}"
             if key in removed:
-                text += f" from {removed[key]}"
+                rem = ", ".join(f"``{i}``" for i in removed[key])
+                text += f" from {rem}"
                 del removed[key]
-            print(text)
+            lines.append(text)
         for key, versions in removed.items():
-            print(f"* removed embedded {key} of {fmt_version(versions)}")
-
+            lines.append(f"Removed {key} of {fmt_version(versions)}")
+        lines.append("")
+        changelog = "\n".join(lines)
+        print(changelog)
+        if len(lines) >= 4:
+            (Path(__file__).parents[1] / "docs" / "changelog" / "u.bugfix.rst").write_text(changelog, encoding="utf-8")
         support_table = OrderedDict((".".join(str(j) for j in i), []) for i in SUPPORT)
         for package in sorted(new_batch.keys()):
             for folder, version in sorted(folders.items()):
@@ -112,7 +120,7 @@ def run():
         """,
         )
         dest_target = DEST / "__init__.py"
-        dest_target.write_text(msg)
+        dest_target.write_text(msg, encoding="utf-8")
 
         subprocess.run([sys.executable, "-m", "black", str(dest_target)])
 
