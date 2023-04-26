@@ -690,3 +690,25 @@ def test_py_pyc_missing(tmp_path, mocker, py, pyc):
 
     pyc_at = Python2.from_stdlib(Python2.mappings(CURRENT), "osc.py")[1](result.creator, Path("os.pyc"))
     assert pyc_at.exists() is pyc
+
+
+# Make sure that the venv creator works on systems where vendor-delivered files
+# (specifically venv scripts delivered with Python itself) are not writable.
+#
+# https://github.com/pypa/virtualenv/issues/2419
+@pytest.mark.skipif("venv" not in CURRENT_CREATORS, reason="test needs venv creator")
+def test_venv_creator_without_write_perms(tmp_path, mocker):
+    from virtualenv.run.session import Session
+
+    prev = Session._create
+
+    def func(self):
+        prev(self)
+        scripts_dir = self.creator.dest / "bin"
+        for script in scripts_dir.glob("*ctivate*"):
+            script.chmod(stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
+
+    mocker.patch("virtualenv.run.session.Session._create", side_effect=func, autospec=True)
+
+    cmd = [str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", "venv"]
+    cli_run(cmd)
