@@ -1,0 +1,1 @@
+Upgrade setuptools to ``67.7.2`` from ``67.6.1`` and pip to ``23.1.2`` from ``23.1`` - by :user:`szleb`.
