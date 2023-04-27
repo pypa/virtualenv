@@ -43,6 +43,10 @@ class ViaTemplateActivator(Activator, metaclass=ABCMeta):
         for template in templates:
             text = self.instantiate_template(replacements, template, creator)
             dest = to_folder / self.as_name(template)
+            # remove the file if it already exists - this prevents permission
+            # errors when the dest is not writable
+            if dest.exists():
+                dest.unlink()
             # use write_bytes to avoid platform specific line normalization (\n -> \r\n)
             dest.write_bytes(text.encode("utf-8"))
             generated.append(dest)

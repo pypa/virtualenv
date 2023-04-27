@@ -611,3 +611,25 @@ def test_python_path(monkeypatch, tmp_path, python_path_on):
         assert non_python_path == [i for i in base if i not in extra_as_python_path]
     else:
         assert base == extra_all
+
+
+# Make sure that the venv creator works on systems where vendor-delivered files
+# (specifically venv scripts delivered with Python itself) are not writable.
+#
+# https://github.com/pypa/virtualenv/issues/2419
+@pytest.mark.skipif("venv" not in CURRENT_CREATORS, reason="test needs venv creator")
+def test_venv_creator_without_write_perms(tmp_path, mocker):
+    from virtualenv.run.session import Session
+
+    prev = Session._create
+
+    def func(self):
+        prev(self)
+        scripts_dir = self.creator.dest / "bin"
+        for script in scripts_dir.glob("*ctivate*"):
+            script.chmod(stat.S_IREAD | stat.S_IRGRP | stat.S_IROTH)
+
+    mocker.patch("virtualenv.run.session.Session._create", side_effect=func, autospec=True)
+
+    cmd = [str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", "venv"]
+    cli_run(cmd)
