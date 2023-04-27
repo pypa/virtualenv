@@ -118,8 +118,9 @@ at the moment has two types of virtual environments:
 Seeders
 -------
 These will install for you some seed packages (one or more of: :pypi:`pip`, :pypi:`setuptools`, :pypi:`wheel`) that
-enables you to install additional python packages into the created virtual environment (by invoking pip). There are two
-main seed mechanism available:
+enables you to install additional python packages into the created virtual environment (by invoking pip). Installing
+:pypi:`setuptools` and :pypi:`wheel` is disabled by default on Python 3.12+ environments. There are two
+main seed mechanisms available:
 
 - ``pip`` - this method uses the bundled pip with virtualenv to install the seed packages (note, a new child process
   needs to be created to do this, which can be expensive especially on Windows).

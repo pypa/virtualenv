@@ -291,7 +291,7 @@ def test_discover_exe_on_path_non_spec_name_not_match(mocker):
     assert CURRENT.satisfies(spec, impl_must_match=True) is False
 
 
-@pytest.mark.skipif(IS_PYPY, reason="setuptools distutil1s patching does not work")
+@pytest.mark.skipif(IS_PYPY, reason="setuptools distutils patching does not work")
 def test_py_info_setuptools():
     from setuptools.dist import Distribution
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import shutil
+import sys
 from stat import S_IWUSR
 
 
@@ -58,7 +59,8 @@ def safe_delete(dest):
         else:
             raise
 
-    shutil.rmtree(str(dest), ignore_errors=True, onerror=onerror)
+    kwargs = {"onexc" if sys.version_info >= (3, 12) else "onerror": onerror}
+    shutil.rmtree(str(dest), ignore_errors=True, **kwargs)
 
 
 class _Debug:
