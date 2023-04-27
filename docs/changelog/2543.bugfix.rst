@@ -1,2 +1,0 @@
-Prevent ``PermissionError`` when using venv creator on systems that deliver files without user write
-permission - by :user:`kulikjak`.
