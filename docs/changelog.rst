@@ -5,6 +5,26 @@ Release History
 
 .. towncrier release notes start
 
+v20.23.0 (2023-04-27)
+---------------------
+
+Features - 20.23.0
+~~~~~~~~~~~~~~~~~~
+- Do not install ``wheel`` and ``setuptools`` seed packages for Python 3.12+. To restore the old behaviour use:
+
+  - for ``wheel`` use ``VIRTUALENV_WHEEL=bundle`` environment variable or ``--wheel=bundle`` CLI flag,
+  - for ``setuptools`` use ``VIRTUALENV_SETUPTOOLS=bundle`` environment variable or ``--setuptools=bundle`` CLI flag.
+
+  By :user:`chrysle`. (:issue:`2487`)
+- 3.12 support - by :user:`gaborbernat`. (:issue:`2558`)
+
+Bugfixes - 20.23.0
+~~~~~~~~~~~~~~~~~~
+- Prevent ``PermissionError`` when using venv creator on systems that deliver files without user write
+  permission - by :user:`kulikjak`. (:issue:`2543`)
+- Upgrade setuptools to ``67.7.2`` from ``67.6.1`` and pip to ``23.1.2`` from ``23.1`` - by :user:`szleb`. (:issue:`2560`)
+
+
 v20.22.0 (2023-04-19)
 ---------------------
 
