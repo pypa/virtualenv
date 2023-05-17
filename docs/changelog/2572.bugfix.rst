@@ -1,0 +1,1 @@
+update and simplify nushell activation script, fixes an issue on Windows resulting in consecutive command not found - by :user:`melMass`.
