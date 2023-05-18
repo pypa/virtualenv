@@ -235,7 +235,7 @@ def activation_tester(activation_python, monkeypatch, tmp_path, is_inside_ci):
             pytest.skip(f"{tester.of_class.__name__} not supported")
         version = tester.get_version(raise_on_fail=is_inside_ci)
         if not isinstance(version, str):
-            pytest.skip(msg=str(version))
+            pytest.skip(reason=str(version))
         return tester(monkeypatch, tmp_path)
 
     return _tester
