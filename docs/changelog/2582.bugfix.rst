@@ -1,0 +1,3 @@
+Upgrade embedded wheels:
+
+* setuptools to ``67.8.0`` from ``67.7.2``
