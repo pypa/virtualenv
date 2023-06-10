@@ -10,7 +10,7 @@ CLI flags
 
 It modifies the environment variables in a shell to create an isolated Python environment, so you'll need to have a
 shell to run it. You can type in ``virtualenv`` (name of the application) followed by flags that control its
-behaviour. All options have sensible defaults, and there's one required argument: then name/path of the virtual
+behaviour. All options have sensible defaults, and there's one required argument: the name/path of the virtual
 environment to create. The default values for the command line options can be overridden via the
 :ref:`conf_file` or :ref:`env_vars`. Environment variables takes priority over the configuration file values
 (``--help`` will show if a default comes from the environment variable as the help message will end in this case
