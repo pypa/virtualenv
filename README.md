@@ -28,6 +28,7 @@ follow the [PSF Code of Conduct](https://github.com/pypa/.github/blob/main/CODE_
 ## Contributors
 
 We appreciate all contributions and thank all the contributors!
+
 <p align="center">
   <img src="https://contributors-img.web.app/image?repo=pypa/virtualenv" />
 </p>
