@@ -1,6 +1,4 @@
-"""
-Helper script to rebuild virtualenv_support. Downloads the wheel files using pip
-"""
+"""Helper script to rebuild virtualenv_support. Downloads the wheel files using pip."""
 
 from __future__ import annotations
 
@@ -23,7 +21,7 @@ DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "wh
 
 def download(ver, dest, package):
     subprocess.call(
-        [
+        [  # noqa: S603
             sys.executable,
             "-m",
             "pip",
@@ -39,7 +37,7 @@ def download(ver, dest, package):
     )
 
 
-def run():
+def run():  # noqa: C901
     old_batch = {i.name for i in DEST.iterdir() if i.suffix == ".whl"}
     with TemporaryDirectory() as temp:
         temp_path = Path(temp)
@@ -56,7 +54,7 @@ def run():
                 thread.start()
         for thread in targets:
             thread.join()
-        new_batch = {i.name: i for f in folders.keys() for i in Path(f).iterdir()}
+        new_batch = {i.name: i for f in folders for i in Path(f).iterdir()}
 
         new_packages = new_batch.keys() - old_batch
         remove_packages = old_batch - new_batch.keys()
@@ -82,8 +80,8 @@ def run():
             lines.append(f"Removed {key} of {fmt_version(versions)}")
         lines.append("")
         changelog = "\n".join(lines)
-        print(changelog)
-        if len(lines) >= 4:
+        print(changelog)  # noqa: T201
+        if len(lines) >= 4:  # noqa: PLR2004
             (Path(__file__).parents[1] / "docs" / "changelog" / "u.bugfix.rst").write_text(changelog, encoding="utf-8")
         support_table = OrderedDict((".".join(str(j) for j in i), []) for i in SUPPORT)
         for package in sorted(new_batch.keys()):
@@ -92,7 +90,7 @@ def run():
                     support_table[version].append(package)
         support_table = {k: OrderedDict((i.split("-")[0], i) for i in v) for k, v in support_table.items()}
         bundle = ",".join(
-            f"{v!r}: {{ {','.join(f'{p!r}: {f!r}' for p, f in l.items())} }}" for v, l in support_table.items()
+            f"{v!r}: {{ {','.join(f'{p!r}: {f!r}' for p, f in line.items())} }}" for v, line in support_table.items()
         )
         msg = dedent(
             f"""
@@ -102,7 +100,7 @@ def run():
 
         BUNDLE_FOLDER = Path(__file__).absolute().parent
         BUNDLE_SUPPORT = {{ {bundle} }}
-        MAX = {repr(next(iter(support_table.keys())))}
+        MAX = {next(iter(support_table.keys()))!r}
 
 
         def get_embed_wheel(distribution, for_py_version):
@@ -122,7 +120,7 @@ def run():
         dest_target = DEST / "__init__.py"
         dest_target.write_text(msg, encoding="utf-8")
 
-        subprocess.run([sys.executable, "-m", "black", str(dest_target)])
+        subprocess.run([sys.executable, "-m", "black", str(dest_target)])  # noqa: S603
 
         raise SystemExit(outcome)
 
@@ -135,7 +133,7 @@ def collect_package_versions(new_packages):
     result = defaultdict(list)
     for package in new_packages:
         split = package.split("-")
-        if len(split) < 2:
+        if len(split) < 2:  # noqa: PLR2004
             raise ValueError(package)
         key, version = split[0:2]
         result[key].append(version)

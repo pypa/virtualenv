@@ -34,5 +34,5 @@ def test_reentrant_file_lock_is_thread_safe(tmp_path):
         for task in tasks:
             try:
                 task.result()
-            except Exception:
+            except Exception:  # noqa: BLE001
                 pytest.fail(traceback.format_exc())

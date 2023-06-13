@@ -55,22 +55,21 @@ def test_destination_exists_file(tmp_path, capsys):
     target = tmp_path / "out"
     target.write_text("", encoding="utf-8")
     err = _non_success_exit_code(capsys, str(target))
-    msg = f"the destination {str(target)} already exists and is a file"
+    msg = f"the destination {target!s} already exists and is a file"
     assert msg in err, err
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
 def test_destination_not_write_able(tmp_path, capsys):
-    if hasattr(os, "geteuid"):
-        if os.geteuid() == 0:
-            pytest.skip("no way to check permission restriction when running under root")
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        pytest.skip("no way to check permission restriction when running under root")
 
     target = tmp_path
     prev_mod = target.stat().st_mode
     target.chmod(S_IREAD | S_IRGRP | S_IROTH)
     try:
         err = _non_success_exit_code(capsys, str(target))
-        msg = f"the destination . is not write-able at {str(target)}"
+        msg = f"the destination . is not write-able at {target!s}"
         assert msg in err, err
     finally:
         target.chmod(prev_mod)
@@ -84,8 +83,7 @@ def cleanup_sys_path(paths):
     if os.environ.get("PYCHARM_HELPERS_DIR"):
         to_remove.append(Path(os.environ["PYCHARM_HELPERS_DIR"]).parent)
         to_remove.append(Path(os.path.expanduser("~")) / ".PyCharm")
-    result = [i for i in paths if not any(str(i).startswith(str(t)) for t in to_remove)]
-    return result
+    return [i for i in paths if not any(str(i).startswith(str(t)) for t in to_remove)]
 
 
 @pytest.fixture(scope="session")
@@ -93,7 +91,7 @@ def system(session_app_data):
     return get_env_debug_info(Path(CURRENT.system_executable), DEBUG_SCRIPT, session_app_data, os.environ)
 
 
-CURRENT_CREATORS = [i for i in CURRENT.creators().key_to_class.keys() if i != "builtin"]
+CURRENT_CREATORS = [i for i in CURRENT.creators().key_to_class if i != "builtin"]
 CREATE_METHODS = []
 for k, v in CURRENT.creators().key_to_meta.items():
     if k in CURRENT_CREATORS:
@@ -107,7 +105,14 @@ for k, v in CURRENT.creators().key_to_meta.items():
     ("creator", "isolated"),
     [pytest.param(*i, id=f"{'-'.join(i[0])}-{i[1]}") for i in product(CREATE_METHODS, ["isolated", "global"])],
 )
-def test_create_no_seed(python, creator, isolated, system, coverage_env, special_name_dir):
+def test_create_no_seed(  # noqa: C901, PLR0912, PLR0913, PLR0915
+    python,
+    creator,
+    isolated,
+    system,
+    coverage_env,
+    special_name_dir,
+):
     dest = special_name_dir
     creator_key, method = creator
     cmd = [
@@ -150,7 +155,7 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     # ensure all additional paths are related to the virtual environment
     for path in our_paths:
         msg = "\n".join(str(p) for p in system_sys_path)
-        msg = f"\n{str(path)}\ndoes not start with {str(dest)}\nhas:\n{msg}"
+        msg = f"\n{path!s}\ndoes not start with {dest!s}\nhas:\n{msg}"
         assert str(path).startswith(str(dest)), msg
     # ensure there's at least a site-packages folder as part of the virtual environment added
     assert any(p for p in our_paths if p.parts[-1] == "site-packages"), our_paths_repr
@@ -159,7 +164,7 @@ def test_create_no_seed(python, creator, isolated, system, coverage_env, special
     global_sys_path = system_sys_path[-1]
     if isolated == "isolated":
         msg = "\n".join(str(j) for j in sys_path)
-        msg = f"global sys path {str(global_sys_path)} is in virtual environment sys path:\n{msg}"
+        msg = f"global sys path {global_sys_path!s} is in virtual environment sys path:\n{msg}"
         assert global_sys_path not in sys_path, msg
     else:
         common = []
@@ -234,9 +239,8 @@ def test_create_vcs_ignore_exists_override(tmp_path):
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
 def test_venv_fails_not_inline(tmp_path, capsys, mocker):
-    if hasattr(os, "geteuid"):
-        if os.geteuid() == 0:
-            pytest.skip("no way to check permission restriction when running under root")
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        pytest.skip("no way to check permission restriction when running under root")
 
     def _session_via_cli(args, options=None, setup_logging=True, env=None):
         session = session_via_cli(args, options, setup_logging, env)
@@ -290,10 +294,9 @@ def test_prompt_set(tmp_path, creator, prompt):
     cfg = PyEnvCfg.from_file(result.creator.pyenv_cfg.path)
     if prompt is None:
         assert "prompt" not in cfg
-    else:
-        if creator != "venv":
-            assert "prompt" in cfg, list(cfg.content.keys())
-            assert cfg["prompt"] == actual_prompt
+    elif creator != "venv":
+        assert "prompt" in cfg, list(cfg.content.keys())
+        assert cfg["prompt"] == actual_prompt
 
 
 @pytest.mark.parametrize("creator", CURRENT_CREATORS)
@@ -602,7 +605,7 @@ def test_python_path(monkeypatch, tmp_path, python_path_on):
         str(result.creator.purelib),
         str(result.creator.bin_dir),
         str(tmp_path / "base"),
-        f"{str(tmp_path / 'base_sep')}{os.sep}",
+        f"{tmp_path / 'base_sep'!s}{os.sep}",
         "name",
         f"name{os.sep}",
         f"{tmp_path.parent}{f'{tmp_path.name}_suffix'}",
@@ -615,9 +618,9 @@ def test_python_path(monkeypatch, tmp_path, python_path_on):
 
     extra_all = _get_sys_path(None if python_path_on else "-E")
     if python_path_on:
-        assert extra_all[0] == ""  # the cwd is always injected at start as ''
+        assert not extra_all[0]  # the cwd is always injected at start as ''
         extra_all = extra_all[1:]
-        assert base[0] == ""
+        assert not base[0]
         base = base[1:]
 
         assert not (set(base) - set(extra_all))  # all base paths are present
@@ -641,7 +644,7 @@ def test_python_path(monkeypatch, tmp_path, python_path_on):
 def test_venv_creator_without_write_perms(tmp_path, mocker):
     from virtualenv.run.session import Session
 
-    prev = Session._create
+    prev = Session._create  # noqa: SLF001
 
     def func(self):
         prev(self)

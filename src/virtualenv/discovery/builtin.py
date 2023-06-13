@@ -12,7 +12,7 @@ from .py_spec import PythonSpec
 
 
 class Builtin(Discover):
-    def __init__(self, options):
+    def __init__(self, options) -> None:
         super().__init__(options)
         self.python_spec = options.python if options.python else [sys.executable]
         self.app_data = options.app_data
@@ -48,7 +48,7 @@ class Builtin(Discover):
                 return result
         return None
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         spec = self.python_spec[0] if len(self.python_spec) == 1 else self.python_spec
         return f"{self.__class__.__name__} discover of python_spec={spec!r}"
 
@@ -67,9 +67,10 @@ def get_interpreter(key, try_first_with, app_data=None, env=None):
             logging.debug("accepted %s", interpreter)
             return interpreter
         proposed_paths.add(key)
+    return None
 
 
-def propose_interpreters(spec, try_first_with, app_data, env=None):
+def propose_interpreters(spec, try_first_with, app_data, env=None):  # noqa: C901, PLR0912
     # 0. try with first
     env = os.environ if env is None else env
     for py_exe in try_first_with:
@@ -126,20 +127,16 @@ def get_paths(env):
             path = os.confstr("CS_PATH")
         except (AttributeError, ValueError):
             path = os.defpath
-    if not path:
-        paths = []
-    else:
-        paths = [p for p in path.split(os.pathsep) if os.path.exists(p)]
-    return paths
+    return [] if not path else [p for p in path.split(os.pathsep) if os.path.exists(p)]
 
 
 class LazyPathDump:
-    def __init__(self, pos, path, env):
+    def __init__(self, pos, path, env) -> None:
         self.pos = pos
         self.path = path
         self.env = env
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         content = f"discover PATH[{self.pos}]={self.path}"
         if self.env.get("_VIRTUALENV_DEBUG"):  # this is the over the board debug
             content += " with =>"
@@ -175,7 +172,7 @@ def possible_specs(spec):
 
 
 class PathPythonInfo(PythonInfo):
-    """python info from path"""
+    """python info from path."""
 
 
 __all__ = [

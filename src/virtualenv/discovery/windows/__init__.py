@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from ..py_info import PythonInfo
-from ..py_spec import PythonSpec
+from virtualenv.discovery.py_info import PythonInfo
+from virtualenv.discovery.py_spec import PythonSpec
+
 from .pep514 import discover_pythons
 
 # Map of well-known organizations (as per PEP 514 Company Windows Registry key part) versus Python implementation
@@ -12,7 +13,7 @@ _IMPLEMENTATION_BY_ORG = {
 
 
 class Pep514PythonInfo(PythonInfo):
-    """A Python information acquired from PEP-514"""
+    """A Python information acquired from PEP-514."""
 
 
 def propose_interpreters(spec, cache_dir, env):
@@ -22,7 +23,7 @@ def propose_interpreters(spec, cache_dir, env):
     # and prefer PythonCore over conda pythons (as virtualenv is mostly used by non conda tools)
     existing = list(discover_pythons())
     existing.sort(
-        key=lambda i: tuple(-1 if j is None else j for j in i[1:4]) + (1 if i[0] == "PythonCore" else 0,),
+        key=lambda i: (*tuple(-1 if j is None else j for j in i[1:4]), 1 if i[0] == "PythonCore" else 0),
         reverse=True,
     )
 
@@ -36,10 +37,8 @@ def propose_interpreters(spec, cache_dir, env):
         registry_spec = PythonSpec(None, implementation, major, minor, None, arch, exe)
         if skip_pre_filter or registry_spec.satisfies(spec):
             interpreter = Pep514PythonInfo.from_exe(exe, cache_dir, env=env, raise_on_error=False)
-            if interpreter is not None:
-                # Final filtering/matching using interpreter metadata
-                if interpreter.satisfies(spec, impl_must_match=True):
-                    yield interpreter
+            if interpreter is not None and interpreter.satisfies(spec, impl_must_match=True):
+                yield interpreter  # Final filtering/matching using interpreter metadata
 
 
 __all__ = [

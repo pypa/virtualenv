@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from virtualenv import cli_run
 from virtualenv.info import IS_PYPY
 from virtualenv.util.subprocess import run_cmd
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.mark.skipif(IS_PYPY, reason="setuptools distutils patching does not work")

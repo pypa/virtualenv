@@ -35,7 +35,7 @@ def builtin_shows_marker_missing():
     not Path(CURRENT.system_include).exists() and not builtin_shows_marker_missing(),
     reason="Building C-Extensions requires header files with host python",
 )
-@pytest.mark.parametrize("creator", [i for i in CREATOR_CLASSES.keys() if i != "builtin"])
+@pytest.mark.parametrize("creator", [i for i in CREATOR_CLASSES if i != "builtin"])
 def test_can_build_c_extensions(creator, tmp_path, coverage_env):
     env, greet = tmp_path / "env", str(tmp_path / "greet")
     shutil.copytree(str(Path(__file__).parent.resolve() / "greet"), greet)

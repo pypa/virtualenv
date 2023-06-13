@@ -5,13 +5,12 @@ import os
 from abc import ABCMeta
 from pathlib import Path
 
+from virtualenv.create.creator import Creator, CreatorMeta
 from virtualenv.info import fs_supports_symlink
-
-from ..creator import Creator, CreatorMeta
 
 
 class ViaGlobalRefMeta(CreatorMeta):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.copy_error = None
         self.symlink_error = None
@@ -28,7 +27,7 @@ class ViaGlobalRefMeta(CreatorMeta):
 
 
 class ViaGlobalRefApi(Creator, metaclass=ABCMeta):
-    def __init__(self, options, interpreter):
+    def __init__(self, options, interpreter) -> None:
         super().__init__(options, interpreter)
         self.symlinks = self._should_symlink(options)
         self.enable_system_site_package = options.system_site
@@ -62,7 +61,8 @@ class ViaGlobalRefApi(Creator, metaclass=ABCMeta):
         )
         group = parser.add_mutually_exclusive_group()
         if not meta.can_symlink and not meta.can_copy:
-            raise RuntimeError("neither symlink or copy method supported")
+            msg = "neither symlink or copy method supported"
+            raise RuntimeError(msg)
         if meta.can_symlink:
             group.add_argument(
                 "--symlinks",
@@ -95,13 +95,13 @@ class ViaGlobalRefApi(Creator, metaclass=ABCMeta):
             dest_path.write_text(text, encoding="utf-8")
 
     def env_patch_text(self):
-        """Patch the distutils package to not be derailed by its configuration files"""
+        """Patch the distutils package to not be derailed by its configuration files."""
         with self.app_data.ensure_extracted(Path(__file__).parent / "_virtualenv.py") as resolved_path:
             text = resolved_path.read_text(encoding="utf-8")
             return text.replace('"__SCRIPT_DIR__"', repr(os.path.relpath(str(self.script_dir), str(self.purelib))))
 
     def _args(self):
-        return super()._args() + [("global", self.enable_system_site_package)]
+        return [*super()._args(), ("global", self.enable_system_site_package)]
 
     def set_pyenv_cfg(self):
         super().set_pyenv_cfg()

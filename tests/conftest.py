@@ -23,8 +23,8 @@ def pytest_addoption(parser):
 def pytest_configure(config):
     """Ensure randomly is called before we re-order"""
     manager = config.pluginmanager
-    # noinspection PyProtectedMember
-    order = manager.hook.pytest_collection_modifyitems._nonwrappers
+
+    order = manager.hook.pytest_collection_modifyitems._nonwrappers  # noqa: SLF001
     dest = next((i for i, p in enumerate(order) if p.plugin is manager.getplugin("randomly")), None)
     if dest is not None:
         from_pos = next(i for i, p in enumerate(order) if p.plugin is manager.getplugin(__file__))
@@ -47,7 +47,7 @@ def pytest_collection_modifyitems(config, items):
 
 
 @pytest.fixture(scope="session")
-def has_symlink_support(tmp_path_factory):  # noqa: U100
+def has_symlink_support(tmp_path_factory):  # noqa: ARG001
     return fs_supports_symlink()
 
 
@@ -55,21 +55,19 @@ def has_symlink_support(tmp_path_factory):  # noqa: U100
 def link_folder(has_symlink_support):
     if has_symlink_support:
         return os.symlink
-    elif sys.platform == "win32":
+    if sys.platform == "win32":
         # on Windows junctions may be used instead
         import _winapi
 
         return getattr(_winapi, "CreateJunction", None)
-    else:
-        return None
+    return None
 
 
 @pytest.fixture(scope="session")
 def link_file(has_symlink_support):
     if has_symlink_support:
         return os.symlink
-    else:
-        return None
+    return None
 
 
 @pytest.fixture(scope="session")
@@ -84,11 +82,10 @@ def link(link_folder, link_file):
             else:
                 shutil.copytree(s_src, s_dest)
                 clean = partial(shutil.rmtree, str(dest))
+        elif link_file:
+            link_file(s_src, s_dest)
         else:
-            if link_file:
-                link_file(s_src, s_dest)
-            else:
-                shutil.copy2(s_src, s_dest)
+            shutil.copy2(s_src, s_dest)
         return clean
 
     return _link
@@ -148,9 +145,7 @@ def _ignore_global_config(tmp_path_factory):
 def _check_os_environ_stable():
     old = os.environ.copy()
     # ensure we don't inherit parent env variables
-    to_clean = {
-        k for k in os.environ.keys() if k.startswith("VIRTUALENV_") or "VIRTUAL_ENV" in k or k.startswith("TOX_")
-    }
+    to_clean = {k for k in os.environ if k.startswith(("VIRTUALENV_", "TOX_")) or "VIRTUAL_ENV" in k}
     cleaned = {k: os.environ[k] for k, v in os.environ.items()}
     override = {
         "VIRTUALENV_NO_PERIODIC_UPDATE": "1",
@@ -166,7 +161,7 @@ def _check_os_environ_stable():
         raise
     finally:
         try:
-            for key in override.keys():
+            for key in override:
                 del os.environ[str(key)]
             if is_exception is False:
                 new = os.environ
@@ -250,11 +245,11 @@ if COVERAGE_RUN:
         _COV_FILE = Path(coverage.__file__)
         _ROOT_COV_FILES_AND_FOLDERS = [i for i in _COV_FILE.parents[1].iterdir() if i.name.startswith("coverage")]
 
-        def __init__(self, link):
+        def __init__(self, link) -> None:
             self.link = link
             self.targets = []
 
-        def __enter__(self, creator):
+        def __enter__(self, creator):  # noqa: PLE0302
             site_packages = creator.purelib
             for entry in self._ROOT_COV_FILES_AND_FOLDERS:
                 target = site_packages / entry.name
@@ -263,7 +258,7 @@ if COVERAGE_RUN:
                     self.targets.append((target, clean))
             return self
 
-        def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: U100
+        def __exit__(self, exc_type, exc_val, exc_tb):
             for target, clean in self.targets:
                 if target.exists():
                     clean()
@@ -295,8 +290,7 @@ def special_char_name():
 
 @pytest.fixture()
 def special_name_dir(tmp_path, special_char_name):
-    dest = Path(str(tmp_path)) / special_char_name
-    return dest
+    return Path(str(tmp_path)) / special_char_name
 
 
 @pytest.fixture(scope="session")
@@ -330,7 +324,7 @@ def change_env_var(key, value):
         yield
     finally:
         if already_set:
-            os.environ[key] = prev_value  # type: ignore
+            os.environ[key] = prev_value
         else:
             del os.environ[key]  # pragma: no cover
 

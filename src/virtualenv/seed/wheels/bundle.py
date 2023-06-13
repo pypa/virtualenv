@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from ..wheels.embed import get_embed_wheel
+from virtualenv.seed.wheels.embed import get_embed_wheel
+
 from .periodic_update import periodic_update
 from .util import Version, Wheel, discover_wheels
 
 
-def from_bundle(distribution, version, for_py_version, search_dirs, app_data, do_periodic_update, env):
-    """
-    Load the bundled wheel to a cache directory.
-    """
+def from_bundle(distribution, version, for_py_version, search_dirs, app_data, do_periodic_update, env):  # noqa: PLR0913
+    """Load the bundled wheel to a cache directory."""
     of_version = Version.of_version(version)
     wheel = load_embed_wheel(app_data, distribution, for_py_version, of_version)
 
@@ -20,11 +19,8 @@ def from_bundle(distribution, version, for_py_version, search_dirs, app_data, do
 
         # 3. acquire from extra search dir
         found_wheel = from_dir(distribution, of_version, for_py_version, search_dirs)
-        if found_wheel is not None:
-            if wheel is None:
-                wheel = found_wheel
-            elif found_wheel.version_tuple > wheel.version_tuple:
-                wheel = found_wheel
+        if found_wheel is not None and (wheel is None or found_wheel.version_tuple > wheel.version_tuple):
+            wheel = found_wheel
     return wheel
 
 
@@ -41,9 +37,7 @@ def load_embed_wheel(app_data, distribution, for_py_version, version):
 
 
 def from_dir(distribution, version, for_py_version, directories):
-    """
-    Load a compatible wheel from a given folder.
-    """
+    """Load a compatible wheel from a given folder."""
     for folder in directories:
         for wheel in discover_wheels(folder, distribution, version, for_py_version):
             return wheel

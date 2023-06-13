@@ -76,18 +76,14 @@ class CliTable(SphinxDirective):
                     prev(*args, **kwargs)
                     if key == "activators":
                         return True
-                    elif key == "creator":
+                    if key == "creator":
                         if name == "venv":
-                            from virtualenv.create.via_global_ref.venv import (
-                                ViaGlobalRefMeta,
-                            )
+                            from virtualenv.create.via_global_ref.venv import ViaGlobalRefMeta
 
                             meta = ViaGlobalRefMeta()
                             meta.symlink_error = None
                             return meta
-                        from virtualenv.create.via_global_ref.builtin.via_global_self_do import (
-                            BuiltinViaGlobalRefMeta,
-                        )
+                        from virtualenv.create.via_global_ref.builtin.via_global_self_do import BuiltinViaGlobalRefMeta
 
                         meta = BuiltinViaGlobalRefMeta()
                         meta.symlink_error = None
@@ -126,11 +122,16 @@ class CliTable(SphinxDirective):
         for option in options:
             names = option["name"]
             default = option["default"]
-            if default is not None:
-                if isinstance(default, str) and default and default[0] == default[-1] and default[0] == '"':
-                    default = default[1:-1]
-                    if default == SUPPRESS:
-                        default = None
+            if (
+                default is not None
+                and isinstance(default, str)
+                and default
+                and default[0] == default[-1]
+                and default[0] == '"'
+            ):
+                default = default[1:-1]
+                if default == SUPPRESS:
+                    default = None
             choices = option.get("choices")
             key = names[0].strip("-")
             if key in CliTable.plugins:
@@ -176,10 +177,7 @@ class CliTable(SphinxDirective):
     @staticmethod
     def _get_help_text(row):
         name = row.names[0]
-        if name in ("--creator",):
-            content = row.help[: row.help.index("(") - 1]
-        else:
-            content = row.help
+        content = row.help[: row.help.index("(") - 1] if name in ("--creator",) else row.help
         help_body = n.paragraph("", "", n.Text(content))
         if row.choices is not None:
             help_body += n.Text("; choice of: ")
@@ -207,11 +205,10 @@ class CliTable(SphinxDirective):
             default_body += n.literal(text="builtin")
             default_body += n.Text(" if exist, else ")
             default_body += n.literal(text="venv")
+        elif default is None:
+            default_body = n.paragraph("", text="")
         else:
-            if default is None:
-                default_body = n.paragraph("", text="")
-            else:
-                default_body = n.literal(text=default if isinstance(default, str) else str(default))
+            default_body = n.literal(text=default if isinstance(default, str) else str(default))
         return default_body
 
     def register_target_option(self, target) -> None:
@@ -221,9 +218,9 @@ class CliTable(SphinxDirective):
             domain.add_program_option(None, key, self.env.docname, key)
 
 
-def literal_data(rawtext, app, type, slug, options):  # noqa: U100
+def literal_data(rawtext, app, of_type, slug, options):  # noqa: ARG001
     """Create a link to a BitBucket resource."""
-    of_class = type.split(".")
+    of_class = of_type.split(".")
     data = getattr(__import__(".".join(of_class[:-1]), fromlist=[of_class[-1]]), of_class[-1])
     return [n.literal("", text=",".join(data))], []
 

@@ -4,8 +4,7 @@ import abc
 from pathlib import Path
 
 from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest, RefMust, RefWhen
-
-from ..via_global_self_do import ViaGlobalRefVirtualenvBuiltin
+from virtualenv.create.via_global_ref.builtin.via_global_self_do import ViaGlobalRefVirtualenvBuiltin
 
 
 class PyPy(ViaGlobalRefVirtualenvBuiltin, metaclass=abc.ABCMeta):
@@ -45,7 +44,7 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin, metaclass=abc.ABCMeta):
         yield from cls._shared_libs(python_dir)
 
     @classmethod
-    def _shared_libs(cls, python_dir):  # noqa: U100
+    def _shared_libs(cls, python_dir):
         raise NotImplementedError
 
 

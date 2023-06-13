@@ -4,18 +4,20 @@ from abc import ABCMeta, abstractmethod
 
 
 class Discover(metaclass=ABCMeta):
-    """Discover and provide the requested Python interpreter"""
+    """Discover and provide the requested Python interpreter."""
 
     @classmethod
-    def add_parser_arguments(cls, parser):  # noqa: U100
-        """Add CLI arguments for this discovery mechanisms.
+    def add_parser_arguments(cls, parser):
+        """
+        Add CLI arguments for this discovery mechanisms.
 
         :param parser: the CLI parser
         """
         raise NotImplementedError
 
-    def __init__(self, options):
-        """Create a new discovery mechanism.
+    def __init__(self, options) -> None:
+        """
+        Create a new discovery mechanism.
 
         :param options: the parsed options as defined within :meth:`add_parser_arguments`
         """
@@ -25,7 +27,8 @@ class Discover(metaclass=ABCMeta):
 
     @abstractmethod
     def run(self):
-        """Discovers an interpreter.
+        """
+        Discovers an interpreter.
 
         :return: the interpreter ready to use for virtual environment creation
         """
@@ -33,9 +36,7 @@ class Discover(metaclass=ABCMeta):
 
     @property
     def interpreter(self):
-        """
-        :return: the interpreter as returned by :meth:`run`, cached
-        """
+        """:return: the interpreter as returned by :meth:`run`, cached"""
         if self._has_run is False:
             self._interpreter = self.run()
             self._has_run = True

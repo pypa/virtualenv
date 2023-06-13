@@ -3,7 +3,7 @@
 We acquire the python information by running an interrogation script via subprocess trigger. This operation is not
 cheap, especially not on Windows. To not have to pay this hefty cost every time we apply multiple levels of
 caching.
-"""
+"""  # noqa: D205
 
 from __future__ import annotations
 
@@ -25,19 +25,18 @@ _CACHE = OrderedDict()
 _CACHE[Path(sys.executable)] = PythonInfo()
 
 
-def from_exe(cls, app_data, exe, env=None, raise_on_error=True, ignore_cache=False):
+def from_exe(cls, app_data, exe, env=None, raise_on_error=True, ignore_cache=False):  # noqa: FBT002, PLR0913
     env = os.environ if env is None else env
     result = _get_from_cache(cls, app_data, exe, env, ignore_cache=ignore_cache)
     if isinstance(result, Exception):
         if raise_on_error:
             raise result
-        else:
-            logging.info("%s", result)
+        logging.info("%s", result)
         result = None
     return result
 
 
-def _get_from_cache(cls, app_data, exe, env, ignore_cache=True):
+def _get_from_cache(cls, app_data, exe, env, ignore_cache=True):  # noqa: FBT002
     # note here we cannot resolve symlinks, as the symlink may trigger different prefix information if there's a
     # pyenv.cfg somewhere alongside on python3.5+
     exe_path = Path(exe)
@@ -76,7 +75,7 @@ def _get_via_file_cache(cls, app_data, path, exe, env):
         if py_info is None:  # if not loaded run and save
             failure, py_info = _run_subprocess(cls, exe, app_data, env)
             if failure is None:
-                data = {"st_mtime": path_modified, "path": path_text, "content": py_info._to_dict()}
+                data = {"st_mtime": path_modified, "path": path_text, "content": py_info._to_dict()}  # noqa: SLF001
                 py_info_store.write(data)
             else:
                 py_info = failure
@@ -87,7 +86,9 @@ COOKIE_LENGTH: int = 32
 
 
 def gen_cookie():
-    return "".join(random.choice("".join((ascii_lowercase, ascii_uppercase, digits))) for _ in range(COOKIE_LENGTH))
+    return "".join(
+        random.choice(f"{ascii_lowercase}{ascii_uppercase}{digits}") for _ in range(COOKIE_LENGTH)  # noqa: S311
+    )
 
 
 def _run_subprocess(cls, exe, app_data, env):
@@ -110,7 +111,7 @@ def _run_subprocess(cls, exe, app_data, env):
         logging.debug("get interpreter info via cmd: %s", LogCmd(cmd))
         try:
             process = Popen(
-                cmd,
+                cmd,  # noqa: S603
                 universal_newlines=True,
                 stdin=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -153,11 +154,11 @@ def _run_subprocess(cls, exe, app_data, env):
 
 
 class LogCmd:
-    def __init__(self, cmd, env=None):
+    def __init__(self, cmd, env=None) -> None:
         self.cmd = cmd
         self.env = env
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         cmd_repr = " ".join(quote(str(c)) for c in self.cmd)
         if self.env is not None:
             cmd_repr = f"{cmd_repr} env of {self.env!r}"

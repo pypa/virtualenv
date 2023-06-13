@@ -10,12 +10,12 @@ def fixture_file(fixture_name):
     files = Path(__file__).parent.parent.rglob(file_mask)
     try:
         return next(files)
-    except StopIteration:
+    except StopIteration as exc:
         # Fixture file was not found in the testing root and its subdirs.
         error = FileNotFoundError
-        raise error(file_mask)
+        raise error(file_mask) from exc
 
 
 def read_fixture(fixture_name):
     fixture_json = fixture_file(fixture_name).read_text(encoding="utf-8")
-    return PythonInfo._from_json(fixture_json)
+    return PythonInfo._from_json(fixture_json)  # noqa: SLF001

@@ -9,9 +9,8 @@ from virtualenv.info import IS_WIN, ROOT
 
 def read(full_path):
     sub_file = _get_path_within_zip(full_path)
-    with zipfile.ZipFile(ROOT, "r") as zip_file:
-        with zip_file.open(sub_file) as file_handler:
-            return file_handler.read().decode("utf-8")
+    with zipfile.ZipFile(ROOT, "r") as zip_file, zip_file.open(sub_file) as file_handler:
+        return file_handler.read().decode("utf-8")
 
 
 def extract(full_path, dest):

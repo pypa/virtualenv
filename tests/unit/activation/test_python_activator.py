@@ -11,7 +11,7 @@ from virtualenv.info import IS_WIN
 
 def test_python(raise_on_non_source_class, activation_tester):
     class Python(raise_on_non_source_class):
-        def __init__(self, session):
+        def __init__(self, session) -> None:
             super().__init__(
                 PythonActivator,
                 session,
@@ -25,7 +25,7 @@ def test_python(raise_on_non_source_class, activation_tester):
         def env(self, tmp_path):
             env = os.environ.copy()
             env["PYTHONIOENCODING"] = "utf-8"
-            for key in {"VIRTUAL_ENV", "PYTHONPATH"}:
+            for key in ("VIRTUAL_ENV", "PYTHONPATH"):
                 env.pop(str(key), None)
             env["PATH"] = os.pathsep.join([str(tmp_path), str(tmp_path / "other")])
             return env
@@ -57,10 +57,9 @@ def test_python(raise_on_non_source_class, activation_tester):
             import pydoc_test
             print_r(pydoc_test.__file__)
             """
-            result = dedent(raw).splitlines()
-            return result
+            return dedent(raw).splitlines()
 
-        def assert_output(self, out, raw, tmp_path):  # noqa: U100
+        def assert_output(self, out, raw, tmp_path):  # noqa: ARG002
             out = [literal_eval(i) for i in out]
             assert out[0] is None  # start with VIRTUAL_ENV None
 
@@ -69,7 +68,7 @@ def test_python(raise_on_non_source_class, activation_tester):
             assert out[3] == str(self._creator.dest)  # VIRTUAL_ENV now points to the virtual env folder
 
             new_path = out[4]  # PATH now starts with bin path of current
-            assert ([str(self._creator.bin_dir)] + prev_path) == new_path
+            assert ([str(self._creator.bin_dir), *prev_path]) == new_path
 
             # sys path contains the site package at its start
             new_sys_path = out[5]
@@ -85,7 +84,6 @@ def test_python(raise_on_non_source_class, activation_tester):
 
         def non_source_activate(self, activate_script):
             act = str(activate_script)
-            cmd = self._invoke_script + ["-c", f"exec(open({act!r}).read())"]
-            return cmd
+            return [*self._invoke_script, "-c", f"exec(open({act!r}).read())"]
 
     activation_tester(Python)

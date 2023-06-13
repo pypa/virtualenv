@@ -5,7 +5,7 @@ from copy import copy
 
 from virtualenv.create.via_global_ref.store import handle_store_python
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.util.error import ProcessCallFailed
+from virtualenv.util.error import ProcessCallFailedError
 from virtualenv.util.path import ensure_dir
 from virtualenv.util.subprocess import run_cmd
 
@@ -14,7 +14,7 @@ from .builtin.pypy.pypy3 import Pypy3Windows
 
 
 class Venv(ViaGlobalRefApi):
-    def __init__(self, options, interpreter):
+    def __init__(self, options, interpreter) -> None:
         self.describe = options.describe
         super().__init__(options, interpreter)
         current = PythonInfo.current()
@@ -48,7 +48,7 @@ class Venv(ViaGlobalRefApi):
         PyPy <= 3.6 (v7.3.3) for Windows contains only pypy3.exe and pypy3w.exe
         Venv does not handle non-existing exe sources, e.g. python.exe, so this
         patch does it.
-        """
+        """  # noqa: D205
         creator = self.describe
         if isinstance(creator, Pypy3Windows) and creator.less_v37:
             for exe in creator.executables(self.interpreter):
@@ -70,7 +70,7 @@ class Venv(ViaGlobalRefApi):
         logging.info("using host built-in venv to create via %s", " ".join(cmd))
         code, out, err = run_cmd(cmd)
         if code != 0:
-            raise ProcessCallFailed(code, out, err, cmd)
+            raise ProcessCallFailedError(code, out, err, cmd)
 
     def get_host_create_cmd(self):
         cmd = [self.interpreter.system_executable, "-m", "venv", "--without-pip"]

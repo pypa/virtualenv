@@ -14,7 +14,7 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
     (fish_conf_dir / "config.fish").write_text("", encoding="utf-8")
 
     class Fish(activation_tester_class):
-        def __init__(self, session):
+        def __init__(self, session) -> None:
             super().__init__(FishActivator, session, "fish", "activate.fish", "fish")
 
         def print_prompt(self):

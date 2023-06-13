@@ -16,7 +16,7 @@ MAX_LEVEL = max(LEVELS.keys())
 LOGGER = logging.getLogger()
 
 
-def setup_report(verbosity, show_pid=False):
+def setup_report(verbosity, show_pid=False):  # noqa: FBT002
     _clean_handlers(LOGGER)
     if verbosity > MAX_LEVEL:
         verbosity = MAX_LEVEL  # pragma: no cover

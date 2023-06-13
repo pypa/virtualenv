@@ -1,4 +1,4 @@
-"""Inspect a target Python interpreter virtual environment wise"""
+"""Inspect a target Python interpreter virtual environment wise."""
 from __future__ import annotations
 
 import sys  # built-in
@@ -8,10 +8,7 @@ def encode_path(value):
     if value is None:
         return None
     if not isinstance(value, (str, bytes)):
-        if isinstance(value, type):
-            value = repr(value)
-        else:
-            value = repr(type(value))
+        value = repr(value) if isinstance(value, type) else repr(type(value))
     if isinstance(value, bytes):
         value = value.decode(sys.getfilesystemencoding())
     return value
@@ -21,13 +18,13 @@ def encode_list_path(value):
     return [encode_path(i) for i in value]
 
 
-def run():
-    """print debug data about the virtual environment"""
+def run():  # noqa: PLR0912
+    """Print debug data about the virtual environment."""
     try:
         from collections import OrderedDict
     except ImportError:  # pragma: no cover
         # this is possible if the standard library cannot be accessed
-        # noinspection PyPep8Naming
+
         OrderedDict = dict  # pragma: no cover  # noqa: N806
     result = OrderedDict([("sys", OrderedDict())])
     path_keys = (
@@ -43,10 +40,7 @@ def run():
     )
     for key in path_keys:
         value = getattr(sys, key, None)
-        if isinstance(value, list):
-            value = encode_list_path(value)
-        else:
-            value = encode_path(value)
+        value = encode_list_path(value) if isinstance(value, list) else encode_path(value)
         result["sys"][key] = value
     result["sys"]["fs_encoding"] = sys.getfilesystemencoding()
     result["sys"]["io_encoding"] = getattr(sys.stdout, "encoding", None)
@@ -66,7 +60,6 @@ def run():
     result["os"] = repr(os)
 
     try:
-        # noinspection PyUnresolvedReferences
         import site  # site
 
         result["site"] = repr(site)
@@ -74,7 +67,6 @@ def run():
         result["site"] = repr(exception)  # pragma: no cover
 
     try:
-        # noinspection PyUnresolvedReferences
         import datetime  # site
 
         result["datetime"] = repr(datetime)
@@ -82,7 +74,6 @@ def run():
         result["datetime"] = repr(exception)  # pragma: no cover
 
     try:
-        # noinspection PyUnresolvedReferences
         import math  # site
 
         result["math"] = repr(math)
@@ -103,7 +94,7 @@ def run():
         except (ValueError, TypeError) as exception:  # pragma: no cover
             sys.stderr.write(repr(exception))
             sys.stdout.write(repr(result))  # pragma: no cover
-            raise SystemExit(1)  # pragma: no cover
+            raise SystemExit(1)  # noqa: TRY200, B904  # pragma: no cover
 
 
 if __name__ == "__main__":

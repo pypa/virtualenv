@@ -16,7 +16,7 @@ from virtualenv.util.path import safe_delete
 
 
 class PipInstall(metaclass=ABCMeta):
-    def __init__(self, wheel, creator, image_folder):
+    def __init__(self, wheel, creator, image_folder) -> None:
         self._wheel = wheel
         self._creator = creator
         self._image_dir = image_folder
@@ -60,7 +60,7 @@ class PipInstall(metaclass=ABCMeta):
             # https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
             zip_max_len = max(len(i) for i in zip_ref.namelist())
             path_len = zip_max_len + len(to_folder)
-            if path_len > 260:
+            if path_len > 260:  # noqa: PLR2004
                 self._image_dir.mkdir(exist_ok=True)  # to get a short path must exist
 
                 from virtualenv.util.path import get_short_path_name
@@ -106,7 +106,8 @@ class PipInstall(metaclass=ABCMeta):
                     self.__dist_info = filename
                     break
             else:
-                raise RuntimeError(f"no .dist-info at {self._image_dir}, has {', '.join(files)}")  # pragma: no cover
+                msg = f"no .dist-info at {self._image_dir}, has {', '.join(files)}"
+                raise RuntimeError(msg)  # pragma: no cover
         return self.__dist_info
 
     @abstractmethod
@@ -127,9 +128,8 @@ class PipInstall(metaclass=ABCMeta):
                 if "console_scripts" in parser.sections():
                     for name, value in parser.items("console_scripts"):
                         match = re.match(r"(.*?)-?\d\.?\d*", name)
-                        if match:
-                            name = match.groups(1)[0]
-                        self._console_entry_points[name] = value
+                        our_name = match.groups(1)[0] if match else name
+                        self._console_entry_points[our_name] = value
         return self._console_entry_points
 
     def _create_console_entry_point(self, name, value, to_folder, version_info):
@@ -142,7 +142,7 @@ class PipInstall(metaclass=ABCMeta):
 
     def _uninstall_previous_version(self):
         dist_name = self._dist_info.stem.split("-")[0]
-        in_folders = chain.from_iterable([i.iterdir() for i in {self._creator.purelib, self._creator.platlib}])
+        in_folders = chain.from_iterable([i.iterdir() for i in (self._creator.purelib, self._creator.platlib)])
         paths = (p for p in in_folders if p.stem.split("-")[0] == dist_name and p.suffix == ".dist-info" and p.is_dir())
         existing_dist = next(paths, None)
         if existing_dist is not None:
@@ -185,7 +185,7 @@ class PipInstall(metaclass=ABCMeta):
 
 
 class ScriptMakerCustom(ScriptMaker):
-    def __init__(self, target_dir, version_info, executable, name):
+    def __init__(self, target_dir, version_info, executable, name) -> None:
         super().__init__(None, str(target_dir))
         self.clobber = True  # overwrite
         self.set_mode = True  # ensure they are executable
@@ -194,7 +194,7 @@ class ScriptMakerCustom(ScriptMaker):
         self.variants = {"", "X", "X.Y"}
         self._name = name
 
-    def _write_script(self, names, shebang, script_bytes, filenames, ext):
+    def _write_script(self, names, shebang, script_bytes, filenames, ext):  # noqa: PLR0913
         names.add(f"{self._name}{self.version_info[0]}.{self.version_info[1]}")
         super()._write_script(names, shebang, script_bytes, filenames, ext)
 

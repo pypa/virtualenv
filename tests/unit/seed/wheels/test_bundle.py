@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -25,7 +25,7 @@ def next_pip_wheel(for_py_version):
 @pytest.fixture(scope="module")
 def app_data(tmp_path_factory, for_py_version, next_pip_wheel):
     temp_folder = tmp_path_factory.mktemp("module-app-data")
-    now = dump_datetime(datetime.now())
+    now = dump_datetime(datetime.now(tz=timezone.utc))
     app_data_ = AppDataDiskFolder(str(temp_folder))
     app_data_.embed_update_log("pip", for_py_version).write(
         {

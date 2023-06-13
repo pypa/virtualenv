@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+from contextlib import suppress
 from pathlib import Path
 
 import pytest
@@ -25,7 +26,7 @@ def zipapp_build_env(tmp_path_factory):
         # prefer CPython as builder as pypy is slow
         for impl in ["cpython", ""]:
             for version in range(11, 6, -1):
-                try:
+                with suppress(Exception):
                     # create a virtual environment which is also guaranteed to contain a recent enough pip (bundled)
                     session = cli_run(
                         [
@@ -42,12 +43,11 @@ def zipapp_build_env(tmp_path_factory):
                     exe = str(session.creator.exe)
                     found = True
                     break
-                except Exception:
-                    pass
             if found:
                 break
         else:
-            raise RuntimeError("could not find a python to build zipapp")
+            msg = "could not find a python to build zipapp"
+            raise RuntimeError(msg)
         cmd = [str(Path(exe).parent / "pip"), "install", "pip>=23", "packaging>=23"]
         subprocess.check_call(cmd)
     yield exe
@@ -75,9 +75,9 @@ def zipapp_test_env(tmp_path_factory):
 
 
 @pytest.fixture()
-def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: U100
+def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG001
     def _run(*args):
-        cmd = [str(zipapp_test_env), str(zipapp), "-vv", str(tmp_path / "env")] + list(args)
+        cmd = [str(zipapp_test_env), str(zipapp), "-vv", str(tmp_path / "env"), *list(args)]
         subprocess.check_call(cmd)
 
     return _run

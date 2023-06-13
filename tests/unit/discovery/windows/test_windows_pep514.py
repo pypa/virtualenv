@@ -32,7 +32,7 @@ def test_pep514():
 def test_pep514_run(capsys, caplog):
     from virtualenv.discovery.windows import pep514
 
-    pep514._run()
+    pep514._run()  # noqa: SLF001
     out, err = capsys.readouterr()
     expected = textwrap.dedent(
         r"""

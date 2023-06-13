@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ..via_template import ViaTemplateActivator
+from virtualenv.activation.via_template import ViaTemplateActivator
 
 
 class BashActivator(ViaTemplateActivator):

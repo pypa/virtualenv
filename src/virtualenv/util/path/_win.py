@@ -2,10 +2,7 @@ from __future__ import annotations
 
 
 def get_short_path_name(long_name):
-    """
-    Gets the short path name of a given long path.
-    http://stackoverflow.com/a/23598461/200291
-    """
+    """Gets the short path name of a given long path - http://stackoverflow.com/a/23598461/200291."""
     import ctypes
     from ctypes import wintypes
 
@@ -18,8 +15,7 @@ def get_short_path_name(long_name):
         needed = _GetShortPathNameW(long_name, output_buf, output_buf_size)
         if output_buf_size >= needed:
             return output_buf.value
-        else:
-            output_buf_size = needed
+        output_buf_size = needed
 
 
 __all__ = [

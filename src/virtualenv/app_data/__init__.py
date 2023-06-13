@@ -1,6 +1,4 @@
-"""
-Application data stored by virtualenv.
-"""
+"""Application data stored by virtualenv."""
 
 from __future__ import annotations
 
@@ -19,15 +17,15 @@ def _default_app_data_dir(env):
     key = "VIRTUALENV_OVERRIDE_APP_DATA"
     if key in env:
         return env[key]
-    else:
-        return user_data_dir(appname="virtualenv", appauthor="pypa")
+    return user_data_dir(appname="virtualenv", appauthor="pypa")
 
 
 def make_app_data(folder, **kwargs):
     is_read_only = kwargs.pop("read_only")
     env = kwargs.pop("env")
     if kwargs:  # py3+ kwonly
-        raise TypeError("unexpected keywords: {}")
+        msg = "unexpected keywords: {}"
+        raise TypeError(msg)
 
     if folder is None:
         folder = _default_app_data_dir(env)
@@ -45,9 +43,8 @@ def make_app_data(folder, **kwargs):
 
     if os.access(folder, os.W_OK):
         return AppDataDiskFolder(folder)
-    else:
-        logging.debug("app data folder %s has no write access", folder)
-        return TempAppData()
+    logging.debug("app data folder %s has no write access", folder)
+    return TempAppData()
 
 
 __all__ = (

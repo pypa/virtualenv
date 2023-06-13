@@ -22,15 +22,16 @@ DEBUG_SCRIPT = HERE / "debug.py"
 
 
 class CreatorMeta:
-    def __init__(self):
+    def __init__(self) -> None:
         self.error = None
 
 
 class Creator(metaclass=ABCMeta):
-    """A class that given a python Interpreter creates a virtual environment"""
+    """A class that given a python Interpreter creates a virtual environment."""
 
-    def __init__(self, options, interpreter):
-        """Construct a new virtual environment creator.
+    def __init__(self, options, interpreter) -> None:
+        """
+        Construct a new virtual environment creator.
 
         :param options: the CLI option as parsed from :meth:`add_parser_arguments`
         :param interpreter: the interpreter to create virtual environment from
@@ -44,7 +45,7 @@ class Creator(metaclass=ABCMeta):
         self.app_data = options.app_data
         self.env = options.env
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self._args())})"
 
     def _args(self):
@@ -55,8 +56,9 @@ class Creator(metaclass=ABCMeta):
         ]
 
     @classmethod
-    def can_create(cls, interpreter):  # noqa: U100
-        """Determine if we can create a virtual environment.
+    def can_create(cls, interpreter):  # noqa: ARG003
+        """
+        Determine if we can create a virtual environment.
 
         :param interpreter: the interpreter in question
         :return: ``None`` if we can't create, any other object otherwise that will be forwarded to \
@@ -65,8 +67,9 @@ class Creator(metaclass=ABCMeta):
         return True
 
     @classmethod
-    def add_parser_arguments(cls, parser, interpreter, meta, app_data):  # noqa: U100
-        """Add CLI arguments for the creator.
+    def add_parser_arguments(cls, parser, interpreter, meta, app_data):  # noqa: ARG003
+        """
+        Add CLI arguments for the creator.
 
         :param parser: the CLI parser
         :param app_data: the application data folder
@@ -99,12 +102,13 @@ class Creator(metaclass=ABCMeta):
         raise NotImplementedError
 
     @classmethod
-    def validate_dest(cls, raw_value):
-        """No path separator in the path, valid chars and must be write-able"""
+    def validate_dest(cls, raw_value):  # noqa: C901
+        """No path separator in the path, valid chars and must be write-able."""
 
         def non_write_able(dest, value):
             common = Path(*os.path.commonprefix([value.parts, dest.parts]))
-            raise ArgumentTypeError(f"the destination {dest.relative_to(common)} is not write-able at {common}")
+            msg = f"the destination {dest.relative_to(common)} is not write-able at {common}"
+            raise ArgumentTypeError(msg)
 
         # the file system must be able to encode
         # note in newer CPython this is always utf-8 https://www.python.org/dev/peps/pep-0529/
@@ -116,7 +120,7 @@ class Creator(metaclass=ABCMeta):
                 trip = char.encode(encoding, **kwargs).decode(encoding)
                 if trip == char:
                     continue
-                raise ValueError(trip)
+                raise ValueError(trip)  # noqa: TRY301
             except ValueError:
                 refused[char] = None
         if refused:
@@ -124,20 +128,23 @@ class Creator(metaclass=ABCMeta):
             msg = f"the file system codec ({encoding}) cannot handle characters {bad!r} within {raw_value!r}"
             raise ArgumentTypeError(msg)
         if os.pathsep in raw_value:
-            msg = f"destination {raw_value!r} must not contain the path separator ({os.pathsep})"
-            raise ArgumentTypeError(f"{msg} as this would break the activation scripts")
+            msg = (
+                f"destination {raw_value!r} must not contain the path separator ({os.pathsep})"
+                f" as this would break the activation scripts"
+            )
+            raise ArgumentTypeError(msg)
 
         value = Path(raw_value)
         if value.exists() and value.is_file():
-            raise ArgumentTypeError(f"the destination {value} already exists and is a file")
+            msg = f"the destination {value} already exists and is a file"
+            raise ArgumentTypeError(msg)
         dest = Path(os.path.abspath(str(value))).resolve()  # on Windows absolute does not imply resolve so use both
         value = dest
         while dest:
             if dest.exists():
                 if os.access(str(dest), os.W_OK):
                     break
-                else:
-                    non_write_able(dest, value)
+                non_write_able(dest, value)
             base, _ = dest.parent, dest.name
             if base == dest:
                 non_write_able(dest, value)  # pragma: no cover
@@ -174,9 +181,7 @@ class Creator(metaclass=ABCMeta):
 
     @property
     def debug(self):
-        """
-        :return: debug information about the virtual environment (only valid after :meth:`create` has run)
-        """
+        """:return: debug information about the virtual environment (only valid after :meth:`create` has run)"""
         if self._debug is None and self.exe is not None:
             self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data, self.env)
         return self._debug
@@ -200,15 +205,15 @@ def get_env_debug_info(env_exe, debug_script, app_data, env):
             if out:
                 result = literal_eval(out)
             else:
-                if code == 2 and "file" in err:
+                if code == 2 and "file" in err:  # noqa: PLR2004
                     # Re-raise FileNotFoundError from `run_cmd()`
-                    raise OSError(err)
-                raise Exception(err)
+                    raise OSError(err)  # noqa: TRY301
+                raise Exception(err)  # noqa: TRY002, TRY301
         else:
             result = json.loads(out)
         if err:
             result["err"] = err
-    except Exception as exception:
+    except Exception as exception:  # noqa: BLE001
         return {"out": out, "err": err, "returncode": code, "exception": repr(exception)}
     if "sys" in result and "path" in result["sys"]:
         del result["sys"]["path"][0]

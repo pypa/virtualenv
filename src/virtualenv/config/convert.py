@@ -5,11 +5,11 @@ import os
 
 
 class TypeData:
-    def __init__(self, default_type, as_type):
+    def __init__(self, default_type, as_type) -> None:
         self.default_type = default_type
         self.as_type = as_type
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}(base={self.default_type}, as={self.as_type})"
 
     def convert(self, value):
@@ -30,7 +30,8 @@ class BoolType(TypeData):
 
     def convert(self, value):
         if value.lower() not in self.BOOLEAN_STATES:
-            raise ValueError(f"Not a boolean: {value}")
+            msg = f"Not a boolean: {value}"
+            raise ValueError(msg)
         return self.BOOLEAN_STATES[value.lower()]
 
 
@@ -43,19 +44,19 @@ class NoneType(TypeData):
 
 class ListType(TypeData):
     def _validate(self):
-        """ """
+        """no op."""
 
-    def convert(self, value, flatten=True):  # noqa: U100
+    def convert(self, value, flatten=True):  # noqa: ARG002, FBT002
         values = self.split_values(value)
         result = []
         for value in values:
             sub_values = value.split(os.pathsep)
             result.extend(sub_values)
-        converted = [self.as_type(i) for i in result]
-        return converted
+        return [self.as_type(i) for i in result]
 
     def split_values(self, value):
-        """Split the provided value into a list.
+        """
+        Split the provided value into a list.
 
         First this is done by newlines. If there were no newlines in the text,
         then we next try to split by comma.
@@ -75,7 +76,7 @@ class ListType(TypeData):
 
 
 def convert(value, as_type, source):
-    """Convert the value as a given type where the value comes from the given source"""
+    """Convert the value as a given type where the value comes from the given source."""
     try:
         return as_type.convert(value)
     except Exception as exception:

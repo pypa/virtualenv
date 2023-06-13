@@ -3,13 +3,12 @@ from __future__ import annotations
 import contextlib
 import os
 import sys
-from pathlib import Path
 from stat import S_IWGRP, S_IWOTH, S_IWUSR
 from subprocess import Popen, check_call
 from threading import Thread
+from typing import TYPE_CHECKING
 
 import pytest
-from pytest_mock import MockerFixture
 
 from virtualenv.discovery import cached_py_info
 from virtualenv.discovery.py_info import PythonInfo
@@ -17,6 +16,11 @@ from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
 from virtualenv.util.path import safe_delete
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pytest_mock import MockerFixture
 
 
 @pytest.mark.slow()
@@ -106,7 +110,7 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
     # Windows does not allow removing a executable while running it, so when uninstalling pip we need to do it via
     # python -m pip
     remove_cmd = [str(result.creator.exe), "-m", "pip"] + remove_cmd[1:]
-    process = Popen(remove_cmd + ["pip", "wheel"])
+    process = Popen([*remove_cmd, "pip", "wheel"])
     _, __ = process.communicate()
     assert not process.returncode
     # pip is greedy here, removing all packages removes the site-package too
@@ -124,16 +128,16 @@ def read_only_dir(d):
     for root, _, filenames in os.walk(str(d)):
         os.chmod(root, os.stat(root).st_mode & ~write)
         for filename in filenames:
-            filename = os.path.join(root, filename)
-            os.chmod(filename, os.stat(filename).st_mode & ~write)
+            name = os.path.join(root, filename)
+            os.chmod(name, os.stat(name).st_mode & ~write)
     try:
         yield
     finally:
         for root, _, filenames in os.walk(str(d)):
             os.chmod(root, os.stat(root).st_mode | write)
             for filename in filenames:
-                filename = os.path.join(root, filename)
-                os.chmod(filename, os.stat(filename).st_mode | write)
+                name = os.path.join(root, filename)
+                os.chmod(name, os.stat(name).st_mode | write)
 
 
 @pytest.fixture()
@@ -167,12 +171,12 @@ def test_populated_read_only_cache_and_symlinked_app_data(tmp_path, current_fast
     assert cli_run(cmd)
     check_call((str(dest.joinpath("bin/python")), "-c", "import pip"))
 
-    cached_py_info._CACHE.clear()  # necessary to re-trigger py info discovery
+    cached_py_info._CACHE.clear()  # necessary to re-trigger py info discovery  # noqa: SLF001
     safe_delete(dest)
 
     # should succeed with special flag when read-only
     with read_only_dir(temp_app_data):
-        assert cli_run(["--read-only-app-data"] + cmd)
+        assert cli_run(["--read-only-app-data", *cmd])
         check_call((str(dest.joinpath("bin/python")), "-c", "import pip"))
 
 
@@ -192,12 +196,12 @@ def test_populated_read_only_cache_and_copied_app_data(tmp_path, current_fastest
 
     assert cli_run(cmd)
 
-    cached_py_info._CACHE.clear()  # necessary to re-trigger py info discovery
+    cached_py_info._CACHE.clear()  # necessary to re-trigger py info discovery  # noqa: SLF001
     safe_delete(dest)
 
     # should succeed with special flag when read-only
     with read_only_dir(temp_app_data):
-        assert cli_run(["--read-only-app-data"] + cmd)
+        assert cli_run(["--read-only-app-data", *cmd])
 
 
 @pytest.mark.slow()
@@ -233,7 +237,7 @@ def _run_parallel_threads(tmp_path):
     def _run(name):
         try:
             cli_run(["--seeder", "app-data", str(tmp_path / name), "--no-pip", "--no-setuptools", "--wheel", "bundle"])
-        except Exception as exception:
+        except Exception as exception:  # noqa: BLE001
             as_str = str(exception)
             exceptions.append(as_str)
 
