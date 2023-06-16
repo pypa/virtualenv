@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 @pytest.mark.skipif(IS_PYPY, reason="setuptools distutils patching does not work")
 def test_app_data_pinning(tmp_path: Path) -> None:
-    version = "23.0"
+    version = "23.1"
     result = cli_run([str(tmp_path), "--pip", version, "--activators", "", "--seeder", "app-data"])
     code, out, _ = run_cmd([str(result.creator.script("pip")), "list", "--disable-pip-version-check"])
     assert not code

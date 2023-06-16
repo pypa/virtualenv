@@ -4,11 +4,6 @@ repos:
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.0.272"
-    hooks:
-      - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
   - repo: https://github.com/psf/black
     rev: 23.3.0
     hooks:
@@ -28,6 +23,11 @@ repos:
     hooks:
       - id: prettier
         args: ["--print-width=120", "--prose-wrap=always"]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: "v0.0.272"
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
   - repo: meta
     hooks:
       - id: check-hooks-apply
