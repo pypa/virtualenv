@@ -5,6 +5,17 @@ Release History
 
 .. towncrier release notes start
 
+v20.23.1 (2023-06-16)
+---------------------
+
+Bugfixes - 20.23.1
+~~~~~~~~~~~~~~~~~~
+- update and simplify nushell activation script, fixes an issue on Windows resulting in consecutive command not found - by :user:`melMass`. (:issue:`2572`)
+- Upgrade embedded wheels:
+
+  * setuptools to ``67.8.0`` from ``67.7.2`` (:issue:`2588`)
+
+
 v20.23.0 (2023-04-27)
 ---------------------
 
