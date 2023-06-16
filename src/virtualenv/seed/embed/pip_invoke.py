@@ -6,12 +6,11 @@ from subprocess import Popen
 
 from virtualenv.discovery.cached_py_info import LogCmd
 from virtualenv.seed.embed.base_embed import BaseEmbed
-
-from ..wheels import Version, get_wheel, pip_wheel_env_run
+from virtualenv.seed.wheels import Version, get_wheel, pip_wheel_env_run
 
 
 class PipInvoke(BaseEmbed):
-    def __init__(self, options):
+    def __init__(self, options) -> None:
         super().__init__(options)
 
     def run(self, creator):
@@ -25,10 +24,11 @@ class PipInvoke(BaseEmbed):
     @staticmethod
     def _execute(cmd, env):
         logging.debug("pip seed by running: %s", LogCmd(cmd, env))
-        process = Popen(cmd, env=env)
+        process = Popen(cmd, env=env)  # noqa: S603
         process.communicate()
         if process.returncode != 0:
-            raise RuntimeError(f"failed seed with code {process.returncode}")
+            msg = f"failed seed with code {process.returncode}"
+            raise RuntimeError(msg)
         return process
 
     @contextmanager
@@ -49,7 +49,8 @@ class PipInvoke(BaseEmbed):
                 env=self.env,
             )
             if wheel is None:
-                raise RuntimeError(f"could not get wheel for distribution {dist}")
+                msg = f"could not get wheel for distribution {dist}"
+                raise RuntimeError(msg)
             folders.add(str(wheel.path.parent))
             cmd.append(Version.as_pip_req(dist, wheel.version))
         for folder in sorted(folders):

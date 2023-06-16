@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         py:
-          - "3.12.0-alpha.7"
+          - "3.12.0-beta.2"
           - "3.11"
           - "3.10"
           - "3.9"
@@ -29,12 +29,12 @@ jobs:
           - pypy-3.8
           - pypy-3.7
         os:
-          - ubuntu-22.04
-          - macos-12
-          - windows-2022
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
         include:
-          - { os: macos-12, py: "brew@3.9" }
-          - { os: macos-12, py: "brew@3.8" }
+          - { os: macos-latest, py: "brew@3.9" }
+          - { os: macos-latest, py: "brew@3.8" }
     steps:
       - uses: taiki-e/install-action@cargo-binstall
       - name: Install OS dependencies
@@ -100,8 +100,8 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-22.04
-          - windows-2022
+          - ubuntu-latest
+          - windows-latest
         tox_env:
           - dev
           - docs
@@ -109,8 +109,8 @@ jobs:
           - upgrade
           - zipapp
         exclude:
-          - { os: windows-2022, tox_env: readme }
-          - { os: windows-2022, tox_env: docs }
+          - { os: windows-latest, tox_env: readme }
+          - { os: windows-latest, tox_env: docs }
     steps:
       - uses: actions/checkout@v3
         with:

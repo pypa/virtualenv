@@ -4,19 +4,20 @@ import logging
 import os
 from functools import partial
 
-from ..app_data import make_app_data
-from ..config.cli.parser import VirtualEnvConfigParser
-from ..report import LEVELS, setup_report
-from ..run.session import Session
-from ..seed.wheels.periodic_update import manual_upgrade
-from ..version import __version__
+from virtualenv.app_data import make_app_data
+from virtualenv.config.cli.parser import VirtualEnvConfigParser
+from virtualenv.report import LEVELS, setup_report
+from virtualenv.run.session import Session
+from virtualenv.seed.wheels.periodic_update import manual_upgrade
+from virtualenv.version import __version__
+
 from .plugin.activators import ActivationSelector
 from .plugin.creators import CreatorSelector
 from .plugin.discovery import get_discover
 from .plugin.seeders import SeederSelector
 
 
-def cli_run(args, options=None, setup_logging=True, env=None):
+def cli_run(args, options=None, setup_logging=True, env=None):  # noqa: FBT002
     """
     Create a virtual environment given some command line interface arguments.
 
@@ -33,7 +34,7 @@ def cli_run(args, options=None, setup_logging=True, env=None):
     return of_session
 
 
-def session_via_cli(args, options=None, setup_logging=True, env=None):
+def session_via_cli(args, options=None, setup_logging=True, env=None):  # noqa: FBT002
     """
     Create a virtualenv session (same as cli_run, but this does not perform the creation). Use this if you just want to
     query what the virtual environment would look like, but not actually create it.
@@ -43,16 +44,22 @@ def session_via_cli(args, options=None, setup_logging=True, env=None):
     :param setup_logging: ``True`` if setup logging handlers, ``False`` to use handlers already registered
     :param env: environment variables to use
     :return: the session object of the creation (its structure for now is experimental and might change on short notice)
-    """
+    """  # noqa: D205
     env = os.environ if env is None else env
     parser, elements = build_parser(args, options, setup_logging, env)
     options = parser.parse_args(args)
     creator, seeder, activators = tuple(e.create(options) for e in elements)  # create types
-    of_session = Session(options.verbosity, options.app_data, parser._interpreter, creator, seeder, activators)
-    return of_session
+    return Session(
+        options.verbosity,
+        options.app_data,
+        parser._interpreter,  # noqa: SLF001
+        creator,
+        seeder,
+        activators,
+    )
 
 
-def build_parser(args=None, options=None, setup_logging=True, env=None):
+def build_parser(args=None, options=None, setup_logging=True, env=None):  # noqa: FBT002
     parser = VirtualEnvConfigParser(options, os.environ if env is None else env)
     add_version_flag(parser)
     parser.add_argument(
@@ -67,9 +74,10 @@ def build_parser(args=None, options=None, setup_logging=True, env=None):
     handle_extra_commands(options)
 
     discover = get_discover(parser, args)
-    parser._interpreter = interpreter = discover.interpreter
+    parser._interpreter = interpreter = discover.interpreter  # noqa: SLF001
     if interpreter is None:
-        raise RuntimeError(f"failed to find interpreter for {discover}")
+        msg = f"failed to find interpreter for {discover}"
+        raise RuntimeError(msg)
     elements = [
         CreatorSelector(interpreter, parser),
         SeederSelector(interpreter, parser),
@@ -83,7 +91,7 @@ def build_parser(args=None, options=None, setup_logging=True, env=None):
 
 
 def build_parser_only(args=None):
-    """Used to provide a parser for the doc generation"""
+    """Used to provide a parser for the doc generation."""
     return build_parser(args)[0]
 
 
@@ -136,7 +144,7 @@ def add_version_flag(parser):
 
 
 def _do_report_setup(parser, args, setup_logging):
-    level_map = ", ".join(f"{logging.getLevelName(l)}={c}" for c, l in sorted(LEVELS.items()))
+    level_map = ", ".join(f"{logging.getLevelName(line)}={c}" for c, line in sorted(LEVELS.items()))
     msg = "verbosity = verbose - quiet, default {}, mapping => {}"
     verbosity_group = parser.add_argument_group(
         title="verbosity",

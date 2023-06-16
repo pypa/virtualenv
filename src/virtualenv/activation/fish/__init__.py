@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ..via_template import ViaTemplateActivator
+from virtualenv.activation.via_template import ViaTemplateActivator
 
 
 class FishActivator(ViaTemplateActivator):

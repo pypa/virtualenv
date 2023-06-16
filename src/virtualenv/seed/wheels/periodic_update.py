@@ -1,6 +1,4 @@
-"""
-Periodically update bundled versions.
-"""
+"""Periodically update bundled versions."""
 
 
 from __future__ import annotations
@@ -10,7 +8,7 @@ import logging
 import os
 import ssl
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from itertools import groupby
 from pathlib import Path
 from shutil import copy2
@@ -21,10 +19,9 @@ from urllib.error import URLError
 from urllib.request import urlopen
 
 from virtualenv.app_data import AppDataDiskFolder
+from virtualenv.seed.wheels.embed import BUNDLE_SUPPORT
+from virtualenv.seed.wheels.util import Wheel
 from virtualenv.util.subprocess import CREATE_NO_WINDOW
-
-from ..wheels.embed import BUNDLE_SUPPORT
-from ..wheels.util import Wheel
 
 GRACE_PERIOD_CI = timedelta(hours=1)  # prevent version switch in the middle of a CI run
 GRACE_PERIOD_MINOR = timedelta(days=28)
@@ -32,11 +29,20 @@ UPDATE_PERIOD = timedelta(days=14)
 UPDATE_ABORTED_DELAY = timedelta(hours=1)
 
 
-def periodic_update(distribution, of_version, for_py_version, wheel, search_dirs, app_data, do_periodic_update, env):
+def periodic_update(  # noqa: PLR0913
+    distribution,
+    of_version,
+    for_py_version,
+    wheel,
+    search_dirs,
+    app_data,
+    do_periodic_update,
+    env,
+):
     if do_periodic_update:
         handle_auto_update(distribution, for_py_version, wheel, search_dirs, app_data, env)
 
-    now = datetime.now()
+    now = datetime.now(tz=timezone.utc)
 
     def _update_wheel(ver):
         updated_wheel = Wheel(app_data.house / ver.filename)
@@ -62,12 +68,12 @@ def periodic_update(distribution, of_version, for_py_version, wheel, search_dirs
     return wheel
 
 
-def handle_auto_update(distribution, for_py_version, wheel, search_dirs, app_data, env):
+def handle_auto_update(distribution, for_py_version, wheel, search_dirs, app_data, env):  # noqa: PLR0913
     embed_update_log = app_data.embed_update_log(distribution, for_py_version)
     u_log = UpdateLog.from_dict(embed_update_log.read())
     if u_log.needs_update:
         u_log.periodic = True
-        u_log.started = datetime.now()
+        u_log.started = datetime.now(tz=timezone.utc)
         embed_update_log.write(u_log.to_dict())
         trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, periodic=True, env=env)
 
@@ -80,7 +86,7 @@ def add_wheel_to_update_log(wheel, for_py_version, app_data):
         logging.warning("%s already present in %s", wheel.name, embed_update_log.file)
         return
     # we don't need a release date for sources other than "periodic"
-    version = NewVersion(wheel.name, datetime.now(), None, "download")
+    version = NewVersion(wheel.name, datetime.now(tz=timezone.utc), None, "download")
     u_log.versions.append(version)  # always write at the end for proper updates
     embed_update_log.write(u_log.to_dict())
 
@@ -93,11 +99,11 @@ def dump_datetime(value):
 
 
 def load_datetime(value):
-    return None if value is None else datetime.strptime(value, DATETIME_FMT)
+    return None if value is None else datetime.strptime(value, DATETIME_FMT).replace(tzinfo=timezone.utc)
 
 
 class NewVersion:
-    def __init__(self, filename, found_date, release_date, source):
+    def __init__(self, filename, found_date, release_date, source) -> None:
         self.filename = filename
         self.found_date = found_date
         self.release_date = release_date
@@ -120,18 +126,17 @@ class NewVersion:
             "source": self.source,
         }
 
-    def use(self, now, ignore_grace_period_minor=False, ignore_grace_period_ci=False):
+    def use(self, now, ignore_grace_period_minor=False, ignore_grace_period_ci=False):  # noqa: FBT002
         if self.source == "manual":
             return True
-        elif self.source == "periodic":
-            if self.found_date < now - GRACE_PERIOD_CI or ignore_grace_period_ci:
-                if not ignore_grace_period_minor:
-                    compare_from = self.release_date or self.found_date
-                    return now - compare_from >= GRACE_PERIOD_MINOR
-                return True
+        if self.source == "periodic" and (self.found_date < now - GRACE_PERIOD_CI or ignore_grace_period_ci):
+            if not ignore_grace_period_minor:
+                compare_from = self.release_date or self.found_date
+                return now - compare_from >= GRACE_PERIOD_MINOR
+            return True
         return False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}(filename={self.filename}), found_date={self.found_date}, "
             f"release_date={self.release_date}, source={self.source})"
@@ -151,7 +156,7 @@ class NewVersion:
 
 
 class UpdateLog:
-    def __init__(self, started, completed, versions, periodic):
+    def __init__(self, started, completed, versions, periodic) -> None:
         self.started = started
         self.completed = completed
         self.versions = versions
@@ -183,19 +188,18 @@ class UpdateLog:
 
     @property
     def needs_update(self):
-        now = datetime.now()
+        now = datetime.now(tz=timezone.utc)
         if self.completed is None:  # never completed
             return self._check_start(now)
-        else:
-            if now - self.completed <= UPDATE_PERIOD:
-                return False
-            return self._check_start(now)
+        if now - self.completed <= UPDATE_PERIOD:
+            return False
+        return self._check_start(now)
 
     def _check_start(self, now):
         return self.started is None or now - self.started > UPDATE_ABORTED_DELAY
 
 
-def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, env, periodic):
+def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, env, periodic):  # noqa: PLR0913
     wheel_path = None if wheel is None else str(wheel.path)
     cmd = [
         sys.executable,
@@ -216,7 +220,7 @@ def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, e
     kwargs = {"stdout": pipe, "stderr": pipe}
     if not debug and sys.platform == "win32":
         kwargs["creationflags"] = CREATE_NO_WINDOW
-    process = Popen(cmd, **kwargs)
+    process = Popen(cmd, **kwargs)  # noqa: S603
     logging.info(
         "triggered periodic upgrade of %s%s (for python %s) via background process having PID %d",
         distribution,
@@ -228,7 +232,7 @@ def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, e
         process.communicate()  # on purpose not called to make it a background process
 
 
-def do_update(distribution, for_py_version, embed_filename, app_data, search_dirs, periodic):
+def do_update(distribution, for_py_version, embed_filename, app_data, search_dirs, periodic):  # noqa: PLR0913
     versions = None
     try:
         versions = _run_do_update(app_data, distribution, embed_filename, for_py_version, periodic, search_dirs)
@@ -237,7 +241,14 @@ def do_update(distribution, for_py_version, embed_filename, app_data, search_dir
     return versions
 
 
-def _run_do_update(app_data, distribution, embed_filename, for_py_version, periodic, search_dirs):
+def _run_do_update(  # noqa: C901, PLR0913
+    app_data,
+    distribution,
+    embed_filename,
+    for_py_version,
+    periodic,
+    search_dirs,
+):
     from virtualenv.seed.wheels import acquire
 
     wheel_filename = None if embed_filename is None else Path(embed_filename)
@@ -247,7 +258,7 @@ def _run_do_update(app_data, distribution, embed_filename, for_py_version, perio
     wheelhouse = app_data.house
     embed_update_log = app_data.embed_update_log(distribution, for_py_version)
     u_log = UpdateLog.from_dict(embed_update_log.read())
-    now = datetime.now()
+    now = datetime.now(tz=timezone.utc)
 
     update_versions, other_versions = [], []
     for version in u_log.versions:
@@ -270,7 +281,7 @@ def _run_do_update(app_data, distribution, embed_filename, for_py_version, perio
             copy2(str(wheel_filename), str(wheelhouse))
     last, last_version, versions, filenames = None, None, [], set()
     while last is None or not last.use(now, ignore_grace_period_ci=True):
-        download_time = datetime.now()
+        download_time = datetime.now(tz=timezone.utc)
         dest = acquire.download_wheel(
             distribution=distribution,
             version_spec=None if last_version is None else f"<{last_version}",
@@ -284,21 +295,20 @@ def _run_do_update(app_data, distribution, embed_filename, for_py_version, perio
             break
         release_date = release_date_for_wheel_path(dest.path)
         last = NewVersion(filename=dest.path.name, release_date=release_date, found_date=download_time, source=source)
-        logging.info("detected %s in %s", last, datetime.now() - download_time)
+        logging.info("detected %s in %s", last, datetime.now(tz=timezone.utc) - download_time)
         versions.append(last)
         filenames.add(last.filename)
         last_wheel = last.wheel
         last_version = last_wheel.version
-        if embed_version is not None:
-            if embed_version >= last_wheel.version_tuple:  # stop download if we reach the embed version
-                break
+        if embed_version is not None and embed_version >= last_wheel.version_tuple:
+            break  # stop download if we reach the embed version
     u_log.periodic = periodic
     if not u_log.periodic:
         u_log.started = now
     # update other_versions by removing version we just found
     other_versions = [version for version in other_versions if version.filename not in filenames]
     u_log.versions = versions + update_versions + other_versions
-    u_log.completed = datetime.now()
+    u_log.completed = datetime.now(tz=timezone.utc)
     embed_update_log.write(u_log.to_dict())
     return versions
 
@@ -311,16 +321,16 @@ def release_date_for_wheel_path(dest):
     if content is not None:
         try:
             upload_time = content["releases"][wheel.version][0]["upload_time"]
-            return datetime.strptime(upload_time, "%Y-%m-%dT%H:%M:%S")
-        except Exception as exception:
-            logging.error("could not load release date %s because %r", content, exception)
+            return datetime.strptime(upload_time, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
+        except Exception as exception:  # noqa: BLE001
+            logging.error("could not load release date %s because %r", content, exception)  # noqa: TRY400
     return None
 
 
 def _request_context():
     yield None
     # fallback to non verified HTTPS (the information we request is not sensitive, so fallback)
-    yield ssl._create_unverified_context()
+    yield ssl._create_unverified_context()  # noqa: S323, SLF001
 
 
 _PYPI_CACHE = {}
@@ -337,13 +347,13 @@ def _pypi_get_distribution_info(distribution):
     try:
         for context in _request_context():
             try:
-                with urlopen(url, context=context) as file_handler:
+                with urlopen(url, context=context) as file_handler:  # noqa: S310
                     content = json.load(file_handler)
                 break
             except URLError as exception:
-                logging.error("failed to access %s because %r", url, exception)
-    except Exception as exception:
-        logging.error("failed to access %s because %r", url, exception)
+                logging.error("failed to access %s because %r", url, exception)  # noqa: TRY400
+    except Exception as exception:  # noqa: BLE001
+        logging.error("failed to access %s because %r", url, exception)  # noqa: TRY400
     return content
 
 
@@ -352,7 +362,7 @@ def manual_upgrade(app_data, env):
 
     for for_py_version, distribution_to_package in BUNDLE_SUPPORT.items():
         # load extra search dir for the given for_py
-        for distribution in distribution_to_package.keys():
+        for distribution in distribution_to_package:
             thread = Thread(target=_run_manual_upgrade, args=(app_data, distribution, for_py_version, env))
             thread.start()
             threads.append(thread)
@@ -362,7 +372,7 @@ def manual_upgrade(app_data, env):
 
 
 def _run_manual_upgrade(app_data, distribution, for_py_version, env):
-    start = datetime.now()
+    start = datetime.now(tz=timezone.utc)
     from .bundle import from_bundle
 
     current = from_bundle(
@@ -392,12 +402,13 @@ def _run_manual_upgrade(app_data, distribution, for_py_version, env):
     args = [
         distribution,
         for_py_version,
-        datetime.now() - start,
+        datetime.now(tz=timezone.utc) - start,
     ]
     if versions:
         args.append("\n".join(f"\t{v}" for v in versions))
     ver_update = "new entries found:\n%s" if versions else "no new versions found"
-    logging.warning(f"upgraded %s for python %s in %s {ver_update}", *args)
+    msg = f"upgraded %s for python %s in %s {ver_update}"
+    logging.warning(msg, *args)
 
 
 __all__ = [

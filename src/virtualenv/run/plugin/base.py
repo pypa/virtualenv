@@ -21,18 +21,17 @@ class PluginLoader:
     def entry_points_for(cls, key):
         if sys.version_info >= (3, 10) or importlib_metadata_version >= (3, 6):
             return OrderedDict((e.name, e.load()) for e in cls.entry_points().select(group=key))
-        else:
-            return OrderedDict((e.name, e.load()) for e in cls.entry_points().get(key, {}))
+        return OrderedDict((e.name, e.load()) for e in cls.entry_points().get(key, {}))
 
     @staticmethod
     def entry_points():
-        if PluginLoader._ENTRY_POINTS is None:
-            PluginLoader._ENTRY_POINTS = entry_points()
-        return PluginLoader._ENTRY_POINTS
+        if PluginLoader._ENTRY_POINTS is None:  # noqa: SLF001
+            PluginLoader._ENTRY_POINTS = entry_points()  # noqa: SLF001
+        return PluginLoader._ENTRY_POINTS  # noqa: SLF001
 
 
 class ComponentBuilder(PluginLoader):
-    def __init__(self, interpreter, parser, name, possible):
+    def __init__(self, interpreter, parser, name, possible) -> None:
         self.interpreter = interpreter
         self.name = name
         self._impl_class = None
@@ -46,13 +45,14 @@ class ComponentBuilder(PluginLoader):
             cls._OPTIONS = cls.entry_points_for(key)
         return cls._OPTIONS
 
-    def add_selector_arg_parse(self, name, choices):  # noqa: U100
+    def add_selector_arg_parse(self, name, choices):
         raise NotImplementedError
 
     def handle_selected_arg_parse(self, options):
         selected = getattr(options, self.name)
         if selected not in self.possible:
-            raise RuntimeError(f"No implementation for {self.interpreter}")
+            msg = f"No implementation for {self.interpreter}"
+            raise RuntimeError(msg)
         self._impl_class = self.possible[selected]
         self.populate_selected_argparse(selected, options.app_data)
         return selected

@@ -7,7 +7,7 @@ from .base import ComponentBuilder
 
 
 class ActivationSelector(ComponentBuilder):
-    def __init__(self, interpreter, parser):
+    def __init__(self, interpreter, parser) -> None:
         self.default = None
         possible = OrderedDict(
             (k, v) for k, v in self.options("virtualenv.activate").items() if v.supports(interpreter)
@@ -31,7 +31,8 @@ class ActivationSelector(ComponentBuilder):
         elements = [e.strip() for e in entered_str.split(",") if e.strip()]
         missing = [e for e in elements if e not in self.possible]
         if missing:
-            raise ArgumentTypeError(f"the following activators are not available {','.join(missing)}")
+            msg = f"the following activators are not available {','.join(missing)}"
+            raise ArgumentTypeError(msg)
         return elements
 
     def handle_selected_arg_parse(self, options):

@@ -6,45 +6,45 @@ from .base import AppData, ContentStore
 
 
 class AppDataDisabled(AppData):
-    """No application cache available (most likely as we don't have write permissions)"""
+    """No application cache available (most likely as we don't have write permissions)."""
 
     transient = True
     can_update = False
 
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     error = RuntimeError("no app data folder available, probably no write access to the folder")
 
     def close(self):
-        """do nothing"""
+        """Do nothing."""
 
     def reset(self):
-        """do nothing"""
+        """Do nothing."""
 
-    def py_info(self, path):  # noqa: U100
+    def py_info(self, path):  # noqa: ARG002
         return ContentStoreNA()
 
-    def embed_update_log(self, distribution, for_py_version):  # noqa: U100
+    def embed_update_log(self, distribution, for_py_version):  # noqa: ARG002
         return ContentStoreNA()
 
-    def extract(self, path, to_folder):  # noqa: U100
+    def extract(self, path, to_folder):  # noqa: ARG002
         raise self.error
 
     @contextmanager
-    def locked(self, path):  # noqa: U100
-        """do nothing"""
+    def locked(self, path):  # noqa: ARG002
+        """Do nothing."""
         yield
 
     @property
     def house(self):
         raise self.error
 
-    def wheel_image(self, for_py_version, name):  # noqa: U100
+    def wheel_image(self, for_py_version, name):  # noqa: ARG002
         raise self.error
 
     def py_info_clear(self):
-        """nothing to clear"""
+        """Nothing to clear."""
 
 
 class ContentStoreNA(ContentStore):
@@ -52,14 +52,14 @@ class ContentStoreNA(ContentStore):
         return False
 
     def read(self):
-        """nothing to read"""
-        return None
+        """Nothing to read."""
+        return
 
-    def write(self, content):  # noqa: U100
-        """nothing to write"""
+    def write(self, content):
+        """Nothing to write."""
 
     def remove(self):
-        """nothing to remove"""
+        """Nothing to remove."""
 
     @contextmanager
     def locked(self):

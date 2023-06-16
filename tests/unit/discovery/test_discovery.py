@@ -33,7 +33,7 @@ def test_discovery_via_path(monkeypatch, case, tmp_path, caplog, session_app_dat
     pyvenv_cfg = Path(sys.executable).parents[1] / "pyvenv.cfg"
     if pyvenv_cfg.exists():
         (target / pyvenv_cfg.name).write_bytes(pyvenv_cfg.read_bytes())
-    new_path = os.pathsep.join([str(target)] + os.environ.get("PATH", "").split(os.pathsep))
+    new_path = os.pathsep.join([str(target), *os.environ.get("PATH", "").split(os.pathsep)])
     monkeypatch.setenv("PATH", new_path)
     interpreter = get_interpreter(core, [])
 

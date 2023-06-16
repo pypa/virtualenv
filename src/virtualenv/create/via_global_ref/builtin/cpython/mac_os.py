@@ -1,4 +1,4 @@
-"""The Apple Framework builds require their own customization"""
+"""The Apple Framework builds require their own customization."""
 from __future__ import annotations
 
 import logging
@@ -31,13 +31,12 @@ class CPythonmacOsFramework(CPython, metaclass=ABCMeta):
         target = self.desired_mach_o_image_path()
         current = self.current_mach_o_image_path()
         for src in self._sources:
-            if isinstance(src, ExePathRefToDest):
-                if src.must == RefMust.COPY or not self.symlinks:
-                    exes = [self.bin_dir / src.base]
-                    if not self.symlinks:
-                        exes.extend(self.bin_dir / a for a in src.aliases)
-                    for exe in exes:
-                        fix_mach_o(str(exe), current, target, self.interpreter.max_size)
+            if isinstance(src, ExePathRefToDest) and (src.must == RefMust.COPY or not self.symlinks):
+                exes = [self.bin_dir / src.base]
+                if not self.symlinks:
+                    exes.extend(self.bin_dir / a for a in src.aliases)
+                for exe in exes:
+                    fix_mach_o(str(exe), current, target, self.interpreter.max_size)
 
     @classmethod
     def _executables(cls, interpreter):
@@ -70,7 +69,7 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
 
         # add a symlink to the host python image
         exe = Path(interpreter.prefix) / "Python3"
-        yield PathRefToDest(exe, dest=lambda self, _: self.dest / ".Python", must=RefMust.SYMLINK)  # noqa: U101
+        yield PathRefToDest(exe, dest=lambda self, _: self.dest / ".Python", must=RefMust.SYMLINK)
 
     @property
     def reload_code(self):
@@ -92,7 +91,7 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
 
 def fix_mach_o(exe, current, new, max_size):
     """
-    https://en.wikipedia.org/wiki/Mach-O
+    https://en.wikipedia.org/wiki/Mach-O.
 
     Mach-O, short for Mach object file format, is a file format for executables, object code, shared libraries,
     dynamically-loaded code, and core dumps. A replacement for the a.out format, Mach-O offers more extensibility and
@@ -117,17 +116,17 @@ def fix_mach_o(exe, current, new, max_size):
     try:
         logging.debug("change Mach-O for %s from %s to %s", exe, current, new)
         _builtin_change_mach_o(max_size)(exe, current, new)
-    except Exception as e:
-        logging.warning("Could not call _builtin_change_mac_o: %s. " "Trying to call install_name_tool instead.", e)
+    except Exception as e:  # noqa: BLE001
+        logging.warning("Could not call _builtin_change_mac_o: %s. Trying to call install_name_tool instead.", e)
         try:
             cmd = ["install_name_tool", "-change", current, new, exe]
-            subprocess.check_call(cmd)
+            subprocess.check_call(cmd)  # noqa: S603
         except Exception:
-            logging.fatal("Could not call install_name_tool -- you must " "have Apple's development tools installed")
+            logging.fatal("Could not call install_name_tool -- you must have Apple's development tools installed")
             raise
 
 
-def _builtin_change_mach_o(maxint):
+def _builtin_change_mach_o(maxint):  # noqa: C901
     MH_MAGIC = 0xFEEDFACE  # noqa: N806
     MH_CIGAM = 0xCEFAEDFE  # noqa: N806
     MH_MAGIC_64 = 0xFEEDFACF  # noqa: N806
@@ -140,16 +139,16 @@ def _builtin_change_mach_o(maxint):
     class FileView:
         """A proxy for file-like objects that exposes a given view of a file. Modified from macholib."""
 
-        def __init__(self, file_obj, start=0, size=maxint):
+        def __init__(self, file_obj, start=0, size=maxint) -> None:
             if isinstance(file_obj, FileView):
-                self._file_obj = file_obj._file_obj
+                self._file_obj = file_obj._file_obj  # noqa: SLF001
             else:
                 self._file_obj = file_obj
             self._start = start
             self._end = start + size
             self._pos = 0
 
-        def __repr__(self):
+        def __repr__(self) -> str:
             return f"<fileview [{self._start:d}, {self._end:d}] {self._file_obj!r}>"
 
         def tell(self):
@@ -169,7 +168,8 @@ def _builtin_change_mach_o(maxint):
             elif whence == os.SEEK_END:
                 seek_to += self._end
             else:
-                raise OSError(f"Invalid whence argument to seek: {whence!r}")
+                msg = f"Invalid whence argument to seek: {whence!r}"
+                raise OSError(msg)
             self._checkwindow(seek_to, "seek")
             self._file_obj.seek(seek_to)
             self._pos = seek_to - self._start
@@ -183,7 +183,7 @@ def _builtin_change_mach_o(maxint):
             self._pos += len(content)
 
         def read(self, size=maxint):
-            assert size >= 0
+            assert size >= 0  # noqa: S101
             here = self._start + self._pos
             self._checkwindow(here, "read")
             size = min(size, self._end - here)
@@ -199,15 +199,17 @@ def _builtin_change_mach_o(maxint):
             return res[0]
         return res
 
-    def mach_o_change(at_path, what, value):
-        """Replace a given name (what) in any LC_LOAD_DYLIB command found in the given binary with a new name (value),
-        provided it's shorter."""
+    def mach_o_change(at_path, what, value):  # noqa: C901
+        """
+        Replace a given name (what) in any LC_LOAD_DYLIB command found in the given binary with a new name (value),
+        provided it's shorter.
+        """  # noqa: D205
 
         def do_macho(file, bits, endian):
             # Read Mach-O header (the magic number is assumed read by the caller)
             cpu_type, cpu_sub_type, file_type, n_commands, size_of_commands, flags = read_data(file, endian, 6)
             # 64-bits header has one more field.
-            if bits == 64:
+            if bits == 64:  # noqa: PLR2004
                 read_data(file, endian)
             # The header is followed by n commands
             for _ in range(n_commands):
@@ -249,7 +251,7 @@ def _builtin_change_mach_o(maxint):
             elif magic == MH_CIGAM_64:
                 do_macho(file, 64, LITTLE_ENDIAN)
 
-        assert len(what) >= len(value)
+        assert len(what) >= len(value)  # noqa: S101
 
         with open(at_path, "r+b") as f:
             do_file(f)

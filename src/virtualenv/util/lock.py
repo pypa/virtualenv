@@ -1,11 +1,11 @@
-"""holds locking functionality that works across processes"""
+"""holds locking functionality that works across processes."""
 
 from __future__ import annotations
 
 import logging
 import os
 from abc import ABCMeta, abstractmethod
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from pathlib import Path
 from threading import Lock, RLock
 
@@ -13,13 +13,12 @@ from filelock import FileLock, Timeout
 
 
 class _CountedFileLock(FileLock):
-    def __init__(self, lock_file):
+    def __init__(self, lock_file) -> None:
         parent = os.path.dirname(lock_file)
         if not os.path.isdir(parent):
-            try:
+            with suppress(OSError):
                 os.makedirs(parent)
-            except OSError:
-                pass
+
         super().__init__(lock_file)
         self.count = 0
         self.thread_safe = RLock()
@@ -31,7 +30,7 @@ class _CountedFileLock(FileLock):
             super().acquire(timeout, poll_interval)
         self.count += 1
 
-    def release(self, force=False):
+    def release(self, force=False):  # noqa: FBT002
         with self.thread_safe:
             if self.count > 0:
                 self.thread_safe.release()
@@ -45,11 +44,11 @@ _store_lock = Lock()
 
 
 class PathLockBase(metaclass=ABCMeta):
-    def __init__(self, folder):
+    def __init__(self, folder) -> None:
         path = Path(folder)
         self.path = path.resolve() if path.exists() else path
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.path})"
 
     def __div__(self, other):
@@ -68,7 +67,7 @@ class PathLockBase(metaclass=ABCMeta):
 
     @abstractmethod
     @contextmanager
-    def lock_for_key(self, name, no_block=False):
+    def lock_for_key(self, name, no_block=False):  # noqa: FBT002
         raise NotImplementedError
 
     @abstractmethod
@@ -78,7 +77,7 @@ class PathLockBase(metaclass=ABCMeta):
 
 
 class ReentrantFileLock(PathLockBase):
-    def __init__(self, folder):
+    def __init__(self, folder) -> None:
         super().__init__(folder)
         self._lock = None
 
@@ -92,31 +91,29 @@ class ReentrantFileLock(PathLockBase):
     @staticmethod
     def _del_lock(lock):
         if lock is not None:
-            with _store_lock:
-                with lock.thread_safe:
-                    if lock.count == 0:
-                        _lock_store.pop(lock.lock_file, None)
+            with _store_lock, lock.thread_safe:
+                if lock.count == 0:
+                    _lock_store.pop(lock.lock_file, None)
 
-    def __del__(self):
+    def __del__(self) -> None:
         self._del_lock(self._lock)
 
     def __enter__(self):
         self._lock = self._create_lock()
         self._lock_file(self._lock)
 
-    def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: U100
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self._release(self._lock)
         self._del_lock(self._lock)
         self._lock = None
 
-    def _lock_file(self, lock, no_block=False):
+    def _lock_file(self, lock, no_block=False):  # noqa: FBT002
         # multiple processes might be trying to get a first lock... so we cannot check if this directory exist without
         # a lock, but that lock might then become expensive, and it's not clear where that lock should live.
         # Instead here we just ignore if we fail to create the directory.
-        try:
+        with suppress(OSError):
             os.makedirs(str(self.path))
-        except OSError:
-            pass
+
         try:
             lock.acquire(0.0001)
         except Timeout:
@@ -131,7 +128,7 @@ class ReentrantFileLock(PathLockBase):
         lock.release()
 
     @contextmanager
-    def lock_for_key(self, name, no_block=False):
+    def lock_for_key(self, name, no_block=False):  # noqa: FBT002
         lock = self._create_lock(name)
         try:
             try:
@@ -153,15 +150,15 @@ class NoOpFileLock(PathLockBase):
     def __enter__(self):
         raise NotImplementedError
 
-    def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: U100
+    def __exit__(self, exc_type, exc_val, exc_tb):
         raise NotImplementedError
 
     @contextmanager
-    def lock_for_key(self, name, no_block=False):  # noqa: U100
+    def lock_for_key(self, name, no_block=False):  # noqa: ARG002, FBT002
         yield
 
     @contextmanager
-    def non_reentrant_lock_for_key(self, name):  # noqa: U100
+    def non_reentrant_lock_for_key(self, name):  # noqa: ARG002
         yield
 
 

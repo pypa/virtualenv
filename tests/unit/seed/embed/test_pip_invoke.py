@@ -14,7 +14,7 @@ from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
 
 @pytest.mark.slow()
 @pytest.mark.parametrize("no", ["pip", "setuptools", "wheel", ""])
-def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_fastest, no):
+def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_fastest, no):  # noqa: C901
     extra_search_dir = tmp_path / "extra"
     extra_search_dir.mkdir()
     for_py_version = f"{sys.version_info.major}.{sys.version_info.minor}"
@@ -22,7 +22,7 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_f
     for wheel_filename in BUNDLE_SUPPORT[for_py_version].values():
         copy2(str(BUNDLE_FOLDER / wheel_filename), str(extra_search_dir))
 
-    def _load_embed_wheel(app_data, distribution, for_py_version, version):  # noqa: U100
+    def _load_embed_wheel(app_data, distribution, for_py_version, version):  # noqa: ARG001
         return load_embed_wheel(app_data, distribution, old_ver, version)
 
     old_ver = "3.7"
@@ -34,9 +34,7 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_f
         for distribution, with_version in versions.items():
             if distribution == no:
                 continue
-            if with_version == "embed":
-                expected.add(BUNDLE_FOLDER)
-            elif old[distribution] == new[distribution]:
+            if with_version == "embed" or old[distribution] == new[distribution]:
                 expected.add(BUNDLE_FOLDER)
             else:
                 expected.add(extra_search_dir)
@@ -49,7 +47,7 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_f
         assert found == expected_list
         return original(cmd, env)
 
-    original = PipInvoke._execute
+    original = PipInvoke._execute  # noqa: SLF001
     run = mocker.patch.object(PipInvoke, "_execute", side_effect=_execute)
     versions = {"pip": "embed", "setuptools": "bundle", "wheel": new["wheel"].split("-")[1]}
 

@@ -1,9 +1,10 @@
-"""Patches that are applied at runtime to the virtual environment"""
+"""Patches that are applied at runtime to the virtual environment."""
 
 from __future__ import annotations
 
 import os
 import sys
+from contextlib import suppress
 
 VIRTUALENV_PATCH_FILE = os.path.join(__file__)
 
@@ -11,10 +12,10 @@ VIRTUALENV_PATCH_FILE = os.path.join(__file__)
 def patch_dist(dist):
     """
     Distutils allows user to configure some arguments via a configuration file:
-    https://docs.python.org/3/install/index.html#distutils-configuration-files
+    https://docs.python.org/3/install/index.html#distutils-configuration-files.
 
     Some of this arguments though don't make sense in context of the virtual environment files, let's fix them up.
-    """
+    """  # noqa: D205
     # we cannot allow some install config as that would get packages installed outside of the virtual environment
     old_parse_config_files = dist.Distribution.parse_config_files
 
@@ -40,7 +41,7 @@ _DISTUTILS_PATCH = "distutils.dist", "setuptools.dist"
 
 
 class _Finder:
-    """A meta path finder that allows patching the imported distutils modules"""
+    """A meta path finder that allows patching the imported distutils modules."""
 
     fullname = None
 
@@ -49,7 +50,7 @@ class _Finder:
     # See https://github.com/pypa/virtualenv/issues/1895 for details.
     lock = []
 
-    def find_spec(self, fullname, path, target=None):  # noqa: U100
+    def find_spec(self, fullname, path, target=None):  # noqa: ARG002
         if fullname in _DISTUTILS_PATCH and self.fullname is None:
             # initialize lock[0] lazily
             if len(self.lock) == 0:
@@ -77,13 +78,12 @@ class _Finder:
                         old = getattr(spec.loader, func_name)
                         func = self.exec_module if is_new_api else self.load_module
                         if old is not func:
-                            try:
+                            with suppress(AttributeError):  # C-Extension loaders are r/o such as zipimporter with <3.7
                                 setattr(spec.loader, func_name, partial(func, old))
-                            except AttributeError:
-                                pass  # C-Extension loaders are r/o such as zipimporter with <python 3.7
                         return spec
                 finally:
                     self.fullname = None
+        return None
 
     @staticmethod
     def exec_module(old, module):

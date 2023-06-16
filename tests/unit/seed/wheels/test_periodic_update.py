@@ -6,7 +6,7 @@ import subprocess
 import sys
 from collections import defaultdict
 from contextlib import contextmanager
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from io import StringIO
 from itertools import zip_longest
 from pathlib import Path
@@ -42,9 +42,21 @@ def _clear_pypi_info_cache():
 
 def test_manual_upgrade(session_app_data, caplog, mocker, for_py_version):
     wheel = get_embed_wheel("pip", for_py_version)
-    new_version = NewVersion(wheel.path, datetime.now(), datetime.now() - timedelta(days=20), "manual")
+    new_version = NewVersion(
+        wheel.path,
+        datetime.now(tz=timezone.utc),
+        datetime.now(tz=timezone.utc) - timedelta(days=20),
+        "manual",
+    )
 
-    def _do_update(distribution, for_py_version, embed_filename, app_data, search_dirs, periodic):  # noqa: U100
+    def _do_update(  # noqa: PLR0913
+        distribution,
+        for_py_version,  # noqa: ARG001
+        embed_filename,  # noqa: ARG001
+        app_data,  # noqa: ARG001
+        search_dirs,  # noqa: ARG001
+        periodic,  # noqa: ARG001
+    ):
         if distribution == "pip":
             return [new_version]
         return []
@@ -70,9 +82,9 @@ def test_manual_upgrade(session_app_data, caplog, mocker, for_py_version):
 def test_pick_periodic_update(tmp_path, mocker, for_py_version):
     embed, current = get_embed_wheel("setuptools", "3.6"), get_embed_wheel("setuptools", for_py_version)
     mocker.patch("virtualenv.seed.wheels.bundle.load_embed_wheel", return_value=embed)
-    completed = datetime.now() - timedelta(days=29)
+    completed = datetime.now(tz=timezone.utc) - timedelta(days=29)
     u_log = UpdateLog(
-        started=datetime.now() - timedelta(days=30),
+        started=datetime.now(tz=timezone.utc) - timedelta(days=30),
         completed=completed,
         versions=[NewVersion(filename=current.path, found_date=completed, release_date=completed, source="periodic")],
         periodic=True,
@@ -102,7 +114,7 @@ def test_pick_periodic_update(tmp_path, mocker, for_py_version):
 def test_periodic_update_stops_at_current(mocker, session_app_data, for_py_version):
     current = get_embed_wheel("setuptools", for_py_version)
 
-    now, completed = datetime.now(), datetime.now() - timedelta(days=29)
+    now, completed = datetime.now(tz=timezone.utc), datetime.now(tz=timezone.utc) - timedelta(days=29)
     u_log = UpdateLog(
         started=completed,
         completed=completed,
@@ -122,7 +134,7 @@ def test_periodic_update_stops_at_current(mocker, session_app_data, for_py_versi
 def test_periodic_update_latest_per_patch(mocker, session_app_data, for_py_version):
     current = get_embed_wheel("setuptools", for_py_version)
     expected_path = wheel_path(current, (0, 1, 2))
-    now = datetime.now()
+    now = datetime.now(tz=timezone.utc)
     completed = now - timedelta(hours=2)
     u_log = UpdateLog(
         started=completed,
@@ -143,7 +155,7 @@ def test_periodic_update_latest_per_patch(mocker, session_app_data, for_py_versi
 def test_periodic_update_latest_per_patch_prev_is_manual(mocker, session_app_data, for_py_version):
     current = get_embed_wheel("setuptools", for_py_version)
     expected_path = wheel_path(current, (0, 1, 2))
-    now = datetime.now()
+    now = datetime.now(tz=timezone.utc)
     completed = now - timedelta(hours=2)
     u_log = UpdateLog(
         started=completed,
@@ -165,7 +177,7 @@ def test_periodic_update_latest_per_patch_prev_is_manual(mocker, session_app_dat
 def test_manual_update_honored(mocker, session_app_data, for_py_version):
     current = get_embed_wheel("setuptools", for_py_version)
     expected_path = wheel_path(current, (0, 1, 1))
-    now = datetime.now()
+    now = datetime.now(tz=timezone.utc)
     completed = now
     u_log = UpdateLog(
         started=completed,
@@ -190,7 +202,7 @@ def wheel_path(wheel, of, pre_release=""):
     return str(wheel.path.parent / new_name)
 
 
-_UP_NOW = datetime.now()
+_UP_NOW = datetime.now(tz=timezone.utc)
 _UPDATE_SKIP = {
     "started_just_now_no_complete": UpdateLog(started=_UP_NOW, completed=None, versions=[], periodic=True),
     "started_1_hour_no_complete": UpdateLog(
@@ -372,14 +384,14 @@ def test_do_update_first(tmp_path, mocker, time_freeze):
     ]
     download_wheels = (Wheel(Path(i[0])) for i in pip_version_remote)
 
-    def _download_wheel(
+    def _download_wheel(  # noqa: PLR0913
         distribution,
-        version_spec,  # noqa: U100
+        version_spec,  # noqa: ARG001
         for_py_version,
         search_dirs,
         app_data,
         to_folder,
-        env,  # noqa: U100
+        env,  # noqa: ARG001
     ):
         assert distribution == "pip"
         assert for_py_version == "3.9"
@@ -441,14 +453,14 @@ def test_do_update_skip_already_done(tmp_path, mocker, time_freeze):
     extra = tmp_path / "extra"
     extra.mkdir()
 
-    def _download_wheel(
-        distribution,  # noqa: U100
-        version_spec,  # noqa: U100
-        for_py_version,  # noqa: U100
-        search_dirs,  # noqa: U100
-        app_data,  # noqa: U100
-        to_folder,  # noqa: U100
-        env,  # noqa: U100
+    def _download_wheel(  # noqa: PLR0913
+        distribution,  # noqa: ARG001
+        version_spec,  # noqa: ARG001
+        for_py_version,  # noqa: ARG001
+        search_dirs,  # noqa: ARG001
+        app_data,  # noqa: ARG001
+        to_folder,  # noqa: ARG001
+        env,  # noqa: ARG001
     ):
         return wheel.path
 
@@ -490,15 +502,15 @@ def test_do_update_skip_already_done(tmp_path, mocker, time_freeze):
 
 
 def test_new_version_eq():
-    value = NewVersion("a", datetime.now(), datetime.now(), "periodic")
+    value = NewVersion("a", datetime.now(tz=timezone.utc), datetime.now(tz=timezone.utc), "periodic")
     assert value == value
 
 
 def test_new_version_ne():
-    assert NewVersion("a", datetime.now(), datetime.now(), "periodic") != NewVersion(
+    assert NewVersion("a", datetime.now(tz=timezone.utc), datetime.now(tz=timezone.utc), "periodic") != NewVersion(
         "a",
-        datetime.now(),
-        datetime.now() + timedelta(hours=1),
+        datetime.now(tz=timezone.utc),
+        datetime.now(tz=timezone.utc) + timedelta(hours=1),
         "manual",
     )
 
@@ -508,7 +520,8 @@ def test_get_release_unsecure(mocker, caplog):
     def _release(of, context):
         assert of == "https://pypi.org/pypi/pip/json"
         if context is None:
-            raise URLError("insecure")
+            msg = "insecure"
+            raise URLError(msg)
         assert context
         yield StringIO(json.dumps({"releases": {"20.1": [{"upload_time": "2020-12-22T12:12:12"}]}}))
 
@@ -516,7 +529,7 @@ def test_get_release_unsecure(mocker, caplog):
 
     result = release_date_for_wheel_path(Path("pip-20.1.whl"))
 
-    assert result == datetime(year=2020, month=12, day=22, hour=12, minute=12, second=12)
+    assert result == datetime(year=2020, month=12, day=22, hour=12, minute=12, second=12, tzinfo=timezone.utc)
     assert url_o.call_count == 2
     assert "insecure" in caplog.text
     assert " failed " in caplog.text
@@ -544,7 +557,7 @@ def mock_download(mocker, pip_version_remote):
     do = download()
     return mocker.patch(
         "virtualenv.seed.wheels.acquire.download_wheel",
-        side_effect=lambda *a, **k: next(do),  # noqa: U100
+        side_effect=lambda *a, **k: next(do),  # noqa: ARG005
     )
 
 
@@ -638,7 +651,7 @@ def test_download_periodic_stop_at_first_usable(tmp_path, mocker, time_freeze):
     rel_date_gen = iter(rel_date_remote)
     release_date = mocker.patch(
         "virtualenv.seed.wheels.periodic_update.release_date_for_wheel_path",
-        side_effect=lambda *a, **k: next(rel_date_gen),  # noqa: U100
+        side_effect=lambda *a, **k: next(rel_date_gen),  # noqa: ARG005
     )
 
     last_update = _UP_NOW - timedelta(days=14)
@@ -670,7 +683,7 @@ def test_download_periodic_stop_at_first_usable_with_previous_minor(tmp_path, mo
     rel_date_gen = iter(rel_date_remote)
     release_date = mocker.patch(
         "virtualenv.seed.wheels.periodic_update.release_date_for_wheel_path",
-        side_effect=lambda *a, **k: next(rel_date_gen),  # noqa: U100
+        side_effect=lambda *a, **k: next(rel_date_gen),  # noqa: ARG005
     )
 
     last_update = _UP_NOW - timedelta(days=14)

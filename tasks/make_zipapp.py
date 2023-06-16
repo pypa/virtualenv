@@ -1,4 +1,4 @@
-"""https://docs.python.org/3/library/zipapp.html"""
+"""https://docs.python.org/3/library/zipapp.html."""
 from __future__ import annotations
 
 import argparse
@@ -48,10 +48,10 @@ def create_zipapp(dest, packages):
         zip_app.writestr("__main__.py", (HERE / "__main__zipapp.py").read_bytes())
     bio.seek(0)
     zipapp.create_archive(bio, dest)
-    print(f"zipapp created at {dest}")
+    print(f"zipapp created at {dest}")  # noqa: T201
 
 
-def write_packages_to_zipapp(base, dist, modules, packages, zip_app):
+def write_packages_to_zipapp(base, dist, modules, packages, zip_app):  # noqa: C901
     has = set()
     for name, p_w_v in packages.items():
         for platform, w_v in p_w_v.items():
@@ -78,21 +78,21 @@ def write_packages_to_zipapp(base, dist, modules, packages, zip_app):
                         has.add(dest_str)
                         if "/tests/" in dest_str or "/docs/" in dest_str:
                             continue
-                        print(dest_str)
+                        print(dest_str)  # noqa: T201
                         content = wheel_zip.read(filename)
                         zip_app.writestr(dest_str, content)
                         del content
 
 
 class WheelDownloader:
-    def __init__(self, into):
+    def __init__(self, into) -> None:
         if into.exists():
             shutil.rmtree(into)
         into.mkdir(parents=True)
         self.into = into
         self.collected = defaultdict(lambda: defaultdict(dict))
         self.pip_cmd = [str(Path(sys.executable).parent / "pip")]
-        self._cmd = self.pip_cmd + ["download", "-q", "--no-deps", "--dest", str(self.into)]
+        self._cmd = [*self.pip_cmd, "download", "-q", "--no-deps", "--dest", str(self.into)]
 
     def run(self, target, versions):
         whl = self.build_sdist(target)
@@ -106,7 +106,8 @@ class WheelDownloader:
             whl = self._get_wheel(dep, platform[2:] if platform and platform.startswith("==") else None, version)
             if whl is None:
                 if dep_str not in wheel_store:
-                    raise RuntimeError(f"failed to get {dep_str}, have {wheel_store}")
+                    msg = f"failed to get {dep_str}, have {wheel_store}"
+                    raise RuntimeError(msg)
                 whl = wheel_store[dep_str]
             else:
                 wheel_store[dep_str] = whl
@@ -116,12 +117,19 @@ class WheelDownloader:
     def _get_wheel(self, dep, platform, version):
         if isinstance(dep, Requirement):
             before = set(self.into.iterdir())
-            if self._download(platform, False, "--python-version", version, "--only-binary", ":all:", str(dep)):
-                self._download(platform, True, "--python-version", version, str(dep))
+            if self._download(
+                platform,
+                False,  # noqa: FBT003
+                "--python-version",
+                version,
+                "--only-binary",
+                ":all:",
+                str(dep),
+            ):
+                self._download(platform, True, "--python-version", version, str(dep))  # noqa: FBT003
             after = set(self.into.iterdir())
             new_files = after - before
-            # print(dep, new_files)
-            assert len(new_files) <= 1
+            assert len(new_files) <= 1  # noqa: S101
             if not len(new_files):
                 return None
             new_file = next(iter(new_files))
@@ -129,7 +137,7 @@ class WheelDownloader:
                 return new_file
             dep = new_file
         new_file = self.build_sdist(dep)
-        assert new_file.suffix == ".whl"
+        assert new_file.suffix == ".whl"  # noqa: S101
         return new_file
 
     def _download(self, platform, stop_print_on_fail, *args):
@@ -150,12 +158,14 @@ class WheelDownloader:
         for dep in deps:
             req = Requirement(dep)
             markers = getattr(req.marker, "_markers", ()) or ()
-            if any(m for m in markers if isinstance(m, tuple) and len(m) == 3 and m[0].value == "extra"):
+            if any(
+                m for m in markers if isinstance(m, tuple) and len(m) == 3 and m[0].value == "extra"  # noqa: PLR2004
+            ):
                 continue
-            py_versions = WheelDownloader._marker_at(markers, "python_version")
+            py_versions = WheelDownloader._marker_at(markers, "python_version")  # noqa: SLF001
             if py_versions:
                 marker = Marker('python_version < "1"')
-                marker._markers = [
+                marker._markers = [  # noqa: SLF001
                     markers[ver] for ver in sorted(i for i in set(py_versions) | {i - 1 for i in py_versions} if i >= 0)
                 ]
                 matches_python = marker.evaluate({"python_version": version})
@@ -163,13 +173,13 @@ class WheelDownloader:
                     continue
                 deleted = 0
                 for ver in py_versions:
-                    deleted += WheelDownloader._del_marker_at(markers, ver - deleted)
+                    deleted += WheelDownloader._del_marker_at(markers, ver - deleted)  # noqa: SLF001
             platforms = []
-            platform_positions = WheelDownloader._marker_at(markers, "sys_platform")
+            platform_positions = WheelDownloader._marker_at(markers, "sys_platform")  # noqa: SLF001
             deleted = 0
             for pos in platform_positions:  # can only be ore meaningfully
                 platform = f"{markers[pos][1].value}{markers[pos][2].value}"
-                deleted += WheelDownloader._del_marker_at(markers, pos - deleted)
+                deleted += WheelDownloader._del_marker_at(markers, pos - deleted)  # noqa: SLF001
                 platforms.append(platform)
             if not platforms:
                 platforms.append(None)
@@ -180,7 +190,7 @@ class WheelDownloader:
     def _marker_at(markers, key):
         positions = []
         for i, m in enumerate(markers):
-            if isinstance(m, tuple) and len(m) == 3 and m[0].value == key:
+            if isinstance(m, tuple) and len(m) == 3 and m[0].value == key:  # noqa: PLR2004
                 positions.append(i)
         return positions
 
@@ -208,7 +218,7 @@ class WheelDownloader:
                     return self._build_sdist(self.into, folder)
                 finally:
                     # permission error on Windows <3.7 https://bugs.python.org/issue26660
-                    def onerror(func, path, exc_info):  # noqa: U100
+                    def onerror(func, path, exc_info):  # noqa: ARG001
                         os.chmod(path, S_IWUSR)
                         func(path)
 
@@ -219,14 +229,14 @@ class WheelDownloader:
 
     def _build_sdist(self, folder, target):
         if not folder.exists() or not list(folder.iterdir()):
-            cmd = self.pip_cmd + ["wheel", "-w", str(folder), "--no-deps", str(target), "-q"]
+            cmd = [*self.pip_cmd, "wheel", "-w", str(folder), "--no-deps", str(target), "-q"]
             run_suppress_output(cmd, stop_print_on_fail=True)
         return list(folder.iterdir())[0]
 
 
-def run_suppress_output(cmd, stop_print_on_fail=False):
+def run_suppress_output(cmd, stop_print_on_fail=False):  # noqa: FBT002
     process = subprocess.Popen(
-        cmd,
+        cmd,  # noqa: S603
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True,
@@ -234,11 +244,11 @@ def run_suppress_output(cmd, stop_print_on_fail=False):
     )
     out, err = process.communicate()
     if stop_print_on_fail and process.returncode != 0:
-        print(f"exit with {process.returncode} of {' '.join(quote(i) for i in cmd)}", file=sys.stdout)
+        print(f"exit with {process.returncode} of {' '.join(quote(i) for i in cmd)}", file=sys.stdout)  # noqa: T201
         if out:
-            print(out, file=sys.stdout)
+            print(out, file=sys.stdout)  # noqa: T201
         if err:
-            print(err, file=sys.stderr)
+            print(err, file=sys.stderr)  # noqa: T201
         raise SystemExit(process.returncode)
     return process.returncode
 
@@ -251,24 +261,24 @@ def get_wheels_for_support_versions(folder):
         for pkg, platform_to_wheel in collected.items():
             name = Requirement(pkg).name
             for platform, wheel in platform_to_wheel.items():
-                platform = platform or "==any"
-                wheel_versions = packages[name][platform][wheel.name]
+                pl = platform or "==any"
+                wheel_versions = packages[name][pl][wheel.name]
                 wheel_versions.versions.append(version)
                 wheel_versions.wheel = wheel
     for name, p_w_v in packages.items():
         for platform, w_v in p_w_v.items():
-            print(f"{name} - {platform}")
+            print(f"{name} - {platform}")  # noqa: T201
             for wheel, wheel_versions in w_v.items():
-                print(f"{' '.join(wheel_versions.versions)} of {wheel} (use {wheel_versions.wheel})")
+                print(f"{' '.join(wheel_versions.versions)} of {wheel} (use {wheel_versions.wheel})")  # noqa: T201
     return packages
 
 
 class WheelForVersion:
-    def __init__(self, wheel=None, versions=None):
+    def __init__(self, wheel=None, versions=None) -> None:
         self.wheel = wheel
         self.versions = versions if versions else []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.wheel!r}, {self.versions!r})"
 
 

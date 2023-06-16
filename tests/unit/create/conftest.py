@@ -19,23 +19,20 @@ from virtualenv.discovery.py_info import PythonInfo
 CURRENT = PythonInfo.current_system()
 
 
-# noinspection PyUnusedLocal
-def root(tmp_path_factory, session_app_data):  # noqa: U100
+def root(tmp_path_factory, session_app_data):  # noqa: ARG001
     return CURRENT.system_executable
 
 
 def venv(tmp_path_factory, session_app_data):
     if CURRENT.is_venv:
         return sys.executable
-    else:
-        root_python = root(tmp_path_factory, session_app_data)
-        dest = tmp_path_factory.mktemp("venv")
-        process = Popen([str(root_python), "-m", "venv", "--without-pip", str(dest)])
-        process.communicate()
-        # sadly creating a virtual environment does not tell us where the executable lives in general case
-        # so discover using some heuristic
-        exe_path = CURRENT.discover_exe(prefix=str(dest)).original_executable
-        return exe_path
+    root_python = root(tmp_path_factory, session_app_data)
+    dest = tmp_path_factory.mktemp("venv")
+    process = Popen([str(root_python), "-m", "venv", "--without-pip", str(dest)])
+    process.communicate()
+    # sadly creating a virtual environment does not tell us where the executable lives in general case
+    # so discover using some heuristic
+    return CURRENT.discover_exe(prefix=str(dest)).original_executable
 
 
 PYTHON = {

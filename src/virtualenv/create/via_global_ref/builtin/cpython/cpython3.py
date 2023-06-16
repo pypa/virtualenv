@@ -15,7 +15,7 @@ from .common import CPython, CPythonPosix, CPythonWindows, is_mac_os_framework
 
 
 class CPython3(CPython, Python3Supports, metaclass=abc.ABCMeta):
-    """CPython 3 or later"""
+    """CPython 3 or later."""
 
 
 class CPython3Posix(CPythonPosix, CPython3):
@@ -43,7 +43,7 @@ class CPython3Posix(CPythonPosix, CPython3):
 
 
 class CPython3Windows(CPythonWindows, CPython3):
-    """ """
+    """CPython 3 on Windows."""
 
     @classmethod
     def setup_meta(cls, interpreter):
@@ -69,7 +69,7 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     def has_shim(cls, interpreter):
-        return interpreter.version_info.minor >= 7 and cls.shim(interpreter) is not None
+        return interpreter.version_info.minor >= 7 and cls.shim(interpreter) is not None  # noqa: PLR2004
 
     @classmethod
     def shim(cls, interpreter):
@@ -114,7 +114,7 @@ class CPython3Windows(CPythonWindows, CPython3):
         "python{VERSION}.zip" and "python{VERSION}._pth" files. User can
         move/rename *zip* file and edit `sys.path` by editing *_pth* file.
         Here the `pattern` is used only for the default *zip* file name!
-        """
+        """  # noqa: D205
         pattern = f"*python{interpreter.version_nodot}.zip"
         matches = fnmatch.filter(interpreter.path, pattern)
         matched_paths = map(Path, matches)

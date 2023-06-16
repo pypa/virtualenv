@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from virtualenv.run import session_via_cli
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.mark.parametrize(
@@ -13,7 +16,7 @@ from virtualenv.run import session_via_cli
     [([], False), (["--no-download"], False), (["--never-download"], False), (["--download"], True)],
 )
 def test_download_cli_flag(args, download, tmp_path):
-    session = session_via_cli(args + [str(tmp_path)])
+    session = session_via_cli([*args, str(tmp_path)])
     assert session.seeder.download is download
 
 

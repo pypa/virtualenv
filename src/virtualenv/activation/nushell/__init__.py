@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from ..via_template import ViaTemplateActivator
+from virtualenv.activation.via_template import ViaTemplateActivator
 
 
 class NushellActivator(ViaTemplateActivator):
     def templates(self):
         yield "activate.nu"
 
-    def replacements(self, creator, dest_folder):  # noqa: U100
+    def replacements(self, creator, dest_folder):  # noqa: ARG002
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
             "__VIRTUAL_ENV__": str(creator.dest),

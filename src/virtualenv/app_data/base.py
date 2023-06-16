@@ -1,6 +1,4 @@
-"""
-Application data stored by virtualenv.
-"""
+"""Application data stored by virtualenv."""
 
 from __future__ import annotations
 
@@ -11,15 +9,15 @@ from virtualenv.info import IS_ZIPAPP
 
 
 class AppData(metaclass=ABCMeta):
-    """Abstract storage interface for the virtualenv application"""
+    """Abstract storage interface for the virtualenv application."""
 
     @abstractmethod
     def close(self):
-        """called before virtualenv exits"""
+        """Called before virtualenv exits."""
 
     @abstractmethod
     def reset(self):
-        """called when the user passes in the reset app data"""
+        """Called when the user passes in the reset app data."""
 
     @abstractmethod
     def py_info(self, path):
@@ -51,7 +49,7 @@ class AppData(metaclass=ABCMeta):
 
     @contextmanager
     def ensure_extracted(self, path, to_folder=None):
-        """Some paths might be within the zipapp, unzip these to a path on the disk"""
+        """Some paths might be within the zipapp, unzip these to a path on the disk."""
         if IS_ZIPAPP:
             with self.extract(path, to_folder) as result:
                 yield result

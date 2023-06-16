@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
-from datetime import date, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from virtualenv.version import __version__
@@ -11,7 +11,7 @@ company = "PyPA"
 name = "virtualenv"
 version = ".".join(__version__.split(".")[:2])
 release = __version__
-copyright = f"2007-{date.today().year}, {company}, PyPA"
+copyright = f"2007-{datetime.now(tz=timezone.utc).year}, {company}, PyPA"  # noqa: A001
 
 extensions = [
     "sphinx.ext.autodoc",
@@ -31,7 +31,7 @@ project = name
 today_fmt = "%B %d, %Y"
 
 html_theme = "furo"
-html_title, html_last_updated_fmt = project, datetime.now().isoformat()
+html_title, html_last_updated_fmt = project, datetime.now(tz=timezone.utc).isoformat()
 pygments_style, pygments_dark_style = "sphinx", "monokai"
 html_static_path, html_css_files = ["_static"], ["custom.css"]
 
@@ -52,7 +52,7 @@ def setup(app):
     root, exe = here.parent, Path(sys.executable)
     towncrier = exe.with_name(f"towncrier{exe.suffix}")
     cmd = [str(towncrier), "build", "--draft", "--version", "NEXT"]
-    new = subprocess.check_output(cmd, cwd=root, text=True, stderr=subprocess.DEVNULL, encoding="UTF-8")
+    new = subprocess.check_output(cmd, cwd=root, text=True, stderr=subprocess.DEVNULL, encoding="UTF-8")  # noqa: S603
     (root / "docs" / "_draft.rst").write_text("" if "No significant changes" in new else new, encoding="UTF-8")
 
     # the CLI arguments are dynamically generated

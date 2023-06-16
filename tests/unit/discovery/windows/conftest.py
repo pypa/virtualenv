@@ -7,12 +7,12 @@ import pytest
 
 
 @pytest.fixture()
-def _mock_registry(mocker):
+def _mock_registry(mocker):  # noqa: C901
     from virtualenv.discovery.windows.pep514 import winreg
 
     loc, glob = {}, {}
     mock_value_str = (Path(__file__).parent / "winreg-mock-values.py").read_text(encoding="utf-8")
-    exec(mock_value_str, glob, loc)
+    exec(mock_value_str, glob, loc)  # noqa: S102
     enum_collect = loc["enum_collect"]
     value_collect = loc["value_collect"]
     key_open = loc["key_open"]
@@ -37,13 +37,13 @@ def _mock_registry(mocker):
     mocker.patch.object(winreg, "QueryValueEx", side_effect=_query_value_ex)
 
     class Key:
-        def __init__(self, value):
+        def __init__(self, value) -> None:
             self.value = value
 
         def __enter__(self):
             return self
 
-        def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: U100
+        def __exit__(self, exc_type, exc_val, exc_tb):
             return None
 
     @contextmanager
@@ -99,4 +99,4 @@ def _populate_pyinfo_cache(monkeypatch):
     ]
     for _, major, minor, arch, exe, _ in interpreters:
         info = _mock_pyinfo(major, minor, arch, exe)
-        monkeypatch.setitem(virtualenv.discovery.cached_py_info._CACHE, Path(info.executable), info)
+        monkeypatch.setitem(virtualenv.discovery.cached_py_info._CACHE, Path(info.executable), info)  # noqa: SLF001

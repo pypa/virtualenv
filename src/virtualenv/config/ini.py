@@ -16,7 +16,7 @@ class IniConfig:
 
     section = "virtualenv"
 
-    def __init__(self, env=None):
+    def __init__(self, env=None) -> None:
         env = os.environ if env is None else env
         config_file = env.get(self.VIRTUALENV_CONFIG_FILE_ENV_VAR, None)
         self.is_env_var = config_file is not None
@@ -40,7 +40,7 @@ class IniConfig:
                 try:
                     self._load()
                     self.has_virtualenv_section = self.config_parser.has_section(self.section)
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001
                     exception = exc
         if exception is not None:
             logging.error("failed to read config file %s because %r", config_file, exception)
@@ -58,12 +58,12 @@ class IniConfig:
             raw_value = self.config_parser.get(self.section, key.lower())
             value = convert(raw_value, as_type, source)
             result = value, source
-        except Exception:
+        except Exception:  # noqa: BLE001
             result = None
         self._cache[cache_key] = result
         return result
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return bool(self.has_config_file) and bool(self.has_virtualenv_section)
 
     @property

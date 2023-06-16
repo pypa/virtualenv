@@ -5,7 +5,7 @@ from zipfile import ZipFile
 
 
 class Wheel:
-    def __init__(self, path):
+    def __init__(self, path) -> None:
         # https://www.python.org/dev/peps/pep-0427/#file-name-convention
         # The wheel filename is {distribution}-{version}(-{build tag})?-{python tag}-{abi tag}-{platform tag}.whl
         self.path = path
@@ -13,7 +13,7 @@ class Wheel:
 
     @classmethod
     def from_path(cls, path):
-        if path is not None and path.suffix == ".whl" and len(path.stem.split("-")) >= 5:
+        if path is not None and path.suffix == ".whl" and len(path.stem.split("-")) >= 5:  # noqa: PLR2004
             return cls(path)
         return None
 
@@ -72,10 +72,10 @@ class Wheel:
                     break
         return True
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.path})"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return str(self.path)
 
 
@@ -83,10 +83,13 @@ def discover_wheels(from_folder, distribution, version, for_py_version):
     wheels = []
     for filename in from_folder.iterdir():
         wheel = Wheel.from_path(filename)
-        if wheel and wheel.distribution == distribution:
-            if version is None or wheel.version == version:
-                if wheel.support_py(for_py_version):
-                    wheels.append(wheel)
+        if (
+            wheel
+            and wheel.distribution == distribution
+            and (version is None or wheel.version == version)
+            and wheel.support_py(for_py_version)
+        ):
+            wheels.append(wheel)
     return sorted(wheels, key=attrgetter("version_tuple", "distribution"), reverse=True)
 
 

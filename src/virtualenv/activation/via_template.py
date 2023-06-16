@@ -27,9 +27,9 @@ class ViaTemplateActivator(Activator, metaclass=ABCMeta):
         generated = self._generate(replacements, self.templates(), dest_folder, creator)
         if self.flag_prompt is not None:
             creator.pyenv_cfg["prompt"] = self.flag_prompt
-        return generated
+        return generated  # noqa: RET504
 
-    def replacements(self, creator, dest_folder):  # noqa: U100
+    def replacements(self, creator, dest_folder):  # noqa: ARG002
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
             "__VIRTUAL_ENV__": str(creator.dest),
@@ -60,12 +60,12 @@ class ViaTemplateActivator(Activator, metaclass=ABCMeta):
         binary = read_binary(self.__module__, template)
         text = binary.decode("utf-8", errors="strict")
         for key, value in replacements.items():
-            value = self._repr_unicode(creator, value)
-            text = text.replace(key, value)
+            value_uni = self._repr_unicode(creator, value)
+            text = text.replace(key, value_uni)
         return text
 
     @staticmethod
-    def _repr_unicode(creator, value):  # noqa: U100
+    def _repr_unicode(creator, value):  # noqa: ARG004
         return value  # by default, we just let it be unicode
 
 

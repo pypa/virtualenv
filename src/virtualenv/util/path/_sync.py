@@ -15,7 +15,8 @@ def ensure_dir(path):
 
 def ensure_safe_to_do(src, dest):
     if src == dest:
-        raise ValueError(f"source and destination is the same {src}")
+        msg = f"source and destination is the same {src}"
+        raise ValueError(msg)
     if not dest.exists():
         return
     if dest.is_dir() and not dest.is_symlink():
@@ -52,7 +53,7 @@ def copytree(src, dest):
 
 
 def safe_delete(dest):
-    def onerror(func, path, exc_info):  # noqa: U100
+    def onerror(func, path, exc_info):  # noqa: ARG001
         if not os.access(path, os.W_OK):
             os.chmod(path, S_IWUSR)
             func(path)
@@ -64,12 +65,12 @@ def safe_delete(dest):
 
 
 class _Debug:
-    def __init__(self, src, dest):
+    def __init__(self, src, dest) -> None:
         self.src = src
         self.dest = dest
 
-    def __str__(self):
-        return f"{'directory ' if self.src.is_dir() else ''}{str(self.src)} to {str(self.dest)}"
+    def __str__(self) -> str:
+        return f"{'directory ' if self.src.is_dir() else ''}{self.src!s} to {self.dest!s}"
 
 
 __all__ = [

@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from collections import OrderedDict
 
-from ..via_template import ViaTemplateActivator
+from virtualenv.activation.via_template import ViaTemplateActivator
 
 
 class PythonActivator(ViaTemplateActivator):

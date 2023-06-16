@@ -77,7 +77,7 @@ def test_extra_search_dir_via_env_var(tmp_path, monkeypatch):
 def test_value_alias(monkeypatch, mocker):
     from virtualenv.config.cli.parser import VirtualEnvConfigParser
 
-    prev = VirtualEnvConfigParser._fix_default
+    prev = VirtualEnvConfigParser._fix_default  # noqa: SLF001
 
     def func(self, action):
         if action.dest == "symlinks":

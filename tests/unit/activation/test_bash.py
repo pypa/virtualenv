@@ -9,7 +9,7 @@ from virtualenv.info import IS_WIN
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
 def test_bash(raise_on_non_source_class, activation_tester):
     class Bash(raise_on_non_source_class):
-        def __init__(self, session):
+        def __init__(self, session) -> None:
             super().__init__(
                 BashActivator,
                 session,

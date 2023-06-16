@@ -12,7 +12,7 @@ def handle_store_python(meta, interpreter):
 def is_store_python(interpreter):
     parts = Path(interpreter.system_executable).parts
     return (
-        len(parts) > 4
+        len(parts) > 4  # noqa: PLR2004
         and parts[-4] == "Microsoft"
         and parts[-3] == "WindowsApps"
         and parts[-2].startswith("PythonSoftwareFoundation.Python.3.")

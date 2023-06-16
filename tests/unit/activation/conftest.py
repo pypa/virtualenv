@@ -15,7 +15,7 @@ from virtualenv.run import cli_run
 
 
 class ActivationTester:
-    def __init__(self, of_class, session, cmd, activate_script, extension):
+    def __init__(self, of_class, session, cmd, activate_script, extension) -> None:  # noqa: PLR0913
         self.of_class = of_class
         self._creator = session.creator
         self._version_cmd = [cmd, "--version"]
@@ -41,17 +41,18 @@ class ActivationTester:
                     encoding="utf-8",
                 )
                 out, err = process.communicate()
-                result = out if out else err
-                self._version = result
-                return result
-            except Exception as exception:
+            except Exception as exception:  # noqa: BLE001
                 self._version = exception
                 if raise_on_fail:
                     raise
                 return RuntimeError(f"{self} is not available due {exception}")
+            else:
+                result = out if out else err
+                self._version = result
+                return result
         return self._version
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}(\nversion={self._version!r},\ncreator={self._creator},\n"
             f"interpreter={self._creator.interpreter})"
@@ -72,7 +73,7 @@ class ActivationTester:
         monkeypatch.chdir(tmp_path)
 
         monkeypatch.delenv("VIRTUAL_ENV", raising=False)
-        invoke, env = self._invoke_script + [str(test_script)], self.env(tmp_path)
+        invoke, env = [*self._invoke_script, str(test_script)], self.env(tmp_path)
 
         try:
             process = Popen(invoke, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
@@ -81,24 +82,23 @@ class ActivationTester:
         except subprocess.CalledProcessError as exception:
             output = exception.output + exception.stderr
             assert not exception.returncode, output  # noqa: PT017
-            return
+            return None
 
         out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, re.M).strip().splitlines()
         self.assert_output(out, raw, tmp_path)
         return env, activate_script
 
     def non_source_activate(self, activate_script):
-        return self._invoke_script + [str(activate_script)]
+        return [*self._invoke_script, str(activate_script)]
 
-    # noinspection PyMethodMayBeStatic
-    def env(self, tmp_path):  # noqa: U100
+    def env(self, tmp_path):  # noqa: ARG002
         env = os.environ.copy()
         # add the current python executable folder to the path so we already have another python on the path
         # also keep the path so the shells (fish, bash, etc can be discovered)
         env["PYTHONIOENCODING"] = "utf-8"
-        env["PATH"] = os.pathsep.join([dirname(sys.executable)] + env.get("PATH", "").split(os.pathsep))
+        env["PATH"] = os.pathsep.join([dirname(sys.executable), *env.get("PATH", "").split(os.pathsep)])
         # clear up some environment variables so they don't affect the tests
-        for key in [k for k in env.keys() if k.startswith("_OLD") or k.startswith("VIRTUALENV_")]:
+        for key in [k for k in env if k.startswith(("_OLD", "VIRTUALENV_"))]:
             del env[key]
         return env
 
@@ -111,7 +111,7 @@ class ActivationTester:
         return test_script
 
     def _get_test_lines(self, activate_script):
-        commands = [
+        return [
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
             self.activate_call(activate_script),
@@ -125,7 +125,6 @@ class ActivationTester:
             self.print_os_env_var("VIRTUAL_ENV"),
             "",  # just finish with an empty new line
         ]
-        return commands
 
     def assert_output(self, out, raw, tmp_path):
         # pre-activation
@@ -187,7 +186,15 @@ class ActivationTester:
 
 
 class RaiseOnNonSourceCall(ActivationTester):
-    def __init__(self, of_class, session, cmd, activate_script, extension, non_source_fail_message):
+    def __init__(  # noqa: PLR0913
+        self,
+        of_class,
+        session,
+        cmd,
+        activate_script,
+        extension,
+        non_source_fail_message,
+    ) -> None:
         super().__init__(of_class, session, cmd, activate_script, extension)
         self.non_source_fail_message = non_source_fail_message
 

@@ -6,11 +6,11 @@ import sys
 import zipfile
 
 ABS_HERE = os.path.abspath(os.path.dirname(__file__))
-NEW_IMPORT_SYSTEM = sys.version_info[0] == 3
+NEW_IMPORT_SYSTEM = sys.version_info[0] >= 3  # noqa: PLR2004
 
 
 class VersionPlatformSelect:
-    def __init__(self):
+    def __init__(self) -> None:
         self.archive = ABS_HERE
         self._zip_file = zipfile.ZipFile(ABS_HERE, "r")
         self.modules = self._load("modules.json")
@@ -32,13 +32,13 @@ class VersionPlatformSelect:
     def __enter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):  # noqa: U100
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self._zip_file.close()
 
     def find_mod(self, fullname):
         if fullname in self.modules:
-            result = self.modules[fullname]
-            return result
+            return self.modules[fullname]
+        return None
 
     def get_filename(self, fullname):
         zip_path = self.find_mod(fullname)
@@ -62,7 +62,7 @@ class VersionPlatformSelect:
             result = dist_class(file_loader=self.get_data, dist_path=self.distributions[name])
             yield result
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={ABS_HERE})"
 
     def _register_distutils_finder(self):
@@ -70,19 +70,18 @@ class VersionPlatformSelect:
             return
 
         class DistlibFinder:
-            def __init__(self, path, loader):
+            def __init__(self, path, loader) -> None:
                 self.path = path
                 self.loader = loader
 
             def find(self, name):
                 class Resource:
-                    def __init__(self, content):
+                    def __init__(self, content) -> None:
                         self.bytes = content
 
                 full_path = os.path.join(self.path, name)
                 return Resource(self.loader.get_data(full_path))
 
-        # noinspection PyPackageRequirements
         from distlib.resources import register_finder
 
         register_finder(self, lambda module: DistlibFinder(os.path.dirname(module.__file__), self))
@@ -92,17 +91,15 @@ _VER_DISTRIBUTION_CLASS = None
 
 
 def versioned_distribution_class():
-    global _VER_DISTRIBUTION_CLASS
+    global _VER_DISTRIBUTION_CLASS  # noqa: PLW0603
     if _VER_DISTRIBUTION_CLASS is None:
         if sys.version_info >= (3, 8):
-            # noinspection PyCompatibility
             from importlib.metadata import Distribution
         else:
-            # noinspection PyUnresolvedReferences
             from importlib_metadata import Distribution
 
         class VersionedDistribution(Distribution):
-            def __init__(self, file_loader, dist_path):
+            def __init__(self, file_loader, dist_path) -> None:
                 self.file_loader = file_loader
                 self.dist_path = dist_path
 
@@ -117,27 +114,24 @@ def versioned_distribution_class():
 
 
 if NEW_IMPORT_SYSTEM:
-    # noinspection PyCompatibility
-    # noinspection PyCompatibility
     from importlib.abc import SourceLoader
     from importlib.util import spec_from_file_location
 
     class VersionedFindLoad(VersionPlatformSelect, SourceLoader):
-        def find_spec(self, fullname, path, target=None):  # noqa: U100
+        def find_spec(self, fullname, path, target=None):  # noqa: ARG002
             zip_path = self.find_mod(fullname)
             if zip_path is not None:
-                spec = spec_from_file_location(name=fullname, loader=self)
-                return spec
+                return spec_from_file_location(name=fullname, loader=self)
+            return None
 
-        def module_repr(self, module):  # noqa: U100
+        def module_repr(self, module):
             raise NotImplementedError
 
 else:
-    # noinspection PyDeprecation
     from imp import new_module
 
     class VersionedFindLoad(VersionPlatformSelect):
-        def find_module(self, fullname, path=None):  # noqa: U100
+        def find_module(self, fullname, path=None):  # noqa: ARG002
             return self if self.find_mod(fullname) else None
 
         def load_module(self, fullname):
@@ -152,14 +146,14 @@ else:
                 mod.__package__ = fullname
             else:
                 mod.__package__ = fullname.rpartition(".")[0]
-            exec(code, mod.__dict__)
+            exec(code, mod.__dict__)  # noqa: S102
             return mod
 
 
 def run():
     with VersionedFindLoad() as finder:
         sys.meta_path.insert(0, finder)
-        finder._register_distutils_finder()
+        finder._register_distutils_finder()  # noqa: SLF001
         from virtualenv.__main__ import run as run_virtualenv
 
         run_virtualenv()
