@@ -103,6 +103,31 @@ version.source = "vcs"
 [tool.black]
 line-length = 120
 
+[tool.ruff]
+select = ["ALL"]
+line-length = 120
+target-version = "py37"
+isort = {known-first-party = ["virtualenv"], required-imports = ["from __future__ import annotations"]}
+ignore = [
+    "ANN",  # no type checking added yet
+    "D10",  # no docstrings
+    "D40",  # no imperative mode for docstrings
+    "PTH",  # no pathlib, <=39 has problems on Windows with absolute/resolve, can revisit once we no longer need 39
+    "INP001",  # ignore implicit namespace packages
+    "D203",  # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
+    "D212",  # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
+    "S104",  # Possible binding to all interface
+]
+[tool.ruff.per-file-ignores]
+"tests/**/*.py" = [
+    "S101",  # asserts allowed in tests...
+    "FBT",  # don"t care about booleans as positional arguments in tests
+    "INP001", # no implicit namespace
+    "D",  # don"t care about documentation in tests
+    "S603",  # `subprocess` call: check for execution of untrusted input
+    "PLR2004",  # Magic value used in comparison, consider replacing with a constant variable
+]
+
 [tool.pytest.ini_options]
 markers = ["slow"]
 timeout = 600
@@ -134,28 +159,3 @@ directory = "docs/changelog"
 title_format = false
 issue_format = ":issue:`{issue}`"
 template = "docs/changelog/template.jinja2"
-
-[tool.ruff]
-select = ["ALL"]
-line-length = 120
-target-version = "py37"
-isort = {known-first-party = ["virtualenv"], required-imports = ["from __future__ import annotations"]}
-ignore = [
-    "ANN",  # no type checking added yet
-    "D10",  # no docstrings
-    "D40",  # no imperative mode for docstrings
-    "PTH",  # no pathlib, <=39 has problems on Windows with absolute/resolve, can revisit once we no longer need 39
-    "INP001",  # ignore implicit namespace packages
-    "D203",  # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
-    "D212",  # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
-    "S104",  # Possible binding to all interface
-]
-[tool.ruff.per-file-ignores]
-"tests/**/*.py" = [
-    "S101",  # asserts allowed in tests...
-    "FBT",  # don"t care about booleans as positional arguments in tests
-    "INP001", # no implicit namespace
-    "D",  # don"t care about documentation in tests
-    "S603",  # `subprocess` call: check for execution of untrusted input
-    "PLR2004",  # Magic value used in comparison, consider replacing with a constant variable
-]
