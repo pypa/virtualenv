@@ -74,7 +74,7 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
     @property
     def reload_code(self):
         result = super().reload_code
-        result = dedent(
+        return dedent(
             f"""
         # the bundled site.py always adds the global site package if we're on python framework build, escape this
         import sys
@@ -86,7 +86,6 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
             sys._framework = before
         """,
         )
-        return result
 
 
 def fix_mach_o(exe, current, new, max_size):

@@ -27,7 +27,7 @@ class ViaTemplateActivator(Activator, metaclass=ABCMeta):
         generated = self._generate(replacements, self.templates(), dest_folder, creator)
         if self.flag_prompt is not None:
             creator.pyenv_cfg["prompt"] = self.flag_prompt
-        return generated  # noqa: RET504
+        return generated
 
     def replacements(self, creator, dest_folder):  # noqa: ARG002
         return {
