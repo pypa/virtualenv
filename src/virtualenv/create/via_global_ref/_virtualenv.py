@@ -48,7 +48,7 @@ class _Finder:
     # lock[0] is threading.Lock(), but initialized lazily to avoid importing threading very early at startup,
     # because there are gevent-based applications that need to be first to import threading by themselves.
     # See https://github.com/pypa/virtualenv/issues/1895 for details.
-    lock = []
+    lock = []  # noqa: RUF012
 
     def find_spec(self, fullname, path, target=None):  # noqa: ARG002
         if fullname in _DISTUTILS_PATCH and self.fullname is None:

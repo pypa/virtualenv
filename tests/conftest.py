@@ -7,6 +7,7 @@ import sys
 from contextlib import contextmanager
 from functools import partial
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
@@ -24,7 +25,7 @@ def pytest_configure(config):
     """Ensure randomly is called before we re-order"""
     manager = config.pluginmanager
 
-    order = manager.hook.pytest_collection_modifyitems._nonwrappers  # noqa: SLF001
+    order = manager.hook.pytest_collection_modifyitems._hookimpls  # noqa: SLF001
     dest = next((i for i, p in enumerate(order) if p.plugin is manager.getplugin("randomly")), None)
     if dest is not None:
         from_pos = next(i for i, p in enumerate(order) if p.plugin is manager.getplugin(__file__))
@@ -242,8 +243,10 @@ if COVERAGE_RUN:
     import coverage
 
     class EnableCoverage:
-        _COV_FILE = Path(coverage.__file__)
-        _ROOT_COV_FILES_AND_FOLDERS = [i for i in _COV_FILE.parents[1].iterdir() if i.name.startswith("coverage")]
+        _COV_FILE: ClassVar[Path] = Path(coverage.__file__)
+        _ROOT_COV_FILES_AND_FOLDERS: ClassVar[list[Path]] = [
+            i for i in _COV_FILE.parents[1].iterdir() if i.name.startswith("coverage")
+        ]
 
         def __init__(self, link) -> None:
             self.link = link

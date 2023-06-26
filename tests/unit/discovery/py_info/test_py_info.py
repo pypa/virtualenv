@@ -17,7 +17,7 @@ import pytest
 from virtualenv.discovery import cached_py_info
 from virtualenv.discovery.py_info import PythonInfo, VersionInfo
 from virtualenv.discovery.py_spec import PythonSpec
-from virtualenv.info import IS_PYPY, fs_supports_symlink
+from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
 
 CURRENT = PythonInfo.current_system()
 
@@ -122,6 +122,7 @@ def test_py_info_cached_error(mocker, tmp_path, session_app_data):
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
+@pytest.mark.xfail(IS_PYPY and IS_WIN and sys.version_info[0:2] == (3, 9), reason="symlink is not supported")
 def test_py_info_cached_symlink_error(mocker, tmp_path, session_app_data):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
     with pytest.raises(RuntimeError):

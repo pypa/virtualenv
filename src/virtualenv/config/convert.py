@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+from typing import ClassVar
 
 
 class TypeData:
@@ -17,7 +18,7 @@ class TypeData:
 
 
 class BoolType(TypeData):
-    BOOLEAN_STATES = {
+    BOOLEAN_STATES: ClassVar[dict[str, bool]] = {
         "1": True,
         "yes": True,
         "true": True,

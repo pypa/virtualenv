@@ -502,8 +502,9 @@ def test_do_update_skip_already_done(tmp_path, mocker, time_freeze):
 
 
 def test_new_version_eq():
-    value = NewVersion("a", datetime.now(tz=timezone.utc), datetime.now(tz=timezone.utc), "periodic")
-    assert value == value
+    now = datetime.now(tz=timezone.utc)
+    value = NewVersion("a", now, now, "periodic")
+    assert value == NewVersion("a", now, now, "periodic")
 
 
 def test_new_version_ne():

@@ -3,6 +3,7 @@ from __future__ import annotations
 from argparse import SUPPRESS
 from collections import namedtuple
 from contextlib import contextmanager
+from typing import Any, ClassVar
 
 from docutils import nodes as n
 from docutils.parsers.rst.directives import unchanged_required
@@ -24,8 +25,8 @@ CUSTOM = {
 
 
 class CliTable(SphinxDirective):
-    name = "table_cli"
-    option_spec = {"module": unchanged_required, "func": unchanged_required}
+    name: ClassVar[str] = "table_cli"
+    option_spec: ClassVar[str, Any] = {"module": unchanged_required, "func": unchanged_required}
 
     def run(self):
         module_name, attr_name = self.options["module"], self.options["func"]
@@ -109,7 +110,7 @@ class CliTable(SphinxDirective):
         options_group += body
         return table
 
-    plugins = {
+    plugins: ClassVar[dict[str, str]] = {
         "creator": "virtualenv.create",
         "seed": "virtualenv.seed",
         "activators": "virtualenv.activate",
