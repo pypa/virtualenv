@@ -4,6 +4,7 @@ import logging
 import os
 from configparser import ConfigParser
 from pathlib import Path
+from typing import ClassVar
 
 from platformdirs import user_config_dir
 
@@ -11,8 +12,8 @@ from .convert import convert
 
 
 class IniConfig:
-    VIRTUALENV_CONFIG_FILE_ENV_VAR = "VIRTUALENV_CONFIG_FILE"
-    STATE = {None: "failed to parse", True: "active", False: "missing"}
+    VIRTUALENV_CONFIG_FILE_ENV_VAR: ClassVar[str] = "VIRTUALENV_CONFIG_FILE"
+    STATE: ClassVar[dict[bool | None, str]] = {None: "failed to parse", True: "active", False: "missing"}
 
     section = "virtualenv"
 

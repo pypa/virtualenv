@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+import sys
 from textwrap import dedent
 
 import pytest
 
-from virtualenv.info import fs_supports_symlink
+from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
 from virtualenv.run import session_via_cli
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
+@pytest.mark.xfail(IS_PYPY and IS_WIN and sys.version_info[0:2] == (3, 9), reason="symlink is not supported")
 def test_ini_can_be_overwritten_by_flag(tmp_path, monkeypatch):
     custom_ini = tmp_path / "conf.ini"
     custom_ini.write_text(

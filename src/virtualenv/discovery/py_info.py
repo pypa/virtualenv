@@ -434,7 +434,7 @@ class PythonInfo:
         target.executable = start_executable
         return target
 
-    _cache_exe_discovery = {}
+    _cache_exe_discovery = {}  # noqa: RUF012
 
     def discover_exe(self, app_data, prefix, exact=True, env=None):  # noqa: FBT002
         key = prefix, exact
