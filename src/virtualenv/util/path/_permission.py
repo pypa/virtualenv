@@ -14,7 +14,7 @@ def make_exe(filename):
                 mode |= level
             filename.chmod(mode)
             break
-        except OSError:
+        except OSError:  # noqa: PERF203
             continue
 
 

@@ -34,9 +34,7 @@ class CliTable(SphinxDirective):
         core_result = parse_parser(parser_creator())
         core_result["action_groups"] = [i for i in core_result["action_groups"] if i["title"] not in CUSTOM]
 
-        content = []
-        for i in core_result["action_groups"]:
-            content.append(self._build_table(i["options"], i["title"], i["description"]))
+        content = [self._build_table(i["options"], i["title"], i["description"]) for i in core_result["action_groups"]]
         for key, name_to_class in CUSTOM.items():
             section = n.section("", ids=[f"section-{key}"])
             title = n.title("", key)

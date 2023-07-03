@@ -121,7 +121,7 @@ class Creator(metaclass=ABCMeta):
                 if trip == char:
                     continue
                 raise ValueError(trip)  # noqa: TRY301
-            except ValueError:
+            except ValueError:  # noqa: PERF203
                 refused[char] = None
         if refused:
             bad = "".join(refused.keys())

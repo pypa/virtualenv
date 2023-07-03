@@ -285,7 +285,7 @@ def special_char_name():
             trip = char.encode(encoding, errors="strict").decode(encoding)
             if char == trip:
                 result += char
-        except ValueError:
+        except ValueError:  # noqa: PERF203
             continue
     assert result
     return result

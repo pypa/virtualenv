@@ -35,7 +35,7 @@ class Wheel:
         for part in version.split(".")[0:3]:
             try:
                 result.append(int(part))
-            except ValueError:
+            except ValueError:  # noqa: PERF203
                 break
         if not result:
             raise ValueError(version)
