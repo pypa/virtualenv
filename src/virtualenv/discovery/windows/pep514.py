@@ -15,7 +15,7 @@ def enum_keys(key):
     while True:
         try:
             yield winreg.EnumKey(key, at)
-        except OSError:
+        except OSError:  # noqa: PERF203
             break
         at += 1
 
@@ -144,9 +144,7 @@ def msg(path, what):
 
 def _run():
     basicConfig()
-    interpreters = []
-    for spec in discover_pythons():
-        interpreters.append(repr(spec))
+    interpreters = [repr(spec) for spec in discover_pythons()]
     print("\n".join(sorted(interpreters)))  # noqa: T201
 
 

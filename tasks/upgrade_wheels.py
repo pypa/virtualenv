@@ -77,7 +77,7 @@ def run():  # noqa: C901
                 del removed[key]
             lines.append(text)
         for key, versions in removed.items():
-            lines.append(f"Removed {key} of {fmt_version(versions)}")
+            lines.append(f"Removed {key} of {fmt_version(versions)}")  # noqa: PERF401
         lines.append("")
         changelog = "\n".join(lines)
         print(changelog)  # noqa: T201
@@ -87,7 +87,7 @@ def run():  # noqa: C901
         for package in sorted(new_batch.keys()):
             for folder, version in sorted(folders.items()):
                 if (folder / package).exists():
-                    support_table[version].append(package)
+                    support_table[version].append(package)  # noqa: PERF401
         support_table = {k: OrderedDict((i.split("-")[0], i) for i in v) for k, v in support_table.items()}
         bundle = ",".join(
             f"{v!r}: {{ {','.join(f'{p!r}: {f!r}' for p, f in line.items())} }}" for v, line in support_table.items()

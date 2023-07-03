@@ -188,11 +188,11 @@ class WheelDownloader:
 
     @staticmethod
     def _marker_at(markers, key):
-        positions = []
-        for i, m in enumerate(markers):
-            if isinstance(m, tuple) and len(m) == 3 and m[0].value == key:  # noqa: PLR2004
-                positions.append(i)
-        return positions
+        return [
+            i
+            for i, m in enumerate(markers)
+            if isinstance(m, tuple) and len(m) == 3 and m[0].value == key  # noqa: PLR2004
+        ]
 
     @staticmethod
     def _del_marker_at(markers, at):

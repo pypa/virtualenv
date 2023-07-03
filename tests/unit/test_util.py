@@ -27,12 +27,10 @@ def test_reentrant_file_lock_is_thread_safe(tmp_path):
             target_file.touch()
 
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        tasks = []
-        for _ in range(4):
-            tasks.append(executor.submit(recreate_target_file))
+        tasks = [executor.submit(recreate_target_file) for _ in range(4)]
         concurrent.futures.wait(tasks)
         for task in tasks:
             try:
                 task.result()
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001, PERF203
                 pytest.fail(traceback.format_exc())
