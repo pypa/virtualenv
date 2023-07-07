@@ -1,6 +1,26 @@
 User Guide
 ==========
 
+Quick start
+-----------
+Create the environment (creates a folder in your current directory)
+    .. code-block:: console
+
+        virtualenv env_name
+In Linux or Mac, activate the new python environment
+    .. code-block:: console
+
+        source env_name/bin/activate
+Or in Windows
+    .. code-block:: console
+
+        .\env_name\Scripts\activate
+Confirm that the env is successfully selected
+    .. code-block:: console
+
+        which python3
+
+
 Introduction
 ------------
 
