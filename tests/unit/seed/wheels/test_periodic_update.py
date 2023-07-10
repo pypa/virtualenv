@@ -71,7 +71,7 @@ def test_manual_upgrade(session_app_data, caplog, mocker, for_py_version):
     assert "\tNewVersion(" in caplog.text
     packages = defaultdict(list)
     for args in do_update_mock.call_args_list:
-        packages[args[1]["distribution"]].append(args[1]["for_py_version"])  # noqa: PERF401
+        packages[args[1]["distribution"]].append(args[1]["for_py_version"])
     packages = {key: sorted(value) for key, value in packages.items()}
     versions = sorted(BUNDLE_SUPPORT.keys())
     expected = {"setuptools": versions, "wheel": versions, "pip": versions}
