@@ -35,7 +35,7 @@ Configuration file
 Unless ``VIRTUALENV_CONFIG_FILE`` is set, virtualenv looks for a standard ``virtualenv.ini`` configuration file.
 The exact location depends on the operating system you're using, as determined by :pypi:`platformdirs` application
 configuration definition. It can be overridden by setting the ``VIRTUALENV_CONFIG_FILE`` environment variable.
-The configuration file location is printed as at the end of the output when ``--help`` is passed. 
+The configuration file location is printed as at the end of the output when ``--help`` is passed.
 
 The keys of the settings are derived from the command line option (left strip the ``-`` characters, and replace ``-``
 with ``_``). Where multiple flags are available first found wins (where order is as it shows up under the ``--help``).
