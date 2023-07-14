@@ -5,6 +5,22 @@ Release History
 
 .. towncrier release notes start
 
+v20.24.0 (2023-07-14)
+---------------------
+
+Features - 20.24.0
+~~~~~~~~~~~~~~~~~~
+- Export the prompt prefix as ``VIRTUAL_ENV_PROMPT`` when activating a virtual
+  environment - by :user:`jimporter`. (:issue:`2194`)
+
+Bugfixes - 20.24.0
+~~~~~~~~~~~~~~~~~~
+- Fix test suite - by :user:`gaborbernat`. (:issue:`2592`)
+- Upgrade embedded wheels:
+
+  * setuptools to ``68.0.0`` from ``67.8.0`` (:issue:`2607`)
+
+
 v20.23.1 (2023-06-16)
 ---------------------
 
