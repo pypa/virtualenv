@@ -1,5 +1,10 @@
 @set "VIRTUAL_ENV=__VIRTUAL_ENV__"
 
+@set "VIRTUAL_ENV_PROMPT=__VIRTUAL_PROMPT__"
+@if NOT DEFINED VIRTUAL_ENV_PROMPT (
+    @for %%d in ("%VIRTUAL_ENV%") do @set "VIRTUAL_ENV_PROMPT=%%~nxd"
+)
+
 @if defined _OLD_VIRTUAL_PROMPT (
     @set "PROMPT=%_OLD_VIRTUAL_PROMPT%"
 ) else (
@@ -11,11 +16,7 @@
     )
 )
 @if not defined VIRTUAL_ENV_DISABLE_PROMPT (
-    @if "__VIRTUAL_PROMPT__" NEQ "" (
-        @set "PROMPT=(__VIRTUAL_PROMPT__) %PROMPT%"
-    ) else (
-        @for %%d in ("%VIRTUAL_ENV%") do @set "PROMPT=(%%~nxd) %PROMPT%"
-    )
+    @set "PROMPT=(%VIRTUAL_ENV_PROMPT%) %PROMPT%"
 )
 
 @REM Don't use () to avoid problems with them in %PATH%

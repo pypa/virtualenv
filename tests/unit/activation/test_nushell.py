@@ -19,7 +19,7 @@ def test_nushell(activation_tester_class, activation_tester):
             self.unix_line_ending = not IS_WIN
 
         def print_prompt(self):
-            return r"print $env.VIRTUAL_PROMPT"
+            return r"print $env.VIRTUAL_PREFIX"
 
         def activate_call(self, script):
             # Commands are called without quotes in Nushell

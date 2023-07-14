@@ -5,7 +5,7 @@
 set newline='\
 '
 
-alias deactivate 'test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PATH:q" && unset _OLD_VIRTUAL_PATH; rehash; test $?_OLD_VIRTUAL_PROMPT != 0 && set prompt="$_OLD_VIRTUAL_PROMPT:q" && unset _OLD_VIRTUAL_PROMPT; unsetenv VIRTUAL_ENV; test "\!:*" != "nondestructive" && unalias deactivate && unalias pydoc'
+alias deactivate 'test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PATH:q" && unset _OLD_VIRTUAL_PATH; rehash; test $?_OLD_VIRTUAL_PROMPT != 0 && set prompt="$_OLD_VIRTUAL_PROMPT:q" && unset _OLD_VIRTUAL_PROMPT; unsetenv VIRTUAL_ENV; unsetenv VIRTUAL_ENV_PROMPT; test "\!:*" != "nondestructive" && unalias deactivate && unalias pydoc'
 
 # Unset irrelevant variables.
 deactivate nondestructive
@@ -18,9 +18,9 @@ setenv PATH "$VIRTUAL_ENV:q/__BIN_NAME__:$PATH:q"
 
 
 if ('__VIRTUAL_PROMPT__' != "") then
-    set env_name = '(__VIRTUAL_PROMPT__) '
+    setenv VIRTUAL_ENV_PROMPT '__VIRTUAL_PROMPT__'
 else
-    set env_name = '('"$VIRTUAL_ENV:t:q"') '
+    setenv VIRTUAL_ENV_PROMPT "$VIRTUAL_ENV:t:q"
 endif
 
 if ( $?VIRTUAL_ENV_DISABLE_PROMPT ) then
@@ -42,7 +42,7 @@ if ( $do_prompt == "1" ) then
         if ( "$prompt:q" =~ *"$newline:q"* ) then
             :
         else
-            set prompt = "$env_name:q$prompt:q"
+            set prompt = '('"$VIRTUAL_ENV_PROMPT:q"') '"$prompt:q"
         endif
     endif
 endif

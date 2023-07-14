@@ -44,6 +44,7 @@ function deactivate -d 'Exit virtualenv mode and return to the normal environmen
     end
 
     set -e VIRTUAL_ENV
+    set -e VIRTUAL_ENV_PROMPT
 
     if test "$argv[1]" != 'nondestructive'
         # Self-destruct!
@@ -67,6 +68,14 @@ else
 end
 set -gx PATH "$VIRTUAL_ENV"'/__BIN_NAME__' $PATH
 
+# Prompt override provided?
+# If not, just use the environment name.
+if test -n '__VIRTUAL_PROMPT__'
+    set -gx VIRTUAL_ENV_PROMPT '__VIRTUAL_PROMPT__'
+else
+    set -gx VIRTUAL_ENV_PROMPT (basename "$VIRTUAL_ENV")
+end
+
 # Unset `$PYTHONHOME` if set.
 if set -q PYTHONHOME
     set -gx _OLD_VIRTUAL_PYTHONHOME $PYTHONHOME
@@ -85,13 +94,7 @@ if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
         # Run the user's prompt first; it might depend on (pipe)status.
         set -l prompt (_old_fish_prompt)
 
-        # Prompt override provided?
-        # If not, just prepend the environment name.
-        if test -n '__VIRTUAL_PROMPT__'
-            printf '(%s) ' '__VIRTUAL_PROMPT__'
-        else
-            printf '(%s) ' (basename "$VIRTUAL_ENV")
-        end
+        printf '(%s) ' $VIRTUAL_ENV_PROMPT
 
         string join -- \n $prompt # handle multi-line prompts
     end

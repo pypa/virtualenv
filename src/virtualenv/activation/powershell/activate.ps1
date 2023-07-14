@@ -16,6 +16,10 @@ function global:deactivate([switch] $NonDestructive) {
         Remove-Item env:VIRTUAL_ENV -ErrorAction SilentlyContinue
     }
 
+    if ($env:VIRTUAL_ENV_PROMPT) {
+        Remove-Item env:VIRTUAL_ENV_PROMPT -ErrorAction SilentlyContinue
+    }
+
     if (!$NonDestructive) {
         # Self destruct!
         Remove-Item function:deactivate
@@ -33,6 +37,13 @@ deactivate -nondestructive
 $VIRTUAL_ENV = $BASE_DIR
 $env:VIRTUAL_ENV = $VIRTUAL_ENV
 
+if ("__VIRTUAL_PROMPT__" -ne "") {
+    $env:VIRTUAL_ENV_PROMPT = "__VIRTUAL_PROMPT__"
+}
+else {
+    $env:VIRTUAL_ENV_PROMPT = $( Split-Path $env:VIRTUAL_ENV -Leaf )
+}
+
 New-Variable -Scope global -Name _OLD_VIRTUAL_PATH -Value $env:PATH
 
 $env:PATH = "$env:VIRTUAL_ENV/__BIN_NAME____PATH_SEP__" + $env:PATH
@@ -42,19 +53,9 @@ if (!$env:VIRTUAL_ENV_DISABLE_PROMPT) {
     }
     $function:_old_virtual_prompt = $function:prompt
 
-    if ("__VIRTUAL_PROMPT__" -ne "") {
-        function global:prompt {
-            # Add the custom prefix to the existing prompt
-            $previous_prompt_value = & $function:_old_virtual_prompt
-            ("(__VIRTUAL_PROMPT__) " + $previous_prompt_value)
-        }
-    }
-    else {
-        function global:prompt {
-            # Add a prefix to the current prompt, but don't discard it.
-            $previous_prompt_value = & $function:_old_virtual_prompt
-            $new_prompt_value = "($( Split-Path $env:VIRTUAL_ENV -Leaf )) "
-            ($new_prompt_value + $previous_prompt_value)
-        }
+    function global:prompt {
+        # Add the custom prefix to the existing prompt
+        $previous_prompt_value = & $function:_old_virtual_prompt
+        ("(" + $env:VIRTUAL_ENV_PROMPT + ") " + $previous_prompt_value)
     }
 }
