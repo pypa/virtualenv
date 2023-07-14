@@ -1,2 +1,0 @@
-Export the prompt prefix as ``VIRTUAL_ENV_PROMPT`` when activating a virtual
-environment - by :user:`jimporter`.
