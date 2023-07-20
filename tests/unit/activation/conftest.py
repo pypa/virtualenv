@@ -84,7 +84,7 @@ class ActivationTester:
             assert not exception.returncode, output  # noqa: PT017
             return None
 
-        out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, re.M).strip().splitlines()
+        out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, flags=re.MULTILINE).strip().splitlines()
         self.assert_output(out, raw, tmp_path)
         return env, activate_script
 

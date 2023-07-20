@@ -5,7 +5,7 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/psf/black
-    rev: 23.3.0
+    rev: 23.7.0
     hooks:
       - id: black
   - repo: https://github.com/tox-dev/tox-ini-fmt
@@ -24,7 +24,7 @@ repos:
       - id: prettier
         args: ["--print-width=120", "--prose-wrap=always"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.0.277"
+    rev: "v0.0.278"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
