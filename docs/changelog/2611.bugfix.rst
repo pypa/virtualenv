@@ -1,3 +1,0 @@
-Upgrade embedded wheels:
-
-* pip to ``23.2`` from ``23.1.2`` - by :user:`arielkirkwood`

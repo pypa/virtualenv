@@ -5,6 +5,16 @@ Release History
 
 .. towncrier release notes start
 
+v20.24.1 (2023-07-19)
+---------------------
+
+Bugfixes - 20.24.1
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded wheels:
+
+  * pip to ``23.2`` from ``23.1.2`` - by :user:`arielkirkwood` (:issue:`2611`)
+
+
 v20.24.0 (2023-07-14)
 ---------------------
 
