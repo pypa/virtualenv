@@ -23,7 +23,7 @@ def extract(full_path, dest):
 
 
 def _get_path_within_zip(full_path):
-    full_path = os.path.abspath(str(full_path))
+    full_path = os.path.realpath(os.path.abspath(str(full_path)))
     prefix = ROOT + os.sep
     assert full_path.startswith(prefix), f"full_path={full_path} should start with prefix={prefix}"
     sub_file = full_path[len(prefix) :]
