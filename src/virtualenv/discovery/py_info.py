@@ -278,10 +278,7 @@ class PythonInfo:
                     ),
                     (
                         "original"
-                        if (
-                            self.original_executable != self.system_executable
-                            and self.original_executable != self.executable
-                        )
+                        if self.original_executable not in {self.system_executable, self.executable}
                         else None,
                         self.original_executable,
                     ),

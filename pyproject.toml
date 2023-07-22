@@ -41,10 +41,10 @@ dynamic = [
   "version",
 ]
 dependencies = [
-  "distlib<1,>=0.3.6",
-  "filelock<4,>=3.12",
+  "distlib<1,>=0.3.7",
+  "filelock<4,>=3.12.2",
   'importlib-metadata>=6.6; python_version < "3.8"',
-  "platformdirs<4,>=3.5.1",
+  "platformdirs<4,>=3.9.1",
 ]
 optional-dependencies.docs = [
   "furo>=2023.5.20",
@@ -60,14 +60,14 @@ optional-dependencies.test = [
   "coverage-enable-subprocess>=1",
   "flaky>=3.7",
   "packaging>=23.1",
-  "pytest>=7.3.1",
-  "pytest-env>=0.8.1",
-  'pytest-freezer>=0.4.6; platform_python_implementation == "PyPy"',
-  "pytest-mock>=3.10",
+  "pytest>=7.4",
+  "pytest-env>=0.8.2",
+  'pytest-freezer>=0.4.8; platform_python_implementation == "PyPy"',
+  "pytest-mock>=3.11.1",
   "pytest-randomly>=3.12",
   "pytest-timeout>=2.1",
-  "setuptools>=67.8",
-  'time-machine>=2.9; platform_python_implementation == "CPython"',
+  "setuptools>=68",
+  'time-machine>=2.10; platform_python_implementation == "CPython"',
 ]
 urls.Documentation = "https://virtualenv.pypa.io"
 urls.Homepage = "https://github.com/pypa/virtualenv"
