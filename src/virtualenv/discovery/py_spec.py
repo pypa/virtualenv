@@ -58,7 +58,7 @@ class PythonSpec:
                     pass
                 else:
                     impl = groups["impl"]
-                    if impl == "py" or impl == "python":
+                    if impl in {"py", "python"}:
                         impl = None
                     arch = _int_or_none(groups["arch"])
 

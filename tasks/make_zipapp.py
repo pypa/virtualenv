@@ -231,7 +231,7 @@ class WheelDownloader:
         if not folder.exists() or not list(folder.iterdir()):
             cmd = [*self.pip_cmd, "wheel", "-w", str(folder), "--no-deps", str(target), "-q"]
             run_suppress_output(cmd, stop_print_on_fail=True)
-        return list(folder.iterdir())[0]
+        return next(iter(folder.iterdir()))
 
 
 def run_suppress_output(cmd, stop_print_on_fail=False):  # noqa: FBT002
