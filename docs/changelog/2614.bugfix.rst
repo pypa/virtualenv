@@ -1,4 +1,0 @@
-Upgrade embedded wheels:
-
-* pip to ``23.2.1`` from ``23.2``
-* wheel to ``0.41.0`` from ``0.40.0``
