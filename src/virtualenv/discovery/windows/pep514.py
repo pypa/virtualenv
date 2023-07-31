@@ -15,7 +15,7 @@ def enum_keys(key):
     while True:
         try:
             yield winreg.EnumKey(key, at)
-        except OSError:  # noqa: PERF203
+        except OSError:
             break
         at += 1
 

@@ -32,7 +32,7 @@ class SymlinkPipInstall(PipInstall):
                 rel = file.relative_to(self._image_dir)
                 if len(rel.parts) > 1:
                     continue
-            except ValueError:  # noqa: PERF203
+            except ValueError:
                 pass
             new_files.add(file)
         return new_files

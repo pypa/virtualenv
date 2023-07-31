@@ -77,7 +77,7 @@ def propose_interpreters(spec, try_first_with, app_data, env=None):  # noqa: C90
         path = os.path.abspath(py_exe)
         try:
             os.lstat(path)  # Windows Store Python does not work with os.path.exists, but does for os.lstat
-        except OSError:  # noqa: PERF203
+        except OSError:
             pass
         else:
             yield PythonInfo.from_exe(os.path.abspath(path), app_data, env=env), True
@@ -145,7 +145,7 @@ class LazyPathDump:
                     file_path = os.path.join(self.path, file_name)
                     if os.path.isdir(file_path) or not os.access(file_path, os.X_OK):
                         continue
-                except OSError:  # noqa: PERF203
+                except OSError:
                     pass
                 content += " "
                 content += file_name
