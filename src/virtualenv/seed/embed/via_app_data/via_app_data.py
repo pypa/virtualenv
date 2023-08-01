@@ -93,7 +93,7 @@ class FromAppData(BaseEmbed):
                     )
                     if result is not None:
                         break
-                except Exception as exception:  # noqa: PERF203
+                except Exception as exception:
                     logging.exception("fail")
                     failure = exception
             if failure:
