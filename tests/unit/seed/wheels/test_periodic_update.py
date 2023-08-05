@@ -316,7 +316,7 @@ def test_trigger_update_no_debug(for_py_version, session_app_data, tmp_path, moc
     )
 
     assert args == ([sys.executable, "-c", cmd],)
-    expected = {"stdout": subprocess.PIPE, "stderr": subprocess.PIPE}
+    expected = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
     if sys.platform == "win32":
         expected["creationflags"] = CREATE_NO_WINDOW
     assert kwargs == expected
