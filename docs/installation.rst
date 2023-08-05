@@ -90,8 +90,9 @@ supported on a best effort approach.
 CPython is shipped in multiple forms, and each OS repackages it, often applying some customization along the way.
 Therefore we cannot say universally that we support all platforms, but rather specify some we test against. In case
 of ones not specified here the support is unknown, though likely will work. If you find some cases please open a feature
-request on our issue tracker. Note, as of ``20.18.0`` we no longer support running under Python less than 3.7, however
-we still support creating environments for 2.7 and 3.5.
+request on our issue tracker. Note, as of ``20.18.0`` we no longer support running under Python less than 3.7. Also, as
+of ``20.22.0`` we no longer support creating environments for Python 2.7, 3.5 and 3.6.
+
 
 Linux
 ~~~~~
