@@ -12,7 +12,7 @@ from datetime import datetime, timedelta, timezone
 from itertools import groupby
 from pathlib import Path
 from shutil import copy2
-from subprocess import PIPE, Popen
+from subprocess import DEVNULL, Popen
 from textwrap import dedent
 from threading import Thread
 from urllib.error import URLError
@@ -216,7 +216,7 @@ def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, e
         .format(distribution, for_py_version, wheel_path, str(app_data), [str(p) for p in search_dirs], periodic),
     ]
     debug = env.get("_VIRTUALENV_PERIODIC_UPDATE_INLINE") == "1"
-    pipe = None if debug else PIPE
+    pipe = None if debug else DEVNULL
     kwargs = {"stdout": pipe, "stderr": pipe}
     if not debug and sys.platform == "win32":
         kwargs["creationflags"] = CREATE_NO_WINDOW
@@ -230,6 +230,9 @@ def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, e
     )
     if debug:
         process.communicate()  # on purpose not called to make it a background process
+    else:
+        # set the returncode here -> no ResourceWarning on main process exit if the subprocess still runs
+        process.returncode = 0
 
 
 def do_update(distribution, for_py_version, embed_filename, app_data, search_dirs, periodic):  # noqa: PLR0913
