@@ -1,0 +1,1 @@
+Added scripts in ``tasks`` directory to sdist on build (#2610)
