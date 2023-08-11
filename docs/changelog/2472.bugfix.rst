@@ -1,1 +1,0 @@
-Fixed ResourceWarning on exit caused by periodic update subprocess

@@ -5,6 +5,21 @@ Release History
 
 .. towncrier release notes start
 
+v20.24.3 (2023-08-11)
+---------------------
+
+Bugfixes - 20.24.3
+~~~~~~~~~~~~~~~~~~
+- Fixed ResourceWarning on exit caused by periodic update subprocess (:issue:`2472`)
+- Upgrade embedded wheels:
+
+  * wheel to ``0.41.1`` from ``0.41.0`` (:issue:`2622`)
+
+Misc - 20.24.3
+~~~~~~~~~~~~~~
+- :issue:`2610`
+
+
 v20.24.2 (2023-07-24)
 ---------------------
 
