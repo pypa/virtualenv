@@ -228,7 +228,7 @@ contain some executable, this will still resolve to the same executable it would
 
 For a list of shells we provide activators see :option:`activators`. The location of these is right alongside the Python
 executables: usually ``Scripts`` folder on Windows, ``bin`` on POSIX. They are called ``activate``, plus an
-extension that's specific per activator, with no extension for Bash. You can invoke them, usally by source-ing them.
+extension that's specific per activator, with no extension for Bash. You can invoke them, usually by source-ing them.
 The source command might vary by shell - e.g. on Bash it’s ``source`` (or ``.``):
 
 .. code-block:: console
