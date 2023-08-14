@@ -47,9 +47,9 @@ dependencies = [
   "platformdirs<4,>=3.9.1",
 ]
 optional-dependencies.docs = [
-  "furo>=2023.5.20",
+  "furo>=2023.7.26",
   "proselint>=0.13",
-  "sphinx>=7.0.1",
+  "sphinx>=7.1.2",
   "sphinx-argparse>=0.4",
   "sphinxcontrib-towncrier>=0.2.1a0",
   "towncrier>=23.6",

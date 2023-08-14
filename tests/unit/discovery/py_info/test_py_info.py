@@ -8,9 +8,9 @@ import logging
 import os
 import sys
 import sysconfig
-from collections import namedtuple
 from pathlib import Path
 from textwrap import dedent
+from typing import NamedTuple
 
 import pytest
 
@@ -166,7 +166,10 @@ def test_py_info_cached_symlink(mocker, tmp_path, session_app_data):
     assert spy.call_count == count + 1  # no longer needed the host invocation, but the new symlink is must
 
 
-PyInfoMock = namedtuple("PyInfoMock", ["implementation", "architecture", "version_info"])
+class PyInfoMock(NamedTuple):
+    implementation: str
+    architecture: int
+    version_info: VersionInfo
 
 
 @pytest.mark.parametrize(

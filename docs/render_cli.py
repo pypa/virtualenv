@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from argparse import SUPPRESS
-from collections import namedtuple
 from contextlib import contextmanager
-from typing import Any, ClassVar
+from typing import Any, ClassVar, NamedTuple
 
 from docutils import nodes as n
 from docutils.parsers.rst.directives import unchanged_required
@@ -12,9 +11,17 @@ from sphinxarg.parser import parse_parser
 
 from virtualenv.run.plugin.base import ComponentBuilder
 
-TableRow = namedtuple("TableRow", ["names", "default", "choices", "help"])
 
-TextAsDefault = namedtuple("TextAsDefault", ["text"])
+class TableRow(NamedTuple):
+    names: list[str]
+    default: str
+    choices: set[str]
+    help: str  # noqa: A003
+
+
+class TextAsDefault(NamedTuple):
+    text: str
+
 
 CUSTOM = {
     "discovery": ComponentBuilder.entry_points_for("virtualenv.discovery"),
