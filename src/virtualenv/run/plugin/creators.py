@@ -1,13 +1,22 @@
 from __future__ import annotations
 
-from collections import OrderedDict, defaultdict, namedtuple
+from collections import OrderedDict, defaultdict
+from typing import TYPE_CHECKING, NamedTuple
 
 from virtualenv.create.describe import Describe
 from virtualenv.create.via_global_ref.builtin.builtin_way import VirtualenvBuiltin
 
 from .base import ComponentBuilder
 
-CreatorInfo = namedtuple("CreatorInfo", ["key_to_class", "key_to_meta", "describe", "builtin_key"])
+if TYPE_CHECKING:
+    from virtualenv.create.creator import Creator, CreatorMeta
+
+
+class CreatorInfo(NamedTuple):
+    key_to_class: dict[str, type[Creator]]
+    key_to_meta: dict[str, CreatorMeta]
+    describe: type[Describe] | None
+    builtin_key: str
 
 
 class CreatorSelector(ComponentBuilder):
