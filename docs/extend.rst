@@ -73,7 +73,7 @@ under and entry point with key ``virtualenv.seed`` , and the class must implemen
 Activation scripts
 ------------------
 If you want add an activator for a new shell you can do this by implementing a new activator. They must be registered
-under and entry point with key ``virtualenv.activate`` , and the class must implement
+under an entry point with key ``virtualenv.activate`` , and the class must implement
 :class:`virtualenv.activation.activator.Activator`:
 
 .. code-block:: ini
