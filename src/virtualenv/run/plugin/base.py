@@ -25,9 +25,9 @@ class PluginLoader:
 
     @staticmethod
     def entry_points():
-        if PluginLoader._ENTRY_POINTS is None:  # noqa: SLF001
-            PluginLoader._ENTRY_POINTS = entry_points()  # noqa: SLF001
-        return PluginLoader._ENTRY_POINTS  # noqa: SLF001
+        if PluginLoader._ENTRY_POINTS is None:
+            PluginLoader._ENTRY_POINTS = entry_points()
+        return PluginLoader._ENTRY_POINTS
 
 
 class ComponentBuilder(PluginLoader):
