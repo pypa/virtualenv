@@ -120,7 +120,7 @@ def run():  # noqa: C901
         dest_target = DEST / "__init__.py"
         dest_target.write_text(msg, encoding="utf-8")
 
-        subprocess.run([sys.executable, "-m", "black", str(dest_target)])  # noqa: S603
+        subprocess.run([sys.executable, "-m", "black", str(dest_target)], check=False)  # noqa: S603
 
         raise SystemExit(outcome)
 

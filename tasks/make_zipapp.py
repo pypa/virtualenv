@@ -162,7 +162,7 @@ class WheelDownloader:
                 m for m in markers if isinstance(m, tuple) and len(m) == 3 and m[0].value == "extra"  # noqa: PLR2004
             ):
                 continue
-            py_versions = WheelDownloader._marker_at(markers, "python_version")  # noqa: SLF001
+            py_versions = WheelDownloader._marker_at(markers, "python_version")
             if py_versions:
                 marker = Marker('python_version < "1"')
                 marker._markers = [  # noqa: SLF001
@@ -173,13 +173,13 @@ class WheelDownloader:
                     continue
                 deleted = 0
                 for ver in py_versions:
-                    deleted += WheelDownloader._del_marker_at(markers, ver - deleted)  # noqa: SLF001
+                    deleted += WheelDownloader._del_marker_at(markers, ver - deleted)
             platforms = []
-            platform_positions = WheelDownloader._marker_at(markers, "sys_platform")  # noqa: SLF001
+            platform_positions = WheelDownloader._marker_at(markers, "sys_platform")
             deleted = 0
             for pos in platform_positions:  # can only be ore meaningfully
                 platform = f"{markers[pos][1].value}{markers[pos][2].value}"
-                deleted += WheelDownloader._del_marker_at(markers, pos - deleted)  # noqa: SLF001
+                deleted += WheelDownloader._del_marker_at(markers, pos - deleted)
                 platforms.append(platform)
             if not platforms:
                 platforms.append(None)

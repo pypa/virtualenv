@@ -353,7 +353,7 @@ def _pypi_get_distribution_info(distribution):
                 with urlopen(url, context=context) as file_handler:  # noqa: S310
                     content = json.load(file_handler)
                 break
-            except URLError as exception:  # noqa: PERF203
+            except URLError as exception:
                 logging.error("failed to access %s because %r", url, exception)  # noqa: TRY400
     except Exception as exception:  # noqa: BLE001
         logging.error("failed to access %s because %r", url, exception)  # noqa: TRY400
