@@ -5,6 +5,17 @@ Release History
 
 .. towncrier release notes start
 
+v20.24.4 (2023-08-30)
+---------------------
+
+Bugfixes - 20.24.4
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded wheels:
+
+  * setuptools to ``68.1.2`` from ``68.1.0`` on ``3.8+``
+  * wheel to ``0.41.2`` from ``0.41.1``  on ``3.7+`` (:issue:`2628`)
+
+
 v20.24.3 (2023-08-11)
 ---------------------
 
