@@ -37,7 +37,7 @@ jobs:
           - { os: macos-latest, py: "brew@3.9" }
           - { os: macos-latest, py: "brew@3.8" }
         exclude:
-          - { os: windows-latest, py: "3.12-rc.2" }
+          - { os: windows-latest, py: "3.12.0-rc.2" }
     steps:
       - uses: taiki-e/install-action@cargo-binstall
       - name: Install OS dependencies
