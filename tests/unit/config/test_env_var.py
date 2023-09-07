@@ -7,6 +7,8 @@ import pytest
 
 from virtualenv.config.cli.parser import VirtualEnvOptions
 from virtualenv.config.ini import IniConfig
+from virtualenv.create.via_global_ref.builtin.cpython.common import is_macos_brew
+from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.run import session_via_cli
 
 
@@ -74,6 +76,7 @@ def test_extra_search_dir_via_env_var(tmp_path, monkeypatch):
 
 
 @pytest.mark.usefixtures("_empty_conf")
+@pytest.mark.skipif(is_macos_brew(PythonInfo.current_system()), reason="no copy on brew")
 def test_value_alias(monkeypatch, mocker):
     from virtualenv.config.cli.parser import VirtualEnvConfigParser
 

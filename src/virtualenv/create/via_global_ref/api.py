@@ -59,10 +59,10 @@ class ViaGlobalRefApi(Creator, metaclass=ABCMeta):
             dest="system_site",
             help="give the virtual environment access to the system site-packages dir",
         )
-        group = parser.add_mutually_exclusive_group()
         if not meta.can_symlink and not meta.can_copy:
             msg = "neither symlink or copy method supported"
             raise RuntimeError(msg)
+        group = parser.add_mutually_exclusive_group()
         if meta.can_symlink:
             group.add_argument(
                 "--symlinks",

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from abc import ABCMeta
 from collections import OrderedDict
 from pathlib import Path
@@ -54,9 +55,19 @@ def is_mac_os_framework(interpreter):
     return False
 
 
+def is_macos_brew(interpreter):
+    return interpreter.platform == "darwin" and _BREW.fullmatch(interpreter.system_prefix) is not None
+
+
+_BREW = re.compile(
+    r"/(usr/local|opt/homebrew)/(opt/python@3\.\d{1,2}|Cellar/python@3\.\d{1,2}/3\.\d{1,2}\.\d{1,2})/Frameworks/"
+    r"Python\.framework/Versions/3\.\d{1,2}",
+)
+
 __all__ = [
     "CPython",
     "CPythonPosix",
     "CPythonWindows",
     "is_mac_os_framework",
+    "is_macos_brew",
 ]

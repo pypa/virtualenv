@@ -11,7 +11,7 @@ from virtualenv.create.describe import Python3Supports
 from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
 from virtualenv.create.via_global_ref.store import is_store_python
 
-from .common import CPython, CPythonPosix, CPythonWindows, is_mac_os_framework
+from .common import CPython, CPythonPosix, CPythonWindows, is_mac_os_framework, is_macos_brew
 
 
 class CPython3(CPython, Python3Supports, metaclass=abc.ABCMeta):
@@ -21,7 +21,11 @@ class CPython3(CPython, Python3Supports, metaclass=abc.ABCMeta):
 class CPython3Posix(CPythonPosix, CPython3):
     @classmethod
     def can_describe(cls, interpreter):
-        return is_mac_os_framework(interpreter) is False and super().can_describe(interpreter)
+        return (
+            is_mac_os_framework(interpreter) is False
+            and is_macos_brew(interpreter) is False
+            and super().can_describe(interpreter)
+        )
 
     def env_patch_text(self):
         text = super().env_patch_text()

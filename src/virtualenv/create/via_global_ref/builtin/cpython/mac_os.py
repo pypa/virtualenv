@@ -14,8 +14,9 @@ from virtualenv.create.via_global_ref.builtin.ref import (
     PathRefToDest,
     RefMust,
 )
+from virtualenv.create.via_global_ref.builtin.via_global_self_do import BuiltinViaGlobalRefMeta
 
-from .common import CPython, CPythonPosix, is_mac_os_framework
+from .common import CPython, CPythonPosix, is_mac_os_framework, is_macos_brew
 from .cpython3 import CPython3
 
 
@@ -258,7 +259,20 @@ def _builtin_change_mach_o(maxint):  # noqa: C901
     return mach_o_change
 
 
+class CPython3macOsBrew(CPython3, CPythonPosix):
+    @classmethod
+    def can_describe(cls, interpreter):
+        return is_macos_brew(interpreter) and super().can_describe(interpreter)
+
+    @classmethod
+    def setup_meta(cls, interpreter):  # noqa: ARG003
+        meta = BuiltinViaGlobalRefMeta()
+        meta.copy_error = "Brew disables copy creation: https://github.com/Homebrew/homebrew-core/issues/138159"
+        return meta
+
+
 __all__ = [
     "CPythonmacOsFramework",
     "CPython3macOsFramework",
+    "CPython3macOsBrew",
 ]
