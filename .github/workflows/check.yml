@@ -36,8 +36,8 @@ jobs:
         include:
           - { os: macos-latest, py: "brew@3.9" }
           - { os: macos-latest, py: "brew@3.8" }
-        exclude:
-          - { os: windows-latest, py: "3.12.0-rc.2" }
+        # exclude:  # Python 3.12 on Windows fails
+        #  - { os: windows-latest, py: "3.12.0-rc.2" }
     steps:
       - uses: taiki-e/install-action@cargo-binstall
       - name: Install OS dependencies
@@ -71,6 +71,7 @@ jobs:
           set -e
           PY=$(echo '${{ matrix.py }}' | cut -c 6-)
           brew upgrade python@$PY || brew install python@$PY
+          brew doctor  # Fix dyld library not loaded issues
           echo "/usr/local/opt/python@$PY/libexec/bin" >>"${GITHUB_PATH}"
         shell: bash
       - name: Setup python for test ${{ matrix.py }}
