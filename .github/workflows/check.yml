@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         py:
-          - "3.12.0-beta.2"
+          - "3.12.0-rc.2"
           - "3.11"
           - "3.10"
           - "3.9"
