@@ -83,6 +83,7 @@ nushell = "virtualenv.activation.nushell:NushellActivator"
 powershell = "virtualenv.activation.powershell:PowerShellActivator"
 python = "virtualenv.activation.python:PythonActivator"
 [project.entry-points."virtualenv.create"]
+cpython3-mac-brew = "virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython3macOsBrew"
 cpython3-mac-framework = "virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython3macOsFramework"
 cpython3-posix = "virtualenv.create.via_global_ref.builtin.cpython.cpython3:CPython3Posix"
 cpython3-win = "virtualenv.create.via_global_ref.builtin.cpython.cpython3:CPython3Windows"

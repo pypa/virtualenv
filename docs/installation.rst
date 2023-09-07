@@ -4,7 +4,7 @@ Installation
 via pipx
 --------
 
-:pypi:`virtualenv` is a CLI tool that needs a Python interpreter to run. If you already have a ``Python 3.5+``
+:pypi:`virtualenv` is a CLI tool that needs a Python interpreter to run. If you already have a ``Python 3.7+``
 interpreter the best is to use :pypi:`pipx` to install virtualenv into an isolated environment. This has the added
 benefit that later you'll be able to upgrade virtualenv without affecting other parts of the system.
 
@@ -58,11 +58,14 @@ with a python interpreter:
 
 The root level zipapp is always the current latest release. To get the last supported zipapp against a given python
 minor release use the link ``https://bootstrap.pypa.io/virtualenv/x.y/virtualenv.pyz``, e.g. for the last virtualenv
-supporting Python 2.7 use
-`https://bootstrap.pypa.io/virtualenv/2.7/virtualenv.pyz <https://bootstrap.pypa.io/virtualenv/2.7/virtualenv.pyz>`_.
+supporting Python 3.11 use
+`https://bootstrap.pypa.io/virtualenv/3.11/virtualenv.pyz <https://bootstrap.pypa.io/virtualenv/3.11/virtualenv.pyz>`_.
 
 If you are looking for past version of virtualenv.pyz they are available here:
-https://github.com/pypa/get-virtualenv/blob/<virtualenv version>/public/<python version>/virtualenv.pyz?raw=true
+
+.. code-block:: console
+
+    https://github.com/pypa/get-virtualenv/blob/<virtualenv version>/public/<python version>/virtualenv.pyz?raw=true
 
 latest unreleased
 -----------------
@@ -81,8 +84,8 @@ Python and OS Compatibility
 
 virtualenv works with the following Python interpreter implementations:
 
-- `CPython <https://www.python.org/>`_ versions 3.7, 3.8, 3.9, 3.10, 3.11, 3.12
-- `PyPy <https://pypy.org/>`_ 3.7, 3.8, 3.9
+- `CPython <https://www.python.org/>`_: ``3.12 >= python_version >= 3.7``
+- `PyPy <https://pypy.org/>`_: ``3.9 >= python_version >= 3.7``
 
 This means virtualenv works on the latest patch version of each of these minor versions. Previous patch versions are
 supported on a best effort approach.
@@ -90,9 +93,12 @@ supported on a best effort approach.
 CPython is shipped in multiple forms, and each OS repackages it, often applying some customization along the way.
 Therefore we cannot say universally that we support all platforms, but rather specify some we test against. In case
 of ones not specified here the support is unknown, though likely will work. If you find some cases please open a feature
-request on our issue tracker. Note, as of ``20.18.0`` we no longer support running under Python less than 3.7. Also, as
-of ``20.22.0`` we no longer support creating environments for Python 2.7, 3.5 and 3.6.
+request on our issue tracker.
 
+Note:
+
+- as of ``20.18.0`` -- ``2023-02-06`` -- we no longer support running under Python ``<=3.6``,
+- as of ``20.22.0`` -- ``2023-04-19`` -- we no longer support creating environments for Python ``<=3.6``.
 
 Linux
 ~~~~~
@@ -107,19 +113,11 @@ macOS
 ~~~~~
 In case of macOS we support:
 
-- installations from `python.org <https://www.python.org/downloads/>`_
-- python versions installed via `brew <https://docs.brew.sh/Homebrew-and-Python>`_ (both older python2.7 and python3)
-- Python 3 part of XCode (Python framework - ``/Library/Frameworks/Python3.framework/``)
-- Python 2 part of the OS (``/System/Library/Frameworks/Python.framework/Versions/``)
+- installations from `python.org <https://www.python.org/downloads/>`_,
+- python versions installed via `brew <https://docs.brew.sh/Homebrew-and-Python>`_,
+- Python 3 part of XCode (Python framework - ``/Library/Frameworks/Python3.framework/``).
 
 Windows
 ~~~~~~~
 - Installations from `python.org <https://www.python.org/downloads/>`_
 - Windows Store Python - note only `version 3.7+ <https://www.microsoft.com/en-us/p/python-38/9mssztt1n39l>`_
-
-Packaging variants
-~~~~~~~~~~~~~~~~~~
-- Normal variant (file structure as comes from `python.org <https://www.python.org/downloads/>`_).
-- We support CPython 2 system installations that do not contain the python files for the standard library if the
-  respective compiled files are present (e.g. only ``os.pyc``, not ``os.py``). This can be used by custom systems may
-  want to maximize available storage or obfuscate source code by removing ``.py`` files.

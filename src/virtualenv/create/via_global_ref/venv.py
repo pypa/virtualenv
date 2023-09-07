@@ -10,6 +10,7 @@ from virtualenv.util.path import ensure_dir
 from virtualenv.util.subprocess import run_cmd
 
 from .api import ViaGlobalRefApi, ViaGlobalRefMeta
+from .builtin.cpython.mac_os import CPython3macOsBrew
 from .builtin.pypy.pypy3 import Pypy3Windows
 
 
@@ -27,6 +28,8 @@ class Venv(ViaGlobalRefApi):
     @classmethod
     def can_create(cls, interpreter):
         if interpreter.has_venv:
+            if CPython3macOsBrew.can_describe(interpreter):
+                return CPython3macOsBrew.setup_meta(interpreter)
             meta = ViaGlobalRefMeta()
             if interpreter.platform == "win32":
                 meta = handle_store_python(meta, interpreter)

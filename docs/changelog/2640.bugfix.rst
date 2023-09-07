@@ -1,0 +1,1 @@
+Brew on macOS no longer allows copy builds - disallow choosing this by :user:`gaborbernat`.

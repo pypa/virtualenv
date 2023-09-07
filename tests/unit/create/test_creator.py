@@ -24,6 +24,7 @@ import pytest
 from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.create.pyenv_cfg import PyEnvCfg
+from virtualenv.create.via_global_ref.builtin.cpython.common import is_macos_brew
 from virtualenv.create.via_global_ref.builtin.cpython.cpython3 import CPython3Posix
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_PYPY, IS_WIN, fs_is_case_sensitive
@@ -430,6 +431,7 @@ def list_files(path):
     return result
 
 
+@pytest.mark.skipif(is_macos_brew(CURRENT), reason="no copy on brew")
 def test_zip_importer_can_import_setuptools(tmp_path):
     """We're patching the loaders so might fail on r/o loaders, such as zipimporter on CPython<3.8"""
     result = cli_run(
