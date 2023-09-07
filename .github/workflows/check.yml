@@ -68,6 +68,7 @@ jobs:
           set -e
           PY=$(echo '${{ matrix.py }}' | cut -c 6-)
           brew upgrade python@$PY || brew install python@$PY
+          brew doctor  # Fix dyld library not loaded issues
           echo "/usr/local/opt/python@$PY/libexec/bin" >>"${GITHUB_PATH}"
         shell: bash
       - name: Setup python for test ${{ matrix.py }}
