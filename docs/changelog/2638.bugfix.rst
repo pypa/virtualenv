@@ -1,1 +1,0 @@
-Declare PyPy 3.10 support - by :user:`cclauss`.

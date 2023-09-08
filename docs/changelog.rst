@@ -5,6 +5,18 @@ Release History
 
 .. towncrier release notes start
 
+v20.24.5 (2023-09-08)
+---------------------
+
+Bugfixes - 20.24.5
+~~~~~~~~~~~~~~~~~~
+- Declare PyPy 3.10 support - by :user:`cclauss`. (:issue:`2638`)
+- Brew on macOS no longer allows copy builds - disallow choosing this by :user:`gaborbernat`. (:issue:`2640`)
+- Upgrade embedded wheels:
+
+  * setuptools to ``68.2.0`` from ``68.1.2`` (:issue:`2642`)
+
+
 v20.24.4 (2023-08-30)
 ---------------------
 
