@@ -1,4 +1,4 @@
-Virtualenv
+virtualenv
 ==========
 
 .. image:: https://img.shields.io/pypi/v/virtualenv?style=flat-square
