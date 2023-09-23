@@ -276,7 +276,7 @@ def get_wheels_for_support_versions(folder):
 class WheelForVersion:
     def __init__(self, wheel=None, versions=None) -> None:
         self.wheel = wheel
-        self.versions = versions if versions else []
+        self.versions = versions or []
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.wheel!r}, {self.versions!r})"

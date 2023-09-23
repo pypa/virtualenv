@@ -31,7 +31,7 @@ class PythonSpec:
             path = string_spec
         else:
             ok = False
-            match = re.match(PATTERN, string_spec)
+            match = PATTERN.match(string_spec)
             if match:
 
                 def _int_or_none(val):

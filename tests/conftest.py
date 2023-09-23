@@ -187,7 +187,7 @@ def _check_os_environ_stable():
 
 
 COV_ENV_VAR = "COVERAGE_PROCESS_START"
-COVERAGE_RUN = os.environ.get(str(COV_ENV_VAR))
+COVERAGE_RUN = os.environ.get(COV_ENV_VAR)
 
 
 @pytest.fixture(autouse=True)

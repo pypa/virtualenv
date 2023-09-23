@@ -53,7 +53,6 @@ class ContentStoreNA(ContentStore):
 
     def read(self):
         """Nothing to read."""
-        return
 
     def write(self, content):
         """Nothing to write."""
