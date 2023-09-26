@@ -24,7 +24,7 @@ repos:
       - id: prettier
         args: ["--print-width=120", "--prose-wrap=always"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.0.288"
+    rev: "v0.0.291"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
