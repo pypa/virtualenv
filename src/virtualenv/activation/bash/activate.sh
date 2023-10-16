@@ -1,5 +1,5 @@
-# This file must be used with "source bin/activate" *from bash*
-# you cannot run it directly
+#!/usr/bin/env bash
+# you can run it directly `source venv/bin/activate`
 
 
 if [ "${BASH_SOURCE-}" = "$0" ]; then
