@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # you can run it directly `source venv/bin/activate`
+# if this doesn't work, try this running from bash.
 
 
 if [ "${BASH_SOURCE-}" = "$0" ]; then
