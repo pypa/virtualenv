@@ -18,7 +18,7 @@ def test_python(raise_on_non_source_class, activation_tester):
                 sys.executable,
                 activate_script="activate_this.py",
                 extension="py",
-                non_source_fail_message="You must use exec(open(this_file).read(), {'__file__': this_file}))",
+                non_source_fail_message="You must use exec(open(this_file).read(), {'__file__': this_file})",
             )
             self.unix_line_ending = not IS_WIN
 
