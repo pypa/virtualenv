@@ -25,7 +25,7 @@ def pytest_configure(config):
     """Ensure randomly is called before we re-order"""
     manager = config.pluginmanager
 
-    order = manager.hook.pytest_collection_modifyitems._hookimpls  # noqa: SLF001
+    order = manager.hook.pytest_collection_modifyitems.get_hookimpls()
     dest = next((i for i, p in enumerate(order) if p.plugin is manager.getplugin("randomly")), None)
     if dest is not None:
         from_pos = next(i for i, p in enumerate(order) if p.plugin is manager.getplugin(__file__))
