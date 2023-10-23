@@ -1,1 +1,0 @@
-Use get_hookimpls method instead of the private attribute in tests.
