@@ -97,6 +97,8 @@ CREATE_METHODS = []
 for k, v in CURRENT.creators().key_to_meta.items():
     if k in CURRENT_CREATORS:
         if v.can_copy:
+            if k == "venv" and CURRENT.implementation == "PyPy" and CURRENT.pypy_version_info >= [7, 3, 13]:
+                continue  # https://foss.heptapod.net/pypy/pypy/-/issues/4019
             CREATE_METHODS.append((k, "copies"))
         if v.can_symlink:
             CREATE_METHODS.append((k, "symlinks"))
