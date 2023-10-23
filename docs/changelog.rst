@@ -5,6 +5,18 @@ Release History
 
 .. towncrier release notes start
 
+v20.24.6 (2023-10-23)
+---------------------
+
+Bugfixes - 20.24.6
+~~~~~~~~~~~~~~~~~~
+- Use get_hookimpls method instead of the private attribute in tests. (:issue:`2649`)
+- Upgrade embedded wheels:
+
+  * setuptools to ``68.2.2`` from ``68.2.0``
+  * pip to ``23.3.1`` from ``23.2.1`` (:issue:`2656`)
+
+
 v20.24.5 (2023-09-08)
 ---------------------
 
