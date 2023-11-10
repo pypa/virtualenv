@@ -44,7 +44,7 @@ dependencies = [
   "distlib<1,>=0.3.7",
   "filelock<4,>=3.12.2",
   'importlib-metadata>=6.6; python_version < "3.8"',
-  "platformdirs<4,>=3.9.1",
+  "platformdirs<5,>=3.9.1",
 ]
 optional-dependencies.docs = [
   "furo>=2023.7.26",
