@@ -9,32 +9,32 @@ BUNDLE_SUPPORT = {
     "3.7": {
         "pip": "pip-23.3.1-py3-none-any.whl",
         "setuptools": "setuptools-68.0.0-py3-none-any.whl",
-        "wheel": "wheel-0.41.2-py3-none-any.whl",
+        "wheel": "wheel-0.41.3-py3-none-any.whl",
     },
     "3.8": {
         "pip": "pip-23.3.1-py3-none-any.whl",
         "setuptools": "setuptools-68.2.2-py3-none-any.whl",
-        "wheel": "wheel-0.41.2-py3-none-any.whl",
+        "wheel": "wheel-0.41.3-py3-none-any.whl",
     },
     "3.9": {
         "pip": "pip-23.3.1-py3-none-any.whl",
         "setuptools": "setuptools-68.2.2-py3-none-any.whl",
-        "wheel": "wheel-0.41.2-py3-none-any.whl",
+        "wheel": "wheel-0.41.3-py3-none-any.whl",
     },
     "3.10": {
         "pip": "pip-23.3.1-py3-none-any.whl",
         "setuptools": "setuptools-68.2.2-py3-none-any.whl",
-        "wheel": "wheel-0.41.2-py3-none-any.whl",
+        "wheel": "wheel-0.41.3-py3-none-any.whl",
     },
     "3.11": {
         "pip": "pip-23.3.1-py3-none-any.whl",
         "setuptools": "setuptools-68.2.2-py3-none-any.whl",
-        "wheel": "wheel-0.41.2-py3-none-any.whl",
+        "wheel": "wheel-0.41.3-py3-none-any.whl",
     },
     "3.12": {
         "pip": "pip-23.3.1-py3-none-any.whl",
         "setuptools": "setuptools-68.2.2-py3-none-any.whl",
-        "wheel": "wheel-0.41.2-py3-none-any.whl",
+        "wheel": "wheel-0.41.3-py3-none-any.whl",
     },
 }
 MAX = "3.7"
