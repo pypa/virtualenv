@@ -36,6 +36,11 @@ BUNDLE_SUPPORT = {
         "setuptools": "setuptools-69.0.2-py3-none-any.whl",
         "wheel": "wheel-0.42.0-py3-none-any.whl",
     },
+    "3.13": {
+        "pip": "pip-23.3.1-py3-none-any.whl",
+        "setuptools": "setuptools-69.0.2-py3-none-any.whl",
+        "wheel": "wheel-0.42.0-py3-none-any.whl",
+    },
 }
 MAX = "3.7"
 
