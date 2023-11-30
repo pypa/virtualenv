@@ -47,10 +47,14 @@ class PathMockABC(FakeDataABC, Path):
     """Mocks the behavior of `Path`"""
 
     _flavour = getattr(Path(), "_flavour", None)
-
     if hasattr(_flavour, "altsep"):
         # Allows to pass some tests for Windows via PosixPath.
         _flavour.altsep = _flavour.altsep or "\\"
+
+    # Python 3.13 renamed _flavour to pathmod
+    pathmod = getattr(Path(), "pathmod", None)
+    if hasattr(pathmod, "altsep"):
+        pathmod.altsep = pathmod.altsep or "\\"
 
     def exists(self):
         return self.is_file() or self.is_dir()
