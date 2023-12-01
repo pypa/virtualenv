@@ -1,3 +1,0 @@
-Upgrade embedded wheels:
-
-* wheel to ``0.41.3`` from ``0.41.2``

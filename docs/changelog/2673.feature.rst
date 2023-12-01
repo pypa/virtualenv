@@ -1,1 +1,0 @@
-The tests now pass on the CI with Python 3.13.0a2 - by :user:`hroncok`.
