@@ -14,7 +14,7 @@ repos:
       - id: tox-ini-fmt
         args: ["-p", "fix"]
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "1.5.1"
+    rev: "1.5.2"
     hooks:
       - id: pyproject-fmt
         additional_dependencies: ["tox>=4.11"]
