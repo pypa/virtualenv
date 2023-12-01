@@ -5,6 +5,23 @@ Release History
 
 .. towncrier release notes start
 
+v20.25.0 (2023-12-01)
+---------------------
+
+Features - 20.25.0
+~~~~~~~~~~~~~~~~~~
+- The tests now pass on the CI with Python 3.13.0a2 - by :user:`hroncok`. (:issue:`2673`)
+
+Bugfixes - 20.25.0
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded wheels:
+
+  * wheel to ``0.41.3`` from ``0.41.2`` (:issue:`2665`)
+- Upgrade embedded wheels:
+
+  * wheel to ``0.42.0`` from ``0.41.3``
+  * setuptools to ``69.0.2`` from ``68.2.2`` (:issue:`2669`)
+
 v20.24.6 (2023-10-23)
 ---------------------
 
