@@ -1,6 +1,8 @@
 name: check
 on:
+  workflow_dispatch:
   push:
+    branches: "main"
     tags-ignore: ["**"]
   pull_request:
   schedule:
@@ -56,9 +58,9 @@ jobs:
           exit 1
         shell: bash
       - name: Setup python for tox
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Setup brew python for test ${{ matrix.py }}
         if: startsWith(matrix.py,'brew@')
         run: |
@@ -76,7 +78,7 @@ jobs:
         run: python -m pip install .
       - name: Setup python for test ${{ matrix.py }}
         if: "!( startsWith(matrix.py,'brew@') || endsWith(matrix.py, '-dev') )"
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py }}
       - name: Pick environment to run
@@ -119,10 +121,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Setup Python "3.11"
-        uses: actions/setup-python@v4
+      - name: Setup Python "3.12"
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Install tox
         run: python -m pip install tox
       - name: Setup check

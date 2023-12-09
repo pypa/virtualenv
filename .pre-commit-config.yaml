@@ -17,14 +17,9 @@ repos:
     rev: "1.5.3"
     hooks:
       - id: pyproject-fmt
-        additional_dependencies: ["tox>=4.11"]
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v4.0.0-alpha.3"
-    hooks:
-      - id: prettier
-        args: ["--print-width=120", "--prose-wrap=always"]
+        additional_dependencies: ["tox>=4.11.4"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.1.6"
+    rev: "v0.1.7"
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
