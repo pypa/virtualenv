@@ -8,7 +8,7 @@ import pytest
 
 @pytest.fixture()
 def _mock_registry(mocker):  # noqa: C901
-    from virtualenv.discovery.windows.pep514 import winreg
+    from virtualenv.discovery.windows.pep514 import winreg  # noqa: PLC0415
 
     loc, glob = {}, {}
     mock_value_str = (Path(__file__).parent / "winreg-mock-values.py").read_text(encoding="utf-8")
@@ -67,7 +67,7 @@ def _mock_registry(mocker):  # noqa: C901
 
 def _mock_pyinfo(major, minor, arch, exe):
     """Return PythonInfo objects with essential metadata set for the given args"""
-    from virtualenv.discovery.py_info import PythonInfo, VersionInfo
+    from virtualenv.discovery.py_info import PythonInfo, VersionInfo  # noqa: PLC0415
 
     info = PythonInfo()
     info.base_prefix = str(Path(exe).parent)
@@ -81,7 +81,7 @@ def _mock_pyinfo(major, minor, arch, exe):
 @pytest.fixture()
 def _populate_pyinfo_cache(monkeypatch):
     """Add metadata to virtualenv.discovery.cached_py_info._CACHE for all (mocked) registry entries"""
-    import virtualenv.discovery.cached_py_info
+    import virtualenv.discovery.cached_py_info  # noqa: PLC0415
 
     # Data matches _mock_registry fixture
     interpreters = [

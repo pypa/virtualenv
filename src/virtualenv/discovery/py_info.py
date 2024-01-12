@@ -28,7 +28,7 @@ EXTENSIONS = _get_path_extensions()
 _CONF_VAR_RE = re.compile(r"\{\w+\}")
 
 
-class PythonInfo:
+class PythonInfo:  # noqa: PLR0904
     """Contains information for a Python interpreter."""
 
     def __init__(self) -> None:  # noqa: PLR0915
@@ -175,8 +175,8 @@ class PythonInfo:
         with warnings.catch_warnings():  # disable warning for PEP-632
             warnings.simplefilter("ignore")
             try:
-                from distutils import dist
-                from distutils.command.install import SCHEME_KEYS
+                from distutils import dist  # noqa: PLC0415
+                from distutils.command.install import SCHEME_KEYS  # noqa: PLC0415
             except ImportError:  # if removed or not installed ignore
                 return {}
 
@@ -225,7 +225,7 @@ class PythonInfo:
 
     def creators(self, refresh=False):  # noqa: FBT002
         if self._creators is None or refresh is True:
-            from virtualenv.run.plugin.creators import CreatorSelector
+            from virtualenv.run.plugin.creators import CreatorSelector  # noqa: PLC0415
 
             self._creators = CreatorSelector.for_interpreter(self)
         return self._creators
@@ -253,9 +253,6 @@ class PythonInfo:
     @property
     def system_exec_prefix(self):
         return self.real_prefix or self.base_exec_prefix or self.exec_prefix
-
-    def __unicode__(self):
-        return repr(self)
 
     def __repr__(self) -> str:
         return "{}({!r})".format(
@@ -298,7 +295,7 @@ class PythonInfo:
     @classmethod
     def clear_cache(cls, app_data):
         # this method is not used by itself, so here and called functions can import stuff locally
-        from virtualenv.discovery.cached_py_info import clear
+        from virtualenv.discovery.cached_py_info import clear  # noqa: PLC0415
 
         clear(app_data)
         cls._cache_exe_discovery.clear()
@@ -362,7 +359,7 @@ class PythonInfo:
         return json.dumps(self._to_dict(), indent=2)
 
     def _to_dict(self):
-        data = {var: (getattr(self, var) if var not in ("_creators",) else None) for var in vars(self)}
+        data = {var: (getattr(self, var) if var != "_creators" else None) for var in vars(self)}
 
         data["version_info"] = data["version_info"]._asdict()  # namedtuple to dictionary
         return data
@@ -379,7 +376,7 @@ class PythonInfo:
     ):
         """Given a path to an executable get the python information."""
         # this method is not used by itself, so here and called functions can import stuff locally
-        from virtualenv.discovery.cached_py_info import from_exe
+        from virtualenv.discovery.cached_py_info import from_exe  # noqa: PLC0415
 
         env = os.environ if env is None else env
         proposed = from_exe(cls, app_data, exe, env=env, raise_on_error=raise_on_error, ignore_cache=ignore_cache)
@@ -543,7 +540,7 @@ class PythonInfo:
         for base in possible_base:
             lower = base.lower()
             yield lower
-            from virtualenv.info import fs_is_case_sensitive
+            from virtualenv.info import fs_is_case_sensitive  # noqa: PLC0415
 
             if fs_is_case_sensitive():
                 if base != lower:

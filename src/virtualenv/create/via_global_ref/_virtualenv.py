@@ -54,7 +54,7 @@ class _Finder:
         if fullname in _DISTUTILS_PATCH and self.fullname is None:
             # initialize lock[0] lazily
             if len(self.lock) == 0:
-                import threading
+                import threading  # noqa: PLC0415
 
                 lock = threading.Lock()
                 # there is possibility that two threads T1 and T2 are simultaneously running into find_spec,
@@ -64,8 +64,8 @@ class _Finder:
                 # https://docs.python.org/3/faq/library.html#what-kinds-of-global-value-mutation-are-thread-safe
                 self.lock.append(lock)
 
-            from functools import partial
-            from importlib.util import find_spec
+            from functools import partial  # noqa: PLC0415
+            from importlib.util import find_spec  # noqa: PLC0415
 
             with self.lock[0]:
                 self.fullname = fullname

@@ -195,8 +195,8 @@ def get_env_debug_info(env_exe, debug_script, app_data, env):
     env = env.copy()
     env.pop("PYTHONPATH", None)
 
-    with app_data.ensure_extracted(debug_script) as debug_script:
-        cmd = [str(env_exe), str(debug_script)]
+    with app_data.ensure_extracted(debug_script) as debug_script_extracted:
+        cmd = [str(env_exe), str(debug_script_extracted)]
         logging.debug("debug via %r", LogCmd(cmd))
         code, out, err = run_cmd(cmd)
 

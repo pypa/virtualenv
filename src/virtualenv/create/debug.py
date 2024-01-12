@@ -1,4 +1,5 @@
 """Inspect a target Python interpreter virtual environment wise."""
+
 from __future__ import annotations
 
 import sys  # built-in
@@ -21,7 +22,7 @@ def encode_list_path(value):
 def run():  # noqa: PLR0912
     """Print debug data about the virtual environment."""
     try:
-        from collections import OrderedDict
+        from collections import OrderedDict  # noqa: PLC0415
     except ImportError:  # pragma: no cover
         # this is possible if the standard library cannot be accessed
 
@@ -47,7 +48,7 @@ def run():  # noqa: PLR0912
     result["version"] = sys.version
 
     try:
-        import sysconfig
+        import sysconfig  # noqa: PLC0415
 
         # https://bugs.python.org/issue22199
         makefile = getattr(sysconfig, "get_makefile_filename", getattr(sysconfig, "_get_makefile_filename", None))
@@ -55,26 +56,26 @@ def run():  # noqa: PLR0912
     except ImportError:
         pass
 
-    import os  # landmark
+    import os  # landmark  # noqa: PLC0415
 
     result["os"] = repr(os)
 
     try:
-        import site  # site
+        import site  # site  # noqa: PLC0415
 
         result["site"] = repr(site)
     except ImportError as exception:  # pragma: no cover
         result["site"] = repr(exception)  # pragma: no cover
 
     try:
-        import datetime  # site
+        import datetime  # site  # noqa: PLC0415
 
         result["datetime"] = repr(datetime)
     except ImportError as exception:  # pragma: no cover
         result["datetime"] = repr(exception)  # pragma: no cover
 
     try:
-        import math  # site
+        import math  # site  # noqa: PLC0415
 
         result["math"] = repr(math)
     except ImportError as exception:  # pragma: no cover
@@ -82,7 +83,7 @@ def run():  # noqa: PLR0912
 
     # try to print out, this will validate if other core modules are available (json in this case)
     try:
-        import json
+        import json  # noqa: PLC0415
 
         result["json"] = repr(json)
     except ImportError as exception:

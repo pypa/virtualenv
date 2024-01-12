@@ -138,8 +138,8 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
     """Link a exe path on the file system."""
 
     def __init__(self, src, targets, dest, must=RefMust.NA, when=RefWhen.ANY) -> None:  # noqa: PLR0913
-        ExePathRef.__init__(self, src, must, when)
-        PathRefToDest.__init__(self, src, dest, must, when)
+        ExePathRef.__init__(self, src, must, when)  # noqa: PLC2801
+        PathRefToDest.__init__(self, src, dest, must, when)  # noqa: PLC2801
         if not self.FS_CASE_SENSITIVE:
             targets = list(OrderedDict((i.lower(), None) for i in targets).keys())
         self.base = targets[0]

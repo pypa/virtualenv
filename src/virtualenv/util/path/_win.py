@@ -3,8 +3,8 @@ from __future__ import annotations
 
 def get_short_path_name(long_name):
     """Gets the short path name of a given long path - http://stackoverflow.com/a/23598461/200291."""
-    import ctypes
-    from ctypes import wintypes
+    import ctypes  # noqa: PLC0415
+    from ctypes import wintypes  # noqa: PLC0415
 
     _GetShortPathNameW = ctypes.windll.kernel32.GetShortPathNameW  # noqa: N806
     _GetShortPathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]

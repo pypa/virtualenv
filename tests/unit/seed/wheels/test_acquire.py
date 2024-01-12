@@ -127,7 +127,7 @@ def test_get_wheel_download_cached(
     time_freeze: Callable[[datetime], None],
 ) -> None:
     time_freeze(datetime.now(tz=timezone.utc))
-    from virtualenv.app_data.via_disk_folder import JSONStoreDisk
+    from virtualenv.app_data.via_disk_folder import JSONStoreDisk  # noqa: PLC0415
 
     app_data = AppDataDiskFolder(folder=str(tmp_path))
     expected = downloaded_wheel[0]

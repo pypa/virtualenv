@@ -58,7 +58,7 @@ def link_folder(has_symlink_support):
         return os.symlink
     if sys.platform == "win32":
         # on Windows junctions may be used instead
-        import _winapi
+        import _winapi  # noqa: PLC0415
 
         return getattr(_winapi, "CreateJunction", None)
     return None
@@ -126,7 +126,7 @@ def _ensure_py_info_cache_empty(session_app_data):
 @contextmanager
 def change_os_environ(key, value):
     env_var = key
-    previous = os.environ[env_var] if env_var in os.environ else None
+    previous = os.environ.get(env_var, None)
     os.environ[env_var] = value
     try:
         yield
@@ -197,7 +197,7 @@ def coverage_env(monkeypatch, link, request):
     """
     if COVERAGE_RUN and "_no_coverage" not in request.fixturenames:
         # we inject right after creation, we cannot collect coverage on site.py - used for helper scripts, such as debug
-        from virtualenv import run
+        from virtualenv import run  # noqa: PLC0415
 
         def _session_via_cli(args, options, setup_logging, env=None):
             session = prev_run(args, options, setup_logging, env)
@@ -206,7 +206,7 @@ def coverage_env(monkeypatch, link, request):
             def create_run():
                 result = old_run()
                 obj["cov"] = EnableCoverage(link)
-                obj["cov"].__enter__(session.creator)
+                obj["cov"].__enter__(session.creator)  # noqa: PLC2801
                 return result
 
             monkeypatch.setattr(session.creator, "run", create_run)

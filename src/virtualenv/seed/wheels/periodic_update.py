@@ -1,6 +1,5 @@
 """Periodically update bundled versions."""
 
-
 from __future__ import annotations
 
 import json
@@ -102,7 +101,7 @@ def load_datetime(value):
     return None if value is None else datetime.strptime(value, DATETIME_FMT).replace(tzinfo=timezone.utc)
 
 
-class NewVersion:
+class NewVersion:  # noqa: PLW1641
     def __init__(self, filename, found_date, release_date, source) -> None:
         self.filename = filename
         self.found_date = found_date
@@ -252,7 +251,7 @@ def _run_do_update(  # noqa: C901, PLR0913
     periodic,
     search_dirs,
 ):
-    from virtualenv.seed.wheels import acquire
+    from virtualenv.seed.wheels import acquire  # noqa: PLC0415
 
     wheel_filename = None if embed_filename is None else Path(embed_filename)
     embed_version = None if wheel_filename is None else Wheel(wheel_filename).version_tuple
@@ -376,7 +375,7 @@ def manual_upgrade(app_data, env):
 
 def _run_manual_upgrade(app_data, distribution, for_py_version, env):
     start = datetime.now(tz=timezone.utc)
-    from .bundle import from_bundle
+    from .bundle import from_bundle  # noqa: PLC0415
 
     current = from_bundle(
         distribution=distribution,

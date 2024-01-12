@@ -9,7 +9,7 @@ import pytest
 @pytest.mark.skipif(sys.platform != "win32", reason="no Windows registry")
 @pytest.mark.usefixtures("_mock_registry")
 def test_pep514():
-    from virtualenv.discovery.windows.pep514 import discover_pythons
+    from virtualenv.discovery.windows.pep514 import discover_pythons  # noqa: PLC0415
 
     interpreters = list(discover_pythons())
     assert interpreters == [
@@ -30,7 +30,7 @@ def test_pep514():
 @pytest.mark.skipif(sys.platform != "win32", reason="no Windows registry")
 @pytest.mark.usefixtures("_mock_registry")
 def test_pep514_run(capsys, caplog):
-    from virtualenv.discovery.windows import pep514
+    from virtualenv.discovery.windows import pep514  # noqa: PLC0415
 
     pep514._run()  # noqa: SLF001
     out, err = capsys.readouterr()

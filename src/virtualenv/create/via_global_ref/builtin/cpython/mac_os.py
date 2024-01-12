@@ -1,4 +1,5 @@
 """The Apple Framework builds require their own customization."""
+
 from __future__ import annotations
 
 import logging
@@ -207,7 +208,7 @@ def _builtin_change_mach_o(maxint):  # noqa: C901
 
         def do_macho(file, bits, endian):
             # Read Mach-O header (the magic number is assumed read by the caller)
-            cpu_type, cpu_sub_type, file_type, n_commands, size_of_commands, flags = read_data(file, endian, 6)
+            _cpu_type, _cpu_sub_type, _file_type, n_commands, _size_of_commands, _flags = read_data(file, endian, 6)
             # 64-bits header has one more field.
             if bits == 64:  # noqa: PLR2004
                 read_data(file, endian)
@@ -240,7 +241,7 @@ def _builtin_change_mach_o(maxint):  # noqa: C901
                 n_fat_arch = read_data(file, BIG_ENDIAN)
                 for _ in range(n_fat_arch):
                     # Read arch header
-                    cpu_type, cpu_sub_type, offset, size, align = read_data(file, BIG_ENDIAN, 5)
+                    _cpu_type, _cpu_sub_type, offset, size, _align = read_data(file, BIG_ENDIAN, 5)
                     do_file(file, offset, size)
             elif magic == MH_MAGIC:
                 do_macho(file, 32, BIG_ENDIAN)

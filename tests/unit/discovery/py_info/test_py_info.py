@@ -309,7 +309,7 @@ def test_discover_exe_on_path_non_spec_name_not_match(mocker):
 
 @pytest.mark.skipif(IS_PYPY, reason="setuptools distutils patching does not work")
 def test_py_info_setuptools():
-    from setuptools.dist import Distribution
+    from setuptools.dist import Distribution  # noqa: PLC0415
 
     assert Distribution
     PythonInfo()

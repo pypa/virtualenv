@@ -102,7 +102,7 @@ class CPython3Windows(CPythonWindows, CPython3):
 
         for folder in folders:
             for file in folder.iterdir():
-                if file.suffix in (".pyd", ".dll"):
+                if file.suffix in {".pyd", ".dll"}:
                     yield PathRefToDest(file, cls.to_bin)
 
     @classmethod

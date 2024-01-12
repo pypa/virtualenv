@@ -16,7 +16,7 @@ class TableRow(NamedTuple):
     names: list[str]
     default: str
     choices: set[str]
-    help: str  # noqa: A003
+    help: str
 
 
 class TextAsDefault(NamedTuple):
@@ -84,12 +84,14 @@ class CliTable(SphinxDirective):
                         return True
                     if key == "creator":
                         if name == "venv":
-                            from virtualenv.create.via_global_ref.venv import ViaGlobalRefMeta
+                            from virtualenv.create.via_global_ref.venv import ViaGlobalRefMeta  # noqa: PLC0415
 
                             meta = ViaGlobalRefMeta()
                             meta.symlink_error = None
                             return meta
-                        from virtualenv.create.via_global_ref.builtin.via_global_self_do import BuiltinViaGlobalRefMeta
+                        from virtualenv.create.via_global_ref.builtin.via_global_self_do import (  # noqa: PLC0415
+                            BuiltinViaGlobalRefMeta,
+                        )
 
                         meta = BuiltinViaGlobalRefMeta()
                         meta.symlink_error = None
@@ -183,7 +185,7 @@ class CliTable(SphinxDirective):
     @staticmethod
     def _get_help_text(row):
         name = row.names[0]
-        content = row.help[: row.help.index("(") - 1] if name in ("--creator",) else row.help
+        content = row.help[: row.help.index("(") - 1] if name == "--creator" else row.help
         help_body = n.paragraph("", "", n.Text(content))
         if row.choices is not None:
             help_body += n.Text("; choice of: ")

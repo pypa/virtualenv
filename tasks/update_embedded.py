@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import codecs
+import locale
 import os
 import re
 from zlib import crc32 as _crc32
@@ -24,7 +25,7 @@ file_template = '# file {filename}\n{variable} = convert(\n    """\n{data}"""\n)
 
 
 def rebuild(script_path):
-    with open(script_path) as current_fh:
+    with script_path.open(encoding=locale.getpreferredencoding(False)) as current_fh:  # noqa: FBT003
         script_content = current_fh.read()
     script_parts = []
     match_end = 0
@@ -49,7 +50,7 @@ def handle_file(previous_content, filename, variable_name, previous_encoded):
     print(f"Found file {filename}")  # noqa: T201
     current_path = os.path.realpath(os.path.join(here, "..", "src", "virtualenv_embedded", filename))
     _, file_type = os.path.splitext(current_path)
-    keep_line_ending = file_type in (".bat",)
+    keep_line_ending = file_type == ".bat"
     with open(current_path, encoding="utf-8", newline="" if keep_line_ending else None) as current_fh:
         current_text = current_fh.read()
     current_crc = crc32(current_text)
@@ -68,7 +69,7 @@ def handle_file(previous_content, filename, variable_name, previous_encoded):
 def report(exit_code, new, next_match, current, script_path):
     if new != current:
         print("Content updated; overwriting... ", end="")  # noqa: T201
-        with open(script_path, "w") as current_fh:
+        with open(script_path, "w", encoding=locale.getpreferredencoding(False)) as current_fh:  # noqa: FBT003
             current_fh.write(new)
         print("done.")  # noqa: T201
     else:

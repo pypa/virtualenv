@@ -87,7 +87,8 @@ COOKIE_LENGTH: int = 32
 
 def gen_cookie():
     return "".join(
-        random.choice(f"{ascii_lowercase}{ascii_uppercase}{digits}") for _ in range(COOKIE_LENGTH)  # noqa: S311
+        random.choice(f"{ascii_lowercase}{ascii_uppercase}{digits}")  # noqa: S311
+        for _ in range(COOKIE_LENGTH)
     )
 
 

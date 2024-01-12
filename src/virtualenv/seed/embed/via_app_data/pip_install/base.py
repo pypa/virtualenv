@@ -63,7 +63,7 @@ class PipInstall(metaclass=ABCMeta):
             if path_len > 260:  # noqa: PLR2004
                 self._image_dir.mkdir(exist_ok=True)  # to get a short path must exist
 
-                from virtualenv.util.path import get_short_path_name
+                from virtualenv.util.path import get_short_path_name  # noqa: PLC0415
 
                 to_folder = get_short_path_name(to_folder)
                 self._image_dir = Path(to_folder)

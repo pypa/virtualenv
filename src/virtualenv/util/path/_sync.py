@@ -58,7 +58,7 @@ def safe_delete(dest):
             os.chmod(path, S_IWUSR)
             func(path)
         else:
-            raise
+            raise  # noqa: PLE0704
 
     kwargs = {"onexc" if sys.version_info >= (3, 12) else "onerror": onerror}
     shutil.rmtree(str(dest), ignore_errors=True, **kwargs)

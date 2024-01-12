@@ -1,4 +1,5 @@
 """Handles creating a release PR."""
+
 from __future__ import annotations
 
 from pathlib import Path

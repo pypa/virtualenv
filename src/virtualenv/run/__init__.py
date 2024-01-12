@@ -133,7 +133,7 @@ def load_app_data(args, parser, options):
 
 
 def add_version_flag(parser):
-    import virtualenv
+    import virtualenv  # noqa: PLC0415
 
     parser.add_argument(
         "--version",
