@@ -9,8 +9,8 @@ from timeit import default_timer
 def run(args=None, options=None, env=None):
     env = os.environ if env is None else env
     start = default_timer()
-    from virtualenv.run import cli_run
-    from virtualenv.util.error import ProcessCallFailedError
+    from virtualenv.run import cli_run  # noqa: PLC0415
+    from virtualenv.util.error import ProcessCallFailedError  # noqa: PLC0415
 
     if args is None:
         args = sys.argv[1:]
@@ -48,7 +48,7 @@ class LogSession:
 
 
 def run_with_catch(args=None, env=None):
-    from virtualenv.config.cli.parser import VirtualEnvOptions
+    from virtualenv.config.cli.parser import VirtualEnvOptions  # noqa: PLC0415
 
     env = os.environ if env is None else env
     options = VirtualEnvOptions()

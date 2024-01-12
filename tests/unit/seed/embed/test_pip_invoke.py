@@ -39,7 +39,7 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_f
             else:
                 expected.add(extra_search_dir)
         expected_list = list(
-            itertools.chain.from_iterable(["--find-links", str(e)] for e in sorted(expected, key=lambda x: str(x))),
+            itertools.chain.from_iterable(["--find-links", str(e)] for e in sorted(expected, key=str)),
         )
         found = cmd[-len(expected_list) :] if expected_list else []
         assert "--no-index" not in cmd

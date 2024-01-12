@@ -182,7 +182,7 @@ class ActivationTester:
         if sys.platform != "win32":
             result = path
         else:
-            from ctypes import create_unicode_buffer, windll
+            from ctypes import create_unicode_buffer, windll  # noqa: PLC0415
 
             buffer_cont = create_unicode_buffer(256)
             get_long_path_name = windll.kernel32.GetLongPathNameW
@@ -212,7 +212,7 @@ class RaiseOnNonSourceCall(ActivationTester):
             stderr=subprocess.PIPE,
             env=env,
         )
-        out, _err = process.communicate()
+        _out, _err = process.communicate()
         err = _err.decode("utf-8")
         assert process.returncode
         assert self.non_source_fail_message in err

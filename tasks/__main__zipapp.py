@@ -82,7 +82,7 @@ class VersionPlatformSelect:
                 full_path = os.path.join(self.path, name)
                 return Resource(self.loader.get_data(full_path))
 
-        from distlib.resources import register_finder
+        from distlib.resources import register_finder  # noqa: PLC0415
 
         register_finder(self, lambda module: DistlibFinder(os.path.dirname(module.__file__), self))
 
@@ -94,9 +94,9 @@ def versioned_distribution_class():
     global _VER_DISTRIBUTION_CLASS  # noqa: PLW0603
     if _VER_DISTRIBUTION_CLASS is None:
         if sys.version_info >= (3, 8):
-            from importlib.metadata import Distribution
+            from importlib.metadata import Distribution  # noqa: PLC0415
         else:
-            from importlib_metadata import Distribution
+            from importlib_metadata import Distribution  # noqa: PLC0415
 
         class VersionedDistribution(Distribution):
             def __init__(self, file_loader, dist_path) -> None:
@@ -154,7 +154,7 @@ def run():
     with VersionedFindLoad() as finder:
         sys.meta_path.insert(0, finder)
         finder._register_distutils_finder()  # noqa: SLF001
-        from virtualenv.__main__ import run as run_virtualenv
+        from virtualenv.__main__ import run as run_virtualenv  # noqa: PLC0415
 
         run_virtualenv()
 

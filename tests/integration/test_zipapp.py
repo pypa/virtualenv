@@ -86,7 +86,7 @@ def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG0
 @flaky(max_runs=2, min_passes=1)
 def test_zipapp_help(call_zipapp, capsys):
     call_zipapp("-h")
-    out, err = capsys.readouterr()
+    _out, err = capsys.readouterr()
     assert not err
 
 

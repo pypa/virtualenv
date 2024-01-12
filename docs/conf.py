@@ -66,7 +66,7 @@ def setup(app):
         sys.path.append(str(here))
 
     # noinspection PyUnresolvedReferences
-    from render_cli import CliTable, literal_data
+    from render_cli import CliTable, literal_data  # noqa: PLC0415
 
     app.add_css_file("custom.css")
     app.add_directive(CliTable.name, CliTable)

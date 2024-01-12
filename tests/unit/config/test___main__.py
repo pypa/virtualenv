@@ -29,7 +29,7 @@ def test_main():
 @pytest.fixture()
 def raise_on_session_done(mocker):
     def _func(exception):
-        from virtualenv.run import session_via_cli
+        from virtualenv.run import session_via_cli  # noqa: PLC0415
 
         prev_session = session_via_cli
 

@@ -50,8 +50,8 @@ class ListType(TypeData):
     def convert(self, value, flatten=True):  # noqa: ARG002, FBT002
         values = self.split_values(value)
         result = []
-        for value in values:
-            sub_values = value.split(os.pathsep)
+        for a_value in values:
+            sub_values = a_value.split(os.pathsep)
             result.extend(sub_values)
         return [self.as_type(i) for i in result]
 

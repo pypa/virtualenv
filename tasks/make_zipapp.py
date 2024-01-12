@@ -1,4 +1,5 @@
 """https://docs.python.org/3/library/zipapp.html."""
+
 from __future__ import annotations
 
 import argparse
@@ -59,11 +60,11 @@ def write_packages_to_zipapp(base, dist, modules, packages, zip_app):  # noqa: C
                 wheel = wheel_data.wheel
                 with zipfile.ZipFile(str(wheel)) as wheel_zip:
                     for filename in wheel_zip.namelist():
-                        if name in ("virtualenv",):
+                        if name == "virtualenv":
                             dest = PurePosixPath(filename)
                         else:
                             dest = base / wheel.stem / filename
-                            if dest.suffix in (".so", ".pyi"):
+                            if dest.suffix in {".so", ".pyi"}:
                                 continue
                             if dest.suffix == ".py":
                                 key = filename[:-3].replace("/", ".").replace("__init__", "").rstrip(".")
@@ -159,7 +160,9 @@ class WheelDownloader:
             req = Requirement(dep)
             markers = getattr(req.marker, "_markers", ()) or ()
             if any(
-                m for m in markers if isinstance(m, tuple) and len(m) == 3 and m[0].value == "extra"  # noqa: PLR2004
+                m
+                for m in markers
+                if isinstance(m, tuple) and len(m) == 3 and m[0].value == "extra"  # noqa: PLR2004
             ):
                 continue
             py_versions = WheelDownloader._marker_at(markers, "python_version")

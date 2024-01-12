@@ -27,7 +27,7 @@ def test_version(capsys):
     assert not err
 
     assert __version__ in content
-    import virtualenv
+    import virtualenv  # noqa: PLC0415
 
     assert virtualenv.__file__ in content
 

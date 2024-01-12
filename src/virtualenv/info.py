@@ -13,7 +13,6 @@ IS_WIN = sys.platform == "win32"
 IS_MAC_ARM64 = sys.platform == "darwin" and platform.machine() == "arm64"
 ROOT = os.path.realpath(os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir))
 IS_ZIPAPP = os.path.isfile(ROOT)
-
 _CAN_SYMLINK = _FS_CASE_SENSITIVE = _CFG_DIR = _DATA_DIR = None
 
 

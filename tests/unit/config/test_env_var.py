@@ -78,7 +78,7 @@ def test_extra_search_dir_via_env_var(tmp_path, monkeypatch):
 @pytest.mark.usefixtures("_empty_conf")
 @pytest.mark.skipif(is_macos_brew(PythonInfo.current_system()), reason="no copy on brew")
 def test_value_alias(monkeypatch, mocker):
-    from virtualenv.config.cli.parser import VirtualEnvConfigParser
+    from virtualenv.config.cli.parser import VirtualEnvConfigParser  # noqa: PLC0415
 
     prev = VirtualEnvConfigParser._fix_default  # noqa: SLF001
 

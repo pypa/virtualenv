@@ -35,7 +35,7 @@ from virtualenv.util.subprocess import CREATE_NO_WINDOW
 
 @pytest.fixture(autouse=True)
 def _clear_pypi_info_cache():
-    from virtualenv.seed.wheels.periodic_update import _PYPI_CACHE
+    from virtualenv.seed.wheels.periodic_update import _PYPI_CACHE  # noqa: PLC0415
 
     _PYPI_CACHE.clear()
 

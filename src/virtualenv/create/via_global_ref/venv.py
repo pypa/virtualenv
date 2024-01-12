@@ -58,7 +58,7 @@ class Venv(ViaGlobalRefApi):
                 exe.run(creator, self.symlinks)
 
     def create_inline(self):
-        from venv import EnvBuilder
+        from venv import EnvBuilder  # noqa: PLC0415
 
         builder = EnvBuilder(
             system_site_packages=self.enable_system_site_package,
@@ -79,8 +79,7 @@ class Venv(ViaGlobalRefApi):
         cmd = [self.interpreter.system_executable, "-m", "venv", "--without-pip"]
         if self.enable_system_site_package:
             cmd.append("--system-site-packages")
-        cmd.append("--symlinks" if self.symlinks else "--copies")
-        cmd.append(str(self.dest))
+        cmd.extend(("--symlinks" if self.symlinks else "--copies", str(self.dest)))
         return cmd
 
     def set_pyenv_cfg(self):
@@ -90,12 +89,12 @@ class Venv(ViaGlobalRefApi):
         self.pyenv_cfg.update(venv_content)
 
     def __getattribute__(self, item):
-        describe = object.__getattribute__(self, "describe")
+        describe = object.__getattribute__(self, "describe")  # noqa: PLC2801
         if describe is not None and hasattr(describe, item):
             element = getattr(describe, item)
-            if not callable(element) or item in ("script",):
+            if not callable(element) or item == "script":
                 return element
-        return object.__getattribute__(self, item)
+        return object.__getattribute__(self, item)  # noqa: PLC2801
 
 
 __all__ = [

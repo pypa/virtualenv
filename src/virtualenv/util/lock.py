@@ -51,11 +51,8 @@ class PathLockBase(metaclass=ABCMeta):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.path})"
 
-    def __div__(self, other):
-        return type(self)(self.path / other)
-
     def __truediv__(self, other):
-        return self.__div__(other)
+        return type(self)(self.path / other)
 
     @abstractmethod
     def __enter__(self):

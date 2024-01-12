@@ -99,7 +99,7 @@ def propose_interpreters(spec, try_first_with, app_data, env=None):  # noqa: C90
 
         # 3. otherwise fallback to platform default logic
         if IS_WIN:
-            from .windows import propose_interpreters
+            from .windows import propose_interpreters  # noqa: PLC0415
 
             for interpreter in propose_interpreters(spec, app_data, env):
                 yield interpreter, True
