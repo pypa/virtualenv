@@ -15,7 +15,7 @@ repos:
       - id: pyproject-fmt
         additional_dependencies: ["tox>=4.12"]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.1.12
+    rev: v0.1.13
     hooks:
       - id: ruff-format
       - id: ruff
