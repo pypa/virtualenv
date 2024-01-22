@@ -32,8 +32,9 @@ class PythonInfo:  # noqa: PLR0904
     """Contains information for a Python interpreter."""
 
     def __init__(self) -> None:  # noqa: PLR0915
-        def abs_path(v):
-            return None if v is None else os.path.abspath(v)  # unroll relative elements from path (e.g. ..)
+        def real_path(v):
+            # unroll relative elements from path (e.g. ..) and ensure symbolic links are resolved
+            return None if v is None else os.path.realpath(v)
 
         # qualifies the python
         self.platform = sys.platform
@@ -53,16 +54,16 @@ class PythonInfo:  # noqa: PLR0904
         self.os = os.name
 
         # information about the prefix - determines python home
-        self.prefix = abs_path(getattr(sys, "prefix", None))  # prefix we think
-        self.base_prefix = abs_path(getattr(sys, "base_prefix", None))  # venv
-        self.real_prefix = abs_path(getattr(sys, "real_prefix", None))  # old virtualenv
+        self.prefix = real_path(getattr(sys, "prefix", None))  # prefix we think
+        self.base_prefix = real_path(getattr(sys, "base_prefix", None))  # venv
+        self.real_prefix = real_path(getattr(sys, "real_prefix", None))  # old virtualenv
 
         # information about the exec prefix - dynamic stdlib modules
-        self.base_exec_prefix = abs_path(getattr(sys, "base_exec_prefix", None))
-        self.exec_prefix = abs_path(getattr(sys, "exec_prefix", None))
+        self.base_exec_prefix = real_path(getattr(sys, "base_exec_prefix", None))
+        self.exec_prefix = real_path(getattr(sys, "exec_prefix", None))
 
-        self.executable = abs_path(sys.executable)  # the executable we were invoked via
-        self.original_executable = abs_path(self.executable)  # the executable as known by the interpreter
+        self.executable = real_path(sys.executable)  # the executable we were invoked via
+        self.original_executable = real_path(self.executable)  # the executable as known by the interpreter
         self.system_executable = self._fast_get_system_executable()  # the executable we are based of (if available)
 
         try:
