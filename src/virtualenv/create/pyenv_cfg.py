@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from collections import OrderedDict
 
 
@@ -32,7 +33,8 @@ class PyEnvCfg:
         logging.debug("write %s", self.path)
         text = ""
         for key, value in self.content.items():
-            line = f"{key} = {value}"
+            normalized_value = os.path.realpath(value) if value and os.path.exists(value) else value
+            line = f"{key} = {normalized_value}"
             logging.debug("\t%s", line)
             text += line
             text += "\n"
