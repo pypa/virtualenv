@@ -47,8 +47,10 @@ class ViaTemplateActivator(Activator, ABC):
             # errors when the dest is not writable
             if dest.exists():
                 dest.unlink()
+            # Powershell assumes Windows 1252 encoding when reading files without BOM
+            encoding = "utf-8-sig" if template.endswith(".ps1") else "utf-8"
             # use write_bytes to avoid platform specific line normalization (\n -> \r\n)
-            dest.write_bytes(text.encode("utf-8"))
+            dest.write_bytes(text.encode(encoding))
             generated.append(dest)
         return generated
 
