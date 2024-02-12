@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import os
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 
 
-class Activator(metaclass=ABCMeta):
+class Activator(ABC):
     """Generates activate script for the virtual environment."""
 
     def __init__(self, options) -> None:

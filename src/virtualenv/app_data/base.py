@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from contextlib import contextmanager
 
 from virtualenv.info import IS_ZIPAPP
 
 
-class AppData(metaclass=ABCMeta):
+class AppData(ABC):
     """Abstract storage interface for the virtualenv application."""
 
     @abstractmethod
@@ -67,7 +67,7 @@ class AppData(metaclass=ABCMeta):
         raise NotImplementedError
 
 
-class ContentStore(metaclass=ABCMeta):
+class ContentStore(ABC):
     @abstractmethod
     def exists(self):
         raise NotImplementedError
@@ -91,6 +91,6 @@ class ContentStore(metaclass=ABCMeta):
 
 
 __all__ = [
-    "ContentStore",
     "AppData",
+    "ContentStore",
 ]

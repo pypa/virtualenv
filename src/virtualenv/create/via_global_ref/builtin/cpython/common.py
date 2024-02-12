@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from abc import ABCMeta
+from abc import ABC
 from collections import OrderedDict
 from pathlib import Path
 
@@ -10,7 +10,7 @@ from virtualenv.create.via_global_ref.builtin.ref import RefMust, RefWhen
 from virtualenv.create.via_global_ref.builtin.via_global_self_do import ViaGlobalRefVirtualenvBuiltin
 
 
-class CPython(ViaGlobalRefVirtualenvBuiltin, metaclass=ABCMeta):
+class CPython(ViaGlobalRefVirtualenvBuiltin, ABC):
     @classmethod
     def can_describe(cls, interpreter):
         return interpreter.implementation == "CPython" and super().can_describe(interpreter)
@@ -20,7 +20,7 @@ class CPython(ViaGlobalRefVirtualenvBuiltin, metaclass=ABCMeta):
         return "python"
 
 
-class CPythonPosix(CPython, PosixSupports, metaclass=ABCMeta):
+class CPythonPosix(CPython, PosixSupports, ABC):
     """Create a CPython virtual environment on POSIX platforms."""
 
     @classmethod
@@ -31,7 +31,7 @@ class CPythonPosix(CPython, PosixSupports, metaclass=ABCMeta):
         yield host_exe, list(targets.keys()), RefMust.NA, RefWhen.ANY
 
 
-class CPythonWindows(CPython, WindowsSupports, metaclass=ABCMeta):
+class CPythonWindows(CPython, WindowsSupports, ABC):
     @classmethod
     def _executables(cls, interpreter):
         # symlink of the python executables does not work reliably, copy always instead

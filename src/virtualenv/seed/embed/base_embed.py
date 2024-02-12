@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABCMeta
+from abc import ABC
 from pathlib import Path
 
 from virtualenv.seed.seeder import Seeder
@@ -9,7 +9,7 @@ from virtualenv.seed.wheels import Version
 PERIODIC_UPDATE_ON_BY_DEFAULT = True
 
 
-class BaseEmbed(Seeder, metaclass=ABCMeta):
+class BaseEmbed(Seeder, ABC):
     def __init__(self, options) -> None:
         super().__init__(options, enabled=options.no_seed is False)
 

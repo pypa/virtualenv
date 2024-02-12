@@ -35,6 +35,6 @@ def _get_default_discovery(discover_types):
 
 
 __all__ = [
-    "get_discover",
     "Discovery",
+    "get_discover",
 ]

@@ -27,7 +27,7 @@ class PythonSpec:
     @classmethod
     def from_string_spec(cls, string_spec):  # noqa: C901, PLR0912
         impl, major, minor, micro, arch, path = None, None, None, None, None, None
-        if os.path.isabs(string_spec):
+        if os.path.isabs(string_spec):  # noqa: PLR1702
             path = string_spec
         else:
             ok = False

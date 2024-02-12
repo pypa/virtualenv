@@ -129,7 +129,7 @@ class PythonInfo:  # noqa: PLR0904
 
     def _fast_get_system_executable(self):
         """Try to get the system executable by just looking at properties."""
-        if self.real_prefix or (
+        if self.real_prefix or (  # noqa: PLR1702
             self.base_prefix is not None and self.base_prefix != self.prefix
         ):  # if this is a virtual environment
             if self.real_prefix is None:

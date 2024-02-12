@@ -414,14 +414,14 @@ def _run_manual_upgrade(app_data, distribution, for_py_version, env):
 
 
 __all__ = [
-    "add_wheel_to_update_log",
-    "periodic_update",
-    "do_update",
-    "manual_upgrade",
     "NewVersion",
     "UpdateLog",
-    "load_datetime",
+    "add_wheel_to_update_log",
+    "do_update",
     "dump_datetime",
-    "trigger_update",
+    "load_datetime",
+    "manual_upgrade",
+    "periodic_update",
     "release_date_for_wheel_path",
+    "trigger_update",
 ]

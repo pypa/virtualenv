@@ -176,7 +176,7 @@ class PathPythonInfo(PythonInfo):
 
 
 __all__ = [
-    "get_interpreter",
     "Builtin",
     "PathPythonInfo",
+    "get_interpreter",
 ]

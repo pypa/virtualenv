@@ -8,8 +8,6 @@
 [![Downloads](https://static.pepy.tech/badge/virtualenv/month)](https://pepy.tech/project/virtualenv)
 [![PyPI - License](https://img.shields.io/pypi/l/virtualenv?style=flat-square)](https://opensource.org/licenses/MIT)
 [![Build Status](https://github.com/pypa/virtualenv/workflows/check/badge.svg?branch=main&event=push)](https://github.com/pypa/virtualenv/actions?query=workflow%3Acheck)
-[![Code style:
-black](https://img.shields.io/badge/code%20style-black-000000.svg?style=flat-square)](https://github.com/psf/black)
 
 A tool for creating isolated `virtual` python environments.
 

@@ -125,7 +125,7 @@ v20.23.0 (2023-04-27)
 
 Features - 20.23.0
 ~~~~~~~~~~~~~~~~~~
-- Do not install ``wheel`` and ``setuptools`` seed packages for Python 3.12+. To restore the old behaviour use:
+- Do not install ``wheel`` and ``setuptools`` seed packages for Python 3.12+. To restore the old behavior use:
 
   - for ``wheel`` use ``VIRTUALENV_WHEEL=bundle`` environment variable or ``--wheel=bundle`` CLI flag,
   - for ``setuptools`` use ``VIRTUALENV_SETUPTOOLS=bundle`` environment variable or ``--setuptools=bundle`` CLI flag.
@@ -222,7 +222,7 @@ v20.17.1 (2022-12-05)
 Bugfixes - 20.17.1
 ~~~~~~~~~~~~~~~~~~
 - A ``py`` or ``python`` spec means any Python rather than ``CPython`` - by :user:`gaborbernat`. (`#2460 <https://github.com/pypa/virtualenv/issues/2460>`_)
-- Make ``activate.nu`` respect ``VIRTUAL_ENV_DISABLE_PROMPT`` and not set the prompt if reqeusted - by :user:`m-lima`. (`#2461 <https://github.com/pypa/virtualenv/issues/2461>`_)
+- Make ``activate.nu`` respect ``VIRTUAL_ENV_DISABLE_PROMPT`` and not set the prompt if requested - by :user:`m-lima`. (`#2461 <https://github.com/pypa/virtualenv/issues/2461>`_)
 
 
 v20.17.0 (2022-11-27)
@@ -259,7 +259,7 @@ Features - 20.16.6
 
 Bugfixes - 20.16.6
 ~~~~~~~~~~~~~~~~~~
-- Fix selected scheme on debian derivatives for python 3.10 when ``python3-distutils`` is not installed or the ``venv`` scheme is not avaiable - by :user:`asottile`. (`#2350 <https://github.com/pypa/virtualenv/issues/2350>`_)
+- Fix selected scheme on debian derivatives for python 3.10 when ``python3-distutils`` is not installed or the ``venv`` scheme is not available - by :user:`asottile`. (`#2350 <https://github.com/pypa/virtualenv/issues/2350>`_)
 - Allow the test suite to pass even with the original C shell (rather than ``tcsh``) - by :user:`kulikjak`. (`#2418 <https://github.com/pypa/virtualenv/issues/2418>`_)
 - Fix fallback handling of downloading wheels for bundled packages - by :user:`schaap`. (`#2429 <https://github.com/pypa/virtualenv/issues/2429>`_)
 - Upgrade embedded setuptools to ``65.5.0`` from ``65.3.0`` and pip to ``22.3`` from ``22.2.2`` - by :user:`gaborbernat`. (`#2434 <https://github.com/pypa/virtualenv/issues/2434>`_)
@@ -295,7 +295,7 @@ v20.16.2 (2022-07-27)
 
 Bugfixes - 20.16.2
 ~~~~~~~~~~~~~~~~~~
-- Bump embeded pip from ``22.2`` to ``22.2.1`` - by :user:`gaborbernat`. (`#2391 <https://github.com/pypa/virtualenv/issues/2391>`_)
+- Bump embedded pip from ``22.2`` to ``22.2.1`` - by :user:`gaborbernat`. (`#2391 <https://github.com/pypa/virtualenv/issues/2391>`_)
 
 
 v20.16.1 (2022-07-26)
@@ -395,7 +395,7 @@ v20.13.1 (2022-02-05)
 Bugfixes - 20.13.1
 ~~~~~~~~~~~~~~~~~~
 - fix "execv() arg 2 must contain only strings" error on M1 MacOS (`#2282 <https://github.com/pypa/virtualenv/issues/2282>`_)
-- Ugrade embedded setuptools to ``60.5.0`` from ``60.2.0`` - by :user:`asottile`. (`#2289 <https://github.com/pypa/virtualenv/issues/2289>`_)
+- Upgrade embedded setuptools to ``60.5.0`` from ``60.2.0`` - by :user:`asottile`. (`#2289 <https://github.com/pypa/virtualenv/issues/2289>`_)
 - Upgrade embedded pip to ``22.0.3`` and setuptools to ``60.6.0`` - by :user:`gaborbernat` and :user:`asottile`. (`#2294 <https://github.com/pypa/virtualenv/issues/2294>`_)
 
 
@@ -439,7 +439,7 @@ Features - 20.12.0
 Bugfixes - 20.12.0
 ~~~~~~~~~~~~~~~~~~
 - Fix ``--download`` option - by :user:`mayeut`. (`#2120 <https://github.com/pypa/virtualenv/issues/2120>`_)
-- Ugrade embedded setuptools to ``60.2.0`` from ``60.1.1`` - by :user:`gaborbernat`. (`#2263 <https://github.com/pypa/virtualenv/issues/2263>`_)
+- Upgrade embedded setuptools to ``60.2.0`` from ``60.1.1`` - by :user:`gaborbernat`. (`#2263 <https://github.com/pypa/virtualenv/issues/2263>`_)
 
 
 v20.11.2 (2021-12-29)
@@ -480,7 +480,7 @@ Features - 20.10.0
   A similar technique `was proposed to Python, for the venv module <https://bugs.python.org/issue45413>`_ - by ``hroncok`` (`#2208 <https://github.com/pypa/virtualenv/issues/2208>`_)
 - The activated virtualenv prompt is now always wrapped in parentheses. This
   affects venvs created with the ``--prompt`` attribute, and matches virtualenv's
-  behaviour on par with venv. (`#2224 <https://github.com/pypa/virtualenv/issues/2224>`_)
+  behavior on par with venv. (`#2224 <https://github.com/pypa/virtualenv/issues/2224>`_)
 
 Bugfixes - 20.10.0
 ~~~~~~~~~~~~~~~~~~
@@ -832,7 +832,7 @@ Bugfixes - 20.0.26
 - Improve periodic update handling:
 
   - better logging output while running and enable logging on background process call (
-    ``_VIRTUALENV_PERIODIC_UPDATE_INLINE`` may be used to debug behaviour inline)
+    ``_VIRTUALENV_PERIODIC_UPDATE_INLINE`` may be used to debug behavior inline)
   - fallback to unverified context when querying the PyPi for release date,
   - stop downloading wheels once we reach the embedded version,
 
@@ -1192,7 +1192,7 @@ v20.0.2 (2020-02-11)
 Features - 20.0.2
 ~~~~~~~~~~~~~~~~~
 - Print out a one line message about the created virtual environment when no :option:`verbose` is set, this can now be
-  silenced to get back the original behaviour via the :option:`quiet` flag - by :user:`pradyunsg`. (`#1557 <https://github.com/pypa/virtualenv/issues/1557>`_)
+  silenced to get back the original behavior via the :option:`quiet` flag - by :user:`pradyunsg`. (`#1557 <https://github.com/pypa/virtualenv/issues/1557>`_)
 - Allow virtualenv's app data cache to be overridden by ``VIRTUALENV_OVERRIDE_APP_DATA`` - by :user:`asottile`. (`#1559 <https://github.com/pypa/virtualenv/issues/1559>`_)
 - Passing in the virtual environment name/path is now required (no longer defaults to ``venv``) - by :user:`gaborbernat`. (`#1568 <https://github.com/pypa/virtualenv/issues/1568>`_)
 - Add a CLI flag :option:`with-traceback` that allows displaying the stacktrace of the virtualenv when a failure occurs

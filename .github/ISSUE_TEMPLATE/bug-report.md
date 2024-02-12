@@ -1,6 +1,6 @@
 **Issue**
 
-Describe what's the expected behaviour and what you're observing.
+Describe what's the expected behavior and what you're observing.
 
 **Environment**
 

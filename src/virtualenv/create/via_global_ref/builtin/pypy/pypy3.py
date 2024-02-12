@@ -9,7 +9,7 @@ from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
 from .common import PyPy
 
 
-class PyPy3(PyPy, Python3Supports, metaclass=abc.ABCMeta):
+class PyPy3(PyPy, Python3Supports, abc.ABC):
     @classmethod
     def exe_stem(cls):
         return "pypy3"

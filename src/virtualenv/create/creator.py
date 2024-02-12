@@ -4,7 +4,7 @@ import json
 import logging
 import os
 import sys
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from argparse import ArgumentTypeError
 from ast import literal_eval
 from collections import OrderedDict
@@ -26,7 +26,7 @@ class CreatorMeta:
         self.error = None
 
 
-class Creator(metaclass=ABCMeta):
+class Creator(ABC):
     """A class that given a python Interpreter creates a virtual environment."""
 
     def __init__(self, options, interpreter) -> None:

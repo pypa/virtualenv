@@ -126,7 +126,7 @@ def pip_wheel_env_run(search_dirs, app_data, env):
 
 
 __all__ = [
-    "get_wheel",
     "download_wheel",
+    "get_wheel",
     "pip_wheel_env_run",
 ]

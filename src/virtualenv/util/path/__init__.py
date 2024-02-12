@@ -5,12 +5,12 @@ from ._sync import copy, copytree, ensure_dir, safe_delete, symlink
 from ._win import get_short_path_name
 
 __all__ = [
-    "ensure_dir",
-    "symlink",
     "copy",
     "copytree",
-    "make_exe",
-    "set_tree",
-    "safe_delete",
+    "ensure_dir",
     "get_short_path_name",
+    "make_exe",
+    "safe_delete",
+    "set_tree",
+    "symlink",
 ]

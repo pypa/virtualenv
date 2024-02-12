@@ -25,6 +25,6 @@ def run_cmd(cmd):
 
 
 __all__ = (
-    "run_cmd",
     "CREATE_NO_WINDOW",
+    "run_cmd",
 )

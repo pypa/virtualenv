@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-from abc import ABCMeta
+from abc import ABC
 from collections import OrderedDict
 from pathlib import Path
 
 from virtualenv.info import IS_WIN
 
 
-class Describe(metaclass=ABCMeta):
+class Describe(ABC):
     """Given a host interpreter tell us information about what the created interpreter might look like."""
 
     suffix = ".exe" if IS_WIN else ""
@@ -84,19 +84,19 @@ class Describe(metaclass=ABCMeta):
         return self.script_dir / f"{name}{self.suffix}"
 
 
-class Python3Supports(Describe, metaclass=ABCMeta):
+class Python3Supports(Describe, ABC):
     @classmethod
     def can_describe(cls, interpreter):
         return interpreter.version_info.major == 3 and super().can_describe(interpreter)  # noqa: PLR2004
 
 
-class PosixSupports(Describe, metaclass=ABCMeta):
+class PosixSupports(Describe, ABC):
     @classmethod
     def can_describe(cls, interpreter):
         return interpreter.os == "posix" and super().can_describe(interpreter)
 
 
-class WindowsSupports(Describe, metaclass=ABCMeta):
+class WindowsSupports(Describe, ABC):
     @classmethod
     def can_describe(cls, interpreter):
         return interpreter.os == "nt" and super().can_describe(interpreter)
@@ -104,7 +104,7 @@ class WindowsSupports(Describe, metaclass=ABCMeta):
 
 __all__ = [
     "Describe",
-    "Python3Supports",
     "PosixSupports",
+    "Python3Supports",
     "WindowsSupports",
 ]

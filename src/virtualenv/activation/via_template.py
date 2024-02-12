@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 
 from .activator import Activator
 
@@ -16,7 +16,7 @@ else:
     from importlib.resources import read_binary
 
 
-class ViaTemplateActivator(Activator, metaclass=ABCMeta):
+class ViaTemplateActivator(Activator, ABC):
     @abstractmethod
     def templates(self):
         raise NotImplementedError

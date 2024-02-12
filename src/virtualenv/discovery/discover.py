@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 
 
-class Discover(metaclass=ABCMeta):
+class Discover(ABC):
     """Discover and provide the requested Python interpreter."""
 
     @classmethod

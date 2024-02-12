@@ -49,12 +49,12 @@ def fs_supports_symlink():
 
 
 __all__ = (
-    "IS_PYPY",
     "IS_CPYTHON",
+    "IS_MAC_ARM64",
+    "IS_PYPY",
     "IS_WIN",
+    "IS_ZIPAPP",
+    "ROOT",
     "fs_is_case_sensitive",
     "fs_supports_symlink",
-    "ROOT",
-    "IS_ZIPAPP",
-    "IS_MAC_ARM64",
 )

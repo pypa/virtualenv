@@ -20,7 +20,7 @@ script = os.path.realpath(os.path.join(here, "..", "src", "virtualenv.py"))
 gzip = codecs.lookup("zlib")
 b64 = codecs.lookup("base64")
 
-file_regex = re.compile(r'# file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+) = convert\(\n {4}"""\n(.*?)"""\n\)', re.S)
+file_regex = re.compile(r'# file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+) = convert\(\n {4}"""\n(.*?)"""\n\)', re.DOTALL)
 file_template = '# file {filename}\n{variable} = convert(\n    """\n{data}"""\n)'
 
 

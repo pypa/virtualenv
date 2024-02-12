@@ -32,6 +32,6 @@ def _get_path_within_zip(full_path):
 
 
 __all__ = [
-    "read",
     "extract",
+    "read",
 ]

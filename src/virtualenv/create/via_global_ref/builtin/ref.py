@@ -7,7 +7,7 @@ the constraints: e.g. can the file system symlink, can the files be read, execut
 from __future__ import annotations
 
 import os
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from collections import OrderedDict
 from stat import S_IXGRP, S_IXOTH, S_IXUSR
 
@@ -27,7 +27,7 @@ class RefWhen:
     SYMLINK = "symlink"
 
 
-class PathRef(metaclass=ABCMeta):
+class PathRef(ABC):
     """Base class that checks if a file reference can be symlink/copied."""
 
     FS_SUPPORTS_SYMLINK = fs_supports_symlink()
@@ -91,7 +91,7 @@ class PathRef(metaclass=ABCMeta):
         return symlink if symlinks else copy
 
 
-class ExePathRef(PathRef, metaclass=ABCMeta):
+class ExePathRef(PathRef, ABC):
     """Base class that checks if a executable can be references via symlink/copy."""
 
     def __init__(self, src, must=RefMust.NA, when=RefWhen.ANY) -> None:
@@ -138,8 +138,8 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
     """Link a exe path on the file system."""
 
     def __init__(self, src, targets, dest, must=RefMust.NA, when=RefWhen.ANY) -> None:  # noqa: PLR0913
-        ExePathRef.__init__(self, src, must, when)  # noqa: PLC2801
-        PathRefToDest.__init__(self, src, dest, must, when)  # noqa: PLC2801
+        ExePathRef.__init__(self, src, must, when)
+        PathRefToDest.__init__(self, src, dest, must, when)
         if not self.FS_CASE_SENSITIVE:
             targets = list(OrderedDict((i.lower(), None) for i in targets).keys())
         self.base = targets[0]
@@ -171,8 +171,8 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
 __all__ = [
     "ExePathRef",
     "ExePathRefToDest",
-    "PathRefToDest",
     "PathRef",
-    "RefWhen",
+    "PathRefToDest",
     "RefMust",
+    "RefWhen",
 ]

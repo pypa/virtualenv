@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from abc import ABCMeta
+from abc import ABC
 from pathlib import Path
 
 from virtualenv.create.creator import Creator, CreatorMeta
@@ -26,7 +26,7 @@ class ViaGlobalRefMeta(CreatorMeta):
         return not self.symlink_error
 
 
-class ViaGlobalRefApi(Creator, metaclass=ABCMeta):
+class ViaGlobalRefApi(Creator, ABC):
     def __init__(self, options, interpreter) -> None:
         super().__init__(options, interpreter)
         self.symlinks = self._should_symlink(options)
@@ -109,6 +109,6 @@ class ViaGlobalRefApi(Creator, metaclass=ABCMeta):
 
 
 __all__ = [
-    "ViaGlobalRefMeta",
     "ViaGlobalRefApi",
+    "ViaGlobalRefMeta",
 ]
