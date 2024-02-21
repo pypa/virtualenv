@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import json
 import logging
-from abc import ABCMeta
+from abc import ABC
 from contextlib import contextmanager, suppress
 from hashlib import sha256
 
@@ -105,7 +105,7 @@ class AppDataDiskFolder(AppData):
         return self.lock.path / "wheel" / for_py_version / "image" / "1" / name
 
 
-class JSONStoreDisk(ContentStore, metaclass=ABCMeta):
+class JSONStoreDisk(ContentStore, ABC):
     def __init__(self, in_folder, key, msg, msg_args) -> None:
         self.in_folder = in_folder
         self.key = key

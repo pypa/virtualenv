@@ -45,6 +45,6 @@ def from_dir(distribution, version, for_py_version, directories):
 
 
 __all__ = [
-    "load_embed_wheel",
     "from_bundle",
+    "load_embed_wheel",
 ]

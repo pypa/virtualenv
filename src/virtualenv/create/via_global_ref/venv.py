@@ -89,12 +89,12 @@ class Venv(ViaGlobalRefApi):
         self.pyenv_cfg.update(venv_content)
 
     def __getattribute__(self, item):
-        describe = object.__getattribute__(self, "describe")  # noqa: PLC2801
+        describe = object.__getattribute__(self, "describe")
         if describe is not None and hasattr(describe, item):
             element = getattr(describe, item)
             if not callable(element) or item == "script":
                 return element
-        return object.__getattribute__(self, item)  # noqa: PLC2801
+        return object.__getattribute__(self, item)
 
 
 __all__ = [

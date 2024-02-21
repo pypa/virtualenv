@@ -7,7 +7,7 @@ from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest, RefMust,
 from virtualenv.create.via_global_ref.builtin.via_global_self_do import ViaGlobalRefVirtualenvBuiltin
 
 
-class PyPy(ViaGlobalRefVirtualenvBuiltin, metaclass=abc.ABCMeta):
+class PyPy(ViaGlobalRefVirtualenvBuiltin, abc.ABC):
     @classmethod
     def can_describe(cls, interpreter):
         return interpreter.implementation == "PyPy" and super().can_describe(interpreter)

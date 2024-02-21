@@ -6,7 +6,7 @@ import logging
 import os
 import struct
 import subprocess
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from pathlib import Path
 from textwrap import dedent
 
@@ -21,7 +21,7 @@ from .common import CPython, CPythonPosix, is_mac_os_framework, is_macos_brew
 from .cpython3 import CPython3
 
 
-class CPythonmacOsFramework(CPython, metaclass=ABCMeta):
+class CPythonmacOsFramework(CPython, ABC):
     @classmethod
     def can_describe(cls, interpreter):
         return is_mac_os_framework(interpreter) and super().can_describe(interpreter)
@@ -273,7 +273,7 @@ class CPython3macOsBrew(CPython3, CPythonPosix):
 
 
 __all__ = [
-    "CPythonmacOsFramework",
-    "CPython3macOsFramework",
     "CPython3macOsBrew",
+    "CPython3macOsFramework",
+    "CPythonmacOsFramework",
 ]

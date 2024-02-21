@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from itertools import chain
 from operator import attrgetter as attr
 from pathlib import Path
@@ -10,7 +10,7 @@ def is_name(path):
     return str(path) == path.name
 
 
-class FakeDataABC(metaclass=ABCMeta):
+class FakeDataABC(ABC):
     """Provides data to mock the `Path`"""
 
     @property

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from contextlib import contextmanager, suppress
 from pathlib import Path
 from threading import Lock, RLock
@@ -43,7 +43,7 @@ _lock_store = {}
 _store_lock = Lock()
 
 
-class PathLockBase(metaclass=ABCMeta):
+class PathLockBase(ABC):
     def __init__(self, folder) -> None:
         path = Path(folder)
         self.path = path.resolve() if path.exists() else path

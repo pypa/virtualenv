@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABCMeta
+from abc import ABC
 
 from virtualenv.create.via_global_ref.api import ViaGlobalRefApi, ViaGlobalRefMeta
 from virtualenv.create.via_global_ref.builtin.ref import (
@@ -19,7 +19,7 @@ class BuiltinViaGlobalRefMeta(ViaGlobalRefMeta):
         self.sources = []
 
 
-class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, metaclass=ABCMeta):
+class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
     def __init__(self, options, interpreter) -> None:
         super().__init__(options, interpreter)
         self._sources = getattr(options.meta, "sources", None)  # if we're created as a describer this might be missing

@@ -31,7 +31,7 @@ Virtualenv has one basic command:
     virtualenv venv
 
 This will create a python virtual environment of the same version as virtualenv, installed into the subdirectory
-``venv``. The command line tool has quite a few of flags that modify the tool's behaviour, for a
+``venv``. The command line tool has quite a few of flags that modify the tool's behavior, for a
 full list make sure to check out :ref:`cli_flags`.
 
 The tool works in two phases:
@@ -182,7 +182,7 @@ package. These wheels may be acquired from multiple locations as follows:
     not start using a new embedded versions half way through.
 
 
-  The automatic behaviour might be disabled via the :option:`no-periodic-update` configuration flag/option. To acquire
+  The automatic behavior might be disabled via the :option:`no-periodic-update` configuration flag/option. To acquire
   the release date of a package virtualenv will perform the following:
 
   - lookup ``https://pypi.org/pypi/<distribution>/json`` (primary truth source),
@@ -243,7 +243,7 @@ executables, rather than relying on your shell to resolve them to your virtual e
 
 Activator scripts also modify your shell prompt to indicate which environment is currently active, by prepending the
 environment name (or the name specified by ``--prompt`` when initially creating the environment) in brackets, like
-``(venv)``. You can disable this behaviour by setting the environment variable ``VIRTUAL_ENV_DISABLE_PROMPT`` to any
+``(venv)``. You can disable this behavior by setting the environment variable ``VIRTUAL_ENV_DISABLE_PROMPT`` to any
 value. You can also get the environment name via the environment variable ``VIRTUAL_ENV_PROMPT`` if you want to
 customize your prompt, for example.
 

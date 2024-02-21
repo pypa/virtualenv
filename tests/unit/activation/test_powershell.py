@@ -23,7 +23,8 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch):
 
         def quote(self, s):
             """powershell double quote needed for quotes within single quotes"""
-            return quote(s).replace('"', '""')
+            text = quote(s)
+            return text.replace('"', '""') if sys.platform == "win32" else text
 
         def _get_test_lines(self, activate_script):
             # for BATCH utf-8 support need change the character code page to 650001

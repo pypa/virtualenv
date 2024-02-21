@@ -14,7 +14,7 @@ from virtualenv.create.via_global_ref.store import is_store_python
 from .common import CPython, CPythonPosix, CPythonWindows, is_mac_os_framework, is_macos_brew
 
 
-class CPython3(CPython, Python3Supports, metaclass=abc.ABCMeta):
+class CPython3(CPython, Python3Supports, abc.ABC):
     """CPython 3 or later."""
 
 

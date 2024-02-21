@@ -51,7 +51,7 @@ class _Finder:
     lock = []  # noqa: RUF012
 
     def find_spec(self, fullname, path, target=None):  # noqa: ARG002
-        if fullname in _DISTUTILS_PATCH and self.fullname is None:
+        if fullname in _DISTUTILS_PATCH and self.fullname is None:  # noqa: PLR1702
             # initialize lock[0] lazily
             if len(self.lock) == 0:
                 import threading  # noqa: PLC0415

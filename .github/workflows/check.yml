@@ -2,7 +2,7 @@ name: check
 on:
   workflow_dispatch:
   push:
-    branches: "main"
+    branches: ["main"]
     tags-ignore: ["**"]
   pull_request:
   schedule:
@@ -17,6 +17,7 @@ jobs:
     name: test ${{ matrix.py }} - ${{ matrix.os }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -93,6 +94,7 @@ jobs:
         run: tox -vv --notest --skip-missing-interpreters false
       - name: Run test suite
         run: tox --skip-pkg-install
+        timeout-minutes: 20
         env:
           PYTEST_ADDOPTS: "-vv --durations=20"
           CI_RUN: "yes"

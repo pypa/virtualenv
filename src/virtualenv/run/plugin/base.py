@@ -66,6 +66,6 @@ class ComponentBuilder(PluginLoader):
 
 
 __all__ = [
-    "PluginLoader",
     "ComponentBuilder",
+    "PluginLoader",
 ]

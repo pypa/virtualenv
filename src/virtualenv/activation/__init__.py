@@ -10,10 +10,10 @@ from .python import PythonActivator
 
 __all__ = [
     "BashActivator",
-    "PowerShellActivator",
-    "CShellActivator",
-    "PythonActivator",
     "BatchActivator",
+    "CShellActivator",
     "FishActivator",
     "NushellActivator",
+    "PowerShellActivator",
+    "PythonActivator",
 ]

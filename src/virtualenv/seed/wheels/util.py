@@ -115,7 +115,7 @@ class Version:
 
 
 __all__ = [
-    "discover_wheels",
     "Version",
     "Wheel",
+    "discover_wheels",
 ]

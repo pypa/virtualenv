@@ -86,6 +86,6 @@ class CreatorSelector(ComponentBuilder):
 
 
 __all__ = [
-    "CreatorSelector",
     "CreatorInfo",
+    "CreatorSelector",
 ]

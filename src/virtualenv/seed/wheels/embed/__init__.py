@@ -51,8 +51,8 @@ def get_embed_wheel(distribution, for_py_version):
 
 
 __all__ = [
-    "get_embed_wheel",
+    "BUNDLE_FOLDER",
     "BUNDLE_SUPPORT",
     "MAX",
-    "BUNDLE_FOLDER",
+    "get_embed_wheel",
 ]

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 
 
-class Seeder(metaclass=ABCMeta):
+class Seeder(ABC):
     """A seeder will install some seed packages into a virtual environment."""
 
     def __init__(self, options, enabled) -> None:
