@@ -16,7 +16,7 @@ Bugfixes - 20.25.1
   * pip to ``23.3.2`` from ``23.3.1`` (:issue:`2681`)
 - Upgrade embedded wheels:
 
-  - pip ``23.3.2`` to `24.0``,
+  - pip ``23.3.2`` to ``24.0``,
   - setuptools ``69.0.3`` to ``69.1.0``. (:issue:`2691`)
 
 Misc - 20.25.1
