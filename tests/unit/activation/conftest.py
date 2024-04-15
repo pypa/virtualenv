@@ -47,7 +47,7 @@ class ActivationTester:
                     raise
                 return RuntimeError(f"{self} is not available due {exception}")
             else:
-                result = out if out else err
+                result = out or err
                 self._version = result
                 return result
         return self._version

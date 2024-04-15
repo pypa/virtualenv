@@ -112,8 +112,7 @@ class PythonInfo:  # noqa: PLR0904
 
         config_var_keys = set()
         for element in self.sysconfig_paths.values():
-            for k in _CONF_VAR_RE.findall(element):
-                config_var_keys.add(k[1:-1])
+            config_var_keys.update(k[1:-1] for k in _CONF_VAR_RE.findall(element))
         config_var_keys.add("PYTHONFRAMEWORK")
 
         self.sysconfig_vars = {i: sysconfig.get_config_var(i or "") for i in config_var_keys}
