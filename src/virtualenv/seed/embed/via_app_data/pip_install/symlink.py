@@ -40,8 +40,7 @@ class SymlinkPipInstall(PipInstall):
     def _fix_records(self, new_files):
         new_files.update(i for i in self._image_dir.iterdir())
         extra_record_data_str = self._records_text(sorted(new_files, key=str))
-        with open(str(self._dist_info / "RECORD"), "wb") as file_handler:
-            file_handler.write(extra_record_data_str.encode("utf-8"))
+        (self._dist_info / "RECORD").write_text(extra_record_data_str, encoding="utf-8")
 
     def build_image(self):
         super().build_image()

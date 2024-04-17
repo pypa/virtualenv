@@ -484,10 +484,9 @@ def test_no_preimport_threading(tmp_path):
 # verify that .pth files in site-packages/ are always processed even if $PYTHONPATH points to it.
 def test_pth_in_site_vs_python_path(tmp_path):
     session = cli_run([str(tmp_path)])
-    site_packages = str(session.creator.purelib)
+    site_packages = session.creator.purelib
     # install test.pth that sets sys.testpth='ok'
-    with open(os.path.join(site_packages, "test.pth"), "w", encoding="utf-8") as f:
-        f.write('import sys; sys.testpth="ok"\n')
+    (session.creator.purelib / "test.pth").write_text('import sys; sys.testpth="ok"\n', encoding="utf-8")
     # verify that test.pth is activated when interpreter is run
     out = subprocess.check_output(
         [str(session.creator.exe), "-c", r"import sys; print(sys.testpth)"],
@@ -497,7 +496,7 @@ def test_pth_in_site_vs_python_path(tmp_path):
     assert out == "ok\n"
     # same with $PYTHONPATH pointing to site_packages
     env = os.environ.copy()
-    path = [site_packages]
+    path = [str(site_packages)]
     if "PYTHONPATH" in env:
         path.append(env["PYTHONPATH"])
     env["PYTHONPATH"] = os.pathsep.join(path)

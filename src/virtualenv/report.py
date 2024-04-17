@@ -18,8 +18,7 @@ LOGGER = logging.getLogger()
 
 def setup_report(verbosity, show_pid=False):  # noqa: FBT002
     _clean_handlers(LOGGER)
-    if verbosity > MAX_LEVEL:
-        verbosity = MAX_LEVEL  # pragma: no cover
+    verbosity = min(verbosity, MAX_LEVEL)  # pragma: no cover
     level = LEVELS[verbosity]
     msg_format = "%(message)s"
     if level <= logging.DEBUG:

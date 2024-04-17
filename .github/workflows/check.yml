@@ -70,8 +70,12 @@ jobs:
           brew cleanup && brew upgrade python@$PY || brew install python@$PY
           echo "/usr/local/opt/python@$PY/libexec/bin" >>"${GITHUB_PATH}"
         shell: bash
+      - name: Install tox-uv
+        run: python -m pip install tox-uv pip -U
+        if: "!(startsWith(matrix.py,'pypy') || matrix.py == '3.7' || matrix.py == 'brew@3.9' || matrix.py == 'brew@3.8')"
       - name: Install tox
         run: python -m pip install tox pip -U
+        if: "(startsWith(matrix.py,'pypy') || matrix.py == '3.7' || matrix.py == 'brew@3.9' || matrix.py == 'brew@3.8')"
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -128,7 +132,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install tox
-        run: python -m pip install tox
+        run: python -m pip install tox-uv
       - name: Setup check
         run: python -m tox --skip-missing-interpreters false -e ${{ matrix.tox_env }} --notest
       - name: Run check for ${{ matrix.tox_env }}

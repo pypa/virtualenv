@@ -14,7 +14,7 @@ from .py_spec import PythonSpec
 class Builtin(Discover):
     def __init__(self, options) -> None:
         super().__init__(options)
-        self.python_spec = options.python if options.python else [sys.executable]
+        self.python_spec = options.python or [sys.executable]
         self.app_data = options.app_data
         self.try_first_with = options.try_first_with
 
@@ -155,7 +155,7 @@ class LazyPathDump:
 def check_path(candidate, path):
     _, ext = os.path.splitext(candidate)
     if sys.platform == "win32" and ext != ".exe":
-        candidate = candidate + ".exe"
+        candidate += ".exe"
     if os.path.isfile(candidate):
         return candidate
     candidate = os.path.join(path, candidate)

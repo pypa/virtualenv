@@ -120,7 +120,14 @@ def run():  # noqa: C901
         dest_target = DEST / "__init__.py"
         dest_target.write_text(msg, encoding="utf-8")
 
-        subprocess.run([sys.executable, "-m", "ruff", str(dest_target), "--fix", "--unsafe-fixes"], check=False)  # noqa: S603
+        subprocess.run(
+            [sys.executable, "-m", "ruff", "check", str(dest_target), "--fix", "--unsafe-fixes"],  # noqa: S603
+            check=False,
+        )
+        subprocess.run(
+            [sys.executable, "-m", "ruff", "format", str(dest_target), "--preview"],  # noqa: S603
+            check=False,
+        )
 
         raise SystemExit(outcome)
 

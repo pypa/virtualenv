@@ -69,8 +69,7 @@ def handle_file(previous_content, filename, variable_name, previous_encoded):
 def report(exit_code, new, next_match, current, script_path):
     if new != current:
         print("Content updated; overwriting... ", end="")  # noqa: T201
-        with open(script_path, "w", encoding=locale.getpreferredencoding(False)) as current_fh:  # noqa: FBT003
-            current_fh.write(new)
+        script_path.write_bytes(new)
         print("done.")  # noqa: T201
     else:
         print("No changes in content")  # noqa: T201
