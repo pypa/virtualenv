@@ -5,6 +5,13 @@ Release History
 
 .. towncrier release notes start
 
+v20.25.3 (2024-04-17)
+---------------------
+
+Bugfixes - 20.25.3
+~~~~~~~~~~~~~~~~~~
+- Python 3.13.0a6 renamed pathmod to parser. (:issue:`2702`)
+
 v20.25.2 (2024-04-16)
 ---------------------
 
