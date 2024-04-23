@@ -5,6 +5,13 @@ Release History
 
 .. towncrier release notes start
 
+v20.26.0 (2024-04-23)
+---------------------
+
+Bugfixes - 20.26.0
+~~~~~~~~~~~~~~~~~~
+- allow builtin discovery to discover specific interpreters (e.g. ``python3.12``) given an unspecific spec (e.g. ``python3``) - by :user:`flying-sheep`. (:issue:`2709`)
+
 v20.25.3 (2024-04-17)
 ---------------------
 
