@@ -5,8 +5,6 @@ from __future__ import annotations
 import os
 import re
 
-from virtualenv.info import fs_is_case_sensitive
-
 PATTERN = re.compile(r"^(?P<impl>[a-zA-Z]+)?(?P<version>[0-9.]+)?(?:-(?P<arch>32|64))?$")
 
 
@@ -84,7 +82,7 @@ class PythonSpec:
         # Try matching `direct` first, so the `direct` group is filled when possible.
         return re.compile(
             rf"(?P<impl>{impl})(?P<v>{version}){suffix}$",
-            flags=re.IGNORECASE if fs_is_case_sensitive() else 0,
+            flags=re.IGNORECASE,
         )
 
     @property
