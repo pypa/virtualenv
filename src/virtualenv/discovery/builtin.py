@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from pathlib import Path
+from typing import TYPE_CHECKING, Callable
 
 from virtualenv.info import IS_WIN
 
@@ -10,8 +12,18 @@ from .discover import Discover
 from .py_info import PythonInfo
 from .py_spec import PythonSpec
 
+if TYPE_CHECKING:
+    from argparse import ArgumentParser
+    from collections.abc import Generator, Iterable, Mapping, Sequence
+
+    from virtualenv.app_data.base import AppData
+
 
 class Builtin(Discover):
+    python_spec: Sequence[str]
+    app_data: AppData
+    try_first_with: Sequence[str]
+
     def __init__(self, options) -> None:
         super().__init__(options)
         self.python_spec = options.python or [sys.executable]
@@ -19,7 +31,7 @@ class Builtin(Discover):
         self.try_first_with = options.try_first_with
 
     @classmethod
-    def add_parser_arguments(cls, parser):
+    def add_parser_arguments(cls, parser: ArgumentParser) -> None:
         parser.add_argument(
             "-p",
             "--python",
@@ -41,7 +53,7 @@ class Builtin(Discover):
             help="try first these interpreters before starting the discovery",
         )
 
-    def run(self):
+    def run(self) -> PythonInfo | None:
         for python_spec in self.python_spec:
             result = get_interpreter(python_spec, self.try_first_with, self.app_data, self._env)
             if result is not None:
@@ -53,7 +65,9 @@ class Builtin(Discover):
         return f"{self.__class__.__name__} discover of python_spec={spec!r}"
 
 
-def get_interpreter(key, try_first_with, app_data=None, env=None):
+def get_interpreter(
+    key, try_first_with: Iterable[str], app_data: AppData | None = None, env: Mapping[str, str] | None = None
+) -> PythonInfo | None:
     spec = PythonSpec.from_string_spec(key)
     logging.info("find interpreter for spec %r", spec)
     proposed_paths = set()
@@ -70,7 +84,12 @@ def get_interpreter(key, try_first_with, app_data=None, env=None):
     return None
 
 
-def propose_interpreters(spec, try_first_with, app_data, env=None):  # noqa: C901, PLR0912
+def propose_interpreters(  # noqa: C901, PLR0912
+    spec: PythonSpec,
+    try_first_with: Iterable[str],
+    app_data: AppData | None = None,
+    env: Mapping[str, str] | None = None,
+) -> Generator[tuple[PythonInfo, bool], None, None]:
     # 0. try with first
     env = os.environ if env is None else env
     for py_exe in try_first_with:
@@ -104,34 +123,35 @@ def propose_interpreters(spec, try_first_with, app_data, env=None):  # noqa: C90
             for interpreter in propose_interpreters(spec, app_data, env):
                 yield interpreter, True
     # finally just find on path, the path order matters (as the candidates are less easy to control by end user)
-    paths = get_paths(env)
     tested_exes = set()
-    for pos, path in enumerate(paths):
-        path_str = str(path)
-        logging.debug(LazyPathDump(pos, path_str, env))
-        for candidate, match in possible_specs(spec):
-            found = check_path(candidate, path_str)
-            if found is not None:
-                exe = os.path.abspath(found)
-                if exe not in tested_exes:
-                    tested_exes.add(exe)
-                    interpreter = PathPythonInfo.from_exe(exe, app_data, raise_on_error=False, env=env)
-                    if interpreter is not None:
-                        yield interpreter, match
+    find_candidates = path_exe_finder(spec)
+    for pos, path in enumerate(get_paths(env)):
+        logging.debug(LazyPathDump(pos, path, env))
+        for exe, impl_must_match in find_candidates(path):
+            if exe in tested_exes:
+                continue
+            tested_exes.add(exe)
+            interpreter = PathPythonInfo.from_exe(str(exe), app_data, raise_on_error=False, env=env)
+            if interpreter is not None:
+                yield interpreter, impl_must_match
 
 
-def get_paths(env):
+def get_paths(env: Mapping[str, str]) -> Generator[Path, None, None]:
     path = env.get("PATH", None)
     if path is None:
         try:
             path = os.confstr("CS_PATH")
         except (AttributeError, ValueError):
             path = os.defpath
-    return [] if not path else [p for p in path.split(os.pathsep) if os.path.exists(p)]
+    if not path:
+        return None
+    for p in map(Path, path.split(os.pathsep)):
+        if p.exists():
+            yield p
 
 
 class LazyPathDump:
-    def __init__(self, pos, path, env) -> None:
+    def __init__(self, pos: int, path: Path, env: Mapping[str, str]) -> None:
         self.pos = pos
         self.path = path
         self.env = env
@@ -140,35 +160,35 @@ class LazyPathDump:
         content = f"discover PATH[{self.pos}]={self.path}"
         if self.env.get("_VIRTUALENV_DEBUG"):  # this is the over the board debug
             content += " with =>"
-            for file_name in os.listdir(self.path):
+            for file_path in self.path.iterdir():
                 try:
-                    file_path = os.path.join(self.path, file_name)
-                    if os.path.isdir(file_path) or not os.access(file_path, os.X_OK):
+                    if file_path.is_dir() or not (file_path.stat().st_mode & os.X_OK):
                         continue
                 except OSError:
                     pass
                 content += " "
-                content += file_name
+                content += file_path.name
         return content
 
 
-def check_path(candidate, path):
-    _, ext = os.path.splitext(candidate)
-    if sys.platform == "win32" and ext != ".exe":
-        candidate += ".exe"
-    if os.path.isfile(candidate):
-        return candidate
-    candidate = os.path.join(path, candidate)
-    if os.path.isfile(candidate):
-        return candidate
-    return None
+def path_exe_finder(spec: PythonSpec) -> Callable[[Path], Generator[tuple[Path, bool], None, None]]:
+    """Given a spec, return a function that can be called on a path to find all matching files in it."""
+    pat = spec.generate_re(windows=sys.platform == "win32")
+    direct = spec.str_spec
+    if sys.platform == "win32":
+        direct = f"{direct}.exe"
 
+    def path_exes(path: Path) -> Generator[tuple[Path, bool], None, None]:
+        # 4. then maybe it's something exact on PATH - if it was direct lookup implementation no longer counts
+        yield (path / direct), False
+        # 5. or from the spec we can deduce if a name on path matches
+        for exe in path.iterdir():
+            match = pat.fullmatch(exe.name)
+            if match:
+                # the implementation must match when we find “python[ver]”
+                yield exe.absolute(), match["impl"] == "python"
 
-def possible_specs(spec):
-    # 4. then maybe it's something exact on PATH - if it was direct lookup implementation no longer counts
-    yield spec.str_spec, False
-    # 5. or from the spec we can deduce a name on path  that matches
-    yield from spec.generate_names()
+    return path_exes
 
 
 class PathPythonInfo(PythonInfo):

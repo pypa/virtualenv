@@ -344,7 +344,7 @@ class PythonInfo:  # noqa: PLR0904
         return cls._current
 
     @classmethod
-    def current_system(cls, app_data=None):
+    def current_system(cls, app_data=None) -> PythonInfo:
         """
         This locates the current host interpreter information. This might be different than what we run into in case
         the host python has been upgraded from underneath us.
