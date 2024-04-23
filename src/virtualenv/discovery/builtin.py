@@ -4,7 +4,7 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
 from virtualenv.info import IS_WIN
 
@@ -124,17 +124,16 @@ def propose_interpreters(  # noqa: C901, PLR0912
                 yield interpreter, True
     # finally just find on path, the path order matters (as the candidates are less easy to control by end user)
     tested_exes = set()
+    find_candidates = path_exe_finder(spec)
     for pos, path in enumerate(get_paths(env)):
         logging.debug(LazyPathDump(pos, path, env))
-        for candidate, match in possible_specs(spec):
-            found = check_path(Path(candidate), path)
-            if found is not None:
-                exe = found.absolute()
-                if exe not in tested_exes:
-                    tested_exes.add(exe)
-                    interpreter = PathPythonInfo.from_exe(exe, app_data, raise_on_error=False, env=env)
-                    if interpreter is not None:
-                        yield interpreter, match
+        for exe, impl_must_match in find_candidates(path):
+            if exe in tested_exes:
+                continue
+            tested_exes.add(exe)
+            interpreter = PathPythonInfo.from_exe(str(exe), app_data, raise_on_error=False, env=env)
+            if interpreter is not None:
+                yield interpreter, impl_must_match
 
 
 def get_paths(env: Mapping[str, str]) -> Generator[Path, None, None]:
@@ -172,22 +171,24 @@ class LazyPathDump:
         return content
 
 
-def check_path(candidate: Path, path: Path) -> Path | None:
-    if sys.platform == "win32" and candidate.suffix != ".exe":
-        candidate = candidate.with_name(f"{candidate.name}.exe")
-    if candidate.is_file():
-        return candidate
-    candidate = path.joinpath(candidate)
-    if candidate.is_file():
-        return candidate
-    return None
+def path_exe_finder(spec: PythonSpec) -> Callable[[Path], Generator[tuple[Path, bool], None, None]]:
+    """Given a spec, return a function that can be called on a path to find all matching files in it."""
+    pat = spec.generate_re(windows=sys.platform == "win32")
+    direct = spec.str_spec
+    if sys.platform == "win32":
+        direct = f"{direct}.exe"
 
+    def path_exes(path: Path) -> Generator[tuple[Path, bool], None, None]:
+        # 4. then maybe it's something exact on PATH - if it was direct lookup implementation no longer counts
+        yield (path / direct), False
+        # 5. or from the spec we can deduce if a name on path matches
+        for exe in path.iterdir():
+            match = pat.fullmatch(exe.name)
+            if match:
+                # the implementation must match when we find “python[ver]”
+                yield exe.absolute(), match["impl"] == "python"
 
-def possible_specs(spec: PythonSpec) -> Generator[tuple[str, bool], None, None]:
-    # 4. then maybe it's something exact on PATH - if it was direct lookup implementation no longer counts
-    yield spec.str_spec, False
-    # 5. or from the spec we can deduce a name on path  that matches
-    yield from spec.generate_names()
+    return path_exes
 
 
 class PathPythonInfo(PythonInfo):

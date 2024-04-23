@@ -2,12 +2,8 @@
 
 from __future__ import annotations
 
-import contextlib
 import os
 import re
-from collections import OrderedDict
-
-from virtualenv.info import fs_is_case_sensitive
 
 PATTERN = re.compile(r"^(?P<impl>[a-zA-Z]+)?(?P<version>[0-9.]+)?(?:-(?P<arch>32|64))?$")
 
@@ -15,7 +11,16 @@ PATTERN = re.compile(r"^(?P<impl>[a-zA-Z]+)?(?P<version>[0-9.]+)?(?:-(?P<arch>32
 class PythonSpec:
     """Contains specification about a Python Interpreter."""
 
-    def __init__(self, str_spec, implementation, major, minor, micro, architecture, path) -> None:  # noqa: PLR0913
+    def __init__(  # noqa: PLR0913
+        self,
+        str_spec: str,
+        implementation: str | None,
+        major: int | None,
+        minor: int | None,
+        micro: int | None,
+        architecture: int | None,
+        path: str | None,
+    ) -> None:
         self.str_spec = str_spec
         self.implementation = implementation
         self.major = major
@@ -25,7 +30,7 @@ class PythonSpec:
         self.path = path
 
     @classmethod
-    def from_string_spec(cls, string_spec):  # noqa: C901, PLR0912
+    def from_string_spec(cls, string_spec: str):  # noqa: C901, PLR0912
         impl, major, minor, micro, arch, path = None, None, None, None, None, None
         if os.path.isabs(string_spec):  # noqa: PLR1702
             path = string_spec
@@ -67,26 +72,18 @@ class PythonSpec:
 
         return cls(string_spec, impl, major, minor, micro, arch, path)
 
-    def generate_names(self):
-        impls = OrderedDict()
-        if self.implementation:
-            # first consider implementation as it is
-            impls[self.implementation] = False
-            if fs_is_case_sensitive():
-                # for case sensitive file systems consider lower and upper case versions too
-                # trivia: MacBooks and all pre 2018 Windows-es were case insensitive by default
-                impls[self.implementation.lower()] = False
-                impls[self.implementation.upper()] = False
-        impls["python"] = True  # finally consider python as alias, implementation must match now
-        version = self.major, self.minor, self.micro
-        with contextlib.suppress(ValueError):
-            version = version[: version.index(None)]
-
-        for impl, match in impls.items():
-            for at in range(len(version), -1, -1):
-                cur_ver = version[0:at]
-                spec = f"{impl}{'.'.join(str(i) for i in cur_ver)}"
-                yield spec, match
+    def generate_re(self, *, windows: bool) -> re.Pattern:
+        """Generate a regular expression for matching against a filename."""
+        version = r"{}(\.{}(\.{})?)?".format(
+            *(r"\d+" if v is None else v for v in (self.major, self.minor, self.micro))
+        )
+        impl = "python" if self.implementation is None else f"python|{re.escape(self.implementation)}"
+        suffix = r"\.exe" if windows else ""
+        # Try matching `direct` first, so the `direct` group is filled when possible.
+        return re.compile(
+            rf"(?P<impl>{impl})(?P<v>{version}){suffix}$",
+            flags=re.IGNORECASE,
+        )
 
     @property
     def is_abs(self):
