@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from typing import TYPE_CHECKING
 
 from virtualenv.info import IS_WIN
 
@@ -10,8 +11,18 @@ from .discover import Discover
 from .py_info import PythonInfo
 from .py_spec import PythonSpec
 
+if TYPE_CHECKING:
+    from argparse import ArgumentParser
+    from collections.abc import Generator, Iterable, Mapping, Sequence
+
+    from virtualenv.app_data.base import AppData
+
 
 class Builtin(Discover):
+    python_spec: Sequence[str]
+    app_data: AppData
+    try_first_with: Sequence[str]
+
     def __init__(self, options) -> None:
         super().__init__(options)
         self.python_spec = options.python or [sys.executable]
@@ -19,7 +30,7 @@ class Builtin(Discover):
         self.try_first_with = options.try_first_with
 
     @classmethod
-    def add_parser_arguments(cls, parser):
+    def add_parser_arguments(cls, parser: ArgumentParser) -> None:
         parser.add_argument(
             "-p",
             "--python",
@@ -41,7 +52,7 @@ class Builtin(Discover):
             help="try first these interpreters before starting the discovery",
         )
 
-    def run(self):
+    def run(self) -> PythonInfo | None:
         for python_spec in self.python_spec:
             result = get_interpreter(python_spec, self.try_first_with, self.app_data, self._env)
             if result is not None:
@@ -53,7 +64,9 @@ class Builtin(Discover):
         return f"{self.__class__.__name__} discover of python_spec={spec!r}"
 
 
-def get_interpreter(key, try_first_with, app_data=None, env=None):
+def get_interpreter(
+    key, try_first_with: Iterable[str], app_data: AppData | None = None, env: Mapping[str, str] | None = None
+) -> PythonInfo | None:
     spec = PythonSpec.from_string_spec(key)
     logging.info("find interpreter for spec %r", spec)
     proposed_paths = set()
@@ -70,7 +83,12 @@ def get_interpreter(key, try_first_with, app_data=None, env=None):
     return None
 
 
-def propose_interpreters(spec, try_first_with, app_data, env=None):  # noqa: C901, PLR0912
+def propose_interpreters(  # noqa: C901, PLR0912
+    spec: PythonSpec,
+    try_first_with: Iterable[str],
+    app_data: AppData | None = None,
+    env: Mapping[str, str] | None = None,
+) -> Generator[tuple[PythonInfo, bool], None, None]:
     # 0. try with first
     env = os.environ if env is None else env
     for py_exe in try_first_with:
@@ -120,7 +138,7 @@ def propose_interpreters(spec, try_first_with, app_data, env=None):  # noqa: C90
                         yield interpreter, match
 
 
-def get_paths(env):
+def get_paths(env: Mapping[str, str]) -> list[str]:
     path = env.get("PATH", None)
     if path is None:
         try:
@@ -131,7 +149,7 @@ def get_paths(env):
 
 
 class LazyPathDump:
-    def __init__(self, pos, path, env) -> None:
+    def __init__(self, pos: int, path: str, env: Mapping[str, str]) -> None:
         self.pos = pos
         self.path = path
         self.env = env
@@ -152,7 +170,7 @@ class LazyPathDump:
         return content
 
 
-def check_path(candidate, path):
+def check_path(candidate: str, path: str) -> str | None:
     _, ext = os.path.splitext(candidate)
     if sys.platform == "win32" and ext != ".exe":
         candidate += ".exe"
@@ -164,7 +182,7 @@ def check_path(candidate, path):
     return None
 
 
-def possible_specs(spec):
+def possible_specs(spec: PythonSpec) -> Generator[tuple[str, bool], None, None]:
     # 4. then maybe it's something exact on PATH - if it was direct lookup implementation no longer counts
     yield spec.str_spec, False
     # 5. or from the spec we can deduce a name on path  that matches
