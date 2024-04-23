@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from virtualenv.info import IS_WIN
@@ -122,15 +123,13 @@ def propose_interpreters(  # noqa: C901, PLR0912
             for interpreter in propose_interpreters(spec, app_data, env):
                 yield interpreter, True
     # finally just find on path, the path order matters (as the candidates are less easy to control by end user)
-    paths = get_paths(env)
     tested_exes = set()
-    for pos, path in enumerate(paths):
-        path_str = str(path)
-        logging.debug(LazyPathDump(pos, path_str, env))
+    for pos, path in enumerate(get_paths(env)):
+        logging.debug(LazyPathDump(pos, path, env))
         for candidate, match in possible_specs(spec):
-            found = check_path(candidate, path_str)
+            found = check_path(Path(candidate), path)
             if found is not None:
-                exe = os.path.abspath(found)
+                exe = found.absolute()
                 if exe not in tested_exes:
                     tested_exes.add(exe)
                     interpreter = PathPythonInfo.from_exe(exe, app_data, raise_on_error=False, env=env)
@@ -138,18 +137,22 @@ def propose_interpreters(  # noqa: C901, PLR0912
                         yield interpreter, match
 
 
-def get_paths(env: Mapping[str, str]) -> list[str]:
+def get_paths(env: Mapping[str, str]) -> Generator[Path, None, None]:
     path = env.get("PATH", None)
     if path is None:
         try:
             path = os.confstr("CS_PATH")
         except (AttributeError, ValueError):
             path = os.defpath
-    return [] if not path else [p for p in path.split(os.pathsep) if os.path.exists(p)]
+    if not path:
+        return None
+    for p in map(Path, path.split(os.pathsep)):
+        if p.exists():
+            yield p
 
 
 class LazyPathDump:
-    def __init__(self, pos: int, path: str, env: Mapping[str, str]) -> None:
+    def __init__(self, pos: int, path: Path, env: Mapping[str, str]) -> None:
         self.pos = pos
         self.path = path
         self.env = env
@@ -158,26 +161,24 @@ class LazyPathDump:
         content = f"discover PATH[{self.pos}]={self.path}"
         if self.env.get("_VIRTUALENV_DEBUG"):  # this is the over the board debug
             content += " with =>"
-            for file_name in os.listdir(self.path):
+            for file_path in self.path.iterdir():
                 try:
-                    file_path = os.path.join(self.path, file_name)
-                    if os.path.isdir(file_path) or not os.access(file_path, os.X_OK):
+                    if file_path.is_dir() or not (file_path.stat().st_mode & os.X_OK):
                         continue
                 except OSError:
                     pass
                 content += " "
-                content += file_name
+                content += file_path.name
         return content
 
 
-def check_path(candidate: str, path: str) -> str | None:
-    _, ext = os.path.splitext(candidate)
-    if sys.platform == "win32" and ext != ".exe":
-        candidate += ".exe"
-    if os.path.isfile(candidate):
+def check_path(candidate: Path, path: Path) -> Path | None:
+    if sys.platform == "win32" and candidate.suffix != ".exe":
+        candidate = candidate.with_name(f"{candidate.name}.exe")
+    if candidate.is_file():
         return candidate
-    candidate = os.path.join(path, candidate)
-    if os.path.isfile(candidate):
+    candidate = path.joinpath(candidate)
+    if candidate.is_file():
         return candidate
     return None
 
