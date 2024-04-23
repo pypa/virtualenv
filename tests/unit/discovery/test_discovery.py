@@ -33,7 +33,7 @@ def test_discovery_via_path(monkeypatch, case, specificity, tmp_path, caplog, se
         # e.g. spec: python3.12.1, exe: /bin/python3
         core_ver = ".".join(str(i) for i in current.version_info[0:3])
         exe_ver = current.version_info.major
-    core = f"{name}{core_ver}"
+    core = f"somethingVeryCryptic{core_ver}"
     exe_name = f"{name}{exe_ver}{'.exe' if sys.platform == 'win32' else ''}"
     target = tmp_path / current.install_path("scripts")
     target.mkdir(parents=True)
