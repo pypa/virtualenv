@@ -1,0 +1,1 @@
+allow builtin discovery to discover specific interpreters (e.g. ``python3.12``) given an unspecific spec (e.g. ``python3``) - by :user:`flying-sheep`.

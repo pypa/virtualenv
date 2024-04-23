@@ -58,9 +58,6 @@ def test_discovery_via_path_specific(
     target.mkdir(parents=True)
     executable = target / exe_name
     os.symlink(sys.executable, str(executable))
-    pyvenv_cfg = Path(sys.executable).parents[1] / "pyvenv.cfg"
-    if pyvenv_cfg.exists():
-        (target / pyvenv_cfg.name).write_bytes(pyvenv_cfg.read_bytes())
     monkeypatch.setenv("PATH", str(target))
     interpreter = get_interpreter(spec, [])
 
