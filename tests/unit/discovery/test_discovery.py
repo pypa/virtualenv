@@ -16,7 +16,7 @@ from virtualenv.info import fs_supports_symlink
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink not supported")
 @pytest.mark.parametrize("case", ["mixed", "lower", "upper"])
-@pytest.mark.parametrize("specificity", ["more", "less"])
+@pytest.mark.parametrize("specificity", ["more", "less", "none"])
 def test_discovery_via_path(monkeypatch, case, specificity, tmp_path, caplog, session_app_data):  # noqa: PLR0913
     caplog.set_level(logging.DEBUG)
     current = PythonInfo.current_system(session_app_data)
@@ -33,7 +33,11 @@ def test_discovery_via_path(monkeypatch, case, specificity, tmp_path, caplog, se
         # e.g. spec: python3.12.1, exe: /bin/python3
         core_ver = ".".join(str(i) for i in current.version_info[0:3])
         exe_ver = current.version_info.major
-    core = f"somethingVeryCryptic{core_ver}"
+    elif specificity == "none":
+        # e.g. spec: python3.12.1, exe: /bin/python
+        core_ver = ".".join(str(i) for i in current.version_info[0:3])
+        exe_ver = ""
+    core = "" if specificity == "none" else f"{name}{core_ver}"
     exe_name = f"{name}{exe_ver}{'.exe' if sys.platform == 'win32' else ''}"
     target = tmp_path / current.install_path("scripts")
     target.mkdir(parents=True)

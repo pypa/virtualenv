@@ -48,6 +48,10 @@ def fs_supports_symlink():
     return _CAN_SYMLINK
 
 
+def fs_path_id(path: str) -> str:
+    return path.casefold() if fs_is_case_sensitive() else path
+
+
 __all__ = (
     "IS_CPYTHON",
     "IS_MAC_ARM64",
@@ -56,5 +60,6 @@ __all__ = (
     "IS_ZIPAPP",
     "ROOT",
     "fs_is_case_sensitive",
+    "fs_path_id",
     "fs_supports_symlink",
 )
