@@ -28,11 +28,9 @@ jobs:
           - "3.10"
           - "3.9"
           - "3.8"
-          - "3.7"
           - pypy-3.10
           - pypy-3.9
           - pypy-3.8
-          - pypy-3.7
         os:
           - ubuntu-latest
           - macos-latest
@@ -42,6 +40,12 @@ jobs:
           - { os: macos-latest, py: "brew@3.10" }
           - { os: macos-latest, py: "brew@3.9" }
           - { os: macos-latest, py: "brew@3.8" }
+          - { os: ubuntu-latest, py: "3.7" }
+          - { os: windows-latest, py: "3.7" }
+          - { os: macos-12, py: "3.7" }
+          - { os: ubuntu-latest, py: "pypy-3.7" }
+          - { os: windows-latest, py: "pypy-3.7" }
+          - { os: macos-12, py: "pypy-3.7" }
     steps:
       - uses: taiki-e/install-action@cargo-binstall
       - name: Install OS dependencies
