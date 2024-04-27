@@ -124,7 +124,12 @@ def propose_interpreters(  # noqa: C901, PLR0912
             return
     else:
         # 2. otherwise try with the current
-        yield PythonInfo.current_system(app_data), True
+        current_python = PythonInfo.current_system(app_data)
+        exe_raw = str(current_python.executable)
+        exe_id = fs_path_id(exe_raw)
+        if exe_id not in tested_exes:
+            tested_exes.add(exe_id)
+            yield current_python, True
 
         # 3. otherwise fallback to platform default logic
         if IS_WIN:

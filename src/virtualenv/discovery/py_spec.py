@@ -83,7 +83,7 @@ class PythonSpec:
             "?"
             # Windows Python executables are almost always unversioned
             if windows
-            # Spec is an empty string, in which case the version part of the pattern will be: None
+            # Spec is an empty string
             or self.major is None
             else ""
         )
