@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 
-from virtualenv.info import IS_WIN
+from virtualenv.info import IS_WIN, fs_path_id
 
 from .discover import Discover
 from .py_info import PythonInfo
@@ -92,6 +92,7 @@ def propose_interpreters(  # noqa: C901, PLR0912
 ) -> Generator[tuple[PythonInfo, bool], None, None]:
     # 0. try with first
     env = os.environ if env is None else env
+    tested_exes: set[str] = set()
     for py_exe in try_first_with:
         path = os.path.abspath(py_exe)
         try:
@@ -99,7 +100,12 @@ def propose_interpreters(  # noqa: C901, PLR0912
         except OSError:
             pass
         else:
-            yield PythonInfo.from_exe(os.path.abspath(path), app_data, env=env), True
+            exe_raw = os.path.abspath(path)
+            exe_id = fs_path_id(exe_raw)
+            if exe_id in tested_exes:
+                continue
+            tested_exes.add(exe_id)
+            yield PythonInfo.from_exe(exe_raw, app_data, env=env), True
 
     # 1. if it's a path and exists
     if spec.path is not None:
@@ -109,7 +115,11 @@ def propose_interpreters(  # noqa: C901, PLR0912
             if spec.is_abs:
                 raise
         else:
-            yield PythonInfo.from_exe(os.path.abspath(spec.path), app_data, env=env), True
+            exe_raw = os.path.abspath(spec.path)
+            exe_id = fs_path_id(exe_raw)
+            if exe_id not in tested_exes:
+                tested_exes.add(exe_id)
+                yield PythonInfo.from_exe(exe_raw, app_data, env=env), True
         if spec.is_abs:
             return
     else:
@@ -121,17 +131,23 @@ def propose_interpreters(  # noqa: C901, PLR0912
             from .windows import propose_interpreters  # noqa: PLC0415
 
             for interpreter in propose_interpreters(spec, app_data, env):
+                exe_raw = str(interpreter.executable)
+                exe_id = fs_path_id(exe_raw)
+                if exe_id in tested_exes:
+                    continue
+                tested_exes.add(exe_id)
                 yield interpreter, True
     # finally just find on path, the path order matters (as the candidates are less easy to control by end user)
-    tested_exes = set()
     find_candidates = path_exe_finder(spec)
     for pos, path in enumerate(get_paths(env)):
         logging.debug(LazyPathDump(pos, path, env))
         for exe, impl_must_match in find_candidates(path):
-            if exe in tested_exes:
+            exe_raw = str(exe)
+            exe_id = fs_path_id(exe_raw)
+            if exe_id in tested_exes:
                 continue
-            tested_exes.add(exe)
-            interpreter = PathPythonInfo.from_exe(str(exe), app_data, raise_on_error=False, env=env)
+            tested_exes.add(exe_id)
+            interpreter = PathPythonInfo.from_exe(exe_raw, app_data, raise_on_error=False, env=env)
             if interpreter is not None:
                 yield interpreter, impl_must_match
 
@@ -180,7 +196,10 @@ def path_exe_finder(spec: PythonSpec) -> Callable[[Path], Generator[tuple[Path, 
 
     def path_exes(path: Path) -> Generator[tuple[Path, bool], None, None]:
         # 4. then maybe it's something exact on PATH - if it was direct lookup implementation no longer counts
-        yield (path / direct), False
+        direct_path = path / direct
+        if direct_path.exists():
+            yield direct_path, False
+
         # 5. or from the spec we can deduce if a name on path matches
         for exe in path.iterdir():
             match = pat.fullmatch(exe.name)

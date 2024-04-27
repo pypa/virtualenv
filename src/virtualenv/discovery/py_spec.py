@@ -79,9 +79,17 @@ class PythonSpec:
         )
         impl = "python" if self.implementation is None else f"python|{re.escape(self.implementation)}"
         suffix = r"\.exe" if windows else ""
+        version_conditional = (
+            "?"
+            # Windows Python executables are almost always unversioned
+            if windows
+            # Spec is an empty string, in which case the version part of the pattern will be: None
+            or self.major is None
+            else ""
+        )
         # Try matching `direct` first, so the `direct` group is filled when possible.
         return re.compile(
-            rf"(?P<impl>{impl})(?P<v>{version}){suffix}$",
+            rf"(?P<impl>{impl})(?P<v>{version}){version_conditional}{suffix}$",
             flags=re.IGNORECASE,
         )
 
