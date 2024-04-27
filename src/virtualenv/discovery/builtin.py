@@ -84,7 +84,7 @@ def get_interpreter(
     return None
 
 
-def propose_interpreters(  # noqa: C901, PLR0912
+def propose_interpreters(  # noqa: C901, PLR0912, PLR0915
     spec: PythonSpec,
     try_first_with: Iterable[str],
     app_data: AppData | None = None,
