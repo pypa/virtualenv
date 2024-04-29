@@ -5,6 +5,13 @@ Release History
 
 .. towncrier release notes start
 
+v20.26.1 (2024-04-29)
+---------------------
+
+Bugfixes - 20.26.1
+~~~~~~~~~~~~~~~~~~
+- fix PATH-based Python discovery on Windows - by :user:`ofek`. (:issue:`2712`)
+
 v20.26.0 (2024-04-23)
 ---------------------
 
