@@ -1,1 +1,0 @@
-fix PATH-based Python discovery on Windows - by :user:`ofek`.
