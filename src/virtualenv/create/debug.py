@@ -95,7 +95,7 @@ def run():  # noqa: PLR0912
         except (ValueError, TypeError) as exception:  # pragma: no cover
             sys.stderr.write(repr(exception))
             sys.stdout.write(repr(result))  # pragma: no cover
-            raise SystemExit(1)  # noqa: TRY200, B904  # pragma: no cover
+            raise SystemExit(1)  # noqa: B904  # pragma: no cover
 
 
 if __name__ == "__main__":
