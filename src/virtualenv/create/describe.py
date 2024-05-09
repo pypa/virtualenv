@@ -7,7 +7,7 @@ from pathlib import Path
 from virtualenv.info import IS_WIN
 
 
-class Describe(ABC):
+class Describe:
     """Given a host interpreter tell us information about what the created interpreter might look like."""
 
     suffix = ".exe" if IS_WIN else ""
