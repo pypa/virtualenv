@@ -21,7 +21,7 @@ def run(args=None, options=None, env=None):
         print(f"subprocess call failed for {exception.cmd} with code {exception.code}")  # noqa: T201
         print(exception.out, file=sys.stdout, end="")  # noqa: T201
         print(exception.err, file=sys.stderr, end="")  # noqa: T201
-        raise SystemExit(exception.code)  # noqa: TRY200, B904
+        raise SystemExit(exception.code)  # noqa: B904
 
 
 class LogSession:
