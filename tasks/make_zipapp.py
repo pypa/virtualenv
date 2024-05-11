@@ -180,7 +180,7 @@ class WheelDownloader:
             platforms = []
             platform_positions = WheelDownloader._marker_at(markers, "sys_platform")
             deleted = 0
-            for pos in platform_positions:  # can only be ore meaningfully
+            for pos in platform_positions:  # can only be or meaningfully
                 platform = f"{markers[pos][1].value}{markers[pos][2].value}"
                 deleted += WheelDownloader._del_marker_at(markers, pos - deleted)
                 platforms.append(platform)
