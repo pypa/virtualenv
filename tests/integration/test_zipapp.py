@@ -9,6 +9,7 @@ import pytest
 from flaky import flaky
 
 from virtualenv.discovery.py_info import PythonInfo
+from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
 
 HERE = Path(__file__).parent
@@ -81,6 +82,24 @@ def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG0
         subprocess.check_call(cmd)
 
     return _run
+
+
+@pytest.fixture()
+def call_zipapp_symlink(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG001
+    def _run(*args):
+        symlinked = zipapp.parent / "symlinked_virtualenv.pyz"
+        symlinked.symlink_to(str(zipapp))
+        cmd = [str(zipapp_test_env), str(symlinked), "-vv", str(tmp_path / "env"), *list(args)]
+        subprocess.check_call(cmd)
+
+    return _run
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlink not supported")
+def test_zipapp_in_symlink(capsys, call_zipapp_symlink):
+    call_zipapp_symlink("--reset-app-data")
+    _out, err = capsys.readouterr()
+    assert not err
 
 
 @flaky(max_runs=2, min_passes=1)
