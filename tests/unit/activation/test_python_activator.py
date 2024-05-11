@@ -18,7 +18,7 @@ def test_python(raise_on_non_source_class, activation_tester):
                 sys.executable,
                 activate_script="activate_this.py",
                 extension="py",
-                non_source_fail_message="You must use exec(open(this_file).read(), {'__file__': this_file})",
+                non_source_fail_message="You must use import runpy; runpy.run_path(this_file)",
             )
             self.unix_line_ending = not IS_WIN
 
@@ -36,6 +36,7 @@ def test_python(raise_on_non_source_class, activation_tester):
             import os
             import sys
             import platform
+            import runpy
 
             def print_r(value):
                 print(repr(value))
@@ -47,10 +48,7 @@ def test_python(raise_on_non_source_class, activation_tester):
 
             file_at = {str(activate_script)!r}
             # CPython 2 requires non-ascii path open to be unicode
-            with open(file_at, "r", encoding='utf-8') as file_handler:
-                content = file_handler.read()
-            exec(content, {{"__file__": file_at}})
-
+            runpy.run_path(file_at)
             print_r(os.environ.get("VIRTUAL_ENV"))
             print_r(os.environ.get("VIRTUAL_ENV_PROMPT"))
             print_r(os.environ.get("PATH").split(os.pathsep))
