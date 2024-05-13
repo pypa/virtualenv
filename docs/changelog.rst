@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.26.2 (2024-05-13)
+---------------------
+
+Bugfixes - 20.26.2
+~~~~~~~~~~~~~~~~~~
+- ``virtualenv.pyz`` no longer fails when zipapp path contains a symlink - by :user:`HandSonic` and :user:`petamas`. (:issue:`1949`)
+- Fix bad return code from activate.sh if hashing is disabled - by :user:'fenkes-ibm'. (:issue:`2717`)
+
 v20.26.1 (2024-04-29)
 ---------------------
 
