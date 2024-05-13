@@ -119,8 +119,14 @@ def run():  # noqa: C901
         )
         dest_target = DEST / "__init__.py"
         dest_target.write_text(msg, encoding="utf-8")
-        subprocess.run([sys.executable, "-m", "ruff", "format", str(dest_target), "--preview"])
-        subprocess.run([sys.executable, "-m", "ruff", "check", str(dest_target), "--fix", "--unsafe-fixes"])
+        subprocess.run(
+            [sys.executable, "-m", "ruff", "check", str(dest_target), "--fix", "--unsafe-fixes"],
+            check=False,
+        )
+        subprocess.run(
+            [sys.executable, "-m", "ruff", "format", str(dest_target), "--preview"],
+            check=False,
+        )
 
         raise SystemExit(outcome)
 
