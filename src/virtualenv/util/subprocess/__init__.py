@@ -8,7 +8,7 @@ CREATE_NO_WINDOW = 0x80000000
 def run_cmd(cmd):
     try:
         process = subprocess.Popen(
-            cmd,  # noqa: S603
+            cmd,
             universal_newlines=True,
             stdin=subprocess.PIPE,
             stderr=subprocess.PIPE,

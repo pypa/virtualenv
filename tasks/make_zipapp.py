@@ -239,7 +239,7 @@ class WheelDownloader:
 
 def run_suppress_output(cmd, stop_print_on_fail=False):  # noqa: FBT002
     process = subprocess.Popen(
-        cmd,  # noqa: S603
+        cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         universal_newlines=True,

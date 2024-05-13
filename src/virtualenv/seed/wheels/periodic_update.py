@@ -219,7 +219,7 @@ def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, e
     kwargs = {"stdout": pipe, "stderr": pipe}
     if not debug and sys.platform == "win32":
         kwargs["creationflags"] = CREATE_NO_WINDOW
-    process = Popen(cmd, **kwargs)  # noqa: S603
+    process = Popen(cmd, **kwargs)
     logging.info(
         "triggered periodic upgrade of %s%s (for python %s) via background process having PID %d",
         distribution,

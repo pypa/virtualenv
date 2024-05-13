@@ -129,6 +129,7 @@ lint.ignore = [
   "PTH",     # no pathlib, <=39 has problems on Windows with absolute/resolve, can revisit once we no longer need 39
   "S104",    # Possible binding to all interfaces
   "S404",    # Using subprocess is alright
+  "S603",    # subprocess calls are fine
 ]
 lint.per-file-ignores."tests/**/*.py" = [
   "D",       # don't care about documentation in tests

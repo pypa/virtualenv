@@ -24,7 +24,7 @@ class PipInvoke(BaseEmbed):
     @staticmethod
     def _execute(cmd, env):
         logging.debug("pip seed by running: %s", LogCmd(cmd, env))
-        process = Popen(cmd, env=env)  # noqa: S603
+        process = Popen(cmd, env=env)
         process.communicate()
         if process.returncode != 0:
             msg = f"failed seed with code {process.returncode}"
