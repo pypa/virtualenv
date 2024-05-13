@@ -1,1 +1,0 @@
-``virtualenv.pyz`` no longer fails when zipapp path contains a symlink - by :user:`HandSonic` and :user:`petamas`.

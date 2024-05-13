@@ -1,1 +1,0 @@
-Fix bad return code from activate.sh if hashing is disabled - by :user:'fenkes-ibm'.
