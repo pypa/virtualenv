@@ -41,7 +41,7 @@ class ActivationTester:
                     encoding="utf-8",
                 )
                 out, err = process.communicate()
-            except Exception as exception:  # noqa: BLE001
+            except Exception as exception:
                 self._version = exception
                 if raise_on_fail:
                     raise

@@ -52,7 +52,7 @@ def create_zipapp(dest, packages):
     print(f"zipapp created at {dest}")  # noqa: T201
 
 
-def write_packages_to_zipapp(base, dist, modules, packages, zip_app):  # noqa: C901
+def write_packages_to_zipapp(base, dist, modules, packages, zip_app):  # noqa: C901, PLR0912
     has = set()
     for name, p_w_v in packages.items():  # noqa: PLR1702
         for platform, w_v in p_w_v.items():

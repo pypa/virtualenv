@@ -383,7 +383,7 @@ class PythonInfo:  # noqa: PLR0904
         if isinstance(proposed, PythonInfo) and resolve_to_host:
             try:
                 proposed = proposed._resolve_to_system(app_data, proposed)  # noqa: SLF001
-            except Exception as exception:  # noqa: BLE001
+            except Exception as exception:
                 if raise_on_error:
                     raise
                 logging.info("ignore %s due cannot resolve system due to %r", proposed.original_executable, exception)
