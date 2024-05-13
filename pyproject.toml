@@ -15,7 +15,9 @@ keywords = [
   "virtual",
 ]
 license = "MIT"
-maintainers = [{ name = "Bernat Gabor", email = "gaborjbernat@gmail.com" }]
+maintainers = [
+  { name = "Bernat Gabor", email = "gaborjbernat@gmail.com" },
+]
 requires-python = ">=3.7"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -31,7 +33,6 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
   "Topic :: Software Development :: Libraries",
@@ -44,7 +45,7 @@ dynamic = [
 dependencies = [
   "distlib<1,>=0.3.7",
   "filelock<4,>=3.12.2",
-  'importlib-metadata>=6.6; python_version < "3.8"',
+  "importlib-metadata>=6.6; python_version<'3.8'",
   "platformdirs<5,>=3.9.1",
 ]
 optional-dependencies.docs = [
@@ -63,50 +64,57 @@ optional-dependencies.test = [
   "packaging>=23.1",
   "pytest>=7.4",
   "pytest-env>=0.8.2",
-  'pytest-freezer>=0.4.8; platform_python_implementation == "PyPy"',
+  "pytest-freezer>=0.4.8; platform_python_implementation=='PyPy'",
   "pytest-mock>=3.11.1",
   "pytest-randomly>=3.12",
   "pytest-timeout>=2.1",
   "setuptools>=68",
-  'time-machine>=2.10; platform_python_implementation == "CPython"',
+  "time-machine>=2.10; platform_python_implementation=='CPython'",
 ]
 urls.Documentation = "https://virtualenv.pypa.io"
 urls.Homepage = "https://github.com/pypa/virtualenv"
 urls.Source = "https://github.com/pypa/virtualenv"
 urls.Tracker = "https://github.com/pypa/virtualenv/issues"
 scripts.virtualenv = "virtualenv.__main__:run_with_catch"
-[project.entry-points."virtualenv.activate"]
-bash = "virtualenv.activation.bash:BashActivator"
-batch = "virtualenv.activation.batch:BatchActivator"
-cshell = "virtualenv.activation.cshell:CShellActivator"
-fish = "virtualenv.activation.fish:FishActivator"
-nushell = "virtualenv.activation.nushell:NushellActivator"
-powershell = "virtualenv.activation.powershell:PowerShellActivator"
-python = "virtualenv.activation.python:PythonActivator"
-[project.entry-points."virtualenv.create"]
-cpython3-mac-brew = "virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython3macOsBrew"
-cpython3-mac-framework = "virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython3macOsFramework"
-cpython3-posix = "virtualenv.create.via_global_ref.builtin.cpython.cpython3:CPython3Posix"
-cpython3-win = "virtualenv.create.via_global_ref.builtin.cpython.cpython3:CPython3Windows"
-pypy3-posix = "virtualenv.create.via_global_ref.builtin.pypy.pypy3:PyPy3Posix"
-pypy3-win = "virtualenv.create.via_global_ref.builtin.pypy.pypy3:Pypy3Windows"
-venv = "virtualenv.create.via_global_ref.venv:Venv"
-[project.entry-points."virtualenv.discovery"]
-builtin = "virtualenv.discovery.builtin:Builtin"
-[project.entry-points."virtualenv.seed"]
-app-data = "virtualenv.seed.embed.via_app_data.via_app_data:FromAppData"
-pip = "virtualenv.seed.embed.pip_invoke:PipInvoke"
+entry-points."virtualenv.activate".bash = "virtualenv.activation.bash:BashActivator"
+entry-points."virtualenv.activate".batch = "virtualenv.activation.batch:BatchActivator"
+entry-points."virtualenv.activate".cshell = "virtualenv.activation.cshell:CShellActivator"
+entry-points."virtualenv.activate".fish = "virtualenv.activation.fish:FishActivator"
+entry-points."virtualenv.activate".nushell = "virtualenv.activation.nushell:NushellActivator"
+entry-points."virtualenv.activate".powershell = "virtualenv.activation.powershell:PowerShellActivator"
+entry-points."virtualenv.activate".python = "virtualenv.activation.python:PythonActivator"
+entry-points."virtualenv.create".cpython3-mac-brew = "virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython3macOsBrew"
+entry-points."virtualenv.create".cpython3-mac-framework = "virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython3macOsFramework"
+entry-points."virtualenv.create".cpython3-posix = "virtualenv.create.via_global_ref.builtin.cpython.cpython3:CPython3Posix"
+entry-points."virtualenv.create".cpython3-win = "virtualenv.create.via_global_ref.builtin.cpython.cpython3:CPython3Windows"
+entry-points."virtualenv.create".pypy3-posix = "virtualenv.create.via_global_ref.builtin.pypy.pypy3:PyPy3Posix"
+entry-points."virtualenv.create".pypy3-win = "virtualenv.create.via_global_ref.builtin.pypy.pypy3:Pypy3Windows"
+entry-points."virtualenv.create".venv = "virtualenv.create.via_global_ref.venv:Venv"
+entry-points."virtualenv.discovery".builtin = "virtualenv.discovery.builtin:Builtin"
+entry-points."virtualenv.seed".app-data = "virtualenv.seed.embed.via_app_data.via_app_data:FromAppData"
+entry-points."virtualenv.seed".pip = "virtualenv.seed.embed.pip_invoke:PipInvoke"
 
 [tool.hatch]
 build.hooks.vcs.version-file = "src/virtualenv/version.py"
-build.targets.sdist.include = ["/src", "/tests", "/tasks", "/tox.ini"]
+build.targets.sdist.include = [
+  "/src",
+  "/tests",
+  "/tasks",
+  "/tox.ini",
+]
 version.source = "vcs"
 
 [tool.ruff]
 line-length = 120
 target-version = "py37"
-lint.isort = { known-first-party = ["virtualenv"], required-imports = ["from __future__ import annotations"] }
-lint.select = ["ALL"]
+lint.isort = { known-first-party = [
+  "virtualenv",
+], required-imports = [
+  "from __future__ import annotations",
+] }
+lint.select = [
+  "ALL",
+]
 lint.ignore = [
   "CPY",     # No copyright header
   "ANN",     # no type checking added yet
@@ -144,10 +152,14 @@ builtin = "clear,usage,en-GB_to_en-US"
 count = true
 
 [tool.pytest.ini_options]
-markers = ["slow"]
+markers = [
+  "slow",
+]
 timeout = 600
 addopts = "--showlocals --no-success-flaky-report"
-env = ["PYTHONIOENCODING=utf-8"]
+env = [
+  "PYTHONIOENCODING=utf-8",
+]
 
 [tool.coverage]
 html.show_contexts = true
@@ -159,12 +171,20 @@ report.omit = [
   "**/src/virtualenv/activation/python/activate_this.py",
   "**/src/virtualenv/seed/wheels/embed/pip-*.whl/pip/**",
 ]
-paths.source = ["src", "**/site-packages"]
+paths.source = [
+  "src",
+  "**/site-packages",
+]
 report.fail_under = 76
-run.source = ["${_COVERAGE_SRC}", "tests"]
+run.source = [
+  "${_COVERAGE_SRC}",
+  "tests",
+]
 run.dynamic_context = "test_function"
 run.parallel = true
-run.plugins = ["covdefaults"]
+run.plugins = [
+  "covdefaults",
+]
 run.relative_files = true
 
 [tool.towncrier]
