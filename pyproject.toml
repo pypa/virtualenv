@@ -14,7 +14,6 @@ keywords = [
   "isolated",
   "virtual",
 ]
-license = "MIT"
 maintainers = [
   { name = "Bernat Gabor", email = "gaborjbernat@gmail.com" },
 ]
