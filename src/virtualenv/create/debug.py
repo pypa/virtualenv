@@ -19,7 +19,7 @@ def encode_list_path(value):
     return [encode_path(i) for i in value]
 
 
-def run():  # noqa: PLR0912
+def run():
     """Print debug data about the virtual environment."""
     try:
         from collections import OrderedDict  # noqa: PLC0415
