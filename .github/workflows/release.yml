@@ -24,4 +24,4 @@ jobs:
       - name: Build package
         run: pyproject-build -s -w . -o dist
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.8.14
+        uses: pypa/gh-action-pypi-publish@v1.9.0
