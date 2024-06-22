@@ -164,11 +164,10 @@ def get_paths(env: Mapping[str, str]) -> Generator[Path, None, None]:
             path = os.confstr("CS_PATH")
         except (AttributeError, ValueError):
             path = os.defpath
-    if not path:
-        return None
-    for p in map(Path, path.split(os.pathsep)):
-        if p.exists():
-            yield p
+    if path:
+        for p in map(Path, path.split(os.pathsep)):
+            if p.exists():
+                yield p
 
 
 class LazyPathDump:

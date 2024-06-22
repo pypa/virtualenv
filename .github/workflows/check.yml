@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         py:
-          - "3.13.0-alpha.6"
+          - "3.13.0-beta.2"
           - "3.12"
           - "3.11"
           - "3.10"
@@ -46,6 +46,9 @@ jobs:
           - { os: ubuntu-latest, py: "pypy-3.7" }
           - { os: windows-latest, py: "pypy-3.7" }
           - { os: macos-12, py: "pypy-3.7" }
+        exclude:
+          - { os: windows-latest, py: "pypy-3.10" }
+          - { os: windows-latest, py: "pypy-3.9" }
     steps:
       - uses: taiki-e/install-action@cargo-binstall
       - name: Install OS dependencies

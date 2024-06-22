@@ -64,7 +64,7 @@ optional-dependencies.test = [
   "packaging>=23.1",
   "pytest>=7.4",
   "pytest-env>=0.8.2",
-  "pytest-freezer>=0.4.8; platform_python_implementation=='PyPy'",
+  "pytest-freezer>=0.4.8; platform_python_implementation=='PyPy' or (platform_python_implementation=='CPython' and sys_platform=='win32' and python_version>='3.13')",
   "pytest-mock>=3.11.1",
   "pytest-randomly>=3.12",
   "pytest-timeout>=2.1",
