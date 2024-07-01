@@ -112,7 +112,7 @@ def _run_subprocess(cls, exe, app_data, env):
         logging.debug("get interpreter info via cmd: %s", LogCmd(cmd))
         try:
             process = Popen(
-                cmd,  # noqa: S603
+                cmd,
                 universal_newlines=True,
                 stdin=subprocess.PIPE,
                 stderr=subprocess.PIPE,
