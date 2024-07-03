@@ -69,7 +69,7 @@ def download_wheel(distribution, version_spec, for_py_version, search_dirs, app_
     ]
     # pip has no interface in python - must be a new sub-process
     env = pip_wheel_env_run(search_dirs, app_data, env)
-    process = Popen(cmd, env=env, stdout=PIPE, stderr=PIPE, universal_newlines=True, encoding="utf-8")  # noqa: S603
+    process = Popen(cmd, env=env, stdout=PIPE, stderr=PIPE, universal_newlines=True, encoding="utf-8")
     out, err = process.communicate()
     if process.returncode != 0:
         kwargs = {"output": out, "stderr": err}

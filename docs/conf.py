@@ -52,7 +52,7 @@ def setup(app):
     root, exe = here.parent, Path(sys.executable)
     towncrier = exe.with_name(f"towncrier{exe.suffix}")
     cmd = [str(towncrier), "build", "--draft", "--version", "NEXT"]
-    new = subprocess.check_output(cmd, cwd=root, text=True, stderr=subprocess.DEVNULL, encoding="UTF-8")  # noqa: S603
+    new = subprocess.check_output(cmd, cwd=root, text=True, stderr=subprocess.DEVNULL, encoding="UTF-8")
     (root / "docs" / "_draft.rst").write_text("" if "No significant changes" in new else new, encoding="UTF-8")
 
     # the CLI arguments are dynamically generated

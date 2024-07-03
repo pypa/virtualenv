@@ -21,7 +21,7 @@ DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "wh
 
 def download(ver, dest, package):
     subprocess.call(
-        [  # noqa: S603
+        [
             sys.executable,
             "-m",
             "pip",
@@ -121,11 +121,11 @@ def run():  # noqa: C901
         dest_target.write_text(msg, encoding="utf-8")
 
         subprocess.run(
-            [sys.executable, "-m", "ruff", "check", str(dest_target), "--fix", "--unsafe-fixes"],  # noqa: S603
+            [sys.executable, "-m", "ruff", "check", str(dest_target), "--fix", "--unsafe-fixes"],
             check=False,
         )
         subprocess.run(
-            [sys.executable, "-m", "ruff", "format", str(dest_target), "--preview"],  # noqa: S603
+            [sys.executable, "-m", "ruff", "format", str(dest_target), "--preview"],
             check=False,
         )
 

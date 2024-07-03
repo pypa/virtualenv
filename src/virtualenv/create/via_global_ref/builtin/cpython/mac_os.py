@@ -121,7 +121,7 @@ def fix_mach_o(exe, current, new, max_size):
         logging.warning("Could not call _builtin_change_mac_o: %s. Trying to call install_name_tool instead.", e)
         try:
             cmd = ["install_name_tool", "-change", current, new, exe]
-            subprocess.check_call(cmd)  # noqa: S603
+            subprocess.check_call(cmd)
         except Exception:
             logging.fatal("Could not call install_name_tool -- you must have Apple's development tools installed")
             raise

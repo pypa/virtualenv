@@ -54,7 +54,7 @@ def get_upstream(repo: Repo) -> Remote:
 
 def release_changelog(repo: Repo, version: Version) -> Commit:
     print("generate release commit")  # noqa: T201
-    check_call(["towncrier", "build", "--yes", "--version", version.public], cwd=str(ROOT_SRC_DIR))  # noqa: S603, S607
+    check_call(["towncrier", "build", "--yes", "--version", version.public], cwd=str(ROOT_SRC_DIR))  # noqa: S607
     return repo.index.commit(f"release {version}")
 
 
