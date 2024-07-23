@@ -13,7 +13,7 @@ import pytest
 
 from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
+from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_WIN, fs_supports_symlink
 from virtualenv.report import LOGGER
 
 
@@ -355,7 +355,9 @@ def _skip_if_test_in_system(session_app_data):
         pytest.skip("test not valid if run under system")
 
 
-if IS_PYPY or (IS_WIN and sys.version_info[0:2] >= (3, 13)):  # https://github.com/adamchainz/time-machine/issues/456
+if (
+    IS_PYPY or IS_GRAALPY or (IS_WIN and sys.version_info[0:2] >= (3, 13))
+):  # https://github.com/adamchainz/time-machine/issues/456
 
     @pytest.fixture
     def time_freeze(freezer):
