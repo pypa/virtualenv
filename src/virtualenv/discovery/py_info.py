@@ -11,6 +11,7 @@ import logging
 import os
 import platform
 import re
+import struct
 import sys
 import sysconfig
 import warnings
@@ -44,7 +45,8 @@ class PythonInfo:  # noqa: PLR0904
 
         # this is a tuple in earlier, struct later, unify to our own named tuple
         self.version_info = VersionInfo(*sys.version_info)
-        self.architecture = 64 if sys.maxsize > 2**32 else 32
+        # see https://github.com/pypa/packaging/pull/711 why we calculate architecture this way
+        self.architecture = 32 if struct.calcsize("P") == 4 else 64  # noqa: PLR2004
 
         # Used to determine some file names.
         # See `CPython3Windows.python_zip()`.
