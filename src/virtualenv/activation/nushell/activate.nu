@@ -44,7 +44,7 @@ export-env {
     )
 
     let venv_path = ([$virtual_env $bin] | path join)
-    let new_path = ($env | get $path_name | prepend $venv_path)
+    let new_path = ($env | get $path_name | prepend $venv_path | str join ':')
 
     # If there is no default prompt, then use the env name instead
     let virtual_env_prompt = (if ('__VIRTUAL_PROMPT__' | is-empty) {
