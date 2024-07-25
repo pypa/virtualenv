@@ -1,0 +1,1 @@
+fix a type mismatch in activation.nu whilst adding venv to path.
