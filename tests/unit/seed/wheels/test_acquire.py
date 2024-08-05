@@ -88,7 +88,7 @@ def test_download_fails(mocker, for_py_version, session_app_data):
     ] == exc.cmd
 
 
-@pytest.fixture()
+@pytest.fixture
 def downloaded_wheel(mocker):
     wheel = Wheel.from_path(Path("setuptools-0.0.0-py2.py3-none-any.whl"))
     return wheel, mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", return_value=wheel)

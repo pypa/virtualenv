@@ -10,7 +10,7 @@ from virtualenv.config.ini import IniConfig
 from virtualenv.run import session_via_cli
 
 
-@pytest.fixture()
+@pytest.fixture
 def gen_parser_no_conf_env(monkeypatch, tmp_path):
     keys_to_delete = {key for key in os.environ if key.startswith("VIRTUALENV_")}
     for key in keys_to_delete:

@@ -12,7 +12,7 @@ from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.run import session_via_cli
 
 
-@pytest.fixture()
+@pytest.fixture
 def _empty_conf(tmp_path, monkeypatch):
     conf = tmp_path / "conf.ini"
     monkeypatch.setenv(IniConfig.VIRTUALENV_CONFIG_FILE_ENV_VAR, str(conf))

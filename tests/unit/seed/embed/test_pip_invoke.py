@@ -12,7 +12,7 @@ from virtualenv.seed.wheels.bundle import load_embed_wheel
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
 
 
-@pytest.mark.slow()
+@pytest.mark.slow
 @pytest.mark.parametrize("no", ["pip", "setuptools", "wheel", ""])
 def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_fastest, no):  # noqa: C901
     extra_search_dir = tmp_path / "extra"

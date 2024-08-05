@@ -234,7 +234,7 @@ def coverage_env(monkeypatch, link, request):
 
 
 # _no_coverage tells coverage_env to disable coverage injection for _no_coverage user.
-@pytest.fixture()
+@pytest.fixture
 def _no_coverage():
     pass
 
@@ -291,7 +291,7 @@ def special_char_name():
     return result
 
 
-@pytest.fixture()
+@pytest.fixture
 def special_name_dir(tmp_path, special_char_name):
     return Path(str(tmp_path)) / special_char_name
 
@@ -332,7 +332,7 @@ def change_env_var(key, value):
             del os.environ[key]  # pragma: no cover
 
 
-@pytest.fixture()
+@pytest.fixture
 def temp_app_data(monkeypatch, tmp_path):
     app_data = tmp_path / "app-data"
     monkeypatch.setenv("VIRTUALENV_OVERRIDE_APP_DATA", str(app_data))
@@ -344,7 +344,7 @@ def for_py_version():
     return f"{sys.version_info.major}.{sys.version_info.minor}"
 
 
-@pytest.fixture()
+@pytest.fixture
 def _skip_if_test_in_system(session_app_data):
     current = PythonInfo.current(session_app_data)
     if current.system_executable is not None:
@@ -353,12 +353,12 @@ def _skip_if_test_in_system(session_app_data):
 
 if IS_PYPY or (IS_WIN and sys.version_info[0:2] >= (3, 13)):  # https://github.com/adamchainz/time-machine/issues/456
 
-    @pytest.fixture()
+    @pytest.fixture
     def time_freeze(freezer):
         return freezer.move_to
 
 else:
 
-    @pytest.fixture()
+    @pytest.fixture
     def time_freeze(time_machine):
         return lambda s: time_machine.move_to(s, tick=False)

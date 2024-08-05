@@ -5,7 +5,7 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.6
+    rev: 0.29.1
     hooks:
       - id: check-github-workflows
         args: [ "--verbose" ]
@@ -20,11 +20,11 @@ repos:
       - id: tox-ini-fmt
         args: ["-p", "fix"]
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "2.1.4"
+    rev: "2.2.1"
     hooks:
       - id: pyproject-fmt
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.5.0"
+    rev: "v0.5.6"
     hooks:
       - id: ruff-format
       - id: ruff

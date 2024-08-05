@@ -75,7 +75,7 @@ def zipapp_test_env(tmp_path_factory):
     shutil.rmtree(str(base_path))
 
 
-@pytest.fixture()
+@pytest.fixture
 def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG001
     def _run(*args):
         cmd = [str(zipapp_test_env), str(zipapp), "-vv", str(tmp_path / "env"), *list(args)]
@@ -84,7 +84,7 @@ def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG0
     return _run
 
 
-@pytest.fixture()
+@pytest.fixture
 def call_zipapp_symlink(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG001
     def _run(*args):
         symlinked = zipapp.parent / "symlinked_virtualenv.pyz"

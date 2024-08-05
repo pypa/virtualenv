@@ -194,7 +194,7 @@ class ScriptMakerCustom(ScriptMaker):
         self.variants = {"", "X", "X.Y"}
         self._name = name
 
-    def _write_script(self, names, shebang, script_bytes, filenames, ext):  # noqa: PLR0913
+    def _write_script(self, names, shebang, script_bytes, filenames, ext):
         names.add(f"{self._name}{self.version_info[0]}.{self.version_info[1]}")
         super()._write_script(names, shebang, script_bytes, filenames, ext)
 

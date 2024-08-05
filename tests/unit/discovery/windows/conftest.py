@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 
-@pytest.fixture()
+@pytest.fixture
 def _mock_registry(mocker):  # noqa: C901
     from virtualenv.discovery.windows.pep514 import winreg  # noqa: PLC0415
 
@@ -78,7 +78,7 @@ def _mock_pyinfo(major, minor, arch, exe):
     return info
 
 
-@pytest.fixture()
+@pytest.fixture
 def _populate_pyinfo_cache(monkeypatch):
     """Add metadata to virtualenv.discovery.cached_py_info._CACHE for all (mocked) registry entries"""
     import virtualenv.discovery.cached_py_info  # noqa: PLC0415
