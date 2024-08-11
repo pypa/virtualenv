@@ -13,7 +13,7 @@ Bugfixes - 20.26.3
 - Upgrade embedded wheels:
 
   * setuptools to ``70.1.0`` from ``69.5.1``
-  * pip to ``24.1``from ``24.0`` (:issue:`2741`)
+  * pip to ``24.1`` from ``24.0`` (:issue:`2741`)
 
 v20.26.2 (2024-05-13)
 ---------------------
