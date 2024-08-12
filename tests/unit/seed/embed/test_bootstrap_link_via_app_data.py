@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
-@pytest.mark.slow()
+@pytest.mark.slow
 @pytest.mark.parametrize("copies", [False, True] if fs_supports_symlink() else [True])
 def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies):
     current = PythonInfo.current_system()
@@ -140,7 +140,7 @@ def read_only_dir(d):
                 os.chmod(name, os.stat(name).st_mode | write)
 
 
-@pytest.fixture()
+@pytest.fixture
 def read_only_app_data(temp_app_data):
     temp_app_data.mkdir()
     with read_only_dir(temp_app_data):
@@ -204,7 +204,7 @@ def test_populated_read_only_cache_and_copied_app_data(tmp_path, current_fastest
         assert cli_run(["--read-only-app-data", *cmd])
 
 
-@pytest.mark.slow()
+@pytest.mark.slow
 @pytest.mark.parametrize("pkg", ["pip", "setuptools", "wheel"])
 @pytest.mark.usefixtures("session_app_data", "current_fastest", "coverage_env")
 def test_base_bootstrap_link_via_app_data_no(tmp_path, pkg):
