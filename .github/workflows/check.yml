@@ -40,12 +40,6 @@ jobs:
           - { os: macos-latest, py: "brew@3.10" }
           - { os: macos-latest, py: "brew@3.9" }
           - { os: macos-latest, py: "brew@3.8" }
-          - { os: ubuntu-latest, py: "3.7" }
-          - { os: windows-latest, py: "3.7" }
-          - { os: macos-13, py: "3.7" }
-          - { os: ubuntu-latest, py: "pypy-3.7" }
-          - { os: windows-latest, py: "pypy-3.7" }
-          - { os: macos-13, py: "pypy-3.7" }
         exclude:
           - { os: windows-latest, py: "pypy-3.10" }
           - { os: windows-latest, py: "pypy-3.9" }
@@ -79,10 +73,10 @@ jobs:
         shell: bash
       - name: Install tox-uv
         run: python -m pip install tox-uv pip -U
-        if: "!(startsWith(matrix.py,'pypy') || matrix.py == '3.7' || matrix.py == 'brew@3.9' || matrix.py == 'brew@3.8')"
+        if: "!(startsWith(matrix.py,'pypy') || matrix.py == 'brew@3.9' || matrix.py == 'brew@3.8')"
       - name: Install tox
         run: python -m pip install tox pip -U
-        if: "(startsWith(matrix.py,'pypy') || matrix.py == '3.7' || matrix.py == 'brew@3.9' || matrix.py == 'brew@3.8')"
+        if: "(startsWith(matrix.py,'pypy') || matrix.py == 'brew@3.9' || matrix.py == 'brew@3.8')"
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0

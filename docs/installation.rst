@@ -4,7 +4,7 @@ Installation
 via pipx
 --------
 
-:pypi:`virtualenv` is a CLI tool that needs a Python interpreter to run. If you already have a ``Python 3.7+``
+:pypi:`virtualenv` is a CLI tool that needs a Python interpreter to run. If you already have a ``Python 3.8+``
 interpreter the best is to use :pypi:`pipx` to install virtualenv into an isolated environment. This has the added
 benefit that later you'll be able to upgrade virtualenv without affecting other parts of the system.
 
@@ -84,8 +84,8 @@ Python and OS Compatibility
 
 virtualenv works with the following Python interpreter implementations:
 
-- `CPython <https://www.python.org/>`_: ``3.12 >= python_version >= 3.7``
-- `PyPy <https://pypy.org/>`_: ``3.10 >= python_version >= 3.7``
+- `CPython <https://www.python.org/>`_: ``3.12 >= python_version >= 3.8``
+- `PyPy <https://pypy.org/>`_: ``3.10 >= python_version >= 3.8``
 
 This means virtualenv works on the latest patch version of each of these minor versions. Previous patch versions are
 supported on a best effort approach.
@@ -120,4 +120,4 @@ In case of macOS we support:
 Windows
 ~~~~~~~
 - Installations from `python.org <https://www.python.org/downloads/>`_
-- Windows Store Python - note only `version 3.7+ <https://www.microsoft.com/en-us/p/python-38/9mssztt1n39l>`_
+- Windows Store Python - note only `version 3.8+ <https://www.microsoft.com/en-us/p/python-38/9mssztt1n39l>`_

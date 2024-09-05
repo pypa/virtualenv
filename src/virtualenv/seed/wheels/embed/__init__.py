@@ -6,11 +6,6 @@ from virtualenv.seed.wheels.util import Wheel
 
 BUNDLE_FOLDER = Path(__file__).absolute().parent
 BUNDLE_SUPPORT = {
-    "3.7": {
-        "pip": "pip-24.0-py3-none-any.whl",
-        "setuptools": "setuptools-68.0.0-py3-none-any.whl",
-        "wheel": "wheel-0.42.0-py3-none-any.whl",
-    },
     "3.8": {
         "pip": "pip-24.1-py3-none-any.whl",
         "setuptools": "setuptools-70.1.0-py3-none-any.whl",
@@ -47,7 +42,7 @@ BUNDLE_SUPPORT = {
         "wheel": "wheel-0.43.0-py3-none-any.whl",
     },
 }
-MAX = "3.7"
+MAX = "3.8"
 
 
 def get_embed_wheel(distribution, for_py_version):

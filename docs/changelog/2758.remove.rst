@@ -1,0 +1,4 @@
+Drop support for creating Python 3.7 interpreters.Removed 
+ * pip of ``24.0``
+ * wheel of ``0.42.0``
+ * setuptools of ``68.0.0``
