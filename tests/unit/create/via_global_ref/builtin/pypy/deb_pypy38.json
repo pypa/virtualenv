@@ -21,7 +21,11 @@
   "original_executable": "/usr/bin/pypy3",
   "system_executable": "/usr/bin/pypy3",
   "has_venv": true,
-  "path": ["/usr/lib/pypy3.8", "/usr/local/lib/pypy3.8/dist-packages", "/usr/lib/python3/dist-packages"],
+  "path": [
+    "/usr/lib/pypy3.8",
+    "/usr/local/lib/pypy3.8/dist-packages",
+    "/usr/lib/python3/dist-packages"
+  ],
   "file_system_encoding": "utf-8",
   "stdout_encoding": "UTF-8",
   "sysconfig_scheme": null,

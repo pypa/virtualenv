@@ -1,0 +1,5 @@
+Upgrade embedded wheels:
+
+* wheel to ``0.44.0`` from ``0.43.0``
+* pip to ``24.2`` from ``24.1``
+* setuptools to ``74.1.2`` from ``70.1.0``

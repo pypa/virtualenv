@@ -437,6 +437,7 @@ def list_files(path):
 
 
 @pytest.mark.skipif(is_macos_brew(CURRENT), reason="no copy on brew")
+@pytest.mark.skip(reason="https://github.com/pypa/setuptools/issues/4640")
 def test_zip_importer_can_import_setuptools(tmp_path):
     """We're patching the loaders so might fail on r/o loaders, such as zipimporter on CPython<3.8"""
     result = cli_run(

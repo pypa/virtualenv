@@ -21,7 +21,10 @@
   "original_executable": "/tmp/pypy3.8-v7.3.8-linux64/bin/pypy",
   "system_executable": "/tmp/pypy3.8-v7.3.8-linux64/bin/pypy",
   "has_venv": true,
-  "path": ["/tmp/pypy3.8-v7.3.8-linux64/lib/pypy3.8", "/tmp/pypy3.8-v7.3.8-linux64/lib/pypy3.8/site-packages"],
+  "path": [
+    "/tmp/pypy3.8-v7.3.8-linux64/lib/pypy3.8",
+    "/tmp/pypy3.8-v7.3.8-linux64/lib/pypy3.8/site-packages"
+  ],
   "file_system_encoding": "utf-8",
   "stdout_encoding": "UTF-8",
   "sysconfig_scheme": null,
