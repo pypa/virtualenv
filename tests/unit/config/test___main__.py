@@ -26,7 +26,7 @@ def test_main():
     assert out
 
 
-@pytest.fixture()
+@pytest.fixture
 def raise_on_session_done(mocker):
     def _func(exception):
         from virtualenv.run import session_via_cli  # noqa: PLC0415
