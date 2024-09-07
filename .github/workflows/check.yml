@@ -22,7 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         py:
-          - "3.13.0-beta.2"
+          - "3.13"
           - "3.12"
           - "3.11"
           - "3.10"
@@ -42,10 +42,10 @@ jobs:
           - { os: macos-latest, py: "brew@3.8" }
           - { os: ubuntu-latest, py: "3.7" }
           - { os: windows-latest, py: "3.7" }
-          - { os: macos-12, py: "3.7" }
+          - { os: macos-13, py: "3.7" }
           - { os: ubuntu-latest, py: "pypy-3.7" }
           - { os: windows-latest, py: "pypy-3.7" }
-          - { os: macos-12, py: "pypy-3.7" }
+          - { os: macos-13, py: "pypy-3.7" }
         exclude:
           - { os: windows-latest, py: "pypy-3.10" }
           - { os: windows-latest, py: "pypy-3.9" }
@@ -93,6 +93,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py }}
+          allow-prereleases: true
       - name: Pick environment to run
         run: |
           import os; import platform; import sys; from pathlib import Path
