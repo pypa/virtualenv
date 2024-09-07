@@ -142,7 +142,7 @@ class NewVersion:  # noqa: PLW1641
         )
 
     def __eq__(self, other):
-        return type(self) == type(other) and all(
+        return type(self) == type(other) and all(  # noqa: E721
             getattr(self, k) == getattr(other, k) for k in ["filename", "release_date", "found_date", "source"]
         )
 
