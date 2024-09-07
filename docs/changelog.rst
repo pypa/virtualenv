@@ -5,6 +5,18 @@ Release History
 
 .. towncrier release notes start
 
+v20.26.4 (2024-09-07)
+---------------------
+
+Bugfixes - 20.26.4
+~~~~~~~~~~~~~~~~~~
+- no longer create `()` output in console during activation of a virtualenv by .bat file. (:issue:`2728`)
+- Upgrade embedded wheels:
+
+  * wheel to ``0.44.0`` from ``0.43.0``
+  * pip to ``24.2`` from ``24.1``
+  * setuptools to ``74.1.2`` from ``70.1.0`` (:issue:`2760`)
+
 v20.26.3 (2024-06-21)
 ---------------------
 

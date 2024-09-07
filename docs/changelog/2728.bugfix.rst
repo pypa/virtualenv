@@ -1,1 +1,0 @@
-no longer create `()` output in console during activation of a virtualenv by .bat file.
