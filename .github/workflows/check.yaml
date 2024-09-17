@@ -62,10 +62,29 @@ jobs:
           done
           exit 1
         shell: bash
-      - name: Setup python for tox
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
         with:
-          python-version: "3.12"
+          fetch-depth: 0
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Add .local/bin to PATH Windows
+        if: runner.os == 'Windows'
+        shell: bash
+        run: echo "$USERPROFILE/.local/bin" >> $GITHUB_PATH
+      - name: Add .local/bin to PATH macos-13
+        if: matrix.os == 'macos-13'
+        shell: bash
+        run: echo ~/.local/bin >> $GITHUB_PATH
+      - name: Install tox
+        if: matrix.py == '3.13'
+        run: uv tool install --python-preference only-managed --python 3.12 tox --with tox-uv
+      - name: Install tox
+        if: matrix.py != '3.13'
+        run: uv tool install --python-preference only-managed --python 3.13 tox --with tox-uv
       - name: Setup brew python for test ${{ matrix.py }}
         if: startsWith(matrix.py,'brew@')
         run: |
@@ -74,17 +93,6 @@ jobs:
           brew cleanup && brew upgrade python@$PY || brew install python@$PY
           echo "/usr/local/opt/python@$PY/libexec/bin" >>"${GITHUB_PATH}"
         shell: bash
-      - name: Install tox-uv
-        run: python -m pip install tox-uv pip -U
-        if: "!(startsWith(matrix.py,'pypy') || matrix.py == '3.7' || matrix.py == 'brew@3.9' || matrix.py == 'brew@3.8')"
-      - name: Install tox
-        run: python -m pip install tox pip -U
-        if: "(startsWith(matrix.py,'pypy') || matrix.py == '3.7' || matrix.py == 'brew@3.9' || matrix.py == 'brew@3.8')"
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Use local virtualenv for tox
-        run: python -m pip install .
       - name: Setup python for test ${{ matrix.py }}
         if: "!( startsWith(matrix.py,'brew@') || endsWith(matrix.py, '-dev') )"
         uses: actions/setup-python@v5
@@ -92,19 +100,11 @@ jobs:
           python-version: ${{ matrix.py }}
           allow-prereleases: true
       - name: Pick environment to run
-        run: |
-          import os; import platform; import sys; from pathlib import Path
-          plat = platform.python_implementation()
-          e = f"3.{sys.version_info.minor}" if plat == "CPython" else f"pypy3{sys.version_info.minor}"
-          env = f"TOXENV={e}"
-          print(f"Picked: {env} for {sys.version} based of {sys.executable}")
-          with Path(os.environ["GITHUB_ENV"]).open("ta") as file_handler:
-              file_handler.write(env)
-        shell: python
+        run: python tasks/pick_tox_env.py ${{ matrix.py }}
       - name: Setup test suite
-        run: tox -vv --notest --skip-missing-interpreters false
+        run: tox run -vv --notest --skip-missing-interpreters false
       - name: Run test suite
-        run: tox --skip-pkg-install
+        run: tox run --skip-pkg-install
         timeout-minutes: 20
         env:
           PYTEST_ADDOPTS: "-vv --durations=20"
@@ -134,15 +134,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Setup Python "3.12"
-        uses: actions/setup-python@v5
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v3
         with:
-          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Add .local/bin to Windows PATH
+        if: runner.os == 'Windows'
+        shell: bash
+        run: echo "$USERPROFILE/.local/bin" >> $GITHUB_PATH
       - name: Install tox
-        run: python -m pip install tox-uv
-      - name: Setup check
-        run: python -m tox --skip-missing-interpreters false -e ${{ matrix.tox_env }} --notest
+        run: uv tool install --python-preference only-managed --python 3.13 tox --with tox-uv
+      - name: Setup check suite
+        run: tox r -vv --notest --skip-missing-interpreters false -e ${{ matrix.tox_env }}
       - name: Run check for ${{ matrix.tox_env }}
-        run: python -m tox  --skip-pkg-install -e ${{ matrix.tox_env }}
-        env:
-          UPGRADE_ADVISORY: "yes"
+        run: tox r --skip-pkg-install -e ${{ matrix.tox_env }}
