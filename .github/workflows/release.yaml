@@ -1,0 +1,48 @@
+name: Release to PyPI
+on:
+  push:
+    tags: ["*"]
+
+env:
+  dists-artifact-name: python-package-distributions
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build package
+        run: uv build --python 3.13 --python-preference only-managed --sdist --wheel . --out-dir dist
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.dists-artifact-name }}
+          path: dist/*
+
+  release:
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    environment:
+      name: release
+      url: https://pypi.org/project/virtualenv/${{ github.ref_name }}
+    permissions:
+      id-token: write
+    steps:
+      - name: Download all the dists
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.dists-artifact-name }}
+          path: dist/
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.10.1
+        with:
+          attestations: true

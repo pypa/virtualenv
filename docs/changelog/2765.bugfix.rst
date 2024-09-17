@@ -1,0 +1,1 @@
+Upgrade embedded wheels: setuptools to ``75.1.0`` from ``74.1.2`` - by :user:`gaborbernat`.
