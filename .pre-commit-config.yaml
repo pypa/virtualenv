@@ -15,16 +15,16 @@ repos:
       - id: codespell
         args: ["--write-changes"]
   - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: "1.4.0"
+    rev: "1.4.1"
     hooks:
       - id: tox-ini-fmt
         args: ["-p", "fix"]
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "2.2.3"
+    rev: "2.2.4"
     hooks:
       - id: pyproject-fmt
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.6.5"
+    rev: "v0.6.7"
     hooks:
       - id: ruff-format
       - id: ruff
