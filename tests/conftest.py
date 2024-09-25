@@ -275,7 +275,11 @@ def is_inside_ci():
 
 @pytest.fixture(scope="session")
 def special_char_name():
-    base = "e-$ èрт🚒♞中片-j"
+    base = "'\";&&e-$ èрт🚒♞中片-j"
+    if IS_WIN:
+        # get rid of invalid characters on Windows
+        base = base.replace('"', "")
+        base = base.replace(";", "")
     # workaround for pypy3 https://bitbucket.org/pypy/pypy/issues/3147/venv-non-ascii-support-windows
     encoding = "ascii" if IS_WIN else sys.getfilesystemencoding()
     # let's not include characters that the file system cannot encode)

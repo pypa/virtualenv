@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from shlex import quote
-
 import pytest
 
 from virtualenv.activation import BatchActivator
@@ -26,10 +24,12 @@ def test_batch(activation_tester_class, activation_tester, tmp_path):
             return ["@echo off", *super()._get_test_lines(activate_script)]
 
         def quote(self, s):
-            """double quotes needs to be single, and single need to be double"""
-            return "".join(("'" if c == '"' else ('"' if c == "'" else c)) for c in quote(s))
+            if '"' in s or " " in s:
+                text = s.replace('"', r"\"")
+                return f'"{text}"'
+            return s
 
         def print_prompt(self):
-            return "echo %PROMPT%"
+            return 'echo "%PROMPT%"'
 
     activation_tester(Batch)

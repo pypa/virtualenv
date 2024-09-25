@@ -15,6 +15,10 @@ class BatchActivator(ViaTemplateActivator):
         yield "deactivate.bat"
         yield "pydoc.bat"
 
+    @staticmethod
+    def quote(string):
+        return string
+
     def instantiate_template(self, replacements, template, creator):
         # ensure the text has all newlines as \r\n - required by batch
         base = super().instantiate_template(replacements, template, creator)

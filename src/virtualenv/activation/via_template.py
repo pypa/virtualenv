@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shlex
 import sys
 from abc import ABC, abstractmethod
 
@@ -20,6 +21,16 @@ class ViaTemplateActivator(Activator, ABC):
     @abstractmethod
     def templates(self):
         raise NotImplementedError
+
+    @staticmethod
+    def quote(string):
+        """
+        Quote strings in the activation script.
+
+        :param string: the string to quote
+        :return: quoted string that works in the activation script
+        """
+        return shlex.quote(string)
 
     def generate(self, creator):
         dest_folder = creator.bin_dir
@@ -63,7 +74,7 @@ class ViaTemplateActivator(Activator, ABC):
         text = binary.decode("utf-8", errors="strict")
         for key, value in replacements.items():
             value_uni = self._repr_unicode(creator, value)
-            text = text.replace(key, value_uni)
+            text = text.replace(key, self.quote(value_uni))
         return text
 
     @staticmethod

@@ -133,6 +133,9 @@ lint.ignore = [
   "S404",    # Using subprocess is alright
   "S603",    # subprocess calls are fine
 ]
+lint.per-file-ignores."src/virtualenv/activation/python/activate_this.py" = [
+  "F821", # ignore undefined template string placeholders
+]
 lint.per-file-ignores."tests/**/*.py" = [
   "D",       # don't care about documentation in tests
   "FBT",     # don't care about booleans as positional arguments in tests

@@ -45,18 +45,18 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV='__VIRTUAL_ENV__'
+VIRTUAL_ENV=__VIRTUAL_ENV__
 if ([ "$OSTYPE" = "cygwin" ] || [ "$OSTYPE" = "msys" ]) && $(command -v cygpath &> /dev/null) ; then
     VIRTUAL_ENV=$(cygpath -u "$VIRTUAL_ENV")
 fi
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
-PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
+PATH="$VIRTUAL_ENV/"__BIN_NAME__":$PATH"
 export PATH
 
-if [ "x__VIRTUAL_PROMPT__" != x ] ; then
-    VIRTUAL_ENV_PROMPT="__VIRTUAL_PROMPT__"
+if [ "x"__VIRTUAL_PROMPT__ != x ] ; then
+    VIRTUAL_ENV_PROMPT=__VIRTUAL_PROMPT__
 else
     VIRTUAL_ENV_PROMPT=$(basename "$VIRTUAL_ENV")
 fi

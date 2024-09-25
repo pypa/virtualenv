@@ -32,8 +32,8 @@ export-env {
       }
     }
 
-    let virtual_env = '__VIRTUAL_ENV__'
-    let bin = '__BIN_NAME__'
+    let virtual_env = __VIRTUAL_ENV__
+    let bin = __BIN_NAME__
 
     let is_windows = ($nu.os-info.family) == 'windows'
     let path_name = (if (has-env 'Path') {
@@ -47,10 +47,10 @@ export-env {
     let new_path = ($env | get $path_name | prepend $venv_path)
 
     # If there is no default prompt, then use the env name instead
-    let virtual_env_prompt = (if ('__VIRTUAL_PROMPT__' | is-empty) {
+    let virtual_env_prompt = (if (__VIRTUAL_PROMPT__ | is-empty) {
         ($virtual_env | path basename)
     } else {
-        '__VIRTUAL_PROMPT__'
+        __VIRTUAL_PROMPT__
     })
 
     let new_env = {

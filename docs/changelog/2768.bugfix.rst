@@ -1,0 +1,2 @@
+Properly quote string placeholders in activation script templates to mitigate
+potential command injection - by :user:`y5c4l3`.
