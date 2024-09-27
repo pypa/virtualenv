@@ -7,6 +7,25 @@ class NushellActivator(ViaTemplateActivator):
     def templates(self):
         yield "activate.nu"
 
+    @staticmethod
+    def quote(string):
+        """
+        Nushell supports raw strings like: r###'this is a string'###.
+
+        This method finds the maximum continuous sharps in the string and then
+        quote it with an extra sharp.
+        """
+        max_sharps = 0
+        current_sharps = 0
+        for char in string:
+            if char == "#":
+                current_sharps += 1
+                max_sharps = max(current_sharps, max_sharps)
+            else:
+                current_sharps = 0
+        wrapping = "#" * (max_sharps + 1)
+        return f"r{wrapping}'{string}'{wrapping}"
+
     def replacements(self, creator, dest_folder):  # noqa: ARG002
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,

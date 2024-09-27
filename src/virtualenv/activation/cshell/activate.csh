@@ -10,15 +10,15 @@ alias deactivate 'test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PA
 # Unset irrelevant variables.
 deactivate nondestructive
 
-setenv VIRTUAL_ENV '__VIRTUAL_ENV__'
+setenv VIRTUAL_ENV __VIRTUAL_ENV__
 
 set _OLD_VIRTUAL_PATH="$PATH:q"
-setenv PATH "$VIRTUAL_ENV:q/__BIN_NAME__:$PATH:q"
+setenv PATH "$VIRTUAL_ENV:q/"__BIN_NAME__":$PATH:q"
 
 
 
-if ('__VIRTUAL_PROMPT__' != "") then
-    setenv VIRTUAL_ENV_PROMPT '__VIRTUAL_PROMPT__'
+if (__VIRTUAL_PROMPT__ != "") then
+    setenv VIRTUAL_ENV_PROMPT __VIRTUAL_PROMPT__
 else
     setenv VIRTUAL_ENV_PROMPT "$VIRTUAL_ENV:t:q"
 endif

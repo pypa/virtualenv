@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import sys
-from shlex import quote
 
 import pytest
 
@@ -21,11 +20,6 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch):
             self.activate_cmd = "."
             self.script_encoding = "utf-8-sig"
 
-        def quote(self, s):
-            """powershell double quote needed for quotes within single quotes"""
-            text = quote(s)
-            return text.replace('"', '""') if sys.platform == "win32" else text
-
         def _get_test_lines(self, activate_script):
             return super()._get_test_lines(activate_script)
 
@@ -34,5 +28,20 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch):
 
         def print_prompt(self):
             return "prompt"
+
+        def quote(self, s):
+            """
+            Tester will pass strings to native commands on Windows so extra
+            parsing rules are used. Check `PowerShellActivator.quote` for more
+            details.
+            """
+            text = PowerShellActivator.quote(s)
+            return text.replace('"', '""') if sys.platform == "win32" else text
+
+        def activate_call(self, script):
+            # Commands are called without quotes in PowerShell
+            cmd = self.activate_cmd
+            scr = self.quote(str(script))
+            return f"{cmd} {scr}".strip()
 
     activation_tester(PowerShell)

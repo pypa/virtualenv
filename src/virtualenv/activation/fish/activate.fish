@@ -58,7 +58,7 @@ end
 # Unset irrelevant variables.
 deactivate nondestructive
 
-set -gx VIRTUAL_ENV '__VIRTUAL_ENV__'
+set -gx VIRTUAL_ENV __VIRTUAL_ENV__
 
 # https://github.com/fish-shell/fish-shell/issues/436 altered PATH handling
 if test (echo $FISH_VERSION | head -c 1) -lt 3
@@ -66,12 +66,12 @@ if test (echo $FISH_VERSION | head -c 1) -lt 3
 else
     set -gx _OLD_VIRTUAL_PATH $PATH
 end
-set -gx PATH "$VIRTUAL_ENV"'/__BIN_NAME__' $PATH
+set -gx PATH "$VIRTUAL_ENV"'/'__BIN_NAME__ $PATH
 
 # Prompt override provided?
 # If not, just use the environment name.
-if test -n '__VIRTUAL_PROMPT__'
-    set -gx VIRTUAL_ENV_PROMPT '__VIRTUAL_PROMPT__'
+if test -n __VIRTUAL_PROMPT__
+    set -gx VIRTUAL_ENV_PROMPT __VIRTUAL_PROMPT__
 else
     set -gx VIRTUAL_ENV_PROMPT (basename "$VIRTUAL_ENV")
 end
