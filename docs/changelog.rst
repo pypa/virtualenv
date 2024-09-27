@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.26.6 (2024-09-27)
+---------------------
+
+Bugfixes - 20.26.6
+~~~~~~~~~~~~~~~~~~
+- Properly quote string placeholders in activation script templates to mitigate
+  potential command injection - by :user:`y5c4l3`. (:issue:`2768`)
+
 v20.26.5 (2024-09-17)
 ---------------------
 
