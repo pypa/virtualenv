@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 
@@ -166,8 +167,9 @@ def get_paths(env: Mapping[str, str]) -> Generator[Path, None, None]:
             path = os.defpath
     if path:
         for p in map(Path, path.split(os.pathsep)):
-            if p.exists():
-                yield p
+            with suppress(OSError):
+                if p.exists():
+                    yield p
 
 
 class LazyPathDump:
