@@ -66,8 +66,8 @@ def run():  # noqa: C901
 
         added = collect_package_versions(new_packages)
         removed = collect_package_versions(remove_packages)
-
         outcome = (1 if STRICT else 0) if (added or removed) else 0
+        print(f"Outcome {outcome} added {added} removed {removed}")  # noqa: T201
         lines = ["Upgrade embedded wheels:", ""]
         for key, versions in added.items():
             text = f"* {key} to {fmt_version(versions)}"
@@ -119,15 +119,8 @@ def run():  # noqa: C901
         )
         dest_target = DEST / "__init__.py"
         dest_target.write_text(msg, encoding="utf-8")
-
-        subprocess.run(
-            [sys.executable, "-m", "ruff", "check", str(dest_target), "--fix", "--unsafe-fixes"],
-            check=False,
-        )
-        subprocess.run(
-            [sys.executable, "-m", "ruff", "format", str(dest_target), "--preview"],
-            check=False,
-        )
+        subprocess.run([sys.executable, "-m", "ruff", "format", str(dest_target), "--preview"])
+        subprocess.run([sys.executable, "-m", "ruff", "check", str(dest_target), "--fix", "--unsafe-fixes"])
 
         raise SystemExit(outcome)
 
