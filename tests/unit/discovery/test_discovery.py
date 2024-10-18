@@ -59,6 +59,14 @@ def test_discovery_via_path_not_found(tmp_path, monkeypatch):
     assert interpreter is None
 
 
+def test_discovery_via_path_in_nonbrowseable_directory(tmp_path, monkeypatch):
+    bad_perm = tmp_path / "bad_perm"
+    bad_perm.mkdir(mode=0o000)
+    monkeypatch.setenv("PATH", str(bad_perm / "bin"))
+    interpreter = get_interpreter(uuid4().hex, [])
+    assert interpreter is None
+
+
 def test_relative_path(session_app_data, monkeypatch):
     sys_executable = Path(PythonInfo.current_system(app_data=session_app_data).system_executable)
     cwd = sys_executable.parents[1]
