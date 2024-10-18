@@ -1,1 +1,0 @@
-When a ``$PATH`` entry cannot be checked for existence, skip it instead of terminating - by :user:`hroncok`.
