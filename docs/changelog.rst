@@ -5,6 +5,26 @@ Release History
 
 .. towncrier release notes start
 
+v20.27.0 (2024-10-17)
+---------------------
+
+Features - 20.27.0
+~~~~~~~~~~~~~~~~~~
+- Drop 3.7 support as the CI environments no longer allow it running - by :user:`gaborbernat`. (:issue:`2758`)
+
+Bugfixes - 20.27.0
+~~~~~~~~~~~~~~~~~~
+- When a ``$PATH`` entry cannot be checked for existence, skip it instead of terminating - by :user:`hroncok`. (:issue:`2782`)
+- Upgrade embedded wheels:
+
+  * setuptools to ``75.2.0`` from ``75.1.0``
+  * Removed pip of ``24.0``
+  * Removed setuptools of ``68.0.0``
+  * Removed wheel of ``0.42.0``
+
+  - by :user:`gaborbernat`. (:issue:`2783`)
+- Fix zipapp is broken on Windows post distlib ``0.3.9`` - by :user:`gaborbernat`. (:issue:`2784`)
+
 v20.26.6 (2024-09-27)
 ---------------------
 
