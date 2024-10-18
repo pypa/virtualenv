@@ -75,12 +75,16 @@ class VersionPlatformSelect:
         class Resource:
             def __init__(self, path: str, name: str, loader: SourceLoader) -> None:
                 self.path = os.path.join(path, name)
-                self.name = name
+                self._name = name
                 self.loader = loader
+
+            @cached_property
+            def name(self) -> str:
+                return os.path.basename(self._name)
 
             @property
             def bytes(self) -> bytes:
-                return self.loader.get_data(self.name)
+                return self.loader.get_data(self._name)
 
             @property
             def is_container(self) -> bool:
@@ -91,8 +95,8 @@ class VersionPlatformSelect:
                 return [
                     i.filename
                     for i in (
-                        (j for j in zip_file.filelist if j.filename.startswith(f"{self.name}/"))
-                        if self.name
+                        (j for j in zip_file.filelist if j.filename.startswith(f"{self._name}/"))
+                        if self._name
                         else zip_file.filelist
                     )
                 ]
@@ -133,10 +137,7 @@ _VER_DISTRIBUTION_CLASS = None
 def versioned_distribution_class():
     global _VER_DISTRIBUTION_CLASS  # noqa: PLW0603
     if _VER_DISTRIBUTION_CLASS is None:
-        if sys.version_info >= (3, 8):
-            from importlib.metadata import Distribution  # noqa: PLC0415
-        else:
-            from importlib_metadata import Distribution  # noqa: PLC0415
+        from importlib.metadata import Distribution  # noqa: PLC0415
 
         class VersionedDistribution(Distribution):
             def __init__(self, file_loader, dist_path) -> None:

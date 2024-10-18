@@ -1,0 +1,1 @@
+Drop 3.7 support as the CI environments no longer allow it running - by :user:`gaborbernat`.
