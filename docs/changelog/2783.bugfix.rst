@@ -1,0 +1,8 @@
+Upgrade embedded wheels:
+
+* setuptools to ``75.2.0`` from ``75.1.0``
+* Removed pip of ``24.0``
+* Removed setuptools of ``68.0.0``
+* Removed wheel of ``0.42.0``
+
+- by :user:`gaborbernat`.

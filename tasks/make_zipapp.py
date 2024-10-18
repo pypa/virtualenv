@@ -23,7 +23,7 @@ from packaging.requirements import Requirement
 
 HERE = Path(__file__).parent.absolute()
 
-VERSIONS = [f"3.{i}" for i in range(10, 6, -1)]
+VERSIONS = [f"3.{i}" for i in range(13, 7, -1)]
 
 
 def main():
@@ -49,7 +49,7 @@ def create_zipapp(dest, packages):
         zip_app.writestr("__main__.py", (HERE / "__main__zipapp.py").read_bytes())
     bio.seek(0)
     zipapp.create_archive(bio, dest)
-    print(f"zipapp created at {dest}")  # noqa: T201
+    print(f"zipapp created at {dest} with size {os.path.getsize(dest) / 1024 / 1024:.2f}MB")  # noqa: T201
 
 
 def write_packages_to_zipapp(base, dist, modules, packages, zip_app):  # noqa: C901, PLR0912

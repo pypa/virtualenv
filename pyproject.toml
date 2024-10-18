@@ -18,7 +18,7 @@ license = "MIT"
 maintainers = [
   { name = "Bernat Gabor", email = "gaborjbernat@gmail.com" },
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
@@ -27,7 +27,6 @@ classifiers = [
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.7",
   "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
@@ -106,7 +105,6 @@ build.targets.sdist.include = [
 version.source = "vcs"
 
 [tool.ruff]
-target-version = "py37"
 line-length = 120
 format.preview = true
 format.docstring-code-line-length = 100
@@ -128,6 +126,7 @@ lint.ignore = [
   "PLR0914", # Too many local variables
   "PLR0917", # Too many positional arguments
   "PLR6301", #  Method could be a function, class method, or static method
+  "PLW1510", # no need for check for subprocess
   "PTH",     # no pathlib, <=39 has problems on Windows with absolute/resolve, can revisit once we no longer need 39
   "S104",    # Possible binding to all interfaces
   "S404",    # Using subprocess is alright

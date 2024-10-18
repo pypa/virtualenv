@@ -97,6 +97,7 @@ request on our issue tracker.
 
 Note:
 
+- as of ``20.27.0`` -- ``2024-10-17`` -- we no longer support running under Python ``<=3.7``,
 - as of ``20.18.0`` -- ``2023-02-06`` -- we no longer support running under Python ``<=3.6``,
 - as of ``20.22.0`` -- ``2023-04-19`` -- we no longer support creating environments for Python ``<=3.6``.
 
@@ -120,4 +121,4 @@ In case of macOS we support:
 Windows
 ~~~~~~~
 - Installations from `python.org <https://www.python.org/downloads/>`_
-- Windows Store Python - note only `version 3.7+ <https://www.microsoft.com/en-us/p/python-38/9mssztt1n39l>`_
+- Windows Store Python - note only `version 3.8+ <https://www.microsoft.com/en-us/p/python-38/9mssztt1n39l>`_
