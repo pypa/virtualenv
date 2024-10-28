@@ -38,7 +38,7 @@ class CPythonWindows(CPython, WindowsSupports, ABC):
         # - https://bugs.python.org/issue42013
         # - venv
         host = cls.host_python(interpreter)
-        for path in (host.parent / n for n in {"python.exe", host.name}):  # noqa: PLC0208
+        for path in (host.parent / n for n in {"python.exe", host.name}):
             yield host, [path.name], RefMust.COPY, RefWhen.ANY
         # for more info on pythonw.exe see https://stackoverflow.com/a/30313091
         python_w = host.parent / "pythonw.exe"
