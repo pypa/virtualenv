@@ -43,15 +43,15 @@ dynamic = [
   "version",
 ]
 dependencies = [
-  "distlib<1,>=0.3.7",
-  "filelock<4,>=3.12.2",
+  "distlib>=0.3.7,<1",
+  "filelock>=3.12.2,<4",
   "importlib-metadata>=6.6; python_version<'3.8'",
-  "platformdirs<5,>=3.9.1",
+  "platformdirs>=3.9.1,<5",
 ]
 optional-dependencies.docs = [
   "furo>=2023.7.26",
   "proselint>=0.13",
-  "sphinx!=7.3,>=7.1.2",
+  "sphinx>=7.1.2,!=7.3",
   "sphinx-argparse>=0.4",
   "sphinxcontrib-towncrier>=0.2.1a0",
   "towncrier>=23.6",
