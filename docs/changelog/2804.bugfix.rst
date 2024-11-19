@@ -1,0 +1,4 @@
+Upgrade embedded wheels:
+
+* setuptools to ``75.6.0`` from ``75.5.0``
+* wheel to ``0.45.1`` from ``0.45.0``
