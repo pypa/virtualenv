@@ -52,9 +52,10 @@ def test_batch_output(activation_tester_class, activation_tester, tmp_path):
 
         def _get_test_lines(self, activate_script):
             intermediary_script_path = str(tmp_path / "intermediary.bat")
+            activate_script_quoted = self.quote(str(activate_script))
             return [
                 "@echo on",
-                f"echo @call {activate_script} > {intermediary_script_path}",
+                f"echo @call {activate_script_quoted} > {intermediary_script_path}",
                 f"echo @echo >> {intermediary_script_path}",
                 f"echo @deactivate >> {intermediary_script_path}",
                 f"call {intermediary_script_path}",
