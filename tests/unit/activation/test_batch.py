@@ -55,10 +55,10 @@ def test_batch_output(activation_tester_class, activation_tester, tmp_path):
             activate_script_quoted = self.quote(str(activate_script))
             return [
                 "@echo on",
-                f"echo @call {activate_script_quoted} > {intermediary_script_path}",
-                f"echo @echo >> {intermediary_script_path}",
-                f"echo @deactivate >> {intermediary_script_path}",
-                f"call {intermediary_script_path}",
+                f"@echo @call {activate_script_quoted} > {intermediary_script_path}",
+                f"@echo @echo >> {intermediary_script_path}",
+                f"@echo @deactivate >> {intermediary_script_path}",
+                f"@call {intermediary_script_path}",
             ]
 
         def assert_output(self, out, raw, tmp_path):
