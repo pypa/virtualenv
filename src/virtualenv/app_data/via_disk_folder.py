@@ -37,6 +37,8 @@ from virtualenv.version import __version__
 
 from .base import AppData, ContentStore
 
+LOGGER = logging.getLogger(__name__)
+
 
 class AppDataDiskFolder(AppData):
     """Store the application data on the disk within a folder layout."""
@@ -54,7 +56,7 @@ class AppDataDiskFolder(AppData):
         return str(self.lock.path)
 
     def reset(self):
-        logging.debug("reset app data folder %s", self.lock.path)
+        LOGGER.debug("reset app data folder %s", self.lock.path)
         safe_delete(self.lock.path)
 
     def close(self):
@@ -128,7 +130,7 @@ class JSONStoreDisk(ContentStore, ABC):
         except Exception:  # noqa: BLE001, S110
             pass
         else:
-            logging.debug("got %s from %s", self.msg, self.msg_args)
+            LOGGER.debug("got %s from %s", self.msg, self.msg_args)
             return data
         if bad_format:
             with suppress(OSError):  # reading and writing on the same file may cause race on multiple processes
@@ -137,7 +139,7 @@ class JSONStoreDisk(ContentStore, ABC):
 
     def remove(self):
         self.file.unlink()
-        logging.debug("removed %s at %s", self.msg, self.msg_args)
+        LOGGER.debug("removed %s at %s", self.msg, self.msg_args)
 
     @contextmanager
     def locked(self):
@@ -148,7 +150,7 @@ class JSONStoreDisk(ContentStore, ABC):
         folder = self.file.parent
         folder.mkdir(parents=True, exist_ok=True)
         self.file.write_text(json.dumps(content, sort_keys=True, indent=2), encoding="utf-8")
-        logging.debug("wrote %s at %s", self.msg, self.msg_args)
+        LOGGER.debug("wrote %s at %s", self.msg, self.msg_args)
 
 
 class PyInfoStoreDisk(JSONStoreDisk):

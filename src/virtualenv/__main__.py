@@ -5,6 +5,8 @@ import os
 import sys
 from timeit import default_timer
 
+LOGGER = logging.getLogger(__name__)
+
 
 def run(args=None, options=None, env=None):
     env = os.environ if env is None else env
@@ -16,7 +18,7 @@ def run(args=None, options=None, env=None):
         args = sys.argv[1:]
     try:
         session = cli_run(args, options, env)
-        logging.warning(LogSession(session, start))
+        LOGGER.warning(LogSession(session, start))
     except ProcessCallFailedError as exception:
         print(f"subprocess call failed for {exception.cmd} with code {exception.code}")  # noqa: T201
         print(exception.out, file=sys.stdout, end="")  # noqa: T201
@@ -59,11 +61,11 @@ def run_with_catch(args=None, env=None):
             if getattr(options, "with_traceback", False):
                 raise
             if not (isinstance(exception, SystemExit) and exception.code == 0):
-                logging.error("%s: %s", type(exception).__name__, exception)  # noqa: TRY400
+                LOGGER.error("%s: %s", type(exception).__name__, exception)  # noqa: TRY400
             code = exception.code if isinstance(exception, SystemExit) else 1
             sys.exit(code)
         finally:
-            logging.shutdown()  # force flush of log messages before the trace is printed
+            LOGGER.shutdown()  # force flush of log messages before the trace is printed
 
 
 if __name__ == "__main__":  # pragma: no cov

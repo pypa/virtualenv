@@ -12,6 +12,8 @@ from .read_only import ReadOnlyAppData
 from .via_disk_folder import AppDataDiskFolder
 from .via_tempdir import TempAppData
 
+LOGGER = logging.getLogger(__name__)
+
 
 def _default_app_data_dir(env):
     key = "VIRTUALENV_OVERRIDE_APP_DATA"
@@ -37,13 +39,13 @@ def make_app_data(folder, **kwargs):
     if not os.path.isdir(folder):
         try:
             os.makedirs(folder)
-            logging.debug("created app data folder %s", folder)
+            LOGGER.debug("created app data folder %s", folder)
         except OSError as exception:
-            logging.info("could not create app data folder %s due to %r", folder, exception)
+            LOGGER.info("could not create app data folder %s due to %r", folder, exception)
 
     if os.access(folder, os.W_OK):
         return AppDataDiskFolder(folder)
-    logging.debug("app data folder %s has no write access", folder)
+    LOGGER.debug("app data folder %s has no write access", folder)
     return TempAppData()
 
 

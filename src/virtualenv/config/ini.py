@@ -10,6 +10,8 @@ from platformdirs import user_config_dir
 
 from .convert import convert
 
+LOGGER = logging.getLogger(__name__)
+
 
 class IniConfig:
     VIRTUALENV_CONFIG_FILE_ENV_VAR: ClassVar[str] = "VIRTUALENV_CONFIG_FILE"
@@ -44,7 +46,7 @@ class IniConfig:
                 except Exception as exc:  # noqa: BLE001
                     exception = exc
         if exception is not None:
-            logging.error("failed to read config file %s because %r", config_file, exception)
+            LOGGER.error("failed to read config file %s because %r", config_file, exception)
 
     def _load(self):
         with self.config_file.open("rt", encoding="utf-8") as file_handler:

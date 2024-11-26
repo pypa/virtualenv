@@ -18,6 +18,7 @@ from collections import OrderedDict, namedtuple
 from string import digits
 
 VersionInfo = namedtuple("VersionInfo", ["major", "minor", "micro", "releaselevel", "serial"])  # noqa: PYI024
+LOGGER = logging.getLogger(__name__)
 
 
 def _get_path_extensions():
@@ -386,7 +387,7 @@ class PythonInfo:  # noqa: PLR0904
             except Exception as exception:
                 if raise_on_error:
                     raise
-                logging.info("ignore %s due cannot resolve system due to %r", proposed.original_executable, exception)
+                LOGGER.info("ignore %s due cannot resolve system due to %r", proposed.original_executable, exception)
                 proposed = None
         return proposed
 
@@ -412,12 +413,12 @@ class PythonInfo:  # noqa: PLR0904
             if prefix in prefixes:
                 if len(prefixes) == 1:
                     # if we're linking back to ourselves accept ourselves with a WARNING
-                    logging.info("%r links back to itself via prefixes", target)
+                    LOGGER.info("%r links back to itself via prefixes", target)
                     target.system_executable = target.executable
                     break
                 for at, (p, t) in enumerate(prefixes.items(), start=1):
-                    logging.error("%d: prefix=%s, info=%r", at, p, t)
-                logging.error("%d: prefix=%s, info=%r", len(prefixes) + 1, prefix, target)
+                    LOGGER.error("%d: prefix=%s, info=%r", at, p, t)
+                LOGGER.error("%d: prefix=%s, info=%r", len(prefixes) + 1, prefix, target)
                 msg = "prefixes are causing a circle {}".format("|".join(prefixes.keys()))
                 raise RuntimeError(msg)
             prefixes[prefix] = target
@@ -432,9 +433,9 @@ class PythonInfo:  # noqa: PLR0904
     def discover_exe(self, app_data, prefix, exact=True, env=None):  # noqa: FBT002
         key = prefix, exact
         if key in self._cache_exe_discovery and prefix:
-            logging.debug("discover exe from cache %s - exact %s: %r", prefix, exact, self._cache_exe_discovery[key])
+            LOGGER.debug("discover exe from cache %s - exact %s: %r", prefix, exact, self._cache_exe_discovery[key])
             return self._cache_exe_discovery[key]
-        logging.debug("discover exe for %s in %s", self, prefix)
+        LOGGER.debug("discover exe for %s in %s", self, prefix)
         # we don't know explicitly here, do some guess work - our executable name should tell
         possible_names = self._find_possible_exe_names()
         possible_folders = self._find_possible_folders(prefix)
@@ -450,7 +451,7 @@ class PythonInfo:  # noqa: PLR0904
             info = self._select_most_likely(discovered, self)
             folders = os.pathsep.join(possible_folders)
             self._cache_exe_discovery[key] = info
-            logging.debug("no exact match found, chosen most similar of %s within base folders %s", info, folders)
+            LOGGER.debug("no exact match found, chosen most similar of %s within base folders %s", info, folders)
             return info
         msg = "failed to detect {} in {}".format("|".join(possible_names), os.pathsep.join(possible_folders))
         raise RuntimeError(msg)
@@ -469,7 +470,7 @@ class PythonInfo:  # noqa: PLR0904
                 if item == "version_info":
                     found, searched = ".".join(str(i) for i in found), ".".join(str(i) for i in searched)
                 executable = info.executable
-                logging.debug("refused interpreter %s because %s differs %s != %s", executable, item, found, searched)
+                LOGGER.debug("refused interpreter %s because %s differs %s != %s", executable, item, found, searched)
                 if exact is False:
                     discovered.append(info)
                 break

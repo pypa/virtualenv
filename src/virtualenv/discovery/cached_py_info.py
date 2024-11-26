@@ -23,6 +23,7 @@ from virtualenv.util.subprocess import subprocess
 
 _CACHE = OrderedDict()
 _CACHE[Path(sys.executable)] = PythonInfo()
+LOGGER = logging.getLogger(__name__)
 
 
 def from_exe(cls, app_data, exe, env=None, raise_on_error=True, ignore_cache=False):  # noqa: FBT002, PLR0913
@@ -31,7 +32,7 @@ def from_exe(cls, app_data, exe, env=None, raise_on_error=True, ignore_cache=Fal
     if isinstance(result, Exception):
         if raise_on_error:
             raise result
-        logging.info("%s", result)
+        LOGGER.info("%s", result)
         result = None
     return result
 
@@ -109,7 +110,7 @@ def _run_subprocess(cls, exe, app_data, env):
         # prevent sys.prefix from leaking into the child process - see https://bugs.python.org/issue22490
         env = env.copy()
         env.pop("__PYVENV_LAUNCHER__", None)
-        logging.debug("get interpreter info via cmd: %s", LogCmd(cmd))
+        LOGGER.debug("get interpreter info via cmd: %s", LogCmd(cmd))
         try:
             process = Popen(
                 cmd,

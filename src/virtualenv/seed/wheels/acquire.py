@@ -12,6 +12,8 @@ from .bundle import from_bundle
 from .periodic_update import add_wheel_to_update_log
 from .util import Version, Wheel, discover_wheels
 
+LOGGER = logging.getLogger(__name__)
+
 
 def get_wheel(  # noqa: PLR0913
     distribution,
@@ -50,7 +52,7 @@ def get_wheel(  # noqa: PLR0913
 
 def download_wheel(distribution, version_spec, for_py_version, search_dirs, app_data, to_folder, env):  # noqa: PLR0913
     to_download = f"{distribution}{version_spec or ''}"
-    logging.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
+    LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
     cmd = [
         sys.executable,
         "-m",
@@ -75,7 +77,7 @@ def download_wheel(distribution, version_spec, for_py_version, search_dirs, app_
         kwargs = {"output": out, "stderr": err}
         raise CalledProcessError(process.returncode, cmd, **kwargs)
     result = _find_downloaded_wheel(distribution, version_spec, for_py_version, to_folder, out)
-    logging.debug("downloaded wheel %s", result.name)
+    LOGGER.debug("downloaded wheel %s", result.name)
     return result
 
 

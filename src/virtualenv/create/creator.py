@@ -20,6 +20,7 @@ from .pyenv_cfg import PyEnvCfg
 
 HERE = Path(os.path.abspath(__file__)).parent
 DEBUG_SCRIPT = HERE / "debug.py"
+LOGGER = logging.getLogger(__name__)
 
 
 class CreatorMeta:
@@ -154,7 +155,7 @@ class Creator(ABC):
 
     def run(self):
         if self.dest.exists() and self.clear:
-            logging.debug("delete %s", self.dest)
+            LOGGER.debug("delete %s", self.dest)
             safe_delete(self.dest)
         self.create()
         self.add_cachedir_tag()
@@ -219,7 +220,7 @@ def get_env_debug_info(env_exe, debug_script, app_data, env):
 
     with app_data.ensure_extracted(debug_script) as debug_script_extracted:
         cmd = [str(env_exe), str(debug_script_extracted)]
-        logging.debug("debug via %r", LogCmd(cmd))
+        LOGGER.debug("debug via %r", LogCmd(cmd))
         code, out, err = run_cmd(cmd)
 
     try:

@@ -11,6 +11,8 @@ from threading import Lock, RLock
 
 from filelock import FileLock, Timeout
 
+LOGGER = logging.getLogger(__name__)
+
 
 class _CountedFileLock(FileLock):
     def __init__(self, lock_file) -> None:
@@ -116,7 +118,7 @@ class ReentrantFileLock(PathLockBase):
         except Timeout:
             if no_block:
                 raise
-            logging.debug("lock file %s present, will block until released", lock.lock_file)
+            LOGGER.debug("lock file %s present, will block until released", lock.lock_file)
             lock.release()  # release the acquire try from above
             lock.acquire()
 
