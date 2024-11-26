@@ -4,6 +4,8 @@ import logging
 import os
 from collections import OrderedDict
 
+LOGGER = logging.getLogger(__name__)
+
 
 class PyEnvCfg:
     def __init__(self, content, path) -> None:
@@ -30,12 +32,12 @@ class PyEnvCfg:
         return content
 
     def write(self):
-        logging.debug("write %s", self.path)
+        LOGGER.debug("write %s", self.path)
         text = ""
         for key, value in self.content.items():
             normalized_value = os.path.realpath(value) if value and os.path.exists(value) else value
             line = f"{key} = {normalized_value}"
-            logging.debug("\t%s", line)
+            LOGGER.debug("\t%s", line)
             text += line
             text += "\n"
         self.path.write_text(text, encoding="utf-8")

@@ -14,6 +14,8 @@ from distlib.scripts import ScriptMaker, enquote_executable
 
 from virtualenv.util.path import safe_delete
 
+LOGGER = logging.getLogger(__name__)
+
 
 class PipInstall(ABC):
     def __init__(self, wheel, creator, image_folder) -> None:
@@ -40,11 +42,11 @@ class PipInstall(ABC):
         script_dir = self._creator.script_dir
         for name, module in self._console_scripts.items():
             consoles.update(self._create_console_entry_point(name, module, script_dir, version_info))
-        logging.debug("generated console scripts %s", " ".join(i.name for i in consoles))
+        LOGGER.debug("generated console scripts %s", " ".join(i.name for i in consoles))
 
     def build_image(self):
         # 1. first extract the wheel
-        logging.debug("build install image for %s to %s", self._wheel.name, self._image_dir)
+        LOGGER.debug("build install image for %s to %s", self._wheel.name, self._image_dir)
         with zipfile.ZipFile(str(self._wheel)) as zip_ref:
             self._shorten_path_if_needed(zip_ref)
             zip_ref.extractall(str(self._image_dir))
@@ -151,7 +153,7 @@ class PipInstall(ABC):
     @staticmethod
     def _uninstall_dist(dist):
         dist_base = dist.parent
-        logging.debug("uninstall existing distribution %s from %s", dist.stem, dist_base)
+        LOGGER.debug("uninstall existing distribution %s from %s", dist.stem, dist_base)
 
         top_txt = dist / "top_level.txt"  # add top level packages at folder level
         paths = (

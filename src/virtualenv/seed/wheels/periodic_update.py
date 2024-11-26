@@ -22,6 +22,7 @@ from virtualenv.seed.wheels.embed import BUNDLE_SUPPORT
 from virtualenv.seed.wheels.util import Wheel
 from virtualenv.util.subprocess import CREATE_NO_WINDOW
 
+LOGGER = logging.getLogger(__name__)
 GRACE_PERIOD_CI = timedelta(hours=1)  # prevent version switch in the middle of a CI run
 GRACE_PERIOD_MINOR = timedelta(days=28)
 UPDATE_PERIOD = timedelta(days=14)
@@ -45,7 +46,7 @@ def periodic_update(  # noqa: PLR0913
 
     def _update_wheel(ver):
         updated_wheel = Wheel(app_data.house / ver.filename)
-        logging.debug("using %supdated wheel %s", "periodically " if updated_wheel else "", updated_wheel)
+        LOGGER.debug("using %supdated wheel %s", "periodically " if updated_wheel else "", updated_wheel)
         return updated_wheel
 
     u_log = UpdateLog.from_app_data(app_data, distribution, for_py_version)
@@ -79,10 +80,10 @@ def handle_auto_update(distribution, for_py_version, wheel, search_dirs, app_dat
 
 def add_wheel_to_update_log(wheel, for_py_version, app_data):
     embed_update_log = app_data.embed_update_log(wheel.distribution, for_py_version)
-    logging.debug("adding %s information to %s", wheel.name, embed_update_log.file)
+    LOGGER.debug("adding %s information to %s", wheel.name, embed_update_log.file)
     u_log = UpdateLog.from_dict(embed_update_log.read())
     if any(version.filename == wheel.name for version in u_log.versions):
-        logging.warning("%s already present in %s", wheel.name, embed_update_log.file)
+        LOGGER.warning("%s already present in %s", wheel.name, embed_update_log.file)
         return
     # we don't need a release date for sources other than "periodic"
     version = NewVersion(wheel.name, datetime.now(tz=timezone.utc), None, "download")
@@ -220,7 +221,7 @@ def trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, e
     if not debug and sys.platform == "win32":
         kwargs["creationflags"] = CREATE_NO_WINDOW
     process = Popen(cmd, **kwargs)
-    logging.info(
+    LOGGER.info(
         "triggered periodic upgrade of %s%s (for python %s) via background process having PID %d",
         distribution,
         "" if wheel is None else f"=={wheel.version}",
@@ -239,7 +240,7 @@ def do_update(distribution, for_py_version, embed_filename, app_data, search_dir
     try:
         versions = _run_do_update(app_data, distribution, embed_filename, for_py_version, periodic, search_dirs)
     finally:
-        logging.debug("done %s %s with %s", distribution, for_py_version, versions)
+        LOGGER.debug("done %s %s with %s", distribution, for_py_version, versions)
     return versions
 
 
@@ -297,7 +298,7 @@ def _run_do_update(  # noqa: C901, PLR0913
             break
         release_date = release_date_for_wheel_path(dest.path)
         last = NewVersion(filename=dest.path.name, release_date=release_date, found_date=download_time, source=source)
-        logging.info("detected %s in %s", last, datetime.now(tz=timezone.utc) - download_time)
+        LOGGER.info("detected %s in %s", last, datetime.now(tz=timezone.utc) - download_time)
         versions.append(last)
         filenames.add(last.filename)
         last_wheel = last.wheel
@@ -325,7 +326,7 @@ def release_date_for_wheel_path(dest):
             upload_time = content["releases"][wheel.version][0]["upload_time"]
             return datetime.strptime(upload_time, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
         except Exception as exception:  # noqa: BLE001
-            logging.error("could not load release date %s because %r", content, exception)  # noqa: TRY400
+            LOGGER.error("could not load release date %s because %r", content, exception)  # noqa: TRY400
     return None
 
 
@@ -353,9 +354,9 @@ def _pypi_get_distribution_info(distribution):
                     content = json.load(file_handler)
                 break
             except URLError as exception:
-                logging.error("failed to access %s because %r", url, exception)  # noqa: TRY400
+                LOGGER.error("failed to access %s because %r", url, exception)  # noqa: TRY400
     except Exception as exception:  # noqa: BLE001
-        logging.error("failed to access %s because %r", url, exception)  # noqa: TRY400
+        LOGGER.error("failed to access %s because %r", url, exception)  # noqa: TRY400
     return content
 
 
@@ -386,7 +387,7 @@ def _run_manual_upgrade(app_data, distribution, for_py_version, env):
         do_periodic_update=False,
         env=env,
     )
-    logging.warning(
+    LOGGER.warning(
         "upgrade %s for python %s with current %s",
         distribution,
         for_py_version,
@@ -410,7 +411,7 @@ def _run_manual_upgrade(app_data, distribution, for_py_version, env):
         args.append("\n".join(f"\t{v}" for v in versions))
     ver_update = "new entries found:\n%s" if versions else "no new versions found"
     msg = f"upgraded %s for python %s in %s {ver_update}"
-    logging.warning(msg, *args)
+    LOGGER.warning(msg, *args)
 
 
 __all__ = [

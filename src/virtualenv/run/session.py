@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import logging
 
+LOGGER = logging.getLogger(__name__)
+
 
 class Session:
     """Represents a virtual environment creation session."""
@@ -47,20 +49,20 @@ class Session:
         self.creator.pyenv_cfg.write()
 
     def _create(self):
-        logging.info("create virtual environment via %s", self.creator)
+        LOGGER.info("create virtual environment via %s", self.creator)
         self.creator.run()
-        logging.debug(_DEBUG_MARKER)
-        logging.debug("%s", _Debug(self.creator))
+        LOGGER.debug(_DEBUG_MARKER)
+        LOGGER.debug("%s", _Debug(self.creator))
 
     def _seed(self):
         if self.seeder is not None and self.seeder.enabled:
-            logging.info("add seed packages via %s", self.seeder)
+            LOGGER.info("add seed packages via %s", self.seeder)
             self.seeder.run(self.creator)
 
     def _activate(self):
         if self.activators:
             active = ", ".join(type(i).__name__.replace("Activator", "") for i in self.activators)
-            logging.info("add activators for %s", active)
+            LOGGER.info("add activators for %s", active)
             for activator in self.activators:
                 activator.generate(self.creator)
 

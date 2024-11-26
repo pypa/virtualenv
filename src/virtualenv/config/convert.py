@@ -4,6 +4,8 @@ import logging
 import os
 from typing import ClassVar
 
+LOGGER = logging.getLogger(__name__)
+
 
 class TypeData:
     def __init__(self, default_type, as_type) -> None:
@@ -81,7 +83,7 @@ def convert(value, as_type, source):
     try:
         return as_type.convert(value)
     except Exception as exception:
-        logging.warning("%s failed to convert %r as %r because %r", source, value, as_type, exception)
+        LOGGER.warning("%s failed to convert %r as %r because %r", source, value, as_type, exception)
         raise
 
 

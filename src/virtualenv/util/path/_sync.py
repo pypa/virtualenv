@@ -6,10 +6,12 @@ import shutil
 import sys
 from stat import S_IWUSR
 
+LOGGER = logging.getLogger(__name__)
+
 
 def ensure_dir(path):
     if not path.exists():
-        logging.debug("create folder %s", str(path))
+        LOGGER.debug("create folder %s", str(path))
         os.makedirs(str(path))
 
 
@@ -20,16 +22,16 @@ def ensure_safe_to_do(src, dest):
     if not dest.exists():
         return
     if dest.is_dir() and not dest.is_symlink():
-        logging.debug("remove directory %s", dest)
+        LOGGER.debug("remove directory %s", dest)
         safe_delete(dest)
     else:
-        logging.debug("remove file %s", dest)
+        LOGGER.debug("remove file %s", dest)
         dest.unlink()
 
 
 def symlink(src, dest):
     ensure_safe_to_do(src, dest)
-    logging.debug("symlink %s", _Debug(src, dest))
+    LOGGER.debug("symlink %s", _Debug(src, dest))
     dest.symlink_to(src, target_is_directory=src.is_dir())
 
 
@@ -37,7 +39,7 @@ def copy(src, dest):
     ensure_safe_to_do(src, dest)
     is_dir = src.is_dir()
     method = copytree if is_dir else shutil.copy
-    logging.debug("copy %s", _Debug(src, dest))
+    LOGGER.debug("copy %s", _Debug(src, dest))
     method(str(src), str(dest))
 
 

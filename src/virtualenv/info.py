@@ -14,6 +14,7 @@ IS_MAC_ARM64 = sys.platform == "darwin" and platform.machine() == "arm64"
 ROOT = os.path.realpath(os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir))
 IS_ZIPAPP = os.path.isfile(ROOT)
 _CAN_SYMLINK = _FS_CASE_SENSITIVE = _CFG_DIR = _DATA_DIR = None
+LOGGER = logging.getLogger(__name__)
 
 
 def fs_is_case_sensitive():
@@ -22,7 +23,7 @@ def fs_is_case_sensitive():
     if _FS_CASE_SENSITIVE is None:
         with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:
             _FS_CASE_SENSITIVE = not os.path.exists(tmp_file.name.lower())
-            logging.debug("filesystem is %scase-sensitive", "" if _FS_CASE_SENSITIVE else "not ")
+            LOGGER.debug("filesystem is %scase-sensitive", "" if _FS_CASE_SENSITIVE else "not ")
     return _FS_CASE_SENSITIVE
 
 
@@ -41,7 +42,7 @@ def fs_supports_symlink():
                         can = True
                     except (OSError, NotImplementedError):
                         pass
-                logging.debug("symlink on filesystem does%s work", "" if can else " not")
+                LOGGER.debug("symlink on filesystem does%s work", "" if can else " not")
             else:
                 can = True
         _CAN_SYMLINK = can

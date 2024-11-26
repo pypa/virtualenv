@@ -33,7 +33,7 @@ def setup_report(verbosity, show_pid=False):  # noqa: FBT002
     stream_handler.setFormatter(formatter)
     LOGGER.addHandler(stream_handler)
     level_name = logging.getLevelName(level)
-    logging.debug("setup logging to %s", level_name)
+    LOGGER.debug("setup logging to %s", level_name)
     logging.getLogger("distlib").setLevel(logging.ERROR)
     return verbosity
 
