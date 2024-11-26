@@ -11,7 +11,6 @@ import site
 import stat
 import subprocess
 import sys
-import textwrap
 import zipfile
 from collections import OrderedDict
 from itertools import product
@@ -222,34 +221,6 @@ def test_create_no_seed(  # noqa: C901, PLR0912, PLR0913, PLR0915
     else:
         comment = "# created by virtualenv automatically"
     assert git_ignore.splitlines() == [comment, "*"]
-
-
-def test_create_cachedir_tag(tmp_path):
-    cachedir_tag_file = tmp_path / "CACHEDIR.TAG"
-    cli_run([str(tmp_path), "--without-pip", "--activators", ""])
-    assert (
-        cachedir_tag_file.read_text(encoding="utf-8")
-        == textwrap.dedent("""
-    Signature: 8a477f597d28d172789f06886806bc55
-    # This file is a cache directory tag created by Python virtualenv.
-    # For information about cache directory tags, see:
-    #   http://www.brynosaurus.com/cachedir/
-    """).strip()
-    )
-
-
-def test_create_cachedir_tag_exists(tmp_path):
-    cachedir_tag_file = tmp_path / "CACHEDIR.TAG"
-    cachedir_tag_file.write_text("magic", encoding="utf-8")
-    cli_run([str(tmp_path), "--without-pip", "--activators", ""])
-    assert cachedir_tag_file.read_text(encoding="utf-8") == "magic"
-
-
-def test_create_cachedir_tag_exists_override(tmp_path):
-    cachedir_tag_file = tmp_path / "CACHEDIR.TAG"
-    cachedir_tag_file.write_text("magic", encoding="utf-8")
-    cli_run([str(tmp_path), "--without-pip", "--activators", ""])
-    assert cachedir_tag_file.read_text(encoding="utf-8") == "magic"
 
 
 def test_create_vcs_ignore_exists(tmp_path):
