@@ -1,1 +1,0 @@
-no longer forcibly echo off during windows batch activation

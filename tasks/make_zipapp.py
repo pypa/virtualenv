@@ -93,7 +93,7 @@ class WheelDownloader:
         self.into = into
         self.collected = defaultdict(lambda: defaultdict(dict))
         self.pip_cmd = [str(Path(sys.executable).parent / "pip")]
-        self._cmd = [*self.pip_cmd, "download", "-q", "--no-deps", "--dest", str(self.into)]
+        self._cmd = [*self.pip_cmd, "download", "-q", "--no-deps", "--no-cache-dir", "--dest", str(self.into)]
 
     def run(self, target, versions):
         whl = self.build_sdist(target)

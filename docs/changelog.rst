@@ -5,6 +5,24 @@ Release History
 
 .. towncrier release notes start
 
+v20.27.2 (2024-11-25)
+---------------------
+
+Bugfixes - 20.27.2
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded wheels:
+
+  * setuptools to ``75.3.0`` from ``75.2.0`` (:issue:`2798`)
+- Upgrade embedded wheels:
+
+  * wheel to ``0.45.0`` from ``0.44.0``
+  * setuptools to ``75.5.0`` (:issue:`2800`)
+- no longer forcibly echo off during windows batch activation (:issue:`2801`)
+- Upgrade embedded wheels:
+
+  * setuptools to ``75.6.0`` from ``75.5.0``
+  * wheel to ``0.45.1`` from ``0.45.0`` (:issue:`2804`)
+
 v20.27.1 (2024-10-28)
 ---------------------
 

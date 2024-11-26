@@ -27,6 +27,7 @@ def download(ver, dest, package):
             "pip",
             "--disable-pip-version-check",
             "download",
+            "--no-cache-dir",
             "--only-binary=:all:",
             "--python-version",
             ver,
@@ -119,14 +120,8 @@ def run():  # noqa: C901
         )
         dest_target = DEST / "__init__.py"
         dest_target.write_text(msg, encoding="utf-8")
-        subprocess.run(
-            [sys.executable, "-m", "ruff", "check", str(dest_target), "--fix", "--unsafe-fixes"],
-            check=False,
-        )
-        subprocess.run(
-            [sys.executable, "-m", "ruff", "format", str(dest_target), "--preview"],
-            check=False,
-        )
+        subprocess.run([sys.executable, "-m", "ruff", "check", str(dest_target), "--fix", "--unsafe-fixes"])
+        subprocess.run([sys.executable, "-m", "ruff", "format", str(dest_target), "--preview"])
 
         raise SystemExit(outcome)
 
