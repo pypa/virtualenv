@@ -164,22 +164,14 @@ class Creator(ABC):
             self.setup_ignore_vcs()
 
     def add_cachedir_tag(self):
-        """
-        Add a Cache Directory Tag file "CACHEDIR.TAG".
-
-        The CACHEDIR.TAG file is used by various tools to mark
-        a directory as cache, so that it can be handled differently.
-        Some backup tools look for this file to exclude the directory.
-
-        See https://bford.info/cachedir/ for more details.
-        """
+        """Generate a file indicating that this is not meant to be backed up."""
         cachedir_tag_file = self.dest / "CACHEDIR.TAG"
         if not cachedir_tag_file.exists():
             cachedir_tag_text = textwrap.dedent("""
                 Signature: 8a477f597d28d172789f06886806bc55
                 # This file is a cache directory tag created by Python virtualenv.
                 # For information about cache directory tags, see:
-                #   http://www.brynosaurus.com/cachedir/
+                #   https://bford.info/cachedir/
             """).strip()
             cachedir_tag_file.write_text(cachedir_tag_text, encoding="utf-8")
 

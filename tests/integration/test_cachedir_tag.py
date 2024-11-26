@@ -1,37 +1,32 @@
 from __future__ import annotations
 
 import shutil
-import subprocess
 import sys
+from subprocess import check_output, run
+from typing import TYPE_CHECKING
 
 import pytest
 
 from virtualenv import cli_run
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
-@pytest.fixture(scope="session")
-def tar_test_env(tmp_path_factory):
-    base_path = tmp_path_factory.mktemp("tar-cachedir-test")
-    cli_run(["--activators", "", "--without-pip", str(base_path / ".venv")])
-    yield base_path
-    shutil.rmtree(str(base_path))
+# gtar => gnu-tar on macOS
+TAR = next((target for target in ("gtar", "tar") if shutil.which(target)), None)
 
 
 def compatible_is_tar_present() -> bool:
-    try:
-        tar_result = subprocess.run(args=["tar", "--help"], capture_output=True, encoding="utf-8")
-        return tar_result.stdout.find("--exclude-caches") > -1
-    except FileNotFoundError:
-        return False
+    return TAR and "--exclude-caches" in check_output(args=[TAR, "--help"], text=True)
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows does not have tar")
 @pytest.mark.skipif(not compatible_is_tar_present(), reason="Compatible tar is not installed")
-def test_cachedir_tag_ignored_by_tag(tar_test_env):  # noqa: ARG001
-    tar_result = subprocess.run(
-        args=["tar", "--create", "--file", "/dev/null", "--exclude-caches", "--verbose", ".venv"],
-        capture_output=True,
-        encoding="utf-8",
-    )
+def test_cachedir_tag_ignored_by_tag(tmp_path: Path) -> None:
+    venv = tmp_path / ".venv"
+    cli_run(["--activators", "", "--without-pip", str(venv)])
+
+    args = [TAR, "--create", "--file", "/dev/null", "--exclude-caches", "--verbose", venv.name]
+    tar_result = run(args=args, capture_output=True, text=True, cwd=tmp_path)
     assert tar_result.stdout == ".venv/\n.venv/CACHEDIR.TAG\n"
-    assert tar_result.stderr == "tar: .venv/: contains a cache directory tag CACHEDIR.TAG; contents not dumped\n"
+    assert tar_result.stderr == f"{TAR}: .venv/: contains a cache directory tag CACHEDIR.TAG; contents not dumped\n"
