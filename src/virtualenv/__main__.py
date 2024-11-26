@@ -65,7 +65,8 @@ def run_with_catch(args=None, env=None):
             code = exception.code if isinstance(exception, SystemExit) else 1
             sys.exit(code)
         finally:
-            LOGGER.shutdown()  # force flush of log messages before the trace is printed
+            for handler in LOGGER.handlers:  # force flush of log messages before the trace is printed
+                handler.flush()
 
 
 if __name__ == "__main__":  # pragma: no cov
