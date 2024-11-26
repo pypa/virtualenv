@@ -5,6 +5,13 @@ Release History
 
 .. towncrier release notes start
 
+v20.28.0 (2024-11-25)
+---------------------
+
+Features - 20.28.0
+~~~~~~~~~~~~~~~~~~
+- Write CACHEDIR.TAG file on creation - by "user:`neilramsay`. (:issue:`2803`)
+
 v20.27.2 (2024-11-25)
 ---------------------
 
