@@ -45,6 +45,14 @@ def test_spec_satisfies_arch():
     assert spec_2.satisfies(spec_1) is False
 
 
+def test_spec_satisfies_free_threaded():
+    spec_1 = PythonSpec.from_string_spec("python3.13t")
+    spec_2 = PythonSpec.from_string_spec("python3.13")
+
+    assert spec_1.satisfies(spec_1) is True
+    assert spec_2.satisfies(spec_1) is False
+
+
 @pytest.mark.parametrize(
     ("req", "spec"),
     [("py", "python"), ("jython", "jython"), ("CPython", "cpython")],
