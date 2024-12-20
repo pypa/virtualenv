@@ -212,8 +212,8 @@ class RaiseOnNonSourceCall(ActivationTester):
             stderr=subprocess.PIPE,
             env=env,
         )
-        _out, _err = process.communicate()
-        err = _err.decode("utf-8")
+        _out, err_ = process.communicate()
+        err = err_.decode("utf-8")
         assert process.returncode
         assert self.non_source_fail_message in err
 
