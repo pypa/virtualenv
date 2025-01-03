@@ -77,7 +77,7 @@ class ActivationTester:
         try:
             process = Popen(invoke, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
             raw_, _ = process.communicate()
-            raw = raw_.decode()
+            raw = raw_.decode(errors="replace")
             assert process.returncode == 0, raw
         except subprocess.CalledProcessError as exception:
             output = exception.output + exception.stderr
