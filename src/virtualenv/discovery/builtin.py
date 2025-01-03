@@ -5,7 +5,7 @@ import os
 import sys
 from contextlib import suppress
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 from virtualenv.info import IS_WIN, fs_path_id
 
@@ -15,7 +15,7 @@ from .py_spec import PythonSpec
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
-    from collections.abc import Generator, Iterable, Mapping, Sequence
+    from collections.abc import Callable, Generator, Iterable, Mapping, Sequence
 
     from virtualenv.app_data.base import AppData
 LOGGER = logging.getLogger(__name__)
