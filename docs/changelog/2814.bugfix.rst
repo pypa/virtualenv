@@ -1,1 +1,0 @@
-Skip tcsh tests on broken tcsh versions - by :user:`gaborbernat`.
