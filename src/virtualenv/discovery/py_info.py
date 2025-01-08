@@ -52,6 +52,7 @@ class PythonInfo:  # noqa: PLR0904
 
         self.version = sys.version
         self.os = os.name
+        self.free_threaded = sysconfig.get_config_var("Py_GIL_DISABLED") == 1
 
         # information about the prefix - determines python home
         self.prefix = abs_path(getattr(sys, "prefix", None))  # prefix we think
@@ -290,7 +291,12 @@ class PythonInfo:  # noqa: PLR0904
 
     @property
     def spec(self):
-        return "{}{}-{}".format(self.implementation, ".".join(str(i) for i in self.version_info), self.architecture)
+        return "{}{}{}-{}".format(
+            self.implementation,
+            ".".join(str(i) for i in self.version_info),
+            "t" if self.free_threaded else "",
+            self.architecture,
+        )
 
     @classmethod
     def clear_cache(cls, app_data):
