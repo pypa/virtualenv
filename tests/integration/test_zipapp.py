@@ -26,23 +26,26 @@ def zipapp_build_env(tmp_path_factory):
         exe, found = None, False
         # prefer CPython as builder as pypy is slow
         for impl in ["cpython", ""]:
-            for version in range(11, 6, -1):
-                with suppress(Exception):
-                    # create a virtual environment which is also guaranteed to contain a recent enough pip (bundled)
-                    session = cli_run(
-                        [
-                            "-vvv",
-                            "-p",
-                            f"{impl}3.{version}",
-                            "--activators",
-                            "",
-                            str(create_env_path),
-                            "--no-download",
-                            "--no-periodic-update",
-                        ],
-                    )
-                    exe = str(session.creator.exe)
-                    found = True
+            for threaded in ["", "t"]:
+                for version in range(11, 6, -1):
+                    with suppress(Exception):
+                        # create a virtual environment which is also guaranteed to contain a recent enough pip (bundled)
+                        session = cli_run(
+                            [
+                                "-vvv",
+                                "-p",
+                                f"{impl}3.{version}{threaded}",
+                                "--activators",
+                                "",
+                                str(create_env_path),
+                                "--no-download",
+                                "--no-periodic-update",
+                            ],
+                        )
+                        exe = str(session.creator.exe)
+                        found = True
+                        break
+                if found:
                     break
             if found:
                 break
