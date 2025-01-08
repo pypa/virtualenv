@@ -21,7 +21,7 @@ class PythonSpec:
         architecture: int | None,
         path: str | None,
         *,
-        free_threaded: bool = False,
+        free_threaded: bool | None = None,
     ) -> None:
         self.str_spec = str_spec
         self.implementation = implementation
@@ -34,7 +34,7 @@ class PythonSpec:
 
     @classmethod
     def from_string_spec(cls, string_spec: str):  # noqa: C901, PLR0912
-        impl, major, minor, micro, threaded, arch, path = None, None, None, None, False, None, None
+        impl, major, minor, micro, threaded, arch, path = None, None, None, None, None, None, None
         if os.path.isabs(string_spec):  # noqa: PLR1702
             path = string_spec
         else:
