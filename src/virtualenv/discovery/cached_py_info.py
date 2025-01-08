@@ -24,6 +24,7 @@ from virtualenv.util.subprocess import subprocess
 _CACHE = OrderedDict()
 _CACHE[Path(sys.executable)] = PythonInfo()
 LOGGER = logging.getLogger(__name__)
+_CACHE_FILE_VERSION = 1
 
 
 def from_exe(cls, app_data, exe, env=None, raise_on_error=True, ignore_cache=False):  # noqa: FBT002, PLR0913
@@ -64,8 +65,13 @@ def _get_via_file_cache(cls, app_data, path, exe, env):
     with py_info_store.locked():
         if py_info_store.exists():  # if exists and matches load
             data = py_info_store.read()
-            of_path, of_st_mtime, of_content = data["path"], data["st_mtime"], data["content"]
-            if of_path == path_text and of_st_mtime == path_modified:
+            of_path, of_st_mtime, of_content, version = (
+                data["path"],
+                data["st_mtime"],
+                data["content"],
+                data.get("version"),
+            )
+            if of_path == path_text and of_st_mtime == path_modified and version == _CACHE_FILE_VERSION:
                 py_info = cls._from_dict(of_content.copy())
                 sys_exe = py_info.system_executable
                 if sys_exe is not None and not os.path.exists(sys_exe):
@@ -76,7 +82,12 @@ def _get_via_file_cache(cls, app_data, path, exe, env):
         if py_info is None:  # if not loaded run and save
             failure, py_info = _run_subprocess(cls, exe, app_data, env)
             if failure is None:
-                data = {"st_mtime": path_modified, "path": path_text, "content": py_info._to_dict()}  # noqa: SLF001
+                data = {
+                    "st_mtime": path_modified,
+                    "path": path_text,
+                    "content": py_info._to_dict(),  # noqa: SLF001
+                    "version": _CACHE_FILE_VERSION,
+                }
                 py_info_store.write(data)
             else:
                 py_info = failure
