@@ -21,6 +21,7 @@ def test_discovery_via_path(monkeypatch, case, specificity, tmp_path, caplog, se
     caplog.set_level(logging.DEBUG)
     current = PythonInfo.current_system(session_app_data)
     name = "somethingVeryCryptic"
+    threaded = "t" if current.free_threaded else ""
     if case == "lower":
         name = name.lower()
     elif case == "upper":
@@ -37,7 +38,7 @@ def test_discovery_via_path(monkeypatch, case, specificity, tmp_path, caplog, se
         # e.g. spec: python3.12.1, exe: /bin/python
         core_ver = ".".join(str(i) for i in current.version_info[0:3])
         exe_ver = ""
-    core = "" if specificity == "none" else f"{name}{core_ver}"
+    core = threaded if specificity == "none" else f"{name}{threaded}{core_ver}"
     exe_name = f"{name}{exe_ver}{'.exe' if sys.platform == 'win32' else ''}"
     target = tmp_path / current.install_path("scripts")
     target.mkdir(parents=True)

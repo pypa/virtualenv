@@ -65,7 +65,7 @@ def _mock_registry(mocker):  # noqa: C901
     mocker.patch("os.path.exists", return_value=True)
 
 
-def _mock_pyinfo(major, minor, arch, exe):
+def _mock_pyinfo(major, minor, arch, exe, threaded=False):
     """Return PythonInfo objects with essential metadata set for the given args"""
     from virtualenv.discovery.py_info import PythonInfo, VersionInfo  # noqa: PLC0415
 
@@ -75,6 +75,7 @@ def _mock_pyinfo(major, minor, arch, exe):
     info.implementation = "CPython"
     info.architecture = arch
     info.version_info = VersionInfo(major, minor, 0, "final", 0)
+    info.free_threaded = threaded
     return info
 
 

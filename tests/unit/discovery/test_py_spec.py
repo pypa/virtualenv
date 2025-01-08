@@ -50,7 +50,9 @@ def test_spec_satisfies_free_threaded():
     spec_2 = PythonSpec.from_string_spec("python3.13")
 
     assert spec_1.satisfies(spec_1) is True
+    assert spec_1.free_threaded is True
     assert spec_2.satisfies(spec_1) is False
+    assert spec_2.free_threaded is False
 
 
 @pytest.mark.parametrize(

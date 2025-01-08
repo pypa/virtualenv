@@ -59,5 +59,6 @@
   "system_stdlib": "/tmp/pypy3.8-v7.3.8-linux64/lib/pypy3.8",
   "system_stdlib_platform": "/tmp/pypy3.8-v7.3.8-linux64/lib/pypy3.8",
   "max_size": 9223372036854775807,
-  "_creators": null
+  "_creators": null,
+  "free_threaded": false
 }
