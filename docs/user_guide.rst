@@ -86,7 +86,7 @@ format is either:
 
     - the python implementation is all alphabetic characters (``python`` means any implementation, and if is missing it
       defaults to ``python``),
-    - the version is a dot separated version number,
+    - the version is a dot separated version number optionally followed by ``t`` for free-threading,
     - the architecture is either ``-64`` or ``-32`` (missing means ``any``).
 
     For example:
