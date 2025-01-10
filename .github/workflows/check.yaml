@@ -92,7 +92,7 @@ jobs:
           echo "/usr/local/opt/python@$PY/libexec/bin" >>"${GITHUB_PATH}"
         shell: bash
       - name: Setup python for test ${{ matrix.py }}
-        if: "!( startsWith(matrix.py, 'brew@') || endsWith(matrix.py, 't'))"
+        if: "!(startsWith(matrix.py, 'brew@') || endsWith(matrix.py, 't'))"
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py }}
