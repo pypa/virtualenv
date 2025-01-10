@@ -78,10 +78,10 @@ jobs:
         shell: bash
         run: echo ~/.local/bin >> $GITHUB_PATH
       - name: Install tox
-        if: matrix.py == '3.13'
+        if: matrix.py == '3.13' || matrix.py == '3.13t'
         run: uv tool install --python-preference only-managed --python 3.12 tox --with tox-uv
       - name: Install tox
-        if: matrix.py != '3.13'
+        if: "!(matrix.py == '3.13' || matrix.py == '3.13t')"
         run: uv tool install --python-preference only-managed --python 3.13 tox --with tox-uv
       - name: Setup brew python for test ${{ matrix.py }}
         if: startsWith(matrix.py, 'brew@')
