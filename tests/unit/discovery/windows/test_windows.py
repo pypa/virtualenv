@@ -25,6 +25,9 @@ from virtualenv.discovery.py_spec import PythonSpec
         # Non-standard org name
         ("python3.6", "Z:\\CompanyA\\Python\\3.6\\python.exe"),
         ("cpython3.6", "Z:\\CompanyA\\Python\\3.6\\python.exe"),
+        # free-threaded
+        ("3t", "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\python3.13t.exe"),
+        ("python3.13t", "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\python3.13t.exe"),
     ],
 )
 def test_propose_interpreters(string_spec, expected_exe):
