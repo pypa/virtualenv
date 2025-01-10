@@ -105,7 +105,14 @@ jobs:
         with:
           python-version: ${{ matrix.py }}
       - name: Pick environment to run
+        if: matrix.py != '3.13t'
         run: python tasks/pick_tox_env.py ${{ matrix.py }}
+      - name: Pick environment to run
+        if: matrix.py == '3.13t' && runner.os != 'Windows'
+        run: python tasks/pick_tox_env.py ${{ matrix.py }} $Python_ROOT_DIR/bin/python
+      - name: Pick environment to run
+        if: matrix.py == '3.13t' && runner.os == 'Windows'
+        run: python tasks/pick_tox_env.py ${{ matrix.py }} $Python_ROOT_DIR\python.exe
       - name: Setup test suite
         run: tox run -vv --notest --skip-missing-interpreters false
       - name: Run test suite
