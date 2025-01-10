@@ -5,6 +5,13 @@ Release History
 
 .. towncrier release notes start
 
+v20.28.1 (2025-01-02)
+---------------------
+
+Bugfixes - 20.28.1
+~~~~~~~~~~~~~~~~~~
+- Skip tcsh tests on broken tcsh versions - by :user:`gaborbernat`. (:issue:`2814`)
+
 v20.28.0 (2024-11-25)
 ---------------------
 
