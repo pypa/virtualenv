@@ -76,13 +76,22 @@ def test_spec_satisfies_implementation_nok():
 def _version_satisfies_pairs():
     target = set()
     version = tuple(str(i) for i in sys.version_info[0:3])
-    for i in range(len(version) + 1):
-        req = ".".join(version[0:i])
-        for j in range(i + 1):
-            sat = ".".join(version[0:j])
-            # can be satisfied in both directions
-            target.add((req, sat))
-            target.add((sat, req))
+    for threading in (False, True):
+        for i in range(len(version) + 1):
+            req = ".".join(version[0:i])
+            for j in range(i + 1):
+                sat = ".".join(version[0:j])
+                # can be satisfied in both directions
+                if sat:
+                    target.add((req, sat))
+                # else: no version => no free-threading info
+                target.add((sat, req))
+                if not threading or not sat or not req:
+                    # free-threading info requires a version
+                    continue
+                target.add((f"{req}t", f"{sat}t"))
+                target.add((f"{sat}t", f"{req}t"))
+
     return sorted(target)
 
 

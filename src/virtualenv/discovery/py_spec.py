@@ -61,6 +61,7 @@ class PythonSpec:
                             major = int(str(version_data)[0])  # first digit major
                             if version_data > 9:  # noqa: PLR2004
                                 minor = int(str(version_data)[1:])
+                        threaded = bool(groups["threaded"])
                     ok = True
                 except ValueError:
                     pass
@@ -68,7 +69,6 @@ class PythonSpec:
                     impl = groups["impl"]
                     if impl in {"py", "python"}:
                         impl = None
-                    threaded = bool(groups["threaded"])
                     arch = _int_or_none(groups["arch"])
 
             if not ok:
@@ -82,7 +82,7 @@ class PythonSpec:
             *(r"\d+" if v is None else v for v in (self.major, self.minor, self.micro))
         )
         impl = "python" if self.implementation is None else f"python|{re.escape(self.implementation)}"
-        mod = "t" if self.free_threaded else ""
+        mod = "t?" if self.free_threaded else ""
         suffix = r"\.exe" if windows else ""
         version_conditional = (
             "?"
@@ -94,7 +94,7 @@ class PythonSpec:
         )
         # Try matching `direct` first, so the `direct` group is filled when possible.
         return re.compile(
-            rf"(?P<impl>{impl})(?P<v>{version}){version_conditional}{mod}{suffix}$",
+            rf"(?P<impl>{impl})(?P<v>{version}{mod}){version_conditional}{suffix}$",
             flags=re.IGNORECASE,
         )
 
@@ -110,7 +110,7 @@ class PythonSpec:
             return False
         if spec.architecture is not None and spec.architecture != self.architecture:
             return False
-        if spec.free_threaded != self.free_threaded:
+        if spec.free_threaded is not None and spec.free_threaded != self.free_threaded:
             return False
 
         for our, req in zip((self.major, self.minor, self.micro), (spec.major, spec.minor, spec.micro)):

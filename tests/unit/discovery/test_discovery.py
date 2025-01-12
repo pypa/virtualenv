@@ -29,7 +29,7 @@ def test_discovery_via_path(monkeypatch, case, specificity, tmp_path, caplog, se
     if specificity == "more":
         # e.g. spec: python3, exe: /bin/python3.12
         core_ver = current.version_info.major
-        exe_ver = ".".join(str(i) for i in current.version_info[0:2])
+        exe_ver = ".".join(str(i) for i in current.version_info[0:2]) + threaded
     elif specificity == "less":
         # e.g. spec: python3.12.1, exe: /bin/python3
         core_ver = ".".join(str(i) for i in current.version_info[0:3])
@@ -38,7 +38,7 @@ def test_discovery_via_path(monkeypatch, case, specificity, tmp_path, caplog, se
         # e.g. spec: python3.12.1, exe: /bin/python
         core_ver = ".".join(str(i) for i in current.version_info[0:3])
         exe_ver = ""
-    core = threaded if specificity == "none" else f"{name}{threaded}{core_ver}"
+    core = "" if specificity == "none" else f"{name}{core_ver}{threaded}"
     exe_name = f"{name}{exe_ver}{'.exe' if sys.platform == 'win32' else ''}"
     target = tmp_path / current.install_path("scripts")
     target.mkdir(parents=True)

@@ -94,7 +94,7 @@ def test_satisfy_not_arch():
 
 def test_satisfy_not_threaded():
     parsed_spec = PythonSpec.from_string_spec(
-        f"{CURRENT.implementation}{'' if CURRENT.free_threaded else 't'}",
+        f"{CURRENT.implementation}{CURRENT.version_info.major}{'' if CURRENT.free_threaded else 't'}",
     )
     matches = CURRENT.satisfies(parsed_spec, True)
     assert matches is False
