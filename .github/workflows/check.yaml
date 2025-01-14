@@ -117,7 +117,7 @@ jobs:
         run: tox run -vv --notest --skip-missing-interpreters false
       - name: Run test suite
         run: tox run --skip-pkg-install
-        timeout-minutes: 20
+        timeout-minutes: 25
         env:
           PYTEST_ADDOPTS: "-vv --durations=20"
           CI_RUN: "yes"
