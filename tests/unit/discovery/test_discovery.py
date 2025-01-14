@@ -99,3 +99,54 @@ def test_discovery_fallback_ok(session_app_data, caplog):
     assert result.executable == sys.executable, caplog.text
 
     assert "accepted" in caplog.text
+
+
+@pytest.fixture
+def mock_get_interpreter(mocker):
+    return mocker.patch(
+        "virtualenv.discovery.builtin.get_interpreter",
+        lambda key, *args, **kwargs: getattr(mocker.sentinel, key),  # noqa: ARG005
+    )
+
+
+@pytest.mark.usefixtures("mock_get_interpreter")
+def test_returns_first_python_specified_when_only_env_var_one_is_specified(mocker, monkeypatch, session_app_data):
+    monkeypatch.setenv("VIRTUALENV_PYTHON", "python_from_env_var")
+    builtin = Builtin(
+        Namespace(app_data=session_app_data, try_first_with=[], python=["python_from_env_var"], env=os.environ),
+    )
+
+    result = builtin.run()
+
+    assert result == mocker.sentinel.python_from_env_var
+
+
+@pytest.mark.usefixtures("mock_get_interpreter")
+def test_returns_second_python_specified_when_more_than_one_is_specified_and_env_var_is_specified(
+    mocker, monkeypatch, session_app_data
+):
+    monkeypatch.setenv("VIRTUALENV_PYTHON", "python_from_env_var")
+    builtin = Builtin(
+        Namespace(
+            app_data=session_app_data,
+            try_first_with=[],
+            python=["python_from_env_var", "python_from_cli"],
+            env=os.environ,
+        ),
+    )
+
+    result = builtin.run()
+
+    assert result == mocker.sentinel.python_from_cli
+
+
+@pytest.mark.usefixtures("mock_get_interpreter")
+def test_returns_first_python_specified_when_no_env_var_is_specified(mocker, monkeypatch, session_app_data):
+    monkeypatch.delenv("VIRTUALENV_PYTHON", raising=False)
+    builtin = Builtin(
+        Namespace(app_data=session_app_data, try_first_with=[], python=["python_from_cli"], env=os.environ),
+    )
+
+    result = builtin.run()
+
+    assert result == mocker.sentinel.python_from_cli
