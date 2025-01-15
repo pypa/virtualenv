@@ -142,10 +142,12 @@ def parse_version(version_str):
 def load_threaded(hive_name, company, tag, tag_key):
     display_name = get_value(tag_key, "DisplayName")
     if display_name is not None:
-        if isinstance(display_name, str) and "freethreaded" in display_name.lower():
-            return True
-        key_path = f"{hive_name}/{company}/{tag}/DisplayName"
-        msg(key_path, f"display name is not string: {display_name!r}")
+        if isinstance(display_name, str):
+            if "freethreaded" in display_name.lower():
+                return True
+        else:
+            key_path = f"{hive_name}/{company}/{tag}/DisplayName"
+            msg(key_path, f"display name is not string: {display_name!r}")
     return bool(re.match(r"^\d+(\.\d+){0,2}t$", tag, flags=re.IGNORECASE))
 
 
