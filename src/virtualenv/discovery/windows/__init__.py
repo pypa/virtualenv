@@ -27,14 +27,14 @@ def propose_interpreters(spec, cache_dir, env):
         reverse=True,
     )
 
-    for name, major, minor, arch, exe, _ in existing:
+    for name, major, minor, arch, threaded, exe, _ in existing:
         # Map well-known/most common organizations to a Python implementation, use the org name as a fallback for
         # backwards compatibility.
         implementation = _IMPLEMENTATION_BY_ORG.get(name, name)
 
         # Pre-filtering based on Windows Registry metadata, for CPython only
         skip_pre_filter = implementation.lower() != "cpython"
-        registry_spec = PythonSpec(None, implementation, major, minor, None, arch, exe)
+        registry_spec = PythonSpec(None, implementation, major, minor, None, arch, exe, free_threaded=threaded)
         if skip_pre_filter or registry_spec.satisfies(spec):
             interpreter = Pep514PythonInfo.from_exe(exe, cache_dir, env=env, raise_on_error=False)
             if interpreter is not None and interpreter.satisfies(spec, impl_must_match=True):

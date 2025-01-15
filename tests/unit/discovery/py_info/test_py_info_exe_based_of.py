@@ -30,7 +30,7 @@ def test_discover_ok(tmp_path, suffix, impl, version, arch, into, caplog, sessio
     caplog.set_level(logging.DEBUG)
     folder = tmp_path / into
     folder.mkdir(parents=True, exist_ok=True)
-    name = f"{impl}{version}"
+    name = f"{impl}{version}{'t' if CURRENT.free_threaded else ''}"
     if arch:
         name += f"-{arch}"
     name += suffix

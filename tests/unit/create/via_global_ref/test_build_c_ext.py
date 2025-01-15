@@ -41,10 +41,19 @@ def test_can_build_c_extensions(creator, tmp_path, coverage_env):
     shutil.copytree(str(Path(__file__).parent.resolve() / "greet"), greet)
     session = cli_run(["--creator", creator, "--seeder", "app-data", str(env), "-vvv"])
     coverage_env()
+    setuptools_index_args = ()
+    if CURRENT.version_info >= (3, 12):
+        # requires to be able to install setuptools as build dependency
+        setuptools_index_args = (
+            "--find-links",
+            "https://pypi.org/simple/setuptools/",
+        )
+
     cmd = [
         str(session.creator.script("pip")),
         "install",
         "--no-index",
+        *setuptools_index_args,
         "--no-deps",
         "--disable-pip-version-check",
         "-vvv",

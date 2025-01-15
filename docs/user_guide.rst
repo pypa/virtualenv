@@ -86,13 +86,14 @@ format is either:
 
     - the python implementation is all alphabetic characters (``python`` means any implementation, and if is missing it
       defaults to ``python``),
-    - the version is a dot separated version number,
+    - the version is a dot separated version number optionally followed by ``t`` for free-threading,
     - the architecture is either ``-64`` or ``-32`` (missing means ``any``).
 
     For example:
 
     - ``python3.8.1`` means any python implementation having the version ``3.8.1``,
     - ``3`` means any python implementation having the major version ``3``,
+    - ``3.13t`` means any python implementation having the version ``3.13`` with free threading,
     - ``cpython3`` means a ``CPython`` implementation having the version ``3``,
     - ``pypy2`` means a python interpreter with the ``PyPy`` implementation and major version ``2``.
 

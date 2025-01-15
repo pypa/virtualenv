@@ -26,7 +26,9 @@ def test_current_as_json():
     result = CURRENT._to_json()  # noqa: SLF001
     parsed = json.loads(result)
     a, b, c, d, e = sys.version_info
+    f = sysconfig.get_config_var("Py_GIL_DISABLED") == 1
     assert parsed["version_info"] == {"major": a, "minor": b, "micro": c, "releaselevel": d, "serial": e}
+    assert parsed["free_threaded"] is f
 
 
 def test_bad_exe_py_info_raise(tmp_path, session_app_data):
@@ -59,7 +61,7 @@ def test_bad_exe_py_info_no_raise(tmp_path, caplog, capsys, session_app_data):
     itertools.chain(
         [sys.executable],
         [
-            f"{impl}{'.'.join(str(i) for i in ver)}{arch}"
+            f"{impl}{'.'.join(str(i) for i in ver)}{'t' if CURRENT.free_threaded else ''}{arch}"
             for impl, ver, arch in itertools.product(
                 (
                     [CURRENT.implementation]
@@ -85,6 +87,14 @@ def test_satisfy_py_info(spec):
 def test_satisfy_not_arch():
     parsed_spec = PythonSpec.from_string_spec(
         f"{CURRENT.implementation}-{64 if CURRENT.architecture == 32 else 32}",
+    )
+    matches = CURRENT.satisfies(parsed_spec, True)
+    assert matches is False
+
+
+def test_satisfy_not_threaded():
+    parsed_spec = PythonSpec.from_string_spec(
+        f"{CURRENT.implementation}{CURRENT.version_info.major}{'' if CURRENT.free_threaded else 't'}",
     )
     matches = CURRENT.satisfies(parsed_spec, True)
     assert matches is False

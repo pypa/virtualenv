@@ -65,7 +65,7 @@ def _mock_registry(mocker):  # noqa: C901
     mocker.patch("os.path.exists", return_value=True)
 
 
-def _mock_pyinfo(major, minor, arch, exe):
+def _mock_pyinfo(major, minor, arch, exe, threaded=False):
     """Return PythonInfo objects with essential metadata set for the given args"""
     from virtualenv.discovery.py_info import PythonInfo, VersionInfo  # noqa: PLC0415
 
@@ -75,6 +75,7 @@ def _mock_pyinfo(major, minor, arch, exe):
     info.implementation = "CPython"
     info.architecture = arch
     info.version_info = VersionInfo(major, minor, 0, "final", 0)
+    info.free_threaded = threaded
     return info
 
 
@@ -84,19 +85,21 @@ def _populate_pyinfo_cache(monkeypatch):
     import virtualenv.discovery.cached_py_info  # noqa: PLC0415
 
     # Data matches _mock_registry fixture
+    python_core_path = "C:\\Users\\user\\AppData\\Local\\Programs\\Python"
     interpreters = [
-        ("ContinuumAnalytics", 3, 10, 32, "C:\\Users\\user\\Miniconda3\\python.exe", None),
-        ("ContinuumAnalytics", 3, 10, 64, "C:\\Users\\user\\Miniconda3-64\\python.exe", None),
-        ("PythonCore", 3, 9, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
-        ("PythonCore", 3, 9, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
-        ("PythonCore", 3, 5, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python35\\python.exe", None),
-        ("PythonCore", 3, 9, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python36\\python.exe", None),
-        ("PythonCore", 3, 7, 32, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python37-32\\python.exe", None),
-        ("PythonCore", 3, 12, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe", None),
-        ("PythonCore", 2, 7, 64, "C:\\Python27\\python.exe", None),
-        ("PythonCore", 3, 4, 64, "C:\\Python34\\python.exe", None),
-        ("CompanyA", 3, 6, 64, "Z:\\CompanyA\\Python\\3.6\\python.exe", None),
+        ("ContinuumAnalytics", 3, 10, 32, False, "C:\\Users\\user\\Miniconda3\\python.exe"),
+        ("ContinuumAnalytics", 3, 10, 64, False, "C:\\Users\\user\\Miniconda3-64\\python.exe"),
+        ("PythonCore", 3, 9, 64, False, f"{python_core_path}\\Python36\\python.exe"),
+        ("PythonCore", 3, 9, 64, False, f"{python_core_path}\\Python36\\python.exe"),
+        ("PythonCore", 3, 5, 64, False, f"{python_core_path}\\Python35\\python.exe"),
+        ("PythonCore", 3, 9, 64, False, f"{python_core_path}\\Python36\\python.exe"),
+        ("PythonCore", 3, 7, 32, False, f"{python_core_path}\\Python37-32\\python.exe"),
+        ("PythonCore", 3, 12, 64, False, f"{python_core_path}\\Python312\\python.exe"),
+        ("PythonCore", 3, 13, 64, True, f"{python_core_path}\\Python313\\python3.13t.exe"),
+        ("PythonCore", 2, 7, 64, False, "C:\\Python27\\python.exe"),
+        ("PythonCore", 3, 4, 64, False, "C:\\Python34\\python.exe"),
+        ("CompanyA", 3, 6, 64, False, "Z:\\CompanyA\\Python\\3.6\\python.exe"),
     ]
-    for _, major, minor, arch, exe, _ in interpreters:
-        info = _mock_pyinfo(major, minor, arch, exe)
+    for _, major, minor, arch, threaded, exe in interpreters:
+        info = _mock_pyinfo(major, minor, arch, exe, threaded)
         monkeypatch.setitem(virtualenv.discovery.cached_py_info._CACHE, Path(info.executable), info)  # noqa: SLF001

@@ -13,17 +13,74 @@ def test_pep514():
 
     interpreters = list(discover_pythons())
     assert interpreters == [
-        ("ContinuumAnalytics", 3, 10, 32, "C:\\Users\\user\\Miniconda3\\python.exe", None),
-        ("ContinuumAnalytics", 3, 10, 64, "C:\\Users\\user\\Miniconda3-64\\python.exe", None),
-        ("PythonCore", 3, 9, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe", None),
-        ("PythonCore", 3, 9, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe", None),
-        ("PythonCore", 3, 8, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python38\\python.exe", None),
-        ("PythonCore", 3, 9, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe", None),
-        ("PythonCore", 3, 10, 32, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python310-32\\python.exe", None),
-        ("PythonCore", 3, 12, 64, "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe", None),
-        ("CompanyA", 3, 6, 64, "Z:\\CompanyA\\Python\\3.6\\python.exe", None),
-        ("PythonCore", 2, 7, 64, "C:\\Python27\\python.exe", None),
-        ("PythonCore", 3, 7, 64, "C:\\Python37\\python.exe", None),
+        ("ContinuumAnalytics", 3, 10, 32, False, "C:\\Users\\user\\Miniconda3\\python.exe", None),
+        ("ContinuumAnalytics", 3, 10, 64, False, "C:\\Users\\user\\Miniconda3-64\\python.exe", None),
+        (
+            "PythonCore",
+            3,
+            9,
+            64,
+            False,
+            "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe",
+            None,
+        ),
+        (
+            "PythonCore",
+            3,
+            9,
+            64,
+            False,
+            "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe",
+            None,
+        ),
+        (
+            "PythonCore",
+            3,
+            8,
+            64,
+            False,
+            "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python38\\python.exe",
+            None,
+        ),
+        (
+            "PythonCore",
+            3,
+            9,
+            64,
+            False,
+            "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe",
+            None,
+        ),
+        (
+            "PythonCore",
+            3,
+            10,
+            32,
+            False,
+            "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python310-32\\python.exe",
+            None,
+        ),
+        (
+            "PythonCore",
+            3,
+            12,
+            64,
+            False,
+            "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+            None,
+        ),
+        (
+            "PythonCore",
+            3,
+            13,
+            64,
+            True,
+            "C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\python3.13t.exe",
+            None,
+        ),
+        ("CompanyA", 3, 6, 64, False, "Z:\\CompanyA\\Python\\3.6\\python.exe", None),
+        ("PythonCore", 2, 7, 64, False, "C:\\Python27\\python.exe", None),
+        ("PythonCore", 3, 7, 64, False, "C:\\Python37\\python.exe", None),
     ]
 
 
@@ -36,18 +93,19 @@ def test_pep514_run(capsys, caplog):
     out, err = capsys.readouterr()
     expected = textwrap.dedent(
         r"""
-    ('CompanyA', 3, 6, 64, 'Z:\\CompanyA\\Python\\3.6\\python.exe', None)
-    ('ContinuumAnalytics', 3, 10, 32, 'C:\\Users\\user\\Miniconda3\\python.exe', None)
-    ('ContinuumAnalytics', 3, 10, 64, 'C:\\Users\\user\\Miniconda3-64\\python.exe', None)
-    ('PythonCore', 2, 7, 64, 'C:\\Python27\\python.exe', None)
-    ('PythonCore', 3, 10, 32, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python310-32\\python.exe', None)
-    ('PythonCore', 3, 12, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', None)
-    ('PythonCore', 3, 7, 64, 'C:\\Python37\\python.exe', None)
-    ('PythonCore', 3, 8, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python38\\python.exe', None)
-    ('PythonCore', 3, 9, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe', None)
-    ('PythonCore', 3, 9, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe', None)
-    ('PythonCore', 3, 9, 64, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe', None)
-    """,
+    ('CompanyA', 3, 6, 64, False, 'Z:\\CompanyA\\Python\\3.6\\python.exe', None)
+    ('ContinuumAnalytics', 3, 10, 32, False, 'C:\\Users\\user\\Miniconda3\\python.exe', None)
+    ('ContinuumAnalytics', 3, 10, 64, False, 'C:\\Users\\user\\Miniconda3-64\\python.exe', None)
+    ('PythonCore', 2, 7, 64, False, 'C:\\Python27\\python.exe', None)
+    ('PythonCore', 3, 10, 32, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python310-32\\python.exe', None)
+    ('PythonCore', 3, 12, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', None)
+    ('PythonCore', 3, 13, 64, True, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\python3.13t.exe', None)
+    ('PythonCore', 3, 7, 64, False, 'C:\\Python37\\python.exe', None)
+    ('PythonCore', 3, 8, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python38\\python.exe', None)
+    ('PythonCore', 3, 9, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe', None)
+    ('PythonCore', 3, 9, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe', None)
+    ('PythonCore', 3, 9, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe', None)
+    """,  # noqa: E501
     ).strip()
     assert out.strip() == expected
     assert not err

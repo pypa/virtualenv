@@ -57,5 +57,6 @@
   "system_stdlib": "c:\\path\\to\\python\\Lib",
   "system_stdlib_platform": "c:\\path\\to\\python\\Lib",
   "max_size": 9223372036854775807,
-  "_creators": null
+  "_creators": null,
+  "free_threaded": false
 }

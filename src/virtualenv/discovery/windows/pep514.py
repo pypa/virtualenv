@@ -65,7 +65,8 @@ def process_tag(hive_name, company, company_key, tag, default_arch):
                 exe_data = load_exe(hive_name, company, company_key, tag)
                 if exe_data is not None:
                     exe, args = exe_data
-                    return company, major, minor, arch, exe, args
+                    threaded = load_threaded(hive_name, company, tag, tag_key)
+                    return company, major, minor, arch, threaded, exe, args
                 return None
             return None
         return None
@@ -136,6 +137,18 @@ def parse_version(version_str):
     else:
         error = f"version is not string: {version_str!r}"
     raise ValueError(error)
+
+
+def load_threaded(hive_name, company, tag, tag_key):
+    display_name = get_value(tag_key, "DisplayName")
+    if display_name is not None:
+        if isinstance(display_name, str):
+            if "freethreaded" in display_name.lower():
+                return True
+        else:
+            key_path = f"{hive_name}/{company}/{tag}/DisplayName"
+            msg(key_path, f"display name is not string: {display_name!r}")
+    return bool(re.match(r"^\d+(\.\d+){0,2}t$", tag, flags=re.IGNORECASE))
 
 
 def msg(path, what):

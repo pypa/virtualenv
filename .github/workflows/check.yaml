@@ -22,6 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         py:
+          - "3.13t"
           - "3.13"
           - "3.12"
           - "3.11"
@@ -77,13 +78,13 @@ jobs:
         shell: bash
         run: echo ~/.local/bin >> $GITHUB_PATH
       - name: Install tox
-        if: matrix.py == '3.13'
+        if: matrix.py == '3.13' || matrix.py == '3.13t'
         run: uv tool install --python-preference only-managed --python 3.12 tox --with tox-uv
       - name: Install tox
-        if: matrix.py != '3.13'
+        if: "!(matrix.py == '3.13' || matrix.py == '3.13t')"
         run: uv tool install --python-preference only-managed --python 3.13 tox --with tox-uv
       - name: Setup brew python for test ${{ matrix.py }}
-        if: startsWith(matrix.py,'brew@')
+        if: startsWith(matrix.py, 'brew@')
         run: |
           set -e
           PY=$(echo '${{ matrix.py }}' | cut -c 6-)
@@ -91,13 +92,27 @@ jobs:
           echo "/usr/local/opt/python@$PY/libexec/bin" >>"${GITHUB_PATH}"
         shell: bash
       - name: Setup python for test ${{ matrix.py }}
-        if: "!( startsWith(matrix.py,'brew@') || endsWith(matrix.py, '-dev') )"
+        if: "!(startsWith(matrix.py, 'brew@') || endsWith(matrix.py, 't'))"
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py }}
           allow-prereleases: true
+      # quansight-labs to install free-threaded python until actions/setup-python supports it
+      # https://github.com/actions/setup-python/issues/771
+      - name: Setup python for test ${{ matrix.py }}
+        if: endsWith(matrix.py, 't')
+        uses: quansight-labs/setup-python@v5.3.1
+        with:
+          python-version: ${{ matrix.py }}
       - name: Pick environment to run
+        if: matrix.py != '3.13t'
         run: python tasks/pick_tox_env.py ${{ matrix.py }}
+      - name: Pick environment to run
+        if: matrix.py == '3.13t' && runner.os != 'Windows'
+        run: python tasks/pick_tox_env.py ${{ matrix.py }} $Python_ROOT_DIR/bin/python
+      - name: Pick environment to run
+        if: matrix.py == '3.13t' && runner.os == 'Windows'
+        run: python tasks/pick_tox_env.py ${{ matrix.py }} $env:Python_ROOT_DIR\python.exe
       - name: Setup test suite
         run: tox run -vv --notest --skip-missing-interpreters false
       - name: Run test suite
