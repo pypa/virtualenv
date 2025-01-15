@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import os
 import sys
+from collections import deque
 from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -22,13 +23,16 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Builtin(Discover):
-    python_spec: Sequence[str]
+    python_spec: Sequence[str] | deque[str]
     app_data: AppData
     try_first_with: Sequence[str]
 
     def __init__(self, options) -> None:
         super().__init__(options)
         self.python_spec = options.python or [sys.executable]
+        if self._env.get("VIRTUALENV_PYTHON"):
+            self.python_spec = deque(self.python_spec)
+            self.python_spec.rotate(-1)
         self.app_data = options.app_data
         self.try_first_with = options.try_first_with
 
