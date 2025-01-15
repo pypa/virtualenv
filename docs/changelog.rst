@@ -5,6 +5,19 @@ Release History
 
 .. towncrier release notes start
 
+v20.29.0 (2025-01-15)
+---------------------
+
+Features - 20.29.0
+~~~~~~~~~~~~~~~~~~
+- Add support for selecting free-threaded Python interpreters, e.g., `python3.13t`. (:issue:`2809`)
+
+Bugfixes - 20.29.0
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded wheels:
+
+  * setuptools to ``75.8.0`` from ``75.6.0`` (:issue:`2823`)
+
 v20.28.1 (2025-01-02)
 ---------------------
 
