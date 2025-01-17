@@ -5,6 +5,13 @@ Release History
 
 .. towncrier release notes start
 
+v20.29.1 (2025-01-17)
+---------------------
+
+Bugfixes - 20.29.1
+~~~~~~~~~~~~~~~~~~
+- Fix PyInfo cache incompatbility warnings - by :user:`robsdedude`. (:issue:`2827`)
+
 v20.29.0 (2025-01-15)
 ---------------------
 
