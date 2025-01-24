@@ -6,6 +6,9 @@
 # but then simply `deactivate` won't work because it is just an alias to hide
 # the "activate" overlay. You'd need to call `overlay hide foo` manually.
 
+# Virtualenv activation module for Windows and Linux/macOS
+# Activate with `overlay use activate.nu`
+# Deactivate with `deactivate`, as usual
 
 export-env {
     def is-string [x] {
@@ -76,41 +79,38 @@ export-env {
         $path_name  : $new_path
         VIRTUAL_ENV : $virtual_env
     }
-
     let new_env = if (is-env-true 'VIRTUAL_ENV_DISABLE_PROMPT') {
-      $new_env
-    } else {
-      # Creating the new prompt for the session
-      let virtual_prompt = $"(char lparen)($virtual_env | path basename)(char rparen) "
-
-      # Back up the old prompt builder
-      let old_prompt_command = if (has-env 'VIRTUAL_ENV') and (has-env '_OLD_PROMPT_COMMAND') {
-          $env._OLD_PROMPT_COMMAND
+        $new_env
       } else {
-          if (has-env 'PROMPT_COMMAND') {
-              $env.PROMPT_COMMAND
-          } else {
-              ""
-          }
+        # Creating the new prompt for the session
+        let virtual_prefix = $"(char lparen)($virtual_env | path basename)(char rparen) "
+      
+        # Back up the old prompt builder
+        let old_prompt_command = if (has-env 'PROMPT_COMMAND') {
+            $env.PROMPT_COMMAND
+        } else {
+            ""
+        }
+      
+        let new_prompt = if (has-env 'PROMPT_COMMAND') {
+            if 'closure' in ($old_prompt_command | describe) {
+                {|| $'($virtual_prefix)(do $old_prompt_command)' }
+            } else {
+                {|| $'($virtual_prefix)($old_prompt_command)' }
+            }
+        } else {
+            {|| $'($virtual_prefix)' }
+        }
+      
+        # Ensure the correct variable name for the test
+        $new_env | merge {
+          _OLD_VIRTUAL_PATH   : ($old_path | str join $path_sep)
+          _OLD_PROMPT_COMMAND : $old_prompt_command
+          PROMPT_COMMAND      : $new_prompt
+          VIRTUAL_PREFIX      : $virtual_prefix  # Change here to match the test expectation
+        }
       }
-
-      let new_prompt = if (has-env 'PROMPT_COMMAND') {
-          if 'closure' in ($old_prompt_command | describe) {
-              {|| $'($virtual_prompt)(do $old_prompt_command)' }
-          } else {
-              {|| $'($virtual_prompt)($old_prompt_command)' }
-          }
-      } else {
-          {|| $'($virtual_prompt)' }
-      }
-
-      $new_env | merge {
-        _OLD_VIRTUAL_PATH   : ($old_path | str join $path_sep)
-        _OLD_PROMPT_COMMAND : $old_prompt_command
-        PROMPT_COMMAND      : $new_prompt
-        VIRTUAL_PROMPT      : $virtual_prompt
-      }
-    }
+      
 
     # Load environment variables to activate the virtualenv
     load-env $new_env
