@@ -84,14 +84,14 @@ export-env {
       } else {
         # Creating the new prompt for the session
         let virtual_prefix = $"(char lparen)($virtual_env | path basename)(char rparen) "
-      
+
         # Back up the old prompt builder
         let old_prompt_command = if (has-env 'PROMPT_COMMAND') {
             $env.PROMPT_COMMAND
         } else {
             ""
         }
-      
+
         let new_prompt = if (has-env 'PROMPT_COMMAND') {
             if 'closure' in ($old_prompt_command | describe) {
                 {|| $'($virtual_prefix)(do $old_prompt_command)' }
@@ -101,7 +101,7 @@ export-env {
         } else {
             {|| $'($virtual_prefix)' }
         }
-      
+
         # Ensure the correct variable name for the test
         $new_env | merge {
           _OLD_VIRTUAL_PATH   : ($old_path | str join $path_sep)
@@ -110,7 +110,7 @@ export-env {
           VIRTUAL_PREFIX      : $virtual_prefix  # Change here to match the test expectation
         }
       }
-      
+
 
     # Load environment variables to activate the virtualenv
     load-env $new_env
