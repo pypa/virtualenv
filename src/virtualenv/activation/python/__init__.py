@@ -14,9 +14,14 @@ class PythonActivator(ViaTemplateActivator):
     def templates(self):
         yield Path("activate_this.py")
 
+    @staticmethod
+    def quote(string):
+        return repr(string)
+
     def replacements(self, creator, dest_folder):
         replacements = super(PythonActivator, self).replacements(creator, dest_folder)
         lib_folders = OrderedDict((os.path.relpath(str(i), str(dest_folder)), None) for i in creator.libs)
+        lib_folders = os.pathsep.join(lib_folders.keys())
         win_py2 = creator.interpreter.platform == "win32" and creator.interpreter.version_info.major == 2
         replacements.update(
             {

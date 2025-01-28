@@ -5,12 +5,6 @@ import sys
 import pytest
 
 from virtualenv.activation import PowerShellActivator
-from virtualenv.info import PY2
-
-if PY2:
-    from pipes import quote
-else:
-    from shlex import quote
 
 
 @pytest.mark.slow
@@ -26,10 +20,6 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch):
             self.activate_cmd = "."
             self.script_encoding = "utf-16"
 
-        def quote(self, s):
-            """powershell double double quote needed for quotes within single quotes"""
-            return quote(s).replace('"', '""')
-
         def _get_test_lines(self, activate_script):
             # for BATCH utf-8 support need change the character code page to 650001
             return super(PowerShell, self)._get_test_lines(activate_script)
@@ -39,5 +29,20 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch):
 
         def print_prompt(self):
             return "prompt"
+
+        def quote(self, s):
+            """
+            Tester will pass strings to native commands on Windows so extra
+            parsing rules are used. Check `PowerShellActivator.quote` for more
+            details.
+            """
+            text = PowerShellActivator.quote(s)
+            return text.replace('"', '""') if sys.platform == "win32" else text
+
+        def activate_call(self, script):
+            # Commands are called without quotes in PowerShell
+            cmd = self.activate_cmd
+            scr = self.quote(str(script))
+            return f"{cmd} {scr}".strip()
 
     activation_tester(PowerShell)

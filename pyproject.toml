@@ -17,3 +17,8 @@ directory = "docs/changelog"
 title_format = false
 issue_format = "`#{issue} <https://github.com/pypa/virtualenv/issues/{issue}>`_"
 template = "docs/changelog/template.jinja2"
+
+[tool.ruff]
+lint.per-file-ignores."src/virtualenv/activation/python/activate_this.py" = [
+  "F821", # ignore undefined template string placeholders
+]

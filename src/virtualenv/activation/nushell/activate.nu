@@ -9,8 +9,8 @@ def-env activate-virtualenv [] {
     }
 
     let is-windows = ((sys).host.name | str downcase) == 'windows'
-    let virtual-env = '__VIRTUAL_ENV__'
-    let bin = '__BIN_NAME__'
+    let virtual-env = __VIRTUAL_ENV__
+    let bin = __BIN_NAME__
     let path-sep = '__PATH_SEP__'
     let path-name = if $is-windows {
         if (has-env 'Path') {
@@ -43,10 +43,10 @@ def-env activate-virtualenv [] {
     let new-path = ($old-path | prepend $venv-path | str collect $path-sep)
 
     # Creating the new prompt for the session
-    let virtual-prompt = if ('__VIRTUAL_PROMPT__' == '') {
+    let virtual-prompt = if (__VIRTUAL_PROMPT__ == '') {
         $'(char lparen)($virtual-env | path basename)(char rparen) '
     } else {
-        '(__VIRTUAL_PROMPT__) '
+        (__VIRTUAL_PROMPT__)
     }
 
     # Back up the old prompt builder

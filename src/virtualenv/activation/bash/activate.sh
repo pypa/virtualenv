@@ -44,14 +44,14 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV='__VIRTUAL_ENV__'
+VIRTUAL_ENV=__VIRTUAL_ENV__
 if ([ "$OSTYPE" = "cygwin" ] || [ "$OSTYPE" = "msys" ]) && $(command -v cygpath &> /dev/null) ; then
     VIRTUAL_ENV=$(cygpath -u "$VIRTUAL_ENV")
 fi
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
-PATH="$VIRTUAL_ENV/__BIN_NAME__:$PATH"
+PATH="$VIRTUAL_ENV/"__BIN_NAME__":$PATH"
 export PATH
 
 # unset PYTHONHOME if set
@@ -62,10 +62,10 @@ fi
 
 if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] ; then
     _OLD_VIRTUAL_PS1="${PS1-}"
-    if [ "x__VIRTUAL_PROMPT__" != x ] ; then
-        PS1="(__VIRTUAL_PROMPT__) ${PS1-}"
+    if [ "x"__VIRTUAL_PROMPT__ != x ] ; then
+        PS1=(__VIRTUAL_PROMPT__) ${PS1-}
     else
-        PS1="(`basename \"$VIRTUAL_ENV\"`) ${PS1-}"
+        PS1=(`basename \"$VIRTUAL_ENV\"`) ${PS1-}
     fi
     export PS1
 fi
