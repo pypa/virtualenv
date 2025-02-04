@@ -44,7 +44,22 @@ export-env {
     )
 
     let venv_path = ([$virtual_env $bin] | path join)
-    let new_path = ($env | get $path_name | prepend $venv_path)
+    let old_path = ($env | get $path_name)
+    let new_path = (if (is-string $old_path) {
+      # nushell post-0.101.0 behavior
+      let sep = (if (is_windows
+          and !($env | get -i CYGWIN)
+          and !($env | get -i MSYSTEM)) {
+        ";"
+      } else {
+        ":"
+      })
+
+      $"($venv_path)($sep)($old_path)"
+    } else {
+      # backwards compatability for nushell pre-0.101.0
+      $old_path | prepend $venv_path
+    })
 
     # If there is no default prompt, then use the env name instead
     let virtual_env_prompt = (if (__VIRTUAL_PROMPT__ | is-empty) {
