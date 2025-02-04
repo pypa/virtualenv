@@ -1,0 +1,1 @@
+invalid ``$PATH`` on nushell post-v0.101.0 - by :user:`midrare`.
