@@ -57,7 +57,7 @@ export-env {
 
       $"($venv_path)($sep)($old_path)"
     } else {
-      # backwards compatability for nushell pre-0.101.0
+      # backwards compatibility for nushell pre-0.101.0
       $old_path | prepend $venv_path
     })
 
