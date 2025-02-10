@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.29.2 (2025-02-10)
+---------------------
+
+Bugfixes - 20.29.2
+~~~~~~~~~~~~~~~~~~
+- Remove old virtualenv wheel from the source distribution - by :user:`gaborbernat`. (:issue:`2841`)
+- Upgrade embedded wheel pip to ``25.0.1`` from ``24.3.1`` - by :user:`gaborbernat`. (:issue:`2843`)
+
 v20.29.1 (2025-01-17)
 ---------------------
 
