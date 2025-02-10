@@ -1,1 +1,0 @@
-Upgrade embedded wheel pip to ``25.0.1`` from ``24.3.1`` - by :user:`gaborbernat`.
