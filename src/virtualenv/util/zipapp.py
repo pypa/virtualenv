@@ -1,4 +1,4 @@
-from __future__ import annotations  # noqa: A005
+from __future__ import annotations
 
 import logging
 import os
