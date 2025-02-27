@@ -63,6 +63,11 @@ def test_discovery_via_path_not_found(tmp_path, monkeypatch):
 def test_discovery_via_path_in_nonbrowseable_directory(tmp_path, monkeypatch):
     bad_perm = tmp_path / "bad_perm"
     bad_perm.mkdir(mode=0o000)
+    # path entry is unreadable
+    monkeypatch.setenv("PATH", str(bad_perm))
+    interpreter = get_interpreter(uuid4().hex, [])
+    assert interpreter is None
+    # path entry parent is unreadable
     monkeypatch.setenv("PATH", str(bad_perm / "bin"))
     interpreter = get_interpreter(uuid4().hex, [])
     assert interpreter is None
