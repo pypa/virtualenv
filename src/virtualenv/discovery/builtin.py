@@ -171,7 +171,7 @@ def get_paths(env: Mapping[str, str]) -> Generator[Path, None, None]:
     if path:
         for p in map(Path, path.split(os.pathsep)):
             with suppress(OSError):
-                if p.exists():
+                if next(p.iterdir(), None):
                     yield p
 
 
