@@ -5,6 +5,13 @@ Release History
 
 .. towncrier release notes start
 
+v20.29.3 (2025-03-06)
+---------------------
+
+Bugfixes - 20.29.3
+~~~~~~~~~~~~~~~~~~
+- Ignore unreadable directories in ``PATH``. (:issue:`2794`)
+
 v20.29.2 (2025-02-10)
 ---------------------
 
