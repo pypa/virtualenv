@@ -355,9 +355,7 @@ def _skip_if_test_in_system(session_app_data):
         pytest.skip("test not valid if run under system")
 
 
-if (
-    IS_PYPY or IS_GRAALPY or (IS_WIN and sys.version_info[0:2] >= (3, 13))
-):  # https://github.com/adamchainz/time-machine/issues/456
+if IS_PYPY or IS_GRAALPY:
 
     @pytest.fixture
     def time_freeze(freezer):
