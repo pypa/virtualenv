@@ -112,6 +112,7 @@ def test_zipapp_help(call_zipapp, capsys):
     assert not err
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("seeder", ["app-data", "pip"])
 def test_zipapp_create(call_zipapp, seeder):
     call_zipapp("--seeder", seeder)

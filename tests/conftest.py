@@ -19,6 +19,7 @@ from virtualenv.report import LOGGER
 
 def pytest_addoption(parser):
     parser.addoption("--int", action="store_true", default=False, help="run integration tests")
+    parser.addoption("--skip-slow", action="store_true", default=False, help="skip slow tests")
 
 
 def pytest_configure(config):
@@ -45,6 +46,11 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if item.location[0].startswith(int_location):
                 item.add_marker(pytest.mark.skip(reason="need --int option to run"))
+
+    if config.getoption("--skip-slow"):
+        for item in items:
+            if "slow" in [mark.name for mark in item.iter_markers()]:
+                item.add_marker(pytest.mark.skip(reason="skipped because --skip-slow was passed"))
 
 
 @pytest.fixture(scope="session")
