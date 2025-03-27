@@ -280,6 +280,7 @@ def test_trigger_update_no_debug(for_py_version, session_app_data, tmp_path, moc
     monkeypatch.delenv("_VIRTUALENV_PERIODIC_UPDATE_INLINE", raising=False)
     current = get_embed_wheel("setuptools", for_py_version)
     process = mocker.MagicMock()
+    process.pid = 123
     process.communicate.return_value = None, None
     Popen = mocker.patch("virtualenv.seed.wheels.periodic_update.Popen", return_value=process)  # noqa: N806
 
@@ -328,6 +329,7 @@ def test_trigger_update_debug(for_py_version, session_app_data, tmp_path, mocker
     current = get_embed_wheel("pip", for_py_version)
 
     process = mocker.MagicMock()
+    process.pid = 123
     process.communicate.return_value = None, None
     Popen = mocker.patch("virtualenv.seed.wheels.periodic_update.Popen", return_value=process)  # noqa: N806
 

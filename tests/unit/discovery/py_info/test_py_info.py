@@ -416,11 +416,11 @@ def test_fallback_existent_system_executable(mocker):
     mocker.patch.object(sys, "executable", current.executable)
 
     # ensure it falls back to an alternate binary name that exists
-    current._fast_get_system_executable()  # noqa: SLF001
-    assert os.path.basename(current.system_executable) in [
+    system_executable = current._fast_get_system_executable()  # noqa: SLF001
+    assert os.path.basename(system_executable) in [
         f"python{v}" for v in (current.version_info.major, f"{current.version_info.major}.{current.version_info.minor}")
     ]
-    assert os.path.exists(current.system_executable)
+    assert os.path.exists(system_executable)
 
 
 @pytest.mark.skipif(sys.version_info[:2] != (3, 10), reason="3.10 specific")

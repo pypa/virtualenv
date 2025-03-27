@@ -13,12 +13,13 @@ import pytest
 
 from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
+from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_WIN, fs_supports_symlink
 from virtualenv.report import LOGGER
 
 
 def pytest_addoption(parser):
     parser.addoption("--int", action="store_true", default=False, help="run integration tests")
+    parser.addoption("--skip-slow", action="store_true", default=False, help="skip slow tests")
 
 
 def pytest_configure(config):
@@ -45,6 +46,11 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if item.location[0].startswith(int_location):
                 item.add_marker(pytest.mark.skip(reason="need --int option to run"))
+
+    if config.getoption("--skip-slow"):
+        for item in items:
+            if "slow" in [mark.name for mark in item.iter_markers()]:
+                item.add_marker(pytest.mark.skip(reason="skipped because --skip-slow was passed"))
 
 
 @pytest.fixture(scope="session")
@@ -355,7 +361,7 @@ def _skip_if_test_in_system(session_app_data):
         pytest.skip("test not valid if run under system")
 
 
-if IS_PYPY or (IS_WIN and sys.version_info[0:2] >= (3, 13)):  # https://github.com/adamchainz/time-machine/issues/456
+if IS_PYPY or IS_GRAALPY:
 
     @pytest.fixture
     def time_freeze(freezer):

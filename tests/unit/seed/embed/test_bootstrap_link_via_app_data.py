@@ -147,6 +147,7 @@ def read_only_app_data(temp_app_data):
         yield temp_app_data
 
 
+@pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
 @pytest.mark.usefixtures("read_only_app_data")
 def test_base_bootstrap_link_via_app_data_not_writable(tmp_path, current_fastest):
@@ -155,6 +156,7 @@ def test_base_bootstrap_link_via_app_data_not_writable(tmp_path, current_fastest
     assert result
 
 
+@pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
 def test_populated_read_only_cache_and_symlinked_app_data(tmp_path, current_fastest, temp_app_data):
     dest = tmp_path / "venv"
@@ -180,6 +182,7 @@ def test_populated_read_only_cache_and_symlinked_app_data(tmp_path, current_fast
         check_call((str(dest.joinpath("bin/python")), "-c", "import pip"))
 
 
+@pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
 def test_populated_read_only_cache_and_copied_app_data(tmp_path, current_fastest, temp_app_data):
     dest = tmp_path / "venv"

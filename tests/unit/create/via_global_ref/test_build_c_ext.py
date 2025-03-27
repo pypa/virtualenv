@@ -26,6 +26,7 @@ def builtin_shows_marker_missing():
     return not marker.exists()
 
 
+@pytest.mark.slow
 @pytest.mark.xfail(
     condition=bool(os.environ.get("CI_RUN")),
     strict=False,
