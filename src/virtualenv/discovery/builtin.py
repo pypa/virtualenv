@@ -204,6 +204,12 @@ def path_exe_finder(spec: PythonSpec) -> Callable[[Path], Generator[tuple[Path, 
         direct = f"{direct}.exe"
 
     def path_exes(path: Path) -> Generator[tuple[Path, bool], None, None]:
+        # 3. if path exists as file and is direct
+        if path.is_file():
+            if path.name == direct:
+                yield path, False
+            return
+
         # 4. then maybe it's something exact on PATH - if it was direct lookup implementation no longer counts
         direct_path = path / direct
         if direct_path.exists():
