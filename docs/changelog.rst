@@ -5,6 +5,19 @@ Release History
 
 .. towncrier release notes start
 
+v20.30.0 (2025-03-31)
+---------------------
+
+Features - 20.30.0
+~~~~~~~~~~~~~~~~~~
+- Add support for `GraalPy <https://github.com/oracle/graalpython>`_. (:issue:`2832`)
+
+Bugfixes - 20.30.0
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded wheels:
+
+  * setuptools to ``78.1.0`` from ``75.3.2`` (:issue:`2863`)
+
 v20.29.3 (2025-03-06)
 ---------------------
 
