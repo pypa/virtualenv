@@ -1,1 +1,0 @@
-Add support for `GraalPy <https://github.com/oracle/graalpython>`_.
