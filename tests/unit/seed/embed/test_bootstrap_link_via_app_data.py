@@ -109,7 +109,7 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
 
     # Windows does not allow removing a executable while running it, so when uninstalling pip we need to do it via
     # python -m pip
-    remove_cmd = [str(result.creator.exe), "-m", "pip"] + remove_cmd[1:]
+    remove_cmd = [str(result.creator.exe), "-m", "pip", *remove_cmd[1:]]
     process = Popen([*remove_cmd, "pip", "wheel"])
     _, __ = process.communicate()
     assert not process.returncode
