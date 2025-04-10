@@ -64,7 +64,7 @@ def test_fail_with_traceback(raise_on_session_done, tmp_path, capsys):
 
 @pytest.mark.usefixtures("session_app_data")
 def test_session_report_full(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
-    run_with_catch([str(tmp_path), "--setuptools", "bundle", "--wheel", "bundle"])
+    run_with_catch([str(tmp_path), "--setuptools", "bundle"])
     out, err = capsys.readouterr()
     assert not err
     lines = out.splitlines()
@@ -72,7 +72,7 @@ def test_session_report_full(tmp_path: Path, capsys: pytest.CaptureFixture[str])
         r"created virtual environment .* in \d+ms",
         r"  creator .*",
         r"  seeder .*",
-        r"    added seed packages: .*pip==.*, setuptools==.*, wheel==.*",
+        r"    added seed packages: .*pip==.*, setuptools==.*",
         r"  activators .*",
     ]
     _match_regexes(lines, regexes)
