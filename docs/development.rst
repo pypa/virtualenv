@@ -106,7 +106,7 @@ that folder.
 Release
 ~~~~~~~
 
-virtualenv's release schedule is tied to ``pip``, ``setuptools`` and ``wheel``. We bundle the latest version of these
+virtualenv's release schedule is tied to ``pip`` and ``setuptools``. We bundle the latest version of these
 libraries so each time there's a new version of any of these, there will be a new virtualenv release shortly afterwards
 (we usually wait just a few days to avoid pulling in any broken releases).
 

@@ -13,7 +13,7 @@ from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("no", ["pip", "setuptools", "wheel", ""])
+@pytest.mark.parametrize("no", ["pip", "setuptools", ""])
 def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_fastest, no):  # noqa: C901
     extra_search_dir = tmp_path / "extra"
     extra_search_dir.mkdir()
@@ -49,7 +49,7 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_f
 
     original = PipInvoke._execute  # noqa: SLF001
     run = mocker.patch.object(PipInvoke, "_execute", side_effect=_execute)
-    versions = {"pip": "embed", "setuptools": "bundle", "wheel": new["wheel"].split("-")[1]}
+    versions = {"pip": "embed", "setuptools": "bundle"}
 
     create_cmd = [
         "--seeder",
@@ -76,14 +76,13 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_f
     site_package = result.creator.purelib
     pip = site_package / "pip"
     setuptools = site_package / "setuptools"
-    wheel = site_package / "wheel"
     files_post_first_create = list(site_package.iterdir())
 
     if no:
         no_file = locals()[no]
         assert no not in files_post_first_create
 
-    for key in ("pip", "setuptools", "wheel"):
+    for key in ("pip", "setuptools"):
         if key == no:
             continue
         assert locals()[key] in files_post_first_create
