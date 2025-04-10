@@ -18,11 +18,9 @@ class BaseEmbed(Seeder, ABC):
 
         self.pip_version = options.pip
         self.setuptools_version = options.setuptools
-        self.wheel_version = options.wheel
 
         self.no_pip = options.no_pip
         self.no_setuptools = options.no_setuptools
-        self.no_wheel = options.no_wheel
         self.app_data = options.app_data
         self.periodic_update = not options.no_periodic_update
 
@@ -34,7 +32,6 @@ class BaseEmbed(Seeder, ABC):
         return {
             "pip": Version.bundle,
             "setuptools": Version.bundle,
-            "wheel": Version.bundle,
         }
 
     def distribution_to_versions(self) -> dict[str, str]:
@@ -71,7 +68,7 @@ class BaseEmbed(Seeder, ABC):
             default=[],
         )
         for distribution, default in cls.distributions().items():
-            if interpreter.version_info[:2] >= (3, 12) and distribution in {"wheel", "setuptools"}:
+            if interpreter.version_info[:2] >= (3, 12) and distribution == "setuptools":
                 default = "none"  # noqa: PLW2901
             parser.add_argument(
                 f"--{distribution}",

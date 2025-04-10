@@ -1,0 +1,1 @@
+No longer bundle ``wheel`` wheels, ``setuptools`` includes native ``bdist_wheel`` support.
