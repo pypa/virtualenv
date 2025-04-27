@@ -28,10 +28,8 @@ jobs:
           - "3.11"
           - "3.10"
           - "3.9"
-          - "3.8"
           - pypy-3.10
           - pypy-3.9
-          - pypy-3.8
           - graalpy-24.1
         os:
           - ubuntu-latest
@@ -45,7 +43,6 @@ jobs:
           - { os: windows-latest, py: "graalpy-24.1" }
           - { os: windows-latest, py: "pypy-3.10" }
           - { os: windows-latest, py: "pypy-3.9" }
-          - { os: windows-latest, py: "pypy-3.8" }
     steps:
       - uses: taiki-e/install-action@cargo-binstall
       - name: Install OS dependencies
