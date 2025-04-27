@@ -398,7 +398,6 @@ def test_create_long_path(tmp_path):
     subprocess.check_call([str(result.creator.script("pip")), "--version"])
 
 
-@pytest.mark.skip("Depends on https://github.com/pypa/pip/pull/13330")
 @pytest.mark.slow
 @pytest.mark.parametrize("creator", sorted(set(PythonInfo.current_system().creators().key_to_class) - {"builtin"}))
 @pytest.mark.usefixtures("session_app_data")

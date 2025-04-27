@@ -1,1 +1,2 @@
 No longer bundle ``wheel`` wheels, ``setuptools`` includes native ``bdist_wheel`` support.
+Update ``pip`` to ``25.1``.
