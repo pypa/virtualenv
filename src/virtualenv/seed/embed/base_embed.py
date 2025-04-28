@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC
+from argparse import SUPPRESS
 from pathlib import Path
+from warnings import warn
 
 from virtualenv.seed.seeder import Seeder
 from virtualenv.seed.wheels import Version
@@ -23,6 +25,15 @@ class BaseEmbed(Seeder, ABC):
         self.no_setuptools = options.no_setuptools
         self.app_data = options.app_data
         self.periodic_update = not options.no_periodic_update
+
+        if options.no_wheel:
+            warn(
+                "The --no-wheel option is deprecated. "
+                "It has no effect, wheel is no longer bundled in virtualenv. "
+                "This option will be removed in pip 26.",
+                DeprecationWarning,
+                stacklevel=1,
+            )
 
         if not self.distribution_to_versions():
             self.enabled = False
@@ -85,6 +96,13 @@ class BaseEmbed(Seeder, ABC):
                 help=f"do not install {distribution}",
                 default=False,
             )
+        # DEPRECATED: Remove in pip 26
+        parser.add_argument(
+            "--no-wheel",
+            dest="no_wheel",
+            action="store_true",
+            help=SUPPRESS,
+        )
         parser.add_argument(
             "--no-periodic-update",
             dest="no_periodic_update",
