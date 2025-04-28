@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC
+from argparse import SUPPRESS
 from pathlib import Path
+from warnings import warn
 
 from virtualenv.seed.seeder import Seeder
 from virtualenv.seed.wheels import Version
@@ -18,13 +20,20 @@ class BaseEmbed(Seeder, ABC):
 
         self.pip_version = options.pip
         self.setuptools_version = options.setuptools
-        self.wheel_version = options.wheel
 
         self.no_pip = options.no_pip
         self.no_setuptools = options.no_setuptools
-        self.no_wheel = options.no_wheel
         self.app_data = options.app_data
         self.periodic_update = not options.no_periodic_update
+
+        if options.no_wheel:
+            warn(
+                "The --no-wheel option is deprecated. "
+                "It has no effect, wheel is no longer bundled in virtualenv. "
+                "This option will be removed in pip 26.",
+                DeprecationWarning,
+                stacklevel=1,
+            )
 
         if not self.distribution_to_versions():
             self.enabled = False
@@ -34,7 +43,6 @@ class BaseEmbed(Seeder, ABC):
         return {
             "pip": Version.bundle,
             "setuptools": Version.bundle,
-            "wheel": Version.bundle,
         }
 
     def distribution_to_versions(self) -> dict[str, str]:
@@ -71,7 +79,7 @@ class BaseEmbed(Seeder, ABC):
             default=[],
         )
         for distribution, default in cls.distributions().items():
-            if interpreter.version_info[:2] >= (3, 12) and distribution in {"wheel", "setuptools"}:
+            if interpreter.version_info[:2] >= (3, 12) and distribution == "setuptools":
                 default = "none"  # noqa: PLW2901
             parser.add_argument(
                 f"--{distribution}",
@@ -88,6 +96,13 @@ class BaseEmbed(Seeder, ABC):
                 help=f"do not install {distribution}",
                 default=False,
             )
+        # DEPRECATED: Remove in pip 26
+        parser.add_argument(
+            "--no-wheel",
+            dest="no_wheel",
+            action="store_true",
+            help=SUPPRESS,
+        )
         parser.add_argument(
             "--no-periodic-update",
             dest="no_periodic_update",

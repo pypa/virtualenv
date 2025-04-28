@@ -398,6 +398,10 @@ def test_create_long_path(tmp_path):
     subprocess.check_call([str(result.creator.script("pip")), "--version"])
 
 
+@pytest.mark.skipif(
+    sys.version_info[:2] == (3, 8),
+    reason="Disable on Python 3.8, which still uses pip 25.0.1 (without https://github.com/pypa/pip/pull/13330)",
+)
 @pytest.mark.slow
 @pytest.mark.parametrize("creator", sorted(set(PythonInfo.current_system().creators().key_to_class) - {"builtin"}))
 @pytest.mark.usefixtures("session_app_data")
@@ -410,8 +414,6 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
             "--creator",
             creator,
             "--setuptools",
-            "bundle",
-            "--wheel",
             "bundle",
         ],
     )
@@ -470,7 +472,7 @@ def list_files(path):
 def test_zip_importer_can_import_setuptools(tmp_path):
     """We're patching the loaders so might fail on r/o loaders, such as zipimporter on CPython<3.8"""
     result = cli_run(
-        [str(tmp_path / "venv"), "--activators", "", "--no-pip", "--no-wheel", "--copies", "--setuptools", "bundle"],
+        [str(tmp_path / "venv"), "--activators", "", "--no-pip", "--copies", "--setuptools", "bundle"],
     )
     zip_path = tmp_path / "site-packages.zip"
     with zipfile.ZipFile(str(zip_path), "w", zipfile.ZIP_DEFLATED) as zip_handler:
