@@ -21,7 +21,7 @@ def test_download_cli_flag(args, download, tmp_path):
     assert session.seeder.download is download
 
 
-# DEPRECATED: Remove in pip 26
+# DEPRECATED: Remove in virtualenv 26
 def test_download_deprecated_cli_flag(tmp_path):
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
@@ -31,7 +31,7 @@ def test_download_deprecated_cli_flag(tmp_path):
     assert str(w[-1].message) == (
         "The --no-wheel option is deprecated. "
         "It has no effect, wheel is no longer bundled in virtualenv. "
-        "This option will be removed in pip 26."
+        "This option will be removed in virtualenv 26."
     )
 
 

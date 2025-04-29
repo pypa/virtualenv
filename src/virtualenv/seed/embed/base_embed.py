@@ -30,7 +30,7 @@ class BaseEmbed(Seeder, ABC):
             warn(
                 "The --no-wheel option is deprecated. "
                 "It has no effect, wheel is no longer bundled in virtualenv. "
-                "This option will be removed in pip 26.",
+                "This option will be removed in virtualenv 26.",
                 DeprecationWarning,
                 stacklevel=1,
             )
@@ -96,7 +96,7 @@ class BaseEmbed(Seeder, ABC):
                 help=f"do not install {distribution}",
                 default=False,
             )
-        # DEPRECATED: Remove in pip 26
+        # DEPRECATED: Remove in virtualenv 26
         parser.add_argument(
             "--no-wheel",
             dest="no_wheel",
