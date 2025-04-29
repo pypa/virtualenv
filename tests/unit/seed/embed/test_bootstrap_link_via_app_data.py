@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 @pytest.mark.slow
 @pytest.mark.parametrize("copies", [False, True] if fs_supports_symlink() else [True])
-def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies):
+def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies, for_py_version):  # noqa: PLR0915
     current = PythonInfo.current_system()
     bundle_ver = BUNDLE_SUPPORT[current.version_release_str]
     create_cmd = [
@@ -45,6 +45,8 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
         current_fastest,
         "-vv",
     ]
+    if for_py_version == "3.8":
+        create_cmd += ["--wheel", bundle_ver["wheel"].split("-")[1]]
     if not copies:
         create_cmd.append("--symlink-app-data")
     result = cli_run(create_cmd)
@@ -110,7 +112,7 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
     # Windows does not allow removing a executable while running it, so when uninstalling pip we need to do it via
     # python -m pip
     remove_cmd = [str(result.creator.exe), "-m", "pip", *remove_cmd[1:]]
-    process = Popen([*remove_cmd, "pip"])
+    process = Popen([*remove_cmd, "pip", "wheel"])
     _, __ = process.communicate()
     assert not process.returncode
     # pip is greedy here, removing all packages removes the site-package too
@@ -208,13 +210,20 @@ def test_populated_read_only_cache_and_copied_app_data(tmp_path, current_fastest
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("pkg", ["pip", "setuptools"])
+@pytest.mark.parametrize("pkg", ["pip", "setuptools", "wheel"])
 @pytest.mark.usefixtures("session_app_data", "current_fastest", "coverage_env")
-def test_base_bootstrap_link_via_app_data_no(tmp_path, pkg):
+def test_base_bootstrap_link_via_app_data_no(tmp_path, pkg, for_py_version):
+    if for_py_version != "3.8" and pkg == "wheel":
+        msg = "wheel isn't installed on Python > 3.8"
+        raise pytest.skip(msg)
     create_cmd = [str(tmp_path), "--seeder", "app-data", f"--no-{pkg}", "--setuptools", "bundle"]
+    if for_py_version == "3.8":
+        create_cmd += ["--wheel", "bundle"]
     result = cli_run(create_cmd)
     assert not (result.creator.purelib / pkg).exists()
-    for key in {"pip", "setuptools"} - {pkg}:
+    for key in {"pip", "setuptools", "wheel"} - {pkg}:
+        if for_py_version != "3.8" and key == "wheel":
+            continue
         assert (result.creator.purelib / key).exists()
 
 
@@ -239,7 +248,10 @@ def _run_parallel_threads(tmp_path):
 
     def _run(name):
         try:
-            cli_run(["--seeder", "app-data", str(tmp_path / name), "--no-setuptools"])
+            cmd = ["--seeder", "app-data", str(tmp_path / name), "--no-setuptools"]
+            if sys.version_info[:2] == (3, 8):
+                cmd.append("--no-wheel")
+            cli_run(cmd)
         except Exception as exception:  # noqa: BLE001
             as_str = str(exception)
             exceptions.append(as_str)

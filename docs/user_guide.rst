@@ -42,7 +42,7 @@ The tool works in two phases:
   four further sub-steps:
 
   - create a python that matches the target python interpreter from phase 1,
-  - install (bootstrap) seed packages (one or more of :pypi:`pip`, :pypi:`setuptools`) in the created
+  - install (bootstrap) seed packages (one or more of :pypi:`pip`, :pypi:`setuptools`, :pypi:`wheel`) in the created
     virtual environment,
   - install activation scripts into the binary directory of the virtual environment (these will allow end users to
     *activate* the virtual environment from various shells).
@@ -138,10 +138,9 @@ at the moment has two types of virtual environments:
 
 Seeders
 -------
-These will install for you some seed packages (one or more of: :pypi:`pip`, :pypi:`setuptools`) that
+These will install for you some seed packages (one or more of: :pypi:`pip`, :pypi:`setuptools`, :pypi:`wheel`) that
 enables you to install additional python packages into the created virtual environment (by invoking pip). Installing
-:pypi:`setuptools` is disabled by default on Python 3.12+ environments. There are two
-main seed mechanisms available:
+:pypi:`setuptools` is disabled by default on Python 3.12+ environments. :pypi:`wheel` is only installed on Python 3.8, by default. There are two main seed mechanisms available:
 
 - ``pip`` - this method uses the bundled pip with virtualenv to install the seed packages (note, a new child process
   needs to be created to do this, which can be expensive especially on Windows).
@@ -163,8 +162,8 @@ Wheels
 To install a seed package via either ``pip`` or ``app-data`` method virtualenv needs to acquire a wheel of the target
 package. These wheels may be acquired from multiple locations as follows:
 
-- ``virtualenv`` ships out of box with a set of embed ``wheels`` for both seed packages (:pypi:`pip`,
-  :pypi:`setuptools`). These are packaged together with the virtualenv source files, and only change upon
+- ``virtualenv`` ships out of box with a set of embed ``wheels`` for all three seed packages (:pypi:`pip`,
+  :pypi:`setuptools`, :pypi:`wheel`). These are packaged together with the virtualenv source files, and only change upon
   upgrading virtualenv. Different Python versions require different versions of these, and because virtualenv supports a
   wide range of Python versions, the number of embedded wheels out of box is greater than 3. Whenever newer versions of
   these embedded packages are released upstream ``virtualenv`` project upgrades them, and does a new release. Therefore,

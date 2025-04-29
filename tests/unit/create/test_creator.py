@@ -468,7 +468,7 @@ def list_files(path):
 def test_zip_importer_can_import_setuptools(tmp_path):
     """We're patching the loaders so might fail on r/o loaders, such as zipimporter on CPython<3.8"""
     result = cli_run(
-        [str(tmp_path / "venv"), "--activators", "", "--no-pip", "--copies", "--setuptools", "bundle"],
+        [str(tmp_path / "venv"), "--activators", "", "--no-pip", "--no-wheel", "--copies", "--setuptools", "bundle"],
     )
     zip_path = tmp_path / "site-packages.zip"
     with zipfile.ZipFile(str(zip_path), "w", zipfile.ZIP_DEFLATED) as zip_handler:
