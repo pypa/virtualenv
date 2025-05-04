@@ -107,8 +107,8 @@ class VirtualEnvConfigParser(ArgumentParser):
 
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
-    def __init__(self, prog) -> None:
-        super().__init__(prog, max_help_position=32, width=240)
+    def __init__(self, prog, **kwargs) -> None:
+        super().__init__(prog, max_help_position=32, width=240, **kwargs)
 
     def _get_help_string(self, action):
         text = super()._get_help_string(action)
