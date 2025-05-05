@@ -38,7 +38,7 @@ def download(ver, dest, package):
     )
 
 
-def run():  # noqa: C901
+def run():  # noqa: C901, PLR0912
     old_batch = {i.name for i in DEST.iterdir() if i.suffix == ".whl"}
     with TemporaryDirectory() as temp:
         temp_path = Path(temp)
@@ -50,6 +50,8 @@ def run():  # noqa: C901
             into.mkdir()
             folders[into] = support_ver
             for package in BUNDLED:
+                if package == "wheel" and support >= (3, 9):
+                    continue
                 thread = Thread(target=download, args=(support_ver, str(into), package))
                 targets.append(thread)
                 thread.start()
@@ -90,8 +92,10 @@ def run():  # noqa: C901
                 if (folder / package).exists():
                     support_table[version].append(package)
         support_table = {k: OrderedDict((i.split("-")[0], i) for i in v) for k, v in support_table.items()}
-        bundle = ",".join(
-            f"{v!r}: {{ {','.join(f'{p!r}: {f!r}' for p, f in line.items())} }}" for v, line in support_table.items()
+        nl = "\n"
+        bundle = "".join(
+            f"\n        {v!r}: {{{nl}{''.join(f'            {p!r}: {f!r},{nl}' for p, f in line.items())}        }},"
+            for v, line in support_table.items()
         )
         msg = dedent(
             f"""
