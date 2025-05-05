@@ -1,2 +1,0 @@
-``get_embed_wheel()`` no longer fails with a :exc:`TypeError` when it is
-called with an unknown *distribution*.

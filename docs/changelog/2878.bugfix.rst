@@ -1,1 +1,0 @@
-Fix ``HelpFormatter`` error with Python 3.14.0b1.

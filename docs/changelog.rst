@@ -5,6 +5,19 @@ Release History
 
 .. towncrier release notes start
 
+v20.31.0 (2025-05-05)
+---------------------
+
+Features - 20.31.0
+~~~~~~~~~~~~~~~~~~
+- No longer bundle ``wheel`` wheels (except on Python 3.8), ``setuptools`` includes native ``bdist_wheel`` support.  Update ``pip`` to ``25.1``. (:issue:`2868`)
+
+Bugfixes - 20.31.0
+~~~~~~~~~~~~~~~~~~
+- ``get_embed_wheel()`` no longer fails with a :exc:`TypeError` when it is
+  called with an unknown *distribution*. (:issue:`2877`)
+- Fix ``HelpFormatter`` error with Python 3.14.0b1. (:issue:`2878`)
+
 v20.30.0 (2025-03-31)
 ---------------------
 
