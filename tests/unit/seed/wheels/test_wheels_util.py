@@ -29,3 +29,8 @@ def test_wheel_not_support():
 def test_wheel_repr():
     wheel = get_embed_wheel("setuptools", MAX)
     assert str(wheel.path) in repr(wheel)
+
+
+def test_unknown_distribution():
+    wheel = get_embed_wheel("unknown", MAX)
+    assert wheel is None
