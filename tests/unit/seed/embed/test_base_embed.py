@@ -21,7 +21,7 @@ def test_download_cli_flag(args, download, tmp_path):
     assert session.seeder.download is download
 
 
-# DEPRECATED: Remove in pip 26
+@pytest.mark.skipif(sys.version_info[:2] == (3, 8), reason="We still bundle wheels for Python 3.8")
 def test_download_deprecated_cli_flag(tmp_path):
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
@@ -29,13 +29,17 @@ def test_download_deprecated_cli_flag(tmp_path):
     assert len(w) == 1
     assert issubclass(w[-1].category, DeprecationWarning)
     assert str(w[-1].message) == (
-        "The --no-wheel option is deprecated. "
-        "It has no effect, wheel is no longer bundled in virtualenv. "
-        "This option will be removed in pip 26."
+        "The --no-wheel option is deprecated. It has no effect for Python >= "
+        "3.8 as wheel is no longer bundled in virtualenv."
     )
 
 
 def test_embed_wheel_versions(tmp_path: Path) -> None:
     session = session_via_cli([str(tmp_path)])
-    expected = {"pip": "bundle"} if sys.version_info[:2] >= (3, 12) else {"pip": "bundle", "setuptools": "bundle"}
+    if sys.version_info[:2] >= (3, 12):
+        expected = {"pip": "bundle"}
+    elif sys.version_info[:2] >= (3, 9):
+        expected = {"pip": "bundle", "setuptools": "bundle"}
+    else:
+        expected = {"pip": "bundle", "setuptools": "bundle", "wheel": "bundle"}
     assert session.seeder.distribution_to_versions() == expected
