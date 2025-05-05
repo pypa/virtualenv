@@ -13,7 +13,7 @@ Bugfixes - 20.31.1
 - Upgrade embedded wheels:
 
   * pip to ``25.1.1`` from ``25.1``
-  * setuptools to ``80.3.1`` from ``78.1.0`` (:issue:`u`)
+  * setuptools to ``80.3.1`` from ``78.1.0`` (:issue:`2880`)
 
 v20.31.0 (2025-05-05)
 ---------------------
