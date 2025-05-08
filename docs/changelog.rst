@@ -5,6 +5,12 @@ Release History
 
 .. towncrier release notes start
 
+v20.31.2 (2025-05-08)
+---------------------
+
+No significant changes.
+
+
 v20.31.1 (2025-05-05)
 ---------------------
 
