@@ -48,6 +48,7 @@ def session_via_cli(args, options=None, setup_logging=True, env=None):  # noqa: 
     env = os.environ if env is None else env
     parser, elements = build_parser(args, options, setup_logging, env)
     options = parser.parse_args(args)
+    options.py_version = parser._interpreter.version_info  # noqa: SLF001
     creator, seeder, activators = tuple(e.create(options) for e in elements)  # create types
     return Session(
         options.verbosity,

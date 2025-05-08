@@ -1,13 +1,14 @@
 from __future__ import annotations
 
+import logging
 from abc import ABC
 from argparse import SUPPRESS
 from pathlib import Path
-from warnings import warn
 
 from virtualenv.seed.seeder import Seeder
 from virtualenv.seed.wheels import Version
 
+LOGGER = logging.getLogger(__name__)
 PERIODIC_UPDATE_ON_BY_DEFAULT = True
 
 
@@ -20,23 +21,26 @@ class BaseEmbed(Seeder, ABC):
 
         self.pip_version = options.pip
         self.setuptools_version = options.setuptools
-        if hasattr(options, "wheel"):
-            # Python 3.8
-            self.wheel_version = options.wheel
-            self.no_wheel = options.no_wheel
-        elif options.no_wheel:
-            warn(
-                "The --no-wheel option is deprecated. "
-                "It has no effect for Python >= 3.8 as wheel is no longer "
-                "bundled in virtualenv.",
-                DeprecationWarning,
-                stacklevel=1,
-            )
+
+        # wheel version needs special handling
+        # on Python > 3.8, the default is None (as in not used)
+        # so we can differentiate between explicit and implicit none
+        self.wheel_version = options.wheel or "none"
 
         self.no_pip = options.no_pip
         self.no_setuptools = options.no_setuptools
+        self.no_wheel = options.no_wheel
         self.app_data = options.app_data
         self.periodic_update = not options.no_periodic_update
+
+        if options.py_version[:2] >= (3, 9):
+            if options.wheel is not None or options.no_wheel:
+                LOGGER.warning(
+                    "The --no-wheel and --wheel options are deprecated. "
+                    "They have no effect for Python > 3.8 as wheel is no longer "
+                    "bundled in virtualenv.",
+                )
+            self.no_wheel = True
 
         if not self.distribution_to_versions():
             self.enabled = False
@@ -83,15 +87,17 @@ class BaseEmbed(Seeder, ABC):
             default=[],
         )
         for distribution, default in cls.distributions().items():
-            if interpreter.version_info[:2] >= (3, 12) and distribution == "setuptools":
+            help_ = f"version of {distribution} to install as seed: embed, bundle, none or exact version"
+            if interpreter.version_info[:2] >= (3, 12) and distribution in {"wheel", "setuptools"}:
                 default = "none"  # noqa: PLW2901
             if interpreter.version_info[:2] >= (3, 9) and distribution == "wheel":
-                continue
+                default = None  # noqa: PLW2901
+                help_ = SUPPRESS
             parser.add_argument(
                 f"--{distribution}",
                 dest=distribution,
                 metavar="version",
-                help=f"version of {distribution} to install as seed: embed, bundle, none or exact version",
+                help=help_,
                 default=default,
             )
         for distribution in cls.distributions():
