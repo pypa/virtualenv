@@ -30,7 +30,12 @@ virtualenv
   :target: https://pypistats.org/packages/virtualenv
   :alt: Package popularity
 
-``virtualenv`` is a tool to create isolated Python environments. Since Python ``3.3``, a subset of it has been
+``virtualenv`` is a tool to create isolated Python environments. 
+
+virtualenv vs venv
+------------
+
+Since Python ``3.3``, a subset of it has been
 integrated into the standard library under the `venv module <https://docs.python.org/3/library/venv.html>`_. The
 ``venv`` module does not offer all features of this library, to name just a few more prominent:
 
@@ -39,6 +44,9 @@ integrated into the standard library under the `venv module <https://docs.python
 - cannot create virtual environments for arbitrarily installed python versions (and automatically discover these),
 - is not upgrade-able via `pip <https://pip.pypa.io/en/stable/installing/>`_,
 - does not have as rich programmatic API (describe virtual environments without creating them).
+
+Concept and purpose of virtualenv
+------------
 
 The basic problem being addressed is one of dependencies and versions, and indirectly permissions.
 Imagine you have an application that needs version ``1`` of ``LibFoo``, but another application requires version
@@ -52,6 +60,30 @@ into the global ``site-packages`` directory, due to not having permissions to ch
 In all these cases, ``virtualenv`` can help you. It creates an environment that has its own installation directories,
 that doesn't share libraries with other virtualenv environments (and optionally doesn't access the globally installed
 libraries either).
+
+
+Compatibility
+------------
+With the release of virtualenv 20.22, April 2023, (`release note <https://virtualenv.pypa.io/en/latest/changelog.html#v20-22-0-2023-04-19>`__) target interpreters are now limited to Python v. 3.7+. 
+
+Trying to use an earlier version will normally result in the target interpreter raising a syntax error. This virtualenv tool will then print some details about the exception and abort, ie no explicit warning about trying to use an outdated/incompatible version. It may look like this:
+
+.. code-block:: console
+
+    $ virtualenv --discovery pyenv -p python3.6 foo
+    RuntimeError: failed to query /home/velle/.pyenv/versions/3.6.15/bin/python3.6 with code 1 err: '  File "/home/velle/.virtualenvs/toxrunner/lib/python3.12/site-packages/virtualenv/discovery/py_info.py", line 7
+        from __future__ import annotations
+        ^
+    SyntaxError: future feature annotations is not defined
+
+
+In tox, even if the interpreter is installed and available, the message is (somewhat misleading):
+
+.. code-block:: console
+
+    py36: skipped because could not find python interpreter with spec(s): py36
+
+
 
 Useful links
 ------------
