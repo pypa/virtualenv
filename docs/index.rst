@@ -30,10 +30,10 @@ virtualenv
   :target: https://pypistats.org/packages/virtualenv
   :alt: Package popularity
 
-``virtualenv`` is a tool to create isolated Python environments. 
+``virtualenv`` is a tool to create isolated Python environments.
 
 virtualenv vs venv
-------------
+------------------
 
 Since Python ``3.3``, a subset of it has been
 integrated into the standard library under the `venv module <https://docs.python.org/3/library/venv.html>`_. The
@@ -46,7 +46,7 @@ integrated into the standard library under the `venv module <https://docs.python
 - does not have as rich programmatic API (describe virtual environments without creating them).
 
 Concept and purpose of virtualenv
-------------
+---------------------------------
 
 The basic problem being addressed is one of dependencies and versions, and indirectly permissions.
 Imagine you have an application that needs version ``1`` of ``LibFoo``, but another application requires version
@@ -63,8 +63,9 @@ libraries either).
 
 
 Compatibility
-------------
-With the release of virtualenv 20.22, April 2023, (`release note <https://virtualenv.pypa.io/en/latest/changelog.html#v20-22-0-2023-04-19>`__) target interpreters are now limited to Python v. 3.7+. 
+-------------
+
+With the release of virtualenv 20.22, April 2023, (`release note <https://virtualenv.pypa.io/en/latest/changelog.html#v20-22-0-2023-04-19>`__) target interpreters are now limited to Python v. 3.7+.
 
 Trying to use an earlier version will normally result in the target interpreter raising a syntax error. This virtualenv tool will then print some details about the exception and abort, ie no explicit warning about trying to use an outdated/incompatible version. It may look like this:
 
