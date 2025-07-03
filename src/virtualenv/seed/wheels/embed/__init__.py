@@ -13,27 +13,27 @@ BUNDLE_SUPPORT = {
     },
     "3.9": {
         "pip": "pip-25.1.1-py3-none-any.whl",
-        "setuptools": "setuptools-80.3.1-py3-none-any.whl",
+        "setuptools": "setuptools-80.9.0-py3-none-any.whl",
     },
     "3.10": {
         "pip": "pip-25.1.1-py3-none-any.whl",
-        "setuptools": "setuptools-80.3.1-py3-none-any.whl",
+        "setuptools": "setuptools-80.9.0-py3-none-any.whl",
     },
     "3.11": {
         "pip": "pip-25.1.1-py3-none-any.whl",
-        "setuptools": "setuptools-80.3.1-py3-none-any.whl",
+        "setuptools": "setuptools-80.9.0-py3-none-any.whl",
     },
     "3.12": {
         "pip": "pip-25.1.1-py3-none-any.whl",
-        "setuptools": "setuptools-80.3.1-py3-none-any.whl",
+        "setuptools": "setuptools-80.9.0-py3-none-any.whl",
     },
     "3.13": {
         "pip": "pip-25.1.1-py3-none-any.whl",
-        "setuptools": "setuptools-80.3.1-py3-none-any.whl",
+        "setuptools": "setuptools-80.9.0-py3-none-any.whl",
     },
     "3.14": {
         "pip": "pip-25.1.1-py3-none-any.whl",
-        "setuptools": "setuptools-80.3.1-py3-none-any.whl",
+        "setuptools": "setuptools-80.9.0-py3-none-any.whl",
     },
 }
 MAX = "3.8"
