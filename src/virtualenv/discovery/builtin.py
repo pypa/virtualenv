@@ -7,6 +7,8 @@ from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from platformdirs import user_data_path
+
 from virtualenv.info import IS_WIN, fs_path_id
 
 from .discover import Discover
@@ -146,6 +148,15 @@ def propose_interpreters(  # noqa: C901, PLR0912, PLR0915
                     continue
                 tested_exes.add(exe_id)
                 yield interpreter, True
+
+        # 4. otherwise try uv-managed python (~/.local/share/uv/python or platform equivalent)
+        uv_python_path = user_data_path("uv") / "python"
+        if uv_python_path.exists():
+            for exe_path in uv_python_path.glob("*/bin/python"):
+                interpreter = PathPythonInfo.from_exe(str(exe_path), app_data, raise_on_error=False, env=env)
+                if interpreter is not None:
+                    yield interpreter, True
+
     # finally just find on path, the path order matters (as the candidates are less easy to control by end user)
     find_candidates = path_exe_finder(spec)
     for pos, path in enumerate(get_paths(env)):

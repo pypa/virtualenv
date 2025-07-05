@@ -102,6 +102,8 @@ format is either:
    - If we're on Windows look into the Windows registry, and check if we see any registered Python implementations that
      match the specification. This is in line with expectation laid out inside
      `PEP-514 <https://www.python.org/dev/peps/pep-0514/>`_
+   - If `uv-managed <https://docs.astral.sh/uv/concepts/python-versions/>`_ Python installations are available, use the
+     first one that matches the specification.
    - Try to discover a matching python executable within the folders enumerated on the ``PATH`` environment variable.
      In this case we'll try to find an executable that has a name roughly similar to the specification (for exact logic,
      please see the implementation code).

@@ -9,7 +9,7 @@ from uuid import uuid4
 
 import pytest
 
-from virtualenv.discovery.builtin import Builtin, get_interpreter
+from virtualenv.discovery.builtin import Builtin, PathPythonInfo, get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import fs_supports_symlink
 
@@ -80,6 +80,21 @@ def test_relative_path(session_app_data, monkeypatch):
     relative = str(sys_executable.relative_to(cwd))
     result = get_interpreter(relative, [], session_app_data)
     assert result is not None
+
+
+def test_uv_python(monkeypatch, tmp_path, mocker):
+    # Mock a python bin in <user_data_path>/uv/python/cpython-3.12.0-linux-x86_64-gnu/bin/python
+    monkeypatch.setattr("virtualenv.discovery.builtin.user_data_path", lambda x: tmp_path / x)
+    bin_path = tmp_path.joinpath("uv", "python", "cpython-3.12.0-linux-x86_64-gnu", "bin")
+    bin_path.mkdir(parents=True)
+    bin_path.joinpath("python").touch()
+
+    mocker.patch("virtualenv.discovery.builtin.PathPythonInfo.from_exe")
+    mocker.patch.object(PythonInfo, "satisfies", return_value=False)
+    get_interpreter("python", [])
+
+    PathPythonInfo.from_exe.assert_called_once()
+    assert PathPythonInfo.from_exe.call_args[0][0] == str(bin_path / "python")
 
 
 def test_discovery_fallback_fail(session_app_data, caplog):
