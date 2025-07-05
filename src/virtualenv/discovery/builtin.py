@@ -157,11 +157,10 @@ def propose_interpreters(  # noqa: C901, PLR0912, PLR0915
         else:
             uv_python_path = user_data_path("uv") / "python"
 
-        if uv_python_path.exists():
-            for exe_path in uv_python_path.glob("*/bin/python"):
-                interpreter = PathPythonInfo.from_exe(str(exe_path), app_data, raise_on_error=False, env=env)
-                if interpreter is not None:
-                    yield interpreter, True
+        for exe_path in uv_python_path.glob("*/bin/python"):
+            interpreter = PathPythonInfo.from_exe(str(exe_path), app_data, raise_on_error=False, env=env)
+            if interpreter is not None:
+                yield interpreter, True
 
     # finally just find on path, the path order matters (as the candidates are less easy to control by end user)
     find_candidates = path_exe_finder(spec)

@@ -5,11 +5,12 @@ import os
 import sys
 from argparse import Namespace
 from pathlib import Path
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
 
-from virtualenv.discovery.builtin import Builtin, PathPythonInfo, get_interpreter
+from virtualenv.discovery.builtin import Builtin, get_interpreter
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import fs_supports_symlink
 
@@ -82,19 +83,47 @@ def test_relative_path(session_app_data, monkeypatch):
     assert result is not None
 
 
-def test_uv_python(monkeypatch, tmp_path, mocker):
-    # Mock a python bin in <user_data_path>/uv/python/cpython-3.12.0-linux-x86_64-gnu/bin/python
-    monkeypatch.setattr("virtualenv.discovery.builtin.user_data_path", lambda x: tmp_path / x)
-    bin_path = tmp_path.joinpath("uv", "python", "cpython-3.12.0-linux-x86_64-gnu", "bin")
+def test_uv_python(monkeypatch, tmp_path_factory, mocker):
+    monkeypatch.delenv("UV_PYTHON_INSTALL_DIR", raising=False)
+    monkeypatch.delenv("XDG_DATA_HOME", raising=False)
+    monkeypatch.setenv("PATH", "")
+    mocker.patch.object(PythonInfo, "satisfies", return_value=False)
+
+    # UV_PYTHON_INSTALL_DIR
+    uv_python_install_dir = tmp_path_factory.mktemp("uv_python_install_dir")
+    bin_path = uv_python_install_dir.joinpath("some-py-impl", "bin")
     bin_path.mkdir(parents=True)
     bin_path.joinpath("python").touch()
 
-    mocker.patch("virtualenv.discovery.builtin.PathPythonInfo.from_exe")
-    mocker.patch.object(PythonInfo, "satisfies", return_value=False)
-    get_interpreter("python", [])
+    with patch("virtualenv.discovery.builtin.PathPythonInfo.from_exe") as mock_from_exe, monkeypatch.context() as m:
+        m.setenv("UV_PYTHON_INSTALL_DIR", str(uv_python_install_dir))
+        get_interpreter("python", [])
+        mock_from_exe.assert_called_once()
+        assert mock_from_exe.call_args[0][0] == str(bin_path / "python")
 
-    PathPythonInfo.from_exe.assert_called_once()
-    assert PathPythonInfo.from_exe.call_args[0][0] == str(bin_path / "python")
+    # XDG_DATA_HOME
+    xdg_data_home = tmp_path_factory.mktemp("xdg_data_home")
+    bin_path = xdg_data_home.joinpath("uv", "python", "some-py-impl", "bin")
+    bin_path.mkdir(parents=True)
+    bin_path.joinpath("python").touch()
+
+    with patch("virtualenv.discovery.builtin.PathPythonInfo.from_exe") as mock_from_exe, monkeypatch.context() as m:
+        m.setenv("XDG_DATA_HOME", str(xdg_data_home))
+        get_interpreter("python", [])
+        mock_from_exe.assert_called_once()
+        assert mock_from_exe.call_args[0][0] == str(bin_path / "python")
+
+    # User data path
+    user_data_path = tmp_path_factory.mktemp("user_data_path")
+    bin_path = user_data_path.joinpath("uv", "python", "some-py-impl", "bin")
+    bin_path.mkdir(parents=True)
+    bin_path.joinpath("python").touch()
+
+    with patch("virtualenv.discovery.builtin.PathPythonInfo.from_exe") as mock_from_exe, monkeypatch.context() as m:
+        m.setattr("virtualenv.discovery.builtin.user_data_path", lambda x: user_data_path / x)
+        get_interpreter("python", [])
+        mock_from_exe.assert_called_once()
+        assert mock_from_exe.call_args[0][0] == str(bin_path / "python")
 
 
 def test_discovery_fallback_fail(session_app_data, caplog):
