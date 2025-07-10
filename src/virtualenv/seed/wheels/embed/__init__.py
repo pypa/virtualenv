@@ -13,38 +13,34 @@ BUNDLE_SUPPORT = {
     },
     "3.9": {
         "pip": "pip-25.1.1-py3-none-any.whl",
-        "setuptools": "setuptools-80.3.1-py3-none-any.whl",
+        "setuptools": "setuptools-80.9.0-py3-none-any.whl",
     },
     "3.10": {
         "pip": "pip-25.1.1-py3-none-any.whl",
-        "setuptools": "setuptools-80.3.1-py3-none-any.whl",
+        "setuptools": "setuptools-80.9.0-py3-none-any.whl",
     },
     "3.11": {
         "pip": "pip-25.1.1-py3-none-any.whl",
-        "setuptools": "setuptools-80.3.1-py3-none-any.whl",
+        "setuptools": "setuptools-80.9.0-py3-none-any.whl",
     },
     "3.12": {
         "pip": "pip-25.1.1-py3-none-any.whl",
-        "setuptools": "setuptools-80.3.1-py3-none-any.whl",
+        "setuptools": "setuptools-80.9.0-py3-none-any.whl",
     },
     "3.13": {
         "pip": "pip-25.1.1-py3-none-any.whl",
-        "setuptools": "setuptools-80.3.1-py3-none-any.whl",
+        "setuptools": "setuptools-80.9.0-py3-none-any.whl",
     },
     "3.14": {
         "pip": "pip-25.1.1-py3-none-any.whl",
-        "setuptools": "setuptools-80.3.1-py3-none-any.whl",
+        "setuptools": "setuptools-80.9.0-py3-none-any.whl",
     },
 }
 MAX = "3.8"
 
 
 def get_embed_wheel(distribution, for_py_version):
-    mapping = BUNDLE_SUPPORT.get(for_py_version, {}) or BUNDLE_SUPPORT[MAX]
-    wheel_file = mapping.get(distribution)
-    if wheel_file is None:
-        return None
-    path = BUNDLE_FOLDER / wheel_file
+    path = BUNDLE_FOLDER / (BUNDLE_SUPPORT.get(for_py_version, {}) or BUNDLE_SUPPORT[MAX]).get(distribution)
     return Wheel.from_path(path)
 
 
