@@ -8,20 +8,21 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install the latest version of uv
+      - name: 🚀 Install the latest version of uv
         uses: astral-sh/setup-uv@v4
         with:
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build package
+      - name: 📦 Build package
         run: uv build --python 3.13 --python-preference only-managed --sdist --wheel . --out-dir dist
-      - name: Store the distribution packages
+      - name: 📦 Store the distribution packages
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.dists-artifact-name }}
@@ -30,19 +31,19 @@ jobs:
   release:
     needs:
       - build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: release
       url: https://pypi.org/project/virtualenv/${{ github.ref_name }}
     permissions:
       id-token: write
     steps:
-      - name: Download all the dists
+      - name: 📥 Download all the dists
         uses: actions/download-artifact@v4
         with:
           name: ${{ env.dists-artifact-name }}
           path: dist/
-      - name: Publish to PyPI
+      - name: 🚀 Publish to PyPI
         uses: pypa/gh-action-pypi-publish@v1.12.3
         with:
           attestations: true
