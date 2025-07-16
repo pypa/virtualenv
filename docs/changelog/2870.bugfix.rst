@@ -1,0 +1,1 @@
+Ignore missing absolute paths for python discovery - by :user:`esafak`

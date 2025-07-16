@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import subprocess
 import sys
 from argparse import Namespace
 from pathlib import Path
@@ -144,6 +145,61 @@ def test_returns_second_python_specified_when_more_than_one_is_specified_and_env
     result = builtin.run()
 
     assert result == mocker.sentinel.python_from_cli
+
+
+def test_absolute_path_does_not_exist(tmp_path):
+    """
+    Test that virtualenv does not fail when an absolute path that does not exist is provided.
+    """
+    # Create a command that uses an absolute path that does not exist
+    # and a valid python executable.
+    command = [
+        sys.executable,
+        "-m",
+        "virtualenv",
+        "-p",
+        "/this/path/does/not/exist",
+        "-p",
+        sys.executable,
+        str(tmp_path / "dest"),
+    ]
+
+    # Run the command
+    process = subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    # Check that the command was successful
+    assert process.returncode == 0, process.stderr
+
+
+def test_absolute_path_does_not_exist_fails(tmp_path):
+    """
+    Test that virtualenv fails when a single absolute path that does not exist is provided.
+    """
+    # Create a command that uses an absolute path that does not exist
+    command = [
+        sys.executable,
+        "-m",
+        "virtualenv",
+        "-p",
+        "/this/path/does/not/exist",
+        str(tmp_path / "dest"),
+    ]
+
+    # Run the command
+    process = subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    # Check that the command failed
+    assert process.returncode != 0, process.stderr
 
 
 @pytest.mark.usefixtures("mock_get_interpreter")
