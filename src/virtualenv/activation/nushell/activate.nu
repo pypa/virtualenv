@@ -6,6 +6,18 @@
 # but then simply `deactivate` won't work because it is just an alias to hide
 # the "activate" overlay. You'd need to call `overlay hide foo` manually.
 
+# Warn users who accidentally 'source' it
+module warning {
+	export-env {
+		const file = path self
+		error make -u {
+			msg: $"`($file | path basename)` is meant to be used with `overlay use`, not `source`"
+		}
+	}
+}
+
+use warning
+
 export-env {
     def is-string [x] {
         ($x | describe) == 'string'
