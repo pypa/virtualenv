@@ -1,9 +1,8 @@
-name: check
+name: 🧪 check
 on:
   workflow_dispatch:
   push:
     branches: ["main"]
-    tags-ignore: ["**"]
   pull_request:
   schedule:
     - cron: "0 8 * * *"
@@ -14,7 +13,7 @@ concurrency:
 
 jobs:
   test:
-    name: test ${{ matrix.py }} - ${{ matrix.os }}
+    name: 🧪 test ${{ matrix.py }} - ${{ matrix.os }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 40
@@ -34,107 +33,93 @@ jobs:
           - pypy-3.8
           - graalpy-24.1
         os:
-          - ubuntu-latest
-          - macos-latest
-          - windows-latest
+          - ubuntu-24.04
+          - macos-15
+          - windows-2025
         include:
-          - { os: macos-latest, py: "brew@3.11" }
-          - { os: macos-latest, py: "brew@3.10" }
-          - { os: macos-latest, py: "brew@3.9" }
+          - { os: macos-15, py: "brew@3.11" }
+          - { os: macos-15, py: "brew@3.10" }
+          - { os: macos-15, py: "brew@3.9" }
         exclude:
-          - { os: windows-latest, py: "graalpy-24.1" }
-          - { os: windows-latest, py: "pypy-3.10" }
-          - { os: windows-latest, py: "pypy-3.9" }
-          - { os: windows-latest, py: "pypy-3.8" }
+          - { os: windows-2025, py: "graalpy-24.1" }
+          - { os: windows-2025, py: "pypy-3.10" }
+          - { os: windows-2025, py: "pypy-3.9" }
+          - { os: windows-2025, py: "pypy-3.8" }
     steps:
-      - uses: taiki-e/install-action@cargo-binstall
-      - name: Install OS dependencies
-        run: |
-          set -x
-          for i in 1 2 3; do
-            echo "try $i" && \
-            ${{ runner.os == 'Linux' && 'sudo apt-get update -y && sudo apt-get install snapd fish csh -y' || true }} && \
-            ${{ runner.os == 'Linux' && 'cargo binstall -y nu' || true }} && \
-            ${{ runner.os == 'macOS' && 'brew install fish tcsh nushell' || true }} && \
-            ${{ runner.os == 'Windows' && 'choco install nushell' || true }} && \
-            exit 0 || true;
-            sleep 1
-          done
-          exit 1
-        shell: bash
-      - uses: actions/checkout@v4
+      - name: 🚀 Install uv
+        uses: astral-sh/setup-uv@v4
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-          cache-dependency-glob: "pyproject.toml"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Add .local/bin to PATH Windows
-        if: runner.os == 'Windows'
-        shell: bash
-        run: echo "$USERPROFILE/.local/bin" >> $GITHUB_PATH
-      - name: Add .local/bin to PATH macos-13
-        if: matrix.os == 'macos-13'
-        shell: bash
-        run: echo ~/.local/bin >> $GITHUB_PATH
-      - name: Install tox
-        if: matrix.py == '3.13' || matrix.py == '3.13t'
-        run: uv tool install --python-preference only-managed --python 3.12 tox --with tox-uv
-      - name: Install tox
-        if: "!(matrix.py == '3.13' || matrix.py == '3.13t')"
-        run: uv tool install --python-preference only-managed --python 3.13 tox --with tox-uv
-      - name: Setup brew python for test ${{ matrix.py }}
-        if: startsWith(matrix.py, 'brew@')
-        run: |
-          set -e
-          PY=$(echo '${{ matrix.py }}' | cut -c 6-)
-          brew cleanup && brew upgrade python@$PY || brew install python@$PY
-          echo "/usr/local/opt/python@$PY/libexec/bin" >>"${GITHUB_PATH}"
-        shell: bash
-      - name: Setup python for test ${{ matrix.py }}
-        if: "!(startsWith(matrix.py, 'brew@') || endsWith(matrix.py, 't'))"
+      - name: 🐍 Setup Python for tox
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.py }}
-          allow-prereleases: true
-      # quansight-labs to install free-threaded python until actions/setup-python supports it
-      # https://github.com/actions/setup-python/issues/771
-      - name: Setup python for test ${{ matrix.py }}
-        if: endsWith(matrix.py, 't')
-        uses: quansight-labs/setup-python@v5.3.1
+          python-version: "3.13"
+      - name: 📦 Install tox with this virtualenv
+        shell: bash
+        run: |
+          if [[ "${{ matrix.py }}" == "3.13t" ]]; then
+            uv tool install --no-managed-python --python 3.13 tox --with .
+          else
+            uv tool install --no-managed-python --python 3.13 tox --with tox-uv --with .
+          fi
+      - name: 🐍 Setup Python for test ${{ matrix.py }}
+        uses: actions/setup-python@v5
+        if: ${{ !startsWith(matrix.py, 'brew@') }}
         with:
           python-version: ${{ matrix.py }}
-      - name: Pick environment to run
-        if: matrix.py != '3.13t'
-        run: python tasks/pick_tox_env.py ${{ matrix.py }}
-      - name: Pick environment to run
-        if: matrix.py == '3.13t' && runner.os != 'Windows'
-        run: python tasks/pick_tox_env.py ${{ matrix.py }} $Python_ROOT_DIR/bin/python
-      - name: Pick environment to run
-        if: matrix.py == '3.13t' && runner.os == 'Windows'
-        run: python tasks/pick_tox_env.py ${{ matrix.py }} $env:Python_ROOT_DIR\python.exe
-      - name: Setup test suite
-        run: tox run -vv --notest --skip-missing-interpreters false
-      - name: Run test suite
+      - name: 🛠️ Install OS dependencies
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            sudo apt-get install -y software-properties-common
+            sudo apt-add-repository ppa:fish-shell/release-4 -y
+            curl -fsSL https://apt.fury.io/nushell/gpg.key | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/fury-nushell.gpg
+            echo "deb https://apt.fury.io/nushell/ /" | sudo tee /etc/apt/sources.list.d/fury.list
+            sudo apt-get update -y
+            sudo apt-get install snapd fish csh nushell -y
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            if [[ "${{ matrix.py }}" == brew@* ]]; then
+              PY=$(echo '${{ matrix.py }}' | cut -c 6-)
+              brew install python@$PY || brew upgrade python@$PY
+              echo "/usr/local/opt/python@$PY/libexec/bin" >>"${GITHUB_PATH}"
+            fi
+            brew install fish tcsh nushell || brew upgrade fish tcsh nushell
+          elif [ "${{ runner.os }}" = "Windows" ]; then
+            choco install nushell
+          fi
+      - name: 🧬 Pick environment to run
+        shell: bash
+        run: |
+          py="${{ matrix.py }}"
+          if [[ "$py" == brew@* ]]; then
+            brew_version="${py#brew@}"
+            echo "TOX_DISCOVER=/opt/homebrew/bin/python${brew_version}" >> "$GITHUB_ENV"
+            py="$brew_version"
+          fi
+          [[ "$py" == graalpy-* ]] && py="graalpy"
+          echo "TOXENV=$py" >> "$GITHUB_ENV"
+          echo "Set TOXENV=$py"
+      - name: 🏗️ Setup test suite
+        run: tox run -vvvv --notest --skip-missing-interpreters false
+      - name: 🏃 Run test suite
         run: tox run --skip-pkg-install
         timeout-minutes: 20
         env:
           PYTEST_ADDOPTS: "-vv --durations=20"
           CI_RUN: "yes"
           DIFF_AGAINST: HEAD
-
   check:
-    name: ${{ matrix.tox_env }} - ${{ matrix.os }}
+    name: 🔎 check ${{ matrix.tox_env }} - ${{ matrix.os }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-latest
-          - windows-latest
+          - ubuntu-24.04
+          - windows-2025
         tox_env:
           - dev
           - docs
@@ -142,25 +127,18 @@ jobs:
           - upgrade
           - zipapp
         exclude:
-          - { os: windows-latest, tox_env: readme }
-          - { os: windows-latest, tox_env: docs }
+          - { os: windows-2025, tox_env: readme }
+          - { os: windows-2025, tox_env: docs }
     steps:
-      - uses: actions/checkout@v4
+      - name: 🚀 Install uv
+        uses: astral-sh/setup-uv@v4
+      - name: 📦 Install tox
+        run: uv tool install --python-preference only-managed --python 3.13 tox --with tox-uv
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
-          cache-dependency-glob: "pyproject.toml"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Add .local/bin to Windows PATH
-        if: runner.os == 'Windows'
-        shell: bash
-        run: echo "$USERPROFILE/.local/bin" >> $GITHUB_PATH
-      - name: Install tox
-        run: uv tool install --python-preference only-managed --python 3.13 tox --with tox-uv
-      - name: Setup check suite
-        run: tox r -vv --notest --skip-missing-interpreters false -e ${{ matrix.tox_env }}
-      - name: Run check for ${{ matrix.tox_env }}
-        run: tox r --skip-pkg-install -e ${{ matrix.tox_env }}
+      - name: 🏗️ Setup check suite
+        run: tox run -vv --notest --skip-missing-interpreters false -e ${{ matrix.tox_env }}
+      - name: 🏃 Run check for ${{ matrix.tox_env }}
+        run: tox run --skip-pkg-install -e ${{ matrix.tox_env }}
