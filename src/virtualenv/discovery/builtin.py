@@ -116,8 +116,7 @@ def propose_interpreters(  # noqa: C901, PLR0912, PLR0915
         try:
             os.lstat(spec.path)  # Windows Store Python does not work with os.path.exists, but does for os.lstat
         except OSError:
-            if spec.is_abs:
-                raise
+            pass
         else:
             exe_raw = os.path.abspath(spec.path)
             exe_id = fs_path_id(exe_raw)
