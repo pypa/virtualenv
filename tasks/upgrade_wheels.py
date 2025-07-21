@@ -109,9 +109,12 @@ def run():  # noqa: C901, PLR0912
 
 
         def get_embed_wheel(distribution, for_py_version):
-            path = BUNDLE_FOLDER / (BUNDLE_SUPPORT.get(for_py_version, {{}}) or BUNDLE_SUPPORT[MAX]).get(distribution)
+            mapping = BUNDLE_SUPPORT.get(for_py_version, {{}}) or BUNDLE_SUPPORT[MAX]
+            wheel_file = mapping.get(distribution)
+            if wheel_file is None:
+                return None
+            path = BUNDLE_FOLDER / wheel_file
             return Wheel.from_path(path)
-
 
         __all__ = [
             "get_embed_wheel",
