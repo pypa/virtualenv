@@ -5,6 +5,19 @@ Release History
 
 .. towncrier release notes start
 
+v20.32.0 (2025-07-20)
+---------------------
+
+Features - 20.32.0
+~~~~~~~~~~~~~~~~~~
+- Warn on incorrect invocation of Nushell activation script - by :user:`esafak`. (:issue:`nushell_activation`)
+- Discover uv-managed Python installations (:issue:`2901`)
+
+Bugfixes - 20.32.0
+~~~~~~~~~~~~~~~~~~
+- Ignore missing absolute paths for python discovery - by :user:`esafak` (:issue:`2870`)
+- Upgrade embedded setuptools to ``80.9.0`` from ``80.3.1`` - by :user:`gaborbernat`. (:issue:`2900`)
+
 v20.31.2 (2025-05-08)
 ---------------------
 
