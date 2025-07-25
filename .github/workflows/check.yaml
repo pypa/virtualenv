@@ -80,6 +80,7 @@ jobs:
             sudo apt-get update -y
             sudo apt-get install snapd fish csh nushell -y
           elif [ "${{ runner.os }}" = "macOS" ]; then
+            brew update
             if [[ "${{ matrix.py }}" == brew@* ]]; then
               PY=$(echo '${{ matrix.py }}' | cut -c 6-)
               brew install python@$PY || brew upgrade python@$PY

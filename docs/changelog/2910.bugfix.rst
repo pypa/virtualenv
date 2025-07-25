@@ -1,0 +1,3 @@
+Resolve Nushell activation script deprecation warnings by dynamically selecting the ``--optional`` flag for Nushell
+``get`` command on version 0.106.0 and newer, while retaining the deprecated ``-i`` flag for older versions to maintain
+compatibility. Contributed by :user:`gaborbernat`.
