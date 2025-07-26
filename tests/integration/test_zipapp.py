@@ -6,7 +6,6 @@ from contextlib import suppress
 from pathlib import Path
 
 import pytest
-from flaky import flaky
 
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import fs_supports_symlink
@@ -105,7 +104,7 @@ def test_zipapp_in_symlink(capsys, call_zipapp_symlink):
     assert not err
 
 
-@flaky(max_runs=2, min_passes=1)
+@pytest.mark.flaky(max_runs=2, min_passes=1)
 def test_zipapp_help(call_zipapp, capsys):
     call_zipapp("-h")
     _out, err = capsys.readouterr()
