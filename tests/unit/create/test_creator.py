@@ -695,8 +695,8 @@ def test_venv_creator_without_write_perms(tmp_path, mocker):
 
 def test_fallback_to_copies_if_symlink_unsupported(tmp_path, python, mocker):
     """Test that creating a virtual environment falls back to copies when filesystem has no symlink support."""
-    # Stop the brew creator from being selected, so we can test the generic fallback case.
-    mocker.patch("virtualenv.create.via_global_ref.builtin.cpython.mac_os.is_macos_brew", return_value=False)
+    if is_macos_brew(PythonInfo.from_exe(python)):
+        pytest.skip("brew python on darwin may not support copies, which is tested separately")
 
     # Given a filesystem that does not support symlinks
     mocker.patch("virtualenv.create.via_global_ref.api.fs_supports_symlink", return_value=False)
@@ -724,14 +724,14 @@ def test_fail_gracefully_if_no_method_supported(tmp_path, python, mocker):
     mocker.patch("virtualenv.create.via_global_ref.api.fs_supports_symlink", return_value=False)
 
     # And a creator that does not support copying
-    original_init = api.ViaGlobalRefMeta.__init__
+    if not is_macos_brew(PythonInfo.from_exe(python)):
+        original_init = api.ViaGlobalRefMeta.__init__
 
-    def new_init(self, *args, **kwargs):
-        original_init(self, *args, **kwargs)
-        self.copy_error = "copying is not supported"
+        def new_init(self, *args, **kwargs):
+            original_init(self, *args, **kwargs)
+            self.copy_error = "copying is not supported"
 
-    mocker.patch("virtualenv.create.via_global_ref.api.ViaGlobalRefMeta.__init__", new=new_init)
-    mocker.patch("virtualenv.create.via_global_ref.builtin.cpython.mac_os.is_macos_brew", return_value=False)
+        mocker.patch("virtualenv.create.via_global_ref.api.ViaGlobalRefMeta.__init__", new=new_init)
 
     # When creating a virtual environment
     with pytest.raises(RuntimeError) as excinfo:
@@ -747,4 +747,7 @@ def test_fail_gracefully_if_no_method_supported(tmp_path, python, mocker):
     # Then a RuntimeError should be raised with a detailed message
     assert "neither symlink or copy method supported" in str(excinfo.value)
     assert "symlink: the filesystem does not supports symlink" in str(excinfo.value)
-    assert "copy: copying is not supported" in str(excinfo.value)
+    if is_macos_brew(PythonInfo.from_exe(python)):
+        assert "copy: Brew disables copy creation" in str(excinfo.value)
+    else:
+        assert "copy: copying is not supported" in str(excinfo.value)
