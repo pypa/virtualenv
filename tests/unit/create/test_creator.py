@@ -731,6 +731,7 @@ def test_fail_gracefully_if_no_method_supported(tmp_path, python, mocker):
         self.copy_error = "copying is not supported"
 
     mocker.patch("virtualenv.create.via_global_ref.api.ViaGlobalRefMeta.__init__", new=new_init)
+    mocker.patch("virtualenv.create.via_global_ref.builtin.cpython.mac_os.is_macos_brew", return_value=False)
 
     # When creating a virtual environment
     with pytest.raises(RuntimeError) as excinfo:
