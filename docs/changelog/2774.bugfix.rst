@@ -1,0 +1,2 @@
+Fall back to python.exe if python3.exe is not found on Windows.
+Contributed by :user:`esafak`.

@@ -75,21 +75,30 @@ def process_tag(hive_name, company, company_key, tag, default_arch):
 def load_exe(hive_name, company, company_key, tag):
     key_path = f"{hive_name}/{company}/{tag}"
     try:
-        with winreg.OpenKeyEx(company_key, rf"{tag}\InstallPath") as ip_key, ip_key:
+        with winreg.OpenKeyEx(company_key, rf"{tag}\InstallPath") as ip_key:
             exe = get_value(ip_key, "ExecutablePath")
             if exe is None:
-                ip = get_value(ip_key, None)
-                if ip is None:
-                    msg(key_path, "no ExecutablePath or default for it")
+                exe = _find_exe_in_install_path(ip_key, key_path)
 
-                else:
-                    exe = os.path.join(ip, "python.exe")
             if exe is not None and os.path.exists(exe):
                 args = get_value(ip_key, "ExecutableArguments")
                 return exe, args
             msg(key_path, f"could not load exe with value {exe}")
     except OSError:
         msg(f"{key_path}/InstallPath", "missing")
+    return None
+
+
+def _find_exe_in_install_path(ip_key, key_path):
+    ip = get_value(ip_key, None)
+    if ip is None:
+        msg(key_path, "no ExecutablePath or default for it")
+        return None
+
+    for name in ("python3.exe", "python.exe"):
+        exe_path = os.path.join(ip, name)
+        if os.path.exists(exe_path):
+            return exe_path
     return None
 
 

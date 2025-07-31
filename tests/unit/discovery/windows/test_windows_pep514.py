@@ -121,3 +121,37 @@ def test_pep514_run(capsys, caplog):
         f"{prefix}HKEY_CURRENT_USER/PythonCore/3.X error: invalid format 3.X",
     ]
     assert caplog.messages == expected_logs
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="no Windows registry")
+def test_pep514_python3_fallback(mocker, tmp_path):
+    from virtualenv.discovery.windows.pep514 import discover_pythons, winreg  # noqa: PLC0415
+
+    # Create a mock python3.exe
+    python3_exe = tmp_path / "python3.exe"
+    python3_exe.touch()
+
+    # Mock the registry to return our test python distribution
+    def open_key_ex(key, sub_key, *args, **kwargs):
+        if sub_key == r"Software\Python\PythonCore\3.9-32":
+            return mocker.MagicMock()
+        if sub_key == r"Software\Python\PythonCore\3.9-32\InstallPath":
+            return mocker.MagicMock()
+        return winreg.OpenKeyEx(key, sub_key, *args, **kwargs)
+
+    def query_value_ex(key, value_name, *args, **kwargs):
+        if value_name == "ExecutablePath":
+            return None  # No executable path, forcing a fallback
+        if value_name is None:
+            return str(tmp_path)
+        return winreg.QueryValueEx(key, value_name, *args, **kwargs)
+
+    mocker.patch("winreg.OpenKeyEx", side_effect=open_key_ex)
+    mocker.patch("winreg.QueryValueEx", side_effect=query_value_ex)
+    mocker.patch("os.path.exists", return_value=True)
+
+    # Mock EnumKey to inject our test distribution
+    mocker.patch("winreg.EnumKey", return_value=["3.9-32"])
+
+    interpreters = list(discover_pythons())
+    assert any(str(python3_exe) in i for i in interpreters)
