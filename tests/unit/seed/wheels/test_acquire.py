@@ -89,6 +89,18 @@ def test_download_fails(mocker, for_py_version, session_app_data):
     ] == exc.cmd
 
 
+def test_download_wheel_python_io_encoding(mocker, for_py_version, session_app_data):
+    mock_popen = mocker.patch("virtualenv.seed.wheels.acquire.Popen")
+    mock_popen.return_value.communicate.return_value = "Saved a-b-c.whl", ""
+    mock_popen.return_value.returncode = 0
+    mocker.patch("pathlib.Path.absolute", return_value=Path("a-b-c.whl"))
+
+    download_wheel("pip", "==1", for_py_version, [], session_app_data, "folder", os.environ.copy())
+
+    env = mock_popen.call_args[1]["env"]
+    assert env["PYTHONIOENCODING"] == "utf-8"
+
+
 @pytest.fixture
 def downloaded_wheel(mocker):
     wheel = Wheel.from_path(Path("setuptools-0.0.0-py2.py3-none-any.whl"))
