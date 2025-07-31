@@ -16,10 +16,15 @@ def get_discover(parser, args):
     choices = _get_default_discovery(discover_types)
     # prefer the builtin if present, otherwise fallback to first defined type
     choices = sorted(choices, key=lambda a: 0 if a == "builtin" else 1)
+    try:
+        default_discovery = next(iter(choices))
+    except StopIteration as e:
+        msg = "No discovery plugin found. Try reinstalling virtualenv to fix this issue."
+        raise RuntimeError(msg) from e
     discovery_parser.add_argument(
         "--discovery",
         choices=choices,
-        default=next(iter(choices)),
+        default=default_discovery,
         required=False,
         help="interpreter discovery method",
     )
