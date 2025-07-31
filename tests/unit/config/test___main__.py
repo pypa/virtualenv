@@ -52,6 +52,16 @@ def test_fail_no_traceback(raise_on_session_done, tmp_path, capsys):
     assert err == "err\n"
 
 
+def test_discovery_fails_no_discovery_plugin(mocker, tmp_path, capsys):
+    mocker.patch("virtualenv.run.plugin.discovery.Discovery.entry_points_for", return_value={})
+    with pytest.raises(SystemExit) as context:
+        run_with_catch([str(tmp_path)])
+    assert context.value.code == 1
+    out, err = capsys.readouterr()
+    assert "RuntimeError: No discovery plugin found. Try reinstalling virtualenv to fix this issue." in out
+    assert not err
+
+
 def test_fail_with_traceback(raise_on_session_done, tmp_path, capsys):
     raise_on_session_done(TypeError("something bad"))
 
