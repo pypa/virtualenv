@@ -30,6 +30,16 @@ Virtualenv has one basic command:
 
     virtualenv venv
 
+.. note::
+
+  When creating a virtual environment, it's recommended to use a specific Python version, for example, by invoking
+  virtualenv with ``python3.10 -m virtualenv venv``. If you use a generic command like ``python3 -m virtualenv venv``,
+  the created environment will be linked to ``/usr/bin/python3``. This can be problematic because when a new Python
+  version is installed on the system, the ``/usr/bin/python3`` symlink will likely be updated to point to the new
+  version. This will cause the virtual environment to inadvertently use the new Python version, which is often not the
+  desired behavior. Using a specific version ensures that the virtual environment is tied to that exact version,
+  providing stability and predictability.
+
 This will create a python virtual environment of the same version as virtualenv, installed into the subdirectory
 ``venv``. The command line tool has quite a few of flags that modify the tool's behavior, for a
 full list make sure to check out :ref:`cli_flags`.

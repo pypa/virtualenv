@@ -1,0 +1,2 @@
+Add a note to the user guide recommending the use of a specific Python version when creating virtual environments.
+Contributed by :user:`esafak`.
