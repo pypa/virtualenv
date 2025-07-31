@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import pytest
 
-from virtualenv.discovery.builtin import Builtin, get_interpreter
+from virtualenv.discovery.builtin import Builtin, LazyPathDump, get_interpreter, get_paths
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import fs_supports_symlink
 
@@ -200,6 +200,14 @@ def test_returns_second_python_specified_when_more_than_one_is_specified_and_env
     assert result == mocker.sentinel.python_from_cli
 
 
+def test_discovery_via_path_with_file(tmp_path, monkeypatch):
+    a_file = tmp_path / "a_file"
+    a_file.touch()
+    monkeypatch.setenv("PATH", str(a_file))
+    interpreter = get_interpreter(uuid4().hex, [])
+    assert interpreter is None
+
+
 def test_absolute_path_does_not_exist(tmp_path):
     """
     Test that virtualenv does not fail when an absolute path that does not exist is provided.
@@ -223,6 +231,7 @@ def test_absolute_path_does_not_exist(tmp_path):
         capture_output=True,
         text=True,
         check=False,
+        encoding="utf-8",
     )
 
     # Check that the command was successful
@@ -249,10 +258,28 @@ def test_absolute_path_does_not_exist_fails(tmp_path):
         capture_output=True,
         text=True,
         check=False,
+        encoding="utf-8",
     )
 
     # Check that the command failed
     assert process.returncode != 0, process.stderr
+
+
+def test_get_paths_no_path_env(monkeypatch):
+    monkeypatch.delenv("PATH", raising=False)
+    paths = list(get_paths({}))
+    assert paths
+
+
+def test_lazy_path_dump_debug(monkeypatch, tmp_path):
+    monkeypatch.setenv("_VIRTUALENV_DEBUG", "1")
+    a_dir = tmp_path
+    (a_dir / "a_file").touch(mode=0o755)
+    (a_dir / "b_file").touch(mode=0o644)
+    dumper = LazyPathDump(0, a_dir, os.environ)
+    output = repr(dumper)
+    assert "a_file" in output
+    assert "b_file" not in output
 
 
 @pytest.mark.usefixtures("mock_get_interpreter")

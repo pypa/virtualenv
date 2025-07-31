@@ -1,0 +1,2 @@
+Add a check to ensure only directories are processed from the PATH.
+Contributed by :user:`esafak`.
