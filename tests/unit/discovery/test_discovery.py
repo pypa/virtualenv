@@ -11,9 +11,9 @@ from uuid import uuid4
 
 import pytest
 
-from virtualenv.discovery.builtin import Builtin, LazyPathDump, get_interpreter, get_paths
+from virtualenv.discovery.builtin import Builtin, get_interpreter, get_paths, LazyPathDump
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import fs_supports_symlink
+from virtualenv.info import IS_WIN, fs_supports_symlink
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink not supported")
@@ -231,7 +231,6 @@ def test_absolute_path_does_not_exist(tmp_path):
         capture_output=True,
         text=True,
         check=False,
-        encoding="utf-8",
     )
 
     # Check that the command was successful
@@ -258,7 +257,6 @@ def test_absolute_path_does_not_exist_fails(tmp_path):
         capture_output=True,
         text=True,
         check=False,
-        encoding="utf-8",
     )
 
     # Check that the command failed
@@ -273,12 +271,14 @@ def test_get_paths_no_path_env(monkeypatch):
 
 def test_lazy_path_dump_debug(monkeypatch, tmp_path):
     monkeypatch.setenv("_VIRTUALENV_DEBUG", "1")
+    print(f"IS_WIN is {IS_WIN}")
     a_dir = tmp_path
-    (a_dir / "a_file").touch(mode=0o755)
+    executable_file = "a_file.exe" if IS_WIN else "a_file"
+    (a_dir / executable_file).touch(mode=0o755)
     (a_dir / "b_file").touch(mode=0o644)
     dumper = LazyPathDump(0, a_dir, os.environ)
     output = repr(dumper)
-    assert "a_file" in output
+    assert executable_file in output
     assert "b_file" not in output
 
 
