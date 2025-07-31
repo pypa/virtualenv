@@ -11,7 +11,7 @@ from uuid import uuid4
 
 import pytest
 
-from virtualenv.discovery.builtin import Builtin, get_interpreter, get_paths, LazyPathDump
+from virtualenv.discovery.builtin import Builtin, LazyPathDump, get_interpreter, get_paths
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_WIN, fs_supports_symlink
 
@@ -271,7 +271,6 @@ def test_get_paths_no_path_env(monkeypatch):
 
 def test_lazy_path_dump_debug(monkeypatch, tmp_path):
     monkeypatch.setenv("_VIRTUALENV_DEBUG", "1")
-    print(f"IS_WIN is {IS_WIN}")
     a_dir = tmp_path
     executable_file = "a_file.exe" if IS_WIN else "a_file"
     (a_dir / executable_file).touch(mode=0o755)
