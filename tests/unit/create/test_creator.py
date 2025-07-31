@@ -25,6 +25,7 @@ import pytest
 from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.create.pyenv_cfg import PyEnvCfg
+from virtualenv.create.via_global_ref import api
 from virtualenv.create.via_global_ref.builtin.cpython.common import is_macos_brew
 from virtualenv.create.via_global_ref.builtin.cpython.cpython3 import CPython3Posix
 from virtualenv.discovery.py_info import PythonInfo
@@ -690,3 +691,63 @@ def test_venv_creator_without_write_perms(tmp_path, mocker):
 
     cmd = [str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", "venv"]
     cli_run(cmd)
+
+
+def test_fallback_to_copies_if_symlink_unsupported(tmp_path, python, mocker):
+    """Test that creating a virtual environment falls back to copies when filesystem has no symlink support."""
+    if is_macos_brew(PythonInfo.from_exe(python)):
+        pytest.skip("brew python on darwin may not support copies, which is tested separately")
+
+    # Given a filesystem that does not support symlinks
+    mocker.patch("virtualenv.create.via_global_ref.api.fs_supports_symlink", return_value=False)
+
+    # When creating a virtual environment (no method specified)
+    cmd = [
+        "-v",
+        "-p",
+        str(python),
+        str(tmp_path),
+        "--without-pip",
+        "--activators",
+        "",
+    ]
+    result = cli_run(cmd)
+
+    # Then the creation should succeed and the creator should report it used copies
+    assert result.creator is not None
+    assert result.creator.symlinks is False
+
+
+def test_fail_gracefully_if_no_method_supported(tmp_path, python, mocker):
+    """Test that virtualenv fails gracefully when no creation method is supported."""
+    # Given a filesystem that does not support symlinks
+    mocker.patch("virtualenv.create.via_global_ref.api.fs_supports_symlink", return_value=False)
+
+    # And a creator that does not support copying
+    if not is_macos_brew(PythonInfo.from_exe(python)):
+        original_init = api.ViaGlobalRefMeta.__init__
+
+        def new_init(self, *args, **kwargs):
+            original_init(self, *args, **kwargs)
+            self.copy_error = "copying is not supported"
+
+        mocker.patch("virtualenv.create.via_global_ref.api.ViaGlobalRefMeta.__init__", new=new_init)
+
+    # When creating a virtual environment
+    with pytest.raises(RuntimeError) as excinfo:
+        cli_run(
+            [
+                "-p",
+                str(python),
+                str(tmp_path),
+                "--without-pip",
+            ],
+        )
+
+    # Then a RuntimeError should be raised with a detailed message
+    assert "neither symlink or copy method supported" in str(excinfo.value)
+    assert "symlink: the filesystem does not supports symlink" in str(excinfo.value)
+    if is_macos_brew(PythonInfo.from_exe(python)):
+        assert "copy: Brew disables copy creation" in str(excinfo.value)
+    else:
+        assert "copy: copying is not supported" in str(excinfo.value)

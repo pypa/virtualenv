@@ -62,7 +62,12 @@ class ViaGlobalRefApi(Creator, ABC):
             help="give the virtual environment access to the system site-packages dir",
         )
         if not meta.can_symlink and not meta.can_copy:
-            msg = "neither symlink or copy method supported"
+            errors = []
+            if meta.symlink_error:
+                errors.append(f"symlink: {meta.symlink_error}")
+            if meta.copy_error:
+                errors.append(f"copy: {meta.copy_error}")
+            msg = f"neither symlink or copy method supported: {', '.join(errors)}"
             raise RuntimeError(msg)
         group = parser.add_mutually_exclusive_group()
         if meta.can_symlink:
