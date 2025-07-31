@@ -10,6 +10,8 @@ function global:deactivate([switch] $NonDestructive) {
     if (Test-Path variable:_OLD_VIRTUAL_PKG_CONFIG_PATH) {
         $env:PKG_CONFIG_PATH = $variable:_OLD_VIRTUAL_PKG_CONFIG_PATH
         Remove-Variable "_OLD_VIRTUAL_PKG_CONFIG_PATH" -Scope global
+    } else {
+        Remove-Item env:PKG_CONFIG_PATH -ErrorAction SilentlyContinue
     }
 
     if (Test-Path function:_old_virtual_prompt) {
@@ -53,8 +55,8 @@ New-Variable -Scope global -Name _OLD_VIRTUAL_PATH -Value $env:PATH
 
 $env:PATH = "$env:VIRTUAL_ENV/" + __BIN_NAME__ + __PATH_SEP__ + $env:PATH
 
-New-Variable -Scope global -Name _OLD_VIRTUAL_PKG_CONFIG_PATH -Value $env:PKG_CONFIG_PATH
 if ($env:PKG_CONFIG_PATH) {
+    New-Variable -Scope global -Name _OLD_VIRTUAL_PKG_CONFIG_PATH -Value $env:PKG_CONFIG_PATH
     $env:PKG_CONFIG_PATH = "$env:VIRTUAL_ENV\lib\pkgconfig" + __PATH_SEP__ + $env:PKG_CONFIG_PATH
 } else {
     $env:PKG_CONFIG_PATH = "$env:VIRTUAL_ENV\lib\pkgconfig"
