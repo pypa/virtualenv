@@ -34,18 +34,20 @@ def fs_supports_symlink():
     if _CAN_SYMLINK is None:
         can = False
         if hasattr(os, "symlink"):
-            if IS_WIN:
-                with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:
-                    temp_dir = os.path.dirname(tmp_file.name)
-                    dest = os.path.join(temp_dir, f"{tmp_file.name}-{'b'}")
-                    try:
-                        os.symlink(tmp_file.name, dest)
-                        can = True
-                    except (OSError, NotImplementedError):
-                        pass
-                LOGGER.debug("symlink on filesystem does%s work", "" if can else " not")
-            else:
-                can = True
+            # Creating a symlink can fail for a variety of reasons, indicating that the filesystem does not support it.
+            # E.g. on Linux with a VFAT partition mounted.
+            with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:
+                temp_dir = os.path.dirname(tmp_file.name)
+                dest = os.path.join(temp_dir, f"{tmp_file.name}-{'b'}")
+                try:
+                    os.symlink(tmp_file.name, dest)
+                    can = True
+                except (OSError, NotImplementedError):
+                    pass  # symlink is not supported
+                finally:
+                    if os.path.lexists(dest):
+                        os.remove(dest)
+            LOGGER.debug("symlink on filesystem does%s work", "" if can else " not")
         _CAN_SYMLINK = can
     return _CAN_SYMLINK
 

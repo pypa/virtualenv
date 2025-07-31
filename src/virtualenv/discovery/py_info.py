@@ -219,7 +219,9 @@ class PythonInfo:  # noqa: PLR0904
         return self.base_prefix is not None
 
     def sysconfig_path(self, key, config_var=None, sep=os.sep):
-        pattern = self.sysconfig_paths[key]
+        pattern = self.sysconfig_paths.get(key)
+        if pattern is None:
+            return ""
         if config_var is None:
             config_var = self.sysconfig_vars
         else:

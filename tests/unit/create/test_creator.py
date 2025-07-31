@@ -690,3 +690,41 @@ def test_venv_creator_without_write_perms(tmp_path, mocker):
 
     cmd = [str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", "venv"]
     cli_run(cmd)
+
+
+def test_create_fs_no_symlink_support(tmp_path, python, mocker):
+    """Test that creating a virtual environment succeeds with copies when filesystem has no symlink support."""
+    # Given a filesystem that does not support symlinks
+    mocker.patch("virtualenv.create.via_global_ref.api.fs_supports_symlink", return_value=False)
+
+    # When creating a virtual environment using --copies
+    cmd = [
+        "-v",
+        "-p",
+        str(python),
+        str(tmp_path),
+        "--without-pip",
+        "--activators",
+        "",
+        "--copies",
+    ]
+    result = cli_run(cmd)
+
+    # Then the creation should succeed and the creator should report it used copies
+    assert result.creator is not None
+    assert result.creator.symlinks is False
+
+    # When creating a virtual environment, the default should be copies
+    dest_2 = tmp_path / "venv2"
+    cmd_2 = [
+        "-v",
+        "-p",
+        str(python),
+        str(dest_2),
+        "--without-pip",
+        "--activators",
+        "",
+    ]
+    result_2 = cli_run(cmd_2)
+    assert result_2.creator is not None
+    assert result_2.creator.symlinks is False
