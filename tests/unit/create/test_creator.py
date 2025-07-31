@@ -25,6 +25,7 @@ import pytest
 from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.create.pyenv_cfg import PyEnvCfg
+from virtualenv.create.via_global_ref import api
 from virtualenv.create.via_global_ref.builtin.cpython.common import is_macos_brew
 from virtualenv.create.via_global_ref.builtin.cpython.cpython3 import CPython3Posix
 from virtualenv.discovery.py_info import PythonInfo
@@ -692,12 +693,15 @@ def test_venv_creator_without_write_perms(tmp_path, mocker):
     cli_run(cmd)
 
 
-def test_create_fs_no_symlink_support(tmp_path, python, mocker):
-    """Test that creating a virtual environment succeeds with copies when filesystem has no symlink support."""
+def test_fallback_to_copies_if_symlink_unsupported(tmp_path, python, mocker):
+    """Test that creating a virtual environment falls back to copies when filesystem has no symlink support."""
+    if sys.platform == "darwin" and "brew" in str(python):
+        pytest.skip("brew python on darwin may not support copies, which is tested separately")
+
     # Given a filesystem that does not support symlinks
     mocker.patch("virtualenv.create.via_global_ref.api.fs_supports_symlink", return_value=False)
 
-    # When creating a virtual environment using --copies
+    # When creating a virtual environment (no method specified)
     cmd = [
         "-v",
         "-p",
@@ -706,7 +710,6 @@ def test_create_fs_no_symlink_support(tmp_path, python, mocker):
         "--without-pip",
         "--activators",
         "",
-        "--copies",
     ]
     result = cli_run(cmd)
 
@@ -714,17 +717,33 @@ def test_create_fs_no_symlink_support(tmp_path, python, mocker):
     assert result.creator is not None
     assert result.creator.symlinks is False
 
-    # When creating a virtual environment, the default should be copies
-    dest_2 = tmp_path / "venv2"
-    cmd_2 = [
-        "-v",
-        "-p",
-        str(python),
-        str(dest_2),
-        "--without-pip",
-        "--activators",
-        "",
-    ]
-    result_2 = cli_run(cmd_2)
-    assert result_2.creator is not None
-    assert result_2.creator.symlinks is False
+
+def test_fail_gracefully_if_no_method_supported(tmp_path, python, mocker):
+    """Test that virtualenv fails gracefully when no creation method is supported."""
+    # Given a filesystem that does not support symlinks
+    mocker.patch("virtualenv.create.via_global_ref.api.fs_supports_symlink", return_value=False)
+
+    # And a creator that does not support copying
+    original_init = api.ViaGlobalRefMeta.__init__
+
+    def new_init(self, *args, **kwargs):
+        original_init(self, *args, **kwargs)
+        self.copy_error = "copying is not supported"
+
+    mocker.patch("virtualenv.create.via_global_ref.api.ViaGlobalRefMeta.__init__", new=new_init)
+
+    # When creating a virtual environment
+    with pytest.raises(RuntimeError) as excinfo:
+        cli_run(
+            [
+                "-p",
+                str(python),
+                str(tmp_path),
+                "--without-pip",
+            ],
+        )
+
+    # Then a RuntimeError should be raised with a detailed message
+    assert "neither symlink or copy method supported" in str(excinfo.value)
+    assert "symlink: the filesystem does not supports symlink" in str(excinfo.value)
+    assert "copy: copying is not supported" in str(excinfo.value)
