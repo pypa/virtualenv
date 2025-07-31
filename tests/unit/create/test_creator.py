@@ -695,8 +695,8 @@ def test_venv_creator_without_write_perms(tmp_path, mocker):
 
 def test_fallback_to_copies_if_symlink_unsupported(tmp_path, python, mocker):
     """Test that creating a virtual environment falls back to copies when filesystem has no symlink support."""
-    if sys.platform == "darwin" and "brew" in str(python):
-        pytest.skip("brew python on darwin may not support copies, which is tested separately")
+    # Stop the brew creator from being selected, so we can test the generic fallback case.
+    mocker.patch("virtualenv.create.via_global_ref.builtin.cpython.mac_os.is_macos_brew", return_value=False)
 
     # Given a filesystem that does not support symlinks
     mocker.patch("virtualenv.create.via_global_ref.api.fs_supports_symlink", return_value=False)
