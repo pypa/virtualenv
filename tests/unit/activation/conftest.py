@@ -98,7 +98,7 @@ class ActivationTester:
         env["PYTHONIOENCODING"] = "utf-8"
         env["PATH"] = os.pathsep.join([dirname(sys.executable), *env.get("PATH", "").split(os.pathsep)])
         # clear up some environment variables so they don't affect the tests
-        for key in [k for k in env if k.startswith(("_OLD", "VIRTUALENV_"))]:
+        for key in [k for k in env if k.startswith(("_OLD", "VIRTUALENV_")) or k == "PKG_CONFIG_PATH"]:
             del env[key]
         return env
 
@@ -115,10 +115,12 @@ class ActivationTester:
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
             self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
+            self.print_os_env_var("PKG_CONFIG_PATH"),
             self.activate_call(activate_script),
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
             self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
+            self.print_os_env_var("PKG_CONFIG_PATH"),
             self.print_prompt(),
             # \\ loads documentation from the virtualenv site packages
             self.pydoc_call,
@@ -126,6 +128,7 @@ class ActivationTester:
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
             self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
+            self.print_os_env_var("PKG_CONFIG_PATH"),
             "",  # just finish with an empty new line
         ]
 
@@ -134,23 +137,28 @@ class ActivationTester:
         assert out[0], raw
         assert out[1] == "None", raw
         assert out[2] == "None", raw
+        assert out[3] == "None", raw
         # post-activation
         expected = self._creator.exe.parent / os.path.basename(sys.executable)
-        assert self.norm_path(out[3]) == self.norm_path(expected), raw
-        assert self.norm_path(out[4]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
-        assert out[5] == self._creator.env_name
+        assert self.norm_path(out[4]) == self.norm_path(expected), raw
+        assert self.norm_path(out[5]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
+        assert out[6] == self._creator.env_name
+        pkg_config_path = self._creator.dest / "lib" / "pkgconfig"
+        assert self.norm_path(out[7]) == self.norm_path(pkg_config_path), raw
+
         # Some attempts to test the prompt output print more than 1 line.
         # So we need to check if the prompt exists on any of them.
         prompt_text = f"({self._creator.env_name}) "
-        assert any(prompt_text in line for line in out[6:-4]), raw
+        assert any(prompt_text in line for line in out[8:-5]), raw
 
-        assert out[-4] == "wrote pydoc_test.html", raw
+        assert out[-5] == "wrote pydoc_test.html", raw
         content = tmp_path / "pydoc_test.html"
         assert content.exists(), raw
         # post deactivation, same as before
-        assert out[-3] == out[0], raw
+        assert out[-4] == out[0], raw
+        assert out[-3] == "None", raw
         assert out[-2] == "None", raw
-        assert out[-1] == "None", raw
+        assert out[-1] in {"None", ""}, raw
 
     def quote(self, s):
         return self.of_class.quote(s)
