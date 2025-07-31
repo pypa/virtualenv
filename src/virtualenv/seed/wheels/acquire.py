@@ -109,7 +109,6 @@ def find_compatible_in_house(distribution, version_spec, for_py_version, in_fold
 
 def pip_wheel_env_run(search_dirs, app_data, env):
     env = env.copy()
-    # force sub-process to use utf-8, https://github.com/pypa/virtualenv/issues/2573
     env.update({"PIP_USE_WHEEL": "1", "PIP_USER": "0", "PIP_NO_INPUT": "1", "PYTHONIOENCODING": "utf-8"})
     wheel = get_wheel(
         distribution="pip",
