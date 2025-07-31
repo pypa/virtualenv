@@ -25,7 +25,7 @@ def test_python(raise_on_non_source_class, activation_tester):
         def env(self, tmp_path):
             env = os.environ.copy()
             env["PYTHONIOENCODING"] = "utf-8"
-            for key in ("VIRTUAL_ENV", "PYTHONPATH"):
+            for key in ("VIRTUAL_ENV", "PYTHONPATH", "PKG_CONFIG_PATH"):
                 env.pop(str(key), None)
             env["PATH"] = os.pathsep.join([str(tmp_path), str(tmp_path / "other")])
             return env
