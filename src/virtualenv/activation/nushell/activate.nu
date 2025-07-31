@@ -74,6 +74,9 @@ export-env {
         }
         $new_env | merge { PROMPT_COMMAND: $new_prompt VIRTUAL_PREFIX: $virtual_prefix }
     }
+    let pkg_config_path = ([$virtual_env 'lib' 'pkgconfig'] | path join)
+    let new_pkg_config_path = ($env | get --optional PKG_CONFIG_PATH | default [] | prepend $pkg_config_path)
+    let new_env = ($new_env | upsert 'PKG_CONFIG_PATH' $new_pkg_config_path)
     load-env $new_env
 }
 

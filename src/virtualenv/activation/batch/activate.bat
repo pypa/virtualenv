@@ -44,6 +44,13 @@
 
 @set "PATH=%VIRTUAL_ENV%\__BIN_NAME__;%PATH%"
 
+@if not defined _OLD_VIRTUAL_PKG_CONFIG_PATH @set "_OLD_VIRTUAL_PKG_CONFIG_PATH=%PKG_CONFIG_PATH%"
+@if defined PKG_CONFIG_PATH (
+    @set "PKG_CONFIG_PATH=%VIRTUAL_ENV%\lib\pkgconfig;%PKG_CONFIG_PATH%"
+) else (
+    @set "PKG_CONFIG_PATH=%VIRTUAL_ENV%\lib\pkgconfig"
+)
+
 @if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" %_OLD_CODEPAGE% > nul
     @set _OLD_CODEPAGE=

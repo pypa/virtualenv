@@ -1,0 +1,2 @@
+Add support for `pkg-config` to virtualenv by adding the virtual environment's `lib/pkgconfig` directory to the `PKG_CONFIG_PATH` environment variable upon activation.
+Contributed by :user:esafak.
