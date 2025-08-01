@@ -14,6 +14,7 @@ from typing import NamedTuple
 
 import pytest
 
+from virtualenv.create.via_global_ref.builtin.cpython.common import is_macos_brew
 from virtualenv.discovery import cached_py_info
 from virtualenv.discovery.py_info import PythonInfo, VersionInfo
 from virtualenv.discovery.py_spec import PythonSpec
@@ -176,7 +177,7 @@ def test_py_info_cache_invalidation_on_py_info_change(mocker, session_app_data):
         # 6. Assert that _run_subprocess was called again
         # TODO(esafak): Investigate why Homebrew sometimes calls it twice. Related to:
         #   https://github.com/pypa/virtualenv/issues/2467
-        if sys.prefix.startswith("/opt/homebrew"):
+        if is_macos_brew(CURRENT):
             assert spy.call_count in {2, 3}
         else:
             assert spy.call_count == 2
