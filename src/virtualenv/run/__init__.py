@@ -154,6 +154,9 @@ def _do_report_setup(parser, args, setup_logging):
     verbosity = verbosity_group.add_mutually_exclusive_group()
     verbosity.add_argument("-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=2)
     verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
+    # do not configure logging if only help is requested, as no logging is required for this
+    if args and any(i in args for i in ("-h", "--help")):
+        return
     option, _ = parser.parse_known_args(args)
     if setup_logging:
         setup_report(option.verbosity)

@@ -104,7 +104,6 @@ def test_zipapp_in_symlink(capsys, call_zipapp_symlink):
     assert not err
 
 
-@pytest.mark.flaky(max_runs=2, min_passes=1)
 def test_zipapp_help(call_zipapp, capsys):
     call_zipapp("-h")
     _out, err = capsys.readouterr()
