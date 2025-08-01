@@ -62,7 +62,7 @@ def process_tag(hive_name, company, company_key, tag, default_arch):
             major, minor, _ = version
             arch = load_arch_data(hive_name, company, tag, tag_key, default_arch)
             if arch is not None:
-                exe_data = load_exe(hive_name, company, company_key, tag)
+                exe_data = load_exe(hive_name, company, company_key, tag, major)
                 if exe_data is not None:
                     exe, args = exe_data
                     threaded = load_threaded(hive_name, company, tag, tag_key)
@@ -72,13 +72,13 @@ def process_tag(hive_name, company, company_key, tag, default_arch):
         return None
 
 
-def load_exe(hive_name, company, company_key, tag):
+def load_exe(hive_name, company, company_key, tag, major):
     key_path = f"{hive_name}/{company}/{tag}"
     try:
         with winreg.OpenKeyEx(company_key, rf"{tag}\InstallPath") as ip_key:
             exe = get_value(ip_key, "ExecutablePath")
             if exe is None:
-                exe = _find_exe_in_install_path(ip_key, key_path)
+                exe = _find_exe_in_install_path(ip_key, key_path, major)
 
             if exe is not None and os.path.exists(exe):
                 args = get_value(ip_key, "ExecutableArguments")
@@ -89,13 +89,17 @@ def load_exe(hive_name, company, company_key, tag):
     return None
 
 
-def _find_exe_in_install_path(ip_key, key_path):
+def _find_exe_in_install_path(ip_key, key_path, major):
     ip = get_value(ip_key, None)
     if ip is None:
         msg(key_path, "no ExecutablePath or default for it")
         return None
 
-    for name in ("python3.exe", "python.exe"):
+    names = ("python.exe",)
+    if major == 3:
+        names = ("python3.exe", "python.exe")
+
+    for name in names:
         exe_path = os.path.join(ip, name)
         if os.path.exists(exe_path):
             return exe_path
