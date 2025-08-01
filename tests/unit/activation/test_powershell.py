@@ -5,6 +5,8 @@ import sys
 import pytest
 
 from virtualenv.activation import PowerShellActivator
+from virtualenv.run import cli_run
+from virtualenv.run import cli_run
 
 
 @pytest.mark.slow

@@ -54,6 +54,8 @@ def _get_from_cache(cls, app_data, exe, env, ignore_cache=True):  # noqa: FBT002
 
 def _get_via_file_cache(cls, app_data, path, exe, env):
     path_text = str(path)
+    our_file = Path(os.path.abspath(__file__))
+    our_file_modified = our_file.stat().st_mtime
     try:
         path_modified = path.stat().st_mtime
     except OSError:
@@ -64,8 +66,13 @@ def _get_via_file_cache(cls, app_data, path, exe, env):
     with py_info_store.locked():
         if py_info_store.exists():  # if exists and matches load
             data = py_info_store.read()
-            of_path, of_st_mtime, of_content = data["path"], data["st_mtime"], data["content"]
-            if of_path == path_text and of_st_mtime == path_modified:
+            of_path, of_st_mtime, of_content, our_mtime = (
+                data["path"],
+                data["st_mtime"],
+                data["content"],
+                data.get("our_mtime"),
+            )
+            if of_path == path_text and of_st_mtime == path_modified and our_mtime == our_file_modified:
                 py_info = cls._from_dict(of_content.copy())
                 sys_exe = py_info.system_executable
                 if sys_exe is not None and not os.path.exists(sys_exe):
@@ -79,6 +86,7 @@ def _get_via_file_cache(cls, app_data, path, exe, env):
                 data = {
                     "st_mtime": path_modified,
                     "path": path_text,
+                    "our_mtime": our_file_modified,
                     "content": py_info._to_dict(),  # noqa: SLF001
                 }
                 py_info_store.write(data)
