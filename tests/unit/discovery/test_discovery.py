@@ -203,12 +203,16 @@ def test_returns_second_python_specified_when_more_than_one_is_specified_and_env
 def test_discovery_absolute_path_with_try_first(tmp_path, session_app_data):
     good_env = tmp_path / "good"
     bad_env = tmp_path / "bad"
-    good_exe = good_env / "bin" / "python"
-    bad_exe = bad_env / "bin" / "python"
 
     # Create two real virtual environments
     subprocess.check_call([sys.executable, "-m", "virtualenv", str(good_env)])
     subprocess.check_call([sys.executable, "-m", "virtualenv", str(bad_env)])
+
+    # On Windows, the executable is in Scripts/python.exe
+    scripts_dir = "Scripts" if IS_WIN else "bin"
+    exe_name = "python.exe" if IS_WIN else "python"
+    good_exe = good_env / scripts_dir / exe_name
+    bad_exe = bad_env / scripts_dir / exe_name
 
     # The spec is an absolute path, this should be a hard requirement.
     # The --try-first-with option should be rejected as it does not match the spec.
