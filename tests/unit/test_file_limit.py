@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import resource
 import sys
 
 import pytest
@@ -14,6 +13,7 @@ def test_too_many_open_files(tmp_path, monkeypatch):
     """
     Test that we get a specific error message when we have too many open files.
     """
+    import resource
 
     soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
     if soft_limit > 1024:
@@ -28,7 +28,8 @@ def test_too_many_open_files(tmp_path, monkeypatch):
     # Keep some file descriptors open to make it easier to trigger the error
     fds = []
     try:
-        fds.extend(os.open(os.devnull, os.O_RDONLY) for _ in range(20))
+        for _ in range(20):
+            fds.append(os.open(os.devnull, os.O_RDONLY))
 
         with pytest.raises(SystemExit) as excinfo:
             cli_run([str(tmp_path / "venv")])
