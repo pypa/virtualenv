@@ -1,0 +1,2 @@
+Stop `--try-first-with` overriding absolute `--python` paths.
+Contributed by :user:`esafak`.
