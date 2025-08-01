@@ -257,7 +257,6 @@ def test_absolute_path_does_not_exist(tmp_path):
         capture_output=True,
         text=True,
         check=False,
-        encoding="utf-8",
     )
 
     # Check that the command was successful
@@ -284,7 +283,6 @@ def test_absolute_path_does_not_exist_fails(tmp_path):
         capture_output=True,
         text=True,
         check=False,
-        encoding="utf-8",
     )
 
     # Check that the command failed

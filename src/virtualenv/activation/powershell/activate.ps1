@@ -1,5 +1,10 @@
 $script:THIS_PATH = $myinvocation.mycommand.path
-$script:BASE_DIR = Split-Path (Resolve-Path "$THIS_PATH/..") -Parent
+$is_unc_path = ((Get-Item $THIS_PATH).ProviderPath -like '\\*')
+if ($is_unc_path) {
+    $script:BASE_DIR = Split-Path (Resolve-Path "$THIS_PATH/../..") -Parent
+} else {
+    $script:BASE_DIR = Split-Path (Resolve-Path "$THIS_PATH/..")   -Parent
+}
 
 function global:deactivate([switch] $NonDestructive) {
     if (Test-Path variable:_OLD_VIRTUAL_PATH) {
@@ -41,14 +46,7 @@ if (__VIRTUAL_PROMPT__ -ne "") {
     $env:VIRTUAL_ENV_PROMPT = __VIRTUAL_PROMPT__
 }
 else {
-    $env:VIRTUAL_ENV_PROMPT = $(
-        if (Split-Path $env:VIRTUAL_ENV -Parent) {
-            Split-Path $env:VIRTUAL_ENV -Leaf
-        }
-        else {
-            Split-Path $env:VIRTUAL_ENV -Qualifier
-        }
-    )
+    $env:VIRTUAL_ENV_PROMPT = $( Split-Path $env:VIRTUAL_ENV -Leaf )
 }
 
 New-Variable -Scope global -Name _OLD_VIRTUAL_PATH -Value $env:PATH
