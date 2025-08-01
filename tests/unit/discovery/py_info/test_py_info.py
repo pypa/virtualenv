@@ -14,6 +14,7 @@ from typing import NamedTuple
 
 import pytest
 
+from virtualenv.create.via_global_ref.builtin.cpython.common import is_macos_brew
 from virtualenv.discovery import cached_py_info
 from virtualenv.discovery.py_info import PythonInfo, VersionInfo
 from virtualenv.discovery.py_spec import PythonSpec
@@ -152,6 +153,36 @@ def test_py_info_cache_clear(mocker, session_app_data):
     PythonInfo.clear_cache(session_app_data)
     assert PythonInfo.from_exe(sys.executable, session_app_data) is not None
     assert spy.call_count >= 2 * count
+
+
+def test_py_info_cache_invalidation_on_py_info_change(mocker, session_app_data):
+    # 1. Get a PythonInfo object for the current executable, this will cache it.
+    PythonInfo.from_exe(sys.executable, session_app_data)
+
+    # 2. Spy on _run_subprocess
+    spy = mocker.spy(cached_py_info, "_run_subprocess")
+
+    # 3. Modify the content of py_info.py
+    py_info_script = Path(cached_py_info.__file__).parent / "py_info.py"
+    original_content = py_info_script.read_text(encoding="utf-8")
+
+    try:
+        # 4. Clear the in-memory cache
+        mocker.patch.dict(cached_py_info._CACHE, {}, clear=True)  # noqa: SLF001
+        py_info_script.write_text(original_content + "\n# a comment", encoding="utf-8")
+
+        # 5. Get the PythonInfo object again
+        info = PythonInfo.from_exe(sys.executable, session_app_data)
+
+        # 6. Assert that _run_subprocess was called again
+        if is_macos_brew(info):
+            assert spy.call_count in {2, 3}
+        else:
+            assert spy.call_count == 2
+
+    finally:
+        # Restore the original content
+        py_info_script.write_text(original_content, encoding="utf-8")
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
