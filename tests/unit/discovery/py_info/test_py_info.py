@@ -154,6 +154,33 @@ def test_py_info_cache_clear(mocker, session_app_data):
     assert spy.call_count >= 2 * count
 
 
+def test_py_info_cache_invalidation_on_py_info_change(mocker, session_app_data):
+    # 1. Get a PythonInfo object for the current executable, this will cache it.
+    PythonInfo.from_exe(sys.executable, session_app_data)
+
+    # 2. Spy on _run_subprocess
+    spy = mocker.spy(cached_py_info, "_run_subprocess")
+
+    # 3. Modify the content of py_info.py
+    py_info_script = Path(cached_py_info.__file__).parent / "py_info.py"
+    original_content = py_info_script.read_text(encoding="utf-8")
+
+    try:
+        # 4. Clear the in-memory cache
+        mocker.patch.dict(cached_py_info._CACHE, {}, clear=True)  # noqa: SLF001
+        py_info_script.write_text(original_content + "\n# a comment", encoding="utf-8")
+
+        # 5. Get the PythonInfo object again
+        PythonInfo.from_exe(sys.executable, session_app_data)
+
+        # 6. Assert that _run_subprocess was called again
+        assert spy.call_count == 2
+
+    finally:
+        # Restore the original content
+        py_info_script.write_text(original_content, encoding="utf-8")
+
+
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
 @pytest.mark.xfail(
     # https://doc.pypy.org/en/latest/install.html?highlight=symlink#download-a-pre-built-pypy

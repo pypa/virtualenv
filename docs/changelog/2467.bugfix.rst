@@ -1,0 +1,2 @@
+Fix cache invalidation for PythonInfo by hashing `py_info.py`.
+Contributed by :user:`esafak`.
