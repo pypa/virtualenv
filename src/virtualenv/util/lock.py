@@ -29,16 +29,22 @@ class _CountedFileLock(FileLock):
         if not self.thread_safe.acquire(timeout=-1 if timeout is None else timeout):
             raise Timeout(self.lock_file)
         if self.count == 0:
-            super().acquire(timeout, poll_interval)
+            try:
+                super().acquire(timeout, poll_interval)
+            except BaseException:
+                self.thread_safe.release()
+                raise
         self.count += 1
 
     def release(self, force=False):  # noqa: FBT002
         with self.thread_safe:
             if self.count > 0:
-                self.thread_safe.release()
-            if self.count == 1:
-                super().release(force=force)
-            self.count = max(self.count - 1, 0)
+                if self.count == 1:
+                    super().release(force=force)
+                self.count -= 1
+                if self.count == 0:
+                    # if we have no more users of this lock, release the thread lock
+                    self.thread_safe.release()
 
 
 _lock_store = {}

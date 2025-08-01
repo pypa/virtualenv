@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import errno
 import logging
 import os
 import sys
@@ -24,6 +25,15 @@ def run(args=None, options=None, env=None):
         print(exception.out, file=sys.stdout, end="")  # noqa: T201
         print(exception.err, file=sys.stderr, end="")  # noqa: T201
         raise SystemExit(exception.code)  # noqa: B904
+    except OSError as exception:
+        if exception.errno == errno.EMFILE:
+            print(  # noqa: T201
+                "OSError: [Errno 24] Too many open files. You may need to increase your OS open files limit.\n"
+                "  On macOS/Linux, try 'ulimit -n 2048'.\n"
+                "  For Windows, this is not a common issue, but you can try to close some applications.",
+                file=sys.stderr,
+            )
+        raise
 
 
 class LogSession:

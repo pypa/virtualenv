@@ -1,0 +1,2 @@
+Fix 'Too many open files' error due to  a file descriptor leak in virtualenv's locking mechanism.
+Contributed by :user:`esafak`.
