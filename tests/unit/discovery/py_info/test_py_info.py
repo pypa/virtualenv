@@ -174,7 +174,8 @@ def test_py_info_cache_invalidation_on_py_info_change(mocker, session_app_data):
         PythonInfo.from_exe(sys.executable, session_app_data)
 
         # 6. Assert that _run_subprocess was called again
-        # TODO: Investigate why Homebrew sometimes calls it twice
+        # TODO(esafak): Investigate why Homebrew sometimes calls it twice. Related to:
+        #   https://github.com/pypa/virtualenv/issues/2467
         if sys.prefix.startswith("/opt/homebrew"):
             assert spy.call_count in {2, 3}
         else:
