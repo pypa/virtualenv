@@ -93,18 +93,18 @@ def test_pep514_run(capsys, caplog):
     out, err = capsys.readouterr()
     expected = textwrap.dedent(
         r"""
-    ('CompanyA', 3, 6, 64, False, 'Z:\\CompanyA\\Python\\3.6\\python3.exe', None)
-    ('ContinuumAnalytics', 3, 10, 32, False, 'C:\\Users\\user\\Miniconda3\\python3.exe', None)
-    ('ContinuumAnalytics', 3, 10, 64, False, 'C:\\Users\\user\\Miniconda3-64\\python3.exe', None)
+    ('CompanyA', 3, 6, 64, False, 'Z:\\CompanyA\\Python\\3.6\\python.exe', None)
+    ('ContinuumAnalytics', 3, 10, 32, False, 'C:\\Users\\user\\Miniconda3\\python.exe', None)
+    ('ContinuumAnalytics', 3, 10, 64, False, 'C:\\Users\\user\\Miniconda3-64\\python.exe', None)
     ('PythonCore', 2, 7, 64, False, 'C:\\Python27\\python.exe', None)
-    ('PythonCore', 3, 10, 32, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python310-32\\python3.exe', None)
-    ('PythonCore', 3, 12, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python3.exe', None)
+    ('PythonCore', 3, 10, 32, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python310-32\\python.exe', None)
+    ('PythonCore', 3, 12, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', None)
     ('PythonCore', 3, 13, 64, True, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\python3.13t.exe', None)
-    ('PythonCore', 3, 7, 64, False, 'C:\\Python37\\python3.exe', None)
-    ('PythonCore', 3, 8, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python38\\python3.exe', None)
-    ('PythonCore', 3, 9, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python3.exe', None)
-    ('PythonCore', 3, 9, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python3.exe', None)
-    ('PythonCore', 3, 9, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python3.exe', None)
+    ('PythonCore', 3, 7, 64, False, 'C:\\Python37\\python.exe', None)
+    ('PythonCore', 3, 8, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python38\\python.exe', None)
+    ('PythonCore', 3, 9, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe', None)
+    ('PythonCore', 3, 9, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe', None)
+    ('PythonCore', 3, 9, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe', None)
     """,  # noqa: E501
     ).strip()
     assert out.strip() == expected
@@ -123,24 +123,31 @@ def test_pep514_run(capsys, caplog):
     assert caplog.messages == expected_logs
 
 
-@pytest.mark.usefixtures("_mock_registry")
 @pytest.mark.skipif(sys.platform != "win32", reason="no Windows registry")
 def test_pep514_python3_fallback(mocker, tmp_path):
-    from virtualenv.discovery.windows import pep514  # noqa: PLC0415
+    from virtualenv.discovery.windows import pep514
+    from virtualenv.discovery.windows.pep514 import winreg
 
     # Create a mock python3.exe, but no python.exe
     python3_exe = tmp_path / "python3.exe"
     python3_exe.touch()
-    mocker.patch("os.path.exists", lambda path: str(path) == str(python3_exe))
+    mocker.patch("os.path.exists", side_effect=lambda p: str(p) == str(python3_exe))
 
-    # Mock the registry to return our test python distribution
-    mocker.patch.object(pep514, "get_value", side_effect=lambda key, name: {None: str(tmp_path)}.get(name))
-    mocker.patch.object(pep514.winreg, "OpenKeyEx", return_value=mocker.MagicMock())
-    mocker.patch.object(pep514.winreg, "EnumKey", side_effect=[["PythonCore"], ["3.9-32"], ["InstallPath"]])
-    mocker.patch.object(pep514, "load_version_data", return_value=(3, 9, 0))
+    # Mock winreg functions to simulate a single Python installation
+    mock_key = mocker.MagicMock()
+    mocker.patch.object(winreg, "OpenKeyEx", return_value=mock_key)
+    mocker.patch.object(winreg, "EnumKey", side_effect=[["PythonCore"], ["3.9-32"], StopIteration])
+
+    def get_value(key, name):
+        if name == "ExecutablePath":
+            raise FileNotFoundError
+        if name is None:
+            return str(tmp_path)
+        return "3.9"
+
+    mocker.patch.object(winreg, "QueryValueEx", side_effect=get_value)
     mocker.patch.object(pep514, "load_arch_data", return_value=64)
     mocker.patch.object(pep514, "load_threaded", return_value=False)
-    mocker.patch.object(pep514, "msg")
 
     interpreters = list(pep514.discover_pythons())
 
