@@ -49,7 +49,7 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch):
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="UNC paths are a Windows feature")
-def test_powershell_unc_path(activation_tester_class, activation_python, monkeypatch, tmp_path):
+def test_powershell_unc_path(activation_tester_class, monkeypatch, tmp_path):
     # we need to create a new session with a UNC path destination
     session = cli_run([str(tmp_path).replace("C:", r"\\localhost\C$")])
 

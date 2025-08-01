@@ -1,5 +1,5 @@
 $script:THIS_PATH = $myinvocation.mycommand.path
-$is_unc_path = ((Get-Item $THIS_PATH).ProviderPath -like '\\*')
+$is_unc_path = ($THIS_PATH -match '^\\\\')
 if ($is_unc_path) {
     $script:BASE_DIR = Split-Path (Resolve-Path "$THIS_PATH/../..") -Parent
 } else {
