@@ -135,17 +135,25 @@ def test_pep514_python3_fallback(mocker, tmp_path):
 
     # Mock winreg functions to simulate a single Python installation
     mock_key = mocker.MagicMock()
-    mocker.patch.object(winreg, "OpenKeyEx", return_value=mock_key)
 
-    enum_key_map = {
-        mock_key: ["PythonCore"],
-        "PythonCore": ["3.9-32"],
-        "3.9-32": ["InstallPath"],
-    }
+    def open_key_ex(key, sub_key, *args, **kwargs):
+        if sub_key == r"Software\Python":
+            return "Python"
+        if key == "Python" and sub_key == "PythonCore":
+            return "PythonCore"
+        if key == "PythonCore" and sub_key == "3.7-32":
+            return "3.7-32"
+        if key == "3.7-32" and sub_key == "InstallPath":
+            return mock_key
+        raise FileNotFoundError
+
+    mocker.patch.object(winreg, "OpenKeyEx", side_effect=open_key_ex)
 
     def enum_key(key, at):
-        if key in enum_key_map and at < len(enum_key_map[key]):
-            return enum_key_map[key][at]
+        if key == "Python" and at == 0:
+            return "PythonCore"
+        if key == "PythonCore" and at == 0:
+            return "3.7-32"
         raise StopIteration
 
     mocker.patch.object(winreg, "EnumKey", side_effect=enum_key)
@@ -155,12 +163,12 @@ def test_pep514_python3_fallback(mocker, tmp_path):
             raise FileNotFoundError
         if name is None:
             return str(tmp_path)
-        return "3.9"
+        return "3.7"
 
     mocker.patch.object(winreg, "QueryValueEx", side_effect=get_value)
-    mocker.patch.object(pep514, "load_arch_data", return_value=64)
+    mocker.patch.object(pep514, "load_arch_data", return_value=32)
     mocker.patch.object(pep514, "load_threaded", return_value=False)
 
     interpreters = list(pep514.discover_pythons())
 
-    assert interpreters == [("PythonCore", 3, 9, 64, False, str(python3_exe), None)]
+    assert interpreters == [("PythonCore", 3, 7, 32, False, str(python3_exe), None)]
