@@ -28,8 +28,7 @@ def test_too_many_open_files(tmp_path, monkeypatch):
     # Keep some file descriptors open to make it easier to trigger the error
     fds = []
     try:
-        for _ in range(20):
-            fds.append(os.open(os.devnull, os.O_RDONLY))
+        fds.extend(os.open(os.devnull, os.O_RDONLY) for _ in range(20))
 
         with pytest.raises(SystemExit) as excinfo:
             cli_run([str(tmp_path / "venv")])
