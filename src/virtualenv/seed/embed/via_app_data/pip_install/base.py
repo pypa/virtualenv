@@ -183,7 +183,7 @@ class PipInstall(ABC):
             safe_delete(self._image_dir)
 
     def has_image(self):
-        return self._image_dir.exists() and next(self._image_dir.iterdir()) is not None
+        return self._image_dir.exists() and any(self._image_dir.iterdir())
 
 
 class ScriptMakerCustom(ScriptMaker):
