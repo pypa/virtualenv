@@ -56,36 +56,43 @@ def process_company(hive_name, company, root_key, default_arch):
 
 
 def process_tag(hive_name, company, company_key, tag, default_arch):
+    LOGGER.info("Processing tag %s for company %s", tag, company)
     with winreg.OpenKeyEx(company_key, tag) as tag_key:
         version = load_version_data(hive_name, company, tag, tag_key)
         if version is not None:  # if failed to get version bail
             major, minor, _ = version
+            LOGGER.info("Found version %s.%s", major, minor)
             arch = load_arch_data(hive_name, company, tag, tag_key, default_arch)
             if arch is not None:
+                LOGGER.info("Found arch %s", arch)
                 exe_data = load_exe(hive_name, company, company_key, tag, major)
                 if exe_data is not None:
                     exe, args = exe_data
+                    LOGGER.info("Found exe %s", exe)
                     threaded = load_threaded(hive_name, company, tag, tag_key)
                     return company, major, minor, arch, threaded, exe, args
-                return None
-            return None
-        return None
+    return None
 
 
 def load_exe(hive_name, company, company_key, tag, major):
     key_path = f"{hive_name}/{company}/{tag}"
+    LOGGER.info("Loading exe for %s", key_path)
     try:
         with winreg.OpenKeyEx(company_key, rf"{tag}\InstallPath") as ip_key:
             exe = get_value(ip_key, "ExecutablePath")
+            LOGGER.info("ExecutablePath from registry: %s", exe)
             if exe is None:
                 exe = _find_exe_in_install_path(ip_key, key_path, major)
+                LOGGER.info("Executable from install path: %s", exe)
 
             if exe is not None and os.path.exists(exe):
                 args = get_value(ip_key, "ExecutableArguments")
+                LOGGER.info("Found executable %s with args %s", exe, args)
                 return exe, args
             msg(key_path, f"could not load exe with value {exe}")
     except OSError:
         msg(f"{key_path}/InstallPath", "missing")
+    LOGGER.info("Failed to load exe for %s", key_path)
     return None
 
 
