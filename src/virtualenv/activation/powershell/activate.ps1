@@ -41,7 +41,14 @@ if (__VIRTUAL_PROMPT__ -ne "") {
     $env:VIRTUAL_ENV_PROMPT = __VIRTUAL_PROMPT__
 }
 else {
-    $env:VIRTUAL_ENV_PROMPT = $( Split-Path $env:VIRTUAL_ENV -Leaf )
+    $env:VIRTUAL_ENV_PROMPT = $(
+        if (Split-Path $env:VIRTUAL_ENV -Parent) {
+            Split-Path $env:VIRTUAL_ENV -Leaf
+        }
+        else {
+            Split-Path $env:VIRTUAL_ENV -Qualifier
+        }
+    )
 }
 
 New-Variable -Scope global -Name _OLD_VIRTUAL_PATH -Value $env:PATH
