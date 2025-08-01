@@ -186,7 +186,7 @@ def get_paths(env: Mapping[str, str]) -> Generator[Path, None, None]:
     if path:
         for p in map(Path, path.split(os.pathsep)):
             with suppress(OSError):
-                if next(p.iterdir(), None):
+                if p.is_dir() and next(p.iterdir(), None):
                     yield p
 
 
@@ -202,7 +202,13 @@ class LazyPathDump:
             content += " with =>"
             for file_path in self.path.iterdir():
                 try:
-                    if file_path.is_dir() or not (file_path.stat().st_mode & os.X_OK):
+                    if file_path.is_dir():
+                        continue
+                    if IS_WIN:
+                        pathext = self.env.get("PATHEXT", ".COM;.EXE;.BAT;.CMD").split(";")
+                        if not any(file_path.name.upper().endswith(ext) for ext in pathext):
+                            continue
+                    elif not (file_path.stat().st_mode & os.X_OK):
                         continue
                 except OSError:
                     pass
