@@ -80,7 +80,7 @@ def test_pep514():
         ),
         ("CompanyA", 3, 6, 64, False, "Z:\\CompanyA\\Python\\3.6\\python.exe", None),
         ("PythonCore", 2, 7, 64, False, "C:\\Python27\\python.exe", None),
-        ("PythonCore", 3, 7, 64, False, "C:\\Python37\\python.exe", None),
+        ("PythonCore", 3, 7, 64, False, "C:\\Python37\\python3.exe", None),
     ]
 
 
@@ -100,7 +100,7 @@ def test_pep514_run(capsys, caplog):
     ('PythonCore', 3, 10, 32, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python310-32\\python.exe', None)
     ('PythonCore', 3, 12, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', None)
     ('PythonCore', 3, 13, 64, True, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\python3.13t.exe', None)
-    ('PythonCore', 3, 7, 64, False, 'C:\\Python37\\python.exe', None)
+    ('PythonCore', 3, 7, 64, False, 'C:\\Python37\\python3.exe', None)
     ('PythonCore', 3, 8, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python38\\python.exe', None)
     ('PythonCore', 3, 9, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe', None)
     ('PythonCore', 3, 9, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe', None)
@@ -136,7 +136,19 @@ def test_pep514_python3_fallback(mocker, tmp_path):
     # Mock winreg functions to simulate a single Python installation
     mock_key = mocker.MagicMock()
     mocker.patch.object(winreg, "OpenKeyEx", return_value=mock_key)
-    mocker.patch.object(winreg, "EnumKey", side_effect=[["PythonCore"], ["3.9-32"], StopIteration])
+
+    enum_key_map = {
+        mock_key: ["PythonCore"],
+        "PythonCore": ["3.9-32"],
+        "3.9-32": ["InstallPath"],
+    }
+
+    def enum_key(key, at):
+        if key in enum_key_map and at < len(enum_key_map[key]):
+            return enum_key_map[key][at]
+        raise StopIteration
+
+    mocker.patch.object(winreg, "EnumKey", side_effect=enum_key)
 
     def get_value(key, name):
         if name == "ExecutablePath":
