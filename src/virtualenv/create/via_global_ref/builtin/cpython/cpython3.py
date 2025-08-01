@@ -77,7 +77,11 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     def shim(cls, interpreter):
-        shim = Path(interpreter.system_stdlib) / "venv" / "scripts" / "nt" / "python.exe"
+        root = Path(interpreter.system_stdlib) / "venv" / "scripts" / "nt"
+        # Before 3.13 the launcher was called python.exe, after is venvlauncher.exe
+        # https://github.com/python/cpython/issues/112984
+        exe_name = "venvlauncher.exe" if interpreter.version_info >= (3, 13) else "python.exe"
+        shim = root / exe_name
         if shim.exists():
             return shim
         return None
