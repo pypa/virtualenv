@@ -96,9 +96,23 @@ def propose_interpreters(  # noqa: C901, PLR0912, PLR0915
     app_data: AppData | None = None,
     env: Mapping[str, str] | None = None,
 ) -> Generator[tuple[PythonInfo, bool], None, None]:
-    # 0. try with first
+    # 0. if it's a path and exists, and is absolute path, this is the only option we consider
     env = os.environ if env is None else env
     tested_exes: set[str] = set()
+    if spec.is_abs:
+        try:
+            os.lstat(spec.path)  # Windows Store Python does not work with os.path.exists, but does for os.lstat
+        except OSError:
+            pass
+        else:
+            exe_raw = os.path.abspath(spec.path)
+            exe_id = fs_path_id(exe_raw)
+            if exe_id not in tested_exes:
+                tested_exes.add(exe_id)
+                yield PythonInfo.from_exe(exe_raw, app_data, env=env), True
+        return
+
+    # 1. try with first
     for py_exe in try_first_with:
         path = os.path.abspath(py_exe)
         try:

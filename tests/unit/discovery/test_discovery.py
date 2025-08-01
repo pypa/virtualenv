@@ -200,6 +200,32 @@ def test_returns_second_python_specified_when_more_than_one_is_specified_and_env
     assert result == mocker.sentinel.python_from_cli
 
 
+def test_discovery_absolute_path_with_try_first(tmp_path, session_app_data):
+    good_env = tmp_path / "good"
+    bad_env = tmp_path / "bad"
+
+    # Create two real virtual environments
+    subprocess.check_call([sys.executable, "-m", "virtualenv", str(good_env)])
+    subprocess.check_call([sys.executable, "-m", "virtualenv", str(bad_env)])
+
+    # On Windows, the executable is in Scripts/python.exe
+    scripts_dir = "Scripts" if IS_WIN else "bin"
+    exe_name = "python.exe" if IS_WIN else "python"
+    good_exe = good_env / scripts_dir / exe_name
+    bad_exe = bad_env / scripts_dir / exe_name
+
+    # The spec is an absolute path, this should be a hard requirement.
+    # The --try-first-with option should be rejected as it does not match the spec.
+    interpreter = get_interpreter(
+        str(good_exe),
+        try_first_with=[str(bad_exe)],
+        app_data=session_app_data,
+    )
+
+    assert interpreter is not None
+    assert Path(interpreter.executable) == good_exe
+
+
 def test_discovery_via_path_with_file(tmp_path, monkeypatch):
     a_file = tmp_path / "a_file"
     a_file.touch()
