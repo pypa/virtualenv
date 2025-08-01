@@ -201,25 +201,25 @@ def test_returns_second_python_specified_when_more_than_one_is_specified_and_env
 
 
 def test_discovery_absolute_path_with_try_first(tmp_path, session_app_data):
-    py_ver_good = "3.8"
-    py_ver_bad = "3.10"
-    good_path = tmp_path / f"python{py_ver_good}"
-    bad_path = tmp_path / f"python{py_ver_bad}"
+    good_env = tmp_path / "good"
+    bad_env = tmp_path / "bad"
+    good_exe = good_env / "bin" / "python"
+    bad_exe = bad_env / "bin" / "python"
 
-    # Create dummy executables
-    os.symlink(sys.executable, str(good_path))
-    os.symlink(sys.executable, str(bad_path))
+    # Create two real virtual environments
+    subprocess.check_call([sys.executable, "-m", "virtualenv", str(good_env)])
+    subprocess.check_call([sys.executable, "-m", "virtualenv", str(bad_env)])
 
     # The spec is an absolute path, this should be a hard requirement.
     # The --try-first-with option should be rejected as it does not match the spec.
     interpreter = get_interpreter(
-        str(good_path),
-        try_first_with=[str(bad_path)],
+        str(good_exe),
+        try_first_with=[str(bad_exe)],
         app_data=session_app_data,
     )
 
     assert interpreter is not None
-    assert interpreter.executable == str(good_path)
+    assert Path(interpreter.executable) == good_exe
 
 
 def test_discovery_via_path_with_file(tmp_path, monkeypatch):
@@ -253,7 +253,6 @@ def test_absolute_path_does_not_exist(tmp_path):
         capture_output=True,
         text=True,
         check=False,
-        encoding="utf-8",
     )
 
     # Check that the command was successful
@@ -280,7 +279,6 @@ def test_absolute_path_does_not_exist_fails(tmp_path):
         capture_output=True,
         text=True,
         check=False,
-        encoding="utf-8",
     )
 
     # Check that the command failed
