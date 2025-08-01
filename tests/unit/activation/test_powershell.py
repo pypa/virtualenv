@@ -48,19 +48,14 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch):
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="UNC paths are a Windows feature")
-def test_powershell_unc_path(activation_tester_class, activation_tester, monkeypatch, tmp_path):
-    monkeypatch.setenv("TERM", "xterm")
-
-    # Create a fake UNC path by creating a temporary directory
-    # and then accessing it via the \\localhost\c$\... path
-    unc_path = str(tmp_path).replace("C:", r"\\localhost\C$")
-    unc_path_venv = f"{unc_path}\\.venv"
+def test_powershell_unc_path(activation_tester_class, activation_python, monkeypatch, tmp_path):
+    # we need to create a new session with a UNC path destination
+    session = cli_run([str(tmp_path).replace("C:", r"\\localhost\C$")])
 
     class PowerShellUNC(activation_tester_class):
         def __init__(self, session) -> None:
             cmd = "powershell.exe"
-            super().__init__(PowerShellActivator, session, cmd, "activate.ps1", "ps1", venv_name=".venv")
-            self.venv_dir = unc_path_venv
+            super().__init__(PowerShellActivator, session, cmd, "activate.ps1", "ps1")
             self._version_cmd = [cmd, "-c", "$PSVersionTable"]
             self._invoke_script = [cmd, "-ExecutionPolicy", "ByPass", "-File"]
             self.activate_cmd = "."
@@ -84,4 +79,6 @@ def test_powershell_unc_path(activation_tester_class, activation_tester, monkeyp
             scr = self.quote(str(script))
             return f"{cmd} {scr}".strip()
 
-    activation_tester(PowerShellUNC)
+    # now we can instantiate and run the tester
+    tester = PowerShellUNC(session)
+    tester(monkeypatch, tmp_path)
