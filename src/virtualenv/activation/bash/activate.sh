@@ -23,6 +23,17 @@ deactivate () {
         unset _OLD_VIRTUAL_PYTHONHOME
     fi
 
+    if ! [ -z "${_OLD_VIRTUAL_TCL_LIBRARY+_}" ]; then
+        TCL_LIBRARY="$_OLD_VIRTUAL_TCL_LIBRARY"
+        export TCL_LIBRARY
+        unset _OLD_VIRTUAL_TCL_LIBRARY
+    fi
+    if ! [ -z "${_OLD_VIRTUAL_TK_LIBRARY+_}" ]; then
+        TK_LIBRARY="$_OLD_VIRTUAL_TK_LIBRARY"
+        export TK_LIBRARY
+        unset _OLD_VIRTUAL_TK_LIBRARY
+    fi
+
     # The hash command must be called to get it to forget past
     # commands. Without forgetting past commands the $PATH changes
     # we made may not be respected
@@ -66,6 +77,22 @@ export VIRTUAL_ENV_PROMPT
 if ! [ -z "${PYTHONHOME+_}" ] ; then
     _OLD_VIRTUAL_PYTHONHOME="$PYTHONHOME"
     unset PYTHONHOME
+fi
+
+if [ __TCL_LIBRARY__ != "''" ]; then
+    if ! [ -z "${TCL_LIBRARY+_}" ] ; then
+        _OLD_VIRTUAL_TCL_LIBRARY="$TCL_LIBRARY"
+    fi
+    TCL_LIBRARY=__TCL_LIBRARY__
+    export TCL_LIBRARY
+fi
+
+if [ __TK_LIBRARY__ != "''" ]; then
+    if ! [ -z "${TK_LIBRARY+_}" ] ; then
+        _OLD_VIRTUAL_TK_LIBRARY="$TK_LIBRARY"
+    fi
+    TK_LIBRARY=__TK_LIBRARY__
+    export TK_LIBRARY
 fi
 
 if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] ; then

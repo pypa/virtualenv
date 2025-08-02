@@ -7,6 +7,24 @@ function global:deactivate([switch] $NonDestructive) {
         Remove-Variable "_OLD_VIRTUAL_PATH" -Scope global
     }
 
+    if (Test-Path variable:_OLD_VIRTUAL_TCL_LIBRARY) {
+        $env:TCL_LIBRARY = $variable:_OLD_VIRTUAL_TCL_LIBRARY
+        Remove-Variable "_OLD_VIRTUAL_TCL_LIBRARY" -Scope global
+    } else {
+        if (Test-Path env:TCL_LIBRARY) {
+            Remove-Item env:TCL_LIBRARY -ErrorAction SilentlyContinue
+        }
+    }
+
+    if (Test-Path variable:_OLD_VIRTUAL_TK_LIBRARY) {
+        $env:TK_LIBRARY = $variable:_OLD_VIRTUAL_TK_LIBRARY
+        Remove-Variable "_OLD_VIRTUAL_TK_LIBRARY" -Scope global
+    } else {
+        if (Test-Path env:TK_LIBRARY) {
+            Remove-Item env:TK_LIBRARY -ErrorAction SilentlyContinue
+        }
+    }
+
     if (Test-Path function:_old_virtual_prompt) {
         $function:prompt = $function:_old_virtual_prompt
         Remove-Item function:\_old_virtual_prompt
@@ -42,6 +60,20 @@ if (__VIRTUAL_PROMPT__ -ne "") {
 }
 else {
     $env:VIRTUAL_ENV_PROMPT = $( Split-Path $env:VIRTUAL_ENV -Leaf )
+}
+
+if (__TCL_LIBRARY__ -ne "") {
+    if (Test-Path env:TCL_LIBRARY) {
+        New-Variable -Scope global -Name _OLD_VIRTUAL_TCL_LIBRARY -Value $env:TCL_LIBRARY
+    }
+    $env:TCL_LIBRARY = __TCL_LIBRARY__
+}
+
+if (__TK_LIBRARY__ -ne "") {
+    if (Test-Path env:TK_LIBRARY) {
+        New-Variable -Scope global -Name _OLD_VIRTUAL_TK_LIBRARY -Value $env:TK_LIBRARY
+    }
+    $env:TK_LIBRARY = __TK_LIBRARY__
 }
 
 New-Variable -Scope global -Name _OLD_VIRTUAL_PATH -Value $env:PATH
