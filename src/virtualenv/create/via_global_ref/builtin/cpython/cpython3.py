@@ -71,16 +71,26 @@ class CPython3Windows(CPythonWindows, CPython3):
     def executables(cls, interpreter):
         sources = super().sources(interpreter)
         if interpreter.version_info >= (3, 13):
-
-            def _sources():
-                for ref in sources:
-                    if ref.path.name == "pythonw.exe":
-                        w_launcher_path = ref.path.with_name("venvwlauncher.exe")
-                        if w_launcher_path.exists():
-                            ref.path = w_launcher_path
-                    yield ref
-
-            return _sources()
+            # Create new ExePathRefToDest objects with updated source paths
+            updated_sources = []
+            for ref in sources:
+                if ref.src.name == "python.exe":
+                    launcher_path = ref.src.with_name("venvlauncher.exe")
+                    if launcher_path.exists():
+                        # Create new ref with updated source path
+                        new_ref = type(ref)(launcher_path, ref.aliases, ref.dest, ref.must, ref.when)
+                        updated_sources.append(new_ref)
+                        continue
+                elif ref.src.name == "pythonw.exe":
+                    w_launcher_path = ref.src.with_name("venvwlauncher.exe")
+                    if w_launcher_path.exists():
+                        # Create new ref with updated source path
+                        new_ref = type(ref)(w_launcher_path, ref.aliases, ref.dest, ref.must, ref.when)
+                        updated_sources.append(new_ref)
+                        continue
+                # Keep original ref if no replacement needed
+                updated_sources.append(ref)
+            return updated_sources
         return sources
 
     @classmethod
