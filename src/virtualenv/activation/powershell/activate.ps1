@@ -1,5 +1,12 @@
 $script:THIS_PATH = $myinvocation.mycommand.path
-$script:BASE_DIR = Split-Path (Resolve-Path "$THIS_PATH/..") -Parent
+$provider_path = (Get-Item $THIS_PATH).ProviderPath
+$is_unc_path = ($provider_path -match '^\\\\')
+Write-Host "DEBUG: ProviderPath = $provider_path, is_unc_path = $is_unc_path"
+if ($is_unc_path) {
+    $script:BASE_DIR = Split-Path (Resolve-Path "$THIS_PATH/../..") -Parent
+} else {
+    $script:BASE_DIR = Split-Path (Resolve-Path "$THIS_PATH/..")   -Parent
+}
 
 function global:deactivate([switch] $NonDestructive) {
     if (Test-Path variable:_OLD_VIRTUAL_PATH) {
