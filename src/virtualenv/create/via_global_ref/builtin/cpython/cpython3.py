@@ -8,7 +8,7 @@ from pathlib import Path
 from textwrap import dedent
 
 from virtualenv.create.describe import Python3Supports
-from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest, ExePathRefToDest
+from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest, PathRefToDest
 from virtualenv.create.via_global_ref.store import is_store_python
 
 from .common import CPython, CPythonPosix, CPythonWindows, is_mac_os_framework, is_macos_brew
@@ -77,13 +77,21 @@ class CPython3Windows(CPythonWindows, CPython3):
                 if ref.src.name == "python.exe":
                     launcher_path = ref.src.with_name("venvlauncher.exe")
                     if launcher_path.exists():
-                        new_ref = ExePathRefToDest(launcher_path, dest=ref.dest, targets=[ref.base] + ref.aliases, must=ref.must, when=ref.when)
+                        new_ref = ExePathRefToDest(
+                            launcher_path, dest=ref.dest, targets=[ref.base, *ref.aliases], must=ref.must, when=ref.when
+                        )
                         updated_sources.append(new_ref)
                         continue
                 elif ref.src.name == "pythonw.exe":
                     w_launcher_path = ref.src.with_name("venvwlauncher.exe")
                     if w_launcher_path.exists():
-                        new_ref = ExePathRefToDest(w_launcher_path, dest=ref.dest, targets=[ref.base] + ref.aliases, must=ref.must, when=ref.when)
+                        new_ref = ExePathRefToDest(
+                            w_launcher_path,
+                            dest=ref.dest,
+                            targets=[ref.base, *ref.aliases],
+                            must=ref.must,
+                            when=ref.when,
+                        )
                         updated_sources.append(new_ref)
                         continue
                 # Keep the original ref unchanged
