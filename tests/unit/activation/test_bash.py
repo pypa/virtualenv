@@ -28,4 +28,11 @@ def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester):
         def print_prompt(self):
             return self.print_os_env_var("PS1")
 
+        def assert_output(self, out, raw, tmp_path):
+            # for bash we check the prompt is changed
+            prompt_text = f"({self._creator.env_name}) "
+            assert out[8].startswith(prompt_text)
+            # then call the base to check the rest
+            super().assert_output(out, raw, tmp_path)
+
     activation_tester(Bash)

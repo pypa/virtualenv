@@ -31,6 +31,13 @@ function deactivate -d 'Exit virtualenv mode and return to the normal environmen
         set -e _OLD_VIRTUAL_PYTHONHOME
     end
 
+    if test -n "$_OLD_VIRTUAL_PKG_CONFIG_PATH" -o -n "$_OLD_VIRTUAL_PKG_CONFIG_PATH_BACKUP"
+        set -gx PKG_CONFIG_PATH $_OLD_VIRTUAL_PKG_CONFIG_PATH
+        set -e _OLD_VIRTUAL_PKG_CONFIG_PATH
+    else
+        set -e PKG_CONFIG_PATH
+    end
+
     if test -n "$_OLD_FISH_PROMPT_OVERRIDE"
        and functions -q _old_fish_prompt
         # Set an empty local `$fish_function_path` to allow the removal of `fish_prompt` using `functions -e`.
@@ -67,6 +74,11 @@ else
     set -gx _OLD_VIRTUAL_PATH $PATH
 end
 set -gx PATH "$VIRTUAL_ENV"'/'__BIN_NAME__ $PATH
+
+if set -q PKG_CONFIG_PATH
+    set -gx _OLD_VIRTUAL_PKG_CONFIG_PATH $PKG_CONFIG_PATH
+end
+set -gx PKG_CONFIG_PATH "$VIRTUAL_ENV/lib/pkgconfig" $PKG_CONFIG_PATH
 
 # Prompt override provided?
 # If not, just use the environment name.

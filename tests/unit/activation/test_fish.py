@@ -29,11 +29,13 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
                 self.print_os_env_var("VIRTUAL_ENV"),
                 self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
                 self.print_os_env_var("PATH"),
+                self.print_os_env_var("PKG_CONFIG_PATH"),
                 self.activate_call(activate_script),
                 self.print_python_exe(),
                 self.print_os_env_var("VIRTUAL_ENV"),
                 self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
                 self.print_os_env_var("PATH"),
+                self.print_os_env_var("PKG_CONFIG_PATH"),
                 self.print_prompt(),
                 # \\ loads documentation from the virtualenv site packages
                 self.pydoc_call,
@@ -42,6 +44,7 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
                 self.print_os_env_var("VIRTUAL_ENV"),
                 self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
                 self.print_os_env_var("PATH"),
+                self.print_os_env_var("PKG_CONFIG_PATH"),
                 "",  # just finish with an empty new line
             ]
 
@@ -50,15 +53,16 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
             assert out[0], raw
             assert out[1] == "None", raw
             assert out[2] == "None", raw
+            assert out[4] == "None", raw
             # post-activation
             expected = self._creator.exe.parent / os.path.basename(sys.executable)
-            assert self.norm_path(out[4]) == self.norm_path(expected), raw
-            assert self.norm_path(out[5]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
-            assert out[6] == self._creator.env_name
+            assert self.norm_path(out[5]) == self.norm_path(expected), raw
+            assert self.norm_path(out[6]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
+            assert out[7] == self._creator.env_name
             # Some attempts to test the prompt output print more than 1 line.
             # So we need to check if the prompt exists on any of them.
             prompt_text = f"({self._creator.env_name}) "
-            assert any(prompt_text in line for line in out[7:-5]), raw
+            assert any(prompt_text in line for line in out[8:-5]), raw
 
             assert out[-5] == "wrote pydoc_test.html", raw
             content = tmp_path / "pydoc_test.html"
@@ -69,8 +73,12 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
             assert out[-2] == "None", raw
 
             # Check that the PATH is restored
-            assert out[3] == out[13], raw
+            assert out[3] == out[15], raw
             # Check that PATH changed after activation
             assert out[3] != out[8], raw
+            # Check that PKG_CONFIG_PATH is restored
+            assert out[4] == out[16], raw
+            # Check that PKG_CONFIG_PATH changed after activation
+            assert out[4] != out[9], raw
 
     activation_tester(Fish)

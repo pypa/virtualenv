@@ -22,6 +22,14 @@ deactivate () {
         export PYTHONHOME
         unset _OLD_VIRTUAL_PYTHONHOME
     fi
+    if [ -n "${_OLD_PKG_CONFIG_PATH-}" ] ; then
+        PKG_CONFIG_PATH="$_OLD_PKG_CONFIG_PATH"
+        export PKG_CONFIG_PATH
+        unset _OLD_PKG_CONFIG_PATH
+    else
+        # if PKG_CONFIG_PATH was not set before, we should unset it
+        unset PKG_CONFIG_PATH
+    fi
 
     # The hash command must be called to get it to forget past
     # commands. Without forgetting past commands the $PATH changes
@@ -54,6 +62,12 @@ export VIRTUAL_ENV
 _OLD_VIRTUAL_PATH="$PATH"
 PATH="$VIRTUAL_ENV/"__BIN_NAME__":$PATH"
 export PATH
+
+if [ -n "${PKG_CONFIG_PATH-}" ] ; then
+    _OLD_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"
+fi
+PKG_CONFIG_PATH="$VIRTUAL_ENV/lib/pkgconfig${PKG_CONFIG_PATH:+:}${PKG_CONFIG_PATH}"
+export PKG_CONFIG_PATH
 
 if [ "x"__VIRTUAL_PROMPT__ != x ] ; then
     VIRTUAL_ENV_PROMPT=__VIRTUAL_PROMPT__
