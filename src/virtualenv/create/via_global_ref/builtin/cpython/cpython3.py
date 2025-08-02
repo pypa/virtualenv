@@ -69,7 +69,19 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     def executables(cls, interpreter):
-        return super().sources(interpreter)
+        sources = super().sources(interpreter)
+        if interpreter.version_info >= (3, 13):
+
+            def _sources():
+                for ref in sources:
+                    if ref.path.name == "pythonw.exe":
+                        w_launcher_path = ref.path.with_name("venvwlauncher.exe")
+                        if w_launcher_path.exists():
+                            ref.path = w_launcher_path
+                    yield ref
+
+            return _sources()
+        return sources
 
     @classmethod
     def has_shim(cls, interpreter):
