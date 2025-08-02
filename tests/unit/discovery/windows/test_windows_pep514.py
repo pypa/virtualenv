@@ -80,7 +80,7 @@ def test_pep514():
         ),
         ("CompanyA", 3, 6, 64, False, "Z:\\CompanyA\\Python\\3.6\\python.exe", None),
         ("PythonCore", 2, 7, 64, False, "C:\\Python27\\python.exe", None),
-        ("PythonCore", 3, 7, 64, False, "C:\\Python37\\python.exe", None),
+        ("PythonCore", 3, 7, 64, False, "C:\\Python37\\python3.exe", None),
     ]
 
 
@@ -100,7 +100,7 @@ def test_pep514_run(capsys, caplog):
     ('PythonCore', 3, 10, 32, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python310-32\\python.exe', None)
     ('PythonCore', 3, 12, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python312\\python.exe', None)
     ('PythonCore', 3, 13, 64, True, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\python3.13t.exe', None)
-    ('PythonCore', 3, 7, 64, False, 'C:\\Python37\\python.exe', None)
+    ('PythonCore', 3, 7, 64, False, 'C:\\Python37\\python3.exe', None)
     ('PythonCore', 3, 8, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python38\\python.exe', None)
     ('PythonCore', 3, 9, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe', None)
     ('PythonCore', 3, 9, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe', None)
@@ -121,3 +121,54 @@ def test_pep514_run(capsys, caplog):
         f"{prefix}HKEY_CURRENT_USER/PythonCore/3.X error: invalid format 3.X",
     ]
     assert caplog.messages == expected_logs
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="no Windows registry")
+def test_pep514_python3_fallback(mocker, tmp_path):
+    from virtualenv.discovery.windows import pep514
+    from virtualenv.discovery.windows.pep514 import winreg
+
+    # Create a mock python3.exe, but no python.exe
+    python3_exe = tmp_path / "python3.exe"
+    python3_exe.touch()
+    mocker.patch("os.path.exists", side_effect=lambda p: str(p) == str(python3_exe))
+
+    # Mock winreg functions to simulate a single Python installation
+    mock_key = mocker.MagicMock()
+
+    def open_key_ex(key, sub_key, *args, **kwargs):
+        if sub_key == r"Software\Python":
+            return "Python"
+        if key == "Python" and sub_key == "PythonCore":
+            return "PythonCore"
+        if key == "PythonCore" and sub_key == "3.7-32":
+            return "3.7-32"
+        if key == "3.7-32" and sub_key == "InstallPath":
+            return mock_key
+        raise FileNotFoundError
+
+    mocker.patch.object(winreg, "OpenKeyEx", side_effect=open_key_ex)
+
+    def enum_key(key, at):
+        if key == "Python" and at == 0:
+            return "PythonCore"
+        if key == "PythonCore" and at == 0:
+            return "3.7-32"
+        raise StopIteration
+
+    mocker.patch.object(winreg, "EnumKey", side_effect=enum_key)
+
+    def get_value(key, name):
+        if name == "ExecutablePath":
+            raise FileNotFoundError
+        if name is None:
+            return str(tmp_path)
+        return "3.7"
+
+    mocker.patch.object(winreg, "QueryValueEx", side_effect=get_value)
+    mocker.patch.object(pep514, "load_arch_data", return_value=32)
+    mocker.patch.object(pep514, "load_threaded", return_value=False)
+
+    interpreters = list(pep514.discover_pythons())
+
+    assert interpreters == [("PythonCore", 3, 7, 32, False, str(python3_exe), None)]
