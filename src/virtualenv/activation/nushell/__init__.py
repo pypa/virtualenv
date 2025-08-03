@@ -12,6 +12,8 @@ class NushellActivator(ViaTemplateActivator):
         """
         Nushell supports raw strings like: r###'this is a string'###.
 
+        https://github.com/nushell/nushell.github.io/blob/main/book/working_with_strings.md
+
         This method finds the maximum continuous sharps in the string and then
         quote it with an extra sharp.
         """
@@ -32,6 +34,8 @@ class NushellActivator(ViaTemplateActivator):
             "__VIRTUAL_ENV__": str(creator.dest),
             "__VIRTUAL_NAME__": creator.env_name,
             "__BIN_NAME__": str(creator.bin_dir.relative_to(creator.dest)),
+            "__TCL_LIBRARY__": creator.interpreter.tcl_lib or "",
+            "__TK_LIBRARY__": creator.interpreter.tk_lib or "",
         }
 
 

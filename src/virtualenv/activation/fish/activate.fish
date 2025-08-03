@@ -26,6 +26,23 @@ function deactivate -d 'Exit virtualenv mode and return to the normal environmen
         set -e _OLD_VIRTUAL_PATH
     end
 
+    if test -n __TCL_LIBRARY__
+      if test -n "$_OLD_VIRTUAL_TCL_LIBRARY";
+        set -gx TCL_LIBRARY "$_OLD_VIRTUAL_TCL_LIBRARY";
+        set -e _OLD_VIRTUAL_TCL_LIBRARY;
+      else;
+        set -e TCL_LIBRARY;
+      end
+    end
+    if test -n __TK_LIBRARY__
+      if test -n "$_OLD_VIRTUAL_TK_LIBRARY";
+        set -gx TK_LIBRARY "$_OLD_VIRTUAL_TK_LIBRARY";
+        set -e _OLD_VIRTUAL_TK_LIBRARY;
+      else;
+        set -e TK_LIBRARY;
+      end
+    end
+
     if test -n "$_OLD_VIRTUAL_PYTHONHOME"
         set -gx PYTHONHOME "$_OLD_VIRTUAL_PYTHONHOME"
         set -e _OLD_VIRTUAL_PYTHONHOME
@@ -67,6 +84,19 @@ else
     set -gx _OLD_VIRTUAL_PATH $PATH
 end
 set -gx PATH "$VIRTUAL_ENV"'/'__BIN_NAME__ $PATH
+
+if test -n __TCL_LIBRARY__
+  if set -q TCL_LIBRARY;
+    set -gx _OLD_VIRTUAL_TCL_LIBRARY $TCL_LIBRARY;
+  end
+  set -gx TCL_LIBRARY '__TCL_LIBRARY__'
+end
+if test -n __TK_LIBRARY__
+  if set -q TK_LIBRARY;
+    set -gx _OLD_VIRTUAL_TK_LIBRARY $TK_LIBRARY;
+  end
+  set -gx TK_LIBRARY '__TK_LIBRARY__'
+end
 
 # Prompt override provided?
 # If not, just use the environment name.

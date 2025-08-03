@@ -8,7 +8,7 @@ from pathlib import Path
 from textwrap import dedent
 
 from virtualenv.create.describe import Python3Supports
-from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
+from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest, PathRefToDest
 from virtualenv.create.via_global_ref.store import is_store_python
 
 from .common import CPython, CPythonPosix, CPythonWindows, is_mac_os_framework, is_macos_brew
@@ -69,7 +69,35 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     def executables(cls, interpreter):
-        return super().sources(interpreter)
+        sources = super().sources(interpreter)
+        if interpreter.version_info >= (3, 13):
+            # Create new refs with corrected launcher paths
+            updated_sources = []
+            for ref in sources:
+                if ref.src.name == "python.exe":
+                    launcher_path = ref.src.with_name("venvlauncher.exe")
+                    if launcher_path.exists():
+                        new_ref = ExePathRefToDest(
+                            launcher_path, dest=ref.dest, targets=[ref.base, *ref.aliases], must=ref.must, when=ref.when
+                        )
+                        updated_sources.append(new_ref)
+                        continue
+                elif ref.src.name == "pythonw.exe":
+                    w_launcher_path = ref.src.with_name("venvwlauncher.exe")
+                    if w_launcher_path.exists():
+                        new_ref = ExePathRefToDest(
+                            w_launcher_path,
+                            dest=ref.dest,
+                            targets=[ref.base, *ref.aliases],
+                            must=ref.must,
+                            when=ref.when,
+                        )
+                        updated_sources.append(new_ref)
+                        continue
+                # Keep the original ref unchanged
+                updated_sources.append(ref)
+            return updated_sources
+        return sources
 
     @classmethod
     def has_shim(cls, interpreter):
@@ -77,7 +105,11 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     def shim(cls, interpreter):
-        shim = Path(interpreter.system_stdlib) / "venv" / "scripts" / "nt" / "python.exe"
+        root = Path(interpreter.system_stdlib) / "venv" / "scripts" / "nt"
+        # Before 3.13 the launcher was called python.exe, after is venvlauncher.exe
+        # https://github.com/python/cpython/issues/112984
+        exe_name = "venvlauncher.exe" if interpreter.version_info >= (3, 13) else "python.exe"
+        shim = root / exe_name
         if shim.exists():
             return shim
         return None
