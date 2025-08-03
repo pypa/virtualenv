@@ -1,3 +1,0 @@
-When no discovery plugins are found, the application would crash with a StopIteration.
-This change catches the StopIteration and raises a RuntimeError with a more informative message.
-Contributed by :user:`esafak`.
