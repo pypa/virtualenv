@@ -7,6 +7,7 @@ caching.
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 import random
@@ -58,14 +59,23 @@ def _get_via_file_cache(cls, app_data, path, exe, env):
         path_modified = path.stat().st_mtime
     except OSError:
         path_modified = -1
+    py_info_script = Path(os.path.abspath(__file__)).parent / "py_info.py"
+    try:
+        py_info_hash = hashlib.sha256(py_info_script.read_bytes()).hexdigest()
+    except OSError:
+        py_info_hash = None
+
     if app_data is None:
         app_data = AppDataDisabled()
     py_info, py_info_store = None, app_data.py_info(path)
     with py_info_store.locked():
         if py_info_store.exists():  # if exists and matches load
             data = py_info_store.read()
-            of_path, of_st_mtime, of_content = data["path"], data["st_mtime"], data["content"]
-            if of_path == path_text and of_st_mtime == path_modified:
+            of_path = data.get("path")
+            of_st_mtime = data.get("st_mtime")
+            of_content = data.get("content")
+            of_hash = data.get("hash")
+            if of_path == path_text and of_st_mtime == path_modified and of_hash == py_info_hash:
                 py_info = cls._from_dict(of_content.copy())
                 sys_exe = py_info.system_executable
                 if sys_exe is not None and not os.path.exists(sys_exe):
@@ -80,6 +90,7 @@ def _get_via_file_cache(cls, app_data, path, exe, env):
                     "st_mtime": path_modified,
                     "path": path_text,
                     "content": py_info._to_dict(),  # noqa: SLF001
+                    "hash": py_info_hash,
                 }
                 py_info_store.write(data)
             else:
