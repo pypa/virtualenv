@@ -130,13 +130,13 @@ class ActivationTester:
         ]
 
     def assert_output(self, out, raw, tmp_path):
-        # pre-activation
+        """Compare _get_test_lines() with the expected values."""
         assert out[0], raw
         assert out[1] == "None", raw
         assert out[2] == "None", raw
-        # post-activation
-        expected = self._creator.exe.parent / os.path.basename(sys.executable)
-        assert self.norm_path(out[3]) == self.norm_path(expected), raw
+        # self.activate_call(activate_script) runs at this point
+        python_exe = self._creator.exe.parent / os.path.basename(sys.executable)
+        assert self.norm_path(out[3]) == self.norm_path(python_exe), raw
         assert self.norm_path(out[4]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
         assert out[5] == self._creator.env_name
         # Some attempts to test the prompt output print more than 1 line.
@@ -232,6 +232,7 @@ def raise_on_non_source_class():
 def activation_python(request, tmp_path_factory, special_char_name, current_fastest):
     dest = os.path.join(str(tmp_path_factory.mktemp("activation-tester-env")), special_char_name)
     cmd = ["--without-pip", dest, "--creator", current_fastest, "-vv", "--no-periodic-update"]
+    # `params` is accessed here. https://docs.pytest.org/en/stable/reference/reference.html#pytest-fixture
     if request.param:
         cmd += ["--prompt", special_char_name]
     session = cli_run(cmd)

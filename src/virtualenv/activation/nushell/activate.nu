@@ -58,6 +58,12 @@ export-env {
         __VIRTUAL_PROMPT__
     }
     let new_env = { $path_name: $new_path VIRTUAL_ENV: $virtual_env VIRTUAL_ENV_PROMPT: $virtual_env_prompt }
+    if (has-env 'TCL_LIBRARY')  {
+        let $new_env = $new_env | insert TCL_LIBRARY __TCL_LIBRARY__
+    }
+    if (has-env 'TK_LIBRARY')  {
+        let $new_env = $new_env | insert TK_LIBRARY __TK_LIBRARY__
+    }
     let old_prompt_command = if (has-env 'PROMPT_COMMAND') { $env.PROMPT_COMMAND } else { '' }
     let new_env = if (is-env-true 'VIRTUAL_ENV_DISABLE_PROMPT') {
         $new_env

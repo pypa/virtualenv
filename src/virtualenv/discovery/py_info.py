@@ -123,6 +123,8 @@ class PythonInfo:  # noqa: PLR0904
 
         self.sysconfig_vars = {i: sysconfig.get_config_var(i or "") for i in config_var_keys}
 
+        self.tcl_lib, self.tk_lib = self._get_tcl_tk_libs() if "TCL_LIBRARY" in os.environ else None, None
+
         confs = {
             k: (self.system_prefix if v is not None and v.startswith(self.prefix) else v)
             for k, v in self.sysconfig_vars.items()
@@ -131,6 +133,59 @@ class PythonInfo:  # noqa: PLR0904
         self.system_stdlib_platform = self.sysconfig_path("platstdlib", confs)
         self.max_size = getattr(sys, "maxsize", getattr(sys, "maxint", None))
         self._creators = None
+
+    @staticmethod
+    def _get_tcl_tk_libs():
+        """
+        Detects the tcl and tk libraries using tkinter.
+
+        This works reliably but spins up tkinter, which is heavy if you don't need it.
+        """
+        tcl_lib, tk_lib = None, None
+        try:
+            import tkinter as tk  # noqa: PLC0415
+        except ImportError:
+            pass
+        else:
+            try:
+                tcl = tk.Tcl()
+                tcl_lib = tcl.eval("info library")
+
+                # Try to get TK library path directly first
+                try:
+                    tk_lib = tcl.eval("set tk_library")
+                    if tk_lib and os.path.isdir(tk_lib):
+                        pass  # We found it directly
+                    else:
+                        tk_lib = None  # Reset if invalid
+                except tk.TclError:
+                    tk_lib = None
+
+                # If direct query failed, try constructing the path
+                if tk_lib is None:
+                    tk_version = tcl.eval("package require Tk")
+                    tcl_parent = os.path.dirname(tcl_lib)
+
+                    # Try different version formats
+                    version_variants = [
+                        tk_version,  # Full version like "8.6.12"
+                        ".".join(tk_version.split(".")[:2]),  # Major.minor like "8.6"
+                        tk_version.split(".")[0],  # Just major like "8"
+                    ]
+
+                    for version in version_variants:
+                        tk_lib_path = os.path.join(tcl_parent, f"tk{version}")
+                        if not os.path.isdir(tk_lib_path):
+                            continue
+                        # Validate it's actually a TK directory
+                        if os.path.exists(os.path.join(tk_lib_path, "tk.tcl")):
+                            tk_lib = tk_lib_path
+                            break
+
+            except tk.TclError:
+                pass
+
+        return tcl_lib, tk_lib
 
     def _fast_get_system_executable(self):
         """Try to get the system executable by just looking at properties."""
