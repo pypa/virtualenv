@@ -518,7 +518,7 @@ class PythonInfo:  # noqa: PLR0904
             prefixes[prefix] = target
             target = target.discover_exe(app_data, prefix=prefix, exact=False)
         if target.executable != target.system_executable:
-            target = cls.from_exe(target.system_executable, app_data)
+            target = cls.from_exe(target.system_executable, app_data, resolve_to_host=target.implementation != "PyPy")
         target.executable = start_executable
         return target
 
