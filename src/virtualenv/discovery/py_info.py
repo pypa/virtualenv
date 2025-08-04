@@ -209,11 +209,11 @@ class PythonInfo:  # noqa: PLR0904
                             # search relative to the directory of sys._base_executable
                             base_dir = os.path.dirname(base_executable)
                             # Debug: Check what's actually in base_dir
-                            LOGGER.debug(f"base_executable: {base_executable}")
-                            LOGGER.debug(f"base_dir: {base_dir}")
+                            print(f"base_executable: {base_executable}")
+                            print(f"base_dir: {base_dir}")
                             if os.path.exists(base_dir):
                                 files = os.listdir(base_dir)
-                                LOGGER.debug(f"Files in base_dir: {files}")
+                                print(f"Files in base_dir: {files}")
 
                             candidates = [f"python{major}", f"python{major}.{minor}"]
                             if self.implementation == "PyPy":
@@ -221,7 +221,7 @@ class PythonInfo:  # noqa: PLR0904
 
                             for candidate in candidates:
                                 full_path = os.path.join(base_dir, candidate)
-                                LOGGER.debug(f"Checking candidate: {full_path}")
+                                print(f"Checking candidate: {full_path}")
                                 if os.path.exists(full_path):
                                     return full_path
             return None  # in this case we just can't tell easily without poking around FS and calling them, bail

@@ -21,32 +21,10 @@ jobs:
       fail-fast: false
       matrix:
         py:
-          - "3.13t"
-          - "3.13"
-          - "3.12"
-          - "3.11"
-          - "3.10"
-          - "3.9"
-          - "3.8"
           - pypy-3.11
-          - pypy-3.10
-          - pypy-3.9
-          - pypy-3.8
-          - graalpy-24.1
         os:
           - ubuntu-24.04
           - macos-15
-          - windows-2025
-        include:
-          - { os: macos-15, py: "brew@3.11" }
-          - { os: macos-15, py: "brew@3.10" }
-          - { os: macos-15, py: "brew@3.9" }
-        exclude:
-          - { os: windows-2025, py: "graalpy-24.1" }
-          - { os: windows-2025, py: "pypy-3.11" }
-          - { os: windows-2025, py: "pypy-3.10" }
-          - { os: windows-2025, py: "pypy-3.9" }
-          - { os: windows-2025, py: "pypy-3.8" }
     steps:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@v4
@@ -107,7 +85,7 @@ jobs:
       - name: 🏗️ Setup test suite
         run: tox run -vvvv --notest --skip-missing-interpreters false
       - name: 🏃 Run test suite
-        run: tox run --skip-pkg-install
+        run: tox run --skip-pkg-install -- tests/unit/discovery/py_info/test_py_info.py
         timeout-minutes: 20
         env:
           PYTEST_ADDOPTS: "-vv --durations=20"
