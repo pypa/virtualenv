@@ -79,7 +79,7 @@ if ! [ -z "${PYTHONHOME+_}" ] ; then
     unset PYTHONHOME
 fi
 
-if [ __TCL_LIBRARY__ != "''" ]; then
+if [ "x"__TCL_LIBRARY__ != x ]; then
     if ! [ -z "${TCL_LIBRARY+_}" ] ; then
         _OLD_VIRTUAL_TCL_LIBRARY="$TCL_LIBRARY"
     fi
@@ -87,7 +87,7 @@ if [ __TCL_LIBRARY__ != "''" ]; then
     export TCL_LIBRARY
 fi
 
-if [ __TK_LIBRARY__ != "''" ]; then
+if [ "x"__TK_LIBRARY__ != x ]; then
     if ! [ -z "${TK_LIBRARY+_}" ] ; then
         _OLD_VIRTUAL_TK_LIBRARY="$TK_LIBRARY"
     fi

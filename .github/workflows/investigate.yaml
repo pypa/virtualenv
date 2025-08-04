@@ -1,0 +1,43 @@
+name: Investigate Shell Activation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  investigate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shell: [bash, csh, fish, nu]
+        mode: [source, published]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ "${{ matrix.mode }}" = "source" ]; then
+            pip install -e .
+          else
+            pip install virtualenv
+          fi
+      - name: Install Shells
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y csh fish
+          curl -fsSL https://apt.fury.io/nushell/gpg.key | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/fury-nushell.gpg
+          echo "deb https://apt.fury.io/nushell/ /" | sudo tee /etc/apt/sources.list.d/fury.list
+          sudo apt update
+          sudo apt install nushell
+      - name: Run investigation script
+        working-directory: ${{ github.workspace }}
+        run: |
+          chmod +x investigate.${{ matrix.shell }}
+          ${{ matrix.shell }} investigate.${{ matrix.shell }}
