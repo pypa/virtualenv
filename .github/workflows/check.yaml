@@ -49,6 +49,44 @@ jobs:
         if: ${{ !startsWith(matrix.py, 'brew@') }}
         with:
           python-version: ${{ matrix.py }}
+      -  name: 🔍 Debug PyPy installation
+         if: ${{ startsWith(matrix.py, 'pypy') }}
+         shell: bash
+         run: |
+           echo "=== Python executable info ==="
+           python -c "import sys; print(f'sys.executable: {sys.executable}')"
+           python -c "import sys; print(f'sys._base_executable: {getattr(sys, \"_base_executable\", \"Not set\")}')"
+           python -c "import sys; print(f'sys.prefix: {sys.prefix}')"
+           python -c "import sys; print(f'sys.base_prefix: {sys.base_prefix}')"
+           
+           echo -e "\n=== Directory structure ==="
+           if [[ -n "${RUNNER_TOOL_CACHE}" ]]; then
+             echo "RUNNER_TOOL_CACHE: ${RUNNER_TOOL_CACHE}"
+             find ${RUNNER_TOOL_CACHE}/PyPy -name "*pypy*" -type f 2>/dev/null || echo "No pypy files found in tool cache"
+           fi
+           
+           echo -e "\n=== Base executable directory contents ==="
+           python -c "
+           import sys, os
+           base_exec = getattr(sys, '_base_executable', None)
+           if base_exec:
+               base_dir = os.path.dirname(base_exec)
+               print(f'base_executable: {base_exec}')
+               print(f'base_dir: {base_dir}')
+               if os.path.exists(base_dir):
+                   files = [f for f in os.listdir(base_dir) if 'py' in f.lower()]
+                   print(f'Python-related files in base_dir: {files}')
+               else:
+                   print('base_dir does not exist')
+           else:
+               print('_base_executable not set')
+           "
+           
+           echo -e "\n=== PATH executables ==="
+           which python || echo "python not in PATH"
+           which python3 || echo "python3 not in PATH" 
+           which pypy || echo "pypy not in PATH"
+           which pypy3 || echo "pypy3 not in PATH"
       - name: 🛠️ Install OS dependencies
         shell: bash
         run: |
