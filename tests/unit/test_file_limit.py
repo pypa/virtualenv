@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import sys
+import typing
 
 import pytest
 
@@ -30,10 +31,15 @@ def test_too_many_open_files(tmp_path):
     try:
         fds.extend(os.open(os.devnull, os.O_RDONLY) for _ in range(20))
 
-        with pytest.raises(SystemExit) as excinfo:
+        # Typically SystemExit, but RuntimeError was observed in RedHat
+        expected_exception = typing.Union[SystemExit, RuntimeError]
+        with pytest.raises(expected_exception) as too_many_open_files_exc:
             cli_run([str(tmp_path / "venv")])
 
-        assert excinfo.value.code != 0
+        if too_many_open_files_exc is SystemExit:
+            assert too_many_open_files_exc.value.code != 0
+        else:
+            assert "Too many open files" in str(too_many_open_files_exc.value)
 
     finally:
         for fd in fds:
