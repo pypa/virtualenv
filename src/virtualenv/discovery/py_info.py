@@ -212,12 +212,12 @@ class PythonInfo:  # noqa: PLR0904
 
                             # Add PyPy-specific names if we're running PyPy
                             if self.implementation == "PyPy":
-                                candidates.extend([f"pypy{major}", f"pypy{major}.{minor}", "pypy3"])
+                                candidates.extend(["pypy", "pypy3", f"pypy{major}", f"pypy{major}.{minor}"])
 
                             for candidate in candidates:
-                                base_executable = os.path.join(base_dir, candidate)
-                                if os.path.exists(base_executable):
-                                    return base_executable
+                                full_path = os.path.join(base_dir, candidate)
+                                if os.path.exists(full_path):
+                                    return full_path
             return None  # in this case we just can't tell easily without poking around FS and calling them, bail
         # if we're not in a virtual environment, this is already a system python, so return the original executable
         # note we must choose the original and not the pure executable as shim scripts might throw us off
