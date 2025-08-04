@@ -208,9 +208,14 @@ class PythonInfo:  # noqa: PLR0904
                         if self.os == "posix" and (major, minor) >= (3, 11):
                             # search relative to the directory of sys._base_executable
                             base_dir = os.path.dirname(base_executable)
-                            for base_executable in [
-                                os.path.join(base_dir, exe) for exe in (f"python{major}", f"python{major}.{minor}")
-                            ]:
+                            candidates = [f"python{major}", f"python{major}.{minor}"]
+
+                            # Add PyPy-specific names if we're running PyPy
+                            if self.implementation == "PyPy":
+                                candidates.extend([f"pypy{major}", f"pypy{major}.{minor}", "pypy3"])
+
+                            for candidate in candidates:
+                                base_executable = os.path.join(base_dir, candidate)
                                 if os.path.exists(base_executable):
                                     return base_executable
             return None  # in this case we just can't tell easily without poking around FS and calling them, bail
