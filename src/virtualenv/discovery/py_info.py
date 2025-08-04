@@ -208,10 +208,6 @@ class PythonInfo:  # noqa: PLR0904
                         if self.os == "posix" and (major, minor) >= (3, 11):
                             # search relative to the directory of sys._base_executable
                             base_dir = os.path.dirname(base_executable)
-                            # Debug: Check what's actually in base_dir
-                            if os.path.exists(base_dir):
-                                os.listdir(base_dir)
-
                             candidates = [f"python{major}", f"python{major}.{minor}"]
                             if self.implementation == "PyPy":
                                 candidates.extend(["pypy", "pypy3", f"pypy{major}", f"pypy{major}.{minor}"])
@@ -220,6 +216,18 @@ class PythonInfo:  # noqa: PLR0904
                                 full_path = os.path.join(base_dir, candidate)
                                 if os.path.exists(full_path):
                                     return full_path
+
+                    # Special case: If we're running PyPy and sys.executable == base_executable,
+                    # try to find a PyPy-specific executable in the same directory
+                    elif self.implementation == "PyPy" and os.path.exists(base_executable):
+                        base_dir = os.path.dirname(base_executable)
+                        major, minor = self.version_info.major, self.version_info.minor
+                        pypy_candidates = ["pypy", "pypy3", f"pypy{major}", f"pypy{major}.{minor}"]
+
+                        for candidate in pypy_candidates:
+                            full_path = os.path.join(base_dir, candidate)
+                            if os.path.exists(full_path) and full_path != sys.executable:
+                                return full_path
             return None  # in this case we just can't tell easily without poking around FS and calling them, bail
         # if we're not in a virtual environment, this is already a system python, so return the original executable
         # note we must choose the original and not the pure executable as shim scripts might throw us off
