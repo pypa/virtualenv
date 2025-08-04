@@ -517,8 +517,8 @@ class PythonInfo:  # noqa: PLR0904
                 raise RuntimeError(msg)
             prefixes[prefix] = target
             target = target.discover_exe(app_data, prefix=prefix, exact=False)
-        if target.executable != target.system_executable:
-            target = cls.from_exe(target.system_executable, app_data, resolve_to_host=target.implementation != "PyPy")
+        if target.executable != target.system_executable and target.system_executable not in visited:
+            target = cls.from_exe(target.system_executable, app_data)
         target.executable = start_executable
         return target
 
