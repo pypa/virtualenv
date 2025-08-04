@@ -493,7 +493,15 @@ class PythonInfo:  # noqa: PLR0904
     def _resolve_to_system(cls, app_data, target):
         start_executable = target.executable
         prefixes = OrderedDict()
+        visited = set()
+
         while target.system_executable is None:
+            if target.executable in visited:
+                LOGGER.error("Recursion detected resolving %s, aborting", start_executable)
+                target.system_executable = start_executable
+                break
+            visited.add(target.executable)
+
             prefix = target.real_prefix or target.base_prefix or target.prefix
             if prefix in prefixes:
                 if len(prefixes) == 1:
@@ -501,6 +509,7 @@ class PythonInfo:  # noqa: PLR0904
                     LOGGER.info("%r links back to itself via prefixes", target)
                     target.system_executable = target.executable
                     break
+
                 for at, (p, t) in enumerate(prefixes.items(), start=1):
                     LOGGER.error("%d: prefix=%s, info=%r", at, p, t)
                 LOGGER.error("%d: prefix=%s, info=%r", len(prefixes) + 1, prefix, target)
