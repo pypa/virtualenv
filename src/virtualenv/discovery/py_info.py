@@ -204,8 +204,12 @@ class PythonInfo:  # noqa: PLR0904
             return None
 
         base_executable = getattr(sys, "_base_executable", None)
-        if base_executable is None or sys.executable == base_executable:
-            print("DEBUG: sys._base_executable is None or sys.executable", base_executable is None)  # noqa: T201
+        if base_executable is None:
+            print("DEBUG: sys._base_executable is None")  # noqa: T201
+            return None
+
+        if sys.executable == base_executable and self.implementation != "PyPy":
+            print("DEBUG: sys._base_executable is base_executable")  # noqa: T201
             return None
 
         if os.path.exists(base_executable):

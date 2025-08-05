@@ -21,6 +21,7 @@ jobs:
       fail-fast: false
       matrix:
         py:
+          - pypy-3.10
           - pypy-3.11
         os:
           - ubuntu-24.04

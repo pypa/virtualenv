@@ -443,6 +443,7 @@ def test_fallback_existent_system_executable(mocker):
     # that "python" is not required and the standard `make install` does not provide one
 
     # Falsify some data to look like we're in a venv
+    assert current.system_executable is not None, current
     current.prefix = current.exec_prefix = "/tmp/tmp.izZNCyINRj/venv"  # noqa: S108
     current.executable = current.original_executable = os.path.join(current.prefix, "bin/python")
 
