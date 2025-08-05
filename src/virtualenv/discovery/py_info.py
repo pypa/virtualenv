@@ -195,28 +195,34 @@ class PythonInfo:  # noqa: PLR0904
         # if we're not in a virtual environment, this is already a system python, so return the original executable
         # note we must choose the original and not the pure executable as shim scripts might throw us off
         if not (self.real_prefix or (self.base_prefix is not None and self.base_prefix != self.prefix)):
+            print("DEBUG: not a venv, use original executable")  # noqa: T201
             return self.original_executable
 
         # if this is NOT a virtual environment, can't determine easily, bail out
         if self.real_prefix is not None:
+            print("DEBUG: old virtualenv, cannot determine easily")  # noqa: T201
             return None
 
         base_executable = sys._base_executable  # noqa: SLF001 some platforms may set this to help us
         if base_executable is None:
+            print("DEBUG: sys._base_executable is None, cannot determine easily")  # noqa: T201
             return None
 
         # use the saved system executable if present
         if sys.executable == base_executable:
             # We're not in a venv and base_executable exists; use it directly
             if os.path.exists(base_executable):
+                print("DEBUG: sys.executable == sys._base_executable and exists, use it")  # noqa: T201
                 return base_executable
             return None
 
         # we know we're in a virtual environment; it can not be us
         if os.path.exists(base_executable):
+            print("DEBUG: sys._base_executable exists, use it")  # noqa: T201
             return base_executable
 
         # Try fallback for POSIX virtual environments
+        print("DEBUG: sys._base_executable is None, cannot determine easily")  # noqa: T201
         return self._try_posix_fallback_executable(base_executable)
 
     def _try_posix_fallback_executable(self, base_executable):
@@ -225,13 +231,14 @@ class PythonInfo:  # noqa: PLR0904
 
         Python may return "python" because it was invoked from the POSIX virtual environment
         however some installs/distributions do not provide a version-less "python" binary in
-        the system install location (see PEP 394) so try to fallback to a versioned binary.
+        the system install location (see PEP 394) so try to fall back to a versioned binary.
 
         Gate this to Python 3.11 as `sys._base_executable` path resolution is now relative to
         the 'home' key from pyvenv.cfg which often points to the system install location.
         """
         major, minor = self.version_info.major, self.version_info.minor
         if self.os != "posix" or (major, minor) < (3, 11):
+            print("DEBUG: not posix or python < 3.11, cannot determine easily")  # noqa: T201
             return None
 
         # search relative to the directory of sys._base_executable
@@ -243,8 +250,10 @@ class PythonInfo:  # noqa: PLR0904
         for candidate in candidates:
             full_path = os.path.join(base_dir, candidate)
             if os.path.exists(full_path):
+                print(f"DEBUG: found fallback executable {full_path}")  # noqa: T201
                 return full_path
 
+        print("DEBUG: no fallback executable")  # noqa: T201
         return None  # in this case we just can't tell easily without poking around FS and calling them, bail
 
     def install_path(self, key):

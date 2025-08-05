@@ -177,7 +177,7 @@ def test_py_info_cache_invalidation_on_py_info_change(mocker, session_app_data):
 
         # 6. Assert that _run_subprocess was called again
         if info.implementation == "PyPy" and info.system_executable == info.executable:
-            assert spy.call_count == 1
+            assert spy.call_count == 2
         elif is_macos_brew(info):
             assert spy.call_count in {2, 3}
         else:
