@@ -6,7 +6,6 @@ import sys
 
 import pytest
 
-from src.virtualenv.info import IS_GRAALPY, IS_PYPY
 from virtualenv.info import IMPLEMENTATION
 from virtualenv.run import cli_run
 
@@ -33,10 +32,11 @@ def test_too_many_open_files(tmp_path):
     fds = []
     try:
         # JIT implementations use more file descriptors up front so we can run out early
-        if IS_GRAALPY or IS_PYPY:
-            with pytest.raises(OSError, match="Too many open files") as jit_exception:
-                fds.extend(os.open(os.devnull, os.O_RDONLY) for _ in range(20))
-            assert jit_exception.value.errno == errno.EMFILE
+        try:
+            fds.extend(os.open(os.devnull, os.O_RDONLY) for _ in range(20))
+        except OSError as jit_exceptions:  # pypy, graalpy
+            assert jit_exceptions.errno == errno.EMFILE  # noqa: PT017
+            assert "Too many open files" in str(jit_exceptions)  # noqa: PT017
 
         expected_exceptions = SystemExit, OSError, RuntimeError
         with pytest.raises(expected_exceptions) as too_many_open_files_exc:
