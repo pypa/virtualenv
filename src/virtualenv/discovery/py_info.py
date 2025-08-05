@@ -190,7 +190,7 @@ class PythonInfo:  # noqa: PLR0904
 
         return tcl_lib, tk_lib
 
-    def _fast_get_system_executable(self):  # noqa: PLR0911
+    def _fast_get_system_executable(self):
         """Try to get the system executable by just looking at properties."""
         # if we're not in a virtual environment, this is already a system python, so return the original executable
         # note we must choose the original and not the pure executable as shim scripts might throw us off
