@@ -12,6 +12,14 @@ class BashActivator(ViaTemplateActivator):
     def as_name(self, template):
         return Path(template).stem
 
+    def replacements(self, creator, dest):
+        data = super().replacements(creator, dest)
+        data.update({
+            "__TCL_LIBRARY__": creator.interpreter.tcl_lib or "",
+            "__TK_LIBRARY__": creator.interpreter.tk_lib or "",
+        })
+        return data
+
 
 __all__ = [
     "BashActivator",
