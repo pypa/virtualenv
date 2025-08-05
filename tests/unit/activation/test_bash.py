@@ -48,11 +48,11 @@ def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     assert "unset _OLD_VIRTUAL_TK_LIBRARY" in content
 
     if present:
-        assert "if [ /path/to/tcl != \"\" ]; then" in content
+        assert 'if [ /path/to/tcl != "" ]; then' in content
         assert "TCL_LIBRARY=/path/to/tcl" in content
         assert "export TCL_LIBRARY" in content
 
-        assert "if [ /path/to/tk != \"\" ]; then" in content
+        assert 'if [ /path/to/tk != "" ]; then' in content
         assert "TK_LIBRARY=/path/to/tk" in content
         assert "export TK_LIBRARY" in content
     else:
