@@ -15,6 +15,8 @@ Describe what's the expected behavior and what you're observing.
 Provide at least:
 
 - OS:
+- Shell:
+- Python version and path:
 - `pip list` of the host python where `virtualenv` is installed:
 
   ```console

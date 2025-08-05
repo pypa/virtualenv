@@ -123,7 +123,10 @@ class PythonInfo:  # noqa: PLR0904
 
         self.sysconfig_vars = {i: sysconfig.get_config_var(i or "") for i in config_var_keys}
 
-        self.tcl_lib, self.tk_lib = self._get_tcl_tk_libs() if "TCL_LIBRARY" in os.environ else None, None
+        if "TCL_LIBRARY" in os.environ:
+            self.tcl_lib, self.tk_lib = self._get_tcl_tk_libs()
+        else:
+            self.tcl_lib, self.tk_lib = None, None
 
         confs = {
             k: (self.system_prefix if v is not None and v.startswith(self.prefix) else v)
