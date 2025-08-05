@@ -218,8 +218,12 @@ class PythonInfo:  # noqa: PLR0904
 
         # we know we're in a virtual environment; it can not be us
         if os.path.exists(base_executable):
-            print("DEBUG: sys._base_executable exists, use it")  # noqa: T201
-            return base_executable
+            # Try to check if this is actually a system Python
+            is_system_python = base_executable.startswith(self.base_prefix)
+            print("Checking base_executable starts with base_prefix:", is_system_python)  # noqa: T201
+            if base_executable.startswith(self.base_prefix):
+                print("DEBUG: sys._base_executable exists, use it")  # noqa: T201
+                return base_executable
 
         # Try fallback for POSIX virtual environments
         print("DEBUG: sys._base_executable is None, cannot determine easily")  # noqa: T201
