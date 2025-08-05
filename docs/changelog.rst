@@ -5,6 +5,16 @@ Release History
 
 .. towncrier release notes start
 
+v20.33.1 (2025-08-05)
+---------------------
+
+Bugfixes - 20.33.1
+~~~~~~~~~~~~~~~~~~
+- Correctly unpack _get_tcl_tk_libs() response in PythonInfo.
+  Contributed by :user:`esafak`. (:issue:`2930`)
+- Restore `py_info.py` timestamp in `test_py_info_cache_invalidation_on_py_info_change`
+  Contributed by :user:`esafak`. (:issue:`2933`)
+
 v20.33.0 (2025-08-03)
 ---------------------
 

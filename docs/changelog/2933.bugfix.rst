@@ -1,2 +1,0 @@
-Restore `py_info.py` timestamp in `test_py_info_cache_invalidation_on_py_info_change`
-Contributed by :user:`esafak`.
