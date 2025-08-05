@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import os
+import sys
 
 import pytest
 
 from virtualenv.run import cli_run
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="resource module not available on Windows")
 def test_too_many_open_files(tmp_path):
     """
     Test that we get a specific error message when we have too many open files.
