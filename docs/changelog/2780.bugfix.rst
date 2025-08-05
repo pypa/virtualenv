@@ -1,2 +1,0 @@
-Force UTF-8 encoding for pip download
-Contributed by :user:`esafak`.

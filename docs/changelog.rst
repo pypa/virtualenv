@@ -5,6 +5,40 @@ Release History
 
 .. towncrier release notes start
 
+v20.33.0 (2025-08-03)
+---------------------
+
+Features - 20.33.0
+~~~~~~~~~~~~~~~~~~
+- Added support for Tcl and Tkinter. You're welcome.
+  Contributed by :user:`esafak`. (:issue:`425`)
+
+Bugfixes - 20.33.0
+~~~~~~~~~~~~~~~~~~
+- Prevent logging setup when --help is passed, fixing a flaky test.
+  Contributed by :user:`esafak`. (:issue:`u`)
+- Fix cache invalidation for PythonInfo by hashing `py_info.py`.
+  Contributed by :user:`esafak`. (:issue:`2467`)
+- When no discovery plugins are found, the application would crash with a StopIteration.
+  This change catches the StopIteration and raises a RuntimeError with a more informative message.
+  Contributed by :user:`esafak`. (:issue:`2493`)
+- Stop `--try-first-with` overriding absolute `--python` paths.
+  Contributed by :user:`esafak`. (:issue:`2659`)
+- Force UTF-8 encoding for pip download
+  Contributed by :user:`esafak`. (:issue:`2780`)
+- Creating a virtual environment on a filesystem without symlink-support would fail even with `--copies`
+  Make `fs_supports_symlink` perform a real symlink creation check on all platforms.
+  Contributed by :user:`esafak`. (:issue:`2786`)
+- Add a note to the user guide recommending the use of a specific Python version when creating virtual environments.
+  Contributed by :user:`esafak`. (:issue:`2808`)
+- Fix 'Too many open files' error due to  a file descriptor leak in virtualenv's locking mechanism.
+  Contributed by :user:`esafak`. (:issue:`2834`)
+- Support renamed Windows venv redirector (`venvlauncher.exe` and `venvwlauncher.exe`) on Python 3.13
+  Contributed by :user:`esafak`. (:issue:`2851`)
+- Resolve Nushell activation script deprecation warnings by dynamically selecting the ``--optional`` flag for Nushell
+  ``get`` command on version 0.106.0 and newer, while retaining the deprecated ``-i`` flag for older versions to maintain
+  compatibility. Contributed by :user:`gaborbernat`. (:issue:`2910`)
+
 v20.32.0 (2025-07-20)
 ---------------------
 

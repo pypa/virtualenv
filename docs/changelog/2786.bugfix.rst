@@ -1,3 +1,0 @@
-Creating a virtual environment on a filesystem without symlink-support would fail even with `--copies`
-Make `fs_supports_symlink` perform a real symlink creation check on all platforms.
-Contributed by :user:`esafak`.
