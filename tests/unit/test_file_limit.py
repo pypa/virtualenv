@@ -5,8 +5,8 @@ import os
 import sys
 
 import pytest
-from virtualenv.info import IMPLEMENTATION
 
+from virtualenv.info import IMPLEMENTATION
 from virtualenv.run import cli_run
 
 
@@ -24,7 +24,7 @@ def test_too_many_open_files(tmp_path):
         resource.setrlimit(resource.RLIMIT_NOFILE, (32, hard_limit))
     except ValueError:
         pytest.skip("could not lower the soft limit for open files")
-    except AttributeError as exc:   # pypy, graalpy
+    except AttributeError as exc:  # pypy, graalpy
         if "module 'resource' has no attribute 'setrlimit'" in str(exc):
             pytest.skip(f"{IMPLEMENTATION} does not support resource.setrlimit")
 
