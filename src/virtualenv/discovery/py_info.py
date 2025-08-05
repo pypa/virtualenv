@@ -195,35 +195,28 @@ class PythonInfo:  # noqa: PLR0904
         # if we're not in a virtual environment, this is already a system python, so return the original executable
         # note we must choose the original and not the pure executable as shim scripts might throw us off
         if not (self.real_prefix or (self.base_prefix is not None and self.base_prefix != self.prefix)):
-            print("Warning: not in a virtual environment, using original executable")
             return self.original_executable
 
         # if this is NOT a virtual environment, can't determine easily, bail out
         if self.real_prefix is not None:
-            print("Warning: cannot determine system executable for old virtualenvs")
             return None
 
         base_executable = sys._base_executable  # noqa: SLF001 some platforms may set this to help us
         if base_executable is None:
-            print("Warning: cannot determine system executable for venvs without sys._base_executable")
             return None
 
         # use the saved system executable if present
         if sys.executable == base_executable:
             # We're not in a venv and base_executable exists; use it directly
             if os.path.exists(base_executable):
-                print("Warning: sys._base_executable is the same as sys.executable, using it directly")
                 return base_executable
-            print("Warning: sys._base_executable is the same as sys.executable, but does not exist")
             return None
 
         # we know we're in a virtual environment; it can not be us
         if os.path.exists(base_executable):
-            print("Warning: using sys._base_executable as system executable")
             return base_executable
 
         # Try fallback for POSIX virtual environments
-        print("Warning: sys._base_executable does not exist, trying fallback for POSIX virtual environments")
         return self._try_posix_fallback_executable(base_executable)
 
     def _try_posix_fallback_executable(self, base_executable):
@@ -239,7 +232,6 @@ class PythonInfo:  # noqa: PLR0904
         """
         major, minor = self.version_info.major, self.version_info.minor
         if self.os != "posix" or (major, minor) < (3, 11):
-            print("Warning: cannot determine system executable for non-POSIX or pre-3.11 virtual environments")
             return None
 
         # search relative to the directory of sys._base_executable
@@ -251,10 +243,8 @@ class PythonInfo:  # noqa: PLR0904
         for candidate in candidates:
             full_path = os.path.join(base_dir, candidate)
             if os.path.exists(full_path):
-                print("Warning: using POSIX fallback executable %s", full_path)
                 return full_path
 
-        print("Warning: no suitable POSIX fallback executable found in %s", base_dir)
         return None  # in this case we just can't tell easily without poking around FS and calling them, bail
 
     def install_path(self, key):
