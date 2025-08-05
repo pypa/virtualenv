@@ -165,6 +165,7 @@ def test_py_info_cache_invalidation_on_py_info_change(mocker, session_app_data):
     # 3. Modify the content of py_info.py
     py_info_script = Path(cached_py_info.__file__).parent / "py_info.py"
     original_content = py_info_script.read_text(encoding="utf-8")
+    original_stat = py_info_script.stat()
 
     try:
         # 4. Clear the in-memory cache
@@ -181,8 +182,9 @@ def test_py_info_cache_invalidation_on_py_info_change(mocker, session_app_data):
             assert spy.call_count == 2
 
     finally:
-        # Restore the original content
+        # Restore the original content and timestamp
         py_info_script.write_text(original_content, encoding="utf-8")
+        os.utime(str(py_info_script), (original_stat.st_atime, original_stat.st_mtime))
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")

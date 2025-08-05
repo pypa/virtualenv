@@ -1,0 +1,2 @@
+Correctly unpack _get_tcl_tk_libs() response in PythonInfo.
+Contributed by :user:`esafak`.
