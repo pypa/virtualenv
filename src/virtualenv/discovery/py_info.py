@@ -190,51 +190,62 @@ class PythonInfo:  # noqa: PLR0904
 
         return tcl_lib, tk_lib
 
-    def _fast_get_system_executable(self):
+    def _fast_get_system_executable(self):  # noqa: PLR0911
         """Try to get the system executable by just looking at properties."""
-        if self.real_prefix or (  # noqa: PLR1702
-            self.base_prefix is not None and self.base_prefix != self.prefix
-        ):  # if this is a virtual environment
-            if self.real_prefix is None:
-                base_executable = getattr(sys, "_base_executable", None)  # some platforms may set this to help us
-                if base_executable is not None:  # noqa: SIM102 # use the saved system executable if present
-                    if sys.executable != base_executable:  # we know we're in a virtual environment, cannot be us
-                        if os.path.exists(base_executable):
-                            return base_executable
-                        # Python may return "python" because it was invoked from the POSIX virtual environment
-                        # however some installs/distributions do not provide a version-less "python" binary in
-                        # the system install location (see PEP 394) so try to fallback to a versioned binary.
-                        #
-                        # Gate this to Python 3.11 as `sys._base_executable` path resolution is now relative to
-                        # the 'home' key from pyvenv.cfg which often points to the system install location.
-                        major, minor = self.version_info.major, self.version_info.minor
-                        if self.os == "posix" and (major, minor) >= (3, 11):
-                            # search relative to the directory of sys._base_executable
-                            base_dir = os.path.dirname(base_executable)
-                            candidates = [f"python{major}", f"python{major}.{minor}"]
-                            if self.implementation == "PyPy":
-                                candidates.extend(["pypy", "pypy3", f"pypy{major}", f"pypy{major}.{minor}"])
-
-                            for candidate in candidates:
-                                full_path = os.path.join(base_dir, candidate)
-                                if os.path.exists(full_path):
-                                    return full_path
-
-                    # Special case: If we're running PyPy and sys.executable == base_executable,
-                    # try to find a PyPy-specific executable in the same directory
-                    elif self.implementation == "PyPy" and os.path.exists(base_executable):
-                        base_dir = os.path.dirname(base_executable)
-                        major, minor = self.version_info.major, self.version_info.minor
-                        pypy_candidates = ["pypy", "pypy3", f"pypy{major}", f"pypy{major}.{minor}"]
-
-                        for candidate in pypy_candidates:
-                            full_path = os.path.join(base_dir, candidate)
-                            if os.path.exists(full_path) and full_path != sys.executable:
-                                return full_path
-            return None  # in this case we just can't tell easily without poking around FS and calling them, bail
         # if we're not in a virtual environment, this is already a system python, so return the original executable
         # note we must choose the original and not the pure executable as shim scripts might throw us off
-        return self.original_executable
+        if not (self.real_prefix or (self.base_prefix is not None and self.base_prefix != self.prefix)):
+            return self.original_executable
+
+        # if this is NOT a virtual environment, can't determine easily, bail out
+        if self.real_prefix is not None:
+            return None
+
+        base_executable = sys._base_executable  # noqa: SLF001 some platforms may set this to help us
+        if base_executable is None:
+            return None
+
+        # use the saved system executable if present
+        if sys.executable == base_executable:
+            # We're not in a venv and base_executable exists; use it directly
+            if os.path.exists(base_executable):
+                return base_executable
+            return None
+
+        # we know we're in a virtual environment; it can not be us
+        if os.path.exists(base_executable):
+            return base_executable
+
+        # Try fallback for POSIX virtual environments
+        return self._try_posix_fallback_executable(base_executable)
+
+    def _try_posix_fallback_executable(self, base_executable):
+        """
+        Try to find a versioned Python binary as fallback for POSIX virtual environments.
+
+        Python may return "python" because it was invoked from the POSIX virtual environment
+        however some installs/distributions do not provide a version-less "python" binary in
+        the system install location (see PEP 394) so try to fallback to a versioned binary.
+
+        Gate this to Python 3.11 as `sys._base_executable` path resolution is now relative to
+        the 'home' key from pyvenv.cfg which often points to the system install location.
+        """
+        major, minor = self.version_info.major, self.version_info.minor
+        if self.os != "posix" or (major, minor) < (3, 11):
+            return None
+
+        # search relative to the directory of sys._base_executable
+        base_dir = os.path.dirname(base_executable)
+        candidates = [f"python{major}", f"python{major}.{minor}"]
+        if self.implementation == "PyPy":
+            candidates.extend(["pypy", "pypy3", f"pypy{major}", f"pypy{major}.{minor}"])
+
+        for candidate in candidates:
+            full_path = os.path.join(base_dir, candidate)
+            if os.path.exists(full_path):
+                return full_path
+
+        return None  # in this case we just can't tell easily without poking around FS and calling them, bail
 
     def install_path(self, key):
         result = self.distutils_install.get(key)
