@@ -203,21 +203,16 @@ class PythonInfo:  # noqa: PLR0904
             print("DEBUG: old virtualenv, cannot determine easily")  # noqa: T201
             return None
 
-        base_executable = sys._base_executable  # noqa: SLF001 some platforms may set this to help us
-        if base_executable is None:
-            print("DEBUG: sys._base_executable is None, cannot determine easily")  # noqa: T201
+        base_executable = getattr(sys, "_base_executable", None)
+        if base_executable is None or sys.executable == base_executable:
+            print("DEBUG: sys._base_executable is None or sys.executable", base_executable is None)  # noqa: T201
             return None
 
-        # use the saved system executable if present
-        if sys.executable == base_executable:
-            # We're not in a venv and base_executable exists; use it directly
-            if os.path.exists(base_executable):
-                print("DEBUG: sys.executable == sys._base_executable and exists, use it")  # noqa: T201
-                return base_executable
-            return None
+        if os.path.exists(base_executable):
+            print("DEBUG: sys._base_executable exists, use it")  # noqa: T201
+            return base_executable
 
         # Try fallback for POSIX virtual environments
-        print("DEBUG: sys._base_executable is None, cannot determine easily")  # noqa: T201
         return self._try_posix_fallback_executable(base_executable)
 
     def _try_posix_fallback_executable(self, base_executable):
