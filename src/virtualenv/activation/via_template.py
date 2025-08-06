@@ -47,8 +47,8 @@ class ViaTemplateActivator(Activator, ABC):
             "__VIRTUAL_NAME__": creator.env_name,
             "__BIN_NAME__": str(creator.bin_dir.relative_to(creator.dest)),
             "__PATH_SEP__": os.pathsep,
-            "__TCL_LIBRARY__": getattr(creator.interpreter, "tcl_lib", ""),
-            "__TK_LIBRARY__": getattr(creator.interpreter, "tk_lib", ""),
+            "__TCL_LIBRARY__": getattr(creator.interpreter, "tcl_lib") or "",
+            "__TK_LIBRARY__": getattr(creator.interpreter, "tk_lib") or "",
         }
 
     def _generate(self, replacements, templates, to_folder, creator):

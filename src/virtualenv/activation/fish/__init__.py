@@ -10,8 +10,8 @@ class FishActivator(ViaTemplateActivator):
     def replacements(self, creator, dest):
         data = super().replacements(creator, dest)
         data.update({
-            "__TCL_LIBRARY__": getattr(creator.interpreter, "tcl_lib", ""),
-            "__TK_LIBRARY__": getattr(creator.interpreter, "tk_lib", ""),
+            "__TCL_LIBRARY__": getattr(creator.interpreter, "tcl_lib") or "",
+            "__TK_LIBRARY__": getattr(creator.interpreter, "tk_lib") or "",
         })
         return data
 
