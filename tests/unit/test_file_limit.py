@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import errno
 import os
 import sys
 
 import pytest
 
+from virtualenv.info import IMPLEMENTATION
 from virtualenv.run import cli_run
 
 
@@ -16,24 +18,34 @@ def test_too_many_open_files(tmp_path):
     import resource  # noqa: PLC0415
 
     soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
-    if soft_limit > 1024:
-        pytest.skip("soft limit for open files is too high to reliably trigger the error")
 
     # Lower the soft limit to a small number to trigger the error
     try:
         resource.setrlimit(resource.RLIMIT_NOFILE, (32, hard_limit))
     except ValueError:
         pytest.skip("could not lower the soft limit for open files")
+    except AttributeError as exc:  # pypy, graalpy
+        if "module 'resource' has no attribute 'setrlimit'" in str(exc):
+            pytest.skip(f"{IMPLEMENTATION} does not support resource.setrlimit")
 
     # Keep some file descriptors open to make it easier to trigger the error
     fds = []
     try:
-        fds.extend(os.open(os.devnull, os.O_RDONLY) for _ in range(20))
+        # JIT implementations use more file descriptors up front so we can run out early
+        try:
+            fds.extend(os.open(os.devnull, os.O_RDONLY) for _ in range(20))
+        except OSError as jit_exceptions:  # pypy, graalpy
+            assert jit_exceptions.errno == errno.EMFILE  # noqa: PT017
+            assert "Too many open files" in str(jit_exceptions)  # noqa: PT017
 
-        with pytest.raises(SystemExit) as excinfo:
+        expected_exceptions = SystemExit, OSError, RuntimeError
+        with pytest.raises(expected_exceptions) as too_many_open_files_exc:
             cli_run([str(tmp_path / "venv")])
 
-        assert excinfo.value.code != 0
+        if isinstance(too_many_open_files_exc, SystemExit):
+            assert too_many_open_files_exc.code != 0
+        else:
+            assert "Too many open files" in str(too_many_open_files_exc.value)
 
     finally:
         for fd in fds:
