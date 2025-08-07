@@ -176,7 +176,9 @@ def test_py_info_cache_invalidation_on_py_info_change(mocker, session_app_data):
         info = PythonInfo.from_exe(sys.executable, session_app_data)
 
         # 6. Assert that _run_subprocess was called again
-        if is_macos_brew(info):
+        if info.implementation == "PyPy" and info.system_executable == info.executable:
+            assert spy.call_count == 2
+        elif is_macos_brew(info):
             assert spy.call_count in {2, 3}
         else:
             assert spy.call_count == 2
@@ -441,6 +443,7 @@ def test_fallback_existent_system_executable(mocker):
     # that "python" is not required and the standard `make install` does not provide one
 
     # Falsify some data to look like we're in a venv
+    assert current.system_executable is not None, current
     current.prefix = current.exec_prefix = "/tmp/tmp.izZNCyINRj/venv"  # noqa: S108
     current.executable = current.original_executable = os.path.join(current.prefix, "bin/python")
 

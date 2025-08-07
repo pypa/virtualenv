@@ -192,34 +192,63 @@ class PythonInfo:  # noqa: PLR0904
 
     def _fast_get_system_executable(self):
         """Try to get the system executable by just looking at properties."""
-        if self.real_prefix or (  # noqa: PLR1702
-            self.base_prefix is not None and self.base_prefix != self.prefix
-        ):  # if this is a virtual environment
-            if self.real_prefix is None:
-                base_executable = getattr(sys, "_base_executable", None)  # some platforms may set this to help us
-                if base_executable is not None:  # noqa: SIM102 # use the saved system executable if present
-                    if sys.executable != base_executable:  # we know we're in a virtual environment, cannot be us
-                        if os.path.exists(base_executable):
-                            return base_executable
-                        # Python may return "python" because it was invoked from the POSIX virtual environment
-                        # however some installs/distributions do not provide a version-less "python" binary in
-                        # the system install location (see PEP 394) so try to fallback to a versioned binary.
-                        #
-                        # Gate this to Python 3.11 as `sys._base_executable` path resolution is now relative to
-                        # the 'home' key from pyvenv.cfg which often points to the system install location.
-                        major, minor = self.version_info.major, self.version_info.minor
-                        if self.os == "posix" and (major, minor) >= (3, 11):
-                            # search relative to the directory of sys._base_executable
-                            base_dir = os.path.dirname(base_executable)
-                            for base_executable in [
-                                os.path.join(base_dir, exe) for exe in (f"python{major}", f"python{major}.{minor}")
-                            ]:
-                                if os.path.exists(base_executable):
-                                    return base_executable
-            return None  # in this case we just can't tell easily without poking around FS and calling them, bail
         # if we're not in a virtual environment, this is already a system python, so return the original executable
         # note we must choose the original and not the pure executable as shim scripts might throw us off
-        return self.original_executable
+        if not (self.real_prefix or (self.base_prefix is not None and self.base_prefix != self.prefix)):
+            print("DEBUG: not a venv, use original executable")  # noqa: T201
+            return self.original_executable
+
+        # if this is NOT a virtual environment, can't determine easily, bail out
+        if self.real_prefix is not None:
+            print("DEBUG: old virtualenv, cannot determine easily")  # noqa: T201
+            return None
+
+        base_executable = getattr(sys, "_base_executable", None)
+        if base_executable is None:
+            print("DEBUG: sys._base_executable is None")  # noqa: T201
+            return None
+
+        if sys.executable == base_executable and self.implementation != "PyPy":
+            print("DEBUG: sys._base_executable is base_executable")  # noqa: T201
+            return None
+
+        if os.path.exists(base_executable):
+            print("DEBUG: sys._base_executable exists, use it")  # noqa: T201
+            return base_executable
+
+        # Try fallback for POSIX virtual environments
+        return self._try_posix_fallback_executable(base_executable)
+
+    def _try_posix_fallback_executable(self, base_executable):
+        """
+        Try to find a versioned Python binary as fallback for POSIX virtual environments.
+
+        Python may return "python" because it was invoked from the POSIX virtual environment
+        however some installs/distributions do not provide a version-less "python" binary in
+        the system install location (see PEP 394) so try to fall back to a versioned binary.
+
+        Gate this to Python 3.11 as `sys._base_executable` path resolution is now relative to
+        the 'home' key from pyvenv.cfg which often points to the system install location.
+        """
+        major, minor = self.version_info.major, self.version_info.minor
+        if self.os != "posix" or (major, minor) < (3, 11):
+            print("DEBUG: not posix or python < 3.11, cannot determine easily")  # noqa: T201
+            return None
+
+        # search relative to the directory of sys._base_executable
+        base_dir = os.path.dirname(base_executable)
+        candidates = [f"python{major}", f"python{major}.{minor}"]
+        if self.implementation == "PyPy":
+            candidates.extend(["pypy", "pypy3", f"pypy{major}", f"pypy{major}.{minor}"])
+
+        for candidate in candidates:
+            full_path = os.path.join(base_dir, candidate)
+            if os.path.exists(full_path):
+                print(f"DEBUG: found fallback executable {full_path}")  # noqa: T201
+                return full_path
+
+        print("DEBUG: no fallback executable")  # noqa: T201
+        return None  # in this case we just can't tell easily without poking around FS and calling them, bail
 
     def install_path(self, key):
         result = self.distutils_install.get(key)
@@ -481,7 +510,15 @@ class PythonInfo:  # noqa: PLR0904
     def _resolve_to_system(cls, app_data, target):
         start_executable = target.executable
         prefixes = OrderedDict()
+        visited = set()
+
         while target.system_executable is None:
+            if target.executable in visited:
+                LOGGER.error("Recursion detected resolving %s, aborting", start_executable)
+                target.system_executable = start_executable
+                break
+            visited.add(target.executable)
+
             prefix = target.real_prefix or target.base_prefix or target.prefix
             if prefix in prefixes:
                 if len(prefixes) == 1:
@@ -489,6 +526,7 @@ class PythonInfo:  # noqa: PLR0904
                     LOGGER.info("%r links back to itself via prefixes", target)
                     target.system_executable = target.executable
                     break
+
                 for at, (p, t) in enumerate(prefixes.items(), start=1):
                     LOGGER.error("%d: prefix=%s, info=%r", at, p, t)
                 LOGGER.error("%d: prefix=%s, info=%r", len(prefixes) + 1, prefix, target)
@@ -496,7 +534,7 @@ class PythonInfo:  # noqa: PLR0904
                 raise RuntimeError(msg)
             prefixes[prefix] = target
             target = target.discover_exe(app_data, prefix=prefix, exact=False)
-        if target.executable != target.system_executable:
+        if target.executable != target.system_executable and target.system_executable not in visited:
             target = cls.from_exe(target.system_executable, app_data)
         target.executable = start_executable
         return target
