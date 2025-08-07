@@ -4,13 +4,18 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 try:
-    from typing import Self  # Python ≥ 3.11
+    from typing import Self  # pragma: ≥ 3.11 cover
 except ImportError:
-    from typing_extensions import Self  # Python < 3.11
+    from typing_extensions import Self  # pragma: < 3.11 cover
 
 
 class Cache(ABC):
-    """A generic cache interface."""
+    """
+    A generic cache interface.
+
+    Add a close() method if the cache needs to perform any cleanup actions,
+    and an __exit__ method to allow it to be used in a context manager.
+    """
 
     @abstractmethod
     def get(self, key: str) -> Any | None:
@@ -48,16 +53,6 @@ class Cache(ABC):
 
     def __enter__(self) -> Self:
         return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        self.close()
-
-    def close(self) -> None:  # noqa: B027
-        """
-        Close the cache, releasing any resources.
-
-        This is a no-op by default but can be overridden in subclasses.
-        """
 
 
 __all__ = [

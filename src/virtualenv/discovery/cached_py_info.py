@@ -175,8 +175,6 @@ class LogCmd:
 def clear(app_data=None, cache=None):
     """Clear the cache."""
     if cache is None and app_data is not None:
-        from virtualenv.discovery.file_cache import FileCache  # noqa: PLC0415
-
         cache = FileCache(app_data)
     if cache is not None:
         cache.clear()
