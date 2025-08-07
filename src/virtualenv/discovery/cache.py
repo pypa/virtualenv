@@ -3,7 +3,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Any
 
-from typing_extensions import Self
+try:
+    from typing import Self  # Python ≥ 3.11
+except ImportError:
+    from typing_extensions import Self  # Python < 3.11
 
 
 class Cache(ABC):
