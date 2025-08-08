@@ -363,11 +363,11 @@ class PythonInfo:  # noqa: PLR0904
         )
 
     @classmethod
-    def clear_cache(cls, app_data):
+    def clear_cache(cls, app_data, cache=None):
         # this method is not used by itself, so here and called functions can import stuff locally
         from virtualenv.discovery.cached_py_info import clear  # noqa: PLC0415
 
-        clear(app_data)
+        clear(app_data, cache)
         cls._cache_exe_discovery.clear()
 
     def satisfies(self, spec, impl_must_match):  # noqa: C901, PLR0911
@@ -408,23 +408,35 @@ class PythonInfo:  # noqa: PLR0904
     _current = None
 
     @classmethod
-    def current(cls, app_data=None):
+    def current(cls, app_data=None, cache=None):
         """
         This locates the current host interpreter information. This might be different than what we run into in case
         the host python has been upgraded from underneath us.
         """  # noqa: D205
         if cls._current is None:
-            cls._current = cls.from_exe(sys.executable, app_data, raise_on_error=True, resolve_to_host=False)
+            cls._current = cls.from_exe(
+                sys.executable,
+                app_data,
+                raise_on_error=True,
+                resolve_to_host=False,
+                cache=cache,
+            )
         return cls._current
 
     @classmethod
-    def current_system(cls, app_data=None) -> PythonInfo:
+    def current_system(cls, app_data=None, cache=None) -> PythonInfo:
         """
         This locates the current host interpreter information. This might be different than what we run into in case
         the host python has been upgraded from underneath us.
         """  # noqa: D205
         if cls._current_system is None:
-            cls._current_system = cls.from_exe(sys.executable, app_data, raise_on_error=True, resolve_to_host=True)
+            cls._current_system = cls.from_exe(
+                sys.executable,
+                app_data,
+                raise_on_error=True,
+                resolve_to_host=True,
+                cache=cache,
+            )
         return cls._current_system
 
     def _to_json(self):
@@ -446,17 +458,26 @@ class PythonInfo:  # noqa: PLR0904
         ignore_cache=False,  # noqa: FBT002
         resolve_to_host=True,  # noqa: FBT002
         env=None,
+        cache=None,
     ):
         """Given a path to an executable get the python information."""
         # this method is not used by itself, so here and called functions can import stuff locally
-        from virtualenv.discovery.cached_py_info import from_exe  # noqa: PLC0415
+        from virtualenv.discovery.cached_py_info import from_exe as from_exe_cache  # noqa: PLC0415
 
         env = os.environ if env is None else env
-        proposed = from_exe(cls, app_data, exe, env=env, raise_on_error=raise_on_error, ignore_cache=ignore_cache)
+        proposed = from_exe_cache(
+            cls,
+            app_data,
+            exe,
+            env=env,
+            raise_on_error=raise_on_error,
+            ignore_cache=ignore_cache,
+            cache=cache,
+        )
 
         if isinstance(proposed, PythonInfo) and resolve_to_host:
             try:
-                proposed = proposed._resolve_to_system(app_data, proposed)  # noqa: SLF001
+                proposed = proposed._resolve_to_system(app_data, proposed, cache=cache)  # noqa: SLF001
             except Exception as exception:
                 if raise_on_error:
                     raise
@@ -478,7 +499,7 @@ class PythonInfo:  # noqa: PLR0904
         return result
 
     @classmethod
-    def _resolve_to_system(cls, app_data, target):
+    def _resolve_to_system(cls, app_data, target, cache=None):
         start_executable = target.executable
         prefixes = OrderedDict()
         while target.system_executable is None:
@@ -495,15 +516,15 @@ class PythonInfo:  # noqa: PLR0904
                 msg = "prefixes are causing a circle {}".format("|".join(prefixes.keys()))
                 raise RuntimeError(msg)
             prefixes[prefix] = target
-            target = target.discover_exe(app_data, prefix=prefix, exact=False)
+            target = target.discover_exe(app_data, prefix=prefix, exact=False, cache=cache)
         if target.executable != target.system_executable:
-            target = cls.from_exe(target.system_executable, app_data)
+            target = cls.from_exe(target.system_executable, app_data, cache=cache)
         target.executable = start_executable
         return target
 
     _cache_exe_discovery = {}  # noqa: RUF012
 
-    def discover_exe(self, app_data, prefix, exact=True, env=None):  # noqa: FBT002
+    def discover_exe(self, app_data, prefix, exact=True, env=None, cache=None):  # noqa: FBT002
         key = prefix, exact
         if key in self._cache_exe_discovery and prefix:
             LOGGER.debug("discover exe from cache %s - exact %s: %r", prefix, exact, self._cache_exe_discovery[key])
@@ -516,7 +537,7 @@ class PythonInfo:  # noqa: PLR0904
         env = os.environ if env is None else env
         for folder in possible_folders:
             for name in possible_names:
-                info = self._check_exe(app_data, folder, name, exact, discovered, env)
+                info = self._check_exe(app_data, folder, name, exact, discovered, env, cache)
                 if info is not None:
                     self._cache_exe_discovery[key] = info
                     return info
@@ -529,11 +550,18 @@ class PythonInfo:  # noqa: PLR0904
         msg = "failed to detect {} in {}".format("|".join(possible_names), os.pathsep.join(possible_folders))
         raise RuntimeError(msg)
 
-    def _check_exe(self, app_data, folder, name, exact, discovered, env):  # noqa: PLR0913
+    def _check_exe(self, app_data, folder, name, exact, discovered, env, cache):  # noqa: PLR0913
         exe_path = os.path.join(folder, name)
         if not os.path.exists(exe_path):
             return None
-        info = self.from_exe(exe_path, app_data, resolve_to_host=False, raise_on_error=False, env=env)
+        info = self.from_exe(
+            exe_path,
+            app_data,
+            resolve_to_host=False,
+            raise_on_error=False,
+            env=env,
+            cache=cache,
+        )
         if info is None:  # ignore if for some reason we can't query
             return None
         for item in ["implementation", "architecture", "version_info"]:
