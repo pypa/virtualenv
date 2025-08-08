@@ -15,8 +15,8 @@ class BashActivator(ViaTemplateActivator):
     def replacements(self, creator, dest):
         data = super().replacements(creator, dest)
         data.update({
-            "__TCL_LIBRARY__": creator.interpreter.tcl_lib or "",
-            "__TK_LIBRARY__": creator.interpreter.tk_lib or "",
+            "__TCL_LIBRARY__": getattr(creator.interpreter, "tcl_lib", None) or "",
+            "__TK_LIBRARY__": getattr(creator.interpreter, "tk_lib", None) or "",
         })
         return data
 
