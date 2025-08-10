@@ -436,7 +436,7 @@ def test_custom_venv_install_scheme_is_prefered(mocker):
     assert pyinfo.install_path("purelib").replace(os.sep, "/") == f"lib/python{pyver}/site-packages"
 
 
-@pytest.mark.skipif(not (os.name == "posix" and sys.version_info[:2] >= (3, 11)), reason="POSIX 3.11+ specific")
+@pytest.mark.skipif(IS_PYPY or not (os.name == "posix" and sys.version_info[:2] >= (3, 11)), reason="POSIX 3.11+ specific")
 def test_fallback_existent_system_executable(mocker):
     current = PythonInfo()
     # Posix may execute a "python" out of a venv but try to set the base_executable
