@@ -190,7 +190,7 @@ class PythonInfo:  # noqa: PLR0904
 
         return tcl_lib, tk_lib
 
-    def _fast_get_system_executable(self):  # noqa: PLR0911
+    def _fast_get_system_executable(self):
         """Try to get the system executable by just looking at properties."""
         # if we're not in a virtual environment, this is already a system python, so return the original executable
         # note we must choose the original and not the pure executable as shim scripts might throw us off
@@ -201,18 +201,15 @@ class PythonInfo:  # noqa: PLR0904
         if self.real_prefix is not None:
             return None
 
-        base_executable = sys._base_executable  # noqa: SLF001 some platforms may set this to help us
-        if base_executable is None:
+        base_executable = getattr(sys, "_base_executable", None)  # some platforms may set this to help us
+        if base_executable is None:  # use the saved system executable if present
             return None
 
-        # use the saved system executable if present
+        # we know we're in a virtual environment, can not be us
         if sys.executable == base_executable:
-            # We're not in a venv and base_executable exists; use it directly
-            if os.path.exists(base_executable):
-                return base_executable
             return None
 
-        # we know we're in a virtual environment; it can not be us
+        # We're not in a venv and base_executable exists; use it directly
         if os.path.exists(base_executable):
             return base_executable
 
