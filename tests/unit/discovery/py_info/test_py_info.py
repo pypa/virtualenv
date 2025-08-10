@@ -290,7 +290,7 @@ def test_system_executable_no_exact_match(  # noqa: PLR0913
     mocker.patch.object(target_py_info, "_find_possible_exe_names", return_value=names)
     mocker.patch.object(target_py_info, "_find_possible_folders", return_value=[str(tmp_path)])
 
-    def func(k, app_data, resolve_to_host, raise_on_error, env):  # noqa: ARG001
+    def func(k, app_data, resolve_to_host, raise_on_error, env, cache=None):  # noqa: ARG001, PLR0913
         return discovered_with_path[k]
 
     mocker.patch.object(target_py_info, "from_exe", side_effect=func)

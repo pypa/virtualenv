@@ -1,0 +1,1 @@
+Accept RuntimeError in `test_too_many_open_files`, by :user:`esafak`

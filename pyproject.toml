@@ -47,6 +47,7 @@ dependencies = [
   "filelock>=3.12.2,<4",
   "importlib-metadata>=6.6; python_version<'3.8'",
   "platformdirs>=3.9.1,<5",
+  "typing-extensions>=4.13.2; python_version<'3.11'",
 ]
 optional-dependencies.docs = [
   "furo>=2023.7.26",
