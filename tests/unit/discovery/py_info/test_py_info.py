@@ -162,7 +162,7 @@ def test_py_info_cache_invalidation_on_py_info_change(mocker, session_app_data):
     # 2. Spy on _run_subprocess
     spy = mocker.spy(cached_py_info, "_run_subprocess")
 
-    # 3. Modify the content of py_info.py
+    # 3. Backup py_info.py
     py_info_script = Path(cached_py_info.__file__).parent / "py_info.py"
     original_content = py_info_script.read_text(encoding="utf-8")
     original_stat = py_info_script.stat()
@@ -170,19 +170,22 @@ def test_py_info_cache_invalidation_on_py_info_change(mocker, session_app_data):
     try:
         # 4. Clear the in-memory cache
         mocker.patch.dict(cached_py_info._CACHE, {}, clear=True)  # noqa: SLF001
+
+        # 5. Modify py_info.py to invalidate the cache
         py_info_script.write_text(original_content + "\n# a comment", encoding="utf-8")
 
-        # 5. Get the PythonInfo object again
+        # 6. Get the PythonInfo object again
         info = PythonInfo.from_exe(sys.executable, session_app_data)
 
-        # 6. Assert that _run_subprocess was called again
+        # 7. Assert that _run_subprocess was called again
+        native_difference = 1 if info.system_executable == info.executable else 0
         if is_macos_brew(info):
-            assert spy.call_count in {2, 3}
+            assert spy.call_count + native_difference in {2, 3}
         else:
-            assert spy.call_count == 2
+            assert spy.call_count + native_difference == 2
 
     finally:
-        # Restore the original content and timestamp
+        # 8. Restore the original content and timestamp
         py_info_script.write_text(original_content, encoding="utf-8")
         os.utime(str(py_info_script), (original_stat.st_atime, original_stat.st_mtime))
 
