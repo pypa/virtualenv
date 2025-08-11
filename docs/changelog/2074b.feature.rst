@@ -1,0 +1,1 @@
+Remove references to py_info in FileCache - by :user:`esafak`.

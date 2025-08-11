@@ -46,7 +46,9 @@ def from_exe(  # noqa: PLR0913
 ) -> PythonInfo | None:
     env = os.environ if env is None else env
     if cache is None:
-        cache = FileCache(app_data)
+        if app_data is None:
+            app_data = AppDataDisabled()
+        cache = FileCache(store_factory=app_data.py_info, clearer=app_data.py_info_clear)
     result = _get_from_cache(cls, app_data, exe, env, cache, ignore_cache=ignore_cache)
     if isinstance(result, Exception):
         if raise_on_error:
@@ -201,7 +203,7 @@ class LogCmd:
 def clear(app_data=None, cache=None):
     """Clear the cache."""
     if cache is None and app_data is not None:
-        cache = FileCache(app_data)
+        cache = FileCache(store_factory=app_data.py_info, clearer=app_data.py_info_clear)
     if cache is not None:
         cache.clear()
     _CACHE.clear()

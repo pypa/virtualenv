@@ -1,44 +1,45 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable
 
-from virtualenv.app_data.na import AppDataDisabled
 from virtualenv.cache import Cache
 
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from virtualenv.app_data.base import AppData
+    from virtualenv.app_data.base import ContentStore
 
 
 class FileCache(Cache):
-    def __init__(self, app_data: AppData) -> None:
-        self.app_data = app_data if app_data is not None else AppDataDisabled()
+    def __init__(self, store_factory: Callable[[Path], ContentStore], clearer: Callable[[], None] | None) -> None:
+        self.store_factory = store_factory
+        self.clearer = clearer
 
     def get(self, key: Path) -> dict | None:
         """Get a value from the file cache."""
-        py_info, py_info_store = None, self.app_data.py_info(key)
-        with py_info_store.locked():
-            if py_info_store.exists():
-                py_info = py_info_store.read()
-        return py_info
+        result, store = None, self.store_factory(key)
+        with store.locked():
+            if store.exists():
+                result = store.read()
+        return result
 
     def set(self, key: Path, value: dict) -> None:
         """Set a value in the file cache."""
-        py_info_store = self.app_data.py_info(key)
-        with py_info_store.locked():
-            py_info_store.write(value)
+        store = self.store_factory(key)
+        with store.locked():
+            store.write(value)
 
     def remove(self, key: Path) -> None:
         """Remove a value from the file cache."""
-        py_info_store = self.app_data.py_info(key)
-        with py_info_store.locked():
-            if py_info_store.exists():
-                py_info_store.remove()
+        store = self.store_factory(key)
+        with store.locked():
+            if store.exists():
+                store.remove()
 
     def clear(self) -> None:
         """Clear the entire file cache."""
-        self.app_data.py_info_clear()
+        if self.clearer is not None:
+            self.clearer()
 
 
 __all__ = [
