@@ -7,6 +7,8 @@ caching.
 
 from __future__ import annotations
 
+import hashlib
+import importlib.util
 import logging
 import os
 import random
@@ -19,11 +21,11 @@ from subprocess import Popen
 from typing import TYPE_CHECKING
 
 from virtualenv.app_data.na import AppDataDisabled
-from virtualenv.discovery.file_cache import FileCache
+from virtualenv.cache import FileCache
 
 if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
-    from virtualenv.discovery.cache import Cache
+    from virtualenv.cache import Cache
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.util.subprocess import subprocess
 
@@ -69,18 +71,42 @@ def _get_from_cache(cls, app_data: AppData, exe: str, env, cache: Cache, *, igno
 
 
 def _get_via_file_cache(cls, app_data: AppData, path: Path, exe: str, env, cache: Cache) -> PythonInfo:  # noqa: PLR0913
-    py_info = cache.get(path)
-    if py_info is not None:
-        py_info = cls._from_dict(py_info)
-        sys_exe = py_info.system_executable
-        if sys_exe is not None and not os.path.exists(sys_exe):
-            cache.remove(path)
-            py_info = None
+    # 1. get the hash of the probing script
+    spec = importlib.util.find_spec("virtualenv.discovery.py_info")
+    script = Path(spec.origin)
+    try:
+        py_info_hash = hashlib.sha256(script.read_bytes()).hexdigest()
+    except OSError:
+        py_info_hash = None
+
+    # 2. get the mtime of the python executable
+    try:
+        path_modified = path.stat().st_mtime
+    except OSError:
+        path_modified = -1
+
+    # 3. check if we have a valid cache entry
+    py_info = None
+    data = cache.get(path)
+    if data is not None:
+        if data.get("path") == str(path) and data.get("st_mtime") == path_modified and data.get("hash") == py_info_hash:
+            py_info = cls._from_dict(data.get("content"))
+            sys_exe = py_info.system_executable
+            if sys_exe is not None and not os.path.exists(sys_exe):
+                py_info = None  # if system executable is no longer there, this is not valid
+        if py_info is None:
+            cache.remove(path)  # if cache is invalid, remove it
 
     if py_info is None:  # if not loaded run and save
         failure, py_info = _run_subprocess(cls, exe, app_data, env)
         if failure is None:
-            cache.set(path, py_info._to_dict())  # noqa: SLF001
+            data = {
+                "st_mtime": path_modified,
+                "path": str(path),
+                "content": py_info._to_dict(),  # noqa: SLF001
+                "hash": py_info_hash,
+            }
+            cache.set(path, data)
         else:
             py_info = failure
     return py_info
