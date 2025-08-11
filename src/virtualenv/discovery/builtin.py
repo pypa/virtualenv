@@ -9,9 +9,8 @@ from typing import TYPE_CHECKING
 
 from platformdirs import user_data_path
 
-from virtualenv.info import IS_WIN, fs_path_id
-
 from .discover import Discover
+from .info import IS_WIN, fs_path_id
 from .py_info import PythonInfo
 from .py_spec import PythonSpec
 

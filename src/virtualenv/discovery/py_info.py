@@ -18,6 +18,8 @@ import warnings
 from collections import OrderedDict, namedtuple
 from string import digits
 
+from .info import fs_is_case_sensitive
+
 VersionInfo = namedtuple("VersionInfo", ["major", "minor", "micro", "releaselevel", "serial"])  # noqa: PYI024
 LOGGER = logging.getLogger(__name__)
 
@@ -659,7 +661,6 @@ class PythonInfo:
         for base in possible_base:
             lower = base.lower()
             yield lower
-            from virtualenv.info import fs_is_case_sensitive  # noqa: PLC0415
 
             if fs_is_case_sensitive():
                 if base != lower:
