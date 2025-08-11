@@ -30,7 +30,7 @@ EXTENSIONS = _get_path_extensions()
 _CONF_VAR_RE = re.compile(r"\{\w+\}")
 
 
-class PythonInfo:  # noqa: PLR0904
+class PythonInfo:
     """Contains information for a Python interpreter."""
 
     def __init__(self) -> None:  # noqa: PLR0915
@@ -135,7 +135,6 @@ class PythonInfo:  # noqa: PLR0904
         self.system_stdlib = self.sysconfig_path("stdlib", confs)
         self.system_stdlib_platform = self.sysconfig_path("platstdlib", confs)
         self.max_size = getattr(sys, "maxsize", getattr(sys, "maxint", None))
-        self._creators = None
 
     @staticmethod
     def _get_tcl_tk_libs():
@@ -311,13 +310,6 @@ class PythonInfo:  # noqa: PLR0904
             config_var = base
         return pattern.format(**config_var).replace("/", sep)
 
-    def creators(self, refresh=False):  # noqa: FBT002
-        if self._creators is None or refresh is True:
-            from virtualenv.run.plugin.creators import CreatorSelector  # noqa: PLC0415
-
-            self._creators = CreatorSelector.for_interpreter(self)
-        return self._creators
-
     @property
     def system_include(self):
         path = self.sysconfig_path(
@@ -467,8 +459,7 @@ class PythonInfo:  # noqa: PLR0904
         return json.dumps(self._to_dict(), indent=2)
 
     def _to_dict(self):
-        data = {var: (getattr(self, var) if var != "_creators" else None) for var in vars(self)}
-
+        data = {var: getattr(self, var) for var in vars(self)}
         data["version_info"] = data["version_info"]._asdict()  # namedtuple to dictionary
         return data
 
