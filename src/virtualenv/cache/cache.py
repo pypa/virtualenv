@@ -1,15 +1,17 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Generic, Hashable, TypeVar
 
 try:
     from typing import Self  # pragma: ≥ 3.11 cover
 except ImportError:
     from typing_extensions import Self  # pragma: < 3.11 cover
 
+K = TypeVar("K", bound=Hashable)
 
-class Cache(ABC):
+
+class Cache(ABC, Generic[K]):
     """
     A generic cache interface.
 
@@ -18,7 +20,7 @@ class Cache(ABC):
     """
 
     @abstractmethod
-    def get(self, key: str) -> Any | None:
+    def get(self, key: K) -> Any | None:
         """
         Get a value from the cache.
 
@@ -28,7 +30,7 @@ class Cache(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def set(self, key: str, value: Any) -> None:
+    def set(self, key: K, value: Any) -> None:
         """
         Set a value in the cache.
 
@@ -38,7 +40,7 @@ class Cache(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def remove(self, key: str) -> None:
+    def remove(self, key: K) -> None:
         """
         Remove a value from the cache.
 
