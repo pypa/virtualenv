@@ -12,12 +12,12 @@ import importlib.util
 import logging
 import os
 import random
+import subprocess
 import sys
 from collections import OrderedDict
 from pathlib import Path
 from shlex import quote
 from string import ascii_lowercase, ascii_uppercase, digits
-from subprocess import Popen
 from typing import TYPE_CHECKING
 
 from virtualenv.app_data.na import AppDataDisabled
@@ -27,7 +27,6 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
     from virtualenv.cache import Cache
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.util.subprocess import subprocess
 
 _CACHE = OrderedDict()
 _CACHE[Path(sys.executable)] = PythonInfo()
@@ -145,7 +144,7 @@ def _run_subprocess(cls, exe, app_data, env):
         env.pop("__PYVENV_LAUNCHER__", None)
         LOGGER.debug("get interpreter info via cmd: %s", LogCmd(cmd))
         try:
-            process = Popen(
+            process = subprocess.Popen(
                 cmd,
                 universal_newlines=True,
                 stdin=subprocess.PIPE,
