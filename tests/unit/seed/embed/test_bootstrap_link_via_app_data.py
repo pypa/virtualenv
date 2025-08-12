@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from virtualenv.cache import FileCache
 from virtualenv.discovery import cached_py_info
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import fs_supports_symlink
@@ -25,8 +26,16 @@ if TYPE_CHECKING:
 
 @pytest.mark.slow
 @pytest.mark.parametrize("copies", [False, True] if fs_supports_symlink() else [True])
-def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies, for_py_version):  # noqa: PLR0915
-    current = PythonInfo.current_system()
+def test_seed_link_via_app_data(  # noqa: PLR0913, PLR0915
+    tmp_path,
+    coverage_env,
+    current_fastest,
+    copies,
+    for_py_version,
+    session_app_data,
+):
+    cache = FileCache(session_app_data.py_info, session_app_data.py_info_clear)
+    current = PythonInfo.current_system(session_app_data, cache)
     bundle_ver = BUNDLE_SUPPORT[current.version_release_str]
     create_cmd = [
         str(tmp_path / "en v"),  # space in the name to ensure generated scripts work when path has space
@@ -42,7 +51,7 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies,
         bundle_ver["setuptools"].split("-")[1],
         "--reset-app-data",
         "--creator",
-        current_fastest,
+        next(iter(current_fastest)),
         "-vv",
     ]
     if for_py_version == "3.8":
@@ -154,7 +163,7 @@ def read_only_app_data(temp_app_data):
 @pytest.mark.usefixtures("read_only_app_data")
 def test_base_bootstrap_link_via_app_data_not_writable(tmp_path, current_fastest):
     dest = tmp_path / "venv"
-    result = cli_run(["--seeder", "app-data", "--creator", current_fastest, "-vv", str(dest)])
+    result = cli_run(["--seeder", "app-data", "--creator", next(iter(current_fastest)), "-vv", str(dest)])
     assert result
 
 
@@ -166,7 +175,7 @@ def test_populated_read_only_cache_and_symlinked_app_data(tmp_path, current_fast
         "--seeder",
         "app-data",
         "--creator",
-        current_fastest,
+        next(iter(current_fastest)),
         "--symlink-app-data",
         "-vv",
         str(dest),
@@ -192,7 +201,7 @@ def test_populated_read_only_cache_and_copied_app_data(tmp_path, current_fastest
         "--seeder",
         "app-data",
         "--creator",
-        current_fastest,
+        next(iter(current_fastest)),
         "-vv",
         "-p",
         "python",

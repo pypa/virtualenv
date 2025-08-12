@@ -32,7 +32,7 @@ def get_discover(parser, args):
     discover_class = discover_types[options.discovery]
     discover_class.add_parser_arguments(discovery_parser)
     options, _ = parser.parse_known_args(args, namespace=options)
-    return discover_class(options)
+    return discover_class(options, options.cache)
 
 
 def _get_default_discovery(discover_types):

@@ -1,0 +1,1 @@
+Add AppData and Cache protocols to discovery for decoupling - by :user:`esafak`.

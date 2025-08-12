@@ -7,19 +7,25 @@ from pathlib import Path
 
 import pytest
 
+from virtualenv.cache import FileCache
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
 
 HERE = Path(__file__).parent
-CURRENT = PythonInfo.current_system()
 
 
 @pytest.fixture(scope="session")
-def zipapp_build_env(tmp_path_factory):
+def current_info(session_app_data):
+    cache = FileCache(session_app_data.py_info, session_app_data.py_info_clear)
+    return PythonInfo.current_system(session_app_data, cache)
+
+
+@pytest.fixture(scope="session")
+def zipapp_build_env(tmp_path_factory, current_info):
     create_env_path = None
-    if CURRENT.implementation not in {"PyPy", "GraalVM"}:
-        exe = CURRENT.executable  # guaranteed to contain a recent enough pip (tox.ini)
+    if current_info.implementation not in {"PyPy", "GraalVM"}:
+        exe = current_info.executable  # guaranteed to contain a recent enough pip (tox.ini)
     else:
         create_env_path = tmp_path_factory.mktemp("zipapp-create-env")
         exe, found = None, False
