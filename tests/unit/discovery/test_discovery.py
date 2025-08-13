@@ -105,6 +105,16 @@ def test_uv_python(monkeypatch, tmp_path_factory, mocker):
         mock_from_exe.assert_called_once()
         assert mock_from_exe.call_args[0][0] == str(bin_path / "python")
 
+        # PATH takes precedence
+        mock_from_exe.reset_mock()
+        python_exe = "python.exe" if IS_WIN else "python"
+        dir_in_path = tmp_path_factory.mktemp("path_bin_dir")
+        dir_in_path.joinpath(python_exe).touch()
+        m.setenv("PATH", str(dir_in_path))
+        get_interpreter("python", [])
+        mock_from_exe.assert_called_once()
+        assert mock_from_exe.call_args[0][0] == str(dir_in_path / python_exe)
+
     # XDG_DATA_HOME
     xdg_data_home = tmp_path_factory.mktemp("xdg_data_home")
     with patch("virtualenv.discovery.builtin.PathPythonInfo.from_exe") as mock_from_exe, monkeypatch.context() as m:

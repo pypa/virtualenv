@@ -162,20 +162,7 @@ def propose_interpreters(  # noqa: C901, PLR0912, PLR0915
                 tested_exes.add(exe_id)
                 yield interpreter, True
 
-        # 4. otherwise try uv-managed python (~/.local/share/uv/python or platform equivalent)
-        if uv_python_dir := os.getenv("UV_PYTHON_INSTALL_DIR"):
-            uv_python_path = Path(uv_python_dir).expanduser()
-        elif xdg_data_home := os.getenv("XDG_DATA_HOME"):
-            uv_python_path = Path(xdg_data_home).expanduser() / "uv" / "python"
-        else:
-            uv_python_path = user_data_path("uv") / "python"
-
-        for exe_path in uv_python_path.glob("*/bin/python"):
-            interpreter = PathPythonInfo.from_exe(str(exe_path), app_data, raise_on_error=False, env=env)
-            if interpreter is not None:
-                yield interpreter, True
-
-    # finally just find on path, the path order matters (as the candidates are less easy to control by end user)
+    # try to find on path, the path order matters (as the candidates are less easy to control by end user)
     find_candidates = path_exe_finder(spec)
     for pos, path in enumerate(get_paths(env)):
         LOGGER.debug(LazyPathDump(pos, path, env))
@@ -188,6 +175,19 @@ def propose_interpreters(  # noqa: C901, PLR0912, PLR0915
             interpreter = PathPythonInfo.from_exe(exe_raw, app_data, raise_on_error=False, env=env)
             if interpreter is not None:
                 yield interpreter, impl_must_match
+
+    # otherwise try uv-managed python (~/.local/share/uv/python or platform equivalent)
+    if uv_python_dir := os.getenv("UV_PYTHON_INSTALL_DIR"):
+        uv_python_path = Path(uv_python_dir).expanduser()
+    elif xdg_data_home := os.getenv("XDG_DATA_HOME"):
+        uv_python_path = Path(xdg_data_home).expanduser() / "uv" / "python"
+    else:
+        uv_python_path = user_data_path("uv") / "python"
+
+    for exe_path in uv_python_path.glob("*/bin/python"):
+        interpreter = PathPythonInfo.from_exe(str(exe_path), app_data, raise_on_error=False, env=env)
+        if interpreter is not None:
+            yield interpreter, True
 
 
 def get_paths(env: Mapping[str, str]) -> Generator[Path, None, None]:
