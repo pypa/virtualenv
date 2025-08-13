@@ -5,6 +5,24 @@ Release History
 
 .. towncrier release notes start
 
+v20.34.0 (2025-08-13)
+---------------------
+
+Features - 20.34.0
+~~~~~~~~~~~~~~~~~~
+- Abstract out caching in discovery - by :user:`esafak`.
+  Decouple `FileCache` from `py_info` (discovery) - by :user:`esafak`.
+  Remove references to py_info in FileCache - by :user:`esafak`.
+  Decouple discovery from creator plugins - by :user:`esafak`.
+  Decouple discovery by duplicating info utils - by :user:`esafak`. (:issue:`2074`)
+- Add PyPy 3.11 support. Contributed by :user:`esafak`. (:issue:`2932`)
+
+Bugfixes - 20.34.0
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded wheel pip to ``25.2`` from ``25.1.1`` - by :user:`gaborbernat`. (:issue:`2333`)
+- Accept RuntimeError in `test_too_many_open_files`, by :user:`esafak` (:issue:`2935`)
+- Python in PATH takes precedence over uv-managed python. Contributed by :user:`edgarrmondragon`. (:issue:`2952`)
+
 v20.33.1 (2025-08-05)
 ---------------------
 
