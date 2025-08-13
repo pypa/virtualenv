@@ -1,1 +1,0 @@
-Decouple `FileCache` from `py_info` (discovery) - by :user:`esafak`.

@@ -1,1 +1,5 @@
 Abstract out caching in discovery - by :user:`esafak`.
+Decouple `FileCache` from `py_info` (discovery) - by :user:`esafak`.
+Remove references to py_info in FileCache - by :user:`esafak`.
+Decouple discovery from creator plugins - by :user:`esafak`.
+Decouple discovery by duplicating info utils - by :user:`esafak`.
