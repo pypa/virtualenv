@@ -1,14 +1,10 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any, ContextManager
+from typing import TYPE_CHECKING, Any, ContextManager, Protocol
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-    from typing_extensions import Protocol
-else:
-    Protocol = object
 
 
 class AppData(Protocol):

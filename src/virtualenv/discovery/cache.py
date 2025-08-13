@@ -1,13 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-    from typing_extensions import Protocol
-else:
-    Protocol = object
 
 
 class Cache(Protocol):

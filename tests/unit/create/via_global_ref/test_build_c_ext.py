@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 import shutil
 import subprocess
-import sysconfig
 from pathlib import Path
 from subprocess import Popen
 
@@ -37,7 +36,7 @@ def test_can_build_c_extensions(tmp_path, coverage_env, session_app_data):
         logger.warning("builtin marker exists: %s", marker.exists())
         return not marker.exists()
 
-    system_include = sysconfig.get_path("include")
+    system_include = current.system_include
     if not Path(system_include).exists() and not builtin_shows_marker_missing():
         pytest.skip("Building C-Extensions requires header files with host python")
 
