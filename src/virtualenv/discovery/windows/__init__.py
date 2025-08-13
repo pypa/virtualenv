@@ -16,7 +16,7 @@ class Pep514PythonInfo(PythonInfo):
     """A Python information acquired from PEP-514."""
 
 
-def propose_interpreters(spec, app_data, env):
+def propose_interpreters(spec, app_data, cache, env):
     # see if PEP-514 entries are good
 
     # start with higher python versions in an effort to use the latest version available
@@ -39,7 +39,7 @@ def propose_interpreters(spec, app_data, env):
             interpreter = Pep514PythonInfo.from_exe(
                 exe,
                 app_data,
-                app_data.cache,
+                cache,
                 raise_on_error=False,
                 env=env,
             )

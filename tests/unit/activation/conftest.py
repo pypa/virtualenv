@@ -231,12 +231,11 @@ def raise_on_non_source_class():
 @pytest.fixture(scope="session", params=[True, False], ids=["with_prompt", "no_prompt"])
 def activation_python(request, tmp_path_factory, special_char_name, current_fastest, session_app_data):
     dest = os.path.join(str(tmp_path_factory.mktemp("activation-tester-env")), special_char_name)
-    creator_name = next(iter(current_fastest))
     cmd = [
         "--without-pip",
         dest,
         "--creator",
-        creator_name,
+        current_fastest,
         "-vv",
         "--no-periodic-update",
         "--app-data",

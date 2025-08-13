@@ -317,7 +317,7 @@ def current_creators(session_app_data):
 
 @pytest.fixture(scope="session")
 def current_fastest(current_creators):
-    return "builtin" if "builtin" in current_creators else next(iter(current_creators))
+    return "builtin" if "builtin" in current_creators.key_to_class else next(iter(current_creators.key_to_class))
 
 
 @pytest.fixture(scope="session")
