@@ -37,7 +37,11 @@ def propose_interpreters(spec, app_data, env):
         registry_spec = PythonSpec(None, implementation, major, minor, None, arch, exe, free_threaded=threaded)
         if skip_pre_filter or registry_spec.satisfies(spec):
             interpreter = Pep514PythonInfo.from_exe(
-                exe, app_data, app_data.cache, raise_on_error=False, env=env,
+                exe,
+                app_data,
+                app_data.cache,
+                raise_on_error=False,
+                env=env,
             )
             if interpreter is not None and interpreter.satisfies(spec, impl_must_match=True):
                 yield interpreter  # Final filtering/matching using interpreter metadata
