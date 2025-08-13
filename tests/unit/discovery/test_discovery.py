@@ -89,6 +89,7 @@ def test_uv_python(monkeypatch, tmp_path_factory, mocker):
     monkeypatch.delenv("XDG_DATA_HOME", raising=False)
     monkeypatch.setenv("PATH", "")
     mocker.patch.object(PythonInfo, "satisfies", return_value=False)
+    python_exe = "python.exe" if IS_WIN else "python"
 
     # UV_PYTHON_INSTALL_DIR
     uv_python_install_dir = tmp_path_factory.mktemp("uv_python_install_dir")
@@ -100,7 +101,7 @@ def test_uv_python(monkeypatch, tmp_path_factory, mocker):
 
         bin_path = uv_python_install_dir.joinpath("some-py-impl", "bin")
         bin_path.mkdir(parents=True)
-        bin_path.joinpath("python").touch()
+        bin_path.joinpath(python_exe).touch()
         get_interpreter("python", [])
         mock_from_exe.assert_called_once()
         assert mock_from_exe.call_args[0][0] == str(bin_path / "python")
@@ -108,7 +109,7 @@ def test_uv_python(monkeypatch, tmp_path_factory, mocker):
         # PATH takes precedence
         mock_from_exe.reset_mock()
         dir_in_path = tmp_path_factory.mktemp("path_bin_dir")
-        dir_in_path.joinpath("python").touch()
+        dir_in_path.joinpath(python_exe).touch()
         m.setenv("PATH", str(dir_in_path))
         get_interpreter("python", [])
         mock_from_exe.assert_called_once()
@@ -124,7 +125,7 @@ def test_uv_python(monkeypatch, tmp_path_factory, mocker):
 
         bin_path = xdg_data_home.joinpath("uv", "python", "some-py-impl", "bin")
         bin_path.mkdir(parents=True)
-        bin_path.joinpath("python").touch()
+        bin_path.joinpath(python_exe).touch()
         get_interpreter("python", [])
         mock_from_exe.assert_called_once()
         assert mock_from_exe.call_args[0][0] == str(bin_path / "python")
@@ -139,7 +140,7 @@ def test_uv_python(monkeypatch, tmp_path_factory, mocker):
 
         bin_path = user_data_path.joinpath("uv", "python", "some-py-impl", "bin")
         bin_path.mkdir(parents=True)
-        bin_path.joinpath("python").touch()
+        bin_path.joinpath(python_exe).touch()
         get_interpreter("python", [])
         mock_from_exe.assert_called_once()
         assert mock_from_exe.call_args[0][0] == str(bin_path / "python")
