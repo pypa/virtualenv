@@ -114,7 +114,7 @@ def test_batch(activation_tester_class, activation_tester, tmp_path):
 
         def quote(self, s):
             if '"' in s or " " in s:
-                text = s.replace('"', r"\"")
+                text = s.replace('"', r"\"").replace("&", "^&")
                 return f'"{text}"'
             return s
 
