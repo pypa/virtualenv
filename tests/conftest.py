@@ -12,6 +12,7 @@ from typing import ClassVar
 import pytest
 
 from virtualenv.app_data import AppDataDiskFolder
+from virtualenv.cache import FileCache
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_WIN, fs_supports_symlink
 from virtualenv.report import LOGGER
@@ -125,9 +126,10 @@ def _check_cwd_not_changed_by_test():
 
 @pytest.fixture(autouse=True)
 def _ensure_py_info_cache_empty(session_app_data):
-    PythonInfo.clear_cache(session_app_data)
+    cache = FileCache(session_app_data.py_info, session_app_data.py_info_clear)
+    PythonInfo.clear_cache(cache)
     yield
-    PythonInfo.clear_cache(session_app_data)
+    PythonInfo.clear_cache(cache)
 
 
 @contextmanager
@@ -309,7 +311,8 @@ def special_name_dir(tmp_path, special_char_name):
 
 @pytest.fixture(scope="session")
 def current_creators(session_app_data):
-    return CreatorSelector.for_interpreter(PythonInfo.current_system(session_app_data))
+    cache = FileCache(session_app_data.py_info, session_app_data.py_info_clear)
+    return CreatorSelector.for_interpreter(PythonInfo.current_system(session_app_data, cache))
 
 
 @pytest.fixture(scope="session")
@@ -357,7 +360,8 @@ def for_py_version():
 
 @pytest.fixture
 def _skip_if_test_in_system(session_app_data):
-    current = PythonInfo.current(session_app_data)
+    cache = FileCache(session_app_data.py_info, session_app_data.py_info_clear)
+    current = PythonInfo.current(session_app_data, cache)
     if current.system_executable is not None:
         pytest.skip("test not valid if run under system")
 

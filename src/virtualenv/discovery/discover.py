@@ -15,7 +15,7 @@ class Discover(ABC):
         """
         raise NotImplementedError
 
-    def __init__(self, options) -> None:
+    def __init__(self, options, cache=None) -> None:
         """
         Create a new discovery mechanism.
 
@@ -24,6 +24,7 @@ class Discover(ABC):
         self._has_run = False
         self._interpreter = None
         self._env = options.env
+        self.cache = cache
 
     @abstractmethod
     def run(self):

@@ -4,6 +4,7 @@ import sys
 
 import pytest
 
+from tests.unit.discovery.util import MockAppData, MockCache
 from virtualenv.discovery.py_spec import PythonSpec
 
 
@@ -36,5 +37,5 @@ def test_propose_interpreters(string_spec, expected_exe):
     from virtualenv.discovery.windows import propose_interpreters  # noqa: PLC0415
 
     spec = PythonSpec.from_string_spec(string_spec)
-    interpreter = next(propose_interpreters(spec=spec, cache_dir=None, env=None))
+    interpreter = next(propose_interpreters(spec, MockAppData(), MockCache(), env=None))
     assert interpreter.executable == expected_exe

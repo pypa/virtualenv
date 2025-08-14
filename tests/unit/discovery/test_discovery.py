@@ -11,6 +11,7 @@ from uuid import uuid4
 
 import pytest
 
+from tests.unit.discovery.util import MockAppData, MockCache
 from virtualenv.discovery.builtin import Builtin, LazyPathDump, get_interpreter, get_paths
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_WIN, fs_supports_symlink
@@ -19,9 +20,10 @@ from virtualenv.info import IS_WIN, fs_supports_symlink
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink not supported")
 @pytest.mark.parametrize("case", ["mixed", "lower", "upper"])
 @pytest.mark.parametrize("specificity", ["more", "less", "none"])
-def test_discovery_via_path(monkeypatch, case, specificity, tmp_path, caplog, session_app_data):  # noqa: PLR0913
+def test_discovery_via_path(monkeypatch, case, specificity, tmp_path, caplog):
     caplog.set_level(logging.DEBUG)
-    current = PythonInfo.current_system(session_app_data)
+    app_data, cache = MockAppData(), MockCache()
+    current = PythonInfo.current_system(app_data, cache)
     name = "somethingVeryCryptic"
     threaded = "t" if current.free_threaded else ""
     if case == "lower":
@@ -51,36 +53,39 @@ def test_discovery_via_path(monkeypatch, case, specificity, tmp_path, caplog, se
         (target / pyvenv_cfg.name).write_bytes(pyvenv_cfg.read_bytes())
     new_path = os.pathsep.join([str(target), *os.environ.get("PATH", "").split(os.pathsep)])
     monkeypatch.setenv("PATH", new_path)
-    interpreter = get_interpreter(core, [])
+    interpreter = get_interpreter(core, [], app_data, cache)
 
     assert interpreter is not None
 
 
 def test_discovery_via_path_not_found(tmp_path, monkeypatch):
     monkeypatch.setenv("PATH", str(tmp_path))
-    interpreter = get_interpreter(uuid4().hex, [])
+    app_data, cache = MockAppData(), MockCache()
+    interpreter = get_interpreter(uuid4().hex, [], app_data, cache)
     assert interpreter is None
 
 
 def test_discovery_via_path_in_nonbrowseable_directory(tmp_path, monkeypatch):
     bad_perm = tmp_path / "bad_perm"
     bad_perm.mkdir(mode=0o000)
+    app_data, cache = MockAppData(), MockCache()
     # path entry is unreadable
     monkeypatch.setenv("PATH", str(bad_perm))
-    interpreter = get_interpreter(uuid4().hex, [])
+    interpreter = get_interpreter(uuid4().hex, [], app_data, cache)
     assert interpreter is None
     # path entry parent is unreadable
     monkeypatch.setenv("PATH", str(bad_perm / "bin"))
-    interpreter = get_interpreter(uuid4().hex, [])
+    interpreter = get_interpreter(uuid4().hex, [], app_data, cache)
     assert interpreter is None
 
 
-def test_relative_path(session_app_data, monkeypatch):
-    sys_executable = Path(PythonInfo.current_system(app_data=session_app_data).system_executable)
+def test_relative_path(monkeypatch):
+    app_data, cache = MockAppData(), MockCache()
+    sys_executable = Path(PythonInfo.current_system(app_data=app_data, cache=cache).system_executable)
     cwd = sys_executable.parents[1]
     monkeypatch.chdir(str(cwd))
     relative = str(sys_executable.relative_to(cwd))
-    result = get_interpreter(relative, [], session_app_data)
+    result = get_interpreter(relative, [], app_data, cache)
     assert result is not None
 
 
@@ -95,13 +100,14 @@ def test_uv_python(monkeypatch, tmp_path_factory, mocker):
     with patch("virtualenv.discovery.builtin.PathPythonInfo.from_exe") as mock_from_exe, monkeypatch.context() as m:
         m.setenv("UV_PYTHON_INSTALL_DIR", str(uv_python_install_dir))
 
-        get_interpreter("python", [])
+        app_data, cache = MockAppData(), MockCache()
+        get_interpreter("python", [], app_data, cache)
         mock_from_exe.assert_not_called()
 
         bin_path = uv_python_install_dir.joinpath("some-py-impl", "bin")
         bin_path.mkdir(parents=True)
         bin_path.joinpath("python").touch()
-        get_interpreter("python", [])
+        get_interpreter("python", [], app_data, cache)
         mock_from_exe.assert_called_once()
         assert mock_from_exe.call_args[0][0] == str(bin_path / "python")
 
@@ -120,13 +126,14 @@ def test_uv_python(monkeypatch, tmp_path_factory, mocker):
     with patch("virtualenv.discovery.builtin.PathPythonInfo.from_exe") as mock_from_exe, monkeypatch.context() as m:
         m.setenv("XDG_DATA_HOME", str(xdg_data_home))
 
-        get_interpreter("python", [])
+        app_data, cache = MockAppData(), MockCache()
+        get_interpreter("python", [], app_data, cache)
         mock_from_exe.assert_not_called()
 
         bin_path = xdg_data_home.joinpath("uv", "python", "some-py-impl", "bin")
         bin_path.mkdir(parents=True)
         bin_path.joinpath("python").touch()
-        get_interpreter("python", [])
+        get_interpreter("python", [], app_data, cache)
         mock_from_exe.assert_called_once()
         assert mock_from_exe.call_args[0][0] == str(bin_path / "python")
 
@@ -135,21 +142,24 @@ def test_uv_python(monkeypatch, tmp_path_factory, mocker):
     with patch("virtualenv.discovery.builtin.PathPythonInfo.from_exe") as mock_from_exe, monkeypatch.context() as m:
         m.setattr("virtualenv.discovery.builtin.user_data_path", lambda x: user_data_path / x)
 
-        get_interpreter("python", [])
+        app_data, cache = MockAppData(), MockCache()
+        get_interpreter("python", [], app_data, cache)
         mock_from_exe.assert_not_called()
 
         bin_path = user_data_path.joinpath("uv", "python", "some-py-impl", "bin")
         bin_path.mkdir(parents=True)
         bin_path.joinpath("python").touch()
-        get_interpreter("python", [])
+        get_interpreter("python", [], app_data, cache)
         mock_from_exe.assert_called_once()
         assert mock_from_exe.call_args[0][0] == str(bin_path / "python")
 
 
-def test_discovery_fallback_fail(session_app_data, caplog):
+def test_discovery_fallback_fail(caplog):
     caplog.set_level(logging.DEBUG)
+    app_data, cache = MockAppData(), MockCache()
     builtin = Builtin(
-        Namespace(app_data=session_app_data, try_first_with=[], python=["magic-one", "magic-two"], env=os.environ),
+        Namespace(app_data=app_data, try_first_with=[], python=["magic-one", "magic-two"], env=os.environ),
+        cache,
     )
 
     result = builtin.run()
@@ -158,10 +168,12 @@ def test_discovery_fallback_fail(session_app_data, caplog):
     assert "accepted" not in caplog.text
 
 
-def test_discovery_fallback_ok(session_app_data, caplog):
+def test_discovery_fallback_ok(caplog):
     caplog.set_level(logging.DEBUG)
+    app_data, cache = MockAppData(), MockCache()
     builtin = Builtin(
-        Namespace(app_data=session_app_data, try_first_with=[], python=["magic-one", sys.executable], env=os.environ),
+        Namespace(app_data=app_data, try_first_with=[], python=["magic-one", sys.executable], env=os.environ),
+        cache,
     )
 
     result = builtin.run()
@@ -180,10 +192,12 @@ def mock_get_interpreter(mocker):
 
 
 @pytest.mark.usefixtures("mock_get_interpreter")
-def test_returns_first_python_specified_when_only_env_var_one_is_specified(mocker, monkeypatch, session_app_data):
+def test_returns_first_python_specified_when_only_env_var_one_is_specified(mocker, monkeypatch):
     monkeypatch.setenv("VIRTUALENV_PYTHON", "python_from_env_var")
+    app_data, cache = MockAppData(), MockCache()
     builtin = Builtin(
-        Namespace(app_data=session_app_data, try_first_with=[], python=["python_from_env_var"], env=os.environ),
+        Namespace(app_data=app_data, try_first_with=[], python=["python_from_env_var"], env=os.environ),
+        cache,
     )
 
     result = builtin.run()
@@ -192,17 +206,17 @@ def test_returns_first_python_specified_when_only_env_var_one_is_specified(mocke
 
 
 @pytest.mark.usefixtures("mock_get_interpreter")
-def test_returns_second_python_specified_when_more_than_one_is_specified_and_env_var_is_specified(
-    mocker, monkeypatch, session_app_data
-):
+def test_returns_second_python_specified_when_more_than_one_is_specified_and_env_var_is_specified(mocker, monkeypatch):
     monkeypatch.setenv("VIRTUALENV_PYTHON", "python_from_env_var")
+    app_data, cache = MockAppData(), MockCache()
     builtin = Builtin(
         Namespace(
-            app_data=session_app_data,
+            app_data=app_data,
             try_first_with=[],
             python=["python_from_env_var", "python_from_cli"],
             env=os.environ,
         ),
+        cache,
     )
 
     result = builtin.run()
@@ -210,7 +224,7 @@ def test_returns_second_python_specified_when_more_than_one_is_specified_and_env
     assert result == mocker.sentinel.python_from_cli
 
 
-def test_discovery_absolute_path_with_try_first(tmp_path, session_app_data):
+def test_discovery_absolute_path_with_try_first(tmp_path):
     good_env = tmp_path / "good"
     bad_env = tmp_path / "bad"
 
@@ -226,10 +240,12 @@ def test_discovery_absolute_path_with_try_first(tmp_path, session_app_data):
 
     # The spec is an absolute path, this should be a hard requirement.
     # The --try-first-with option should be rejected as it does not match the spec.
+    app_data, cache = MockAppData(), MockCache()
     interpreter = get_interpreter(
         str(good_exe),
         try_first_with=[str(bad_exe)],
-        app_data=session_app_data,
+        app_data=app_data,
+        cache=cache,
     )
 
     assert interpreter is not None
@@ -240,7 +256,8 @@ def test_discovery_via_path_with_file(tmp_path, monkeypatch):
     a_file = tmp_path / "a_file"
     a_file.touch()
     monkeypatch.setenv("PATH", str(a_file))
-    interpreter = get_interpreter(uuid4().hex, [])
+    app_data, cache = MockAppData(), MockCache()
+    interpreter = get_interpreter(uuid4().hex, [], app_data, cache)
     assert interpreter is None
 
 
@@ -320,10 +337,12 @@ def test_lazy_path_dump_debug(monkeypatch, tmp_path):
 
 
 @pytest.mark.usefixtures("mock_get_interpreter")
-def test_returns_first_python_specified_when_no_env_var_is_specified(mocker, monkeypatch, session_app_data):
+def test_returns_first_python_specified_when_no_env_var_is_specified(mocker, monkeypatch):
     monkeypatch.delenv("VIRTUALENV_PYTHON", raising=False)
+    app_data, cache = MockAppData(), MockCache()
     builtin = Builtin(
-        Namespace(app_data=session_app_data, try_first_with=[], python=["python_from_cli"], env=os.environ),
+        Namespace(app_data=app_data, try_first_with=[], python=["python_from_cli"], env=os.environ),
+        cache,
     )
 
     result = builtin.run()

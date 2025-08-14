@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from virtualenv.cache import FileCache
 from virtualenv.config.cli.parser import VirtualEnvOptions
 from virtualenv.config.ini import IniConfig
 from virtualenv.create.via_global_ref.builtin.cpython.common import is_macos_brew
@@ -76,10 +77,12 @@ def test_extra_search_dir_via_env_var(tmp_path, monkeypatch):
 
 
 @pytest.mark.usefixtures("_empty_conf")
-@pytest.mark.skipif(is_macos_brew(PythonInfo.current_system()), reason="no copy on brew")
-def test_value_alias(monkeypatch, mocker):
+def test_value_alias(monkeypatch, mocker, session_app_data):
     from virtualenv.config.cli.parser import VirtualEnvConfigParser  # noqa: PLC0415
 
+    cache = FileCache(session_app_data.py_info, session_app_data.py_info_clear)
+    if is_macos_brew(PythonInfo.current_system(session_app_data, cache)):
+        pytest.skip(reason="no copy on brew")
     prev = VirtualEnvConfigParser._fix_default  # noqa: SLF001
 
     def func(self, action):
