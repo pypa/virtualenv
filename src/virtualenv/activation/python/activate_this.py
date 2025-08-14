@@ -24,6 +24,14 @@ base = bin_dir[: -len(__BIN_NAME__) - 1]  # strip away the bin part from the __f
 
 # prepend bin to PATH (this file is inside the bin directory)
 os.environ["PATH"] = os.pathsep.join([bin_dir, *os.environ.get("PATH", "").split(os.pathsep)])
+
+# set PKG_CONFIG_PATH
+pkg_config_path = os.path.join(base, "lib", "pkgconfig")
+if "PKG_CONFIG_PATH" in os.environ:
+    os.environ["PKG_CONFIG_PATH"] = os.pathsep.join([pkg_config_path, os.environ["PKG_CONFIG_PATH"]])
+else:
+    os.environ["PKG_CONFIG_PATH"] = pkg_config_path
+
 os.environ["VIRTUAL_ENV"] = base  # virtual env is right above bin directory
 os.environ["VIRTUAL_ENV_PROMPT"] = __VIRTUAL_PROMPT__ or os.path.basename(base)
 

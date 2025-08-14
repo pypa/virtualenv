@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from argparse import Namespace
 
@@ -52,6 +53,48 @@ def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     else:
         assert "if ('' -ne \"\")" in content
         assert "$env:TCL_LIBRARY = ''" in content
+
+
+def test_powershell_pkg_config_generation(tmp_path):
+    # GIVEN
+    class MockInterpreter:
+        os = "nt"
+
+    interpreter = MockInterpreter()
+    interpreter.tcl_lib = None
+    interpreter.tk_lib = None
+
+    class MockCreator:
+        def __init__(self, dest):
+            self.dest = dest
+            self.bin_dir = dest / "bin"
+            self.bin_dir.mkdir()
+            self.interpreter = interpreter
+            self.pyenv_cfg = {}
+            self.env_name = "my-env"
+
+    creator = MockCreator(tmp_path)
+    options = Namespace(prompt=None)
+    activator = PowerShellActivator(options)
+
+    # WHEN
+    activator.generate(creator)
+    content = (creator.bin_dir / "activate.ps1").read_text(encoding="utf-8-sig")
+
+    # THEN
+    pkg_config_path = str(tmp_path / "lib" / "pkgconfig")
+    content = content.replace(PowerShellActivator.quote(pkg_config_path), "__PKG_CONFIG_PATH__")
+    content = content.replace(PowerShellActivator.quote(os.pathsep), "__PATH_SEP__")
+
+    assert "if (Test-Path env:PKG_CONFIG_PATH)" in content
+    assert "New-Variable -Scope global -Name _OLD_VIRTUAL_PKG_CONFIG_PATH -Value $env:PKG_CONFIG_PATH" in content
+    assert "$env:PKG_CONFIG_PATH = __PKG_CONFIG_PATH__ + __PATH_SEP__ + $env:PKG_CONFIG_PATH" in content
+    assert "else" in content
+    assert "$env:PKG_CONFIG_PATH = __PKG_CONFIG_PATH__" in content
+    assert "if (Test-Path variable:_OLD_VIRTUAL_PKG_CONFIG_PATH)" in content
+    assert "$env:PKG_CONFIG_PATH = $variable:_OLD_VIRTUAL_PKG_CONFIG_PATH" in content
+    assert 'Remove-Variable "_OLD_VIRTUAL_PKG_CONFIG_PATH" -Scope global' in content
+    assert "Remove-Item env:PKG_CONFIG_PATH -ErrorAction SilentlyContinue" in content
 
 
 @pytest.mark.slow

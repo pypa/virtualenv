@@ -49,6 +49,7 @@ class ViaTemplateActivator(Activator, ABC):
             "__PATH_SEP__": os.pathsep,
             "__TCL_LIBRARY__": creator.interpreter.tcl_lib or "",
             "__TK_LIBRARY__": creator.interpreter.tk_lib or "",
+            "__PKG_CONFIG_PATH__": str(creator.dest / "lib" / "pkgconfig"),
         }
 
     def _generate(self, replacements, templates, to_folder, creator):
