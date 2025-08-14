@@ -17,7 +17,7 @@ class BatchActivator(ViaTemplateActivator):
 
     @staticmethod
     def quote(string):
-        return string
+        return string.replace("&", "^&")
 
     def instantiate_template(self, replacements, template, creator):
         # ensure the text has all newlines as \r\n - required by batch
