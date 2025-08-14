@@ -10,6 +10,7 @@
 @set "VIRTUAL_ENV_PROMPT=__VIRTUAL_PROMPT__"
 @if NOT DEFINED VIRTUAL_ENV_PROMPT (
     @for %%d in ("%VIRTUAL_ENV%") do @set "VIRTUAL_ENV_PROMPT=%%~nxd"
+    @set "VIRTUAL_ENV_PROMPT=%VIRTUAL_ENV_PROMPT:&=^&%"
 )
 
 @if defined _OLD_VIRTUAL_PROMPT (
