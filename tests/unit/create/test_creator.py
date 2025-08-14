@@ -101,15 +101,15 @@ def system(session_app_data, current_info):
 
 
 @pytest.fixture(scope="session")
-def current_creators(current_info):
+def current_creator_keys(current_info):
     return [i for i in CreatorSelector.for_interpreter(current_info).key_to_class if i != "builtin"]
 
 
 @pytest.fixture(scope="session")
-def create_methods(current_creators, current_info):
+def create_methods(current_creator_keys, current_info):
     methods = []
     for k, v in CreatorSelector.for_interpreter(current_info).key_to_meta.items():
-        if k in current_creators:
+        if k in current_creator_keys:
             if v.can_copy:
                 if (
                     k == "venv"
@@ -348,9 +348,9 @@ def test_venv_fails_not_inline(tmp_path, capsys, mocker, current_info):
 
 
 @pytest.mark.parametrize("clear", [True, False], ids=["clear", "no_clear"])
-def test_create_clear_resets(tmp_path, clear, caplog, current_creators):
+def test_create_clear_resets(tmp_path, clear, caplog, current_creator_keys):
     caplog.set_level(logging.DEBUG)
-    for creator in current_creators:
+    for creator in current_creator_keys:
         if creator == "venv" and clear is False:
             pytest.skip("venv without clear might fail")
         marker = tmp_path / creator / "magic"
@@ -365,8 +365,8 @@ def test_create_clear_resets(tmp_path, clear, caplog, current_creators):
 
 
 @pytest.mark.parametrize("prompt", [None, "magic"])
-def test_prompt_set(tmp_path, prompt, current_creators):
-    for creator in current_creators:
+def test_prompt_set(tmp_path, prompt, current_creator_keys):
+    for creator in current_creator_keys:
         cmd = [str(tmp_path / creator), "--seeder", "app-data", "--without-pip", "--creator", creator]
         if prompt is not None:
             cmd.extend(["--prompt", "magic"])
@@ -381,8 +381,8 @@ def test_prompt_set(tmp_path, prompt, current_creators):
             assert cfg["prompt"] == actual_prompt
 
 
-def test_home_path_is_exe_parent(tmp_path, current_creators):
-    for creator in current_creators:
+def test_home_path_is_exe_parent(tmp_path, current_creator_keys):
+    for creator in current_creator_keys:
         cmd = [str(tmp_path / creator), "--seeder", "app-data", "--without-pip", "--creator", creator]
         result = cli_run(cmd)
         cfg = PyEnvCfg.from_file(result.creator.pyenv_cfg.path)
@@ -446,8 +446,8 @@ def test_create_long_path(tmp_path):
 
 
 @pytest.mark.slow
-def test_create_distutils_cfg(tmp_path, monkeypatch, current_creators):
-    for creator in current_creators:
+def test_create_distutils_cfg(tmp_path, monkeypatch, current_creator_keys):
+    for creator in current_creator_keys:
         result = cli_run(
             [
                 str(tmp_path / creator / "venv"),
@@ -720,8 +720,8 @@ def test_python_path(monkeypatch, tmp_path, python_path_on):
 # (specifically venv scripts delivered with Python itself) are not writable.
 #
 # https://github.com/pypa/virtualenv/issues/2419
-def test_venv_creator_without_write_perms(tmp_path, mocker, current_creators):
-    if "venv" not in current_creators:
+def test_venv_creator_without_write_perms(tmp_path, mocker, current_creator_keys):
+    if "venv" not in current_creator_keys:
         pytest.skip("test needs venv creator")
     from virtualenv.run.session import Session  # noqa: PLC0415
 
