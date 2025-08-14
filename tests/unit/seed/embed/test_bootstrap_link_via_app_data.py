@@ -51,7 +51,7 @@ def test_seed_link_via_app_data(  # noqa: PLR0913, PLR0915
         bundle_ver["setuptools"].split("-")[1],
         "--reset-app-data",
         "--creator",
-        next(iter(current_fastest)),
+        current_fastest,
         "-vv",
     ]
     if for_py_version == "3.8":
@@ -163,7 +163,7 @@ def read_only_app_data(temp_app_data):
 @pytest.mark.usefixtures("read_only_app_data")
 def test_base_bootstrap_link_via_app_data_not_writable(tmp_path, current_fastest):
     dest = tmp_path / "venv"
-    result = cli_run(["--seeder", "app-data", "--creator", next(iter(current_fastest)), "-vv", str(dest)])
+    result = cli_run(["--seeder", "app-data", "--creator", current_fastest, "-vv", str(dest)])
     assert result
 
 
@@ -175,7 +175,7 @@ def test_populated_read_only_cache_and_symlinked_app_data(tmp_path, current_fast
         "--seeder",
         "app-data",
         "--creator",
-        next(iter(current_fastest)),
+        current_fastest,
         "--symlink-app-data",
         "-vv",
         str(dest),
@@ -201,7 +201,7 @@ def test_populated_read_only_cache_and_copied_app_data(tmp_path, current_fastest
         "--seeder",
         "app-data",
         "--creator",
-        next(iter(current_fastest)),
+        current_fastest,
         "-vv",
         "-p",
         "python",

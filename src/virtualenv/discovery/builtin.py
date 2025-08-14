@@ -158,7 +158,7 @@ def propose_interpreters(  # noqa: C901, PLR0912, PLR0915
         if IS_WIN:
             from .windows import propose_interpreters  # noqa: PLC0415
 
-            for interpreter in propose_interpreters(spec, app_data, env):
+            for interpreter in propose_interpreters(spec, app_data, cache, env):
                 exe_raw = str(interpreter.executable)
                 exe_id = fs_path_id(exe_raw)
                 if exe_id in tested_exes:

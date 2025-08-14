@@ -59,7 +59,7 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_f
         str(tmp_path / "env"),
         "--download",
         "--creator",
-        next(iter(current_fastest)),
+        current_fastest,
         "--extra-search-dir",
         str(extra_search_dir),
         "--app-data",
