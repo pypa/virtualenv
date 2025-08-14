@@ -32,8 +32,6 @@ class CPythonPosix(CPython, PosixSupports, ABC):
 
 
 class CPythonWindows(CPython, WindowsSupports, ABC):
-    PY_3 = 3
-
     @classmethod
     def _executables(cls, interpreter):
         # symlink of the python executables does not work reliably, copy always instead
@@ -41,7 +39,7 @@ class CPythonWindows(CPython, WindowsSupports, ABC):
         # - venv
         host = cls.host_python(interpreter)
         names = {"python.exe", host.name}
-        if interpreter.version_info.major == cls.PY_3:
+        if interpreter.version_info.major == 3:  # noqa: PLR2004
             names.update({"python3.exe", "python3"})
         for path in (host.parent / n for n in names):
             yield host, [path.name], RefMust.COPY, RefWhen.ANY
