@@ -22,13 +22,14 @@ class BatchActivator(ViaTemplateActivator):
 
     def instantiate_template(self, replacements, template, creator):
         # ensure the text has all newlines as \r\n - required by batch
-        base = super().instantiate_template(replacements, template, creator)
         if template == "activate.bat":
-            # only sanitize the prompt placeholder
-            # __VIRTUAL_PROMPT__ → VIRTUAL_ENV_PROMPT
-            safe = replacements["__VIRTUAL_PROMPT__"]
-            safe = re.sub(r"(?<!\r)\n", "\r\n", safe)
-            base = base.replace(f'"{replacements["__VIRTUAL_PROMPT__"]}"', f'"{safe}"')
+            # sanitize batch-special chars from key replacements
+            safe_replacements = replacements.copy()
+            safe_replacements["__VIRTUAL_ENV__"] = re.sub(r"[&<>|^]", "", replacements["__VIRTUAL_ENV__"])
+            safe_replacements["__VIRTUAL_PROMPT__"] = re.sub(r"[&<>|^]", "", replacements["__VIRTUAL_PROMPT__"])
+            base = super().instantiate_template(safe_replacements, template, creator)
+        else:
+            base = super().instantiate_template(replacements, template, creator)
         return base.replace(os.linesep, "\n").replace("\n", os.linesep)
 
 
