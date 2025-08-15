@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import re
 
 from virtualenv.activation.via_template import ViaTemplateActivator
 
