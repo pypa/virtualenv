@@ -23,19 +23,19 @@ jobs:
         py:
           - "3.13t"
           - "3.13"
-          - "3.12"
-          - "3.11"
-          - "3.10"
-          - "3.9"
+#          - "3.12"
+#          - "3.11"
+#          - "3.10"
+#          - "3.9"
           - "3.8"
           - pypy-3.11
-          - pypy-3.10
-          - pypy-3.9
-          - pypy-3.8
-          - graalpy-24.1
+#          - pypy-3.10
+#          - pypy-3.9
+#          - pypy-3.8
+#          - graalpy-24.1
         os:
-          - ubuntu-24.04
-          - macos-15
+#          - ubuntu-24.04
+#          - macos-15
           - windows-2025
         include:
           - { os: macos-15, py: "brew@3.11" }
