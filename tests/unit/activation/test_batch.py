@@ -52,6 +52,48 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
         assert '@if NOT ""=="" @set "TK_LIBRARY="' in activate_content
 
 
+def test_batch_pkg_config_generation(tmp_path):
+    # GIVEN
+    class MockInterpreter:
+        os = "nt"
+
+    interpreter = MockInterpreter()
+    interpreter.tcl_lib = None
+    interpreter.tk_lib = None
+
+    class MockCreator:
+        def __init__(self, dest):
+            self.dest = dest
+            self.bin_dir = dest / "bin"
+            self.bin_dir.mkdir()
+            self.interpreter = interpreter
+            self.pyenv_cfg = {}
+            self.env_name = "my-env"
+
+    creator = MockCreator(tmp_path)
+    options = Namespace(prompt=None)
+    activator = BatchActivator(options)
+
+    # WHEN
+    activator.generate(creator)
+    activate_content = (creator.bin_dir / "activate.bat").read_text(encoding="utf-8")
+    deactivate_content = (creator.bin_dir / "deactivate.bat").read_text(encoding="utf-8")
+
+    # THEN
+    pkg_config_path = str(tmp_path / "lib" / "pkgconfig")
+    activate_content = activate_content.replace(BatchActivator.quote(pkg_config_path), "__PKG_CONFIG_PATH__")
+
+    assert '@if defined PKG_CONFIG_PATH @set "_OLD_VIRTUAL_PKG_CONFIG_PATH=%PKG_CONFIG_PATH%"' in activate_content
+    assert "(@set PKG_CONFIG_PATH=__PKG_CONFIG_PATH__;%_OLD_VIRTUAL_PKG_CONFIG_PATH%)" in activate_content
+    assert "else (@set PKG_CONFIG_PATH=__PKG_CONFIG_PATH__)" in activate_content
+    assert (
+        '@if defined _OLD_VIRTUAL_PKG_CONFIG_PATH @set "PKG_CONFIG_PATH=%_OLD_VIRTUAL_PKG_CONFIG_PATH%"'
+        in deactivate_content
+    )
+    assert "@if not defined _OLD_VIRTUAL_PKG_CONFIG_PATH @set PKG_CONFIG_PATH=" in deactivate_content
+    assert "@set _OLD_VIRTUAL_PKG_CONFIG_PATH=" in deactivate_content
+
+
 @pytest.mark.usefixtures("activation_python")
 def test_batch(activation_tester_class, activation_tester, tmp_path):
     version_script = tmp_path / "version.bat"
