@@ -28,6 +28,12 @@ class BatchActivator(ViaTemplateActivator):
             safe_replacements["__VIRTUAL_ENV__"] = re.sub(r"[&<>|^]", "", replacements["__VIRTUAL_ENV__"])
             safe_replacements["__VIRTUAL_PROMPT__"] = re.sub(r"[&<>|^]", "", replacements["__VIRTUAL_PROMPT__"])
             base = super().instantiate_template(safe_replacements, template, creator)
+            # DEBUG: print what we generated
+            print(f"DEBUG SANITIZED VIRTUAL_ENV: {safe_replacements['__VIRTUAL_ENV__']}")
+            print(f"DEBUG SANITIZED VIRTUAL_PROMPT: {safe_replacements['__VIRTUAL_PROMPT__']}")
+            print("DEBUG FIRST 10 LINES OF ACTIVATE.BAT:")
+            for i, line in enumerate(base.split('\n')[:10]):
+                print(f"  {i+1}: {line}")
         else:
             base = super().instantiate_template(replacements, template, creator)
         return base.replace(os.linesep, "\n").replace("\n", os.linesep)
