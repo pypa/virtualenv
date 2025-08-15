@@ -229,9 +229,18 @@ def raise_on_non_source_class():
 
 
 @pytest.fixture(scope="session", params=[True, False], ids=["with_prompt", "no_prompt"])
-def activation_python(request, tmp_path_factory, special_char_name, current_fastest):
+def activation_python(request, tmp_path_factory, special_char_name, current_fastest, session_app_data):
     dest = os.path.join(str(tmp_path_factory.mktemp("activation-tester-env")), special_char_name)
-    cmd = ["--without-pip", dest, "--creator", current_fastest, "-vv", "--no-periodic-update"]
+    cmd = [
+        "--without-pip",
+        dest,
+        "--creator",
+        current_fastest,
+        "-vv",
+        "--no-periodic-update",
+        "--app-data",
+        str(session_app_data),
+    ]
     # `params` is accessed here. https://docs.pytest.org/en/stable/reference/reference.html#pytest-fixture
     if request.param:
         cmd += ["--prompt", special_char_name]

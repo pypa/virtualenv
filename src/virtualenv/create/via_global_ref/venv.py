@@ -20,7 +20,7 @@ class Venv(ViaGlobalRefApi):
     def __init__(self, options, interpreter) -> None:
         self.describe = options.describe
         super().__init__(options, interpreter)
-        current = PythonInfo.current()
+        current = PythonInfo.current(options.app_data, options.cache)
         self.can_be_inline = interpreter is current and interpreter.executable == interpreter.system_executable
         self._context = None
 

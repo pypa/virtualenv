@@ -1,0 +1,1 @@
+Replaced direct references to tcl/tk library paths with getattr. By :user:`esafak`

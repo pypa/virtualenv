@@ -5,6 +5,7 @@ import os
 from functools import partial
 
 from virtualenv.app_data import make_app_data
+from virtualenv.cache import FileCache
 from virtualenv.config.cli.parser import VirtualEnvConfigParser
 from virtualenv.report import LEVELS, setup_report
 from virtualenv.run.session import Session
@@ -130,6 +131,8 @@ def load_app_data(args, parser, options):
     options, _ = parser.parse_known_args(args, namespace=options)
     if options.reset_app_data:
         options.app_data.reset()
+
+    options.cache = FileCache(store_factory=options.app_data.py_info, clearer=options.app_data.py_info_clear)
     return options
 
 
