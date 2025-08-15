@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 
 from virtualenv.activation.via_template import ViaTemplateActivator
 
@@ -17,7 +18,7 @@ class BatchActivator(ViaTemplateActivator):
 
     @staticmethod
     def quote(string):
-        return string
+        return re.sub(r"[&<>|^]", "", string)
 
     def instantiate_template(self, replacements, template, creator):
         # ensure the text has all newlines as \r\n - required by batch
