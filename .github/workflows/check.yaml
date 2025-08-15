@@ -37,10 +37,10 @@ jobs:
 #          - ubuntu-24.04
 #          - macos-15
           - windows-2025
-        include:
-          - { os: macos-15, py: "brew@3.11" }
-          - { os: macos-15, py: "brew@3.10" }
-          - { os: macos-15, py: "brew@3.9" }
+#        include:
+#          - { os: macos-15, py: "brew@3.11" }
+#          - { os: macos-15, py: "brew@3.10" }
+#          - { os: macos-15, py: "brew@3.9" }
         exclude:
           - { os: windows-2025, py: "graalpy-24.1" }
           - { os: windows-2025, py: "pypy-3.10" }

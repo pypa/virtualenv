@@ -25,17 +25,17 @@ class BatchActivator(ViaTemplateActivator):
         if template == "activate.bat":
             # sanitize batch-special chars from key replacements
             safe_replacements = replacements.copy()
+
+            # Escape ' as ^' for batch quoted paths (critical!)
+            safe_replacements["__VIRTUAL_ENV__"] = (
+                replacements["__VIRTUAL_ENV__"].replace("'", "^'")
+            )
+
             # Sanitize ONLY the prompt (with_prompt case)
             safe_replacements["__VIRTUAL_PROMPT__"] = re.sub(
                 r"[&<>|^]", "", replacements["__VIRTUAL_PROMPT__"]
             )
 
-            # For no_prompt case, sanitize the fallback name
-            if not safe_replacements["__VIRTUAL_PROMPT__"]:
-                safe_name = re.sub(
-                    r"[&<>|^]", "", os.path.basename(replacements["__VIRTUAL_ENV__"])
-                )
-                safe_replacements["__VIRTUAL_PROMPT__"] = safe_name
             base = super().instantiate_template(safe_replacements, template, creator)
         else:
             base = super().instantiate_template(replacements, template, creator)
