@@ -660,7 +660,7 @@ class PythonInfo:
             lower = base.lower()
             yield lower
 
-            from .info import fs_is_case_sensitive  # noqa: PLC0415
+            from virtualenv.discovery.info import fs_is_case_sensitive  # noqa: PLC0415
 
             if fs_is_case_sensitive():
                 if base != lower:

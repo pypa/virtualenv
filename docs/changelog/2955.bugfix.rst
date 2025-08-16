@@ -1,0 +1,1 @@
+Restore absolute import of fs_is_case_sensitive - by :user:`esafak`.
