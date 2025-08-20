@@ -52,6 +52,47 @@ def test_fish_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
         assert "if test -n ''\n  if set -q TK_LIBRARY;" in content
 
 
+def test_fish_pkg_config_generation(tmp_path):
+    # GIVEN
+    class MockInterpreter:
+        pass
+
+    interpreter = MockInterpreter()
+    interpreter.tcl_lib = None
+    interpreter.tk_lib = None
+
+    class MockCreator:
+        def __init__(self, dest):
+            self.dest = dest
+            self.bin_dir = dest / "bin"
+            self.bin_dir.mkdir()
+            self.interpreter = interpreter
+            self.pyenv_cfg = {}
+            self.env_name = "my-env"
+
+    creator = MockCreator(tmp_path)
+    options = Namespace(prompt=None)
+    activator = FishActivator(options)
+
+    # WHEN
+    activator.generate(creator)
+    content = (creator.bin_dir / "activate.fish").read_text(encoding="utf-8")
+
+    # THEN
+    pkg_config_path = str(tmp_path / "lib" / "pkgconfig")
+    content = content.replace(FishActivator.quote(pkg_config_path), "__PKG_CONFIG_PATH__")
+
+    assert "if set -q PKG_CONFIG_PATH" in content
+    assert "set -gx _OLD_VIRTUAL_PKG_CONFIG_PATH $PKG_CONFIG_PATH" in content
+    assert "set -gx PKG_CONFIG_PATH __PKG_CONFIG_PATH__ $PKG_CONFIG_PATH" in content
+    assert "else" in content
+    assert "set -gx PKG_CONFIG_PATH __PKG_CONFIG_PATH__" in content
+    assert 'if test -n "$_OLD_VIRTUAL_PKG_CONFIG_PATH"' in content
+    assert 'set -gx PKG_CONFIG_PATH "$_OLD_VIRTUAL_PKG_CONFIG_PATH"' in content
+    assert "set -e _OLD_VIRTUAL_PKG_CONFIG_PATH" in content
+    assert "set -e PKG_CONFIG_PATH" in content
+
+
 @pytest.mark.skipif(IS_WIN, reason="we have not setup fish in CI yet")
 def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path):
     monkeypatch.setenv("HOME", str(tmp_path))
