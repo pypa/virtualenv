@@ -64,6 +64,12 @@ export-env {
     if (has-env 'TK_LIBRARY')  {
         let $new_env = $new_env | insert TK_LIBRARY __TK_LIBRARY__
     }
+    let $new_env = if (has-env 'PKG_CONFIG_PATH') {
+        let pkg_config_path = ($env.PKG_CONFIG_PATH | prepend __PKG_CONFIG_PATH__)
+        $new_env | insert PKG_CONFIG_PATH $pkg_config_path
+    } else {
+        $new_env | insert PKG_CONFIG_PATH [__PKG_CONFIG_PATH__]
+    }
     let old_prompt_command = if (has-env 'PROMPT_COMMAND') { $env.PROMPT_COMMAND } else { '' }
     let new_env = if (is-env-true 'VIRTUAL_ENV_DISABLE_PROMPT') {
         $new_env
