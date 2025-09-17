@@ -43,6 +43,13 @@ function deactivate -d 'Exit virtualenv mode and return to the normal environmen
       end
     end
 
+    if test -n "$_OLD_VIRTUAL_PKG_CONFIG_PATH"
+        set -gx PKG_CONFIG_PATH "$_OLD_VIRTUAL_PKG_CONFIG_PATH"
+        set -e _OLD_VIRTUAL_PKG_CONFIG_PATH
+    else
+        set -e PKG_CONFIG_PATH
+    end
+
     if test -n "$_OLD_VIRTUAL_PYTHONHOME"
         set -gx PYTHONHOME "$_OLD_VIRTUAL_PYTHONHOME"
         set -e _OLD_VIRTUAL_PYTHONHOME
@@ -96,6 +103,13 @@ if test -n __TK_LIBRARY__
     set -gx _OLD_VIRTUAL_TK_LIBRARY $TK_LIBRARY;
   end
   set -gx TK_LIBRARY '__TK_LIBRARY__'
+end
+
+if set -q PKG_CONFIG_PATH
+    set -gx _OLD_VIRTUAL_PKG_CONFIG_PATH $PKG_CONFIG_PATH
+    set -gx PKG_CONFIG_PATH __PKG_CONFIG_PATH__ $PKG_CONFIG_PATH
+else
+    set -gx PKG_CONFIG_PATH __PKG_CONFIG_PATH__
 end
 
 # Prompt override provided?

@@ -43,6 +43,40 @@ def test_nushell_tkinter_generation(tmp_path):
     assert expected_tk in content
 
 
+def test_nushell_pkg_config_generation(tmp_path):
+    # GIVEN
+    class MockInterpreter:
+        pass
+
+    interpreter = MockInterpreter()
+    interpreter.tcl_lib = None
+    interpreter.tk_lib = None
+
+    class MockCreator:
+        def __init__(self, dest):
+            self.dest = dest
+            self.bin_dir = dest / "bin"
+            self.bin_dir.mkdir()
+            self.interpreter = interpreter
+            self.pyenv_cfg = {}
+            self.env_name = "my-env"
+
+    creator = MockCreator(tmp_path)
+    options = Namespace(prompt=None)
+    activator = NushellActivator(options)
+
+    # WHEN
+    activator.generate(creator)
+    content = (creator.bin_dir / "activate.nu").read_text(encoding="utf-8")
+
+    # THEN
+    assert "let $new_env = if (has-env 'PKG_CONFIG_PATH') {" in content
+    assert "let pkg_config_path = ($env.PKG_CONFIG_PATH | prepend __PKG_CONFIG_PATH__)" in content
+    assert "$new_env | insert PKG_CONFIG_PATH $pkg_config_path" in content
+    assert "else {" in content
+    assert "$new_env | insert PKG_CONFIG_PATH [__PKG_CONFIG_PATH__]" in content
+
+
 def test_nushell(activation_tester_class, activation_tester):
     class Nushell(activation_tester_class):
         def __init__(self, session) -> None:

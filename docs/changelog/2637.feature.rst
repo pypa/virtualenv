@@ -1,0 +1,1 @@
+Added support for `pkg-config` - by :user:`esafak`.
