@@ -1,1 +1,0 @@
-Ensure python3.exe and python3 on Windows for Python 3 - by :user:`esafak`.

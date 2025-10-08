@@ -5,6 +5,19 @@ Release History
 
 .. towncrier release notes start
 
+v20.35.0 (2025-10-08)
+---------------------
+
+Features - 20.35.0
+~~~~~~~~~~~~~~~~~~
+- Add AppData and Cache protocols to discovery for decoupling - by :user:`esafak`. (:issue:`2074`)
+- Ensure python3.exe and python3 on Windows for Python 3 - by :user:`esafak`. (:issue:`2774`)
+
+Bugfixes - 20.35.0
+~~~~~~~~~~~~~~~~~~
+- Replaced direct references to tcl/tk library paths with getattr - by :user:`esafak` (:issue:`2944`)
+- Restore absolute import of fs_is_case_sensitive - by :user:`esafak`. (:issue:`2955`)
+
 v20.34.0 (2025-08-13)
 ---------------------
 
