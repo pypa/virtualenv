@@ -33,6 +33,7 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
   "Topic :: Software Development :: Libraries",
@@ -159,7 +160,7 @@ builtin = "clear,usage,en-GB_to_en-US"
 count = true
 
 [tool.pyproject-fmt]
-max_supported_python = "3.13"
+max_supported_python = "3.14"
 
 [tool.pytest.ini_options]
 markers = [
