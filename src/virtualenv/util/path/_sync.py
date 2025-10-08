@@ -11,7 +11,7 @@ LOGGER = logging.getLogger(__name__)
 
 def ensure_dir(path):
     if not path.exists():
-        LOGGER.debug("create folder %s", str(path))
+        LOGGER.debug("create folder %s", path)
         os.makedirs(str(path))
 
 
