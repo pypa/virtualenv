@@ -16,7 +16,7 @@ CURRENT = PythonInfo.current(MockAppData(), MockCache())
 def test_discover_empty_folder(tmp_path):
     app_data, cache = MockAppData(), MockCache()
     with pytest.raises(RuntimeError):
-        CURRENT.discover_exe(app_data, cache, prefix=str(tmp_path))
+        CURRENT.discover_exe(app_data, prefix=str(tmp_path), cache=cache)
 
 
 BASE = (CURRENT.install_path("scripts"), ".")
@@ -43,7 +43,7 @@ def test_discover_ok(tmp_path, suffix, impl, version, arch, into, caplog):  # no
     if pyvenv.exists():
         (folder / pyvenv.name).write_text(pyvenv.read_text(encoding="utf-8"), encoding="utf-8")
     inside_folder = str(tmp_path)
-    base = CURRENT.discover_exe(app_data, cache, inside_folder)
+    base = CURRENT.discover_exe(app_data, inside_folder, cache=cache)
     found = base.executable
     dest_str = str(dest)
     if not fs_is_case_sensitive():
@@ -56,4 +56,4 @@ def test_discover_ok(tmp_path, suffix, impl, version, arch, into, caplog):  # no
     dest.rename(dest.parent / (dest.name + "-1"))
     CURRENT._cache_exe_discovery.clear()  # noqa: SLF001
     with pytest.raises(RuntimeError):
-        CURRENT.discover_exe(app_data, cache, inside_folder)
+        CURRENT.discover_exe(app_data, inside_folder, cache=cache)

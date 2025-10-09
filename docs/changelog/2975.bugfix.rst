@@ -1,0 +1,1 @@
+Fix backwards incompatible changes to ``PythonInfo`` - by :user:`gaborbernat`.
