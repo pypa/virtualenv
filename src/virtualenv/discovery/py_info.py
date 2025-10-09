@@ -27,10 +27,10 @@ def _get_path_extensions():
 
 
 EXTENSIONS = _get_path_extensions()
-_CONF_VAR_RE = re.compile(r"\{\w+\}")
+_CONF_VAR_RE = re.compile(r"\{\w+}")
 
 
-class PythonInfo:
+class PythonInfo:  # noqa: PLR0904
     """Contains information for a Python interpreter."""
 
     def __init__(self) -> None:  # noqa: PLR0915
@@ -135,6 +135,7 @@ class PythonInfo:
         self.system_stdlib = self.sysconfig_path("stdlib", confs)
         self.system_stdlib_platform = self.sysconfig_path("platstdlib", confs)
         self.max_size = getattr(sys, "maxsize", getattr(sys, "maxint", None))
+        self._creators = None
 
     @staticmethod
     def _get_tcl_tk_libs():
@@ -310,6 +311,13 @@ class PythonInfo:
             config_var = base
         return pattern.format(**config_var).replace("/", sep)
 
+    def creators(self, refresh=False):  # noqa: FBT002
+        if self._creators is None or refresh is True:
+            from virtualenv.run.plugin.creators import CreatorSelector  # noqa: PLC0415
+
+        self._creators = CreatorSelector.for_interpreter(self)
+        return self._creators
+
     @property
     def system_include(self):
         path = self.sysconfig_path(
@@ -423,7 +431,7 @@ class PythonInfo:
     _current = None
 
     @classmethod
-    def current(cls, app_data, cache):
+    def current(cls, app_data=None, cache=None):
         """
         This locates the current host interpreter information. This might be different than what we run into in case
         the host python has been upgraded from underneath us.
@@ -439,7 +447,7 @@ class PythonInfo:
         return cls._current
 
     @classmethod
-    def current_system(cls, app_data, cache) -> PythonInfo:
+    def current_system(cls, app_data=None, cache=None) -> PythonInfo:
         """
         This locates the current host interpreter information. This might be different than what we run into in case
         the host python has been upgraded from underneath us.
@@ -467,8 +475,8 @@ class PythonInfo:
     def from_exe(  # noqa: PLR0913
         cls,
         exe,
-        app_data,
-        cache,
+        app_data=None,
+        cache=None,
         raise_on_error=True,  # noqa: FBT002
         ignore_cache=False,  # noqa: FBT002
         resolve_to_host=True,  # noqa: FBT002
@@ -480,13 +488,7 @@ class PythonInfo:
 
         env = os.environ if env is None else env
         proposed = from_exe_cache(
-            cls,
-            app_data,
-            exe,
-            env=env,
-            raise_on_error=raise_on_error,
-            ignore_cache=ignore_cache,
-            cache=cache,
+            cls, app_data, exe, env=env, raise_on_error=raise_on_error, ignore_cache=ignore_cache, cache=cache
         )
 
         if isinstance(proposed, PythonInfo) and resolve_to_host:
@@ -538,7 +540,7 @@ class PythonInfo:
 
     _cache_exe_discovery = {}  # noqa: RUF012
 
-    def discover_exe(self, app_data, cache, prefix, exact=True, env=None):  # noqa: FBT002
+    def discover_exe(self, app_data, prefix, exact=True, env=None, cache=None):  # noqa: FBT002
         key = prefix, exact
         if key in self._cache_exe_discovery and prefix:
             LOGGER.debug("discover exe from cache %s - exact %s: %r", prefix, exact, self._cache_exe_discovery[key])
@@ -568,14 +570,7 @@ class PythonInfo:
         exe_path = os.path.join(folder, name)
         if not os.path.exists(exe_path):
             return None
-        info = self.from_exe(
-            exe_path,
-            app_data,
-            cache,
-            resolve_to_host=False,
-            raise_on_error=False,
-            env=env,
-        )
+        info = self.from_exe(exe_path, app_data, cache, resolve_to_host=False, raise_on_error=False, env=env)
         if info is None:  # ignore if for some reason we can't query
             return None
         for item in ["implementation", "architecture", "version_info"]:

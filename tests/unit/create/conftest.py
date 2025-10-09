@@ -38,7 +38,7 @@ def venv(tmp_path_factory, session_app_data, current_info):
     # sadly creating a virtual environment does not tell us where the executable lives in general case
     # so discover using some heuristic
     cache = FileCache(session_app_data.py_info, session_app_data.py_info_clear)
-    return current_info.discover_exe(session_app_data, cache, prefix=str(dest)).original_executable
+    return current_info.discover_exe(session_app_data, prefix=str(dest), cache=cache).original_executable
 
 
 PYTHON = {
