@@ -1,0 +1,1 @@
+Patch get_interpreter to handle missing cache and app_data - by :user:`esafak`

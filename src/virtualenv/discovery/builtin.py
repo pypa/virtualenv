@@ -77,6 +77,25 @@ def get_interpreter(
     cache=None,
     env: Mapping[str, str] | None = None,
 ) -> PythonInfo | None:
+    """
+    Find an interpreter that matches a given specification.
+
+    :param key: the specification of the interpreter to find
+    :param try_first_with: a list of interpreters to try first
+    :param app_data: the application data folder
+    :param cache: a cache of python information
+    :param env: the environment to use
+    :return: the interpreter if found, otherwise None
+    """
+    if cache is None:
+        # Import locally to avoid a circular dependency
+        from virtualenv.app_data import AppDataDisabled  # noqa: PLC0415
+        from virtualenv.cache import FileCache  # noqa: PLC0415
+
+        if app_data is None:
+            app_data = AppDataDisabled()
+        cache = FileCache(store_factory=app_data.py_info, clearer=app_data.py_info_clear)
+
     spec = PythonSpec.from_string_spec(key)
     LOGGER.info("find interpreter for spec %r", spec)
     proposed_paths = set()
