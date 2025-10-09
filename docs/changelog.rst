@@ -5,6 +5,14 @@ Release History
 
 .. towncrier release notes start
 
+v20.35.1 (2025-10-09)
+---------------------
+
+Bugfixes - 20.35.1
+~~~~~~~~~~~~~~~~~~
+- Patch get_interpreter to handle missing cache and app_data - by :user:`esafak` (:issue:`2972`)
+- Fix backwards incompatible changes to ``PythonInfo`` - by :user:`gaborbernat`. (:issue:`2975`)
+
 v20.35.0 (2025-10-08)
 ---------------------
 
