@@ -224,6 +224,18 @@ def test_returns_second_python_specified_when_more_than_one_is_specified_and_env
     assert result == mocker.sentinel.python_from_cli
 
 
+def test_get_interpreter_no_cache_no_app_data():
+    """Test that get_interpreter can be called without cache and app_data."""
+    # A call to a valid interpreter should succeed and return a PythonInfo object.
+    interpreter = get_interpreter(sys.executable, [])
+    assert interpreter is not None
+    assert Path(interpreter.executable).is_file()
+
+    # A call to an invalid interpreter should not fail and should return None.
+    interpreter = get_interpreter("a-python-that-does-not-exist", [])
+    assert interpreter is None
+
+
 def test_discovery_absolute_path_with_try_first(tmp_path):
     good_env = tmp_path / "good"
     bad_env = tmp_path / "bad"
