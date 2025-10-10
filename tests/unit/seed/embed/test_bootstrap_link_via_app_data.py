@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from virtualenv.cache import FileCache
 from virtualenv.discovery import cached_py_info
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import fs_supports_symlink
@@ -26,16 +25,8 @@ if TYPE_CHECKING:
 
 @pytest.mark.slow
 @pytest.mark.parametrize("copies", [False, True] if fs_supports_symlink() else [True])
-def test_seed_link_via_app_data(  # noqa: PLR0913, PLR0915
-    tmp_path,
-    coverage_env,
-    current_fastest,
-    copies,
-    for_py_version,
-    session_app_data,
-):
-    cache = FileCache(session_app_data.py_info, session_app_data.py_info_clear)
-    current = PythonInfo.current_system(session_app_data, cache)
+def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies, for_py_version):  # noqa: PLR0915
+    current = PythonInfo.current_system()
     bundle_ver = BUNDLE_SUPPORT[current.version_release_str]
     create_cmd = [
         str(tmp_path / "en v"),  # space in the name to ensure generated scripts work when path has space

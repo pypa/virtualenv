@@ -14,31 +14,25 @@ from subprocess import Popen
 
 import pytest
 
-from virtualenv.cache import FileCache
 from virtualenv.discovery.py_info import PythonInfo
 
-
-@pytest.fixture(scope="session")
-def current_info(session_app_data):
-    cache = FileCache(session_app_data.py_info, session_app_data.py_info_clear)
-    return PythonInfo.current_system(session_app_data, cache)
+CURRENT = PythonInfo.current_system()
 
 
-def root(tmp_path_factory, session_app_data, current_info):  # noqa: ARG001
-    return current_info.system_executable
+def root(tmp_path_factory, session_app_data):  # noqa: ARG001
+    return CURRENT.system_executable
 
 
-def venv(tmp_path_factory, session_app_data, current_info):
-    if current_info.is_venv:
+def venv(tmp_path_factory, session_app_data):
+    if CURRENT.is_venv:
         return sys.executable
-    root_python = root(tmp_path_factory, session_app_data, current_info)
+    root_python = root(tmp_path_factory, session_app_data)
     dest = tmp_path_factory.mktemp("venv")
     process = Popen([str(root_python), "-m", "venv", "--without-pip", str(dest)])
     process.communicate()
     # sadly creating a virtual environment does not tell us where the executable lives in general case
     # so discover using some heuristic
-    cache = FileCache(session_app_data.py_info, session_app_data.py_info_clear)
-    return current_info.discover_exe(session_app_data, prefix=str(dest), cache=cache).original_executable
+    return CURRENT.discover_exe(prefix=str(dest)).original_executable
 
 
 PYTHON = {
@@ -48,8 +42,8 @@ PYTHON = {
 
 
 @pytest.fixture(params=list(PYTHON.values()), ids=list(PYTHON.keys()), scope="session")
-def python(request, tmp_path_factory, session_app_data, current_info):
-    result = request.param(tmp_path_factory, session_app_data, current_info)
+def python(request, tmp_path_factory, session_app_data):
+    result = request.param(tmp_path_factory, session_app_data)
     if isinstance(result, Exception):
         pytest.skip(f"could not resolve interpreter based on {request.param.__name__} because {result}")
     if result is None:
