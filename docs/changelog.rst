@@ -5,6 +5,13 @@ Release History
 
 .. towncrier release notes start
 
+v20.35.2 (2025-10-10)
+---------------------
+
+Bugfixes - 20.35.2
+~~~~~~~~~~~~~~~~~~
+- Revert out changes related to the extraction of the discovery module - by :user:`gaborbernat`. (:issue:`2978`)
+
 v20.35.1 (2025-10-09)
 ---------------------
 
