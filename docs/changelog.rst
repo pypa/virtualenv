@@ -5,6 +5,13 @@ Release History
 
 .. towncrier release notes start
 
+v20.35.3 (2025-10-10)
+---------------------
+
+Bugfixes - 20.35.3
+~~~~~~~~~~~~~~~~~~
+- Accept RuntimeError in `test_too_many_open_files`, by :user:`esafak` (:issue:`2935`)
+
 v20.35.2 (2025-10-10)
 ---------------------
 
