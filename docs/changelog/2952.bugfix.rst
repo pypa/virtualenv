@@ -1,1 +1,0 @@
-Python in PATH takes precedence over uv-managed python. Contributed by :user:`edgarrmondragon`.

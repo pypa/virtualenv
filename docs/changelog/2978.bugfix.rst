@@ -1,0 +1,1 @@
+Revert out changes related to the extraction of the discovery module - by :user:`gaborbernat`.

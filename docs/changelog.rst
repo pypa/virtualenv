@@ -5,6 +5,45 @@ Release History
 
 .. towncrier release notes start
 
+v20.35.1 (2025-10-09)
+---------------------
+
+Bugfixes - 20.35.1
+~~~~~~~~~~~~~~~~~~
+- Patch get_interpreter to handle missing cache and app_data - by :user:`esafak` (:issue:`2972`)
+- Fix backwards incompatible changes to ``PythonInfo`` - by :user:`gaborbernat`. (:issue:`2975`)
+
+v20.35.0 (2025-10-08)
+---------------------
+
+Features - 20.35.0
+~~~~~~~~~~~~~~~~~~
+- Add AppData and Cache protocols to discovery for decoupling - by :user:`esafak`. (:issue:`2074`)
+- Ensure python3.exe and python3 on Windows for Python 3 - by :user:`esafak`. (:issue:`2774`)
+
+Bugfixes - 20.35.0
+~~~~~~~~~~~~~~~~~~
+- Replaced direct references to tcl/tk library paths with getattr - by :user:`esafak` (:issue:`2944`)
+- Restore absolute import of fs_is_case_sensitive - by :user:`esafak`. (:issue:`2955`)
+
+v20.34.0 (2025-08-13)
+---------------------
+
+Features - 20.34.0
+~~~~~~~~~~~~~~~~~~
+- Abstract out caching in discovery - by :user:`esafak`.
+  Decouple `FileCache` from `py_info` (discovery) - by :user:`esafak`.
+  Remove references to py_info in FileCache - by :user:`esafak`.
+  Decouple discovery from creator plugins - by :user:`esafak`.
+  Decouple discovery by duplicating info utils - by :user:`esafak`. (:issue:`2074`)
+- Add PyPy 3.11 support. Contributed by :user:`esafak`. (:issue:`2932`)
+
+Bugfixes - 20.34.0
+~~~~~~~~~~~~~~~~~~
+- Upgrade embedded wheel pip to ``25.2`` from ``25.1.1`` - by :user:`gaborbernat`. (:issue:`2333`)
+- Accept RuntimeError in `test_too_many_open_files`, by :user:`esafak` (:issue:`2935`)
+- Python in PATH takes precedence over uv-managed python. Contributed by :user:`edgarrmondragon`. (:issue:`2952`)
+
 v20.33.1 (2025-08-05)
 ---------------------
 

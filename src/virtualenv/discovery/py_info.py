@@ -27,7 +27,7 @@ def _get_path_extensions():
 
 
 EXTENSIONS = _get_path_extensions()
-_CONF_VAR_RE = re.compile(r"\{\w+\}")
+_CONF_VAR_RE = re.compile(r"\{\w+}")
 
 
 class PythonInfo:  # noqa: PLR0904
