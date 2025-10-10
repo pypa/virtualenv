@@ -99,11 +99,3 @@ def test_no_python_zip_if_not_exists(py_info, mock_files):
     sources = tuple(CPython3Windows.sources(interpreter=py_info))
     assert python_zip in py_info.path
     assert not contains_ref(sources, python_zip)
-
-
-@pytest.mark.parametrize("py_info_name", ["cpython3_win_embed"])
-def test_python3_exe_present(py_info, mock_files):
-    mock_files(CPYTHON3_PATH, [py_info.system_executable])
-    sources = tuple(CPython3Windows.sources(interpreter=py_info))
-    assert contains_exe(sources, py_info.system_executable, "python3.exe")
-    assert contains_exe(sources, py_info.system_executable, "python3")

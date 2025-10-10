@@ -8,41 +8,28 @@ caching.
 from __future__ import annotations
 
 import hashlib
-import importlib.util
 import logging
 import os
 import random
-import subprocess
 import sys
 from collections import OrderedDict
 from pathlib import Path
 from shlex import quote
 from string import ascii_lowercase, ascii_uppercase, digits
-from typing import TYPE_CHECKING
+from subprocess import Popen
 
-from .py_info import PythonInfo
-
-if TYPE_CHECKING:
-    from .app_data import AppData
-    from .cache import Cache
+from virtualenv.app_data import AppDataDisabled
+from virtualenv.discovery.py_info import PythonInfo
+from virtualenv.util.subprocess import subprocess
 
 _CACHE = OrderedDict()
 _CACHE[Path(sys.executable)] = PythonInfo()
 LOGGER = logging.getLogger(__name__)
 
 
-def from_exe(  # noqa: PLR0913
-    cls,
-    app_data: AppData,
-    exe: str,
-    env: dict[str, str] | None = None,
-    *,
-    raise_on_error: bool = True,
-    ignore_cache: bool = False,
-    cache: Cache,
-) -> PythonInfo | None:
+def from_exe(cls, app_data, exe, env=None, raise_on_error=True, ignore_cache=False):  # noqa: FBT002, PLR0913
     env = os.environ if env is None else env
-    result = _get_from_cache(cls, app_data, exe, env, cache, ignore_cache=ignore_cache)
+    result = _get_from_cache(cls, app_data, exe, env, ignore_cache=ignore_cache)
     if isinstance(result, Exception):
         if raise_on_error:
             raise result
@@ -51,59 +38,63 @@ def from_exe(  # noqa: PLR0913
     return result
 
 
-def _get_from_cache(cls, app_data: AppData, exe: str, env, cache: Cache, *, ignore_cache: bool) -> PythonInfo:  # noqa: PLR0913
+def _get_from_cache(cls, app_data, exe, env, ignore_cache=True):  # noqa: FBT002
     # note here we cannot resolve symlinks, as the symlink may trigger different prefix information if there's a
     # pyenv.cfg somewhere alongside on python3.5+
     exe_path = Path(exe)
     if not ignore_cache and exe_path in _CACHE:  # check in the in-memory cache
         result = _CACHE[exe_path]
     else:  # otherwise go through the app data cache
-        result = _CACHE[exe_path] = _get_via_file_cache(cls, app_data, exe_path, exe, env, cache)
+        py_info = _get_via_file_cache(cls, app_data, exe_path, exe, env)
+        result = _CACHE[exe_path] = py_info
     # independent if it was from the file or in-memory cache fix the original executable location
     if isinstance(result, PythonInfo):
         result.executable = exe
     return result
 
 
-def _get_via_file_cache(cls, app_data: AppData, path: Path, exe: str, env, cache: Cache) -> PythonInfo:  # noqa: PLR0913
-    # 1. get the hash of the probing script
-    spec = importlib.util.find_spec("virtualenv.discovery.py_info")
-    script = Path(spec.origin)
-    try:
-        py_info_hash = hashlib.sha256(script.read_bytes()).hexdigest()
-    except OSError:
-        py_info_hash = None
-
-    # 2. get the mtime of the python executable
+def _get_via_file_cache(cls, app_data, path, exe, env):
+    path_text = str(path)
     try:
         path_modified = path.stat().st_mtime
     except OSError:
         path_modified = -1
+    py_info_script = Path(os.path.abspath(__file__)).parent / "py_info.py"
+    try:
+        py_info_hash = hashlib.sha256(py_info_script.read_bytes()).hexdigest()
+    except OSError:
+        py_info_hash = None
 
-    # 3. check if we have a valid cache entry
-    py_info = None
-    data = cache.get(path)
-    if data is not None:
-        if data.get("path") == str(path) and data.get("st_mtime") == path_modified and data.get("hash") == py_info_hash:
-            py_info = cls._from_dict(data.get("content"))
-            sys_exe = py_info.system_executable
-            if sys_exe is not None and not os.path.exists(sys_exe):
-                py_info = None  # if system executable is no longer there, this is not valid
-        if py_info is None:
-            cache.remove(path)  # if cache is invalid, remove it
-
-    if py_info is None:  # if not loaded run and save
-        failure, py_info = _run_subprocess(cls, exe, app_data, env)
-        if failure is None:
-            data = {
-                "st_mtime": path_modified,
-                "path": str(path),
-                "content": py_info._to_dict(),  # noqa: SLF001
-                "hash": py_info_hash,
-            }
-            cache.set(path, data)
-        else:
-            py_info = failure
+    if app_data is None:
+        app_data = AppDataDisabled()
+    py_info, py_info_store = None, app_data.py_info(path)
+    with py_info_store.locked():
+        if py_info_store.exists():  # if exists and matches load
+            data = py_info_store.read()
+            of_path = data.get("path")
+            of_st_mtime = data.get("st_mtime")
+            of_content = data.get("content")
+            of_hash = data.get("hash")
+            if of_path == path_text and of_st_mtime == path_modified and of_hash == py_info_hash:
+                py_info = cls._from_dict(of_content.copy())
+                sys_exe = py_info.system_executable
+                if sys_exe is not None and not os.path.exists(sys_exe):
+                    py_info_store.remove()
+                    py_info = None
+            else:
+                py_info_store.remove()
+        if py_info is None:  # if not loaded run and save
+            failure, py_info = _run_subprocess(cls, exe, app_data, env)
+            if failure is None:
+                data = {
+                    "st_mtime": path_modified,
+                    "path": path_text,
+                    "content": py_info._to_dict(),  # noqa: SLF001
+                    "hash": py_info_hash,
+                }
+                py_info_store.write(data)
+            else:
+                py_info = failure
     return py_info
 
 
@@ -117,12 +108,7 @@ def gen_cookie():
     )
 
 
-def _run_subprocess(
-    cls,
-    exe: str,
-    app_data: AppData,
-    env: dict[str, str],
-) -> tuple[Exception | None, PythonInfo | None]:
+def _run_subprocess(cls, exe, app_data, env):
     py_info_script = Path(os.path.abspath(__file__)).parent / "py_info.py"
     # Cookies allow to split the serialized stdout output generated by the script collecting the info from the output
     # generated by something else. The right way to deal with it is to create an anonymous pipe and pass its descriptor
@@ -134,14 +120,14 @@ def _run_subprocess(
 
     start_cookie = gen_cookie()
     end_cookie = gen_cookie()
-    with app_data.ensure_extracted(py_info_script) as py_info_script_path:
-        cmd = [exe, str(py_info_script_path), start_cookie, end_cookie]
+    with app_data.ensure_extracted(py_info_script) as py_info_script:
+        cmd = [exe, str(py_info_script), start_cookie, end_cookie]
         # prevent sys.prefix from leaking into the child process - see https://bugs.python.org/issue22490
         env = env.copy()
         env.pop("__PYVENV_LAUNCHER__", None)
         LOGGER.debug("get interpreter info via cmd: %s", LogCmd(cmd))
         try:
-            process = subprocess.Popen(
+            process = Popen(
                 cmd,
                 universal_newlines=True,
                 stdin=subprocess.PIPE,
@@ -196,10 +182,8 @@ class LogCmd:
         return cmd_repr
 
 
-def clear(cache: Cache | None = None) -> None:
-    """Clear the cache."""
-    if cache is not None:
-        cache.clear()
+def clear(app_data):
+    app_data.py_info_clear()
     _CACHE.clear()
 
 

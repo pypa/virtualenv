@@ -33,7 +33,6 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
-  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
   "Topic :: Software Development :: Libraries",
@@ -48,7 +47,6 @@ dependencies = [
   "filelock>=3.12.2,<4",
   "importlib-metadata>=6.6; python_version<'3.8'",
   "platformdirs>=3.9.1,<5",
-  "typing-extensions>=4.13.2; python_version<'3.11'",
 ]
 optional-dependencies.docs = [
   "furo>=2023.7.26",
@@ -160,7 +158,7 @@ builtin = "clear,usage,en-GB_to_en-US"
 count = true
 
 [tool.pyproject-fmt]
-max_supported_python = "3.14"
+max_supported_python = "3.13"
 
 [tool.pytest.ini_options]
 markers = [

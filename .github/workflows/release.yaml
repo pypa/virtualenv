@@ -21,7 +21,7 @@ jobs:
           cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: 📦 Build package
-        run: uv build --python 3.14 --python-preference only-managed --sdist --wheel . --out-dir dist
+        run: uv build --python 3.13 --python-preference only-managed --sdist --wheel . --out-dir dist
       - name: 📦 Store the distribution packages
         uses: actions/upload-artifact@v4
         with:
@@ -44,6 +44,6 @@ jobs:
           name: ${{ env.dists-artifact-name }}
           path: dist/
       - name: 🚀 Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.13.0
+        uses: pypa/gh-action-pypi-publish@v1.12.3
         with:
           attestations: true

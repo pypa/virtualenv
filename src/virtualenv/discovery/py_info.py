@@ -27,7 +27,7 @@ def _get_path_extensions():
 
 
 EXTENSIONS = _get_path_extensions()
-_CONF_VAR_RE = re.compile(r"\{\w+}")
+_CONF_VAR_RE = re.compile(r"\{\w+\}")
 
 
 class PythonInfo:  # noqa: PLR0904
@@ -192,57 +192,34 @@ class PythonInfo:  # noqa: PLR0904
 
     def _fast_get_system_executable(self):
         """Try to get the system executable by just looking at properties."""
+        if self.real_prefix or (  # noqa: PLR1702
+            self.base_prefix is not None and self.base_prefix != self.prefix
+        ):  # if this is a virtual environment
+            if self.real_prefix is None:
+                base_executable = getattr(sys, "_base_executable", None)  # some platforms may set this to help us
+                if base_executable is not None:  # noqa: SIM102 # use the saved system executable if present
+                    if sys.executable != base_executable:  # we know we're in a virtual environment, cannot be us
+                        if os.path.exists(base_executable):
+                            return base_executable
+                        # Python may return "python" because it was invoked from the POSIX virtual environment
+                        # however some installs/distributions do not provide a version-less "python" binary in
+                        # the system install location (see PEP 394) so try to fallback to a versioned binary.
+                        #
+                        # Gate this to Python 3.11 as `sys._base_executable` path resolution is now relative to
+                        # the 'home' key from pyvenv.cfg which often points to the system install location.
+                        major, minor = self.version_info.major, self.version_info.minor
+                        if self.os == "posix" and (major, minor) >= (3, 11):
+                            # search relative to the directory of sys._base_executable
+                            base_dir = os.path.dirname(base_executable)
+                            for base_executable in [
+                                os.path.join(base_dir, exe) for exe in (f"python{major}", f"python{major}.{minor}")
+                            ]:
+                                if os.path.exists(base_executable):
+                                    return base_executable
+            return None  # in this case we just can't tell easily without poking around FS and calling them, bail
         # if we're not in a virtual environment, this is already a system python, so return the original executable
         # note we must choose the original and not the pure executable as shim scripts might throw us off
-        if not (self.real_prefix or (self.base_prefix is not None and self.base_prefix != self.prefix)):
-            return self.original_executable
-
-        # if this is NOT a virtual environment, can't determine easily, bail out
-        if self.real_prefix is not None:
-            return None
-
-        base_executable = getattr(sys, "_base_executable", None)  # some platforms may set this to help us
-        if base_executable is None:  # use the saved system executable if present
-            return None
-
-        # we know we're in a virtual environment, can not be us
-        if sys.executable == base_executable:
-            return None
-
-        # We're not in a venv and base_executable exists; use it directly
-        if os.path.exists(base_executable):
-            return base_executable
-
-        # Try fallback for POSIX virtual environments
-        return self._try_posix_fallback_executable(base_executable)
-
-    def _try_posix_fallback_executable(self, base_executable):
-        """
-        Try to find a versioned Python binary as fallback for POSIX virtual environments.
-
-        Python may return "python" because it was invoked from the POSIX virtual environment
-        however some installs/distributions do not provide a version-less "python" binary in
-        the system install location (see PEP 394) so try to fallback to a versioned binary.
-
-        Gate this to Python 3.11 as `sys._base_executable` path resolution is now relative to
-        the 'home' key from pyvenv.cfg which often points to the system install location.
-        """
-        major, minor = self.version_info.major, self.version_info.minor
-        if self.os != "posix" or (major, minor) < (3, 11):
-            return None
-
-        # search relative to the directory of sys._base_executable
-        base_dir = os.path.dirname(base_executable)
-        candidates = [f"python{major}", f"python{major}.{minor}"]
-        if self.implementation == "PyPy":
-            candidates.extend(["pypy", "pypy3", f"pypy{major}", f"pypy{major}.{minor}"])
-
-        for candidate in candidates:
-            full_path = os.path.join(base_dir, candidate)
-            if os.path.exists(full_path):
-                return full_path
-
-        return None  # in this case we just can't tell easily without poking around FS and calling them, bail
+        return self.original_executable
 
     def install_path(self, key):
         result = self.distutils_install.get(key)
@@ -315,7 +292,7 @@ class PythonInfo:  # noqa: PLR0904
         if self._creators is None or refresh is True:
             from virtualenv.run.plugin.creators import CreatorSelector  # noqa: PLC0415
 
-        self._creators = CreatorSelector.for_interpreter(self)
+            self._creators = CreatorSelector.for_interpreter(self)
         return self._creators
 
     @property
@@ -386,11 +363,11 @@ class PythonInfo:  # noqa: PLR0904
         )
 
     @classmethod
-    def clear_cache(cls, cache=None):
+    def clear_cache(cls, app_data):
         # this method is not used by itself, so here and called functions can import stuff locally
         from virtualenv.discovery.cached_py_info import clear  # noqa: PLC0415
 
-        clear(cache)
+        clear(app_data)
         cls._cache_exe_discovery.clear()
 
     def satisfies(self, spec, impl_must_match):  # noqa: C901, PLR0911
@@ -431,35 +408,23 @@ class PythonInfo:  # noqa: PLR0904
     _current = None
 
     @classmethod
-    def current(cls, app_data=None, cache=None):
+    def current(cls, app_data=None):
         """
         This locates the current host interpreter information. This might be different than what we run into in case
         the host python has been upgraded from underneath us.
         """  # noqa: D205
         if cls._current is None:
-            cls._current = cls.from_exe(
-                sys.executable,
-                app_data,
-                cache,
-                raise_on_error=True,
-                resolve_to_host=False,
-            )
+            cls._current = cls.from_exe(sys.executable, app_data, raise_on_error=True, resolve_to_host=False)
         return cls._current
 
     @classmethod
-    def current_system(cls, app_data=None, cache=None) -> PythonInfo:
+    def current_system(cls, app_data=None) -> PythonInfo:
         """
         This locates the current host interpreter information. This might be different than what we run into in case
         the host python has been upgraded from underneath us.
         """  # noqa: D205
         if cls._current_system is None:
-            cls._current_system = cls.from_exe(
-                sys.executable,
-                app_data,
-                cache,
-                raise_on_error=True,
-                resolve_to_host=True,
-            )
+            cls._current_system = cls.from_exe(sys.executable, app_data, raise_on_error=True, resolve_to_host=True)
         return cls._current_system
 
     def _to_json(self):
@@ -467,7 +432,8 @@ class PythonInfo:  # noqa: PLR0904
         return json.dumps(self._to_dict(), indent=2)
 
     def _to_dict(self):
-        data = {var: getattr(self, var) for var in vars(self)}
+        data = {var: (getattr(self, var) if var != "_creators" else None) for var in vars(self)}
+
         data["version_info"] = data["version_info"]._asdict()  # namedtuple to dictionary
         return data
 
@@ -476,7 +442,6 @@ class PythonInfo:  # noqa: PLR0904
         cls,
         exe,
         app_data=None,
-        cache=None,
         raise_on_error=True,  # noqa: FBT002
         ignore_cache=False,  # noqa: FBT002
         resolve_to_host=True,  # noqa: FBT002
@@ -484,16 +449,14 @@ class PythonInfo:  # noqa: PLR0904
     ):
         """Given a path to an executable get the python information."""
         # this method is not used by itself, so here and called functions can import stuff locally
-        from virtualenv.discovery.cached_py_info import from_exe as from_exe_cache  # noqa: PLC0415
+        from virtualenv.discovery.cached_py_info import from_exe  # noqa: PLC0415
 
         env = os.environ if env is None else env
-        proposed = from_exe_cache(
-            cls, app_data, exe, env=env, raise_on_error=raise_on_error, ignore_cache=ignore_cache, cache=cache
-        )
+        proposed = from_exe(cls, app_data, exe, env=env, raise_on_error=raise_on_error, ignore_cache=ignore_cache)
 
         if isinstance(proposed, PythonInfo) and resolve_to_host:
             try:
-                proposed = proposed._resolve_to_system(app_data, proposed, cache=cache)  # noqa: SLF001
+                proposed = proposed._resolve_to_system(app_data, proposed)  # noqa: SLF001
             except Exception as exception:
                 if raise_on_error:
                     raise
@@ -515,7 +478,7 @@ class PythonInfo:  # noqa: PLR0904
         return result
 
     @classmethod
-    def _resolve_to_system(cls, app_data, target, cache):
+    def _resolve_to_system(cls, app_data, target):
         start_executable = target.executable
         prefixes = OrderedDict()
         while target.system_executable is None:
@@ -532,15 +495,15 @@ class PythonInfo:  # noqa: PLR0904
                 msg = "prefixes are causing a circle {}".format("|".join(prefixes.keys()))
                 raise RuntimeError(msg)
             prefixes[prefix] = target
-            target = target.discover_exe(app_data, prefix=prefix, exact=False, cache=cache)
+            target = target.discover_exe(app_data, prefix=prefix, exact=False)
         if target.executable != target.system_executable:
-            target = cls.from_exe(target.system_executable, app_data, cache)
+            target = cls.from_exe(target.system_executable, app_data)
         target.executable = start_executable
         return target
 
     _cache_exe_discovery = {}  # noqa: RUF012
 
-    def discover_exe(self, app_data, prefix, exact=True, env=None, cache=None):  # noqa: FBT002
+    def discover_exe(self, app_data, prefix, exact=True, env=None):  # noqa: FBT002
         key = prefix, exact
         if key in self._cache_exe_discovery and prefix:
             LOGGER.debug("discover exe from cache %s - exact %s: %r", prefix, exact, self._cache_exe_discovery[key])
@@ -553,7 +516,7 @@ class PythonInfo:  # noqa: PLR0904
         env = os.environ if env is None else env
         for folder in possible_folders:
             for name in possible_names:
-                info = self._check_exe(app_data, cache, folder, name, exact, discovered, env)
+                info = self._check_exe(app_data, folder, name, exact, discovered, env)
                 if info is not None:
                     self._cache_exe_discovery[key] = info
                     return info
@@ -566,11 +529,11 @@ class PythonInfo:  # noqa: PLR0904
         msg = "failed to detect {} in {}".format("|".join(possible_names), os.pathsep.join(possible_folders))
         raise RuntimeError(msg)
 
-    def _check_exe(self, app_data, cache, folder, name, exact, discovered, env):  # noqa: PLR0913
+    def _check_exe(self, app_data, folder, name, exact, discovered, env):  # noqa: PLR0913
         exe_path = os.path.join(folder, name)
         if not os.path.exists(exe_path):
             return None
-        info = self.from_exe(exe_path, app_data, cache, resolve_to_host=False, raise_on_error=False, env=env)
+        info = self.from_exe(exe_path, app_data, resolve_to_host=False, raise_on_error=False, env=env)
         if info is None:  # ignore if for some reason we can't query
             return None
         for item in ["implementation", "architecture", "version_info"]:
@@ -654,8 +617,7 @@ class PythonInfo:  # noqa: PLR0904
         for base in possible_base:
             lower = base.lower()
             yield lower
-
-            from virtualenv.discovery.info import fs_is_case_sensitive  # noqa: PLC0415
+            from virtualenv.info import fs_is_case_sensitive  # noqa: PLC0415
 
             if fs_is_case_sensitive():
                 if base != lower:

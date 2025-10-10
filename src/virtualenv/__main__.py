@@ -66,7 +66,7 @@ def run_with_catch(args=None, env=None):
     options = VirtualEnvOptions()
     try:
         run(args, options, env)
-    except (KeyboardInterrupt, SystemExit, Exception) as exception:  # noqa: BLE001
+    except (KeyboardInterrupt, SystemExit, Exception) as exception:
         try:
             if getattr(options, "with_traceback", False):
                 raise

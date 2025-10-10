@@ -14,14 +14,13 @@ from typing import NamedTuple
 
 import pytest
 
-from tests.unit.discovery.util import MockAppData, MockCache
 from virtualenv.create.via_global_ref.builtin.cpython.common import is_macos_brew
 from virtualenv.discovery import cached_py_info
 from virtualenv.discovery.py_info import PythonInfo, VersionInfo
 from virtualenv.discovery.py_spec import PythonSpec
 from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
 
-CURRENT = PythonInfo.current_system(MockAppData(), MockCache())
+CURRENT = PythonInfo.current_system()
 
 
 def test_current_as_json():
@@ -33,21 +32,19 @@ def test_current_as_json():
     assert parsed["free_threaded"] is f
 
 
-def test_bad_exe_py_info_raise(tmp_path):
+def test_bad_exe_py_info_raise(tmp_path, session_app_data):
     exe = str(tmp_path)
-    app_data, cache = MockAppData(), MockCache()
     with pytest.raises(RuntimeError) as context:
-        PythonInfo.from_exe(exe, app_data, cache)
+        PythonInfo.from_exe(exe, session_app_data)
     msg = str(context.value)
     assert "code" in msg
     assert exe in msg
 
 
-def test_bad_exe_py_info_no_raise(tmp_path, caplog, capsys):
+def test_bad_exe_py_info_no_raise(tmp_path, caplog, capsys, session_app_data):
     caplog.set_level(logging.NOTSET)
     exe = str(tmp_path)
-    app_data, cache = MockAppData(), MockCache()
-    result = PythonInfo.from_exe(exe, app_data, cache, raise_on_error=False)
+    result = PythonInfo.from_exe(exe, session_app_data, raise_on_error=False)
     assert result is None
     out, _ = capsys.readouterr()
     assert not out
@@ -126,50 +123,46 @@ def test_satisfy_not_version(spec):
     assert matches is False
 
 
-def test_py_info_cached_error(mocker, tmp_path):
+def test_py_info_cached_error(mocker, tmp_path, session_app_data):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
-    app_data, cache = MockAppData(), MockCache()
     with pytest.raises(RuntimeError):
-        PythonInfo.from_exe(str(tmp_path), app_data, cache)
+        PythonInfo.from_exe(str(tmp_path), session_app_data)
     with pytest.raises(RuntimeError):
-        PythonInfo.from_exe(str(tmp_path), app_data, cache)
+        PythonInfo.from_exe(str(tmp_path), session_app_data)
     assert spy.call_count == 1
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
-def test_py_info_cached_symlink_error(mocker, tmp_path):
+def test_py_info_cached_symlink_error(mocker, tmp_path, session_app_data):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
-    app_data, cache = MockAppData(), MockCache()
     with pytest.raises(RuntimeError):
-        PythonInfo.from_exe(str(tmp_path), app_data, cache)
+        PythonInfo.from_exe(str(tmp_path), session_app_data)
     symlinked = tmp_path / "a"
     symlinked.symlink_to(tmp_path)
     with pytest.raises(RuntimeError):
-        PythonInfo.from_exe(str(symlinked), app_data, cache)
+        PythonInfo.from_exe(str(symlinked), session_app_data)
     assert spy.call_count == 2
 
 
-def test_py_info_cache_clear(mocker):
+def test_py_info_cache_clear(mocker, session_app_data):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
-    app_data, cache = MockAppData(), MockCache()
-    result = PythonInfo.from_exe(sys.executable, app_data, cache)
+    result = PythonInfo.from_exe(sys.executable, session_app_data)
     assert result is not None
     count = 1 if result.executable == sys.executable else 2  # at least two, one for the venv, one more for the host
     assert spy.call_count >= count
-    PythonInfo.clear_cache()
-    assert PythonInfo.from_exe(sys.executable, app_data, cache) is not None
+    PythonInfo.clear_cache(session_app_data)
+    assert PythonInfo.from_exe(sys.executable, session_app_data) is not None
     assert spy.call_count >= 2 * count
 
 
-def test_py_info_cache_invalidation_on_py_info_change(mocker):
+def test_py_info_cache_invalidation_on_py_info_change(mocker, session_app_data):
     # 1. Get a PythonInfo object for the current executable, this will cache it.
-    app_data, cache = MockAppData(), MockCache()
-    PythonInfo.from_exe(sys.executable, app_data, cache)
+    PythonInfo.from_exe(sys.executable, session_app_data)
 
     # 2. Spy on _run_subprocess
     spy = mocker.spy(cached_py_info, "_run_subprocess")
 
-    # 3. Backup py_info.py
+    # 3. Modify the content of py_info.py
     py_info_script = Path(cached_py_info.__file__).parent / "py_info.py"
     original_content = py_info_script.read_text(encoding="utf-8")
     original_stat = py_info_script.stat()
@@ -177,22 +170,19 @@ def test_py_info_cache_invalidation_on_py_info_change(mocker):
     try:
         # 4. Clear the in-memory cache
         mocker.patch.dict(cached_py_info._CACHE, {}, clear=True)  # noqa: SLF001
-
-        # 5. Modify py_info.py to invalidate the cache
         py_info_script.write_text(original_content + "\n# a comment", encoding="utf-8")
 
-        # 6. Get the PythonInfo object again
-        info = PythonInfo.from_exe(sys.executable, app_data, cache)
+        # 5. Get the PythonInfo object again
+        info = PythonInfo.from_exe(sys.executable, session_app_data)
 
-        # 7. Assert that _run_subprocess was called again
-        native_difference = 1 if info.system_executable == info.executable else 0
+        # 6. Assert that _run_subprocess was called again
         if is_macos_brew(info):
-            assert spy.call_count + native_difference in {2, 3}
+            assert spy.call_count in {2, 3}
         else:
-            assert spy.call_count + native_difference == 2
+            assert spy.call_count == 2
 
     finally:
-        # 8. Restore the original content and timestamp
+        # Restore the original content and timestamp
         py_info_script.write_text(original_content, encoding="utf-8")
         os.utime(str(py_info_script), (original_stat.st_atime, original_stat.st_mtime))
 
@@ -204,10 +194,9 @@ def test_py_info_cache_invalidation_on_py_info_change(mocker):
     reason="symlink is not supported",
 )
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
-def test_py_info_cached_symlink(mocker, tmp_path):
+def test_py_info_cached_symlink(mocker, tmp_path, session_app_data):
     spy = mocker.spy(cached_py_info, "_run_subprocess")
-    app_data, cache = MockAppData(), MockCache()
-    first_result = PythonInfo.from_exe(sys.executable, app_data, cache)
+    first_result = PythonInfo.from_exe(sys.executable, session_app_data)
     assert first_result is not None
     count = spy.call_count
     # at least two, one for the venv, one more for the host
@@ -220,7 +209,7 @@ def test_py_info_cached_symlink(mocker, tmp_path):
     if pyvenv.exists():
         (tmp_path / pyvenv.name).write_text(pyvenv.read_text(encoding="utf-8"), encoding="utf-8")
     new_exe_str = str(new_exe)
-    second_result = PythonInfo.from_exe(new_exe_str, app_data, cache)
+    second_result = PythonInfo.from_exe(new_exe_str, session_app_data)
     assert second_result.executable == new_exe_str
     assert spy.call_count == count + 1  # no longer needed the host invocation, but the new symlink is must
 
@@ -267,10 +256,10 @@ def test_system_executable_no_exact_match(  # noqa: PLR0913
     tmp_path,
     mocker,
     caplog,
+    session_app_data,
 ):
     """Here we should fallback to other compatible"""
     caplog.set_level(logging.DEBUG)
-    app_data, cache = MockAppData(), MockCache()
 
     def _make_py_info(of):
         base = copy.deepcopy(CURRENT)
@@ -298,15 +287,15 @@ def test_system_executable_no_exact_match(  # noqa: PLR0913
     mocker.patch.object(target_py_info, "_find_possible_exe_names", return_value=names)
     mocker.patch.object(target_py_info, "_find_possible_folders", return_value=[str(tmp_path)])
 
-    def func(exe, app_data, cache, raise_on_error=True, ignore_cache=False, resolve_to_host=True, env=None):  # noqa: ARG001, PLR0913
-        return discovered_with_path.get(exe)
+    def func(k, app_data, resolve_to_host, raise_on_error, env):  # noqa: ARG001
+        return discovered_with_path[k]
 
-    mocker.patch.object(PythonInfo, "from_exe", side_effect=func)
+    mocker.patch.object(target_py_info, "from_exe", side_effect=func)
     target_py_info.real_prefix = str(tmp_path)
 
     target_py_info.system_executable = None
     target_py_info.executable = str(tmp_path)
-    mapped = target_py_info._resolve_to_system(app_data, target_py_info, cache)  # noqa: SLF001
+    mapped = target_py_info._resolve_to_system(session_app_data, target_py_info)  # noqa: SLF001
     assert mapped.system_executable == CURRENT.system_executable
     found = discovered_with_path[mapped.base_executable]
     assert found is selected
@@ -333,8 +322,7 @@ def test_py_info_ignores_distutils_config(monkeypatch, tmp_path):
     """
     (tmp_path / "setup.cfg").write_text(dedent(raw), encoding="utf-8")
     monkeypatch.chdir(tmp_path)
-    app_data, cache = MockAppData(), MockCache()
-    py_info = PythonInfo.from_exe(sys.executable, app_data, cache)
+    py_info = PythonInfo.from_exe(sys.executable)
     distutils = py_info.distutils_install
     for key, value in distutils.items():
         assert not value.startswith(str(tmp_path)), f"{key}={value}"
@@ -371,11 +359,10 @@ def test_py_info_setuptools():
 
 
 @pytest.mark.usefixtures("_skip_if_test_in_system")
-def test_py_info_to_system_raises(mocker, caplog):
+def test_py_info_to_system_raises(session_app_data, mocker, caplog):
     caplog.set_level(logging.DEBUG)
     mocker.patch.object(PythonInfo, "_find_possible_folders", return_value=[])
-    app_data, cache = MockAppData(), MockCache()
-    result = PythonInfo.from_exe(sys.executable, app_data=app_data, cache=cache, raise_on_error=False)
+    result = PythonInfo.from_exe(sys.executable, app_data=session_app_data, raise_on_error=False)
     assert result is None
     log = caplog.records[-1]
     assert log.levelno == logging.INFO
@@ -446,9 +433,7 @@ def test_custom_venv_install_scheme_is_prefered(mocker):
     assert pyinfo.install_path("purelib").replace(os.sep, "/") == f"lib/python{pyver}/site-packages"
 
 
-@pytest.mark.skipif(
-    IS_PYPY or not (os.name == "posix" and sys.version_info[:2] >= (3, 11)), reason="POSIX 3.11+ specific"
-)
+@pytest.mark.skipif(not (os.name == "posix" and sys.version_info[:2] >= (3, 11)), reason="POSIX 3.11+ specific")
 def test_fallback_existent_system_executable(mocker):
     current = PythonInfo()
     # Posix may execute a "python" out of a venv but try to set the base_executable
