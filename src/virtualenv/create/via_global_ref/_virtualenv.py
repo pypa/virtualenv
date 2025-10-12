@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import contextlib
 import os
 import sys
 
-VIRTUALENV_PATCH_FILE = os.path.join(__file__)
+VIRTUALENV_PATCH_FILE = os.path.abspath(__file__)
 
 
 def patch_dist(dist):
@@ -50,7 +51,14 @@ class _Finder:
     lock = []  # noqa: RUF012
 
     def find_spec(self, fullname, path, target=None):  # noqa: ARG002
-        if fullname in _DISTUTILS_PATCH and self.fullname is None:  # noqa: PLR1702
+        # Guard against race conditions during file rewrite by checking if _DISTUTILS_PATCH is defined.
+        # This can happen when the file is being overwritten while it's being imported by another process.
+        # See https://github.com/pypa/virtualenv/issues/2969 for details.
+        try:
+            distutils_patch = _DISTUTILS_PATCH
+        except NameError:
+            return None
+        if fullname in distutils_patch and self.fullname is None:  # noqa: PLR1702
             # initialize lock[0] lazily
             if len(self.lock) == 0:
                 import threading  # noqa: PLC0415
@@ -89,14 +97,26 @@ class _Finder:
     @staticmethod
     def exec_module(old, module):
         old(module)
-        if module.__name__ in _DISTUTILS_PATCH:
-            patch_dist(module)
+        try:
+            distutils_patch = _DISTUTILS_PATCH
+        except NameError:
+            return
+        if module.__name__ in distutils_patch:
+            # patch_dist or its dependencies may not be defined during file rewrite
+            with contextlib.suppress(NameError):
+                patch_dist(module)
 
     @staticmethod
     def load_module(old, name):
         module = old(name)
-        if module.__name__ in _DISTUTILS_PATCH:
-            patch_dist(module)
+        try:
+            distutils_patch = _DISTUTILS_PATCH
+        except NameError:
+            return module
+        if module.__name__ in distutils_patch:
+            # patch_dist or its dependencies may not be defined during file rewrite
+            with contextlib.suppress(NameError):
+                patch_dist(module)
         return module
 
 
