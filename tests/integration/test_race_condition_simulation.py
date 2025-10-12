@@ -4,7 +4,6 @@ import importlib.util
 import sys
 import tempfile
 from pathlib import Path
-from textwrap import dedent
 
 
 def test_race_condition_simulation():
