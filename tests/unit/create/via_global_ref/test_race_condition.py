@@ -61,7 +61,7 @@ def test_virtualenv_py_race_condition_find_spec():
         sys.path.insert(0, tmpdir)
         try:
             # Import the module
-            import _virtualenv_test
+            import _virtualenv_test  # noqa: PLC0415
 
             # Get the finder instance
             finder = _virtualenv_test.finder
@@ -75,11 +75,15 @@ def test_virtualenv_py_race_condition_find_spec():
                 __name__ = "distutils.dist"
 
             # Try to call exec_module - this should not raise NameError
-            mock_old_exec = lambda x: None  # noqa: E731
+            def mock_old_exec(_x):
+                pass
+
             finder.exec_module(mock_old_exec, MockModule())
 
             # Try to call load_module - this should not raise NameError
-            mock_old_load = lambda name: MockModule()  # noqa: E731
+            def mock_old_load(_name):
+                return MockModule()
+
             result = finder.load_module(mock_old_load, "distutils.dist")
             assert result.__name__ == "distutils.dist"
 
