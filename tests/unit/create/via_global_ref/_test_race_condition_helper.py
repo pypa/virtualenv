@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from typing import ClassVar
+
 
 class _Finder:
     fullname = None
-    lock = []
+    lock: ClassVar[list] = []
 
-    def find_spec(self, fullname, path, target=None):
+    def find_spec(self, fullname, path, target=None):  # noqa: ARG002
         # This should handle the NameError gracefully
         try:
             distutils_patch = _DISTUTILS_PATCH
