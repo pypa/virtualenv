@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import shutil
 import sys
 from pathlib import Path
 
@@ -15,30 +16,21 @@ def test_race_condition_simulation(tmp_path):
 
     The test verifies that no NameError is raised for _DISTUTILS_PATCH.
     """
-    venv_path = tmp_path
-
     # Create the _virtualenv.py file
-    virtualenv_file = venv_path / "_virtualenv.py"
-    source_file = Path(__file__).parent.parent / "src" / "virtualenv" / "create" / "via_global_ref" / "_virtualenv.py"
+    virtualenv_file = tmp_path / "_virtualenv.py"
+    source_file = Path(__file__).parents[2] / "src" / "virtualenv" / "create" / "via_global_ref" / "_virtualenv.py"
 
-    if not source_file.exists():
-        return  # Skip test if source file doesn't exist
-
-    content = source_file.read_text(encoding="utf-8")
-    virtualenv_file.write_text(content, encoding="utf-8")
+    shutil.copy(source_file, virtualenv_file)
 
     # Create the _virtualenv.pth file
-    pth_file = venv_path / "_virtualenv.pth"
+    pth_file = tmp_path / "_virtualenv.pth"
     pth_file.write_text("import _virtualenv", encoding="utf-8")
 
-    # Simulate the race condition by alternating between importing and overwriting
+    # Simulate the race condition by repeatedly importing
     errors = []
     for _ in range(5):
-        # Overwrite the file
-        virtualenv_file.write_text(content, encoding="utf-8")
-
         # Try to import it
-        sys.path.insert(0, str(venv_path))
+        sys.path.insert(0, str(tmp_path))
         try:
             if "_virtualenv" in sys.modules:
                 del sys.modules["_virtualenv"]
@@ -52,11 +44,7 @@ def test_race_condition_simulation(tmp_path):
                 if "_DISTUTILS_PATCH" in str(e):
                     errors.append(str(e))
         finally:
-            if str(venv_path) in sys.path:
-                sys.path.remove(str(venv_path))
-
-    # Clean up
-    if "_virtualenv" in sys.modules:
-        del sys.modules["_virtualenv"]
+            if str(tmp_path) in sys.path:
+                sys.path.remove(str(tmp_path))
 
     assert not errors, f"Race condition detected: {errors}"
