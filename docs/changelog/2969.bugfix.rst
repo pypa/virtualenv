@@ -1,0 +1,1 @@
+Fix race condition in ``_virtualenv.py`` when file is overwritten during import, preventing ``NameError`` when ``_DISTUTILS_PATCH`` is accessed - by :user:`gracetyy`.
