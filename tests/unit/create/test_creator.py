@@ -440,7 +440,6 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch):
         "--disable-pip-version-check",
         "install",
         str(dest),
-        "--no-use-pep517",
         "-vv",
     ]
     subprocess.check_call(install_demo_cmd)
