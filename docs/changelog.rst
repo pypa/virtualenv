@@ -5,6 +5,16 @@ Release History
 
 .. towncrier release notes start
 
+v20.35.4 (2025-10-28)
+---------------------
+
+Bugfixes - 20.35.4
+~~~~~~~~~~~~~~~~~~
+- Fix race condition in ``_virtualenv.py`` when file is overwritten during import, preventing ``NameError`` when ``_DISTUTILS_PATCH`` is accessed - by :user:`gracetyy`. (:issue:`2969`)
+- Upgrade embedded wheels:
+
+  * pip to ``25.3`` from ``25.2`` (:issue:`2989`)
+
 v20.35.3 (2025-10-10)
 ---------------------
 
