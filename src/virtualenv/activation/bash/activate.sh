@@ -61,7 +61,7 @@ if [ ! -d __VIRTUAL_ENV__ ]; then
     CURRENT_PATH=$(realpath "${0}")
     CURRENT_DIR=$(dirname "${CURRENT_PATH}")
     VIRTUAL_ENV="$(realpath "${CURRENT_DIR}/../")"
-else    
+else
     VIRTUAL_ENV=__VIRTUAL_ENV__
 fi
 
