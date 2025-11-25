@@ -56,7 +56,15 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV=__VIRTUAL_ENV__
+if [ ! -d __VIRTUAL_ENV__ ]; then
+    echo "Virtual environment directory __VIRTUAL_ENV__ does not exist!" >&2
+    CURRENT_PATH=$(realpath "${0}")
+    CURRENT_DIR=$(dirname "${CURRENT_PATH}")
+    VIRTUAL_ENV="$(realpath "${CURRENT_DIR}/../")"
+else
+    VIRTUAL_ENV=__VIRTUAL_ENV__
+fi
+
 if ([ "$OSTYPE" = "cygwin" ] || [ "$OSTYPE" = "msys" ]) && $(command -v cygpath &> /dev/null) ; then
     VIRTUAL_ENV=$(cygpath -u "$VIRTUAL_ENV")
 fi
