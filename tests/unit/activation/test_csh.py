@@ -53,6 +53,47 @@ def test_cshell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
         assert "setenv TCL_LIBRARY ''" in content
 
 
+def test_cshell_pkg_config_generation(tmp_path):
+    # GIVEN
+    class MockInterpreter:
+        pass
+
+    interpreter = MockInterpreter()
+    interpreter.tcl_lib = None
+    interpreter.tk_lib = None
+
+    class MockCreator:
+        def __init__(self, dest):
+            self.dest = dest
+            self.bin_dir = dest / "bin"
+            self.bin_dir.mkdir()
+            self.interpreter = interpreter
+            self.pyenv_cfg = {}
+            self.env_name = "my-env"
+
+    creator = MockCreator(tmp_path)
+    options = Namespace(prompt=None)
+    activator = CShellActivator(options)
+
+    # WHEN
+    activator.generate(creator)
+    content = (creator.bin_dir / "activate.csh").read_text(encoding="utf-8")
+
+    # THEN
+    pkg_config_path = str(tmp_path / "lib" / "pkgconfig")
+    content = content.replace(CShellActivator.quote(pkg_config_path), "__PKG_CONFIG_PATH__")
+
+    assert "if ($?PKG_CONFIG_PATH) then" in content
+    assert 'set _OLD_VIRTUAL_PKG_CONFIG_PATH="$PKG_CONFIG_PATH:q"' in content
+    assert "setenv PKG_CONFIG_PATH __PKG_CONFIG_PATH__:$PKG_CONFIG_PATH:q" in content
+    assert "else" in content
+    assert "setenv PKG_CONFIG_PATH __PKG_CONFIG_PATH__" in content
+    assert "test $?_OLD_VIRTUAL_PKG_CONFIG_PATH != 0" in content
+    assert 'setenv PKG_CONFIG_PATH "$_OLD_VIRTUAL_PKG_CONFIG_PATH:q"' in content
+    assert "unset _OLD_VIRTUAL_PKG_CONFIG_PATH" in content
+    assert "unsetenv PKG_CONFIG_PATH" in content
+
+
 def test_csh(activation_tester_class, activation_tester):
     exe = f"tcsh{'.exe' if sys.platform == 'win32' else ''}"
     if which(exe):

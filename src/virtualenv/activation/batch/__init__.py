@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 
 from virtualenv.activation.via_template import ViaTemplateActivator
 
@@ -21,7 +22,23 @@ class BatchActivator(ViaTemplateActivator):
 
     def instantiate_template(self, replacements, template, creator):
         # ensure the text has all newlines as \r\n - required by batch
-        base = super().instantiate_template(replacements, template, creator)
+        if template == "activate.bat":
+            # sanitize batch-special chars from key replacements
+            safe_replacements = replacements.copy()
+
+            # CRITICAL: Escape & in PATH assignments (batch-safe)
+            safe_replacements["__VIRTUAL_ENV__"] = (
+                replacements["__VIRTUAL_ENV__"].replace("&", "^&")
+            )
+
+            # Sanitize prompt (remove batch command separators)
+            safe_replacements["__VIRTUAL_PROMPT__"] = re.sub(
+                r"[&<>|^]", "", replacements["__VIRTUAL_PROMPT__"]
+            )
+
+            base = super().instantiate_template(safe_replacements, template, creator)
+        else:
+            base = super().instantiate_template(replacements, template, creator)
         return base.replace(os.linesep, "\n").replace("\n", os.linesep)
 
 

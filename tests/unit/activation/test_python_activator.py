@@ -5,6 +5,8 @@ import sys
 from ast import literal_eval
 from textwrap import dedent
 
+import pytest
+
 from virtualenv.activation import PythonActivator
 from virtualenv.info import IS_WIN
 
@@ -59,7 +61,7 @@ def test_python(raise_on_non_source_class, activation_tester):
             """
             return dedent(raw).splitlines()
 
-        def assert_output(self, out, raw, tmp_path):  # noqa: ARG002
+        def assert_output(self, out, _raw, _tmp_path):
             out = [literal_eval(i) for i in out]
             assert out[0] is None  # start with VIRTUAL_ENV None
             assert out[1] is None  # likewise for VIRTUAL_ENV_PROMPT
@@ -84,6 +86,68 @@ def test_python(raise_on_non_source_class, activation_tester):
             dest = self.norm_path(self._creator.purelib / "pydoc_test.py")
             found = self.norm_path(out[8])
             assert found.startswith(dest)
+
+        def non_source_activate(self, activate_script):
+            act = str(activate_script)
+            return [*self._invoke_script, "-c", f"exec(open({act!r}).read())"]
+
+    activation_tester(Python)
+
+
+@pytest.mark.parametrize("pkg_config_path", [None, "/data/foo"])
+def test_python_pkg_config(raise_on_non_source_class, activation_tester, pkg_config_path, monkeypatch):
+    if pkg_config_path:
+        monkeypatch.setenv("PKG_CONFIG_PATH", pkg_config_path)
+
+    class Python(raise_on_non_source_class):
+        def __init__(self, session) -> None:
+            super().__init__(
+                PythonActivator,
+                session,
+                sys.executable,
+                activate_script="activate_this.py",
+                extension="py",
+                non_source_fail_message="You must use import runpy; runpy.run_path(this_file)",
+            )
+            self.unix_line_ending = not IS_WIN
+
+        def env(self, tmp_path):
+            env = super().env(tmp_path)
+            if pkg_config_path is None and "PKG_CONFIG_PATH" in env:
+                del env["PKG_CONFIG_PATH"]
+            return env
+
+        @staticmethod
+        def _get_test_lines(activate_script):
+            raw = f"""
+            import os
+            import sys
+            import runpy
+
+            def print_r(value):
+                print(repr(value))
+
+            print_r(os.environ.get("PKG_CONFIG_PATH"))
+            file_at = {str(activate_script)!r}
+            runpy.run_path(file_at)
+            print_r(os.environ.get("PKG_CONFIG_PATH"))
+            """
+            return dedent(raw).splitlines()
+
+        def assert_output(self, out, _raw, _tmp_path):
+            out = [literal_eval(i) for i in out]
+
+            # Before activation
+            assert out[0] == pkg_config_path
+
+            # After activation
+            venv_pkg_config = str(self._creator.dest / "lib" / "pkgconfig")
+            if pkg_config_path is None:
+                expected = venv_pkg_config
+            else:
+                expected = os.pathsep.join([venv_pkg_config, pkg_config_path])
+
+            assert out[1] == expected
 
         def non_source_activate(self, activate_script):
             act = str(activate_script)
