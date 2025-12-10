@@ -25,6 +25,16 @@ function global:deactivate([switch] $NonDestructive) {
         }
     }
 
+    if (Test-Path variable:_OLD_VIRTUAL_PKG_CONFIG_PATH) {
+        $env:PKG_CONFIG_PATH = $variable:_OLD_VIRTUAL_PKG_CONFIG_PATH
+        Remove-Variable "_OLD_VIRTUAL_PKG_CONFIG_PATH" -Scope global
+    }
+    else {
+        if (Test-Path env:PKG_CONFIG_PATH) {
+            Remove-Item env:PKG_CONFIG_PATH -ErrorAction SilentlyContinue
+        }
+    }
+
     if (Test-Path function:_old_virtual_prompt) {
         $function:prompt = $function:_old_virtual_prompt
         Remove-Item function:\_old_virtual_prompt
@@ -74,6 +84,14 @@ if (__TK_LIBRARY__ -ne "") {
         New-Variable -Scope global -Name _OLD_VIRTUAL_TK_LIBRARY -Value $env:TK_LIBRARY
     }
     $env:TK_LIBRARY = __TK_LIBRARY__
+}
+
+if (Test-Path env:PKG_CONFIG_PATH) {
+    New-Variable -Scope global -Name _OLD_VIRTUAL_PKG_CONFIG_PATH -Value $env:PKG_CONFIG_PATH
+    $env:PKG_CONFIG_PATH = __PKG_CONFIG_PATH__ + __PATH_SEP__ + $env:PKG_CONFIG_PATH
+}
+else {
+    $env:PKG_CONFIG_PATH = __PKG_CONFIG_PATH__
 }
 
 New-Variable -Scope global -Name _OLD_VIRTUAL_PATH -Value $env:PATH
