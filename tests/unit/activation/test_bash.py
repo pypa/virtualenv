@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import shlex
 from argparse import Namespace
 
 import pytest
@@ -61,6 +63,49 @@ def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
         assert "TCL_LIBRARY=''" in content
         # The export is inside the if, so this is fine
         assert "export TCL_LIBRARY" in content
+
+
+@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
+def test_bash_pkg_config_generation(tmp_path):
+    # GIVEN
+    class MockCreator:
+        def __init__(self, dest):
+            self.dest = dest
+            self.bin_dir = dest / "bin"
+            self.bin_dir.mkdir()
+            self.pyenv_cfg = {}
+            self.env_name = "my-env"
+
+            class MockInterpreter:
+                pass
+
+            self.interpreter = MockInterpreter()
+            self.interpreter.tcl_lib = None
+            self.interpreter.tk_lib = None
+
+    creator = MockCreator(tmp_path)
+    options = Namespace(prompt=None)
+    activator = BashActivator(options)
+
+    # WHEN
+    activator.generate(creator)
+    content = (creator.bin_dir / "activate").read_text(encoding="utf-8")
+
+    # THEN
+    pkg_config_path = str(tmp_path / "lib" / "pkgconfig")
+    content = content.replace(shlex.quote(pkg_config_path), "__PKG_CONFIG_PATH__")
+    content = content.replace(shlex.quote(os.pathsep), "__PATH_SEP__")
+
+    assert 'if ! [ -z "${PKG_CONFIG_PATH+_}" ]; then' in content
+    assert '_OLD_VIRTUAL_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"' in content
+    assert "PKG_CONFIG_PATH=__PKG_CONFIG_PATH__${__PATH_SEP__}$PKG_CONFIG_PATH" in content
+    assert "else" in content
+    assert "PKG_CONFIG_PATH=__PKG_CONFIG_PATH__" in content
+    assert "export PKG_CONFIG_PATH" in content
+    assert 'if ! [ -z "${_OLD_VIRTUAL_PKG_CONFIG_PATH+_}" ]; then' in content
+    assert 'PKG_CONFIG_PATH="$_OLD_VIRTUAL_PKG_CONFIG_PATH"' in content
+    assert "unset _OLD_VIRTUAL_PKG_CONFIG_PATH" in content
+    assert "unset PKG_CONFIG_PATH" in content
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
