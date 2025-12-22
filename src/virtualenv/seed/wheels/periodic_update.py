@@ -350,7 +350,7 @@ def _pypi_get_distribution_info(distribution):
     try:
         for context in _request_context():
             try:
-                with urlopen(url, context=context) as file_handler:  # noqa: S310
+                with urlopen(url, context=context) as file_handler:
                     content = json.load(file_handler)
                 break
             except URLError as exception:
