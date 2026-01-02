@@ -422,9 +422,16 @@ class PythonInfo:  # noqa: PLR0904
         if spec.free_threaded is not None and spec.free_threaded != self.free_threaded:
             return False
 
-        for our, req in zip(self.version_info[0:3], (spec.major, spec.minor, spec.micro)):
-            if req is not None and our is not None and our != req:
+        # Check version specifier (e.g., >=3.12, ~=3.11.0)
+        if spec.version_specifier is not None:
+            version_string = f"{self.version_info.major}.{self.version_info.minor}.{self.version_info.micro}"
+            if version_string not in spec.version_specifier:
                 return False
+        else:
+            # Check exact version match (backward compatibility)
+            for our, req in zip(self.version_info[0:3], (spec.major, spec.minor, spec.micro)):
+                if req is not None and our is not None and our != req:
+                    return False
         return True
 
     _current_system = None
