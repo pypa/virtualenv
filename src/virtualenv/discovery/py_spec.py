@@ -40,12 +40,12 @@ class PythonSpec:
     def from_string_spec(cls, string_spec: str):  # noqa: C901, PLR0912
         impl, major, minor, micro, threaded, arch, path = None, None, None, None, None, None, None
         version_specifier = None
-        
+
         # Check if this looks like a version specifier (contains comparison operators)
         # Version specifiers start with >=, <=, ==, ~=, !=, >, <, or ===
         specifier_operators = (">=", "<=", "==", "~=", "!=", ">", "<", "===")
         is_specifier = any(string_spec.lstrip().startswith(op) for op in specifier_operators)
-        
+
         if is_specifier:
             try:
                 version_specifier = SpecifierSet(string_spec)
@@ -53,7 +53,7 @@ class PythonSpec:
                 # We'll match any version that satisfies the specifier
             except Exception:  # If it fails to parse as a specifier, treat it as a regular spec
                 is_specifier = False
-        
+
         if os.path.isabs(string_spec):  # noqa: PLR1702
             path = string_spec
         elif not is_specifier:
@@ -93,7 +93,17 @@ class PythonSpec:
             if not ok:
                 path = string_spec
 
-        return cls(string_spec, impl, major, minor, micro, arch, path, free_threaded=threaded, version_specifier=version_specifier)
+        return cls(
+            string_spec,
+            impl,
+            major,
+            minor,
+            micro,
+            arch,
+            path,
+            free_threaded=threaded,
+            version_specifier=version_specifier,
+        )
 
     def generate_re(self, *, windows: bool) -> re.Pattern:
         """Generate a regular expression for matching against a filename."""
@@ -139,7 +149,16 @@ class PythonSpec:
 
     def __repr__(self) -> str:
         name = type(self).__name__
-        params = "implementation", "major", "minor", "micro", "architecture", "path", "free_threaded", "version_specifier"
+        params = (
+            "implementation",
+            "major",
+            "minor",
+            "micro",
+            "architecture",
+            "path",
+            "free_threaded",
+            "version_specifier",
+        )
         return f"{name}({', '.join(f'{k}={getattr(self, k)}' for k in params if getattr(self, k) is not None)})"
 
 
