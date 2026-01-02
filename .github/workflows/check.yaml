@@ -137,7 +137,7 @@ jobs:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@v4
       - name: 📦 Install tox
-        run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.28" --with tox-uv
+        run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.32" --with tox-uv
       - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
