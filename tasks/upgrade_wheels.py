@@ -23,6 +23,8 @@ def download(ver, dest, package):
     subprocess.call(
         [
             sys.executable,
+            "-W",
+            "ignore::EncodingWarning",
             "-m",
             "pip",
             "--disable-pip-version-check",
