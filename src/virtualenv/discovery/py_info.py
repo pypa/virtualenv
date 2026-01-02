@@ -400,7 +400,7 @@ class PythonInfo:  # noqa: PLR0904
         if self.executable == os.path.abspath(spec.path):
             return True
         if spec.is_abs:
-            return None
+            return False
         # if path set, and is not our original executable name, this does not match
         basename = os.path.basename(self.original_executable)
         spec_path = spec.path
