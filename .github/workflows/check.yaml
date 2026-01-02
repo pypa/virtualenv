@@ -63,9 +63,9 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.py }}" == "3.13t" || "${{ matrix.py }}" == "3.14t" ]]; then
-            uv tool install --python 3.13 tox==4.11.3 --with .
+            uv tool install --python 3.13 tox==4.0.14 --with .
           else
-            uv tool install --python 3.13 tox==4.11.3 --with tox-uv --with .
+            uv tool install --python 3.13 tox==4.0.14 --with tox-uv --with .
           fi
       - name: 🐍 Setup Python for test ${{ matrix.py }}
         uses: actions/setup-python@v5
@@ -137,7 +137,7 @@ jobs:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@v4
       - name: 📦 Install tox
-        run: uv tool install --python 3.13 tox==4.11.3 --with tox-uv
+        run: uv tool install --python 3.13 tox==4.0.14 --with tox-uv
       - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
