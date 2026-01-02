@@ -62,7 +62,7 @@ jobs:
       - name: 📦 Install tox with this virtualenv
         shell: bash
         run: |
-          uv tool install --python 3.13 tox==4.0.14
+          uv tool install --python 3.14 tox==4.0.14
       - name: 🐍 Setup Python for test ${{ matrix.py }}
         uses: actions/setup-python@v5
         if: ${{ !startsWith(matrix.py, 'brew@') }}
@@ -133,7 +133,7 @@ jobs:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@v4
       - name: 📦 Install tox
-        run: uv tool install --python 3.13 tox==4.0.14
+        run: uv tool install --python 3.14 tox==4.0.14
       - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
