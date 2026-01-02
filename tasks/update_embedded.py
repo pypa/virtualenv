@@ -25,7 +25,10 @@ file_template = '# file {filename}\n{variable} = convert(\n    """\n{data}"""\n)
 
 
 def rebuild(script_path):
-    with script_path.open(encoding=locale.getpreferredencoding(False)) as current_fh:  # noqa: FBT003
+    encoding = (
+        locale.getencoding() if hasattr(locale, "getencoding") else locale.getpreferredencoding(do_setlocale=False)
+    )
+    with script_path.open(encoding=encoding) as current_fh:
         script_content = current_fh.read()
     script_parts = []
     match_end = 0
