@@ -63,9 +63,9 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.py }}" == "3.13t" || "${{ matrix.py }}" == "3.14t" ]]; then
-            uv tool install --python 3.13 tox==4.0.14 --with .
+            uv tool install --python 3.13 tox==4.0.14
           else
-            uv tool install --python 3.13 tox==4.0.14 --with tox-uv --with .
+            uv tool install --python 3.13 tox==4.0.14 --with tox-uv
           fi
       - name: 🐍 Setup Python for test ${{ matrix.py }}
         uses: actions/setup-python@v5
