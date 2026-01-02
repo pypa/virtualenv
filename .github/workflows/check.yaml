@@ -62,7 +62,11 @@ jobs:
       - name: 📦 Install tox with this virtualenv
         shell: bash
         run: |
-          uv tool install --python 3.14 tox==4.0.14
+          if [[ "${{ matrix.py }}" == "3.13t" || "${{ matrix.py }}" == "3.14t" ]]; then
+            uv tool install --no-managed-python --python 3.14 tox --with .
+          else
+            uv tool install --no-managed-python --python 3.14 tox --with tox-uv --with .
+          fi
       - name: 🐍 Setup Python for test ${{ matrix.py }}
         uses: actions/setup-python@v5
         if: ${{ !startsWith(matrix.py, 'brew@') }}
@@ -102,8 +106,7 @@ jobs:
           echo "TOXENV=$py" >> "$GITHUB_ENV"
           echo "Set TOXENV=$py"
       - name: 🏗️ Setup test suite
-        run: tox run -vvvv --notest
-        timeout-minutes: 10
+        run: tox run -vvvv --notest --skip-missing-interpreters false
       - name: 🏃 Run test suite
         run: tox run --skip-pkg-install
         timeout-minutes: 20
@@ -134,12 +137,12 @@ jobs:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@v4
       - name: 📦 Install tox
-        run: uv tool install --python 3.14 tox==4.0.14
+        run: uv tool install --python-preference only-managed --python 3.14 tox --with tox-uv
       - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: 🏗️ Setup check suite
-        run: tox run -vv --notest -e ${{ matrix.tox_env }}
+        run: tox run -vv --notest --skip-missing-interpreters false -e ${{ matrix.tox_env }}
       - name: 🏃 Run check for ${{ matrix.tox_env }}
         run: tox run --skip-pkg-install -e ${{ matrix.tox_env }}
