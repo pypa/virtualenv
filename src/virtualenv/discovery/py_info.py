@@ -393,27 +393,49 @@ class PythonInfo:  # noqa: PLR0904
         clear(app_data)
         cls._cache_exe_discovery.clear()
 
-    def satisfies(self, spec, impl_must_match):  # noqa: C901, PLR0911
-        """Check if a given specification can be satisfied by the this python interpreter instance."""
-        if spec.path:
-            if self.executable == os.path.abspath(spec.path):
-                return True  # if the path is a our own executable path we're done
-            if not spec.is_abs:
-                # if path set, and is not our original executable name, this does not match
-                basename = os.path.basename(self.original_executable)
-                spec_path = spec.path
-                if sys.platform == "win32":
-                    basename, suffix = os.path.splitext(basename)
-                    if spec_path.endswith(suffix):
-                        spec_path = spec_path[: -len(suffix)]
-                if basename != spec_path:
-                    return False
+    def _check_path_match(self, spec):
+        """Check if path specification matches. Returns None if no path check needed."""
+        if not spec.path:
+            return None
+        if self.executable == os.path.abspath(spec.path):
+            return True
+        if spec.is_abs:
+            return None
+        # if path set, and is not our original executable name, this does not match
+        basename = os.path.basename(self.original_executable)
+        spec_path = spec.path
+        if sys.platform == "win32":
+            basename, suffix = os.path.splitext(basename)
+            if spec_path.endswith(suffix):
+                spec_path = spec_path[: -len(suffix)]
+        return basename == spec_path
 
-        if (
-            impl_must_match
-            and spec.implementation is not None
-            and spec.implementation.lower() != self.implementation.lower()
-        ):
+    def _check_impl_match(self, spec, impl_must_match):
+        """Check if implementation matches."""
+        return (
+            not impl_must_match
+            or spec.implementation is None
+            or spec.implementation.lower() == self.implementation.lower()
+        )
+
+    def _check_version_match(self, spec):
+        """Check if version matches spec (handles both specifiers and exact versions)."""
+        if spec.version_specifier is not None:
+            version_string = f"{self.version_info.major}.{self.version_info.minor}.{self.version_info.micro}"
+            return version_string in spec.version_specifier
+        # Check exact version match (backward compatibility)
+        for our, req in zip(self.version_info[0:3], (spec.major, spec.minor, spec.micro)):
+            if req is not None and our is not None and our != req:
+                return False
+        return True
+
+    def satisfies(self, spec, impl_must_match):
+        """Check if a given specification can be satisfied by the this python interpreter instance."""
+        path_match = self._check_path_match(spec)
+        if path_match is False:
+            return False
+
+        if not self._check_impl_match(spec, impl_must_match):
             return False
 
         if spec.architecture is not None and spec.architecture != self.architecture:
@@ -422,17 +444,7 @@ class PythonInfo:  # noqa: PLR0904
         if spec.free_threaded is not None and spec.free_threaded != self.free_threaded:
             return False
 
-        # Check version specifier (e.g., >=3.12, ~=3.11.0)
-        if spec.version_specifier is not None:
-            version_string = f"{self.version_info.major}.{self.version_info.minor}.{self.version_info.micro}"
-            if version_string not in spec.version_specifier:
-                return False
-        else:
-            # Check exact version match (backward compatibility)
-            for our, req in zip(self.version_info[0:3], (spec.major, spec.minor, spec.micro)):
-                if req is not None and our is not None and our != req:
-                    return False
-        return True
+        return self._check_version_match(spec)
 
     _current_system = None
     _current = None

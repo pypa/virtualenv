@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import re
 
-from packaging.specifiers import SpecifierSet
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
 
 PATTERN = re.compile(r"^(?P<impl>[a-zA-Z]+)?(?P<version>[0-9.]+)?(?P<threaded>t)?(?:-(?P<arch>32|64))?$")
 
@@ -51,7 +51,7 @@ class PythonSpec:
                 version_specifier = SpecifierSet(string_spec)
                 # Extract the base version from the specifier for display purposes
                 # We'll match any version that satisfies the specifier
-            except Exception:  # If it fails to parse as a specifier, treat it as a regular spec
+            except InvalidSpecifier:  # If it fails to parse as a specifier, treat it as a regular spec
                 is_specifier = False
 
         if os.path.isabs(string_spec):  # noqa: PLR1702
