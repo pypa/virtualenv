@@ -106,7 +106,7 @@ jobs:
           echo "TOXENV=$py" >> "$GITHUB_ENV"
           echo "Set TOXENV=$py"
       - name: 🏗️ Setup test suite
-        run: tox run -vvvv --notest --skip-missing-interpreters false
+        run: tox run -vvvv --notest --skip-missing-interpreters
       - name: 🏃 Run test suite
         run: tox run --skip-pkg-install
         timeout-minutes: 20
@@ -143,6 +143,6 @@ jobs:
         with:
           fetch-depth: 0
       - name: 🏗️ Setup check suite
-        run: tox run -vv --notest --skip-missing-interpreters false -e ${{ matrix.tox_env }}
+        run: tox run -vv --notest --skip-missing-interpreters -e ${{ matrix.tox_env }}
       - name: 🏃 Run check for ${{ matrix.tox_env }}
         run: tox run --skip-pkg-install -e ${{ matrix.tox_env }}
