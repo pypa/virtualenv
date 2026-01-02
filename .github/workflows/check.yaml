@@ -102,7 +102,7 @@ jobs:
           echo "TOXENV=$py" >> "$GITHUB_ENV"
           echo "Set TOXENV=$py"
       - name: 🏗️ Setup test suite
-        run: tox run -vvvv --notest --skip-pkg-install
+        run: tox run -vvvv --notest
         timeout-minutes: 10
       - name: 🏃 Run test suite
         run: tox run --skip-pkg-install
