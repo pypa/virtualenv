@@ -63,9 +63,9 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.py }}" == "3.13t" || "${{ matrix.py }}" == "3.14t" ]]; then
-            uv tool install --no-managed-python --python 3.14 tox --with .
+            uv tool install --no-managed-python --python 3.14 "tox>=4.0" --with .
           else
-            uv tool install --no-managed-python --python 3.14 tox --with tox-uv --with .
+            uv tool install --no-managed-python --python 3.14 "tox>=4.0" --with tox-uv --with .
           fi
       - name: 🐍 Setup Python for test ${{ matrix.py }}
         uses: actions/setup-python@v5
@@ -137,7 +137,7 @@ jobs:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@v4
       - name: 📦 Install tox
-        run: uv tool install --python-preference only-managed --python 3.14 tox --with tox-uv
+        run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.0" --with tox-uv
       - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:
