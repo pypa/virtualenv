@@ -405,7 +405,7 @@ class PythonInfo:  # noqa: PLR0904
         clear(app_data)
         cls._cache_exe_discovery.clear()
 
-    def satisfies(self, spec, impl_must_match):  # noqa: C901, PLR0911
+    def satisfies(self, spec, impl_must_match):  # noqa: C901, PLR0911, PLR0912
         """Check if a given specification can be satisfied by the this python interpreter instance."""
         if spec.path:
             if self.executable == os.path.abspath(spec.path):

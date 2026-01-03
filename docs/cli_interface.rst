@@ -38,6 +38,7 @@ To avoid confusion, it's best to think of them as the "rule" and the "hint".
 This flag sets the mandatory requirements for the interpreter. The ``<spec>`` can be:
 
 - **A version string** (e.g., ``python3.8``, ``pypy3``). ``virtualenv`` will search for any interpreter that matches this version.
+- **A version specifier** using PEP 440 operators (e.g., ``>=3.12``, ``~=3.11.0``, ``python>=3.10``). ``virtualenv`` will search for any interpreter that satisfies the version constraint. You can also specify the implementation: ``cpython>=3.12``.
 - **An absolute path** (e.g., ``/usr/bin/python3.8``). This is a *strict* requirement. Only the interpreter at this exact path will be used. If it does not exist or is not a valid interpreter, creation will fail.
 
 **``--try-first-with <path>``: The Hint**

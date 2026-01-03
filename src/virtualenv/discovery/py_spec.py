@@ -157,7 +157,7 @@ class PythonSpec:
     def is_abs(self):
         return self.path is not None and os.path.isabs(self.path)
 
-    def satisfies(self, spec):
+    def satisfies(self, spec):  # noqa: C901, PLR0911, PLR0912
         """Called when there's a candidate metadata spec to see if compatible - e.g. PEP-514 on Windows."""
         if spec.is_abs and self.is_abs and self.path != spec.path:
             return False
