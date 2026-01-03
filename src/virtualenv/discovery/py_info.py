@@ -16,7 +16,19 @@ import sys
 import sysconfig
 import warnings
 from collections import OrderedDict, namedtuple
+from pathlib import Path
 from string import digits
+
+try:
+    from packaging.version import Version
+except ModuleNotFoundError:  # pragma: no cover - fallback for non-site virtual executions
+    try:
+        site_packages = Path(__file__).resolve().parents[2]
+        if site_packages.exists():
+            sys.path.insert(0, str(site_packages))
+        from packaging.version import Version
+    except ModuleNotFoundError:
+        Version = None  # Will be unavailable for version specifier matching
 
 VersionInfo = namedtuple("VersionInfo", ["major", "minor", "micro", "releaselevel", "serial"])  # noqa: PYI024
 LOGGER = logging.getLogger(__name__)
@@ -421,6 +433,23 @@ class PythonInfo:  # noqa: PLR0904
 
         if spec.free_threaded is not None and spec.free_threaded != self.free_threaded:
             return False
+
+        if spec.version_specifier is not None:
+            if Version is None:
+                return False  # Can't match version specifiers without packaging library
+            version_info = self.version_info
+            release = f"{version_info.major}.{version_info.minor}.{version_info.micro}"
+            if version_info.releaselevel != "final":
+                suffix = {
+                    "alpha": "a",
+                    "beta": "b",
+                    "candidate": "rc",
+                }.get(version_info.releaselevel)
+                if suffix is not None:
+                    release = f"{release}{suffix}{version_info.serial}"
+            version = Version(release)
+            if not spec.version_specifier.contains(version):
+                return False
 
         for our, req in zip(self.version_info[0:3], (spec.major, spec.minor, spec.micro)):
             if req is not None and our is not None and our != req:
