@@ -11,11 +11,18 @@ try:
     from packaging.specifiers import InvalidSpecifier, SpecifierSet
     from packaging.version import InvalidVersion, Version
 except ModuleNotFoundError:  # pragma: no cover - fallback for non-site virtual executions
-    site_packages = Path(__file__).resolve().parents[2]
-    if site_packages.exists():
-        sys.path.insert(0, str(site_packages))
-    from packaging.specifiers import InvalidSpecifier, SpecifierSet
-    from packaging.version import InvalidVersion, Version
+    try:
+        site_packages = Path(__file__).resolve().parents[2]
+        if site_packages.exists():
+            sys.path.insert(0, str(site_packages))
+        from packaging.specifiers import InvalidSpecifier, SpecifierSet
+        from packaging.version import InvalidVersion, Version
+    except ModuleNotFoundError:
+        # Packaging not available - version specifier support will be disabled
+        InvalidSpecifier = Exception  # type: ignore[misc, assignment]
+        SpecifierSet = None  # type: ignore[misc, assignment]
+        InvalidVersion = Exception  # type: ignore[misc, assignment]
+        Version = None  # type: ignore[misc, assignment]
 
 PATTERN = re.compile(r"^(?P<impl>[a-zA-Z]+)?(?P<version>[0-9.]+)?(?P<threaded>t)?(?:-(?P<arch>32|64))?$")
 SPECIFIER_PATTERN = re.compile(r"^(?:(?P<impl>[A-Za-z]+)\s*)?(?P<spec>(?:===|==|~=|!=|<=|>=|<|>).+)$")
@@ -89,7 +96,7 @@ class PythonSpec:
 
             if not ok:
                 specifier_match = SPECIFIER_PATTERN.match(string_spec.strip())
-                if specifier_match:
+                if specifier_match and SpecifierSet is not None:
                     impl = specifier_match.group("impl")
                     spec_text = specifier_match.group("spec").strip()
                     try:
