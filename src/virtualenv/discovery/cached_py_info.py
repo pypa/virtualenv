@@ -134,7 +134,7 @@ def _run_subprocess(cls, exe, app_data, env):
                 stderr=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 env=env,
-                encoding="utf-8",
+                encoding="latin-1",
             )
             out, err = process.communicate()
             code = process.returncode
