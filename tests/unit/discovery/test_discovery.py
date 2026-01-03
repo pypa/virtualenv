@@ -329,3 +329,30 @@ def test_returns_first_python_specified_when_no_env_var_is_specified(mocker, mon
     result = builtin.run()
 
     assert result == mocker.sentinel.python_from_cli
+
+
+def test_discovery_via_version_specifier(session_app_data):
+    """Test that version specifiers like >=3.11 work correctly."""
+    current = PythonInfo.current_system(session_app_data)
+    major, minor = current.version_info.major, current.version_info.minor
+
+    # Test with >= specifier that should match current Python
+    spec = f">={major}.{minor}"
+    interpreter = get_interpreter(spec, [], session_app_data)
+    assert interpreter is not None
+    assert interpreter.version_info.major == major
+    assert interpreter.version_info.minor >= minor
+
+    # Test with compound specifier
+    spec = f">={major}.{minor},<{major}.{minor + 10}"
+    interpreter = get_interpreter(spec, [], session_app_data)
+    assert interpreter is not None
+    assert interpreter.version_info.major == major
+    assert minor <= interpreter.version_info.minor < minor + 10
+
+    # Test with implementation prefix
+    spec = f"cpython>={major}.{minor}"
+    interpreter = get_interpreter(spec, [], session_app_data)
+    if current.implementation == "CPython":
+        assert interpreter is not None
+        assert interpreter.implementation == "CPython"
