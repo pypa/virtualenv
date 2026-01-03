@@ -1,1 +1,1 @@
-Add support for PEP 440 version specifiers in the ``--python`` flag. Users can now specify Python versions using operators like ``>=``, ``<=``, ``~=``, etc. For example: ``virtualenv --python=">=3.12" myenv`` - by :user:`rahuldevikar`.
+Add support for PEP 440 version specifiers in the ``--python`` flag. Users can now specify Python versions using operators like ``>=``, ``<=``, ``~=``, etc. For example: ``virtualenv --python=">=3.12" myenv`` `.
