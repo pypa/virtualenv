@@ -25,13 +25,16 @@ file_template = '# file {filename}\n{variable} = convert(\n    """\n{data}"""\n)
 
 
 def rebuild(script_path):
-    with script_path.open(encoding=locale.getpreferredencoding(False)) as current_fh:  # noqa: FBT003
+    encoding = (
+        locale.getencoding() if hasattr(locale, "getencoding") else locale.getpreferredencoding(do_setlocale=False)
+    )
+    with script_path.open(encoding=encoding) as current_fh:
         script_content = current_fh.read()
     script_parts = []
     match_end = 0
     next_match = None
-    _count, did_update = 0, False
-    for _count, next_match in enumerate(file_regex.finditer(script_content)):
+    count, did_update = 0, False
+    for count, next_match in enumerate(file_regex.finditer(script_content)):  # noqa: B007
         script_parts += [script_content[match_end : next_match.start()]]
         match_end = next_match.end()
         filename, variable_name, previous_encoded = next_match.group(1), next_match.group(2), next_match.group(3)
@@ -43,7 +46,7 @@ def rebuild(script_path):
     script_parts += [script_content[match_end:]]
     new_content = "".join(script_parts)
 
-    report(1 if not _count or did_update else 0, new_content, next_match, script_content, script_path)
+    report(1 if not count or did_update else 0, new_content, next_match, script_content, script_path)
 
 
 def handle_file(previous_content, filename, variable_name, previous_encoded):
