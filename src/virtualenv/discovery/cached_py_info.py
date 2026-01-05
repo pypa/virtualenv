@@ -125,6 +125,9 @@ def _run_subprocess(cls, exe, app_data, env):
         # prevent sys.prefix from leaking into the child process - see https://bugs.python.org/issue22490
         env = env.copy()
         env.pop("__PYVENV_LAUNCHER__", None)
+        # Force UTF-8 mode to handle output from Microsoft Store Python stub on Windows
+        # See https://github.com/pypa/virtualenv/issues/2812
+        env["PYTHONUTF8"] = "1"
         LOGGER.debug("get interpreter info via cmd: %s", LogCmd(cmd))
         try:
             process = Popen(
@@ -135,6 +138,7 @@ def _run_subprocess(cls, exe, app_data, env):
                 stdout=subprocess.PIPE,
                 env=env,
                 encoding="utf-8",
+                errors="backslashreplace",
             )
             out, err = process.communicate()
             code = process.returncode
