@@ -7,22 +7,7 @@ import re
 import sys
 from pathlib import Path
 
-try:
-    from packaging.specifiers import InvalidSpecifier, SpecifierSet
-    from packaging.version import InvalidVersion, Version
-except ModuleNotFoundError:  # pragma: no cover - fallback for non-site virtual executions
-    try:
-        site_packages = Path(__file__).resolve().parents[2]
-        if site_packages.exists():
-            sys.path.insert(0, str(site_packages))
-        from packaging.specifiers import InvalidSpecifier, SpecifierSet
-        from packaging.version import InvalidVersion, Version
-    except ModuleNotFoundError:
-        # Packaging not available - version specifier support will be disabled
-        InvalidSpecifier = Exception  # type: ignore[misc, assignment]
-        SpecifierSet = None  # type: ignore[misc, assignment]
-        InvalidVersion = Exception  # type: ignore[misc, assignment]
-        Version = None  # type: ignore[misc, assignment]
+from virtualenv.util.specifier import SimpleSpecifier, SimpleSpecifierSet, SimpleVersion
 
 PATTERN = re.compile(r"^(?P<impl>[a-zA-Z]+)?(?P<version>[0-9.]+)?(?P<threaded>t)?(?:-(?P<arch>32|64))?$")
 SPECIFIER_PATTERN = re.compile(r"^(?:(?P<impl>[A-Za-z]+)\s*)?(?P<spec>(?:===|==|~=|!=|<=|>=|<|>).+)$")
@@ -175,24 +160,30 @@ class PythonSpec:
                     break
                 components.append(part)
             if components:
+                version_str = ".".join(str(part) for part in components)
                 try:
-                    candidate = Version(".".join(str(part) for part in components))
+                    candidate = Version(version_str)
                 except InvalidVersion:
                     candidate = None
                 else:
                     for item in spec.version_specifier:
-                        base_version = item.version
-                        if base_version.endswith(".*"):
-                            base_version = base_version[:-2]
-                        if not base_version:
-                            continue
-                        try:
-                            required_precision = len(Version(base_version).release)
-                        except InvalidVersion:
-                            continue
+                        # Check precision requirements
+                        base_version_str = item.version_str
+                        if item.is_wildcard:
+                            # For wildcard versions, get base precision
+                            try:
+                                required_precision = len(item.version.release)
+                            except (AttributeError, ValueError):
+                                continue
+                        else:
+                            try:
+                                required_precision = len(item.version.release)
+                            except (AttributeError, ValueError):
+                                continue
+                        
                         if len(components) < required_precision:
                             continue
-                        if not item.contains(candidate):
+                        if not item.contains(version_str):
                             return False
 
         for our, req in zip((self.major, self.minor, self.micro), (spec.major, spec.minor, spec.micro)):
@@ -215,6 +206,16 @@ class PythonSpec:
         return f"{name}({', '.join(f'{k}={getattr(self, k)}' for k in params if getattr(self, k) is not None)})"
 
 
+# Create aliases for backward compatibility
+SpecifierSet = SimpleSpecifierSet
+Version = SimpleVersion
+InvalidSpecifier = ValueError
+InvalidVersion = ValueError
+
 __all__ = [
     "PythonSpec",
+    "SpecifierSet",
+    "Version",
+    "InvalidSpecifier",
+    "InvalidVersion",
 ]

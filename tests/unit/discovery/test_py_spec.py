@@ -4,9 +4,9 @@ import sys
 from copy import copy
 
 import pytest
-from packaging.specifiers import SpecifierSet
 
 from virtualenv.discovery.py_spec import PythonSpec
+from virtualenv.util.specifier import SimpleSpecifierSet as SpecifierSet
 
 
 def test_bad_py_spec():

@@ -1,4 +1,4 @@
-"""Helper script to rebuild virtualenv.py from virtualenv_support."""
+"""Helper script to rebuild virtualenv.py from virtualenv_support."""  # noqa: EXE002
 
 from __future__ import annotations
 
