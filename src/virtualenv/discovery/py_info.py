@@ -16,10 +16,7 @@ import sys
 import sysconfig
 import warnings
 from collections import OrderedDict, namedtuple
-from pathlib import Path
 from string import digits
-
-from virtualenv.util.specifier import SimpleVersion
 
 VersionInfo = namedtuple("VersionInfo", ["major", "minor", "micro", "releaselevel", "serial"])  # noqa: PYI024
 LOGGER = logging.getLogger(__name__)

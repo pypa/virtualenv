@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import operator
 import re
 
 
@@ -30,11 +32,10 @@ class SimpleVersion:
     def __eq__(self, other):
         if not isinstance(other, SimpleVersion):
             return NotImplemented
-        return (
-            self.release == other.release
-            and self.pre_type == other.pre_type
-            and self.pre_num == other.pre_num
-        )
+        return self.release == other.release and self.pre_type == other.pre_type and self.pre_num == other.pre_num
+
+    def __hash__(self):
+        return hash((self.release, self.pre_type, self.pre_num))
 
     def __lt__(self, other):
         if not isinstance(other, SimpleVersion):
@@ -42,6 +43,10 @@ class SimpleVersion:
         # Compare release tuples first
         if self.release != other.release:
             return self.release < other.release
+        return self._compare_prerelease(other)
+
+    def _compare_prerelease(self, other):
+        """Compare pre-release versions."""
         # If releases are equal, compare pre-release
         # No pre-release is greater than any pre-release
         if self.pre_type is None and other.pre_type is None:
@@ -76,6 +81,16 @@ class SimpleVersion:
 
 class SimpleSpecifier:
     """Simple PEP 440-like version specifier using only standard library."""
+
+    __slots__ = (
+        "is_wildcard",
+        "operator",
+        "spec_str",
+        "version",
+        "version_str",
+        "wildcard_precision",
+        "wildcard_version",
+    )
 
     def __init__(self, spec_str: str) -> None:
         self.spec_str = spec_str.strip()
@@ -116,50 +131,55 @@ class SimpleSpecifier:
             return False
 
         if self.is_wildcard:
-            # For wildcard specs like "3.11.*", check prefix match
-            if self.operator == "==":
-                return candidate.release[: self.wildcard_precision] == self.version.release[: self.wildcard_precision]
-            if self.operator == "!=":
-                return candidate.release[: self.wildcard_precision] != self.version.release[: self.wildcard_precision]
-            # Other operators with wildcards are not standard, treat as False
-            return False
+            return self._check_wildcard(candidate)
+        return self._check_standard(candidate)
 
-        # Standard version comparison
+    def _check_wildcard(self, candidate):
+        """Check wildcard version matching."""
+        if self.operator == "==":
+            return candidate.release[: self.wildcard_precision] == self.version.release[: self.wildcard_precision]
+        if self.operator == "!=":
+            return candidate.release[: self.wildcard_precision] != self.version.release[: self.wildcard_precision]
+        # Other operators with wildcards are not standard
+        return False
+
+    def _check_standard(self, candidate):
+        """Check standard version comparisons."""
         if self.operator == "===":
             return str(candidate) == str(self.version)
-        if self.operator == "==":
-            return candidate == self.version
-        if self.operator == "!=":
-            return candidate != self.version
-        if self.operator == "<":
-            return candidate < self.version
-        if self.operator == "<=":
-            return candidate <= self.version
-        if self.operator == ">":
-            return candidate > self.version
-        if self.operator == ">=":
-            return candidate >= self.version
         if self.operator == "~=":
-            # Compatible release: ~=3.11.0 matches >=3.11.0, <3.12.0
-            # ~=3.11 matches >=3.11, <4.0
-            if candidate < self.version:
-                return False
-            # Calculate upper bound based on precision
-            if len(self.version.release) >= 2:  # noqa: PLR2004
-                # For ~=3.11.0 -> upper is 3.12
-                # For ~=3.11 -> upper is 4.0
-                upper_parts = list(self.version.release[:-1])
-                upper_parts[-1] += 1
-                upper = SimpleVersion(".".join(str(p) for p in upper_parts))
-                return candidate < upper
-            return True
-
+            return self._check_compatible_release(candidate)
+        # Use operator module for comparisons
+        cmp_ops = {
+            "==": operator.eq,
+            "!=": operator.ne,
+            "<": operator.lt,
+            "<=": operator.le,
+            ">": operator.gt,
+            ">=": operator.ge,
+        }
+        if self.operator in cmp_ops:
+            return cmp_ops[self.operator](candidate, self.version)
         return False
+
+    def _check_compatible_release(self, candidate):
+        """Check compatible release version (~=)."""
+        if candidate < self.version:
+            return False
+        if len(self.version.release) >= 2:  # noqa: PLR2004
+            upper_parts = list(self.version.release[:-1])
+            upper_parts[-1] += 1
+            upper = SimpleVersion(".".join(str(p) for p in upper_parts))
+            return candidate < upper
+        return True
 
     def __eq__(self, other):
         if not isinstance(other, SimpleSpecifier):
             return NotImplemented
         return self.spec_str == other.spec_str
+
+    def __hash__(self):
+        return hash(self.spec_str)
 
     def __str__(self):
         return self.spec_str
@@ -171,20 +191,19 @@ class SimpleSpecifier:
 class SimpleSpecifierSet:
     """Simple PEP 440-like specifier set using only standard library."""
 
+    __slots__ = ("specifiers", "specifiers_str")
+
     def __init__(self, specifiers_str: str = "") -> None:
         self.specifiers_str = specifiers_str.strip()
         self.specifiers = []
 
         if self.specifiers_str:
             # Split by comma for compound specifiers
-            for spec_str in self.specifiers_str.split(","):
-                spec_str = spec_str.strip()
-                if spec_str:
-                    try:
-                        self.specifiers.append(SimpleSpecifier(spec_str))
-                    except ValueError:
-                        # Invalid specifier, skip it
-                        pass
+            for spec_item in self.specifiers_str.split(","):
+                stripped = spec_item.strip()
+                if stripped:
+                    with contextlib.suppress(ValueError):
+                        self.specifiers.append(SimpleSpecifier(stripped))
 
     def contains(self, version_str: str) -> bool:
         """Check if a version satisfies all specifiers in the set."""
@@ -201,6 +220,9 @@ class SimpleSpecifierSet:
             return NotImplemented
         return self.specifiers_str == other.specifiers_str
 
+    def __hash__(self):
+        return hash(self.specifiers_str)
+
     def __str__(self):
         return self.specifiers_str
 
@@ -209,7 +231,7 @@ class SimpleSpecifierSet:
 
 
 __all__ = [
-    "SimpleVersion",
     "SimpleSpecifier",
     "SimpleSpecifierSet",
+    "SimpleVersion",
 ]

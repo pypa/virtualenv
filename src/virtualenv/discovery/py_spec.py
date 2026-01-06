@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
+import contextlib
 import os
 import re
-import sys
-from pathlib import Path
 
-from virtualenv.util.specifier import SimpleSpecifier, SimpleSpecifierSet, SimpleVersion
+from virtualenv.util.specifier import SimpleSpecifierSet, SimpleVersion
 
 PATTERN = re.compile(r"^(?P<impl>[a-zA-Z]+)?(?P<version>[0-9.]+)?(?P<threaded>t)?(?:-(?P<arch>32|64))?$")
 SPECIFIER_PATTERN = re.compile(r"^(?:(?P<impl>[A-Za-z]+)\s*)?(?P<spec>(?:===|==|~=|!=|<=|>=|<|>).+)$")
@@ -142,7 +141,36 @@ class PythonSpec:
     def is_abs(self):
         return self.path is not None and os.path.isabs(self.path)
 
-    def satisfies(self, spec):  # noqa: C901, PLR0911, PLR0912
+    def _check_version_specifier(self, spec):
+        """Check if version specifier is satisfied."""
+        components: list[int] = []
+        for part in (self.major, self.minor, self.micro):
+            if part is None:
+                break
+            components.append(part)
+        if not components:
+            return True
+
+        version_str = ".".join(str(part) for part in components)
+        with contextlib.suppress(InvalidVersion):
+            Version(version_str)
+            for item in spec.version_specifier:
+                # Check precision requirements
+                required_precision = self._get_required_precision(item)
+                if required_precision is None or len(components) < required_precision:
+                    continue
+                if not item.contains(version_str):
+                    return False
+        return True
+
+    @staticmethod
+    def _get_required_precision(item):
+        """Get the required precision for a specifier item."""
+        with contextlib.suppress(AttributeError, ValueError):
+            return len(item.version.release)
+        return None
+
+    def satisfies(self, spec):  # noqa: PLR0911
         """Called when there's a candidate metadata spec to see if compatible - e.g. PEP-514 on Windows."""
         if spec.is_abs and self.is_abs and self.path != spec.path:
             return False
@@ -153,38 +181,8 @@ class PythonSpec:
         if spec.free_threaded is not None and spec.free_threaded != self.free_threaded:
             return False
 
-        if spec.version_specifier is not None:
-            components: list[int] = []
-            for part in (self.major, self.minor, self.micro):
-                if part is None:
-                    break
-                components.append(part)
-            if components:
-                version_str = ".".join(str(part) for part in components)
-                try:
-                    candidate = Version(version_str)
-                except InvalidVersion:
-                    candidate = None
-                else:
-                    for item in spec.version_specifier:
-                        # Check precision requirements
-                        base_version_str = item.version_str
-                        if item.is_wildcard:
-                            # For wildcard versions, get base precision
-                            try:
-                                required_precision = len(item.version.release)
-                            except (AttributeError, ValueError):
-                                continue
-                        else:
-                            try:
-                                required_precision = len(item.version.release)
-                            except (AttributeError, ValueError):
-                                continue
-                        
-                        if len(components) < required_precision:
-                            continue
-                        if not item.contains(version_str):
-                            return False
+        if spec.version_specifier is not None and not self._check_version_specifier(spec):
+            return False
 
         for our, req in zip((self.major, self.minor, self.micro), (spec.major, spec.minor, spec.micro)):
             if req is not None and our is not None and our != req:
@@ -213,9 +211,9 @@ InvalidSpecifier = ValueError
 InvalidVersion = ValueError
 
 __all__ = [
+    "InvalidSpecifier",
+    "InvalidVersion",
     "PythonSpec",
     "SpecifierSet",
     "Version",
-    "InvalidSpecifier",
-    "InvalidVersion",
 ]
