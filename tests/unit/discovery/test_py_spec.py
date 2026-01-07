@@ -6,6 +6,7 @@ from copy import copy
 import pytest
 
 from virtualenv.discovery.py_spec import PythonSpec
+from virtualenv.util.specifier import SimpleSpecifierSet as SpecifierSet
 
 
 def test_bad_py_spec():
@@ -132,3 +133,29 @@ def test_relative_spec(tmp_path, monkeypatch):
     a_relative_path = str((tmp_path / "a" / "b").relative_to(tmp_path))
     spec = PythonSpec.from_string_spec(a_relative_path)
     assert spec.path == a_relative_path
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (">=3.12", ">=3.12"),
+        ("python>=3.12", ">=3.12"),
+        ("cpython!=3.11.*", "!=3.11.*"),
+        ("<=3.13,>=3.12", "<=3.13,>=3.12"),
+    ],
+)
+def test_specifier_parsing(text, expected):
+    spec = PythonSpec.from_string_spec(text)
+    assert spec.version_specifier == SpecifierSet(expected)
+
+
+def test_specifier_with_implementation():
+    spec = PythonSpec.from_string_spec("cpython>=3.12")
+    assert spec.implementation == "cpython"
+    assert spec.version_specifier == SpecifierSet(">=3.12")
+
+
+def test_specifier_satisfies_with_partial_information():
+    spec = PythonSpec.from_string_spec(">=3.12")
+    candidate = PythonSpec.from_string_spec("python3.12")
+    assert candidate.satisfies(spec) is True
