@@ -1,1 +1,0 @@
-Fix TOCTOU vulnerabilities in app_data and lock directory creation that could be exploited via symlink attacks - reported by :user:`tsigouris007`, fixed by :user:`gaborbernat`.
