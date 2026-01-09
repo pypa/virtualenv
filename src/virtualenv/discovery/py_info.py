@@ -393,7 +393,7 @@ class PythonInfo:  # noqa: PLR0904
         clear(app_data)
         cls._cache_exe_discovery.clear()
 
-    def satisfies(self, spec, impl_must_match):  # noqa: C901, PLR0911
+    def satisfies(self, spec, impl_must_match):  # noqa: C901, PLR0911, PLR0912
         """Check if a given specification can be satisfied by the this python interpreter instance."""
         if spec.path:
             if self.executable == os.path.abspath(spec.path):
@@ -421,6 +421,20 @@ class PythonInfo:  # noqa: PLR0904
 
         if spec.free_threaded is not None and spec.free_threaded != self.free_threaded:
             return False
+
+        if spec.version_specifier is not None:
+            version_info = self.version_info
+            release = f"{version_info.major}.{version_info.minor}.{version_info.micro}"
+            if version_info.releaselevel != "final":
+                suffix = {
+                    "alpha": "a",
+                    "beta": "b",
+                    "candidate": "rc",
+                }.get(version_info.releaselevel)
+                if suffix is not None:
+                    release = f"{release}{suffix}{version_info.serial}"
+            if not spec.version_specifier.contains(release):
+                return False
 
         for our, req in zip(self.version_info[0:3], (spec.major, spec.minor, spec.micro)):
             if req is not None and our is not None and our != req:

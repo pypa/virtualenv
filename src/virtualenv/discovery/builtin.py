@@ -46,8 +46,9 @@ class Builtin(Discover):
             type=str,
             action="append",
             default=[],
-            help="interpreter based on what to create environment (path/identifier) "
-            "- by default use the interpreter where the tool is installed - first found wins",
+            help="interpreter based on what to create environment (path/identifier/version-specifier) "
+            "- by default use the interpreter where the tool is installed - first found wins. "
+            "Version specifiers (e.g., >=3.12, ~=3.11.0, ==3.10) are also supported",
         )
         parser.add_argument(
             "--try-first-with",

@@ -5,6 +5,20 @@ Release History
 
 .. towncrier release notes start
 
+v20.36.1 (2026-01-09)
+---------------------
+
+Bugfixes - 20.36.1
+~~~~~~~~~~~~~~~~~~
+- Fix TOCTOU vulnerabilities in app_data and lock directory creation that could be exploited via symlink attacks - reported by :user:`tsigouris007`, fixed by :user:`gaborbernat`. (:issue:`3013`)
+
+v20.36.0 (2026-01-07)
+---------------------
+
+Features - 20.36.0
+~~~~~~~~~~~~~~~~~~
+- Add support for PEP 440 version specifiers in the ``--python`` flag. Users can now specify Python versions using operators like ``>=``, ``<=``, ``~=``, etc. For example: ``virtualenv --python=">=3.12" myenv`` `. (:issue:`2994`)
+
 v20.35.4 (2025-10-28)
 ---------------------
 

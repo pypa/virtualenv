@@ -17,9 +17,8 @@ LOGGER = logging.getLogger(__name__)
 class _CountedFileLock(FileLock):
     def __init__(self, lock_file) -> None:
         parent = os.path.dirname(lock_file)
-        if not os.path.isdir(parent):
-            with suppress(OSError):
-                os.makedirs(parent)
+        with suppress(OSError):
+            os.makedirs(parent, exist_ok=True)
 
         super().__init__(lock_file)
         self.count = 0
@@ -117,7 +116,7 @@ class ReentrantFileLock(PathLockBase):
         # a lock, but that lock might then become expensive, and it's not clear where that lock should live.
         # Instead here we just ignore if we fail to create the directory.
         with suppress(OSError):
-            os.makedirs(str(self.path))
+            os.makedirs(str(self.path), exist_ok=True)
 
         try:
             lock.acquire(0.0001)
