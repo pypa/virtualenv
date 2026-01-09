@@ -5,6 +5,13 @@ Release History
 
 .. towncrier release notes start
 
+v20.36.1 (2026-01-09)
+---------------------
+
+Bugfixes - 20.36.1
+~~~~~~~~~~~~~~~~~~
+- Fix TOCTOU vulnerabilities in app_data and lock directory creation that could be exploited via symlink attacks - reported by :user:`tsigouris007`, fixed by :user:`gaborbernat`. (:issue:`3013`)
+
 v20.36.0 (2026-01-07)
 ---------------------
 
