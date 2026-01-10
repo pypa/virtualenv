@@ -7,6 +7,38 @@ import pytest
 from virtualenv.activation import BatchActivator
 
 
+def test_batch_pydoc_bat_quoting(tmp_path):
+    """Test that pydoc.bat properly quotes python.exe path to handle spaces."""
+
+    # GIVEN: A mock interpreter
+    class MockInterpreter:
+        os = "nt"
+        tcl_lib = None
+        tk_lib = None
+
+    class MockCreator:
+        def __init__(self, dest):
+            self.dest = dest
+            self.bin_dir = dest / "Scripts"
+            self.bin_dir.mkdir(parents=True)
+            self.interpreter = MockInterpreter()
+            self.pyenv_cfg = {}
+            self.env_name = "test-env"
+
+    creator = MockCreator(tmp_path)
+    options = Namespace(prompt=None)
+    activator = BatchActivator(options)
+
+    # WHEN: Generate activation scripts
+    activator.generate(creator)
+
+    # THEN: pydoc.bat should quote python.exe to handle paths with spaces
+    pydoc_content = (creator.bin_dir / "pydoc.bat").read_text(encoding="utf-8")
+
+    # The python.exe should be quoted to handle paths with spaces like "C:\Program Files\Python39\python.exe"
+    assert '"python.exe"' in pydoc_content, f"python.exe should be quoted in pydoc.bat. Content:\n{pydoc_content}"
+
+
 @pytest.mark.parametrize(
     ("tcl_lib", "tk_lib", "present"),
     [

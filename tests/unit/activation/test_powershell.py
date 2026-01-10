@@ -8,6 +8,40 @@ import pytest
 from virtualenv.activation import PowerShellActivator
 
 
+def test_powershell_pydoc_call_operator(tmp_path):
+    """Test that PowerShell pydoc function uses call operator to handle spaces in python path."""
+
+    # GIVEN: A mock interpreter
+    class MockInterpreter:
+        os = "nt"
+        tcl_lib = None
+        tk_lib = None
+
+    class MockCreator:
+        def __init__(self, dest):
+            self.dest = dest
+            self.bin_dir = dest / "Scripts"
+            self.bin_dir.mkdir(parents=True)
+            self.interpreter = MockInterpreter()
+            self.pyenv_cfg = {}
+            self.env_name = "test-env"
+
+    creator = MockCreator(tmp_path)
+    options = Namespace(prompt=None)
+    activator = PowerShellActivator(options)
+
+    # WHEN: Generate activation scripts
+    activator.generate(creator)
+
+    # THEN: pydoc function should use call operator & to handle paths with spaces
+    activate_content = (creator.bin_dir / "activate.ps1").read_text(encoding="utf-8-sig")
+
+    # The pydoc function should use & call operator to handle paths with spaces
+    assert "& python -m pydoc" in activate_content, (
+        f"pydoc function should use & call operator. Content:\n{activate_content}"
+    )
+
+
 @pytest.mark.parametrize(
     ("tcl_lib", "tk_lib", "present"),
     [
