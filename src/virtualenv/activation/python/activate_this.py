@@ -27,6 +27,14 @@ os.environ["PATH"] = os.pathsep.join([bin_dir, *os.environ.get("PATH", "").split
 os.environ["VIRTUAL_ENV"] = base  # virtual env is right above bin directory
 os.environ["VIRTUAL_ENV_PROMPT"] = __VIRTUAL_PROMPT__ or os.path.basename(base)
 
+# Set PKG_CONFIG_PATH to include the virtualenv's pkgconfig directory
+pkg_config_path = os.path.join(base, "lib", "pkgconfig")
+existing_pkg_config_path = os.environ.get("PKG_CONFIG_PATH", "")
+if existing_pkg_config_path:
+    os.environ["PKG_CONFIG_PATH"] = os.pathsep.join([pkg_config_path, existing_pkg_config_path])
+else:
+    os.environ["PKG_CONFIG_PATH"] = pkg_config_path
+
 # add the virtual environments libraries to the host python import mechanism
 prev_length = len(sys.path)
 for lib in __LIB_FOLDERS__.split(os.pathsep):

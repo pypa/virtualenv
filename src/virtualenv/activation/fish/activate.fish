@@ -43,6 +43,11 @@ function deactivate -d 'Exit virtualenv mode and return to the normal environmen
       end
     end
 
+    if test -n "$_OLD_PKG_CONFIG_PATH"
+        set -gx PKG_CONFIG_PATH "$_OLD_PKG_CONFIG_PATH"
+        set -e _OLD_PKG_CONFIG_PATH
+    end
+
     if test -n "$_OLD_VIRTUAL_PYTHONHOME"
         set -gx PYTHONHOME "$_OLD_VIRTUAL_PYTHONHOME"
         set -e _OLD_VIRTUAL_PYTHONHOME
@@ -76,6 +81,9 @@ end
 deactivate nondestructive
 
 set -gx VIRTUAL_ENV __VIRTUAL_ENV__
+
+set -gx _OLD_PKG_CONFIG_PATH "$PKG_CONFIG_PATH"
+set -gx PKG_CONFIG_PATH "$VIRTUAL_ENV/lib/pkgconfig:$PKG_CONFIG_PATH"
 
 # https://github.com/fish-shell/fish-shell/issues/436 altered PATH handling
 if test (string sub -s 1 -l 1 $FISH_VERSION) -lt 3
