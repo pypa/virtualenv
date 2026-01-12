@@ -136,8 +136,8 @@ Automated testing
 ~~~~~~~~~~~~~~~~~
 
 All pull requests and merges to 'main' branch are tested using
-`Azure Pipelines <https://azure.microsoft.com/en-gb/services/devops/pipelines/>`_ (configured by
-``azure-pipelines.yml`` file at the root of the repository). You can find the status and results to the CI runs for your
+`GitHub Actions <https://docs.github.com/en/actions>`_ (configured by
+``.github/workflows/check.yaml`` file at the root of the repository). You can find the status and results to the CI runs for your
 PR on GitHub's Web UI for the pull request. You can also find links to the CI services' pages for the specific builds in
 the form of "Details" links, in case the CI run fails and you wish to view the output.
 
