@@ -133,9 +133,11 @@ lint.ignore = [
   "PLR6301", #  Method could be a function, class method, or static method
   "PLW1510", # no need for check for subprocess
   "PTH",     # no pathlib, <=39 has problems on Windows with absolute/resolve, can revisit once we no longer need 39
+  "RUF067",  # `__init__` module should only contain docstrings and re-exports
   "S104",    # Possible binding to all interfaces
-  "S404",    # Using subprocess is alright
-  "S603",    # subprocess calls are fine
+
+  "S404", # Using subprocess is alright
+  "S603", # subprocess calls are fine
 ]
 lint.per-file-ignores."src/virtualenv/activation/python/activate_this.py" = [
   "F821", # ignore undefined template string placeholders
