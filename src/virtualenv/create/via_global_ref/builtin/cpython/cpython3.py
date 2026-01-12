@@ -135,7 +135,19 @@ class CPython3Windows(CPythonWindows, CPython3):
         for folder in folders:
             for file in folder.iterdir():
                 if file.suffix in {".pyd", ".dll"}:
+                    # Skip pywin32 DLLs to avoid conflicts with pywin32 installation
+                    # pywin32 has its own post-install that places DLLs in site-packages/pywin32_system32
+                    # See https://github.com/pypa/virtualenv/issues/2662
+                    if cls._is_pywin32_dll(file.name):
+                        continue
                     yield PathRefToDest(file, cls.to_bin)
+
+    @classmethod
+    def _is_pywin32_dll(cls, filename):
+        """Check if a DLL file belongs to pywin32."""
+        # pywin32 DLLs follow patterns like: pywintypes39.dll, pythoncom39.dll
+        name_lower = filename.lower()
+        return name_lower.startswith(("pywintypes", "pythoncom"))
 
     @classmethod
     def python_zip(cls, interpreter):
