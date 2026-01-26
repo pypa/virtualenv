@@ -81,5 +81,4 @@ __all__ = [
     "ensure_dir",
     "safe_delete",
     "symlink",
-    "symlink",
 ]
