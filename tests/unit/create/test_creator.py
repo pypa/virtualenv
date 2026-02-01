@@ -759,20 +759,20 @@ def test_pyenv_cfg_preserves_symlinks(tmp_path):
     real_dir.mkdir()
     real_file = real_dir / "some_file.txt"
     real_file.write_text("test")
-    
+
     symlink_dir = tmp_path / "symlink_directory"
     try:
         symlink_dir.symlink_to(real_dir, target_is_directory=True)
     except (OSError, NotImplementedError):
         pytest.skip("Symlinks not supported on this platform")
-    
+
     cfg_path = tmp_path / "pyvenv.cfg"
     cfg = PyEnvCfg(OrderedDict(), cfg_path)
-    
+
     symlink_path = str(symlink_dir / "some_file.txt")
     cfg["test_path"] = symlink_path
     cfg.write()
-    
+
     written_content = cfg_path.read_text()
     expected_abspath = os.path.abspath(symlink_path)
     expected_realpath = os.path.realpath(symlink_path)
