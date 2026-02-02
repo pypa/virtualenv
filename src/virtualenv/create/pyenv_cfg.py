@@ -35,7 +35,9 @@ class PyEnvCfg:
         LOGGER.debug("write %s", self.path)
         text = ""
         for key, value in self.content.items():
-            normalized_value = os.path.realpath(value) if value and os.path.exists(value) else value
+            # Use abspath to normalize relative paths but preserve symlinks (match venv behavior)
+            # See issue #2770 - realpath resolves symlinks which breaks prefix symlinks
+            normalized_value = os.path.abspath(value) if value and os.path.exists(value) else value
             line = f"{key} = {normalized_value}"
             LOGGER.debug("\t%s", line)
             text += line

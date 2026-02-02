@@ -750,3 +750,32 @@ def test_fail_gracefully_if_no_method_supported(tmp_path, python, mocker):
         assert "copy: Brew disables copy creation" in str(excinfo.value)
     else:
         assert "copy: copying is not supported" in str(excinfo.value)
+
+
+def test_pyenv_cfg_preserves_symlinks(tmp_path):
+    """Test that PyEnvCfg.write() preserves symlinks and doesn't resolve them (issue #2770)."""
+    # Create a real directory and a symlink to it
+    real_dir = tmp_path / "real_directory"
+    real_dir.mkdir()
+    real_file = real_dir / "some_file.txt"
+    real_file.write_text("test")
+
+    symlink_dir = tmp_path / "symlink_directory"
+    try:
+        symlink_dir.symlink_to(real_dir, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("Symlinks not supported on this platform")
+
+    cfg_path = tmp_path / "pyvenv.cfg"
+    cfg = PyEnvCfg(OrderedDict(), cfg_path)
+
+    symlink_path = str(symlink_dir / "some_file.txt")
+    cfg["test_path"] = symlink_path
+    cfg.write()
+
+    written_content = cfg_path.read_text()
+    expected_abspath = os.path.abspath(symlink_path)
+    expected_realpath = os.path.realpath(symlink_path)
+
+    assert f"test_path = {expected_abspath}" in written_content
+    assert expected_abspath != expected_realpath, "Test setup error: paths should differ for symlinks"
