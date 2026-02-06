@@ -65,9 +65,11 @@ def _create_test_env(tmp_path):
             CShellActivator,
             "activate.csh",
             {
-                "save": "setenv _OLD_PKG_CONFIG_PATH",
+                "save": 'set _OLD_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"',
                 "set": 'setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig:${PKG_CONFIG_PATH}"',
-                "unset": "unsetenv _OLD_PKG_CONFIG_PATH",
+                "deactivate_test": "test $?_OLD_PKG_CONFIG_PATH != 0",
+                "restore": 'setenv PKG_CONFIG_PATH "$_OLD_PKG_CONFIG_PATH:q"',
+                "unset": "unset _OLD_PKG_CONFIG_PATH",
             },
         ),
     ],
