@@ -66,7 +66,8 @@ def _create_test_env(tmp_path):
             "activate.csh",
             {
                 "save": 'set _OLD_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"',
-                "set": 'setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig:${PKG_CONFIG_PATH}"',
+                "set_with_existing": 'setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig:${PKG_CONFIG_PATH}"',
+                "set_without_existing": 'setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig"',
                 "deactivate_test": "test $?_OLD_PKG_CONFIG_PATH != 0",
                 "restore": 'setenv PKG_CONFIG_PATH "$_OLD_PKG_CONFIG_PATH:q"',
                 "unset": "unset _OLD_PKG_CONFIG_PATH",

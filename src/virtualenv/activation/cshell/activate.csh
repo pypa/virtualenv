@@ -17,8 +17,10 @@ setenv PATH "$VIRTUAL_ENV:q/"__BIN_NAME__":$PATH:q"
 
 if ($?PKG_CONFIG_PATH) then
     set _OLD_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"
+    setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+else
+    setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig"
 endif
-setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig:${PKG_CONFIG_PATH}"
 
 if (__TCL_LIBRARY__ != "") then
     if ($?TCL_LIBRARY) then
