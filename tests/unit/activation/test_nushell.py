@@ -36,6 +36,11 @@ def test_nushell_tkinter_generation(tmp_path):
     content = (creator.bin_dir / "activate.nu").read_text(encoding="utf-8")
 
     # THEN
+    # PKG_CONFIG_PATH is always set
+    assert "let old_pkg_config_path = if (has-env 'PKG_CONFIG_PATH')" in content
+    assert "let new_pkg_config_path = " in content
+    assert "PKG_CONFIG_PATH: $new_pkg_config_path" in content
+
     expected_tcl = f"let $new_env = $new_env | insert TCL_LIBRARY {quoted_tcl_path}"
     expected_tk = f"let $new_env = $new_env | insert TK_LIBRARY {quoted_tk_path}"
 

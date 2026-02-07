@@ -44,6 +44,14 @@ def test_cshell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     activator.generate(creator)
     content = (creator.bin_dir / "activate.csh").read_text(encoding="utf-8")
 
+    # PKG_CONFIG_PATH is always set
+    assert "test $?_OLD_PKG_CONFIG_PATH != 0" in content
+    assert 'set _OLD_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"' in content
+    assert 'setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig:${PKG_CONFIG_PATH}"' in content
+    assert 'setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig"' in content
+    assert 'setenv PKG_CONFIG_PATH "$_OLD_PKG_CONFIG_PATH:q"' in content
+    assert "unset _OLD_PKG_CONFIG_PATH" in content
+
     if present:
         assert "test $?_OLD_VIRTUAL_TCL_LIBRARY != 0" in content
         assert "test $?_OLD_VIRTUAL_TK_LIBRARY != 0" in content

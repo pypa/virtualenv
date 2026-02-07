@@ -76,6 +76,13 @@ def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     content = (creator.bin_dir / "activate.ps1").read_text(encoding="utf-8-sig")
 
     # THEN
+    # PKG_CONFIG_PATH is always set
+    assert "New-Variable -Scope global -Name _OLD_PKG_CONFIG_PATH" in content
+    assert '$env:PKG_CONFIG_PATH = "$env:VIRTUAL_ENV\\lib\\pkgconfig;$env:PKG_CONFIG_PATH"' in content
+    assert "if (Test-Path variable:_OLD_PKG_CONFIG_PATH)" in content
+    assert "$env:PKG_CONFIG_PATH = $variable:_OLD_PKG_CONFIG_PATH" in content
+    assert 'Remove-Variable "_OLD_PKG_CONFIG_PATH" -Scope global' in content
+
     if present:
         assert "if ('C:\\tcl' -ne \"\")" in content
         assert "$env:TCL_LIBRARY = 'C:\\tcl'" in content
