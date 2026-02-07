@@ -74,6 +74,13 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     deactivate_content = (creator.bin_dir / "deactivate.bat").read_text(encoding="utf-8")
 
     # THEN
+    # PKG_CONFIG_PATH is always set
+    assert '@if defined PKG_CONFIG_PATH @set "_OLD_PKG_CONFIG_PATH=%PKG_CONFIG_PATH%"' in activate_content
+    assert '@set "PKG_CONFIG_PATH=%VIRTUAL_ENV%\\lib\\pkgconfig;%PKG_CONFIG_PATH%"' in activate_content
+    assert '@if defined _OLD_PKG_CONFIG_PATH @set "PKG_CONFIG_PATH=%_OLD_PKG_CONFIG_PATH%"' in deactivate_content
+    assert "@if not defined _OLD_PKG_CONFIG_PATH @set PKG_CONFIG_PATH=" in deactivate_content
+    assert "@set _OLD_PKG_CONFIG_PATH=" in deactivate_content
+
     if present:
         assert '@if NOT "C:\\tcl"=="" @set "TCL_LIBRARY=C:\\tcl"' in activate_content
         assert '@if NOT "C:\\tk"=="" @set "TK_LIBRARY=C:\\tk"' in activate_content

@@ -44,6 +44,11 @@ def test_fish_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     content = (creator.bin_dir / "activate.fish").read_text(encoding="utf-8")
 
     # THEN
+    # PKG_CONFIG_PATH is always set
+    assert 'set -gx _OLD_PKG_CONFIG_PATH "$PKG_CONFIG_PATH"' in content
+    assert 'set -gx PKG_CONFIG_PATH "$VIRTUAL_ENV/lib/pkgconfig:$PKG_CONFIG_PATH"' in content
+    assert "set -e _OLD_PKG_CONFIG_PATH" in content
+
     if present:
         assert "set -gx TCL_LIBRARY '/path/to/tcl'" in content
         assert "set -gx TK_LIBRARY '/path/to/tk'" in content

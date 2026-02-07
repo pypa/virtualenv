@@ -25,6 +25,11 @@ function global:deactivate([switch] $NonDestructive) {
         }
     }
 
+    if (Test-Path variable:_OLD_PKG_CONFIG_PATH) {
+        $env:PKG_CONFIG_PATH = $variable:_OLD_PKG_CONFIG_PATH
+        Remove-Variable "_OLD_PKG_CONFIG_PATH" -Scope global
+    }
+
     if (Test-Path function:_old_virtual_prompt) {
         $function:prompt = $function:_old_virtual_prompt
         Remove-Item function:\_old_virtual_prompt
@@ -77,6 +82,11 @@ if (__TK_LIBRARY__ -ne "") {
 }
 
 New-Variable -Scope global -Name _OLD_VIRTUAL_PATH -Value $env:PATH
+
+if (Test-Path env:PKG_CONFIG_PATH) {
+    New-Variable -Scope global -Name _OLD_PKG_CONFIG_PATH -Value $env:PKG_CONFIG_PATH
+}
+$env:PKG_CONFIG_PATH = "$env:VIRTUAL_ENV\lib\pkgconfig;$env:PKG_CONFIG_PATH"
 
 $env:PATH = "$env:VIRTUAL_ENV/" + __BIN_NAME__ + __PATH_SEP__ + $env:PATH
 if (!$env:VIRTUAL_ENV_DISABLE_PROMPT) {

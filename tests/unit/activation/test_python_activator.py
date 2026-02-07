@@ -2,11 +2,45 @@ from __future__ import annotations
 
 import os
 import sys
+from argparse import Namespace
 from ast import literal_eval
 from textwrap import dedent
 
 from virtualenv.activation import PythonActivator
 from virtualenv.info import IS_WIN
+
+
+def test_python_activator_generates_pkg_config_path(tmp_path):
+    """Test that activate_this.py sets PKG_CONFIG_PATH."""
+
+    class MockInterpreter:
+        tcl_lib = None
+        tk_lib = None
+
+    class MockCreator:
+        def __init__(self, dest):
+            self.dest = dest
+            self.bin_dir = dest / ("Scripts" if IS_WIN else "bin")
+            self.bin_dir.mkdir(parents=True)
+            self.libs = [dest / "Lib" / "site-packages"]
+            self.env_name = "test-env"
+            self.interpreter = MockInterpreter()
+            self.pyenv_cfg = {}
+
+    creator = MockCreator(tmp_path)
+    options = Namespace(prompt=None)
+    activator = PythonActivator(options)
+
+    # Generate the activation script
+    activator.generate(creator)
+
+    # Read the generated script
+    content = (creator.bin_dir / "activate_this.py").read_text(encoding="utf-8")
+
+    # Verify PKG_CONFIG_PATH is set
+    assert "PKG_CONFIG_PATH" in content
+    assert "pkg_config_path" in content
+    assert 'os.path.join(base, "lib", "pkgconfig")' in content
 
 
 def test_python(raise_on_non_source_class, activation_tester):
