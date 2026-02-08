@@ -201,6 +201,10 @@ run.plugins = [
 ]
 run.relative_files = true
 
+[tool.ty.rules]
+# Ignore all rules initially - enable gradually as type annotations are added
+all = "ignore"
+
 [tool.towncrier]
 name = "tox"
 filename = "docs/changelog.rst"
