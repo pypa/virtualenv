@@ -16,7 +16,7 @@ MAX_LEVEL = max(LEVELS.keys())
 LOGGER = logging.getLogger()
 
 
-def setup_report(verbosity, show_pid=False):  # noqa: FBT002
+def setup_report(verbosity: int, show_pid: bool = False) -> int:  # noqa: FBT001, FBT002
     _clean_handlers(LOGGER)
     verbosity = min(verbosity, MAX_LEVEL)  # pragma: no cover
     level = LEVELS[verbosity]
@@ -38,7 +38,7 @@ def setup_report(verbosity, show_pid=False):  # noqa: FBT002
     return verbosity
 
 
-def _clean_handlers(log):
+def _clean_handlers(log: logging.Logger) -> None:
     for log_handler in list(log.handlers):  # remove handlers of libraries
         log.removeHandler(log_handler)
 

@@ -18,7 +18,7 @@ _CAN_SYMLINK = _FS_CASE_SENSITIVE = _CFG_DIR = _DATA_DIR = None
 LOGGER = logging.getLogger(__name__)
 
 
-def fs_is_case_sensitive():
+def fs_is_case_sensitive() -> bool:
     global _FS_CASE_SENSITIVE  # noqa: PLW0603
 
     if _FS_CASE_SENSITIVE is None:
@@ -28,7 +28,7 @@ def fs_is_case_sensitive():
     return _FS_CASE_SENSITIVE
 
 
-def fs_supports_symlink():
+def fs_supports_symlink() -> bool:
     global _CAN_SYMLINK  # noqa: PLW0603
 
     if _CAN_SYMLINK is None:
