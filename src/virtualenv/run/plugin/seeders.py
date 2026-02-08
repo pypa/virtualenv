@@ -32,7 +32,7 @@ class SeederSelector(ComponentBuilder):
         return super().handle_selected_arg_parse(options)
 
     def create(self, options):
-        return self._impl_class(options)
+        return self._impl_class(options)  # ty: ignore[call-non-callable]
 
 
 __all__ = [

@@ -137,9 +137,9 @@ class SimpleSpecifier:
     def _check_wildcard(self, candidate):
         """Check wildcard version matching."""
         if self.operator == "==":
-            return candidate.release[: self.wildcard_precision] == self.version.release[: self.wildcard_precision]
+            return candidate.release[: self.wildcard_precision] == self.version.release[: self.wildcard_precision]  # ty: ignore[possibly-missing-attribute]
         if self.operator == "!=":
-            return candidate.release[: self.wildcard_precision] != self.version.release[: self.wildcard_precision]
+            return candidate.release[: self.wildcard_precision] != self.version.release[: self.wildcard_precision]  # ty: ignore[possibly-missing-attribute]
         # Other operators with wildcards are not standard
         return False
 
@@ -159,15 +159,15 @@ class SimpleSpecifier:
             ">=": operator.ge,
         }
         if self.operator in cmp_ops:
-            return cmp_ops[self.operator](candidate, self.version)
+            return cmp_ops[self.operator](candidate, self.version)  # ty: ignore[invalid-argument-type]
         return False
 
     def _check_compatible_release(self, candidate):
         """Check compatible release version (~=)."""
         if candidate < self.version:
             return False
-        if len(self.version.release) >= 2:  # noqa: PLR2004
-            upper_parts = list(self.version.release[:-1])
+        if len(self.version.release) >= 2:  # ty: ignore[possibly-missing-attribute]  # noqa: PLR2004
+            upper_parts = list(self.version.release[:-1])  # ty: ignore[possibly-missing-attribute]
             upper_parts[-1] += 1
             upper = SimpleVersion(".".join(str(p) for p in upper_parts))
             return candidate < upper

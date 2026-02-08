@@ -37,9 +37,9 @@ class SymlinkPipInstall(PipInstall):
             new_files.add(file)
         return new_files
 
-    def _fix_records(self, new_files):
-        new_files.update(i for i in self._image_dir.iterdir())
-        extra_record_data_str = self._records_text(sorted(new_files, key=str))
+    def _fix_records(self, extra_record_data):
+        extra_record_data.update(i for i in self._image_dir.iterdir())
+        extra_record_data_str = self._records_text(sorted(extra_record_data, key=str))
         (self._dist_info / "RECORD").write_text(extra_record_data_str, encoding="utf-8")
 
     def build_image(self):

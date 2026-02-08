@@ -94,10 +94,10 @@ class ViaGlobalRefApi(Creator, ABC):
     def install_patch(self):
         text = self.env_patch_text()
         if text:
-            pth = self.purelib / "_virtualenv.pth"
+            pth = self.purelib / "_virtualenv.pth"  # ty: ignore[unresolved-attribute]
             LOGGER.debug("create virtualenv import hook file %s", pth)
             pth.write_text("import _virtualenv", encoding="utf-8")
-            dest_path = self.purelib / "_virtualenv.py"
+            dest_path = self.purelib / "_virtualenv.py"  # ty: ignore[unresolved-attribute]
             LOGGER.debug("create %s", dest_path)
             dest_path.write_text(text, encoding="utf-8")
 
@@ -105,7 +105,8 @@ class ViaGlobalRefApi(Creator, ABC):
         """Patch the distutils package to not be derailed by its configuration files."""
         with self.app_data.ensure_extracted(Path(__file__).parent / "_virtualenv.py") as resolved_path:
             text = resolved_path.read_text(encoding="utf-8")
-            return text.replace('"__SCRIPT_DIR__"', repr(os.path.relpath(str(self.script_dir), str(self.purelib))))
+            # script_dir and purelib are defined in subclasses
+            return text.replace('"__SCRIPT_DIR__"', repr(os.path.relpath(str(self.script_dir), str(self.purelib))))  # ty: ignore[unresolved-attribute]
 
     def _args(self):
         return [*super()._args(), ("global", self.enable_system_site_package)]

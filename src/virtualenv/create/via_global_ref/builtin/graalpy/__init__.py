@@ -39,7 +39,7 @@ class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
         if python_dir.name in {"bin", "Scripts"}:
             python_dir = python_dir.parent
 
-        native_lib = cls._native_lib(python_dir / "lib", interpreter.platform)
+        native_lib = cls._native_lib(python_dir / "lib", interpreter.platform)  # ty: ignore[unresolved-attribute]
         if native_lib.exists():
             yield PathRefToDest(native_lib, dest=lambda self, s: self.bin_dir.parent / "lib" / s.name)
 

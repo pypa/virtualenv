@@ -29,8 +29,8 @@ class CopyPipInstall(PipInstall):
             for name in dirs:
                 yield root_path / name / "__pycache__"
 
-    def _fix_records(self, new_files):
-        extra_record_data_str = self._records_text(new_files)
+    def _fix_records(self, extra_record_data):
+        extra_record_data_str = self._records_text(extra_record_data)
         with (self._dist_info / "RECORD").open("ab") as file_handler:
             file_handler.write(extra_record_data_str.encode("utf-8"))
 
