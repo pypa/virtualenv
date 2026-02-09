@@ -34,7 +34,7 @@ class CPythonmacOsFramework(CPython, ABC):
         # change the install_name of the copied python executables
         target = self.desired_mach_o_image_path()
         current = self.current_mach_o_image_path()
-        for src in self._sources:
+        for src in self._sources:  # ty: ignore[not-iterable]
             if isinstance(src, ExePathRefToDest) and (src.must == RefMust.COPY or not self.symlinks):
                 exes = [self.bin_dir / src.base]
                 if not self.symlinks:
@@ -77,7 +77,7 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
 
     @property
     def reload_code(self):
-        result = super().reload_code
+        result = super().reload_code  # ty: ignore[unresolved-attribute]
         return dedent(
             f"""
         # the bundled site.py always adds the global site package if we're on python framework build, escape this

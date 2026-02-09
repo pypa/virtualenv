@@ -41,7 +41,7 @@ class PythonInfo:  # noqa: PLR0904
         self.platform = sys.platform
         self.implementation = platform.python_implementation()
         if self.implementation == "PyPy":
-            self.pypy_version_info = tuple(sys.pypy_version_info)
+            self.pypy_version_info = tuple(sys.pypy_version_info)  # ty: ignore[unresolved-attribute]
 
         # this is a tuple in earlier, struct later, unify to our own named tuple
         self.version_info = VersionInfo(*sys.version_info)
@@ -111,7 +111,7 @@ class PythonInfo:  # noqa: PLR0904
             k: v
             for k, v in [
                 # a list of content to store from sysconfig
-                ("makefile_filename", makefile()),
+                ("makefile_filename", makefile() if makefile is not None else None),
             ]
             if k is not None
         }
@@ -471,7 +471,7 @@ class PythonInfo:  # noqa: PLR0904
     def _to_dict(self):
         data = {var: (getattr(self, var) if var != "_creators" else None) for var in vars(self)}
 
-        data["version_info"] = data["version_info"]._asdict()  # namedtuple to dictionary
+        data["version_info"] = data["version_info"]._asdict()  # ty: ignore[possibly-missing-attribute]  # namedtuple to dict
         return data
 
     @classmethod

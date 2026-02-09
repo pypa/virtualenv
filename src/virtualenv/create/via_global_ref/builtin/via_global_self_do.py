@@ -86,7 +86,7 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
         true_system_site = self.enable_system_site_package
         try:
             self.enable_system_site_package = False
-            for src in self._sources:
+            for src in self._sources:  # ty: ignore[not-iterable]
                 if (
                     src.when == RefWhen.ANY
                     or (src.when == RefWhen.SYMLINK and self.symlinks is True)

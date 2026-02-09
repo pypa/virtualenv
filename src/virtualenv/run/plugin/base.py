@@ -53,10 +53,10 @@ class ComponentBuilder(PluginLoader):
 
     def populate_selected_argparse(self, selected, app_data):
         self.parser.description = f"options for {self.name} {selected}"
-        self._impl_class.add_parser_arguments(self.parser, self.interpreter, app_data)
+        self._impl_class.add_parser_arguments(self.parser, self.interpreter, app_data)  # ty: ignore[possibly-missing-attribute]
 
     def create(self, options):
-        return self._impl_class(options, self.interpreter)
+        return self._impl_class(options, self.interpreter)  # ty: ignore[call-non-callable]
 
 
 __all__ = [

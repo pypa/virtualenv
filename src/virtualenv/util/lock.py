@@ -24,7 +24,11 @@ class _CountedFileLock(FileLock):
         self.count = 0
         self.thread_safe = RLock()
 
-    def acquire(self, timeout=None, poll_interval=0.05):
+    def acquire(  # ty: ignore[invalid-method-override]
+        self,
+        timeout=None,
+        poll_interval=0.05,
+    ):
         if not self.thread_safe.acquire(timeout=-1 if timeout is None else timeout):
             raise Timeout(self.lock_file)
         if self.count == 0:
