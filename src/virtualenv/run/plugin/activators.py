@@ -54,7 +54,7 @@ class ActivationSelector(ComponentBuilder):
             activator.add_parser_arguments(self.parser, self.interpreter)
 
     def create(self, options):
-        return [activator_class(options) for activator_class in self.active.values()]
+        return [activator_class(options) for activator_class in self.active.values()]  # ty: ignore[possibly-missing-attribute]
 
 
 __all__ = [

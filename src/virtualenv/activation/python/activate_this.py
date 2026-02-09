@@ -20,12 +20,12 @@ except NameError as exc:
     raise AssertionError(msg) from exc
 
 bin_dir = os.path.dirname(abs_file)
-base = bin_dir[: -len(__BIN_NAME__) - 1]  # strip away the bin part from the __file__, plus the path separator
+base = bin_dir[: -len(__BIN_NAME__) - 1]  # ty: ignore[unresolved-reference]
 
 # prepend bin to PATH (this file is inside the bin directory)
 os.environ["PATH"] = os.pathsep.join([bin_dir, *os.environ.get("PATH", "").split(os.pathsep)])
 os.environ["VIRTUAL_ENV"] = base  # virtual env is right above bin directory
-os.environ["VIRTUAL_ENV_PROMPT"] = __VIRTUAL_PROMPT__ or os.path.basename(base)
+os.environ["VIRTUAL_ENV_PROMPT"] = __VIRTUAL_PROMPT__ or os.path.basename(base)  # ty: ignore[unresolved-reference]
 
 # Set PKG_CONFIG_PATH to include the virtualenv's pkgconfig directory
 pkg_config_path = os.path.join(base, "lib", "pkgconfig")
@@ -37,10 +37,10 @@ else:
 
 # add the virtual environments libraries to the host python import mechanism
 prev_length = len(sys.path)
-for lib in __LIB_FOLDERS__.split(os.pathsep):
+for lib in __LIB_FOLDERS__.split(os.pathsep):  # ty: ignore[unresolved-reference]
     path = os.path.realpath(os.path.join(bin_dir, lib))
-    site.addsitedir(path.decode("utf-8") if __DECODE_PATH__ else path)
+    site.addsitedir(path.decode("utf-8") if __DECODE_PATH__ else path)  # ty: ignore[unresolved-reference,unresolved-attribute]
 sys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]
 
-sys.real_prefix = sys.prefix
+sys.real_prefix = sys.prefix  # ty: ignore[unresolved-attribute]
 sys.prefix = base

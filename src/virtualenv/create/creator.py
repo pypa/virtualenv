@@ -197,8 +197,8 @@ class Creator(ABC):
     @property
     def debug(self):
         """:return: debug information about the virtual environment (only valid after :meth:`create` has run)"""
-        if self._debug is None and self.exe is not None:
-            self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data, self.env)
+        if self._debug is None and self.exe is not None:  # ty: ignore[unresolved-attribute]
+            self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data, self.env)  # ty: ignore[unresolved-attribute]
         return self._debug
 
     @staticmethod

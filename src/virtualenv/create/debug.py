@@ -19,14 +19,14 @@ def encode_list_path(value):
     return [encode_path(i) for i in value]
 
 
-def run():
+def run():  # noqa: C901
     """Print debug data about the virtual environment."""
     try:
         from collections import OrderedDict  # noqa: PLC0415
     except ImportError:  # pragma: no cover
         # this is possible if the standard library cannot be accessed
 
-        OrderedDict = dict  # pragma: no cover  # noqa: N806
+        OrderedDict = dict  # type: ignore[misc]  # pragma: no cover  # noqa: N806
     result = OrderedDict([("sys", OrderedDict())])
     path_keys = (
         "executable",
@@ -52,7 +52,8 @@ def run():
 
         # https://bugs.python.org/issue22199
         makefile = getattr(sysconfig, "get_makefile_filename", getattr(sysconfig, "_get_makefile_filename", None))
-        result["makefile_filename"] = encode_path(makefile())
+        if makefile is not None:
+            result["makefile_filename"] = encode_path(makefile())
     except ImportError:
         pass
 

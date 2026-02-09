@@ -100,7 +100,7 @@ def propose_interpreters(  # noqa: C901, PLR0912, PLR0915
     # 0. if it's a path and exists, and is absolute path, this is the only option we consider
     env = os.environ if env is None else env
     tested_exes: set[str] = set()
-    if spec.is_abs:
+    if spec.is_abs and spec.path is not None:
         try:
             os.lstat(spec.path)  # Windows Store Python does not work with os.path.exists, but does for os.lstat
         except OSError:
@@ -195,7 +195,7 @@ def get_paths(env: Mapping[str, str]) -> Generator[Path, None, None]:
     path = env.get("PATH", None)
     if path is None:
         try:
-            path = os.confstr("CS_PATH")
+            path = os.confstr("CS_PATH")  # ty: ignore[unresolved-attribute]
         except (AttributeError, ValueError):
             path = os.defpath
     if path:

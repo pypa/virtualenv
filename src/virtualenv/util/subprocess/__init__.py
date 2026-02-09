@@ -19,7 +19,7 @@ def run_cmd(cmd):
         code = process.returncode
     except OSError as error:
         code, out, err = error.errno, "", error.strerror
-        if code == 2 and "file" in err:  # noqa: PLR2004
+        if code == 2 and err is not None and "file" in err:  # noqa: PLR2004
             err = str(error)  # FileNotFoundError in Python >= 3.3
     return code, out, err
 

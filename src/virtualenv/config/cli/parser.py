@@ -112,7 +112,7 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
 
     def _get_help_string(self, action):
         text = super()._get_help_string(action)
-        if hasattr(action, "default_source"):
+        if text is not None and hasattr(action, "default_source"):
             default = " (default: %(default)s)"
             if text.endswith(default):
                 text = f"{text[: -len(default)]} (default: %(default)s -> from %(default_source)s)"
