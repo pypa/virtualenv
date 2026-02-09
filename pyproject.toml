@@ -67,7 +67,10 @@ optional-dependencies.test = [
   "packaging>=23.1",
   "pytest>=7.4",
   "pytest-env>=0.8.2",
-  "pytest-freezer>=0.4.8; platform_python_implementation=='PyPy' or platform_python_implementation=='GraalVM' or (platform_python_implementation=='CPython' and sys_platform=='win32' and python_version>='3.13')",
+  """\
+  pytest-freezer>=0.4.8; platform_python_implementation=='PyPy' or platform_python_implementation=='GraalVM' or \
+  (platform_python_implementation=='CPython' and sys_platform=='win32' and python_version>='3.13')\
+  """,
   "pytest-mock>=3.11.1",
   "pytest-randomly>=3.12",
   "pytest-timeout>=2.1",
@@ -130,14 +133,13 @@ lint.ignore = [
   "ISC001",  # conflict with formatter
   "PLR0914", # Too many local variables
   "PLR0917", # Too many positional arguments
-  "PLR6301", #  Method could be a function, class method, or static method
+  "PLR6301", # Method could be a function, class method, or static method
   "PLW1510", # no need for check for subprocess
   "PTH",     # no pathlib, <=39 has problems on Windows with absolute/resolve, can revisit once we no longer need 39
   "RUF067",  # `__init__` module should only contain docstrings and re-exports
   "S104",    # Possible binding to all interfaces
-
-  "S404", # Using subprocess is alright
-  "S603", # subprocess calls are fine
+  "S404",    # Using subprocess is alright
+  "S603",    # subprocess calls are fine
 ]
 lint.per-file-ignores."src/virtualenv/activation/python/activate_this.py" = [
   "F821", # ignore undefined template string placeholders
@@ -165,41 +167,41 @@ count = true
 [tool.pyproject-fmt]
 max_supported_python = "3.14"
 
-[tool.pytest.ini_options]
-markers = [
+[tool.pytest]
+ini_options.markers = [
   "slow",
 ]
-timeout = 600
-addopts = "--showlocals --no-success-flaky-report"
-env = [
+ini_options.timeout = 600
+ini_options.addopts = "--showlocals --no-success-flaky-report"
+ini_options.env = [
   "PYTHONIOENCODING=utf-8",
 ]
 
 [tool.coverage]
-html.show_contexts = true
-html.skip_covered = false
-report.omit = [
-  # site.py is run before the coverage can be enabled, no way to measure coverage on this
-  "**/src/virtualenv/create/via_global_ref/builtin/python2/site.py",
-  "**/src/virtualenv/create/via_global_ref/_virtualenv.py",
-  "**/src/virtualenv/activation/python/activate_this.py",
-  "**/src/virtualenv/seed/wheels/embed/pip-*.whl/pip/**",
-]
-paths.source = [
-  "src",
-  "**/site-packages",
-]
-report.fail_under = 76
-run.source = [
-  "${_COVERAGE_SRC}",
-  "tests",
-]
 run.dynamic_context = "test_function"
 run.parallel = true
 run.plugins = [
   "covdefaults",
 ]
 run.relative_files = true
+run.source = [
+  "${_COVERAGE_SRC}",
+  "tests",
+]
+paths.source = [
+  "src",
+  "**/site-packages",
+]
+report.fail_under = 76
+report.omit = [
+  "**/src/virtualenv/activation/python/activate_this.py",
+  "**/src/virtualenv/create/via_global_ref/_virtualenv.py",
+  # site.py is run before the coverage can be enabled, no way to measure coverage on this
+  "**/src/virtualenv/create/via_global_ref/builtin/python2/site.py",
+  "**/src/virtualenv/seed/wheels/embed/pip-*.whl/pip/**",
+]
+html.show_contexts = true
+html.skip_covered = false
 
 [tool.towncrier]
 name = "tox"
