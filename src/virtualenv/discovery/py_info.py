@@ -471,7 +471,8 @@ class PythonInfo:  # noqa: PLR0904
     def _to_dict(self):
         data = {var: (getattr(self, var) if var != "_creators" else None) for var in vars(self)}
 
-        data["version_info"] = data["version_info"]._asdict()  # ty: ignore[possibly-missing-attribute]  # namedtuple to dict
+        version_info = data["version_info"]
+        data["version_info"] = version_info._asdict() if hasattr(version_info, "_asdict") else version_info
         return data
 
     @classmethod
