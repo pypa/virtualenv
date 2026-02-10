@@ -136,15 +136,17 @@ class SimpleSpecifier:
 
     def _check_wildcard(self, candidate):
         """Check wildcard version matching."""
+        assert self.version is not None  # noqa: S101  # Checked by caller in contains()
         if self.operator == "==":
-            return candidate.release[: self.wildcard_precision] == self.version.release[: self.wildcard_precision]  # ty: ignore[possibly-missing-attribute]
+            return candidate.release[: self.wildcard_precision] == self.version.release[: self.wildcard_precision]
         if self.operator == "!=":
-            return candidate.release[: self.wildcard_precision] != self.version.release[: self.wildcard_precision]  # ty: ignore[possibly-missing-attribute]
+            return candidate.release[: self.wildcard_precision] != self.version.release[: self.wildcard_precision]
         # Other operators with wildcards are not standard
         return False
 
     def _check_standard(self, candidate):
         """Check standard version comparisons."""
+        assert self.version is not None  # noqa: S101  # Checked by caller in contains()
         if self.operator == "===":
             return str(candidate) == str(self.version)
         if self.operator == "~=":
@@ -159,15 +161,16 @@ class SimpleSpecifier:
             ">=": operator.ge,
         }
         if self.operator in cmp_ops:
-            return cmp_ops[self.operator](candidate, self.version)  # ty: ignore[invalid-argument-type]
+            return cmp_ops[self.operator](candidate, self.version)
         return False
 
     def _check_compatible_release(self, candidate):
         """Check compatible release version (~=)."""
+        assert self.version is not None  # noqa: S101  # Checked by caller in contains()
         if candidate < self.version:
             return False
-        if len(self.version.release) >= 2:  # ty: ignore[possibly-missing-attribute]  # noqa: PLR2004
-            upper_parts = list(self.version.release[:-1])  # ty: ignore[possibly-missing-attribute]
+        if len(self.version.release) >= 2:  # noqa: PLR2004
+            upper_parts = list(self.version.release[:-1])
             upper_parts[-1] += 1
             upper = SimpleVersion(".".join(str(p) for p in upper_parts))
             return candidate < upper

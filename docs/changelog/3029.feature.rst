@@ -1,0 +1,1 @@
+Replace ``ty: ignore`` comments with proper type narrowing using assertions and explicit None checks - by :user:`rahuldevikar`.
