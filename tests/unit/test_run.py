@@ -41,3 +41,15 @@ def test_logging_setup(caplog, on):
         assert not caplog.records
     else:
         assert caplog.records
+
+
+def test_invalid_discovery_method_via_env(monkeypatch):
+    """Test that an invalid discovery method via env var raises a helpful error."""
+    monkeypatch.setenv("VIRTUALENV_DISCOVERY", "pyenv")
+    with pytest.raises(ValueError) as exc_info:
+        session_via_cli(["env"])
+    
+    error_message = str(exc_info.value)
+    assert "Invalid discovery method 'pyenv'" in error_message
+    assert "Available options:" in error_message
+    assert "'builtin'" in error_message

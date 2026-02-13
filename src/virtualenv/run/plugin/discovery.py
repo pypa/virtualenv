@@ -29,6 +29,13 @@ def get_discover(parser, args):
         help="interpreter discovery method",
     )
     options, _ = parser.parse_known_args(args)
+    
+    # Check if the specified discovery method is valid
+    if options.discovery not in discover_types:
+        available = ", ".join(f"'{key}'" for key in sorted(discover_types.keys()))
+        msg = f"Invalid discovery method '{options.discovery}'. Available options: {available}"
+        raise ValueError(msg)
+    
     discover_class = discover_types[options.discovery]
     discover_class.add_parser_arguments(discovery_parser)
     options, _ = parser.parse_known_args(args, namespace=options)
