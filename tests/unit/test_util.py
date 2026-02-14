@@ -47,7 +47,6 @@ class TestDefaultAppDataDir:
     def test_no_override_returns_cache_dir(self, monkeypatch):
         monkeypatch.delenv("VIRTUALENV_OVERRIDE_APP_DATA", raising=False)
         result = _default_app_data_dir(os.environ)
-        # Should not be empty, exact value is platform-dependent
         assert result
 
 
@@ -56,11 +55,10 @@ class TestCacheDirMigration:
         old_dir = str(tmp_path / "old-data")
         new_dir = str(tmp_path / "new-cache")
         os.makedirs(old_dir)
-        # Put a file in old_dir to confirm migration
         (tmp_path / "old-data" / "test.txt").write_text("hello")
 
-        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **kw: new_dir)
-        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **kw: old_dir)
+        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: new_dir)
+        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: old_dir)
 
         result = _cache_dir_with_migration()
         assert result == new_dir
@@ -72,8 +70,8 @@ class TestCacheDirMigration:
         old_dir = str(tmp_path / "old-data")
         new_dir = str(tmp_path / "new-cache")
 
-        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **kw: new_dir)
-        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **kw: old_dir)
+        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: new_dir)
+        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: old_dir)
 
         result = _cache_dir_with_migration()
         assert result == new_dir
@@ -86,18 +84,17 @@ class TestCacheDirMigration:
         os.makedirs(new_dir)
         (tmp_path / "old-data" / "old.txt").write_text("old")
 
-        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **kw: new_dir)
-        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **kw: old_dir)
+        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: new_dir)
+        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: old_dir)
 
         result = _cache_dir_with_migration()
         assert result == new_dir
-        # old_dir should NOT have been moved (new already existed)
         assert os.path.isdir(old_dir)
 
     def test_same_dir_returns_immediately(self, tmp_path, monkeypatch):
         same_dir = str(tmp_path / "same")
-        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **kw: same_dir)
-        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **kw: same_dir)
+        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: same_dir)
+        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: same_dir)
 
         result = _cache_dir_with_migration()
         assert result == same_dir
@@ -107,10 +104,10 @@ class TestCacheDirMigration:
         new_dir = str(tmp_path / "new-cache")
         os.makedirs(old_dir)
 
-        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **kw: new_dir)
-        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **kw: old_dir)
+        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: new_dir)
+        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: old_dir)
 
-        def broken_move(src, dst):
+        def broken_move(_src, _dst):
             msg = "permission denied"
             raise OSError(msg)
 
@@ -121,18 +118,14 @@ class TestCacheDirMigration:
 
     @pytest.mark.parametrize("symlink_flag", [True, False])
     def test_symlink_app_data_survives_migration(self, tmp_path, monkeypatch, symlink_flag):  # noqa: ARG002
-        """After migration, symlinks from virtualenvs into the app-data still resolve
-        because the entire tree was moved atomically via shutil.move."""
         old_dir = str(tmp_path / "old-data")
         new_dir = str(tmp_path / "new-cache")
         os.makedirs(old_dir)
-        # Simulate a wheel image file in the old app-data
         wheel_img = tmp_path / "old-data" / "wheel" / "3.12" / "image" / "pip"
         wheel_img.mkdir(parents=True)
         (wheel_img / "pip.dist-info").mkdir()
         (wheel_img / "pip.dist-info" / "METADATA").write_text("Name: pip")
 
-        # Simulate a virtualenv that symlinks into the old app-data
         venv_dir = tmp_path / "my-venv" / "lib" / "site-packages"
         venv_dir.mkdir(parents=True)
         try:
@@ -140,10 +133,9 @@ class TestCacheDirMigration:
         except OSError:
             pytest.skip("symlinks not supported on this filesystem")
 
-        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **kw: new_dir)
-        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **kw: old_dir)
+        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: new_dir)
+        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: old_dir)
 
         result = _cache_dir_with_migration()
         assert result == new_dir
-        # The migrated file is accessible at the new location
         assert (tmp_path / "new-cache" / "wheel" / "3.12" / "image" / "pip" / "pip.dist-info" / "METADATA").exists()
