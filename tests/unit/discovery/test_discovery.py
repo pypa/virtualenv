@@ -383,5 +383,5 @@ def test_invalid_discovery_via_env_var_unit(monkeypatch):
 
     monkeypatch.setenv("VIRTUALENV_DISCOVERY", "nonexistent_plugin")
     parser = VirtualEnvConfigParser()
-    with pytest.raises(RuntimeError, match="nonexistent_plugin.*is not available"):
+    with pytest.raises(RuntimeError, match=r"nonexistent_plugin.*is not available"):
         get_discover(parser, [])
