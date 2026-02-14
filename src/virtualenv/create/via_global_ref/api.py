@@ -4,6 +4,7 @@ import logging
 import os
 from abc import ABC
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from virtualenv.create.creator import Creator, CreatorMeta
 from virtualenv.info import fs_supports_symlink
@@ -33,6 +34,14 @@ class ViaGlobalRefApi(Creator, ABC):
         super().__init__(options, interpreter)
         self.symlinks = self._should_symlink(options)
         self.enable_system_site_package = options.system_site
+
+    if TYPE_CHECKING:
+
+        @property
+        def purelib(self) -> Path: ...
+
+        @property
+        def script_dir(self) -> Path: ...
 
     @staticmethod
     def _should_symlink(options):
@@ -94,10 +103,10 @@ class ViaGlobalRefApi(Creator, ABC):
     def install_patch(self):
         text = self.env_patch_text()
         if text:
-            pth = self.purelib / "_virtualenv.pth"  # ty: ignore[unresolved-attribute]
+            pth = self.purelib / "_virtualenv.pth"
             LOGGER.debug("create virtualenv import hook file %s", pth)
             pth.write_text("import _virtualenv", encoding="utf-8")
-            dest_path = self.purelib / "_virtualenv.py"  # ty: ignore[unresolved-attribute]
+            dest_path = self.purelib / "_virtualenv.py"
             LOGGER.debug("create %s", dest_path)
             dest_path.write_text(text, encoding="utf-8")
 
@@ -106,7 +115,7 @@ class ViaGlobalRefApi(Creator, ABC):
         with self.app_data.ensure_extracted(Path(__file__).parent / "_virtualenv.py") as resolved_path:
             text = resolved_path.read_text(encoding="utf-8")
             # script_dir and purelib are defined in subclasses
-            return text.replace('"__SCRIPT_DIR__"', repr(os.path.relpath(str(self.script_dir), str(self.purelib))))  # ty: ignore[unresolved-attribute]
+            return text.replace('"__SCRIPT_DIR__"', repr(os.path.relpath(str(self.script_dir), str(self.purelib))))
 
     def _args(self):
         return [*super()._args(), ("global", self.enable_system_site_package)]
