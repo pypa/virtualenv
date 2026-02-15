@@ -193,7 +193,7 @@ class Creator(ABC):
         self.pyenv_cfg["virtualenv"] = __version__
         if self.prompt is not None:
             prompt_value = os.path.basename(os.getcwd()) if self.prompt == "." else self.prompt
-            self.pyenv_cfg["prompt"] = repr(prompt_value)
+            self.pyenv_cfg["prompt"] = prompt_value
 
     def setup_ignore_vcs(self):
         """Generate ignore instructions for version control systems."""
