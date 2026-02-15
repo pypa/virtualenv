@@ -11,29 +11,28 @@ deactivate () {
     unset -f pydoc >/dev/null 2>&1 || true
 
     # reset old environment variables
-    # ! [ -z ${VAR+_} ] returns true if VAR is declared at all
-    if ! [ -z "${_OLD_VIRTUAL_PATH:+_}" ] ; then
+    if [ -n "${_OLD_VIRTUAL_PATH:-}" ] ; then
         PATH="$_OLD_VIRTUAL_PATH"
         export PATH
         unset _OLD_VIRTUAL_PATH
     fi
-    if ! [ -z "${_OLD_VIRTUAL_PYTHONHOME+_}" ] ; then
+    if [ -n "${_OLD_VIRTUAL_PYTHONHOME:-}" ] ; then
         PYTHONHOME="$_OLD_VIRTUAL_PYTHONHOME"
         export PYTHONHOME
         unset _OLD_VIRTUAL_PYTHONHOME
     fi
 
-    if ! [ -z "${_OLD_VIRTUAL_TCL_LIBRARY+_}" ]; then
+    if [ -n "${_OLD_VIRTUAL_TCL_LIBRARY:-}" ]; then
         TCL_LIBRARY="$_OLD_VIRTUAL_TCL_LIBRARY"
         export TCL_LIBRARY
         unset _OLD_VIRTUAL_TCL_LIBRARY
     fi
-    if ! [ -z "${_OLD_VIRTUAL_TK_LIBRARY+_}" ]; then
+    if [ -n "${_OLD_VIRTUAL_TK_LIBRARY:-}" ]; then
         TK_LIBRARY="$_OLD_VIRTUAL_TK_LIBRARY"
         export TK_LIBRARY
         unset _OLD_VIRTUAL_TK_LIBRARY
     fi
-    if ! [ -z "${_OLD_PKG_CONFIG_PATH+_}" ]; then
+    if [ -n "${_OLD_PKG_CONFIG_PATH:-}" ]; then
         PKG_CONFIG_PATH="$_OLD_PKG_CONFIG_PATH"
         export PKG_CONFIG_PATH
         unset _OLD_PKG_CONFIG_PATH
@@ -44,7 +43,7 @@ deactivate () {
     # we made may not be respected
     hash -r 2>/dev/null
 
-    if ! [ -z "${_OLD_VIRTUAL_PS1+_}" ] ; then
+    if [ -n "${_OLD_VIRTUAL_PS1:-}" ] ; then
         PS1="$_OLD_VIRTUAL_PS1"
         export PS1
         unset _OLD_VIRTUAL_PS1
@@ -70,9 +69,11 @@ else
     VIRTUAL_ENV=__VIRTUAL_ENV__
 fi
 
-if ([ "$OSTYPE" = "cygwin" ] || [ "$OSTYPE" = "msys" ]) && $(command -v cygpath &> /dev/null) ; then
-    VIRTUAL_ENV=$(cygpath -u "$VIRTUAL_ENV")
-fi
+case "$(uname)" in
+    CYGWIN*|MSYS*|MINGW*)
+        VIRTUAL_ENV=$(cygpath "$VIRTUAL_ENV")
+        ;;
+esac
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
@@ -91,13 +92,13 @@ fi
 export VIRTUAL_ENV_PROMPT
 
 # unset PYTHONHOME if set
-if ! [ -z "${PYTHONHOME+_}" ] ; then
+if [ -n "${PYTHONHOME:-}" ] ; then
     _OLD_VIRTUAL_PYTHONHOME="$PYTHONHOME"
     unset PYTHONHOME
 fi
 
 if [ __TCL_LIBRARY__ != "" ]; then
-    if ! [ -z "${TCL_LIBRARY+_}" ] ; then
+    if [ -n "${TCL_LIBRARY:-}" ] ; then
         _OLD_VIRTUAL_TCL_LIBRARY="$TCL_LIBRARY"
     fi
     TCL_LIBRARY=__TCL_LIBRARY__
@@ -105,7 +106,7 @@ if [ __TCL_LIBRARY__ != "" ]; then
 fi
 
 if [ __TK_LIBRARY__ != "" ]; then
-    if ! [ -z "${TK_LIBRARY+_}" ] ; then
+    if [ -n "${TK_LIBRARY:-}" ] ; then
         _OLD_VIRTUAL_TK_LIBRARY="$TK_LIBRARY"
     fi
     TK_LIBRARY=__TK_LIBRARY__

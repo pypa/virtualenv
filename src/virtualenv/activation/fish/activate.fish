@@ -1,28 +1,10 @@
 # This file must be used using `source bin/activate.fish` *within a running fish ( http://fishshell.com ) session*.
 # Do not run it directly.
 
-function _bashify_path -d "Converts a fish path to something bash can recognize"
-    set fishy_path $argv
-    set bashy_path $fishy_path[1]
-    for path_part in $fishy_path[2..-1]
-        set bashy_path "$bashy_path:$path_part"
-    end
-    echo $bashy_path
-end
-
-function _fishify_path -d "Converts a bash path to something fish can recognize"
-    echo $argv | tr ':' '\n'
-end
-
 function deactivate -d 'Exit virtualenv mode and return to the normal environment.'
     # reset old environment variables
     if test -n "$_OLD_VIRTUAL_PATH"
-        # https://github.com/fish-shell/fish-shell/issues/436 altered PATH handling
-        if test (string sub -s 1 -l 1 $FISH_VERSION) -lt 3
-            set -gx PATH (_fishify_path "$_OLD_VIRTUAL_PATH")
-        else
-            set -gx PATH $_OLD_VIRTUAL_PATH
-        end
+        set -gx PATH $_OLD_VIRTUAL_PATH
         set -e _OLD_VIRTUAL_PATH
     end
 
@@ -72,8 +54,6 @@ function deactivate -d 'Exit virtualenv mode and return to the normal environmen
         # Self-destruct!
         functions -e pydoc
         functions -e deactivate
-        functions -e _bashify_path
-        functions -e _fishify_path
     end
 end
 
@@ -85,12 +65,7 @@ set -gx VIRTUAL_ENV __VIRTUAL_ENV__
 set -gx _OLD_PKG_CONFIG_PATH "$PKG_CONFIG_PATH"
 set -gx PKG_CONFIG_PATH "$VIRTUAL_ENV/lib/pkgconfig:$PKG_CONFIG_PATH"
 
-# https://github.com/fish-shell/fish-shell/issues/436 altered PATH handling
-if test (string sub -s 1 -l 1 $FISH_VERSION) -lt 3
-    set -gx _OLD_VIRTUAL_PATH (_bashify_path $PATH)
-else
-    set -gx _OLD_VIRTUAL_PATH $PATH
-end
+set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV"'/'__BIN_NAME__ $PATH
 
 if test -n __TCL_LIBRARY__
@@ -129,12 +104,14 @@ if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
     functions -c fish_prompt _old_fish_prompt
 
     function fish_prompt
+        set -l old_status $status
         # Run the user's prompt first; it might depend on (pipe)status.
         set -l prompt (_old_fish_prompt)
 
         printf '(%s) ' $VIRTUAL_ENV_PROMPT
 
         string join -- \n $prompt # handle multi-line prompts
+        echo "exit $old_status" | .
     end
 
     set -gx _OLD_FISH_PROMPT_OVERRIDE "$VIRTUAL_ENV"

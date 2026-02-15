@@ -120,6 +120,7 @@ class PythonInfo:  # noqa: PLR0904
         for element in self.sysconfig_paths.values():
             config_var_keys.update(k[1:-1] for k in _CONF_VAR_RE.findall(element))
         config_var_keys.add("PYTHONFRAMEWORK")
+        config_var_keys.update(("Py_ENABLE_SHARED", "INSTSONAME", "LIBDIR"))
 
         self.sysconfig_vars = {i: sysconfig.get_config_var(i or "") for i in config_var_keys}
 
@@ -129,7 +130,7 @@ class PythonInfo:  # noqa: PLR0904
             self.tcl_lib, self.tk_lib = None, None
 
         confs = {
-            k: (self.system_prefix if v is not None and v.startswith(self.prefix) else v)
+            k: (self.system_prefix if isinstance(v, str) and v.startswith(self.prefix) else v)
             for k, v in self.sysconfig_vars.items()
         }
         self.system_stdlib = self.sysconfig_path("stdlib", confs)
@@ -323,7 +324,7 @@ class PythonInfo:  # noqa: PLR0904
         path = self.sysconfig_path(
             "include",
             {
-                k: (self.system_prefix if v is not None and v.startswith(self.prefix) else v)
+                k: (self.system_prefix if isinstance(v, str) and v.startswith(self.prefix) else v)
                 for k, v in self.sysconfig_vars.items()
             },
         )

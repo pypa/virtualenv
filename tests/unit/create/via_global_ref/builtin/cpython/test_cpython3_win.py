@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from testing.helpers import contains_exe, contains_ref
+from testing.helpers import contains_exe, contains_ref, has_src, is_exe
 from testing.path import join as path
 
 from virtualenv.create.via_global_ref.builtin.cpython.cpython3 import CPython3Windows
@@ -107,6 +107,16 @@ def test_python3_exe_present(py_info, mock_files):
     sources = tuple(CPython3Windows.sources(interpreter=py_info))
     assert contains_exe(sources, py_info.system_executable, "python3.exe")
     assert contains_exe(sources, py_info.system_executable, "python3")
+
+
+@pytest.mark.parametrize("py_info_name", ["cpython3_win_free_threaded"])
+def test_free_threaded_exe_naming(py_info, mock_files):
+    mock_files(CPYTHON3_PATH, [py_info.system_executable])
+    sources = tuple(CPython3Windows.sources(interpreter=py_info))
+    assert contains_exe(sources, py_info.system_executable, "python3.13t.exe")
+    pythonw_refs = [s for s in sources if is_exe(s) and has_src(path(py_info.prefix, "pythonw.exe"))(s)]
+    assert len(pythonw_refs) == 1
+    assert "pythonw3.13t.exe" in pythonw_refs[0].aliases
 
 
 @pytest.mark.parametrize("py_info_name", ["cpython3_win_embed"])

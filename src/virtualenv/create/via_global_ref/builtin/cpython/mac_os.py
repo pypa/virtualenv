@@ -31,7 +31,6 @@ class CPythonmacOsFramework(CPython, ABC):
     def create(self):
         super().create()
 
-        # change the install_name of the copied python executables
         target = self.desired_mach_o_image_path()
         current = self.current_mach_o_image_path()
         for src in self._sources:
@@ -41,6 +40,10 @@ class CPythonmacOsFramework(CPython, ABC):
                     exes.extend(self.bin_dir / a for a in src.aliases)
                 for exe in exes:
                     fix_mach_o(str(exe), current, target, self.interpreter.max_size)
+                    try:
+                        subprocess.check_call(["codesign", "--force", "--sign", "-", str(exe)])  # noqa: S607
+                    except (OSError, subprocess.CalledProcessError) as e:
+                        LOGGER.warning("Could not ad-hoc re-sign %s: %s", exe, e)
 
     @classmethod
     def _executables(cls, interpreter):
