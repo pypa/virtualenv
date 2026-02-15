@@ -47,6 +47,7 @@ class Creator(ABC):
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest)
         self.app_data = options.app_data
         self.env = options.env
+        self.prompt = getattr(options, "prompt", None)
 
     if TYPE_CHECKING:
 
@@ -186,7 +187,10 @@ class Creator(ABC):
         self.pyenv_cfg["home"] = os.path.dirname(os.path.abspath(self.interpreter.system_executable))
         self.pyenv_cfg["implementation"] = self.interpreter.implementation
         self.pyenv_cfg["version_info"] = ".".join(str(i) for i in self.interpreter.version_info)
+        self.pyenv_cfg["version"] = ".".join(str(i) for i in self.interpreter.version_info[:3])
         self.pyenv_cfg["virtualenv"] = __version__
+        if self.prompt is not None:
+            self.pyenv_cfg["prompt"] = os.path.basename(os.getcwd()) if self.prompt == "." else self.prompt
 
     def setup_ignore_vcs(self):
         """Generate ignore instructions for version control systems."""

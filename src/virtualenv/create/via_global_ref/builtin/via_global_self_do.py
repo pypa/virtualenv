@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import sys
 from abc import ABC
 
 from virtualenv.create.via_global_ref.api import ViaGlobalRefApi, ViaGlobalRefMeta
@@ -100,8 +102,12 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
                 self.enable_system_site_package = true_system_site
         super().create()
 
+    @property
+    def include_dir(self):
+        return self.dest / ("Include" if self.interpreter.os == "nt" else "include")
+
     def ensure_directories(self):
-        return {self.dest, self.bin_dir, self.script_dir, self.stdlib} | set(self.libs)
+        return {self.dest, self.bin_dir, self.script_dir, self.stdlib, self.include_dir} | set(self.libs)
 
     def set_pyenv_cfg(self):
         """
@@ -112,6 +118,9 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
         self.pyenv_cfg["base-prefix"] = self.interpreter.system_prefix
         self.pyenv_cfg["base-exec-prefix"] = self.interpreter.system_exec_prefix
         self.pyenv_cfg["base-executable"] = self.interpreter.system_executable
+        if self.interpreter.version_info >= (3, 11):
+            self.pyenv_cfg["executable"] = os.path.realpath(self.interpreter.system_executable)
+            self.pyenv_cfg["command"] = f"{sys.executable} -m virtualenv {self.dest}"
 
 
 __all__ = [

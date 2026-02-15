@@ -45,13 +45,17 @@ class PyPy3Posix(PyPy3, PosixSupports):
         host_lib = Path(interpreter.system_prefix) / "lib"
         stdlib = Path(interpreter.system_stdlib)
         if host_lib.exists() and host_lib.is_dir():
-            for path in host_lib.iterdir():
-                if stdlib == path:
-                    # For PyPy3.8+ the stdlib lives in lib/pypy3.8
-                    # We need to avoid creating a symlink to it since that
-                    # will defeat the purpose of a virtualenv
-                    continue
-                yield PathRefToDest(path, dest=cls.to_lib)
+            deps_file = host_lib / "PYPY_PORTABLE_DEPS.txt"
+            if deps_file.exists():
+                for line in deps_file.read_text(encoding="utf-8").splitlines():
+                    dep = line.strip()
+                    if dep and (path := host_lib / dep).exists():
+                        yield PathRefToDest(path, dest=cls.to_lib)
+            else:
+                for path in host_lib.iterdir():
+                    if stdlib == path:
+                        continue
+                    yield PathRefToDest(path, dest=cls.to_lib)
 
 
 class Pypy3Windows(PyPy3, WindowsSupports):
@@ -63,10 +67,9 @@ class Pypy3Windows(PyPy3, WindowsSupports):
 
     @classmethod
     def _shared_libs(cls, python_dir):
-        # glob for libpypy*.dll and libffi*.dll
-        for pattern in ["libpypy*.dll", "libffi*.dll"]:
-            srcs = python_dir.glob(pattern)
-            yield from srcs
+        # PyPy does not use a PEP 397 launcher, so all DLLs from the
+        # interpreter directory are needed for the venv to function
+        yield from python_dir.glob("*.dll")
 
 
 __all__ = [

@@ -8,7 +8,7 @@ from pathlib import Path
 from textwrap import dedent
 
 from virtualenv.create.describe import Python3Supports
-from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest, PathRefToDest
+from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest, PathRefToDest, RefWhen
 from virtualenv.create.via_global_ref.store import is_store_python
 
 from .common import CPython, CPythonPosix, CPythonWindows, is_mac_os_framework, is_macos_brew
@@ -26,6 +26,29 @@ class CPython3Posix(CPythonPosix, CPython3):
             and is_macos_brew(interpreter) is False
             and super().can_describe(interpreter)
         )
+
+    @classmethod
+    def sources(cls, interpreter):
+        yield from super().sources(interpreter)
+        if shared_lib := cls._shared_libpython(interpreter):
+            yield PathRefToDest(shared_lib, dest=cls._to_lib, when=RefWhen.COPY)
+
+    @classmethod
+    def _to_lib(cls, creator, src):
+        return creator.dest / "lib" / src.name
+
+    @classmethod
+    def _shared_libpython(cls, interpreter):
+        if not interpreter.sysconfig_vars.get("Py_ENABLE_SHARED"):
+            return None
+        if not (instsoname := interpreter.sysconfig_vars.get("INSTSONAME")):
+            return None
+        if not (libdir := interpreter.sysconfig_vars.get("LIBDIR")):
+            return None
+        lib_path = Path(libdir) / instsoname
+        if not lib_path.exists():
+            return None
+        return lib_path
 
     def env_patch_text(self):
         text = super().env_patch_text()
@@ -71,11 +94,11 @@ class CPython3Windows(CPythonWindows, CPython3):
     def executables(cls, interpreter):
         sources = super().sources(interpreter)
         if interpreter.version_info >= (3, 13):
-            # Create new refs with corrected launcher paths
+            t_suffix = "t" if interpreter.free_threaded else ""
             updated_sources = []
             for ref in sources:
                 if ref.src.name == "python.exe":
-                    launcher_path = ref.src.with_name("venvlauncher.exe")
+                    launcher_path = ref.src.with_name(f"venvlauncher{t_suffix}.exe")
                     if launcher_path.exists():
                         new_ref = ExePathRefToDest(
                             launcher_path, dest=ref.dest, targets=[ref.base, *ref.aliases], must=ref.must, when=ref.when
@@ -83,7 +106,7 @@ class CPython3Windows(CPythonWindows, CPython3):
                         updated_sources.append(new_ref)
                         continue
                 elif ref.src.name == "pythonw.exe":
-                    w_launcher_path = ref.src.with_name("venvwlauncher.exe")
+                    w_launcher_path = ref.src.with_name(f"venvwlauncher{t_suffix}.exe")
                     if w_launcher_path.exists():
                         new_ref = ExePathRefToDest(
                             w_launcher_path,
@@ -94,7 +117,6 @@ class CPython3Windows(CPythonWindows, CPython3):
                         )
                         updated_sources.append(new_ref)
                         continue
-                # Keep the original ref unchanged
                 updated_sources.append(ref)
             return updated_sources
         return sources
@@ -106,9 +128,12 @@ class CPython3Windows(CPythonWindows, CPython3):
     @classmethod
     def shim(cls, interpreter):
         root = Path(interpreter.system_stdlib) / "venv" / "scripts" / "nt"
-        # Before 3.13 the launcher was called python.exe, after is venvlauncher.exe
-        # https://github.com/python/cpython/issues/112984
-        exe_name = "venvlauncher.exe" if interpreter.version_info >= (3, 13) else "python.exe"
+        if interpreter.version_info >= (3, 13):
+            # https://github.com/python/cpython/issues/112984
+            t_suffix = "t" if interpreter.free_threaded else ""
+            exe_name = f"venvlauncher{t_suffix}.exe"
+        else:
+            exe_name = "python.exe"
         shim = root / exe_name
         if shim.exists():
             return shim

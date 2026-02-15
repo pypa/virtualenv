@@ -27,7 +27,11 @@ class CPythonPosix(CPython, PosixSupports, ABC):
     def _executables(cls, interpreter):
         host_exe = Path(interpreter.system_executable)
         major, minor = interpreter.version_info.major, interpreter.version_info.minor
-        targets = OrderedDict((i, None) for i in ["python", f"python{major}", f"python{major}.{minor}", host_exe.name])
+        names = ["python", f"python{major}", f"python{major}.{minor}"]
+        if interpreter.free_threaded:
+            names.append(f"python{major}.{minor}t")
+        names.append(host_exe.name)
+        targets = OrderedDict((i, None) for i in names)
         yield host_exe, list(targets.keys()), RefMust.NA, RefWhen.ANY
 
 
@@ -38,14 +42,20 @@ class CPythonWindows(CPython, WindowsSupports, ABC):
         # - https://bugs.python.org/issue42013
         # - venv
         host = cls.host_python(interpreter)
+        major, minor = interpreter.version_info.major, interpreter.version_info.minor
         names = {"python.exe", host.name}
-        if interpreter.version_info.major == 3:  # noqa: PLR2004
+        if major == 3:  # noqa: PLR2004
             names.update({"python3.exe", "python3"})
+        if interpreter.free_threaded:
+            names.update({f"python{major}.{minor}t.exe"})
         for path in (host.parent / n for n in names):
             yield host, [path.name], RefMust.COPY, RefWhen.ANY
         # for more info on pythonw.exe see https://stackoverflow.com/a/30313091
         python_w = host.parent / "pythonw.exe"
-        yield python_w, [python_w.name], RefMust.COPY, RefWhen.ANY
+        pythonw_names = [python_w.name]
+        if interpreter.free_threaded:
+            pythonw_names.append(f"pythonw{major}.{minor}t.exe")
+        yield python_w, pythonw_names, RefMust.COPY, RefWhen.ANY
 
     @classmethod
     def host_python(cls, interpreter):

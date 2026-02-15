@@ -529,3 +529,8 @@ def test_uses_posix_prefix_on_debian_3_10_without_venv(mocker):
     pyver = f"{pyinfo.version_info.major}.{pyinfo.version_info.minor}"
     assert pyinfo.install_path("scripts") == "bin"
     assert pyinfo.install_path("purelib").replace(os.sep, "/") == f"lib/python{pyver}/site-packages"
+
+
+def test_sysconfig_vars_include_shared_lib_keys() -> None:
+    for key in ("Py_ENABLE_SHARED", "INSTSONAME", "LIBDIR"):
+        assert key in CURRENT.sysconfig_vars
