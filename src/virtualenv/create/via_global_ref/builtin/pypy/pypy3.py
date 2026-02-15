@@ -33,20 +33,17 @@ class PyPy3Posix(PyPy3, PosixSupports):
     @classmethod
     def sources(cls, interpreter):
         yield from super().sources(interpreter)
-        # PyPy >= 3.8 supports a standard prefix installation, where older
-        # versions always used a portable/development style installation.
-        # If this is a standard prefix installation, skip the below:
+        # PyPy >= 3.8 supports a standard prefix installation, where older versions always used a portable/development
+        # style installation. If this is a standard prefix installation, skip the below:
         if interpreter.system_prefix == "/usr":
             return
-        # Also copy/symlink anything under prefix/lib, which, for "portable"
-        # PyPy builds, includes the tk,tcl runtime and a number of shared
-        # objects. In distro-specific builds or on conda this should be empty
-        # (on PyPy3.8+ it will, like on CPython, hold the stdlib).
+        # Also copy/symlink anything under prefix/lib, which, for "portable" PyPy builds, includes the tk,tcl runtime
+        # and a number of shared objects. In distro-specific builds or on conda this should be empty (on PyPy3.8+ it
+        # will, like on CPython, hold the stdlib).
         host_lib = Path(interpreter.system_prefix) / "lib"
         stdlib = Path(interpreter.system_stdlib)
         if host_lib.exists() and host_lib.is_dir():
-            deps_file = host_lib / "PYPY_PORTABLE_DEPS.txt"
-            if deps_file.exists():
+            if (deps_file := host_lib / "PYPY_PORTABLE_DEPS.txt").exists():
                 for line in deps_file.read_text(encoding="utf-8").splitlines():
                     dep = line.strip()
                     if dep and (path := host_lib / dep).exists():
@@ -67,8 +64,7 @@ class Pypy3Windows(PyPy3, WindowsSupports):
 
     @classmethod
     def _shared_libs(cls, python_dir):
-        # PyPy does not use a PEP 397 launcher, so all DLLs from the
-        # interpreter directory are needed for the venv to function
+        # PyPy does not use a PEP 397 launcher, so all DLLs from the interpreter directory are needed for the venv
         yield from python_dir.glob("*.dll")
 
 

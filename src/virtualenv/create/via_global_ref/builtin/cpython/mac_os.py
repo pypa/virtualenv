@@ -40,7 +40,10 @@ class CPythonmacOsFramework(CPython, ABC):
                     exes.extend(self.bin_dir / a for a in src.aliases)
                 for exe in exes:
                     fix_mach_o(str(exe), current, target, self.interpreter.max_size)
-                    resign(str(exe))
+                    try:
+                        subprocess.check_call(["codesign", "--force", "--sign", "-", str(exe)])  # noqa: S607
+                    except (OSError, subprocess.CalledProcessError) as e:
+                        LOGGER.warning("Could not ad-hoc re-sign %s: %s", exe, e)
 
     @classmethod
     def _executables(cls, interpreter):
@@ -90,13 +93,6 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
             sys._framework = before
         """,
         )
-
-
-def resign(exe):
-    try:
-        subprocess.check_call(["codesign", "--force", "--sign", "-", exe])  # noqa: S607
-    except (OSError, subprocess.CalledProcessError) as e:
-        LOGGER.warning("Could not ad-hoc re-sign %s: %s", exe, e)
 
 
 def fix_mach_o(exe, current, new, max_size):

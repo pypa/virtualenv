@@ -87,9 +87,7 @@ class Describe:
 
 
 class Python3Supports(Describe, ABC):
-    @classmethod
-    def can_describe(cls, interpreter):
-        return interpreter.version_info.major == 3 and super().can_describe(interpreter)  # noqa: PLR2004
+    pass
 
 
 class PosixSupports(Describe, ABC):

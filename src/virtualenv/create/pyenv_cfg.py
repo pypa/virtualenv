@@ -28,6 +28,8 @@ class PyEnvCfg:
             equals_at = line.index("=")
             key = line[:equals_at].strip()
             value = line[equals_at + 1 :].strip()
+            if len(value) > 1 and value[0] in {"'", '"'} and value[0] == value[-1]:
+                value = value[1:-1]
             content[key] = value
         return content
 

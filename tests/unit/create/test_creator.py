@@ -349,14 +349,10 @@ def test_version_key_in_pyenv_cfg(tmp_path, creator):
 def test_executable_and_command_keys(tmp_path, creator):
     result = cli_run([str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", creator])
     cfg = PyEnvCfg.from_file(result.creator.pyenv_cfg.path)
-    if sys.version_info >= (3, 11):
-        assert "executable" in cfg
-        assert Path(cfg["executable"]).exists()
-        assert "command" in cfg
-        assert "virtualenv" in cfg["command"]
-    else:
-        assert "executable" not in cfg
-        assert "command" not in cfg
+    assert "executable" in cfg
+    assert Path(cfg["executable"]).exists()
+    assert "command" in cfg
+    assert "virtualenv" in cfg["command"]
 
 
 @pytest.mark.parametrize("creator", [c for c in CURRENT_CREATORS if c != "venv"])

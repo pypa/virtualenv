@@ -188,9 +188,12 @@ class Creator(ABC):
         self.pyenv_cfg["implementation"] = self.interpreter.implementation
         self.pyenv_cfg["version_info"] = ".".join(str(i) for i in self.interpreter.version_info)
         self.pyenv_cfg["version"] = ".".join(str(i) for i in self.interpreter.version_info[:3])
+        self.pyenv_cfg["executable"] = os.path.realpath(self.interpreter.system_executable)
+        self.pyenv_cfg["command"] = f"{sys.executable} -m virtualenv {self.dest}"
         self.pyenv_cfg["virtualenv"] = __version__
         if self.prompt is not None:
-            self.pyenv_cfg["prompt"] = os.path.basename(os.getcwd()) if self.prompt == "." else self.prompt
+            prompt_value = os.path.basename(os.getcwd()) if self.prompt == "." else self.prompt
+            self.pyenv_cfg["prompt"] = repr(prompt_value)
 
     def setup_ignore_vcs(self):
         """Generate ignore instructions for version control systems."""

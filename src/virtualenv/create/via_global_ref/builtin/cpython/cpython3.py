@@ -10,6 +10,8 @@ from textwrap import dedent
 from virtualenv.create.describe import Python3Supports
 from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest, PathRefToDest, RefWhen
 from virtualenv.create.via_global_ref.store import is_store_python
+from virtualenv.util.path import copy as copy_path
+from virtualenv.util.path import ensure_dir
 
 from .common import CPython, CPythonPosix, CPythonWindows, is_mac_os_framework, is_macos_brew
 
@@ -45,10 +47,18 @@ class CPython3Posix(CPythonPosix, CPython3):
             return None
         if not (libdir := interpreter.sysconfig_vars.get("LIBDIR")):
             return None
-        lib_path = Path(libdir) / instsoname
-        if not lib_path.exists():
+        if not (lib_path := Path(libdir) / instsoname).exists():
             return None
         return lib_path
+
+    def install_venv_shared_libs(self, venv_creator):
+        if venv_creator.symlinks:
+            return
+        if not (shared_lib := self._shared_libpython(venv_creator.interpreter)):
+            return
+        dest = venv_creator.dest / "lib" / shared_lib.name
+        ensure_dir(dest.parent)
+        copy_path(shared_lib, dest)
 
     def env_patch_text(self):
         text = super().env_patch_text()
@@ -134,8 +144,7 @@ class CPython3Windows(CPythonWindows, CPython3):
             exe_name = f"venvlauncher{t_suffix}.exe"
         else:
             exe_name = "python.exe"
-        shim = root / exe_name
-        if shim.exists():
+        if (shim := root / exe_name).exists():
             return shim
         return None
 
@@ -192,8 +201,7 @@ class CPython3Windows(CPythonWindows, CPython3):
         matches = fnmatch.filter(interpreter.path, pattern)
         matched_paths = map(Path, matches)
         existing_paths = filter(method("exists"), matched_paths)
-        path = next(existing_paths, None)
-        if path is not None:
+        if (path := next(existing_paths, None)) is not None:
             yield PathRefToDest(path, cls.to_bin)
 
 
