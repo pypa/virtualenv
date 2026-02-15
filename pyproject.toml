@@ -74,6 +74,7 @@ optional-dependencies.test = [
   "pytest-mock>=3.11.1",
   "pytest-randomly>=3.12",
   "pytest-timeout>=2.1",
+  "pytest-xdist>=3.5",
   "setuptools>=68",
   "time-machine>=2.10; platform_python_implementation=='CPython'",
 ]
@@ -171,7 +172,7 @@ max_supported_python = "3.14"
 ini_options.markers = [
   "slow",
 ]
-ini_options.timeout = 600
+ini_options.timeout = 120
 ini_options.addopts = "--showlocals --no-success-flaky-report"
 ini_options.env = [
   "PYTHONIOENCODING=utf-8",

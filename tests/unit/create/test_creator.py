@@ -394,9 +394,9 @@ def test_create_long_path(tmp_path):
     folder = tmp_path / ("a" * (count // 2)) / ("b" * (count // 2)) / "c"
     folder.mkdir(parents=True)
 
-    cmd = [str(folder)]
+    cmd = [str(folder), "--without-pip"]
     result = cli_run(cmd)
-    subprocess.check_call([str(result.creator.script("pip")), "--version"])
+    subprocess.check_call([str(result.creator.exe), "--version"])
 
 
 @pytest.mark.slow
