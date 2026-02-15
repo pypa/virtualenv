@@ -34,7 +34,7 @@ class CPythonmacOsFramework(CPython, ABC):
         # change the install_name of the copied python executables
         target = self.desired_mach_o_image_path()
         current = self.current_mach_o_image_path()
-        for src in self._sources:  # ty: ignore[not-iterable]
+        for src in self._sources:
             if isinstance(src, ExePathRefToDest) and (src.must == RefMust.COPY or not self.symlinks):
                 exes = [self.bin_dir / src.base]
                 if not self.symlinks:

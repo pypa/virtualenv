@@ -10,6 +10,7 @@ from argparse import ArgumentTypeError
 from ast import literal_eval
 from collections import OrderedDict
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from virtualenv.discovery.cached_py_info import LogCmd
 from virtualenv.util.path import safe_delete
@@ -46,6 +47,11 @@ class Creator(ABC):
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest)
         self.app_data = options.app_data
         self.env = options.env
+
+    if TYPE_CHECKING:
+
+        @property
+        def exe(self) -> Path: ...
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self._args())})"
@@ -197,8 +203,8 @@ class Creator(ABC):
     @property
     def debug(self):
         """:return: debug information about the virtual environment (only valid after :meth:`create` has run)"""
-        if self._debug is None and self.exe is not None:  # ty: ignore[unresolved-attribute]
-            self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data, self.env)  # ty: ignore[unresolved-attribute]
+        if self._debug is None and self.exe is not None:
+            self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data, self.env)
         return self._debug
 
     @staticmethod

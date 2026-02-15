@@ -22,7 +22,9 @@ class BuiltinViaGlobalRefMeta(ViaGlobalRefMeta):
 class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
     def __init__(self, options, interpreter) -> None:
         super().__init__(options, interpreter)
-        self._sources = getattr(options.meta, "sources", None)  # if we're created as a describer this might be missing
+        self._sources: list = (
+            getattr(options.meta, "sources", None) or []
+        )  # if created as a describer this might be missing
 
     @classmethod
     def can_create(cls, interpreter):
@@ -86,7 +88,7 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
         true_system_site = self.enable_system_site_package
         try:
             self.enable_system_site_package = False
-            for src in self._sources:  # ty: ignore[not-iterable]
+            for src in self._sources:
                 if (
                     src.when == RefWhen.ANY
                     or (src.when == RefWhen.SYMLINK and self.symlinks is True)
