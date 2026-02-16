@@ -62,8 +62,10 @@ def safe_delete(dest):
         else:
             raise  # noqa: PLE0704
 
-    kwargs = {"onexc" if sys.version_info >= (3, 12) else "onerror": onerror}
-    shutil.rmtree(str(dest), ignore_errors=True, **kwargs)
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(str(dest), ignore_errors=True, onexc=onerror)
+    else:
+        shutil.rmtree(str(dest), ignore_errors=True, onerror=onerror)
 
 
 class _Debug:

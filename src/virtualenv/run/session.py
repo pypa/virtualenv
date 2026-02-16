@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import json
 import logging
+import sys
 from typing import TYPE_CHECKING
-
-from typing_extensions import Self
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -14,6 +13,11 @@ if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
     from virtualenv.discovery.py_info import PythonInfo
     from virtualenv.seed.seeder import Seeder
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 LOGGER = logging.getLogger(__name__)
 

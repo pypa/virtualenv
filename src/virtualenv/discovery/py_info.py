@@ -277,8 +277,12 @@ class PythonInfo:  # noqa: PLR0904
         with warnings.catch_warnings():  # disable warning for PEP-632
             warnings.simplefilter("ignore")
             try:
-                from distutils import dist  # noqa: PLC0415
-                from distutils.command.install import SCHEME_KEYS  # noqa: PLC0415
+                from distutils import (  # noqa: PLC0415  # ty: ignore[unresolved-import]  # https://github.com/astral-sh/ty/issues/708
+                    dist,
+                )
+                from distutils.command.install import (  # noqa: PLC0415  # ty: ignore[unresolved-import]  # https://github.com/astral-sh/ty/issues/708
+                    SCHEME_KEYS,
+                )
             except ImportError:  # if removed or not installed ignore
                 return {}
 

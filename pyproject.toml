@@ -216,7 +216,7 @@ html.show_contexts = true
 html.skip_covered = false
 
 [tool.towncrier]
-name = "tox"
+name = "virtualenv"
 filename = "docs/changelog.rst"
 directory = "docs/changelog"
 title_format = false

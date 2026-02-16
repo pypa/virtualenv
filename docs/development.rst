@@ -123,64 +123,24 @@ The ``--version`` argument to ``tox r -e release`` controls the version. It defa
 ``docs/changelog`` directory: if any ``*.feature.rst`` or ``*.removal.rst`` fragments exist, the minor version is
 bumped, otherwise the patch version is bumped. You can also pass ``major``, ``minor``, or ``patch`` explicitly.
 
+Both methods produce identical results: a release commit and tag on ``main``. Pushing the tag triggers the `Release
+workflow <https://github.com/pypa/virtualenv/actions/workflows/release.yaml>`_ which builds the sdist, wheel, and
+zipapp, publishes to PyPI via trusted publisher, creates a `GitHub Release
+<https://github.com/pypa/virtualenv/releases>`_ with the zipapp attached, and updates `get-virtualenv
+<https://github.com/pypa/get-virtualenv>`_. If publish fails, a rollback job automatically reverts everything.
+
 **Via GitHub Actions (recommended)**
 
-1. Go to the `Release workflow <https://github.com/pypa/virtualenv/actions/workflows/release.yaml>`_ on GitHub.
+1. Go to the `Pre-release workflow <https://github.com/pypa/virtualenv/actions/workflows/pre-release.yaml>`_ on GitHub.
 2. Click **Run workflow** and select the bump type (``auto``, ``major``, ``minor``, or ``patch``).
-3. The workflow runs in two phases:
-
-   **Build** (nothing is published yet):
-
-   - Generates the changelog from ``docs/changelog`` fragments via :pypi:`towncrier`.
-   - Creates the release commit and tag locally.
-   - Builds the sdist, wheel, and zipapp (``virtualenv.pyz``).
-
-   **Publish** (only if build succeeds):
-
-   - Pushes the release commit and tag to ``main``.
-   - Publishes the sdist and wheel to PyPI.
-   - Creates a `GitHub Release <https://github.com/pypa/virtualenv/releases>`_ with the zipapp attached.
-   - Pushes the new zipapp and version to ``get-virtualenv``.
-
-   If publish fails, a **rollback** job automatically reverts the release commit, deletes the tag and GitHub Release on
-   both ``virtualenv`` and ``get-virtualenv``.
 
 **Locally**
 
-1. Generate the changelog, create the release commit, tag, and push:
+.. code-block:: console
 
-   .. code-block:: console
+    tox r -e release
 
-       tox r -e release
-
-   Pass ``--version <bump>`` to override the default ``auto`` behavior (e.g. ``--version minor``).
-
-2. Build the zipapp:
-
-   .. code-block:: console
-
-       tox r -e zipapp
-
-3. Create a GitHub Release and attach the zipapp:
-
-   .. code-block:: console
-
-       gh release create <version> virtualenv.pyz --generate-notes
-
-4. Update ``get-virtualenv`` with the new zipapp:
-
-   .. code-block:: console
-
-       git clone https://github.com/pypa/get-virtualenv.git /tmp/get-virtualenv
-       cp virtualenv.pyz /tmp/get-virtualenv/public/virtualenv.pyz
-       echo -n "<version>" > /tmp/get-virtualenv/public/version.txt
-       git -C /tmp/get-virtualenv add public/virtualenv.pyz public/version.txt
-       git -C /tmp/get-virtualenv commit -m "update virtualenv to <version>"
-       git -C /tmp/get-virtualenv push origin main
-
-   The push triggers ``get-virtualenv``'s own `release workflow
-   <https://github.com/pypa/get-virtualenv/blob/main/.github/workflows/release.yml>`_ which automatically creates a tag
-   and GitHub Release with the zipapp attached.
+Pass ``--version <bump>`` to override the default ``auto`` behavior (e.g. ``--version minor``).
 
 **************
  Contributing
