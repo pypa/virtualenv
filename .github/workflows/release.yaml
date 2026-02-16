@@ -9,6 +9,8 @@ env:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -88,6 +90,8 @@ jobs:
       - publish
     runs-on: ubuntu-24.04
     environment: release
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
