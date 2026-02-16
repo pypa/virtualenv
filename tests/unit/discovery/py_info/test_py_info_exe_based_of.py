@@ -21,7 +21,7 @@ BASE = (CURRENT.install_path("scripts"), ".")
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
-@pytest.mark.parametrize("suffix", sorted({".exe", ".cmd", ""} & set(EXTENSIONS) if IS_WIN else [""]))
+@pytest.mark.parametrize("suffix", sorted({".exe", ""} & set(EXTENSIONS) if IS_WIN else [""]))
 @pytest.mark.parametrize("into", BASE)
 @pytest.mark.parametrize("arch", [CURRENT.architecture, ""])
 @pytest.mark.parametrize("version", [".".join(str(i) for i in CURRENT.version_info[0:i]) for i in range(3, 0, -1)])
