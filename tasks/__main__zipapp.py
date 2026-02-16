@@ -169,7 +169,7 @@ def run():
     with VersionedFindLoad() as finder:
         sys.meta_path.insert(0, finder)
         finder._register_distutils_finder()  # noqa: SLF001
-        from virtualenv.__main__ import run as run_virtualenv  # noqa: PLC0415, PLC2701
+        from virtualenv.__main__ import run as run_virtualenv  # noqa: PLC0415
 
         run_virtualenv()
 
