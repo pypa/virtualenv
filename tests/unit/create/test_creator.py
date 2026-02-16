@@ -26,7 +26,7 @@ from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.create.pyenv_cfg import PyEnvCfg
 from virtualenv.create.via_global_ref import api
-from virtualenv.create.via_global_ref.builtin.cpython.common import is_macos_brew
+from virtualenv.create.via_global_ref.builtin.cpython.common import is_mac_os_framework, is_macos_brew
 from virtualenv.create.via_global_ref.builtin.cpython.cpython3 import CPython3Posix
 from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_PYPY, IS_WIN, fs_is_case_sensitive
@@ -318,20 +318,51 @@ def test_create_clear_resets(tmp_path, creator, clear, caplog):
 
 
 @pytest.mark.parametrize("creator", CURRENT_CREATORS)
-@pytest.mark.parametrize("prompt", [None, "magic"])
-def test_prompt_set(tmp_path, creator, prompt):
-    cmd = [str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", creator]
+@pytest.mark.parametrize("prompt", [None, "magic", "."])
+def test_prompt_set(tmp_path: Path, creator: str, prompt: str | None, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    cmd = [str(tmp_path / "env"), "--seeder", "app-data", "--without-pip", "--creator", creator]
     if prompt is not None:
-        cmd.extend(["--prompt", "magic"])
+        cmd.extend(["--prompt", prompt])
 
     result = cli_run(cmd)
-    actual_prompt = tmp_path.name if prompt is None else prompt
     cfg = PyEnvCfg.from_file(result.creator.pyenv_cfg.path)
     if prompt is None:
         assert "prompt" not in cfg
     elif creator != "venv":
+        expected = tmp_path.name if prompt == "." else prompt
         assert "prompt" in cfg, list(cfg.content.keys())
-        assert cfg["prompt"] == actual_prompt
+        assert cfg["prompt"] == expected
+
+
+@pytest.mark.parametrize("creator", CURRENT_CREATORS)
+def test_version_key_in_pyenv_cfg(tmp_path: Path, creator: str) -> None:
+    result = cli_run([str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", creator])
+    cfg = PyEnvCfg.from_file(result.creator.pyenv_cfg.path)
+    assert "version" in cfg
+    parts = cfg["version"].split(".")
+    assert len(parts) == 3
+    assert all(p.isdigit() for p in parts)
+
+
+@pytest.mark.parametrize("creator", [c for c in CURRENT_CREATORS if c != "venv"])
+def test_executable_and_command_keys(tmp_path: Path, creator: str) -> None:
+    result = cli_run([str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", creator])
+    cfg = PyEnvCfg.from_file(result.creator.pyenv_cfg.path)
+    assert "executable" in cfg
+    assert Path(cfg["executable"]).exists()
+    assert "command" in cfg
+    assert "virtualenv" in cfg["command"]
+
+
+@pytest.mark.parametrize("creator", [c for c in CURRENT_CREATORS if c != "venv"])
+def test_include_dir_created(tmp_path: Path, creator: str) -> None:
+    result = cli_run([str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", creator])
+    if sys.platform == "win32":
+        include = result.creator.dest / "Include"
+    else:
+        include = result.creator.dest / "include"
+    assert include.is_dir()
 
 
 @pytest.mark.parametrize("creator", CURRENT_CREATORS)
@@ -746,8 +777,11 @@ def test_fail_gracefully_if_no_method_supported(tmp_path, python, mocker):
     # Then a RuntimeError should be raised with a detailed message
     assert "neither symlink or copy method supported" in str(excinfo.value)
     assert "symlink: the filesystem does not supports symlink" in str(excinfo.value)
-    if is_macos_brew(PythonInfo.from_exe(python)):
+    interpreter = PythonInfo.from_exe(python)
+    if is_macos_brew(interpreter):
         assert "copy: Brew disables copy creation" in str(excinfo.value)
+    elif is_mac_os_framework(interpreter):
+        assert "copy: macOS framework builds do not support copy-based virtual environments" in str(excinfo.value)
     else:
         assert "copy: copying is not supported" in str(excinfo.value)
 

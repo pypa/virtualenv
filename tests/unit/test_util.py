@@ -3,12 +3,16 @@ from __future__ import annotations
 import concurrent.futures
 import os
 import traceback
+from typing import TYPE_CHECKING
 
 import pytest
 
 from virtualenv.app_data import _cache_dir_with_migration, _default_app_data_dir
 from virtualenv.util.lock import ReentrantFileLock
 from virtualenv.util.subprocess import run_cmd
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_run_fail(tmp_path):
@@ -39,19 +43,19 @@ def test_reentrant_file_lock_is_thread_safe(tmp_path):
 
 
 class TestDefaultAppDataDir:
-    def test_override_env_var(self, tmp_path):
+    def test_override_env_var(self, tmp_path: Path) -> None:
         custom = str(tmp_path / "custom")
         env = {"VIRTUALENV_OVERRIDE_APP_DATA": custom}
         assert _default_app_data_dir(env) == custom
 
-    def test_no_override_returns_cache_dir(self, monkeypatch):
+    def test_no_override_returns_cache_dir(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("VIRTUALENV_OVERRIDE_APP_DATA", raising=False)
         result = _default_app_data_dir(os.environ)
         assert result
 
 
 class TestCacheDirMigration:
-    def test_migrate_old_to_new(self, tmp_path, monkeypatch):
+    def test_migrate_old_to_new(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         old_dir = str(tmp_path / "old-data")
         new_dir = str(tmp_path / "new-cache")
         os.makedirs(old_dir)
@@ -66,7 +70,7 @@ class TestCacheDirMigration:
         assert not os.path.isdir(old_dir)
         assert (tmp_path / "new-cache" / "test.txt").read_text() == "hello"
 
-    def test_no_migration_when_old_missing(self, tmp_path, monkeypatch):
+    def test_no_migration_when_old_missing(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         old_dir = str(tmp_path / "old-data")
         new_dir = str(tmp_path / "new-cache")
 
@@ -77,7 +81,7 @@ class TestCacheDirMigration:
         assert result == new_dir
         assert not os.path.isdir(old_dir)
 
-    def test_no_migration_when_new_exists(self, tmp_path, monkeypatch):
+    def test_no_migration_when_new_exists(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         old_dir = str(tmp_path / "old-data")
         new_dir = str(tmp_path / "new-cache")
         os.makedirs(old_dir)
@@ -91,7 +95,7 @@ class TestCacheDirMigration:
         assert result == new_dir
         assert os.path.isdir(old_dir)
 
-    def test_same_dir_returns_immediately(self, tmp_path, monkeypatch):
+    def test_same_dir_returns_immediately(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         same_dir = str(tmp_path / "same")
         monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: same_dir)
         monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: same_dir)
@@ -99,7 +103,7 @@ class TestCacheDirMigration:
         result = _cache_dir_with_migration()
         assert result == same_dir
 
-    def test_fallback_on_migration_error(self, tmp_path, monkeypatch):
+    def test_fallback_on_migration_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         old_dir = str(tmp_path / "old-data")
         new_dir = str(tmp_path / "new-cache")
         os.makedirs(old_dir)
@@ -107,7 +111,7 @@ class TestCacheDirMigration:
         monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: new_dir)
         monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: old_dir)
 
-        def broken_move(_src, _dst):
+        def broken_move(_src: str, _dst: str) -> None:
             msg = "permission denied"
             raise OSError(msg)
 
@@ -117,7 +121,12 @@ class TestCacheDirMigration:
         assert result == old_dir
 
     @pytest.mark.parametrize("symlink_flag", [True, False])
-    def test_symlink_app_data_survives_migration(self, tmp_path, monkeypatch, symlink_flag):  # noqa: ARG002
+    def test_symlink_app_data_survives_migration(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        symlink_flag: bool,  # noqa: ARG002
+    ) -> None:
         old_dir = str(tmp_path / "old-data")
         new_dir = str(tmp_path / "new-cache")
         os.makedirs(old_dir)

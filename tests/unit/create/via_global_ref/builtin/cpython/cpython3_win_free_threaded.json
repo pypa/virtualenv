@@ -1,0 +1,62 @@
+{
+  "platform": "win32",
+  "implementation": "CPython",
+  "version_info": {
+    "major": 3,
+    "minor": 13,
+    "micro": 0,
+    "releaselevel": "final",
+    "serial": 0
+  },
+  "architecture": 64,
+  "version_nodot": "313",
+  "version": "3.13.0 (main, Oct 07 2024, 00:00:00) [MSC v.1941 64 bit (AMD64)]",
+  "os": "nt",
+  "prefix": "c:\\path\\to\\python",
+  "base_prefix": "c:\\path\\to\\python",
+  "real_prefix": null,
+  "base_exec_prefix": "c:\\path\\to\\python",
+  "exec_prefix": "c:\\path\\to\\python",
+  "executable": "c:\\path\\to\\python\\python3.13t.exe",
+  "original_executable": "c:\\path\\to\\python\\python3.13t.exe",
+  "system_executable": "c:\\path\\to\\python\\python3.13t.exe",
+  "has_venv": false,
+  "path": [
+    "c:\\path\\to\\python\\Scripts\\virtualenv.exe",
+    "c:\\path\\to\\python\\python313.zip",
+    "c:\\path\\to\\python",
+    "c:\\path\\to\\python\\Lib\\site-packages"
+  ],
+  "file_system_encoding": "utf-8",
+  "stdout_encoding": "utf-8",
+  "sysconfig_scheme": null,
+  "sysconfig_paths": {
+    "stdlib": "{installed_base}/Lib",
+    "platstdlib": "{base}/Lib",
+    "purelib": "{base}/Lib/site-packages",
+    "platlib": "{base}/Lib/site-packages",
+    "include": "{installed_base}/Include",
+    "scripts": "{base}/Scripts",
+    "data": "{base}"
+  },
+  "distutils_install": {
+    "purelib": "Lib\\site-packages",
+    "platlib": "Lib\\site-packages",
+    "headers": "Include\\UNKNOWN",
+    "scripts": "Scripts",
+    "data": ""
+  },
+  "sysconfig": {
+    "makefile_filename": "c:\\path\\to\\python\\Lib\\config\\Makefile"
+  },
+  "sysconfig_vars": {
+    "PYTHONFRAMEWORK": "",
+    "installed_base": "c:\\path\\to\\python",
+    "base": "c:\\path\\to\\python"
+  },
+  "system_stdlib": "c:\\path\\to\\python\\Lib",
+  "system_stdlib_platform": "c:\\path\\to\\python\\Lib",
+  "max_size": 9223372036854775807,
+  "_creators": null,
+  "free_threaded": true
+}

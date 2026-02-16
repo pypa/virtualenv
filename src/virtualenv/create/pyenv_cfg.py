@@ -28,6 +28,8 @@ class PyEnvCfg:
             equals_at = line.index("=")
             key = line[:equals_at].strip()
             value = line[equals_at + 1 :].strip()
+            if len(value) > 1 and value[0] in {"'", '"'} and value[0] == value[-1]:
+                value = value[1:-1]
             content[key] = value
         return content
 
@@ -37,7 +39,10 @@ class PyEnvCfg:
         for key, value in self.content.items():
             # Use abspath to normalize relative paths but preserve symlinks (match venv behavior)
             # See issue #2770 - realpath resolves symlinks which breaks prefix symlinks
-            normalized_value = os.path.abspath(value) if value and os.path.exists(value) else value
+            if key == "prompt" and value:
+                normalized_value = f'"{value}"'
+            else:
+                normalized_value = os.path.abspath(value) if value and os.path.exists(value) else value
             line = f"{key} = {normalized_value}"
             LOGGER.debug("\t%s", line)
             text += line
