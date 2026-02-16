@@ -155,7 +155,7 @@ otherwise the patch version is bumped. You can also pass ``major``, ``minor``, o
 
        tox r -e release
 
-   Pass ``--version <bump>`` to override the default ``auto`` behaviour (e.g. ``--version minor``).
+   Pass ``--version <bump>`` to override the default ``auto`` behavior (e.g. ``--version minor``).
 
 #. Build the zipapp:
 
