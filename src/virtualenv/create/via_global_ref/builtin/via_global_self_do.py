@@ -111,10 +111,7 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
         return {self.dest, self.bin_dir, self.script_dir, self.stdlib, self.include_dir} | set(self.libs)
 
     def set_pyenv_cfg(self):
-        """
-        We directly inject the base prefix and base exec prefix to avoid site.py needing to discover these
-        from home (which usually is done within the interpreter itself).
-        """  # noqa: D205
+        """We directly inject the base prefix and base exec prefix to avoid site.py needing to discover these from home (which usually is done within the interpreter itself)."""
         super().set_pyenv_cfg()
         self.pyenv_cfg["base-prefix"] = self.interpreter.system_prefix
         self.pyenv_cfg["base-exec-prefix"] = self.interpreter.system_exec_prefix

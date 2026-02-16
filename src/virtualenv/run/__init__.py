@@ -3,9 +3,10 @@ from __future__ import annotations
 import logging
 import os
 from functools import partial
+from typing import TYPE_CHECKING
 
 from virtualenv.app_data import make_app_data
-from virtualenv.config.cli.parser import VirtualEnvConfigParser
+from virtualenv.config.cli.parser import VirtualEnvConfigParser, VirtualEnvOptions
 from virtualenv.report import LEVELS, setup_report
 from virtualenv.run.session import Session
 from virtualenv.seed.wheels.periodic_update import manual_upgrade
@@ -16,16 +17,26 @@ from .plugin.creators import CreatorSelector
 from .plugin.discovery import get_discover
 from .plugin.seeders import SeederSelector
 
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping
 
-def cli_run(args, options=None, setup_logging=True, env=None):  # noqa: FBT002
-    """
-    Create a virtual environment given some command line interface arguments.
+
+def cli_run(
+    args: list[str],
+    options: VirtualEnvOptions | None = None,
+    setup_logging: bool = True,  # noqa: FBT001, FBT002
+    env: MutableMapping[str, str] | None = None,
+) -> Session:
+    """Create a virtual environment given some command line interface arguments.
 
     :param args: the command line arguments
     :param options: passing in a ``VirtualEnvOptions`` object allows return of the parsed options
     :param setup_logging: ``True`` if setup logging handlers, ``False`` to use handlers already registered
     :param env: environment variables to use
-    :return: the session object of the creation (its structure for now is experimental and might change on short notice)
+
+    :returns: the session object of the creation (its structure for now is experimental and might change on short
+        notice)
+
     """
     env = os.environ if env is None else env
     of_session = session_via_cli(args, options, setup_logging, env)
@@ -34,17 +45,23 @@ def cli_run(args, options=None, setup_logging=True, env=None):  # noqa: FBT002
     return of_session
 
 
-def session_via_cli(args, options=None, setup_logging=True, env=None):  # noqa: FBT002
-    """
-    Create a virtualenv session (same as cli_run, but this does not perform the creation). Use this if you just want to
-    query what the virtual environment would look like, but not actually create it.
+def session_via_cli(
+    args: list[str],
+    options: VirtualEnvOptions | None = None,
+    setup_logging: bool = True,  # noqa: FBT001, FBT002
+    env: MutableMapping[str, str] | None = None,
+) -> Session:
+    """Create a virtualenv session (same as cli_run, but this does not perform the creation). Use this if you just want to query what the virtual environment would look like, but not actually create it.
 
     :param args: the command line arguments
     :param options: passing in a ``VirtualEnvOptions`` object allows return of the parsed options
     :param setup_logging: ``True`` if setup logging handlers, ``False`` to use handlers already registered
     :param env: environment variables to use
-    :return: the session object of the creation (its structure for now is experimental and might change on short notice)
-    """  # noqa: D205
+
+    :returns: the session object of the creation (its structure for now is experimental and might change on short
+        notice)
+
+    """
     env = os.environ if env is None else env
     parser, elements = build_parser(args, options, setup_logging, env)
     options = parser.parse_args(args)

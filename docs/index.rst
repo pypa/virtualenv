@@ -1,122 +1,137 @@
-virtualenv
-==========
+############
+ virtualenv
+############
 
 .. image:: https://img.shields.io/pypi/v/virtualenv?style=flat-square
-  :target: https://pypi.org/project/virtualenv/#history
-  :alt: Latest version on PyPI
+    :target: https://pypi.org/project/virtualenv/#history
+    :alt: Latest version on PyPI
+
 .. image:: https://img.shields.io/pypi/implementation/virtualenv?style=flat-square
-  :alt: PyPI - Implementation
+    :alt: PyPI - Implementation
+
 .. image:: https://img.shields.io/pypi/pyversions/virtualenv?style=flat-square
-  :alt: PyPI - Python Version
+    :alt: PyPI - Python Version
+
 .. image:: https://readthedocs.org/projects/virtualenv/badge/?version=latest&style=flat-square
-  :target: https://virtualenv.pypa.io
-  :alt: Documentation status
+    :target: https://virtualenv.pypa.io
+    :alt: Documentation status
+
 .. image:: https://img.shields.io/discord/803025117553754132
-  :target: https://discord.gg/pypa
-  :alt: Discord
+    :target: https://discord.gg/pypa
+    :alt: Discord
+
 .. image:: https://img.shields.io/pypi/dm/virtualenv?style=flat-square
-  :target: https://pypistats.org/packages/virtualenv
-  :alt: PyPI - Downloads
+    :target: https://pypistats.org/packages/virtualenv
+    :alt: PyPI - Downloads
+
 .. image:: https://img.shields.io/pypi/l/virtualenv?style=flat-square
-  :target: https://opensource.org/licenses/MIT
-  :alt: PyPI - License
+    :target: https://opensource.org/licenses/MIT
+    :alt: PyPI - License
+
 .. image:: https://img.shields.io/github/issues/pypa/virtualenv?style=flat-square
-  :target: https://github.com/pypa/virtualenv/issues
-  :alt: Open issues
+    :target: https://github.com/pypa/virtualenv/issues
+    :alt: Open issues
+
 .. image:: https://img.shields.io/github/issues-pr/pypa/virtualenv?style=flat-square
-  :target: https://github.com/pypa/virtualenv/pulls
-  :alt: Open pull requests
+    :target: https://github.com/pypa/virtualenv/pulls
+    :alt: Open pull requests
+
 .. image:: https://img.shields.io/github/stars/pypa/virtualenv?style=flat-square
-  :target: https://pypistats.org/packages/virtualenv
-  :alt: Package popularity
+    :target: https://pypistats.org/packages/virtualenv
+    :alt: Package popularity
 
-``virtualenv`` is a tool to create isolated Python environments.
+``virtualenv`` is a tool to create isolated Python environments. Since Python 3.3, a subset of it has been integrated
+into the standard library under the ``venv`` module. For how ``virtualenv`` compares to the stdlib ``venv`` module, see
+:doc:`explanation`.
 
-virtualenv vs venv
-------------------
+******************
+ Quick navigation
+******************
 
-Since Python ``3.3``, a subset of it has been
-integrated into the standard library under the `venv module <https://docs.python.org/3/library/venv.html>`_. The
-``venv`` module does not offer all features of this library, to name just a few more prominent:
+**Tutorials** - Learn by doing
 
-- is slower (by not having the ``app-data`` seed method),
-- is not as extendable,
-- cannot create virtual environments for arbitrarily installed python versions (and automatically discover these),
-- is not upgrade-able via `pip <https://pip.pypa.io/en/stable/installing/>`_,
-- does not have as rich programmatic API (describe virtual environments without creating them).
+- :doc:`tutorial/getting-started` — Create your first virtual environment and learn the basic workflow
 
-Concept and purpose of virtualenv
----------------------------------
+**How-to guides** - Solve specific problems
 
-The basic problem being addressed is one of dependencies and versions, and indirectly permissions.
-Imagine you have an application that needs version ``1`` of ``LibFoo``, but another application requires version
-``2``. How can you use both these libraries? If you install everything into your host python (e.g. ``python3.8``)
-it's easy to end up in a situation where two packages have conflicting requirements.
+- :doc:`how-to/install` — Install virtualenv on your system
+- :doc:`how-to/usage` — Select Python versions, activate environments, configure defaults, and use from Python code
 
-Or more generally, what if you want to install an application *and leave it be*? If an application works, any change
-in its libraries or the versions of those libraries can break the application. Also, what if you can't install packages
-into the global ``site-packages`` directory, due to not having permissions to change the host python environment?
+**Reference** - Technical information
 
-In all these cases, ``virtualenv`` can help you. It creates an environment that has its own installation directories,
-that doesn't share libraries with other virtualenv environments (and optionally doesn't access the globally installed
-libraries either).
+- :doc:`reference/compatibility` — Supported Python versions and operating systems
+- :doc:`reference/cli` — Command line options and flags
+- :doc:`reference/api` — Programmatic Python API reference
 
+**Explanation** - Understand the concepts
 
-Compatibility
--------------
+- :doc:`explanation` — How virtualenv works under the hood and why it exists
 
-With the release of virtualenv 20.22, April 2023, (`release note <https://virtualenv.pypa.io/en/latest/changelog.html#v20-22-0-2023-04-19>`__) target interpreters are now limited to Python v. 3.7+.
+**Extensions**
 
-Trying to use an earlier version will normally result in the target interpreter raising a syntax error. This virtualenv tool will then print some details about the exception and abort, ie no explicit warning about trying to use an outdated/incompatible version. It may look like this:
+- :doc:`plugin/index` — Extend virtualenv with custom creators, seeders, and activators
 
-.. code-block:: console
+******************
+ Related projects
+******************
 
-    $ virtualenv --discovery pyenv -p python3.6 foo
-    RuntimeError: failed to query /home/velle/.pyenv/versions/3.6.15/bin/python3.6 with code 1 err: '  File "/home/velle/.virtualenvs/toxrunner/lib/python3.12/site-packages/virtualenv/discovery/py_info.py", line 7
-        from __future__ import annotations
-        ^
-    SyntaxError: future feature annotations is not defined
+Several tools build on virtualenv to provide higher-level workflows:
 
+- `virtualenvwrapper <https://virtualenvwrapper.readthedocs.io/en/latest/>`_ — Shell wrapper for creating and managing
+  multiple virtualenvs
+- `pew <https://github.com/berdario/pew>`_ — Python Env Wrapper, a set of commands to manage multiple virtual
+  environments
+- `tox <https://tox.readthedocs.io/en/latest/>`_ — Automate testing across multiple Python versions
+- `nox <https://nox.thea.codes/en/stable/>`_ — Flexible test automation in Python
 
-In tox, even if the interpreter is installed and available, the message is (somewhat misleading):
+********************
+ External resources
+********************
 
-.. code-block:: console
+Learn more about virtualenv from these community resources:
 
-    py36: skipped because could not find python interpreter with spec(s): py36
-
-
-
-Useful links
-------------
-
-**Related projects, that build abstractions on top of virtualenv**
-
-* :pypi:`virtualenvwrapper` - a useful set of scripts for creating and deleting virtual environments
-* :pypi:`pew` - provides a set of commands to manage multiple virtual environments
-* :pypi:`tox` - a generic virtualenv management and test automation command line tool, driven by a ``tox.ini``
-  configuration file
-* :pypi:`nox` - a tool that automates testing in multiple Python environments, similar to tox,
-  driven by a ``noxfile.py`` configuration file
-
-**Tutorials**
-
-* `Corey Schafer tutorial <https://www.youtube.com/watch?v=N5vscPTWKOk>`_ on how to use it
-* `Using virtualenv with mod_wsgi <http://code.google.com/p/modwsgi/wiki/VirtualEnvironments>`_
-
-**Presenting how the package works from within**
-
-* `Bernat Gabor: status quo of virtual environments <https://www.youtube.com/watch?v=o1Vue9CWRxU>`_
-* `Carl Meyer: Reverse-engineering Ian Bicking's brain: inside pip and virtualenv
-  <http://pyvideo.org/video/568/reverse-engineering-ian-bicking--39-s-brain--insi>`_
-
-.. comment: split here
+- `Corey Schafer's virtualenv tutorial <https://www.youtube.com/watch?v=N5vscPTWKOk>`_ — Video walkthrough for beginners
+- `Bernat Gabor's status quo <https://www.youtube.com/watch?v=o1Vue9CWRxU>`_ — Talk about the current state of Python
+  packaging
+- `Carl Meyer's reverse-engineering <http://pyvideo.org/video/568/reverse-engineering-ian-bicking--39-s-brain--insi>`_ —
+  Deep dive into how virtualenv works internally
 
 .. toctree::
-   :hidden:
+    :hidden:
+    :caption: Tutorial
 
-   installation
-   user_guide
-   cli_interface
-   extend
-   development
-   changelog
+    tutorial/getting-started
+
+.. toctree::
+    :hidden:
+    :caption: How-to guides
+
+    how-to/install
+    how-to/usage
+
+.. toctree::
+    :hidden:
+    :caption: Reference
+
+    reference/compatibility
+    reference/cli
+    reference/api
+
+.. toctree::
+    :hidden:
+    :caption: Explanation
+
+    explanation
+
+.. toctree::
+    :hidden:
+    :caption: Extend
+
+    plugin/index
+
+.. toctree::
+    :hidden:
+    :caption: Project
+
+    development
+    changelog

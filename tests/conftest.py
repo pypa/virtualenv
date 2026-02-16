@@ -198,9 +198,7 @@ COVERAGE_RUN = os.environ.get(str(COV_ENV_VAR))
 
 @pytest.fixture(autouse=True)
 def coverage_env(monkeypatch, link, request):
-    """
-    Enable coverage report collection on the created virtual environments by injecting the coverage project
-    """
+    """Enable coverage report collection on the created virtual environments by injecting the coverage project"""
     if COVERAGE_RUN and "_no_coverage" not in request.fixturenames:
         # we inject right after creation, we cannot collect coverage on site.py - used for helper scripts, such as debug
         from virtualenv import run  # noqa: PLC0415
@@ -326,10 +324,7 @@ def session_app_data(tmp_path_factory):
 
 @contextmanager
 def change_env_var(key, value):
-    """Temporarily change an environment variable.
-    :param key: the key of the env var
-    :param value: the value of the env var
-    """
+    """Temporarily change an environment variable. :param key: the key of the env var :param value: the value of the env var"""
     already_set = key in os.environ
     prev_value = os.environ.get(key)
     os.environ[key] = value

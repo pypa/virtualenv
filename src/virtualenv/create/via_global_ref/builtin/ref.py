@@ -1,8 +1,4 @@
-"""
-Virtual environments in the traditional sense are built as reference to the host python. This file allows declarative
-references to elements on the file system, allowing our system to automatically detect what modes it can support given
-the constraints: e.g. can the file system symlink, can the files be read, executed, etc.
-"""  # noqa: D205
+"""Virtual environments in the traditional sense are built as reference to the host python. This file allows declarative references to elements on the file system, allowing our system to automatically detect what modes it can support given the constraints: e.g. can the file system symlink, can the files be read, executed, etc."""
 
 from __future__ import annotations
 

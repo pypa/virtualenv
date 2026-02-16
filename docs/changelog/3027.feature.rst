@@ -1,1 +1,2 @@
-Upgrade embedded pip to ``26.0.1`` from ``25.3`` and setuptools to ``82.0.0``, ``75.3.4`` from ``75.3.2``, ``80.9.0`` - by :user:`rahuldevikar`.
+Upgrade embedded pip to ``26.0.1`` from ``25.3`` and setuptools to ``82.0.0``, ``75.3.4`` from ``75.3.2``, ``80.9.0`` -
+by :user:`rahuldevikar`.

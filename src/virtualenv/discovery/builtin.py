@@ -195,7 +195,7 @@ def get_paths(env: Mapping[str, str]) -> Generator[Path, None, None]:
     path = env.get("PATH", None)
     if path is None:
         try:
-            path = os.confstr("CS_PATH")  # ty: ignore[unresolved-attribute]
+            path = os.confstr("CS_PATH")
         except (AttributeError, ValueError):
             path = os.defpath
     if path:

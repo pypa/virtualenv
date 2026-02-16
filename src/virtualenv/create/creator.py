@@ -12,6 +12,13 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from argparse import ArgumentParser
+
+    from virtualenv.app_data.base import AppData
+    from virtualenv.config.cli.parser import VirtualEnvOptions
+    from virtualenv.discovery.py_info import PythonInfo
+
 from virtualenv.discovery.cached_py_info import LogCmd
 from virtualenv.util.path import safe_delete
 from virtualenv.util.subprocess import run_cmd
@@ -32,12 +39,12 @@ class CreatorMeta:
 class Creator(ABC):
     """A class that given a python Interpreter creates a virtual environment."""
 
-    def __init__(self, options, interpreter) -> None:
-        """
-        Construct a new virtual environment creator.
+    def __init__(self, options: VirtualEnvOptions, interpreter: PythonInfo) -> None:
+        """Construct a new virtual environment creator.
 
         :param options: the CLI option as parsed from :meth:`add_parser_arguments`
         :param interpreter: the interpreter to create virtual environment from
+
         """
         self.interpreter = interpreter
         self._debug = None
@@ -48,11 +55,6 @@ class Creator(ABC):
         self.app_data = options.app_data
         self.env = options.env
         self.prompt = getattr(options, "prompt", None)
-
-    if TYPE_CHECKING:
-
-        @property
-        def exe(self) -> Path: ...
 
     if TYPE_CHECKING:
 
@@ -70,25 +72,32 @@ class Creator(ABC):
         ]
 
     @classmethod
-    def can_create(cls, interpreter):  # noqa: ARG003
-        """
-        Determine if we can create a virtual environment.
+    def can_create(cls, interpreter: PythonInfo) -> CreatorMeta | None:  # noqa: ARG003
+        """Determine if we can create a virtual environment.
 
         :param interpreter: the interpreter in question
-        :return: ``None`` if we can't create, any other object otherwise that will be forwarded to \
-                  :meth:`add_parser_arguments`
+
+        :returns: ``None`` if we can't create, any other object otherwise that will be forwarded to
+            :meth:`add_parser_arguments`
+
         """
-        return True
+        return True  # type: ignore[return-value]
 
     @classmethod
-    def add_parser_arguments(cls, parser, interpreter, meta, app_data):  # noqa: ARG003
-        """
-        Add CLI arguments for the creator.
+    def add_parser_arguments(
+        cls,
+        parser: ArgumentParser,
+        interpreter: PythonInfo,  # noqa: ARG003
+        meta: CreatorMeta,  # noqa: ARG003
+        app_data: AppData,  # noqa: ARG003
+    ) -> None:
+        """Add CLI arguments for the creator.
 
         :param parser: the CLI parser
         :param app_data: the application data folder
         :param interpreter: the interpreter we're asked to create virtual environment for
         :param meta: value as returned by :meth:`can_create`
+
         """
         parser.add_argument(
             "dest",
@@ -111,7 +120,7 @@ class Creator(ABC):
         )
 
     @abstractmethod
-    def create(self):
+    def create(self) -> None:
         """Perform the virtual environment creation."""
         raise NotImplementedError
 
@@ -214,7 +223,7 @@ class Creator(ABC):
 
     @property
     def debug(self):
-        """:return: debug information about the virtual environment (only valid after :meth:`create` has run)"""
+        """:returns: debug information about the virtual environment (only valid after :meth:`create` has run)"""
         if self._debug is None and self.exe is not None:
             self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data, self.env)
         return self._debug

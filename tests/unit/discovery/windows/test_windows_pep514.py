@@ -105,7 +105,7 @@ def test_pep514_run(capsys, caplog):
     ('PythonCore', 3, 9, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe', None)
     ('PythonCore', 3, 9, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe', None)
     ('PythonCore', 3, 9, 64, False, 'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python39\\python.exe', None)
-    """,  # noqa: E501
+    """,
     ).strip()
     assert out.strip() == expected
     assert not err

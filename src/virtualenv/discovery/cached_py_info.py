@@ -1,9 +1,4 @@
-"""
-
-We acquire the python information by running an interrogation script via subprocess trigger. This operation is not
-cheap, especially not on Windows. To not have to pay this hefty cost every time we apply multiple levels of
-caching.
-"""  # noqa: D205
+"""We acquire the python information by running an interrogation script via subprocess trigger. This operation is not cheap, especially not on Windows. To not have to pay this hefty cost every time we apply multiple levels of caching."""
 
 from __future__ import annotations
 

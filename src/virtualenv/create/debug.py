@@ -27,7 +27,7 @@ def run():  # noqa: C901
         # this is possible if the standard library cannot be accessed
 
         OrderedDict = dict  # type: ignore[misc]  # pragma: no cover  # noqa: N806
-    result = OrderedDict([("sys", OrderedDict())])
+    result: dict = OrderedDict([("sys", OrderedDict())])
     path_keys = (
         "executable",
         "_base_executable",

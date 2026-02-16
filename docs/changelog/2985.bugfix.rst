@@ -1,1 +1,3 @@
-Fix Windows activation scripts to properly quote ``python.exe`` path, preventing failures when Python is installed in a path with spaces (e.g., ``C:\Program Files``) and a file named ``C:\Program`` exists on the filesystem - by :user:`rahuldevikar`.
+Fix Windows activation scripts to properly quote ``python.exe`` path, preventing failures when Python is installed in a
+path with spaces (e.g., ``C:\Program Files``) and a file named ``C:\Program`` exists on the filesystem - by
+:user:`rahuldevikar`.

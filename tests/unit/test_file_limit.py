@@ -12,9 +12,7 @@ from virtualenv.run import cli_run
 
 @pytest.mark.skipif(sys.platform == "win32", reason="resource module not available on Windows")
 def test_too_many_open_files(tmp_path):
-    """
-    Test that we get a specific error when we have too many open files.
-    """
+    """Test that we get a specific error when we have too many open files."""
     import resource  # noqa: PLC0415
 
     soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
