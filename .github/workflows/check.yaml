@@ -132,11 +132,15 @@ jobs:
           - dev
           - docs
           - readme
+          - type
+          - type-3.8
           - upgrade
           - zipapp
         exclude:
-          - { os: windows-2025, tox_env: readme }
           - { os: windows-2025, tox_env: docs }
+          - { os: windows-2025, tox_env: readme }
+          - { os: windows-2025, tox_env: type }
+          - { os: windows-2025, tox_env: type-3.8 }
     steps:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@v4

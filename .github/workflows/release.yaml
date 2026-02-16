@@ -1,17 +1,7 @@
 name: Release
 on:
-  workflow_dispatch:
-    inputs:
-      bump:
-        description: "Version bump type"
-        required: true
-        type: choice
-        options:
-          - auto
-          - major
-          - minor
-          - patch
-        default: auto
+  push:
+    tags: ["*.*.*"]
 
 env:
   dists-artifact-name: python-package-distributions
@@ -19,15 +9,11 @@ env:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    environment: release
-    outputs:
-      version: ${{ steps.resolve.outputs.version }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GH_RELEASE_TOKEN }}
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@v4
         with:
@@ -36,26 +22,10 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Python
         run: uv python install 3.14
-      - name: Configure git identity from token owner
-        env:
-          GH_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
-        run: |
-          user_info=$(gh api /user)
-          git config user.name "$(echo "$user_info" | jq -r '.name // .login')"
-          git config user.email "$(echo "$user_info" | jq -r '.id')+$(echo "$user_info" | jq -r '.login')@users.noreply.github.com"
-      - name: Generate changelog, commit, and tag locally
-        id: resolve
-        run: |
-          uv tool run --with tox-uv tox r -e release -- --version "${{ inputs.bump }}" --no-push
-          echo "version=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
       - name: Build sdist and wheel
         run: uv build --python 3.14 --python-preference only-managed --sdist --wheel . --out-dir dist
       - name: Build zipapp
-        run: uv tool run --with packaging --with pip tox r -e zipapp
-      - name: Push release commit and tag
-        run: |
-          git push origin HEAD:main
-          git push origin "${{ steps.resolve.outputs.version }}"
+        run: uv tool run --with tox-uv tox r -e zipapp
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
         with:
@@ -72,15 +42,11 @@ jobs:
     runs-on: ubuntu-24.04
     environment:
       name: release
-      url: https://pypi.org/project/virtualenv/${{ needs.build.outputs.version }}
+      url: https://pypi.org/project/virtualenv/${{ github.ref_name }}
     permissions:
       contents: write
       id-token: write
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Download all the dists
         uses: actions/download-artifact@v4
         with:
@@ -97,7 +63,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.build.outputs.version }}
+          tag_name: ${{ github.ref_name }}
           generate_release_notes: true
           files: virtualenv.pyz
       - name: Update get-virtualenv
@@ -106,13 +72,13 @@ jobs:
         run: |
           git clone https://x-access-token:${GH_TOKEN}@github.com/pypa/get-virtualenv.git
           cp virtualenv.pyz get-virtualenv/public/virtualenv.pyz
-          echo -n "${{ needs.build.outputs.version }}" > get-virtualenv/public/version.txt
+          echo -n "${{ github.ref_name }}" > get-virtualenv/public/version.txt
           cd get-virtualenv
           user_info=$(gh api /user)
           git config user.name "$(echo "$user_info" | jq -r '.name // .login')"
           git config user.email "$(echo "$user_info" | jq -r '.id')+$(echo "$user_info" | jq -r '.login')@users.noreply.github.com"
           git add public/virtualenv.pyz public/version.txt
-          git commit -m "update virtualenv to ${{ needs.build.outputs.version }}"
+          git commit -m "update virtualenv to ${{ github.ref_name }}"
           git push origin main
 
   rollback:
@@ -131,9 +97,9 @@ jobs:
       - name: Delete GitHub Release if created
         env:
           GH_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
-        run: gh release delete "${{ needs.build.outputs.version }}" --yes --cleanup-tag || true
+        run: gh release delete "${{ github.ref_name }}" --yes --cleanup-tag || true
       - name: Delete remote tag
-        run: git push origin --delete "${{ needs.build.outputs.version }}" || true
+        run: git push origin --delete "${{ github.ref_name }}" || true
       - name: Reset release commit on main
         run: |
           git checkout main
@@ -146,7 +112,7 @@ jobs:
           git clone https://x-access-token:${GH_TOKEN}@github.com/pypa/get-virtualenv.git
           cd get-virtualenv
           current_version=$(cat public/version.txt)
-          if [ "$current_version" = "${{ needs.build.outputs.version }}" ]; then
+          if [ "$current_version" = "${{ github.ref_name }}" ]; then
             gh release delete "$current_version" --yes --cleanup-tag || true
             git reset --hard HEAD~1
             git push origin main --force
