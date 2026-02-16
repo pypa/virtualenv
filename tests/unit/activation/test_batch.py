@@ -137,12 +137,7 @@ def test_batch_output(activation_tester_class, activation_tester, tmp_path):
             self.unix_line_ending = False
 
         def _get_test_lines(self, activate_script):
-            """
-            Build intermediary script which will be then called.
-            In the script just activate environment, call echo to get current
-            echo setting, and then deactivate. This ensures that echo setting
-            is preserved and no unwanted output appears.
-            """
+            """Build intermediary script which will be then called. In the script just activate environment, call echo to get current echo setting, and then deactivate. This ensures that echo setting is preserved and no unwanted output appears."""
             intermediary_script_path = str(tmp_path / "intermediary.bat")
             activate_script_quoted = self.quote(str(activate_script))
             return [

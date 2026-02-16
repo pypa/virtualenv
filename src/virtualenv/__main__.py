@@ -18,7 +18,7 @@ def run(args=None, options=None, env=None):
     if args is None:
         args = sys.argv[1:]
     try:
-        session = cli_run(args, options, env)
+        session = cli_run(args, options, env=env)
         LOGGER.warning(LogSession(session, start))
     except ProcessCallFailedError as exception:
         print(f"subprocess call failed for {exception.cmd} with code {exception.code}")  # noqa: T201

@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from collections import OrderedDict
+from typing import Any
 
 from virtualenv.config.convert import get_type
 from virtualenv.config.env_var import get_env_var
@@ -10,27 +11,46 @@ from virtualenv.config.ini import IniConfig
 
 
 class VirtualEnvOptions(Namespace):
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
-        self._src = None
-        self._sources = {}
+        self._src: str | None = None
+        self._sources: dict[str, str] = {}
 
-    def set_src(self, key, value, src):
+    def set_src(self, key: str, value: Any, src: str) -> None:
+        """Set an option value and record where it came from.
+
+        :param key: the option name
+        :param value: the option value
+        :param src: the source of the value (e.g. ``"cli"``, ``"env var"``, ``"default"``)
+
+        """
         setattr(self, key, value)
         if src.startswith("env var"):
             src = "env var"
         self._sources[key] = src
 
-    def __setattr__(self, key, value) -> None:
-        if getattr(self, "_src", None) is not None:
-            self._sources[key] = self._src
+    def __setattr__(self, key: str, value: Any) -> None:
+        if (src := getattr(self, "_src", None)) is not None:
+            self._sources[key] = src
         super().__setattr__(key, value)
 
-    def get_source(self, key):
+    def get_source(self, key: str) -> str | None:
+        """Return the source that provided a given option value.
+
+        :param key: the option name
+
+        :returns: the source string (e.g. ``"cli"``, ``"env var"``, ``"default"``), or ``None`` if not tracked
+
+        """
         return self._sources.get(key)
 
     @property
-    def verbosity(self):
+    def verbosity(self) -> int | None:
+        """The verbosity level, computed as ``verbose - quiet``, clamped to zero.
+
+        :returns: the verbosity level, or ``None`` if neither ``--verbose`` nor ``--quiet`` has been parsed yet
+
+        """
         if not hasattr(self, "verbose") and not hasattr(self, "quiet"):
             return None
         return max(self.verbose - self.quiet, 0)

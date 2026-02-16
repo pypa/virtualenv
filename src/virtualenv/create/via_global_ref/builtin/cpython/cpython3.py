@@ -185,18 +185,16 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     def python_zip(cls, interpreter):
-        """
-        "python{VERSION}.zip" contains compiled *.pyc std lib packages, where
-        "VERSION" is `py_version_nodot` var from the `sysconfig` module.
-        :see: https://docs.python.org/3/using/windows.html#the-embeddable-package
-        :see: `discovery.py_info.PythonInfo` class (interpreter).
-        :see: `python -m sysconfig` output.
+        """``python{VERSION}.zip`` contains compiled ``*.pyc`` std lib packages, where ``VERSION`` is ``py_version_nodot`` var from the ``sysconfig`` module.
 
-        :note: The embeddable Python distribution for Windows includes
-        "python{VERSION}.zip" and "python{VERSION}._pth" files. User can
-        move/rename *zip* file and edit `sys.path` by editing *_pth* file.
-        Here the `pattern` is used only for the default *zip* file name!
-        """  # noqa: D205
+        See https://docs.python.org/3/using/windows.html#the-embeddable-package, ``discovery.py_info.PythonInfo`` class
+        (interpreter), and ``python -m sysconfig`` output.
+
+        The embeddable Python distribution for Windows includes ``python{VERSION}.zip`` and ``python{VERSION}._pth``
+        files. User can move/rename the zip file and edit ``sys.path`` by editing the ``_pth`` file. Here the
+        ``pattern`` is used only for the default zip file name.
+
+        """
         pattern = f"*python{interpreter.version_nodot}.zip"
         matches = fnmatch.filter(interpreter.path, pattern)
         matched_paths = map(Path, matches)

@@ -1,25 +1,27 @@
-"""
-A rough layout of the current storage goes as:
+r"""A rough layout of the current storage goes as:
 
-virtualenv-app-data
-├── py - <version> <cache information about python interpreters>
-│  └── *.json/lock
-├── wheel <cache wheels used for seeding>
-│   ├── house
-│   │   └── *.whl <wheels downloaded go here>
-│   └── <python major.minor> -> 3.9
-│       ├── img-<version>
-│       │   └── image
-│       │           └── <install class> -> CopyPipInstall / SymlinkPipInstall
-│       │               └── <wheel name> -> pip-20.1.1-py2.py3-none-any
-│       └── embed
-│           └── 3 -> json format versioning
-│               └── *.json -> for every distribution contains data about newer embed versions and releases
-└─── unzip <in zip app we cannot refer to some internal files, so first extract them>
-     └── <virtualenv version>
-         ├── py_info.py
-         ├── debug.py
-         └── _virtualenv.py
+::
+
+    virtualenv-app-data
+    ├── py - <version> <cache information about python interpreters>
+    │  └── *.json/lock
+    ├── wheel <cache wheels used for seeding>
+    │   ├── house
+    │   │   └── *.whl <wheels downloaded go here>
+    │   └── <python major.minor> -> 3.9
+    │       ├── img-<version>
+    │       │   └── image
+    │       │           └── <install class> -> CopyPipInstall / SymlinkPipInstall
+    │       │               └── <wheel name> -> pip-20.1.1-py2.py3-none-any
+    │       └── embed
+    │           └── 3 -> json format versioning
+    │               └── *.json -> for every distribution contains data about newer embed versions and releases
+    └─── unzip <in zip app we cannot refer to some internal files, so first extract them>
+         └── <virtualenv version>
+             ├── py_info.py
+             ├── debug.py
+             └── _virtualenv.py
+
 """  # noqa: D415
 
 from __future__ import annotations

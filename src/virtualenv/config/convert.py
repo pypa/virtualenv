@@ -58,11 +58,10 @@ class ListType(TypeData):
         return [self.as_type(i) for i in result]
 
     def split_values(self, value):
-        """
-        Split the provided value into a list.
+        """Split the provided value into a list.
 
-        First this is done by newlines. If there were no newlines in the text,
-        then we next try to split by comma.
+        First this is done by newlines. If there were no newlines in the text, then we next try to split by comma.
+
         """
         if isinstance(value, (str, bytes)):
             # Use `splitlines` rather than a custom check for whether there is

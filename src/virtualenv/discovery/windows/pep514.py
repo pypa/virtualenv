@@ -14,7 +14,7 @@ def enum_keys(key):
     at = 0
     while True:
         try:
-            yield winreg.EnumKey(key, at)
+            yield winreg.EnumKey(key, at)  # ty: ignore[unresolved-attribute]
         except OSError:
             break
         at += 1
@@ -22,23 +22,23 @@ def enum_keys(key):
 
 def get_value(key, value_name):
     try:
-        return winreg.QueryValueEx(key, value_name)[0]
+        return winreg.QueryValueEx(key, value_name)[0]  # ty: ignore[unresolved-attribute]
     except OSError:
         return None
 
 
 def discover_pythons():
     for hive, hive_name, key, flags, default_arch in [
-        (winreg.HKEY_CURRENT_USER, "HKEY_CURRENT_USER", r"Software\Python", 0, 64),
-        (winreg.HKEY_LOCAL_MACHINE, "HKEY_LOCAL_MACHINE", r"Software\Python", winreg.KEY_WOW64_64KEY, 64),
-        (winreg.HKEY_LOCAL_MACHINE, "HKEY_LOCAL_MACHINE", r"Software\Python", winreg.KEY_WOW64_32KEY, 32),
+        (winreg.HKEY_CURRENT_USER, "HKEY_CURRENT_USER", r"Software\Python", 0, 64),  # ty: ignore[unresolved-attribute]
+        (winreg.HKEY_LOCAL_MACHINE, "HKEY_LOCAL_MACHINE", r"Software\Python", winreg.KEY_WOW64_64KEY, 64),  # ty: ignore[unresolved-attribute]
+        (winreg.HKEY_LOCAL_MACHINE, "HKEY_LOCAL_MACHINE", r"Software\Python", winreg.KEY_WOW64_32KEY, 32),  # ty: ignore[unresolved-attribute]
     ]:
         yield from process_set(hive, hive_name, key, flags, default_arch)
 
 
 def process_set(hive, hive_name, key, flags, default_arch):
     try:
-        with winreg.OpenKeyEx(hive, key, 0, winreg.KEY_READ | flags) as root_key:
+        with winreg.OpenKeyEx(hive, key, 0, winreg.KEY_READ | flags) as root_key:  # ty: ignore[unresolved-attribute]
             for company in enum_keys(root_key):
                 if company == "PyLauncher":  # reserved
                     continue
@@ -48,7 +48,7 @@ def process_set(hive, hive_name, key, flags, default_arch):
 
 
 def process_company(hive_name, company, root_key, default_arch):
-    with winreg.OpenKeyEx(root_key, company) as company_key:
+    with winreg.OpenKeyEx(root_key, company) as company_key:  # ty: ignore[unresolved-attribute]
         for tag in enum_keys(company_key):
             spec = process_tag(hive_name, company, company_key, tag, default_arch)
             if spec is not None:
@@ -56,7 +56,7 @@ def process_company(hive_name, company, root_key, default_arch):
 
 
 def process_tag(hive_name, company, company_key, tag, default_arch):
-    with winreg.OpenKeyEx(company_key, tag) as tag_key:
+    with winreg.OpenKeyEx(company_key, tag) as tag_key:  # ty: ignore[unresolved-attribute]
         version = load_version_data(hive_name, company, tag, tag_key)
         if version is not None:  # if failed to get version bail
             major, minor, _ = version
@@ -75,7 +75,7 @@ def process_tag(hive_name, company, company_key, tag, default_arch):
 def load_exe(hive_name, company, company_key, tag):
     key_path = f"{hive_name}/{company}/{tag}"
     try:
-        with winreg.OpenKeyEx(company_key, rf"{tag}\InstallPath") as ip_key, ip_key:
+        with winreg.OpenKeyEx(company_key, rf"{tag}\InstallPath") as ip_key, ip_key:  # ty: ignore[unresolved-attribute]
             exe = get_value(ip_key, "ExecutablePath")
             if exe is None:
                 ip = get_value(ip_key, None)

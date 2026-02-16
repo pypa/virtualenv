@@ -374,10 +374,7 @@ def test_py_info_to_system_raises(session_app_data, mocker, caplog):
 
 
 def _stringify_schemes_dict(schemes_dict):
-    """
-    Since this file has from __future__ import unicode_literals, we manually cast all values of mocked install_schemes
-    to str() as the original schemes are not unicode on Python 2.
-    """
+    """Since this file has from __future__ import unicode_literals, we manually cast all values of mocked install_schemes to str() as the original schemes are not unicode on Python 2."""
     return {str(n): {str(k): str(v) for k, v in s.items()} for n, s in schemes_dict.items()}
 
 

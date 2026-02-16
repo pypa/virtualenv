@@ -1,1 +1,3 @@
-Preserve symlinks in ``pyvenv.cfg`` paths to match ``venv`` behavior. Use ``os.path.abspath()`` instead of ``os.path.realpath()`` to normalize paths without resolving symlinks, fixing issues with Python installations accessed via symlinked directories (common in network-mounted filesystems) - by :user:`rahuldevikar`. Fixes :issue:`2770`.
+Preserve symlinks in ``pyvenv.cfg`` paths to match ``venv`` behavior. Use ``os.path.abspath()`` instead of
+``os.path.realpath()`` to normalize paths without resolving symlinks, fixing issues with Python installations accessed
+via symlinked directories (common in network-mounted filesystems) - by :user:`rahuldevikar`. Fixes :issue:`2770`.

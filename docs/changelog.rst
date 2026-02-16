@@ -1,1077 +1,1314 @@
-Release History
-===============
+#################
+ Release History
+#################
 
-.. include:: _draft.rst
+.. towncrier-draft-entries:: [UNRELEASED DRAFT]
 
 .. towncrier release notes start
 
-v20.36.1 (2026-01-09)
----------------------
+***********************
+ v20.36.1 (2026-01-09)
+***********************
 
 Bugfixes - 20.36.1
-~~~~~~~~~~~~~~~~~~
-- Fix TOCTOU vulnerabilities in app_data and lock directory creation that could be exploited via symlink attacks - reported by :user:`tsigouris007`, fixed by :user:`gaborbernat`. (:issue:`3013`)
+==================
 
-v20.36.0 (2026-01-07)
----------------------
+- Fix TOCTOU vulnerabilities in app_data and lock directory creation that could be exploited via symlink attacks -
+  reported by :user:`tsigouris007`, fixed by :user:`gaborbernat`. (:issue:`3013`)
+
+***********************
+ v20.36.0 (2026-01-07)
+***********************
 
 Features - 20.36.0
-~~~~~~~~~~~~~~~~~~
-- Add support for PEP 440 version specifiers in the ``--python`` flag. Users can now specify Python versions using operators like ``>=``, ``<=``, ``~=``, etc. For example: ``virtualenv --python=">=3.12" myenv`` `. (:issue:`2994`)
+==================
 
-v20.35.4 (2025-10-28)
----------------------
+- Add support for PEP 440 version specifiers in the ``--python`` flag. Users can now specify Python versions using
+  operators like ``>=``, ``<=``, ``~=``, etc. For example: ``virtualenv --python=">=3.12" myenv`` `. (:issue:`2994`)
+
+***********************
+ v20.35.4 (2025-10-28)
+***********************
 
 Bugfixes - 20.35.4
-~~~~~~~~~~~~~~~~~~
-- Fix race condition in ``_virtualenv.py`` when file is overwritten during import, preventing ``NameError`` when ``_DISTUTILS_PATCH`` is accessed - by :user:`gracetyy`. (:issue:`2969`)
+==================
+
+- Fix race condition in ``_virtualenv.py`` when file is overwritten during import, preventing ``NameError`` when
+  ``_DISTUTILS_PATCH`` is accessed - by :user:`gracetyy`. (:issue:`2969`)
 - Upgrade embedded wheels:
 
-  * pip to ``25.3`` from ``25.2`` (:issue:`2989`)
+  - pip to ``25.3`` from ``25.2`` (:issue:`2989`)
 
-v20.35.3 (2025-10-10)
----------------------
+***********************
+ v20.35.3 (2025-10-10)
+***********************
 
 Bugfixes - 20.35.3
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Accept RuntimeError in `test_too_many_open_files`, by :user:`esafak` (:issue:`2935`)
 
-v20.35.2 (2025-10-10)
----------------------
+***********************
+ v20.35.2 (2025-10-10)
+***********************
 
 Bugfixes - 20.35.2
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Revert out changes related to the extraction of the discovery module - by :user:`gaborbernat`. (:issue:`2978`)
 
-v20.35.1 (2025-10-09)
----------------------
+***********************
+ v20.35.1 (2025-10-09)
+***********************
 
 Bugfixes - 20.35.1
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Patch get_interpreter to handle missing cache and app_data - by :user:`esafak` (:issue:`2972`)
 - Fix backwards incompatible changes to ``PythonInfo`` - by :user:`gaborbernat`. (:issue:`2975`)
 
-v20.35.0 (2025-10-08)
----------------------
+***********************
+ v20.35.0 (2025-10-08)
+***********************
 
 Features - 20.35.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Add AppData and Cache protocols to discovery for decoupling - by :user:`esafak`. (:issue:`2074`)
 - Ensure python3.exe and python3 on Windows for Python 3 - by :user:`esafak`. (:issue:`2774`)
 
 Bugfixes - 20.35.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Replaced direct references to tcl/tk library paths with getattr - by :user:`esafak` (:issue:`2944`)
 - Restore absolute import of fs_is_case_sensitive - by :user:`esafak`. (:issue:`2955`)
 
-v20.34.0 (2025-08-13)
----------------------
+***********************
+ v20.34.0 (2025-08-13)
+***********************
 
 Features - 20.34.0
-~~~~~~~~~~~~~~~~~~
-- Abstract out caching in discovery - by :user:`esafak`.
-  Decouple `FileCache` from `py_info` (discovery) - by :user:`esafak`.
-  Remove references to py_info in FileCache - by :user:`esafak`.
-  Decouple discovery from creator plugins - by :user:`esafak`.
-  Decouple discovery by duplicating info utils - by :user:`esafak`. (:issue:`2074`)
+==================
+
+- Abstract out caching in discovery - by :user:`esafak`. Decouple `FileCache` from `py_info` (discovery) - by
+  :user:`esafak`. Remove references to py_info in FileCache - by :user:`esafak`. Decouple discovery from creator plugins
+  - by :user:`esafak`. Decouple discovery by duplicating info utils - by :user:`esafak`. (:issue:`2074`)
 - Add PyPy 3.11 support. Contributed by :user:`esafak`. (:issue:`2932`)
 
 Bugfixes - 20.34.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Upgrade embedded wheel pip to ``25.2`` from ``25.1.1`` - by :user:`gaborbernat`. (:issue:`2333`)
 - Accept RuntimeError in `test_too_many_open_files`, by :user:`esafak` (:issue:`2935`)
 - Python in PATH takes precedence over uv-managed python. Contributed by :user:`edgarrmondragon`. (:issue:`2952`)
 
-v20.33.1 (2025-08-05)
----------------------
+***********************
+ v20.33.1 (2025-08-05)
+***********************
 
 Bugfixes - 20.33.1
-~~~~~~~~~~~~~~~~~~
-- Correctly unpack _get_tcl_tk_libs() response in PythonInfo.
-  Contributed by :user:`esafak`. (:issue:`2930`)
-- Restore `py_info.py` timestamp in `test_py_info_cache_invalidation_on_py_info_change`
-  Contributed by :user:`esafak`. (:issue:`2933`)
+==================
 
-v20.33.0 (2025-08-03)
----------------------
+- Correctly unpack _get_tcl_tk_libs() response in PythonInfo. Contributed by :user:`esafak`. (:issue:`2930`)
+- Restore `py_info.py` timestamp in `test_py_info_cache_invalidation_on_py_info_change` Contributed by :user:`esafak`.
+  (:issue:`2933`)
+
+***********************
+ v20.33.0 (2025-08-03)
+***********************
 
 Features - 20.33.0
-~~~~~~~~~~~~~~~~~~
-- Added support for Tcl and Tkinter. You're welcome.
-  Contributed by :user:`esafak`. (:issue:`425`)
+==================
+
+- Added support for Tcl and Tkinter. You're welcome. Contributed by :user:`esafak`. (:issue:`425`)
 
 Bugfixes - 20.33.0
-~~~~~~~~~~~~~~~~~~
-- Prevent logging setup when --help is passed, fixing a flaky test.
-  Contributed by :user:`esafak`. (:issue:`u`)
-- Fix cache invalidation for PythonInfo by hashing `py_info.py`.
-  Contributed by :user:`esafak`. (:issue:`2467`)
-- When no discovery plugins are found, the application would crash with a StopIteration.
-  This change catches the StopIteration and raises a RuntimeError with a more informative message.
-  Contributed by :user:`esafak`. (:issue:`2493`)
-- Stop `--try-first-with` overriding absolute `--python` paths.
-  Contributed by :user:`esafak`. (:issue:`2659`)
-- Force UTF-8 encoding for pip download
-  Contributed by :user:`esafak`. (:issue:`2780`)
-- Creating a virtual environment on a filesystem without symlink-support would fail even with `--copies`
-  Make `fs_supports_symlink` perform a real symlink creation check on all platforms.
-  Contributed by :user:`esafak`. (:issue:`2786`)
+==================
+
+- Prevent logging setup when --help is passed, fixing a flaky test. Contributed by :user:`esafak`. (:issue:`u`)
+- Fix cache invalidation for PythonInfo by hashing `py_info.py`. Contributed by :user:`esafak`. (:issue:`2467`)
+- When no discovery plugins are found, the application would crash with a StopIteration. This change catches the
+  StopIteration and raises a RuntimeError with a more informative message. Contributed by :user:`esafak`.
+  (:issue:`2493`)
+- Stop `--try-first-with` overriding absolute `--python` paths. Contributed by :user:`esafak`. (:issue:`2659`)
+- Force UTF-8 encoding for pip download Contributed by :user:`esafak`. (:issue:`2780`)
+- Creating a virtual environment on a filesystem without symlink-support would fail even with `--copies` Make
+  `fs_supports_symlink` perform a real symlink creation check on all platforms. Contributed by :user:`esafak`.
+  (:issue:`2786`)
 - Add a note to the user guide recommending the use of a specific Python version when creating virtual environments.
   Contributed by :user:`esafak`. (:issue:`2808`)
-- Fix 'Too many open files' error due to  a file descriptor leak in virtualenv's locking mechanism.
-  Contributed by :user:`esafak`. (:issue:`2834`)
-- Support renamed Windows venv redirector (`venvlauncher.exe` and `venvwlauncher.exe`) on Python 3.13
-  Contributed by :user:`esafak`. (:issue:`2851`)
+- Fix 'Too many open files' error due to a file descriptor leak in virtualenv's locking mechanism. Contributed by
+  :user:`esafak`. (:issue:`2834`)
+- Support renamed Windows venv redirector (`venvlauncher.exe` and `venvwlauncher.exe`) on Python 3.13 Contributed by
+  :user:`esafak`. (:issue:`2851`)
 - Resolve Nushell activation script deprecation warnings by dynamically selecting the ``--optional`` flag for Nushell
-  ``get`` command on version 0.106.0 and newer, while retaining the deprecated ``-i`` flag for older versions to maintain
-  compatibility. Contributed by :user:`gaborbernat`. (:issue:`2910`)
+  ``get`` command on version 0.106.0 and newer, while retaining the deprecated ``-i`` flag for older versions to
+  maintain compatibility. Contributed by :user:`gaborbernat`. (:issue:`2910`)
 
-v20.32.0 (2025-07-20)
----------------------
+***********************
+ v20.32.0 (2025-07-20)
+***********************
 
 Features - 20.32.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Warn on incorrect invocation of Nushell activation script - by :user:`esafak`. (:issue:`nushell_activation`)
 - Discover uv-managed Python installations (:issue:`2901`)
 
 Bugfixes - 20.32.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Ignore missing absolute paths for python discovery - by :user:`esafak` (:issue:`2870`)
 - Upgrade embedded setuptools to ``80.9.0`` from ``80.3.1`` - by :user:`gaborbernat`. (:issue:`2900`)
 
-v20.31.2 (2025-05-08)
----------------------
+***********************
+ v20.31.2 (2025-05-08)
+***********************
 
 No significant changes.
 
-
-v20.31.1 (2025-05-05)
----------------------
+***********************
+ v20.31.1 (2025-05-05)
+***********************
 
 Bugfixes - 20.31.1
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Upgrade embedded wheels:
 
-  * pip to ``25.1.1`` from ``25.1``
-  * setuptools to ``80.3.1`` from ``78.1.0`` (:issue:`2880`)
+  - pip to ``25.1.1`` from ``25.1``
+  - setuptools to ``80.3.1`` from ``78.1.0`` (:issue:`2880`)
 
-v20.31.0 (2025-05-05)
----------------------
+***********************
+ v20.31.0 (2025-05-05)
+***********************
 
 Features - 20.31.0
-~~~~~~~~~~~~~~~~~~
-- No longer bundle ``wheel`` wheels (except on Python 3.8), ``setuptools`` includes native ``bdist_wheel`` support.  Update ``pip`` to ``25.1``. (:issue:`2868`)
+==================
+
+- No longer bundle ``wheel`` wheels (except on Python 3.8), ``setuptools`` includes native ``bdist_wheel`` support.
+  Update ``pip`` to ``25.1``. (:issue:`2868`)
 
 Bugfixes - 20.31.0
-~~~~~~~~~~~~~~~~~~
-- ``get_embed_wheel()`` no longer fails with a :exc:`TypeError` when it is
-  called with an unknown *distribution*. (:issue:`2877`)
+==================
+
+- ``get_embed_wheel()`` no longer fails with a :exc:`TypeError` when it is called with an unknown *distribution*.
+  (:issue:`2877`)
 - Fix ``HelpFormatter`` error with Python 3.14.0b1. (:issue:`2878`)
 
-v20.30.0 (2025-03-31)
----------------------
+***********************
+ v20.30.0 (2025-03-31)
+***********************
 
 Features - 20.30.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Add support for `GraalPy <https://github.com/oracle/graalpython>`_. (:issue:`2832`)
 
 Bugfixes - 20.30.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Upgrade embedded wheels:
 
-  * setuptools to ``78.1.0`` from ``75.3.2`` (:issue:`2863`)
+  - setuptools to ``78.1.0`` from ``75.3.2`` (:issue:`2863`)
 
-v20.29.3 (2025-03-06)
----------------------
+***********************
+ v20.29.3 (2025-03-06)
+***********************
 
 Bugfixes - 20.29.3
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Ignore unreadable directories in ``PATH``. (:issue:`2794`)
 
-v20.29.2 (2025-02-10)
----------------------
+***********************
+ v20.29.2 (2025-02-10)
+***********************
 
 Bugfixes - 20.29.2
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Remove old virtualenv wheel from the source distribution - by :user:`gaborbernat`. (:issue:`2841`)
 - Upgrade embedded wheel pip to ``25.0.1`` from ``24.3.1`` - by :user:`gaborbernat`. (:issue:`2843`)
 
-v20.29.1 (2025-01-17)
----------------------
+***********************
+ v20.29.1 (2025-01-17)
+***********************
 
 Bugfixes - 20.29.1
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Fix PyInfo cache incompatibility warnings - by :user:`robsdedude`. (:issue:`2827`)
 
-v20.29.0 (2025-01-15)
----------------------
+***********************
+ v20.29.0 (2025-01-15)
+***********************
 
 Features - 20.29.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Add support for selecting free-threaded Python interpreters, e.g., `python3.13t`. (:issue:`2809`)
 
 Bugfixes - 20.29.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Upgrade embedded wheels:
 
-  * setuptools to ``75.8.0`` from ``75.6.0`` (:issue:`2823`)
+  - setuptools to ``75.8.0`` from ``75.6.0`` (:issue:`2823`)
 
-v20.28.1 (2025-01-02)
----------------------
+***********************
+ v20.28.1 (2025-01-02)
+***********************
 
 Bugfixes - 20.28.1
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Skip tcsh tests on broken tcsh versions - by :user:`gaborbernat`. (:issue:`2814`)
 
-v20.28.0 (2024-11-25)
----------------------
+***********************
+ v20.28.0 (2024-11-25)
+***********************
 
 Features - 20.28.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Write CACHEDIR.TAG file on creation - by "user:`neilramsay`. (:issue:`2803`)
 
-v20.27.2 (2024-11-25)
----------------------
+***********************
+ v20.27.2 (2024-11-25)
+***********************
 
 Bugfixes - 20.27.2
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Upgrade embedded wheels:
 
-  * setuptools to ``75.3.0`` from ``75.2.0`` (:issue:`2798`)
+  - setuptools to ``75.3.0`` from ``75.2.0`` (:issue:`2798`)
+
 - Upgrade embedded wheels:
 
-  * wheel to ``0.45.0`` from ``0.44.0``
-  * setuptools to ``75.5.0`` (:issue:`2800`)
+  - wheel to ``0.45.0`` from ``0.44.0``
+  - setuptools to ``75.5.0`` (:issue:`2800`)
+
 - no longer forcibly echo off during windows batch activation (:issue:`2801`)
 - Upgrade embedded wheels:
 
-  * setuptools to ``75.6.0`` from ``75.5.0``
-  * wheel to ``0.45.1`` from ``0.45.0`` (:issue:`2804`)
+  - setuptools to ``75.6.0`` from ``75.5.0``
+  - wheel to ``0.45.1`` from ``0.45.0`` (:issue:`2804`)
 
-v20.27.1 (2024-10-28)
----------------------
+***********************
+ v20.27.1 (2024-10-28)
+***********************
 
 Bugfixes - 20.27.1
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Upgrade embedded wheels:
 
-  * pip to ``24.3.1`` from ``24.2`` (:issue:`2789`)
+  - pip to ``24.3.1`` from ``24.2`` (:issue:`2789`)
 
-v20.27.0 (2024-10-17)
----------------------
+***********************
+ v20.27.0 (2024-10-17)
+***********************
 
 Features - 20.27.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Drop 3.7 support as the CI environments no longer allow it running - by :user:`gaborbernat`. (:issue:`2758`)
 
 Bugfixes - 20.27.0
-~~~~~~~~~~~~~~~~~~
-- When a ``$PATH`` entry cannot be checked for existence, skip it instead of terminating - by :user:`hroncok`. (:issue:`2782`)
+==================
+
+- When a ``$PATH`` entry cannot be checked for existence, skip it instead of terminating - by :user:`hroncok`.
+  (:issue:`2782`)
 - Upgrade embedded wheels:
 
-  * setuptools to ``75.2.0`` from ``75.1.0``
-  * Removed pip of ``24.0``
-  * Removed setuptools of ``68.0.0``
-  * Removed wheel of ``0.42.0``
-
+  - setuptools to ``75.2.0`` from ``75.1.0``
+  - Removed pip of ``24.0``
+  - Removed setuptools of ``68.0.0``
+  - Removed wheel of ``0.42.0``
   - by :user:`gaborbernat`. (:issue:`2783`)
+
 - Fix zipapp is broken on Windows post distlib ``0.3.9`` - by :user:`gaborbernat`. (:issue:`2784`)
 
-v20.26.6 (2024-09-27)
----------------------
+***********************
+ v20.26.6 (2024-09-27)
+***********************
 
 Bugfixes - 20.26.6
-~~~~~~~~~~~~~~~~~~
-- Properly quote string placeholders in activation script templates to mitigate
-  potential command injection - by :user:`y5c4l3`. (:issue:`2768`)
+==================
 
-v20.26.5 (2024-09-17)
----------------------
+- Properly quote string placeholders in activation script templates to mitigate potential command injection - by
+  :user:`y5c4l3`. (:issue:`2768`)
+
+***********************
+ v20.26.5 (2024-09-17)
+***********************
 
 Bugfixes - 20.26.5
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Upgrade embedded wheels: setuptools to ``75.1.0`` from ``74.1.2`` - by :user:`gaborbernat`. (:issue:`2765`)
 
-v20.26.4 (2024-09-07)
----------------------
+***********************
+ v20.26.4 (2024-09-07)
+***********************
 
 Bugfixes - 20.26.4
-~~~~~~~~~~~~~~~~~~
+==================
+
 - no longer create `()` output in console during activation of a virtualenv by .bat file. (:issue:`2728`)
 - Upgrade embedded wheels:
 
-  * wheel to ``0.44.0`` from ``0.43.0``
-  * pip to ``24.2`` from ``24.1``
-  * setuptools to ``74.1.2`` from ``70.1.0`` (:issue:`2760`)
+  - wheel to ``0.44.0`` from ``0.43.0``
+  - pip to ``24.2`` from ``24.1``
+  - setuptools to ``74.1.2`` from ``70.1.0`` (:issue:`2760`)
 
-v20.26.3 (2024-06-21)
----------------------
+***********************
+ v20.26.3 (2024-06-21)
+***********************
 
 Bugfixes - 20.26.3
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Upgrade embedded wheels:
 
-  * setuptools to ``70.1.0`` from ``69.5.1``
-  * pip to ``24.1`` from ``24.0`` (:issue:`2741`)
+  - setuptools to ``70.1.0`` from ``69.5.1``
+  - pip to ``24.1`` from ``24.0`` (:issue:`2741`)
 
-v20.26.2 (2024-05-13)
----------------------
+***********************
+ v20.26.2 (2024-05-13)
+***********************
 
 Bugfixes - 20.26.2
-~~~~~~~~~~~~~~~~~~
-- ``virtualenv.pyz`` no longer fails when zipapp path contains a symlink - by :user:`HandSonic` and :user:`petamas`. (:issue:`1949`)
+==================
+
+- ``virtualenv.pyz`` no longer fails when zipapp path contains a symlink - by :user:`HandSonic` and :user:`petamas`.
+  (:issue:`1949`)
 - Fix bad return code from activate.sh if hashing is disabled - by :user:'fenkes-ibm'. (:issue:`2717`)
 
-v20.26.1 (2024-04-29)
----------------------
+***********************
+ v20.26.1 (2024-04-29)
+***********************
 
 Bugfixes - 20.26.1
-~~~~~~~~~~~~~~~~~~
+==================
+
 - fix PATH-based Python discovery on Windows - by :user:`ofek`. (:issue:`2712`)
 
-v20.26.0 (2024-04-23)
----------------------
+***********************
+ v20.26.0 (2024-04-23)
+***********************
 
 Bugfixes - 20.26.0
-~~~~~~~~~~~~~~~~~~
-- allow builtin discovery to discover specific interpreters (e.g. ``python3.12``) given an unspecific spec (e.g. ``python3``) - by :user:`flying-sheep`. (:issue:`2709`)
+==================
 
-v20.25.3 (2024-04-17)
----------------------
+- allow builtin discovery to discover specific interpreters (e.g. ``python3.12``) given an unspecific spec (e.g.
+  ``python3``) - by :user:`flying-sheep`. (:issue:`2709`)
+
+***********************
+ v20.25.3 (2024-04-17)
+***********************
 
 Bugfixes - 20.25.3
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Python 3.13.0a6 renamed pathmod to parser. (:issue:`2702`)
 
-v20.25.2 (2024-04-16)
----------------------
+***********************
+ v20.25.2 (2024-04-16)
+***********************
 
 Bugfixes - 20.25.2
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Upgrade embedded wheels:
 
   - setuptools of ``69.1.0`` to ``69.5.1``
   - wheel of ``0.42.0`` to ``0.43.0`` (:issue:`2699`)
 
-v20.25.1 (2024-02-21)
----------------------
+***********************
+ v20.25.1 (2024-02-21)
+***********************
 
 Bugfixes - 20.25.1
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Upgrade embedded wheels:
 
-  * setuptools to ``69.0.3`` from ``69.0.2``
-  * pip to ``23.3.2`` from ``23.3.1`` (:issue:`2681`)
+  - setuptools to ``69.0.3`` from ``69.0.2``
+  - pip to ``23.3.2`` from ``23.3.1`` (:issue:`2681`)
+
 - Upgrade embedded wheels:
 
   - pip ``23.3.2`` to ``24.0``,
   - setuptools ``69.0.3`` to ``69.1.0``. (:issue:`2691`)
 
 Misc - 20.25.1
-~~~~~~~~~~~~~~
+==============
+
 - :issue:`2688`
 
-v20.25.0 (2023-12-01)
----------------------
+***********************
+ v20.25.0 (2023-12-01)
+***********************
 
 Features - 20.25.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - The tests now pass on the CI with Python 3.13.0a2 - by :user:`hroncok`. (:issue:`2673`)
 
 Bugfixes - 20.25.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Upgrade embedded wheels:
 
-  * wheel to ``0.41.3`` from ``0.41.2`` (:issue:`2665`)
+  - wheel to ``0.41.3`` from ``0.41.2`` (:issue:`2665`)
+
 - Upgrade embedded wheels:
 
-  * wheel to ``0.42.0`` from ``0.41.3``
-  * setuptools to ``69.0.2`` from ``68.2.2`` (:issue:`2669`)
+  - wheel to ``0.42.0`` from ``0.41.3``
+  - setuptools to ``69.0.2`` from ``68.2.2`` (:issue:`2669`)
 
-v20.24.6 (2023-10-23)
----------------------
+***********************
+ v20.24.6 (2023-10-23)
+***********************
 
 Bugfixes - 20.24.6
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Use get_hookimpls method instead of the private attribute in tests. (:issue:`2649`)
 - Upgrade embedded wheels:
 
-  * setuptools to ``68.2.2`` from ``68.2.0``
-  * pip to ``23.3.1`` from ``23.2.1`` (:issue:`2656`)
+  - setuptools to ``68.2.2`` from ``68.2.0``
+  - pip to ``23.3.1`` from ``23.2.1`` (:issue:`2656`)
 
-
-v20.24.5 (2023-09-08)
----------------------
+***********************
+ v20.24.5 (2023-09-08)
+***********************
 
 Bugfixes - 20.24.5
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Declare PyPy 3.10 support - by :user:`cclauss`. (:issue:`2638`)
 - Brew on macOS no longer allows copy builds - disallow choosing this by :user:`gaborbernat`. (:issue:`2640`)
 - Upgrade embedded wheels:
 
-  * setuptools to ``68.2.0`` from ``68.1.2`` (:issue:`2642`)
+  - setuptools to ``68.2.0`` from ``68.1.2`` (:issue:`2642`)
 
-
-v20.24.4 (2023-08-30)
----------------------
+***********************
+ v20.24.4 (2023-08-30)
+***********************
 
 Bugfixes - 20.24.4
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Upgrade embedded wheels:
 
-  * setuptools to ``68.1.2`` from ``68.1.0`` on ``3.8+``
-  * wheel to ``0.41.2`` from ``0.41.1``  on ``3.7+`` (:issue:`2628`)
+  - setuptools to ``68.1.2`` from ``68.1.0`` on ``3.8+``
+  - wheel to ``0.41.2`` from ``0.41.1`` on ``3.7+`` (:issue:`2628`)
 
-
-v20.24.3 (2023-08-11)
----------------------
+***********************
+ v20.24.3 (2023-08-11)
+***********************
 
 Bugfixes - 20.24.3
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Fixed ResourceWarning on exit caused by periodic update subprocess (:issue:`2472`)
 - Upgrade embedded wheels:
 
-  * wheel to ``0.41.1`` from ``0.41.0`` (:issue:`2622`)
+  - wheel to ``0.41.1`` from ``0.41.0`` (:issue:`2622`)
 
 Misc - 20.24.3
-~~~~~~~~~~~~~~
+==============
+
 - :issue:`2610`
 
-
-v20.24.2 (2023-07-24)
----------------------
+***********************
+ v20.24.2 (2023-07-24)
+***********************
 
 Bugfixes - 20.24.2
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Upgrade embedded wheels:
 
-  * pip to ``23.2.1`` from ``23.2``
-  * wheel to ``0.41.0`` from ``0.40.0`` (:issue:`2614`)
+  - pip to ``23.2.1`` from ``23.2``
+  - wheel to ``0.41.0`` from ``0.40.0`` (:issue:`2614`)
 
-
-v20.24.1 (2023-07-19)
----------------------
+***********************
+ v20.24.1 (2023-07-19)
+***********************
 
 Bugfixes - 20.24.1
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Upgrade embedded wheels:
 
-  * pip to ``23.2`` from ``23.1.2`` - by :user:`arielkirkwood` (:issue:`2611`)
+  - pip to ``23.2`` from ``23.1.2`` - by :user:`arielkirkwood` (:issue:`2611`)
 
-
-v20.24.0 (2023-07-14)
----------------------
+***********************
+ v20.24.0 (2023-07-14)
+***********************
 
 Features - 20.24.0
-~~~~~~~~~~~~~~~~~~
-- Export the prompt prefix as ``VIRTUAL_ENV_PROMPT`` when activating a virtual
-  environment - by :user:`jimporter`. (:issue:`2194`)
+==================
+
+- Export the prompt prefix as ``VIRTUAL_ENV_PROMPT`` when activating a virtual environment - by :user:`jimporter`.
+  (:issue:`2194`)
 
 Bugfixes - 20.24.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Fix test suite - by :user:`gaborbernat`. (:issue:`2592`)
 - Upgrade embedded wheels:
 
-  * setuptools to ``68.0.0`` from ``67.8.0`` (:issue:`2607`)
+  - setuptools to ``68.0.0`` from ``67.8.0`` (:issue:`2607`)
 
-
-v20.23.1 (2023-06-16)
----------------------
+***********************
+ v20.23.1 (2023-06-16)
+***********************
 
 Bugfixes - 20.23.1
-~~~~~~~~~~~~~~~~~~
-- update and simplify nushell activation script, fixes an issue on Windows resulting in consecutive command not found - by :user:`melMass`. (:issue:`2572`)
+==================
+
+- update and simplify nushell activation script, fixes an issue on Windows resulting in consecutive command not found -
+  by :user:`melMass`. (:issue:`2572`)
 - Upgrade embedded wheels:
 
-  * setuptools to ``67.8.0`` from ``67.7.2`` (:issue:`2588`)
+  - setuptools to ``67.8.0`` from ``67.7.2`` (:issue:`2588`)
 
-
-v20.23.0 (2023-04-27)
----------------------
+***********************
+ v20.23.0 (2023-04-27)
+***********************
 
 Features - 20.23.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Do not install ``wheel`` and ``setuptools`` seed packages for Python 3.12+. To restore the old behavior use:
 
   - for ``wheel`` use ``VIRTUALENV_WHEEL=bundle`` environment variable or ``--wheel=bundle`` CLI flag,
   - for ``setuptools`` use ``VIRTUALENV_SETUPTOOLS=bundle`` environment variable or ``--setuptools=bundle`` CLI flag.
 
   By :user:`chrysle`. (:issue:`2487`)
+
 - 3.12 support - by :user:`gaborbernat`. (:issue:`2558`)
 
 Bugfixes - 20.23.0
-~~~~~~~~~~~~~~~~~~
-- Prevent ``PermissionError`` when using venv creator on systems that deliver files without user write
-  permission - by :user:`kulikjak`. (:issue:`2543`)
-- Upgrade setuptools to ``67.7.2`` from ``67.6.1`` and pip to ``23.1.2`` from ``23.1`` - by :user:`szleb`. (:issue:`2560`)
+==================
 
+- Prevent ``PermissionError`` when using venv creator on systems that deliver files without user write permission - by
+  :user:`kulikjak`. (:issue:`2543`)
+- Upgrade setuptools to ``67.7.2`` from ``67.6.1`` and pip to ``23.1.2`` from ``23.1`` - by :user:`szleb`.
+  (:issue:`2560`)
 
-v20.22.0 (2023-04-19)
----------------------
+***********************
+ v20.22.0 (2023-04-19)
+***********************
 
 Features - 20.22.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Drop support for creating Python <=3.6 (including 2) interpreters. Removed pip of ``20.3.4``, ``21.3.1``; wheel of
   ``0.37.1``; setuptools of ``59.6.0``, ``44.1.1``, ``50.3.2``- by :user:`gaborbernat`. (:issue:`2548`)
 
-
-v20.21.1 (2023-04-19)
----------------------
+***********************
+ v20.21.1 (2023-04-19)
+***********************
 
 Bugfixes - 20.21.1
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Add ``tox.ini`` to sdist - by :user:`mtelka`. (:issue:`2511`)
 - Move the use of 'let' in nushell to ensure compatibility with future releases of nushell, where 'let' no longer
   assumes that its initializer is a full expressions. (:issue:`2527`)
-- The nushell command 'str collect' has been superseded by the 'str join' command. The activate.nu script has
-  been updated to reflect this change. (:issue:`2532`)
+- The nushell command 'str collect' has been superseded by the 'str join' command. The activate.nu script has been
+  updated to reflect this change. (:issue:`2532`)
 - Upgrade embedded wheels:
 
-  * wheel to ``0.40.0`` from ``0.38.4``
-  * setuptools to ``67.6.1`` from ``67.4.0``
-  * pip to ``23.1`` from ``23.0.1`` (:issue:`2546`)
+  - wheel to ``0.40.0`` from ``0.38.4``
+  - setuptools to ``67.6.1`` from ``67.4.0``
+  - pip to ``23.1`` from ``23.0.1`` (:issue:`2546`)
 
-
-v20.21.0 (2023-03-12)
----------------------
+***********************
+ v20.21.0 (2023-03-12)
+***********************
 
 Features - 20.21.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Make closure syntax explicitly starts with {||. (:issue:`2512`)
 
 Bugfixes - 20.21.0
-~~~~~~~~~~~~~~~~~~
-- Add ``print`` command to nushell print_prompt to ensure compatibility with future release of nushell,
-  where intermediate commands no longer print their result to stdout. (:issue:`2514`)
+==================
+
+- Add ``print`` command to nushell print_prompt to ensure compatibility with future release of nushell, where
+  intermediate commands no longer print their result to stdout. (:issue:`2514`)
 - Do not assume the default encoding. (:issue:`2515`)
-- Make ``ReentrantFileLock`` thread-safe and,
-  thereby, fix race condition in ``virtualenv.cli_run`` - by :user:`radoering`. (:issue:`2516`)
+- Make ``ReentrantFileLock`` thread-safe and, thereby, fix race condition in ``virtualenv.cli_run`` - by
+  :user:`radoering`. (:issue:`2516`)
 
-
-v20.20.0 (2023-02-28)
----------------------
+***********************
+ v20.20.0 (2023-02-28)
+***********************
 
 Features - 20.20.0
-~~~~~~~~~~~~~~~~~~
-- Change environment variable existence check in Nushell activation script to not use deprecated command. (:issue:`2506`)
+==================
+
+- Change environment variable existence check in Nushell activation script to not use deprecated command.
+  (:issue:`2506`)
 
 Bugfixes - 20.20.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Discover CPython implementations distributed on Windows by any organization - by :user:`faph`. (:issue:`2504`)
-- Upgrade embedded setuptools to ``67.4.0`` from ``67.1.0`` and pip to ``23.0.1`` from ``23.0`` - by :user:`gaborbernat`. (:issue:`2510`)
+- Upgrade embedded setuptools to ``67.4.0`` from ``67.1.0`` and pip to ``23.0.1`` from ``23.0`` - by
+  :user:`gaborbernat`. (:issue:`2510`)
 
-
-v20.19.0 (2023-02-07)
----------------------
+***********************
+ v20.19.0 (2023-02-07)
+***********************
 
 Features - 20.19.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Allow platformdirs version ``3`` - by :user:`cdce8p`. (:issue:`2499`)
 
-
-v20.18.0 (2023-02-06)
----------------------
+***********************
+ v20.18.0 (2023-02-06)
+***********************
 
 Features - 20.18.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Drop ``3.6`` runtime support (can still create ``2.7+``) - by :user:`gaborbernat`. (:issue:`2489`)
 
 Bugfixes - 20.18.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Fix broken prompt in Nushell when activating virtual environment - by :user:`kubouc`. (:issue:`2481`)
 - Bump embedded pip to ``23.0`` and setuptools to ``67.1`` - by :user:`gaborbernat`. (:issue:`2489`)
 
-
-v20.17.1 (2022-12-05)
----------------------
+***********************
+ v20.17.1 (2022-12-05)
+***********************
 
 Bugfixes - 20.17.1
-~~~~~~~~~~~~~~~~~~
-- A ``py`` or ``python`` spec means any Python rather than ``CPython`` - by :user:`gaborbernat`. (`#2460 <https://github.com/pypa/virtualenv/issues/2460>`_)
-- Make ``activate.nu`` respect ``VIRTUAL_ENV_DISABLE_PROMPT`` and not set the prompt if requested - by :user:`m-lima`. (`#2461 <https://github.com/pypa/virtualenv/issues/2461>`_)
+==================
 
+- A ``py`` or ``python`` spec means any Python rather than ``CPython`` - by :user:`gaborbernat`. (`#2460
+  <https://github.com/pypa/virtualenv/issues/2460>`_)
+- Make ``activate.nu`` respect ``VIRTUAL_ENV_DISABLE_PROMPT`` and not set the prompt if requested - by :user:`m-lima`.
+  (`#2461 <https://github.com/pypa/virtualenv/issues/2461>`_)
 
-v20.17.0 (2022-11-27)
----------------------
+***********************
+ v20.17.0 (2022-11-27)
+***********************
 
 Features - 20.17.0
-~~~~~~~~~~~~~~~~~~
-- Change Nushell activation script to be a module meant to be activated as an overlay. (`#2422 <https://github.com/pypa/virtualenv/issues/2422>`_)
-- Update operator used in Nushell activation script to be compatible with future versions. (`#2450 <https://github.com/pypa/virtualenv/issues/2450>`_)
+==================
+
+- Change Nushell activation script to be a module meant to be activated as an overlay. (`#2422
+  <https://github.com/pypa/virtualenv/issues/2422>`_)
+- Update operator used in Nushell activation script to be compatible with future versions. (`#2450
+  <https://github.com/pypa/virtualenv/issues/2450>`_)
 
 Bugfixes - 20.17.0
-~~~~~~~~~~~~~~~~~~
-- Do not use deprecated API from ``importlib.resources`` on Python 3.10 or later - by :user:`gaborbernat`. (`#2448 <https://github.com/pypa/virtualenv/issues/2448>`_)
-- Upgrade embedded setuptools to ``65.6.3`` from ``65.5.1`` - by :user:`gaborbernat`. (`#2451 <https://github.com/pypa/virtualenv/issues/2451>`_)
+==================
 
+- Do not use deprecated API from ``importlib.resources`` on Python 3.10 or later - by :user:`gaborbernat`. (`#2448
+  <https://github.com/pypa/virtualenv/issues/2448>`_)
+- Upgrade embedded setuptools to ``65.6.3`` from ``65.5.1`` - by :user:`gaborbernat`. (`#2451
+  <https://github.com/pypa/virtualenv/issues/2451>`_)
 
-v20.16.7 (2022-11-12)
----------------------
+***********************
+ v20.16.7 (2022-11-12)
+***********************
 
 Bugfixes - 20.16.7
-~~~~~~~~~~~~~~~~~~
-- Use parent directory of python executable for pyvenv.cfg "home" value per PEP 405 - by :user:`vfazio`. (`#2440 <https://github.com/pypa/virtualenv/issues/2440>`_)
-- In POSIX virtual environments, try alternate binary names if ``sys._base_executable`` does not exist - by :user:`vfazio`. (`#2442 <https://github.com/pypa/virtualenv/issues/2442>`_)
-- Upgrade embedded wheel to ``0.38.4`` and  pip to ``22.3.1`` from ``22.3`` and setuptools to ``65.5.1`` from
-  ``65.5.0`` - by :user:`gaborbernat`. (`#2443 <https://github.com/pypa/virtualenv/issues/2443>`_)
+==================
 
+- Use parent directory of python executable for pyvenv.cfg "home" value per PEP 405 - by :user:`vfazio`. (`#2440
+  <https://github.com/pypa/virtualenv/issues/2440>`_)
+- In POSIX virtual environments, try alternate binary names if ``sys._base_executable`` does not exist - by
+  :user:`vfazio`. (`#2442 <https://github.com/pypa/virtualenv/issues/2442>`_)
+- Upgrade embedded wheel to ``0.38.4`` and pip to ``22.3.1`` from ``22.3`` and setuptools to ``65.5.1`` from ``65.5.0``
+  - by :user:`gaborbernat`. (`#2443 <https://github.com/pypa/virtualenv/issues/2443>`_)
 
-v20.16.6 (2022-10-25)
----------------------
+***********************
+ v20.16.6 (2022-10-25)
+***********************
 
 Features - 20.16.6
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Drop unneeded shims for PyPy3 directory structure (`#2426 <https://github.com/pypa/virtualenv/issues/2426>`_)
 
 Bugfixes - 20.16.6
-~~~~~~~~~~~~~~~~~~
-- Fix selected scheme on debian derivatives for python 3.10 when ``python3-distutils`` is not installed or the ``venv`` scheme is not available - by :user:`asottile`. (`#2350 <https://github.com/pypa/virtualenv/issues/2350>`_)
-- Allow the test suite to pass even with the original C shell (rather than ``tcsh``) - by :user:`kulikjak`. (`#2418 <https://github.com/pypa/virtualenv/issues/2418>`_)
-- Fix fallback handling of downloading wheels for bundled packages - by :user:`schaap`. (`#2429 <https://github.com/pypa/virtualenv/issues/2429>`_)
-- Upgrade embedded setuptools to ``65.5.0`` from ``65.3.0`` and pip to ``22.3`` from ``22.2.2`` - by :user:`gaborbernat`. (`#2434 <https://github.com/pypa/virtualenv/issues/2434>`_)
+==================
 
+- Fix selected scheme on debian derivatives for python 3.10 when ``python3-distutils`` is not installed or the ``venv``
+  scheme is not available - by :user:`asottile`. (`#2350 <https://github.com/pypa/virtualenv/issues/2350>`_)
+- Allow the test suite to pass even with the original C shell (rather than ``tcsh``) - by :user:`kulikjak`. (`#2418
+  <https://github.com/pypa/virtualenv/issues/2418>`_)
+- Fix fallback handling of downloading wheels for bundled packages - by :user:`schaap`. (`#2429
+  <https://github.com/pypa/virtualenv/issues/2429>`_)
+- Upgrade embedded setuptools to ``65.5.0`` from ``65.3.0`` and pip to ``22.3`` from ``22.2.2`` - by
+  :user:`gaborbernat`. (`#2434 <https://github.com/pypa/virtualenv/issues/2434>`_)
 
-v20.16.5 (2022-09-07)
----------------------
+***********************
+ v20.16.5 (2022-09-07)
+***********************
 
 Bugfixes - 20.16.5
-~~~~~~~~~~~~~~~~~~
-- Do not turn echo off for subsequent commands in batch activators
-  (``activate.bat`` and ``deactivate.bat``) - by :user:`pawelszramowski`. (`#2411 <https://github.com/pypa/virtualenv/issues/2411>`_)
+==================
 
+- Do not turn echo off for subsequent commands in batch activators (``activate.bat`` and ``deactivate.bat``) - by
+  :user:`pawelszramowski`. (`#2411 <https://github.com/pypa/virtualenv/issues/2411>`_)
 
-v20.16.4 (2022-08-29)
----------------------
+***********************
+ v20.16.4 (2022-08-29)
+***********************
 
 Bugfixes - 20.16.4
-~~~~~~~~~~~~~~~~~~
-- Bump embed setuptools to ``65.3`` - by :user:`gaborbernat`. (`#2405 <https://github.com/pypa/virtualenv/issues/2405>`_)
+==================
 
+- Bump embed setuptools to ``65.3`` - by :user:`gaborbernat`. (`#2405
+  <https://github.com/pypa/virtualenv/issues/2405>`_)
 
-v20.16.3 (2022-08-04)
----------------------
+***********************
+ v20.16.3 (2022-08-04)
+***********************
 
 Bugfixes - 20.16.3
-~~~~~~~~~~~~~~~~~~
-- Upgrade embedded pip to ``22.2.2`` from ``22.2.1`` and setuptools to ``63.4.1`` from ``63.2.0`` - by :user:`gaborbernat`. (`#2395 <https://github.com/pypa/virtualenv/issues/2395>`_)
+==================
 
+- Upgrade embedded pip to ``22.2.2`` from ``22.2.1`` and setuptools to ``63.4.1`` from ``63.2.0`` - by
+  :user:`gaborbernat`. (`#2395 <https://github.com/pypa/virtualenv/issues/2395>`_)
 
-v20.16.2 (2022-07-27)
----------------------
+***********************
+ v20.16.2 (2022-07-27)
+***********************
 
 Bugfixes - 20.16.2
-~~~~~~~~~~~~~~~~~~
-- Bump embedded pip from ``22.2`` to ``22.2.1`` - by :user:`gaborbernat`. (`#2391 <https://github.com/pypa/virtualenv/issues/2391>`_)
+==================
 
+- Bump embedded pip from ``22.2`` to ``22.2.1`` - by :user:`gaborbernat`. (`#2391
+  <https://github.com/pypa/virtualenv/issues/2391>`_)
 
-v20.16.1 (2022-07-26)
----------------------
+***********************
+ v20.16.1 (2022-07-26)
+***********************
 
 Features - 20.16.1
-~~~~~~~~~~~~~~~~~~
-- Update Nushell activation scripts to version 0.67 - by :user:`kubouch`. (`#2386 <https://github.com/pypa/virtualenv/issues/2386>`_)
+==================
 
+- Update Nushell activation scripts to version 0.67 - by :user:`kubouch`. (`#2386
+  <https://github.com/pypa/virtualenv/issues/2386>`_)
 
-v20.16.0 (2022-07-25)
----------------------
+***********************
+ v20.16.0 (2022-07-25)
+***********************
 
 Features - 20.16.0
-~~~~~~~~~~~~~~~~~~
-- Drop support for running under Python 2 (still can generate Python 2 environments) - by :user:`gaborbernat`. (`#2382 <https://github.com/pypa/virtualenv/issues/2382>`_)
-- Upgrade embedded pip to ``22.2`` from ``22.1.2`` and  setuptools to ``63.2.0`` from ``62.6.0`` -
-  by :user:`gaborbernat`. (`#2383 <https://github.com/pypa/virtualenv/issues/2383>`_)
+==================
 
+- Drop support for running under Python 2 (still can generate Python 2 environments) - by :user:`gaborbernat`. (`#2382
+  <https://github.com/pypa/virtualenv/issues/2382>`_)
+- Upgrade embedded pip to ``22.2`` from ``22.1.2`` and setuptools to ``63.2.0`` from ``62.6.0`` - by
+  :user:`gaborbernat`. (`#2383 <https://github.com/pypa/virtualenv/issues/2383>`_)
 
-v20.15.1 (2022-06-28)
----------------------
+***********************
+ v20.15.1 (2022-06-28)
+***********************
 
 Bugfixes - 20.15.1
-~~~~~~~~~~~~~~~~~~
-- Fix the incorrect operation when ``setuptools`` plugins output something into ``stdout``. (`#2335 <https://github.com/pypa/virtualenv/issues/2335>`_)
+==================
+
+- Fix the incorrect operation when ``setuptools`` plugins output something into ``stdout``. (`#2335
+  <https://github.com/pypa/virtualenv/issues/2335>`_)
 - CPython3Windows creator ignores missing ``DLLs`` dir. (`#2368 <https://github.com/pypa/virtualenv/issues/2368>`_)
 
-
-v20.15.0 (2022-06-25)
----------------------
+***********************
+ v20.15.0 (2022-06-25)
+***********************
 
 Features - 20.15.0
-~~~~~~~~~~~~~~~~~~
-- Support for Windows embeddable Python package: includes ``python<VERSION>.zip`` in the creator sources
-  - by :user:`reksarka`. (`#1774 <https://github.com/pypa/virtualenv/issues/1774>`_)
+==================
+
+- Support for Windows embeddable Python package: includes ``python<VERSION>.zip`` in the creator sources - by
+  :user:`reksarka`. (`#1774 <https://github.com/pypa/virtualenv/issues/1774>`_)
 
 Bugfixes - 20.15.0
-~~~~~~~~~~~~~~~~~~
-- Upgrade embedded setuptools to ``62.3.3`` from ``62.6.0`` and pip to ``22.1.2`` from ``22.0.4``
-  - by :user:`gaborbernat`. (`#2348 <https://github.com/pypa/virtualenv/issues/2348>`_)
-- Use ``shlex.quote`` instead of deprecated ``pipes.quote`` in Python 3 - by :user:`frenzymadness`. (`#2351 <https://github.com/pypa/virtualenv/issues/2351>`_)
+==================
+
+- Upgrade embedded setuptools to ``62.3.3`` from ``62.6.0`` and pip to ``22.1.2`` from ``22.0.4`` - by
+  :user:`gaborbernat`. (`#2348 <https://github.com/pypa/virtualenv/issues/2348>`_)
+- Use ``shlex.quote`` instead of deprecated ``pipes.quote`` in Python 3 - by :user:`frenzymadness`. (`#2351
+  <https://github.com/pypa/virtualenv/issues/2351>`_)
 - Fix Windows PyPy 3.6 - by :user:`reksarka`. (`#2363 <https://github.com/pypa/virtualenv/issues/2363>`_)
 
-
-v20.14.1 (2022-04-11)
----------------------
+***********************
+ v20.14.1 (2022-04-11)
+***********************
 
 Features - 20.14.1
-~~~~~~~~~~~~~~~~~~
-- Support for creating a virtual environment from a Python 2.7 framework on macOS 12 - by :user:`nickhutchinson`. (`#2284 <https://github.com/pypa/virtualenv/issues/2284>`_)
+==================
+
+- Support for creating a virtual environment from a Python 2.7 framework on macOS 12 - by :user:`nickhutchinson`.
+  (`#2284 <https://github.com/pypa/virtualenv/issues/2284>`_)
 
 Bugfixes - 20.14.1
-~~~~~~~~~~~~~~~~~~
-- Upgrade embedded setuptools to ``62.1.0`` from ``61.0.0`` - by :user:`gaborbernat`. (`#2327 <https://github.com/pypa/virtualenv/issues/2327>`_)
+==================
 
+- Upgrade embedded setuptools to ``62.1.0`` from ``61.0.0`` - by :user:`gaborbernat`. (`#2327
+  <https://github.com/pypa/virtualenv/issues/2327>`_)
 
-v20.14.0 (2022-03-25)
----------------------
+***********************
+ v20.14.0 (2022-03-25)
+***********************
 
 Features - 20.14.0
-~~~~~~~~~~~~~~~~~~
-- Support Nushell activation scripts with nu version ``0.60`` - by :user:`kubouch`. (`#2321 <https://github.com/pypa/virtualenv/issues/2321>`_)
+==================
+
+- Support Nushell activation scripts with nu version ``0.60`` - by :user:`kubouch`. (`#2321
+  <https://github.com/pypa/virtualenv/issues/2321>`_)
 
 Bugfixes - 20.14.0
-~~~~~~~~~~~~~~~~~~
-- Upgrade embedded setuptools to ``61.0.0`` from ``60.10.0`` - by :user:`gaborbernat`. (`#2322 <https://github.com/pypa/virtualenv/issues/2322>`_)
+==================
 
-v20.13.4 (2022-03-18)
----------------------
+- Upgrade embedded setuptools to ``61.0.0`` from ``60.10.0`` - by :user:`gaborbernat`. (`#2322
+  <https://github.com/pypa/virtualenv/issues/2322>`_)
+
+***********************
+ v20.13.4 (2022-03-18)
+***********************
 
 Bugfixes - 20.13.4
-~~~~~~~~~~~~~~~~~~
-- Improve performance of python startup inside created virtualenvs - by :user:`asottile`. (`#2317 <https://github.com/pypa/virtualenv/issues/2317>`_)
-- Upgrade embedded setuptools to ``60.10.0`` from ``60.9.3`` - by :user:`gaborbernat`. (`#2320 <https://github.com/pypa/virtualenv/issues/2320>`_)
+==================
 
-v20.13.3 (2022-03-07)
----------------------
+- Improve performance of python startup inside created virtualenvs - by :user:`asottile`. (`#2317
+  <https://github.com/pypa/virtualenv/issues/2317>`_)
+- Upgrade embedded setuptools to ``60.10.0`` from ``60.9.3`` - by :user:`gaborbernat`. (`#2320
+  <https://github.com/pypa/virtualenv/issues/2320>`_)
+
+***********************
+ v20.13.3 (2022-03-07)
+***********************
 
 Bugfixes - 20.13.3
-~~~~~~~~~~~~~~~~~~
-- Avoid symlinking the contents of ``/usr`` into PyPy3.8+ virtualenvs - by :user:`stefanor`. (`#2310 <https://github.com/pypa/virtualenv/issues/2310>`_)
-- Bump embed pip from ``22.0.3`` to ``22.0.4`` - by :user:`gaborbernat`. (`#2311 <https://github.com/pypa/virtualenv/issues/2311>`_)
+==================
 
+- Avoid symlinking the contents of ``/usr`` into PyPy3.8+ virtualenvs - by :user:`stefanor`. (`#2310
+  <https://github.com/pypa/virtualenv/issues/2310>`_)
+- Bump embed pip from ``22.0.3`` to ``22.0.4`` - by :user:`gaborbernat`. (`#2311
+  <https://github.com/pypa/virtualenv/issues/2311>`_)
 
-v20.13.2 (2022-02-24)
----------------------
+***********************
+ v20.13.2 (2022-02-24)
+***********************
 
 Bugfixes - 20.13.2
-~~~~~~~~~~~~~~~~~~
-- Upgrade embedded setuptools to ``60.9.3`` from ``60.6.0`` - by :user:`gaborbernat`. (`#2306 <https://github.com/pypa/virtualenv/issues/2306>`_)
+==================
 
+- Upgrade embedded setuptools to ``60.9.3`` from ``60.6.0`` - by :user:`gaborbernat`. (`#2306
+  <https://github.com/pypa/virtualenv/issues/2306>`_)
 
-v20.13.1 (2022-02-05)
----------------------
+***********************
+ v20.13.1 (2022-02-05)
+***********************
 
 Bugfixes - 20.13.1
-~~~~~~~~~~~~~~~~~~
-- fix "execv() arg 2 must contain only strings" error on M1 MacOS (`#2282 <https://github.com/pypa/virtualenv/issues/2282>`_)
-- Upgrade embedded setuptools to ``60.5.0`` from ``60.2.0`` - by :user:`asottile`. (`#2289 <https://github.com/pypa/virtualenv/issues/2289>`_)
-- Upgrade embedded pip to ``22.0.3`` and setuptools to ``60.6.0`` - by :user:`gaborbernat` and :user:`asottile`. (`#2294 <https://github.com/pypa/virtualenv/issues/2294>`_)
+==================
 
+- fix "execv() arg 2 must contain only strings" error on M1 MacOS (`#2282
+  <https://github.com/pypa/virtualenv/issues/2282>`_)
+- Upgrade embedded setuptools to ``60.5.0`` from ``60.2.0`` - by :user:`asottile`. (`#2289
+  <https://github.com/pypa/virtualenv/issues/2289>`_)
+- Upgrade embedded pip to ``22.0.3`` and setuptools to ``60.6.0`` - by :user:`gaborbernat` and :user:`asottile`. (`#2294
+  <https://github.com/pypa/virtualenv/issues/2294>`_)
 
-v20.13.0 (2022-01-02)
----------------------
+***********************
+ v20.13.0 (2022-01-02)
+***********************
 
 Features - 20.13.0
-~~~~~~~~~~~~~~~~~~
-- Add downloaded wheel information in the relevant JSON embed file to
-  prevent additional downloads of the same wheel. - by :user:`mayeut`. (`#2268 <https://github.com/pypa/virtualenv/issues/2268>`_)
+==================
+
+- Add downloaded wheel information in the relevant JSON embed file to prevent additional downloads of the same wheel. -
+  by :user:`mayeut`. (`#2268 <https://github.com/pypa/virtualenv/issues/2268>`_)
 
 Bugfixes - 20.13.0
-~~~~~~~~~~~~~~~~~~
-- Fix ``AttributeError: 'bool' object has no attribute 'error'`` when creating a
-  Python 2.x virtualenv on macOS - by ``moreati``. (`#2269 <https://github.com/pypa/virtualenv/issues/2269>`_)
-- Fix ``PermissionError: [Errno 1] Operation not permitted`` when creating a
-  Python 2.x virtualenv on macOS/arm64 - by ``moreati``. (`#2271 <https://github.com/pypa/virtualenv/issues/2271>`_)
+==================
 
+- Fix ``AttributeError: 'bool' object has no attribute 'error'`` when creating a Python 2.x virtualenv on macOS - by
+  ``moreati``. (`#2269 <https://github.com/pypa/virtualenv/issues/2269>`_)
+- Fix ``PermissionError: [Errno 1] Operation not permitted`` when creating a Python 2.x virtualenv on macOS/arm64 - by
+  ``moreati``. (`#2271 <https://github.com/pypa/virtualenv/issues/2271>`_)
 
-v20.12.1 (2022-01-01)
----------------------
+***********************
+ v20.12.1 (2022-01-01)
+***********************
 
 Bugfixes - 20.12.1
-~~~~~~~~~~~~~~~~~~
-- Try using previous updates of ``pip``, ``setuptools`` & ``wheel``
-  when inside an update grace period rather than always falling back
-  to embedded wheels - by :user:`mayeut`. (`#2265 <https://github.com/pypa/virtualenv/issues/2265>`_)
-- New patch versions of ``pip``, ``setuptools`` & ``wheel`` are now
-  returned in the expected timeframe. - by :user:`mayeut`. (`#2266 <https://github.com/pypa/virtualenv/issues/2266>`_)
-- Manual upgrades of ``pip``, ``setuptools`` & ``wheel`` are
-  not discarded by a periodic update - by :user:`mayeut`. (`#2267 <https://github.com/pypa/virtualenv/issues/2267>`_)
+==================
 
+- Try using previous updates of ``pip``, ``setuptools`` & ``wheel`` when inside an update grace period rather than
+  always falling back to embedded wheels - by :user:`mayeut`. (`#2265
+  <https://github.com/pypa/virtualenv/issues/2265>`_)
+- New patch versions of ``pip``, ``setuptools`` & ``wheel`` are now returned in the expected timeframe. - by
+  :user:`mayeut`. (`#2266 <https://github.com/pypa/virtualenv/issues/2266>`_)
+- Manual upgrades of ``pip``, ``setuptools`` & ``wheel`` are not discarded by a periodic update - by :user:`mayeut`.
+  (`#2267 <https://github.com/pypa/virtualenv/issues/2267>`_)
 
-v20.12.0 (2021-12-31)
----------------------
+***********************
+ v20.12.0 (2021-12-31)
+***********************
 
 Features - 20.12.0
-~~~~~~~~~~~~~~~~~~
-- Sign the python2 exe on Darwin arm64 - by :user:`tmspicer`. (`#2233 <https://github.com/pypa/virtualenv/issues/2233>`_)
+==================
+
+- Sign the python2 exe on Darwin arm64 - by :user:`tmspicer`. (`#2233
+  <https://github.com/pypa/virtualenv/issues/2233>`_)
 
 Bugfixes - 20.12.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Fix ``--download`` option - by :user:`mayeut`. (`#2120 <https://github.com/pypa/virtualenv/issues/2120>`_)
-- Upgrade embedded setuptools to ``60.2.0`` from ``60.1.1`` - by :user:`gaborbernat`. (`#2263 <https://github.com/pypa/virtualenv/issues/2263>`_)
+- Upgrade embedded setuptools to ``60.2.0`` from ``60.1.1`` - by :user:`gaborbernat`. (`#2263
+  <https://github.com/pypa/virtualenv/issues/2263>`_)
 
-
-v20.11.2 (2021-12-29)
----------------------
+***********************
+ v20.11.2 (2021-12-29)
+***********************
 
 Bugfixes - 20.11.2
-~~~~~~~~~~~~~~~~~~
-- Fix installation of pinned versions of ``pip``, ``setuptools`` & ``wheel`` - by :user:`mayeut`. (`#2203 <https://github.com/pypa/virtualenv/issues/2203>`_)
+==================
 
+- Fix installation of pinned versions of ``pip``, ``setuptools`` & ``wheel`` - by :user:`mayeut`. (`#2203
+  <https://github.com/pypa/virtualenv/issues/2203>`_)
 
-v20.11.1 (2021-12-29)
----------------------
+***********************
+ v20.11.1 (2021-12-29)
+***********************
 
 Bugfixes - 20.11.1
-~~~~~~~~~~~~~~~~~~
-- Bump embed setuptools to ``60.1.1`` from ``60.1.0`` - by :user:`gaborbernat`. (`#2258 <https://github.com/pypa/virtualenv/issues/2258>`_)
+==================
 
+- Bump embed setuptools to ``60.1.1`` from ``60.1.0`` - by :user:`gaborbernat`. (`#2258
+  <https://github.com/pypa/virtualenv/issues/2258>`_)
 
-v20.11.0 (2021-12-28)
----------------------
+***********************
+ v20.11.0 (2021-12-28)
+***********************
 
 Features - 20.11.0
-~~~~~~~~~~~~~~~~~~
-- Avoid deprecation warning from py-filelock argument - by :user:`ofek`. (`#2237 <https://github.com/pypa/virtualenv/issues/2237>`_)
-- Upgrade embedded setuptools to ``61.1.0`` from ``58.3.0`` - by :user:`gaborbernat`. (`#2240 <https://github.com/pypa/virtualenv/issues/2240>`_)
-- Drop the runtime dependency of ``backports.entry-points-selectable`` - by :user:`hroncok`. (`#2246 <https://github.com/pypa/virtualenv/issues/2246>`_)
-- Fish: PATH variables should not be quoted when being set - by :user:`d3dave`. (`#2248 <https://github.com/pypa/virtualenv/issues/2248>`_)
+==================
 
+- Avoid deprecation warning from py-filelock argument - by :user:`ofek`. (`#2237
+  <https://github.com/pypa/virtualenv/issues/2237>`_)
+- Upgrade embedded setuptools to ``61.1.0`` from ``58.3.0`` - by :user:`gaborbernat`. (`#2240
+  <https://github.com/pypa/virtualenv/issues/2240>`_)
+- Drop the runtime dependency of ``backports.entry-points-selectable`` - by :user:`hroncok`. (`#2246
+  <https://github.com/pypa/virtualenv/issues/2246>`_)
+- Fish: PATH variables should not be quoted when being set - by :user:`d3dave`. (`#2248
+  <https://github.com/pypa/virtualenv/issues/2248>`_)
 
-v20.10.0 (2021-11-01)
----------------------
+***********************
+ v20.10.0 (2021-11-01)
+***********************
 
 Features - 20.10.0
-~~~~~~~~~~~~~~~~~~
+==================
+
 - If a ``"venv"`` install scheme exists in ``sysconfig``, virtualenv now uses it to create new virtual environments.
-  This allows Python distributors, such as Fedora, to patch/replace the default install scheme without affecting
-  the paths in new virtual environments.
-  A similar technique `was proposed to Python, for the venv module <https://bugs.python.org/issue45413>`_ - by ``hroncok`` (`#2208 <https://github.com/pypa/virtualenv/issues/2208>`_)
-- The activated virtualenv prompt is now always wrapped in parentheses. This
-  affects venvs created with the ``--prompt`` attribute, and matches virtualenv's
-  behavior on par with venv. (`#2224 <https://github.com/pypa/virtualenv/issues/2224>`_)
+  This allows Python distributors, such as Fedora, to patch/replace the default install scheme without affecting the
+  paths in new virtual environments. A similar technique `was proposed to Python, for the venv module
+  <https://bugs.python.org/issue45413>`_ - by ``hroncok`` (`#2208 <https://github.com/pypa/virtualenv/issues/2208>`_)
+- The activated virtualenv prompt is now always wrapped in parentheses. This affects venvs created with the ``--prompt``
+  attribute, and matches virtualenv's behavior on par with venv. (`#2224
+  <https://github.com/pypa/virtualenv/issues/2224>`_)
 
 Bugfixes - 20.10.0
-~~~~~~~~~~~~~~~~~~
-- Fix broken prompt set up by activate.bat - by :user:`SiggyBar`. (`#2225 <https://github.com/pypa/virtualenv/issues/2225>`_)
+==================
 
+- Fix broken prompt set up by activate.bat - by :user:`SiggyBar`. (`#2225
+  <https://github.com/pypa/virtualenv/issues/2225>`_)
 
-v20.9.0 (2021-10-23)
---------------------
+**********************
+ v20.9.0 (2021-10-23)
+**********************
 
 Features - 20.9.0
-~~~~~~~~~~~~~~~~~
-- Special-case ``--prompt .`` to the name of the current directory - by :user:`rkm`. (`#2220 <https://github.com/pypa/virtualenv/issues/2220>`_)
+=================
+
+- Special-case ``--prompt .`` to the name of the current directory - by :user:`rkm`. (`#2220
+  <https://github.com/pypa/virtualenv/issues/2220>`_)
 - Add libffi-8.dll to pypy windows `#2218 <https://github.com/pypa/virtualenv/issues/2218>`_ - by :user:`mattip`
 
 Bugfixes - 20.9.0
-~~~~~~~~~~~~~~~~~
-- Fixed path collision that could lead to a PermissionError or writing to system
-  directories when using PyPy3.8 - by :user:`mgorny`. (`#2182 <https://github.com/pypa/virtualenv/issues/2182>`_)
+=================
+
+- Fixed path collision that could lead to a PermissionError or writing to system directories when using PyPy3.8 - by
+  :user:`mgorny`. (`#2182 <https://github.com/pypa/virtualenv/issues/2182>`_)
 - Upgrade embedded setuptools to ``58.3.0`` from ``58.1.0`` and pip to ``21.3.1`` from ``21.2.4`` - by
   :user:`gaborbernat`. (`#2205 <https://github.com/pypa/virtualenv/issues/2205>`_)
-- Remove stray closing parenthesis in activate.bat - by :user:`SiggyBar`. (`#2221 <https://github.com/pypa/virtualenv/issues/2221>`_)
+- Remove stray closing parenthesis in activate.bat - by :user:`SiggyBar`. (`#2221
+  <https://github.com/pypa/virtualenv/issues/2221>`_)
 
-
-v20.8.1 (2021-09-24)
---------------------
+**********************
+ v20.8.1 (2021-09-24)
+**********************
 
 Bugfixes - 20.8.1
-~~~~~~~~~~~~~~~~~
-- Fixed a bug where while creating a venv on top of an existing one, without cleaning, when seeded
-  wheel version mismatch occurred, multiple ``.dist-info`` directories may be present, confounding entrypoint
-  discovery - by :user:`arcivanov` (`#2185 <https://github.com/pypa/virtualenv/issues/2185>`_)
-- Bump embed setuptools from ``58.0.4`` to ``58.1.0`` - by :user:`gaborbernat`. (`#2195 <https://github.com/pypa/virtualenv/issues/2195>`_)
+=================
+
+- Fixed a bug where while creating a venv on top of an existing one, without cleaning, when seeded wheel version
+  mismatch occurred, multiple ``.dist-info`` directories may be present, confounding entrypoint discovery - by
+  :user:`arcivanov` (`#2185 <https://github.com/pypa/virtualenv/issues/2185>`_)
+- Bump embed setuptools from ``58.0.4`` to ``58.1.0`` - by :user:`gaborbernat`. (`#2195
+  <https://github.com/pypa/virtualenv/issues/2195>`_)
 
 Misc - 20.8.1
-~~~~~~~~~~~~~
+=============
+
 - `#2189 <https://github.com/pypa/virtualenv/issues/2189>`_
 
+**********************
+ v20.8.0 (2021-09-16)
+**********************
 
-v20.8.0 (2021-09-16)
---------------------
+- upgrade embedded setuptools to ``58.0.4`` from ``57.4.0`` and pip to ``21.2.4`` from ``21.2.3``
+- Add nushell activation script
 
-* upgrade embedded setuptools to ``58.0.4`` from ``57.4.0`` and pip to ``21.2.4`` from ``21.2.3``
-* Add nushell activation script
-
-v20.7.2 (2021-08-10)
---------------------
+**********************
+ v20.7.2 (2021-08-10)
+**********************
 
 Bugfixes - 20.7.2
-~~~~~~~~~~~~~~~~~
-- Upgrade embedded pip to ``21.2.3`` from ``21.2.2`` and wheel to ``0.37.0`` from ``0.36.2`` - by :user:`gaborbernat`. (`#2168 <https://github.com/pypa/virtualenv/issues/2168>`_)
+=================
 
+- Upgrade embedded pip to ``21.2.3`` from ``21.2.2`` and wheel to ``0.37.0`` from ``0.36.2`` - by :user:`gaborbernat`.
+  (`#2168 <https://github.com/pypa/virtualenv/issues/2168>`_)
 
-v20.7.1 (2021-08-09)
---------------------
+**********************
+ v20.7.1 (2021-08-09)
+**********************
 
 Bugfixes - 20.7.1
-~~~~~~~~~~~~~~~~~
+=================
+
 - Fix unpacking dictionary items in PythonInfo.install_path (`#2165 <https://github.com/pypa/virtualenv/issues/2165>`_)
 
-
-v20.7.0 (2021-07-31)
---------------------
+**********************
+ v20.7.0 (2021-07-31)
+**********************
 
 Bugfixes - 20.7.0
-~~~~~~~~~~~~~~~~~
-- upgrade embedded pip to ``21.2.2`` from ``21.1.3`` and setuptools to ``57.4.0`` from ``57.1.0`` - by :user:`gaborbernat` (`#2159 <https://github.com/pypa/virtualenv/issues/2159>`_)
+=================
+
+- upgrade embedded pip to ``21.2.2`` from ``21.1.3`` and setuptools to ``57.4.0`` from ``57.1.0`` - by
+  :user:`gaborbernat` (`#2159 <https://github.com/pypa/virtualenv/issues/2159>`_)
 
 Deprecations and Removals - 20.7.0
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+==================================
+
 - Removed ``xonsh`` activator due to this breaking fairly often the CI and lack of support from those packages
-  maintainers, upstream is encouraged to continue supporting the project as a
-  `plugin <https://github.com/xonsh/xonsh/issues/3689>`_  - by :user:`gaborbernat`. (`#2160 <https://github.com/pypa/virtualenv/issues/2160>`_)
+  maintainers, upstream is encouraged to continue supporting the project as a `plugin
+  <https://github.com/xonsh/xonsh/issues/3689>`_ - by :user:`gaborbernat`. (`#2160
+  <https://github.com/pypa/virtualenv/issues/2160>`_)
 
-
-v20.6.0 (2021-07-14)
---------------------
+**********************
+ v20.6.0 (2021-07-14)
+**********************
 
 Features - 20.6.0
-~~~~~~~~~~~~~~~~~
-- Support Python interpreters without ``distutils`` (fallback to ``syconfig`` in these cases) - by :user:`gaborbernat`. (`#1910 <https://github.com/pypa/virtualenv/issues/1910>`_)
+=================
 
+- Support Python interpreters without ``distutils`` (fallback to ``syconfig`` in these cases) - by :user:`gaborbernat`.
+  (`#1910 <https://github.com/pypa/virtualenv/issues/1910>`_)
 
-v20.5.0 (2021-07-13)
---------------------
+**********************
+ v20.5.0 (2021-07-13)
+**********************
 
 Features - 20.5.0
-~~~~~~~~~~~~~~~~~
-- Plugins now use 'selectable' entry points - by :user:`jaraco`. (`#2093 <https://github.com/pypa/virtualenv/issues/2093>`_)
+=================
+
+- Plugins now use 'selectable' entry points - by :user:`jaraco`. (`#2093
+  <https://github.com/pypa/virtualenv/issues/2093>`_)
 - add libffi-7.dll to the hard-coded list of dlls for PyPy (`#2141 <https://github.com/pypa/virtualenv/issues/2141>`_)
-- Use the better maintained ``platformdirs`` instead of ``appdirs`` - by :user:`gaborbernat`. (`#2142 <https://github.com/pypa/virtualenv/issues/2142>`_)
+- Use the better maintained ``platformdirs`` instead of ``appdirs`` - by :user:`gaborbernat`. (`#2142
+  <https://github.com/pypa/virtualenv/issues/2142>`_)
 
 Bugfixes - 20.5.0
-~~~~~~~~~~~~~~~~~
-- Bump pip the embedded pip ``21.1.3`` and setuptools to ``57.1.0`` - by :user:`gaborbernat`. (`#2135 <https://github.com/pypa/virtualenv/issues/2135>`_)
+=================
+
+- Bump pip the embedded pip ``21.1.3`` and setuptools to ``57.1.0`` - by :user:`gaborbernat`. (`#2135
+  <https://github.com/pypa/virtualenv/issues/2135>`_)
 
 Deprecations and Removals - 20.5.0
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- Drop python ``3.4`` support as it has been over 2 years since EOL - by :user:`gaborbernat`. (`#2141 <https://github.com/pypa/virtualenv/issues/2141>`_)
+==================================
 
+- Drop python ``3.4`` support as it has been over 2 years since EOL - by :user:`gaborbernat`. (`#2141
+  <https://github.com/pypa/virtualenv/issues/2141>`_)
 
-v20.4.7 (2021-05-24)
---------------------
+**********************
+ v20.4.7 (2021-05-24)
+**********************
 
 Bugfixes - 20.4.7
-~~~~~~~~~~~~~~~~~
-- Upgrade embedded pip to ``21.1.2`` and setuptools to ``57.0.0`` - by :user:`gaborbernat`. (`#2123 <https://github.com/pypa/virtualenv/issues/2123>`_)
+=================
 
+- Upgrade embedded pip to ``21.1.2`` and setuptools to ``57.0.0`` - by :user:`gaborbernat`. (`#2123
+  <https://github.com/pypa/virtualenv/issues/2123>`_)
 
-v20.4.6 (2021-05-05)
---------------------
+**********************
+ v20.4.6 (2021-05-05)
+**********************
 
 Bugfixes - 20.4.6
-~~~~~~~~~~~~~~~~~
-- Fix ``site.getsitepackages()`` broken on python2 on debian - by :user:`freundTech`. (`#2105 <https://github.com/pypa/virtualenv/issues/2105>`_)
+=================
 
+- Fix ``site.getsitepackages()`` broken on python2 on debian - by :user:`freundTech`. (`#2105
+  <https://github.com/pypa/virtualenv/issues/2105>`_)
 
-v20.4.5 (2021-05-05)
---------------------
+**********************
+ v20.4.5 (2021-05-05)
+**********************
 
 Bugfixes - 20.4.5
-~~~~~~~~~~~~~~~~~
-- Bump pip to ``21.1.1`` from ``21.0.1`` - by :user:`gaborbernat`. (`#2104 <https://github.com/pypa/virtualenv/issues/2104>`_)
-- Fix ``site.getsitepackages()`` ignoring ``--system-site-packages`` on python2 - by :user:`freundTech`. (`#2106 <https://github.com/pypa/virtualenv/issues/2106>`_)
+=================
 
+- Bump pip to ``21.1.1`` from ``21.0.1`` - by :user:`gaborbernat`. (`#2104
+  <https://github.com/pypa/virtualenv/issues/2104>`_)
+- Fix ``site.getsitepackages()`` ignoring ``--system-site-packages`` on python2 - by :user:`freundTech`. (`#2106
+  <https://github.com/pypa/virtualenv/issues/2106>`_)
 
-v20.4.4 (2021-04-20)
---------------------
+**********************
+ v20.4.4 (2021-04-20)
+**********************
 
 Bugfixes - 20.4.4
-~~~~~~~~~~~~~~~~~
-- Built in discovery class is always preferred over plugin supplied classes. (`#2087 <https://github.com/pypa/virtualenv/issues/2087>`_)
-- Upgrade embedded setuptools to ``56.0.0`` by :user:`gaborbernat`. (`#2094 <https://github.com/pypa/virtualenv/issues/2094>`_)
+=================
 
+- Built in discovery class is always preferred over plugin supplied classes. (`#2087
+  <https://github.com/pypa/virtualenv/issues/2087>`_)
+- Upgrade embedded setuptools to ``56.0.0`` by :user:`gaborbernat`. (`#2094
+  <https://github.com/pypa/virtualenv/issues/2094>`_)
 
-v20.4.3 (2021-03-16)
---------------------
+**********************
+ v20.4.3 (2021-03-16)
+**********************
 
 Bugfixes - 20.4.3
-~~~~~~~~~~~~~~~~~
-- Bump embedded setuptools from ``52.0.0`` to ``54.1.2`` - by :user:`gaborbernat` (`#2069 <https://github.com/pypa/virtualenv/issues/2069>`_)
-- Fix PyPy3 stdlib on Windows is incorrect - by :user:`gaborbernat`. (`#2071 <https://github.com/pypa/virtualenv/issues/2071>`_)
+=================
 
+- Bump embedded setuptools from ``52.0.0`` to ``54.1.2`` - by :user:`gaborbernat` (`#2069
+  <https://github.com/pypa/virtualenv/issues/2069>`_)
+- Fix PyPy3 stdlib on Windows is incorrect - by :user:`gaborbernat`. (`#2071
+  <https://github.com/pypa/virtualenv/issues/2071>`_)
 
-v20.4.2 (2021-02-01)
---------------------
+**********************
+ v20.4.2 (2021-02-01)
+**********************
 
 Bugfixes - 20.4.2
-~~~~~~~~~~~~~~~~~
-- Running virtualenv ``--upgrade-embed-wheels`` crashes - by :user:`gaborbernat`. (`#2058 <https://github.com/pypa/virtualenv/issues/2058>`_)
+=================
 
+- Running virtualenv ``--upgrade-embed-wheels`` crashes - by :user:`gaborbernat`. (`#2058
+  <https://github.com/pypa/virtualenv/issues/2058>`_)
 
-v20.4.1 (2021-01-31)
---------------------
+**********************
+ v20.4.1 (2021-01-31)
+**********************
 
 Bugfixes - 20.4.1
-~~~~~~~~~~~~~~~~~
-- Bump embedded pip and setuptools packages to latest upstream supported (``21.0.1`` and ``52.0.0``) - by :user:`gaborbernat`. (`#2060 <https://github.com/pypa/virtualenv/issues/2060>`_)
+=================
 
+- Bump embedded pip and setuptools packages to latest upstream supported (``21.0.1`` and ``52.0.0``) - by
+  :user:`gaborbernat`. (`#2060 <https://github.com/pypa/virtualenv/issues/2060>`_)
 
-v20.4.0 (2021-01-19)
---------------------
+**********************
+ v20.4.0 (2021-01-19)
+**********************
 
 Features - 20.4.0
-~~~~~~~~~~~~~~~~~
+=================
+
 - On the programmatic API allow passing in the environment variable dictionary to use, defaults to ``os.environ`` if not
   specified - by :user:`gaborbernat`. (`#2054 <https://github.com/pypa/virtualenv/issues/2054>`_)
 
 Bugfixes - 20.4.0
-~~~~~~~~~~~~~~~~~
-- Upgrade embedded setuptools to ``51.3.3`` from ``51.1.2`` - by :user:`gaborbernat`. (`#2055 <https://github.com/pypa/virtualenv/issues/2055>`_)
+=================
 
+- Upgrade embedded setuptools to ``51.3.3`` from ``51.1.2`` - by :user:`gaborbernat`. (`#2055
+  <https://github.com/pypa/virtualenv/issues/2055>`_)
 
-v20.3.1 (2021-01-13)
---------------------
+**********************
+ v20.3.1 (2021-01-13)
+**********************
 
 Bugfixes - 20.3.1
-~~~~~~~~~~~~~~~~~
-- Bump embed pip to ``20.3.3``, setuptools to ``51.1.1`` and wheel to ``0.36.2`` - by :user:`gaborbernat`. (`#2036 <https://github.com/pypa/virtualenv/issues/2036>`_)
-- Allow unfunctioning of pydoc to fail freely so that virtualenvs can be
-  activated under Zsh with set -e (since otherwise ``unset -f`` and
-  ``unfunction`` exit with 1 if the function does not exist in Zsh) - by
-  :user:`d125q`. (`#2049 <https://github.com/pypa/virtualenv/issues/2049>`_)
+=================
+
+- Bump embed pip to ``20.3.3``, setuptools to ``51.1.1`` and wheel to ``0.36.2`` - by :user:`gaborbernat`. (`#2036
+  <https://github.com/pypa/virtualenv/issues/2036>`_)
+- Allow unfunctioning of pydoc to fail freely so that virtualenvs can be activated under Zsh with set -e (since
+  otherwise ``unset -f`` and ``unfunction`` exit with 1 if the function does not exist in Zsh) - by :user:`d125q`.
+  (`#2049 <https://github.com/pypa/virtualenv/issues/2049>`_)
 - Drop cached python information if the system executable is no longer present (for example when the executable is a
-  shim and the mapped executable is replaced - such is the case with pyenv) - by :user:`gaborbernat`. (`#2050 <https://github.com/pypa/virtualenv/issues/2050>`_)
+  shim and the mapped executable is replaced - such is the case with pyenv) - by :user:`gaborbernat`. (`#2050
+  <https://github.com/pypa/virtualenv/issues/2050>`_)
 
-
-v20.3.0 (2021-01-10)
---------------------
+**********************
+ v20.3.0 (2021-01-10)
+**********************
 
 Features - 20.3.0
-~~~~~~~~~~~~~~~~~
+=================
+
 - The builtin discovery takes now a ``--try-first-with`` argument and is first attempted as valid interpreters. One can
-  use this to force discovery of a given python executable when the discovery order/mechanism raises errors -
-  by :user:`gaborbernat`. (`#2046 <https://github.com/pypa/virtualenv/issues/2046>`_)
+  use this to force discovery of a given python executable when the discovery order/mechanism raises errors - by
+  :user:`gaborbernat`. (`#2046 <https://github.com/pypa/virtualenv/issues/2046>`_)
 
 Bugfixes - 20.3.0
-~~~~~~~~~~~~~~~~~
-- On Windows python ``3.7+`` distributions where the exe shim is missing fallback to the old ways - by :user:`gaborbernat`. (`#1986 <https://github.com/pypa/virtualenv/issues/1986>`_)
+=================
+
+- On Windows python ``3.7+`` distributions where the exe shim is missing fallback to the old ways - by
+  :user:`gaborbernat`. (`#1986 <https://github.com/pypa/virtualenv/issues/1986>`_)
 - When discovering interpreters on Windows, via the PEP-514, prefer ``PythonCore`` releases over other ones. virtualenv
-  is used via pip mostly by this distribution, so prefer it over other such as conda - by :user:`gaborbernat`. (`#2046 <https://github.com/pypa/virtualenv/issues/2046>`_)
+  is used via pip mostly by this distribution, so prefer it over other such as conda - by :user:`gaborbernat`. (`#2046
+  <https://github.com/pypa/virtualenv/issues/2046>`_)
 
-
-v20.2.2 (2020-12-07)
---------------------
+**********************
+ v20.2.2 (2020-12-07)
+**********************
 
 Bugfixes - 20.2.2
-~~~~~~~~~~~~~~~~~
-- Bump pip to ``20.3.1``, setuptools to ``51.0.0`` and wheel to ``0.36.1`` - by :user:`gaborbernat`. (`#2029 <https://github.com/pypa/virtualenv/issues/2029>`_)
+=================
 
+- Bump pip to ``20.3.1``, setuptools to ``51.0.0`` and wheel to ``0.36.1`` - by :user:`gaborbernat`. (`#2029
+  <https://github.com/pypa/virtualenv/issues/2029>`_)
 
-v20.2.1 (2020-11-23)
---------------------
+**********************
+ v20.2.1 (2020-11-23)
+**********************
 
 No significant changes.
 
-
-v20.2.0 (2020-11-21)
---------------------
+**********************
+ v20.2.0 (2020-11-21)
+**********************
 
 Features - 20.2.0
-~~~~~~~~~~~~~~~~~
-- Optionally skip VCS ignore directive for entire virtualenv directory, using option :option:`no-vcs-ignore`, by default ``False``. (`#2003 <https://github.com/pypa/virtualenv/issues/2003>`_)
-- Add ``--read-only-app-data`` option to allow for creation based on an existing
-  app data cache which is non-writable. This may be useful (for example) to
-  produce a docker image where the app-data is pre-populated.
+=================
+
+- Optionally skip VCS ignore directive for entire virtualenv directory, using option :option:`no-vcs-ignore`, by default
+  ``False``. (`#2003 <https://github.com/pypa/virtualenv/issues/2003>`_)
+- Add ``--read-only-app-data`` option to allow for creation based on an existing app data cache which is non-writable.
+  This may be useful (for example) to produce a docker image where the app-data is pre-populated.
 
   .. code-block:: dockerfile
 
@@ -1087,114 +1324,147 @@ Features - 20.2.0
   Patch by :user:`asottile`. (`#2009 <https://github.com/pypa/virtualenv/issues/2009>`_)
 
 Bugfixes - 20.2.0
-~~~~~~~~~~~~~~~~~
-- Fix processing of the ``VIRTUALENV_PYTHON`` environment variable and make it
-  multi-value as well (separated by comma) - by :user:`pneff`. (`#1998 <https://github.com/pypa/virtualenv/issues/1998>`_)
+=================
 
+- Fix processing of the ``VIRTUALENV_PYTHON`` environment variable and make it multi-value as well (separated by comma)
+  - by :user:`pneff`. (`#1998 <https://github.com/pypa/virtualenv/issues/1998>`_)
 
-v20.1.0 (2020-10-25)
---------------------
+**********************
+ v20.1.0 (2020-10-25)
+**********************
 
 Features - 20.1.0
-~~~~~~~~~~~~~~~~~
+=================
+
 - The python specification can now take one or more values, first found is used to create the virtual environment - by
   :user:`gaborbernat`. (`#1995 <https://github.com/pypa/virtualenv/issues/1995>`_)
 
-
-v20.0.35 (2020-10-15)
----------------------
+***********************
+ v20.0.35 (2020-10-15)
+***********************
 
 Bugfixes - 20.0.35
-~~~~~~~~~~~~~~~~~~
-- Bump embedded setuptools from ``50.3.0`` to ``50.3.1`` - by :user:`gaborbernat`. (`#1982 <https://github.com/pypa/virtualenv/issues/1982>`_)
-- After importing virtualenv passing cwd to a subprocess calls breaks with ``invalid directory`` - by :user:`gaborbernat`. (`#1983 <https://github.com/pypa/virtualenv/issues/1983>`_)
+==================
 
+- Bump embedded setuptools from ``50.3.0`` to ``50.3.1`` - by :user:`gaborbernat`. (`#1982
+  <https://github.com/pypa/virtualenv/issues/1982>`_)
+- After importing virtualenv passing cwd to a subprocess calls breaks with ``invalid directory`` - by
+  :user:`gaborbernat`. (`#1983 <https://github.com/pypa/virtualenv/issues/1983>`_)
 
-v20.0.34 (2020-10-12)
----------------------
+***********************
+ v20.0.34 (2020-10-12)
+***********************
 
 Bugfixes - 20.0.34
-~~~~~~~~~~~~~~~~~~
-- Align with venv module when creating virtual environments with builtin creator on Windows 3.7 and later
-  - by :user:`gaborbernat`. (`#1782 <https://github.com/pypa/virtualenv/issues/1782>`_)
-- Handle Cygwin path conversion in the activation script - by :user:`davidcoghlan`. (`#1969 <https://github.com/pypa/virtualenv/issues/1969>`_)
+==================
 
+- Align with venv module when creating virtual environments with builtin creator on Windows 3.7 and later - by
+  :user:`gaborbernat`. (`#1782 <https://github.com/pypa/virtualenv/issues/1782>`_)
+- Handle Cygwin path conversion in the activation script - by :user:`davidcoghlan`. (`#1969
+  <https://github.com/pypa/virtualenv/issues/1969>`_)
 
-v20.0.33 (2020-10-04)
----------------------
+***********************
+ v20.0.33 (2020-10-04)
+***********************
 
 Bugfixes - 20.0.33
-~~~~~~~~~~~~~~~~~~
-- Fix ``None`` type error in cygwin if POSIX path in dest - by :user:`danyeaw`. (`#1962 <https://github.com/pypa/virtualenv/issues/1962>`_)
-- Fix Python 3.4 incompatibilities (added back to the CI) - by :user:`gaborbernat`. (`#1963 <https://github.com/pypa/virtualenv/issues/1963>`_)
+==================
 
+- Fix ``None`` type error in cygwin if POSIX path in dest - by :user:`danyeaw`. (`#1962
+  <https://github.com/pypa/virtualenv/issues/1962>`_)
+- Fix Python 3.4 incompatibilities (added back to the CI) - by :user:`gaborbernat`. (`#1963
+  <https://github.com/pypa/virtualenv/issues/1963>`_)
 
-v20.0.32 (2020-10-01)
----------------------
+***********************
+ v20.0.32 (2020-10-01)
+***********************
 
 Bugfixes - 20.0.32
-~~~~~~~~~~~~~~~~~~
-- For activation scripts always use UNIX line endings (unless it's BATCH shell related) - by :user:`saytosid`. (`#1818 <https://github.com/pypa/virtualenv/issues/1818>`_)
-- Upgrade embedded pip to ``20.2.1`` and setuptools to ``49.4.0`` - by :user:`gaborbernat`. (`#1918 <https://github.com/pypa/virtualenv/issues/1918>`_)
-- Avoid spawning new windows when doing seed package upgrades in the background on Windows - by :user:`gaborbernat`. (`#1928 <https://github.com/pypa/virtualenv/issues/1928>`_)
-- Fix a bug that reading and writing on the same file may cause race on multiple processes. (`#1938 <https://github.com/pypa/virtualenv/issues/1938>`_)
-- Upgrade embedded setuptools to ``50.2.0`` and pip to ``20.2.3`` - by :user:`gaborbernat`. (`#1939 <https://github.com/pypa/virtualenv/issues/1939>`_)
-- Provide correct path for bash activator in cygwin or msys2 - by :user:`danyeaw`. (`#1940 <https://github.com/pypa/virtualenv/issues/1940>`_)
-- Relax importlib requirement to allow version<3 - by :user:`usamasadiq` (`#1953 <https://github.com/pypa/virtualenv/issues/1953>`_)
-- pth files were not processed on CPython2 if $PYTHONPATH was pointing to site-packages/ - by :user:`navytux`. (`#1959 <https://github.com/pypa/virtualenv/issues/1959>`_) (`#1960 <https://github.com/pypa/virtualenv/issues/1960>`_)
+==================
 
+- For activation scripts always use UNIX line endings (unless it's BATCH shell related) - by :user:`saytosid`. (`#1818
+  <https://github.com/pypa/virtualenv/issues/1818>`_)
+- Upgrade embedded pip to ``20.2.1`` and setuptools to ``49.4.0`` - by :user:`gaborbernat`. (`#1918
+  <https://github.com/pypa/virtualenv/issues/1918>`_)
+- Avoid spawning new windows when doing seed package upgrades in the background on Windows - by :user:`gaborbernat`.
+  (`#1928 <https://github.com/pypa/virtualenv/issues/1928>`_)
+- Fix a bug that reading and writing on the same file may cause race on multiple processes. (`#1938
+  <https://github.com/pypa/virtualenv/issues/1938>`_)
+- Upgrade embedded setuptools to ``50.2.0`` and pip to ``20.2.3`` - by :user:`gaborbernat`. (`#1939
+  <https://github.com/pypa/virtualenv/issues/1939>`_)
+- Provide correct path for bash activator in cygwin or msys2 - by :user:`danyeaw`. (`#1940
+  <https://github.com/pypa/virtualenv/issues/1940>`_)
+- Relax importlib requirement to allow version<3 - by :user:`usamasadiq` (`#1953
+  <https://github.com/pypa/virtualenv/issues/1953>`_)
+- pth files were not processed on CPython2 if $PYTHONPATH was pointing to site-packages/ - by :user:`navytux`. (`#1959
+  <https://github.com/pypa/virtualenv/issues/1959>`_) (`#1960 <https://github.com/pypa/virtualenv/issues/1960>`_)
 
-v20.0.31 (2020-08-17)
----------------------
+***********************
+ v20.0.31 (2020-08-17)
+***********************
 
 Bugfixes - 20.0.31
-~~~~~~~~~~~~~~~~~~
-- Upgrade embedded pip to ``20.2.1``, setuptools to ``49.6.0`` and wheel to ``0.35.1``  - by :user:`gaborbernat`. (`#1918 <https://github.com/pypa/virtualenv/issues/1918>`_)
+==================
 
+- Upgrade embedded pip to ``20.2.1``, setuptools to ``49.6.0`` and wheel to ``0.35.1`` - by :user:`gaborbernat`. (`#1918
+  <https://github.com/pypa/virtualenv/issues/1918>`_)
 
-v20.0.30 (2020-08-04)
----------------------
+***********************
+ v20.0.30 (2020-08-04)
+***********************
 
 Bugfixes - 20.0.30
-~~~~~~~~~~~~~~~~~~
-- Upgrade pip to ``20.2.1`` and setuptools to ``49.2.1`` - by :user:`gaborbernat`. (`#1915 <https://github.com/pypa/virtualenv/issues/1915>`_)
+==================
 
+- Upgrade pip to ``20.2.1`` and setuptools to ``49.2.1`` - by :user:`gaborbernat`. (`#1915
+  <https://github.com/pypa/virtualenv/issues/1915>`_)
 
-v20.0.29 (2020-07-31)
----------------------
+***********************
+ v20.0.29 (2020-07-31)
+***********************
 
 Bugfixes - 20.0.29
-~~~~~~~~~~~~~~~~~~
-- Upgrade embedded pip from version ``20.1.2`` to ``20.2`` - by :user:`gaborbernat`. (`#1909 <https://github.com/pypa/virtualenv/issues/1909>`_)
+==================
 
+- Upgrade embedded pip from version ``20.1.2`` to ``20.2`` - by :user:`gaborbernat`. (`#1909
+  <https://github.com/pypa/virtualenv/issues/1909>`_)
 
-v20.0.28 (2020-07-24)
----------------------
+***********************
+ v20.0.28 (2020-07-24)
+***********************
 
 Bugfixes - 20.0.28
-~~~~~~~~~~~~~~~~~~
-- Fix test suite failing if run from system Python - by :user:`gaborbernat`. (`#1882 <https://github.com/pypa/virtualenv/issues/1882>`_)
+==================
+
+- Fix test suite failing if run from system Python - by :user:`gaborbernat`. (`#1882
+  <https://github.com/pypa/virtualenv/issues/1882>`_)
 - Provide ``setup_logging`` flag to python API so that users can bypass logging handling if their application already
   performs this - by :user:`gaborbernat`. (`#1896 <https://github.com/pypa/virtualenv/issues/1896>`_)
 - Use ``\n`` instead if ``\r\n`` as line separator for report (because Python already performs this transformation
-  automatically upon write to the logging pipe) - by :user:`gaborbernat`. (`#1905 <https://github.com/pypa/virtualenv/issues/1905>`_)
+  automatically upon write to the logging pipe) - by :user:`gaborbernat`. (`#1905
+  <https://github.com/pypa/virtualenv/issues/1905>`_)
 
-
-v20.0.27 (2020-07-15)
----------------------
+***********************
+ v20.0.27 (2020-07-15)
+***********************
 
 Bugfixes - 20.0.27
-~~~~~~~~~~~~~~~~~~
-- No longer preimport threading to fix support for `gpython <https://pypi.org/project/pygolang/#gpython>`_ and `gevent <https://www.gevent.org/>`_ - by :user:`navytux`. (`#1897 <https://github.com/pypa/virtualenv/issues/1897>`_)
-- Upgrade setuptools from ``49.2.0`` on ``Python 3.5+`` - by :user:`gaborbernat`. (`#1898 <https://github.com/pypa/virtualenv/issues/1898>`_)
+==================
 
+- No longer preimport threading to fix support for `gpython <https://pypi.org/project/pygolang/#gpython>`_ and `gevent
+  <https://www.gevent.org/>`_ - by :user:`navytux`. (`#1897 <https://github.com/pypa/virtualenv/issues/1897>`_)
+- Upgrade setuptools from ``49.2.0`` on ``Python 3.5+`` - by :user:`gaborbernat`. (`#1898
+  <https://github.com/pypa/virtualenv/issues/1898>`_)
 
-v20.0.26 (2020-07-07)
----------------------
+***********************
+ v20.0.26 (2020-07-07)
+***********************
 
 Bugfixes - 20.0.26
-~~~~~~~~~~~~~~~~~~
-- Bump dependency ``distutils >= 0.3.1`` - by :user:`gaborbernat`. (`#1880 <https://github.com/pypa/virtualenv/issues/1880>`_)
+==================
+
+- Bump dependency ``distutils >= 0.3.1`` - by :user:`gaborbernat`. (`#1880
+  <https://github.com/pypa/virtualenv/issues/1880>`_)
 - Improve periodic update handling:
 
   - better logging output while running and enable logging on background process call (
@@ -1203,36 +1473,45 @@ Bugfixes - 20.0.26
   - stop downloading wheels once we reach the embedded version,
 
   by :user:`gaborbernat`. (`#1883 <https://github.com/pypa/virtualenv/issues/1883>`_)
-- Do not print error message if the application exists with ``SystemExit(0)`` - by :user:`gaborbernat`. (`#1885 <https://github.com/pypa/virtualenv/issues/1885>`_)
-- Upgrade embedded setuptools from ``47.3.1`` to ``49.1.0`` for Python ``3.5+`` - by :user:`gaborbernat`. (`#1887 <https://github.com/pypa/virtualenv/issues/1887>`_)
 
+- Do not print error message if the application exists with ``SystemExit(0)`` - by :user:`gaborbernat`. (`#1885
+  <https://github.com/pypa/virtualenv/issues/1885>`_)
+- Upgrade embedded setuptools from ``47.3.1`` to ``49.1.0`` for Python ``3.5+`` - by :user:`gaborbernat`. (`#1887
+  <https://github.com/pypa/virtualenv/issues/1887>`_)
 
-v20.0.25 (2020-06-23)
----------------------
+***********************
+ v20.0.25 (2020-06-23)
+***********************
 
 Bugfixes - 20.0.25
-~~~~~~~~~~~~~~~~~~
-- Fix that when the ``app-data`` seeders image creation fails the exception is silently ignored. Avoid two virtual environment creations to step on each others toes by using a lock while creating the base images. By :user:`gaborbernat`. (`#1869 <https://github.com/pypa/virtualenv/issues/1869>`_)
+==================
 
+- Fix that when the ``app-data`` seeders image creation fails the exception is silently ignored. Avoid two virtual
+  environment creations to step on each others toes by using a lock while creating the base images. By
+  :user:`gaborbernat`. (`#1869 <https://github.com/pypa/virtualenv/issues/1869>`_)
 
-v20.0.24 (2020-06-22)
----------------------
+***********************
+ v20.0.24 (2020-06-22)
+***********************
 
 Features - 20.0.24
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Ensure that the seeded packages do not get too much out of date:
 
   - add a CLI flag that triggers upgrade of embedded wheels under :option:`upgrade-embed-wheels`
-  - periodically (once every 14 days) upgrade the embedded wheels in a background process, and use them if they have been
-    released for more than 28 days (can be disabled via :option:`no-periodic-update`)
+  - periodically (once every 14 days) upgrade the embedded wheels in a background process, and use them if they have
+    been released for more than 28 days (can be disabled via :option:`no-periodic-update`)
 
   More details under :ref:`wheels` - by :user:`gaborbernat`. (`#1821 <https://github.com/pypa/virtualenv/issues/1821>`_)
+
 - Upgrade embed wheel content:
 
   - ship wheels for Python ``3.9`` and ``3.10``
   - upgrade setuptools for Python ``3.5+`` from ``47.1.1`` to ``47.3.1``
 
   by :user:`gaborbernat`. (`#1841 <https://github.com/pypa/virtualenv/issues/1841>`_)
+
 - Display the installed seed package versions in the final summary output, for example:
 
   .. code-block:: console
@@ -1245,249 +1524,317 @@ Features - 20.0.24
   by :user:`gaborbernat`. (`#1864 <https://github.com/pypa/virtualenv/issues/1864>`_)
 
 Bugfixes - 20.0.24
-~~~~~~~~~~~~~~~~~~
-- Do not generate/overwrite ``.gitignore`` if it already exists at destination path - by :user:`gaborbernat`. (`#1862 <https://github.com/pypa/virtualenv/issues/1862>`_)
-- Improve error message for no ``.dist-info`` inside the ``app-data`` copy seeder - by :user:`gaborbernat`. (`#1867 <https://github.com/pypa/virtualenv/issues/1867>`_)
+==================
+
+- Do not generate/overwrite ``.gitignore`` if it already exists at destination path - by :user:`gaborbernat`. (`#1862
+  <https://github.com/pypa/virtualenv/issues/1862>`_)
+- Improve error message for no ``.dist-info`` inside the ``app-data`` copy seeder - by :user:`gaborbernat`. (`#1867
+  <https://github.com/pypa/virtualenv/issues/1867>`_)
 
 Improved Documentation - 20.0.24
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- How seeding mechanisms discover (and automatically keep it up to date) wheels at :ref:`wheels` - by :user:`gaborbernat`. (`#1821 <https://github.com/pypa/virtualenv/issues/1821>`_)
-- How distributions should handle shipping their own embedded wheels at  :ref:`distribution_wheels` - by :user:`gaborbernat`. (`#1840 <https://github.com/pypa/virtualenv/issues/1840>`_)
+================================
 
+- How seeding mechanisms discover (and automatically keep it up to date) wheels at :ref:`wheels` - by
+  :user:`gaborbernat`. (`#1821 <https://github.com/pypa/virtualenv/issues/1821>`_)
+- How distributions should handle shipping their own embedded wheels at :ref:`distribution_wheels` - by
+  :user:`gaborbernat`. (`#1840 <https://github.com/pypa/virtualenv/issues/1840>`_)
 
-v20.0.23 (2020-06-12)
----------------------
+***********************
+ v20.0.23 (2020-06-12)
+***********************
 
 Bugfixes - 20.0.23
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Fix typo in ``setup.cfg`` - by :user:`RowdyHowell`. (`#1857 <https://github.com/pypa/virtualenv/issues/1857>`_)
 
-
-v20.0.22 (2020-06-12)
----------------------
+***********************
+ v20.0.22 (2020-06-12)
+***********************
 
 Bugfixes - 20.0.22
-~~~~~~~~~~~~~~~~~~
-- Relax ``importlib.resources`` requirement to also allow version 2 - by :user:`asottile`. (`#1846 <https://github.com/pypa/virtualenv/issues/1846>`_)
-- Upgrade embedded setuptools to ``44.1.1`` for python 2 and ``47.1.1`` for python3.5+ - by :user:`gaborbernat`. (`#1855 <https://github.com/pypa/virtualenv/issues/1855>`_)
+==================
 
+- Relax ``importlib.resources`` requirement to also allow version 2 - by :user:`asottile`. (`#1846
+  <https://github.com/pypa/virtualenv/issues/1846>`_)
+- Upgrade embedded setuptools to ``44.1.1`` for python 2 and ``47.1.1`` for python3.5+ - by :user:`gaborbernat`. (`#1855
+  <https://github.com/pypa/virtualenv/issues/1855>`_)
 
-v20.0.21 (2020-05-20)
----------------------
+***********************
+ v20.0.21 (2020-05-20)
+***********************
 
 Features - 20.0.21
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Generate ignore file for version control systems to avoid tracking virtual environments by default. Users should
-  remove these files if still want to track. For now we support only **git** by :user:`gaborbernat`. (`#1806 <https://github.com/pypa/virtualenv/issues/1806>`_)
+  remove these files if still want to track. For now we support only **git** by :user:`gaborbernat`. (`#1806
+  <https://github.com/pypa/virtualenv/issues/1806>`_)
 
 Bugfixes - 20.0.21
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Fix virtualenv fails sometimes when run concurrently, ``--clear-app-data`` conflicts with :option:`clear` flag when
   abbreviation is turned on. To bypass this while allowing abbreviated flags on the command line we had to move it to
   :option:`reset-app-data` - by :user:`gaborbernat`. (`#1824 <https://github.com/pypa/virtualenv/issues/1824>`_)
-- Upgrade embedded ``setuptools`` to ``46.4.0`` from ``46.1.3`` on Python ``3.5+``, and ``pip`` from ``20.1`` to ``20.1.1`` - by :user:`gaborbernat`. (`#1827 <https://github.com/pypa/virtualenv/issues/1827>`_)
-- Seeder pip now correctly handles ``--extra-search-dir`` - by :user:`frenzymadness`. (`#1834 <https://github.com/pypa/virtualenv/issues/1834>`_)
+- Upgrade embedded ``setuptools`` to ``46.4.0`` from ``46.1.3`` on Python ``3.5+``, and ``pip`` from ``20.1`` to
+  ``20.1.1`` - by :user:`gaborbernat`. (`#1827 <https://github.com/pypa/virtualenv/issues/1827>`_)
+- Seeder pip now correctly handles ``--extra-search-dir`` - by :user:`frenzymadness`. (`#1834
+  <https://github.com/pypa/virtualenv/issues/1834>`_)
 
-
-v20.0.20 (2020-05-04)
----------------------
+***********************
+ v20.0.20 (2020-05-04)
+***********************
 
 Bugfixes - 20.0.20
-~~~~~~~~~~~~~~~~~~
-- Fix download fails with python 3.4 - by :user:`gaborbernat`. (`#1809 <https://github.com/pypa/virtualenv/issues/1809>`_)
-- Fixes older CPython2 versions use ``_get_makefile_filename`` instead of ``get_makefile_filename`` on ``sysconfig`` - by :user:`ianw`. (`#1810 <https://github.com/pypa/virtualenv/issues/1810>`_)
-- Fix download is ``True`` by default - by :user:`gaborbernat`. (`#1813 <https://github.com/pypa/virtualenv/issues/1813>`_)
-- Fail ``app-data`` seed operation when wheel download fails and better error message - by :user:`gaborbernat`. (`#1814 <https://github.com/pypa/virtualenv/issues/1814>`_)
+==================
 
+- Fix download fails with python 3.4 - by :user:`gaborbernat`. (`#1809
+  <https://github.com/pypa/virtualenv/issues/1809>`_)
+- Fixes older CPython2 versions use ``_get_makefile_filename`` instead of ``get_makefile_filename`` on ``sysconfig`` -
+  by :user:`ianw`. (`#1810 <https://github.com/pypa/virtualenv/issues/1810>`_)
+- Fix download is ``True`` by default - by :user:`gaborbernat`. (`#1813
+  <https://github.com/pypa/virtualenv/issues/1813>`_)
+- Fail ``app-data`` seed operation when wheel download fails and better error message - by :user:`gaborbernat`. (`#1814
+  <https://github.com/pypa/virtualenv/issues/1814>`_)
 
-v20.0.19 (2020-05-03)
----------------------
+***********************
+ v20.0.19 (2020-05-03)
+***********************
 
 Bugfixes - 20.0.19
-~~~~~~~~~~~~~~~~~~
-- Fix generating a Python 2 environment from Python 3 creates invalid python activator - by :user:`gaborbernat`. (`#1776 <https://github.com/pypa/virtualenv/issues/1776>`_)
-- Fix pinning seed packages via ``app-data`` seeder raised ``Invalid Requirement`` - by :user:`gaborbernat`. (`#1779 <https://github.com/pypa/virtualenv/issues/1779>`_)
-- Do not stop interpreter discovery if we fail to find the system interpreter for a executable during discovery
-  - by :user:`gaborbernat`. (`#1781 <https://github.com/pypa/virtualenv/issues/1781>`_)
-- On CPython2 POSIX platforms ensure ``syconfig.get_makefile_filename`` exists within the virtual environment (this is used by some c-extension based libraries - e.g. numpy - for building) - by :user:`gaborbernat`. (`#1783 <https://github.com/pypa/virtualenv/issues/1783>`_)
-- Better handling of options :option:`copies` and :option:`symlinks`. Introduce priority of where the option is set
-  to follow the order: CLI, env var, file, hardcoded. If both set at same level prefers copy over symlink. - by
+==================
+
+- Fix generating a Python 2 environment from Python 3 creates invalid python activator - by :user:`gaborbernat`. (`#1776
+  <https://github.com/pypa/virtualenv/issues/1776>`_)
+- Fix pinning seed packages via ``app-data`` seeder raised ``Invalid Requirement`` - by :user:`gaborbernat`. (`#1779
+  <https://github.com/pypa/virtualenv/issues/1779>`_)
+- Do not stop interpreter discovery if we fail to find the system interpreter for a executable during discovery - by
+  :user:`gaborbernat`. (`#1781 <https://github.com/pypa/virtualenv/issues/1781>`_)
+- On CPython2 POSIX platforms ensure ``syconfig.get_makefile_filename`` exists within the virtual environment (this is
+  used by some c-extension based libraries - e.g. numpy - for building) - by :user:`gaborbernat`. (`#1783
+  <https://github.com/pypa/virtualenv/issues/1783>`_)
+- Better handling of options :option:`copies` and :option:`symlinks`. Introduce priority of where the option is set to
+  follow the order: CLI, env var, file, hardcoded. If both set at same level prefers copy over symlink. - by
   :user:`gaborbernat`. (`#1784 <https://github.com/pypa/virtualenv/issues/1784>`_)
-- Upgrade pip for Python ``2.7`` and ``3.5+`` from ``20.0.2`` to ``20.1`` - by :user:`gaborbernat`. (`#1793 <https://github.com/pypa/virtualenv/issues/1793>`_)
-- Fix CPython is not discovered from Windows registry, and discover pythons from Windows registry in decreasing order
-  by version - by :user:`gaborbernat`. (`#1796 <https://github.com/pypa/virtualenv/issues/1796>`_)
+- Upgrade pip for Python ``2.7`` and ``3.5+`` from ``20.0.2`` to ``20.1`` - by :user:`gaborbernat`. (`#1793
+  <https://github.com/pypa/virtualenv/issues/1793>`_)
+- Fix CPython is not discovered from Windows registry, and discover pythons from Windows registry in decreasing order by
+  version - by :user:`gaborbernat`. (`#1796 <https://github.com/pypa/virtualenv/issues/1796>`_)
 - Fix symlink detection for creators - by :user:`asottile` (`#1803 <https://github.com/pypa/virtualenv/issues/1803>`_)
 
-
-v20.0.18 (2020-04-16)
----------------------
+***********************
+ v20.0.18 (2020-04-16)
+***********************
 
 Bugfixes - 20.0.18
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Importing setuptools before cli_run could cause our python information query to fail due to setuptools patching
   ``distutils.dist.Distribution`` - by :user:`gaborbernat`. (`#1771 <https://github.com/pypa/virtualenv/issues/1771>`_)
 
-
-v20.0.17 (2020-04-09)
----------------------
+***********************
+ v20.0.17 (2020-04-09)
+***********************
 
 Features - 20.0.17
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Extend environment variables checked for configuration to also check aliases (e.g. setting either
-  ``VIRTUALENV_COPIES`` or ``VIRTUALENV_ALWAYS_COPY`` will work) - by :user:`gaborbernat`. (`#1763 <https://github.com/pypa/virtualenv/issues/1763>`_)
+  ``VIRTUALENV_COPIES`` or ``VIRTUALENV_ALWAYS_COPY`` will work) - by :user:`gaborbernat`. (`#1763
+  <https://github.com/pypa/virtualenv/issues/1763>`_)
 
-
-v20.0.16 (2020-04-04)
----------------------
+***********************
+ v20.0.16 (2020-04-04)
+***********************
 
 Bugfixes - 20.0.16
-~~~~~~~~~~~~~~~~~~
-- Allow seed wheel files inside the :option:`extra-search-dir` folders that do not have ``Requires-Python``
-  metadata specified, these are considered compatible with all python versions - by :user:`gaborbernat`. (`#1757 <https://github.com/pypa/virtualenv/issues/1757>`_)
+==================
 
+- Allow seed wheel files inside the :option:`extra-search-dir` folders that do not have ``Requires-Python`` metadata
+  specified, these are considered compatible with all python versions - by :user:`gaborbernat`. (`#1757
+  <https://github.com/pypa/virtualenv/issues/1757>`_)
 
-v20.0.15 (2020-03-27)
----------------------
+***********************
+ v20.0.15 (2020-03-27)
+***********************
 
 Features - 20.0.15
-~~~~~~~~~~~~~~~~~~
-- Upgrade embedded setuptools to ``46.1.3`` from ``46.1.1`` - by :user:`gaborbernat`. (`#1752 <https://github.com/pypa/virtualenv/issues/1752>`_)
+==================
 
+- Upgrade embedded setuptools to ``46.1.3`` from ``46.1.1`` - by :user:`gaborbernat`. (`#1752
+  <https://github.com/pypa/virtualenv/issues/1752>`_)
 
-v20.0.14 (2020-03-25)
----------------------
+***********************
+ v20.0.14 (2020-03-25)
+***********************
 
 Features - 20.0.14
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Remove ``__PYVENV_LAUNCHER__`` on macOs for Python ``3.7.(<8)`` and ``3.8.(<3)`` on interpreter startup via ``pth``
-  file, this pulls in the `upstream patch <https://github.com/python/cpython/pull/9516>`_ - by :user:`gaborbernat`. (`#1704 <https://github.com/pypa/virtualenv/issues/1704>`_)
-- Upgrade embedded setuptools for Python ``3.5+`` to ``46.1.1``, for Python ``2.7`` to ``44.1.0`` - by :user:`gaborbernat`. (`#1745 <https://github.com/pypa/virtualenv/issues/1745>`_)
+  file, this pulls in the `upstream patch <https://github.com/python/cpython/pull/9516>`_ - by :user:`gaborbernat`.
+  (`#1704 <https://github.com/pypa/virtualenv/issues/1704>`_)
+- Upgrade embedded setuptools for Python ``3.5+`` to ``46.1.1``, for Python ``2.7`` to ``44.1.0`` - by
+  :user:`gaborbernat`. (`#1745 <https://github.com/pypa/virtualenv/issues/1745>`_)
 
 Bugfixes - 20.0.14
-~~~~~~~~~~~~~~~~~~
-- Fix discovery of interpreter by name from ``PATH`` that does not match a spec format - by :user:`gaborbernat`. (`#1746 <https://github.com/pypa/virtualenv/issues/1746>`_)
+==================
 
+- Fix discovery of interpreter by name from ``PATH`` that does not match a spec format - by :user:`gaborbernat`. (`#1746
+  <https://github.com/pypa/virtualenv/issues/1746>`_)
 
-v20.0.13 (2020-03-19)
----------------------
+***********************
+ v20.0.13 (2020-03-19)
+***********************
 
 Bugfixes - 20.0.13
-~~~~~~~~~~~~~~~~~~
-- Do not fail when the pyc files is missing for the host Python 2 - by :user:`gaborbernat`. (`#1738 <https://github.com/pypa/virtualenv/issues/1738>`_)
-- Support broken Packaging pythons that put the include headers under distutils pattern rather than sysconfig one
-  - by :user:`gaborbernat`. (`#1739 <https://github.com/pypa/virtualenv/issues/1739>`_)
+==================
 
+- Do not fail when the pyc files is missing for the host Python 2 - by :user:`gaborbernat`. (`#1738
+  <https://github.com/pypa/virtualenv/issues/1738>`_)
+- Support broken Packaging pythons that put the include headers under distutils pattern rather than sysconfig one - by
+  :user:`gaborbernat`. (`#1739 <https://github.com/pypa/virtualenv/issues/1739>`_)
 
-v20.0.12 (2020-03-19)
----------------------
+***********************
+ v20.0.12 (2020-03-19)
+***********************
 
 Bugfixes - 20.0.12
-~~~~~~~~~~~~~~~~~~
-- Fix relative path discovery of interpreters - by :user:`gaborbernat`. (`#1734 <https://github.com/pypa/virtualenv/issues/1734>`_)
+==================
 
+- Fix relative path discovery of interpreters - by :user:`gaborbernat`. (`#1734
+  <https://github.com/pypa/virtualenv/issues/1734>`_)
 
-v20.0.11 (2020-03-18)
----------------------
+***********************
+ v20.0.11 (2020-03-18)
+***********************
 
 Features - 20.0.11
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Improve error message when the host python does not satisfy invariants needed to create virtual environments (now we
-  print which host files are incompatible/missing and for which creators when no supported creator can be matched, however
-  we found creators that can describe the given Python interpreter - will still print no supported creator for Jython,
-  however print exactly what host files do not allow creation of virtual environments in case of CPython/PyPy)
-  - by :user:`gaborbernat`. (`#1716 <https://github.com/pypa/virtualenv/issues/1716>`_)
+  print which host files are incompatible/missing and for which creators when no supported creator can be matched,
+  however we found creators that can describe the given Python interpreter - will still print no supported creator for
+  Jython, however print exactly what host files do not allow creation of virtual environments in case of CPython/PyPy) -
+  by :user:`gaborbernat`. (`#1716 <https://github.com/pypa/virtualenv/issues/1716>`_)
 
 Bugfixes - 20.0.11
-~~~~~~~~~~~~~~~~~~
-- Support Python 3 Framework distributed via XCode in macOs Catalina and before - by :user:`gaborbernat`. (`#1663 <https://github.com/pypa/virtualenv/issues/1663>`_)
-- Fix Windows Store Python support, do not allow creation via symlink as that's not going to work by design
-  - by :user:`gaborbernat`. (`#1709 <https://github.com/pypa/virtualenv/issues/1709>`_)
+==================
+
+- Support Python 3 Framework distributed via XCode in macOs Catalina and before - by :user:`gaborbernat`. (`#1663
+  <https://github.com/pypa/virtualenv/issues/1663>`_)
+- Fix Windows Store Python support, do not allow creation via symlink as that's not going to work by design - by
+  :user:`gaborbernat`. (`#1709 <https://github.com/pypa/virtualenv/issues/1709>`_)
 - Fix ``activate_this.py`` throws ``AttributeError`` on Windows when virtual environment was created via cross python
   mechanism - by :user:`gaborbernat`. (`#1710 <https://github.com/pypa/virtualenv/issues/1710>`_)
-- Fix ``--no-pip``, ``--no-setuptools``, ``--no-wheel`` not being respected - by :user:`gaborbernat`. (`#1712 <https://github.com/pypa/virtualenv/issues/1712>`_)
-- Allow missing ``.py`` files if a compiled ``.pyc`` version is available - by :user:`tucked`. (`#1714 <https://github.com/pypa/virtualenv/issues/1714>`_)
-- Do not fail if the distutils/setuptools patch happens on a C-extension loader (such as ``zipimporter`` on Python 3.7 or
-  earlier) - by :user:`gaborbernat`. (`#1715 <https://github.com/pypa/virtualenv/issues/1715>`_)
+- Fix ``--no-pip``, ``--no-setuptools``, ``--no-wheel`` not being respected - by :user:`gaborbernat`. (`#1712
+  <https://github.com/pypa/virtualenv/issues/1712>`_)
+- Allow missing ``.py`` files if a compiled ``.pyc`` version is available - by :user:`tucked`. (`#1714
+  <https://github.com/pypa/virtualenv/issues/1714>`_)
+- Do not fail if the distutils/setuptools patch happens on a C-extension loader (such as ``zipimporter`` on Python 3.7
+  or earlier) - by :user:`gaborbernat`. (`#1715 <https://github.com/pypa/virtualenv/issues/1715>`_)
 - Support Python 2 implementations that require the landmark files and ``site.py`` to be in platform standard library
-  instead of the standard library path of the virtual environment (notably some RHEL ones, such as the Docker
-  image ``amazonlinux:1``) - by :user:`gaborbernat`. (`#1719 <https://github.com/pypa/virtualenv/issues/1719>`_)
+  instead of the standard library path of the virtual environment (notably some RHEL ones, such as the Docker image
+  ``amazonlinux:1``) - by :user:`gaborbernat`. (`#1719 <https://github.com/pypa/virtualenv/issues/1719>`_)
 - Allow the test suite to pass even when called with the system Python - to help repackaging of the tool for Linux
-  distributions -  by :user:`gaborbernat`. (`#1721 <https://github.com/pypa/virtualenv/issues/1721>`_)
-- Also generate ``pipx.y`` console script beside ``pip-x.y`` to be compatible with how pip installs itself -
-  by :user:`gaborbernat`. (`#1723 <https://github.com/pypa/virtualenv/issues/1723>`_)
-- Automatically create the application data folder if it does not exists - by :user:`gaborbernat`. (`#1728 <https://github.com/pypa/virtualenv/issues/1728>`_)
+  distributions - by :user:`gaborbernat`. (`#1721 <https://github.com/pypa/virtualenv/issues/1721>`_)
+- Also generate ``pipx.y`` console script beside ``pip-x.y`` to be compatible with how pip installs itself - by
+  :user:`gaborbernat`. (`#1723 <https://github.com/pypa/virtualenv/issues/1723>`_)
+- Automatically create the application data folder if it does not exists - by :user:`gaborbernat`. (`#1728
+  <https://github.com/pypa/virtualenv/issues/1728>`_)
 
 Improved Documentation - 20.0.11
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- :ref:`supports <compatibility-requirements>` details now explicitly what Python installations we support
-  - by :user:`gaborbernat`. (`#1714 <https://github.com/pypa/virtualenv/issues/1714>`_)
+================================
 
+- :ref:`supports <compatibility-requirements>` details now explicitly what Python installations we support - by
+  :user:`gaborbernat`. (`#1714 <https://github.com/pypa/virtualenv/issues/1714>`_)
 
-v20.0.10 (2020-03-10)
----------------------
+***********************
+ v20.0.10 (2020-03-10)
+***********************
 
 Bugfixes - 20.0.10
-~~~~~~~~~~~~~~~~~~
+==================
+
 - Fix acquiring python information might be altered by distutils configuration files generating incorrect layout virtual
   environments - by :user:`gaborbernat`. (`#1663 <https://github.com/pypa/virtualenv/issues/1663>`_)
-- Upgrade embedded setuptools to ``46.0.0`` from ``45.3.0`` on Python ``3.5+`` - by :user:`gaborbernat`. (`#1702 <https://github.com/pypa/virtualenv/issues/1702>`_)
+- Upgrade embedded setuptools to ``46.0.0`` from ``45.3.0`` on Python ``3.5+`` - by :user:`gaborbernat`. (`#1702
+  <https://github.com/pypa/virtualenv/issues/1702>`_)
 
 Improved Documentation - 20.0.10
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+================================
+
 - Document requirements (pip + index server) when installing via pip under the installation section - by
   :user:`gaborbernat`. (`#1618 <https://github.com/pypa/virtualenv/issues/1618>`_)
-- Document installing from non PEP-518 systems - :user:`gaborbernat`. (`#1619 <https://github.com/pypa/virtualenv/issues/1619>`_)
-- Document installing latest unreleased version from Github - :user:`gaborbernat`. (`#1620 <https://github.com/pypa/virtualenv/issues/1620>`_)
+- Document installing from non PEP-518 systems - :user:`gaborbernat`. (`#1619
+  <https://github.com/pypa/virtualenv/issues/1619>`_)
+- Document installing latest unreleased version from Github - :user:`gaborbernat`. (`#1620
+  <https://github.com/pypa/virtualenv/issues/1620>`_)
 
-
-v20.0.9 (2020-03-08)
---------------------
+**********************
+ v20.0.9 (2020-03-08)
+**********************
 
 Bugfixes - 20.0.9
-~~~~~~~~~~~~~~~~~
-- ``pythonw.exe`` works as ``python.exe`` on Windows - by :user:`gaborbernat`. (`#1686 <https://github.com/pypa/virtualenv/issues/1686>`_)
-- Handle legacy loaders for virtualenv import hooks used to patch distutils configuration load - by :user:`gaborbernat`. (`#1690 <https://github.com/pypa/virtualenv/issues/1690>`_)
+=================
+
+- ``pythonw.exe`` works as ``python.exe`` on Windows - by :user:`gaborbernat`. (`#1686
+  <https://github.com/pypa/virtualenv/issues/1686>`_)
+- Handle legacy loaders for virtualenv import hooks used to patch distutils configuration load - by :user:`gaborbernat`.
+  (`#1690 <https://github.com/pypa/virtualenv/issues/1690>`_)
 - Support for python 2 platforms that store landmark files in ``platstdlib`` over ``stdlib`` (e.g. RHEL) - by
   :user:`gaborbernat`. (`#1694 <https://github.com/pypa/virtualenv/issues/1694>`_)
-- Upgrade embedded setuptools to ``45.3.0`` from ``45.2.0`` for Python ``3.5+``  - by :user:`gaborbernat`. (`#1699 <https://github.com/pypa/virtualenv/issues/1699>`_)
+- Upgrade embedded setuptools to ``45.3.0`` from ``45.2.0`` for Python ``3.5+`` - by :user:`gaborbernat`. (`#1699
+  <https://github.com/pypa/virtualenv/issues/1699>`_)
 
-
-v20.0.8 (2020-03-04)
---------------------
+**********************
+ v20.0.8 (2020-03-04)
+**********************
 
 Bugfixes - 20.0.8
-~~~~~~~~~~~~~~~~~
-- Having `distutils configuration <https://docs.python.org/3/install/index.html#distutils-configuration-files>`_
-  files that set ``prefix`` and ``install_scripts`` cause installation of packages in the wrong location -
-  by :user:`gaborbernat`. (`#1663 <https://github.com/pypa/virtualenv/issues/1663>`_)
-- Fix ``PYTHONPATH`` being overridden on Python 2 — by :user:`jd`. (`#1673 <https://github.com/pypa/virtualenv/issues/1673>`_)
-- Fix list configuration value parsing from config file or environment variable - by :user:`gaborbernat`. (`#1674 <https://github.com/pypa/virtualenv/issues/1674>`_)
-- Fix Batch activation script shell prompt to display environment name by default - by :user:`spetafree`. (`#1679 <https://github.com/pypa/virtualenv/issues/1679>`_)
-- Fix startup on Python 2 is slower for virtualenv - this was due to setuptools calculating it's working set distribution
-  - by :user:`gaborbernat`. (`#1682 <https://github.com/pypa/virtualenv/issues/1682>`_)
+=================
+
+- Having `distutils configuration <https://docs.python.org/3/install/index.html#distutils-configuration-files>`_ files
+  that set ``prefix`` and ``install_scripts`` cause installation of packages in the wrong location - by
+  :user:`gaborbernat`. (`#1663 <https://github.com/pypa/virtualenv/issues/1663>`_)
+- Fix ``PYTHONPATH`` being overridden on Python 2 — by :user:`jd`. (`#1673
+  <https://github.com/pypa/virtualenv/issues/1673>`_)
+- Fix list configuration value parsing from config file or environment variable - by :user:`gaborbernat`. (`#1674
+  <https://github.com/pypa/virtualenv/issues/1674>`_)
+- Fix Batch activation script shell prompt to display environment name by default - by :user:`spetafree`. (`#1679
+  <https://github.com/pypa/virtualenv/issues/1679>`_)
+- Fix startup on Python 2 is slower for virtualenv - this was due to setuptools calculating it's working set
+  distribution - by :user:`gaborbernat`. (`#1682 <https://github.com/pypa/virtualenv/issues/1682>`_)
 - Fix entry points are not populated for editable installs on Python 2 due to setuptools working set being calculated
   before ``easy_install.pth`` runs - by :user:`gaborbernat`. (`#1684 <https://github.com/pypa/virtualenv/issues/1684>`_)
-- Fix ``attr:`` import fails for setuptools - by :user:`gaborbernat`. (`#1685 <https://github.com/pypa/virtualenv/issues/1685>`_)
+- Fix ``attr:`` import fails for setuptools - by :user:`gaborbernat`. (`#1685
+  <https://github.com/pypa/virtualenv/issues/1685>`_)
 
-
-v20.0.7 (2020-02-26)
---------------------
+**********************
+ v20.0.7 (2020-02-26)
+**********************
 
 Bugfixes - 20.0.7
-~~~~~~~~~~~~~~~~~
+=================
+
 - Disable distutils fixup for python 3 until `pypa/pip #7778 <https://github.com/pypa/pip/issues/7778>`_ is fixed and
   released - by :user:`gaborbernat`. (`#1669 <https://github.com/pypa/virtualenv/issues/1669>`_)
 
-
-v20.0.6 (2020-02-26)
---------------------
+**********************
+ v20.0.6 (2020-02-26)
+**********************
 
 Bugfixes - 20.0.6
-~~~~~~~~~~~~~~~~~
-- Fix global site package always being added with bundled macOs python framework builds - by :user:`gaborbernat`. (`#1561 <https://github.com/pypa/virtualenv/issues/1561>`_)
-- Fix generated scripts use host version info rather than target - by :user:`gaborbernat`. (`#1600 <https://github.com/pypa/virtualenv/issues/1600>`_)
-- Fix circular prefix reference with single elements (accept these as if they were system executables, print a info about
-  them referencing themselves) - by :user:`gaborbernat`. (`#1632 <https://github.com/pypa/virtualenv/issues/1632>`_)
+=================
+
+- Fix global site package always being added with bundled macOs python framework builds - by :user:`gaborbernat`.
+  (`#1561 <https://github.com/pypa/virtualenv/issues/1561>`_)
+- Fix generated scripts use host version info rather than target - by :user:`gaborbernat`. (`#1600
+  <https://github.com/pypa/virtualenv/issues/1600>`_)
+- Fix circular prefix reference with single elements (accept these as if they were system executables, print a info
+  about them referencing themselves) - by :user:`gaborbernat`. (`#1632
+  <https://github.com/pypa/virtualenv/issues/1632>`_)
 - Handle the case when the application data folder is read-only:
 
   - the application data folder is now controllable via :option:`app-data`,
@@ -1497,75 +1844,103 @@ Bugfixes - 20.0.6
   - :option:`symlink-app-data` is always ``False`` when the application data is temporary
 
   by :user:`gaborbernat`. (`#1640 <https://github.com/pypa/virtualenv/issues/1640>`_)
-- Fix PyPy 2 builtin modules are imported from standard library, rather than from builtin  - by :user:`gaborbernat`. (`#1652 <https://github.com/pypa/virtualenv/issues/1652>`_)
-- Fix creation of entry points when path contains spaces - by :user:`nsoranzo`. (`#1660 <https://github.com/pypa/virtualenv/issues/1660>`_)
-- Fix relative paths for the zipapp (for python ``3.7+``) - by :user:`gaborbernat`. (`#1666 <https://github.com/pypa/virtualenv/issues/1666>`_)
 
-v20.0.5 (2020-02-21)
---------------------
+- Fix PyPy 2 builtin modules are imported from standard library, rather than from builtin - by :user:`gaborbernat`.
+  (`#1652 <https://github.com/pypa/virtualenv/issues/1652>`_)
+- Fix creation of entry points when path contains spaces - by :user:`nsoranzo`. (`#1660
+  <https://github.com/pypa/virtualenv/issues/1660>`_)
+- Fix relative paths for the zipapp (for python ``3.7+``) - by :user:`gaborbernat`. (`#1666
+  <https://github.com/pypa/virtualenv/issues/1666>`_)
+
+**********************
+ v20.0.5 (2020-02-21)
+**********************
 
 Features - 20.0.5
-~~~~~~~~~~~~~~~~~
-- Also create ``pythonX.X`` executables when creating pypy virtualenvs - by :user:`asottile` (`#1612 <https://github.com/pypa/virtualenv/issues/1612>`_)
-- Fail with better error message if trying to install source with unsupported ``setuptools``, allow ``setuptools-scm >= 2``
-  and move to legacy ``setuptools-scm`` format to support better older platforms (``CentOS 7`` and such) - by :user:`gaborbernat`. (`#1621 <https://github.com/pypa/virtualenv/issues/1621>`_)
-- Report of the created virtual environment is now split across four short lines rather than one long - by :user:`gaborbernat` (`#1641 <https://github.com/pypa/virtualenv/issues/1641>`_)
+=================
+
+- Also create ``pythonX.X`` executables when creating pypy virtualenvs - by :user:`asottile` (`#1612
+  <https://github.com/pypa/virtualenv/issues/1612>`_)
+- Fail with better error message if trying to install source with unsupported ``setuptools``, allow ``setuptools-scm >=
+  2`` and move to legacy ``setuptools-scm`` format to support better older platforms (``CentOS 7`` and such) - by
+  :user:`gaborbernat`. (`#1621 <https://github.com/pypa/virtualenv/issues/1621>`_)
+- Report of the created virtual environment is now split across four short lines rather than one long - by
+  :user:`gaborbernat` (`#1641 <https://github.com/pypa/virtualenv/issues/1641>`_)
 
 Bugfixes - 20.0.5
-~~~~~~~~~~~~~~~~~
-- Add macOs Python 2 Framework support (now we test it with the CI via brew) - by :user:`gaborbernat` (`#1561 <https://github.com/pypa/virtualenv/issues/1561>`_)
-- Fix losing of libpypy-c.so when the pypy executable is a symlink - by :user:`asottile` (`#1614 <https://github.com/pypa/virtualenv/issues/1614>`_)
-- Discover python interpreter in a case insensitive manner - by :user:`PrajwalM2212` (`#1624 <https://github.com/pypa/virtualenv/issues/1624>`_)
-- Fix cross interpreter support when the host python sets ``sys.base_executable`` based on ``__PYVENV_LAUNCHER__`` -
-  by :user:`cjolowicz` (`#1643 <https://github.com/pypa/virtualenv/issues/1643>`_)
+=================
 
+- Add macOs Python 2 Framework support (now we test it with the CI via brew) - by :user:`gaborbernat` (`#1561
+  <https://github.com/pypa/virtualenv/issues/1561>`_)
+- Fix losing of libpypy-c.so when the pypy executable is a symlink - by :user:`asottile` (`#1614
+  <https://github.com/pypa/virtualenv/issues/1614>`_)
+- Discover python interpreter in a case insensitive manner - by :user:`PrajwalM2212` (`#1624
+  <https://github.com/pypa/virtualenv/issues/1624>`_)
+- Fix cross interpreter support when the host python sets ``sys.base_executable`` based on ``__PYVENV_LAUNCHER__`` - by
+  :user:`cjolowicz` (`#1643 <https://github.com/pypa/virtualenv/issues/1643>`_)
 
-v20.0.4 (2020-02-14)
---------------------
+**********************
+ v20.0.4 (2020-02-14)
+**********************
 
 Features - 20.0.4
-~~~~~~~~~~~~~~~~~
-- When aliasing interpreters, use relative symlinks - by :user:`asottile`. (`#1596 <https://github.com/pypa/virtualenv/issues/1596>`_)
+=================
+
+- When aliasing interpreters, use relative symlinks - by :user:`asottile`. (`#1596
+  <https://github.com/pypa/virtualenv/issues/1596>`_)
 
 Bugfixes - 20.0.4
-~~~~~~~~~~~~~~~~~
-- Allow the use of ``/`` as pathname component separator on Windows - by ``vphilippon`` (`#1582 <https://github.com/pypa/virtualenv/issues/1582>`_)
-- Lower minimal version of six required to 1.9 - by ``ssbarnea`` (`#1606 <https://github.com/pypa/virtualenv/issues/1606>`_)
+=================
 
+- Allow the use of ``/`` as pathname component separator on Windows - by ``vphilippon`` (`#1582
+  <https://github.com/pypa/virtualenv/issues/1582>`_)
+- Lower minimal version of six required to 1.9 - by ``ssbarnea`` (`#1606
+  <https://github.com/pypa/virtualenv/issues/1606>`_)
 
-v20.0.3 (2020-02-12)
---------------------
+**********************
+ v20.0.3 (2020-02-12)
+**********************
 
 Bugfixes - 20.0.3
-~~~~~~~~~~~~~~~~~
+=================
+
 - On Python 2 with Apple Framework builds the global site package is no longer added when the
-  :option:`system-site-packages` is not specified - by :user:`gaborbernat`. (`#1561 <https://github.com/pypa/virtualenv/issues/1561>`_)
+  :option:`system-site-packages` is not specified - by :user:`gaborbernat`. (`#1561
+  <https://github.com/pypa/virtualenv/issues/1561>`_)
 - Fix system python discovery mechanism when prefixes contain relative parts (e.g. ``..``) by resolving paths within the
   python information query - by :user:`gaborbernat`. (`#1583 <https://github.com/pypa/virtualenv/issues/1583>`_)
-- Expose a programmatic API as ``from virtualenv import cli_run`` - by :user:`gaborbernat`. (`#1585 <https://github.com/pypa/virtualenv/issues/1585>`_)
+- Expose a programmatic API as ``from virtualenv import cli_run`` - by :user:`gaborbernat`. (`#1585
+  <https://github.com/pypa/virtualenv/issues/1585>`_)
 - Fix ``app-data`` :option:`seeder` injects a extra ``.dist-info.virtualenv`` path that breaks ``importlib.metadata``,
-  now we inject an extra ``.virtualenv`` - by :user:`gaborbernat`. (`#1589 <https://github.com/pypa/virtualenv/issues/1589>`_)
+  now we inject an extra ``.virtualenv`` - by :user:`gaborbernat`. (`#1589
+  <https://github.com/pypa/virtualenv/issues/1589>`_)
 
 Improved Documentation - 20.0.3
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- Document a programmatic API as ``from virtualenv import cli_run`` under :ref:`programmatic_api` -
-  by :user:`gaborbernat`. (`#1585 <https://github.com/pypa/virtualenv/issues/1585>`_)
+===============================
 
+- Document a programmatic API as ``from virtualenv import cli_run`` under :ref:`programmatic_api` - by
+  :user:`gaborbernat`. (`#1585 <https://github.com/pypa/virtualenv/issues/1585>`_)
 
-v20.0.2 (2020-02-11)
---------------------
+**********************
+ v20.0.2 (2020-02-11)
+**********************
 
 Features - 20.0.2
-~~~~~~~~~~~~~~~~~
+=================
+
 - Print out a one line message about the created virtual environment when no :option:`verbose` is set, this can now be
-  silenced to get back the original behavior via the :option:`quiet` flag - by :user:`pradyunsg`. (`#1557 <https://github.com/pypa/virtualenv/issues/1557>`_)
-- Allow virtualenv's app data cache to be overridden by ``VIRTUALENV_OVERRIDE_APP_DATA`` - by :user:`asottile`. (`#1559 <https://github.com/pypa/virtualenv/issues/1559>`_)
-- Passing in the virtual environment name/path is now required (no longer defaults to ``venv``) - by :user:`gaborbernat`. (`#1568 <https://github.com/pypa/virtualenv/issues/1568>`_)
+  silenced to get back the original behavior via the :option:`quiet` flag - by :user:`pradyunsg`. (`#1557
+  <https://github.com/pypa/virtualenv/issues/1557>`_)
+- Allow virtualenv's app data cache to be overridden by ``VIRTUALENV_OVERRIDE_APP_DATA`` - by :user:`asottile`. (`#1559
+  <https://github.com/pypa/virtualenv/issues/1559>`_)
+- Passing in the virtual environment name/path is now required (no longer defaults to ``venv``) - by
+  :user:`gaborbernat`. (`#1568 <https://github.com/pypa/virtualenv/issues/1568>`_)
 - Add a CLI flag :option:`with-traceback` that allows displaying the stacktrace of the virtualenv when a failure occurs
   - by :user:`gaborbernat`. (`#1572 <https://github.com/pypa/virtualenv/issues/1572>`_)
 
 Bugfixes - 20.0.2
-~~~~~~~~~~~~~~~~~
+=================
+
 - Support long path names for generated virtual environment console entry points (such as ``pip``) when using the
   ``app-data`` :option:`seeder` - by :user:`gaborbernat`. (`#997 <https://github.com/pypa/virtualenv/issues/997>`_)
 - Improve python discovery mechanism:
@@ -1574,71 +1949,88 @@ Bugfixes - 20.0.2
   - beside the prefix folder also try with the platform dependent binary folder within that,
 
   by :user:`gaborbernat`. (`#1545 <https://github.com/pypa/virtualenv/issues/1545>`_)
+
 - When copying (either files or trees) do not copy the permission bits, last access time, last modification time, and
-  flags as access to these might be forbidden (for example in case of the macOs Framework Python) and these are not needed
-  for the user to use the virtual environment - by :user:`gaborbernat`. (`#1561 <https://github.com/pypa/virtualenv/issues/1561>`_)
+  flags as access to these might be forbidden (for example in case of the macOs Framework Python) and these are not
+  needed for the user to use the virtual environment - by :user:`gaborbernat`. (`#1561
+  <https://github.com/pypa/virtualenv/issues/1561>`_)
 - While discovering a python executables interpreters that cannot be queried are now displayed with info level rather
   than warning, so now they're no longer shown by default (these can be just executables to which we don't have access
-  or that are broken, don't warn if it's not the target Python we want) - by :user:`gaborbernat`. (`#1574 <https://github.com/pypa/virtualenv/issues/1574>`_)
+  or that are broken, don't warn if it's not the target Python we want) - by :user:`gaborbernat`. (`#1574
+  <https://github.com/pypa/virtualenv/issues/1574>`_)
 - The ``app-data`` :option:`seeder` no longer symlinks the packages on UNIX and copies on Windows. Instead by default
-  always copies, however now has the :option:`symlink-app-data` flag allowing users to request this less robust but faster
-  method - by :user:`gaborbernat`. (`#1575 <https://github.com/pypa/virtualenv/issues/1575>`_)
+  always copies, however now has the :option:`symlink-app-data` flag allowing users to request this less robust but
+  faster method - by :user:`gaborbernat`. (`#1575 <https://github.com/pypa/virtualenv/issues/1575>`_)
 
 Improved Documentation - 20.0.2
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- Add link to the `legacy documentation <https://virtualenv.pypa.io/en/legacy>`_ for the changelog by :user:`jezdez`. (`#1547 <https://github.com/pypa/virtualenv/issues/1547>`_)
-- Fine tune the documentation layout: default width of theme, allow tables to wrap around, soft corners for code snippets
-  - by :user:`pradyunsg`. (`#1548 <https://github.com/pypa/virtualenv/issues/1548>`_)
+===============================
 
+- Add link to the `legacy documentation <https://virtualenv.pypa.io/en/legacy>`_ for the changelog by :user:`jezdez`.
+  (`#1547 <https://github.com/pypa/virtualenv/issues/1547>`_)
+- Fine tune the documentation layout: default width of theme, allow tables to wrap around, soft corners for code
+  snippets - by :user:`pradyunsg`. (`#1548 <https://github.com/pypa/virtualenv/issues/1548>`_)
 
-v20.0.1 (2020-02-10)
---------------------
+**********************
+ v20.0.1 (2020-02-10)
+**********************
 
 Features - 20.0.1
-~~~~~~~~~~~~~~~~~
-- upgrade embedded setuptools to ``45.2.0`` from ``45.1.0`` for Python ``3.4+`` - by :user:`gaborbernat`. (`#1554 <https://github.com/pypa/virtualenv/issues/1554>`_)
+=================
+
+- upgrade embedded setuptools to ``45.2.0`` from ``45.1.0`` for Python ``3.4+`` - by :user:`gaborbernat`. (`#1554
+  <https://github.com/pypa/virtualenv/issues/1554>`_)
 
 Bugfixes - 20.0.1
-~~~~~~~~~~~~~~~~~
-- Virtual environments created via relative path on Windows creates bad console executables - by :user:`gaborbernat`. (`#1552 <https://github.com/pypa/virtualenv/issues/1552>`_)
+=================
+
+- Virtual environments created via relative path on Windows creates bad console executables - by :user:`gaborbernat`.
+  (`#1552 <https://github.com/pypa/virtualenv/issues/1552>`_)
 - Seems sometimes venvs created set their base executable to themselves; we accept these without question, so we handle
-  virtual environments as system pythons causing issues - by :user:`gaborbernat`. (`#1553 <https://github.com/pypa/virtualenv/issues/1553>`_)
+  virtual environments as system pythons causing issues - by :user:`gaborbernat`. (`#1553
+  <https://github.com/pypa/virtualenv/issues/1553>`_)
 
-
-v20.0.0. (2020-02-10)
----------------------
+***********************
+ v20.0.0. (2020-02-10)
+***********************
 
 Improved Documentation - 20.0.0.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- Fixes typos, repeated words and inconsistent heading spacing. Rephrase parts of the development documentation and CLI
-  documentation. Expands shorthands like ``env var`` and ``config`` to their full forms. Uses descriptions from respective
-  documentation, for projects listed in ``related links`` - by :user:`pradyunsg`. (`#1540 <https://github.com/pypa/virtualenv/issues/1540>`_)
+================================
 
-v20.0.0b2 (2020-02-04)
-----------------------
+- Fixes typos, repeated words and inconsistent heading spacing. Rephrase parts of the development documentation and CLI
+  documentation. Expands shorthands like ``env var`` and ``config`` to their full forms. Uses descriptions from
+  respective documentation, for projects listed in ``related links`` - by :user:`pradyunsg`. (`#1540
+  <https://github.com/pypa/virtualenv/issues/1540>`_)
+
+************************
+ v20.0.0b2 (2020-02-04)
+************************
 
 Features - 20.0.0b2
-~~~~~~~~~~~~~~~~~~~
+===================
+
 - Improve base executable discovery mechanism:
 
   - print at debug level why we refuse some candidates,
   - when no candidates match exactly, instead of hard failing fallback to the closest match where the priority of
-    matching attributes is: python implementation, major version, minor version, architecture, patch version,
-    release level and serial (this is to facilitate things to still work when the OS upgrade replace/upgrades the system
-    python with a never version, than what the virtualenv host python was created with),
+    matching attributes is: python implementation, major version, minor version, architecture, patch version, release
+    level and serial (this is to facilitate things to still work when the OS upgrade replace/upgrades the system python
+    with a never version, than what the virtualenv host python was created with),
   - always resolve system_executable information during the interpreter discovery, and the discovered environment is the
-    system interpreter instead of the venv/virtualenv (this happened before lazily the first time we accessed, and caused
-    reporting that the created virtual environment is of type of the virtualenv host python version, instead of the
-    system pythons version - these two can differ if the OS upgraded the system python underneath and the virtualenv
+    system interpreter instead of the venv/virtualenv (this happened before lazily the first time we accessed, and
+    caused reporting that the created virtual environment is of type of the virtualenv host python version, instead of
+    the system pythons version - these two can differ if the OS upgraded the system python underneath and the virtualenv
     host was created via copy),
 
   by :user:`gaborbernat`. (`#1515 <https://github.com/pypa/virtualenv/issues/1515>`_)
-- Generate ``bash`` and ``fish`` activators on Windows too (as these can be available with git bash, cygwin or mysys2)
-  - by :user:`gaborbernat`. (`#1527 <https://github.com/pypa/virtualenv/issues/1527>`_)
-- Upgrade the bundled ``wheel`` package from ``0.34.0`` to ``0.34.2`` - by :user:`gaborbernat`. (`#1531 <https://github.com/pypa/virtualenv/issues/1531>`_)
+
+- Generate ``bash`` and ``fish`` activators on Windows too (as these can be available with git bash, cygwin or mysys2) -
+  by :user:`gaborbernat`. (`#1527 <https://github.com/pypa/virtualenv/issues/1527>`_)
+- Upgrade the bundled ``wheel`` package from ``0.34.0`` to ``0.34.2`` - by :user:`gaborbernat`. (`#1531
+  <https://github.com/pypa/virtualenv/issues/1531>`_)
 
 Bugfixes - 20.0.0b2
-~~~~~~~~~~~~~~~~~~~
+===================
+
 - Bash activation script should have no extensions instead of ``.sh`` (this fixes the :pypi:`virtualenvwrapper`
   integration) - by :user:`gaborbernat`. (`#1508 <https://github.com/pypa/virtualenv/issues/1508>`_)
 - Show less information when we run with a single verbosity (``-v``):
@@ -1648,32 +2040,42 @@ Bugfixes - 20.0.0b2
   - for the ``app-data`` seeder do not show the type of lock, only the path to the app data directory,
 
   By :user:`gaborbernat`. (`#1510 <https://github.com/pypa/virtualenv/issues/1510>`_)
+
 - Fixed cannot discover a python interpreter that has already been discovered under a different path (such is the case
-  when we have multiple symlinks to the same interpreter) - by :user:`gaborbernat`. (`#1512 <https://github.com/pypa/virtualenv/issues/1512>`_)
-- Support relative paths for ``-p`` - by :user:`gaborbernat`. (`#1514 <https://github.com/pypa/virtualenv/issues/1514>`_)
-- Creating virtual environments in parallel fail with cannot acquire lock within app data - by :user:`gaborbernat`. (`#1516 <https://github.com/pypa/virtualenv/issues/1516>`_)
-- pth files were not processed under Debian CPython2 interpreters - by :user:`gaborbernat`. (`#1517 <https://github.com/pypa/virtualenv/issues/1517>`_)
+  when we have multiple symlinks to the same interpreter) - by :user:`gaborbernat`. (`#1512
+  <https://github.com/pypa/virtualenv/issues/1512>`_)
+- Support relative paths for ``-p`` - by :user:`gaborbernat`. (`#1514
+  <https://github.com/pypa/virtualenv/issues/1514>`_)
+- Creating virtual environments in parallel fail with cannot acquire lock within app data - by :user:`gaborbernat`.
+  (`#1516 <https://github.com/pypa/virtualenv/issues/1516>`_)
+- pth files were not processed under Debian CPython2 interpreters - by :user:`gaborbernat`. (`#1517
+  <https://github.com/pypa/virtualenv/issues/1517>`_)
 - Fix prompt not displayed correctly with upcoming fish 3.10 due to us not preserving ``$pipestatus`` - by
   :user:`krobelus`. (`#1530 <https://github.com/pypa/virtualenv/issues/1530>`_)
 - Stable order within ``pyenv.cfg`` and add ``include-system-site-packages`` only for creators that reference a global
   Python - by user:`gaborbernat`. (`#1535 <https://github.com/pypa/virtualenv/issues/1535>`_)
 
 Improved Documentation - 20.0.0b2
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-- Create the first iteration of the new documentation - by :user:`gaborbernat`. (`#1465 <https://github.com/pypa/virtualenv/issues/1465>`_)
-- Project readme is now of type MarkDown instead of reStructuredText - by :user:`gaborbernat`. (`#1531 <https://github.com/pypa/virtualenv/issues/1531>`_)
+=================================
 
+- Create the first iteration of the new documentation - by :user:`gaborbernat`. (`#1465
+  <https://github.com/pypa/virtualenv/issues/1465>`_)
+- Project readme is now of type MarkDown instead of reStructuredText - by :user:`gaborbernat`. (`#1531
+  <https://github.com/pypa/virtualenv/issues/1531>`_)
 
-v20.0.0b1 (2020-01-28)
-----------------------
+************************
+ v20.0.0b1 (2020-01-28)
+************************
 
-* First public release of the rewrite. Everything is brand new and just added.
-* ``--download`` defaults to ``False``
-* No longer replaces builtin ``site`` module with `custom version baked within virtualenv code itself <https://github.com/pypa/virtualenv/blob/legacy/virtualenv_embedded/site.py>`_. A simple shim module is used to fix up things on Python 2 only.
+- First public release of the rewrite. Everything is brand new and just added.
+- ``--download`` defaults to ``False``
+- No longer replaces builtin ``site`` module with `custom version baked within virtualenv code itself
+  <https://github.com/pypa/virtualenv/blob/legacy/virtualenv_embedded/site.py>`_. A simple shim module is used to fix up
+  things on Python 2 only.
 
 .. warning::
 
-   The current virtualenv is the second iteration of implementation. From version ``0.8`` all the way to ``16.7.9``
-   we numbered the first iteration. Version ``20.0.0b1`` is a complete rewrite of the package, and as such this release
-   history starts from there. The old changelog is still available in the
-   `legacy branch documentation <https://virtualenv.pypa.io/en/legacy/changes.html>`_.
+    The current virtualenv is the second iteration of implementation. From version ``0.8`` all the way to ``16.7.9`` we
+    numbered the first iteration. Version ``20.0.0b1`` is a complete rewrite of the package, and as such this release
+    history starts from there. The old changelog is still available in the `legacy branch documentation
+    <https://virtualenv.pypa.io/en/legacy/changes.html>`_.

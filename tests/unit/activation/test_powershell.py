@@ -118,11 +118,7 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch):
             return "prompt"
 
         def quote(self, s):
-            """
-            Tester will pass strings to native commands on Windows so extra
-            parsing rules are used. Check `PowerShellActivator.quote` for more
-            details.
-            """
+            """Tester will pass strings to native commands on Windows so extra parsing rules are used. Check `PowerShellActivator.quote` for more details."""
             text = PowerShellActivator.quote(s)
             return text.replace('"', '""') if sys.platform == "win32" else text
 

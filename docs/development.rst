@@ -1,38 +1,38 @@
-Development
-===========
+#############
+ Development
+#############
 
-Getting started
----------------
-
+*****************
+ Getting started
+*****************
 
 ``virtualenv`` is a volunteer maintained open source project and we welcome contributions of all forms. The sections
 below will help you get started with development, testing, and documentation. We’re pleased that you are interested in
 working on virtualenv. This document is meant to get you setup to work on virtualenv and to act as a guide and reference
-to the development setup. If you face any issues during this process, please
-`open an issue <https://github.com/pypa/virtualenv/issues/new?title=Trouble+with+development+environment>`_ about it on
-the issue tracker.
+to the development setup. If you face any issues during this process, please `open an issue
+<https://github.com/pypa/virtualenv/issues/new?title=Trouble+with+development+environment>`_ about it on the issue
+tracker.
 
 Setup
-~~~~~
+=====
 
 virtualenv is a command line application written in Python. To work on it, you'll need:
 
 - **Source code**: available on `GitHub <https://github.com/pypa/virtualenv>`_. You can use ``git`` to clone the
-    repository:
+      repository:
 
   .. code-block:: console
 
       git clone https://github.com/pypa/virtualenv
       cd virtualenv
 
-- **Python interpreter**: We recommend using ``CPython``. You can use
-  `this guide <https://realpython.com/installing-python/>`_ to set it up.
-
+- **Python interpreter**: We recommend using ``CPython``. You can use `this guide
+  <https://realpython.com/installing-python/>`_ to set it up.
 - :pypi:`tox`: to automatically get the projects development dependencies and run the test suite. We recommend
   installing it using `pipx <https://pipxproject.github.io/pipx/>`_.
 
 Running from source tree
-~~~~~~~~~~~~~~~~~~~~~~~~
+========================
 
 The easiest way to do this is to generate the development tox environment, and then invoke virtualenv from under the
 ``.tox/dev`` folder
@@ -44,10 +44,10 @@ The easiest way to do this is to generate the development tox environment, and t
     .tox/dev/Scripts/virtualenv  # on Windows
 
 Running tests
-~~~~~~~~~~~~~
+=============
 
-virtualenv's tests are written using the :pypi:`pytest` test framework. :pypi:`tox` is used to automate the setup
-and execution of virtualenv's tests.
+virtualenv's tests are written using the :pypi:`pytest` test framework. :pypi:`tox` is used to automate the setup and
+execution of virtualenv's tests.
 
 To run tests locally execute:
 
@@ -58,10 +58,9 @@ To run tests locally execute:
 This will run the test suite for the same Python version as under which ``tox`` is installed. Alternatively you can
 specify a specific version of python by using the ``pyNN`` format, such as: ``py38``, ``pypy3``, etc.
 
-``tox`` has been configured to forward any additional arguments it is given to ``pytest``.
-This enables the use of pytest's
-`rich CLI <https://docs.pytest.org/en/latest/usage.html#specifying-tests-selecting-tests>`_. As an example, you can
-select tests using the various ways that pytest provides:
+``tox`` has been configured to forward any additional arguments it is given to ``pytest``. This enables the use of
+pytest's `rich CLI <https://docs.pytest.org/en/latest/usage.html#specifying-tests-selecting-tests>`_. As an example, you
+can select tests using the various ways that pytest provides:
 
 .. code-block:: console
 
@@ -71,11 +70,11 @@ select tests using the various ways that pytest provides:
     tox -e py -- -k "test_extra"
 
 Some tests require additional dependencies to be run, such is the various shell activators (``bash``, ``fish``,
-``powershell``, etc). These tests will automatically be skipped if these are not present, note however that in CI
-all tests are run; so even if all tests succeed locally for you, they may still fail in the CI.
+``powershell``, etc). These tests will automatically be skipped if these are not present, note however that in CI all
+tests are run; so even if all tests succeed locally for you, they may still fail in the CI.
 
 Running linters
-~~~~~~~~~~~~~~~
+===============
 
 virtualenv uses :pypi:`pre-commit` for managing linting of the codebase. ``pre-commit`` performs various checks on all
 files in virtualenv and uses tools that help follow a consistent code style within the codebase. To use linters locally,
@@ -91,7 +90,7 @@ run:
     ``# noqa`` comments are reserved for rare cases where the recommended style causes severe readability problems.
 
 Building documentation
-~~~~~~~~~~~~~~~~~~~~~~
+======================
 
 virtualenv's documentation is built using :pypi:`Sphinx`. The documentation is written in reStructuredText. To build it
 locally, run:
@@ -104,32 +103,31 @@ The built documentation can be found in the ``.tox/docs_out`` folder and may be 
 that folder.
 
 Release
-~~~~~~~
+=======
 
-virtualenv's release schedule is tied to ``pip`` and ``setuptools``. We bundle the latest version of these
-libraries so each time there's a new version of any of these, there will be a new virtualenv release shortly afterwards
-(we usually wait just a few days to avoid pulling in any broken releases).
+virtualenv's release schedule is tied to ``pip`` and ``setuptools``. We bundle the latest version of these libraries so
+each time there's a new version of any of these, there will be a new virtualenv release shortly afterwards (we usually
+wait just a few days to avoid pulling in any broken releases).
 
 Performing a release
-^^^^^^^^^^^^^^^^^^^^
+--------------------
 
-A full release publishes to `PyPI <https://pypi.org/project/virtualenv/>`_, creates a
-`GitHub Release <https://github.com/pypa/virtualenv/releases>`_ with the zipapp attached, and updates
-`get-virtualenv <https://github.com/pypa/get-virtualenv>`_ so that ``https://bootstrap.pypa.io/virtualenv.pyz`` serves
-the new version.
+A full release publishes to `PyPI <https://pypi.org/project/virtualenv/>`_, creates a `GitHub Release
+<https://github.com/pypa/virtualenv/releases>`_ with the zipapp attached, and updates `get-virtualenv
+<https://github.com/pypa/get-virtualenv>`_ so that ``https://bootstrap.pypa.io/virtualenv.pyz`` serves the new version.
 
 Version bumping
-"""""""""""""""
+^^^^^^^^^^^^^^^
 
 The ``--version`` argument to ``tox r -e release`` controls the version. It defaults to ``auto``, which inspects the
-``docs/changelog`` directory: if any ``*.feature.rst`` or ``*.removal.rst`` fragments exist, the minor version is bumped,
-otherwise the patch version is bumped. You can also pass ``major``, ``minor``, or ``patch`` explicitly.
+``docs/changelog`` directory: if any ``*.feature.rst`` or ``*.removal.rst`` fragments exist, the minor version is
+bumped, otherwise the patch version is bumped. You can also pass ``major``, ``minor``, or ``patch`` explicitly.
 
 **Via GitHub Actions (recommended)**
 
-#. Go to the `Release workflow <https://github.com/pypa/virtualenv/actions/workflows/release.yaml>`_ on GitHub.
-#. Click **Run workflow** and select the bump type (``auto``, ``major``, ``minor``, or ``patch``).
-#. The workflow runs in two phases:
+1. Go to the `Release workflow <https://github.com/pypa/virtualenv/actions/workflows/release.yaml>`_ on GitHub.
+2. Click **Run workflow** and select the bump type (``auto``, ``major``, ``minor``, or ``patch``).
+3. The workflow runs in two phases:
 
    **Build** (nothing is published yet):
 
@@ -149,7 +147,7 @@ otherwise the patch version is bumped. You can also pass ``major``, ``minor``, o
 
 **Locally**
 
-#. Generate the changelog, create the release commit, tag, and push:
+1. Generate the changelog, create the release commit, tag, and push:
 
    .. code-block:: console
 
@@ -157,19 +155,19 @@ otherwise the patch version is bumped. You can also pass ``major``, ``minor``, o
 
    Pass ``--version <bump>`` to override the default ``auto`` behavior (e.g. ``--version minor``).
 
-#. Build the zipapp:
+2. Build the zipapp:
 
    .. code-block:: console
 
        tox r -e zipapp
 
-#. Create a GitHub Release and attach the zipapp:
+3. Create a GitHub Release and attach the zipapp:
 
    .. code-block:: console
 
        gh release create <version> virtualenv.pyz --generate-notes
 
-#. Update ``get-virtualenv`` with the new zipapp:
+4. Update ``get-virtualenv`` with the new zipapp:
 
    .. code-block:: console
 
@@ -180,21 +178,22 @@ otherwise the patch version is bumped. You can also pass ``major``, ``minor``, o
        git -C /tmp/get-virtualenv commit -m "update virtualenv to <version>"
        git -C /tmp/get-virtualenv push origin main
 
-   The push triggers ``get-virtualenv``'s own
-   `release workflow <https://github.com/pypa/get-virtualenv/blob/main/.github/workflows/release.yml>`_ which
-   automatically creates a tag and GitHub Release with the zipapp attached.
+   The push triggers ``get-virtualenv``'s own `release workflow
+   <https://github.com/pypa/get-virtualenv/blob/main/.github/workflows/release.yml>`_ which automatically creates a tag
+   and GitHub Release with the zipapp attached.
 
-Contributing
--------------
+**************
+ Contributing
+**************
 
 Submitting pull requests
-~~~~~~~~~~~~~~~~~~~~~~~~
+========================
 
 Submit pull requests against the ``main`` branch, providing a good description of what you're doing and why. You must
 have legal permission to distribute any code you contribute to virtualenv and it must be available under the MIT
-License. Provide tests that cover your changes and run the tests locally first. virtualenv
-:ref:`supports <compatibility-requirements>` multiple Python versions and operating systems. Any pull request must
-consider and work on all these platforms.
+License. Provide tests that cover your changes and run the tests locally first. virtualenv :ref:`supports
+<compatibility-requirements>` multiple Python versions and operating systems. Any pull request must consider and work on
+all these platforms.
 
 Pull Requests should be small to facilitate review. Keep them self-contained, and limited in scope. `Studies have shown
 <https://www.kessler.de/prd/smartbear/BestPracticesForPeerCodeReview.pdf>`_ that review quality falls off as patch size
@@ -207,24 +206,23 @@ PR more difficult. Examples include re-flowing text in comments or documentation
 or whitespace within lines. Such changes can be made separately, as a "formatting cleanup" PR, if needed.
 
 Automated testing
-~~~~~~~~~~~~~~~~~
+=================
 
-All pull requests and merges to 'main' branch are tested using
-`GitHub Actions <https://docs.github.com/en/actions>`_ (configured by
-``.github/workflows/check.yaml`` file at the root of the repository). You can find the status and results to the CI runs for your
-PR on GitHub's Web UI for the pull request. You can also find links to the CI services' pages for the specific builds in
-the form of "Details" links, in case the CI run fails and you wish to view the output.
+All pull requests and merges to 'main' branch are tested using `GitHub Actions <https://docs.github.com/en/actions>`_
+(configured by ``.github/workflows/check.yaml`` file at the root of the repository). You can find the status and results
+to the CI runs for your PR on GitHub's Web UI for the pull request. You can also find links to the CI services' pages
+for the specific builds in the form of "Details" links, in case the CI run fails and you wish to view the output.
 
 To trigger CI to run again for a pull request, you can close and open the pull request or submit another change to the
 pull request. If needed, project maintainers can manually trigger a restart of a job/build.
 
 NEWS entries
-~~~~~~~~~~~~
+============
 
 The ``changelog.rst`` file is managed using :pypi:`towncrier` and all non trivial changes must be accompanied by a news
-entry. To add an entry to the news file, first you need to have created an issue describing the change you want to
-make. A Pull Request itself *may* function as such, but it is preferred to have a dedicated issue (for example, in case
-the PR ends up rejected due to code quality reasons).
+entry. To add an entry to the news file, first you need to have created an issue describing the change you want to make.
+A Pull Request itself *may* function as such, but it is preferred to have a dedicated issue (for example, in case the PR
+ends up rejected due to code quality reasons).
 
 Once you have an issue or pull request, you take the number and you create a file inside of the ``docs/changelog``
 directory named after that issue number with an extension of:
@@ -242,29 +240,28 @@ added a feature and deprecated/removed the old feature at the same time, you wou
 you may create a file for each of them with the same contents and :pypi:`towncrier` will deduplicate them.
 
 Contents of a NEWS entry
-^^^^^^^^^^^^^^^^^^^^^^^^
+------------------------
 
 The contents of this file are reStructuredText formatted text that will be used as the content of the news file entry.
-You do not need to reference the issue or PR numbers here as towncrier will automatically add a reference to all of
-the affected issues when rendering the news file.
+You do not need to reference the issue or PR numbers here as towncrier will automatically add a reference to all of the
+affected issues when rendering the news file.
 
 In order to maintain a consistent style in the ``changelog.rst`` file, it is preferred to keep the news entry to the
 point, in sentence case, shorter than 120 characters and in an imperative tone -- an entry should complete the sentence
 ``This change will …``. In rare cases, where one line is not enough, use a summary line in an imperative tone followed
-by a blank line separating it from a description of the feature/change in one or more paragraphs, each wrapped
-at 120 characters. Remember that a news entry is meant for end users and should only contain details relevant to an end
-user.
+by a blank line separating it from a description of the feature/change in one or more paragraphs, each wrapped at 120
+characters. Remember that a news entry is meant for end users and should only contain details relevant to an end user.
 
 Choosing the type of NEWS entry
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-------------------------------
 
 A trivial change is anything that does not warrant an entry in the news file. Some examples are: code refactors that
-don't change anything as far as the public is concerned, typo fixes, white space modification, etc. To mark a PR
-as trivial a contributor simply needs to add a randomly named, empty file to the ``news/`` directory with the extension
-of ``.trivial``.
+don't change anything as far as the public is concerned, typo fixes, white space modification, etc. To mark a PR as
+trivial a contributor simply needs to add a randomly named, empty file to the ``news/`` directory with the extension of
+``.trivial``.
 
 Becoming a maintainer
-~~~~~~~~~~~~~~~~~~~~~
+=====================
 
 If you want to become an official maintainer, start by helping out. As a first step, we welcome you to triage issues on
 virtualenv's issue tracker. virtualenv maintainers provide triage abilities to contributors once they have been around
@@ -274,8 +271,8 @@ initiate a vote among the existing maintainers.
 
 .. note::
 
-    Upon becoming a maintainer, a person should be given access to various virtualenv-related tooling across
-    multiple platforms. These are noted here for future reference by the maintainers:
+    Upon becoming a maintainer, a person should be given access to various virtualenv-related tooling across multiple
+    platforms. These are noted here for future reference by the maintainers:
 
     - GitHub Push Access
     - PyPI Publishing Access

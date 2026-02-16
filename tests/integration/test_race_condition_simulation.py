@@ -9,12 +9,12 @@ from pathlib import Path
 def test_race_condition_simulation(tmp_path):
     """Test that simulates the race condition described in the issue.
 
-    This test creates a temporary directory with _virtualenv.py and _virtualenv.pth,
-    then simulates the scenario where:
-    - One process imports and uses the _virtualenv module (simulating marimo)
-    - Another process overwrites the _virtualenv.py file (simulating uv venv)
+    This test creates a temporary directory with _virtualenv.py and _virtualenv.pth, then simulates the scenario where:
+    - One process imports and uses the _virtualenv module (simulating marimo) - Another process overwrites the
+    _virtualenv.py file (simulating uv venv)
 
     The test verifies that no NameError is raised for _DISTUTILS_PATCH.
+
     """
     # Create the _virtualenv.py file
     virtualenv_file = tmp_path / "_virtualenv.py"

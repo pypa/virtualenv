@@ -36,6 +36,12 @@ repos:
         additional_dependencies:
           - prettier@3.3.3
           - "@prettier/plugin-xml@3.4.1"
+  - repo: https://github.com/LilSpazJoekp/docstrfmt
+    rev: v2.0.2
+    hooks:
+      - id: docstrfmt
+        args: ["-l", "120"]
+        additional_dependencies: ["sphinx>=9.1"]
   - repo: meta
     hooks:
       - id: check-hooks-apply

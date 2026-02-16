@@ -24,11 +24,12 @@ class ViaTemplateActivator(Activator, ABC):
 
     @staticmethod
     def quote(string):
-        """
-        Quote strings in the activation script.
+        """Quote strings in the activation script.
 
         :param string: the string to quote
-        :return: quoted string that works in the activation script
+
+        :returns: quoted string that works in the activation script
+
         """
         return shlex.quote(string)
 

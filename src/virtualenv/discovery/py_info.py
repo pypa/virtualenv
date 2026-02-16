@@ -1,7 +1,7 @@
-"""
-The PythonInfo contains information about a concrete instance of a Python interpreter.
+"""The PythonInfo contains information about a concrete instance of a Python interpreter.
 
 Note: this file is also used to query target interpreters, so can only use standard library methods
+
 """
 
 from __future__ import annotations
@@ -17,6 +17,14 @@ import sysconfig
 import warnings
 from collections import OrderedDict, namedtuple
 from string import digits
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from virtualenv.app_data.base import AppData
+    from virtualenv.discovery.py_spec import PythonSpec
+    from virtualenv.run.plugin.creators import CreatorSelector
 
 VersionInfo = namedtuple("VersionInfo", ["major", "minor", "micro", "releaselevel", "serial"])  # noqa: PYI024
 LOGGER = logging.getLogger(__name__)
@@ -140,10 +148,10 @@ class PythonInfo:  # noqa: PLR0904
 
     @staticmethod
     def _get_tcl_tk_libs():
-        """
-        Detects the tcl and tk libraries using tkinter.
+        """Detects the tcl and tk libraries using tkinter.
 
         This works reliably but spins up tkinter, which is heavy if you don't need it.
+
         """
         tcl_lib, tk_lib = None, None
         try:
@@ -218,15 +226,15 @@ class PythonInfo:  # noqa: PLR0904
         return self._try_posix_fallback_executable(base_executable)
 
     def _try_posix_fallback_executable(self, base_executable):
-        """
-        Try to find a versioned Python binary as fallback for POSIX virtual environments.
+        """Try to find a versioned Python binary as fallback for POSIX virtual environments.
 
-        Python may return "python" because it was invoked from the POSIX virtual environment
-        however some installs/distributions do not provide a version-less "python" binary in
-        the system install location (see PEP 394) so try to fallback to a versioned binary.
+        Python may return "python" because it was invoked from the POSIX virtual environment however some
+        installs/distributions do not provide a version-less "python" binary in the system install location (see PEP
+        394) so try to fallback to a versioned binary.
 
-        Gate this to Python 3.11 as `sys._base_executable` path resolution is now relative to
-        the 'home' key from pyvenv.cfg which often points to the system install location.
+        Gate this to Python 3.11 as `sys._base_executable` path resolution is now relative to the 'home' key from
+        pyvenv.cfg which often points to the system install location.
+
         """
         major, minor = self.version_info.major, self.version_info.minor
         if self.os != "posix" or (major, minor) < (3, 11):
@@ -245,7 +253,14 @@ class PythonInfo:  # noqa: PLR0904
 
         return None  # in this case we just can't tell easily without poking around FS and calling them, bail
 
-    def install_path(self, key):
+    def install_path(self, key: str) -> str:
+        """Return the relative installation path for a given installation scheme key.
+
+        :param key: the sysconfig scheme key (e.g. ``purelib``, ``headers``)
+
+        :returns: the relative path for the given key
+
+        """
         result = self.distutils_install.get(key)
         if result is None:  # use sysconfig if sysconfig_scheme is set or distutils is unavailable
             # set prefixes to empty => result is relative from cwd
@@ -280,27 +295,41 @@ class PythonInfo:  # noqa: PLR0904
         return {key: (getattr(i, f"install_{key}")[1:]).lstrip(os.sep) for key in SCHEME_KEYS}
 
     @property
-    def version_str(self):
+    def version_str(self) -> str:
+        """The full version as ``major.minor.micro`` string (e.g. ``3.13.2``)."""
         return ".".join(str(i) for i in self.version_info[0:3])
 
     @property
-    def version_release_str(self):
+    def version_release_str(self) -> str:
+        """The release version as ``major.minor`` string (e.g. ``3.13``)."""
         return ".".join(str(i) for i in self.version_info[0:2])
 
     @property
-    def python_name(self):
+    def python_name(self) -> str:
+        """The python executable name as ``pythonX.Y`` (e.g. ``python3.13``)."""
         version_info = self.version_info
         return f"python{version_info.major}.{version_info.minor}"
 
     @property
-    def is_old_virtualenv(self):
+    def is_old_virtualenv(self) -> bool:
+        """``True`` if this interpreter runs inside an old-style virtualenv (has ``real_prefix``)."""
         return self.real_prefix is not None
 
     @property
-    def is_venv(self):
+    def is_venv(self) -> bool:
+        """``True`` if this interpreter runs inside a PEP 405 venv (has ``base_prefix``)."""
         return self.base_prefix is not None
 
-    def sysconfig_path(self, key, config_var=None, sep=os.sep):
+    def sysconfig_path(self, key: str, config_var: dict[str, str] | None = None, sep: str = os.sep) -> str:
+        """Return the sysconfig install path for a scheme key, optionally substituting config variables.
+
+        :param key: the sysconfig path name (e.g. ``stdlib``, ``purelib``)
+        :param config_var: override config variables for path expansion, or ``None`` to use defaults
+        :param sep: path separator to use
+
+        :returns: the expanded path string
+
+        """
         pattern = self.sysconfig_paths.get(key)
         if pattern is None:
             return ""
@@ -312,7 +341,14 @@ class PythonInfo:  # noqa: PLR0904
             config_var = base
         return pattern.format(**config_var).replace("/", sep)
 
-    def creators(self, refresh=False):  # noqa: FBT002
+    def creators(self, refresh: bool = False) -> CreatorSelector:  # noqa: FBT001, FBT002
+        """Return the available creators for this interpreter, cached unless ``refresh`` is ``True``.
+
+        :param refresh: if ``True``, re-discover creators instead of using the cache
+
+        :returns: the creator selector for this interpreter
+
+        """
         if self._creators is None or refresh is True:
             from virtualenv.run.plugin.creators import CreatorSelector  # noqa: PLC0415
 
@@ -320,7 +356,8 @@ class PythonInfo:  # noqa: PLR0904
         return self._creators
 
     @property
-    def system_include(self):
+    def system_include(self) -> str:
+        """The path to the system include directory for C headers."""
         path = self.sysconfig_path(
             "include",
             {
@@ -336,11 +373,13 @@ class PythonInfo:  # noqa: PLR0904
         return path
 
     @property
-    def system_prefix(self):
+    def system_prefix(self) -> str:
+        """The prefix of the system Python this interpreter is based on."""
         return self.real_prefix or self.base_prefix or self.prefix
 
     @property
-    def system_exec_prefix(self):
+    def system_exec_prefix(self) -> str:
+        """The exec prefix of the system Python this interpreter is based on."""
         return self.real_prefix or self.base_exec_prefix or self.exec_prefix
 
     def __repr__(self) -> str:
@@ -378,7 +417,8 @@ class PythonInfo:  # noqa: PLR0904
         )
 
     @property
-    def spec(self):
+    def spec(self) -> str:
+        """A specification string identifying this interpreter (e.g. ``CPython3.13.2-64``)."""
         return "{}{}{}-{}".format(
             self.implementation,
             ".".join(str(i) for i in self.version_info),
@@ -387,15 +427,26 @@ class PythonInfo:  # noqa: PLR0904
         )
 
     @classmethod
-    def clear_cache(cls, app_data):
-        # this method is not used by itself, so here and called functions can import stuff locally
+    def clear_cache(cls, app_data: AppData) -> None:
+        """Clear all cached interpreter information from the application data store.
+
+        :param app_data: the application data store to clear
+
+        """
         from virtualenv.discovery.cached_py_info import clear  # noqa: PLC0415
 
         clear(app_data)
         cls._cache_exe_discovery.clear()
 
-    def satisfies(self, spec, impl_must_match):  # noqa: C901, PLR0911, PLR0912
-        """Check if a given specification can be satisfied by the this python interpreter instance."""
+    def satisfies(self, spec: PythonSpec, impl_must_match: bool) -> bool:  # noqa: C901, FBT001, PLR0911, PLR0912
+        """Check if a given specification can be satisfied by this python interpreter instance.
+
+        :param spec: the python specification to check against
+        :param impl_must_match: if ``True``, the implementation (e.g. CPython vs PyPy) must also match
+
+        :returns: ``True`` if this interpreter satisfies the specification
+
+        """
         if spec.path:
             if self.executable == os.path.abspath(spec.path):
                 return True  # if the path is a our own executable path we're done
@@ -446,23 +497,35 @@ class PythonInfo:  # noqa: PLR0904
     _current = None
 
     @classmethod
-    def current(cls, app_data=None):
+    def current(cls, app_data: AppData | None = None) -> PythonInfo:
+        """Locate the current host interpreter information.
+
+        This might differ from the running interpreter if the host Python has been upgraded.
+
+        :param app_data: the application data store for caching
+
+        :returns: the current interpreter information
+
         """
-        This locates the current host interpreter information. This might be different than what we run into in case
-        the host python has been upgraded from underneath us.
-        """  # noqa: D205
         if cls._current is None:
-            cls._current = cls.from_exe(sys.executable, app_data, raise_on_error=True, resolve_to_host=False)
+            result = cls.from_exe(sys.executable, app_data, raise_on_error=True, resolve_to_host=False)
+            assert result is not None  # raise_on_error=True guarantees non-None  # noqa: S101
+            cls._current = result
         return cls._current
 
     @classmethod
-    def current_system(cls, app_data=None) -> PythonInfo:
+    def current_system(cls, app_data: AppData | None = None) -> PythonInfo:
+        """Locate the current system interpreter information, resolving through any virtualenv layers.
+
+        :param app_data: the application data store for caching
+
+        :returns: the system interpreter information
+
         """
-        This locates the current host interpreter information. This might be different than what we run into in case
-        the host python has been upgraded from underneath us.
-        """  # noqa: D205
         if cls._current_system is None:
-            cls._current_system = cls.from_exe(sys.executable, app_data, raise_on_error=True, resolve_to_host=True)
+            result = cls.from_exe(sys.executable, app_data, raise_on_error=True, resolve_to_host=True)
+            assert result is not None  # raise_on_error=True guarantees non-None  # noqa: S101
+            cls._current_system = result
         return cls._current_system
 
     def _to_json(self):
@@ -479,14 +542,25 @@ class PythonInfo:  # noqa: PLR0904
     @classmethod
     def from_exe(  # noqa: PLR0913
         cls,
-        exe,
-        app_data=None,
-        raise_on_error=True,  # noqa: FBT002
-        ignore_cache=False,  # noqa: FBT002
-        resolve_to_host=True,  # noqa: FBT002
-        env=None,
-    ):
-        """Given a path to an executable get the python information."""
+        exe: str,
+        app_data: AppData | None = None,
+        raise_on_error: bool = True,  # noqa: FBT001, FBT002
+        ignore_cache: bool = False,  # noqa: FBT001, FBT002
+        resolve_to_host: bool = True,  # noqa: FBT001, FBT002
+        env: Mapping[str, str] | None = None,
+    ) -> PythonInfo | None:
+        """Given a path to an executable, get the python information.
+
+        :param exe: path to the Python executable
+        :param app_data: the application data store for caching
+        :param raise_on_error: if ``True``, raise on failure instead of returning ``None``
+        :param ignore_cache: if ``True``, bypass the cache and re-query the interpreter
+        :param resolve_to_host: if ``True``, resolve through virtualenv layers to the host interpreter
+        :param env: environment variables to use for subprocess calls
+
+        :returns: the interpreter information, or ``None`` if discovery failed and ``raise_on_error`` is ``False``
+
+        """
         # this method is not used by itself, so here and called functions can import stuff locally
         from virtualenv.discovery.cached_py_info import from_exe  # noqa: PLC0415
 
@@ -536,13 +610,31 @@ class PythonInfo:  # noqa: PLR0904
             prefixes[prefix] = target
             target = target.discover_exe(app_data, prefix=prefix, exact=False)
         if target.executable != target.system_executable:
-            target = cls.from_exe(target.system_executable, app_data)
+            resolved = cls.from_exe(target.system_executable, app_data)
+            if resolved is not None:
+                target = resolved
         target.executable = start_executable
         return target
 
     _cache_exe_discovery = {}  # noqa: RUF012
 
-    def discover_exe(self, app_data, prefix, exact=True, env=None):  # noqa: FBT002
+    def discover_exe(
+        self,
+        app_data: AppData,
+        prefix: str,
+        exact: bool = True,  # noqa: FBT001, FBT002
+        env: Mapping[str, str] | None = None,
+    ) -> PythonInfo:
+        """Discover a matching Python executable under a given prefix directory.
+
+        :param app_data: the application data store for caching
+        :param prefix: the directory prefix to search under
+        :param exact: if ``True``, require an exact version match; if ``False``, pick the closest match
+        :param env: environment variables to use for subprocess calls
+
+        :returns: the discovered interpreter information
+
+        """
         key = prefix, exact
         if key in self._cache_exe_discovery and prefix:
             LOGGER.debug("discover exe from cache %s - exact %s: %r", prefix, exact, self._cache_exe_discovery[key])

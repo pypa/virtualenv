@@ -9,13 +9,12 @@ class NushellActivator(ViaTemplateActivator):
 
     @staticmethod
     def quote(string):
-        """
-        Nushell supports raw strings like: r###'this is a string'###.
+        """Nushell supports raw strings like: r###'this is a string'###.
 
         https://github.com/nushell/nushell.github.io/blob/main/book/working_with_strings.md
 
-        This method finds the maximum continuous sharps in the string and then
-        quote it with an extra sharp.
+        This method finds the maximum continuous sharps in the string and then quote it with an extra sharp.
+
         """
         max_sharps = 0
         current_sharps = 0

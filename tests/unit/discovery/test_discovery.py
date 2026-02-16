@@ -245,9 +245,7 @@ def test_discovery_via_path_with_file(tmp_path, monkeypatch):
 
 
 def test_absolute_path_does_not_exist(tmp_path):
-    """
-    Test that virtualenv does not fail when an absolute path that does not exist is provided.
-    """
+    """Test that virtualenv does not fail when an absolute path that does not exist is provided."""
     # Create a command that uses an absolute path that does not exist
     # and a valid python executable.
     command = [
@@ -275,9 +273,7 @@ def test_absolute_path_does_not_exist(tmp_path):
 
 
 def test_absolute_path_does_not_exist_fails(tmp_path):
-    """
-    Test that virtualenv fails when a single absolute path that does not exist is provided.
-    """
+    """Test that virtualenv fails when a single absolute path that does not exist is provided."""
     # Create a command that uses an absolute path that does not exist
     command = [
         sys.executable,

@@ -96,8 +96,7 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
 
 
 def fix_mach_o(exe, current, new, max_size):
-    """
-    https://en.wikipedia.org/wiki/Mach-O.
+    """https://en.wikipedia.org/wiki/Mach-O.
 
     Mach-O, short for Mach object file format, is a file format for executables, object code, shared libraries,
     dynamically-loaded code, and core dumps. A replacement for the a.out format, Mach-O offers more extensibility and
@@ -113,11 +112,12 @@ def fix_mach_o(exe, current, new, max_size):
     Lisp.
 
     With the introduction of Mac OS X 10.6 platform the Mach-O file underwent a significant modification that causes
-    binaries compiled on a computer running 10.6 or later to be (by default) executable only on computers running Mac
-    OS X 10.6 or later. The difference stems from load commands that the dynamic linker, in previous Mac OS X versions,
+    binaries compiled on a computer running 10.6 or later to be (by default) executable only on computers running Mac OS
+    X 10.6 or later. The difference stems from load commands that the dynamic linker, in previous Mac OS X versions,
     does not understand. Another significant change to the Mach-O format is the change in how the Link Edit tables
     (found in the __LINKEDIT section) function. In 10.6 these new Link Edit tables are compressed by removing unused and
     unneeded bits of information, however Mac OS X 10.5 and earlier cannot read this new Link Edit table format.
+
     """
     try:
         LOGGER.debug("change Mach-O for %s from %s to %s", exe, current, new)
@@ -206,10 +206,7 @@ def _builtin_change_mach_o(maxint):  # noqa: C901
         return res
 
     def mach_o_change(at_path, what, value):  # noqa: C901
-        """
-        Replace a given name (what) in any LC_LOAD_DYLIB command found in the given binary with a new name (value),
-        provided it's shorter.
-        """  # noqa: D205
+        """Replace a given name (what) in any LC_LOAD_DYLIB command found in the given binary with a new name (value), provided it's shorter."""
 
         def do_macho(file, bits, endian):
             # Read Mach-O header (the magic number is assumed read by the caller)
