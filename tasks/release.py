@@ -50,11 +50,11 @@ def resolve_version(version_str: str, repo: Repo) -> Version:
 
 
 def get_remote(repo: Repo) -> Remote:
-    upstream_remote = "pypa/virtualenv.git"
+    upstream_remote = "pypa/virtualenv"
     urls = set()
     for remote in repo.remotes:
         for url in remote.urls:
-            if url.endswith(upstream_remote):
+            if url.rstrip(".git").endswith(upstream_remote):
                 return remote
             urls.add(url)
     msg = f"could not find {upstream_remote} remote, has {urls}"

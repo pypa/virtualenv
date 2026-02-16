@@ -19,6 +19,7 @@ env:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    environment: release
     outputs:
       version: ${{ steps.resolve.outputs.version }}
     steps:
@@ -51,6 +52,10 @@ jobs:
         run: uv build --python 3.14 --python-preference only-managed --sdist --wheel . --out-dir dist
       - name: Build zipapp
         run: uv tool run --with packaging --with pip tox r -e zipapp
+      - name: Push release commit and tag
+        run: |
+          git push origin HEAD:main
+          git push origin "${{ steps.resolve.outputs.version }}"
       - name: Store the distribution packages
         uses: actions/upload-artifact@v4
         with:
@@ -76,11 +81,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GH_RELEASE_TOKEN }}
-      - name: Push release commit and tag
-        run: |
-          git push origin HEAD:main
-          git push origin "${{ needs.build.outputs.version }}"
       - name: Download all the dists
         uses: actions/download-artifact@v4
         with:
@@ -121,6 +121,7 @@ jobs:
       - build
       - publish
     runs-on: ubuntu-24.04
+    environment: release
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
