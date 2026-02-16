@@ -100,8 +100,15 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
                 self.enable_system_site_package = true_system_site
         super().create()
 
+    @property
+    def include_dir(self):
+        return self.dest / ("Include" if self.interpreter.os == "nt" else "include")
+
+    def install_venv_shared_libs(self, venv_creator):
+        pass
+
     def ensure_directories(self):
-        return {self.dest, self.bin_dir, self.script_dir, self.stdlib} | set(self.libs)
+        return {self.dest, self.bin_dir, self.script_dir, self.stdlib, self.include_dir} | set(self.libs)
 
     def set_pyenv_cfg(self):
         """
