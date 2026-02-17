@@ -49,8 +49,8 @@ def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     assert "unset _OLD_PKG_CONFIG_PATH" in content
 
     # PKG_CONFIG_PATH is always set
-    assert '_OLD_PKG_CONFIG_PATH="${PKG_CONFIG_PATH}"' in content
-    assert 'PKG_CONFIG_PATH="${VIRTUAL_ENV}/lib/pkgconfig:${PKG_CONFIG_PATH}"' in content
+    assert '_OLD_PKG_CONFIG_PATH="${PKG_CONFIG_PATH:-}"' in content
+    assert 'PKG_CONFIG_PATH="${VIRTUAL_ENV}/lib/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}"' in content
     assert "export PKG_CONFIG_PATH" in content
     assert 'PKG_CONFIG_PATH="$_OLD_PKG_CONFIG_PATH"' in content
 

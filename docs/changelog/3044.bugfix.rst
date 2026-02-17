@@ -1,0 +1,2 @@
+Fix ``bash -u`` (``set -o nounset``) compatibility in bash activation script by using ``${PKG_CONFIG_PATH:-}`` and
+``${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}`` to handle unset ``PKG_CONFIG_PATH`` - by :user:`Fridayai700`.
