@@ -1,0 +1,2 @@
+Fix ``bash -u`` (nounset) compatibility in ``activate`` script — use ``${PKG_CONFIG_PATH:-}`` default value syntax to
+avoid "unbound variable" error when ``PKG_CONFIG_PATH`` is not set - by :user:`radevika`.
