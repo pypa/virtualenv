@@ -14,11 +14,10 @@ repos:
     hooks:
       - id: codespell
         args: ["--write-changes"]
-  - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: "1.7.1"
+  - repo: https://github.com/tox-dev/tox-toml-fmt
+    rev: "v1.7.0"
     hooks:
-      - id: tox-ini-fmt
-        args: ["-p", "fix"]
+      - id: tox-toml-fmt
   - repo: https://github.com/tox-dev/pyproject-fmt
     rev: "v2.16.0"
     hooks:
