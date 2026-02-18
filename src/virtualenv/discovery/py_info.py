@@ -584,7 +584,17 @@ class PythonInfo:  # noqa: PLR0904
     @classmethod
     def _from_json(cls, payload):
         # the dictionary unroll here is to protect against pypy bug of interpreter crashing
-        raw = json.loads(payload)
+        try:
+            raw = json.loads(payload)
+        except json.JSONDecodeError as e:
+            msg = f"Failed to parse JSON payload (length={len(payload)}): {e}"
+            if not payload:
+                msg += " - payload is empty"
+            elif len(payload) < 100:
+                msg += f" - payload content: {payload!r}"
+            else:
+                msg += f" - payload preview: {payload[:100]!r}..."
+            raise RuntimeError(msg) from e
         return cls._from_dict(raw.copy())
 
     @classmethod

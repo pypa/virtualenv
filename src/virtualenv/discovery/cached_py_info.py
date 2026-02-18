@@ -150,6 +150,9 @@ def _run_subprocess(cls, exe, app_data, env):
                 sys.stdout.write(pre_cookie)
 
             out = out[out_starts + COOKIE_LENGTH :]
+        else:
+            # Start cookie not found - this indicates the script may have failed to output properly
+            LOGGER.warning("Start cookie not found in output from %s, output length: %d", exe, len(out))
 
         out_ends = out.find(end_cookie[::-1])
 
@@ -160,9 +163,25 @@ def _run_subprocess(cls, exe, app_data, env):
                 sys.stdout.write(post_cookie)
 
             out = out[:out_ends]
+        else:
+            # End cookie not found - this indicates the script may have failed or crashed midway
+            LOGGER.warning("End cookie not found in output from %s, output length: %d", exe, len(out))
 
-        result = cls._from_json(out)
-        result.executable = exe  # keep original executable as this may contain initialization code
+        if not out or not out.strip():
+            # If output is empty after cookie extraction, create a detailed error
+            msg = f"{exe} - no output between cookies (code {code})"
+            if err:
+                msg += f", stderr: {err!r}"
+            failure = RuntimeError(msg)
+        else:
+            try:
+                result = cls._from_json(out)
+                result.executable = exe  # keep original executable as this may contain initialization code
+            except Exception as json_error:  # noqa: BLE001
+                msg = f"{exe} - failed to parse JSON output (code {code}): {json_error}"
+                if err:
+                    msg += f", stderr: {err!r}"
+                failure = RuntimeError(msg)
     else:
         msg = f"{exe} with code {code}{f' out: {out!r}' if out else ''}{f' err: {err!r}' if err else ''}"
         failure = RuntimeError(f"failed to query {msg}")
