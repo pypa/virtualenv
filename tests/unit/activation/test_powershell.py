@@ -104,7 +104,7 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch):
             cmd = "powershell.exe" if sys.platform == "win32" else "pwsh"
             super().__init__(PowerShellActivator, session, cmd, "activate.ps1", "ps1")
             self._version_cmd = [cmd, "-c", "$PSVersionTable"]
-            self._invoke_script = [cmd, "-ExecutionPolicy", "ByPass", "-File"]
+            self._invoke_script = [cmd, "-NonInteractive", "-NoProfile", "-ExecutionPolicy", "ByPass", "-File"]
             self.activate_cmd = "."
             self.script_encoding = "utf-8-sig"
 
@@ -113,6 +113,9 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch):
 
         def invoke_script(self):
             return [self.cmd, "-File"]
+
+        def print_os_env_var(self, var):
+            return f'if ($env:{var} -eq $null) {{ "None" }} else {{ $env:{var} }}'
 
         def print_prompt(self):
             return "prompt"

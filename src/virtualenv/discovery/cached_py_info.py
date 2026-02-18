@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import os
 import random
@@ -66,20 +67,17 @@ def _get_via_file_cache(cls, app_data, path, exe, env):
     with py_info_store.locked():
         if py_info_store.exists():  # if exists and matches load
             data = py_info_store.read()
-            of_path = data.get("path")
-            of_st_mtime = data.get("st_mtime")
-            of_content = data.get("content")
-            of_hash = data.get("hash")
+            of_path, of_st_mtime = data.get("path"), data.get("st_mtime")
+            of_content, of_hash = data.get("content"), data.get("hash")
             if of_path == path_text and of_st_mtime == path_modified and of_hash == py_info_hash:
-                py_info = cls._from_dict(of_content.copy())
-                sys_exe = py_info.system_executable
-                if sys_exe is not None and not os.path.exists(sys_exe):
-                    py_info_store.remove()
-                    py_info = None
+                py_info = _load_cached_py_info(cls, py_info_store, of_content)
             else:
                 py_info_store.remove()
         if py_info is None:  # if not loaded run and save
             failure, py_info = _run_subprocess(cls, exe, app_data, env)
+            if failure is not None:
+                LOGGER.debug("first subprocess attempt failed for %s (%s), retrying", exe, failure)
+                failure, py_info = _run_subprocess(cls, exe, app_data, env)
             if failure is None:
                 data = {
                     "st_mtime": path_modified,
@@ -90,6 +88,18 @@ def _get_via_file_cache(cls, app_data, path, exe, env):
                 py_info_store.write(data)
             else:
                 py_info = failure
+    return py_info
+
+
+def _load_cached_py_info(cls, py_info_store, content):
+    try:
+        py_info = cls._from_dict(content.copy())
+    except (KeyError, TypeError):
+        py_info_store.remove()
+        return None
+    if (sys_exe := py_info.system_executable) is not None and not os.path.exists(sys_exe):
+        py_info_store.remove()
+        return None
     return py_info
 
 
@@ -141,6 +151,7 @@ def _run_subprocess(cls, exe, app_data, env):
             out, err, code = "", os_error.strerror, os_error.errno
     result, failure = None, None
     if code == 0:
+        raw_out = out
         out_starts = out.find(start_cookie[::-1])
 
         if out_starts > -1:
@@ -161,8 +172,23 @@ def _run_subprocess(cls, exe, app_data, env):
 
             out = out[:out_ends]
 
-        result = cls._from_json(out)
-        result.executable = exe  # keep original executable as this may contain initialization code
+        try:
+            result = cls._from_json(out)
+            result.executable = exe  # keep original executable as this may contain initialization code
+        except json.JSONDecodeError as exc:
+            LOGGER.warning(
+                "subprocess %s returned invalid JSON; raw stdout %d chars, start cookie %s, end cookie %s, "
+                "parsed output %d chars: %r",
+                exe,
+                len(raw_out),
+                "found" if out_starts > -1 else "missing",
+                "found" if out_ends > -1 else "missing",
+                len(out),
+                out[:200] if out else "<empty>",
+            )
+            msg = f"{exe} returned invalid JSON (exit code {code}){f', stderr: {err!r}' if err else ''}"
+            failure = RuntimeError(msg)
+            failure.__cause__ = exc
     else:
         msg = f"{exe} with code {code}{f' out: {out!r}' if out else ''}{f' err: {err!r}' if err else ''}"
         failure = RuntimeError(f"failed to query {msg}")

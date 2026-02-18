@@ -76,13 +76,18 @@ class ActivationTester:
 
         try:
             process = Popen(invoke, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
-            raw_, _ = process.communicate()
-            raw = raw_.decode(errors="replace")
-            assert process.returncode == 0, raw
+            raw_, _ = process.communicate(timeout=120)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.communicate()
+            pytest.fail(f"Activation script timed out: {invoke}")
         except subprocess.CalledProcessError as exception:
             output = exception.output + exception.stderr
             assert not exception.returncode, output  # noqa: PT017
             return None
+        else:
+            raw = raw_.decode(errors="replace")
+            assert process.returncode == 0, raw
 
         out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, flags=re.MULTILINE).strip().splitlines()
         self.assert_output(out, raw, tmp_path)

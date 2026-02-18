@@ -1,0 +1,2 @@
+Gracefully handle corrupted on-disk cache and invalid JSON from Python interrogation subprocess instead of crashing with
+unhandled ``JSONDecodeError`` or ``KeyError`` - by :user:`gaborbernat`.

@@ -182,6 +182,7 @@ max_supported_python = "3.14"
 [tool.pytest]
 ini_options.markers = [
   "slow",
+  "graalpy: minimal test suite for GraalPy validation",
 ]
 ini_options.timeout = 120
 ini_options.addopts = "--showlocals --no-success-flaky-report"

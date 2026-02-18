@@ -105,6 +105,7 @@ for k, v in CURRENT.creators().key_to_meta.items():
             CREATE_METHODS.append((k, "symlinks"))
 
 
+@pytest.mark.graalpy
 @pytest.mark.parametrize(
     ("creator", "isolated"),
     [pytest.param(*i, id=f"{'-'.join(i[0])}-{i[1]}") for i in product(CREATE_METHODS, ["isolated", "global"])],
@@ -646,6 +647,7 @@ def test_debug_bad_virtualenv(tmp_path):
     assert debug_info["exception"]
 
 
+@pytest.mark.graalpy
 @pytest.mark.parametrize("python_path_on", [True, False], ids=["on", "off"])
 def test_python_path(monkeypatch, tmp_path, python_path_on):
     result = cli_run([str(tmp_path), "--without-pip", "--activators", ""])

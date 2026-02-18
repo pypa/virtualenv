@@ -17,7 +17,18 @@ def test_discover_empty_folder(tmp_path, session_app_data):
         CURRENT.discover_exe(session_app_data, prefix=str(tmp_path))
 
 
-BASE = (CURRENT.install_path("scripts"), ".")
+def _discover_base_folders() -> tuple[str, ...]:
+    exe_dir = os.path.dirname(CURRENT.executable)
+    folders: dict[str, None] = {}
+    if exe_dir.startswith(CURRENT.prefix):
+        relative = exe_dir[len(CURRENT.prefix) :].lstrip(os.sep)
+        if relative:
+            folders[relative] = None
+    folders["."] = None
+    return tuple(folders)
+
+
+BASE = _discover_base_folders()
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
