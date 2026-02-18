@@ -62,13 +62,6 @@ commands = [
 ]
 uv_seed = true
 
-[env]
-"3.13t".base_python = { replace = "env", name = "TOX_BASEPYTHON" }
-"3.14t".base_python = { replace = "env", name = "TOX_BASEPYTHON" }
-"type-3.8".description = "run type checker (ty) against Python 3.8"
-"type-3.8".commands = [ [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.8" ] ]
-"type-3.8".base = [ "type" ]
-
 [env.docs]
 description = "build documentation"
 extras = [ "docs" ]
@@ -161,3 +154,14 @@ skip_install = true
 deps = [ "packaging>=25" ]
 commands = [ [ "python", "tasks/make_zipapp.py" ] ]
 uv_seed = true
+
+[env."3.13t"]
+base_python = { replace = "env", name = "TOX_BASEPYTHON" }
+
+[env."3.14t"]
+base_python = { replace = "env", name = "TOX_BASEPYTHON" }
+
+[env."type-3.8"]
+description = "run type checker (ty) against Python 3.8"
+commands = [ [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.8" ] ]
+base = [ "type" ]
