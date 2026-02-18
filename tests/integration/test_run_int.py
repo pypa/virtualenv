@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
+@pytest.mark.graalpy
 @pytest.mark.skipif(IS_PYPY, reason="setuptools distutils patching does not work")
 def test_app_data_pinning(tmp_path: Path) -> None:
     version = "23.1"

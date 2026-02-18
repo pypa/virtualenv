@@ -783,3 +783,4 @@ if __name__ == "__main__":
 
     info = PythonInfo()._to_json()  # noqa: SLF001
     sys.stdout.write("".join((start_cookie[::-1], info, end_cookie[::-1])))
+    sys.stdout.flush()

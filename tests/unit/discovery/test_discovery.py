@@ -16,6 +16,7 @@ from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import IS_WIN, fs_supports_symlink
 
 
+@pytest.mark.graalpy
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink not supported")
 @pytest.mark.parametrize("case", ["mixed", "lower", "upper"])
 @pytest.mark.parametrize("specificity", ["more", "less", "none"])

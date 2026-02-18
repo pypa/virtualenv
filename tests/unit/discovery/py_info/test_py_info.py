@@ -23,6 +23,7 @@ from virtualenv.info import IS_PYPY, IS_WIN, fs_supports_symlink
 CURRENT = PythonInfo.current_system()
 
 
+@pytest.mark.graalpy
 def test_current_as_json():
     result = CURRENT._to_json()  # noqa: SLF001
     parsed = json.loads(result)
@@ -49,12 +50,12 @@ def test_bad_exe_py_info_no_raise(tmp_path, caplog, capsys, session_app_data):
     out, _ = capsys.readouterr()
     assert not out
     messages = [r.message for r in caplog.records if r.name != "filelock"]
-    assert len(messages) == 2
-    msg = messages[0]
-    assert "get interpreter info via cmd: " in msg
-    msg = messages[1]
-    assert str(exe) in msg
-    assert "code" in msg
+    assert len(messages) == 4  # two subprocess attempts (debug cmd + retry debug) + final info
+    assert "get interpreter info via cmd: " in messages[0]
+    assert "retrying" in messages[1]
+    assert "get interpreter info via cmd: " in messages[2]
+    assert str(exe) in messages[3]
+    assert "code" in messages[3]
 
 
 @pytest.mark.parametrize(
@@ -129,7 +130,7 @@ def test_py_info_cached_error(mocker, tmp_path, session_app_data):
         PythonInfo.from_exe(str(tmp_path), session_app_data)
     with pytest.raises(RuntimeError):
         PythonInfo.from_exe(str(tmp_path), session_app_data)
-    assert spy.call_count == 1
+    assert spy.call_count == 2  # initial attempt + one retry, second from_exe uses cache
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
@@ -141,7 +142,7 @@ def test_py_info_cached_symlink_error(mocker, tmp_path, session_app_data):
     symlinked.symlink_to(tmp_path)
     with pytest.raises(RuntimeError):
         PythonInfo.from_exe(str(symlinked), session_app_data)
-    assert spy.call_count == 2
+    assert spy.call_count == 4  # 2 attempts per path (initial + retry)
 
 
 def test_py_info_cache_clear(mocker, session_app_data):
