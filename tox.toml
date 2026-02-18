@@ -156,10 +156,10 @@ commands = [ [ "python", "tasks/make_zipapp.py" ] ]
 uv_seed = true
 
 [env."3.13t"]
-base_python = { replace = "env", name = "TOX_BASEPYTHON" }
+base_python = [ { replace = "env", name = "TOX_BASEPYTHON" } ]
 
 [env."3.14t"]
-base_python = { replace = "env", name = "TOX_BASEPYTHON" }
+base_python = [ { replace = "env", name = "TOX_BASEPYTHON" } ]
 
 [env."type-3.8"]
 description = "run type checker (ty) against Python 3.8"
