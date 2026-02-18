@@ -182,6 +182,7 @@ def _run_subprocess(cls, exe, app_data, env):
                 if err:
                     msg += f", stderr: {err!r}"
                 failure = RuntimeError(msg)
+                result = None  # Ensure result is None when parsing fails
     else:
         msg = f"{exe} with code {code}{f' out: {out!r}' if out else ''}{f' err: {err!r}' if err else ''}"
         failure = RuntimeError(f"failed to query {msg}")
