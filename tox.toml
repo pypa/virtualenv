@@ -23,7 +23,7 @@ skip_missing_interpreters = true
 description = "run tests with {env_name}"
 package = "wheel"
 wheel_build_env = ".pkg"
-extras = [ "test" ]
+dependency_groups = [ "test" ]
 pass_env = [ "CI_RUN", "PYTEST_*", "TERM" ]
 set_env._COVERAGE_SRC = "{env_site_packages_dir}{/}virtualenv"
 set_env.COVERAGE_FILE = "{work_dir}{/}.coverage.{env_name}"
@@ -64,7 +64,7 @@ uv_seed = true
 
 [env.docs]
 description = "build documentation"
-extras = [ "docs" ]
+dependency_groups = [ "docs" ]
 set_env.PYTHONUTF8 = "1"
 commands = [
   [ "pre-commit", "run", "docstrfmt", "--all-files" ],
@@ -74,11 +74,10 @@ commands = [
     "-d",
     "{env_tmp_dir}{/}doctree",
     "docs",
-    "{work_dir}{/}docs_out",
     "--color",
     "-b",
     "html",
-    { replace = "posargs", extend = true, default = [ "-W" ] },
+    { replace = "posargs", extend = true, default = [ "-W", "{work_dir}{/}docs_out" ] },
   ],
   [
     "python",
@@ -93,7 +92,7 @@ commands = [
 [env.fix]
 description = "format the code base to adhere to our styles, and complain about what we cannot do automatically"
 skip_install = true
-deps = [ "pre-commit-uv>=4.1.4" ]
+dependency_groups = [ "lint" ]
 commands = [ [ "pre-commit", "run", "--all-files", "--show-diff-on-failure" ] ]
 
 [env.graalpy]
@@ -112,7 +111,7 @@ commands = [
 [env.readme]
 description = "check that the long description is valid"
 skip_install = true
-deps = [ "check-wheel-contents>=0.6.2", "twine>=6.1", "uv>=0.8" ]
+dependency_groups = [ "pkg-meta" ]
 commands = [
   [ "uv", "build", "--sdist", "--wheel", "--out-dir", "{env_tmp_dir}", "." ],
   [ "twine", "check", "{env_tmp_dir}{/}*" ],
@@ -121,7 +120,7 @@ commands = [
 
 [env.type]
 description = "run type checker (ty) against Python 3.14"
-deps = [ "ty>=0.0.15" ]
+dependency_groups = [ "type" ]
 commands = [ [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.14" ] ]
 
 [env.upgrade]
@@ -142,7 +141,7 @@ commands = [ [ "python", "release.py", { replace = "posargs", extend = true } ] 
 [env.dev]
 description = "generate a DEV environment"
 package = "editable"
-extras = [ "docs", "test" ]
+dependency_groups = [ "dev" ]
 commands = [
   [ "uv", "pip", "tree" ],
   [ "python", "-c", "import sys; print(sys.executable)" ],
