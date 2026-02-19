@@ -71,6 +71,7 @@ entry-points."virtualenv.create".graalpy-posix = "virtualenv.create.via_global_r
 entry-points."virtualenv.create".graalpy-win = "virtualenv.create.via_global_ref.builtin.graalpy:GraalPyWindows"
 entry-points."virtualenv.create".pypy3-posix = "virtualenv.create.via_global_ref.builtin.pypy.pypy3:PyPy3Posix"
 entry-points."virtualenv.create".pypy3-win = "virtualenv.create.via_global_ref.builtin.pypy.pypy3:Pypy3Windows"
+entry-points."virtualenv.create".rustpython-posix = "virtualenv.create.via_global_ref.builtin.rustpython:RustPythonPosix"
 entry-points."virtualenv.create".venv = "virtualenv.create.via_global_ref.venv:Venv"
 entry-points."virtualenv.discovery".builtin = "virtualenv.discovery.builtin:Builtin"
 entry-points."virtualenv.seed".app-data = "virtualenv.seed.embed.via_app_data.via_app_data:FromAppData"
