@@ -7,6 +7,46 @@
 .. towncrier release notes start
 
 ***********************
+ v20.38.0 (2026-02-19)
+***********************
+
+Features - 20.38.0
+==================
+
+- Store app data (pip/setuptools/wheel caches) under the OS cache directory (``platformdirs.user_cache_dir``) instead of
+  the data directory (``platformdirs.user_data_dir``). Existing app data at the old location is automatically migrated
+  on first use. This ensures cached files that can be redownloaded are placed in the standard cache location (e.g.
+  ``~/.cache`` on Linux, ``~/Library/Caches`` on macOS) where they are excluded from backups and can be cleaned by
+  system tools - by :user:`rahuldevikar`. (:issue:`1884`) (:issue:`1884`)
+- Add ``PKG_CONFIG_PATH`` environment variable support to all activation scripts (Bash, Batch, PowerShell, Fish, C
+  Shell, Nushell, and Python). The virtualenv's ``lib/pkgconfig`` directory is now automatically prepended to
+  ``PKG_CONFIG_PATH`` on activation and restored on deactivation, enabling packages that use ``pkg-config`` during
+  build/install to find their configuration files - by :user:`rahuldevikar`. (:issue:`2637`)
+- Upgrade embedded pip to ``26.0.1`` from ``25.3`` and setuptools to ``82.0.0``, ``75.3.4`` from ``75.3.2``, ``80.9.0``
+  - by :user:`rahuldevikar`. (:issue:`3027`)
+- Replace ``ty: ignore`` comments with proper type narrowing using assertions and explicit None checks - by
+  :user:`rahuldevikar`. (:issue:`3029`)
+
+Bugfixes - 20.38.0
+==================
+
+- Exclude pywin32 DLLs (``pywintypes*.dll``, ``pythoncom*.dll``) from being copied to the Scripts directory during
+  virtualenv creation on Windows. This fixes compatibility issues with pywin32, which expects its DLLs to be installed
+  in ``site-packages/pywin32_system32`` by its own post-install script - by :user:`rahuldevikar`. (:issue:`2662`)
+- Preserve symlinks in ``pyvenv.cfg`` paths to match ``venv`` behavior. Use ``os.path.abspath()`` instead of
+  ``os.path.realpath()`` to normalize paths without resolving symlinks, fixing issues with Python installations accessed
+  via symlinked directories (common in network-mounted filesystems) - by :user:`rahuldevikar`. Fixes :issue:`2770`.
+  (:issue:`2770`)
+- Fix Windows activation scripts to properly quote ``python.exe`` path, preventing failures when Python is installed in
+  a path with spaces (e.g., ``C:\Program Files``) and a file named ``C:\Program`` exists on the filesystem - by
+  :user:`rahuldevikar`. (:issue:`2985`)
+- Fix ``bash -u`` (``set -o nounset``) compatibility in bash activation script by using ``${PKG_CONFIG_PATH:-}`` and
+  ``${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}`` to handle unset ``PKG_CONFIG_PATH`` - by :user:`Fridayai700`.
+  (:issue:`3044`)
+- Gracefully handle corrupted on-disk cache and invalid JSON from Python interrogation subprocess instead of crashing
+  with unhandled ``JSONDecodeError`` or ``KeyError`` - by :user:`gaborbernat`. (:issue:`3054`)
+
+***********************
  v20.36.1 (2026-01-09)
 ***********************
 

@@ -1,3 +1,0 @@
-Exclude pywin32 DLLs (``pywintypes*.dll``, ``pythoncom*.dll``) from being copied to the Scripts directory during
-virtualenv creation on Windows. This fixes compatibility issues with pywin32, which expects its DLLs to be installed in
-``site-packages/pywin32_system32`` by its own post-install script - by :user:`rahuldevikar`.
