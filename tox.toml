@@ -1,0 +1,161 @@
+requires = [ "tox>=4.28" ]
+env_list = [
+  "3.14",
+  "3.13",
+  "3.12",
+  "3.11",
+  "3.10",
+  "3.9",
+  "3.8",
+  "pypy3",
+  "3.13t",
+  "3.14t",
+  "coverage",
+  "docs",
+  "fix",
+  "graalpy",
+  "readme",
+  "type",
+]
+skip_missing_interpreters = true
+
+[env_run_base]
+description = "run tests with {env_name}"
+package = "wheel"
+wheel_build_env = ".pkg"
+extras = [ "test" ]
+pass_env = [ "CI_RUN", "PYTEST_*", "TERM" ]
+set_env._COVERAGE_SRC = "{env_site_packages_dir}{/}virtualenv"
+set_env.COVERAGE_FILE = "{work_dir}{/}.coverage.{env_name}"
+set_env.COVERAGE_PROCESS_START = "{tox_root}{/}pyproject.toml"
+set_env.PYTHONWARNDEFAULTENCODING = "1"
+commands = [
+  [ "coverage", "erase" ],
+  [
+    "coverage",
+    "run",
+    "-m",
+    "pytest",
+    { replace = "posargs", extend = true, default = [
+      "--junitxml",
+      "{work_dir}{/}junit.{env_name}.xml",
+      "tests",
+      "--int",
+      "-n",
+      "auto",
+      "--dist",
+      "loadfile",
+    ] },
+  ],
+  [ "coverage", "combine" ],
+  [ "coverage", "report", "--skip-covered", "--show-missing" ],
+  [ "coverage", "xml", "-o", "{work_dir}{/}coverage.{env_name}.xml" ],
+  [
+    "coverage",
+    "html",
+    "-d",
+    "{env_tmp_dir}{/}htmlcov",
+    "--show-contexts",
+    "--title",
+    "virtualenv-{env_name}-coverage",
+  ],
+]
+uv_seed = true
+
+[env.docs]
+description = "build documentation"
+extras = [ "docs" ]
+set_env.PYTHONUTF8 = "1"
+commands = [
+  [ "pre-commit", "run", "docstrfmt", "--all-files" ],
+  [ "proselint", "check", "docs" ],
+  [
+    "sphinx-build",
+    "-d",
+    "{env_tmp_dir}{/}doctree",
+    "docs",
+    "{work_dir}{/}docs_out",
+    "--color",
+    "-b",
+    "html",
+    { replace = "posargs", extend = true, default = [ "-W" ] },
+  ],
+  [
+    "python",
+    "-c",
+    """\
+  import pathlib; print(\"documentation available under file://\" + str(pathlib.Path(r\"{work_dir}\") / \"docs_out\" / \
+  \"index.html\"))\
+  """,
+  ],
+]
+
+[env.fix]
+description = "format the code base to adhere to our styles, and complain about what we cannot do automatically"
+skip_install = true
+deps = [ "pre-commit-uv>=4.1.4" ]
+commands = [ [ "pre-commit", "run", "--all-files", "--show-diff-on-failure" ] ]
+
+[env.graalpy]
+commands = [
+  [
+    "pytest",
+    { replace = "posargs", extend = true, default = [
+      "--junitxml",
+      "{work_dir}{/}junit.{env_name}.xml",
+      "tests",
+      "--skip-slow",
+    ] },
+  ],
+]
+
+[env.readme]
+description = "check that the long description is valid"
+skip_install = true
+deps = [ "check-wheel-contents>=0.6.2", "twine>=6.1", "uv>=0.8" ]
+commands = [
+  [ "uv", "build", "--sdist", "--wheel", "--out-dir", "{env_tmp_dir}", "." ],
+  [ "twine", "check", "{env_tmp_dir}{/}*" ],
+  [ "check-wheel-contents", "--no-config", "{env_tmp_dir}" ],
+]
+
+[env.type]
+description = "run type checker (ty) against Python 3.14"
+deps = [ "ty>=0.0.15" ]
+commands = [ [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.14" ] ]
+
+[env.upgrade]
+description = "upgrade pip/wheels/setuptools to latest"
+skip_install = true
+deps = [ "ruff>=0.12.4" ]
+pass_env = [ "UPGRADE_ADVISORY" ]
+change_dir = "{tox_root}{/}tasks"
+commands = [ [ "python", "upgrade_wheels.py" ] ]
+uv_seed = true
+
+[env.release]
+description = "do a release, required posarg of the version number"
+deps = [ "gitpython>=3.1.44", "packaging>=25", "pre-commit-uv>=4.1.4", "towncrier>=24.8" ]
+change_dir = "{tox_root}{/}tasks"
+commands = [ [ "python", "release.py", { replace = "posargs", extend = true } ] ]
+
+[env.dev]
+description = "generate a DEV environment"
+package = "editable"
+extras = [ "docs", "test" ]
+commands = [
+  [ "uv", "pip", "tree" ],
+  [ "python", "-c", "import sys; print(sys.executable)" ],
+]
+
+[env.zipapp]
+description = "generate a zipapp"
+skip_install = true
+deps = [ "packaging>=25" ]
+commands = [ [ "python", "tasks/make_zipapp.py" ] ]
+uv_seed = true
+
+[env."type-3.8"]
+description = "run type checker (ty) against Python 3.8"
+commands = [ [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.8" ] ]
+base = [ "type" ]
