@@ -51,38 +51,6 @@ dependencies = [
   "platformdirs>=3.9.1,<5",
   "typing-extensions>=4.13.2; python_version<'3.11'",
 ]
-optional-dependencies.docs = [
-  "furo>=2023.7.26",
-  "pre-commit-uv>=4.1.4",
-  "proselint>=0.13",
-  "sphinx>=7.1.2,!=7.3",
-  "sphinx-argparse>=0.4",
-  "sphinx-autodoc-typehints>=3.6.2",
-  "sphinx-copybutton>=0.5.2",
-  "sphinx-inline-tabs>=2025.12.21.14",
-  "sphinxcontrib-mermaid>=2",
-  "sphinxcontrib-towncrier>=0.2.1a0",
-  "towncrier>=23.6",
-]
-optional-dependencies.test = [
-  "covdefaults>=2.3",
-  "coverage>=7.2.7",
-  "coverage-enable-subprocess>=1",
-  "flaky>=3.7",
-  "packaging>=23.1",
-  "pytest>=7.4",
-  "pytest-env>=0.8.2",
-  """\
-  pytest-freezer>=0.4.8; platform_python_implementation=='PyPy' or platform_python_implementation=='GraalVM' or \
-  (platform_python_implementation=='CPython' and sys_platform=='win32' and python_version>='3.13')\
-  """,
-  "pytest-mock>=3.11.1",
-  "pytest-randomly>=3.12",
-  "pytest-timeout>=2.1",
-  "pytest-xdist>=3.5",
-  "setuptools>=68",
-  "time-machine>=2.10; platform_python_implementation=='CPython'",
-]
 urls.Documentation = "https://virtualenv.pypa.io"
 urls.Homepage = "https://github.com/pypa/virtualenv"
 urls.Source = "https://github.com/pypa/virtualenv"
@@ -107,6 +75,50 @@ entry-points."virtualenv.create".venv = "virtualenv.create.via_global_ref.venv:V
 entry-points."virtualenv.discovery".builtin = "virtualenv.discovery.builtin:Builtin"
 entry-points."virtualenv.seed".app-data = "virtualenv.seed.embed.via_app_data.via_app_data:FromAppData"
 entry-points."virtualenv.seed".pip = "virtualenv.seed.embed.pip_invoke:PipInvoke"
+
+[dependency-groups]
+dev = [
+  { include-group = "docs" },
+  { include-group = "lint" },
+  { include-group = "pkg-meta" },
+  { include-group = "test" },
+  { include-group = "type" },
+]
+test = [
+  "covdefaults>=2.3",
+  "coverage>=7.2.7",
+  "coverage-enable-subprocess>=1",
+  "flaky>=3.7",
+  "packaging>=23.1",
+  "pytest>=7.4",
+  "pytest-env>=0.8.2",
+  """\
+  pytest-freezer>=0.4.8; platform_python_implementation=='PyPy' or platform_python_implementation=='GraalVM' or \
+  (platform_python_implementation=='CPython' and sys_platform=='win32' and python_version>='3.13')\
+  """,
+  "pytest-mock>=3.11.1",
+  "pytest-randomly>=3.12",
+  "pytest-timeout>=2.1",
+  "pytest-xdist>=3.5",
+  "setuptools>=68",
+  "time-machine>=2.10; platform_python_implementation=='CPython'",
+]
+docs = [
+  "furo>=2023.7.26",
+  "pre-commit-uv>=4.1.4",
+  "proselint>=0.13",
+  "sphinx>=7.1.2,!=7.3",
+  "sphinx-argparse>=0.4",
+  "sphinx-autodoc-typehints>=3.6.2",
+  "sphinx-copybutton>=0.5.2",
+  "sphinx-inline-tabs>=2025.12.21.14",
+  "sphinxcontrib-mermaid>=2",
+  "sphinxcontrib-towncrier>=0.2.1a0",
+  "towncrier>=23.6",
+]
+type = [ "ty>=0.0.15", { include-group = "test" }, ]
+lint = [ "pre-commit-uv>=4.1.4", ]
+pkg-meta = [ "check-wheel-contents>=0.6.2", "twine>=6.1", "uv>=0.8", ]
 
 [tool.hatch]
 build.hooks.vcs.version-file = "src/virtualenv/version.py"
