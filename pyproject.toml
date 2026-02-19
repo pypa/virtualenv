@@ -103,6 +103,10 @@ test = [
   "setuptools>=68",
   "time-machine>=2.10; platform_python_implementation=='CPython'",
 ]
+type = [
+  "ty>=0.0.15",
+  { include-group = "test" },
+]
 docs = [
   "furo>=2023.7.26",
   "pre-commit-uv>=4.1.4",
@@ -116,9 +120,14 @@ docs = [
   "sphinxcontrib-towncrier>=0.2.1a0",
   "towncrier>=23.6",
 ]
-type = [ "ty>=0.0.15", { include-group = "test" }, ]
-lint = [ "pre-commit-uv>=4.1.4", ]
-pkg-meta = [ "check-wheel-contents>=0.6.2", "twine>=6.1", "uv>=0.8", ]
+lint = [
+  "pre-commit-uv>=4.1.4",
+]
+pkg-meta = [
+  "check-wheel-contents>=0.6.2",
+  "twine>=6.1",
+  "uv>=0.8",
+]
 
 [tool.hatch]
 build.hooks.vcs.version-file = "src/virtualenv/version.py"
