@@ -5,7 +5,7 @@ from copy import copy
 
 import pytest
 
-from virtualenv.discovery.py_spec import PythonSpec
+from virtualenv.discovery.py_spec import PythonSpec, _normalize_isa
 from virtualenv.util.specifier import SimpleSpecifierSet as SpecifierSet
 
 
@@ -221,8 +221,6 @@ def test_spec_satisfies_machine_none_matches_any():
 
 def test_spec_satisfies_machine_normalization():
     """Cross-OS ISA aliases should match: amd64 == x86_64, aarch64 == arm64."""
-    from virtualenv.discovery.py_spec import _normalize_isa
-
     # amd64 (Windows) should normalize to x86_64
     assert _normalize_isa("amd64") == _normalize_isa("x86_64")
     # aarch64 (Linux) should normalize to arm64 (macOS)

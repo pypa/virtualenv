@@ -189,9 +189,12 @@ class PythonSpec:
             return False
         if spec.architecture is not None and spec.architecture != self.architecture:
             return False
-        if spec.machine is not None and self.machine is not None:
-            if _normalize_isa(spec.machine) != _normalize_isa(self.machine):
-                return False
+        if (
+            spec.machine is not None
+            and self.machine is not None
+            and _normalize_isa(spec.machine) != _normalize_isa(self.machine)
+        ):
+            return False
         if spec.free_threaded is not None and spec.free_threaded != self.free_threaded:
             return False
 
