@@ -1,0 +1,57 @@
+name: Upgrade embedded dependencies
+on:
+  schedule:
+    - cron: "0 10 * * *" # daily at 10:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  upgrade:
+    name: Upgrade embedded pip/setuptools/wheel
+    if: github.repository_owner == 'pypa'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+      - name: Install tox
+        run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.32" --with tox-uv
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
+      - name: Fetch upstream tags for versioning
+        run: git fetch --force --tags https://github.com/pypa/virtualenv.git
+      - name: Run upgrade
+        id: upgrade
+        env:
+          UPGRADE_ADVISORY: "1"
+        run: |
+          tox run -e upgrade
+          if [ -n "$(git diff --name-only)" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "### Embedded dependency changes" >> "$GITHUB_STEP_SUMMARY"
+            git diff --stat >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "### All embedded dependencies are up to date" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Create Pull Request
+        if: steps.upgrade.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "Upgrade embedded dependencies"
+          branch: auto/upgrade-embedded-deps
+          delete-branch: true
+          title: "Upgrade embedded pip/setuptools/wheel"
+          body: |
+            Automated upgrade of embedded pip, setuptools, and wheel dependencies.
+
+            This PR was created automatically by the [upgrade workflow](https://github.com/${{ github.repository }}/actions/workflows/upgrade.yaml).
+          labels: |
+            dependencies
