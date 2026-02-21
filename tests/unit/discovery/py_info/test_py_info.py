@@ -659,7 +659,9 @@ def test_py_info_machine_derivation_missing_sysconfig_platform():
 def test_py_info_satisfies_with_machine():
     """Current interpreter should satisfy a spec that includes its own machine."""
     threaded = "t" if CURRENT.free_threaded else ""
-    spec_str = f"{CURRENT.implementation}{CURRENT.version_info.major}{threaded}-{CURRENT.architecture}-{CURRENT.machine}"
+    spec_str = (
+        f"{CURRENT.implementation}{CURRENT.version_info.major}{threaded}-{CURRENT.architecture}-{CURRENT.machine}"
+    )
     parsed_spec = PythonSpec.from_string_spec(spec_str)
     assert CURRENT.satisfies(parsed_spec, True) is True
 
