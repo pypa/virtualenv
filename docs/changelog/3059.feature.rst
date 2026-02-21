@@ -1,5 +1,5 @@
 Add architecture (ISA) awareness to Python discovery — users can now specify a CPU architecture suffix in the
-``--python`` spec string (e.g. ``cpython3.12-64-arm64``) to distinguish between interpreters that share the same
-version and bitness but target different architectures. Uses ``sysconfig.get_platform()`` as the data source, with
-cross-platform normalization (``amd64`` ↔ ``x86_64``, ``aarch64`` ↔ ``arm64``). Omitting the suffix preserves
-existing behavior - by :user:`rahuldevikar`.
+``--python`` spec string (e.g. ``cpython3.12-64-arm64``) to distinguish between interpreters that share the same version
+and bitness but target different architectures. Uses ``sysconfig.get_platform()`` as the data source, with
+cross-platform normalization (``amd64`` ↔ ``x86_64``, ``aarch64`` ↔ ``arm64``). Omitting the suffix preserves existing
+behavior - by :user:`rahuldevikar`.
