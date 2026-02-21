@@ -43,6 +43,20 @@ Create an environment with `free-threading Python <https://docs.python.org/3/how
 
     $ virtualenv -p 3.13t venv
 
+Targeting a specific CPU architecture
+=====================================
+
+On machines that support multiple architectures — such as Apple Silicon (arm64 + x86_64 via Rosetta) or Windows on ARM —
+you can request a specific CPU architecture by appending it to the spec string:
+
+.. code-block:: console
+
+    $ virtualenv -p cpython3.12-64-arm64 venv
+    $ virtualenv -p 3.11-64-x86_64 venv
+
+Cross-platform aliases are normalized automatically, so ``amd64`` and ``x86_64`` are treated as equivalent, as are
+``aarch64`` and ``arm64``. If omitted, any architecture matches (preserving existing behavior).
+
 Using absolute paths
 ====================
 
