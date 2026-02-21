@@ -24,6 +24,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
       - name: Fetch upstream tags for versioning
         run: git fetch --force --tags https://github.com/pypa/virtualenv.git
       - name: Run upgrade
@@ -44,7 +45,6 @@ jobs:
         if: steps.upgrade.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "Upgrade embedded dependencies"
           branch: auto/upgrade-embedded-deps
           delete-branch: true
@@ -53,9 +53,5 @@ jobs:
             Automated upgrade of embedded pip, setuptools, and wheel dependencies.
 
             This PR was created automatically by the [upgrade workflow](https://github.com/${{ github.repository }}/actions/workflows/upgrade.yaml).
-
-            > [!NOTE]
-            > CI does not trigger automatically on PRs created with `GITHUB_TOKEN`.
-            > Close and reopen this PR, or push an empty commit, to trigger CI.
           labels: |
             dependencies
