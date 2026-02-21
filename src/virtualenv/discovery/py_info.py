@@ -58,6 +58,11 @@ class PythonInfo:  # noqa: PLR0904
         # pointer size.
         self.architecture = 32 if struct.calcsize("P") == 4 else 64  # noqa: PLR2004
 
+        # Full platform identity string from Python's build configuration.
+        # Used to derive the instruction set architecture (ISA) via the `machine` property.
+        # sysconfig.get_platform() returns e.g. 'macosx-14.0-arm64', 'linux-x86_64', 'win-amd64', 'win32'.
+        self.sysconfig_platform = sysconfig.get_platform()
+
         # Used to determine some file names.
         # See `CPython3Windows.python_zip()`.
         self.version_nodot = sysconfig.get_config_var("py_version_nodot")
@@ -422,13 +427,41 @@ class PythonInfo:  # noqa: PLR0904
 
     @property
     def spec(self) -> str:
-        """A specification string identifying this interpreter (e.g. ``CPython3.13.2-64``)."""
-        return "{}{}{}-{}".format(
+        """A specification string identifying this interpreter (e.g. ``CPython3.13.2-64-arm64``)."""
+        return "{}{}{}-{}-{}".format(
             self.implementation,
             ".".join(str(i) for i in self.version_info),
             "t" if self.free_threaded else "",
             self.architecture,
+            self.machine,
         )
+
+    @property
+    def machine(self) -> str:
+        """The instruction set architecture (ISA) of this interpreter.
+
+        Derived from :func:`sysconfig.get_platform`, which returns the platform identity string
+        used by Python's build system (e.g. ``macosx-14.0-arm64``, ``linux-x86_64``, ``win-amd64``).
+        The ISA is the last component of this string.
+
+        For macOS ``universal2`` fat binaries, falls back to :func:`platform.machine` to report
+        the actual runtime ISA (``arm64`` or ``x86_64``) rather than the build target.
+
+        :returns: the ISA string, e.g. ``arm64``, ``x86_64``, ``x86``
+
+        """
+        plat = getattr(self, "sysconfig_platform", None)
+        if plat is None:
+            # Fallback for old cached entries that lack sysconfig_platform
+            return "unknown"
+        if plat == "win32":
+            return "x86"
+        isa = plat.rsplit("-", 1)[-1]
+        if isa == "universal2":
+            # universal2 is a fat binary containing both arm64 and x86_64;
+            # report the actual runtime ISA
+            return platform.machine().lower()
+        return isa
 
     @classmethod
     def clear_cache(cls, app_data: AppData) -> None:
@@ -474,6 +507,12 @@ class PythonInfo:  # noqa: PLR0904
 
         if spec.architecture is not None and spec.architecture != self.architecture:
             return False
+
+        if spec.machine is not None:
+            from virtualenv.discovery.py_spec import _normalize_isa  # noqa: PLC0415
+
+            if _normalize_isa(spec.machine) != _normalize_isa(self.machine):
+                return False
 
         if spec.free_threaded is not None and spec.free_threaded != self.free_threaded:
             return False
@@ -590,6 +629,7 @@ class PythonInfo:  # noqa: PLR0904
     @classmethod
     def _from_dict(cls, data):
         data["version_info"] = VersionInfo(**data["version_info"])  # restore this to a named tuple structure
+        data.setdefault("sysconfig_platform", None)  # backward compat for old cache entries without ISA
         result = cls()
         result.__dict__ = data.copy()
         return result
@@ -671,10 +711,21 @@ class PythonInfo:  # noqa: PLR0904
         info = self.from_exe(exe_path, app_data, resolve_to_host=False, raise_on_error=False, env=env)
         if info is None:  # ignore if for some reason we can't query
             return None
-        for item in ["implementation", "architecture", "version_info"]:
+        for item in ["implementation", "architecture", "machine", "version_info"]:
             found = getattr(info, item)
             searched = getattr(self, item)
-            if found != searched:
+            if item == "machine":
+                from virtualenv.discovery.py_spec import _normalize_isa  # noqa: PLC0415
+
+                if _normalize_isa(found) != _normalize_isa(searched):
+                    executable = info.executable
+                    LOGGER.debug(
+                        "refused interpreter %s because %s differs %s != %s", executable, item, found, searched
+                    )
+                    if exact is False:
+                        discovered.append(info)
+                    break
+            elif found != searched:
                 if item == "version_info":
                     found, searched = ".".join(str(i) for i in found), ".".join(str(i) for i in searched)
                 executable = info.executable
@@ -690,14 +741,17 @@ class PythonInfo:  # noqa: PLR0904
     def _select_most_likely(discovered, target):
         # no exact match found, start relaxing our requirements then to facilitate system package upgrades that
         # could cause this (when using copy strategy of the host python)
+        from virtualenv.discovery.py_spec import _normalize_isa  # noqa: PLC0415
+
         def sort_by(info):
             # we need to setup some priority of traits, this is as follows:
-            # implementation, major, minor, micro, architecture, tag, serial
+            # implementation, major, minor, architecture, machine, micro, tag, serial
             matches = [
                 info.implementation == target.implementation,
                 info.version_info.major == target.version_info.major,
                 info.version_info.minor == target.version_info.minor,
                 info.architecture == target.architecture,
+                _normalize_isa(info.machine) == _normalize_isa(target.machine),
                 info.version_info.micro == target.version_info.micro,
                 info.version_info.releaselevel == target.version_info.releaselevel,
                 info.version_info.serial == target.version_info.serial,
