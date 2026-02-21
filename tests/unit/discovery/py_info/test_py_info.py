@@ -532,3 +532,225 @@ def test_uses_posix_prefix_on_debian_3_10_without_venv(mocker):
 def test_sysconfig_vars_include_shared_lib_keys() -> None:
     for key in ("Py_ENABLE_SHARED", "INSTSONAME", "LIBDIR"):
         assert key in CURRENT.sysconfig_vars
+
+
+# --- Machine (ISA) / sysconfig_platform tests ---
+
+
+def test_py_info_has_sysconfig_platform():
+    """PythonInfo should have a sysconfig_platform field from sysconfig.get_platform()."""
+    assert hasattr(CURRENT, "sysconfig_platform")
+    assert CURRENT.sysconfig_platform is not None
+    assert isinstance(CURRENT.sysconfig_platform, str)
+    assert len(CURRENT.sysconfig_platform) > 0
+
+
+def test_py_info_machine_property():
+    """machine property should return a non-empty ISA string derived from sysconfig_platform."""
+    machine = CURRENT.machine
+    assert machine is not None
+    assert isinstance(machine, str)
+    assert len(machine) > 0
+    # Should be a recognized ISA value
+    known_isas = {"arm64", "x86_64", "x86", "amd64", "aarch64", "ppc64le", "ppc64", "s390x", "riscv64", "unknown"}
+    assert machine in known_isas, f"unexpected machine value: {machine}"
+
+
+def test_py_info_machine_in_spec():
+    """The spec property should include the machine ISA."""
+    spec = CURRENT.spec
+    assert CURRENT.machine in spec
+    # Format: Implementation + version + optional 't' + '-' + arch + '-' + machine
+    assert f"-{CURRENT.architecture}-{CURRENT.machine}" in spec
+
+
+def test_py_info_sysconfig_platform_matches_sysconfig():
+    """sysconfig_platform field should match sysconfig.get_platform()."""
+    assert CURRENT.sysconfig_platform == sysconfig.get_platform()
+
+
+def test_py_info_machine_derivation_win32():
+    """For win32 sysconfig_platform, machine should be 'x86'."""
+    info = copy.deepcopy(CURRENT)
+    info.sysconfig_platform = "win32"
+    assert info.machine == "x86"
+
+
+def test_py_info_machine_derivation_linux_x86_64():
+    """For linux-x86_64, machine should be 'x86_64'."""
+    info = copy.deepcopy(CURRENT)
+    info.sysconfig_platform = "linux-x86_64"
+    assert info.machine == "x86_64"
+
+
+def test_py_info_machine_derivation_linux_aarch64():
+    """For linux-aarch64, machine should be 'aarch64'."""
+    info = copy.deepcopy(CURRENT)
+    info.sysconfig_platform = "linux-aarch64"
+    assert info.machine == "aarch64"
+
+
+def test_py_info_machine_derivation_macos_arm64():
+    """For macosx-14.0-arm64, machine should be 'arm64'."""
+    info = copy.deepcopy(CURRENT)
+    info.sysconfig_platform = "macosx-14.0-arm64"
+    assert info.machine == "arm64"
+
+
+def test_py_info_machine_derivation_macos_x86_64():
+    """For macosx-14.0-x86_64, machine should be 'x86_64'."""
+    info = copy.deepcopy(CURRENT)
+    info.sysconfig_platform = "macosx-14.0-x86_64"
+    assert info.machine == "x86_64"
+
+
+def test_py_info_machine_derivation_win_amd64():
+    """For win-amd64, machine should be 'amd64'."""
+    info = copy.deepcopy(CURRENT)
+    info.sysconfig_platform = "win-amd64"
+    assert info.machine == "amd64"
+
+
+def test_py_info_machine_derivation_win_arm64():
+    """For win-arm64, machine should be 'arm64'."""
+    info = copy.deepcopy(CURRENT)
+    info.sysconfig_platform = "win-arm64"
+    assert info.machine == "arm64"
+
+
+def test_py_info_machine_derivation_linux_riscv64():
+    """For linux-riscv64, machine should be 'riscv64'."""
+    info = copy.deepcopy(CURRENT)
+    info.sysconfig_platform = "linux-riscv64"
+    assert info.machine == "riscv64"
+
+
+def test_py_info_machine_derivation_linux_ppc64le():
+    """For linux-ppc64le, machine should be 'ppc64le'."""
+    info = copy.deepcopy(CURRENT)
+    info.sysconfig_platform = "linux-ppc64le"
+    assert info.machine == "ppc64le"
+
+
+def test_py_info_machine_derivation_linux_s390x():
+    """For linux-s390x, machine should be 's390x'."""
+    info = copy.deepcopy(CURRENT)
+    info.sysconfig_platform = "linux-s390x"
+    assert info.machine == "s390x"
+
+
+def test_py_info_machine_derivation_universal2(mocker):
+    """For macosx universal2, machine should fall back to platform.machine()."""
+    info = copy.deepcopy(CURRENT)
+    info.sysconfig_platform = "macosx-11.0-universal2"
+    mocker.patch("virtualenv.discovery.py_info.platform.machine", return_value="arm64")
+    assert info.machine == "arm64"
+    mocker.patch("virtualenv.discovery.py_info.platform.machine", return_value="x86_64")
+    assert info.machine == "x86_64"
+
+
+def test_py_info_machine_derivation_missing_sysconfig_platform():
+    """When sysconfig_platform is None (old cache), machine should be 'unknown'."""
+    info = copy.deepcopy(CURRENT)
+    info.sysconfig_platform = None
+    assert info.machine == "unknown"
+
+
+def test_py_info_satisfies_with_machine():
+    """Current interpreter should satisfy a spec that includes its own machine."""
+    threaded = "t" if CURRENT.free_threaded else ""
+    spec_str = (
+        f"{CURRENT.implementation}{CURRENT.version_info.major}{threaded}-{CURRENT.architecture}-{CURRENT.machine}"
+    )
+    parsed_spec = PythonSpec.from_string_spec(spec_str)
+    assert CURRENT.satisfies(parsed_spec, True) is True
+
+
+def test_py_info_satisfies_not_machine():
+    """Current interpreter should NOT satisfy a spec with a different machine."""
+    other_machine = "arm64" if CURRENT.machine != "arm64" else "x86_64"
+    spec_str = f"{CURRENT.implementation}-{CURRENT.architecture}-{other_machine}"
+    parsed_spec = PythonSpec.from_string_spec(spec_str)
+    assert CURRENT.satisfies(parsed_spec, True) is False
+
+
+def test_py_info_satisfies_no_machine_in_spec():
+    """A spec without machine should match any interpreter (backward compat)."""
+    threaded = "t" if CURRENT.free_threaded else ""
+    spec_str = f"{CURRENT.implementation}{CURRENT.version_info.major}{threaded}-{CURRENT.architecture}"
+    parsed_spec = PythonSpec.from_string_spec(spec_str)
+    assert parsed_spec.machine is None
+    assert CURRENT.satisfies(parsed_spec, True) is True
+
+
+def test_py_info_satisfies_machine_cross_os_normalization():
+    """Cross-OS aliases should match: e.g. amd64 spec matches x86_64 interpreter."""
+    info = copy.deepcopy(CURRENT)
+    info.sysconfig_platform = "linux-x86_64"
+    # Spec uses Windows-style 'amd64', interpreter is Linux 'x86_64'
+    spec = PythonSpec.from_string_spec(f"{info.implementation}-{info.architecture}-amd64")
+    assert info.satisfies(spec, True) is True
+
+    info2 = copy.deepcopy(CURRENT)
+    info2.sysconfig_platform = "macosx-14.0-arm64"
+    # Spec uses Linux-style 'aarch64', interpreter is macOS 'arm64'
+    spec2 = PythonSpec.from_string_spec(f"{info2.implementation}-{info2.architecture}-aarch64")
+    assert info2.satisfies(spec2, True) is True
+
+
+def test_py_info_from_dict_backward_compat():
+    """_from_dict should handle old cache entries that lack sysconfig_platform."""
+    data = CURRENT._to_dict()  # noqa: SLF001
+    del data["sysconfig_platform"]  # simulate old cache entry
+    restored = PythonInfo._from_dict(data)  # noqa: SLF001
+    assert restored.sysconfig_platform is None
+    assert restored.machine == "unknown"
+
+
+def test_py_info_to_dict_includes_sysconfig_platform():
+    """_to_dict should include sysconfig_platform."""
+    data = CURRENT._to_dict()  # noqa: SLF001
+    assert "sysconfig_platform" in data
+    assert data["sysconfig_platform"] == sysconfig.get_platform()
+
+
+def test_py_info_json_round_trip():
+    """sysconfig_platform should survive JSON serialization round-trip."""
+    json_str = CURRENT._to_json()  # noqa: SLF001
+    parsed = json.loads(json_str)
+    assert "sysconfig_platform" in parsed
+    restored = PythonInfo._from_json(json_str)  # noqa: SLF001
+    assert restored.sysconfig_platform == CURRENT.sysconfig_platform
+    assert restored.machine == CURRENT.machine
+
+
+@pytest.mark.parametrize(
+    ("target_platform", "discovered_platforms", "expected_position"),
+    [
+        # Same machine preferred over different machine
+        (
+            "linux-x86_64",
+            ["linux-aarch64", "linux-x86_64"],
+            1,
+        ),
+        # arm64 target prefers arm64 discovered
+        (
+            "macosx-14.0-arm64",
+            ["macosx-14.0-x86_64", "macosx-14.0-arm64"],
+            1,
+        ),
+    ],
+)
+def test_select_most_likely_prefers_machine_match(target_platform, discovered_platforms, expected_position):
+    """_select_most_likely should prefer interpreters with matching machine."""
+    target = copy.deepcopy(CURRENT)
+    target.sysconfig_platform = target_platform
+
+    discovered = []
+    for plat in discovered_platforms:
+        d = copy.deepcopy(CURRENT)
+        d.sysconfig_platform = plat
+        discovered.append(d)
+
+    result = PythonInfo._select_most_likely(discovered, target)  # noqa: SLF001
+    assert result.sysconfig_platform == discovered_platforms[expected_position]

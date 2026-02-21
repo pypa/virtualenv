@@ -152,11 +152,13 @@ The ``--python`` flag accepts several specifier formats:
     An absolute or relative path to a Python executable, such as ``/usr/bin/python3.8`` or ``./python``.
 
 **Version specifier**
-    A string following the format ``{implementation}{version}{architecture}`` where:
+    A string following the format ``{implementation}{version}{architecture}{machine}`` where:
 
     - Implementation is alphabetic characters (``python`` means any implementation; if omitted, defaults to ``python``).
     - Version is dot-separated numbers, optionally followed by ``t`` for free-threading builds.
     - Architecture is ``-64`` or ``-32`` (if omitted, means any architecture).
+    - Machine is the CPU instruction set architecture, e.g. ``-arm64``, ``-x86_64``, ``-aarch64`` (if omitted, means any
+      machine). Cross-platform aliases are normalized automatically (``amd64`` ↔ ``x86_64``, ``aarch64`` ↔ ``arm64``).
 
     Examples:
 
@@ -165,6 +167,8 @@ The ``--python`` flag accepts several specifier formats:
     - ``3.13t`` - Any Python implementation version 3.13 with free-threading enabled
     - ``cpython3`` - CPython implementation with major version 3
     - ``pypy2`` - PyPy implementation with major version 2
+    - ``cpython3.12-64-arm64`` - CPython 3.12, 64-bit, ARM64 architecture
+    - ``3.11-64-x86_64`` - Any implementation, version 3.11, 64-bit, x86_64 architecture
 
 **PEP 440 version specifier**
     Version constraints using PEP 440 operators:
