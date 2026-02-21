@@ -37,6 +37,16 @@ def _get_path_extensions():
 EXTENSIONS = _get_path_extensions()
 _CONF_VAR_RE = re.compile(r"\{\w+}")
 
+# Canonical ISA aliases for cross-platform normalization.
+# Windows uses "amd64" where Linux/macOS use "x86_64";
+# Linux uses "aarch64" where macOS uses "arm64".
+_ISA_ALIASES = {"amd64": "x86_64", "aarch64": "arm64"}
+
+
+def _normalize_isa(isa: str) -> str:
+    """Normalize ISA name to a canonical form for comparison."""
+    return _ISA_ALIASES.get(isa.lower(), isa.lower())
+
 
 class PythonInfo:  # noqa: PLR0904
     """Contains information for a Python interpreter."""
@@ -508,11 +518,8 @@ class PythonInfo:  # noqa: PLR0904
         if spec.architecture is not None and spec.architecture != self.architecture:
             return False
 
-        if spec.machine is not None:
-            from virtualenv.discovery.py_spec import _normalize_isa  # noqa: PLC0415
-
-            if _normalize_isa(spec.machine) != _normalize_isa(self.machine):
-                return False
+        if spec.machine is not None and _normalize_isa(spec.machine) != _normalize_isa(self.machine):
+            return False
 
         if spec.free_threaded is not None and spec.free_threaded != self.free_threaded:
             return False
@@ -715,8 +722,6 @@ class PythonInfo:  # noqa: PLR0904
             found = getattr(info, item)
             searched = getattr(self, item)
             if item == "machine":
-                from virtualenv.discovery.py_spec import _normalize_isa  # noqa: PLC0415
-
                 if _normalize_isa(found) != _normalize_isa(searched):
                     executable = info.executable
                     LOGGER.debug(
@@ -741,8 +746,6 @@ class PythonInfo:  # noqa: PLR0904
     def _select_most_likely(discovered, target):
         # no exact match found, start relaxing our requirements then to facilitate system package upgrades that
         # could cause this (when using copy strategy of the host python)
-        from virtualenv.discovery.py_spec import _normalize_isa  # noqa: PLC0415
-
         def sort_by(info):
             # we need to setup some priority of traits, this is as follows:
             # implementation, major, minor, architecture, machine, micro, tag, serial

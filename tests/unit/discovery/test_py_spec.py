@@ -5,7 +5,8 @@ from copy import copy
 
 import pytest
 
-from virtualenv.discovery.py_spec import PythonSpec, _normalize_isa
+from virtualenv.discovery.py_info import _normalize_isa
+from virtualenv.discovery.py_spec import PythonSpec
 from virtualenv.util.specifier import SimpleSpecifierSet as SpecifierSet
 
 

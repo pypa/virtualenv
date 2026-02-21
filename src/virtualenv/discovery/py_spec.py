@@ -6,6 +6,7 @@ import contextlib
 import os
 import re
 
+from virtualenv.discovery.py_info import _normalize_isa
 from virtualenv.util.specifier import SimpleSpecifierSet, SimpleVersion
 
 PATTERN = re.compile(
@@ -220,24 +221,6 @@ class PythonSpec:
             "version_specifier",
         )
         return f"{name}({', '.join(f'{k}={getattr(self, k)}' for k in params if getattr(self, k) is not None)})"
-
-
-# Cross-OS ISA normalization: only needed when a spec written on one OS must match an interpreter on another.
-# sysconfig.get_platform() uses lowercase and consistent naming, so this map is minimal.
-_ISA_ALIASES: dict[str, str] = {
-    "amd64": "x86_64",  # Windows win-amd64 → Linux/macOS x86_64
-    "aarch64": "arm64",  # Linux linux-aarch64 → macOS arm64
-}
-
-
-def _normalize_isa(isa: str) -> str:
-    """Normalize an ISA name to a canonical form for comparison.
-
-    Handles cross-OS aliases: amd64↔x86_64, aarch64↔arm64. Values from sysconfig.get_platform() are already lowercase.
-
-    """
-    lowered = isa.lower()
-    return _ISA_ALIASES.get(lowered, lowered)
 
 
 # Create aliases for backward compatibility
