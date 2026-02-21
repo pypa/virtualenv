@@ -440,12 +440,12 @@ class PythonInfo:  # noqa: PLR0904
     def machine(self) -> str:
         """The instruction set architecture (ISA) of this interpreter.
 
-        Derived from :func:`sysconfig.get_platform`, which returns the platform identity string
-        used by Python's build system (e.g. ``macosx-14.0-arm64``, ``linux-x86_64``, ``win-amd64``).
-        The ISA is the last component of this string.
+        Derived from :func:`sysconfig.get_platform`, which returns the platform identity string used by Python's build
+        system (e.g. ``macosx-14.0-arm64``, ``linux-x86_64``, ``win-amd64``). The ISA is the last component of this
+        string.
 
-        For macOS ``universal2`` fat binaries, falls back to :func:`platform.machine` to report
-        the actual runtime ISA (``arm64`` or ``x86_64``) rather than the build target.
+        For macOS ``universal2`` fat binaries, falls back to :func:`platform.machine` to report the actual runtime ISA
+        (``arm64`` or ``x86_64``) rather than the build target.
 
         :returns: the ISA string, e.g. ``arm64``, ``x86_64``, ``x86``
 

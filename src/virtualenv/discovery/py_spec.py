@@ -230,8 +230,8 @@ _ISA_ALIASES: dict[str, str] = {
 def _normalize_isa(isa: str) -> str:
     """Normalize an ISA name to a canonical form for comparison.
 
-    Handles cross-OS aliases: amd64↔x86_64, aarch64↔arm64.
-    Values from sysconfig.get_platform() are already lowercase.
+    Handles cross-OS aliases: amd64↔x86_64, aarch64↔arm64. Values from sysconfig.get_platform() are already lowercase.
+
     """
     lowered = isa.lower()
     return _ISA_ALIASES.get(lowered, lowered)
