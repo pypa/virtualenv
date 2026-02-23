@@ -795,7 +795,7 @@ class PythonInfo:  # noqa: PLR0904
 
 
 def _normalize_isa(isa: str) -> str:
-    return {"amd64": "x86_64", "aarch64": "arm64"}.get(isa.lower(), isa.lower())
+    return {"amd64": "x86_64", "aarch64": "arm64"}.get(low := isa.lower(), low)
 
 
 if __name__ == "__main__":
