@@ -9,6 +9,7 @@ import tempfile
 IMPLEMENTATION = platform.python_implementation()
 IS_PYPY = IMPLEMENTATION == "PyPy"
 IS_GRAALPY = IMPLEMENTATION == "GraalVM"
+IS_RUSTPYTHON = IMPLEMENTATION == "RustPython"
 IS_CPYTHON = IMPLEMENTATION == "CPython"
 IS_WIN = sys.platform == "win32"
 IS_MAC_ARM64 = sys.platform == "darwin" and platform.machine() == "arm64"
@@ -61,6 +62,7 @@ __all__ = (
     "IS_GRAALPY",
     "IS_MAC_ARM64",
     "IS_PYPY",
+    "IS_RUSTPYTHON",
     "IS_WIN",
     "IS_ZIPAPP",
     "ROOT",

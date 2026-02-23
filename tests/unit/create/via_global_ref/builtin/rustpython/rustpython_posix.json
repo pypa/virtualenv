@@ -1,0 +1,61 @@
+{
+  "platform": "linux",
+  "implementation": "RustPython",
+  "version_info": {
+    "major": 3,
+    "minor": 14,
+    "micro": 0,
+    "releaselevel": "alpha",
+    "serial": 0
+  },
+  "architecture": 64,
+  "version": "3.14.0alpha (default, Nov 10 2025, 09:14:50)\n[RustPython 0.4.0 with rustc 1.83.0 (90b35a623 2024-11-26)]",
+  "os": "posix",
+  "prefix": "/usr/local",
+  "base_prefix": "/usr/local",
+  "real_prefix": null,
+  "base_exec_prefix": "/usr/local",
+  "exec_prefix": "/usr/local",
+  "executable": "/usr/local/bin/rustpython",
+  "original_executable": "/usr/local/bin/rustpython",
+  "system_executable": "/usr/local/bin/rustpython",
+  "has_venv": true,
+  "path": [
+    "/usr/local/lib/python3.14",
+    "/usr/local/lib/python3.14/site-packages"
+  ],
+  "file_system_encoding": "utf-8",
+  "stdout_encoding": "UTF-8",
+  "sysconfig_scheme": null,
+  "sysconfig_paths": {
+    "stdlib": "{installed_base}/lib/python{py_version_short}",
+    "platstdlib": "{platbase}/lib/python{py_version_short}",
+    "purelib": "{base}/lib/python{py_version_short}/site-packages",
+    "platlib": "{platbase}/lib/python{py_version_short}/site-packages",
+    "include": "{installed_base}/include/python{py_version_short}{abiflags}",
+    "scripts": "{base}/bin",
+    "data": "{base}"
+  },
+  "distutils_install": {
+    "purelib": "lib/python3.14/site-packages",
+    "platlib": "lib/python3.14/site-packages",
+    "headers": "include/python3.14/UNKNOWN",
+    "scripts": "bin",
+    "data": ""
+  },
+  "sysconfig": {},
+  "sysconfig_vars": {
+    "installed_base": "/usr/local",
+    "implementation_lower": "rustpython",
+    "py_version_short": "3.14",
+    "platbase": "/usr/local",
+    "base": "/usr/local",
+    "abiflags": "t",
+    "PYTHONFRAMEWORK": ""
+  },
+  "system_stdlib": "/usr/local/lib/python3.14",
+  "system_stdlib_platform": "/usr/local/lib/python3.14",
+  "max_size": 9223372036854775807,
+  "_creators": null,
+  "free_threaded": false
+}

@@ -1,4 +1,4 @@
-requires = [ "tox>=4.34.1" ]
+requires = [ "tox>=4.45" ]
 env_list = [
   "3.14",
   "3.13",
@@ -14,6 +14,7 @@ env_list = [
   "docs",
   "fix",
   "graalpy",
+  "rp",
   "readme",
   "type",
 ]
@@ -97,6 +98,19 @@ dependency_groups = [ "lint" ]
 commands = [ [ "pre-commit", "run", "--all-files", "--show-diff-on-failure" ] ]
 
 [env.graalpy]
+commands = [
+  [
+    "pytest",
+    { replace = "posargs", extend = true, default = [
+      "--junitxml",
+      "{work_dir}{/}junit.{env_name}.xml",
+      "tests",
+      "--skip-slow",
+    ] },
+  ],
+]
+
+[env.rp]
 commands = [
   [
     "pytest",

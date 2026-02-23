@@ -26,6 +26,12 @@ GraalPy
 
 ``24.1`` and later (Linux and macOS only).
 
+RustPython
+==========
+
+Experimental support (Linux, macOS, and Windows). `RustPython <https://github.com/RustPython/RustPython>`_ implements
+Python 3.14.
+
 ****************
  Support policy
 ****************

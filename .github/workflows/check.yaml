@@ -37,6 +37,7 @@ jobs:
           - pypy-3.9
           - pypy-3.8
           - graalpy-24.1
+          - rp
         os:
           - ubuntu-24.04
           - macos-15
@@ -71,16 +72,37 @@ jobs:
       - name: 📦 Install tox with this virtualenv
         shell: bash
         run: |
-          if [[ "${{ matrix.py }}" == "3.13t" || "${{ matrix.py }}" == "3.14t" ]]; then
-            uv tool install --no-managed-python --python 3.14 "tox>=4.32" --with .
+          if [[ "${{ matrix.py }}" == "3.13t" || "${{ matrix.py }}" == "3.14t" || "${{ matrix.py }}" == "rp" ]]; then
+            uv tool install --no-managed-python --python 3.14 "tox>=4.45" --with .
           else
-            uv tool install --no-managed-python --python 3.14 "tox>=4.32" --with tox-uv --with .
+            uv tool install --no-managed-python --python 3.14 "tox>=4.45" --with tox-uv --with .
           fi
       - name: 🐍 Setup Python for test ${{ matrix.py }}
         uses: actions/setup-python@v5
-        if: ${{ !startsWith(matrix.py, 'brew@') }}
+        if: ${{ !startsWith(matrix.py, 'brew@') && matrix.py != 'rp' }}
         with:
           python-version: ${{ matrix.py }}
+      - name: 🦀 Setup RustPython
+        if: matrix.py == 'rp'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh release list --repo RustPython/RustPython --limit 1 --json tagName -q '.[0].tagName')
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            asset="rustpython-release-Linux-x86_64-unknown-linux-gnu"
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            asset="rustpython-release-macOS-aarch64-apple-darwin"
+          elif [ "${{ runner.os }}" = "Windows" ]; then
+            asset="rustpython-release-Windows-x86_64-pc-windows-msvc.exe"
+          fi
+          gh release download "$tag" --repo RustPython/RustPython --pattern "$asset" --dir "$RUNNER_TEMP"
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp "$RUNNER_TEMP/$asset" "/c/ProgramData/chocolatey/bin/rustpython.exe"
+          else
+            chmod +x "$RUNNER_TEMP/$asset"
+            sudo mv "$RUNNER_TEMP/$asset" /usr/local/bin/rustpython
+          fi
       - name: 🛠️ Install OS dependencies
         shell: bash
         env:
@@ -157,7 +179,7 @@ jobs:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@v4
       - name: 📦 Install tox
-        run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.32" --with tox-uv
+        run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.45" --with tox-uv
       - name: 📥 Checkout code
         uses: actions/checkout@v4
         with:

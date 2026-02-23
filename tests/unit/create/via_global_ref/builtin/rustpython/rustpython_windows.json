@@ -1,0 +1,61 @@
+{
+  "platform": "win32",
+  "implementation": "RustPython",
+  "version_info": {
+    "major": 3,
+    "minor": 14,
+    "micro": 0,
+    "releaselevel": "alpha",
+    "serial": 0
+  },
+  "architecture": 64,
+  "version": "3.14.0alpha (default, Nov 10 2025, 09:14:50)\n[RustPython 0.4.0 with rustc 1.83.0 (90b35a623 2024-11-26) MSC v.1929 64 bit (AMD64)]",
+  "os": "nt",
+  "prefix": "C:\\RustPython",
+  "base_prefix": "C:\\RustPython",
+  "real_prefix": null,
+  "base_exec_prefix": "C:\\RustPython",
+  "exec_prefix": "C:\\RustPython",
+  "executable": "C:\\RustPython\\rustpython.exe",
+  "original_executable": "C:\\RustPython\\rustpython.exe",
+  "system_executable": "C:\\RustPython\\rustpython.exe",
+  "has_venv": true,
+  "path": [
+    "C:\\RustPython\\Lib",
+    "C:\\RustPython\\Lib\\site-packages"
+  ],
+  "file_system_encoding": "utf-8",
+  "stdout_encoding": "UTF-8",
+  "sysconfig_scheme": null,
+  "sysconfig_paths": {
+    "stdlib": "{installed_base}\\Lib",
+    "platstdlib": "{platbase}\\Lib",
+    "purelib": "{base}\\Lib\\site-packages",
+    "platlib": "{platbase}\\Lib\\site-packages",
+    "include": "{installed_base}\\Include",
+    "scripts": "{base}\\Scripts",
+    "data": "{base}"
+  },
+  "distutils_install": {
+    "purelib": "Lib\\site-packages",
+    "platlib": "Lib\\site-packages",
+    "headers": "Include\\UNKNOWN",
+    "scripts": "Scripts",
+    "data": ""
+  },
+  "sysconfig": {},
+  "sysconfig_vars": {
+    "installed_base": "C:\\RustPython",
+    "implementation_lower": "rustpython",
+    "py_version_short": "3.14",
+    "platbase": "C:\\RustPython",
+    "base": "C:\\RustPython",
+    "abiflags": "t",
+    "PYTHONFRAMEWORK": ""
+  },
+  "system_stdlib": "C:\\RustPython\\Lib",
+  "system_stdlib_platform": "C:\\RustPython\\Lib",
+  "max_size": 9223372036854775807,
+  "_creators": null,
+  "free_threaded": false
+}

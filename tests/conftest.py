@@ -13,7 +13,7 @@ import pytest
 
 from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_WIN, fs_supports_symlink
+from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_RUSTPYTHON, IS_WIN, fs_supports_symlink
 from virtualenv.report import LOGGER
 
 
@@ -356,7 +356,7 @@ def _skip_if_test_in_system(session_app_data):
         pytest.skip("test not valid if run under system")
 
 
-if IS_PYPY or IS_GRAALPY:
+if IS_PYPY or IS_GRAALPY or IS_RUSTPYTHON:
 
     @pytest.fixture
     def time_freeze(freezer):

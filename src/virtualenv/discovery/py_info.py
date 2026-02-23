@@ -250,6 +250,8 @@ class PythonInfo:  # noqa: PLR0904
         candidates = [f"python{major}", f"python{major}.{minor}"]
         if self.implementation == "PyPy":
             candidates.extend(["pypy", "pypy3", f"pypy{major}", f"pypy{major}.{minor}"])
+        elif self.implementation == "RustPython":
+            candidates.extend(["rustpython", f"rustpython{major}", f"rustpython{major}.{minor}"])
 
         for candidate in candidates:
             full_path = os.path.join(base_dir, candidate)

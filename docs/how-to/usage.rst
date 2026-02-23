@@ -18,6 +18,7 @@ Specify a Python version by name or version number:
     $ virtualenv -p python3.8 venv
     $ virtualenv -p 3.10 venv
     $ virtualenv -p pypy3 venv
+    $ virtualenv -p rustpython venv
 
 Using PEP 440 specifiers
 ========================

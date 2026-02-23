@@ -169,6 +169,7 @@ The ``--python`` flag accepts several specifier formats:
     - ``pypy2`` - PyPy implementation with major version 2
     - ``cpython3.12-64-arm64`` - CPython 3.12, 64-bit, ARM64 architecture
     - ``3.11-64-x86_64`` - Any implementation, version 3.11, 64-bit, x86_64 architecture
+    - ``rustpython`` - RustPython implementation
 
 **PEP 440 version specifier**
     Version constraints using PEP 440 operators:
@@ -257,7 +258,7 @@ Creators are responsible for constructing the virtual environment structure. vir
 **builtin creator**
     This creator means virtualenv performs the creation itself by knowing exactly which files to create and which system
     files to reference. The builtin creator is actually a family of specialized creators for different combinations of
-    Python implementation (CPython, PyPy) and platform (Windows, POSIX). The name ``builtin`` is an alias that selects
+    Python implementation (CPython, PyPy, GraalPy, RustPython) and platform (Windows, POSIX). The name ``builtin`` is an alias that selects
     the first available builtin creator for the target environment.
 
     Because builtin creators don't require subprocess invocation, they're generally faster than the venv creator.
