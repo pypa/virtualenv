@@ -81,7 +81,7 @@ class AppDataDiskFolder(AppData):
 
     @property
     def py_info_at(self):
-        return self.lock / "py_info" / "3"
+        return self.lock / "py_info" / "4"
 
     def py_info(self, path):
         return PyInfoStoreDisk(self.py_info_at, path)

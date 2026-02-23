@@ -58,6 +58,11 @@ class PythonInfo:  # noqa: PLR0904
         # pointer size.
         self.architecture = 32 if struct.calcsize("P") == 4 else 64  # noqa: PLR2004
 
+        # Full platform identity string from Python's build configuration.
+        # Used to derive the instruction set architecture (ISA) via the `machine` property.
+        # sysconfig.get_platform() returns e.g. 'macosx-14.0-arm64', 'linux-x86_64', 'win-amd64', 'win32'.
+        self.sysconfig_platform = sysconfig.get_platform()
+
         # Used to determine some file names.
         # See `CPython3Windows.python_zip()`.
         self.version_nodot = sysconfig.get_config_var("py_version_nodot")
@@ -421,13 +426,36 @@ class PythonInfo:  # noqa: PLR0904
         )
 
     @property
+    def machine(self) -> str:
+        """The instruction set architecture (ISA) of this interpreter.
+
+        Derived from :func:`sysconfig.get_platform`, which returns the platform identity string used by Python's build
+        system (e.g. ``macosx-14.0-arm64``, ``linux-x86_64``, ``win-amd64``). The ISA is the last component of this
+        string.
+
+        For macOS ``universal2`` fat binaries, falls back to :func:`platform.machine` to report the actual runtime ISA
+        (``arm64`` or ``x86_64``) rather than the build target.
+
+        :returns: the ISA string, e.g. ``arm64``, ``x86_64``, ``x86``
+
+        """
+        if (plat := self.sysconfig_platform) is None:
+            return "unknown"
+        if plat == "win32":
+            return "x86"
+        if (isa := plat.rsplit("-", 1)[-1]) == "universal2":
+            isa = platform.machine().lower()
+        return normalize_isa(isa)
+
+    @property
     def spec(self) -> str:
-        """A specification string identifying this interpreter (e.g. ``CPython3.13.2-64``)."""
-        return "{}{}{}-{}".format(
+        """A specification string identifying this interpreter (e.g. ``CPython3.13.2-64-arm64``)."""
+        return "{}{}{}-{}-{}".format(
             self.implementation,
             ".".join(str(i) for i in self.version_info),
             "t" if self.free_threaded else "",
             self.architecture,
+            self.machine,
         )
 
     @classmethod
@@ -473,6 +501,9 @@ class PythonInfo:  # noqa: PLR0904
             return False
 
         if spec.architecture is not None and spec.architecture != self.architecture:
+            return False
+
+        if spec.machine is not None and spec.machine != self.machine:
             return False
 
         if spec.free_threaded is not None and spec.free_threaded != self.free_threaded:
@@ -671,7 +702,7 @@ class PythonInfo:  # noqa: PLR0904
         info = self.from_exe(exe_path, app_data, resolve_to_host=False, raise_on_error=False, env=env)
         if info is None:  # ignore if for some reason we can't query
             return None
-        for item in ["implementation", "architecture", "version_info"]:
+        for item in ["implementation", "architecture", "machine", "version_info"]:
             found = getattr(info, item)
             searched = getattr(self, item)
             if found != searched:
@@ -692,12 +723,13 @@ class PythonInfo:  # noqa: PLR0904
         # could cause this (when using copy strategy of the host python)
         def sort_by(info):
             # we need to setup some priority of traits, this is as follows:
-            # implementation, major, minor, micro, architecture, tag, serial
+            # implementation, major, minor, architecture, machine, micro, tag, serial
             matches = [
                 info.implementation == target.implementation,
                 info.version_info.major == target.version_info.major,
                 info.version_info.minor == target.version_info.minor,
                 info.architecture == target.architecture,
+                info.machine == target.machine,
                 info.version_info.micro == target.version_info.micro,
                 info.version_info.releaselevel == target.version_info.releaselevel,
                 info.version_info.serial == target.version_info.serial,
@@ -760,6 +792,10 @@ class PythonInfo:  # noqa: PLR0904
                 upper = base.upper()
                 if upper != base:
                     yield upper
+
+
+def normalize_isa(isa: str) -> str:
+    return {"amd64": "x86_64", "aarch64": "arm64"}.get(low := isa.lower(), low)
 
 
 if __name__ == "__main__":

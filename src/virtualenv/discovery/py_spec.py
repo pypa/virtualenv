@@ -6,10 +6,30 @@ import contextlib
 import os
 import re
 
+from virtualenv.discovery.py_info import normalize_isa
 from virtualenv.util.specifier import SimpleSpecifierSet, SimpleVersion
 
-PATTERN = re.compile(r"^(?P<impl>[a-zA-Z]+)?(?P<version>[0-9.]+)?(?P<threaded>t)?(?:-(?P<arch>32|64))?$")
-SPECIFIER_PATTERN = re.compile(r"^(?:(?P<impl>[A-Za-z]+)\s*)?(?P<spec>(?:===|==|~=|!=|<=|>=|<|>).+)$")
+PATTERN = re.compile(
+    r"""
+    ^
+    (?P<impl>[a-zA-Z]+)?            # implementation (e.g. cpython, pypy)
+    (?P<version>[0-9.]+)?           # version (e.g. 3.12, 3.12.1)
+    (?P<threaded>t)?                # free-threaded flag
+    (?:-(?P<arch>32|64))?           # architecture bitness
+    (?:-(?P<machine>[a-zA-Z0-9_]+))?  # ISA (e.g. arm64, x86_64)
+    $
+    """,
+    re.VERBOSE,
+)
+SPECIFIER_PATTERN = re.compile(
+    r"""
+    ^
+    (?:(?P<impl>[A-Za-z]+)\s*)?     # optional implementation prefix
+    (?P<spec>(?:===|==|~=|!=|<=|>=|<|>).+)  # PEP 440 version specifier
+    $
+    """,
+    re.VERBOSE,
+)
 
 
 class PythonSpec:
@@ -26,6 +46,7 @@ class PythonSpec:
         path: str | None,
         *,
         free_threaded: bool | None = None,
+        machine: str | None = None,
         version_specifier: SpecifierSet | None = None,
     ) -> None:
         self.str_spec = str_spec
@@ -35,12 +56,13 @@ class PythonSpec:
         self.micro = micro
         self.free_threaded = free_threaded
         self.architecture = architecture
+        self.machine = machine
         self.path = path
         self.version_specifier = version_specifier
 
     @classmethod
     def from_string_spec(cls, string_spec: str):  # noqa: C901, PLR0912
-        impl, major, minor, micro, threaded, arch, path = None, None, None, None, None, None, None
+        impl, major, minor, micro, threaded, arch, machine, path = None, None, None, None, None, None, None, None
         version_specifier = None
         if os.path.isabs(string_spec):  # noqa: PLR1702
             path = string_spec
@@ -77,6 +99,8 @@ class PythonSpec:
                     if impl in {"py", "python"}:
                         impl = None
                     arch = _int_or_none(groups["arch"])
+                    if (machine := groups.get("machine")) is not None:
+                        machine = normalize_isa(machine)
 
             if not ok:
                 specifier_match = SPECIFIER_PATTERN.match(string_spec.strip())
@@ -99,6 +123,7 @@ class PythonSpec:
                             None,
                             None,
                             free_threaded=None,
+                            machine=None,
                             version_specifier=version_specifier,
                         )
                 path = string_spec
@@ -112,6 +137,7 @@ class PythonSpec:
             arch,
             path,
             free_threaded=threaded,
+            machine=machine,
             version_specifier=version_specifier,
         )
 
@@ -182,6 +208,8 @@ class PythonSpec:
             return False
         if spec.architecture is not None and spec.architecture != self.architecture:
             return False
+        if spec.machine is not None and self.machine is not None and spec.machine != self.machine:
+            return False
         if spec.free_threaded is not None and spec.free_threaded != self.free_threaded:
             return False
 
@@ -201,6 +229,7 @@ class PythonSpec:
             "minor",
             "micro",
             "architecture",
+            "machine",
             "path",
             "free_threaded",
             "version_specifier",

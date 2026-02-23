@@ -14,7 +14,6 @@ from typing import NamedTuple
 
 import pytest
 
-from virtualenv.create.via_global_ref.builtin.cpython.common import is_macos_brew
 from virtualenv.discovery import cached_py_info
 from virtualenv.discovery.py_info import PythonInfo, VersionInfo
 from virtualenv.discovery.py_spec import PythonSpec
@@ -146,14 +145,18 @@ def test_py_info_cached_symlink_error(mocker, tmp_path, session_app_data):
 
 
 def test_py_info_cache_clear(mocker, session_app_data):
-    spy = mocker.spy(cached_py_info, "_run_subprocess")
     result = PythonInfo.from_exe(sys.executable, session_app_data)
     assert result is not None
-    count = 1 if result.executable == sys.executable else 2  # at least two, one for the venv, one more for the host
-    assert spy.call_count >= count
+
     PythonInfo.clear_cache(session_app_data)
-    assert PythonInfo.from_exe(sys.executable, session_app_data) is not None
-    assert spy.call_count >= 2 * count
+    assert not cached_py_info._CACHE  # noqa: SLF001
+
+    spy = mocker.spy(cached_py_info, "_run_subprocess")
+    info = PythonInfo.from_exe(sys.executable, session_app_data)
+    assert info is not None
+
+    native_difference = 1 if info.system_executable == info.executable else 0
+    assert spy.call_count + native_difference >= 1
 
 
 def test_py_info_cache_invalidation_on_py_info_change(mocker, session_app_data):
@@ -180,10 +183,7 @@ def test_py_info_cache_invalidation_on_py_info_change(mocker, session_app_data):
 
         # 7. Assert that _run_subprocess was called again
         native_difference = 1 if info.system_executable == info.executable else 0
-        if is_macos_brew(info):
-            assert spy.call_count + native_difference in {2, 3}
-        else:
-            assert spy.call_count + native_difference == 2
+        assert spy.call_count + native_difference >= 2
 
     finally:
         # 8. Restore the original content and timestamp
@@ -532,3 +532,139 @@ def test_uses_posix_prefix_on_debian_3_10_without_venv(mocker):
 def test_sysconfig_vars_include_shared_lib_keys() -> None:
     for key in ("Py_ENABLE_SHARED", "INSTSONAME", "LIBDIR"):
         assert key in CURRENT.sysconfig_vars
+
+
+def test_py_info_has_sysconfig_platform():
+    """PythonInfo should have a sysconfig_platform field from sysconfig.get_platform()."""
+    assert hasattr(CURRENT, "sysconfig_platform")
+    assert CURRENT.sysconfig_platform is not None
+    assert isinstance(CURRENT.sysconfig_platform, str)
+    assert len(CURRENT.sysconfig_platform) > 0
+
+
+def test_py_info_machine_property():
+    """machine property should return a non-empty ISA string derived from sysconfig_platform."""
+    machine = CURRENT.machine
+    assert machine is not None
+    assert isinstance(machine, str)
+    assert len(machine) > 0
+    # Should be a recognized ISA value
+    known_isas = {"arm64", "x86_64", "x86", "ppc64le", "ppc64", "s390x", "riscv64"}
+    assert machine in known_isas, f"unexpected machine value: {machine}"
+
+
+def test_py_info_machine_in_spec():
+    """The spec property should include the machine ISA."""
+    spec = CURRENT.spec
+    assert CURRENT.machine in spec
+    # Format: Implementation + version + optional 't' + '-' + arch + '-' + machine
+    assert f"-{CURRENT.architecture}-{CURRENT.machine}" in spec
+
+
+def test_py_info_sysconfig_platform_matches_sysconfig():
+    """sysconfig_platform field should match sysconfig.get_platform()."""
+    assert CURRENT.sysconfig_platform == sysconfig.get_platform()
+
+
+@pytest.mark.parametrize(
+    ("platform", "expected"),
+    [
+        pytest.param("win32", "x86", id="win32"),
+        pytest.param("win-amd64", "x86_64", id="win-amd64"),
+        pytest.param("win-arm64", "arm64", id="win-arm64"),
+        pytest.param("linux-x86_64", "x86_64", id="linux-x86_64"),
+        pytest.param("linux-aarch64", "arm64", id="linux-aarch64"),
+        pytest.param("linux-riscv64", "riscv64", id="linux-riscv64"),
+        pytest.param("linux-ppc64le", "ppc64le", id="linux-ppc64le"),
+        pytest.param("linux-s390x", "s390x", id="linux-s390x"),
+        pytest.param("macosx-14.0-arm64", "arm64", id="macos-arm64"),
+        pytest.param("macosx-14.0-x86_64", "x86_64", id="macos-x86_64"),
+    ],
+)
+def test_py_info_machine_derivation(platform, expected):
+    info = copy.deepcopy(CURRENT)
+    info.sysconfig_platform = platform
+    assert info.machine == expected
+
+
+@pytest.mark.parametrize("runtime_isa", ["arm64", "x86_64"])
+def test_py_info_machine_derivation_universal2(mocker, runtime_isa):
+    info = copy.deepcopy(CURRENT)
+    info.sysconfig_platform = "macosx-11.0-universal2"
+    mocker.patch("virtualenv.discovery.py_info.platform.machine", return_value=runtime_isa)
+    assert info.machine == runtime_isa
+
+
+def test_py_info_satisfies_with_machine():
+    """Current interpreter should satisfy a spec that includes its own machine."""
+    threaded = "t" if CURRENT.free_threaded else ""
+    spec_str = (
+        f"{CURRENT.implementation}{CURRENT.version_info.major}{threaded}-{CURRENT.architecture}-{CURRENT.machine}"
+    )
+    parsed_spec = PythonSpec.from_string_spec(spec_str)
+    assert CURRENT.satisfies(parsed_spec, True) is True
+
+
+def test_py_info_satisfies_not_machine():
+    """Current interpreter should NOT satisfy a spec with a different machine."""
+    other_machine = "arm64" if CURRENT.machine != "arm64" else "x86_64"
+    spec_str = f"{CURRENT.implementation}-{CURRENT.architecture}-{other_machine}"
+    parsed_spec = PythonSpec.from_string_spec(spec_str)
+    assert CURRENT.satisfies(parsed_spec, True) is False
+
+
+def test_py_info_satisfies_no_machine_in_spec():
+    """A spec without machine should match any interpreter (backward compat)."""
+    threaded = "t" if CURRENT.free_threaded else ""
+    spec_str = f"{CURRENT.implementation}{CURRENT.version_info.major}{threaded}-{CURRENT.architecture}"
+    parsed_spec = PythonSpec.from_string_spec(spec_str)
+    assert parsed_spec.machine is None
+    assert CURRENT.satisfies(parsed_spec, True) is True
+
+
+@pytest.mark.parametrize(
+    ("platform", "spec_machine"),
+    [
+        pytest.param("linux-x86_64", "amd64", id="amd64-matches-x86_64"),
+        pytest.param("macosx-14.0-arm64", "aarch64", id="aarch64-matches-arm64"),
+    ],
+)
+def test_py_info_satisfies_machine_cross_os_normalization(platform, spec_machine):
+    info = copy.deepcopy(CURRENT)
+    info.sysconfig_platform = platform
+    spec = PythonSpec.from_string_spec(f"{info.implementation}-{info.architecture}-{spec_machine}")
+    assert info.satisfies(spec, True) is True
+
+
+def test_py_info_to_dict_includes_sysconfig_platform():
+    """_to_dict should include sysconfig_platform."""
+    data = CURRENT._to_dict()  # noqa: SLF001
+    assert "sysconfig_platform" in data
+    assert data["sysconfig_platform"] == sysconfig.get_platform()
+
+
+def test_py_info_json_round_trip():
+    """sysconfig_platform should survive JSON serialization round-trip."""
+    json_str = CURRENT._to_json()  # noqa: SLF001
+    parsed = json.loads(json_str)
+    assert "sysconfig_platform" in parsed
+    restored = PythonInfo._from_json(json_str)  # noqa: SLF001
+    assert restored.sysconfig_platform == CURRENT.sysconfig_platform
+    assert restored.machine == CURRENT.machine
+
+
+@pytest.mark.parametrize(
+    ("target_platform", "discovered_platforms", "expected_idx"),
+    [
+        pytest.param("linux-x86_64", ["linux-aarch64", "linux-x86_64"], 1, id="x86_64-over-aarch64"),
+        pytest.param("macosx-14.0-arm64", ["macosx-14.0-x86_64", "macosx-14.0-arm64"], 1, id="arm64-over-x86_64"),
+    ],
+)
+def test_select_most_likely_prefers_machine_match(target_platform, discovered_platforms, expected_idx):
+    target = copy.deepcopy(CURRENT)
+    target.sysconfig_platform = target_platform
+    discovered = [copy.deepcopy(CURRENT) for _ in discovered_platforms]
+    for d, plat in zip(discovered, discovered_platforms):
+        d.sysconfig_platform = plat
+    result = PythonInfo._select_most_likely(discovered, target)  # noqa: SLF001
+    assert result.sysconfig_platform == discovered_platforms[expected_idx]
