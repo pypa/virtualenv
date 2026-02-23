@@ -10,9 +10,26 @@ from virtualenv.discovery.py_info import _normalize_isa
 from virtualenv.util.specifier import SimpleSpecifierSet, SimpleVersion
 
 PATTERN = re.compile(
-    r"^(?P<impl>[a-zA-Z]+)?(?P<version>[0-9.]+)?(?P<threaded>t)?(?:-(?P<arch>32|64))?(?:-(?P<machine>[a-zA-Z0-9_]+))?$",
+    r"""
+    ^
+    (?P<impl>[a-zA-Z]+)?            # implementation (e.g. cpython, pypy)
+    (?P<version>[0-9.]+)?           # version (e.g. 3.12, 3.12.1)
+    (?P<threaded>t)?                # free-threaded flag
+    (?:-(?P<arch>32|64))?           # architecture bitness
+    (?:-(?P<machine>[a-zA-Z0-9_]+))?  # ISA (e.g. arm64, x86_64)
+    $
+    """,
+    re.VERBOSE,
 )
-SPECIFIER_PATTERN = re.compile(r"^(?:(?P<impl>[A-Za-z]+)\s*)?(?P<spec>(?:===|==|~=|!=|<=|>=|<|>).+)$")
+SPECIFIER_PATTERN = re.compile(
+    r"""
+    ^
+    (?:(?P<impl>[A-Za-z]+)\s*)?     # optional implementation prefix
+    (?P<spec>(?:===|==|~=|!=|<=|>=|<|>).+)  # PEP 440 version specifier
+    $
+    """,
+    re.VERBOSE,
+)
 
 
 class PythonSpec:
