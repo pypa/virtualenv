@@ -436,17 +436,6 @@ class PythonInfo:  # noqa: PLR0904
         )
 
     @property
-    def spec(self) -> str:
-        """A specification string identifying this interpreter (e.g. ``CPython3.13.2-64-arm64``)."""
-        return "{}{}{}-{}-{}".format(
-            self.implementation,
-            ".".join(str(i) for i in self.version_info),
-            "t" if self.free_threaded else "",
-            self.architecture,
-            self.machine,
-        )
-
-    @property
     def machine(self) -> str:
         """The instruction set architecture (ISA) of this interpreter.
 
@@ -462,16 +451,23 @@ class PythonInfo:  # noqa: PLR0904
         """
         plat = getattr(self, "sysconfig_platform", None)
         if plat is None:
-            # Fallback for old cached entries that lack sysconfig_platform
             return "unknown"
         if plat == "win32":
             return "x86"
-        isa = plat.rsplit("-", 1)[-1]
-        if isa == "universal2":
-            # universal2 is a fat binary containing both arm64 and x86_64;
-            # report the actual runtime ISA
+        if (isa := plat.rsplit("-", 1)[-1]) == "universal2":
             return platform.machine().lower()
         return isa
+
+    @property
+    def spec(self) -> str:
+        """A specification string identifying this interpreter (e.g. ``CPython3.13.2-64-arm64``)."""
+        return "{}{}{}-{}-{}".format(
+            self.implementation,
+            ".".join(str(i) for i in self.version_info),
+            "t" if self.free_threaded else "",
+            self.architecture,
+            self.machine,
+        )
 
     @classmethod
     def clear_cache(cls, app_data: AppData) -> None:
