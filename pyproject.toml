@@ -1,8 +1,8 @@
 [build-system]
 build-backend = "hatchling.build"
 requires = [
-  "hatch-vcs>=0.3",
-  "hatchling>=1.17.1",
+  "hatch-vcs>=0.4",
+  "hatchling>=1.27",
 ]
 
 [project]
@@ -104,12 +104,12 @@ test = [
   "time-machine>=2.10; platform_python_implementation=='CPython'",
 ]
 type = [
-  "ty>=0.0.15",
+  "ty>=0.0.17",
   { include-group = "test" },
 ]
 docs = [
   "furo>=2023.7.26",
-  "pre-commit-uv>=4.1.4",
+  "pre-commit-uv>=4.2",
   "proselint>=0.13",
   "sphinx>=7.1.2,!=7.3",
   "sphinx-argparse>=0.4",
@@ -121,12 +121,12 @@ docs = [
   "towncrier>=23.6",
 ]
 lint = [
-  "pre-commit-uv>=4.1.4",
+  "pre-commit-uv>=4.2",
 ]
 pkg-meta = [
-  "check-wheel-contents>=0.6.2",
-  "twine>=6.1",
-  "uv>=0.8",
+  "check-wheel-contents>=0.6.3",
+  "twine>=6.2",
+  "uv>=0.10.2",
 ]
 
 [tool.hatch]

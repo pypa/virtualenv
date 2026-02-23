@@ -1,4 +1,4 @@
-requires = [ "tox>=4.28" ]
+requires = [ "tox>=4.34.1" ]
 env_list = [
   "3.14",
   "3.13",
@@ -74,10 +74,11 @@ commands = [
     "-d",
     "{env_tmp_dir}{/}doctree",
     "docs",
+    "{env:READTHEDOCS_OUTPUT:{env_tmp_dir}{/}docs_out}/html",
     "--color",
     "-b",
     "html",
-    { replace = "posargs", extend = true, default = [ "-W", "{work_dir}{/}docs_out" ] },
+    "-W",
   ],
   [
     "python",
