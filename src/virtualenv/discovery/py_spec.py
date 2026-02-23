@@ -99,7 +99,8 @@ class PythonSpec:
                     if impl in {"py", "python"}:
                         impl = None
                     arch = _int_or_none(groups["arch"])
-                    machine = groups.get("machine")
+                    if (machine := groups.get("machine")) is not None:
+                        machine = _normalize_isa(machine)
 
             if not ok:
                 specifier_match = SPECIFIER_PATTERN.match(string_spec.strip())
@@ -207,11 +208,7 @@ class PythonSpec:
             return False
         if spec.architecture is not None and spec.architecture != self.architecture:
             return False
-        if (
-            spec.machine is not None
-            and self.machine is not None
-            and _normalize_isa(spec.machine) != _normalize_isa(self.machine)
-        ):
+        if spec.machine is not None and self.machine is not None and spec.machine != self.machine:
             return False
         if spec.free_threaded is not None and spec.free_threaded != self.free_threaded:
             return False

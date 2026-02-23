@@ -162,22 +162,19 @@ def test_specifier_satisfies_with_partial_information():
     assert candidate.satisfies(spec) is True
 
 
-# --- Machine (ISA) tests ---
-
-
 @pytest.mark.parametrize(
     ("spec_str", "expected_machine"),
     [
-        ("cpython3.12-64-arm64", "arm64"),
-        ("cpython3.12-64-x86_64", "x86_64"),
-        ("cpython3.12-32-x86", "x86"),
-        ("cpython3.12-64-aarch64", "aarch64"),
-        ("cpython3.12-64-ppc64le", "ppc64le"),
-        ("cpython3.12-64-s390x", "s390x"),
-        ("cpython3.12-64-riscv64", "riscv64"),
-        ("cpython3.12-64", None),  # no machine suffix
-        ("cpython3.12", None),  # no arch, no machine
-        ("python3.12-64-arm64", "arm64"),
+        pytest.param("cpython3.12-64-arm64", "arm64", id="arm64"),
+        pytest.param("cpython3.12-64-x86_64", "x86_64", id="x86_64"),
+        pytest.param("cpython3.12-32-x86", "x86", id="x86"),
+        pytest.param("cpython3.12-64-aarch64", "arm64", id="aarch64"),
+        pytest.param("cpython3.12-64-ppc64le", "ppc64le", id="ppc64le"),
+        pytest.param("cpython3.12-64-s390x", "s390x", id="s390x"),
+        pytest.param("cpython3.12-64-riscv64", "riscv64", id="riscv64"),
+        pytest.param("cpython3.12-64", None, id="no-machine"),
+        pytest.param("cpython3.12", None, id="no-arch-no-machine"),
+        pytest.param("python3.12-64-arm64", "arm64", id="python-impl"),
     ],
 )
 def test_spec_parse_machine(spec_str, expected_machine):
@@ -188,9 +185,9 @@ def test_spec_parse_machine(spec_str, expected_machine):
 @pytest.mark.parametrize(
     ("spec_str", "expected_arch", "expected_machine"),
     [
-        ("cpython3.12-64-arm64", 64, "arm64"),
-        ("cpython3.12-32-x86", 32, "x86"),
-        ("cpython3.12-64", 64, None),
+        pytest.param("cpython3.12-64-arm64", 64, "arm64", id="64bit-arm64"),
+        pytest.param("cpython3.12-32-x86", 32, "x86", id="32bit-x86"),
+        pytest.param("cpython3.12-64", 64, None, id="64bit-no-machine"),
     ],
 )
 def test_spec_parse_arch_and_machine_together(spec_str, expected_arch, expected_machine):
@@ -199,66 +196,43 @@ def test_spec_parse_arch_and_machine_together(spec_str, expected_arch, expected_
     assert spec.machine == expected_machine
 
 
-def test_spec_satisfies_machine_match():
-    spec_arm = PythonSpec.from_string_spec("cpython3.12-64-arm64")
-    spec_arm2 = PythonSpec.from_string_spec("cpython3.12-64-arm64")
-    assert spec_arm.satisfies(spec_arm2) is True
+@pytest.mark.parametrize(
+    ("left", "right", "expected"),
+    [
+        pytest.param("cpython3.12-64-arm64", "cpython3.12-64-arm64", True, id="same-machine"),
+        pytest.param("cpython3.12-64-arm64", "cpython3.12-64-x86_64", False, id="different-machine"),
+        pytest.param("cpython3.12-64-arm64", "cpython3.12-64", True, id="none-matches-any"),
+        pytest.param("cpython3.12-64-amd64", "cpython3.12-64-x86_64", True, id="amd64-eq-x86_64"),
+        pytest.param("cpython3.12-64-aarch64", "cpython3.12-64-arm64", True, id="aarch64-eq-arm64"),
+    ],
+)
+def test_spec_satisfies_machine(left, right, expected):
+    assert PythonSpec.from_string_spec(left).satisfies(PythonSpec.from_string_spec(right)) is expected
 
 
-def test_spec_satisfies_machine_mismatch():
-    spec_arm = PythonSpec.from_string_spec("cpython3.12-64-arm64")
-    spec_x86 = PythonSpec.from_string_spec("cpython3.12-64-x86_64")
-    assert spec_arm.satisfies(spec_x86) is False
-    assert spec_x86.satisfies(spec_arm) is False
+@pytest.mark.parametrize(
+    ("isa", "normalized"),
+    [
+        pytest.param("amd64", "x86_64", id="amd64"),
+        pytest.param("aarch64", "arm64", id="aarch64"),
+        pytest.param("x86_64", "x86_64", id="x86_64"),
+        pytest.param("arm64", "arm64", id="arm64"),
+        pytest.param("x86", "x86", id="x86"),
+        pytest.param("ppc64le", "ppc64le", id="ppc64le"),
+        pytest.param("riscv64", "riscv64", id="riscv64"),
+        pytest.param("s390x", "s390x", id="s390x"),
+    ],
+)
+def test_normalize_isa(isa, normalized):
+    assert _normalize_isa(isa) == normalized
 
 
-def test_spec_satisfies_machine_none_matches_any():
-    """When spec has no machine constraint, any machine should match."""
-    spec_no_machine = PythonSpec.from_string_spec("cpython3.12-64")
-    spec_arm = PythonSpec.from_string_spec("cpython3.12-64-arm64")
-    # candidate with machine satisfies a spec without machine constraint
-    assert spec_arm.satisfies(spec_no_machine) is True
-
-
-def test_spec_satisfies_machine_normalization():
-    """Cross-OS ISA aliases should match: amd64 == x86_64, aarch64 == arm64."""
-    # amd64 (Windows) should normalize to x86_64
-    assert _normalize_isa("amd64") == _normalize_isa("x86_64")
-    # aarch64 (Linux) should normalize to arm64 (macOS)
-    assert _normalize_isa("aarch64") == _normalize_isa("arm64")
-    # Already-canonical values are unchanged
-    assert _normalize_isa("x86_64") == "x86_64"
-    assert _normalize_isa("arm64") == "arm64"
-    assert _normalize_isa("x86") == "x86"
-    assert _normalize_isa("ppc64le") == "ppc64le"
-    assert _normalize_isa("riscv64") == "riscv64"
-    assert _normalize_isa("s390x") == "s390x"
-
-
-def test_spec_satisfies_machine_cross_os_aliases():
-    """Specs using cross-OS ISA aliases should satisfy each other."""
-    spec_amd64 = PythonSpec.from_string_spec("cpython3.12-64-amd64")
-    spec_x86_64 = PythonSpec.from_string_spec("cpython3.12-64-x86_64")
-    # amd64 and x86_64 are aliases, should satisfy each other
-    assert spec_amd64.satisfies(spec_x86_64) is True
-    assert spec_x86_64.satisfies(spec_amd64) is True
-
-    spec_aarch64 = PythonSpec.from_string_spec("cpython3.12-64-aarch64")
-    spec_arm64 = PythonSpec.from_string_spec("cpython3.12-64-arm64")
-    # aarch64 and arm64 are aliases, should satisfy each other
-    assert spec_aarch64.satisfies(spec_arm64) is True
-    assert spec_arm64.satisfies(spec_aarch64) is True
-
-
-def test_spec_repr_includes_machine():
-    spec = PythonSpec.from_string_spec("cpython3.12-64-arm64")
-    r = repr(spec)
-    assert "machine=arm64" in r
-    assert "architecture=64" in r
-
-
-def test_spec_repr_no_machine():
-    spec = PythonSpec.from_string_spec("cpython3.12-64")
-    r = repr(spec)
-    assert "machine=" not in r
-    assert "architecture=64" in r
+@pytest.mark.parametrize(
+    ("spec_str", "in_repr"),
+    [
+        pytest.param("cpython3.12-64-arm64", "machine=arm64", id="with-machine"),
+        pytest.param("cpython3.12-64", "architecture=64", id="without-machine"),
+    ],
+)
+def test_spec_repr_machine(spec_str, in_repr):
+    assert in_repr in repr(PythonSpec.from_string_spec(spec_str))

@@ -449,14 +449,13 @@ class PythonInfo:  # noqa: PLR0904
         :returns: the ISA string, e.g. ``arm64``, ``x86_64``, ``x86``
 
         """
-        plat = getattr(self, "sysconfig_platform", None)
-        if plat is None:
+        if (plat := self.sysconfig_platform) is None:
             return "unknown"
         if plat == "win32":
             return "x86"
         if (isa := plat.rsplit("-", 1)[-1]) == "universal2":
-            return platform.machine().lower()
-        return isa
+            isa = platform.machine().lower()
+        return _normalize_isa(isa)
 
     @property
     def spec(self) -> str:
@@ -514,7 +513,7 @@ class PythonInfo:  # noqa: PLR0904
         if spec.architecture is not None and spec.architecture != self.architecture:
             return False
 
-        if spec.machine is not None and _normalize_isa(spec.machine) != _normalize_isa(self.machine):
+        if spec.machine is not None and spec.machine != self.machine:
             return False
 
         if spec.free_threaded is not None and spec.free_threaded != self.free_threaded:
@@ -632,7 +631,6 @@ class PythonInfo:  # noqa: PLR0904
     @classmethod
     def _from_dict(cls, data):
         data["version_info"] = VersionInfo(**data["version_info"])  # restore this to a named tuple structure
-        data.setdefault("sysconfig_platform", None)  # backward compat for old cache entries without ISA
         result = cls()
         result.__dict__ = data.copy()
         return result
@@ -717,16 +715,7 @@ class PythonInfo:  # noqa: PLR0904
         for item in ["implementation", "architecture", "machine", "version_info"]:
             found = getattr(info, item)
             searched = getattr(self, item)
-            if item == "machine":
-                if _normalize_isa(found) != _normalize_isa(searched):
-                    executable = info.executable
-                    LOGGER.debug(
-                        "refused interpreter %s because %s differs %s != %s", executable, item, found, searched
-                    )
-                    if exact is False:
-                        discovered.append(info)
-                    break
-            elif found != searched:
+            if found != searched:
                 if item == "version_info":
                     found, searched = ".".join(str(i) for i in found), ".".join(str(i) for i in searched)
                 executable = info.executable
@@ -750,7 +739,7 @@ class PythonInfo:  # noqa: PLR0904
                 info.version_info.major == target.version_info.major,
                 info.version_info.minor == target.version_info.minor,
                 info.architecture == target.architecture,
-                _normalize_isa(info.machine) == _normalize_isa(target.machine),
+                info.machine == target.machine,
                 info.version_info.micro == target.version_info.micro,
                 info.version_info.releaselevel == target.version_info.releaselevel,
                 info.version_info.serial == target.version_info.serial,
