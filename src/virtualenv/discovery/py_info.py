@@ -794,11 +794,8 @@ class PythonInfo:  # noqa: PLR0904
                     yield upper
 
 
-_ISA_ALIASES = {"amd64": "x86_64", "aarch64": "arm64"}
-
-
 def _normalize_isa(isa: str) -> str:
-    return _ISA_ALIASES.get(isa.lower(), isa.lower())
+    return {"amd64": "x86_64", "aarch64": "arm64"}.get(isa.lower(), isa.lower())
 
 
 if __name__ == "__main__":
