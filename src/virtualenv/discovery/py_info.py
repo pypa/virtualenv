@@ -37,16 +37,6 @@ def _get_path_extensions():
 EXTENSIONS = _get_path_extensions()
 _CONF_VAR_RE = re.compile(r"\{\w+}")
 
-# Canonical ISA aliases for cross-platform normalization.
-# Windows uses "amd64" where Linux/macOS use "x86_64";
-# Linux uses "aarch64" where macOS uses "arm64".
-_ISA_ALIASES = {"amd64": "x86_64", "aarch64": "arm64"}
-
-
-def _normalize_isa(isa: str) -> str:
-    """Normalize ISA name to a canonical form for comparison."""
-    return _ISA_ALIASES.get(isa.lower(), isa.lower())
-
 
 class PythonInfo:  # noqa: PLR0904
     """Contains information for a Python interpreter."""
@@ -802,6 +792,13 @@ class PythonInfo:  # noqa: PLR0904
                 upper = base.upper()
                 if upper != base:
                     yield upper
+
+
+_ISA_ALIASES = {"amd64": "x86_64", "aarch64": "arm64"}
+
+
+def _normalize_isa(isa: str) -> str:
+    return _ISA_ALIASES.get(isa.lower(), isa.lower())
 
 
 if __name__ == "__main__":
