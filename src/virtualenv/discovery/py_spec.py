@@ -6,7 +6,7 @@ import contextlib
 import os
 import re
 
-from virtualenv.discovery.py_info import _normalize_isa
+from virtualenv.discovery.py_info import normalize_isa
 from virtualenv.util.specifier import SimpleSpecifierSet, SimpleVersion
 
 PATTERN = re.compile(
@@ -100,7 +100,7 @@ class PythonSpec:
                         impl = None
                     arch = _int_or_none(groups["arch"])
                     if (machine := groups.get("machine")) is not None:
-                        machine = _normalize_isa(machine)
+                        machine = normalize_isa(machine)
 
             if not ok:
                 specifier_match = SPECIFIER_PATTERN.match(string_spec.strip())

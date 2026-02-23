@@ -5,7 +5,7 @@ from copy import copy
 
 import pytest
 
-from virtualenv.discovery.py_info import _normalize_isa
+from virtualenv.discovery.py_info import normalize_isa
 from virtualenv.discovery.py_spec import PythonSpec
 from virtualenv.util.specifier import SimpleSpecifierSet as SpecifierSet
 
@@ -223,8 +223,8 @@ def test_spec_satisfies_machine(left, right, expected):
         pytest.param("s390x", "s390x", id="s390x"),
     ],
 )
-def test_normalize_isa(isa, normalized):
-    assert _normalize_isa(isa) == normalized
+def testnormalize_isa(isa, normalized):
+    assert normalize_isa(isa) == normalized
 
 
 @pytest.mark.parametrize(

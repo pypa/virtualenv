@@ -445,7 +445,7 @@ class PythonInfo:  # noqa: PLR0904
             return "x86"
         if (isa := plat.rsplit("-", 1)[-1]) == "universal2":
             isa = platform.machine().lower()
-        return _normalize_isa(isa)
+        return normalize_isa(isa)
 
     @property
     def spec(self) -> str:
@@ -794,7 +794,7 @@ class PythonInfo:  # noqa: PLR0904
                     yield upper
 
 
-def _normalize_isa(isa: str) -> str:
+def normalize_isa(isa: str) -> str:
     return {"amd64": "x86_64", "aarch64": "arm64"}.get(low := isa.lower(), low)
 
 
