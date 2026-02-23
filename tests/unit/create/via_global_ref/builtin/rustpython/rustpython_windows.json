@@ -20,10 +20,7 @@
   "original_executable": "C:\\RustPython\\rustpython.exe",
   "system_executable": "C:\\RustPython\\rustpython.exe",
   "has_venv": true,
-  "path": [
-    "C:\\RustPython\\Lib",
-    "C:\\RustPython\\Lib\\site-packages"
-  ],
+  "path": ["C:\\RustPython\\Lib", "C:\\RustPython\\Lib\\site-packages"],
   "file_system_encoding": "utf-8",
   "stdout_encoding": "UTF-8",
   "sysconfig_scheme": null,

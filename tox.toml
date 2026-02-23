@@ -14,8 +14,8 @@ env_list = [
   "docs",
   "fix",
   "graalpy",
-  "rp",
   "readme",
+  "rp",
   "type",
 ]
 skip_missing_interpreters = true
@@ -110,6 +110,16 @@ commands = [
   ],
 ]
 
+[env.readme]
+description = "check that the long description is valid"
+skip_install = true
+dependency_groups = [ "pkg-meta" ]
+commands = [
+  [ "uv", "build", "--sdist", "--wheel", "--out-dir", "{env_tmp_dir}", "." ],
+  [ "twine", "check", "{env_tmp_dir}{/}*" ],
+  [ "check-wheel-contents", "--no-config", "{env_tmp_dir}" ],
+]
+
 [env.rp]
 commands = [
   [
@@ -121,16 +131,6 @@ commands = [
       "--skip-slow",
     ] },
   ],
-]
-
-[env.readme]
-description = "check that the long description is valid"
-skip_install = true
-dependency_groups = [ "pkg-meta" ]
-commands = [
-  [ "uv", "build", "--sdist", "--wheel", "--out-dir", "{env_tmp_dir}", "." ],
-  [ "twine", "check", "{env_tmp_dir}{/}*" ],
-  [ "check-wheel-contents", "--no-config", "{env_tmp_dir}" ],
 ]
 
 [env.type]
