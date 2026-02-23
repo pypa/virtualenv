@@ -51,11 +51,7 @@ def test_nushell_tkinter_generation(tmp_path):
 def test_nushell(activation_tester_class, activation_tester):
     class Nushell(activation_tester_class):
         def __init__(self, session) -> None:
-            cmd = which("nu")
-            if cmd is None and IS_WIN:
-                cmd = "c:\\program files\\nu\\bin\\nu.exe"
-
-            super().__init__(NushellActivator, session, cmd, "activate.nu", "nu")
+            super().__init__(NushellActivator, session, which("nu"), "activate.nu", "nu")
 
             self.activate_cmd = "overlay use"
             self.unix_line_ending = not IS_WIN

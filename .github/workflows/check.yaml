@@ -42,6 +42,9 @@ jobs:
           - macos-15
           - windows-2025
         include:
+          - { os: macos-15, py: "brew@3.14" }
+          - { os: macos-15, py: "brew@3.13" }
+          - { os: macos-15, py: "brew@3.12" }
           - { os: macos-15, py: "brew@3.11" }
           - { os: macos-15, py: "brew@3.10" }
           - { os: macos-15, py: "brew@3.9" }
@@ -80,6 +83,8 @@ jobs:
           python-version: ${{ matrix.py }}
       - name: 🛠️ Install OS dependencies
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [ "${{ runner.os }}" = "Linux" ]; then
             sudo apt-get install -y software-properties-common
@@ -97,7 +102,10 @@ jobs:
             fi
             brew install fish tcsh nushell || brew upgrade fish tcsh nushell
           elif [ "${{ runner.os }}" = "Windows" ]; then
-            choco install nushell
+            nu_version=$(gh release view --repo nushell/nushell --json tagName -q .tagName)
+            gh release download "$nu_version" --repo nushell/nushell --pattern "*-x86_64-pc-windows-msvc.zip" --dir "$RUNNER_TEMP"
+            7z x "$RUNNER_TEMP/nu-${nu_version#v}-x86_64-pc-windows-msvc.zip" -o"$RUNNER_TEMP/nushell" -y
+            cp "$RUNNER_TEMP/nushell/nu.exe" "/c/ProgramData/chocolatey/bin/nu.exe"
           fi
       - name: 🧬 Pick environment to run
         shell: bash
@@ -105,7 +113,7 @@ jobs:
           py="${{ matrix.py }}"
           if [[ "$py" == brew@* ]]; then
             brew_version="${py#brew@}"
-            echo "TOX_DISCOVER=/opt/homebrew/bin/python${brew_version}" >> "$GITHUB_ENV"
+            echo "UV_PYTHON=/opt/homebrew/bin/python${brew_version}" >> "$GITHUB_ENV"
             py="$brew_version"
           fi
           [[ "$py" == graalpy-* ]] && py="graalpy"
