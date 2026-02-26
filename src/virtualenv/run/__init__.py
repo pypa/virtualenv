@@ -69,8 +69,9 @@ def session_via_cli(
     options = parser.parse_args(args)  # ty: ignore[invalid-assignment]
     options.py_version = parser._interpreter.version_info  # noqa: SLF001  # ty: ignore[invalid-assignment, unresolved-attribute]
     creator, seeder, activators = tuple(
-        e.create(options) for e in elements
-    )  # create types  # ty: ignore[invalid-argument-type]
+        e.create(options)
+        for e in elements  # ty: ignore[invalid-argument-type]
+    )  # create types
     return Session(
         options.verbosity,  # ty: ignore[unresolved-attribute, invalid-argument-type]
         options.app_data,  # ty: ignore[unresolved-attribute]

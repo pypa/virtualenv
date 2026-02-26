@@ -54,7 +54,7 @@ def get_wheel(  # noqa: PLR0913
     return wheel
 
 
-def download_wheel(
+def download_wheel(  # noqa: PLR0913
     distribution: str,
     version_spec: str | None,
     for_py_version: str,

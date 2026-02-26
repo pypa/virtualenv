@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
 
 
-def from_bundle(
+def from_bundle(  # noqa: PLR0913
     distribution: str,
     version: str | None,
     for_py_version: str,

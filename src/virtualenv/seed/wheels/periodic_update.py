@@ -74,7 +74,7 @@ def periodic_update(  # noqa: PLR0913
     return wheel
 
 
-def handle_auto_update(
+def handle_auto_update(  # noqa: PLR0913
     distribution: str,
     for_py_version: str,
     wheel: Wheel | None,
@@ -214,7 +214,7 @@ class UpdateLog:
         return self.started is None or now - self.started > UPDATE_ABORTED_DELAY
 
 
-def trigger_update(
+def trigger_update(  # noqa: PLR0913
     distribution: str,
     for_py_version: str,
     wheel: Wheel | None,
@@ -258,7 +258,7 @@ def trigger_update(
         process.returncode = 0
 
 
-def do_update(
+def do_update(  # noqa: PLR0913
     distribution: str,
     for_py_version: str,
     embed_filename: str | None,

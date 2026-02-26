@@ -180,10 +180,17 @@ lint.ignore = [
   "S404",    # Using subprocess is alright
   "S603",    # subprocess calls are fine
 ]
+lint.per-file-ignores."docs/**/*.py" = [
+  "ANN", # don't require type annotations in docs scripts
+]
 lint.per-file-ignores."src/virtualenv/activation/python/activate_this.py" = [
   "F821", # ignore undefined template string placeholders
 ]
+lint.per-file-ignores."tasks/**/*.py" = [
+  "ANN", # don't require type annotations in task scripts
+]
 lint.per-file-ignores."tests/**/*.py" = [
+  "ANN",     # don't require type annotations in tests (pytest fixtures make this impractical)
   "D",       # don't care about documentation in tests
   "FBT",     # don't care about booleans as positional arguments in tests
   "INP001",  # no implicit namespace
