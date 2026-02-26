@@ -7,12 +7,13 @@ import zipfile
 from functools import cached_property
 from importlib.abc import SourceLoader
 from importlib.util import spec_from_file_location
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from importlib.machinery import ModuleSpec
     from types import ModuleType, TracebackType
+    from typing import Self
 
 ABS_HERE = os.path.abspath(os.path.dirname(__file__))
 
