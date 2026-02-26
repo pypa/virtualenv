@@ -52,7 +52,7 @@ def zipapp_build_env(tmp_path_factory):
             msg = "could not find a python to build zipapp"
             raise RuntimeError(msg)
         cmd = [str(Path(exe).parent / "pip"), "install", "pip>=23", "packaging>=23"]
-        subprocess.run(cmd, check=True, timeout=120)
+        subprocess.run(cmd, check=True, timeout=300)
     yield exe
     if create_env_path is not None:
         shutil.rmtree(str(create_env_path))
@@ -64,7 +64,7 @@ def zipapp(zipapp_build_env, tmp_path_factory):
     path = HERE.parent.parent / "tasks" / "make_zipapp.py"
     filename = into / "virtualenv.pyz"
     cmd = [zipapp_build_env, str(path), "--dest", str(filename)]
-    subprocess.run(cmd, check=True, timeout=120)
+    subprocess.run(cmd, check=True, timeout=300)
     yield filename
     shutil.rmtree(str(into))
 
