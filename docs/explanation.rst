@@ -45,6 +45,10 @@ with a plugin system for extensibility.
       - Full Python API; can describe environments without creating them. Used by `tox <https://tox.readthedocs.io>`_,
         `poetry <https://python-poetry.org/>`_, `pipx <https://pipx.pypa.io>`_, etc.
       - Command line only.
+    - - Type annotations
+      - No ``py.typed`` marker; limited annotations.
+      - Fully typed with :pep:`561` ``py.typed`` marker; checked by `ty <https://docs.astral.sh/ty/>`_.
+      - Not applicable (Rust binary).
     - - Best for
       - Zero dependencies, basic needs.
       - Plugin extensibility, programmatic API, tool compatibility (`tox <https://tox.readthedocs.io>`_,
