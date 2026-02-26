@@ -97,6 +97,7 @@ def call_zipapp_symlink(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # no
     return _run
 
 
+@pytest.mark.timeout(600)
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink not supported")
 def test_zipapp_in_symlink(capsys, call_zipapp_symlink) -> None:
     call_zipapp_symlink("--reset-app-data")
@@ -104,12 +105,14 @@ def test_zipapp_in_symlink(capsys, call_zipapp_symlink) -> None:
     assert not err
 
 
+@pytest.mark.timeout(600)
 def test_zipapp_help(call_zipapp, capsys) -> None:
     call_zipapp("-h")
     _out, err = capsys.readouterr()
     assert not err
 
 
+@pytest.mark.timeout(600)
 @pytest.mark.slow
 @pytest.mark.parametrize("seeder", ["app-data", "pip"])
 def test_zipapp_create(call_zipapp, seeder) -> None:
