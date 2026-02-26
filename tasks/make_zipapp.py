@@ -17,9 +17,13 @@ from pathlib import Path, PurePosixPath
 from shlex import quote
 from stat import S_IWUSR
 from tempfile import TemporaryDirectory
+from typing import TYPE_CHECKING, Any
 
 from packaging.markers import Marker
 from packaging.requirements import Requirement
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 HERE = Path(__file__).parent.absolute()
 
@@ -35,7 +39,7 @@ def main() -> None:
         create_zipapp(os.path.abspath(args.dest), packages)
 
 
-def create_zipapp(dest, packages) -> None:
+def create_zipapp(dest: str, packages: dict[str, Any]) -> None:
     bio = io.BytesIO()
     base = PurePosixPath("__virtualenv__")
     modules = defaultdict(lambda: defaultdict(dict))
@@ -52,7 +56,13 @@ def create_zipapp(dest, packages) -> None:
     print(f"zipapp created at {dest} with size {os.path.getsize(dest) / 1024 / 1024:.2f}MB")  # noqa: T201
 
 
-def write_packages_to_zipapp(base, dist, modules, packages, zip_app) -> None:  # noqa: C901, PLR0912
+def write_packages_to_zipapp(  # noqa: C901, PLR0912
+    base: PurePosixPath,
+    dist: dict[str, Any],
+    modules: dict[str, Any],
+    packages: dict[str, Any],
+    zip_app: zipfile.ZipFile,
+) -> None:
     has = set()
     for name, p_w_v in packages.items():  # noqa: PLR1702
         for platform, w_v in p_w_v.items():
@@ -87,7 +97,7 @@ def write_packages_to_zipapp(base, dist, modules, packages, zip_app) -> None:  #
 
 
 class WheelDownloader:
-    def __init__(self, into) -> None:
+    def __init__(self, into: Path) -> None:
         if into.exists():
             shutil.rmtree(into)
         into.mkdir(parents=True)
@@ -96,7 +106,7 @@ class WheelDownloader:
         self.pip_cmd = [str(Path(sys.executable).parent / "pip")]
         self._cmd = [*self.pip_cmd, "download", "-q", "--no-deps", "--no-cache-dir", "--dest", str(self.into)]
 
-    def run(self, target, versions) -> None:
+    def run(self, target: Path, versions: list[str]) -> None:
         whl = self.build_sdist(target)
         todo = deque((version, None, whl) for version in versions)
         wheel_store = {}
@@ -116,7 +126,7 @@ class WheelDownloader:
             self.collected[version][dep_str][platform] = whl
             todo.extend(self.get_dependencies(whl, version))
 
-    def _get_wheel(self, dep, platform, version):
+    def _get_wheel(self, dep: Requirement | Path, platform: str | None, version: str) -> Path | None:
         if isinstance(dep, Requirement):
             before = set(self.into.iterdir())
             if self._download(
@@ -142,14 +152,14 @@ class WheelDownloader:
         assert new_file.suffix == ".whl"  # noqa: S101
         return new_file
 
-    def _download(self, platform, stop_print_on_fail, *args):
+    def _download(self, platform: str | None, stop_print_on_fail: bool, *args: str) -> int:
         exe_cmd = self._cmd + list(args)
         if platform is not None:
             exe_cmd.extend(["--platform", platform])
         return run_suppress_output(exe_cmd, stop_print_on_fail=stop_print_on_fail)
 
     @staticmethod
-    def get_dependencies(whl, version):
+    def get_dependencies(whl: Path, version: str) -> Iterator[tuple[str, str | None, Requirement]]:
         with zipfile.ZipFile(str(whl), "r") as zip_file:
             name = "/".join([f"{'-'.join(whl.name.split('-')[0:2])}.dist-info", "METADATA"])
             with zip_file.open(name) as file_handler:
@@ -191,7 +201,7 @@ class WheelDownloader:
                 yield version, platform, req
 
     @staticmethod
-    def _marker_at(markers, key):
+    def _marker_at(markers: list[Any], key: str) -> list[int]:
         return [
             i
             for i, m in enumerate(markers)
@@ -199,7 +209,7 @@ class WheelDownloader:
         ]
 
     @staticmethod
-    def _del_marker_at(markers, at):
+    def _del_marker_at(markers: list[Any], at: int) -> int:
         del markers[at]
         deleted = 1
         op = max(at - 1, 0)
@@ -208,7 +218,7 @@ class WheelDownloader:
             deleted += 1
         return deleted
 
-    def build_sdist(self, target):
+    def build_sdist(self, target: Path) -> Path:
         if target.is_dir():
             # pip 20.1 no longer guarantees this to be parallel safe, need to copy/lock
             with TemporaryDirectory() as temp_folder:
@@ -222,7 +232,7 @@ class WheelDownloader:
                     return self._build_sdist(self.into, folder)
                 finally:
                     # permission error on Windows <3.7 https://bugs.python.org/issue26660
-                    def onerror(func, path, exc_info) -> None:  # noqa: ARG001
+                    def onerror(func: Any, path: str, exc_info: Any) -> None:  # noqa: ARG001
                         os.chmod(path, S_IWUSR)
                         func(path)
 
@@ -231,14 +241,14 @@ class WheelDownloader:
         else:
             return self._build_sdist(target.parent / target.stem, target)
 
-    def _build_sdist(self, folder, target):
+    def _build_sdist(self, folder: Path, target: Path) -> Path:
         if not folder.exists() or not list(folder.iterdir()):
             cmd = [*self.pip_cmd, "wheel", "-w", str(folder), "--no-deps", str(target), "-q"]
             run_suppress_output(cmd, stop_print_on_fail=True)
         return next(iter(folder.iterdir()))
 
 
-def run_suppress_output(cmd, stop_print_on_fail=False):  # noqa: FBT002
+def run_suppress_output(cmd: list[str], stop_print_on_fail: bool = False) -> int:  # noqa: FBT002
     process = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
@@ -257,7 +267,7 @@ def run_suppress_output(cmd, stop_print_on_fail=False):  # noqa: FBT002
     return process.returncode
 
 
-def get_wheels_for_support_versions(folder):
+def get_wheels_for_support_versions(folder: Path) -> dict[str, Any]:
     downloader = WheelDownloader(folder / "wheel-store")
     downloader.run(HERE.parent, VERSIONS)
     packages = defaultdict(lambda: defaultdict(lambda: defaultdict(WheelForVersion)))
@@ -278,7 +288,7 @@ def get_wheels_for_support_versions(folder):
 
 
 class WheelForVersion:
-    def __init__(self, wheel=None, versions=None) -> None:
+    def __init__(self, wheel: Path | None = None, versions: list[str] | None = None) -> None:
         self.wheel = wheel
         self.versions = versions or []
 

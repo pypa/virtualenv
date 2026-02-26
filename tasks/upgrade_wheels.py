@@ -20,7 +20,7 @@ SUPPORT = [(3, i) for i in range(8, 16)]
 DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "wheels" / "embed"
 
 
-def download(ver, dest, package) -> None:
+def download(ver: str, dest: str, package: str) -> None:
     subprocess.call(
         [
             sys.executable,
@@ -136,11 +136,11 @@ def run() -> NoReturn:  # noqa: C901, PLR0912
         raise SystemExit(outcome)
 
 
-def fmt_version(versions):
+def fmt_version(versions: list[str]) -> str:
     return ", ".join(f"``{v}``" for v in versions)
 
 
-def collect_package_versions(new_packages):
+def collect_package_versions(new_packages: set[str]) -> dict[str, list[str]]:
     result = defaultdict(list)
     for package in new_packages:
         split = package.split("-")
