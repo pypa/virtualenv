@@ -52,7 +52,7 @@ def zipapp_build_env(tmp_path_factory):
             msg = "could not find a python to build zipapp"
             raise RuntimeError(msg)
         cmd = [str(Path(exe).parent / "pip"), "install", "pip>=23", "packaging>=23"]
-        subprocess.check_call(cmd, timeout=120)
+        subprocess.run(cmd, check=True, timeout=120)
     yield exe
     if create_env_path is not None:
         shutil.rmtree(str(create_env_path))
@@ -64,7 +64,7 @@ def zipapp(zipapp_build_env, tmp_path_factory):
     path = HERE.parent.parent / "tasks" / "make_zipapp.py"
     filename = into / "virtualenv.pyz"
     cmd = [zipapp_build_env, str(path), "--dest", str(filename)]
-    subprocess.check_call(cmd, timeout=120)
+    subprocess.run(cmd, check=True, timeout=120)
     yield filename
     shutil.rmtree(str(into))
 
@@ -81,7 +81,7 @@ def zipapp_test_env(tmp_path_factory):
 def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG001
     def _run(*args) -> None:
         cmd = [str(zipapp_test_env), str(zipapp), "-vv", str(tmp_path / "env"), *list(args)]
-        subprocess.check_call(cmd, timeout=120)
+        subprocess.run(cmd, check=True, timeout=120)
 
     return _run
 
@@ -92,7 +92,7 @@ def call_zipapp_symlink(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # no
         symlinked = zipapp.parent / "symlinked_virtualenv.pyz"
         symlinked.symlink_to(str(zipapp))
         cmd = [str(zipapp_test_env), str(symlinked), "-vv", str(tmp_path / "env"), *list(args)]
-        subprocess.check_call(cmd, timeout=120)
+        subprocess.run(cmd, check=True, timeout=120)
 
     return _run
 
