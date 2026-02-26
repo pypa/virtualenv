@@ -57,7 +57,9 @@ def mock_get_interpreter(mocker):
 
 
 @pytest.mark.usefixtures("mock_get_interpreter")
-def test_returns_first_python_specified_when_only_env_var_one_is_specified(mocker, monkeypatch, session_app_data) -> None:
+def test_returns_first_python_specified_when_only_env_var_one_is_specified(
+    mocker, monkeypatch, session_app_data
+) -> None:
     monkeypatch.setenv("VIRTUALENV_PYTHON", "python_from_env_var")
     builtin = Builtin(
         Namespace(app_data=session_app_data, try_first_with=[], python=["python_from_env_var"], env=os.environ),
