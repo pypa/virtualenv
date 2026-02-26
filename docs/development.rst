@@ -117,8 +117,8 @@ Annotation guidelines
 - Use ``from __future__ import annotations`` at the top of every module (enforced by ruff's ``required-imports``
   setting).
 - Place imports that are only needed for type checking inside an ``if TYPE_CHECKING:`` block to avoid runtime overhead.
-- Ruff's ``ANN`` rules are enabled. Only ``ANN003`` (``**kwargs``) and ``ANN401`` (``typing.Any``) are suppressed
-  globally because they are too noisy for the plugin API.
+- Ruff's ``ANN`` rules are enabled. ``ANN401`` (``typing.Any``) is suppressed on a case-by-case basis with inline ``#
+  noqa: ANN401`` comments where ``Any`` is genuinely required (e.g. serialization, dynamic dispatch).
 - Prefer concrete types over ``Any``. Use ``Union`` / ``|`` for nullable or multi-type parameters.
 - When a type error is genuinely unfixable (e.g. third-party library limitations), suppress it with an inline ``# ty:
   ignore[rule-name]`` comment and a brief justification.

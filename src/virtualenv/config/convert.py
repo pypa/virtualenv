@@ -19,7 +19,7 @@ class TypeData:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(base={self.default_type}, as={self.as_type})"
 
-    def convert(self, value: str) -> Any:
+    def convert(self, value: str) -> Any:  # noqa: ANN401
         return self.default_type(value)
 
 
@@ -81,7 +81,7 @@ class ListType(TypeData):
         return values  # ty: ignore[invalid-return-type]
 
 
-def convert(value: str, as_type: TypeData, source: str) -> Any:
+def convert(value: str, as_type: TypeData, source: str) -> Any:  # noqa: ANN401
     """Convert the value as a given type where the value comes from the given source."""
     try:
         return as_type.convert(value)

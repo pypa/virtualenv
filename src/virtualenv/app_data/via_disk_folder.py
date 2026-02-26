@@ -127,7 +127,7 @@ class JSONStoreDisk(ContentStore, ABC):
     def exists(self) -> bool:
         return self.file.exists()
 
-    def read(self) -> Any:
+    def read(self) -> Any:  # noqa: ANN401
         data, bad_format = None, False
         try:
             data = json.loads(self.file.read_text(encoding="utf-8"))
@@ -152,7 +152,7 @@ class JSONStoreDisk(ContentStore, ABC):
         with self.in_folder.lock_for_key(self.key):
             yield
 
-    def write(self, content: Any) -> None:
+    def write(self, content: Any) -> None:  # noqa: ANN401
         folder = self.file.parent
         folder.mkdir(parents=True, exist_ok=True)
         self.file.write_text(json.dumps(content, sort_keys=True, indent=2), encoding="utf-8")

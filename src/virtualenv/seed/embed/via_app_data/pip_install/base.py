@@ -39,11 +39,11 @@ class PipInstall(ABC):
         self._uninstall_previous_version()
         # sync image
         for filename in self._image_dir.iterdir():
-            into = self._creator.purelib / filename.name  # ty: ignore[unresolved-attribute]
+            into = self._creator.purelib / filename.name
             self._sync(filename, into)
         # generate console executables
         consoles = set()
-        script_dir = self._creator.script_dir  # ty: ignore[unresolved-attribute]
+        script_dir = self._creator.script_dir
         for name, module in self._console_scripts.items():  # ty: ignore[unresolved-attribute]
             consoles.update(self._create_console_entry_point(name, module, script_dir, version_info))
         LOGGER.debug("generated console scripts %s", " ".join(i.name for i in consoles))
@@ -89,7 +89,7 @@ class PipInstall(ABC):
         folder = mkdtemp()
         try:
             to_folder = Path(folder)
-            rel = os.path.relpath(str(self._creator.script_dir), str(self._creator.purelib))  # ty: ignore[unresolved-attribute]
+            rel = os.path.relpath(str(self._creator.script_dir), str(self._creator.purelib))
             version_info = self._creator.interpreter.version_info
             for name, module in self._console_scripts.items():  # ty: ignore[unresolved-attribute]
                 new_files.update(
@@ -150,7 +150,7 @@ class PipInstall(ABC):
 
     def _uninstall_previous_version(self) -> None:
         dist_name = self._dist_info.stem.split("-")[0]  # ty: ignore[unresolved-attribute]
-        in_folders = chain.from_iterable([i.iterdir() for i in (self._creator.purelib, self._creator.platlib)])  # ty: ignore[unresolved-attribute]
+        in_folders = chain.from_iterable([i.iterdir() for i in (self._creator.purelib, self._creator.platlib)])
         paths = (p for p in in_folders if p.stem.split("-")[0] == dist_name and p.suffix == ".dist-info" and p.is_dir())
         existing_dist = next(paths, None)
         if existing_dist is not None:

@@ -62,6 +62,24 @@ class Creator(ABC):
         @property
         def exe(self) -> Path: ...
 
+        @property
+        def env_name(self) -> str: ...
+
+        @property
+        def bin_dir(self) -> Path: ...
+
+        @property
+        def script_dir(self) -> Path: ...
+
+        @property
+        def libs(self) -> list[Path]: ...
+
+        @property
+        def purelib(self) -> Path: ...
+
+        @property
+        def platlib(self) -> Path: ...
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self._args())})"
 

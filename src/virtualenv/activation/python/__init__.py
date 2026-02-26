@@ -23,7 +23,7 @@ class PythonActivator(ViaTemplateActivator):
 
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:
         replacements = super().replacements(creator, dest_folder)
-        lib_folders = OrderedDict((os.path.relpath(str(i), str(dest_folder)), None) for i in creator.libs)  # ty: ignore[unresolved-attribute]
+        lib_folders = OrderedDict((os.path.relpath(str(i), str(dest_folder)), None) for i in creator.libs)
         lib_folders = os.pathsep.join(lib_folders.keys())
         replacements.update(
             {

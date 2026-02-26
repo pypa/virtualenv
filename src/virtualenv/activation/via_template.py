@@ -41,7 +41,7 @@ class ViaTemplateActivator(Activator, ABC):
         return shlex.quote(string)
 
     def generate(self, creator: Creator) -> list[Path]:
-        dest_folder = creator.bin_dir  # ty: ignore[unresolved-attribute]
+        dest_folder = creator.bin_dir
         replacements = self.replacements(creator, dest_folder)
         generated = self._generate(replacements, self.templates(), dest_folder, creator)
         if self.flag_prompt is not None:
@@ -52,8 +52,8 @@ class ViaTemplateActivator(Activator, ABC):
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
             "__VIRTUAL_ENV__": str(creator.dest),
-            "__VIRTUAL_NAME__": creator.env_name,  # ty: ignore[unresolved-attribute]
-            "__BIN_NAME__": str(creator.bin_dir.relative_to(creator.dest)),  # ty: ignore[unresolved-attribute]
+            "__VIRTUAL_NAME__": creator.env_name,
+            "__BIN_NAME__": str(creator.bin_dir.relative_to(creator.dest)),
             "__PATH_SEP__": os.pathsep,
             "__TCL_LIBRARY__": getattr(creator.interpreter, "tcl_lib", None) or "",
             "__TK_LIBRARY__": getattr(creator.interpreter, "tk_lib", None) or "",

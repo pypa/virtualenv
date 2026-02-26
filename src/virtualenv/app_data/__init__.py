@@ -46,7 +46,7 @@ def _cache_dir_with_migration() -> str:
     return new_dir
 
 
-def make_app_data(folder: str | None, **kwargs: Any) -> AppData:
+def make_app_data(folder: str | None, **kwargs: Any) -> AppData:  # noqa: ANN401
     is_read_only = kwargs.pop("read_only")
     env = kwargs.pop("env")
     if kwargs:  # py3+ kwonly

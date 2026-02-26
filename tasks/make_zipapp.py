@@ -232,7 +232,7 @@ class WheelDownloader:
                     return self._build_sdist(self.into, folder)
                 finally:
                     # permission error on Windows <3.7 https://bugs.python.org/issue26660
-                    def onerror(func: Any, path: str, exc_info: Any) -> None:  # noqa: ARG001
+                    def onerror(func: Any, path: str, exc_info: Any) -> None:  # noqa: ARG001, ANN401
                         os.chmod(path, S_IWUSR)
                         func(path)
 

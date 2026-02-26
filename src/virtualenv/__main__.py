@@ -59,7 +59,7 @@ class LogSession:
         ]
         if self.session.seeder.enabled:
             lines.append(f"  seeder {self.session.seeder!s}")
-            path = self.session.creator.purelib.iterdir()  # ty: ignore[unresolved-attribute]
+            path = self.session.creator.purelib.iterdir()
             packages = sorted("==".join(i.stem.split("-")) for i in path if i.suffix == ".dist-info")
             lines.append(f"    added seed packages: {', '.join(packages)}")
 

@@ -61,7 +61,7 @@ class ContentStoreNA(ContentStore):
         """Nothing to read."""
         return
 
-    def write(self, content: Any) -> None:
+    def write(self, content: Any) -> None:  # noqa: ANN401
         """Nothing to write."""
 
     def remove(self) -> None:

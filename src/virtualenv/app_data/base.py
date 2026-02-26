@@ -133,7 +133,7 @@ class ContentStore(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def read(self) -> Any:
+    def read(self) -> Any:  # noqa: ANN401
         """Read the stored content.
 
         :returns: the stored content
@@ -142,7 +142,7 @@ class ContentStore(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def write(self, content: Any) -> None:
+    def write(self, content: Any) -> None:  # noqa: ANN401
         """Write content to the store.
 
         :param content: the content to write

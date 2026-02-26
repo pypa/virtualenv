@@ -15,12 +15,12 @@ from virtualenv.config.ini import IniConfig
 
 
 class VirtualEnvOptions(Namespace):
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
         super().__init__(**kwargs)
         self._src: str | None = None
         self._sources: dict[str, str] = {}
 
-    def set_src(self, key: str, value: Any, src: str) -> None:
+    def set_src(self, key: str, value: Any, src: str) -> None:  # noqa: ANN401
         """Set an option value and record where it came from.
 
         :param key: the option name
@@ -33,7 +33,7 @@ class VirtualEnvOptions(Namespace):
             src = "env var"
         self._sources[key] = src
 
-    def __setattr__(self, key: str, value: Any) -> None:
+    def __setattr__(self, key: str, value: Any) -> None:  # noqa: ANN401
         if (src := getattr(self, "_src", None)) is not None:
             self._sources[key] = src
         super().__setattr__(key, value)
@@ -67,7 +67,11 @@ class VirtualEnvConfigParser(ArgumentParser):
     """Custom option parser which updates its defaults by checking the configuration files and environmental vars."""
 
     def __init__(
-        self, options: VirtualEnvOptions | None = None, env: Mapping[str, str] | None = None, *args: Any, **kwargs: Any
+        self,
+        options: VirtualEnvOptions | None = None,
+        env: Mapping[str, str] | None = None,
+        *args: Any,  # noqa: ANN401
+        **kwargs: Any,  # noqa: ANN401
     ) -> None:
         env = os.environ if env is None else env
         self.file_config = IniConfig(env)
@@ -135,7 +139,7 @@ class VirtualEnvConfigParser(ArgumentParser):
 
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
-    def __init__(self, prog: str, **kwargs: Any) -> None:
+    def __init__(self, prog: str, **kwargs: Any) -> None:  # noqa: ANN401
         super().__init__(prog, max_help_position=32, width=240, **kwargs)
 
     def _get_help_string(self, action: Action) -> str | None:
