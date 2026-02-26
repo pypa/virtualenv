@@ -47,7 +47,7 @@ with a plugin system for extensibility.
       - Command line only.
     - - Type annotations
       - No ``py.typed`` marker; limited annotations.
-      - Fully typed with :pep:`561` ``py.typed`` marker; checked by `ty <https://docs.astral.sh/ty/>`_.
+      - Fully typed with :PEP:`561` ``py.typed`` marker; checked by `ty <https://docs.astral.sh/ty/>`_.
       - Not applicable (Rust binary).
     - - Best for
       - Zero dependencies, basic needs.

@@ -24,7 +24,7 @@ PYPY3_PATH = (
 # In `PyPy3Posix.sources()` `host_lib` will be broken in Python 2 for Windows,
 # so `py_file` will not be in sources.
 @pytest.mark.parametrize("py_info_name", ["portable_pypy38"])
-def test_portable_pypy3_virtualenvs_get_their_libs(py_info, mock_files, mock_pypy_libs):
+def test_portable_pypy3_virtualenvs_get_their_libs(py_info, mock_files, mock_pypy_libs) -> None:
     py_file = path(py_info.prefix, "lib/libgdbm.so.4")
     mock_files(PYPY3_PATH, [py_info.system_executable, py_file])
     lib_file = path(py_info.prefix, "bin/libpypy3-c.so")
@@ -37,7 +37,7 @@ def test_portable_pypy3_virtualenvs_get_their_libs(py_info, mock_files, mock_pyp
 
 
 @pytest.mark.parametrize("py_info_name", ["deb_pypy37"])
-def test_debian_pypy37_virtualenvs(py_info, mock_files, mock_pypy_libs):
+def test_debian_pypy37_virtualenvs(py_info, mock_files, mock_pypy_libs) -> None:
     # Debian's pypy3 layout, installed to /usr, before 3.8 allowed a /usr prefix
     mock_files(PYPY3_PATH, [py_info.system_executable])
     lib_file = path(py_info.prefix, "bin/libpypy3-c.so")
@@ -49,7 +49,7 @@ def test_debian_pypy37_virtualenvs(py_info, mock_files, mock_pypy_libs):
 
 
 @pytest.mark.parametrize("py_info_name", ["deb_pypy38"])
-def test_debian_pypy38_virtualenvs_exclude_usr(py_info, mock_files, mock_pypy_libs):
+def test_debian_pypy38_virtualenvs_exclude_usr(py_info, mock_files, mock_pypy_libs) -> None:
     mock_files(PYPY3_PATH, [py_info.system_executable, "/usr/lib/foo"])
     # libpypy3-c.so lives on the ld search path
     mock_pypy_libs(PyPy3Posix, [])

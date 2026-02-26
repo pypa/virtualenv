@@ -6,6 +6,7 @@ import codecs
 import locale
 import os
 import re
+from typing import NoReturn
 from zlib import crc32 as _crc32
 
 
@@ -24,7 +25,7 @@ file_regex = re.compile(r'# file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+) = convert\(\n {4
 file_template = '# file {filename}\n{variable} = convert(\n    """\n{data}"""\n)'
 
 
-def rebuild(script_path):
+def rebuild(script_path) -> None:
     encoding = (
         locale.getencoding() if hasattr(locale, "getencoding") else locale.getpreferredencoding(do_setlocale=False)
     )
@@ -69,7 +70,7 @@ def handle_file(previous_content, filename, variable_name, previous_encoded):
     return True, new_part
 
 
-def report(exit_code, new, next_match, current, script_path):
+def report(exit_code, new, next_match, current, script_path) -> NoReturn:
     if new != current:
         print("Content updated; overwriting... ", end="")  # noqa: T201
         script_path.write_bytes(new)

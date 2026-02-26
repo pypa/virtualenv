@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-def run():
+def run() -> None:
     print("magic")  # noqa: T201
 
 

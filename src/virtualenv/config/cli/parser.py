@@ -66,7 +66,9 @@ class VirtualEnvOptions(Namespace):
 class VirtualEnvConfigParser(ArgumentParser):
     """Custom option parser which updates its defaults by checking the configuration files and environmental vars."""
 
-    def __init__(self, options: VirtualEnvOptions | None = None, env: Mapping[str, str] | None = None, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self, options: VirtualEnvOptions | None = None, env: Mapping[str, str] | None = None, *args: Any, **kwargs: Any
+    ) -> None:
         env = os.environ if env is None else env
         self.file_config = IniConfig(env)
         self.epilog_list = []
@@ -115,7 +117,9 @@ class VirtualEnvConfigParser(ArgumentParser):
         self._fix_defaults()
         self.add_argument("-h", "--help", action="help", default=SUPPRESS, help="show this help message and exit")
 
-    def parse_known_args(self, args: Sequence[str] | None = None, namespace: VirtualEnvOptions | None = None) -> tuple[VirtualEnvOptions, list[str]]:
+    def parse_known_args(
+        self, args: Sequence[str] | None = None, namespace: VirtualEnvOptions | None = None
+    ) -> tuple[VirtualEnvOptions, list[str]]:
         if namespace is None:
             namespace = self.options
         elif namespace is not self.options:

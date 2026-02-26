@@ -13,7 +13,15 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
 
 
-def from_bundle(distribution: str, version: str | None, for_py_version: str, search_dirs: list[Path], app_data: AppData, do_periodic_update: bool, env: dict[str, str]) -> Wheel | None:  # noqa: PLR0913
+def from_bundle(
+    distribution: str,
+    version: str | None,
+    for_py_version: str,
+    search_dirs: list[Path],
+    app_data: AppData,
+    do_periodic_update: bool,
+    env: dict[str, str],
+) -> Wheel | None:
     """Load the bundled wheel to a cache directory."""
     of_version = Version.of_version(version)
     wheel = load_embed_wheel(app_data, distribution, for_py_version, of_version)

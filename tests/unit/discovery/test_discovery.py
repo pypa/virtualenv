@@ -14,7 +14,7 @@ from virtualenv.discovery.builtin import Builtin, get_interpreter
 from virtualenv.info import IS_WIN
 
 
-def test_relative_path(session_app_data, monkeypatch):
+def test_relative_path(session_app_data, monkeypatch) -> None:
     sys_executable = Path(PythonInfo.current_system(session_app_data).system_executable)
     cwd = sys_executable.parents[1]
     monkeypatch.chdir(str(cwd))
@@ -23,7 +23,7 @@ def test_relative_path(session_app_data, monkeypatch):
     assert result is not None
 
 
-def test_discovery_fallback_fail(session_app_data, caplog):
+def test_discovery_fallback_fail(session_app_data, caplog) -> None:
     caplog.set_level(logging.DEBUG)
     builtin = Builtin(
         Namespace(app_data=session_app_data, try_first_with=[], python=["magic-one", "magic-two"], env=os.environ),
@@ -35,7 +35,7 @@ def test_discovery_fallback_fail(session_app_data, caplog):
     assert "accepted" not in caplog.text
 
 
-def test_discovery_fallback_ok(session_app_data, caplog):
+def test_discovery_fallback_ok(session_app_data, caplog) -> None:
     caplog.set_level(logging.DEBUG)
     builtin = Builtin(
         Namespace(app_data=session_app_data, try_first_with=[], python=["magic-one", sys.executable], env=os.environ),
@@ -57,7 +57,7 @@ def mock_get_interpreter(mocker):
 
 
 @pytest.mark.usefixtures("mock_get_interpreter")
-def test_returns_first_python_specified_when_only_env_var_one_is_specified(mocker, monkeypatch, session_app_data):
+def test_returns_first_python_specified_when_only_env_var_one_is_specified(mocker, monkeypatch, session_app_data) -> None:
     monkeypatch.setenv("VIRTUALENV_PYTHON", "python_from_env_var")
     builtin = Builtin(
         Namespace(app_data=session_app_data, try_first_with=[], python=["python_from_env_var"], env=os.environ),
@@ -71,7 +71,7 @@ def test_returns_first_python_specified_when_only_env_var_one_is_specified(mocke
 @pytest.mark.usefixtures("mock_get_interpreter")
 def test_returns_second_python_specified_when_more_than_one_is_specified_and_env_var_is_specified(
     mocker, monkeypatch, session_app_data
-):
+) -> None:
     monkeypatch.setenv("VIRTUALENV_PYTHON", "python_from_env_var")
     builtin = Builtin(
         Namespace(
@@ -87,7 +87,7 @@ def test_returns_second_python_specified_when_more_than_one_is_specified_and_env
     assert result == mocker.sentinel.python_from_cli
 
 
-def test_discovery_absolute_path_with_try_first(tmp_path, session_app_data):
+def test_discovery_absolute_path_with_try_first(tmp_path, session_app_data) -> None:
     good_env = tmp_path / "good"
     bad_env = tmp_path / "bad"
 
@@ -109,7 +109,7 @@ def test_discovery_absolute_path_with_try_first(tmp_path, session_app_data):
     assert Path(interpreter.executable) == good_exe
 
 
-def test_absolute_path_does_not_exist(tmp_path):
+def test_absolute_path_does_not_exist(tmp_path) -> None:
     """Test that virtualenv does not fail when an absolute path that does not exist is provided."""
     command = [
         sys.executable,
@@ -133,7 +133,7 @@ def test_absolute_path_does_not_exist(tmp_path):
     assert process.returncode == 0, process.stderr
 
 
-def test_absolute_path_does_not_exist_fails(tmp_path):
+def test_absolute_path_does_not_exist_fails(tmp_path) -> None:
     """Test that virtualenv fails when a single absolute path that does not exist is provided."""
     command = [
         sys.executable,
@@ -156,7 +156,7 @@ def test_absolute_path_does_not_exist_fails(tmp_path):
 
 
 @pytest.mark.usefixtures("mock_get_interpreter")
-def test_returns_first_python_specified_when_no_env_var_is_specified(mocker, monkeypatch, session_app_data):
+def test_returns_first_python_specified_when_no_env_var_is_specified(mocker, monkeypatch, session_app_data) -> None:
     monkeypatch.delenv("VIRTUALENV_PYTHON", raising=False)
     builtin = Builtin(
         Namespace(app_data=session_app_data, try_first_with=[], python=["python_from_cli"], env=os.environ),
@@ -167,7 +167,7 @@ def test_returns_first_python_specified_when_no_env_var_is_specified(mocker, mon
     assert result == mocker.sentinel.python_from_cli
 
 
-def test_discovery_via_version_specifier(session_app_data):
+def test_discovery_via_version_specifier(session_app_data) -> None:
     """Test that version specifiers like >=3.11 work correctly through the virtualenv wrapper."""
     current = PythonInfo.current_system(session_app_data)
     major, minor = current.version_info.major, current.version_info.minor
@@ -191,7 +191,7 @@ def test_discovery_via_version_specifier(session_app_data):
         assert interpreter.implementation == "CPython"
 
 
-def test_invalid_discovery_via_env_var(monkeypatch, tmp_path):
+def test_invalid_discovery_via_env_var(monkeypatch, tmp_path) -> None:
     """When VIRTUALENV_DISCOVERY is set to an unavailable plugin, raise a clear error instead of KeyError."""
     monkeypatch.setenv("VIRTUALENV_DISCOVERY", "nonexistent_plugin")
     process = subprocess.run(
@@ -208,7 +208,7 @@ def test_invalid_discovery_via_env_var(monkeypatch, tmp_path):
     assert "KeyError" not in output
 
 
-def test_invalid_discovery_via_env_var_unit(monkeypatch):
+def test_invalid_discovery_via_env_var_unit(monkeypatch) -> None:
     """Unit test: get_discover raises RuntimeError with helpful message for unknown discovery method."""
     from virtualenv.config.cli.parser import VirtualEnvConfigParser  # noqa: PLC0415
     from virtualenv.run.plugin.discovery import get_discover  # noqa: PLC0415

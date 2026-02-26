@@ -17,7 +17,7 @@ CURRENT = PythonInfo.current_system()
 CREATOR_CLASSES = CreatorSelector.for_interpreter(CURRENT).key_to_class
 
 
-def builtin_shows_marker_missing():
+def builtin_shows_marker_missing() -> bool:
     builtin_classs = CREATOR_CLASSES.get("builtin")
     if builtin_classs is None:
         return False
@@ -39,7 +39,7 @@ def builtin_shows_marker_missing():
     reason="Building C-Extensions requires header files with host python",
 )
 @pytest.mark.parametrize("creator", [i for i in CREATOR_CLASSES if i != "builtin"])
-def test_can_build_c_extensions(creator, tmp_path, coverage_env):
+def test_can_build_c_extensions(creator, tmp_path, coverage_env) -> None:
     env, greet = tmp_path / "env", str(tmp_path / "greet")
     shutil.copytree(str(Path(__file__).parent.resolve() / "greet"), greet)
     session = cli_run(["--creator", creator, "--seeder", "app-data", str(env), "-vvv"])

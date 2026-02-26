@@ -16,7 +16,7 @@ from virtualenv.info import IS_WIN
         (None, None, False),
     ],
 )
-def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
+def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
     # GIVEN
     class MockInterpreter:
         pass
@@ -26,7 +26,7 @@ def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     interpreter.tk_lib = tk_lib
 
     class MockCreator:
-        def __init__(self, dest):
+        def __init__(self, dest) -> None:
             self.dest = dest
             self.bin_dir = dest / "bin"
             self.bin_dir.mkdir()
@@ -72,7 +72,7 @@ def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
 @pytest.mark.parametrize("hashing_enabled", [True, False])
-def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester):
+def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> None:
     class Bash(raise_on_non_source_class):
         def __init__(self, session) -> None:
             super().__init__(

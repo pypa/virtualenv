@@ -17,12 +17,12 @@ from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_RUSTPYTHON, IS_WIN, fs_suppo
 from virtualenv.report import LOGGER
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser) -> None:
     parser.addoption("--int", action="store_true", default=False, help="run integration tests")
     parser.addoption("--skip-slow", action="store_true", default=False, help="skip slow tests")
 
 
-def pytest_configure(config):
+def pytest_configure(config) -> None:
     """Ensure randomly is called before we re-order"""
     manager = config.pluginmanager
 
@@ -35,7 +35,7 @@ def pytest_configure(config):
         order[from_pos] = temp
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config, items) -> None:
     int_location = os.path.join("tests", "integration", "").rstrip()
     if len(items) == 1:
         return
@@ -220,7 +220,7 @@ def coverage_env(monkeypatch, link, request):
         prev_run = run.session_via_cli
         monkeypatch.setattr(run, "session_via_cli", _session_via_cli)
 
-        def finish():
+        def finish() -> None:
             cov = obj["cov"]
             obj["cov"] = None
             cov.__exit__(None, None, None)
@@ -231,7 +231,7 @@ def coverage_env(monkeypatch, link, request):
 
     else:
 
-        def finish():
+        def finish() -> None:
             pass
 
         yield finish
@@ -239,7 +239,7 @@ def coverage_env(monkeypatch, link, request):
 
 # _no_coverage tells coverage_env to disable coverage injection for _no_coverage user.
 @pytest.fixture
-def _no_coverage():
+def _no_coverage() -> None:
     pass
 
 
@@ -347,12 +347,12 @@ def temp_app_data(monkeypatch, tmp_path):
 
 
 @pytest.fixture(scope="session")
-def for_py_version():
+def for_py_version() -> str:
     return f"{sys.version_info.major}.{sys.version_info.minor}"
 
 
 @pytest.fixture
-def _skip_if_test_in_system(session_app_data):
+def _skip_if_test_in_system(session_app_data) -> None:
     current = PythonInfo.current(session_app_data)
     if current.system_executable is not None:
         pytest.skip("test not valid if run under system")

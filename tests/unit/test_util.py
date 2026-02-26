@@ -15,19 +15,19 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-def test_run_fail(tmp_path):
+def test_run_fail(tmp_path) -> None:
     code, out, err = run_cmd([str(tmp_path)])
     assert err
     assert not out
     assert code
 
 
-def test_reentrant_file_lock_is_thread_safe(tmp_path):
+def test_reentrant_file_lock_is_thread_safe(tmp_path) -> None:
     lock = ReentrantFileLock(tmp_path)
     target_file = tmp_path / "target"
     target_file.touch()
 
-    def recreate_target_file():
+    def recreate_target_file() -> None:
         with lock.lock_for_key("target"):
             target_file.unlink()
             target_file.touch()

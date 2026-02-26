@@ -11,6 +11,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from textwrap import dedent
 from threading import Thread
+from typing import NoReturn
 
 STRICT = "UPGRADE_ADVISORY" not in os.environ
 
@@ -19,7 +20,7 @@ SUPPORT = [(3, i) for i in range(8, 16)]
 DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "wheels" / "embed"
 
 
-def download(ver, dest, package):
+def download(ver, dest, package) -> None:
     subprocess.call(
         [
             sys.executable,
@@ -40,7 +41,7 @@ def download(ver, dest, package):
     )
 
 
-def run():  # noqa: C901, PLR0912
+def run() -> NoReturn:  # noqa: C901, PLR0912
     old_batch = {i.name for i in DEST.iterdir() if i.suffix == ".whl"}
     with TemporaryDirectory() as temp:
         temp_path = Path(temp)

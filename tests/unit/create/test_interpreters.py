@@ -10,7 +10,7 @@ from virtualenv.run import cli_run
 
 
 @pytest.mark.slow
-def test_failed_to_find_bad_spec():
+def test_failed_to_find_bad_spec() -> None:
     of_id = uuid4().hex
     with pytest.raises(RuntimeError) as context:
         cli_run(["-p", of_id])
@@ -25,7 +25,7 @@ SYSTEM = PythonInfo.current_system()
     "of_id",
     ({sys.executable} if sys.executable != SYSTEM.executable else set()) | {SYSTEM.implementation},
 )
-def test_failed_to_find_implementation(of_id, mocker):
+def test_failed_to_find_implementation(of_id, mocker) -> None:
     mocker.patch("virtualenv.run.plugin.creators.CreatorSelector._OPTIONS", return_value={})
     with pytest.raises(RuntimeError) as context:
         cli_run(["-p", of_id])

@@ -16,7 +16,9 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
-def run(args: list[str] | None = None, options: VirtualEnvOptions | None = None, env: MutableMapping[str, str] | None = None) -> None:
+def run(
+    args: list[str] | None = None, options: VirtualEnvOptions | None = None, env: MutableMapping[str, str] | None = None
+) -> None:
     env = os.environ if env is None else env
     start = default_timer()
     from virtualenv.run import cli_run  # noqa: PLC0415

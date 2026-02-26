@@ -69,7 +69,7 @@ extlinks = {
 }
 
 
-def setup(app):
+def setup(app) -> None:
     doc_tree = Path(app.doctreedir)
     for name in ("cli_interface", "reference/cli"):
         doctree = doc_tree / f"{name}.doctree"

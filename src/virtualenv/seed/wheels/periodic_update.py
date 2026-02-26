@@ -74,7 +74,14 @@ def periodic_update(  # noqa: PLR0913
     return wheel
 
 
-def handle_auto_update(distribution: str, for_py_version: str, wheel: Wheel | None, search_dirs: list[Path], app_data: AppData, env: dict[str, str]) -> None:  # noqa: PLR0913
+def handle_auto_update(
+    distribution: str,
+    for_py_version: str,
+    wheel: Wheel | None,
+    search_dirs: list[Path],
+    app_data: AppData,
+    env: dict[str, str],
+) -> None:
     embed_update_log = app_data.embed_update_log(distribution, for_py_version)
     u_log = UpdateLog.from_dict(embed_update_log.read())
     if u_log.needs_update:
@@ -162,7 +169,9 @@ class NewVersion:  # noqa: PLW1641
 
 
 class UpdateLog:
-    def __init__(self, started: datetime | None, completed: datetime | None, versions: list[NewVersion], periodic: bool | None) -> None:
+    def __init__(
+        self, started: datetime | None, completed: datetime | None, versions: list[NewVersion], periodic: bool | None
+    ) -> None:
         self.started = started
         self.completed = completed
         self.versions = versions
@@ -205,7 +214,15 @@ class UpdateLog:
         return self.started is None or now - self.started > UPDATE_ABORTED_DELAY
 
 
-def trigger_update(distribution: str, for_py_version: str, wheel: Wheel | None, search_dirs: list[Path], app_data: AppData, env: dict[str, str], periodic: bool) -> None:  # noqa: PLR0913
+def trigger_update(
+    distribution: str,
+    for_py_version: str,
+    wheel: Wheel | None,
+    search_dirs: list[Path],
+    app_data: AppData,
+    env: dict[str, str],
+    periodic: bool,
+) -> None:
     wheel_path = None if wheel is None else str(wheel.path)
     cmd = [
         sys.executable,
@@ -241,7 +258,14 @@ def trigger_update(distribution: str, for_py_version: str, wheel: Wheel | None, 
         process.returncode = 0
 
 
-def do_update(distribution: str, for_py_version: str, embed_filename: str | None, app_data: str | AppData, search_dirs: list[str] | list[Path], periodic: bool) -> list[NewVersion] | None:  # noqa: PLR0913
+def do_update(
+    distribution: str,
+    for_py_version: str,
+    embed_filename: str | None,
+    app_data: str | AppData,
+    search_dirs: list[str] | list[Path],
+    periodic: bool,
+) -> list[NewVersion] | None:
     versions = None
     try:
         versions = _run_do_update(app_data, distribution, embed_filename, for_py_version, periodic, search_dirs)

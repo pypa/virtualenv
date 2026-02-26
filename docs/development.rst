@@ -92,8 +92,8 @@ run:
 Type checking
 =============
 
-virtualenv ships a :pep:`561` ``py.typed`` marker and has comprehensive type annotations across the entire codebase.
-This means downstream consumers and type checkers automatically recognise virtualenv as an inline-typed package.
+virtualenv ships a :PEP:`561` ``py.typed`` marker and has comprehensive type annotations across the entire codebase.
+This means downstream consumers and type checkers automatically recognize virtualenv as an inline-typed package.
 
 All new code **must** include complete type annotations for function parameters and return types. To verify annotations
 locally, run:
@@ -120,8 +120,8 @@ Annotation guidelines
 - Ruff's ``ANN`` rules are enabled. Only ``ANN003`` (``**kwargs``) and ``ANN401`` (``typing.Any``) are suppressed
   globally because they are too noisy for the plugin API.
 - Prefer concrete types over ``Any``. Use ``Union`` / ``|`` for nullable or multi-type parameters.
-- When a type error is genuinely unfixable (e.g. third-party library limitations), suppress it with an inline
-  ``# ty: ignore[rule-name]`` comment and a brief justification.
+- When a type error is genuinely unfixable (e.g. third-party library limitations), suppress it with an inline ``# ty:
+  ignore[rule-name]`` comment and a brief justification.
 
 Building documentation
 ======================

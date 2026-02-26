@@ -8,7 +8,7 @@ import pytest
 from virtualenv.activation import PowerShellActivator
 
 
-def test_powershell_pydoc_call_operator(tmp_path):
+def test_powershell_pydoc_call_operator(tmp_path) -> None:
     """Test that PowerShell pydoc function uses call operator to handle spaces in python path."""
 
     # GIVEN: A mock interpreter
@@ -18,7 +18,7 @@ def test_powershell_pydoc_call_operator(tmp_path):
         tk_lib = None
 
     class MockCreator:
-        def __init__(self, dest):
+        def __init__(self, dest) -> None:
             self.dest = dest
             self.bin_dir = dest / "Scripts"
             self.bin_dir.mkdir(parents=True)
@@ -49,7 +49,7 @@ def test_powershell_pydoc_call_operator(tmp_path):
         (None, None, False),
     ],
 )
-def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
+def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
     # GIVEN
     class MockInterpreter:
         os = "nt"
@@ -59,7 +59,7 @@ def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     interpreter.tk_lib = tk_lib
 
     class MockCreator:
-        def __init__(self, dest):
+        def __init__(self, dest) -> None:
             self.dest = dest
             self.bin_dir = dest / "bin"
             self.bin_dir.mkdir()
@@ -96,7 +96,7 @@ def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
 
 
 @pytest.mark.slow
-def test_powershell(activation_tester_class, activation_tester, monkeypatch):
+def test_powershell(activation_tester_class, activation_tester, monkeypatch) -> None:
     monkeypatch.setenv("TERM", "xterm")
 
     class PowerShell(activation_tester_class):
@@ -114,10 +114,10 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch):
         def invoke_script(self):
             return [self.cmd, "-File"]
 
-        def print_os_env_var(self, var):
+        def print_os_env_var(self, var) -> str:
             return f'if ($env:{var} -eq $null) {{ "None" }} else {{ $env:{var} }}'
 
-        def print_prompt(self):
+        def print_prompt(self) -> str:
             return "prompt"
 
         def quote(self, s):

@@ -33,7 +33,9 @@ class PluginLoader:
 
 
 class ComponentBuilder(PluginLoader):
-    def __init__(self, interpreter: PythonInfo, parser: VirtualEnvConfigParser, name: str, possible: dict[str, type]) -> None:
+    def __init__(
+        self, interpreter: PythonInfo, parser: VirtualEnvConfigParser, name: str, possible: dict[str, type]
+    ) -> None:
         self.interpreter = interpreter
         self.name = name
         self._impl_class = None

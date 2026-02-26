@@ -138,7 +138,9 @@ class PipInstall(ABC):
                         self._console_entry_points[our_name] = value
         return self._console_entry_points
 
-    def _create_console_entry_point(self, name: str, value: str, to_folder: Path, version_info: tuple[int, ...]) -> list[Path]:
+    def _create_console_entry_point(
+        self, name: str, value: str, to_folder: Path, version_info: tuple[int, ...]
+    ) -> list[Path]:
         result = []
         maker = ScriptMakerCustom(to_folder, version_info, self._creator.exe, name)
         specification = f"{name} = {value}"
@@ -200,7 +202,9 @@ class ScriptMakerCustom(ScriptMaker):
         self.variants = {"", "X", "X.Y"}
         self._name = name
 
-    def _write_script(self, names: set[str], shebang: bytes, script_bytes: bytes, filenames: list[str], ext: str) -> None:
+    def _write_script(
+        self, names: set[str], shebang: bytes, script_bytes: bytes, filenames: list[str], ext: str
+    ) -> None:
         names.add(f"{self._name}{self.version_info[0]}.{self.version_info[1]}")
         super()._write_script(names, shebang, script_bytes, filenames, ext)
 

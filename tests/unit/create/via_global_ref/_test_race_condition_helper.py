@@ -7,7 +7,7 @@ class _Finder:
     fullname = None
     lock: ClassVar[list] = []
 
-    def find_spec(self, fullname, path, target=None):  # noqa: ARG002
+    def find_spec(self, fullname, path, target=None) -> None:  # noqa: ARG002
         # This should handle the NameError gracefully
         try:
             distutils_patch = _DISTUTILS_PATCH
@@ -18,7 +18,7 @@ class _Finder:
         return
 
     @staticmethod
-    def exec_module(old, module):
+    def exec_module(old, module) -> None:
         old(module)
         try:
             distutils_patch = _DISTUTILS_PATCH

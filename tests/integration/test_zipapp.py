@@ -79,7 +79,7 @@ def zipapp_test_env(tmp_path_factory):
 
 @pytest.fixture
 def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG001
-    def _run(*args):
+    def _run(*args) -> None:
         cmd = [str(zipapp_test_env), str(zipapp), "-vv", str(tmp_path / "env"), *list(args)]
         subprocess.check_call(cmd)
 
@@ -88,7 +88,7 @@ def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG0
 
 @pytest.fixture
 def call_zipapp_symlink(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG001
-    def _run(*args):
+    def _run(*args) -> None:
         symlinked = zipapp.parent / "symlinked_virtualenv.pyz"
         symlinked.symlink_to(str(zipapp))
         cmd = [str(zipapp_test_env), str(symlinked), "-vv", str(tmp_path / "env"), *list(args)]
@@ -98,13 +98,13 @@ def call_zipapp_symlink(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # no
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink not supported")
-def test_zipapp_in_symlink(capsys, call_zipapp_symlink):
+def test_zipapp_in_symlink(capsys, call_zipapp_symlink) -> None:
     call_zipapp_symlink("--reset-app-data")
     _out, err = capsys.readouterr()
     assert not err
 
 
-def test_zipapp_help(call_zipapp, capsys):
+def test_zipapp_help(call_zipapp, capsys) -> None:
     call_zipapp("-h")
     _out, err = capsys.readouterr()
     assert not err
@@ -112,5 +112,5 @@ def test_zipapp_help(call_zipapp, capsys):
 
 @pytest.mark.slow
 @pytest.mark.parametrize("seeder", ["app-data", "pip"])
-def test_zipapp_create(call_zipapp, seeder):
+def test_zipapp_create(call_zipapp, seeder) -> None:
     call_zipapp("--seeder", seeder)

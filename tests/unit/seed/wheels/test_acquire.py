@@ -23,17 +23,17 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture(autouse=True)
-def _fake_release_date(mocker):
+def _fake_release_date(mocker) -> None:
     mocker.patch("virtualenv.seed.wheels.periodic_update.release_date_for_wheel_path", return_value=None)
 
 
-def test_pip_wheel_env_run_could_not_find(session_app_data, mocker):
+def test_pip_wheel_env_run_could_not_find(session_app_data, mocker) -> None:
     mocker.patch("virtualenv.seed.wheels.acquire.from_bundle", return_value=None)
     with pytest.raises(RuntimeError, match="could not find the embedded pip"):
         pip_wheel_env_run([], session_app_data, os.environ)
 
 
-def test_download_wheel_bad_output(mocker, for_py_version, session_app_data):
+def test_download_wheel_bad_output(mocker, for_py_version, session_app_data) -> None:
     """if the download contains no match for what wheel was downloaded, pick one that matches from target"""
     distribution = "setuptools"
     p_open = mocker.MagicMock()
@@ -58,7 +58,7 @@ def test_download_wheel_bad_output(mocker, for_py_version, session_app_data):
     assert result.path == embed.path
 
 
-def test_download_fails(mocker, for_py_version, session_app_data):
+def test_download_fails(mocker, for_py_version, session_app_data) -> None:
     p_open = mocker.MagicMock()
     mocker.patch("virtualenv.seed.wheels.acquire.Popen", return_value=p_open)
     p_open.communicate.return_value = "out", "err"
@@ -89,7 +89,7 @@ def test_download_fails(mocker, for_py_version, session_app_data):
     ] == exc.cmd
 
 
-def test_download_wheel_python_io_encoding(mocker, for_py_version, session_app_data):
+def test_download_wheel_python_io_encoding(mocker, for_py_version, session_app_data) -> None:
     mock_popen = mocker.patch("virtualenv.seed.wheels.acquire.Popen")
     mock_popen.return_value.communicate.return_value = "Saved a-b-c.whl", ""
     mock_popen.return_value.returncode = 0
@@ -108,7 +108,7 @@ def downloaded_wheel(mocker):
 
 
 @pytest.mark.parametrize("version", ["bundle", "0.0.0"])
-def test_get_wheel_download_called(mocker, for_py_version, session_app_data, downloaded_wheel, version):
+def test_get_wheel_download_called(mocker, for_py_version, session_app_data, downloaded_wheel, version) -> None:
     distribution = "setuptools"
     write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write")
     wheel = get_wheel(distribution, version, for_py_version, [], True, session_app_data, False, os.environ)
@@ -119,7 +119,7 @@ def test_get_wheel_download_called(mocker, for_py_version, session_app_data, dow
 
 
 @pytest.mark.parametrize("version", ["embed", "pinned"])
-def test_get_wheel_download_not_called(mocker, for_py_version, session_app_data, downloaded_wheel, version):
+def test_get_wheel_download_not_called(mocker, for_py_version, session_app_data, downloaded_wheel, version) -> None:
     distribution = "setuptools"
     expected = get_embed_wheel(distribution, for_py_version)
     if version == "pinned":

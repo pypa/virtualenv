@@ -138,7 +138,9 @@ class PathRefToDest(PathRef):
 class ExePathRefToDest(PathRefToDest, ExePathRef):
     """Link a exe path on the file system."""
 
-    def __init__(self, src: Path, targets: list[str], dest: Callable[..., Path], must: str = RefMust.NA, when: str = RefWhen.ANY) -> None:
+    def __init__(
+        self, src: Path, targets: list[str], dest: Callable[..., Path], must: str = RefMust.NA, when: str = RefWhen.ANY
+    ) -> None:
         ExePathRef.__init__(self, src, must, when)
         PathRefToDest.__init__(self, src, dest, must, when)
         if not self.FS_CASE_SENSITIVE:

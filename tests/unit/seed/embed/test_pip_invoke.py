@@ -14,7 +14,7 @@ from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
 
 @pytest.mark.slow
 @pytest.mark.parametrize("no", ["pip", "setuptools", "wheel", ""])
-def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_fastest, no):  # noqa: C901
+def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_fastest, no) -> None:  # noqa: C901
     extra_search_dir = tmp_path / "extra"
     extra_search_dir.mkdir()
     for_py_version = f"{sys.version_info.major}.{sys.version_info.minor}"

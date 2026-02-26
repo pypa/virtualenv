@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 
-def test_race_condition_simulation(tmp_path):
+def test_race_condition_simulation(tmp_path) -> None:
     """Test that simulates the race condition described in the issue.
 
     This test creates a temporary directory with _virtualenv.py and _virtualenv.pth, then simulates the scenario where:

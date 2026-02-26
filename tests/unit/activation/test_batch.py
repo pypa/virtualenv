@@ -7,7 +7,7 @@ import pytest
 from virtualenv.activation import BatchActivator
 
 
-def test_batch_pydoc_bat_quoting(tmp_path):
+def test_batch_pydoc_bat_quoting(tmp_path) -> None:
     """Test that pydoc.bat properly quotes python.exe path to handle spaces."""
 
     # GIVEN: A mock interpreter
@@ -17,7 +17,7 @@ def test_batch_pydoc_bat_quoting(tmp_path):
         tk_lib = None
 
     class MockCreator:
-        def __init__(self, dest):
+        def __init__(self, dest) -> None:
             self.dest = dest
             self.bin_dir = dest / "Scripts"
             self.bin_dir.mkdir(parents=True)
@@ -46,7 +46,7 @@ def test_batch_pydoc_bat_quoting(tmp_path):
         (None, None, False),
     ],
 )
-def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
+def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
     # GIVEN
     class MockInterpreter:
         os = "nt"
@@ -56,7 +56,7 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     interpreter.tk_lib = tk_lib
 
     class MockCreator:
-        def __init__(self, dest):
+        def __init__(self, dest) -> None:
             self.dest = dest
             self.bin_dir = dest / "bin"
             self.bin_dir.mkdir()
@@ -92,7 +92,7 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
 
 
 @pytest.mark.usefixtures("activation_python")
-def test_batch(activation_tester_class, activation_tester, tmp_path):
+def test_batch(activation_tester_class, activation_tester, tmp_path) -> None:
     version_script = tmp_path / "version.bat"
     version_script.write_text("ver", encoding="utf-8")
 
@@ -115,14 +115,14 @@ def test_batch(activation_tester_class, activation_tester, tmp_path):
                 return f'"{text}"'
             return s
 
-        def print_prompt(self):
+        def print_prompt(self) -> str:
             return 'echo "%PROMPT%"'
 
     activation_tester(Batch)
 
 
 @pytest.mark.usefixtures("activation_python")
-def test_batch_output(activation_tester_class, activation_tester, tmp_path):
+def test_batch_output(activation_tester_class, activation_tester, tmp_path) -> None:
     version_script = tmp_path / "version.bat"
     version_script.write_text("ver", encoding="utf-8")
 
@@ -148,7 +148,7 @@ def test_batch_output(activation_tester_class, activation_tester, tmp_path):
                 f"@call {intermediary_script_path}",
             ]
 
-        def assert_output(self, out, raw, tmp_path):  # noqa: ARG002
+        def assert_output(self, out, raw, tmp_path) -> None:  # noqa: ARG002
             assert out[0] == "ECHO is on.", raw
 
         def quote(self, s):
@@ -157,7 +157,7 @@ def test_batch_output(activation_tester_class, activation_tester, tmp_path):
                 return f'"{text}"'
             return s
 
-        def print_prompt(self):
+        def print_prompt(self) -> str:
             return 'echo "%PROMPT%"'
 
     activation_tester(Batch)

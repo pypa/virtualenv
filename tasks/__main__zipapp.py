@@ -70,7 +70,7 @@ class VersionPlatformSelect:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={ABS_HERE})"
 
-    def _register_distutils_finder(self):  # noqa: C901
+    def _register_distutils_finder(self) -> None:  # noqa: C901
         if "distlib" not in self.modules:
             return
 
@@ -167,7 +167,7 @@ class VersionedFindLoad(VersionPlatformSelect, SourceLoader):
         raise NotImplementedError
 
 
-def run():
+def run() -> None:
     with VersionedFindLoad() as finder:
         sys.meta_path.insert(0, finder)
         finder._register_distutils_finder()  # noqa: SLF001

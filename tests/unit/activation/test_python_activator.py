@@ -10,7 +10,7 @@ from virtualenv.activation import PythonActivator
 from virtualenv.info import IS_WIN
 
 
-def test_python_activator_generates_pkg_config_path(tmp_path):
+def test_python_activator_generates_pkg_config_path(tmp_path) -> None:
     """Test that activate_this.py sets PKG_CONFIG_PATH."""
 
     class MockInterpreter:
@@ -18,7 +18,7 @@ def test_python_activator_generates_pkg_config_path(tmp_path):
         tk_lib = None
 
     class MockCreator:
-        def __init__(self, dest):
+        def __init__(self, dest) -> None:
             self.dest = dest
             self.bin_dir = dest / ("Scripts" if IS_WIN else "bin")
             self.bin_dir.mkdir(parents=True)
@@ -43,7 +43,7 @@ def test_python_activator_generates_pkg_config_path(tmp_path):
     assert 'os.path.join(base, "lib", "pkgconfig")' in content
 
 
-def test_python(raise_on_non_source_class, activation_tester):
+def test_python(raise_on_non_source_class, activation_tester) -> None:
     class Python(raise_on_non_source_class):
         def __init__(self, session) -> None:
             super().__init__(
@@ -93,7 +93,7 @@ def test_python(raise_on_non_source_class, activation_tester):
             """
             return dedent(raw).splitlines()
 
-        def assert_output(self, out, raw, tmp_path):  # noqa: ARG002
+        def assert_output(self, out, raw, tmp_path) -> None:  # noqa: ARG002
             out = [literal_eval(i) for i in out]
             assert out[0] is None  # start with VIRTUAL_ENV None
             assert out[1] is None  # likewise for VIRTUAL_ENV_PROMPT

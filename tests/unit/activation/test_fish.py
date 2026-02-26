@@ -17,7 +17,7 @@ from virtualenv.info import IS_WIN
         (None, None, False),
     ],
 )
-def test_fish_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
+def test_fish_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
     # GIVEN
     class MockInterpreter:
         pass
@@ -27,7 +27,7 @@ def test_fish_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     interpreter.tk_lib = tk_lib
 
     class MockCreator:
-        def __init__(self, dest):
+        def __init__(self, dest) -> None:
             self.dest = dest
             self.bin_dir = dest / "bin"
             self.bin_dir.mkdir()
@@ -58,7 +58,7 @@ def test_fish_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
 
 
 @pytest.mark.skipif(IS_WIN, reason="we have not setup fish in CI yet")
-def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path):
+def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("HOME", str(tmp_path))
     fish_conf_dir = tmp_path / ".config" / "fish"
     fish_conf_dir.mkdir(parents=True)
@@ -68,7 +68,7 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
         def __init__(self, session) -> None:
             super().__init__(FishActivator, session, "fish", "activate.fish", "fish")
 
-        def print_prompt(self):
+        def print_prompt(self) -> str:
             return "fish_prompt"
 
         def _get_test_lines(self, activate_script):
@@ -93,7 +93,7 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
                 "",  # just finish with an empty new line
             ]
 
-        def assert_output(self, out, raw, _):
+        def assert_output(self, out, raw, _) -> None:
             """Compare _get_test_lines() with the expected values."""
             assert out[0], raw
             assert out[1] == "None", raw

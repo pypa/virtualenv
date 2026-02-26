@@ -1,2 +1,2 @@
 Add comprehensive type annotations across the entire codebase and ship a PEP 561 ``py.typed`` marker so downstream
-consumers and type checkers recognise virtualenv as an inline-typed package - by :user:`rahuldevikar`.
+consumers and type checkers recognize virtualenv as an inline-typed package - by :user:`rahuldevikar`.

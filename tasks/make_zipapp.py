@@ -26,7 +26,7 @@ HERE = Path(__file__).parent.absolute()
 VERSIONS = [f"3.{i}" for i in range(14, 7, -1)]
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dest", default="virtualenv.pyz")
     args = parser.parse_args()
@@ -35,7 +35,7 @@ def main():
         create_zipapp(os.path.abspath(args.dest), packages)
 
 
-def create_zipapp(dest, packages):
+def create_zipapp(dest, packages) -> None:
     bio = io.BytesIO()
     base = PurePosixPath("__virtualenv__")
     modules = defaultdict(lambda: defaultdict(dict))
@@ -52,7 +52,7 @@ def create_zipapp(dest, packages):
     print(f"zipapp created at {dest} with size {os.path.getsize(dest) / 1024 / 1024:.2f}MB")  # noqa: T201
 
 
-def write_packages_to_zipapp(base, dist, modules, packages, zip_app):  # noqa: C901, PLR0912
+def write_packages_to_zipapp(base, dist, modules, packages, zip_app) -> None:  # noqa: C901, PLR0912
     has = set()
     for name, p_w_v in packages.items():  # noqa: PLR1702
         for platform, w_v in p_w_v.items():
@@ -96,7 +96,7 @@ class WheelDownloader:
         self.pip_cmd = [str(Path(sys.executable).parent / "pip")]
         self._cmd = [*self.pip_cmd, "download", "-q", "--no-deps", "--no-cache-dir", "--dest", str(self.into)]
 
-    def run(self, target, versions):
+    def run(self, target, versions) -> None:
         whl = self.build_sdist(target)
         todo = deque((version, None, whl) for version in versions)
         wheel_store = {}
@@ -222,7 +222,7 @@ class WheelDownloader:
                     return self._build_sdist(self.into, folder)
                 finally:
                     # permission error on Windows <3.7 https://bugs.python.org/issue26660
-                    def onerror(func, path, exc_info):  # noqa: ARG001
+                    def onerror(func, path, exc_info) -> None:  # noqa: ARG001
                         os.chmod(path, S_IWUSR)
                         func(path)
 

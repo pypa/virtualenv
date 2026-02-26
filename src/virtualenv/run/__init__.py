@@ -68,7 +68,9 @@ def session_via_cli(
     parser, elements = build_parser(args, options, setup_logging, env)
     options = parser.parse_args(args)  # ty: ignore[invalid-assignment]
     options.py_version = parser._interpreter.version_info  # noqa: SLF001  # ty: ignore[invalid-assignment, unresolved-attribute]
-    creator, seeder, activators = tuple(e.create(options) for e in elements)  # create types  # ty: ignore[invalid-argument-type]
+    creator, seeder, activators = tuple(
+        e.create(options) for e in elements
+    )  # create types  # ty: ignore[invalid-argument-type]
     return Session(
         options.verbosity,  # ty: ignore[unresolved-attribute, invalid-argument-type]
         options.app_data,  # ty: ignore[unresolved-attribute]
@@ -126,7 +128,9 @@ def handle_extra_commands(options: VirtualEnvOptions) -> None:
         raise SystemExit(result)
 
 
-def load_app_data(args: list[str] | None, parser: VirtualEnvConfigParser, options: VirtualEnvOptions | None) -> VirtualEnvOptions:
+def load_app_data(
+    args: list[str] | None, parser: VirtualEnvConfigParser, options: VirtualEnvOptions | None
+) -> VirtualEnvOptions:
     parser.add_argument(
         "--read-only-app-data",
         action="store_true",

@@ -7,7 +7,7 @@ from virtualenv.activation import NushellActivator
 from virtualenv.info import IS_WIN
 
 
-def test_nushell_tkinter_generation(tmp_path):
+def test_nushell_tkinter_generation(tmp_path) -> None:
     # GIVEN
     class MockInterpreter:
         pass
@@ -19,7 +19,7 @@ def test_nushell_tkinter_generation(tmp_path):
     quoted_tk_path = NushellActivator.quote(interpreter.tk_lib)
 
     class MockCreator:
-        def __init__(self, dest):
+        def __init__(self, dest) -> None:
             self.dest = dest
             self.bin_dir = dest / "bin"
             self.bin_dir.mkdir()
@@ -48,7 +48,7 @@ def test_nushell_tkinter_generation(tmp_path):
     assert expected_tk in content
 
 
-def test_nushell(activation_tester_class, activation_tester):
+def test_nushell(activation_tester_class, activation_tester) -> None:
     class Nushell(activation_tester_class):
         def __init__(self, session) -> None:
             super().__init__(NushellActivator, session, which("nu"), "activate.nu", "nu")
@@ -56,7 +56,7 @@ def test_nushell(activation_tester_class, activation_tester):
             self.activate_cmd = "overlay use"
             self.unix_line_ending = not IS_WIN
 
-        def print_prompt(self):
+        def print_prompt(self) -> str:
             return r"print $env.VIRTUAL_PREFIX"
 
         def activate_call(self, script):

@@ -155,7 +155,6 @@ lint.ignore = [
   "ANN003",  # Missing type annotation for **kwargs - too noisy for plugin APIs
   "ANN401",  # Dynamically typed expressions (typing.Any) - needed for plugin/config dispatch
   "COM812",  # conflict with formatter
-  "FBT001",  # boolean positional args - pre-existing signatures, changing would break public API
   "CPY",     # No copyright header
   "D10",     # no docstrings
   "D40",     # no imperative mode for docstrings
@@ -168,6 +167,7 @@ lint.ignore = [
   "D301",    # use r if any backslashes - conflicts with docstrfmt
   "DOC",     # no restructuredtext support
   "E501",    # line too long - handled by ruff format and docstrfmt
+  "FBT001",  # boolean positional args - pre-existing signatures, changing would break public API
   "INP001",  # ignore implicit namespace packages
   "ISC001",  # conflict with formatter
   "PLR0914", # Too many local variables

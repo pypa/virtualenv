@@ -54,7 +54,15 @@ def get_wheel(  # noqa: PLR0913
     return wheel
 
 
-def download_wheel(distribution: str, version_spec: str | None, for_py_version: str, search_dirs: list[Path], app_data: AppData, to_folder: Path, env: dict[str, str]) -> Wheel:  # noqa: PLR0913
+def download_wheel(
+    distribution: str,
+    version_spec: str | None,
+    for_py_version: str,
+    search_dirs: list[Path],
+    app_data: AppData,
+    to_folder: Path,
+    env: dict[str, str],
+) -> Wheel:
     to_download = f"{distribution}{version_spec or ''}"
     LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
     cmd = [
@@ -85,7 +93,9 @@ def download_wheel(distribution: str, version_spec: str | None, for_py_version: 
     return result  # ty: ignore[invalid-return-type]
 
 
-def _find_downloaded_wheel(distribution: str, version_spec: str | None, for_py_version: str, to_folder: Path, out: str) -> Wheel | None:
+def _find_downloaded_wheel(
+    distribution: str, version_spec: str | None, for_py_version: str, to_folder: Path, out: str
+) -> Wheel | None:
     for line in out.splitlines():
         stripped_line = line.lstrip()
         for marker in ("Saved ", "File was already downloaded "):
@@ -95,7 +105,9 @@ def _find_downloaded_wheel(distribution: str, version_spec: str | None, for_py_v
     return find_compatible_in_house(distribution, version_spec, for_py_version, to_folder)
 
 
-def find_compatible_in_house(distribution: str, version_spec: str | None, for_py_version: str, in_folder: Path) -> Wheel | None:
+def find_compatible_in_house(
+    distribution: str, version_spec: str | None, for_py_version: str, in_folder: Path
+) -> Wheel | None:
     wheels = discover_wheels(in_folder, distribution, None, for_py_version)
     start, end = 0, len(wheels)
     if version_spec is not None and version_spec:

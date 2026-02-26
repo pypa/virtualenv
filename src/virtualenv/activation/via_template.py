@@ -59,7 +59,9 @@ class ViaTemplateActivator(Activator, ABC):
             "__TK_LIBRARY__": getattr(creator.interpreter, "tk_lib", None) or "",
         }
 
-    def _generate(self, replacements: dict[str, str], templates: Iterable[str], to_folder: Path, creator: Creator) -> list[Path]:
+    def _generate(
+        self, replacements: dict[str, str], templates: Iterable[str], to_folder: Path, creator: Creator
+    ) -> list[Path]:
         generated = []
         for template in templates:
             text = self.instantiate_template(replacements, template, creator)

@@ -70,7 +70,9 @@ class ViaGlobalRefApi(Creator, ABC):
         return False  # fallback to copy
 
     @classmethod
-    def add_parser_arguments(cls, parser: ArgumentParser, interpreter: PythonInfo, meta: ViaGlobalRefMeta, app_data: AppData) -> None:  # ty: ignore[invalid-method-override]
+    def add_parser_arguments(
+        cls, parser: ArgumentParser, interpreter: PythonInfo, meta: ViaGlobalRefMeta, app_data: AppData
+    ) -> None:  # ty: ignore[invalid-method-override]
         super().add_parser_arguments(parser, interpreter, meta, app_data)
         parser.add_argument(
             "--system-site-packages",

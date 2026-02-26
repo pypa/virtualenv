@@ -75,7 +75,9 @@ class PathLockBase(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None) -> None:
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+    ) -> None:
         raise NotImplementedError
 
     @abstractmethod
@@ -115,7 +117,9 @@ class ReentrantFileLock(PathLockBase):
         self._lock = self._create_lock()
         self._lock_file(self._lock)
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None) -> None:
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+    ) -> None:
         self._release(self._lock)  # ty: ignore[invalid-argument-type]
         self._del_lock(self._lock)
         self._lock = None
@@ -163,7 +167,9 @@ class NoOpFileLock(PathLockBase):
     def __enter__(self) -> None:
         raise NotImplementedError
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None) -> None:
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+    ) -> None:
         raise NotImplementedError
 
     @contextmanager

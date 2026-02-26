@@ -19,7 +19,9 @@ class ActivationSelector(ComponentBuilder):
     def __init__(self, interpreter: PythonInfo, parser: VirtualEnvConfigParser) -> None:
         self.default = None
         possible = OrderedDict(
-            (k, v) for k, v in self.options("virtualenv.activate").items() if v.supports(interpreter)  # ty: ignore[unresolved-attribute]
+            (k, v)
+            for k, v in self.options("virtualenv.activate").items()
+            if v.supports(interpreter)  # ty: ignore[unresolved-attribute]
         )
         super().__init__(interpreter, parser, "activators", possible)
         self.parser.description = "options for activation scripts"

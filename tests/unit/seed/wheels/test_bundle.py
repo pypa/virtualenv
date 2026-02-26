@@ -45,31 +45,31 @@ def app_data(tmp_path_factory, for_py_version, next_pip_wheel):
     return app_data_
 
 
-def test_version_embed(app_data, for_py_version):
+def test_version_embed(app_data, for_py_version) -> None:
     wheel = from_bundle("pip", Version.embed, for_py_version, [], app_data, False, os.environ)
     assert wheel is not None
     assert wheel.name == get_embed_wheel("pip", for_py_version).name
 
 
-def test_version_bundle(app_data, for_py_version, next_pip_wheel):
+def test_version_bundle(app_data, for_py_version, next_pip_wheel) -> None:
     wheel = from_bundle("pip", Version.bundle, for_py_version, [], app_data, False, os.environ)
     assert wheel is not None
     assert wheel.name == next_pip_wheel.name
 
 
-def test_version_pinned_not_found(app_data, for_py_version):
+def test_version_pinned_not_found(app_data, for_py_version) -> None:
     wheel = from_bundle("pip", "0.0.0", for_py_version, [], app_data, False, os.environ)
     assert wheel is None
 
 
-def test_version_pinned_is_embed(app_data, for_py_version):
+def test_version_pinned_is_embed(app_data, for_py_version) -> None:
     expected_wheel = get_embed_wheel("pip", for_py_version)
     wheel = from_bundle("pip", expected_wheel.version, for_py_version, [], app_data, False, os.environ)
     assert wheel is not None
     assert wheel.name == expected_wheel.name
 
 
-def test_version_pinned_in_app_data(app_data, for_py_version, next_pip_wheel):
+def test_version_pinned_in_app_data(app_data, for_py_version, next_pip_wheel) -> None:
     wheel = from_bundle("pip", next_pip_wheel.version, for_py_version, [], app_data, False, os.environ)
     assert wheel is not None
     assert wheel.name == next_pip_wheel.name

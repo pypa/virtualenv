@@ -8,7 +8,7 @@ from virtualenv import __version__
 from virtualenv.run import cli_run, session_via_cli
 
 
-def test_help(capsys):
+def test_help(capsys) -> None:
     with pytest.raises(SystemExit) as context:
         cli_run(args=["-h", "-vvv"])
     assert context.value.code == 0
@@ -18,7 +18,7 @@ def test_help(capsys):
     assert out
 
 
-def test_version(capsys):
+def test_version(capsys) -> None:
     with pytest.raises(SystemExit) as context:
         cli_run(args=["--version"])
     assert context.value.code == 0
@@ -33,7 +33,7 @@ def test_version(capsys):
 
 
 @pytest.mark.parametrize("on", [True, False])
-def test_logging_setup(caplog, on):
+def test_logging_setup(caplog, on) -> None:
     caplog.set_level(logging.DEBUG)
     session_via_cli(["env"], setup_logging=on)
     # DEBUG only level output is generated during this phase, default output is WARN, so if on no records should be

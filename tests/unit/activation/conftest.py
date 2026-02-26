@@ -134,7 +134,7 @@ class ActivationTester:
             "",  # just finish with an empty new line
         ]
 
-    def assert_output(self, out, raw, tmp_path):
+    def assert_output(self, out, raw, tmp_path) -> None:
         """Compare _get_test_lines() with the expected values."""
         assert out[0], raw
         assert out[1] == "None", raw
@@ -160,7 +160,7 @@ class ActivationTester:
     def quote(self, s):
         return self.of_class.quote(s)
 
-    def python_cmd(self, cmd):
+    def python_cmd(self, cmd) -> str:
         return f"{os.path.basename(sys.executable)} -c {self.quote(cmd)}"
 
     def print_python_exe(self):
