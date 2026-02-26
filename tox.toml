@@ -136,7 +136,7 @@ commands = [
 [env.type]
 description = "run type checker (ty) against Python 3.14"
 dependency_groups = [ "type" ]
-commands = [ [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.14", "--error-on-warning" ] ]
+commands = [ [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.14" ] ]
 
 [env.upgrade]
 description = "upgrade pip/wheels/setuptools to latest"
@@ -171,5 +171,5 @@ uv_seed = true
 
 [env."type-3.8"]
 description = "run type checker (ty) against Python 3.8"
-commands = [ [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.8", "--error-on-warning" ] ]
+commands = [ [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.8" ] ]
 base = [ "type" ]

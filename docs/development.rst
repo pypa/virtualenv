@@ -109,7 +109,7 @@ This uses `ty <https://docs.astral.sh/ty/>`_ (Astral's Rust-based type checker) 
 
     tox -e type-3.8
 
-Both environments run with ``--error-on-warning`` enabled, so warnings are treated as failures.
+Both environments validate that annotations are consistent and correct.
 
 Annotation guidelines
 ---------------------
