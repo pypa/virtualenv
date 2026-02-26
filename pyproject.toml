@@ -255,3 +255,6 @@ title_format = false
 issue_format = ":issue:`{issue}`"
 template = "docs/changelog/template.jinja2"
 underlines = [ "*", "=", "-" ]
+
+[tool.ty]
+rules.unused-ignore-comment = "ignore"  # some ignores are platform/version-specific (e.g., ctypes.windll on Linux)

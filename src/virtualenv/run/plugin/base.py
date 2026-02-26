@@ -23,7 +23,7 @@ class PluginLoader:
     def entry_points_for(cls, key: str) -> OrderedDict[str, type]:
         if sys.version_info >= (3, 10) or importlib_metadata_version >= (3, 6):
             return OrderedDict((e.name, e.load()) for e in cls.entry_points().select(group=key))  # ty: ignore[unresolved-attribute]
-        return OrderedDict((e.name, e.load()) for e in cls.entry_points().get(key, {}))
+        return OrderedDict((e.name, e.load()) for e in cls.entry_points().get(key, {}))  # ty: ignore[unresolved-attribute]
 
     @staticmethod
     def entry_points() -> object:

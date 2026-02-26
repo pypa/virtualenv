@@ -8,7 +8,7 @@ from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest, RefMust,
 from virtualenv.create.via_global_ref.builtin.via_global_self_do import ViaGlobalRefVirtualenvBuiltin
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Generator, Iterator
 
     from python_discovery import PythonInfo
 
@@ -52,7 +52,7 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin, abc.ABC):
         yield from cls._shared_libs(python_dir)
 
     @classmethod
-    def _shared_libs(cls, python_dir: Path) -> Generator[Path]:
+    def _shared_libs(cls, python_dir: Path) -> Iterator[Path]:
         raise NotImplementedError
 
 

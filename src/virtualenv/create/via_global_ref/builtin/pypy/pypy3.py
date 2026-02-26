@@ -10,7 +10,7 @@ from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
 from .common import PyPy
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Generator, Iterator
 
     from python_discovery import PythonInfo
 
@@ -31,9 +31,9 @@ class PyPy3Posix(PyPy3, PosixSupports):
     """PyPy 3 on POSIX."""
 
     @classmethod
-    def _shared_libs(cls, python_dir: Path) -> Generator[Path]:
+    def _shared_libs(cls, python_dir: Path) -> Iterator[Path]:
         # glob for libpypy3-c.so, libpypy3-c.dylib, libpypy3.9-c.so ...
-        return python_dir.glob("libpypy3*.*")  # ty: ignore[invalid-return-type]
+        return python_dir.glob("libpypy3*.*")
 
     def to_lib(self, src: Path) -> Path:
         return self.dest / "lib" / src.name
@@ -71,7 +71,7 @@ class Pypy3Windows(PyPy3, WindowsSupports):
         return self.interpreter.version_info.minor < 7  # noqa: PLR2004
 
     @classmethod
-    def _shared_libs(cls, python_dir: Path) -> Generator[Path]:
+    def _shared_libs(cls, python_dir: Path) -> Iterator[Path]:
         # PyPy does not use a PEP 397 launcher, so all DLLs from the interpreter directory are needed for the venv
         yield from python_dir.glob("*.dll")
 
