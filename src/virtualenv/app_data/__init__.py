@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import shutil
+from typing import TYPE_CHECKING, Any
 
 from platformdirs import user_cache_dir, user_data_dir
 
@@ -13,17 +14,22 @@ from .read_only import ReadOnlyAppData
 from .via_disk_folder import AppDataDiskFolder
 from .via_tempdir import TempAppData
 
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from .base import AppData
+
 LOGGER = logging.getLogger(__name__)
 
 
-def _default_app_data_dir(env):
+def _default_app_data_dir(env: Mapping[str, str]) -> str:
     key = "VIRTUALENV_OVERRIDE_APP_DATA"
     if key in env:
         return env[key]
     return _cache_dir_with_migration()
 
 
-def _cache_dir_with_migration():
+def _cache_dir_with_migration() -> str:
     new_dir = user_cache_dir(appname="virtualenv", appauthor="pypa")
     old_dir = user_data_dir(appname="virtualenv", appauthor="pypa")
     if new_dir == old_dir:
@@ -40,7 +46,7 @@ def _cache_dir_with_migration():
     return new_dir
 
 
-def make_app_data(folder, **kwargs):
+def make_app_data(folder: str | None, **kwargs: Any) -> AppData:
     is_read_only = kwargs.pop("read_only")
     env = kwargs.pop("env")
     if kwargs:  # py3+ kwonly

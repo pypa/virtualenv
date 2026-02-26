@@ -5,11 +5,17 @@ from __future__ import annotations
 import contextlib
 import os
 import sys
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import types
+    from collections.abc import Callable
+    from importlib.machinery import ModuleSpec
 
 VIRTUALENV_PATCH_FILE = os.path.abspath(__file__)
 
 
-def patch_dist(dist):
+def patch_dist(dist: types.ModuleType) -> None:
     """Distutils allows user to configure some arguments via a configuration file: https://docs.python.org/3/install/index.html#distutils-configuration-files.
 
     Some of this arguments though don't make sense in context of the virtual environment files, let's fix them up.
@@ -18,7 +24,7 @@ def patch_dist(dist):
     # we cannot allow some install config as that would get packages installed outside of the virtual environment
     old_parse_config_files = dist.Distribution.parse_config_files
 
-    def parse_config_files(self, *args, **kwargs):
+    def parse_config_files(self, *args: object, **kwargs: object) -> object:  # noqa: ANN001
         result = old_parse_config_files(self, *args, **kwargs)
         install = self.get_option_dict("install")
 
@@ -49,7 +55,7 @@ class _Finder:
     # See https://github.com/pypa/virtualenv/issues/1895 for details.
     lock = []  # noqa: RUF012
 
-    def find_spec(self, fullname, path, target=None):  # noqa: ARG002
+    def find_spec(self, fullname: str, path: object, target: object = None) -> ModuleSpec | None:  # noqa: ARG002
         # Guard against race conditions during file rewrite by checking if _DISTUTILS_PATCH is defined.
         # This can happen when the file is being overwritten while it's being imported by another process.
         # See https://github.com/pypa/virtualenv/issues/2969 for details.
@@ -76,7 +82,7 @@ class _Finder:
             with self.lock[0]:
                 self.fullname = fullname
                 try:
-                    spec = find_spec(fullname, path)
+                    spec = find_spec(fullname, path)  # ty: ignore[invalid-argument-type]
                     if spec is not None:
                         # https://www.python.org/dev/peps/pep-0451/#how-loading-will-work
                         is_new_api = hasattr(spec.loader, "exec_module")
@@ -94,7 +100,7 @@ class _Finder:
         return None
 
     @staticmethod
-    def exec_module(old, module):
+    def exec_module(old: Callable[..., object], module: types.ModuleType) -> None:
         old(module)
         try:
             distutils_patch = _DISTUTILS_PATCH
@@ -106,7 +112,7 @@ class _Finder:
                 patch_dist(module)
 
     @staticmethod
-    def load_module(old, name):
+    def load_module(old: Callable[..., types.ModuleType], name: str) -> types.ModuleType:
         module = old(name)
         try:
             distutils_patch = _DISTUTILS_PATCH

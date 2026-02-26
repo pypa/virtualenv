@@ -152,8 +152,10 @@ lint.select = [
   "ALL",
 ]
 lint.ignore = [
-  "ANN",     # no type checking added yet
+  "ANN003",  # Missing type annotation for **kwargs - too noisy for plugin APIs
+  "ANN401",  # Dynamically typed expressions (typing.Any) - needed for plugin/config dispatch
   "COM812",  # conflict with formatter
+  "FBT001",  # boolean positional args - pre-existing signatures, changing would break public API
   "CPY",     # No copyright header
   "D10",     # no docstrings
   "D40",     # no imperative mode for docstrings

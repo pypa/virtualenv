@@ -1,14 +1,22 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from virtualenv.activation.via_template import ViaTemplateActivator
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from pathlib import Path
+
+    from virtualenv.create.creator import Creator
 
 
 class NushellActivator(ViaTemplateActivator):
-    def templates(self):
+    def templates(self) -> Iterator[str]:
         yield "activate.nu"
 
     @staticmethod
-    def quote(string):
+    def quote(string: str) -> str:
         """Nushell supports raw strings like: r###'this is a string'###.
 
         https://github.com/nushell/nushell.github.io/blob/main/book/working_with_strings.md
@@ -27,12 +35,12 @@ class NushellActivator(ViaTemplateActivator):
         wrapping = "#" * (max_sharps + 1)
         return f"r{wrapping}'{string}'{wrapping}"
 
-    def replacements(self, creator, dest_folder):  # noqa: ARG002
+    def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:  # noqa: ARG002
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
             "__VIRTUAL_ENV__": str(creator.dest),
-            "__VIRTUAL_NAME__": creator.env_name,
-            "__BIN_NAME__": str(creator.bin_dir.relative_to(creator.dest)),
+            "__VIRTUAL_NAME__": creator.env_name,  # ty: ignore[unresolved-attribute]
+            "__BIN_NAME__": str(creator.bin_dir.relative_to(creator.dest)),  # ty: ignore[unresolved-attribute]
             "__TCL_LIBRARY__": getattr(creator.interpreter, "tcl_lib", None) or "",
             "__TK_LIBRARY__": getattr(creator.interpreter, "tk_lib", None) or "",
         }

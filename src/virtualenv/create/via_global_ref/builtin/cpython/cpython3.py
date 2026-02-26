@@ -6,6 +6,7 @@ from itertools import chain
 from operator import methodcaller as method
 from pathlib import Path
 from textwrap import dedent
+from typing import TYPE_CHECKING
 
 from virtualenv.create.describe import Python3Supports
 from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest, PathRefToDest, RefWhen
@@ -15,6 +16,15 @@ from virtualenv.util.path import ensure_dir
 
 from .common import CPython, CPythonPosix, CPythonWindows, is_mac_os_framework, is_macos_brew
 
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from python_discovery import PythonInfo
+
+    from virtualenv.create.via_global_ref.builtin.ref import PathRef
+    from virtualenv.create.via_global_ref.builtin.via_global_self_do import BuiltinViaGlobalRefMeta
+    from virtualenv.create.via_global_ref.venv import Venv
+
 
 class CPython3(CPython, Python3Supports, abc.ABC):
     """CPython 3 or later."""
@@ -22,7 +32,7 @@ class CPython3(CPython, Python3Supports, abc.ABC):
 
 class CPython3Posix(CPythonPosix, CPython3):
     @classmethod
-    def can_describe(cls, interpreter):
+    def can_describe(cls, interpreter: PythonInfo) -> bool:
         return (
             is_mac_os_framework(interpreter) is False
             and is_macos_brew(interpreter) is False
@@ -30,17 +40,17 @@ class CPython3Posix(CPythonPosix, CPython3):
         )
 
     @classmethod
-    def sources(cls, interpreter):
+    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
         yield from super().sources(interpreter)
         if shared_lib := cls._shared_libpython(interpreter):
             yield PathRefToDest(shared_lib, dest=cls._to_lib, when=RefWhen.COPY)
 
     @classmethod
-    def _to_lib(cls, creator, src):
+    def _to_lib(cls, creator: CPython3Posix, src: Path) -> Path:
         return creator.dest / "lib" / src.name
 
     @classmethod
-    def _shared_libpython(cls, interpreter):
+    def _shared_libpython(cls, interpreter: PythonInfo) -> Path | None:
         if not interpreter.sysconfig_vars.get("Py_ENABLE_SHARED"):
             return None
         if not (instsoname := interpreter.sysconfig_vars.get("INSTSONAME")):
@@ -51,7 +61,7 @@ class CPython3Posix(CPythonPosix, CPython3):
             return None
         return lib_path
 
-    def install_venv_shared_libs(self, venv_creator):
+    def install_venv_shared_libs(self, venv_creator: Venv) -> None:
         if venv_creator.symlinks:
             return
         if not (shared_lib := self._shared_libpython(venv_creator.interpreter)):
@@ -60,7 +70,7 @@ class CPython3Posix(CPythonPosix, CPython3):
         ensure_dir(dest.parent)
         copy_path(shared_lib, dest)
 
-    def env_patch_text(self):
+    def env_patch_text(self) -> str:
         text = super().env_patch_text()
         if self.pyvenv_launch_patch_active(self.interpreter):
             text += dedent(
@@ -74,7 +84,7 @@ class CPython3Posix(CPythonPosix, CPython3):
         return text
 
     @classmethod
-    def pyvenv_launch_patch_active(cls, interpreter):
+    def pyvenv_launch_patch_active(cls, interpreter: PythonInfo) -> bool:
         ver = interpreter.version_info
         return interpreter.platform == "darwin" and ((3, 7, 8) > ver >= (3, 7) or (3, 8, 3) > ver >= (3, 8))
 
@@ -83,25 +93,25 @@ class CPython3Windows(CPythonWindows, CPython3):
     """CPython 3 on Windows."""
 
     @classmethod
-    def setup_meta(cls, interpreter):
+    def setup_meta(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta | None:  # ty: ignore[invalid-method-override]
         if is_store_python(interpreter):  # store python is not supported here
             return None
         return super().setup_meta(interpreter)
 
     @classmethod
-    def sources(cls, interpreter):
+    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
         if cls.has_shim(interpreter):
             refs = cls.executables(interpreter)
         else:
             refs = chain(
-                cls.executables(interpreter),
+                cls.executables(interpreter),  # ty: ignore[invalid-argument-type]
                 cls.dll_and_pyd(interpreter),
                 cls.python_zip(interpreter),
             )
         yield from refs
 
     @classmethod
-    def executables(cls, interpreter):
+    def executables(cls, interpreter: PythonInfo) -> list[PathRef] | Generator[PathRef]:
         sources = super().sources(interpreter)
         if interpreter.version_info >= (3, 13):
             t_suffix = "t" if interpreter.free_threaded else ""
@@ -132,11 +142,11 @@ class CPython3Windows(CPythonWindows, CPython3):
         return sources
 
     @classmethod
-    def has_shim(cls, interpreter):
+    def has_shim(cls, interpreter: PythonInfo) -> bool:
         return interpreter.version_info.minor >= 7 and cls.shim(interpreter) is not None  # noqa: PLR2004
 
     @classmethod
-    def shim(cls, interpreter):
+    def shim(cls, interpreter: PythonInfo) -> Path | None:
         root = Path(interpreter.system_stdlib) / "venv" / "scripts" / "nt"
         if interpreter.version_info >= (3, 13):
             # https://github.com/python/cpython/issues/112984
@@ -149,16 +159,16 @@ class CPython3Windows(CPythonWindows, CPython3):
         return None
 
     @classmethod
-    def host_python(cls, interpreter):
+    def host_python(cls, interpreter: PythonInfo) -> Path:
         if cls.has_shim(interpreter):
             # starting with CPython 3.7 Windows ships with a venvlauncher.exe that avoids the need for dll/pyd copies
             # it also means the wrapper must be copied to avoid bugs such as https://bugs.python.org/issue42013
-            return cls.shim(interpreter)
+            return cls.shim(interpreter)  # ty: ignore[invalid-return-type]
         return super().host_python(interpreter)
 
     @classmethod
-    def dll_and_pyd(cls, interpreter):
-        folders = [Path(interpreter.system_executable).parent]
+    def dll_and_pyd(cls, interpreter: PythonInfo) -> Generator[PathRefToDest]:
+        folders = [Path(interpreter.system_executable).parent]  # ty: ignore[invalid-argument-type]
 
         # May be missing on some Python hosts.
         # See https://github.com/pypa/virtualenv/issues/2368
@@ -177,14 +187,14 @@ class CPython3Windows(CPythonWindows, CPython3):
                     yield PathRefToDest(file, cls.to_bin)
 
     @classmethod
-    def _is_pywin32_dll(cls, filename):
+    def _is_pywin32_dll(cls, filename: str) -> bool:
         """Check if a DLL file belongs to pywin32."""
         # pywin32 DLLs follow patterns like: pywintypes39.dll, pythoncom39.dll
         name_lower = filename.lower()
         return name_lower.startswith(("pywintypes", "pythoncom"))
 
     @classmethod
-    def python_zip(cls, interpreter):
+    def python_zip(cls, interpreter: PythonInfo) -> Generator[PathRefToDest]:
         """``python{VERSION}.zip`` contains compiled ``*.pyc`` std lib packages, where ``VERSION`` is ``py_version_nodot`` var from the ``sysconfig`` module.
 
         See https://docs.python.org/3/using/windows.html#the-embeddable-package, ``discovery.py_info.PythonInfo`` class

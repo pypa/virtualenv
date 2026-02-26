@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 
-def get_short_path_name(long_name):
+def get_short_path_name(long_name: str) -> str:
     """Gets the short path name of a given long path - http://stackoverflow.com/a/23598461/200291."""
     import ctypes  # noqa: PLC0415
     from ctypes import wintypes  # noqa: PLC0415
 
-    GetShortPathNameW = ctypes.windll.kernel32.GetShortPathNameW  # noqa: N806  # ty: ignore[unresolved-attribute]
+    GetShortPathNameW = ctypes.windll.kernel32.GetShortPathNameW  # noqa: N806
     GetShortPathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
     GetShortPathNameW.restype = wintypes.DWORD
     output_buf_size = 0

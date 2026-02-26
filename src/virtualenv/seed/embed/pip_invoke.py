@@ -3,19 +3,27 @@ from __future__ import annotations
 import logging
 from contextlib import contextmanager
 from subprocess import Popen
+from typing import TYPE_CHECKING
 
 from virtualenv.seed.embed.base_embed import BaseEmbed
 from virtualenv.seed.wheels import Version, get_wheel, pip_wheel_env_run
 from virtualenv.util.subprocess import LogCmd
 
+if TYPE_CHECKING:
+    from collections.abc import Generator
+    from pathlib import Path
+
+    from virtualenv.config.cli.parser import VirtualEnvOptions
+    from virtualenv.create.creator import Creator
+
 LOGGER = logging.getLogger(__name__)
 
 
 class PipInvoke(BaseEmbed):
-    def __init__(self, options) -> None:
+    def __init__(self, options: VirtualEnvOptions) -> None:
         super().__init__(options)
 
-    def run(self, creator):
+    def run(self, creator: Creator) -> None:
         if not self.enabled:
             return
         for_py_version = creator.interpreter.version_release_str
@@ -24,7 +32,7 @@ class PipInvoke(BaseEmbed):
             self._execute(cmd, env)
 
     @staticmethod
-    def _execute(cmd, env):
+    def _execute(cmd: list[str], env: dict[str, str]) -> Popen[bytes]:
         LOGGER.debug("pip seed by running: %s", LogCmd(cmd, env))
         process = Popen(cmd, env=env)
         process.communicate()
@@ -34,7 +42,7 @@ class PipInvoke(BaseEmbed):
         return process
 
     @contextmanager
-    def get_pip_install_cmd(self, exe, for_py_version):
+    def get_pip_install_cmd(self, exe: Path, for_py_version: str) -> Generator[list[str], None, None]:
         cmd = [
             str(exe),
             "-m",

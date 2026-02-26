@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC
+from typing import TYPE_CHECKING
 
 from virtualenv.create.via_global_ref.api import ViaGlobalRefApi, ViaGlobalRefMeta
 from virtualenv.create.via_global_ref.builtin.ref import (
@@ -12,22 +13,32 @@ from virtualenv.util.path import ensure_dir
 
 from .builtin_way import VirtualenvBuiltin
 
+if TYPE_CHECKING:
+    from collections.abc import Generator
+    from pathlib import Path
+
+    from python_discovery import PythonInfo
+
+    from virtualenv.config.cli.parser import VirtualEnvOptions
+    from virtualenv.create.via_global_ref.builtin.ref import PathRef
+    from virtualenv.create.via_global_ref.venv import Venv
+
 
 class BuiltinViaGlobalRefMeta(ViaGlobalRefMeta):
     def __init__(self) -> None:
         super().__init__()
-        self.sources = []
+        self.sources: list[PathRef] = []
 
 
 class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
-    def __init__(self, options, interpreter) -> None:
+    def __init__(self, options: VirtualEnvOptions, interpreter: PythonInfo) -> None:
         super().__init__(options, interpreter)
-        self._sources: list = (
+        self._sources: list[PathRef] = (
             getattr(options.meta, "sources", None) or []
         )  # if created as a describer this might be missing
 
     @classmethod
-    def can_create(cls, interpreter):
+    def can_create(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta | None:
         """By default, all built-in methods assume that if we can describe it we can create it."""
         # first we must be able to describe it
         if not cls.can_describe(interpreter):
@@ -38,7 +49,7 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
         return meta
 
     @classmethod
-    def _sources_can_be_applied(cls, interpreter, meta):
+    def _sources_can_be_applied(cls, interpreter: PythonInfo, meta: BuiltinViaGlobalRefMeta) -> None:
         for src in cls.sources(interpreter):
             if src.exists:
                 if meta.can_copy and not src.can_copy:
@@ -60,22 +71,22 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
             meta.sources.append(src)
 
     @classmethod
-    def setup_meta(cls, interpreter):  # noqa: ARG003
+    def setup_meta(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta:  # noqa: ARG003
         return BuiltinViaGlobalRefMeta()
 
     @classmethod
-    def sources(cls, interpreter):
+    def sources(cls, interpreter: PythonInfo) -> Generator[ExePathRefToDest]:
         for host_exe, targets, must, when in cls._executables(interpreter):
             yield ExePathRefToDest(host_exe, dest=cls.to_bin, targets=targets, must=must, when=when)
 
-    def to_bin(self, src):
+    def to_bin(self, src: Path) -> Path:
         return self.bin_dir / src.name
 
     @classmethod
-    def _executables(cls, interpreter):
+    def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], str, str]]:
         raise NotImplementedError
 
-    def create(self):
+    def create(self) -> None:
         dirs = self.ensure_directories()
         for directory in list(dirs):
             if any(i for i in dirs if i is not directory and directory.parts == i.parts[: len(directory.parts)]):
@@ -101,21 +112,21 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
         super().create()
 
     @property
-    def include_dir(self):
+    def include_dir(self) -> Path:
         return self.dest / ("Include" if self.interpreter.os == "nt" else "include")
 
-    def install_venv_shared_libs(self, venv_creator):
+    def install_venv_shared_libs(self, venv_creator: Venv) -> None:
         pass
 
-    def ensure_directories(self):
+    def ensure_directories(self) -> set[Path]:
         return {self.dest, self.bin_dir, self.script_dir, self.stdlib, self.include_dir} | set(self.libs)
 
-    def set_pyenv_cfg(self):
+    def set_pyenv_cfg(self) -> None:
         """We directly inject the base prefix and base exec prefix to avoid site.py needing to discover these from home (which usually is done within the interpreter itself)."""
         super().set_pyenv_cfg()
         self.pyenv_cfg["base-prefix"] = self.interpreter.system_prefix
         self.pyenv_cfg["base-exec-prefix"] = self.interpreter.system_exec_prefix
-        self.pyenv_cfg["base-executable"] = self.interpreter.system_executable
+        self.pyenv_cfg["base-executable"] = self.interpreter.system_executable  # ty: ignore[invalid-assignment]
 
 
 __all__ = [

@@ -9,6 +9,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from subprocess import CalledProcessError
 from threading import Lock, Thread
+from typing import TYPE_CHECKING
 
 from virtualenv.info import fs_supports_symlink
 from virtualenv.seed.embed.base_embed import BaseEmbed
@@ -17,16 +18,29 @@ from virtualenv.seed.wheels import get_wheel
 from .pip_install.copy import CopyPipInstall
 from .pip_install.symlink import SymlinkPipInstall
 
+if TYPE_CHECKING:
+    from argparse import ArgumentParser
+    from collections.abc import Generator
+
+    from python_discovery import PythonInfo
+
+    from virtualenv.app_data.base import AppData
+    from virtualenv.config.cli.parser import VirtualEnvOptions
+    from virtualenv.create.creator import Creator
+    from virtualenv.seed.wheels.util import Wheel
+
+    from .pip_install.base import PipInstall
+
 LOGGER = logging.getLogger(__name__)
 
 
 class FromAppData(BaseEmbed):
-    def __init__(self, options) -> None:
+    def __init__(self, options: VirtualEnvOptions) -> None:
         super().__init__(options)
         self.symlinks = options.symlink_app_data
 
     @classmethod
-    def add_parser_arguments(cls, parser, interpreter, app_data):
+    def add_parser_arguments(cls, parser: ArgumentParser, interpreter: PythonInfo, app_data: AppData) -> None:
         super().add_parser_arguments(parser, interpreter, app_data)
         can_symlink = app_data.transient is False and fs_supports_symlink()
         sym = "" if can_symlink else "not supported - "
@@ -38,7 +52,7 @@ class FromAppData(BaseEmbed):
             default=False,
         )
 
-    def run(self, creator):
+    def run(self, creator: Creator) -> None:
         if not self.enabled:
             return
         with self._get_seed_wheels(creator) as name_to_whl:
@@ -46,7 +60,7 @@ class FromAppData(BaseEmbed):
             installer_class = self.installer_class(pip_version)
             exceptions = {}
 
-            def _install(name, wheel):
+            def _install(name: str, wheel: Wheel) -> None:
                 try:
                     LOGGER.debug("install %s from wheel %s via %s", name, wheel, installer_class.__name__)
                     key = Path(installer_class.__name__) / wheel.path.stem
@@ -56,7 +70,7 @@ class FromAppData(BaseEmbed):
                     with parent.non_reentrant_lock_for_key(wheel_img.name):
                         if not installer.has_image():
                             installer.build_image()
-                    installer.install(creator.interpreter.version_info)
+                    installer.install(creator.interpreter.version_info)  # ty: ignore[invalid-argument-type]
                 except Exception:  # noqa: BLE001
                     exceptions[name] = sys.exc_info()
 
@@ -73,10 +87,10 @@ class FromAppData(BaseEmbed):
                 raise RuntimeError("\n".join(messages))
 
     @contextmanager
-    def _get_seed_wheels(self, creator):  # noqa: C901
+    def _get_seed_wheels(self, creator: Creator) -> Generator[dict[str, Wheel], None, None]:  # noqa: C901
         name_to_whl, lock, fail = {}, Lock(), {}
 
-        def _get(distribution, version):
+        def _get(distribution: str, version: str | None) -> None:
             for_py_version = creator.interpreter.version_release_str
             failure, result = None, None
             # fallback to download in case the exact version is not available
@@ -130,7 +144,7 @@ class FromAppData(BaseEmbed):
             raise RuntimeError(msg)
         yield name_to_whl
 
-    def installer_class(self, pip_version_tuple):
+    def installer_class(self, pip_version_tuple: tuple[int, ...] | None) -> type[PipInstall]:
         if self.symlinks and pip_version_tuple and pip_version_tuple >= (19, 3):  # symlink support requires pip 19.3+
             return SymlinkPipInstall
         return CopyPipInstall

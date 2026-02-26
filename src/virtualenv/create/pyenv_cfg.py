@@ -3,26 +3,30 @@ from __future__ import annotations
 import logging
 import os
 from collections import OrderedDict
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
 
 
 class PyEnvCfg:
-    def __init__(self, content, path) -> None:
+    def __init__(self, content: OrderedDict[str, str], path: Path) -> None:
         self.content = content
         self.path = path
 
     @classmethod
-    def from_folder(cls, folder):
+    def from_folder(cls, folder: Path) -> PyEnvCfg:
         return cls.from_file(folder / "pyvenv.cfg")
 
     @classmethod
-    def from_file(cls, path):
+    def from_file(cls, path: Path) -> PyEnvCfg:
         content = cls._read_values(path) if path.exists() else OrderedDict()
         return PyEnvCfg(content, path)
 
     @staticmethod
-    def _read_values(path):
+    def _read_values(path: Path) -> OrderedDict[str, str]:
         content = OrderedDict()
         for line in path.read_text(encoding="utf-8").splitlines():
             equals_at = line.index("=")
@@ -33,7 +37,7 @@ class PyEnvCfg:
             content[key] = value
         return content
 
-    def write(self):
+    def write(self) -> None:
         LOGGER.debug("write %s", self.path)
         text = ""
         for key, value in self.content.items():
@@ -49,20 +53,20 @@ class PyEnvCfg:
             text += "\n"
         self.path.write_text(text, encoding="utf-8")
 
-    def refresh(self):
+    def refresh(self) -> OrderedDict[str, str]:
         self.content = self._read_values(self.path)
         return self.content
 
-    def __setitem__(self, key, value) -> None:
+    def __setitem__(self, key: str, value: str) -> None:
         self.content[key] = value
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> str:
         return self.content[key]
 
-    def __contains__(self, item) -> bool:
+    def __contains__(self, item: str) -> bool:
         return item in self.content
 
-    def update(self, other):
+    def update(self, other: dict[str, str]) -> PyEnvCfg:
         self.content.update(other)
         return self
 

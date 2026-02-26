@@ -109,7 +109,7 @@ _DEBUG_MARKER = "=" * 30 + " target debug " + "=" * 30
 class _Debug:
     """lazily populate debug."""
 
-    def __init__(self, creator) -> None:
+    def __init__(self, creator: Creator) -> None:
         self.creator = creator
 
     def __repr__(self) -> str:

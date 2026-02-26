@@ -3,7 +3,11 @@ from __future__ import annotations
 import os
 from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from collections import OrderedDict
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from argparse import Action
+    from collections.abc import Mapping, Sequence
 
 from virtualenv.config.convert import get_type
 from virtualenv.config.env_var import get_env_var
@@ -62,7 +66,7 @@ class VirtualEnvOptions(Namespace):
 class VirtualEnvConfigParser(ArgumentParser):
     """Custom option parser which updates its defaults by checking the configuration files and environmental vars."""
 
-    def __init__(self, options=None, env=None, *args, **kwargs) -> None:
+    def __init__(self, options: VirtualEnvOptions | None = None, env: Mapping[str, str] | None = None, *args: Any, **kwargs: Any) -> None:
         env = os.environ if env is None else env
         self.file_config = IniConfig(env)
         self.epilog_list = []
@@ -80,14 +84,14 @@ class VirtualEnvConfigParser(ArgumentParser):
         self._interpreter = None
         self._app_data = None
 
-    def _fix_defaults(self):
+    def _fix_defaults(self) -> None:
         for action in self._actions:
             action_id = id(action)
             if action_id not in self._fixed:
                 self._fix_default(action)
                 self._fixed.add(action_id)
 
-    def _fix_default(self, action):
+    def _fix_default(self, action: Action) -> None:
         if hasattr(action, "default") and hasattr(action, "dest") and action.default != SUPPRESS:
             as_type = get_type(action)
             names = OrderedDict((i.lstrip("-").replace("-", "_"), None) for i in action.option_strings)
@@ -107,11 +111,11 @@ class VirtualEnvConfigParser(ArgumentParser):
                 outcome = action.default, "default"
             self.options.set_src(action.dest, *outcome)
 
-    def enable_help(self):
+    def enable_help(self) -> None:
         self._fix_defaults()
         self.add_argument("-h", "--help", action="help", default=SUPPRESS, help="show this help message and exit")
 
-    def parse_known_args(self, args=None, namespace=None):
+    def parse_known_args(self, args: Sequence[str] | None = None, namespace: VirtualEnvOptions | None = None) -> tuple[VirtualEnvOptions, list[str]]:
         if namespace is None:
             namespace = self.options
         elif namespace is not self.options:
@@ -127,10 +131,10 @@ class VirtualEnvConfigParser(ArgumentParser):
 
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
-    def __init__(self, prog, **kwargs) -> None:
+    def __init__(self, prog: str, **kwargs: Any) -> None:
         super().__init__(prog, max_help_position=32, width=240, **kwargs)
 
-    def _get_help_string(self, action):
+    def _get_help_string(self, action: Action) -> str | None:
         text = super()._get_help_string(action)
         if text is not None and hasattr(action, "default_source"):
             default = " (default: %(default)s)"

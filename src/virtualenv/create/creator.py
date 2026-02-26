@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
+    from typing import Any, NoReturn
 
     from python_discovery import PythonInfo
 
@@ -64,7 +65,7 @@ class Creator(ABC):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self._args())})"
 
-    def _args(self):
+    def _args(self) -> list[tuple[str, Any]]:
         return [
             ("dest", str(self.dest)),
             ("clear", self.clear),
@@ -125,10 +126,10 @@ class Creator(ABC):
         raise NotImplementedError
 
     @classmethod
-    def validate_dest(cls, raw_value):  # noqa: C901
+    def validate_dest(cls, raw_value: str) -> str:  # noqa: C901
         """No path separator in the path, valid chars and must be write-able."""
 
-        def non_write_able(dest, value):
+        def non_write_able(dest: Path, value: Path) -> NoReturn:
             common = Path(*os.path.commonprefix([value.parts, dest.parts]))
             msg = f"the destination {dest.relative_to(common)} is not write-able at {common}"
             raise ArgumentTypeError(msg)
@@ -174,7 +175,7 @@ class Creator(ABC):
             dest = base
         return str(value)
 
-    def run(self):
+    def run(self) -> None:
         if self.dest.exists() and self.clear:
             LOGGER.debug("delete %s", self.dest)
             safe_delete(self.dest)
@@ -184,7 +185,7 @@ class Creator(ABC):
         if not self.no_vcs_ignore:
             self.setup_ignore_vcs()
 
-    def add_cachedir_tag(self):
+    def add_cachedir_tag(self) -> None:
         """Generate a file indicating that this is not meant to be backed up."""
         cachedir_tag_file = self.dest / "CACHEDIR.TAG"
         if not cachedir_tag_file.exists():
@@ -196,7 +197,7 @@ class Creator(ABC):
             """).strip()
             cachedir_tag_file.write_text(cachedir_tag_text, encoding="utf-8")
 
-    def set_pyenv_cfg(self):
+    def set_pyenv_cfg(self) -> None:
         self.pyenv_cfg.content = OrderedDict()
         system_executable = self.interpreter.system_executable or self.interpreter.executable
         assert system_executable is not None  # noqa: S101
@@ -211,7 +212,7 @@ class Creator(ABC):
             prompt_value = os.path.basename(os.getcwd()) if self.prompt == "." else self.prompt
             self.pyenv_cfg["prompt"] = prompt_value
 
-    def setup_ignore_vcs(self):
+    def setup_ignore_vcs(self) -> None:
         """Generate ignore instructions for version control systems."""
         # mark this folder to be ignored by VCS, handle https://www.python.org/dev/peps/pep-0610/#registered-vcs
         git_ignore = self.dest / ".gitignore"
@@ -224,18 +225,18 @@ class Creator(ABC):
         # Subversion - does not support ignore files, requires direct manipulation with the svn tool
 
     @property
-    def debug(self):
+    def debug(self) -> dict[str, Any] | None:
         """:returns: debug information about the virtual environment (only valid after :meth:`create` has run)"""
         if self._debug is None and self.exe is not None:
             self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data, self.env)
         return self._debug
 
     @staticmethod
-    def debug_script():
+    def debug_script() -> Path:
         return DEBUG_SCRIPT
 
 
-def get_env_debug_info(env_exe, debug_script, app_data, env):
+def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env: dict[str, str]) -> dict[str, Any]:
     env = env.copy()
     env.pop("PYTHONPATH", None)
 

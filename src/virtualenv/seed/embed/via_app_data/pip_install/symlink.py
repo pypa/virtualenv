@@ -3,17 +3,21 @@ from __future__ import annotations
 import os
 from stat import S_IREAD, S_IRGRP, S_IROTH
 from subprocess import PIPE, Popen
+from typing import TYPE_CHECKING
 
 from virtualenv.util.path import safe_delete, set_tree
 
 from .base import PipInstall
 
+if TYPE_CHECKING:
+    from pathlib import Path
+
 
 class SymlinkPipInstall(PipInstall):
-    def _sync(self, src, dst):
+    def _sync(self, src: Path, dst: Path) -> None:
         os.symlink(str(src), str(dst))
 
-    def _generate_new_files(self):
+    def _generate_new_files(self) -> set[Path]:
         # create the pyc files, as the build image will be R/O
         cmd = [str(self._creator.exe), "-m", "compileall", str(self._image_dir)]
         process = Popen(cmd, stdout=PIPE, stderr=PIPE)
@@ -37,17 +41,17 @@ class SymlinkPipInstall(PipInstall):
             new_files.add(file)
         return new_files
 
-    def _fix_records(self, extra_record_data):
+    def _fix_records(self, extra_record_data: set[Path]) -> None:
         extra_record_data.update(i for i in self._image_dir.iterdir())
-        extra_record_data_str = self._records_text(sorted(extra_record_data, key=str))
-        (self._dist_info / "RECORD").write_text(extra_record_data_str, encoding="utf-8")
+        extra_record_data_str = self._records_text(sorted(extra_record_data, key=str))  # ty: ignore[invalid-argument-type]
+        (self._dist_info / "RECORD").write_text(extra_record_data_str, encoding="utf-8")  # ty: ignore[unsupported-operator]
 
-    def build_image(self):
+    def build_image(self) -> None:
         super().build_image()
         # protect the image by making it read only
         set_tree(self._image_dir, S_IREAD | S_IRGRP | S_IROTH)
 
-    def clear(self):
+    def clear(self) -> None:
         if self._image_dir.exists():
             safe_delete(self._image_dir)
         super().clear()

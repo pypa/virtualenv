@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys  # built-in
 
 
-def encode_path(value):
+def encode_path(value: object) -> str | None:
     if value is None:
         return None
     if not isinstance(value, (str, bytes)):
@@ -15,11 +15,11 @@ def encode_path(value):
     return value
 
 
-def encode_list_path(value):
+def encode_list_path(value: list[object]) -> list[str | None]:
     return [encode_path(i) for i in value]
 
 
-def run():  # noqa: C901
+def run() -> None:  # noqa: C901
     """Print debug data about the virtual environment."""
     try:
         from collections import OrderedDict  # noqa: PLC0415

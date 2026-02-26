@@ -2,20 +2,28 @@ from __future__ import annotations
 
 import abc
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from virtualenv.create.describe import PosixSupports, Python3Supports, WindowsSupports
 from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
 
 from .common import PyPy
 
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from python_discovery import PythonInfo
+
+    from virtualenv.create.via_global_ref.builtin.ref import PathRef
+
 
 class PyPy3(PyPy, Python3Supports, abc.ABC):
     @classmethod
-    def exe_stem(cls):
+    def exe_stem(cls) -> str:
         return "pypy3"
 
     @classmethod
-    def exe_names(cls, interpreter):
+    def exe_names(cls, interpreter: PythonInfo) -> set[str]:
         return super().exe_names(interpreter) | {"pypy"}
 
 
@@ -23,15 +31,15 @@ class PyPy3Posix(PyPy3, PosixSupports):
     """PyPy 3 on POSIX."""
 
     @classmethod
-    def _shared_libs(cls, python_dir):
+    def _shared_libs(cls, python_dir: Path) -> Generator[Path]:
         # glob for libpypy3-c.so, libpypy3-c.dylib, libpypy3.9-c.so ...
-        return python_dir.glob("libpypy3*.*")
+        return python_dir.glob("libpypy3*.*")  # ty: ignore[invalid-return-type]
 
-    def to_lib(self, src):
+    def to_lib(self, src: Path) -> Path:
         return self.dest / "lib" / src.name
 
     @classmethod
-    def sources(cls, interpreter):
+    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:
         yield from super().sources(interpreter)
         # PyPy >= 3.8 supports a standard prefix installation, where older versions always used a portable/development
         # style installation. If this is a standard prefix installation, skip the below:
@@ -59,11 +67,11 @@ class Pypy3Windows(PyPy3, WindowsSupports):
     """PyPy 3 on Windows."""
 
     @property
-    def less_v37(self):
+    def less_v37(self) -> bool:
         return self.interpreter.version_info.minor < 7  # noqa: PLR2004
 
     @classmethod
-    def _shared_libs(cls, python_dir):
+    def _shared_libs(cls, python_dir: Path) -> Generator[Path]:
         # PyPy does not use a PEP 397 launcher, so all DLLs from the interpreter directory are needed for the venv
         yield from python_dir.glob("*.dll")
 

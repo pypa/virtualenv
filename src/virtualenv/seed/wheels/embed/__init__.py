@@ -43,7 +43,7 @@ BUNDLE_SUPPORT = {
 MAX = "3.8"
 
 
-def get_embed_wheel(distribution, for_py_version):
+def get_embed_wheel(distribution: str, for_py_version: str) -> Wheel | None:
     mapping = BUNDLE_SUPPORT.get(for_py_version, {}) or BUNDLE_SUPPORT[MAX]
     wheel_file = mapping.get(distribution)
     if wheel_file is None:

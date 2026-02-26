@@ -7,24 +7,28 @@ import sys
 from operator import eq, lt
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, Popen
+from typing import TYPE_CHECKING
 
 from .bundle import from_bundle
 from .periodic_update import add_wheel_to_update_log
 from .util import Version, Wheel, discover_wheels
 
+if TYPE_CHECKING:
+    from virtualenv.app_data.base import AppData
+
 LOGGER = logging.getLogger(__name__)
 
 
 def get_wheel(  # noqa: PLR0913
-    distribution,
-    version,
-    for_py_version,
-    search_dirs,
-    download,
-    app_data,
-    do_periodic_update,
-    env,
-):
+    distribution: str,
+    version: str | None,
+    for_py_version: str,
+    search_dirs: list[Path],
+    download: bool,
+    app_data: AppData,
+    do_periodic_update: bool,
+    env: dict[str, str],
+) -> Wheel | None:
     """Get a wheel with the given distribution-version-for_py_version trio, by using the extra search dir + download."""
     # not all wheels are compatible with all python versions, so we need to py version qualify it
     wheel = None
@@ -50,7 +54,7 @@ def get_wheel(  # noqa: PLR0913
     return wheel
 
 
-def download_wheel(distribution, version_spec, for_py_version, search_dirs, app_data, to_folder, env):  # noqa: PLR0913
+def download_wheel(distribution: str, version_spec: str | None, for_py_version: str, search_dirs: list[Path], app_data: AppData, to_folder: Path, env: dict[str, str]) -> Wheel:  # noqa: PLR0913
     to_download = f"{distribution}{version_spec or ''}"
     LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
     cmd = [
@@ -77,11 +81,11 @@ def download_wheel(distribution, version_spec, for_py_version, search_dirs, app_
         kwargs = {"output": out, "stderr": err}
         raise CalledProcessError(process.returncode, cmd, **kwargs)
     result = _find_downloaded_wheel(distribution, version_spec, for_py_version, to_folder, out)
-    LOGGER.debug("downloaded wheel %s", result.name)
-    return result
+    LOGGER.debug("downloaded wheel %s", result.name)  # ty: ignore[unresolved-attribute]
+    return result  # ty: ignore[invalid-return-type]
 
 
-def _find_downloaded_wheel(distribution, version_spec, for_py_version, to_folder, out):
+def _find_downloaded_wheel(distribution: str, version_spec: str | None, for_py_version: str, to_folder: Path, out: str) -> Wheel | None:
     for line in out.splitlines():
         stripped_line = line.lstrip()
         for marker in ("Saved ", "File was already downloaded "):
@@ -91,7 +95,7 @@ def _find_downloaded_wheel(distribution, version_spec, for_py_version, to_folder
     return find_compatible_in_house(distribution, version_spec, for_py_version, to_folder)
 
 
-def find_compatible_in_house(distribution, version_spec, for_py_version, in_folder):
+def find_compatible_in_house(distribution: str, version_spec: str | None, for_py_version: str, in_folder: Path) -> Wheel | None:
     wheels = discover_wheels(in_folder, distribution, None, for_py_version)
     start, end = 0, len(wheels)
     if version_spec is not None and version_spec:
@@ -107,7 +111,7 @@ def find_compatible_in_house(distribution, version_spec, for_py_version, in_fold
     return None if start == end else wheels[start]
 
 
-def pip_wheel_env_run(search_dirs, app_data, env):
+def pip_wheel_env_run(search_dirs: list[Path], app_data: AppData, env: dict[str, str]) -> dict[str, str]:
     env = env.copy()
     env.update({"PIP_USE_WHEEL": "1", "PIP_USER": "0", "PIP_NO_INPUT": "1", "PYTHONIOENCODING": "utf-8"})
     wheel = get_wheel(

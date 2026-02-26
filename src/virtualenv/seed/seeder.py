@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class Seeder(ABC):
     """A seeder will install some seed packages into a virtual environment."""
 
-    def __init__(self, options: VirtualEnvOptions, enabled: bool) -> None:  # noqa: FBT001
+    def __init__(self, options: VirtualEnvOptions, enabled: bool) -> None:
         """Create.
 
         :param options: the parsed options as defined within :meth:`add_parser_arguments`

@@ -4,16 +4,25 @@ import logging
 from abc import ABC
 from argparse import SUPPRESS
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from virtualenv.seed.seeder import Seeder
 from virtualenv.seed.wheels import Version
+
+if TYPE_CHECKING:
+    from argparse import ArgumentParser
+
+    from python_discovery import PythonInfo
+
+    from virtualenv.app_data.base import AppData
+    from virtualenv.config.cli.parser import VirtualEnvOptions
 
 LOGGER = logging.getLogger(__name__)
 PERIODIC_UPDATE_ON_BY_DEFAULT = True
 
 
 class BaseEmbed(Seeder, ABC):
-    def __init__(self, options) -> None:
+    def __init__(self, options: VirtualEnvOptions) -> None:
         super().__init__(options, enabled=options.no_seed is False)
 
         self.download = options.download
@@ -61,7 +70,7 @@ class BaseEmbed(Seeder, ABC):
         }
 
     @classmethod
-    def add_parser_arguments(cls, parser, interpreter, app_data):  # noqa: ARG003
+    def add_parser_arguments(cls, parser: ArgumentParser, interpreter: PythonInfo, app_data: AppData) -> None:  # noqa: ARG003
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
             "--no-download",

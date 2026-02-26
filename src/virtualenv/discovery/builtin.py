@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 
     from python_discovery import PyInfoCache, PythonInfo
 
+    from virtualenv.config.cli.parser import VirtualEnvOptions
+
 
 def get_interpreter(
     key: str,
@@ -31,7 +33,7 @@ class Builtin(Discover):
     app_data: PyInfoCache
     try_first_with: Sequence[str]
 
-    def __init__(self, options) -> None:
+    def __init__(self, options: VirtualEnvOptions) -> None:
         super().__init__(options)
         self.python_spec = options.python or [sys.executable]
         if self._env.get("VIRTUALENV_PYTHON"):

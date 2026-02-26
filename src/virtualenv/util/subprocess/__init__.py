@@ -22,7 +22,7 @@ class LogCmd:
         return cmd_repr
 
 
-def run_cmd(cmd):
+def run_cmd(cmd: list[str]) -> tuple[int, str, str]:
     try:
         process = subprocess.Popen(
             cmd,
@@ -38,7 +38,7 @@ def run_cmd(cmd):
         code, out, err = error.errno, "", error.strerror
         if code == 2 and err is not None and "file" in err:  # noqa: PLR2004
             err = str(error)  # FileNotFoundError in Python >= 3.3
-    return code, out, err
+    return code, out, err  # ty: ignore[invalid-return-type]
 
 
 __all__ = (

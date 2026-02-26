@@ -5,11 +5,18 @@ import logging
 import os
 import sys
 from timeit import default_timer
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import MutableMapping
+
+    from virtualenv.config.cli.parser import VirtualEnvOptions
+    from virtualenv.run.session import Session
 
 LOGGER = logging.getLogger(__name__)
 
 
-def run(args=None, options=None, env=None):
+def run(args: list[str] | None = None, options: VirtualEnvOptions | None = None, env: MutableMapping[str, str] | None = None) -> None:
     env = os.environ if env is None else env
     start = default_timer()
     from virtualenv.run import cli_run  # noqa: PLC0415
@@ -37,7 +44,7 @@ def run(args=None, options=None, env=None):
 
 
 class LogSession:
-    def __init__(self, session, start) -> None:
+    def __init__(self, session: Session, start: float) -> None:
         self.session = session
         self.start = start
 
@@ -50,7 +57,7 @@ class LogSession:
         ]
         if self.session.seeder.enabled:
             lines.append(f"  seeder {self.session.seeder!s}")
-            path = self.session.creator.purelib.iterdir()
+            path = self.session.creator.purelib.iterdir()  # ty: ignore[unresolved-attribute]
             packages = sorted("==".join(i.stem.split("-")) for i in path if i.suffix == ".dist-info")
             lines.append(f"    added seed packages: {', '.join(packages)}")
 
@@ -59,7 +66,7 @@ class LogSession:
         return "\n".join(lines)
 
 
-def run_with_catch(args=None, env=None):
+def run_with_catch(args: list[str] | None = None, env: MutableMapping[str, str] | None = None) -> None:
     from virtualenv.config.cli.parser import VirtualEnvOptions  # noqa: PLC0415
 
     env = os.environ if env is None else env

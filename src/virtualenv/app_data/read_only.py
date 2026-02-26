@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 import os.path
+from typing import TYPE_CHECKING
 
 from virtualenv.util.lock import NoOpFileLock
 
 from .via_disk_folder import AppDataDiskFolder, PyInfoStoreDisk
+
+if TYPE_CHECKING:
+    from pathlib import Path
+    from typing import NoReturn
 
 
 class ReadOnlyAppData(AppDataDiskFolder):
@@ -24,15 +29,15 @@ class ReadOnlyAppData(AppDataDiskFolder):
     def py_info_clear(self) -> None:
         raise NotImplementedError
 
-    def py_info(self, path):
+    def py_info(self, path: Path) -> _PyInfoStoreDiskReadOnly:
         return _PyInfoStoreDiskReadOnly(self.py_info_at, path)
 
-    def embed_update_log(self, distribution, for_py_version):
+    def embed_update_log(self, distribution: str, for_py_version: str) -> NoReturn:
         raise NotImplementedError
 
 
 class _PyInfoStoreDiskReadOnly(PyInfoStoreDisk):
-    def write(self, content):  # noqa: ARG002
+    def write(self, content: str) -> NoReturn:  # noqa: ARG002
         msg = "read-only app data python info cannot be updated"
         raise RuntimeError(msg)
 

@@ -2,21 +2,30 @@ from __future__ import annotations
 
 from argparse import ArgumentTypeError
 from collections import OrderedDict
+from typing import TYPE_CHECKING
 
 from .base import ComponentBuilder
 
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from python_discovery import PythonInfo
+
+    from virtualenv.activation.activator import Activator
+    from virtualenv.config.cli.parser import VirtualEnvConfigParser, VirtualEnvOptions
+
 
 class ActivationSelector(ComponentBuilder):
-    def __init__(self, interpreter, parser) -> None:
+    def __init__(self, interpreter: PythonInfo, parser: VirtualEnvConfigParser) -> None:
         self.default = None
         possible = OrderedDict(
-            (k, v) for k, v in self.options("virtualenv.activate").items() if v.supports(interpreter)
+            (k, v) for k, v in self.options("virtualenv.activate").items() if v.supports(interpreter)  # ty: ignore[unresolved-attribute]
         )
         super().__init__(interpreter, parser, "activators", possible)
         self.parser.description = "options for activation scripts"
         self.active = None
 
-    def add_selector_arg_parse(self, name, choices):
+    def add_selector_arg_parse(self, name: str, choices: Sequence[str]) -> None:
         self.default = ",".join(choices)
         self.parser.add_argument(
             f"--{name}",
@@ -27,7 +36,7 @@ class ActivationSelector(ComponentBuilder):
             type=self._extract_activators,
         )
 
-    def _extract_activators(self, entered_str):
+    def _extract_activators(self, entered_str: str) -> list[str]:
         elements = [e.strip() for e in entered_str.split(",") if e.strip()]
         missing = [e for e in elements if e not in self.possible]
         if missing:
@@ -35,7 +44,7 @@ class ActivationSelector(ComponentBuilder):
             raise ArgumentTypeError(msg)
         return elements
 
-    def handle_selected_arg_parse(self, options):
+    def handle_selected_arg_parse(self, options: VirtualEnvOptions) -> None:  # ty: ignore[invalid-method-override]
         selected_activators = (
             self._extract_activators(self.default) if options.activators is self.default else options.activators
         )
@@ -51,9 +60,9 @@ class ActivationSelector(ComponentBuilder):
             default=None,
         )
         for activator in self.active.values():
-            activator.add_parser_arguments(self.parser, self.interpreter)
+            activator.add_parser_arguments(self.parser, self.interpreter)  # ty: ignore[unresolved-attribute]
 
-    def create(self, options):
+    def create(self, options: VirtualEnvOptions) -> list[Activator]:
         assert self.active is not None  # noqa: S101  # Set by handle_selected_arg_parse
         return [activator_class(options) for activator_class in self.active.values()]
 
