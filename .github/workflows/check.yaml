@@ -66,7 +66,7 @@ jobs:
         run: |
           git fetch --force --tags https://github.com/pypa/virtualenv.git
       - name: 🐍 Setup Python for tox
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: "3.14"
       - name: 📦 Install tox with this virtualenv
@@ -78,7 +78,7 @@ jobs:
             uv tool install --no-managed-python --python 3.14 "tox>=4.45" --with tox-uv --with .
           fi
       - name: 🐍 Setup Python for test ${{ matrix.py }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         if: ${{ !startsWith(matrix.py, 'brew@') && matrix.py != 'rp' }}
         with:
           python-version: ${{ matrix.py }}
