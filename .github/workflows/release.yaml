@@ -50,7 +50,7 @@ jobs:
       id-token: write
     steps:
       - name: Download all the dists
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ${{ env.dists-artifact-name }}
           path: dist/
@@ -59,7 +59,7 @@ jobs:
         with:
           attestations: true
       - name: Download the zipapp
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: virtualenv-zipapp
       - name: Create GitHub Release
