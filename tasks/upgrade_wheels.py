@@ -102,6 +102,8 @@ def run() -> NoReturn:  # noqa: C901, PLR0912
         )
         msg = dedent(
             f"""
+        from __future__ import annotations
+
         from pathlib import Path
 
         from virtualenv.seed.wheels.util import Wheel
@@ -111,7 +113,7 @@ def run() -> NoReturn:  # noqa: C901, PLR0912
         MAX = {next(iter(support_table.keys()))!r}
 
 
-        def get_embed_wheel(distribution, for_py_version):
+        def get_embed_wheel(distribution: str, for_py_version: str) -> Wheel | None:
             mapping = BUNDLE_SUPPORT.get(for_py_version, {{}}) or BUNDLE_SUPPORT[MAX]
             wheel_file = mapping.get(distribution)
             if wheel_file is None:
@@ -120,10 +122,10 @@ def run() -> NoReturn:  # noqa: C901, PLR0912
             return Wheel.from_path(path)
 
         __all__ = [
-            "get_embed_wheel",
+            "BUNDLE_FOLDER",
             "BUNDLE_SUPPORT",
             "MAX",
-            "BUNDLE_FOLDER",
+            "get_embed_wheel",
         ]
 
         """,
