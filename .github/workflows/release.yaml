@@ -29,12 +29,12 @@ jobs:
       - name: Build zipapp
         run: uv tool run --with tox-uv tox r -e zipapp
       - name: Store the distribution packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.dists-artifact-name }}
           path: dist/*
       - name: Store the zipapp
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: virtualenv-zipapp
           path: virtualenv.pyz
