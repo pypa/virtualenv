@@ -56,7 +56,7 @@ jobs:
           - { os: windows-2025, py: "pypy-3.8" }
     steps:
       - name: 🚀 Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
       - name: 📥 Checkout code
         uses: actions/checkout@v6
         with:
@@ -177,7 +177,7 @@ jobs:
           - { os: windows-2025, tox_env: type-3.8 }
     steps:
       - name: 🚀 Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v7
       - name: 📦 Install tox
         run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.45" --with tox-uv
       - name: 📥 Checkout code
