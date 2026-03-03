@@ -73,8 +73,7 @@ class VersionPlatformSelect:
             return
         name = context.name.replace("_", "-")
         if name in self.distributions:
-            result = dist_class(file_loader=self.get_data, dist_path=self.distributions[name])
-            yield result
+            yield dist_class(file_loader=self.get_data, dist_path=self.distributions[name])
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={ABS_HERE})"

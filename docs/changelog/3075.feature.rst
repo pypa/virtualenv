@@ -1,0 +1,2 @@
+Update embed wheel generator (``tasks/upgrade_wheels.py``) to include type annotations in generated output - by
+:user:`rahuldevikar`.
