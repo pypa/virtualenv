@@ -1,2 +1,2 @@
-Use ``BASH_SOURCE[0]`` instead of ``$0`` in the bash activate script relocation fallback, fixing incorrect ``PATH``
-when sourcing the activate script from a different directory - by :user:`gaborbernat`.
+Use ``BASH_SOURCE[0]`` instead of ``$0`` in the bash activate script relocation fallback, fixing incorrect ``PATH`` when
+sourcing the activate script from a different directory - by :user:`gaborbernat`.

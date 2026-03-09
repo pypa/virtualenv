@@ -76,7 +76,15 @@ def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
 def test_bash_activate_relocation_resolves_virtual_env(tmp_path, current_fastest) -> None:
     original = tmp_path / "original"
-    cli_run(["--without-pip", str(original), "--creator", current_fastest, "--no-periodic-update", "--activators", "bash"])
+    cli_run([
+        "--without-pip",
+        str(original),
+        "--creator",
+        current_fastest,
+        "--no-periodic-update",
+        "--activators",
+        "bash",
+    ])
     relocated = tmp_path / "relocated"
     shutil.move(original, relocated)
 
