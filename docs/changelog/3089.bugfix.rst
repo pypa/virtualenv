@@ -1,2 +1,0 @@
-Pass ``--without-scm-ignore-files`` to subprocess venv on Python 3.13+ so virtualenv controls ``.gitignore`` creation,
-fixing flaky ``test_create_no_seed`` and ``--no-vcs-ignore`` being ignored in subprocess path - by :user:`gaborbernat`.

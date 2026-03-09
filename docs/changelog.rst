@@ -7,6 +7,25 @@
 .. towncrier release notes start
 
 **********************
+ v21.2.0 (2026-03-09)
+**********************
+
+Features - 21.2.0
+=================
+
+- Update embed wheel generator (``tasks/upgrade_wheels.py``) to include type annotations in generated output - by
+  :user:`rahuldevikar`. (:issue:`3075`)
+
+Bugfixes - 21.2.0
+=================
+
+- Pass ``--without-scm-ignore-files`` to subprocess venv on Python 3.13+ so virtualenv controls ``.gitignore`` creation,
+  fixing flaky ``test_create_no_seed`` and ``--no-vcs-ignore`` being ignored in subprocess path - by
+  :user:`gaborbernat`. (:issue:`3089`)
+- Use ``BASH_SOURCE[0]`` instead of ``$0`` in the bash activate script relocation fallback, fixing incorrect ``PATH``
+  when sourcing the activate script from a different directory - by :user:`gaborbernat`. (:issue:`3090`)
+
+**********************
  v21.1.0 (2026-02-27)
 **********************
 
