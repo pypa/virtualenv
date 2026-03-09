@@ -106,7 +106,7 @@ def build_parser(
     if interpreter is None:
         msg = f"failed to find interpreter for {discover}"
         raise RuntimeError(msg)
-    elements = [
+    elements: list[ComponentBuilder] = [
         CreatorSelector(interpreter, parser),
         SeederSelector(interpreter, parser),
         ActivationSelector(interpreter, parser),
