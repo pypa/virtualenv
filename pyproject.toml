@@ -193,6 +193,7 @@ lint.per-file-ignores."tests/**/*.py" = [
   "PLR2004", # Magic value used in comparison, consider replacing with a constant variable
   "S101",    # asserts allowed in tests
   "S603",    # `subprocess` call: check for execution of untrusted input
+  "S607",    # partial executable path is fine in tests
 ]
 lint.isort = { known-first-party = [
   "virtualenv",

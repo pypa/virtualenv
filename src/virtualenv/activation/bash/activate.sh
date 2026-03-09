@@ -62,7 +62,7 @@ deactivate nondestructive
 
 if [ ! -d __VIRTUAL_ENV__ ]; then
     echo "Virtual environment directory __VIRTUAL_ENV__ does not exist!" >&2
-    CURRENT_PATH=$(realpath "${0}")
+    CURRENT_PATH=$(realpath "${BASH_SOURCE[0]}")
     CURRENT_DIR=$(dirname "${CURRENT_PATH}")
     VIRTUAL_ENV="$(realpath "${CURRENT_DIR}/../")"
 else
