@@ -10,12 +10,12 @@ repos:
       - id: check-github-workflows
         args: ["--verbose"]
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
+    rev: v2.4.2
     hooks:
       - id: codespell
         args: ["--write-changes"]
   - repo: https://github.com/tox-dev/tox-toml-fmt
-    rev: "v1.8.0"
+    rev: "v1.9.1"
     hooks:
       - id: tox-toml-fmt
   - repo: https://github.com/tox-dev/pyproject-fmt
@@ -23,7 +23,7 @@ repos:
     hooks:
       - id: pyproject-fmt
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.4"
+    rev: "v0.15.5"
     hooks:
       - id: ruff-format
       - id: ruff
