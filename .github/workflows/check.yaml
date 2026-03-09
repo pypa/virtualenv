@@ -192,3 +192,5 @@ jobs:
         run: tox run -vv --notest --skip-missing-interpreters false -e ${{ matrix.tox_env }}
       - name: 🏃 Run check for ${{ matrix.tox_env }}
         run: tox run --skip-pkg-install -e ${{ matrix.tox_env }}
+        env:
+          UPGRADE_ADVISORY: ${{ matrix.tox_env == 'upgrade' && '1' || '' }}
