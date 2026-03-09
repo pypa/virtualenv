@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import shutil
+import subprocess
 from argparse import Namespace
 
 import pytest
 
 from virtualenv.activation import BashActivator
 from virtualenv.info import IS_WIN
+from virtualenv.run import cli_run
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
@@ -68,6 +71,26 @@ def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
         assert "TCL_LIBRARY=''" in content
         # The export is inside the if, so this is fine
         assert "export TCL_LIBRARY" in content
+
+
+@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
+def test_bash_activate_relocation_resolves_virtual_env(tmp_path, current_fastest) -> None:
+    original = tmp_path / "original"
+    cli_run(["--without-pip", str(original), "--creator", current_fastest, "--no-periodic-update", "--activators", "bash"])
+    relocated = tmp_path / "relocated"
+    shutil.move(original, relocated)
+
+    work_dir = tmp_path / "workdir"
+    work_dir.mkdir()
+    activate_script = relocated / "bin" / "activate"
+    result = subprocess.run(
+        ["bash", "-c", f'source "{activate_script}" 2>/dev/null && echo "$VIRTUAL_ENV"'],
+        capture_output=True,
+        text=True,
+        cwd=str(work_dir),
+    )
+    assert result.returncode == 0
+    assert result.stdout.strip() == str(relocated)
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
