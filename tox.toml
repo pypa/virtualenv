@@ -37,7 +37,7 @@ commands = [
     "run",
     "-m",
     "pytest",
-    { replace = "posargs", extend = true, default = [
+    { replace = "posargs", default = [
       "--junitxml",
       "{work_dir}{/}junit.{env_name}.xml",
       "tests",
@@ -46,7 +46,7 @@ commands = [
       "auto",
       "--dist",
       "loadfile",
-    ] },
+    ], extend = true },
   ],
   [ "coverage", "combine" ],
   [ "coverage", "report", "--skip-covered", "--show-missing" ],
@@ -101,12 +101,12 @@ commands = [ [ "pre-commit", "run", "--all-files", "--show-diff-on-failure" ] ]
 commands = [
   [
     "pytest",
-    { replace = "posargs", extend = true, default = [
+    { replace = "posargs", default = [
       "--junitxml",
       "{work_dir}{/}junit.{env_name}.xml",
       "tests",
       "--skip-slow",
-    ] },
+    ], extend = true },
   ],
 ]
 
@@ -124,12 +124,12 @@ commands = [
 commands = [
   [
     "pytest",
-    { replace = "posargs", extend = true, default = [
+    { replace = "posargs", default = [
       "--junitxml",
       "{work_dir}{/}junit.{env_name}.xml",
       "tests",
       "--skip-slow",
-    ] },
+    ], extend = true },
   ],
 ]
 
@@ -137,21 +137,6 @@ commands = [
 description = "run type checker (ty) against Python 3.14"
 dependency_groups = [ "type" ]
 commands = [ [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.14" ] ]
-
-[env.upgrade]
-description = "upgrade pip/wheels/setuptools to latest"
-skip_install = true
-deps = [ "ruff>=0.12.4" ]
-pass_env = [ "UPGRADE_ADVISORY" ]
-change_dir = "{tox_root}{/}tasks"
-commands = [ [ "python", "upgrade_wheels.py" ] ]
-uv_seed = true
-
-[env.release]
-description = "do a release, required posarg of the version number"
-deps = [ "gitpython>=3.1.44", "packaging>=25", "pre-commit-uv>=4.1.4", "towncrier>=24.8" ]
-change_dir = "{tox_root}{/}tasks"
-commands = [ [ "python", "release.py", { replace = "posargs", extend = true } ] ]
 
 [env.dev]
 description = "generate a DEV environment"
@@ -161,6 +146,21 @@ commands = [
   [ "uv", "pip", "tree" ],
   [ "python", "-c", "import sys; print(sys.executable)" ],
 ]
+
+[env.release]
+description = "do a release, required posarg of the version number"
+deps = [ "gitpython>=3.1.44", "packaging>=25", "pre-commit-uv>=4.1.4", "towncrier>=24.8" ]
+change_dir = "{tox_root}{/}tasks"
+commands = [ [ "python", "release.py", { replace = "posargs", extend = true } ] ]
+
+[env.upgrade]
+description = "upgrade pip/wheels/setuptools to latest"
+skip_install = true
+deps = [ "ruff>=0.12.4" ]
+pass_env = [ "UPGRADE_ADVISORY" ]
+change_dir = "{tox_root}{/}tasks"
+commands = [ [ "python", "upgrade_wheels.py" ] ]
+uv_seed = true
 
 [env.zipapp]
 description = "generate a zipapp"

@@ -153,7 +153,7 @@ def _check_os_environ_stable():
     old = os.environ.copy()
     # ensure we don't inherit parent env variables
     to_clean = {k for k in os.environ if k.startswith(("VIRTUALENV_", "TOX_")) or "VIRTUAL_ENV" in k}
-    cleaned = {k: os.environ[k] for k, v in os.environ.items()}
+    cleaned = {k: os.environ[k] for k in os.environ}
     override = {
         "VIRTUALENV_NO_PERIODIC_UPDATE": "1",
         "VIRTUALENV_NO_DOWNLOAD": "1",
