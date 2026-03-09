@@ -220,11 +220,7 @@ def test_create_no_seed(  # noqa: C901, PLR0912, PLR0913, PLR0915
         assert result == "None"
 
     git_ignore = (dest / ".gitignore").read_text(encoding="utf-8")
-    if creator_key == "venv" and sys.version_info >= (3, 13):
-        comment = "# Created by venv; see https://docs.python.org/3/library/venv.html"
-    else:
-        comment = "# created by virtualenv automatically"
-    assert git_ignore.splitlines() == [comment, "*"]
+    assert git_ignore.splitlines() == ["# created by virtualenv automatically", "*"]
 
 
 def test_create_cachedir_tag(tmp_path) -> None:

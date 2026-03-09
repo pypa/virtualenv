@@ -87,6 +87,8 @@ class Venv(ViaGlobalRefApi):
 
     def get_host_create_cmd(self) -> list[str]:
         cmd = [self.interpreter.system_executable, "-m", "venv", "--without-pip"]
+        if self.interpreter.version_info >= (3, 13):
+            cmd.append("--without-scm-ignore-files")
         if self.enable_system_site_package:
             cmd.append("--system-site-packages")
         cmd.extend(("--symlinks" if self.symlinks else "--copies", str(self.dest)))
