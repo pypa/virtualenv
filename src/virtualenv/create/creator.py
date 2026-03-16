@@ -21,6 +21,8 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
+from os.path import commonpath
+
 from virtualenv.util.path import safe_delete
 from virtualenv.util.subprocess import LogCmd, run_cmd
 from virtualenv.version import __version__
@@ -148,7 +150,7 @@ class Creator(ABC):
         """No path separator in the path, valid chars and must be write-able."""
 
         def non_write_able(dest: Path, value: Path) -> NoReturn:
-            common = Path(*os.path.commonprefix([value.parts, dest.parts]))
+            common = Path(*commonpath([value.parts, dest.parts]))
             msg = f"the destination {dest.relative_to(common)} is not write-able at {common}"
             raise ArgumentTypeError(msg)
 
