@@ -148,7 +148,7 @@ class Creator(ABC):
         """No path separator in the path, valid chars and must be write-able."""
 
         def non_write_able(dest: Path, value: Path) -> NoReturn:
-            common = Path(*os.path.commonprefix([value.parts, dest.parts]))
+            common = Path(os.path.commonpath([str(value), str(dest)]))
             msg = f"the destination {dest.relative_to(common)} is not write-able at {common}"
             raise ArgumentTypeError(msg)
 
