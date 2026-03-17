@@ -209,6 +209,9 @@ count = true
 [tool.pyproject-fmt]
 max_supported_python = "3.14"
 
+[tool.ty]
+rules.unused-ignore-comment = "ignore"  # some ignores are platform/version-specific (e.g., ctypes.windll on Linux)
+
 [tool.pytest]
 ini_options.markers = [
   "slow",
@@ -254,6 +257,3 @@ title_format = false
 issue_format = ":issue:`{issue}`"
 template = "docs/changelog/template.jinja2"
 underlines = [ "*", "=", "-" ]
-
-[tool.ty]
-rules.unused-ignore-comment = "ignore"  # some ignores are platform/version-specific (e.g., ctypes.windll on Linux)
