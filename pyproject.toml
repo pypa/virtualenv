@@ -108,7 +108,7 @@ test = [
   "time-machine>=2.10; platform_python_implementation=='CPython'",
 ]
 type = [
-  "ty>=0.0.17",
+  "ty>=0.0.19",
   { include-group = "test" },
 ]
 docs = [

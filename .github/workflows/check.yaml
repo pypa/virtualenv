@@ -56,17 +56,18 @@ jobs:
           - { os: windows-2025, py: "pypy-3.8" }
     steps:
       - name: 🚀 Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
       - name: 📥 Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: 🏷️ Fetch upstream tags for versioning
         shell: bash
         run: |
           git fetch --force --tags https://github.com/pypa/virtualenv.git
       - name: 🐍 Setup Python for tox
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.14"
       - name: 📦 Install tox with this virtualenv
@@ -78,7 +79,7 @@ jobs:
             uv tool install --no-managed-python --python 3.14 "tox>=4.45" --with tox-uv --with .
           fi
       - name: 🐍 Setup Python for test ${{ matrix.py }}
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         if: ${{ !startsWith(matrix.py, 'brew@') && matrix.py != 'rp' }}
         with:
           python-version: ${{ matrix.py }}
@@ -177,13 +178,14 @@ jobs:
           - { os: windows-2025, tox_env: type-3.8 }
     steps:
       - name: 🚀 Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
       - name: 📦 Install tox
         run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.45" --with tox-uv
       - name: 📥 Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
+          persist-credentials: false
       - name: 🏷️ Fetch upstream tags for versioning
         shell: bash
         run: |
