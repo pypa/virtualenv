@@ -19,7 +19,7 @@ def encode_list_path(value: list[object]) -> list[str | None]:
     return [encode_path(i) for i in value]
 
 
-def run() -> None:  # noqa: C901
+def run() -> None:  # noqa: C901,PLR0915
     """Print debug data about the virtual environment."""
     try:
         from collections import OrderedDict  # noqa: PLC0415
@@ -27,8 +27,8 @@ def run() -> None:  # noqa: C901
         DictType = OrderedDict  # noqa: N806
     except ImportError:  # pragma: no cover
         DictType = dict  # pragma: no cover  # noqa: N806
-    sys_info: dict[str, str | None | list[str | None]] = DictType()
-    result: dict[str, str | None | dict[str, str | None | list[str | None]]] = DictType([("sys", sys_info)])
+    sys_info: dict[str, str | list[str | None] | None] = DictType()
+    result: dict[str, str | dict[str, str | list[str | None] | None] | None] = DictType([("sys", sys_info)])
     path_keys = (
         "executable",
         "_base_executable",
