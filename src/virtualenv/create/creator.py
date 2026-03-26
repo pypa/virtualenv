@@ -93,7 +93,7 @@ class Creator(ABC):
         ]
 
     @classmethod
-    def can_create(cls, interpreter: PythonInfo) -> CreatorMeta | None:  # noqa: ARG003
+    def can_create(cls, interpreter: PythonInfo) -> CreatorMeta | bool | None:  # noqa: ARG003
         """Determine if we can create a virtual environment.
 
         :param interpreter: the interpreter in question
@@ -102,7 +102,7 @@ class Creator(ABC):
             :meth:`add_parser_arguments`
 
         """
-        return True  # type: ignore[return-value]
+        return True
 
     @classmethod
     def add_parser_arguments(

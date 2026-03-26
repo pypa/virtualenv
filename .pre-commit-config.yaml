@@ -41,6 +41,10 @@ repos:
       - id: docstrfmt
         args: ["-l", "120"]
         additional_dependencies: ["sphinx>=9.1"]
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.23.1
+    hooks:
+      - id: zizmor
   - repo: meta
     hooks:
       - id: check-hooks-apply

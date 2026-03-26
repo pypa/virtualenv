@@ -12,19 +12,21 @@ jobs:
     name: Upgrade embedded pip/setuptools/wheel
     if: github.repository_owner == 'pypa'
     runs-on: ubuntu-24.04
+    environment: upgrade
     permissions:
       contents: write
       pull-requests: write
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
       - name: Install tox
         run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.32" --with tox-uv
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
           ssh-key: ${{ secrets.DEPLOY_KEY }}
+          persist-credentials: false
       - name: Fetch upstream tags for versioning
         run: git fetch --force --tags https://github.com/pypa/virtualenv.git
       - name: Run upgrade
@@ -70,7 +72,7 @@ jobs:
       - name: Create Pull Request
         if: steps.upgrade.outputs.changed == 'true' && steps.age-check.outputs.skip != 'true'
         id: cpr
-        uses: peter-evans/create-pull-request@v8
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8
         with:
           commit-message: "Upgrade embedded dependencies"
           branch: auto/upgrade-embedded-deps
@@ -85,10 +87,12 @@ jobs:
       - name: Rename changelog with PR number
         if: steps.cpr.outputs.pull-request-number
         run: |
-          pr_number="${{ steps.cpr.outputs.pull-request-number }}"
+          pr_number="${STEPS_CPR_OUTPUTS_PULL_REQUEST_NUMBER}"
           git fetch origin auto/upgrade-embedded-deps
           git checkout auto/upgrade-embedded-deps
           mv docs/changelog/u.bugfix.rst "docs/changelog/${pr_number}.bugfix.rst"
           git add docs/changelog/
           git commit -m "Rename changelog to ${pr_number}.bugfix.rst"
           git push
+        env:
+          STEPS_CPR_OUTPUTS_PULL_REQUEST_NUMBER: ${{ steps.cpr.outputs.pull-request-number }}

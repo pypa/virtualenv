@@ -136,7 +136,19 @@ commands = [
 [env.type]
 description = "run type checker (ty) against Python 3.14"
 dependency_groups = [ "type" ]
-commands = [ [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.14" ] ]
+commands = [
+  [
+    "python",
+    "-m",
+    "ty",
+    "check",
+    "src/virtualenv",
+    "--python-version",
+    "3.14",
+    "--output-format",
+    "concise"
+  ]
+]
 
 [env.dev]
 description = "generate a DEV environment"
