@@ -272,3 +272,18 @@ initiate a vote among the existing maintainers.
     - PyPI Publishing Access
     - CI Administration capabilities
     - ReadTheDocs Administration capabilities
+
+.. _current-maintainers:
+
+Current maintainers
+-------------------
+
+- :user:`Bernát Gábor <gaborbernat>`
+- :user:`Rahul Devikar <rahuldevikar>`
+
+Previous maintainers
+--------------------
+
+- :user:`Paul Moore <pfmoore>`
+- :user:`Ian Bicking <ianb>`
+- :user:`Donald Stufft <dstufft>`

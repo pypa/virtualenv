@@ -17,6 +17,7 @@ keywords = [
 license = "MIT"
 maintainers = [
   { name = "Bernat Gabor", email = "gaborjbernat@gmail.com" },
+  { name = "Rahul Devikar", email = "rahuldevikar5512@gmail.com" },
 ]
 requires-python = ">=3.8"
 classifiers = [
