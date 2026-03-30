@@ -19,15 +19,16 @@ def encode_list_path(value: list[object]) -> list[str | None]:
     return [encode_path(i) for i in value]
 
 
-def run() -> None:  # noqa: C901
+def run() -> None:  # noqa: C901,PLR0915
     """Print debug data about the virtual environment."""
     try:
         from collections import OrderedDict  # noqa: PLC0415
-    except ImportError:  # pragma: no cover
-        # this is possible if the standard library cannot be accessed
 
-        OrderedDict = dict  # type: ignore[misc]  # pragma: no cover  # noqa: N806
-    result: dict = OrderedDict([("sys", OrderedDict())])
+        DictType = OrderedDict  # noqa: N806
+    except ImportError:  # pragma: no cover
+        DictType = dict  # pragma: no cover  # noqa: N806
+    sys_info: dict[str, str | list[str | None] | None] = DictType()
+    result: dict[str, str | dict[str, str | list[str | None] | None] | None] = DictType([("sys", sys_info)])
     path_keys = (
         "executable",
         "_base_executable",
@@ -42,9 +43,9 @@ def run() -> None:  # noqa: C901
     for key in path_keys:
         value = getattr(sys, key, None)
         value = encode_list_path(value) if isinstance(value, list) else encode_path(value)
-        result["sys"][key] = value
-    result["sys"]["fs_encoding"] = sys.getfilesystemencoding()
-    result["sys"]["io_encoding"] = getattr(sys.stdout, "encoding", None)
+        sys_info[key] = value
+    sys_info["fs_encoding"] = sys.getfilesystemencoding()
+    sys_info["io_encoding"] = getattr(sys.stdout, "encoding", None)
     result["version"] = sys.version
 
     try:

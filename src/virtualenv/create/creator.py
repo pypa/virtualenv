@@ -21,6 +21,8 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
+from os.path import commonpath
+
 from virtualenv.util.path import safe_delete
 from virtualenv.util.subprocess import LogCmd, run_cmd
 from virtualenv.version import __version__
@@ -91,7 +93,7 @@ class Creator(ABC):
         ]
 
     @classmethod
-    def can_create(cls, interpreter: PythonInfo) -> CreatorMeta | None:  # noqa: ARG003
+    def can_create(cls, interpreter: PythonInfo) -> CreatorMeta | bool | None:  # noqa: ARG003
         """Determine if we can create a virtual environment.
 
         :param interpreter: the interpreter in question
@@ -100,7 +102,7 @@ class Creator(ABC):
             :meth:`add_parser_arguments`
 
         """
-        return True  # type: ignore[return-value]
+        return True
 
     @classmethod
     def add_parser_arguments(
@@ -148,7 +150,7 @@ class Creator(ABC):
         """No path separator in the path, valid chars and must be write-able."""
 
         def non_write_able(dest: Path, value: Path) -> NoReturn:
-            common = Path(*os.path.commonprefix([value.parts, dest.parts]))
+            common = Path(commonpath([str(value), str(dest)]))
             msg = f"the destination {dest.relative_to(common)} is not write-able at {common}"
             raise ArgumentTypeError(msg)
 

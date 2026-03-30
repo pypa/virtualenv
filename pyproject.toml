@@ -109,7 +109,7 @@ test = [
   "time-machine>=2.10; platform_python_implementation=='CPython'",
 ]
 type = [
-  "ty>=0.0.17",
+  "ty>=0.0.19",
   { include-group = "test" },
 ]
 docs = [
@@ -210,6 +210,9 @@ count = true
 [tool.pyproject-fmt]
 max_supported_python = "3.14"
 
+[tool.ty]
+rules.unused-ignore-comment = "ignore"  # some ignores are platform/version-specific (e.g., ctypes.windll on Linux)
+
 [tool.pytest]
 ini_options.markers = [
   "slow",
@@ -255,6 +258,3 @@ title_format = false
 issue_format = ":issue:`{issue}`"
 template = "docs/changelog/template.jinja2"
 underlines = [ "*", "=", "-" ]
-
-[tool.ty]
-rules.unused-ignore-comment = "ignore"  # some ignores are platform/version-specific (e.g., ctypes.windll on Linux)

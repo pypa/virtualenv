@@ -12,19 +12,21 @@ jobs:
     name: Upgrade embedded pip/setuptools/wheel
     if: github.repository_owner == 'pypa'
     runs-on: ubuntu-24.04
+    environment: upgrade
     permissions:
       contents: write
       pull-requests: write
     steps:
       - name: Install uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
       - name: Install tox
         run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.32" --with tox-uv
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
           ssh-key: ${{ secrets.DEPLOY_KEY }}
+          persist-credentials: false
       - name: Fetch upstream tags for versioning
         run: git fetch --force --tags https://github.com/pypa/virtualenv.git
       - name: Run upgrade
@@ -41,9 +43,36 @@ jobs:
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "### All embedded dependencies are up to date" >> "$GITHUB_STEP_SUMMARY"
           fi
-      - name: Create Pull Request
+      - name: Check PyPI release age
         if: steps.upgrade.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v8
+        id: age-check
+        run: |
+          cutoff=$(( $(date +%s) - 7 * 24 * 3600 ))
+          too_new=false
+          for whl in $(git diff --name-only -- 'src/virtualenv/seed/wheels/embed/*.whl'); do
+            pkg=$(basename "$whl" | cut -d- -f1)
+            version=$(basename "$whl" | cut -d- -f2)
+            upload_time=$(curl -sf "https://pypi.org/pypi/${pkg}/${version}/json" | jq -r '.urls[0].upload_time_iso_8601 // empty')
+            if [ -z "$upload_time" ]; then
+              echo "::warning::Could not fetch release date for ${pkg}==${version}"
+              continue
+            fi
+            release_epoch=$(date -d "$upload_time" +%s)
+            if [ "$release_epoch" -gt "$cutoff" ]; then
+              echo "::notice::${pkg}==${version} released less than 7 days ago (${upload_time})"
+              too_new=true
+            fi
+          done
+          if [ "$too_new" = "true" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "### Skipped — some packages released less than 7 days ago" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create Pull Request
+        if: steps.upgrade.outputs.changed == 'true' && steps.age-check.outputs.skip != 'true'
+        id: cpr
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8
         with:
           commit-message: "Upgrade embedded dependencies"
           branch: auto/upgrade-embedded-deps
@@ -55,3 +84,15 @@ jobs:
             This PR was created automatically by the [upgrade workflow](https://github.com/${{ github.repository }}/actions/workflows/upgrade.yaml).
           labels: |
             dependencies
+      - name: Rename changelog with PR number
+        if: steps.cpr.outputs.pull-request-number
+        run: |
+          pr_number="${STEPS_CPR_OUTPUTS_PULL_REQUEST_NUMBER}"
+          git fetch origin auto/upgrade-embedded-deps
+          git checkout auto/upgrade-embedded-deps
+          mv docs/changelog/u.bugfix.rst "docs/changelog/${pr_number}.bugfix.rst"
+          git add docs/changelog/
+          git commit -m "Rename changelog to ${pr_number}.bugfix.rst"
+          git push
+        env:
+          STEPS_CPR_OUTPUTS_PULL_REQUEST_NUMBER: ${{ steps.cpr.outputs.pull-request-number }}

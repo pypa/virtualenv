@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from stat import S_IXGRP, S_IXOTH, S_IXUSR
@@ -15,14 +16,22 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
+if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
+    from enum import StrEnum
+else:  # pragma: no cover (py311+)
+    from enum import Enum
 
-class RefMust:
+    class StrEnum(str, Enum):
+        pass
+
+
+class RefMust(StrEnum):
     NA = "NA"
     COPY = "copy"
     SYMLINK = "symlink"
 
 
-class RefWhen:
+class RefWhen(StrEnum):
     ANY = "ANY"
     COPY = "copy"
     SYMLINK = "symlink"

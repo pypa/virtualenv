@@ -33,7 +33,7 @@ class RustPython(ViaGlobalRefVirtualenvBuiltin, Python3Supports, ABC):
         }
 
     @classmethod
-    def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], RefMust, RefWhen]]:  # ty: ignore[invalid-method-override]
+    def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], RefMust, RefWhen], None, None]:  # ty: ignore[invalid-method-override]
         host = Path(interpreter.system_executable)  # ty: ignore[invalid-argument-type]
         targets = sorted(f"{name}{cls.suffix}" for name in cls.exe_names(interpreter))
         yield host, targets, RefMust.NA, RefWhen.ANY
