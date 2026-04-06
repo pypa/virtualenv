@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import abc
 import fnmatch
-from itertools import chain
 from operator import methodcaller as method
 from pathlib import Path
 from textwrap import dedent
@@ -100,15 +99,10 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
-        if cls.has_shim(interpreter):
-            refs = cls.executables(interpreter)
-        else:
-            refs = chain(
-                cls.executables(interpreter),  # ty: ignore[invalid-argument-type]
-                cls.dll_and_pyd(interpreter),
-                cls.python_zip(interpreter),
-            )
-        yield from refs
+        yield from cls.executables(interpreter)
+        if not cls.has_shim(interpreter):
+            yield from cls.dll_and_pyd(interpreter)
+            yield from cls.python_zip(interpreter)
 
     @classmethod
     def executables(cls, interpreter: PythonInfo) -> list[PathRef] | Generator[PathRef]:
