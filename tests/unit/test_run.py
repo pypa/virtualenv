@@ -29,7 +29,7 @@ def test_version(capsys) -> None:
     assert __version__ in content
     import virtualenv  # noqa: PLC0415
 
-    assert virtualenv.__file__ in content
+    assert virtualenv.__file__ in content.replace("\n", "")
 
 
 @pytest.mark.parametrize("on", [True, False])

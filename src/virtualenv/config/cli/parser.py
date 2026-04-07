@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from collections import OrderedDict
 from typing import TYPE_CHECKING, Any
@@ -140,7 +141,7 @@ class VirtualEnvConfigParser(ArgumentParser):
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
     def __init__(self, prog: str, **kwargs: Any) -> None:  # noqa: ANN401
-        super().__init__(prog, max_help_position=32, width=240, **kwargs)
+        super().__init__(prog, max_help_position=32, width=shutil.get_terminal_size().columns, **kwargs)
 
     def _get_help_string(self, action: Action) -> str | None:
         text = super()._get_help_string(action)

@@ -1,0 +1,1 @@
+Use terminal width for help formatting instead of hardcoded 240.
