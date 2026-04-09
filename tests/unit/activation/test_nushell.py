@@ -50,13 +50,11 @@ def test_nushell_tkinter_generation(tmp_path) -> None:
     assert expected_tcl in content
     assert expected_tk in content
 
-    # overlay hide is a parser keyword: using it in a def body causes a parse-time
-    # error because the overlay doesn't exist yet when the def is compiled.
-    # The alias defers that check to call time, when the overlay is active.
+    # overlay hide is a parser keyword: a def body would fail at parse time because the overlay doesn't exist yet
+    # when the def is compiled. The alias defers that check to call time, when the overlay is active.
     assert "export alias deactivate = overlay hide activate" in content
-    # nushell shows one line of context before the error site, so placing the
-    # hint comment directly above the alias makes it appear in the error output
-    # users see when they activate via `use *` or a custom name (gh-3103).
+    # nushell shows one line of context before the error site, so placing the hint comment directly above the alias
+    # makes it appear in the error output users see when they activate via `use *` or a custom name (gh-3103).
     lines = content.splitlines()
     alias_idx = next(i for i, line in enumerate(lines) if "export alias deactivate" in line)
     assert alias_idx > 0
