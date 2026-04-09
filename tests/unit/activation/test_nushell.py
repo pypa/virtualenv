@@ -1,10 +1,18 @@
 from __future__ import annotations
 
+import subprocess
 from argparse import Namespace
 from shutil import which
+from typing import TYPE_CHECKING
+
+import pytest
 
 from virtualenv.activation import NushellActivator
 from virtualenv.info import IS_WIN
+from virtualenv.run import cli_run
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 def test_nushell_tkinter_generation(tmp_path) -> None:
@@ -47,6 +55,16 @@ def test_nushell_tkinter_generation(tmp_path) -> None:
     assert expected_tcl in content
     assert expected_tk in content
 
+    # overlay hide is a parser keyword: a def body would fail at parse time because the overlay doesn't exist yet
+    # when the def is compiled. The alias defers that check to call time, when the overlay is active.
+    assert "export alias deactivate = overlay hide activate" in content
+    # nushell shows one line of context before the error site, so placing the hint comment directly above the alias
+    # makes it appear in the error output users see when they activate via `use *` or a custom name (gh-3103).
+    lines = content.splitlines()
+    alias_idx = next(i for i, line in enumerate(lines) if "export alias deactivate" in line)
+    assert alias_idx > 0
+    assert "overlay use activate.nu" in lines[alias_idx - 1]
+
 
 def test_nushell(activation_tester_class, activation_tester) -> None:
     class Nushell(activation_tester_class):
@@ -66,3 +84,33 @@ def test_nushell(activation_tester_class, activation_tester) -> None:
             return f"{cmd} {scr}".strip()
 
     activation_tester(Nushell)
+
+
+def test_nushell_deactivate_errors(tmp_path: Path) -> None:
+    """Regression for gh-3103: both misuse patterns give actionable inline errors.
+
+    `^nu | complete` captures stderr from child invocations without aborting the outer script, so both cases run in a
+    single subprocess call.
+
+    """
+    nu = which("nu")
+    if nu is None:
+        pytest.skip("nu not installed")
+
+    activate_nu = cli_run(["--without-pip", str(tmp_path / "venv")]).creator.bin_dir / "activate.nu"
+    quoted = NushellActivator.quote(str(activate_nu))
+
+    # `to nuon` re-quotes the path so it remains valid nushell syntax after string interpolation.
+    script = f"""\
+let path = {quoted}
+let r1 = (^nu --commands $"use ($path | to nuon) *; deactivate" | complete)
+if ($r1.exit_code == 0) {{ error make {{ msg: "expected deactivate to fail for use-star" }} }}
+if not ("not an active overlay" in $r1.stderr) {{ error make {{ msg: "overlay error missing" }} }}
+if not ("overlay use activate.nu" in $r1.stderr) {{ error make {{ msg: "hint missing for use-star" }} }}
+let r2 = (^nu --commands $"overlay use ($path | to nuon) as myenv; deactivate" | complete)
+if ($r2.exit_code == 0) {{ error make {{ msg: "expected deactivate to fail for custom name" }} }}
+if not ("not an active overlay" in $r2.stderr) {{ error make {{ msg: "overlay error missing" }} }}
+if not ("overlay hide NAME" in $r2.stderr) {{ error make {{ msg: "hint missing for custom name" }} }}
+"""
+    result = subprocess.run([nu, "--commands", script], capture_output=True, text=True, timeout=60, check=False)
+    assert result.returncode == 0, result.stderr
