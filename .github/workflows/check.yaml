@@ -68,6 +68,7 @@ jobs:
         with:
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
+          cache-suffix: ${{ matrix.py }}
       - name: 🐍 Setup Python for tox
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
@@ -153,6 +154,7 @@ jobs:
           PYTEST_ADDOPTS: "-vv --durations=20"
           CI_RUN: "yes"
           DIFF_AGAINST: HEAD
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
   check:
     name: 🔎 check ${{ matrix.tox_env }} - ${{ matrix.os }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
@@ -193,6 +195,7 @@ jobs:
         with:
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
+          cache-suffix: ${{ matrix.tox_env }}
       - name: 📦 Install tox
         run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.45" --with tox-uv
       - name: 🏗️ Setup check suite
