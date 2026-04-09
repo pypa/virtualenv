@@ -89,8 +89,9 @@ def test_nushell(activation_tester_class, activation_tester) -> None:
 def test_nushell_deactivate_errors(tmp_path: Path) -> None:
     """Regression for gh-3103: both misuse patterns give actionable inline errors.
 
-    `^nu | complete` captures stderr from child invocations without aborting the
-    outer script, so both cases run in a single subprocess call.
+    `^nu | complete` captures stderr from child invocations without aborting the outer script, so both cases run in a
+    single subprocess call.
+
     """
     nu = which("nu")
     if nu is None:
