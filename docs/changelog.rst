@@ -7,6 +7,18 @@
 .. towncrier release notes start
 
 **********************
+ v21.2.1 (2026-04-09)
+**********************
+
+Bugfixes - 21.2.1
+=================
+
+- Upgrade embedded wheels:
+
+  - setuptools to ``82.0.1`` from ``82.0.0`` (:issue:`3093`)
+- Use terminal width for help formatting instead of hardcoded 240. (:issue:`3110`)
+
+**********************
  v21.2.0 (2026-03-09)
 **********************
 
