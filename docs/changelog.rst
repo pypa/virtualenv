@@ -7,6 +7,16 @@
 .. towncrier release notes start
 
 **********************
+ v21.2.2 (2026-04-13)
+**********************
+
+Bugfixes - 21.2.2
+=================
+
+- Bump ``python-discovery`` minimum to ``>=1.2.2`` to include ``normalize_isa`` support - by :user:`rahuldevikar`.
+  (:issue:`3117`)
+
+**********************
  v21.2.1 (2026-04-09)
 **********************
 
