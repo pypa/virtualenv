@@ -15,21 +15,21 @@ repos:
       - id: codespell
         args: ["--write-changes"]
   - repo: https://github.com/tox-dev/tox-toml-fmt
-    rev: "v1.9.1"
+    rev: "v1.9.2"
     hooks:
       - id: tox-toml-fmt
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "v2.21.0"
+    rev: "v2.21.1"
     hooks:
       - id: pyproject-fmt
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.9"
+    rev: "v0.15.10"
     hooks:
       - id: ruff-format
       - id: ruff
         args: ["--fix", "--unsafe-fixes", "--exit-non-zero-on-fix"]
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.8.1"
+    rev: "v3.8.2"
     hooks:
       - id: prettier
         additional_dependencies:
@@ -42,7 +42,7 @@ repos:
         args: ["-l", "120"]
         additional_dependencies: ["sphinx>=9.1"]
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.23.1
+    rev: v1.24.1
     hooks:
       - id: zizmor
   - repo: meta
