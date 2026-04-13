@@ -3,6 +3,7 @@ from __future__ import annotations
 import contextlib
 import os
 import sys
+import zipfile
 from stat import S_IWGRP, S_IWOTH, S_IWUSR
 from subprocess import Popen, check_call
 from threading import Thread
@@ -14,6 +15,7 @@ from python_discovery import _cached_py_info as cached_py_info
 
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
+from virtualenv.seed.embed.via_app_data.pip_install.base import _safe_extract_zip
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
 from virtualenv.util.path import safe_delete
 
@@ -262,3 +264,52 @@ def _run_parallel_threads(tmp_path):
     for thread in threads:
         thread.join()
     return exceptions
+
+
+def _write_zip_with_entry(zip_path: Path, entry_name: str) -> None:
+    with zipfile.ZipFile(str(zip_path), "w") as archive:
+        archive.writestr(entry_name, "payload")
+
+
+def test_safe_extract_zip_allows_normal_entry(tmp_path: Path) -> None:
+    archive = tmp_path / "ok.zip"
+    _write_zip_with_entry(archive, "pkg/inner.txt")
+    target = tmp_path / "out"
+    target.mkdir()
+
+    with zipfile.ZipFile(str(archive)) as zip_ref:
+        _safe_extract_zip(zip_ref, target)
+
+    assert (target / "pkg" / "inner.txt").read_text() == "payload"
+
+
+def test_safe_extract_zip_rejects_parent_traversal(tmp_path: Path) -> None:
+    archive = tmp_path / "evil.zip"
+    _write_zip_with_entry(archive, "../escape.txt")
+    target = tmp_path / "out"
+    target.mkdir()
+
+    with zipfile.ZipFile(str(archive)) as zip_ref, pytest.raises(RuntimeError, match="escaping target directory"):
+        _safe_extract_zip(zip_ref, target)
+
+    assert not (tmp_path / "escape.txt").exists()
+
+
+def test_safe_extract_zip_rejects_absolute_posix_entry(tmp_path: Path) -> None:
+    archive = tmp_path / "abs.zip"
+    _write_zip_with_entry(archive, "/tmp/evil.txt")  # noqa: S108
+    target = tmp_path / "out"
+    target.mkdir()
+
+    with zipfile.ZipFile(str(archive)) as zip_ref, pytest.raises(RuntimeError, match="absolute path"):
+        _safe_extract_zip(zip_ref, target)
+
+
+def test_safe_extract_zip_rejects_absolute_windows_entry(tmp_path: Path) -> None:
+    archive = tmp_path / "win.zip"
+    _write_zip_with_entry(archive, "C:/Windows/System32/evil.txt")
+    target = tmp_path / "out"
+    target.mkdir()
+
+    with zipfile.ZipFile(str(archive)) as zip_ref, pytest.raises(RuntimeError, match="absolute path"):
+        _safe_extract_zip(zip_ref, target)
