@@ -1,0 +1,1 @@
+Bump ``python-discovery`` minimum to ``>=1.2.2`` to include ``normalize_isa`` support - by :user:`rahuldevikar`.
