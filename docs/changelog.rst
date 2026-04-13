@@ -16,6 +16,7 @@ Bugfixes - 21.2.1
 - Upgrade embedded wheels:
 
   - setuptools to ``82.0.1`` from ``82.0.0`` (:issue:`3093`)
+
 - Use terminal width for help formatting instead of hardcoded 240. (:issue:`3110`)
 
 **********************
