@@ -1,2 +1,0 @@
-Security hardening: replace the string-prefix containment check in ``virtualenv.util.zipapp`` with ``Path.relative_to``
-so the zipapp extraction helpers refuse any path that does not resolve under the archive root.

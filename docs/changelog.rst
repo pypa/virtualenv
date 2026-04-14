@@ -7,6 +7,30 @@
 .. towncrier release notes start
 
 **********************
+ v21.2.4 (2026-04-14)
+**********************
+
+Bugfixes - 21.2.4
+=================
+
+- Security hardening: validate each entry of a seed wheel archive before extracting it so a tampered wheel cannot escape
+  the app-data image directory via an absolute path or ``..`` traversal. (:issue:`3118`)
+- Security hardening: verify the SHA-256 of every bundled seed wheel when it is loaded so a corrupted or tampered file
+  on disk fails loud instead of being handed to pip. The hash table is generated alongside ``BUNDLE_SUPPORT`` by
+  ``tasks/upgrade_wheels.py``. (:issue:`3119`)
+- Security hardening: validate the distribution name and version specifier passed to ``pip download`` when acquiring a
+  seed wheel so extras, pip flags, or shell metacharacters cannot be smuggled into the subprocess command line.
+  (:issue:`3120`)
+- Security hardening: replace the string-prefix containment check in ``virtualenv.util.zipapp`` with
+  ``Path.relative_to`` so the zipapp extraction helpers refuse any path that does not resolve under the archive root.
+  (:issue:`3121`)
+- Security hardening: do not silently fall back to an unverified HTTPS context when the periodic update request to PyPI
+  fails TLS verification. The returned metadata drives which wheel version virtualenv considers "up to date", so
+  accepting an unverified response lets a network-level attacker suppress security updates. Set
+  ``VIRTUALENV_PERIODIC_UPDATE_INSECURE=1`` to restore the previous behavior on hosts with broken trust stores.
+  (:issue:`3122`)
+
+**********************
  v21.2.3 (2026-04-14)
 **********************
 

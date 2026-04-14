@@ -1,2 +1,0 @@
-Security hardening: validate each entry of a seed wheel archive before extracting it so a tampered wheel cannot escape
-the app-data image directory via an absolute path or ``..`` traversal.
