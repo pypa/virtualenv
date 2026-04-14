@@ -171,3 +171,36 @@ def test_get_wheel_download_cached(
             },
         ],
     }
+
+
+@pytest.mark.parametrize(
+    "distribution",
+    [
+        "pip space",
+        "pip[extra]",
+        "pip;os.system('x')",
+        "--index-url=http://evil",
+        "-r requirements.txt",
+        "",
+        ".pip",
+        "pip-",
+    ],
+)
+def test_download_wheel_rejects_bad_distribution(distribution: str, session_app_data) -> None:
+    with pytest.raises(ValueError, match="suspicious distribution name"):
+        download_wheel(distribution, None, "3.14", [], session_app_data, "folder", os.environ)
+
+
+@pytest.mark.parametrize(
+    "version_spec",
+    [
+        "==1.0 --index-url=http://evil",
+        ">=1.0",
+        "== 1.0",
+        "==1.0;echo",
+    ],
+)
+def test_download_wheel_rejects_bad_version_spec(version_spec: str, session_app_data, mocker: MockerFixture) -> None:
+    mocker.patch("virtualenv.seed.wheels.acquire.Popen")
+    with pytest.raises(ValueError, match="suspicious version spec"):
+        download_wheel("pip", version_spec, "3.14", [], session_app_data, "folder", os.environ)
