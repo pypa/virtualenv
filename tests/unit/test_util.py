@@ -3,11 +3,13 @@ from __future__ import annotations
 import concurrent.futures
 import os
 import traceback
+import zipfile
 from typing import TYPE_CHECKING
 
 import pytest
 
 from virtualenv.app_data import _cache_dir_with_migration, _default_app_data_dir
+from virtualenv.util import zipapp
 from virtualenv.util.lock import ReentrantFileLock
 from virtualenv.util.subprocess import run_cmd
 
@@ -148,3 +150,29 @@ class TestCacheDirMigration:
         result = _cache_dir_with_migration()
         assert result == new_dir
         assert (tmp_path / "new-cache" / "wheel" / "3.12" / "image" / "pip" / "pip.dist-info" / "METADATA").exists()
+
+
+@pytest.fixture
+def fake_zipapp_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    fake_root = tmp_path / "virtualenv.pyz"
+    with zipfile.ZipFile(str(fake_root), "w") as zip_file:
+        zip_file.writestr("virtualenv/payload.txt", "hello zipapp")
+    monkeypatch.setattr(zipapp, "ROOT", str(fake_root))
+    return fake_root
+
+
+def test_zipapp_read_returns_payload_from_entry_inside_root(fake_zipapp_root: Path) -> None:
+    entry = fake_zipapp_root / "virtualenv" / "payload.txt"
+    assert zipapp.read(entry) == "hello zipapp"
+
+
+def test_zipapp_read_rejects_path_escaping_via_parent(fake_zipapp_root: Path) -> None:
+    escape = fake_zipapp_root / ".." / "escape.txt"
+    with pytest.raises(RuntimeError, match="should be within ROOT"):
+        zipapp.read(escape)
+
+
+def test_zipapp_read_rejects_unrelated_absolute_path(fake_zipapp_root: Path, tmp_path: Path) -> None:  # noqa: ARG001
+    unrelated = tmp_path / "other" / "file.txt"
+    with pytest.raises(RuntimeError, match="should be within ROOT"):
+        zipapp.read(unrelated)
