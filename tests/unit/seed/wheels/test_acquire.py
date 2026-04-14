@@ -200,9 +200,7 @@ def test_download_wheel_rejects_bad_distribution(distribution: str, session_app_
         "==1.0;echo",
     ],
 )
-def test_download_wheel_rejects_bad_version_spec(
-    version_spec: str, session_app_data, mocker: MockerFixture
-) -> None:
+def test_download_wheel_rejects_bad_version_spec(version_spec: str, session_app_data, mocker: MockerFixture) -> None:
     mocker.patch("virtualenv.seed.wheels.acquire.Popen")
     with pytest.raises(ValueError, match="suspicious version spec"):
         download_wheel("pip", version_spec, "3.14", [], session_app_data, "folder", os.environ)
