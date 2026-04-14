@@ -1,0 +1,3 @@
+Security hardening: verify the SHA-256 of every bundled seed wheel when it is loaded so a corrupted or tampered file on
+disk fails loud instead of being handed to pip. The hash table is generated alongside ``BUNDLE_SUPPORT`` by
+``tasks/upgrade_wheels.py``.
