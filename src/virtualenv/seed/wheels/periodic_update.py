@@ -360,10 +360,20 @@ def release_date_for_wheel_path(dest: Path) -> datetime | None:
     return None
 
 
+#: Opt-in escape hatch to restore the pre-2026 behavior of falling back to an unverified HTTPS context when the
+#: verified request fails. Off by default: a failed TLS handshake on the PyPI metadata lookup now aborts the update
+#: instead of silently downgrading, because the response drives which wheel version virtualenv thinks is up to date.
+_INSECURE_FALLBACK_ENV = "VIRTUALENV_PERIODIC_UPDATE_INSECURE"
+
+
 def _request_context() -> Generator[ssl.SSLContext | None, None, None]:
     yield None
-    # fallback to non verified HTTPS (the information we request is not sensitive, so fallback)
-    yield ssl._create_unverified_context()  # noqa: S323, SLF001
+    if os.environ.get(_INSECURE_FALLBACK_ENV):
+        LOGGER.warning(
+            "falling back to unverified HTTPS for PyPI metadata because %s is set",
+            _INSECURE_FALLBACK_ENV,
+        )
+        yield ssl._create_unverified_context()  # noqa: S323, SLF001
 
 
 _PYPI_CACHE = {}
