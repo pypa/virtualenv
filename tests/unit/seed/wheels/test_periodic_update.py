@@ -501,7 +501,9 @@ def test_new_version_ne() -> None:
     )
 
 
-def test_get_release_unsecure(mocker, caplog) -> None:
+def test_get_release_unsecure(mocker, caplog, monkeypatch) -> None:
+    monkeypatch.setenv("VIRTUALENV_PERIODIC_UPDATE_INSECURE", "1")
+
     @contextmanager
     def _release(of, context):
         assert of == "https://pypi.org/pypi/pip/json"
@@ -519,6 +521,17 @@ def test_get_release_unsecure(mocker, caplog) -> None:
     assert url_o.call_count == 2
     assert "insecure" in caplog.text
     assert " failed " in caplog.text
+
+
+def test_get_release_verified_failure_does_not_fallback(mocker, monkeypatch) -> None:
+    monkeypatch.delenv("VIRTUALENV_PERIODIC_UPDATE_INSECURE", raising=False)
+    url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=URLError("insecure"))
+
+    result = release_date_for_wheel_path(Path("pip-20.1.whl"))
+
+    assert result is None
+    assert url_o.call_count == 1
+    assert url_o.call_args.kwargs["context"] is None
 
 
 def test_get_release_fails(mocker, caplog) -> None:
@@ -564,7 +577,7 @@ def test_download_stop_with_embed(tmp_path, mocker, time_freeze) -> None:
     do_update("pip", "3.9", str(wheel.path), str(app_data_outer), [], True)
 
     assert download_wheel.call_count == 3
-    assert url_o.call_count == 2
+    assert url_o.call_count == 1
 
     assert read_dict.call_count == 1
     assert write.call_count == 1
@@ -587,7 +600,7 @@ def test_download_manual_stop_after_one_download(tmp_path, mocker, time_freeze) 
     do_update("pip", "3.9", str(wheel.path), str(app_data_outer), [], False)
 
     assert download_wheel.call_count == 1
-    assert url_o.call_count == 2
+    assert url_o.call_count == 1
     assert read_dict.call_count == 1
     assert write.call_count == 1
 
@@ -610,7 +623,7 @@ def test_download_manual_ignores_pre_release(tmp_path, mocker, time_freeze) -> N
     do_update("pip", "3.9", str(wheel.path), str(app_data_outer), [], False)
 
     assert download_wheel.call_count == 1
-    assert url_o.call_count == 2
+    assert url_o.call_count == 1
     assert read_dict.call_count == 1
     assert write.call_count == 1
     wrote_json = write.call_args[0][0]

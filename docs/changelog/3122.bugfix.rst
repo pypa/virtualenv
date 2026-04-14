@@ -1,0 +1,4 @@
+Security hardening: do not silently fall back to an unverified HTTPS context when the periodic update request to PyPI
+fails TLS verification. The returned metadata drives which wheel version virtualenv considers "up to date", so accepting
+an unverified response lets a network-level attacker suppress security updates. Set
+``VIRTUALENV_PERIODIC_UPDATE_INSECURE=1`` to restore the previous behavior on hosts with broken trust stores.

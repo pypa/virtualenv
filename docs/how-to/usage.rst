@@ -252,6 +252,15 @@ Override app-data location
 
 Set the ``VIRTUALENV_OVERRIDE_APP_DATA`` environment variable to override the default app-data cache directory location.
 
+Allow unverified HTTPS for periodic updates
+===========================================
+
+The periodic update checks for newer seed wheels by fetching ``https://pypi.org/pypi/<distribution>/json``. The request
+is made with full TLS verification and, if the verified request fails, virtualenv now skips the update rather than
+downgrading the connection. Set ``VIRTUALENV_PERIODIC_UPDATE_INSECURE=1`` to restore the previous behavior and retry
+with an unverified SSL context. This is an escape hatch for hosts with broken trust stores; do not set it on hosts you
+do not control.
+
 Configuration priority
 ======================
 
