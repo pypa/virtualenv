@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import sys
 from operator import eq, lt
 from pathlib import Path
@@ -17,6 +18,34 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
 
 LOGGER = logging.getLogger(__name__)
+
+# PEP 503 normalized distribution name. Anything outside this character set on the way to ``pip download`` means
+# somebody is smuggling pip options or extras, so reject it before we build the command line.
+_DISTRIBUTION_RE = re.compile(
+    r"""
+    ^
+    (?P<name>
+        [A-Za-z0-9]                 # must start with an alnum
+        (?:[A-Za-z0-9._-]*           # inner chars: alnum plus . _ -
+           [A-Za-z0-9])?             # must also end with an alnum (unless length is 1)
+    )
+    $
+    """,
+    re.VERBOSE,
+)
+
+# Version specifier that matches what ``Version.as_version_spec`` emits: either empty, ``==<ver>`` or ``<<ver>`` where
+# ``<ver>`` is a subset of PEP 440 public versions. Kept deliberately strict so a crafted version cannot inject pip
+# flags.
+_VERSION_SPEC_RE = re.compile(
+    r"""
+    ^
+    (?P<operator>==|<)              # only the operators Version.as_version_spec can emit
+    (?P<version>[A-Za-z0-9._+!-]+)  # PEP 440 public-version character set, no whitespace
+    $
+    """,
+    re.VERBOSE,
+)
 
 
 def get_wheel(  # noqa: PLR0913
@@ -63,6 +92,26 @@ def download_wheel(  # noqa: PLR0913
     to_folder: Path,
     env: dict[str, str],
 ) -> Wheel:
+    """Invoke ``pip download`` in a subprocess to fetch a seed wheel.
+
+    :param distribution: PEP 503 normalized project name; rejected if it contains anything other than
+        ``[A-Za-z0-9._-]``.
+    :param version_spec: optional version specifier of the form ``==<ver>`` or ``<<ver>`` as emitted by
+        :func:`Version.as_version_spec`, or ``None``/empty for the latest compatible release.
+    :param for_py_version: major.minor Python version to pass through to ``pip --python-version``.
+    :param search_dirs: additional directories to treat as a local wheel index when bootstrapping pip.
+    :param app_data: application data store used to locate the embedded pip wheel.
+    :param to_folder: directory the downloaded wheel is written into.
+    :param env: environment mapping passed through to the subprocess.
+
+    :returns: the downloaded :class:`Wheel`.
+
+    :raises ValueError: if ``distribution`` or ``version_spec`` fail the strict allow-list check.
+    :raises CalledProcessError: if ``pip download`` exits with a non-zero status.
+
+    """
+    _check_distribution(distribution)
+    _check_version_spec(version_spec)
     to_download = f"{distribution}{version_spec or ''}"
     LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
     cmd = [
@@ -141,6 +190,20 @@ def pip_wheel_env_run(search_dirs: list[Path], app_data: AppData, env: dict[str,
         raise RuntimeError(msg)
     env["PYTHONPATH"] = str(wheel.path)
     return env
+
+
+def _check_distribution(distribution: str) -> None:
+    if not _DISTRIBUTION_RE.fullmatch(distribution):
+        msg = f"refusing to download wheel for suspicious distribution name: {distribution!r}"
+        raise ValueError(msg)
+
+
+def _check_version_spec(version_spec: str | None) -> None:
+    if not version_spec:
+        return
+    if not _VERSION_SPEC_RE.fullmatch(version_spec):
+        msg = f"refusing to download wheel with suspicious version spec: {version_spec!r}"
+        raise ValueError(msg)
 
 
 __all__ = [

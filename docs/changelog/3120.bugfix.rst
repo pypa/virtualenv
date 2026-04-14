@@ -1,0 +1,2 @@
+Security hardening: validate the distribution name and version specifier passed to ``pip download`` when acquiring a
+seed wheel so extras, pip flags, or shell metacharacters cannot be smuggled into the subprocess command line.
