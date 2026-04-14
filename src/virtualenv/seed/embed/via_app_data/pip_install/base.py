@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import logging
+import ntpath
 import os
+import posixpath
 import re
 import zipfile
 from abc import ABC, abstractmethod
@@ -19,6 +21,24 @@ if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
 LOGGER = logging.getLogger(__name__)
+
+
+def _safe_extract_zip(zip_ref: zipfile.ZipFile, target_dir: Path) -> None:
+    # Guard against zip slip: a wheel is a zip and a tampered entry name (absolute path or one containing ``..``)
+    # could escape ``target_dir``.
+    base = target_dir.resolve()
+    for info in zip_ref.infolist():
+        name = info.filename
+        if name.startswith(("/", "\\")) or ntpath.isabs(name) or posixpath.isabs(name):
+            msg = f"refusing to extract absolute path entry from wheel: {name!r}"
+            raise RuntimeError(msg)
+        candidate = (base / name).resolve()
+        try:
+            candidate.relative_to(base)
+        except ValueError as exc:
+            msg = f"refusing to extract entry escaping target directory: {name!r}"
+            raise RuntimeError(msg) from exc
+    zip_ref.extractall(str(target_dir))
 
 
 class PipInstall(ABC):
@@ -49,11 +69,19 @@ class PipInstall(ABC):
         LOGGER.debug("generated console scripts %s", " ".join(i.name for i in consoles))
 
     def build_image(self) -> None:
+        """Extract the seed wheel into the image directory and fix up its RECORD file.
+
+        Each archive entry is validated before extraction so a tampered wheel cannot escape the image directory via an
+        absolute path or ``..`` traversal.
+
+        :raises RuntimeError: if the wheel contains an entry that would land outside the image directory.
+
+        """
         # 1. first extract the wheel
         LOGGER.debug("build install image for %s to %s", self._wheel.name, self._image_dir)
         with zipfile.ZipFile(str(self._wheel)) as zip_ref:
             self._shorten_path_if_needed(zip_ref)
-            zip_ref.extractall(str(self._image_dir))
+            _safe_extract_zip(zip_ref, self._image_dir)
             self._extracted = True
         # 2. now add additional files not present in the distribution
         new_files = self._generate_new_files()
