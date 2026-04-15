@@ -113,7 +113,8 @@ class VirtualEnvConfigParser(ArgumentParser):
                     if outcome is not None:
                         break
             if outcome is not None:
-                action.default, action.default_source = outcome
+                action.default, default_source = outcome
+                vars(action)["default_source"] = default_source
             else:
                 outcome = action.default, "default"
             self.options.set_src(action.dest, *outcome)
