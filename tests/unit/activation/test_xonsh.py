@@ -49,13 +49,14 @@ def test_xonsh_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     assert '"TK_LIBRARY"' in content
 
     if present:
-        # Paths flow into the override-loop tuple as Python string literals.
-        assert """("TCL_LIBRARY", '/path/to/tcl')""" in content
-        assert """("TK_LIBRARY", '/path/to/tk')""" in content
+        # Paths are embedded in __init__ as Python string literals and used
+        # from self.embedded_* attributes during activate().
+        assert "self.embedded_tcl_library = '/path/to/tcl'" in content
+        assert "self.embedded_tk_library = '/path/to/tk'" in content
     else:
-        # Empty strings are falsy, so the loop body is skipped at runtime.
-        assert """("TCL_LIBRARY", '')""" in content
-        assert """("TK_LIBRARY", '')""" in content
+        # Empty strings are falsy, so the override loop is skipped at runtime.
+        assert "self.embedded_tcl_library = ''" in content
+        assert "self.embedded_tk_library = ''" in content
 
 
 def test_xonsh_quote():

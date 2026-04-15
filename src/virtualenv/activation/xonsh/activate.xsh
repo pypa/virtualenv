@@ -19,6 +19,18 @@ class _VirtualEnvActivator:
 
     def __init__(self):
         self.env = @.env
+        try:
+            # Values substituted by virtualenv's XonshActivator at generate-time.
+            # If this file was sourced before template rendering, the bare
+            # identifiers below resolve to NameError.
+            self.embedded_virtual_env = __VIRTUAL_ENV__
+            self.embedded_virtual_prompt = __VIRTUAL_PROMPT__
+            self.embedded_bin_name = __BIN_NAME__
+            self.embedded_tcl_library = __TCL_LIBRARY__
+            self.embedded_tk_library = __TK_LIBRARY__
+        except NameError:
+            print("virtualenv activate.xsh: template was not rendered")
+            raise
         # Variables this activator may save+override; deactivate walks this list.
         self.managed_vars = ("PATH", "PYTHONHOME", "TCL_LIBRARY", "TK_LIBRARY")
 
@@ -50,12 +62,12 @@ class _VirtualEnvActivator:
         aliases["deactivate"] = self.deactivate
         self.deactivate(["nondestructive"])  # wipe any stale state from a prior activation
 
-        $VIRTUAL_ENV = __VIRTUAL_ENV__
-        $VIRTUAL_ENV_PROMPT = __VIRTUAL_PROMPT__ or basename($VIRTUAL_ENV)
+        $VIRTUAL_ENV = self.embedded_virtual_env
+        $VIRTUAL_ENV_PROMPT = self.embedded_virtual_prompt or basename($VIRTUAL_ENV)
 
-        self._override("PATH", [join($VIRTUAL_ENV, __BIN_NAME__), *$PATH])
+        self._override("PATH", [join($VIRTUAL_ENV, self.embedded_bin_name), *$PATH])
         self._drop("PYTHONHOME")
-        for name, value in (("TCL_LIBRARY", __TCL_LIBRARY__), ("TK_LIBRARY", __TK_LIBRARY__)):
+        for name, value in (("TCL_LIBRARY", self.embedded_tcl_library), ("TK_LIBRARY", self.embedded_tk_library)):
             if value:
                 self._override(name, value)
 
