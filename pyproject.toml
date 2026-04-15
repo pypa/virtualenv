@@ -85,6 +85,7 @@ entry-points."virtualenv.activate".fish = "virtualenv.activation.fish:FishActiva
 entry-points."virtualenv.activate".nushell = "virtualenv.activation.nushell:NushellActivator"
 entry-points."virtualenv.activate".powershell = "virtualenv.activation.powershell:PowerShellActivator"
 entry-points."virtualenv.activate".python = "virtualenv.activation.python:PythonActivator"
+entry-points."virtualenv.activate".xonsh = "virtualenv.activation.xonsh:XonshActivator"
 entry-points."virtualenv.create".cpython3-mac-brew = "virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython3macOsBrew"
 entry-points."virtualenv.create".cpython3-mac-framework = "virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython3macOsFramework"
 entry-points."virtualenv.create".cpython3-posix = "virtualenv.create.via_global_ref.builtin.cpython.cpython3:CPython3Posix"

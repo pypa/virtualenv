@@ -14,8 +14,14 @@ class PluginLoader:
     @classmethod
     def entry_points_for(cls, key):
         if sys.version_info >= (3, 10) or importlib_metadata_version >= (3, 6):
-            return OrderedDict((e.name, e.load()) for e in cls.entry_points().select(group=key))
-        return OrderedDict((e.name, e.load()) for e in cls.entry_points().get(key, {}))
+            selected = list(cls.entry_points().select(group=key))
+        else:
+            selected = list(cls.entry_points().get(key, []))
+        # Third-party packages may register entry points with the same name as virtualenv's
+        # built-ins (e.g. xonsh's own `virtualenv.activate.xonsh`). Sort so built-ins are
+        # inserted last into the OrderedDict, making them win on name collision.
+        selected.sort(key=lambda e: e.value.startswith("virtualenv."))
+        return OrderedDict((e.name, e.load()) for e in selected)
 
     @staticmethod
     def entry_points():
