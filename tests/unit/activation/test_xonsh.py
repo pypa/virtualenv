@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from argparse import Namespace
 from shutil import which
+from unittest.mock import create_autospec
 
 import pytest
+from python_discovery import PythonInfo
 
 from virtualenv.activation import XonshActivator
+from virtualenv.create.creator import Creator
 
 
 @pytest.mark.parametrize(
@@ -15,31 +18,27 @@ from virtualenv.activation import XonshActivator
         (None, None, False),
     ],
 )
-def test_xonsh_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
+def test_xonsh_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
     # GIVEN
-    class MockInterpreter:
-        pass
-
-    interpreter = MockInterpreter()
+    interpreter = create_autospec(PythonInfo, instance=True)
     interpreter.tcl_lib = tcl_lib
     interpreter.tk_lib = tk_lib
 
-    class MockCreator:
-        def __init__(self, dest):
-            self.dest = dest
-            self.bin_dir = dest / "bin"
-            self.bin_dir.mkdir()
-            self.interpreter = interpreter
-            self.pyenv_cfg = {}
-            self.env_name = "my-env"
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
 
-    creator = MockCreator(tmp_path)
-    options = Namespace(prompt=None)
-    activator = XonshActivator(options)
+    creator = create_autospec(Creator, instance=True)
+    creator.dest = tmp_path
+    creator.bin_dir = bin_dir
+    creator.interpreter = interpreter
+    creator.pyenv_cfg = {}
+    creator.env_name = "my-env"
+
+    activator = XonshActivator(Namespace(prompt=None))
 
     # WHEN
     activator.generate(creator)
-    content = (creator.bin_dir / "activate.xsh").read_text(encoding="utf-8")
+    content = (bin_dir / "activate.xsh").read_text(encoding="utf-8")
 
     # THEN
     # `managed_vars` always lists TCL_LIBRARY/TK_LIBRARY so deactivate can clean up
@@ -59,7 +58,7 @@ def test_xonsh_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
         assert "self.embedded_tk_library = ''" in content
 
 
-def test_xonsh_quote():
+def test_xonsh_quote() -> None:
     # XonshActivator.quote uses repr() so the template substitution produces valid
     # Python literals — this is what the rest of the tests rely on.
     assert XonshActivator.quote("hello") == "'hello'"
@@ -68,7 +67,7 @@ def test_xonsh_quote():
 
 
 @pytest.mark.skipif(which("xonsh") is None, reason="xonsh is not installed")
-def test_xonsh(activation_tester_class, activation_tester):
+def test_xonsh(activation_tester_class, activation_tester) -> None:
     class Xonsh(activation_tester_class):
         def __init__(self, session) -> None:
             super().__init__(XonshActivator, session, "xonsh", "activate.xsh", "xsh")
