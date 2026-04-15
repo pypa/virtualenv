@@ -1,4 +1,4 @@
-"""Helper script to rebuild virtualenv.py from virtualenv_support."""  # noqa: EXE002
+"""Helper script to rebuild virtualenv.py from virtualenv_support."""
 
 from __future__ import annotations
 
@@ -6,10 +6,14 @@ import codecs
 import locale
 import os
 import re
+from typing import TYPE_CHECKING, NoReturn
 from zlib import crc32 as _crc32
 
+if TYPE_CHECKING:
+    from pathlib import Path
 
-def crc32(data):
+
+def crc32(data: str) -> int:
     """Python version idempotent."""
     return _crc32(data.encode()) & 0xFFFFFFFF
 
@@ -24,14 +28,17 @@ file_regex = re.compile(r'# file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+) = convert\(\n {4
 file_template = '# file {filename}\n{variable} = convert(\n    """\n{data}"""\n)'
 
 
-def rebuild(script_path):
-    with script_path.open(encoding=locale.getpreferredencoding(False)) as current_fh:  # noqa: FBT003
+def rebuild(script_path: Path) -> None:
+    encoding = (
+        locale.getencoding() if hasattr(locale, "getencoding") else locale.getpreferredencoding(do_setlocale=False)
+    )
+    with script_path.open(encoding=encoding) as current_fh:
         script_content = current_fh.read()
     script_parts = []
     match_end = 0
     next_match = None
-    _count, did_update = 0, False
-    for _count, next_match in enumerate(file_regex.finditer(script_content)):
+    count, did_update = 0, False
+    for count, next_match in enumerate(file_regex.finditer(script_content)):  # noqa: B007
         script_parts += [script_content[match_end : next_match.start()]]
         match_end = next_match.end()
         filename, variable_name, previous_encoded = next_match.group(1), next_match.group(2), next_match.group(3)
@@ -43,10 +50,10 @@ def rebuild(script_path):
     script_parts += [script_content[match_end:]]
     new_content = "".join(script_parts)
 
-    report(1 if not _count or did_update else 0, new_content, next_match, script_content, script_path)
+    report(1 if not count or did_update else 0, new_content, next_match, script_content, script_path)
 
 
-def handle_file(previous_content, filename, variable_name, previous_encoded):
+def handle_file(previous_content: str, filename: str, variable_name: str, previous_encoded: str) -> tuple[bool, str]:
     print(f"Found file {filename}")  # noqa: T201
     current_path = os.path.realpath(os.path.join(here, "..", "src", "virtualenv_embedded", filename))
     _, file_type = os.path.splitext(current_path)
@@ -66,7 +73,7 @@ def handle_file(previous_content, filename, variable_name, previous_encoded):
     return True, new_part
 
 
-def report(exit_code, new, next_match, current, script_path):
+def report(exit_code: int, new: str, next_match: re.Match[str] | None, current: str, script_path: Path) -> NoReturn:
     if new != current:
         print("Content updated; overwriting... ", end="")  # noqa: T201
         script_path.write_bytes(new)

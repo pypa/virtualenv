@@ -1,1 +1,1 @@
-python.exe -m pydoc %*
+"python.exe" -m pydoc %*

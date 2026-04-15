@@ -17,6 +17,8 @@ jobs:
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 40
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -35,45 +37,80 @@ jobs:
           - pypy-3.9
           - pypy-3.8
           - graalpy-24.1
+          - rp
         os:
           - ubuntu-24.04
           - macos-15
           - windows-2025
         include:
+          - { os: macos-15, py: "brew@3.14" }
+          - { os: macos-15, py: "brew@3.13" }
+          - { os: macos-15, py: "brew@3.12" }
           - { os: macos-15, py: "brew@3.11" }
           - { os: macos-15, py: "brew@3.10" }
-          - { os: macos-15, py: "brew@3.9" }
         exclude:
           - { os: windows-2025, py: "graalpy-24.1" }
           - { os: windows-2025, py: "pypy-3.10" }
           - { os: windows-2025, py: "pypy-3.9" }
           - { os: windows-2025, py: "pypy-3.8" }
     steps:
-      - name: 🚀 Install uv
-        uses: astral-sh/setup-uv@v4
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
+          persist-credentials: false
+      - name: 🏷️ Fetch upstream tags for versioning
+        shell: bash
+        run: |
+          git fetch --force --tags https://github.com/pypa/virtualenv.git
+      - name: 🚀 Install uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+          cache-suffix: ${{ matrix.py }}
       - name: 🐍 Setup Python for tox
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.14"
       - name: 📦 Install tox with this virtualenv
         shell: bash
         run: |
-          if [[ "${{ matrix.py }}" == "3.13t" || "${{ matrix.py }}" == "3.14t" ]]; then
-            uv tool install --no-managed-python --python 3.14 tox --with .
+          if [[ "${{ matrix.py }}" == "3.13t" || "${{ matrix.py }}" == "3.14t" || "${{ matrix.py }}" == "rp" ]]; then
+            uv tool install --no-managed-python --python 3.14 "tox>=4.45" --with .
           else
-            uv tool install --no-managed-python --python 3.14 tox --with tox-uv --with .
+            uv tool install --no-managed-python --python 3.14 "tox>=4.45" --with tox-uv --with .
           fi
       - name: 🐍 Setup Python for test ${{ matrix.py }}
-        uses: actions/setup-python@v5
-        if: ${{ !startsWith(matrix.py, 'brew@') }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        if: ${{ !startsWith(matrix.py, 'brew@') && matrix.py != 'rp' }}
         with:
           python-version: ${{ matrix.py }}
+      - name: 🦀 Setup RustPython
+        if: matrix.py == 'rp'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(gh release list --repo RustPython/RustPython --limit 1 --json tagName -q '.[0].tagName')
+          if [ "${{ runner.os }}" = "Linux" ]; then
+            asset="rustpython-release-Linux-x86_64-unknown-linux-gnu"
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            asset="rustpython-release-macOS-aarch64-apple-darwin"
+          elif [ "${{ runner.os }}" = "Windows" ]; then
+            asset="rustpython-release-Windows-x86_64-pc-windows-msvc.exe"
+          fi
+          gh release download "$tag" --repo RustPython/RustPython --pattern "$asset" --dir "$RUNNER_TEMP"
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp "$RUNNER_TEMP/$asset" "/c/ProgramData/chocolatey/bin/rustpython.exe"
+          else
+            chmod +x "$RUNNER_TEMP/$asset"
+            sudo mv "$RUNNER_TEMP/$asset" /usr/local/bin/rustpython
+          fi
       - name: 🛠️ Install OS dependencies
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if [ "${{ runner.os }}" = "Linux" ]; then
             sudo apt-get install -y software-properties-common
@@ -91,7 +128,10 @@ jobs:
             fi
             brew install fish tcsh nushell || brew upgrade fish tcsh nushell
           elif [ "${{ runner.os }}" = "Windows" ]; then
-            choco install nushell
+            nu_version=$(gh release view --repo nushell/nushell --json tagName -q .tagName)
+            gh release download "$nu_version" --repo nushell/nushell --pattern "*-x86_64-pc-windows-msvc.zip" --dir "$RUNNER_TEMP"
+            7z x "$RUNNER_TEMP/nu-${nu_version#v}-x86_64-pc-windows-msvc.zip" -o"$RUNNER_TEMP/nushell" -y
+            cp "$RUNNER_TEMP/nushell/nu.exe" "/c/ProgramData/chocolatey/bin/nu.exe"
           fi
       - name: 🧬 Pick environment to run
         shell: bash
@@ -99,7 +139,7 @@ jobs:
           py="${{ matrix.py }}"
           if [[ "$py" == brew@* ]]; then
             brew_version="${py#brew@}"
-            echo "TOX_DISCOVER=/opt/homebrew/bin/python${brew_version}" >> "$GITHUB_ENV"
+            echo "UV_PYTHON=/opt/homebrew/bin/python${brew_version}" >> "$GITHUB_ENV"
             py="$brew_version"
           fi
           [[ "$py" == graalpy-* ]] && py="graalpy"
@@ -109,15 +149,18 @@ jobs:
         run: tox run -vvvv --notest --skip-missing-interpreters false
       - name: 🏃 Run test suite
         run: tox run --skip-pkg-install
-        timeout-minutes: 20
+        timeout-minutes: 30
         env:
           PYTEST_ADDOPTS: "-vv --durations=20"
           CI_RUN: "yes"
           DIFF_AGAINST: HEAD
+          PIP_DISABLE_PIP_VERSION_CHECK: "1"
   check:
     name: 🔎 check ${{ matrix.tox_env }} - ${{ matrix.os }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -128,21 +171,36 @@ jobs:
           - dev
           - docs
           - readme
+          - type
+          - type-3.8
           - upgrade
           - zipapp
         exclude:
-          - { os: windows-2025, tox_env: readme }
           - { os: windows-2025, tox_env: docs }
+          - { os: windows-2025, tox_env: readme }
+          - { os: windows-2025, tox_env: type }
+          - { os: windows-2025, tox_env: type-3.8 }
     steps:
-      - name: 🚀 Install uv
-        uses: astral-sh/setup-uv@v4
-      - name: 📦 Install tox
-        run: uv tool install --python-preference only-managed --python 3.14 tox --with tox-uv
       - name: 📥 Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
+          persist-credentials: false
+      - name: 🏷️ Fetch upstream tags for versioning
+        shell: bash
+        run: |
+          git fetch --force --tags https://github.com/pypa/virtualenv.git
+      - name: 🚀 Install uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+          cache-suffix: ${{ matrix.tox_env }}
+      - name: 📦 Install tox
+        run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.45" --with tox-uv
       - name: 🏗️ Setup check suite
         run: tox run -vv --notest --skip-missing-interpreters false -e ${{ matrix.tox_env }}
       - name: 🏃 Run check for ${{ matrix.tox_env }}
         run: tox run --skip-pkg-install -e ${{ matrix.tox_env }}
+        env:
+          UPGRADE_ADVISORY: ${{ matrix.tox_env == 'upgrade' && '1' || '' }}

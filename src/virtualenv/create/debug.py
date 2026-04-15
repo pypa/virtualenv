@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys  # built-in
 
 
-def encode_path(value):
+def encode_path(value: object) -> str | None:
     if value is None:
         return None
     if not isinstance(value, (str, bytes)):
@@ -15,19 +15,20 @@ def encode_path(value):
     return value
 
 
-def encode_list_path(value):
+def encode_list_path(value: list[object]) -> list[str | None]:
     return [encode_path(i) for i in value]
 
 
-def run():
+def run() -> None:  # noqa: C901,PLR0915
     """Print debug data about the virtual environment."""
     try:
         from collections import OrderedDict  # noqa: PLC0415
-    except ImportError:  # pragma: no cover
-        # this is possible if the standard library cannot be accessed
 
-        OrderedDict = dict  # pragma: no cover  # noqa: N806
-    result = OrderedDict([("sys", OrderedDict())])
+        DictType = OrderedDict  # noqa: N806
+    except ImportError:  # pragma: no cover
+        DictType = dict  # pragma: no cover  # noqa: N806
+    sys_info: dict[str, str | list[str | None] | None] = DictType()
+    result: dict[str, str | dict[str, str | list[str | None] | None] | None] = DictType([("sys", sys_info)])
     path_keys = (
         "executable",
         "_base_executable",
@@ -42,9 +43,9 @@ def run():
     for key in path_keys:
         value = getattr(sys, key, None)
         value = encode_list_path(value) if isinstance(value, list) else encode_path(value)
-        result["sys"][key] = value
-    result["sys"]["fs_encoding"] = sys.getfilesystemencoding()
-    result["sys"]["io_encoding"] = getattr(sys.stdout, "encoding", None)
+        sys_info[key] = value
+    sys_info["fs_encoding"] = sys.getfilesystemencoding()
+    sys_info["io_encoding"] = getattr(sys.stdout, "encoding", None)
     result["version"] = sys.version
 
     try:
@@ -52,7 +53,8 @@ def run():
 
         # https://bugs.python.org/issue22199
         makefile = getattr(sysconfig, "get_makefile_filename", getattr(sysconfig, "_get_makefile_filename", None))
-        result["makefile_filename"] = encode_path(makefile())
+        if makefile is not None:
+            result["makefile_filename"] = encode_path(makefile())
     except ImportError:
         pass
 

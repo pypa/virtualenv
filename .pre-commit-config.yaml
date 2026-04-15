@@ -5,37 +5,46 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.35.0
+    rev: 0.37.1
     hooks:
       - id: check-github-workflows
         args: ["--verbose"]
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
+    rev: v2.4.2
     hooks:
       - id: codespell
         args: ["--write-changes"]
-  - repo: https://github.com/tox-dev/tox-ini-fmt
-    rev: "1.7.0"
+  - repo: https://github.com/tox-dev/tox-toml-fmt
+    rev: "v1.9.2"
     hooks:
-      - id: tox-ini-fmt
-        args: ["-p", "fix"]
+      - id: tox-toml-fmt
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "v2.11.1"
+    rev: "v2.21.1"
     hooks:
       - id: pyproject-fmt
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.14.6"
+    rev: "v0.15.10"
     hooks:
       - id: ruff-format
       - id: ruff
         args: ["--fix", "--unsafe-fixes", "--exit-non-zero-on-fix"]
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.6.2"
+    rev: "v3.8.2"
     hooks:
       - id: prettier
         additional_dependencies:
           - prettier@3.3.3
           - "@prettier/plugin-xml@3.4.1"
+  - repo: https://github.com/LilSpazJoekp/docstrfmt
+    rev: v2.0.2
+    hooks:
+      - id: docstrfmt
+        args: ["-l", "120"]
+        additional_dependencies: ["sphinx>=9.1"]
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.24.1
+    hooks:
+      - id: zizmor
   - repo: meta
     hooks:
       - id: check-hooks-apply

@@ -1,36 +1,40 @@
 from __future__ import annotations
 
 from operator import attrgetter
+from typing import TYPE_CHECKING
 from zipfile import ZipFile
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class Wheel:
-    def __init__(self, path) -> None:
+    def __init__(self, path: Path) -> None:
         # https://www.python.org/dev/peps/pep-0427/#file-name-convention
         # The wheel filename is {distribution}-{version}(-{build tag})?-{python tag}-{abi tag}-{platform tag}.whl
         self.path = path
         self._parts = path.stem.split("-")
 
     @classmethod
-    def from_path(cls, path):
+    def from_path(cls, path: Path) -> Wheel | None:
         if path is not None and path.suffix == ".whl" and len(path.stem.split("-")) >= 5:  # noqa: PLR2004
             return cls(path)
         return None
 
     @property
-    def distribution(self):
+    def distribution(self) -> str:
         return self._parts[0]
 
     @property
-    def version(self):
+    def version(self) -> str:
         return self._parts[1]
 
     @property
-    def version_tuple(self):
+    def version_tuple(self) -> tuple[int, ...]:
         return self.as_version_tuple(self.version)
 
     @staticmethod
-    def as_version_tuple(version):
+    def as_version_tuple(version: str) -> tuple[int, ...]:
         result = []
         for part in version.split(".")[0:3]:
             try:
@@ -42,10 +46,10 @@ class Wheel:
         return tuple(result)
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.path.name
 
-    def support_py(self, py_version):
+    def support_py(self, py_version: str) -> bool:
         name = f"{'-'.join(self.path.stem.split('-')[0:2])}.dist-info/METADATA"
         with ZipFile(str(self.path), "r") as zip_file:
             metadata = zip_file.read(name).decode("utf-8")
@@ -79,7 +83,7 @@ class Wheel:
         return str(self.path)
 
 
-def discover_wheels(from_folder, distribution, version, for_py_version):
+def discover_wheels(from_folder: Path, distribution: str, version: str | None, for_py_version: str) -> list[Wheel]:
     wheels = []
     for filename in from_folder.iterdir():
         wheel = Wheel.from_path(filename)
@@ -101,15 +105,15 @@ class Version:
     non_version = (bundle, embed)
 
     @staticmethod
-    def of_version(value):
+    def of_version(value: str | None) -> str | None:
         return None if value in Version.non_version else value
 
     @staticmethod
-    def as_pip_req(distribution, version):
+    def as_pip_req(distribution: str, version: str | None) -> str:
         return f"{distribution}{Version.as_version_spec(version)}"
 
     @staticmethod
-    def as_version_spec(version):
+    def as_version_spec(version: str | None) -> str:
         of_version = Version.of_version(version)
         return "" if of_version is None else f"=={of_version}"
 

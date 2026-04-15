@@ -1,10 +1,10 @@
-"""
-It's possible to use multiple types of host pythons to create virtual environments and all should work:
+"""It's possible to use multiple types of host pythons to create virtual environments and all should work:
 
 - host installation
 - invoking from a venv (if Python 3.3+)
 - invoking from an old style virtualenv (<17.0.0)
 - invoking from our own venv
+
 """
 
 from __future__ import annotations
@@ -13,8 +13,7 @@ import sys
 from subprocess import Popen
 
 import pytest
-
-from virtualenv.discovery.py_info import PythonInfo
+from python_discovery import PythonInfo
 
 CURRENT = PythonInfo.current_system()
 

@@ -10,19 +10,19 @@ from pathlib import Path
 from typing import ClassVar
 
 import pytest
+from python_discovery import PythonInfo
 
 from virtualenv.app_data import AppDataDiskFolder
-from virtualenv.discovery.py_info import PythonInfo
-from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_WIN, fs_supports_symlink
+from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_RUSTPYTHON, IS_WIN, fs_supports_symlink
 from virtualenv.report import LOGGER
 
 
-def pytest_addoption(parser):
+def pytest_addoption(parser) -> None:
     parser.addoption("--int", action="store_true", default=False, help="run integration tests")
     parser.addoption("--skip-slow", action="store_true", default=False, help="skip slow tests")
 
 
-def pytest_configure(config):
+def pytest_configure(config) -> None:
     """Ensure randomly is called before we re-order"""
     manager = config.pluginmanager
 
@@ -35,7 +35,7 @@ def pytest_configure(config):
         order[from_pos] = temp
 
 
-def pytest_collection_modifyitems(config, items):
+def pytest_collection_modifyitems(config, items) -> None:
     int_location = os.path.join("tests", "integration", "").rstrip()
     if len(items) == 1:
         return
@@ -54,7 +54,7 @@ def pytest_collection_modifyitems(config, items):
 
 
 @pytest.fixture(scope="session")
-def has_symlink_support(tmp_path_factory):  # noqa: ARG001
+def has_symlink_support():
     return fs_supports_symlink()
 
 
@@ -153,7 +153,7 @@ def _check_os_environ_stable():
     old = os.environ.copy()
     # ensure we don't inherit parent env variables
     to_clean = {k for k in os.environ if k.startswith(("VIRTUALENV_", "TOX_")) or "VIRTUAL_ENV" in k}
-    cleaned = {k: os.environ[k] for k, v in os.environ.items()}
+    cleaned = {k: os.environ[k] for k in os.environ}
     override = {
         "VIRTUALENV_NO_PERIODIC_UPDATE": "1",
         "VIRTUALENV_NO_DOWNLOAD": "1",
@@ -198,9 +198,7 @@ COVERAGE_RUN = os.environ.get(str(COV_ENV_VAR))
 
 @pytest.fixture(autouse=True)
 def coverage_env(monkeypatch, link, request):
-    """
-    Enable coverage report collection on the created virtual environments by injecting the coverage project
-    """
+    """Enable coverage report collection on the created virtual environments by injecting the coverage project"""
     if COVERAGE_RUN and "_no_coverage" not in request.fixturenames:
         # we inject right after creation, we cannot collect coverage on site.py - used for helper scripts, such as debug
         from virtualenv import run  # noqa: PLC0415
@@ -222,7 +220,7 @@ def coverage_env(monkeypatch, link, request):
         prev_run = run.session_via_cli
         monkeypatch.setattr(run, "session_via_cli", _session_via_cli)
 
-        def finish():
+        def finish() -> None:
             cov = obj["cov"]
             obj["cov"] = None
             cov.__exit__(None, None, None)
@@ -233,7 +231,7 @@ def coverage_env(monkeypatch, link, request):
 
     else:
 
-        def finish():
+        def finish() -> None:
             pass
 
         yield finish
@@ -241,7 +239,7 @@ def coverage_env(monkeypatch, link, request):
 
 # _no_coverage tells coverage_env to disable coverage injection for _no_coverage user.
 @pytest.fixture
-def _no_coverage():
+def _no_coverage() -> None:
     pass
 
 
@@ -308,7 +306,9 @@ def special_name_dir(tmp_path, special_char_name):
 
 @pytest.fixture(scope="session")
 def current_creators(session_app_data):
-    return PythonInfo.current_system(session_app_data).creators()
+    from virtualenv.run.plugin.creators import CreatorSelector  # noqa: PLC0415
+
+    return CreatorSelector.for_interpreter(PythonInfo.current_system(session_app_data))
 
 
 @pytest.fixture(scope="session")
@@ -326,10 +326,7 @@ def session_app_data(tmp_path_factory):
 
 @contextmanager
 def change_env_var(key, value):
-    """Temporarily change an environment variable.
-    :param key: the key of the env var
-    :param value: the value of the env var
-    """
+    """Temporarily change an environment variable. :param key: the key of the env var :param value: the value of the env var"""
     already_set = key in os.environ
     prev_value = os.environ.get(key)
     os.environ[key] = value
@@ -350,18 +347,18 @@ def temp_app_data(monkeypatch, tmp_path):
 
 
 @pytest.fixture(scope="session")
-def for_py_version():
+def for_py_version() -> str:
     return f"{sys.version_info.major}.{sys.version_info.minor}"
 
 
 @pytest.fixture
-def _skip_if_test_in_system(session_app_data):
+def _skip_if_test_in_system(session_app_data) -> None:
     current = PythonInfo.current(session_app_data)
     if current.system_executable is not None:
         pytest.skip("test not valid if run under system")
 
 
-if IS_PYPY or IS_GRAALPY:
+if IS_PYPY or IS_GRAALPY or IS_RUSTPYTHON:
 
     @pytest.fixture
     def time_freeze(freezer):

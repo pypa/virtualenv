@@ -6,8 +6,8 @@ from contextlib import suppress
 from pathlib import Path
 
 import pytest
+from python_discovery import PythonInfo
 
-from virtualenv.discovery.py_info import PythonInfo
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
 
@@ -52,7 +52,7 @@ def zipapp_build_env(tmp_path_factory):
             msg = "could not find a python to build zipapp"
             raise RuntimeError(msg)
         cmd = [str(Path(exe).parent / "pip"), "install", "pip>=23", "packaging>=23"]
-        subprocess.check_call(cmd)
+        subprocess.run(cmd, check=True, timeout=300)
     yield exe
     if create_env_path is not None:
         shutil.rmtree(str(create_env_path))
@@ -64,7 +64,7 @@ def zipapp(zipapp_build_env, tmp_path_factory):
     path = HERE.parent.parent / "tasks" / "make_zipapp.py"
     filename = into / "virtualenv.pyz"
     cmd = [zipapp_build_env, str(path), "--dest", str(filename)]
-    subprocess.check_call(cmd)
+    subprocess.run(cmd, check=True, timeout=300)
     yield filename
     shutil.rmtree(str(into))
 
@@ -79,38 +79,41 @@ def zipapp_test_env(tmp_path_factory):
 
 @pytest.fixture
 def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG001
-    def _run(*args):
+    def _run(*args) -> None:
         cmd = [str(zipapp_test_env), str(zipapp), "-vv", str(tmp_path / "env"), *list(args)]
-        subprocess.check_call(cmd)
+        subprocess.run(cmd, check=True, timeout=120)
 
     return _run
 
 
 @pytest.fixture
 def call_zipapp_symlink(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG001
-    def _run(*args):
+    def _run(*args) -> None:
         symlinked = zipapp.parent / "symlinked_virtualenv.pyz"
         symlinked.symlink_to(str(zipapp))
         cmd = [str(zipapp_test_env), str(symlinked), "-vv", str(tmp_path / "env"), *list(args)]
-        subprocess.check_call(cmd)
+        subprocess.run(cmd, check=True, timeout=120)
 
     return _run
 
 
+@pytest.mark.timeout(600)
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink not supported")
-def test_zipapp_in_symlink(capsys, call_zipapp_symlink):
+def test_zipapp_in_symlink(capsys, call_zipapp_symlink) -> None:
     call_zipapp_symlink("--reset-app-data")
     _out, err = capsys.readouterr()
     assert not err
 
 
-def test_zipapp_help(call_zipapp, capsys):
+@pytest.mark.timeout(600)
+def test_zipapp_help(call_zipapp, capsys) -> None:
     call_zipapp("-h")
     _out, err = capsys.readouterr()
     assert not err
 
 
+@pytest.mark.timeout(600)
 @pytest.mark.slow
 @pytest.mark.parametrize("seeder", ["app-data", "pip"])
-def test_zipapp_create(call_zipapp, seeder):
+def test_zipapp_create(call_zipapp, seeder) -> None:
     call_zipapp("--seeder", seeder)

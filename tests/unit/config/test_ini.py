@@ -15,7 +15,7 @@ from virtualenv.run import session_via_cli
     IS_PYPY and IS_WIN and sys.version_info[0:2] >= (3, 9),
     reason="symlink is not supported",
 )
-def test_ini_can_be_overwritten_by_flag(tmp_path, monkeypatch):
+def test_ini_can_be_overwritten_by_flag(tmp_path, monkeypatch) -> None:
     custom_ini = tmp_path / "conf.ini"
     custom_ini.write_text(
         dedent(

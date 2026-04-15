@@ -1,7 +1,7 @@
-name: Release to PyPI
+name: Release
 on:
   push:
-    tags: ["*"]
+    tags: ["*.*.*"]
 
 env:
   dists-artifact-name: python-package-distributions
@@ -9,41 +9,119 @@ env:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
-      - name: 🚀 Install the latest version of uv
-        uses: astral-sh/setup-uv@v4
+          persist-credentials: false
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@cec208311dfd045dd5311c1add060b2062131d57 # v8.0.0
         with:
-          enable-cache: true
+          enable-cache: false
           cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: 📦 Build package
+      - name: Set up Python
+        run: uv python install 3.14
+      - name: Build sdist and wheel
         run: uv build --python 3.14 --python-preference only-managed --sdist --wheel . --out-dir dist
-      - name: 📦 Store the distribution packages
-        uses: actions/upload-artifact@v4
+      - name: Build zipapp
+        run: uv tool run --with tox-uv tox r -e zipapp
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
         with:
           name: ${{ env.dists-artifact-name }}
           path: dist/*
+      - name: Store the zipapp
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        with:
+          name: virtualenv-zipapp
+          path: virtualenv.pyz
 
-  release:
-    needs:
-      - build
+  publish:
+    needs: build
     runs-on: ubuntu-24.04
     environment:
       name: release
       url: https://pypi.org/project/virtualenv/${{ github.ref_name }}
     permissions:
+      contents: write
       id-token: write
     steps:
-      - name: 📥 Download all the dists
-        uses: actions/download-artifact@v4
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Download all the dists
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: ${{ env.dists-artifact-name }}
           path: dist/
-      - name: 🚀 Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@v1.13.0
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # v1.14.0
         with:
           attestations: true
+      - name: Download the zipapp
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: virtualenv-zipapp
+      - name: Create GitHub Release
+        run: gh release create "$GITHUB_REF_NAME" virtualenv.pyz --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Update get-virtualenv
+        env:
+          GH_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
+        run: |
+          git clone https://x-access-token:${GH_TOKEN}@github.com/pypa/get-virtualenv.git
+          cp virtualenv.pyz get-virtualenv/public/virtualenv.pyz
+          echo -n "${GITHUB_REF_NAME}" > get-virtualenv/public/version.txt
+          cd get-virtualenv
+          user_info=$(gh api /user)
+          git config user.name "$(echo "$user_info" | jq -r '.name // .login')"
+          git config user.email "$(echo "$user_info" | jq -r '.id')+$(echo "$user_info" | jq -r '.login')@users.noreply.github.com"
+          git add public/virtualenv.pyz public/version.txt
+          git commit -m "update virtualenv to ${GITHUB_REF_NAME}"
+          git push origin main
+
+  rollback:
+    if: ${{ always() && needs.build.result == 'success' && needs.publish.result == 'failure' }}
+    needs:
+      - build
+      - publish
+    runs-on: ubuntu-24.04
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GH_RELEASE_TOKEN }} # zizmor: ignore[artipacked]
+      - name: Delete GitHub Release if created
+        env:
+          GH_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
+        run: gh release delete "${GITHUB_REF_NAME}" --yes --cleanup-tag || true
+      - name: Delete remote tag
+        run: git push origin --delete "${GITHUB_REF_NAME}" || true
+      - name: Reset release commit on main
+        run: |
+          git checkout main
+          git reset --hard HEAD~1
+          git push origin main --force
+      - name: Rollback get-virtualenv if updated
+        env:
+          GH_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
+        run: |
+          git clone https://x-access-token:${GH_TOKEN}@github.com/pypa/get-virtualenv.git
+          cd get-virtualenv
+          current_version=$(cat public/version.txt)
+          if [ "$current_version" = "${GITHUB_REF_NAME}" ]; then
+            gh release delete "$current_version" --yes --cleanup-tag || true
+            git reset --hard HEAD~1
+            git push origin main --force
+          fi

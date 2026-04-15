@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="virtualenv mark (balanced)">
+
+  <!-- Blue arc -->
+  <path d="M128 44
+           A84 84 0 0 0 44 128
+           C44 176 82 212 128 212" fill="none" stroke="#2b7cff" stroke-width="28" stroke-linecap="round"></path>
+
+  <!-- Yellow arc -->
+  <path d="M128 44
+           A84 84 0 0 1 212 128
+           C212 176 174 212 128 212" fill="none" stroke="#c9f400" stroke-width="28" stroke-linecap="round"></path>
+
+  <!-- Symmetric eyes -->
+  <circle cx="99.3" cy="49.1" r="6" fill="#ffffff"></circle>
+  <circle cx="99.3" cy="49.1" r="2.6" fill="#0F172A"></circle>
+
+  <circle cx="156.7" cy="49.1" r="6" fill="#ffffff"></circle>
+  <circle cx="156.7" cy="49.1" r="2.6" fill="#0F172A"></circle>
+
+  <!-- Continuous wordmark -->
+  <text x="128" y="104" text-anchor="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="24" font-weight="900" letter-spacing="-0.6">
+    <tspan fill="#2b7cff">virtual</tspan><tspan fill="#9fb800">env</tspan>
+  </text>
+
+  <!-- Terminal moved up -->
+  <rect x="80" y="110" width="96" height="70" rx="14" fill="#0f172a"></rect>
+  <path d="M98 132 L116 146 L98 160" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"></path>
+  <path d="M130 160 H156" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round"></path>
+
+</svg>

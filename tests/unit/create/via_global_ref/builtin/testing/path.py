@@ -76,19 +76,17 @@ class PathMockABC(FakeDataABC, Path):
 
 
 def MetaPathMock(filelist):  # noqa: N802
-    """
-    Metaclass that creates a `PathMock` class with the `filelist` defined.
-    """
+    """Metaclass that creates a `PathMock` class with the `filelist` defined."""
     return type("PathMock", (PathMockABC,), {"filelist": filelist})
 
 
-def mock_files(mocker, pathlist, filelist):
+def mock_files(mocker, pathlist, filelist) -> None:
     PathMock = MetaPathMock(set(filelist))  # noqa: N806
     for path in pathlist:
         mocker.patch(path, PathMock)
 
 
-def mock_pypy_libs(mocker, pypy_creator_cls, libs):
+def mock_pypy_libs(mocker, pypy_creator_cls, libs) -> None:
     paths = tuple(set(map(Path, libs)))
     mocker.patch.object(pypy_creator_cls, "_shared_libs", return_value=paths)
 

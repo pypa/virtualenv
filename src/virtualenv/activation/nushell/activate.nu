@@ -2,8 +2,9 @@
 # - Activate with `overlay use activate.nu`
 # - Deactivate with `deactivate`, as usual
 #
-# To customize the overlay name, you can call `overlay use activate.nu as foo`, but then simply `deactivate` won't work
-# because it is just an alias to hide the "activate" overlay. You'd need to call `overlay hide foo` manually.
+# To customize the overlay name, call `overlay use activate.nu as foo`, but then `deactivate` won't work —
+# you'd need to run `overlay hide foo` manually. Do not activate with `use activate.nu *`; that does not
+# create an overlay and deactivation will fail.
 
 module warning {
     export-env {
@@ -57,7 +58,9 @@ export-env {
     } else {
         __VIRTUAL_PROMPT__
     }
-    let new_env = { $path_name: $new_path VIRTUAL_ENV: $virtual_env VIRTUAL_ENV_PROMPT: $virtual_env_prompt }
+    let old_pkg_config_path = if (has-env 'PKG_CONFIG_PATH') { $env.PKG_CONFIG_PATH } else { '' }
+    let new_pkg_config_path = $'($virtual_env)/lib/pkgconfig:($old_pkg_config_path)'
+    let new_env = { $path_name: $new_path VIRTUAL_ENV: $virtual_env VIRTUAL_ENV_PROMPT: $virtual_env_prompt PKG_CONFIG_PATH: $new_pkg_config_path }
     if (has-env 'TCL_LIBRARY')  {
         let $new_env = $new_env | insert TCL_LIBRARY __TCL_LIBRARY__
     }
@@ -84,4 +87,5 @@ export-env {
 }
 
 export alias pydoc = python -m pydoc
+# If deactivate errors "not an active overlay": activate with `overlay use activate.nu` not `use activate.nu *`; for custom names use `overlay hide NAME`
 export alias deactivate = overlay hide activate

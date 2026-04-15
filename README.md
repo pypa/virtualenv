@@ -11,7 +11,7 @@
 
 A tool for creating isolated `virtual` python environments.
 
-- [Installation](https://virtualenv.pypa.io/en/latest/installation.html)
+- [Installation](https://virtualenv.pypa.io/en/latest/how-to/install.html)
 - [Documentation](https://virtualenv.pypa.io)
 - [Changelog](https://virtualenv.pypa.io/en/latest/changelog.html)
 - [Issues](https://github.com/pypa/virtualenv/issues)

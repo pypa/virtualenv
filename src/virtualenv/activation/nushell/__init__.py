@@ -1,21 +1,28 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from virtualenv.activation.via_template import ViaTemplateActivator
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
+    from pathlib import Path
+
+    from virtualenv.create.creator import Creator
 
 
 class NushellActivator(ViaTemplateActivator):
-    def templates(self):
+    def templates(self) -> Iterator[str]:
         yield "activate.nu"
 
     @staticmethod
-    def quote(string):
-        """
-        Nushell supports raw strings like: r###'this is a string'###.
+    def quote(string: str) -> str:
+        """Nushell supports raw strings like: r###'this is a string'###.
 
         https://github.com/nushell/nushell.github.io/blob/main/book/working_with_strings.md
 
-        This method finds the maximum continuous sharps in the string and then
-        quote it with an extra sharp.
+        This method finds the maximum continuous sharps in the string and then quote it with an extra sharp.
+
         """
         max_sharps = 0
         current_sharps = 0
@@ -28,7 +35,7 @@ class NushellActivator(ViaTemplateActivator):
         wrapping = "#" * (max_sharps + 1)
         return f"r{wrapping}'{string}'{wrapping}"
 
-    def replacements(self, creator, dest_folder):  # noqa: ARG002
+    def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:  # noqa: ARG002
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
             "__VIRTUAL_ENV__": str(creator.dest),

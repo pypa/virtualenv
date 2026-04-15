@@ -7,6 +7,38 @@ import pytest
 from virtualenv.activation import BatchActivator
 
 
+def test_batch_pydoc_bat_quoting(tmp_path) -> None:
+    """Test that pydoc.bat properly quotes python.exe path to handle spaces."""
+
+    # GIVEN: A mock interpreter
+    class MockInterpreter:
+        os = "nt"
+        tcl_lib = None
+        tk_lib = None
+
+    class MockCreator:
+        def __init__(self, dest) -> None:
+            self.dest = dest
+            self.bin_dir = dest / "Scripts"
+            self.bin_dir.mkdir(parents=True)
+            self.interpreter = MockInterpreter()
+            self.pyenv_cfg = {}
+            self.env_name = "test-env"
+
+    creator = MockCreator(tmp_path)
+    options = Namespace(prompt=None)
+    activator = BatchActivator(options)
+
+    # WHEN: Generate activation scripts
+    activator.generate(creator)
+
+    # THEN: pydoc.bat should quote python.exe to handle paths with spaces
+    pydoc_content = (creator.bin_dir / "pydoc.bat").read_text(encoding="utf-8")
+
+    # The python.exe should be quoted to handle paths with spaces like "C:\Program Files\Python39\python.exe"
+    assert '"python.exe"' in pydoc_content, f"python.exe should be quoted in pydoc.bat. Content:\n{pydoc_content}"
+
+
 @pytest.mark.parametrize(
     ("tcl_lib", "tk_lib", "present"),
     [
@@ -14,7 +46,7 @@ from virtualenv.activation import BatchActivator
         (None, None, False),
     ],
 )
-def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
+def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
     # GIVEN
     class MockInterpreter:
         os = "nt"
@@ -24,7 +56,7 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     interpreter.tk_lib = tk_lib
 
     class MockCreator:
-        def __init__(self, dest):
+        def __init__(self, dest) -> None:
             self.dest = dest
             self.bin_dir = dest / "bin"
             self.bin_dir.mkdir()
@@ -42,6 +74,13 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     deactivate_content = (creator.bin_dir / "deactivate.bat").read_text(encoding="utf-8")
 
     # THEN
+    # PKG_CONFIG_PATH is always set
+    assert '@if defined PKG_CONFIG_PATH @set "_OLD_PKG_CONFIG_PATH=%PKG_CONFIG_PATH%"' in activate_content
+    assert '@set "PKG_CONFIG_PATH=%VIRTUAL_ENV%\\lib\\pkgconfig;%PKG_CONFIG_PATH%"' in activate_content
+    assert '@if defined _OLD_PKG_CONFIG_PATH @set "PKG_CONFIG_PATH=%_OLD_PKG_CONFIG_PATH%"' in deactivate_content
+    assert "@if not defined _OLD_PKG_CONFIG_PATH @set PKG_CONFIG_PATH=" in deactivate_content
+    assert "@set _OLD_PKG_CONFIG_PATH=" in deactivate_content
+
     if present:
         assert '@if NOT "C:\\tcl"=="" @set "TCL_LIBRARY=C:\\tcl"' in activate_content
         assert '@if NOT "C:\\tk"=="" @set "TK_LIBRARY=C:\\tk"' in activate_content
@@ -53,7 +92,7 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
 
 
 @pytest.mark.usefixtures("activation_python")
-def test_batch(activation_tester_class, activation_tester, tmp_path):
+def test_batch(activation_tester_class, activation_tester, tmp_path) -> None:
     version_script = tmp_path / "version.bat"
     version_script.write_text("ver", encoding="utf-8")
 
@@ -76,14 +115,14 @@ def test_batch(activation_tester_class, activation_tester, tmp_path):
                 return f'"{text}"'
             return s
 
-        def print_prompt(self):
+        def print_prompt(self) -> str:
             return 'echo "%PROMPT%"'
 
     activation_tester(Batch)
 
 
 @pytest.mark.usefixtures("activation_python")
-def test_batch_output(activation_tester_class, activation_tester, tmp_path):
+def test_batch_output(activation_tester_class, activation_tester, tmp_path) -> None:
     version_script = tmp_path / "version.bat"
     version_script.write_text("ver", encoding="utf-8")
 
@@ -98,12 +137,7 @@ def test_batch_output(activation_tester_class, activation_tester, tmp_path):
             self.unix_line_ending = False
 
         def _get_test_lines(self, activate_script):
-            """
-            Build intermediary script which will be then called.
-            In the script just activate environment, call echo to get current
-            echo setting, and then deactivate. This ensures that echo setting
-            is preserved and no unwanted output appears.
-            """
+            """Build intermediary script which will be then called. In the script just activate environment, call echo to get current echo setting, and then deactivate. This ensures that echo setting is preserved and no unwanted output appears."""
             intermediary_script_path = str(tmp_path / "intermediary.bat")
             activate_script_quoted = self.quote(str(activate_script))
             return [
@@ -114,7 +148,7 @@ def test_batch_output(activation_tester_class, activation_tester, tmp_path):
                 f"@call {intermediary_script_path}",
             ]
 
-        def assert_output(self, out, raw, tmp_path):  # noqa: ARG002
+        def assert_output(self, out, raw, tmp_path) -> None:  # noqa: ARG002
             assert out[0] == "ECHO is on.", raw
 
         def quote(self, s):
@@ -123,7 +157,7 @@ def test_batch_output(activation_tester_class, activation_tester, tmp_path):
                 return f'"{text}"'
             return s
 
-        def print_prompt(self):
+        def print_prompt(self) -> str:
             return 'echo "%PROMPT%"'
 
     activation_tester(Batch)

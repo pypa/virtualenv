@@ -4,19 +4,25 @@ import re
 from abc import ABC
 from collections import OrderedDict
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from virtualenv.create.describe import PosixSupports, WindowsSupports
 from virtualenv.create.via_global_ref.builtin.ref import RefMust, RefWhen
 from virtualenv.create.via_global_ref.builtin.via_global_self_do import ViaGlobalRefVirtualenvBuiltin
 
+if TYPE_CHECKING:
+    from collections.abc import Generator
+
+    from python_discovery import PythonInfo
+
 
 class CPython(ViaGlobalRefVirtualenvBuiltin, ABC):
     @classmethod
-    def can_describe(cls, interpreter):
+    def can_describe(cls, interpreter: PythonInfo) -> bool:
         return interpreter.implementation == "CPython" and super().can_describe(interpreter)
 
     @classmethod
-    def exe_stem(cls):
+    def exe_stem(cls) -> str:
         return "python"
 
 
@@ -24,41 +30,58 @@ class CPythonPosix(CPython, PosixSupports, ABC):
     """Create a CPython virtual environment on POSIX platforms."""
 
     @classmethod
-    def _executables(cls, interpreter):
-        host_exe = Path(interpreter.system_executable)
-        major, minor = interpreter.version_info.major, interpreter.version_info.minor
-        targets = OrderedDict((i, None) for i in ["python", f"python{major}", f"python{major}.{minor}", host_exe.name])
+    def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], str, str]]:
+        host_exe = Path(interpreter.system_executable)  # ty: ignore[invalid-argument-type]
+        minor = interpreter.version_info.minor
+        names = [
+            "python",
+            "python3",
+            f"python3.{minor}",
+            *((f"python3.{minor}t",) if interpreter.free_threaded else ()),
+            host_exe.name,
+        ]
+        targets = OrderedDict((i, None) for i in names)
         yield host_exe, list(targets.keys()), RefMust.NA, RefWhen.ANY
 
 
 class CPythonWindows(CPython, WindowsSupports, ABC):
     @classmethod
-    def _executables(cls, interpreter):
+    def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], str, str]]:
         # symlink of the python executables does not work reliably, copy always instead
         # - https://bugs.python.org/issue42013
         # - venv
         host = cls.host_python(interpreter)
-        names = {"python.exe", host.name}
-        if interpreter.version_info.major == 3:  # noqa: PLR2004
-            names.update({"python3.exe", "python3"})
+        minor = interpreter.version_info.minor
+        names = {
+            "python.exe",
+            "python3.exe",
+            "python3",
+            host.name,
+            *((f"python3.{minor}t.exe",) if interpreter.free_threaded else ()),
+        }
         for path in (host.parent / n for n in names):
             yield host, [path.name], RefMust.COPY, RefWhen.ANY
         # for more info on pythonw.exe see https://stackoverflow.com/a/30313091
         python_w = host.parent / "pythonw.exe"
-        yield python_w, [python_w.name], RefMust.COPY, RefWhen.ANY
+        yield (
+            python_w,
+            [python_w.name, "pythonw3.exe", *((f"pythonw3.{minor}t.exe",) if interpreter.free_threaded else ())],
+            RefMust.COPY,
+            RefWhen.ANY,
+        )
 
     @classmethod
-    def host_python(cls, interpreter):
-        return Path(interpreter.system_executable)
+    def host_python(cls, interpreter: PythonInfo) -> Path:
+        return Path(interpreter.system_executable)  # ty: ignore[invalid-argument-type]
 
 
-def is_mac_os_framework(interpreter):
+def is_mac_os_framework(interpreter: PythonInfo) -> bool:
     if interpreter.platform == "darwin":
         return interpreter.sysconfig_vars.get("PYTHONFRAMEWORK") == "Python3"
     return False
 
 
-def is_macos_brew(interpreter):
+def is_macos_brew(interpreter: PythonInfo) -> bool:
     return interpreter.platform == "darwin" and _BREW.fullmatch(interpreter.system_prefix) is not None
 
 

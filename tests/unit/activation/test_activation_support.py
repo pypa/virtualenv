@@ -3,6 +3,7 @@ from __future__ import annotations
 from argparse import Namespace
 
 import pytest
+from python_discovery import PythonInfo
 
 from virtualenv.activation import (
     BashActivator,
@@ -13,14 +14,13 @@ from virtualenv.activation import (
     PythonActivator,
     XonshActivator,
 )
-from virtualenv.discovery.py_info import PythonInfo
 
 
 @pytest.mark.parametrize(
     "activator_class",
     [BatchActivator, PowerShellActivator, PythonActivator, BashActivator, FishActivator, XonshActivator],
 )
-def test_activator_support_windows(mocker, activator_class):
+def test_activator_support_windows(mocker, activator_class) -> None:
     activator = activator_class(Namespace(prompt=None))
 
     interpreter = mocker.Mock(spec=PythonInfo)
@@ -29,7 +29,7 @@ def test_activator_support_windows(mocker, activator_class):
 
 
 @pytest.mark.parametrize("activator_class", [CShellActivator])
-def test_activator_no_support_windows(mocker, activator_class):
+def test_activator_no_support_windows(mocker, activator_class) -> None:
     activator = activator_class(Namespace(prompt=None))
 
     interpreter = mocker.Mock(spec=PythonInfo)
@@ -41,7 +41,7 @@ def test_activator_no_support_windows(mocker, activator_class):
     "activator_class",
     [BashActivator, CShellActivator, FishActivator, PowerShellActivator, PythonActivator, XonshActivator],
 )
-def test_activator_support_posix(mocker, activator_class):
+def test_activator_support_posix(mocker, activator_class) -> None:
     activator = activator_class(Namespace(prompt=None))
     interpreter = mocker.Mock(spec=PythonInfo)
     interpreter.os = "posix"
@@ -49,7 +49,7 @@ def test_activator_support_posix(mocker, activator_class):
 
 
 @pytest.mark.parametrize("activator_class", [BatchActivator])
-def test_activator_no_support_posix(mocker, activator_class):
+def test_activator_no_support_posix(mocker, activator_class) -> None:
     activator = activator_class(Namespace(prompt=None))
     interpreter = mocker.Mock(spec=PythonInfo)
     interpreter.os = "posix"

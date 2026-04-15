@@ -4,8 +4,15 @@ import os
 import shlex
 import sys
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
 from .activator import Activator
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable, Iterator
+    from pathlib import Path
+
+    from virtualenv.create.creator import Creator
 
 if sys.version_info >= (3, 10):
     from importlib.resources import files
@@ -19,20 +26,21 @@ else:
 
 class ViaTemplateActivator(Activator, ABC):
     @abstractmethod
-    def templates(self):
+    def templates(self) -> Iterator[str]:
         raise NotImplementedError
 
     @staticmethod
-    def quote(string):
-        """
-        Quote strings in the activation script.
+    def quote(string: str) -> str:
+        """Quote strings in the activation script.
 
         :param string: the string to quote
-        :return: quoted string that works in the activation script
+
+        :returns: quoted string that works in the activation script
+
         """
         return shlex.quote(string)
 
-    def generate(self, creator):
+    def generate(self, creator: Creator) -> list[Path]:
         dest_folder = creator.bin_dir
         replacements = self.replacements(creator, dest_folder)
         generated = self._generate(replacements, self.templates(), dest_folder, creator)
@@ -40,7 +48,7 @@ class ViaTemplateActivator(Activator, ABC):
             creator.pyenv_cfg["prompt"] = self.flag_prompt
         return generated
 
-    def replacements(self, creator, dest_folder):  # noqa: ARG002
+    def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:  # noqa: ARG002
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
             "__VIRTUAL_ENV__": str(creator.dest),
@@ -51,7 +59,9 @@ class ViaTemplateActivator(Activator, ABC):
             "__TK_LIBRARY__": getattr(creator.interpreter, "tk_lib", None) or "",
         }
 
-    def _generate(self, replacements, templates, to_folder, creator):
+    def _generate(
+        self, replacements: dict[str, str], templates: Iterable[str], to_folder: Path, creator: Creator
+    ) -> list[Path]:
         generated = []
         for template in templates:
             text = self.instantiate_template(replacements, template, creator)
@@ -67,10 +77,10 @@ class ViaTemplateActivator(Activator, ABC):
             generated.append(dest)
         return generated
 
-    def as_name(self, template):
+    def as_name(self, template: str) -> str:
         return template
 
-    def instantiate_template(self, replacements, template, creator):
+    def instantiate_template(self, replacements: dict[str, str], template: str, creator: Creator) -> str:
         # read content as binary to avoid platform specific line normalization (\n -> \r\n)
         binary = read_binary(self.__module__, template)
         text = binary.decode("utf-8", errors="strict")
@@ -80,7 +90,7 @@ class ViaTemplateActivator(Activator, ABC):
         return text
 
     @staticmethod
-    def _repr_unicode(creator, value):  # noqa: ARG004
+    def _repr_unicode(creator: Creator, value: str) -> str:  # noqa: ARG004
         return value  # by default, we just let it be unicode
 
 

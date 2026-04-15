@@ -10,10 +10,21 @@ from argparse import ArgumentTypeError
 from ast import literal_eval
 from collections import OrderedDict
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from virtualenv.discovery.cached_py_info import LogCmd
+if TYPE_CHECKING:
+    from argparse import ArgumentParser
+    from typing import Any, NoReturn
+
+    from python_discovery import PythonInfo
+
+    from virtualenv.app_data.base import AppData
+    from virtualenv.config.cli.parser import VirtualEnvOptions
+
+from os.path import commonpath
+
 from virtualenv.util.path import safe_delete
-from virtualenv.util.subprocess import run_cmd
+from virtualenv.util.subprocess import LogCmd, run_cmd
 from virtualenv.version import __version__
 
 from .pyenv_cfg import PyEnvCfg
@@ -31,12 +42,12 @@ class CreatorMeta:
 class Creator(ABC):
     """A class that given a python Interpreter creates a virtual environment."""
 
-    def __init__(self, options, interpreter) -> None:
-        """
-        Construct a new virtual environment creator.
+    def __init__(self, options: VirtualEnvOptions, interpreter: PythonInfo) -> None:
+        """Construct a new virtual environment creator.
 
         :param options: the CLI option as parsed from :meth:`add_parser_arguments`
         :param interpreter: the interpreter to create virtual environment from
+
         """
         self.interpreter = interpreter
         self._debug = None
@@ -46,11 +57,35 @@ class Creator(ABC):
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest)
         self.app_data = options.app_data
         self.env = options.env
+        self.prompt = getattr(options, "prompt", None)
+
+    if TYPE_CHECKING:
+
+        @property
+        def exe(self) -> Path: ...
+
+        @property
+        def env_name(self) -> str: ...
+
+        @property
+        def bin_dir(self) -> Path: ...
+
+        @property
+        def script_dir(self) -> Path: ...
+
+        @property
+        def libs(self) -> list[Path]: ...
+
+        @property
+        def purelib(self) -> Path: ...
+
+        @property
+        def platlib(self) -> Path: ...
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self._args())})"
 
-    def _args(self):
+    def _args(self) -> list[tuple[str, Any]]:
         return [
             ("dest", str(self.dest)),
             ("clear", self.clear),
@@ -58,25 +93,32 @@ class Creator(ABC):
         ]
 
     @classmethod
-    def can_create(cls, interpreter):  # noqa: ARG003
-        """
-        Determine if we can create a virtual environment.
+    def can_create(cls, interpreter: PythonInfo) -> CreatorMeta | bool | None:  # noqa: ARG003
+        """Determine if we can create a virtual environment.
 
         :param interpreter: the interpreter in question
-        :return: ``None`` if we can't create, any other object otherwise that will be forwarded to \
-                  :meth:`add_parser_arguments`
+
+        :returns: ``None`` if we can't create, any other object otherwise that will be forwarded to
+            :meth:`add_parser_arguments`
+
         """
         return True
 
     @classmethod
-    def add_parser_arguments(cls, parser, interpreter, meta, app_data):  # noqa: ARG003
-        """
-        Add CLI arguments for the creator.
+    def add_parser_arguments(
+        cls,
+        parser: ArgumentParser,
+        interpreter: PythonInfo,  # noqa: ARG003
+        meta: CreatorMeta,  # noqa: ARG003
+        app_data: AppData,  # noqa: ARG003
+    ) -> None:
+        """Add CLI arguments for the creator.
 
         :param parser: the CLI parser
         :param app_data: the application data folder
         :param interpreter: the interpreter we're asked to create virtual environment for
         :param meta: value as returned by :meth:`can_create`
+
         """
         parser.add_argument(
             "dest",
@@ -99,16 +141,16 @@ class Creator(ABC):
         )
 
     @abstractmethod
-    def create(self):
+    def create(self) -> None:
         """Perform the virtual environment creation."""
         raise NotImplementedError
 
     @classmethod
-    def validate_dest(cls, raw_value):  # noqa: C901
+    def validate_dest(cls, raw_value: str) -> str:  # noqa: C901
         """No path separator in the path, valid chars and must be write-able."""
 
-        def non_write_able(dest, value):
-            common = Path(*os.path.commonprefix([value.parts, dest.parts]))
+        def non_write_able(dest: Path, value: Path) -> NoReturn:
+            common = Path(commonpath([str(value), str(dest)]))
             msg = f"the destination {dest.relative_to(common)} is not write-able at {common}"
             raise ArgumentTypeError(msg)
 
@@ -153,7 +195,7 @@ class Creator(ABC):
             dest = base
         return str(value)
 
-    def run(self):
+    def run(self) -> None:
         if self.dest.exists() and self.clear:
             LOGGER.debug("delete %s", self.dest)
             safe_delete(self.dest)
@@ -163,7 +205,7 @@ class Creator(ABC):
         if not self.no_vcs_ignore:
             self.setup_ignore_vcs()
 
-    def add_cachedir_tag(self):
+    def add_cachedir_tag(self) -> None:
         """Generate a file indicating that this is not meant to be backed up."""
         cachedir_tag_file = self.dest / "CACHEDIR.TAG"
         if not cachedir_tag_file.exists():
@@ -175,14 +217,22 @@ class Creator(ABC):
             """).strip()
             cachedir_tag_file.write_text(cachedir_tag_text, encoding="utf-8")
 
-    def set_pyenv_cfg(self):
+    def set_pyenv_cfg(self) -> None:
         self.pyenv_cfg.content = OrderedDict()
-        self.pyenv_cfg["home"] = os.path.dirname(os.path.abspath(self.interpreter.system_executable))
+        system_executable = self.interpreter.system_executable or self.interpreter.executable
+        assert system_executable is not None  # noqa: S101
+        self.pyenv_cfg["home"] = os.path.dirname(os.path.abspath(system_executable))
         self.pyenv_cfg["implementation"] = self.interpreter.implementation
         self.pyenv_cfg["version_info"] = ".".join(str(i) for i in self.interpreter.version_info)
+        self.pyenv_cfg["version"] = ".".join(str(i) for i in self.interpreter.version_info[:3])
+        self.pyenv_cfg["executable"] = os.path.realpath(system_executable)
+        self.pyenv_cfg["command"] = f"{sys.executable} -m virtualenv {self.dest}"
         self.pyenv_cfg["virtualenv"] = __version__
+        if self.prompt is not None:
+            prompt_value = os.path.basename(os.getcwd()) if self.prompt == "." else self.prompt
+            self.pyenv_cfg["prompt"] = prompt_value
 
-    def setup_ignore_vcs(self):
+    def setup_ignore_vcs(self) -> None:
         """Generate ignore instructions for version control systems."""
         # mark this folder to be ignored by VCS, handle https://www.python.org/dev/peps/pep-0610/#registered-vcs
         git_ignore = self.dest / ".gitignore"
@@ -195,18 +245,18 @@ class Creator(ABC):
         # Subversion - does not support ignore files, requires direct manipulation with the svn tool
 
     @property
-    def debug(self):
-        """:return: debug information about the virtual environment (only valid after :meth:`create` has run)"""
+    def debug(self) -> dict[str, Any] | None:
+        """:returns: debug information about the virtual environment (only valid after :meth:`create` has run)"""
         if self._debug is None and self.exe is not None:
             self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data, self.env)
         return self._debug
 
     @staticmethod
-    def debug_script():
+    def debug_script() -> Path:
         return DEBUG_SCRIPT
 
 
-def get_env_debug_info(env_exe, debug_script, app_data, env):
+def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env: dict[str, str]) -> dict[str, Any]:
     env = env.copy()
     env.pop("PYTHONPATH", None)
 

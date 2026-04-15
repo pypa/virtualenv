@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import shutil
+import subprocess
 from argparse import Namespace
 
 import pytest
 
 from virtualenv.activation import BashActivator
 from virtualenv.info import IS_WIN
+from virtualenv.run import cli_run
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
@@ -16,7 +19,7 @@ from virtualenv.info import IS_WIN
         (None, None, False),
     ],
 )
-def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
+def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
     # GIVEN
     class MockInterpreter:
         pass
@@ -26,7 +29,7 @@ def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     interpreter.tk_lib = tk_lib
 
     class MockCreator:
-        def __init__(self, dest):
+        def __init__(self, dest) -> None:
             self.dest = dest
             self.bin_dir = dest / "bin"
             self.bin_dir.mkdir()
@@ -46,6 +49,13 @@ def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     # The teardown logic is always present in deactivate()
     assert "unset _OLD_VIRTUAL_TCL_LIBRARY" in content
     assert "unset _OLD_VIRTUAL_TK_LIBRARY" in content
+    assert "unset _OLD_PKG_CONFIG_PATH" in content
+
+    # PKG_CONFIG_PATH is always set
+    assert '_OLD_PKG_CONFIG_PATH="${PKG_CONFIG_PATH:-}"' in content
+    assert 'PKG_CONFIG_PATH="${VIRTUAL_ENV}/lib/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}"' in content
+    assert "export PKG_CONFIG_PATH" in content
+    assert 'PKG_CONFIG_PATH="$_OLD_PKG_CONFIG_PATH"' in content
 
     if present:
         assert 'if [ /path/to/tcl != "" ]; then' in content
@@ -64,8 +74,36 @@ def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
+def test_bash_activate_relocation_resolves_virtual_env(tmp_path, current_fastest) -> None:
+    original = tmp_path / "original"
+    cli_run([
+        "--without-pip",
+        str(original),
+        "--creator",
+        current_fastest,
+        "--no-periodic-update",
+        "--activators",
+        "bash",
+    ])
+    relocated = tmp_path / "relocated"
+    shutil.move(original, relocated)
+
+    work_dir = tmp_path / "workdir"
+    work_dir.mkdir()
+    activate_script = relocated / "bin" / "activate"
+    result = subprocess.run(
+        ["bash", "-c", f'source "{activate_script}" 2>/dev/null && echo "$VIRTUAL_ENV"'],
+        capture_output=True,
+        text=True,
+        cwd=str(work_dir),
+    )
+    assert result.returncode == 0
+    assert result.stdout.strip() == str(relocated)
+
+
+@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
 @pytest.mark.parametrize("hashing_enabled", [True, False])
-def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester):
+def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> None:
     class Bash(raise_on_non_source_class):
         def __init__(self, session) -> None:
             super().__init__(

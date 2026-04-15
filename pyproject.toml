@@ -1,8 +1,8 @@
 [build-system]
 build-backend = "hatchling.build"
 requires = [
-  "hatch-vcs>=0.3",
-  "hatchling>=1.17.1",
+  "hatch-vcs>=0.4",
+  "hatchling>=1.27",
 ]
 
 [project]
@@ -17,6 +17,7 @@ keywords = [
 license = "MIT"
 maintainers = [
   { name = "Bernat Gabor", email = "gaborjbernat@gmail.com" },
+  { name = "Rahul Devikar", email = "rahuldevikar5512@gmail.com" },
 ]
 requires-python = ">=3.8"
 classifiers = [
@@ -45,33 +46,12 @@ dynamic = [
 ]
 dependencies = [
   "distlib>=0.3.7,<1",
-  "filelock>=3.12.2,<4",
+  "filelock>=3.16.1,<=3.19.1; python_version<'3.10'",
+  "filelock>=3.24.2,<4; python_version>='3.10'",
   "importlib-metadata>=6.6; python_version<'3.8'",
   "platformdirs>=3.9.1,<5",
+  "python-discovery>=1.2.2",
   "typing-extensions>=4.13.2; python_version<'3.11'",
-]
-optional-dependencies.docs = [
-  "furo>=2023.7.26",
-  "proselint>=0.13",
-  "sphinx>=7.1.2,!=7.3",
-  "sphinx-argparse>=0.4",
-  "sphinxcontrib-towncrier>=0.2.1a0",
-  "towncrier>=23.6",
-]
-optional-dependencies.test = [
-  "covdefaults>=2.3",
-  "coverage>=7.2.7",
-  "coverage-enable-subprocess>=1",
-  "flaky>=3.7",
-  "packaging>=23.1",
-  "pytest>=7.4",
-  "pytest-env>=0.8.2",
-  "pytest-freezer>=0.4.8; platform_python_implementation=='PyPy' or platform_python_implementation=='GraalVM' or (platform_python_implementation=='CPython' and sys_platform=='win32' and python_version>='3.13')",
-  "pytest-mock>=3.11.1",
-  "pytest-randomly>=3.12",
-  "pytest-timeout>=2.1",
-  "setuptools>=68",
-  "time-machine>=2.10; platform_python_implementation=='CPython'",
 ]
 urls.Documentation = "https://virtualenv.pypa.io"
 urls.Homepage = "https://github.com/pypa/virtualenv"
@@ -94,10 +74,66 @@ entry-points."virtualenv.create".graalpy-posix = "virtualenv.create.via_global_r
 entry-points."virtualenv.create".graalpy-win = "virtualenv.create.via_global_ref.builtin.graalpy:GraalPyWindows"
 entry-points."virtualenv.create".pypy3-posix = "virtualenv.create.via_global_ref.builtin.pypy.pypy3:PyPy3Posix"
 entry-points."virtualenv.create".pypy3-win = "virtualenv.create.via_global_ref.builtin.pypy.pypy3:Pypy3Windows"
+entry-points."virtualenv.create".rustpython-posix = "virtualenv.create.via_global_ref.builtin.rustpython:RustPythonPosix"
+entry-points."virtualenv.create".rustpython-win = "virtualenv.create.via_global_ref.builtin.rustpython:RustPythonWindows"
 entry-points."virtualenv.create".venv = "virtualenv.create.via_global_ref.venv:Venv"
 entry-points."virtualenv.discovery".builtin = "virtualenv.discovery.builtin:Builtin"
 entry-points."virtualenv.seed".app-data = "virtualenv.seed.embed.via_app_data.via_app_data:FromAppData"
 entry-points."virtualenv.seed".pip = "virtualenv.seed.embed.pip_invoke:PipInvoke"
+
+[dependency-groups]
+dev = [
+  { include-group = "docs" },
+  { include-group = "lint" },
+  { include-group = "pkg-meta" },
+  { include-group = "test" },
+  { include-group = "type" },
+]
+test = [
+  "covdefaults>=2.3",
+  "coverage>=7.2.7",
+  "coverage-enable-subprocess>=1",
+  "flaky>=3.7",
+  "packaging>=23.1",
+  "pytest>=7.4",
+  "pytest-env>=0.8.2",
+  """\
+  pytest-freezer>=0.4.8; platform_python_implementation=='PyPy' or platform_python_implementation=='GraalVM' or \
+  platform_python_implementation=='RustPython' or (platform_python_implementation=='CPython' and sys_platform=='win32' \
+  and python_version>='3.13')\
+  """,
+  "pytest-mock>=3.11.1",
+  "pytest-randomly>=3.12",
+  "pytest-timeout>=2.1",
+  "pytest-xdist>=3.5",
+  "setuptools>=68",
+  "time-machine>=2.10; platform_python_implementation=='CPython'",
+]
+type = [
+  "ty>=0.0.19",
+  { include-group = "test" },
+]
+docs = [
+  "furo>=2023.7.26",
+  "pre-commit-uv>=4.2",
+  "proselint>=0.13",
+  "sphinx>=7.1.2,!=7.3",
+  "sphinx-argparse>=0.4",
+  "sphinx-autodoc-typehints>=3.6.2",
+  "sphinx-copybutton>=0.5.2",
+  "sphinx-inline-tabs>=2025.12.21.14",
+  "sphinxcontrib-mermaid>=2",
+  "sphinxcontrib-towncrier>=0.2.1a0",
+  "towncrier>=23.6",
+]
+lint = [
+  "pre-commit-uv>=4.2",
+]
+pkg-meta = [
+  "check-wheel-contents>=0.6.3",
+  "twine>=6.2",
+  "uv>=0.10.2",
+]
 
 [tool.hatch]
 build.hooks.vcs.version-file = "src/virtualenv/version.py"
@@ -105,7 +141,7 @@ build.targets.sdist.include = [
   "/src",
   "/tests",
   "/tasks",
-  "/tox.ini",
+  "/tox.toml",
 ]
 version.source = "vcs"
 
@@ -118,29 +154,40 @@ lint.select = [
   "ALL",
 ]
 lint.ignore = [
-  "ANN",     # no type checking added yet
   "COM812",  # conflict with formatter
   "CPY",     # No copyright header
   "D10",     # no docstrings
   "D40",     # no imperative mode for docstrings
+  "D200",    # fits on one line - conflicts with docstrfmt
   "D203",    # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
+  "D205",    # 1 blank line required between summary and description - conflicts with docstrfmt
+  "D209",    # multi-line docstring closing quotes - conflicts with docstrfmt
   "D212",    # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
+  "D213",    # multi-line-summary-second-line - conflicts with docstrfmt
+  "D301",    # use r if any backslashes - conflicts with docstrfmt
   "DOC",     # no restructuredtext support
+  "E501",    # line too long - handled by ruff format and docstrfmt
+  "FBT001",  # boolean positional args - pre-existing signatures, changing would break public API
   "INP001",  # ignore implicit namespace packages
   "ISC001",  # conflict with formatter
   "PLR0914", # Too many local variables
   "PLR0917", # Too many positional arguments
-  "PLR6301", #  Method could be a function, class method, or static method
+  "PLR6301", # Method could be a function, class method, or static method
   "PLW1510", # no need for check for subprocess
   "PTH",     # no pathlib, <=39 has problems on Windows with absolute/resolve, can revisit once we no longer need 39
+  "RUF067",  # `__init__` module should only contain docstrings and re-exports
   "S104",    # Possible binding to all interfaces
   "S404",    # Using subprocess is alright
   "S603",    # subprocess calls are fine
+]
+lint.per-file-ignores."docs/**/*.py" = [
+  "ANN", # don't require type annotations in docs scripts
 ]
 lint.per-file-ignores."src/virtualenv/activation/python/activate_this.py" = [
   "F821", # ignore undefined template string placeholders
 ]
 lint.per-file-ignores."tests/**/*.py" = [
+  "ANN",     # don't require type annotations in tests (pytest fixtures make this impractical)
   "D",       # don't care about documentation in tests
   "FBT",     # don't care about booleans as positional arguments in tests
   "INP001",  # no implicit namespace
@@ -148,6 +195,7 @@ lint.per-file-ignores."tests/**/*.py" = [
   "PLR2004", # Magic value used in comparison, consider replacing with a constant variable
   "S101",    # asserts allowed in tests
   "S603",    # `subprocess` call: check for execution of untrusted input
+  "S607",    # partial executable path is fine in tests
 ]
 lint.isort = { known-first-party = [
   "virtualenv",
@@ -163,46 +211,51 @@ count = true
 [tool.pyproject-fmt]
 max_supported_python = "3.14"
 
-[tool.pytest.ini_options]
-markers = [
+[tool.ty]
+rules.unused-ignore-comment = "ignore"  # some ignores are platform/version-specific (e.g., ctypes.windll on Linux)
+
+[tool.pytest]
+ini_options.markers = [
   "slow",
+  "graalpy: minimal test suite for GraalPy validation",
 ]
-timeout = 600
-addopts = "--showlocals --no-success-flaky-report"
-env = [
+ini_options.timeout = 120
+ini_options.addopts = "--showlocals --no-success-flaky-report"
+ini_options.env = [
   "PYTHONIOENCODING=utf-8",
 ]
 
 [tool.coverage]
-html.show_contexts = true
-html.skip_covered = false
-report.omit = [
-  # site.py is run before the coverage can be enabled, no way to measure coverage on this
-  "**/src/virtualenv/create/via_global_ref/builtin/python2/site.py",
-  "**/src/virtualenv/create/via_global_ref/_virtualenv.py",
-  "**/src/virtualenv/activation/python/activate_this.py",
-  "**/src/virtualenv/seed/wheels/embed/pip-*.whl/pip/**",
-]
-paths.source = [
-  "src",
-  "**/site-packages",
-]
-report.fail_under = 76
-run.source = [
-  "${_COVERAGE_SRC}",
-  "tests",
-]
 run.dynamic_context = "test_function"
 run.parallel = true
 run.plugins = [
   "covdefaults",
 ]
 run.relative_files = true
+run.source = [
+  "${_COVERAGE_SRC}",
+  "tests",
+]
+paths.source = [
+  "src",
+  "**/site-packages",
+]
+report.fail_under = 76
+report.omit = [
+  "**/src/virtualenv/activation/python/activate_this.py",
+  "**/src/virtualenv/create/via_global_ref/_virtualenv.py",
+  # site.py is run before the coverage can be enabled, no way to measure coverage on this
+  "**/src/virtualenv/create/via_global_ref/builtin/python2/site.py",
+  "**/src/virtualenv/seed/wheels/embed/pip-*.whl/pip/**",
+]
+html.show_contexts = true
+html.skip_covered = false
 
 [tool.towncrier]
-name = "tox"
+name = "virtualenv"
 filename = "docs/changelog.rst"
 directory = "docs/changelog"
 title_format = false
 issue_format = ":issue:`{issue}`"
 template = "docs/changelog/template.jinja2"
+underlines = [ "*", "=", "-" ]

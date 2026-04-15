@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 
 
-def test_virtualenv_py_race_condition_find_spec(tmp_path):
+def test_virtualenv_py_race_condition_find_spec(tmp_path) -> None:
     """Test that _Finder.find_spec handles NameError gracefully when _DISTUTILS_PATCH is not defined."""
     # Create a temporary file with partial _virtualenv.py content (simulating race condition)
     venv_file = tmp_path / "_virtualenv_test.py"
@@ -31,7 +31,7 @@ def test_virtualenv_py_race_condition_find_spec(tmp_path):
             __name__ = "distutils.dist"
 
         # Try to call exec_module - this should not raise NameError
-        def mock_old_exec(_x):
+        def mock_old_exec(_x) -> None:
             pass
 
         finder.exec_module(mock_old_exec, MockModule())
@@ -49,7 +49,7 @@ def test_virtualenv_py_race_condition_find_spec(tmp_path):
             del sys.modules["_virtualenv_test"]
 
 
-def test_virtualenv_py_normal_operation():
+def test_virtualenv_py_normal_operation() -> None:
     """Test that the fix doesn't break normal operation when _DISTUTILS_PATCH is defined."""
     # Read the actual _virtualenv.py file
     virtualenv_py_path = (

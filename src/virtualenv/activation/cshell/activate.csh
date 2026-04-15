@@ -5,7 +5,7 @@
 set newline='\
 '
 
-alias deactivate 'test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PATH:q" && unset _OLD_VIRTUAL_PATH; rehash; test $?_OLD_VIRTUAL_TCL_LIBRARY != 0 && setenv TCL_LIBRARY "$_OLD_VIRTUAL_TCL_LIBRARY:q" && unset _OLD_VIRTUAL_TCL_LIBRARY || unsetenv TCL_LIBRARY; test $?_OLD_VIRTUAL_TK_LIBRARY != 0 && setenv TK_LIBRARY "$_OLD_VIRTUAL_TK_LIBRARY:q" && unset _OLD_VIRTUAL_TK_LIBRARY || unsetenv TK_LIBRARY; test $?_OLD_VIRTUAL_PROMPT != 0 && set prompt="$_OLD_VIRTUAL_PROMPT:q" && unset _OLD_VIRTUAL_PROMPT; unsetenv VIRTUAL_ENV; unsetenv VIRTUAL_ENV_PROMPT; test "\!:*" != "nondestructive" && unalias deactivate && unalias pydoc'
+alias deactivate 'test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PATH:q" && unset _OLD_VIRTUAL_PATH; rehash; test $?_OLD_VIRTUAL_TCL_LIBRARY != 0 && setenv TCL_LIBRARY "$_OLD_VIRTUAL_TCL_LIBRARY:q" && unset _OLD_VIRTUAL_TCL_LIBRARY || unsetenv TCL_LIBRARY; test $?_OLD_VIRTUAL_TK_LIBRARY != 0 && setenv TK_LIBRARY "$_OLD_VIRTUAL_TK_LIBRARY:q" && unset _OLD_VIRTUAL_TK_LIBRARY || unsetenv TK_LIBRARY; test $?_OLD_PKG_CONFIG_PATH != 0 && setenv PKG_CONFIG_PATH "$_OLD_PKG_CONFIG_PATH:q" && unset _OLD_PKG_CONFIG_PATH || unsetenv PKG_CONFIG_PATH; test $?_OLD_VIRTUAL_PROMPT != 0 && set prompt="$_OLD_VIRTUAL_PROMPT:q" && unset _OLD_VIRTUAL_PROMPT; unsetenv VIRTUAL_ENV; unsetenv VIRTUAL_ENV_PROMPT; test "\!:*" != "nondestructive" && unalias deactivate && unalias pydoc'
 
 # Unset irrelevant variables.
 deactivate nondestructive
@@ -14,6 +14,13 @@ setenv VIRTUAL_ENV __VIRTUAL_ENV__
 
 set _OLD_VIRTUAL_PATH="$PATH:q"
 setenv PATH "$VIRTUAL_ENV:q/"__BIN_NAME__":$PATH:q"
+
+if ($?PKG_CONFIG_PATH) then
+    set _OLD_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"
+    setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig:${PKG_CONFIG_PATH}"
+else
+    setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig"
+endif
 
 if (__TCL_LIBRARY__ != "") then
     if ($?TCL_LIBRARY) then

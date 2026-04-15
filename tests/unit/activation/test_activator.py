@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from argparse import Namespace
 
+import pytest
+
 from virtualenv.activation.activator import Activator
 
 
-def test_activator_prompt_cwd(monkeypatch, tmp_path):
+@pytest.mark.graalpy
+def test_activator_prompt_cwd(monkeypatch, tmp_path) -> None:
     class FakeActivator(Activator):
         def generate(self, creator):
             raise NotImplementedError

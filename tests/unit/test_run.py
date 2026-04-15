@@ -8,7 +8,7 @@ from virtualenv import __version__
 from virtualenv.run import cli_run, session_via_cli
 
 
-def test_help(capsys):
+def test_help(capsys) -> None:
     with pytest.raises(SystemExit) as context:
         cli_run(args=["-h", "-vvv"])
     assert context.value.code == 0
@@ -18,7 +18,7 @@ def test_help(capsys):
     assert out
 
 
-def test_version(capsys):
+def test_version(capsys) -> None:
     with pytest.raises(SystemExit) as context:
         cli_run(args=["--version"])
     assert context.value.code == 0
@@ -29,11 +29,11 @@ def test_version(capsys):
     assert __version__ in content
     import virtualenv  # noqa: PLC0415
 
-    assert virtualenv.__file__ in content
+    assert virtualenv.__file__ in content.replace("\n", "")
 
 
 @pytest.mark.parametrize("on", [True, False])
-def test_logging_setup(caplog, on):
+def test_logging_setup(caplog, on) -> None:
     caplog.set_level(logging.DEBUG)
     session_via_cli(["env"], setup_logging=on)
     # DEBUG only level output is generated during this phase, default output is WARN, so if on no records should be
@@ -41,3 +41,15 @@ def test_logging_setup(caplog, on):
         assert not caplog.records
     else:
         assert caplog.records
+
+
+def test_invalid_discovery_method_via_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("VIRTUALENV_DISCOVERY", "pyenv")
+    with pytest.raises(RuntimeError, match=r"discovery 'pyenv' is not available") as exc_info:
+        session_via_cli(["env"])
+
+    error_message = str(exc_info.value)
+    assert "discovery 'pyenv' is not available" in error_message
+    assert "Available discovery methods:" in error_message
+    assert "builtin" in error_message
+    assert "Is the plugin installed?" in error_message
