@@ -18,7 +18,7 @@ class _VirtualEnvActivator:
     _UNSET_SENTINEL = "__virtualenv_was_not_set__"
 
     def __init__(self):
-        self.env = @.env
+        self.env = __xonsh__.env
         try:
             # Values substituted by virtualenv's XonshActivator at generate-time.
             # If this file was sourced before template rendering, the bare
@@ -90,12 +90,12 @@ class _VirtualEnvActivator:
         if args is None or "nondestructive" not in args:
             del aliases["deactivate"]
             try:
-                del @.xontrib.virtualenv
+                del __xonsh__.xontrib.virtualenv
             except AttributeError:
                 pass
 
 
-if not hasattr(@, "xontrib"):
-    @.xontrib = @.imp.types.SimpleNamespace()
-@.xontrib.virtualenv = _VirtualEnvActivator()
-@.xontrib.virtualenv.activate()
+if not hasattr(__xonsh__, "xontrib"):
+    __xonsh__.xontrib = __xonsh__.imp.types.SimpleNamespace()
+__xonsh__.xontrib.virtualenv = _VirtualEnvActivator()
+__xonsh__.xontrib.virtualenv.activate()
