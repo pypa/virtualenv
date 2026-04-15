@@ -6,7 +6,6 @@ from shutil import which
 import pytest
 
 from virtualenv.activation import XonshActivator
-from virtualenv.info import IS_WIN
 
 
 @pytest.mark.parametrize(
@@ -28,7 +27,7 @@ def test_xonsh_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     class MockCreator:
         def __init__(self, dest):
             self.dest = dest
-            self.bin_dir = dest / ("Scripts" if IS_WIN else "bin")
+            self.bin_dir = dest / "bin"
             self.bin_dir.mkdir()
             self.interpreter = interpreter
             self.pyenv_cfg = {}
@@ -42,22 +41,26 @@ def test_xonsh_tkinter_generation(tmp_path, tcl_lib, tk_lib, present):
     activator.generate(creator)
     content = (creator.bin_dir / "activate.xsh").read_text(encoding="utf-8")
 
-    # THEN: TCL/TK are declared unconditionally in managed_vars so deactivate
-    # tears them down whenever they were introduced by an activation.
+    # THEN
+    # `managed_vars` always lists TCL_LIBRARY/TK_LIBRARY so deactivate can clean up
+    # whatever activation introduced — regardless of whether the interpreter reported
+    # tcl_lib/tk_lib.
     assert '"TCL_LIBRARY"' in content
     assert '"TK_LIBRARY"' in content
 
     if present:
-        # The override-loop tuple carries the interpreter paths as Python literals.
-        assert '("TCL_LIBRARY", \'/path/to/tcl\')' in content
-        assert '("TK_LIBRARY", \'/path/to/tk\')' in content
+        # Paths flow into the override-loop tuple as Python string literals.
+        assert """("TCL_LIBRARY", '/path/to/tcl')""" in content
+        assert """("TK_LIBRARY", '/path/to/tk')""" in content
     else:
-        # Without TCL/TK support the override loop sees empty strings (skipped at runtime).
-        assert '("TCL_LIBRARY", \'\')' in content
-        assert '("TK_LIBRARY", \'\')' in content
+        # Empty strings are falsy, so the loop body is skipped at runtime.
+        assert """("TCL_LIBRARY", '')""" in content
+        assert """("TK_LIBRARY", '')""" in content
 
 
 def test_xonsh_quote():
+    # XonshActivator.quote uses repr() so the template substitution produces valid
+    # Python literals — this is what the rest of the tests rely on.
     assert XonshActivator.quote("hello") == "'hello'"
     assert XonshActivator.quote("it's") == '"it\'s"'
     assert XonshActivator.quote("") == "''"
@@ -68,12 +71,14 @@ def test_xonsh(activation_tester_class, activation_tester):
     class Xonsh(activation_tester_class):
         def __init__(self, session) -> None:
             super().__init__(XonshActivator, session, "xonsh", "activate.xsh", "xsh")
-            self._invoke_script = ["xonsh", "--no-rc"]
+            self._invoke_script.append("--no-rc")
 
         def env(self, tmp_path):
             env = super().env(tmp_path)
-            # make xonsh skip xontrib auto-loading to avoid third-party noise
-            env["XONSH_NO_AMALGAMATE"] = "1"
+            # Keep the subprocess hermetic: skip auto-loaded xontribs that a dev may
+            # have installed locally, and surface tracebacks so test failures are
+            # actionable.
+            env["XONTRIBS_AUTOLOAD_DISABLED"] = "1"
             env["XONSH_SHOW_TRACEBACK"] = "1"
             return env
 
