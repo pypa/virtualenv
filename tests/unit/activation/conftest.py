@@ -78,10 +78,13 @@ class ActivationTester:
         try:
             process = Popen(invoke, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
             raw_, _ = process.communicate(timeout=60)
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as exc:
             process.kill()
-            process.communicate(timeout=5)
-            pytest.fail(f"Activation script timed out: {invoke}")
+            remaining, _ = process.communicate(timeout=5)
+            partial = (exc.stdout or b"") + (remaining or b"")
+            pytest.fail(
+                f"Activation script timed out:\nPartial output:\n{partial.decode(errors='replace')}\nCommand: {invoke}"
+            )
         except subprocess.CalledProcessError as exception:
             output = exception.output + exception.stderr
             assert not exception.returncode, output  # noqa: PT017
@@ -117,7 +120,7 @@ class ActivationTester:
         return test_script
 
     def _get_test_lines(self, activate_script):
-        return [
+        steps = [
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
             self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
@@ -134,9 +137,17 @@ class ActivationTester:
             self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
             "",  # just finish with an empty new line
         ]
+        result = []
+        for index, step in enumerate(steps):
+            result.extend((self.print_marker(index), step))
+        return result
+
+    def print_marker(self, step) -> str:
+        return f'echo "__STEP_{step}__"'
 
     def assert_output(self, out, raw, tmp_path) -> None:
         """Compare _get_test_lines() with the expected values."""
+        out = [line for line in out if not line.strip('"').startswith("__STEP_")]
         assert out[0], raw
         assert out[1] == "None", raw
         assert out[2] == "None", raw
