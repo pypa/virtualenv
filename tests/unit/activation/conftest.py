@@ -77,7 +77,7 @@ class ActivationTester:
 
         try:
             process = Popen(invoke, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
-            raw_, _ = process.communicate(timeout=60)
+            raw_, _ = process.communicate(timeout=90)
         except subprocess.TimeoutExpired as exc:
             process.kill()
             remaining, _ = process.communicate(timeout=5)

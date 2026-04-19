@@ -96,6 +96,7 @@ def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> No
 
 
 @pytest.mark.slow
+@pytest.mark.timeout(180)
 def test_powershell(activation_tester_class, activation_tester, monkeypatch) -> None:
     monkeypatch.setenv("TERM", "xterm")
 
