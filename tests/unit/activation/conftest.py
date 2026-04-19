@@ -34,12 +34,13 @@ class ActivationTester:
             try:
                 process = Popen(
                     self._version_cmd,
+                    stdin=subprocess.DEVNULL,
                     universal_newlines=True,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     encoding="utf-8",
                 )
-                out, err = process.communicate()
+                out, err = process.communicate(timeout=30)
             except Exception as exception:
                 self._version = exception
                 if raise_on_fail:
@@ -75,11 +76,11 @@ class ActivationTester:
         invoke, env = [*self._invoke_script, str(test_script)], self.env(tmp_path)
 
         try:
-            process = Popen(invoke, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
-            raw_, _ = process.communicate(timeout=120)
+            process = Popen(invoke, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env)
+            raw_, _ = process.communicate(timeout=60)
         except subprocess.TimeoutExpired:
             process.kill()
-            process.communicate()
+            process.communicate(timeout=5)
             pytest.fail(f"Activation script timed out: {invoke}")
         except subprocess.CalledProcessError as exception:
             output = exception.output + exception.stderr
@@ -213,11 +214,12 @@ class RaiseOnNonSourceCall(ActivationTester):
         env, activate_script = super().__call__(monkeypatch, tmp_path)
         process = Popen(
             self.non_source_activate(activate_script),
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=env,
         )
-        _out, err_ = process.communicate()
+        _out, err_ = process.communicate(timeout=60)
         err = err_.decode("utf-8")
         assert process.returncode
         assert self.non_source_fail_message in err
