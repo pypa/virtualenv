@@ -147,6 +147,9 @@ jobs:
           echo "Set TOXENV=$py"
       - name: 🏗️ Setup test suite
         run: tox run -vvvv --notest --skip-missing-interpreters false
+      - name: 🔥 Warm up PowerShell
+        if: runner.os == 'Windows'
+        run: powershell.exe -NonInteractive -NoProfile -ExecutionPolicy ByPass -Command "Write-Output 'ready'"
       - name: 🏃 Run test suite
         run: tox run --skip-pkg-install
         timeout-minutes: 30
