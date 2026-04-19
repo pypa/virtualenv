@@ -107,7 +107,7 @@ class ActivationTester:
         env["PYTHONIOENCODING"] = "utf-8"
         env["PATH"] = os.pathsep.join([dirname(sys.executable), *env.get("PATH", "").split(os.pathsep)])
         # clear up some environment variables so they don't affect the tests
-        for key in [k for k in env if k.startswith(("_OLD", "VIRTUALENV_"))]:
+        for key in [k for k in env if k.startswith(("_OLD", "VIRTUALENV_", "COVERAGE_"))]:
             del env[key]
         return env
 
