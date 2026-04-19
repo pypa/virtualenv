@@ -96,9 +96,6 @@ def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> No
 
 
 @pytest.mark.slow
-@pytest.mark.xfail(
-    sys.platform == "win32", reason="PowerShell activation hangs on Windows Server 2025 GHA runners", strict=False
-)
 def test_powershell(activation_tester_class, activation_tester, monkeypatch) -> None:
     monkeypatch.setenv("TERM", "xterm")
 
