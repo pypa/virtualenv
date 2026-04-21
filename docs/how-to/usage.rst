@@ -142,6 +142,12 @@ Activate the environment to modify your shell's PATH and environment variables.
 
        $ overlay use venv/bin/activate.nu
 
+.. tab:: Xonsh
+
+    .. code-block:: console
+
+       @ source venv/bin/activate.xsh
+
 Deactivate the environment
 ==========================
 
