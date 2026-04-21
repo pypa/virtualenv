@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 import sys
 from argparse import Namespace
 
@@ -101,7 +102,7 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch) -> 
 
     class PowerShell(activation_tester_class):
         def __init__(self, session) -> None:
-            cmd = "powershell.exe" if sys.platform == "win32" else "pwsh"
+            cmd = "pwsh" if shutil.which("pwsh") else "powershell.exe" if sys.platform == "win32" else "pwsh"
             super().__init__(PowerShellActivator, session, cmd, "activate.ps1", "ps1")
             self._version_cmd = [cmd, "-c", "$PSVersionTable"]
             self._invoke_script = [cmd, "-NonInteractive", "-NoProfile", "-ExecutionPolicy", "ByPass", "-File"]
