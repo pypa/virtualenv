@@ -148,7 +148,6 @@ Activate the environment to modify your shell's PATH and environment variables.
 
        @ source venv/bin/activate.xsh
 
-
 Deactivate the environment
 ==========================
 
