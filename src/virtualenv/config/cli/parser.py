@@ -113,7 +113,8 @@ class VirtualEnvConfigParser(ArgumentParser):
                     if outcome is not None:
                         break
             if outcome is not None:
-                action.default, action.default_source = outcome
+                action.default, default_source = outcome
+                vars(action)["default_source"] = default_source
             else:
                 outcome = action.default, "default"
             self.options.set_src(action.dest, *outcome)
@@ -122,7 +123,7 @@ class VirtualEnvConfigParser(ArgumentParser):
         self._fix_defaults()
         self.add_argument("-h", "--help", action="help", default=SUPPRESS, help="show this help message and exit")
 
-    def parse_known_args(
+    def parse_known_args(  # ty: ignore[invalid-method-override]
         self, args: Sequence[str] | None = None, namespace: VirtualEnvOptions | None = None
     ) -> tuple[VirtualEnvOptions, list[str]]:
         if namespace is None:
