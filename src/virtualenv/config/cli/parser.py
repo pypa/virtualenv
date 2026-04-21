@@ -123,7 +123,7 @@ class VirtualEnvConfigParser(ArgumentParser):
         self._fix_defaults()
         self.add_argument("-h", "--help", action="help", default=SUPPRESS, help="show this help message and exit")
 
-    def parse_known_args(
+    def parse_known_args(  # ty: ignore[invalid-method-override]
         self, args: Sequence[str] | None = None, namespace: VirtualEnvOptions | None = None
     ) -> tuple[VirtualEnvOptions, list[str]]:
         if namespace is None:
