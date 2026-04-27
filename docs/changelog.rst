@@ -7,6 +7,24 @@
 .. towncrier release notes start
 
 **********************
+ v21.3.0 (2026-04-27)
+**********************
+
+Features - 21.3.0
+=================
+
+- Re-introduce ``xonsh`` shell activator (``activate.xsh``) previously removed in 20.7.0, and make the plugin loader
+  prefer virtualenv's built-in entry points so a third-party package cannot override them by registering a duplicate
+  name. (:issue:`3003`)
+
+Bugfixes - 21.3.0
+=================
+
+- Upgrade embedded wheels:
+
+  - pip to ``26.1`` (:issue:`3132`)
+
+**********************
  v21.2.4 (2026-04-14)
 **********************
 
