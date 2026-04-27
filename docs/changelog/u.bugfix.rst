@@ -1,3 +1,3 @@
 Upgrade embedded wheels:
 
-* pip to ``26.1``
+- pip to ``26.1``
