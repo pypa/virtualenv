@@ -113,12 +113,25 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if [ "${{ runner.os }}" = "Linux" ]; then
-            sudo apt-get install -y software-properties-common
-            sudo apt-add-repository ppa:fish-shell/release-4 -y
-            curl -fsSL https://apt.fury.io/nushell/gpg.key | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/fury-nushell.gpg
+            retry() {
+              local n=1
+              while ! "$@"; do
+                if [ $n -ge 5 ]; then
+                  echo "Command failed after $n attempts: $*" >&2
+                  return 1
+                fi
+                echo "Attempt $n failed for: $*; retrying in 10s" >&2
+                n=$((n + 1))
+                sleep 10
+              done
+            }
+            retry sudo apt-get install -y software-properties-common
+            retry sudo apt-add-repository ppa:fish-shell/release-4 -y
+            curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 https://apt.fury.io/nushell/gpg.key \
+              | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/fury-nushell.gpg
             echo "deb https://apt.fury.io/nushell/ /" | sudo tee /etc/apt/sources.list.d/fury.list
-            sudo apt-get update -y
-            sudo apt-get install snapd fish csh nushell -y
+            retry sudo apt-get update -y
+            retry sudo apt-get install snapd fish csh nushell -y
           elif [ "${{ runner.os }}" = "macOS" ]; then
             brew update
             if [[ "${{ matrix.py }}" == brew@* ]]; then
