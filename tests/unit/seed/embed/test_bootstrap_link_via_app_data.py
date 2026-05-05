@@ -122,12 +122,7 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies,
         purelib = result.creator.purelib
         patch_files = {purelib / f"{'_virtualenv'}.{i}" for i in ("py", "pyc", "pth")}
         patch_files.add(purelib / "__pycache__")
-
-        # pip 26.1+ leaves empty parent directories on uninstall (pypa/pip#13725)
-        def _has_files(path: Path) -> bool:
-            return path.is_file() or (path.is_dir() and any(_has_files(child) for child in path.iterdir()))
-
-        post_run = {p for p in set(site_package.iterdir()) - patch_files if _has_files(p)}
+        post_run = set(site_package.iterdir()) - patch_files
         assert not post_run, "\n".join(str(i) for i in post_run)
 
 
