@@ -42,6 +42,10 @@ BUNDLE_SUPPORT = {
         "pip": "pip-26.1.1-py3-none-any.whl",
         "setuptools": "setuptools-82.0.1-py3-none-any.whl",
     },
+    "3.16": {
+        "pip": "pip-26.1.1-py3-none-any.whl",
+        "setuptools": "setuptools-82.0.1-py3-none-any.whl",
+    },
 }
 MAX = "3.8"
 
