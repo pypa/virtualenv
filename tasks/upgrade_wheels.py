@@ -18,7 +18,7 @@ from typing import NoReturn
 STRICT = "UPGRADE_ADVISORY" not in os.environ
 
 BUNDLED = ["pip", "setuptools", "wheel"]
-SUPPORT = [(3, i) for i in range(8, 16)]
+SUPPORT = [(3, i) for i in range(8, 17)]
 DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "wheels" / "embed"
 
 
@@ -125,7 +125,7 @@ def render_init(folders: dict[Path, str] | None = None) -> None:
 
     BUNDLE_FOLDER = Path(__file__).absolute().parent
     BUNDLE_SUPPORT = {{ {bundle} }}
-    MAX = {next(iter(support_table.keys()))!r}
+    MAX = next(reversed(BUNDLE_SUPPORT))
 
     # SHA-256 of every bundled wheel. Verified on load so a corrupted or tampered wheel on disk fails loud instead of
     # being handed to pip. Generated together with ``BUNDLE_SUPPORT`` by ``tasks/upgrade_wheels.py``.
