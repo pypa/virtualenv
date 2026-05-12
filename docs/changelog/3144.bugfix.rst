@@ -1,0 +1,1 @@
+recognize GraalPy interpreters using the normalized ``GraalPy`` name - by :user:`timfel`.

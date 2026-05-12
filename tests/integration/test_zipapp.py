@@ -18,7 +18,7 @@ CURRENT = PythonInfo.current_system()
 @pytest.fixture(scope="session")
 def zipapp_build_env(tmp_path_factory):
     create_env_path = None
-    if CURRENT.implementation not in {"PyPy", "GraalVM"}:
+    if CURRENT.implementation not in {"PyPy", "GraalPy"}:
         exe = CURRENT.executable  # guaranteed to contain a recent enough pip (tox.ini)
     else:
         create_env_path = tmp_path_factory.mktemp("zipapp-create-env")

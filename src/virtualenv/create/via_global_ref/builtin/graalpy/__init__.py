@@ -23,7 +23,7 @@ class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
 
     @classmethod
     def can_describe(cls, interpreter: PythonInfo) -> bool:
-        return interpreter.implementation == "GraalVM" and super().can_describe(interpreter)
+        return interpreter.implementation == "GraalPy" and super().can_describe(interpreter)
 
     @classmethod
     def exe_stem(cls) -> str:
