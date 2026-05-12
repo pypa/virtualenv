@@ -42,12 +42,8 @@ BUNDLE_SUPPORT = {
         "pip": "pip-26.1.1-py3-none-any.whl",
         "setuptools": "setuptools-82.0.1-py3-none-any.whl",
     },
-    "3.16": {
-        "pip": "pip-26.1.1-py3-none-any.whl",
-        "setuptools": "setuptools-82.0.1-py3-none-any.whl",
-    },
 }
-MAX = next(reversed(BUNDLE_SUPPORT))
+MAX = "3.8"
 
 # SHA-256 of every bundled wheel. Verified on load so a corrupted or tampered wheel on disk fails loud instead of
 # being handed to pip. Generated together with ``BUNDLE_SUPPORT`` by ``tasks/upgrade_wheels.py``.
