@@ -23,7 +23,7 @@ repos:
     hooks:
       - id: pyproject-fmt
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.12"
+    rev: "v0.15.13"
     hooks:
       - id: ruff-format
       - id: ruff
@@ -42,7 +42,7 @@ repos:
         args: ["-l", "120"]
         additional_dependencies: ["sphinx>=9.1"]
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.24.1
+    rev: v1.25.2
     hooks:
       - id: zizmor
   - repo: meta
