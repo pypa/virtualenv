@@ -83,7 +83,7 @@ class CPython3Posix(CPythonPosix, CPython3):
         return text
 
     @classmethod
-    def pyvenv_launch_patch_active(cls, interpreter: PythonInfo) -> bool:
+    def pyvenv_launch_patch_active(cls, interpreter: PythonInfo) -> bool:  # drop when Python 3.8 support is dropped
         ver = interpreter.version_info
         return interpreter.platform == "darwin" and ((3, 7, 8) > ver >= (3, 7) or (3, 8, 3) > ver >= (3, 8))
 

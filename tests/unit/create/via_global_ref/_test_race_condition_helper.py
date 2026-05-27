@@ -27,16 +27,5 @@ class _Finder:
         if module.__name__ in distutils_patch:
             pass  # Would call patch_dist(module)
 
-    @staticmethod
-    def load_module(old, name):
-        module = old(name)
-        try:
-            distutils_patch = _DISTUTILS_PATCH
-        except NameError:
-            return module
-        if module.__name__ in distutils_patch:
-            pass  # Would call patch_dist(module)
-        return module
-
 
 finder = _Finder()

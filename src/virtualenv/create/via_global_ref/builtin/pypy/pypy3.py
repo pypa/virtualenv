@@ -66,10 +66,6 @@ class PyPy3Posix(PyPy3, PosixSupports):
 class Pypy3Windows(PyPy3, WindowsSupports):
     """PyPy 3 on Windows."""
 
-    @property
-    def less_v37(self) -> bool:
-        return self.interpreter.version_info.minor < 7  # noqa: PLR2004
-
     @classmethod
     def _shared_libs(cls, python_dir: Path) -> Iterator[Path]:
         # PyPy does not use a PEP 397 launcher, so all DLLs from the interpreter directory are needed for the venv

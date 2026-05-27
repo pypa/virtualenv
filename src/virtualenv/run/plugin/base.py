@@ -12,8 +12,6 @@ if TYPE_CHECKING:
 
     from virtualenv.config.cli.parser import VirtualEnvConfigParser, VirtualEnvOptions
 
-importlib_metadata_version = ()
-
 
 class PluginLoader:
     _OPTIONS = None
@@ -21,7 +19,7 @@ class PluginLoader:
 
     @classmethod
     def entry_points_for(cls, key: str) -> OrderedDict[str, type]:
-        if sys.version_info >= (3, 10) or importlib_metadata_version >= (3, 6):
+        if sys.version_info >= (3, 10):
             selected = list(cls.entry_points().select(group=key))  # ty: ignore[unresolved-attribute]
         else:
             selected = list(cls.entry_points().get(key, []))  # ty: ignore[unresolved-attribute]
