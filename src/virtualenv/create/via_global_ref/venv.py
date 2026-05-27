@@ -14,7 +14,6 @@ from virtualenv.util.subprocess import run_cmd
 from .api import ViaGlobalRefApi, ViaGlobalRefMeta
 from .builtin.cpython.common import is_mac_os_framework
 from .builtin.cpython.mac_os import CPython3macOsBrew
-from .builtin.pypy.pypy3 import Pypy3Windows
 
 if TYPE_CHECKING:
     from typing import Any
@@ -58,14 +57,6 @@ class Venv(ViaGlobalRefApi):
         if self.describe is not None:
             self.describe.install_venv_shared_libs(self)
         super().create()
-        self.executables_for_win_pypy_less_v37()
-
-    def executables_for_win_pypy_less_v37(self) -> None:
-        """PyPy <= 3.6 (v7.3.3) for Windows contains only pypy3.exe and pypy3w.exe Venv does not handle non-existing exe sources, e.g. python.exe, so this patch does it."""
-        creator = self.describe
-        if isinstance(creator, Pypy3Windows) and creator.less_v37:
-            for exe in creator.executables(self.interpreter):
-                exe.run(creator, self.symlinks)
 
     def create_inline(self) -> None:
         from venv import EnvBuilder  # noqa: PLC0415

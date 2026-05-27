@@ -91,16 +91,12 @@ class _Finder:
         return None
 
     def _patch_spec(self, spec: ModuleSpec, partial: Callable[..., object]) -> ModuleSpec:
-        # https://www.python.org/dev/peps/pep-0451/#how-loading-will-work
-        is_new_api = hasattr(spec.loader, "exec_module")
-        func_name = "exec_module" if is_new_api else "load_module"
-        old = getattr(spec.loader, func_name)
-        func = self.exec_module if is_new_api else self.load_module
-        if old is not func:
+        old = getattr(spec.loader, "exec_module", None)
+        if old is not None and old is not self.exec_module:
             try:  # noqa: SIM105
-                setattr(spec.loader, func_name, partial(func, old))
+                setattr(spec.loader, "exec_module", partial(self.exec_module, old))  # ty: ignore[invalid-assignment]
             except AttributeError:
-                pass  # C-Extension loaders are r/o such as zipimporter with <3.7
+                pass
         return spec
 
     @staticmethod
@@ -111,22 +107,8 @@ class _Finder:
         except NameError:
             return
         if module.__name__ in distutils_patch:
-            # patch_dist or its dependencies may not be defined during file rewrite
             with contextlib.suppress(NameError):
                 patch_dist(module)
-
-    @staticmethod
-    def load_module(old: Callable[..., types.ModuleType], name: str) -> types.ModuleType:
-        module = old(name)
-        try:
-            distutils_patch = _DISTUTILS_PATCH
-        except NameError:
-            return module
-        if module.__name__ in distutils_patch:
-            # patch_dist or its dependencies may not be defined during file rewrite
-            with contextlib.suppress(NameError):
-                patch_dist(module)
-        return module
 
 
 sys.meta_path.insert(0, _Finder())

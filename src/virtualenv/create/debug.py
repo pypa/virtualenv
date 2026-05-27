@@ -19,22 +19,15 @@ def encode_list_path(value: list[object]) -> list[str | None]:
     return [encode_path(i) for i in value]
 
 
-def run() -> None:  # noqa: C901,PLR0915
+def run() -> None:
     """Print debug data about the virtual environment."""
-    try:
-        from collections import OrderedDict  # noqa: PLC0415
-
-        DictType = OrderedDict  # noqa: N806
-    except ImportError:  # pragma: no cover
-        DictType = dict  # pragma: no cover  # noqa: N806
-    sys_info: dict[str, str | list[str | None] | None] = DictType()
-    result: dict[str, str | dict[str, str | list[str | None] | None] | None] = DictType([("sys", sys_info)])
+    sys_info: dict[str, str | list[str | None] | None] = {}
+    result: dict[str, str | dict[str, str | list[str | None] | None] | None] = {"sys": sys_info}
     path_keys = (
         "executable",
         "_base_executable",
         "prefix",
         "base_prefix",
-        "real_prefix",
         "exec_prefix",
         "base_exec_prefix",
         "path",
@@ -51,10 +44,7 @@ def run() -> None:  # noqa: C901,PLR0915
     try:
         import sysconfig  # noqa: PLC0415
 
-        # https://bugs.python.org/issue22199
-        makefile = getattr(sysconfig, "get_makefile_filename", getattr(sysconfig, "_get_makefile_filename", None))
-        if makefile is not None:
-            result["makefile_filename"] = encode_path(makefile())
+        result["makefile_filename"] = encode_path(sysconfig.get_makefile_filename())
     except ImportError:
         pass
 

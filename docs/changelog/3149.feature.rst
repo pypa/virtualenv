@@ -1,0 +1,2 @@
+Remove dead code targeting Python versions below the supported target range (PyPy 3.6, deprecated
+importlib APIs) and simplify the runtime import hook in ``_virtualenv.py`` - by :user:`gaborbernat`.

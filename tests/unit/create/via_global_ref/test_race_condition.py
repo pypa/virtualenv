@@ -20,12 +20,6 @@ def _test_finder_behavior() -> None:
 
     finder.exec_module(mock_old_exec, MockModule())
 
-    def mock_old_load(_name):
-        return MockModule()
-
-    result = finder.load_module(mock_old_load, "distutils.dist")
-    assert result.__name__ == "distutils.dist"
-
 
 def test_virtualenv_py_race_condition_find_spec(tmp_path) -> None:
     """Test that _Finder.find_spec handles NameError gracefully when _DISTUTILS_PATCH is not defined."""
