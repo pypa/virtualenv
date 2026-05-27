@@ -6,6 +6,14 @@ import sys
 from pathlib import Path
 
 
+def _check_distutils_patch(errors: list[str]) -> None:
+    try:
+        importlib.util.find_spec("distutils.dist")
+    except NameError as e:
+        if "_DISTUTILS_PATCH" in str(e):
+            errors.append(str(e))
+
+
 def test_race_condition_simulation(tmp_path) -> None:
     """Test that simulates the race condition described in the issue.
 
@@ -29,20 +37,12 @@ def test_race_condition_simulation(tmp_path) -> None:
     # Simulate the race condition by repeatedly importing
     errors = []
     for _ in range(5):
-        # Try to import it
         sys.path.insert(0, str(tmp_path))
+        sys.modules.pop("_virtualenv", None)
         try:
-            if "_virtualenv" in sys.modules:
-                del sys.modules["_virtualenv"]
-
             import _virtualenv  # noqa: F401, PLC0415
 
-            # Try to trigger find_spec
-            try:
-                importlib.util.find_spec("distutils.dist")
-            except NameError as e:
-                if "_DISTUTILS_PATCH" in str(e):
-                    errors.append(str(e))
+            _check_distutils_patch(errors)
         finally:
             if str(tmp_path) in sys.path:
                 sys.path.remove(str(tmp_path))
