@@ -32,7 +32,7 @@ class BaseEmbed(Seeder, ABC):
         self.setuptools_version = options.setuptools
 
         # wheel version needs special handling
-        # on Python > 3.8, the default is None (as in not used)
+        # on Python >= 3.9, the default is None (as in not used)
         # so we can differentiate between explicit and implicit none
         self.wheel_version = options.wheel or "none"
 
@@ -46,7 +46,7 @@ class BaseEmbed(Seeder, ABC):
             if options.wheel is not None or options.no_wheel:
                 LOGGER.warning(
                     "The --no-wheel and --wheel options are deprecated. "
-                    "They have no effect for Python > 3.8 as wheel is no longer "
+                    "They have no effect for Python >= 3.9 as wheel is no longer "
                     "bundled in virtualenv.",
                 )
             self.no_wheel = True

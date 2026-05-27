@@ -75,6 +75,54 @@ with a plugin system for extensibility.
         style U fill:#2563eb,stroke:#1d4ed8,color:#fff
         style VENV fill:#7c3aed,stroke:#6d28d9,color:#fff
 
+***************************
+ Supported Python versions
+***************************
+
+virtualenv distinguishes between the **host** interpreter (the Python running virtualenv itself) and the **target**
+interpreter (the Python for which the virtual environment is created). When ``--python`` is not specified, the host and
+target are the same interpreter.
+
+Host interpreter
+================
+
+virtualenv requires CPython or PyPy **3.8 or later** as the host interpreter. This is enforced by ``requires-python >=
+3.8`` in the package metadata.
+
+Target interpreter
+==================
+
+The target interpreter can differ from the host. virtualenv can create virtual environments for any Python interpreter
+it can discover on the system, provided a matching creator exists.
+
+.. list-table::
+    :header-rows: 1
+    :widths: 20 15 15 50
+
+    - - Implementation
+      - Platforms
+      - Free-threaded
+      - Notes
+    - - CPython
+      - Linux, macOS, Windows
+      - 3.13+
+      - Full support including macOS framework builds, Homebrew, Microsoft Store, and Windows debug builds.
+    - - PyPy
+      - Linux, macOS, Windows
+      - No
+      - PyPy 3.8+.
+    - - GraalPy
+      - Linux, macOS, Windows
+      - No
+      - GraalPy 24.1+. Minimal test coverage, marked experimental.
+    - - RustPython
+      - Linux, macOS, Windows
+      - No
+      - Minimal test coverage, marked experimental.
+
+Seed packages (``pip``, ``setuptools``) are bundled for CPython 3.8 through 3.16. Target interpreters outside this range
+use the highest available bundled version as a fallback, which may or may not be compatible.
+
 **********************
  How virtualenv works
 **********************
@@ -252,10 +300,8 @@ Creators are responsible for constructing the virtual environment structure. vir
 
 **venv creator**
     This creator delegates the entire creation process to the standard library's ``venv`` module, following `PEP 405
-    <https://www.python.org/dev/peps/pep-0405/>`_. The venv creator has two limitations:
-
-    - It only works with Python 3.5 or later.
-    - It requires spawning a subprocess to invoke the venv module, unless virtualenv is installed in the system Python.
+    <https://www.python.org/dev/peps/pep-0405/>`_. The venv creator requires spawning a subprocess to invoke the venv
+    module, unless virtualenv is installed in the system Python.
 
     The subprocess overhead can be significant, especially on Windows where process creation is expensive.
 

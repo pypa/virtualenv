@@ -85,7 +85,7 @@ class CPython3Posix(CPythonPosix, CPython3):
     @classmethod
     def pyvenv_launch_patch_active(cls, interpreter: PythonInfo) -> bool:  # drop when Python 3.8 support is dropped
         ver = interpreter.version_info
-        return interpreter.platform == "darwin" and ((3, 7, 8) > ver >= (3, 7) or (3, 8, 3) > ver >= (3, 8))
+        return interpreter.platform == "darwin" and (3, 8, 3) > ver >= (3, 8)
 
 
 class CPython3Windows(CPythonWindows, CPython3):
@@ -105,14 +105,19 @@ class CPython3Windows(CPythonWindows, CPython3):
             yield from cls.python_zip(interpreter)
 
     @classmethod
+    def _debug_suffix(cls, interpreter: PythonInfo) -> str:
+        return "_d" if interpreter.debug_build else ""
+
+    @classmethod
     def executables(cls, interpreter: PythonInfo) -> list[PathRef] | Generator[PathRef]:
         sources = super().sources(interpreter)
         if interpreter.version_info >= (3, 13):
             t_suffix = "t" if interpreter.free_threaded else ""
+            d_suffix = cls._debug_suffix(interpreter)
             updated_sources: list[PathRef] = []
             for ref in sources:
                 if ref.src.name == "python.exe":
-                    launcher_path = ref.src.with_name(f"venvlauncher{t_suffix}.exe")
+                    launcher_path = ref.src.with_name(f"venvlauncher{t_suffix}{d_suffix}.exe")
                     if launcher_path.exists():
                         new_ref = ExePathRefToDest(
                             launcher_path, dest=ref.dest, targets=[ref.base, *ref.aliases], must=ref.must, when=ref.when
@@ -120,7 +125,7 @@ class CPython3Windows(CPythonWindows, CPython3):
                         updated_sources.append(new_ref)
                         continue
                 elif ref.src.name == "pythonw.exe":
-                    w_launcher_path = ref.src.with_name(f"venvwlauncher{t_suffix}.exe")
+                    w_launcher_path = ref.src.with_name(f"venvwlauncher{t_suffix}{d_suffix}.exe")
                     if w_launcher_path.exists():
                         new_ref = ExePathRefToDest(
                             w_launcher_path,
@@ -137,17 +142,18 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     def has_shim(cls, interpreter: PythonInfo) -> bool:
-        return interpreter.version_info.minor >= 7 and cls.shim(interpreter) is not None  # noqa: PLR2004
+        return cls.shim(interpreter) is not None
 
     @classmethod
     def shim(cls, interpreter: PythonInfo) -> Path | None:
         root = Path(interpreter.system_stdlib) / "venv" / "scripts" / "nt"
+        d_suffix = cls._debug_suffix(interpreter)
         if interpreter.version_info >= (3, 13):
             # https://github.com/python/cpython/issues/112984
             t_suffix = "t" if interpreter.free_threaded else ""
-            exe_name = f"venvlauncher{t_suffix}.exe"
+            exe_name = f"venvlauncher{t_suffix}{d_suffix}.exe"
         else:
-            exe_name = "python.exe"
+            exe_name = f"python{d_suffix}.exe"
         if (shim := root / exe_name).exists():
             return shim
         return None

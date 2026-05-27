@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from abc import ABC
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -124,9 +123,7 @@ class ViaGlobalRefApi(Creator, ABC):
     def env_patch_text(self) -> str:
         """Patch the distutils package to not be derailed by its configuration files."""
         with self.app_data.ensure_extracted(Path(__file__).parent / "_virtualenv.py") as resolved_path:
-            text = resolved_path.read_text(encoding="utf-8")
-            # script_dir and purelib are defined in subclasses
-            return text.replace('"__SCRIPT_DIR__"', repr(os.path.relpath(str(self.script_dir), str(self.purelib))))
+            return resolved_path.read_text(encoding="utf-8")
 
     def _args(self) -> list[tuple[str, Any]]:
         return [*super()._args(), ("global", self.enable_system_site_package)]
