@@ -148,8 +148,8 @@ class ReentrantFileLock(PathLockBase):
     def lock_for_key(self, name: str, no_block: bool = False) -> Iterator[None]:  # noqa: FBT002
         lock = self._create_lock(name)
         try:
+            self._lock_file(lock, no_block)
             try:
-                self._lock_file(lock, no_block)
                 yield
             finally:
                 self._release(lock)

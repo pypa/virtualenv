@@ -266,22 +266,26 @@ def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env
         code, out, err = run_cmd(cmd)
 
     try:
-        if code != 0:
-            if out:
-                result = literal_eval(out)
-            else:
-                if code == 2 and "file" in err:  # noqa: PLR2004
-                    # Re-raise FileNotFoundError from `run_cmd()`
-                    raise OSError(err)  # noqa: TRY301
-                raise Exception(err)  # noqa: TRY002, TRY301
-        else:
-            result = json.loads(out)
-        if err:
-            result["err"] = err
+        result = _parse_debug_output(code, out, err)
     except Exception as exception:  # noqa: BLE001
         return {"out": out, "err": err, "returncode": code, "exception": repr(exception)}
     if "sys" in result and "path" in result["sys"]:
         del result["sys"]["path"][0]
+    return result
+
+
+def _parse_debug_output(code: int, out: str, err: str) -> dict[str, Any]:
+    if code != 0:
+        if out:
+            result = literal_eval(out)
+        elif code == 2 and "file" in err:  # noqa: PLR2004
+            raise OSError(err)
+        else:
+            raise Exception(err)  # noqa: TRY002
+    else:
+        result = json.loads(out)
+    if err:
+        result["err"] = err
     return result
 
 

@@ -77,15 +77,18 @@ def run_with_catch(args: list[str] | None = None, env: MutableMapping[str, str] 
         run(args, options, env)
     except (KeyboardInterrupt, SystemExit, Exception) as exception:  # noqa: BLE001
         try:
-            if getattr(options, "with_traceback", False):
-                raise
-            if not (isinstance(exception, SystemExit) and exception.code == 0):
-                LOGGER.error("%s: %s", type(exception).__name__, exception)  # noqa: TRY400
-            code = exception.code if isinstance(exception, SystemExit) else 1
-            sys.exit(code)
+            _exit_for_exception(options, exception)
         finally:
             for handler in LOGGER.handlers:  # force flush of log messages before the trace is printed
                 handler.flush()
+
+
+def _exit_for_exception(options: VirtualEnvOptions, exception: BaseException) -> None:
+    if getattr(options, "with_traceback", False):
+        raise exception
+    if not (isinstance(exception, SystemExit) and exception.code == 0):
+        LOGGER.error("%s: %s", type(exception).__name__, exception)
+    sys.exit(exception.code if isinstance(exception, SystemExit) else 1)
 
 
 if __name__ == "__main__":  # pragma: no cov

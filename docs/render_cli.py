@@ -74,36 +74,38 @@ class CliTable(SphinxDirective):
     def _run_parser(self, class_n, key, name):
         test_name = {"creator": "can_create", "activators": "supports"}
         func_name = test_name.get(key)
+        prev = getattr(class_n, func_name) if func_name is not None else None
+        if func_name is not None:
+            setattr(class_n, func_name, self._make_patch_func(prev, key, name))
         try:
-            if func_name is not None:
-                prev = getattr(class_n, func_name)
-
-                def a(*args, **kwargs):
-                    prev(*args, **kwargs)
-                    if key == "activators":
-                        return True
-                    if key == "creator":
-                        if name == "venv":
-                            from virtualenv.create.via_global_ref.venv import ViaGlobalRefMeta  # noqa: PLC0415
-
-                            meta = ViaGlobalRefMeta()
-                            meta.symlink_error = None
-                            return meta
-                        from virtualenv.create.via_global_ref.builtin.via_global_self_do import (  # noqa: PLC0415
-                            BuiltinViaGlobalRefMeta,
-                        )
-
-                        meta = BuiltinViaGlobalRefMeta()
-                        meta.symlink_error = None
-                        return meta
-                    raise RuntimeError
-
-                setattr(class_n, func_name, a)
             yield
         finally:
             if func_name is not None:
-                # noinspection PyUnboundLocalVariable
                 setattr(class_n, func_name, prev)
+
+    @staticmethod
+    def _make_patch_func(prev, key, name):
+        def a(*args, **kwargs):
+            prev(*args, **kwargs)
+            if key == "activators":
+                return True
+            if key == "creator":
+                if name == "venv":
+                    from virtualenv.create.via_global_ref.venv import ViaGlobalRefMeta  # noqa: PLC0415
+
+                    meta = ViaGlobalRefMeta()
+                    meta.symlink_error = None
+                    return meta
+                from virtualenv.create.via_global_ref.builtin.via_global_self_do import (  # noqa: PLC0415
+                    BuiltinViaGlobalRefMeta,
+                )
+
+                meta = BuiltinViaGlobalRefMeta()
+                meta.symlink_error = None
+                return meta
+            raise RuntimeError
+
+        return a
 
     def _build_table(self, options, title, description):
         table = n.table()
