@@ -109,7 +109,7 @@ class CPython3Windows(CPythonWindows, CPython3):
         sources = super().sources(interpreter)
         if interpreter.version_info >= (3, 13):
             t_suffix = "t" if interpreter.free_threaded else ""
-            updated_sources = []
+            updated_sources: list[PathRef] = []
             for ref in sources:
                 if ref.src.name == "python.exe":
                     launcher_path = ref.src.with_name(f"venvlauncher{t_suffix}.exe")

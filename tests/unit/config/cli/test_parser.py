@@ -24,8 +24,10 @@ def gen_parser_no_conf_env(monkeypatch, tmp_path):
         def _run(*args):
             return parser.parse_args(args=args)
 
-        yield parser, _run
-        parser.enable_help()
+        try:
+            yield parser, _run
+        finally:
+            parser.enable_help()
 
     return _build
 

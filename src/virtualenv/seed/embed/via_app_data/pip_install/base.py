@@ -162,7 +162,7 @@ class PipInstall(ABC):
                 if "console_scripts" in parser.sections():
                     for name, value in parser.items("console_scripts"):
                         match = re.match(r"(.*?)-?\d\.?\d*", name)
-                        our_name = match.groups(1)[0] if match else name
+                        our_name = match.group(1) if match else name
                         self._console_entry_points[our_name] = value
         return self._console_entry_points
 

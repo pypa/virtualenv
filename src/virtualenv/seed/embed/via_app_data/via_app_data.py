@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from virtualenv.config.cli.parser import VirtualEnvOptions
     from virtualenv.create.creator import Creator
     from virtualenv.seed.wheels.util import Wheel
+    from virtualenv.util.lock import PathLockBase
 
     from .pip_install.base import PipInstall
 
@@ -61,15 +62,12 @@ class FromAppData(BaseEmbed):
             exceptions = {}
 
             def _install(name: str, wheel: Wheel) -> None:
+                LOGGER.debug("install %s from wheel %s via %s", name, wheel, installer_class.__name__)
                 try:
-                    LOGGER.debug("install %s from wheel %s via %s", name, wheel, installer_class.__name__)
                     key = Path(installer_class.__name__) / wheel.path.stem
                     wheel_img = self.app_data.wheel_image(creator.interpreter.version_release_str, key)
                     installer = installer_class(wheel.path, creator, wheel_img)
-                    parent = self.app_data.lock / wheel_img.parent
-                    with parent.non_reentrant_lock_for_key(wheel_img.name):
-                        if not installer.has_image():
-                            installer.build_image()
+                    _build_wheel_image(self.app_data.lock / wheel_img.parent, wheel_img.name, installer)
                     installer.install(creator.interpreter.version_info)  # ty: ignore[invalid-argument-type]
                 except Exception:  # noqa: BLE001
                     exceptions[name] = sys.exc_info()
@@ -153,6 +151,12 @@ class FromAppData(BaseEmbed):
         msg = f", via={'symlink' if self.symlinks else 'copy'}, app_data_dir={self.app_data}"
         base = super().__repr__()
         return f"{base[:-1]}{msg}{base[-1]}"
+
+
+def _build_wheel_image(parent: PathLockBase, name: str, installer: PipInstall) -> None:
+    with parent.non_reentrant_lock_for_key(name):
+        if not installer.has_image():
+            installer.build_image()
 
 
 __all__ = [

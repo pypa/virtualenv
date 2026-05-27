@@ -389,15 +389,20 @@ def _pypi_get_distribution_info(distribution: str) -> dict[str, object] | None:
     content, url = None, f"https://pypi.org/pypi/{distribution}/json"
     try:
         for context in _request_context():
-            try:
-                with urlopen(url, context=context) as file_handler:
-                    content = json.load(file_handler)
+            if (content := _fetch_pypi_json(url, context)) is not None:
                 break
-            except URLError as exception:
-                LOGGER.error("failed to access %s because %r", url, exception)  # noqa: TRY400
     except Exception as exception:  # noqa: BLE001
         LOGGER.error("failed to access %s because %r", url, exception)  # noqa: TRY400
     return content
+
+
+def _fetch_pypi_json(url: str, context: ssl.SSLContext | None) -> dict[str, object] | None:
+    try:
+        with urlopen(url, context=context) as file_handler:  # noqa: S310
+            return json.load(file_handler)
+    except URLError as exception:
+        LOGGER.error("failed to access %s because %r", url, exception)  # noqa: TRY400
+    return None
 
 
 def manual_upgrade(app_data: AppData, env: dict[str, str]) -> None:

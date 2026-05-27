@@ -63,7 +63,7 @@ class _Finder:
             distutils_patch = _DISTUTILS_PATCH
         except NameError:
             return None
-        if fullname in distutils_patch and self.fullname is None:  # noqa: PLR1702
+        if fullname in distutils_patch and self.fullname is None:
             # initialize lock[0] lazily
             if len(self.lock) == 0:
                 import threading  # noqa: PLC0415
@@ -81,23 +81,27 @@ class _Finder:
 
             with self.lock[0]:
                 self.fullname = fullname
+                spec = None
                 try:
                     spec = find_spec(fullname, path)  # ty: ignore[invalid-argument-type]
-                    if spec is not None:
-                        # https://www.python.org/dev/peps/pep-0451/#how-loading-will-work
-                        is_new_api = hasattr(spec.loader, "exec_module")
-                        func_name = "exec_module" if is_new_api else "load_module"
-                        old = getattr(spec.loader, func_name)
-                        func = self.exec_module if is_new_api else self.load_module
-                        if old is not func:
-                            try:  # noqa: SIM105
-                                setattr(spec.loader, func_name, partial(func, old))
-                            except AttributeError:
-                                pass  # C-Extension loaders are r/o such as zipimporter with <3.7
-                        return spec
                 finally:
                     self.fullname = None
+                if spec is not None:
+                    return self._patch_spec(spec, partial)
         return None
+
+    def _patch_spec(self, spec: ModuleSpec, partial: Callable[..., object]) -> ModuleSpec:
+        # https://www.python.org/dev/peps/pep-0451/#how-loading-will-work
+        is_new_api = hasattr(spec.loader, "exec_module")
+        func_name = "exec_module" if is_new_api else "load_module"
+        old = getattr(spec.loader, func_name)
+        func = self.exec_module if is_new_api else self.load_module
+        if old is not func:
+            try:  # noqa: SIM105
+                setattr(spec.loader, func_name, partial(func, old))
+            except AttributeError:
+                pass  # C-Extension loaders are r/o such as zipimporter with <3.7
+        return spec
 
     @staticmethod
     def exec_module(old: Callable[..., object], module: types.ModuleType) -> None:

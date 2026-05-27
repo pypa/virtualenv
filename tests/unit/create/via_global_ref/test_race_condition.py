@@ -4,6 +4,29 @@ import sys
 from pathlib import Path
 
 
+def _test_finder_behavior() -> None:
+    import _virtualenv_test  # noqa: PLC0415
+
+    finder = _virtualenv_test.finder
+
+    result = finder.find_spec("distutils.dist", None)
+    assert result is None, "find_spec should return None when _DISTUTILS_PATCH is not defined"
+
+    class MockModule:
+        __name__ = "distutils.dist"
+
+    def mock_old_exec(_x) -> None:
+        pass
+
+    finder.exec_module(mock_old_exec, MockModule())
+
+    def mock_old_load(_name):
+        return MockModule()
+
+    result = finder.load_module(mock_old_load, "distutils.dist")
+    assert result.__name__ == "distutils.dist"
+
+
 def test_virtualenv_py_race_condition_find_spec(tmp_path) -> None:
     """Test that _Finder.find_spec handles NameError gracefully when _DISTUTILS_PATCH is not defined."""
     # Create a temporary file with partial _virtualenv.py content (simulating race condition)
@@ -18,35 +41,10 @@ def test_virtualenv_py_race_condition_find_spec(tmp_path) -> None:
 
     sys.path.insert(0, str(tmp_path))
     try:
-        import _virtualenv_test  # noqa: PLC0415
-
-        finder = _virtualenv_test.finder
-
-        # Try to call find_spec - this should not raise NameError
-        result = finder.find_spec("distutils.dist", None)
-        assert result is None, "find_spec should return None when _DISTUTILS_PATCH is not defined"
-
-        # Create a mock module object
-        class MockModule:
-            __name__ = "distutils.dist"
-
-        # Try to call exec_module - this should not raise NameError
-        def mock_old_exec(_x) -> None:
-            pass
-
-        finder.exec_module(mock_old_exec, MockModule())
-
-        # Try to call load_module - this should not raise NameError
-        def mock_old_load(_name):
-            return MockModule()
-
-        result = finder.load_module(mock_old_load, "distutils.dist")
-        assert result.__name__ == "distutils.dist"
-
+        _test_finder_behavior()
     finally:
         sys.path.remove(str(tmp_path))
-        if "_virtualenv_test" in sys.modules:
-            del sys.modules["_virtualenv_test"]
+        sys.modules.pop("_virtualenv_test", None)
 
 
 def test_virtualenv_py_normal_operation() -> None:

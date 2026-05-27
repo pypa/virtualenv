@@ -148,6 +148,24 @@ def _ignore_global_config(tmp_path_factory):
         yield
 
 
+def _assert_environ_stable(old: dict[str, str], to_clean: set[str]) -> None:
+    new = os.environ
+    extra = {k: new[k] for k in set(new) - set(old)}
+    miss = {k: old[k] for k in set(old) - set(new) - to_clean}
+    diff = {
+        f"{k} = {old[k]} vs {new[k]}" for k in set(old) & set(new) if old[k] != new[k] and not k.startswith("PYTEST_")
+    }
+    if extra or miss or diff:
+        msg = "tests changed environ"
+        if extra:
+            msg += f" extra {extra}"
+        if miss:
+            msg += f" miss {miss}"
+        if diff:
+            msg += f" diff {diff}"
+        pytest.fail(msg)
+
+
 @pytest.fixture(autouse=True)
 def _check_os_environ_stable():
     old = os.environ.copy()
@@ -171,23 +189,7 @@ def _check_os_environ_stable():
             for key in override:
                 del os.environ[str(key)]
             if is_exception is False:
-                new = os.environ
-                extra = {k: new[k] for k in set(new) - set(old)}
-                miss = {k: old[k] for k in set(old) - set(new) - to_clean}
-                diff = {
-                    f"{k} = {old[k]} vs {new[k]}"
-                    for k in set(old) & set(new)
-                    if old[k] != new[k] and not k.startswith("PYTEST_")
-                }
-                if extra or miss or diff:
-                    msg = "tests changed environ"
-                    if extra:
-                        msg += f" extra {extra}"
-                    if miss:
-                        msg += f" miss {miss}"
-                    if diff:
-                        msg += f" diff {diff}"
-                    pytest.fail(msg)
+                _assert_environ_stable(old, to_clean)
         finally:
             os.environ.update(cleaned)
 
