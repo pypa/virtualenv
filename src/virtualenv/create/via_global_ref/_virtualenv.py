@@ -94,7 +94,7 @@ class _Finder:
         old = getattr(spec.loader, "exec_module", None)
         if old is not None and old is not self.exec_module:
             try:  # noqa: SIM105
-                setattr(spec.loader, "exec_module", partial(self.exec_module, old))  # ty: ignore[invalid-assignment]
+                spec.loader.exec_module = partial(self.exec_module, old)  # ty: ignore[invalid-assignment]
             except AttributeError:
                 pass
         return spec
