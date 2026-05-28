@@ -17,9 +17,9 @@
   "real_prefix": null,
   "base_exec_prefix": "c:\\path\\to\\python",
   "exec_prefix": "c:\\path\\to\\python",
-  "executable": "c:\\path\\to\\python\\python3.13t.exe",
-  "original_executable": "c:\\path\\to\\python\\python3.13t.exe",
-  "system_executable": "c:\\path\\to\\python\\python3.13t.exe",
+  "executable": "c:\\path\\to\\python\\python_d.exe",
+  "original_executable": "c:\\path\\to\\python\\python_d.exe",
+  "system_executable": "c:\\path\\to\\python\\python_d.exe",
   "has_venv": false,
   "path": [
     "c:\\path\\to\\python\\Scripts\\virtualenv.exe",
@@ -58,6 +58,6 @@
   "system_stdlib_platform": "c:\\path\\to\\python\\Lib",
   "max_size": 9223372036854775807,
   "_creators": null,
-  "free_threaded": true,
-  "debug_build": false
+  "free_threaded": false,
+  "debug_build": true
 }

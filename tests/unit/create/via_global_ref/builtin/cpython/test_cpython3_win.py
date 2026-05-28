@@ -129,6 +129,25 @@ def test_free_threaded_exe_naming(py_info, mock_files) -> None:
     assert "pythonw3.13t.exe" in pythonw_refs[0].aliases
 
 
+@pytest.mark.parametrize("py_info_name", ["cpython3_win_debug"])
+def test_debug_build_shim(py_info, mock_files) -> None:
+    shim = path(py_info.system_stdlib, "venv\\scripts\\nt\\venvlauncher_d.exe")
+    mock_files(CPYTHON3_PATH, [shim])
+    assert CPython3Windows.has_shim(interpreter=py_info)
+    sources = tuple(CPython3Windows.sources(interpreter=py_info))
+    assert contains_exe(sources, shim)
+
+
+@pytest.mark.parametrize("py_info_name", ["cpython3_win_debug"])
+def test_debug_build_uses_venvlauncher(py_info, mock_files) -> None:
+    launcher = path(py_info.prefix, "venvlauncher_d.exe")
+    w_launcher = path(py_info.prefix, "venvwlauncher_d.exe")
+    mock_files(CPYTHON3_PATH, [py_info.system_executable, launcher, w_launcher])
+    sources = tuple(CPython3Windows.sources(interpreter=py_info))
+    assert contains_exe(sources, launcher, "python.exe")
+    assert contains_exe(sources, w_launcher, "pythonw.exe")
+
+
 @pytest.mark.parametrize("py_info_name", ["cpython3_win_embed"])
 def test_pywin32_dll_exclusion(py_info, mock_files) -> None:
     """Test that pywin32 DLLs are excluded from virtualenv creation."""
