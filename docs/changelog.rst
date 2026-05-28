@@ -7,6 +7,17 @@
 .. towncrier release notes start
 
 **********************
+ v21.4.1 (2026-05-28)
+**********************
+
+Bugfixes - 21.4.1
+=================
+
+- Fix Windows debug build ``venvlauncher_d.exe`` substitution never triggering because ``executables()`` compared the
+  source executable name instead of the target name, and fix ``AttributeError`` on ``debug_build`` attribute for
+  interpreter info objects missing the field - by :user:`gaborbernat`. (:issue:`3151`)
+
+**********************
  v21.4.0 (2026-05-28)
 **********************
 
