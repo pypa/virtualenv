@@ -97,27 +97,23 @@ it can discover on the system, provided a matching creator exists.
 
 .. list-table::
     :header-rows: 1
-    :widths: 20 15 15 50
+    :widths: 20 15 65
 
     - - Implementation
       - Platforms
-      - Free-threaded
       - Notes
     - - CPython
       - Linux, macOS, Windows
-      - 3.13+
-      - Full support including macOS framework builds, Homebrew, Microsoft Store, and Windows debug builds.
+      - 3.8+. Free-threaded builds supported on 3.13+. Includes macOS framework, Homebrew, Microsoft Store, and Windows
+        debug build support.
     - - PyPy
       - Linux, macOS, Windows
-      - No
-      - PyPy 3.8+.
+      - 3.8+.
     - - GraalPy
       - Linux, macOS, Windows
-      - No
-      - GraalPy 24.1+. Minimal test coverage, marked experimental.
+      - 24.1+. Minimal test coverage, marked experimental.
     - - RustPython
       - Linux, macOS, Windows
-      - No
       - Minimal test coverage, marked experimental.
 
 Seed packages (``pip``, ``setuptools``) are bundled for CPython 3.8 through 3.16. Target interpreters outside this range

@@ -106,7 +106,7 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     def _debug_suffix(cls, interpreter: PythonInfo) -> str:
-        return "_d" if interpreter.debug_build else ""
+        return "_d" if getattr(interpreter, "debug_build", False) else ""
 
     @classmethod
     def executables(cls, interpreter: PythonInfo) -> list[PathRef] | Generator[PathRef]:
