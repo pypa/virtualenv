@@ -112,12 +112,13 @@ class CPython3Windows(CPythonWindows, CPython3):
     def executables(cls, interpreter: PythonInfo) -> list[PathRef] | Generator[PathRef]:
         sources = super().sources(interpreter)
         if interpreter.version_info >= (3, 13):
+            host = cls.host_python(interpreter)
             t_suffix = "t" if interpreter.free_threaded else ""
             d_suffix = cls._debug_suffix(interpreter)
             updated_sources: list[PathRef] = []
             for ref in sources:
-                if ref.src.name == "python.exe":
-                    launcher_path = ref.src.with_name(f"venvlauncher{t_suffix}{d_suffix}.exe")
+                if ref.base == "python.exe":
+                    launcher_path = host.with_name(f"venvlauncher{t_suffix}{d_suffix}.exe")
                     if launcher_path.exists():
                         new_ref = ExePathRefToDest(
                             launcher_path, dest=ref.dest, targets=[ref.base, *ref.aliases], must=ref.must, when=ref.when
