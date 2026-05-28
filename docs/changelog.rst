@@ -7,6 +7,20 @@
 .. towncrier release notes start
 
 **********************
+ v21.4.0 (2026-05-28)
+**********************
+
+Features - 21.4.0
+=================
+
+- Remove dead code targeting Python versions below the supported target range (PyPy 3.6, deprecated importlib APIs) and
+  simplify the runtime import hook in ``_virtualenv.py`` - by :user:`gaborbernat`. (:issue:`3149`)
+- Support Windows debug builds (``python_d.exe``, ``venvlauncher_d.exe``) matching CPython venv behavior, remove dead
+  ``__SCRIPT_DIR__`` replacement and ``has_shim`` version guard, drop unreachable Python 3.7 branch from
+  ``pyvenv_launch_patch_active``, and fix wheel deprecation message to say ``>= 3.9`` - by :user:`gaborbernat`.
+  (:issue:`3150`)
+
+**********************
  v21.3.3 (2026-05-13)
 **********************
 

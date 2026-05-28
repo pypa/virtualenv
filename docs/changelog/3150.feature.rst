@@ -1,3 +1,0 @@
-Support Windows debug builds (``python_d.exe``, ``venvlauncher_d.exe``) matching CPython venv behavior, remove dead
-``__SCRIPT_DIR__`` replacement and ``has_shim`` version guard, drop unreachable Python 3.7 branch from
-``pyvenv_launch_patch_active``, and fix wheel deprecation message to say ``>= 3.9`` - by :user:`gaborbernat`.
