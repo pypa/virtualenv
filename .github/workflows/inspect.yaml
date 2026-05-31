@@ -1,0 +1,120 @@
+name: 🔬 inspect venv DLL layout
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SETUPTOOLS_SCM_PRETEND_VERSION: "0.0.0"
+
+jobs:
+  freethreaded-windows:
+    name: 🪟 free-threaded ${{ matrix.py }}
+    runs-on: windows-2025
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        py: ["3.13t", "3.14t"]
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - name: 🐍 Setup free-threaded Python ${{ matrix.py }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        with:
+          python-version: ${{ matrix.py }}
+      - name: 🔎 Inspect host interpreter layout
+        shell: python
+        run: |
+          import sys, sysconfig, os, glob
+          print("== interpreter ==")
+          print("executable      ", sys.executable)
+          print("prefix          ", sys.prefix)
+          print("base_prefix     ", sys.base_prefix)
+          print("abiflags        ", getattr(sys, "abiflags", "<none>"))
+          gil = getattr(sys, "_is_gil_enabled", None)
+          print("gil_enabled     ", gil() if gil else "<n/a>")
+          print("== sysconfig vars ==")
+          for k in ("DLLLIBRARY", "LDLIBRARY", "INSTSONAME", "BINDIR", "BINLIBDEST", "EXT_SUFFIX"):
+              print(f"{k:16}", sysconfig.get_config_var(k))
+          exe_dir = os.path.dirname(sys.executable)
+          print("== *.dll next to python.exe ==", exe_dir)
+          for f in sorted(glob.glob(os.path.join(exe_dir, "*.dll"))):
+              print("  ", os.path.basename(f))
+          dlls = os.path.join(sys.prefix, "DLLs")
+          print("== prefix/DLLs ==", dlls, "exists:", os.path.isdir(dlls))
+          if os.path.isdir(dlls):
+              for f in sorted(os.listdir(dlls)):
+                  if f.lower().endswith(".dll"):
+                      print("  ", f)
+          scripts_nt = os.path.join(sysconfig.get_path("stdlib"), "venv", "scripts", "nt")
+          print("== venv/scripts/nt launchers ==", scripts_nt, "exists:", os.path.isdir(scripts_nt))
+          if os.path.isdir(scripts_nt):
+              for f in sorted(os.listdir(scripts_nt)):
+                  print("  ", f)
+      - name: 🏗️ Create a free-threaded venv with this virtualenv
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python -m pip install --quiet .
+          python -m virtualenv "$RUNNER_TEMP/ft_venv"
+          echo "== created venv Scripts dir =="
+          ls -la "$RUNNER_TEMP/ft_venv/Scripts"
+          echo "== pyvenv.cfg =="
+          cat "$RUNNER_TEMP/ft_venv/pyvenv.cfg"
+      - name: ✅ Verify the free-threaded venv actually runs
+        shell: bash
+        run: |
+          set -euxo pipefail
+          PY="$RUNNER_TEMP/ft_venv/Scripts/python.exe"
+          "$PY" -c "import sys; print('version', sys.version)"
+          "$PY" -c "import sys; g=getattr(sys,'_is_gil_enabled',None); print('gil_enabled', g() if g else 'n/a')"
+          "$PY" -c "import ssl, ctypes, zlib, _socket, sqlite3; print('C-extension imports OK')"
+          "$PY" -m pip install --quiet packaging
+          "$PY" -c "import packaging; print('pip install OK', packaging.__version__)"
+
+  cygwin:
+    name: 🐚 cygwin cygpython dll
+    runs-on: windows-2025
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          persist-credentials: false
+      - name: 🐚 Install Cygwin
+        uses: cygwin/cygwin-install-action@8be4a7277a684c177c0fefca7d75c9c24a45055e # v6
+        with:
+          packages: python39 python39-pip python39-devel
+      - name: 🔎 Inspect Cygwin python layout + create venv
+        shell: C:\cygwin\bin\bash.exe --login --norc -eo pipefail -o igncr {0}
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION: "0.0.0"
+        run: |
+          set -x
+          cd "$(cygpath "$GITHUB_WORKSPACE")"
+          which python3.9
+          python3.9 -c "
+          import sys, sysconfig, os, glob
+          print('executable', sys.executable)
+          print('prefix', sys.prefix)
+          for k in ('DLLLIBRARY','LDLIBRARY','INSTSONAME','BINDIR'):
+              print(k, sysconfig.get_config_var(k))
+          for d in ('/usr/bin', os.path.dirname(sys.executable)):
+              print('== cygpython dlls in', d, '==')
+              for f in sorted(glob.glob(os.path.join(d, 'cygpython*.dll'))):
+                  print('  ', f)
+          "
+          python3.9 -m pip install --quiet .
+          python3.9 -m virtualenv "$HOME/cyg_venv"
+          echo "== created venv bin =="
+          ls -la "$HOME/cyg_venv/bin"
+          "$HOME/cyg_venv/bin/python" -c "import sys; print('cygwin venv runs', sys.version)"
+          "$HOME/cyg_venv/bin/python" -c "import ssl, ctypes, zlib; print('C-extension imports OK')"
