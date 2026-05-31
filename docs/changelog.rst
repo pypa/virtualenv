@@ -7,6 +7,17 @@
 .. towncrier release notes start
 
 **********************
+ v21.4.2 (2026-05-31)
+**********************
+
+Bugfixes - 21.4.2
+=================
+
+- Stop ``deactivate`` in the bash/zsh activation script from aborting under ``set -e`` when ``hash -r`` fails (for
+  example with shell hashing disabled) by appending ``|| true``, matching CPython ``venv`` (gh-149701) and the existing
+  non-deactivate call - by :user:`gaborbernat`. (:issue:`3152`)
+
+**********************
  v21.4.1 (2026-05-28)
 **********************
 
