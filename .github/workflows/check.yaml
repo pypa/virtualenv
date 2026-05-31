@@ -19,6 +19,8 @@ jobs:
     timeout-minutes: 40
     permissions:
       contents: read
+    env:
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
     strategy:
       fail-fast: false
       matrix:
@@ -41,7 +43,7 @@ jobs:
         os:
           - ubuntu-24.04
           - macos-15
-          - windows-2025
+          - windows-2025-vs2026
         include:
           - { os: macos-15, py: "brew@3.14" }
           - { os: macos-15, py: "brew@3.13" }
@@ -49,10 +51,10 @@ jobs:
           - { os: macos-15, py: "brew@3.11" }
           - { os: macos-15, py: "brew@3.10" }
         exclude:
-          - { os: windows-2025, py: "graalpy-24.1" }
-          - { os: windows-2025, py: "pypy-3.10" }
-          - { os: windows-2025, py: "pypy-3.9" }
-          - { os: windows-2025, py: "pypy-3.8" }
+          - { os: windows-2025-vs2026, py: "graalpy-24.1" }
+          - { os: windows-2025-vs2026, py: "pypy-3.10" }
+          - { os: windows-2025-vs2026, py: "pypy-3.9" }
+          - { os: windows-2025-vs2026, py: "pypy-3.8" }
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
@@ -136,7 +138,7 @@ jobs:
             brew update
             if [[ "${{ matrix.py }}" == brew@* ]]; then
               PY=$(echo '${{ matrix.py }}' | cut -c 6-)
-              brew install python@$PY || brew upgrade python@$PY
+              brew list --versions "python@$PY" >/dev/null 2>&1 || brew install "python@$PY"
               echo "/usr/local/opt/python@$PY/libexec/bin" >>"${GITHUB_PATH}"
             fi
             brew install fish tcsh nushell || brew upgrade fish tcsh nushell
@@ -167,7 +169,6 @@ jobs:
           PYTEST_ADDOPTS: "-vv --durations=20"
           CI_RUN: "yes"
           DIFF_AGAINST: HEAD
-          PIP_DISABLE_PIP_VERSION_CHECK: "1"
   check:
     name: 🔎 check ${{ matrix.tox_env }} - ${{ matrix.os }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
@@ -179,7 +180,7 @@ jobs:
       matrix:
         os:
           - ubuntu-24.04
-          - windows-2025
+          - windows-2025-vs2026
         tox_env:
           - dev
           - docs
@@ -189,10 +190,10 @@ jobs:
           - upgrade
           - zipapp
         exclude:
-          - { os: windows-2025, tox_env: docs }
-          - { os: windows-2025, tox_env: readme }
-          - { os: windows-2025, tox_env: type }
-          - { os: windows-2025, tox_env: type-3.8 }
+          - { os: windows-2025-vs2026, tox_env: docs }
+          - { os: windows-2025-vs2026, tox_env: readme }
+          - { os: windows-2025-vs2026, tox_env: type }
+          - { os: windows-2025-vs2026, tox_env: type-3.8 }
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
