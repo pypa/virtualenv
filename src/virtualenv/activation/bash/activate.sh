@@ -41,7 +41,7 @@ deactivate () {
     # The hash command must be called to get it to forget past
     # commands. Without forgetting past commands the $PATH changes
     # we made may not be respected
-    hash -r 2>/dev/null
+    hash -r 2>/dev/null || true
 
     if [ -n "${_OLD_VIRTUAL_PS1:-}" ] ; then
         PS1="$_OLD_VIRTUAL_PS1"
