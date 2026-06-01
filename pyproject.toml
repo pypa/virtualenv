@@ -136,14 +136,14 @@ pkg-meta = [
 ]
 
 [tool.hatch]
+version.source = "vcs"
 build.hooks.vcs.version-file = "src/virtualenv/version.py"
 build.targets.sdist.include = [
   "/src",
-  "/tests",
   "/tasks",
+  "/tests",
   "/tox.toml",
 ]
-version.source = "vcs"
 
 [tool.ruff]
 line-length = 120
@@ -215,15 +215,15 @@ max_supported_python = "3.14"
 rules.unused-ignore-comment = "ignore"  # some ignores are platform/version-specific (e.g., ctypes.windll on Linux)
 
 [tool.pytest]
-ini_options.markers = [
-  "slow",
-  "graalpy: minimal test suite for GraalPy validation",
-]
-ini_options.timeout = 120
 ini_options.addopts = "--showlocals --no-success-flaky-report"
+ini_options.markers = [
+  "graalpy: minimal test suite for GraalPy validation",
+  "slow",
+]
 ini_options.env = [
   "PYTHONIOENCODING=utf-8",
 ]
+ini_options.timeout = 120
 
 [tool.coverage]
 run.dynamic_context = "test_function"
@@ -253,9 +253,9 @@ html.skip_covered = false
 
 [tool.towncrier]
 name = "virtualenv"
-filename = "docs/changelog.rst"
 directory = "docs/changelog"
+filename = "docs/changelog.rst"
+template = "docs/changelog/template.jinja2"
 title_format = false
 issue_format = ":issue:`{issue}`"
-template = "docs/changelog/template.jinja2"
 underlines = [ "*", "=", "-" ]
