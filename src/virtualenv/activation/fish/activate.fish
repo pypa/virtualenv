@@ -61,6 +61,9 @@ end
 deactivate nondestructive
 
 set -gx VIRTUAL_ENV __VIRTUAL_ENV__
+if string match -qr 'CYGWIN|MSYS|MINGW' (uname)
+    set -gx VIRTUAL_ENV (cygpath -u $VIRTUAL_ENV)
+end
 
 set -gx _OLD_PKG_CONFIG_PATH "$PKG_CONFIG_PATH"
 set -gx PKG_CONFIG_PATH "$VIRTUAL_ENV/lib/pkgconfig:$PKG_CONFIG_PATH"
