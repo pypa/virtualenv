@@ -1,0 +1,1 @@
+Handle CYGWIN/MSYS/MINGW path conversions in fish activation script - by user::`LuNoX`.
