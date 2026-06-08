@@ -45,7 +45,6 @@ deactivate () {
 
     if [ -n "${_OLD_VIRTUAL_PS1:-}" ] ; then
         PS1="$_OLD_VIRTUAL_PS1"
-        export PS1
         unset _OLD_VIRTUAL_PS1
     fi
 
@@ -116,7 +115,6 @@ fi
 if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] ; then
     _OLD_VIRTUAL_PS1="${PS1-}"
     PS1="(${VIRTUAL_ENV_PROMPT}) ${PS1-}"
-    export PS1
 fi
 
 # Make sure to unalias pydoc if it's already there
