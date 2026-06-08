@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import shlex
 import shutil
 import subprocess
+import sys
 from argparse import Namespace
 
 import pytest
@@ -102,6 +104,34 @@ def test_bash_activate_relocation_resolves_virtual_env(tmp_path, current_fastest
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
+def test_bash_activate_does_not_export_ps1(tmp_path, current_fastest) -> None:
+    dest = tmp_path / "env"
+    cli_run([
+        "--without-pip",
+        str(dest),
+        "--creator",
+        current_fastest,
+        "--no-periodic-update",
+        "--activators",
+        "bash",
+    ])
+    activate_script = dest / "bin" / "activate"
+    print_ps1 = f"{shlex.quote(sys.executable)} -c 'import os; print(os.environ.get(\"PS1\"))'"
+    result = subprocess.run(
+        [
+            "bash",
+            "-c",
+            (f"unset PS1; PS1='base$ '; source \"{activate_script}\" && {print_ps1} && deactivate && {print_ps1}"),
+        ],
+        capture_output=True,
+        encoding="utf-8",
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.splitlines() == ["None", "None"]
+
+
+@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
 @pytest.mark.parametrize("hashing_enabled", [True, False])
 def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> None:
     class Bash(raise_on_non_source_class):
@@ -121,6 +151,6 @@ def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> 
             return super().activate_call(script) + " || exit 1"
 
         def print_prompt(self):
-            return self.print_os_env_var("PS1")
+            return 'printf "%s\\n" "$PS1"'
 
     activation_tester(Bash)
