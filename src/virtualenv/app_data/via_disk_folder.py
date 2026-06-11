@@ -86,7 +86,7 @@ class AppDataDiskFolder(AppData):
 
     @property
     def py_info_at(self) -> ReentrantFileLock:
-        return self.lock / "py_info" / "4"  # ty: ignore[invalid-return-type]
+        return self.lock / "py_info" / "5"  # ty: ignore[invalid-return-type]
 
     def py_info(self, path: Path) -> PyInfoStoreDisk:
         return PyInfoStoreDisk(self.py_info_at, path)

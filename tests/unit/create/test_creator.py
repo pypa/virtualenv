@@ -385,6 +385,28 @@ def test_home_path_is_exe_parent(tmp_path, creator) -> None:
     assert any(os.path.exists(os.path.join(cfg["home"], exe)) for exe in exes)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX only")
+@pytest.mark.skipif(
+    bool(CURRENT.sysconfig_vars.get("PYTHONFRAMEWORK")),
+    reason="framework builds self-locate via dyld and keep the recorded path",
+)
+@pytest.mark.usefixtures("temp_app_data")
+def test_home_resolves_executable_only_symlink(tmp_path: Path) -> None:
+    """An executable-only symlink must not be recorded as home / base-executable (issue #3157)."""
+    system_exe = CURRENT.system_executable
+    assert system_exe is not None
+    link = tmp_path / "symdir" / "python3"
+    link.parent.mkdir()
+    link.symlink_to(system_exe)
+
+    result = cli_run(["-p", str(link), str(tmp_path / "env"), "--seeder", "app-data", "--without-pip"])
+    cfg = PyEnvCfg.from_file(result.creator.pyenv_cfg.path)
+
+    assert Path(cfg["home"]) != link.parent
+    assert os.path.samefile(cfg["base-executable"], system_exe)
+    assert Path(cfg["home"]) == Path(cfg["base-executable"]).parent
+
+
 @pytest.mark.usefixtures("temp_app_data")
 def test_create_parallel(tmp_path) -> None:
     def create(count) -> None:
