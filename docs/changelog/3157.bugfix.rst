@@ -1,0 +1,4 @@
+Resolve executable-only symlinks when recording ``home`` and ``base-executable`` in ``pyvenv.cfg``, mirroring CPython's
+``getpath.realpath`` (python/cpython#115237), so environments created from a symlink to the interpreter binary locate
+the base stdlib (for example python-build-standalone); a fully symlinked interpreter tree is kept as-is - by
+:user:`gaborbernat`.
