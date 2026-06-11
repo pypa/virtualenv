@@ -1,1 +1,0 @@
-Stop exporting ``PS1`` from the bash activator so child processes do not inherit shell prompt state.

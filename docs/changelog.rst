@@ -7,6 +7,24 @@
 .. towncrier release notes start
 
 **********************
+ v21.4.3 (2026-06-11)
+**********************
+
+Bugfixes - 21.4.3
+=================
+
+- Upgrade embedded wheels:
+
+  - pip to ``26.1.2`` from ``26.1.1`` (:issue:`u`)
+
+- Resolve executable-only symlinks when recording ``home`` and ``base-executable`` in ``pyvenv.cfg``, mirroring
+  CPython's ``getpath.realpath`` (python/cpython#115237), so environments created from a symlink to the interpreter
+  binary locate the base stdlib (for example python-build-standalone); a fully symlinked interpreter tree is kept as-is
+  - by :user:`gaborbernat`. (:issue:`3157`)
+- Stop exporting ``PS1`` from the bash activator so child processes do not inherit shell prompt state. (:issue:`3158`)
+- Handle CYGWIN/MSYS/MINGW path conversions in fish activation script - by user::`LuNoX`. (:issue:`3160`)
+
+**********************
  v21.4.2 (2026-05-31)
 **********************
 
