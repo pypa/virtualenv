@@ -58,7 +58,6 @@ BUNDLE_SHA256 = {
     "setuptools-75.3.4-py3-none-any.whl": "2dd50a7f42dddfa1d02a36f275dbe716f38ed250224f609d35fb60a09593d93e",
     "setuptools-82.0.1-py3-none-any.whl": "a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb",
     "wheel-0.45.1-py3-none-any.whl": "708e7481cc80179af0e556bbf0cc00b8444c7321e2700b8d8580231d13017248",
-    "wheel-0.47.0-py3-none-any.whl": "212281cab4dff978f6cedd499cd893e1f620791ca6ff7107cf270781e587eced",
 }
 
 _VERIFIED_WHEELS: set[str] = set()
