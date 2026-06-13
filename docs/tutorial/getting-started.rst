@@ -11,7 +11,7 @@ environment, install packages, and learn how to manage project dependencies.
 
 Before starting this tutorial, you need:
 
-- Python 3.8 or later installed on your system. If you use a version manager like `pyenv
+- Python 3.9 or later installed on your system. If you use a version manager like `pyenv
   <https://github.com/pyenv/pyenv>`_, `mise <https://mise.jdx.dev/>`_, or `asdf <https://asdf-vm.com/>`_, virtualenv
   will automatically discover the Python version they manage.
 - virtualenv installed (see :doc:`../how-to/install`).

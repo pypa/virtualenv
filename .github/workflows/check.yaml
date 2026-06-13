@@ -33,11 +33,9 @@ jobs:
           - "3.11"
           - "3.10"
           - "3.9"
-          - "3.8"
           - pypy-3.11
           - pypy-3.10
           - pypy-3.9
-          - pypy-3.8
           - graalpy-24.1
           - rp
         os:
@@ -54,7 +52,6 @@ jobs:
           - { os: windows-2025-vs2026, py: "graalpy-24.1" }
           - { os: windows-2025-vs2026, py: "pypy-3.10" }
           - { os: windows-2025-vs2026, py: "pypy-3.9" }
-          - { os: windows-2025-vs2026, py: "pypy-3.8" }
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -186,14 +183,14 @@ jobs:
           - docs
           - readme
           - type
-          - type-3.8
+          - type-3.9
           - upgrade
           - zipapp
         exclude:
           - { os: windows-2025-vs2026, tox_env: docs }
           - { os: windows-2025-vs2026, tox_env: readme }
           - { os: windows-2025-vs2026, tox_env: type }
-          - { os: windows-2025-vs2026, tox_env: type-3.8 }
+          - { os: windows-2025-vs2026, tox_env: type-3.9 }
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6

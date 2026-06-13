@@ -17,8 +17,8 @@ from typing import NoReturn
 
 STRICT = "UPGRADE_ADVISORY" not in os.environ
 
-BUNDLED = ["pip", "setuptools", "wheel"]
-SUPPORT = [(3, i) for i in range(8, 17)]
+BUNDLED = ["pip", "setuptools"]
+SUPPORT = [(3, i) for i in range(9, 17)]
 DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "wheels" / "embed"
 
 
@@ -51,8 +51,6 @@ def _download_all(temp_path: Path) -> dict[Path, str]:
         into.mkdir()
         folders[into] = support_ver
         for package in BUNDLED:
-            if package == "wheel" and support >= (3, 9):
-                continue
             thread = Thread(target=download, args=(support_ver, str(into), package))
             targets.append(thread)
             thread.start()

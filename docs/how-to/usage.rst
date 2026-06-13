@@ -15,7 +15,7 @@ Specify a Python version by name or version number:
 
 .. code-block:: console
 
-    $ virtualenv -p python3.8 venv
+    $ virtualenv -p python3.14 venv
     $ virtualenv -p 3.10 venv
     $ virtualenv -p pypy3 venv
     $ virtualenv -p rustpython venv
@@ -228,7 +228,7 @@ Derive configuration keys from command-line options by stripping leading ``-`` a
 .. code-block:: ini
 
     [virtualenv]
-    python = /opt/python-3.8/bin/python
+    python = /opt/python-3.14/bin/python
 
 Multi-value options
 ===================
@@ -249,7 +249,7 @@ Set options using environment variables with the ``VIRTUALENV_`` prefix and uppe
 
 .. code-block:: console
 
-    $ export VIRTUALENV_PYTHON=/opt/python-3.8/bin/python
+    $ export VIRTUALENV_PYTHON=/opt/python-3.14/bin/python
 
 For multi-value options, separate values with commas or newlines.
 
@@ -348,7 +348,7 @@ Pass options as list elements:
 
 .. code-block:: python
 
-    cli_run(["-p", "python3.8", "--without-pip", "myenv"])
+    cli_run(["-p", "python3.14", "--without-pip", "myenv"])
 
 Use the returned session object to access environment details:
 

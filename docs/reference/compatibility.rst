@@ -14,12 +14,12 @@ version is fully supported; previous patch versions work on a best effort basis.
 CPython
 =======
 
-``3.14 >= python_version >= 3.8``
+``3.14 >= python_version >= 3.9``
 
 PyPy
 ====
 
-``3.11 >= python_version >= 3.8``
+``3.11 >= python_version >= 3.9``
 
 GraalPy
 =======
@@ -94,4 +94,4 @@ macOS
 Windows
 =======
 
-- `Windows Store <https://apps.microsoft.com/search?query=python>`_ Python 3.8 and later
+- `Windows Store <https://apps.microsoft.com/search?query=python>`_ Python 3.9 and later
