@@ -87,6 +87,8 @@ jobs:
         if: steps.cpr.outputs.pull-request-number
         run: |
           pr_number="${STEPS_CPR_OUTPUTS_PULL_REQUEST_NUMBER}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin auto/upgrade-embedded-deps
           git checkout auto/upgrade-embedded-deps
           mv docs/changelog/u.bugfix.rst "docs/changelog/${pr_number}.bugfix.rst"
