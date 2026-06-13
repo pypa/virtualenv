@@ -31,25 +31,21 @@ class BaseEmbed(Seeder, ABC):
         self.pip_version = options.pip
         self.setuptools_version = options.setuptools
 
-        # wheel version needs special handling
-        # on Python >= 3.9, the default is None (as in not used)
-        # so we can differentiate between explicit and implicit none
+        # virtualenv no longer bundles wheel; the parsed default stays None (unused) so the
+        # warning below fires only when you pass --wheel or --no-wheel
         self.wheel_version = options.wheel or "none"
 
         self.no_pip = options.no_pip
         self.no_setuptools = options.no_setuptools
-        self.no_wheel = options.no_wheel
         self.app_data = options.app_data
         self.periodic_update = not options.no_periodic_update
 
-        if options.py_version[:2] >= (3, 9):
-            if options.wheel is not None or options.no_wheel:
-                LOGGER.warning(
-                    "The --no-wheel and --wheel options are deprecated. "
-                    "They have no effect for Python >= 3.9 as wheel is no longer "
-                    "bundled in virtualenv.",
-                )
-            self.no_wheel = True
+        if options.wheel is not None or options.no_wheel:
+            LOGGER.warning(
+                "DEPRECATION: the --wheel and --no-wheel options do nothing; virtualenv no longer bundles wheel. "
+                "They will be removed in a release after 2026-12. Stop passing them.",
+            )
+        self.no_wheel = True
 
         if not self.distribution_to_versions():
             self.enabled = False
@@ -97,9 +93,9 @@ class BaseEmbed(Seeder, ABC):
         )
         for distribution, default in cls.distributions().items():
             help_ = f"version of {distribution} to install as seed: embed, bundle, none or exact version"
-            if interpreter.version_info[:2] >= (3, 12) and distribution in {"wheel", "setuptools"}:
+            if interpreter.version_info[:2] >= (3, 12) and distribution == "setuptools":
                 default = "none"  # noqa: PLW2901
-            if interpreter.version_info[:2] >= (3, 9) and distribution == "wheel":
+            if distribution == "wheel":
                 default = None  # noqa: PLW2901
                 help_ = SUPPRESS
             parser.add_argument(
@@ -111,7 +107,7 @@ class BaseEmbed(Seeder, ABC):
             )
         for distribution in cls.distributions():
             help_ = f"do not install {distribution}"
-            if interpreter.version_info[:2] >= (3, 9) and distribution == "wheel":
+            if distribution == "wheel":
                 help_ = SUPPRESS
             parser.add_argument(
                 f"--no-{distribution}",

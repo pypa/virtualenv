@@ -27,7 +27,7 @@ if TYPE_CHECKING:
 
 @pytest.mark.slow
 @pytest.mark.parametrize("copies", [False, True] if fs_supports_symlink() else [True])
-def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies, for_py_version) -> None:  # noqa: PLR0915
+def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies) -> None:
     current = PythonInfo.current_system()
     bundle_ver = BUNDLE_SUPPORT[current.version_release_str]
     create_cmd = [
@@ -47,8 +47,6 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies,
         current_fastest,
         "-vv",
     ]
-    if for_py_version == "3.8":
-        create_cmd += ["--wheel", bundle_ver["wheel"].split("-")[1]]
     if not copies:
         create_cmd.append("--symlink-app-data")
     result = cli_run(create_cmd)
@@ -212,20 +210,13 @@ def test_populated_read_only_cache_and_copied_app_data(tmp_path, current_fastest
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("pkg", ["pip", "setuptools", "wheel"])
+@pytest.mark.parametrize("pkg", ["pip", "setuptools"])
 @pytest.mark.usefixtures("session_app_data", "current_fastest", "coverage_env")
-def test_base_bootstrap_link_via_app_data_no(tmp_path, pkg, for_py_version) -> None:
-    if for_py_version != "3.8" and pkg == "wheel":
-        msg = "wheel isn't installed on Python > 3.8"
-        raise pytest.skip(msg)
+def test_base_bootstrap_link_via_app_data_no(tmp_path, pkg) -> None:
     create_cmd = [str(tmp_path), "--seeder", "app-data", f"--no-{pkg}", "--setuptools", "bundle"]
-    if for_py_version == "3.8":
-        create_cmd += ["--wheel", "bundle"]
     result = cli_run(create_cmd)
     assert not (result.creator.purelib / pkg).exists()
-    for key in {"pip", "setuptools", "wheel"} - {pkg}:
-        if for_py_version != "3.8" and key == "wheel":
-            continue
+    for key in {"pip", "setuptools"} - {pkg}:
         assert (result.creator.purelib / key).exists()
 
 
@@ -251,8 +242,6 @@ def _run_parallel_threads(tmp_path):
     def _run(name) -> None:
         try:
             cmd = ["--seeder", "app-data", str(tmp_path / name), "--no-setuptools"]
-            if sys.version_info[:2] == (3, 8):
-                cmd.append("--no-wheel")
             cli_run(cmd)
         except Exception as exception:  # noqa: BLE001
             as_str = str(exception)

@@ -28,7 +28,6 @@ from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.create.pyenv_cfg import PyEnvCfg
 from virtualenv.create.via_global_ref import api
 from virtualenv.create.via_global_ref.builtin.cpython.common import is_mac_os_framework, is_macos_brew
-from virtualenv.create.via_global_ref.builtin.cpython.cpython3 import CPython3Posix
 from virtualenv.info import IS_PYPY, IS_WIN, fs_is_case_sensitive
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.run.plugin.creators import CreatorSelector
@@ -211,13 +210,6 @@ def test_create_no_seed(  # noqa: C901, PLR0912, PLR0913, PLR0915
         python_w = creator.exe.parent / "pythonw.exe"
         assert python_w.exists()
         assert python_w.read_bytes() != creator.exe.read_bytes()
-
-    if CPython3Posix.pyvenv_launch_patch_active(PythonInfo.from_exe(python)) and creator_key != "venv":
-        result = subprocess.check_output(
-            [str(creator.exe), "-c", 'import os; print(os.environ.get("__PYVENV_LAUNCHER__"))'],
-            text=True,
-        ).strip()
-        assert result == "None"
 
     git_ignore = (dest / ".gitignore").read_text(encoding="utf-8")
     assert git_ignore.splitlines() == ["# created by virtualenv automatically", "*"]

@@ -9,11 +9,6 @@ from virtualenv.seed.wheels.util import Wheel
 
 BUNDLE_FOLDER = Path(__file__).absolute().parent
 BUNDLE_SUPPORT = {
-    "3.8": {
-        "pip": "pip-25.0.1-py3-none-any.whl",
-        "setuptools": "setuptools-75.3.4-py3-none-any.whl",
-        "wheel": "wheel-0.45.1-py3-none-any.whl",
-    },
     "3.9": {
         "pip": "pip-26.0.1-py3-none-any.whl",
         "setuptools": "setuptools-82.0.1-py3-none-any.whl",
@@ -52,12 +47,9 @@ MAX = next(reversed(BUNDLE_SUPPORT))
 # SHA-256 of every bundled wheel. Verified on load so a corrupted or tampered wheel on disk fails loud instead of
 # being handed to pip. Generated together with ``BUNDLE_SUPPORT`` by ``tasks/upgrade_wheels.py``.
 BUNDLE_SHA256 = {
-    "pip-25.0.1-py3-none-any.whl": "c46efd13b6aa8279f33f2864459c8ce587ea6a1a59ee20de055868d8f7688f7f",
     "pip-26.0.1-py3-none-any.whl": "bdb1b08f4274833d62c1aa29e20907365a2ceb950410df15fc9521bad440122b",
     "pip-26.1.2-py3-none-any.whl": "382ff9f685ee3bc25864f820aa50505825f10f5458ffff07e30a6d96e5715cab",
-    "setuptools-75.3.4-py3-none-any.whl": "2dd50a7f42dddfa1d02a36f275dbe716f38ed250224f609d35fb60a09593d93e",
     "setuptools-82.0.1-py3-none-any.whl": "a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb",
-    "wheel-0.45.1-py3-none-any.whl": "708e7481cc80179af0e556bbf0cc00b8444c7321e2700b8d8580231d13017248",
 }
 
 _VERIFIED_WHEELS: set[str] = set()

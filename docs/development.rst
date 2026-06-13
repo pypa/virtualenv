@@ -56,7 +56,7 @@ To run tests locally execute:
     tox -e py
 
 This will run the test suite for the same Python version as under which ``tox`` is installed. Alternatively you can
-specify a specific version of python by using the ``pyNN`` format, such as: ``py38``, ``pypy3``, etc.
+specify a specific version of python by using the ``pyNN`` format, such as: ``py314``, ``pypy3``, etc.
 
 ``tox`` has been configured to forward any additional arguments it is given to ``pytest``. This enables the use of
 pytest's `rich CLI <https://docs.pytest.org/en/latest/usage.html#specifying-tests-selecting-tests>`_. As an example, you
@@ -107,7 +107,7 @@ This uses `ty <https://docs.astral.sh/ty/>`_ (Astral's Rust-based type checker) 
 
 .. code-block:: console
 
-    tox -e type-3.8
+    tox -e type-3.9
 
 Both environments validate that annotations are consistent and correct.
 

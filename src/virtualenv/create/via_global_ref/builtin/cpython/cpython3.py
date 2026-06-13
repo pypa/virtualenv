@@ -4,7 +4,6 @@ import abc
 import fnmatch
 from operator import methodcaller as method
 from pathlib import Path
-from textwrap import dedent
 from typing import TYPE_CHECKING
 
 from virtualenv.create.describe import Python3Supports
@@ -68,24 +67,6 @@ class CPython3Posix(CPythonPosix, CPython3):
         dest = venv_creator.dest / "lib" / shared_lib.name
         ensure_dir(dest.parent)
         copy_path(shared_lib, dest)
-
-    def env_patch_text(self) -> str:
-        text = super().env_patch_text()
-        if self.pyvenv_launch_patch_active(self.interpreter):
-            text += dedent(
-                """
-                # for https://github.com/python/cpython/pull/9516, see https://github.com/pypa/virtualenv/issues/1704
-                import os
-                if "__PYVENV_LAUNCHER__" in os.environ:
-                    del os.environ["__PYVENV_LAUNCHER__"]
-                """,
-            )
-        return text
-
-    @classmethod
-    def pyvenv_launch_patch_active(cls, interpreter: PythonInfo) -> bool:  # drop when Python 3.8 support is dropped
-        ver = interpreter.version_info
-        return interpreter.platform == "darwin" and (3, 8, 3) > ver >= (3, 8)
 
 
 class CPython3Windows(CPythonWindows, CPython3):

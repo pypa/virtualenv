@@ -86,8 +86,8 @@ target are the same interpreter.
 Host interpreter
 ================
 
-virtualenv requires CPython or PyPy **3.8 or later** as the host interpreter. This is enforced by ``requires-python >=
-3.8`` in the package metadata.
+virtualenv requires CPython or PyPy **3.9 or later** as the host interpreter. This is enforced by ``requires-python >=
+3.9`` in the package metadata.
 
 Target interpreter
 ==================
@@ -104,11 +104,11 @@ it can discover on the system, provided a matching creator exists.
       - Notes
     - - CPython
       - Linux, macOS, Windows
-      - 3.8+. Free-threaded builds supported on 3.13+. Includes macOS framework, Homebrew, Microsoft Store, and Windows
+      - 3.9+. Free-threaded builds supported on 3.13+. Includes macOS framework, Homebrew, Microsoft Store, and Windows
         debug build support.
     - - PyPy
       - Linux, macOS, Windows
-      - 3.8+.
+      - 3.9+.
     - - GraalPy
       - Linux, macOS, Windows
       - 24.1+. Minimal test coverage, marked experimental.
@@ -116,7 +116,7 @@ it can discover on the system, provided a matching creator exists.
       - Linux, macOS, Windows
       - Minimal test coverage, marked experimental.
 
-Seed packages (``pip``, ``setuptools``) are bundled for CPython 3.8 through 3.16. Target interpreters outside this range
+Seed packages (``pip``, ``setuptools``) are bundled for CPython 3.9 through 3.16. Target interpreters outside this range
 use the highest available bundled version as a fallback, which may or may not be compatible.
 
 **********************
@@ -197,7 +197,7 @@ virtual environment's Python version, implementation (CPython, PyPy, etc.), and 
 The ``--python`` flag accepts several specifier formats:
 
 **Path specifier**
-    An absolute or relative path to a Python executable, such as ``/usr/bin/python3.8`` or ``./python``.
+    An absolute or relative path to a Python executable, such as ``/usr/bin/python3.14`` or ``./python``.
 
 **Version specifier**
     A string following the format ``{implementation}{version}{architecture}{machine}`` where:
@@ -210,7 +210,7 @@ The ``--python`` flag accepts several specifier formats:
 
     Examples:
 
-    - ``python3.8.1`` - Any Python implementation with version 3.8.1
+    - ``python3.14.1`` - Any Python implementation with version 3.14.1
     - ``3`` - Any Python implementation with major version 3
     - ``3.13t`` - Any Python implementation version 3.13 with free-threading enabled
     - ``cpython3`` - CPython implementation with major version 3
@@ -333,7 +333,6 @@ within the environment. The seed packages are:
 
 - ``pip`` - The package installer for Python (always installed).
 - ``setuptools`` - Package development and installation library (disabled by default on Python 3.12+).
-- ``wheel`` - Support for the wheel binary package format (only installed by default on Python 3.8).
 
 virtualenv supports two seeding methods with dramatically different performance characteristics:
 

@@ -67,7 +67,7 @@ def test_manual_upgrade(session_app_data, caplog, mocker, for_py_version) -> Non
         packages[args[1]["distribution"]].append(args[1]["for_py_version"])
     packages = {key: sorted(value) for key, value in packages.items()}
     versions = sorted(BUNDLE_SUPPORT.keys())
-    expected = {"setuptools": versions, "wheel": ["3.8"], "pip": versions}
+    expected = {"setuptools": versions, "pip": versions}
     assert packages == expected
 
 

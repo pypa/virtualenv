@@ -6,7 +6,6 @@ env_list = [
   "3.11",
   "3.10",
   "3.9",
-  "3.8",
   "pypy3",
   "3.13t",
   "3.14t",
@@ -181,7 +180,7 @@ deps = [ "packaging>=25" ]
 commands = [ [ "python", "tasks/make_zipapp.py" ] ]
 uv_seed = true
 
-[env."type-3.8"]
-description = "run type checker (ty) against Python 3.8"
-commands = [ [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.8" ] ]
+[env."type-3.9"]
+description = "run type checker (ty) against Python 3.9"
+commands = [ [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.9" ] ]
 base = [ "type" ]
