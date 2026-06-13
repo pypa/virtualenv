@@ -7,6 +7,25 @@
 .. towncrier release notes start
 
 **********************
+ v21.5.0 (2026-06-13)
+**********************
+
+Features - 21.5.0
+=================
+
+- Drop support for Python 3.8; virtualenv now requires Python 3.9 or later to run and to create environments. Remove the
+  embedded ``wheel`` seed package, which virtualenv bundled only for Python 3.8. The ``--wheel`` and ``--no-wheel``
+  options stay as no-ops, but now warn that virtualenv will remove them in a release after 2026-12 - by
+  :user:`gaborbernat`. (:issue:`3170`)
+
+Bugfixes - 21.5.0
+=================
+
+- Upgrade embedded wheels:
+
+  Removed wheel of ``0.47.0`` (:issue:`u`)
+
+**********************
  v21.4.3 (2026-06-11)
 **********************
 
