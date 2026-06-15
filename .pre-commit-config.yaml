@@ -5,7 +5,7 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.37.2
+    rev: 0.37.3
     hooks:
       - id: check-github-workflows
         args: ["--verbose"]
@@ -19,24 +19,24 @@ repos:
     hooks:
       - id: tox-toml-fmt
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "v2.23.0"
+    rev: "v2.24.1"
     hooks:
       - id: pyproject-fmt
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.16"
+    rev: "v0.15.17"
     hooks:
       - id: ruff-format
       - id: ruff
         args: ["--fix", "--unsafe-fixes", "--exit-non-zero-on-fix"]
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.8.3"
+    rev: "v3.8.4"
     hooks:
       - id: prettier
         additional_dependencies:
           - prettier@3.3.3
           - "@prettier/plugin-xml@3.4.1"
   - repo: https://github.com/LilSpazJoekp/docstrfmt
-    rev: v2.1.0
+    rev: v2.1.1
     hooks:
       - id: docstrfmt
         args: ["-l", "120"]
