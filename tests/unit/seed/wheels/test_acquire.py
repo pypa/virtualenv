@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture(autouse=True)  # noqa: RUF076
 def _fake_release_date(mocker) -> None:
     mocker.patch("virtualenv.seed.wheels.periodic_update.release_date_for_wheel_path", return_value=None)
 
