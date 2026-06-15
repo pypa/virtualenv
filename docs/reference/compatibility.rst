@@ -46,6 +46,7 @@ Python 3.14.
 
 Major version support changes:
 
+- **21.5.0** (2026-06-13): dropped support for running under and creating environments for Python 3.8 and earlier.
 - **20.27.0** (2024-10-17): dropped support for running under Python 3.7 and earlier.
 - **20.22.0** (2023-04-19): dropped support for creating environments for Python 3.6 and earlier.
 - **20.18.0** (2023-02-06): dropped support for running under Python 3.6 and earlier.

@@ -27,6 +27,18 @@ class Seeder(ABC):
         self.env = options.env
 
     @classmethod
+    def cannot_seed(cls, interpreter: PythonInfo) -> str | None:  # noqa: ARG003
+        """Explain why this seeder cannot install seed packages for the given interpreter.
+
+        :param interpreter: the interpreter the environment is based on
+
+        :returns: ``None`` when the seeder supports the interpreter, otherwise a message describing why it cannot;
+            selection rejects a seeder that returns a message and surfaces it to the user
+
+        """
+        return None
+
+    @classmethod
     def add_parser_arguments(cls, parser: ArgumentParser, interpreter: PythonInfo, app_data: AppData) -> None:
         """Add CLI arguments for this seed mechanisms.
 
