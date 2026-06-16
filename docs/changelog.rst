@@ -7,6 +7,18 @@
 .. towncrier release notes start
 
 **********************
+ v21.5.1 (2026-06-16)
+**********************
+
+Bugfixes - 21.5.1
+=================
+
+- Refuse to create environments whose Python the bundled wheels no longer cover (currently below 3.9). virtualenv used
+  to substitute the newest bundled ``pip``, which cannot run on such a target, leaving a broken environment; seeder
+  selection now rejects it up front with a clear error. ``--no-seed`` and third-party seeders that ship compatible
+  wheels still work - by :user:`gaborbernat`. (:issue:`3171`)
+
+**********************
  v21.5.0 (2026-06-13)
 **********************
 
