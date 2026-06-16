@@ -68,8 +68,8 @@ def get_embed_wheel(distribution: str, for_py_version: str | None) -> Wheel | No
     """Return the bundled wheel that ships with virtualenv for a given distribution and Python version.
 
     :param distribution: project name of the seed package, for example ``pip`` or ``setuptools``.
-    :param for_py_version: major.minor Python version string the environment will be created for, or ``None`` to use
-        the newest bundle.
+    :param for_py_version: major.minor Python version string the environment will be created for, or ``None`` to use the
+        newest bundle.
 
     :returns: a :class:`Wheel` pointing at the verified bundled file, or ``None`` when no wheel is bundled for the
         requested combination, including target versions below the oldest bundled one.
