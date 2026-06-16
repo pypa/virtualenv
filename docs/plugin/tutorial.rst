@@ -49,19 +49,21 @@ In ``src/virtualenv_pyenv/__init__.py``, implement the discovery plugin by subcl
     from __future__ import annotations
 
     import subprocess
+    from argparse import ArgumentParser
     from pathlib import Path
 
+    from virtualenv.config.cli.parser import VirtualEnvOptions
     from virtualenv.discovery.discover import Discover
     from virtualenv.discovery.py_info import PythonInfo
 
 
     class PyEnvDiscovery(Discover):
-        def __init__(self, options):
+        def __init__(self, options: VirtualEnvOptions) -> None:
             super().__init__(options)
             self.python_spec = options.python if options.python else "python"
 
         @classmethod
-        def add_parser_arguments(cls, parser):
+        def add_parser_arguments(cls, parser: ArgumentParser) -> None:
             parser.add_argument(
                 "--python",
                 dest="python",
@@ -71,7 +73,7 @@ In ``src/virtualenv_pyenv/__init__.py``, implement the discovery plugin by subcl
                 help="pyenv Python version to use (e.g., 3.11.0)",
             )
 
-        def run(self):
+        def run(self) -> PythonInfo | None:
             try:
                 result = subprocess.run(
                     ["pyenv", "which", "python"],
@@ -82,7 +84,7 @@ In ``src/virtualenv_pyenv/__init__.py``, implement the discovery plugin by subcl
                 python_path = Path(result.stdout.strip())
                 return PythonInfo.from_exe(str(python_path))
             except (subprocess.CalledProcessError, FileNotFoundError) as e:
-                raise RuntimeError(f"Failed to locate pyenv Python: {e}")
+                raise RuntimeError(f"Failed to locate pyenv Python: {e}") from e
 
 ********************
  Install the plugin

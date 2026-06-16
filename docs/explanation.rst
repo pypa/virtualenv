@@ -116,8 +116,10 @@ it can discover on the system, provided a matching creator exists.
       - Linux, macOS, Windows
       - Minimal test coverage, marked experimental.
 
-Seed packages (``pip``, ``setuptools``) are bundled for CPython 3.9 through 3.16. Target interpreters outside this range
-use the highest available bundled version as a fallback, which may or may not be compatible.
+Seed packages (``pip``, ``setuptools``) are bundled for CPython 3.9 through 3.16. A target newer than the highest
+bundled version reuses the newest bundle. A target older than the oldest bundled version has no compatible bundled
+wheel, so the bundled seeders refuse it before the environment is created; pass ``--no-seed`` for an empty environment,
+or select a seeder that ships wheels for that version.
 
 **********************
  How virtualenv works
@@ -448,7 +450,9 @@ uses. They want to align virtualenv's bundled packages with system package versi
 
 Distributions can patch the ``virtualenv.seed.wheels.embed`` module, replacing the ``get_embed_wheel`` function with
 their own implementation that returns distribution-provided wheels. If they want to use virtualenv's test suite for
-validation, they should also provide the ``BUNDLE_FOLDER``, ``BUNDLE_SUPPORT``, and ``MAX`` variables.
+validation, they should also provide the ``BUNDLE_FOLDER``, ``BUNDLE_SUPPORT``, ``MIN``, ``MAX``, and
+``OLDEST_SUPPORTED`` variables. ``OLDEST_SUPPORTED`` (the parsed form of ``MIN``) sets the floor below which the bundled
+seeders refuse to seed, so a distribution that bundles wheels for an older Python must lower it to match.
 
 Distributions should also consider patching ``virtualenv.seed.embed.base_embed.PERIODIC_UPDATE_ON_BY_DEFAULT`` to
 ``False``, allowing the system package manager to control seed package updates rather than virtualenv's periodic update

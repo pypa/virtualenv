@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING
 
 from virtualenv.seed.seeder import Seeder
 from virtualenv.seed.wheels import Version
+from virtualenv.seed.wheels.embed import MIN, OLDEST_SUPPORTED
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
@@ -64,6 +65,28 @@ class BaseEmbed(Seeder, ABC):
             for distribution in self.distributions()
             if getattr(self, f"no_{distribution}", None) is False and getattr(self, f"{distribution}_version") != "none"
         }
+
+    @classmethod
+    def cannot_seed(cls, interpreter: PythonInfo) -> str | None:
+        """Explain why the bundled wheels cannot seed the target Python version.
+
+        The embedded pip/setuptools stopped shipping for Pythons below :data:`OLDEST_SUPPORTED`, so seeding one would
+        install an incompatible wheel.
+
+        :param interpreter: the interpreter to be seeded
+
+        :returns: ``None`` when the bundled wheels still support the target, otherwise a message naming the target and
+            the remedies
+
+        """
+        if interpreter.version_info[:2] >= OLDEST_SUPPORTED:
+            return None
+        target = f"{interpreter.version_info.major}.{interpreter.version_info.minor}"
+        return (
+            f"the bundled seeder no longer ships pip/setuptools for Python {target}; the oldest supported target is "
+            f"Python {MIN} - pass --no-seed for an empty environment, use a seeder that provides Python {target} "
+            f"wheels, or install an older virtualenv release"
+        )
 
     @classmethod
     def add_parser_arguments(cls, parser: ArgumentParser, interpreter: PythonInfo, app_data: AppData) -> None:  # noqa: ARG003
