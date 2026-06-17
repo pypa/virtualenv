@@ -43,15 +43,6 @@ BUNDLE_SUPPORT = {
     },
 }
 MAX = next(reversed(BUNDLE_SUPPORT))
-MIN = next(iter(BUNDLE_SUPPORT))
-
-
-def _release_tuple(version: str) -> tuple[int, ...]:
-    return tuple(int(part) for part in version.split("."))
-
-
-# oldest target Python version virtualenv still bundles seed wheels for; anything below this has no embedded pip
-OLDEST_SUPPORTED = _release_tuple(MIN)
 
 # SHA-256 of every bundled wheel. Verified on load so a corrupted or tampered wheel on disk fails loud instead of
 # being handed to pip. Generated together with ``BUNDLE_SUPPORT`` by ``tasks/upgrade_wheels.py``.
@@ -64,26 +55,19 @@ BUNDLE_SHA256 = {
 _VERIFIED_WHEELS: set[str] = set()
 
 
-def get_embed_wheel(distribution: str, for_py_version: str | None) -> Wheel | None:
+def get_embed_wheel(distribution: str, for_py_version: str) -> Wheel | None:
     """Return the bundled wheel that ships with virtualenv for a given distribution and Python version.
 
     :param distribution: project name of the seed package, for example ``pip`` or ``setuptools``.
-    :param for_py_version: major.minor Python version string the environment will be created for, or ``None`` to use the
-        newest bundle.
+    :param for_py_version: major.minor Python version string the environment will be created for.
 
     :returns: a :class:`Wheel` pointing at the verified bundled file, or ``None`` when no wheel is bundled for the
-        requested combination, including target versions below the oldest bundled one.
+        requested combination.
 
     :raises RuntimeError: if the bundled wheel on disk fails SHA-256 verification.
 
     """
-    if for_py_version is None or _release_tuple(for_py_version) > _release_tuple(MAX):
-        # no specific target, or a Python newer than anything bundled: reuse the newest bundle
-        mapping = BUNDLE_SUPPORT[MAX]
-    else:  # versions below the oldest bundled one fall through to None instead of an incompatible newer wheel
-        mapping = BUNDLE_SUPPORT.get(for_py_version)
-    if not mapping:
-        return None
+    mapping = BUNDLE_SUPPORT.get(for_py_version, {}) or BUNDLE_SUPPORT[MAX]
     wheel_file = mapping.get(distribution)
     if wheel_file is None:
         return None
@@ -128,7 +112,5 @@ __all__ = [
     "BUNDLE_SHA256",
     "BUNDLE_SUPPORT",
     "MAX",
-    "MIN",
-    "OLDEST_SUPPORTED",
     "get_embed_wheel",
 ]
