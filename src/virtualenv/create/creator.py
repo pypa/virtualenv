@@ -246,7 +246,7 @@ class Creator(ABC):
 
     @property
     def debug(self) -> dict[str, Any] | None:
-        """:returns: debug information about the virtual environment (only valid after :meth:`create` has run)"""
+        """Debug information about the virtual environment (only valid after :meth:`create` has run)."""
         if self._debug is None and self.exe is not None:
             self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data, self.env)
         return self._debug
