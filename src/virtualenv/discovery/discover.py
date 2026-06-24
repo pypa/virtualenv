@@ -31,7 +31,7 @@ class Discover(ABC):
 
     @property
     def interpreter(self) -> PythonInfo | None:
-        """:returns: the interpreter as returned by :meth:`run`, cached"""
+        """The interpreter as returned by :meth:`run`, cached."""
         if self._has_run is False:
             self._interpreter = self.run()
             self._has_run = True

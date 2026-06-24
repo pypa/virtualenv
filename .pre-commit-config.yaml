@@ -19,11 +19,11 @@ repos:
     hooks:
       - id: tox-toml-fmt
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "v2.24.1"
+    rev: "v2.25.0"
     hooks:
       - id: pyproject-fmt
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.15.17"
+    rev: "v0.15.18"
     hooks:
       - id: ruff-format
       - id: ruff
@@ -36,13 +36,13 @@ repos:
           - prettier@3.3.3
           - "@prettier/plugin-xml@3.4.1"
   - repo: https://github.com/LilSpazJoekp/docstrfmt
-    rev: v2.1.1
+    rev: v2.2.0
     hooks:
       - id: docstrfmt
         args: ["-l", "120"]
         additional_dependencies: ["sphinx>=9.1"]
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.25.2
+    rev: v1.26.1
     hooks:
       - id: zizmor
   - repo: meta
