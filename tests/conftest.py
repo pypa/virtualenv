@@ -98,7 +98,7 @@ def link(link_folder, link_file):
     return _link
 
 
-@pytest.fixture(autouse=True)  # noqa: RUF076
+@pytest.fixture(autouse=True)
 def _ensure_logging_stable():
     logger_level = LOGGER.level
     handlers = list(LOGGER.handlers)
@@ -113,7 +113,7 @@ def _ensure_logging_stable():
     LOGGER.setLevel(logger_level)
 
 
-@pytest.fixture(autouse=True)  # noqa: RUF076
+@pytest.fixture(autouse=True)
 def _check_cwd_not_changed_by_test():
     old = os.getcwd()
     yield
@@ -122,7 +122,7 @@ def _check_cwd_not_changed_by_test():
         pytest.fail(f"tests changed cwd: {old!r} => {new!r}")
 
 
-@pytest.fixture(autouse=True)  # noqa: RUF076
+@pytest.fixture(autouse=True)
 def _ensure_py_info_cache_empty(session_app_data):
     PythonInfo.clear_cache(session_app_data)
     yield
@@ -141,7 +141,7 @@ def change_os_environ(key, value):
             os.environ[env_var] = previous
 
 
-@pytest.fixture(autouse=True, scope="session")  # noqa: RUF076
+@pytest.fixture(autouse=True, scope="session")
 def _ignore_global_config(tmp_path_factory):
     filename = str(tmp_path_factory.mktemp("folder") / "virtualenv-test-suite.ini")
     with change_os_environ("VIRTUALENV_CONFIG_FILE", filename):
@@ -166,7 +166,7 @@ def _assert_environ_stable(old: dict[str, str], to_clean: set[str]) -> None:
         pytest.fail(msg)
 
 
-@pytest.fixture(autouse=True)  # noqa: RUF076
+@pytest.fixture(autouse=True)
 def _check_os_environ_stable():
     old = os.environ.copy()
     # ensure we don't inherit parent env variables
@@ -198,7 +198,7 @@ COV_ENV_VAR = "COVERAGE_PROCESS_START"
 COVERAGE_RUN = os.environ.get(str(COV_ENV_VAR))
 
 
-@pytest.fixture(autouse=True)  # noqa: RUF076
+@pytest.fixture(autouse=True)
 def coverage_env(monkeypatch, link, request):
     """Enable coverage report collection on the created virtual environments by injecting the coverage project"""
     if COVERAGE_RUN and "_no_coverage" not in request.fixturenames:
