@@ -69,7 +69,7 @@ jobs:
           cache-dependency-glob: "pyproject.toml"
           cache-suffix: ${{ matrix.py }}
       - name: 🐍 Setup Python for tox
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         with:
           python-version: "3.14"
       - name: 📦 Install tox with this virtualenv
@@ -81,7 +81,7 @@ jobs:
             uv tool install --no-managed-python --python 3.14 "tox>=4.45" --with tox-uv --with .
           fi
       - name: 🐍 Setup Python for test ${{ matrix.py }}
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
         if: ${{ !startsWith(matrix.py, 'brew@') && matrix.py != 'rp' }}
         with:
           python-version: ${{ matrix.py }}
