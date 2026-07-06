@@ -496,6 +496,23 @@ def test_create_distutils_cfg(creator, tmp_path, monkeypatch) -> None:
     assert package_folder.exists(), list_files(str(tmp_path))
 
 
+def test_install_patch_skipped_on_py310(tmp_path, mocker) -> None:
+    creator = mocker.MagicMock(purelib=tmp_path, interpreter=mocker.MagicMock(version_info=(3, 10, 0)))
+    creator.env_patch_text.return_value = "import _virtualenv"
+    api.ViaGlobalRefApi.install_patch(creator)
+    assert not (tmp_path / "_virtualenv.pth").exists()
+    assert not (tmp_path / "_virtualenv.py").exists()
+    creator.env_patch_text.assert_not_called()
+
+
+def test_install_patch_written_on_py39(tmp_path, mocker) -> None:
+    creator = mocker.MagicMock(purelib=tmp_path, interpreter=mocker.MagicMock(version_info=(3, 9, 21)))
+    creator.env_patch_text.return_value = "import _virtualenv"
+    api.ViaGlobalRefApi.install_patch(creator)
+    assert (tmp_path / "_virtualenv.pth").read_text(encoding="utf-8") == "import _virtualenv"
+    assert (tmp_path / "_virtualenv.py").read_text(encoding="utf-8") == "import _virtualenv"
+
+
 def list_files(path):
     result = ""
     for root, _, files in os.walk(path):

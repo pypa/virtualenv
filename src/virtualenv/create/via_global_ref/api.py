@@ -111,6 +111,11 @@ class ViaGlobalRefApi(Creator, ABC):
         self.install_patch()
 
     def install_patch(self) -> None:
+        # Python 3.10+ ignores the distutils install config keys this patch guards against (pip does so by default,
+        # setuptools and CPython's vendored distutils drop them too), so the runtime import hook only earns its
+        # startup cost on 3.9. See https://github.com/pypa/virtualenv/issues/3181.
+        if self.interpreter.version_info >= (3, 10):
+            return
         text = self.env_patch_text()
         if text:
             pth = self.purelib / "_virtualenv.pth"
