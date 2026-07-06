@@ -69,7 +69,7 @@ def _sync_dest(new_packages: set[str], remove_packages: set[str], new_batch: dic
 def _write_changelog(added: dict[str, list[str]], removed: dict[str, list[str]]) -> None:
     lines = ["Upgrade embedded wheels:", ""]
     for key, versions in added.items():
-        text = f"* {key} to {fmt_version(versions)}"
+        text = f"- {key} to {fmt_version(versions)}"
         if key in removed:
             rem = ", ".join(f"``{i}``" for i in removed[key])
             text += f" from {rem}"
