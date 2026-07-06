@@ -15,31 +15,31 @@ BUNDLE_SUPPORT = {
     },
     "3.10": {
         "pip": "pip-26.1.2-py3-none-any.whl",
-        "setuptools": "setuptools-82.0.1-py3-none-any.whl",
+        "setuptools": "setuptools-83.0.0-py3-none-any.whl",
     },
     "3.11": {
         "pip": "pip-26.1.2-py3-none-any.whl",
-        "setuptools": "setuptools-82.0.1-py3-none-any.whl",
+        "setuptools": "setuptools-83.0.0-py3-none-any.whl",
     },
     "3.12": {
         "pip": "pip-26.1.2-py3-none-any.whl",
-        "setuptools": "setuptools-82.0.1-py3-none-any.whl",
+        "setuptools": "setuptools-83.0.0-py3-none-any.whl",
     },
     "3.13": {
         "pip": "pip-26.1.2-py3-none-any.whl",
-        "setuptools": "setuptools-82.0.1-py3-none-any.whl",
+        "setuptools": "setuptools-83.0.0-py3-none-any.whl",
     },
     "3.14": {
         "pip": "pip-26.1.2-py3-none-any.whl",
-        "setuptools": "setuptools-82.0.1-py3-none-any.whl",
+        "setuptools": "setuptools-83.0.0-py3-none-any.whl",
     },
     "3.15": {
         "pip": "pip-26.1.2-py3-none-any.whl",
-        "setuptools": "setuptools-82.0.1-py3-none-any.whl",
+        "setuptools": "setuptools-83.0.0-py3-none-any.whl",
     },
     "3.16": {
         "pip": "pip-26.1.2-py3-none-any.whl",
-        "setuptools": "setuptools-82.0.1-py3-none-any.whl",
+        "setuptools": "setuptools-83.0.0-py3-none-any.whl",
     },
 }
 MAX = next(reversed(BUNDLE_SUPPORT))
@@ -59,6 +59,7 @@ BUNDLE_SHA256 = {
     "pip-26.0.1-py3-none-any.whl": "bdb1b08f4274833d62c1aa29e20907365a2ceb950410df15fc9521bad440122b",
     "pip-26.1.2-py3-none-any.whl": "382ff9f685ee3bc25864f820aa50505825f10f5458ffff07e30a6d96e5715cab",
     "setuptools-82.0.1-py3-none-any.whl": "a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb",
+    "setuptools-83.0.0-py3-none-any.whl": "29b23c360f22f414dc7336bb39178cc7bcbf6021ed2733cde173f09dba19abb3",
 }
 
 _VERIFIED_WHEELS: set[str] = set()

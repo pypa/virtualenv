@@ -1,0 +1,3 @@
+Upgrade embedded wheels:
+
+* setuptools to ``83.0.0``
