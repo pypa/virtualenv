@@ -7,6 +7,17 @@
 .. towncrier release notes start
 
 **********************
+ v21.6.0 (2026-07-06)
+**********************
+
+Features - 21.6.0
+=================
+
+- Stop installing the ``_virtualenv.{py,pth}`` distutils import hook for Python 3.10 and later, where pip, setuptools
+  and CPython already ignore the install config keys it guards against; this removes the hook's startup import cost. The
+  hook is still installed for Python 3.9 - :issue:`3181`. (:issue:`3181`)
+
+**********************
  v21.5.2 (2026-07-06)
 **********************
 
