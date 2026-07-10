@@ -36,14 +36,14 @@ function deactivate -d 'Exit virtualenv mode and return to the normal environmen
     end
 
     if test -n "$_OLD_FISH_PROMPT_OVERRIDE"
-       and functions -q _old_fish_prompt
+       and builtin functions -q _old_fish_prompt
         # Set an empty local `$fish_function_path` to allow the removal of `fish_prompt` using `functions -e`.
         set -l fish_function_path
 
         # Erase virtualenv's `fish_prompt` and restore the original.
-        functions -e fish_prompt
-        functions -c _old_fish_prompt fish_prompt
-        functions -e _old_fish_prompt
+        builtin functions -e fish_prompt
+        builtin functions -c _old_fish_prompt fish_prompt
+        builtin functions -e _old_fish_prompt
         set -e _OLD_FISH_PROMPT_OVERRIDE
     end
 
@@ -52,8 +52,8 @@ function deactivate -d 'Exit virtualenv mode and return to the normal environmen
 
     if test "$argv[1]" != 'nondestructive'
         # Self-destruct!
-        functions -e pydoc
-        functions -e deactivate
+        builtin functions -e pydoc
+        builtin functions -e deactivate
     end
 end
 
@@ -104,17 +104,20 @@ end
 
 if test -z "$VIRTUAL_ENV_DISABLE_PROMPT"
     # Copy the current `fish_prompt` function as `_old_fish_prompt`.
-    functions -c fish_prompt _old_fish_prompt
+    builtin functions -c fish_prompt _old_fish_prompt
 
+    # Route every builtin the prompt path uses through `builtin` so a user function that shadows
+    # `printf`, `string`, `echo`, or `source`/`.` cannot hijack the prompt (Issue #93858 follow-up,
+    # CPython gh-140006). A dot-style directory navigator redefining `.` is the common trigger.
     function fish_prompt
         set -l old_status $status
         # Run the user's prompt first; it might depend on (pipe)status.
         set -l prompt (_old_fish_prompt)
 
-        printf '(%s) ' $VIRTUAL_ENV_PROMPT
+        builtin printf '(%s) ' $VIRTUAL_ENV_PROMPT
 
-        string join -- \n $prompt # handle multi-line prompts
-        echo "exit $old_status" | .
+        builtin string join -- \n $prompt # handle multi-line prompts
+        builtin echo "exit $old_status" | builtin source -
     end
 
     set -gx _OLD_FISH_PROMPT_OVERRIDE "$VIRTUAL_ENV"
