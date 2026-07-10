@@ -7,6 +7,18 @@
 .. towncrier release notes start
 
 **********************
+ v21.6.1 (2026-07-10)
+**********************
+
+Bugfixes - 21.6.1
+=================
+
+- Harden the fish activator prompt against user functions that shadow builtins. Routing ``functions``, ``printf``,
+  ``string``, ``echo`` and ``source``/``.`` through ``builtin`` stops a shadowing function (such as a dot-style
+  directory navigator that redefines ``.``) from hijacking the prompt and dropping the previous command's exit status,
+  matching the CPython fix in `gh-140006 <https://github.com/python/cpython/issues/140006>`_. (:issue:`3185`)
+
+**********************
  v21.6.0 (2026-07-06)
 **********************
 
