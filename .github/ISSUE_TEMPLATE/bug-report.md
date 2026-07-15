@@ -1,10 +1,6 @@
----
-name: Bug report
-about: Create a report to help us improve
-title: ""
-labels: bug
-assignees: ""
----
+______________________________________________________________________
+
+## name: Bug report about: Create a report to help us improve title: "" labels: bug assignees: ""
 
 **Issue**
 
@@ -15,8 +11,11 @@ Describe what's the expected behavior and what you're observing.
 Provide at least:
 
 - OS:
+
 - Shell:
+
 - Python version and path:
+
 - `pip list` of the host python where `virtualenv` is installed:
 
   ```console
