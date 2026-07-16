@@ -2,10 +2,8 @@ name: Release
 on:
   push:
     tags: ["*.*.*"]
-
 env:
   dists-artifact-name: python-package-distributions
-
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -39,7 +37,6 @@ jobs:
         with:
           name: virtualenv-zipapp
           path: virtualenv.pyz
-
   publish:
     needs: build
     runs-on: ubuntu-24.04
@@ -86,7 +83,6 @@ jobs:
           git add public/virtualenv.pyz public/version.txt
           git commit -m "update virtualenv to ${GITHUB_REF_NAME}"
           git push origin main
-
   rollback:
     if: ${{ always() && needs.build.result == 'success' && needs.publish.result == 'failure' }}
     needs:

@@ -1,10 +1,6 @@
----
-name: Feature request
-about: Suggest an enhancement for this project
-title: ""
-labels: enhancement
-assignees: ""
----
+______________________________________________________________________
+
+## name: Feature request about: Suggest an enhancement for this project title: "" labels: enhancement assignees: ""
 
 **What's the problem this feature will solve?**
 

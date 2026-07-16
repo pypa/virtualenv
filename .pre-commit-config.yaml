@@ -28,13 +28,20 @@ repos:
       - id: ruff-format
       - id: ruff
         args: ["--fix", "--unsafe-fixes", "--exit-non-zero-on-fix"]
-  - repo: https://github.com/rbubley/mirrors-prettier
-    rev: "v3.9.5"
+  - repo: https://github.com/google/yamlfmt
+    rev: "v0.21.0"
     hooks:
-      - id: prettier
+      - id: yamlfmt
+  - repo: local
+    hooks:
+      - id: mdformat
+        name: mdformat
+        entry: mdformat --wrap 120
+        language: python
+        types: [markdown]
         additional_dependencies:
-          - prettier@3.3.3
-          - "@prettier/plugin-xml@3.4.1"
+          - mdformat-gfm>=1
+          - mdformat-ruff>=0.1.3
   - repo: https://github.com/LilSpazJoekp/docstrfmt
     rev: v2.2.0
     hooks:
