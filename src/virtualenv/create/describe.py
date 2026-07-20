@@ -71,7 +71,7 @@ class Describe:
         }
 
     @classmethod
-    def can_describe(cls, interpreter: PythonInfo) -> bool:  # noqa: ARG003
+    def can_describe(cls, interpreter: PythonInfo) -> bool:  # ruff:ignore[unused-class-method-argument]
         """Knows means it knows how the output will look."""
         return True
 

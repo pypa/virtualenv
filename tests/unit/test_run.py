@@ -27,7 +27,7 @@ def test_version(capsys) -> None:
     assert not err
 
     assert __version__ in content
-    import virtualenv  # noqa: PLC0415
+    import virtualenv  # ruff:ignore[import-outside-top-level]
 
     assert virtualenv.__file__ in content.replace("\n", "")
 

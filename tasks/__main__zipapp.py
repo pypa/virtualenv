@@ -67,7 +67,7 @@ class VersionPlatformSelect:
         with self._zip_file.open(filename) as file_handler:
             return file_handler.read()
 
-    def find_distributions(self, context: Any) -> Iterator[Any]:  # noqa: ANN401
+    def find_distributions(self, context: Any) -> Iterator[Any]:  # ruff:ignore[any-type]
         dist_class = versioned_distribution_class()
         if context.name is None:
             return
@@ -78,7 +78,7 @@ class VersionPlatformSelect:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={ABS_HERE})"
 
-    def _register_distutils_finder(self) -> None:  # noqa: C901
+    def _register_distutils_finder(self) -> None:  # ruff:ignore[complex-structure]
         if "distlib" not in self.modules:
             return
 
@@ -112,11 +112,11 @@ class VersionPlatformSelect:
                 ]
 
         class DistlibFinder:
-            def __init__(self, path: str, loader: Any) -> None:  # noqa: ANN401
+            def __init__(self, path: str, loader: Any) -> None:  # ruff:ignore[any-type]
                 self.path = path
                 self.loader = loader
 
-            def find(self, name: str) -> Any:  # noqa: ANN401
+            def find(self, name: str) -> Any:  # ruff:ignore[any-type]
                 return Resource(self.path, name, self.loader)
 
             def iterator(self, resource_name: str) -> Iterator[Any]:
@@ -135,7 +135,7 @@ class VersionPlatformSelect:
                                 else:
                                     yield child
 
-        from distlib.resources import register_finder  # noqa: PLC0415
+        from distlib.resources import register_finder  # ruff:ignore[import-outside-top-level]
 
         zip_file = self._zip_file
         register_finder(self, lambda module: DistlibFinder(os.path.dirname(module.__file__), self))
@@ -145,12 +145,12 @@ _VER_DISTRIBUTION_CLASS = None
 
 
 def versioned_distribution_class() -> type:
-    global _VER_DISTRIBUTION_CLASS  # noqa: PLW0603
+    global _VER_DISTRIBUTION_CLASS  # ruff:ignore[global-statement]
     if _VER_DISTRIBUTION_CLASS is None:
-        from importlib.metadata import Distribution  # noqa: PLC0415
+        from importlib.metadata import Distribution  # ruff:ignore[import-outside-top-level]
 
         class VersionedDistribution(Distribution):
-            def __init__(self, file_loader: Any, dist_path: str) -> None:  # noqa: ANN401
+            def __init__(self, file_loader: Any, dist_path: str) -> None:  # ruff:ignore[any-type]
                 self.file_loader = file_loader
                 self.dist_path = dist_path
 
@@ -165,7 +165,7 @@ def versioned_distribution_class() -> type:
 
 
 class VersionedFindLoad(VersionPlatformSelect, SourceLoader):
-    def find_spec(self, fullname: str, path: Any, target: ModuleType | None = None) -> ModuleSpec | None:  # noqa: ARG002, ANN401
+    def find_spec(self, fullname: str, path: Any, target: ModuleType | None = None) -> ModuleSpec | None:  # ruff:ignore[unused-method-argument, any-type]
         zip_path = self.find_mod(fullname)
         if zip_path is not None:
             return spec_from_file_location(name=fullname, loader=self)
@@ -178,8 +178,8 @@ class VersionedFindLoad(VersionPlatformSelect, SourceLoader):
 def run() -> None:
     with VersionedFindLoad() as finder:
         sys.meta_path.insert(0, finder)
-        finder._register_distutils_finder()  # noqa: SLF001
-        from virtualenv.__main__ import run as run_virtualenv  # noqa: PLC0415
+        finder._register_distutils_finder()  # ruff:ignore[private-member-access]
+        from virtualenv.__main__ import run as run_virtualenv  # ruff:ignore[import-outside-top-level]
 
         run_virtualenv()
 

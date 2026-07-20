@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from python_discovery._cached_py_info import clear, from_exe  # noqa: PLC2701
+from python_discovery._cached_py_info import clear, from_exe  # ruff:ignore[import-private-name]
 
 __all__ = [
     "clear",

@@ -26,7 +26,7 @@ LOGGER = logging.getLogger(__name__)
 class Session:
     """Represents a virtual environment creation session."""
 
-    def __init__(  # noqa: PLR0913
+    def __init__(  # ruff:ignore[too-many-arguments]
         self,
         verbosity: int,
         app_data: AppData,

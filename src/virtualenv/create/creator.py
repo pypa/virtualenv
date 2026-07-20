@@ -93,7 +93,7 @@ class Creator(ABC):
         ]
 
     @classmethod
-    def can_create(cls, interpreter: PythonInfo) -> CreatorMeta | bool | None:  # noqa: ARG003
+    def can_create(cls, interpreter: PythonInfo) -> CreatorMeta | bool | None:  # ruff:ignore[unused-class-method-argument]
         """Determine if we can create a virtual environment.
 
         :param interpreter: the interpreter in question
@@ -108,9 +108,9 @@ class Creator(ABC):
     def add_parser_arguments(
         cls,
         parser: ArgumentParser,
-        interpreter: PythonInfo,  # noqa: ARG003
-        meta: CreatorMeta,  # noqa: ARG003
-        app_data: AppData,  # noqa: ARG003
+        interpreter: PythonInfo,  # ruff:ignore[unused-class-method-argument]
+        meta: CreatorMeta,  # ruff:ignore[unused-class-method-argument]
+        app_data: AppData,  # ruff:ignore[unused-class-method-argument]
     ) -> None:
         """Add CLI arguments for the creator.
 
@@ -146,7 +146,7 @@ class Creator(ABC):
         raise NotImplementedError
 
     @classmethod
-    def validate_dest(cls, raw_value: str) -> str:  # noqa: C901
+    def validate_dest(cls, raw_value: str) -> str:  # ruff:ignore[complex-structure]
         """No path separator in the path, valid chars and must be write-able."""
 
         def non_write_able(dest: Path, value: Path) -> NoReturn:
@@ -164,7 +164,7 @@ class Creator(ABC):
                 trip = char.encode(encoding, **kwargs).decode(encoding)
                 if trip == char:
                     continue
-                raise ValueError(trip)  # noqa: TRY301
+                raise ValueError(trip)  # ruff:ignore[raise-within-try]
             except ValueError:
                 refused[char] = None
         if refused:
@@ -220,7 +220,7 @@ class Creator(ABC):
     def set_pyenv_cfg(self) -> None:
         self.pyenv_cfg.content = OrderedDict()
         system_executable = self.interpreter.system_executable or self.interpreter.executable
-        assert system_executable is not None  # noqa: S101
+        assert system_executable is not None  # ruff:ignore[assert]
         self.pyenv_cfg["home"] = os.path.dirname(os.path.abspath(system_executable))
         self.pyenv_cfg["implementation"] = self.interpreter.implementation
         self.pyenv_cfg["version_info"] = ".".join(str(i) for i in self.interpreter.version_info)
@@ -267,7 +267,7 @@ def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env
 
     try:
         result = _parse_debug_output(code, out, err)
-    except Exception as exception:  # noqa: BLE001
+    except Exception as exception:  # ruff:ignore[blind-except]
         return {"out": out, "err": err, "returncode": code, "exception": repr(exception)}
     if "sys" in result and "path" in result["sys"]:
         del result["sys"]["path"][0]
@@ -278,10 +278,10 @@ def _parse_debug_output(code: int, out: str, err: str) -> dict[str, Any]:
     if code != 0:
         if out:
             result = literal_eval(out)
-        elif code == 2 and "file" in err:  # noqa: PLR2004
+        elif code == 2 and "file" in err:  # ruff:ignore[magic-value-comparison]
             raise OSError(err)
         else:
-            raise Exception(err)  # noqa: TRY002
+            raise Exception(err)  # ruff:ignore[raise-vanilla-class]
     else:
         result = json.loads(out)
     if err:

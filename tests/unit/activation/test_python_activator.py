@@ -93,7 +93,7 @@ def test_python(raise_on_non_source_class, activation_tester) -> None:
             """
             return dedent(raw).splitlines()
 
-        def assert_output(self, out, raw, tmp_path) -> None:  # noqa: ARG002
+        def assert_output(self, out, raw, tmp_path) -> None:  # ruff:ignore[unused-method-argument]
             out = [literal_eval(i) for i in out]
             assert out[0] is None  # start with VIRTUAL_ENV None
             assert out[1] is None  # likewise for VIRTUAL_ENV_PROMPT

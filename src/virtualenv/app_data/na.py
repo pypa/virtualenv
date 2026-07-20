@@ -28,17 +28,17 @@ class AppDataDisabled(AppData):
     def reset(self) -> None:
         """Do nothing."""
 
-    def py_info(self, path: Path) -> ContentStoreNA:  # noqa: ARG002
+    def py_info(self, path: Path) -> ContentStoreNA:  # ruff:ignore[unused-method-argument]
         return ContentStoreNA()
 
-    def embed_update_log(self, distribution: str, for_py_version: str) -> ContentStoreNA:  # noqa: ARG002
+    def embed_update_log(self, distribution: str, for_py_version: str) -> ContentStoreNA:  # ruff:ignore[unused-method-argument]
         return ContentStoreNA()
 
-    def extract(self, path: Path, to_folder: Path | None) -> NoReturn:  # noqa: ARG002
+    def extract(self, path: Path, to_folder: Path | None) -> NoReturn:  # ruff:ignore[unused-method-argument]
         raise self.error
 
     @contextmanager
-    def locked(self, path: Path) -> Generator[None]:  # noqa: ARG002
+    def locked(self, path: Path) -> Generator[None]:  # ruff:ignore[unused-method-argument]
         """Do nothing."""
         yield
 
@@ -46,7 +46,7 @@ class AppDataDisabled(AppData):
     def house(self) -> NoReturn:
         raise self.error
 
-    def wheel_image(self, for_py_version: str, name: str) -> NoReturn:  # noqa: ARG002
+    def wheel_image(self, for_py_version: str, name: str) -> NoReturn:  # ruff:ignore[unused-method-argument]
         raise self.error
 
     def py_info_clear(self) -> None:
@@ -61,7 +61,7 @@ class ContentStoreNA(ContentStore):
         """Nothing to read."""
         return
 
-    def write(self, content: Any) -> None:  # noqa: ANN401
+    def write(self, content: Any) -> None:  # ruff:ignore[any-type]
         """Nothing to write."""
 
     def remove(self) -> None:

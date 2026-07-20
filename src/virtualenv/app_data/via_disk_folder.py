@@ -22,7 +22,7 @@ r"""A rough layout of the current storage goes as:
              ├── debug.py
              └── _virtualenv.py
 
-"""  # noqa: D415
+"""  # ruff:ignore[missing-terminal-punctuation]
 
 from __future__ import annotations
 
@@ -127,13 +127,13 @@ class JSONStoreDisk(ContentStore, ABC):
     def exists(self) -> bool:
         return self.file.exists()
 
-    def read(self) -> Any:  # noqa: ANN401
+    def read(self) -> Any:  # ruff:ignore[any-type]
         data, bad_format = None, False
         try:
             data = json.loads(self.file.read_text(encoding="utf-8"))
         except ValueError:
             bad_format = True
-        except Exception:  # noqa: BLE001, S110
+        except Exception:  # ruff:ignore[blind-except, try-except-pass]
             pass
         else:
             LOGGER.debug("got %s %s from %s", *self.msg_args)
@@ -152,7 +152,7 @@ class JSONStoreDisk(ContentStore, ABC):
         with self.in_folder.lock_for_key(self.key):
             yield
 
-    def write(self, content: Any) -> None:  # noqa: ANN401
+    def write(self, content: Any) -> None:  # ruff:ignore[any-type]
         folder = self.file.parent
         folder.mkdir(parents=True, exist_ok=True)
         self.file.write_text(json.dumps(content, sort_keys=True, indent=2), encoding="utf-8")

@@ -148,7 +148,7 @@ def test_batch_output(activation_tester_class, activation_tester, tmp_path) -> N
                 f"@call {intermediary_script_path}",
             ]
 
-        def assert_output(self, out, raw, tmp_path) -> None:  # noqa: ARG002
+        def assert_output(self, out, raw, tmp_path) -> None:  # ruff:ignore[unused-method-argument]
             assert out[0] == "ECHO is on.", raw
 
         def quote(self, s):

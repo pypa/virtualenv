@@ -48,7 +48,7 @@ _VERSION_SPEC_RE = re.compile(
 )
 
 
-def get_wheel(  # noqa: PLR0913
+def get_wheel(  # ruff:ignore[too-many-arguments]
     distribution: str,
     version: str | None,
     for_py_version: str,
@@ -83,7 +83,7 @@ def get_wheel(  # noqa: PLR0913
     return wheel
 
 
-def download_wheel(  # noqa: PLR0913
+def download_wheel(  # ruff:ignore[too-many-arguments]
     distribution: str,
     version_spec: str | None,
     for_py_version: str,

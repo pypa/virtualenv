@@ -81,12 +81,12 @@ class CreatorSelector(ComponentBuilder):
 
     def populate_selected_argparse(self, selected: str, app_data: object) -> None:
         self.parser.description = f"options for {self.name} {selected}"
-        assert self._impl_class is not None  # noqa: S101  # Set by handle_selected_arg_parse
+        assert self._impl_class is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
         self._impl_class.add_parser_arguments(self.parser, self.interpreter, self.key_to_meta[selected], app_data)  # ty: ignore[unresolved-attribute]
 
     def create(self, options: VirtualEnvOptions) -> Creator:
         options.meta = self.key_to_meta[getattr(options, self.name)]
-        assert self._impl_class is not None  # noqa: S101  # Set by handle_selected_arg_parse
+        assert self._impl_class is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
         if not issubclass(self._impl_class, Describe):
             options.describe = self.describe(options, self.interpreter)  # ty: ignore[call-non-callable, invalid-argument-type]
         return super().create(options)  # ty: ignore[invalid-return-type]

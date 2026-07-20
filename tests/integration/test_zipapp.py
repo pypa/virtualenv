@@ -78,7 +78,7 @@ def zipapp_test_env(tmp_path_factory):
 
 
 @pytest.fixture
-def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG001
+def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # ruff:ignore[unused-function-argument]
     def _run(*args) -> None:
         cmd = [str(zipapp_test_env), str(zipapp), "-vv", str(tmp_path / "env"), *list(args)]
         subprocess.run(cmd, check=True, timeout=120)
@@ -87,7 +87,7 @@ def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG0
 
 
 @pytest.fixture
-def call_zipapp_symlink(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # noqa: ARG001
+def call_zipapp_symlink(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # ruff:ignore[unused-function-argument]
     def _run(*args) -> None:
         symlinked = zipapp.parent / "symlinked_virtualenv.pyz"
         symlinked.symlink_to(str(zipapp))

@@ -20,7 +20,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def fs_is_case_sensitive() -> bool:
-    global _FS_CASE_SENSITIVE  # noqa: PLW0603
+    global _FS_CASE_SENSITIVE  # ruff:ignore[global-statement]
 
     if _FS_CASE_SENSITIVE is None:
         with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:
@@ -30,7 +30,7 @@ def fs_is_case_sensitive() -> bool:
 
 
 def fs_supports_symlink() -> bool:
-    global _CAN_SYMLINK  # noqa: PLW0603
+    global _CAN_SYMLINK  # ruff:ignore[global-statement]
 
     if _CAN_SYMLINK is None:
         can = False

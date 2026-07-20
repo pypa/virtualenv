@@ -75,13 +75,13 @@ class PathMockABC(FakeDataABC, Path):
         yield from map(self.joinpath, self.contained_fake_names)
 
 
-def MetaPathMock(filelist):  # noqa: N802
+def MetaPathMock(filelist):  # ruff:ignore[invalid-function-name]
     """Metaclass that creates a `PathMock` class with the `filelist` defined."""
     return type("PathMock", (PathMockABC,), {"filelist": filelist})
 
 
 def mock_files(mocker, pathlist, filelist) -> None:
-    PathMock = MetaPathMock(set(filelist))  # noqa: N806
+    PathMock = MetaPathMock(set(filelist))  # ruff:ignore[non-lowercase-variable-in-function]
     for path in pathlist:
         mocker.patch(path, PathMock)
 

@@ -35,7 +35,7 @@ class NushellActivator(ViaTemplateActivator):
         wrapping = "#" * (max_sharps + 1)
         return f"r{wrapping}'{string}'{wrapping}"
 
-    def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:  # noqa: ARG002
+    def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:  # ruff:ignore[unused-method-argument]
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
             "__VIRTUAL_ENV__": str(creator.dest),

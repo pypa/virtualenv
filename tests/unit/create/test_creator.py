@@ -79,7 +79,7 @@ def test_destination_not_write_able(tmp_path, capsys) -> None:
 
 
 def cleanup_sys_path(paths):
-    from virtualenv.create.creator import HERE  # noqa: PLC0415
+    from virtualenv.create.creator import HERE  # ruff:ignore[import-outside-top-level]
 
     paths = [p.resolve() for p in (Path(os.path.abspath(i)) for i in paths) if p.exists()]
     to_remove = [Path(HERE)]
@@ -110,7 +110,7 @@ for k, v in CreatorSelector.for_interpreter(CURRENT).key_to_meta.items():
     ("creator", "isolated"),
     [pytest.param(*i, id=f"{'-'.join(i[0])}-{i[1]}") for i in product(CREATE_METHODS, ["isolated", "global"])],
 )
-def test_create_no_seed(  # noqa: C901, PLR0912, PLR0913, PLR0915
+def test_create_no_seed(  # ruff:ignore[complex-structure, too-many-branches, too-many-arguments, too-many-statements]
     python,
     creator,
     isolated,
@@ -739,9 +739,9 @@ def test_python_path(monkeypatch, tmp_path, python_path_on) -> None:
 # https://github.com/pypa/virtualenv/issues/2419
 @pytest.mark.skipif("venv" not in CURRENT_CREATORS, reason="test needs venv creator")
 def test_venv_creator_without_write_perms(tmp_path, mocker) -> None:
-    from virtualenv.run.session import Session  # noqa: PLC0415
+    from virtualenv.run.session import Session  # ruff:ignore[import-outside-top-level]
 
-    prev = Session._create  # noqa: SLF001
+    prev = Session._create  # ruff:ignore[private-member-access]
 
     def func(self) -> None:
         prev(self)

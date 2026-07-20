@@ -18,7 +18,7 @@ def handle_store_python(meta: ViaGlobalRefMeta, interpreter: PythonInfo) -> ViaG
 def is_store_python(interpreter: PythonInfo) -> bool:
     parts = Path(interpreter.system_executable).parts  # ty: ignore[invalid-argument-type]
     return (
-        len(parts) > 4  # noqa: PLR2004
+        len(parts) > 4  # ruff:ignore[magic-value-comparison]
         and parts[-4] == "Microsoft"
         and parts[-3] == "WindowsApps"
         and parts[-2].startswith("PythonSoftwareFoundation.Python.3.")

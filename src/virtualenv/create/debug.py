@@ -42,32 +42,32 @@ def run() -> None:
     result["version"] = sys.version
 
     try:
-        import sysconfig  # noqa: PLC0415
+        import sysconfig  # ruff:ignore[import-outside-top-level]
 
         result["makefile_filename"] = encode_path(sysconfig.get_makefile_filename())
     except ImportError:
         pass
 
-    import os  # landmark  # noqa: PLC0415
+    import os  # landmark  # ruff:ignore[import-outside-top-level]
 
     result["os"] = repr(os)
 
     try:
-        import site  # site  # noqa: PLC0415
+        import site  # site  # ruff:ignore[import-outside-top-level]
 
         result["site"] = repr(site)
     except ImportError as exception:  # pragma: no cover
         result["site"] = repr(exception)  # pragma: no cover
 
     try:
-        import datetime  # site  # noqa: PLC0415
+        import datetime  # site  # ruff:ignore[import-outside-top-level]
 
         result["datetime"] = repr(datetime)
     except ImportError as exception:  # pragma: no cover
         result["datetime"] = repr(exception)  # pragma: no cover
 
     try:
-        import math  # site  # noqa: PLC0415
+        import math  # site  # ruff:ignore[import-outside-top-level]
 
         result["math"] = repr(math)
     except ImportError as exception:  # pragma: no cover
@@ -75,7 +75,7 @@ def run() -> None:
 
     # try to print out, this will validate if other core modules are available (json in this case)
     try:
-        import json  # noqa: PLC0415
+        import json  # ruff:ignore[import-outside-top-level]
 
         result["json"] = repr(json)
     except ImportError as exception:
@@ -87,7 +87,7 @@ def run() -> None:
         except (ValueError, TypeError) as exception:  # pragma: no cover
             sys.stderr.write(repr(exception))
             sys.stdout.write(repr(result))  # pragma: no cover
-            raise SystemExit(1)  # noqa: B904  # pragma: no cover
+            raise SystemExit(1)  # ruff:ignore[raise-without-from-inside-except]  # pragma: no cover
 
 
 if __name__ == "__main__":

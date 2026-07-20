@@ -27,7 +27,7 @@ class Seeder(ABC):
         self.env = options.env
 
     @classmethod
-    def cannot_seed(cls, interpreter: PythonInfo) -> str | None:  # noqa: ARG003
+    def cannot_seed(cls, interpreter: PythonInfo) -> str | None:  # ruff:ignore[unused-class-method-argument]
         """Explain why this seeder cannot install seed packages for the given interpreter.
 
         :param interpreter: the interpreter the environment is based on

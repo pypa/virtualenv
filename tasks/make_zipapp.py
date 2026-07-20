@@ -53,10 +53,10 @@ def create_zipapp(dest: str, packages: dict[str, Any]) -> None:
         zip_app.writestr("__main__.py", (HERE / "__main__zipapp.py").read_bytes())
     bio.seek(0)
     zipapp.create_archive(bio, dest)
-    print(f"zipapp created at {dest} with size {os.path.getsize(dest) / 1024 / 1024:.2f}MB")  # noqa: T201
+    print(f"zipapp created at {dest} with size {os.path.getsize(dest) / 1024 / 1024:.2f}MB")  # ruff:ignore[print]
 
 
-def write_packages_to_zipapp(  # noqa: C901, PLR0912
+def write_packages_to_zipapp(  # ruff:ignore[complex-structure, too-many-branches]
     base: PurePosixPath,
     dist: dict[str, Any],
     modules: dict[str, Any],
@@ -64,7 +64,7 @@ def write_packages_to_zipapp(  # noqa: C901, PLR0912
     zip_app: zipfile.ZipFile,
 ) -> None:
     has = set()
-    for name, p_w_v in packages.items():  # noqa: PLR1702
+    for name, p_w_v in packages.items():  # ruff:ignore[too-many-nested-blocks]
         for platform, w_v in p_w_v.items():
             for wheel_data in w_v.values():
                 wheel = wheel_data.wheel
@@ -90,7 +90,7 @@ def write_packages_to_zipapp(  # noqa: C901, PLR0912
                         has.add(dest_str)
                         if "/tests/" in dest_str or "/docs/" in dest_str:
                             continue
-                        print(dest_str)  # noqa: T201
+                        print(dest_str)  # ruff:ignore[print]
                         content = wheel_zip.read(filename)
                         zip_app.writestr(dest_str, content)
                         del content
@@ -131,17 +131,17 @@ class WheelDownloader:
             before = set(self.into.iterdir())
             if self._download(
                 platform,
-                False,  # noqa: FBT003
+                False,  # ruff:ignore[boolean-positional-value-in-call]
                 "--python-version",
                 version,
                 "--only-binary",
                 ":all:",
                 str(dep),
             ):
-                self._download(platform, True, "--python-version", version, str(dep))  # noqa: FBT003
+                self._download(platform, True, "--python-version", version, str(dep))  # ruff:ignore[boolean-positional-value-in-call]
             after = set(self.into.iterdir())
             new_files = after - before
-            assert len(new_files) <= 1  # noqa: S101
+            assert len(new_files) <= 1  # ruff:ignore[assert]
             if not len(new_files):
                 return None
             new_file = next(iter(new_files))
@@ -149,7 +149,7 @@ class WheelDownloader:
                 return new_file
             dep = new_file
         new_file = self.build_sdist(dep)
-        assert new_file.suffix == ".whl"  # noqa: S101
+        assert new_file.suffix == ".whl"  # ruff:ignore[assert]
         return new_file
 
     def _download(self, platform: str | None, stop_print_on_fail: bool, *args: str) -> int:
@@ -173,13 +173,13 @@ class WheelDownloader:
             if any(
                 m
                 for m in markers
-                if isinstance(m, tuple) and len(m) == 3 and m[0].value == "extra"  # noqa: PLR2004
+                if isinstance(m, tuple) and len(m) == 3 and m[0].value == "extra"  # ruff:ignore[magic-value-comparison]
             ):
                 continue
             py_versions = WheelDownloader._marker_at(markers, "python_version")
             if py_versions:
                 marker = Marker('python_version < "1"')
-                marker._markers = [  # noqa: SLF001
+                marker._markers = [  # ruff:ignore[private-member-access]
                     markers[ver] for ver in sorted(i for i in set(py_versions) | {i - 1 for i in py_versions} if i >= 0)
                 ]
                 matches_python = marker.evaluate({"python_version": version})
@@ -205,7 +205,7 @@ class WheelDownloader:
         return [
             i
             for i, m in enumerate(markers)
-            if isinstance(m, tuple) and len(m) == 3 and m[0].value == key  # noqa: PLR2004
+            if isinstance(m, tuple) and len(m) == 3 and m[0].value == key  # ruff:ignore[magic-value-comparison]
         ]
 
     @staticmethod
@@ -232,7 +232,7 @@ class WheelDownloader:
                     return self._build_sdist(self.into, folder)
                 finally:
                     # permission error on Windows <3.7 https://bugs.python.org/issue26660
-                    def onerror(func: Any, path: str, exc_info: Any) -> None:  # noqa: ARG001, ANN401
+                    def onerror(func: Any, path: str, exc_info: Any) -> None:  # ruff:ignore[unused-function-argument, any-type]
                         os.chmod(path, S_IWUSR)
                         func(path)
 
@@ -248,7 +248,7 @@ class WheelDownloader:
         return next(iter(folder.iterdir()))
 
 
-def run_suppress_output(cmd: list[str], stop_print_on_fail: bool = False) -> int:  # noqa: FBT002
+def run_suppress_output(cmd: list[str], stop_print_on_fail: bool = False) -> int:  # ruff:ignore[boolean-default-value-positional-argument]
     process = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
@@ -258,11 +258,11 @@ def run_suppress_output(cmd: list[str], stop_print_on_fail: bool = False) -> int
     )
     out, err = process.communicate()
     if stop_print_on_fail and process.returncode != 0:
-        print(f"exit with {process.returncode} of {' '.join(quote(i) for i in cmd)}", file=sys.stdout)  # noqa: T201
+        print(f"exit with {process.returncode} of {' '.join(quote(i) for i in cmd)}", file=sys.stdout)  # ruff:ignore[print]
         if out:
-            print(out, file=sys.stdout)  # noqa: T201
+            print(out, file=sys.stdout)  # ruff:ignore[print]
         if err:
-            print(err, file=sys.stderr)  # noqa: T201
+            print(err, file=sys.stderr)  # ruff:ignore[print]
         raise SystemExit(process.returncode)
     return process.returncode
 
@@ -281,9 +281,9 @@ def get_wheels_for_support_versions(folder: Path) -> dict[str, Any]:
                 wheel_versions.wheel = wheel
     for name, p_w_v in packages.items():
         for platform, w_v in p_w_v.items():
-            print(f"{name} - {platform}")  # noqa: T201
+            print(f"{name} - {platform}")  # ruff:ignore[print]
             for wheel, wheel_versions in w_v.items():
-                print(f"{' '.join(wheel_versions.versions)} of {wheel} (use {wheel_versions.wheel})")  # noqa: T201
+                print(f"{' '.join(wheel_versions.versions)} of {wheel} (use {wheel_versions.wheel})")  # ruff:ignore[print]
     return packages
 
 

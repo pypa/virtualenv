@@ -26,7 +26,7 @@ class Activator(ABC):
         self.flag_prompt = os.path.basename(os.getcwd()) if options.prompt == "." else options.prompt
 
     @classmethod
-    def supports(cls, interpreter: PythonInfo) -> bool:  # noqa: ARG003
+    def supports(cls, interpreter: PythonInfo) -> bool:  # ruff:ignore[unused-class-method-argument]
         """Check if the activation script is supported in the given interpreter.
 
         :param interpreter: the interpreter we need to support
@@ -36,7 +36,7 @@ class Activator(ABC):
         """
         return True
 
-    @classmethod  # noqa: B027
+    @classmethod  # ruff:ignore[empty-method-without-abstract-decorator]
     def add_parser_arguments(cls, parser: ArgumentParser, interpreter: PythonInfo) -> None:
         """Add CLI arguments for this activation script.
 

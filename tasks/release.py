@@ -20,15 +20,15 @@ def main(version_str: str, *, push: bool) -> None:
     remote = get_remote(repo)
     remote.fetch()
     version = resolve_version(version_str, repo)
-    print(f"releasing {version}")  # noqa: T201
+    print(f"releasing {version}")  # ruff:ignore[print]
     release_commit = release_changelog(repo, version)
     tag = tag_release_commit(release_commit, repo, version)
     if push:
-        print("push release commit")  # noqa: T201
+        print("push release commit")  # ruff:ignore[print]
         repo.git.push(remote.name, "HEAD:main")
-        print("push release tag")  # noqa: T201
+        print("push release tag")  # ruff:ignore[print]
         repo.git.push(remote.name, tag)
-    print("All done! ✨ 🍰 ✨")  # noqa: T201
+    print("All done! ✨ 🍰 ✨")  # ruff:ignore[print]
 
 
 def resolve_version(version_str: str, repo: Repo) -> Version:
@@ -62,21 +62,21 @@ def get_remote(repo: Repo) -> Remote:
 
 
 def release_changelog(repo: Repo, version: Version) -> Commit:
-    print("generate release commit")  # noqa: T201
-    check_call(["towncrier", "build", "--yes", "--version", version.public], cwd=str(ROOT_SRC_DIR))  # noqa: S607
-    call(["pre-commit", "run", "--all-files"], cwd=str(ROOT_SRC_DIR))  # noqa: S607
+    print("generate release commit")  # ruff:ignore[print]
+    check_call(["towncrier", "build", "--yes", "--version", version.public], cwd=str(ROOT_SRC_DIR))  # ruff:ignore[start-process-with-partial-path]
+    call(["pre-commit", "run", "--all-files"], cwd=str(ROOT_SRC_DIR))  # ruff:ignore[start-process-with-partial-path]
     repo.git.add(".")
-    check_call(["pre-commit", "run", "--all-files"], cwd=str(ROOT_SRC_DIR))  # noqa: S607
+    check_call(["pre-commit", "run", "--all-files"], cwd=str(ROOT_SRC_DIR))  # ruff:ignore[start-process-with-partial-path]
     return repo.index.commit(f"release {version}")
 
 
 def tag_release_commit(release_commit: Commit, repo: Repo, version: Version) -> TagReference:
-    print("tag release commit")  # noqa: T201
+    print("tag release commit")  # ruff:ignore[print]
     existing_tags = [x.name for x in repo.tags]
     if version in existing_tags:
-        print(f"delete existing tag {version}")  # noqa: T201
+        print(f"delete existing tag {version}")  # ruff:ignore[print]
         repo.delete_tag(version)
-    print(f"create tag {version}")  # noqa: T201
+    print(f"create tag {version}")  # ruff:ignore[print]
     return repo.create_tag(version, ref=release_commit, force=True)
 
 

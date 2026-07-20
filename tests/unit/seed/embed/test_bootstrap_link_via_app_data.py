@@ -175,7 +175,7 @@ def test_populated_read_only_cache_and_symlinked_app_data(tmp_path, current_fast
     assert cli_run(cmd)
     check_call((str(dest.joinpath("bin/python")), "-c", "import pip"))
 
-    cached_py_info._CACHE.clear()  # noqa: SLF001  # necessary to re-trigger py info discovery
+    cached_py_info._CACHE.clear()  # ruff:ignore[private-member-access]  # necessary to re-trigger py info discovery
     safe_delete(dest)
 
     # should succeed with special flag when read-only
@@ -201,7 +201,7 @@ def test_populated_read_only_cache_and_copied_app_data(tmp_path, current_fastest
 
     assert cli_run(cmd)
 
-    cached_py_info._CACHE.clear()  # noqa: SLF001  # necessary to re-trigger py info discovery
+    cached_py_info._CACHE.clear()  # ruff:ignore[private-member-access]  # necessary to re-trigger py info discovery
     safe_delete(dest)
 
     # should succeed with special flag when read-only
@@ -243,7 +243,7 @@ def _run_parallel_threads(tmp_path):
         try:
             cmd = ["--seeder", "app-data", str(tmp_path / name), "--no-setuptools"]
             cli_run(cmd)
-        except Exception as exception:  # noqa: BLE001
+        except Exception as exception:  # ruff:ignore[blind-except]
             as_str = str(exception)
             exceptions.append(as_str)
 
@@ -286,7 +286,7 @@ def test_safe_extract_zip_rejects_parent_traversal(tmp_path: Path) -> None:
 
 def test_safe_extract_zip_rejects_absolute_posix_entry(tmp_path: Path) -> None:
     archive = tmp_path / "abs.zip"
-    _write_zip_with_entry(archive, "/tmp/evil.txt")  # noqa: S108
+    _write_zip_with_entry(archive, "/tmp/evil.txt")  # ruff:ignore[hardcoded-temp-file]
     target = tmp_path / "out"
     target.mkdir()
 

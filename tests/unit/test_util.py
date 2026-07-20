@@ -40,7 +40,7 @@ def test_reentrant_file_lock_is_thread_safe(tmp_path) -> None:
         for task in tasks:
             try:
                 task.result()
-            except Exception:  # noqa: BLE001, PERF203
+            except Exception:  # ruff:ignore[blind-except, try-except-in-loop]
                 pytest.fail(traceback.format_exc())
 
 
@@ -127,7 +127,7 @@ class TestCacheDirMigration:
         self,
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
-        symlink_flag: bool,  # noqa: ARG002
+        symlink_flag: bool,  # ruff:ignore[unused-method-argument]
     ) -> None:
         old_dir = str(tmp_path / "old-data")
         new_dir = str(tmp_path / "new-cache")
@@ -172,7 +172,7 @@ def test_zipapp_read_rejects_path_escaping_via_parent(fake_zipapp_root: Path) ->
         zipapp.read(escape)
 
 
-def test_zipapp_read_rejects_unrelated_absolute_path(fake_zipapp_root: Path, tmp_path: Path) -> None:  # noqa: ARG001
+def test_zipapp_read_rejects_unrelated_absolute_path(fake_zipapp_root: Path, tmp_path: Path) -> None:  # ruff:ignore[unused-function-argument]
     unrelated = tmp_path / "other" / "file.txt"
     with pytest.raises(RuntimeError, match="should be within ROOT"):
         zipapp.read(unrelated)

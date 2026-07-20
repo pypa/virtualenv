@@ -44,7 +44,7 @@ class _CountedFileLock(FileLock):
                 raise
         self.count += 1
 
-    def release(self, force: bool = False) -> None:  # noqa: FBT002
+    def release(self, force: bool = False) -> None:  # ruff:ignore[boolean-default-value-positional-argument]
         with self.thread_safe:
             if self.count > 0:
                 if self.count == 1:
@@ -82,7 +82,7 @@ class PathLockBase(ABC):
 
     @abstractmethod
     @contextmanager
-    def lock_for_key(self, name: str, no_block: bool = False) -> Iterator[None]:  # noqa: FBT002
+    def lock_for_key(self, name: str, no_block: bool = False) -> Iterator[None]:  # ruff:ignore[boolean-default-value-positional-argument]
         raise NotImplementedError
 
     @abstractmethod
@@ -124,7 +124,7 @@ class ReentrantFileLock(PathLockBase):
         self._del_lock(self._lock)
         self._lock = None
 
-    def _lock_file(self, lock: _CountedFileLock, no_block: bool = False) -> None:  # noqa: FBT002
+    def _lock_file(self, lock: _CountedFileLock, no_block: bool = False) -> None:  # ruff:ignore[boolean-default-value-positional-argument]
         # multiple processes might be trying to get a first lock... so we cannot check if this directory exist without
         # a lock, but that lock might then become expensive, and it's not clear where that lock should live.
         # Instead here we just ignore if we fail to create the directory.
@@ -145,7 +145,7 @@ class ReentrantFileLock(PathLockBase):
         lock.release()
 
     @contextmanager
-    def lock_for_key(self, name: str, no_block: bool = False) -> Iterator[None]:  # noqa: FBT002
+    def lock_for_key(self, name: str, no_block: bool = False) -> Iterator[None]:  # ruff:ignore[boolean-default-value-positional-argument]
         lock = self._create_lock(name)
         try:
             with self._lock_and_yield(lock, no_block):
@@ -178,11 +178,11 @@ class NoOpFileLock(PathLockBase):
         raise NotImplementedError
 
     @contextmanager
-    def lock_for_key(self, name: str, no_block: bool = False) -> Iterator[None]:  # noqa: ARG002, FBT002
+    def lock_for_key(self, name: str, no_block: bool = False) -> Iterator[None]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]
         yield
 
     @contextmanager
-    def non_reentrant_lock_for_key(self, name: str) -> Iterator[None]:  # noqa: ARG002
+    def non_reentrant_lock_for_key(self, name: str) -> Iterator[None]:  # ruff:ignore[unused-method-argument]
         yield
 
 

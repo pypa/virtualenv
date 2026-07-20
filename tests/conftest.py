@@ -64,7 +64,7 @@ def link_folder(has_symlink_support):
         return os.symlink
     if sys.platform == "win32":
         # on Windows junctions may be used instead
-        import _winapi  # noqa: PLC0415
+        import _winapi  # ruff:ignore[import-outside-top-level]
 
         return getattr(_winapi, "CreateJunction", None)
     return None
@@ -203,7 +203,7 @@ def coverage_env(monkeypatch, link, request):
     """Enable coverage report collection on the created virtual environments by injecting the coverage project"""
     if COVERAGE_RUN and "_no_coverage" not in request.fixturenames:
         # we inject right after creation, we cannot collect coverage on site.py - used for helper scripts, such as debug
-        from virtualenv import run  # noqa: PLC0415
+        from virtualenv import run  # ruff:ignore[import-outside-top-level]
 
         def _session_via_cli(args, options, setup_logging, env=None):
             session = prev_run(args, options, setup_logging, env)
@@ -212,7 +212,7 @@ def coverage_env(monkeypatch, link, request):
             def create_run():
                 result = old_run()
                 obj["cov"] = EnableCoverage(link)
-                obj["cov"].__enter__(session.creator)  # noqa: PLC2801
+                obj["cov"].__enter__(session.creator)  # ruff:ignore[unnecessary-dunder-call]
                 return result
 
             monkeypatch.setattr(session.creator, "run", create_run)
@@ -258,7 +258,7 @@ if COVERAGE_RUN:
             self.link = link
             self.targets = []
 
-        def __enter__(self, creator):  # noqa: PLE0302
+        def __enter__(self, creator):  # ruff:ignore[unexpected-special-method-signature]
             site_packages = creator.purelib
             for entry in self._ROOT_COV_FILES_AND_FOLDERS:
                 target = site_packages / entry.name
@@ -295,7 +295,7 @@ def special_char_name():
             trip = char.encode(encoding, errors="strict").decode(encoding)
             if char == trip:
                 result += char
-        except ValueError:  # noqa: PERF203
+        except ValueError:  # ruff:ignore[try-except-in-loop]
             continue
     assert result
     return result
@@ -308,7 +308,7 @@ def special_name_dir(tmp_path, special_char_name):
 
 @pytest.fixture(scope="session")
 def current_creators(session_app_data):
-    from virtualenv.run.plugin.creators import CreatorSelector  # noqa: PLC0415
+    from virtualenv.run.plugin.creators import CreatorSelector  # ruff:ignore[import-outside-top-level]
 
     return CreatorSelector.for_interpreter(PythonInfo.current_system(session_app_data))
 
