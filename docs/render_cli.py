@@ -91,7 +91,7 @@ class CliTable(SphinxDirective):
                 return True
             if key == "creator":
                 if name == "venv":
-                    from virtualenv.create.via_global_ref.venv import (
+                    from virtualenv.create.via_global_ref.venv import (  # ruff:ignore[import-outside-top-level]
                         ViaGlobalRefMeta,
                     )
 
