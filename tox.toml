@@ -1,5 +1,6 @@
 requires = [ "tox>=4.45" ]
 env_list = [
+  "3.15",
   "3.14",
   "3.13",
   "3.12",
@@ -9,6 +10,7 @@ env_list = [
   "pypy3",
   "3.13t",
   "3.14t",
+  "3.15t",
   "coverage",
   "docs",
   "fix",
