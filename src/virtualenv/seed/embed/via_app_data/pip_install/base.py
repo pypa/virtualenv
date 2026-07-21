@@ -94,10 +94,10 @@ class PipInstall(ABC):
             # https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
             zip_max_len = max(len(i) for i in zip_ref.namelist())
             path_len = zip_max_len + len(to_folder)
-            if path_len > 260:  # noqa: PLR2004
+            if path_len > 260:  # ruff:ignore[magic-value-comparison]
                 self._image_dir.mkdir(exist_ok=True)  # to get a short path must exist
 
-                from virtualenv.util.path import get_short_path_name  # noqa: PLC0415
+                from virtualenv.util.path import get_short_path_name  # ruff:ignore[import-outside-top-level]
 
                 to_folder = get_short_path_name(to_folder)
                 self._image_dir = Path(to_folder)

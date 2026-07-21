@@ -36,7 +36,7 @@ def run_cmd(cmd: list[str]) -> tuple[int, str, str]:
         code = process.returncode
     except OSError as error:
         code, out, err = error.errno, "", error.strerror
-        if code == 2 and err is not None and "file" in err:  # noqa: PLR2004
+        if code == 2 and err is not None and "file" in err:  # ruff:ignore[magic-value-comparison]
             err = str(error)  # FileNotFoundError in Python >= 3.3
     return code, out, err  # ty: ignore[invalid-return-type]
 

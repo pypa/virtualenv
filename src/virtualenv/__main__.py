@@ -21,8 +21,8 @@ def run(
 ) -> None:
     env = os.environ if env is None else env
     start = default_timer()
-    from virtualenv.run import cli_run  # noqa: PLC0415
-    from virtualenv.util.error import ProcessCallFailedError  # noqa: PLC0415
+    from virtualenv.run import cli_run  # ruff:ignore[import-outside-top-level]
+    from virtualenv.util.error import ProcessCallFailedError  # ruff:ignore[import-outside-top-level]
 
     if args is None:
         args = sys.argv[1:]
@@ -30,13 +30,13 @@ def run(
         session = cli_run(args, options, env=env)
         LOGGER.warning(LogSession(session, start))
     except ProcessCallFailedError as exception:
-        print(f"subprocess call failed for {exception.cmd} with code {exception.code}")  # noqa: T201
-        print(exception.out, file=sys.stdout, end="")  # noqa: T201
-        print(exception.err, file=sys.stderr, end="")  # noqa: T201
-        raise SystemExit(exception.code)  # noqa: B904
+        print(f"subprocess call failed for {exception.cmd} with code {exception.code}")  # ruff:ignore[print]
+        print(exception.out, file=sys.stdout, end="")  # ruff:ignore[print]
+        print(exception.err, file=sys.stderr, end="")  # ruff:ignore[print]
+        raise SystemExit(exception.code)  # ruff:ignore[raise-without-from-inside-except]
     except OSError as exception:
         if exception.errno == errno.EMFILE:
-            print(  # noqa: T201
+            print(  # ruff:ignore[print]
                 "OSError: [Errno 24] Too many open files. You may need to increase your OS open files limit.\n"
                 "  On macOS/Linux, try 'ulimit -n 2048'.\n"
                 "  For Windows, this is not a common issue, but you can try to close some applications.",
@@ -69,13 +69,13 @@ class LogSession:
 
 
 def run_with_catch(args: list[str] | None = None, env: MutableMapping[str, str] | None = None) -> None:
-    from virtualenv.config.cli.parser import VirtualEnvOptions  # noqa: PLC0415
+    from virtualenv.config.cli.parser import VirtualEnvOptions  # ruff:ignore[import-outside-top-level]
 
     env = os.environ if env is None else env
     options = VirtualEnvOptions()
     try:
         run(args, options, env)
-    except (KeyboardInterrupt, SystemExit, Exception) as exception:  # noqa: BLE001
+    except (KeyboardInterrupt, SystemExit, Exception) as exception:  # ruff:ignore[blind-except]
         try:
             _exit_for_exception(options, exception)
         finally:

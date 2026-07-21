@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 def run() -> None:
-    print("magic")  # noqa: T201
+    print("magic")  # ruff:ignore[print]
 
 
 if __name__ == "__main__":

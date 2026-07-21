@@ -68,7 +68,7 @@ class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
         super().set_pyenv_cfg()
         # GraalPy 24.0 and older had home without the bin
         version = self.interpreter.version_info
-        if version.minor <= 10:  # noqa: PLR2004
+        if version.minor <= 10:  # ruff:ignore[magic-value-comparison]
             home = Path(self.pyenv_cfg["home"])
             if home.name == "bin":
                 self.pyenv_cfg["home"] = str(home.parent)
@@ -84,7 +84,7 @@ class GraalPyPosix(GraalPy, PosixSupports):
 
 class GraalPyWindows(GraalPy, WindowsSupports):
     @classmethod
-    def _native_lib(cls, lib_dir: Path, platform: str) -> Path:  # noqa: ARG003
+    def _native_lib(cls, lib_dir: Path, platform: str) -> Path:  # ruff:ignore[unused-class-method-argument]
         return lib_dir / "pythonvm.dll"
 
     def set_pyenv_cfg(self) -> None:

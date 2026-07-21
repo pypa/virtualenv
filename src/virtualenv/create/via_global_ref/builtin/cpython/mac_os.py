@@ -50,7 +50,7 @@ class CPythonmacOsFramework(CPython, ABC):
                 for exe in exes:
                     fix_mach_o(str(exe), current, target, self.interpreter.max_size)  # ty: ignore[invalid-argument-type]
                     try:
-                        subprocess.check_call(["codesign", "--force", "--sign", "-", str(exe)])  # noqa: S607
+                        subprocess.check_call(["codesign", "--force", "--sign", "-", str(exe)])  # ruff:ignore[start-process-with-partial-path]
                     except (OSError, subprocess.CalledProcessError) as e:
                         LOGGER.warning("Could not ad-hoc re-sign %s: %s", exe, e)
 
@@ -131,7 +131,7 @@ def fix_mach_o(exe: str, current: str, new: str, max_size: int) -> None:
     try:
         LOGGER.debug("change Mach-O for %s from %s to %s", exe, current, new)
         _builtin_change_mach_o(max_size)(exe, current, new)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:  # ruff:ignore[blind-except]
         LOGGER.warning("Could not call _builtin_change_mac_o: %s. Trying to call install_name_tool instead.", e)
         try:
             cmd = ["install_name_tool", "-change", current, new, exe]
@@ -141,22 +141,22 @@ def fix_mach_o(exe: str, current: str, new: str, max_size: int) -> None:
             raise
 
 
-def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # noqa: C901
-    MH_MAGIC = 0xFEEDFACE  # noqa: N806
-    MH_CIGAM = 0xCEFAEDFE  # noqa: N806
-    MH_MAGIC_64 = 0xFEEDFACF  # noqa: N806
-    MH_CIGAM_64 = 0xCFFAEDFE  # noqa: N806
-    FAT_MAGIC = 0xCAFEBABE  # noqa: N806
-    BIG_ENDIAN = ">"  # noqa: N806
-    LITTLE_ENDIAN = "<"  # noqa: N806
-    LC_LOAD_DYLIB = 0xC  # noqa: N806
+def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # ruff:ignore[complex-structure]
+    MH_MAGIC = 0xFEEDFACE  # ruff:ignore[non-lowercase-variable-in-function]
+    MH_CIGAM = 0xCEFAEDFE  # ruff:ignore[non-lowercase-variable-in-function]
+    MH_MAGIC_64 = 0xFEEDFACF  # ruff:ignore[non-lowercase-variable-in-function]
+    MH_CIGAM_64 = 0xCFFAEDFE  # ruff:ignore[non-lowercase-variable-in-function]
+    FAT_MAGIC = 0xCAFEBABE  # ruff:ignore[non-lowercase-variable-in-function]
+    BIG_ENDIAN = ">"  # ruff:ignore[non-lowercase-variable-in-function]
+    LITTLE_ENDIAN = "<"  # ruff:ignore[non-lowercase-variable-in-function]
+    LC_LOAD_DYLIB = 0xC  # ruff:ignore[non-lowercase-variable-in-function]
 
     class FileView:
         """A proxy for file-like objects that exposes a given view of a file. Modified from macholib."""
 
         def __init__(self, file_obj: FileView | BufferedRandom, start: int = 0, size: int = maxint) -> None:
             if isinstance(file_obj, FileView):
-                self._file_obj = file_obj._file_obj  # noqa: SLF001
+                self._file_obj = file_obj._file_obj  # ruff:ignore[private-member-access]
             else:
                 self._file_obj = file_obj
             self._start = start
@@ -198,7 +198,7 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # n
             self._pos += len(content)
 
         def read(self, size: int = maxint) -> bytes:
-            assert size >= 0  # noqa: S101
+            assert size >= 0  # ruff:ignore[assert]
             here = self._start + self._pos
             self._checkwindow(here, "read")
             size = min(size, self._end - here)
@@ -214,14 +214,14 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # n
             return res[0]
         return res
 
-    def mach_o_change(at_path: str, what: str, value: str) -> None:  # noqa: C901
+    def mach_o_change(at_path: str, what: str, value: str) -> None:  # ruff:ignore[complex-structure]
         """Replace a given name (what) in any LC_LOAD_DYLIB command found in the given binary with a new name (value), provided it's shorter."""
 
         def do_macho(file: FileView, bits: int, endian: str) -> None:
             # Read Mach-O header (the magic number is assumed read by the caller)
             _cpu_type, _cpu_sub_type, _file_type, n_commands, _size_of_commands, _flags = read_data(file, endian, 6)  # ty: ignore[not-iterable]
             # 64-bits header has one more field.
-            if bits == 64:  # noqa: PLR2004
+            if bits == 64:  # ruff:ignore[magic-value-comparison]
                 read_data(file, endian)
             # The header is followed by n commands
             for _ in range(n_commands):
@@ -263,7 +263,7 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # n
             elif magic == MH_CIGAM_64:
                 do_macho(file, 64, LITTLE_ENDIAN)
 
-        assert len(what) >= len(value)  # noqa: S101
+        assert len(what) >= len(value)  # ruff:ignore[assert]
 
         with open(at_path, "r+b") as f:
             do_file(f)
@@ -277,7 +277,7 @@ class CPython3macOsBrew(CPython3, CPythonPosix):
         return is_macos_brew(interpreter) and super().can_describe(interpreter)
 
     @classmethod
-    def setup_meta(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta:  # noqa: ARG003
+    def setup_meta(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta:  # ruff:ignore[unused-class-method-argument]
         meta = BuiltinViaGlobalRefMeta()
         meta.copy_error = "Brew disables copy creation: https://github.com/Homebrew/homebrew-core/issues/138159"
         return meta

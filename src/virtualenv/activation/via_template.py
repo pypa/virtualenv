@@ -48,7 +48,7 @@ class ViaTemplateActivator(Activator, ABC):
             creator.pyenv_cfg["prompt"] = self.flag_prompt
         return generated
 
-    def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:  # noqa: ARG002
+    def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:  # ruff:ignore[unused-method-argument]
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
             "__VIRTUAL_ENV__": str(creator.dest),
@@ -90,7 +90,7 @@ class ViaTemplateActivator(Activator, ABC):
         return text
 
     @staticmethod
-    def _repr_unicode(creator: Creator, value: str) -> str:  # noqa: ARG004
+    def _repr_unicode(creator: Creator, value: str) -> str:  # ruff:ignore[unused-static-method-argument]
         return value  # by default, we just let it be unicode
 
 

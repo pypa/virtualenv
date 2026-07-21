@@ -49,7 +49,7 @@ class IniConfig:
                 try:
                     self._load()
                     self.has_virtualenv_section = self.config_parser.has_section(self.section)
-                except Exception as exc:  # noqa: BLE001
+                except Exception as exc:  # ruff:ignore[blind-except]
                     exception = exc
         if exception is not None:
             LOGGER.error("failed to read config file %s because %r", config_file, exception)
@@ -67,7 +67,7 @@ class IniConfig:
             raw_value = self.config_parser.get(self.section, key.lower())
             value = convert(raw_value, as_type, source)
             result = value, source
-        except Exception:  # noqa: BLE001
+        except Exception:  # ruff:ignore[blind-except]
             result = None
         self._cache[cache_key] = result
         return result

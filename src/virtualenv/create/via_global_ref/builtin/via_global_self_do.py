@@ -71,7 +71,7 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
             meta.sources.append(src)
 
     @classmethod
-    def setup_meta(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta:  # noqa: ARG003
+    def setup_meta(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta:  # ruff:ignore[unused-class-method-argument]
         return BuiltinViaGlobalRefMeta()
 
     @classmethod

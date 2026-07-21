@@ -59,12 +59,12 @@ def copytree(src: str, dest: str) -> None:
 
 
 def safe_delete(dest: Path) -> None:
-    def onerror(func: object, path: str, exc_info: object) -> None:  # noqa: ARG001
+    def onerror(func: object, path: str, exc_info: object) -> None:  # ruff:ignore[unused-function-argument]
         if not os.access(path, os.W_OK):
             os.chmod(path, S_IWUSR)
             func(path)  # ty: ignore[call-non-callable]
         else:
-            raise  # noqa: PLE0704
+            raise  # ruff:ignore[misplaced-bare-raise]
 
     if sys.version_info >= (3, 12):
         shutil.rmtree(str(dest), ignore_errors=True, onexc=onerror)

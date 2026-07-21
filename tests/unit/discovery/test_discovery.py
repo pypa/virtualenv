@@ -212,8 +212,8 @@ def test_invalid_discovery_via_env_var(monkeypatch, tmp_path) -> None:
 
 def test_invalid_discovery_via_env_var_unit(monkeypatch) -> None:
     """Unit test: get_discover raises RuntimeError with helpful message for unknown discovery method."""
-    from virtualenv.config.cli.parser import VirtualEnvConfigParser  # noqa: PLC0415
-    from virtualenv.run.plugin.discovery import get_discover  # noqa: PLC0415
+    from virtualenv.config.cli.parser import VirtualEnvConfigParser  # ruff:ignore[import-outside-top-level]
+    from virtualenv.run.plugin.discovery import get_discover  # ruff:ignore[import-outside-top-level]
 
     monkeypatch.setenv("VIRTUALENV_DISCOVERY", "nonexistent_plugin")
     parser = VirtualEnvConfigParser()

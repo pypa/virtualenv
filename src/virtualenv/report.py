@@ -16,7 +16,7 @@ MAX_LEVEL = max(LEVELS.keys())
 LOGGER = logging.getLogger()
 
 
-def setup_report(verbosity: int, show_pid: bool = False) -> int:  # noqa: FBT002
+def setup_report(verbosity: int, show_pid: bool = False) -> int:  # ruff:ignore[boolean-default-value-positional-argument]
     _clean_handlers(LOGGER)
     verbosity = min(verbosity, MAX_LEVEL)  # pragma: no cover
     level = LEVELS[verbosity]

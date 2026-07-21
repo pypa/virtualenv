@@ -17,7 +17,7 @@ class Wheel:
 
     @classmethod
     def from_path(cls, path: Path) -> Wheel | None:
-        if path is not None and path.suffix == ".whl" and len(path.stem.split("-")) >= 5:  # noqa: PLR2004
+        if path is not None and path.suffix == ".whl" and len(path.stem.split("-")) >= 5:  # ruff:ignore[magic-value-comparison]
             return cls(path)
         return None
 
@@ -39,7 +39,7 @@ class Wheel:
         for part in version.split(".")[0:3]:
             try:
                 result.append(int(part))
-            except ValueError:  # noqa: PERF203
+            except ValueError:  # ruff:ignore[try-except-in-loop]
                 break
         if not result:
             raise ValueError(version)

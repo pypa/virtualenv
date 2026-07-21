@@ -38,7 +38,7 @@ def rebuild(script_path: Path) -> None:
     match_end = 0
     next_match = None
     count, did_update = 0, False
-    for count, next_match in enumerate(file_regex.finditer(script_content)):  # noqa: B007
+    for count, next_match in enumerate(file_regex.finditer(script_content)):  # ruff:ignore[unused-loop-control-variable]
         script_parts += [script_content[match_end : next_match.start()]]
         match_end = next_match.end()
         filename, variable_name, previous_encoded = next_match.group(1), next_match.group(2), next_match.group(3)
@@ -54,7 +54,7 @@ def rebuild(script_path: Path) -> None:
 
 
 def handle_file(previous_content: str, filename: str, variable_name: str, previous_encoded: str) -> tuple[bool, str]:
-    print(f"Found file {filename}")  # noqa: T201
+    print(f"Found file {filename}")  # ruff:ignore[print]
     current_path = os.path.realpath(os.path.join(here, "..", "src", "virtualenv_embedded", filename))
     _, file_type = os.path.splitext(current_path)
     keep_line_ending = file_type == ".bat"
@@ -63,25 +63,25 @@ def handle_file(previous_content: str, filename: str, variable_name: str, previo
     current_crc = crc32(current_text)
     current_encoded = b64.encode(gzip.encode(current_text.encode())[0])[0].decode()
     if current_encoded == previous_encoded:
-        print(f"  File up to date (crc: {current_crc:08x})")  # noqa: T201
+        print(f"  File up to date (crc: {current_crc:08x})")  # ruff:ignore[print]
         return False, previous_content
     # Else: content has changed
     previous_text = gzip.decode(b64.decode(previous_encoded.encode())[0])[0].decode()
     previous_crc = crc32(previous_text)
-    print(f"  Content changed (crc: {previous_crc:08x} -> {current_crc:08x})")  # noqa: T201
+    print(f"  Content changed (crc: {previous_crc:08x} -> {current_crc:08x})")  # ruff:ignore[print]
     new_part = file_template.format(filename=filename, variable=variable_name, data=current_encoded)
     return True, new_part
 
 
 def report(exit_code: int, new: str, next_match: re.Match[str] | None, current: str, script_path: Path) -> NoReturn:
     if new != current:
-        print("Content updated; overwriting... ", end="")  # noqa: T201
+        print("Content updated; overwriting... ", end="")  # ruff:ignore[print]
         script_path.write_bytes(new)
-        print("done.")  # noqa: T201
+        print("done.")  # ruff:ignore[print]
     else:
-        print("No changes in content")  # noqa: T201
+        print("No changes in content")  # ruff:ignore[print]
     if next_match is None:
-        print("No variables were matched/found")  # noqa: T201
+        print("No variables were matched/found")  # ruff:ignore[print]
     raise SystemExit(exit_code)
 
 

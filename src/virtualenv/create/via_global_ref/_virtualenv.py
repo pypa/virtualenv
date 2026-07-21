@@ -24,7 +24,7 @@ def patch_dist(dist: types.ModuleType) -> None:
     # we cannot allow some install config as that would get packages installed outside of the virtual environment
     old_parse_config_files = dist.Distribution.parse_config_files
 
-    def parse_config_files(self, *args: object, **kwargs: object) -> object:  # noqa: ANN001
+    def parse_config_files(self, *args: object, **kwargs: object) -> object:  # ruff:ignore[missing-type-function-argument]
         result = old_parse_config_files(self, *args, **kwargs)
         install = self.get_option_dict("install")
 
@@ -53,9 +53,9 @@ class _Finder:
     # lock[0] is threading.Lock(), but initialized lazily to avoid importing threading very early at startup,
     # because there are gevent-based applications that need to be first to import threading by themselves.
     # See https://github.com/pypa/virtualenv/issues/1895 for details.
-    lock = []  # noqa: RUF012
+    lock = []  # ruff:ignore[mutable-class-default]
 
-    def find_spec(self, fullname: str, path: object, target: object = None) -> ModuleSpec | None:  # noqa: ARG002
+    def find_spec(self, fullname: str, path: object, target: object = None) -> ModuleSpec | None:  # ruff:ignore[unused-method-argument]
         # Guard against race conditions during file rewrite by checking if _DISTUTILS_PATCH is defined.
         # This can happen when the file is being overwritten while it's being imported by another process.
         # See https://github.com/pypa/virtualenv/issues/2969 for details.
@@ -66,7 +66,7 @@ class _Finder:
         if fullname in distutils_patch and self.fullname is None:
             # initialize lock[0] lazily
             if len(self.lock) == 0:
-                import threading  # noqa: PLC0415
+                import threading  # ruff:ignore[import-outside-top-level]
 
                 lock = threading.Lock()
                 # there is possibility that two threads T1 and T2 are simultaneously running into find_spec,
@@ -76,8 +76,8 @@ class _Finder:
                 # https://docs.python.org/3/faq/library.html#what-kinds-of-global-value-mutation-are-thread-safe
                 self.lock.append(lock)
 
-            from functools import partial  # noqa: PLC0415
-            from importlib.util import find_spec  # noqa: PLC0415
+            from functools import partial  # ruff:ignore[import-outside-top-level]
+            from importlib.util import find_spec  # ruff:ignore[import-outside-top-level]
 
             with self.lock[0]:
                 self.fullname = fullname
@@ -93,7 +93,7 @@ class _Finder:
     def _patch_spec(self, spec: ModuleSpec, partial: Callable[..., object]) -> ModuleSpec:
         old = getattr(spec.loader, "exec_module", None)
         if old is not None and old is not self.exec_module:
-            try:  # noqa: SIM105
+            try:  # ruff:ignore[suppressible-exception]
                 spec.loader.exec_module = partial(self.exec_module, old)  # ty: ignore[invalid-assignment]
             except AttributeError:
                 pass

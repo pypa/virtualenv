@@ -65,7 +65,7 @@ class ActivationSelector(ComponentBuilder):
             activator.add_parser_arguments(self.parser, self.interpreter)  # ty: ignore[unresolved-attribute]
 
     def create(self, options: VirtualEnvOptions) -> list[Activator]:
-        assert self.active is not None  # noqa: S101  # Set by handle_selected_arg_parse
+        assert self.active is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
         return [activator_class(options) for activator_class in self.active.values()]
 
 

@@ -16,12 +16,12 @@ from virtualenv.config.ini import IniConfig
 
 
 class VirtualEnvOptions(Namespace):
-    def __init__(self, **kwargs: Any) -> None:  # noqa: ANN401
+    def __init__(self, **kwargs: Any) -> None:  # ruff:ignore[any-type]
         super().__init__(**kwargs)
         self._src: str | None = None
         self._sources: dict[str, str] = {}
 
-    def set_src(self, key: str, value: Any, src: str) -> None:  # noqa: ANN401
+    def set_src(self, key: str, value: Any, src: str) -> None:  # ruff:ignore[any-type]
         """Set an option value and record where it came from.
 
         :param key: the option name
@@ -34,7 +34,7 @@ class VirtualEnvOptions(Namespace):
             src = "env var"
         self._sources[key] = src
 
-    def __setattr__(self, key: str, value: Any) -> None:  # noqa: ANN401
+    def __setattr__(self, key: str, value: Any) -> None:  # ruff:ignore[any-type]
         if (src := getattr(self, "_src", None)) is not None:
             self._sources[key] = src
         super().__setattr__(key, value)
@@ -71,8 +71,8 @@ class VirtualEnvConfigParser(ArgumentParser):
         self,
         options: VirtualEnvOptions | None = None,
         env: Mapping[str, str] | None = None,
-        *args: Any,  # noqa: ANN401
-        **kwargs: Any,  # noqa: ANN401
+        *args: Any,  # ruff:ignore[any-type]
+        **kwargs: Any,  # ruff:ignore[any-type]
     ) -> None:
         env = os.environ if env is None else env
         self.file_config = IniConfig(env)
@@ -132,16 +132,16 @@ class VirtualEnvConfigParser(ArgumentParser):
             msg = "can only pass in parser.options"
             raise ValueError(msg)
         self._fix_defaults()
-        self.options._src = "cli"  # noqa: SLF001
+        self.options._src = "cli"  # ruff:ignore[private-member-access]
         try:
             namespace.env = self.env
             return super().parse_known_args(args, namespace=namespace)
         finally:
-            self.options._src = None  # noqa: SLF001
+            self.options._src = None  # ruff:ignore[private-member-access]
 
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
-    def __init__(self, prog: str, **kwargs: Any) -> None:  # noqa: ANN401
+    def __init__(self, prog: str, **kwargs: Any) -> None:  # ruff:ignore[any-type]
         super().__init__(prog, max_help_position=32, width=shutil.get_terminal_size().columns, **kwargs)
 
     def _get_help_string(self, action: Action) -> str | None:

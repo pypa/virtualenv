@@ -78,9 +78,9 @@ def test_extra_search_dir_via_env_var(tmp_path, monkeypatch) -> None:
 @pytest.mark.usefixtures("_empty_conf")
 @pytest.mark.skipif(is_macos_brew(PythonInfo.current_system()), reason="no copy on brew")
 def test_value_alias(monkeypatch, mocker) -> None:
-    from virtualenv.config.cli.parser import VirtualEnvConfigParser  # noqa: PLC0415
+    from virtualenv.config.cli.parser import VirtualEnvConfigParser  # ruff:ignore[import-outside-top-level]
 
-    prev = VirtualEnvConfigParser._fix_default  # noqa: SLF001
+    prev = VirtualEnvConfigParser._fix_default  # ruff:ignore[private-member-access]
 
     def func(self, action):
         if action.dest == "symlinks":

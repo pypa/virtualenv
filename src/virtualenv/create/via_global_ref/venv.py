@@ -59,7 +59,7 @@ class Venv(ViaGlobalRefApi):
         super().create()
 
     def create_inline(self) -> None:
-        from venv import EnvBuilder  # noqa: PLC0415
+        from venv import EnvBuilder  # ruff:ignore[import-outside-top-level]
 
         builder = EnvBuilder(
             system_site_packages=self.enable_system_site_package,

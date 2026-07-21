@@ -91,12 +91,14 @@ class CliTable(SphinxDirective):
                 return True
             if key == "creator":
                 if name == "venv":
-                    from virtualenv.create.via_global_ref.venv import ViaGlobalRefMeta  # noqa: PLC0415
+                    from virtualenv.create.via_global_ref.venv import (  # ruff:ignore[import-outside-top-level]
+                        ViaGlobalRefMeta,
+                    )
 
                     meta = ViaGlobalRefMeta()
                     meta.symlink_error = None
                     return meta
-                from virtualenv.create.via_global_ref.builtin.via_global_self_do import (  # noqa: PLC0415
+                from virtualenv.create.via_global_ref.builtin.via_global_self_do import (  # ruff:ignore[import-outside-top-level]
                     BuiltinViaGlobalRefMeta,
                 )
 
@@ -228,7 +230,7 @@ class CliTable(SphinxDirective):
             domain.add_program_option(None, key, self.env.docname, key)
 
 
-def literal_data(rawtext, app, of_type, slug, options):  # noqa: ARG001
+def literal_data(rawtext, app, of_type, slug, options):  # ruff:ignore[unused-function-argument]
     """Create a link to a BitBucket resource."""
     of_class = of_type.split(".")
     data = getattr(__import__(".".join(of_class[:-1]), fromlist=[of_class[-1]]), of_class[-1])

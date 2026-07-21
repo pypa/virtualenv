@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def _test_finder_behavior() -> None:
-    import _virtualenv_test  # noqa: PLC0415
+    import _virtualenv_test  # ruff:ignore[import-outside-top-level]
 
     finder = _virtualenv_test.finder
 

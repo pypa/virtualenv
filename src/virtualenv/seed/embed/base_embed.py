@@ -89,7 +89,7 @@ class BaseEmbed(Seeder, ABC):
         )
 
     @classmethod
-    def add_parser_arguments(cls, parser: ArgumentParser, interpreter: PythonInfo, app_data: AppData) -> None:  # noqa: ARG003
+    def add_parser_arguments(cls, parser: ArgumentParser, interpreter: PythonInfo, app_data: AppData) -> None:  # ruff:ignore[unused-class-method-argument]
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
             "--no-download",
@@ -117,9 +117,9 @@ class BaseEmbed(Seeder, ABC):
         for distribution, default in cls.distributions().items():
             help_ = f"version of {distribution} to install as seed: embed, bundle, none or exact version"
             if interpreter.version_info[:2] >= (3, 12) and distribution == "setuptools":
-                default = "none"  # noqa: PLW2901
+                default = "none"  # ruff:ignore[redefined-loop-name]
             if distribution == "wheel":
-                default = None  # noqa: PLW2901
+                default = None  # ruff:ignore[redefined-loop-name]
                 help_ = SUPPRESS
             parser.add_argument(
                 f"--{distribution}",

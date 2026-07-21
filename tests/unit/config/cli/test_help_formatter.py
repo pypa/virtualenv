@@ -16,7 +16,7 @@ def test_help_formatter_uses_terminal_width(width: int) -> None:
     with patch("virtualenv.config.cli.parser.shutil.get_terminal_size") as mock_size:
         mock_size.return_value = os.terminal_size((width, 24))
         formatter = HelpFormatter("test_prog")
-        assert formatter._width == width  # noqa: SLF001
+        assert formatter._width == width  # ruff:ignore[private-member-access]
 
 
 def test_help_formatter_not_hardcoded_240() -> None:
@@ -24,4 +24,4 @@ def test_help_formatter_not_hardcoded_240() -> None:
     with patch("virtualenv.config.cli.parser.shutil.get_terminal_size") as mock_size:
         mock_size.return_value = os.terminal_size((80, 24))
         formatter = HelpFormatter("test_prog")
-        assert formatter._width != 240  # noqa: SLF001
+        assert formatter._width != 240  # ruff:ignore[private-member-access]

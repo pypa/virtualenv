@@ -36,7 +36,7 @@ def run() -> NoReturn:
         added = collect_package_versions(new_packages)
         removed = collect_package_versions(remove_packages)
         outcome = (1 if STRICT else 0) if (added or removed) else 0
-        print(f"Outcome {outcome} added {added} removed {removed}")  # noqa: T201
+        print(f"Outcome {outcome} added {added} removed {removed}")  # ruff:ignore[print]
         _write_changelog(added, removed)
         render_init(folders=folders)
         raise SystemExit(outcome)
@@ -79,8 +79,8 @@ def _write_changelog(added: dict[str, list[str]], removed: dict[str, list[str]])
         lines.append(f"Removed {key} of {fmt_version(versions)}")
     lines.append("")
     changelog = "\n".join(lines)
-    print(changelog)  # noqa: T201
-    if len(lines) >= 4:  # noqa: PLR2004
+    print(changelog)  # ruff:ignore[print]
+    if len(lines) >= 4:  # ruff:ignore[magic-value-comparison]
         (Path(__file__).parents[1] / "docs" / "changelog" / "u.bugfix.rst").write_text(changelog, encoding="utf-8")
 
 
@@ -249,7 +249,7 @@ def collect_package_versions(new_packages: set[str]) -> dict[str, list[str]]:
     result = defaultdict(list)
     for package in new_packages:
         split = package.split("-")
-        if len(split) < 2:  # noqa: PLR2004
+        if len(split) < 2:  # ruff:ignore[magic-value-comparison]
             raise ValueError(package)
         key, version = split[0:2]
         result[key].append(version)

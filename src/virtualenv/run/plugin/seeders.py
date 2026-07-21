@@ -42,7 +42,7 @@ class SeederSelector(ComponentBuilder):
         return super().handle_selected_arg_parse(options)
 
     def create(self, options: VirtualEnvOptions) -> Seeder:
-        assert self._impl_class is not None  # noqa: S101  # Set by handle_selected_arg_parse
+        assert self._impl_class is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
         seeder = self._impl_class(options)
         if seeder.enabled and (reason := seeder.cannot_seed(self.interpreter)) is not None:
             raise RuntimeError(reason)

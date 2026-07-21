@@ -7,7 +7,7 @@ class _Finder:
     fullname = None
     lock: ClassVar[list] = []
 
-    def find_spec(self, fullname, path, target=None) -> None:  # noqa: ARG002
+    def find_spec(self, fullname, path, target=None) -> None:  # ruff:ignore[unused-method-argument]
         # This should handle the NameError gracefully
         try:
             distutils_patch = _DISTUTILS_PATCH

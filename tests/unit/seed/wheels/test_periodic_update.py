@@ -35,7 +35,7 @@ from virtualenv.util.subprocess import CREATE_NO_WINDOW
 
 @pytest.fixture(autouse=True)
 def _clear_pypi_info_cache() -> None:
-    from virtualenv.seed.wheels.periodic_update import _PYPI_CACHE  # noqa: PLC0415
+    from virtualenv.seed.wheels.periodic_update import _PYPI_CACHE  # ruff:ignore[import-outside-top-level]
 
     _PYPI_CACHE.clear()
 
@@ -273,7 +273,7 @@ def test_trigger_update_no_debug(for_py_version, session_app_data, tmp_path, moc
     process = mocker.MagicMock()
     process.pid = 123
     process.communicate.return_value = None, None
-    Popen = mocker.patch("virtualenv.seed.wheels.periodic_update.Popen", return_value=process)  # noqa: N806
+    Popen = mocker.patch("virtualenv.seed.wheels.periodic_update.Popen", return_value=process)  # ruff:ignore[non-lowercase-variable-in-function]
 
     trigger_update(
         "setuptools",
@@ -322,7 +322,7 @@ def test_trigger_update_debug(for_py_version, session_app_data, tmp_path, mocker
     process = mocker.MagicMock()
     process.pid = 123
     process.communicate.return_value = None, None
-    Popen = mocker.patch("virtualenv.seed.wheels.periodic_update.Popen", return_value=process)  # noqa: N806
+    Popen = mocker.patch("virtualenv.seed.wheels.periodic_update.Popen", return_value=process)  # ruff:ignore[non-lowercase-variable-in-function]
 
     trigger_update(
         "pip",
@@ -377,14 +377,14 @@ def test_do_update_first(tmp_path, mocker, time_freeze) -> None:
     ]
     download_wheels = (Wheel(Path(i[0])) for i in pip_version_remote)
 
-    def _download_wheel(  # noqa: PLR0913
+    def _download_wheel(  # ruff:ignore[too-many-arguments]
         distribution,
-        version_spec,  # noqa: ARG001
+        version_spec,  # ruff:ignore[unused-function-argument]
         for_py_version,
         search_dirs,
         app_data,
         to_folder,
-        env,  # noqa: ARG001
+        env,  # ruff:ignore[unused-function-argument]
     ):
         assert distribution == "pip"
         assert for_py_version == "3.9"

@@ -35,7 +35,7 @@ UPDATE_PERIOD = timedelta(days=14)
 UPDATE_ABORTED_DELAY = timedelta(hours=1)
 
 
-def periodic_update(  # noqa: PLR0913
+def periodic_update(  # ruff:ignore[too-many-arguments]
     distribution: str,
     of_version: str | None,
     for_py_version: str,
@@ -74,7 +74,7 @@ def periodic_update(  # noqa: PLR0913
     return wheel
 
 
-def handle_auto_update(  # noqa: PLR0913
+def handle_auto_update(  # ruff:ignore[too-many-arguments]
     distribution: str,
     for_py_version: str,
     wheel: Wheel | None,
@@ -115,7 +115,7 @@ def load_datetime(value: str | None) -> datetime | None:
     return None if value is None else datetime.strptime(value, DATETIME_FMT).replace(tzinfo=timezone.utc)
 
 
-class NewVersion:  # noqa: PLW1641
+class NewVersion:  # ruff:ignore[eq-without-hash]
     def __init__(self, filename: str, found_date: datetime, release_date: datetime | None, source: str) -> None:
         self.filename = filename
         self.found_date = found_date
@@ -139,7 +139,7 @@ class NewVersion:  # noqa: PLW1641
             "source": self.source,
         }
 
-    def use(self, now: datetime, ignore_grace_period_minor: bool = False, ignore_grace_period_ci: bool = False) -> bool:  # noqa: FBT002
+    def use(self, now: datetime, ignore_grace_period_minor: bool = False, ignore_grace_period_ci: bool = False) -> bool:  # ruff:ignore[boolean-default-value-positional-argument]
         if self.source == "manual":
             return True
         if self.source == "periodic" and (self.found_date < now - GRACE_PERIOD_CI or ignore_grace_period_ci):
@@ -156,7 +156,7 @@ class NewVersion:  # noqa: PLW1641
         )
 
     def __eq__(self, other: object) -> bool:
-        return type(self) == type(other) and all(  # noqa: E721
+        return type(self) == type(other) and all(  # ruff:ignore[type-comparison]
             getattr(self, k) == getattr(other, k) for k in ["filename", "release_date", "found_date", "source"]
         )
 
@@ -214,7 +214,7 @@ class UpdateLog:
         return self.started is None or now - self.started > UPDATE_ABORTED_DELAY
 
 
-def trigger_update(  # noqa: PLR0913
+def trigger_update(  # ruff:ignore[too-many-arguments]
     distribution: str,
     for_py_version: str,
     wheel: Wheel | None,
@@ -258,7 +258,7 @@ def trigger_update(  # noqa: PLR0913
         process.returncode = 0
 
 
-def do_update(  # noqa: PLR0913
+def do_update(  # ruff:ignore[too-many-arguments]
     distribution: str,
     for_py_version: str,
     embed_filename: str | None,
@@ -274,7 +274,7 @@ def do_update(  # noqa: PLR0913
     return versions
 
 
-def _run_do_update(  # noqa: C901, PLR0913
+def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
     app_data: str | AppData,
     distribution: str,
     embed_filename: str | None,
@@ -282,7 +282,7 @@ def _run_do_update(  # noqa: C901, PLR0913
     periodic: bool,
     search_dirs: list[str] | list[Path],
 ) -> list[NewVersion]:
-    from virtualenv.seed.wheels import acquire  # noqa: PLC0415
+    from virtualenv.seed.wheels import acquire  # ruff:ignore[import-outside-top-level]
 
     wheel_filename = None if embed_filename is None else Path(embed_filename)
     embed_version = None if wheel_filename is None else Wheel(wheel_filename).version_tuple
@@ -355,8 +355,8 @@ def release_date_for_wheel_path(dest: Path) -> datetime | None:
         try:
             upload_time = content["releases"][wheel.version][0]["upload_time"]  # ty: ignore[not-subscriptable]
             return datetime.strptime(upload_time, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
-        except Exception as exception:  # noqa: BLE001
-            LOGGER.error("could not load release date %s because %r", content, exception)  # noqa: TRY400
+        except Exception as exception:  # ruff:ignore[blind-except]
+            LOGGER.error("could not load release date %s because %r", content, exception)  # ruff:ignore[error-instead-of-exception]
     return None
 
 
@@ -373,7 +373,7 @@ def _request_context() -> Generator[ssl.SSLContext | None, None, None]:
             "falling back to unverified HTTPS for PyPI metadata because %s is set",
             _INSECURE_FALLBACK_ENV,
         )
-        yield ssl._create_unverified_context()  # noqa: S323, SLF001
+        yield ssl._create_unverified_context()  # ruff:ignore[suspicious-unverified-context-usage, private-member-access]
 
 
 _PYPI_CACHE = {}
@@ -391,17 +391,17 @@ def _pypi_get_distribution_info(distribution: str) -> dict[str, object] | None:
         for context in _request_context():
             if (content := _fetch_pypi_json(url, context)) is not None:
                 break
-    except Exception as exception:  # noqa: BLE001
-        LOGGER.error("failed to access %s because %r", url, exception)  # noqa: TRY400
+    except Exception as exception:  # ruff:ignore[blind-except]
+        LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
     return content
 
 
 def _fetch_pypi_json(url: str, context: ssl.SSLContext | None) -> dict[str, object] | None:
     try:
-        with urlopen(url, context=context) as file_handler:  # noqa: S310
+        with urlopen(url, context=context) as file_handler:  # ruff:ignore[suspicious-url-open-usage]
             return json.load(file_handler)
     except URLError as exception:
-        LOGGER.error("failed to access %s because %r", url, exception)  # noqa: TRY400
+        LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
     return None
 
 
@@ -421,7 +421,7 @@ def manual_upgrade(app_data: AppData, env: dict[str, str]) -> None:
 
 def _run_manual_upgrade(app_data: AppData, distribution: str, for_py_version: str, env: dict[str, str]) -> None:
     start = datetime.now(tz=timezone.utc)
-    from .bundle import from_bundle  # noqa: PLC0415
+    from .bundle import from_bundle  # ruff:ignore[import-outside-top-level]
 
     current = from_bundle(
         distribution=distribution,

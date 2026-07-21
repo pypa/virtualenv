@@ -69,7 +69,7 @@ class FromAppData(BaseEmbed):
                     installer = installer_class(wheel.path, creator, wheel_img)
                     _build_wheel_image(self.app_data.lock / wheel_img.parent, wheel_img.name, installer)
                     installer.install(creator.interpreter.version_info)  # ty: ignore[invalid-argument-type]
-                except Exception:  # noqa: BLE001
+                except Exception:  # ruff:ignore[blind-except]
                     exceptions[name] = sys.exc_info()
 
             threads = [Thread(target=_install, args=(n, w)) for n, w in name_to_whl.items()]
@@ -85,7 +85,7 @@ class FromAppData(BaseEmbed):
                 raise RuntimeError("\n".join(messages))
 
     @contextmanager
-    def _get_seed_wheels(self, creator: Creator) -> Generator[dict[str, Wheel], None, None]:  # noqa: C901
+    def _get_seed_wheels(self, creator: Creator) -> Generator[dict[str, Wheel], None, None]:  # ruff:ignore[complex-structure]
         name_to_whl, lock, fail = {}, Lock(), {}
 
         def _get(distribution: str, version: str | None) -> None:

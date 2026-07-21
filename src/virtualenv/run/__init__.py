@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 def cli_run(
     args: list[str],
     options: VirtualEnvOptions | None = None,
-    setup_logging: bool = True,  # noqa: FBT002
+    setup_logging: bool = True,  # ruff:ignore[boolean-default-value-positional-argument]
     env: MutableMapping[str, str] | None = None,
 ) -> Session:
     """Create a virtual environment given some command line interface arguments.
@@ -50,7 +50,7 @@ def cli_run(
 def session_via_cli(
     args: list[str],
     options: VirtualEnvOptions | None = None,
-    setup_logging: bool = True,  # noqa: FBT002
+    setup_logging: bool = True,  # ruff:ignore[boolean-default-value-positional-argument]
     env: MutableMapping[str, str] | None = None,
 ) -> Session:
     """Create a virtualenv session (same as cli_run, but this does not perform the creation). Use this if you just want to query what the virtual environment would look like, but not actually create it.
@@ -67,7 +67,7 @@ def session_via_cli(
     env = os.environ if env is None else env
     parser, elements = build_parser(args, options, setup_logging, env)
     options = parser.parse_args(args)  # ty: ignore[invalid-assignment]
-    options.py_version = parser._interpreter.version_info  # noqa: SLF001  # ty: ignore[invalid-assignment, unresolved-attribute]
+    options.py_version = parser._interpreter.version_info  # ruff:ignore[private-member-access]  # ty: ignore[invalid-assignment, unresolved-attribute]
     creator, seeder, activators = tuple(
         e.create(options)  # ty: ignore[invalid-argument-type]
         for e in elements
@@ -75,7 +75,7 @@ def session_via_cli(
     return Session(
         options.verbosity,  # ty: ignore[unresolved-attribute, invalid-argument-type]
         options.app_data,  # ty: ignore[unresolved-attribute]
-        parser._interpreter,  # noqa: SLF001  # ty: ignore[invalid-argument-type]
+        parser._interpreter,  # ruff:ignore[private-member-access]  # ty: ignore[invalid-argument-type]
         creator,  # ty: ignore[invalid-argument-type]
         seeder,  # ty: ignore[invalid-argument-type]
         activators,  # ty: ignore[invalid-argument-type]
@@ -85,7 +85,7 @@ def session_via_cli(
 def build_parser(
     args: list[str] | None = None,
     options: VirtualEnvOptions | None = None,
-    setup_logging: bool = True,  # noqa: FBT002
+    setup_logging: bool = True,  # ruff:ignore[boolean-default-value-positional-argument]
     env: MutableMapping[str, str] | None = None,
 ) -> tuple[VirtualEnvConfigParser, list[ComponentBuilder]]:
     parser = VirtualEnvConfigParser(options, os.environ if env is None else env)
@@ -102,7 +102,7 @@ def build_parser(
     handle_extra_commands(options)
 
     discover = get_discover(parser, args)
-    parser._interpreter = interpreter = discover.interpreter  # noqa: SLF001
+    parser._interpreter = interpreter = discover.interpreter  # ruff:ignore[private-member-access]
     if interpreter is None:
         msg = f"failed to find interpreter for {discover}"
         raise RuntimeError(msg)
@@ -163,7 +163,7 @@ def load_app_data(
 
 
 def add_version_flag(parser: VirtualEnvConfigParser) -> None:
-    import virtualenv  # noqa: PLC0415
+    import virtualenv  # ruff:ignore[import-outside-top-level]
 
     parser.add_argument(
         "--version",

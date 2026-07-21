@@ -87,7 +87,7 @@ class ActivationTester:
             )
         except subprocess.CalledProcessError as exception:
             output = exception.output + exception.stderr
-            assert not exception.returncode, output  # noqa: PT017
+            assert not exception.returncode, output  # ruff:ignore[pytest-assert-in-except]
             return None
         else:
             raw = raw_.decode(errors="replace")
@@ -100,7 +100,7 @@ class ActivationTester:
     def non_source_activate(self, activate_script):
         return [*self._invoke_script, str(activate_script)]
 
-    def env(self, tmp_path):  # noqa: ARG002
+    def env(self, tmp_path):  # ruff:ignore[unused-method-argument]
         env = os.environ.copy()
         # add the current python executable folder to the path so we already have another python on the path
         # also keep the path so the shells (fish, bash, etc can be discovered)
@@ -199,7 +199,7 @@ class ActivationTester:
         if sys.platform != "win32":
             result = path
         else:
-            from ctypes import create_unicode_buffer, windll  # noqa: PLC0415
+            from ctypes import create_unicode_buffer, windll  # ruff:ignore[import-outside-top-level]
 
             buffer_cont = create_unicode_buffer(256)
             get_long_path_name = windll.kernel32.GetLongPathNameW
@@ -209,7 +209,7 @@ class ActivationTester:
 
 
 class RaiseOnNonSourceCall(ActivationTester):
-    def __init__(  # noqa: PLR0913
+    def __init__(  # ruff:ignore[too-many-arguments]
         self,
         of_class,
         session,
