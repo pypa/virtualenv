@@ -23,6 +23,8 @@ jobs:
       fail-fast: false
       matrix:
         py:
+          - "3.15t"
+          - "3.15"
           - "3.14t"
           - "3.14"
           - "3.13t"
@@ -73,7 +75,7 @@ jobs:
       - name: 📦 Install tox with this virtualenv
         shell: bash
         run: |
-          if [[ "${{ matrix.py }}" == "3.13t" || "${{ matrix.py }}" == "3.14t" || "${{ matrix.py }}" == "rp" ]]; then
+          if [[ "${{ matrix.py }}" == "3.13t" || "${{ matrix.py }}" == "3.14t" || "${{ matrix.py }}" == "3.15t" || "${{ matrix.py }}" == "rp" ]]; then
             uv tool install --no-managed-python --python 3.14 "tox>=4.45" --with .
           else
             uv tool install --no-managed-python --python 3.14 "tox>=4.45" --with tox-uv --with .
