@@ -85,6 +85,7 @@ jobs:
         if: ${{ !startsWith(matrix.py, 'brew@') && matrix.py != 'rp' }}
         with:
           python-version: ${{ matrix.py }}
+          allow-prereleases: true
       - name: 🦀 Setup RustPython
         if: matrix.py == 'rp'
         shell: bash
