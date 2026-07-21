@@ -1,2 +1,0 @@
-Declare support for Python 3.15: CI now tests against the CPython 3.15 beta, including the free-threaded ``3.15t``
-build, and the ``Programming Language :: Python :: 3.15`` classifier is advertised.
