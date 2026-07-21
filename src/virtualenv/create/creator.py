@@ -223,6 +223,9 @@ class Creator(ABC):
         assert system_executable is not None  # ruff:ignore[assert]
         self.pyenv_cfg["home"] = os.path.dirname(os.path.abspath(system_executable))
         self.pyenv_cfg["implementation"] = self.interpreter.implementation
+        self.pyenv_cfg["python-version"] = (
+            f"{self.interpreter.version_info.major}.{self.interpreter.version_info.minor}"
+        )
         self.pyenv_cfg["version_info"] = ".".join(str(i) for i in self.interpreter.version_info)
         self.pyenv_cfg["version"] = ".".join(str(i) for i in self.interpreter.version_info[:3])
         self.pyenv_cfg["executable"] = os.path.realpath(system_executable)
