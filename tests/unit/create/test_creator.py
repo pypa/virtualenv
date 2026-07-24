@@ -326,9 +326,10 @@ def test_prompt_set(tmp_path: Path, creator: str, prompt: str | None, monkeypatc
 
 
 @pytest.mark.parametrize("creator", CURRENT_CREATORS)
-def test_version_key_in_pyenv_cfg(tmp_path: Path, creator: str) -> None:
+def test_version_keys_in_pyenv_cfg(tmp_path: Path, creator: str) -> None:
     result = cli_run([str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", creator])
     cfg = PyEnvCfg.from_file(result.creator.pyenv_cfg.path)
+    assert cfg["python-version"] == f"{sys.version_info.major}.{sys.version_info.minor}"
     assert "version" in cfg
     parts = cfg["version"].split(".")
     assert len(parts) == 3
