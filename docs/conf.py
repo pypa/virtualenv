@@ -49,6 +49,7 @@ pygments_style, pygments_dark_style = "sphinx", "monokai"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 html_js_files = ["mermaid-normalize.js", "rtd-search.js"]
+# favicon is a simplified mark, not a vector copy of the logo PNG; see development.rst "Logo and branding"
 html_favicon = "_static/virtualenv.svg"
 html_theme_options = {
     "light_logo": "virtualenv.png",
