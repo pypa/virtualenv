@@ -1,0 +1,2 @@
+Document that ``virtualenv.png`` is the official logo and ``virtualenv.svg`` is a simplified favicon-only mark - by
+:user:`gaborbernat`.

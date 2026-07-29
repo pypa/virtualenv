@@ -136,6 +136,16 @@ locally, run:
 The built documentation can be found in the ``.tox/docs_out`` folder and may be viewed by opening ``index.html`` within
 that folder.
 
+Logo and branding
+=================
+
+Two logo files live in ``docs/_static`` and serve different roles, so both are kept on purpose:
+
+- ``virtualenv.png`` is the official logo — the snakes wrapped around a terminal, with the wordmark. It is the site logo
+  (``light_logo``/``dark_logo`` in ``docs/conf.py``) and the one to use wherever a virtualenv logo is needed.
+- ``virtualenv.svg`` is a simplified mark used only as the browser favicon (``html_favicon``), where the detailed PNG
+  would be illegible at 16×16. It is not a vector copy of the PNG.
+
 Release
 =======
 
