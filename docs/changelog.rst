@@ -7,6 +7,23 @@
 .. towncrier release notes start
 
 **********************
+ v21.7.1 (2026-07-30)
+**********************
+
+Bugfixes - 21.7.1
+=================
+
+- Upgrade embedded wheels:
+
+  - pip to ``26.2`` from ``26.1.2`` (:issue:`u`)
+
+Improved Documentation - 21.7.1
+===============================
+
+- Document that ``virtualenv.png`` is the official logo and ``virtualenv.svg`` is a simplified favicon-only mark - by
+  :user:`gaborbernat`. (:issue:`3199`)
+
+**********************
  v21.7.0 (2026-07-21)
 **********************
 
