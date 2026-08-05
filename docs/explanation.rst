@@ -147,7 +147,8 @@ virtualenv operates in two distinct phases:
         CreatePython --> SeedPackages[Install seed packages: pip, setuptools, wheel]
         SeedPackages --> ActivationScripts[Install activation scripts]
         ActivationScripts --> VCSIgnore[Create VCS ignore files]
-        VCSIgnore --> Complete([Virtual environment ready])
+        VCSIgnore --> Record[Point .venv redirect at it]
+        Record --> Complete([Virtual environment ready])
 
         style Start fill:#2563eb,stroke:#1d4ed8,color:#fff
         style Phase1 fill:#6366f1,stroke:#4f46e5,color:#fff
@@ -161,12 +162,14 @@ virtualenv operates in two distinct phases:
     flag to specify a different interpreter.
 
 **Phase 2: Create the virtual environment**
-    Once the target interpreter is identified, virtualenv creates the environment in four steps:
+    Once the target interpreter is identified, virtualenv creates the environment in five steps:
 
     1. Create a Python executable matching the target interpreter
     2. Install seed packages (pip, setuptools, wheel) to enable package installation
     3. Install activation scripts for various shells
     4. Create VCS ignore files (currently Git's ``.gitignore``, skip with ``--no-vcs-ignore``)
+    5. Point a ``.venv`` redirect file beside the environment at it so editors and type checkers can find it (`PEP 832
+       <https://peps.python.org/pep-0832/>`_, provisional, skip with ``--no-venv-redirect``)
 
 An important design principle: virtual environments are not self-contained. A complete Python installation consists of
 thousands of files, and copying all of them into every virtual environment would be wasteful. Instead, virtual
@@ -623,6 +626,61 @@ What it does not prove:
 - Anything about wheels virtualenv fetches at run time. ``--download``, ``--upgrade-embed-wheels`` and the periodic
   update take ``pip`` and ``setuptools`` from PyPI, outside virtualenv's attestations.
 - That you have the latest release. The bootstrap zipapp in particular can trail it.
+
+***********************
+ Environment discovery
+***********************
+
+Editors, type checkers and task runners need to find a project's environment, and they cannot count on an activated
+shell to tell them where it is. Launching an editor on a fresh checkout leaves it guessing. Each tool has answered that
+by hard-coding a search per environment manager it wants to support, which is why editor support for any new tool lags
+behind the tool itself.
+
+`PEP 832 <https://peps.python.org/pep-0832/>`_ gives the guess a fixed place to look: ``.venv`` in the project root,
+either the environment itself or a redirect file holding a single line with the path of one. virtualenv creates
+environments, so it writes the redirect; reading it belongs to the tools consuming it.
+
+After creating ``<root>/<name>``, virtualenv writes ``<name>`` into ``<root>/.venv``:
+
+.. code-block:: console
+
+    $ virtualenv env
+    $ virtualenv other
+    $ cat .venv
+    other
+
+**The newest environment wins**
+    The redirect names one environment, the one other tools should use by default, so each creation points it at the
+    environment just made.
+
+**A ``.venv`` folder stays**
+    Creating ``.venv`` itself writes nothing, and where a ``.venv`` folder or symlink exists virtualenv leaves it alone,
+    since it already is the default.
+
+**Other tools' redirects stay**
+    The PEP asks tools not to overwrite a redirect another tool wrote. The file carries no marker of who wrote it, so
+    virtualenv judges by the target: it takes over the redirect only when the ``pyvenv.cfg`` there carries the
+    ``virtualenv`` key. A redirect written by uv, ``venv`` or you stays, and so does one whose target is gone, since it
+    may still resolve inside a container or on another machine.
+
+**A failed write keeps the environment**
+    A write failure logs a warning and leaves you with a working environment. Discovery is a convenience for other
+    tools, so it does not get to fail the job you asked for.
+
+Why not a list
+==============
+
+An earlier draft of the PEP listed every environment in a ``.python-envs`` file. The PEP went back to a single redirect
+after workflow tool authors warned that tools sharing one list would overwrite each other's entries and change the
+default under the user. virtualenv follows the PEP, so it writes one line.
+
+Provisional status
+==================
+
+The feature is provisional. PEP 832 is still a draft whose format changed twice during review, and virtualenv tracks the
+PEP rather than its own earlier behavior, so a minor or patch release may change what virtualenv writes in backward
+incompatible ways. Pass ``--no-venv-redirect`` if you need a stable project folder until the Steering Council accepts
+the PEP.
 
 **********
  See also

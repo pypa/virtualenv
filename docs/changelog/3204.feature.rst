@@ -1,0 +1,7 @@
+Point a ``.venv`` redirect file in the parent folder at the created environment, per `PEP 832
+<https://peps.python.org/pep-0832/>`_, so editors and type checkers can find it - by :user:`gaborbernat`.
+
+- virtualenv leaves a ``.venv`` folder alone, and a redirect pointing at an environment it did not create.
+- Pass ``--no-venv-redirect`` to opt out.
+- The feature is provisional while PEP 832 is a draft: a minor or patch release may change it in backward incompatible
+  ways to follow the PEP.
