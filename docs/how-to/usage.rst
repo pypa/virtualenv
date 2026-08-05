@@ -290,6 +290,66 @@ Options are resolved in this order (highest to lowest priority):
         style C fill:#d97706,stroke:#b45309,color:#fff
         style D fill:#6366f1,stroke:#4f46e5,color:#fff
 
+********************************
+ Make environments discoverable
+********************************
+
+virtualenv records every environment it creates in a ``.python-envs`` file next to it, so editors and type checkers can
+find them without an activated shell. See `PEP 832 <https://peps.python.org/pep-0832/>`_ for the format and
+:ref:`explanation:Environment discovery` for the reasoning.
+
+Point a tool at the right environment
+=====================================
+
+The last line of ``.python-envs`` is the default environment, and the environment you create last takes that spot:
+
+.. code-block:: console
+
+    $ virtualenv py313 --python 3.13
+    $ virtualenv py314 --python 3.14
+    $ cat .python-envs
+    py313
+    py314
+
+To promote ``py313`` back to the default, create it again over the existing folder. Its entry moves to the end rather
+than repeating:
+
+.. code-block:: console
+
+    $ virtualenv py313 --python 3.13
+    $ cat .python-envs
+    py314
+    py313
+
+A ``.venv`` folder outranks every line in the file, so delete or rename it if you want another environment to win.
+
+Skip recording
+==============
+
+Pass ``--no-python-envs`` when you do not want the ``.python-envs`` and ``.python-envs.lock`` files:
+
+.. code-block:: console
+
+    $ virtualenv env --no-python-envs
+
+Set it once for every environment you create through the configuration file or an environment variable:
+
+.. code-block:: ini
+
+    [virtualenv]
+    no_python_envs = true
+
+.. code-block:: console
+
+    $ export VIRTUALENV_NO_PYTHON_ENVS=1
+
+Commit the file or ignore it
+============================
+
+Commit ``.python-envs`` when the environment locations are the same for everyone on the project, such as a containerized
+setup or a fixed tox layout. Add it to ``.gitignore`` when developers pick their own paths. Always ignore
+``.python-envs.lock``, which is a local lock file rather than project configuration.
+
 ***********************
  Control seed packages
 ***********************

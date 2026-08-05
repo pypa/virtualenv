@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
 from os.path import commonpath
 
+from virtualenv.util.lock import ReentrantFileLock
 from virtualenv.util.path import safe_delete
 from virtualenv.util.subprocess import LogCmd, run_cmd
 from virtualenv.version import __version__
@@ -54,6 +55,7 @@ class Creator(ABC):
         self.dest = Path(options.dest)
         self.clear = options.clear
         self.no_vcs_ignore = options.no_vcs_ignore
+        self.no_python_envs = options.no_python_envs
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest)
         self.app_data = options.app_data
         self.env = options.env
@@ -90,6 +92,7 @@ class Creator(ABC):
             ("dest", str(self.dest)),
             ("clear", self.clear),
             ("no_vcs_ignore", self.no_vcs_ignore),
+            ("no_python_envs", self.no_python_envs),
         ]
 
     @classmethod
@@ -137,6 +140,13 @@ class Creator(ABC):
             dest="no_vcs_ignore",
             action="store_true",
             help="don't create VCS ignore directive in the destination directory",
+            default=False,
+        )
+        parser.add_argument(
+            "--no-python-envs",
+            dest="no_python_envs",
+            action="store_true",
+            help="don't record the created environment within a PEP-832 .python-envs file next to the destination",
             default=False,
         )
 
@@ -204,6 +214,8 @@ class Creator(ABC):
         self.set_pyenv_cfg()
         if not self.no_vcs_ignore:
             self.setup_ignore_vcs()
+        if not self.no_python_envs:
+            self.record_python_envs()
 
     def add_cachedir_tag(self) -> None:
         """Generate a file indicating that this is not meant to be backed up."""
@@ -245,6 +257,28 @@ class Creator(ABC):
         # https://www.selenic.com/mercurial/hgignore.5.html for more details
         # Bazaar - does not support ignore files in sub-directories, only at root level via .bzrignore
         # Subversion - does not support ignore files, requires direct manipulation with the svn tool
+
+    def record_python_envs(self) -> None:
+        """Register the environment as the default one of its parent folder, per PEP-832."""
+        if self.dest.name == ".venv":  # implicitly the last line of .python-envs, no need to record it
+            return
+        root = self.dest.parent
+        if (root / ".venv" / "pyvenv.cfg").exists():
+            LOGGER.debug(".venv keeps being the default environment of %s", root)
+        envs_file = root / ".python-envs"
+        target = os.path.normcase(os.path.normpath(str(self.dest)))
+        try:
+            # concurrent creations under one folder rewrite the same file, so serialize them across processes
+            with ReentrantFileLock(root).lock_for_key(envs_file.name):
+                # the last entry is the default environment, so an entry already pointing at us must move to the end
+                keep = [
+                    i
+                    for i in (envs_file.read_text(encoding="utf-8") if envs_file.exists() else "").splitlines()
+                    if i.strip() and os.path.normcase(os.path.normpath(os.path.join(str(root), i))) != target
+                ]
+                envs_file.write_text("".join(f"{i}\n" for i in [*keep, self.dest.name]), encoding="utf-8")
+        except OSError as exc:
+            LOGGER.warning("could not record %s within %s - %s", self.dest, envs_file, exc)
 
     @property
     def debug(self) -> dict[str, Any] | None:

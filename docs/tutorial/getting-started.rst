@@ -26,7 +26,7 @@ Let's create a virtual environment called ``myproject``:
 
     $ virtualenv myproject
     created virtual environment CPython3.13.2.final.0-64 in 200ms
-      creator CPython3Posix(dest=/home/user/myproject, clear=False, no_vcs_ignore=False, global=False)
+      creator CPython3Posix(dest=/home/user/myproject, clear=False, no_vcs_ignore=False, no_python_envs=False, global=False)
       seeder FromAppData(download=False, pip=bundle, setuptools=bundle, via=copy, app_data_dir=/home/user/.cache/virtualenv)
       activators BashActivator,CShellActivator,FishActivator,NushellActivator,PowerShellActivator,PythonActivator
 
@@ -40,8 +40,7 @@ of Python, pip, and other tools.
     $ grep python-version myproject/pyvenv.cfg
     python-version = 3.13
 
-That key tells an editor or a type checker which language version your code targets, and :doc:`../reference/files`
-covers the rest of the file.
+That key tells an editor or a type checker which language version your code targets.
 
 The interpreter answers to several names, so a script expecting any of them keeps working inside the environment:
 
@@ -50,7 +49,17 @@ The interpreter answers to several names, so a script expecting any of them keep
     $ ls myproject/bin/python*
     myproject/bin/python  myproject/bin/python3  myproject/bin/python3.13
 
-:doc:`../reference/environment-layout` lists the full set, which differs on Windows.
+Alongside the folder you get a ``.python-envs`` file naming the environment you just made:
+
+.. code-block:: console
+
+    $ cat .python-envs
+    myproject
+
+The same tools read that file to find the environment, so they can offer the right interpreter before you activate
+anything. Create a second environment here and its name joins the list, with the newest one last. Pass
+``--no-python-envs`` if you would rather virtualenv left no trace outside the environment folder.
+:doc:`../reference/environment-layout` lists every interpreter name, and :doc:`../reference/files` covers every file.
 
 **************************
  Activate the environment
@@ -251,6 +260,7 @@ In this tutorial, you learned how to:
 - Install packages in isolation from your system Python.
 - Save project dependencies with ``pip freeze``.
 - Reproduce environments using ``requirements.txt``.
+- Let editors find your environments through the ``.python-envs`` file.
 
 ************
  Next steps
@@ -261,3 +271,4 @@ Now that you understand the basics, explore these topics:
 - :doc:`../how-to/usage` for selecting specific Python versions, configuring defaults, and advanced usage patterns.
 - :doc:`../explanation` for understanding how virtualenv works under the hood and how it compares to ``venv``.
 - :doc:`../reference/cli` for all available command line options and flags.
+- :doc:`../reference/files` for every file virtualenv writes inside and beside an environment.
