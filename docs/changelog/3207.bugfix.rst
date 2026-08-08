@@ -1,0 +1,2 @@
+Make ``ListType.split_values`` return a ``list`` for string input instead of a ``filter`` object, so the result matches
+the annotated return type and can be iterated more than once - by :user:`darrenhuai`.
