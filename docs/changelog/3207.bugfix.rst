@@ -1,2 +1,2 @@
-Make ``ListType.split_values`` return a ``list`` for string input instead of a ``filter`` object, so the result matches
-the annotated return type and can be iterated more than once - by :user:`darrenhuai`.
+``ListType.split_values`` now returns a ``list`` for ``str`` input rather than a one-shot ``filter`` object, and decodes
+``bytes`` input so that it splits on commas and yields ``str`` values - by :user:`darrenhuai`.

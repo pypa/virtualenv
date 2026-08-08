@@ -61,21 +61,20 @@ class ListType(TypeData):
             result.extend(sub_values)
         return [self.as_type(i) for i in result]
 
-    def split_values(self, value: str | list[str]) -> list[str]:
+    def split_values(self, value: str | bytes | list[str]) -> list[str]:
         """Split the provided value into a list.
 
         First this is done by newlines. If there were no newlines in the text, then we next try to split by comma.
 
         """
+        if isinstance(value, bytes):
+            value = value.decode()
         if isinstance(value, str):
-            # Use `splitlines` rather than a custom check for whether there is
-            # more than one line. This ensures that the full `splitlines()`
-            # logic is supported here.
+            # `splitlines` rather than a manual newline check, so its full line-boundary logic applies.
             values = value.splitlines()
             if len(values) <= 1:
                 values = value.split(",")
-            return [stripped for stripped in (x.strip() for x in values) if stripped]
-
+            return [stripped for x in values if (stripped := x.strip())]
         return list(value)
 
 
