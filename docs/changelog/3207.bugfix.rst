@@ -1,2 +1,2 @@
-``ListType.split_values`` now returns a ``list`` for ``str`` input rather than a one-shot ``filter`` object, and decodes
-``bytes`` input so that it splits on commas and yields ``str`` values - by :user:`darrenhuai`.
+``ListType.split_values`` now returns a ``list`` you can iterate more than once, and accepts ``bytes`` input instead of
+raising ``TypeError`` - by :user:`darrenhuai`.
