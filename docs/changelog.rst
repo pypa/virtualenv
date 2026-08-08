@@ -7,6 +7,16 @@
 .. towncrier release notes start
 
 **********************
+ v21.7.3 (2026-08-08)
+**********************
+
+Bugfixes - 21.7.3
+=================
+
+- ``ListType.split_values`` now returns a ``list`` you can iterate more than once, and accepts ``bytes`` input instead
+  of raising ``TypeError`` - by :user:`darrenhuai`. (:issue:`3207`)
+
+**********************
  v21.7.2 (2026-08-07)
 **********************
 

@@ -1,2 +1,0 @@
-``ListType.split_values`` now returns a ``list`` you can iterate more than once, and accepts ``bytes`` input instead of
-raising ``TypeError`` - by :user:`darrenhuai`.
