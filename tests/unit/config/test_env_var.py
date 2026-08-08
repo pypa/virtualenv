@@ -7,6 +7,7 @@ import pytest
 from python_discovery import PythonInfo
 
 from virtualenv.config.cli.parser import VirtualEnvOptions
+from virtualenv.config.convert import ListType
 from virtualenv.config.ini import IniConfig
 from virtualenv.create.via_global_ref.builtin.cpython.common import is_macos_brew
 from virtualenv.run import session_via_cli
@@ -62,6 +63,25 @@ def test_python_multi_value_prefer_newline_via_env_var(monkeypatch) -> None:
     monkeypatch.setenv("VIRTUALENV_PYTHON", "python3\npython2,python27")
     session_via_cli(["venv"], options=options)
     assert options.python == ["python3", "python2,python27"]
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param("a,b,c", ["a", "b", "c"], id="comma"),
+        pytest.param("a\nb\nc", ["a", "b", "c"], id="newline"),
+        pytest.param("a\nb,c", ["a", "b,c"], id="newline_wins_over_comma"),
+        pytest.param(" a , b ", ["a", "b"], id="strips_whitespace"),
+        pytest.param("a\n\nb", ["a", "b"], id="drops_blank_lines"),
+        pytest.param("a", ["a"], id="single"),
+        pytest.param("", [], id="empty"),
+        pytest.param(b"a,b", ["a", "b"], id="bytes_comma"),
+        pytest.param(b"a\nb", ["a", "b"], id="bytes_newline"),
+        pytest.param(["a", "b"], ["a", "b"], id="list_passthrough"),
+    ],
+)
+def test_split_values(value, expected) -> None:
+    assert ListType(list, str).split_values(value) == expected
 
 
 def test_extra_search_dir_via_env_var(tmp_path, monkeypatch) -> None:

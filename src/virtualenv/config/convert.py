@@ -67,18 +67,15 @@ class ListType(TypeData):
         First this is done by newlines. If there were no newlines in the text, then we next try to split by comma.
 
         """
-        if isinstance(value, (str, bytes)):
-            # Use `splitlines` rather than a custom check for whether there is
-            # more than one line. This ensures that the full `splitlines()`
-            # logic is supported here.
+        if isinstance(value, bytes):
+            value = value.decode()
+        if isinstance(value, str):
+            # `splitlines` rather than a manual newline check, so its full line-boundary logic applies.
             values = value.splitlines()
             if len(values) <= 1:
-                values = value.split(",")  # ty: ignore[invalid-argument-type]
-            values = filter(None, [x.strip() for x in values])
-        else:
-            values = list(value)
-
-        return values  # ty: ignore[invalid-return-type]
+                values = value.split(",")
+            return [stripped for x in values if (stripped := x.strip())]
+        return list(value)
 
 
 def convert(value: str, as_type: TypeData, source: str) -> Any:  # ruff:ignore[any-type]
