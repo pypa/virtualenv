@@ -1,0 +1,3 @@
+Fix the type check against ``python-discovery`` 1.5.2, whose annotations allow a ``None`` ``prefix`` and integer
+``sysconfig_vars`` values: config var substitution now skips a missing prefix and locating the shared libpython
+requires string ``INSTSONAME``/``LIBDIR`` values.
