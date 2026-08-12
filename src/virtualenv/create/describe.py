@@ -66,9 +66,9 @@ class Describe:
 
     def _calc_config_vars(self, to: Path) -> dict[str, Any]:
         sys_vars = self.interpreter.sysconfig_vars
-        return {
-            k: (to if isinstance(v, str) and v.startswith(self.interpreter.prefix) else v) for k, v in sys_vars.items()
-        }
+        if (prefix := self.interpreter.prefix) is None:  # no prefix means no value can live under it
+            return dict(sys_vars)
+        return {k: (to if isinstance(v, str) and v.startswith(prefix) else v) for k, v in sys_vars.items()}
 
     @classmethod
     def can_describe(cls, interpreter: PythonInfo) -> bool:  # ruff:ignore[unused-class-method-argument]

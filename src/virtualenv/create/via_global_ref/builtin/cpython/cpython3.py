@@ -51,9 +51,9 @@ class CPython3Posix(CPythonPosix, CPython3):
     def _shared_libpython(cls, interpreter: PythonInfo) -> Path | None:
         if not interpreter.sysconfig_vars.get("Py_ENABLE_SHARED"):
             return None
-        if not (instsoname := interpreter.sysconfig_vars.get("INSTSONAME")):
+        if not isinstance(instsoname := interpreter.sysconfig_vars.get("INSTSONAME"), str) or not instsoname:
             return None
-        if not (libdir := interpreter.sysconfig_vars.get("LIBDIR")):
+        if not isinstance(libdir := interpreter.sysconfig_vars.get("LIBDIR"), str) or not libdir:
             return None
         if not (lib_path := Path(libdir) / instsoname).exists():
             return None
