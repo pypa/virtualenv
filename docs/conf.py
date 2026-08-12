@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -13,6 +14,7 @@ release = __version__
 copyright = f"2007-{datetime.now(tz=timezone.utc).year}, {company}, PyPA"  # ruff:ignore[builtin-variable-shadowing]
 
 extensions = [
+    "sphinx_llm.txt",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosectionlabel",
     "sphinx.ext.extlinks",
@@ -86,3 +88,6 @@ def setup(app) -> None:
     app.add_css_file("custom.css")
     app.add_directive(CliTable.name, CliTable)
     app.add_role("literal_data", literal_data)
+
+
+markdown_http_base = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
