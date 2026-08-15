@@ -88,10 +88,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin auto/upgrade-embedded-deps
-          git checkout auto/upgrade-embedded-deps
+          git checkout -B auto/upgrade-embedded-deps FETCH_HEAD
           mv docs/changelog/u.bugfix.rst "docs/changelog/${pr_number}.bugfix.rst"
           git add docs/changelog/
           git commit -m "Rename changelog to ${pr_number}.bugfix.rst"
-          git push
+          git push origin HEAD:auto/upgrade-embedded-deps
         env:
           STEPS_CPR_OUTPUTS_PULL_REQUEST_NUMBER: ${{ steps.cpr.outputs.pull-request-number }}
