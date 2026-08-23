@@ -14,25 +14,31 @@ def test_can_symlink_when_symlinks_not_enabled(mocker) -> None:
     assert api.ViaGlobalRefMeta().can_symlink is False
 
 
-def _exe_ref(mocker, mode: int) -> ExePathRefToDest:
-    """Build a ref whose source reports mode, so the permission bits behave the same on Windows and POSIX."""
+@pytest.fixture
+def exe_ref(mocker, request) -> ExePathRefToDest:
+    """A ref whose source reports the requested mode, so the permission bits behave the same on Windows and POSIX."""
     src = mocker.Mock()
     src.exists.return_value = True
-    src.stat.return_value = os.stat_result((mode, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+    src.stat.return_value = os.stat_result((request.param, 0, 0, 0, 0, 0, 0, 0, 0, 0))
     return ExePathRefToDest(src, targets=["python"], dest=mocker.Mock())
 
 
-@pytest.mark.parametrize("bit", [S_IXUSR, S_IXGRP, S_IXOTH])
-def test_can_run_with_execute_bit(mocker, bit) -> None:
-    assert _exe_ref(mocker, 0o644 | bit).can_run is True
+@pytest.mark.parametrize(
+    ("exe_ref", "expected"),
+    [
+        pytest.param(0o644 | S_IXUSR, True, id="user"),
+        pytest.param(0o644 | S_IXGRP, True, id="group"),
+        pytest.param(0o644 | S_IXOTH, True, id="other"),
+        pytest.param(0o644, False, id="none"),
+    ],
+    indirect=["exe_ref"],
+)
+def test_can_run_honours_every_execute_bit(exe_ref, expected) -> None:
+    assert exe_ref.can_run is expected
 
 
-def test_can_run_without_execute_bit(mocker) -> None:
-    assert _exe_ref(mocker, 0o644).can_run is False
-
-
-def test_can_run_is_cached(mocker) -> None:
-    ref = _exe_ref(mocker, 0o644)
-    assert ref.can_run is False
-    assert ref.can_run is False
-    assert ref.src.stat.call_count == 1
+@pytest.mark.parametrize("exe_ref", [pytest.param(0o644, id="none")], indirect=True)
+def test_can_run_is_cached(exe_ref) -> None:
+    assert exe_ref.can_run is False
+    assert exe_ref.can_run is False
+    assert exe_ref.src.stat.call_count == 1
