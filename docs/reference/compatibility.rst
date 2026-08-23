@@ -14,7 +14,7 @@ version is fully supported; previous patch versions work on a best effort basis.
 CPython
 =======
 
-``3.14 >= python_version >= 3.9``
+``3.15 >= python_version >= 3.9``
 
 PyPy
 ====
