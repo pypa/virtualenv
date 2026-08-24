@@ -8,6 +8,7 @@ from stat import S_IWUSR
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
@@ -59,17 +60,20 @@ def copytree(src: str, dest: str) -> None:
 
 
 def safe_delete(dest: Path) -> None:
-    def onerror(func: object, path: str, exc_info: object) -> None:  # ruff:ignore[unused-function-argument]
+    def onerror(func: Callable[[str], object], path: str, exc_info: object) -> None:
+        exc = exc_info[1] if isinstance(exc_info, tuple) else exc_info
+        if isinstance(exc, FileNotFoundError):
+            return
         if not os.access(path, os.W_OK):
             os.chmod(path, S_IWUSR)
-            func(path)  # ty: ignore[call-non-callable]
+            func(path)
         else:
             raise  # ruff:ignore[misplaced-bare-raise]
 
     if sys.version_info >= (3, 12):
-        shutil.rmtree(str(dest), ignore_errors=True, onexc=onerror)
+        shutil.rmtree(str(dest), onexc=onerror)
     else:
-        shutil.rmtree(str(dest), ignore_errors=True, onerror=onerror)
+        shutil.rmtree(str(dest), onerror=onerror)
 
 
 class _Debug:

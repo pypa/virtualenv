@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import concurrent.futures
 import os
+import sys
 import traceback
 import zipfile
+from stat import S_IREAD
 from typing import TYPE_CHECKING
 
 import pytest
@@ -11,6 +13,7 @@ import pytest
 from virtualenv.app_data import _cache_dir_with_migration, _default_app_data_dir
 from virtualenv.util import zipapp
 from virtualenv.util.lock import ReentrantFileLock
+from virtualenv.util.path import safe_delete
 from virtualenv.util.subprocess import run_cmd
 
 if TYPE_CHECKING:
@@ -22,6 +25,35 @@ def test_run_fail(tmp_path) -> None:
     assert err
     assert not out
     assert code
+
+
+def test_safe_delete_removes_read_only_files(tmp_path: Path) -> None:
+    target = tmp_path / "target"
+    nested = target / "sub"
+    nested.mkdir(parents=True)
+    # the wheel image marks its files read-only via set_tree, which on Windows blocks os.unlink
+    marked = nested / "wheel.py"
+    marked.write_text("cached")
+    marked.chmod(S_IREAD)
+
+    safe_delete(target)
+
+    assert not target.exists()
+
+
+def test_safe_delete_missing_path_is_noop(tmp_path: Path) -> None:
+    safe_delete(tmp_path / "does-not-exist")  # --reset-app-data before anything was cached
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="only Windows blocks deleting an open file")
+def test_safe_delete_surfaces_undeletable_entries(tmp_path: Path) -> None:
+    target = tmp_path / "target"
+    target.mkdir()
+    busy = target / "busy.txt"
+    busy.write_text("x")
+
+    with busy.open(), pytest.raises(OSError, match="busy"):
+        safe_delete(target)
 
 
 def test_reentrant_file_lock_is_thread_safe(tmp_path) -> None:
