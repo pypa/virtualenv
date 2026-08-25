@@ -1,2 +1,2 @@
-``ExePathRef.can_run`` now checks the group and other execute bits instead of only the owner one, and no longer returns
-``None`` from a ``bool`` property when none of them are set - by :user:`darrenhuai`.
+``ExePathRef.can_run`` now checks the group and other execute bits instead of only the owner one, and returns ``False``
+rather than ``None`` when a file carries none of the three - by :user:`darrenhuai`.
