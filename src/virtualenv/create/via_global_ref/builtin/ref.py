@@ -118,13 +118,8 @@ class ExePathRef(PathRef, ABC):
     def can_run(self) -> bool:
         if self._can_run is None:
             mode = self.src.stat().st_mode
-            for key in [S_IXUSR, S_IXGRP, S_IXOTH]:
-                if mode & key:
-                    self._can_run = True
-                break
-            else:
-                self._can_run = False
-        return self._can_run  # ty: ignore[invalid-return-type]
+            self._can_run = bool(mode & (S_IXUSR | S_IXGRP | S_IXOTH))
+        return self._can_run
 
 
 class PathRefToDest(PathRef):
