@@ -10,6 +10,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
+    from types import TracebackType
+
+    _ExcInfo = BaseException | tuple[type[BaseException], BaseException, TracebackType]
 
 LOGGER = logging.getLogger(__name__)
 
@@ -60,15 +63,16 @@ def copytree(src: str, dest: str) -> None:
 
 
 def safe_delete(dest: Path) -> None:
-    def onerror(func: Callable[[str], object], path: str, exc_info: object) -> None:
+    def onerror(func: Callable[[str], object], path: str, exc_info: _ExcInfo) -> None:
         exc = exc_info[1] if isinstance(exc_info, tuple) else exc_info
         if isinstance(exc, FileNotFoundError):
             return
-        if not os.access(path, os.W_OK):
-            os.chmod(path, S_IWUSR)
-            func(path)
-        else:
+        # rmtree also reports os.open/os.close/os.scandir/os.lstat; retrying one of those with a lone path raises
+        # TypeError over the real error, or deletes nothing while telling rmtree we handled the failure
+        if func not in {os.unlink, os.rmdir} or os.access(path, os.W_OK):
             raise  # ruff:ignore[misplaced-bare-raise]
+        os.chmod(path, os.lstat(path).st_mode | S_IWUSR)
+        func(path)
 
     if sys.version_info >= (3, 12):
         shutil.rmtree(str(dest), onexc=onerror)

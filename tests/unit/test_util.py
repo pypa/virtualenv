@@ -5,7 +5,7 @@ import os
 import sys
 import traceback
 import zipfile
-from stat import S_IREAD
+from stat import S_IEXEC, S_IREAD, S_IRGRP, S_IRWXU, S_IWUSR
 from typing import TYPE_CHECKING
 
 import pytest
@@ -54,6 +54,38 @@ def test_safe_delete_surfaces_undeletable_entries(tmp_path: Path) -> None:
 
     with busy.open(), pytest.raises(OSError, match="busy"):
         safe_delete(target)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows deletion ignores directory permissions")
+def test_safe_delete_raises_the_original_error_not_a_retry_failure(tmp_path: Path) -> None:
+    target = tmp_path / "target"
+    blocked = target / "sub"
+    blocked.mkdir(parents=True)
+    (blocked / "wheel.py").write_text("cached")
+    blocked.chmod(0o000)  # rmtree reports this one through os.open, which takes more than a path
+
+    try:
+        with pytest.raises(PermissionError):
+            safe_delete(target)
+    finally:
+        blocked.chmod(S_IRWXU)
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="Windows deletion ignores directory permissions")
+def test_safe_delete_keeps_the_other_mode_bits_when_clearing_read_only(tmp_path: Path) -> None:
+    target = tmp_path / "target"
+    target.mkdir()
+    blocked = target / "wheel.py"
+    blocked.write_text("cached")
+    blocked.chmod(S_IREAD | S_IRGRP)
+    target.chmod(S_IREAD | S_IEXEC)  # the unlink fails, so the mode the handler left behind stays observable
+
+    try:
+        with pytest.raises(PermissionError):
+            safe_delete(target)
+        assert blocked.stat().st_mode & 0o777 == S_IREAD | S_IRGRP | S_IWUSR
+    finally:
+        target.chmod(S_IRWXU)
 
 
 def test_reentrant_file_lock_is_thread_safe(tmp_path) -> None:
