@@ -1,0 +1,4 @@
+``safe_delete`` no longer passes ``ignore_errors=True`` to ``shutil.rmtree``, which was replacing its own
+chmod-and-retry error handler with a no-op. Read-only files - which is every file in a wheel image, marked by
+``set_tree`` - were left behind and the failure was swallowed, so ``--reset-app-data`` and ``--clear`` could silently
+keep the tree they reported deleting - by :user:`darrenhuai`.
