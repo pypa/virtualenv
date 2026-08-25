@@ -7,6 +7,24 @@
 .. towncrier release notes start
 
 **********************
+ v21.7.5 (2026-08-25)
+**********************
+
+Bugfixes - 21.7.5
+=================
+
+- Fix the type check against ``python-discovery`` 1.5.2, whose annotations allow a ``None`` ``prefix`` and integer
+  ``sysconfig_vars`` values: config var substitution now skips a missing prefix and locating the shared libpython
+  requires string ``INSTSONAME``/``LIBDIR`` values. (:issue:`3211`)
+- ``ExePathRef.can_run`` now checks the group and other execute bits instead of only the owner one, and returns
+  ``False`` rather than ``None`` when a file carries none of the three - by :user:`darrenhuai`. (:issue:`3217`)
+- ``safe_delete`` no longer passes ``ignore_errors=True`` to ``shutil.rmtree``, which replaced its own chmod-and-retry
+  handler with a no-op and swallowed every failure. Read-only files - every file in a wheel image, which ``set_tree``
+  marks - survived, so ``--reset-app-data`` and ``--clear`` kept trees they reported deleting. The handler now retries
+  only the deletion itself, keeps the other mode bits, and raises the original error for anything it cannot clear - by
+  :user:`darrenhuai`. (:issue:`3222`)
+
+**********************
  v21.7.4 (2026-08-10)
 **********************
 
