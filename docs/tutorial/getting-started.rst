@@ -33,6 +33,16 @@ Let's create a virtual environment called ``myproject``:
 This creates a new directory called ``myproject`` containing a complete, isolated Python environment with its own copy
 of Python, pip, and other tools.
 
+``pyvenv.cfg`` inside it records which Python the environment came from:
+
+.. code-block:: console
+
+    $ grep python-version myproject/pyvenv.cfg
+    python-version = 3.13
+
+That key tells an editor or a type checker which language version your code targets, and :doc:`../reference/files`
+covers the rest of the file.
+
 The interpreter answers to several names, so a script expecting any of them keeps working inside the environment:
 
 .. code-block:: console
