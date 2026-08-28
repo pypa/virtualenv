@@ -1,2 +1,0 @@
-Bump the ``python-discovery`` minimum to ``>=1.6`` for ``PythonInfo.system_exe``, which reports the system interpreter
-without the nullable typing of ``system_executable`` - by :user:`gaborbernat`.

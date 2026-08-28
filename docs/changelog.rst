@@ -7,6 +7,23 @@
 .. towncrier release notes start
 
 **********************
+ v21.7.7 (2026-08-28)
+**********************
+
+Bugfixes - 21.7.7
+=================
+
+- Bump the ``python-discovery`` minimum to ``>=1.6`` for ``PythonInfo.system_exe``, which reports the system interpreter
+  without the nullable typing of ``system_executable`` - by :user:`gaborbernat`. (:issue:`3224`)
+
+Improved Documentation - 21.7.7
+===============================
+
+- Document the names the interpreter answers to inside a created environment. A new :doc:`reference/environment-layout`
+  page lists them per platform, the tutorial and the usage guide point at it, and the explanation of creators covers why
+  an environment carries several names and why Windows copies a redirector - by :user:`gaborbernat`. (:issue:`3225`)
+
+**********************
  v21.7.6 (2026-08-28)
 **********************
 
