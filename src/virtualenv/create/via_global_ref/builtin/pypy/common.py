@@ -22,7 +22,7 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin, abc.ABC):
 
     @classmethod
     def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], str, str]]:
-        host = Path(interpreter.system_executable)  # ty: ignore[invalid-argument-type]
+        host = Path(interpreter.system_exe)
         targets = sorted(f"{name}{PyPy.suffix}" for name in cls.exe_names(interpreter))
         yield host, targets, RefMust.NA, RefWhen.ANY
 
@@ -48,7 +48,7 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin, abc.ABC):
     @classmethod
     def _add_shared_libs(cls, interpreter: PythonInfo) -> Generator[Path]:
         # https://bitbucket.org/pypy/pypy/issue/1922/future-proofing-virtualenv
-        python_dir = Path(interpreter.system_executable).resolve().parent  # ty: ignore[invalid-argument-type]
+        python_dir = Path(interpreter.system_exe).resolve().parent
         yield from cls._shared_libs(python_dir)
 
     @classmethod

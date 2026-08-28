@@ -31,7 +31,7 @@ class CPythonPosix(CPython, PosixSupports, ABC):
 
     @classmethod
     def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], str, str]]:
-        host_exe = Path(interpreter.system_executable)  # ty: ignore[invalid-argument-type]
+        host_exe = Path(interpreter.system_exe)
         minor = interpreter.version_info.minor
         names = [
             "python",
@@ -57,7 +57,7 @@ class CPythonWindows(CPython, WindowsSupports, ABC):
             "python3.exe",
             "python3",
             # host is the venvlauncher shim on CPython 3.13+, so the alias comes from the interpreter, not from host
-            Path(interpreter.system_executable).name,  # ty: ignore[invalid-argument-type]
+            Path(interpreter.system_exe).name,
             *((f"python3.{minor}t.exe",) if interpreter.free_threaded else ()),
         }
         for path in (host.parent / n for n in names):
@@ -73,7 +73,7 @@ class CPythonWindows(CPython, WindowsSupports, ABC):
 
     @classmethod
     def host_python(cls, interpreter: PythonInfo) -> Path:
-        return Path(interpreter.system_executable)  # ty: ignore[invalid-argument-type]
+        return Path(interpreter.system_exe)
 
 
 def is_mac_os_framework(interpreter: PythonInfo) -> bool:

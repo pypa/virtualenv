@@ -16,7 +16,7 @@ def handle_store_python(meta: ViaGlobalRefMeta, interpreter: PythonInfo) -> ViaG
 
 
 def is_store_python(interpreter: PythonInfo) -> bool:
-    parts = Path(interpreter.system_executable).parts  # ty: ignore[invalid-argument-type]
+    parts = Path(interpreter.system_exe).parts
     return (
         len(parts) > 4  # ruff:ignore[magic-value-comparison]
         and parts[-4] == "Microsoft"

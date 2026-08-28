@@ -150,7 +150,7 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     def dll_and_pyd(cls, interpreter: PythonInfo) -> Generator[PathRefToDest]:
-        folders = [Path(interpreter.system_executable).parent]  # ty: ignore[invalid-argument-type]
+        folders = [Path(interpreter.system_exe).parent]
 
         # May be missing on some Python hosts.
         # See https://github.com/pypa/virtualenv/issues/2368
