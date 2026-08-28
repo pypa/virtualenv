@@ -1,4 +1,4 @@
-On Windows the CPython 3.13+ ``venvlauncher.exe`` shim is no longer copied into ``Scripts`` under its own name, and the
-interpreter's file name is exposed again when a shim stands in for it. ``_executables`` took its target names from
-``host_python``, which returns the shim rather than the interpreter, so every environment gained a stray copy of the
-launcher and a host such as ``python_d.exe`` lost its alias - by :user:`darrenhuai`.
+On Windows, ``virtualenv`` no longer copies the CPython 3.13+ ``venvlauncher.exe`` shim into ``Scripts`` under the
+shim's own name, and a host such as ``python_d.exe`` gets its alias back. The alias set took its names from the shim
+that stands in for the interpreter, so every environment gained a stray launcher copy and lost the interpreter's own
+file name - by :user:`darrenhuai`.

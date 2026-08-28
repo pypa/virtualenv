@@ -51,15 +51,13 @@ class CPythonWindows(CPython, WindowsSupports, ABC):
         # - https://bugs.python.org/issue42013
         # - venv
         host = cls.host_python(interpreter)
-        # host may be a launcher shim instead of the interpreter (CPython 3.13+ ships venvlauncher.exe), so the
-        # name we expose has to come from the interpreter, otherwise the shim's own name leaks into the venv
-        exe_name = Path(interpreter.system_executable).name  # ty: ignore[invalid-argument-type]
         minor = interpreter.version_info.minor
         names = {
             "python.exe",
             "python3.exe",
             "python3",
-            exe_name,
+            # host is the venvlauncher shim on CPython 3.13+, so the alias comes from the interpreter, not from host
+            Path(interpreter.system_executable).name,  # ty: ignore[invalid-argument-type]
             *((f"python3.{minor}t.exe",) if interpreter.free_threaded else ()),
         }
         for path in (host.parent / n for n in names):
