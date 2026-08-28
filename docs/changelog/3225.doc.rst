@@ -1,4 +1,3 @@
-Document the names the interpreter answers to inside a created environment. A new
-:doc:`reference/environment-layout` page lists them per platform, the tutorial and the usage guide point at it, and the
-explanation of creators covers why an environment carries several names and why Windows copies a redirector - by
-:user:`gaborbernat`.
+Document the names the interpreter answers to inside a created environment. A new :doc:`reference/environment-layout`
+page lists them per platform, the tutorial and the usage guide point at it, and the explanation of creators covers why
+an environment carries several names and why Windows copies a redirector - by :user:`gaborbernat`.
