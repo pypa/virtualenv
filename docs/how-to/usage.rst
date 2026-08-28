@@ -336,6 +336,25 @@ For distribution maintainers
 Patch the ``virtualenv.seed.wheels.embed`` module and set ``PERIODIC_UPDATE_ON_BY_DEFAULT`` to ``False`` to disable
 periodic updates by default. See :doc:`../explanation` for implementation details.
 
+*******************************************
+ Find out which Python an environment uses
+*******************************************
+
+Read ``python-version`` out of ``pyvenv.cfg`` rather than running the environment's interpreter, which costs a
+subprocess and fails when the base Python has been removed:
+
+.. code-block:: python
+
+    from configparser import ConfigParser
+    from pathlib import Path
+
+    parser = ConfigParser()
+    parser.read_string("[cfg]\n" + Path("env/pyvenv.cfg").read_text(encoding="utf-8"))
+    parser["cfg"]["python-version"]  # '3.14'
+
+``pyvenv.cfg`` has no section header, hence the prefix. The key holds the feature release only; reach for ``version``
+when you need the patch level too.
+
 **********************
  Use from Python code
 **********************
