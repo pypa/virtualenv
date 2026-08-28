@@ -326,6 +326,19 @@ Creators are responsible for constructing the virtual environment structure. vir
 virtualenv defaults to using the builtin creator if one is available for the target environment, falling back to the
 venv creator otherwise.
 
+Whichever creator runs, the interpreter ends up reachable under several names, listed in
+:doc:`reference/environment-layout`. Tools reach for different ones - a shebang may say ``python``, a CI job may call
+the versioned name - and an environment offering only one of them would break the others. The builtin creators take the
+version-bearing names from the target interpreter and add the host executable's own file name, so a host called
+``pypy3.11`` or ``python_d.exe`` stays reachable under the name its callers already use.
+
+Windows copies rather than symlinks, because symlinking the interpreter there is unreliable (`bpo-42013
+<https://bugs.python.org/issue42013>`_). From CPython 3.13 the file copied is the ``venvlauncher.exe`` redirector out of
+the host's standard library rather than the interpreter itself. The redirector reads ``pyvenv.cfg`` and hands off to the
+base prefix, which saves copying the DLLs and the standard library zip into every environment. Which name a copy carries
+makes no difference to where it lands, since the redirector resolves its target from a value compiled into it rather
+than from its own file name.
+
 *********
  Seeders
 *********
