@@ -7,6 +7,18 @@
 .. towncrier release notes start
 
 **********************
+ v21.7.6 (2026-08-28)
+**********************
+
+Bugfixes - 21.7.6
+=================
+
+- On Windows, ``virtualenv`` no longer copies the CPython 3.13+ ``venvlauncher.exe`` shim into ``Scripts`` under the
+  shim's own name, and a host such as ``python_d.exe`` gets its alias back. The alias set took its names from the shim
+  that stands in for the interpreter, so every environment gained a stray launcher copy and lost the interpreter's own
+  file name - by :user:`darrenhuai`. (:issue:`3223`)
+
+**********************
  v21.7.5 (2026-08-25)
 **********************
 
