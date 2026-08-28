@@ -33,6 +33,15 @@ Let's create a virtual environment called ``myproject``:
 This creates a new directory called ``myproject`` containing a complete, isolated Python environment with its own copy
 of Python, pip, and other tools.
 
+The interpreter answers to several names, so a script expecting any of them keeps working inside the environment:
+
+.. code-block:: console
+
+    $ ls myproject/bin/python*
+    myproject/bin/python  myproject/bin/python3  myproject/bin/python3.13
+
+:doc:`../reference/environment-layout` lists the full set, which differs on Windows.
+
 **************************
  Activate the environment
 **************************

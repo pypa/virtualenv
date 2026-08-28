@@ -115,6 +115,7 @@ Learn more about virtualenv from these community resources:
 
     reference/compatibility
     reference/cli
+    reference/environment-layout
     reference/api
 
 .. toctree::

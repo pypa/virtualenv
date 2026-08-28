@@ -167,6 +167,10 @@ Use the environment without activating it by calling executables with their full
     $ venv/bin/python script.py
     $ venv/bin/pip install package
 
+``python3`` and ``python3.13`` reach the same interpreter, and on Windows the executables live in ``venv\Scripts`` under
+``.exe`` names. Reach for ``pythonw.exe`` there when you want a process without a console window.
+:doc:`../reference/environment-layout` lists every name.
+
 Customize prompt
 ================
 
