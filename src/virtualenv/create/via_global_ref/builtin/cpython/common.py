@@ -56,7 +56,8 @@ class CPythonWindows(CPython, WindowsSupports, ABC):
             "python.exe",
             "python3.exe",
             "python3",
-            host.name,
+            # host is the venvlauncher shim on CPython 3.13+, so the alias comes from the interpreter, not from host
+            Path(interpreter.system_executable).name,  # ty: ignore[invalid-argument-type]
             *((f"python3.{minor}t.exe",) if interpreter.free_threaded else ()),
         }
         for path in (host.parent / n for n in names):

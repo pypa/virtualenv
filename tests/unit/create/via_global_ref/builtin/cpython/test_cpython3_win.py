@@ -138,6 +138,35 @@ def test_debug_build_shim(py_info, mock_files) -> None:
     assert contains_exe(sources, shim)
 
 
+@pytest.mark.parametrize(
+    ("py_info_name", "shim_name"),
+    [
+        pytest.param("cpython3_win_debug", "venvlauncher_d.exe", id="debug"),
+        pytest.param("cpython3_win_free_threaded", "venvlaunchert.exe", id="free-threaded"),
+    ],
+)
+def test_shim_not_copied_under_its_own_name(py_info, mock_files, shim_name: str) -> None:
+    shim = path(py_info.system_stdlib, f"venv\\scripts\\nt\\{shim_name}")
+    mock_files(CPYTHON3_PATH, [shim])
+    sources = tuple(CPython3Windows.sources(interpreter=py_info))
+    assert not contains_exe(sources, shim, shim_name)
+
+
+@pytest.mark.parametrize(
+    ("py_info_name", "shim_name", "exe_name"),
+    [
+        pytest.param("cpython3_win_debug", "venvlauncher_d.exe", "python_d.exe", id="3.13 debug build"),
+        pytest.param("cpython3_win_embed", "python.exe", "python666.exe", id="pre-3.13 renamed host"),
+    ],
+)
+def test_shim_exposes_the_interpreter_exe_name(py_info, mock_files, shim_name: str, exe_name: str) -> None:
+    py_info.system_executable = path(py_info.prefix, exe_name)
+    shim = path(py_info.system_stdlib, f"venv\\scripts\\nt\\{shim_name}")
+    mock_files(CPYTHON3_PATH, [shim])
+    sources = tuple(CPython3Windows.sources(interpreter=py_info))
+    assert contains_exe(sources, shim, exe_name)
+
+
 @pytest.mark.parametrize("py_info_name", ["cpython3_win_debug"])
 def test_debug_build_uses_venvlauncher(py_info, mock_files) -> None:
     launcher = path(py_info.prefix, "venvlauncher_d.exe")
