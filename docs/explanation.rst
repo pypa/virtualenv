@@ -328,7 +328,7 @@ venv creator otherwise.
 
 Whichever creator runs, the interpreter ends up reachable under several names, listed in
 :doc:`reference/environment-layout`. Tools reach for different ones - a shebang may say ``python``, a CI job may call
-``python3.14`` - and an environment offering only one of them would break the others. The builtin creators take the
+the versioned name - and an environment offering only one of them would break the others. The builtin creators take the
 version-bearing names from the target interpreter and add the host executable's own file name, so a host called
 ``pypy3.11`` or ``python_d.exe`` stays reachable under the name its callers already use.
 
