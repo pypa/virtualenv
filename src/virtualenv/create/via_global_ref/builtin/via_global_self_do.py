@@ -126,7 +126,7 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
         super().set_pyenv_cfg()
         self.pyenv_cfg["base-prefix"] = self.interpreter.system_prefix
         self.pyenv_cfg["base-exec-prefix"] = self.interpreter.system_exec_prefix
-        self.pyenv_cfg["base-executable"] = self.interpreter.system_executable  # ty: ignore[invalid-assignment]
+        self.pyenv_cfg["base-executable"] = self.interpreter.system_exe
 
 
 __all__ = [

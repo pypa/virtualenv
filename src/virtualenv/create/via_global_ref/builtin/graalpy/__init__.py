@@ -40,14 +40,14 @@ class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
 
     @classmethod
     def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], RefMust, RefWhen], None, None]:  # ty: ignore[invalid-method-override]
-        host = Path(interpreter.system_executable)  # ty: ignore[invalid-argument-type]
+        host = Path(interpreter.system_exe)
         targets = sorted(f"{name}{cls.suffix}" for name in cls.exe_names(interpreter))
         yield host, targets, RefMust.NA, RefWhen.ANY
 
     @classmethod
     def sources(cls, interpreter: PythonInfo) -> Generator[PathRefToDest]:  # ty: ignore[invalid-method-override]
         yield from super().sources(interpreter)
-        python_dir = Path(interpreter.system_executable).resolve().parent  # ty: ignore[invalid-argument-type]
+        python_dir = Path(interpreter.system_exe).resolve().parent
         if python_dir.name in {"bin", "Scripts"}:
             python_dir = python_dir.parent
 
@@ -90,7 +90,7 @@ class GraalPyWindows(GraalPy, WindowsSupports):
     def set_pyenv_cfg(self) -> None:
         # GraalPy needs an additional entry in pyvenv.cfg on Windows
         super().set_pyenv_cfg()
-        self.pyenv_cfg["venvlauncher_command"] = self.interpreter.system_executable  # ty: ignore[invalid-assignment]
+        self.pyenv_cfg["venvlauncher_command"] = self.interpreter.system_exe
 
 
 __all__ = [

@@ -1,0 +1,3 @@
+Read the system interpreter through ``PythonInfo.system_exe``, which python-discovery narrows to ``str``, in place of
+the nullable ``system_executable``. That drops the twelve type-checker suppressions the creators carried for it - by
+:user:`gaborbernat`.
