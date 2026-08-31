@@ -138,17 +138,7 @@ commands = [
 description = "run type checker (ty) against Python 3.14"
 dependency_groups = [ "type" ]
 commands = [
-  [
-    "python",
-    "-m",
-    "ty",
-    "check",
-    "src/virtualenv",
-    "--python-version",
-    "3.14",
-    "--output-format",
-    "concise"
-  ]
+  [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.14", "--output-format", "concise" ]
 ]
 
 [env.dev]
@@ -166,6 +156,11 @@ deps = [ "gitpython>=3.1.44", "packaging>=25", "pre-commit-uv>=4.1.4", "towncrie
 change_dir = "{tox_root}{/}tasks"
 commands = [ [ "python", "release.py", { replace = "posargs", extend = true } ] ]
 
+[env."type-3.9"]
+description = "run type checker (ty) against Python 3.9"
+commands = [ [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.9" ] ]
+base = [ "type" ]
+
 [env.upgrade]
 description = "upgrade pip/wheels/setuptools to latest"
 skip_install = true
@@ -181,8 +176,3 @@ skip_install = true
 deps = [ "packaging>=25" ]
 commands = [ [ "python", "tasks/make_zipapp.py" ] ]
 uv_seed = true
-
-[env."type-3.9"]
-description = "run type checker (ty) against Python 3.9"
-commands = [ [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.9" ] ]
-base = [ "type" ]
