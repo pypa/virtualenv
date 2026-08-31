@@ -199,15 +199,16 @@ lint.per-file-ignores."src/virtualenv/activation/python/activate_this.py" = [
   "F821", # ignore undefined template string placeholders
 ]
 lint.per-file-ignores."tests/**/*.py" = [
-  "ANN",     # don't require type annotations in tests (pytest fixtures make this impractical)
-  "D",       # don't care about documentation in tests
-  "FBT",     # don't care about booleans as positional arguments in tests
-  "INP001",  # no implicit namespace
-  "PLC2701", # Private import
-  "PLR2004", # Magic value used in comparison, consider replacing with a constant variable
-  "S101",    # asserts allowed in tests
-  "S603",    # `subprocess` call: check for execution of untrusted input
-  "S607",    # partial executable path is fine in tests
+  "ANN",                    # don't require type annotations in tests (pytest fixtures make this impractical)
+  "D",                      # don't care about documentation in tests
+  "FBT",                    # don't care about booleans as positional arguments in tests
+  "INP001",                 # no implicit namespace
+  "PLC2701",                # Private import
+  "PLR2004",                # Magic value used in comparison, consider replacing with a constant variable
+  "pytest-fixture-autouse", # shared setup fixtures are meant to apply to every test
+  "S101",                   # asserts allowed in tests
+  "S603",                   # `subprocess` call: check for execution of untrusted input
+  "S607",                   # partial executable path is fine in tests
 ]
 lint.isort = { known-first-party = [
   "virtualenv",
