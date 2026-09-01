@@ -112,5 +112,7 @@ if ($r2.exit_code == 0) {{ error make {{ msg: "expected deactivate to fail for c
 if not ("not an active overlay" in $r2.stderr) {{ error make {{ msg: "overlay error missing" }} }}
 if not ("overlay hide NAME" in $r2.stderr) {{ error make {{ msg: "hint missing for custom name" }} }}
 """
-    result = subprocess.run([nu, "--commands", script], capture_output=True, text=True, timeout=60, check=False)
+    result = subprocess.run(
+        [nu, "--commands", script], capture_output=True, text=True, encoding="utf-8", timeout=60, check=False
+    )
     assert result.returncode == 0, result.stderr

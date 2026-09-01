@@ -269,7 +269,7 @@ def test_safe_extract_zip_allows_normal_entry(tmp_path: Path) -> None:
     with zipfile.ZipFile(str(archive)) as zip_ref:
         _safe_extract_zip(zip_ref, target)
 
-    assert (target / "pkg" / "inner.txt").read_text() == "payload"
+    assert (target / "pkg" / "inner.txt").read_text(encoding="utf-8") == "payload"
 
 
 def test_safe_extract_zip_rejects_parent_traversal(tmp_path: Path) -> None:

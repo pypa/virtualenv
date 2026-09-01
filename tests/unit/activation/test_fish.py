@@ -77,7 +77,9 @@ def test_fish_prompt_survives_shadowed_source(activation_python, tmp_path) -> No
         f"cd '{start}'\nfunction . ; cd '{trap}' ; end\nsource '{script}'\nfish_prompt\necho \"PWD=$PWD\"\n",
         encoding="utf-8",
     )
-    out = subprocess.run([FISH, str(driver)], capture_output=True, text=True, timeout=60, check=True).stdout
+    out = subprocess.run(
+        [FISH, str(driver)], capture_output=True, text=True, encoding="utf-8", timeout=60, check=True
+    ).stdout
     assert f"PWD={start}\n" in out, out
 
 
