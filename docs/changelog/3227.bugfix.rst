@@ -1,0 +1,3 @@
+A missing source needed by both install modes now disables the builtin creator through ``meta.error``. The check
+compared ``RefWhen`` values against ``RefMust`` members, so creation went on to fail with a ``FileNotFoundError`` or a
+dangling symlink - by :user:`darrenhuai`.

@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 from virtualenv.create.via_global_ref.api import ViaGlobalRefApi, ViaGlobalRefMeta
 from virtualenv.create.via_global_ref.builtin.ref import (
     ExePathRefToDest,
-    RefMust,
     RefWhen,
 )
 from virtualenv.util.path import ensure_dir
@@ -58,11 +57,11 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
                     meta.symlink_error = f"cannot symlink {src}"
             else:
                 msg = f"missing required file {src}"
-                if src.when == RefMust.NA:
+                if src.when == RefWhen.ANY:
                     meta.error = msg
-                elif src.when == RefMust.COPY:
+                elif src.when == RefWhen.COPY:
                     meta.copy_error = msg
-                elif src.when == RefMust.SYMLINK:
+                elif src.when == RefWhen.SYMLINK:
                     meta.symlink_error = msg
             if not meta.can_copy and not meta.can_symlink:
                 meta.error = f"neither copy or symlink supported, copy: {meta.copy_error} symlink: {meta.symlink_error}"
