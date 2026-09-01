@@ -50,9 +50,9 @@ def test_safe_delete_surfaces_undeletable_entries(tmp_path: Path) -> None:
     target = tmp_path / "target"
     target.mkdir()
     busy = target / "busy.txt"
-    busy.write_text("x")
+    busy.write_text("x", encoding="utf-8")
 
-    with busy.open(), pytest.raises(OSError, match="busy"):
+    with busy.open(encoding="utf-8"), pytest.raises(OSError, match="busy"):
         safe_delete(target)
 
 
