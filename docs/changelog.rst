@@ -7,6 +7,17 @@
 .. towncrier release notes start
 
 **********************
+ v21.7.8 (2026-09-01)
+**********************
+
+Bugfixes - 21.7.8
+=================
+
+- A missing source needed by both install modes now disables the builtin creator through ``meta.error``. The check
+  compared ``RefWhen`` values against ``RefMust`` members, so creation went on to fail with a ``FileNotFoundError`` or a
+  dangling symlink - by :user:`darrenhuai`. (:issue:`3227`)
+
+**********************
  v21.7.7 (2026-08-28)
 **********************
 
