@@ -33,7 +33,7 @@ def test_safe_delete_removes_read_only_files(tmp_path: Path) -> None:
     nested.mkdir(parents=True)
     # the wheel image marks its files read-only via set_tree, which on Windows blocks os.unlink
     marked = nested / "wheel.py"
-    marked.write_text("cached")
+    marked.write_text("cached", encoding="utf-8")
     marked.chmod(S_IREAD)
 
     safe_delete(target)
@@ -61,7 +61,7 @@ def test_safe_delete_raises_the_original_error_not_a_retry_failure(tmp_path: Pat
     target = tmp_path / "target"
     blocked = target / "sub"
     blocked.mkdir(parents=True)
-    (blocked / "wheel.py").write_text("cached")
+    (blocked / "wheel.py").write_text("cached", encoding="utf-8")
     blocked.chmod(0o000)  # rmtree reports this one through os.open, which takes more than a path
 
     try:
@@ -76,7 +76,7 @@ def test_safe_delete_keeps_the_other_mode_bits_when_clearing_read_only(tmp_path:
     target = tmp_path / "target"
     target.mkdir()
     blocked = target / "wheel.py"
-    blocked.write_text("cached")
+    blocked.write_text("cached", encoding="utf-8")
     blocked.chmod(S_IREAD | S_IRGRP)
     target.chmod(S_IREAD | S_IEXEC)  # the unlink fails, so the mode the handler left behind stays observable
 
@@ -125,7 +125,7 @@ class TestCacheDirMigration:
         old_dir = str(tmp_path / "old-data")
         new_dir = str(tmp_path / "new-cache")
         os.makedirs(old_dir)
-        (tmp_path / "old-data" / "test.txt").write_text("hello")
+        (tmp_path / "old-data" / "test.txt").write_text("hello", encoding="utf-8")
 
         monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: new_dir)
         monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: old_dir)
@@ -134,7 +134,7 @@ class TestCacheDirMigration:
         assert result == new_dir
         assert os.path.isdir(new_dir)
         assert not os.path.isdir(old_dir)
-        assert (tmp_path / "new-cache" / "test.txt").read_text() == "hello"
+        assert (tmp_path / "new-cache" / "test.txt").read_text(encoding="utf-8") == "hello"
 
     def test_no_migration_when_old_missing(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         old_dir = str(tmp_path / "old-data")
@@ -152,7 +152,7 @@ class TestCacheDirMigration:
         new_dir = str(tmp_path / "new-cache")
         os.makedirs(old_dir)
         os.makedirs(new_dir)
-        (tmp_path / "old-data" / "old.txt").write_text("old")
+        (tmp_path / "old-data" / "old.txt").write_text("old", encoding="utf-8")
 
         monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: new_dir)
         monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: old_dir)
@@ -199,7 +199,7 @@ class TestCacheDirMigration:
         wheel_img = tmp_path / "old-data" / "wheel" / "3.12" / "image" / "pip"
         wheel_img.mkdir(parents=True)
         (wheel_img / "pip.dist-info").mkdir()
-        (wheel_img / "pip.dist-info" / "METADATA").write_text("Name: pip")
+        (wheel_img / "pip.dist-info" / "METADATA").write_text("Name: pip", encoding="utf-8")
 
         venv_dir = tmp_path / "my-venv" / "lib" / "site-packages"
         venv_dir.mkdir(parents=True)

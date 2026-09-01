@@ -824,7 +824,7 @@ def test_pyenv_cfg_preserves_symlinks(tmp_path) -> None:
     real_dir = tmp_path / "real_directory"
     real_dir.mkdir()
     real_file = real_dir / "some_file.txt"
-    real_file.write_text("test")
+    real_file.write_text("test", encoding="utf-8")
 
     symlink_dir = tmp_path / "symlink_directory"
     try:
@@ -839,7 +839,7 @@ def test_pyenv_cfg_preserves_symlinks(tmp_path) -> None:
     cfg["test_path"] = symlink_path
     cfg.write()
 
-    written_content = cfg_path.read_text()
+    written_content = cfg_path.read_text(encoding="utf-8")
     expected_abspath = os.path.abspath(symlink_path)
     expected_realpath = os.path.realpath(symlink_path)
 
