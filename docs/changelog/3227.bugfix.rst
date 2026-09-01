@@ -1,0 +1,4 @@
+A source file that both install modes need but that is missing on the host now disables the builtin creator through
+``meta.error`` instead of slipping into its sources. The missing-file check compared ``RefWhen`` values against
+``RefMust`` members, so the ``ANY`` arm never matched and creation went on to fail with a ``FileNotFoundError`` from
+``copy`` - or a dangling symlink - rather than falling back cleanly - by :user:`darrenhuai`.
