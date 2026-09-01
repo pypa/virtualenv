@@ -112,7 +112,7 @@ The output should list ``pyenv`` as an available discovery mechanism. You can no
 
     $ virtualenv --discovery=pyenv myenv
     created virtual environment CPython3.11.0.final.0-64 in 234ms
-      creator CPython3Posix(dest=/path/to/myenv, clear=False, no_vcs_ignore=False, global=False)
+      creator CPython3Posix(dest=/path/to/myenv, clear=False, no_vcs_ignore=False, no_python_envs=False, global=False)
       seeder FromAppData(download=False, pip=bundle, setuptools=bundle, wheel=bundle, via=copy, app_data_dir=/path)
         added seed packages: pip==23.0, setuptools==65.5.0, wheel==0.38.4
       activators BashActivator,CShellActivator,FishActivator,NushellActivator,PowerShellActivator,PythonActivator
