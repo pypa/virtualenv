@@ -98,7 +98,7 @@ def test_bash_activate_relocation_resolves_virtual_env(tmp_path, current_fastest
         capture_output=True,
         text=True,
         cwd=str(work_dir),
-        encoding = "utf-8"
+        encoding="utf-8",
     )
     assert result.returncode == 0
     assert result.stdout.strip() == str(relocated)
