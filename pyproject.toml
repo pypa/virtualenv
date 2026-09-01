@@ -65,16 +65,28 @@ entry-points."virtualenv.activate".nushell = "virtualenv.activation.nushell:Nush
 entry-points."virtualenv.activate".powershell = "virtualenv.activation.powershell:PowerShellActivator"
 entry-points."virtualenv.activate".python = "virtualenv.activation.python:PythonActivator"
 entry-points."virtualenv.activate".xonsh = "virtualenv.activation.xonsh:XonshActivator"
-entry-points."virtualenv.create".cpython3-mac-brew = "virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython3macOsBrew"
-entry-points."virtualenv.create".cpython3-mac-framework = "virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython3macOsFramework"
-entry-points."virtualenv.create".cpython3-posix = "virtualenv.create.via_global_ref.builtin.cpython.cpython3:CPython3Posix"
-entry-points."virtualenv.create".cpython3-win = "virtualenv.create.via_global_ref.builtin.cpython.cpython3:CPython3Windows"
+entry-points."virtualenv.create".cpython3-mac-brew = """\
+  virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython3macOsBrew\
+  """
+entry-points."virtualenv.create".cpython3-mac-framework = """\
+  virtualenv.create.via_global_ref.builtin.cpython.mac_os:CPython3macOsFramework\
+  """
+entry-points."virtualenv.create".cpython3-posix = """\
+  virtualenv.create.via_global_ref.builtin.cpython.cpython3:CPython3Posix\
+  """
+entry-points."virtualenv.create".cpython3-win = """\
+  virtualenv.create.via_global_ref.builtin.cpython.cpython3:CPython3Windows\
+  """
 entry-points."virtualenv.create".graalpy-posix = "virtualenv.create.via_global_ref.builtin.graalpy:GraalPyPosix"
 entry-points."virtualenv.create".graalpy-win = "virtualenv.create.via_global_ref.builtin.graalpy:GraalPyWindows"
 entry-points."virtualenv.create".pypy3-posix = "virtualenv.create.via_global_ref.builtin.pypy.pypy3:PyPy3Posix"
 entry-points."virtualenv.create".pypy3-win = "virtualenv.create.via_global_ref.builtin.pypy.pypy3:Pypy3Windows"
-entry-points."virtualenv.create".rustpython-posix = "virtualenv.create.via_global_ref.builtin.rustpython:RustPythonPosix"
-entry-points."virtualenv.create".rustpython-win = "virtualenv.create.via_global_ref.builtin.rustpython:RustPythonWindows"
+entry-points."virtualenv.create".rustpython-posix = """\
+  virtualenv.create.via_global_ref.builtin.rustpython:RustPythonPosix\
+  """
+entry-points."virtualenv.create".rustpython-win = """\
+  virtualenv.create.via_global_ref.builtin.rustpython:RustPythonWindows\
+  """
 entry-points."virtualenv.create".venv = "virtualenv.create.via_global_ref.venv:Venv"
 entry-points."virtualenv.discovery".builtin = "virtualenv.discovery.builtin:Builtin"
 entry-points."virtualenv.seed".app-data = "virtualenv.seed.embed.via_app_data.via_app_data:FromAppData"
@@ -187,15 +199,16 @@ lint.per-file-ignores."src/virtualenv/activation/python/activate_this.py" = [
   "F821", # ignore undefined template string placeholders
 ]
 lint.per-file-ignores."tests/**/*.py" = [
-  "ANN",     # don't require type annotations in tests (pytest fixtures make this impractical)
-  "D",       # don't care about documentation in tests
-  "FBT",     # don't care about booleans as positional arguments in tests
-  "INP001",  # no implicit namespace
-  "PLC2701", # Private import
-  "PLR2004", # Magic value used in comparison, consider replacing with a constant variable
-  "S101",    # asserts allowed in tests
-  "S603",    # `subprocess` call: check for execution of untrusted input
-  "S607",    # partial executable path is fine in tests
+  "ANN",                    # don't require type annotations in tests (pytest fixtures make this impractical)
+  "D",                      # don't care about documentation in tests
+  "FBT",                    # don't care about booleans as positional arguments in tests
+  "INP001",                 # no implicit namespace
+  "PLC2701",                # Private import
+  "PLR2004",                # Magic value used in comparison, consider replacing with a constant variable
+  "pytest-fixture-autouse", # shared setup fixtures are meant to apply to every test
+  "S101",                   # asserts allowed in tests
+  "S603",                   # `subprocess` call: check for execution of untrusted input
+  "S607",                   # partial executable path is fine in tests
 ]
 lint.isort = { known-first-party = [
   "virtualenv",
