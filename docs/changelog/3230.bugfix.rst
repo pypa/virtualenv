@@ -1,0 +1,4 @@
+A ``virtualenv.ini`` that fails to parse no longer crashes every invocation with an ``AttributeError``; it is skipped
+with the error logged and ``--help`` reports it as ``failed to parse``. A UTF-8 byte order mark, which PowerShell 5 and
+older versions of Notepad write, is now tolerated in the config file instead of being treated as a missing section
+header - by :user:`darrenhuai`.
