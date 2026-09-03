@@ -38,6 +38,7 @@ class IniConfig:
 
         exception = None
         self.has_config_file = None
+        self.has_virtualenv_section = False
         try:
             self.has_config_file = self.config_file.exists()
         except OSError as exc:
@@ -50,12 +51,13 @@ class IniConfig:
                     self._load()
                     self.has_virtualenv_section = self.config_parser.has_section(self.section)
                 except Exception as exc:  # ruff:ignore[blind-except]
+                    self.has_config_file = None  # mark it failed to parse, so the config is ignored
                     exception = exc
         if exception is not None:
             LOGGER.error("failed to read config file %s because %r", config_file, exception)
 
     def _load(self) -> None:
-        with self.config_file.open("rt", encoding="utf-8") as file_handler:
+        with self.config_file.open("rt", encoding="utf-8-sig") as file_handler:
             return self.config_parser.read_file(file_handler)
 
     def get(self, key: str, as_type: TypeData) -> tuple[Any, str] | None:
