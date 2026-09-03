@@ -13,7 +13,7 @@ import pytest
 from virtualenv.app_data import _cache_dir_with_migration, _default_app_data_dir
 from virtualenv.util import zipapp
 from virtualenv.util.lock import ReentrantFileLock
-from virtualenv.util.path import safe_delete
+from virtualenv.util.path import copy, safe_delete, symlink
 from virtualenv.util.subprocess import run_cmd
 
 if TYPE_CHECKING:
@@ -86,6 +86,38 @@ def test_safe_delete_keeps_the_other_mode_bits_when_clearing_read_only(tmp_path:
         assert blocked.stat().st_mode & 0o777 == S_IREAD | S_IRGRP | S_IWUSR
     finally:
         target.chmod(S_IRWXU)
+
+
+def test_symlink_replaces_a_dangling_symlink(tmp_path: Path) -> None:
+    src = tmp_path / "src.txt"
+    src.write_text("new", encoding="utf-8")
+    dest = tmp_path / "dest"
+    try:  # the exe of an environment whose interpreter has since been removed
+        os.symlink(str(tmp_path / "gone.txt"), str(dest))
+    except OSError:
+        pytest.skip("symlinks not supported on this filesystem")
+
+    symlink(src, dest)
+
+    assert dest.is_symlink()
+    assert dest.resolve() == src.resolve()
+
+
+def test_copy_does_not_write_through_a_dangling_symlink(tmp_path: Path) -> None:
+    src = tmp_path / "src.txt"
+    src.write_text("new", encoding="utf-8")
+    outside = tmp_path / "outside.txt"
+    dest = tmp_path / "dest"
+    try:
+        os.symlink(str(outside), str(dest))
+    except OSError:
+        pytest.skip("symlinks not supported on this filesystem")
+
+    copy(src, dest)
+
+    assert not dest.is_symlink()
+    assert dest.read_text(encoding="utf-8") == "new"
+    assert not outside.exists()  # the copy landed at dest, not at what the stale link pointed to
 
 
 def test_reentrant_file_lock_is_thread_safe(tmp_path) -> None:

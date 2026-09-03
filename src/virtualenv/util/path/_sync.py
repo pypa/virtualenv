@@ -27,7 +27,8 @@ def ensure_safe_to_do(src: Path, dest: Path) -> None:
     if src == dest:
         msg = f"source and destination is the same {src}"
         raise ValueError(msg)
-    if not dest.exists():
+    # exists() follows the link, so a dangling symlink reads as nothing there and we would write through it
+    if not dest.exists() and not dest.is_symlink():
         return
     if dest.is_dir() and not dest.is_symlink():
         LOGGER.debug("remove directory %s", dest)
