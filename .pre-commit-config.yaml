@@ -15,15 +15,15 @@ repos:
       - id: codespell
         args: ["--write-changes"]
   - repo: https://github.com/tox-dev/tox-toml-fmt
-    rev: "v1.10.0"
+    rev: "v1.10.3"
     hooks:
       - id: tox-toml-fmt
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "v2.29.0"
+    rev: "v2.29.3"
     hooks:
       - id: pyproject-fmt
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.16.5"
+    rev: "v0.16.6"
     hooks:
       - id: ruff-format
       - id: ruff
