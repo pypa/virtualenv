@@ -51,8 +51,10 @@ def test_ini_that_fails_to_parse_is_logged(invalid_ini: Path, caplog: pytest.Log
     ]
 
 
-def test_ini_that_fails_to_parse_does_not_break_the_cli(invalid_ini: Path) -> None:
-    assert session_via_cli(["venv"], env={"VIRTUALENV_CONFIG_FILE": str(invalid_ini)}).creator.clear is False
+def test_ini_that_fails_to_parse_does_not_break_the_cli(invalid_ini: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(invalid_ini))
+
+    assert session_via_cli(["venv"]).creator.clear is False
 
 
 @pytest.fixture(
@@ -85,8 +87,9 @@ def test_ini_filesystem_error_is_ignored(tmp_path: Path, mocker: MockerFixture, 
 
 
 @pytest.mark.parametrize("prefix", [pytest.param(b"", id="utf8"), pytest.param(codecs.BOM_UTF8, id="utf8-bom")])
-def test_ini_utf8_is_read(tmp_path: Path, prefix: bytes) -> None:
+def test_ini_utf8_is_read(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, prefix: bytes) -> None:
     config_file: Final[Path] = tmp_path / "conf.ini"
     config_file.write_bytes(prefix + b"[virtualenv]\nclear = True\n")
+    monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(config_file))
 
-    assert session_via_cli(["venv"], env={"VIRTUALENV_CONFIG_FILE": str(config_file)}).creator.clear is True
+    assert session_via_cli(["venv"]).creator.clear is True
