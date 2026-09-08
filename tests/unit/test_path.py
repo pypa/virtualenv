@@ -4,7 +4,9 @@ import sys
 from typing import TYPE_CHECKING, Final
 
 import pytest
+from python_discovery import PythonInfo
 
+from virtualenv.create.via_global_ref.builtin.cpython.common import is_mac_os_framework, is_macos_brew
 from virtualenv.info import IS_WIN, fs_supports_symlink
 from virtualenv.run import cli_run
 from virtualenv.util.path import copy, symlink
@@ -40,7 +42,20 @@ def test_replace_dangling_symlink(
 
 
 @pytest.mark.skipif(IS_WIN or not fs_supports_symlink(), reason="requires POSIX interpreter aliases")
-@pytest.mark.parametrize("mode", [pytest.param("--copies", id="copy"), pytest.param("--symlinks", id="symlink")])
+@pytest.mark.parametrize(
+    "mode",
+    [
+        pytest.param(
+            "--copies",
+            id="copy",
+            marks=pytest.mark.skipif(
+                is_macos_brew(PythonInfo.current_system()) or is_mac_os_framework(PythonInfo.current_system()),
+                reason="Homebrew and framework builds require symlinks",
+            ),
+        ),
+        pytest.param("--symlinks", id="symlink"),
+    ],
+)
 def test_recreate_environment_with_dangling_alias(tmp_path: Path, mode: str) -> None:
     destination: Final[Path] = tmp_path / "venv"
     cli_run([str(destination), "--creator", "builtin", "--no-seed", "--symlinks"])
