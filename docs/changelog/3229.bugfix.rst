@@ -1,4 +1,2 @@
-Recreating an environment whose interpreter has since been removed no longer writes through the stale symlink left
-behind. ``ensure_safe_to_do`` cleared the destination based on ``exists()``, which follows the link, so ``--symlinks``
-failed with a ``FileExistsError`` and ``--copies`` reported success while placing the interpreter outside the
-environment - by :user:`darrenhuai`.
+Replace dangling symlinks, including interpreter aliases, when recreating an environment. This prevents
+``FileExistsError`` with ``--symlinks`` and writes outside the environment with ``--copies`` - by :user:`darrenhuai`.
