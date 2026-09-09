@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import logging
 import os
-from configparser import ConfigParser
+from configparser import ConfigParser, Error
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Final
 
 from platformdirs import user_config_dir
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
     from .convert import TypeData
 
-LOGGER = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class IniConfig:
@@ -36,26 +36,24 @@ class IniConfig:
         self.config_file = config_file
         self._cache = {}
 
+        self.has_config_file: bool | None = None
+        self.has_virtualenv_section = False
+        self.config_parser: Final[ConfigParser] = ConfigParser()
         exception = None
-        self.has_config_file = None
         try:
             self.has_config_file = self.config_file.exists()
-        except OSError as exc:
-            exception = exc
-        else:
             if self.has_config_file:
                 self.config_file = self.config_file.resolve()
-                self.config_parser = ConfigParser()
-                try:
-                    self._load()
-                    self.has_virtualenv_section = self.config_parser.has_section(self.section)
-                except Exception as exc:  # ruff:ignore[blind-except]
-                    exception = exc
+                self._load()
+                self.has_virtualenv_section = self.config_parser.has_section(self.section)
+        except (OSError, UnicodeError, Error) as exc:
+            self.has_config_file = None
+            exception = exc
         if exception is not None:
-            LOGGER.error("failed to read config file %s because %r", config_file, exception)
+            _LOGGER.error("failed to read config file %s because %r", config_file, exception)
 
     def _load(self) -> None:
-        with self.config_file.open("rt", encoding="utf-8") as file_handler:
+        with self.config_file.open("rt", encoding="utf-8-sig") as file_handler:
             return self.config_parser.read_file(file_handler)
 
     def get(self, key: str, as_type: TypeData) -> tuple[Any, str] | None:
@@ -81,3 +79,6 @@ class IniConfig:
             f"\nconfig file {self.config_file} {self.STATE[self.has_config_file]} "
             f"(change{'d' if self.is_env_var else ''} via env var {self.VIRTUALENV_CONFIG_FILE_ENV_VAR})"
         )
+
+
+__all__ = ["IniConfig"]
