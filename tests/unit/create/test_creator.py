@@ -874,3 +874,18 @@ def test_pyenv_cfg_preserves_symlinks(tmp_path) -> None:
 
     assert f"test_path = {expected_abspath}" in written_content
     assert expected_abspath != expected_realpath, "Test setup error: paths should differ for symlinks"
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        pytest.param("\n\nhome = /a\n", {"home": "/a"}, id="blank-line"),
+        pytest.param("# home = /b\nhome = /a\n", {"home": "/a"}, id="comment"),
+        pytest.param("no-separator\nhome = /a\n", {"home": "/a"}, id="no-separator"),
+        pytest.param('home = /a\nprompt = "a b"\n', {"home": "/a", "prompt": "a b"}, id="quoted-value"),
+    ],
+)
+def test_pyenv_cfg_read_values(tmp_path, text, expected) -> None:
+    (tmp_path / "pyvenv.cfg").write_text(text, encoding="utf-8")
+
+    assert PyEnvCfg.from_folder(tmp_path).content == expected

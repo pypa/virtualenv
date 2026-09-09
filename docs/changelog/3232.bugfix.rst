@@ -1,0 +1,2 @@
+Skip blank lines, comments and lines without ``=`` when reading ``pyvenv.cfg``, matching how CPython parses it, instead
+of failing with ``ValueError`` - by :user:`r3wretrhy`.

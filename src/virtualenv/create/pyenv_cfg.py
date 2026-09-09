@@ -29,9 +29,11 @@ class PyEnvCfg:
     def _read_values(path: Path) -> OrderedDict[str, str]:
         content = OrderedDict()
         for line in path.read_text(encoding="utf-8").splitlines():
-            equals_at = line.index("=")
-            key = line[:equals_at].strip()
-            value = line[equals_at + 1 :].strip()
+            key, separator, value = line.partition("=")
+            key = key.strip()
+            if not separator or key.startswith("#"):
+                continue
+            value = value.strip()
             if len(value) > 1 and value[0] in {"'", '"'} and value[0] == value[-1]:
                 value = value[1:-1]
             content[key] = value
