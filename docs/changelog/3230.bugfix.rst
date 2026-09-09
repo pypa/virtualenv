@@ -1,2 +1,0 @@
-Ignore malformed or unreadable ``virtualenv.ini`` files and report the error in the log and ``--help``. Accept a UTF-8
-byte order mark, as written by PowerShell 5 and older Notepad versions - by :user:`darrenhuai`.

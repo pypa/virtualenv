@@ -7,6 +7,19 @@
 .. towncrier release notes start
 
 **********************
+ v21.7.9 (2026-09-09)
+**********************
+
+Bugfixes - 21.7.9
+=================
+
+- Replace dangling symlinks, including interpreter aliases, when recreating an environment. This prevents
+  ``FileExistsError`` with ``--symlinks`` and writes outside the environment with ``--copies`` - by :user:`darrenhuai`.
+  (:issue:`3229`)
+- Ignore malformed or unreadable ``virtualenv.ini`` files and report the error in the log and ``--help``. Accept a UTF-8
+  byte order mark, as written by PowerShell 5 and older Notepad versions - by :user:`darrenhuai`. (:issue:`3230`)
+
+**********************
  v21.7.8 (2026-09-01)
 **********************
 
