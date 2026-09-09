@@ -162,7 +162,7 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
             make_exe(dest)
         for extra in self.aliases:
             link_file = bin_dir / extra
-            if link_file.exists():
+            if link_file.is_symlink() or link_file.exists():
                 link_file.unlink()
             if symlinks:
                 link_file.symlink_to(self.base)

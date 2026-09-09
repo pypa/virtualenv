@@ -1,0 +1,2 @@
+Replace dangling symlinks, including interpreter aliases, when recreating an environment. This prevents
+``FileExistsError`` with ``--symlinks`` and writes outside the environment with ``--copies`` - by :user:`darrenhuai`.
