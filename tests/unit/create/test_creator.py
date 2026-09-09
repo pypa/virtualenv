@@ -19,6 +19,7 @@ from pathlib import Path
 from stat import S_IREAD, S_IRGRP, S_IROTH
 from textwrap import dedent
 from threading import Thread
+from typing import Final
 
 import pytest
 from python_discovery import PythonInfo
@@ -28,7 +29,7 @@ from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.create.pyenv_cfg import PyEnvCfg
 from virtualenv.create.via_global_ref import api
 from virtualenv.create.via_global_ref.builtin.cpython.common import is_mac_os_framework, is_macos_brew
-from virtualenv.info import IS_PYPY, IS_WIN, fs_is_case_sensitive
+from virtualenv.info import IS_PYPY, IS_WIN, fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.run.plugin.creators import CreatorSelector
 
@@ -375,6 +376,34 @@ def test_home_path_is_exe_parent(tmp_path, creator) -> None:
         )
 
     assert any(os.path.exists(os.path.join(cfg["home"], exe)) for exe in exes)
+
+
+@pytest.mark.skipif(IS_WIN or not fs_supports_symlink(), reason="requires POSIX interpreter aliases")
+@pytest.mark.parametrize(
+    "mode",
+    [
+        pytest.param(
+            "--copies",
+            id="copy",
+            marks=pytest.mark.skipif(
+                is_macos_brew(CURRENT) or is_mac_os_framework(CURRENT),
+                reason="Homebrew and framework builds require symlinks",
+            ),
+        ),
+        pytest.param("--symlinks", id="symlink"),
+    ],
+)
+def test_recreate_environment_with_dangling_alias(tmp_path: Path, mode: str) -> None:
+    destination: Final[Path] = tmp_path / "venv"
+    cli_run([str(destination), "--creator", "builtin", "--no-seed", "--symlinks"])
+    alias: Final[Path] = destination / "bin" / f"python{sys.version_info.major}"
+    alias.unlink()
+    outside: Final[Path] = tmp_path / "removed-python"
+    alias.symlink_to(outside)
+
+    cli_run([str(destination), "--creator", "builtin", "--no-seed", mode])
+
+    assert (alias.is_symlink(), alias.is_file(), outside.exists()) == (mode == "--symlinks", True, False)
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX only")

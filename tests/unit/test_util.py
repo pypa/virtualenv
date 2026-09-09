@@ -6,17 +6,19 @@ import sys
 import traceback
 import zipfile
 from stat import S_IEXEC, S_IREAD, S_IRGRP, S_IRWXU, S_IWUSR
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
 from virtualenv.app_data import _cache_dir_with_migration, _default_app_data_dir
+from virtualenv.info import fs_supports_symlink
 from virtualenv.util import zipapp
 from virtualenv.util.lock import ReentrantFileLock
-from virtualenv.util.path import safe_delete
+from virtualenv.util.path import copy, safe_delete, symlink
 from virtualenv.util.subprocess import run_cmd
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
 
 
@@ -86,6 +88,31 @@ def test_safe_delete_keeps_the_other_mode_bits_when_clearing_read_only(tmp_path:
         assert blocked.stat().st_mode & 0o777 == S_IREAD | S_IRGRP | S_IWUSR
     finally:
         target.chmod(S_IRWXU)
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
+@pytest.mark.parametrize("operation", [pytest.param(copy, id="copy"), pytest.param(symlink, id="symlink")])
+@pytest.mark.parametrize("directory", [pytest.param(False, id="file"), pytest.param(True, id="directory")])
+@pytest.mark.parametrize("loop", [pytest.param(False, id="missing-target"), pytest.param(True, id="self-loop")])
+def test_replace_dangling_symlink(
+    tmp_path: Path, operation: Callable[[Path, Path], None], directory: bool, loop: bool
+) -> None:
+    source: Final[Path] = tmp_path / "source"
+    if directory:
+        source.mkdir()
+    (source / "file.txt" if directory else source).write_text("new", encoding="utf-8")
+    destination: Final[Path] = tmp_path / "destination"
+    outside: Final[Path] = tmp_path / "outside"
+    destination.symlink_to(destination if loop else outside, target_is_directory=directory)
+
+    operation(source, destination)
+
+    assert (
+        destination.is_symlink(),
+        (destination / "file.txt" if directory else destination).read_text(encoding="utf-8"),
+        destination.resolve(),
+        outside.exists(),
+    ) == (operation is symlink, "new", source.resolve() if operation is symlink else destination, False)
 
 
 def test_reentrant_file_lock_is_thread_safe(tmp_path) -> None:
