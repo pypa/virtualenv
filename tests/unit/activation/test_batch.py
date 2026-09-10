@@ -1,10 +1,44 @@
 from __future__ import annotations
 
+import subprocess
+import sys
 from argparse import Namespace
+from pathlib import Path
 
 import pytest
 
 from virtualenv.activation import BatchActivator
+from virtualenv.info import IS_WIN
+from virtualenv.run import cli_run
+
+
+@pytest.mark.skipif(not IS_WIN, reason="batch is Windows only")
+def test_batch_deactivate_unsets_pkg_config_path_that_was_not_set(tmp_path, current_fastest) -> None:
+    dest = tmp_path / "env"
+    cli_run([
+        "--without-pip",
+        str(dest),
+        "--creator",
+        current_fastest,
+        "--no-periodic-update",
+        "--activators",
+        "batch",
+    ])
+    scripts = dest / "Scripts"
+    print_var = f'"{sys.executable}" -c "import os; print(os.environ.get(\'PKG_CONFIG_PATH\'))"'
+    driver = tmp_path / "driver.bat"
+    driver.write_text(
+        f'@echo off\nset "PKG_CONFIG_PATH="\ncall "{scripts / "activate.bat"}"\n'
+        f'{print_var}\ncall "{scripts / "deactivate.bat"}"\n{print_var}\n',
+        encoding="utf-8",
+    )
+    out = subprocess.run(
+        ["cmd", "/c", str(driver)], capture_output=True, text=True, encoding="utf-8", timeout=60, check=True
+    ).stdout
+    activated, deactivated = out.splitlines()
+    # no trailing separator when there was nothing to prepend to, and gone again afterwards
+    assert Path(activated) == dest / "lib" / "pkgconfig", out
+    assert deactivated == "None", out
 
 
 def test_batch_pydoc_bat_quoting(tmp_path) -> None:

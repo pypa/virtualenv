@@ -194,8 +194,11 @@ New-Variable -Scope global -Name _OLD_VIRTUAL_PATH -Value $env:PATH
 
 if (Test-Path env:PKG_CONFIG_PATH) {
     New-Variable -Scope global -Name _OLD_PKG_CONFIG_PATH -Value $env:PKG_CONFIG_PATH
+    $env:PKG_CONFIG_PATH = "$env:VIRTUAL_ENV\lib\pkgconfig;$env:PKG_CONFIG_PATH"
+} else {
+    New-Variable -Scope global -Name _OLD_PKG_CONFIG_PATH -Value $null
+    $env:PKG_CONFIG_PATH = "$env:VIRTUAL_ENV\lib\pkgconfig"
 }
-$env:PKG_CONFIG_PATH = "$env:VIRTUAL_ENV\lib\pkgconfig;$env:PKG_CONFIG_PATH"
 
 $env:PATH = "$env:VIRTUAL_ENV/" + __BIN_NAME__ + __PATH_SEP__ + $env:PATH
 

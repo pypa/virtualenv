@@ -40,7 +40,8 @@
 @if NOT "__TK_LIBRARY__"=="" @set "TK_LIBRARY=__TK_LIBRARY__"
 
 @if defined PKG_CONFIG_PATH @set "_OLD_PKG_CONFIG_PATH=%PKG_CONFIG_PATH%"
-@set "PKG_CONFIG_PATH=%VIRTUAL_ENV%\lib\pkgconfig;%PKG_CONFIG_PATH%"
+@if defined PKG_CONFIG_PATH @set "PKG_CONFIG_PATH=%VIRTUAL_ENV%\lib\pkgconfig;%PKG_CONFIG_PATH%"
+@if not defined PKG_CONFIG_PATH @set "PKG_CONFIG_PATH=%VIRTUAL_ENV%\lib\pkgconfig"
 
 @REM if defined _OLD_VIRTUAL_PATH (
 @if not defined _OLD_VIRTUAL_PATH @goto ENDIFVPATH1
