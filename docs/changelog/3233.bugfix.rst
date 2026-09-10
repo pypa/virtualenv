@@ -1,0 +1,4 @@
+Deactivation now unsets ``PKG_CONFIG_PATH`` when it was not set before activation, instead of leaving the environment's
+``lib/pkgconfig`` behind for good. The bash, fish and PowerShell scripts could not tell "nothing saved" apart from "was
+unset", so they restored nothing. Activation also no longer leaves a trailing separator in the batch, fish, nushell and
+PowerShell scripts when there was nothing to prepend to - by :user:`darrenhuai`.
