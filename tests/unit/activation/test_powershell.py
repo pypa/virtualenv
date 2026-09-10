@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import shutil
+import subprocess
 import sys
 from argparse import Namespace
+from pathlib import Path
 
 import pytest
 
 from virtualenv.activation import PowerShellActivator
+from virtualenv.run import cli_run
 
 
 def test_powershell_pydoc_call_operator(tmp_path) -> None:
@@ -94,6 +97,43 @@ def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> No
     else:
         assert "if ('' -ne \"\")" in content
         assert "$env:TCL_LIBRARY = ''" in content
+
+
+POWERSHELL = shutil.which("pwsh") or (shutil.which("powershell.exe") if sys.platform == "win32" else None)
+
+
+@pytest.mark.skipif(POWERSHELL is None, reason="powershell is not installed")
+def test_powershell_deactivate_unsets_pkg_config_path_that_was_not_set(tmp_path, current_fastest) -> None:
+    dest = tmp_path / "env"
+    cli_run([
+        "--without-pip",
+        str(dest),
+        "--creator",
+        current_fastest,
+        "--no-periodic-update",
+        "--activators",
+        "powershell",
+    ])
+    activate_script = dest / ("Scripts" if sys.platform == "win32" else "bin") / "activate.ps1"
+    print_var = f'& "{sys.executable}" -c "import os; print(os.environ.get(\'PKG_CONFIG_PATH\'))"'
+    driver = tmp_path / "driver.ps1"
+    driver.write_text(
+        f'Remove-Item env:PKG_CONFIG_PATH -ErrorAction SilentlyContinue\n. "{activate_script}"\n'
+        f"{print_var}\ndeactivate\n{print_var}\n",
+        encoding="utf-8-sig",
+    )
+    out = subprocess.run(
+        [POWERSHELL, "-NonInteractive", "-NoProfile", "-ExecutionPolicy", "ByPass", "-File", str(driver)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=True,
+    ).stdout
+    activated, deactivated = out.splitlines()
+    # no trailing separator when there was nothing to prepend to, and gone again afterwards
+    assert Path(activated) == dest / "lib" / "pkgconfig", out
+    assert deactivated == "None", out
 
 
 @pytest.mark.slow

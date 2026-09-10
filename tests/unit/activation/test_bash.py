@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import sys
 from argparse import Namespace
+from pathlib import Path
 
 import pytest
 
@@ -130,6 +131,37 @@ def test_bash_activate_does_not_export_ps1(tmp_path, current_fastest) -> None:
     )
     assert result.returncode == 0, result.stderr
     assert result.stdout.splitlines() == ["None", "None"]
+
+
+@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
+def test_bash_deactivate_unsets_pkg_config_path_that_was_not_set(tmp_path, current_fastest) -> None:
+    dest = tmp_path / "env"
+    cli_run([
+        "--without-pip",
+        str(dest),
+        "--creator",
+        current_fastest,
+        "--no-periodic-update",
+        "--activators",
+        "bash",
+    ])
+    activate_script = dest / "bin" / "activate"
+    print_var = f"{shlex.quote(sys.executable)} -c 'import os; print(os.environ.get(\"PKG_CONFIG_PATH\"))'"
+    result = subprocess.run(
+        [
+            "bash",
+            "-c",
+            (f'unset PKG_CONFIG_PATH; source "{activate_script}" && {print_var} && deactivate && {print_var}'),
+        ],
+        capture_output=True,
+        encoding="utf-8",
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    activated, deactivated = result.stdout.splitlines()
+    # no trailing separator when there was nothing to prepend to, and gone again afterwards
+    assert Path(activated) == dest / "lib" / "pkgconfig", result.stdout
+    assert deactivated == "None", result.stdout
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")

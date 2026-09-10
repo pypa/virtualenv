@@ -32,9 +32,13 @@ deactivate () {
         export TK_LIBRARY
         unset _OLD_VIRTUAL_TK_LIBRARY
     fi
-    if [ -n "${_OLD_PKG_CONFIG_PATH:-}" ]; then
-        PKG_CONFIG_PATH="$_OLD_PKG_CONFIG_PATH"
-        export PKG_CONFIG_PATH
+    if [ -n "${_OLD_PKG_CONFIG_PATH+x}" ]; then
+        if [ -n "$_OLD_PKG_CONFIG_PATH" ]; then
+            PKG_CONFIG_PATH="$_OLD_PKG_CONFIG_PATH"
+            export PKG_CONFIG_PATH
+        else
+            unset PKG_CONFIG_PATH
+        fi
         unset _OLD_PKG_CONFIG_PATH
     fi
 

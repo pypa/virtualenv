@@ -59,7 +59,11 @@ export-env {
         __VIRTUAL_PROMPT__
     }
     let old_pkg_config_path = if (has-env 'PKG_CONFIG_PATH') { $env.PKG_CONFIG_PATH } else { '' }
-    let new_pkg_config_path = $'($virtual_env)/lib/pkgconfig:($old_pkg_config_path)'
+    let new_pkg_config_path = if ($old_pkg_config_path | is-empty) {
+        $'($virtual_env)/lib/pkgconfig'
+    } else {
+        $'($virtual_env)/lib/pkgconfig:($old_pkg_config_path)'
+    }
     let new_env = { $path_name: $new_path VIRTUAL_ENV: $virtual_env VIRTUAL_ENV_PROMPT: $virtual_env_prompt PKG_CONFIG_PATH: $new_pkg_config_path }
     if (has-env 'TCL_LIBRARY')  {
         let $new_env = $new_env | insert TCL_LIBRARY __TCL_LIBRARY__

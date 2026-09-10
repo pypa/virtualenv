@@ -25,8 +25,12 @@ function deactivate -d 'Exit virtualenv mode and return to the normal environmen
       end
     end
 
-    if test -n "$_OLD_PKG_CONFIG_PATH"
-        set -gx PKG_CONFIG_PATH "$_OLD_PKG_CONFIG_PATH"
+    if set -q _OLD_PKG_CONFIG_PATH
+        if test -n "$_OLD_PKG_CONFIG_PATH"
+            set -gx PKG_CONFIG_PATH "$_OLD_PKG_CONFIG_PATH"
+        else
+            set -e PKG_CONFIG_PATH
+        end
         set -e _OLD_PKG_CONFIG_PATH
     end
 
@@ -66,7 +70,11 @@ if string match -qr 'CYGWIN|MSYS|MINGW' (uname)
 end
 
 set -gx _OLD_PKG_CONFIG_PATH "$PKG_CONFIG_PATH"
-set -gx PKG_CONFIG_PATH "$VIRTUAL_ENV/lib/pkgconfig:$PKG_CONFIG_PATH"
+if test -n "$PKG_CONFIG_PATH"
+    set -gx PKG_CONFIG_PATH "$VIRTUAL_ENV/lib/pkgconfig:$PKG_CONFIG_PATH"
+else
+    set -gx PKG_CONFIG_PATH "$VIRTUAL_ENV/lib/pkgconfig"
+end
 
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV"'/'__BIN_NAME__ $PATH
