@@ -8,21 +8,21 @@ function deactivate -d 'Exit virtualenv mode and return to the normal environmen
         set -e _OLD_VIRTUAL_PATH
     end
 
-    if test -n __TCL_LIBRARY__
-      if test -n "$_OLD_VIRTUAL_TCL_LIBRARY";
-        set -gx TCL_LIBRARY "$_OLD_VIRTUAL_TCL_LIBRARY";
-        set -e _OLD_VIRTUAL_TCL_LIBRARY;
-      else;
-        set -e TCL_LIBRARY;
-      end
+    if set -q _OLD_VIRTUAL_TCL_LIBRARY
+        if test -n "$_OLD_VIRTUAL_TCL_LIBRARY"
+            set -gx TCL_LIBRARY "$_OLD_VIRTUAL_TCL_LIBRARY"
+        else
+            set -e TCL_LIBRARY
+        end
+        set -e _OLD_VIRTUAL_TCL_LIBRARY
     end
-    if test -n __TK_LIBRARY__
-      if test -n "$_OLD_VIRTUAL_TK_LIBRARY";
-        set -gx TK_LIBRARY "$_OLD_VIRTUAL_TK_LIBRARY";
-        set -e _OLD_VIRTUAL_TK_LIBRARY;
-      else;
-        set -e TK_LIBRARY;
-      end
+    if set -q _OLD_VIRTUAL_TK_LIBRARY
+        if test -n "$_OLD_VIRTUAL_TK_LIBRARY"
+            set -gx TK_LIBRARY "$_OLD_VIRTUAL_TK_LIBRARY"
+        else
+            set -e TK_LIBRARY
+        end
+        set -e _OLD_VIRTUAL_TK_LIBRARY
     end
 
     if test -n "$_OLD_PKG_CONFIG_PATH"
@@ -71,16 +71,13 @@ set -gx PKG_CONFIG_PATH "$VIRTUAL_ENV/lib/pkgconfig:$PKG_CONFIG_PATH"
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV"'/'__BIN_NAME__ $PATH
 
+# Saved even when unset, so deactivate knows to erase the value set here.
 if test -n __TCL_LIBRARY__
-  if set -q TCL_LIBRARY;
-    set -gx _OLD_VIRTUAL_TCL_LIBRARY $TCL_LIBRARY;
-  end
+  set -gx _OLD_VIRTUAL_TCL_LIBRARY "$TCL_LIBRARY"
   set -gx TCL_LIBRARY '__TCL_LIBRARY__'
 end
 if test -n __TK_LIBRARY__
-  if set -q TK_LIBRARY;
-    set -gx _OLD_VIRTUAL_TK_LIBRARY $TK_LIBRARY;
-  end
+  set -gx _OLD_VIRTUAL_TK_LIBRARY "$TK_LIBRARY"
   set -gx TK_LIBRARY '__TK_LIBRARY__'
 end
 

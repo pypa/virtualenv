@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import shutil
+import subprocess
 import sys
 from argparse import Namespace
 
@@ -133,3 +134,54 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch) -> 
             return f"{cmd} {scr}".strip()
 
     activation_tester(PowerShell)
+
+
+@pytest.mark.parametrize("venv_sets_tcl", [True, False])
+@pytest.mark.parametrize("was_set", [True, False])
+def test_powershell_deactivate_restores_tcl_tk_library(tmp_path, venv_sets_tcl, was_set) -> None:
+    powershell = shutil.which("pwsh") or (shutil.which("powershell.exe") if sys.platform == "win32" else None)
+    if powershell is None:
+        pytest.skip("powershell is not installed")
+
+    class MockInterpreter:
+        os = "nt"
+
+    interpreter = MockInterpreter()
+    interpreter.tcl_lib = str(tmp_path / "venv-tcl") if venv_sets_tcl else None
+    interpreter.tk_lib = str(tmp_path / "venv-tk") if venv_sets_tcl else None
+
+    class MockCreator:
+        def __init__(self, dest) -> None:
+            self.dest = dest
+            self.bin_dir = dest / "Scripts"
+            self.bin_dir.mkdir(parents=True)
+            self.interpreter = interpreter
+            self.pyenv_cfg = {}
+            self.env_name = "env"
+
+    creator = MockCreator(tmp_path / "env")
+    (creator.dest / "pyvenv.cfg").write_text("", encoding="utf-8")
+    PowerShellActivator(Namespace(prompt=None)).generate(creator)
+
+    setup = "$env:TCL_LIBRARY = 'user-tcl'; $env:TK_LIBRARY = 'user-tk'" if was_set else ""
+    show = 'if ($env:{0} -eq $null) {{ "None" }} else {{ $env:{0} }}'
+    show_both = f"{show.format('TCL_LIBRARY')}\n{show.format('TK_LIBRARY')}"
+    driver = tmp_path / "driver.ps1"
+    driver.write_text(
+        f"Remove-Item env:TCL_LIBRARY, env:TK_LIBRARY -ErrorAction SilentlyContinue\n{setup}\n"
+        f". '{creator.bin_dir / 'activate.ps1'}'\n{show_both}\ndeactivate\n{show_both}\n",
+        encoding="utf-8-sig",
+    )
+    out = subprocess.run(
+        [powershell, "-NonInteractive", "-NoProfile", "-ExecutionPolicy", "ByPass", "-File", str(driver)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=True,
+    ).stdout
+
+    before = ["user-tcl", "user-tk"] if was_set else ["None", "None"]
+    activated = [interpreter.tcl_lib, interpreter.tk_lib] if venv_sets_tcl else before
+    # activation must not drop a value it does not replace, and deactivate puts back what was there
+    assert out.splitlines() == [*activated, *before], out
