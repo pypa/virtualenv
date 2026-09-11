@@ -1,0 +1,3 @@
+Record the created environment as the default one of its parent folder within a ``.python-envs`` file, per `PEP 832
+<https://peps.python.org/pep-0832/>`_, so editors and type checkers can find it. Parallel creations under one folder
+serialize through a ``.python-envs.lock`` file next to it. Skip both with ``--no-python-envs`` - by :user:`gaborbernat`.

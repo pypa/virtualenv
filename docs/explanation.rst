@@ -147,7 +147,8 @@ virtualenv operates in two distinct phases:
         CreatePython --> SeedPackages[Install seed packages: pip, setuptools, wheel]
         SeedPackages --> ActivationScripts[Install activation scripts]
         ActivationScripts --> VCSIgnore[Create VCS ignore files]
-        VCSIgnore --> Complete([Virtual environment ready])
+        VCSIgnore --> Record[Record in .python-envs]
+        Record --> Complete([Virtual environment ready])
 
         style Start fill:#2563eb,stroke:#1d4ed8,color:#fff
         style Phase1 fill:#6366f1,stroke:#4f46e5,color:#fff
@@ -161,17 +162,27 @@ virtualenv operates in two distinct phases:
     flag to specify a different interpreter.
 
 **Phase 2: Create the virtual environment**
-    Once the target interpreter is identified, virtualenv creates the environment in four steps:
+    Once the target interpreter is identified, virtualenv creates the environment in five steps:
 
     1. Create a Python executable matching the target interpreter
     2. Install seed packages (pip, setuptools, wheel) to enable package installation
     3. Install activation scripts for various shells
     4. Create VCS ignore files (currently Git's ``.gitignore``, skip with ``--no-vcs-ignore``)
+    5. Record the environment in a ``.python-envs`` file so editors and type checkers can find it (`PEP 832
+       <https://peps.python.org/pep-0832/>`_, skip with ``--no-python-envs``)
 
 An important design principle: virtual environments are not self-contained. A complete Python installation consists of
 thousands of files, and copying all of them into every virtual environment would be wasteful. Instead, virtual
 environments are lightweight shells that borrow most content from the system Python. They contain only what's needed to
 redirect Python's behavior.
+
+``pyvenv.cfg`` is what makes that redirection work. The interpreter reads it at startup to find its base installation,
+so the file is the environment rather than a description of it. That also makes it the cheapest place for other tools to
+learn about the environment, which is why it accumulated three keys carrying the same version at different precisions.
+`PEP 838 <https://peps.python.org/pep-0838/>`_ settles which one to read by requiring ``python-version``, holding the
+feature release and nothing more, since a wheel tag and a type-checker target both stop at the minor version.
+``version`` and ``version_info`` stay for the callers that need a patch level or a release level, and
+:doc:`reference/files` sets out the difference.
 
 This design has two implications:
 
@@ -561,6 +572,54 @@ Remember: activation is optional. The following commands are equivalent:
 For a deeper dive into how activation works under the hood, see Allison Kaptur's blog post `There's no magic: virtualenv
 edition <https://www.recurse.com/blog/14-there-is-no-magic-virtualenv-edition>`_, which explains how virtualenv uses
 ``PATH`` and ``PYTHONHOME`` to isolate virtual environments.
+
+***********************
+ Environment discovery
+***********************
+
+Editors, type checkers and task runners need to find a project's environments, and they cannot count on an activated
+shell to tell them where those are. Launching an editor on a fresh checkout leaves it guessing. Each tool has answered
+that by hard-coding a search per environment manager it wants to support, which is why editor support for any new tool
+lags behind the tool itself.
+
+`PEP 832 <https://peps.python.org/pep-0832/>`_ replaces the guessing with a file. A project may carry a ``.python-envs``
+file listing one environment per line, and the tools that create environments keep it current. virtualenv creates
+environments, so it writes the file; reading it belongs to the tools consuming it.
+
+After creating ``<root>/<name>``, virtualenv records ``<name>`` in ``<root>/.python-envs``:
+
+.. code-block:: console
+
+    $ virtualenv env
+    $ virtualenv other
+    $ cat .python-envs
+    env
+    other
+
+**The last line is the default**
+    A tool asking "which environment should I use" takes the final entry, so the environment created last wins. An entry
+    pointing at the same destination moves to the end instead of being repeated.
+
+**A ``.venv`` folder needs no line**
+    PEP 832 counts a ``.venv`` folder beside the file as its implicit last line. Creating ``.venv`` therefore writes
+    nothing, and where a ``.venv`` folder exists it stays the default whatever ``.python-envs`` lists. virtualenv logs a
+    debug message when it records an environment that a sibling ``.venv`` outranks.
+
+**Recording never breaks creation**
+    A read or write failure logs a warning and leaves you with a working environment. Discovery is a convenience for
+    other tools, so it does not get to fail the job you asked for.
+
+Why a lock file
+===============
+
+Recording rewrites the whole file, which loses entries when several environments land in one folder at once. A task
+runner building a matrix does that. virtualenv serializes the read-modify-write through a ``.python-envs.lock`` file,
+which is why a second file appears next to ``.python-envs`` on every platform except Windows, where the lock file goes
+away as the lock releases.
+
+The lock sits beside the file it guards rather than in the app data folder for two reasons. It keeps working when the
+app data is read-only or disabled, and it gives any other PEP 832 writer a location to agree on, which a path private to
+virtualenv could not.
 
 **********
  See also
