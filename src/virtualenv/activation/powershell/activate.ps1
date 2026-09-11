@@ -97,19 +97,11 @@ function global:deactivate([switch] $NonDestructive) {
     if (Test-Path variable:_OLD_VIRTUAL_TCL_LIBRARY) {
         $env:TCL_LIBRARY = $variable:_OLD_VIRTUAL_TCL_LIBRARY
         Remove-Variable "_OLD_VIRTUAL_TCL_LIBRARY" -Scope global
-    } else {
-        if (Test-Path env:TCL_LIBRARY) {
-            Remove-Item env:TCL_LIBRARY -ErrorAction SilentlyContinue
-        }
     }
 
     if (Test-Path variable:_OLD_VIRTUAL_TK_LIBRARY) {
         $env:TK_LIBRARY = $variable:_OLD_VIRTUAL_TK_LIBRARY
         Remove-Variable "_OLD_VIRTUAL_TK_LIBRARY" -Scope global
-    } else {
-        if (Test-Path env:TK_LIBRARY) {
-            Remove-Item env:TK_LIBRARY -ErrorAction SilentlyContinue
-        }
     }
 
     if (Test-Path variable:_OLD_PKG_CONFIG_PATH) {
@@ -176,17 +168,14 @@ deactivate -nondestructive
 $env:VIRTUAL_ENV = $VenvDir
 $env:VIRTUAL_ENV_PROMPT = $Prompt
 
+# Saved even when unset ($null), so deactivate knows to remove the value set here.
 if (__TCL_LIBRARY__ -ne "") {
-    if (Test-Path env:TCL_LIBRARY) {
-        New-Variable -Scope global -Name _OLD_VIRTUAL_TCL_LIBRARY -Value $env:TCL_LIBRARY
-    }
+    New-Variable -Scope global -Name _OLD_VIRTUAL_TCL_LIBRARY -Value $env:TCL_LIBRARY
     $env:TCL_LIBRARY = __TCL_LIBRARY__
 }
 
 if (__TK_LIBRARY__ -ne "") {
-    if (Test-Path env:TK_LIBRARY) {
-        New-Variable -Scope global -Name _OLD_VIRTUAL_TK_LIBRARY -Value $env:TK_LIBRARY
-    }
+    New-Variable -Scope global -Name _OLD_VIRTUAL_TK_LIBRARY -Value $env:TK_LIBRARY
     $env:TK_LIBRARY = __TK_LIBRARY__
 }
 

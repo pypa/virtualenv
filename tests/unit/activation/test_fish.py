@@ -57,8 +57,8 @@ def test_fish_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
         assert "set -gx TCL_LIBRARY '/path/to/tcl'" in content
         assert "set -gx TK_LIBRARY '/path/to/tk'" in content
     else:
-        assert "if test -n ''\n  if set -q TCL_LIBRARY;" in content
-        assert "if test -n ''\n  if set -q TK_LIBRARY;" in content
+        assert "if test -n ''\n  set -gx _OLD_VIRTUAL_TCL_LIBRARY" in content
+        assert "if test -n ''\n  set -gx _OLD_VIRTUAL_TK_LIBRARY" in content
 
 
 @pytest.mark.skipif(IS_WIN, reason="fish is not available on Windows")
@@ -81,6 +81,47 @@ def test_fish_prompt_survives_shadowed_source(activation_python, tmp_path) -> No
         [FISH, str(driver)], capture_output=True, text=True, encoding="utf-8", timeout=60, check=True
     ).stdout
     assert f"PWD={start}\n" in out, out
+
+
+@pytest.mark.skipif(IS_WIN, reason="fish is not available on Windows")
+@pytest.mark.skipif(FISH is None, reason="fish is not installed")
+@pytest.mark.parametrize("venv_sets_tcl", [True, False])
+@pytest.mark.parametrize("was_set", [True, False])
+def test_fish_deactivate_restores_tcl_tk_library(tmp_path, venv_sets_tcl, was_set) -> None:
+    class MockInterpreter:
+        pass
+
+    interpreter = MockInterpreter()
+    interpreter.tcl_lib = str(tmp_path / "venv-tcl") if venv_sets_tcl else None
+    interpreter.tk_lib = str(tmp_path / "venv-tk") if venv_sets_tcl else None
+
+    class MockCreator:
+        def __init__(self, dest) -> None:
+            self.dest = dest
+            self.bin_dir = dest / "bin"
+            self.bin_dir.mkdir(parents=True)
+            self.interpreter = interpreter
+            self.pyenv_cfg = {}
+            self.env_name = "env"
+
+    creator = MockCreator(tmp_path / "env")
+    FishActivator(Namespace(prompt=None)).generate(creator)
+
+    setup = "set -gx TCL_LIBRARY user-tcl; set -gx TK_LIBRARY user-tk" if was_set else "set -e TCL_LIBRARY TK_LIBRARY"
+    show = "for name in TCL_LIBRARY TK_LIBRARY; if set -q $name; echo $$name; else; echo None; end; end"
+    driver = tmp_path / "driver.fish"
+    driver.write_text(
+        f"{setup}\nsource '{creator.bin_dir / 'activate.fish'}'\n{show}\ndeactivate\n{show}\n",
+        encoding="utf-8",
+    )
+    out = subprocess.run(
+        [FISH, str(driver)], capture_output=True, text=True, encoding="utf-8", timeout=60, check=True
+    ).stdout
+
+    before = ["user-tcl", "user-tk"] if was_set else ["None", "None"]
+    activated = [interpreter.tcl_lib, interpreter.tk_lib] if venv_sets_tcl else before
+    # activation must not drop a value it does not replace, and deactivate puts back what was there
+    assert out.splitlines() == [*activated, *before], out
 
 
 @pytest.mark.skipif(IS_WIN, reason="we have not setup fish in CI yet")

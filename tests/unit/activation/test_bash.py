@@ -155,3 +155,43 @@ def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> 
             return 'printf "%s\\n" "$PS1"'
 
     activation_tester(Bash)
+
+
+@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
+@pytest.mark.parametrize("venv_sets_tcl", [True, False])
+@pytest.mark.parametrize("was_set", [True, False])
+def test_bash_deactivate_restores_tcl_tk_library(tmp_path, venv_sets_tcl, was_set) -> None:
+    class MockInterpreter:
+        pass
+
+    interpreter = MockInterpreter()
+    interpreter.tcl_lib = str(tmp_path / "venv-tcl") if venv_sets_tcl else None
+    interpreter.tk_lib = str(tmp_path / "venv-tk") if venv_sets_tcl else None
+
+    class MockCreator:
+        def __init__(self, dest) -> None:
+            self.dest = dest
+            self.bin_dir = dest / "bin"
+            self.bin_dir.mkdir(parents=True)
+            self.interpreter = interpreter
+            self.pyenv_cfg = {}
+            self.env_name = "env"
+
+    creator = MockCreator(tmp_path / "env")
+    BashActivator(Namespace(prompt=None)).generate(creator)
+
+    setup = "export TCL_LIBRARY=user-tcl TK_LIBRARY=user-tk" if was_set else "unset TCL_LIBRARY TK_LIBRARY"
+    show = 'printf "%s\\n" "${TCL_LIBRARY-None}" "${TK_LIBRARY-None}"'
+    script = shlex.quote(str(creator.bin_dir / "activate"))
+    result = subprocess.run(
+        ["bash", "-c", f"{setup}; source {script} && {show} && deactivate && {show}"],
+        capture_output=True,
+        encoding="utf-8",
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+
+    before = ["user-tcl", "user-tk"] if was_set else ["None", "None"]
+    activated = [interpreter.tcl_lib, interpreter.tk_lib] if venv_sets_tcl else before
+    # activation must not drop a value it does not replace, and deactivate puts back what was there
+    assert result.stdout.splitlines() == [*activated, *before], result.stdout
