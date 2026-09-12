@@ -18,10 +18,10 @@ CREATOR_CLASSES = CreatorSelector.for_interpreter(CURRENT).key_to_class
 
 
 def builtin_shows_marker_missing() -> bool:
-    builtin_classs = CREATOR_CLASSES.get("builtin")
-    if builtin_classs is None:
+    builtin_classes = CREATOR_CLASSES.get("builtin")
+    if builtin_classes is None:
         return False
-    host_include_marker = getattr(builtin_classs, "host_include_marker", None)
+    host_include_marker = getattr(builtin_classes, "host_include_marker", None)
     if host_include_marker is None:
         return False
     marker = host_include_marker(CURRENT)
