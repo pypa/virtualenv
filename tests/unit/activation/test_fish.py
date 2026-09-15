@@ -105,6 +105,7 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
                 self.print_os_env_var("PATH"),
                 self.print_os_env_var("TCL_LIBRARY"),
                 self.print_os_env_var("TK_LIBRARY"),
+                self.print_os_env_var("PKG_CONFIG_PATH"),
                 self.activate_call(activate_script),
                 self.print_python_exe(),
                 self.print_os_env_var("VIRTUAL_ENV"),
@@ -112,6 +113,7 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
                 self.print_os_env_var("PATH"),
                 self.print_os_env_var("TCL_LIBRARY"),
                 self.print_os_env_var("TK_LIBRARY"),
+                self.print_os_env_var("PKG_CONFIG_PATH"),
                 self.print_prompt(),
                 # \\ loads documentation from the virtualenv site packages
                 self.pydoc_call,
@@ -122,6 +124,7 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
                 self.print_os_env_var("PATH"),
                 self.print_os_env_var("TCL_LIBRARY"),
                 self.print_os_env_var("TK_LIBRARY"),
+                self.print_os_env_var("PKG_CONFIG_PATH"),
                 "",  # just finish with an empty new line
             ]
 
@@ -130,28 +133,29 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
             assert out[0], raw
             assert out[1] == "None", raw
             assert out[2] == "None", raw
-            self.assert_tcl_tk_library(out[4:6], out[10:12], out[-2:], raw)
+            self.assert_tcl_tk_library(out[4:6], out[11:13], out[-3:-1], raw)
+            self.assert_pkg_config_path(out[6], out[13], out[-1], raw)
             # self.activate_call(activate_script) runs at this point
             expected = self._creator.exe.parent / os.path.basename(sys.executable)
-            assert self.norm_path(out[6]) == self.norm_path(expected), raw
-            assert self.norm_path(out[7]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
-            assert out[8] == self._creator.env_name
+            assert self.norm_path(out[7]) == self.norm_path(expected), raw
+            assert self.norm_path(out[8]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
+            assert out[9] == self._creator.env_name
             # Some attempts to test the prompt output print more than 1 line.
             # So we need to check if the prompt exists on any of them.
             prompt_text = f"({self._creator.env_name}) "
-            assert any(prompt_text in line for line in out[12:-7]), raw
+            assert any(prompt_text in line for line in out[14:-8]), raw
 
-            assert out[-7] == "wrote pydoc_test.html", raw
+            assert out[-8] == "wrote pydoc_test.html", raw
             content = tmp_path / "pydoc_test.html"
             assert content.exists(), raw
             # post deactivation, same as before
-            assert out[-6] == out[0], raw
+            assert out[-7] == out[0], raw
+            assert out[-6] == "None", raw
             assert out[-5] == "None", raw
-            assert out[-4] == "None", raw
 
             # Check that the PATH is restored
-            assert out[3] == out[-3], raw
+            assert out[3] == out[-4], raw
             # Check that PATH changed after activation
-            assert out[3] != out[9], raw
+            assert out[3] != out[10], raw
 
     activation_tester(Fish)

@@ -1,0 +1,4 @@
+``deactivate`` in bash, fish and PowerShell unsets ``PKG_CONFIG_PATH`` when activation found it unset, instead of
+keeping the environment's ``lib/pkgconfig``. csh activation no longer drops a ``PKG_CONFIG_PATH`` the user had set.
+Activation in batch, fish, nushell and PowerShell no longer adds a trailing separator when ``PKG_CONFIG_PATH`` is unset,
+and PowerShell and nushell build the value with the host's path separators - by :user:`darrenhuai`.
