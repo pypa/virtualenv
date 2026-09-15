@@ -52,11 +52,11 @@ repos:
     rev: v1.30.0
     hooks:
       - id: zizmor
-  - repo: meta
-    hooks:
-      - id: check-hooks-apply
-      - id: check-useless-excludes
   - repo: https://github.com/crate-ci/typos
     rev: v1.50.1
     hooks:
       - id: typos
+  - repo: meta
+    hooks:
+      - id: check-hooks-apply
+      - id: check-useless-excludes

@@ -18,14 +18,11 @@ CREATOR_CLASSES = CreatorSelector.for_interpreter(CURRENT).key_to_class
 
 
 def builtin_shows_marker_missing() -> bool:
-    builtin_classes = CREATOR_CLASSES.get("builtin")
-    if builtin_classes is None:
+    if (builtin_class := CREATOR_CLASSES.get("builtin")) is None:
         return False
-    host_include_marker = getattr(builtin_classes, "host_include_marker", None)
-    if host_include_marker is None:
+    if (host_include_marker := getattr(builtin_class, "host_include_marker", None)) is None:
         return False
-    marker = host_include_marker(CURRENT)
-    return not marker.exists()
+    return not host_include_marker(CURRENT).exists()
 
 
 @pytest.mark.slow
