@@ -6,6 +6,25 @@
 
 .. towncrier release notes start
 
+***********************
+ v21.7.10 (2026-09-15)
+***********************
+
+Bugfixes - 21.7.10
+==================
+
+- Skip blank lines, ``#`` comments and lines without ``=`` in ``pyvenv.cfg`` instead of raising ``ValueError`` - by
+  :user:`r3wretrhy`. (:issue:`3232`)
+- ``deactivate`` in bash, fish and PowerShell unsets ``PKG_CONFIG_PATH`` when activation found it unset, instead of
+  keeping the environment's ``lib/pkgconfig``. csh activation no longer drops a ``PKG_CONFIG_PATH`` the user had set.
+  Activation in batch, fish, nushell and PowerShell no longer adds a trailing separator when ``PKG_CONFIG_PATH`` is
+  unset, and PowerShell and nushell build the value with the host's path separators - by :user:`darrenhuai`.
+  (:issue:`3233`)
+- Activation in bash, csh, fish and PowerShell keeps the user's ``TCL_LIBRARY`` and ``TK_LIBRARY``, and ``deactivate``
+  restores them. csh and PowerShell removed both variables on every activation, fish did so when the interpreter has
+  tcl, and bash kept the environment's value after ``deactivate`` when the variable was unset before - by
+  :user:`darrenhuai`. (:issue:`3234`)
+
 **********************
  v21.7.9 (2026-09-09)
 **********************

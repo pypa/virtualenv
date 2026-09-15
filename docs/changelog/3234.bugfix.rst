@@ -1,3 +1,0 @@
-Activation in bash, csh, fish and PowerShell keeps the user's ``TCL_LIBRARY`` and ``TK_LIBRARY``, and ``deactivate``
-restores them. csh and PowerShell removed both variables on every activation, fish did so when the interpreter has tcl,
-and bash kept the environment's value after ``deactivate`` when the variable was unset before - by :user:`darrenhuai`.

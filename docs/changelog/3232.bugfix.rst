@@ -1,2 +1,0 @@
-Skip blank lines, ``#`` comments and lines without ``=`` in ``pyvenv.cfg`` instead of raising ``ValueError`` - by
-:user:`r3wretrhy`.
