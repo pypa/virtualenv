@@ -77,6 +77,10 @@ def test_nushell(activation_tester_class, activation_tester) -> None:
         def print_prompt(self) -> str:
             return r"print $env.VIRTUAL_PREFIX"
 
+        def assert_tcl_tk_library(self, before, activated, deactivated, raw) -> None:
+            # activate.nu never sets TCL_LIBRARY or TK_LIBRARY: its `let $new_env` inside `if` only shadows the variable
+            assert before == activated == deactivated, raw
+
         def activate_call(self, script):
             # Commands are called without quotes in Nushell
             cmd = self.activate_cmd

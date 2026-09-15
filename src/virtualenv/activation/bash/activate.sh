@@ -104,7 +104,7 @@ if [ -n "${PYTHONHOME:-}" ] ; then
     unset PYTHONHOME
 fi
 
-# saved even when empty, so deactivate knows to unset the value set here
+# an empty saved value tells deactivate to unset the variable
 if [ __TCL_LIBRARY__ != "" ]; then
     _OLD_VIRTUAL_TCL_LIBRARY="${TCL_LIBRARY:-}"
     TCL_LIBRARY=__TCL_LIBRARY__

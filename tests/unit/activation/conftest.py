@@ -124,10 +124,14 @@ class ActivationTester:
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
             self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
+            self.print_os_env_var("TCL_LIBRARY"),
+            self.print_os_env_var("TK_LIBRARY"),
             self.activate_call(activate_script),
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
             self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
+            self.print_os_env_var("TCL_LIBRARY"),
+            self.print_os_env_var("TK_LIBRARY"),
             self.print_prompt(),
             # \\ loads documentation from the virtualenv site packages
             self.pydoc_call,
@@ -135,6 +139,8 @@ class ActivationTester:
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
             self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
+            self.print_os_env_var("TCL_LIBRARY"),
+            self.print_os_env_var("TK_LIBRARY"),
             "",  # just finish with an empty new line
         ]
         result = []
@@ -151,23 +157,31 @@ class ActivationTester:
         assert out[0], raw
         assert out[1] == "None", raw
         assert out[2] == "None", raw
+        self.assert_tcl_tk_library(out[3:5], out[8:10], out[-2:], raw)
         # self.activate_call(activate_script) runs at this point
         python_exe = self._creator.exe.parent / os.path.basename(sys.executable)
-        assert self.norm_path(out[3]) == self.norm_path(python_exe), raw
-        assert self.norm_path(out[4]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
-        assert out[5] == self._creator.env_name
+        assert self.norm_path(out[5]) == self.norm_path(python_exe), raw
+        assert self.norm_path(out[6]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
+        assert out[7] == self._creator.env_name
         # Some attempts to test the prompt output print more than 1 line.
         # So we need to check if the prompt exists on any of them.
         prompt_text = f"({self._creator.env_name}) "
-        assert any(prompt_text in line for line in out[6:-4]), raw
+        assert any(prompt_text in line for line in out[10:-6]), raw
 
-        assert out[-4] == "wrote pydoc_test.html", raw
+        assert out[-6] == "wrote pydoc_test.html", raw
         content = tmp_path / "pydoc_test.html"
         assert content.exists(), raw
         # post deactivation, same as before
-        assert out[-3] == out[0], raw
-        assert out[-2] == "None", raw
-        assert out[-1] == "None", raw
+        assert out[-5] == out[0], raw
+        assert out[-4] == "None", raw
+        assert out[-3] == "None", raw
+
+    def assert_tcl_tk_library(self, before, activated, deactivated, raw) -> None:
+        user_values = [os.environ.get("TCL_LIBRARY", "None"), os.environ.get("TK_LIBRARY", "None")]
+        venv_values = [self._creator.dest.parent / "tcl", self._creator.dest.parent / "tk"]
+        # activation_python creates these folders only for an environment whose interpreter reports tcl
+        expected_activated = [str(path) for path in venv_values] if venv_values[0].exists() else user_values
+        assert (before, activated, deactivated) == (user_values, expected_activated, user_values), raw
 
     def quote(self, s):
         return self.of_class.quote(s)
@@ -246,21 +260,44 @@ def raise_on_non_source_class():
     return RaiseOnNonSourceCall
 
 
-@pytest.fixture(scope="session", params=[True, False], ids=["with_prompt", "no_prompt"])
+@pytest.fixture(
+    scope="session",
+    params=[
+        pytest.param((prompt, tcl), id=f"{'with' if prompt else 'no'}_prompt-{'with' if tcl else 'no'}_tcl")
+        for prompt in (True, False)
+        for tcl in (True, False)
+    ],
+)
 def activation_python(request, tmp_path_factory, special_char_name, current_fastest):
     dest = os.path.join(str(tmp_path_factory.mktemp("activation-tester-env")), special_char_name)
     cmd = ["--without-pip", dest, "--creator", current_fastest, "-vv", "--no-periodic-update"]
     # `params` is accessed here. https://docs.pytest.org/en/stable/reference/reference.html#pytest-fixture
-    if request.param:
+    prompt, tcl = request.param
+    if prompt:
         cmd += ["--prompt", special_char_name]
     session = cli_run(cmd)
+    if tcl:
+        # the interpreter reports tcl_lib only when TCL_LIBRARY is set during its cached probe, so regenerate the scripts
+        # with the values patched instead
+        with pytest.MonkeyPatch.context() as monkeypatch:
+            for name in ("tcl", "tk"):
+                (path := Path(dest).parent / name).mkdir()
+                monkeypatch.setattr(session.creator.interpreter, f"{name}_lib", str(path))
+            for activator in session.activators:
+                activator.generate(session.creator)
     pydoc_test = session.creator.purelib / "pydoc_test.py"
     pydoc_test.write_text('"""This is pydoc_test.py"""', encoding="utf-8")
     return session
 
 
-@pytest.fixture
-def activation_tester(activation_python, monkeypatch, tmp_path, is_inside_ci):
+@pytest.fixture(params=[False, True], ids=["tcl_tk_unset", "tcl_tk_set"])
+def activation_tester(request, activation_python, monkeypatch, tmp_path, is_inside_ci):
+    for name in ("TCL_LIBRARY", "TK_LIBRARY"):
+        if request.param:
+            monkeypatch.setenv(name, f"user-{name.lower()}")
+        else:
+            monkeypatch.delenv(name, raising=False)
+
     def _tester(tester_class):
         tester = tester_class(activation_python)
         if not tester.of_class.supports(activation_python.creator.interpreter):

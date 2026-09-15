@@ -83,47 +83,6 @@ def test_fish_prompt_survives_shadowed_source(activation_python, tmp_path) -> No
     assert f"PWD={start}\n" in out, out
 
 
-@pytest.mark.skipif(IS_WIN, reason="fish is not available on Windows")
-@pytest.mark.skipif(FISH is None, reason="fish is not installed")
-@pytest.mark.parametrize("venv_sets_tcl", [True, False])
-@pytest.mark.parametrize("was_set", [True, False])
-def test_fish_deactivate_restores_tcl_tk_library(tmp_path, venv_sets_tcl, was_set) -> None:
-    class MockInterpreter:
-        pass
-
-    interpreter = MockInterpreter()
-    interpreter.tcl_lib = str(tmp_path / "venv-tcl") if venv_sets_tcl else None
-    interpreter.tk_lib = str(tmp_path / "venv-tk") if venv_sets_tcl else None
-
-    class MockCreator:
-        def __init__(self, dest) -> None:
-            self.dest = dest
-            self.bin_dir = dest / "bin"
-            self.bin_dir.mkdir(parents=True)
-            self.interpreter = interpreter
-            self.pyenv_cfg = {}
-            self.env_name = "env"
-
-    creator = MockCreator(tmp_path / "env")
-    FishActivator(Namespace(prompt=None)).generate(creator)
-
-    setup = "set -gx TCL_LIBRARY user-tcl; set -gx TK_LIBRARY user-tk" if was_set else "set -e TCL_LIBRARY TK_LIBRARY"
-    show = "for name in TCL_LIBRARY TK_LIBRARY; if set -q $name; echo $$name; else; echo None; end; end"
-    driver = tmp_path / "driver.fish"
-    driver.write_text(
-        f"{setup}\nsource '{creator.bin_dir / 'activate.fish'}'\n{show}\ndeactivate\n{show}\n",
-        encoding="utf-8",
-    )
-    out = subprocess.run(
-        [FISH, str(driver)], capture_output=True, text=True, encoding="utf-8", timeout=60, check=True
-    ).stdout
-
-    before = ["user-tcl", "user-tk"] if was_set else ["None", "None"]
-    activated = [interpreter.tcl_lib, interpreter.tk_lib] if venv_sets_tcl else before
-    # activation must not drop a value it does not replace, and deactivate puts back what was there
-    assert out.splitlines() == [*activated, *before], out
-
-
 @pytest.mark.skipif(IS_WIN, reason="we have not setup fish in CI yet")
 def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("HOME", str(tmp_path))
@@ -144,11 +103,15 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
                 self.print_os_env_var("VIRTUAL_ENV"),
                 self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
                 self.print_os_env_var("PATH"),
+                self.print_os_env_var("TCL_LIBRARY"),
+                self.print_os_env_var("TK_LIBRARY"),
                 self.activate_call(activate_script),
                 self.print_python_exe(),
                 self.print_os_env_var("VIRTUAL_ENV"),
                 self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
                 self.print_os_env_var("PATH"),
+                self.print_os_env_var("TCL_LIBRARY"),
+                self.print_os_env_var("TK_LIBRARY"),
                 self.print_prompt(),
                 # \\ loads documentation from the virtualenv site packages
                 self.pydoc_call,
@@ -157,6 +120,8 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
                 self.print_os_env_var("VIRTUAL_ENV"),
                 self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
                 self.print_os_env_var("PATH"),
+                self.print_os_env_var("TCL_LIBRARY"),
+                self.print_os_env_var("TK_LIBRARY"),
                 "",  # just finish with an empty new line
             ]
 
@@ -165,27 +130,28 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
             assert out[0], raw
             assert out[1] == "None", raw
             assert out[2] == "None", raw
+            self.assert_tcl_tk_library(out[4:6], out[10:12], out[-2:], raw)
             # self.activate_call(activate_script) runs at this point
             expected = self._creator.exe.parent / os.path.basename(sys.executable)
-            assert self.norm_path(out[4]) == self.norm_path(expected), raw
-            assert self.norm_path(out[5]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
-            assert out[6] == self._creator.env_name
+            assert self.norm_path(out[6]) == self.norm_path(expected), raw
+            assert self.norm_path(out[7]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
+            assert out[8] == self._creator.env_name
             # Some attempts to test the prompt output print more than 1 line.
             # So we need to check if the prompt exists on any of them.
             prompt_text = f"({self._creator.env_name}) "
-            assert any(prompt_text in line for line in out[7:-5]), raw
+            assert any(prompt_text in line for line in out[12:-7]), raw
 
-            assert out[-5] == "wrote pydoc_test.html", raw
+            assert out[-7] == "wrote pydoc_test.html", raw
             content = tmp_path / "pydoc_test.html"
             assert content.exists(), raw
             # post deactivation, same as before
-            assert out[-4] == out[0], raw
-            assert out[-3] == "None", raw
-            assert out[-2] == "None", raw
+            assert out[-6] == out[0], raw
+            assert out[-5] == "None", raw
+            assert out[-4] == "None", raw
 
             # Check that the PATH is restored
-            assert out[3] == out[13], raw
+            assert out[3] == out[-3], raw
             # Check that PATH changed after activation
-            assert out[3] != out[8], raw
+            assert out[3] != out[9], raw
 
     activation_tester(Fish)

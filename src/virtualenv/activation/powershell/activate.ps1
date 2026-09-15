@@ -168,7 +168,7 @@ deactivate -nondestructive
 $env:VIRTUAL_ENV = $VenvDir
 $env:VIRTUAL_ENV_PROMPT = $Prompt
 
-# Saved even when unset ($null), so deactivate knows to remove the value set here.
+# a $null saved value tells deactivate to remove the variable
 if (__TCL_LIBRARY__ -ne "") {
     New-Variable -Scope global -Name _OLD_VIRTUAL_TCL_LIBRARY -Value $env:TCL_LIBRARY
     $env:TCL_LIBRARY = __TCL_LIBRARY__

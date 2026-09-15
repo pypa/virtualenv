@@ -71,7 +71,7 @@ set -gx PKG_CONFIG_PATH "$VIRTUAL_ENV/lib/pkgconfig:$PKG_CONFIG_PATH"
 set -gx _OLD_VIRTUAL_PATH $PATH
 set -gx PATH "$VIRTUAL_ENV"'/'__BIN_NAME__ $PATH
 
-# Saved even when unset, so deactivate knows to erase the value set here.
+# an empty saved value tells deactivate to erase the variable
 if test -n __TCL_LIBRARY__
   set -gx _OLD_VIRTUAL_TCL_LIBRARY "$TCL_LIBRARY"
   set -gx TCL_LIBRARY '__TCL_LIBRARY__'
