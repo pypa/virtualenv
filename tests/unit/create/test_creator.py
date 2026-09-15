@@ -881,11 +881,12 @@ def test_pyenv_cfg_preserves_symlinks(tmp_path) -> None:
     [
         pytest.param("\n\nhome = /a\n", {"home": "/a"}, id="blank-line"),
         pytest.param("# home = /b\nhome = /a\n", {"home": "/a"}, id="comment"),
+        pytest.param("  # home = /b\nhome = /a\n", {"home": "/a"}, id="indented-comment"),
         pytest.param("no-separator\nhome = /a\n", {"home": "/a"}, id="no-separator"),
         pytest.param('home = /a\nprompt = "a b"\n', {"home": "/a", "prompt": "a b"}, id="quoted-value"),
     ],
 )
-def test_pyenv_cfg_read_values(tmp_path, text, expected) -> None:
+def test_pyenv_cfg_from_folder_skips_non_entries(tmp_path: Path, text: str, expected: dict[str, str]) -> None:
     (tmp_path / "pyvenv.cfg").write_text(text, encoding="utf-8")
 
     assert PyEnvCfg.from_folder(tmp_path).content == expected

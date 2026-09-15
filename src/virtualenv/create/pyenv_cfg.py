@@ -30,8 +30,7 @@ class PyEnvCfg:
         content = OrderedDict()
         for line in path.read_text(encoding="utf-8").splitlines():
             key, separator, value = line.partition("=")
-            key = key.strip()
-            if not separator or key.startswith("#"):
+            if not separator or (key := key.strip()).startswith("#"):
                 continue
             value = value.strip()
             if len(value) > 1 and value[0] in {"'", '"'} and value[0] == value[-1]:
