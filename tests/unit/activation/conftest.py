@@ -124,10 +124,12 @@ class ActivationTester:
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
             self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
+            self.print_os_env_var("PKG_CONFIG_PATH"),
             self.activate_call(activate_script),
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
             self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
+            self.print_os_env_var("PKG_CONFIG_PATH"),
             self.print_prompt(),
             # \\ loads documentation from the virtualenv site packages
             self.pydoc_call,
@@ -135,6 +137,7 @@ class ActivationTester:
             self.print_python_exe(),
             self.print_os_env_var("VIRTUAL_ENV"),
             self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
+            self.print_os_env_var("PKG_CONFIG_PATH"),
             "",  # just finish with an empty new line
         ]
         result = []
@@ -151,23 +154,36 @@ class ActivationTester:
         assert out[0], raw
         assert out[1] == "None", raw
         assert out[2] == "None", raw
+        self.assert_pkg_config_path(out[3], out[7], out[-1], raw)
         # self.activate_call(activate_script) runs at this point
         python_exe = self._creator.exe.parent / os.path.basename(sys.executable)
-        assert self.norm_path(out[3]) == self.norm_path(python_exe), raw
-        assert self.norm_path(out[4]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
-        assert out[5] == self._creator.env_name
+        assert self.norm_path(out[4]) == self.norm_path(python_exe), raw
+        assert self.norm_path(out[5]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
+        assert out[6] == self._creator.env_name
         # Some attempts to test the prompt output print more than 1 line.
         # So we need to check if the prompt exists on any of them.
         prompt_text = f"({self._creator.env_name}) "
-        assert any(prompt_text in line for line in out[6:-4]), raw
+        assert any(prompt_text in line for line in out[8:-5]), raw
 
-        assert out[-4] == "wrote pydoc_test.html", raw
+        assert out[-5] == "wrote pydoc_test.html", raw
         content = tmp_path / "pydoc_test.html"
         assert content.exists(), raw
         # post deactivation, same as before
-        assert out[-3] == out[0], raw
+        assert out[-4] == out[0], raw
+        assert out[-3] == "None", raw
         assert out[-2] == "None", raw
-        assert out[-1] == "None", raw
+
+    def assert_pkg_config_path(self, before, activated, deactivated, raw) -> None:
+        user_value = os.environ.get("PKG_CONFIG_PATH")
+        # comparing entries as paths catches a trailing separator as an extra entry
+        assert (before, [self.norm_path(entry) for entry in activated.split(os.pathsep)], deactivated) == (
+            str(user_value),
+            [
+                self.norm_path(self._creator.dest / "lib" / "pkgconfig"),
+                *([self.norm_path(user_value)] if user_value else []),
+            ],
+            str(user_value),
+        ), raw
 
     def quote(self, s):
         return self.of_class.quote(s)
@@ -259,8 +275,13 @@ def activation_python(request, tmp_path_factory, special_char_name, current_fast
     return session
 
 
-@pytest.fixture
-def activation_tester(activation_python, monkeypatch, tmp_path, is_inside_ci):
+@pytest.fixture(params=[None, "user"], ids=["pkg_config_path_unset", "pkg_config_path_set"])
+def activation_tester(request, activation_python, monkeypatch, tmp_path, is_inside_ci):
+    if request.param is None:
+        monkeypatch.delenv("PKG_CONFIG_PATH", raising=False)
+    else:
+        monkeypatch.setenv("PKG_CONFIG_PATH", request.param)
+
     def _tester(tester_class):
         tester = tester_class(activation_python)
         if not tester.of_class.supports(activation_python.creator.interpreter):

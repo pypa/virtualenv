@@ -85,6 +85,10 @@ def test_xonsh(activation_tester_class, activation_tester) -> None:
         def print_prompt(self):
             return 'echo @("(" + $VIRTUAL_ENV_PROMPT + ") ")'
 
+        def assert_pkg_config_path(self, before, activated, deactivated, raw) -> None:
+            # activate.xsh does not manage PKG_CONFIG_PATH
+            assert before == activated == deactivated, raw
+
         def activate_call(self, script):
             return f"source {self.quote(str(script))}"
 
