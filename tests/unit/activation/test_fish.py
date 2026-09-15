@@ -57,8 +57,8 @@ def test_fish_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
         assert "set -gx TCL_LIBRARY '/path/to/tcl'" in content
         assert "set -gx TK_LIBRARY '/path/to/tk'" in content
     else:
-        assert "if test -n ''\n  if set -q TCL_LIBRARY;" in content
-        assert "if test -n ''\n  if set -q TK_LIBRARY;" in content
+        assert "if test -n ''\n  set -gx _OLD_VIRTUAL_TCL_LIBRARY" in content
+        assert "if test -n ''\n  set -gx _OLD_VIRTUAL_TK_LIBRARY" in content
 
 
 @pytest.mark.skipif(IS_WIN, reason="fish is not available on Windows")
@@ -103,11 +103,15 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
                 self.print_os_env_var("VIRTUAL_ENV"),
                 self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
                 self.print_os_env_var("PATH"),
+                self.print_os_env_var("TCL_LIBRARY"),
+                self.print_os_env_var("TK_LIBRARY"),
                 self.activate_call(activate_script),
                 self.print_python_exe(),
                 self.print_os_env_var("VIRTUAL_ENV"),
                 self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
                 self.print_os_env_var("PATH"),
+                self.print_os_env_var("TCL_LIBRARY"),
+                self.print_os_env_var("TK_LIBRARY"),
                 self.print_prompt(),
                 # \\ loads documentation from the virtualenv site packages
                 self.pydoc_call,
@@ -116,6 +120,8 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
                 self.print_os_env_var("VIRTUAL_ENV"),
                 self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
                 self.print_os_env_var("PATH"),
+                self.print_os_env_var("TCL_LIBRARY"),
+                self.print_os_env_var("TK_LIBRARY"),
                 "",  # just finish with an empty new line
             ]
 
@@ -124,27 +130,28 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
             assert out[0], raw
             assert out[1] == "None", raw
             assert out[2] == "None", raw
+            self.assert_tcl_tk_library(out[4:6], out[10:12], out[-2:], raw)
             # self.activate_call(activate_script) runs at this point
             expected = self._creator.exe.parent / os.path.basename(sys.executable)
-            assert self.norm_path(out[4]) == self.norm_path(expected), raw
-            assert self.norm_path(out[5]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
-            assert out[6] == self._creator.env_name
+            assert self.norm_path(out[6]) == self.norm_path(expected), raw
+            assert self.norm_path(out[7]) == self.norm_path(self._creator.dest).replace("\\\\", "\\"), raw
+            assert out[8] == self._creator.env_name
             # Some attempts to test the prompt output print more than 1 line.
             # So we need to check if the prompt exists on any of them.
             prompt_text = f"({self._creator.env_name}) "
-            assert any(prompt_text in line for line in out[7:-5]), raw
+            assert any(prompt_text in line for line in out[12:-7]), raw
 
-            assert out[-5] == "wrote pydoc_test.html", raw
+            assert out[-7] == "wrote pydoc_test.html", raw
             content = tmp_path / "pydoc_test.html"
             assert content.exists(), raw
             # post deactivation, same as before
-            assert out[-4] == out[0], raw
-            assert out[-3] == "None", raw
-            assert out[-2] == "None", raw
+            assert out[-6] == out[0], raw
+            assert out[-5] == "None", raw
+            assert out[-4] == "None", raw
 
             # Check that the PATH is restored
-            assert out[3] == out[13], raw
+            assert out[3] == out[-3], raw
             # Check that PATH changed after activation
-            assert out[3] != out[8], raw
+            assert out[3] != out[9], raw
 
     activation_tester(Fish)
