@@ -108,7 +108,7 @@ commands = [
       "tests",
       "--skip-slow",
       "-n",
-      "auto",
+      "2",
       "--dist",
       "loadfile",
       "--timeout-method",

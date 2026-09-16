@@ -167,7 +167,11 @@ jobs:
           # --reruns lets a single test recover from a transient worker crash (see
           # pytest-rerunfailures' documented pytest-xdist crash-recovery support) instead of
           # failing the whole matrix leg; scoped to CI only so local runs still fail fast.
-          PYTEST_ADDOPTS: "-vv --durations=20 --reruns 2 --reruns-delay 2"
+          # graalpy gets a longer per-test --timeout: at the default 120s, JIT warmup plus
+          # xdist contention from parallel workers pushed a legitimate test (44s on its own)
+          # past the limit, forcing a hard worker kill whose aftermath crashed the interpreter
+          # on shutdown (see #3240).
+          PYTEST_ADDOPTS: "-vv --durations=20 --reruns 2 --reruns-delay 2${{ matrix.py == 'graalpy-24.1' && ' --timeout=300' || '' }}"
           # If a worker process dies outright (seen on 3.13t/Windows with no Python-level
           # exception at all), this prints a native stack trace to stderr instead of nothing.
           PYTHONFAULTHANDLER: "1"
