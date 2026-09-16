@@ -12,6 +12,7 @@ on:
           - minor
           - patch
         default: auto
+permissions: {}
 jobs:
   pre-release:
     runs-on: ubuntu-24.04

@@ -1,0 +1,2 @@
+Add top-level ``permissions: {}`` to workflows that lacked it, add a CodeQL workflow, and annotate the embedded-wheel
+binary-artifacts finding for the OpenSSF Scorecard.
