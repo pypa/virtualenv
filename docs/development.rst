@@ -216,8 +216,6 @@ You may use AI tools (code assistants, chat models, agents) to help write a cont
 
 - You are the author. Read, understand and test everything you submit; you are responsible for it as if you had typed it
   yourself, including its licensing.
-- Disclose it. Say in the pull request description which tool you used and for what (for example "the tests were drafted
-  with Copilot").
 - Keep a human in the loop. Do not open pull requests or issues, or post review comments, that you have not read. Fully
   automated submissions are closed without review.
 - Do not paste in code whose license is unknown or incompatible with the MIT License, whatever produced it.
