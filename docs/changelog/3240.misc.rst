@@ -1,0 +1,1 @@
+Parallelize the GraalPy test env and add crash-recovery reruns to CI to fix two flaky-CI root causes.
