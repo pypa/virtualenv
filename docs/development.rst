@@ -209,6 +209,35 @@ Additionally, avoid including "cosmetic" changes to code that is unrelated to yo
 PR more difficult. Examples include re-flowing text in comments or documentation, or addition or removal of blank lines
 or whitespace within lines. Such changes can be made separately, as a "formatting cleanup" PR, if needed.
 
+AI-assisted contributions
+=========================
+
+You may use AI tools (code assistants, chat models, agents) to help write a contribution, under these conditions:
+
+- You are the author. Read, understand and test everything you submit; you are responsible for it as if you had typed it
+  yourself, including its licensing.
+- Disclose it. Say in the pull request description which tool you used and for what (for example "the tests were drafted
+  with Copilot").
+- Keep a human in the loop. Do not open pull requests or issues, or post review comments, that you have not read. Fully
+  automated submissions are closed without review.
+- Do not paste in code whose license is unknown or incompatible with the MIT License, whatever produced it.
+
+Maintainers may use AI tools to help triage and review. A review comment posted under a maintainer's name has been read
+and endorsed by that maintainer.
+
+Licensing policy
+================
+
+virtualenv is distributed under the MIT License, and everything in the repository must be compatible with it:
+
+- Contributions are accepted under the MIT License only; you must have the right to license what you submit.
+- Runtime dependencies must use a permissive license: MIT, BSD, Apache-2.0, PSF-2.0 or ISC. Copyleft licenses (GPL,
+  LGPL, AGPL, MPL) are not acceptable for runtime dependencies. Development-only tools carry no such restriction.
+- The wheels embedded under ``src/virtualenv/seed/wheels/embed`` (``pip``, ``setuptools``) keep their own MIT licenses
+  and are redistributed unchanged.
+- Adding a runtime dependency or bumping an embedded wheel is a maintainer decision; checking the license of the new
+  version is part of that review.
+
 Automated testing
 =================
 
