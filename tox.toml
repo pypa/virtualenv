@@ -107,6 +107,10 @@ commands = [
       "{work_dir}{/}junit.{env_name}.xml",
       "tests",
       "--skip-slow",
+      "-n",
+      "auto",
+      "--dist",
+      "loadfile",
     ], extend = true },
   ],
 ]

@@ -104,7 +104,6 @@ test = [
   "covdefaults>=2.3",
   "coverage>=7.2.7",
   "coverage-enable-subprocess>=1",
-  "flaky>=3.7",
   "packaging>=23.1",
   "pytest>=7.4",
   "pytest-env>=0.8.2",
@@ -115,6 +114,7 @@ test = [
   """,
   "pytest-mock>=3.11.1",
   "pytest-randomly>=3.12",
+  "pytest-rerunfailures>=15",
   "pytest-timeout>=2.1",
   "pytest-xdist>=3.5",
   "setuptools>=68",
@@ -228,7 +228,7 @@ max_supported_python = "3.15"
 rules.unused-ignore-comment = "ignore"  # some ignores are platform/version-specific (e.g., ctypes.windll on Linux)
 
 [tool.pytest]
-ini_options.addopts = "--showlocals --no-success-flaky-report"
+ini_options.addopts = "--showlocals"
 ini_options.markers = [
   "graalpy: minimal test suite for GraalPy validation",
   "slow",
