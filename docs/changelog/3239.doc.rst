@@ -1,0 +1,1 @@
+Document the policy for AI-assisted contributions and the licensing rules for dependencies.
