@@ -1,0 +1,2 @@
+Attest build provenance for the release zipapp and attach the ``.intoto.jsonl`` bundle to GitHub releases, for the
+OpenSSF Scorecard Signed-Releases check.

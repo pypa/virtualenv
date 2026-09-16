@@ -219,6 +219,7 @@ lint.preview = true
 
 [tool.codespell]
 builtin = "clear,usage,en-GB_to_en-US"
+ignore-words-list = "intoto"
 count = true
 
 [tool.pyproject-fmt]
