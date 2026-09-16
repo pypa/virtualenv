@@ -8,6 +8,7 @@
 [![Downloads](https://static.pepy.tech/badge/virtualenv/month)](https://pepy.tech/project/virtualenv)
 [![PyPI - License](https://img.shields.io/pypi/l/virtualenv?style=flat-square)](https://opensource.org/licenses/MIT)
 [![check](https://github.com/pypa/virtualenv/actions/workflows/check.yaml/badge.svg)](https://github.com/pypa/virtualenv/actions/workflows/check.yaml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/pypa/virtualenv/badge)](https://scorecard.dev/viewer/?uri=github.com/pypa/virtualenv)
 
 A tool for creating isolated `virtual` python environments.
 
