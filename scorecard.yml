@@ -1,0 +1,5 @@
+annotations:
+  - checks:
+      - binary-artifacts
+    reasons:
+      - reason: remediated # embedded pip/setuptools wheels are pinned and sha256-verified at build time
