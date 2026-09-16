@@ -168,6 +168,9 @@ jobs:
           # pytest-rerunfailures' documented pytest-xdist crash-recovery support) instead of
           # failing the whole matrix leg; scoped to CI only so local runs still fail fast.
           PYTEST_ADDOPTS: "-vv --durations=20 --reruns 2 --reruns-delay 2"
+          # If a worker process dies outright (seen on 3.13t/Windows with no Python-level
+          # exception at all), this prints a native stack trace to stderr instead of nothing.
+          PYTHONFAULTHANDLER: "1"
           CI_RUN: "yes"
           DIFF_AGAINST: HEAD
   check:
