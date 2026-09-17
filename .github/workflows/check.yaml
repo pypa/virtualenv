@@ -14,7 +14,7 @@ jobs:
     name: 🧪 test ${{ matrix.py }} - ${{ matrix.os }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: ${{ matrix.py == 'graalpy-24.1' && 50 || 40 }}
+    timeout-minutes: ${{ matrix.py == 'graalpy-24.1' && 75 || 40 }}
     permissions:
       contents: read
     env:
@@ -162,15 +162,16 @@ jobs:
         run: tox run -vvvv --notest --skip-missing-interpreters false
       - name: 🏃 Run test suite
         run: tox run --skip-pkg-install
-        timeout-minutes: ${{ matrix.py == 'graalpy-24.1' && 40 || 30 }}
+        timeout-minutes: ${{ matrix.py == 'graalpy-24.1' && 65 || 30 }}
         env:
           # --reruns lets a single test recover from a transient worker crash (see
           # pytest-rerunfailures' documented pytest-xdist crash-recovery support) instead of
           # failing the whole matrix leg; scoped to CI only so local runs still fail fast.
-          # graalpy gets a longer per-test --timeout: at the default 120s, JIT warmup plus
-          # xdist contention from parallel workers pushed a legitimate test (44s on its own)
-          # past the limit, forcing a hard worker kill whose aftermath crashed the interpreter
-          # on shutdown (see #3240).
+          # graalpy also no longer runs under xdist (see tox.toml): its execnet controller
+          # gateway thread was still alive when GraalVM's Context.close() ran, which GraalVM
+          # treats as fatal regardless of daemon status, crashing the job even after every
+          # test passed (see #3240). --timeout=300 stays as a safety net now that a slow test
+          # has no parallel workers competing with it for CPU.
           PYTEST_ADDOPTS: "-vv --durations=20 --reruns 2 --reruns-delay 2${{ matrix.py == 'graalpy-24.1' && ' --timeout=300' || '' }}"
           # If a worker process dies outright (seen on 3.13t/Windows with no Python-level
           # exception at all), this prints a native stack trace to stderr instead of nothing.

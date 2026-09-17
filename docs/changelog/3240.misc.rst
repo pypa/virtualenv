@@ -1,3 +1,3 @@
-Run the flaky GraalPy CI job's worker pool at ``-n 2`` instead of ``-n auto`` to cut the JIT warmup contention that was
-pushing tests past their timeout, add crash-recovery reruns, and raise its per-test timeout to give slower runs enough
-room.
+Run the flaky GraalPy CI job's tests without ``pytest-xdist``, since ``execnet``'s controller thread was still alive
+when GraalVM closed its context, crashing the job even after every test passed, and add crash-recovery reruns plus a
+longer per-test timeout for the runs that remain.
