@@ -3,12 +3,28 @@ from __future__ import annotations
 import logging
 import os
 from collections import OrderedDict
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
+
+# pyvenv.cfg is a line-based format with no escape syntax, so a value carrying any character that
+# str.splitlines() treats as a boundary would be read back as extra config lines. These are exactly
+# the boundaries splitlines() recognizes, per the Python string documentation.
+_LINE_BOUNDARIES: Final[tuple[str, ...]] = (
+    "\n",
+    "\r",
+    "\v",
+    "\f",
+    "\x1c",
+    "\x1d",
+    "\x1e",
+    "\x85",
+    chr(0x2028),  # line separator
+    chr(0x2029),  # paragraph separator
+)
 
 
 class PyEnvCfg:
@@ -48,7 +64,7 @@ class PyEnvCfg:
                 normalized_value = f'"{value}"'
             else:
                 normalized_value = os.path.abspath(value) if value and os.path.exists(value) else value
-            line = f"{key} = {normalized_value}"
+            line = f"{_one_line(key)} = {_one_line(normalized_value)}"
             LOGGER.debug("\t%s", line)
             text += line
             text += "\n"
@@ -73,6 +89,13 @@ class PyEnvCfg:
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={self.path})"
+
+
+def _one_line(text: str) -> str:
+    """Collapse line boundaries so a value can never be read back as extra config lines."""
+    for boundary in _LINE_BOUNDARIES:
+        text = text.replace(boundary, " ")
+    return text
 
 
 __all__ = [

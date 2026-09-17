@@ -152,6 +152,27 @@ commands = [
   [ "python", "-c", "import sys; print(sys.executable)" ],
 ]
 
+[env.fuzz]
+description = "run the atheris fuzz target for pyvenv.cfg (Linux + CPython 3.12-3.14 only)"
+dependency_groups = [ "fuzz" ]
+commands = [ [ "python", "{tox_root}{/}tasks{/}fuzz_pyenv_cfg.py", "-runs=20000" ] ]
+
+[env.property]
+description = "run the hypothesis property tests"
+dependency_groups = [ "property" ]
+commands = [
+  [
+    "pytest",
+    { replace = "posargs", default = [
+      "--junitxml",
+      "{work_dir}{/}junit.{env_name}.xml",
+      "tests{/}property",
+      "-m",
+      "property",
+    ], extend = true },
+  ],
+]
+
 [env.release]
 description = "do a release, required posarg of the version number"
 deps = [ "gitpython>=3.1.44", "packaging>=25", "pre-commit-uv>=4.1.4", "towncrier>=24.8" ]

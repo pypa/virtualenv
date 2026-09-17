@@ -194,6 +194,7 @@ jobs:
         tox_env:
           - dev
           - docs
+          - property
           - readme
           - type
           - type-3.9
