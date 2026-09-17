@@ -364,12 +364,11 @@ def release_date_for_wheel_path(dest: Path) -> datetime | None:
 def verify_wheel_digest(wheel: Wheel) -> None:
     """Verify a downloaded wheel's sha256 against the digest PyPI's JSON API reports for that release.
 
-    ``pip download`` trusts whatever index it is configured to use, and nothing else in this module
-    checks the bytes it hands back. A missing PyPI record only means this check cannot run - the wheel
-    may come from a private index PyPI has never heard of - so that case is logged and let through. An
-    actual mismatch means the file on disk is not the release PyPI published under that filename, which
-    is what a compromised index, a stale mirror, or a MITM'd download would produce, so that case is
-    fatal: the wheel must never be cached or seeded into a venv.
+    ``pip download`` trusts whatever index it is configured to use, and nothing else in this module checks the bytes it
+    hands back. A missing PyPI record only means this check cannot run - the wheel may come from a private index PyPI
+    has never heard of - so that case is logged and let through. An actual mismatch means the file on disk is not the
+    release PyPI published under that filename, which is what a compromised index, a stale mirror, or a MITM'd download
+    would produce, so that case is fatal: the wheel must never be cached or seeded into a venv.
 
     :raises RuntimeError: if PyPI's record for this exact filename exists and the digest does not match.
 
