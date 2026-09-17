@@ -1,0 +1,5 @@
+Escape ``%``, ``"``, ``&``, ``|``, ``<``, ``>``, ``(``, ``)``, ``^`` and any ``str.splitlines`` line
+boundary before writing them into ``activate.bat``. ``--prompt``, the ``VIRTUALENV_PROMPT`` environment
+variable and the config file all set the prompt, and cmd.exe treats those characters as live syntax even
+inside the ``@set "VAR=value"`` construct the template uses, so a prompt such as ``x" & calc & "`` ran
+``calc`` the moment a victim activated the environment.
