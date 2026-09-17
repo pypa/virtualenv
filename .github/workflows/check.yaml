@@ -41,14 +41,14 @@ jobs:
           - rp
         os:
           - ubuntu-24.04
-          - macos-15
+          - macos-26
           - windows-2025-vs2026
         include:
-          - {os: macos-15, py: "brew@3.14"}
-          - {os: macos-15, py: "brew@3.13"}
-          - {os: macos-15, py: "brew@3.12"}
-          - {os: macos-15, py: "brew@3.11"}
-          - {os: macos-15, py: "brew@3.10"}
+          - {os: macos-26, py: "brew@3.14"}
+          - {os: macos-26, py: "brew@3.13"}
+          - {os: macos-26, py: "brew@3.12"}
+          - {os: macos-26, py: "brew@3.11"}
+          - {os: macos-26, py: "brew@3.10"}
         exclude:
           - {os: windows-2025-vs2026, py: "graalpy-24.1"}
           - {os: windows-2025-vs2026, py: "pypy-3.10"}
