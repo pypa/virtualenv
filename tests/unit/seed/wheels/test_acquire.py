@@ -38,6 +38,7 @@ def test_download_wheel_bad_output(mocker, for_py_version, session_app_data) -> 
     distribution = "setuptools"
     p_open = mocker.MagicMock()
     mocker.patch("virtualenv.seed.wheels.acquire.Popen", return_value=p_open)
+    mocker.patch("virtualenv.seed.wheels.acquire.verify_wheel_digest")
     p_open.communicate.return_value = "", ""
     p_open.returncode = 0
 
@@ -94,11 +95,29 @@ def test_download_wheel_python_io_encoding(mocker, for_py_version, session_app_d
     mock_popen.return_value.communicate.return_value = "Saved a-b-c.whl", ""
     mock_popen.return_value.returncode = 0
     mocker.patch("pathlib.Path.absolute", return_value=Path("a-b-c.whl"))
+    mocker.patch("virtualenv.seed.wheels.acquire.verify_wheel_digest")
 
     download_wheel("pip", "==1", for_py_version, [], session_app_data, "folder", os.environ.copy())
 
     env = mock_popen.call_args[1]["env"]
     assert env["PYTHONIOENCODING"] == "utf-8"
+
+
+def test_download_wheel_verifies_digest(mocker, for_py_version, session_app_data) -> None:
+    """download_wheel must reject a wheel whose bytes do not match PyPI's published digest."""
+    mock_popen = mocker.patch("virtualenv.seed.wheels.acquire.Popen")
+    mock_popen.return_value.communicate.return_value = "Saved a-b-c.whl", ""
+    mock_popen.return_value.returncode = 0
+    mocker.patch("pathlib.Path.absolute", return_value=Path("a-b-c.whl"))
+    verify = mocker.patch(
+        "virtualenv.seed.wheels.acquire.verify_wheel_digest",
+        side_effect=RuntimeError("digest mismatch"),
+    )
+
+    with pytest.raises(RuntimeError, match="digest mismatch"):
+        download_wheel("pip", "==1", for_py_version, [], session_app_data, "folder", os.environ.copy())
+
+    assert verify.call_count == 1
 
 
 @pytest.fixture

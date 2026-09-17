@@ -11,7 +11,7 @@ from subprocess import PIPE, CalledProcessError, Popen
 from typing import TYPE_CHECKING
 
 from .bundle import from_bundle
-from .periodic_update import add_wheel_to_update_log
+from .periodic_update import add_wheel_to_update_log, verify_wheel_digest
 from .util import Version, Wheel, discover_wheels
 
 if TYPE_CHECKING:
@@ -108,6 +108,8 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
 
     :raises ValueError: if ``distribution`` or ``version_spec`` fail the strict allow-list check.
     :raises CalledProcessError: if ``pip download`` exits with a non-zero status.
+    :raises RuntimeError: if PyPI has a published digest for the downloaded filename and it does not
+        match, see :func:`virtualenv.seed.wheels.periodic_update.verify_wheel_digest`.
 
     """
     _check_distribution(distribution)
@@ -139,6 +141,7 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         raise CalledProcessError(process.returncode, cmd, **kwargs)
     result = _find_downloaded_wheel(distribution, version_spec, for_py_version, to_folder, out)
     LOGGER.debug("downloaded wheel %s", result.name)  # ty: ignore[unresolved-attribute]
+    verify_wheel_digest(result)  # ty: ignore[invalid-argument-type]
     return result  # ty: ignore[invalid-return-type]
 
 
