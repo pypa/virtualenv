@@ -1,3 +1,0 @@
-Add an opt-in ``tox -e fuzz`` environment that runs Atheris fuzz targets against ``NushellActivator.quote`` and
-``PowerShellActivator.quote``, checking each output against the escaping rule it implements. Isolated in its own
-dependency group; no other environment installs Atheris, and it is not part of the default test matrix.

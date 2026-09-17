@@ -1,4 +1,0 @@
-Fix flaky GraalPy CI. GraalVM's interpreter can crash on shutdown after every test has already passed, independent of
-test parallelism or timeout configuration; ``tasks/run_graalpy_tests.py`` now tolerates that specific case by checking
-the JUnit report before failing the build. Also add crash-recovery reruns and a longer per-test timeout for the runs
-that remain.

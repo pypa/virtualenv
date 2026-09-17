@@ -1,1 +1,0 @@
-Run the macOS test matrix on ``macos-26``, matching ``macos-latest``, instead of ``macos-15``.

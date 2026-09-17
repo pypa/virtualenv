@@ -7,6 +7,32 @@
 .. towncrier release notes start
 
 ***********************
+ v21.7.11 (2026-09-17)
+***********************
+
+Bugfixes - 21.7.11
+==================
+
+- Running ``activate.bat`` again before ``deactivate`` no longer makes ``deactivate`` leave the environment's
+  ``PKG_CONFIG_PATH``, ``TCL_LIBRARY`` and ``TK_LIBRARY`` behind, or lose values the user had set before the first
+  activation - by :user:`darrenhuai`. (:issue:`3245`)
+- Write ``pyvenv.cfg`` values on a single line, so a prompt carrying a line boundary can no longer inject configuration.
+  ``--prompt``, the ``VIRTUALENV_PROMPT`` environment variable and the config file all set the prompt, and
+  ``pyvenv.cfg`` has no escape syntax, so a newline, a carriage return, or any other boundary ``str.splitlines``
+  recognizes, such as ``U+2028``, started a new configuration line. Reading the file back picked up those lines as keys,
+  and since the last value for a key wins, they replaced anything written earlier, including ``home``. (:issue:`3247`)
+
+Improved Documentation - 21.7.11
+================================
+
+- Document the policy for AI-assisted contributions and the licensing rules for dependencies. (:issue:`3239`)
+
+Misc - 21.7.11
+==============
+
+- :issue:`3238`, :issue:`3240`, :issue:`3241`, :issue:`3242`, :issue:`3243`, :issue:`3244`, :issue:`3246`
+
+***********************
  v21.7.10 (2026-09-15)
 ***********************
 

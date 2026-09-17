@@ -1,1 +1,0 @@
-Publish OpenSSF Scorecard results via a scheduled workflow and show the badge in the README.
