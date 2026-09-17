@@ -92,7 +92,8 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
 
 
 @pytest.mark.usefixtures("activation_python")
-def test_batch(activation_tester_class, activation_tester, tmp_path) -> None:
+@pytest.mark.parametrize("activations", [1, 2], ids=["activate_once", "activate_twice"])
+def test_batch(activation_tester_class, activation_tester, tmp_path, activations) -> None:
     version_script = tmp_path / "version.bat"
     version_script.write_text("ver", encoding="utf-8")
 
@@ -108,6 +109,10 @@ def test_batch(activation_tester_class, activation_tester, tmp_path) -> None:
 
         def _get_test_lines(self, activate_script):
             return ["@echo off", *super()._get_test_lines(activate_script)]
+
+        def activate_call(self, script):
+            # activating again without deactivating must still restore the values from before the first activation
+            return " & ".join([super().activate_call(script)] * activations)
 
         def quote(self, s):
             if '"' in s or " " in s:
