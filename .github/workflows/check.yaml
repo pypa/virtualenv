@@ -15,7 +15,7 @@ jobs:
     name: 🧪 test ${{ matrix.py }} - ${{ matrix.os }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 40
+    timeout-minutes: ${{ matrix.py == 'graalpy-24.1' && 75 || 40 }}
     permissions:
       contents: read
     env:
@@ -163,9 +163,20 @@ jobs:
         run: tox run -vvvv --notest --skip-missing-interpreters false
       - name: 🏃 Run test suite
         run: tox run --skip-pkg-install
-        timeout-minutes: 30
+        timeout-minutes: ${{ matrix.py == 'graalpy-24.1' && 65 || 30 }}
         env:
-          PYTEST_ADDOPTS: "-vv --durations=20"
+          # --reruns lets a single test recover from a transient worker crash (see
+          # pytest-rerunfailures' documented pytest-xdist crash-recovery support) instead of
+          # failing the whole matrix leg; scoped to CI only so local runs still fail fast.
+          # graalpy also no longer runs under xdist (see tox.toml) and dropped its
+          # --timeout-method=thread override: that method spawns a watcher thread per test,
+          # and GraalVM's Context.close() treats any Python-visible thread still alive as
+          # fatal, crashing the job even after every test passed (see #3240). The default
+          # signal-based method needs no such thread. --timeout=300 stays as a safety net.
+          PYTEST_ADDOPTS: "-vv --durations=20 --reruns 2 --reruns-delay 2${{ matrix.py == 'graalpy-24.1' && ' --timeout=300' || '' }}"
+          # If a worker process dies outright (seen on 3.13t/Windows with no Python-level
+          # exception at all), this prints a native stack trace to stderr instead of nothing.
+          PYTHONFAULTHANDLER: "1"
           CI_RUN: "yes"
           DIFF_AGAINST: HEAD
   check:

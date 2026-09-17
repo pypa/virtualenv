@@ -26,7 +26,7 @@ description = "run tests with {env_name}"
 package = "wheel"
 wheel_build_env = ".pkg"
 dependency_groups = [ "test" ]
-pass_env = [ "CI_RUN", "PYTEST_*", "TERM" ]
+pass_env = [ "CI_RUN", "PYTEST_*", "PYTHONFAULTHANDLER", "TERM" ]
 set_env._COVERAGE_SRC = "{env_site_packages_dir}{/}virtualenv"
 set_env.COVERAGE_FILE = "{work_dir}{/}.coverage.{env_name}"
 set_env.COVERAGE_PROCESS_START = "{tox_root}{/}pyproject.toml"
@@ -101,7 +101,9 @@ commands = [ [ "pre-commit", "run", "--all-files", "--show-diff-on-failure" ] ]
 [env.graalpy]
 commands = [
   [
-    "pytest",
+    "python",
+    "{tox_root}{/}tasks{/}run_graalpy_tests.py",
+    "{work_dir}{/}junit.{env_name}.xml",
     { replace = "posargs", default = [
       "--junitxml",
       "{work_dir}{/}junit.{env_name}.xml",
