@@ -153,9 +153,13 @@ commands = [
 ]
 
 [env.fuzz]
-description = "run the atheris fuzz target for pyvenv.cfg (Linux + CPython 3.12-3.14 only)"
+description = "run the atheris fuzz targets (Linux + CPython 3.12-3.14 only)"
 dependency_groups = [ "fuzz" ]
-commands = [ [ "python", "{tox_root}{/}tasks{/}fuzz_pyenv_cfg.py", "-runs=20000" ] ]
+commands = [
+  [ "python", "{tox_root}{/}tasks{/}fuzz_pyenv_cfg.py", "-runs=20000" ],
+  [ "python", "{tox_root}{/}tasks{/}fuzz_nushell_quote.py", "-runs=20000" ],
+  [ "python", "{tox_root}{/}tasks{/}fuzz_powershell_quote.py", "-runs=20000" ],
+]
 
 [env.property]
 description = "run the hypothesis property tests"
