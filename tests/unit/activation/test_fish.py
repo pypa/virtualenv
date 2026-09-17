@@ -83,6 +83,7 @@ def test_fish_prompt_survives_shadowed_source(activation_python, tmp_path) -> No
     assert f"PWD={start}\n" in out, out
 
 
+@pytest.mark.slow
 @pytest.mark.skipif(IS_WIN, reason="we have not setup fish in CI yet")
 def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("HOME", str(tmp_path))

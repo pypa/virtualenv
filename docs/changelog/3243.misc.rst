@@ -1,0 +1,4 @@
+Mark ``test_bash``, ``test_csh``, ``test_fish``, and ``test_nushell`` as ``slow``, matching the existing
+``test_powershell`` convention. Each spawns a real shell and, measured on the GraalPy CI leg, accounted for about half
+its runtime without adding coverage beyond what the fast interpreters already provide for these interpreter-independent
+activation scripts.
