@@ -1,0 +1,3 @@
+Running ``activate.bat`` again before ``deactivate`` no longer makes ``deactivate`` leave the environment's
+``PKG_CONFIG_PATH``, ``TCL_LIBRARY`` and ``TK_LIBRARY`` behind, or lose values the user had set before the first
+activation - by :user:`darrenhuai`.
