@@ -35,12 +35,12 @@ class BatchActivator(ViaTemplateActivator):
     def quote(string: str) -> str:
         """Make a value safe to sit inside ``@set "VAR=value"``.
 
-        Batch has no escape for a double quote in this context either: it always closes the quoted
-        string, and whatever follows on the line runs as live cmd.exe syntax. A raw line boundary is
-        worse - batch is line-oriented regardless of quote state, so it starts a brand-new statement
-        instead of staying inside the value. None of these can be represented literally here, so
-        replace them with a space. ``%`` still triggers variable expansion inside the quotes, but
-        doubling it to ``%%`` is a real, in-file escape that keeps the literal character.
+        Batch has no escape for a double quote in this context either: it always closes the quoted string, and whatever
+        follows on the line runs as live cmd.exe syntax. A raw line boundary is worse - batch is line-oriented
+        regardless of quote state, so it starts a brand-new statement instead of staying inside the value. None of these
+        can be represented literally here, so replace them with a space. ``%`` still triggers variable expansion inside
+        the quotes, but doubling it to ``%%`` is a real, in-file escape that keeps the literal character.
+
         """
         string = string.replace("%", "%%").replace('"', " ")
         for operator in BatchActivator._CMD_OPERATORS:

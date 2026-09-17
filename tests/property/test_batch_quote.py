@@ -1,9 +1,9 @@
 """Property tests for BatchActivator.quote().
 
-``@set "VAR=value"`` is the only place a value from ``--prompt`` (or any other replacement) reaches
-cmd.exe, and cmd.exe treats several characters as live syntax there regardless of the surrounding
-quotes - confirmed on a real Windows runner while fixing the ``activate.bat`` injection this closes.
-The invariant that matters is that none of those characters can survive ``quote()``.
+``@set "VAR=value"`` is the only place a value from ``--prompt`` (or any other replacement) reaches cmd.exe, and cmd.exe
+treats several characters as live syntax there regardless of the surrounding quotes - confirmed on a real Windows runner
+while fixing the ``activate.bat`` injection this closes. The invariant that matters is that none of those characters can
+survive ``quote()``.
 
 """
 
