@@ -61,6 +61,7 @@ def test_cshell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
         assert "setenv TCL_LIBRARY ''" in content
 
 
+@pytest.mark.slow
 def test_csh(activation_tester_class, activation_tester) -> None:
     exe = f"tcsh{'.exe' if sys.platform == 'win32' else ''}"
     if which(exe):

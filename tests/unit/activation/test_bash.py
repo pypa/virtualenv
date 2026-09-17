@@ -132,6 +132,7 @@ def test_bash_activate_does_not_export_ps1(tmp_path, current_fastest) -> None:
     assert result.stdout.splitlines() == ["None", "None"]
 
 
+@pytest.mark.slow
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
 @pytest.mark.parametrize("hashing_enabled", [True, False])
 def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> None:

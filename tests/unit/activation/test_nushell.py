@@ -66,6 +66,7 @@ def test_nushell_tkinter_generation(tmp_path) -> None:
     assert "overlay use activate.nu" in lines[alias_idx - 1]
 
 
+@pytest.mark.slow
 def test_nushell(activation_tester_class, activation_tester) -> None:
     class Nushell(activation_tester_class):
         def __init__(self, session) -> None:
