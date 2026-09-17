@@ -101,7 +101,9 @@ commands = [ [ "pre-commit", "run", "--all-files", "--show-diff-on-failure" ] ]
 [env.graalpy]
 commands = [
   [
-    "pytest",
+    "python",
+    "{tox_root}{/}tasks{/}run_graalpy_tests.py",
+    "{work_dir}{/}junit.{env_name}.xml",
     { replace = "posargs", default = [
       "--junitxml",
       "{work_dir}{/}junit.{env_name}.xml",

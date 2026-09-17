@@ -1,3 +1,4 @@
-Fix flaky GraalPy CI by dropping ``pytest-xdist`` and its ``--timeout-method=thread`` override for that job. The watcher
-thread that method spawns per test was still alive when GraalVM closed its interpreter context, crashing the job even
-after every test passed. Add crash-recovery reruns plus a longer per-test timeout for the runs that remain.
+Fix flaky GraalPy CI. GraalVM's interpreter can crash on shutdown after every test has already passed, independent of
+test parallelism or timeout configuration; ``tasks/run_graalpy_tests.py`` now tolerates that specific case by checking
+the JUnit report before failing the build. Also add crash-recovery reruns and a longer per-test timeout for the runs
+that remain.
