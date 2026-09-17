@@ -1,0 +1,5 @@
+Write ``pyvenv.cfg`` values on a single line, so a prompt carrying a line boundary can no longer inject configuration.
+``--prompt``, the ``VIRTUALENV_PROMPT`` environment variable and the config file all set the prompt, and ``pyvenv.cfg``
+has no escape syntax, so a newline, a carriage return, or any other boundary ``str.splitlines`` recognizes, such as
+``U+2028``, started a new configuration line. Reading the file back picked up those lines as keys, and since the last
+value for a key wins, they replaced anything written earlier, including ``home``.

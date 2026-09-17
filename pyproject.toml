@@ -138,6 +138,11 @@ docs = [
   "sphinxcontrib-towncrier>=0.2.1a0",
   "towncrier>=23.6",
 ]
+fuzz = [
+  # atheris only ships prebuilt Linux wheels for these CPython versions; everywhere else it needs a
+  # custom clang+libFuzzer build, so skip it there rather than triggering a doomed source build.
+  "atheris>=2.3; sys_platform=='linux' and python_version>='3.12' and python_version<'3.15'",
+]
 lint = [
   "pre-commit-uv>=4.2",
 ]
@@ -145,6 +150,10 @@ pkg-meta = [
   "check-wheel-contents>=0.6.3",
   "twine>=6.2",
   "uv>=0.10.2",
+]
+property = [
+  "hypothesis>=6.140",
+  { include-group = "test" },
 ]
 
 [tool.hatch]
@@ -229,9 +238,10 @@ max_supported_python = "3.15"
 rules.unused-ignore-comment = "ignore"  # some ignores are platform/version-specific (e.g., ctypes.windll on Linux)
 
 [tool.pytest]
-ini_options.addopts = "--showlocals"
+ini_options.addopts = "--showlocals -m 'not property'"
 ini_options.markers = [
   "graalpy: minimal test suite for GraalPy validation",
+  "property: hypothesis property tests, run by their own tox environment",
   "slow",
 ]
 ini_options.env = [
