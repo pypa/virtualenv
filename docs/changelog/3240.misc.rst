@@ -1,3 +1,3 @@
-Run the flaky GraalPy CI job's tests without ``pytest-xdist``, since ``execnet``'s controller thread was still alive
-when GraalVM closed its context, crashing the job even after every test passed, and add crash-recovery reruns plus a
-longer per-test timeout for the runs that remain.
+Fix flaky GraalPy CI by dropping ``pytest-xdist`` and its ``--timeout-method=thread`` override for that job. The watcher
+thread that method spawns per test was still alive when GraalVM closed its interpreter context, crashing the job even
+after every test passed. Add crash-recovery reruns plus a longer per-test timeout for the runs that remain.

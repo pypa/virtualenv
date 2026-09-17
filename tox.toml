@@ -107,8 +107,6 @@ commands = [
       "{work_dir}{/}junit.{env_name}.xml",
       "tests",
       "--skip-slow",
-      "--timeout-method",
-      "thread",
     ], extend = true },
   ],
 ]
