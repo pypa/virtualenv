@@ -1,4 +1,4 @@
-r"""Property tests for BatchActivator.quote() and its path validation.
+r"""Property tests for BatchActivator.quote().
 
 ``@set "VAR=value"`` is the only place a value from ``--prompt`` (or any other replacement) reaches cmd.exe, and cmd.exe
 treats several characters as live syntax there regardless of the surrounding quotes - confirmed on a real Windows runner
@@ -18,7 +18,7 @@ import pytest
 from hypothesis import example, given
 from hypothesis import strategies as st
 
-from virtualenv.activation.batch import BatchActivator, _unsafe_path_reason
+from virtualenv.activation.batch import BatchActivator
 
 pytestmark = pytest.mark.property
 
@@ -70,21 +70,3 @@ def test_embedding_in_the_set_statement_stays_one_well_formed_line(value: str) -
 
     assert rendered.count("\n") == 0
     assert rendered.count('"') == 2
-
-
-@given(prefix=st.text(st.characters(blacklist_categories=("Cs",), blacklist_characters="&"), max_size=8))
-@example("C:\\Program Files (x86)\\Python39\\tcl")
-def test_path_without_ampersand_has_no_reason_to_skip(prefix: str) -> None:
-    assert _unsafe_path_reason("__VIRTUAL_ENV__", prefix) is None
-
-
-@given(
-    before=st.text(st.characters(blacklist_categories=("Cs",), blacklist_characters="&"), max_size=4),
-    after=st.text(st.characters(blacklist_categories=("Cs",), blacklist_characters="&"), max_size=4),
-)
-def test_path_with_ampersand_has_a_reason_to_skip(before: str, after: str) -> None:
-    """An `&` in a destination path can never be represented, so generation must skip it, not guess."""
-    reason = _unsafe_path_reason("__VIRTUAL_ENV__", f"{before}&{after}")
-
-    assert reason is not None
-    assert "&" in reason

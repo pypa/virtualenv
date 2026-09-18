@@ -43,16 +43,6 @@ _PATH_REPLACEMENT_NAMES: Final[dict[str, str]] = {
 }
 
 
-def _unsafe_path_reason(key: str, value: str) -> str | None:
-    found = sorted({char for char in value if char in _PATH_UNSAFE_CHARS})
-    if not found:
-        return None
-    return (
-        f"{_PATH_REPLACEMENT_NAMES[key]} ({value!r}) contains {''.join(found)!r}, and cmd.exe has no way "
-        f'to keep that literal inside the @set "VAR=value" lines activate.bat relies on'
-    )
-
-
 class BatchActivator(ViaTemplateActivator):
     @classmethod
     def supports(cls, interpreter: PythonInfo) -> bool:
@@ -92,6 +82,16 @@ class BatchActivator(ViaTemplateActivator):
         # ensure the text has all newlines as \r\n - required by batch
         base = super().instantiate_template(replacements, template, creator)
         return base.replace(os.linesep, "\n").replace("\n", os.linesep)
+
+
+def _unsafe_path_reason(key: str, value: str) -> str | None:
+    found = sorted({char for char in value if char in _PATH_UNSAFE_CHARS})
+    if not found:
+        return None
+    return (
+        f"{_PATH_REPLACEMENT_NAMES[key]} ({value!r}) contains {''.join(found)!r}, and cmd.exe has no way "
+        f'to keep that literal inside the @set "VAR=value" lines activate.bat relies on'
+    )
 
 
 __all__ = [

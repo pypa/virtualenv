@@ -7,7 +7,7 @@ from typing import Final
 # A line-based format with no escape syntax reads any character str.splitlines() treats as a
 # boundary back as an extra line - or, for a script, runs it as one. This is the exact boundary
 # set splitlines() recognizes, per the Python string documentation.
-LINE_BOUNDARIES: Final[tuple[str, ...]] = (
+_LINE_BOUNDARIES: Final[tuple[str, ...]] = (
     "\n",
     "\r",
     "\v",
@@ -23,12 +23,11 @@ LINE_BOUNDARIES: Final[tuple[str, ...]] = (
 
 def collapse_line_boundaries(text: str) -> str:
     """Replace every line-boundary character with a space so text can never become extra lines."""
-    for boundary in LINE_BOUNDARIES:
+    for boundary in _LINE_BOUNDARIES:
         text = text.replace(boundary, " ")
     return text
 
 
 __all__ = [
-    "LINE_BOUNDARIES",
     "collapse_line_boundaries",
 ]

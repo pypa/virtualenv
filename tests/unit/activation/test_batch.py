@@ -193,7 +193,11 @@ def test_batch_output(activation_python, activation_tester_class, activation_tes
             self.unix_line_ending = False
 
         def _get_test_lines(self, activate_script):
-            """Build intermediary script which will be then called. In the script just activate environment, call echo to get current echo setting, and then deactivate. This ensures that echo setting is preserved and no unwanted output appears."""
+            """Build an intermediary script that activates, echoes the current echo setting, then deactivates.
+
+            This is what proves echo state survives activation and deactivation without leaking unwanted output.
+
+            """
             intermediary_script_path = str(tmp_path / "intermediary.bat")
             activate_script_quoted = self.quote(str(activate_script))
             return [
