@@ -120,6 +120,26 @@ def test_download_wheel_verifies_digest(mocker, for_py_version, session_app_data
     assert verify.call_count == 1
 
 
+@pytest.mark.parametrize("env_var", ["PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL", "PIP_INDEX"])
+def test_download_wheel_skips_digest_check_for_custom_index(mocker, for_py_version, session_app_data, env_var) -> None:
+    """A configured custom index may legitimately serve a same-named wheel PyPI never built."""
+    mock_popen = mocker.patch("virtualenv.seed.wheels.acquire.Popen")
+    mock_popen.return_value.communicate.return_value = "Saved a-b-c.whl", ""
+    mock_popen.return_value.returncode = 0
+    mocker.patch("pathlib.Path.absolute", return_value=Path("a-b-c.whl"))
+    verify = mocker.patch(
+        "virtualenv.seed.wheels.acquire.verify_wheel_digest",
+        side_effect=RuntimeError("would have rejected a legitimate wheel"),
+    )
+    env = os.environ.copy()
+    env[env_var] = "https://example.com/simple"
+
+    result = download_wheel("pip", "==1", for_py_version, [], session_app_data, "folder", env)
+
+    assert result.name == "a-b-c.whl"
+    assert verify.call_count == 0
+
+
 @pytest.fixture
 def downloaded_wheel(mocker):
     wheel = Wheel.from_path(Path("setuptools-0.0.0-py2.py3-none-any.whl"))

@@ -8,7 +8,7 @@ import sys
 from operator import eq, lt
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, Popen
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from .bundle import from_bundle
 from .periodic_update import add_wheel_to_update_log, verify_wheel_digest
@@ -18,6 +18,20 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
 
 LOGGER = logging.getLogger(__name__)
+
+# A private index can legitimately serve a rebuilt wheel under the same distribution, version, and
+# filename PyPI also uses - an internal mirror re-signing or re-packaging a release for policy reasons,
+# for example. Verifying that file against PyPI's own digest would then reject a wheel that came from
+# exactly the source it was configured to come from, not a compromised one. This does not attempt to
+# find every way pip can be pointed elsewhere (a pip.conf file has the same effect and is invisible
+# here), only the common, explicit one, so treat this as a conservative signal rather than proof either
+# way: it exists to avoid false rejections, not to guarantee verification runs whenever it safely could.
+_CUSTOM_INDEX_ENV_VARS: Final[tuple[str, ...]] = ("PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL", "PIP_INDEX")
+
+
+def _uses_default_index(env: dict[str, str]) -> bool:
+    return not any(env.get(var) for var in _CUSTOM_INDEX_ENV_VARS)
+
 
 # PEP 503 normalized distribution name. Anything outside this character set on the way to ``pip download`` means
 # somebody is smuggling pip options or extras, so reject it before we build the command line.
@@ -108,7 +122,8 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
 
     :raises ValueError: if ``distribution`` or ``version_spec`` fail the strict allow-list check.
     :raises CalledProcessError: if ``pip download`` exits with a non-zero status.
-    :raises RuntimeError: if PyPI has a published digest for the downloaded filename and it does not match, see
+    :raises RuntimeError: if the caller has not configured a custom index and PyPI has a published digest
+        for the downloaded filename that does not match, see
         :func:`virtualenv.seed.wheels.periodic_update.verify_wheel_digest`.
 
     """
@@ -132,6 +147,7 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         str(to_folder),
         to_download,
     ]
+    verify_against_pypi = _uses_default_index(env)
     # pip has no interface in python - must be a new sub-process
     env = pip_wheel_env_run(search_dirs, app_data, env)
     process = Popen(cmd, env=env, stdout=PIPE, stderr=PIPE, universal_newlines=True, encoding="utf-8")
@@ -141,7 +157,10 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         raise CalledProcessError(process.returncode, cmd, **kwargs)
     result = _find_downloaded_wheel(distribution, version_spec, for_py_version, to_folder, out)
     LOGGER.debug("downloaded wheel %s", result.name)  # ty: ignore[unresolved-attribute]
-    verify_wheel_digest(result)  # ty: ignore[invalid-argument-type]
+    if verify_against_pypi:
+        verify_wheel_digest(result)  # ty: ignore[invalid-argument-type]
+    else:
+        LOGGER.debug("skip PyPI digest check for %s: a custom pip index is configured", result.name)  # ty: ignore[unresolved-attribute]
     return result  # ty: ignore[invalid-return-type]
 
 
