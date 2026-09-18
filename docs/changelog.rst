@@ -7,6 +7,18 @@
 .. towncrier release notes start
 
 ***********************
+ v21.7.15 (2026-09-18)
+***********************
+
+Bugfixes - 21.7.15
+==================
+
+- Restore an empty ``PATH`` on ``deactivate`` in the bash and fish activators, and stop bash leaving the prompt in
+  ``PS1`` when it was unset before activation. (:issue:`3259`)
+- Fix ``activate.csh`` failing to restore ``PATH`` and other saved variables on ``deactivate`` when ``PATH`` was already
+  empty. (:issue:`3260`)
+
+***********************
  v21.7.14 (2026-09-18)
 ***********************
 

@@ -1,2 +1,0 @@
-Restore an empty ``PATH`` on ``deactivate`` in the bash and fish activators, and stop bash leaving the prompt in ``PS1``
-when it was unset before activation.

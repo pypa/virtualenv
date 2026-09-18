@@ -1,2 +1,0 @@
-Fix ``activate.csh`` failing to restore ``PATH`` and other saved variables on ``deactivate`` when ``PATH`` was already
-empty.
