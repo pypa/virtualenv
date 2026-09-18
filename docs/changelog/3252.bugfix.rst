@@ -1,0 +1,2 @@
+Fix ``activate`` and ``activate.fish`` running commands embedded in the virtual environment path or in the interpreter's
+Tcl/Tk library paths.

@@ -82,11 +82,11 @@ set -gx PATH "$VIRTUAL_ENV"'/'__BIN_NAME__ $PATH
 # an empty saved value tells deactivate to erase the variable
 if test -n __TCL_LIBRARY__
   set -gx _OLD_VIRTUAL_TCL_LIBRARY "$TCL_LIBRARY"
-  set -gx TCL_LIBRARY '__TCL_LIBRARY__'
+  set -gx TCL_LIBRARY __TCL_LIBRARY__
 end
 if test -n __TK_LIBRARY__
   set -gx _OLD_VIRTUAL_TK_LIBRARY "$TK_LIBRARY"
-  set -gx TK_LIBRARY '__TK_LIBRARY__'
+  set -gx TK_LIBRARY __TK_LIBRARY__
 end
 
 # Prompt override provided?
