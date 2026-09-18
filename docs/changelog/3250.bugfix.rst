@@ -1,2 +1,0 @@
-Fix ``activate.bat`` running arbitrary commands from a crafted ``--prompt``, ``VIRTUALENV_PROMPT``, or config file
-value.

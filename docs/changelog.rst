@@ -7,6 +7,18 @@
 .. towncrier release notes start
 
 ***********************
+ v21.7.12 (2026-09-18)
+***********************
+
+Bugfixes - 21.7.12
+==================
+
+- Fix ``activate.bat`` running arbitrary commands from a crafted ``--prompt``, ``VIRTUALENV_PROMPT``, or config file
+  value. (:issue:`3250`)
+- Verify a downloaded seed wheel's sha256 against PyPI before seeding it into a virtual environment, skipped when a
+  custom pip index is configured. (:issue:`3251`)
+
+***********************
  v21.7.11 (2026-09-17)
 ***********************
 
