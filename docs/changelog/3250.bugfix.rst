@@ -1,10 +1,2 @@
-Escape ``%``, ``"``, ``&``, ``|``, ``<``, ``>``, ``^`` and ``!`` and collapse any ``str.splitlines`` line boundary
-before writing them into ``activate.bat``. ``--prompt``, the ``VIRTUALENV_PROMPT`` environment variable and the config
-file all set the prompt, and cmd.exe treats those characters as live syntax even inside the ``@set "VAR=value"``
-construct the template uses: a prompt such as ``x" & calc & "`` ran ``calc`` the moment a victim activated the
-environment, and, under a caller that already has delayed expansion enabled, one such as ``foo!SECRET!bar`` leaked the
-value of an existing ``SECRET`` variable into the prompt. ``(`` and ``)`` are deliberately left untouched, since they
-round-trip safely through this construct and neutering them would corrupt a destination under ``C:\Program Files
-(x86)\...``. A destination, or an interpreter's Tcl/Tk library path, containing ``&`` cannot be represented here at all,
-so batch activation is skipped for that environment with a warning instead of silently pointing ``activate.bat`` at a
-directory that does not exist.
+Fix ``activate.bat`` running arbitrary commands from a crafted ``--prompt``, ``VIRTUALENV_PROMPT``, or config file
+value.
