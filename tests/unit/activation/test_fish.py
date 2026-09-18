@@ -13,6 +13,7 @@ import pytest
 
 from virtualenv.activation import FishActivator
 from virtualenv.info import IS_WIN
+from virtualenv.run import cli_run
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -77,6 +78,45 @@ def test_fish_tkinter_path_does_not_run_commands(
     subprocess.run([FISH, "-c", f"source '{script}'"], capture_output=True, text=True, timeout=60, check=False)
 
     assert not marker.exists()
+
+
+@pytest.mark.skipif(IS_WIN, reason="fish is not available on Windows")
+@pytest.mark.skipif(FISH is None, reason="fish is not installed")
+@pytest.mark.parametrize(
+    ("original", "expected"),
+    [
+        pytest.param("", "", id="empty"),
+        # fish joins a path variable with colons when it is expanded inside quotes
+        pytest.param("/usr/bin /bin", "/usr/bin:/bin", id="populated"),
+    ],
+)
+def test_fish_deactivate_restores_path(tmp_path, current_fastest, original, expected) -> None:
+    dest = tmp_path / "venv"
+    cli_run([
+        "--without-pip",
+        str(dest),
+        "--creator",
+        current_fastest,
+        "--no-periodic-update",
+        "--activators",
+        "fish",
+    ])
+
+    out = subprocess.run(
+        [
+            FISH,
+            "--no-config",
+            "-c",
+            f"set -gx PATH {original}\nsource '{dest / 'bin' / 'activate.fish'}'\ndeactivate\necho \"PATH=<$PATH>\"\n",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    ).stdout
+
+    assert out == f"PATH=<{expected}>\n"
 
 
 @pytest.mark.skipif(IS_WIN, reason="fish is not available on Windows")

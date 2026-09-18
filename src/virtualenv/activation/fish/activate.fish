@@ -3,7 +3,7 @@
 
 function deactivate -d 'Exit virtualenv mode and return to the normal environment.'
     # reset old environment variables
-    if test -n "$_OLD_VIRTUAL_PATH"
+    if set -q _OLD_VIRTUAL_PATH
         set -gx PATH $_OLD_VIRTUAL_PATH
         set -e _OLD_VIRTUAL_PATH
     end

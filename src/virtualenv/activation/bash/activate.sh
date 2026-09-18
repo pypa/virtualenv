@@ -11,7 +11,7 @@ deactivate () {
     unset -f pydoc >/dev/null 2>&1 || true
 
     # reset old environment variables
-    if [ -n "${_OLD_VIRTUAL_PATH:-}" ] ; then
+    if [ -n "${_OLD_VIRTUAL_PATH+x}" ] ; then
         PATH="$_OLD_VIRTUAL_PATH"
         export PATH
         unset _OLD_VIRTUAL_PATH
@@ -55,8 +55,12 @@ deactivate () {
     # we made may not be respected
     hash -r 2>/dev/null || true
 
-    if [ -n "${_OLD_VIRTUAL_PS1:-}" ] ; then
-        PS1="$_OLD_VIRTUAL_PS1"
+    if [ -n "${_OLD_VIRTUAL_PS1+x}" ] ; then
+        if [ -n "$_OLD_VIRTUAL_PS1" ] ; then
+            PS1="$_OLD_VIRTUAL_PS1"
+        else
+            unset PS1
+        fi
         unset _OLD_VIRTUAL_PS1
     fi
 

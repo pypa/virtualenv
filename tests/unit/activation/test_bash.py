@@ -81,6 +81,63 @@ def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
 
 
 @pytest.fixture
+def bash_after_deactivate(tmp_path: Path, current_fastest: str) -> Callable[[str, str], str]:
+    dest = tmp_path / "venv"
+    cli_run([
+        "--without-pip",
+        str(dest),
+        "--creator",
+        current_fastest,
+        "--no-periodic-update",
+        "--activators",
+        "bash",
+    ])
+
+    def probe(setup: str, report: str) -> str:
+        # activation probes the platform with uname, which an emptied PATH can no longer find
+        driver = (
+            'uname_path=$(command -v uname)\nuname() { "$uname_path" "$@"; }\n'
+            f'{setup}\nsource "$1"\ndeactivate\n{report}\n'
+        )
+        return subprocess.run(
+            ["bash", "--noprofile", "--norc", "-s", "--", str(dest / "bin" / "activate")],
+            input=driver,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=60,
+            check=False,
+        ).stdout
+
+    return probe
+
+
+@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
+@pytest.mark.parametrize("original", [pytest.param("", id="empty"), pytest.param("/usr/bin:/bin", id="populated")])
+def test_bash_deactivate_restores_path(bash_after_deactivate: Callable[[str, str], str], original: str) -> None:
+    out = bash_after_deactivate(f"PATH='{original}'", r'printf "PATH=<%s>\n" "$PATH"')
+
+    assert out == f"PATH=<{original}>\n"
+
+
+@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
+@pytest.mark.parametrize(
+    ("setup", "expected"),
+    [
+        pytest.param("unset PS1", "unset", id="unset"),
+        pytest.param("PS1=''", "unset", id="empty"),
+        pytest.param("PS1='base$ '", "set:base$ ", id="populated"),
+    ],
+)
+def test_bash_deactivate_restores_ps1(
+    bash_after_deactivate: Callable[[str, str], str], setup: str, expected: str
+) -> None:
+    out = bash_after_deactivate(setup, r'printf "%s\n" "${PS1+set:}${PS1-unset}"')
+
+    assert out == f"{expected}\n"
+
+
+@pytest.fixture
 def relocated_bash_venv(
     tmp_path: Path, current_fastest: str
 ) -> Callable[[str], tuple[subprocess.CompletedProcess[str], Path, Path]]:
