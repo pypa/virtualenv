@@ -5,12 +5,17 @@ import shutil
 import subprocess
 import sys
 from argparse import Namespace
+from typing import TYPE_CHECKING
 
 import pytest
 
 from virtualenv.activation import BashActivator
 from virtualenv.info import IS_WIN
 from virtualenv.run import cli_run
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
@@ -75,33 +80,66 @@ def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
         assert "export TCL_LIBRARY" in content
 
 
-@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
-def test_bash_activate_relocation_resolves_virtual_env(tmp_path, current_fastest) -> None:
-    original = tmp_path / "original"
-    cli_run([
-        "--without-pip",
-        str(original),
-        "--creator",
-        current_fastest,
-        "--no-periodic-update",
-        "--activators",
-        "bash",
-    ])
-    relocated = tmp_path / "relocated"
-    shutil.move(original, relocated)
+@pytest.fixture
+def relocated_bash_venv(
+    tmp_path: Path, current_fastest: str
+) -> Callable[[str], tuple[subprocess.CompletedProcess[str], Path, Path]]:
+    def source_after_move(name: str) -> tuple[subprocess.CompletedProcess[str], Path, Path]:
+        original = tmp_path / name
+        cli_run([
+            "--without-pip",
+            str(original),
+            "--creator",
+            current_fastest,
+            "--no-periodic-update",
+            "--activators",
+            "bash",
+        ])
+        relocated = tmp_path / "relocated"
+        shutil.move(original, relocated)
+        work_dir = tmp_path / "workdir"
+        work_dir.mkdir()
+        result = subprocess.run(
+            ["bash", "-c", f'source "{relocated / "bin" / "activate"}" 2>/dev/null && echo "$VIRTUAL_ENV"'],
+            capture_output=True,
+            text=True,
+            cwd=str(work_dir),
+            encoding="utf-8",
+            check=False,
+        )
+        return result, relocated, work_dir
 
-    work_dir = tmp_path / "workdir"
-    work_dir.mkdir()
-    activate_script = relocated / "bin" / "activate"
-    result = subprocess.run(
-        ["bash", "-c", f'source "{activate_script}" 2>/dev/null && echo "$VIRTUAL_ENV"'],
-        capture_output=True,
-        text=True,
-        cwd=str(work_dir),
-        encoding="utf-8",
-    )
+    return source_after_move
+
+
+@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
+@pytest.mark.parametrize(
+    "name", [pytest.param("original", id="plain"), pytest.param("has(paren)and'quote", id="shell-metacharacters")]
+)
+def test_bash_activate_relocation_resolves_virtual_env(
+    relocated_bash_venv: Callable[[str], tuple[subprocess.CompletedProcess[str], Path, Path]], name: str
+) -> None:
+    result, relocated, _ = relocated_bash_venv(name)
+
     assert result.returncode == 0
     assert result.stdout.strip() == str(relocated)
+
+
+@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
+@pytest.mark.parametrize(
+    "payload",
+    [
+        pytest.param("x'$(id > PWNED)'y", id="command-substitution"),
+        pytest.param("x'`id > PWNED`'y", id="backticks"),
+        pytest.param("a';id > PWNED;'b", id="statement-separator"),
+    ],
+)
+def test_bash_activate_relocation_does_not_run_path_commands(
+    relocated_bash_venv: Callable[[str], tuple[subprocess.CompletedProcess[str], Path, Path]], payload: str
+) -> None:
+    _, _, work_dir = relocated_bash_venv(payload)
+
+    assert not (work_dir / "PWNED").exists()
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")

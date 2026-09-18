@@ -1,64 +1,82 @@
 from __future__ import annotations
 
 import os
+import shlex
 import shutil
 import subprocess
 import sys
 from argparse import Namespace
+from types import SimpleNamespace
+from typing import TYPE_CHECKING
 
 import pytest
 
 from virtualenv.activation import FishActivator
 from virtualenv.info import IS_WIN
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
 FISH = shutil.which("fish")
+
+
+@pytest.fixture
+def rendered_activate_fish(tmp_path: Path) -> Callable[[str | None, str | None], Path]:
+    def render(tcl_lib: str | None, tk_lib: str | None) -> Path:
+        creator = SimpleNamespace(
+            dest=tmp_path,
+            bin_dir=tmp_path / "bin",
+            interpreter=SimpleNamespace(tcl_lib=tcl_lib, tk_lib=tk_lib),
+            pyenv_cfg={},
+            env_name="my-env",
+        )
+        creator.bin_dir.mkdir()
+        FishActivator(Namespace(prompt=None)).generate(creator)
+        return creator.bin_dir / "activate.fish"
+
+    return render
 
 
 @pytest.mark.parametrize(
     ("tcl_lib", "tk_lib", "present"),
     [
         ("/path/to/tcl", "/path/to/tk", True),
+        ("/Program Files/tcl", "/Program Files/tk", True),
         (None, None, False),
     ],
 )
-def test_fish_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
-    # GIVEN
-    class MockInterpreter:
-        pass
+def test_fish_tkinter_generation(
+    rendered_activate_fish: Callable[[str | None, str | None], Path],
+    tcl_lib: str | None,
+    tk_lib: str | None,
+    present: bool,
+) -> None:
+    content = rendered_activate_fish(tcl_lib, tk_lib).read_text(encoding="utf-8")
 
-    interpreter = MockInterpreter()
-    interpreter.tcl_lib = tcl_lib
-    interpreter.tk_lib = tk_lib
-
-    class MockCreator:
-        def __init__(self, dest) -> None:
-            self.dest = dest
-            self.bin_dir = dest / "bin"
-            self.bin_dir.mkdir()
-            self.interpreter = interpreter
-            self.pyenv_cfg = {}
-            self.env_name = "my-env"
-
-    creator = MockCreator(tmp_path)
-    options = Namespace(prompt=None)
-    activator = FishActivator(options)
-
-    # WHEN
-    activator.generate(creator)
-    content = (creator.bin_dir / "activate.fish").read_text(encoding="utf-8")
-
-    # THEN
-    # PKG_CONFIG_PATH is always set
     assert 'set -gx _OLD_PKG_CONFIG_PATH "$PKG_CONFIG_PATH"' in content
     assert 'set -gx PKG_CONFIG_PATH "$VIRTUAL_ENV/lib/pkgconfig:$PKG_CONFIG_PATH"' in content
     assert "set -e _OLD_PKG_CONFIG_PATH" in content
 
     if present:
-        assert "set -gx TCL_LIBRARY '/path/to/tcl'" in content
-        assert "set -gx TK_LIBRARY '/path/to/tk'" in content
+        assert f"set -gx TCL_LIBRARY {shlex.quote(tcl_lib)}\n" in content
+        assert f"set -gx TK_LIBRARY {shlex.quote(tk_lib)}\n" in content
     else:
         assert "if test -n ''\n  set -gx _OLD_VIRTUAL_TCL_LIBRARY" in content
         assert "if test -n ''\n  set -gx _OLD_VIRTUAL_TK_LIBRARY" in content
+
+
+@pytest.mark.skipif(IS_WIN, reason="fish is not available on Windows")
+@pytest.mark.skipif(FISH is None, reason="fish is not installed")
+def test_fish_tkinter_path_does_not_run_commands(
+    rendered_activate_fish: Callable[[str | None, str | None], Path], tmp_path: Path
+) -> None:
+    marker = tmp_path / "PWNED"
+    script = rendered_activate_fish(f"/tcl/(touch {marker})/lib", "/tk/lib")
+
+    subprocess.run([FISH, "-c", f"source '{script}'"], capture_output=True, text=True, timeout=60, check=False)
+
+    assert not marker.exists()
 
 
 @pytest.mark.skipif(IS_WIN, reason="fish is not available on Windows")
