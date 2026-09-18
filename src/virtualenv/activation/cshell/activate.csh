@@ -5,10 +5,8 @@
 set newline='\
 '
 
-alias deactivate 'test $?_OLD_VIRTUAL_PATH != 0 && setenv PATH "$_OLD_VIRTUAL_PATH:q" && unset _OLD_VIRTUAL_PATH; rehash; test $?_OLD_VIRTUAL_TCL_LIBRARY != 0 && setenv TCL_LIBRARY "$_OLD_VIRTUAL_TCL_LIBRARY:q" && test "$TCL_LIBRARY:q" = "" && unsetenv TCL_LIBRARY; test $?_OLD_VIRTUAL_TCL_LIBRARY != 0 && unset _OLD_VIRTUAL_TCL_LIBRARY; test $?_OLD_VIRTUAL_TK_LIBRARY != 0 && setenv TK_LIBRARY "$_OLD_VIRTUAL_TK_LIBRARY:q" && test "$TK_LIBRARY:q" = "" && unsetenv TK_LIBRARY; test $?_OLD_VIRTUAL_TK_LIBRARY != 0 && unset _OLD_VIRTUAL_TK_LIBRARY; test $?_OLD_PKG_CONFIG_PATH != 0 && setenv PKG_CONFIG_PATH "$_OLD_PKG_CONFIG_PATH:q" && test "$PKG_CONFIG_PATH:q" = "" && unsetenv PKG_CONFIG_PATH; test $?_OLD_PKG_CONFIG_PATH != 0 && unset _OLD_PKG_CONFIG_PATH; test $?_OLD_VIRTUAL_PROMPT != 0 && set prompt="$_OLD_VIRTUAL_PROMPT:q" && unset _OLD_VIRTUAL_PROMPT; unsetenv VIRTUAL_ENV; unsetenv VIRTUAL_ENV_PROMPT; test "\!:*" != "nondestructive" && unalias deactivate && unalias pydoc'
-
-# Unset irrelevant variables.
-deactivate nondestructive
+# Undo an activation that is still in effect, otherwise its values get saved as the ones to restore
+if ($?_OLD_VIRTUAL_PATH) source __VIRTUAL_ENV__"/"__BIN_NAME__"/deactivate.csh"
 
 setenv VIRTUAL_ENV __VIRTUAL_ENV__
 
@@ -75,5 +73,10 @@ unset env_name
 unset do_prompt
 
 alias pydoc python -m pydoc
+
+# stashed in a variable, not embedded directly in the alias body, because the alias's own single
+# quotes cannot nest around a path that itself needed single-quoting
+set deactivate_script = __VIRTUAL_ENV__"/"__BIN_NAME__"/deactivate.csh"
+alias deactivate 'source "$deactivate_script:q"'
 
 rehash

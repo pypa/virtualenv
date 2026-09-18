@@ -51,23 +51,43 @@ def test_cshell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
 
     # WHEN
     activator.generate(creator)
-    content = (creator.bin_dir / "activate.csh").read_text(encoding="utf-8")
+    activate = (creator.bin_dir / "activate.csh").read_text(encoding="utf-8")
+    deactivate = (creator.bin_dir / "deactivate.csh").read_text(encoding="utf-8")
 
-    # PKG_CONFIG_PATH is always set
-    assert "test $?_OLD_PKG_CONFIG_PATH != 0" in content
-    assert 'set _OLD_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"' in content
-    assert 'setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig:${PKG_CONFIG_PATH}"' in content
-    assert 'setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig"' in content
-    assert 'setenv PKG_CONFIG_PATH "$_OLD_PKG_CONFIG_PATH:q"' in content
-    assert "unset _OLD_PKG_CONFIG_PATH" in content
+    # the restore side carries no per-venv placeholders, so it is identical regardless of `present`
+    assert "if ($?_OLD_PKG_CONFIG_PATH) then" in deactivate
+    assert 'setenv PKG_CONFIG_PATH "$_OLD_PKG_CONFIG_PATH:q"' in deactivate
+    assert "unset _OLD_PKG_CONFIG_PATH" in deactivate
+    assert "if ($?_OLD_VIRTUAL_TCL_LIBRARY) then" in deactivate
+    assert "if ($?_OLD_VIRTUAL_TK_LIBRARY) then" in deactivate
+
+    # PKG_CONFIG_PATH is always saved on activation
+    assert 'set _OLD_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"' in activate
+    assert 'setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig:${PKG_CONFIG_PATH}"' in activate
+    assert 'setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig"' in activate
 
     if present:
-        assert "test $?_OLD_VIRTUAL_TCL_LIBRARY != 0" in content
-        assert "test $?_OLD_VIRTUAL_TK_LIBRARY != 0" in content
-        assert "setenv TCL_LIBRARY /path/to/tcl" in content
-        assert "setenv TK_LIBRARY /path/to/tk" in content
+        assert "setenv TCL_LIBRARY /path/to/tcl" in activate
+        assert "setenv TK_LIBRARY /path/to/tk" in activate
     else:
-        assert "setenv TCL_LIBRARY ''" in content
+        assert "setenv TCL_LIBRARY ''" in activate
+
+
+def test_cshell_generates_deactivate_script(tmp_path) -> None:
+    class MockCreator:
+        def __init__(self, dest) -> None:
+            self.dest = dest
+            self.bin_dir = dest / "bin"
+            self.bin_dir.mkdir()
+            self.interpreter = type("MockInterpreter", (), {"tcl_lib": None, "tk_lib": None})()
+            self.pyenv_cfg = {}
+            self.env_name = "my-env"
+
+    creator = MockCreator(tmp_path)
+    CShellActivator(Namespace(prompt=None)).generate(creator)
+
+    assert (creator.bin_dir / "deactivate.csh").exists()
+    assert "deactivate.csh" in (creator.bin_dir / "activate.csh").read_text(encoding="utf-8")
 
 
 @pytest.fixture
@@ -125,6 +145,41 @@ def test_cshell_activates_path_with_history_character(
     )
 
     assert result.stdout == str(dest), result.stderr
+
+
+@pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
+@pytest.mark.skipif(TCSH is None, reason="tcsh is not installed")
+@pytest.mark.parametrize("original", [pytest.param("", id="empty"), pytest.param("/usr/bin:/bin", id="populated")])
+def test_cshell_deactivate_restores_path(csh_venv: Callable[[str], tuple[Path, str]], original: str) -> None:
+    dest, _ = csh_venv("plain")
+    driver = f'setenv PATH "{original}"\nsource {dest / "bin" / "activate.csh"}\ndeactivate\necho "PATH=<$PATH>"\n'
+
+    result = run([TCSH, "-f"], input=driver, capture_output=True, text=True, encoding="utf-8", timeout=90, check=False)
+
+    assert result.stdout == f"PATH=<{original}>\n", result.stderr
+
+
+@pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
+@pytest.mark.skipif(TCSH is None, reason="tcsh is not installed")
+def test_cshell_deactivate_removes_aliases(csh_venv: Callable[[str], tuple[Path, str]]) -> None:
+    dest, _ = csh_venv("plain")
+    driver = f'source {dest / "bin" / "activate.csh"}\ndeactivate\nalias deactivate\nalias pydoc\necho "done"\n'
+
+    result = run([TCSH, "-f"], input=driver, capture_output=True, text=True, encoding="utf-8", timeout=90, check=False)
+
+    assert result.stdout == "done\n", result.stderr
+
+
+@pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
+@pytest.mark.skipif(TCSH is None, reason="tcsh is not installed")
+def test_cshell_reactivation_restores_original_path(csh_venv: Callable[[str], tuple[Path, str]]) -> None:
+    dest, _ = csh_venv("plain")
+    script = dest / "bin" / "activate.csh"
+    driver = f'setenv PATH "/original/path"\nsource {script}\nsource {script}\ndeactivate\necho "PATH=<$PATH>"\n'
+
+    result = run([TCSH, "-f"], input=driver, capture_output=True, text=True, encoding="utf-8", timeout=90, check=False)
+
+    assert result.stdout == "PATH=</original/path>\n", result.stderr
 
 
 @pytest.mark.slow

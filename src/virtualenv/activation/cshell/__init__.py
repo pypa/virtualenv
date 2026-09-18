@@ -18,6 +18,7 @@ class CShellActivator(ViaTemplateActivator):
 
     def templates(self) -> Iterator[str]:
         yield "activate.csh"
+        yield "deactivate.csh"
 
     @staticmethod
     def quote(string: str) -> str:
