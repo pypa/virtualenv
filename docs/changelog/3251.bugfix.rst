@@ -1,6 +1,2 @@
-Verify a downloaded seed wheel's sha256 against the digest PyPI's JSON API reports for that release before caching or
-seeding it into a virtual environment. ``pip download`` trusts whatever index it is configured to use, and nothing
-previously checked the bytes it handed back, so a compromised index or a tampered mirror could substitute a different
-file under the same name. The check is skipped, not treated as failure, whenever ``PIP_INDEX_URL``,
-``PIP_EXTRA_INDEX_URL`` or ``PIP_INDEX`` names a custom index, since a private index PyPI has never heard of can
-legitimately serve a different, intentionally rebuilt wheel under the same distribution, version and filename.
+Verify a downloaded seed wheel's sha256 against PyPI before seeding it into a virtual environment, skipped when a custom
+pip index is configured.
