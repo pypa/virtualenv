@@ -1,1 +1,0 @@
-Scope the nushell apt signing key to its own repository with ``signed-by`` rather than trusting it archive-wide.
