@@ -1,14 +1,14 @@
-"""Property tests for BatchActivator.quote() and its path validation.
+r"""Property tests for BatchActivator.quote() and its path validation.
 
-``@set "VAR=value"`` is the only place a value from ``--prompt`` (or any other replacement) reaches
-cmd.exe, and cmd.exe treats several characters as live syntax there regardless of the surrounding
-quotes - confirmed on a real Windows runner while fixing the ``activate.bat`` injection this closes. The
-invariant that matters is that none of those characters can survive ``quote()``.
+``@set "VAR=value"`` is the only place a value from ``--prompt`` (or any other replacement) reaches cmd.exe, and cmd.exe
+treats several characters as live syntax there regardless of the surrounding quotes - confirmed on a real Windows runner
+while fixing the ``activate.bat`` injection this closes. The invariant that matters is that none of those characters can
+survive ``quote()``.
 
-``(`` and ``)`` are deliberately not in that set: also confirmed on a real Windows runner, they round-trip
-unchanged through the same construct, since cmd.exe only treats them as special when they delimit a
-control-flow block (``if``, ``for``), not as bare characters in a value. Neutering them anyway would
-corrupt a destination path under the extremely common ``C:\\Program Files (x86)\\...``.
+``(`` and ``)`` are deliberately not in that set: also confirmed on a real Windows runner, they round-trip unchanged
+through the same construct, since cmd.exe only treats them as special when they delimit a control-flow block (``if``,
+``for``), not as bare characters in a value. Neutering them anyway would corrupt a destination path under the extremely
+common ``C:\Program Files (x86)\...``.
 
 """
 
