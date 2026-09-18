@@ -122,9 +122,8 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
 
     :raises ValueError: if ``distribution`` or ``version_spec`` fail the strict allow-list check.
     :raises CalledProcessError: if ``pip download`` exits with a non-zero status.
-    :raises RuntimeError: if the caller has not configured a custom index and PyPI has a published digest
-        for the downloaded filename that does not match, see
-        :func:`virtualenv.seed.wheels.periodic_update.verify_wheel_digest`.
+    :raises RuntimeError: if the caller has not configured a custom index and PyPI has a published digest for the
+        downloaded filename that does not match, see :func:`virtualenv.seed.wheels.periodic_update.verify_wheel_digest`.
 
     """
     _check_distribution(distribution)
