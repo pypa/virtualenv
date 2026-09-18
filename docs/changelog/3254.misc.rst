@@ -1,0 +1,2 @@
+Correct the version comment on the ``actions/checkout`` pin in the pre-release workflow, which read ``v6`` for a
+``v7.0.1`` commit.
