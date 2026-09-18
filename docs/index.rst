@@ -61,6 +61,8 @@ into the standard library under the ``venv`` module. For how ``virtualenv`` comp
 
 - :doc:`reference/compatibility` — Supported Python versions and operating systems
 - :doc:`reference/cli` — Command line options and flags
+- :doc:`reference/environment-layout` — Names the interpreter answers to inside an environment
+- :doc:`reference/files` — Files written inside and beside a created environment
 - :doc:`reference/api` — Programmatic Python API reference
 
 **Explanation** - Understand the concepts
@@ -116,6 +118,7 @@ Learn more about virtualenv from these community resources:
     reference/compatibility
     reference/cli
     reference/environment-layout
+    reference/files
     reference/api
 
 .. toctree::

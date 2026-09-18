@@ -1,0 +1,3 @@
+Write the `PEP 838 <https://peps.python.org/pep-0838/>`_ ``python-version`` key into ``pyvenv.cfg``, holding the target
+interpreter's feature release. The new :doc:`reference/files` page covers it alongside every other file a created
+environment holds - by :user:`konstin`.
