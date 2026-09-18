@@ -1,10 +1,31 @@
 from __future__ import annotations
 
+import sys
 from argparse import Namespace
 
 import pytest
 
 from virtualenv.activation import BatchActivator
+from virtualenv.info import IS_WIN
+
+
+@pytest.fixture(scope="session")
+def special_char_name():
+    """The shared tests/conftest.py fixture, minus &: cmd.exe cannot represent that one at all."""
+    base = "'\";e-$ èрт🚒♞中片-j"
+    if IS_WIN:
+        base = base.replace('"', "").replace(";", "")
+    encoding = "ascii" if IS_WIN else sys.getfilesystemencoding()
+    result = ""
+    for char in base:
+        try:
+            trip = char.encode(encoding, errors="strict").decode(encoding)
+            if char == trip:
+                result += char
+        except ValueError:  # ruff:ignore[try-except-in-loop]
+            continue
+    assert result
+    return result
 
 
 def test_batch_pydoc_bat_quoting(tmp_path) -> None:
@@ -91,9 +112,38 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
         assert '@if NOT ""=="" @set "TK_LIBRARY="' in activate_content
 
 
-@pytest.mark.usefixtures("activation_python")
+def test_batch_skips_destination_with_ampersand(tmp_path, caplog) -> None:
+    """An `&` in the destination can never be represented, so generation must skip it, not guess."""
+
+    class MockInterpreter:
+        os = "nt"
+        tcl_lib = None
+        tk_lib = None
+
+    class MockCreator:
+        def __init__(self, dest) -> None:
+            self.dest = dest
+            self.bin_dir = dest / "Scripts"
+            self.bin_dir.mkdir(parents=True)
+            self.interpreter = MockInterpreter()
+            self.pyenv_cfg = {}
+            self.env_name = "test-env"
+
+    creator = MockCreator(tmp_path / "weird&dest")
+    activator = BatchActivator(Namespace(prompt=None))
+
+    generated = activator.generate(creator)
+
+    assert generated == []
+    assert list(creator.bin_dir.iterdir()) == []
+    assert "skipping batch activation scripts" in caplog.text
+    assert "&" in caplog.text
+
+
 @pytest.mark.parametrize("activations", [1, 2], ids=["activate_once", "activate_twice"])
-def test_batch(activation_tester_class, activation_tester, tmp_path, activations) -> None:
+def test_batch(activation_python, activation_tester_class, activation_tester, tmp_path, activations) -> None:
+    if not (activation_python.creator.bin_dir / "activate.bat").exists():
+        pytest.skip("cmd.exe cannot represent this destination, batch activation was skipped on purpose")
     version_script = tmp_path / "version.bat"
     version_script.write_text("ver", encoding="utf-8")
 
@@ -126,8 +176,9 @@ def test_batch(activation_tester_class, activation_tester, tmp_path, activations
     activation_tester(Batch)
 
 
-@pytest.mark.usefixtures("activation_python")
-def test_batch_output(activation_tester_class, activation_tester, tmp_path) -> None:
+def test_batch_output(activation_python, activation_tester_class, activation_tester, tmp_path) -> None:
+    if not (activation_python.creator.bin_dir / "activate.bat").exists():
+        pytest.skip("cmd.exe cannot represent this destination, batch activation was skipped on purpose")
     version_script = tmp_path / "version.bat"
     version_script.write_text("ver", encoding="utf-8")
 
