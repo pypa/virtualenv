@@ -122,8 +122,9 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
 
     :raises ValueError: if ``distribution`` or ``version_spec`` fail the strict allow-list check.
     :raises CalledProcessError: if ``pip download`` exits with a non-zero status.
-    :raises RuntimeError: if the caller has not configured a custom index and PyPI has a published digest for the
-        downloaded filename that does not match, see :func:`virtualenv.seed.wheels.periodic_update.verify_wheel_digest`.
+    :raises RuntimeError: if no downloaded wheel can be identified from ``pip``'s output or the search directory, or if
+        the caller has not configured a custom index and PyPI has a published digest for the downloaded filename that
+        does not match, see :func:`virtualenv.seed.wheels.periodic_update.verify_wheel_digest`.
 
     """
     _check_distribution(distribution)
@@ -155,12 +156,13 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         kwargs = {"output": out, "stderr": err}
         raise CalledProcessError(process.returncode, cmd, **kwargs)
     result = _find_downloaded_wheel(distribution, version_spec, for_py_version, to_folder, out)
-    LOGGER.debug("downloaded wheel %s", result.name)  # ty: ignore[unresolved-attribute]
+    if result is None:
+        msg = f"could not find downloaded wheel for {to_download}"
+        raise RuntimeError(msg)
+    LOGGER.debug("downloaded wheel %s", result.name)
     if verify_against_pypi:
-        verify_wheel_digest(result)  # ty: ignore[invalid-argument-type]
-    else:
-        LOGGER.debug("skip PyPI digest check for %s: a custom pip index is configured", result.name)  # ty: ignore[unresolved-attribute]
-    return result  # ty: ignore[invalid-return-type]
+        verify_wheel_digest(result)
+    return result
 
 
 def _find_downloaded_wheel(

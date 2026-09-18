@@ -377,9 +377,9 @@ def verify_wheel_digest(wheel: Wheel) -> None:
     if entry is None:
         LOGGER.debug("could not verify %s against PyPI: no matching release record", wheel.name)
         return
-    try:
-        expected = entry["digests"]["sha256"]  # ty: ignore[not-subscriptable]
-    except (KeyError, TypeError):
+    digests = entry.get("digests")
+    expected = digests.get("sha256") if isinstance(digests, dict) else None
+    if not isinstance(expected, str):
         LOGGER.debug("could not verify %s against PyPI: no sha256 digest published", wheel.name)
         return
     actual = hashlib.sha256(wheel.path.read_bytes()).hexdigest()
@@ -390,13 +390,11 @@ def verify_wheel_digest(wheel: Wheel) -> None:
 
 def _pypi_release_entry_for_wheel(wheel: Wheel) -> dict[str, object] | None:
     content = _pypi_get_distribution_info_cached(wheel.distribution)
-    if content is None:
+    releases = content.get("releases") if isinstance(content, dict) else None
+    entries = releases.get(wheel.version) if isinstance(releases, dict) else None
+    if not isinstance(entries, list):
         return None
-    try:
-        releases = content["releases"][wheel.version]  # ty: ignore[not-subscriptable]
-    except (KeyError, TypeError):
-        return None
-    return next((entry for entry in releases if entry.get("filename") == wheel.name), None)  # ty: ignore[not-iterable]
+    return next((entry for entry in entries if isinstance(entry, dict) and entry.get("filename") == wheel.name), None)
 
 
 #: Opt-in escape hatch to restore the pre-2026 behavior of falling back to an unverified HTTPS context when the
