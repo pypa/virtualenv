@@ -1,0 +1,1 @@
+Fix ``activate.csh`` failing with ``Event not found`` when the virtual environment path contains ``!``.
