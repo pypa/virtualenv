@@ -7,6 +7,16 @@
 .. towncrier release notes start
 
 ***********************
+ v21.7.14 (2026-09-18)
+***********************
+
+Bugfixes - 21.7.14
+==================
+
+- Fix ``activate.csh`` failing with ``Event not found`` when the virtual environment path contains ``!``.
+  (:issue:`3256`)
+
+***********************
  v21.7.13 (2026-09-18)
 ***********************
 
