@@ -7,6 +7,16 @@
 .. towncrier release notes start
 
 ***********************
+ v21.7.13 (2026-09-18)
+***********************
+
+Bugfixes - 21.7.13
+==================
+
+- Fix ``activate`` and ``activate.fish`` running commands embedded in the virtual environment path or in the
+  interpreter's Tcl/Tk library paths. (:issue:`3252`)
+
+***********************
  v21.7.12 (2026-09-18)
 ***********************
 
