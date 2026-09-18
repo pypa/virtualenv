@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shlex
 from typing import TYPE_CHECKING
 
 from virtualenv.activation.via_template import ViaTemplateActivator
@@ -17,6 +18,12 @@ class CShellActivator(ViaTemplateActivator):
 
     def templates(self) -> Iterator[str]:
         yield "activate.csh"
+
+    @staticmethod
+    def quote(string: str) -> str:
+        # csh runs history substitution before it parses quotes, so a ! survives shlex.quote's single
+        # quotes and aborts the whole script with "Event not found"; only a backslash suppresses it
+        return shlex.quote(string).replace("!", "\\!")
 
 
 __all__ = [

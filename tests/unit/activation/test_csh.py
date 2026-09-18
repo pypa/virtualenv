@@ -3,12 +3,21 @@ from __future__ import annotations
 import sys
 from argparse import Namespace
 from shutil import which
-from subprocess import check_output
+from subprocess import check_output, run
+from typing import TYPE_CHECKING
 
 import pytest
 from packaging.version import Version
 
 from virtualenv.activation import CShellActivator
+from virtualenv.info import IS_WIN
+from virtualenv.run import cli_run
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
+TCSH = which("tcsh")
 
 
 @pytest.mark.parametrize(
@@ -59,6 +68,63 @@ def test_cshell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
         assert "setenv TK_LIBRARY /path/to/tk" in content
     else:
         assert "setenv TCL_LIBRARY ''" in content
+
+
+@pytest.fixture
+def csh_venv(tmp_path: Path, current_fastest: str) -> Callable[[str], tuple[Path, str]]:
+    def create(name: str) -> tuple[Path, str]:
+        dest = tmp_path / name / "venv"
+        dest.parent.mkdir(parents=True)
+        cli_run([
+            "--without-pip",
+            str(dest),
+            "--creator",
+            current_fastest,
+            "--no-periodic-update",
+            "--activators",
+            "cshell",
+        ])
+        return dest, (dest / "bin" / "activate.csh").read_text(encoding="utf-8")
+
+    return create
+
+
+@pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
+def test_cshell_escapes_history_character(csh_venv: Callable[[str], tuple[Path, str]]) -> None:
+    dest, content = csh_venv("has!bang")
+
+    assert f"setenv VIRTUAL_ENV '{str(dest).replace('!', chr(92) + '!')}'\n" in content
+
+
+@pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
+@pytest.mark.skipif(TCSH is None, reason="tcsh is not installed")
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("plain", id="plain"),
+        pytest.param("has!bang", id="bang"),
+        pytest.param("has!!doublebang", id="double-bang"),
+        pytest.param("has'quote!bang", id="quote-and-bang"),
+    ],
+)
+def test_cshell_activates_path_with_history_character(
+    csh_venv: Callable[[str], tuple[Path, str]], tmp_path: Path, name: str
+) -> None:
+    dest, content = csh_venv(name)
+    # source from an ASCII path so the driver's own quoting cannot stand in for the script's
+    script = tmp_path / "activate.csh"
+    script.write_text(content, encoding="utf-8")
+
+    result = run(
+        [TCSH, "-c", f'source {script} && printf "%s" "$VIRTUAL_ENV"'],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=90,
+        check=False,
+    )
+
+    assert result.stdout == str(dest), result.stderr
 
 
 @pytest.mark.slow
