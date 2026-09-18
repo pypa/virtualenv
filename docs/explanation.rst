@@ -173,6 +173,14 @@ thousands of files, and copying all of them into every virtual environment would
 environments are lightweight shells that borrow most content from the system Python. They contain only what's needed to
 redirect Python's behavior.
 
+``pyvenv.cfg`` is what makes that redirection work. The interpreter reads it at startup to find its base installation,
+so the file is the environment rather than a description of it. That also makes it the cheapest place for other tools to
+learn about the environment, which is why it accumulated three keys carrying the same version at different precisions.
+`PEP 838 <https://peps.python.org/pep-0838/>`_ settles which one to read by requiring ``python-version``, holding the
+feature release and nothing more, since a wheel tag and a type-checker target both stop at the minor version.
+``version`` and ``version_info`` stay for the callers that need a patch level or a release level, and
+:doc:`reference/files` sets out the difference.
+
 This design has two implications:
 
 - Environment creation is fast because only a small number of files need to be created.
