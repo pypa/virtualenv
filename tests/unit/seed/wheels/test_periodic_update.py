@@ -547,9 +547,9 @@ def test_get_release_fails(mocker, caplog) -> None:
     assert repr(exc) in caplog.text
 
 
-def _pypi_release_response(mocker, filename, digests):
+def _pypi_release_response(mocker, filename, digests, version="20.1"):
     entry = {"filename": filename, "digests": digests}
-    body = json.dumps({"releases": {"20.1": [entry]}})
+    body = json.dumps({"releases": {version: [entry]}})
     return mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", return_value=StringIO(body))
 
 
@@ -572,16 +572,19 @@ def test_verify_wheel_digest_mismatch(tmp_path, mocker) -> None:
 
 
 @pytest.mark.parametrize(
-    ("filename", "digests"),
+    ("filename", "digests", "version"),
     [
-        pytest.param("setuptools-99.0-py3-none-any.whl", {"sha256": "0" * 64}, id="filename_not_in_release"),
-        pytest.param("pip-20.1-py3-none-any.whl", {"md5": "d41d8cd98f00b204e9800998ecf8427e"}, id="no_sha256_digest"),
+        pytest.param("setuptools-99.0-py3-none-any.whl", {"sha256": "0" * 64}, "20.1", id="filename_not_in_release"),
+        pytest.param(
+            "pip-20.1-py3-none-any.whl", {"md5": "d41d8cd98f00b204e9800998ecf8427e"}, "20.1", id="no_sha256_digest"
+        ),
+        pytest.param("pip-20.1-py3-none-any.whl", {"sha256": "0" * 64}, "19.0", id="version_not_in_releases"),
     ],
 )
-def test_verify_wheel_digest_skips_when_unverifiable(tmp_path, mocker, filename, digests) -> None:
+def test_verify_wheel_digest_skips_when_unverifiable(tmp_path, mocker, filename, digests, version) -> None:
     wheel = Wheel(tmp_path / "pip-20.1-py3-none-any.whl")
     wheel.path.write_bytes(b"content")
-    _pypi_release_response(mocker, filename, digests)
+    _pypi_release_response(mocker, filename, digests, version)
 
     verify_wheel_digest(wheel)  # must not raise: nothing to compare against
 
@@ -592,15 +595,6 @@ def test_verify_wheel_digest_skips_on_pypi_lookup_failure(tmp_path, mocker) -> N
     mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=URLError("offline"))
 
     verify_wheel_digest(wheel)  # must not raise: a private mirror PyPI never heard of is legitimate
-
-
-def test_verify_wheel_digest_skips_when_version_missing_from_releases(tmp_path, mocker) -> None:
-    wheel = Wheel(tmp_path / "pip-20.1-py3-none-any.whl")
-    wheel.path.write_bytes(b"content")
-    body = json.dumps({"releases": {"19.0": [{"filename": wheel.name, "digests": {"sha256": "0" * 64}}]}})
-    mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", return_value=StringIO(body))
-
-    verify_wheel_digest(wheel)  # must not raise: yanked or renamed releases can drop out of the JSON
 
 
 def mock_download(mocker, pip_version_remote):

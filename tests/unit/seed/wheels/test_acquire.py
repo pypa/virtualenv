@@ -59,6 +59,19 @@ def test_download_wheel_bad_output(mocker, for_py_version, session_app_data) -> 
     assert result.path == embed.path
 
 
+def test_download_wheel_not_found_raises(mocker, for_py_version, session_app_data) -> None:
+    """download_wheel must raise a clear error rather than crash when no wheel can be identified at all."""
+    p_open = mocker.MagicMock()
+    mocker.patch("virtualenv.seed.wheels.acquire.Popen", return_value=p_open)
+    p_open.communicate.return_value = "", ""
+    p_open.returncode = 0
+    as_path = mocker.MagicMock()
+    as_path.iterdir.return_value = []
+
+    with pytest.raises(RuntimeError, match="could not find downloaded wheel"):
+        download_wheel("setuptools", None, for_py_version, [], session_app_data, as_path, os.environ)
+
+
 def test_download_fails(mocker, for_py_version, session_app_data) -> None:
     p_open = mocker.MagicMock()
     mocker.patch("virtualenv.seed.wheels.acquire.Popen", return_value=p_open)
