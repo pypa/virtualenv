@@ -38,6 +38,7 @@ def test_download_wheel_bad_output(mocker, for_py_version, session_app_data) -> 
     distribution = "setuptools"
     p_open = mocker.MagicMock()
     mocker.patch("virtualenv.seed.wheels.acquire.Popen", return_value=p_open)
+    mocker.patch("virtualenv.seed.wheels.acquire.verify_wheel_digest")
     p_open.communicate.return_value = "", ""
     p_open.returncode = 0
 
@@ -56,6 +57,19 @@ def test_download_wheel_bad_output(mocker, for_py_version, session_app_data) -> 
         os.environ,
     )
     assert result.path == embed.path
+
+
+def test_download_wheel_not_found_raises(mocker, for_py_version, session_app_data) -> None:
+    """download_wheel must raise a clear error rather than crash when no wheel can be identified at all."""
+    p_open = mocker.MagicMock()
+    mocker.patch("virtualenv.seed.wheels.acquire.Popen", return_value=p_open)
+    p_open.communicate.return_value = "", ""
+    p_open.returncode = 0
+    as_path = mocker.MagicMock()
+    as_path.iterdir.return_value = []
+
+    with pytest.raises(RuntimeError, match="could not find downloaded wheel"):
+        download_wheel("setuptools", None, for_py_version, [], session_app_data, as_path, os.environ)
 
 
 def test_download_fails(mocker, for_py_version, session_app_data) -> None:
@@ -94,11 +108,49 @@ def test_download_wheel_python_io_encoding(mocker, for_py_version, session_app_d
     mock_popen.return_value.communicate.return_value = "Saved a-b-c.whl", ""
     mock_popen.return_value.returncode = 0
     mocker.patch("pathlib.Path.absolute", return_value=Path("a-b-c.whl"))
+    mocker.patch("virtualenv.seed.wheels.acquire.verify_wheel_digest")
 
     download_wheel("pip", "==1", for_py_version, [], session_app_data, "folder", os.environ.copy())
 
     env = mock_popen.call_args[1]["env"]
     assert env["PYTHONIOENCODING"] == "utf-8"
+
+
+def test_download_wheel_verifies_digest(mocker, for_py_version, session_app_data) -> None:
+    """download_wheel must reject a wheel whose bytes do not match PyPI's published digest."""
+    mock_popen = mocker.patch("virtualenv.seed.wheels.acquire.Popen")
+    mock_popen.return_value.communicate.return_value = "Saved a-b-c.whl", ""
+    mock_popen.return_value.returncode = 0
+    mocker.patch("pathlib.Path.absolute", return_value=Path("a-b-c.whl"))
+    verify = mocker.patch(
+        "virtualenv.seed.wheels.acquire.verify_wheel_digest",
+        side_effect=RuntimeError("digest mismatch"),
+    )
+
+    with pytest.raises(RuntimeError, match="digest mismatch"):
+        download_wheel("pip", "==1", for_py_version, [], session_app_data, "folder", os.environ.copy())
+
+    assert verify.call_count == 1
+
+
+@pytest.mark.parametrize("env_var", ["PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL", "PIP_INDEX"])
+def test_download_wheel_skips_digest_check_for_custom_index(mocker, for_py_version, session_app_data, env_var) -> None:
+    """A configured custom index may legitimately serve a same-named wheel PyPI never built."""
+    mock_popen = mocker.patch("virtualenv.seed.wheels.acquire.Popen")
+    mock_popen.return_value.communicate.return_value = "Saved a-b-c.whl", ""
+    mock_popen.return_value.returncode = 0
+    mocker.patch("pathlib.Path.absolute", return_value=Path("a-b-c.whl"))
+    verify = mocker.patch(
+        "virtualenv.seed.wheels.acquire.verify_wheel_digest",
+        side_effect=RuntimeError("would have rejected a legitimate wheel"),
+    )
+    env = os.environ.copy()
+    env[env_var] = "https://example.com/simple"
+
+    result = download_wheel("pip", "==1", for_py_version, [], session_app_data, "folder", env)
+
+    assert result.name == "a-b-c.whl"
+    assert verify.call_count == 0
 
 
 @pytest.fixture

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import os
@@ -360,6 +361,42 @@ def release_date_for_wheel_path(dest: Path) -> datetime | None:
     return None
 
 
+def verify_wheel_digest(wheel: Wheel) -> None:
+    """Verify a downloaded wheel's sha256 against the digest PyPI's JSON API reports for that release.
+
+    ``pip download`` trusts whatever index it is configured to use, and nothing else in this module checks the bytes it
+    hands back. A missing PyPI record only means this check cannot run - the wheel may come from a private index PyPI
+    has never heard of - so that case is logged and let through. An actual mismatch means the file on disk is not the
+    release PyPI published under that filename, which is what a compromised index, a stale mirror, or a MITM'd download
+    would produce, so that case is fatal: the wheel must never be cached or seeded into a venv.
+
+    :raises RuntimeError: if PyPI's record for this exact filename exists and the digest does not match.
+
+    """
+    entry = _pypi_release_entry_for_wheel(wheel)
+    if entry is None:
+        LOGGER.debug("could not verify %s against PyPI: no matching release record", wheel.name)
+        return
+    digests = entry.get("digests")
+    expected = digests.get("sha256") if isinstance(digests, dict) else None
+    if not isinstance(expected, str):
+        LOGGER.debug("could not verify %s against PyPI: no sha256 digest published", wheel.name)
+        return
+    actual = hashlib.sha256(wheel.path.read_bytes()).hexdigest()
+    if actual != expected:
+        msg = f"downloaded wheel {wheel.name} has sha256 {actual}, but PyPI reports {expected} for this release"
+        raise RuntimeError(msg)
+
+
+def _pypi_release_entry_for_wheel(wheel: Wheel) -> dict[str, object] | None:
+    content = _pypi_get_distribution_info_cached(wheel.distribution)
+    releases = content.get("releases") if isinstance(content, dict) else None
+    entries = releases.get(wheel.version) if isinstance(releases, dict) else None
+    if not isinstance(entries, list):
+        return None
+    return next((entry for entry in entries if isinstance(entry, dict) and entry.get("filename") == wheel.name), None)
+
+
 #: Opt-in escape hatch to restore the pre-2026 behavior of falling back to an unverified HTTPS context when the
 #: verified request fails. Off by default: a failed TLS handshake on the PyPI metadata lookup now aborts the update
 #: instead of silently downgrading, because the response drives which wheel version virtualenv thinks is up to date.
@@ -470,4 +507,5 @@ __all__ = [
     "periodic_update",
     "release_date_for_wheel_path",
     "trigger_update",
+    "verify_wheel_digest",
 ]
