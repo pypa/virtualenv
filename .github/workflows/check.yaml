@@ -128,9 +128,12 @@ jobs:
             }
             retry sudo apt-get install -y software-properties-common
             retry sudo apt-add-repository ppa:fish-shell/release-4 -y
+            sudo install -m 0755 -d /etc/apt/keyrings
             curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 https://apt.fury.io/nushell/gpg.key \
-              | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/fury-nushell.gpg
-            echo "deb https://apt.fury.io/nushell/ /" | sudo tee /etc/apt/sources.list.d/fury.list
+              | sudo gpg --dearmor -o /etc/apt/keyrings/fury-nushell.gpg
+            sudo chmod 0644 /etc/apt/keyrings/fury-nushell.gpg
+            echo "deb [signed-by=/etc/apt/keyrings/fury-nushell.gpg] https://apt.fury.io/nushell/ /" \
+              | sudo tee /etc/apt/sources.list.d/fury.list
             retry sudo apt-get update -y
             retry sudo apt-get install snapd fish csh nushell -y
           elif [ "${{ runner.os }}" = "macOS" ]; then
