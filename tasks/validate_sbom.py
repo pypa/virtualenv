@@ -1,4 +1,4 @@
-"""Check that a built wheel's embedded SBOM satisfies what a consumer like actions/attest requires."""
+"""Check that a built wheel's embedded SBOM is valid CycloneDX 1.6 and satisfies what actions/attest requires."""
 
 from __future__ import annotations
 
@@ -8,6 +8,9 @@ import sys
 import zipfile
 from pathlib import Path
 from typing import Any
+
+from cyclonedx.schema import SchemaVersion
+from cyclonedx.validation.json import JsonStrictValidator
 
 _SERIAL_PATTERN = re.compile(r"^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
@@ -24,64 +27,52 @@ def main() -> None:
         for problem in problems:
             print(f"SBOM invalid: {problem}")  # ruff:ignore[print]
         raise SystemExit(1)
-    print(f"SBOM in {wheel.name} is structurally valid")  # ruff:ignore[print]
+    print(f"SBOM in {wheel.name} is valid")  # ruff:ignore[print]
 
 
 def validate(wheel: Path) -> list[str]:
     with zipfile.ZipFile(wheel) as archive:
-        names = archive.namelist()
-        sbom_name = next((name for name in names if name.endswith("/sboms/virtualenv.cdx.json")), None)
+        sbom_name = next((n for n in archive.namelist() if n.endswith("/sboms/virtualenv.cdx.json")), None)
         if sbom_name is None:
             return ["no .dist-info/sboms/virtualenv.cdx.json found in the wheel"]
-        document = json.loads(archive.read(sbom_name))
+        raw = archive.read(sbom_name).decode("utf-8")
+
+    if schema_error := JsonStrictValidator(SchemaVersion.V1_6).validate_str(raw):
+        return [f"does not conform to the CycloneDX 1.6 schema: {schema_error}"]
+    document = json.loads(raw)
 
     problems = []
-    if document.get("bomFormat") != "CycloneDX":
-        problems.append(f"bomFormat must be 'CycloneDX', got {document.get('bomFormat')!r}")
-    if document.get("specVersion") != "1.6":
-        problems.append(f"specVersion must be '1.6', got {document.get('specVersion')!r}")
-    if document.get("version") != 1:
-        problems.append(f"version must be 1, got {document.get('version')!r}")
-
-    serial = document.get("serialNumber")
-    if not serial or not _SERIAL_PATTERN.match(serial):
+    if not _SERIAL_PATTERN.match(document.get("serialNumber", "")):
         # optional in the CycloneDX spec itself, but actions/attest's format sniffer requires it to recognize
         # the document as CycloneDX at all, and silently rejects anything missing it as an unknown format
-        problems.append(f"serialNumber must match {_SERIAL_PATTERN.pattern}, got {serial!r}")
-
-    metadata_problems, root_ref = _validate_metadata(document.get("metadata", {}))
-    problems += metadata_problems
-    problems += _validate_dependency_graph(document, root_ref)
+        problems.append(f"serialNumber must match {_SERIAL_PATTERN.pattern}, got {document.get('serialNumber')!r}")
+    problems += _validate_references(document)
     return problems
 
 
-def _validate_metadata(metadata: dict[str, Any]) -> tuple[list[str], str | None]:
+def _validate_references(document: dict[str, Any]) -> list[str]:
+    root_ref = document["metadata"]["component"]["bom-ref"]
+    component_refs = {component["bom-ref"] for component in document["components"]}
+    tool_refs = {tool["bom-ref"] for tool in document["metadata"]["tools"]["components"]}
+    known = {root_ref, *component_refs, *tool_refs}
+    if len(known) != 1 + len(document["components"]) + len(tool_refs):
+        return ["bom-ref values are not unique across the root, components and tools"]
+
     problems = []
-    if not metadata.get("timestamp"):
-        problems.append("metadata.timestamp is missing")
-    if not metadata.get("tools", {}).get("components"):
-        problems.append("metadata.tools.components is missing or empty")
-    root_ref = metadata.get("component", {}).get("bom-ref")
-    if not root_ref:
-        problems.append("metadata.component.bom-ref is missing")
-    return problems, root_ref
+    dependencies = {entry["ref"]: set(entry.get("dependsOn", [])) for entry in document["dependencies"]}
+    if unknown := (set(dependencies) | set().union(*dependencies.values())) - known:
+        problems.append(f"dependencies reference bom-refs that do not exist: {sorted(unknown)}")
+    if dependencies.get(root_ref) != component_refs:
+        problems.append(
+            f"root dependsOn {sorted(dependencies.get(root_ref, []))} != components {sorted(component_refs)}"
+        )
+    if missing := component_refs - set(dependencies):
+        problems.append(f"components without a dependencies entry: {sorted(missing)}")
 
-
-def _validate_dependency_graph(document: dict[str, Any], root_ref: str | None) -> list[str]:
-    problems = []
-    component_refs = {component.get("bom-ref") for component in document.get("components", [])}
-    dependency_entries = {
-        entry.get("ref"): set(entry.get("dependsOn", [])) for entry in document.get("dependencies", [])
-    }
-    unknown_refs = set(dependency_entries) - component_refs - {root_ref}
-    if unknown_refs:
-        problems.append(f"dependencies entries with no matching component: {sorted(unknown_refs)}")
-
-    root_depends_on = dependency_entries.get(root_ref)
-    if root_depends_on is None:
-        problems.append(f"no dependencies entry for the root component {root_ref!r}")
-    elif root_depends_on != component_refs:
-        problems.append(f"root dependsOn {sorted(root_depends_on)} does not match components {sorted(component_refs)}")
+    for workflow in document["formulation"][0]["workflows"]:
+        referenced = {reference["ref"] for reference in workflow["resourceReferences"]}
+        if unknown := referenced - tool_refs:
+            problems.append(f"workflow {workflow['uid']} references unknown tools: {sorted(unknown)}")
     return problems
 
 

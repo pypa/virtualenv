@@ -153,6 +153,7 @@ lint = [
 ]
 pkg-meta = [
   "check-wheel-contents>=0.6.3",
+  "cyclonedx-python-lib[json-validation]>=11.12",
   "twine>=6.2",
   "uv>=0.10.2",
 ]
