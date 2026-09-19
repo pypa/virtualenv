@@ -91,11 +91,11 @@ def test_cshell_generates_deactivate_script(tmp_path) -> None:
 
 
 @pytest.fixture
-def csh_venv(tmp_path: Path, current_fastest: str) -> Callable[[str], tuple[Path, str]]:
-    def create(name: str) -> tuple[Path, str]:
+def csh_venv(tmp_path: Path, current_fastest: str) -> Callable[..., tuple[Path, str]]:
+    def create(name: str, *, prompt: str | None = None) -> tuple[Path, str]:
         dest = tmp_path / name / "venv"
         dest.parent.mkdir(parents=True)
-        cli_run([
+        cmd = [
             "--without-pip",
             str(dest),
             "--creator",
@@ -103,17 +103,41 @@ def csh_venv(tmp_path: Path, current_fastest: str) -> Callable[[str], tuple[Path
             "--no-periodic-update",
             "--activators",
             "cshell",
-        ])
+        ]
+        if prompt is not None:
+            cmd += ["--prompt", prompt]
+        cli_run(cmd)
         return dest, (dest / "bin" / "activate.csh").read_text(encoding="utf-8")
 
     return create
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
-def test_cshell_escapes_history_character(csh_venv: Callable[[str], tuple[Path, str]]) -> None:
+def test_cshell_escapes_history_character(csh_venv: Callable[..., tuple[Path, str]]) -> None:
     dest, content = csh_venv("has!bang")
 
     assert f"setenv VIRTUAL_ENV '{str(dest).replace('!', chr(92) + '!')}'\n" in content
+
+
+@pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
+@pytest.mark.parametrize(
+    ("prompt", "tcsh_escaped", "plain_escaped"),
+    [
+        pytest.param("plain", "plain", "plain", id="plain"),
+        pytest.param("has!bang", "has\\\\!bang", "has\\\\!bang", id="bang"),
+        pytest.param("has%pct", "has%%pct", "has%pct", id="percent"),
+        pytest.param("a!b%p c", "a\\\\!b%%p c", "a\\\\!b%p c", id="bang-and-percent"),
+    ],
+)
+def test_cshell_escapes_prompt_expansion(
+    csh_venv: Callable[..., tuple[Path, str]], prompt: str, tcsh_escaped: str, plain_escaped: str
+) -> None:
+    _, content = csh_venv(prompt, prompt=prompt)
+
+    # tcsh treats a bare % as the start of a prompt escape and needs it doubled; plain csh has no such escape, and
+    # doubling it there would show two literal percent signs, so activate.csh picks the branch to use at runtime
+    assert f"set prompt = '(''{tcsh_escaped}'') '" in content
+    assert f"set prompt = '(''{plain_escaped}'') '" in content
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")

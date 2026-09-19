@@ -1,0 +1,2 @@
+Fix ``activate.csh`` rendering the venv's prompt text wrong when it contains ``!`` (csh and tcsh both expand it) or
+``%`` (tcsh only, since plain csh has no ``%`` prompt escape at all).
