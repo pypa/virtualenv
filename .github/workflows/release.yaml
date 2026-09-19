@@ -12,6 +12,7 @@ jobs:
       contents: read
       id-token: write
       attestations: write
+      artifact-metadata: write
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -28,6 +29,13 @@ jobs:
         run: uv python install 3.14
       - name: Build sdist and wheel
         run: uv build --python 3.14 --python-preference only-managed --sdist --wheel . --out-dir dist
+      - name: Extract the SBOM the wheel build embedded
+        run: python -m zipfile -e dist/*.whl sbom-extract/ && cp sbom-extract/*.dist-info/sboms/virtualenv.cdx.json .
+      - name: Attest the SBOM against the sdist and wheel
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: dist/*
+          sbom-path: virtualenv.cdx.json
       - name: Build zipapp
         run: uv tool run --with tox-uv tox r -e zipapp
       - name: Attest provenance for the zipapp
@@ -44,6 +52,11 @@ jobs:
         with:
           name: ${{ env.dists-artifact-name }}
           path: dist/*
+      - name: Store the SBOM
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: virtualenv-sbom
+          path: virtualenv.cdx.json
       - name: Store the zipapp
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:

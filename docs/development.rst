@@ -235,6 +235,11 @@ virtualenv is distributed under the MIT License, and everything in the repositor
   and are redistributed unchanged.
 - Adding a runtime dependency or bumping an embedded wheel is a maintainer decision; checking the license of the new
   version is part of that review.
+- Every wheel virtualenv publishes carries a `CycloneDX <https://cyclonedx.org/>`_ SBOM at
+  ``.dist-info/sboms/virtualenv.cdx.json``, generated at build time by ``hatch_build.py`` from the same
+  ``BUNDLE_SUPPORT``/``BUNDLE_SHA256`` tables that back the embedded wheels above, so a wheel bump keeps it current
+  automatically. GitHub attests it against the release's sdist and wheel; verify with ``gh attestation verify <file> -R
+  pypa/virtualenv --predicate-type https://cyclonedx.org/bom``.
 
 Automated testing
 =================
