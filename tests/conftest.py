@@ -281,7 +281,7 @@ def is_inside_ci():
 
 @pytest.fixture(scope="session")
 def special_char_name():
-    base = "'\";&&e-$ èрт🚒♞中片-j"
+    base = "'\";&&e-$ !%`|>èрт🚒♞中片-j"
     if IS_WIN:
         # get rid of invalid characters on Windows
         base = base.replace('"', "")
