@@ -7,12 +7,23 @@ import re
 import sys
 import zipfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 from cyclonedx.schema import SchemaVersion
 from cyclonedx.validation.json import JsonStrictValidator
 
-_SERIAL_PATTERN = re.compile(r"^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
+_SERIAL_PATTERN: Final[re.Pattern[str]] = re.compile(
+    r"""
+    ^urn:uuid:
+    (?P<time_low>[0-9a-f]{8})-
+    (?P<time_mid>[0-9a-f]{4})-
+    (?P<time_high_and_version>[0-9a-f]{4})-
+    (?P<clock_seq>[0-9a-f]{4})-
+    (?P<node>[0-9a-f]{12})
+    $
+    """,
+    re.VERBOSE,
+)
 
 
 def main() -> None:
@@ -45,7 +56,7 @@ def validate(wheel: Path) -> list[str]:
     if not _SERIAL_PATTERN.match(document.get("serialNumber", "")):
         # optional in the CycloneDX spec itself, but actions/attest's format sniffer requires it to recognize
         # the document as CycloneDX at all, and silently rejects anything missing it as an unknown format
-        problems.append(f"serialNumber must match {_SERIAL_PATTERN.pattern}, got {document.get('serialNumber')!r}")
+        problems.append(f"serialNumber must be a urn:uuid: RFC 4122 UUID, got {document.get('serialNumber')!r}")
     problems += _validate_references(document)
     return problems
 
