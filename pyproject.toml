@@ -15,6 +15,10 @@ keywords = [
   "virtual",
 ]
 license = "MIT"
+license-files = [
+  "LICENSE",
+  "THIRD-PARTY-NOTICES.md",
+]
 maintainers = [
   { name = "Bernat Gabor", email = "gaborjbernat@gmail.com" },
   { name = "Rahul Devikar", email = "rahuldevikar5512@gmail.com" },
