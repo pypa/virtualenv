@@ -1,0 +1,4 @@
+The embedded SBOM now describes the root component's license, copyright, maintainers and project links, each bundled
+wheel from its own metadata, the declared runtime dependencies, and the full build environment (interpreter, OS and
+every distribution in the isolated build environment with the dependency graph between them), plus the GitHub Actions
+run when built there.
