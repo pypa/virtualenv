@@ -95,6 +95,16 @@ def test_every_wheel_on_disk_has_sha256() -> None:
     assert on_disk == BUNDLE_SHA256.keys()
 
 
+def test_notices_mention_every_bundled_distribution() -> None:
+    # rooted at this test file rather than BUNDLE_FOLDER: a non-editable install puts the installed package
+    # under site-packages with no relationship to the checkout, but tests/ always runs from the repo itself
+    repo_root = Path(__file__).resolve().parents[4]
+    notices = (repo_root / "THIRD-PARTY-NOTICES.md").read_text(encoding="utf-8")
+    distributions = {wheel_name.split("-")[0] for wheel_name in BUNDLE_SHA256}
+    missing = {name for name in distributions if f"## {name}" not in notices}
+    assert not missing, f"THIRD-PARTY-NOTICES.md is missing a section for: {sorted(missing)}"
+
+
 def test_get_embed_wheel_verifies_pip(for_py_version: str) -> None:
     wheel = get_embed_wheel("pip", for_py_version)
     assert wheel is not None
