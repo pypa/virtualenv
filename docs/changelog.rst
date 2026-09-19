@@ -7,6 +7,16 @@
 .. towncrier release notes start
 
 ***********************
+ v21.7.16 (2026-09-19)
+***********************
+
+Bugfixes - 21.7.16
+==================
+
+- Fix ``activate.csh`` rendering the venv's prompt text wrong when it contains ``!`` (csh and tcsh both expand it) or
+  ``%`` (tcsh only, since plain csh has no ``%`` prompt escape at all). (:issue:`3263`)
+
+***********************
  v21.7.15 (2026-09-18)
 ***********************
 
