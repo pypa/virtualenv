@@ -6,6 +6,17 @@
 
 .. towncrier release notes start
 
+**********************
+ v21.8.0 (2026-09-19)
+**********************
+
+Features - 21.8.0
+=================
+
+- Every published wheel now carries a `CycloneDX <https://cyclonedx.org/>`_ SBOM at
+  ``.dist-info/sboms/virtualenv.cdx.json`` (:PEP:`770`), declaring the bundled ``pip`` and ``setuptools`` wheels that
+  generic SBOM tools cannot see on their own. GitHub attests it against the released sdist and wheel. (:issue:`3265`)
+
 ***********************
  v21.7.16 (2026-09-19)
 ***********************

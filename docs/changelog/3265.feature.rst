@@ -1,3 +1,0 @@
-Every published wheel now carries a `CycloneDX <https://cyclonedx.org/>`_ SBOM at
-``.dist-info/sboms/virtualenv.cdx.json`` (:PEP:`770`), declaring the bundled ``pip`` and ``setuptools`` wheels that
-generic SBOM tools cannot see on their own. GitHub attests it against the released sdist and wheel.
