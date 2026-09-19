@@ -3,13 +3,15 @@ from __future__ import annotations
 import ast
 import json
 import tempfile
+import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, Final
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 
-_ROOT = Path(__file__).parent
-_EMBED_INIT = _ROOT / "src" / "virtualenv" / "seed" / "wheels" / "embed" / "__init__.py"
+_ROOT: Final[Path] = Path(__file__).resolve().parent
+_EMBED_INIT: Final[Path] = _ROOT / "src" / "virtualenv" / "seed" / "wheels" / "embed" / "__init__.py"
+_SBOM_NAMESPACE: Final[uuid.UUID] = uuid.uuid5(uuid.NAMESPACE_URL, "https://github.com/pypa/virtualenv/sboms")
 
 
 class SbomBuildHook(BuildHookInterface):
@@ -39,25 +41,11 @@ class SbomBuildHook(BuildHookInterface):
         build_data["sbom_files"].append(str(out))
 
 
-def _bundled_wheels() -> dict[str, str]:
-    tree = ast.parse(_EMBED_INIT.read_text(encoding="utf-8"))
-    sha256_by_name = {}
-    for node in tree.body:
-        if isinstance(node, ast.Assign) and any(
-            isinstance(target, ast.Name) and target.id == "BUNDLE_SHA256" for target in node.targets
-        ):
-            sha256_by_name = ast.literal_eval(node.value)
-            break
-    if not sha256_by_name:
-        msg = f"BUNDLE_SHA256 not found in {_EMBED_INIT}"
-        raise RuntimeError(msg)
-    return sha256_by_name
-
-
 def _cyclonedx_document(version: str, name: str) -> dict[str, Any]:
+    wheel_sha256 = _bundled_wheels()
     components = []
     dependencies = [{"ref": f"pkg:pypi/{name}@{version}", "dependsOn": []}]
-    for filename, sha256 in sorted(_bundled_wheels().items()):
+    for filename, sha256 in sorted(wheel_sha256.items()):
         distribution, wheel_version = filename.split("-")[:2]
         purl = f"pkg:pypi/{distribution}@{wheel_version}"
         components.append({
@@ -80,6 +68,7 @@ def _cyclonedx_document(version: str, name: str) -> dict[str, Any]:
     return {
         "bomFormat": "CycloneDX",
         "specVersion": "1.6",
+        "serialNumber": _serial_number(name, version, wheel_sha256),
         "version": 1,
         "metadata": {
             "component": {
@@ -93,3 +82,25 @@ def _cyclonedx_document(version: str, name: str) -> dict[str, Any]:
         "components": components,
         "dependencies": dependencies,
     }
+
+
+def _bundled_wheels() -> dict[str, str]:
+    tree = ast.parse(_EMBED_INIT.read_text(encoding="utf-8"))
+    sha256_by_name = {}
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id == "BUNDLE_SHA256" for target in node.targets
+        ):
+            sha256_by_name = ast.literal_eval(node.value)
+            break
+    if not sha256_by_name:
+        msg = f"BUNDLE_SHA256 not found in {_EMBED_INIT}"
+        raise RuntimeError(msg)
+    return sha256_by_name
+
+
+def _serial_number(name: str, version: str, wheel_sha256: dict[str, str]) -> str:
+    # uuid5 rather than uuid4: deterministic on the inputs that actually change the SBOM's content, so two builds
+    # of the same commit against the same bundled wheels produce a byte-identical document
+    payload = f"{name}@{version}+{','.join(f'{k}:{v}' for k, v in sorted(wheel_sha256.items()))}"
+    return f"urn:uuid:{uuid.uuid5(_SBOM_NAMESPACE, payload)}"
