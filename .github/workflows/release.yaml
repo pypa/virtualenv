@@ -27,6 +27,8 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Python
         run: uv python install 3.14
+      - name: Pin build timestamps to the release commit for reproducible artifacts
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
       - name: Build sdist and wheel
         run: uv build --python 3.14 --python-preference only-managed --sdist --wheel . --out-dir dist
       - name: Extract the SBOM the wheel build embedded

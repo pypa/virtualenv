@@ -7,10 +7,13 @@ import re
 import sys
 import zipfile
 from pathlib import Path
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
 
 from cyclonedx.schema import SchemaVersion
 from cyclonedx.validation.json import JsonStrictValidator
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 _SERIAL_PATTERN: Final[re.Pattern[str]] = re.compile(
     r"""
@@ -65,9 +68,16 @@ def _validate_references(document: dict[str, Any]) -> list[str]:
     root_ref = document["metadata"]["component"]["bom-ref"]
     component_refs = {component["bom-ref"] for component in document["components"]}
     tool_refs = {tool["bom-ref"] for tool in document["metadata"]["tools"]["components"]}
-    known = {root_ref, *component_refs, *tool_refs}
-    if len(known) != 1 + len(document["components"]) + len(tool_refs):
-        return ["bom-ref values are not unique across the root, components and tools"]
+    every_ref = list(
+        _bom_refs([
+            document["metadata"]["component"],
+            *document["components"],
+            *document["metadata"]["tools"]["components"],
+        ])
+    )
+    if duplicates := {ref for ref in every_ref if every_ref.count(ref) > 1}:
+        return [f"bom-ref values are not unique: {sorted(duplicates)}"]
+    known = set(every_ref)
 
     problems = []
     dependencies = {entry["ref"]: set(entry.get("dependsOn", [])) for entry in document["dependencies"]}
@@ -85,6 +95,12 @@ def _validate_references(document: dict[str, Any]) -> list[str]:
         if unknown := referenced - tool_refs:
             problems.append(f"workflow {workflow['uid']} references unknown tools: {sorted(unknown)}")
     return problems
+
+
+def _bom_refs(components: list[dict[str, Any]]) -> Iterator[str]:
+    for component in components:
+        yield component["bom-ref"]
+        yield from _bom_refs(component.get("components", []))
 
 
 if __name__ == "__main__":
