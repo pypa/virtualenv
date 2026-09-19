@@ -7,6 +7,17 @@
 .. towncrier release notes start
 
 **********************
+ v21.8.1 (2026-09-19)
+**********************
+
+Bugfixes - 21.8.1
+=================
+
+- Make the embedded SBOM's ``serialNumber`` a deterministic UUID derived from the package name, version and bundled
+  wheel hashes, so the same source tree produces a byte-identical SBOM, and validate the SBOM's structure as part of the
+  packaging checks that already run on every pull request. (:issue:`3268`)
+
+**********************
  v21.8.0 (2026-09-19)
 **********************
 

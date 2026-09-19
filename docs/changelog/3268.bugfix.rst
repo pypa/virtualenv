@@ -1,3 +1,0 @@
-Make the embedded SBOM's ``serialNumber`` a deterministic UUID derived from the package name, version and bundled wheel
-hashes, so the same source tree produces a byte-identical SBOM, and validate the SBOM's structure as part of the
-packaging checks that already run on every pull request.
