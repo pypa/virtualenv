@@ -4,10 +4,12 @@ import ast
 import json
 import tempfile
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Final
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
+from hatchling.builders.utils import get_reproducible_timestamp
 
 _ROOT: Final[Path] = Path(__file__).resolve().parent
 _EMBED_INIT: Final[Path] = _ROOT / "src" / "virtualenv" / "seed" / "wheels" / "embed" / "__init__.py"
@@ -71,6 +73,12 @@ def _cyclonedx_document(version: str, name: str) -> dict[str, Any]:
         "serialNumber": _serial_number(name, version, wheel_sha256),
         "version": 1,
         "metadata": {
+            "timestamp": _timestamp(),
+            "tools": {
+                "components": [
+                    {"type": "application", "name": "hatch_build.py", "vendor": "pypa"},
+                ],
+            },
             "component": {
                 "type": "application",
                 "name": name,
@@ -104,3 +112,9 @@ def _serial_number(name: str, version: str, wheel_sha256: dict[str, str]) -> str
     # of the same commit against the same bundled wheels produce a byte-identical document
     payload = f"{name}@{version}+{','.join(f'{k}:{v}' for k, v in sorted(wheel_sha256.items()))}"
     return f"urn:uuid:{uuid.uuid5(_SBOM_NAMESPACE, payload)}"
+
+
+def _timestamp() -> str:
+    # honors SOURCE_DATE_EPOCH through hatchling's own helper, the same value it uses for the wheel's zip entry
+    # timestamps, so setting it for a reproducible build keeps the SBOM byte-identical too
+    return datetime.fromtimestamp(get_reproducible_timestamp(), tz=timezone.utc).isoformat()
