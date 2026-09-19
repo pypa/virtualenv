@@ -283,9 +283,9 @@ def is_inside_ci():
 def special_char_name():
     base = "'\";&&e-$ !%`|>èрт🚒♞中片-j"
     if IS_WIN:
-        # get rid of invalid characters on Windows
-        base = base.replace('"', "")
-        base = base.replace(";", "")
+        # NTFS path components cannot contain any of these, regardless of where they sit in the string
+        for reserved in '<>:"/\\|?*;':
+            base = base.replace(reserved, "")
     # workaround for pypy3 https://bitbucket.org/pypy/pypy/issues/3147/venv-non-ascii-support-windows
     encoding = "ascii" if IS_WIN else sys.getfilesystemencoding()
     # let's not include characters that the file system cannot encode)

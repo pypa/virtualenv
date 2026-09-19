@@ -63,8 +63,10 @@ if ( $do_prompt == "1" ) then
         set _OLD_VIRTUAL_PROMPT="$prompt:q"
         if ( "$prompt:q" =~ *"$newline:q"* ) then
             :
+        else if ( $?tcsh ) then
+            set prompt = '('__VIRTUAL_PROMPT_DISPLAY_TCSH__') '"$prompt:q"
         else
-            set prompt = '('__VIRTUAL_PROMPT_DISPLAY__') '"$prompt:q"
+            set prompt = '('__VIRTUAL_PROMPT_DISPLAY_PLAIN__') '"$prompt:q"
         endif
     endif
 endif

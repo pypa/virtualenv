@@ -121,18 +121,23 @@ def test_cshell_escapes_history_character(csh_venv: Callable[..., tuple[Path, st
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
 @pytest.mark.parametrize(
-    ("prompt", "escaped"),
+    ("prompt", "tcsh_escaped", "plain_escaped"),
     [
-        pytest.param("plain", "plain", id="plain"),
-        pytest.param("has!bang", "has\\\\!bang", id="bang"),
-        pytest.param("has%pct", "has%%pct", id="percent"),
-        pytest.param("a!b%p c", "a\\\\!b%%p c", id="bang-and-time-escape"),
+        pytest.param("plain", "plain", "plain", id="plain"),
+        pytest.param("has!bang", "has\\\\!bang", "has\\\\!bang", id="bang"),
+        pytest.param("has%pct", "has%%pct", "has%pct", id="percent"),
+        pytest.param("a!b%p c", "a\\\\!b%%p c", "a\\\\!b%p c", id="bang-and-percent"),
     ],
 )
-def test_cshell_escapes_prompt_expansion(csh_venv: Callable[..., tuple[Path, str]], prompt: str, escaped: str) -> None:
+def test_cshell_escapes_prompt_expansion(
+    csh_venv: Callable[..., tuple[Path, str]], prompt: str, tcsh_escaped: str, plain_escaped: str
+) -> None:
     _, content = csh_venv(prompt, prompt=prompt)
 
-    assert f"set prompt = '(''{escaped}'') '" in content
+    # tcsh treats a bare % as the start of a prompt escape and needs it doubled; plain csh has no such escape, and
+    # doubling it there would show two literal percent signs, so activate.csh picks the branch to use at runtime
+    assert f"set prompt = '(''{tcsh_escaped}'') '" in content
+    assert f"set prompt = '(''{plain_escaped}'') '" in content
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
