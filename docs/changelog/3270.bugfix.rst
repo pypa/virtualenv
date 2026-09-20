@@ -1,2 +1,0 @@
-Fix the embedded SBOM not conforming to the CycloneDX 1.6 schema (an invalid ``vendor`` key on the generator tool entry)
-and validate it against the schema in CI.

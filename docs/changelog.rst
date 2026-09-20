@@ -7,6 +7,27 @@
 .. towncrier release notes start
 
 **********************
+ v21.9.0 (2026-09-20)
+**********************
+
+Features - 21.9.0
+=================
+
+- The embedded SBOM now describes the root component's license, copyright, maintainers and project links, each bundled
+  wheel from its own metadata, the declared runtime dependencies, and the full build environment (interpreter, OS and
+  every distribution in the isolated build environment with the dependency graph between them), plus the GitHub Actions
+  run when built there. (:issue:`3270`)
+
+Bugfixes - 21.9.0
+=================
+
+- Add ``metadata.timestamp`` (derived from ``SOURCE_DATE_EPOCH`` for reproducibility) and ``metadata.tools`` naming the
+  generator to the embedded SBOM, and validate both fields in the packaging checks that already run on every pull
+  request. (:issue:`3269`)
+- Fix the embedded SBOM not conforming to the CycloneDX 1.6 schema (an invalid ``vendor`` key on the generator tool
+  entry) and validate it against the schema in CI. (:issue:`3270`)
+
+**********************
  v21.8.1 (2026-09-19)
 **********************
 

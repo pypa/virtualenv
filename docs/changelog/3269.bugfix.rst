@@ -1,2 +1,0 @@
-Add ``metadata.timestamp`` (derived from ``SOURCE_DATE_EPOCH`` for reproducibility) and ``metadata.tools`` naming the
-generator to the embedded SBOM, and validate both fields in the packaging checks that already run on every pull request.
