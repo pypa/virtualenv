@@ -192,7 +192,7 @@ base = [ "type" ]
 [env.upgrade]
 description = "upgrade pip/wheels/setuptools to latest"
 skip_install = true
-deps = [ "ruff>=0.12.4" ]
+deps = [ "pre-commit-uv>=4.2", "ruff>=0.12.4" ]
 pass_env = [ "UPGRADE_ADVISORY" ]
 change_dir = "{tox_root}{/}tasks"
 commands = [ [ "python", "upgrade_wheels.py" ] ]

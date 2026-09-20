@@ -262,6 +262,10 @@ def render_notices() -> None:
 
         """)
     NOTICES_DEST.write_text(header + "\n".join(sections), encoding="utf-8")
+    if (pre_commit := shutil.which("pre-commit")) is None:
+        msg = "pre-commit must be installed to format THIRD-PARTY-NOTICES.md"
+        raise RuntimeError(msg)
+    subprocess.run([pre_commit, "run", "mdformat", "--files", str(NOTICES_DEST)], check=True)
 
 
 def _wheel_license_text(path: Path) -> str:
