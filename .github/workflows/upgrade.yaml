@@ -89,6 +89,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch origin auto/upgrade-embedded-deps
           git checkout -B auto/upgrade-embedded-deps FETCH_HEAD
+          if [ ! -f docs/changelog/u.bugfix.rst ]; then
+            exit 0
+          fi
           mv docs/changelog/u.bugfix.rst "docs/changelog/${pr_number}.bugfix.rst"
           git add docs/changelog/
           git commit -m "Rename changelog to ${pr_number}.bugfix.rst"
