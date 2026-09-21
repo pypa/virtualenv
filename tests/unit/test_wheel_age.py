@@ -41,31 +41,44 @@ def check_age(capsys: pytest.CaptureFixture[str]) -> Callable[[], str]:
 
 
 @pytest.mark.parametrize(
-    ("upload", "expected"),
+    "wheel",
     [
-        pytest.param("2026-09-13T00:00:00Z", "skip=false\n", id="old"),
-        pytest.param("2026-09-14T00:00:00+00:00", "skip=false\n", id="seven-days"),
-        pytest.param("2026-09-15T00:00:00Z", "skip=true\n", id="new"),
+        pytest.param(("pip-2-py3-none-any.whl", "pip/2"), id="simple-name"),
+        pytest.param(("importlib_metadata-8.7.0-py3-none-any.whl", "importlib_metadata/8.7.0"), id="normalized-name"),
+        pytest.param(("importlib_metadata-8.7.0-1-py3-none-any.whl", "importlib_metadata/8.7.0"), id="build-tag"),
+    ],
+)
+@pytest.mark.parametrize(
+    "age",
+    [
+        pytest.param(("2026-09-13T00:00:00Z", "skip=false\n"), id="old"),
+        pytest.param(("2026-09-14T00:00:00+00:00", "skip=false\n"), id="seven-days"),
+        pytest.param(("2026-09-15T00:00:00Z", "skip=true\n"), id="new"),
     ],
 )
 def test_new_wheel_age(
-    wheel_repo: Path, mocker: MockerFixture, check_age: Callable[[], str], upload: str, expected: str
+    wheel_repo: Path,
+    mocker: MockerFixture,
+    check_age: Callable[[], str],
+    age: tuple[str, str],
+    wheel: tuple[str, str],
 ) -> None:
     (wheel_repo / "pip-1-py3-none-any.whl").unlink()
-    (wheel_repo / "pip-2-py3-none-any.whl").write_bytes(b"new")
-    mocker.patch(
+    (wheel_repo / wheel[0]).write_bytes(b"new")
+    request = mocker.patch(
         "urllib.request.urlopen",
         autospec=True,
         return_value=BytesIO(
             json.dumps({
                 "urls": [
                     {"filename": "pip-2.tar.gz", "upload_time_iso_8601": "2020-01-01T00:00:00Z"},
-                    {"filename": "pip-2-py3-none-any.whl", "upload_time_iso_8601": upload},
+                    {"filename": wheel[0], "upload_time_iso_8601": age[0]},
                 ]
             }).encode()
         ),
     )
-    assert check_age() == expected
+    assert check_age() == age[1]
+    request.assert_called_once_with(f"https://pypi.org/pypi/{wheel[1]}/json", timeout=30)
 
 
 @pytest.mark.parametrize("staged", [pytest.param(False, id="untracked"), pytest.param(True, id="staged")])
