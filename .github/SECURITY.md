@@ -65,10 +65,11 @@ conversion is the boundary this policy cares about.
 
 **Out of scope**
 
-- An attacker who already controls the machine, the command line, the environment variables or the app-data directory.
-  They can achieve more directly than through virtualenv.
-- Getting a user to run a crafted `virtualenv` command line. If an attacker chooses your arguments, no guarantee here
-  survives.
+- An attacker who already has arbitrary command execution as the victim, or can replace the victim's executables or
+  app-data contents. This does not exclude an attacker who controls only a value that a caller passes to virtualenv,
+  such as project metadata used as a prompt or destination path.
+- Tricking a user into executing shell syntax in the command they use to launch virtualenv. Injection from argument data
+  into a generated activation script or configuration file remains in scope.
 - Code that runs from packages virtualenv seeds or that are installed into the environment afterwards. Report malware on
   PyPI to [PyPI security](https://pypi.org/security/).
 - Vulnerabilities in pip or setuptools themselves. Report those to their own projects.
