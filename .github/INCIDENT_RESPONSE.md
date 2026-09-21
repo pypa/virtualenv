@@ -38,15 +38,12 @@ Four levels, set by judgment rather than a calculator. virtualenv is a library a
 computed without knowing how a caller invokes it says little. curl, the ASF and OpenSSL all reach the same conclusion
 for the same reason, and GitHub's advisory form accepts a plain severity with no vector attached.
 
-| Level | Meaning | Example from this project | | -------- |
-\----------------------------------------------------------------------------------------------------- |
-------------------------------------------------------------------------------- | | Critical | A tampered artifact
-reached users, or an account or publishing credential is in someone else's hands. | none so far | | High |
-Attacker-chosen data becomes code on a normal path, with no unusual setup. | `GHSA-x78j-v8h9-3j2q`, command injection
-through `--prompt` into `activate.bat` | | Medium | Real damage that needs a race, a specific configuration, or local
-timing to land. | `GHSA-597g-3phw-6986`, a time-of-check to time-of-use gap in directory creation | | Low | A
-correctness or integrity failure with a narrow or hard-to-reach effect. | `GHSA-94p9-xgh2-xp45`, seed wheels used
-without an integrity check |
+| Level    | Meaning                                                                                               | Example from this project                                                       |
+| -------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Critical | A tampered artifact reached users, or an account or publishing credential is in someone else's hands. | none so far                                                                     |
+| High     | Attacker-chosen data becomes code on a normal path, with no unusual setup.                            | `GHSA-x78j-v8h9-3j2q`, command injection through `--prompt` into `activate.bat` |
+| Medium   | Real damage that needs a race, a specific configuration, or local timing to land.                     | `GHSA-597g-3phw-6986`, a time-of-check to time-of-use gap in directory creation |
+| Low      | A correctness or integrity failure with a narrow or hard-to-reach effect.                             | `GHSA-94p9-xgh2-xp45`, seed wheels used without an integrity check              |
 
 Keep undisclosed vulnerabilities in a private advisory and its temporary fork, regardless of severity. High and Critical
 need an out-of-band release. Low and Medium may wait for the next release within the agreed disclosure window. A public
