@@ -112,41 +112,16 @@ jobs:
           git add public/virtualenv.pyz public/version.txt
           git commit -m "update virtualenv to ${GITHUB_REF_NAME}"
           git push origin main
-  rollback:
+  recovery:
     if: ${{ always() && needs.build.result == 'success' && needs.publish.result == 'failure' }}
     needs:
       - build
       - publish
     runs-on: ubuntu-24.04
-    environment: release
-    permissions:
-      contents: write
+    permissions: {}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GH_RELEASE_TOKEN }} # zizmor: ignore[artipacked]
-      - name: Delete GitHub Release if created
-        env:
-          GH_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
-        run: gh release delete "${GITHUB_REF_NAME}" --yes --cleanup-tag || true
-      - name: Delete remote tag
-        run: git push origin --delete "${GITHUB_REF_NAME}" || true
-      - name: Reset release commit on main
+      - name: Report partial publication
         run: |
-          git checkout main
-          git reset --hard HEAD~1
-          git push origin main --force
-      - name: Rollback get-virtualenv if updated
-        env:
-          GH_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
-        run: |
-          git clone https://x-access-token:${GH_TOKEN}@github.com/pypa/get-virtualenv.git
-          cd get-virtualenv
-          current_version=$(cat public/version.txt)
-          if [ "$current_version" = "${GITHUB_REF_NAME}" ]; then
-            gh release delete "$current_version" --yes --cleanup-tag || true
-            git reset --hard HEAD~1
-            git push origin main --force
-          fi
+          echo "::error::Publication failed. Inspect PyPI, the GitHub release, and get-virtualenv before retrying."
+          echo "Publication may have succeeded on some destinations. Keep the release tag and commit." >> "$GITHUB_STEP_SUMMARY"
+          echo "Follow the partial-publication recovery instructions in docs/development.rst." >> "$GITHUB_STEP_SUMMARY"
