@@ -11,9 +11,11 @@ import sys
 import atheris
 from fuzz_shared import consume_text
 
-from virtualenv.activation.nushell import NushellActivator
+with atheris.instrument_imports(include=["virtualenv"]):
+    from virtualenv.activation.nushell import NushellActivator
 
 
+@atheris.instrument_func
 def test_one_input(data: bytes) -> None:
     string = consume_text(data)
     quoted = NushellActivator.quote(string)

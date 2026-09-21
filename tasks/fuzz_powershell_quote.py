@@ -11,9 +11,11 @@ import sys
 import atheris
 from fuzz_shared import consume_text
 
-from virtualenv.activation.powershell import PowerShellActivator
+with atheris.instrument_imports(include=["virtualenv"]):
+    from virtualenv.activation.powershell import PowerShellActivator
 
 
+@atheris.instrument_func
 def test_one_input(data: bytes) -> None:
     string = consume_text(data)
     quoted = PowerShellActivator.quote(string)
