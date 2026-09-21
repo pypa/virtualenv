@@ -32,9 +32,11 @@ def build_sbom(tmp_path: Path) -> Callable[[str], str]:
             ("pip-1.0.dist-info/RECORD", "", ""),
         ])
         with zipfile.ZipFile(embed / "pip-1.0-py3-none-any.whl", "w") as archive:
-            archive.writestr("pip-1.0.dist-info/METADATA", "Metadata-Version: 2.4\nName: pip\nVersion: 1.0\n")
-            archive.writestr("pip-1.0.dist-info/RECORD", record.getvalue())
-            archive.writestr(filename, b"abc")
+            archive.writestr(
+                zipfile.ZipInfo("pip-1.0.dist-info/METADATA"), "Metadata-Version: 2.4\nName: pip\nVersion: 1.0\n"
+            )
+            archive.writestr(zipfile.ZipInfo("pip-1.0.dist-info/RECORD"), record.getvalue())
+            archive.writestr(zipfile.ZipInfo(filename), b"abc")
         builder: Final[WheelBuilder] = WheelBuilder(
             str(tmp_path),
             config={
@@ -50,7 +52,9 @@ def build_sbom(tmp_path: Path) -> Callable[[str], str]:
                 "tool": {"hatch": {"build": {"hooks": {"custom": {"path": "hatch_build.py"}}}}},
             },
         )
-        build_data: Final[dict[str, list[str]]] = {"sbom_files": []}
+        build_data: Final = builder.get_default_build_data()
+        if "sbom_files" not in build_data:
+            pytest.skip("Hatchling before 1.28 does not support SBOMs (Python 3.9 builds)")
         builder.get_build_hooks(str(tmp_path))["custom"].initialize("standard", build_data)
         return Path(build_data["sbom_files"][0]).read_text(encoding="utf-8")
 
