@@ -23,7 +23,7 @@ repos:
     hooks:
       - id: pyproject-fmt
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.16.7"
+    rev: "v0.16.8"
     hooks:
       - id: ruff-format
       - id: ruff
@@ -61,7 +61,7 @@ repos:
     hooks:
       - id: zizmor
   - repo: https://github.com/crate-ci/typos
-    rev: v1.50.1
+    rev: v1.50.2
     hooks:
       - id: typos
   - repo: meta
