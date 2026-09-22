@@ -112,6 +112,58 @@ jobs:
           git add public/virtualenv.pyz public/version.txt
           git commit -m "update virtualenv to ${GITHUB_REF_NAME}"
           git push origin main
+  verify:
+    needs: publish
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      attestations: read
+    steps:
+      - name: Install uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: false
+      - name: Download expected distributions
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: ${{ env.dists-artifact-name }}
+          path: expected/
+      - name: Download and verify published distributions
+        run: |
+          mkdir published
+          curl --fail --silent --show-error --retry 5 --retry-all-errors \
+            "https://pypi.org/pypi/virtualenv/$GITHUB_REF_NAME/json" --output release.json
+          for expected in expected/*.whl expected/*.tar.gz; do
+            filename="$(basename "$expected")"
+            url="$(jq --exit-status --raw-output --arg filename "$filename" \
+              '.urls[] | select(.filename == $filename) | .url' release.json)"
+            curl --fail --silent --show-error --retry 5 --retry-all-errors --output "published/$filename" -- "$url"
+            cmp "$expected" "published/$filename"
+            uvx pypi-attestations verify pypi --repository https://github.com/pypa/virtualenv "published/$filename"
+          done
+      - name: Download and verify published zipapp
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$GITHUB_REF_NAME" --repo pypa/virtualenv \
+            --pattern virtualenv.pyz --pattern virtualenv.pyz.intoto.jsonl --dir published
+          gh attestation verify published/virtualenv.pyz --repo pypa/virtualenv \
+            --bundle published/virtualenv.pyz.intoto.jsonl \
+            --signer-workflow pypa/virtualenv/.github/workflows/release.yaml \
+            --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" --deny-self-hosted-runners
+      - name: Create environments from verified distributions
+        run: |
+          uv python install 3.14
+          for artifact in published/*.whl published/*.tar.gz; do
+            installation="$RUNNER_TEMP/$(basename "$artifact")"
+            uv venv --python 3.14 "$installation"
+            uv pip install --no-cache --python "$installation/bin/python" "$artifact"
+            "$installation/bin/python" -I -m virtualenv --no-download --no-periodic-update "$installation/created"
+            "$installation/created/bin/python" -I -m pip --version
+          done
+          uv run --no-project --python 3.14 python -I published/virtualenv.pyz \
+            --no-download --no-periodic-update "$RUNNER_TEMP/zipapp-created"
+          "$RUNNER_TEMP/zipapp-created/bin/python" -I -m pip --version
   recovery:
     if: ${{ always() && needs.build.result == 'success' && needs.publish.result == 'failure' }}
     needs:
