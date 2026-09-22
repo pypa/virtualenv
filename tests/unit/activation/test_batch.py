@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 
 @pytest.fixture(scope="session")
 def special_char_name():
-    """The shared tests/conftest.py fixture, minus &: cmd.exe cannot represent that one at all."""
+    """Exclude ampersands, which batch activation does not support in paths."""
     base = "'\";e-$ èрт🚒♞中片-j"
     if IS_WIN:
         base = base.replace('"', "").replace(";", "")
@@ -163,7 +163,8 @@ def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str) -> None:
         "print(json.dumps({k:os.environ.get(k) for k in ('VIRTUAL_ENV','PATH','PROMPT')}))\""
     )
     (creator.bin_dir / "check.bat").write_text(
-        f'@echo off\n@set VIRTUAL_ENV=\n@set _OLD_VIRTUAL_PATH=\n@set _OLD_VIRTUAL_PROMPT=\n@set "PROMPT=original"\n@call activate.bat\n{snapshot}\n@call activate.bat\n{snapshot}\n@call deactivate.bat\n{snapshot}',
+        '@echo off\n@set VIRTUAL_ENV=\n@set _OLD_VIRTUAL_PATH=\n@set _OLD_VIRTUAL_PROMPT=\n@set "PROMPT=original"\n'
+        f"@call activate.bat\n{snapshot}\n@call activate.bat\n{snapshot}\n@call deactivate.bat\n{snapshot}",
         encoding="utf-8",
     )
     result: Final = subprocess.run(
@@ -190,7 +191,7 @@ def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str) -> None:
 @pytest.mark.parametrize("activations", [1, 2], ids=["activate_once", "activate_twice"])
 def test_batch(activation_python, activation_tester_class, activation_tester, tmp_path, activations) -> None:
     if not (activation_python.creator.bin_dir / "activate.bat").exists():
-        pytest.skip("cmd.exe cannot represent this destination, batch activation was skipped on purpose")
+        pytest.skip("Batch activation does not support this destination")
     version_script = tmp_path / "version.bat"
     version_script.write_text("ver", encoding="utf-8")
 
@@ -225,7 +226,7 @@ def test_batch(activation_python, activation_tester_class, activation_tester, tm
 
 def test_batch_output(activation_python, activation_tester_class, activation_tester, tmp_path) -> None:
     if not (activation_python.creator.bin_dir / "activate.bat").exists():
-        pytest.skip("cmd.exe cannot represent this destination, batch activation was skipped on purpose")
+        pytest.skip("Batch activation does not support this destination")
     version_script = tmp_path / "version.bat"
     version_script.write_text("ver", encoding="utf-8")
 
