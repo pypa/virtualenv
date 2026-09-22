@@ -1,4 +1,4 @@
-"""Check that a built wheel's embedded SBOM is valid CycloneDX 1.6 and satisfies what actions/attest requires."""
+"""Check that a built wheel's embedded SBOM is valid CycloneDX 1.6, satisfies actions/attest and renders as SPDX 2.3."""
 
 from __future__ import annotations
 
@@ -11,6 +11,10 @@ from typing import TYPE_CHECKING, Any, Final
 
 from cyclonedx.schema import SchemaVersion
 from cyclonedx.validation.json import JsonStrictValidator
+from cyclonedx_to_spdx import to_spdx
+from spdx_tools.spdx.parser.error import SPDXParsingError
+from spdx_tools.spdx.parser.jsonlikedict.json_like_dict_parser import JsonLikeDictParser
+from spdx_tools.spdx.validation.document_validator import validate_full_spdx_document
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -61,6 +65,7 @@ def validate(wheel: Path) -> list[str]:
         # the document as CycloneDX at all, and silently rejects anything missing it as an unknown format
         problems.append(f"serialNumber must be a urn:uuid: RFC 4122 UUID, got {document.get('serialNumber')!r}")
     problems += _validate_references(document)
+    problems += _validate_spdx(document)
     return problems
 
 
@@ -93,6 +98,14 @@ def _validate_references(document: dict[str, Any]) -> list[str]:
         if unknown := referenced - tool_refs:
             problems.append(f"workflow {workflow['uid']} references unknown tools: {sorted(unknown)}")
     return problems
+
+
+def _validate_spdx(document: dict[str, Any]) -> list[str]:
+    try:
+        spdx = JsonLikeDictParser().parse(to_spdx(document))
+    except SPDXParsingError as error:
+        return [f"SPDX rendering does not parse: {message}" for message in error.get_messages()]
+    return [f"SPDX rendering invalid: {message.validation_message}" for message in validate_full_spdx_document(spdx)]
 
 
 def _bom_refs(components: list[dict[str, Any]]) -> Iterator[str]:

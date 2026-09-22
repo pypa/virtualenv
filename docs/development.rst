@@ -157,7 +157,7 @@ Performing a release
 --------------------
 
 A full release publishes to `PyPI <https://pypi.org/project/virtualenv/>`_, creates a `GitHub Release
-<https://github.com/pypa/virtualenv/releases>`_ with the zipapp attached, and updates `get-virtualenv
+<https://github.com/pypa/virtualenv/releases>`_ with the zipapp and SBOMs attached, and updates `get-virtualenv
 <https://github.com/pypa/get-virtualenv>`_ so that ``https://bootstrap.pypa.io/virtualenv.pyz`` serves the new version.
 
 Version bumping
@@ -170,7 +170,7 @@ bumped, otherwise the patch version is bumped. You can also pass ``major``, ``mi
 Both methods produce identical results: a release commit and tag on ``main``. Pushing the tag triggers the `Release
 workflow <https://github.com/pypa/virtualenv/actions/workflows/release.yaml>`_ which builds the sdist, wheel, and
 zipapp, publishes to PyPI via trusted publisher, creates a `GitHub Release
-<https://github.com/pypa/virtualenv/releases>`_ with the zipapp attached, and updates `get-virtualenv
+<https://github.com/pypa/virtualenv/releases>`_ with the zipapp and SBOMs attached, and updates `get-virtualenv
 <https://github.com/pypa/get-virtualenv>`_. A failed publish needs the recovery procedure below.
 
 **Via GitHub Actions (recommended)**
@@ -205,9 +205,10 @@ correction, without force-pushing either repository. Follow ``.github/INCIDENT_R
 tampering or compromised credentials.
 
 The release workflow verifies the published wheel, sdist and zipapp after publication. It checks the PyPI attestations
-and compares the distributions with the build artifacts, verifies the zipapp's release workflow, tag and commit, then
-creates an environment from each distribution. This job has no publishing credentials. A verification failure does not
-undo publication: inspect the mismatch or creation failure before retrying only the verification job. Do not rerun
+and compares the distributions with the build artifacts, verifies the zipapp's release workflow, tag and commit, checks
+that the ``virtualenv.cdx.json`` and ``virtualenv.spdx.json`` release assets match the wheel and the attested SBOMs,
+then creates an environment from each distribution. This job has no publishing credentials. A verification failure does
+not undo publication: inspect the mismatch or creation failure before retrying only the verification job. Do not rerun
 publication to repair a verification failure.
 
 **************
@@ -259,11 +260,13 @@ virtualenv is distributed under the MIT License, and everything in the repositor
   and are redistributed unchanged.
 - Adding a runtime dependency or bumping an embedded wheel is a maintainer decision; checking the license of the new
   version is part of that review.
-- Every wheel virtualenv publishes carries a `CycloneDX <https://cyclonedx.org/>`_ SBOM at
-  ``.dist-info/sboms/virtualenv.cdx.json``, generated at build time by ``hatch_build.py`` from the same
-  ``BUNDLE_SUPPORT``/``BUNDLE_SHA256`` tables that back the embedded wheels above, so a wheel bump keeps it current
-  automatically. GitHub attests it against the release's sdist and wheel; verify with ``gh attestation verify <file> -R
-  pypa/virtualenv --predicate-type https://cyclonedx.org/bom``.
+- ``hatch_build.py`` writes a `CycloneDX <https://cyclonedx.org/>`_ SBOM into every wheel at
+  ``.dist-info/sboms/virtualenv.cdx.json``. It reads the ``BUNDLE_SUPPORT``/``BUNDLE_SHA256`` tables that back the
+  embedded wheels above, so a wheel bump updates it with no extra step. ``tasks/cyclonedx_to_spdx.py`` renders that
+  document as SPDX 2.3 with the standard library alone. ``tox r -e readme`` builds a wheel and validates its SBOM and
+  the SPDX rendering; the release workflow runs ``tox r -e spdx`` to write ``virtualenv.spdx.json`` from
+  ``virtualenv.cdx.json`` and check it with ``pyspdxtools``. Both envs run on Python 3.14 because ``spdx-tools`` fails
+  to import on 3.15.
 
 Automated testing
 =================

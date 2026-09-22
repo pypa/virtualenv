@@ -156,13 +156,17 @@ lint = [
 ]
 pkg-meta = [
   "check-wheel-contents>=0.6.3",
-  "cyclonedx-python-lib[json-validation]>=11.12",
   "twine>=6.2",
   "uv>=0.10.2",
+  { include-group = "sbom" },
 ]
 property = [
   "hypothesis>=6.140",
   { include-group = "test" },
+]
+sbom = [
+  "cyclonedx-python-lib[json-validation]>=11.12",
+  "spdx-tools>=0.8.5",
 ]
 
 [tool.hatch]

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import csv
 import json
+import runpy
 import shutil
+import sys
 import zipfile
 from io import StringIO
 from pathlib import Path
@@ -172,6 +174,136 @@ def test_sbom_ci_rerun(build_sbom: Callable[[str, dict[str, str]], str], monkeyp
     monkeypatch.setenv("GITHUB_RUN_ID", "200")
     monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "2")
     assert build_sbom("pip/example.py", {}) == first
+
+
+def test_sbom_spdx_bundled_wheel(
+    build_sbom: Callable[[str, dict[str, str]], str], render_spdx: Callable[[str], dict[str, Any]]
+) -> None:
+    cyclonedx: Final[str] = build_sbom("pip/example.py", {})
+    assert render_spdx(cyclonedx)["packages"][1] == {
+        "SPDXID": "SPDXRef-pkg-pypi-pip-1.0",
+        "checksums": [
+            {"algorithm": "SHA256", "checksumValue": json.loads(cyclonedx)["components"][0]["hashes"][0]["content"]}
+        ],
+        "comment": "virtualenv:bundled-wheel: src/virtualenv/seed/wheels/embed/pip-1.0-py3-none-any.whl\n"
+        "virtualenv:seeded-for-python: 3.14",
+        "downloadLocation": "NOASSERTION",
+        "externalRefs": [
+            {"referenceCategory": "PACKAGE-MANAGER", "referenceLocator": "pkg:pypi/pip@1.0", "referenceType": "purl"}
+        ],
+        "filesAnalyzed": False,
+        "licenseConcluded": "NOASSERTION",
+        "licenseDeclared": "NOASSERTION",
+        "name": "pip",
+        "primaryPackagePurpose": "LIBRARY",
+        "versionInfo": "1.0",
+    }
+
+
+def test_sbom_spdx_relationships(
+    build_sbom: Callable[[str, dict[str, str]], str], render_spdx: Callable[[str], dict[str, Any]]
+) -> None:
+    document: Final[dict[str, Any]] = render_spdx(
+        build_sbom("pip/example.py", {"pip/_vendor/vendor.txt": "urllib3==1.26.4\n"})
+    )
+    assert [
+        relationship
+        for relationship in document["relationships"]
+        if not relationship["spdxElementId"].startswith("SPDXRef-tool-")
+    ] == [
+        {
+            "spdxElementId": "SPDXRef-DOCUMENT",
+            "relationshipType": "DESCRIBES",
+            "relatedSpdxElement": "SPDXRef-pkg-pypi-virtualenv-1.0",
+        },
+        {
+            "spdxElementId": "SPDXRef-pkg-pypi-pip-1.0",
+            "relationshipType": "CONTAINS",
+            "relatedSpdxElement": "SPDXRef-pkg-pypi-pip-1.0-vendored-pkg-pypi-urllib3-1.26.4",
+        },
+        {
+            "spdxElementId": "SPDXRef-pkg-pypi-virtualenv-1.0",
+            "relationshipType": "DEPENDS_ON",
+            "relatedSpdxElement": "SPDXRef-pkg-pypi-pip-1.0",
+        },
+        {
+            "spdxElementId": "SPDXRef-pkg-pypi-virtualenv-1.0",
+            "relationshipType": "DEPENDS_ON",
+            "relatedSpdxElement": "SPDXRef-requires-dist-python-discovery-1.6",
+        },
+        {
+            "spdxElementId": "SPDXRef-pkg-pypi-pip-1.0",
+            "relationshipType": "DEPENDS_ON",
+            "relatedSpdxElement": "SPDXRef-pkg-pypi-pip-1.0-vendored-pkg-pypi-urllib3-1.26.4",
+        },
+    ]
+
+
+def test_sbom_spdx_build_tools(
+    build_sbom: Callable[[str, dict[str, str]], str], render_spdx: Callable[[str], dict[str, Any]]
+) -> None:
+    document: Final[dict[str, Any]] = render_spdx(build_sbom("pip/example.py", {}))
+    assert {
+        relationship["relatedSpdxElement"]
+        for relationship in document["relationships"]
+        if relationship["relationshipType"] == "BUILD_TOOL_OF"
+    } == {"SPDXRef-pkg-pypi-virtualenv-1.0"}
+
+
+@pytest.mark.parametrize(
+    ("metadata", "expected"),
+    [
+        pytest.param("License-Expression: MIT\n", ("MIT", None), id="expression"),
+        pytest.param(
+            "Classifier: License :: OSI Approved :: MIT License\nLicense: MIT\n",
+            ("NOASSERTION", "Declared in package metadata as: MIT License; MIT"),
+            id="names",
+        ),
+        pytest.param("", ("NOASSERTION", None), id="undeclared"),
+    ],
+)
+def test_sbom_spdx_declared_license(
+    build_sbom: Callable[[str, dict[str, str]], str],
+    render_spdx: Callable[[str], dict[str, Any]],
+    metadata: str,
+    expected: tuple[str, str | None],
+) -> None:
+    vendored: Final[dict[str, str]] = {
+        "pip/_vendor/urllib3-1.26.4.dist-info/METADATA": f"Name: urllib3\nVersion: 1.26.4\n{metadata}"
+    }
+    assert [
+        (package["licenseDeclared"], package.get("licenseComments"))
+        for package in render_spdx(build_sbom("pip/example.py", vendored))["packages"]
+        if package["name"] == "urllib3"
+    ] == [expected]
+
+
+def test_sbom_spdx_creation_info(
+    build_sbom: Callable[[str, dict[str, str]], str],
+    render_spdx: Callable[[str], dict[str, Any]],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("SOURCE_DATE_EPOCH", "1700000000")
+    cyclonedx: Final[str] = build_sbom("pip/example.py", {})
+    serial: Final[str] = json.loads(cyclonedx)["serialNumber"].removeprefix("urn:uuid:")
+    document: Final[dict[str, Any]] = render_spdx(cyclonedx)
+    assert (document["documentNamespace"], document["creationInfo"]["created"]) == (
+        f"https://github.com/pypa/virtualenv/sboms/virtualenv-1.0-{serial}",
+        "2023-11-14T22:13:20Z",
+    )
+
+
+@pytest.fixture
+def render_spdx(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Callable[[str], dict[str, Any]]:
+    def render(cyclonedx: str) -> dict[str, Any]:
+        (source := tmp_path / "virtualenv.cdx.json").write_text(cyclonedx, encoding="utf-8")
+        monkeypatch.setattr(
+            sys, "argv", ["cyclonedx_to_spdx.py", str(source), str(target := tmp_path / "out.spdx.json")]
+        )
+        runpy.run_path(str(Path(__file__).parents[2] / "tasks" / "cyclonedx_to_spdx.py"), run_name="__main__")
+        return json.loads(target.read_text(encoding="utf-8"))
+
+    return render
 
 
 @pytest.fixture
