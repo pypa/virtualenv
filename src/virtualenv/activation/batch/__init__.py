@@ -28,13 +28,8 @@ LOGGER = logging.getLogger(__name__)
 # unconditionally rather than only when that mode happens to be on.
 _CMD_OPERATORS: Final[tuple[str, ...]] = ("&", "|", "<", ">", "^", "!", '"')
 
-# Of _CMD_OPERATORS, only `&` can actually occur in a real Windows path: `|`, `<`, `>` and `"` are
-# already illegal in Windows filenames, and a literal `^` is silently dropped by cmd.exe itself even
-# with no help from quote(), confirmed on a real Windows runner - never exploitable, just a value that
-# reads one character short. `&` is different: quote() can neuter it in free text like the prompt, but
-# doing that to a path would silently point activate.bat at a directory that does not exist. There is no
-# way to represent it here and no way to fake the path, so refuse instead.
-_PATH_UNSAFE_CHARS: Final[tuple[str, ...]] = ("&",)
+# These are valid filename characters that quote() would replace, changing the target directory.
+_PATH_UNSAFE_CHARS: Final[tuple[str, ...]] = ("&", "^", "!")
 
 _PATH_REPLACEMENT_NAMES: Final[dict[str, str]] = {
     "__VIRTUAL_ENV__": "the destination directory",
@@ -89,8 +84,8 @@ def _unsafe_path_reason(key: str, value: str) -> str | None:
     if not found:
         return None
     return (
-        f"{_PATH_REPLACEMENT_NAMES[key]} ({value!r}) contains {''.join(found)!r}, and cmd.exe has no way "
-        f'to keep that literal inside the @set "VAR=value" lines activate.bat relies on'
+        f"{_PATH_REPLACEMENT_NAMES[key]} ({value!r}) contains {''.join(found)!r}, which the batch activator "
+        "cannot preserve in generated scripts"
     )
 
 
