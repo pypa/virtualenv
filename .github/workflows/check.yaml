@@ -198,6 +198,7 @@ jobs:
           - dev
           - docs
           - property
+          - fuzz
           - readme
           - type
           - type-3.9
@@ -205,6 +206,7 @@ jobs:
           - zipapp
         exclude:
           - {os: windows-2025-vs2026, tox_env: docs}
+          - {os: windows-2025-vs2026, tox_env: fuzz}
           - {os: windows-2025-vs2026, tox_env: readme}
           - {os: windows-2025-vs2026, tox_env: type}
           - {os: windows-2025-vs2026, tox_env: type-3.9}

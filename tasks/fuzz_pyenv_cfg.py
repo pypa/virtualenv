@@ -17,9 +17,11 @@ from pathlib import Path
 
 import atheris
 
-from virtualenv.create.pyenv_cfg import PyEnvCfg
+with atheris.instrument_imports(include=["virtualenv"]):
+    from virtualenv.create.pyenv_cfg import PyEnvCfg
 
 
+@atheris.instrument_func
 def test_one_input(data: bytes) -> None:
     provider = atheris.FuzzedDataProvider(data)
     keys = ("home", "prompt", "version", "base-prefix")
