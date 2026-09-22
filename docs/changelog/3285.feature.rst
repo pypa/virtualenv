@@ -1,0 +1,1 @@
+Allow ``filelock`` 4.x on Python 3.10+ by relaxing the upper bound from ``<4`` to ``<5`` - by :user:`r3wretrhy`.
