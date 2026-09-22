@@ -6,14 +6,12 @@ on:
 permissions:
   contents: read
 jobs:
-  upgrade:
+  generate:
     name: Upgrade embedded pip/setuptools/wheel
     if: github.repository_owner == 'pypa'
     runs-on: ubuntu-24.04
-    environment: upgrade
-    permissions:
-      contents: write
-      pull-requests: write
+    outputs:
+      publish: ${{ steps.upgrade.outputs.changed == 'true' && steps.age-check.outputs.skip == 'false' }}
     steps:
       - name: Install uv
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
@@ -23,7 +21,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          ssh-key: ${{ secrets.DEPLOY_KEY }} # zizmor: ignore[artipacked]
+          persist-credentials: false
       - name: Fetch upstream tags for versioning
         run: git fetch --force --tags https://github.com/pypa/virtualenv.git
       - name: Run upgrade
@@ -32,10 +30,11 @@ jobs:
           UPGRADE_ADVISORY: "1"
         run: |
           tox run -e upgrade
-          if [ -n "$(git diff --name-only)" ]; then
+          git add -- src/virtualenv/seed/wheels/embed THIRD-PARTY-NOTICES.md docs/changelog
+          if ! git diff --cached --quiet; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "### Embedded dependency changes" >> "$GITHUB_STEP_SUMMARY"
-            git diff --stat >> "$GITHUB_STEP_SUMMARY"
+            git diff --cached --stat >> "$GITHUB_STEP_SUMMARY"
           else
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "### All embedded dependencies are up to date" >> "$GITHUB_STEP_SUMMARY"
@@ -45,8 +44,40 @@ jobs:
         id: age-check
         run: |
           python tasks/check_wheel_age.py >> "$GITHUB_OUTPUT"
+      - name: Prepare upgrade patch
+        if: steps.upgrade.outputs.changed == 'true' && steps.age-check.outputs.skip == 'false'
+        run: git diff --cached --binary --no-ext-diff --no-textconv > "$RUNNER_TEMP/upgrade.patch"
+      - name: Store upgrade patch
+        if: steps.upgrade.outputs.changed == 'true' && steps.age-check.outputs.skip == 'false'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: upgrade-patch
+          path: ${{ runner.temp }}/upgrade.patch
+          if-no-files-found: error
+          retention-days: 1
+  publish:
+    needs: generate
+    if: needs.generate.outputs.publish == 'true'
+    runs-on: ubuntu-24.04
+    environment: upgrade
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout trusted generator revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          ssh-key: ${{ secrets.DEPLOY_KEY }} # zizmor: ignore[artipacked]
+      - name: Download upgrade patch
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: upgrade-patch
+          path: ${{ runner.temp }}/upgrade-patch
+      - name: Validate and apply upgrade patch
+        run: python tasks/apply_upgrade_patch.py "$RUNNER_TEMP/upgrade-patch/upgrade.patch"
       - name: Create Pull Request
-        if: steps.upgrade.outputs.changed == 'true' && steps.age-check.outputs.skip != 'true'
         id: cpr
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
         with:
