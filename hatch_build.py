@@ -27,9 +27,11 @@ from hatchling.builders.utils import get_reproducible_timestamp
 from packaging.requirements import Requirement
 
 if TYPE_CHECKING:
+    from email.message import Message
     from importlib.metadata import Distribution, PackageMetadata
 
     from hatchling.metadata.core import CoreMetadata
+    from packaging.specifiers import Specifier
 
 _ROOT: Final[Path] = Path(__file__).resolve().parent
 _EMBED: Final[Path] = _ROOT / "src" / "virtualenv" / "seed" / "wheels" / "embed"
@@ -218,22 +220,23 @@ def _contacts(names: list[str], addresses: list[str]) -> list[dict[str, str]]:
 
 def _bundled_component(wheel: Path) -> dict[str, Any]:
     with zipfile.ZipFile(wheel) as archive:
-        metadata_name = next(
-            name for name in archive.namelist() if name.count("/") == 1 and name.endswith(".dist-info/METADATA")
+        members: Final[list[str]] = sorted(archive.namelist())
+        metadata_name: Final[str] = next(
+            name for name in members if name.count("/") == 1 and name.endswith(".dist-info/METADATA")
         )
         metadata = Parser().parsestr(archive.read(metadata_name).decode("utf-8"))
         record = archive.read(metadata_name.replace("METADATA", "RECORD")).decode("utf-8")
-        vendored_metadata = []
-        for name in sorted(archive.namelist()):
+        vendored_metadata: Final[list[tuple[str, Message]]] = []
+        for name in members:
             if not name.endswith("/_vendor/vendor.txt"):
                 continue
             for line in archive.read(name).decode("utf-8").splitlines():
                 if not (requirement := line.partition("#")[0].strip()):
                     continue
-                parsed = Requirement(requirement)
-                pins = list(parsed.specifier)
-                if len(pins) != 1 or pins[0].operator != "==" or "*" in pins[0].version or parsed.url:
-                    msg = f"Unpinned vendored dependency in {wheel.name}:{name}: {requirement}"
+                parsed: Final[Requirement] = Requirement(requirement)
+                pins: Final[list[Specifier]] = list(parsed.specifier)
+                if len(pins) != 1 or pins[0].operator != "==" or "*" in pins[0].version:
+                    msg: Final[str] = f"Unpinned vendored dependency in {wheel.name}:{name}: {requirement}"
                     raise ValueError(msg)
                 vendored_metadata.append((
                     name,
@@ -241,7 +244,7 @@ def _bundled_component(wheel: Path) -> dict[str, Any]:
                 ))
         vendored_metadata.extend(
             (name, Parser().parsestr(archive.read(name).decode("utf-8")))
-            for name in sorted(archive.namelist())
+            for name in members
             if "/_vendor/" in name and name.endswith(".dist-info/METADATA")
         )
     component = _component_from_metadata(metadata, "library")
@@ -280,9 +283,9 @@ def _bundled_component(wheel: Path) -> dict[str, Any]:
         for path, digest, size in (row for row in csv.reader(StringIO(record, newline="")) if row)
         if digest
     ]
-    vendored_components = {}
+    vendored_components: Final[dict[str, dict[str, Any]]] = {}
     for source, vendored in vendored_metadata:
-        child = _component_from_metadata(vendored, "library")
+        child: Final[dict[str, Any]] = _component_from_metadata(vendored, "library")
         child["bom-ref"] = f"{component['bom-ref']}#vendored/{child['purl']}"
         child["properties"].append({"name": "virtualenv:vendored-manifest", "value": source})
         child["evidence"] = {
