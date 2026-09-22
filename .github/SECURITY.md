@@ -63,6 +63,9 @@ conversion is the boundary this policy cares about.
 - virtualenv writing outside the directory it was pointed at, whether through a symlink, a race or path handling.
 - Files or directories created with wider permissions than intended.
 
+The [assurance case](ASSURANCE_CASE.md) maps each item above to the code and tests that enforce it, and records when we
+last reviewed them.
+
 **Out of scope**
 
 - An attacker who already has arbitrary command execution as the victim, or can replace the victim's executables or
