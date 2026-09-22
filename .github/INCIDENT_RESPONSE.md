@@ -45,9 +45,10 @@ for the same reason, and GitHub's advisory form accepts a plain severity with no
 | Medium   | Real damage that needs a race, a specific configuration, or local timing to land.                     | `GHSA-597g-3phw-6986`, a time-of-check to time-of-use gap in directory creation |
 | Low      | A correctness or integrity failure with a narrow or hard-to-reach effect.                             | `GHSA-94p9-xgh2-xp45`, seed wheels used without an integrity check              |
 
-Severity decides two things. High and Critical get a private fork and an out-of-band release. Low and Medium may be
-fixed through an ordinary pull request that does not advertise itself as a security fix, and may wait for the next
-release. Anyone scoring the same issue with CVSS afterwards may land somewhere else, and that is expected.
+Keep undisclosed vulnerabilities in a private advisory and its temporary fork, regardless of severity. High and Critical
+need an out-of-band release. Low and Medium may wait for the next release within the agreed disclosure window. A public
+pull request exposes the patch even if its title does not mention security. Follow the early-disclosure procedure in
+[SECURITY.md](SECURITY.md) if the details are public.
 
 ## Where reports come from
 
@@ -62,16 +63,28 @@ that way.
 [SECURITY.md](SECURITY.md) puts it in scope. Reply to the reporter either way. An out-of-scope report gets a reason, not
 silence.
 
-**Contain.** Only for the artifact, account and credential cases above. Yank the affected release from PyPI, revoke the
-publishing credentials and the `release` environment, check every tag against a known good commit, roll back
-`bootstrap.pypa.io/virtualenv.pyz`, and re-examine anything published while the access was open.
+**Contain.** For the artifact, account and credential cases above, stop release jobs and revoke compromised account
+sessions, API tokens and deploy keys. Remove a compromised trusted publisher from PyPI until maintainers can restore
+trusted access. Keep the GitHub `release` environment and its protection rules; deleting it does not revoke a PyPI
+trusted publisher.
+
+Preserve workflow logs, audit events, artifact hashes and affected commit IDs before cleanup. Yank affected PyPI
+releases with a reason, and contact [PyPI security](https://pypi.org/security/) for compromised artifacts.
+[Yanking does not prevent installation through an exact version pin](https://docs.pypi.org/project-management/yanking/),
+so warn users about affected versions and recovery steps. Check tags against known good commits, restore a verified
+`bootstrap.pypa.io/virtualenv.pyz`, and examine releases from the period of compromised access.
 
 **Measure the blast radius.** For anything beyond a plain code bug, write down whether there is evidence of real
 exploitation and how confident that answer is. Guessing in public later is worse than recording uncertainty now.
 
-**Fix.** High and Critical are built in the temporary private fork attached to the advisory. Low and Medium go through a
-normal pull request. Either way the fix carries a regression test, and nothing in a commit message, branch name or issue
-says "security" until disclosure.
+**Fix.** Develop the patch and a regression test in the temporary private fork attached to the advisory. Keep the patch,
+reproducer and logs within the advisory until disclosure.
+
+GitHub
+[does not run CI or enforce branch protection in temporary private forks](https://docs.github.com/en/code-security/tutorials/fix-reported-vulnerabilities/collaborate-in-a-fork).
+Run the relevant tox environments on trusted machines without publishing credentials. Record the commit ID, commands,
+platforms and results in the private advisory. Ask another maintainer to review the patch and results before merging;
+record any emergency exception and its reason in the advisory.
 
 **Release.** Follow the usual release process in `docs/development.rst`. Remember there are three surfaces: PyPI, the
 GitHub Release zipapp, and `bootstrap.pypa.io/virtualenv.pyz`.
