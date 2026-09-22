@@ -133,20 +133,36 @@ jobs:
             virtualenv.cdx.json virtualenv.spdx.json --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
+      - name: Mint get-virtualenv app token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: pypa
+          repositories: get-virtualenv
+          permission-contents: write
+      # get-virtualenv main requires signed commits, and GitHub signs commits the app creates through the API
       - name: Update get-virtualenv
         env:
-          GH_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          git clone https://x-access-token:${GH_TOKEN}@github.com/pypa/get-virtualenv.git
-          cp virtualenv.pyz get-virtualenv/public/virtualenv.pyz
-          echo -n "${GITHUB_REF_NAME}" > get-virtualenv/public/version.txt
-          cd get-virtualenv
-          user_info=$(gh api /user)
-          git config user.name "$(echo "$user_info" | jq -r '.name // .login')"
-          git config user.email "$(echo "$user_info" | jq -r '.id')+$(echo "$user_info" | jq -r '.login')@users.noreply.github.com"
-          git add public/virtualenv.pyz public/version.txt
-          git commit -m "update virtualenv to ${GITHUB_REF_NAME}"
-          git push origin main
+          repo=repos/pypa/get-virtualenv
+          head=$(gh api "$repo/git/ref/heads/main" --jq .object.sha)
+          base_tree=$(gh api "$repo/git/commits/$head" --jq .tree.sha)
+          blob=$(base64 --wrap=0 virtualenv.pyz | jq --raw-input --slurp '{content: ., encoding: "base64"}' \
+            | gh api "$repo/git/blobs" --input - --jq .sha)
+          tree=$(jq --null-input --arg base_tree "$base_tree" --arg blob "$blob" --arg version "$GITHUB_REF_NAME" '{
+            base_tree: $base_tree,
+            tree: [
+              {path: "public/virtualenv.pyz", mode: "100644", type: "blob", sha: $blob},
+              {path: "public/version.txt", mode: "100644", type: "blob", content: $version}
+            ]
+          }' | gh api "$repo/git/trees" --input - --jq .sha)
+          commit=$(jq --null-input --arg tree "$tree" --arg head "$head" \
+            --arg message "update virtualenv to $GITHUB_REF_NAME" '{message: $message, tree: $tree, parents: [$head]}' \
+            | gh api "$repo/git/commits" --input - --jq .sha)
+          gh api --method PATCH "$repo/git/refs/heads/main" -f sha="$commit" -F force=false
   verify:
     name: Verify
     needs: publish

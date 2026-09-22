@@ -22,13 +22,22 @@ jobs:
     runs-on: ubuntu-24.04
     environment: release
     permissions:
-      contents: write # push the release commit and tag
+      contents: read # setup-uv downloads uv with the job token
     steps:
+      - name: Mint release app token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: pypa
+          repositories: virtualenv
+          permission-contents: write
       - name: Checkout code # zizmor: ignore[artipacked]
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          token: ${{ secrets.GH_RELEASE_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
@@ -37,13 +46,13 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Python
         run: uv python install 3.14
-      - name: Configure git identity from token owner
+      - name: Configure git identity from the release app
         env:
-          GH_TOKEN: ${{ secrets.GH_RELEASE_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
         run: |
-          user_info=$(gh api /user)
-          git config user.name "$(echo "$user_info" | jq -r '.name // .login')"
-          git config user.email "$(echo "$user_info" | jq -r '.id')+$(echo "$user_info" | jq -r '.login')@users.noreply.github.com"
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "$(gh api "/users/${APP_SLUG}[bot]" --jq .id)+${APP_SLUG}[bot]@users.noreply.github.com"
       - name: Generate changelog, commit, tag, and push
         env:
           BUMP: ${{ inputs.bump }}
