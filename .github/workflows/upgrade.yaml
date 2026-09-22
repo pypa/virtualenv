@@ -2,6 +2,7 @@ name: Upgrade embedded dependencies
 on:
   schedule:
     - cron: "0 10 * * *" # daily at 10:00 UTC
+    - cron: "0 11 * * 1" # Mondays at 11:00 UTC, after the daily run, to also bump the CI test tools
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -27,13 +28,23 @@ jobs:
           persist-credentials: false
       - name: Fetch upstream tags for versioning
         run: git fetch --force --tags https://github.com/pypa/virtualenv.git
+      - name: Pin the newest CI test tools
+        id: ci-tools
+        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 11 * * 1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python tasks/upgrade_ci_tools.py
       - name: Run upgrade
         id: upgrade
         env:
           UPGRADE_ADVISORY: "1"
+          CI_TOOLS_OUTCOME: ${{ steps.ci-tools.outcome }}
         run: |
           tox run -e upgrade
           git add -- src/virtualenv/seed/wheels/embed THIRD-PARTY-NOTICES.md docs/changelog
+          if [ "$CI_TOOLS_OUTCOME" = "success" ]; then
+            git add -- tasks/ci-tools.json
+          fi
           if ! git diff --cached --quiet; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
             echo "### Embedded dependency changes" >> "$GITHUB_STEP_SUMMARY"
@@ -88,9 +99,9 @@ jobs:
           commit-message: "Upgrade embedded dependencies"
           branch: auto/upgrade-embedded-deps
           delete-branch: true
-          title: "Upgrade embedded pip/setuptools/wheel"
+          title: "Upgrade embedded pip/setuptools/wheel and CI test tools"
           body: |
-            Automated upgrade of embedded pip, setuptools, and wheel dependencies.
+            Automated upgrade of embedded pip, setuptools, and wheel dependencies, and of the RustPython and Nushell releases CI tests against.
 
             This PR was created automatically by the [upgrade workflow](https://github.com/${{ github.repository }}/actions/workflows/upgrade.yaml).
           labels: |

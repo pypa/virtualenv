@@ -1,0 +1,28 @@
+{
+  "nushell": {
+    "assets": {
+      "Windows": {
+        "name": "nu-0.115.1-x86_64-pc-windows-msvc.zip",
+        "sha256": "b83009cbc88021f4dc293c49320118886b78363f9a4bb14933d33c8803241f46"
+      }
+    },
+    "tag": "0.115.1"
+  },
+  "rustpython": {
+    "assets": {
+      "Linux": {
+        "name": "rustpython-release-Linux-x86_64-unknown-linux-gnu",
+        "sha256": "96b9bf688fde0feb3f392e39e5421382cb7e9c0641d7010c51ced871414b45c6"
+      },
+      "Windows": {
+        "name": "rustpython-release-Windows-x86_64-pc-windows-msvc.exe",
+        "sha256": "94a8e11df016e5002b4e4346064813981b50a822a61efe6e6d9310762c46b257"
+      },
+      "macOS": {
+        "name": "rustpython-release-macOS-aarch64-apple-darwin",
+        "sha256": "f0376723cdc222dc428df0c1ea771ed638f5c4e9fc6adacf5509fadfb9273bb6"
+      }
+    },
+    "tag": "2025-03-05-upd-webpack-19"
+  }
+}

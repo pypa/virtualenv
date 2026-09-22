@@ -95,15 +95,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag=$(gh release list --repo RustPython/RustPython --limit 1 --json tagName -q '.[0].tagName')
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            asset="rustpython-release-Linux-x86_64-unknown-linux-gnu"
-          elif [ "$RUNNER_OS" = "macOS" ]; then
-            asset="rustpython-release-macOS-aarch64-apple-darwin"
-          elif [ "$RUNNER_OS" = "Windows" ]; then
-            asset="rustpython-release-Windows-x86_64-pc-windows-msvc.exe"
-          fi
+          # the upgrade workflow keeps tasks/ci-tools.json on the newest release; tr drops the CR jq.exe may emit
+          read -r tag asset sha256 < <(jq --raw-output --arg os "$RUNNER_OS" \
+            '.rustpython | [.tag, .assets[$os].name, .assets[$os].sha256] | @tsv' tasks/ci-tools.json | tr -d '\r')
           gh release download "$tag" --repo RustPython/RustPython --pattern "$asset" --dir "$RUNNER_TEMP"
+          (cd "$RUNNER_TEMP" && echo "$sha256  $asset" | sha256sum -c -)
           if [ "$RUNNER_OS" = "Windows" ]; then
             cp "$RUNNER_TEMP/$asset" "/c/ProgramData/chocolatey/bin/rustpython.exe"
           else
@@ -148,9 +144,11 @@ jobs:
             fi
             brew install fish tcsh nushell || brew upgrade fish tcsh nushell
           elif [ "$RUNNER_OS" = "Windows" ]; then
-            nu_version=$(gh release view --repo nushell/nushell --json tagName -q .tagName)
-            gh release download "$nu_version" --repo nushell/nushell --pattern "*-x86_64-pc-windows-msvc.zip" --dir "$RUNNER_TEMP"
-            7z x "$RUNNER_TEMP/nu-${nu_version#v}-x86_64-pc-windows-msvc.zip" -o"$RUNNER_TEMP/nushell" -y
+            read -r nu_tag nu_archive nu_sha256 < <(jq --raw-output \
+              '.nushell | [.tag, .assets.Windows.name, .assets.Windows.sha256] | @tsv' tasks/ci-tools.json | tr -d '\r')
+            gh release download "$nu_tag" --repo nushell/nushell --pattern "$nu_archive" --dir "$RUNNER_TEMP"
+            (cd "$RUNNER_TEMP" && echo "$nu_sha256  $nu_archive" | sha256sum -c -)
+            7z x "$RUNNER_TEMP/$nu_archive" -o"$RUNNER_TEMP/nushell" -y
             cp "$RUNNER_TEMP/nushell/nu.exe" "/c/ProgramData/chocolatey/bin/nu.exe"
           fi
       - name: 🧬 Pick environment to run

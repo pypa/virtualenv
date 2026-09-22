@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import runpy
 import shutil
@@ -15,6 +16,7 @@ import pytest
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+    from urllib.request import Request
 
     from pytest_mock import MockerFixture
 
@@ -226,6 +228,7 @@ def apply_patch(wheel_repo: Path) -> Callable[[str, str], subprocess.CompletedPr
         pytest.param("docs/changelog/u.bugfix.rst", id="changelog"),
         pytest.param("src/virtualenv/seed/wheels/embed/__init__.py", id="bundle-index"),
         pytest.param("src/virtualenv/seed/wheels/embed/pip-2-py3-none-any.whl", id="wheel"),
+        pytest.param("tasks/ci-tools.json", id="ci-tools"),
     ],
 )
 def test_upgrade_patch_applies(
@@ -264,3 +267,139 @@ def test_upgrade_patch_missing_git(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PATH", "")
     with pytest.raises(SystemExit, match="git is required"):
         runpy.run_path(str(Path(__file__).parents[2] / "tasks" / "apply_upgrade_patch.py"), run_name="__main__")
+
+
+_NU_ASSET: Final[str] = "nu-0.116.0-x86_64-pc-windows-msvc.zip"
+_RUSTPYTHON_ASSETS: Final[dict[str, str]] = {
+    "Linux": "rustpython-release-Linux-x86_64-unknown-linux-gnu",
+    "macOS": "rustpython-release-macOS-aarch64-apple-darwin",
+    "Windows": "rustpython-release-Windows-x86_64-pc-windows-msvc.exe",
+}
+_OLD_PINS: Final[dict[str, dict[str, str | dict[str, dict[str, str]]]]] = {
+    "nushell": {"tag": "0.115.1", "assets": {"Windows": {"name": "nu-old.zip", "sha256": "old"}}},
+    "rustpython": {"tag": "old", "assets": {"Linux": {"name": "rp-old", "sha256": "old"}}},
+}
+
+
+@pytest.fixture
+def ci_tools(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("GH_TOKEN", "token")
+    (tmp_path / "tasks").mkdir()
+    pins: Final[Path] = tmp_path / "tasks" / "ci-tools.json"
+    pins.write_text(json.dumps(_OLD_PINS), encoding="utf-8")
+    return pins
+
+
+@pytest.fixture
+def github(mocker: MockerFixture) -> Callable[[str, dict[str, bytes], dict[str, str]], None]:
+    def serve(nushell_tag: str, contents: dict[str, bytes], digests: dict[str, str]) -> None:
+        names: Final[list[str]] = sorted(contents)
+
+        def respond(request: Request, **_kwargs: int) -> BytesIO:
+            url: Final[str] = request.full_url
+            if url == "https://api.github.com/graphql":
+                return BytesIO(
+                    json.dumps({
+                        "data": {
+                            "repository": {
+                                "latestRelease": {"tagName": nushell_tag},
+                                "releases": {"nodes": [{"tagName": "2026-09-20-main-1"}]},
+                            }
+                        }
+                    }).encode()
+                )
+            if "/releases/tags/" in url:
+                return BytesIO(
+                    json.dumps({
+                        "assets": [
+                            {"id": index, "name": name, "digest": digests.get(name)} for index, name in enumerate(names)
+                        ]
+                    }).encode()
+                )
+            return BytesIO(contents[names[int(url.rsplit("/", 1)[1])]])
+
+        mocker.patch("urllib.request.urlopen", autospec=True, side_effect=respond)
+
+    return serve
+
+
+@pytest.fixture
+def upgrade_ci_tools() -> Callable[[], None]:
+    def invoke() -> None:
+        runpy.run_path(str(Path(__file__).parents[2] / "tasks" / "upgrade_ci_tools.py"), run_name="__main__")
+
+    return invoke
+
+
+def test_ci_tools_pin_newest_releases(
+    ci_tools: Path,
+    github: Callable[[str, dict[str, bytes], dict[str, str]], None],
+    upgrade_ci_tools: Callable[[], None],
+) -> None:
+    github(
+        "0.116.0",
+        {_NU_ASSET: b"nu", **{name: name.encode() for name in _RUSTPYTHON_ASSETS.values()}},
+        {_NU_ASSET: f"sha256:{hashlib.sha256(b'nu').hexdigest()}"},
+    )
+    upgrade_ci_tools()
+    assert json.loads(ci_tools.read_text(encoding="utf-8")) == {
+        "nushell": {
+            "tag": "0.116.0",
+            "assets": {"Windows": {"name": _NU_ASSET, "sha256": hashlib.sha256(b"nu").hexdigest()}},
+        },
+        "rustpython": {
+            "tag": "2026-09-20-main-1",
+            "assets": {
+                runner_os: {"name": name, "sha256": hashlib.sha256(name.encode()).hexdigest()}
+                for runner_os, name in _RUSTPYTHON_ASSETS.items()
+            },
+        },
+    }
+
+
+def test_ci_tools_keep_hashes_of_unchanged_tag(
+    ci_tools: Path,
+    github: Callable[[str, dict[str, bytes], dict[str, str]], None],
+    upgrade_ci_tools: Callable[[], None],
+) -> None:
+    github("0.115.1", dict.fromkeys(_RUSTPYTHON_ASSETS.values(), b"replaced"), {})
+    upgrade_ci_tools()
+    assert json.loads(ci_tools.read_text(encoding="utf-8"))["nushell"] == _OLD_PINS["nushell"]
+
+
+@pytest.mark.parametrize(
+    ("release", "error"),
+    [
+        pytest.param(
+            ({_NU_ASSET: b"nu"}, {_NU_ASSET: "sha256:0000"}),
+            rf"{_NU_ASSET} hashes to \w+ but GitHub reports sha256:0000",
+            id="digest-mismatch",
+        ),
+        pytest.param(
+            ({"nu-0.116.0-aarch64-pc-windows-msvc.zip": b"nu"}, {}),
+            rf"nushell/nushell 0\.116\.0 has no asset {_NU_ASSET}",
+            id="missing-asset",
+        ),
+    ],
+)
+def test_ci_tools_reject_release(
+    ci_tools: Path,
+    github: Callable[[str, dict[str, bytes], dict[str, str]], None],
+    upgrade_ci_tools: Callable[[], None],
+    release: tuple[dict[str, bytes], dict[str, str]],
+    error: str,
+) -> None:
+    github("0.116.0", *release)
+    with pytest.raises(SystemExit, match=error):
+        upgrade_ci_tools()
+    assert json.loads(ci_tools.read_text(encoding="utf-8")) == _OLD_PINS
+
+
+def test_ci_tools_require_token(
+    ci_tools: Path, monkeypatch: pytest.MonkeyPatch, upgrade_ci_tools: Callable[[], None]
+) -> None:
+    monkeypatch.delenv("GH_TOKEN")
+    with pytest.raises(SystemExit, match="GH_TOKEN is required"):
+        upgrade_ci_tools()
+    assert json.loads(ci_tools.read_text(encoding="utf-8")) == _OLD_PINS
