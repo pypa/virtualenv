@@ -132,6 +132,11 @@ def _cyclonedx_document(core: CoreMetadata, version: str) -> dict[str, Any]:
         "components": [*bundled, *declared],
         "dependencies": [
             {"ref": root["bom-ref"], "dependsOn": [component["bom-ref"] for component in [*bundled, *declared]]},
+            *(
+                {"ref": component["bom-ref"], "dependsOn": references}
+                for component in bundled
+                if (references := [child["bom-ref"] for child in component["components"] if child["type"] == "library"])
+            ),
             *tool_dependencies,
         ],
         # transitive runtime dependencies are unknown until install time
@@ -213,9 +218,32 @@ def _contacts(names: list[str], addresses: list[str]) -> list[dict[str, str]]:
 
 def _bundled_component(wheel: Path) -> dict[str, Any]:
     with zipfile.ZipFile(wheel) as archive:
-        metadata_name = next(name for name in archive.namelist() if name.endswith(".dist-info/METADATA"))
+        metadata_name = next(
+            name for name in archive.namelist() if name.count("/") == 1 and name.endswith(".dist-info/METADATA")
+        )
         metadata = Parser().parsestr(archive.read(metadata_name).decode("utf-8"))
         record = archive.read(metadata_name.replace("METADATA", "RECORD")).decode("utf-8")
+        vendored_metadata = []
+        for name in sorted(archive.namelist()):
+            if not name.endswith("/_vendor/vendor.txt"):
+                continue
+            for line in archive.read(name).decode("utf-8").splitlines():
+                if not (requirement := line.partition("#")[0].strip()):
+                    continue
+                parsed = Requirement(requirement)
+                pins = list(parsed.specifier)
+                if len(pins) != 1 or pins[0].operator != "==" or "*" in pins[0].version or parsed.url:
+                    msg = f"Unpinned vendored dependency in {wheel.name}:{name}: {requirement}"
+                    raise ValueError(msg)
+                vendored_metadata.append((
+                    name,
+                    Parser().parsestr(f"Name: {parsed.name}\nVersion: {pins[0].version}\n"),
+                ))
+        vendored_metadata.extend(
+            (name, Parser().parsestr(archive.read(name).decode("utf-8")))
+            for name in sorted(archive.namelist())
+            if "/_vendor/" in name and name.endswith(".dist-info/METADATA")
+        )
     component = _component_from_metadata(metadata, "library")
     if any(reference["url"].startswith("https://github.com/pypa/") for reference in component["externalReferences"]):
         component["supplier"] = _PYPA
@@ -252,6 +280,22 @@ def _bundled_component(wheel: Path) -> dict[str, Any]:
         for path, digest, size in (row for row in csv.reader(StringIO(record, newline="")) if row)
         if digest
     ]
+    vendored_components = {}
+    for source, vendored in vendored_metadata:
+        child = _component_from_metadata(vendored, "library")
+        child["bom-ref"] = f"{component['bom-ref']}#vendored/{child['purl']}"
+        child["properties"].append({"name": "virtualenv:vendored-manifest", "value": source})
+        child["evidence"] = {
+            "identity": [
+                {
+                    "field": "purl",
+                    "confidence": 1,
+                    "methods": [{"technique": "manifest-analysis", "confidence": 1, "value": source}],
+                }
+            ],
+        }
+        vendored_components[child["purl"]] = child
+    component["components"].extend(vendored_components[key] for key in sorted(vendored_components))
     return component
 
 

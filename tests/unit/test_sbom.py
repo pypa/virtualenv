@@ -18,7 +18,12 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def build_sbom(tmp_path: Path) -> Callable[[str], str]:
+def vendored_files() -> dict[str, str]:
+    return {}
+
+
+@pytest.fixture
+def build_sbom(tmp_path: Path, vendored_files: dict[str, str]) -> Callable[[str], str]:
     shutil.copyfile(Path(__file__).parents[2] / "hatch_build.py", tmp_path / "hatch_build.py")
     (tmp_path / "LICENSE").write_text("Copyright (c) example\n", encoding="utf-8")
     embed: Final[Path] = tmp_path / "src" / "virtualenv" / "seed" / "wheels" / "embed"
@@ -34,6 +39,8 @@ def build_sbom(tmp_path: Path) -> Callable[[str], str]:
             ("pip-1.0.dist-info/RECORD", "", ""),
         ])
         with zipfile.ZipFile(embed / "pip-1.0-py3-none-any.whl", "w") as archive:
+            for name, content in vendored_files.items():
+                archive.writestr(zipfile.ZipInfo(name), content)
             archive.writestr(
                 zipfile.ZipInfo("pip-1.0.dist-info/METADATA"), "Metadata-Version: 2.4\nName: pip\nVersion: 1.0\n"
             )
@@ -92,6 +99,81 @@ def test_sbom_unresolved_dependencies(build_sbom: Callable[[str], str]) -> None:
     assert [entry for entry in document["dependencies"] if not entry["ref"].startswith("tool:")] == [
         {"ref": "pkg:pypi/virtualenv@1.0", "dependsOn": ["pkg:pypi/pip@1.0", "requires-dist:python-discovery>=1.6"]},
     ]
+
+
+@pytest.mark.parametrize(
+    ("source", "content"),
+    [
+        pytest.param(
+            "pip/_vendor/vendor.txt", "# bundled\n\n  urllib3==1.26.4 # patched upstream\n", id="pip-manifest"
+        ),
+        pytest.param(
+            "pip/_vendor/urllib3-1.26.4.dist-info/METADATA", "Name: urllib3\nVersion: 1.26.4\n", id="nested-metadata"
+        ),
+    ],
+)
+def test_sbom_vendored_identity(
+    build_sbom: Callable[[str], str], vendored_files: dict[str, str], source: str, content: str
+) -> None:
+    vendored_files[source] = content
+    document: Final = json.loads(build_sbom("pip/example.py"))
+    assert [child for child in document["components"][0]["components"] if child["type"] == "library"] == [
+        {
+            "type": "library",
+            "bom-ref": "pkg:pypi/pip@1.0#vendored/pkg:pypi/urllib3@1.26.4",
+            "name": "urllib3",
+            "version": "1.26.4",
+            "purl": "pkg:pypi/urllib3@1.26.4",
+            "externalReferences": [],
+            "properties": [{"name": "virtualenv:vendored-manifest", "value": source}],
+            "evidence": {
+                "identity": [
+                    {
+                        "field": "purl",
+                        "confidence": 1,
+                        "methods": [{"technique": "manifest-analysis", "confidence": 1, "value": source}],
+                    }
+                ]
+            },
+        }
+    ]
+
+
+def test_sbom_vendored_relationship(build_sbom: Callable[[str], str], vendored_files: dict[str, str]) -> None:
+    vendored_files["pip/_vendor/vendor.txt"] = "urllib3==1.26.4\n"
+    document: Final = json.loads(build_sbom("pip/example.py"))
+    assert [entry for entry in document["dependencies"] if not entry["ref"].startswith("tool:")] == [
+        {"ref": "pkg:pypi/virtualenv@1.0", "dependsOn": ["pkg:pypi/pip@1.0", "requires-dist:python-discovery>=1.6"]},
+        {"ref": "pkg:pypi/pip@1.0", "dependsOn": ["pkg:pypi/pip@1.0#vendored/pkg:pypi/urllib3@1.26.4"]},
+    ]
+
+
+def test_sbom_vendored_metadata_precedence(build_sbom: Callable[[str], str], vendored_files: dict[str, str]) -> None:
+    vendored_files.update({
+        "pip/_vendor/vendor.txt": "urllib3==1.26.4\n",
+        "pip/_vendor/urllib3-1.26.4.dist-info/METADATA": "Name: urllib3\nVersion: 1.26.4\nLicense-Expression: MIT\n",
+    })
+    document: Final = json.loads(build_sbom("pip/example.py"))
+    assert [child["licenses"] for child in document["components"][0]["components"] if child["type"] == "library"] == [
+        [{"expression": "MIT", "acknowledgement": "declared"}],
+    ]
+
+
+@pytest.mark.parametrize(
+    "requirement",
+    [
+        pytest.param("urllib3", id="missing"),
+        pytest.param("urllib3>=1", id="range"),
+        pytest.param("urllib3==1.*", id="wildcard"),
+        pytest.param("urllib3 @ https://example.com/package.whl", id="url"),
+    ],
+)
+def test_sbom_rejects_unpinned_vendor(
+    build_sbom: Callable[[str], str], vendored_files: dict[str, str], requirement: str
+) -> None:
+    vendored_files["pip/_vendor/vendor.txt"] = requirement
+    with pytest.raises(ValueError, match="Unpinned vendored dependency"):
+        build_sbom("pip/example.py")
 
 
 @pytest.mark.parametrize(
