@@ -30,6 +30,7 @@ def main() -> None:
         allowed: Final[bool] = filename in {
             "THIRD-PARTY-NOTICES.md",
             "docs/changelog/u.bugfix.rst",
+            "pylock.zipapp.toml",
             "tasks/ci-tools.json",
         } or (
             path.parent == PurePosixPath("src/virtualenv/seed/wheels/embed")

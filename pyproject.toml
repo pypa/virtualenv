@@ -127,6 +127,7 @@ test = [
   "ruff>=0.16.8; python_version=='3.14' and implementation_name=='cpython'",
   "setuptools>=68",
   "time-machine>=2.10; platform_python_implementation=='CPython'",
+  "tomli>=2.0.1; python_version<'3.11'",
 ]
 type = [
   "ty>=0.0.19",
