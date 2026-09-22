@@ -116,8 +116,8 @@ def test_missing_git(monkeypatch: pytest.MonkeyPatch, check_age: Callable[[], st
 
 @pytest.fixture
 def generator_repo(tmp_path: Path) -> Path:
-    if sys.version_info < (3, 10):
-        pytest.skip("The upgrade formatter toolchain requires Python 3.10 or newer")
+    if sys.version_info[:2] != (3, 14) or sys.implementation.name != "cpython":
+        pytest.skip("The upgrade workflow runs its formatter toolchain on CPython 3.14")
     root: Final[Path] = Path(__file__).parents[2]
     (tmp_path / "tasks").mkdir()
     shutil.copyfile(root / "tasks" / "upgrade_wheels.py", tmp_path / "tasks" / "upgrade_wheels.py")

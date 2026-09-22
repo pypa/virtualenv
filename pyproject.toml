@@ -111,7 +111,7 @@ test = [
   "coverage-enable-subprocess>=1",
   "hatchling>=1.27",
   "packaging>=23.1",
-  "pre-commit-uv>=4.2; python_version>='3.10'",
+  "pre-commit-uv>=4.2; python_version=='3.14' and implementation_name=='cpython'",
   "pytest>=7.4",
   "pytest-env>=0.8.2",
   """\
@@ -124,7 +124,7 @@ test = [
   "pytest-rerunfailures>=15",
   "pytest-timeout>=2.1",
   "pytest-xdist>=3.5",
-  "ruff>=0.16.8; python_version>='3.10'",
+  "ruff>=0.16.8; python_version=='3.14' and implementation_name=='cpython'",
   "setuptools>=68",
   "time-machine>=2.10; platform_python_implementation=='CPython'",
 ]
