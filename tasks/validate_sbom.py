@@ -87,8 +87,6 @@ def _validate_references(document: dict[str, Any]) -> list[str]:
         problems.append(
             f"root dependsOn {sorted(dependencies.get(root_ref, []))} != components {sorted(component_refs)}"
         )
-    if missing := component_refs - set(dependencies):
-        problems.append(f"components without a dependencies entry: {sorted(missing)}")
 
     for workflow in document["formulation"][0]["workflows"]:
         referenced = {reference["ref"] for reference in workflow["resourceReferences"]}

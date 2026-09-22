@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import ast
 import base64
+import csv
 import hashlib
 import json
-import os
 import platform
 import re
 import shutil
@@ -17,11 +17,13 @@ from datetime import datetime, timezone
 from email.parser import Parser
 from email.utils import getaddresses
 from importlib.metadata import distributions
+from io import StringIO
 from itertools import starmap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
+from hatchling.builders.utils import get_reproducible_timestamp
 from packaging.requirements import Requirement
 
 if TYPE_CHECKING:
@@ -69,17 +71,6 @@ _RECORD_HASH_ALGORITHMS: Final[dict[str, str]] = {
     "sha384": "SHA-384",
     "sha512": "SHA-512",
 }
-# only these names are ever read from the environment: they identify the CI run and carry no secrets
-_GITHUB_PROVENANCE: Final[tuple[str, ...]] = (
-    "GITHUB_REPOSITORY",
-    "GITHUB_SHA",
-    "GITHUB_REF",
-    "GITHUB_WORKFLOW",
-    "GITHUB_RUN_ID",
-    "GITHUB_RUN_ATTEMPT",
-    "RUNNER_OS",
-    "RUNNER_ARCH",
-)
 
 
 class SbomBuildHook(BuildHookInterface):
@@ -93,7 +84,8 @@ class SbomBuildHook(BuildHookInterface):
 
     The document also records the build environment (interpreter, OS, every distribution in the isolated build env with
     its files and the dependency graph between them), which PEP 770 calls out as what a third party needs to verify
-    build reproducibility, plus the source revision and the CI run that produced the wheel when known.
+    build reproducibility, plus the source revision when known. Release attestations identify the CI run without
+    introducing run-specific values into the wheel.
 
     """
 
@@ -140,7 +132,6 @@ def _cyclonedx_document(core: CoreMetadata, version: str) -> dict[str, Any]:
         "components": [*bundled, *declared],
         "dependencies": [
             {"ref": root["bom-ref"], "dependsOn": [component["bom-ref"] for component in [*bundled, *declared]]},
-            *({"ref": component["bom-ref"], "dependsOn": []} for component in [*bundled, *declared]),
             *tool_dependencies,
         ],
         # transitive runtime dependencies are unknown until install time
@@ -179,11 +170,6 @@ def _root_component(core: CoreMetadata, version: str) -> dict[str, Any]:
     if commit := _commit():
         references.append({"type": "vcs", "url": f"{_REPOSITORY}/tree/{commit}", "comment": "exact source revision"})
         properties.append({"name": "virtualenv:vcs-commit", "value": commit})
-    if run_id := os.environ.get("GITHUB_RUN_ID"):
-        server = os.environ.get("GITHUB_SERVER_URL", "https://github.com")
-        references.append(
-            {"type": "build-system", "url": f"{server}/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{run_id}"},
-        )
     return {
         "type": "application",
         "bom-ref": purl,
@@ -211,8 +197,6 @@ def _external_reference(label: str, url: str) -> dict[str, str]:
 
 
 def _commit() -> str | None:
-    if commit := os.environ.get("GITHUB_SHA"):
-        return commit
     if not (_ROOT / ".git").exists() or (git := shutil.which("git")) is None:  # building from an sdist
         return None
     return subprocess.run(
@@ -265,7 +249,7 @@ def _bundled_component(wheel: Path) -> dict[str, Any]:
     }
     component["components"] = [
         _file_component(component["bom-ref"], path, digest, size)
-        for path, digest, size in (line.split(",") for line in record.splitlines() if line)
+        for path, digest, size in (row for row in csv.reader(StringIO(record, newline="")) if row)
         if digest
     ]
     return component
@@ -377,7 +361,8 @@ def _build_tools(package_version: str) -> tuple[list[dict[str, Any]], list[dict[
             "properties": [
                 {"name": "python:implementation", "value": platform.python_implementation()},
                 {"name": "python:compiler", "value": platform.python_compiler()},
-                {"name": "python:build", "value": " ".join(platform.python_build())},
+                # GraalPy may omit the build date instead of returning an empty string.
+                {"name": "python:build", "value": " ".join(part for part in platform.python_build() if part)},
             ],
         },
         _operating_system(),
@@ -443,18 +428,11 @@ def _workflow(root: dict[str, Any], tools: list[dict[str, Any]]) -> dict[str, An
         "resourceReferences": [{"ref": tool["bom-ref"]} for tool in tools],
         "outputs": [{"type": "artifact", "resource": {"ref": root["bom-ref"]}}],
     }
-    if recorded := [
-        {"name": name, "value": os.environ[name]}
-        for name in ("SOURCE_DATE_EPOCH", *_GITHUB_PROVENANCE)
-        if name in os.environ
-    ]:
-        workflow["inputs"] = [{"environmentVars": recorded}]
+    workflow["inputs"] = [
+        {"environmentVars": [{"name": "SOURCE_DATE_EPOCH", "value": str(get_reproducible_timestamp())}]},
+    ]
     return workflow
 
 
 def _timestamp() -> str:
-    # SOURCE_DATE_EPOCH makes the document reproducible; without it the real creation time is the truthful value,
-    # not hatchling's fixed 2020 fallback
-    if (epoch := os.environ.get("SOURCE_DATE_EPOCH")) is not None:
-        return datetime.fromtimestamp(int(epoch), tz=timezone.utc).isoformat()
-    return datetime.now(tz=timezone.utc).replace(microsecond=0).isoformat()
+    return datetime.fromtimestamp(get_reproducible_timestamp(), tz=timezone.utc).isoformat()
