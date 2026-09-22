@@ -361,7 +361,8 @@ def _build_tools(package_version: str) -> tuple[list[dict[str, Any]], list[dict[
             "properties": [
                 {"name": "python:implementation", "value": platform.python_implementation()},
                 {"name": "python:compiler", "value": platform.python_compiler()},
-                {"name": "python:build", "value": " ".join(platform.python_build())},
+                # GraalPy may omit the build date instead of returning an empty string.
+                {"name": "python:build", "value": " ".join(part for part in platform.python_build() if part)},
             ],
         },
         _operating_system(),

@@ -14,6 +14,8 @@ from hatchling.builders.wheel import WheelBuilder
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from pytest_mock import MockerFixture
+
 
 @pytest.fixture
 def build_sbom(tmp_path: Path) -> Callable[[str], str]:
@@ -106,6 +108,27 @@ def test_sbom_timestamp(
     if epoch is not None:
         monkeypatch.setenv("SOURCE_DATE_EPOCH", epoch)
     assert json.loads(build_sbom("pip/example.py"))["metadata"]["timestamp"] == expected
+
+
+@pytest.mark.parametrize(
+    ("build", "expected"),
+    [
+        pytest.param(("main", "Sep 21 2026"), "main Sep 21 2026", id="complete"),
+        pytest.param(("main", None), "main", id="graalpy-missing-date"),
+        pytest.param(("main", ""), "main", id="empty-date"),
+    ],
+)
+def test_sbom_python_build(
+    build_sbom: Callable[[str], str], mocker: MockerFixture, build: tuple[str, str | None], expected: str
+) -> None:
+    mocker.patch("platform.python_build", autospec=True, return_value=build)
+    document: Final = json.loads(build_sbom("pip/example.py"))
+    assert [
+        prop["value"]
+        for component in document["metadata"]["tools"]["components"]
+        for prop in component.get("properties", [])
+        if prop["name"] == "python:build"
+    ] == [expected]
 
 
 def test_sbom_ci_rerun(build_sbom: Callable[[str], str], monkeypatch: pytest.MonkeyPatch) -> None:
