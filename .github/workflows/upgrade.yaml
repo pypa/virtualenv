@@ -3,6 +3,9 @@ on:
   schedule:
     - cron: "0 10 * * *" # daily at 10:00 UTC
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 permissions:
   contents: read
 jobs:
@@ -56,13 +59,14 @@ jobs:
           if-no-files-found: error
           retention-days: 1
   publish:
+    name: Open upgrade pull request
     needs: generate
     if: needs.generate.outputs.publish == 'true'
     runs-on: ubuntu-24.04
     environment: upgrade
     permissions:
-      contents: write
-      pull-requests: write
+      contents: write # let create-pull-request manage the upgrade branch
+      pull-requests: write # open the upgrade pull request
     steps:
       - name: Checkout trusted generator revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

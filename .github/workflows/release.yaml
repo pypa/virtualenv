@@ -4,15 +4,19 @@ on:
     tags: ["*.*.*"]
 env:
   dists-artifact-name: python-package-distributions
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 permissions: {}
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-24.04
     permissions:
-      contents: read
-      id-token: write
-      attestations: write
-      artifact-metadata: write
+      contents: read # check out the tagged source
+      id-token: write # sign attestations with the workflow identity
+      attestations: write # store the SBOM and provenance attestations
+      artifact-metadata: write # record the attested artifacts
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -67,14 +71,15 @@ jobs:
             virtualenv.pyz
             virtualenv.pyz.intoto.jsonl
   publish:
+    name: Publish
     needs: build
     runs-on: ubuntu-24.04
     environment:
       name: release
       url: https://pypi.org/project/virtualenv/${{ github.ref_name }}
     permissions:
-      contents: write
-      id-token: write
+      contents: write # create the GitHub release
+      id-token: write # authenticate to PyPI with trusted publishing
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -113,11 +118,12 @@ jobs:
           git commit -m "update virtualenv to ${GITHUB_REF_NAME}"
           git push origin main
   verify:
+    name: Verify
     needs: publish
     runs-on: ubuntu-24.04
     permissions:
-      contents: read
-      attestations: read
+      contents: read # download the published zipapp from the release
+      attestations: read # verify the zipapp provenance
     steps:
       - name: Install uv
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
@@ -165,6 +171,7 @@ jobs:
             --no-download --no-periodic-update "$RUNNER_TEMP/zipapp-created"
           "$RUNNER_TEMP/zipapp-created/bin/python" -I -m pip --version
   recovery:
+    name: Recovery
     if: ${{ always() && needs.build.result == 'success' && needs.publish.result == 'failure' }}
     needs:
       - build

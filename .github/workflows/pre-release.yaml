@@ -12,16 +12,20 @@ on:
           - minor
           - patch
         default: auto
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 permissions: {}
 jobs:
   pre-release:
+    name: Pre-release
     runs-on: ubuntu-24.04
     environment: release
     permissions:
-      contents: write
+      contents: write # push the release commit and tag
     steps:
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 # zizmor: ignore[artipacked]
+      - name: Checkout code # zizmor: ignore[artipacked]
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           token: ${{ secrets.GH_RELEASE_TOKEN }}
