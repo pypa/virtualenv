@@ -204,6 +204,12 @@ change, publish a new version and consider yanking the broken release. Use a nor
 correction, without force-pushing either repository. Follow ``.github/INCIDENT_RESPONSE.md`` if there is evidence of
 tampering or compromised credentials.
 
+The release workflow verifies the published wheel, sdist and zipapp after publication. It checks the PyPI attestations
+and compares the distributions with the build artifacts, verifies the zipapp's release workflow, tag and commit, then
+creates an environment from each distribution. This job has no publishing credentials. A verification failure does not
+undo publication: inspect the mismatch or creation failure before retrying only the verification job. Do not rerun
+publication to repair a verification failure.
+
 **************
  Contributing
 **************
