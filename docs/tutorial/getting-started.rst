@@ -251,3 +251,4 @@ Now that you understand the basics, explore these topics:
 - :doc:`../how-to/usage` for selecting specific Python versions, configuring defaults, and advanced usage patterns.
 - :doc:`../explanation` for understanding how virtualenv works under the hood and how it compares to ``venv``.
 - :doc:`../reference/cli` for all available command line options and flags.
+- :doc:`../how-to/verify-release` to check that the virtualenv you downloaded came from its release workflow.

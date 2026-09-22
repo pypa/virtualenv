@@ -562,6 +562,59 @@ For a deeper dive into how activation works under the hood, see Allison Kaptur's
 edition <https://www.recurse.com/blog/14-there-is-no-magic-virtualenv-edition>`_, which explains how virtualenv uses
 ``PATH`` and ``PYTHONHOME`` to isolate virtual environments.
 
+.. _release-integrity:
+
+*******************
+ Release integrity
+*******************
+
+virtualenv installs the ``pip`` and ``setuptools`` wheels it bundles into every environment it creates, so a tampered
+release would reach all of them. Each release lets you check where its files came from without trusting the maintainers'
+machines. :doc:`how-to/verify-release` walks through the checks and :doc:`reference/release-artifacts` lists the files
+involved.
+
+**Trusted publishing**
+    The release workflow holds no PyPI API token. Its publish job exchanges a short-lived GitHub OIDC token for upload
+    rights through PyPI's `trusted publishing <https://docs.pypi.org/trusted-publishers/>`_, and the publish attestation
+    PyPI keeps for each file names that publisher: the ``release.yaml`` workflow of ``pypa/virtualenv`` in the
+    ``release`` environment.
+
+**Provenance**
+    For each file, the workflow signs a statement that binds the file's SHA-256 to the workflow identity: repository,
+    workflow file, tag and commit. `Sigstore <https://www.sigstore.dev>`_ issues the signing certificate and records it
+    in a public transparency log. PyPI stores the statements for the wheel and sdist; GitHub stores the one for the
+    zipapp and the SBOM attestations. Verifying a file recomputes its digest and checks it against a signed statement
+    whose identity you name.
+
+**Reproducible builds**
+    Provenance tells you which workflow run built a file, but you still trust that run. The release pins every timestamp
+    to ``SOURCE_DATE_EPOCH``, the commit time of the tag, so you can rebuild the sdist from the tag yourself and compare
+    the bytes. The wheel reproduces except for its SBOM, which describes the machine that built it, and the ``RECORD``
+    entry that hashes the SBOM.
+
+**The SBOMs**
+    Dependency scanners find the packages a project declares, and virtualenv declares neither ``pip`` nor
+    ``setuptools``: it ships them as data files. The CycloneDX SBOM in the wheel names each bundled wheel with its hash,
+    license and vendored packages, so a scanner can match them against vulnerability databases. The release also
+    publishes it as SPDX for tools that read only that format. The zipapp gets its own SBOM because it bundles more: the
+    runtime dependencies for every supported Python, each in the version that Python loads.
+
+What a successful check proves:
+
+- The file is byte-identical to one that ``release.yaml`` in ``pypa/virtualenv`` built and signed.
+- With ``--source-ref`` or ``--signer-workflow``, the run came from that tag and workflow file.
+
+What it does not prove:
+
+- That the source at that tag is free of bugs or malicious code. Provenance ties a file to a commit; review of the
+  commit is a separate matter.
+- That the actions and build dependencies the workflow pulled in were not compromised. The SBOM records the build
+  environment so you can audit it after the fact.
+- That the bundled ``pip`` and ``setuptools`` have no known vulnerabilities. The SBOM lets you look them up.
+- Anything about wheels virtualenv fetches at run time. ``--download``, ``--upgrade-embed-wheels`` and the periodic
+  update take ``pip`` and ``setuptools`` from PyPI, outside virtualenv's attestations.
+- That you have the latest release. The bootstrap zipapp in particular can trail it.
+
 **********
  See also
 **********
