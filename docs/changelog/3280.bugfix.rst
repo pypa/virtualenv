@@ -1,0 +1,2 @@
+Skip Windows batch activation scripts when environment or Tcl/Tk paths contain ``^`` or ``!``, since quoting changes
+those paths. Other activation scripts remain available.
