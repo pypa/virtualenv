@@ -1,9 +1,10 @@
 # Security Policy
 
 `virtualenv` creates Python environments. A small team maintains it: [Bernát Gábor](https://github.com/gaborbernat)
-handles most day-to-day work and answers fastest, with [Rahul Devikar](https://github.com/rahuldevikar) and
-[Paul Moore](https://github.com/pfmoore) in backup roles. [Tidelift](https://tidelift.com/security) supports the
-project. This policy says how to report a security problem, what happens next, and how long it takes.
+handles most day-to-day work and answers fastest. [Rahul Devikar](https://github.com/rahuldevikar) covers when Bernát is
+unavailable, and [Paul Moore](https://github.com/pfmoore) steps in if both are away.
+[Tidelift](https://tidelift.com/security) supports the project. This policy says how to report a security problem, what
+happens next, and how long it takes.
 
 ## Reporting a vulnerability
 
