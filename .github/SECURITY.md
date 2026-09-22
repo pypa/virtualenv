@@ -80,6 +80,11 @@ conversion is the boundary this policy cares about.
 
 If you cannot tell which side a finding falls on, report it and we will assess it.
 
+The [threat model](THREAT_MODEL.md) gives the reasoning behind these lists. It covers what virtualenv trusts, its trust
+boundaries and the current controls, and its [assurance case](THREAT_MODEL.md#assurance-case) maps each in-scope item to
+the code and tests that enforce it, with the date of our last review. On a conflict we follow this policy and fix the
+threat model.
+
 ## How a report is handled
 
 1. **Triage.** Confirm the report, decide whether it is a vulnerability under the scope above, and set a severity.

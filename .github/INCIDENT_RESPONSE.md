@@ -50,6 +50,9 @@ need an out-of-band release. Low and Medium may wait for the next release within
 pull request exposes the patch even if its title does not mention security. Follow the early-disclosure procedure in
 [SECURITY.md](SECURITY.md) if the details are public.
 
+Check the [threat model](THREAT_MODEL.md) to judge likelihood and reach. It lists the threats we expect at each trust
+boundary with their controls, and the risks we chose to accept.
+
 ## Where reports come from
 
 The [advisory form](https://github.com/pypa/virtualenv/security/advisories/new), the Tidelift contact, Dependabot and
