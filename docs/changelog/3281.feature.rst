@@ -1,1 +1,0 @@
-Include versioned identities for packages vendored inside seed wheels in the embedded SBOM.

@@ -6,6 +6,23 @@
 
 .. towncrier release notes start
 
+***********************
+ v21.10.0 (2026-09-22)
+***********************
+
+Features - 21.10.0
+==================
+
+- Include versioned identities for packages vendored inside seed wheels in the embedded SBOM. (:issue:`3281`)
+- Allow ``filelock`` 4.x on Python 3.10+ by relaxing the upper bound from ``<4`` to ``<5`` - by :user:`r3wretrhy`.
+  (:issue:`3285`)
+
+Bugfixes - 21.10.0
+==================
+
+- Skip Windows batch activation scripts when environment or Tcl/Tk paths contain ``^`` or ``!``, since quoting changes
+  those paths. Other activation scripts remain available. (:issue:`3280`)
+
 **********************
  v21.9.1 (2026-09-22)
 **********************
