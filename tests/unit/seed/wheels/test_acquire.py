@@ -12,7 +12,7 @@ import pytest
 from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.seed.wheels.acquire import download_wheel, get_wheel, pip_wheel_env_run
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, get_embed_wheel
-from virtualenv.seed.wheels.periodic_update import dump_datetime
+from virtualenv.seed.wheels.periodic_update import UnverifiedWheelError, dump_datetime
 from virtualenv.seed.wheels.util import Wheel, discover_wheels
 
 if TYPE_CHECKING:
@@ -182,6 +182,26 @@ def test_get_wheel_download_not_called(mocker, for_py_version, session_app_data,
     assert wheel.name == expected.name
     assert downloaded_wheel[1].call_count == 0
     assert write.call_count == 0
+
+
+def test_get_wheel_falls_back_to_bundle_when_unverified(
+    mocker: MockerFixture, for_py_version: str, session_app_data: AppDataDiskFolder
+) -> None:
+    mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", side_effect=UnverifiedWheelError("refusing"))
+
+    wheel = get_wheel("setuptools", "bundle", for_py_version, [], True, session_app_data, False, os.environ)
+
+    assert wheel is not None
+    assert wheel.name == get_embed_wheel("setuptools", for_py_version).name
+
+
+def test_get_wheel_unverified_pinned_version_fails(
+    mocker: MockerFixture, for_py_version: str, session_app_data: AppDataDiskFolder
+) -> None:
+    mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", side_effect=UnverifiedWheelError("refusing"))
+
+    with pytest.raises(UnverifiedWheelError, match="refusing"):
+        get_wheel("setuptools", "0.0.0", for_py_version, [], True, session_app_data, False, os.environ)
 
 
 def test_get_wheel_download_cached(
