@@ -171,7 +171,7 @@ Both methods produce identical results: a release commit and tag on ``main``. Pu
 workflow <https://github.com/pypa/virtualenv/actions/workflows/release.yaml>`_ which builds the sdist, wheel, and
 zipapp, publishes to PyPI via trusted publisher, creates a `GitHub Release
 <https://github.com/pypa/virtualenv/releases>`_ with the zipapp attached, and updates `get-virtualenv
-<https://github.com/pypa/get-virtualenv>`_. If publish fails, a rollback job automatically reverts everything.
+<https://github.com/pypa/get-virtualenv>`_. A failed publish needs the recovery procedure below.
 
 **Via GitHub Actions (recommended)**
 
@@ -185,6 +185,24 @@ zipapp, publishes to PyPI via trusted publisher, creates a `GitHub Release
     tox r -e release
 
 Pass ``--version <bump>`` to override the default ``auto`` behavior (e.g. ``--version minor``).
+
+Recovering a partial publication
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A failure after the PyPI upload can leave a published package without its GitHub release or bootstrap update. Keep the
+release commit and tag: users may have installed that version, and PyPI `does not allow filename reuse
+<https://pypi.org/help/#file-name-reuse>`_. Resetting the tip of ``main`` can also remove an unrelated commit that a
+maintainer merged during publication.
+
+Before retrying, inspect the failed job, the files on PyPI, the GitHub release assets and
+``get-virtualenv/public/version.txt``. Compare their hashes with the artifacts from the failed workflow run. Preserve
+those artifacts and logs. A timeout does not prove that an upload failed.
+
+Complete missing publication steps with the original verified artifacts. Do not rerun the full publish job after PyPI
+accepted its upload; the duplicate upload can fail before reaching the remaining destinations. If the artifacts need a
+change, publish a new version and consider yanking the broken release. Use a normal reviewed commit for any bootstrap
+correction, without force-pushing either repository. Follow ``.github/INCIDENT_RESPONSE.md`` if there is evidence of
+tampering or compromised credentials.
 
 **************
  Contributing
