@@ -28,7 +28,7 @@ jobs:
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
-          enable-cache: true
+          enable-cache: false
           cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Set up Python
