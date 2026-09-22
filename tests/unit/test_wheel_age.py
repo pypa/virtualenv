@@ -185,3 +185,82 @@ def test_generator_formatter_failure(
     (generator_repo / ".pre-commit-config.yaml").write_text("repos: invalid\n", encoding="utf-8")
     with pytest.raises(subprocess.CalledProcessError):
         regenerate()
+
+
+@pytest.fixture
+def apply_patch(wheel_repo: Path) -> Callable[[str, str], subprocess.CompletedProcess[str]]:
+    def invoke(filename: str, mode: str = "100644") -> subprocess.CompletedProcess[str]:
+        blob: Final[str] = subprocess.run(
+            ["git", "hash-object", "-w", "--stdin"],
+            input="new\0content",
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=True,
+        ).stdout.strip()
+        if mode == "000000":
+            subprocess.run(["git", "update-index", "--force-remove", filename], check=True)
+        else:
+            subprocess.run(["git", "update-index", "--add", "--cacheinfo", mode, blob, filename], check=True)
+        patch: Final[bytes] = subprocess.run(
+            ["git", "diff", "--cached", "--binary"], capture_output=True, check=True
+        ).stdout
+        subprocess.run(["git", "reset", "-q", "HEAD", "--", filename], check=True)
+        patch_file: Final[Path] = wheel_repo.parents[4] / "upgrade.patch"
+        patch_file.write_bytes(patch)
+        return subprocess.run(
+            [sys.executable, str(Path(__file__).parents[2] / "tasks" / "apply_upgrade_patch.py"), str(patch_file)],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=False,
+        )
+
+    return invoke
+
+
+@pytest.mark.parametrize(
+    "filename",
+    [
+        pytest.param("THIRD-PARTY-NOTICES.md", id="notices"),
+        pytest.param("docs/changelog/u.bugfix.rst", id="changelog"),
+        pytest.param("src/virtualenv/seed/wheels/embed/__init__.py", id="bundle-index"),
+        pytest.param("src/virtualenv/seed/wheels/embed/pip-2-py3-none-any.whl", id="wheel"),
+    ],
+)
+def test_upgrade_patch_applies(
+    apply_patch: Callable[[str, str], subprocess.CompletedProcess[str]], filename: str
+) -> None:
+    result: Final = apply_patch(filename, "100644")
+    assert (result.returncode, Path(filename).read_bytes()) == (0, b"new\0content")
+
+
+@pytest.mark.parametrize(
+    ("filename", "mode"),
+    [
+        pytest.param(".github/workflows/release.yaml", "100644", id="workflow"),
+        pytest.param("tasks/apply_upgrade_patch.py", "100644", id="validator"),
+        pytest.param("src/virtualenv/seed/wheels/embed/subdir/pip.whl", "100644", id="nested-path"),
+        pytest.param("THIRD-PARTY-NOTICES.md", "120000", id="symlink"),
+        pytest.param("THIRD-PARTY-NOTICES.md", "100755", id="executable"),
+    ],
+)
+def test_upgrade_patch_rejects(
+    apply_patch: Callable[[str, str], subprocess.CompletedProcess[str]], filename: str, mode: str
+) -> None:
+    result: Final = apply_patch(filename, mode)
+    assert (result.returncode, Path(filename).exists()) == (1, False)
+    assert "unsupported path or file mode" in result.stderr
+
+
+def test_upgrade_patch_removes_old_wheel(
+    wheel_repo: Path, apply_patch: Callable[[str, str], subprocess.CompletedProcess[str]]
+) -> None:
+    result: Final = apply_patch("src/virtualenv/seed/wheels/embed/pip-1-py3-none-any.whl", "000000")
+    assert (result.returncode, (wheel_repo / "pip-1-py3-none-any.whl").exists()) == (0, False)
+
+
+def test_upgrade_patch_missing_git(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PATH", "")
+    with pytest.raises(SystemExit, match="git is required"):
+        runpy.run_path(str(Path(__file__).parents[2] / "tasks" / "apply_upgrade_patch.py"), run_name="__main__")
