@@ -1,17 +1,26 @@
 from __future__ import annotations
 
+import json
+import os
+import subprocess
 import sys
 from argparse import Namespace
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
+from virtualenv import session_via_cli
 from virtualenv.activation import BatchActivator
+from virtualenv.config.cli.parser import VirtualEnvOptions
 from virtualenv.info import IS_WIN
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.fixture(scope="session")
 def special_char_name():
-    """The shared tests/conftest.py fixture, minus &: cmd.exe cannot represent that one at all."""
+    """Exclude ampersands, which batch activation does not support in paths."""
     base = "'\";e-$ èрт🚒♞中片-j"
     if IS_WIN:
         base = base.replace('"', "").replace(";", "")
@@ -112,38 +121,77 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
         assert '@if NOT ""=="" @set "TK_LIBRARY="' in activate_content
 
 
-def test_batch_skips_destination_with_ampersand(tmp_path, caplog) -> None:
-    """An `&` in the destination can never be represented, so generation must skip it, not guess."""
-
-    class MockInterpreter:
-        os = "nt"
-        tcl_lib = None
-        tk_lib = None
-
-    class MockCreator:
-        def __init__(self, dest) -> None:
-            self.dest = dest
-            self.bin_dir = dest / "Scripts"
-            self.bin_dir.mkdir(parents=True)
-            self.interpreter = MockInterpreter()
-            self.pyenv_cfg = {}
-            self.env_name = "test-env"
-
-    creator = MockCreator(tmp_path / "weird&dest")
-    activator = BatchActivator(Namespace(prompt=None))
-
-    generated = activator.generate(creator)
-
-    assert generated == []
+@pytest.mark.parametrize(
+    "character", [pytest.param("&", id="ampersand"), pytest.param("^", id="caret"), pytest.param("!", id="exclamation")]
+)
+@pytest.mark.parametrize(
+    "field",
+    [pytest.param("dest", id="destination"), pytest.param("tcl_lib", id="tcl"), pytest.param("tk_lib", id="tk")],
+)
+def test_batch_skips_changed_paths(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, character: str, field: str
+) -> None:
+    creator: Final = session_via_cli(
+        [str(tmp_path / (f"env{character}name" if field == "dest" else "env")), "--no-seed"],
+        setup_logging=False,
+    ).creator
+    if field != "dest":
+        monkeypatch.setattr(creator.interpreter, field, str(tmp_path / f"lib{character}name"), raising=False)
+    creator.bin_dir.mkdir(parents=True)
+    assert BatchActivator(VirtualEnvOptions(prompt=None)).generate(creator) == []
     assert list(creator.bin_dir.iterdir()) == []
     assert "skipping batch activation scripts" in caplog.text
-    assert "&" in caplog.text
+    assert "cannot preserve" in caplog.text
+
+
+@pytest.mark.skipif(not IS_WIN, reason="requires cmd.exe")
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("env space", id="space"),
+        pytest.param("env(x86)", id="parentheses"),
+        pytest.param("env%SECRET%", id="percent"),
+    ],
+)
+@pytest.mark.parametrize("delayed", [pytest.param("OFF", id="normal"), pytest.param("ON", id="delayed-expansion")])
+def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str) -> None:
+    creator: Final = session_via_cli([str(tmp_path / name), "--no-seed"], setup_logging=False).creator
+    creator.bin_dir.mkdir(parents=True)
+    BatchActivator(VirtualEnvOptions(prompt="roundtrip")).generate(creator)
+    snapshot: Final[str] = (
+        f'@"{sys.executable}" -I -c "import json,os; '
+        "print(json.dumps({k:os.environ.get(k) for k in ('VIRTUAL_ENV','PATH','PROMPT')}))\""
+    )
+    (creator.bin_dir / "check.bat").write_text(
+        '@echo off\n@set VIRTUAL_ENV=\n@set _OLD_VIRTUAL_PATH=\n@set _OLD_VIRTUAL_PROMPT=\n@set "PROMPT=original"\n'
+        f"@call activate.bat\n{snapshot}\n@call activate.bat\n{snapshot}\n@call deactivate.bat\n{snapshot}",
+        encoding="utf-8",
+    )
+    result: Final = subprocess.run(
+        [os.environ["COMSPEC"], "/D", f"/V:{delayed}", "/C", "check.bat"],
+        cwd=creator.bin_dir,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+        env={**os.environ, "SECRET": "expanded", "VIRTUAL_ENV_DISABLE_PROMPT": ""},
+    )
+    active: Final = {
+        "VIRTUAL_ENV": str(creator.dest),
+        "PATH": f"{creator.bin_dir};{os.environ['PATH']}",
+        "PROMPT": "(roundtrip) original",
+    }
+    assert [json.loads(line) for line in result.stdout.splitlines()] == [
+        active,
+        active,
+        {"VIRTUAL_ENV": None, "PATH": os.environ["PATH"], "PROMPT": "original"},
+    ]
 
 
 @pytest.mark.parametrize("activations", [1, 2], ids=["activate_once", "activate_twice"])
 def test_batch(activation_python, activation_tester_class, activation_tester, tmp_path, activations) -> None:
     if not (activation_python.creator.bin_dir / "activate.bat").exists():
-        pytest.skip("cmd.exe cannot represent this destination, batch activation was skipped on purpose")
+        pytest.skip("Batch activation does not support this destination")
     version_script = tmp_path / "version.bat"
     version_script.write_text("ver", encoding="utf-8")
 
@@ -178,7 +226,7 @@ def test_batch(activation_python, activation_tester_class, activation_tester, tm
 
 def test_batch_output(activation_python, activation_tester_class, activation_tester, tmp_path) -> None:
     if not (activation_python.creator.bin_dir / "activate.bat").exists():
-        pytest.skip("cmd.exe cannot represent this destination, batch activation was skipped on purpose")
+        pytest.skip("Batch activation does not support this destination")
     version_script = tmp_path / "version.bat"
     version_script.write_text("ver", encoding="utf-8")
 
