@@ -41,4 +41,6 @@ jobs:
           git config user.name "$(echo "$user_info" | jq -r '.name // .login')"
           git config user.email "$(echo "$user_info" | jq -r '.id')+$(echo "$user_info" | jq -r '.login')@users.noreply.github.com"
       - name: Generate changelog, commit, tag, and push
-        run: uv tool run --with tox-uv tox r -e release -- --version "${{ inputs.bump }}"
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: uv tool run --with tox-uv tox r -e release -- --version "$BUMP"

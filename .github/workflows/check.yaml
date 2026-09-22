@@ -75,8 +75,10 @@ jobs:
           python-version: "3.14"
       - name: 📦 Install tox with this virtualenv
         shell: bash
+        env:
+          MATRIX_PY: ${{ matrix.py }}
         run: |
-          if [[ "${{ matrix.py }}" == "3.13t" || "${{ matrix.py }}" == "3.14t" || "${{ matrix.py }}" == "3.15t" || "${{ matrix.py }}" == "rp" ]]; then
+          if [[ "$MATRIX_PY" == "3.13t" || "$MATRIX_PY" == "3.14t" || "$MATRIX_PY" == "3.15t" || "$MATRIX_PY" == "rp" ]]; then
             uv tool install --no-managed-python --python 3.14 "tox>=4.45" --with .
           else
             uv tool install --no-managed-python --python 3.14 "tox>=4.45" --with tox-uv --with .
@@ -94,15 +96,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag=$(gh release list --repo RustPython/RustPython --limit 1 --json tagName -q '.[0].tagName')
-          if [ "${{ runner.os }}" = "Linux" ]; then
+          if [ "$RUNNER_OS" = "Linux" ]; then
             asset="rustpython-release-Linux-x86_64-unknown-linux-gnu"
-          elif [ "${{ runner.os }}" = "macOS" ]; then
+          elif [ "$RUNNER_OS" = "macOS" ]; then
             asset="rustpython-release-macOS-aarch64-apple-darwin"
-          elif [ "${{ runner.os }}" = "Windows" ]; then
+          elif [ "$RUNNER_OS" = "Windows" ]; then
             asset="rustpython-release-Windows-x86_64-pc-windows-msvc.exe"
           fi
           gh release download "$tag" --repo RustPython/RustPython --pattern "$asset" --dir "$RUNNER_TEMP"
-          if [ "${{ runner.os }}" = "Windows" ]; then
+          if [ "$RUNNER_OS" = "Windows" ]; then
             cp "$RUNNER_TEMP/$asset" "/c/ProgramData/chocolatey/bin/rustpython.exe"
           else
             chmod +x "$RUNNER_TEMP/$asset"
@@ -112,8 +114,9 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          MATRIX_PY: ${{ matrix.py }}
         run: |
-          if [ "${{ runner.os }}" = "Linux" ]; then
+          if [ "$RUNNER_OS" = "Linux" ]; then
             retry() {
               local n=1
               while ! "$@"; do
@@ -136,15 +139,15 @@ jobs:
               | sudo tee /etc/apt/sources.list.d/fury.list
             retry sudo apt-get update -y
             retry sudo apt-get install snapd fish csh nushell -y
-          elif [ "${{ runner.os }}" = "macOS" ]; then
+          elif [ "$RUNNER_OS" = "macOS" ]; then
             brew update
-            if [[ "${{ matrix.py }}" == brew@* ]]; then
-              PY=$(echo '${{ matrix.py }}' | cut -c 6-)
+            if [[ "$MATRIX_PY" == brew@* ]]; then
+              PY=$(echo "$MATRIX_PY" | cut -c 6-)
               brew list --versions "python@$PY" >/dev/null 2>&1 || brew install "python@$PY"
               echo "/usr/local/opt/python@$PY/libexec/bin" >>"${GITHUB_PATH}"
             fi
             brew install fish tcsh nushell || brew upgrade fish tcsh nushell
-          elif [ "${{ runner.os }}" = "Windows" ]; then
+          elif [ "$RUNNER_OS" = "Windows" ]; then
             nu_version=$(gh release view --repo nushell/nushell --json tagName -q .tagName)
             gh release download "$nu_version" --repo nushell/nushell --pattern "*-x86_64-pc-windows-msvc.zip" --dir "$RUNNER_TEMP"
             7z x "$RUNNER_TEMP/nu-${nu_version#v}-x86_64-pc-windows-msvc.zip" -o"$RUNNER_TEMP/nushell" -y
@@ -152,8 +155,10 @@ jobs:
           fi
       - name: 🧬 Pick environment to run
         shell: bash
+        env:
+          MATRIX_PY: ${{ matrix.py }}
         run: |
-          py="${{ matrix.py }}"
+          py="$MATRIX_PY"
           if [[ "$py" == brew@* ]]; then
             brew_version="${py#brew@}"
             echo "UV_PYTHON=/opt/homebrew/bin/python${brew_version}" >> "$GITHUB_ENV"
@@ -229,8 +234,11 @@ jobs:
       - name: 📦 Install tox
         run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.45" --with tox-uv
       - name: 🏗️ Setup check suite
-        run: tox run -vv --notest --skip-missing-interpreters false -e ${{ matrix.tox_env }}
-      - name: 🏃 Run check for ${{ matrix.tox_env }}
-        run: tox run --skip-pkg-install -e ${{ matrix.tox_env }}
+        run: tox run -vv --notest --skip-missing-interpreters false
         env:
+          TOXENV: ${{ matrix.tox_env }}
+      - name: 🏃 Run check for ${{ matrix.tox_env }}
+        run: tox run --skip-pkg-install
+        env:
+          TOXENV: ${{ matrix.tox_env }}
           UPGRADE_ADVISORY: ${{ matrix.tox_env == 'upgrade' && '1' || '' }}
