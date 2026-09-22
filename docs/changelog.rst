@@ -7,6 +7,16 @@
 .. towncrier release notes start
 
 **********************
+ v21.9.1 (2026-09-22)
+**********************
+
+Bugfixes - 21.9.1
+=================
+
+- Correct SBOM CSV parsing and unresolved dependency relationships, and omit CI run identifiers from reproducible
+  builds. (:issue:`3278`)
+
+**********************
  v21.9.0 (2026-09-20)
 **********************
 
