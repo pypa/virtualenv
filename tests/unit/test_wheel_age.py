@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import json
 import runpy
+import shutil
 import subprocess
+import sys
+import zipfile
 from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
@@ -109,3 +112,76 @@ def test_missing_git(monkeypatch: pytest.MonkeyPatch, check_age: Callable[[], st
     monkeypatch.setenv("PATH", "")
     with pytest.raises(SystemExit, match="git is required"):
         check_age()
+
+
+@pytest.fixture
+def generator_repo(tmp_path: Path) -> Path:
+    if sys.version_info[:2] != (3, 14) or sys.implementation.name != "cpython":
+        pytest.skip("The upgrade workflow runs its formatter toolchain on CPython 3.14")
+    root: Final[Path] = Path(__file__).parents[2]
+    (tmp_path / "tasks").mkdir()
+    shutil.copyfile(root / "tasks" / "upgrade_wheels.py", tmp_path / "tasks" / "upgrade_wheels.py")
+    shutil.copyfile(root / ".pre-commit-config.yaml", tmp_path / ".pre-commit-config.yaml")
+    shutil.copyfile(root / "pyproject.toml", tmp_path / "pyproject.toml")
+    embed: Final[Path] = tmp_path / "src" / "virtualenv" / "seed" / "wheels" / "embed"
+    embed.mkdir(parents=True)
+    (embed / "__init__.py").write_text(
+        'BUNDLE_SUPPORT = {"3.14": {"pip": "pip-1-py3-none-any.whl"}}\n', encoding="utf-8"
+    )
+    with zipfile.ZipFile(embed / "pip-1-py3-none-any.whl", "w") as archive:
+        archive.writestr("pip-1.dist-info/METADATA", "Name: pip\nVersion: 1\n")
+        archive.writestr("pip-1.dist-info/licenses/LICENSE.txt", "Copyright Example\nPermission to redistribute.\n")
+    subprocess.run(["git", "init", "--quiet"], cwd=tmp_path, check=True)
+    return tmp_path
+
+
+@pytest.fixture
+def regenerate(generator_repo: Path) -> Callable[[], subprocess.CompletedProcess[str]]:
+    def invoke() -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [sys.executable, "tasks/upgrade_wheels.py", "--regen"],
+            cwd=generator_repo,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=True,
+        )
+
+    return invoke
+
+
+def test_generator_converges(generator_repo: Path, regenerate: Callable[[], subprocess.CompletedProcess[str]]) -> None:
+    regenerate()
+    assert "Copyright Example" in (generator_repo / "THIRD-PARTY-NOTICES.md").read_text(encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=generator_repo, check=True)
+    regenerate()
+    subprocess.run(
+        ["pre-commit", "run", "mdformat", "--files", "THIRD-PARTY-NOTICES.md"],
+        cwd=generator_repo,
+        check=True,
+    )
+    assert (
+        subprocess.run(["git", "diff", "--exit-code"], cwd=generator_repo, capture_output=True, check=False).returncode
+        == 0
+    )
+
+
+def test_generator_updates_license(
+    generator_repo: Path, regenerate: Callable[[], subprocess.CompletedProcess[str]]
+) -> None:
+    regenerate()
+    subprocess.run(["git", "add", "."], cwd=generator_repo, check=True)
+    wheel: Final[Path] = generator_repo / "src/virtualenv/seed/wheels/embed/pip-1-py3-none-any.whl"
+    with zipfile.ZipFile(wheel, "w") as archive:
+        archive.writestr("pip-1.dist-info/METADATA", "Name: pip\nVersion: 1\n")
+        archive.writestr("pip-1.dist-info/licenses/LICENSE.txt", "Copyright Changed\nPermission to redistribute.\n")
+    regenerate()
+    assert "Copyright Changed" in (generator_repo / "THIRD-PARTY-NOTICES.md").read_text(encoding="utf-8")
+
+
+def test_generator_formatter_failure(
+    generator_repo: Path, regenerate: Callable[[], subprocess.CompletedProcess[str]]
+) -> None:
+    (generator_repo / ".pre-commit-config.yaml").write_text("repos: invalid\n", encoding="utf-8")
+    with pytest.raises(subprocess.CalledProcessError):
+        regenerate()
