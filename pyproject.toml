@@ -156,6 +156,7 @@ lint = [
   "pre-commit-uv>=4.2",
 ]
 pkg-meta = [
+  "check-sdist>=1.6",
   "check-wheel-contents>=0.6.3",
   "twine>=6.2",
   "uv>=0.10.2",
@@ -175,6 +176,8 @@ version.source = "vcs"
 build.hooks.vcs.version-file = "src/virtualenv/version.py"
 build.hooks.custom.path = "hatch_build.py"
 build.targets.sdist.include = [
+  "/.pre-commit-config.yaml",
+  "/pylock.zipapp.toml",
   "/src",
   "/tasks",
   "/tests",
@@ -247,6 +250,20 @@ builtin = "clear,usage,en-GB_to_en-US"
 # mitre: the CWE catalog lives at cwe.mitre.org, which codespell would rewrite to "miter"
 ignore-words-list = "acknowledgement,intoto,mitre"
 count = true
+
+[tool.check-sdist]
+default-ignore = false
+git-only = [
+  ".dockerignore",
+  ".gitattributes",
+  ".github/",
+  ".markdownlint.yaml",
+  ".readthedocs.yml",
+  "_typos.toml",
+  "docs/",
+  "scorecard.yml",
+]
+sdist-only = [ "src/virtualenv/version.py" ]
 
 [tool.pyproject-fmt]
 max_supported_python = "3.15"
