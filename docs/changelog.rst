@@ -7,6 +7,16 @@
 .. towncrier release notes start
 
 ***********************
+ v21.11.1 (2026-09-23)
+***********************
+
+Bugfixes - 21.11.1
+==================
+
+- Include the pre-commit configuration and the zipapp lock file in the source distribution, so downstream packagers can
+  run the test suite from it. (:issue:`3314`)
+
+***********************
  v21.11.0 (2026-09-23)
 ***********************
 
