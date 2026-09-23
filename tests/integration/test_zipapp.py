@@ -51,7 +51,13 @@ def zipapp_build_env(tmp_path_factory):
         else:
             msg = "could not find a python to build zipapp"
             raise RuntimeError(msg)
-        cmd = [str(Path(exe).parent / "pip"), "install", "pip>=23", "packaging>=23"]
+        cmd = [
+            str(Path(exe).parent / "pip"),
+            "install",
+            "pip>=23",
+            "packaging>=23",
+            "tomli>=2.0.1; python_version<'3.11'",
+        ]
         subprocess.run(cmd, check=True, timeout=300)
     yield exe
     if create_env_path is not None:

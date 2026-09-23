@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import io
 import json
 import os
@@ -11,23 +12,41 @@ import subprocess
 import sys
 import zipapp
 import zipfile
-from collections import defaultdict, deque
-from email import message_from_string
+from collections import defaultdict
+from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
-from shlex import quote
-from stat import S_IWUSR
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
+from urllib.request import urlopen
 
 from packaging.markers import Marker
-from packaging.requirements import Requirement
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from typing import TypedDict
+
+    from typing_extensions import NotRequired
+
+    class LockedWheel(TypedDict):
+        url: str
+        hashes: dict[str, str]
+
+    class LockedPackage(TypedDict):
+        name: str
+        version: str
+        marker: NotRequired[str]
+        wheels: NotRequired[list[LockedWheel]]
+
 
 HERE = Path(__file__).parent.absolute()
 
 VERSIONS = [f"3.{i}" for i in range(14, 7, -1)]
+LOCK: Final[Path] = HERE.parent / "pylock.zipapp.toml"
+PLATFORMS: Final[tuple[str, ...]] = ("darwin", "linux", "win32")
 
 
 def main() -> None:
@@ -39,7 +58,69 @@ def main() -> None:
         create_zipapp(os.path.abspath(args.dest), packages)
 
 
-def create_zipapp(dest: str, packages: dict[str, Any]) -> None:
+def get_wheels_for_support_versions(folder: Path) -> dict[str, dict[str, dict[str, WheelForVersion]]]:
+    packages: defaultdict[str, dict[str, dict[str, WheelForVersion]]] = defaultdict(lambda: {"==any": {}})
+    wheel = build_virtualenv_wheel(folder)
+    packages["virtualenv"]["==any"][wheel.name] = WheelForVersion(wheel, list(VERSIONS))
+    for package in tomllib.loads(LOCK.read_text(encoding="utf-8"))["packages"]:
+        wheel = download_locked_wheel(package, folder)
+        packages[package["name"]]["==any"][wheel.name] = WheelForVersion(wheel, python_versions_for(package))
+    for name, platforms in packages.items():
+        for wheel_name, wheel_for_version in platforms["==any"].items():
+            sys.stdout.write(f"{name}: {wheel_name} for {' '.join(wheel_for_version.versions)}\n")
+    return packages
+
+
+def build_virtualenv_wheel(into: Path) -> Path:
+    with TemporaryDirectory() as temp_folder:
+        # pip does not guarantee building from the same source tree in parallel is safe, so build from a copy
+        source = Path(temp_folder) / HERE.parent.name
+        shutil.copytree(
+            HERE.parent, source, ignore=shutil.ignore_patterns(".tox", ".tox4", "venv", "__pycache__", "*.pyz")
+        )
+        subprocess.run(
+            [sys.executable, "-m", "pip", "wheel", "-q", "--no-deps", "-w", str(into), str(source)], check=True
+        )
+    return next(into.glob("virtualenv-*.whl"))
+
+
+def download_locked_wheel(package: LockedPackage, into: Path) -> Path:
+    # the zipapp cannot load compiled extensions, so only a pure-Python wheel can be bundled
+    if not (wheels := [wheel for wheel in package.get("wheels", []) if wheel["url"].endswith("-none-any.whl")]):
+        msg = f"{LOCK.name} has no pure-Python wheel for {package['name']} {package['version']}"
+        raise RuntimeError(msg)
+    url, expected = wheels[0]["url"], wheels[0]["hashes"]["sha256"]
+    with urlopen(url, timeout=60) as response:  # ruff:ignore[suspicious-url-open-usage]  # lock URL, sha256-checked
+        content = response.read()
+    if (actual := hashlib.sha256(content).hexdigest()) != expected:
+        msg = f"{url} has sha256 {actual}, but {LOCK.name} records {expected}"
+        raise RuntimeError(msg)
+    (dest := into / url.rsplit("/", 1)[1]).write_bytes(content)
+    return dest
+
+
+def python_versions_for(package: LockedPackage) -> list[str]:
+    if (marker := package.get("marker")) is None:
+        return list(VERSIONS)
+    parsed, versions = Marker(marker), []
+    for version in VERSIONS:
+        environment = {"python_version": version, "python_full_version": f"{version}.0"}
+        # every bundled wheel is keyed as ==any, so a marker that differs per platform would ship the build host's pick
+        if len(matches := {parsed.evaluate({**environment, "sys_platform": p}) for p in PLATFORMS}) != 1:
+            msg = f"{LOCK.name} marks {package['name']} as platform specific ({marker}), which the zipapp cannot select"
+            raise RuntimeError(msg)
+        if matches.pop():
+            versions.append(version)
+    return versions
+
+
+@dataclass(frozen=True)
+class WheelForVersion:
+    wheel: Path
+    versions: list[str]
+
+
+def create_zipapp(dest: str, packages: dict[str, dict[str, dict[str, WheelForVersion]]]) -> None:
     bio = io.BytesIO()
     base = PurePosixPath("__virtualenv__")
     modules = defaultdict(lambda: defaultdict(dict))
@@ -60,7 +141,7 @@ def write_packages_to_zipapp(  # ruff:ignore[complex-structure, too-many-branche
     base: PurePosixPath,
     dist: dict[str, Any],
     modules: dict[str, Any],
-    packages: dict[str, Any],
+    packages: dict[str, dict[str, dict[str, WheelForVersion]]],
     zip_app: zipfile.ZipFile,
 ) -> None:
     has = set()
@@ -94,206 +175,6 @@ def write_packages_to_zipapp(  # ruff:ignore[complex-structure, too-many-branche
                         content = wheel_zip.read(filename)
                         zip_app.writestr(dest_str, content)
                         del content
-
-
-class WheelDownloader:
-    def __init__(self, into: Path) -> None:
-        if into.exists():
-            shutil.rmtree(into)
-        into.mkdir(parents=True)
-        self.into = into
-        self.collected = defaultdict(lambda: defaultdict(dict))
-        self.pip_cmd = [str(Path(sys.executable).parent / "pip")]
-        self._cmd = [*self.pip_cmd, "download", "-q", "--no-deps", "--no-cache-dir", "--dest", str(self.into)]
-
-    def run(self, target: Path, versions: list[str]) -> None:
-        whl = self.build_sdist(target)
-        todo = deque((version, None, whl) for version in versions)
-        wheel_store = {}
-        while todo:
-            version, platform, dep = todo.popleft()
-            dep_str = dep.name.split("-")[0] if isinstance(dep, Path) else dep.name
-            if dep_str in self.collected[version] and platform in self.collected[version][dep_str]:
-                continue
-            whl = self._get_wheel(dep, platform[2:] if platform and platform.startswith("==") else None, version)
-            if whl is None:
-                if dep_str not in wheel_store:
-                    msg = f"failed to get {dep_str}, have {wheel_store}"
-                    raise RuntimeError(msg)
-                whl = wheel_store[dep_str]
-            else:
-                wheel_store[dep_str] = whl
-            self.collected[version][dep_str][platform] = whl
-            todo.extend(self.get_dependencies(whl, version))
-
-    def _get_wheel(self, dep: Requirement | Path, platform: str | None, version: str) -> Path | None:
-        if isinstance(dep, Requirement):
-            before = set(self.into.iterdir())
-            if self._download(
-                platform,
-                False,  # ruff:ignore[boolean-positional-value-in-call]
-                "--python-version",
-                version,
-                "--only-binary",
-                ":all:",
-                str(dep),
-            ):
-                self._download(platform, True, "--python-version", version, str(dep))  # ruff:ignore[boolean-positional-value-in-call]
-            after = set(self.into.iterdir())
-            new_files = after - before
-            assert len(new_files) <= 1  # ruff:ignore[assert]
-            if not len(new_files):
-                return None
-            new_file = next(iter(new_files))
-            if new_file.suffix == ".whl":
-                return new_file
-            dep = new_file
-        new_file = self.build_sdist(dep)
-        assert new_file.suffix == ".whl"  # ruff:ignore[assert]
-        return new_file
-
-    def _download(self, platform: str | None, stop_print_on_fail: bool, *args: str) -> int:
-        exe_cmd = self._cmd + list(args)
-        if platform is not None:
-            exe_cmd.extend(["--platform", platform])
-        return run_suppress_output(exe_cmd, stop_print_on_fail=stop_print_on_fail)
-
-    @staticmethod
-    def get_dependencies(whl: Path, version: str) -> Iterator[tuple[str, str | None, Requirement]]:
-        with zipfile.ZipFile(str(whl), "r") as zip_file:
-            name = "/".join([f"{'-'.join(whl.name.split('-')[0:2])}.dist-info", "METADATA"])
-            with zip_file.open(name) as file_handler:
-                metadata = message_from_string(file_handler.read().decode("utf-8"))
-        deps = metadata.get_all("Requires-Dist")
-        if deps is None:
-            return
-        for dep in deps:
-            req = Requirement(dep)
-            markers = getattr(req.marker, "_markers", ()) or ()
-            if any(
-                m
-                for m in markers
-                if isinstance(m, tuple) and len(m) == 3 and m[0].value == "extra"  # ruff:ignore[magic-value-comparison]
-            ):
-                continue
-            py_versions = WheelDownloader._marker_at(markers, "python_version")
-            if py_versions:
-                marker = Marker('python_version < "1"')
-                marker._markers = [  # ruff:ignore[private-member-access]
-                    markers[ver] for ver in sorted(i for i in set(py_versions) | {i - 1 for i in py_versions} if i >= 0)
-                ]
-                matches_python = marker.evaluate({"python_version": version})
-                if not matches_python:
-                    continue
-                deleted = 0
-                for ver in py_versions:
-                    deleted += WheelDownloader._del_marker_at(markers, ver - deleted)
-            platforms = []
-            platform_positions = WheelDownloader._marker_at(markers, "sys_platform")
-            deleted = 0
-            for pos in platform_positions:  # can only be or meaningfully
-                platform = f"{markers[pos][1].value}{markers[pos][2].value}"
-                deleted += WheelDownloader._del_marker_at(markers, pos - deleted)
-                platforms.append(platform)
-            if not platforms:
-                platforms.append(None)
-            for platform in platforms:
-                yield version, platform, req
-
-    @staticmethod
-    def _marker_at(markers: list[Any], key: str) -> list[int]:
-        return [
-            i
-            for i, m in enumerate(markers)
-            if isinstance(m, tuple) and len(m) == 3 and m[0].value == key  # ruff:ignore[magic-value-comparison]
-        ]
-
-    @staticmethod
-    def _del_marker_at(markers: list[Any], at: int) -> int:
-        del markers[at]
-        deleted = 1
-        op = max(at - 1, 0)
-        if markers and isinstance(markers[op], str):
-            del markers[op]
-            deleted += 1
-        return deleted
-
-    def build_sdist(self, target: Path) -> Path:
-        if target.is_dir():
-            # pip 20.1 no longer guarantees this to be parallel safe, need to copy/lock
-            with TemporaryDirectory() as temp_folder:
-                folder = Path(temp_folder) / target.name
-                shutil.copytree(
-                    str(target),
-                    str(folder),
-                    ignore=shutil.ignore_patterns(".tox", ".tox4", "venv", "__pycache__", "*.pyz"),
-                )
-                try:
-                    return self._build_sdist(self.into, folder)
-                finally:
-                    # permission error on Windows <3.7 https://bugs.python.org/issue26660
-                    def onerror(func: Any, path: str, exc_info: Any) -> None:  # ruff:ignore[unused-function-argument, any-type]
-                        os.chmod(path, S_IWUSR)
-                        func(path)
-
-                    shutil.rmtree(str(folder), onerror=onerror)
-
-        else:
-            return self._build_sdist(target.parent / target.stem, target)
-
-    def _build_sdist(self, folder: Path, target: Path) -> Path:
-        if not folder.exists() or not list(folder.iterdir()):
-            cmd = [*self.pip_cmd, "wheel", "-w", str(folder), "--no-deps", str(target), "-q"]
-            run_suppress_output(cmd, stop_print_on_fail=True)
-        return next(iter(folder.iterdir()))
-
-
-def run_suppress_output(cmd: list[str], stop_print_on_fail: bool = False) -> int:  # ruff:ignore[boolean-default-value-positional-argument]
-    process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        universal_newlines=True,
-        encoding="utf-8",
-    )
-    out, err = process.communicate()
-    if stop_print_on_fail and process.returncode != 0:
-        print(f"exit with {process.returncode} of {' '.join(quote(i) for i in cmd)}", file=sys.stdout)  # ruff:ignore[print]
-        if out:
-            print(out, file=sys.stdout)  # ruff:ignore[print]
-        if err:
-            print(err, file=sys.stderr)  # ruff:ignore[print]
-        raise SystemExit(process.returncode)
-    return process.returncode
-
-
-def get_wheels_for_support_versions(folder: Path) -> dict[str, Any]:
-    downloader = WheelDownloader(folder / "wheel-store")
-    downloader.run(HERE.parent, VERSIONS)
-    packages = defaultdict(lambda: defaultdict(lambda: defaultdict(WheelForVersion)))
-    for version, collected in downloader.collected.items():
-        for pkg, platform_to_wheel in collected.items():
-            name = Requirement(pkg).name
-            for platform, wheel in platform_to_wheel.items():
-                pl = platform or "==any"
-                wheel_versions = packages[name][pl][wheel.name]
-                wheel_versions.versions.append(version)
-                wheel_versions.wheel = wheel
-    for name, p_w_v in packages.items():
-        for platform, w_v in p_w_v.items():
-            print(f"{name} - {platform}")  # ruff:ignore[print]
-            for wheel, wheel_versions in w_v.items():
-                print(f"{' '.join(wheel_versions.versions)} of {wheel} (use {wheel_versions.wheel})")  # ruff:ignore[print]
-    return packages
-
-
-class WheelForVersion:
-    def __init__(self, wheel: Path | None = None, versions: list[str] | None = None) -> None:
-        self.wheel = wheel
-        self.versions = versions or []
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.wheel!r}, {self.versions!r})"
 
 
 if __name__ == "__main__":
