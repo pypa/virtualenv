@@ -243,7 +243,8 @@ lint.preview = true
 
 [tool.codespell]
 builtin = "clear,usage,en-GB_to_en-US"
-ignore-words-list = "acknowledgement,intoto"
+# mitre: the CWE catalog lives at cwe.mitre.org, which codespell would rewrite to "miter"
+ignore-words-list = "acknowledgement,intoto,mitre"
 count = true
 
 [tool.pyproject-fmt]
