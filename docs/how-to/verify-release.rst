@@ -145,9 +145,9 @@ List the distributions the zipapp bundles and the Python versions that load each
     $ jq -r '.components[] | "\(.name) \(.version) \([.properties[] | select(.name == "virtualenv:loaded-for-python").value] | join(","))"' \
         virtualenv.pyz.cdx.json
 
-*******************
- Rebuild the sdist
-*******************
+*****************************
+ Rebuild the sdist and wheel
+*****************************
 
 The release builds with ``SOURCE_DATE_EPOCH`` set to the commit time of the release tag, so rebuilding the tag yields
 the same sdist, byte for byte:
@@ -159,5 +159,27 @@ the same sdist, byte for byte:
     $ SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) uv build --sdist --out-dir rebuild .
     $ cmp rebuild/virtualenv-21.10.0.tar.gz ../virtualenv-21.10.0.tar.gz
 
-``cmp`` prints nothing when the files match. A rebuilt wheel matches the published one in every file except the SBOM,
-which records the machine that built it, and ``RECORD``, which holds the SBOM's hash.
+``cmp`` prints nothing when the files match.
+
+The wheel of a release after 21.10.0 rebuilds byte for byte too, on any operating system and architecture, once the
+Python patch version and the build backend versions match the ones the release used. Its SBOM lists both, so read them
+from the published wheel and pass them to the build:
+
+.. code-block:: console
+
+    $ unzip -p ../virtualenv-<version>-py3-none-any.whl '*.dist-info/sboms/virtualenv.cdx.json' > published.cdx.json
+    $ jq -r '.metadata.tools.components[] | select(.type == "platform") | .version' published.cdx.json
+    3.14.7
+    $ jq -r '.metadata.tools.components[] | select(.purl // "" | startswith("pkg:pypi/")) | "\(.name)==\(.version)"' \
+        published.cdx.json > build-constraints.txt
+    $ SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) uv build --wheel --python 3.14.7 \
+        --build-constraint build-constraints.txt --out-dir rebuild .
+    $ cmp rebuild/virtualenv-<version>-py3-none-any.whl ../virtualenv-<version>-py3-none-any.whl
+
+Build from a git checkout, since the SBOM records the source commit and an sdist does not carry it. Wheels up to 21.10.0
+recorded the machine that built them in the SBOM, so a rebuild of those differs in the SBOM and in ``RECORD``, which
+holds the SBOM's hash.
+
+The zipapp rebuilds byte for byte with ``SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) tox r -e zipapp`` on the Python
+version its SBOM lists, but only while every package the build pulls from PyPI still resolves to the version the release
+used. The zipapp build does not pin them; the zipapp SBOM and the wheel SBOM inside the zipapp list them.

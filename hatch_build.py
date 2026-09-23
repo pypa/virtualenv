@@ -84,10 +84,11 @@ class SbomBuildHook(BuildHookInterface):
     described from its own ``METADATA`` and ``RECORD`` and hashed from its bytes, so a wheel bump needs no separate SBOM
     update.
 
-    The document also records the build environment (interpreter, OS, every distribution in the isolated build env with
-    its files and the dependency graph between them), which PEP 770 calls out as what a third party needs to verify
-    build reproducibility, plus the source revision when known. Release attestations identify the CI run without
-    introducing run-specific values into the wheel.
+    The document also records the build toolchain (the Python version, every distribution in the isolated build env with
+    the files of the pure-Python ones, and the dependency graph between them), which PEP 770 calls out as what a third
+    party needs to verify build reproducibility, plus the source revision when known. Nothing about the build machine
+    goes in, so a rebuild with the same toolchain on another OS or architecture produces the same wheel; release
+    attestations identify the CI run and the builder instead.
 
     """
 
@@ -403,16 +404,9 @@ def build_tools(package_version: str) -> tuple[list[dict[str, Any]], list[dict[s
             "bom-ref": f"tool:{interpreter}",
             "name": sys.implementation.name,
             "version": platform.python_version(),
-            "description": sys.version,
             "purl": interpreter,
-            "properties": [
-                {"name": "python:implementation", "value": platform.python_implementation()},
-                {"name": "python:compiler", "value": platform.python_compiler()},
-                # GraalPy may omit the build date instead of returning an empty string.
-                {"name": "python:build", "value": " ".join(part for part in platform.python_build() if part)},
-            ],
+            "properties": [{"name": "python:implementation", "value": platform.python_implementation()}],
         },
-        _operating_system(),
     ]
     # bom-refs are prefixed because the same distribution can be both a build tool and a bundled component
     installed = {_purl(distribution.metadata["Name"]): distribution for distribution in distributions()}
@@ -420,40 +414,26 @@ def build_tools(package_version: str) -> tuple[list[dict[str, Any]], list[dict[s
     for distribution in (installed[key] for key in sorted(installed)):
         component = component_from_metadata(distribution.metadata, "library")
         component["bom-ref"] = f"tool:{component['purl']}"
-        component["components"] = [
-            _file_component(
-                component["bom-ref"], file.as_posix(), f"{file.hash.mode}={file.hash.value}", str(file.size)
-            )
-            for file in distribution.files or []
-            # console-script launchers live outside site-packages and embed the build env's interpreter path in
-            # their shebang, so their hash differs on every build and says nothing about the distribution
-            if file.hash is not None and not file.as_posix().startswith("../")
-        ]
+        # a platform wheel installs files built for the build machine's OS and architecture, so listing them would
+        # tie the document to that machine
+        if Parser().parsestr(distribution.read_text("WHEEL") or "")["Root-Is-Purelib"] == "true":
+            component["components"] = [
+                _file_component(
+                    component["bom-ref"], file.as_posix(), f"{file.hash.mode}={file.hash.value}", str(file.size)
+                )
+                for file in distribution.files or []
+                # console-script launchers live outside site-packages and embed the build env's interpreter path in
+                # their shebang, so their hash differs on every build and says nothing about the distribution; the
+                # installer metadata names the build frontend that set up the env rather than the distribution
+                if file.hash is not None
+                and not file.as_posix().startswith("../")
+                and not (
+                    file.parent.suffix == ".dist-info" and file.name in {"INSTALLER", "REQUESTED", "direct_url.json"}
+                )
+            ]
         tools.append(component)
         tool_dependencies.append({"ref": component["bom-ref"], "dependsOn": _depends_on(distribution, installed)})
     return tools, tool_dependencies
-
-
-def _operating_system() -> dict[str, Any]:
-    component: dict[str, Any] = {
-        "type": "operating-system",
-        "bom-ref": f"tool:os:{platform.system()}@{platform.release()}",
-        "name": platform.system(),
-        "version": platform.release(),
-        "description": platform.platform(),
-        "properties": [
-            {"name": "machine", "value": platform.machine()},
-            {"name": "kernel-version", "value": platform.version()},
-        ],
-    }
-    try:
-        os_release = platform.freedesktop_os_release()
-    except OSError:  # not a freedesktop system, e.g. macOS or Windows
-        return component
-    component["properties"] += [
-        {"name": f"os-release:{key}", "value": value} for key, value in sorted(os_release.items())
-    ]
-    return component
 
 
 def _depends_on(distribution: Distribution, installed: dict[str, Distribution]) -> list[str]:

@@ -14,6 +14,7 @@ import zipapp
 import zipfile
 from collections import defaultdict
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, Final
@@ -128,10 +129,10 @@ def create_zipapp(dest: str, packages: dict[str, dict[str, dict[str, WheelForVer
     with zipfile.ZipFile(bio, "w") as zip_app:
         write_packages_to_zipapp(base, dist, modules, packages, zip_app)
         modules_json = json.dumps(modules, indent=2)
-        zip_app.writestr("modules.json", modules_json)
+        zip_app.writestr(_entry("modules.json"), modules_json)
         distributions_json = json.dumps(dist, indent=2)
-        zip_app.writestr("distributions.json", distributions_json)
-        zip_app.writestr("__main__.py", (HERE / "__main__zipapp.py").read_bytes())
+        zip_app.writestr(_entry("distributions.json"), distributions_json)
+        zip_app.writestr(_entry("__main__.py"), (HERE / "__main__zipapp.py").read_bytes())
     bio.seek(0)
     zipapp.create_archive(bio, dest)
     print(f"zipapp created at {dest} with size {os.path.getsize(dest) / 1024 / 1024:.2f}MB")  # ruff:ignore[print]
@@ -173,8 +174,20 @@ def write_packages_to_zipapp(  # ruff:ignore[complex-structure, too-many-branche
                             continue
                         print(dest_str)  # ruff:ignore[print]
                         content = wheel_zip.read(filename)
-                        zip_app.writestr(dest_str, content)
+                        zip_app.writestr(_entry(dest_str), content)
                         del content
+
+
+def _entry(name: str) -> zipfile.ZipInfo:
+    # the build time and OS would otherwise end up in each entry header; 1580601600 is hatchling's fallback, so the
+    # entries share the timestamp of the SBOM appended after them
+    epoch: Final[int] = int(os.environ.get("SOURCE_DATE_EPOCH", "1580601600"))
+    entry: Final[zipfile.ZipInfo] = zipfile.ZipInfo(
+        name, datetime.fromtimestamp(epoch, tz=timezone.utc).timetuple()[:6]
+    )
+    entry.create_system = 3
+    entry.external_attr = 0o644 << 16
+    return entry
 
 
 if __name__ == "__main__":

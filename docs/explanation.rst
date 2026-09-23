@@ -588,9 +588,10 @@ involved.
 
 **Reproducible builds**
     Provenance tells you which workflow run built a file, but you still trust that run. The release pins every timestamp
-    to ``SOURCE_DATE_EPOCH``, the commit time of the tag, so you can rebuild the sdist from the tag yourself and compare
-    the bytes. The wheel reproduces except for its SBOM, which describes the machine that built it, and the ``RECORD``
-    entry that hashes the SBOM.
+    to ``SOURCE_DATE_EPOCH``, the commit time of the tag, so you can rebuild the sdist and the wheel from the tag
+    yourself and compare the bytes. The wheel's SBOM records the Python version and build backend the release used,
+    which a rebuild must match. It leaves out the machine that ran the build, which the provenance attestation already
+    names.
 
 **The SBOMs**
     Dependency scanners find the packages a project declares, and virtualenv declares neither ``pip`` nor

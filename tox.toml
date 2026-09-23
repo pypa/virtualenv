@@ -215,6 +215,7 @@ base_python = [ "3.14" ]
 skip_install = true
 deps = [ "hatchling>=1.28", "packaging>=25" ]
 dependency_groups = [ "sbom" ]
+pass_env = [ "SOURCE_DATE_EPOCH" ]
 set_env.PYTHONPATH = "{tox_root}"
 commands = [
   [ "python", "tasks/make_zipapp.py" ],

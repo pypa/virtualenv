@@ -96,8 +96,9 @@ Wheel SBOM
 - Components: every wheel bundled under ``virtualenv/seed/wheels/embed``, with its SHA-256, license, the packages it
   vendors, and a ``virtualenv:seeded-for-python`` property per Python version that receives it; plus the runtime
   dependencies declared in the wheel metadata, without versions, since the installer resolves those.
-- Build record: the interpreter, operating system and build backend packages that produced the wheel, the source commit,
-  and the ``SOURCE_DATE_EPOCH`` used for timestamps.
+- Build record: the Python version and build backend packages that produced the wheel, the source commit, and the
+  ``SOURCE_DATE_EPOCH`` used for timestamps. Releases up to 21.10.0 also recorded the operating system, architecture and
+  interpreter build of the build machine.
 - First release carrying it: 21.8.1.
 
 SPDX rendering
@@ -118,8 +119,9 @@ Zipapp SBOM
   SHA-256; and each bundled distribution, such as ``filelock`` or ``platformdirs``, with its version, license, a
   ``virtualenv:loaded-for-python`` property per Python version that imports it, and a SHA-256 per file. Every file in
   the archive other than the SBOM appears in it.
-- Build record: the interpreter, operating system and packages of the environment that built the zipapp, and the
-  ``SOURCE_DATE_EPOCH`` used for timestamps.
+- Build record: the Python version and packages of the environment that built the zipapp, and the ``SOURCE_DATE_EPOCH``
+  used for timestamps. Packages installed from platform-specific wheels appear without their files, which differ per
+  operating system and architecture.
 
 ***************************
  Embedded wheel advisories
@@ -135,5 +137,22 @@ Python 3.10 or newer to avoid them.
 ***********************
 
 The release sets ``SOURCE_DATE_EPOCH`` to the commit time of the tag (``git log -1 --pretty=%ct``). Rebuilding the tag
-with the same value reproduces the sdist byte for byte. A rebuilt wheel differs from the published one only in the SBOM,
-which records the build machine, and in ``RECORD``, which holds the SBOM's hash.
+with the same value reproduces the sdist byte for byte.
+
+The wheel, whose SBOM `hatch_build.py <https://github.com/pypa/virtualenv/blob/main/hatch_build.py>`_ writes, reproduces
+byte for byte on any operating system and architecture when these inputs match the release:
+
+- the source tree, as a git checkout of the tag, since the SBOM records the commit;
+- ``SOURCE_DATE_EPOCH``;
+- the Python patch version, which the SBOM records;
+- the versions of the build backend and its dependencies, which the SBOM lists.
+
+Any build frontend works, since the SBOM leaves out the installer metadata a frontend writes into the build environment.
+
+Wheels up to 21.10.0 recorded the build machine in their SBOM, so a rebuild of those differs in the SBOM and in
+``RECORD``, which holds the SBOM's hash.
+
+The zipapp, built by `tasks/make_zipapp.py <https://github.com/pypa/virtualenv/blob/main/tasks/make_zipapp.py>`_, needs
+the same inputs, and its entries carry ``SOURCE_DATE_EPOCH`` as their timestamp and fixed permissions. Its build also
+downloads the distributions it bundles and the backend for the wheel inside it from PyPI without pinning them, so a
+rebuild matches only while those resolve to the versions the release used.
