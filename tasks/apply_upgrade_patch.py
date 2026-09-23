@@ -27,7 +27,11 @@ def main() -> None:
     )
     for header, filename in zip(changes[::2], changes[1::2]):
         path: Final[PurePosixPath] = PurePosixPath(filename)
-        allowed: Final[bool] = filename in {"THIRD-PARTY-NOTICES.md", "docs/changelog/u.bugfix.rst"} or (
+        allowed: Final[bool] = filename in {
+            "THIRD-PARTY-NOTICES.md",
+            "docs/changelog/u.bugfix.rst",
+            "tasks/ci-tools.json",
+        } or (
             path.parent == PurePosixPath("src/virtualenv/seed/wheels/embed")
             and (path.name == "__init__.py" or path.suffix == ".whl")
         )
