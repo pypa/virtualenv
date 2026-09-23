@@ -1,0 +1,2 @@
+Include the pre-commit configuration and the zipapp lock file in the source distribution, so downstream packagers can
+run the test suite from it.
