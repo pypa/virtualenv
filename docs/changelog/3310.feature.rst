@@ -1,0 +1,3 @@
+Describe the zipapp in its own CycloneDX SBOM, which lists virtualenv, the embedded pip and setuptools wheels, and each
+bundled dependency with the Python versions that load it, down to a SHA-256 per file. The SBOM sits at the root of
+``virtualenv.pyz``, ships as the ``virtualenv.pyz.cdx.json`` release asset, and GitHub attests it against the zipapp.

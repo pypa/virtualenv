@@ -269,6 +269,11 @@ virtualenv is distributed under the MIT License, and everything in the repositor
   the SPDX rendering; the release workflow runs ``tox r -e spdx`` to write ``virtualenv.spdx.json`` from
   ``virtualenv.cdx.json`` and check it with ``pyspdxtools``. Both envs run on Python 3.14 because ``spdx-tools`` fails
   to import on 3.15.
+- ``tasks/zipapp_sbom.py`` describes a built ``virtualenv.pyz`` from the archive itself: virtualenv, the embedded
+  wheels, and each bundled dependency with the Python versions that load it, down to a SHA-256 per file. It reuses the
+  helpers in ``hatch_build.py``, writes ``virtualenv.pyz.cdx.json`` next to the zipapp and adds the same file to the
+  archive root. ``tox r -e zipapp`` builds the zipapp, runs the script, and has ``tasks/validate_sbom.py`` check that
+  the SBOM lists every file in the archive with its hash.
 
 Automated testing
 =================
