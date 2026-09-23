@@ -6,15 +6,24 @@ on:
   push:
     branches: ["main"]
   workflow_dispatch:
-permissions: read-all
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+permissions: {}
 jobs:
   analysis:
     name: 🔎 scorecard analysis
     if: github.repository_owner == 'pypa'
     runs-on: ubuntu-latest
     permissions:
-      security-events: write
-      id-token: write
+      actions: read # read workflow runs for the Packaging check
+      checks: read # read check runs for the CI-Tests and SAST checks
+      contents: read # check out and scan the repository
+      id-token: write # authenticate the results published to the scorecard API
+      issues: read # read issue activity for the Maintained check
+      pull-requests: read # read reviews for the Code-Review check
+      security-events: write # upload the SARIF results to code scanning
+      statuses: read # read commit statuses for the CI-Tests check
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
