@@ -146,6 +146,8 @@ Two logo files live in ``docs/_static`` and serve different roles, so both are k
 - ``virtualenv.svg`` is a simplified mark used only as the browser favicon (``html_favicon``), where the detailed PNG
   would be illegible at 16×16. It is not a vector copy of the PNG.
 
+.. _release:
+
 Release
 =======
 
@@ -365,3 +367,34 @@ Previous maintainers
 
 - :user:`Ian Bicking <ianb>`
 - :user:`Donald Stufft <dstufft>`
+
+*********
+ Roadmap
+*********
+
+This roadmap covers October 2026 to September 2027; Bernát Gábor last updated it on 2026-09-22. It lists work that
+follows from a published policy or waits on an outside decision, and it gives no release dates. We leave out work that
+an open pull request delivers without waiting on anyone else.
+
+What we plan to do
+==================
+
+- Add CPython 3.16 and drop CPython 3.9 under the :ref:`support policy <compatibility-requirements>`. CPython 3.9
+  reached end of life in October 2025, so the drop can happen from May 2027; it also retires the ``_virtualenv.pth``
+  distutils hook, which only 3.9 environments still receive (:issue:`3181`).
+- Keep releasing on the pip and setuptools cadence that :ref:`release` describes.
+- Merge :pull:`3204` (:PEP:`832`) and :pull:`3193` (:PEP:`838`) once those PEPs reach Accepted status.
+- Verify the copy served from ``bootstrap.pypa.io`` after each release, one of the open items in the `threat model
+  <https://github.com/pypa/virtualenv/blob/main/.github/THREAT_MODEL.md>`_.
+
+What we do not plan to do
+=========================
+
+- Backport fixes to older release lines; see `supported versions
+  <https://github.com/pypa/virtualenv/blob/main/.github/SECURITY.md#supported-versions>`_.
+- Break the command line, the Python API or the plugin API, per the backwards-compatible release policy in the same
+  section.
+- Bring back Python versions that the :ref:`support policy <compatibility-requirements>` has dropped.
+- Write files outside the environment it creates, such as a project-level ``.gitignore`` (:issue:`3237`).
+- Install, resolve or lock project dependencies. virtualenv creates and seeds the environment; pip, uv and similar tools
+  manage what goes into it.

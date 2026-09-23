@@ -1,0 +1,2 @@
+Add a roadmap to the development guide listing what the project plans to do, and not do, through September 2027 - by
+:user:`gaborbernat`.
