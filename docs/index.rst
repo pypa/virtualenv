@@ -56,12 +56,14 @@ into the standard library under the ``venv`` module. For how ``virtualenv`` comp
 
 - :doc:`how-to/install` — Install virtualenv on your system
 - :doc:`how-to/usage` — Select Python versions, activate environments, configure defaults, and use from Python code
+- :doc:`how-to/verify-release` — Check that a downloaded release came from the virtualenv release workflow
 
 **Reference** - Technical information
 
 - :doc:`reference/compatibility` — Supported Python versions and operating systems
 - :doc:`reference/cli` — Command line options and flags
 - :doc:`reference/api` — Programmatic Python API reference
+- :doc:`reference/release-artifacts` — Files, attestations and SBOMs each release publishes
 
 **Explanation** - Understand the concepts
 
@@ -108,6 +110,7 @@ Learn more about virtualenv from these community resources:
 
     how-to/install
     how-to/usage
+    how-to/verify-release
 
 .. toctree::
     :hidden:
@@ -117,6 +120,7 @@ Learn more about virtualenv from these community resources:
     reference/cli
     reference/environment-layout
     reference/api
+    reference/release-artifacts
 
 .. toctree::
     :hidden:

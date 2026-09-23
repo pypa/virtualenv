@@ -90,6 +90,8 @@ Python. Pick the method that fits your setup:
     Download the latest version from https://bootstrap.pypa.io/virtualenv.pyz or a specific version from
     ``https://bootstrap.pypa.io/virtualenv/x.y/virtualenv.pyz``.
 
+    Each GitHub release also attaches the zipapp with a provenance bundle; :doc:`verify-release` shows how to check it.
+
 *********************
  Verify installation
 *********************

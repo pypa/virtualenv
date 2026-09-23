@@ -275,6 +275,9 @@ virtualenv is distributed under the MIT License, and everything in the repositor
   archive root. ``tox r -e zipapp`` builds the zipapp, runs the script, and has ``tasks/validate_sbom.py`` check that
   the SBOM lists every file in the archive with its hash.
 
+:doc:`reference/release-artifacts` describes every file, SBOM and attestation a release publishes, and
+:doc:`how-to/verify-release` shows users how to check them.
+
 Automated testing
 =================
 

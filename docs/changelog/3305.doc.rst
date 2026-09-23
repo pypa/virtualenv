@@ -1,0 +1,2 @@
+Document what a release publishes and how to verify each file, covering the PyPI attestations, the zipapp and its
+provenance, the CycloneDX and SPDX SBOMs of the wheel, the zipapp SBOM, and rebuilding the sdist from its tag.
