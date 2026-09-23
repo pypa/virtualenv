@@ -177,10 +177,10 @@ def test_sbom_ci_rerun(build_sbom: Callable[[str, dict[str, str]], str], monkeyp
 
 
 def test_sbom_spdx_bundled_wheel(
-    build_sbom: Callable[[str, dict[str, str]], str], render_spdx: Callable[[str], dict[str, Any]]
+    build_sbom: Callable[[str, dict[str, str]], str], render_spdx: Callable[[str], str]
 ) -> None:
     cyclonedx: Final[str] = build_sbom("pip/example.py", {})
-    assert render_spdx(cyclonedx)["packages"][1] == {
+    assert json.loads(render_spdx(cyclonedx))["packages"][1] == {
         "SPDXID": "SPDXRef-pkg-pypi-pip-1.0",
         "checksums": [
             {"algorithm": "SHA256", "checksumValue": json.loads(cyclonedx)["components"][0]["hashes"][0]["content"]}
@@ -201,14 +201,12 @@ def test_sbom_spdx_bundled_wheel(
 
 
 def test_sbom_spdx_relationships(
-    build_sbom: Callable[[str, dict[str, str]], str], render_spdx: Callable[[str], dict[str, Any]]
+    build_sbom: Callable[[str, dict[str, str]], str], render_spdx: Callable[[str], str]
 ) -> None:
-    document: Final[dict[str, Any]] = render_spdx(
-        build_sbom("pip/example.py", {"pip/_vendor/vendor.txt": "urllib3==1.26.4\n"})
-    )
+    rendered: Final[str] = render_spdx(build_sbom("pip/example.py", {"pip/_vendor/vendor.txt": "urllib3==1.26.4\n"}))
     assert [
         relationship
-        for relationship in document["relationships"]
+        for relationship in json.loads(rendered)["relationships"]
         if not relationship["spdxElementId"].startswith("SPDXRef-tool-")
     ] == [
         {
@@ -240,12 +238,11 @@ def test_sbom_spdx_relationships(
 
 
 def test_sbom_spdx_build_tools(
-    build_sbom: Callable[[str, dict[str, str]], str], render_spdx: Callable[[str], dict[str, Any]]
+    build_sbom: Callable[[str, dict[str, str]], str], render_spdx: Callable[[str], str]
 ) -> None:
-    document: Final[dict[str, Any]] = render_spdx(build_sbom("pip/example.py", {}))
     assert {
         relationship["relatedSpdxElement"]
-        for relationship in document["relationships"]
+        for relationship in json.loads(render_spdx(build_sbom("pip/example.py", {})))["relationships"]
         if relationship["relationshipType"] == "BUILD_TOOL_OF"
     } == {"SPDXRef-pkg-pypi-virtualenv-1.0"}
 
@@ -264,7 +261,7 @@ def test_sbom_spdx_build_tools(
 )
 def test_sbom_spdx_declared_license(
     build_sbom: Callable[[str, dict[str, str]], str],
-    render_spdx: Callable[[str], dict[str, Any]],
+    render_spdx: Callable[[str], str],
     metadata: str,
     expected: tuple[str, str | None],
 ) -> None:
@@ -273,35 +270,37 @@ def test_sbom_spdx_declared_license(
     }
     assert [
         (package["licenseDeclared"], package.get("licenseComments"))
-        for package in render_spdx(build_sbom("pip/example.py", vendored))["packages"]
+        for package in json.loads(render_spdx(build_sbom("pip/example.py", vendored)))["packages"]
         if package["name"] == "urllib3"
     ] == [expected]
 
 
 def test_sbom_spdx_creation_info(
     build_sbom: Callable[[str, dict[str, str]], str],
-    render_spdx: Callable[[str], dict[str, Any]],
+    render_spdx: Callable[[str], str],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("SOURCE_DATE_EPOCH", "1700000000")
     cyclonedx: Final[str] = build_sbom("pip/example.py", {})
     serial: Final[str] = json.loads(cyclonedx)["serialNumber"].removeprefix("urn:uuid:")
-    document: Final[dict[str, Any]] = render_spdx(cyclonedx)
-    assert (document["documentNamespace"], document["creationInfo"]["created"]) == (
+    assert (
+        (document := json.loads(render_spdx(cyclonedx)))["documentNamespace"],
+        document["creationInfo"]["created"],
+    ) == (
         f"https://github.com/pypa/virtualenv/sboms/virtualenv-1.0-{serial}",
         "2023-11-14T22:13:20Z",
     )
 
 
 @pytest.fixture
-def render_spdx(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Callable[[str], dict[str, Any]]:
-    def render(cyclonedx: str) -> dict[str, Any]:
+def render_spdx(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Callable[[str], str]:
+    def render(cyclonedx: str) -> str:
         (source := tmp_path / "virtualenv.cdx.json").write_text(cyclonedx, encoding="utf-8")
         monkeypatch.setattr(
             sys, "argv", ["cyclonedx_to_spdx.py", str(source), str(target := tmp_path / "out.spdx.json")]
         )
         runpy.run_path(str(Path(__file__).parents[2] / "tasks" / "cyclonedx_to_spdx.py"), run_name="__main__")
-        return json.loads(target.read_text(encoding="utf-8"))
+        return target.read_text(encoding="utf-8")
 
     return render
 
