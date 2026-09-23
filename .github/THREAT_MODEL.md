@@ -262,9 +262,9 @@ close submissions with no human in the loop.
 
 T3, T5 and T6 cover compromised dependencies and embedded wheels, and S2 covers registry typosquatting. Tools that
 install virtualenv unpinned take each new release on the day PyPI publishes it. We cannot slow that down for them, so we
-keep releases verifiable with attestations, a reproducible sdist, SBOMs and [published advisories][advisories]. The
-[CRA section][security-cra] of SECURITY.md points integrators to the same material, and the project reports its
-practices through [OpenSSF Scorecard][scorecard-virtualenv] and the
+keep releases verifiable with attestations, an sdist and wheel that [rebuild byte for byte][ra-repro], SBOMs and
+[published advisories][advisories]. The [CRA section][security-cra] of SECURITY.md points integrators to the same
+material, and the project reports its practices through [OpenSSF Scorecard][scorecard-virtualenv] and the
 [OpenSSF Best Practices badge][bestpractices-virtualenv].
 
 ## Accepted risks
@@ -293,13 +293,6 @@ section.
 We would accept a fix for each of these gaps, and we track each one in a public pull request or issue once someone picks
 it up.
 
-- The `GH_RELEASE_TOKEN` personal access token stays in the `release` environment until a release built with the
-  [GitHub App installation tokens][gh-app-tokens] from [#3301][pr-3301] succeeds. A maintainer then revokes the token
-  and deletes the secret.
-- Wheels do not rebuild byte for byte across build machines, because the embedded SBOM records the build environment
-  (operating system, kernel, architecture and interpreter build). A rebuilt wheel differs from the published one in the
-  SBOM and in the `RECORD` entry that hashes it, and the sdist is the one distribution that [reproduces][ra-repro].
-  [#3311][pr-3311] drops the build environment from the SBOMs.
 - virtualenv does not tie an embedded wheel to an attestation from the pip or setuptools project; the hash table records
   what PyPI served on the upgrade day.
 
@@ -440,7 +433,6 @@ the workflows as I1 describes, and [scorecard.yaml][workflow-scorecard] runs [Op
 [fuzz-powershell]: https://github.com/pypa/virtualenv/blob/main/tasks/fuzz_powershell_quote.py
 [fuzz-pyenv-cfg]: https://github.com/pypa/virtualenv/blob/main/tasks/fuzz_pyenv_cfg.py
 [get-virtualenv]: https://github.com/pypa/get-virtualenv
-[gh-app-tokens]: https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/authenticating-as-a-github-app-installation
 [gh-attestations]: https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds
 [gh-environments]: https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment
 [gh-immutable]: https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/immutable-releases
@@ -489,13 +481,11 @@ the workflows as I1 describes, and [scorecard.yaml][workflow-scorecard] runs [Op
 [pr-3280]: https://github.com/pypa/virtualenv/pull/3280
 [pr-3293]: https://github.com/pypa/virtualenv/pull/3293
 [pr-3299]: https://github.com/pypa/virtualenv/pull/3299
-[pr-3301]: https://github.com/pypa/virtualenv/pull/3301
 [pr-3302]: https://github.com/pypa/virtualenv/pull/3302
 [pr-3305]: https://github.com/pypa/virtualenv/pull/3305
 [pr-3306]: https://github.com/pypa/virtualenv/pull/3306
 [pr-3309]: https://github.com/pypa/virtualenv/pull/3309
 [pr-3310]: https://github.com/pypa/virtualenv/pull/3310
-[pr-3311]: https://github.com/pypa/virtualenv/pull/3311
 [precommit-ci]: https://pre-commit.ci/
 [precommit-config]: https://github.com/pypa/virtualenv/blob/main/.pre-commit-config.yaml
 [pypa-bootstrap]: https://github.com/pypa/bootstrap
