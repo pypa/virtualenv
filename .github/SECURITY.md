@@ -108,3 +108,26 @@ There is none. This project does not pay for reported vulnerabilities.
 
 Past advisories are at [the project's advisory list](https://github.com/pypa/virtualenv/security/advisories). To be
 notified of new ones, open the repository page and choose **Watch**, then **Custom**, then enable **Security alerts**.
+
+## EU Cyber Resilience Act
+
+The [Cyber Resilience Act](https://eur-lex.europa.eu/eli/reg/2024/2847/oj) (Regulation (EU) 2024/2847) sets security
+requirements for products with digital elements placed on the EU market. virtualenv is open source software under the
+MIT License, developed in public by volunteers under the [Python Packaging Authority](https://www.pypa.io/). We do not
+sell virtualenv, support contracts for it or paid features. Maintainers accept sponsorship through GitHub Sponsors and
+thanks.dev, and Tidelift supports the project as described at the top of this policy.
+
+This section says what the project does and where to find its artifacts. It is not a legal assessment of the role
+virtualenv, the PyPA or anyone else holds under the regulation. The OpenSSF
+[CRA brief guide for open source developers](https://best.openssf.org/CRA-Brief-Guide-for-OSS-Developers.html) explains
+those roles.
+
+If you ship virtualenv in a product and need supply-chain information for your own obligations, it is here:
+
+- **Release artifacts.** [Release artifacts](https://virtualenv.pypa.io/en/latest/reference/release-artifacts.html)
+  lists what each release publishes, including the CycloneDX SBOM embedded in every wheel and the attestations.
+  [Verify a virtualenv release](https://virtualenv.pypa.io/en/latest/how-to/verify-release.html) shows how to check
+  them.
+- **Vulnerabilities.** Report them as described in [Reporting a vulnerability](#reporting-a-vulnerability). Published
+  advisories are at <https://github.com/pypa/virtualenv/security/advisories>.
+- **Support period.** See [Supported versions](#supported-versions): fixes ship only in the latest release.
