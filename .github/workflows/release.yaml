@@ -124,7 +124,7 @@ jobs:
       - name: Create GitHub Release
         run: |
           gh release create "$GITHUB_REF_NAME" virtualenv.pyz virtualenv.pyz.intoto.jsonl \
-            virtualenv.cdx.json virtualenv.spdx.json --generate-notes
+            virtualenv.cdx.json virtualenv.spdx.json virtualenv.openvex.json --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Update get-virtualenv
@@ -204,6 +204,13 @@ jobs:
                   'any(.[]; .verificationResult.statement.predicate == $asset[0])'
             done
           done
+      - name: Download and verify published VEX
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$GITHUB_REF_NAME" --repo pypa/virtualenv --pattern virtualenv.openvex.json --dir published
+          gh api "repos/pypa/virtualenv/contents/virtualenv.openvex.json?ref=$GITHUB_SHA" \
+            --header "Accept: application/vnd.github.raw" | cmp - published/virtualenv.openvex.json
       - name: Create environments from verified distributions
         run: |
           uv python install 3.14

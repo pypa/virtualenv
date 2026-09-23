@@ -114,7 +114,7 @@ commands = [
 ]
 
 [env.readme]
-description = "check that the long description, wheel contents and embedded SBOM are valid"
+description = "check that the long description, wheel contents, embedded SBOM and VEX document are valid"
 base_python = [ "3.14" ]
 skip_install = true
 dependency_groups = [ "pkg-meta" ]
@@ -122,7 +122,12 @@ commands = [
   [ "uv", "build", "--sdist", "--wheel", "--out-dir", "{env_tmp_dir}", "." ],
   [ "twine", "check", "{env_tmp_dir}{/}*" ],
   [ "check-wheel-contents", "--no-config", "{env_tmp_dir}" ],
-  [ "python", "{tox_root}{/}tasks{/}validate_sbom.py", "{env_tmp_dir}" ],
+  [
+    "python",
+    "{tox_root}{/}tasks{/}validate_sbom.py",
+    "{env_tmp_dir}",
+    "{tox_root}{/}virtualenv.openvex.json",
+  ],
 ]
 
 [env.rp]

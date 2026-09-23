@@ -1,0 +1,256 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "https://github.com/pypa/virtualenv/blob/main/virtualenv.openvex.json",
+  "author": "Python Packaging Authority",
+  "role": "virtualenv maintainers",
+  "timestamp": "2026-09-23T00:00:00Z",
+  "version": 1,
+  "tooling": "Written by hand from the OSV advisories for the bundled wheels",
+  "statements": [
+    {
+      "vulnerability": {
+        "@id": "https://github.com/advisories/GHSA-58qw-9mgm-455v",
+        "name": "GHSA-58qw-9mgm-455v",
+        "aliases": [
+          "CVE-2026-3219",
+          "PYSEC-2026-2875"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/virtualenv",
+          "identifiers": {
+            "purl": "pkg:pypi/virtualenv"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pip@26.0.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pip@26.0.1"
+              },
+              "hashes": {
+                "sha-256": "bdb1b08f4274833d62c1aa29e20907365a2ceb950410df15fc9521bad440122b"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:generic/virtualenv.pyz",
+          "identifiers": {
+            "purl": "pkg:generic/virtualenv.pyz"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pip@26.0.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pip@26.0.1"
+              },
+              "hashes": {
+                "sha-256": "bdb1b08f4274833d62c1aa29e20907365a2ceb950410df15fc9521bad440122b"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "affected",
+      "status_notes": "virtualenv seeds pip 26.0.1 only into Python 3.9 environments; Python 3.10 and newer get pip 26.2.1, which has the fix. pip 26.1 and later require Python 3.10, so --pip cannot pick a fixed version for Python 3.9. virtualenv installs only its bundled wheels, checked against their SHA-256, or wheels it downloaded. A user who later installs an archive that is both a tar and a ZIP file with this pip reaches the vulnerable code.",
+      "action_statement": "Create environments for Python 3.10 or newer, which virtualenv seeds with pip 26.2.1. In Python 3.9 environments, install archives only from sources you trust."
+    },
+    {
+      "vulnerability": {
+        "@id": "https://github.com/advisories/GHSA-jp4c-xjxw-mgf9",
+        "name": "GHSA-jp4c-xjxw-mgf9",
+        "aliases": [
+          "CVE-2026-6357",
+          "PYSEC-2026-2876"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/virtualenv",
+          "identifiers": {
+            "purl": "pkg:pypi/virtualenv"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pip@26.0.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pip@26.0.1"
+              },
+              "hashes": {
+                "sha-256": "bdb1b08f4274833d62c1aa29e20907365a2ceb950410df15fc9521bad440122b"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:generic/virtualenv.pyz",
+          "identifiers": {
+            "purl": "pkg:generic/virtualenv.pyz"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pip@26.0.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pip@26.0.1"
+              },
+              "hashes": {
+                "sha-256": "bdb1b08f4274833d62c1aa29e20907365a2ceb950410df15fc9521bad440122b"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "affected",
+      "status_notes": "virtualenv seeds pip 26.0.1 only into Python 3.9 environments; Python 3.10 and newer get pip 26.2.1, which has the fix. pip 26.1 and later require Python 3.10, so --pip cannot pick a fixed version for Python 3.9. virtualenv passes --disable-pip-version-check whenever it runs pip, which skips the self-update check the advisory describes. pip runs that check by default when a user installs packages into the environment.",
+      "action_statement": "Create environments for Python 3.10 or newer, which virtualenv seeds with pip 26.2.1. In Python 3.9 environments, set PIP_DISABLE_PIP_VERSION_CHECK=1 and review packages before installing them."
+    },
+    {
+      "vulnerability": {
+        "@id": "https://github.com/advisories/GHSA-wf93-45jw-7689",
+        "name": "GHSA-wf93-45jw-7689",
+        "aliases": [
+          "CVE-2026-8643",
+          "PYSEC-2026-196"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/virtualenv",
+          "identifiers": {
+            "purl": "pkg:pypi/virtualenv"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pip@26.0.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pip@26.0.1"
+              },
+              "hashes": {
+                "sha-256": "bdb1b08f4274833d62c1aa29e20907365a2ceb950410df15fc9521bad440122b"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:generic/virtualenv.pyz",
+          "identifiers": {
+            "purl": "pkg:generic/virtualenv.pyz"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pip@26.0.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pip@26.0.1"
+              },
+              "hashes": {
+                "sha-256": "bdb1b08f4274833d62c1aa29e20907365a2ceb950410df15fc9521bad440122b"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "affected",
+      "status_notes": "virtualenv seeds pip 26.0.1 only into Python 3.9 environments; Python 3.10 and newer get pip 26.2.1, which has the fix. pip 26.1 and later require Python 3.10, so --pip cannot pick a fixed version for Python 3.9. The seeded pip and setuptools wheels declare no entry point names that escape the scripts directory. A wheel a user installs later with this pip can.",
+      "action_statement": "Create environments for Python 3.10 or newer, which virtualenv seeds with pip 26.2.1. In Python 3.9 environments, install wheels only from sources you trust."
+    },
+    {
+      "vulnerability": {
+        "@id": "https://github.com/advisories/GHSA-qwm4-qh6w-59xr",
+        "name": "GHSA-qwm4-qh6w-59xr",
+        "aliases": [
+          "CVE-2026-13346",
+          "PYSEC-2026-3721"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/virtualenv",
+          "identifiers": {
+            "purl": "pkg:pypi/virtualenv"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pip@26.0.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pip@26.0.1"
+              },
+              "hashes": {
+                "sha-256": "bdb1b08f4274833d62c1aa29e20907365a2ceb950410df15fc9521bad440122b"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:generic/virtualenv.pyz",
+          "identifiers": {
+            "purl": "pkg:generic/virtualenv.pyz"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/pip@26.0.1",
+              "identifiers": {
+                "purl": "pkg:pypi/pip@26.0.1"
+              },
+              "hashes": {
+                "sha-256": "bdb1b08f4274833d62c1aa29e20907365a2ceb950410df15fc9521bad440122b"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "affected",
+      "status_notes": "virtualenv seeds pip 26.0.1 only into Python 3.9 environments; Python 3.10 and newer get pip 26.2.1, which has the fix. pip 26.1 and later require Python 3.10, so --pip cannot pick a fixed version for Python 3.9. When virtualenv itself runs on Python 3.9 and downloads seed wheels (--download, --upgrade-embed-wheels or the periodic update), it runs this pip as pip download --only-binary=:all: against the index the pip configuration names, the path the advisory describes. A user who runs pip download with this pip against a malicious index also reaches it.",
+      "action_statement": "Create environments for Python 3.10 or newer, which virtualenv seeds with pip 26.2.1. Run virtualenv itself on Python 3.10 or newer. When it has to run on Python 3.9, configure only indexes you trust, or pass --no-download and --no-periodic-update."
+    },
+    {
+      "vulnerability": {
+        "@id": "https://github.com/advisories/GHSA-h35f-9h28-mq5c",
+        "name": "GHSA-h35f-9h28-mq5c",
+        "aliases": [
+          "CVE-2026-59890",
+          "PYSEC-2026-3447"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:pypi/virtualenv",
+          "identifiers": {
+            "purl": "pkg:pypi/virtualenv"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/setuptools@82.0.1",
+              "identifiers": {
+                "purl": "pkg:pypi/setuptools@82.0.1"
+              },
+              "hashes": {
+                "sha-256": "a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb"
+              }
+            }
+          ]
+        },
+        {
+          "@id": "pkg:generic/virtualenv.pyz",
+          "identifiers": {
+            "purl": "pkg:generic/virtualenv.pyz"
+          },
+          "subcomponents": [
+            {
+              "@id": "pkg:pypi/setuptools@82.0.1",
+              "identifiers": {
+                "purl": "pkg:pypi/setuptools@82.0.1"
+              },
+              "hashes": {
+                "sha-256": "a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb"
+              }
+            }
+          ]
+        }
+      ],
+      "status": "affected",
+      "status_notes": "virtualenv seeds setuptools 82.0.1 only into Python 3.9 environments; Python 3.10 and newer get setuptools 84.0.0, which has the fix. setuptools 83.0.0 and later require Python 3.10, so --setuptools cannot pick a fixed version for Python 3.9. virtualenv never builds a source distribution; a user who builds one with this setuptools on macOS APFS or HFS+ reaches the vulnerable code.",
+      "action_statement": "Create environments for Python 3.10 or newer, which virtualenv seeds with setuptools 84.0.0. In Python 3.9 environments, pass --no-setuptools when the environment builds no packages, and list the contents of any source distribution built on macOS before publishing it."
+    }
+  ]
+}

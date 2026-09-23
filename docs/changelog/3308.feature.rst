@@ -1,0 +1,3 @@
+Attach an OpenVEX document, ``virtualenv.openvex.json``, to each GitHub release. For every advisory against a bundled
+pip or setuptools wheel it lists the Python versions that receive that wheel and how to avoid it, such as creating the
+environment for Python 3.10 or newer.

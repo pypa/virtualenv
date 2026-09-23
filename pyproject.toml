@@ -166,6 +166,7 @@ property = [
 ]
 sbom = [
   "cyclonedx-python-lib[json-validation]>=11.12",
+  "jsonschema>=4.26",
   "spdx-tools>=0.8.5",
 ]
 

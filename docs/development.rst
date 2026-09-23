@@ -159,8 +159,9 @@ Performing a release
 --------------------
 
 A full release publishes to `PyPI <https://pypi.org/project/virtualenv/>`_, creates a `GitHub Release
-<https://github.com/pypa/virtualenv/releases>`_ with the zipapp and SBOMs attached, and updates `get-virtualenv
-<https://github.com/pypa/get-virtualenv>`_ so that ``https://bootstrap.pypa.io/virtualenv.pyz`` serves the new version.
+<https://github.com/pypa/virtualenv/releases>`_ with the zipapp, SBOMs and VEX document attached, and updates
+`get-virtualenv <https://github.com/pypa/get-virtualenv>`_ so that ``https://bootstrap.pypa.io/virtualenv.pyz`` serves
+the new version.
 
 Version bumping
 ^^^^^^^^^^^^^^^
@@ -172,8 +173,8 @@ bumped, otherwise the patch version is bumped. You can also pass ``major``, ``mi
 Both methods produce identical results: a release commit and tag on ``main``. Pushing the tag triggers the `Release
 workflow <https://github.com/pypa/virtualenv/actions/workflows/release.yaml>`_ which builds the sdist, wheel, and
 zipapp, publishes to PyPI via trusted publisher, creates a `GitHub Release
-<https://github.com/pypa/virtualenv/releases>`_ with the zipapp and SBOMs attached, and updates `get-virtualenv
-<https://github.com/pypa/get-virtualenv>`_. A failed publish needs the recovery procedure below.
+<https://github.com/pypa/virtualenv/releases>`_ with the zipapp, SBOMs and VEX document attached, and updates
+`get-virtualenv <https://github.com/pypa/get-virtualenv>`_. A failed publish needs the recovery procedure below.
 
 **Via GitHub Actions (recommended)**
 
@@ -269,6 +270,14 @@ virtualenv is distributed under the MIT License, and everything in the repositor
   the SPDX rendering; the release workflow runs ``tox r -e spdx`` to write ``virtualenv.spdx.json`` from
   ``virtualenv.cdx.json`` and check it with ``pyspdxtools``. Both envs run on Python 3.14 because ``spdx-tools`` fails
   to import on 3.15.
+- ``virtualenv.openvex.json`` states, for each advisory against an embedded wheel, whether environments virtualenv
+  creates are affected and what users can do about it. Maintainers edit it by hand, in the pull request that bumps an
+  embedded wheel and whenever `OSV <https://osv.dev>`_ lists a new advisory for a bundled version. Each edit raises
+  ``version`` and sets ``timestamp``. A statement defaults to ``affected``; use ``not_affected`` with a
+  ``justification`` only when a created environment cannot reach the vulnerable code. ``tox r -e readme`` validates the
+  file against the OpenVEX 0.2.0 schema and fails when it names a wheel, by purl and SHA-256, that the built wheel does
+  not bundle, so the daily embedded wheel upgrade pull request stays red until someone updates the statements. The
+  release workflow attaches the file as it stands at the release tag.
 
 Automated testing
 =================
