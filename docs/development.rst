@@ -395,8 +395,6 @@ What we plan to do
   distutils hook, which only 3.9 environments still receive (:issue:`3181`).
 - Keep releasing on the pip and setuptools cadence that :ref:`release` describes.
 - Merge :pull:`3204` (:PEP:`832`) and :pull:`3193` (:PEP:`838`) once those PEPs reach Accepted status.
-- Verify the copy served from ``bootstrap.pypa.io`` after each release, one of the open items in the `threat model
-  <https://github.com/pypa/virtualenv/blob/main/.github/THREAT_MODEL.md>`_.
 
 What we do not plan to do
 =========================
