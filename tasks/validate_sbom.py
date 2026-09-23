@@ -19,6 +19,8 @@ from spdx_tools.spdx.validation.document_validator import validate_full_spdx_doc
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
+    from cyclonedx_to_spdx import CycloneDX
+
 _SERIAL_PATTERN: Final[re.Pattern[str]] = re.compile(
     r"""
     ^urn:uuid:
@@ -100,9 +102,9 @@ def _validate_references(document: dict[str, Any]) -> list[str]:
     return problems
 
 
-def _validate_spdx(document: dict[str, Any]) -> list[str]:
+def _validate_spdx(document: CycloneDX) -> list[str]:
     try:
-        spdx = JsonLikeDictParser().parse(to_spdx(document))
+        spdx = JsonLikeDictParser().parse(dict(to_spdx(document)))
     except SPDXParsingError as error:
         return [f"SPDX rendering does not parse: {message}" for message in error.get_messages()]
     return [f"SPDX rendering invalid: {message.validation_message}" for message in validate_full_spdx_document(spdx)]
