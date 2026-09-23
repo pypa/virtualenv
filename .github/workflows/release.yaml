@@ -230,6 +230,47 @@ jobs:
           uv run --no-project --python 3.14 python -I published/virtualenv.pyz \
             --no-download --no-periodic-update "$RUNNER_TEMP/zipapp-created"
           "$RUNNER_TEMP/zipapp-created/bin/python" -I -m pip --version
+  verify-bootstrap:
+    name: Verify bootstrap.pypa.io
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    permissions:
+      contents: read # download the published zipapp from the release
+      attestations: read # verify the served zipapp provenance
+    steps:
+      - name: Download the verified zipapp
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$GITHUB_REF_NAME" --repo pypa/virtualenv \
+            --pattern virtualenv.pyz --pattern virtualenv.pyz.intoto.jsonl --dir published
+      - name: Download and verify the zipapp served from bootstrap.pypa.io
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # pypa/bootstrap polls get-virtualenv every 15 minutes, then rebuilds its image and purges the CDN; the
+          # per-Python paths that track the latest release are symlinks, the rest pin zipapps for retired Pythons
+          paths="virtualenv.pyz virtualenv/virtualenv.pyz $(gh api 'repos/pypa/get-virtualenv/git/trees/main?recursive=1' \
+            --jq '.tree[] | select(.mode == "120000" and (.path | test("^public/[0-9.]+/virtualenv[.]pyz$")))
+              | .path | sub("^public/"; "virtualenv/")')"
+          deadline=$((SECONDS + 7200))
+          for path in $paths; do
+            mkdir -p "bootstrap/$(dirname "$path")"
+            until curl --fail --silent --show-error --max-time 300 --retry 3 --retry-all-errors \
+              --output "bootstrap/$path" "https://bootstrap.pypa.io/$path" && cmp --silent published/virtualenv.pyz "bootstrap/$path"; do
+              if ((SECONDS >= deadline)); then
+                served="$(curl --silent --max-time 30 https://bootstrap.pypa.io/virtualenv/version.txt || true)"
+                echo "::error::https://bootstrap.pypa.io/$path does not serve $GITHUB_REF_NAME after 2 hours (version.txt: ${served:-unavailable})"
+                exit 1
+              fi
+              sleep 60
+            done
+            gh attestation verify "bootstrap/$path" --repo pypa/virtualenv \
+              --bundle published/virtualenv.pyz.intoto.jsonl \
+              --signer-workflow pypa/virtualenv/.github/workflows/release.yaml \
+              --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" --deny-self-hosted-runners
+          done
   recovery:
     name: Recovery
     if: ${{ always() && needs.build.result == 'success' && needs.publish.result == 'failure' }}
