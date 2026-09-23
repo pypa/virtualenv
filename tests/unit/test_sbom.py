@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 import runpy
 import shutil
 import sys
 import zipfile
-from io import StringIO
+from io import BytesIO, StringIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final
 
@@ -17,6 +18,11 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from pytest_mock import MockerFixture
+
+_DISTRIBUTIONS: Final[str] = json.dumps({
+    "3.14": {"==any": {"distlib": "__virtualenv__/distlib-0.4-py3-none-any/distlib-0.4.dist-info"}},
+    "3.9": {"==any": {"distlib": "__virtualenv__/distlib-0.4-py3-none-any/distlib-0.4.dist-info"}},
+})
 
 
 @pytest.mark.parametrize(
@@ -290,6 +296,96 @@ def test_sbom_spdx_creation_info(
         f"https://github.com/pypa/virtualenv/sboms/virtualenv-1.0-{serial}",
         "2023-11-14T22:13:20Z",
     )
+
+
+def test_sbom_zipapp_components(zipapp_sbom: str) -> None:
+    assert [
+        (
+            component["purl"],
+            [prop["value"] for prop in component["properties"] if prop["name"].startswith("virtualenv:")],
+            [child["name"] for child in component["components"]],
+        )
+        for component in json.loads(zipapp_sbom)["components"]
+    ] == [
+        (
+            "pkg:pypi/virtualenv@1.0",
+            [],
+            ["virtualenv-1.0.dist-info/METADATA", "virtualenv/__init__.py", "pip"],
+        ),
+        (
+            "pkg:pypi/distlib@0.4",
+            ["__virtualenv__/distlib-0.4-py3-none-any", "3.14", "3.9"],
+            [
+                "__virtualenv__/distlib-0.4-py3-none-any/distlib-0.4.dist-info/METADATA",
+                "__virtualenv__/distlib-0.4-py3-none-any/distlib/__init__.py",
+            ],
+        ),
+    ]
+
+
+def test_sbom_zipapp_embedded_wheel(zipapp: Path, zipapp_sbom: str) -> None:
+    with zipfile.ZipFile(zipapp) as archive:
+        digest: Final[str] = hashlib.sha256(
+            archive.read("virtualenv/seed/wheels/embed/pip-1.0-py3-none-any.whl")
+        ).hexdigest()
+    assert json.loads(zipapp_sbom)["components"][0]["components"][2] == {
+        "type": "library",
+        "bom-ref": "pkg:pypi/pip@1.0",
+        "name": "pip",
+        "version": "1.0",
+        "purl": "pkg:pypi/pip@1.0",
+        "externalReferences": [],
+        "hashes": [{"alg": "SHA-256", "content": digest}],
+        "properties": [
+            {"name": "virtualenv:bundled-wheel", "value": "virtualenv/seed/wheels/embed/pip-1.0-py3-none-any.whl"}
+        ],
+    }
+
+
+def test_sbom_zipapp_loader_files(zipapp_sbom: str) -> None:
+    assert [
+        (component["name"], component["hashes"][0]["content"])
+        for component in json.loads(zipapp_sbom)["metadata"]["component"]["components"]
+    ] == [
+        ("__main__.py", hashlib.sha256(b"# loader").hexdigest()),
+        ("distributions.json", hashlib.sha256(_DISTRIBUTIONS.encode()).hexdigest()),
+        ("modules.json", hashlib.sha256(b"{}").hexdigest()),
+    ]
+
+
+def test_sbom_zipapp_embeds_document(zipapp: Path, zipapp_sbom: str) -> None:
+    with zipfile.ZipFile(zipapp) as archive:
+        assert archive.read("virtualenv.pyz.cdx.json").decode("utf-8") == zipapp_sbom
+
+
+@pytest.fixture
+def zipapp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    if sys.version_info < (3, 10):
+        pytest.skip("hatch_build.py reads the OS release with platform.freedesktop_os_release, new in Python 3.10")
+    wheel: Final[BytesIO] = BytesIO()
+    with zipfile.ZipFile(wheel, "w") as archive:
+        archive.writestr("pip-1.0.dist-info/METADATA", "Metadata-Version: 2.4\nName: pip\nVersion: 1.0\n")
+    bundled: Final[str] = "__virtualenv__/distlib-0.4-py3-none-any"
+    with zipfile.ZipFile(pyz := tmp_path / "virtualenv.pyz", "w") as archive:
+        archive.writestr("__main__.py", "# loader")
+        archive.writestr("modules.json", "{}")
+        archive.writestr("distributions.json", _DISTRIBUTIONS)
+        archive.writestr("virtualenv-1.0.dist-info/METADATA", "Metadata-Version: 2.4\nName: virtualenv\nVersion: 1.0\n")
+        archive.writestr("virtualenv/__init__.py", "")
+        archive.writestr("virtualenv/seed/wheels/embed/pip-1.0-py3-none-any.whl", wheel.getvalue())
+        archive.writestr(
+            f"{bundled}/distlib-0.4.dist-info/METADATA", "Metadata-Version: 2.4\nName: distlib\nVersion: 0.4\n"
+        )
+        archive.writestr(f"{bundled}/distlib/__init__.py", "")
+    monkeypatch.syspath_prepend(str(Path(__file__).parents[2]))
+    monkeypatch.setattr(sys, "argv", ["zipapp_sbom.py", str(pyz), str(tmp_path / "virtualenv.pyz.cdx.json")])
+    runpy.run_path(str(Path(__file__).parents[2] / "tasks" / "zipapp_sbom.py"), run_name="__main__")
+    return pyz
+
+
+@pytest.fixture
+def zipapp_sbom(zipapp: Path) -> str:
+    return (zipapp.parent / "virtualenv.pyz.cdx.json").read_text(encoding="utf-8")
 
 
 @pytest.fixture

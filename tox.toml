@@ -210,8 +210,15 @@ commands = [ [ "python", "upgrade_wheels.py" ] ]
 uv_seed = true
 
 [env.zipapp]
-description = "generate a zipapp"
+description = "generate a zipapp, embed its SBOM and validate the SBOM"
+base_python = [ "3.14" ]
 skip_install = true
-deps = [ "packaging>=25" ]
-commands = [ [ "python", "tasks/make_zipapp.py" ] ]
+deps = [ "hatchling>=1.28", "packaging>=25" ]
+dependency_groups = [ "sbom" ]
+set_env.PYTHONPATH = "{tox_root}"
+commands = [
+  [ "python", "tasks/make_zipapp.py" ],
+  [ "python", "tasks/zipapp_sbom.py", "virtualenv.pyz", "virtualenv.pyz.cdx.json" ],
+  [ "python", "tasks/validate_sbom.py", "virtualenv.pyz" ],
+]
 uv_seed = true

@@ -36,8 +36,8 @@ if TYPE_CHECKING:
 _ROOT: Final[Path] = Path(__file__).resolve().parent
 _EMBED: Final[Path] = _ROOT / "src" / "virtualenv" / "seed" / "wheels" / "embed"
 _REPOSITORY: Final[str] = "https://github.com/pypa/virtualenv"
-_SBOM_NAMESPACE: Final[uuid.UUID] = uuid.uuid5(uuid.NAMESPACE_URL, f"{_REPOSITORY}/sboms")
-_PYPA: Final[dict[str, Any]] = {"name": "Python Packaging Authority", "url": ["https://www.pypa.io"]}
+SBOM_NAMESPACE: Final[uuid.UUID] = uuid.uuid5(uuid.NAMESPACE_URL, f"{_REPOSITORY}/sboms")
+PYPA: Final[dict[str, Any]] = {"name": "Python Packaging Authority", "url": ["https://www.pypa.io"]}
 # the label normalization and mapping cyclonedx-py applies to Project-URL entries, plus "source", so the same
 # metadata yields the same reference types whichever generator produced the document
 _URL_LABEL_TO_REFERENCE_TYPE: Final[dict[str, str]] = {
@@ -111,15 +111,15 @@ def _cyclonedx_document(core: CoreMetadata, version: str) -> dict[str, Any]:
     root = _root_component(core, version)
     bundled = [_bundled_component(wheel) for wheel in sorted(_EMBED.glob("*.whl"))]
     declared = [_declared_dependency(requirement) for requirement in core.dependencies]
-    tools, tool_dependencies = _build_tools(version)
+    tools, tool_dependencies = build_tools(version)
     body = {
         "metadata": {
-            "timestamp": _timestamp(),
+            "timestamp": timestamp(),
             "lifecycles": [{"phase": "build"}],
             "tools": {"components": tools},
-            "manufacturer": _PYPA,
+            "manufacturer": PYPA,
             "authors": _contacts(core.maintainers_data["name"], core.maintainers_data["email"]),
-            "supplier": _PYPA,
+            "supplier": PYPA,
             "component": root,
             "licenses": [{"expression": core.license_expression, "acknowledgement": "declared"}],
             "properties": [
@@ -150,7 +150,7 @@ def _cyclonedx_document(core: CoreMetadata, version: str) -> dict[str, Any]:
         "bomFormat": "CycloneDX",
         "specVersion": "1.6",
         # derived from the content so identical documents share a serial and any difference gets a new one
-        "serialNumber": f"urn:uuid:{uuid.uuid5(_SBOM_NAMESPACE, json.dumps(body, sort_keys=True))}",
+        "serialNumber": f"urn:uuid:{uuid.uuid5(SBOM_NAMESPACE, json.dumps(body, sort_keys=True))}",
         "version": 1,
         **body,
     }
@@ -180,7 +180,7 @@ def _root_component(core: CoreMetadata, version: str) -> dict[str, Any]:
     return {
         "type": "application",
         "bom-ref": purl,
-        "supplier": _PYPA,
+        "supplier": PYPA,
         "authors": _contacts(core.maintainers_data["name"], core.maintainers_data["email"]),
         "name": core.name,
         "version": version,
@@ -247,9 +247,9 @@ def _bundled_component(wheel: Path) -> dict[str, Any]:
             for name in members
             if "/_vendor/" in name and name.endswith(".dist-info/METADATA")
         )
-    component = _component_from_metadata(metadata, "library")
+    component = component_from_metadata(metadata, "library")
     if any(reference["url"].startswith("https://github.com/pypa/") for reference in component["externalReferences"]):
-        component["supplier"] = _PYPA
+        component["supplier"] = PYPA
     sha256 = hashlib.sha256(wheel.read_bytes()).hexdigest()
     component["hashes"] = [{"alg": "SHA-256", "content": sha256}]
     component["externalReferences"].append(
@@ -285,7 +285,7 @@ def _bundled_component(wheel: Path) -> dict[str, Any]:
     ]
     vendored_components: Final[dict[str, dict[str, Any]]] = {}
     for source, vendored in vendored_metadata:
-        child: Final[dict[str, Any]] = _component_from_metadata(vendored, "library")
+        child: Final[dict[str, Any]] = component_from_metadata(vendored, "library")
         child["bom-ref"] = f"{component['bom-ref']}#vendored/{child['purl']}"
         child["properties"].append({"name": "virtualenv:vendored-manifest", "value": source})
         child["evidence"] = {
@@ -302,7 +302,7 @@ def _bundled_component(wheel: Path) -> dict[str, Any]:
     return component
 
 
-def _component_from_metadata(metadata: PackageMetadata, component_type: str) -> dict[str, Any]:
+def component_from_metadata(metadata: PackageMetadata, component_type: str) -> dict[str, Any]:
     name, version = metadata["Name"], metadata["Version"]
     purl = _purl(name, version)
     component: dict[str, Any] = {
@@ -386,7 +386,7 @@ def _declared_dependency(requirement: str) -> dict[str, Any]:
     return component
 
 
-def _build_tools(package_version: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def build_tools(package_version: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     hook = Path(__file__)
     interpreter = f"pkg:generic/{sys.implementation.name}@{platform.python_version()}"
     tools = [
@@ -418,7 +418,7 @@ def _build_tools(package_version: str) -> tuple[list[dict[str, Any]], list[dict[
     installed = {_purl(distribution.metadata["Name"]): distribution for distribution in distributions()}
     tool_dependencies = []
     for distribution in (installed[key] for key in sorted(installed)):
-        component = _component_from_metadata(distribution.metadata, "library")
+        component = component_from_metadata(distribution.metadata, "library")
         component["bom-ref"] = f"tool:{component['purl']}"
         component["components"] = [
             _file_component(
@@ -481,5 +481,14 @@ def _workflow(root: dict[str, Any], tools: list[dict[str, Any]]) -> dict[str, An
     return workflow
 
 
-def _timestamp() -> str:
+def timestamp() -> str:
     return datetime.fromtimestamp(get_reproducible_timestamp(), tz=timezone.utc).isoformat()
+
+
+__all__ = [
+    "PYPA",
+    "SBOM_NAMESPACE",
+    "build_tools",
+    "component_from_metadata",
+    "timestamp",
+]

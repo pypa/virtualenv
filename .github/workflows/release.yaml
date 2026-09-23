@@ -64,6 +64,11 @@ jobs:
         env:
           BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
         run: cp "$BUNDLE_PATH" virtualenv.pyz.intoto.jsonl
+      - name: Attest the zipapp SBOM against the zipapp
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: virtualenv.pyz
+          sbom-path: virtualenv.pyz.cdx.json
       - name: Store the distribution packages
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -83,6 +88,7 @@ jobs:
           path: |
             virtualenv.pyz
             virtualenv.pyz.intoto.jsonl
+            virtualenv.pyz.cdx.json
   publish:
     name: Publish
     needs: build
@@ -123,7 +129,7 @@ jobs:
       # immutable releases reject assets added after creation, so every asset goes into this one call
       - name: Create GitHub Release
         run: |
-          gh release create "$GITHUB_REF_NAME" virtualenv.pyz virtualenv.pyz.intoto.jsonl \
+          gh release create "$GITHUB_REF_NAME" virtualenv.pyz virtualenv.pyz.intoto.jsonl virtualenv.pyz.cdx.json \
             virtualenv.cdx.json virtualenv.spdx.json --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
@@ -180,12 +186,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download "$GITHUB_REF_NAME" --repo pypa/virtualenv \
-            --pattern virtualenv.pyz --pattern virtualenv.pyz.intoto.jsonl --dir published
+          gh release download "$GITHUB_REF_NAME" --repo pypa/virtualenv --pattern virtualenv.pyz \
+            --pattern virtualenv.pyz.intoto.jsonl --pattern virtualenv.pyz.cdx.json --dir published
           gh attestation verify published/virtualenv.pyz --repo pypa/virtualenv \
             --bundle published/virtualenv.pyz.intoto.jsonl \
             --signer-workflow pypa/virtualenv/.github/workflows/release.yaml \
             --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" --deny-self-hosted-runners
+          unzip -p published/virtualenv.pyz virtualenv.pyz.cdx.json | cmp - published/virtualenv.pyz.cdx.json
+          gh attestation verify published/virtualenv.pyz --repo pypa/virtualenv \
+            --predicate-type https://cyclonedx.org/bom \
+            --signer-workflow pypa/virtualenv/.github/workflows/release.yaml \
+            --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" --deny-self-hosted-runners --format json |
+            jq --exit-status --slurpfile asset published/virtualenv.pyz.cdx.json \
+              'any(.[]; .verificationResult.statement.predicate == $asset[0])'
       - name: Download and verify published SBOMs
         env:
           GH_TOKEN: ${{ github.token }}
