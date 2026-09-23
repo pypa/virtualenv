@@ -54,6 +54,7 @@ class Creator(ABC):
         self.dest = Path(options.dest)
         self.clear = options.clear
         self.no_vcs_ignore = options.no_vcs_ignore
+        self.no_venv_redirect = options.no_venv_redirect
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest)
         self.app_data = options.app_data
         self.env = options.env
@@ -90,6 +91,7 @@ class Creator(ABC):
             ("dest", str(self.dest)),
             ("clear", self.clear),
             ("no_vcs_ignore", self.no_vcs_ignore),
+            ("no_venv_redirect", self.no_venv_redirect),
         ]
 
     @classmethod
@@ -137,6 +139,13 @@ class Creator(ABC):
             dest="no_vcs_ignore",
             action="store_true",
             help="don't create VCS ignore directive in the destination directory",
+            default=False,
+        )
+        parser.add_argument(
+            "--no-venv-redirect",
+            dest="no_venv_redirect",
+            action="store_true",
+            help="don't point a PEP-832 .venv redirect file next to the destination at the created environment",
             default=False,
         )
 
@@ -204,6 +213,8 @@ class Creator(ABC):
         self.set_pyenv_cfg()
         if not self.no_vcs_ignore:
             self.setup_ignore_vcs()
+        if not self.no_venv_redirect:
+            self.point_venv_redirect()
 
     def add_cachedir_tag(self) -> None:
         """Generate a file indicating that this is not meant to be backed up."""
@@ -223,8 +234,10 @@ class Creator(ABC):
         assert system_executable is not None  # ruff:ignore[assert]
         self.pyenv_cfg["home"] = os.path.dirname(os.path.abspath(system_executable))
         self.pyenv_cfg["implementation"] = self.interpreter.implementation
-        self.pyenv_cfg["version_info"] = ".".join(str(i) for i in self.interpreter.version_info)
-        self.pyenv_cfg["version"] = ".".join(str(i) for i in self.interpreter.version_info[:3])
+        version_info = self.interpreter.version_info
+        self.pyenv_cfg["python-version"] = f"{version_info.major}.{version_info.minor}"
+        self.pyenv_cfg["version_info"] = ".".join(str(i) for i in version_info)
+        self.pyenv_cfg["version"] = ".".join(str(i) for i in version_info[:3])
         self.pyenv_cfg["executable"] = os.path.realpath(system_executable)
         self.pyenv_cfg["command"] = f"{sys.executable} -m virtualenv {self.dest}"
         self.pyenv_cfg["virtualenv"] = __version__
@@ -244,6 +257,22 @@ class Creator(ABC):
         # Bazaar - does not support ignore files in sub-directories, only at root level via .bzrignore
         # Subversion - does not support ignore files, requires direct manipulation with the svn tool
 
+    def point_venv_redirect(self) -> None:
+        """Point the ``.venv`` redirect file of the parent folder at the environment, per PEP-832 (provisional)."""
+        if self.dest.name == ".venv":  # the environment is the .venv itself, no redirect needed
+            return
+        redirect = self.dest.parent / ".venv"
+        if redirect.is_symlink() or redirect.is_dir():
+            LOGGER.debug("%s keeps being the default environment", redirect)
+            return
+        if redirect.exists() and not _points_at_virtualenv(redirect):
+            LOGGER.debug("%s points at an environment virtualenv did not create, leaving it", redirect)
+            return
+        try:
+            redirect.write_text(f"{self.dest.name}\n", encoding="utf-8")
+        except OSError as exc:
+            LOGGER.warning("could not point %s at %s - %s", redirect, self.dest, exc)
+
     @property
     def debug(self) -> dict[str, Any] | None:
         """Debug information about the virtual environment (only valid after :meth:`create` has run)."""
@@ -254,6 +283,14 @@ class Creator(ABC):
     @staticmethod
     def debug_script() -> Path:
         return DEBUG_SCRIPT
+
+
+def _points_at_virtualenv(redirect: Path) -> bool:
+    try:
+        line = redirect.read_text(encoding="utf-8").removesuffix("\n")  # universal newlines already turned \r\n into \n
+        return bool(line) and "virtualenv" in PyEnvCfg.from_folder(redirect.parent / line)
+    except (OSError, UnicodeDecodeError):  # unreadable, so not a redirect virtualenv can claim
+        return False
 
 
 def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env: dict[str, str]) -> dict[str, Any]:

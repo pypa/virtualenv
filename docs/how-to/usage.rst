@@ -290,6 +290,65 @@ Options are resolved in this order (highest to lowest priority):
         style C fill:#d97706,stroke:#b45309,color:#fff
         style D fill:#6366f1,stroke:#4f46e5,color:#fff
 
+********************************
+ Make environments discoverable
+********************************
+
+virtualenv points a ``.venv`` redirect file next to the environment it creates at that environment, so editors and type
+checkers can find it without an activated shell. See `PEP 832 <https://peps.python.org/pep-0832/>`_ for the format and
+:ref:`explanation:Environment discovery` for the reasoning. The feature is provisional while the PEP is a draft, so a
+minor or patch release may change it in backward incompatible ways.
+
+Point a tool at the right environment
+=====================================
+
+The redirect names the environment you created last:
+
+.. code-block:: console
+
+    $ virtualenv py313 --python 3.13
+    $ virtualenv py314 --python 3.14
+    $ cat .venv
+    py314
+
+To make ``py313`` the default again, create it again over the existing folder:
+
+.. code-block:: console
+
+    $ virtualenv py313 --python 3.13
+    $ cat .venv
+    py313
+
+virtualenv leaves a ``.venv`` folder alone, and a redirect pointing at an environment it did not create. Delete the
+``.venv`` if you want virtualenv to take it over.
+
+Skip the redirect
+=================
+
+Pass ``--no-venv-redirect`` when you do not want virtualenv to write ``.venv``:
+
+.. code-block:: console
+
+    $ virtualenv env --no-venv-redirect
+
+Set it once for every environment you create through the configuration file or an environment variable:
+
+.. code-block:: ini
+
+    [virtualenv]
+    no_venv_redirect = true
+
+.. code-block:: console
+
+    $ export VIRTUALENV_NO_VENV_REDIRECT=1
+
+Commit the file or ignore it
+============================
+
+The redirect holds a path relative to its own folder, so you can commit it when the environment location is the same for
+everyone on the project, such as a containerized setup. Leave ``.venv`` in ``.gitignore`` when developers pick their own
+paths.
+
 ***********************
  Control seed packages
 ***********************
@@ -335,6 +394,25 @@ For distribution maintainers
 
 Patch the ``virtualenv.seed.wheels.embed`` module and set ``PERIODIC_UPDATE_ON_BY_DEFAULT`` to ``False`` to disable
 periodic updates by default. See :doc:`../explanation` for implementation details.
+
+*******************************************
+ Find out which Python an environment uses
+*******************************************
+
+Read ``python-version`` out of ``pyvenv.cfg`` rather than running the environment's interpreter, which costs a
+subprocess and fails when the base Python has been removed:
+
+.. code-block:: python
+
+    from configparser import ConfigParser
+    from pathlib import Path
+
+    parser = ConfigParser()
+    parser.read_string("[cfg]\n" + Path("env/pyvenv.cfg").read_text(encoding="utf-8"))
+    parser["cfg"]["python-version"]  # '3.14'
+
+``pyvenv.cfg`` has no section header, hence the prefix. The key holds the feature release only; reach for ``version``
+when you need the patch level too.
 
 **********************
  Use from Python code

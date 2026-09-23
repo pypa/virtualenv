@@ -26,12 +26,21 @@ Let's create a virtual environment called ``myproject``:
 
     $ virtualenv myproject
     created virtual environment CPython3.13.2.final.0-64 in 200ms
-      creator CPython3Posix(dest=/home/user/myproject, clear=False, no_vcs_ignore=False, global=False)
+      creator CPython3Posix(dest=/home/user/myproject, clear=False, no_vcs_ignore=False, no_venv_redirect=False, global=False)
       seeder FromAppData(download=False, pip=bundle, setuptools=bundle, via=copy, app_data_dir=/home/user/.cache/virtualenv)
       activators BashActivator,CShellActivator,FishActivator,NushellActivator,PowerShellActivator,PythonActivator
 
 This creates a new directory called ``myproject`` containing a complete, isolated Python environment with its own copy
 of Python, pip, and other tools.
+
+``pyvenv.cfg`` inside it records which Python the environment came from:
+
+.. code-block:: console
+
+    $ grep python-version myproject/pyvenv.cfg
+    python-version = 3.13
+
+That key tells an editor or a type checker which language version your code targets.
 
 The interpreter answers to several names, so a script expecting any of them keeps working inside the environment:
 
@@ -40,7 +49,18 @@ The interpreter answers to several names, so a script expecting any of them keep
     $ ls myproject/bin/python*
     myproject/bin/python  myproject/bin/python3  myproject/bin/python3.13
 
-:doc:`../reference/environment-layout` lists the full set, which differs on Windows.
+Alongside the folder you get a ``.venv`` redirect file naming the environment you just made:
+
+.. code-block:: console
+
+    $ cat .venv
+    myproject
+
+The same tools read that file to find the environment, so they can offer the right interpreter before you activate
+anything. Create a second environment here and the redirect points at it instead. Pass ``--no-venv-redirect`` if you
+would rather virtualenv left no trace outside the environment folder. The redirect is provisional and may change as PEP
+832 evolves. :doc:`../reference/environment-layout` lists every interpreter name, and :doc:`../reference/files` covers
+every file.
 
 **************************
  Activate the environment
@@ -241,6 +261,7 @@ In this tutorial, you learned how to:
 - Install packages in isolation from your system Python.
 - Save project dependencies with ``pip freeze``.
 - Reproduce environments using ``requirements.txt``.
+- Let editors find your environment through the ``.venv`` redirect file.
 
 ************
  Next steps
@@ -252,3 +273,4 @@ Now that you understand the basics, explore these topics:
 - :doc:`../explanation` for understanding how virtualenv works under the hood and how it compares to ``venv``.
 - :doc:`../reference/cli` for all available command line options and flags.
 - :doc:`../how-to/verify-release` to check that the virtualenv you downloaded came from its release workflow.
+- :doc:`../reference/files` for every file virtualenv writes inside and beside an environment.
