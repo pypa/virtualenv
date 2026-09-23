@@ -1,2 +1,0 @@
-Attach the CycloneDX SBOM and an SPDX 2.3 rendering of it (``virtualenv.cdx.json``, ``virtualenv.spdx.json``) to each
-GitHub release, and attest the SPDX document against the sdist and wheel.

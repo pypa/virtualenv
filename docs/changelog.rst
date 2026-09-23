@@ -7,6 +7,44 @@
 .. towncrier release notes start
 
 ***********************
+ v21.11.0 (2026-09-23)
+***********************
+
+Features - 21.11.0
+==================
+
+- Attach the CycloneDX SBOM and an SPDX 2.3 rendering of it (``virtualenv.cdx.json``, ``virtualenv.spdx.json``) to each
+  GitHub release, and attest the SPDX document against the sdist and wheel. (:issue:`3299`)
+- Describe the zipapp in its own CycloneDX SBOM, which lists virtualenv, the embedded pip and setuptools wheels, and
+  each bundled dependency with the Python versions that load it, down to a SHA-256 per file. The SBOM sits at the root
+  of ``virtualenv.pyz``, ships as the ``virtualenv.pyz.cdx.json`` release asset, and GitHub attests it against the
+  zipapp. (:issue:`3310`)
+
+Bugfixes - 21.11.0
+==================
+
+- Refuse a seed wheel downloaded from the default index when virtualenv cannot get its sha256 from PyPI after three
+  retries, instead of seeding it unverified. Seeding falls back to the bundled wheel unless a specific version was
+  requested. (:issue:`3302`)
+- Build the zipapp from the dependency wheels that ``pylock.zipapp.toml`` pins by URL and sha256, so a release bundles
+  only files matching the committed hashes. (:issue:`3306`)
+- Leave the build machine out of the wheel and zipapp SBOMs, so the wheel rebuilds byte for byte on any operating system
+  and architecture given the same source, ``SOURCE_DATE_EPOCH``, Python patch version and build backend versions. Zipapp
+  entries now carry the ``SOURCE_DATE_EPOCH`` timestamp and fixed permissions instead of the build time. (:issue:`3311`)
+
+Improved Documentation - 21.11.0
+================================
+
+- Document the backup maintainer and the two-factor authentication and access review expectations for maintainers.
+  (:issue:`3290`)
+- Link the Carl Meyer talk on the home page over HTTPS - by :user:`gaborbernat`. (:issue:`3300`)
+- Add a roadmap to the development guide listing what the project plans to do, and not do, through September 2027 - by
+  :user:`gaborbernat`. (:issue:`3304`)
+- Document what a release publishes and how to verify each file, covering the PyPI attestations, the zipapp and its
+  provenance, the CycloneDX and SPDX SBOMs of the wheel, the zipapp SBOM, and rebuilding the sdist from its tag.
+  (:issue:`3305`)
+
+***********************
  v21.10.0 (2026-09-22)
 ***********************
 

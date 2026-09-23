@@ -1,1 +1,0 @@
-Document the backup maintainer and the two-factor authentication and access review expectations for maintainers.

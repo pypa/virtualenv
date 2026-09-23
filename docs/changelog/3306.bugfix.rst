@@ -1,2 +1,0 @@
-Build the zipapp from the dependency wheels that ``pylock.zipapp.toml`` pins by URL and sha256, so a release bundles
-only files matching the committed hashes.

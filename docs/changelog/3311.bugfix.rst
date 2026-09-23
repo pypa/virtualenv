@@ -1,3 +1,0 @@
-Leave the build machine out of the wheel and zipapp SBOMs, so the wheel rebuilds byte for byte on any operating system
-and architecture given the same source, ``SOURCE_DATE_EPOCH``, Python patch version and build backend versions. Zipapp
-entries now carry the ``SOURCE_DATE_EPOCH`` timestamp and fixed permissions instead of the build time.
