@@ -115,6 +115,7 @@ commands = [
 
 [env.readme]
 description = "check that the long description, wheel contents and embedded SBOM are valid"
+base_python = [ "3.14" ]
 skip_install = true
 dependency_groups = [ "pkg-meta" ]
 commands = [
@@ -183,6 +184,16 @@ description = "do a release, required posarg of the version number"
 deps = [ "gitpython>=3.1.44", "packaging>=25", "pre-commit-uv>=4.1.4", "towncrier>=24.8" ]
 change_dir = "{tox_root}{/}tasks"
 commands = [ [ "python", "release.py", { replace = "posargs", extend = true } ] ]
+
+[env.spdx]
+description = "render the CycloneDX SBOM extracted from a wheel as SPDX 2.3 and validate it"
+base_python = [ "3.14" ]
+skip_install = true
+dependency_groups = [ "sbom" ]
+commands = [
+  [ "python", "{tox_root}{/}tasks{/}cyclonedx_to_spdx.py", "virtualenv.cdx.json", "virtualenv.spdx.json" ],
+  [ "pyspdxtools", "--infile", "virtualenv.spdx.json" ],
+]
 
 [env."type-3.9"]
 description = "run type checker (ty) against Python 3.9"

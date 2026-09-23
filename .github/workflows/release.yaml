@@ -46,6 +46,13 @@ jobs:
         with:
           subject-path: dist/*
           sbom-path: virtualenv.cdx.json
+      - name: Render the SBOM as SPDX
+        run: uv tool run --with tox-uv tox r -e spdx
+      - name: Attest the SPDX SBOM against the sdist and wheel
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: dist/*
+          sbom-path: virtualenv.spdx.json
       - name: Build zipapp
         run: uv tool run --with tox-uv tox r -e zipapp
       - name: Attest provenance for the zipapp
@@ -66,7 +73,9 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: virtualenv-sbom
-          path: virtualenv.cdx.json
+          path: |
+            virtualenv.cdx.json
+            virtualenv.spdx.json
       - name: Store the zipapp
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -107,8 +116,15 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: virtualenv-zipapp
+      - name: Download the SBOMs
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: virtualenv-sbom
+      # immutable releases reject assets added after creation, so every asset goes into this one call
       - name: Create GitHub Release
-        run: gh release create "$GITHUB_REF_NAME" virtualenv.pyz virtualenv.pyz.intoto.jsonl --generate-notes
+        run: |
+          gh release create "$GITHUB_REF_NAME" virtualenv.pyz virtualenv.pyz.intoto.jsonl \
+            virtualenv.cdx.json virtualenv.spdx.json --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Update get-virtualenv
@@ -142,6 +158,11 @@ jobs:
         with:
           name: ${{ env.dists-artifact-name }}
           path: expected/
+      - name: Download expected SBOMs
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: virtualenv-sbom
+          path: expected/
       - name: Download and verify published distributions
         run: |
           mkdir published
@@ -165,6 +186,24 @@ jobs:
             --bundle published/virtualenv.pyz.intoto.jsonl \
             --signer-workflow pypa/virtualenv/.github/workflows/release.yaml \
             --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" --deny-self-hosted-runners
+      - name: Download and verify published SBOMs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "$GITHUB_REF_NAME" --repo pypa/virtualenv \
+            --pattern virtualenv.cdx.json --pattern virtualenv.spdx.json --dir published
+          cmp expected/virtualenv.spdx.json published/virtualenv.spdx.json
+          unzip -p published/*.whl '*.dist-info/sboms/virtualenv.cdx.json' | cmp - published/virtualenv.cdx.json
+          uvx --python 3.14 --from spdx-tools pyspdxtools --infile published/virtualenv.spdx.json
+          for artifact in published/*.whl published/*.tar.gz; do
+            for sbom in cdx:https://cyclonedx.org/bom spdx:https://spdx.dev/Document/v2.3; do
+              gh attestation verify "$artifact" --repo pypa/virtualenv --predicate-type "${sbom#*:}" \
+                --signer-workflow pypa/virtualenv/.github/workflows/release.yaml \
+                --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" --deny-self-hosted-runners --format json |
+                jq --exit-status --slurpfile asset "published/virtualenv.${sbom%%:*}.json" \
+                  'any(.[]; .verificationResult.statement.predicate == $asset[0])'
+            done
+          done
       - name: Create environments from verified distributions
         run: |
           uv python install 3.14
