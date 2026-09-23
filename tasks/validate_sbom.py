@@ -36,7 +36,6 @@ if TYPE_CHECKING:
         properties: NotRequired[list[_Property]]
         components: NotRequired[list[_Component]]
 
-
     from cyclonedx_to_spdx import CycloneDX
 
 _SERIAL_PATTERN: Final[re.Pattern[str]] = re.compile(
