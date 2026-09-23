@@ -90,8 +90,8 @@ data and must not change the meaning of the file. We put this boundary in scope 
   [pypa/get-virtualenv][get-virtualenv]. [Release artifacts][ra-files] lists each file. tox and hatch depend on
   virtualenv, so a tampered release reaches tox and hatch users as well as direct users.
 - Maintainer and publishing credentials, meaning GitHub accounts with admin rights on `pypa/virtualenv`, PyPI owner
-  accounts, the PyPI [trusted publisher][pypi-tp] configuration, and the `GH_RELEASE_TOKEN` secret in the `release`
-  [deployment environment][gh-environments].
+  accounts, the PyPI [trusted publisher][pypi-tp] configuration, and the private key of the
+  [release GitHub App][release-app] in the `release` [deployment environment][gh-environments].
 - The project's reputation, which downstream projects rely on when they depend on virtualenv without pinning it.
 
 ## Entry points and trust boundaries
@@ -160,12 +160,12 @@ flowchart LR
     maint -.->|"TB4 pull request"| main
     maint -->|dispatch| pre
     main --> pre
-    pre -->|GH_RELEASE_TOKEN| tag
+    pre -->|release App token| tag
     tag --> build
     build -->|artifacts| publish
     publish -.->|"TB3 trusted publishing"| pypi
     publish -.->|"TB3 GITHUB_TOKEN"| ghr
-    publish -.->|"TB3 GH_RELEASE_TOKEN"| getv
+    publish -.->|"TB3 release App token"| getv
     getv --> boot
     pypi --> verify
     ghr --> verify
@@ -212,7 +212,7 @@ risk to lowest.
 | T2  | A caller value adds a line or a key to `pyvenv.cfg`.                                                                       | Medium | The [`pyvenv.cfg` writer][src-pyenv-cfg] [collapses line boundaries][src-text] in keys and values before writing ([GHSA-9h9j-4vrj-gf7g][ghsa-9h9j]). [Property tests][tests-pyenv-cfg] check that a written file keeps one line per key and gains no new key, and a [fuzz target][fuzz-pyenv-cfg] exercises the same writer.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | T3  | virtualenv embeds a compromised pip or setuptools release from PyPI.                                                       | Medium | The daily [upgrade workflow][workflow-upgrade] [skips wheels uploaded to PyPI in the last seven days][task-wheel-age] and opens a pull request for a maintainer to review. PyPI and the upstream project get that week to catch a bad upload. The workflow records whatever SHA-256 PyPI served, so we would hash and ship a malicious upstream release that stays up seven days like any other.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | T4  | A malicious pull request or a compromised GitHub Action alters a release.                                                  | Medium | The `main` [ruleset][gh-rulesets] requires a pull request and passing status checks across the CI matrix, and it blocks force pushes and deletion. We pin each action to a commit SHA and each [pre-commit hook][precommit-config] to a frozen commit, [Dependabot][dependabot-config] proposes updates after a seven-day [cooldown][dependabot-cooldown], and [zizmor] and [CodeQL][workflow-codeql] scan the workflows. CI checks the RustPython and Nushell downloads against SHA-256 values in [ci-tools.json][ci-tools], which the upgrade workflow refreshes each week ([#3293][pr-3293]). The build job has read-only repository access and no publishing credentials, its checkout does not persist credentials, and [harden-runner] logs outbound traffic in the build and publish jobs. No workflow uses [`pull_request_target`][gh-prt], so pull requests from forks run without secrets. The ruleset asks for one approval covering the last push, but admins bypass it, so we do not count a second reviewer as a control. |
-| T5  | A compromised release of a runtime dependency (distlib, filelock, platformdirs, python-discovery) reaches users.           | Medium | The wheel and sdist declare [version ranges][pyproject], and each user's installer resolves them, so we cannot pin for them. [Dependabot][dependabot-config] checks them each week with a seven-day cooldown. The zipapp bundles these dependencies at build time; see open items.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| T5  | A compromised release of a runtime dependency (distlib, filelock, platformdirs, python-discovery) reaches users.           | Medium | The wheel and sdist declare [version ranges][pyproject], and each user's installer resolves them, so we cannot pin for them. [Dependabot][dependabot-config] checks them each week with a seven-day cooldown. The zipapp bundles the versions a [PEP 751][pep-751] lock pins by SHA-256, and the upgrade workflow refreshes the lock after the same seven-day cooldown ([#3306][pr-3306]).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | T6  | Someone modifies embedded wheels after the release build, on disk or inside the zipapp.                                    | Low    | The [embed module][src-embed-init] records the SHA-256 of each embedded wheel and checks it before first use in each process, reading from inside the zipapp when needed. The [wheel build][hatch-build] generates the embedded [CycloneDX] SBOM from the same table.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | T7  | Another local user redirects virtualenv's writes through a symlink or a race.                                              | Low    | We replaced check-then-create with atomic directory creation ([GHSA-597g-3phw-6986][ghsa-597g]). The [creator][src-creator] resolves the destination and checks write access before use. Directories shared with other users stay outside what we can defend; see accepted risks.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 
@@ -249,9 +249,10 @@ risk to lowest.
 These threats target the project and its releases. They weigh more on a package that tox and hatch pull in without
 pinning.
 
-S1 covers maintainer account takeover. Repository admins bypass both [rulesets][gh-rulesets], so an admin account can
-push to `main`, create a tag and trigger a release with no other account involved, and the attestations would show a
-genuine workflow run of attacker-chosen code. [INCIDENT_RESPONSE.md][ir-response] covers containment.
+S1 covers maintainer account takeover. Repository admins and the [release App][release-app] bypass both
+[rulesets][gh-rulesets], so an admin account can push to `main`, create a tag and trigger a release with no other
+account involved, and the attestations would show a genuine workflow run of attacker-chosen code.
+[INCIDENT_RESPONSE.md][ir-response] covers containment.
 
 A patient contributor can earn trust and land a harmful change, as in the [xz backdoor][xz]. CI runs on each pull
 request, and a non-admin cannot merge without passing checks. Bernát reviews most pull requests without a second
@@ -276,7 +277,8 @@ section.
   approve deployments through the API. A tag or branch policy does not stop a compromised maintainer token, because
   pushing a matching `*.*.*` tag starts the release. We rely on trusted publishing and attestations.
 - Admins bypass the `main` and tag [rulesets][gh-rulesets]. The [pre-release workflow][workflow-pre-release] pushes the
-  release commit to `main` and creates the tag with `GH_RELEASE_TOKEN`, which needs the admin bypass.
+  release commit to `main` and creates the tag with a token from the [release App][release-app], which the rulesets list
+  as a bypass actor next to admins.
 - A root or service account that runs virtualenv on a destination, app-data directory or temporary directory that a less
   privileged user can write gives that user a way in. Use a directory that no other user can write.
 - Seeded pip and setuptools run as the user, and so does each package the user adds to the environment. virtualenv does
@@ -291,16 +293,13 @@ section.
 We would accept a fix for each of these gaps, and we track each one in a public pull request or issue once someone picks
 it up.
 
-- The [zipapp build][task-make-zipapp] downloads its runtime dependencies from PyPI inside the version ranges, with no
-  hash pinning, so the zipapp contains whatever PyPI served at build time. [#3306][pr-3306] bundles wheels pinned by a
-  [PEP 751][pep-751] lock and waits for review.
-- `GH_RELEASE_TOKEN` is a stored personal access token that can push to both `pypa/virtualenv` and
-  `pypa/get-virtualenv`. Anyone who obtains it can push until a maintainer revokes it, and each workflow job in this
-  repository that names the `release` environment can read it. [#3301][pr-3301], a draft, replaces it with
-  [GitHub App installation tokens][gh-app-tokens] scoped per job.
+- The `GH_RELEASE_TOKEN` personal access token stays in the `release` environment until a release built with the
+  [GitHub App installation tokens][gh-app-tokens] from [#3301][pr-3301] succeeds. A maintainer then revokes the token
+  and deletes the secret.
 - Wheels do not rebuild byte for byte across build machines, because the embedded SBOM records the build environment
   (operating system, kernel, architecture and interpreter build). A rebuilt wheel differs from the published one in the
   SBOM and in the `RECORD` entry that hashes it, and the sdist is the one distribution that [reproduces][ra-repro].
+  [#3311][pr-3311] drops the build environment from the SBOMs.
 - virtualenv does not tie an embedded wheel to an attestation from the pip or setuptools project; the hash table records
   what PyPI served on the upgrade day.
 
@@ -354,7 +353,7 @@ We apply least privilege in the workflows and in the tool. Each workflow except 
 with no token permissions and grants each job the permissions it needs and no more; upgrade.yaml starts with read access
 to contents. The repository's [default workflow token][gh-token-permissions] is read-only, and GitHub
 [rejects actions not pinned to a full commit SHA][gh-sha-pinning]. Checkouts do not persist credentials, except in
-[pre-release.yaml][workflow-pre-release], which pushes the release commit and tag with `GH_RELEASE_TOKEN`, and the
+[pre-release.yaml][workflow-pre-release], which pushes the release commit and tag with a release App token, and the
 upgrade publish job, which pushes with a deploy key. PyPI uploads use trusted publishing (S1). In the tool, the app-data
 seeder [marks the extracted wheel image read-only][src-symlink] when it links packages by symlink.
 
@@ -496,6 +495,7 @@ the workflows as I1 describes, and [scorecard.yaml][workflow-scorecard] runs [Op
 [pr-3306]: https://github.com/pypa/virtualenv/pull/3306
 [pr-3309]: https://github.com/pypa/virtualenv/pull/3309
 [pr-3310]: https://github.com/pypa/virtualenv/pull/3310
+[pr-3311]: https://github.com/pypa/virtualenv/pull/3311
 [precommit-ci]: https://pre-commit.ci/
 [precommit-config]: https://github.com/pypa/virtualenv/blob/main/.pre-commit-config.yaml
 [pypa-bootstrap]: https://github.com/pypa/bootstrap
@@ -509,6 +509,7 @@ the workflows as I1 describes, and [scorecard.yaml][workflow-scorecard] runs [Op
 [ra-files]: https://virtualenv.pypa.io/en/latest/reference/release-artifacts.html#files
 [ra-repro]: https://virtualenv.pypa.io/en/latest/reference/release-artifacts.html#build-reproducibility
 [release-21.10.0]: https://github.com/pypa/virtualenv/releases/tag/21.10.0
+[release-app]: https://github.com/apps/virtualenv-release
 [ruff]: https://docs.astral.sh/ruff/
 [ruff-bandit]: https://docs.astral.sh/ruff/rules/#flake8-bandit-s
 [scorecard]: https://scorecard.dev/
@@ -537,7 +538,6 @@ the workflows as I1 describes, and [scorecard.yaml][workflow-scorecard] runs [Op
 [src-text]: https://github.com/pypa/virtualenv/blob/main/src/virtualenv/util/text.py
 [src-zipapp]: https://github.com/pypa/virtualenv/blob/main/src/virtualenv/util/zipapp.py
 [stride]: https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool-threats#stride-model
-[task-make-zipapp]: https://github.com/pypa/virtualenv/blob/main/tasks/make_zipapp.py
 [task-wheel-age]: https://github.com/pypa/virtualenv/blob/main/tasks/check_wheel_age.py
 [tests-acquire]: https://github.com/pypa/virtualenv/blob/main/tests/unit/seed/wheels/test_acquire.py
 [tests-app-data]: https://github.com/pypa/virtualenv/blob/main/tests/unit/seed/embed/test_bootstrap_link_via_app_data.py
