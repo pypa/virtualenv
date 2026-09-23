@@ -93,8 +93,8 @@ Learn more about virtualenv from these community resources:
 - `Corey Schafer's virtualenv tutorial <https://www.youtube.com/watch?v=N5vscPTWKOk>`_ — Video walkthrough for beginners
 - `Bernat Gabor's status quo <https://www.youtube.com/watch?v=o1Vue9CWRxU>`_ — Talk about the current state of Python
   packaging
-- `Carl Meyer's reverse-engineering <http://pyvideo.org/video/568/reverse-engineering-ian-bicking--39-s-brain--insi>`_ —
-  Deep dive into how virtualenv works internally
+- `Carl Meyer's reverse-engineering <https://pyvideo.org/video/568/reverse-engineering-ian-bicking--39-s-brain--insi/>`_
+  — Deep dive into how virtualenv works internally
 
 .. toctree::
     :hidden:
