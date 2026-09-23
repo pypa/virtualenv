@@ -69,6 +69,9 @@ def main() -> None:
     entry: Final[zipfile.ZipInfo] = zipfile.ZipInfo(
         _SBOM_NAME, datetime.fromtimestamp(get_reproducible_timestamp(), tz=timezone.utc).timetuple()[:6]
     )
+    # match the entries tasks/make_zipapp.py writes, whichever OS appends the SBOM
+    entry.create_system = 3
+    entry.external_attr = 0o644 << 16
     with zipfile.ZipFile(pyz, "a") as archive:
         archive.writestr(entry, content)
 

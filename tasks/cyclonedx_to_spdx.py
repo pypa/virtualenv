@@ -122,7 +122,6 @@ _REPOSITORY: Final[str] = "https://github.com/pypa/virtualenv"
 _PURPOSES: Final[dict[str, str]] = {
     "application": "APPLICATION",
     "library": "LIBRARY",
-    "operating-system": "OPERATING-SYSTEM",
     "platform": "OTHER",
 }
 

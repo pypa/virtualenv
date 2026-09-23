@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import csv
 import hashlib
 import json
@@ -145,28 +146,55 @@ def test_sbom_timestamp(
     assert json.loads(build_sbom("pip/example.py", {}))["metadata"]["timestamp"] == expected
 
 
-@pytest.mark.parametrize(
-    ("build", "expected"),
-    [
-        pytest.param(("main", "Sep 21 2026"), "main Sep 21 2026", id="complete"),
-        pytest.param(("main", None), "main", id="graalpy-missing-date"),
-        pytest.param(("main", ""), "main", id="empty-date"),
-    ],
-)
-def test_sbom_python_build(
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="platform.freedesktop_os_release is new in Python 3.10")
+def test_sbom_build_host_independent(
     build_sbom: Callable[[str, dict[str, str]], str],
+    install_tool: Callable[[Path, str, bool, dict[str, bytes]], None],
     mocker: MockerFixture,
-    build: tuple[str, str | None],
-    expected: str,
+    tmp_path: Path,
 ) -> None:
-    mocker.patch("platform.python_build", autospec=True, return_value=build)
-    document: Final[dict[str, Any]] = json.loads(build_sbom("pip/example.py", {}))
-    assert [
-        prop["value"]
-        for component in document["metadata"]["tools"]["components"]
-        for prop in component.get("properties", [])
-        if prop["name"] == "python:build"
-    ] == [expected]
+    sboms: Final[list[str]] = []
+    for host, extension, installer, sys_version in (
+        (
+            {
+                "system": "Linux",
+                "release": "6.17.0-1022-azure",
+                "version": "#22~24.04.1-Ubuntu SMP",
+                "machine": "x86_64",
+                "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+                "python_compiler": "GCC 13.3.0",
+                "python_build": ("main", "Aug  5 2026 10:00:00"),
+                "freedesktop_os_release": {"ID": "ubuntu", "VERSION_ID": "24.04"},
+            },
+            "cpython-314-x86_64-linux-gnu.so",
+            b"uv\n",
+            "3.14.7 (main, Aug  5 2026, 10:00:00) [GCC 13.3.0]",
+        ),
+        (
+            {
+                "system": "Linux",
+                "release": "7.0.12-linuxkit",
+                "version": "#1 SMP PREEMPT",
+                "machine": "aarch64",
+                "platform": "Linux-7.0.12-linuxkit-aarch64-with-glibc2.36",
+                "python_compiler": "Clang 20.1.4",
+                "python_build": ("main", "Sep  1 2026 08:00:00"),
+                "freedesktop_os_release": {"ID": "debian", "VERSION_ID": "12"},
+            },
+            "cpython-314-aarch64-linux-gnu.so",
+            b"pip\n",
+            "3.14.7 (main, Sep  1 2026, 08:00:00) [Clang 20.1.4]",
+        ),
+    ):
+        for name, value in host.items():
+            mocker.patch(f"platform.{name}", autospec=True, return_value=value)
+        mocker.patch.object(sys, "version", sys_version)
+        install_tool(site := tmp_path / extension, "native", False, {f"native/_speedups.{extension}": b"\0"})
+        install_tool(site, "pure", True, {"pure-1.0.dist-info/INSTALLER": installer})
+        mocker.patch.object(sys, "path", [str(site), *sys.path])
+        sboms.append(build_sbom("pip/example.py", {}))
+        mocker.stopall()
+    assert sboms[0] == sboms[1]
 
 
 def test_sbom_ci_rerun(build_sbom: Callable[[str, dict[str, str]], str], monkeypatch: pytest.MonkeyPatch) -> None:
@@ -361,7 +389,7 @@ def test_sbom_zipapp_embeds_document(zipapp: Path, zipapp_sbom: str) -> None:
 @pytest.fixture
 def zipapp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     if sys.version_info < (3, 10):
-        pytest.skip("hatch_build.py reads the OS release with platform.freedesktop_os_release, new in Python 3.10")
+        pytest.skip("zipfile.Path shares and then closes the handle of the archive it wraps before Python 3.10")
     wheel: Final[BytesIO] = BytesIO()
     with zipfile.ZipFile(wheel, "w") as archive:
         archive.writestr("pip-1.0.dist-info/METADATA", "Metadata-Version: 2.4\nName: pip\nVersion: 1.0\n")
@@ -399,6 +427,25 @@ def render_spdx(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Callable[[st
         return target.read_text(encoding="utf-8")
 
     return render
+
+
+@pytest.fixture
+def install_tool() -> Callable[[Path, str, bool, dict[str, bytes]], None]:
+    def install(site: Path, name: str, purelib: bool, files: dict[str, bytes]) -> None:
+        record: Final[StringIO] = StringIO(newline="")
+        for path, content in files.items():
+            (target := site / path).parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(content)
+            digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).rstrip(b"=").decode()
+            csv.writer(record).writerow((path, f"sha256={digest}", len(content)))
+        (dist_info := site / f"{name}-1.0.dist-info").mkdir(exist_ok=True)
+        (dist_info / "METADATA").write_text(f"Metadata-Version: 2.4\nName: {name}\nVersion: 1.0\n", encoding="utf-8")
+        (dist_info / "WHEEL").write_text(
+            f"Wheel-Version: 1.0\nRoot-Is-Purelib: {str(purelib).lower()}\n", encoding="utf-8"
+        )
+        (dist_info / "RECORD").write_text(record.getvalue(), encoding="utf-8", newline="")
+
+    return install
 
 
 @pytest.fixture
