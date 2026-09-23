@@ -339,17 +339,29 @@ initiate a vote among the existing maintainers.
     - CI Administration capabilities
     - ReadTheDocs Administration capabilities
 
+Maintainer access
+-----------------
+
+Current and backup maintainers turn on two-factor authentication for GitHub and PyPI, with a security key or passkey
+where the service supports one. We review access once a year and whenever a maintainer steps back. When someone steps
+back, we remove their GitHub push access, PyPI publishing access, CI administration and ReadTheDocs administration, and
+rotate every secret they could read. New commit access still goes through the maintainer vote described above.
+
 .. _current-maintainers:
 
 Current maintainers
 -------------------
 
 - :user:`Bernát Gábor <gaborbernat>`
-- :user:`Rahul Devikar <rahuldevikar>`
+- :user:`Rahul Devikar <rahuldevikar>`, who covers when Bernát is unavailable
+
+Backup maintainer
+-----------------
+
+- :user:`Paul Moore <pfmoore>`, who steps in if both current maintainers are away
 
 Previous maintainers
 --------------------
 
-- :user:`Paul Moore <pfmoore>`
 - :user:`Ian Bicking <ianb>`
 - :user:`Donald Stufft <dstufft>`

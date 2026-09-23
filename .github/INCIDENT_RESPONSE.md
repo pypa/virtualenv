@@ -20,9 +20,9 @@ step below.
 ## Who responds
 
 [Bernát Gábor](https://github.com/gaborbernat) leads the response, because he does most of the day-to-day work and
-answers fastest. [Rahul Devikar](https://github.com/rahuldevikar) and [Paul Moore](https://github.com/pfmoore) back that
-up. Nothing here depends on who is available: anyone holding release rights can run this plan, and the lead for a given
-incident is whoever picks it up.
+answers fastest. [Rahul Devikar](https://github.com/rahuldevikar) covers when Bernát is unavailable, and
+[Paul Moore](https://github.com/pfmoore) steps in if both are away. Nothing here depends on who is available: anyone
+holding release rights can run this plan, and the lead for a given incident is whoever picks it up.
 
 We are volunteers, with no rotation and no out-of-hours cover. The targets in [SECURITY.md](SECURITY.md) are what this
 team can meet on a good week, not a service level. [Tidelift](https://tidelift.com/security) is the lane that carries a
