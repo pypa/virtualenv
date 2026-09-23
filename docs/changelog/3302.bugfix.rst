@@ -1,0 +1,3 @@
+Refuse a seed wheel downloaded from the default index when virtualenv cannot get its sha256 from PyPI after three
+retries, instead of seeding it unverified. Seeding falls back to the bundled wheel unless a specific version was
+requested.

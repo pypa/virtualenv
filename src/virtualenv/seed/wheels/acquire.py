@@ -11,7 +11,7 @@ from subprocess import PIPE, CalledProcessError, Popen
 from typing import TYPE_CHECKING, Final
 
 from .bundle import from_bundle
-from .periodic_update import add_wheel_to_update_log, verify_wheel_digest
+from .periodic_update import UnverifiedWheelError, add_wheel_to_update_log, verify_wheel_digest
 from .util import Version, Wheel, discover_wheels
 
 if TYPE_CHECKING:
@@ -82,15 +82,22 @@ def get_wheel(  # ruff:ignore[too-many-arguments]
 
     if download and wheel is None and version != Version.embed:
         # 2. download from the internet
-        wheel = download_wheel(
-            distribution=distribution,
-            version_spec=Version.as_version_spec(version),
-            for_py_version=for_py_version,
-            search_dirs=search_dirs,
-            app_data=app_data,
-            to_folder=app_data.house,
-            env=env,
-        )
+        try:
+            wheel = download_wheel(
+                distribution=distribution,
+                version_spec=Version.as_version_spec(version),
+                for_py_version=for_py_version,
+                search_dirs=search_dirs,
+                app_data=app_data,
+                to_folder=app_data.house,
+                env=env,
+            )
+        except UnverifiedWheelError as exception:
+            # only the bundle request has a local wheel that satisfies it; a pinned version must fail
+            if version != Version.bundle:
+                raise
+            LOGGER.warning("%s, seeding the bundled %s instead", exception, distribution)
+            return from_bundle(distribution, version, for_py_version, search_dirs, app_data, do_periodic_update, env)
         if wheel is not None and app_data.can_update:
             add_wheel_to_update_log(wheel, for_py_version, app_data)
 
@@ -123,7 +130,7 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
     :raises ValueError: if ``distribution`` or ``version_spec`` fail the strict allow-list check.
     :raises CalledProcessError: if ``pip download`` exits with a non-zero status.
     :raises RuntimeError: if no downloaded wheel can be identified from ``pip``'s output or the search directory, or if
-        the caller has not configured a custom index and PyPI has a published digest for the downloaded filename that
+        the caller has not configured a custom index and PyPI's sha256 for the downloaded filename cannot be obtained or
         does not match, see :func:`virtualenv.seed.wheels.periodic_update.verify_wheel_digest`.
 
     """
