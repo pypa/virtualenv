@@ -112,9 +112,13 @@ class VirtualEnvConfigParser(ArgumentParser):
                     outcome = self.file_config.get(name, as_type)
                     if outcome is not None:
                         break
+            if tri_state := action.default is None and isinstance(action.const, bool):
+                outcome = _as_passed_flag(action.const, outcome)
             if outcome is not None:
                 action.default, default_source = outcome
                 vars(action)["default_source"] = default_source
+            elif tri_state and hasattr(self.options, action.dest):
+                return  # a sibling flag sharing this destination already set it
             else:
                 outcome = action.default, "default"
             self.options.set_src(action.dest, *outcome)
@@ -151,6 +155,15 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
             if text.endswith(default):
                 text = f"{text[: -len(default)]} (default: %(default)s -> from %(default_source)s)"
         return text
+
+
+def _as_passed_flag(const: bool, outcome: tuple[bool, str] | None) -> tuple[bool, str] | None:
+    # an env var or ini value for a --x/--no-x pair means "as if the flag was passed": true stores the flag's value, while
+    # false on the negative flag leaves the choice unset rather than flipping it on
+    if outcome is None or const:
+        return outcome
+    value, source = outcome
+    return (False, source) if value else None
 
 
 __all__ = [

@@ -294,44 +294,39 @@ Options are resolved in this order (highest to lowest priority):
  Make environments discoverable
 ********************************
 
-virtualenv points a ``.venv`` redirect file next to the environment it creates at that environment, so editors and type
-checkers can find it without an activated shell. See `PEP 832 <https://peps.python.org/pep-0832/>`_ for the format and
-:ref:`explanation:Environment discovery` for the reasoning. The feature is provisional while the PEP is a draft, so a
-minor or patch release may change it in backward incompatible ways.
+In a project folder, one holding a ``pyproject.toml``, virtualenv points a ``.venv`` redirect file at the first
+environment you create there, so editors and type checkers can find it without an activated shell. See `PEP 832
+<https://peps.python.org/pep-0832/>`_ for the format and :ref:`explanation:Environment discovery` for the reasoning. The
+feature is provisional while the PEP is a draft, so a minor or patch release may change it in backward incompatible
+ways.
 
 Point a tool at the right environment
 =====================================
 
-The redirect names the environment you created last:
+The redirect names the first environment you created in the project:
 
 .. code-block:: console
 
     $ virtualenv py313 --python 3.13
     $ virtualenv py314 --python 3.14
     $ cat .venv
-    py314
+    py313
 
-To make ``py313`` the default again, create it again over the existing folder:
+Pass ``--venv-redirect`` to make another environment the default, or to write the redirect outside a project folder:
 
 .. code-block:: console
 
-    $ virtualenv py313 --python 3.13
+    $ virtualenv py314 --python 3.14 --venv-redirect
     $ cat .venv
-    py313
+    py314
 
 virtualenv leaves a ``.venv`` folder alone, and a redirect pointing at an environment it did not create. Delete the
 ``.venv`` if you want virtualenv to take it over.
 
-Skip the redirect
-=================
+Choose once for every environment
+=================================
 
-Pass ``--no-venv-redirect`` when you do not want virtualenv to write ``.venv``:
-
-.. code-block:: console
-
-    $ virtualenv env --no-venv-redirect
-
-Set it once for every environment you create through the configuration file or an environment variable:
+Set the choice in the configuration file or an environment variable. ``no_venv_redirect = true`` stops the redirect:
 
 .. code-block:: ini
 
@@ -341,6 +336,10 @@ Set it once for every environment you create through the configuration file or a
 .. code-block:: console
 
     $ export VIRTUALENV_NO_VENV_REDIRECT=1
+
+``venv_redirect = true`` or ``VIRTUALENV_VENV_REDIRECT=1`` writes it for every environment, as ``--venv-redirect`` does.
+A flag on the command line beats both, so ``virtualenv env --venv-redirect`` writes the file for one run even with
+``no_venv_redirect = true`` set.
 
 Commit the file or ignore it
 ============================

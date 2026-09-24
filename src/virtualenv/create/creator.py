@@ -54,7 +54,7 @@ class Creator(ABC):
         self.dest = Path(options.dest)
         self.clear = options.clear
         self.no_vcs_ignore = options.no_vcs_ignore
-        self.no_venv_redirect = options.no_venv_redirect
+        self.venv_redirect = options.venv_redirect
         self.pyenv_cfg = PyEnvCfg.from_folder(self.dest)
         self.app_data = options.app_data
         self.env = options.env
@@ -91,7 +91,7 @@ class Creator(ABC):
             ("dest", str(self.dest)),
             ("clear", self.clear),
             ("no_vcs_ignore", self.no_vcs_ignore),
-            ("no_venv_redirect", self.no_venv_redirect),
+            ("venv_redirect", self.venv_redirect),
         ]
 
     @classmethod
@@ -142,11 +142,21 @@ class Creator(ABC):
             default=False,
         )
         parser.add_argument(
+            "--venv-redirect",
+            dest="venv_redirect",
+            action="store_const",
+            const=True,
+            help="point a PEP-832 .venv redirect file next to the destination at the created environment, even outside "
+            "a project folder; unset, virtualenv does so only beside a pyproject.toml with no .venv yet",
+            default=None,
+        )
+        parser.add_argument(
             "--no-venv-redirect",
-            dest="no_venv_redirect",
-            action="store_true",
-            help="don't point a PEP-832 .venv redirect file next to the destination at the created environment",
-            default=False,
+            dest="venv_redirect",
+            action="store_const",
+            const=False,
+            help="write no PEP-832 .venv redirect file",
+            default=None,
         )
 
     @abstractmethod
@@ -213,7 +223,7 @@ class Creator(ABC):
         self.set_pyenv_cfg()
         if not self.no_vcs_ignore:
             self.setup_ignore_vcs()
-        if not self.no_venv_redirect:
+        if self.venv_redirect is not False:
             self.point_venv_redirect()
 
     def add_cachedir_tag(self) -> None:
@@ -262,6 +272,10 @@ class Creator(ABC):
         if self.dest.name == ".venv":  # the environment is the .venv itself, no redirect needed
             return
         redirect = self.dest.parent / ".venv"
+        if self.venv_redirect is None and (
+            redirect.exists() or redirect.is_symlink() or not (self.dest.parent / "pyproject.toml").is_file()
+        ):  # unset: claim the default only for a project folder that has none yet
+            return
         if redirect.is_symlink() or redirect.is_dir():
             LOGGER.debug("%s keeps being the default environment", redirect)
             return

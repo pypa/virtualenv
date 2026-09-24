@@ -91,7 +91,8 @@ _CONVERT = {bool: BoolType, type(None): NoneType, list: ListType}
 
 
 def get_type(action: Action) -> TypeData:
-    default_type = type(action.default)
+    # a flag that stores a bool over an unset default is tri-state, so its env var and ini values read as bools
+    default_type = bool if action.default is None and isinstance(action.const, bool) else type(action.default)
     as_type = default_type if action.type is None else action.type
     return _CONVERT.get(default_type, TypeData)(default_type, as_type)  # ty: ignore[invalid-argument-type]
 

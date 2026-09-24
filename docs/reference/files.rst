@@ -80,12 +80,13 @@ shells.
 =========
 
 A :PEP:`832` redirect file holding the destination folder name, which tells editors and type checkers which environment
-of the parent folder to use. Skip it with ``--no-venv-redirect``.
+of the parent folder to use. virtualenv writes it in a folder holding a ``pyproject.toml`` and no ``.venv`` yet. Force
+it with ``--venv-redirect``, skip it with ``--no-venv-redirect``.
 
 .. warning::
 
     This file is provisional because PEP 832 is still a draft, and virtualenv follows the PEP as it changes. A minor or
-    patch release may change this file and ``--no-venv-redirect`` in backward incompatible ways.
+    patch release may change this file, ``--venv-redirect`` and ``--no-venv-redirect`` in backward incompatible ways.
 
 .. code-block:: text
 
@@ -104,11 +105,12 @@ Format rules virtualenv follows when it writes the file:
     - - Content
       - One line: the destination folder name, relative to the parent folder, followed by a newline.
     - - Target
-      - The environment created last.
+      - The first environment created in a folder holding a ``pyproject.toml``; with ``--venv-redirect``, the
+        environment created last, in any folder.
     - - ``.venv`` folder
       - Left alone, whether folder or symlink; virtualenv writes nothing when the destination itself is ``.venv``.
     - - Existing redirect
-      - Replaced only when its target's ``pyvenv.cfg`` carries the ``virtualenv`` key; one written by another tool, or
-        pointing at a missing folder, stays.
+      - Kept, unless you pass ``--venv-redirect`` and its target's ``pyvenv.cfg`` carries the ``virtualenv`` key; one
+        that another tool wrote, or that points at a missing folder, stays either way.
     - - Failure
       - Logged as a warning; the environment is still created.
