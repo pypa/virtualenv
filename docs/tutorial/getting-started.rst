@@ -26,7 +26,7 @@ Let's create a virtual environment called ``myproject``:
 
     $ virtualenv myproject
     created virtual environment CPython3.13.2.final.0-64 in 200ms
-      creator CPython3Posix(dest=/home/user/myproject, clear=False, no_vcs_ignore=False, no_venv_redirect=False, global=False)
+      creator CPython3Posix(dest=/home/user/myproject, clear=False, no_vcs_ignore=False, venv_redirect=None, global=False)
       seeder FromAppData(download=False, pip=bundle, setuptools=bundle, via=copy, app_data_dir=/home/user/.cache/virtualenv)
       activators BashActivator,CShellActivator,FishActivator,NushellActivator,PowerShellActivator,PythonActivator
 
@@ -49,16 +49,17 @@ The interpreter answers to several names, so a script expecting any of them keep
     $ ls myproject/bin/python*
     myproject/bin/python  myproject/bin/python3  myproject/bin/python3.13
 
-Alongside the folder you get a ``.venv`` redirect file naming the environment you just made:
+When you create the environment inside a project folder, one with a ``pyproject.toml``, virtualenv writes a ``.venv``
+redirect file naming it:
 
 .. code-block:: console
 
     $ cat .venv
     myproject
 
-The same tools read that file to find the environment, so they can offer the right interpreter before you activate
-anything. Create a second environment here and the redirect points at it instead. Pass ``--no-venv-redirect`` if you
-would rather virtualenv left no trace outside the environment folder. The redirect is provisional and may change as PEP
+Editors and type checkers read that file to find the environment, so they can offer the right interpreter before you
+activate anything. A second environment in the same folder leaves the redirect as it is; pass ``--venv-redirect`` to
+point it at the new one, or ``--no-venv-redirect`` to write nothing. The redirect is provisional and may change as PEP
 832 evolves. :doc:`../reference/environment-layout` lists every interpreter name, and :doc:`../reference/files` covers
 every file.
 

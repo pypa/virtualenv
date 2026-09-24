@@ -168,8 +168,9 @@ virtualenv operates in two distinct phases:
     2. Install seed packages (pip, setuptools, wheel) to enable package installation
     3. Install activation scripts for various shells
     4. Create VCS ignore files (currently Git's ``.gitignore``, skip with ``--no-vcs-ignore``)
-    5. Point a ``.venv`` redirect file beside the environment at it so editors and type checkers can find it (`PEP 832
-       <https://peps.python.org/pep-0832/>`_, provisional, skip with ``--no-venv-redirect``)
+    5. In a project folder, point a ``.venv`` redirect file beside the environment at it so editors and type checkers
+       can find it (`PEP 832 <https://peps.python.org/pep-0832/>`_, provisional; force with ``--venv-redirect``, skip
+       with ``--no-venv-redirect``)
 
 An important design principle: virtual environments are not self-contained. A complete Python installation consists of
 thousands of files, and copying all of them into every virtual environment would be wasteful. Instead, virtual
@@ -640,28 +641,40 @@ behind the tool itself.
 either the environment itself or a redirect file holding a single line with the path of one. virtualenv creates
 environments, so it writes the redirect; reading it belongs to the tools consuming it.
 
-After creating ``<root>/<name>``, virtualenv writes ``<name>`` into ``<root>/.venv``:
+virtualenv is a low-level tool, and most environments it builds are not a project's default, such as scratch
+environments or the ones tox and nox create for their own use. By default it writes the redirect when the environment
+lands in a project folder, one holding a ``pyproject.toml``, and that folder has no ``.venv`` yet:
 
 .. code-block:: console
 
+    $ ls
+    pyproject.toml  src
     $ virtualenv env
-    $ virtualenv other
+    $ virtualenv scratch
     $ cat .venv
-    other
+    env
 
-**The newest environment wins**
-    The redirect names one environment, the one other tools should use by default, so each creation points it at the
-    environment just made.
+**The first environment in a project claims the default**
+    Later environments leave the redirect alone, so a throwaway environment next to your working one does not move your
+    editor to it. Pass ``--venv-redirect`` to point the redirect at the new environment.
+
+**Outside a project folder, virtualenv writes nothing**
+    ``virtualenv foo`` in a folder without a ``pyproject.toml`` leaves the folder as it was. ``--venv-redirect`` writes
+    the redirect there anyway.
 
 **A ``.venv`` folder stays**
     Creating ``.venv`` itself writes nothing, and where a ``.venv`` folder or symlink exists virtualenv leaves it alone,
     since it already is the default.
 
 **Other tools' redirects stay**
-    The PEP asks tools not to overwrite a redirect another tool wrote. The file carries no marker of who wrote it, so
-    virtualenv judges by the target: it takes over the redirect only when the ``pyvenv.cfg`` there carries the
-    ``virtualenv`` key. A redirect written by uv, ``venv`` or you stays, and so does one whose target is gone, since it
-    may still resolve inside a container or on another machine.
+    Even with ``--venv-redirect``, virtualenv honors the PEP's request not to overwrite a redirect another tool wrote.
+    The file carries no marker of who wrote it, so virtualenv judges by the target: it takes over the redirect only when
+    the ``pyvenv.cfg`` there carries the ``virtualenv`` key. A redirect written by uv, ``venv`` or you stays, and so
+    does one whose target is gone, since it may still resolve inside a container or on another machine.
+
+**The command line wins**
+    ``--venv-redirect`` and ``--no-venv-redirect`` set one choice, and a flag on the command line beats the environment
+    variable and the configuration file, so a single run can override a standing setting in either direction.
 
 **A failed write keeps the environment**
     A write failure logs a warning and leaves you with a working environment. Discovery is a convenience for other
