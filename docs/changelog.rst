@@ -7,6 +7,24 @@
 .. towncrier release notes start
 
 ***********************
+ v21.12.0 (2026-09-24)
+***********************
+
+Features - 21.12.0
+==================
+
+- Write the `PEP 838 <https://peps.python.org/pep-0838/>`_ ``python-version`` key into ``pyvenv.cfg``, holding the
+  target interpreter's feature release. The new :doc:`reference/files` page covers it alongside every other file a
+  created environment holds - by :user:`konstin`. (:issue:`3193`)
+- Point a ``.venv`` redirect file in the parent folder at the created environment, per `PEP 832
+  <https://peps.python.org/pep-0832/>`_, so editors and type checkers can find it - by :user:`gaborbernat`.
+
+  - virtualenv leaves a ``.venv`` folder alone, and a redirect pointing at an environment it did not create.
+  - Pass ``--no-venv-redirect`` to opt out.
+  - The feature is provisional while PEP 832 is a draft: a minor or patch release may change it in backward incompatible
+    ways to follow the PEP. (:issue:`3204`)
+
+***********************
  v21.11.1 (2026-09-23)
 ***********************
 
