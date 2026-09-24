@@ -7,6 +7,21 @@
 .. towncrier release notes start
 
 ***********************
+ v21.12.1 (2026-09-24)
+***********************
+
+Bugfixes - 21.12.1
+==================
+
+- Limit the :PEP:`832` ``.venv`` redirect to folders holding a ``pyproject.toml`` and no ``.venv`` yet, so ``virtualenv
+  foo`` in a scratch folder, and tools such as tox or nox building environments through virtualenv, no longer claim a
+  folder's default environment - by :user:`gaborbernat`.
+
+  - ``--venv-redirect`` writes the redirect in any folder and replaces an earlier virtualenv redirect.
+  - A flag on the command line overrides the environment variable and the config file in either direction.
+    (:issue:`3316`)
+
+***********************
  v21.12.0 (2026-09-24)
 ***********************
 
