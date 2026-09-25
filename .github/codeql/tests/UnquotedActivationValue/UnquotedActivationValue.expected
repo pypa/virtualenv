@@ -1,0 +1,28 @@
+edges
+| activators.py:8:16:8:70 | ControlFlowNode for Dict [Dictionary element at key __VIRTUAL_ENV__] | activators.py:11:27:11:57 | ControlFlowNode for Attribute() [Dictionary element at key __VIRTUAL_ENV__] | provenance |  |
+| activators.py:8:16:8:70 | ControlFlowNode for Dict [Dictionary element at key __VIRTUAL_PROMPT__] | activators.py:11:27:11:57 | ControlFlowNode for Attribute() [Dictionary element at key __VIRTUAL_PROMPT__] | provenance |  |
+| activators.py:8:39:8:44 | ControlFlowNode for prompt | activators.py:8:16:8:70 | ControlFlowNode for Dict [Dictionary element at key __VIRTUAL_PROMPT__] | provenance |  |
+| activators.py:8:66:8:69 | ControlFlowNode for dest | activators.py:8:16:8:70 | ControlFlowNode for Dict [Dictionary element at key __VIRTUAL_ENV__] | provenance |  |
+| activators.py:11:13:11:22 | ControlFlowNode for Tuple [Tuple element at index 1] | activators.py:11:18:11:22 | ControlFlowNode for value | provenance |  |
+| activators.py:11:13:11:22 | IterableSequence [Tuple element at index 1] | activators.py:11:13:11:22 | ControlFlowNode for Tuple [Tuple element at index 1] | provenance |  |
+| activators.py:11:18:11:22 | ControlFlowNode for value | activators.py:12:38:12:42 | ControlFlowNode for value | provenance |  |
+| activators.py:11:27:11:57 | ControlFlowNode for Attribute() [Dictionary element at key __VIRTUAL_ENV__] | activators.py:11:27:11:65 | ControlFlowNode for Attribute() [List element, Tuple element at index 1] | provenance | dict.items |
+| activators.py:11:27:11:57 | ControlFlowNode for Attribute() [Dictionary element at key __VIRTUAL_PROMPT__] | activators.py:11:27:11:65 | ControlFlowNode for Attribute() [List element, Tuple element at index 1] | provenance | dict.items |
+| activators.py:11:27:11:65 | ControlFlowNode for Attribute() [List element, Tuple element at index 1] | activators.py:11:13:11:22 | ControlFlowNode for Tuple [Tuple element at index 1] | provenance |  |
+| activators.py:11:27:11:65 | ControlFlowNode for Attribute() [List element, Tuple element at index 1] | activators.py:11:13:11:22 | IterableSequence [Tuple element at index 1] | provenance |  |
+nodes
+| activators.py:8:16:8:70 | ControlFlowNode for Dict [Dictionary element at key __VIRTUAL_ENV__] | semmle.label | ControlFlowNode for Dict [Dictionary element at key __VIRTUAL_ENV__] |
+| activators.py:8:16:8:70 | ControlFlowNode for Dict [Dictionary element at key __VIRTUAL_PROMPT__] | semmle.label | ControlFlowNode for Dict [Dictionary element at key __VIRTUAL_PROMPT__] |
+| activators.py:8:39:8:44 | ControlFlowNode for prompt | semmle.label | ControlFlowNode for prompt |
+| activators.py:8:66:8:69 | ControlFlowNode for dest | semmle.label | ControlFlowNode for dest |
+| activators.py:11:13:11:22 | ControlFlowNode for Tuple [Tuple element at index 1] | semmle.label | ControlFlowNode for Tuple [Tuple element at index 1] |
+| activators.py:11:13:11:22 | IterableSequence [Tuple element at index 1] | semmle.label | IterableSequence [Tuple element at index 1] |
+| activators.py:11:18:11:22 | ControlFlowNode for value | semmle.label | ControlFlowNode for value |
+| activators.py:11:27:11:57 | ControlFlowNode for Attribute() [Dictionary element at key __VIRTUAL_ENV__] | semmle.label | ControlFlowNode for Attribute() [Dictionary element at key __VIRTUAL_ENV__] |
+| activators.py:11:27:11:57 | ControlFlowNode for Attribute() [Dictionary element at key __VIRTUAL_PROMPT__] | semmle.label | ControlFlowNode for Attribute() [Dictionary element at key __VIRTUAL_PROMPT__] |
+| activators.py:11:27:11:65 | ControlFlowNode for Attribute() [List element, Tuple element at index 1] | semmle.label | ControlFlowNode for Attribute() [List element, Tuple element at index 1] |
+| activators.py:12:38:12:42 | ControlFlowNode for value | semmle.label | ControlFlowNode for value |
+subpaths
+#select
+| activators.py:12:38:12:42 | ControlFlowNode for value | activators.py:8:39:8:44 | ControlFlowNode for prompt | activators.py:12:38:12:42 | ControlFlowNode for value | $@ reaches an activation script without quoting. | activators.py:8:39:8:44 | ControlFlowNode for prompt | This input |
+| activators.py:12:38:12:42 | ControlFlowNode for value | activators.py:8:66:8:69 | ControlFlowNode for dest | activators.py:12:38:12:42 | ControlFlowNode for value | $@ reaches an activation script without quoting. | activators.py:8:66:8:69 | ControlFlowNode for dest | This input |

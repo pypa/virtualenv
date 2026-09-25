@@ -1,0 +1,1 @@
+| acquire.py:11:5:11:58 | Popen() | This pip download in $@ never calls verify_wheel_digest(). | acquire.py:10:1:10:47 | Function download_unverified | download_unverified |
