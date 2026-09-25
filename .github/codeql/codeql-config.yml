@@ -2,5 +2,6 @@ queries:
   - uses: security-extended
 threat-models: local
 paths-ignore:
+  - .github/codeql/tests
   - tasks
   - tests
