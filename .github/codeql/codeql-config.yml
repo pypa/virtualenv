@@ -1,0 +1,6 @@
+queries:
+  - uses: security-extended
+threat-models: local
+paths-ignore:
+  - tasks
+  - tests
