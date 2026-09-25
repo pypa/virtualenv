@@ -19,7 +19,6 @@ module UnquotedActivationValueConfig implements DataFlow::ConfigSig {
   predicate isSource(DataFlow::Node node) {
     exists(Function replacements, Return ret, Dict dict |
       replacements.getName() = "replacements" and
-      replacements.getLocation().getFile().getRelativePath().matches("%virtualenv/activation/%") and
       ret.getScope() = replacements and
       ret.getValue() = dict and
       node.asExpr() = dict.getAValue()
@@ -29,7 +28,7 @@ module UnquotedActivationValueConfig implements DataFlow::ConfigSig {
   predicate isSink(DataFlow::Node node) {
     exists(DataFlow::MethodCallNode call |
       call.calls(_, "replace") and
-      call.getLocation().getFile().getRelativePath().matches("%virtualenv/activation/%") and
+      call.getScope().(Function).getName() = "instantiate_template" and
       node = call.getArg(1)
     )
   }

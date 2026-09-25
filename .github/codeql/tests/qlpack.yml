@@ -1,0 +1,6 @@
+name: pypa/virtualenv-queries-tests
+extractor: python
+tests: .
+dependencies:
+  codeql/python-all: "*"
+  pypa/virtualenv-queries: "*"
