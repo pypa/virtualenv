@@ -161,10 +161,14 @@ Any build frontend works, since the SBOM leaves out the installer metadata a fro
 Wheels up to 21.10.0 recorded the build machine in their SBOM, so a rebuild of those differs in the SBOM and in
 ``RECORD``, which holds the SBOM's hash.
 
+The release pins the build backend and its dependencies by version and SHA-256 in `tasks/release-requirements.txt
+<https://github.com/pypa/virtualenv/blob/main/tasks/release-requirements.txt>`_, so a checkout of the tag carries them.
+
 The zipapp, built by `tasks/make_zipapp.py <https://github.com/pypa/virtualenv/blob/main/tasks/make_zipapp.py>`_, needs
 the same inputs, and its entries carry ``SOURCE_DATE_EPOCH`` as their timestamp and fixed permissions. The build takes
 the distributions it bundles from `pylock.zipapp.toml
 <https://github.com/pypa/virtualenv/blob/main/pylock.zipapp.toml>`_, a `PEP 751 <https://peps.python.org/pep-0751/>`_
 lock that pins each wheel by SHA-256, and fails on a hash mismatch. A rebuild of a release from 21.11.0 on also needs
 the versions of the tools that built it: the zipapp SBOM lists the packages of the build environment, and the wheel SBOM
-inside the zipapp lists the backend that built that wheel.
+inside the zipapp lists the backend that built that wheel. Releases after 21.13.0 also pin those tools in
+``tasks/release-requirements.txt``.

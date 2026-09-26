@@ -53,15 +53,18 @@ PLATFORMS: Final[tuple[str, ...]] = ("darwin", "linux", "win32")
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dest", default="virtualenv.pyz")
+    parser.add_argument("--wheel-dir", type=Path, help="bundle the virtualenv wheel from here instead of building one")
     args = parser.parse_args()
     with TemporaryDirectory() as folder:
-        packages = get_wheels_for_support_versions(Path(folder))
+        packages = get_wheels_for_support_versions(Path(folder), args.wheel_dir)
         create_zipapp(os.path.abspath(args.dest), packages)
 
 
-def get_wheels_for_support_versions(folder: Path) -> dict[str, dict[str, dict[str, WheelForVersion]]]:
+def get_wheels_for_support_versions(
+    folder: Path, wheel_dir: Path | None
+) -> dict[str, dict[str, dict[str, WheelForVersion]]]:
     packages: defaultdict[str, dict[str, dict[str, WheelForVersion]]] = defaultdict(lambda: {"==any": {}})
-    wheel = build_virtualenv_wheel(folder)
+    wheel = build_virtualenv_wheel(folder) if wheel_dir is None else next(wheel_dir.glob("virtualenv-*.whl"))
     packages["virtualenv"]["==any"][wheel.name] = WheelForVersion(wheel, list(VERSIONS))
     for package in tomllib.loads(LOCK.read_text(encoding="utf-8"))["packages"]:
         wheel = download_locked_wheel(package, folder)

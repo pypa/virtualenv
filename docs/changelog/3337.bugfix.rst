@@ -1,0 +1,2 @@
+Build the release sdist, wheel and zipapp with the build backend and SBOM tools that ``tasks/release-requirements.txt``
+pins by version and SHA-256, so a rebuild of the tag uses the same versions.
