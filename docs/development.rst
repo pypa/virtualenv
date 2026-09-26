@@ -236,6 +236,32 @@ Additionally, avoid including "cosmetic" changes to code that is unrelated to yo
 PR more difficult. Examples include re-flowing text in comments or documentation, or addition or removal of blank lines
 or whitespace within lines. Such changes can be made separately, as a "formatting cleanup" PR, if needed.
 
+Code review
+===========
+
+A maintainer reviews each pull request before it merges into ``main`` and checks that:
+
+- the change does what its description says, and a test covers it;
+- the change works on each Python version and operating system that :ref:`compatibility-requirements` lists;
+- a news fragment describes each user-facing change, and the documentation matches the new behavior;
+- the command line, the Python API and the plugin API stay compatible, or a deprecation or removal fragment announces
+  the break;
+- a change to activation scripts, ``pyvenv.cfg``, wheel downloads, app-data or the release workflows names in its
+  description the outside input it handles, and updates the `threat model
+  <https://github.com/pypa/virtualenv/blob/main/.github/THREAT_MODEL.md#update-triggers>`_ when it hits an update
+  trigger;
+- a new or bumped dependency meets the :ref:`licensing policy <development:Licensing policy>`.
+
+The ``main`` ruleset enforces the rest. A pull request merges only after four checks pass: ``✅ all checks pass``, which
+gathers the test matrix, the type checks, the docs build, the zipapp and SBOM checks and the CodeQL query tests from
+``check.yaml``; ``🔍 dependency review``; ``pre-commit.ci - pr``; and the Read the Docs build. The ruleset also blocks a
+merge while CodeQL reports an error, or a security alert of high severity or above.
+
+The ruleset asks for one approval from someone other than the last person to push. Repository admins can bypass that
+rule, and the maintainers merge their own pull requests this way once the required checks pass. The `threat model
+<https://github.com/pypa/virtualenv/blob/main/.github/THREAT_MODEL.md#library-and-supply-chain-threats>`_ records the
+risk of a single reviewer.
+
 AI-assisted contributions
 =========================
 
