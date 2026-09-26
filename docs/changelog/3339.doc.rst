@@ -1,0 +1,2 @@
+Apply the licensing policy to what the wheel and zipapp ship, checked against their SBOMs, and name ``ALLOWED_LICENSES``
+in ``tasks/license_policy.py`` as the list of accepted licenses.

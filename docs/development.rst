@@ -256,15 +256,18 @@ Licensing policy
 virtualenv is distributed under the MIT License, and everything in the repository must be compatible with it:
 
 - Contributions are accepted under the MIT License only; you must have the right to license what you submit.
-- Runtime dependencies must use a permissive license: MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0, PSF-2.0, ISC or
-  Unlicense. The Unlicense entry covers ``filelock`` 3.19.1 and older, which virtualenv installs on Python 3.9 and
-  bundles in the zipapp. Copyleft licenses (GPL, LGPL, AGPL, MPL) are not acceptable for runtime dependencies.
-  Development-only tools carry no such restriction.
-- ``.github/workflows/dependency-review.yaml`` enforces this list on every pull request and fails when a change adds a
-  runtime dependency under another license, or one with a known vulnerability. Its ``allow-licenses`` input and the list
-  above must match.
-- The wheels embedded under ``src/virtualenv/seed/wheels/embed`` (``pip``, ``setuptools``) keep their own MIT licenses
-  and are redistributed unchanged.
+- What virtualenv ships must use a permissive license from ``ALLOWED_LICENSES`` in ``tasks/license_policy.py``. That
+  covers virtualenv itself, every distribution the zipapp bundles, and the embedded ``pip`` and ``setuptools`` wheels
+  under ``src/virtualenv/seed/wheels/embed``, which keep their own MIT licenses and ship unchanged. The packages those
+  wheels vendor follow the terms of their wheel. The Unlicense entry covers ``filelock`` 3.19.1 and older, which
+  virtualenv installs on Python 3.9 and bundles in the zipapp. Copyleft licenses (GPL, LGPL, AGPL, MPL) stay out.
+  Development and release tools carry no such restriction.
+- ``tasks/validate_sbom.py`` enforces the policy on the SBOMs of the built wheel and zipapp, in ``tox r -e readme`` and
+  ``tox r -e zipapp``. An SPDX expression passes when each ``OR`` offers an allowed license and every ``AND`` operand is
+  allowed; a ``WITH`` exception leaves the verdict to the license it modifies. A package that declares its license by
+  name alone fails the check until ``_CLASSIFIER_LICENSES`` in ``hatch_build.py`` maps the name to an SPDX id.
+- ``.github/workflows/dependency-review.yaml`` fails a pull request that adds a dependency with a known vulnerability to
+  any manifest, release tooling lock files included.
 - Adding a runtime dependency or bumping an embedded wheel is a maintainer decision; checking the license of the new
   version is part of that review.
 - ``hatch_build.py`` writes a `CycloneDX <https://cyclonedx.org/>`_ SBOM into every wheel at

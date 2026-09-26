@@ -1,0 +1,2 @@
+Record the SPDX license id in the wheel and zipapp SBOMs for bundled packages that declare their license by name or
+classifier, such as ``distlib`` and ``python-discovery``, so license scanners can match them.

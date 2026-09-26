@@ -1,4 +1,4 @@
-"""Check that the SBOM embedded in a built wheel or zipapp is valid CycloneDX 1.6 and satisfies actions/attest."""
+"""Check that the SBOM in a built wheel or zipapp is valid CycloneDX 1.6, satisfies actions/attest and license policy."""
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any, Final
 from cyclonedx.schema import SchemaVersion
 from cyclonedx.validation.json import JsonStrictValidator
 from cyclonedx_to_spdx import to_spdx
+from license_policy import license_problems
 from spdx_tools.spdx.parser.error import SPDXParsingError
 from spdx_tools.spdx.parser.jsonlikedict.json_like_dict_parser import JsonLikeDictParser
 from spdx_tools.spdx.validation.document_validator import validate_full_spdx_document
@@ -85,6 +86,7 @@ def validate(wheel: Path) -> list[str]:
     problems = _validate_serial(document.get("serialNumber", ""))
     problems += _validate_references(document)
     problems += _validate_spdx(document)
+    problems += license_problems(document["components"])
     return problems
 
 
@@ -103,6 +105,7 @@ def validate_zipapp(pyz: Path) -> list[str]:
     document = json.loads(raw)
     problems = _validate_serial(document.get("serialNumber", ""))
     problems += _validate_references(document)
+    problems += license_problems(document["components"])
     described: Final[dict[str, str]] = dict(
         _described_files([document["metadata"]["component"], *document["components"]])
     )

@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING, Any, Final
 
 from hatchling.builders.hooks.plugin.interface import BuildHookInterface
 from hatchling.builders.utils import get_reproducible_timestamp
+from packaging.licenses import InvalidLicenseExpression, canonicalize_license_expression
 from packaging.requirements import Requirement
 
 if TYPE_CHECKING:
@@ -66,6 +67,16 @@ _METADATA_PROPERTIES: Final[tuple[str, ...]] = (
     "Classifier",
     "Keywords",
 )
+# only the license classifiers that name exactly one SPDX license; "BSD License" or "Apache Software License" leave the
+# version or variant open
+_CLASSIFIER_LICENSES: Final[dict[str, str]] = {
+    "ISC License (ISCL)": "ISC",
+    "MIT License": "MIT",
+    "MIT No Attribution License (MIT-0)": "MIT-0",
+    "Mozilla Public License 2.0 (MPL 2.0)": "MPL-2.0",
+    "Python Software Foundation License": "PSF-2.0",
+    "The Unlicense (Unlicense)": "Unlicense",
+}
 _RECORD_HASH_ALGORITHMS: Final[dict[str, str]] = {
     "md5": "MD5",
     "sha1": "SHA-1",
@@ -343,7 +354,27 @@ def _licenses(metadata: PackageMetadata) -> list[dict[str, Any]]:
     ]
     if (declared := metadata.get("License")) and "\n" not in declared:
         names.append(declared)
-    return [{"license": {"name": name, "acknowledgement": "declared"}} for name in names]
+    licenses: Final[list[dict[str, Any]]] = [
+        {"license": {"name": name, "acknowledgement": "declared"}} for name in names
+    ]
+    # tasks/license_policy.py judges SPDX ids only, so a component keeps its bare names when any one of them does not
+    # resolve and the check reports it instead of judging a partial set
+    if names and None not in (identifiers := [_spdx_license(name) for name in names]):
+        licenses.extend(
+            {"license": {"id": identifier, "acknowledgement": "concluded"}} for identifier in dict.fromkeys(identifiers)
+        )
+    return licenses
+
+
+def _spdx_license(name: str) -> str | None:
+    if identifier := _CLASSIFIER_LICENSES.get(name):
+        return identifier
+    try:
+        canonical = canonicalize_license_expression(name)
+    except InvalidLicenseExpression:
+        return None
+    # a CycloneDX license id holds one entry of the SPDX license list, never an expression or a LicenseRef
+    return canonical if re.fullmatch(r"[A-Za-z0-9.-]+", canonical) and not canonical.startswith("LicenseRef-") else None
 
 
 def _bundle_support() -> dict[str, dict[str, str]]:
