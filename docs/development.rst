@@ -256,8 +256,13 @@ Licensing policy
 virtualenv is distributed under the MIT License, and everything in the repository must be compatible with it:
 
 - Contributions are accepted under the MIT License only; you must have the right to license what you submit.
-- Runtime dependencies must use a permissive license: MIT, BSD, Apache-2.0, PSF-2.0 or ISC. Copyleft licenses (GPL,
-  LGPL, AGPL, MPL) are not acceptable for runtime dependencies. Development-only tools carry no such restriction.
+- Runtime dependencies must use a permissive license: MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0, PSF-2.0, ISC or
+  Unlicense. The Unlicense entry covers ``filelock`` 3.19.1 and older, which virtualenv installs on Python 3.9 and
+  bundles in the zipapp. Copyleft licenses (GPL, LGPL, AGPL, MPL) are not acceptable for runtime dependencies.
+  Development-only tools carry no such restriction.
+- ``.github/workflows/dependency-review.yaml`` enforces this list on every pull request and fails when a change adds a
+  runtime dependency under another license, or one with a known vulnerability. Its ``allow-licenses`` input and the list
+  above must match.
 - The wheels embedded under ``src/virtualenv/seed/wheels/embed`` (``pip``, ``setuptools``) keep their own MIT licenses
   and are redistributed unchanged.
 - Adding a runtime dependency or bumping an embedded wheel is a maintainer decision; checking the license of the new
