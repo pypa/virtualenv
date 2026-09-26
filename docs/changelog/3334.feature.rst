@@ -1,0 +1,3 @@
+Add ``Changelog`` and ``Funding`` links to the PyPI project metadata, and replace the ``2020-202x`` placeholder in
+``LICENSE`` with ``2020-present`` so the copyright field of the wheel SBOM reads as a real range - by
+:user:`gaborbernat`.

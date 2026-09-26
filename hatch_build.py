@@ -165,7 +165,6 @@ def _root_component(core: CoreMetadata, version: str) -> dict[str, Any]:
     references += [
         {"type": "distribution", "url": f"https://pypi.org/project/{core.name}/{version}/"},
         {"type": "attestation", "url": f"https://pypi.org/integrity/{core.name}/{version}/{wheel_name}/provenance"},
-        {"type": "release-notes", "url": "https://virtualenv.pypa.io/en/latest/changelog.html"},
         {"type": "security-contact", "url": f"{_REPOSITORY}/security/policy"},
         {"type": "advisories", "url": f"{_REPOSITORY}/security/advisories"},
         {"type": "license", "url": f"{_REPOSITORY}/blob/main/LICENSE"},

@@ -57,7 +57,9 @@ dependencies = [
   "python-discovery>=1.6",
   "typing-extensions>=4.13.2; python_version<'3.11'",
 ]
+urls.Changelog = "https://virtualenv.pypa.io/en/latest/changelog.html"
 urls.Documentation = "https://virtualenv.pypa.io"
+urls.Funding = "https://github.com/sponsors/gaborbernat"
 urls.Homepage = "https://github.com/pypa/virtualenv"
 urls.Source = "https://github.com/pypa/virtualenv"
 urls.Tracker = "https://github.com/pypa/virtualenv/issues"
