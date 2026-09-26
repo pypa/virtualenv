@@ -146,6 +146,13 @@ def test_sbom_timestamp(
     assert json.loads(build_sbom("pip/example.py", {}))["metadata"]["timestamp"] == expected
 
 
+def test_sbom_release_notes_from_project_url(build_sbom: Callable[[str, dict[str, str]], str]) -> None:
+    root: Final[dict[str, Any]] = json.loads(build_sbom("pip/example.py", {}))["metadata"]["component"]
+    assert [reference for reference in root["externalReferences"] if reference["type"] == "release-notes"] == [
+        {"type": "release-notes", "url": "https://example.com/changelog", "comment": "Project-URL: Changelog"},
+    ]
+
+
 @pytest.mark.skipif(sys.version_info < (3, 10), reason="platform.freedesktop_os_release is new in Python 3.10")
 def test_sbom_build_host_independent(
     build_sbom: Callable[[str, dict[str, str]], str],
@@ -483,6 +490,7 @@ def build_sbom(tmp_path: Path) -> Callable[[str, dict[str, str]], str]:
                     "license": "MIT",
                     "maintainers": [{"name": "Example"}],
                     "dependencies": ["python-discovery>=1.6"],
+                    "urls": {"Changelog": "https://example.com/changelog"},
                 },
                 "tool": {"hatch": {"build": {"hooks": {"custom": {"path": "hatch_build.py"}}}}},
             },
