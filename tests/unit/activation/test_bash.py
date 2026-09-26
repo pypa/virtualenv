@@ -227,6 +227,101 @@ def test_bash_activate_does_not_export_ps1(tmp_path, current_fastest) -> None:
     assert result.stdout.splitlines() == ["None", "None"]
 
 
+@pytest.fixture
+def bash_prompt_after_activate(tmp_path: Path, current_fastest: str) -> Callable[[str | None, str], tuple[Path, str]]:
+    version = subprocess.run(
+        ["bash", "-c", 'printf "%s" "$((BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1]))"'],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    if int(version) < 404:
+        pytest.skip("${PS1@P} needs bash 4.4 or later")
+
+    def build(prompt: str | None, env_name: str) -> tuple[Path, str]:
+        dest = tmp_path / env_name
+        args = [
+            "--without-pip",
+            str(dest),
+            "--creator",
+            current_fastest,
+            "--no-periodic-update",
+            "--activators",
+            "bash",
+        ]
+        if prompt is not None:
+            args += ["--prompt", prompt]
+        cli_run(args)
+        activate = dest / "bin" / "activate"
+        work_dir = tmp_path / "workdir"
+        work_dir.mkdir(exist_ok=True)
+        # the path is passed as $1 so the outer shell cannot expand a payload dir name while locating the script;
+        # ${PS1@P} then forces bash to render the prompt exactly as it does before each interactive command
+        result = subprocess.run(
+            ["bash", "--norc", "--noprofile", "-c", 'source "$1"; printf "%s" "${PS1@P}"', "bash", str(activate)],
+            capture_output=True,
+            text=True,
+            cwd=str(work_dir),
+            encoding="utf-8",
+            check=False,
+        )
+        return work_dir, result.stdout
+
+    return build
+
+
+@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
+@pytest.mark.parametrize(
+    ("prompt", "env_name"),
+    [
+        pytest.param("x$(touch PWNED)y", "env", id="prompt-command-substitution"),
+        pytest.param("x`touch PWNED`y", "env", id="prompt-backticks"),
+        pytest.param(None, "x$(touch PWNED)y", id="dirname-command-substitution"),
+    ],
+)
+def test_bash_prompt_does_not_run_commands(
+    bash_prompt_after_activate: Callable[[str | None, str], tuple[Path, str]], prompt: str | None, env_name: str
+) -> None:
+    work_dir, _ = bash_prompt_after_activate(prompt, env_name)
+
+    assert not (work_dir / "PWNED").exists()
+
+
+@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
+def test_bash_prompt_keeps_plain_name_visible(
+    bash_prompt_after_activate: Callable[[str | None, str], tuple[Path, str]],
+) -> None:
+    _, rendered = bash_prompt_after_activate("myenv", "env")
+
+    assert rendered.startswith("(myenv) ")
+
+
+@pytest.mark.skipif(IS_WIN or shutil.which("dash") is None, reason="needs dash as a POSIX shell")
+def test_bash_activate_sources_under_dash(tmp_path: Path, current_fastest: str) -> None:
+    dest = tmp_path / "env"
+    cli_run([
+        "--without-pip",
+        str(dest),
+        "--creator",
+        current_fastest,
+        "--no-periodic-update",
+        "--activators",
+        "bash",
+        "--prompt",
+        "x$y",
+    ])
+
+    result = subprocess.run(
+        ["dash", "-c", '. "$1" && printf "%s" "$VIRTUAL_ENV"', "dash", str(dest / "bin" / "activate")],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout) == (0, str(dest))
+
+
 @pytest.mark.slow
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
 @pytest.mark.parametrize("hashing_enabled", [True, False])
@@ -248,6 +343,11 @@ def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> 
             return super().activate_call(script) + " || exit 1"
 
         def print_prompt(self):
-            return 'printf "%s\\n" "$PS1"'
+            # render PS1 the way bash draws it, since the activator escapes the prompt for that expansion; bash before
+            # 4.4 lacks ${PS1@P}, so undo the escapes the way its prompt expansion would
+            return (
+                'if ((BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1] >= 404)); then printf "%s\\n" "${PS1@P}"; '
+                "else printf '%s\\n' \"$PS1\" | sed 's/\\\\\\([$`\\\\]\\)/\\1/g'; fi"
+            )
 
     activation_tester(Bash)
