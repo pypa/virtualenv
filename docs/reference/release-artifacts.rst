@@ -50,7 +50,8 @@ each file, and :ref:`release-integrity` explains what the checks prove.
 The bootstrap copies come from the ``public`` directory of `pypa/get-virtualenv
 <https://github.com/pypa/get-virtualenv>`_, which the release workflow updates, and can trail the latest release.
 Releases published before an asset existed do not have it; ``gh release view {version} --repo pypa/virtualenv`` lists
-what a release carries. Immutable releases are enabled on the repository, so assets cannot change after publication.
+what a release carries. Releases from 21.11.0 on are immutable; GitHub rejects changes to their tag and assets after
+publication.
 
 **************
  Attestations
@@ -78,9 +79,13 @@ what a release carries. Immutable releases are enabled on the repository, so ass
     - - CycloneDX SBOM, predicate ``https://cyclonedx.org/bom``
       - ``virtualenv.pyz``
       - GitHub attestations API, predicate equal to ``virtualenv.pyz.cdx.json``
+    - - GitHub release attestation, predicate ``https://in-toto.io/attestation/release/v0.2``
+      - the tag's commit and every GitHub release asset, from 21.11.0 on
+      - GitHub attestations API, read by ``gh release verify``
 
-The release workflow signs every attestation through `Sigstore <https://www.sigstore.dev>`_ with the identity
-``https://github.com/pypa/virtualenv/.github/workflows/release.yaml@refs/tags/{version}``.
+The release workflow signs every attestation except the last through `Sigstore <https://www.sigstore.dev>`_ with the
+identity ``https://github.com/pypa/virtualenv/.github/workflows/release.yaml@refs/tags/{version}``. GitHub signs the
+release attestation when it publishes an immutable release, with the identity ``https://dotcom.releases.github.com``.
 
 *******
  SBOMs
@@ -153,6 +158,9 @@ Wheels up to 21.10.0 recorded the build machine in their SBOM, so a rebuild of t
 ``RECORD``, which holds the SBOM's hash.
 
 The zipapp, built by `tasks/make_zipapp.py <https://github.com/pypa/virtualenv/blob/main/tasks/make_zipapp.py>`_, needs
-the same inputs, and its entries carry ``SOURCE_DATE_EPOCH`` as their timestamp and fixed permissions. Its build also
-downloads the distributions it bundles and the backend for the wheel inside it from PyPI without pinning them, so a
-rebuild matches only while those resolve to the versions the release used.
+the same inputs, and its entries carry ``SOURCE_DATE_EPOCH`` as their timestamp and fixed permissions. The build takes
+the distributions it bundles from `pylock.zipapp.toml
+<https://github.com/pypa/virtualenv/blob/main/pylock.zipapp.toml>`_, a `PEP 751 <https://peps.python.org/pep-0751/>`_
+lock that pins each wheel by SHA-256, and fails on a hash mismatch. A rebuild of a release from 21.11.0 on also needs
+the versions of the tools that built it: the zipapp SBOM lists the packages of the build environment, and the wheel SBOM
+inside the zipapp lists the backend that built that wheel.

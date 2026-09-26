@@ -1,0 +1,3 @@
+Show how to check a release with ``gh release verify`` and ``gh release verify-asset``, and how to rebuild the zipapp
+byte for byte with the build tool versions its SBOMs list. Drop the claims that the zipapp build does not pin the
+distributions it bundles and that wheels differ between build machines - by :user:`gaborbernat`.
