@@ -78,6 +78,7 @@ jobs:
     runs-on: ubuntu-24.04
     environment: upgrade
     permissions:
+      actions: write # dispatch CI on the upgrade branch
       contents: write # let create-pull-request manage the upgrade branch
       pull-requests: write # open the upgrade pull request
     steps:
@@ -86,7 +87,7 @@ jobs:
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
-          ssh-key: ${{ secrets.DEPLOY_KEY }} # zizmor: ignore[artipacked]
+          persist-credentials: true # zizmor: ignore[artipacked] create-pull-request and the changelog rename push with it
       - name: Download upgrade patch
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
@@ -127,3 +128,12 @@ jobs:
           git push origin HEAD:auto/upgrade-embedded-deps
         env:
           STEPS_CPR_OUTPUTS_PULL_REQUEST_NUMBER: ${{ steps.cpr.outputs.pull-request-number }}
+      - name: Run CI on the upgrade branch
+        if: steps.cpr.outputs.pull-request-number
+        # events from GITHUB_TOKEN start no workflows, except workflow_dispatch, so the pull request gets no CI otherwise
+        run: |
+          gh workflow run check.yaml --ref auto/upgrade-embedded-deps
+          gh workflow run codeql.yaml --ref auto/upgrade-embedded-deps
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
