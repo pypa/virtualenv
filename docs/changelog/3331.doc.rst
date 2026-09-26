@@ -1,0 +1,2 @@
+List each account that can bypass the ``main`` and tag rulesets in the threat model, with what it can do: push to
+``main``, create or move tags, and publish to PyPI - by :user:`gaborbernat`.

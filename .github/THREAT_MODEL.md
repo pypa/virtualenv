@@ -199,7 +199,7 @@ risk to lowest.
 
 | ID  | Threat                                                                                                          | Risk   | Mitigation                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | --- | --------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| S1  | An attacker takes over a maintainer's GitHub or PyPI account and publishes a release.                           | High   | PyPI uploads use [trusted publishing][pypi-tp] from [release.yaml][workflow-release], so no long-lived PyPI token exists to steal. PyPI [requires 2FA][pypi-2fa] on each account. A [tag ruleset][gh-rulesets] reserves creating, moving and deleting tags for admins. Artifacts carry [attestations][gh-attestations] that tie them to the workflow, and [immutable releases][gh-immutable] block changes to GitHub release assets after publication. |
+| S1  | An attacker takes over a maintainer's GitHub or PyPI account and publishes a release.                           | High   | PyPI uploads use [trusted publishing][pypi-tp] from [release.yaml][workflow-release], so no long-lived PyPI token exists to steal. PyPI [requires 2FA][pypi-2fa] on each account. A [tag ruleset][gh-rulesets] lets [admins and the App](#ruleset-bypass) change tags. Artifacts carry [attestations][gh-attestations] that tie them to the workflow, and [immutable releases][gh-immutable] block changes to GitHub release assets after publication. |
 | S2  | An attacker registers a lookalike name on PyPI (`virtualenvs`, `virtual-env`) to catch users who mistype.       | Medium | PyPI resolves names that normalize to `virtualenv` under [PEP 503][pep-503] to this project. Other lookalikes are outside our control; we report them to [PyPI security][pypi-security].                                                                                                                                                                                                                                                               |
 | S3  | A network attacker or a compromised mirror serves a different wheel under a genuine pip or setuptools filename. | Low    | pip verifies TLS. virtualenv [compares the downloaded file's SHA-256][src-periodic-update] with PyPI's record and refuses a mismatch ([GHSA-94p9-xgh2-xp45][ghsa-94p9]) or a wheel PyPI lists no digest for ([#3302][pr-3302]). Unless the user sets [`VIRTUALENV_PERIODIC_UPDATE_INSECURE`][usage-insecure], the PyPI metadata request has no unverified TLS fallback.                                                                                |
 | S4  | A third-party package registers an entry point named like a built-in activator or creator to replace it.        | Low    | Built-in entry points win on a name collision ([plugin loading][src-plugin-base]). A package that can register entry points runs code at import, so the collision gives it no new capability.                                                                                                                                                                                                                                                          |
@@ -253,6 +253,39 @@ S1 covers maintainer account takeover. Repository admins and the [release App][r
 [rulesets][gh-rulesets], so an admin account can push to `main`, create a tag and trigger a release with no other
 account involved, and the attestations would show a genuine workflow run of attacker-chosen code.
 [INCIDENT_RESPONSE.md][ir-response] covers containment.
+
+### Ruleset bypass
+
+The `default` ruleset guards `main` and the `protect-release-tags` ruleset guards each tag. Both list two bypass actors
+in `always` mode, the repository admin role and the release App. On 2026-09-26 these accounts held that bypass:
+
+| Account                                             | Source of the bypass                                             |
+| --------------------------------------------------- | ---------------------------------------------------------------- |
+| Bernát Gábor ([@gaborbernat][gh-gaborbernat])       | admin through the `virtualenv-committers` team                   |
+| Rahul Devikar ([@rahuldevikar][gh-rahuldevikar])    | admin through the `virtualenv-committers` team                   |
+| Paul Moore ([@pfmoore][gh-pfmoore])                 | admin through the team and as a `pypa` owner                     |
+| Dustin Ingram ([@di][gh-di])                        | admin as a `pypa` organization owner                             |
+| Donald Stufft ([@dstufft][gh-dstufft])              | admin as a `pypa` organization owner                             |
+| Ee Durbin ([@ewdurbin][gh-ewdurbin])                | admin as a `pypa` organization owner                             |
+| Jacob Coffee ([@JacobCoffee][gh-jacobcoffee])       | admin as a `pypa` organization owner                             |
+| Jason R. Coombs ([@jaraco][gh-jaraco])              | admin as a `pypa` organization owner                             |
+| Pradyun Gedam ([@pradyunsg][gh-pradyunsg])          | admin as a `pypa` organization owner                             |
+| Xavier Fernandez ([@xavfernandez][gh-xavfernandez]) | admin as a `pypa` organization owner                             |
+| `virtualenv-release[bot]`                           | the ruleset lists the [release App][release-app], App ID 5040632 |
+
+Each of the ten admins can push to `main` without a pull request or passing checks, and can create, move or delete any
+tag. Pushing a `*.*.*` tag starts [release.yaml][workflow-release], which uploads to PyPI through trusted publishing, so
+tag rights amount to publishing rights. Admins can also edit the rulesets and the `release` environment, and they can
+push a workflow that reads the environment's secrets.
+
+`virtualenv-release[bot]` holds `contents: write` and the same `main` and tag bypass. The
+[pre-release workflow][workflow-pre-release] uses it to push the release commit and the tag, and the publish job uses it
+to update [pypa/get-virtualenv][get-virtualenv]. Its private key sits in the `release` environment, so whoever runs a
+job in that environment can act as the App. Bernát owns the App and can rotate its key or change its permissions.
+
+No account holds direct collaborator access, and no collaborator holds the write or maintain role, so no other person
+can push a branch to the repository. PyPI owner accounts can upload to [PyPI][pypi-project] without going through
+GitHub; the project page on PyPI lists them.
 
 A patient contributor can earn trust and land a harmful change, as in the [xz backdoor][xz]. CI runs on each pull
 request, and a non-admin cannot merge without passing checks. Bernát reviews most pull requests without a second
@@ -434,16 +467,26 @@ the workflows as I1 describes, and [scorecard.yaml][workflow-scorecard] runs [Op
 [fuzz-pyenv-cfg]: https://github.com/pypa/virtualenv/blob/main/tasks/fuzz_pyenv_cfg.py
 [get-virtualenv]: https://github.com/pypa/get-virtualenv
 [gh-attestations]: https://docs.github.com/en/actions/security-for-github-actions/using-artifact-attestations/using-artifact-attestations-to-establish-provenance-for-builds
+[gh-di]: https://github.com/di
+[gh-dstufft]: https://github.com/dstufft
 [gh-environments]: https://docs.github.com/en/actions/managing-workflow-runs-and-deployments/managing-deployments/managing-environments-for-deployment
+[gh-ewdurbin]: https://github.com/ewdurbin
+[gh-gaborbernat]: https://github.com/gaborbernat
 [gh-immutable]: https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/immutable-releases
+[gh-jacobcoffee]: https://github.com/JacobCoffee
+[gh-jaraco]: https://github.com/jaraco
+[gh-pfmoore]: https://github.com/pfmoore
+[gh-pradyunsg]: https://github.com/pradyunsg
 [gh-prt]: https://docs.github.com/en/actions/writing-workflows/choosing-when-your-workflow-runs/events-that-trigger-workflows#pull_request_target
 [gh-push-protection]: https://docs.github.com/en/code-security/secret-scanning/introduction/about-push-protection
 [gh-pvr]: https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability
+[gh-rahuldevikar]: https://github.com/rahuldevikar
 [gh-releases]: https://github.com/pypa/virtualenv/releases
 [gh-rulesets]: https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets
 [gh-secret-scanning]: https://docs.github.com/en/code-security/secret-scanning/introduction/about-secret-scanning
 [gh-sha-pinning]: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository#allowing-select-actions-and-reusable-workflows-to-run
 [gh-token-permissions]: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository#setting-the-permissions-of-the-github_token-for-your-repository
+[gh-xavfernandez]: https://github.com/xavfernandez
 [ghsa-597g]: https://github.com/pypa/virtualenv/security/advisories/GHSA-597g-3phw-6986
 [ghsa-94p9]: https://github.com/pypa/virtualenv/security/advisories/GHSA-94p9-xgh2-xp45
 [ghsa-9h9j]: https://github.com/pypa/virtualenv/security/advisories/GHSA-9h9j-4vrj-gf7g
