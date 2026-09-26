@@ -345,11 +345,12 @@ argue that the release above meets them, apart from the exceptions under [Accept
 We apply least privilege in the workflows and in the tool. Each workflow except [upgrade.yaml][workflow-upgrade] starts
 with no token permissions and grants each job the permissions it needs and no more; upgrade.yaml starts with read access
 to contents. The repository's [default workflow token][gh-token-permissions] is read-only, and GitHub
-[rejects actions not pinned to a full commit SHA][gh-sha-pinning]. Checkouts do not persist credentials, except in
-[pre-release.yaml][workflow-pre-release], which pushes the release commit and tag with a release App token, and the
-upgrade publish job, which pushes the upgrade branch with the workflow token. PyPI uploads use trusted publishing (S1).
-In the tool, the app-data seeder [marks the extracted wheel image read-only][src-symlink] when it links packages by
-symlink.
+[rejects actions not pinned to a full commit SHA][gh-sha-pinning]. Checkouts do not persist credentials, except in the
+upgrade publish job, which pushes the upgrade branch with the workflow token. [pre-release.yaml][workflow-pre-release]
+builds the changelog in a job with no credentials, from tools that a hash-pinned lock fixes, and a second job mints the
+release App token to create the signed release commit and tag through the GitHub API. The commit takes only
+`docs/changelog.rst` from the first job. PyPI uploads use trusted publishing (S1). In the tool, the app-data seeder
+[marks the extracted wheel image read-only][src-symlink] when it links packages by symlink.
 
 virtualenv uses fail-safe defaults on the network and in the batch activator. If the TLS handshake with the PyPI
 metadata API fails, virtualenv does not retry without verification; the unverified fallback needs the

@@ -17,13 +17,57 @@ concurrency:
   cancel-in-progress: false
 permissions: {}
 jobs:
-  pre-release:
-    name: Pre-release
+  changelog:
+    name: Build changelog
+    # the release commit fast-forwards main from the dispatched commit, so a branch ahead of main would land on main
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read # check out the source and let setup-uv download uv with the job token
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install the locked version of uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version-file: tasks/release-requirements.txt
+          enable-cache: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install the locked release tooling
+        run: |
+          uv venv --python 3.14 --python-preference only-managed "$RUNNER_TEMP/release"
+          uv pip sync --python "$RUNNER_TEMP/release" --require-hashes tasks/release-requirements.txt
+      - name: Generate changelog, commit, and tag
+        id: release
+        env:
+          BUMP: ${{ inputs.bump }}
+        run: |
+          "$RUNNER_TEMP/release/bin/python" tasks/release.py --version "$BUMP" --no-push
+          echo "version=$(git describe --tags --exact-match)" >> "$GITHUB_OUTPUT"
+      - name: Store the changelog
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: release-changelog
+          path: docs/changelog.rst
+          if-no-files-found: error
+          retention-days: 1
+  push:
+    name: Push release commit and tag
+    needs: changelog
     runs-on: ubuntu-24.04
     environment: release
-    permissions:
-      contents: read # setup-uv downloads uv with the job token
+    permissions: {} # the release app token makes every write
     steps:
+      - name: Download the changelog
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          name: release-changelog
+          path: ${{ runner.temp }}/changelog
       - name: Mint release app token
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
@@ -33,27 +77,30 @@ jobs:
           owner: pypa
           repositories: virtualenv
           permission-contents: write
-      - name: Checkout code # zizmor: ignore[artipacked]
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          token: ${{ steps.app-token.outputs.token }}
-      - name: Install the latest version of uv
-        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
-        with:
-          enable-cache: false
-          cache-dependency-glob: "pyproject.toml"
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set up Python
-        run: uv python install 3.14
-      - name: Configure git identity from the release app
+      # GitHub signs commits the app creates through the API; the commit takes only the changelog from the build job and
+      # deletes the fragments of the dispatched commit, so nothing else the build job ran can reach main
+      - name: Commit, tag, and push through the API
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+          VERSION: ${{ needs.changelog.outputs.version }}
+          CHANGELOG: ${{ runner.temp }}/changelog/changelog.rst
         run: |
-          git config user.name "${APP_SLUG}[bot]"
-          git config user.email "$(gh api "/users/${APP_SLUG}[bot]" --jq .id)+${APP_SLUG}[bot]@users.noreply.github.com"
-      - name: Generate changelog, commit, tag, and push
-        env:
-          BUMP: ${{ inputs.bump }}
-        run: uv tool run --with tox-uv tox r -e release -- --version "$BUMP"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::the build job reported an invalid version: $VERSION"
+            exit 1
+          fi
+          repo=repos/pypa/virtualenv
+          base_tree=$(gh api "$repo/git/commits/$GITHUB_SHA" --jq .tree.sha)
+          blob=$(base64 --wrap=0 "$CHANGELOG" | jq --raw-input --slurp '{content: ., encoding: "base64"}' \
+            | gh api "$repo/git/blobs" --input - --jq .sha)
+          fragments=$(gh api "$repo/contents/docs/changelog?ref=$GITHUB_SHA" --jq '[.[]
+            | select(.name | test("^[0-9]+[.](feature|bugfix|doc|deprecation|removal)[.]rst$"))
+            | {path, mode: "100644", type: "blob", sha: null}]')
+          tree=$(jq --null-input --arg base_tree "$base_tree" --arg blob "$blob" --argjson fragments "$fragments" '{
+            base_tree: $base_tree,
+            tree: ([{path: "docs/changelog.rst", mode: "100644", type: "blob", sha: $blob}] + $fragments)
+          }' | gh api "$repo/git/trees" --input - --jq .sha)
+          commit=$(jq --null-input --arg tree "$tree" --arg head "$GITHUB_SHA" --arg message "release $VERSION" \
+            '{message: $message, tree: $tree, parents: [$head]}' | gh api "$repo/git/commits" --input - --jq .sha)
+          gh api --method PATCH "$repo/git/refs/heads/main" -f sha="$commit" -F force=false
+          gh api --method POST "$repo/git/refs" -f ref="refs/tags/$VERSION" -f sha="$commit"

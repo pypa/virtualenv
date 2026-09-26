@@ -168,6 +168,13 @@ property = [
   "hypothesis>=6.140",
   { include-group = "test" },
 ]
+release = [
+  "docstrfmt>=2.2.1",
+  "gitpython>=3.1.44",
+  "packaging>=25",
+  "towncrier>=24.8",
+  "uv>=0.12.17",
+]
 sbom = [
   "cyclonedx-python-lib[json-validation]>=11.12",
   "spdx-tools>=0.8.5",

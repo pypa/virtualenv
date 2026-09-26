@@ -32,6 +32,7 @@ def main() -> None:
             "docs/changelog/u.bugfix.rst",
             "pylock.zipapp.toml",
             "tasks/ci-tools.json",
+            "tasks/release-requirements.txt",
         } or (
             path.parent == PurePosixPath("src/virtualenv/seed/wheels/embed")
             and (path.name == "__init__.py" or path.suffix == ".whl")

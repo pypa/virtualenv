@@ -230,6 +230,7 @@ def apply_patch(wheel_repo: Path) -> Callable[[str, str], subprocess.CompletedPr
         pytest.param("src/virtualenv/seed/wheels/embed/__init__.py", id="bundle-index"),
         pytest.param("src/virtualenv/seed/wheels/embed/pip-2-py3-none-any.whl", id="wheel"),
         pytest.param("tasks/ci-tools.json", id="ci-tools"),
+        pytest.param("tasks/release-requirements.txt", id="release-lock"),
     ],
 )
 def test_upgrade_patch_applies(

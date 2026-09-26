@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from subprocess import call, check_call
+from subprocess import check_call
 
 from git import Commit, Remote, Repo, TagReference
 from packaging.version import Version
@@ -64,9 +64,9 @@ def get_remote(repo: Repo) -> Remote:
 def release_changelog(repo: Repo, version: Version) -> Commit:
     print("generate release commit")  # ruff:ignore[print]
     check_call(["towncrier", "build", "--yes", "--version", version.public], cwd=str(ROOT_SRC_DIR))  # ruff:ignore[start-process-with-partial-path]
-    call(["pre-commit", "run", "--all-files"], cwd=str(ROOT_SRC_DIR))  # ruff:ignore[start-process-with-partial-path]
+    # pre-commit would resolve hook dependencies unpinned, so wrap the changelog with the locked docstrfmt
+    check_call(["docstrfmt", "-l", "120", "docs/changelog.rst"], cwd=str(ROOT_SRC_DIR))  # ruff:ignore[start-process-with-partial-path]
     repo.git.add(".")
-    check_call(["pre-commit", "run", "--all-files"], cwd=str(ROOT_SRC_DIR))  # ruff:ignore[start-process-with-partial-path]
     return repo.index.commit(f"release {version}")
 
 
