@@ -1,0 +1,2 @@
+Add the Tidelift and thanks.dev funding links to the PyPI project URLs, next to GitHub Sponsors - by
+:user:`gaborbernat`.
