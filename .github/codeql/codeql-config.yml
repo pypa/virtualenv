@@ -3,5 +3,4 @@ queries:
 threat-models: local
 paths-ignore:
   - .github/codeql/tests
-  - tasks
   - tests
