@@ -127,7 +127,16 @@ fi
 
 if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] ; then
     _OLD_VIRTUAL_PS1="${PS1-}"
-    PS1="(${VIRTUAL_ENV_PROMPT}) ${PS1-}"
+    _VIRTUAL_PROMPT="${VIRTUAL_ENV_PROMPT}"
+    # bash re-expands backslashes, dollar signs and backticks in PS1 on every redraw; the guard keeps the
+    # bash-only substitution away from POSIX shells such as dash, which reject it with "Bad substitution"
+    if [ -n "${BASH_VERSION-}" ]; then
+        _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\\/\\\\}"
+        _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\$/\\\$}"
+        _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\`/\\\`}"
+    fi
+    PS1="(${_VIRTUAL_PROMPT}) ${PS1-}"
+    unset _VIRTUAL_PROMPT
 fi
 
 # Make sure to unalias pydoc if it's already there
