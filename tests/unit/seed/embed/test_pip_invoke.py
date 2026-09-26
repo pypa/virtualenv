@@ -13,8 +13,8 @@ from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("no", ["pip", "setuptools", "wheel", ""])
-def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_fastest, no) -> None:  # ruff:ignore[complex-structure]
+@pytest.mark.parametrize("no", ["pip", "setuptools", ""], ids=["no-pip", "no-setuptools", "all"])
+def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_fastest, no) -> None:
     extra_search_dir = tmp_path / "extra"
     extra_search_dir.mkdir()
     for_py_version = f"{sys.version_info.major}.{sys.version_info.minor}"
@@ -73,17 +73,5 @@ def test_base_bootstrap_via_pip_invoke(tmp_path, coverage_env, mocker, current_f
     assert result
     assert run.call_count == 1
 
-    site_package = result.creator.purelib
-    pip = site_package / "pip"
-    setuptools = site_package / "setuptools"
-    wheel = site_package / "wheel"
-    files_post_first_create = list(site_package.iterdir())
-
-    if no:
-        no_file = locals()[no]
-        assert no not in files_post_first_create
-
-    for key in ("pip", "setuptools"):
-        if key == no:
-            continue
-        assert locals()[key] in files_post_first_create
+    installed = {path.name for path in result.creator.purelib.iterdir()}
+    assert installed & {"pip", "setuptools"} == {"pip", "setuptools"} - {no}
