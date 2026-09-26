@@ -368,6 +368,29 @@ where the service supports one. We review access once a year and whenever a main
 back, we remove their GitHub push access, PyPI publishing access, CI administration and ReadTheDocs administration, and
 rotate every secret they could read. New commit access still goes through the maintainer vote described above.
 
+Secrets and credentials
+-----------------------
+
+The project stores two secrets, the client ID and the private key of the `virtualenv-release
+<https://github.com/apps/virtualenv-release>`_ GitHub App, as ``RELEASE_APP_CLIENT_ID`` and ``RELEASE_APP_PRIVATE_KEY``
+in the ``release`` deployment environment. The push job of ``pre-release.yaml`` and the publish job of ``release.yaml``
+name that environment, and no other job can read them. Each of the two jobs trades the key for an App token that expires
+within an hour and can write the contents of one repository, ``virtualenv`` or ``get-virtualenv``.
+
+The rest of the release needs no stored secret. PyPI accepts uploads through `trusted publishing
+<https://docs.pypi.org/trusted-publishers/>`_, Sigstore signs the attestations with the workflow's OIDC identity, and
+the other jobs use their own ``GITHUB_TOKEN``, which the repository makes read-only unless the job asks for more. Do not
+create a PyPI API token or a personal access token for the project.
+
+We follow these rules for the two secrets:
+
+- Keep them in the ``release`` environment, and out of the repository, workflow files, logs and repository-wide secrets.
+  Secret scanning with push protection rejects pushes that contain a known token format.
+- Repository admins manage the environment secrets, and the App's owner manages its keys.
+- Generate a new private key, store it in ``RELEASE_APP_PRIVATE_KEY`` and delete the old key from the App settings at
+  the yearly access review, when a maintainer steps back, and after a suspected leak, following the `incident response
+  plan <https://github.com/pypa/virtualenv/blob/main/.github/INCIDENT_RESPONSE.md#response>`_.
+
 .. _current-maintainers:
 
 Current maintainers

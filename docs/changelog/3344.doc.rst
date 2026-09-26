@@ -1,0 +1,1 @@
+Document which secrets the project stores, who can read them and when maintainers rotate them - by :user:`gaborbernat`.
