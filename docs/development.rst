@@ -303,13 +303,13 @@ directory named after that issue number with an extension of:
 - ``feature.rst``,
 - ``bugfix.rst``,
 - ``doc.rst``,
-- ``removal.rst``,
-- ``misc.rst``.
+- ``deprecation.rst``,
+- ``removal.rst``.
 
 Thus if your issue or PR number is ``1234`` and this change is fixing a bug, then you would create a file
 ``docs/changelog/1234.bugfix.rst``. PRs can span multiple categories by creating multiple files (for instance, if you
 added a feature and deprecated/removed the old feature at the same time, you would create
-``docs/changelog/1234.bugfix.rst`` and ``docs/changelog/1234.remove.rst``). Likewise if a PR touches multiple issues/PRs
+``docs/changelog/1234.bugfix.rst`` and ``docs/changelog/1234.removal.rst``). Likewise if a PR touches multiple issues/PRs
 you may create a file for each of them with the same contents and :pypi:`towncrier` will deduplicate them.
 
 Contents of a NEWS entry
