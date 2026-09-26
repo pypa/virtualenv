@@ -19,10 +19,10 @@ wheels = [{ url = "https://files.pythonhosted.org/packages/42/14/42b2651a2f46b02
 
 [[packages]]
 name = "filelock"
-version = "3.32.6"
+version = "4.0.1"
 marker = "python_full_version >= '3.10'"
-sdist = { url = "https://files.pythonhosted.org/packages/38/46/126b1831dca12060d4a8296bf9c4fe5c93c4f22197fa239cb0cc82042bba/filelock-3.32.6.tar.gz", upload-time = 2026-09-08T22:57:11Z, size = 225172, hashes = { sha256 = "a3f55a18af3652a94d8f47d6055df434f254ca1d02ef2524850c6d249ca2512c" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/cc/06/4f138f618dbea66803291274f228f01daf29f306fe8b96bc30dab765df75/filelock-3.32.6-py3-none-any.whl", upload-time = 2026-09-08T22:57:10Z, size = 100189, hashes = { sha256 = "3f16ecd0117feae0dfc147e8c62eb5daeccd8bd800378c3ddf416de9b4feb6b1" } }]
+sdist = { url = "https://files.pythonhosted.org/packages/6f/38/88cd6eda96c40594a1e3da7d8b40f04bc40ace5a6aef9ac5cb407540f173/filelock-4.0.1.tar.gz", upload-time = 2026-09-19T01:08:15Z, size = 238888, hashes = { sha256 = "fdefc3f3e87716d855ae2b732c1cfd521dd99799ef2b4d00e8c0d4dcdc7cc94b" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/29/33/af0635ab07fe83b1788a1dbe370ff3e226062495a998335cb18a1cac81aa/filelock-4.0.1-py3-none-any.whl", upload-time = 2026-09-19T01:08:14Z, size = 106219, hashes = { sha256 = "481a321a27bef441e23c53371c6abc8d7d16e26b97090074ba44f7538a3fd55a" } }]
 
 [[packages]]
 name = "platformdirs"
@@ -33,16 +33,16 @@ wheels = [{ url = "https://files.pythonhosted.org/packages/40/4b/2028861e724d3bd
 
 [[packages]]
 name = "platformdirs"
-version = "4.11.8"
+version = "4.11.11"
 marker = "python_full_version >= '3.10'"
-sdist = { url = "https://files.pythonhosted.org/packages/53/18/f3bb8ef0d3b930692343da8aa4d3cbcd6749477c053959395ac81965a6e9/platformdirs-4.11.8.tar.gz", upload-time = 2026-09-08T22:20:42Z, size = 37182, hashes = { sha256 = "f23abafea7dd4276d1f29104b83598d7dcc567cafd07c9c951e66665645437fc" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/f4/e1/5b7b8bbb55084d1425bcb9bc823ff519e1b2be05f6ebb0089e2eacc38413/platformdirs-4.11.8-py3-none-any.whl", upload-time = 2026-09-08T22:20:41Z, size = 24027, hashes = { sha256 = "52f2f181bbfde907966932cc8312d967d02976422d66d537ea16092b8e291081" } }]
+sdist = { url = "https://files.pythonhosted.org/packages/f8/13/f870dd0b42690138e4e37a76b5138e5690ed4365a77071bb092d59037da0/platformdirs-4.11.11.tar.gz", upload-time = 2026-09-19T01:18:47Z, size = 39949, hashes = { sha256 = "b0befe8a90759e4a9a8b9820d434ae226a6549063210b596da0038a7a05aede4" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/39/be/3ae887e84c38c4dd1c549cd5825adc93f48069a94fe1cb8ac52a9da16f15/platformdirs-4.11.11-py3-none-any.whl", upload-time = 2026-09-19T01:18:45Z, size = 24992, hashes = { sha256 = "972ea6b2b387155a536226a0750e46923d731d459a387c4a255c583ed2f64547" } }]
 
 [[packages]]
 name = "python-discovery"
-version = "1.6.0"
-sdist = { url = "https://files.pythonhosted.org/packages/91/96/0f93e27c9f60a650838f2118159aa115fd5732c0716247917b7ba7ede665/python_discovery-1.6.0.tar.gz", upload-time = 2026-08-28T17:30:02Z, size = 82849, hashes = { sha256 = "6393b4eae1be8b2182670635e7baff89ac21cb9f8e86fd1ff40c7b1144febb4c" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/43/5e/21abf578182fb15006a57faf3711a1e659e29d600d19b6e557eae908c81d/python_discovery-1.6.0-py3-none-any.whl", upload-time = 2026-08-28T17:30:01Z, size = 38451, hashes = { sha256 = "d4e244cf17b8b29819ed78003d55fbacf86eda23425b075454fff9271b79377a" } }]
+version = "1.6.1"
+sdist = { url = "https://files.pythonhosted.org/packages/0c/57/250bd238b966cece44328235eb85290045d059265fdaf7527a3a958123db/python_discovery-1.6.1.tar.gz", upload-time = 2026-09-18T01:31:53Z, size = 84338, hashes = { sha256 = "cf87d3627dfb4412437fdd5b13eae402607722998d21567993aedbc59b23c15e" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/16/7d/e9ffbadfbf89c93848412d04594135c4ae8c1d37d9e053b9c3ed718fabc4/python_discovery-1.6.1-py3-none-any.whl", upload-time = 2026-09-18T01:31:52Z, size = 38664, hashes = { sha256 = "d43fcdef879fe795352bd13ccf8d185ba5a9f86f36cfcd00529f596e737442b3" } }]
 
 [[packages]]
 name = "typing-extensions"
