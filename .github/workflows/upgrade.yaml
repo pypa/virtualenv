@@ -43,7 +43,10 @@ jobs:
           tox run -e upgrade
           # hold back releases younger than the seven days check_wheel_age.py demands of embedded wheels
           UV_EXCLUDE_NEWER="7 days" uv pip compile pyproject.toml --universal --python-version 3.9 --upgrade -o pylock.zipapp.toml
-          git add -- src/virtualenv/seed/wheels/embed THIRD-PARTY-NOTICES.md docs/changelog pylock.zipapp.toml
+          UV_EXCLUDE_NEWER="7 days" uv pip compile --group pyproject.toml:release --universal --python-version 3.14 \
+            --generate-hashes --upgrade -o tasks/release-requirements.txt
+          git add -- src/virtualenv/seed/wheels/embed THIRD-PARTY-NOTICES.md docs/changelog pylock.zipapp.toml \
+            tasks/release-requirements.txt
           if [ "$CI_TOOLS_OUTCOME" = "success" ]; then
             git add -- tasks/ci-tools.json
           fi
@@ -106,7 +109,7 @@ jobs:
           delete-branch: true
           title: "Upgrade embedded pip/setuptools/wheel and CI test tools"
           body: |
-            Automated upgrade of embedded pip, setuptools, and wheel dependencies, of the GraalPy, RustPython and Nushell releases CI tests against, and of the Mermaid version the documentation loads.
+            Automated upgrade of embedded pip, setuptools, and wheel dependencies, of the locked release tooling, of the GraalPy, RustPython and Nushell releases CI tests against, and of the Mermaid version the documentation loads.
 
             This PR was created automatically by the [upgrade workflow](https://github.com/${{ github.repository }}/actions/workflows/upgrade.yaml).
           labels: |

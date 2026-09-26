@@ -182,7 +182,9 @@ commands = [
 
 [env.release]
 description = "do a release, required posarg of the version number"
-deps = [ "gitpython>=3.1.44", "packaging>=25", "pre-commit-uv>=4.1.4", "towncrier>=24.8" ]
+base_python = [ "3.14" ]
+skip_install = true
+deps = [ "-r tasks/release-requirements.txt" ]
 change_dir = "{tox_root}{/}tasks"
 commands = [ [ "python", "release.py", { replace = "posargs", extend = true } ] ]
 
