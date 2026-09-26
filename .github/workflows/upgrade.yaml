@@ -106,7 +106,7 @@ jobs:
           delete-branch: true
           title: "Upgrade embedded pip/setuptools/wheel and CI test tools"
           body: |
-            Automated upgrade of embedded pip, setuptools, and wheel dependencies, and of the RustPython and Nushell releases CI tests against.
+            Automated upgrade of embedded pip, setuptools, and wheel dependencies, of the RustPython and Nushell releases CI tests against, and of the Mermaid version the documentation loads.
 
             This PR was created automatically by the [upgrade workflow](https://github.com/${{ github.repository }}/actions/workflows/upgrade.yaml).
           labels: |
