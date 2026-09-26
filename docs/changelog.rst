@@ -7,6 +7,39 @@
 .. towncrier release notes start
 
 ***********************
+ v21.13.0 (2026-09-26)
+***********************
+
+Features - 21.13.0
+==================
+
+- Add ``Changelog`` and ``Funding`` links to the PyPI project metadata, and replace the ``2020-202x`` placeholder in
+  ``LICENSE`` with ``2020-present`` so the copyright field of the wheel SBOM reads as a real range - by
+  :user:`gaborbernat`. (:issue:`3334`)
+
+Bugfixes - 21.13.0
+==================
+
+- Escape the curly single quotes ``U+2018``-``U+201B`` in the PowerShell activator's ``quote`` so a virtual environment
+  prompt, name or Tcl/Tk library path containing them can no longer close the string literal and run commands - by
+  :user:`gaborbernat`. (:issue:`3325`)
+- Stop the bash activator from re-expanding the prompt inside ``PS1``, so a virtual environment name or ``--prompt``
+  value containing ``$(...)``, backticks or backslashes no longer runs as a command each time bash draws the prompt - by
+  :user:`gaborbernat`. (:issue:`3326`)
+
+Improved Documentation - 21.13.0
+================================
+
+- Correct the documented changelog fragment types and example to match the enforced towncrier categories.
+  (:issue:`3323`)
+- List the Unlicense and the SPDX BSD variants in the runtime dependency licensing policy, matching the ``filelock``
+  releases virtualenv installs on Python 3.9, and describe the dependency review check that enforces the policy.
+  (:issue:`3329`)
+- Show how to check a release with ``gh release verify`` and ``gh release verify-asset``, and how to rebuild the zipapp
+  byte for byte with the build tool versions its SBOMs list. Drop the claims that the zipapp build does not pin the
+  distributions it bundles and that wheels differ between build machines - by :user:`gaborbernat`. (:issue:`3330`)
+
+***********************
  v21.12.1 (2026-09-24)
 ***********************
 

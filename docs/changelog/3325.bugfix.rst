@@ -1,3 +1,0 @@
-Escape the curly single quotes ``U+2018``-``U+201B`` in the PowerShell activator's ``quote`` so a virtual environment
-prompt, name or Tcl/Tk library path containing them can no longer close the string literal and run commands - by
-:user:`gaborbernat`.
