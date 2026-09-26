@@ -1,0 +1,2 @@
+Document what a maintainer checks when reviewing a pull request and what the ``main`` ruleset requires before a merge -
+by :user:`gaborbernat`.
