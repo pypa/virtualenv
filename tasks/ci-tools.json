@@ -1,4 +1,7 @@
 {
+  "mermaid": {
+    "version": "11.12.1"
+  },
   "nushell": {
     "assets": {
       "Windows": {

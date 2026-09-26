@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Final
 from urllib.request import Request, urlopen
@@ -29,6 +31,8 @@ query($owner: String!, $name: String!) {
   }
 }
 """
+# the docs load Mermaid from jsDelivr into every reader's browser, so give npm a week to pull a hijacked release
+_NPM_COOLDOWN: Final[timedelta] = timedelta(days=7)
 
 
 def main() -> None:
@@ -40,6 +44,7 @@ def main() -> None:
         # an unchanged tag keeps its recorded hashes, so an asset replaced under the same tag fails CI instead
         if (tag := _newest_tag(token, repository, prerelease=prerelease)) != pins[tool]["tag"]:
             pins[tool] = {"tag": tag, "assets": _pin_assets(token, repository, tag, patterns)}
+    pins["mermaid"]["version"] = _newest_npm_version("mermaid", pins["mermaid"]["version"])
     _PINS.write_text(f"{json.dumps(pins, indent=2, sort_keys=True)}\n", encoding="utf-8")
 
 
@@ -92,6 +97,31 @@ def _sha256(repository: str, asset_id: int) -> str:
         for chunk in iter(lambda: response.read(1 << 20), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _newest_npm_version(package: str, pinned: str) -> str:
+    with urlopen(Request(f"https://registry.npmjs.org/{package}"), timeout=30) as response:
+        metadata: Final = json.load(response)
+    cutoff: Final = datetime.now(tz=timezone.utc) - _NPM_COOLDOWN
+    # npm keeps the publish time of unpublished versions, so check each one still exists before taking it
+    return max(
+        (
+            pinned,
+            *(
+                version
+                for version, published in metadata["time"].items()
+                if re.fullmatch(r"\d+\.\d+\.\d+", version)
+                and datetime.strptime(published, "%Y-%m-%dT%H:%M:%S.%f%z") <= cutoff
+                and version in metadata["versions"]
+                and not metadata["versions"][version].get("deprecated")
+            ),
+        ),
+        key=_release_key,
+    )
+
+
+def _release_key(version: str) -> tuple[int, ...]:
+    return tuple(map(int, version.split(".")))
 
 
 __all__ = ["main"]

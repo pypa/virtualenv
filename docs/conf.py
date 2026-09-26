@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import sys
 from datetime import datetime, timezone
@@ -51,6 +52,10 @@ pygments_style, pygments_dark_style = "sphinx", "monokai"
 html_static_path = ["_static"]
 html_css_files = ["custom.css"]
 html_js_files = ["mermaid-normalize.js", "rtd-search.js"]
+# sphinxcontrib-mermaid defaults to whichever Mermaid its release shipped with; pin it so the upgrade workflow bumps it
+mermaid_version = json.loads((Path(__file__).parents[1] / "tasks" / "ci-tools.json").read_text(encoding="utf-8"))[
+    "mermaid"
+]["version"]
 # favicon is a simplified mark, not a vector copy of the logo PNG; see development.rst "Logo and branding"
 html_favicon = "_static/virtualenv.svg"
 html_theme_options = {

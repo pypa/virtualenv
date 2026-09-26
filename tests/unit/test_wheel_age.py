@@ -277,6 +277,7 @@ _RUSTPYTHON_ASSETS: Final[dict[str, str]] = {
     "Windows": "rustpython-release-Windows-x86_64-pc-windows-msvc.exe",
 }
 _OLD_PINS: Final[dict[str, dict[str, str | dict[str, dict[str, str]]]]] = {
+    "mermaid": {"version": "11.12.1"},
     "nushell": {"tag": "0.115.1", "assets": {"Windows": {"name": "nu-old.zip", "sha256": "old"}}},
     "rustpython": {"tag": "old", "assets": {"Linux": {"name": "rp-old", "sha256": "old"}}},
 }
@@ -293,12 +294,22 @@ def ci_tools(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 @pytest.fixture
-def github(mocker: MockerFixture) -> Callable[[str, dict[str, bytes], dict[str, str]], None]:
+def npm_registry(time_freeze: Callable[[str], None]) -> dict[str, dict[str, object]]:
+    time_freeze("2026-09-21T00:00:00+00:00")
+    return {"time": {"created": "2014-01-01T00:00:00.000Z"}, "versions": {}}
+
+
+@pytest.fixture
+def github(
+    mocker: MockerFixture, npm_registry: dict[str, dict[str, object]]
+) -> Callable[[str, dict[str, bytes], dict[str, str]], None]:
     def serve(nushell_tag: str, contents: dict[str, bytes], digests: dict[str, str]) -> None:
         names: Final[list[str]] = sorted(contents)
 
         def respond(request: Request, **_kwargs: int) -> BytesIO:
             url: Final[str] = request.full_url
+            if url == "https://registry.npmjs.org/mermaid":
+                return BytesIO(json.dumps(npm_registry).encode())
             if url == "https://api.github.com/graphql":
                 return BytesIO(
                     json.dumps({
@@ -345,6 +356,7 @@ def test_ci_tools_pin_newest_releases(
     )
     upgrade_ci_tools()
     assert json.loads(ci_tools.read_text(encoding="utf-8")) == {
+        "mermaid": {"version": "11.12.1"},
         "nushell": {
             "tag": "0.116.0",
             "assets": {"Windows": {"name": _NU_ASSET, "sha256": hashlib.sha256(b"nu").hexdigest()}},
@@ -357,6 +369,44 @@ def test_ci_tools_pin_newest_releases(
             },
         },
     }
+
+
+@pytest.mark.parametrize(
+    "release",
+    [
+        pytest.param(("11.9.0", "2026-09-10T00:00:00.000Z", {}), id="older-line-published-later"),
+        pytest.param(("12.0.0-rc.1", "2026-09-01T00:00:00.000Z", {}), id="prerelease"),
+        pytest.param(("12.0.0", "2026-09-15T00:00:00.000Z", {}), id="inside-cooldown"),
+        pytest.param(("12.0.0", "2026-09-01T00:00:00.000Z", {"deprecated": "broken"}), id="deprecated"),
+        pytest.param(("12.0.0", "2026-09-01T00:00:00.000Z", None), id="unpublished"),
+    ],
+)
+def test_ci_tools_pin_newest_mermaid(
+    ci_tools: Path,
+    github: Callable[[str, dict[str, bytes], dict[str, str]], None],
+    upgrade_ci_tools: Callable[[], None],
+    npm_registry: dict[str, dict[str, object]],
+    release: tuple[str, str, dict[str, str] | None],
+) -> None:
+    version, published, metadata = release
+    npm_registry["time"] |= {"11.13.0": "2026-08-01T00:00:00.000Z", version: published}
+    npm_registry["versions"] |= {"11.13.0": {}} | ({} if metadata is None else {version: metadata})
+    github("0.115.1", dict.fromkeys(_RUSTPYTHON_ASSETS.values(), b"rp"), {})
+    upgrade_ci_tools()
+    assert json.loads(ci_tools.read_text(encoding="utf-8"))["mermaid"] == {"version": "11.13.0"}
+
+
+def test_ci_tools_keep_newer_mermaid_pin(
+    ci_tools: Path,
+    github: Callable[[str, dict[str, bytes], dict[str, str]], None],
+    upgrade_ci_tools: Callable[[], None],
+    npm_registry: dict[str, dict[str, object]],
+) -> None:
+    npm_registry["time"] |= {"11.0.0": "2024-08-01T00:00:00.000Z"}
+    npm_registry["versions"] |= {"11.0.0": {}}
+    github("0.115.1", dict.fromkeys(_RUSTPYTHON_ASSETS.values(), b"rp"), {})
+    upgrade_ci_tools()
+    assert json.loads(ci_tools.read_text(encoding="utf-8"))["mermaid"] == _OLD_PINS["mermaid"]
 
 
 def test_ci_tools_keep_hashes_of_unchanged_tag(
