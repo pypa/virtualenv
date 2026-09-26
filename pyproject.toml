@@ -57,11 +57,13 @@ dependencies = [
   "python-discovery>=1.6",
   "typing-extensions>=4.13.2; python_version<'3.11'",
 ]
+urls."thanks.dev" = "https://thanks.dev/u/gh/gaborbernat"
 urls.Changelog = "https://virtualenv.pypa.io/en/latest/changelog.html"
 urls.Documentation = "https://virtualenv.pypa.io"
 urls.Funding = "https://github.com/sponsors/gaborbernat"
 urls.Homepage = "https://github.com/pypa/virtualenv"
 urls.Source = "https://github.com/pypa/virtualenv"
+urls.Tidelift = "https://tidelift.com/funding/github/pypi/virtualenv"
 urls.Tracker = "https://github.com/pypa/virtualenv/issues"
 scripts.virtualenv = "virtualenv.__main__:run_with_catch"
 entry-points."virtualenv.activate".bash = "virtualenv.activation.bash:BashActivator"
