@@ -209,9 +209,11 @@ from the published wheel and pass them to the build:
         --build-constraint build-constraints.txt --out-dir rebuild .
     $ cmp rebuild/virtualenv-21.12.1-py3-none-any.whl ../virtualenv-21.12.1-py3-none-any.whl
 
-Build from a git checkout, since the SBOM records the source commit and an sdist does not carry it. Wheels up to 21.10.0
-recorded the machine that built them in the SBOM, so a rebuild of those differs in the SBOM and in ``RECORD``, which
-holds the SBOM's hash.
+Releases after 21.13.0 also pin the backend in ``tasks/release-requirements.txt``, so on those tags
+``--build-constraints tasks/release-requirements.txt --require-hashes`` replaces the file read from the SBOM. Build from
+a git checkout, since the SBOM records the source commit and an sdist does not carry it. Wheels up to 21.10.0 recorded
+the machine that built them in the SBOM, so a rebuild of those differs in the SBOM and in ``RECORD``, which holds the
+SBOM's hash.
 
 The zipapp of a release from 21.11.0 on rebuilds byte for byte as well. The `pylock.zipapp.toml
 <https://github.com/pypa/virtualenv/blob/main/pylock.zipapp.toml>`_ lock at the tag pins each distribution it bundles by
@@ -233,3 +235,6 @@ wheel. Constrain both, and run on the CPython version the zipapp SBOM lists:
 The release runs ``tox`` with the ``tox-uv`` plugin as well. The plugin passes ``UV_*`` variables into the environment,
 and the ``-x`` override adds ``PIP_BUILD_CONSTRAINT`` for the ``pip wheel`` call that builds the virtualenv wheel inside
 the zipapp.
+
+Releases after 21.13.0 pin those build tools and the SBOM tools in ``tasks/release-requirements.txt`` at the tag, so a
+rebuild of those takes its constraints from that file and needs neither SBOM.

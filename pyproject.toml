@@ -171,9 +171,15 @@ property = [
 release = [
   "docstrfmt>=2.2.1",
   "gitpython>=3.1.44",
+  "hatch-vcs>=0.4",
+  "hatchling>=1.28",
   "packaging>=25",
+  "pypi-attestations>=0.0.28",
   "towncrier>=24.8",
+  "tox>=4.45",
+  "tox-uv>=1.28",
   "uv>=0.12.17",
+  { include-group = "sbom" },
 ]
 sbom = [
   "cyclonedx-python-lib[json-validation]>=11.12",

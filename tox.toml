@@ -193,10 +193,12 @@ description = "render the CycloneDX SBOM extracted from a wheel as SPDX 2.3 and 
 base_python = [ "3.14" ]
 skip_install = true
 dependency_groups = [ "sbom" ]
+set_env.UV_CONSTRAINT = "{tox_root}{/}tasks{/}release-requirements.txt"
 commands = [
   [ "python", "{tox_root}{/}tasks{/}cyclonedx_to_spdx.py", "virtualenv.cdx.json", "virtualenv.spdx.json" ],
   [ "pyspdxtools", "--infile", "virtualenv.spdx.json" ],
 ]
+uv_seed = false
 
 [env."type-3.9"]
 description = "run type checker (ty) against Python 3.9"
@@ -216,13 +218,27 @@ uv_seed = true
 description = "generate a zipapp, embed its SBOM and validate the SBOM"
 base_python = [ "3.14" ]
 skip_install = true
-deps = [ "hatchling>=1.28", "packaging>=25" ]
+deps = [ "hatchling>=1.28", "packaging>=25", "uv>=0.12.17" ]
 dependency_groups = [ "sbom" ]
 pass_env = [ "SOURCE_DATE_EPOCH" ]
 set_env.PYTHONPATH = "{tox_root}"
+set_env.UV_CONSTRAINT = "{tox_root}{/}tasks{/}release-requirements.txt"
 commands = [
-  [ "python", "tasks/make_zipapp.py" ],
+  [
+    "uv",
+    "build",
+    "--wheel",
+    "--python",
+    "{env_python}",
+    "--build-constraints",
+    "{tox_root}{/}tasks{/}release-requirements.txt",
+    "--require-hashes",
+    "--out-dir",
+    "{env_tmp_dir}",
+    ".",
+  ],
+  [ "python", "tasks/make_zipapp.py", "--wheel-dir", "{env_tmp_dir}" ],
   [ "python", "tasks/zipapp_sbom.py", "virtualenv.pyz", "virtualenv.pyz.cdx.json" ],
   [ "python", "tasks/validate_sbom.py", "virtualenv.pyz" ],
 ]
-uv_seed = true
+uv_seed = false

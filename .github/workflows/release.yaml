@@ -27,18 +27,22 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Install the latest version of uv
+      - name: Install the locked version of uv
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
+          version-file: tasks/release-requirements.txt
           enable-cache: false
-          cache-dependency-glob: "pyproject.toml"
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set up Python
-        run: uv python install 3.14
+      - name: Install the locked release tooling
+        run: |
+          uv venv --python 3.14 --python-preference only-managed "$RUNNER_TEMP/tools"
+          uv pip sync --python "$RUNNER_TEMP/tools" --require-hashes tasks/release-requirements.txt
       - name: Pin build timestamps to the release commit for reproducible artifacts
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
       - name: Build sdist and wheel
-        run: uv build --python 3.14 --python-preference only-managed --sdist --wheel . --out-dir dist
+        run: |
+          uv build --python 3.14 --python-preference only-managed --sdist --wheel . --out-dir dist \
+            --build-constraints tasks/release-requirements.txt --require-hashes
       - name: Extract the SBOM the wheel build embedded
         run: python -m zipfile -e dist/*.whl sbom-extract/ && cp sbom-extract/*.dist-info/sboms/virtualenv.cdx.json .
       - name: Attest the SBOM against the sdist and wheel
@@ -47,14 +51,14 @@ jobs:
           subject-path: dist/*
           sbom-path: virtualenv.cdx.json
       - name: Render the SBOM as SPDX
-        run: uv tool run --with tox-uv tox r -e spdx
+        run: '"$RUNNER_TEMP/tools/bin/tox" r -e spdx'
       - name: Attest the SPDX SBOM against the sdist and wheel
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: dist/*
           sbom-path: virtualenv.spdx.json
       - name: Build zipapp
-        run: uv tool run --with tox-uv tox r -e zipapp
+        run: '"$RUNNER_TEMP/tools/bin/tox" r -e zipapp'
       - name: Attest provenance for the zipapp
         id: attest
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
@@ -168,13 +172,22 @@ jobs:
     needs: publish
     runs-on: ubuntu-24.04
     permissions:
-      contents: read # download the published zipapp from the release
+      contents: read # check out the tooling lock and download the published zipapp from the release
       attestations: read # verify the zipapp provenance
     steps:
-      - name: Install uv
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install the locked version of uv
         uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
         with:
+          version-file: tasks/release-requirements.txt
           enable-cache: false
+      - name: Install the locked verification tooling
+        run: |
+          uv venv --python 3.14 --python-preference only-managed "$RUNNER_TEMP/tools"
+          uv pip sync --python "$RUNNER_TEMP/tools" --require-hashes tasks/release-requirements.txt
       - name: Download expected distributions
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
@@ -196,7 +209,8 @@ jobs:
               '.urls[] | select(.filename == $filename) | .url' release.json)"
             curl --fail --silent --show-error --retry 5 --retry-all-errors --output "published/$filename" -- "$url"
             cmp "$expected" "published/$filename"
-            uvx pypi-attestations verify pypi --repository https://github.com/pypa/virtualenv "published/$filename"
+            "$RUNNER_TEMP/tools/bin/pypi-attestations" verify pypi --repository https://github.com/pypa/virtualenv \
+              "published/$filename"
           done
       - name: Download and verify published zipapp
         env:
@@ -223,7 +237,7 @@ jobs:
             --pattern virtualenv.cdx.json --pattern virtualenv.spdx.json --dir published
           cmp expected/virtualenv.spdx.json published/virtualenv.spdx.json
           unzip -p published/*.whl '*.dist-info/sboms/virtualenv.cdx.json' | cmp - published/virtualenv.cdx.json
-          uvx --python 3.14 --from spdx-tools pyspdxtools --infile published/virtualenv.spdx.json
+          "$RUNNER_TEMP/tools/bin/pyspdxtools" --infile published/virtualenv.spdx.json
           for artifact in published/*.whl published/*.tar.gz; do
             for sbom in cdx:https://cyclonedx.org/bom spdx:https://spdx.dev/Document/v2.3; do
               gh attestation verify "$artifact" --repo pypa/virtualenv --predicate-type "${sbom#*:}" \
@@ -235,7 +249,6 @@ jobs:
           done
       - name: Create environments from verified distributions
         run: |
-          uv python install 3.14
           for artifact in published/*.whl published/*.tar.gz; do
             installation="$RUNNER_TEMP/$(basename "$artifact")"
             uv venv --python 3.14 "$installation"
