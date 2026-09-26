@@ -391,7 +391,7 @@ Previous maintainers
  Roadmap
 *********
 
-This roadmap covers October 2026 to September 2027; Bernát Gábor last updated it on 2026-09-22. It lists work that
+This roadmap covers October 2026 to September 2027; Bernát Gábor last updated it on 2026-09-26. It lists work that
 follows from a published policy or waits on an outside decision, and it gives no release dates. We leave out work that
 an open pull request delivers without waiting on anyone else.
 
@@ -402,7 +402,8 @@ What we plan to do
   reached end of life in October 2025, so the drop can happen from May 2027; it also retires the ``_virtualenv.pth``
   distutils hook, which only 3.9 environments still receive (:issue:`3181`).
 - Keep releasing on the pip and setuptools cadence that :ref:`release` describes.
-- Merge :pull:`3204` (:PEP:`832`) and :pull:`3193` (:PEP:`838`) once those PEPs reach Accepted status.
+- Record ``python-version`` in ``pyvenv.cfg`` (:PEP:`838`) once the PEP reaches Accepted status, restarting from the
+  closed :pull:`3193`. :PEP:`832` support shipped in :pull:`3204`.
 
 What we do not plan to do
 =========================
