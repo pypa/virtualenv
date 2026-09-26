@@ -101,6 +101,9 @@ Wheel SBOM
 - Components: every wheel bundled under ``virtualenv/seed/wheels/embed``, with its SHA-256, license, the packages it
   vendors, and a ``virtualenv:seeded-for-python`` property per Python version that receives it; plus the runtime
   dependencies declared in the wheel metadata, without versions, since the installer resolves those.
+- Licenses: a component whose metadata has a ``License-Expression`` carries that SPDX expression. Otherwise it lists its
+  ``License`` field and ``License ::`` classifier names as declared, plus the SPDX ids they map to as concluded when
+  each name maps to a single SPDX license.
 - Build record: the Python version and build backend packages that produced the wheel, the source commit, and the
   ``SOURCE_DATE_EPOCH`` used for timestamps. Releases up to 21.10.0 also recorded the operating system, architecture and
   interpreter build of the build machine.
@@ -110,10 +113,10 @@ SPDX rendering
 ==============
 
 ``virtualenv.spdx.json`` is the wheel SBOM rendered as SPDX 2.3 JSON for tools that read only SPDX. It keeps the
-packages, SHA-256 hashes, declared licenses, purls and the containment, dependency and build tool relationships. It
-leaves out the per-file hashes, because SPDX 2.3 requires a SHA-1 for every file and wheel ``RECORD`` files hold
-SHA-256, and the build record, which SPDX 2.3 has no field for. Its document namespace ends in the CycloneDX serial
-number, so both documents name the same build.
+packages, SHA-256 hashes, declared and concluded licenses, purls and the containment, dependency and build tool
+relationships. It leaves out the per-file hashes, because SPDX 2.3 requires a SHA-1 for every file and wheel ``RECORD``
+files hold SHA-256, and the build record, which SPDX 2.3 has no field for. Its document namespace ends in the CycloneDX
+serial number, so both documents name the same build.
 
 Zipapp SBOM
 ===========
@@ -124,6 +127,7 @@ Zipapp SBOM
   SHA-256; and each bundled distribution, such as ``filelock`` or ``platformdirs``, with its version, license, a
   ``virtualenv:loaded-for-python`` property per Python version that imports it, and a SHA-256 per file. Every file in
   the archive other than the SBOM appears in it.
+- Licenses: recorded the same way as in the wheel SBOM.
 - Build record: the Python version and packages of the environment that built the zipapp, and the ``SOURCE_DATE_EPOCH``
   used for timestamps. Packages installed from platform-specific wheels appear without their files, which differ per
   operating system and architecture.

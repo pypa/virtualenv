@@ -14,10 +14,10 @@ jobs:
     steps:
       - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
-          # every virtualenv install runs the runtime dependencies, so an advisory of any severity blocks the change
+          # an advisory of any severity in any manifest blocks the change: runtime dependencies run on every install,
+          # and the release tooling lock runs in jobs that hold publish and attestation permissions
           fail-on-severity: low
-          # docs/development.rst limits the license policy to runtime dependencies; dev-only tools such as the
-          # MPL-2.0 hypothesis stay out of scope
-          fail-on-scopes: runtime
-          # keep in sync with the licensing policy in docs/development.rst
-          allow-licenses: MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0, PSF-2.0, ISC, Unlicense
+          fail-on-scopes: runtime, development, unknown
+          # the dependency graph files requirements lock files under runtime scope whatever they pin, so the license
+          # policy runs on the built wheel and zipapp SBOMs instead; see tasks/license_policy.py
+          license-check: false

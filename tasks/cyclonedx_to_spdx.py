@@ -28,9 +28,13 @@ if TYPE_CHECKING:
     class _Named(TypedDict):
         name: str
 
+    class _Licensed(TypedDict):
+        id: NotRequired[str]
+        name: NotRequired[str]
+
     class _License(TypedDict):
         expression: NotRequired[str]
-        license: NotRequired[_Named]
+        license: NotRequired[_Licensed]
 
     _Component = TypedDict(
         "_Component",
@@ -185,14 +189,16 @@ def _walk(components: list[_Component]) -> Iterator[_Component]:
 
 
 def _package(component: _Component) -> _Package:
-    # hatch_build.py emits either one SPDX expression or the free-form names from License/classifier metadata
+    # hatch_build.py emits either one SPDX expression, or the free-form names from License/classifier metadata plus the
+    # SPDX ids it concluded from them
     licenses: Final[list[_License]] = component.get("licenses", [])
+    concluded: Final[list[str]] = [entry["license"]["id"] for entry in licenses if "id" in entry.get("license", ())]
     package: Final[_Package] = {
         "SPDXID": _spdx_id(component["bom-ref"]),
         "name": component["name"],
         "downloadLocation": "NOASSERTION",
         "filesAnalyzed": False,
-        "licenseConcluded": "NOASSERTION",
+        "licenseConcluded": " AND ".join(concluded) or "NOASSERTION",
         "licenseDeclared": next((entry["expression"] for entry in licenses if "expression" in entry), "NOASSERTION"),
         "primaryPackagePurpose": _PURPOSES[component["type"]],
     }
@@ -222,7 +228,7 @@ def _package(component: _Component) -> _Package:
             {"referenceCategory": "PACKAGE-MANAGER", "referenceType": "purl", "referenceLocator": purl}
         ]
     if package["licenseDeclared"] == "NOASSERTION" and (
-        names := [entry["license"]["name"] for entry in licenses if "license" in entry]
+        names := [entry["license"]["name"] for entry in licenses if "name" in entry.get("license", ())]
     ):
         package["licenseComments"] = f"Declared in package metadata as: {'; '.join(names)}"
     return package
