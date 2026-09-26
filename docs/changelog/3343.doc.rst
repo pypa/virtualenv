@@ -1,0 +1,2 @@
+Document which static analysis findings block a merge or a release, and how maintainers suppress a finding - by
+:user:`gaborbernat`.

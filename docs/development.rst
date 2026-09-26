@@ -356,6 +356,28 @@ for the specific builds in the form of "Details" links, in case the CI run fails
 To trigger CI to run again for a pull request, you can close and open the pull request or submit another change to the
 pull request. If needed, project maintainers can manually trigger a restart of a job/build.
 
+Code scanning policy
+====================
+
+Static analysis runs on every pull request and every push to ``main``:
+
+- pre-commit.ci runs ruff with every rule selected, the ``flake8-bandit`` security rules included, and `zizmor
+  <https://docs.zizmor.sh>`_ on the workflows. The ``type`` and ``type-3.9`` tox environments run ty.
+- ``codeql.yaml`` runs CodeQL with the ``security-extended`` suite and the project queries under
+  ``.github/codeql/queries`` on the Python code, and the Actions analysis on the workflows. It also runs every Tuesday.
+
+A finding blocks a merge at these thresholds:
+
+- Any ruff, zizmor or ty finding fails a required check.
+- The ``main`` ruleset blocks a merge while CodeQL reports an alert of severity ``error``, or a security alert of
+  severity ``high`` or ``critical``.
+- Each other open CodeQL alert blocks the next release. The maintainer who cuts the release fixes it first, or dismisses
+  it as a false positive or as not exploitable.
+
+A CodeQL dismissal carries a comment that says who controls the flagged input and why it cannot cross a trust boundary
+that the `threat model <https://github.com/pypa/virtualenv/blob/main/.github/THREAT_MODEL.md>`_ lists. An inline
+suppression names the rule it silences, and :ref:`development:Running linters` says when a ``# noqa`` fits.
+
 NEWS entries
 ============
 
