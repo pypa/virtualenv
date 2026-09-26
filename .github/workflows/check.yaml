@@ -240,3 +240,35 @@ jobs:
         env:
           TOXENV: ${{ matrix.tox_env }}
           UPGRADE_ADVISORY: ${{ matrix.tox_env == 'upgrade' && '1' || '' }}
+  test-queries:
+    name: 🔎 test custom queries
+    if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read # check out the queries and their test fixtures
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: 🔎 Install CodeQL
+        id: codeql
+        uses: github/codeql-action/init@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4.38.0
+        with:
+          languages: python
+      - name: 🏃 Run query tests
+        run: '"$CODEQL" test run .github/codeql/tests'
+        env:
+          CODEQL: ${{ steps.codeql.outputs.codeql-path }}
+  all-checks-pass:
+    name: ✅ all checks pass
+    # the gate shares the jobs' condition, so every job it needs has run and a skip counts as a failure
+    if: always() && (github.event_name != 'schedule' || github.repository_owner == 'pypa')
+    needs: [test, check, test-queries]
+    runs-on: ubuntu-24.04
+    permissions: {}
+    steps:
+      - name: ✅ Require every job to succeed
+        uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # v1.3.0
+        with:
+          jobs: ${{ toJSON(needs) }}
