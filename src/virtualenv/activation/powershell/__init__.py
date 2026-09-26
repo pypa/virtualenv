@@ -21,7 +21,11 @@ class PowerShellActivator(ViaTemplateActivator):
         https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_parsing#passing-arguments-that-contain-quote-characters
 
         """
-        string = string.replace("'", "''")
+        # PowerShell treats the ASCII apostrophe and the curly single quotes U+2018-U+201B as
+        # interchangeable single-quote delimiters, so each must be doubled to stay inert inside the literal.
+        for point in (0x27, 0x2018, 0x2019, 0x201A, 0x201B):
+            delimiter = chr(point)
+            string = string.replace(delimiter, delimiter * 2)
         return f"'{string}'"
 
 
