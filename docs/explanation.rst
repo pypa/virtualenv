@@ -598,12 +598,18 @@ involved.
     zipapp and the SBOM attestations. Verifying a file recomputes its digest and checks it against a signed statement
     whose identity you name.
 
+**Immutable releases**
+    From 21.11.0 on, once the workflow publishes a GitHub release, GitHub refuses changes to its tag and assets and
+    signs a release attestation over the tag's commit and each asset's SHA-256. A stolen maintainer token cannot swap
+    the zipapp or an SBOM on a published release. The release attestation names no workflow, so pair it with the
+    provenance check.
+
 **Reproducible builds**
     Provenance tells you which workflow run built a file, but you still trust that run. The release pins every timestamp
-    to ``SOURCE_DATE_EPOCH``, the commit time of the tag, so you can rebuild the sdist and the wheel from the tag
-    yourself and compare the bytes. The wheel's SBOM records the Python version and build backend the release used,
-    which a rebuild must match. It leaves out the machine that ran the build, which the provenance attestation already
-    names.
+    to ``SOURCE_DATE_EPOCH``, the commit time of the tag, so you can rebuild the sdist, the wheel and the zipapp from
+    the tag yourself and compare the bytes. The SBOMs record the Python version and build tools the release used, which
+    a rebuild must match, and a lock file pins the distributions the zipapp bundles. The SBOMs leave out the machine
+    that ran the build, which the provenance attestation already names.
 
 **The SBOMs**
     Dependency scanners find the packages a project declares, and virtualenv declares neither ``pip`` nor

@@ -149,7 +149,7 @@ flowchart LR
     main["main branch<br/>ruleset: pull request, checks"]
     pre["pre-release.yaml<br/>release commit and tag"]
     tag["Tag *.*.*<br/>tag ruleset"]
-    build["release.yaml build<br/>no secrets"]
+    build["release.yaml build<br/>no publishing credentials"]
     publish["release.yaml publish<br/>environment: release"]
     verify["release.yaml verify jobs<br/>no publishing credentials"]
     pypi[("PyPI<br/>sdist, wheel, attestations")]
@@ -181,12 +181,12 @@ flowchart LR
     class pypi,ghr,getv,boot output;
 ```
 
-| Boundary | Crossing                                                                                           | Controls                                                                                                                                                                       |
-| -------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| TB1      | Caller-supplied values into activation scripts and `pyvenv.cfg`                                    | [Per-shell quoting][src-activation], [line boundary collapsing][src-text], [property tests][tests-property] and [fuzzing][atheris]                                             |
-| TB2      | Wheel bytes from an index through app-data into an environment                                     | pip's TLS, SHA-256 comparison with PyPI's published digest, refusal when PyPI has none ([#3302][pr-3302])                                                                      |
-| TB3      | Built artifacts from GitHub Actions to PyPI, GitHub Releases, get-virtualenv and bootstrap.pypa.io | [Trusted publishing][pypi-tp], [attestations][gh-attestations], [post-publish verification][workflow-release] of each destination                                              |
-| TB4      | Code from contributors and dependencies into a release                                             | [Rulesets][gh-rulesets], [SHA-pinned actions][gh-sha-pinning], [embedded wheel hashes][src-embed-init], [wheel age gate][task-wheel-age], [pinned CI tool downloads][ci-tools] |
+| Boundary | Crossing                                                                                           | Controls                                                                                                                                                                                                     |
+| -------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| TB1      | Caller-supplied values into activation scripts and `pyvenv.cfg`                                    | [Per-shell quoting][src-activation], [line boundary collapsing][src-text], [property tests][tests-property] and [fuzzing][atheris]                                                                           |
+| TB2      | Wheel bytes from an index through app-data into an environment                                     | pip's TLS, SHA-256 comparison with PyPI's published digest, refusal when PyPI has none ([#3302][pr-3302])                                                                                                    |
+| TB3      | Built artifacts from GitHub Actions to PyPI, GitHub Releases, get-virtualenv and bootstrap.pypa.io | [Trusted publishing][pypi-tp], [attestations][gh-attestations], [immutable releases][gh-immutable], [post-publish verification][workflow-release] of each destination                                        |
+| TB4      | Code from contributors and dependencies into a release                                             | [Rulesets][gh-rulesets], [SHA-pinned actions][gh-sha-pinning], [embedded wheel hashes][src-embed-init], [wheel age gate][task-wheel-age], [pinned CI tool downloads][ci-tools], [zipapp lock][pylock-zipapp] |
 
 ## Threats and existing mitigations
 
@@ -218,9 +218,9 @@ risk to lowest.
 
 ### Repudiation
 
-| ID  | Threat                                                                      | Risk | Mitigation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| --- | --------------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| R1  | A user cannot tell whether a published artifact came from the project's CI. | Low  | [PyPI attestations][pypi-attestations] cover the sdist and wheel, and a [SLSA build provenance][slsa-provenance] attestation ships beside the zipapp. [GitHub attestations][gh-attestations] bind the CycloneDX SBOM and its [SPDX] rendering to both distributions ([#3299][pr-3299]) and the zipapp SBOM to the zipapp ([#3310][pr-3310]). The wheel carries its SBOM as [PEP 770][pep-770] describes. The release pins timestamps to [`SOURCE_DATE_EPOCH`][sde], so anyone can [rebuild the sdist][verify-rebuild] and compare it; wheels differ between build machines, see open items. [Verify a virtualenv release][verify] shows each check. We do not require signed commits. |
+| ID  | Threat                                                                      | Risk | Mitigation                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| --- | --------------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| R1  | A user cannot tell whether a published artifact came from the project's CI. | Low  | [PyPI attestations][pypi-attestations] cover the sdist and wheel, and a [SLSA build provenance][slsa-provenance] attestation ships beside the zipapp. [GitHub attestations][gh-attestations] bind the CycloneDX SBOM and its [SPDX] rendering to both distributions ([#3299][pr-3299]) and the zipapp SBOM to the zipapp ([#3310][pr-3310]). The wheel carries its SBOM as [PEP 770][pep-770] describes. GitHub signs a release attestation over the assets of each immutable release. The release pins timestamps to [`SOURCE_DATE_EPOCH`][sde] and the zipapp's bundled wheels to a [PEP 751][pep-751] lock, and the SBOMs record the build tools, so anyone can [rebuild the sdist, wheel and zipapp][verify-rebuild] and compare the bytes ([#3306][pr-3306], [#3311][pr-3311]). [Verify a virtualenv release][verify] shows each check. We do not require signed commits. |
 
 ### Information disclosure
 
@@ -262,7 +262,7 @@ close submissions with no human in the loop.
 
 T3, T5 and T6 cover compromised dependencies and embedded wheels, and S2 covers registry typosquatting. Tools that
 install virtualenv unpinned take each new release on the day PyPI publishes it. We cannot slow that down for them, so we
-keep releases verifiable with attestations, an sdist and wheel that [rebuild byte for byte][ra-repro], SBOMs and
+keep releases verifiable with attestations, an sdist, wheel and zipapp that [rebuild byte for byte][ra-repro], SBOMs and
 [published advisories][advisories]. The [CRA section][security-cra] of SECURITY.md points integrators to the same
 material, and the project reports its practices through [OpenSSF Scorecard][scorecard-virtualenv] and the
 [OpenSSF Best Practices badge][bestpractices-virtualenv].
@@ -347,8 +347,9 @@ with no token permissions and grants each job the permissions it needs and no mo
 to contents. The repository's [default workflow token][gh-token-permissions] is read-only, and GitHub
 [rejects actions not pinned to a full commit SHA][gh-sha-pinning]. Checkouts do not persist credentials, except in
 [pre-release.yaml][workflow-pre-release], which pushes the release commit and tag with a release App token, and the
-upgrade publish job, which pushes with a deploy key. PyPI uploads use trusted publishing (S1). In the tool, the app-data
-seeder [marks the extracted wheel image read-only][src-symlink] when it links packages by symlink.
+upgrade publish job, which pushes the upgrade branch with the workflow token. PyPI uploads use trusted publishing (S1).
+In the tool, the app-data seeder [marks the extracted wheel image read-only][src-symlink] when it links packages by
+symlink.
 
 virtualenv uses fail-safe defaults on the network and in the batch activator. If the TLS handshake with the PyPI
 metadata API fails, virtualenv does not retry without verification; the unverified fallback needs the
@@ -486,8 +487,10 @@ the workflows as I1 describes, and [scorecard.yaml][workflow-scorecard] runs [Op
 [pr-3306]: https://github.com/pypa/virtualenv/pull/3306
 [pr-3309]: https://github.com/pypa/virtualenv/pull/3309
 [pr-3310]: https://github.com/pypa/virtualenv/pull/3310
+[pr-3311]: https://github.com/pypa/virtualenv/pull/3311
 [precommit-ci]: https://pre-commit.ci/
 [precommit-config]: https://github.com/pypa/virtualenv/blob/main/.pre-commit-config.yaml
+[pylock-zipapp]: https://github.com/pypa/virtualenv/blob/main/pylock.zipapp.toml
 [pypa-bootstrap]: https://github.com/pypa/bootstrap
 [pypi-2fa]: https://blog.pypi.org/posts/2024-01-01-2fa-enforced/
 [pypi-attestations]: https://docs.pypi.org/attestations/
@@ -549,7 +552,7 @@ the workflows as I1 describes, and [scorecard.yaml][workflow-scorecard] runs [Op
 [usage-insecure]: https://virtualenv.pypa.io/en/latest/how-to/usage.html#allow-unverified-https-for-periodic-updates
 [usage-override-app-data]: https://virtualenv.pypa.io/en/latest/how-to/usage.html#override-app-data-location
 [verify]: https://virtualenv.pypa.io/en/latest/how-to/verify-release.html
-[verify-rebuild]: https://virtualenv.pypa.io/en/latest/how-to/verify-release.html#rebuild-the-sdist
+[verify-rebuild]: https://virtualenv.pypa.io/en/latest/how-to/verify-release.html#rebuild-the-release-files
 [workflow-check]: https://github.com/pypa/virtualenv/blob/main/.github/workflows/check.yaml
 [workflow-codeql]: https://github.com/pypa/virtualenv/blob/main/.github/workflows/codeql.yaml
 [workflow-pre-release]: https://github.com/pypa/virtualenv/blob/main/.github/workflows/pre-release.yaml

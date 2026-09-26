@@ -4,7 +4,7 @@
 
 The ``release.yaml`` workflow in `pypa/virtualenv <https://github.com/pypa/virtualenv>`_ builds and publishes every
 release. The steps below check that a file you downloaded came out of that workflow, and show you what the release
-bundles. The examples use release ``21.10.0``; replace it with the version you have.
+bundles. The examples use release ``21.12.1``; replace it with the version you have.
 :doc:`../reference/release-artifacts` lists every file a release publishes, and :ref:`release-integrity` covers what
 these checks prove.
 
@@ -20,21 +20,49 @@ Download the wheel and the sdist without installing them:
 
 .. code-block:: console
 
-    $ uvx pip download virtualenv==21.10.0 --no-deps --dest .
-    $ uvx pip download virtualenv==21.10.0 --no-deps --no-binary :all: --dest .
+    $ uvx pip download virtualenv==21.12.1 --no-deps --dest .
+    $ uvx pip download virtualenv==21.12.1 --no-deps --no-binary :all: --dest .
 
 Check each file against the attestation PyPI stores for it, one file per call:
 
 .. code-block:: console
 
-    $ uvx pypi-attestations verify pypi --repository https://github.com/pypa/virtualenv virtualenv-21.10.0-py3-none-any.whl
-    OK: virtualenv-21.10.0-py3-none-any.whl
-    $ uvx pypi-attestations verify pypi --repository https://github.com/pypa/virtualenv virtualenv-21.10.0.tar.gz
-    OK: virtualenv-21.10.0.tar.gz
+    $ uvx pypi-attestations verify pypi --repository https://github.com/pypa/virtualenv virtualenv-21.12.1-py3-none-any.whl
+    OK: virtualenv-21.12.1-py3-none-any.whl
+    $ uvx pypi-attestations verify pypi --repository https://github.com/pypa/virtualenv virtualenv-21.12.1.tar.gz
+    OK: virtualenv-21.12.1.tar.gz
 
 A modified file fails with ``subject does not match distribution digest``, and a file signed by another repository fails
 with ``provenance was signed by repository ...``. To check the copy on PyPI without downloading it first, prefix the
-file name with ``pypi:``, as in ``pypi:virtualenv-21.10.0-py3-none-any.whl``.
+file name with ``pypi:``, as in ``pypi:virtualenv-21.12.1-py3-none-any.whl``.
+
+**************************************
+ Verify the GitHub release and assets
+**************************************
+
+Releases from 21.11.0 on are `immutable
+<https://docs.github.com/en/code-security/supply-chain-security/understanding-your-software-supply-chain/immutable-releases>`_:
+GitHub signs a release attestation that binds the tag to its commit and to the SHA-256 of every asset, and refuses any
+later change to the tag or the assets. Check that attestation:
+
+.. code-block:: console
+
+    $ gh release verify 21.12.1 --repo pypa/virtualenv
+    Resolved tag 21.12.1 to sha1:befec5eae075d1c4cb00a41d0c72bcdb91bf4586
+    Loaded attestation from GitHub API
+    ✓ Release 21.12.1 verified!
+
+Then check a file you downloaded against the digests the attestation lists. The command hashes the local file, so it
+works for a copy under any name:
+
+.. code-block:: console
+
+    $ gh release download 21.12.1 --repo pypa/virtualenv --pattern virtualenv.pyz
+    $ gh release verify-asset 21.12.1 virtualenv.pyz --repo pypa/virtualenv
+    ✓ Verification succeeded! virtualenv.pyz is present in release 21.12.1
+
+GitHub signs the release attestation itself, so it shows the assets did not change after publication. It does not name
+the workflow that built them; the provenance check below does.
 
 *******************
  Verify the zipapp
@@ -44,26 +72,25 @@ Download the zipapp and its provenance bundle from the GitHub release, then veri
 
 .. code-block:: console
 
-    $ gh release download 21.10.0 --repo pypa/virtualenv --pattern virtualenv.pyz --pattern virtualenv.pyz.intoto.jsonl
+    $ gh release download 21.12.1 --repo pypa/virtualenv --pattern virtualenv.pyz --pattern virtualenv.pyz.intoto.jsonl
     $ gh attestation verify virtualenv.pyz --repo pypa/virtualenv --bundle virtualenv.pyz.intoto.jsonl \
         --signer-workflow pypa/virtualenv/.github/workflows/release.yaml
 
-Add ``--source-ref refs/tags/21.10.0`` to also require that the build ran from the ``21.10.0`` tag. Without
+Add ``--source-ref refs/tags/21.12.1`` to also require that the build ran from the ``21.12.1`` tag. Without
 ``--bundle``, ``gh`` fetches the attestation from GitHub instead of reading the local file.
 
 The zipapp at ``https://bootstrap.pypa.io/virtualenv.pyz`` comes from `pypa/get-virtualenv
 <https://github.com/pypa/get-virtualenv>`_ and can trail the latest release. ``python virtualenv.pyz --version`` shows
-which release you have. Verify it with ``gh attestation verify`` as above, leaving out ``--bundle``. A release without a
-provenance bundle has no attestation to check; compare the file's SHA-256 with the digest GitHub lists for the release
-asset instead:
+which release you have. Verify it with ``gh release verify-asset`` for that release, or with ``gh attestation verify``
+as above, leaving out ``--bundle``. Releases before 21.7.11 have neither a release attestation nor a provenance bundle;
+compare the file's SHA-256 with the digest GitHub lists for the release asset instead:
 
 .. code-block:: console
 
-    $ gh release view 21.10.0 --repo pypa/virtualenv --json assets --jq '.assets[] | .name + " " + .digest'
-    virtualenv.pyz sha256:345775312f24d272017d7c640b3184414fa1779152e28aa9f082491766d5fb38
-    virtualenv.pyz.intoto.jsonl sha256:e2486ddcc38fa254afda37cd325dc14db45b42519235eb7e304388ea6afd3e2e
+    $ gh release view 21.7.10 --repo pypa/virtualenv --json assets --jq '.assets[] | .name + " " + .digest'
+    virtualenv.pyz sha256:06ee4ea84517e9b8565f7ee81c064d2de5e83dad3874d2babd7b94b2b40c4595
     $ shasum -a 256 virtualenv.pyz
-    345775312f24d272017d7c640b3184414fa1779152e28aa9f082491766d5fb38  virtualenv.pyz
+    06ee4ea84517e9b8565f7ee81c064d2de5e83dad3874d2babd7b94b2b40c4595  virtualenv.pyz
 
 ************************
  Read the embedded SBOM
@@ -74,9 +101,9 @@ virtualenv bundles, with their hashes, licenses and the Python versions each one
 
 .. code-block:: console
 
-    $ python -m zipfile --extract virtualenv-21.10.0-py3-none-any.whl wheel
+    $ python -m zipfile --extract virtualenv-21.12.1-py3-none-any.whl wheel
     $ jq -r '.components[] | select(.hashes) | "\(.name) \(.version) Python \([.properties[] | select(.name == "virtualenv:seeded-for-python").value] | join(","))"' \
-        wheel/virtualenv-21.10.0.dist-info/sboms/virtualenv.cdx.json
+        wheel/virtualenv-21.12.1.dist-info/sboms/virtualenv.cdx.json
     pip 26.0.1 Python 3.9
     pip 26.2.1 Python 3.10,3.11,3.12,3.13,3.14,3.15,3.16
     setuptools 82.0.1 Python 3.9
@@ -98,28 +125,26 @@ the release workflow:
 
 .. code-block:: console
 
-    $ gh attestation verify virtualenv-21.10.0-py3-none-any.whl -R pypa/virtualenv --predicate-type https://cyclonedx.org/bom
+    $ gh attestation verify virtualenv-21.12.1-py3-none-any.whl -R pypa/virtualenv --predicate-type https://cyclonedx.org/bom
 
 To confirm the attested SBOM matches the one inside the wheel, save the attested copy and compare the two. ``diff``
 prints nothing when they match:
 
 .. code-block:: console
 
-    $ gh attestation verify virtualenv-21.10.0-py3-none-any.whl -R pypa/virtualenv --predicate-type https://cyclonedx.org/bom \
+    $ gh attestation verify virtualenv-21.12.1-py3-none-any.whl -R pypa/virtualenv --predicate-type https://cyclonedx.org/bom \
         --format json --jq '.[0].verificationResult.statement.predicate' > attested.cdx.json
-    $ diff <(jq -S . attested.cdx.json) <(jq -S . wheel/virtualenv-21.10.0.dist-info/sboms/virtualenv.cdx.json)
+    $ diff <(jq -S . attested.cdx.json) <(jq -S . wheel/virtualenv-21.12.1.dist-info/sboms/virtualenv.cdx.json)
 
-Newer releases also attach the SBOM as ``virtualenv.cdx.json`` and an SPDX 2.3 rendering of it as
-``virtualenv.spdx.json``, and attest the SPDX document against the wheel and the sdist as well. Replace ``<version>``
-with a release that has these assets. The CycloneDX asset must match the SBOM in the wheel, and the SPDX asset what the
-release attested:
+Releases from 21.11.0 on also attach the SBOM as ``virtualenv.cdx.json`` and an SPDX 2.3 rendering of it as
+``virtualenv.spdx.json``, and attest the SPDX document against the wheel and the sdist as well. The CycloneDX asset must
+match the SBOM in the wheel, and the SPDX asset what the release attested:
 
 .. code-block:: console
 
-    $ uvx pip download virtualenv==<version> --no-deps --dest .
-    $ gh release download <version> --repo pypa/virtualenv --pattern virtualenv.cdx.json --pattern virtualenv.spdx.json
-    $ unzip -p virtualenv-<version>-py3-none-any.whl '*.dist-info/sboms/virtualenv.cdx.json' | cmp - virtualenv.cdx.json
-    $ gh attestation verify virtualenv-<version>-py3-none-any.whl -R pypa/virtualenv --predicate-type https://spdx.dev/Document/v2.3 \
+    $ gh release download 21.12.1 --repo pypa/virtualenv --pattern virtualenv.cdx.json --pattern virtualenv.spdx.json
+    $ unzip -p virtualenv-21.12.1-py3-none-any.whl '*.dist-info/sboms/virtualenv.cdx.json' | cmp - virtualenv.cdx.json
+    $ gh attestation verify virtualenv-21.12.1-py3-none-any.whl -R pypa/virtualenv --predicate-type https://spdx.dev/Document/v2.3 \
         --format json --jq '.[0].verificationResult.statement.predicate' > attested.spdx.json
     $ diff <(jq -S . attested.spdx.json) <(jq -S . virtualenv.spdx.json)
 
@@ -127,12 +152,12 @@ release attested:
  Read the zipapp SBOM
 **********************
 
-Newer releases describe the zipapp in its own CycloneDX SBOM. The zipapp carries it at its root, the release attaches it
-as ``virtualenv.pyz.cdx.json``, and GitHub attests it against ``virtualenv.pyz``. Check all three agree:
+Releases from 21.11.0 on describe the zipapp in its own CycloneDX SBOM. The zipapp carries it at its root, the release
+attaches it as ``virtualenv.pyz.cdx.json``, and GitHub attests it against ``virtualenv.pyz``. Check all three agree:
 
 .. code-block:: console
 
-    $ gh release download <version> --repo pypa/virtualenv --pattern virtualenv.pyz --pattern virtualenv.pyz.cdx.json
+    $ gh release download 21.12.1 --repo pypa/virtualenv --pattern virtualenv.pyz --pattern virtualenv.pyz.cdx.json
     $ unzip -p virtualenv.pyz virtualenv.pyz.cdx.json | cmp - virtualenv.pyz.cdx.json
     $ gh attestation verify virtualenv.pyz -R pypa/virtualenv --predicate-type https://cyclonedx.org/bom \
         --format json --jq '.[0].verificationResult.statement.predicate' > attested.pyz.cdx.json
@@ -144,42 +169,67 @@ List the distributions the zipapp bundles and the Python versions that load each
 
     $ jq -r '.components[] | "\(.name) \(.version) \([.properties[] | select(.name == "virtualenv:loaded-for-python").value] | join(","))"' \
         virtualenv.pyz.cdx.json
+    virtualenv 21.12.1
+    distlib 0.4.3 3.14,3.13,3.12,3.11,3.10,3.9,3.8
+    filelock 3.19.1 3.9,3.8
+    filelock 3.32.6 3.14,3.13,3.12,3.11,3.10
+    platformdirs 4.11.8 3.14,3.13,3.12,3.11,3.10
+    platformdirs 4.4.0 3.9,3.8
+    python-discovery 1.6.0 3.14,3.13,3.12,3.11,3.10,3.9,3.8
+    typing_extensions 4.16.0 3.10,3.9,3.8
 
-*****************************
- Rebuild the sdist and wheel
-*****************************
+***************************
+ Rebuild the release files
+***************************
 
 The release builds with ``SOURCE_DATE_EPOCH`` set to the commit time of the release tag, so rebuilding the tag yields
 the same sdist, byte for byte:
 
 .. code-block:: console
 
-    $ git clone --branch 21.10.0 https://github.com/pypa/virtualenv
+    $ git clone --branch 21.12.1 https://github.com/pypa/virtualenv
     $ cd virtualenv
     $ SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) uv build --sdist --out-dir rebuild .
-    $ cmp rebuild/virtualenv-21.10.0.tar.gz ../virtualenv-21.10.0.tar.gz
+    $ cmp rebuild/virtualenv-21.12.1.tar.gz ../virtualenv-21.12.1.tar.gz
 
 ``cmp`` prints nothing when the files match.
 
-The wheel of a release after 21.10.0 rebuilds byte for byte too, on any operating system and architecture, once the
+The wheel of a release from 21.11.0 on rebuilds byte for byte too, on any operating system and architecture, once the
 Python patch version and the build backend versions match the ones the release used. Its SBOM lists both, so read them
 from the published wheel and pass them to the build:
 
 .. code-block:: console
 
-    $ unzip -p ../virtualenv-<version>-py3-none-any.whl '*.dist-info/sboms/virtualenv.cdx.json' > published.cdx.json
+    $ unzip -p ../virtualenv-21.12.1-py3-none-any.whl '*.dist-info/sboms/virtualenv.cdx.json' > published.cdx.json
     $ jq -r '.metadata.tools.components[] | select(.type == "platform") | .version' published.cdx.json
     3.14.7
     $ jq -r '.metadata.tools.components[] | select(.purl // "" | startswith("pkg:pypi/")) | "\(.name)==\(.version)"' \
         published.cdx.json > build-constraints.txt
     $ SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) uv build --wheel --python 3.14.7 \
         --build-constraint build-constraints.txt --out-dir rebuild .
-    $ cmp rebuild/virtualenv-<version>-py3-none-any.whl ../virtualenv-<version>-py3-none-any.whl
+    $ cmp rebuild/virtualenv-21.12.1-py3-none-any.whl ../virtualenv-21.12.1-py3-none-any.whl
 
 Build from a git checkout, since the SBOM records the source commit and an sdist does not carry it. Wheels up to 21.10.0
 recorded the machine that built them in the SBOM, so a rebuild of those differs in the SBOM and in ``RECORD``, which
 holds the SBOM's hash.
 
-The zipapp rebuilds byte for byte with ``SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) tox r -e zipapp`` on the Python
-version its SBOM lists, but only while every package the build pulls from PyPI still resolves to the version the release
-used. The zipapp build does not pin them; the zipapp SBOM and the wheel SBOM inside the zipapp list them.
+The zipapp of a release from 21.11.0 on rebuilds byte for byte as well. The `pylock.zipapp.toml
+<https://github.com/pypa/virtualenv/blob/main/pylock.zipapp.toml>`_ lock at the tag pins each distribution it bundles by
+version and SHA-256, so only the build tools can drift. Two SBOMs list them: the zipapp SBOM holds the tools of the
+``tox`` environment that assembles the zipapp, and the wheel SBOM inside the zipapp holds the build backend for that
+wheel. Constrain both, and run on the CPython version the zipapp SBOM lists:
+
+.. code-block:: console
+
+    $ jq -r '.metadata.tools.components[] | select(.purl // "" | startswith("pkg:pypi/")) | "\(.name)==\(.version)"' \
+        ../virtualenv.pyz.cdx.json > zipapp-constraints.txt
+    $ unzip -p ../virtualenv.pyz 'virtualenv-*.dist-info/sboms/virtualenv.cdx.json' \
+        | jq -r '.metadata.tools.components[] | select(.purl // "" | startswith("pkg:pypi/")) | "\(.name)==\(.version)"' \
+        > wheel-constraints.txt
+    $ UV_CONSTRAINT=$PWD/zipapp-constraints.txt PIP_BUILD_CONSTRAINT=$PWD/wheel-constraints.txt \
+        SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) uvx --with tox-uv tox r -e zipapp -x 'env.zipapp.pass_env+=PIP_BUILD_CONSTRAINT'
+    $ cmp virtualenv.pyz ../virtualenv.pyz
+
+The release runs ``tox`` with the ``tox-uv`` plugin as well. The plugin passes ``UV_*`` variables into the environment,
+and the ``-x`` override adds ``PIP_BUILD_CONSTRAINT`` for the ``pip wheel`` call that builds the virtualenv wheel inside
+the zipapp.
