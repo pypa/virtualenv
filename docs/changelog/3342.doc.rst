@@ -1,0 +1,2 @@
+Document how the project selects, obtains and tracks its dependencies, and which dependency findings block a merge or a
+release - by :user:`gaborbernat`.

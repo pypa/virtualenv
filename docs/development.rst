@@ -250,6 +250,39 @@ You may use AI tools (code assistants, chat models, agents) to help write a cont
 Maintainers may use AI tools to help triage and review. A review comment posted under a maintainer's name has been read
 and endorsed by that maintainer.
 
+Dependency policy
+=================
+
+virtualenv lists its runtime dependencies under ``[project.dependencies]`` in ``pyproject.toml``, and its development
+and release tools in dependency groups and ``tox.toml``. Adding a runtime dependency is a maintainer decision under the
+`Licensing policy`_ below.
+
+The project obtains and updates each kind of dependency this way:
+
+- Installers fetch runtime dependencies from PyPI within the ranges ``pyproject.toml`` allows.
+- The daily ``upgrade.yaml`` workflow runs ``tox r -e upgrade``, which downloads new ``pip`` and ``setuptools`` wheels
+  from PyPI into ``src/virtualenv/seed/wheels/embed`` and records their SHA-256 in ``BUNDLE_SHA256``. The same workflow
+  recompiles ``pylock.zipapp.toml``, which pins each distribution the zipapp bundles by version and hash. It leaves out
+  releases younger than seven days and opens a pull request with the result.
+- Dependabot bumps the GitHub Actions, which the repository requires to be pinned to a commit SHA, every week after a
+  seven-day cooldown. pre-commit.ci bumps the pre-commit hooks, which ``.pre-commit-config.yaml`` freezes to commit
+  SHAs. ``upgrade.yaml`` bumps the CI test tools every Monday.
+
+We track dependencies through the CycloneDX SBOM in every wheel and the SBOMs attached to each release, which
+:doc:`reference/release-artifacts` describes, and through Dependabot alerts, which cover the pip and GitHub Actions
+manifests.
+
+Software composition analysis findings follow these thresholds:
+
+- ``dependency-review.yaml`` fails a pull request that adds a dependency with a known advisory of any severity, in
+  runtime or development scope. The ``main`` ruleset requires that check.
+- A shipped package whose license falls outside ``ALLOWED_LICENSES`` fails the SBOM check in ``tox r -e readme`` and
+  ``tox r -e zipapp``, which the required ``✅ all checks pass`` check runs. We accept no exceptions.
+- An open Dependabot alert blocks the next release. The maintainer who cuts the release fixes it first, or dismisses it
+  with the reason virtualenv does not reach the vulnerable code.
+- An embedded wheel with no fixed version for a supported Python version stays, and
+  :ref:`reference/release-artifacts:Embedded wheel advisories` lists its advisories and the way around them.
+
 Licensing policy
 ================
 
