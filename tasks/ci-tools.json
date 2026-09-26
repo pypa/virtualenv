@@ -1,4 +1,8 @@
 {
+  "graalpy": {
+    "assets": {},
+    "tag": "graal-24.1.2"
+  },
   "mermaid": {
     "version": "11.12.1"
   },

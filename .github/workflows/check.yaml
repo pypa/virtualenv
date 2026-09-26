@@ -15,7 +15,7 @@ jobs:
     name: 🧪 test ${{ matrix.py }} - ${{ matrix.os }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: ${{ matrix.py == 'graalpy-24.1' && 75 || 40 }}
+    timeout-minutes: ${{ matrix.py == 'graalpy' && 75 || 40 }}
     permissions:
       contents: read
     env:
@@ -37,7 +37,7 @@ jobs:
           - pypy-3.11
           - pypy-3.10
           - pypy-3.9
-          - graalpy-24.1
+          - graalpy
           - rp
         os:
           - ubuntu-24.04
@@ -50,7 +50,7 @@ jobs:
           - {os: macos-26, py: "brew@3.11"}
           - {os: macos-26, py: "brew@3.10"}
         exclude:
-          - {os: windows-2025-vs2026, py: "graalpy-24.1"}
+          - {os: windows-2025-vs2026, py: "graalpy"}
           - {os: windows-2025-vs2026, py: "pypy-3.10"}
           - {os: windows-2025-vs2026, py: "pypy-3.9"}
     steps:
@@ -83,11 +83,17 @@ jobs:
           else
             uv tool install --no-managed-python --python 3.14 "tox>=4.45" --with tox-uv --with .
           fi
+      - name: 🧮 Resolve GraalPy release
+        id: graalpy
+        if: matrix.py == 'graalpy'
+        shell: bash
+        # the upgrade workflow keeps tasks/ci-tools.json on the newest release
+        run: echo "python-version=graalpy-$(jq --raw-output '.graalpy.tag | ltrimstr("graal-")' tasks/ci-tools.json)" >> "$GITHUB_OUTPUT"
       - name: 🐍 Setup Python for test ${{ matrix.py }}
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         if: ${{ !startsWith(matrix.py, 'brew@') && matrix.py != 'rp' }}
         with:
-          python-version: ${{ matrix.py }}
+          python-version: ${{ steps.graalpy.outputs.python-version || matrix.py }}
           allow-prereleases: true
       - name: 🦀 Setup RustPython
         if: matrix.py == 'rp'
@@ -162,14 +168,13 @@ jobs:
             echo "UV_PYTHON=/opt/homebrew/bin/python${brew_version}" >> "$GITHUB_ENV"
             py="$brew_version"
           fi
-          [[ "$py" == graalpy-* ]] && py="graalpy"
           echo "TOXENV=$py" >> "$GITHUB_ENV"
           echo "Set TOXENV=$py"
       - name: 🏗️ Setup test suite
         run: tox run -vvvv --notest --skip-missing-interpreters false
       - name: 🏃 Run test suite
         run: tox run --skip-pkg-install
-        timeout-minutes: ${{ matrix.py == 'graalpy-24.1' && 65 || 30 }}
+        timeout-minutes: ${{ matrix.py == 'graalpy' && 65 || 30 }}
         env:
           # --reruns lets a single test recover from a transient worker crash (see
           # pytest-rerunfailures' documented pytest-xdist crash-recovery support) instead of
@@ -179,7 +184,7 @@ jobs:
           # and GraalVM's Context.close() treats any Python-visible thread still alive as
           # fatal, crashing the job even after every test passed (see #3240). The default
           # signal-based method needs no such thread. --timeout=300 stays as a safety net.
-          PYTEST_ADDOPTS: "-vv --durations=20 --reruns 2 --reruns-delay 2${{ matrix.py == 'graalpy-24.1' && ' --timeout=300' || '' }}"
+          PYTEST_ADDOPTS: "-vv --durations=20 --reruns 2 --reruns-delay 2${{ matrix.py == 'graalpy' && ' --timeout=300' || '' }}"
           # If a worker process dies outright (seen on 3.13t/Windows with no Python-level
           # exception at all), this prints a native stack trace to stderr instead of nothing.
           PYTHONFAULTHANDLER: "1"

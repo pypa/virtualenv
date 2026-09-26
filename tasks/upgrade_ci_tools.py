@@ -10,7 +10,9 @@ from typing import Final
 from urllib.request import Request, urlopen
 
 _PINS: Final[Path] = Path("tasks/ci-tools.json")
+# no GraalPy assets to hash: check.yaml hands the tag to setup-python, which downloads the release itself
 _TOOLS: Final[dict[str, tuple[str, bool, dict[str, str]]]] = {
+    "graalpy": ("oracle/graalpython", False, {}),
     "nushell": ("nushell/nushell", False, {"Windows": "nu-{version}-x86_64-pc-windows-msvc.zip"}),
     "rustpython": (
         "RustPython/RustPython",
