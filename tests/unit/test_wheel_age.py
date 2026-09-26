@@ -277,6 +277,7 @@ _RUSTPYTHON_ASSETS: Final[dict[str, str]] = {
     "Windows": "rustpython-release-Windows-x86_64-pc-windows-msvc.exe",
 }
 _OLD_PINS: Final[dict[str, dict[str, str | dict[str, dict[str, str]]]]] = {
+    "graalpy": {"tag": "graal-24.1.2", "assets": {}},
     "mermaid": {"version": "11.12.1"},
     "nushell": {"tag": "0.115.1", "assets": {"Windows": {"name": "nu-old.zip", "sha256": "old"}}},
     "rustpython": {"tag": "old", "assets": {"Linux": {"name": "rp-old", "sha256": "old"}}},
@@ -311,11 +312,14 @@ def github(
             if url == "https://registry.npmjs.org/mermaid":
                 return BytesIO(json.dumps(npm_registry).encode())
             if url == "https://api.github.com/graphql":
+                repository: Final[str] = json.loads(request.data)["variables"]["name"]
                 return BytesIO(
                     json.dumps({
                         "data": {
                             "repository": {
-                                "latestRelease": {"tagName": nushell_tag},
+                                "latestRelease": {
+                                    "tagName": "graal-25.4.4" if repository == "graalpython" else nushell_tag
+                                },
                                 "releases": {"nodes": [{"tagName": "2026-09-20-main-1"}]},
                             }
                         }
@@ -356,6 +360,7 @@ def test_ci_tools_pin_newest_releases(
     )
     upgrade_ci_tools()
     assert json.loads(ci_tools.read_text(encoding="utf-8")) == {
+        "graalpy": {"tag": "graal-25.4.4", "assets": {}},
         "mermaid": {"version": "11.12.1"},
         "nushell": {
             "tag": "0.116.0",
