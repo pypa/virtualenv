@@ -146,8 +146,9 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch) -> 
         def invoke_script(self):
             return [self.cmd, "-File"]
 
-        def print_os_env_var(self, var) -> str:
-            return f'if ($env:{var} -eq $null) {{ "None" }} else {{ $env:{var} }}'
+        def print_state(self, names: tuple[str, ...]) -> str:
+            lookups = (f'if ($env:{var} -eq $null) {{ "None" }} else {{ $env:{var} }}' for var in names)
+            return "; ".join([self.print_python_exe(), *lookups])
 
         def print_prompt(self) -> str:
             return "prompt"
