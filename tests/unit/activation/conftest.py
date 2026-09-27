@@ -7,10 +7,19 @@ import sys
 from os.path import dirname, normcase
 from pathlib import Path
 from subprocess import Popen
+from typing import Final, NamedTuple
 
 import pytest
 
 from virtualenv.run import cli_run
+
+_STATE_VARS: Final[tuple[str, ...]] = (
+    "VIRTUAL_ENV",
+    "VIRTUAL_ENV_PROMPT",
+    "TCL_LIBRARY",
+    "TK_LIBRARY",
+    "PKG_CONFIG_PATH",
+)
 
 
 class ActivationTester:
@@ -121,29 +130,14 @@ class ActivationTester:
 
     def _get_test_lines(self, activate_script):
         steps = [
-            self.print_python_exe(),
-            self.print_os_env_var("VIRTUAL_ENV"),
-            self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
-            self.print_os_env_var("TCL_LIBRARY"),
-            self.print_os_env_var("TK_LIBRARY"),
-            self.print_os_env_var("PKG_CONFIG_PATH"),
+            self.print_state(_STATE_VARS),
             self.activate_call(activate_script),
-            self.print_python_exe(),
-            self.print_os_env_var("VIRTUAL_ENV"),
-            self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
-            self.print_os_env_var("TCL_LIBRARY"),
-            self.print_os_env_var("TK_LIBRARY"),
-            self.print_os_env_var("PKG_CONFIG_PATH"),
+            self.print_state(_STATE_VARS),
             self.print_prompt(),
             # \\ loads documentation from the virtualenv site packages
             self.pydoc_call,
             self.deactivate,
-            self.print_python_exe(),
-            self.print_os_env_var("VIRTUAL_ENV"),
-            self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
-            self.print_os_env_var("TCL_LIBRARY"),
-            self.print_os_env_var("TK_LIBRARY"),
-            self.print_os_env_var("PKG_CONFIG_PATH"),
+            self.print_state(_STATE_VARS),
             "",  # just finish with an empty new line
         ]
         result = []
@@ -208,9 +202,10 @@ class ActivationTester:
     def print_python_exe(self):
         return self.python_cmd("import sys; print(sys.executable)")
 
-    def print_os_env_var(self, var):
-        val = f'"{var}"'
-        return self.python_cmd(f"import os; import sys; v = os.environ.get({val}); print(v)")
+    def print_state(self, names: tuple[str, ...]) -> str:
+        # one launch per phase instead of one per value, since interpreter startup dominates the probe cost
+        lookups = "; ".join(f'print(os.environ.get("{name}"))' for name in names)
+        return self.python_cmd(f"import os; import sys; print(sys.executable); {lookups}")
 
     def print_prompt(self):
         return NotImplemented
@@ -276,23 +271,35 @@ def raise_on_non_source_class():
     return RaiseOnNonSourceCall
 
 
+class ActivationCase(NamedTuple):
+    prompt: bool
+    tcl: bool
+    user_env: bool
+
+
+# an L4 orthogonal array: every pair of factors still meets in all four value combinations, at half the cost of the
+# full grid; no activation script reads a value that depends on all three factors at once
 @pytest.fixture(
     scope="session",
     params=[
-        pytest.param((prompt, tcl), id=f"{'with' if prompt else 'no'}_prompt-{'with' if tcl else 'no'}_tcl")
-        for prompt in (True, False)
-        for tcl in (True, False)
+        pytest.param(ActivationCase(prompt=True, tcl=True, user_env=True), id="with_prompt-with_tcl-user_env_set"),
+        pytest.param(ActivationCase(prompt=True, tcl=False, user_env=False), id="with_prompt-no_tcl-user_env_unset"),
+        pytest.param(ActivationCase(prompt=False, tcl=True, user_env=False), id="no_prompt-with_tcl-user_env_unset"),
+        pytest.param(ActivationCase(prompt=False, tcl=False, user_env=True), id="no_prompt-no_tcl-user_env_set"),
     ],
 )
-def activation_python(request, tmp_path_factory, special_char_name, current_fastest):
+def activation_case(request: pytest.FixtureRequest) -> ActivationCase:
+    return request.param
+
+
+@pytest.fixture(scope="session")
+def activation_python(activation_case: ActivationCase, tmp_path_factory, special_char_name, current_fastest):
     dest = os.path.join(str(tmp_path_factory.mktemp("activation-tester-env")), special_char_name)
     cmd = ["--without-pip", dest, "--creator", current_fastest, "-vv", "--no-periodic-update"]
-    # `params` is accessed here. https://docs.pytest.org/en/stable/reference/reference.html#pytest-fixture
-    prompt, tcl = request.param
-    if prompt:
+    if activation_case.prompt:
         cmd += ["--prompt", special_char_name]
     session = cli_run(cmd)
-    if tcl:
+    if activation_case.tcl:
         # the interpreter reports tcl_lib only when TCL_LIBRARY is set during its cached probe, so regenerate the scripts
         # with the values patched instead
         with pytest.MonkeyPatch.context() as monkeypatch:
@@ -306,10 +313,10 @@ def activation_python(request, tmp_path_factory, special_char_name, current_fast
     return session
 
 
-@pytest.fixture(params=[False, True], ids=["user_env_unset", "user_env_set"])
-def activation_tester(request, activation_python, monkeypatch, tmp_path, is_inside_ci):
+@pytest.fixture
+def activation_tester(activation_case: ActivationCase, activation_python, monkeypatch, tmp_path, is_inside_ci):
     for name in ("PKG_CONFIG_PATH", "TCL_LIBRARY", "TK_LIBRARY"):
-        if request.param:
+        if activation_case.user_env:
             monkeypatch.setenv(name, f"user-{name.lower()}")
         else:
             monkeypatch.delenv(name, raising=False)

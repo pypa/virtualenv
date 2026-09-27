@@ -157,33 +157,16 @@ def test_fish(activation_tester_class, activation_tester, monkeypatch, tmp_path)
             return "fish_prompt"
 
         def _get_test_lines(self, activate_script):
+            names = ("VIRTUAL_ENV", "VIRTUAL_ENV_PROMPT", "PATH", "TCL_LIBRARY", "TK_LIBRARY", "PKG_CONFIG_PATH")
             return [
-                self.print_python_exe(),
-                self.print_os_env_var("VIRTUAL_ENV"),
-                self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
-                self.print_os_env_var("PATH"),
-                self.print_os_env_var("TCL_LIBRARY"),
-                self.print_os_env_var("TK_LIBRARY"),
-                self.print_os_env_var("PKG_CONFIG_PATH"),
+                self.print_state(names),
                 self.activate_call(activate_script),
-                self.print_python_exe(),
-                self.print_os_env_var("VIRTUAL_ENV"),
-                self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
-                self.print_os_env_var("PATH"),
-                self.print_os_env_var("TCL_LIBRARY"),
-                self.print_os_env_var("TK_LIBRARY"),
-                self.print_os_env_var("PKG_CONFIG_PATH"),
+                self.print_state(names),
                 self.print_prompt(),
                 # \\ loads documentation from the virtualenv site packages
                 self.pydoc_call,
                 self.deactivate,
-                self.print_python_exe(),
-                self.print_os_env_var("VIRTUAL_ENV"),
-                self.print_os_env_var("VIRTUAL_ENV_PROMPT"),
-                self.print_os_env_var("PATH"),
-                self.print_os_env_var("TCL_LIBRARY"),
-                self.print_os_env_var("TK_LIBRARY"),
-                self.print_os_env_var("PKG_CONFIG_PATH"),
+                self.print_state(names),
                 "",  # just finish with an empty new line
             ]
 
