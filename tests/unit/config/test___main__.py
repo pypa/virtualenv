@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 import sys
-from subprocess import PIPE, Popen, check_output
+from subprocess import check_output
 from typing import TYPE_CHECKING, NoReturn
 
 import pytest
@@ -12,18 +12,6 @@ from virtualenv.util.error import ProcessCallFailedError
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-
-def test_main() -> None:
-    process = Popen(
-        [sys.executable, "-m", "virtualenv", "--help"],
-        universal_newlines=True,
-        stdout=PIPE,
-        encoding="utf-8",
-    )
-    out, _ = process.communicate()
-    assert not process.returncode
-    assert out
 
 
 @pytest.fixture

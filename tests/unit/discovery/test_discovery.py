@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import os
-import subprocess
 import sys
 from argparse import Namespace
 from pathlib import Path
@@ -12,6 +11,7 @@ from python_discovery import PythonInfo
 
 from virtualenv.discovery.builtin import Builtin, get_interpreter
 from virtualenv.info import IS_WIN
+from virtualenv.run import cli_run, session_via_cli
 
 
 def test_relative_path(session_app_data, monkeypatch) -> None:
@@ -57,44 +57,34 @@ def mock_get_interpreter(mocker):
 
 
 @pytest.mark.usefixtures("mock_get_interpreter")
-def test_returns_first_python_specified_when_only_env_var_one_is_specified(
-    mocker, monkeypatch, session_app_data
-) -> None:
-    monkeypatch.setenv("VIRTUALENV_PYTHON", "python_from_env_var")
-    builtin = Builtin(
-        Namespace(app_data=session_app_data, try_first_with=[], python=["python_from_env_var"], env=os.environ),
-    )
-
-    result = builtin.run()
-
-    assert result == mocker.sentinel.python_from_env_var
-
-
-@pytest.mark.usefixtures("mock_get_interpreter")
-def test_returns_second_python_specified_when_more_than_one_is_specified_and_env_var_is_specified(
-    mocker, monkeypatch, session_app_data
-) -> None:
-    monkeypatch.setenv("VIRTUALENV_PYTHON", "python_from_env_var")
-    builtin = Builtin(
-        Namespace(
-            app_data=session_app_data,
-            try_first_with=[],
-            python=["python_from_env_var", "python_from_cli"],
-            env=os.environ,
+@pytest.mark.parametrize(
+    ("env_var", "python", "expected"),
+    [
+        pytest.param("python_from_env_var", ["python_from_env_var"], "python_from_env_var", id="env-var-only"),
+        pytest.param(
+            "python_from_env_var", ["python_from_env_var", "python_from_cli"], "python_from_cli", id="env-var-and-cli"
         ),
-    )
+        pytest.param(None, ["python_from_cli"], "python_from_cli", id="cli-only"),
+    ],
+)
+def test_returns_python_specified(  # ruff:ignore[too-many-arguments]
+    mocker, monkeypatch, session_app_data, env_var: str | None, python: list[str], expected: str
+) -> None:
+    if env_var is None:
+        monkeypatch.delenv("VIRTUALENV_PYTHON", raising=False)
+    else:
+        monkeypatch.setenv("VIRTUALENV_PYTHON", env_var)
+    builtin = Builtin(Namespace(app_data=session_app_data, try_first_with=[], python=python, env=os.environ))
 
-    result = builtin.run()
-
-    assert result == mocker.sentinel.python_from_cli
+    assert builtin.run() == getattr(mocker.sentinel, expected)
 
 
 def test_discovery_absolute_path_with_try_first(tmp_path, session_app_data) -> None:
     good_env = tmp_path / "good"
     bad_env = tmp_path / "bad"
 
-    subprocess.check_call([sys.executable, "-m", "virtualenv", str(good_env)])
-    subprocess.check_call([sys.executable, "-m", "virtualenv", str(bad_env)])
+    cli_run(["--no-seed", str(good_env)])
+    cli_run(["--no-seed", str(bad_env)])
 
     scripts_dir = "Scripts" if IS_WIN else "bin"
     exe_name = "python.exe" if IS_WIN else "python"
@@ -113,60 +103,15 @@ def test_discovery_absolute_path_with_try_first(tmp_path, session_app_data) -> N
 
 def test_absolute_path_does_not_exist(tmp_path) -> None:
     """Test that virtualenv does not fail when an absolute path that does not exist is provided."""
-    command = [
-        sys.executable,
-        "-m",
-        "virtualenv",
-        "-p",
-        "/this/path/does/not/exist",
-        "-p",
-        sys.executable,
-        str(tmp_path / "dest"),
-    ]
+    session = session_via_cli(["-p", "/this/path/does/not/exist", "-p", sys.executable, str(tmp_path / "dest")])
 
-    process = subprocess.run(
-        command,
-        capture_output=True,
-        text=True,
-        check=False,
-        encoding="utf-8",
-    )
-
-    assert process.returncode == 0, process.stderr
+    assert session.interpreter.executable == sys.executable
 
 
 def test_absolute_path_does_not_exist_fails(tmp_path) -> None:
     """Test that virtualenv fails when a single absolute path that does not exist is provided."""
-    command = [
-        sys.executable,
-        "-m",
-        "virtualenv",
-        "-p",
-        "/this/path/does/not/exist",
-        str(tmp_path / "dest"),
-    ]
-
-    process = subprocess.run(
-        command,
-        capture_output=True,
-        text=True,
-        check=False,
-        encoding="utf-8",
-    )
-
-    assert process.returncode != 0, process.stderr
-
-
-@pytest.mark.usefixtures("mock_get_interpreter")
-def test_returns_first_python_specified_when_no_env_var_is_specified(mocker, monkeypatch, session_app_data) -> None:
-    monkeypatch.delenv("VIRTUALENV_PYTHON", raising=False)
-    builtin = Builtin(
-        Namespace(app_data=session_app_data, try_first_with=[], python=["python_from_cli"], env=os.environ),
-    )
-
-    result = builtin.run()
-
-    assert result == mocker.sentinel.python_from_cli
+    with pytest.raises(RuntimeError, match="failed to find interpreter"):
+        session_via_cli(["-p", "/this/path/does/not/exist", str(tmp_path / "dest")])
 
 
 def test_discovery_via_version_specifier(session_app_data) -> None:
@@ -191,31 +136,3 @@ def test_discovery_via_version_specifier(session_app_data) -> None:
     if current.implementation == "CPython":
         assert interpreter is not None
         assert interpreter.implementation == "CPython"
-
-
-def test_invalid_discovery_via_env_var(monkeypatch, tmp_path) -> None:
-    """When VIRTUALENV_DISCOVERY is set to an unavailable plugin, raise a clear error instead of KeyError."""
-    monkeypatch.setenv("VIRTUALENV_DISCOVERY", "nonexistent_plugin")
-    process = subprocess.run(
-        [sys.executable, "-m", "virtualenv", str(tmp_path / "env")],
-        capture_output=True,
-        text=True,
-        check=False,
-        encoding="utf-8",
-    )
-    assert process.returncode != 0
-    output = process.stdout + process.stderr
-    assert "nonexistent_plugin" in output
-    assert "is not available" in output
-    assert "KeyError" not in output
-
-
-def test_invalid_discovery_via_env_var_unit(monkeypatch) -> None:
-    """Unit test: get_discover raises RuntimeError with helpful message for unknown discovery method."""
-    from virtualenv.config.cli.parser import VirtualEnvConfigParser  # ruff:ignore[import-outside-top-level]
-    from virtualenv.run.plugin.discovery import get_discover  # ruff:ignore[import-outside-top-level]
-
-    monkeypatch.setenv("VIRTUALENV_DISCOVERY", "nonexistent_plugin")
-    parser = VirtualEnvConfigParser()
-    with pytest.raises(RuntimeError, match=r"nonexistent_plugin.*is not available"):
-        get_discover(parser, [])

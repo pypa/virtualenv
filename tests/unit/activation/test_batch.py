@@ -121,12 +121,16 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
         assert '@if NOT ""=="" @set "TK_LIBRARY="' in activate_content
 
 
+# every field feeds the same character check, so the tcl and tk fields need only one of the characters
 @pytest.mark.parametrize(
-    "character", [pytest.param("&", id="ampersand"), pytest.param("^", id="caret"), pytest.param("!", id="exclamation")]
-)
-@pytest.mark.parametrize(
-    "field",
-    [pytest.param("dest", id="destination"), pytest.param("tcl_lib", id="tcl"), pytest.param("tk_lib", id="tk")],
+    ("field", "character"),
+    [
+        pytest.param("dest", "&", id="destination-ampersand"),
+        pytest.param("dest", "^", id="destination-caret"),
+        pytest.param("dest", "!", id="destination-exclamation"),
+        pytest.param("tcl_lib", "&", id="tcl-ampersand"),
+        pytest.param("tk_lib", "&", id="tk-ampersand"),
+    ],
 )
 def test_batch_skips_changed_paths(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, character: str, field: str

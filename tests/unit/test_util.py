@@ -257,13 +257,13 @@ def test_zipapp_read_returns_payload_from_entry_inside_root(fake_zipapp_root: Pa
     assert zipapp.read(entry) == "hello zipapp"
 
 
-def test_zipapp_read_rejects_path_escaping_via_parent(fake_zipapp_root: Path) -> None:
-    escape = fake_zipapp_root / ".." / "escape.txt"
+@pytest.mark.parametrize(
+    "parts",
+    [
+        pytest.param(("virtualenv.pyz", "..", "escape.txt"), id="escapes-via-parent"),
+        pytest.param(("other", "file.txt"), id="unrelated-absolute"),
+    ],
+)
+def test_zipapp_read_rejects_path_outside_root(fake_zipapp_root: Path, parts: tuple[str, ...]) -> None:
     with pytest.raises(RuntimeError, match="should be within ROOT"):
-        zipapp.read(escape)
-
-
-def test_zipapp_read_rejects_unrelated_absolute_path(fake_zipapp_root: Path, tmp_path: Path) -> None:  # ruff:ignore[unused-function-argument]
-    unrelated = tmp_path / "other" / "file.txt"
-    with pytest.raises(RuntimeError, match="should be within ROOT"):
-        zipapp.read(unrelated)
+        zipapp.read(fake_zipapp_root.parent.joinpath(*parts))

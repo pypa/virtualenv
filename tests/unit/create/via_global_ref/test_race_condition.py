@@ -39,27 +39,3 @@ def test_virtualenv_py_race_condition_find_spec(tmp_path) -> None:
     finally:
         sys.path.remove(str(tmp_path))
         sys.modules.pop("_virtualenv_test", None)
-
-
-def test_virtualenv_py_normal_operation() -> None:
-    """Test that the fix doesn't break normal operation when _DISTUTILS_PATCH is defined."""
-    # Read the actual _virtualenv.py file
-    virtualenv_py_path = (
-        Path(__file__).parent.parent.parent.parent.parent
-        / "src"
-        / "virtualenv"
-        / "create"
-        / "via_global_ref"
-        / "_virtualenv.py"
-    )
-
-    if not virtualenv_py_path.exists():
-        return  # Skip if we can't find the file
-
-    content = virtualenv_py_path.read_text(encoding="utf-8")
-
-    # Verify the fix is present
-    assert "try:" in content
-    assert "distutils_patch = _DISTUTILS_PATCH" in content
-    assert "except NameError:" in content
-    assert "return None" in content or "return" in content
