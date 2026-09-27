@@ -232,7 +232,6 @@ def test_sbom_release_notes_from_project_url(build_sbom: Callable[[str, dict[str
     ]
 
 
-@pytest.mark.skipif(sys.version_info < (3, 10), reason="platform.freedesktop_os_release is new in Python 3.10")
 def test_sbom_build_host_independent(
     build_sbom: Callable[[str, dict[str, str]], str],
     install_tool: Callable[[Path, str, bool, dict[str, bytes]], None],
@@ -617,8 +616,6 @@ def license_problems() -> Callable[[list[dict[str, Any]]], list[str]]:
 
 @pytest.fixture
 def zipapp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    if sys.version_info < (3, 10):
-        pytest.skip("zipfile.Path shares and then closes the handle of the archive it wraps before Python 3.10")
     wheel: Final[BytesIO] = BytesIO()
     with zipfile.ZipFile(wheel, "w") as archive:
         archive.writestr("pip-1.0.dist-info/METADATA", "Metadata-Version: 2.4\nName: pip\nVersion: 1.0\n")
@@ -718,8 +715,6 @@ def build_sbom(tmp_path: Path) -> Callable[[str, dict[str, str]], str]:
             },
         )
         build_data: Final[dict[str, Any]] = builder.get_default_build_data()
-        if "sbom_files" not in build_data:
-            pytest.skip("Hatchling before 1.28 does not support SBOMs (Python 3.9 builds)")
         builder.get_build_hooks(str(tmp_path))["custom"].initialize("standard", build_data)
         return Path(build_data["sbom_files"][0]).read_text(encoding="utf-8")
 

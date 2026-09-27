@@ -208,6 +208,7 @@ jobs:
           - property
           - fuzz
           - readme
+          - tasks
           - type
           - type-3.9
           - upgrade
@@ -216,6 +217,7 @@ jobs:
           - {os: windows-2025-vs2026, tox_env: docs}
           - {os: windows-2025-vs2026, tox_env: fuzz}
           - {os: windows-2025-vs2026, tox_env: readme}
+          - {os: windows-2025-vs2026, tox_env: tasks}
           - {os: windows-2025-vs2026, tox_env: type}
           - {os: windows-2025-vs2026, tox_env: type-3.9}
     steps:

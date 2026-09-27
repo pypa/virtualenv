@@ -17,6 +17,7 @@ env_list = [
   "graalpy",
   "readme",
   "rp",
+  "tasks",
   "type",
 ]
 skip_missing_interpreters = true
@@ -136,6 +137,44 @@ commands = [
       "tests",
       "--skip-slow",
     ], extend = true },
+  ],
+]
+
+[env.tasks]
+description = "run the build and CI tooling tests"
+base_python = [ "3.14" ]
+dependency_groups = [ "tasks" ]
+set_env._COVERAGE_SRC = "{tox_root}"
+set_env.COVERAGE_FILE = "{work_dir}{/}.coverage.{env_name}"
+set_env.COVERAGE_PROCESS_START = "{tox_root}{/}pyproject.toml"
+set_env.PYTHONWARNDEFAULTENCODING = "1"
+commands = [
+  [ "coverage", "erase" ],
+  [
+    "coverage",
+    "run",
+    "-m",
+    "pytest",
+    { replace = "posargs", default = [
+      "--junitxml",
+      "{work_dir}{/}junit.{env_name}.xml",
+      "tests{/}tasks",
+      "-n",
+      "auto",
+      "--dist",
+      "loadfile",
+    ], extend = true },
+  ],
+  [ "coverage", "combine" ],
+  [
+    "coverage",
+    "report",
+    "--skip-covered",
+    "--show-missing",
+    "--include",
+    "tasks/*,tests/tasks/*",
+    "--fail-under",
+    "100",
   ],
 ]
 
