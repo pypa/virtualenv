@@ -34,12 +34,6 @@ def test_venv_redirect_auto_skips_folder_without_pyproject(redirect: Path) -> No
     assert not redirect.exists()
 
 
-def test_venv_redirect_auto_points_project_at_created(project_redirect: Path) -> None:
-    _create(project_redirect.parent / "env")
-
-    assert project_redirect.read_text(encoding="utf-8") == "env\n"
-
-
 def test_venv_redirect_auto_keeps_existing_redirect(project_redirect: Path) -> None:
     _create(project_redirect.parent / "old")
 

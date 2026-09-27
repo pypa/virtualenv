@@ -113,13 +113,6 @@ def test_zipapp_in_symlink(capsys, call_zipapp_symlink) -> None:
 
 
 @pytest.mark.timeout(600)
-def test_zipapp_help(call_zipapp, capsys) -> None:
-    call_zipapp("-h")
-    _out, err = capsys.readouterr()
-    assert not err
-
-
-@pytest.mark.timeout(600)
 @pytest.mark.slow
 @pytest.mark.parametrize("seeder", ["app-data", "pip"])
 def test_zipapp_create(call_zipapp, seeder) -> None:

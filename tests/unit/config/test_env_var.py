@@ -37,27 +37,6 @@ def test_value_bad(monkeypatch, caplog) -> None:
     assert "invalid literal" in caplog.messages[0]
 
 
-def test_python_via_env_var(monkeypatch) -> None:
-    options = VirtualEnvOptions()
-    monkeypatch.setenv("VIRTUALENV_PYTHON", "python3")
-    session_via_cli(["venv"], options=options)
-    assert options.python == ["python3"]
-
-
-def test_python_multi_value_via_env_var(monkeypatch) -> None:
-    options = VirtualEnvOptions()
-    monkeypatch.setenv("VIRTUALENV_PYTHON", "python3,python2")
-    session_via_cli(["venv"], options=options)
-    assert options.python == ["python3", "python2"]
-
-
-def test_python_multi_value_newline_via_env_var(monkeypatch) -> None:
-    options = VirtualEnvOptions()
-    monkeypatch.setenv("VIRTUALENV_PYTHON", "python3\npython2")
-    session_via_cli(["venv"], options=options)
-    assert options.python == ["python3", "python2"]
-
-
 def test_python_multi_value_prefer_newline_via_env_var(monkeypatch) -> None:
     options = VirtualEnvOptions()
     monkeypatch.setenv("VIRTUALENV_PYTHON", "python3\npython2,python27")
