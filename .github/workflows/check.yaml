@@ -15,7 +15,7 @@ jobs:
     name: 🧪 test ${{ matrix.py }} - ${{ matrix.os }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: ${{ matrix.py == 'graalpy' && 75 || 40 }}
+    timeout-minutes: ${{ matrix.py == 'graalpy' && 35 || 40 }}
     permissions:
       contents: read
     env:
@@ -174,12 +174,13 @@ jobs:
         run: tox run -vvvv --notest --skip-missing-interpreters false
       - name: 🏃 Run test suite
         run: tox run --skip-pkg-install
-        timeout-minutes: ${{ matrix.py == 'graalpy' && 65 || 30 }}
+        timeout-minutes: 30
         env:
           # --reruns lets a single test recover from a transient worker crash (see
           # pytest-rerunfailures' documented pytest-xdist crash-recovery support) instead of
           # failing the whole matrix leg; scoped to CI only so local runs still fail fast.
-          # graalpy also no longer runs under xdist (see tox.toml) and dropped its
+          # graalpy skips xdist: tasks/run_graalpy_tests.py runs one serial pytest process per
+          # CPU instead, each on its own --shard slice of the tests. graalpy also dropped its
           # --timeout-method=thread override: that method spawns a watcher thread per test,
           # and GraalVM's Context.close() treats any Python-visible thread still alive as
           # fatal, crashing the job even after every test passed (see #3240). The default

@@ -4,6 +4,7 @@ import logging
 import os
 import shutil
 import sys
+from argparse import ArgumentTypeError
 from contextlib import contextmanager
 from functools import partial
 from pathlib import Path
@@ -23,6 +24,20 @@ collect_ignore = ["tasks"]
 def pytest_addoption(parser) -> None:
     parser.addoption("--int", action="store_true", default=False, help="run integration tests")
     parser.addoption("--skip-slow", action="store_true", default=False, help="skip slow tests")
+    parser.addoption(
+        "--shard",
+        type=_parse_shard,
+        metavar="K/N",
+        help="run the K-th of N disjoint slices of the collected tests",
+    )
+
+
+def _parse_shard(value: str) -> tuple[int, int]:
+    index, _, count = value.partition("/")
+    if not (index.isdecimal() and count.isdecimal() and 1 <= int(index) <= int(count)):
+        msg = f"expected K/N with 1 <= K <= N, got {value!r}"
+        raise ArgumentTypeError(msg)
+    return int(index), int(count)
 
 
 def pytest_configure(config) -> None:
@@ -39,6 +54,12 @@ def pytest_configure(config) -> None:
 
 
 def pytest_collection_modifyitems(config, items) -> None:
+    if shard := config.getoption("--shard"):
+        index, count = shard
+        # pytest-randomly shuffles each process differently, so slice the sorted IDs to agree across shards
+        selected = set(sorted(item.nodeid for item in items)[index - 1 :: count])
+        config.hook.pytest_deselected(items=[item for item in items if item.nodeid not in selected])
+        items[:] = [item for item in items if item.nodeid in selected]
     int_location = os.path.join("tests", "integration", "").rstrip()
     if len(items) == 1:
         return
