@@ -18,10 +18,13 @@ jobs:
       attestations: write # store the SBOM and provenance attestations
       artifact-metadata: write # record the attested artifacts
     steps:
-      - name: Audit outbound network traffic
+      - name: Block outbound traffic outside the allowlist
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
-          egress-policy: audit
+          egress-policy: block
+          disable-sudo-and-containers: true
+          allowed-endpoints: >-
+            api.github.com:443 files.pythonhosted.org:443 fulcio.sigstore.dev:443 github.com:443 pypi.org:443 raw.githubusercontent.com:443 rekor.sigstore.dev:443 release-assets.githubusercontent.com:443 releases.astral.sh:443
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -104,10 +107,12 @@ jobs:
       contents: write # create the GitHub release
       id-token: write # authenticate to PyPI with trusted publishing
     steps:
-      - name: Audit outbound network traffic
+      - name: Block outbound traffic outside the allowlist
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >-
+            api.github.com:443 fulcio.sigstore.dev:443 ghcr.io:443 github.com:443 pkg-containers.githubusercontent.com:443 rekor.sigstore.dev:443 timestamp.sigstore.dev:443 tuf-repo-cdn.sigstore.dev:443 upload.pypi.org:443 uploads.github.com:443
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -175,6 +180,13 @@ jobs:
       contents: read # check out the tooling lock and download the published zipapp from the release
       attestations: read # verify the zipapp provenance
     steps:
+      - name: Block outbound traffic outside the allowlist
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: block
+          disable-sudo-and-containers: true
+          allowed-endpoints: >-
+            api.github.com:443 files.pythonhosted.org:443 github.com:443 pypi.org:443 raw.githubusercontent.com:443 release-assets.githubusercontent.com:443 releases.astral.sh:443 tuf-repo-cdn.sigstore.dev:443 tuf-repo.github.com:443
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
