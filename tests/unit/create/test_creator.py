@@ -19,7 +19,7 @@ from pathlib import Path
 from stat import S_IREAD, S_IRGRP, S_IROTH
 from textwrap import dedent
 from threading import Thread
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from python_discovery import PythonInfo
@@ -32,6 +32,9 @@ from virtualenv.create.via_global_ref.builtin.cpython.common import is_mac_os_fr
 from virtualenv.info import IS_PYPY, IS_WIN, fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.run.plugin.creators import CreatorSelector
+
+if TYPE_CHECKING:
+    from virtualenv.run.session import Session
 
 CURRENT = PythonInfo.current_system()
 
@@ -236,13 +239,6 @@ def test_create_cachedir_tag_exists(tmp_path: Path) -> None:
     assert cachedir_tag_file.read_text(encoding="utf-8") == "magic"
 
 
-def test_create_cachedir_tag_exists_override(tmp_path: Path) -> None:
-    cachedir_tag_file = tmp_path / "CACHEDIR.TAG"
-    cachedir_tag_file.write_text("magic", encoding="utf-8")
-    cli_run([str(tmp_path), "--without-pip", "--activators", ""])
-    assert cachedir_tag_file.read_text(encoding="utf-8") == "magic"
-
-
 def test_create_vcs_ignore_exists(tmp_path) -> None:
     git_ignore = tmp_path / ".gitignore"
     git_ignore.write_text("magic", encoding="utf-8")
@@ -309,28 +305,42 @@ def test_create_clear_resets(tmp_path, creator, clear, caplog) -> None:
 
 
 @pytest.mark.parametrize("creator", CURRENT_CREATORS)
-@pytest.mark.parametrize("prompt", [None, "magic", "."])
-def test_prompt_set(tmp_path: Path, creator: str, prompt: str | None, monkeypatch: pytest.MonkeyPatch) -> None:
+@pytest.mark.parametrize("prompt", ["magic", "."])
+def test_prompt_set(tmp_path: Path, creator: str, prompt: str, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(tmp_path)
-    cmd = [str(tmp_path / "env"), "--seeder", "app-data", "--without-pip", "--creator", creator]
-    if prompt is not None:
-        cmd.extend(["--prompt", prompt])
-
+    cmd = [str(tmp_path / "env"), "--seeder", "app-data", "--without-pip", "--creator", creator, "--prompt", prompt]
     result = cli_run(cmd)
     cfg = PyEnvCfg.from_file(result.creator.pyenv_cfg.path)
-    if prompt is None:
-        assert "prompt" not in cfg
-    elif creator != "venv":
+    if creator != "venv":
         expected = tmp_path.name if prompt == "." else prompt
         assert "prompt" in cfg, list(cfg.content.keys())
         assert cfg["prompt"] == expected
 
 
-@pytest.mark.parametrize("creator", CURRENT_CREATORS)
-def test_version_keys_in_pyenv_cfg(tmp_path: Path, creator: str) -> None:
-    result = cli_run([str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", creator])
-    cfg = PyEnvCfg.from_file(result.creator.pyenv_cfg.path)
-    version_info = result.creator.interpreter.version_info
+# the tests below only read the environment, so each creator builds it once per module
+@pytest.fixture(scope="module")
+def default_env(request: pytest.FixtureRequest, tmp_path_factory: pytest.TempPathFactory) -> Session:
+    dest = tmp_path_factory.mktemp(f"default-{request.param}")
+    return cli_run([
+        str(dest),
+        "--seeder",
+        "app-data",
+        "--without-pip",
+        "--creator",
+        request.param,
+        "--no-periodic-update",
+    ])
+
+
+@pytest.mark.parametrize("default_env", CURRENT_CREATORS, indirect=True)
+def test_prompt_not_set_by_default(default_env: Session) -> None:
+    assert "prompt" not in PyEnvCfg.from_file(default_env.creator.pyenv_cfg.path)
+
+
+@pytest.mark.parametrize("default_env", CURRENT_CREATORS, indirect=True)
+def test_version_keys_in_pyenv_cfg(default_env: Session) -> None:
+    cfg = PyEnvCfg.from_file(default_env.creator.pyenv_cfg.path)
+    version_info = default_env.creator.interpreter.version_info
     assert cfg["python-version"] == f"{version_info.major}.{version_info.minor}"
     assert "version" in cfg
     parts = cfg["version"].split(".")
@@ -338,32 +348,27 @@ def test_version_keys_in_pyenv_cfg(tmp_path: Path, creator: str) -> None:
     assert all(p.isdigit() for p in parts)
 
 
-@pytest.mark.parametrize("creator", [c for c in CURRENT_CREATORS if c != "venv"])
-def test_executable_and_command_keys(tmp_path: Path, creator: str) -> None:
-    result = cli_run([str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", creator])
-    cfg = PyEnvCfg.from_file(result.creator.pyenv_cfg.path)
+@pytest.mark.parametrize("default_env", [c for c in CURRENT_CREATORS if c != "venv"], indirect=True)
+def test_executable_and_command_keys(default_env: Session) -> None:
+    cfg = PyEnvCfg.from_file(default_env.creator.pyenv_cfg.path)
     assert "executable" in cfg
     assert Path(cfg["executable"]).exists()
     assert "command" in cfg
     assert "virtualenv" in cfg["command"]
 
 
-@pytest.mark.parametrize("creator", [c for c in CURRENT_CREATORS if c != "venv"])
-def test_include_dir_created(tmp_path: Path, creator: str) -> None:
-    result = cli_run([str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", creator])
+@pytest.mark.parametrize("default_env", [c for c in CURRENT_CREATORS if c != "venv"], indirect=True)
+def test_include_dir_created(default_env: Session) -> None:
     if sys.platform == "win32":
-        include = result.creator.dest / "Include"
+        include = default_env.creator.dest / "Include"
     else:
-        include = result.creator.dest / "include"
+        include = default_env.creator.dest / "include"
     assert include.is_dir()
 
 
-@pytest.mark.parametrize("creator", CURRENT_CREATORS)
-def test_home_path_is_exe_parent(tmp_path, creator) -> None:
-    cmd = [str(tmp_path), "--seeder", "app-data", "--without-pip", "--creator", creator]
-
-    result = cli_run(cmd)
-    cfg = PyEnvCfg.from_file(result.creator.pyenv_cfg.path)
+@pytest.mark.parametrize("default_env", CURRENT_CREATORS, indirect=True)
+def test_home_path_is_exe_parent(default_env: Session) -> None:
+    cfg = PyEnvCfg.from_file(default_env.creator.pyenv_cfg.path)
 
     # Cannot assume "home" path is a specific value as path resolution may change
     # between versions (symlinks, framework paths, etc) but we can check that a
@@ -604,7 +609,7 @@ def test_no_preimport_threading(tmp_path) -> None:
 
 # verify that .pth files in site-packages/ are always processed even if $PYTHONPATH points to it.
 def test_pth_in_site_vs_python_path(tmp_path) -> None:
-    session = cli_run([str(tmp_path)])
+    session = cli_run([str(tmp_path), "--without-pip"])
     site_packages = session.creator.purelib
     # install test.pth that sets sys.testpth='ok'
     (session.creator.purelib / "test.pth").write_text('import sys; sys.testpth="ok"\n', encoding="utf-8")
@@ -632,7 +637,7 @@ def test_pth_in_site_vs_python_path(tmp_path) -> None:
 
 def test_getsitepackages_system_site(tmp_path) -> None:
     # Test without --system-site-packages
-    session = cli_run([str(tmp_path)])
+    session = cli_run([str(tmp_path), "--without-pip"])
 
     system_site_packages = get_expected_system_site_packages(session)
 
@@ -646,8 +651,15 @@ def test_getsitepackages_system_site(tmp_path) -> None:
     for system_site_package in system_site_packages:
         assert system_site_package not in site_packages
 
+    env_site_packages = [str(session.creator.purelib), str(session.creator.platlib)]
+    if not fs_is_case_sensitive():
+        env_site_packages = [x.lower() for x in env_site_packages]
+        site_packages = [x.lower() for x in site_packages]
+    for env_site_package in env_site_packages:
+        assert env_site_package in site_packages
+
     # Test with --system-site-packages
-    session = cli_run([str(tmp_path), "--system-site-packages"])
+    session = cli_run([str(tmp_path), "--system-site-packages", "--without-pip"])
 
     system_site_packages = [str(Path(i).resolve()) for i in get_expected_system_site_packages(session)]
 
@@ -671,25 +683,6 @@ def get_expected_system_site_packages(session):
     site.PREFIXES = old_prefixes
 
     return system_site_packages
-
-
-def test_get_site_packages(tmp_path) -> None:
-    case_sensitive = fs_is_case_sensitive()
-    session = cli_run([str(tmp_path)])
-    env_site_packages = [str(session.creator.purelib), str(session.creator.platlib)]
-    out = subprocess.check_output(
-        [str(session.creator.exe), "-c", r"import site; print(site.getsitepackages())"],
-        text=True,
-        encoding="utf-8",
-    )
-    site_packages = ast.literal_eval(out)
-
-    if not case_sensitive:
-        env_site_packages = [x.lower() for x in env_site_packages]
-        site_packages = [x.lower() for x in site_packages]
-
-    for env_site_package in env_site_packages:
-        assert env_site_package in site_packages
 
 
 def test_debug_bad_virtualenv(tmp_path) -> None:

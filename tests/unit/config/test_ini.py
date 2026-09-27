@@ -51,7 +51,9 @@ def test_ini_that_fails_to_parse_is_logged(invalid_ini: Path, caplog: pytest.Log
     ]
 
 
-def test_ini_that_fails_to_parse_does_not_break_the_cli(invalid_ini: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_ini_that_fails_to_parse_does_not_break_the_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    # configparser reads clear = True before it hits the bad line, and the CLI must not apply that partial result
+    (invalid_ini := tmp_path / "conf.ini").write_bytes(b"[virtualenv]\nclear = True\ninvalid\n")
     monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(invalid_ini))
 
     assert session_via_cli(["venv"]).creator.clear is False

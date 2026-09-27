@@ -90,26 +90,28 @@ def test_cshell_generates_deactivate_script(tmp_path) -> None:
     assert "deactivate.csh" in (creator.bin_dir / "activate.csh").read_text(encoding="utf-8")
 
 
+def _create_csh_venv(dest: Path, current_fastest: str, prompt: str | None = None) -> str:
+    cmd = ["--without-pip", str(dest), "--creator", current_fastest, "--no-periodic-update", "--activators", "cshell"]
+    if prompt is not None:
+        cmd += ["--prompt", prompt]
+    cli_run(cmd)
+    return (dest / "bin" / "activate.csh").read_text(encoding="utf-8")
+
+
 @pytest.fixture
 def csh_venv(tmp_path: Path, current_fastest: str) -> Callable[..., tuple[Path, str]]:
     def create(name: str, *, prompt: str | None = None) -> tuple[Path, str]:
-        dest = tmp_path / name / "venv"
-        dest.parent.mkdir(parents=True)
-        cmd = [
-            "--without-pip",
-            str(dest),
-            "--creator",
-            current_fastest,
-            "--no-periodic-update",
-            "--activators",
-            "cshell",
-        ]
-        if prompt is not None:
-            cmd += ["--prompt", prompt]
-        cli_run(cmd)
-        return dest, (dest / "bin" / "activate.csh").read_text(encoding="utf-8")
+        (dest := tmp_path / name / "venv").parent.mkdir(parents=True)
+        return dest, _create_csh_venv(dest, current_fastest, prompt)
 
     return create
+
+
+# the deactivate tests only source the script, so they share one environment
+@pytest.fixture(scope="module")
+def csh_plain_activate(tmp_path_factory: pytest.TempPathFactory, current_fastest: str) -> Path:
+    _create_csh_venv(dest := tmp_path_factory.mktemp("plain") / "venv", current_fastest)
+    return dest / "bin" / "activate.csh"
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
@@ -174,9 +176,8 @@ def test_cshell_activates_path_with_history_character(
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
 @pytest.mark.skipif(TCSH is None, reason="tcsh is not installed")
 @pytest.mark.parametrize("original", [pytest.param("", id="empty"), pytest.param("/usr/bin:/bin", id="populated")])
-def test_cshell_deactivate_restores_path(csh_venv: Callable[[str], tuple[Path, str]], original: str) -> None:
-    dest, _ = csh_venv("plain")
-    driver = f'setenv PATH "{original}"\nsource {dest / "bin" / "activate.csh"}\ndeactivate\necho "PATH=<$PATH>"\n'
+def test_cshell_deactivate_restores_path(csh_plain_activate: Path, original: str) -> None:
+    driver = f'setenv PATH "{original}"\nsource {csh_plain_activate}\ndeactivate\necho "PATH=<$PATH>"\n'
 
     result = run([TCSH, "-f"], input=driver, capture_output=True, text=True, encoding="utf-8", timeout=90, check=False)
 
@@ -185,9 +186,8 @@ def test_cshell_deactivate_restores_path(csh_venv: Callable[[str], tuple[Path, s
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
 @pytest.mark.skipif(TCSH is None, reason="tcsh is not installed")
-def test_cshell_deactivate_removes_aliases(csh_venv: Callable[[str], tuple[Path, str]]) -> None:
-    dest, _ = csh_venv("plain")
-    driver = f'source {dest / "bin" / "activate.csh"}\ndeactivate\nalias deactivate\nalias pydoc\necho "done"\n'
+def test_cshell_deactivate_removes_aliases(csh_plain_activate: Path) -> None:
+    driver = f'source {csh_plain_activate}\ndeactivate\nalias deactivate\nalias pydoc\necho "done"\n'
 
     result = run([TCSH, "-f"], input=driver, capture_output=True, text=True, encoding="utf-8", timeout=90, check=False)
 
@@ -196,10 +196,11 @@ def test_cshell_deactivate_removes_aliases(csh_venv: Callable[[str], tuple[Path,
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
 @pytest.mark.skipif(TCSH is None, reason="tcsh is not installed")
-def test_cshell_reactivation_restores_original_path(csh_venv: Callable[[str], tuple[Path, str]]) -> None:
-    dest, _ = csh_venv("plain")
-    script = dest / "bin" / "activate.csh"
-    driver = f'setenv PATH "/original/path"\nsource {script}\nsource {script}\ndeactivate\necho "PATH=<$PATH>"\n'
+def test_cshell_reactivation_restores_original_path(csh_plain_activate: Path) -> None:
+    driver = (
+        f'setenv PATH "/original/path"\nsource {csh_plain_activate}\nsource {csh_plain_activate}\ndeactivate\n'
+        'echo "PATH=<$PATH>"\n'
+    )
 
     result = run([TCSH, "-f"], input=driver, capture_output=True, text=True, encoding="utf-8", timeout=90, check=False)
 

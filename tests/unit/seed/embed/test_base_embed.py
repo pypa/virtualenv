@@ -30,36 +30,26 @@ def test_download_cli_flag(args, download, tmp_path) -> None:
     assert session.seeder.download is download
 
 
-@pytest.mark.parametrize("flag", ["--no-wheel", "--wheel=none", "--wheel=embed", "--wheel=bundle"])
-def test_wheel_cli_flags_do_nothing(tmp_path, flag) -> None:
-    session = session_via_cli([flag, str(tmp_path)])
-    if sys.version_info[:2] >= (3, 12):
-        expected = {"pip": "bundle"}
-    else:
-        expected = {"pip": "bundle", "setuptools": "bundle"}
-    assert session.seeder.distribution_to_versions() == expected
-
-
-@pytest.mark.parametrize("flag", ["--no-wheel", "--wheel=none", "--wheel=embed", "--wheel=bundle"])
-def test_wheel_cli_flags_warn(tmp_path, flag, capsys) -> None:
-    session_via_cli([flag, str(tmp_path)])
+@pytest.mark.parametrize(
+    ("flags", "warns"),
+    [
+        pytest.param([], False, id="no-flag"),
+        pytest.param(["--no-wheel"], True, id="no-wheel"),
+        pytest.param(["--wheel=none"], True, id="wheel-none"),
+        pytest.param(["--wheel=embed"], True, id="wheel-embed"),
+        pytest.param(["--wheel=bundle"], True, id="wheel-bundle"),
+    ],
+)
+def test_wheel_cli_flags_do_nothing(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], flags: list[str], warns: bool
+) -> None:
+    session = session_via_cli([*flags, str(tmp_path)])
     out, err = capsys.readouterr()
-    assert "the --wheel and --no-wheel options do nothing" in out + err
-
-
-def test_unused_wheel_cli_flags_dont_warn(tmp_path, capsys) -> None:
-    session_via_cli([str(tmp_path)])
-    out, err = capsys.readouterr()
-    assert "the --wheel and --no-wheel options do nothing" not in out + err
-
-
-def test_embed_wheel_versions(tmp_path: Path) -> None:
-    session = session_via_cli([str(tmp_path)])
-    if sys.version_info[:2] >= (3, 12):
-        expected = {"pip": "bundle"}
-    else:
-        expected = {"pip": "bundle", "setuptools": "bundle"}
-    assert session.seeder.distribution_to_versions() == expected
+    expected = {"pip": "bundle"} if sys.version_info[:2] >= (3, 12) else {"pip": "bundle", "setuptools": "bundle"}
+    assert (
+        session.seeder.distribution_to_versions(),
+        "the --wheel and --no-wheel options do nothing" in out + err,
+    ) == (expected, warns)
 
 
 BUNDLED_SEEDERS = [pytest.param(FromAppData, id="app-data"), pytest.param(PipInvoke, id="pip")]

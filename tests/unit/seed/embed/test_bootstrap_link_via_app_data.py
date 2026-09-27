@@ -284,19 +284,16 @@ def test_safe_extract_zip_rejects_parent_traversal(tmp_path: Path) -> None:
     assert not (tmp_path / "escape.txt").exists()
 
 
-def test_safe_extract_zip_rejects_absolute_posix_entry(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "entry",
+    [
+        pytest.param("/tmp/evil.txt", id="posix"),  # ruff:ignore[hardcoded-temp-file]
+        pytest.param("C:/Windows/System32/evil.txt", id="windows"),
+    ],
+)
+def test_safe_extract_zip_rejects_absolute_entry(tmp_path: Path, entry: str) -> None:
     archive = tmp_path / "abs.zip"
-    _write_zip_with_entry(archive, "/tmp/evil.txt")  # ruff:ignore[hardcoded-temp-file]
-    target = tmp_path / "out"
-    target.mkdir()
-
-    with zipfile.ZipFile(str(archive)) as zip_ref, pytest.raises(RuntimeError, match="absolute path"):
-        _safe_extract_zip(zip_ref, target)
-
-
-def test_safe_extract_zip_rejects_absolute_windows_entry(tmp_path: Path) -> None:
-    archive = tmp_path / "win.zip"
-    _write_zip_with_entry(archive, "C:/Windows/System32/evil.txt")
+    _write_zip_with_entry(archive, entry)
     target = tmp_path / "out"
     target.mkdir()
 
