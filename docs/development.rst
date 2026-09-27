@@ -73,6 +73,14 @@ Some tests require additional dependencies to be run, such is the various shell 
 ``powershell``, etc). These tests will automatically be skipped if these are not present, note however that in CI all
 tests are run; so even if all tests succeed locally for you, they may still fail in the CI.
 
+The tests under ``tests/tasks`` cover the build and CI tooling, ``hatch_build.py`` and the scripts in ``tasks/``. Their
+outcome does not depend on the interpreter, so the interpreter environments skip them and one environment runs them on
+CPython 3.14:
+
+.. code-block:: console
+
+    tox -e tasks
+
 Running linters
 ===============
 
