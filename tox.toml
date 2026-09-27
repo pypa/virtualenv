@@ -65,6 +65,16 @@ commands = [
 ]
 uv_seed = true
 
+[env.coverage]
+description = "combine the coverage data of every test run, passed as data directories, into one report"
+skip_install = true
+dependency_groups = [ "coverage" ]
+set_env.COVERAGE_FILE = "{work_dir}{/}.coverage"
+commands = [
+  [ "coverage", "combine", { replace = "posargs", extend = true } ],
+  [ "coverage", "report", "--skip-covered", "--show-missing" ],
+]
+
 [env.docs]
 description = "build documentation"
 dependency_groups = [ "docs" ]

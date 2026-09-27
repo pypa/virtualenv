@@ -190,6 +190,47 @@ jobs:
           PYTHONFAULTHANDLER: "1"
           CI_RUN: "yes"
           DIFF_AGAINST: HEAD
+      - name: 📤 Store coverage data
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: coverage-${{ matrix.py }}-${{ matrix.os }}
+          # combined .coverage.<env> files and the per-process files of envs that do not combine them
+          path: .tox/.coverage*
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+  coverage:
+    name: 📊 coverage
+    needs: test
+    if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read # check out the sources the report reads
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: 🚀 Install uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+          cache-suffix: coverage
+      - name: 📦 Install tox
+        run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.45" --with tox-uv
+      - name: 📥 Download coverage data
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        with:
+          # one directory per test run: runs on different OSes write the same .coverage.<env> file name
+          pattern: coverage-*
+          path: ${{ runner.temp }}/coverage-data
+      - name: 📊 Combine and report coverage
+        run: tox run -e coverage -- "$RUNNER_TEMP"/coverage-data/*
+      - name: 📝 Write the coverage summary
+        run: .tox/coverage/bin/coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
+        env:
+          COVERAGE_FILE: .tox/.coverage
   check:
     name: 🔎 check ${{ matrix.tox_env }} - ${{ matrix.os }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
@@ -271,7 +312,7 @@ jobs:
     name: ✅ all checks pass
     # the gate shares the jobs' condition, so every job it needs has run and a skip counts as a failure
     if: always() && (github.event_name != 'schedule' || github.repository_owner == 'pypa')
-    needs: [test, check, test-queries]
+    needs: [test, coverage, check, test-queries]
     runs-on: ubuntu-24.04
     permissions: {}
     steps:

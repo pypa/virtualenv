@@ -110,9 +110,8 @@ dev = [
   { include-group = "type" },
 ]
 test = [
-  "covdefaults>=2.3",
-  "coverage>=7.2.7",
   "coverage-enable-subprocess>=1",
+  { include-group = "coverage" },
   "packaging>=23.1",
   "pytest>=7.4",
   "pytest-env>=0.8.2",
@@ -147,6 +146,10 @@ docs = [
   "sphinxcontrib-mermaid>=2",
   "sphinxcontrib-towncrier>=0.2.1a0",
   "towncrier>=23.6",
+]
+coverage = [
+  "covdefaults>=2.3",
+  "coverage>=7.2.7",
 ]
 fuzz = [
   # atheris only ships prebuilt Linux wheels for these CPython versions; everywhere else it needs a
@@ -325,6 +328,8 @@ report.omit = [
   # site.py is run before the coverage can be enabled, no way to measure coverage on this
   "**/src/virtualenv/create/via_global_ref/builtin/python2/site.py",
   "**/src/virtualenv/seed/wheels/embed/pip-*.whl/pip/**",
+  # hatch-vcs writes version.py at build time, so the checkout that combines every run has no source for it
+  "**/virtualenv/version.py",
 ]
 html.show_contexts = true
 html.skip_covered = false
