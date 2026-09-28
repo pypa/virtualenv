@@ -213,6 +213,7 @@ jobs:
             .tox/diagnostics-self-test/**/diagnostics/*.log
             .tox/3.13t/log/
             .tox/junit.3.13t.xml
+          include-hidden-files: true
           if-no-files-found: warn
           retention-days: 14
       - name: 📤 Store coverage data
