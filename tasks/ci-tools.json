@@ -1,7 +1,7 @@
 {
   "graalpy": {
     "assets": {},
-    "tag": "graal-24.1.2"
+    "tag": "graal-25.4.4"
   },
   "mermaid": {
     "version": "12.0.0"
@@ -9,11 +9,11 @@
   "nushell": {
     "assets": {
       "Windows": {
-        "name": "nu-0.115.1-x86_64-pc-windows-msvc.zip",
-        "sha256": "b83009cbc88021f4dc293c49320118886b78363f9a4bb14933d33c8803241f46"
+        "name": "nu-0.116.0-x86_64-pc-windows-msvc.zip",
+        "sha256": "745b165d847e34b5dea80c2cfc867383c02b907d288a59a44b25e39bcac14015"
       }
     },
-    "tag": "0.115.1"
+    "tag": "0.116.0"
   },
   "rustpython": {
     "assets": {
