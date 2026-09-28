@@ -183,3 +183,23 @@ def test_graalpy_shards_default_to_cpu_count(
     mocker.patch.object(sys, "argv", ["runner", str(junit), "tests"])
     runpy.run_path(str(_RUNNER), run_name="__main__")
     assert started.call_count == expected
+
+
+def test_graalpy_groups_cover_all_shards(
+    mocker: MockerFixture, junit: Path, popen: Callable[[Sequence[Outcome]], MagicMock]
+) -> None:
+    started: Final = popen([_PASS] * 8)
+    for group in range(1, 5):
+        mocker.patch.object(sys, "argv", ["runner", "--shards", "2", "--group", f"{group}/4", str(junit), "tests"])
+        runpy.run_path(str(_RUNNER), run_name="__main__")
+    assert sorted(call.args[0][-3] for call in started.call_args_list) == [
+        f"--shard={index}/8" for index in range(1, 9)
+    ]
+
+
+@pytest.mark.parametrize("group", ["0/4", "5/4", "1/0", "1", "a/4", "1/2/3"], ids=str)
+def test_graalpy_invalid_group(mocker: MockerFixture, junit: Path, group: str) -> None:
+    mocker.patch.object(sys, "argv", ["runner", "--group", group, str(junit), "tests"])
+    with pytest.raises(SystemExit) as exc:
+        runpy.run_path(str(_RUNNER), run_name="__main__")
+    assert exc.value.code == 2

@@ -12,10 +12,10 @@ concurrency:
 permissions: {}
 jobs:
   test:
-    name: 🧪 test ${{ matrix.py }} - ${{ matrix.os }}
+    name: 🧪 test ${{ matrix.py }} - ${{ matrix.os }} ${{ matrix.group }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: ${{ matrix.py == 'graalpy' && 65 || 40 }}
+    timeout-minutes: ${{ matrix.py == 'graalpy' && 20 || 40 }}
     permissions:
       contents: read
     env:
@@ -37,20 +37,26 @@ jobs:
           - pypy-3.11
           - pypy-3.10
           - pypy-3.9
-          - graalpy
           - rp
         os:
           - ubuntu-24.04
           - macos-26
           - windows-2025-vs2026
         include:
+          - {os: ubuntu-24.04, py: graalpy, group: "1/4"}
+          - {os: ubuntu-24.04, py: graalpy, group: "2/4"}
+          - {os: ubuntu-24.04, py: graalpy, group: "3/4"}
+          - {os: ubuntu-24.04, py: graalpy, group: "4/4"}
+          - {os: macos-26, py: graalpy, group: "1/4"}
+          - {os: macos-26, py: graalpy, group: "2/4"}
+          - {os: macos-26, py: graalpy, group: "3/4"}
+          - {os: macos-26, py: graalpy, group: "4/4"}
           - {os: macos-26, py: "brew@3.14"}
           - {os: macos-26, py: "brew@3.13"}
           - {os: macos-26, py: "brew@3.12"}
           - {os: macos-26, py: "brew@3.11"}
           - {os: macos-26, py: "brew@3.10"}
         exclude:
-          - {os: windows-2025-vs2026, py: "graalpy"}
           - {os: windows-2025-vs2026, py: "pypy-3.10"}
           - {os: windows-2025-vs2026, py: "pypy-3.9"}
     steps:
@@ -174,9 +180,9 @@ jobs:
         run: tox run -vvvv --notest --skip-missing-interpreters false
       - name: 🏃 Run test suite
         run: tox run --skip-pkg-install
-        # GraalPy's slowest Ubuntu shard was still passing tests at the old 30-minute limit (#3353).
-        timeout-minutes: ${{ matrix.py == 'graalpy' && 60 || 30 }}
+        timeout-minutes: ${{ matrix.py == 'graalpy' && 17 || 30 }}
         env:
+          GRAALPY_GROUP: ${{ matrix.group || '1/1' }}
           # --reruns lets a single test recover from a transient worker crash (see
           # pytest-rerunfailures' documented pytest-xdist crash-recovery support) instead of
           # failing the whole matrix leg; scoped to CI only so local runs still fail fast.
@@ -195,7 +201,7 @@ jobs:
       - name: 📤 Store coverage data
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: coverage-${{ matrix.py }}-${{ matrix.os }}
+          name: coverage-${{ matrix.py }}-${{ matrix.os }}-${{ strategy.job-index }}
           # combined .coverage.<env> files and the per-process files of envs that do not combine them
           path: .tox/.coverage*
           include-hidden-files: true

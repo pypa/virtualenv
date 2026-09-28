@@ -27,10 +27,15 @@ def main() -> None:
         help="parallel pytest processes; xdist cannot run under GraalPy (see #3240)",
     )
     parser.add_argument("junit", type=Path, help="report path; shard K writes it with a .K.xml suffix")
+    parser.add_argument("--group", default="1/1", help="K/N runner group; groups run disjoint shards")
     parser.add_argument("pytest_args", nargs=REMAINDER, help="arguments passed to every pytest process")
     args: Final = parser.parse_args()
+    group, _, groups = args.group.partition("/")
+    if not (group.isdecimal() and groups.isdecimal() and 1 <= int(group) <= int(groups)):
+        parser.error("--group requires K/N with 1 <= K <= N")
+    total: Final[int] = args.shards * int(groups)
     shards: Final[list[_Shard]] = [
-        _Shard(index, args.shards, args.junit, args.pytest_args) for index in range(1, args.shards + 1)
+        _Shard(index, total, args.junit, args.pytest_args) for index in range(int(group), total + 1, int(groups))
     ]
     executed: Final[list[int | None]] = [shard.wait() for shard in shards]
     if failed := [shard.label for shard, count in zip(shards, executed) if count is None]:

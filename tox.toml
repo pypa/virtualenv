@@ -115,6 +115,8 @@ commands = [
     "python",
     "-u",
     "{tox_root}{/}tasks{/}run_graalpy_tests.py",
+    "--group",
+    "{env:GRAALPY_GROUP:1/1}",
     "{work_dir}{/}junit.{env_name}.xml",
     { replace = "posargs", default = [ "tests", "--skip-slow" ], extend = true },
   ],
