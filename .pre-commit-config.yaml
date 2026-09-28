@@ -5,7 +5,7 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: c4654a7e007c9619a5eb63c39a456572a0fa1851 # frozen: 0.38.0
+    rev: 4f85d46a92dc17713078e5de73f8a13190edf6fc # frozen: 0.38.2
     hooks:
       - id: check-github-workflows
         args: ["--verbose"]
@@ -23,7 +23,7 @@ repos:
     hooks:
       - id: pyproject-fmt
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "2eeb5678de71a00c0902cbda7105d328432f72cb" # frozen: v0.16.8
+    rev: "a56c0b927e6465d37cae3e97d35d4d18ab2b96cd" # frozen: v0.16.9
     hooks:
       - id: ruff-format
       - id: ruff
@@ -61,7 +61,7 @@ repos:
     hooks:
       - id: zizmor
   - repo: https://github.com/crate-ci/typos
-    rev: 5b5e71f127904bfb8d941c57c26c544b7075e025 # frozen: v1.50.2
+    rev: 4141ff14cb566df76c473c786332c186a4fd71d1 # frozen: v1.50.3
     hooks:
       - id: typos
   - repo: meta
