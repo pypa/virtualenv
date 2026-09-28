@@ -1437,9 +1437,9 @@ towncrier==26.9.0 \
     --hash=sha256:ace9031631c718cc0709107b8755e6e31350eb8acdc877af43df3177addb9a55 \
     --hash=sha256:ae4d223e6aadaff98d29b7f09e58d9c9ccf4cd3b455a2d2e0486d432cd8bf660
     # via virtualenv (pyproject.toml:release)
-tox==4.62.1 \
-    --hash=sha256:17cdf6aded0b48c1b7f07c85f8262cd7e0f217ec872c6e66e41924af432e59bf \
-    --hash=sha256:e35e939624079a8cc24c55ee3a1d9d540dca97497b5772a4b397944de334eac5
+tox==4.63.0 \
+    --hash=sha256:e8c560a9124e127c5e0547912d2ae1ef948dbba2fdea0b8d506e609a126b2e47 \
+    --hash=sha256:fb7105ef125b371e31797cfa615e5a160de3d8ef29b86dca7fcbd9048da3a9d8
     # via
     #   virtualenv (pyproject.toml:release)
     #   tox-uv-bare
@@ -1520,9 +1520,9 @@ vcs-versioning==2.4.1 \
     --hash=sha256:b7089ec9bef67b2cad82148366e8eac4d63173f440ec62628282b59eb96bbcb0 \
     --hash=sha256:d4575de3115ec9434393c87c80ffb0eb98a16056bfe2b11ce0f3a97aff67fe0a
     # via setuptools-scm
-virtualenv==21.8.1 \
-    --hash=sha256:0685ab90c9c3748dd6c99631207bda9fb359c72c28337047e719c83fb41a7a59 \
-    --hash=sha256:529a4c883b4efa067b98cfb61b64cdc0e453d01800ef5b5a29d0a9c514499a4f
+virtualenv==21.9.0 \
+    --hash=sha256:8c7cde05f630fbedf61758258014a92e6d6d5b4b9c6e6be7279d233f89e09aac \
+    --hash=sha256:fa0f2a26fcb6f32b376fc8b2c705b6057366763d5b9e5242d1ab10ecc3279fd3
     # via tox
 webcolors==25.10.0 \
     --hash=sha256:032c727334856fc0b968f63daa252a1ac93d33db2f5267756623c210e57a4f1d \
