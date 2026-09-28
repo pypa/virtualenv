@@ -183,6 +183,8 @@ jobs:
         timeout-minutes: ${{ matrix.py == 'graalpy' && 17 || 30 }}
         env:
           GRAALPY_GROUP: ${{ matrix.group || '1/1' }}
+          # Run Windows 3.13t without xdist after its suite stalled (#3354; pytest-dev/pytest-xdist#1313).
+          PYTEST_XDIST_AUTO_NUM_WORKERS: ${{ matrix.py == '3.13t' && runner.os == 'Windows' && '0' || '' }}
           # --reruns lets a single test recover from a transient worker crash (see
           # pytest-rerunfailures' documented pytest-xdist crash-recovery support) instead of
           # failing the whole matrix leg; scoped to CI only so local runs still fail fast.
