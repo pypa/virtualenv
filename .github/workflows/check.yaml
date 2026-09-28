@@ -15,7 +15,7 @@ jobs:
     name: 🧪 test ${{ matrix.py }} - ${{ matrix.os }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: ${{ matrix.py == 'graalpy' && 35 || 40 }}
+    timeout-minutes: ${{ matrix.py == 'graalpy' && 65 || 40 }}
     permissions:
       contents: read
     env:
@@ -174,7 +174,8 @@ jobs:
         run: tox run -vvvv --notest --skip-missing-interpreters false
       - name: 🏃 Run test suite
         run: tox run --skip-pkg-install
-        timeout-minutes: 30
+        # GraalPy's slowest Ubuntu shard was still passing tests at the old 30-minute limit (#3353).
+        timeout-minutes: ${{ matrix.py == 'graalpy' && 60 || 30 }}
         env:
           # --reruns lets a single test recover from a transient worker crash (see
           # pytest-rerunfailures' documented pytest-xdist crash-recovery support) instead of
