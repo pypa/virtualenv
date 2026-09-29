@@ -137,6 +137,7 @@ def test_wait_after_nested_pytest() -> None:
 def test_diagnostics_capture_shutdown_wait(diagnostic_pytester: pytest.Pytester) -> None:
     diagnostic_pytester.makeconftest(
         """
+import faulthandler
 import os
 import threading
 import time
@@ -148,19 +149,25 @@ def pytest_unconfigure() -> None:
 
 def wait_for_shutdown() -> None:
     path: Final[Path] = Path("diagnostics") / f"controller-{os.getpid()}.log"
-    deadline: Final[float] = time.monotonic() + 20
-    while time.monotonic() < deadline:
-        tail = path.read_text(encoding="utf-8").rsplit("STOP\\n", 1)[-1]
-        if tail.count("Timeout (") >= 2 and "in wait_for_shutdown\\n" in tail:
-            return
-        time.sleep(0.01)
-    raise TimeoutError("no stack dump during shutdown")
+    try:
+        deadline: Final[float] = time.monotonic() + 20
+        while time.monotonic() < deadline:
+            tail = path.read_text(encoding="utf-8").rsplit("STOP\\n", 1)[-1]
+            if tail.count("in _shutdown\\n") >= 2 and "in wait_for_shutdown\\n" in tail:
+                return
+            time.sleep(0.01)
+        raise TimeoutError("no stack dump during shutdown")
+    finally:
+        # Keep this thread alive until the native watchdog finishes reading its frames.
+        faulthandler.cancel_dump_traceback_later()
 """
     )
     diagnostic_pytester.makepyfile("def test_empty() -> None: pass")
     diagnostic_pytester.runpytest_subprocess(timeout=30).assert_outcomes(passed=1)
     text: Final[str] = next((diagnostic_pytester.path / "diagnostics").glob("*.log")).read_text(encoding="utf-8")
-    assert "in wait_for_shutdown\n" in text.rsplit("STOP\n", 1)[-1]
+    tail: Final[str] = text.rsplit("STOP\n", 1)[-1]
+    assert tail.count("in _shutdown\n") >= 2
+    assert "in wait_for_shutdown\n" in tail
 
 
 def test_diagnostics_default_directory(diagnostic_pytester: pytest.Pytester) -> None:
