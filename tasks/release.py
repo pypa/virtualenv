@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from subprocess import check_call
 
@@ -63,9 +64,11 @@ def get_remote(repo: Repo) -> Remote:
 
 def release_changelog(repo: Repo, version: Version) -> Commit:
     print("generate release commit")  # ruff:ignore[print]
-    check_call(["towncrier", "build", "--yes", "--version", version.public], cwd=str(ROOT_SRC_DIR))  # ruff:ignore[start-process-with-partial-path]
+    check_call(
+        [sys.executable, "-m", "towncrier", "build", "--yes", "--version", version.public], cwd=str(ROOT_SRC_DIR)
+    )
     # pre-commit would resolve hook dependencies unpinned, so wrap the changelog with the locked docstrfmt
-    check_call(["docstrfmt", "-l", "120", "docs/changelog.rst"], cwd=str(ROOT_SRC_DIR))  # ruff:ignore[start-process-with-partial-path]
+    check_call([sys.executable, "-m", "docstrfmt", "-l", "120", "docs/changelog.rst"], cwd=str(ROOT_SRC_DIR))
     repo.git.add(".")
     return repo.index.commit(f"release {version}")
 
