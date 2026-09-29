@@ -1,2 +1,2 @@
-Compare seed wheel versions using their PEP 440 ordering, so a pinned pre-release such as ``--pip 26.2.1rc1`` resolves
-to the wheel that was asked for instead of a different one that shares the same release numbers.
+Use PEP 440 version ordering when selecting seed wheels, so pinned pre-releases, post-releases and local versions
+resolve to the requested wheel.

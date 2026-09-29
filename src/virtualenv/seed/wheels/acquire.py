@@ -5,10 +5,11 @@ from __future__ import annotations
 import logging
 import re
 import sys
-from operator import eq, lt
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, Popen
 from typing import TYPE_CHECKING, Final
+
+from packaging.specifiers import Specifier
 
 from .bundle import from_bundle
 from .periodic_update import UnverifiedWheelError, add_wheel_to_update_log, verify_wheel_digest
@@ -187,19 +188,13 @@ def _find_downloaded_wheel(
 def find_compatible_in_house(
     distribution: str, version_spec: str | None, for_py_version: str, in_folder: Path
 ) -> Wheel | None:
-    wheels = discover_wheels(in_folder, distribution, None, for_py_version)
-    start, end = 0, len(wheels)
-    if version_spec is not None and version_spec:
-        if version_spec.startswith("<"):
-            from_pos, op = 1, lt
-        elif version_spec.startswith("=="):
-            from_pos, op = 2, eq
-        else:
+    wheels: Final = discover_wheels(in_folder, distribution, None, for_py_version)
+    if version_spec:
+        specifier: Final = Specifier(version_spec)
+        if specifier.operator not in {"==", "<"}:
             raise ValueError(version_spec)
-        version = Wheel.as_version_tuple(version_spec[from_pos:])
-        start = next((at for at, w in enumerate(wheels) if op(w.version_tuple, version)), len(wheels))
-
-    return None if start == end else wheels[start]
+        return next((wheel for wheel in wheels if specifier.contains(wheel.version)), None)
+    return next(iter(wheels), None)
 
 
 def pip_wheel_env_run(search_dirs: list[Path], app_data: AppData, env: dict[str, str]) -> dict[str, str]:
@@ -238,6 +233,7 @@ def _check_version_spec(version_spec: str | None) -> None:
 
 __all__ = [
     "download_wheel",
+    "find_compatible_in_house",
     "get_wheel",
     "pip_wheel_env_run",
 ]

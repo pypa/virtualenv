@@ -287,7 +287,7 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
     from virtualenv.seed.wheels import acquire  # ruff:ignore[import-outside-top-level]
 
     wheel_filename = None if embed_filename is None else Path(embed_filename)
-    embed_version = None if wheel_filename is None else Wheel(wheel_filename).version_tuple
+    embed_version = None if wheel_filename is None else Wheel(wheel_filename).parsed_version
     app_data = AppDataDiskFolder(app_data) if isinstance(app_data, str) else app_data
     search_dirs = [Path(p) if isinstance(p, str) else p for p in search_dirs]
     wheelhouse = app_data.house
@@ -335,7 +335,7 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
         filenames.add(last.filename)
         last_wheel = last.wheel
         last_version = last_wheel.version
-        if embed_version is not None and embed_version >= last_wheel.version_tuple:
+        if embed_version is not None and embed_version >= last_wheel.parsed_version:
             break  # stop download if we reach the embed version
     u_log.periodic = periodic
     if not u_log.periodic:

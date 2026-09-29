@@ -34,7 +34,7 @@ def from_bundle(  # ruff:ignore[too-many-arguments]
 
         # 3. acquire from extra search dir
         found_wheel = from_dir(distribution, of_version, for_py_version, search_dirs)
-        if found_wheel is not None and (wheel is None or found_wheel.version_tuple > wheel.version_tuple):
+        if found_wheel is not None and (wheel is None or found_wheel.parsed_version > wheel.parsed_version):
             wheel = found_wheel
     return wheel
 
