@@ -25,7 +25,7 @@ jobs:
           allowed-endpoints: >-
             api.github.com:443 files.pythonhosted.org:443 github.com:443 pypi.org:443 raw.githubusercontent.com:443 registry.npmjs.org:443 release-assets.githubusercontent.com:443 releases.astral.sh:443
       - name: Install uv
-        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
       - name: Install tox
         run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.32" --with tox-uv
       - name: Checkout code
