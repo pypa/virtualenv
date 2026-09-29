@@ -30,6 +30,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     parser.addoption("--diagnostics-interval", type=float, default=60, help="seconds between stack dumps")
 
 
+@pytest.hookimpl(trylast=True)
 def pytest_configure(config: pytest.Config) -> None:
     interval: Final[float] = config.getoption("diagnostics_interval")
     if interval <= 0:
@@ -38,6 +39,7 @@ def pytest_configure(config: pytest.Config) -> None:
     if not _DIAGNOSTICS:
         _DIAGNOSTICS.append(_Diagnostics(config.getoption("diagnostics_dir"), interval))
     config.pluginmanager.register(_DIAGNOSTICS[0], "session-diagnostics")
+    _DIAGNOSTICS[0].retain_crash_traceback()
 
 
 class _Diagnostics:
@@ -58,6 +60,10 @@ class _Diagnostics:
     def _arm_timer(self) -> None:
         faulthandler.dump_traceback_later(self.interval, repeat=True, file=self.stream)
 
+    def retain_crash_traceback(self) -> None:
+        # pytest's captured stderr can disappear with a crashed xdist worker.
+        faulthandler.enable(file=self.stream)
+
     def pytest_runtest_logstart(self, nodeid: str) -> None:
         self._record(f"TEST {nodeid}")
 
@@ -69,12 +75,15 @@ class _Diagnostics:
         # pytest's faulthandler plugin cancels the timer when reporting an exception.
         self._arm_timer()
 
+    @pytest.hookimpl(trylast=True)
     def pytest_unconfigure(self) -> None:
+        self.retain_crash_traceback()
         self._record("STOP")
 
     def _close(self) -> None:
         # Keep the watchdog alive during xdist worker shutdown, after pytest has returned.
         faulthandler.cancel_dump_traceback_later()
+        faulthandler.disable()
         self._record("EXIT")
         self.stream.close()
 

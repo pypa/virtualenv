@@ -44,6 +44,7 @@ jobs:
           - windows-2025-vs2026
         include:
           - {os: windows-2025-vs2026, py: "3.13t", diagnostics: true}
+          - {os: macos-26, py: "3.13t", diagnostics: true}
           - {os: ubuntu-24.04, py: graalpy, group: "1/4"}
           - {os: ubuntu-24.04, py: graalpy, group: "2/4"}
           - {os: ubuntu-24.04, py: graalpy, group: "3/4"}
@@ -179,9 +180,16 @@ jobs:
           echo "Set TOXENV=$py"
       - name: 🏗️ Setup test suite
         run: tox run -vvvv --notest --skip-missing-interpreters false
-      - name: 🔎 Verify Windows hang diagnostics
+      - name: 🔎 Verify pytest diagnostics
         if: matrix.diagnostics
-        run: ./.tox/3.13t/Scripts/python.exe -m pytest tests/tasks/test_pytest_diagnostics.py -n 0 --basetemp=.tox/diagnostics-self-test
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            python_path=./.tox/3.13t/Scripts/python.exe
+          else
+            python_path=./.tox/3.13t/bin/python
+          fi
+          "$python_path" -m pytest tests/tasks/test_pytest_diagnostics.py -n 0 --basetemp=.tox/diagnostics-self-test
       - name: 🏃 Run test suite
         run: tox run --skip-pkg-install
         timeout-minutes: ${{ matrix.py == 'graalpy' && 17 || 30 }}
@@ -203,7 +211,15 @@ jobs:
           PYTHONFAULTHANDLER: "1"
           CI_RUN: "yes"
           DIFF_AGAINST: HEAD
-      - name: 📤 Store Windows hang diagnostics
+      - name: 📤 Store macOS crash reports
+        if: always() && matrix.diagnostics && runner.os == 'macOS'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: crash-reports-${{ matrix.py }}-${{ matrix.os }}
+          path: ~/Library/Logs/DiagnosticReports/
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: 📤 Store pytest diagnostics
         if: always() && matrix.diagnostics
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
