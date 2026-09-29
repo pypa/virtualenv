@@ -211,20 +211,6 @@ jobs:
           PYTHONFAULTHANDLER: "1"
           CI_RUN: "yes"
           DIFF_AGAINST: HEAD
-      - name: 🔎 Reproduce macOS worker crash
-        if: matrix.diagnostics && runner.os == 'macOS'
-        shell: bash
-        timeout-minutes: 17
-        env:
-          PYTEST_PLUGINS: tasks.pytest_diagnostics
-          PYTEST_ADDOPTS: "-vv --durations=20 --reruns 2 --reruns-delay 2"
-          PYTHONFAULTHANDLER: "1"
-          CI_RUN: "yes"
-        run: |
-          for attempt in {1..5}; do
-            tox run --skip-pkg-install -- tests --int -n 3 --dist loadfile --randomly-seed=1394887037 \
-              --diagnostics-dir=".tox/hang-diagnostics/reproduction-$attempt"
-          done
       - name: 📤 Store macOS crash reports
         if: always() && matrix.diagnostics && runner.os == 'macOS'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
