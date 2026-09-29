@@ -395,7 +395,7 @@ def test_sbom_spdx_declared_license(
     assert [
         (package["licenseDeclared"], package["licenseConcluded"], package.get("licenseComments"))
         for package in json.loads(render_spdx(build_sbom("pip/example.py", vendored)))["packages"]
-        if package["name"] == "urllib3"
+        if (package["name"], package.get("versionInfo")) == ("urllib3", "1.26.4")
     ] == [expected]
 
 

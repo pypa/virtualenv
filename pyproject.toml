@@ -189,9 +189,12 @@ sbom = [
   "spdx-tools>=0.8.5",
 ]
 tasks = [
+  "docstrfmt>=2.2.1",
+  "gitpython>=3.1.44",
   "hatchling>=1.28",
   "pre-commit-uv>=4.2",
   "ruff>=0.16.8",
+  "towncrier>=24.8",
   { include-group = "test" },
 ]
 
