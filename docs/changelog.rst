@@ -7,6 +7,43 @@
 .. towncrier release notes start
 
 ***********************
+ v21.14.0 (2026-09-29)
+***********************
+
+Features - 21.14.0
+==================
+
+- Record the SPDX license id in the wheel and zipapp SBOMs for bundled packages that declare their license by name or
+  classifier, such as ``distlib`` and ``python-discovery``, so license scanners can match them. (:issue:`3339`)
+- Add the Tidelift and thanks.dev funding links to the PyPI project URLs, next to GitHub Sponsors - by
+  :user:`gaborbernat`. (:issue:`3340`)
+
+Bugfixes - 21.14.0
+==================
+
+- Build the release sdist, wheel and zipapp with the build backend and SBOM tools that
+  ``tasks/release-requirements.txt`` pins by version and SHA-256, so a rebuild of the tag uses the same versions.
+  (:issue:`3337`)
+- Use PEP 440 version ordering when selecting seed wheels, so pinned pre-releases, post-releases and local versions
+  resolve to the requested wheel. (:issue:`3360`)
+
+Improved Documentation - 21.14.0
+================================
+
+- Apply the licensing policy to what the wheel and zipapp ship, checked against their SBOMs, and name
+  ``ALLOWED_LICENSES`` in ``tasks/license_policy.py`` as the list of accepted licenses. (:issue:`3339`)
+- Document what a maintainer checks when reviewing a pull request and what the ``main`` ruleset requires before a merge
+  - by :user:`gaborbernat`. (:issue:`3341`)
+- Document how the project selects, obtains and tracks its dependencies, and which dependency findings block a merge or
+  a release - by :user:`gaborbernat`. (:issue:`3342`)
+- Document which static analysis findings block a merge or a release, and how maintainers suppress a finding - by
+  :user:`gaborbernat`. (:issue:`3343`)
+- Document which secrets the project stores, who can read them and when maintainers rotate them - by
+  :user:`gaborbernat`. (:issue:`3344`)
+- Update the roadmap: :PEP:`832` support shipped, and :PEP:`838` waits on the PEP - by :user:`gaborbernat`.
+  (:issue:`3345`)
+
+***********************
  v21.13.0 (2026-09-26)
 ***********************
 
