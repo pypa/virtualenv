@@ -6,8 +6,11 @@ import atexit
 import faulthandler
 import os
 import sys
+import sysconfig
+import traceback
 from datetime import datetime, timezone
 from pathlib import Path
+from threading import Event, Thread
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -50,7 +53,16 @@ class _Diagnostics:
             "w", encoding="utf-8", buffering=1
         )
         self.interval: Final[float] = interval
+        self._stop: Final[Event] = Event()
+        # The 3.13t native watchdog can hang while walking a thread's exiting frames.
+        self._watchdog: Final[Thread | None] = (
+            Thread(target=self._dump_stacks, daemon=True)
+            if sys.version_info[:2] == (3, 13) and sysconfig.get_config_var("Py_GIL_DISABLED")
+            else None
+        )
         self._record(f"START pid={os.getpid()} parent={os.getppid()} python={sys.version}")
+        if self._watchdog is not None:
+            self._watchdog.start()
         self._arm_timer()
         atexit.register(self._close)
 
@@ -58,7 +70,18 @@ class _Diagnostics:
         self.stream.write(f"{datetime.now(timezone.utc).isoformat()} {message}\n")
 
     def _arm_timer(self) -> None:
-        faulthandler.dump_traceback_later(self.interval, repeat=True, file=self.stream)
+        if self._watchdog is None:
+            faulthandler.dump_traceback_later(self.interval, repeat=True, file=self.stream)
+
+    def _dump_stacks(self) -> None:
+        while not self._stop.wait(self.interval):
+            self._snapshot()
+
+    def _snapshot(self) -> None:
+        self._record(f"Timeout ({self.interval}s)!")
+        for thread_id, frame in sys._current_frames().items():  # ruff:ignore[private-member-access] - documented sys API
+            self.stream.write(f"Thread {thread_id:#x}:\n")
+            traceback.print_stack(frame, file=self.stream)
 
     def retain_crash_traceback(self) -> None:
         # pytest's captured stderr can disappear with a crashed xdist worker.
@@ -82,7 +105,11 @@ class _Diagnostics:
 
     def _close(self) -> None:
         # Keep the watchdog alive during xdist worker shutdown, after pytest has returned.
-        faulthandler.cancel_dump_traceback_later()
+        if self._watchdog is None:
+            faulthandler.cancel_dump_traceback_later()
+        else:
+            self._stop.set()
+            self._watchdog.join()
         faulthandler.disable()
         self._record("EXIT")
         self.stream.close()

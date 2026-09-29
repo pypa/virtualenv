@@ -27,13 +27,34 @@ def wait_for_stack(function: str) -> None:
 """
 
 
-@pytest.fixture
-def diagnostic_pytester(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) -> pytest.Pytester:
+@pytest.fixture(params=["runtime", "3.13t"])
+def diagnostic_pytester(
+    pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest
+) -> pytest.Pytester:
     monkeypatch.setenv("PYTHONPATH", str(Path(__file__).parents[2]))
     monkeypatch.setenv("PYTEST_DISABLE_PLUGIN_AUTOLOAD", "1")
     monkeypatch.setenv("PYTEST_ADDOPTS", "")
     monkeypatch.delenv("PYTEST_XDIST_WORKER", raising=False)
-    pytester.plugins.append("tasks.pytest_diagnostics")
+    if request.param == "3.13t":
+        pytester.makepyfile(
+            runtime_plugin="""
+from unittest.mock import patch
+
+import pytest
+
+from tasks import pytest_diagnostics
+
+pytest_addoption = pytest_diagnostics.pytest_addoption
+
+@pytest.hookimpl(trylast=True)
+def pytest_configure(config: pytest.Config) -> None:
+    with patch("sys.version_info", (3, 13)), patch("sysconfig.get_config_var", autospec=True, return_value=1):
+        pytest_diagnostics.pytest_configure(config)
+"""
+        )
+        pytester.plugins.append("runtime_plugin")
+    else:
+        pytester.plugins.append("tasks.pytest_diagnostics")
     pytester.makeini("[pytest]\naddopts = --diagnostics-dir=diagnostics --diagnostics-interval=0.05\n")
     return pytester
 
