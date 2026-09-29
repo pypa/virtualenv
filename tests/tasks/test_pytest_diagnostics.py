@@ -95,6 +95,28 @@ def test_wait_for_stack() -> None:
     assert "STOP" not in text
 
 
+@pytest.mark.parametrize("nested", [False, True], ids=["direct", "after-nested-pytest"])
+def test_diagnostics_retain_worker_crash(diagnostic_pytester: pytest.Pytester, nested: bool) -> None:
+    diagnostic_pytester.makepyfile(
+        inner="def test_inner() -> None: pass",
+        outer=f"""
+import os
+import pytest
+
+def test_crash() -> None:
+    if {nested}:
+        assert pytest.main(["inner.py", "-p", "tasks.pytest_diagnostics"]) == 0
+    os.abort()
+""",
+    )
+    diagnostic_pytester.runpytest_subprocess(
+        "outer.py", "-p", "xdist.plugin", "-n", "1", "--max-worker-restart=0", timeout=30
+    ).assert_outcomes(failed=1)
+    text: Final[str] = next((diagnostic_pytester.path / "diagnostics").glob("gw0-*.log")).read_text(encoding="utf-8")
+    assert "Fatal Python error:" in text
+    assert "in test_crash\n" in text
+
+
 def test_diagnostics_survive_nested_pytest(diagnostic_pytester: pytest.Pytester) -> None:
     diagnostic_pytester.makepyfile(
         inner="def test_inner() -> None: pass",
