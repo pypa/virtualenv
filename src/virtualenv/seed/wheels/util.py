@@ -4,6 +4,8 @@ from operator import attrgetter
 from typing import TYPE_CHECKING
 from zipfile import ZipFile
 
+from packaging.version import Version as PackagingVersion
+
 if TYPE_CHECKING:
     from pathlib import Path
 
@@ -33,17 +35,13 @@ class Wheel:
     def version_tuple(self) -> tuple[int, ...]:
         return self.as_version_tuple(self.version)
 
+    @property
+    def parsed_version(self) -> PackagingVersion:
+        return PackagingVersion(self.version)
+
     @staticmethod
     def as_version_tuple(version: str) -> tuple[int, ...]:
-        result = []
-        for part in version.split(".")[0:3]:
-            try:
-                result.append(int(part))
-            except ValueError:  # ruff:ignore[try-except-in-loop]
-                break
-        if not result:
-            raise ValueError(version)
-        return tuple(result)
+        return PackagingVersion(version).release
 
     @property
     def name(self) -> str:
@@ -94,7 +92,7 @@ def discover_wheels(from_folder: Path, distribution: str, version: str | None, f
             and wheel.support_py(for_py_version)
         ):
             wheels.append(wheel)
-    return sorted(wheels, key=attrgetter("version_tuple", "distribution"), reverse=True)
+    return sorted(wheels, key=attrgetter("parsed_version", "distribution"), reverse=True)
 
 
 class Version:

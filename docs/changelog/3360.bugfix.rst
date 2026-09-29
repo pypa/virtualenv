@@ -1,0 +1,2 @@
+Use PEP 440 version ordering when selecting seed wheels, so pinned pre-releases, post-releases and local versions
+resolve to the requested wheel.
