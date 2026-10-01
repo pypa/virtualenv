@@ -31,13 +31,15 @@ class CShellActivator(ViaTemplateActivator):
         # quotes and aborts the whole script with "Event not found"; only a backslash suppresses it
         return shlex.quote(string).replace("!", "\\!")
 
-    def instantiate_template(self, replacements: dict[str, str], template: str, creator: Creator) -> str:
-        text = super().instantiate_template(replacements, template, creator)
+    def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
         # carries its own quoting, so it cannot go through the shared quote() pass with the other replacements;
         # tcsh and plain csh disagree on whether % needs escaping, so activate.csh picks one of these at runtime
         display = creator.env_name if self.flag_prompt is None else self.flag_prompt
-        text = text.replace(_PROMPT_DISPLAY_TCSH, _prompt_literal(display, tcsh=True))
-        return text.replace(_PROMPT_DISPLAY_PLAIN, _prompt_literal(display, tcsh=False))
+        return {
+            **super().substitutions(replacements, creator),
+            _PROMPT_DISPLAY_TCSH: _prompt_literal(display, tcsh=True),
+            _PROMPT_DISPLAY_PLAIN: _prompt_literal(display, tcsh=False),
+        }
 
 
 def _prompt_literal(value: str, *, tcsh: bool) -> str:

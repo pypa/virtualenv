@@ -277,6 +277,7 @@ def bash_prompt_after_activate(tmp_path: Path, current_fastest: str) -> Callable
         pytest.param("x$(touch PWNED)y", "env", id="prompt-command-substitution"),
         pytest.param("x`touch PWNED`y", "env", id="prompt-backticks"),
         pytest.param(None, "x$(touch PWNED)y", id="dirname-command-substitution"),
+        pytest.param(None, "A__VIRTUAL_NAME__B/x'$(touch PWNED)'y", id="placeholder-in-parent-dir"),
     ],
 )
 def test_bash_prompt_does_not_run_commands(

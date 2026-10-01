@@ -305,7 +305,8 @@ def is_inside_ci():
 
 @pytest.fixture(scope="session")
 def special_char_name():
-    base = "'\";&&e-$ !%`|>èрт🚒♞中片-j"
+    # __VIRTUAL_NAME__ is a template placeholder, and must stay data when the path embeds it
+    base = "'\";&&e-$ !%`|>__VIRTUAL_NAME__èрт🚒♞中片-j"
     if IS_WIN:
         # NTFS path components cannot contain any of these, regardless of where they sit in the string
         for reserved in '<>:"/\\|?*;':

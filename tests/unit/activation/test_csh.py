@@ -151,9 +151,10 @@ def test_cshell_escapes_prompt_expansion(
         pytest.param("has!bang", id="bang"),
         pytest.param("has!!doublebang", id="double-bang"),
         pytest.param("has'quote!bang", id="quote-and-bang"),
+        pytest.param("A__VIRTUAL_PROMPT_DISPLAY_TCSH__B", id="display-placeholder"),
     ],
 )
-def test_cshell_activates_path_with_history_character(
+def test_cshell_activates_path_with_special_characters(
     csh_venv: Callable[[str], tuple[Path, str]], tmp_path: Path, name: str
 ) -> None:
     dest, content = csh_venv(name)

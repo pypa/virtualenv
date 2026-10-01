@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shlex
 import sys
 from abc import ABC, abstractmethod
@@ -84,10 +85,22 @@ class ViaTemplateActivator(Activator, ABC):
         # read content as binary to avoid platform specific line normalization (\n -> \r\n)
         binary = read_binary(self.__module__, template)
         text = binary.decode("utf-8", errors="strict")
-        for key, value in replacements.items():
-            value_uni = self._repr_unicode(creator, value)
-            text = text.replace(key, self.quote(value_uni))
-        return text
+        substitutions = self.substitutions(replacements, creator)
+        # one pass over the template, so a placeholder name inside an already quoted value (a path component named
+        # __VIRTUAL_NAME__) stays data instead of being rewritten by a later key from inside the finished literal
+        pattern = re.compile("|".join(re.escape(key) for key in sorted(substitutions, key=len, reverse=True)))
+        return pattern.sub(lambda match: substitutions[match.group()], text)
+
+    def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
+        """Map each placeholder to the final text that replaces it in the template.
+
+        :param replacements: the raw placeholder values
+        :param creator: the creator of the environment
+
+        :returns: the placeholder to substituted text mapping
+
+        """
+        return {key: self.quote(self._repr_unicode(creator, value)) for key, value in replacements.items()}
 
     @staticmethod
     def _repr_unicode(creator: Creator, value: str) -> str:  # ruff:ignore[unused-static-method-argument]
