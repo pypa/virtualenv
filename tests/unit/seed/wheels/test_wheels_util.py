@@ -6,23 +6,11 @@ from typing import TYPE_CHECKING
 import pytest
 
 from virtualenv.seed.wheels.embed import MAX, MIN, get_embed_wheel
-from virtualenv.seed.wheels.util import Wheel
+from virtualenv.seed.wheels.util import Wheel, discover_wheels
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
-
-
-def _wheel_with_requires(folder: Path, filename: str, requires_python: str) -> Wheel:
-    """Write a wheel whose METADATA carries the given Requires-Python, then wrap it."""
-    distribution, version = filename.split("-", maxsplit=1)[0], filename.split("-")[1]
-    dist_info = f"{distribution}-{version}.dist-info"
-    with zipfile.ZipFile(folder / filename, "w") as zip_file:
-        zip_file.writestr(
-            f"{dist_info}/METADATA",
-            f"Metadata-Version: 2.1\nName: {distribution}\nVersion: {version}\nRequires-Python: {requires_python}\n",
-        )
-        zip_file.writestr(f"{distribution}/__init__.py", "")
-    return Wheel(folder / filename)
 
 
 @pytest.mark.parametrize(
@@ -38,20 +26,7 @@ def test_embed_wheel_oldest_supported_is_present() -> None:
 
 
 def test_embed_wheel_future_version_reuses_newest() -> None:
-    future, newest = get_embed_wheel("pip", "3.99"), get_embed_wheel("pip", MAX)
-    assert future is not None
-    assert newest is not None
-    assert future.name == newest.name
-
-
-def test_wheel_support_no_python_requires(mocker) -> None:
-    wheel = get_embed_wheel("setuptools", for_py_version=None)
-    zip_mock = mocker.MagicMock()
-    mocker.patch("virtualenv.seed.wheels.util.ZipFile", new=zip_mock)
-    zip_mock.return_value.__enter__.return_value.read = lambda _name: b""
-
-    supports = wheel.support_py("3.9")
-    assert supports is True
+    assert str(get_embed_wheel("pip", "3.99")) == str(get_embed_wheel("pip", MAX))
 
 
 def test_bad_as_version_tuple() -> None:
@@ -60,8 +35,7 @@ def test_bad_as_version_tuple() -> None:
 
 
 def test_wheel_not_support() -> None:
-    wheel = get_embed_wheel("setuptools", MAX)
-    assert wheel.support_py("3.3") is False
+    assert get_embed_wheel("setuptools", MAX).support_py("3.3") is False
 
 
 def test_wheel_repr() -> None:
@@ -70,41 +44,55 @@ def test_wheel_repr() -> None:
 
 
 def test_unknown_distribution() -> None:
-    wheel = get_embed_wheel("unknown", MAX)
-    assert wheel is None
+    assert get_embed_wheel("unknown", MAX) is None
 
 
-def test_support_py_honours_compatible_release(tmp_path: Path) -> None:
-    """``~=3.9`` is ``>=3.9, ==3.*``, so it covers later minors but not the next major."""
-    wheel = _wheel_with_requires(tmp_path, "pip-9.1-py3-none-any.whl", "~=3.9")
-
-    assert wheel.support_py("3.9") is True
-    assert wheel.support_py("3.14") is True
-    assert wheel.support_py("4.0") is False
-
-
-def test_support_py_compatible_release_keeps_patch_prefix(tmp_path: Path) -> None:
-    """``~=3.10.1`` is ``>=3.10.1, ==3.10.*``, so neither 3.10.0 nor a later minor matches."""
-    wheel = _wheel_with_requires(tmp_path, "pip-9.2-py3-none-any.whl", "~=3.10.1")
-
-    assert wheel.support_py("3.10.1") is True
-    assert wheel.support_py("3.10") is False
-    assert wheel.support_py("3.11") is False
-
-
-def test_support_py_compares_all_version_components(tmp_path: Path) -> None:
-    """A three-part requirement must not be truncated, so ``>=3.9.1`` excludes 3.9.0."""
-    wheel = _wheel_with_requires(tmp_path, "pip-9.3-py3-none-any.whl", ">=3.9.1")
-
-    assert wheel.support_py("3.9") is False
-    assert wheel.support_py("3.10") is True
+@pytest.mark.parametrize(
+    ("requires", "py_version", "expected"),
+    [
+        pytest.param("~=3.9", "3.9", True, id="compatible-release-same-minor"),
+        pytest.param("~=3.9", "3.14", True, id="compatible-release-later-minor"),
+        pytest.param("~=3.9", "4.0", False, id="compatible-release-next-major"),
+        pytest.param(">=3.10,!=3.11.*", "3.11", False, id="every-clause-must-hold"),
+        pytest.param(">=3.10,!=3.11.*", "3.12", True, id="every-clause-holds"),
+        pytest.param(">= 3.9 , != 3.10.*", "3.12", True, id="whitespace"),
+        pytest.param(">=3.6.*", "3.9", False, id="invalid-specifier-skipped"),
+        pytest.param("foo", "3.9", False, id="garbage-skipped"),
+    ],
+)
+def test_support_py(pip_wheel: Callable[[str, str], Wheel], requires: str, py_version: str, expected: bool) -> None:
+    assert pip_wheel(f"Requires-Python: {requires}\n", "1.0").support_py(py_version) is expected
 
 
-def test_support_py_every_requirement_must_hold(tmp_path: Path) -> None:
-    """Each clause of a specifier set has to be satisfied, not just the first."""
-    wheel = _wheel_with_requires(tmp_path, "pip-9.4-py3-none-any.whl", ">=3.10,~=3.10.1")
+@pytest.mark.parametrize(
+    ("headers", "py_version", "expected"),
+    [
+        pytest.param("", "3.9", True, id="no-header"),
+        pytest.param("requires-python: >=3.12\n", "3.9", False, id="lowercase-header"),
+        pytest.param("Requires-Python: >=3.9,\n <3.10\n", "3.12", False, id="folded-header"),
+        pytest.param("\nRequires-Python: >=3.99\n", "3.9", True, id="body-only"),
+    ],
+)
+def test_support_py_reads_header(
+    pip_wheel: Callable[[str, str], Wheel], headers: str, py_version: str, expected: bool
+) -> None:
+    assert pip_wheel(headers, "1.0").support_py(py_version) is expected
 
-    assert wheel.support_py("3.9") is False
-    assert wheel.support_py("3.10") is False
-    assert wheel.support_py("3.10.1") is True
-    assert wheel.support_py("3.11") is False
+
+def test_discover_wheels_skips_unsupported(tmp_path: Path, pip_wheel: Callable[[str, str], Wheel]) -> None:
+    pip_wheel("Requires-Python: >=3.99\n", "2.0")
+    pip_wheel("", "1.0")
+
+    assert [wheel.version for wheel in discover_wheels(tmp_path, "pip", None, "3.12")] == ["1.0"]
+
+
+@pytest.fixture
+def pip_wheel(tmp_path: Path) -> Callable[[str, str], Wheel]:
+    def build(headers: str, version: str) -> Wheel:
+        with zipfile.ZipFile(path := tmp_path / f"pip-{version}-py3-none-any.whl", "w") as zip_file:
+            zip_file.writestr(
+                f"pip-{version}.dist-info/METADATA", f"Metadata-Version: 2.1\nName: pip\nVersion: {version}\n{headers}"
+            )
+        return Wheel(path)
+
+    return build

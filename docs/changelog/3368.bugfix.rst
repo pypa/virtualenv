@@ -1,2 +1,0 @@
-Apply the whole ``Requires-Python`` specifier set when checking whether a seed wheel supports a Python version, so a
-``~=`` compatible release is honored and every component of the version is compared.
