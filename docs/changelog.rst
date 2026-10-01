@@ -7,6 +7,23 @@
 .. towncrier release notes start
 
 ***********************
+ v21.14.2 (2026-10-01)
+***********************
+
+Bugfixes - 21.14.2
+==================
+
+- Fix ``pyvenv.cfg`` getting an absolute path in ``python-version``, ``include-system-site-packages`` and the other keys
+  that hold no path when the working directory has an entry named like the value, such as ``3.14`` for ``virtualenv
+  3.14`` or ``true`` with ``--system-site-packages`` - by :user:`darrenhuai`. (:issue:`3366`)
+- Fix activation scripts running code from a virtual environment path whose parent directory carries a placeholder name
+  such as ``__VIRTUAL_NAME__`` (`GHSA-8rjx-v5ww-45pp
+  <https://github.com/pypa/virtualenv/security/advisories/GHSA-8rjx-v5ww-45pp>`_), and ``activate.fish`` running
+  commands from a path or ``--prompt`` that holds a backslash before a single quote (`GHSA-c947-3pg5-gm8q
+  <https://github.com/pypa/virtualenv/security/advisories/GHSA-c947-3pg5-gm8q>`_); both reported by :user:`Kwstubbs` of
+  GitHub Security Lab. (:issue:`3367`)
+
+***********************
  v21.14.1 (2026-09-29)
 ***********************
 
