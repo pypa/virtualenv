@@ -871,27 +871,18 @@ def test_pyenv_cfg_preserves_symlinks(tmp_path) -> None:
     assert expected_abspath != expected_realpath, "Test setup error: paths should differ for symlinks"
 
 
-def test_pyenv_cfg_makes_relative_path_absolute(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    (tmp_path / "base").mkdir()
-    monkeypatch.chdir(tmp_path)
-    cfg = PyEnvCfg(OrderedDict({"home": "base"}), tmp_path / "pyvenv.cfg")
-
-    cfg.write()
-
-    assert PyEnvCfg.from_file(cfg.path).content == {"home": os.path.abspath("base")}
-
-
 @pytest.mark.parametrize(
-    ("key", "value"),
+    ("key", "value", "is_path"),
     [
-        pytest.param("python-version", "3.14", id="python-version"),
-        pytest.param("version", "3.14.6", id="version"),
-        pytest.param("implementation", "CPython", id="implementation"),
-        pytest.param("include-system-site-packages", "true", id="include-system-site-packages"),
+        pytest.param("home", "base", True, id="home"),
+        pytest.param("python-version", "3.14", False, id="python-version"),
+        pytest.param("version", "3.14.6", False, id="version"),
+        pytest.param("implementation", "CPython", False, id="implementation"),
+        pytest.param("include-system-site-packages", "true", False, id="include-system-site-packages"),
     ],
 )
-def test_pyenv_cfg_keeps_value_naming_entry_in_cwd(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, key: str, value: str
+def test_pyenv_cfg_value_naming_entry_in_cwd(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, key: str, value: str, is_path: bool
 ) -> None:
     (tmp_path / value).mkdir()
     monkeypatch.chdir(tmp_path)
@@ -899,7 +890,7 @@ def test_pyenv_cfg_keeps_value_naming_entry_in_cwd(
 
     cfg.write()
 
-    assert PyEnvCfg.from_file(cfg.path).content == {key: value}
+    assert PyEnvCfg.from_file(cfg.path).content == {key: os.path.abspath(value) if is_path else value}
 
 
 @pytest.mark.parametrize(

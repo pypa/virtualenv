@@ -12,9 +12,7 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 
-# The keys holding a filesystem path. Only these are made absolute on write: any other value is plain text, and treating
-# it as a path would rewrite it whenever the working directory has an entry of that name (a 3.14 folder, a file called
-# true).
+# a plain value such as 3.14 or true would otherwise turn into a path whenever the working directory has an entry so named
 _PATH_KEYS: Final[frozenset[str]] = frozenset({
     "home",
     "executable",
@@ -56,11 +54,10 @@ class PyEnvCfg:
         LOGGER.debug("write %s", self.path)
         text = ""
         for key, value in self.content.items():
-            # Use abspath to normalize relative paths but preserve symlinks (match venv behavior)
-            # See issue #2770 - realpath resolves symlinks which breaks prefix symlinks
             if key == "prompt" and value:
                 normalized_value = f'"{value}"'
-            elif key in _PATH_KEYS and value and os.path.exists(value):
+            elif key in _PATH_KEYS and os.path.exists(value):
+                # abspath rather than realpath keeps symlinked prefixes intact, as venv does (#2770)
                 normalized_value = os.path.abspath(value)
             else:
                 normalized_value = value
