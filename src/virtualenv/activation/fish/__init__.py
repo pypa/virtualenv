@@ -15,6 +15,12 @@ class FishActivator(ViaTemplateActivator):
     def templates(self) -> Iterator[str]:
         yield "activate.fish"
 
+    @staticmethod
+    def quote(string: str) -> str:
+        # fish reads \\ and \' as escapes inside single quotes, unlike POSIX sh, so shlex.quote's output lets a
+        # backslash before a quote end the literal early
+        return "'" + string.replace("\\", "\\\\").replace("'", "\\'") + "'"
+
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:
         data = super().replacements(creator, dest_folder)
         data.update({

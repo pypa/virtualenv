@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import shlex
 import shutil
 import subprocess
 import sys
@@ -60,8 +59,8 @@ def test_fish_tkinter_generation(
     assert "set -e _OLD_PKG_CONFIG_PATH" in content
 
     if present:
-        assert f"set -gx TCL_LIBRARY {shlex.quote(tcl_lib)}\n" in content
-        assert f"set -gx TK_LIBRARY {shlex.quote(tk_lib)}\n" in content
+        assert f"set -gx TCL_LIBRARY {FishActivator.quote(tcl_lib)}\n" in content
+        assert f"set -gx TK_LIBRARY {FishActivator.quote(tk_lib)}\n" in content
     else:
         assert "if test -n ''\n  set -gx _OLD_VIRTUAL_TCL_LIBRARY" in content
         assert "if test -n ''\n  set -gx _OLD_VIRTUAL_TK_LIBRARY" in content
@@ -78,6 +77,40 @@ def test_fish_tkinter_path_does_not_run_commands(
     subprocess.run([FISH, "-c", f"source '{script}'"], capture_output=True, text=True, timeout=60, check=False)
 
     assert not marker.exists()
+
+
+@pytest.mark.skipif(IS_WIN, reason="fish is not available on Windows")
+@pytest.mark.skipif(FISH is None, reason="fish is not installed")
+@pytest.mark.parametrize(
+    ("prompt", "env_name"),
+    [
+        pytest.param(r"x\'$(touch PWNED)'\'", "env", id="prompt-backslash-quote"),
+        pytest.param(None, r"x\'$(touch PWNED)'\'", id="dirname-backslash-quote"),
+    ],
+)
+def test_fish_activate_does_not_run_commands(
+    tmp_path: Path, current_fastest: str, prompt: str | None, env_name: str
+) -> None:
+    dest = tmp_path / env_name
+    args = ["--without-pip", str(dest), "--creator", current_fastest, "--no-periodic-update", "--activators", "fish"]
+    if prompt is not None:
+        args += ["--prompt", prompt]
+    cli_run(args)
+    (work_dir := tmp_path / "workdir").mkdir()
+
+    # the path is passed as an argument so the driver cannot expand a payload dir name while locating the script
+    result = subprocess.run(
+        [FISH, "--no-config", "-c", 'source $argv[1]; printf "%s" "$VIRTUAL_ENV"', str(dest / "bin" / "activate.fish")],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        cwd=str(work_dir),
+        timeout=60,
+        check=False,
+    )
+
+    assert not (work_dir / "PWNED").exists()
+    assert result.stdout == str(dest), result.stderr
 
 
 @pytest.mark.skipif(IS_WIN, reason="fish is not available on Windows")
