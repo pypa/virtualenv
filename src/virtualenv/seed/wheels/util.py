@@ -1,27 +1,62 @@
 from __future__ import annotations
 
+import logging
+from email.parser import HeaderParser
 from operator import attrgetter
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 from zipfile import ZipFile
 
+from packaging.specifiers import InvalidSpecifier, SpecifierSet
 from packaging.version import Version as PackagingVersion
 
 if TYPE_CHECKING:
     from pathlib import Path
 
+_LOGGER: Final = logging.getLogger(__name__)
+# https://packaging.python.org/en/latest/specifications/binary-distribution-format/#file-name-convention
+# {distribution}-{version}(-{build tag})?-{python tag}-{abi tag}-{platform tag}.whl
+_MIN_WHEEL_NAME_PARTS: Final = 5
+
+
+def discover_wheels(from_folder: Path, distribution: str, version: str | None, for_py_version: str) -> list[Wheel]:
+    return sorted(
+        (
+            wheel
+            for filename in from_folder.iterdir()
+            if (wheel := Wheel.from_path(filename))
+            and wheel.distribution == distribution
+            and (version is None or wheel.version == version)
+            and wheel.support_py(for_py_version)
+        ),
+        key=attrgetter("parsed_version", "distribution"),
+        reverse=True,
+    )
+
 
 class Wheel:
     def __init__(self, path: Path) -> None:
-        # https://www.python.org/dev/peps/pep-0427/#file-name-convention
-        # The wheel filename is {distribution}-{version}(-{build tag})?-{python tag}-{abi tag}-{platform tag}.whl
         self.path = path
         self._parts = path.stem.split("-")
 
     @classmethod
     def from_path(cls, path: Path) -> Wheel | None:
-        if path is not None and path.suffix == ".whl" and len(path.stem.split("-")) >= 5:  # ruff:ignore[magic-value-comparison]
+        if path.suffix == ".whl" and len(path.stem.split("-")) >= _MIN_WHEEL_NAME_PARTS:
             return cls(path)
         return None
+
+    def support_py(self, py_version: str) -> bool:
+        """Check whether ``Requires-Python`` admits ``py_version``, a ``major.minor`` string."""
+        name = f"{self.distribution}-{self.version}.dist-info/METADATA"
+        with ZipFile(str(self.path), "r") as zip_file:
+            requires = HeaderParser().parsestr(zip_file.read(name).decode("utf-8")).get("Requires-Python")
+        if requires is None:
+            return True
+        try:
+            return SpecifierSet(requires).contains(py_version)
+        except InvalidSpecifier:
+            # skip the wheel as pip does, rather than abort seeding or override the verified embedded wheel
+            _LOGGER.warning("skip %s, its Requires-Python %r is not a valid specifier", self.path, requires)
+            return False
 
     @property
     def distribution(self) -> str:
@@ -35,44 +70,17 @@ class Wheel:
     def version_tuple(self) -> tuple[int, ...]:
         return self.as_version_tuple(self.version)
 
-    @property
-    def parsed_version(self) -> PackagingVersion:
-        return PackagingVersion(self.version)
-
     @staticmethod
     def as_version_tuple(version: str) -> tuple[int, ...]:
         return PackagingVersion(version).release
 
     @property
+    def parsed_version(self) -> PackagingVersion:
+        return PackagingVersion(self.version)
+
+    @property
     def name(self) -> str:
         return self.path.name
-
-    def support_py(self, py_version: str) -> bool:
-        name = f"{'-'.join(self.path.stem.split('-')[0:2])}.dist-info/METADATA"
-        with ZipFile(str(self.path), "r") as zip_file:
-            metadata = zip_file.read(name).decode("utf-8")
-        marker = "Requires-Python:"
-        requires = next((i[len(marker) :] for i in metadata.splitlines() if i.startswith(marker)), None)
-        if requires is None:  # if it does not specify a python requires the assumption is compatible
-            return True
-        py_version_int = tuple(int(i) for i in py_version.split("."))
-        for require in (i.strip() for i in requires.split(",")):
-            # https://www.python.org/dev/peps/pep-0345/#version-specifiers
-            for operator, check in [
-                ("!=", lambda v: py_version_int != v),
-                ("==", lambda v: py_version_int == v),
-                ("<=", lambda v: py_version_int <= v),
-                (">=", lambda v: py_version_int >= v),
-                ("<", lambda v: py_version_int < v),
-                (">", lambda v: py_version_int > v),
-            ]:
-                if require.startswith(operator):
-                    ver_str = require[len(operator) :].strip()
-                    version = tuple((int(i) if i != "*" else None) for i in ver_str.split("."))[0:2]
-                    if not check(version):
-                        return False
-                    break
-        return True
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.path})"
@@ -81,30 +89,12 @@ class Wheel:
         return str(self.path)
 
 
-def discover_wheels(from_folder: Path, distribution: str, version: str | None, for_py_version: str) -> list[Wheel]:
-    wheels = []
-    for filename in from_folder.iterdir():
-        wheel = Wheel.from_path(filename)
-        if (
-            wheel
-            and wheel.distribution == distribution
-            and (version is None or wheel.version == version)
-            and wheel.support_py(for_py_version)
-        ):
-            wheels.append(wheel)
-    return sorted(wheels, key=attrgetter("parsed_version", "distribution"), reverse=True)
-
-
 class Version:
     #: the version bundled with virtualenv
-    bundle = "bundle"
-    embed = "embed"
+    bundle: Final = "bundle"
+    embed: Final = "embed"
     #: custom version handlers
-    non_version = (bundle, embed)
-
-    @staticmethod
-    def of_version(value: str | None) -> str | None:
-        return None if value in Version.non_version else value
+    non_version: Final = (bundle, embed)
 
     @staticmethod
     def as_pip_req(distribution: str, version: str | None) -> str:
@@ -112,8 +102,11 @@ class Version:
 
     @staticmethod
     def as_version_spec(version: str | None) -> str:
-        of_version = Version.of_version(version)
-        return "" if of_version is None else f"=={of_version}"
+        return "" if (of_version := Version.of_version(version)) is None else f"=={of_version}"
+
+    @staticmethod
+    def of_version(value: str | None) -> str | None:
+        return None if value in Version.non_version else value
 
 
 __all__ = [
