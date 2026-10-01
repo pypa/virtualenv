@@ -1,0 +1,3 @@
+Write ``pyvenv.cfg`` values that are not paths as given: a file or folder in the working directory named like the value
+(``virtualenv 3.14`` on Python 3.14, or an entry called ``true`` with ``--system-site-packages``) no longer turns
+``python-version``, ``include-system-site-packages`` and other plain keys into an absolute path - by :user:`darrenhuai`.
