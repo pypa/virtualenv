@@ -48,7 +48,7 @@ Bugfixes - 21.14.0
   ``tasks/release-requirements.txt`` pins by version and SHA-256, so a rebuild of the tag uses the same versions.
   (:issue:`3337`)
 - Use PEP 440 version ordering when selecting seed wheels, so pinned pre-releases, post-releases and local versions
-  resolve to the requested wheel. (:issue:`3360`)
+  resolve to the requested wheel. (:issue:`3361`)
 
 Improved Documentation - 21.14.0
 ================================
