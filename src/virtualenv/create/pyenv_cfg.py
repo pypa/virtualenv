@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from collections import OrderedDict
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.util.text import collapse_line_boundaries
 
@@ -11,6 +11,18 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
+
+# The keys holding a filesystem path. Only these are made absolute on write: any other value is plain text, and treating
+# it as a path would rewrite it whenever the working directory has an entry of that name (a 3.14 folder, a file called
+# true).
+_PATH_KEYS: Final[frozenset[str]] = frozenset({
+    "home",
+    "executable",
+    "base-prefix",
+    "base-exec-prefix",
+    "base-executable",
+    "venvlauncher_command",
+})
 
 
 class PyEnvCfg:
@@ -48,8 +60,10 @@ class PyEnvCfg:
             # See issue #2770 - realpath resolves symlinks which breaks prefix symlinks
             if key == "prompt" and value:
                 normalized_value = f'"{value}"'
+            elif key in _PATH_KEYS and value and os.path.exists(value):
+                normalized_value = os.path.abspath(value)
             else:
-                normalized_value = os.path.abspath(value) if value and os.path.exists(value) else value
+                normalized_value = value
             line = f"{collapse_line_boundaries(key)} = {collapse_line_boundaries(normalized_value)}"
             LOGGER.debug("\t%s", line)
             text += line
