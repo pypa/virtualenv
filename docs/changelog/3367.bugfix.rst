@@ -1,0 +1,6 @@
+Fix activation scripts running code from a virtual environment path whose parent directory carries a placeholder name
+such as ``__VIRTUAL_NAME__`` (`GHSA-8rjx-v5ww-45pp
+<https://github.com/pypa/virtualenv/security/advisories/GHSA-8rjx-v5ww-45pp>`_), and ``activate.fish`` running commands
+from a path or ``--prompt`` that holds a backslash before a single quote (`GHSA-c947-3pg5-gm8q
+<https://github.com/pypa/virtualenv/security/advisories/GHSA-c947-3pg5-gm8q>`_); both reported by :user:`Kwstubbs` of
+GitHub Security Lab.
