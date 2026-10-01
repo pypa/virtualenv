@@ -27,7 +27,7 @@ its own.
 - The steps or a proof of concept that reproduce it.
 - The versions, operating system and Python you tested against.
 - Any mitigation you already know of.
-- A severity estimate, and a CWE identifier if you know one.
+- A severity estimate and the CWE that fits best; the form requires at least one CWE.
 
 Write the report yourself. Reports that consist of unreviewed tool or model output take longer to triage, and we may
 close them without a detailed reply.
