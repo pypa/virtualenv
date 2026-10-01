@@ -7,6 +7,17 @@
 .. towncrier release notes start
 
 ***********************
+ v21.14.3 (2026-10-01)
+***********************
+
+Bugfixes - 21.14.3
+==================
+
+- Honor ``~=`` and every clause of a seed wheel's ``Requires-Python`` when picking a wheel for the target Python, and
+  skip a wheel whose ``Requires-Python`` is not a valid specifier instead of failing - by :user:`pasmud`.
+  (:issue:`3369`)
+
+***********************
  v21.14.2 (2026-10-01)
 ***********************
 
