@@ -1,0 +1,3 @@
+Fix ``pyvenv.cfg`` getting an absolute path in ``python-version``, ``include-system-site-packages`` and the other keys
+that hold no path when the working directory has an entry named like the value, such as ``3.14`` for ``virtualenv 3.14``
+or ``true`` with ``--system-site-packages`` - by :user:`darrenhuai`.

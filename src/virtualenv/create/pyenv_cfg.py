@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from collections import OrderedDict
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.util.text import collapse_line_boundaries
 
@@ -11,6 +11,16 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 LOGGER = logging.getLogger(__name__)
+
+# a plain value such as 3.14 or true would otherwise turn into a path whenever the working directory has an entry so named
+_PATH_KEYS: Final[frozenset[str]] = frozenset({
+    "home",
+    "executable",
+    "base-prefix",
+    "base-exec-prefix",
+    "base-executable",
+    "venvlauncher_command",
+})
 
 
 class PyEnvCfg:
@@ -44,12 +54,13 @@ class PyEnvCfg:
         LOGGER.debug("write %s", self.path)
         text = ""
         for key, value in self.content.items():
-            # Use abspath to normalize relative paths but preserve symlinks (match venv behavior)
-            # See issue #2770 - realpath resolves symlinks which breaks prefix symlinks
             if key == "prompt" and value:
                 normalized_value = f'"{value}"'
+            elif key in _PATH_KEYS and os.path.exists(value):
+                # abspath rather than realpath keeps symlinked prefixes intact, as venv does (#2770)
+                normalized_value = os.path.abspath(value)
             else:
-                normalized_value = os.path.abspath(value) if value and os.path.exists(value) else value
+                normalized_value = value
             line = f"{collapse_line_boundaries(key)} = {collapse_line_boundaries(normalized_value)}"
             LOGGER.debug("\t%s", line)
             text += line

@@ -860,15 +860,37 @@ def test_pyenv_cfg_preserves_symlinks(tmp_path) -> None:
     cfg = PyEnvCfg(OrderedDict(), cfg_path)
 
     symlink_path = str(symlink_dir / "some_file.txt")
-    cfg["test_path"] = symlink_path
+    cfg["home"] = symlink_path
     cfg.write()
 
     written_content = cfg_path.read_text(encoding="utf-8")
     expected_abspath = os.path.abspath(symlink_path)
     expected_realpath = os.path.realpath(symlink_path)
 
-    assert f"test_path = {expected_abspath}" in written_content
+    assert f"home = {expected_abspath}" in written_content
     assert expected_abspath != expected_realpath, "Test setup error: paths should differ for symlinks"
+
+
+@pytest.mark.parametrize(
+    ("key", "value", "is_path"),
+    [
+        pytest.param("home", "base", True, id="home"),
+        pytest.param("python-version", "3.14", False, id="python-version"),
+        pytest.param("version", "3.14.6", False, id="version"),
+        pytest.param("implementation", "CPython", False, id="implementation"),
+        pytest.param("include-system-site-packages", "true", False, id="include-system-site-packages"),
+    ],
+)
+def test_pyenv_cfg_value_naming_entry_in_cwd(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, key: str, value: str, is_path: bool
+) -> None:
+    (tmp_path / value).mkdir()
+    monkeypatch.chdir(tmp_path)
+    cfg = PyEnvCfg(OrderedDict({key: value}), tmp_path / "pyvenv.cfg")
+
+    cfg.write()
+
+    assert PyEnvCfg.from_file(cfg.path).content == {key: os.path.abspath(value) if is_path else value}
 
 
 @pytest.mark.parametrize(
