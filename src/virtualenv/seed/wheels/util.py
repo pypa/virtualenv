@@ -4,6 +4,7 @@ from operator import attrgetter
 from typing import TYPE_CHECKING
 from zipfile import ZipFile
 
+from packaging.specifiers import SpecifierSet
 from packaging.version import Version as PackagingVersion
 
 if TYPE_CHECKING:
@@ -55,24 +56,9 @@ class Wheel:
         requires = next((i[len(marker) :] for i in metadata.splitlines() if i.startswith(marker)), None)
         if requires is None:  # if it does not specify a python requires the assumption is compatible
             return True
-        py_version_int = tuple(int(i) for i in py_version.split("."))
-        for require in (i.strip() for i in requires.split(",")):
-            # https://www.python.org/dev/peps/pep-0345/#version-specifiers
-            for operator, check in [
-                ("!=", lambda v: py_version_int != v),
-                ("==", lambda v: py_version_int == v),
-                ("<=", lambda v: py_version_int <= v),
-                (">=", lambda v: py_version_int >= v),
-                ("<", lambda v: py_version_int < v),
-                (">", lambda v: py_version_int > v),
-            ]:
-                if require.startswith(operator):
-                    ver_str = require[len(operator) :].strip()
-                    version = tuple((int(i) if i != "*" else None) for i in ver_str.split("."))[0:2]
-                    if not check(version):
-                        return False
-                    break
-        return True
+        # https://peps.python.org/pep-0345/#version-specifiers - let packaging apply the whole set, so
+        # operators such as ~= are honored and every component of the version is compared
+        return SpecifierSet(requires).contains(py_version)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.path})"

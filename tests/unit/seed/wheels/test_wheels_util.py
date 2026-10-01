@@ -1,9 +1,28 @@
 from __future__ import annotations
 
+import zipfile
+from typing import TYPE_CHECKING
+
 import pytest
 
 from virtualenv.seed.wheels.embed import MAX, MIN, get_embed_wheel
 from virtualenv.seed.wheels.util import Wheel
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+
+def _wheel_with_requires(folder: Path, filename: str, requires_python: str) -> Wheel:
+    """Write a wheel whose METADATA carries the given Requires-Python, then wrap it."""
+    distribution, version = filename.split("-", maxsplit=1)[0], filename.split("-")[1]
+    dist_info = f"{distribution}-{version}.dist-info"
+    with zipfile.ZipFile(folder / filename, "w") as zip_file:
+        zip_file.writestr(
+            f"{dist_info}/METADATA",
+            f"Metadata-Version: 2.1\nName: {distribution}\nVersion: {version}\nRequires-Python: {requires_python}\n",
+        )
+        zip_file.writestr(f"{distribution}/__init__.py", "")
+    return Wheel(folder / filename)
 
 
 @pytest.mark.parametrize(
@@ -53,3 +72,39 @@ def test_wheel_repr() -> None:
 def test_unknown_distribution() -> None:
     wheel = get_embed_wheel("unknown", MAX)
     assert wheel is None
+
+
+def test_support_py_honours_compatible_release(tmp_path: Path) -> None:
+    """``~=3.9`` is ``>=3.9, ==3.*``, so it covers later minors but not the next major."""
+    wheel = _wheel_with_requires(tmp_path, "pip-9.1-py3-none-any.whl", "~=3.9")
+
+    assert wheel.support_py("3.9") is True
+    assert wheel.support_py("3.14") is True
+    assert wheel.support_py("4.0") is False
+
+
+def test_support_py_compatible_release_keeps_patch_prefix(tmp_path: Path) -> None:
+    """``~=3.10.1`` is ``>=3.10.1, ==3.10.*``, so neither 3.10.0 nor a later minor matches."""
+    wheel = _wheel_with_requires(tmp_path, "pip-9.2-py3-none-any.whl", "~=3.10.1")
+
+    assert wheel.support_py("3.10.1") is True
+    assert wheel.support_py("3.10") is False
+    assert wheel.support_py("3.11") is False
+
+
+def test_support_py_compares_all_version_components(tmp_path: Path) -> None:
+    """A three-part requirement must not be truncated, so ``>=3.9.1`` excludes 3.9.0."""
+    wheel = _wheel_with_requires(tmp_path, "pip-9.3-py3-none-any.whl", ">=3.9.1")
+
+    assert wheel.support_py("3.9") is False
+    assert wheel.support_py("3.10") is True
+
+
+def test_support_py_every_requirement_must_hold(tmp_path: Path) -> None:
+    """Each clause of a specifier set has to be satisfied, not just the first."""
+    wheel = _wheel_with_requires(tmp_path, "pip-9.4-py3-none-any.whl", ">=3.10,~=3.10.1")
+
+    assert wheel.support_py("3.9") is False
+    assert wheel.support_py("3.10") is False
+    assert wheel.support_py("3.10.1") is True
+    assert wheel.support_py("3.11") is False
