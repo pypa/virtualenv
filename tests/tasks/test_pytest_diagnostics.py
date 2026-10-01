@@ -109,8 +109,9 @@ def test_crash() -> None:
     os.abort()
 """,
     )
+    # the watchdog and the fatal handler write to the same file unsynchronized, so keep the watchdog quiet here
     diagnostic_pytester.runpytest_subprocess(
-        "outer.py", "-p", "xdist.plugin", "-n", "1", "--max-worker-restart=0", timeout=30
+        "outer.py", "-p", "xdist.plugin", "-n", "1", "--max-worker-restart=0", "--diagnostics-interval=60", timeout=30
     ).assert_outcomes(failed=1)
     text: Final[str] = next((diagnostic_pytester.path / "diagnostics").glob("gw0-*.log")).read_text(encoding="utf-8")
     assert "Fatal Python error:" in text
