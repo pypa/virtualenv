@@ -193,7 +193,14 @@ class UpdateLog:
     @classmethod
     def from_app_data(cls, app_data: AppData, distribution: str, for_py_version: str) -> UpdateLog:
         raw_json = app_data.embed_update_log(distribution, for_py_version).read()
-        return cls.from_dict(raw_json)
+        try:
+            return cls.from_dict(raw_json)
+        except (AttributeError, KeyError, TypeError, ValueError):
+            # the app data folder is shared and outlives a single run, so what is on disk may have been written by
+            # another version or left incomplete. Drop it and start over rather than failing the seed, the log only
+            # records which newer wheels are known so far, and an empty one just re-reads the bundled wheel
+            LOGGER.warning("ignoring unreadable embed update log of %s, reset it", distribution)
+            return cls(None, None, [], None)
 
     def to_dict(self) -> dict[str, object]:
         return {
