@@ -6,8 +6,40 @@ import os
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Final
+from typing import TYPE_CHECKING, Final
 from urllib.request import Request, urlopen
+
+if TYPE_CHECKING:
+    from _hashlib import HASH
+    from typing import NotRequired, TypedDict
+
+    class _Pin(TypedDict):
+        tag: NotRequired[str]
+        assets: NotRequired[dict[str, dict[str, str]]]
+        version: NotRequired[str]
+
+    class _Release(TypedDict):
+        tagName: str
+
+    class _Releases(TypedDict):
+        nodes: list[_Release]
+
+    class _Repository(TypedDict):
+        latestRelease: _Release
+        releases: _Releases
+
+    class _Asset(TypedDict):
+        name: str
+        id: int
+        digest: NotRequired[str | None]
+
+    class _NpmVersion(TypedDict):
+        deprecated: NotRequired[str]
+
+    class _NpmPackage(TypedDict):
+        time: dict[str, str]
+        versions: dict[str, _NpmVersion]
+
 
 _PINS: Final[Path] = Path("tasks/ci-tools.json")
 # no GraalPy assets to hash: check.yaml hands the tag to setup-python, which downloads the release itself
@@ -41,7 +73,7 @@ def main() -> None:
     if not (token := os.environ.get("GH_TOKEN")):
         msg = "GH_TOKEN is required to query GitHub releases"
         raise SystemExit(msg)
-    pins: Final = json.loads(_PINS.read_text(encoding="utf-8"))
+    pins: Final[dict[str, _Pin]] = json.loads(_PINS.read_text(encoding="utf-8"))
     for tool, (repository, prerelease, patterns) in _TOOLS.items():
         # an unchanged tag keeps its recorded hashes, so an asset replaced under the same tag fails CI instead
         if (tag := _newest_tag(token, repository, prerelease=prerelease)) != pins[tool]["tag"]:
@@ -60,7 +92,7 @@ def _newest_tag(token: str, repository: str, *, prerelease: bool) -> str:
         ),
         timeout=30,
     ) as response:
-        found: Final = json.load(response)["data"]["repository"]
+        found: Final[_Repository] = json.load(response)["data"]["repository"]
     return found["releases"]["nodes"][0]["tagName"] if prerelease else found["latestRelease"]["tagName"]
 
 
@@ -72,7 +104,7 @@ def _pin_assets(token: str, repository: str, tag: str, patterns: dict[str, str])
         ),
         timeout=30,
     ) as response:
-        published: Final = {asset["name"]: asset for asset in json.load(response)["assets"]}
+        published: Final[dict[str, _Asset]] = {asset["name"]: asset for asset in json.load(response)["assets"]}
     pins: Final[dict[str, dict[str, str]]] = {}
     for runner_os, pattern in patterns.items():
         if (asset := published.get(name := pattern.format(version=tag.removeprefix("v")))) is None:
@@ -87,7 +119,7 @@ def _pin_assets(token: str, repository: str, tag: str, patterns: dict[str, str])
 
 
 def _sha256(repository: str, asset_id: int) -> str:
-    digest: Final = hashlib.sha256()
+    digest: Final[HASH] = hashlib.sha256()
     # no token: the API redirects to a signed storage URL, and urllib would forward the Authorization header there
     with urlopen(
         Request(
@@ -103,8 +135,8 @@ def _sha256(repository: str, asset_id: int) -> str:
 
 def _newest_npm_version(package: str, pinned: str) -> str:
     with urlopen(Request(f"https://registry.npmjs.org/{package}"), timeout=30) as response:
-        metadata: Final = json.load(response)
-    cutoff: Final = datetime.now(tz=timezone.utc) - _NPM_COOLDOWN
+        metadata: Final[_NpmPackage] = json.load(response)
+    cutoff: Final[datetime] = datetime.now(tz=timezone.utc) - _NPM_COOLDOWN
     # npm keeps the publish time of unpublished versions, so check each one still exists before taking it
     return max(
         (

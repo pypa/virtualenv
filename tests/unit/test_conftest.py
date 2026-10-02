@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -13,7 +13,6 @@ pytest_plugins = ["pytester"]
 
 @pytest.fixture
 def collect(pytester: pytest.Pytester, request: pytest.FixtureRequest) -> Callable[[str], pytest.RunResult]:
-    suite_conftest: Final = request.config.pluginmanager.getplugin(str(Path(__file__).parents[1] / "conftest.py"))
     # definition order differs from ID order, so slicing the collection order would pick other tests
     pytester.makepyfile(
         test_sample="def test_c(): pass\ndef test_a(): pass\ndef test_d(): pass\ndef test_b(): pass\ndef test_e(): pass\n"
@@ -22,7 +21,12 @@ def collect(pytester: pytest.Pytester, request: pytest.FixtureRequest) -> Callab
     def run(shard: str) -> pytest.RunResult:
         # registered under a new name, the suite conftest cannot find itself to reorder around pytest-randomly
         return pytester.runpytest_inprocess(
-            "-p", "no:randomly", "--collect-only", "-q", shard, plugins=[suite_conftest]
+            "-p",
+            "no:randomly",
+            "--collect-only",
+            "-q",
+            shard,
+            plugins=[request.config.pluginmanager.getplugin(str(Path(__file__).parents[1] / "conftest.py"))],
         )
 
     return run

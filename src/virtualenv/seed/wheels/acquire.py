@@ -188,9 +188,9 @@ def _find_downloaded_wheel(
 def find_compatible_in_house(
     distribution: str, version_spec: str | None, for_py_version: str, in_folder: Path
 ) -> Wheel | None:
-    wheels: Final = discover_wheels(in_folder, distribution, None, for_py_version)
+    wheels: Final[list[Wheel]] = discover_wheels(in_folder, distribution, None, for_py_version)
     if version_spec:
-        specifier: Final = Specifier(version_spec)
+        specifier: Final[Specifier] = Specifier(version_spec)
         if specifier.operator not in {"==", "<"}:
             raise ValueError(version_spec)
         return next((wheel for wheel in wheels if specifier.contains(wheel.version)), None)

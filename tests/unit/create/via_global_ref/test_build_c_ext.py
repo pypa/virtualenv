@@ -16,8 +16,10 @@ from virtualenv.seed.wheels.embed import BUNDLE_FOLDER as EMBED_WHEEL_DIR
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-_CURRENT: Final = PythonInfo.current_system()
-_CREATOR_CLASSES: Final = CreatorSelector.for_interpreter(_CURRENT).key_to_class
+    from virtualenv.create.creator import Creator
+
+_CURRENT: Final[PythonInfo] = PythonInfo.current_system()
+_CREATOR_CLASSES: Final[dict[str, type[Creator]]] = CreatorSelector.for_interpreter(_CURRENT).key_to_class
 
 
 def builtin_shows_marker_missing() -> bool:

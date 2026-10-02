@@ -17,6 +17,8 @@ from virtualenv.info import IS_WIN
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from virtualenv.create.creator import Creator
+
 
 @pytest.fixture(scope="session")
 def special_char_name():
@@ -135,7 +137,7 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
 def test_batch_skips_changed_paths(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, character: str, field: str
 ) -> None:
-    creator: Final = session_via_cli(
+    creator: Final[Creator] = session_via_cli(
         [str(tmp_path / (f"env{character}name" if field == "dest" else "env")), "--no-seed"],
         setup_logging=False,
     ).creator
@@ -159,7 +161,7 @@ def test_batch_skips_changed_paths(
 )
 @pytest.mark.parametrize("delayed", [pytest.param("OFF", id="normal"), pytest.param("ON", id="delayed-expansion")])
 def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str) -> None:
-    creator: Final = session_via_cli([str(tmp_path / name), "--no-seed"], setup_logging=False).creator
+    creator: Final[Creator] = session_via_cli([str(tmp_path / name), "--no-seed"], setup_logging=False).creator
     creator.bin_dir.mkdir(parents=True)
     BatchActivator(VirtualEnvOptions(prompt="roundtrip")).generate(creator)
     snapshot: Final[str] = (
@@ -171,7 +173,7 @@ def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str) -> None:
         f"@call activate.bat\n{snapshot}\n@call activate.bat\n{snapshot}\n@call deactivate.bat\n{snapshot}",
         encoding="utf-8",
     )
-    result: Final = subprocess.run(
+    result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
         [os.environ["COMSPEC"], "/D", f"/V:{delayed}", "/C", "check.bat"],
         cwd=creator.bin_dir,
         capture_output=True,
@@ -180,7 +182,7 @@ def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str) -> None:
         check=True,
         env={**os.environ, "SECRET": "expanded", "VIRTUAL_ENV_DISABLE_PROMPT": ""},
     )
-    active: Final = {
+    active: Final[dict[str, str]] = {
         "VIRTUAL_ENV": str(creator.dest),
         "PATH": f"{creator.bin_dir};{os.environ['PATH']}",
         "PROMPT": "(roundtrip) original",

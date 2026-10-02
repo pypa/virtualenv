@@ -14,7 +14,7 @@ def main() -> None:
     subprocess.run([git, "diff", "--cached", "--exit-code"], check=True)
     subprocess.run([git, "apply", "--check", sys.argv[1]], check=True)
     subprocess.run([git, "apply", "--cached", sys.argv[1]], check=True)
-    changes: Final = (
+    changes: Final[list[str]] = (
         subprocess
         .run(
             [git, "diff", "--cached", "--raw", "--no-renames", "-z"],
