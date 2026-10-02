@@ -230,7 +230,7 @@ jobs:
             .tox/3.13t/log/
             .tox/junit.3.13t.xml
           include-hidden-files: true
-          if-no-files-found: warn
+          if-no-files-found: ignore
           retention-days: 14
       - name: 📤 Store coverage data
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
