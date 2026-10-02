@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from importlib.metadata import PathDistribution
 from io import BytesIO
 from pathlib import Path, PurePosixPath
-from typing import TYPE_CHECKING, Final, cast
+from typing import TYPE_CHECKING, Final
 from urllib.parse import quote
 
 from hatchling.builders.utils import get_reproducible_timestamp
@@ -20,37 +20,8 @@ from hatch_build import PYPA, SBOM_NAMESPACE, build_tools, component_from_metada
 
 if TYPE_CHECKING:
     from importlib.metadata import PackageMetadata
-    from typing import NotRequired, TypedDict
 
-    class _Hash(TypedDict):
-        alg: str
-        content: str
-
-    class _Property(TypedDict):
-        name: str
-        value: str
-
-    class _Reference(TypedDict):
-        type: str
-        url: str
-        comment: NotRequired[str]
-
-    _Component = TypedDict(
-        "_Component",
-        {
-            "type": str,
-            "bom-ref": str,
-            "name": str,
-            "version": NotRequired[str],
-            "purl": NotRequired[str],
-            "supplier": NotRequired[dict[str, str | list[str]]],
-            "description": NotRequired[str],
-            "hashes": NotRequired[list[_Hash]],
-            "externalReferences": NotRequired[list[_Reference]],
-            "properties": NotRequired[list[_Property]],
-            "components": NotRequired[list["_Component"]],
-        },
-    )
+    from hatch_build import Body, Component, Document, Property
 
 _SBOM_NAME: Final[str] = "virtualenv.pyz.cdx.json"
 _HERE: Final[Path] = Path(__file__).parent
@@ -83,7 +54,7 @@ def _describe(archive: zipfile.ZipFile) -> str:
     )
     version: Final[str] = metadata["Version"]
     purl: Final[str] = f"pkg:generic/virtualenv.pyz@{quote(version, safe='')}"
-    root: Final[_Component] = {
+    root: Final[Component] = {
         "type": "application",
         "bom-ref": purl,
         "supplier": PYPA,
@@ -97,7 +68,7 @@ def _describe(archive: zipfile.ZipFile) -> str:
         ],
         "components": [_file(archive, purl, name) for name in members if name in _LOADER],
     }
-    virtualenv: Final[_Component] = _from_metadata(metadata)
+    virtualenv: Final[Component] = _from_metadata(metadata)
     # the wheel SBOM in virtualenv's dist-info already lists what each embedded wheel vendors
     virtualenv["components"] = [
         _embedded_wheel(archive, name)
@@ -111,13 +82,16 @@ def _describe(archive: zipfile.ZipFile) -> str:
         for paths in platforms.values():
             for path in paths.values():
                 loaded_by.setdefault(str(PurePosixPath(path).parent), []).append(python)
-    bundled: Final[list[_Component]] = [
+    bundled: Final[list[Component]] = [
         _bundled(archive, directory, [name for name in members if name.startswith(f"{directory}/")], pythons)
         for directory, pythons in sorted(loaded_by.items())
     ]
     environment, tool_dependencies = build_tools(version)
-    tools: Final = [*environment, *(_script(path, version) for path in (_HERE / "make_zipapp.py", Path(__file__)))]
-    body: Final = {
+    tools: Final[list[Component]] = [
+        *environment,
+        *(_script(path, version) for path in (_HERE / "make_zipapp.py", Path(__file__))),
+    ]
+    body: Final[Body] = {
         "metadata": {
             "timestamp": timestamp(),
             "lifecycles": [{"phase": "build"}],
@@ -154,7 +128,7 @@ def _describe(archive: zipfile.ZipFile) -> str:
             }
         ],
     }
-    document: Final = {
+    document: Final[Document] = {
         "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
         "bomFormat": "CycloneDX",
         "specVersion": "1.6",
@@ -170,12 +144,11 @@ def _metadata(archive: zipfile.ZipFile, name: str) -> PackageMetadata:
     return PathDistribution(zipfile.Path(archive, f"{PurePosixPath(name).parent}/")).metadata
 
 
-def _from_metadata(metadata: PackageMetadata) -> _Component:
-    # hatch_build.py builds its CycloneDX dicts untyped; this is where they enter typed code
-    return cast("_Component", component_from_metadata(metadata, "library"))
+def _from_metadata(metadata: PackageMetadata) -> Component:
+    return component_from_metadata(metadata, "library")
 
 
-def _file(archive: zipfile.ZipFile, parent: str, name: str) -> _Component:
+def _file(archive: zipfile.ZipFile, parent: str, name: str) -> Component:
     content: Final[bytes] = archive.read(name)
     return {
         "type": "file",
@@ -186,23 +159,23 @@ def _file(archive: zipfile.ZipFile, parent: str, name: str) -> _Component:
     }
 
 
-def _embedded_wheel(archive: zipfile.ZipFile, name: str) -> _Component:
+def _embedded_wheel(archive: zipfile.ZipFile, name: str) -> Component:
     content: Final[bytes] = archive.read(name)
     with zipfile.ZipFile(BytesIO(content)) as wheel:
         metadata: Final[PackageMetadata] = _metadata(
             wheel, next(entry for entry in wheel.namelist() if entry.endswith(".dist-info/METADATA"))
         )
-    component: Final[_Component] = _from_metadata(metadata)
+    component: Final[Component] = _from_metadata(metadata)
     component["hashes"] = [{"alg": "SHA-256", "content": hashlib.sha256(content).hexdigest()}]
     component["properties"] = [{"name": "virtualenv:bundled-wheel", "value": name}, *component["properties"]]
     return component
 
 
-def _bundled(archive: zipfile.ZipFile, directory: str, names: list[str], pythons: list[str]) -> _Component:
-    component: Final[_Component] = _from_metadata(
+def _bundled(archive: zipfile.ZipFile, directory: str, names: list[str], pythons: list[str]) -> Component:
+    component: Final[Component] = _from_metadata(
         _metadata(archive, next(name for name in names if name.endswith(".dist-info/METADATA")))
     )
-    loaded_for: Final[list[_Property]] = [
+    loaded_for: Final[list[Property]] = [
         {"name": "virtualenv:loaded-for-python", "value": python} for python in pythons
     ]
     component["properties"] = [
@@ -214,7 +187,7 @@ def _bundled(archive: zipfile.ZipFile, directory: str, names: list[str], pythons
     return component
 
 
-def _script(path: Path, version: str) -> _Component:
+def _script(path: Path, version: str) -> Component:
     return {
         "type": "application",
         "bom-ref": f"tool:{path.name}",

@@ -30,15 +30,149 @@ from packaging.requirements import Requirement
 if TYPE_CHECKING:
     from email.message import Message
     from importlib.metadata import Distribution, PackageMetadata
+    from typing import NotRequired, TypedDict
 
     from hatchling.metadata.core import CoreMetadata
     from packaging.specifiers import Specifier
+
+    class _OrganizationalEntity(TypedDict):
+        name: str
+        url: list[str]
+
+    class _Hash(TypedDict):
+        alg: str
+        content: str
+
+    class Property(TypedDict):
+        name: str
+        value: str
+
+    class _ExternalReference(TypedDict):
+        type: str
+        url: str
+        comment: NotRequired[str]
+
+    class _LicenseName(TypedDict):
+        name: str
+        acknowledgement: str
+
+    class _LicenseId(TypedDict):
+        id: str
+        acknowledgement: str
+
+    class _NamedLicense(TypedDict):
+        license: _LicenseName | _LicenseId
+
+    class _LicenseExpression(TypedDict):
+        expression: str
+        acknowledgement: str
+
+    _License = _NamedLicense | _LicenseExpression
+
+    class _Method(TypedDict):
+        technique: str
+        confidence: int
+        value: str
+
+    class _Identity(TypedDict):
+        field: str
+        confidence: int
+        methods: list[_Method]
+
+    class _Evidence(TypedDict):
+        identity: list[_Identity]
+
+    Component = TypedDict(
+        "Component",
+        {
+            "type": str,
+            "bom-ref": str,
+            "name": str,
+            "version": NotRequired[str],
+            "purl": NotRequired[str],
+            "supplier": NotRequired[_OrganizationalEntity],
+            "authors": NotRequired[list[dict[str, str]]],
+            "description": NotRequired[str],
+            "licenses": NotRequired[list[_License]],
+            "copyright": NotRequired[str],
+            "hashes": NotRequired[list[_Hash]],
+            "externalReferences": NotRequired[list[_ExternalReference]],
+            "properties": NotRequired[list[Property]],
+            "evidence": NotRequired[_Evidence],
+            "components": NotRequired[list["Component"]],
+        },
+    )
+
+    class _Dependency(TypedDict):
+        ref: str
+        dependsOn: list[str]
+
+    class _Ref(TypedDict):
+        ref: str
+
+    class _Output(TypedDict):
+        type: str
+        resource: _Ref
+
+    class _Input(TypedDict):
+        environmentVars: list[Property]
+
+    _Workflow = TypedDict(
+        "_Workflow",
+        {
+            "bom-ref": str,
+            "uid": str,
+            "name": str,
+            "taskTypes": list[str],
+            "resourceReferences": list[_Ref],
+            "inputs": NotRequired[list[_Input]],
+            "outputs": list[_Output],
+        },
+    )
+
+    _Formula = TypedDict("_Formula", {"bom-ref": str, "workflows": list[_Workflow]})
+
+    class _Lifecycle(TypedDict):
+        phase: str
+
+    class _Tools(TypedDict):
+        components: list[Component]
+
+    class _Metadata(TypedDict):
+        timestamp: str
+        lifecycles: list[_Lifecycle]
+        tools: _Tools
+        manufacturer: _OrganizationalEntity
+        authors: NotRequired[list[dict[str, str]]]
+        supplier: _OrganizationalEntity
+        component: Component
+        licenses: NotRequired[list[_License]]
+        properties: NotRequired[list[Property]]
+
+    class _Composition(TypedDict):
+        aggregate: str
+        dependencies: list[str]
+
+    class Body(TypedDict):
+        metadata: _Metadata
+        components: list[Component]
+        dependencies: list[_Dependency]
+        compositions: NotRequired[list[_Composition]]
+        formulation: list[_Formula]
+
+    _Header = TypedDict(
+        "_Header", {"$schema": str, "bomFormat": str, "specVersion": str, "serialNumber": str, "version": int}
+    )
+
+    class Document(_Header, Body):
+        pass
+
 
 _ROOT: Final[Path] = Path(__file__).resolve().parent
 _EMBED: Final[Path] = _ROOT / "src" / "virtualenv" / "seed" / "wheels" / "embed"
 _REPOSITORY: Final[str] = "https://github.com/pypa/virtualenv"
 SBOM_NAMESPACE: Final[uuid.UUID] = uuid.uuid5(uuid.NAMESPACE_URL, f"{_REPOSITORY}/sboms")
-PYPA: Final[dict[str, Any]] = {"name": "Python Packaging Authority", "url": ["https://www.pypa.io"]}
+PYPA: Final[_OrganizationalEntity] = {"name": "Python Packaging Authority", "url": ["https://www.pypa.io"]}
 # the label normalization and mapping cyclonedx-py applies to Project-URL entries, plus "source", so the same
 # metadata yields the same reference types whichever generator produced the document
 _URL_LABEL_TO_REFERENCE_TYPE: Final[dict[str, str]] = {
@@ -119,12 +253,17 @@ class SbomBuildHook(BuildHookInterface):
         build_data["sbom_files"].append(str(out))
 
 
-def _cyclonedx_document(core: CoreMetadata, version: str) -> dict[str, Any]:
+def _cyclonedx_document(core: CoreMetadata, version: str) -> Document:
     root = _root_component(core, version)
     bundled = [_bundled_component(wheel) for wheel in sorted(_EMBED.glob("*.whl"))]
     declared = [_declared_dependency(requirement) for requirement in core.dependencies]
     tools, tool_dependencies = build_tools(version)
-    body = {
+    bundled_dependencies: Final[list[_Dependency]] = [
+        {"ref": component["bom-ref"], "dependsOn": references}
+        for component in bundled
+        if (references := [child["bom-ref"] for child in component["components"] if child["type"] == "library"])
+    ]
+    body: Final[Body] = {
         "metadata": {
             "timestamp": timestamp(),
             "lifecycles": [{"phase": "build"}],
@@ -146,11 +285,7 @@ def _cyclonedx_document(core: CoreMetadata, version: str) -> dict[str, Any]:
         "components": [*bundled, *declared],
         "dependencies": [
             {"ref": root["bom-ref"], "dependsOn": [component["bom-ref"] for component in [*bundled, *declared]]},
-            *(
-                {"ref": component["bom-ref"], "dependsOn": references}
-                for component in bundled
-                if (references := [child["bom-ref"] for child in component["components"] if child["type"] == "library"])
-            ),
+            *bundled_dependencies,
             *tool_dependencies,
         ],
         # transitive runtime dependencies are unknown until install time
@@ -168,7 +303,7 @@ def _cyclonedx_document(core: CoreMetadata, version: str) -> dict[str, Any]:
     }
 
 
-def _root_component(core: CoreMetadata, version: str) -> dict[str, Any]:
+def _root_component(core: CoreMetadata, version: str) -> Component:
     purl = _purl(core.name, version)
     wheel_name = f"{core.name}-{version}-py3-none-any.whl"
     license_lines = (_ROOT / "LICENSE").read_text(encoding="utf-8").splitlines()
@@ -180,11 +315,9 @@ def _root_component(core: CoreMetadata, version: str) -> dict[str, Any]:
         {"type": "advisories", "url": f"{_REPOSITORY}/security/advisories"},
         {"type": "license", "url": f"{_REPOSITORY}/blob/main/LICENSE"},
     ]
-    properties = [
-        {"name": "virtualenv:requires-python", "value": core.requires_python},
-        *({"name": "python:classifier", "value": classifier} for classifier in core.classifiers),
-        *({"name": "python:keyword", "value": keyword} for keyword in core.keywords),
-    ]
+    properties: Final[list[Property]] = [{"name": "virtualenv:requires-python", "value": core.requires_python}]
+    properties.extend({"name": "python:classifier", "value": classifier} for classifier in core.classifiers)
+    properties.extend({"name": "python:keyword", "value": keyword} for keyword in core.keywords)
     if commit := _commit():
         references.append({"type": "vcs", "url": f"{_REPOSITORY}/tree/{commit}", "comment": "exact source revision"})
         properties.append({"name": "virtualenv:vcs-commit", "value": commit})
@@ -209,7 +342,7 @@ def _purl(name: str, version: str | None = None) -> str:
     return f"pkg:pypi/{normalized}@{version}" if version else f"pkg:pypi/{normalized}"
 
 
-def _external_reference(label: str, url: str) -> dict[str, str]:
+def _external_reference(label: str, url: str) -> _ExternalReference:
     reference_type = _URL_LABEL_TO_REFERENCE_TYPE.get(re.sub(r"[^a-z]", "", label.lower()), "other")
     return {"type": reference_type, "url": url, "comment": f"Project-URL: {label}"}
 
@@ -229,7 +362,7 @@ def _contacts(names: list[str], addresses: list[str]) -> list[dict[str, str]]:
     return contacts
 
 
-def _bundled_component(wheel: Path) -> dict[str, Any]:
+def _bundled_component(wheel: Path) -> Component:
     with zipfile.ZipFile(wheel) as archive:
         members: Final[list[str]] = sorted(archive.namelist())
         metadata_name: Final[str] = next(
@@ -266,13 +399,14 @@ def _bundled_component(wheel: Path) -> dict[str, Any]:
     component["externalReferences"].append(
         {"type": "distribution", "url": f"https://pypi.org/project/{metadata['Name']}/{metadata['Version']}/"},
     )
+    seeded_for: Final[list[Property]] = [
+        {"name": "virtualenv:seeded-for-python", "value": python_version}
+        for python_version, wheels in _bundle_support().items()
+        if wheel.name in wheels.values()
+    ]
     component["properties"] = [
         {"name": "virtualenv:bundled-wheel", "value": wheel.relative_to(_ROOT).as_posix()},
-        *(
-            {"name": "virtualenv:seeded-for-python", "value": python_version}
-            for python_version, wheels in _bundle_support().items()
-            if wheel.name in wheels.values()
-        ),
+        *seeded_for,
         *component["properties"],
     ]
     component["evidence"] = {
@@ -294,9 +428,9 @@ def _bundled_component(wheel: Path) -> dict[str, Any]:
         for path, digest, size in (row for row in csv.reader(StringIO(record, newline="")) if row)
         if digest
     ]
-    vendored_components: Final[dict[str, dict[str, Any]]] = {}
+    vendored_components: Final[dict[str, Component]] = {}
     for source, vendored in vendored_metadata:
-        child: Final[dict[str, Any]] = component_from_metadata(vendored, "library")
+        child: Final[Component] = component_from_metadata(vendored, "library")
         child["bom-ref"] = f"{component['bom-ref']}#vendored/{child['purl']}"
         child["properties"].append({"name": "virtualenv:vendored-manifest", "value": source})
         child["evidence"] = {
@@ -313,10 +447,10 @@ def _bundled_component(wheel: Path) -> dict[str, Any]:
     return component
 
 
-def component_from_metadata(metadata: PackageMetadata, component_type: str) -> dict[str, Any]:
+def component_from_metadata(metadata: PackageMetadata, component_type: str) -> Component:
     name, version = metadata["Name"], metadata["Version"]
     purl = _purl(name, version)
-    component: dict[str, Any] = {
+    component: Final[Component] = {
         "type": component_type,
         "bom-ref": purl,
         "name": name,
@@ -346,7 +480,7 @@ def component_from_metadata(metadata: PackageMetadata, component_type: str) -> d
     return component
 
 
-def _licenses(metadata: PackageMetadata) -> list[dict[str, Any]]:
+def _licenses(metadata: PackageMetadata) -> list[_License]:
     if expression := metadata.get("License-Expression"):
         return [{"expression": expression, "acknowledgement": "declared"}]
     names = [
@@ -354,12 +488,11 @@ def _licenses(metadata: PackageMetadata) -> list[dict[str, Any]]:
     ]
     if (declared := metadata.get("License")) and "\n" not in declared:
         names.append(declared)
-    licenses: Final[list[dict[str, Any]]] = [
-        {"license": {"name": name, "acknowledgement": "declared"}} for name in names
-    ]
+    licenses: Final[list[_License]] = [{"license": {"name": name, "acknowledgement": "declared"}} for name in names]
     # tasks/license_policy.py judges SPDX ids only, so a component keeps its bare names when any one of them does not
     # resolve and the check reports it instead of judging a partial set
-    if names and None not in (identifiers := [_spdx_license(name) for name in names]):
+    identifiers: Final[list[str]] = [identifier for name in names if (identifier := _spdx_license(name)) is not None]
+    if len(identifiers) == len(names):
         licenses.extend(
             {"license": {"id": identifier, "acknowledgement": "concluded"}} for identifier in dict.fromkeys(identifiers)
         )
@@ -388,7 +521,7 @@ def _bundle_support() -> dict[str, dict[str, str]]:
     raise RuntimeError(msg)
 
 
-def _file_component(parent_ref: str, path: str, digest: str, size: str) -> dict[str, Any]:
+def _file_component(parent_ref: str, path: str, digest: str, size: str) -> Component:
     # RECORD stores "<algorithm>=<urlsafe base64 without padding>", CycloneDX wants lowercase hex
     algorithm, _, encoded = digest.partition("=")
     raw = base64.urlsafe_b64decode(encoded + "=" * (-len(encoded) % 4))
@@ -401,9 +534,9 @@ def _file_component(parent_ref: str, path: str, digest: str, size: str) -> dict[
     }
 
 
-def _declared_dependency(requirement: str) -> dict[str, Any]:
+def _declared_dependency(requirement: str) -> Component:
     parsed = Requirement(requirement)
-    component = {
+    component: Final[Component] = {
         "type": "library",
         # the same distribution can be declared more than once with different markers, so the purl alone is not unique
         "bom-ref": f"requires-dist:{requirement}",
@@ -417,10 +550,10 @@ def _declared_dependency(requirement: str) -> dict[str, Any]:
     return component
 
 
-def build_tools(package_version: str) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def build_tools(package_version: str) -> tuple[list[Component], list[_Dependency]]:
     hook = Path(__file__)
     interpreter = f"pkg:generic/{sys.implementation.name}@{platform.python_version()}"
-    tools = [
+    tools: Final[list[Component]] = [
         {
             "type": "application",
             "bom-ref": "tool:hatch_build.py",
@@ -440,7 +573,7 @@ def build_tools(package_version: str) -> tuple[list[dict[str, Any]], list[dict[s
     ]
     # bom-refs are prefixed because the same distribution can be both a build tool and a bundled component
     installed = {_purl(distribution.metadata["Name"]): distribution for distribution in distributions()}
-    tool_dependencies = []
+    tool_dependencies: Final[list[_Dependency]] = []
     for distribution in (installed[key] for key in sorted(installed)):
         component = component_from_metadata(distribution.metadata, "library")
         component["bom-ref"] = f"tool:{component['purl']}"
@@ -476,8 +609,8 @@ def _depends_on(distribution: Distribution, installed: dict[str, Distribution]) 
     return sorted(refs)
 
 
-def _workflow(root: dict[str, Any], tools: list[dict[str, Any]]) -> dict[str, Any]:
-    workflow: dict[str, Any] = {
+def _workflow(root: Component, tools: list[Component]) -> _Workflow:
+    workflow: Final[_Workflow] = {
         "bom-ref": "workflow:wheel-build",
         "uid": "wheel-build",
         "name": "build the wheel and this SBOM",
@@ -498,6 +631,10 @@ def timestamp() -> str:
 __all__ = [
     "PYPA",
     "SBOM_NAMESPACE",
+    "Body",
+    "Component",
+    "Document",
+    "Property",
     "build_tools",
     "component_from_metadata",
     "timestamp",
