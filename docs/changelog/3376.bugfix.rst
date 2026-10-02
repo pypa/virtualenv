@@ -1,2 +1,0 @@
-Fall back to the bundled seed wheel and remove the embed update log when the log in the app data folder holds JSON of
-the wrong shape, instead of failing to create the environment - by :user:`pasmud`.

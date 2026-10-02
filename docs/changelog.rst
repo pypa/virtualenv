@@ -7,6 +7,16 @@
 .. towncrier release notes start
 
 ***********************
+ v21.14.5 (2026-10-02)
+***********************
+
+Bugfixes - 21.14.5
+==================
+
+- Fall back to the bundled seed wheel and remove the embed update log when the log in the app data folder holds JSON of
+  the wrong shape, instead of failing to create the environment - by :user:`pasmud`. (:issue:`3376`)
+
+***********************
  v21.14.4 (2026-10-02)
 ***********************
 
