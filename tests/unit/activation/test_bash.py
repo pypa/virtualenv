@@ -5,7 +5,7 @@ import shutil
 import subprocess
 import sys
 from argparse import Namespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -234,7 +234,7 @@ def prompt_after_activate(
     if shutil.which(shell := request.param) is None:
         pytest.skip(f"{shell} is not installed")
     if shell == "bash":
-        version = subprocess.run(
+        version: Final = subprocess.run(
             ["bash", "-c", 'printf "%s" "$((BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1]))"'],
             capture_output=True,
             text=True,
@@ -244,7 +244,7 @@ def prompt_after_activate(
             pytest.skip("${PS1@P} needs bash 4.4 or later")
 
     def build(prompt: str | None, env_name: str) -> tuple[Path, str]:
-        dest = tmp_path / env_name
+        dest: Final = tmp_path / env_name
         args = [
             "--without-pip",
             str(dest),
@@ -257,16 +257,16 @@ def prompt_after_activate(
         if prompt is not None:
             args += ["--prompt", prompt]
         cli_run(args)
-        work_dir = tmp_path / "workdir"
+        work_dir: Final = tmp_path / "workdir"
         work_dir.mkdir(exist_ok=True)
         # the path is passed as $1 so the outer shell cannot expand a payload dir name while locating the script;
         # ${PS1@P} renders the prompt exactly as bash does before each interactive command, and in zsh (e) applies
         # what PROMPT_SUBST does at each draw before (%) expands the prompt escapes
-        render = {
+        render: Final = {
             "bash": ["bash", "--norc", "--noprofile", "-c", 'source "$1"; printf "%s" "${PS1@P}"'],
             "zsh": ["zsh", "-f", "-c", 'setopt prompt_subst; source "$1"; print -rn -- "${(%)${(e)PS1}}"'],
         }[shell]
-        result = subprocess.run(
+        result: Final = subprocess.run(
             [*render, shell, str(dest / "bin" / "activate")],
             capture_output=True,
             text=True,
