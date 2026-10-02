@@ -1,8 +1,8 @@
 [build-system]
 build-backend = "hatchling.build"
 requires = [
-  "hatch-vcs>=0.4",
-  "hatchling>=1.27,<1.28; python_version<'3.10'",
+  "hatch-vcs>=0.5",
+  "hatchling<1.28,>=1.27; python_version < '3.10'",
   "hatchling>=1.28; python_version>='3.10'",
 ]
 
@@ -50,13 +50,13 @@ dynamic = [
   "version",
 ]
 dependencies = [
-  "distlib>=0.3.7,<1",
-  "filelock>=3.16.1,<=3.19.1; python_version<'3.10'",
+  "distlib<1,>=0.4.3",
+  "filelock<=3.19.1,>=3.19.1; python_version < '3.10'",
   "filelock>=3.24.2,<5; python_version>='3.10'",
-  "packaging>=23.1",
-  "platformdirs>=3.9.1,<5",
-  "python-discovery>=1.6",
-  "typing-extensions>=4.13.2; python_version<'3.11'",
+  "packaging>=26.3",
+  "platformdirs<5,>=4.4",
+  "python-discovery>=1.6.1",
+  "typing-extensions>=4.16; python_version < '3.11'",
 ]
 urls."thanks.dev" = "https://thanks.dev/u/gh/gaborbernat"
 urls.Changelog = "https://virtualenv.pypa.io/en/latest/changelog.html"
@@ -113,49 +113,49 @@ dev = [
 test = [
   "coverage-enable-subprocess>=1",
   { include-group = "coverage" },
-  "packaging>=23.1",
-  "pytest>=7.4",
-  "pytest-env>=0.8.2",
+  "packaging>=26.3",
+  "pytest>=8.4.2",
+  "pytest-env>=1.1.5",
   """\
   pytest-freezer>=0.4.8; platform_python_implementation=='PyPy' or platform_python_implementation=='GraalVM' or \
   platform_python_implementation=='RustPython' or (platform_python_implementation=='CPython' and sys_platform=='win32' \
   and python_version>='3.13')\
   """,
-  "pytest-mock>=3.11.1",
-  "pytest-randomly>=3.12",
-  "pytest-rerunfailures>=15",
-  "pytest-timeout>=2.1",
-  "pytest-xdist>=3.5",
-  "setuptools>=68",
-  "time-machine>=2.10; platform_python_implementation=='CPython'",
-  "tomli>=2.0.1; python_version<'3.11'",
+  "pytest-mock>=3.15.1",
+  "pytest-randomly>=4.0.1",
+  "pytest-rerunfailures>=16.0.1",
+  "pytest-timeout>=2.4",
+  "pytest-xdist>=3.8",
+  "setuptools>=82.0.1",
+  "time-machine>=2.19; platform_python_implementation == 'CPython'",
+  "tomli>=2.4.1; python_version < '3.11'",
 ]
 type = [
-  "ty>=0.0.19",
+  "ty>=0.0.84",
   { include-group = "test" },
 ]
 docs = [
-  "furo>=2023.7.26",
+  "furo>=2025.12.19",
   "pre-commit-uv>=4.2",
-  "proselint>=0.13",
-  "sphinx>=7.1.2,!=7.3",
+  "proselint>=0.14",
+  "sphinx!=7.3,>=7.4.7",
   "sphinx-argparse>=0.4",
   "sphinx-autodoc-typehints>=3.6.2",
   "sphinx-copybutton>=0.5.2",
   "sphinx-inline-tabs>=2025.12.21.14",
-  "sphinx-llm>=0.4.1,!=1.1",
+  "sphinx-llm!=1.1,>=1",
   "sphinxcontrib-mermaid>=2",
   "sphinxcontrib-towncrier>=0.2.1a0",
-  "towncrier>=23.6",
+  "towncrier>=26.9",
 ]
 coverage = [
   "covdefaults>=2.3",
-  "coverage>=7.2.7",
+  "coverage>=7.10.7",
 ]
 fuzz = [
   # atheris only ships prebuilt Linux wheels for these CPython versions; everywhere else it needs a
   # custom clang+libFuzzer build, so skip it there rather than triggering a doomed source build.
-  "atheris>=2.3; sys_platform=='linux' and python_version>='3.12' and python_version<'3.15'",
+  "atheris>=3.1; sys_platform == 'linux' and python_version >= '3.12' and python_version < '3.15'",
 ]
 lint = [
   "pre-commit-uv>=4.2",
@@ -164,24 +164,24 @@ pkg-meta = [
   "check-sdist>=1.6",
   "check-wheel-contents>=0.6.3",
   "twine>=6.2",
-  "uv>=0.10.2",
+  "uv>=0.12.22",
   { include-group = "sbom" },
 ]
 property = [
-  "hypothesis>=6.140",
+  "hypothesis>=6.141.1",
   { include-group = "test" },
 ]
 release = [
   "docstrfmt>=2.2.1",
-  "gitpython>=3.1.44",
-  "hatch-vcs>=0.4",
+  "gitpython>=3.2",
+  "hatch-vcs>=0.5",
   "hatchling>=1.28",
-  "packaging>=25",
+  "packaging>=26.3",
   "pypi-attestations>=0.0.28",
-  "towncrier>=24.8",
+  "towncrier>=26.9",
   "tox>=4.45",
-  "tox-uv>=1.28",
-  "uv>=0.12.17",
+  "tox-uv>=1.28.1",
+  "uv>=0.12.22",
   { include-group = "sbom" },
 ]
 sbom = [
@@ -190,11 +190,11 @@ sbom = [
 ]
 tasks = [
   "docstrfmt>=2.2.1",
-  "gitpython>=3.1.44",
+  "gitpython>=3.2",
   "hatchling>=1.28",
   "pre-commit-uv>=4.2",
-  "ruff>=0.16.8",
-  "towncrier>=24.8",
+  "ruff>=0.16.10",
+  "towncrier>=26.9",
   { include-group = "test" },
 ]
 
