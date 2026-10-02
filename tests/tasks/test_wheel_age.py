@@ -234,7 +234,7 @@ def apply_patch(wheel_repo: Path) -> Callable[[str, str], subprocess.CompletedPr
 def test_upgrade_patch_applies(
     apply_patch: Callable[[str, str], subprocess.CompletedProcess[str]], filename: str
 ) -> None:
-    result: Final = apply_patch(filename, "100644")
+    result: Final[subprocess.CompletedProcess[str]] = apply_patch(filename, "100644")
     assert (result.returncode, Path(filename).read_bytes()) == (0, b"new\0content")
 
 
@@ -251,7 +251,7 @@ def test_upgrade_patch_applies(
 def test_upgrade_patch_rejects(
     apply_patch: Callable[[str, str], subprocess.CompletedProcess[str]], filename: str, mode: str
 ) -> None:
-    result: Final = apply_patch(filename, mode)
+    result: Final[subprocess.CompletedProcess[str]] = apply_patch(filename, mode)
     assert (result.returncode, Path(filename).exists()) == (1, False)
     assert "unsupported path or file mode" in result.stderr
 
@@ -259,7 +259,9 @@ def test_upgrade_patch_rejects(
 def test_upgrade_patch_removes_old_wheel(
     wheel_repo: Path, apply_patch: Callable[[str, str], subprocess.CompletedProcess[str]]
 ) -> None:
-    result: Final = apply_patch("src/virtualenv/seed/wheels/embed/pip-1-py3-none-any.whl", "000000")
+    result: Final[subprocess.CompletedProcess[str]] = apply_patch(
+        "src/virtualenv/seed/wheels/embed/pip-1-py3-none-any.whl", "000000"
+    )
     assert (result.returncode, (wheel_repo / "pip-1-py3-none-any.whl").exists()) == (0, False)
 
 

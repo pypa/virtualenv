@@ -16,17 +16,19 @@ if TYPE_CHECKING:
 
 @pytest.mark.parametrize("version", [pytest.param(None, id="none"), pytest.param("", id="empty")])
 def test_find_latest(for_py_version: str, version: str | None) -> None:
-    result: Final = find_compatible_in_house("setuptools", version, for_py_version, BUNDLE_FOLDER)
-    expected: Final = get_embed_wheel("setuptools", for_py_version)
+    result: Final[Wheel | None] = find_compatible_in_house("setuptools", version, for_py_version, BUNDLE_FOLDER)
+    expected: Final[Wheel | None] = get_embed_wheel("setuptools", for_py_version)
     assert result is not None
     assert expected is not None
     assert result.path == expected.path
 
 
 def test_find_exact(for_py_version: str) -> None:
-    expected: Final = get_embed_wheel("setuptools", for_py_version)
+    expected: Final[Wheel | None] = get_embed_wheel("setuptools", for_py_version)
     assert expected is not None
-    result: Final = find_compatible_in_house("setuptools", f"=={expected.version}", for_py_version, BUNDLE_FOLDER)
+    result: Final[Wheel | None] = find_compatible_in_house(
+        "setuptools", f"=={expected.version}", for_py_version, BUNDLE_FOLDER
+    )
     assert result is not None
     assert result.path == expected.path
 
@@ -53,8 +55,8 @@ def test_find_exact_version(
     tmp_path: Path, make_wheel: Callable[[str], Path], other: str, requested: str, available: bool
 ) -> None:
     make_wheel(other)
-    expected: Final = make_wheel(requested) if available else None
-    result: Final = find_compatible_in_house("pip", f"=={requested}", "3.14", tmp_path)
+    expected: Final[Path | None] = make_wheel(requested) if available else None
+    result: Final[Wheel | None] = find_compatible_in_house("pip", f"=={requested}", "3.14", tmp_path)
     assert (result.path if result else None) == expected
 
 
@@ -95,7 +97,7 @@ def test_find_version_specifier(
 ) -> None:
     for version in versions:
         make_wheel(version)
-    result: Final = find_compatible_in_house("pip", spec, "3.14", tmp_path)
+    result: Final[Wheel | None] = find_compatible_in_house("pip", spec, "3.14", tmp_path)
     assert result is not None
     assert result.version == expected
 
@@ -103,7 +105,7 @@ def test_find_version_specifier(
 @pytest.fixture
 def make_wheel(tmp_path: Path) -> Callable[[str], Path]:
     def build(version: str) -> Path:
-        path: Final = tmp_path / f"pip-{version}-py3-none-any.whl"
+        path: Final[Path] = tmp_path / f"pip-{version}-py3-none-any.whl"
         with zipfile.ZipFile(path, "w") as wheel:
             wheel.writestr(
                 f"pip-{version}.dist-info/METADATA",

@@ -71,7 +71,7 @@ def test_wait_for_stack() -> None:
     wait_for_stack("test_wait_for_stack")
 """
     )
-    result: Final = diagnostic_pytester.runpytest_subprocess(timeout=30)
+    result: Final[pytest.RunResult] = diagnostic_pytester.runpytest_subprocess(timeout=30)
     result.assert_outcomes(failed=1, passed=1)
     text: Final[str] = next((diagnostic_pytester.path / "diagnostics").glob("*.log")).read_text(encoding="utf-8")
     assert "call failed" in text
@@ -182,6 +182,6 @@ def test_diagnostics_default_directory(diagnostic_pytester: pytest.Pytester) -> 
 
 
 def test_diagnostics_reject_nonpositive_interval(diagnostic_pytester: pytest.Pytester) -> None:
-    result: Final = diagnostic_pytester.runpytest_subprocess("--diagnostics-interval=0", timeout=30)
+    result: Final[pytest.RunResult] = diagnostic_pytester.runpytest_subprocess("--diagnostics-interval=0", timeout=30)
     assert result.ret == pytest.ExitCode.USAGE_ERROR
     result.stderr.fnmatch_lines(["*--diagnostics-interval must be positive*"])

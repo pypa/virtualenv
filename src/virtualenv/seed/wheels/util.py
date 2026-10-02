@@ -12,10 +12,10 @@ from packaging.version import Version as PackagingVersion
 if TYPE_CHECKING:
     from pathlib import Path
 
-_LOGGER: Final = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 # https://packaging.python.org/en/latest/specifications/binary-distribution-format/#file-name-convention
 # {distribution}-{version}(-{build tag})?-{python tag}-{abi tag}-{platform tag}.whl
-_MIN_WHEEL_NAME_PARTS: Final = 5
+_MIN_WHEEL_NAME_PARTS: Final[int] = 5
 
 
 def discover_wheels(from_folder: Path, distribution: str, version: str | None, for_py_version: str) -> list[Wheel]:
@@ -91,10 +91,10 @@ class Wheel:
 
 class Version:
     #: the version bundled with virtualenv
-    bundle: Final = "bundle"
-    embed: Final = "embed"
+    bundle: Final[str] = "bundle"
+    embed: Final[str] = "embed"
     #: custom version handlers
-    non_version: Final = (bundle, embed)
+    non_version: Final[tuple[str, str]] = (bundle, embed)
 
     @staticmethod
     def as_pip_req(distribution: str, version: str | None) -> str:

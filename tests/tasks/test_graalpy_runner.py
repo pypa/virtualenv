@@ -188,7 +188,7 @@ def test_graalpy_shards_default_to_cpu_count(
 def test_graalpy_groups_cover_all_shards(
     mocker: MockerFixture, junit: Path, popen: Callable[[Sequence[Outcome]], MagicMock]
 ) -> None:
-    started: Final = popen([_PASS] * 8)
+    started: Final[MagicMock] = popen([_PASS] * 8)
     for group in range(1, 5):
         mocker.patch.object(sys, "argv", ["runner", "--shards", "2", "--group", f"{group}/4", str(junit), "tests"])
         runpy.run_path(str(_RUNNER), run_name="__main__")
