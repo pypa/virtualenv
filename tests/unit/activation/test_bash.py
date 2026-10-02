@@ -227,16 +227,21 @@ def test_bash_activate_does_not_export_ps1(tmp_path, current_fastest) -> None:
     assert result.stdout.splitlines() == ["None", "None"]
 
 
-@pytest.fixture
-def bash_prompt_after_activate(tmp_path: Path, current_fastest: str) -> Callable[[str | None, str], tuple[Path, str]]:
-    version = subprocess.run(
-        ["bash", "-c", 'printf "%s" "$((BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1]))"'],
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout
-    if int(version) < 404:
-        pytest.skip("${PS1@P} needs bash 4.4 or later")
+@pytest.fixture(params=["bash", "zsh"])
+def prompt_after_activate(
+    request: pytest.FixtureRequest, tmp_path: Path, current_fastest: str
+) -> Callable[[str | None, str], tuple[Path, str]]:
+    if shutil.which(shell := request.param) is None:
+        pytest.skip(f"{shell} is not installed")
+    if shell == "bash":
+        version = subprocess.run(
+            ["bash", "-c", 'printf "%s" "$((BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1]))"'],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+        if int(version) < 404:
+            pytest.skip("${PS1@P} needs bash 4.4 or later")
 
     def build(prompt: str | None, env_name: str) -> tuple[Path, str]:
         dest = tmp_path / env_name
@@ -252,13 +257,17 @@ def bash_prompt_after_activate(tmp_path: Path, current_fastest: str) -> Callable
         if prompt is not None:
             args += ["--prompt", prompt]
         cli_run(args)
-        activate = dest / "bin" / "activate"
         work_dir = tmp_path / "workdir"
         work_dir.mkdir(exist_ok=True)
         # the path is passed as $1 so the outer shell cannot expand a payload dir name while locating the script;
-        # ${PS1@P} then forces bash to render the prompt exactly as it does before each interactive command
+        # ${PS1@P} renders the prompt exactly as bash does before each interactive command, and in zsh (e) applies
+        # what PROMPT_SUBST does at each draw before (%) expands the prompt escapes
+        render = {
+            "bash": ["bash", "--norc", "--noprofile", "-c", 'source "$1"; printf "%s" "${PS1@P}"'],
+            "zsh": ["zsh", "-f", "-c", 'setopt prompt_subst; source "$1"; print -rn -- "${(%)${(e)PS1}}"'],
+        }[shell]
         result = subprocess.run(
-            ["bash", "--norc", "--noprofile", "-c", 'source "$1"; printf "%s" "${PS1@P}"', "bash", str(activate)],
+            [*render, shell, str(dest / "bin" / "activate")],
             capture_output=True,
             text=True,
             cwd=str(work_dir),
@@ -276,25 +285,33 @@ def bash_prompt_after_activate(tmp_path: Path, current_fastest: str) -> Callable
     [
         pytest.param("x$(touch PWNED)y", "env", id="prompt-command-substitution"),
         pytest.param("x`touch PWNED`y", "env", id="prompt-backticks"),
+        pytest.param("x${$(touch PWNED)}y", "env", id="prompt-parameter-expansion"),
         pytest.param(None, "x$(touch PWNED)y", id="dirname-command-substitution"),
         pytest.param(None, "A__VIRTUAL_NAME__B/x'$(touch PWNED)'y", id="placeholder-in-parent-dir"),
     ],
 )
-def test_bash_prompt_does_not_run_commands(
-    bash_prompt_after_activate: Callable[[str | None, str], tuple[Path, str]], prompt: str | None, env_name: str
+def test_prompt_does_not_run_commands(
+    prompt_after_activate: Callable[[str | None, str], tuple[Path, str]], prompt: str | None, env_name: str
 ) -> None:
-    work_dir, _ = bash_prompt_after_activate(prompt, env_name)
+    work_dir, _ = prompt_after_activate(prompt, env_name)
 
     assert not (work_dir / "PWNED").exists()
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
-def test_bash_prompt_keeps_plain_name_visible(
-    bash_prompt_after_activate: Callable[[str | None, str], tuple[Path, str]],
+@pytest.mark.parametrize(
+    "prompt",
+    [
+        pytest.param("myenv", id="plain"),
+        pytest.param("a%n$HOME\\b`c`", id="special-characters"),
+    ],
+)
+def test_prompt_renders_name_literally(
+    prompt_after_activate: Callable[[str | None, str], tuple[Path, str]], prompt: str
 ) -> None:
-    _, rendered = bash_prompt_after_activate("myenv", "env")
+    _, rendered = prompt_after_activate(prompt, "env")
 
-    assert rendered.startswith("(myenv) ")
+    assert rendered.startswith(f"({prompt}) ")
 
 
 @pytest.mark.skipif(IS_WIN or shutil.which("dash") is None, reason="needs dash as a POSIX shell")
