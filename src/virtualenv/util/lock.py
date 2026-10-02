@@ -145,7 +145,7 @@ class ReentrantFileLock(PathLockBase):
         lock.release()
 
     @contextmanager
-    def lock_for_key(self, name: str, no_block: bool = False) -> Iterator[None]:  # ruff:ignore[boolean-default-value-positional-argument]
+    def lock_for_key(self, name: str, no_block: bool = False) -> Generator[None, None, None]:  # ruff:ignore[boolean-default-value-positional-argument]
         lock = self._create_lock(name)
         try:
             with self._lock_and_yield(lock, no_block):
