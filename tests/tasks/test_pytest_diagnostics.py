@@ -20,7 +20,11 @@ def wait_for_stack(function: str) -> None:
     while time.monotonic() < deadline:
         text = path.read_text(encoding="utf-8")
         controller = next(Path("diagnostics").glob("controller-*.log")).read_text(encoding="utf-8")
-        if text.count("Timeout (") >= 2 and f"in {function}\\n" in text and "pytest_runtestloop" in controller:
+        if (
+            text.count(" DUMP\\n") >= 2
+            and f"in {function}\\n" in text
+            and all("pytest_runtestloop" in log for log in (text, controller))
+        ):
             return
         time.sleep(0.01)
     raise TimeoutError("stack dumps did not capture the blocked pytest process")
@@ -48,7 +52,7 @@ def test_diagnostics_capture_controller_and_workers(diagnostic_pytester: pytest.
     }
     assert set(logs) == {"controller", "gw0", "gw1"}
     for worker, text in logs.items():
-        assert text.count("Timeout (") >= 2
+        assert text.count(" DUMP\n") >= 2
         assert "pytest_runtestloop" in text
         assert "pid=" in text
         assert "parent=" in text
@@ -76,7 +80,7 @@ def test_wait_for_stack() -> None:
     text: Final[str] = next((diagnostic_pytester.path / "diagnostics").glob("*.log")).read_text(encoding="utf-8")
     assert "call failed" in text
     assert "in test_wait_for_stack\n" in text
-    assert "Timeout (" in text
+    assert " DUMP\n" in text
 
 
 def test_diagnostics_survive_abrupt_exit(diagnostic_pytester: pytest.Pytester) -> None:
@@ -91,7 +95,7 @@ def test_wait_for_stack() -> None:
     assert diagnostic_pytester.runpytest_subprocess(timeout=30).ret == 23
     text: Final[str] = next((diagnostic_pytester.path / "diagnostics").glob("*.log")).read_text(encoding="utf-8")
     assert "in test_wait_for_stack\n" in text
-    assert "Timeout (" in text
+    assert " DUMP\n" in text
     assert "STOP" not in text
 
 
@@ -135,10 +139,31 @@ def test_wait_after_nested_pytest() -> None:
     assert "in test_wait_after_nested_pytest\n" in text
 
 
+def test_diagnostics_dump_when_gil_held(diagnostic_pytester: pytest.Pytester) -> None:
+    # a backtracking regex keeps the GIL for over a second, longer than the stall timer's 10 intervals
+    diagnostic_pytester.makepyfile(
+        """
+import re
+import time
+from pathlib import Path
+
+def test_hold_the_gil() -> None:
+    log = next(Path("diagnostics").glob("controller-*.log"))
+    deadline = time.monotonic() + 20
+    while "Timeout (" not in log.read_text(encoding="utf-8"):
+        assert time.monotonic() < deadline, "the stall timer never fired"
+        re.fullmatch(r"(a+)+b", "a" * 26)
+"""
+    )
+    diagnostic_pytester.runpytest_subprocess(timeout=30).assert_outcomes(passed=1)
+    text: Final[str] = next((diagnostic_pytester.path / "diagnostics").glob("*.log")).read_text(encoding="utf-8")
+    _, header, after = text.partition("Timeout (")
+    assert (header, "in test_hold_the_gil\n" in after.split(" DUMP\n", 1)[0]) == ("Timeout (", True)
+
+
 def test_diagnostics_capture_shutdown_wait(diagnostic_pytester: pytest.Pytester) -> None:
     diagnostic_pytester.makeconftest(
         """
-import faulthandler
 import os
 import threading
 import time
@@ -150,17 +175,13 @@ def pytest_unconfigure() -> None:
 
 def wait_for_shutdown() -> None:
     path: Final[Path] = Path("diagnostics") / f"controller-{os.getpid()}.log"
-    try:
-        deadline: Final[float] = time.monotonic() + 20
-        while time.monotonic() < deadline:
-            tail = path.read_text(encoding="utf-8").rsplit("STOP\\n", 1)[-1]
-            if tail.count("in _shutdown\\n") >= 2 and "in wait_for_shutdown\\n" in tail:
-                return
-            time.sleep(0.01)
-        raise TimeoutError("no stack dump during shutdown")
-    finally:
-        # Keep this thread alive until the native watchdog finishes reading its frames.
-        faulthandler.cancel_dump_traceback_later()
+    deadline: Final[float] = time.monotonic() + 20
+    while time.monotonic() < deadline:
+        tail = path.read_text(encoding="utf-8").rsplit("STOP\\n", 1)[-1]
+        if tail.count("in _shutdown\\n") >= 2 and "in wait_for_shutdown\\n" in tail:
+            return
+        time.sleep(0.01)
+    raise TimeoutError("no stack dump during shutdown")
 """
     )
     diagnostic_pytester.makepyfile("def test_empty() -> None: pass")
