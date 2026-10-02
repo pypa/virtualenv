@@ -1,0 +1,3 @@
+Fix ``activate`` running commands from a virtual environment name or ``--prompt`` that holds ``$(...)``, backticks or
+``${...}`` when zsh has ``PROMPT_SUBST`` set, and show a ``%`` in the name as typed under zsh (`GHSA-5vjq-rrrf-7h2q
+<https://github.com/pypa/virtualenv/security/advisories/GHSA-5vjq-rrrf-7h2q>`_); reported by :user:`kemrec`.
