@@ -8,6 +8,7 @@ import logging
 import os
 import ssl
 import sys
+from contextlib import suppress
 from datetime import datetime, timedelta, timezone
 from itertools import groupby
 from pathlib import Path
@@ -28,7 +29,7 @@ from virtualenv.util.subprocess import CREATE_NO_WINDOW
 if TYPE_CHECKING:
     from collections.abc import Generator
 
-    from virtualenv.app_data.base import AppData
+    from virtualenv.app_data.base import AppData, ContentStore
 
 LOGGER = logging.getLogger(__name__)
 GRACE_PERIOD_CI = timedelta(hours=1)  # prevent version switch in the middle of a CI run
@@ -192,14 +193,15 @@ class UpdateLog:
 
     @classmethod
     def from_app_data(cls, app_data: AppData, distribution: str, for_py_version: str) -> UpdateLog:
-        raw_json = app_data.embed_update_log(distribution, for_py_version).read()
+        store: Final[ContentStore] = app_data.embed_update_log(distribution, for_py_version)
         try:
-            return cls.from_dict(raw_json)
+            return cls.from_dict(store.read())
         except (AttributeError, KeyError, TypeError, ValueError):
-            # the app data folder is shared and outlives a single run, so what is on disk may have been written by
-            # another version or left incomplete. Drop it and start over rather than failing the seed, the log only
-            # records which newer wheels are known so far, and an empty one just re-reads the bundled wheel
-            LOGGER.warning("ignoring unreadable embed update log of %s, reset it", distribution)
+            # another virtualenv version or an interrupted run can leave valid JSON of the wrong shape in the shared
+            # app data; drop it as read() drops invalid JSON, since an empty log falls back to the bundled wheel
+            LOGGER.warning("removing malformed embed update log of %s", distribution)
+            with suppress(OSError):  # another process may remove or rewrite the file at the same time
+                store.remove()
             return cls(None, None, [], None)
 
     def to_dict(self) -> dict[str, object]:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -12,7 +13,7 @@ from io import StringIO
 from itertools import zip_longest
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 from urllib.error import URLError
 
 import pytest
@@ -41,6 +42,8 @@ if TYPE_CHECKING:
     from unittest.mock import MagicMock
 
     from pytest_mock import MockerFixture
+
+    from virtualenv.app_data.via_disk_folder import EmbedDistributionUpdateStoreDisk
 
 
 @pytest.fixture(autouse=True)
@@ -251,31 +254,37 @@ def test_periodic_update_skip(u_log, mocker, for_py_version, session_app_data, t
     assert result is None
 
 
-# the app data folder is shared and persists between runs, so a log written by another version, or left
-# half written by an interrupted one, must not stop the environment from being created
-_MALFORMED_U_LOG = [
-    pytest.param([1, 2, 3], id="not-a-mapping"),
-    pytest.param("oops", id="string"),
-    pytest.param({"versions": "abc"}, id="versions-not-a-list"),
-    pytest.param({"versions": ["abc"]}, id="version-not-a-mapping"),
-    pytest.param({"completed": 5, "started": None, "versions": []}, id="completed-not-a-datetime"),
-]
-
-
-@pytest.mark.parametrize("stored", _MALFORMED_U_LOG)
-def test_periodic_update_tolerates_malformed_log(
-    stored: object, mocker, for_py_version, session_app_data, caplog
+@pytest.mark.parametrize(
+    "stored",
+    [
+        pytest.param([1, 2, 3], id="not-a-mapping"),
+        pytest.param("oops", id="string"),
+        pytest.param({"versions": "abc"}, id="versions-not-a-list"),
+        pytest.param({"versions": ["abc"]}, id="version-not-a-mapping"),
+        pytest.param({"completed": 5, "started": None, "versions": []}, id="completed-not-a-datetime"),
+    ],
+)
+def test_periodic_update_drops_malformed_log(
+    stored: list[int] | str | dict[str, str | int | list[str] | None],
+    tmp_path: Path,
+    for_py_version: str,
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
-    mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=stored)
-    mocker.patch("virtualenv.seed.wheels.periodic_update.trigger_update")
-    wheel = get_embed_wheel("setuptools", for_py_version)
+    caplog.set_level(logging.WARNING)
+    app_data: Final[AppDataDiskFolder] = AppDataDiskFolder(str(tmp_path))
+    log: Final[EmbedDistributionUpdateStoreDisk] = app_data.embed_update_log("setuptools", for_py_version)
+    log.write(stored)
+    wheel: Final[Wheel | None] = get_embed_wheel("setuptools", for_py_version)
 
-    result = periodic_update("setuptools", None, for_py_version, wheel, [], session_app_data, False, os.environ)
+    result: Final[Wheel | None] = periodic_update(
+        "setuptools", None, for_py_version, wheel, [], app_data, False, os.environ
+    )
 
-    # the bundled wheel is still usable, and the unusable log is reported rather than crashing
-    assert result is not None
-    assert result.path == wheel.path
-    assert caplog.records
+    assert (result, log.exists(), caplog.messages) == (
+        wheel,
+        False,
+        ["removing malformed embed update log of setuptools"],
+    )
 
 
 _UPDATE_YES = {

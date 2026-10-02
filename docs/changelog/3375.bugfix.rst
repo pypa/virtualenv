@@ -1,2 +1,0 @@
-Fall back to the bundled seed wheel when the embed update log on disk cannot be read, instead of failing the whole
-environment creation with an error about failing to download wheels.
