@@ -7,6 +7,18 @@
 .. towncrier release notes start
 
 ***********************
+ v21.14.4 (2026-10-02)
+***********************
+
+Bugfixes - 21.14.4
+==================
+
+- Fix ``activate`` running commands from a virtual environment name or ``--prompt`` that holds ``$(...)``, backticks or
+  ``${...}`` when zsh has ``PROMPT_SUBST`` set, and show a ``%`` in the name as typed under zsh (`GHSA-5vjq-rrrf-7h2q
+  <https://github.com/pypa/virtualenv/security/advisories/GHSA-5vjq-rrrf-7h2q>`_); reported by :user:`kemrec`.
+  (:issue:`3373`)
+
+***********************
  v21.14.3 (2026-10-01)
 ***********************
 
