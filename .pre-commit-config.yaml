@@ -1,35 +1,35 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c # frozen: v6.0.0
+    rev: v6.0.0
     hooks:
       - id: end-of-file-fixer
       - id: trailing-whitespace
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 4f85d46a92dc17713078e5de73f8a13190edf6fc # frozen: 0.38.2
+    rev: "0.38.2"
     hooks:
       - id: check-github-workflows
         args: ["--verbose"]
   - repo: https://github.com/codespell-project/codespell
-    rev: 57b21406f092110c18776e39b0bda50d37c945c8 # frozen: v2.4.3
+    rev: v2.4.3
     hooks:
       - id: codespell
         args: ["--write-changes"]
   - repo: https://github.com/tox-dev/tox-toml-fmt
-    rev: "2863761a0c1b4a6e9fea638b27657b81f400543b" # frozen: v1.10.3
+    rev: "v1.10.3"
     hooks:
       - id: tox-toml-fmt
   - repo: https://github.com/tox-dev/pyproject-fmt
-    rev: "59e7b26529dc6f15c43063064b8b06ded60d0910" # frozen: v2.29.4
+    rev: "v2.29.4"
     hooks:
       - id: pyproject-fmt
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "a56c0b927e6465d37cae3e97d35d4d18ab2b96cd" # frozen: v0.16.9
+    rev: "v0.16.10"
     hooks:
       - id: ruff-format
       - id: ruff
         args: ["--fix", "--unsafe-fixes", "--exit-non-zero-on-fix"]
   - repo: https://github.com/google/yamlfmt
-    rev: "b5ca1890231d5e1e5181fef75a1be609d1e25029" # frozen: v0.21.0
+    rev: "v0.21.0"
     hooks:
       - id: yamlfmt
   - repo: local
@@ -51,17 +51,17 @@ repos:
         files: '^docs/changelog/'
         exclude: '^docs/changelog/(examples\.rst|template\.jinja2|\d+\.(feature|bugfix|doc|deprecation|removal)\.rst)$'
   - repo: https://github.com/LilSpazJoekp/docstrfmt
-    rev: c1813841673cdcd6cf602dde1edb78a5d5e45235 # frozen: v2.2.1
+    rev: v2.2.1
     hooks:
       - id: docstrfmt
         args: ["-l", "120"]
         additional_dependencies: ["sphinx>=9.1"]
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: fa412071e4f5d44d44f9e365f4676f9df92456a2 # frozen: v1.30.1
+    rev: v1.30.1
     hooks:
       - id: zizmor
   - repo: https://github.com/crate-ci/typos
-    rev: 4141ff14cb566df76c473c786332c186a4fd71d1 # frozen: v1.50.3
+    rev: typos-dict-v0.14.2
     hooks:
       - id: typos
   - repo: meta
