@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -12,7 +13,7 @@ from io import StringIO
 from itertools import zip_longest
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 from urllib.error import URLError
 
 import pytest
@@ -41,6 +42,8 @@ if TYPE_CHECKING:
     from unittest.mock import MagicMock
 
     from pytest_mock import MockerFixture
+
+    from virtualenv.app_data.via_disk_folder import EmbedDistributionUpdateStoreDisk
 
 
 @pytest.fixture(autouse=True)
@@ -249,6 +252,39 @@ def test_periodic_update_skip(u_log, mocker, for_py_version, session_app_data, t
 
     result = periodic_update("setuptools", None, for_py_version, None, [], session_app_data, os.environ, True)
     assert result is None
+
+
+@pytest.mark.parametrize(
+    "stored",
+    [
+        pytest.param([1, 2, 3], id="not-a-mapping"),
+        pytest.param("oops", id="string"),
+        pytest.param({"versions": "abc"}, id="versions-not-a-list"),
+        pytest.param({"versions": ["abc"]}, id="version-not-a-mapping"),
+        pytest.param({"completed": 5, "started": None, "versions": []}, id="completed-not-a-datetime"),
+    ],
+)
+def test_periodic_update_drops_malformed_log(
+    stored: list[int] | str | dict[str, str | int | list[str] | None],
+    tmp_path: Path,
+    for_py_version: str,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level(logging.WARNING)
+    app_data: Final[AppDataDiskFolder] = AppDataDiskFolder(str(tmp_path))
+    log: Final[EmbedDistributionUpdateStoreDisk] = app_data.embed_update_log("setuptools", for_py_version)
+    log.write(stored)
+    wheel: Final[Wheel | None] = get_embed_wheel("setuptools", for_py_version)
+
+    result: Final[Wheel | None] = periodic_update(
+        "setuptools", None, for_py_version, wheel, [], app_data, False, os.environ
+    )
+
+    assert (result, log.exists(), caplog.messages) == (
+        wheel,
+        False,
+        ["removing malformed embed update log of setuptools"],
+    )
 
 
 _UPDATE_YES = {
