@@ -14,7 +14,7 @@ jobs:
   analysis:
     name: 🔎 scorecard analysis
     if: github.repository_owner == 'pypa'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       actions: read # read workflow runs for the Packaging check
       checks: read # read check runs for the CI-Tests and SAST checks
