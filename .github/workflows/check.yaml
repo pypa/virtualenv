@@ -213,7 +213,7 @@ jobs:
           DIFF_AGAINST: HEAD
       - name: 📤 Store macOS crash reports
         if: always() && matrix.diagnostics && runner.os == 'macOS'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: crash-reports-${{ matrix.py }}-${{ matrix.os }}
           path: ~/Library/Logs/DiagnosticReports/
@@ -221,7 +221,7 @@ jobs:
           retention-days: 14
       - name: 📤 Store pytest diagnostics
         if: always() && matrix.diagnostics
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: hang-diagnostics-${{ matrix.py }}-${{ matrix.os }}
           path: |
@@ -230,10 +230,10 @@ jobs:
             .tox/3.13t/log/
             .tox/junit.3.13t.xml
           include-hidden-files: true
-          if-no-files-found: warn
+          if-no-files-found: ignore
           retention-days: 14
       - name: 📤 Store coverage data
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: coverage-${{ matrix.py }}-${{ matrix.os }}-${{ strategy.job-index }}
           # combined .coverage.<env> files and the per-process files of envs that do not combine them
@@ -262,7 +262,7 @@ jobs:
       - name: 📦 Install tox
         run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.45" --with tox-uv
       - name: 📥 Download coverage data
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           # one directory per test run: runs on different OSes write the same .coverage.<env> file name
           pattern: coverage-*
@@ -336,6 +336,7 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read # check out the queries and their test fixtures
+      security-events: read # codeql-action needs it to reach its API endpoints
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -343,7 +344,7 @@ jobs:
           persist-credentials: false
       - name: 🔎 Install CodeQL
         id: codeql
-        uses: github/codeql-action/init@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
+        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
           languages: python
       - name: 🏃 Run query tests

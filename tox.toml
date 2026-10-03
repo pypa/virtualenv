@@ -255,7 +255,7 @@ base = [ "type" ]
 [env.upgrade]
 description = "upgrade pip/wheels/setuptools to latest"
 skip_install = true
-deps = [ "pre-commit-uv>=4.2", "ruff>=0.12.4" ]
+deps = [ "pre-commit-uv>=4.2", "ruff>=0.16.10" ]
 pass_env = [ "UPGRADE_ADVISORY" ]
 change_dir = "{tox_root}{/}tasks"
 commands = [ [ "python", "upgrade_wheels.py" ] ]
@@ -265,7 +265,7 @@ uv_seed = true
 description = "generate a zipapp, embed its SBOM and validate the SBOM"
 base_python = [ "3.14" ]
 skip_install = true
-deps = [ "hatchling>=1.28", "packaging>=25", "uv>=0.12.17" ]
+deps = [ "hatchling>=1.28", "packaging>=26.3", "uv>=0.12.19" ]
 dependency_groups = [ "sbom" ]
 pass_env = [ "SOURCE_DATE_EPOCH" ]
 set_env.PYTHONPATH = "{tox_root}"

@@ -24,15 +24,17 @@ jobs:
           disable-sudo-and-containers: true
           allowed-endpoints: >-
             api.github.com:443 files.pythonhosted.org:443 github.com:443 pypi.org:443 raw.githubusercontent.com:443 registry.npmjs.org:443 release-assets.githubusercontent.com:443 releases.astral.sh:443
-      - name: Install uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
-      - name: Install tox
-        run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.32" --with tox-uv
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false # the egress allowlist above blocks the cache service
+      - name: Install tox
+        run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.32" --with tox-uv
       - name: Fetch upstream tags for versioning
         run: git fetch --force --tags https://github.com/pypa/virtualenv.git
       - name: Pin the newest CI test tools
@@ -75,7 +77,7 @@ jobs:
         run: git diff --cached --binary --no-ext-diff --no-textconv > "$RUNNER_TEMP/upgrade.patch"
       - name: Store upgrade patch
         if: steps.upgrade.outputs.changed == 'true' && steps.age-check.outputs.skip == 'false'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: upgrade-patch
           path: ${{ runner.temp }}/upgrade.patch
@@ -106,7 +108,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: true # zizmor: ignore[artipacked] create-pull-request and the changelog rename push with it
       - name: Download upgrade patch
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: upgrade-patch
           path: ${{ runner.temp }}/upgrade-patch
@@ -114,7 +116,7 @@ jobs:
         run: python tasks/apply_upgrade_patch.py "$RUNNER_TEMP/upgrade-patch/upgrade.patch"
       - name: Create Pull Request
         id: cpr
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
           commit-message: "Upgrade embedded dependencies"
           # the checkout pins github.sha, a detached HEAD, so the action cannot infer the base branch

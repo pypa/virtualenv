@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from filelock import FileLock, Timeout
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Generator, Iterator
     from types import TracebackType
 
 LOGGER = logging.getLogger(__name__)
@@ -145,7 +145,7 @@ class ReentrantFileLock(PathLockBase):
         lock.release()
 
     @contextmanager
-    def lock_for_key(self, name: str, no_block: bool = False) -> Iterator[None]:  # ruff:ignore[boolean-default-value-positional-argument]
+    def lock_for_key(self, name: str, no_block: bool = False) -> Generator[None, None, None]:  # ruff:ignore[boolean-default-value-positional-argument]
         lock = self._create_lock(name)
         try:
             with self._lock_and_yield(lock, no_block):
@@ -155,7 +155,7 @@ class ReentrantFileLock(PathLockBase):
             lock = None
 
     @contextmanager
-    def _lock_and_yield(self, lock: _CountedFileLock, no_block: bool) -> Iterator[None]:
+    def _lock_and_yield(self, lock: _CountedFileLock, no_block: bool) -> Generator[None, None, None]:
         self._lock_file(lock, no_block)
         try:
             yield
@@ -163,7 +163,7 @@ class ReentrantFileLock(PathLockBase):
             self._release(lock)
 
     @contextmanager
-    def non_reentrant_lock_for_key(self, name: str) -> Iterator[None]:
+    def non_reentrant_lock_for_key(self, name: str) -> Generator[None, None, None]:
         with _CountedFileLock(str(self.path / f"{name}.lock")):
             yield
 
@@ -178,11 +178,11 @@ class NoOpFileLock(PathLockBase):
         raise NotImplementedError
 
     @contextmanager
-    def lock_for_key(self, name: str, no_block: bool = False) -> Iterator[None]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]
+    def lock_for_key(self, name: str, no_block: bool = False) -> Generator[None, None, None]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]
         yield
 
     @contextmanager
-    def non_reentrant_lock_for_key(self, name: str) -> Iterator[None]:  # ruff:ignore[unused-method-argument]
+    def non_reentrant_lock_for_key(self, name: str) -> Generator[None, None, None]:  # ruff:ignore[unused-method-argument]
         yield
 
 
