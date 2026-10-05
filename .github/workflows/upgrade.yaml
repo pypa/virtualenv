@@ -52,8 +52,14 @@ jobs:
           tox run -e upgrade
           # hold back releases younger than the seven days check_wheel_age.py demands of embedded wheels
           UV_EXCLUDE_NEWER="7 days" uv pip compile pyproject.toml --universal --python-version 3.9 --upgrade -o pylock.zipapp.toml
-          UV_EXCLUDE_NEWER="7 days" uv pip compile --group pyproject.toml:release --universal --python-version 3.14 \
-            --generate-hashes --upgrade -o tasks/release-requirements.txt
+          if ! UV_EXCLUDE_NEWER="7 days" uv pip compile --group pyproject.toml:release --universal --python-version 3.14 \
+            --generate-hashes --upgrade -o tasks/release-requirements.txt; then
+            uv pip compile --group pyproject.toml:release --universal --python-version 3.14 \
+              --generate-hashes --upgrade --no-build -o "$RUNNER_TEMP/release-requirements.txt"
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "### Waiting for release dependencies to satisfy the seven-day age filter" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           git add -- src/virtualenv/seed/wheels/embed THIRD-PARTY-NOTICES.md docs/changelog pylock.zipapp.toml \
             tasks/release-requirements.txt
           if [ "$CI_TOOLS_OUTCOME" = "success" ]; then
