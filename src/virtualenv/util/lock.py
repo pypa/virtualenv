@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from filelock import FileLock, Timeout
 
 if TYPE_CHECKING:
-    from collections.abc import Generator, Iterator
+    from collections.abc import Generator
     from types import TracebackType
 
 LOGGER = logging.getLogger(__name__)
@@ -82,12 +82,12 @@ class PathLockBase(ABC):
 
     @abstractmethod
     @contextmanager
-    def lock_for_key(self, name: str, no_block: bool = False) -> Iterator[None]:  # ruff:ignore[boolean-default-value-positional-argument]
+    def lock_for_key(self, name: str, no_block: bool = False) -> Generator[None, None, None]:  # ruff:ignore[boolean-default-value-positional-argument]
         raise NotImplementedError
 
     @abstractmethod
     @contextmanager
-    def non_reentrant_lock_for_key(self, name: str) -> Iterator[None]:
+    def non_reentrant_lock_for_key(self, name: str) -> Generator[None, None, None]:
         raise NotImplementedError
 
 
