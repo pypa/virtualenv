@@ -76,26 +76,27 @@ jobs:
         with:
           subject-path: virtualenv.pyz
           sbom-path: virtualenv.pyz.cdx.json
-      - name: Store the distribution packages
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: ${{ env.dists-artifact-name }}
-          path: dist/*
-      - name: Store the SBOM
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: virtualenv-sbom
-          path: |
-            virtualenv.cdx.json
-            virtualenv.spdx.json
-      - name: Store the zipapp
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: virtualenv-zipapp
-          path: |
-            virtualenv.pyz
-            virtualenv.pyz.intoto.jsonl
-            virtualenv.pyz.cdx.json
+      - parallel:
+          - name: Store the distribution packages
+            uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+            with:
+              name: ${{ env.dists-artifact-name }}
+              path: dist/*
+          - name: Store the SBOM
+            uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+            with:
+              name: virtualenv-sbom
+              path: |
+                virtualenv.cdx.json
+                virtualenv.spdx.json
+          - name: Store the zipapp
+            uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+            with:
+              name: virtualenv-zipapp
+              path: |
+                virtualenv.pyz
+                virtualenv.pyz.intoto.jsonl
+                virtualenv.pyz.cdx.json
   publish:
     name: Publish
     needs: build
@@ -127,15 +128,16 @@ jobs:
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
           attestations: true
-      - name: Download the zipapp
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: virtualenv-zipapp
-      - name: Download the SBOMs
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: virtualenv-sbom
-      # immutable releases reject assets added after creation, so every asset goes into this one call
+      - parallel:
+          - name: Download the zipapp
+            uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+            with:
+              name: virtualenv-zipapp
+          - name: Download the SBOMs
+            uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+            with:
+              name: virtualenv-sbom
+      # Immutable releases require all assets at creation.
       - name: Create GitHub Release
         run: |
           gh release create "$GITHUB_REF_NAME" virtualenv.pyz virtualenv.pyz.intoto.jsonl virtualenv.pyz.cdx.json \
@@ -210,21 +212,11 @@ jobs:
         with:
           name: virtualenv-sbom
           path: expected/
-      - name: Download and verify published distributions
-        run: |
-          mkdir published
-          curl --fail --silent --show-error --retry 5 --retry-all-errors \
-            "https://pypi.org/pypi/virtualenv/$GITHUB_REF_NAME/json" --output release.json
-          for expected in expected/*.whl expected/*.tar.gz; do
-            filename="$(basename "$expected")"
-            url="$(jq --exit-status --raw-output --arg filename "$filename" \
-              '.urls[] | select(.filename == $filename) | .url' release.json)"
-            curl --fail --silent --show-error --retry 5 --retry-all-errors --output "published/$filename" -- "$url"
-            cmp "$expected" "published/$filename"
-            "$RUNNER_TEMP/tools/bin/pypi-attestations" verify pypi --repository https://github.com/pypa/virtualenv \
-              "published/$filename"
-          done
+      - name: Prepare verification directory
+        run: mkdir published
       - name: Download and verify published zipapp
+        id: zipapp
+        background: true
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -241,6 +233,19 @@ jobs:
             --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" --deny-self-hosted-runners --format json |
             jq --exit-status --slurpfile asset published/virtualenv.pyz.cdx.json \
               'any(.[]; .verificationResult.statement.predicate == $asset[0])'
+      - name: Download and verify published distributions
+        run: |
+          curl --fail --silent --show-error --retry 5 --retry-all-errors \
+            "https://pypi.org/pypi/virtualenv/$GITHUB_REF_NAME/json" --output release.json
+          for expected in expected/*.whl expected/*.tar.gz; do
+            filename="$(basename "$expected")"
+            url="$(jq --exit-status --raw-output --arg filename "$filename" \
+              '.urls[] | select(.filename == $filename) | .url' release.json)"
+            curl --fail --silent --show-error --retry 5 --retry-all-errors --output "published/$filename" -- "$url"
+            cmp "$expected" "published/$filename"
+            "$RUNNER_TEMP/tools/bin/pypi-attestations" verify pypi --repository https://github.com/pypa/virtualenv \
+              "published/$filename"
+          done
       - name: Download and verify published SBOMs
         env:
           GH_TOKEN: ${{ github.token }}
@@ -259,6 +264,7 @@ jobs:
                   'any(.[]; .verificationResult.statement.predicate == $asset[0])'
             done
           done
+      - wait: zipapp
       - name: Create environments from verified distributions
         run: |
           for artifact in published/*.whl published/*.tar.gz; do
