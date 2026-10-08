@@ -1,3 +1,3 @@
 Drop a malformed embed update log in every reader of it, not only in ``UpdateLog.from_app_data``, so the default
-periodic update no longer fails on it, falls back to downloading pip from PyPI, and breaks environment creation
-offline - by :user:`darrenhuai`.
+periodic update no longer fails on it, falls back to downloading pip from PyPI, and breaks environment creation offline
+- by :user:`darrenhuai`.
