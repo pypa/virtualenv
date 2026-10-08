@@ -85,19 +85,18 @@ def handle_auto_update(  # ruff:ignore[too-many-arguments]
     app_data: AppData,
     env: dict[str, str],
 ) -> None:
-    embed_update_log = app_data.embed_update_log(distribution, for_py_version)
-    u_log = UpdateLog.from_dict(embed_update_log.read())
+    u_log = UpdateLog.from_app_data(app_data, distribution, for_py_version)
     if u_log.needs_update:
         u_log.periodic = True
         u_log.started = datetime.now(tz=timezone.utc)
-        embed_update_log.write(u_log.to_dict())
+        app_data.embed_update_log(distribution, for_py_version).write(u_log.to_dict())
         trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, periodic=True, env=env)
 
 
 def add_wheel_to_update_log(wheel: Wheel, for_py_version: str, app_data: AppData) -> None:
     embed_update_log = app_data.embed_update_log(wheel.distribution, for_py_version)
     LOGGER.debug("adding %s information to %s", wheel.name, embed_update_log.file)  # ty: ignore[unresolved-attribute]
-    u_log = UpdateLog.from_dict(embed_update_log.read())
+    u_log = UpdateLog.from_app_data(app_data, wheel.distribution, for_py_version)
     if any(version.filename == wheel.name for version in u_log.versions):
         LOGGER.warning("%s already present in %s", wheel.name, embed_update_log.file)  # ty: ignore[unresolved-attribute]
         return
@@ -300,8 +299,7 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
     app_data = AppDataDiskFolder(app_data) if isinstance(app_data, str) else app_data
     search_dirs = [Path(p) if isinstance(p, str) else p for p in search_dirs]
     wheelhouse = app_data.house
-    embed_update_log = app_data.embed_update_log(distribution, for_py_version)
-    u_log = UpdateLog.from_dict(embed_update_log.read())
+    u_log = UpdateLog.from_app_data(app_data, distribution, for_py_version)
     now = datetime.now(tz=timezone.utc)
 
     update_versions, other_versions = [], []
@@ -353,7 +351,7 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
     other_versions = [version for version in other_versions if version.filename not in filenames]
     u_log.versions = versions + update_versions + other_versions
     u_log.completed = datetime.now(tz=timezone.utc)
-    embed_update_log.write(u_log.to_dict())
+    app_data.embed_update_log(distribution, for_py_version).write(u_log.to_dict())
     return versions
 
 
