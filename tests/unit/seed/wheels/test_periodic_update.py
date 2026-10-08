@@ -26,6 +26,7 @@ from virtualenv.seed.wheels.periodic_update import (
     NewVersion,
     UnverifiedWheelError,
     UpdateLog,
+    add_wheel_to_update_log,
     do_update,
     dump_datetime,
     load_datetime,
@@ -38,7 +39,7 @@ from virtualenv.seed.wheels.periodic_update import (
 from virtualenv.util.subprocess import CREATE_NO_WINDOW
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
+    from collections.abc import Callable, Generator
     from unittest.mock import MagicMock
 
     from pytest_mock import MockerFixture
@@ -254,16 +255,16 @@ def test_periodic_update_skip(u_log, mocker, for_py_version, session_app_data, t
     assert result is None
 
 
-@pytest.mark.parametrize(
-    "stored",
-    [
-        pytest.param([1, 2, 3], id="not-a-mapping"),
-        pytest.param("oops", id="string"),
-        pytest.param({"versions": "abc"}, id="versions-not-a-list"),
-        pytest.param({"versions": ["abc"]}, id="version-not-a-mapping"),
-        pytest.param({"completed": 5, "started": None, "versions": []}, id="completed-not-a-datetime"),
-    ],
-)
+_MALFORMED_LOGS: Final[list[object]] = [
+    pytest.param([1, 2, 3], id="not-a-mapping"),
+    pytest.param("oops", id="string"),
+    pytest.param({"versions": "abc"}, id="versions-not-a-list"),
+    pytest.param({"versions": ["abc"]}, id="version-not-a-mapping"),
+    pytest.param({"completed": 5, "started": None, "versions": []}, id="completed-not-a-datetime"),
+]
+
+
+@pytest.mark.parametrize("stored", _MALFORMED_LOGS)
 def test_periodic_update_drops_malformed_log(
     stored: list[int] | str | dict[str, str | int | list[str] | None],
     tmp_path: Path,
@@ -284,6 +285,80 @@ def test_periodic_update_drops_malformed_log(
         wheel,
         False,
         ["removing malformed embed update log of setuptools"],
+    )
+
+
+@pytest.mark.parametrize("stored", _MALFORMED_LOGS)
+def test_periodic_update_auto_update_drops_malformed_log(
+    stored: list[int] | str | dict[str, str | int | list[str] | None],
+    tmp_path: Path,
+    for_py_version: str,
+    caplog: pytest.LogCaptureFixture,
+    mocker: MockerFixture,
+) -> None:
+    caplog.set_level(logging.WARNING)
+    trigger_update_: Final[MagicMock] = mocker.patch("virtualenv.seed.wheels.periodic_update.trigger_update")
+    app_data: Final[AppDataDiskFolder] = AppDataDiskFolder(str(tmp_path))
+    log: Final[EmbedDistributionUpdateStoreDisk] = app_data.embed_update_log("setuptools", for_py_version)
+    log.write(stored)
+    wheel: Final[Wheel | None] = get_embed_wheel("setuptools", for_py_version)
+
+    result: Final[Wheel | None] = periodic_update(
+        "setuptools", None, for_py_version, wheel, [], app_data, True, os.environ
+    )
+
+    # the reset log has never completed an update, so a fresh periodic one is scheduled
+    assert (result, trigger_update_.call_count, log.read()["periodic"], caplog.messages) == (
+        wheel,
+        1,
+        True,
+        ["removing malformed embed update log of setuptools"],
+    )
+
+
+@pytest.mark.parametrize("stored", _MALFORMED_LOGS)
+def test_add_wheel_to_update_log_drops_malformed_log(
+    stored: list[int] | str | dict[str, str | int | list[str] | None],
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    time_freeze: Callable[[datetime], None],
+) -> None:
+    caplog.set_level(logging.WARNING)
+    time_freeze(_UP_NOW)
+    wheel: Final[Wheel] = get_embed_wheel("pip", "3.9")
+    app_data: Final[AppDataDiskFolder] = AppDataDiskFolder(str(tmp_path))
+    log: Final[EmbedDistributionUpdateStoreDisk] = app_data.embed_update_log("pip", "3.9")
+    log.write(stored)
+
+    add_wheel_to_update_log(wheel, "3.9", app_data)
+
+    assert (log.read()["versions"], caplog.messages) == (
+        [NewVersion(wheel.path.name, _UP_NOW, None, "download").to_dict()],
+        ["removing malformed embed update log of pip"],
+    )
+
+
+@pytest.mark.parametrize("stored", _MALFORMED_LOGS)
+def test_do_update_drops_malformed_log(
+    stored: list[int] | str | dict[str, str | int | list[str] | None],
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    mocker: MockerFixture,
+    time_freeze: Callable[[datetime], None],
+) -> None:
+    caplog.set_level(logging.WARNING)
+    time_freeze(_UP_NOW)
+    mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", return_value=None)
+    app_data: Final[AppDataDiskFolder] = AppDataDiskFolder(str(tmp_path))
+    log: Final[EmbedDistributionUpdateStoreDisk] = app_data.embed_update_log("pip", "3.9")
+    log.write(stored)
+
+    versions: Final[list[NewVersion] | None] = do_update("pip", "3.9", None, app_data, [], True)
+
+    assert (versions, log.read(), caplog.messages) == (
+        [],
+        UpdateLog(None, _UP_NOW, [], True).to_dict(),
+        ["removing malformed embed update log of pip"],
     )
 
 
