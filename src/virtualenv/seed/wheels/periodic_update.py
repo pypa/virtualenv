@@ -85,12 +85,11 @@ def handle_auto_update(  # ruff:ignore[too-many-arguments]
     app_data: AppData,
     env: dict[str, str],
 ) -> None:
-    embed_update_log = app_data.embed_update_log(distribution, for_py_version)
     u_log = UpdateLog.from_app_data(app_data, distribution, for_py_version)
     if u_log.needs_update:
         u_log.periodic = True
         u_log.started = datetime.now(tz=timezone.utc)
-        embed_update_log.write(u_log.to_dict())
+        app_data.embed_update_log(distribution, for_py_version).write(u_log.to_dict())
         trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, periodic=True, env=env)
 
 
@@ -300,7 +299,6 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
     app_data = AppDataDiskFolder(app_data) if isinstance(app_data, str) else app_data
     search_dirs = [Path(p) if isinstance(p, str) else p for p in search_dirs]
     wheelhouse = app_data.house
-    embed_update_log = app_data.embed_update_log(distribution, for_py_version)
     u_log = UpdateLog.from_app_data(app_data, distribution, for_py_version)
     now = datetime.now(tz=timezone.utc)
 
@@ -353,7 +351,7 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
     other_versions = [version for version in other_versions if version.filename not in filenames]
     u_log.versions = versions + update_versions + other_versions
     u_log.completed = datetime.now(tz=timezone.utc)
-    embed_update_log.write(u_log.to_dict())
+    app_data.embed_update_log(distribution, for_py_version).write(u_log.to_dict())
     return versions
 
 

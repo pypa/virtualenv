@@ -1,3 +1,2 @@
-Drop a malformed embed update log in every reader of it, not only in ``UpdateLog.from_app_data``, so the default
-periodic update no longer fails on it, falls back to downloading pip from PyPI, and breaks environment creation offline
-- by :user:`darrenhuai`.
+Fall back to the bundled seed wheel with periodic update on (the default) when the embed update log holds JSON of the
+wrong shape, instead of downloading the wheel or, offline, failing to create the environment - by :user:`darrenhuai`.
