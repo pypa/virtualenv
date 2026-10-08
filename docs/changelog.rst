@@ -7,6 +7,17 @@
 .. towncrier release notes start
 
 ***********************
+ v21.14.6 (2026-10-08)
+***********************
+
+Bugfixes - 21.14.6
+==================
+
+- Fall back to the bundled seed wheel with periodic update on (the default) when the embed update log holds JSON of the
+  wrong shape, instead of downloading the wheel or, offline, failing to create the environment - by :user:`darrenhuai`.
+  (:issue:`3383`)
+
+***********************
  v21.14.5 (2026-10-02)
 ***********************
 

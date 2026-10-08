@@ -1,2 +1,0 @@
-Fall back to the bundled seed wheel with periodic update on (the default) when the embed update log holds JSON of the
-wrong shape, instead of downloading the wheel or, offline, failing to create the environment - by :user:`darrenhuai`.
