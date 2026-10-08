@@ -251,7 +251,7 @@ def test_periodic_update_skip(u_log, mocker, for_py_version, session_app_data, t
     mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict())
     mocker.patch("virtualenv.seed.wheels.periodic_update.trigger_update", side_effect=RuntimeError)
 
-    result = periodic_update("setuptools", None, for_py_version, None, [], session_app_data, os.environ, True)
+    result = periodic_update("setuptools", None, for_py_version, None, [], session_app_data, True, os.environ)
     assert result is None
 
 
@@ -375,10 +375,11 @@ def test_periodic_update_trigger(u_log, mocker, for_py_version, session_app_data
     write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write")
     trigger_update_ = mocker.patch("virtualenv.seed.wheels.periodic_update.trigger_update")
 
-    result = periodic_update("setuptools", None, for_py_version, None, [], session_app_data, os.environ, True)
+    result = periodic_update("setuptools", None, for_py_version, None, [], session_app_data, True, os.environ)
 
     assert result is None
     assert trigger_update_.call_count
+    assert trigger_update_.call_args.kwargs["env"] is os.environ
     assert write.call_count == 1
     wrote_json = write.call_args[0][0]
     assert wrote_json["periodic"] is True
