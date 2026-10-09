@@ -29,7 +29,6 @@ from virtualenv.seed.wheels.periodic_update import (
     add_wheel_to_update_log,
     do_update,
     dump_datetime,
-    load_datetime,
     manual_upgrade,
     periodic_update,
     release_date_for_wheel_path,
@@ -215,8 +214,8 @@ def wheel_path(wheel, of, pre_release=""):
     return str(wheel.path.parent / new_name)
 
 
-_UP_NOW = datetime.now(tz=timezone.utc)
-_UPDATE_SKIP = {
+_UP_NOW: Final[datetime] = datetime.now(tz=timezone.utc)
+_UPDATE_SKIP: Final[dict[str, UpdateLog]] = {
     "started_just_now_no_complete": UpdateLog(started=_UP_NOW, completed=None, versions=[], periodic=True),
     "started_1_hour_no_complete": UpdateLog(
         started=_UP_NOW - timedelta(hours=1),
@@ -246,13 +245,30 @@ _UPDATE_SKIP = {
 
 
 @pytest.mark.parametrize("u_log", list(_UPDATE_SKIP.values()), ids=list(_UPDATE_SKIP.keys()))
-def test_periodic_update_skip(u_log, mocker, for_py_version, session_app_data, time_freeze) -> None:
-    time_freeze(_UP_NOW)
-    mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict())
-    mocker.patch("virtualenv.seed.wheels.periodic_update.trigger_update", side_effect=RuntimeError)
+@pytest.mark.usefixtures("periodic_update_clock")
+def test_periodic_update_skip(
+    u_log: UpdateLog,
+    mocker: MockerFixture,
+    for_py_version: str,
+    app_data: AppDataDiskFolder,
+) -> None:
+    app_data.embed_update_log("setuptools", for_py_version).write(u_log.to_dict())
+    mocker.patch("virtualenv.seed.wheels.periodic_update.Popen", autospec=True, side_effect=AssertionError)
 
-    result = periodic_update("setuptools", None, for_py_version, None, [], session_app_data, True, os.environ)
-    assert result is None
+    assert (
+        periodic_update("setuptools", None, for_py_version, None, [], app_data, do_periodic_update=True, env={}),
+        app_data.embed_update_log("setuptools", for_py_version).read(),
+    ) == (None, u_log.to_dict())
+
+
+@pytest.fixture
+def app_data(tmp_path: Path) -> AppDataDiskFolder:
+    return AppDataDiskFolder(str(tmp_path))
+
+
+@pytest.fixture
+def periodic_update_clock(time_freeze: Callable[[datetime], None]) -> None:
+    time_freeze(_UP_NOW)
 
 
 def test_periodic_update_drops_malformed_log(
@@ -351,7 +367,7 @@ def malformed_app_data(request: pytest.FixtureRequest, tmp_path: Path, for_py_ve
     return app_data
 
 
-_UPDATE_YES = {
+_UPDATE_YES: Final[dict[str, UpdateLog]] = {
     "never_started": UpdateLog(started=None, completed=None, versions=[], periodic=False),
     "started_1_hour": UpdateLog(
         started=_UP_NOW - timedelta(hours=1, microseconds=1),
@@ -369,21 +385,35 @@ _UPDATE_YES = {
 
 
 @pytest.mark.parametrize("u_log", list(_UPDATE_YES.values()), ids=list(_UPDATE_YES.keys()))
-def test_periodic_update_trigger(u_log, mocker, for_py_version, session_app_data, time_freeze) -> None:
-    time_freeze(_UP_NOW)
-    mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.read", return_value=u_log.to_dict())
-    write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write")
-    trigger_update_ = mocker.patch("virtualenv.seed.wheels.periodic_update.trigger_update")
+@pytest.mark.usefixtures("periodic_update_clock")
+@pytest.mark.parametrize(
+    "env",
+    [pytest.param({}, id="empty-env"), pytest.param({"_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1"}, id="custom-env")],
+)
+def test_periodic_update_trigger(
+    u_log: UpdateLog,
+    mocker: MockerFixture,
+    for_py_version: str,
+    app_data: AppDataDiskFolder,
+    env: dict[str, str],
+) -> None:
+    app_data.embed_update_log("setuptools", for_py_version).write(u_log.to_dict())
+    process: Final[MagicMock] = mocker.create_autospec(subprocess.Popen, instance=True, pid=123)
+    popen: Final[MagicMock] = mocker.patch(
+        "virtualenv.seed.wheels.periodic_update.Popen", autospec=True, return_value=process
+    )
 
-    result = periodic_update("setuptools", None, for_py_version, None, [], session_app_data, True, os.environ)
-
-    assert result is None
-    assert trigger_update_.call_count
-    assert trigger_update_.call_args.kwargs["env"] is os.environ
-    assert write.call_count == 1
-    wrote_json = write.call_args[0][0]
-    assert wrote_json["periodic"] is True
-    assert load_datetime(wrote_json["started"]) == _UP_NOW
+    assert (
+        periodic_update("setuptools", None, for_py_version, None, [], app_data, do_periodic_update=True, env=env),
+        app_data.embed_update_log("setuptools", for_py_version).read(),
+    ) == (None, UpdateLog(_UP_NOW, u_log.completed, [], True).to_dict())
+    assert popen.call_count == 1
+    assert popen.call_args.kwargs == {
+        "stdout": None if env else subprocess.DEVNULL,
+        "stderr": None if env else subprocess.DEVNULL,
+        **({"creationflags": CREATE_NO_WINDOW} if not env and sys.platform == "win32" else {}),
+    }
+    assert process.communicate.call_count == bool(env)
 
 
 def test_trigger_update_no_debug(for_py_version, session_app_data, tmp_path, mocker, monkeypatch) -> None:
