@@ -19,10 +19,10 @@ wheels = [{ url = "https://files.pythonhosted.org/packages/42/14/42b2651a2f46b02
 
 [[packages]]
 name = "filelock"
-version = "4.0.3"
+version = "4.0.9"
 marker = "python_full_version >= '3.10'"
-sdist = { url = "https://files.pythonhosted.org/packages/4f/b8/9ba8f569df649beb7058db5eb392a5f779bdbc3b82cf3942f0be439fb99e/filelock-4.0.3.tar.gz", upload-time = 2026-09-23T23:40:22Z, size = 244309, hashes = { sha256 = "87296d60478e14204fd9406e79831400fef76693bae2895deec236c98e87a8aa" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/7a/6d/db8b86e168fef0cf904737e275bccb683558088ef971e92d3b41ce980699/filelock-4.0.3-py3-none-any.whl", upload-time = 2026-09-23T23:40:20Z, size = 108444, hashes = { sha256 = "30cd166e2aee2c7534ce2c33c6367c4cd051b8368e20e2c4eb0c34f699bacfab" } }]
+sdist = { url = "https://files.pythonhosted.org/packages/70/51/2bc9e529f154fad99b6cd0073e609291eb32fd23581b32362d33d164d316/filelock-4.0.9.tar.gz", upload-time = 2026-10-01T23:09:14Z, size = 251200, hashes = { sha256 = "635e7d67fa92654eed444e75e9ca18426d34e77ad9c469bf4373f75a932f7b22" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/01/4f/83454fafd628e1e7e1726d74e44fb2332be5969d04c6182ca1fecb6c580e/filelock-4.0.9-py3-none-any.whl", upload-time = 2026-10-01T23:09:12Z, size = 110368, hashes = { sha256 = "9287fd61b99a806e5202be29a83034c0808a1b9830e820537c2f5773981f7eeb" } }]
 
 [[packages]]
 name = "packaging"
@@ -39,10 +39,10 @@ wheels = [{ url = "https://files.pythonhosted.org/packages/40/4b/2028861e724d3bd
 
 [[packages]]
 name = "platformdirs"
-version = "4.11.13"
+version = "4.12.2"
 marker = "python_full_version >= '3.10'"
-sdist = { url = "https://files.pythonhosted.org/packages/53/0e/7be2983c52622d6c0899300f760e31ba143355cedf1afcb3e65689d5ca85/platformdirs-4.11.13.tar.gz", upload-time = 2026-09-25T04:44:25Z, size = 40415, hashes = { sha256 = "6985eefdc2298693e4ce1fe124645524cb967428eb6384e0ce5b49767e7ea8ba" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/29/a6/76a492f6a937e196641b3abd1588c504c71438e243daf1bebde4d3bb8ee9/platformdirs-4.11.13-py3-none-any.whl", upload-time = 2026-09-25T04:44:23Z, size = 25054, hashes = { sha256 = "228b2283af5c1f32673cdf55271216a52bbd8258cb31374e302ad7bd26cd7513" } }]
+sdist = { url = "https://files.pythonhosted.org/packages/17/c8/721b3855fe457da514fe249247d404b9b39c5d16532278f70ebaa6acf18b/platformdirs-4.12.2.tar.gz", upload-time = 2026-09-29T18:27:56Z, size = 59353, hashes = { sha256 = "eab5f70271a490ef74618bb314fbb86e3c7e82fa3b9c922c2ea0e0a1a155d329" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/d0/89/446044f33aba0348d35e433f56d12206d010a5281a1df54054d4cfb82388/platformdirs-4.12.2-py3-none-any.whl", upload-time = 2026-09-29T18:27:54Z, size = 32457, hashes = { sha256 = "29dbf06d96c500bc6bdbce75fb0a14d63279c93b1842f97e72a135b33e856983" } }]
 
 [[packages]]
 name = "python-discovery"
