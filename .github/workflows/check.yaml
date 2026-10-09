@@ -85,9 +85,9 @@ jobs:
           MATRIX_PY: ${{ matrix.py }}
         run: |
           if [[ "$MATRIX_PY" == "3.13t" || "$MATRIX_PY" == "3.14t" || "$MATRIX_PY" == "3.15t" || "$MATRIX_PY" == "rp" ]]; then
-            uv tool install --no-managed-python --python 3.15 "tox>=4.45" --with .
+            uv tool install --python-preference only-managed --python 3.15 "tox>=4.45" --with .
           else
-            uv tool install --no-managed-python --python 3.15 "tox>=4.45" --with tox-uv --with .
+            uv tool install --python-preference only-managed --python 3.15 "tox>=4.45" --with tox-uv --with .
           fi
       - name: 🧮 Resolve GraalPy release
         id: graalpy
