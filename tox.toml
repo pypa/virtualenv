@@ -1,4 +1,4 @@
-requires = [ "tox>=4.45" ]
+requires = [ "tox>=4.64.7" ]
 env_list = [
   "3.15",
   "3.14",
@@ -24,6 +24,7 @@ skip_missing_interpreters = true
 
 [env_run_base]
 description = "run tests with {env_name}"
+default_base_python = [ "3.15" ]
 package = "wheel"
 wheel_build_env = ".pkg"
 dependency_groups = [ "test" ]
@@ -64,6 +65,9 @@ commands = [
   ],
 ]
 uv_seed = true
+
+[env_pkg_base]
+default_base_python = [ "3.15" ]
 
 [env.coverage]
 description = "combine the coverage data of every test run, passed as data directories, into one report"
@@ -124,7 +128,7 @@ commands = [
 
 [env.readme]
 description = "check the long description, sdist and wheel contents, and embedded SBOM"
-base_python = [ "3.14" ]
+base_python = [ "3.15" ]
 skip_install = true
 dependency_groups = [ "pkg-meta" ]
 commands = [
@@ -150,7 +154,7 @@ commands = [
 
 [env.tasks]
 description = "run the build and CI tooling tests"
-base_python = [ "3.14" ]
+base_python = [ "3.15" ]
 dependency_groups = [ "tasks" ]
 set_env._COVERAGE_SRC = "{tox_root}"
 set_env.COVERAGE_FILE = "{work_dir}{/}.coverage.{env_name}"
@@ -187,10 +191,10 @@ commands = [
 ]
 
 [env.type]
-description = "run type checker (ty) against Python 3.14"
+description = "run type checker (ty) against Python 3.15"
 dependency_groups = [ "type" ]
 commands = [
-  [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.14", "--output-format", "concise" ]
+  [ "python", "-m", "ty", "check", "src/virtualenv", "--python-version", "3.15", "--output-format", "concise" ]
 ]
 
 [env.dev]
@@ -229,7 +233,7 @@ commands = [
 
 [env.release]
 description = "do a release, required posarg of the version number"
-base_python = [ "3.14" ]
+base_python = [ "3.15" ]
 skip_install = true
 deps = [ "-r tasks/release-requirements.txt" ]
 change_dir = "{tox_root}{/}tasks"
@@ -237,7 +241,7 @@ commands = [ [ "python", "release.py", { replace = "posargs", extend = true } ] 
 
 [env.spdx]
 description = "render the CycloneDX SBOM extracted from a wheel as SPDX 2.3 and validate it"
-base_python = [ "3.14" ]
+base_python = [ "3.15" ]
 skip_install = true
 dependency_groups = [ "sbom" ]
 set_env.UV_CONSTRAINT = "{tox_root}{/}tasks{/}release-requirements.txt"
@@ -263,7 +267,7 @@ uv_seed = true
 
 [env.zipapp]
 description = "generate a zipapp, embed its SBOM and validate the SBOM"
-base_python = [ "3.14" ]
+base_python = [ "3.15" ]
 skip_install = true
 deps = [ "hatchling>=1.28", "packaging>=26.3", "uv>=0.12.19" ]
 dependency_groups = [ "sbom" ]

@@ -47,7 +47,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install the locked release tooling
         run: |
-          uv venv --python 3.14 --python-preference only-managed "$RUNNER_TEMP/release"
+          uv venv --python 3.15 --python-preference only-managed "$RUNNER_TEMP/release"
           uv pip sync --python "$RUNNER_TEMP/release" --require-hashes tasks/release-requirements.txt
       - name: Generate changelog, commit, and tag
         id: release

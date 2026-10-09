@@ -34,7 +34,7 @@ jobs:
         with:
           enable-cache: false # the egress allowlist above blocks the cache service
       - name: Install tox
-        run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.32" --with tox-uv
+        run: uv tool install --python-preference only-managed --python 3.15 "tox>=4.32" --with tox-uv
       - name: Fetch upstream tags for versioning
         run: git fetch --force --tags https://github.com/pypa/virtualenv.git
       - name: Pin the newest CI test tools
@@ -52,9 +52,9 @@ jobs:
           tox run -e upgrade
           # hold back releases younger than the seven days check_wheel_age.py demands of embedded wheels
           UV_EXCLUDE_NEWER="7 days" uv pip compile pyproject.toml --universal --python-version 3.9 --upgrade -o pylock.zipapp.toml
-          if ! UV_EXCLUDE_NEWER="7 days" uv pip compile --group pyproject.toml:release --universal --python-version 3.14 \
+          if ! UV_EXCLUDE_NEWER="7 days" uv pip compile --group pyproject.toml:release --universal --python-version 3.15 \
             --generate-hashes --upgrade -o tasks/release-requirements.txt; then
-            uv pip compile --group pyproject.toml:release --universal --python-version 3.14 \
+            uv pip compile --group pyproject.toml:release --universal --python-version 3.15 \
               --generate-hashes --upgrade --no-build -o "$RUNNER_TEMP/release-requirements.txt"
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "### Waiting for release dependencies to satisfy the seven-day age filter" >> "$GITHUB_STEP_SUMMARY"
