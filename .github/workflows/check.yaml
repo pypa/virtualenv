@@ -77,10 +77,8 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
           cache-suffix: ${{ matrix.py }}
-      - name: 🐍 Setup Python for tox
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-        with:
           python-version: "3.15"
+          activate-environment: true
       - name: 📦 Install tox with this virtualenv
         shell: bash
         env:
@@ -99,10 +97,17 @@ jobs:
         run: echo "python-version=graalpy-$(jq --raw-output '.graalpy.tag | ltrimstr("graal-")' tasks/ci-tools.json)" >> "$GITHUB_OUTPUT"
       - name: 🐍 Setup Python for test ${{ matrix.py }}
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-        if: ${{ !startsWith(matrix.py, 'brew@') && matrix.py != 'rp' }}
+        if: ${{ !startsWith(matrix.py, 'brew@') && !startsWith(matrix.py, '3.15') && matrix.py != 'rp' }}
         with:
           python-version: ${{ steps.graalpy.outputs.python-version || matrix.py }}
           allow-prereleases: true
+      - name: Setup Python 3.15 for tests
+        if: startsWith(matrix.py, '3.15')
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: false
+          python-version: ${{ matrix.py }}
+          activate-environment: true
       - name: 🦀 Setup RustPython
         if: matrix.py == 'rp'
         shell: bash
@@ -256,6 +261,7 @@ jobs:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
+          python-version: "3.15"
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
           cache-suffix: coverage
@@ -316,6 +322,7 @@ jobs:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
+          python-version: "3.15"
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
           cache-suffix: ${{ matrix.tox_env }}

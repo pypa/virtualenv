@@ -42,6 +42,7 @@ jobs:
       - name: Install the locked version of uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
+          python-version: "3.15"
           version-file: tasks/release-requirements.txt
           enable-cache: false
           github-token: ${{ secrets.GITHUB_TOKEN }}
