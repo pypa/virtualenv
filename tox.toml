@@ -209,6 +209,8 @@ commands = [
 
 [env.fuzz]
 description = "run the atheris fuzz targets (Linux + CPython 3.12-3.14 only)"
+# Atheris lacks Python 3.15 support: https://github.com/google/atheris/issues/114
+base_python = [ "3.14" ]
 dependency_groups = [ "fuzz" ]
 commands = [
   [ "python", "{tox_root}{/}tasks{/}fuzz_pyenv_cfg.py", "-runs=20000" ],
