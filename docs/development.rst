@@ -55,8 +55,8 @@ To run tests locally execute:
 
     tox -e py
 
-This will run the test suite for the same Python version as under which ``tox`` is installed. Alternatively you can
-specify a specific version of python by using the ``pyNN`` format, such as: ``py314``, ``pypy3``, etc.
+This runs the test suite on Python 3.15. Select another supported interpreter with its environment name, such as
+``3.9``, ``3.14`` or ``pypy3.11``.
 
 ``tox`` has been configured to forward any additional arguments it is given to ``pytest``. This enables the use of
 pytest's `rich CLI <https://docs.pytest.org/en/latest/usage.html#specifying-tests-selecting-tests>`_. As an example, you
@@ -75,7 +75,7 @@ tests are run; so even if all tests succeed locally for you, they may still fail
 
 The tests under ``tests/tasks`` cover the build and CI tooling, ``hatch_build.py`` and the scripts in ``tasks/``. Their
 outcome does not depend on the interpreter, so the interpreter environments skip them and one environment runs them on
-CPython 3.14:
+CPython 3.15:
 
 .. code-block:: console
 
@@ -111,7 +111,7 @@ locally, run:
     tox -e type
 
 This uses `ty <https://docs.astral.sh/ty/>`_ (Astral's Rust-based type checker) to validate annotations against Python
-3.14. A second environment checks compatibility with the minimum supported version:
+3.15. A second environment checks compatibility with the minimum supported version:
 
 .. code-block:: console
 
@@ -342,8 +342,8 @@ virtualenv is distributed under the MIT License, and everything in the repositor
   embedded wheels above, so a wheel bump updates it with no extra step. ``tasks/cyclonedx_to_spdx.py`` renders that
   document as SPDX 2.3 with the standard library alone. ``tox r -e readme`` builds a wheel and validates its SBOM and
   the SPDX rendering; the release workflow runs ``tox r -e spdx`` to write ``virtualenv.spdx.json`` from
-  ``virtualenv.cdx.json`` and check it with ``pyspdxtools``. Both envs run on Python 3.14 because ``spdx-tools`` fails
-  to import on 3.15.
+  ``virtualenv.cdx.json`` and check it with ``pyspdxtools``. Both environments run on Python 3.15 with a Beartype
+  prerelease that fixes its `removed typing API import <https://github.com/beartype/beartype/issues/618>`_.
 - ``tasks/zipapp_sbom.py`` describes a built ``virtualenv.pyz`` from the archive itself: virtualenv, the embedded
   wheels, and each bundled dependency with the Python versions that load it, down to a SHA-256 per file. It reuses the
   helpers in ``hatch_build.py``, writes ``virtualenv.pyz.cdx.json`` next to the zipapp and adds the same file to the
