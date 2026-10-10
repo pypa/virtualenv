@@ -85,7 +85,8 @@ dependency_groups = [ "docs" ]
 set_env.PYTHONUTF8 = "1"
 commands = [
   [ "pre-commit", "run", "docstrfmt", "--all-files" ],
-  [ "proselint", "check", "docs" ],
+  # RE2 lacks Python 3.15 wheels: https://github.com/google/re2/issues/647
+  [ "uv", "tool", "run", "--python", "3.14", "--from", "proselint>=0.16", "proselint", "check", "docs" ],
   [
     "sphinx-build",
     "-d",

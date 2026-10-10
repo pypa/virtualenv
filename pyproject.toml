@@ -137,7 +137,6 @@ type = [
 docs = [
   "furo>=2025.12.19",
   "pre-commit-uv>=4.2",
-  "proselint>=0.14",
   "sphinx!=7.3,>=7.4.7",
   "sphinx-argparse>=0.4",
   "sphinx-autodoc-typehints>=3.6.2",
@@ -147,6 +146,7 @@ docs = [
   "sphinxcontrib-mermaid>=2",
   "sphinxcontrib-towncrier>=0.2.1a0",
   "towncrier>=26.9",
+  "uv>=0.12.22",
 ]
 coverage = [
   "covdefaults>=2.3",
@@ -185,6 +185,8 @@ release = [
   { include-group = "sbom" },
 ]
 sbom = [
+  # The stable release still imports a removed typing API: https://github.com/beartype/beartype/issues/618
+  "beartype>=0.23.0rc2; python_version>='3.15'",
   "cyclonedx-python-lib[json-validation]>=11.12",
   "spdx-tools>=0.8.5",
 ]
