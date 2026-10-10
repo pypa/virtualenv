@@ -32,9 +32,10 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
+          python-version: "3.15"
           enable-cache: false # the egress allowlist above blocks the cache service
       - name: Install tox
-        run: uv tool install --python-preference only-managed --python 3.14 "tox>=4.32" --with tox-uv
+        run: uv tool install --python-preference only-managed --python 3.15 "tox>=4.32" --with tox-uv
       - name: Fetch upstream tags for versioning
         run: git fetch --force --tags https://github.com/pypa/virtualenv.git
       - name: Pin the newest CI test tools
@@ -42,7 +43,7 @@ jobs:
         if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 11 * * 1'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python tasks/upgrade_ci_tools.py
+        run: uv run --no-project --python 3.15 python tasks/upgrade_ci_tools.py
       - name: Run upgrade
         id: upgrade
         env:
@@ -52,9 +53,9 @@ jobs:
           tox run -e upgrade
           # hold back releases younger than the seven days check_wheel_age.py demands of embedded wheels
           UV_EXCLUDE_NEWER="7 days" uv pip compile pyproject.toml --universal --python-version 3.9 --upgrade -o pylock.zipapp.toml
-          if ! UV_EXCLUDE_NEWER="7 days" uv pip compile --group pyproject.toml:release --universal --python-version 3.14 \
+          if ! UV_EXCLUDE_NEWER="7 days" uv pip compile --group pyproject.toml:release --universal --python-version 3.15 \
             --generate-hashes --upgrade -o tasks/release-requirements.txt; then
-            uv pip compile --group pyproject.toml:release --universal --python-version 3.14 \
+            uv pip compile --group pyproject.toml:release --universal --python-version 3.15 \
               --generate-hashes --upgrade --no-build -o "$RUNNER_TEMP/release-requirements.txt"
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "### Waiting for release dependencies to satisfy the seven-day age filter" >> "$GITHUB_STEP_SUMMARY"
@@ -77,7 +78,7 @@ jobs:
         if: steps.upgrade.outputs.changed == 'true'
         id: age-check
         run: |
-          python tasks/check_wheel_age.py >> "$GITHUB_OUTPUT"
+          uv run --no-project --python 3.15 python tasks/check_wheel_age.py >> "$GITHUB_OUTPUT"
       - name: Prepare upgrade patch
         if: steps.upgrade.outputs.changed == 'true' && steps.age-check.outputs.skip == 'false'
         run: git diff --cached --binary --no-ext-diff --no-textconv > "$RUNNER_TEMP/upgrade.patch"
@@ -106,7 +107,7 @@ jobs:
           egress-policy: block
           disable-sudo-and-containers: true
           allowed-endpoints: >-
-            api.github.com:443 github.com:443
+            api.github.com:443 github.com:443 release-assets.githubusercontent.com:443 releases.astral.sh:443
       - name: Checkout trusted generator revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -118,8 +119,13 @@ jobs:
         with:
           name: upgrade-patch
           path: ${{ runner.temp }}/upgrade-patch
+      - name: Install uv
+        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          python-version: "3.15"
+          enable-cache: false
       - name: Validate and apply upgrade patch
-        run: python tasks/apply_upgrade_patch.py "$RUNNER_TEMP/upgrade-patch/upgrade.patch"
+        run: uv run --no-project --python 3.15 python tasks/apply_upgrade_patch.py "$RUNNER_TEMP/upgrade-patch/upgrade.patch"
       - name: Create Pull Request
         id: cpr
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1

@@ -33,21 +33,22 @@ jobs:
       - name: Install the locked version of uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
+          python-version: "3.15"
           version-file: tasks/release-requirements.txt
           enable-cache: false
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install the locked release tooling
         run: |
-          uv venv --python 3.14 --python-preference only-managed "$RUNNER_TEMP/tools"
+          uv venv --python 3.15 --python-preference only-managed "$RUNNER_TEMP/tools"
           uv pip sync --python "$RUNNER_TEMP/tools" --require-hashes tasks/release-requirements.txt
       - name: Pin build timestamps to the release commit for reproducible artifacts
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
       - name: Build sdist and wheel
         run: |
-          uv build --python 3.14 --python-preference only-managed --sdist --wheel . --out-dir dist \
+          uv build --python 3.15 --python-preference only-managed --sdist --wheel . --out-dir dist \
             --build-constraints tasks/release-requirements.txt --require-hashes
       - name: Extract the SBOM the wheel build embedded
-        run: python -m zipfile -e dist/*.whl sbom-extract/ && cp sbom-extract/*.dist-info/sboms/virtualenv.cdx.json .
+        run: uv run --no-project --python 3.15 python -m zipfile -e dist/*.whl sbom-extract/ && cp sbom-extract/*.dist-info/sboms/virtualenv.cdx.json .
       - name: Attest the SBOM against the sdist and wheel
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
@@ -196,11 +197,12 @@ jobs:
       - name: Install the locked version of uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
+          python-version: "3.15"
           version-file: tasks/release-requirements.txt
           enable-cache: false
       - name: Install the locked verification tooling
         run: |
-          uv venv --python 3.14 --python-preference only-managed "$RUNNER_TEMP/tools"
+          uv venv --python 3.15 --python-preference only-managed "$RUNNER_TEMP/tools"
           uv pip sync --python "$RUNNER_TEMP/tools" --require-hashes tasks/release-requirements.txt
       - name: Download expected distributions
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
@@ -269,12 +271,12 @@ jobs:
         run: |
           for artifact in published/*.whl published/*.tar.gz; do
             installation="$RUNNER_TEMP/$(basename "$artifact")"
-            uv venv --python 3.14 "$installation"
+            uv venv --python 3.15 "$installation"
             uv pip install --no-cache --python "$installation/bin/python" "$artifact"
             "$installation/bin/python" -I -m virtualenv --no-download --no-periodic-update "$installation/created"
             "$installation/created/bin/python" -I -m pip --version
           done
-          uv run --no-project --python 3.14 python -I published/virtualenv.pyz \
+          uv run --no-project --python 3.15 python -I published/virtualenv.pyz \
             --no-download --no-periodic-update "$RUNNER_TEMP/zipapp-created"
           "$RUNNER_TEMP/zipapp-created/bin/python" -I -m pip --version
   verify-bootstrap:
