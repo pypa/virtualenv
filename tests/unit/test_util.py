@@ -60,6 +60,8 @@ def test_safe_delete_surfaces_undeletable_entries(tmp_path: Path) -> None:
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows deletion ignores directory permissions")
 def test_safe_delete_raises_the_original_error_not_a_retry_failure(tmp_path: Path) -> None:
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        pytest.skip("root bypasses the permission bits that make the delete fail")
     target = tmp_path / "target"
     blocked = target / "sub"
     blocked.mkdir(parents=True)
@@ -75,6 +77,8 @@ def test_safe_delete_raises_the_original_error_not_a_retry_failure(tmp_path: Pat
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows deletion ignores directory permissions")
 def test_safe_delete_keeps_the_other_mode_bits_when_clearing_read_only(tmp_path: Path) -> None:
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        pytest.skip("root bypasses the permission bits that make the delete fail")
     target = tmp_path / "target"
     target.mkdir()
     blocked = target / "wheel.py"
