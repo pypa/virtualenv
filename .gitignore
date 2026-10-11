@@ -27,4 +27,5 @@ dist
 *wheel-store*
 
 Dockerfile*
+!.oss-scanner/Dockerfile
 .dockerignore
