@@ -21,6 +21,8 @@ If you do not have a GitHub account, or you are a Tidelift subscriber, report th
 us. If you subscribe to Tidelift, prefer that path: it carries a contractual response time the project cannot offer on
 its own.
 
+If neither path works for you, email [gaborjbernat@gmail.com](mailto:gaborjbernat@gmail.com).
+
 ### What to include
 
 - What the problem is and what an attacker gains from it.
