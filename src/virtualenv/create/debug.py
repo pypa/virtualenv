@@ -60,9 +60,9 @@ def run() -> None:
         result["site"] = repr(exception)  # pragma: no cover
 
     try:
-        import datetime  # site  # ruff:ignore[import-outside-top-level]
+        import datetime as dt  # site  # ruff:ignore[import-outside-top-level]
 
-        result["datetime"] = repr(datetime)
+        result["datetime"] = repr(dt)
     except ImportError as exception:  # pragma: no cover
         result["datetime"] = repr(exception)  # pragma: no cover
 
