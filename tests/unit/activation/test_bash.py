@@ -368,10 +368,11 @@ def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> 
 
         def print_prompt(self):
             # render PS1 the way bash draws it, since the activator escapes the prompt for that expansion; bash before
-            # 4.4 lacks ${PS1@P}, so undo the escapes the way its prompt expansion would
+            # 4.4 lacks ${PS1@P}, so undo the escapes once for the prompt-escape decode and once for the expansion
+            unescape = "s/\\\\\\([$`\\\\]\\)/\\1/g"
             return (
                 'if ((BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1] >= 404)); then printf "%s\\n" "${PS1@P}"; '
-                "else printf '%s\\n' \"$PS1\" | sed 's/\\\\\\([$`\\\\]\\)/\\1/g'; fi"
+                f"else printf '%s\\n' \"$PS1\" | sed -e '{unescape}' -e '{unescape}'; fi"
             )
 
     activation_tester(Bash)
