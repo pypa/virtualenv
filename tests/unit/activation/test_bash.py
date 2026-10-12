@@ -286,6 +286,8 @@ def prompt_after_activate(
         pytest.param("x$(touch PWNED)y", "env", id="prompt-command-substitution"),
         pytest.param("x`touch PWNED`y", "env", id="prompt-backticks"),
         pytest.param("x${$(touch PWNED)}y", "env", id="prompt-parameter-expansion"),
+        pytest.param("x\\$(touch PWNED)y", "env", id="prompt-backslash-command-substitution"),
+        pytest.param("x\\`touch PWNED`y", "env", id="prompt-backslash-backticks"),
         pytest.param(None, "x$(touch PWNED)y", id="dirname-command-substitution"),
         pytest.param(None, "A__VIRTUAL_NAME__B/x'$(touch PWNED)'y", id="placeholder-in-parent-dir"),
     ],
@@ -304,6 +306,10 @@ def test_prompt_does_not_run_commands(
     [
         pytest.param("myenv", id="plain"),
         pytest.param("a%n$HOME\\b`c`", id="special-characters"),
+        pytest.param("a\\$HOME", id="backslash-before-dollar"),
+        pytest.param("a\\`c`", id="backslash-before-backtick"),
+        pytest.param("x\\\\y", id="doubled-backslash"),
+        pytest.param("e\\", id="trailing-backslash"),
     ],
 )
 def test_prompt_renders_name_literally(
