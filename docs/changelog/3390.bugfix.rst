@@ -1,3 +1,0 @@
-Escape the environment name in the bash activator for both of bash's ``PS1`` passes, so a name or ``--prompt`` value
-with a backslash before ``$(...)`` or backticks no longer runs as a command each time bash draws the prompt - by
-:user:`gaborbernat`.

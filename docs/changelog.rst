@@ -7,6 +7,17 @@
 .. towncrier release notes start
 
 ***********************
+ v21.14.7 (2026-10-12)
+***********************
+
+Bugfixes - 21.14.7
+==================
+
+- Escape the environment name in the bash activator for both of bash's ``PS1`` passes, so a name or ``--prompt`` value
+  with a backslash before ``$(...)`` or backticks no longer runs as a command each time bash draws the prompt - by
+  :user:`gaborbernat`. (:issue:`3390`)
+
+***********************
  v21.14.6 (2026-10-08)
 ***********************
 
