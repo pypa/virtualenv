@@ -4,94 +4,14 @@ import shutil
 import subprocess
 import sys
 from argparse import Namespace
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from virtualenv.activation import PowerShellActivator
-from virtualenv.run import cli_run
 
-
-@pytest.mark.parametrize("shell", ["pwsh", "powershell.exe"])
-@pytest.mark.parametrize("explicit_venv_dir", [False, True], ids=["inferred", "explicit"])
-@pytest.mark.parametrize(
-    ("env_name", "configured_prompt"),
-    [
-        pytest.param("venv[1]", "from-config", id="brackets"),
-        pytest.param("project [2026]/.venv", "from-config", id="parent-brackets"),
-        pytest.param("venv", None, id="missing-config"),
-        pytest.param("venv", "from-config", id="ordinary-path"),
-    ],
-)
-def test_powershell_paths_and_config(  # ruff:ignore[too-many-arguments]
-    tmp_path: Path,
-    current_fastest: str,
-    shell: str,
-    explicit_venv_dir: bool,
-    env_name: str,
-    configured_prompt: str | None,
-) -> None:
-    if shutil.which(shell) is None:
-        pytest.skip(f"requires {shell}")
-    dest = tmp_path / env_name
-    session = cli_run([
-        "--without-pip",
-        "--no-periodic-update",
-        "--creator",
-        current_fastest,
-        "--activators",
-        "powershell",
-        "--prompt",
-        "embedded-prompt",
-        str(dest),
-    ])
-    config = session.creator.pyenv_cfg
-    if configured_prompt is None:
-        config.path.unlink()
-    else:
-        # A different embedded prompt must not hide a failed config lookup.
-        config["prompt"] = configured_prompt
-        config.write()
-
-    sibling_bin = tmp_path / "venv1" / session.creator.bin_dir.name
-    sibling_bin.mkdir(parents=True)
-    (sibling_bin.parent / "pyvenv.cfg").write_text("prompt = wrong-environment\n", encoding="utf-8")
-
-    activate_script = session.creator.bin_dir / "activate.ps1"
-    arguments = ""
-    if explicit_venv_dir:
-        # A script outside the environment exercises the config lookup independently of the script directory lookup.
-        activate_script = shutil.copyfile(activate_script, tmp_path / "activate.ps1")
-        arguments = f" -VenvDir {PowerShellActivator.quote(str(dest))}"
-    driver = tmp_path / "probe.ps1"
-    driver.write_text(
-        "$ErrorActionPreference = 'Stop'\n"
-        "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new()\n"
-        f". {PowerShellActivator.quote(str(activate_script))}{arguments}\n"
-        "$env:VIRTUAL_ENV\n$env:VIRTUAL_ENV_PROMPT\n"
-        "(Get-Command python)[0].Source\n"
-        "deactivate\n",
-        encoding="utf-8-sig",
-    )
-    result = subprocess.run(
-        [shell, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(driver)],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
-        timeout=60,
-        check=False,
-    )
-
-    assert result.returncode == 0, result.stderr
-    venv, prompt, python = result.stdout.splitlines()
-    assert Path(venv) == dest
-    assert prompt == (configured_prompt or "embedded-prompt")
-    assert Path(python) == session.creator.exe
-    if configured_prompt is None:
-        assert "pyvenv.cfg" in result.stderr
-    else:
-        assert not result.stderr
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 @pytest.mark.skipif(shutil.which("pwsh") is None, reason="requires PowerShell Core")

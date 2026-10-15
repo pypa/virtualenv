@@ -305,8 +305,9 @@ def is_inside_ci():
 
 @pytest.fixture(scope="session")
 def special_char_name():
-    # __VIRTUAL_NAME__ is a template placeholder, and must stay data when the path embeds it
-    base = "'\";&&e-$ !%`|>__VIRTUAL_NAME__èрт🚒♞中片-j"
+    # __VIRTUAL_NAME__ is a template placeholder, and must stay data when the path embeds it; [1] is a wildcard pattern
+    # in PowerShell paths
+    base = "'\";&&e-$ !%`|>__VIRTUAL_NAME__[1]èрт🚒♞中片-j"
     if IS_WIN:
         # NTFS path components cannot contain any of these, regardless of where they sit in the string
         for reserved in '<>:"/\\|?*;':

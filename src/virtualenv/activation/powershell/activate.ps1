@@ -63,8 +63,7 @@ function Get-PyVenvConfig(
 ) {
     Write-Verbose "Given ConfigDir=$ConfigDir, obtain values in pyvenv.cfg"
 
-    $pyvenvConfigPath = Join-Path -Path $ConfigDir -ChildPath 'pyvenv.cfg'
-    $pyvenvConfigPath = Resolve-Path -LiteralPath $pyvenvConfigPath -ErrorAction Continue
+    $pyvenvConfigPath = Resolve-Path -LiteralPath (Join-Path -Path $ConfigDir -ChildPath 'pyvenv.cfg') -ErrorAction Continue
 
     $pyvenvConfig = @{ }
 

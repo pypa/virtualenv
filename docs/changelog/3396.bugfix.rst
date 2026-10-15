@@ -1,2 +1,2 @@
-Activate PowerShell environments whose paths contain square brackets, and read their own ``pyvenv.cfg`` rather than
-treating the path as a wildcard pattern.
+Activate PowerShell environments whose path contains square brackets, and read the environment's own ``pyvenv.cfg``
+instead of whichever file the path matches as a wildcard pattern - by :user:`repzakske`.
