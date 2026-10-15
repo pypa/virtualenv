@@ -63,13 +63,14 @@ function Get-PyVenvConfig(
 ) {
     Write-Verbose "Given ConfigDir=$ConfigDir, obtain values in pyvenv.cfg"
 
-    $pyvenvConfigPath = Join-Path -Resolve -Path $ConfigDir -ChildPath 'pyvenv.cfg' -ErrorAction Continue
+    $pyvenvConfigPath = Join-Path -Path $ConfigDir -ChildPath 'pyvenv.cfg'
+    $pyvenvConfigPath = Resolve-Path -LiteralPath $pyvenvConfigPath -ErrorAction Continue
 
     $pyvenvConfig = @{ }
 
     if ($pyvenvConfigPath) {
         Write-Verbose "File exists, parse ``key = value`` lines"
-        $pyvenvConfigContent = Get-Content -Path $pyvenvConfigPath
+        $pyvenvConfigContent = Get-Content -LiteralPath $pyvenvConfigPath.ProviderPath
 
         $pyvenvConfigContent | ForEach-Object {
             $keyval = $PSItem -split "\s*=\s*", 2
@@ -137,7 +138,7 @@ function global:pydoc {
 }
 
 $VenvExecPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$VenvExecDir = Get-Item -Path $VenvExecPath
+$VenvExecDir = Get-Item -LiteralPath $VenvExecPath
 
 Write-Verbose "Activation script is located in path: '$VenvExecPath'"
 
