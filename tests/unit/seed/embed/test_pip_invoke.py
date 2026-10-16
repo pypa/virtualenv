@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
-from shutil import copy2, copytree
+from shutil import copytree
 from typing import TYPE_CHECKING, Final
 from zipfile import ZipFile
 
@@ -11,10 +11,7 @@ import pytest
 
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
-from virtualenv.seed.wheels.embed import get_embed_wheel
-from virtualenv.seed.embed.pip_invoke import PipInvoke
-from virtualenv.seed.wheels.bundle import load_embed_wheel
-from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
+from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT, get_embed_wheel
 from virtualenv.util.path import safe_delete
 
 if TYPE_CHECKING:
