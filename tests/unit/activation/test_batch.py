@@ -130,6 +130,8 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
         pytest.param("dest", "&", id="destination-ampersand"),
         pytest.param("dest", "^", id="destination-caret"),
         pytest.param("dest", "!", id="destination-exclamation"),
+        pytest.param("dest", "\u2028", id="destination-line-separator"),
+        pytest.param("tcl_lib", "\x1a", id="tcl-end-of-file"),
         pytest.param("tcl_lib", "&", id="tcl-ampersand"),
         pytest.param("tk_lib", "&", id="tk-ampersand"),
     ],
@@ -144,8 +146,10 @@ def test_batch_skips_changed_paths(
     if field != "dest":
         monkeypatch.setattr(creator.interpreter, field, str(tmp_path / f"lib{character}name"), raising=False)
     creator.bin_dir.mkdir(parents=True)
+    for name in ("activate.bat", "deactivate.bat", "pydoc.bat", "keep.txt"):
+        (creator.bin_dir / name).write_text("old", encoding="utf-8")
     assert BatchActivator(VirtualEnvOptions(prompt=None)).generate(creator) == []
-    assert list(creator.bin_dir.iterdir()) == []
+    assert list(creator.bin_dir.iterdir()) == [creator.bin_dir / "keep.txt"]
     assert "skipping batch activation scripts" in caplog.text
     assert "cannot preserve" in caplog.text
 
@@ -163,7 +167,7 @@ def test_batch_skips_changed_paths(
 def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str) -> None:
     creator: Final[Creator] = session_via_cli([str(tmp_path / name), "--no-seed"], setup_logging=False).creator
     creator.bin_dir.mkdir(parents=True)
-    BatchActivator(VirtualEnvOptions(prompt="roundtrip")).generate(creator)
+    BatchActivator(VirtualEnvOptions(prompt="roundtrip$P")).generate(creator)
     snapshot: Final[str] = (
         f'@"{sys.executable}" -I -c "import json,os; '
         "print(json.dumps({k:os.environ.get(k) for k in ('VIRTUAL_ENV','PATH','PROMPT')}))\""
@@ -185,13 +189,18 @@ def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str) -> None:
     active: Final[dict[str, str]] = {
         "VIRTUAL_ENV": str(creator.dest),
         "PATH": f"{creator.bin_dir};{os.environ['PATH']}",
-        "PROMPT": "(roundtrip) original",
+        "PROMPT": "(roundtrip$$P) original",
     }
     assert [json.loads(line) for line in result.stdout.splitlines()] == [
         active,
         active,
         {"VIRTUAL_ENV": None, "PATH": os.environ["PATH"], "PROMPT": "original"},
     ]
+    assert not result.stderr
+
+
+def test_batch_quote_replaces_end_of_file() -> None:
+    assert BatchActivator.quote("before\x1aafter") == "before after"
 
 
 @pytest.mark.parametrize("activations", [1, 2], ids=["activate_once", "activate_twice"])

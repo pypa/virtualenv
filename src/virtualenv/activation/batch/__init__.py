@@ -26,10 +26,7 @@ LOGGER = logging.getLogger(__name__)
 # `cmd /V:ON`) - not cmd.exe's default, but confirmed on a real runner that a prompt like `foo!SECRET!`
 # then substitutes the actual value of an existing SECRET variable into the prompt, so it is neutered
 # unconditionally rather than only when that mode happens to be on.
-_CMD_OPERATORS: Final[tuple[str, ...]] = ("&", "|", "<", ">", "^", "!", '"')
-
-# These are valid filename characters that quote() would replace, changing the target directory.
-_PATH_UNSAFE_CHARS: Final[tuple[str, ...]] = ("&", "^", "!")
+_CMD_OPERATORS: Final[tuple[str, ...]] = ("&", "|", "<", ">", "^", "!", '"', "\x1a")
 
 _PATH_REPLACEMENT_NAMES: Final[dict[str, str]] = {
     "__VIRTUAL_ENV__": "the destination directory",
@@ -54,6 +51,8 @@ class BatchActivator(ViaTemplateActivator):
         if problems:
             for problem in problems:
                 LOGGER.warning("skipping batch activation scripts: %s", problem)
+            for template in self.templates():
+                (creator.bin_dir / self.as_name(template)).unlink(missing_ok=True)
             return []
         return super().generate(creator)
 
@@ -78,9 +77,15 @@ class BatchActivator(ViaTemplateActivator):
         base = super().instantiate_template(replacements, template, creator)
         return base.replace(os.linesep, "\n").replace("\n", os.linesep)
 
+    def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
+        return {
+            **super().substitutions(replacements, creator),
+            "__VIRTUAL_ENV_CALL__": self.quote(replacements["__VIRTUAL_ENV__"]).replace("%", "%%"),
+        }
+
 
 def _unsafe_path_reason(key: str, value: str) -> str | None:
-    found = sorted({char for char in value if char in _PATH_UNSAFE_CHARS})
+    found = sorted({char for char in value if char in _CMD_OPERATORS or collapse_line_boundaries(char) != char})
     if not found:
         return None
     return (

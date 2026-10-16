@@ -6,7 +6,7 @@
 )
 
 @REM Undo an activation that is still in effect, otherwise its values get saved as the ones to restore
-@if defined _OLD_VIRTUAL_PATH @call "__VIRTUAL_ENV__\__BIN_NAME__\deactivate.bat"
+@if defined _OLD_VIRTUAL_PATH @call "__VIRTUAL_ENV_CALL__\__BIN_NAME__\deactivate.bat"
 
 @set "VIRTUAL_ENV=__VIRTUAL_ENV__"
 
@@ -26,7 +26,7 @@
     )
 )
 @if not defined VIRTUAL_ENV_DISABLE_PROMPT (
-    @set "PROMPT=(%VIRTUAL_ENV_PROMPT%) %PROMPT%"
+    @set "PROMPT=(%VIRTUAL_ENV_PROMPT:$=$$%) %PROMPT%"
 )
 
 @REM Don't use () to avoid problems with them in %PATH%
