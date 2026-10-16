@@ -13,6 +13,7 @@ import subprocess
 import sys
 import textwrap
 import zipfile
+from argparse import ArgumentTypeError
 from collections import OrderedDict
 from itertools import product
 from pathlib import Path
@@ -47,6 +48,23 @@ def test_os_path_sep_not_allowed(tmp_path, capsys) -> None:
         f" as this would break the activation scripts"
     )
     assert msg in err, err
+
+
+@pytest.mark.parametrize("linked", [pytest.param(False, id="working-directory"), pytest.param(True, id="symlink")])
+def test_resolved_destination_rejects_path_separator(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, linked: bool
+) -> None:
+    parent: Final = tmp_path / f"parent{os.pathsep}directory"
+    parent.mkdir()
+    if linked:
+        if not fs_supports_symlink():
+            pytest.skip("requires directory symlinks")
+        (tmp_path / "link").symlink_to(parent, target_is_directory=True)
+        monkeypatch.chdir(tmp_path)
+    else:
+        monkeypatch.chdir(parent)
+    with pytest.raises(ArgumentTypeError, match="must not contain the path separator"):
+        Creator.validate_dest("link/env" if linked else "env")
 
 
 def _non_success_exit_code(capsys, target):

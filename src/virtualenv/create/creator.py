@@ -190,18 +190,18 @@ class Creator(ABC):
             bad = "".join(refused.keys())
             msg = f"the file system codec ({encoding}) cannot handle characters {bad!r} within {raw_value!r}"
             raise ArgumentTypeError(msg)
-        if os.pathsep in raw_value:
-            msg = (
-                f"destination {raw_value!r} must not contain the path separator ({os.pathsep})"
-                f" as this would break the activation scripts"
-            )
-            raise ArgumentTypeError(msg)
-
         value = Path(raw_value)
         if value.exists() and value.is_file():
             msg = f"the destination {value} already exists and is a file"
             raise ArgumentTypeError(msg)
         dest = Path(os.path.abspath(str(value))).resolve()  # on Windows absolute does not imply resolve so use both
+        for destination in (raw_value, str(dest)):
+            if os.pathsep in destination:
+                msg = (
+                    f"destination {destination!r} must not contain the path separator ({os.pathsep})"
+                    f" as this would break the activation scripts"
+                )
+                raise ArgumentTypeError(msg)
         value = dest
         while dest:
             if dest.exists():
