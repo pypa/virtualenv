@@ -118,6 +118,56 @@ def test_clear_direct_destination(tmp_path: Path, parent_link: bool) -> None:
     assert (session.creator.dest, marker.exists(), (target / "pyvenv.cfg").is_file()) == (target.resolve(), False, True)
 
 
+@pytest.mark.parametrize("creator_name", [pytest.param("builtin", id="builtin"), pytest.param("venv", id="venv")])
+@pytest.mark.parametrize("existing", [pytest.param(False, id="dangling"), pytest.param(True, id="existing")])
+@pytest.mark.parametrize(
+    "generated",
+    [
+        pytest.param(name, id=name)
+        for name in ("pyvenv.cfg", "activate", "pip", "CACHEDIR.TAG", ".gitignore", "_virtualenv.py", "_virtualenv.pth")
+    ],
+)
+def test_creator_replaces_generated_file_links(
+    tmp_path: Path,
+    creator_name: str,
+    existing: bool,
+    generated: str,
+) -> None:
+    command: Final = [
+        str(tmp_path / "env"),
+        "--creator",
+        creator_name,
+        "--pip",
+        "embed",
+        "--no-periodic-update",
+    ]
+    if generated.startswith("_virtualenv"):
+        if (python39 := shutil.which("python3.9")) is None:
+            pytest.skip("Python 3.9 is unavailable")
+        command.extend(["--python", python39])
+    session: Final = session_via_cli(command)
+    session.creator.bin_dir.mkdir(parents=True)
+    target: Final = session.creator.dest / "original"
+    if existing:
+        target.write_bytes(b"original")
+    path = (
+        session.creator.bin_dir / ("pip.exe" if generated == "pip" and os.name == "nt" else generated)
+        if generated in {"activate", "pip"}
+        else session.creator.dest / generated
+    )
+    if generated.startswith("_virtualenv"):
+        path = session.creator.purelib / generated
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.symlink_to(target)
+    with session:
+        session.run()
+    if existing and (generated == "CACHEDIR.TAG" or (generated == ".gitignore" and creator_name == "builtin")):
+        assert path.is_symlink()
+    else:
+        assert not path.is_symlink()
+    assert (target.read_bytes() if existing else target.exists()) == (b"original" if existing else False)
+
+
 def test_os_path_sep_not_allowed(tmp_path, capsys) -> None:
     target = str(tmp_path / f"a{os.pathsep}b")
     err = _non_success_exit_code(capsys, target)

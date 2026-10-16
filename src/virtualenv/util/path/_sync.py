@@ -26,6 +26,14 @@ def ensure_dir(path: Path) -> None:
         os.makedirs(str(path))
 
 
+def write_file(path: Path, data: bytes) -> None:
+    if path.is_symlink() or path.exists():
+        path.unlink()
+    # Exclusive creation rejects links introduced after the old entry was removed.
+    with path.open("xb") as stream:
+        stream.write(data)
+
+
 def ensure_safe_to_do(src: Path, dest: Path) -> None:
     if src == dest:
         msg = f"source and destination is the same {src}"
@@ -104,4 +112,5 @@ __all__ = [
     "ensure_dir",
     "safe_delete",
     "symlink",
+    "write_file",
 ]

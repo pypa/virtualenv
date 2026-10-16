@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from virtualenv.create.creator import Creator, CreatorMeta
 from virtualenv.info import fs_supports_symlink
+from virtualenv.util.path import write_file
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
@@ -120,10 +121,10 @@ class ViaGlobalRefApi(Creator, ABC):
         if text:
             pth = self.purelib / "_virtualenv.pth"
             LOGGER.debug("create virtualenv import hook file %s", pth)
-            pth.write_text("import _virtualenv", encoding="utf-8")
+            write_file(pth, b"import _virtualenv")
             dest_path = self.purelib / "_virtualenv.py"
             LOGGER.debug("create %s", dest_path)
-            dest_path.write_text(text, encoding="utf-8")
+            write_file(dest_path, text.encode("utf-8"))
 
     def env_patch_text(self) -> str:
         """Patch the distutils package to not be derailed by its configuration files."""
