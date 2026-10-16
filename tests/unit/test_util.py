@@ -33,6 +33,10 @@ if TYPE_CHECKING:
         pytest.param(0o600, 0o022, 0o644, id="private-source"),
         pytest.param(0o777, 0o022, 0o755, id="executable"),
         pytest.param(0o777, 0o077, 0o700, id="private-executable"),
+        pytest.param(0o666, 0o000, 0o644, id="permissive-umask"),
+        pytest.param(0o777, 0o000, 0o755, id="permissive-executable"),
+        pytest.param(0o666, 0o002, 0o644, id="group-umask"),
+        pytest.param(0o777, 0o002, 0o755, id="group-executable"),
     ],
 )
 def test_copy_uses_current_umask(tmp_path: Path, directory: bool, source_mode: int, mask: int, expected: int) -> None:

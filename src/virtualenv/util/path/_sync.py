@@ -62,7 +62,7 @@ def copytree(src: str, dest: str) -> None:
 
 def _copy_file(src: Path, dest: Path) -> None:
     ensure_safe_to_do(src, dest)
-    mode: Final = 0o777 if src.stat().st_mode & (S_IXUSR | S_IXGRP | S_IXOTH) else 0o666
+    mode: Final = 0o755 if src.stat().st_mode & (S_IXUSR | S_IXGRP | S_IXOTH) else 0o644
     flags: Final = os.O_WRONLY | os.O_CREAT | os.O_EXCL | (os.O_BINARY if os.name == "nt" else 0)
     # Creation applies the current umask without changing the process-wide setting.
     with src.open("rb") as source, os.fdopen(os.open(str(dest), flags, mode), "wb") as target:
