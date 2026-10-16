@@ -7,7 +7,7 @@ import zipfile
 from stat import S_IWGRP, S_IWOTH, S_IWUSR
 from subprocess import Popen, check_call
 from threading import Thread
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from python_discovery import PythonInfo
@@ -15,6 +15,7 @@ from python_discovery import _cached_py_info as cached_py_info
 
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
+from virtualenv.seed.embed.via_app_data.pip_install import symlink
 from virtualenv.seed.embed.via_app_data.pip_install.base import _safe_extract_zip
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
 from virtualenv.util.path import safe_delete
@@ -23,6 +24,21 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from pytest_mock import MockerFixture
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
+def test_seed_image_compiles_without_site_initialization(tmp_path: Path, mocker: MockerFixture) -> None:
+    process: Final = mocker.spy(symlink, "Popen")
+    session: Final = cli_run([
+        str(tmp_path / "env"),
+        "--app-data",
+        str(tmp_path / "cache"),
+        "--symlink-app-data",
+        "--no-periodic-update",
+        "--no-setuptools",
+    ])
+    assert process.call_args.args[0][1:5] == ["-I", "-S", "-m", "compileall"]
+    assert list((session.creator.purelib / "pip" / "__pycache__").glob("__init__.*.pyc"))
 
 
 @pytest.mark.slow
