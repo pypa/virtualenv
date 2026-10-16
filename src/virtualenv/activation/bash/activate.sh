@@ -137,19 +137,16 @@ else
         export TK_LIBRARY
     fi
 
-if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] &&
-    { [ -n "${BASH_VERSION-}" ] || [ -n "${ZSH_VERSION-}" ]; }; then
+    if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] &&
+        { [ -n "${BASH_VERSION-}" ] || [ -n "${ZSH_VERSION-}" ]; }; then
         _OLD_VIRTUAL_PS1="${PS1-}"
         _VIRTUAL_PROMPT="${VIRTUAL_ENV_PROMPT}"
         # bash, and zsh under PROMPT_SUBST, re-expand backslashes, dollar signs and backticks in PS1 on every redraw;
         # zsh gets the escaping even without the option, since a user can set it after activation. The guards keep
         # the substitution away from POSIX shells such as dash, which reject it with "Bad substitution"
         if [ -n "${BASH_VERSION-}" ]; then
-            # bash first decodes its backslash prompt escapes, turning \\ into \ and \$ into $ (or # for root), and only
-            # then expands the result, so each character needs escaping for both passes
-            _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\\/\\\\\\\\}"
-            _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\$/\\\\\$}"
-            _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\`/\\\\\`}"
+            # Expand the value only after bash decodes prompt escapes.
+            PS1='(${VIRTUAL_ENV_PROMPT}) '"${PS1-}"
         elif [ -n "${ZSH_VERSION-}" ]; then
             _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\\/\\\\}"
             _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\$/\\\$}"
@@ -159,7 +156,9 @@ if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] &&
         if [ -n "${ZSH_VERSION-}" ]; then
             _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\%/%%}"
         fi
-        PS1="(${_VIRTUAL_PROMPT}) ${PS1-}"
+        if [ -z "${BASH_VERSION-}" ]; then
+            PS1="(${_VIRTUAL_PROMPT}) ${PS1-}"
+        fi
         unset _VIRTUAL_PROMPT
     fi
 

@@ -25,7 +25,7 @@ _BASH: Final = shutil.which("bash")
 @pytest.mark.parametrize(
     ("setup", "expected"),
     [
-        pytest.param("", "(example) base ", id="bash"),
+        pytest.param("", "(${VIRTUAL_ENV_PROMPT}) base ", id="bash"),
         pytest.param("unset BASH_VERSION ZSH_VERSION;", "base ", id="unrecognized-shell"),
     ],
 )
@@ -415,9 +415,14 @@ def test_prompt_does_not_run_commands(
         pytest.param("e\\", id="trailing-backslash"),
     ],
 )
+@pytest.mark.parametrize("compatibility", [pytest.param("42", id="bash42"), pytest.param("51", id="bash51")])
 def test_prompt_renders_name_literally(
-    prompt_after_activate: Callable[[str | None, str], tuple[Path, str]], prompt: str
+    prompt_after_activate: Callable[[str | None, str], tuple[Path, str]],
+    prompt: str,
+    compatibility: str,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    monkeypatch.setenv("BASH_COMPAT", compatibility)
     _, rendered = prompt_after_activate(prompt, "env")
 
     assert rendered.startswith(f"({prompt}) ")
