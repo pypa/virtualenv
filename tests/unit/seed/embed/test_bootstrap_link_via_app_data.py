@@ -51,6 +51,50 @@ def test_seed_image_compiles_in_isolation(
     assert not marker.exists()
 
 
+def test_seed_metadata_cannot_remove_environment_root(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    args: Final = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
+    session: Final = cli_run(args, setup_logging=False)
+    marker: Final = session.creator.dest / "keep.txt"
+    marker.write_text("keep", encoding="utf-8")
+    metadata: Final = next(session.creator.purelib.glob("pip-*.dist-info"))
+    (metadata / "top_level.txt").write_text(str(session.creator.dest), encoding="utf-8")
+    cli_run(args, setup_logging=False)
+    assert (marker.read_text(encoding="utf-8"), (session.creator.purelib / "pip" / "__init__.py").is_file()) == (
+        "keep",
+        True,
+    )
+    assert "skip removal of" in caplog.text
+
+
+@pytest.mark.parametrize(
+    "linked",
+    [
+        pytest.param(False, id="copy"),
+        pytest.param(
+            True, id="symlink", marks=pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+        ),
+    ],
+)
+def test_seed_metadata_keeps_reseeding_supported(
+    tmp_path: Path, linked: bool, caplog: pytest.LogCaptureFixture
+) -> None:
+    args: Final = [
+        str(tmp_path / "env"),
+        "--pip",
+        "embed",
+        "--no-periodic-update",
+        *(["--symlink-app-data"] if linked else []),
+    ]
+    cli_run(args, setup_logging=False)
+    session: Final = cli_run(args, setup_logging=False)
+    package: Final = session.creator.purelib / "pip"
+    assert ((package / "__init__.py").is_file(), package.is_symlink(), "skip removal of" in caplog.text) == (
+        True,
+        linked,
+        False,
+    )
+
+
 @pytest.mark.slow
 @pytest.mark.parametrize("copies", [False, True] if fs_supports_symlink() else [True])
 def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies) -> None:
