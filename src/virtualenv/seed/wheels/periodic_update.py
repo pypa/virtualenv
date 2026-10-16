@@ -420,18 +420,11 @@ def _pypi_sha256_for_wheel(wheel: Wheel) -> str | None:
     return sha256 if isinstance(sha256, str) else None
 
 
-#: Opt-in escape hatch to restore the pre-2026 behavior of falling back to an unverified HTTPS context when the
-#: verified request fails. Off by default: a failed TLS handshake on the PyPI metadata lookup now aborts the update
-#: instead of silently downgrading, because the response drives which wheel version virtualenv thinks is up to date.
-_INSECURE_FALLBACK_ENV = "VIRTUALENV_PERIODIC_UPDATE_INSECURE"
-
-
 def _request_context() -> Generator[ssl.SSLContext | None, None, None]:
     yield None
     if (setting := get_env_var("periodic_update_insecure", BoolType(bool, bool), os.environ)) and setting[0]:
         LOGGER.warning(
-            "falling back to unverified HTTPS for PyPI metadata because %s is set",
-            _INSECURE_FALLBACK_ENV,
+            "falling back to unverified HTTPS for PyPI metadata because VIRTUALENV_PERIODIC_UPDATE_INSECURE is enabled",
         )
         yield ssl._create_unverified_context()  # ruff:ignore[suspicious-unverified-context-usage, private-member-access]
 
