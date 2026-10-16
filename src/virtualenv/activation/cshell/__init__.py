@@ -4,6 +4,7 @@ import shlex
 from typing import TYPE_CHECKING, Final
 
 from virtualenv.activation.via_template import ViaTemplateActivator
+from virtualenv.util.text import collapse_line_boundaries
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -33,11 +34,14 @@ class CShellActivator(ViaTemplateActivator):
         return (f"'{quoted}'" if quoted == string else quoted).replace("\\", "'\\\\'").replace("!", "'\\!'")
 
     def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
-        # carries its own quoting, so it cannot go through the shared quote() pass with the other replacements;
-        # tcsh and plain csh disagree on whether % needs escaping, so activate.csh picks one of these at runtime
-        display = creator.env_name if self.flag_prompt is None else self.flag_prompt
+        # Normalize display text without changing the filesystem paths used by activation.
+        values: Final = {
+            **replacements,
+            "__VIRTUAL_PROMPT__": collapse_line_boundaries(replacements["__VIRTUAL_PROMPT__"]),
+        }
+        display: Final = collapse_line_boundaries(creator.env_name if self.flag_prompt is None else self.flag_prompt)
         return {
-            **super().substitutions(replacements, creator),
+            **super().substitutions(values, creator),
             _PROMPT_DISPLAY_TCSH: _prompt_literal(display, tcsh=True),
             _PROMPT_DISPLAY_PLAIN: _prompt_literal(display, tcsh=False),
         }
