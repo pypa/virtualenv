@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import os
-from configparser import ConfigParser
 from contextlib import contextmanager
 from pathlib import Path
 from shutil import copyfile
@@ -12,6 +11,7 @@ from typing import TYPE_CHECKING, Final
 from zipfile import ZipFile
 
 from virtualenv.seed.embed.base_embed import BaseEmbed
+from virtualenv.seed.embed.via_app_data.pip_install.base import EntryPointConfig
 from virtualenv.seed.wheels import get_wheel, pip_wheel_env_run
 from virtualenv.seed.wheels.acquire import PIP_RUN
 from virtualenv.seed.wheels.util import Version
@@ -98,7 +98,7 @@ class PipInvoke(BaseEmbed):
                         entry.unlink()
 
     def _detach_entry_points(self, creator: Creator, content: str) -> None:
-        entries: Final = ConfigParser()
+        entries: Final = EntryPointConfig(interpolation=None, strict=False)
         entries.read_string(content)
         for section in ("console_scripts", "gui_scripts"):
             if entries.has_section(section):
