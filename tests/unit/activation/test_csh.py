@@ -5,7 +5,7 @@ import sys
 from argparse import Namespace
 from shutil import which
 from subprocess import check_output, run
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from packaging.version import Version
@@ -244,9 +244,18 @@ def test_csh(activation_tester_class, activation_tester) -> None:
 
 
 @pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
-@pytest.mark.parametrize("prompt", [pytest.param("中^b", id="caret"), pytest.param("中!b", id="history")])
+@pytest.mark.parametrize(
+    "prompt",
+    [
+        pytest.param("中^b", id="caret"),
+        pytest.param("中!b", id="history"),
+        pytest.param(r"中\^b", id="backslash-caret"),
+        pytest.param(r"丁\!", id="backslash-history"),
+    ],
+)
 def test_cshell_prompt_in_gbk_locale(csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, prompt: str) -> None:
-    if "zh_CN.gbk" not in check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines():
+    locales: Final = check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
+    if (locale := next((name for name in locales if name.lower().replace("-", "").endswith(".gbk")), None)) is None:
         pytest.skip("GBK locale is unavailable")
     _, content = csh_venv("plain", prompt=prompt)
     script = tmp_path / "activate.csh"
@@ -254,7 +263,7 @@ def test_cshell_prompt_in_gbk_locale(csh_venv: Callable[..., tuple[Path, str]], 
     result = run(
         [TCSH, "-f", "-i"],
         input=f"source {script}\nexit\n".encode(),
-        env={**os.environ, "LC_ALL": "zh_CN.gbk"},
+        env={**os.environ, "LC_ALL": locale},
         capture_output=True,
         timeout=30,
         check=True,

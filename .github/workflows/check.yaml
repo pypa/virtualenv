@@ -153,7 +153,7 @@ jobs:
             echo "deb [signed-by=/etc/apt/keyrings/fury-nushell.gpg] https://apt.fury.io/nushell/ /" \
               | sudo tee /etc/apt/sources.list.d/fury.list
             retry sudo apt-get update -y
-            retry sudo apt-get install snapd fish csh nushell -y
+            retry sudo apt-get install snapd fish csh tcsh locales-all nushell -y
           elif [ "$RUNNER_OS" = "macOS" ]; then
             brew update
             if [[ "$MATRIX_PY" == brew@* ]]; then

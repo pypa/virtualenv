@@ -64,7 +64,7 @@ def _prompt_literal(value: str, *, tcsh: bool) -> str:
         elif char == "^" and tcsh:
             parts.append("'\\\\^'")
         elif char == "\\":
-            parts.append("\\\\")
+            parts.append("'\\\\\\\\'")
         else:
             parts.append(char)
     parts.append("'")
