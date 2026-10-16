@@ -80,6 +80,9 @@ def test_xonsh(activation_tester_class, activation_tester) -> None:
             # actionable.
             env["XONTRIBS_AUTOLOAD_DISABLED"] = "1"
             env["XONSH_SHOW_TRACEBACK"] = "1"
+            # xonsh runs on its own interpreter, so the EncodingWarnings tox enables come from xonsh's code and would
+            # land in the parsed output
+            env.pop("PYTHONWARNDEFAULTENCODING", None)
             return env
 
         def print_prompt(self):
