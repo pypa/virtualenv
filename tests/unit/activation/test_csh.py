@@ -238,6 +238,9 @@ def test_csh(activation_tester_class, activation_tester) -> None:
         def __init__(self, session) -> None:
             super().__init__(CShellActivator, session, "csh", "activate.csh", "csh")
 
+        def activate_call(self, script: Path) -> str:
+            return f"source {self.quote(str(script))}"
+
         def print_prompt(self) -> str:
             # Original csh doesn't print the last newline,
             # breaking the test; hence the trailing echo.
