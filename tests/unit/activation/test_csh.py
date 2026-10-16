@@ -5,7 +5,7 @@ import sys
 from argparse import Namespace
 from shutil import which
 from subprocess import check_output, run
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from packaging.version import Version
@@ -19,6 +19,38 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 TCSH = which("tcsh")
+
+
+@pytest.mark.skipif(IS_WIN or TCSH is None, reason="tcsh is required")
+@pytest.mark.parametrize(
+    "option", [pytest.param("", id="default"), pytest.param("set backslash_quote\n", id="backslash-quote")]
+)
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param("a\\b", id="backslash"),
+        pytest.param("a\\\\b\\", id="trailing-backslash"),
+        pytest.param("it's mine", id="apostrophe"),
+        pytest.param("a\\!b", id="history-character"),
+    ],
+)
+def test_cshell_prompt_preserves_quoting_mode(
+    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, value: str, option: str
+) -> None:
+    dest, content = csh_venv("ordinary", prompt=value)
+    script: Final = tmp_path / "activate.csh"
+    script.write_text(content, encoding="utf-8")
+    result: Final = run(
+        [TCSH, "-f"],
+        input=f'{option}set prompt = "> "\nsource {script}\nprintf "%s\\n" "$VIRTUAL_ENV:q" "$VIRTUAL_ENV_PROMPT:q" "$prompt:q"\n',
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+        check=True,
+    )
+    display: Final = value.replace("\\", "\\\\").replace("!", "\\!")
+    assert result.stdout == f"{dest}\n{value}\n({display}) > \n"
 
 
 @pytest.mark.parametrize(
@@ -123,7 +155,7 @@ def csh_plain_activate(tmp_path_factory: pytest.TempPathFactory, current_fastest
         pytest.param("has!bang", "has'\\\\'\\!bang", "has'\\\\'\\!bang", id="bang"),
         pytest.param("has%pct", "has%%pct", "has%pct", id="percent"),
         pytest.param("has^caret", "has\\^caret", "has^caret", id="caret"),
-        pytest.param("a!b%p c", "a\\\\!b%%p c", "a\\\\!b%p c", id="bang-and-percent"),
+        pytest.param("a!b%p c", "a'\\\\'\\!b%%p c", "a'\\\\'\\!b%p c", id="bang-and-percent"),
     ],
 )
 def test_cshell_escapes_prompt_expansion(
@@ -133,8 +165,8 @@ def test_cshell_escapes_prompt_expansion(
 
     # tcsh treats a bare % as the start of a prompt escape and needs it doubled; plain csh has no such escape, and
     # doubling it there would show two literal percent signs, so activate.csh picks the branch to use at runtime
-    assert f"set prompt = '(''{tcsh_escaped}'') '" in content
-    assert f"set prompt = '(''{plain_escaped}'') '" in content
+    assert f"set _virtualenv_prompt_tcsh = '{tcsh_escaped}'\n" in content
+    assert f"set _virtualenv_prompt_plain = '{plain_escaped}'\n" in content
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")

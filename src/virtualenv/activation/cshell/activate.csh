@@ -55,6 +55,10 @@ else
     set do_prompt = "1"
 endif
 
+# Skipped branches use a different quote scanner, so assign prompt literals before entering them.
+set _virtualenv_prompt_tcsh = __VIRTUAL_PROMPT_DISPLAY_TCSH__
+set _virtualenv_prompt_plain = __VIRTUAL_PROMPT_DISPLAY_PLAIN__
+
 if ( $do_prompt == "1" ) then
     # Could be in a non-interactive environment,
     # in which case, $prompt is undefined and we wouldn't
@@ -64,15 +68,17 @@ if ( $do_prompt == "1" ) then
         if ( "$prompt:q" =~ *"$newline:q"* ) then
             :
         else if ( $?tcsh ) then
-            set prompt = '('__VIRTUAL_PROMPT_DISPLAY_TCSH__') '"$prompt:q"
+            set prompt = '('"$_virtualenv_prompt_tcsh:q"') '"$prompt:q"
         else
-            set prompt = '('__VIRTUAL_PROMPT_DISPLAY_PLAIN__') '"$prompt:q"
+            set prompt = '('"$_virtualenv_prompt_plain:q"') '"$prompt:q"
         endif
     endif
 endif
 
 unset env_name
 unset do_prompt
+unset _virtualenv_prompt_tcsh
+unset _virtualenv_prompt_plain
 
 alias pydoc python -m pydoc
 
