@@ -28,7 +28,7 @@ class XonshActivator(ViaTemplateActivator):
 
     @staticmethod
     def quote(string: str) -> str:
-        return repr(string)
+        return ascii(string)
 
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:
         data = super().replacements(creator, dest_folder)

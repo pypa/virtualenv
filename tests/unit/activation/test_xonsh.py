@@ -181,3 +181,25 @@ def test_xonsh_switch_restores_unset_tk_libraries(tmp_path: Path) -> None:
         check=True,
     )
     assert json.loads(result.stdout) == [None, None]
+
+
+@pytest.mark.skipif(which("xonsh") is None, reason="requires xonsh")
+@pytest.mark.parametrize("encoding", [pytest.param("gbk", id="gbk"), pytest.param("big5", id="big5")])
+def test_xonsh_preserves_unicode_values(tmp_path: Path, encoding: str) -> None:
+    destination: Final = tmp_path / "中文環境"
+    prompt: Final = "中文提示"
+    session: Final = cli_run([str(destination), "--no-seed", "--activators", "xonsh", "--prompt", prompt])
+    result: Final = subprocess.run(
+        [
+            "xonsh",
+            "--no-rc",
+            "-c",
+            f"source @({str(session.creator.bin_dir / 'activate.xsh')!a})\nimport json\nprint(json.dumps([$VIRTUAL_ENV, $VIRTUAL_ENV_PROMPT]))",
+        ],
+        env={**os.environ, "XONSH_ENCODING": encoding},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert json.loads(result.stdout) == [str(destination), prompt]
