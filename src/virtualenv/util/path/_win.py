@@ -71,7 +71,6 @@ if os.name == "nt":
         ]
 
 
-__all__ = [
-    "clear_readonly",
-    "get_short_path_name",
-]
+__all__ = ["get_short_path_name"]
+if os.name == "nt":
+    __all__ += ["clear_readonly"]
