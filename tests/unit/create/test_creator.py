@@ -34,11 +34,11 @@ from virtualenv.create.via_global_ref.builtin.cpython.common import is_mac_os_fr
 from virtualenv.info import IS_PYPY, IS_WIN, fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.run.plugin.creators import CreatorSelector
+from virtualenv.util.error import ProcessCallFailedError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pytest_mock import MockerFixture
-
     from virtualenv.run.session import Session
 
 CURRENT = PythonInfo.current_system()
@@ -461,8 +461,7 @@ def test_venv_configuration_uses_selected_options(tmp_path: Path, global_package
 
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
-def test_venv_subprocess_uses_isolated_mode(tmp_path: Path, mocker: MockerFixture) -> None:
-    process: Final = mocker.spy(subprocess, "Popen")
+def test_venv_subprocess_creates_environment(tmp_path: Path) -> None:
     session: Final = cli_run([
         "-p",
         str(CURRENT.executable),
@@ -473,7 +472,6 @@ def test_venv_subprocess_uses_isolated_mode(tmp_path: Path, mocker: MockerFixtur
         "--no-periodic-update",
     ])
     assert (session.creator.dest / "pyvenv.cfg").is_file()
-    assert any(call.args[0][1:4] == ["-I", "-m", "venv"] for call in process.call_args_list)
 
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
@@ -1173,3 +1171,11 @@ def test_pyenv_cfg_write_logs_escaped_values(tmp_path: Path, caplog: pytest.LogC
     caplog.set_level(logging.DEBUG)
     PyEnvCfg(OrderedDict({"prompt": "a\x1bb"}), tmp_path / "pyvenv.cfg").write()
     assert "\t'prompt = \"a\\x1bb\"'" in caplog.text
+
+
+@pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
+def test_venv_subprocess_respects_pythonhome(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = session_via_cli(["-p", str(CURRENT.executable), str(tmp_path / "env"), "--no-seed", "--creator", "venv"])
+    monkeypatch.setenv("PYTHONHOME", str(tmp_path / "missing-home"))
+    with pytest.raises(ProcessCallFailedError):
+        session.run()
