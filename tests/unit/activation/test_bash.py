@@ -407,3 +407,33 @@ def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> 
             )
 
     activation_tester(Bash)
+
+
+@pytest.mark.skipif(IS_WIN, reason="requires POSIX shells")
+@pytest.mark.parametrize("mode", [pytest.param("eval", id="eval"), pytest.param("stdin", id="stdin")])
+def test_bash_relocation_without_source_preserves_path(tmp_path: Path, mode: str) -> None:
+    cli_run([str(tmp_path / "original"), "--no-seed", "--activators", "bash"])
+    (tmp_path / "original").rename(tmp_path / "moved")
+    activation: Final = tmp_path / "moved" / "bin" / "activate"
+    result: Final = subprocess.run(
+        [
+            "/bin/bash",
+            "--noprofile",
+            "--norc",
+            "-c",
+            'eval "$(cat "$1")"; printf "%s|%s" "$PATH" "${VIRTUAL_ENV-unset}"',
+            "test",
+            str(activation),
+        ]
+        if mode == "eval"
+        else ["/bin/bash", "--noprofile", "--norc"],
+        input=None
+        if mode == "eval"
+        else activation.read_text(encoding="utf-8") + '\nprintf "%s|%s" "$PATH" "${VIRTUAL_ENV-unset}"',
+        env={"PATH": "/usr/bin:/bin"},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert result.stdout == "/usr/bin:/bin|unset"

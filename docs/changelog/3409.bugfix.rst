@@ -1,2 +1,5 @@
 Stop activation of a moved environment when the shell cannot locate its script, required path tools fail, or the new
 location has no ``pyvenv.cfg``, instead of continuing with an incorrect environment path.
+
+Leave ``PATH`` unchanged when a moved activation script is evaluated or read from standard input without a source
+filename.
