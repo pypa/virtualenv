@@ -1,2 +1,2 @@
-Reject destinations whose resolved path contains the platform's PATH separator, including separators inherited from
-the working directory or a directory symlink.
+Reject destinations whose resolved path contains the platform's PATH separator, including separators inherited from the
+working directory or a directory symlink.
