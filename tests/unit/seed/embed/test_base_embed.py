@@ -101,3 +101,18 @@ def at_version(mocker: MockerFixture) -> Callable[[int, int], MagicMock]:
 class _VersionInfo(NamedTuple):
     major: int
     minor: int
+
+
+@pytest.mark.parametrize("seeder", [pytest.param("pip", id="pip"), pytest.param("app-data", id="app-data")])
+@pytest.mark.parametrize(
+    "version",
+    [
+        pytest.param("1.zip", id="archive"),
+        pytest.param("1+local.zip", id="local-archive"),
+        pytest.param("invalid", id="invalid"),
+    ],
+)
+def test_seed_version_rejected_before_creation(tmp_path: Path, seeder: str, version: str) -> None:
+    with pytest.raises(SystemExit) as context:
+        session_via_cli([str(tmp_path / "env"), "--seeder", seeder, "--pip", version])
+    assert context.value.code == 2

@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Final
 from zipfile import ZipFile
 
 from packaging.specifiers import InvalidSpecifier, SpecifierSet
+from packaging.version import InvalidVersion
 from packaging.version import Version as PackagingVersion
 
 if TYPE_CHECKING:
@@ -106,7 +107,34 @@ class Version:
 
     @staticmethod
     def of_version(value: str | None) -> str | None:
-        return None if value in Version.non_version else value
+        return None if value is None or value in Version.non_version else Version.validate(value)
+
+    @staticmethod
+    def validate(value: str) -> str:
+        if value in {*Version.non_version, "none"}:
+            return value
+        try:
+            PackagingVersion(value)
+        except InvalidVersion as exception:
+            msg = f"invalid seed version: {value!r}"
+            raise ValueError(msg) from exception
+        if value.lower().endswith((
+            ".zip",
+            ".whl",
+            ".tar",
+            ".tar.gz",
+            ".tgz",
+            ".tar.bz2",
+            ".tbz",
+            ".tar.xz",
+            ".txz",
+            ".tlz",
+            ".tar.lz",
+            ".tar.lzma",
+        )):
+            msg = f"archive-like seed version: {value!r}"
+            raise ValueError(msg)
+        return value
 
 
 __all__ = [

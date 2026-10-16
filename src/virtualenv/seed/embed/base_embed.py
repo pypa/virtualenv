@@ -125,6 +125,7 @@ class BaseEmbed(Seeder, ABC):
                 f"--{distribution}",
                 dest=distribution,
                 metavar="version",
+                type=Version.validate,
                 help=help_,
                 default=default,
             )

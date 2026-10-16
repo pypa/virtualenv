@@ -1,0 +1,1 @@
+Reject invalid and archive-like seed versions while parsing options for both seeders, before creating an environment or looking up wheels. Apply the same validation to versions obtained from wheel filenames.
