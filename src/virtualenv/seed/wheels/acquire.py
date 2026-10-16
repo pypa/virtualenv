@@ -108,6 +108,11 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
     to_folder: Path,
     env: dict[str, str],
 ) -> Wheel:
+    """Raise ValueError for invalid requirements, CalledProcessError for pip failures, and RuntimeError for invalid wheels.
+
+    Digest verification failures raise UnverifiedWheelError before the wheel enters the cache.
+
+    """
     _check_distribution(distribution)
     _check_version_spec(version_spec)
     to_download: Final = f"{distribution}{version_spec or ''}"
