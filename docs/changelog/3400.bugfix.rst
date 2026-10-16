@@ -1,2 +1,4 @@
 Preserve an existing ``pyvenv.cfg`` when a prompt or configuration value cannot be encoded as UTF-8, instead of leaving
 the file empty after a failed environment creation.
+
+Debug logs show configuration values with escaping so embedded line boundaries remain visible.
