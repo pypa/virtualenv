@@ -513,6 +513,27 @@ def test_bash_relocation_without_source_preserves_path(moved_bash_activate: Path
 
 
 @pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
+@pytest.mark.parametrize(
+    "mode", [pytest.param("disabled", id="promptvars-disabled"), pytest.param("unset", id="unset-with-nounset")]
+)
+def test_bash_prompt_options(tmp_path: Path, mode: str) -> None:
+    session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "bash", "--prompt", "literal"])
+    command: Final = (
+        'shopt -u promptvars; PS1=; . "$1"; printf "%s" "${PS1@P}"'
+        if mode == "disabled"
+        else 'PS1=; . "$1"; set -u; unset VIRTUAL_ENV_PROMPT; printf "%s" "${PS1@P}"'
+    )
+    result: Final = subprocess.run(
+        ["bash", "-c", command, "test", str(session.creator.bin_dir / "activate")],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert result.stdout == ("(literal) " if mode == "disabled" else "() ")
+
+
+@pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
 def test_bash_relocation_rejects_sourced_wrapper(moved_bash_activate: Path) -> None:
     wrapper: Final = moved_bash_activate.with_name("wrapper")
     wrapper.write_text('eval "$(cat "$1")"\n', encoding="utf-8")

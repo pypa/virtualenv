@@ -2,3 +2,5 @@ Leave ``PS1`` unchanged when sourcing the POSIX activation script in a shell oth
 escaping rules virtualenv handles. ``VIRTUAL_ENV_PROMPT`` remains available to custom prompts in other shells.
 
 Preserve literal prompt characters when bash runs with older compatibility settings.
+
+Keep literal prompt display with promptvars disabled and avoid nounset errors after the prompt value is removed.

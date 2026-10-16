@@ -146,7 +146,12 @@ else
         # the substitution away from POSIX shells such as dash, which reject it with "Bad substitution"
         if [ -n "${BASH_VERSION-}" ]; then
             # Expand the value only after bash decodes prompt escapes.
-            PS1='(${VIRTUAL_ENV_PROMPT}) '"${PS1-}"
+            if shopt -q promptvars; then
+                PS1='(${VIRTUAL_ENV_PROMPT-}) '"${PS1-}"
+            else
+                _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\\/\\\\}"
+                PS1="(${_VIRTUAL_PROMPT}) ${PS1-}"
+            fi
         elif [ -n "${ZSH_VERSION-}" ]; then
             _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\\/\\\\}"
             _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\$/\\\$}"
