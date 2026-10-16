@@ -14,7 +14,7 @@ from itertools import groupby
 from pathlib import Path
 from shutil import copy2
 from subprocess import DEVNULL, Popen
-from textwrap import dedent
+from textwrap import dedent, indent
 from threading import Thread
 from time import sleep
 from typing import TYPE_CHECKING, Final
@@ -24,6 +24,7 @@ from urllib.request import urlopen
 from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.config.convert import BoolType
 from virtualenv.config.env_var import get_env_var
+from virtualenv.info import IS_ZIPAPP, ROOT
 from virtualenv.seed.wheels.embed import BUNDLE_SUPPORT
 from virtualenv.seed.wheels.util import Wheel
 from virtualenv.util.subprocess import CREATE_NO_WINDOW
@@ -236,22 +237,25 @@ def trigger_update(  # ruff:ignore[too-many-arguments]
     periodic: bool,
 ) -> None:
     wheel_path = None if wheel is None else str(wheel.path)
-    cmd = [
-        sys.executable,
-        "-c",
+    code = (
         dedent(
-            """
-        import sys
-        sys.path = [p for p in sys.path if p]
+            """\
         from virtualenv.report import setup_report, MAX_LEVEL
         from virtualenv.seed.wheels.periodic_update import do_update
         setup_report(MAX_LEVEL, show_pid=True)
         do_update({!r}, {!r}, {!r}, {!r}, {!r}, {!r})
-        """,
+        """
         )
         .strip()
-        .format(distribution, for_py_version, wheel_path, str(app_data), [str(p) for p in search_dirs], periodic),
-    ]
+        .format(distribution, for_py_version, wheel_path, str(app_data), [str(p) for p in search_dirs], periodic)
+    )
+    if IS_ZIPAPP:
+        code = f"import runpy\nwith runpy.run_path({ROOT!r}, run_name='__loader__')['VersionedFindLoad']():\n" + indent(
+            code, "    "
+        )
+    else:
+        code = f"import sys\nsys.path.insert(0, {ROOT!r})\n{code}"
+    cmd: Final = [sys.executable, "-I", "-c", code]
     debug = env.get("_VIRTUALENV_PERIODIC_UPDATE_INLINE") == "1"
     pipe = None if debug else DEVNULL
     kwargs = {"stdout": pipe, "stderr": pipe}

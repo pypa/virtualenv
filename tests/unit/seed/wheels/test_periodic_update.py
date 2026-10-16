@@ -20,6 +20,7 @@ import pytest
 
 from virtualenv import cli_run
 from virtualenv.app_data import AppDataDiskFolder
+from virtualenv.info import ROOT
 from virtualenv.seed.wheels import Wheel
 from virtualenv.seed.wheels.embed import BUNDLE_SUPPORT, get_embed_wheel
 from virtualenv.seed.wheels.periodic_update import (
@@ -470,7 +471,7 @@ def test_trigger_update_command(
         dedent(
             """\
         import sys
-        sys.path = [p for p in sys.path if p]
+        sys.path.insert(0, {!r})
         from virtualenv.report import setup_report, MAX_LEVEL
         from virtualenv.seed.wheels.periodic_update import do_update
         setup_report(MAX_LEVEL, show_pid=True)
@@ -478,10 +479,12 @@ def test_trigger_update_command(
         """
         )
         .strip()
-        .format(for_py_version, str(current.path), str(session_app_data), [str(tmp_path / "a"), str(tmp_path / "b")])
+        .format(
+            ROOT, for_py_version, str(current.path), str(session_app_data), [str(tmp_path / "a"), str(tmp_path / "b")]
+        )
     )
     process.assert_called_once_with(
-        [sys.executable, "-c", command],
+        [sys.executable, "-I", "-c", command],
         stdout=None if debug else subprocess.DEVNULL,
         stderr=None if debug else subprocess.DEVNULL,
         **({"creationflags": CREATE_NO_WINDOW} if not debug and sys.platform == "win32" else {}),

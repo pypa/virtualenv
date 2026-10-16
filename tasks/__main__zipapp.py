@@ -18,6 +18,13 @@ if TYPE_CHECKING:
 ABS_HERE = os.path.abspath(os.path.dirname(__file__))
 
 
+def run() -> None:
+    with VersionedFindLoad():
+        from virtualenv.__main__ import run as run_virtualenv  # ruff:ignore[import-outside-top-level]
+
+        run_virtualenv()
+
+
 class VersionPlatformSelect:
     def __init__(self) -> None:
         zipapp = ABS_HERE
@@ -165,6 +172,19 @@ def versioned_distribution_class() -> type:
 
 
 class VersionedFindLoad(VersionPlatformSelect, SourceLoader):
+    def __enter__(self) -> Self:
+        sys.path.insert(0, self.archive)
+        sys.meta_path.insert(0, self)
+        self._register_distutils_finder()
+        return self
+
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+    ) -> None:
+        sys.meta_path.remove(self)
+        sys.path.remove(self.archive)
+        super().__exit__(exc_type, exc_val, exc_tb)
+
     def find_spec(self, fullname: str, path: Any, target: ModuleType | None = None) -> ModuleSpec | None:  # ruff:ignore[unused-method-argument, any-type]
         zip_path = self.find_mod(fullname)
         if zip_path is not None:
@@ -175,14 +195,8 @@ class VersionedFindLoad(VersionPlatformSelect, SourceLoader):
         raise NotImplementedError
 
 
-def run() -> None:
-    with VersionedFindLoad() as finder:
-        sys.meta_path.insert(0, finder)
-        finder._register_distutils_finder()  # ruff:ignore[private-member-access]
-        from virtualenv.__main__ import run as run_virtualenv  # ruff:ignore[import-outside-top-level]
-
-        run_virtualenv()
-
-
 if __name__ == "__main__":
     run()
+
+
+__all__ = ["VersionedFindLoad", "run"]
