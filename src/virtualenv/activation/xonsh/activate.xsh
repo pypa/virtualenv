@@ -12,13 +12,9 @@ class _VirtualEnvActivator:
     - Template source: https://github.com/pypa/virtualenv/tree/main/src/virtualenv/activation/xonsh
     """
 
-    # Stashed in _OLD_VIRTUAL_{name} when the variable was not set before
-    # activation. deactivate treats this as "unset" rather than "restore to
-    # this string". Chosen to be vanishingly unlikely as a real value.
-    _UNSET_SENTINEL = "__virtualenv_was_not_set__"
-
     def __init__(self):
         self.env = __xonsh__.env
+        self.unset_vars = set()
         try:
             # Values substituted by virtualenv's XonshActivator at generate-time.
             # If this file was sourced before template rendering, the bare
@@ -38,9 +34,12 @@ class _VirtualEnvActivator:
         return f"_OLD_VIRTUAL_{name}"
 
     def _save(self, name):
-        """Stash the current value (or sentinel if unset) so deactivate can undo."""
         backup = self._backup_name(name)
-        self.env[backup] = self.env[name] if name in self.env else self._UNSET_SENTINEL
+        if name in self.env:
+            self.env[backup] = self.env[name]
+        else:
+            self.unset_vars.add(name)
+            self.env.pop(backup, None)
 
     def _override(self, name, value):
         self._save(name)
@@ -76,14 +75,11 @@ class _VirtualEnvActivator:
     def deactivate(self, args=None):
         for name in self.managed_vars:
             backup = self._backup_name(name)
-            if backup not in self.env:
-                continue
-            previous = self.env[backup]
-            del self.env[backup]
-            if previous == self._UNSET_SENTINEL:
+            if backup in self.env:
+                self.env[name] = self.env.pop(backup)
+            elif name in self.unset_vars:
                 self.env.pop(name, None)
-            else:
-                self.env[name] = previous
+        self.unset_vars.clear()
         for name in ("VIRTUAL_ENV", "VIRTUAL_ENV_PROMPT"):
             self.env.pop(name, None)
         self.unregister_pydoc()

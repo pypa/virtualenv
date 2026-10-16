@@ -1,14 +1,69 @@
 from __future__ import annotations
 
+import json
+import os
+import subprocess
 from argparse import Namespace
 from shutil import which
+from typing import TYPE_CHECKING, Final
 from unittest.mock import create_autospec
 
 import pytest
 from python_discovery import PythonInfo
 
 from virtualenv.activation import XonshActivator
+from virtualenv.config.cli.parser import VirtualEnvOptions
 from virtualenv.create.creator import Creator
+from virtualenv.run import cli_run, session_via_cli
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("env$HOME", id="variable"),
+        pytest.param("env${HOME}", id="braces"),
+        pytest.param("env=~root", id="home"),
+    ],
+)
+def test_xonsh_skips_expanding_destination(tmp_path: Path, name: str) -> None:
+    session: Final = session_via_cli([str(tmp_path / name), "--no-seed", "--activators", "xonsh"])
+    session.creator.bin_dir.mkdir(parents=True)
+    (session.creator.bin_dir / "activate.xsh").write_text("old", encoding="utf-8")
+    XonshActivator(VirtualEnvOptions(prompt=None)).generate(session.creator)
+    assert not (session.creator.bin_dir / "activate.xsh").exists()
+
+
+@pytest.mark.skipif(which("xonsh") is None, reason="requires xonsh")
+@pytest.mark.parametrize(
+    "original", [pytest.param(None, id="unset"), pytest.param("__virtualenv_was_not_set__", id="sentinel-value")]
+)
+def test_xonsh_restores_pythonhome_without_exported_sentinel(tmp_path: Path, original: str | None) -> None:
+    session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "xonsh"])
+    script: Final = (
+        "import json\n"
+        + ("__xonsh__.env.pop('PYTHONHOME', None)\n" if original is None else f"$PYTHONHOME = {original!r}\n")
+        + f'source "{session.creator.bin_dir / "activate.xsh"}"\n'
+        + "print(json.dumps(__xonsh__.env.get('_OLD_VIRTUAL_PYTHONHOME')))\ndeactivate\n"
+        + "print(json.dumps(__xonsh__.env.get('PYTHONHOME')))\n"
+    )
+    assert [
+        json.loads(line)
+        for line in subprocess.run(
+            ["xonsh", "--no-rc", "-c", script],
+            env={
+                key: value
+                for key, value in os.environ.items()
+                if key not in {"PYTHONHOME", "PYTHONWARNDEFAULTENCODING"}
+            },
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=True,
+        ).stdout.splitlines()
+    ] == [original, original]
 
 
 @pytest.mark.parametrize(
