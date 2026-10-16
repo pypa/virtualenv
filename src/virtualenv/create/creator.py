@@ -203,14 +203,6 @@ class Creator(ABC):
                     f" as this would break the activation scripts"
                 )
                 raise ArgumentTypeError(msg)
-        if os.name != "nt" and str(dest).encode(encoding, errors="replace") != str(dest).encode(
-            "utf-8", errors="replace"
-        ):
-            msg = (
-                f"the file system codec ({encoding}) does not encode {str(dest)!r} as UTF-8 does; "
-                "activation scripts would point at a different directory"
-            )
-            raise ArgumentTypeError(msg)
         value = dest
         while dest:
             if dest.exists():

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+import sys
 from argparse import ArgumentTypeError
 from collections import OrderedDict
 from typing import TYPE_CHECKING
@@ -66,6 +68,17 @@ class ActivationSelector(ComponentBuilder):
 
     def create(self, options: VirtualEnvOptions) -> list[Activator]:
         assert self.active is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
+        if self.active and os.name != "nt":
+            try:
+                matches = os.fsencode(options.dest) == options.dest.encode("utf-8")
+            except UnicodeEncodeError:
+                matches = False
+            if not matches:
+                msg = (
+                    f"the file system codec ({sys.getfilesystemencoding()}) does not encode {options.dest!r} as UTF-8 "
+                    "does; activation scripts would point at a different directory"
+                )
+                raise ValueError(msg)
         return [activator_class(options) for activator_class in self.active.values()]
 
 

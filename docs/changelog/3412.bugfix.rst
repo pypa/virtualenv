@@ -1,2 +1,3 @@
-Reject non-ASCII destinations when a POSIX filesystem codec encodes their paths differently from UTF-8, instead of
-creating activation scripts that point at another directory. ASCII paths remain supported in legacy locales.
+Reject incompatible POSIX path encodings only when generating activation scripts. Environments created with
+``--activators=`` remain supported in legacy locales. Undecodable parent paths now fail before activation scripts are
+written.

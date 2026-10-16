@@ -85,9 +85,18 @@ def test_destination_rejects_non_utf8_path_bytes(
 ) -> None:
     (tmp_path / name).mkdir()
     monkeypatch.chdir(tmp_path / name)
-    mocker.patch("sys.getfilesystemencoding", autospec=True, return_value=encoding)
-    with pytest.raises(ArgumentTypeError, match="activation scripts would point at a different directory"):
-        Creator.validate_dest("env")
+    encode: Final = os.fsencode
+
+    def legacy_encode(value: str | bytes | os.PathLike[str] | os.PathLike[bytes]) -> bytes:
+        if value == str(tmp_path / name / "env"):
+            return str(value).encode(encoding, errors="replace")
+        return encode(value)
+
+    mocker.patch("os.fsencode", autospec=True, side_effect=legacy_encode)
+    with pytest.raises(ValueError, match="activation scripts would point at a different directory"):
+        session_via_cli(["env", "--no-seed", "--activators", "bash"])
+    session = cli_run(["env", "--no-seed", "--activators="])
+    assert (session.creator.dest / "pyvenv.cfg").is_file()
 
 
 @pytest.mark.skipif(IS_WIN, reason="Windows paths use Unicode APIs")
