@@ -234,7 +234,7 @@ def test_batch(activation_python, activation_tester_class, activation_tester, tm
             return s
 
         def print_prompt(self) -> str:
-            return 'echo "%PROMPT%"'
+            return 'echo "%PROMPT:$$=$%"'
 
     activation_tester(Batch)
 
@@ -281,6 +281,6 @@ def test_batch_output(activation_python, activation_tester_class, activation_tes
             return s
 
         def print_prompt(self) -> str:
-            return 'echo "%PROMPT%"'
+            return 'echo "%PROMPT:$$=$%"'
 
     activation_tester(Batch)
