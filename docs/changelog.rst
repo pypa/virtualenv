@@ -7,6 +7,16 @@
 .. towncrier release notes start
 
 ***********************
+ v21.14.8 (2026-10-16)
+***********************
+
+Bugfixes - 21.14.8
+==================
+
+- Activate PowerShell environments whose path contains square brackets, and read the environment's own ``pyvenv.cfg``
+  instead of whichever file the path matches as a wildcard pattern - by :user:`repzakske`. (:issue:`3396`)
+
+***********************
  v21.14.7 (2026-10-12)
 ***********************
 
