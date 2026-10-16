@@ -80,6 +80,28 @@ def test_venv_redirect_forced_points_at_created(redirect: Path) -> None:
 
 
 @pytest.mark.parametrize(
+    "boundary",
+    [pytest.param(chr(code), id=f"U+{code:04X}") for code in (10, 13, 11, 12, 28, 29, 30, 133, 8232, 8233)],
+)
+@pytest.mark.parametrize("existing", [pytest.param(False, id="new"), pytest.param(True, id="existing")])
+def test_venv_redirect_skips_line_boundary_names(project_redirect: Path, boundary: str, existing: bool) -> None:
+    if os.name == "nt" and ord(boundary) < 32:
+        pytest.skip("Windows rejects control characters in directory names")
+    if existing:
+        cli_run([str(project_redirect.parent / "old"), "--without-pip", "--activators", ""])
+    cli_run([
+        str(project_redirect.parent / f"env{boundary}name"),
+        "--without-pip",
+        "--activators",
+        "",
+        "--venv-redirect",
+    ])
+    assert (project_redirect.read_text(encoding="utf-8") if project_redirect.exists() else None) == (
+        "old\n" if existing else None
+    )
+
+
+@pytest.mark.parametrize(
     "line_end", [pytest.param("\n", id="lf"), pytest.param("\r\n", id="crlf"), pytest.param("", id="none")]
 )
 def test_venv_redirect_forced_moves_to_newest(redirect: Path, line_end: str) -> None:

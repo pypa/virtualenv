@@ -25,6 +25,7 @@ from os.path import commonpath
 
 from virtualenv.util.path import safe_delete
 from virtualenv.util.subprocess import LogCmd, run_cmd
+from virtualenv.util.text import collapse_line_boundaries
 from virtualenv.version import __version__
 
 from .pyenv_cfg import PyEnvCfg
@@ -281,6 +282,9 @@ class Creator(ABC):
             return
         if redirect.exists() and not _points_at_virtualenv(redirect):
             LOGGER.debug("%s points at an environment virtualenv did not create, leaving it", redirect)
+            return
+        if collapse_line_boundaries(self.dest.name) != self.dest.name:
+            LOGGER.warning("could not point %s at %s - the name contains a line boundary", redirect, self.dest)
             return
         try:
             redirect.write_text(f"{self.dest.name}\n", encoding="utf-8")
