@@ -17,8 +17,8 @@ class XonshActivator(ViaTemplateActivator):
 
     @staticmethod
     def quote(string: str) -> str:
-        """Quote as a Python literal — xonsh parses the activation script as Python."""
-        return repr(string)
+        """Keep literals independent of the encoding xonsh uses to read the script."""
+        return ascii(string)
 
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:
         data = super().replacements(creator, dest_folder)
