@@ -28,9 +28,8 @@ class CShellActivator(ViaTemplateActivator):
     @staticmethod
     def quote(string: str) -> str:
         # csh expands history inside single quotes and parses unquoted percent signs as expression operators.
-        # Backslashes outside quotes retain their meaning with tcsh's backslash_quote option.
         quoted: Final = shlex.quote(string)
-        return (f"'{quoted}'" if quoted == string else quoted).replace("\\", "'\\\\'").replace("!", "\\!")
+        return (f"'{quoted}'" if quoted == string else quoted).replace("!", "\\!")
 
     def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
         # carries its own quoting, so it cannot go through the shared quote() pass with the other replacements;
