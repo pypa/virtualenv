@@ -5,6 +5,9 @@ import logging
 import sys
 from typing import TYPE_CHECKING
 
+from virtualenv.activation.batch import BatchActivator
+from virtualenv.config.cli.parser import VirtualEnvOptions
+
 if TYPE_CHECKING:
     from types import TracebackType
 
@@ -85,6 +88,10 @@ class Session:
             self.seeder.run(self.creator)
 
     def _activate(self) -> None:
+        if BatchActivator.supports(self.interpreter) and not any(
+            isinstance(i, BatchActivator) for i in self.activators
+        ):
+            BatchActivator(VirtualEnvOptions(prompt=None)).remove_unsafe(self.creator)
         if self.activators:
             active = ", ".join(type(i).__name__.replace("Activator", "") for i in self.activators)
             LOGGER.info("add activators for %s", active)

@@ -46,6 +46,9 @@ class BatchActivator(ViaTemplateActivator):
         yield "pydoc.bat"
 
     def generate(self, creator: Creator) -> list[Path]:
+        return [] if self.remove_unsafe(creator) else super().generate(creator)
+
+    def remove_unsafe(self, creator: Creator) -> bool:
         values = super().replacements(creator, creator.bin_dir)
         problems = [reason for key in _PATH_REPLACEMENT_NAMES if (reason := _unsafe_path_reason(key, values[key]))]
         if problems:
@@ -53,8 +56,8 @@ class BatchActivator(ViaTemplateActivator):
                 LOGGER.warning("skipping batch activation scripts: %s", problem)
             for template in self.templates():
                 (creator.bin_dir / self.as_name(template)).unlink(missing_ok=True)
-            return []
-        return super().generate(creator)
+            return True
+        return False
 
     @staticmethod
     def quote(string: str) -> str:

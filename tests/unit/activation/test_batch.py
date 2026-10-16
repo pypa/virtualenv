@@ -284,3 +284,14 @@ def test_batch_output(activation_python, activation_tester_class, activation_tes
             return 'echo "%PROMPT:$$=$%"'
 
     activation_tester(Batch)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="requires Windows batch activation")
+def test_batch_removes_stale_script_when_unselected(tmp_path: Path) -> None:
+    destination = tmp_path / "env&name"
+    session = session_via_cli([str(destination), "--no-seed", "--activators", "powershell"])
+    session.creator.bin_dir.mkdir(parents=True)
+    script = session.creator.bin_dir / "activate.bat"
+    script.write_text("old", encoding="utf-8")
+    session.run()
+    assert not script.exists()
