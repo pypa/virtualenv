@@ -182,6 +182,37 @@ def test_bash_activate_relocation_resolves_virtual_env(
     assert result.stdout.strip() == str(relocated)
 
 
+@pytest.mark.skipif(IS_WIN, reason="requires POSIX shells")
+@pytest.mark.parametrize(
+    "failure",
+    [
+        pytest.param("shell", id="unsupported-shell"),
+        pytest.param("tools", id="missing-tools"),
+        pytest.param("config", id="missing-config"),
+    ],
+)
+def test_bash_relocation_stops_when_unavailable(tmp_path: Path, failure: str) -> None:
+    cli_run([str(tmp_path / "original"), "--no-seed", "--activators", "bash"])
+    (tmp_path / "original").rename(tmp_path / "moved")
+    if failure == "config":
+        (tmp_path / "moved" / "pyvenv.cfg").unlink()
+    assert (
+        subprocess.run(
+            [
+                "/bin/bash",
+                "-c",
+                'unset BASH_VERSION; . "$1"' if failure == "shell" else '. "$1"',
+                "activate",
+                str(tmp_path / "moved" / "bin" / "activate"),
+            ],
+            env={"PATH": str(tmp_path) if failure == "tools" else "/usr/bin:/bin"},
+            capture_output=True,
+            check=False,
+        ).returncode
+        != 0
+    )
+
+
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
 @pytest.mark.parametrize(
     "payload",

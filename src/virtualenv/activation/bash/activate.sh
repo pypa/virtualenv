@@ -77,9 +77,18 @@ deactivate nondestructive
 
 if [ ! -d __VIRTUAL_ENV__ ]; then
     echo "Virtual environment directory" __VIRTUAL_ENV__ "does not exist!" >&2
-    CURRENT_PATH=$(realpath "${BASH_SOURCE[0]}")
-    CURRENT_DIR=$(dirname "${CURRENT_PATH}")
-    VIRTUAL_ENV="$(realpath "${CURRENT_DIR}/../")"
+    if [ -z "${BASH_VERSION-}" ]; then
+        echo "Relocating this activation script requires bash." >&2
+        return 1
+    fi
+    CURRENT_PATH=$(realpath "${BASH_SOURCE[0]}") || return 1
+    CURRENT_DIR=$(dirname "${CURRENT_PATH}") || return 1
+    VIRTUAL_ENV="$(realpath "${CURRENT_DIR}/../")" || return 1
+    if [ ! -f "$VIRTUAL_ENV/pyvenv.cfg" ]; then
+        echo "Relocated environment has no pyvenv.cfg: $VIRTUAL_ENV" >&2
+        unset VIRTUAL_ENV
+        return 1
+    fi
 else
     VIRTUAL_ENV=__VIRTUAL_ENV__
 fi
