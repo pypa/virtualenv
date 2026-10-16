@@ -168,6 +168,44 @@ def test_creator_replaces_generated_file_links(
     assert (target.read_bytes() if existing else target.exists()) == (b"original" if existing else False)
 
 
+@pytest.mark.parametrize(
+    "kind",
+    [
+        pytest.param("file", id="file"),
+        pytest.param("symlink", id="symlink"),
+        pytest.param("dangling", id="dangling"),
+        pytest.param("junction", id="junction"),
+    ],
+)
+def test_venv_prepares_real_executable_directory(tmp_path: Path, kind: str) -> None:
+    session: Final = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--no-seed", "--activators="])
+    session.creator.dest.mkdir()
+    if kind == "file":
+        session.creator.bin_dir.write_bytes(b"file")
+    else:
+        target: Final = session.creator.dest / "empty"
+        if kind != "dangling":
+            target.mkdir()
+        if kind == "junction":
+            if not IS_WIN:
+                pytest.skip("requires Windows junctions")
+            subprocess.run(
+                ["cmd", "/c", "mklink", "/J", str(session.creator.bin_dir), str(target)],
+                capture_output=True,
+                check=True,
+            )
+        else:
+            if not fs_supports_symlink():
+                pytest.skip("requires directory symlinks")
+            session.creator.bin_dir.symlink_to(target, target_is_directory=True)
+    if kind == "file":
+        with pytest.raises(NotADirectoryError, match="environment directory is not a real directory"):
+            session.run()
+    else:
+        session.run()
+        assert session.creator.bin_dir.resolve() == session.creator.bin_dir
+
+
 def test_os_path_sep_not_allowed(tmp_path, capsys) -> None:
     target = str(tmp_path / f"a{os.pathsep}b")
     err = _non_success_exit_code(capsys, target)
