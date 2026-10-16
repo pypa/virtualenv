@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-import ctypes
 import os
-from ctypes import wintypes
 from typing import Final
+
+if os.name == "nt":
+    import ctypes
+    from ctypes import wintypes
 
 
 def get_short_path_name(long_name: str) -> str:

@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Final
 
 import pytest
 
+from virtualenv import __version__
 from virtualenv.app_data import (
     AppDataDiskFolder,
     TempAppData,
@@ -162,6 +163,19 @@ def test_copy_replaces_contents(tmp_path: Path, directory: bool) -> None:
     destination.write_bytes(b"old")
     copy(source if directory else source / "entry", destination)
     assert (destination / "entry" if directory else destination).read_bytes() == b"new"
+@pytest.mark.skipif(os.name == "nt", reason="Windows requires ctypes")
+def test_command_line_import_without_ctypes() -> None:
+    result: Final = run_cmd([
+        sys.executable,
+        "-c",
+        (
+            "import runpy, sys; sys.modules['ctypes'] = None; sys.argv = ['virtualenv', '--version']; "
+            "runpy.run_module('virtualenv', run_name='__main__')"
+        ),
+    ])
+    assert (result[0], __version__ in result[1], result[2]) == (0, True, "")
+
+
 @pytest.mark.skipif(os.name != "nt", reason="Windows file attributes")
 @pytest.mark.parametrize(
     "operation",
