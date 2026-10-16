@@ -22,7 +22,13 @@ TCSH = which("tcsh")
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
-@pytest.mark.parametrize("shell", [pytest.param("tcsh", id="tcsh"), pytest.param("csh", id="csh")])
+@pytest.mark.parametrize(
+    "shell",
+    [
+        pytest.param(shell, id=shell, marks=pytest.mark.skipif(which(shell) is None, reason=f"{shell} is unavailable"))
+        for shell in ("tcsh", "csh")
+    ],
+)
 @pytest.mark.parametrize(
     "boundary",
     [pytest.param(value, id=f"U+{ord(value):04X}") for value in "\n\r\v\f\x1c\x1d\x1e\x85\u2028\u2029"],
@@ -33,13 +39,11 @@ def test_cshell_prompt_collapses_line_boundaries(
     shell: str,
     boundary: str,
 ) -> None:
-    if (executable := which(shell)) is None:
-        pytest.skip(f"{shell} is unavailable")
     dest, content = csh_venv("ordinary", prompt=f"first{boundary}second")
     script: Final = tmp_path / "activate.csh"
     script.write_text(content, encoding="utf-8")
     result: Final = run(
-        [executable, "-f"],
+        [shell, "-f"],
         input=f'set prompt = "> "\nsource {script}\nprintf "%s\\n" "$VIRTUAL_ENV:q" "$VIRTUAL_ENV_PROMPT:q" "$prompt:q"\n',
         capture_output=True,
         text=True,
