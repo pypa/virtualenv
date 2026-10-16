@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import itertools
+import os
 import subprocess
 import sys
 from shutil import copy2
@@ -39,7 +40,7 @@ def test_pip_invoke_uses_selected_wheel(
         encoding="utf-8",
         check=True,
     )
-    assert str(session.creator.purelib) in result.stdout
+    assert os.path.normcase(str(session.creator.purelib)) in os.path.normcase(result.stdout)
 
 
 @pytest.mark.slow

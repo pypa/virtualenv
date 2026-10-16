@@ -454,8 +454,9 @@ def test_trigger_update_command(
     process: Final = mocker.patch(
         "virtualenv.seed.wheels.periodic_update.Popen",
         autospec=True,
-        **{"return_value.pid": 123, "return_value.communicate.return_value": (None, None)},
     )
+    # Python 3.11 rebuilds autospecced children after applying constructor kwargs.
+    process.configure_mock(**{"return_value.pid": 123, "return_value.communicate.return_value": (None, None)})
     trigger_update(
         "pip",
         for_py_version,

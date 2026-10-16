@@ -75,11 +75,12 @@ def test_download_wheel_not_found_raises(mocker, for_py_version, session_app_dat
 def test_download_fails(
     mocker: MockerFixture, for_py_version: str, session_app_data: AppDataDiskFolder, tmp_path: Path
 ) -> None:
-    mocker.patch(
+    process: Final = mocker.patch(
         "virtualenv.seed.wheels.acquire.Popen",
         autospec=True,
-        **{"return_value.communicate.return_value": ("out", "err"), "return_value.returncode": 1},
     )
+    # Python 3.11 rebuilds autospecced children after applying constructor kwargs.
+    process.configure_mock(**{"return_value.communicate.return_value": ("out", "err"), "return_value.returncode": 1})
     with pytest.raises(CalledProcessError) as context:
         download_wheel("pip", "==1", for_py_version, [], session_app_data, tmp_path, os.environ)
     error: Final = context.value
