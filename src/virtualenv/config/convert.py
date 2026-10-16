@@ -98,6 +98,7 @@ def get_type(action: Action) -> TypeData:
 
 
 __all__ = [
+    "BoolType",
     "convert",
     "get_type",
 ]

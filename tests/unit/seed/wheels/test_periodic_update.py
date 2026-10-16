@@ -672,15 +672,32 @@ def test_get_release_unsecure(mocker, caplog, monkeypatch) -> None:
     assert " failed " in caplog.text
 
 
-def test_get_release_verified_failure_does_not_fallback(mocker, monkeypatch) -> None:
-    monkeypatch.delenv("VIRTUALENV_PERIODIC_UPDATE_INSECURE", raising=False)
-    url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=URLError("insecure"))
-
-    result = release_date_for_wheel_path(Path("pip-20.1.whl"))
-
-    assert result is None
-    assert url_o.call_count == 1
-    assert url_o.call_args.kwargs["context"] is None
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param(None, id="unset"),
+        pytest.param("0", id="zero"),
+        pytest.param("false", id="false"),
+        pytest.param("no", id="no"),
+        pytest.param("off", id="off"),
+        pytest.param("FALSE", id="uppercase-false"),
+        pytest.param("OFF", id="uppercase-off"),
+        pytest.param("", id="empty"),
+        pytest.param("invalid", id="invalid"),
+    ],
+)
+def test_false_update_option_keeps_certificate_verification(
+    monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, value: str | None
+) -> None:
+    if value is None:
+        monkeypatch.delenv("VIRTUALENV_PERIODIC_UPDATE_INSECURE", raising=False)
+    else:
+        monkeypatch.setenv("VIRTUALENV_PERIODIC_UPDATE_INSECURE", value)
+    request: Final = mocker.patch(
+        "virtualenv.seed.wheels.periodic_update.urlopen", autospec=True, side_effect=URLError("certificate failure")
+    )
+    assert release_date_for_wheel_path(Path("pip-20.1.whl")) is None
+    assert request.call_args_list == [mocker.call("https://pypi.org/pypi/pip/json", context=None)]
 
 
 def test_get_release_fails(mocker, caplog) -> None:
