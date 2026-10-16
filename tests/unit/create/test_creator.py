@@ -323,10 +323,14 @@ def test_venv_configuration_uses_selected_options(tmp_path: Path, global_package
     session: Final = cli_run(args)
     session.creator.pyenv_cfg.path.write_text("vendor-marker = unused\n", encoding="utf-8")
     session.creator.set_pyenv_cfg()
-    assert (
-        "vendor-marker" in session.creator.pyenv_cfg.content,
-        session.creator.pyenv_cfg["include-system-site-packages"],
-    ) == (False, str(global_packages).lower())
+    executable: Final = session.creator.interpreter.system_exe if CURRENT.implementation == "GraalPy" else None
+    expected: Final = {
+        "vendor-marker": None,
+        "include-system-site-packages": str(global_packages).lower(),
+        "venvlauncher_command": executable,
+        "base-executable": executable,
+    }
+    assert {key: session.creator.pyenv_cfg.content.get(key) for key in expected} == expected
 
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")

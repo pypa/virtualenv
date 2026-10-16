@@ -100,6 +100,13 @@ class Venv(ViaGlobalRefApi):
         cmd.extend(("--symlinks" if self.symlinks else "--copies", str(self.dest)))
         return cmd  # ty: ignore[invalid-return-type]
 
+    def set_pyenv_cfg(self) -> None:
+        super().set_pyenv_cfg()
+        if self.interpreter.implementation == "GraalPy":
+            # GraalPy launchers need these settings on Windows and macOS.
+            self.pyenv_cfg["venvlauncher_command"] = self.interpreter.system_exe
+            self.pyenv_cfg["base-executable"] = self.interpreter.system_exe
+
     def __getattribute__(self, item: str) -> object:
         describe = object.__getattribute__(self, "describe")
         if describe is not None and hasattr(describe, item):
