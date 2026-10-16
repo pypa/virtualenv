@@ -52,6 +52,7 @@ def test_seed_image_compiles_in_isolation(
     assert not marker.exists()
 
 
+@pytest.mark.usefixtures("_no_coverage")
 @pytest.mark.parametrize(
     ("metadata_file", "content"),
     [
@@ -144,7 +145,7 @@ def test_seed_metadata_keeps_reseeding_supported(
         pytest.param("plain", id="plain"),
         pytest.param("two words", id="space"),
         pytest.param("owner's env", id="apostrophe"),
-        pytest.param("a" * 120, id="long"),
+        pytest.param("a" * 120, id="long", marks=pytest.mark.skipif(os.name == "nt", reason="POSIX shebang limit")),
         pytest.param("env \\path", id="backslash", marks=pytest.mark.skipif(os.name == "nt", reason="POSIX filename")),
         pytest.param("env\tname", id="tab", marks=pytest.mark.skipif(os.name == "nt", reason="POSIX filename")),
     ],
@@ -181,7 +182,7 @@ def test_console_script_preserves_interpreter_path(
         timeout=30,
         check=True,
     )
-    assert str(session.creator.purelib) in result.stdout
+    assert os.path.normcase(str(session.creator.purelib)) in os.path.normcase(result.stdout)
 
 
 @pytest.mark.slow
