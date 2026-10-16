@@ -1,0 +1,2 @@
+Leave ``PS1`` unchanged when sourcing the POSIX activation script in a shell other than bash or zsh, whose prompt
+escaping rules virtualenv handles. ``VIRTUAL_ENV_PROMPT`` remains available to custom prompts in other shells.

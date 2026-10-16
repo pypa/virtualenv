@@ -18,6 +18,48 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
+_BASH: Final = shutil.which("bash")
+
+
+@pytest.mark.skipif(_BASH is None or (IS_WIN and "\\git\\" not in _BASH.lower()), reason="requires native bash")
+@pytest.mark.parametrize(
+    ("setup", "expected"),
+    [
+        pytest.param("", "(example) base ", id="bash"),
+        pytest.param("unset BASH_VERSION ZSH_VERSION;", "base ", id="unrecognized-shell"),
+    ],
+)
+def test_prompt_requires_known_shell(tmp_path: Path, current_fastest: str, setup: str, expected: str) -> None:
+    session: Final = cli_run([
+        str(tmp_path / "env"),
+        "--creator",
+        current_fastest,
+        "--without-pip",
+        "--no-periodic-update",
+        "--activators",
+        "bash",
+        "--prompt",
+        "example",
+    ])
+    result: Final = subprocess.run(
+        [
+            _BASH,
+            "--norc",
+            "--noprofile",
+            "-c",
+            f'{setup} PS1="base "; . "$1"; printf "%s|%s" "$PS1" "$VIRTUAL_ENV_PROMPT"',
+            "test",
+            str(session.creator.bin_dir / "activate"),
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+        check=True,
+    )
+    assert result.stdout == f"{expected}|example"
+
+
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
 @pytest.mark.parametrize(
     ("tcl_lib", "tk_lib", "present"),

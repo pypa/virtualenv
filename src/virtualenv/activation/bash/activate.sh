@@ -137,7 +137,8 @@ else
         export TK_LIBRARY
     fi
 
-    if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] ; then
+if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] &&
+    { [ -n "${BASH_VERSION-}" ] || [ -n "${ZSH_VERSION-}" ]; }; then
         _OLD_VIRTUAL_PS1="${PS1-}"
         _VIRTUAL_PROMPT="${VIRTUAL_ENV_PROMPT}"
         # bash, and zsh under PROMPT_SUBST, re-expand backslashes, dollar signs and backticks in PS1 on every redraw;
