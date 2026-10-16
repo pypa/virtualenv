@@ -37,7 +37,6 @@ from virtualenv.run.plugin.creators import CreatorSelector
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
     from pytest_mock import MockerFixture
 
     from virtualenv.run.session import Session
@@ -459,6 +458,22 @@ def test_venv_configuration_uses_selected_options(tmp_path: Path, global_package
         "base-executable": executable,
     }
     assert {key: session.creator.pyenv_cfg.content.get(key) for key in expected} == expected
+
+
+@pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
+def test_venv_subprocess_uses_isolated_mode(tmp_path: Path, mocker: MockerFixture) -> None:
+    process: Final = mocker.spy(subprocess, "Popen")
+    session: Final = cli_run([
+        "-p",
+        str(CURRENT.executable),
+        str(tmp_path / "env"),
+        "--without-pip",
+        "--creator",
+        "venv",
+        "--no-periodic-update",
+    ])
+    assert (session.creator.dest / "pyvenv.cfg").is_file()
+    assert any(call.args[0][1:4] == ["-I", "-m", "venv"] for call in process.call_args_list)
 
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")

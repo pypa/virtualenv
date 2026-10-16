@@ -5,12 +5,12 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from subprocess import CalledProcessError
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
 from virtualenv.app_data import AppDataDiskFolder
-from virtualenv.seed.wheels.acquire import download_wheel, get_wheel, pip_wheel_env_run
+from virtualenv.seed.wheels.acquire import PIP_RUN, download_wheel, get_wheel, pip_wheel_env_run
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, get_embed_wheel
 from virtualenv.seed.wheels.periodic_update import UnverifiedWheelError, dump_datetime
 from virtualenv.seed.wheels.util import Wheel, discover_wheels
@@ -72,35 +72,38 @@ def test_download_wheel_not_found_raises(mocker, for_py_version, session_app_dat
         download_wheel("setuptools", None, for_py_version, [], session_app_data, as_path, os.environ)
 
 
-def test_download_fails(mocker, for_py_version, session_app_data) -> None:
-    p_open = mocker.MagicMock()
-    mocker.patch("virtualenv.seed.wheels.acquire.Popen", return_value=p_open)
-    p_open.communicate.return_value = "out", "err"
-    p_open.returncode = 1
-
-    as_path = mocker.MagicMock()
+def test_download_fails(
+    mocker: MockerFixture, for_py_version: str, session_app_data: AppDataDiskFolder, tmp_path: Path
+) -> None:
+    mocker.patch(
+        "virtualenv.seed.wheels.acquire.Popen",
+        autospec=True,
+        **{"return_value.communicate.return_value": ("out", "err"), "return_value.returncode": 1},
+    )
     with pytest.raises(CalledProcessError) as context:
-        download_wheel("pip", "==1", for_py_version, [], session_app_data, as_path, os.environ)
-    exc = context.value
-    assert exc.output == "out"
-    assert exc.stderr == "err"
-    assert exc.returncode == 1
-    assert [
-        sys.executable,
-        "-m",
-        "pip",
-        "download",
-        "--progress-bar",
-        "off",
-        "--disable-pip-version-check",
-        "--only-binary=:all:",
-        "--no-deps",
-        "--python-version",
-        for_py_version,
-        "-d",
-        str(as_path),
-        "pip==1",
-    ] == exc.cmd
+        download_wheel("pip", "==1", for_py_version, [], session_app_data, tmp_path, os.environ)
+    error: Final = context.value
+    assert (error.output, error.stderr, error.returncode, error.cmd) == (
+        "out",
+        "err",
+        1,
+        [
+            sys.executable,
+            "-c",
+            PIP_RUN,
+            "download",
+            "--progress-bar",
+            "off",
+            "--disable-pip-version-check",
+            "--only-binary=:all:",
+            "--no-deps",
+            "--python-version",
+            for_py_version,
+            "-d",
+            str(tmp_path),
+            "pip==1",
+        ],
+    )
 
 
 def test_download_wheel_python_io_encoding(mocker, for_py_version, session_app_data) -> None:

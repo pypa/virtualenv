@@ -442,98 +442,50 @@ def test_periodic_update_trigger(
     assert process.communicate.call_count == bool(env)
 
 
-def test_trigger_update_no_debug(for_py_version, session_app_data, tmp_path, mocker, monkeypatch) -> None:
-    monkeypatch.delenv("_VIRTUALENV_PERIODIC_UPDATE_INLINE", raising=False)
-    current = get_embed_wheel("setuptools", for_py_version)
-    process = mocker.MagicMock()
-    process.pid = 123
-    process.communicate.return_value = None, None
-    Popen = mocker.patch("virtualenv.seed.wheels.periodic_update.Popen", return_value=process)  # ruff:ignore[non-lowercase-variable-in-function]
-
-    trigger_update(
-        "setuptools",
-        for_py_version,
-        current,
-        [tmp_path / "a", tmp_path / "b"],
-        session_app_data,
-        os.environ,
-        True,
+@pytest.mark.parametrize("debug", [pytest.param(False, id="background"), pytest.param(True, id="inline")])
+def test_trigger_update_command(
+    for_py_version: str,
+    session_app_data: AppDataDiskFolder,
+    tmp_path: Path,
+    mocker: MockerFixture,
+    debug: bool,
+) -> None:
+    current: Final = get_embed_wheel("pip", for_py_version)
+    process: Final = mocker.patch(
+        "virtualenv.seed.wheels.periodic_update.Popen",
+        autospec=True,
+        **{"return_value.pid": 123, "return_value.communicate.return_value": (None, None)},
     )
-
-    assert Popen.call_count == 1
-    args, kwargs = Popen.call_args
-    cmd = (
-        dedent(
-            """
-        from virtualenv.report import setup_report, MAX_LEVEL
-        from virtualenv.seed.wheels.periodic_update import do_update
-        setup_report(MAX_LEVEL, show_pid=True)
-        do_update({!r}, {!r}, {!r}, {!r}, {!r}, {!r})
-        """,
-        )
-        .strip()
-        .format(
-            "setuptools",
-            for_py_version,
-            str(current.path),
-            str(session_app_data),
-            [str(tmp_path / "a"), str(tmp_path / "b")],
-            True,
-        )
-    )
-
-    assert args == ([sys.executable, "-c", cmd],)
-    expected = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
-    if sys.platform == "win32":
-        expected["creationflags"] = CREATE_NO_WINDOW
-    assert kwargs == expected
-    assert process.communicate.call_count == 0
-
-
-def test_trigger_update_debug(for_py_version, session_app_data, tmp_path, mocker, monkeypatch) -> None:
-    monkeypatch.setenv("_VIRTUALENV_PERIODIC_UPDATE_INLINE", "1")
-    current = get_embed_wheel("pip", for_py_version)
-
-    process = mocker.MagicMock()
-    process.pid = 123
-    process.communicate.return_value = None, None
-    Popen = mocker.patch("virtualenv.seed.wheels.periodic_update.Popen", return_value=process)  # ruff:ignore[non-lowercase-variable-in-function]
-
     trigger_update(
         "pip",
         for_py_version,
         current,
         [tmp_path / "a", tmp_path / "b"],
         session_app_data,
-        os.environ,
-        False,
+        {"_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1" if debug else "0"},
+        True,
     )
-
-    assert Popen.call_count == 1
-    args, kwargs = Popen.call_args
-    cmd = (
+    command: Final = (
         dedent(
-            """
+            """\
+        import sys
+        sys.path = [p for p in sys.path if p]
         from virtualenv.report import setup_report, MAX_LEVEL
         from virtualenv.seed.wheels.periodic_update import do_update
         setup_report(MAX_LEVEL, show_pid=True)
-        do_update({!r}, {!r}, {!r}, {!r}, {!r}, {!r})
-        """,
+        do_update('pip', {!r}, {!r}, {!r}, {!r}, True)
+        """
         )
         .strip()
-        .format(
-            "pip",
-            for_py_version,
-            str(current.path),
-            str(session_app_data),
-            [str(tmp_path / "a"), str(tmp_path / "b")],
-            False,
-        )
+        .format(for_py_version, str(current.path), str(session_app_data), [str(tmp_path / "a"), str(tmp_path / "b")])
     )
-    assert args == ([sys.executable, "-c", cmd],)
-    expected = {"stdout": None, "stderr": None}
-    assert kwargs == expected
-    assert process.communicate.call_count == 1
+    process.assert_called_once_with(
+        [sys.executable, "-c", command],
+        stdout=None if debug else subprocess.DEVNULL,
+        stderr=None if debug else subprocess.DEVNULL,
+        **({"creationflags": CREATE_NO_WINDOW} if not debug and sys.platform == "win32" else {}),
+    )
+    assert process.return_value.communicate.call_count == int(debug)
 
 
 def test_do_update_first(tmp_path, mocker, time_freeze) -> None:

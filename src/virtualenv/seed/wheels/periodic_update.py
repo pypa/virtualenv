@@ -241,6 +241,8 @@ def trigger_update(  # ruff:ignore[too-many-arguments]
         "-c",
         dedent(
             """
+        import sys
+        sys.path = [p for p in sys.path if p]
         from virtualenv.report import setup_report, MAX_LEVEL
         from virtualenv.seed.wheels.periodic_update import do_update
         setup_report(MAX_LEVEL, show_pid=True)
