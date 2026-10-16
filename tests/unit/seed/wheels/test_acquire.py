@@ -266,13 +266,45 @@ def test_download_wheel_rejects_bad_distribution(distribution: str, session_app_
 @pytest.mark.parametrize(
     "version_spec",
     [
-        "==1.0 --index-url=http://evil",
-        ">=1.0",
-        "== 1.0",
-        "==1.0;echo",
+        pytest.param("==1.0 --index-url=http://evil", id="extra-option"),
+        pytest.param(">=1.0", id="unsupported-operator"),
+        pytest.param("== 1.0", id="whitespace"),
+        pytest.param("==1.0;echo", id="separator"),
+        pytest.param("==not-a-version", id="invalid-version"),
+        pytest.param("==1.zip", id="archive-version"),
     ],
 )
-def test_download_wheel_rejects_bad_version_spec(version_spec: str, session_app_data, mocker: MockerFixture) -> None:
-    mocker.patch("virtualenv.seed.wheels.acquire.Popen")
+def test_download_wheel_rejects_bad_version_spec(
+    version_spec: str, session_app_data: AppDataDiskFolder, mocker: MockerFixture
+) -> None:
+    mocker.patch(
+        "virtualenv.seed.wheels.acquire.Popen", autospec=True, side_effect=AssertionError("unexpected download")
+    )
     with pytest.raises(ValueError, match="suspicious version spec"):
-        download_wheel("pip", version_spec, "3.14", [], session_app_data, "folder", os.environ)
+        download_wheel("pip", version_spec, "3.14", [], session_app_data, session_app_data.house, {})
+
+
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        pytest.param(suffix, id=suffix)
+        for suffix in (
+            "zip",
+            "whl",
+            "tar",
+            "tar.gz",
+            "tgz",
+            "tar.bz2",
+            "tbz",
+            "tar.xz",
+            "txz",
+            "tlz",
+            "tar.lz",
+            "tar.lzma",
+            "ZIP",
+        )
+    ],
+)
+def test_download_wheel_rejects_archive_local_version(suffix: str, session_app_data: AppDataDiskFolder) -> None:
+    with pytest.raises(ValueError, match="archive-like requirement"):
+        download_wheel("pip", f"==1+local.{suffix}", "3.14", [], session_app_data, session_app_data.house, {})
