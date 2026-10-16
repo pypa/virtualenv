@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from io import StringIO
 from itertools import zip_longest
 from pathlib import Path
+from shutil import copytree, ignore_patterns
 from textwrap import dedent
 from typing import TYPE_CHECKING, Final
 from urllib.error import URLError
@@ -470,9 +471,12 @@ def test_trigger_update_command(
     command: Final = (
         dedent(
             """\
-        import sys
+        import importlib.util, sys
         if sys.path and sys.path[0] == '': sys.path.pop(0)
-        sys.path.append({!r})
+        spec = importlib.util.spec_from_file_location('virtualenv', {!r})
+        package = importlib.util.module_from_spec(spec)
+        sys.modules['virtualenv'] = package
+        spec.loader.exec_module(package)
         from virtualenv.report import setup_report, MAX_LEVEL
         from virtualenv.seed.wheels.periodic_update import do_update
         setup_report(MAX_LEVEL, show_pid=True)
@@ -481,7 +485,11 @@ def test_trigger_update_command(
         )
         .strip()
         .format(
-            ROOT, for_py_version, str(current.path), str(session_app_data), [str(tmp_path / "a"), str(tmp_path / "b")]
+            str(Path(ROOT) / "virtualenv" / "__init__.py"),
+            for_py_version,
+            str(current.path),
+            str(session_app_data),
+            [str(tmp_path / "a"), str(tmp_path / "b")],
         )
     )
     process.assert_called_once_with(
@@ -932,3 +940,27 @@ def test_download_periodic_stop_at_first_usable_with_previous_minor(tmp_path, mo
         },
         downloaded_versions[0].to_dict(),
     ]
+
+
+def test_update_uses_selected_installation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capfd: pytest.CaptureFixture[str]
+) -> None:
+    root: Final = tmp_path / "vendored"
+    package: Final = root / "virtualenv"
+    copytree(Path(ROOT) / "virtualenv", package, ignore=ignore_patterns("__pycache__"))
+    version: Final = package / "version.py"
+    version.write_text('__version__ = "99.0.0"\n', encoding="utf-8")
+    entry: Final = package / "__init__.py"
+    entry.write_text(entry.read_text(encoding="utf-8") + "\nprint(__version__)\n", encoding="utf-8")
+    monkeypatch.setattr("virtualenv.seed.wheels.periodic_update.ROOT", str(root))
+    monkeypatch.setenv("PIP_NO_INDEX", "1")
+    trigger_update(
+        "pip",
+        f"{sys.version_info.major}.{sys.version_info.minor}",
+        None,
+        [],
+        AppDataDiskFolder(str(tmp_path / "data")),
+        {"_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1"},
+        True,
+    )
+    assert "99.0.0" in capfd.readouterr().out

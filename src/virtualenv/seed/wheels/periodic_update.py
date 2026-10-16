@@ -254,7 +254,15 @@ def trigger_update(  # ruff:ignore[too-many-arguments]
             code, "    "
         )
     else:
-        code = f"import sys\nif sys.path and sys.path[0] == '': sys.path.pop(0)\nsys.path.append({ROOT!r})\n{code}"
+        code = (
+            "import importlib.util, sys\n"
+            "if sys.path and sys.path[0] == '': sys.path.pop(0)\n"
+            f"spec = importlib.util.spec_from_file_location('virtualenv', {str(Path(ROOT) / 'virtualenv' / '__init__.py')!r})\n"
+            "package = importlib.util.module_from_spec(spec)\n"
+            "sys.modules['virtualenv'] = package\n"
+            "spec.loader.exec_module(package)\n"
+            f"{code}"
+        )
     cmd: Final = [sys.executable, *(["-I"] if IS_ZIPAPP else []), "-c", code]
     debug = env.get("_VIRTUALENV_PERIODIC_UPDATE_INLINE") == "1"
     pipe = None if debug else DEVNULL
