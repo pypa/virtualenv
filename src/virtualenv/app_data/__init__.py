@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import shutil
+from stat import S_IMODE, S_IWGRP, S_IWOTH
 from typing import TYPE_CHECKING, Final
 
 from platformdirs import user_cache_dir, user_data_dir
@@ -34,11 +35,12 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
     try:
         os.makedirs(folder, mode=0o700 if private else 0o777, exist_ok=True)
         if private and os.name == "posix":
-            os.chmod(folder, 0o700)
+            os.chmod(folder, S_IMODE(os.stat(folder).st_mode) & ~(S_IWGRP | S_IWOTH))
         _LOGGER.debug("created app data folder %s", folder)
     except OSError as exception:
         _LOGGER.info("could not prepare app data folder %s due to %r", folder, exception)
         if private:
+            _LOGGER.warning("using temporary app-data because default cache permissions could not be set")
             return TempAppData()
 
     if os.access(folder, os.W_OK):

@@ -1,2 +1,3 @@
-Restrict the default app-data directory to its owner on POSIX, including existing caches. Explicit app-data paths keep
-their permissions so shared caches remain usable. Use temporary app-data if default cache permissions cannot be set.
+Create new default app-data directories with owner-only access on POSIX. For existing defaults, remove group and other
+write access while preserving read, execute, and special mode bits. Explicit app-data paths keep their permissions. Warn
+and use temporary app-data if default cache permissions cannot be set.

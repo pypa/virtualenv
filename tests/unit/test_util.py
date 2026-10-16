@@ -40,7 +40,7 @@ def test_app_data_default_permissions(app_data_default: Path, existing: bool) ->
         data: Final = make_app_data(None, read_only=False, env={})
     finally:
         os.umask(previous)
-    assert (str(data), app_data_default.stat().st_mode & 0o777) == (str(app_data_default), 0o700)
+    assert (str(data), app_data_default.stat().st_mode & 0o777) == (str(app_data_default), 0o755 if existing else 0o700)
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
@@ -359,3 +359,11 @@ def test_zipapp_read_returns_payload_from_entry_inside_root(fake_zipapp_root: Pa
 def test_zipapp_read_rejects_path_outside_root(fake_zipapp_root: Path, parts: tuple[str, ...]) -> None:
     with pytest.raises(RuntimeError, match="should be within ROOT"):
         zipapp.read(fake_zipapp_root.parent.joinpath(*parts))
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+def test_app_data_preserves_setgid_and_read_access(app_data_default: Path) -> None:
+    app_data_default.mkdir()
+    app_data_default.chmod(0o2775)
+    make_app_data(None, read_only=False, env={})
+    assert app_data_default.stat().st_mode & 0o7777 == 0o2755
