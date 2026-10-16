@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import shlex
 from typing import TYPE_CHECKING, Final
 
 from virtualenv.activation.via_template import ViaTemplateActivator
@@ -27,9 +26,8 @@ class CShellActivator(ViaTemplateActivator):
 
     @staticmethod
     def quote(string: str) -> str:
-        # csh runs history substitution before it parses quotes, so a ! survives shlex.quote's single
-        # quotes and aborts the whole script with "Event not found"; only a backslash suppresses it
-        return shlex.quote(string).replace("!", "\\!")
+        # csh expands history inside single quotes and parses unquoted percent signs as expression operators.
+        return "'" + string.replace("'", "'\\''").replace("!", "\\!") + "'"
 
     def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
         # carries its own quoting, so it cannot go through the shared quote() pass with the other replacements;
@@ -61,6 +59,8 @@ def _prompt_literal(value: str, *, tcsh: bool) -> str:
             parts.append("\\\\!")
         elif char == "%" and tcsh:
             parts.append("%%")
+        elif char == "^" and tcsh:
+            parts.append("\\^")
         elif char == "\\":
             parts.append("\\\\")
         else:

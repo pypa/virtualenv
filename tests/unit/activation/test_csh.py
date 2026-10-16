@@ -67,8 +67,8 @@ def test_cshell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
     assert 'setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig"' in activate
 
     if present:
-        assert "setenv TCL_LIBRARY /path/to/tcl" in activate
-        assert "setenv TK_LIBRARY /path/to/tk" in activate
+        assert "setenv TCL_LIBRARY '/path/to/tcl'" in activate
+        assert "setenv TK_LIBRARY '/path/to/tk'" in activate
     else:
         assert "setenv TCL_LIBRARY ''" in activate
 
@@ -128,6 +128,7 @@ def test_cshell_escapes_history_character(csh_venv: Callable[..., tuple[Path, st
         pytest.param("plain", "plain", "plain", id="plain"),
         pytest.param("has!bang", "has\\\\!bang", "has\\\\!bang", id="bang"),
         pytest.param("has%pct", "has%%pct", "has%pct", id="percent"),
+        pytest.param("has^caret", "has\\^caret", "has^caret", id="caret"),
         pytest.param("a!b%p c", "a\\\\!b%%p c", "a\\\\!b%p c", id="bang-and-percent"),
     ],
 )
@@ -172,6 +173,22 @@ def test_cshell_activates_path_with_special_characters(
     )
 
     assert result.stdout == str(dest), result.stderr
+
+
+@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
+def test_cshell_preserves_percent_prompt(csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path) -> None:
+    _, content = csh_venv("plain", prompt="%")
+    (tmp_path / "activate.csh").write_text(content, encoding="utf-8")
+    assert (
+        run(
+            [TCSH, "-fc", f'source {tmp_path / "activate.csh"}; printf "%s" "$VIRTUAL_ENV_PROMPT"'],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=True,
+        ).stdout
+        == "%"
+    )
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
