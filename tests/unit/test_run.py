@@ -1,11 +1,29 @@
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 import pytest
 
 from virtualenv import __version__
 from virtualenv.run import cli_run, session_via_cli
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+
+@pytest.mark.parametrize(
+    "option",
+    [
+        pytest.param(option, id=option.removeprefix("--"))
+        for option in ("--prompt", "--activators", "--pip", "--setuptools")
+    ],
+)
+def test_missing_option_value_does_not_create_app_data(tmp_path: Path, option: str) -> None:
+    with pytest.raises(SystemExit) as error:
+        session_via_cli([option, "--app-data", str(tmp_path / "cache"), str(tmp_path / "env")])
+    assert error.value.code == 2
+    assert not (tmp_path / "cache").exists()
 
 
 def test_help(capsys) -> None:
