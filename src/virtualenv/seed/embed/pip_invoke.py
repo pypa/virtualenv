@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Final
 from virtualenv.seed.embed.base_embed import BaseEmbed
 from virtualenv.seed.wheels import get_wheel, pip_wheel_env_run
 from virtualenv.seed.wheels.acquire import PIP_RUN
+from virtualenv.seed.wheels.util import Version
 from virtualenv.util.subprocess import LogCmd
 
 if TYPE_CHECKING:
@@ -76,7 +77,7 @@ class PipInvoke(BaseEmbed):
                     msg: Final = f"could not get wheel for distribution {dist}"
                     raise RuntimeError(msg)
                 copyfile(wheel.path, Path(folder) / wheel.name)
-                cmd.append(f"{dist}=={wheel.version}")
+                cmd.append(Version.as_pip_req(dist, wheel.version))
             yield cmd
 
 
