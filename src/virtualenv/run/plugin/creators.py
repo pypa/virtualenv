@@ -26,6 +26,7 @@ class CreatorInfo(NamedTuple):
 
 class CreatorSelector(ComponentBuilder):
     def __init__(self, interpreter: PythonInfo, parser: VirtualEnvConfigParser) -> None:
+        self._parser = parser
         creators, self.key_to_meta, self.describe, self.builtin_key = self.for_interpreter(interpreter)
         super().__init__(interpreter, parser, "creator", creators)  # ty: ignore[invalid-argument-type]
 
@@ -85,6 +86,8 @@ class CreatorSelector(ComponentBuilder):
         self._impl_class.add_parser_arguments(self.parser, self.interpreter, self.key_to_meta[selected], app_data)  # ty: ignore[unresolved-attribute]
 
     def create(self, options: VirtualEnvOptions) -> Creator:
+        if options.clear and getattr(options, "dest_is_link", False):
+            self._parser.error("--clear cannot use a symlink destination; pass the target directory explicitly")
         options.meta = self.key_to_meta[getattr(options, self.name)]
         assert self._impl_class is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
         if not issubclass(self._impl_class, Describe):

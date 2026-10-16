@@ -6,14 +6,15 @@ import os
 import sys
 import textwrap
 from abc import ABC, abstractmethod
-from argparse import ArgumentTypeError
+from argparse import Action, ArgumentTypeError
 from ast import literal_eval
 from collections import OrderedDict
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final, cast
 
 if TYPE_CHECKING:
-    from argparse import ArgumentParser
+    from argparse import ArgumentParser, Namespace
+    from collections.abc import Sequence
     from typing import Any, NoReturn
 
     from python_discovery import PythonInfo
@@ -123,10 +124,26 @@ class Creator(ABC):
         :param meta: value as returned by :meth:`can_create`
 
         """
+
+        class Destination(Action):
+            def __call__(
+                self,
+                parser: ArgumentParser,
+                namespace: Namespace,
+                values: str | Sequence[str] | None,
+                option_string: str | None = None,
+            ) -> None:
+                raw: Final = cast("str", values)
+                try:
+                    namespace.dest = cls.validate_dest(raw)
+                except ArgumentTypeError as exception:
+                    parser.error(f"argument {option_string or self.dest}: {exception}")
+                namespace.dest_is_link = Path(raw).is_symlink()
+
         parser.add_argument(
             "dest",
             help="directory to create virtualenv at",
-            type=cls.validate_dest,
+            action=Destination,
         )
         parser.add_argument(
             "--clear",
