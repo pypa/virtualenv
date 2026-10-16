@@ -1,1 +1,2 @@
-Preserve non-ASCII prompt and path values in xonsh activation scripts when xonsh reads them with a legacy encoding. Regenerate existing activation scripts to apply the correction.
+Preserve non-ASCII prompt and path values in xonsh activation scripts when xonsh reads them with a legacy encoding.
+Regenerate existing activation scripts to apply the correction.
