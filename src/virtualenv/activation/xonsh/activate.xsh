@@ -93,5 +93,7 @@ class _VirtualEnvActivator:
 
 if not hasattr(__xonsh__, "xontrib"):
     __xonsh__.xontrib = __xonsh__.imp.types.SimpleNamespace()
+if hasattr(__xonsh__.xontrib, "virtualenv"):
+    __xonsh__.xontrib.virtualenv.deactivate(["nondestructive"])
 __xonsh__.xontrib.virtualenv = _VirtualEnvActivator()
 __xonsh__.xontrib.virtualenv.activate()

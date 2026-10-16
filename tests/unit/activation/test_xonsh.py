@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 from argparse import Namespace
+from copy import copy
 from shutil import which
 from typing import TYPE_CHECKING, Final
 from unittest.mock import create_autospec
@@ -151,3 +152,31 @@ def test_xonsh(activation_tester_class, activation_tester) -> None:
             return f"source {self.quote(str(script))}"
 
     activation_tester(Xonsh)
+
+
+@pytest.mark.skipif(which("xonsh") is None, reason="requires xonsh")
+def test_xonsh_switch_restores_unset_tk_libraries(tmp_path: Path) -> None:
+    for name, library in (("first", "/test/library"), ("second", None)):
+        session = session_via_cli([str(tmp_path / name), "--no-seed", "--activators", "xonsh"])
+        session.creator.bin_dir.mkdir(parents=True)
+        session.creator.interpreter = copy(session.creator.interpreter)
+        session.creator.interpreter.tcl_lib = library
+        session.creator.interpreter.tk_lib = library
+        XonshActivator(VirtualEnvOptions(prompt=None)).generate(session.creator)
+    script: Final = (
+        "import json\n"
+        "__xonsh__.env.pop('TCL_LIBRARY', None)\n"
+        "__xonsh__.env.pop('TK_LIBRARY', None)\n"
+        f'source "{tmp_path / "first" / "bin" / "activate.xsh"}"\n'
+        f'source "{tmp_path / "second" / "bin" / "activate.xsh"}"\n'
+        "print(json.dumps([__xonsh__.env.get('TCL_LIBRARY'), __xonsh__.env.get('TK_LIBRARY')]))\n"
+    )
+    result: Final = subprocess.run(
+        ["xonsh", "--no-rc", "-c", script],
+        env={key: value for key, value in os.environ.items() if key != "PYTHONWARNDEFAULTENCODING"},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert json.loads(result.stdout) == [None, None]
