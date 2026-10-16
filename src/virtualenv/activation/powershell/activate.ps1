@@ -142,6 +142,11 @@ $VenvExecPath = [IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Definition)
 Write-Verbose "Activation script is located in path: '$VenvExecPath'"
 
 if ($VenvDir) {
+    if ($VenvDir -match '^(~([/\\]|$)|[^/\\]+:)') {
+        $VenvDir = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($VenvDir)
+    } else {
+        $VenvDir = [IO.Path]::GetFullPath([IO.Path]::Combine((Get-Location -PSProvider FileSystem).ProviderPath, $VenvDir))
+    }
     Write-Verbose "VenvDir given as parameter, using '$VenvDir' to determine values"
 } else {
     $VenvDir = [IO.Path]::GetDirectoryName($VenvExecPath)

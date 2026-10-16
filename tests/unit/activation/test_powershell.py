@@ -64,7 +64,7 @@ def test_powershell_literal_destination(
         timeout=30,
         check=True,
     )
-    assert (result.stdout.strip(), result.stderr) == (f"{name if relative else dest}|{configured_prompt or name}", "")
+    assert (result.stdout.strip(), result.stderr) == (f"{dest}|{configured_prompt or name}", "")
 
 
 @pytest.mark.skipif(_POWERSHELL is None, reason="requires PowerShell")
