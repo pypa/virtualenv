@@ -67,7 +67,7 @@ class PyEnvCfg:
             LOGGER.debug("\t%s", line)
             text += line
             text += "\n"
-        self.path.write_text(text, encoding="utf-8")
+        self.path.write_bytes(text.encode("utf-8"))
 
     def refresh(self) -> OrderedDict[str, str]:
         self.content = self._read_values(self.path)
