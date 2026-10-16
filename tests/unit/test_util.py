@@ -163,7 +163,9 @@ def test_copy_replaces_contents(tmp_path: Path, directory: bool) -> None:
     destination.write_bytes(b"old")
     copy(source if directory else source / "entry", destination)
     assert (destination / "entry" if directory else destination).read_bytes() == b"new"
-@pytest.mark.skipif(os.name == "nt", reason="Windows requires ctypes")
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="minimal Linux builds can omit ctypes")
 def test_command_line_import_without_ctypes() -> None:
     result: Final = run_cmd([
         sys.executable,
