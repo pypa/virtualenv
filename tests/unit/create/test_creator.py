@@ -31,7 +31,7 @@ from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.create.pyenv_cfg import PyEnvCfg
 from virtualenv.create.via_global_ref import api
 from virtualenv.create.via_global_ref.builtin.cpython.common import is_mac_os_framework, is_macos_brew
-from virtualenv.info import IS_PYPY, IS_WIN, fs_is_case_sensitive, fs_supports_symlink
+from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_WIN, fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.run.plugin.creators import CreatorSelector
 from virtualenv.util.error import ProcessCallFailedError
@@ -513,12 +513,18 @@ def test_venv_configuration_uses_selected_options(tmp_path: Path, global_package
 
 
 @pytest.mark.skipif(not CURRENT.has_venv or not fs_supports_symlink(), reason="requires venv and symlinks")
-@pytest.mark.skipif(is_mac_os_framework(CURRENT) or is_macos_brew(CURRENT), reason="requires copy support")
+@pytest.mark.skipif(
+    is_mac_os_framework(CURRENT) or is_macos_brew(CURRENT) or (IS_GRAALPY and not IS_WIN),
+    reason="stdlib creator requires symlinks on this runtime",
+)
 def test_venv_recreate_with_copied_interpreter(tmp_path: Path) -> None:
     args: Final = [str(tmp_path / "env"), "--creator", "venv", "--no-seed"]
     cli_run([*args, "--symlinks"])
     session: Final = cli_run([*args, "--copies"])
-    assert (session.creator.exe.is_file(), session.creator.exe.is_symlink()) == (True, False)
+    assert (session.creator.exe.is_file(), session.creator.exe.resolve().parent) == (
+        True,
+        session.creator.bin_dir.resolve(),
+    )
 
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
