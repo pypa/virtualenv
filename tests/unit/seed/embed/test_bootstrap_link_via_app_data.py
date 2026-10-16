@@ -16,6 +16,7 @@ from python_discovery import _cached_py_info as cached_py_info
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
 from virtualenv.seed.embed.via_app_data.pip_install.base import _safe_extract_zip
+from virtualenv.seed.embed.via_app_data.pip_install.copy import CopyPipInstall
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
 from virtualenv.util.path import safe_delete
 
@@ -411,6 +412,26 @@ def test_safe_extract_zip_rejects_absolute_entry(tmp_path: Path, entry: str) -> 
 
     with zipfile.ZipFile(str(archive)) as zip_ref, pytest.raises(RuntimeError, match="absolute path"):
         _safe_extract_zip(zip_ref, target)
+
+
+def test_seed_entry_points_preserve_case_and_last_duplicate(tmp_path: Path) -> None:
+    session = cli_run([str(tmp_path / "env"), "--no-seed"])
+    image = tmp_path / "image"
+    metadata = image / "example-1.dist-info"
+    metadata.mkdir(parents=True)
+    (metadata / "entry_points.txt").write_text(
+        "[console_scripts]\nMyTool = old:main\nMyTool = example:main\n", encoding="utf-8"
+    )
+    CopyPipInstall(tmp_path / "example-1-py3-none-any.whl", session.creator, image).install(
+        session.interpreter.version_info
+    )
+    script = session.creator.script("MyTool")
+    if sys.platform == "win32":
+        with zipfile.ZipFile(script) as archive:
+            source = archive.read("__main__.py")
+    else:
+        source = script.read_bytes()
+    assert b"from example import main" in source
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
