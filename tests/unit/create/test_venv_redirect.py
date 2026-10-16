@@ -169,3 +169,24 @@ def test_venv_redirect_forced_not_write_able(redirect: Path, caplog: pytest.LogC
         redirect.chmod(S_IREAD | S_IWRITE)
 
     assert f"could not point {redirect.resolve()} at {(redirect.parent / 'env').resolve()}" in caplog.text
+
+
+@pytest.mark.parametrize("kind", [pytest.param("directory", id="directory"), pytest.param("fifo", id="fifo")])
+def test_venv_redirect_keeps_non_file_config(redirect: Path, kind: str) -> None:
+    config = redirect.parent / "other" / "pyvenv.cfg"
+    config.parent.mkdir()
+    if kind == "directory":
+        config.mkdir()
+    elif hasattr(os, "mkfifo"):
+        os.mkfifo(config)
+    else:
+        pytest.skip("requires FIFOs")
+    redirect.write_text("other\n", encoding="utf-8")
+    _create(redirect.parent / "new", "--venv-redirect")
+    assert redirect.read_text(encoding="utf-8") == "other\n"
+
+
+def test_clear_recovers_non_file_config(tmp_path: Path) -> None:
+    (tmp_path / "pyvenv.cfg").mkdir()
+    _create(tmp_path, "--clear")
+    assert (tmp_path / "pyvenv.cfg").is_file()
