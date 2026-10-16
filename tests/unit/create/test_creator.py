@@ -36,6 +36,8 @@ from virtualenv.run import cli_run, session_via_cli
 from virtualenv.run.plugin.creators import CreatorSelector
 
 if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
+
     from virtualenv.run.session import Session
 
 CURRENT = PythonInfo.current_system()
@@ -66,6 +68,32 @@ def test_resolved_destination_rejects_path_separator(
         monkeypatch.chdir(parent)
     with pytest.raises(ArgumentTypeError, match="must not contain the path separator"):
         Creator.validate_dest("link/env" if linked else "env")
+
+
+@pytest.mark.skipif(IS_WIN, reason="Windows paths use Unicode APIs")
+@pytest.mark.parametrize(
+    ("encoding", "name"),
+    [
+        pytest.param("latin-1", "café", id="latin1"),
+        pytest.param("koi8-r", "тест", id="koi8r"),
+        pytest.param("gbk", "中文", id="gbk"),
+        pytest.param("ascii", "café", id="unencodable-parent"),
+    ],
+)
+def test_destination_rejects_non_utf8_path_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, encoding: str, name: str
+) -> None:
+    (tmp_path / name).mkdir()
+    monkeypatch.chdir(tmp_path / name)
+    mocker.patch("sys.getfilesystemencoding", autospec=True, return_value=encoding)
+    with pytest.raises(ArgumentTypeError, match="activation scripts would point at a different directory"):
+        Creator.validate_dest("env")
+
+
+@pytest.mark.skipif(IS_WIN, reason="Windows paths use Unicode APIs")
+def test_destination_accepts_ascii_in_legacy_locale(tmp_path: Path, mocker: MockerFixture) -> None:
+    mocker.patch("sys.getfilesystemencoding", autospec=True, return_value="latin-1")
+    assert Creator.validate_dest(str(tmp_path / "env")) == str(tmp_path / "env")
 
 
 def _non_success_exit_code(capsys, target):
