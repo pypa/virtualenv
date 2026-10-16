@@ -67,7 +67,7 @@ def periodic_update(  # ruff:ignore[too-many-arguments]
             all_patches = list(group)
             ignore_grace_period_minor = any(version for version in all_patches if version.use(now))
             for version in all_patches:
-                if wheel is not None and Path(version.filename).name == wheel.name:
+                if wheel is not None and version.wheel.parsed_version <= wheel.parsed_version:
                     return wheel
                 if version.use(now, ignore_grace_period_minor):
                     return _update_wheel(version)
@@ -335,7 +335,11 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
             to_folder=wheelhouse,
             env=os.environ,  # ty: ignore[invalid-argument-type]
         )
-        if dest is None or (update_versions and update_versions[0].filename == dest.name):
+        if (
+            dest is None
+            or (update_versions and update_versions[0].filename == dest.name)
+            or (embed_version is not None and dest.parsed_version < embed_version)
+        ):
             break
         release_date = release_date_for_wheel_path(dest.path)
         last = NewVersion(filename=dest.path.name, release_date=release_date, found_date=download_time, source=source)
