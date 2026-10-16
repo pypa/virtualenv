@@ -80,23 +80,27 @@ def test_resolved_destination_rejects_path_separator(
         pytest.param("ascii", "café", id="unencodable-parent"),
     ],
 )
-def test_destination_rejects_non_utf8_path_bytes(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, encoding: str, name: str
+@pytest.mark.parametrize(
+    "activators", [pytest.param("bash", id="bash"), pytest.param("", id="none"), pytest.param("python", id="python")]
+)
+def test_destination_activators_in_legacy_locale(
+    tmp_path: Path, mocker: MockerFixture, encoding: str, name: str, activators: str
 ) -> None:
     (tmp_path / name).mkdir()
-    monkeypatch.chdir(tmp_path / name)
     encode: Final = os.fsencode
 
     def legacy_encode(value: str | bytes | os.PathLike[str] | os.PathLike[bytes]) -> bytes:
         if value == str(tmp_path / name / "env"):
-            return str(value).encode(encoding, errors="replace")
+            return str(value).encode(encoding)
         return encode(value)
 
     mocker.patch("os.fsencode", autospec=True, side_effect=legacy_encode)
-    with pytest.raises(ValueError, match="activation scripts would point at a different directory"):
-        session_via_cli(["env", "--no-seed", "--activators", "bash"])
-    session = cli_run(["env", "--no-seed", "--activators="])
-    assert (session.creator.dest / "pyvenv.cfg").is_file()
+    if activators == "bash":
+        with pytest.raises(ValueError, match="activation scripts would point at a different directory"):
+            session_via_cli([str(tmp_path / name / "env"), "--no-seed", "--activators", activators])
+    else:
+        session = cli_run([str(tmp_path / name / "env"), "--no-seed", "--activators", activators])
+        assert (session.creator.dest / "pyvenv.cfg").is_file()
 
 
 @pytest.mark.skipif(IS_WIN, reason="Windows paths use Unicode APIs")

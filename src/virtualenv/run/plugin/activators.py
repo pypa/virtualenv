@@ -68,7 +68,7 @@ class ActivationSelector(ComponentBuilder):
 
     def create(self, options: VirtualEnvOptions) -> list[Activator]:
         assert self.active is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
-        if self.active and os.name != "nt":
+        if self.active.keys() - {"python"} and os.name != "nt":
             try:
                 matches = os.fsencode(options.dest) == options.dest.encode("utf-8")
             except UnicodeEncodeError:
