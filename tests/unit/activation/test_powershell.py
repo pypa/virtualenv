@@ -22,17 +22,20 @@ _POWERSHELL: Final = shutil.which("pwsh") or shutil.which("powershell.exe")
 
 @pytest.mark.skipif(_POWERSHELL is None, reason="requires PowerShell")
 @pytest.mark.parametrize(
-    "name",
+    ("name", "mode"),
     [
-        pytest.param("ordinary", id="ordinary"),
-        pytest.param("env[one]", id="brackets"),
-        pytest.param("env\\one", id="backslash", marks=pytest.mark.skipif(IS_WIN, reason="POSIX filename")),
+        pytest.param(name, mode, id=f"{mode}-{label}", marks=marks)
+        for name, label, modes, marks in (
+            ("ordinary", "ordinary", ("implicit", "relative", "drive"), []),
+            ("env[one]", "brackets", ("implicit", "relative", "drive"), []),
+            ("env\\one", "backslash", ("implicit", "relative"), [pytest.mark.skipif(IS_WIN, reason="POSIX filename")]),
+        )
+        for mode in modes
     ],
 )
 @pytest.mark.parametrize("configured_prompt", [pytest.param(None, id="name"), pytest.param("custom", id="config")])
-@pytest.mark.parametrize("relative", [pytest.param(False, id="implicit"), pytest.param(True, id="relative")])
 def test_powershell_literal_destination(
-    tmp_path: Path, current_fastest: str, name: str, configured_prompt: str | None, relative: bool
+    tmp_path: Path, current_fastest: str, name: str, configured_prompt: str | None, mode: str
 ) -> None:
     dest: Final = os.path.join(str(tmp_path), name)
     args: Final = [
@@ -50,8 +53,13 @@ def test_powershell_literal_destination(
     subprocess.run([sys.executable, "-m", "virtualenv", *args], capture_output=True, check=True)
     driver: Final = tmp_path / "driver.ps1"
     driver.write_text(
-        f". {PowerShellActivator.quote(os.path.join(dest, 'Scripts' if IS_WIN else 'bin', 'activate.ps1'))}"
-        f"{' -VenvDir ' + PowerShellActivator.quote(name) if relative else ''}\n"
+        (
+            f"New-PSDrive -Name ReviewEnv -PSProvider FileSystem -Root {PowerShellActivator.quote(str(tmp_path))} | Out-Null\n"
+            if mode == "drive"
+            else ""
+        )
+        + f". {PowerShellActivator.quote(os.path.join(dest, 'Scripts' if IS_WIN else 'bin', 'activate.ps1'))}"
+        f"{' -VenvDir ' + PowerShellActivator.quote(('ReviewEnv:/' if mode == 'drive' else '') + name) if mode != 'implicit' else ''}\n"
         'Write-Output "$env:VIRTUAL_ENV|$env:VIRTUAL_ENV_PROMPT"\n',
         encoding="utf-8-sig",
     )
