@@ -314,6 +314,21 @@ def test_create_vcs_ignore_exists_override(tmp_path) -> None:
     assert git_ignore.read_text(encoding="utf-8") == "magic"
 
 
+@pytest.mark.skipif(not CURRENT.has_venv, reason="requires venv")
+@pytest.mark.parametrize("global_packages", [pytest.param(False, id="isolated"), pytest.param(True, id="global")])
+def test_venv_configuration_uses_selected_options(tmp_path: Path, global_packages: bool) -> None:
+    args: Final = [str(tmp_path / "env"), "--creator", "venv", "--no-seed"]
+    if global_packages:
+        args.append("--system-site-packages")
+    session: Final = cli_run(args)
+    session.creator.pyenv_cfg.path.write_text("vendor-marker = unused\n", encoding="utf-8")
+    session.creator.set_pyenv_cfg()
+    assert (
+        "vendor-marker" in session.creator.pyenv_cfg.content,
+        session.creator.pyenv_cfg["include-system-site-packages"],
+    ) == (False, str(global_packages).lower())
+
+
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
 def test_venv_fails_not_inline(tmp_path, capsys, mocker) -> None:
     if hasattr(os, "geteuid") and os.geteuid() == 0:

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from argparse import ArgumentTypeError
-from copy import copy
 from typing import TYPE_CHECKING, Final
 
 from python_discovery import PythonInfo
@@ -100,12 +99,6 @@ class Venv(ViaGlobalRefApi):
             cmd.append("--system-site-packages")
         cmd.extend(("--symlinks" if self.symlinks else "--copies", str(self.dest)))
         return cmd  # ty: ignore[invalid-return-type]
-
-    def set_pyenv_cfg(self) -> None:
-        # prefer venv options over ours, but keep our extra
-        venv_content = copy(self.pyenv_cfg.refresh())
-        super().set_pyenv_cfg()
-        self.pyenv_cfg.update(venv_content)
 
     def __getattribute__(self, item: str) -> object:
         describe = object.__getattribute__(self, "describe")
