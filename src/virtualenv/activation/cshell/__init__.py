@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import shlex
 from typing import TYPE_CHECKING, Final
 
@@ -8,11 +9,13 @@ from virtualenv.util.text import collapse_line_boundaries
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from pathlib import Path
 
     from python_discovery import PythonInfo
 
     from virtualenv.create.creator import Creator
 
+_LOGGER: Final = logging.getLogger(__name__)
 _PROMPT_DISPLAY_TCSH: Final[str] = "__VIRTUAL_PROMPT_DISPLAY_TCSH__"
 _PROMPT_DISPLAY_PLAIN: Final[str] = "__VIRTUAL_PROMPT_DISPLAY_PLAIN__"
 
@@ -25,6 +28,18 @@ class CShellActivator(ViaTemplateActivator):
     def templates(self) -> Iterator[str]:
         yield "activate.csh"
         yield "deactivate.csh"
+
+    def generate(self, creator: Creator) -> list[Path]:
+        values: Final = super().replacements(creator, creator.bin_dir)
+        if any(
+            collapse_line_boundaries(values[key]) != values[key]
+            for key in ("__VIRTUAL_ENV__", "__TCL_LIBRARY__", "__TK_LIBRARY__")
+        ):
+            _LOGGER.warning("skipping csh activation scripts: a filesystem path contains a line boundary")
+            for template in self.templates():
+                (creator.bin_dir / self.as_name(template)).unlink(missing_ok=True)
+            return []
+        return super().generate(creator)
 
     @staticmethod
     def quote(string: str) -> str:

@@ -325,3 +325,13 @@ def test_cshell_prompt_in_gbk_locale(csh_venv: Callable[..., tuple[Path, str]], 
         check=True,
     )
     assert f"({prompt}) ".encode() in result.stdout + result.stderr
+
+
+@pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
+def test_cshell_skips_multiline_destination(tmp_path: Path) -> None:
+    destination = tmp_path / "env\nname"
+    scripts = destination / "bin"
+    scripts.mkdir(parents=True)
+    (scripts / "activate.csh").write_text("old", encoding="utf-8")
+    cli_run([str(destination), "--no-seed", "--activators", "cshell"])
+    assert not list(scripts.glob("*.csh"))
