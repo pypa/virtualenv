@@ -13,8 +13,6 @@ from typing import Final
 import pytest
 from python_discovery import PythonInfo
 
-from tasks.__main__zipapp import VersionedFindLoad
-from tasks.__main__zipapp import run as run_zipapp
 from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
@@ -22,6 +20,8 @@ from virtualenv.seed.wheels.periodic_update import trigger_update
 
 HERE = Path(__file__).parent
 CURRENT = PythonInfo.current_system()
+# Repackaged sdists omit the zipapp build sources.
+_ZIPAPP_MAIN: Final = pytest.importorskip("tasks.__main__zipapp")
 
 
 @pytest.fixture(scope="session")
@@ -96,7 +96,7 @@ def zipapp_test_env(tmp_path_factory):
 def test_zipapp_loader_context(zipapp: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("tasks.__main__zipapp.ABS_HERE", str(zipapp))
     monkeypatch.delitem(sys.modules, "filelock", raising=False)
-    with VersionedFindLoad():
+    with _ZIPAPP_MAIN.VersionedFindLoad():
         spec: Final = importlib.util.find_spec("filelock")
         assert spec is not None
         assert spec.origin is not None
@@ -112,7 +112,7 @@ def test_zipapp_version(zipapp: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("tasks.__main__zipapp.ABS_HERE", str(zipapp))
     monkeypatch.setattr(sys, "argv", [str(zipapp), "--version"])
     with pytest.raises(SystemExit) as context:
-        run_zipapp()
+        _ZIPAPP_MAIN.run()
     assert context.value.code == 0
 
 
