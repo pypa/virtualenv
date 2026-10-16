@@ -39,6 +39,7 @@ class PyEnvCfg:
 
     @staticmethod
     def _read_values(path: Path) -> OrderedDict[str, str]:
+        _validate_path(path)
         content = OrderedDict()
         for line in path.read_text(encoding="utf-8").splitlines():
             key, separator, value = line.partition("=")
@@ -51,6 +52,7 @@ class PyEnvCfg:
         return content
 
     def write(self) -> None:
+        _validate_path(self.path)
         LOGGER.debug("write %s", self.path)
         text = ""
         for key, value in self.content.items():
@@ -86,6 +88,12 @@ class PyEnvCfg:
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={self.path})"
+
+
+def _validate_path(path: Path) -> None:
+    if path.exists() and not path.is_file():
+        msg = f"configuration path is not a regular file: {path}"
+        raise ValueError(msg)
 
 
 __all__ = [
