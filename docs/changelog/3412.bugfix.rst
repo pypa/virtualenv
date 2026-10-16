@@ -1,3 +1,3 @@
-Reject incompatible POSIX path encodings only when generating activation scripts. Environments created with
-``--activators=`` remain supported in legacy locales. Undecodable parent paths now fail before activation scripts are
-written.
+Reject incompatible POSIX path encodings when generating shell activation scripts. Environments created with
+``--activators=`` or ``--activators=python`` remain supported in legacy locales. Undecodable parent paths now fail
+before shell activation scripts are written.
