@@ -88,12 +88,14 @@ else
         fi
         CURRENT_PATH=$(realpath "${BASH_SOURCE[0]}") || return 1
         CURRENT_DIR=$(dirname "${CURRENT_PATH}") || return 1
-        VIRTUAL_ENV="$(realpath "${CURRENT_DIR}/../")" || return 1
-        if [ ! -f "$VIRTUAL_ENV/pyvenv.cfg" ]; then
-            echo "Relocated environment has no pyvenv.cfg: $VIRTUAL_ENV" >&2
-            unset VIRTUAL_ENV
+        CURRENT_ENV="$(realpath "${CURRENT_DIR}/../")" || return 1
+        if [ ! "$CURRENT_PATH" -ef "$CURRENT_ENV/bin/activate" ] || [ ! -f "$CURRENT_ENV/pyvenv.cfg" ]; then
+            echo "Cannot identify relocated environment: $CURRENT_ENV" >&2
+            unset CURRENT_ENV
             return 1
         fi
+        VIRTUAL_ENV="$CURRENT_ENV"
+        unset CURRENT_ENV
     else
         VIRTUAL_ENV=__VIRTUAL_ENV__
     fi

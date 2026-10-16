@@ -3,3 +3,5 @@ location has no ``pyvenv.cfg``, instead of continuing with an incorrect environm
 
 Leave ``PATH`` unchanged when a moved activation script is evaluated or read from standard input without a source
 filename.
+
+Require the sourced file to be the relocated activation script before exporting the new environment path.

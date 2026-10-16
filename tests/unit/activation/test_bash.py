@@ -437,3 +437,27 @@ def test_bash_relocation_without_source_preserves_path(tmp_path: Path, mode: str
         check=True,
     )
     assert result.stdout == "/usr/bin:/bin|unset"
+
+
+@pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
+def test_bash_relocation_rejects_sourced_wrapper(tmp_path: Path) -> None:
+    cli_run([str(tmp_path / "original"), "--no-seed", "--activators", "bash"])
+    (tmp_path / "original").rename(tmp_path / "moved")
+    wrapper: Final = tmp_path / "moved" / "bin" / "wrapper"
+    wrapper.write_text('eval "$(cat "$1")"\n', encoding="utf-8")
+    result: Final = subprocess.run(
+        [
+            "bash",
+            "-c",
+            '. "$1" "$2"; printf "%s|%s" "$PATH" "${VIRTUAL_ENV-unset}"',
+            "test",
+            str(wrapper),
+            str(wrapper.parent / "activate"),
+        ],
+        env={"PATH": "/usr/bin:/bin"},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert result.stdout == "/usr/bin:/bin|unset"
