@@ -51,7 +51,8 @@ class Venv(ViaGlobalRefApi):
     def create(self) -> None:
         # stdlib venv writes interpreter files, configuration and activation scripts in place, so a planted symlink or
         # hard link would receive them outside the environment
-        ensure_within(self.dest, self.bin_dir)
+        for directory in (self.bin_dir, self.purelib, self.platlib):
+            ensure_within(self.dest, directory)
         for path in (self.dest / "pyvenv.cfg", self.dest / ".gitignore", *self.bin_dir.iterdir()):
             if path.is_symlink() or (path.is_file() and path.stat().st_nlink > 1):
                 path.unlink()

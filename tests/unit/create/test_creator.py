@@ -370,6 +370,42 @@ def test_venv_creator_accepts_plain_destination(tmp_path: Path) -> None:
     assert (session.creator.dest / "pyvenv.cfg").is_file()
 
 
+@pytest.mark.parametrize(
+    "junction",
+    [
+        pytest.param(
+            False, id="symlink", marks=pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+        ),
+        pytest.param(True, id="junction", marks=pytest.mark.skipif(os.name != "nt", reason="Windows junctions")),
+    ],
+)
+@pytest.mark.parametrize(
+    "creator_name",
+    [
+        pytest.param("builtin", id="builtin"),
+        pytest.param(
+            "venv",
+            id="venv",
+            marks=pytest.mark.skipif("venv" not in CURRENT_CREATORS, reason="stdlib venv is unavailable"),
+        ),
+    ],
+)
+@pytest.mark.parametrize("folder", [pytest.param("bin_dir", id="executables"), pytest.param("purelib", id="packages")])
+def test_creator_replaces_directory_links(tmp_path: Path, creator_name: str, folder: str, junction: bool) -> None:
+    session: Final = session_via_cli([str(tmp_path / "env"), "--creator", creator_name, "--no-seed"])
+    session.creator.dest.mkdir()
+    stored: Final = session.creator.dest / "stored"
+    stored.mkdir()
+    link: Final = session.creator.dest / getattr(session.creator, folder).relative_to(session.creator.dest).parts[0]
+    if junction:
+        subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(stored)], capture_output=True, check=True)
+    else:
+        link.symlink_to(stored, target_is_directory=True)
+    with session:
+        session.run()
+    assert (link.resolve(), session.creator.exe.is_file(), list(stored.iterdir())) == (link, True, [])
+
+
 CREATE_METHODS = []
 for k, v in CreatorSelector.for_interpreter(CURRENT).key_to_meta.items():
     if k in CURRENT_CREATORS:

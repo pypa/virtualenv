@@ -23,7 +23,7 @@ from virtualenv.app_data import (
 from virtualenv.info import fs_supports_symlink
 from virtualenv.util import zipapp
 from virtualenv.util.lock import ReentrantFileLock
-from virtualenv.util.path import copy, safe_delete, symlink, write_file
+from virtualenv.util.path import copy, ensure_within, safe_delete, symlink, write_file
 from virtualenv.util.subprocess import run_cmd
 
 if os.name == "nt":
@@ -240,6 +240,25 @@ def test_write_file_replaces_content(tmp_path: Path, existing: bool) -> None:
         path.write_bytes(b"previous")
     write_file(path, b"generated")
     assert path.read_bytes() == b"generated"
+
+
+def test_environment_directories_reject_parent_components(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="must remain inside"):
+        ensure_within(tmp_path, tmp_path / ".." / "folder")
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+@pytest.mark.parametrize(
+    "existing", [pytest.param(False, id="missing-target"), pytest.param(True, id="existing-target")]
+)
+def test_environment_directories_remove_links(tmp_path: Path, existing: bool) -> None:
+    target: Final = tmp_path / "stored"
+    if existing:
+        target.mkdir()
+    link: Final = tmp_path / "link"
+    link.symlink_to(target, target_is_directory=True)
+    ensure_within(tmp_path, link / "nested")
+    assert (link.is_symlink(), link.exists(), target.exists()) == (False, False, existing)
 
 
 def test_run_fail(tmp_path) -> None:
