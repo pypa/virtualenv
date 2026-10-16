@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import logging
+from argparse import ArgumentTypeError
 from copy import copy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from python_discovery import PythonInfo
 
@@ -10,6 +11,7 @@ from virtualenv.create.via_global_ref.store import handle_store_python
 from virtualenv.util.error import ProcessCallFailedError
 from virtualenv.util.path import ensure_dir
 from virtualenv.util.subprocess import run_cmd
+from virtualenv.util.text import collapse_line_boundaries
 
 from .api import ViaGlobalRefApi, ViaGlobalRefMeta
 from .builtin.cpython.common import is_mac_os_framework
@@ -57,6 +59,17 @@ class Venv(ViaGlobalRefApi):
         if self.describe is not None:
             self.describe.install_venv_shared_libs(self)
         super().create()
+
+    @classmethod
+    def validate_dest(cls, raw_value: str) -> str:
+        value: Final = super().validate_dest(raw_value)
+        # stdlib venv writes the destination into pyvenv.cfg without escaping line boundaries.
+        if collapse_line_boundaries(value) != value:
+            msg: Final = (
+                f"destination {value!r} must not contain a line boundary as venv cannot record it in pyvenv.cfg"
+            )
+            raise ArgumentTypeError(msg)
+        return value
 
     def create_inline(self) -> None:
         from venv import EnvBuilder  # ruff:ignore[import-outside-top-level]

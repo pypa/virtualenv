@@ -117,6 +117,42 @@ def system(session_app_data):
 
 
 CURRENT_CREATORS = [i for i in CreatorSelector.for_interpreter(CURRENT).key_to_class if i != "builtin"]
+
+
+@pytest.mark.skipif("venv" not in CURRENT_CREATORS, reason="stdlib venv is unavailable")
+@pytest.mark.parametrize(
+    "boundary",
+    [
+        pytest.param(char, id=name)
+        for name, char in (
+            ("newline", "\n"),
+            ("return", "\r"),
+            ("vertical-tab", "\v"),
+            ("form-feed", "\f"),
+            ("file-separator", "\x1c"),
+            ("group-separator", "\x1d"),
+            ("record-separator", "\x1e"),
+            ("next-line", "\x85"),
+            ("line-separator", "\u2028"),
+            ("paragraph-separator", "\u2029"),
+        )
+    ],
+)
+def test_venv_creator_rejects_line_boundary(tmp_path: Path, capsys: pytest.CaptureFixture[str], boundary: str) -> None:
+    destination: Final = tmp_path / f"project{boundary}name"
+    with pytest.raises(SystemExit) as context:
+        cli_run([str(destination), "--creator", "venv", "--no-seed"])
+    assert context.value.code == 2
+    assert "must not contain a line boundary" in capsys.readouterr().err
+    assert not destination.exists()
+
+
+@pytest.mark.skipif("venv" not in CURRENT_CREATORS, reason="stdlib venv is unavailable")
+def test_venv_creator_accepts_plain_destination(tmp_path: Path) -> None:
+    session: Final = cli_run([str(tmp_path / "environment"), "--creator", "venv", "--no-seed"])
+    assert (session.creator.dest / "pyvenv.cfg").is_file()
+
+
 CREATE_METHODS = []
 for k, v in CreatorSelector.for_interpreter(CURRENT).key_to_meta.items():
     if k in CURRENT_CREATORS:
