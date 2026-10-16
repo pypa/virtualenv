@@ -4,14 +4,96 @@ import shutil
 import subprocess
 import sys
 from argparse import Namespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
 from virtualenv.activation import PowerShellActivator
+from virtualenv.info import IS_WIN
+from virtualenv.run import cli_run
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+
+_POWERSHELL: Final = shutil.which("pwsh") or shutil.which("powershell.exe")
+
+
+@pytest.mark.skipif(_POWERSHELL is None, reason="requires PowerShell")
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("ordinary", id="ordinary"),
+        pytest.param("env[one]", id="brackets"),
+        pytest.param("env\\one", id="backslash", marks=pytest.mark.skipif(IS_WIN, reason="POSIX filename")),
+    ],
+)
+@pytest.mark.parametrize("configured_prompt", [pytest.param(None, id="name"), pytest.param("custom", id="config")])
+@pytest.mark.parametrize("relative", [pytest.param(False, id="implicit"), pytest.param(True, id="relative")])
+def test_powershell_literal_destination(
+    tmp_path: Path, current_fastest: str, name: str, configured_prompt: str | None, relative: bool
+) -> None:
+    dest: Final = tmp_path / name
+    args: Final = [
+        "--without-pip",
+        "--no-periodic-update",
+        "--activators",
+        "powershell",
+        "--creator",
+        current_fastest,
+        str(dest),
+    ]
+    if configured_prompt is not None:
+        args.extend(["--prompt", configured_prompt])
+    session: Final = cli_run(args)
+    driver: Final = tmp_path / "driver.ps1"
+    driver.write_text(
+        f". {PowerShellActivator.quote(str(session.creator.bin_dir / 'activate.ps1'))}"
+        f"{' -VenvDir ' + PowerShellActivator.quote(name) if relative else ''}\n"
+        'Write-Output "$env:VIRTUAL_ENV|$env:VIRTUAL_ENV_PROMPT"\n',
+        encoding="utf-8-sig",
+    )
+    result: Final = subprocess.run(
+        [_POWERSHELL, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(driver)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        cwd=tmp_path,
+        timeout=30,
+        check=True,
+    )
+    assert (result.stdout.strip(), result.stderr) == (f"{name if relative else dest}|{configured_prompt or name}", "")
+
+
+@pytest.mark.skipif(_POWERSHELL is None, reason="requires PowerShell")
+def test_powershell_reports_missing_config(tmp_path: Path, current_fastest: str) -> None:
+    session: Final = cli_run([
+        "--without-pip",
+        "--no-periodic-update",
+        "--activators",
+        "powershell",
+        "--creator",
+        current_fastest,
+        str(tmp_path / "env"),
+    ])
+    (session.creator.dest / "pyvenv.cfg").unlink()
+    result: Final = subprocess.run(
+        [
+            _POWERSHELL,
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(session.creator.bin_dir / "activate.ps1"),
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+        check=True,
+    )
+    assert "Cannot find configuration file" in result.stderr
 
 
 @pytest.mark.skipif(shutil.which("pwsh") is None, reason="requires PowerShell Core")
