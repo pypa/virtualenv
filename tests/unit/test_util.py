@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Final
 import pytest
 
 from virtualenv.app_data import (
+    AppDataDiskFolder,
     TempAppData,
     _cache_dir_with_migration,
     _default_app_data_dir,
@@ -82,6 +83,8 @@ def test_app_data_default_writable(app_data_default: Path) -> None:
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
 def test_app_data_permission_failure_uses_temporary(app_data_default: Path, mocker: MockerFixture) -> None:
+    app_data_default.mkdir()
+    app_data_default.chmod(0o777)
     mocker.patch("virtualenv.app_data.os.chmod", autospec=True, side_effect=PermissionError)
     data: Final = make_app_data(None, read_only=False, env={})
     try:
@@ -366,4 +369,18 @@ def test_app_data_preserves_setgid_and_read_access(app_data_default: Path) -> No
     app_data_default.mkdir()
     app_data_default.chmod(0o2775)
     make_app_data(None, read_only=False, env={})
-    assert app_data_default.stat().st_mode & 0o7777 == 0o2755
+    assert app_data_default.stat().st_mode & 0o7777 == 0o2775
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX ownership")
+def test_app_data_keeps_writable_non_owned_cache(app_data_default: Path, mocker: MockerFixture) -> None:
+    app_data_default.mkdir()
+    app_data_default.chmod(0o1777)
+    mocker.patch("virtualenv.app_data.os.geteuid", autospec=True, return_value=app_data_default.stat().st_uid + 1)
+    mocker.patch("virtualenv.app_data.os.chmod", autospec=True, side_effect=PermissionError)
+    data: Final = make_app_data(None, read_only=False, env={})
+    assert (isinstance(data, AppDataDiskFolder), str(data), app_data_default.stat().st_mode & 0o7777) == (
+        True,
+        str(app_data_default),
+        0o1777,
+    )
