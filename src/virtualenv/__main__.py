@@ -4,6 +4,7 @@ import errno
 import logging
 import os
 import sys
+from pathlib import Path
 from time import perf_counter
 from typing import TYPE_CHECKING, Final
 
@@ -22,7 +23,12 @@ def _run_as_module() -> None:
     except OSError:
         pass
     else:
-        if sys.path and sys.path[0] == current:
+        if (
+            sys.path
+            and sys.path[0] == current
+            and not getattr(sys.flags, "safe_path", False)
+            and Path(__file__).resolve().parent.parent != Path(current)
+        ):
             del sys.path[0]
     run_with_catch()
 

@@ -3,17 +3,18 @@ from __future__ import annotations
 import os
 import re
 import runpy
+import shutil
 import sys
+from importlib.metadata import distribution
+from pathlib import Path
 from subprocess import check_output
-from typing import TYPE_CHECKING, Final, NoReturn
+from typing import Final, NoReturn
 
 import pytest
 
+import virtualenv
 from virtualenv.__main__ import run_with_catch
 from virtualenv.util.error import ProcessCallFailedError
-
-if TYPE_CHECKING:
-    from pathlib import Path
 
 
 @pytest.mark.parametrize("implicit", [pytest.param(True, id="working-directory"), pytest.param(False, id="other-path")])
@@ -137,3 +138,19 @@ def test_session_report_subprocess(tmp_path) -> None:
         r"  activators .*",
     ]
     _match_regexes(lines, regexes)
+
+
+def test_module_entry_from_target_install(tmp_path: Path) -> None:
+    shutil.copytree(Path(virtualenv.__file__).parent, tmp_path / "virtualenv")
+    metadata = distribution("virtualenv")
+    for file in metadata.files or ():
+        if file.name == "METADATA":
+            shutil.copytree(Path(metadata.locate_file(file)).parent, tmp_path / file.parent.name)
+            break
+    check_output(
+        [sys.executable, "-m", "virtualenv", str(tmp_path / "env"), "--no-seed", "--activators="],
+        cwd=tmp_path,
+        text=True,
+        encoding="utf-8",
+    )
+    assert (tmp_path / "env" / "pyvenv.cfg").is_file()
