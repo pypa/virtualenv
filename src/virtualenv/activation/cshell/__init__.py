@@ -29,7 +29,7 @@ class CShellActivator(ViaTemplateActivator):
     def quote(string: str) -> str:
         # csh expands history inside single quotes and parses unquoted percent signs as expression operators.
         quoted: Final = shlex.quote(string)
-        return (f"'{quoted}'" if quoted == string else quoted).replace("!", "\\!")
+        return (f"'{quoted}'" if quoted == string else quoted).replace("!", "'\\!'")
 
     def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
         # carries its own quoting, so it cannot go through the shared quote() pass with the other replacements;
@@ -58,11 +58,11 @@ def _prompt_literal(value: str, *, tcsh: bool) -> str:
         if char == "'":
             parts.append("'\\''")
         elif char == "!":
-            parts.append("\\\\!")
+            parts.append("'\\\\'\\!")
         elif char == "%" and tcsh:
             parts.append("%%")
         elif char == "^" and tcsh:
-            parts.append("\\^")
+            parts.append("'\\\\^'")
         elif char == "\\":
             parts.append("\\\\")
         else:

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from argparse import Namespace
 from shutil import which
@@ -115,21 +116,14 @@ def csh_plain_activate(tmp_path_factory: pytest.TempPathFactory, current_fastest
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
-def test_cshell_escapes_history_character(csh_venv: Callable[..., tuple[Path, str]]) -> None:
-    dest, content = csh_venv("has!bang")
-
-    assert f"setenv VIRTUAL_ENV '{str(dest).replace('!', chr(92) + '!')}'\n" in content
-
-
-@pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
 @pytest.mark.parametrize(
     ("prompt", "tcsh_escaped", "plain_escaped"),
     [
         pytest.param("plain", "plain", "plain", id="plain"),
-        pytest.param("has!bang", "has\\\\!bang", "has\\\\!bang", id="bang"),
+        pytest.param("has!bang", "has'\\\\'\\!bang", "has'\\\\'\\!bang", id="bang"),
         pytest.param("has%pct", "has%%pct", "has%pct", id="percent"),
-        pytest.param("has^caret", "has\\^caret", "has^caret", id="caret"),
-        pytest.param("a!b%p c", "a\\\\!b%%p c", "a\\\\!b%p c", id="bang-and-percent"),
+        pytest.param("has^caret", "has'\\\\^'caret", "has^caret", id="caret"),
+        pytest.param("a!b%p c", "a'\\\\'\\!b%%p c", "a'\\\\'\\!b%p c", id="bang-and-percent"),
     ],
 )
 def test_cshell_escapes_prompt_expansion(
@@ -247,3 +241,22 @@ def test_csh(activation_tester_class, activation_tester) -> None:
             return "echo 'source \"$VIRTUAL_ENV/bin/activate.csh\"; echo $prompt' | csh -i ; echo"
 
     activation_tester(Csh)
+
+
+@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
+@pytest.mark.parametrize("prompt", [pytest.param("中^b", id="caret"), pytest.param("中!b", id="history")])
+def test_cshell_prompt_in_gbk_locale(csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, prompt: str) -> None:
+    if "zh_CN.gbk" not in check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines():
+        pytest.skip("GBK locale is unavailable")
+    _, content = csh_venv("plain", prompt=prompt)
+    script = tmp_path / "activate.csh"
+    script.write_text(content, encoding="utf-8")
+    result = run(
+        [TCSH, "-f", "-i"],
+        input=f"source {script}\nexit\n".encode(),
+        env={**os.environ, "LC_ALL": "zh_CN.gbk"},
+        capture_output=True,
+        timeout=30,
+        check=True,
+    )
+    assert f"({prompt}) ".encode() in result.stdout + result.stderr
