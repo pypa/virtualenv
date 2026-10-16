@@ -6,8 +6,18 @@ from argparse import Namespace
 from ast import literal_eval
 from textwrap import dedent
 
+import pytest
+
 from virtualenv.activation import PythonActivator
 from virtualenv.info import IS_WIN
+
+
+@pytest.mark.parametrize(
+    "encoding",
+    [pytest.param("utf-8", id="utf8"), pytest.param("latin-1", id="latin1"), pytest.param("cp932", id="cp932")],
+)
+def test_python_quote_preserves_unicode_across_source_encodings(encoding: str) -> None:
+    assert literal_eval(PythonActivator.quote("café 日本語").encode("ascii").decode(encoding)) == "café 日本語"
 
 
 def test_python_activator_generates_pkg_config_path(tmp_path) -> None:
