@@ -3,6 +3,7 @@ from __future__ import annotations
 import concurrent.futures
 import ctypes
 import os
+import subprocess
 import sys
 import traceback
 import zipfile
@@ -242,6 +243,22 @@ def test_write_file_replaces_content(tmp_path: Path, existing: bool) -> None:
     assert path.read_bytes() == b"generated"
 
 
+@pytest.mark.parametrize("existing", [pytest.param(False, id="new"), pytest.param(True, id="existing")])
+def test_environment_directories_create_nested_path(tmp_path: Path, existing: bool) -> None:
+    folder: Final = tmp_path / "env" / "lib" / "python"
+    if existing:
+        folder.mkdir(parents=True)
+    ensure_within(tmp_path / "env", folder)
+    assert folder.is_dir()
+
+
+def test_environment_directories_reject_regular_file(tmp_path: Path) -> None:
+    folder: Final = tmp_path / "file"
+    folder.touch()
+    with pytest.raises(NotADirectoryError, match="not a real directory"):
+        ensure_within(tmp_path, folder)
+
+
 def test_environment_directories_reject_parent_components(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="must remain inside"):
         ensure_within(tmp_path, tmp_path / ".." / "folder")
@@ -258,7 +275,17 @@ def test_environment_directories_remove_links(tmp_path: Path, existing: bool) ->
     link: Final = tmp_path / "link"
     link.symlink_to(target, target_is_directory=True)
     ensure_within(tmp_path, link / "nested")
-    assert (link.is_symlink(), link.exists(), target.exists()) == (False, False, existing)
+    assert (link.is_symlink(), link.exists(), target.exists()) == (False, True, existing)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows junctions")
+def test_environment_directories_report_replaced_junction(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    target: Final = tmp_path / "stored"
+    target.mkdir()
+    link: Final = tmp_path / "link"
+    subprocess.run(["cmd", "/c", "mklink", "/J", str(link), str(target)], check=True, capture_output=True)
+    ensure_within(tmp_path, link)
+    assert (link.resolve(), f"replace environment directory junction {link}" in caplog.text) == (link, True)
 
 
 def test_run_fail(tmp_path) -> None:
