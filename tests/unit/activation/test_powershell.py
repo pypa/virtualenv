@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import sys
@@ -33,7 +34,7 @@ _POWERSHELL: Final = shutil.which("pwsh") or shutil.which("powershell.exe")
 def test_powershell_literal_destination(
     tmp_path: Path, current_fastest: str, name: str, configured_prompt: str | None, relative: bool
 ) -> None:
-    dest: Final = tmp_path / name
+    dest: Final = os.path.join(str(tmp_path), name)
     args: Final = [
         "--without-pip",
         "--no-periodic-update",
@@ -45,10 +46,11 @@ def test_powershell_literal_destination(
     ]
     if configured_prompt is not None:
         args.extend(["--prompt", configured_prompt])
-    session: Final = cli_run(args)
+    # Simulated-platform tests change pathlib's separators at collection, so create the environment in a fresh process.
+    subprocess.run([sys.executable, "-m", "virtualenv", *args], capture_output=True, check=True)
     driver: Final = tmp_path / "driver.ps1"
     driver.write_text(
-        f". {PowerShellActivator.quote(str(session.creator.bin_dir / 'activate.ps1'))}"
+        f". {PowerShellActivator.quote(os.path.join(dest, 'Scripts' if IS_WIN else 'bin', 'activate.ps1'))}"
         f"{' -VenvDir ' + PowerShellActivator.quote(name) if relative else ''}\n"
         'Write-Output "$env:VIRTUAL_ENV|$env:VIRTUAL_ENV_PROMPT"\n',
         encoding="utf-8-sig",
