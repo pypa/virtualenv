@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import os
 import subprocess
+import sys
 from typing import TYPE_CHECKING, Final
 
 import pytest
 
 from virtualenv.run import cli_run
+from virtualenv.seed.wheels.embed import get_embed_wheel
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -78,3 +80,25 @@ def test_pip_invoke_reports_unavailable_wheel(tmp_path: Path) -> None:
             "--no-download",
             "--no-periodic-update",
         ])
+
+
+@pytest.mark.usefixtures("_no_coverage")
+def test_pip_invoke_freeze_uses_version_pin(tmp_path: Path) -> None:
+    session: Final = cli_run([
+        str(tmp_path / "env"),
+        "--seeder",
+        "pip",
+        "--pip",
+        "embed",
+        "--no-setuptools",
+        "--no-periodic-update",
+    ])
+    result: Final = subprocess.run(
+        [str(session.creator.exe), "-I", "-m", "pip", "freeze", "--all"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    version: Final = get_embed_wheel("pip", f"{sys.version_info.major}.{sys.version_info.minor}").version
+    assert result.stdout.splitlines() == [f"pip=={version}"]

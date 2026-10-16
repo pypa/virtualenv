@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import logging
 from contextlib import contextmanager
+from pathlib import Path
+from shutil import copyfile
 from subprocess import Popen
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Final
 
 from virtualenv.seed.embed.base_embed import BaseEmbed
@@ -12,7 +15,6 @@ from virtualenv.util.subprocess import LogCmd
 
 if TYPE_CHECKING:
     from collections.abc import Generator
-    from pathlib import Path
 
     from virtualenv.config.cli.parser import VirtualEnvOptions
     from virtualenv.create.creator import Creator
@@ -56,22 +58,26 @@ class PipInvoke(BaseEmbed):
             "--ignore-installed",
             "--no-index",
         ]
-        for dist, version in self.distribution_to_versions().items():
-            wheel: Final = get_wheel(
-                distribution=dist,
-                version=version,
-                for_py_version=for_py_version,
-                search_dirs=self.extra_search_dir,
-                download=self.download,
-                app_data=self.app_data,
-                do_periodic_update=self.periodic_update,
-                env=self.env,
-            )
-            if wheel is None:
-                msg: Final = f"could not get wheel for distribution {dist}"
-                raise RuntimeError(msg)
-            cmd.append(str(wheel.path))
-        yield cmd
+        # Only the selected archives may participate in pip's filename-based selection.
+        with TemporaryDirectory(prefix="virtualenv-seed-") as folder:
+            cmd.extend(["--find-links", folder])
+            for dist, version in self.distribution_to_versions().items():
+                wheel: Final = get_wheel(
+                    distribution=dist,
+                    version=version,
+                    for_py_version=for_py_version,
+                    search_dirs=self.extra_search_dir,
+                    download=self.download,
+                    app_data=self.app_data,
+                    do_periodic_update=self.periodic_update,
+                    env=self.env,
+                )
+                if wheel is None:
+                    msg: Final = f"could not get wheel for distribution {dist}"
+                    raise RuntimeError(msg)
+                copyfile(wheel.path, Path(folder) / wheel.name)
+                cmd.append(f"{dist}=={wheel.version}")
+            yield cmd
 
 
 __all__ = [
