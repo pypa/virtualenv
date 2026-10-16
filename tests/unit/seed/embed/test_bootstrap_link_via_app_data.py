@@ -5,7 +5,7 @@ import os
 import sys
 import zipfile
 from stat import S_IWGRP, S_IWOTH, S_IWUSR
-from subprocess import Popen, check_call
+from subprocess import Popen, check_call, run
 from threading import Thread
 from typing import TYPE_CHECKING, Final
 
@@ -136,6 +136,52 @@ def test_seed_metadata_keeps_reseeding_supported(
         linked,
         False,
     )
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("plain", id="plain"),
+        pytest.param("two words", id="space"),
+        pytest.param("owner's env", id="apostrophe"),
+        pytest.param("a" * 120, id="long"),
+        pytest.param("env \\path", id="backslash", marks=pytest.mark.skipif(os.name == "nt", reason="POSIX filename")),
+        pytest.param("env\tname", id="tab", marks=pytest.mark.skipif(os.name == "nt", reason="POSIX filename")),
+    ],
+)
+@pytest.mark.parametrize(
+    "via_python",
+    [
+        pytest.param(False, id="launcher"),
+        pytest.param(
+            True, id="python", marks=pytest.mark.skipif(os.name == "nt", reason="Windows launcher is an executable")
+        ),
+    ],
+)
+def test_console_script_preserves_interpreter_path(
+    tmp_path: Path, current_fastest: str, name: str, via_python: bool
+) -> None:
+    session: Final = cli_run([
+        str(tmp_path / name / "env"),
+        "--seeder",
+        "app-data",
+        "--creator",
+        current_fastest,
+        "--activators",
+        "",
+        "--no-periodic-update",
+        "--pip",
+        "embed",
+    ])
+    result: Final = run(
+        [*([str(session.creator.exe)] if via_python else []), str(session.creator.script("pip")), "--version"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+        check=True,
+    )
+    assert str(session.creator.purelib) in result.stdout
 
 
 @pytest.mark.slow
