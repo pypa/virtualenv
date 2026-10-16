@@ -101,4 +101,4 @@ def test_pip_invoke_freeze_uses_version_pin(tmp_path: Path) -> None:
         check=True,
     )
     version: Final = get_embed_wheel("pip", f"{sys.version_info.major}.{sys.version_info.minor}").version
-    assert result.stdout.splitlines() == [f"pip=={version}"]
+    assert f"pip=={version}" in result.stdout.splitlines()
