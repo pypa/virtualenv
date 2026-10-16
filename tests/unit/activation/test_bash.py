@@ -474,13 +474,12 @@ def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> 
         def activate_call(self, script):
             return super().activate_call(script) + " || exit 1"
 
-        def print_prompt(self):
-            # render PS1 the way bash draws it, since the activator escapes the prompt for that expansion; bash before
-            # 4.4 lacks ${PS1@P}, so undo the escapes once for the prompt-escape decode and once for the expansion
-            unescape = "s/\\\\\\([$`\\\\]\\)/\\1/g"
+        def print_prompt(self) -> str:
             return (
                 'if ((BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1] >= 404)); then printf "%s\\n" "${PS1@P}"; '
-                f"else printf '%s\\n' \"$PS1\" | sed -e '{unescape}' -e '{unescape}'; fi"
+                "else case \"$PS1\" in '(${VIRTUAL_ENV_PROMPT}) '*) "
+                "printf '(%s) %s\\n' \"$VIRTUAL_ENV_PROMPT\" \"${PS1#'(${VIRTUAL_ENV_PROMPT}) '}\";; "
+                "*) printf '%s\\n' \"$PS1\";; esac; fi"
             )
 
     activation_tester(Bash)
