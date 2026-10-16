@@ -71,6 +71,28 @@ def test_clear_rejects_linked_destination(
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+@pytest.mark.parametrize(
+    "suffix",
+    [pytest.param("missing/../link", id="missing-parent"), pytest.param("link/child/..", id="child-parent")],
+)
+def test_clear_rejects_normalized_link(linked_destination: Path, suffix: str) -> None:
+    with pytest.raises(SystemExit) as context:
+        session_via_cli([str(linked_destination.parent / suffix), "--clear", "--no-seed"])
+    assert context.value.code == 2
+
+
+@pytest.mark.skipif(not IS_WIN, reason="requires Windows junctions")
+def test_clear_rejects_junction(tmp_path: Path) -> None:
+    target: Final = tmp_path / "target"
+    target.mkdir()
+    junction: Final = tmp_path / "junction"
+    subprocess.run(["cmd", "/c", "mklink", "/J", str(junction), str(target)], check=True, capture_output=True)
+    with pytest.raises(SystemExit) as context:
+        session_via_cli([str(junction), "--clear", "--no-seed"])
+    assert context.value.code == 2
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_create_linked_destination_without_clear(linked_destination: Path) -> None:
     session: Final = cli_run([str(linked_destination), "--no-seed"])
     assert (
