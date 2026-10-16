@@ -15,6 +15,7 @@ import textwrap
 import zipfile
 from argparse import ArgumentTypeError
 from collections import OrderedDict
+from functools import partial
 from itertools import product
 from pathlib import Path
 from stat import S_IREAD, S_IRGRP, S_IROTH
@@ -925,3 +926,18 @@ def test_pyenv_cfg_from_folder_skips_non_entries(tmp_path: Path, text: str, expe
     (tmp_path / "pyvenv.cfg").write_text(text, encoding="utf-8")
 
     assert PyEnvCfg.from_folder(tmp_path).content == expected
+
+
+@pytest.mark.parametrize(
+    "operation",
+    [pytest.param("read", id="read"), pytest.param("write", id="write"), pytest.param("refresh", id="refresh")],
+)
+def test_pyenv_cfg_rejects_non_file_path(tmp_path: Path, operation: str) -> None:
+    config: Final = PyEnvCfg(OrderedDict(), tmp_path)
+    action: Final = {
+        "read": partial(PyEnvCfg.from_file, tmp_path),
+        "write": config.write,
+        "refresh": config.refresh,
+    }[operation]
+    with pytest.raises(ValueError, match="configuration path is not a regular file"):
+        action()
