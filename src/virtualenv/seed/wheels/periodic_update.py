@@ -254,8 +254,8 @@ def trigger_update(  # ruff:ignore[too-many-arguments]
             code, "    "
         )
     else:
-        code = f"import sys\nsys.path.insert(0, {ROOT!r})\n{code}"
-    cmd: Final = [sys.executable, "-I", "-c", code]
+        code = f"import sys\nif sys.path and sys.path[0] == '': sys.path.pop(0)\nsys.path.append({ROOT!r})\n{code}"
+    cmd: Final = [sys.executable, *(["-I"] if IS_ZIPAPP else []), "-c", code]
     debug = env.get("_VIRTUALENV_PERIODIC_UPDATE_INLINE") == "1"
     pipe = None if debug else DEVNULL
     kwargs = {"stdout": pipe, "stderr": pipe}

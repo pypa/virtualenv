@@ -471,7 +471,8 @@ def test_trigger_update_command(
         dedent(
             """\
         import sys
-        sys.path.insert(0, {!r})
+        if sys.path and sys.path[0] == '': sys.path.pop(0)
+        sys.path.append({!r})
         from virtualenv.report import setup_report, MAX_LEVEL
         from virtualenv.seed.wheels.periodic_update import do_update
         setup_report(MAX_LEVEL, show_pid=True)
@@ -484,7 +485,7 @@ def test_trigger_update_command(
         )
     )
     process.assert_called_once_with(
-        [sys.executable, "-I", "-c", command],
+        [sys.executable, "-c", command],
         stdout=None if debug else subprocess.DEVNULL,
         stderr=None if debug else subprocess.DEVNULL,
         **({"creationflags": CREATE_NO_WINDOW} if not debug and sys.platform == "win32" else {}),
