@@ -144,7 +144,7 @@ def test_venv_creator_rejects_line_boundary(tmp_path: Path, capsys: pytest.Captu
         cli_run([str(destination), "--creator", "venv", "--no-seed"])
     assert context.value.code == 2
     assert "must not contain a line boundary" in capsys.readouterr().err
-    assert not destination.exists()
+    assert not list(tmp_path.iterdir())
 
 
 @pytest.mark.skipif("venv" not in CURRENT_CREATORS, reason="stdlib venv is unavailable")

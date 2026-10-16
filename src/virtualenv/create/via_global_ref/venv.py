@@ -62,7 +62,10 @@ class Venv(ViaGlobalRefApi):
 
     @classmethod
     def validate_dest(cls, raw_value: str) -> str:
-        value: Final = super().validate_dest(raw_value)
+        return cls._check_line_boundaries(super().validate_dest(cls._check_line_boundaries(raw_value)))
+
+    @staticmethod
+    def _check_line_boundaries(value: str) -> str:
         # stdlib venv writes the destination into pyvenv.cfg without escaping line boundaries.
         if collapse_line_boundaries(value) != value:
             msg: Final = (
