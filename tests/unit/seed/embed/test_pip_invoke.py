@@ -234,3 +234,26 @@ def test_pip_invoke_freeze_uses_version_pin(tmp_path: Path) -> None:
     )
     version: Final = get_embed_wheel("pip", f"{sys.version_info.major}.{sys.version_info.minor}").version
     assert f"pip=={version}" in result.stdout.splitlines()
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+@pytest.mark.skipif(sys.version_info < (3, 10), reason="requires two compatible bundled pip versions")
+def test_pip_reseed_removes_previous_version_metadata(tmp_path: Path) -> None:
+    old: Final = BUNDLE_SUPPORT["3.9"]["pip"].split("-")[1]
+    session: Final = cli_run([
+        str(tmp_path / "env"),
+        "--pip",
+        old,
+        "--extra-search-dir",
+        str(BUNDLE_FOLDER),
+        "--symlink-app-data",
+        "--no-periodic-update",
+        "--app-data",
+        str(tmp_path / "cache"),
+    ])
+    cli_run([str(session.creator.dest), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
+    expected: Final = BUNDLE_SUPPORT[f"{sys.version_info.major}.{sys.version_info.minor}"]["pip"].split("-")[1]
+    assert sorted(entry.name for entry in session.creator.purelib.glob("pip-*.dist-info")) == [
+        f"pip-{expected}.dist-info",
+    ]
+    assert not list(session.creator.purelib.glob(f"pip-{old}.virtualenv"))

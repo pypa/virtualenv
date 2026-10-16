@@ -87,6 +87,15 @@ class PipInvoke(BaseEmbed):
                     if name.endswith(".dist-info/entry_points.txt"):
                         self._detach_entry_points(creator, archive.read(name).decode("utf-8"))
 
+        self._detach_metadata(creator)
+
+    def _detach_metadata(self, creator: Creator) -> None:
+        for root in {creator.purelib, creator.platlib}:
+            for distribution in self.distribution_to_versions():
+                for entry in root.glob(f"{distribution.replace('-', '_')}-*"):
+                    if entry.suffix in {".dist-info", ".virtualenv"} and entry.is_symlink():
+                        entry.unlink()
+
     @staticmethod
     def _detach_tree(path: Path) -> None:
         if path.is_symlink():
