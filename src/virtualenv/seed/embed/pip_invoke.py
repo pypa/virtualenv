@@ -23,8 +23,6 @@ if TYPE_CHECKING:
     from virtualenv.config.cli.parser import VirtualEnvOptions
     from virtualenv.create.creator import Creator
 
-_LOGGER: Final = logging.getLogger(__name__)
-
 
 class PipInvoke(BaseEmbed):
     def __init__(self, options: VirtualEnvOptions) -> None:
@@ -126,7 +124,7 @@ class PipInvoke(BaseEmbed):
 
     @staticmethod
     def _execute(cmd: list[str], env: dict[str, str]) -> Popen[bytes]:
-        _LOGGER.debug("pip seed by running: %s", LogCmd(cmd, env))
+        logging.getLogger(__name__).debug("pip seed by running: %s", LogCmd(cmd, env))
         process: Final = Popen(cmd, env=env)
         process.communicate()
         if process.returncode != 0:
