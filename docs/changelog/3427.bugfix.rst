@@ -1,2 +1,2 @@
-Preserve a symlink target's permissions when deletion of the link fails. Report the original deletion error instead of
-trying to make the target writable.
+Preserve file permissions when deletion fails on POSIX. On Windows, clear read-only attributes through a handle that
+opens the entry itself and prevents replacement, preserving other attributes and rejecting reparse points.

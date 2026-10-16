@@ -5,8 +5,11 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from stat import S_IWUSR, S_IXGRP, S_IXOTH, S_IXUSR
+from stat import S_IXGRP, S_IXOTH, S_IXUSR
 from typing import TYPE_CHECKING, Final
+
+if os.name == "nt":
+    from ._win import clear_readonly
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -74,12 +77,10 @@ def safe_delete(dest: Path) -> None:
         exc = exc_info[1] if isinstance(exc_info, tuple) else exc_info
         if isinstance(exc, FileNotFoundError):
             return
-        # rmtree also reports os.open/os.close/os.scandir/os.lstat; retrying one of those with a lone path raises
-        # TypeError over the real error, or deletes nothing while telling rmtree we handled the failure
-        # A link's mode cannot prevent unlinking it; chmod would change its target instead.
-        if func not in {os.unlink, os.rmdir} or os.path.islink(path) or os.access(path, os.W_OK):
-            raise  # ruff:ignore[misplaced-bare-raise]
-        os.chmod(path, os.lstat(path).st_mode | S_IWUSR)
+        # POSIX deletion depends on the parent directory, so changing the entry's mode cannot help.
+        if os.name != "nt" or func not in {os.unlink, os.rmdir} or os.path.islink(path) or os.access(path, os.W_OK):
+            raise exc
+        clear_readonly(path)
         func(path)
 
     if sys.version_info >= (3, 12):
