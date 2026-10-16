@@ -9,7 +9,7 @@ from pathlib import Path
 from subprocess import PIPE, CalledProcessError, Popen
 from typing import TYPE_CHECKING, Final
 
-from packaging.specifiers import Specifier
+from packaging.specifiers import InvalidSpecifier, Specifier
 
 from .bundle import from_bundle
 from .periodic_update import UnverifiedWheelError, add_wheel_to_update_log, verify_wheel_digest
@@ -44,19 +44,6 @@ _DISTRIBUTION_RE = re.compile(
         (?:[A-Za-z0-9._-]*           # inner chars: alnum plus . _ -
            [A-Za-z0-9])?             # must also end with an alnum (unless length is 1)
     )
-    $
-    """,
-    re.VERBOSE,
-)
-
-# Version specifier that matches what ``Version.as_version_spec`` emits: either empty, ``==<ver>`` or ``<<ver>`` where
-# ``<ver>`` is a subset of PEP 440 public versions. Kept deliberately strict so a crafted version cannot inject pip
-# flags.
-_VERSION_SPEC_RE = re.compile(
-    r"""
-    ^
-    (?P<operator>==|<)              # only the operators Version.as_version_spec can emit
-    (?P<version>[A-Za-z0-9._+!-]+)  # PEP 440 public-version character set, no whitespace
     $
     """,
     re.VERBOSE,
@@ -138,6 +125,22 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
     _check_distribution(distribution)
     _check_version_spec(version_spec)
     to_download = f"{distribution}{version_spec or ''}"
+    if to_download.lower().endswith((
+        ".zip",
+        ".whl",
+        ".tar",
+        ".tar.gz",
+        ".tgz",
+        ".tar.bz2",
+        ".tbz",
+        ".tar.xz",
+        ".txz",
+        ".tlz",
+        ".tar.lz",
+        ".tar.lzma",
+    )):
+        msg = f"refusing to download wheel with archive-like requirement: {to_download!r}"
+        raise ValueError(msg)
     LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
     cmd = [
         sys.executable,
@@ -226,9 +229,14 @@ def _check_distribution(distribution: str) -> None:
 def _check_version_spec(version_spec: str | None) -> None:
     if not version_spec:
         return
-    if not _VERSION_SPEC_RE.fullmatch(version_spec):
+    if not re.fullmatch(r"(?:==|<)[A-Za-z0-9._+!-]+", version_spec):
         msg = f"refusing to download wheel with suspicious version spec: {version_spec!r}"
         raise ValueError(msg)
+    try:
+        Specifier(version_spec)
+    except InvalidSpecifier as exception:
+        msg = f"refusing to download wheel with suspicious version spec: {version_spec!r}"
+        raise ValueError(msg) from exception
 
 
 __all__ = [
