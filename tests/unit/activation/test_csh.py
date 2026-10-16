@@ -333,5 +333,28 @@ def test_cshell_skips_multiline_destination(tmp_path: Path) -> None:
     scripts = destination / "bin"
     scripts.mkdir(parents=True)
     (scripts / "activate.csh").write_text("old", encoding="utf-8")
-    cli_run([str(destination), "--no-seed", "--activators", "cshell"])
-    assert not list(scripts.glob("*.csh"))
+    session: Final = cli_run([str(destination), "--no-seed", "--activators", "cshell"])
+    assert (list(scripts.glob("*.csh")), session.activators) == ([], [])
+
+
+@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
+@pytest.mark.parametrize(
+    "boundary",
+    [
+        pytest.param("\r", id="carriage-return"),
+        pytest.param("\u2028", id="line-separator"),
+        pytest.param("\x1c", id="file-separator"),
+    ],
+)
+def test_cshell_preserves_non_newline_path(tmp_path: Path, boundary: str) -> None:
+    destination: Final = tmp_path / f"a{boundary}b"
+    session: Final = cli_run([str(destination), "--no-seed", "--activators", "cshell"])
+    result: Final = run(
+        [TCSH, "-f"],
+        input=f"source {CShellActivator.quote(str(session.creator.bin_dir / 'activate.csh'))}\nprintf '%s' \"$VIRTUAL_ENV\"\n",
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert result.stdout == str(destination).replace("\r", "\n")
