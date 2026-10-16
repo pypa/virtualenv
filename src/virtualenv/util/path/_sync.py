@@ -66,7 +66,7 @@ def _copy_file(src: Path, dest: Path) -> None:
     flags: Final = os.O_WRONLY | os.O_CREAT | os.O_EXCL | (os.O_BINARY if os.name == "nt" else 0)
     # Creation applies the current umask without changing the process-wide setting.
     with src.open("rb") as source, os.fdopen(os.open(str(dest), flags, mode), "wb") as target:
-        shutil.copyfileobj(source, target)
+        shutil.copyfileobj(source, target, length=1024 * 1024)
 
 
 def safe_delete(dest: Path) -> None:

@@ -1,3 +1,4 @@
 Apply the current umask when copying interpreter and seed-package files instead of inheriting cached permission bits.
 Executable sources remain executable within the permissions allowed by that umask. Copied files no longer grant group or
-world write access, even with a permissive umask.
+world write access, even with a permissive umask. Source modes are not preserved: data files start from 0644 and
+executable files from 0755 before applying the umask.
