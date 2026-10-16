@@ -512,6 +512,15 @@ def test_venv_configuration_uses_selected_options(tmp_path: Path, global_package
     assert {key: session.creator.pyenv_cfg.content.get(key) for key in expected} == expected
 
 
+@pytest.mark.skipif(not CURRENT.has_venv or not fs_supports_symlink(), reason="requires venv and symlinks")
+@pytest.mark.skipif(is_mac_os_framework(CURRENT) or is_macos_brew(CURRENT), reason="requires copy support")
+def test_venv_recreate_with_copied_interpreter(tmp_path: Path) -> None:
+    args: Final = [str(tmp_path / "env"), "--creator", "venv", "--no-seed"]
+    cli_run([*args, "--symlinks"])
+    session: Final = cli_run([*args, "--copies"])
+    assert (session.creator.exe.is_file(), session.creator.exe.is_symlink()) == (True, False)
+
+
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
 def test_venv_subprocess_skips_local_venv_module(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     (tmp_path / "venv").mkdir()

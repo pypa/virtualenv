@@ -49,22 +49,9 @@ class Venv(ViaGlobalRefApi):
         return None
 
     def create(self) -> None:
-        # stdlib venv writes these before virtualenv's own configuration and activation writers run.
-        for path in (
-            self.dest / "pyvenv.cfg",
-            self.dest / ".gitignore",
-            *(
-                self.bin_dir / name
-                for name in (
-                    "activate",
-                    "activate.csh",
-                    "activate.fish",
-                    "Activate.ps1",
-                    "activate.bat",
-                    "deactivate.bat",
-                )
-            ),
-        ):
+        # stdlib venv writes interpreter files as well as configuration and activation scripts.
+        ensure_dir(self.bin_dir)
+        for path in (self.dest / "pyvenv.cfg", self.dest / ".gitignore", *self.bin_dir.iterdir()):
             if path.is_symlink():
                 path.unlink()
         if self.can_be_inline:

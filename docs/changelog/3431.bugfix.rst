@@ -1,2 +1,4 @@
 Replace existing file links when writing environment configuration, activation scripts, import hooks, and seed
-launchers. Create generated text files exclusively so a replacement link cannot redirect the final file open.
+launchers. Create generated text files exclusively so a replacement link cannot redirect the final file open. When
+recreating an environment with the stdlib venv creator, remove existing links in its executable directory before
+creating interpreter files, including when switching from symlinks to copies.
