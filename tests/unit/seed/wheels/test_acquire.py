@@ -182,12 +182,13 @@ def test_download_wheel_preserves_custom_index_policy(
 def download_process(mocker: MockerFixture, for_py_version: str) -> tuple[MagicMock, Wheel, bytearray]:
     wheel: Final = get_embed_wheel("pip", for_py_version)
     payload: Final = bytearray(wheel.path.read_bytes())
+    # PyPy can retain the hash input buffer until garbage collection.
     metadata: Final = json.dumps({
         "releases": {
             wheel.version: [
                 {
                     "filename": wheel.name,
-                    "digests": {"sha256": hashlib.sha256(payload).hexdigest()},
+                    "digests": {"sha256": hashlib.sha256(bytes(payload)).hexdigest()},
                 }
             ]
         }
