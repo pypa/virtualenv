@@ -169,3 +169,10 @@ def test_venv_redirect_forced_not_write_able(redirect: Path, caplog: pytest.LogC
         redirect.chmod(S_IREAD | S_IWRITE)
 
     assert f"could not point {redirect.resolve()} at {(redirect.parent / 'env').resolve()}" in caplog.text
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Windows normalizes trailing whitespace")
+@pytest.mark.parametrize("name", [pytest.param(" env", id="leading"), pytest.param("env ", id="trailing")])
+def test_venv_redirect_skips_surrounding_whitespace(project_redirect: Path, name: str) -> None:
+    _create(project_redirect.parent / name, "--venv-redirect")
+    assert not project_redirect.exists()
