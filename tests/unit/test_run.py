@@ -11,6 +11,8 @@ from virtualenv.run import cli_run, session_via_cli
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from pytest_mock import MockerFixture
+
 
 @pytest.mark.parametrize(
     "option",
@@ -71,3 +73,12 @@ def test_invalid_discovery_method_via_env(monkeypatch: pytest.MonkeyPatch) -> No
     assert "Available discovery methods:" in error_message
     assert "builtin" in error_message
     assert "Is the plugin installed?" in error_message
+
+
+@pytest.mark.parametrize("option", [pytest.param("--prompt", id="prompt"), pytest.param("--pip", id="pip")])
+def test_missing_option_value_precedes_interpreter_query(tmp_path: Path, option: str, mocker: MockerFixture) -> None:
+    process = mocker.patch("subprocess.Popen", autospec=True, side_effect=AssertionError("interpreter query started"))
+    with pytest.raises(SystemExit) as context:
+        session_via_cli([option, "--python", str(tmp_path / "python"), str(tmp_path / "env")])
+    assert context.value.code == 2
+    process.assert_not_called()
