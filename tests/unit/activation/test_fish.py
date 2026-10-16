@@ -6,7 +6,7 @@ import subprocess
 import sys
 from argparse import Namespace
 from types import SimpleNamespace
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -19,6 +19,40 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 FISH = shutil.which("fish")
+
+
+@pytest.mark.skipif(IS_WIN or FISH is None, reason="fish is required")
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param("", id="empty"),
+        pytest.param("plain text", id="space"),
+        pytest.param("café's", id="unicode-apostrophe"),
+        pytest.param("café\\path", id="unicode-backslash"),
+    ],
+)
+def test_fish_quote_preserves_literal(value: str) -> None:
+    result: Final = subprocess.run(
+        [FISH, "--no-config"],
+        input=f"printf '%s' {FishActivator.quote(value)}\n",
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+        check=True,
+    )
+    assert result.stdout == value
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param("café's", "'café'\\''s'", id="apostrophe"),
+        pytest.param("café\\path", "'café'\\\\'path'", id="backslash"),
+    ],
+)
+def test_fish_quote_separates_escapes(value: str, expected: str) -> None:
+    assert FishActivator.quote(value) == expected
 
 
 @pytest.fixture
