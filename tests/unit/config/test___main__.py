@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import os
 import re
+import runpy
 import sys
 from subprocess import check_output
-from typing import TYPE_CHECKING, NoReturn
+from typing import TYPE_CHECKING, Final, NoReturn
 
 import pytest
 
@@ -12,6 +14,31 @@ from virtualenv.util.error import ProcessCallFailedError
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+
+@pytest.mark.parametrize("implicit", [pytest.param(True, id="working-directory"), pytest.param(False, id="other-path")])
+def test_module_entry_removes_implicit_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, implicit: bool
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    original: Final = sys.path.copy()
+    monkeypatch.setattr(sys, "path", [str(tmp_path if implicit else tmp_path / "other"), *original])
+    monkeypatch.setattr(sys, "argv", ["virtualenv", "--version"])
+    with pytest.raises(SystemExit) as context:
+        runpy.run_module("virtualenv", run_name="__main__")
+    assert (context.value.code, sys.path) == (0, original if implicit else [str(tmp_path / "other"), *original])
+
+
+@pytest.mark.skipif(os.name == "nt", reason="Windows keeps the working directory open")
+def test_module_entry_without_working_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    directory: Final = tmp_path / "removed"
+    directory.mkdir()
+    monkeypatch.chdir(directory)
+    directory.rmdir()
+    monkeypatch.setattr(sys, "argv", ["virtualenv", "--version"])
+    with pytest.raises(SystemExit) as context:
+        runpy.run_module("virtualenv", run_name="__main__")
+    assert context.value.code == 0
 
 
 @pytest.fixture
