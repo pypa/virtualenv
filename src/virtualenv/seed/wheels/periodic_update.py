@@ -22,6 +22,8 @@ from urllib.error import URLError
 from urllib.request import urlopen
 
 from virtualenv.app_data import AppDataDiskFolder
+from virtualenv.config.convert import BoolType
+from virtualenv.config.env_var import get_env_var
 from virtualenv.seed.wheels.embed import BUNDLE_SUPPORT
 from virtualenv.seed.wheels.util import Wheel
 from virtualenv.util.subprocess import CREATE_NO_WINDOW
@@ -426,7 +428,7 @@ _INSECURE_FALLBACK_ENV = "VIRTUALENV_PERIODIC_UPDATE_INSECURE"
 
 def _request_context() -> Generator[ssl.SSLContext | None, None, None]:
     yield None
-    if os.environ.get(_INSECURE_FALLBACK_ENV):
+    if (setting := get_env_var("periodic_update_insecure", BoolType(bool, bool), os.environ)) and setting[0]:
         LOGGER.warning(
             "falling back to unverified HTTPS for PyPI metadata because %s is set",
             _INSECURE_FALLBACK_ENV,

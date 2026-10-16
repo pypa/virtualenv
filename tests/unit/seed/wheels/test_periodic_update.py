@@ -683,6 +683,18 @@ def test_get_release_verified_failure_does_not_fallback(mocker, monkeypatch) -> 
     assert url_o.call_args.kwargs["context"] is None
 
 
+@pytest.mark.parametrize("value", ["0", "false", "no", "off", "FALSE", "OFF", "", "invalid"])
+def test_false_update_option_keeps_certificate_verification(
+    monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, value: str
+) -> None:
+    monkeypatch.setenv("VIRTUALENV_PERIODIC_UPDATE_INSECURE", value)
+    request: Final = mocker.patch(
+        "virtualenv.seed.wheels.periodic_update.urlopen", side_effect=URLError("certificate failure")
+    )
+    release_date_for_wheel_path(Path("pip-20.1.whl"))
+    assert request.call_args_list == [mocker.call("https://pypi.org/pypi/pip/json", context=None)]
+
+
 def test_get_release_fails(mocker, caplog) -> None:
     exc = RuntimeError("oh no")
     url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=exc)
