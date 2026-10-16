@@ -5,6 +5,7 @@ import os
 import sys
 import traceback
 import zipfile
+from errno import EACCES
 from stat import S_IEXEC, S_IREAD, S_IRGRP, S_IRWXU, S_IWUSR
 from typing import TYPE_CHECKING, Final
 
@@ -155,6 +156,22 @@ def test_copy_replaces_contents(tmp_path: Path, directory: bool) -> None:
     destination.write_bytes(b"old")
     copy(source if directory else source / "entry", destination)
     assert (destination / "entry" if directory else destination).read_bytes() == b"new"
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+def test_safe_delete_does_not_chmod_link_target(tmp_path: Path, mocker: MockerFixture) -> None:
+    source: Final = tmp_path / "read-only"
+    source.write_text("unchanged", encoding="utf-8")
+    source.chmod(S_IREAD)
+    mode: Final = source.stat().st_mode
+    folder: Final = tmp_path / "folder"
+    folder.mkdir()
+    (folder / "link").symlink_to(source)
+    unlink: Final = mocker.patch("os.unlink", autospec=True, side_effect=PermissionError(EACCES, "entry is busy"))
+    try:
+        with pytest.raises(PermissionError, match="entry is busy"):
+            safe_delete(folder)
+    finally:
+        mocker.stop(unlink)
+    assert source.stat().st_mode == mode
 
 
 def test_run_fail(tmp_path) -> None:

@@ -76,7 +76,8 @@ def safe_delete(dest: Path) -> None:
             return
         # rmtree also reports os.open/os.close/os.scandir/os.lstat; retrying one of those with a lone path raises
         # TypeError over the real error, or deletes nothing while telling rmtree we handled the failure
-        if func not in {os.unlink, os.rmdir} or os.access(path, os.W_OK):
+        # A link's mode cannot prevent unlinking it; chmod would change its target instead.
+        if func not in {os.unlink, os.rmdir} or os.path.islink(path) or os.access(path, os.W_OK):
             raise  # ruff:ignore[misplaced-bare-raise]
         os.chmod(path, os.lstat(path).st_mode | S_IWUSR)
         func(path)
