@@ -64,7 +64,7 @@ class PyEnvCfg:
             else:
                 normalized_value = value
             line = f"{collapse_line_boundaries(key)} = {collapse_line_boundaries(normalized_value)}"
-            LOGGER.debug("\t%s", line)
+            LOGGER.debug("\t%r", line)
             text += line
             text += "\n"
         self.path.write_bytes(text.encode("utf-8"))
