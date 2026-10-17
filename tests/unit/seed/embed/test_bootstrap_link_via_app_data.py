@@ -40,7 +40,11 @@ if TYPE_CHECKING:
 def test_transient_seed_survives_cache_cleanup(tmp_path: Path, source: str, unusable_cache: Path) -> None:
     config: Final = tmp_path / "virtualenv.ini"
     config.write_text("[virtualenv]\nsymlink_app_data = true\n" if source == "configuration" else "", encoding="utf-8")
-    env: Final = {"VIRTUALENV_CONFIG_FILE": str(config), "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache)}
+    env: Final = {
+        **os.environ,
+        "VIRTUALENV_CONFIG_FILE": str(config),
+        "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache),
+    }
     if source == "environment":
         env["VIRTUALENV_SYMLINK_APP_DATA"] = "true"
     args: Final = [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"]
@@ -60,7 +64,7 @@ def test_transient_seed_reports_copy_fallback(
     caplog.set_level(logging.DEBUG)
     cli_run(
         [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"],
-        env={"VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache), "VIRTUALENV_SYMLINK_APP_DATA": "true"},
+        env={**os.environ, "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache), "VIRTUALENV_SYMLINK_APP_DATA": "true"},
         setup_logging=False,
     )
     assert "copy seed packages because temporary app-data is removed after creation" in caplog.text
