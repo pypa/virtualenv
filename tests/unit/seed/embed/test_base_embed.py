@@ -105,14 +105,19 @@ class _VersionInfo(NamedTuple):
 
 @pytest.mark.parametrize("seeder", [pytest.param("pip", id="pip"), pytest.param("app-data", id="app-data")])
 @pytest.mark.parametrize(
-    "version",
+    ("version", "reason"),
     [
-        pytest.param("1.zip", id="archive"),
-        pytest.param("1+local.zip", id="local-archive"),
-        pytest.param("invalid", id="invalid"),
+        pytest.param("1.zip", "invalid", id="zip"),
+        pytest.param("1+local.zip", "archive-like", id="local-zip"),
+        pytest.param("20.0.0.tar.gz", "invalid", id="tar-gz"),
+        pytest.param("./pip.whl", "invalid", id="path"),
+        pytest.param("invalid", "invalid", id="word"),
     ],
 )
-def test_seed_version_rejected_before_creation(tmp_path: Path, seeder: str, version: str) -> None:
+def test_seed_version_rejected_before_creation(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], seeder: str, version: str, reason: str
+) -> None:
     with pytest.raises(SystemExit) as context:
         session_via_cli([str(tmp_path / "env"), "--seeder", seeder, "--pip", version])
-    assert context.value.code == 2
+    assert (context.value.code, (tmp_path / "env").exists()) == (2, False)
+    assert f"argument --pip: {reason} seed version: {version!r}" in capsys.readouterr().err
