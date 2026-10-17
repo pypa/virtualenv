@@ -28,8 +28,9 @@ class CShellActivator(ViaTemplateActivator):
     @staticmethod
     def quote(string: str) -> str:
         # csh expands history inside single quotes and parses unquoted percent signs as expression operators.
+        # Backslashes outside quotes retain their meaning with tcsh's backslash_quote option.
         quoted: Final = shlex.quote(string)
-        return (f"'{quoted}'" if quoted == string else quoted).replace("!", "'\\!'")
+        return (f"'{quoted}'" if quoted == string else quoted).replace("\\", "'\\\\'").replace("!", "'\\!'")
 
     def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
         # carries its own quoting, so it cannot go through the shared quote() pass with the other replacements;
@@ -43,20 +44,11 @@ class CShellActivator(ViaTemplateActivator):
 
 
 def _prompt_literal(value: str, *, tcsh: bool) -> str:
-    r"""Build csh source whose ``prompt`` renders ``value`` unchanged.
-
-    Both csh and tcsh expand the prompt every time it draws it, and a literal ``!`` turns into the history event number
-    in either; only ``\!`` survives that pass, and it has to reach the variable as a real backslash, which costs a
-    second one in the source. ``%`` is different: tcsh treats a bare ``%`` as the start of an escape such as ``%p`` for
-    the time, and only a doubled ``%%`` survives as a literal percent, but plain csh has no such escape at all - a bare
-    ``%`` is already literal there, and doubling it would show two. Confirmed on tcsh 6.24 and on Debian's bsd-csh
-    package, which is what "csh" actually resolves to on Debian and Ubuntu.
-
-    """
+    """Prompt drawing interprets history escapes and tcsh percent codes a second time."""
     parts = ["'"]
     for char in value:
         if char == "'":
-            parts.append("'\\''")
+            parts.append("'\"'\"'")
         elif char == "!":
             parts.append("'\\\\'\\!")
         elif char == "%" and tcsh:
@@ -64,7 +56,7 @@ def _prompt_literal(value: str, *, tcsh: bool) -> str:
         elif char == "^" and tcsh:
             parts.append("'\\\\^'")
         elif char == "\\":
-            parts.append("'\\\\\\\\'")
+            parts.append("'\\\\\\\\'" if tcsh else "'\\\\'")
         else:
             parts.append(char)
     parts.append("'")

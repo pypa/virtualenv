@@ -5,7 +5,7 @@ import sys
 from argparse import Namespace
 from shutil import which
 from subprocess import check_output, run
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from packaging.version import Version
@@ -133,8 +133,8 @@ def test_cshell_escapes_prompt_expansion(
 
     # tcsh treats a bare % as the start of a prompt escape and needs it doubled; plain csh has no such escape, and
     # doubling it there would show two literal percent signs, so activate.csh picks the branch to use at runtime
-    assert f"set prompt = '(''{tcsh_escaped}'') '" in content
-    assert f"set prompt = '(''{plain_escaped}'') '" in content
+    assert f"set _virtualenv_prompt_tcsh = '{tcsh_escaped}'\n" in content
+    assert f"set _virtualenv_prompt_plain = '{plain_escaped}'\n" in content
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
@@ -167,6 +167,38 @@ def test_cshell_activates_path_with_special_characters(
     )
 
     assert result.stdout == str(dest), result.stderr
+
+
+@pytest.mark.skipif(IS_WIN or TCSH is None, reason="tcsh is required")
+@pytest.mark.parametrize(
+    "option", [pytest.param("", id="default"), pytest.param("set backslash_quote\n", id="backslash-quote")]
+)
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param("a\\b", id="backslash"),
+        pytest.param("a\\\\b\\", id="trailing-backslash"),
+        pytest.param("it's mine", id="apostrophe"),
+        pytest.param("a\\!b", id="history-character"),
+    ],
+)
+def test_cshell_prompt_preserves_quoting_mode(
+    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, value: str, option: str
+) -> None:
+    dest, content = csh_venv("ordinary", prompt=value)
+    script: Final = tmp_path / "activate.csh"
+    script.write_text(content, encoding="utf-8")
+    result: Final = run(
+        [TCSH, "-f"],
+        input=f'{option}set prompt = "> "\nsource {script}\nprintf "%s\\n" "$VIRTUAL_ENV:q" "$VIRTUAL_ENV_PROMPT:q" "$prompt:q"\n',
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+        check=True,
+    )
+    display: Final = value.replace("\\", "\\\\").replace("!", "\\!")
+    assert result.stdout == f"{dest}\n{value}\n({display}) > \n"
 
 
 @pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
@@ -264,3 +296,34 @@ def test_csh(activation_tester_class, activation_tester) -> None:
             return "echo 'source \"$VIRTUAL_ENV/bin/activate.csh\"; echo $prompt' | csh -i ; echo"
 
     activation_tester(Csh)
+
+
+@pytest.mark.skipif(IS_WIN or which("csh") is None, reason="requires csh")
+def test_cshell_disabled_prompt_preserves_existing_value(csh_venv: Callable[..., tuple[Path, str]]) -> None:
+    dest, _ = csh_venv("plain", prompt="owner's prompt")
+    result: Final = run(
+        ["csh", "-f"],
+        input=f"set prompt = original\nsetenv VIRTUAL_ENV_DISABLE_PROMPT 1\nsource {dest / 'bin' / 'activate.csh'}\necho $prompt\n",
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert result.stdout == "original\n"
+
+
+@pytest.mark.skipif(IS_WIN or which("csh") is None, reason="requires csh")
+def test_bsd_cshell_displays_one_backslash(csh_venv: Callable[..., tuple[Path, str]]) -> None:
+    shell: Final = which("bsd-csh") or which("csh")
+    if run([shell, "-fc", "if ($?tcsh) exit 77"], check=False).returncode == 77:
+        pytest.skip("requires bsd-csh")
+    dest, _ = csh_venv("plain", prompt="a\\b")
+    result: Final = run(
+        [shell, "-f", "-i"],
+        input=f"source {dest / 'bin' / 'activate.csh'}\nexit\n",
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert "(a\\b) " in result.stdout + result.stderr
