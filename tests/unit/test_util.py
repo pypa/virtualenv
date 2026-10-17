@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import concurrent.futures
+import ctypes
 import os
 import sys
 import traceback
 import zipfile
+from errno import EACCES
 from stat import S_IEXEC, S_IREAD, S_IRGRP, S_IRWXU, S_IWUSR
 from typing import TYPE_CHECKING, Final
 
 import pytest
 
+from virtualenv import __version__
 from virtualenv.app_data import (
     AppDataDiskFolder,
     TempAppData,
@@ -22,6 +25,11 @@ from virtualenv.util import zipapp
 from virtualenv.util.lock import ReentrantFileLock
 from virtualenv.util.path import copy, safe_delete, symlink
 from virtualenv.util.subprocess import run_cmd
+
+if os.name == "nt":
+    from ctypes import wintypes
+
+    from virtualenv.util.path._win import clear_readonly
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -157,6 +165,74 @@ def test_copy_replaces_contents(tmp_path: Path, directory: bool) -> None:
     assert (destination / "entry" if directory else destination).read_bytes() == b"new"
 
 
+@pytest.mark.skipif(sys.platform != "linux", reason="minimal Linux builds can omit ctypes")
+def test_command_line_import_without_ctypes() -> None:
+    result: Final = run_cmd([
+        sys.executable,
+        "-c",
+        (
+            "import runpy, sys; sys.modules['ctypes'] = None; sys.argv = ['virtualenv', '--version']; "
+            "runpy.run_module('virtualenv', run_name='__main__')"
+        ),
+    ])
+    assert (result[0], __version__ in result[1], result[2]) == (0, True, "")
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows file attributes")
+@pytest.mark.parametrize(
+    "operation",
+    [
+        pytest.param("CreateFileW", id="open"),
+        pytest.param("GetFileInformationByHandleEx", id="read"),
+        pytest.param("SetFileInformationByHandle", id="write"),
+    ],
+)
+def test_safe_delete_reports_attribute_errors(tmp_path: Path, mocker: MockerFixture, operation: str) -> None:
+    folder: Final = tmp_path / "folder"
+    folder.mkdir()
+    source: Final = folder / "read-only"
+    source.touch()
+    source.chmod(S_IREAD)
+    kernel: Final = ctypes.WinDLL("kernel32", use_last_error=True)
+    mocker.patch.object(
+        kernel, operation, autospec=True, return_value=wintypes.HANDLE(-1).value if operation == "CreateFileW" else 0
+    )
+    mocker.patch("ctypes.WinDLL", autospec=True, return_value=kernel)
+    mocker.patch("ctypes.get_last_error", autospec=True, return_value=5)
+    with pytest.raises(PermissionError, match="WinError 5"):
+        safe_delete(folder)
+    assert source.stat().st_mode & S_IWUSR == 0
+    source.chmod(S_IREAD | S_IWUSR)
+
+
+@pytest.mark.skipif(os.name != "nt" or not fs_supports_symlink(), reason="Windows file links")
+def test_clear_readonly_refuses_reparse_points(tmp_path: Path) -> None:
+    source: Final = tmp_path / "source"
+    source.touch()
+    link: Final = tmp_path / "link"
+    link.symlink_to(source)
+    with pytest.raises(OSError, match="refusing to change attributes"):
+        clear_readonly(str(link))
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+def test_safe_delete_does_not_chmod_link_target(tmp_path: Path, mocker: MockerFixture) -> None:
+    source: Final = tmp_path / "read-only"
+    source.write_text("unchanged", encoding="utf-8")
+    source.chmod(S_IREAD)
+    mode: Final = source.stat().st_mode
+    folder: Final = tmp_path / "folder"
+    folder.mkdir()
+    (folder / "link").symlink_to(source)
+    unlink: Final = mocker.patch("os.unlink", autospec=True, side_effect=PermissionError(EACCES, "entry is busy"))
+    try:
+        with pytest.raises(PermissionError, match="entry is busy"):
+            safe_delete(folder)
+    finally:
+        mocker.stop(unlink)
+    assert source.stat().st_mode == mode
+
+
 def test_run_fail(tmp_path) -> None:
     code, out, err = run_cmd([str(tmp_path)])
     assert err
@@ -211,7 +287,7 @@ def test_safe_delete_raises_the_original_error_not_a_retry_failure(tmp_path: Pat
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows deletion ignores directory permissions")
-def test_safe_delete_keeps_the_other_mode_bits_when_clearing_read_only(tmp_path: Path) -> None:
+def test_safe_delete_preserves_file_mode_when_parent_denies_deletion(tmp_path: Path) -> None:
     if hasattr(os, "geteuid") and os.geteuid() == 0:
         pytest.skip("root bypasses the permission bits that make the delete fail")
     target = tmp_path / "target"
@@ -224,7 +300,7 @@ def test_safe_delete_keeps_the_other_mode_bits_when_clearing_read_only(tmp_path:
     try:
         with pytest.raises(PermissionError):
             safe_delete(target)
-        assert blocked.stat().st_mode & 0o777 == S_IREAD | S_IRGRP | S_IWUSR
+        assert blocked.stat().st_mode & 0o777 == S_IREAD | S_IRGRP
     finally:
         target.chmod(S_IRWXU)
 
