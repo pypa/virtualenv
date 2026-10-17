@@ -143,6 +143,32 @@ def test_periodic_update_stops_at_current(mocker, session_app_data, for_py_versi
     assert result.path == current.path
 
 
+def test_periodic_update_keeps_newer_bundle(app_data: AppDataDiskFolder) -> None:
+    current: Final = get_embed_wheel("pip", "3.9")
+    assert current is not None
+    completed: Final = datetime.now(tz=timezone.utc) - timedelta(days=30)
+    app_data.embed_update_log("pip", "3.9").write(
+        UpdateLog(
+            completed,
+            completed,
+            [NewVersion(wheel_path(current, (-1,)), completed, completed, "manual")],
+            True,
+        ).to_dict()
+    )
+    assert periodic_update("pip", None, "3.9", current, [], app_data, False, {}) == current
+
+
+def test_do_update_ignores_download_below_bundle(app_data: AppDataDiskFolder, mocker: MockerFixture) -> None:
+    current: Final = get_embed_wheel("pip", "3.9")
+    assert current is not None
+    mocker.patch(
+        "virtualenv.seed.wheels.acquire.download_wheel",
+        autospec=True,
+        return_value=Wheel(Path(wheel_path(current, (-1,)))),
+    )
+    assert do_update("pip", "3.9", str(current.path), str(app_data), [], True) == []
+
+
 def test_periodic_update_latest_per_patch(mocker, session_app_data, for_py_version) -> None:
     current = get_embed_wheel("setuptools", for_py_version)
     expected_path = wheel_path(current, (0, 1, 2))
