@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import copy
 import json
+import logging
 import os
 import subprocess
 from argparse import Namespace
-from copy import copy
+from ast import literal_eval
 from shutil import which
 from typing import TYPE_CHECKING, Final
 from unittest.mock import create_autospec
@@ -18,7 +20,25 @@ from virtualenv.create.creator import Creator
 from virtualenv.run import cli_run, session_via_cli
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from pathlib import Path
+
+_NEEDS_XONSH: Final = pytest.mark.skipif(which("xonsh") is None, reason="requires xonsh")
+
+
+@pytest.fixture
+def xonsh() -> Callable[..., str]:
+    def run(script: str, **env: str) -> str:
+        return subprocess.run(
+            ["xonsh", "--no-rc", "-c", script],
+            env={k: v for k, v in os.environ.items() if k not in {"PYTHONHOME", "PYTHONWARNDEFAULTENCODING"}} | env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            check=True,
+        ).stdout
+
+    return run
 
 
 @pytest.mark.parametrize(
@@ -29,42 +49,33 @@ if TYPE_CHECKING:
         pytest.param("env=~root", id="home"),
     ],
 )
-def test_xonsh_skips_expanding_destination(tmp_path: Path, name: str) -> None:
-    session: Final = session_via_cli([str(tmp_path / name), "--no-seed", "--activators", "xonsh"])
+def test_xonsh_skips_expanding_destination(tmp_path: Path, name: str, caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.WARNING)
+    session: Final = session_via_cli([str(tmp_path / name), "--no-seed", "--activators", "xonsh"], setup_logging=False)
     session.creator.bin_dir.mkdir(parents=True)
-    (session.creator.bin_dir / "activate.xsh").write_text("old", encoding="utf-8")
-    XonshActivator(VirtualEnvOptions(prompt=None)).generate(session.creator)
-    assert not (session.creator.bin_dir / "activate.xsh").exists()
+    (script := session.creator.bin_dir / "activate.xsh").write_text("old", encoding="utf-8")
+    assert (XonshActivator(VirtualEnvOptions(prompt=None)).generate(session.creator), script.exists()) == ([], False)
+    assert caplog.messages == [
+        f"skipping xonsh activation script: destination {session.creator.dest} contains path expansion syntax"
+    ]
 
 
-@pytest.mark.skipif(which("xonsh") is None, reason="requires xonsh")
+@_NEEDS_XONSH
 @pytest.mark.parametrize(
     "original", [pytest.param(None, id="unset"), pytest.param("__virtualenv_was_not_set__", id="sentinel-value")]
 )
-def test_xonsh_restores_pythonhome_without_exported_sentinel(tmp_path: Path, original: str | None) -> None:
+def test_xonsh_restores_pythonhome_without_exported_sentinel(
+    tmp_path: Path, xonsh: Callable[..., str], original: str | None
+) -> None:
     session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "xonsh"])
     script: Final = (
         "import json\n"
-        + ("__xonsh__.env.pop('PYTHONHOME', None)\n" if original is None else f"$PYTHONHOME = {original!r}\n")
+        + ("" if original is None else f"$PYTHONHOME = {original!r}\n")
         + f'source "{session.creator.bin_dir / "activate.xsh"}"\n'
         + "print(json.dumps(__xonsh__.env.get('_OLD_VIRTUAL_PYTHONHOME')))\ndeactivate\n"
         + "print(json.dumps(__xonsh__.env.get('PYTHONHOME')))\n"
     )
-    assert [
-        json.loads(line)
-        for line in subprocess.run(
-            ["xonsh", "--no-rc", "-c", script],
-            env={
-                key: value
-                for key, value in os.environ.items()
-                if key not in {"PYTHONHOME", "PYTHONWARNDEFAULTENCODING"}
-            },
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            check=True,
-        ).stdout.splitlines()
-    ] == [original, original]
+    assert [json.loads(line) for line in xonsh(script).splitlines()] == [original, original]
 
 
 @pytest.mark.parametrize(
@@ -114,15 +125,20 @@ def test_xonsh_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
         assert "self.embedded_tk_library = ''" in content
 
 
-def test_xonsh_quote() -> None:
-    # XonshActivator.quote uses repr() so the template substitution produces valid
-    # Python literals — this is what the rest of the tests rely on.
-    assert XonshActivator.quote("hello") == "'hello'"
-    assert XonshActivator.quote("it's") == '"it\'s"'
-    assert XonshActivator.quote("") == "''"
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param("hello", id="plain"),
+        pytest.param("it's", id="apostrophe"),
+        pytest.param("", id="empty"),
+        pytest.param("中'\\name", id="unicode-and-quotes"),
+    ],
+)
+def test_xonsh_quote(value: str) -> None:
+    assert literal_eval(XonshActivator.quote(value).encode("ascii").decode("gbk")) == value
 
 
-@pytest.mark.skipif(which("xonsh") is None, reason="xonsh is not installed")
+@_NEEDS_XONSH
 def test_xonsh(activation_tester_class, activation_tester) -> None:
     class Xonsh(activation_tester_class):
         def __init__(self, session) -> None:
@@ -154,13 +170,13 @@ def test_xonsh(activation_tester_class, activation_tester) -> None:
     activation_tester(Xonsh)
 
 
-@pytest.mark.skipif(which("xonsh") is None, reason="requires xonsh")
-def test_xonsh_switch_restores_unset_tk_libraries(tmp_path: Path) -> None:
+@_NEEDS_XONSH
+def test_xonsh_switch_restores_unset_tk_libraries(tmp_path: Path, xonsh: Callable[..., str]) -> None:
     activations: Final[list[Path]] = []
     for name, library in (("first", "/test/library"), ("second", None)):
         session = session_via_cli([str(tmp_path / name), "--no-seed", "--activators", "xonsh"])
         session.creator.bin_dir.mkdir(parents=True)
-        session.creator.interpreter = copy(session.creator.interpreter)
+        session.creator.interpreter = copy.copy(session.creator.interpreter)
         session.creator.interpreter.tcl_lib = library
         session.creator.interpreter.tk_lib = library
         activations.extend(XonshActivator(VirtualEnvOptions(prompt=None)).generate(session.creator))
@@ -172,34 +188,17 @@ def test_xonsh_switch_restores_unset_tk_libraries(tmp_path: Path) -> None:
         f'source "{activations[1]}"\n'
         "print(json.dumps([__xonsh__.env.get('TCL_LIBRARY'), __xonsh__.env.get('TK_LIBRARY')]))\n"
     )
-    result: Final = subprocess.run(
-        ["xonsh", "--no-rc", "-c", script],
-        env={key: value for key, value in os.environ.items() if key != "PYTHONWARNDEFAULTENCODING"},
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        check=True,
-    )
-    assert json.loads(result.stdout) == [None, None]
+    assert json.loads(xonsh(script)) == [None, None]
 
 
-@pytest.mark.skipif(which("xonsh") is None, reason="requires xonsh")
+@_NEEDS_XONSH
 @pytest.mark.parametrize("encoding", [pytest.param("gbk", id="gbk"), pytest.param("big5", id="big5")])
-def test_xonsh_preserves_unicode_values(tmp_path: Path, encoding: str) -> None:
+def test_xonsh_preserves_unicode_values(tmp_path: Path, xonsh: Callable[..., str], encoding: str) -> None:
     destination: Final = tmp_path / "中文環境"
     prompt: Final = "中文提示"
     session: Final = cli_run([str(destination), "--no-seed", "--activators", "xonsh", "--prompt", prompt])
-    result: Final = subprocess.run(
-        [
-            "xonsh",
-            "--no-rc",
-            "-c",
-            f"source @({str(session.creator.bin_dir / 'activate.xsh')!a})\nimport json\nprint(json.dumps([$VIRTUAL_ENV, $VIRTUAL_ENV_PROMPT]))",
-        ],
-        env={**os.environ, "XONSH_ENCODING": encoding},
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        check=True,
+    script: Final = (
+        f"source @({str(session.creator.bin_dir / 'activate.xsh')!a})\n"
+        "import json\nprint(json.dumps([$VIRTUAL_ENV, $VIRTUAL_ENV_PROMPT]))"
     )
-    assert json.loads(result.stdout) == [str(destination), prompt]
+    assert json.loads(xonsh(script, XONSH_ENCODING=encoding)) == [str(destination), prompt]
