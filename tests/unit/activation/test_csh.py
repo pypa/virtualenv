@@ -292,3 +292,41 @@ def test_cshell_prompt_in_gbk_locale(csh_venv: Callable[..., tuple[Path, str]], 
         check=True,
     )
     assert f"({prompt}) ".encode() in result.stdout + result.stderr
+
+
+@pytest.mark.skipif(IS_WIN or which("csh") is None, reason="requires csh")
+def test_cshell_disabled_prompt_preserves_existing_value(tmp_path: Path) -> None:
+    session: Final = cli_run([
+        str(tmp_path / "env"),
+        "--no-seed",
+        "--activators",
+        "cshell",
+        "--prompt",
+        "owner's prompt",
+    ])
+    result: Final = run(
+        ["csh", "-f"],
+        input=f"set prompt = original\nsetenv VIRTUAL_ENV_DISABLE_PROMPT 1\nsource {session.creator.bin_dir / 'activate.csh'}\necho $prompt\n",
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert result.stdout == "original\n"
+
+
+@pytest.mark.skipif(IS_WIN or which("csh") is None, reason="requires csh")
+def test_bsd_cshell_displays_one_backslash(tmp_path: Path) -> None:
+    shell: Final = which("bsd-csh") or which("csh")
+    if run([shell, "-fc", "if ($?tcsh) exit 77"], check=False).returncode == 77:
+        pytest.skip("requires bsd-csh")
+    session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "cshell", "--prompt", "a\\b"])
+    result: Final = run(
+        [shell, "-f", "-i"],
+        input=f"source {session.creator.bin_dir / 'activate.csh'}\nexit\n",
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert "(a\\b) " in result.stdout + result.stderr
