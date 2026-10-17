@@ -91,7 +91,7 @@ class Session:
         if BatchActivator.supports(self.interpreter) and not any(
             isinstance(i, BatchActivator) for i in self.activators
         ):
-            BatchActivator(VirtualEnvOptions(prompt=None)).remove_unsafe(self.creator)
+            BatchActivator(VirtualEnvOptions(prompt=None)).remove_unsafe(self.creator, selected=False)
         if self.activators:
             active = ", ".join(type(i).__name__.replace("Activator", "") for i in self.activators)
             LOGGER.info("add activators for %s", active)

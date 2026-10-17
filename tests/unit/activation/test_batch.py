@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -287,7 +288,7 @@ def test_batch_output(activation_python, activation_tester_class, activation_tes
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="requires Windows batch activation")
-def test_batch_removes_stale_script_when_unselected(tmp_path: Path) -> None:
+def test_batch_removes_stale_script_when_unselected(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
     destination = tmp_path / "env&name"
     session = session_via_cli([str(destination), "--no-seed", "--activators", "powershell"])
     session.creator.bin_dir.mkdir(parents=True)
@@ -295,3 +296,6 @@ def test_batch_removes_stale_script_when_unselected(tmp_path: Path) -> None:
     script.write_text("old", encoding="utf-8")
     session.run()
     assert not script.exists()
+    assert not [
+        record for record in caplog.records if record.levelno >= logging.WARNING and "skipping batch" in record.message
+    ]

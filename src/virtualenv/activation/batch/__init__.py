@@ -48,12 +48,14 @@ class BatchActivator(ViaTemplateActivator):
     def generate(self, creator: Creator) -> list[Path]:
         return [] if self.remove_unsafe(creator) else super().generate(creator)
 
-    def remove_unsafe(self, creator: Creator) -> bool:
+    def remove_unsafe(self, creator: Creator, *, selected: bool = True) -> bool:
         values = super().replacements(creator, creator.bin_dir)
         problems = [reason for key in _PATH_REPLACEMENT_NAMES if (reason := _unsafe_path_reason(key, values[key]))]
         if problems:
             for problem in problems:
-                LOGGER.warning("skipping batch activation scripts: %s", problem)
+                LOGGER.log(
+                    logging.WARNING if selected else logging.DEBUG, "skipping batch activation scripts: %s", problem
+                )
             for template in self.templates():
                 (creator.bin_dir / self.as_name(template)).unlink(missing_ok=True)
             return True
