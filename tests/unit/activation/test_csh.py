@@ -54,38 +54,6 @@ def test_cshell_prompt_collapses_line_boundaries(
     assert (result.stdout, result.stderr) == (f"{dest}\nfirst second\n(first second) > \n", "")
 
 
-@pytest.mark.skipif(IS_WIN or TCSH is None, reason="tcsh is required")
-@pytest.mark.parametrize(
-    "option", [pytest.param("", id="default"), pytest.param("set backslash_quote\n", id="backslash-quote")]
-)
-@pytest.mark.parametrize(
-    "value",
-    [
-        pytest.param("a\\b", id="backslash"),
-        pytest.param("a\\\\b\\", id="trailing-backslash"),
-        pytest.param("it's mine", id="apostrophe"),
-        pytest.param("a\\!b", id="history-character"),
-    ],
-)
-def test_cshell_prompt_preserves_quoting_mode(
-    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, value: str, option: str
-) -> None:
-    dest, content = csh_venv("ordinary", prompt=value)
-    script: Final = tmp_path / "activate.csh"
-    script.write_text(content, encoding="utf-8")
-    result: Final = run(
-        [TCSH, "-f"],
-        input=f'{option}set prompt = "> "\nsource {script}\nprintf "%s\\n" "$VIRTUAL_ENV:q" "$VIRTUAL_ENV_PROMPT:q" "$prompt:q"\n',
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        timeout=30,
-        check=True,
-    )
-    display: Final = value.replace("\\", "\\\\").replace("!", "\\!")
-    assert result.stdout == f"{dest}\n{value}\n({display}) > \n"
-
-
 @pytest.mark.parametrize(
     ("tcl_lib", "tk_lib", "present"),
     [
@@ -234,20 +202,75 @@ def test_cshell_activates_path_with_special_characters(
     assert result.stdout == str(dest), result.stderr
 
 
-@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
-def test_cshell_preserves_percent_prompt(csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path) -> None:
-    _, content = csh_venv("plain", prompt="%")
-    (tmp_path / "activate.csh").write_text(content, encoding="utf-8")
-    assert (
-        run(
-            [TCSH, "-fc", f'source {tmp_path / "activate.csh"}; printf "%s" "$VIRTUAL_ENV_PROMPT"'],
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            check=True,
-        ).stdout
-        == "%"
+@pytest.mark.skipif(IS_WIN or TCSH is None, reason="tcsh is required")
+@pytest.mark.parametrize(
+    "option", [pytest.param("", id="default"), pytest.param("set backslash_quote\n", id="backslash-quote")]
+)
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param("a\\b", id="backslash"),
+        pytest.param("a\\\\b\\", id="trailing-backslash"),
+        pytest.param("it's mine", id="apostrophe"),
+        pytest.param("a\\!b", id="history-character"),
+    ],
+)
+def test_cshell_prompt_preserves_quoting_mode(
+    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, value: str, option: str
+) -> None:
+    dest, content = csh_venv("ordinary", prompt=value)
+    script: Final = tmp_path / "activate.csh"
+    script.write_text(content, encoding="utf-8")
+    result: Final = run(
+        [TCSH, "-f"],
+        input=f'{option}set prompt = "> "\nsource {script}\nprintf "%s\\n" "$VIRTUAL_ENV:q" "$VIRTUAL_ENV_PROMPT:q" "$prompt:q"\n',
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+        check=True,
     )
+    display: Final = value.replace("\\", "\\\\").replace("!", "\\!")
+    assert result.stdout == f"{dest}\n{value}\n({display}) > \n"
+
+
+@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
+@pytest.mark.parametrize(
+    ("prompt", "codec"),
+    [
+        pytest.param("%", None, id="percent"),
+        pytest.param("has^caret", None, id="caret"),
+        pytest.param("中^b", "gbk", id="gbk-caret"),
+        pytest.param("中!b", "gbk", id="gbk-history"),
+        pytest.param(r"中\^b", "gbk", id="gbk-backslash-caret"),
+        pytest.param(r"丁\!", "gbk", id="gbk-backslash-history"),
+    ],
+)
+def test_cshell_renders_prompt_literally(
+    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, prompt: str, codec: str | None
+) -> None:
+    env = os.environ.copy()
+    if codec is not None:
+        # a legacy double-byte locale reads the last UTF-8 byte of 中 and the ASCII byte after it as one character
+        locales = check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
+        if (locale := next((i for i in locales if i.lower().replace("-", "").endswith(f".{codec}")), None)) is None:
+            pytest.skip(f"no {codec} locale is installed")
+        env["LC_ALL"] = locale
+    _, content = csh_venv("plain", prompt=prompt)
+    script = tmp_path / "activate.csh"
+    script.write_text(content, encoding="utf-8")
+
+    # only an interactive shell draws the prompt, which is where tcsh turns ^c into a control character
+    result = run(
+        [TCSH, "-f", "-i"],
+        input=f"source {script}\nexit\n".encode(),
+        env=env,
+        capture_output=True,
+        timeout=30,
+        check=True,
+    )
+
+    assert f"({prompt}) ".encode() in result.stdout + result.stderr
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
@@ -308,25 +331,6 @@ def test_csh(activation_tester_class, activation_tester) -> None:
     activation_tester(Csh)
 
 
-@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
-@pytest.mark.parametrize("prompt", [pytest.param("中^b", id="caret"), pytest.param("中!b", id="history")])
-def test_cshell_prompt_in_gbk_locale(csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, prompt: str) -> None:
-    if "zh_CN.gbk" not in check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines():
-        pytest.skip("GBK locale is unavailable")
-    _, content = csh_venv("plain", prompt=prompt)
-    script = tmp_path / "activate.csh"
-    script.write_text(content, encoding="utf-8")
-    result = run(
-        [TCSH, "-f", "-i"],
-        input=f"source {script}\nexit\n".encode(),
-        env={**os.environ, "LC_ALL": "zh_CN.gbk"},
-        capture_output=True,
-        timeout=30,
-        check=True,
-    )
-    assert f"({prompt}) ".encode() in result.stdout + result.stderr
-
-
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
 def test_cshell_skips_multiline_destination(tmp_path: Path) -> None:
     destination = tmp_path / "env\nname"
@@ -346,15 +350,20 @@ def test_cshell_skips_multiline_destination(tmp_path: Path) -> None:
         pytest.param("\x1c", id="file-separator"),
     ],
 )
-def test_cshell_preserves_non_newline_path(tmp_path: Path, boundary: str) -> None:
-    destination: Final = tmp_path / f"a{boundary}b"
-    session: Final = cli_run([str(destination), "--no-seed", "--activators", "cshell"])
-    result: Final = run(
+def test_cshell_preserves_non_newline_path(
+    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, boundary: str
+) -> None:
+    dest, _ = csh_venv(f"a{boundary}b")
+    # copied as bytes, because text mode reads the carriage return in the path back as a newline
+    script = tmp_path / "activate.csh"
+    script.write_bytes((dest / "bin" / "activate.csh").read_bytes())
+
+    result = run(
         [TCSH, "-f"],
-        input=f"source {CShellActivator.quote(str(session.creator.bin_dir / 'activate.csh'))}\nprintf '%s' \"$VIRTUAL_ENV\"\n",
+        input=f'source {script}\nprintf "%s" "$VIRTUAL_ENV:q"\n'.encode(),
         capture_output=True,
-        text=True,
-        encoding="utf-8",
+        timeout=30,
         check=True,
     )
-    assert result.stdout == str(destination).replace("\r", "\n")
+
+    assert result.stdout == str(dest).encode()
