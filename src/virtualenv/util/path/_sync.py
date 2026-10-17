@@ -5,12 +5,13 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from stat import S_ISDIR, S_ISLNK, S_IWUSR, S_IXGRP, S_IXOTH, S_IXUSR
+from stat import S_ISDIR, S_ISLNK, S_IXGRP, S_IXOTH, S_IXUSR
 from typing import TYPE_CHECKING, Final
 
 if os.name == "nt":
-    from ._win import clear_readonly
     from stat import IO_REPARSE_TAG_MOUNT_POINT
+
+    from ._win import clear_readonly
 
 if TYPE_CHECKING:
     from collections.abc import Callable
