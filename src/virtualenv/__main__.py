@@ -4,8 +4,8 @@ import errno
 import logging
 import os
 import sys
-from timeit import default_timer
-from typing import TYPE_CHECKING
+from time import perf_counter
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -16,11 +16,27 @@ if TYPE_CHECKING:
 LOGGER = logging.getLogger(__name__)
 
 
+def _run_as_module() -> None:
+    try:
+        current: Final = os.getcwd()
+    except OSError:
+        pass
+    else:
+        if (
+            sys.path
+            and sys.path[0] == current
+            and not getattr(sys.flags, "safe_path", False)
+            and os.path.dirname(os.path.dirname(__file__)) != current
+        ):
+            del sys.path[0]
+    run_with_catch()
+
+
 def run(
     args: list[str] | None = None, options: VirtualEnvOptions | None = None, env: MutableMapping[str, str] | None = None
 ) -> None:
     env = os.environ if env is None else env
-    start = default_timer()
+    start = perf_counter()
     from virtualenv.run import cli_run  # ruff:ignore[import-outside-top-level]
     from virtualenv.util.error import ProcessCallFailedError  # ruff:ignore[import-outside-top-level]
 
@@ -52,7 +68,7 @@ class LogSession:
 
     def __str__(self) -> str:
         spec = self.session.creator.interpreter.spec
-        elapsed = (default_timer() - self.start) * 1000
+        elapsed = (perf_counter() - self.start) * 1000
         lines = [
             f"created virtual environment {spec} in {elapsed:.0f}ms",
             f"  creator {self.session.creator!s}",
@@ -91,5 +107,8 @@ def _exit_for_exception(options: VirtualEnvOptions, exception: BaseException) ->
     sys.exit(exception.code if isinstance(exception, SystemExit) else 1)
 
 
-if __name__ == "__main__":  # pragma: no cov
-    run_with_catch()  # pragma: no cov
+if __name__ == "__main__":
+    _run_as_module()
+
+
+__all__ = ["run", "run_with_catch"]
