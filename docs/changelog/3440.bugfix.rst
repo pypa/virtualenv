@@ -1,0 +1,1 @@
+Search all directories supplied by repeated ``--extra-search-dir`` options instead of keeping only the last group.

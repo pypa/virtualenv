@@ -6,6 +6,7 @@ from argparse import SUPPRESS, ArgumentTypeError
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from virtualenv.config.cli.parser import ExtendAction
 from virtualenv.seed.seeder import Seeder
 from virtualenv.seed.wheels import Version
 from virtualenv.seed.wheels.embed import MIN, OLDEST_SUPPORTED
@@ -111,6 +112,7 @@ class BaseEmbed(Seeder, ABC):
             metavar="d",
             type=Path,
             nargs="+",
+            action=ExtendAction,
             help="a path containing wheels to extend the internal wheel list (can be set 1+ times)",
             default=[],
         )
