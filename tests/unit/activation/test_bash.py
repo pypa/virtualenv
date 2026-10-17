@@ -444,14 +444,20 @@ def test_bash_activate_sources_under_dash(tmp_path: Path, current_fastest: str) 
     ])
 
     result = subprocess.run(
-        ["dash", "-c", '. "$1" && printf "%s" "$VIRTUAL_ENV"', "dash", str(dest / "bin" / "activate")],
+        [
+            "dash",
+            "-c",
+            'PS1="base "; . "$1" && printf "%s|%s" "$VIRTUAL_ENV" "$PS1"',
+            "dash",
+            str(dest / "bin" / "activate"),
+        ],
         capture_output=True,
         text=True,
         encoding="utf-8",
         check=False,
     )
 
-    assert (result.returncode, result.stdout) == (0, str(dest))
+    assert (result.returncode, result.stdout) == (0, f"{dest}|base ")
 
 
 @pytest.mark.slow
@@ -514,23 +520,37 @@ def test_bash_relocation_without_source_preserves_path(moved_bash_activate: Path
 
 @pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
 @pytest.mark.parametrize(
-    "mode", [pytest.param("disabled", id="promptvars-disabled"), pytest.param("unset", id="unset-with-nounset")]
+    ("before", "after", "expected"),
+    [
+        pytest.param("shopt -u promptvars", "", "(x$(touch PWNED)y) __END__", id="promptvars-disabled"),
+        pytest.param(
+            "shopt -u promptvars; set -o posix", "", "(x$(touch PWNED)y) __END__", id="promptvars-disabled-posix"
+        ),
+        pytest.param("", "set -u; unset VIRTUAL_ENV_PROMPT", "() __END__", id="unset-with-nounset"),
+    ],
 )
-def test_bash_prompt_options(tmp_path: Path, mode: str) -> None:
-    session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "bash", "--prompt", "literal"])
-    command: Final = "shopt -u promptvars\nPS1=__END__\n" if mode == "disabled" else "PS1=__END__\n"
+def test_bash_prompt_options(tmp_path: Path, current_fastest: str, before: str, after: str, expected: str) -> None:
+    session: Final = cli_run([
+        "--without-pip",
+        str(tmp_path / "env"),
+        "--creator",
+        current_fastest,
+        "--no-periodic-update",
+        "--activators",
+        "bash",
+        "--prompt",
+        "x$(touch PWNED)y",
+    ])
     result: Final = subprocess.run(
         ["bash", "--noprofile", "--norc", "-i"],
-        input=command
-        + f". {BashActivator.quote(str(session.creator.bin_dir / 'activate'))}\n"
-        + ("set -u\nunset VIRTUAL_ENV_PROMPT\n" if mode == "unset" else "")
-        + "exit\n",
+        input=f"{before}\nPS1=__END__\n. {BashActivator.quote(str(session.creator.bin_dir / 'activate'))}\n{after}\nexit\n",
+        cwd=tmp_path,
         capture_output=True,
         text=True,
         encoding="utf-8",
         check=True,
     )
-    assert ("(literal) __END__" if mode == "disabled" else "() __END__") in result.stderr
+    assert expected in result.stderr
     assert "unbound variable" not in result.stderr
 
 

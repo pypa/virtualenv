@@ -140,31 +140,23 @@ else
     if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] &&
         { [ -n "${BASH_VERSION-}" ] || [ -n "${ZSH_VERSION-}" ]; }; then
         _OLD_VIRTUAL_PS1="${PS1-}"
-        _VIRTUAL_PROMPT="${VIRTUAL_ENV_PROMPT}"
-        # bash, and zsh under PROMPT_SUBST, re-expand backslashes, dollar signs and backticks in PS1 on every redraw;
-        # zsh gets the escaping even without the option, since a user can set it after activation. The guards keep
-        # the substitution away from POSIX shells such as dash, which reject it with "Bad substitution"
-        if [ -n "${BASH_VERSION-}" ]; then
-            # Expand the value only after bash decodes prompt escapes.
-            if shopt -q promptvars; then
-                PS1='(${VIRTUAL_ENV_PROMPT-}) '"${PS1-}"
-            else
-                _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\\/\\\\}"
-                PS1="(${_VIRTUAL_PROMPT}) ${PS1-}"
+        # bash expands PS1 after decoding its prompt escapes when promptvars is on or in posix mode, so the prompt holds a
+        # reference to the variable and its value never reaches that expansion; otherwise only the decode runs and
+        # backslashes need doubling. zsh re-expands backslashes, dollar signs and backticks under PROMPT_SUBST, which a
+        # user can set after activation, and reads % as a prompt escape. The guards keep the substitutions away from
+        # POSIX shells such as dash, which reject them with "Bad substitution"
+        if [ -n "${BASH_VERSION-}" ] && { shopt -q promptvars || shopt -qo posix; }; then
+            PS1='(${VIRTUAL_ENV_PROMPT-}) '"${PS1-}"
+        else
+            _VIRTUAL_PROMPT="${VIRTUAL_ENV_PROMPT//\\/\\\\}"
+            if [ -n "${ZSH_VERSION-}" ]; then
+                _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\$/\\\$}"
+                _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\`/\\\`}"
+                _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\%/%%}"
             fi
-        elif [ -n "${ZSH_VERSION-}" ]; then
-            _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\\/\\\\}"
-            _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\$/\\\$}"
-            _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\`/\\\`}"
-        fi
-        # zsh expands % sequences in PS1 as prompt escapes
-        if [ -n "${ZSH_VERSION-}" ]; then
-            _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\%/%%}"
-        fi
-        if [ -z "${BASH_VERSION-}" ]; then
             PS1="(${_VIRTUAL_PROMPT}) ${PS1-}"
+            unset _VIRTUAL_PROMPT
         fi
-        unset _VIRTUAL_PROMPT
     fi
 
     # Make sure to unalias pydoc if it's already there
