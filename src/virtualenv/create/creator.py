@@ -308,8 +308,12 @@ class Creator(ABC):
         if redirect.exists() and not _points_at_virtualenv(redirect):
             LOGGER.debug("%s points at an environment virtualenv did not create, leaving it", redirect)
             return
-        if collapse_line_boundaries(self.dest.name) != self.dest.name:
-            LOGGER.warning("could not point %s at %s - the name contains a line boundary", redirect, self.dest)
+        if collapse_line_boundaries(self.dest.name) != self.dest.name or self.dest.name != self.dest.name.strip():
+            LOGGER.warning(
+                "could not point %s at %s - the name contains a line boundary or surrounding whitespace",
+                redirect,
+                self.dest,
+            )
             return
         try:
             redirect.write_text(f"{self.dest.name}\n", encoding="utf-8")
