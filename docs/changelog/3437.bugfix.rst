@@ -1,2 +1,0 @@
-Always copy seed packages when app-data is temporary, including when symlink seeding is enabled through an environment
-variable or configuration file. Seeded packages remain available after temporary cache cleanup.

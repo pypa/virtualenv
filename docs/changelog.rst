@@ -6,6 +6,16 @@
 
 .. towncrier release notes start
 
+************************
+ v21.14.10 (2026-10-17)
+************************
+
+Bugfixes - 21.14.10
+===================
+
+- Always copy seed packages when app-data is temporary, including when symlink seeding is enabled through an environment
+  variable or configuration file. Seeded packages remain available after temporary cache cleanup. (:issue:`3437`)
+
 ***********************
  v21.14.9 (2026-10-17)
 ***********************
