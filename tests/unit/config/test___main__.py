@@ -5,6 +5,7 @@ import re
 import runpy
 import shutil
 import sys
+import venv
 from importlib.metadata import distribution
 from pathlib import Path
 from subprocess import check_output
@@ -140,16 +141,50 @@ def test_session_report_subprocess(tmp_path) -> None:
     _match_regexes(lines, regexes)
 
 
-def test_module_entry_from_target_install(tmp_path: Path) -> None:
-    shutil.copytree(Path(virtualenv.__file__).parent, tmp_path / "virtualenv")
-    metadata = distribution("virtualenv")
-    for file in metadata.files or ():
-        if file.name == "METADATA":
-            shutil.copytree(Path(metadata.locate_file(file)).parent, tmp_path / file.parent.name)
-            break
+@pytest.mark.parametrize(
+    "safe_path",
+    [
+        pytest.param(False, id="implicit"),
+        pytest.param(True, id="safe-path", marks=pytest.mark.skipif(sys.version_info < (3, 11), reason="requires -P")),
+    ],
+)
+def test_module_entry_from_target_install(tmp_path: Path, safe_path: bool) -> None:
+    target: Final = tmp_path / "target"
+    target.mkdir()
+    shutil.copytree(Path(virtualenv.__file__).parent, target / "virtualenv")
+    for name in (
+        "virtualenv",
+        "distlib",
+        "filelock",
+        "platformdirs",
+        "packaging",
+        "python-discovery",
+        *(("typing-extensions",) if sys.version_info < (3, 11) else ()),
+    ):
+        metadata = distribution(name)
+        for root in {file.parts[0] for file in metadata.files or () if file.parts[0] not in {"..", "__pycache__"}}:
+            source = Path(str(metadata.locate_file(root)))
+            if (target / root).exists():
+                continue
+            if source.is_dir():
+                shutil.copytree(source, target / root)
+            elif source.is_file():
+                shutil.copy2(source, target / root)
+    bare: Final = tmp_path / "bare"
+    venv.EnvBuilder(with_pip=False).create(bare)
+    executable: Final = bare / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     check_output(
-        [sys.executable, "-m", "virtualenv", str(tmp_path / "env"), "--no-seed", "--activators="],
-        cwd=tmp_path,
+        [
+            str(executable),
+            *(["-P"] if safe_path else []),
+            "-m",
+            "virtualenv",
+            str(tmp_path / "env"),
+            "--no-seed",
+            "--activators=",
+        ],
+        cwd=target,
+        env={**os.environ, "PYTHONPATH": str(target) if safe_path else ""},
         text=True,
         encoding="utf-8",
     )
