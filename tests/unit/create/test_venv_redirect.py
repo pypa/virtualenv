@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import os
 from stat import S_IREAD, S_IWRITE
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -128,10 +128,17 @@ def test_venv_redirect_forced_keeps_foreign(redirect: Path, existing: str) -> No
     assert redirect.read_text(encoding="utf-8") == existing
 
 
-def test_venv_redirect_forced_keeps_redirect_to_other_tool(redirect: Path) -> None:
+_NON_FILE_KINDS: Final = [pytest.param("directory", id="directory"), pytest.param("fifo", id="fifo")]
+
+
+@pytest.mark.parametrize("kind", [pytest.param("other_tool", id="other-tool"), *_NON_FILE_KINDS])
+def test_venv_redirect_forced_keeps_other_environment(redirect: Path, kind: str) -> None:
     other = redirect.parent / "other"
     other.mkdir()
-    (other / "pyvenv.cfg").write_text("home = /usr/bin\nuv = 0.12.5\n", encoding="utf-8")
+    if kind == "other_tool":
+        (other / "pyvenv.cfg").write_text("home = /usr/bin\nuv = 0.12.5\n", encoding="utf-8")
+    else:
+        _make_non_file(other / "pyvenv.cfg", kind)
     redirect.write_text("other\n", encoding="utf-8")
 
     _create(redirect.parent / "env", "--venv-redirect")
@@ -169,3 +176,21 @@ def test_venv_redirect_forced_not_write_able(redirect: Path, caplog: pytest.LogC
         redirect.chmod(S_IREAD | S_IWRITE)
 
     assert f"could not point {redirect.resolve()} at {(redirect.parent / 'env').resolve()}" in caplog.text
+
+
+def _make_non_file(path: Path, kind: str) -> None:
+    if kind == "directory":
+        path.mkdir()
+    elif hasattr(os, "mkfifo"):
+        os.mkfifo(path)
+    else:
+        pytest.skip("requires FIFOs")
+
+
+@pytest.mark.parametrize("kind", _NON_FILE_KINDS)
+def test_clear_recovers_non_file_config(tmp_path: Path, kind: str) -> None:
+    _make_non_file(tmp_path / "pyvenv.cfg", kind)
+
+    _create(tmp_path, "--clear")
+
+    assert (tmp_path / "pyvenv.cfg").is_file()

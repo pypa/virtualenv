@@ -58,7 +58,9 @@ class Creator(ABC):
         self.clear = options.clear
         self.no_vcs_ignore = options.no_vcs_ignore
         self.venv_redirect = options.venv_redirect
-        self.pyenv_cfg = PyEnvCfg.from_folder(self.dest)
+        self.pyenv_cfg = (
+            PyEnvCfg(OrderedDict(), self.dest / "pyvenv.cfg") if self.clear else PyEnvCfg.from_folder(self.dest)
+        )
         self.app_data = options.app_data
         self.env = options.env
         self.prompt = getattr(options, "prompt", None)
@@ -330,7 +332,7 @@ def _points_at_virtualenv(redirect: Path) -> bool:
     try:
         line = redirect.read_text(encoding="utf-8").removesuffix("\n")  # universal newlines already turned \r\n into \n
         return bool(line) and "virtualenv" in PyEnvCfg.from_folder(redirect.parent / line)
-    except (OSError, UnicodeDecodeError):  # unreadable, so not a redirect virtualenv can claim
+    except (OSError, UnicodeDecodeError, ValueError):  # unreadable, so not a redirect virtualenv can claim
         return False
 
 
