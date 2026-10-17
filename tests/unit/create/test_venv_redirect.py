@@ -80,17 +80,28 @@ def test_venv_redirect_forced_points_at_created(redirect: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    "boundary",
-    [pytest.param(chr(code), id=f"U+{code:04X}") for code in (10, 13, 11, 12, 28, 29, 30, 133, 8232, 8233)],
+    "name",
+    [
+        *(
+            pytest.param(f"env{chr(code)}name", id=f"U+{code:04X}")
+            for code in (10, 13, 11, 12, 28, 29, 30, 133, 8232, 8233)
+        ),
+        pytest.param(" env", id="leading-whitespace"),
+        pytest.param(
+            "env ",
+            id="trailing-whitespace",
+            marks=pytest.mark.skipif(os.name == "nt", reason="Windows strips trailing whitespace from names"),
+        ),
+    ],
 )
 @pytest.mark.parametrize("existing", [pytest.param(False, id="new"), pytest.param(True, id="existing")])
-def test_venv_redirect_skips_line_boundary_names(project_redirect: Path, boundary: str, existing: bool) -> None:
-    if os.name == "nt" and ord(boundary) < 32:
+def test_venv_redirect_skips_unrepresentable_names(project_redirect: Path, name: str, existing: bool) -> None:
+    if os.name == "nt" and any(ord(char) < 32 for char in name):
         pytest.skip("Windows rejects control characters in directory names")
     if existing:
         cli_run([str(project_redirect.parent / "old"), "--without-pip", "--activators", ""])
     cli_run([
-        str(project_redirect.parent / f"env{boundary}name"),
+        str(project_redirect.parent / name),
         "--without-pip",
         "--activators",
         "",
@@ -169,19 +180,3 @@ def test_venv_redirect_forced_not_write_able(redirect: Path, caplog: pytest.LogC
         redirect.chmod(S_IREAD | S_IWRITE)
 
     assert f"could not point {redirect.resolve()} at {(redirect.parent / 'env').resolve()}" in caplog.text
-
-
-@pytest.mark.parametrize(
-    "name",
-    [
-        pytest.param(" env", id="leading"),
-        pytest.param(
-            "env ",
-            id="trailing",
-            marks=pytest.mark.skipif(os.name == "nt", reason="Windows strips trailing whitespace from names"),
-        ),
-    ],
-)
-def test_venv_redirect_skips_surrounding_whitespace(project_redirect: Path, name: str) -> None:
-    _create(project_redirect.parent / name, "--venv-redirect")
-    assert not project_redirect.exists()
