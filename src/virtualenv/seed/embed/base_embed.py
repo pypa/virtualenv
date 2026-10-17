@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC
-from argparse import SUPPRESS
+from argparse import SUPPRESS, ArgumentTypeError
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -125,6 +125,7 @@ class BaseEmbed(Seeder, ABC):
                 f"--{distribution}",
                 dest=distribution,
                 metavar="version",
+                type=_seed_version,
                 help=help_,
                 default=default,
             )
@@ -162,6 +163,14 @@ class BaseEmbed(Seeder, ABC):
             ver = f"={version or 'latest'}"
             result += f" {distribution}{ver},"
         return result[:-1] + ")"
+
+
+def _seed_version(value: str) -> str:
+    try:
+        return Version.validate(value)
+    except ValueError as exception:
+        # argparse shows only an ArgumentTypeError's message; a ValueError prints as "invalid _seed_version value"
+        raise ArgumentTypeError(str(exception)) from exception
 
 
 __all__ = [
