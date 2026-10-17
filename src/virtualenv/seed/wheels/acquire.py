@@ -108,9 +108,13 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
     to_folder: Path,
     env: dict[str, str],
 ) -> Wheel:
-    """Raise ValueError for invalid requirements, CalledProcessError for pip failures, and RuntimeError for invalid wheels.
+    """Download one wheel into a private staging directory and move it into ``to_folder`` once it checks out.
 
-    Digest verification failures raise UnverifiedWheelError before the wheel enters the cache.
+    :raises ValueError: for an invalid distribution name or version specifier.
+    :raises CalledProcessError: when ``pip download`` fails.
+    :raises UnverifiedWheelError: when PyPI cannot supply the digest to verify against.
+    :raises RuntimeError: when the staged file is not the requested wheel, its digest differs from PyPI's, or it does
+        not support ``for_py_version``; nothing reaches ``to_folder`` in these cases.
 
     """
     _check_distribution(distribution)
@@ -177,7 +181,7 @@ def _downloaded_wheel(folder: Path, distribution: str, version_spec: str | None)
     if (
         result is None
         or canonicalize_name(result.distribution) != canonicalize_name(distribution)
-        or (version_spec is not None and not Specifier(version_spec).contains(result.version))
+        or (version_spec and not Specifier(version_spec).contains(result.version))
     ):
         msg: Final = f"unexpected downloaded wheel {files[0].name} for {distribution}{version_spec or ''}"
         raise RuntimeError(msg)

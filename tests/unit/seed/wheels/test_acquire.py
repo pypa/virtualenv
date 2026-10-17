@@ -14,7 +14,7 @@ import pytest
 
 from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.seed.wheels.acquire import PIP_RUN, download_wheel, get_wheel, pip_wheel_env_run
-from virtualenv.seed.wheels.embed import get_embed_wheel
+from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, get_embed_wheel
 from virtualenv.seed.wheels.periodic_update import UnverifiedWheelError, dump_datetime
 from virtualenv.seed.wheels.util import Wheel
 
@@ -37,14 +37,23 @@ def test_pip_wheel_env_run_could_not_find(session_app_data, mocker) -> None:
         pip_wheel_env_run([], session_app_data, os.environ)
 
 
+@pytest.mark.parametrize(
+    "version_spec",
+    [
+        pytest.param(lambda _wheel: None, id="latest"),
+        pytest.param(lambda _wheel: "", id="unpinned"),
+        pytest.param(lambda wheel: f"=={wheel.version}", id="pinned"),
+    ],
+)
 def test_download_wheel_uses_staged_archive(
     download_process: tuple[MagicMock, Wheel, bytearray],
     for_py_version: str,
     session_app_data: AppDataDiskFolder,
     tmp_path: Path,
+    version_spec: Callable[[Wheel], str | None],
 ) -> None:
     _, expected, _ = download_process
-    result: Final = download_wheel("pip", None, for_py_version, [], session_app_data, tmp_path, {})
+    result: Final = download_wheel("pip", version_spec(expected), for_py_version, [], session_app_data, tmp_path, {})
     assert (result.path, result.path.read_bytes(), list(tmp_path.iterdir())) == (
         tmp_path / expected.name,
         expected.path.read_bytes(),
@@ -85,25 +94,6 @@ def test_download_wheel_rejects_unsupported_python(
     assert list(tmp_path.iterdir()) == []
 
 
-def test_download_fails(
-    download_process: tuple[MagicMock, Wheel, bytearray],
-    for_py_version: str,
-    session_app_data: AppDataDiskFolder,
-    tmp_path: Path,
-) -> None:
-    download_process[0].return_value.configure_mock(returncode=7)
-    with pytest.raises(CalledProcessError) as context:
-        download_wheel("pip", None, for_py_version, [], session_app_data, tmp_path, {})
-    error: Final = context.value
-    assert (error.output, error.stderr, error.returncode, error.cmd[:3], list(tmp_path.iterdir())) == (
-        "progress complete",
-        "",
-        7,
-        [sys.executable, "-c", PIP_RUN],
-        [],
-    )
-
-
 def test_download_wheel_skips_local_pip_module(
     mocker: MockerFixture,
     for_py_version: str,
@@ -123,6 +113,25 @@ def test_download_wheel_skips_local_pip_module(
     )
 
     assert result.path == tmp_path / "house" / embedded.name
+
+
+def test_download_fails(
+    download_process: tuple[MagicMock, Wheel, bytearray],
+    for_py_version: str,
+    session_app_data: AppDataDiskFolder,
+    tmp_path: Path,
+) -> None:
+    download_process[0].return_value.configure_mock(returncode=7)
+    with pytest.raises(CalledProcessError) as context:
+        download_wheel("pip", None, for_py_version, [], session_app_data, tmp_path, {})
+    error: Final = context.value
+    assert (error.output, error.stderr, error.returncode, error.cmd[:3], list(tmp_path.iterdir())) == (
+        "progress complete",
+        "",
+        7,
+        [sys.executable, "-c", PIP_RUN],
+        [],
+    )
 
 
 def test_download_wheel_python_io_encoding(
