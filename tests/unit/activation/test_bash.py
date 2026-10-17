@@ -18,6 +18,48 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
+_BASH: Final = shutil.which("bash")
+
+
+@pytest.mark.skipif(_BASH is None or (IS_WIN and "\\git\\" not in _BASH.lower()), reason="requires native bash")
+@pytest.mark.parametrize(
+    ("setup", "expected"),
+    [
+        pytest.param("", "(${VIRTUAL_ENV_PROMPT-}) base ", id="bash"),
+        pytest.param("unset BASH_VERSION ZSH_VERSION;", "base ", id="unrecognized-shell"),
+    ],
+)
+def test_prompt_requires_known_shell(tmp_path: Path, current_fastest: str, setup: str, expected: str) -> None:
+    session: Final = cli_run([
+        str(tmp_path / "env"),
+        "--creator",
+        current_fastest,
+        "--without-pip",
+        "--no-periodic-update",
+        "--activators",
+        "bash",
+        "--prompt",
+        "example",
+    ])
+    result: Final = subprocess.run(
+        [
+            _BASH,
+            "--norc",
+            "--noprofile",
+            "-c",
+            f'{setup} PS1="base "; . "$1"; printf "%s|%s" "$PS1" "$VIRTUAL_ENV_PROMPT"',
+            "test",
+            str(session.creator.bin_dir / "activate"),
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+        check=True,
+    )
+    assert result.stdout == f"{expected}|example"
+
+
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
 @pytest.mark.parametrize(
     ("tcl_lib", "tk_lib", "present"),
@@ -373,9 +415,14 @@ def test_prompt_does_not_run_commands(
         pytest.param("e\\", id="trailing-backslash"),
     ],
 )
+@pytest.mark.parametrize("compatibility", [pytest.param("42", id="bash42"), pytest.param("51", id="bash51")])
 def test_prompt_renders_name_literally(
-    prompt_after_activate: Callable[[str | None, str], tuple[Path, str]], prompt: str
+    prompt_after_activate: Callable[[str | None, str], tuple[Path, str]],
+    prompt: str,
+    compatibility: str,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    monkeypatch.setenv("BASH_COMPAT", compatibility)
     _, rendered = prompt_after_activate(prompt, "env")
 
     assert rendered.startswith(f"({prompt}) ")
@@ -397,14 +444,20 @@ def test_bash_activate_sources_under_dash(tmp_path: Path, current_fastest: str) 
     ])
 
     result = subprocess.run(
-        ["dash", "-c", '. "$1" && printf "%s" "$VIRTUAL_ENV"', "dash", str(dest / "bin" / "activate")],
+        [
+            "dash",
+            "-c",
+            'PS1="base "; . "$1" && printf "%s|%s" "$VIRTUAL_ENV" "$PS1"',
+            "dash",
+            str(dest / "bin" / "activate"),
+        ],
         capture_output=True,
         text=True,
         encoding="utf-8",
         check=False,
     )
 
-    assert (result.returncode, result.stdout) == (0, str(dest))
+    assert (result.returncode, result.stdout) == (0, f"{dest}|base ")
 
 
 @pytest.mark.slow
@@ -427,13 +480,12 @@ def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> 
         def activate_call(self, script):
             return super().activate_call(script) + " || exit 1"
 
-        def print_prompt(self):
-            # render PS1 the way bash draws it, since the activator escapes the prompt for that expansion; bash before
-            # 4.4 lacks ${PS1@P}, so undo the escapes once for the prompt-escape decode and once for the expansion
-            unescape = "s/\\\\\\([$`\\\\]\\)/\\1/g"
+        def print_prompt(self) -> str:
             return (
                 'if ((BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1] >= 404)); then printf "%s\\n" "${PS1@P}"; '
-                f"else printf '%s\\n' \"$PS1\" | sed -e '{unescape}' -e '{unescape}'; fi"
+                "else case \"$PS1\" in '(${VIRTUAL_ENV_PROMPT-}) '*) "
+                "printf '(%s) %s\\n' \"$VIRTUAL_ENV_PROMPT\" \"${PS1#'(${VIRTUAL_ENV_PROMPT-}) '}\";; "
+                "*) printf '%s\\n' \"$PS1\";; esac; fi"
             )
 
     activation_tester(Bash)
@@ -464,6 +516,42 @@ def test_bash_relocation_without_source_preserves_path(moved_bash_activate: Path
         check=True,
     )
     assert result.stdout == "/usr/bin:/bin|unset"
+
+
+@pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
+@pytest.mark.parametrize(
+    ("before", "after", "expected"),
+    [
+        pytest.param("shopt -u promptvars", "", "(x$(touch PWNED)y) __END__", id="promptvars-disabled"),
+        pytest.param(
+            "shopt -u promptvars; set -o posix", "", "(x$(touch PWNED)y) __END__", id="promptvars-disabled-posix"
+        ),
+        pytest.param("", "set -u; unset VIRTUAL_ENV_PROMPT", "() __END__", id="unset-with-nounset"),
+    ],
+)
+def test_bash_prompt_options(tmp_path: Path, current_fastest: str, before: str, after: str, expected: str) -> None:
+    session: Final = cli_run([
+        "--without-pip",
+        str(tmp_path / "env"),
+        "--creator",
+        current_fastest,
+        "--no-periodic-update",
+        "--activators",
+        "bash",
+        "--prompt",
+        "x$(touch PWNED)y",
+    ])
+    result: Final = subprocess.run(
+        ["bash", "--noprofile", "--norc", "-i"],
+        input=f"{before}\nPS1=__END__\n. {BashActivator.quote(str(session.creator.bin_dir / 'activate'))}\n{after}\nexit\n",
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert expected in result.stderr
+    assert "unbound variable" not in result.stderr
 
 
 @pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
