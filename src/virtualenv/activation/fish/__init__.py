@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import TYPE_CHECKING
 
 from virtualenv.activation.via_template import ViaTemplateActivator
@@ -17,9 +18,8 @@ class FishActivator(ViaTemplateActivator):
 
     @staticmethod
     def quote(string: str) -> str:
-        # fish reads \\ and \' as escapes inside single quotes, unlike POSIX sh, so shlex.quote's output lets a
-        # backslash before a quote end the literal early
-        return "'" + string.replace("\\", "\\\\").replace("'", "\\'") + "'"
+        # Keep escapes beside ASCII quotes so legacy decoders cannot absorb them into a preceding multibyte character.
+        return "'" + re.sub(r"[\\']", lambda match: f"'\\{match.group()}'", string) + "'"
 
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:
         data = super().replacements(creator, dest_folder)
