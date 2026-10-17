@@ -56,9 +56,13 @@ class PipInvoke(BaseEmbed):
                 if path.parent != creator.script_dir or not path.is_file():
                     continue
                 content = path.read_bytes()
-                if not content.startswith(b"#!/bin/sh\n'''exec' "):
+                if content.startswith(b"#!/bin/sh\n'''exec' "):
+                    body = content.split(b"\n", 3)[3]
+                elif content.startswith(b"#!" + str(creator.exe).encode("utf-8") + b"\n"):
+                    body = content.split(b"\n", 1)[1]
+                else:
                     continue
-                content = shell_shebang(str(creator.exe)) + content.split(b"\n", 3)[3]
+                content = shell_shebang(str(creator.exe)) + body
                 mode: Final = S_IMODE(path.stat().st_mode) & 0o755
                 path.unlink()
                 with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode), "wb") as stream:
