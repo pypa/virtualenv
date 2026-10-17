@@ -1,5 +1,2 @@
 Reject built-in options with missing values before creating the application-data directory or starting interpreter
 discovery, instead of reporting the argument error after those operations.
-
-Place discovery options such as ``--python`` before creator, seeder, and activator options. Ambiguous ordering now
-reports a usage error before querying an interpreter, including when a plugin option is missing its value.

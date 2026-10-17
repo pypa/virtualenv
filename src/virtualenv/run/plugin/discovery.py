@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import sys
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
 from .base import PluginLoader
 
@@ -47,25 +46,7 @@ def get_discover(parser: VirtualEnvConfigParser, args: list[str] | None) -> Disc
         raise RuntimeError(msg)
     discover_class = discover_types[discovery]
     discover_class.add_parser_arguments(discovery_parser)  # ty: ignore[unresolved-attribute]
-    options, remaining = parser.parse_known_args(args, namespace=options)
-    discovery_options: Final = {
-        option
-        # argparse has no public accessor for the arguments registered by a plugin.
-        for action in discovery_parser._group_actions  # ruff: ignore[private-member-access]
-        for option in action.option_strings
-    }
-    unregistered: Final = {value for value in remaining if value.startswith("-")}
-    preceding = None
-    for value in sys.argv[1:] if args is None else args:
-        if value == "--":
-            break
-        if preceding is not None and (
-            value.split("=", 1)[0] in discovery_options
-            or any(value.startswith(option) for option in discovery_options if not option.startswith("--"))
-        ):
-            parser.error(f"discovery option {value!r} must precede unregistered option {preceding!r}")
-        if value in unregistered:
-            preceding = value
+    options, _ = parser.parse_known_args(args, namespace=options)
     return discover_class(options)
 
 

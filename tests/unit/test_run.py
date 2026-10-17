@@ -90,22 +90,13 @@ def test_missing_option_value_precedes_interpreter_query(tmp_path: Path, option:
     process.assert_not_called()
 
 
-@pytest.mark.parametrize("option", [pytest.param("--rplug-value", id="plugin"), pytest.param("--no-seed", id="seeder")])
-@pytest.mark.parametrize("discovery", [pytest.param("--python", id="long"), pytest.param("-p", id="short")])
-def test_discovery_requires_registered_prefix(
-    tmp_path: Path, option: str, discovery: str, mocker: MockerFixture
-) -> None:
-    executable: Final = tmp_path / "python"
-    shutil.copy2(sys.executable, executable)
-    process: Final = mocker.patch(
-        "python_discovery._cached_py_info.Popen", autospec=True, side_effect=AssertionError("interpreter query started")
-    )
-    with pytest.raises(SystemExit) as context:
-        session_via_cli([option, discovery, str(executable), str(tmp_path / "env")])
-    assert context.value.code == 2
-    process.assert_not_called()
-
-
-def test_discovery_before_component_options(tmp_path: Path) -> None:
-    session: Final = session_via_cli(["--python", sys.executable, "--no-seed", str(tmp_path / "env")])
+@pytest.mark.parametrize(
+    ("leading", "trailing"),
+    [
+        pytest.param([], ["--no-periodic-update", "-p", sys.executable], id="nox"),
+        pytest.param(["--prompt=env", f"--python={sys.executable}"], [], id="pipenv"),
+    ],
+)
+def test_component_option_before_discovery_option(tmp_path: Path, leading: list[str], trailing: list[str]) -> None:
+    session: Final = session_via_cli([*leading, str(tmp_path / "env"), *trailing])
     assert session.creator.dest == tmp_path / "env"
