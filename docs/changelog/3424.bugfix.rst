@@ -1,5 +1,4 @@
-Replace line-boundary characters in csh prompt text with spaces so activation remains valid. Filesystem paths retain
-their original values.
+Replace line-boundary characters in csh prompt text with spaces so activation remains valid.
 
-Skip csh activation for filesystem paths containing newlines, and remove any stale csh activation scripts for those
-paths. Preserve other control characters in filesystem paths, and omit skipped activators from the creation summary.
+When a filesystem path contains a newline, skip csh activation and remove any stale csh activation scripts. Keep
+filesystem paths unchanged, including other control characters, and omit skipped activators from the creation summary.
