@@ -156,7 +156,7 @@ class PipInstall(ABC):
             self._console_entry_points = {}
             entry_points = self._dist_info / "entry_points.txt"  # ty: ignore[unsupported-operator]
             if entry_points.exists():
-                parser = ConfigParser()
+                parser = EntryPointConfig(interpolation=None, strict=False)
                 with entry_points.open(encoding="utf-8") as file_handler:
                     parser.read_file(file_handler)
                 if "console_scripts" in parser.sections():
@@ -233,6 +233,12 @@ class PipInstall(ABC):
         return self._image_dir.exists() and any(self._image_dir.iterdir())
 
 
+class EntryPointConfig(ConfigParser):
+    @staticmethod
+    def optionxform(optionstr: str) -> str:
+        return optionstr
+
+
 class ScriptMakerCustom(ScriptMaker):
     def __init__(self, target_dir: Path, version_info: tuple[int, ...], executable: Path, name: str) -> None:
         super().__init__(None, str(target_dir))
@@ -255,5 +261,6 @@ class ScriptMakerCustom(ScriptMaker):
 
 
 __all__ = [
+    "EntryPointConfig",
     "PipInstall",
 ]
