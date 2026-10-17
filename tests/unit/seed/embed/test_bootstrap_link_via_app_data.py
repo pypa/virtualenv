@@ -15,7 +15,6 @@ from python_discovery import _cached_py_info as cached_py_info
 
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
-from virtualenv.seed.embed.via_app_data.pip_install import symlink
 from virtualenv.seed.embed.via_app_data.pip_install.base import _safe_extract_zip
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
 from virtualenv.util.path import safe_delete
@@ -27,18 +26,29 @@ if TYPE_CHECKING:
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
-def test_seed_image_compiles_without_site_initialization(tmp_path: Path, mocker: MockerFixture) -> None:
-    process: Final = mocker.spy(symlink, "Popen")
-    session: Final = cli_run([
+@pytest.mark.parametrize(
+    ("where", "name"),
+    [pytest.param("cwd", "compileall.py", id="cwd-module"), pytest.param("purelib", "planted.pth", id="site-pth")],
+)
+def test_seed_image_compiles_in_isolation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, where: str, name: str
+) -> None:
+    cmd: Final = [
         str(tmp_path / "env"),
         "--app-data",
         str(tmp_path / "cache"),
         "--symlink-app-data",
         "--no-periodic-update",
         "--no-setuptools",
-    ])
-    assert process.call_args.args[0][1:5] == ["-I", "-S", "-m", "compileall"]
+    ]
+    purelib: Final = cli_run([*cmd, "--without-pip"]).creator.purelib
+    marker: Final = tmp_path / "marker"
+    planted: Final = {"cwd": tmp_path, "purelib": purelib}[where] / name
+    planted.write_text(f"import pathlib; pathlib.Path({str(marker)!r}).touch()", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    session: Final = cli_run(cmd)
     assert list((session.creator.purelib / "pip" / "__pycache__").glob("__init__.*.pyc"))
+    assert not marker.exists()
 
 
 @pytest.mark.slow
