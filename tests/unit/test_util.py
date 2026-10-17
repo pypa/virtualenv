@@ -10,7 +10,13 @@ from typing import TYPE_CHECKING, Final
 
 import pytest
 
-from virtualenv.app_data import _cache_dir_with_migration, _default_app_data_dir
+from virtualenv.app_data import (
+    AppDataDiskFolder,
+    TempAppData,
+    _cache_dir_with_migration,
+    _default_app_data_dir,
+    make_app_data,
+)
 from virtualenv.info import fs_supports_symlink
 from virtualenv.util import zipapp
 from virtualenv.util.lock import ReentrantFileLock
@@ -20,6 +26,91 @@ from virtualenv.util.subprocess import run_cmd
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
+
+    from pytest_mock import MockerFixture
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+@pytest.mark.parametrize("existing", [pytest.param(False, id="new"), pytest.param(True, id="existing")])
+def test_app_data_default_permissions(app_data_default: Path, existing: bool) -> None:
+    if existing:
+        app_data_default.mkdir()
+        app_data_default.chmod(0o777)
+    previous: Final = os.umask(0)
+    try:
+        data: Final = make_app_data(None, read_only=False, env={})
+    finally:
+        os.umask(previous)
+    assert (str(data), app_data_default.stat().st_mode & 0o777) == (str(app_data_default), 0o755 if existing else 0o700)
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+@pytest.mark.parametrize("override", [pytest.param(False, id="argument"), pytest.param(True, id="environment")])
+def test_app_data_explicit_permissions(tmp_path: Path, override: bool) -> None:
+    tmp_path.chmod(0o775)
+    data: Final = make_app_data(
+        None if override else str(tmp_path),
+        read_only=False,
+        env={"VIRTUALENV_OVERRIDE_APP_DATA": str(tmp_path)} if override else {},
+    )
+    assert (str(data), tmp_path.stat().st_mode & 0o777) == (str(tmp_path), 0o775)
+
+
+def test_app_data_read_only_does_not_create(app_data_default: Path) -> None:
+    with pytest.raises(RuntimeError, match="does not exist"):
+        make_app_data(None, read_only=True, env={})
+    assert not app_data_default.exists()
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+def test_app_data_read_only_permissions(app_data_default: Path) -> None:
+    app_data_default.mkdir()
+    app_data_default.chmod(0o775)
+    data: Final = make_app_data(None, read_only=True, env={})
+    assert (str(data), app_data_default.stat().st_mode & 0o777) == (str(app_data_default), 0o775)
+
+
+def test_app_data_default_writable(app_data_default: Path) -> None:
+    data: Final = make_app_data(None, read_only=False, env={})
+    target: Final = app_data_default / "entry"
+    target.write_text("cached", encoding="utf-8")
+    assert (str(data), target.read_text(encoding="utf-8"), data.transient) == (
+        str(app_data_default),
+        "cached",
+        False,
+    )
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+def test_app_data_permission_failure_uses_temporary(app_data_default: Path, mocker: MockerFixture) -> None:
+    app_data_default.mkdir()
+    app_data_default.chmod(0o777)
+    mocker.patch("virtualenv.app_data.os.chmod", autospec=True, side_effect=PermissionError)
+    data: Final = make_app_data(None, read_only=False, env={})
+    try:
+        assert isinstance(data, TempAppData)
+        assert str(data) != str(app_data_default)
+    finally:
+        data.close()
+
+
+@pytest.mark.parametrize("writable", [pytest.param(False, id="unwritable"), pytest.param(True, id="writable")])
+def test_app_data_explicit_create_failure(tmp_path: Path, mocker: MockerFixture, writable: bool) -> None:
+    mocker.patch("virtualenv.app_data.os.makedirs", autospec=True, side_effect=PermissionError)
+    mocker.patch("virtualenv.app_data.os.access", autospec=True, return_value=writable)
+    data: Final = make_app_data(str(tmp_path), read_only=False, env={})
+    try:
+        assert (data.transient, str(data) == str(tmp_path)) == (not writable, writable)
+    finally:
+        data.close()
+
+
+@pytest.fixture
+def app_data_default(tmp_path: Path, mocker: MockerFixture) -> Path:
+    folder: Final = tmp_path / "cache"
+    mocker.patch("virtualenv.app_data.user_cache_dir", autospec=True, return_value=str(folder))
+    mocker.patch("virtualenv.app_data.user_data_dir", autospec=True, return_value=str(tmp_path / "old"))
+    return folder
 
 
 def test_run_fail(tmp_path) -> None:
@@ -271,3 +362,29 @@ def test_zipapp_read_returns_payload_from_entry_inside_root(fake_zipapp_root: Pa
 def test_zipapp_read_rejects_path_outside_root(fake_zipapp_root: Path, parts: tuple[str, ...]) -> None:
     with pytest.raises(RuntimeError, match="should be within ROOT"):
         zipapp.read(fake_zipapp_root.parent.joinpath(*parts))
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
+@pytest.mark.parametrize(
+    ("mode", "expected"),
+    [pytest.param(0o2775, 0o2775, id="group-write"), pytest.param(0o2777, 0o2775, id="other-write")],
+)
+def test_app_data_setgid_keeps_group_write(app_data_default: Path, mode: int, expected: int) -> None:
+    app_data_default.mkdir()
+    app_data_default.chmod(mode)
+    make_app_data(None, read_only=False, env={})
+    assert app_data_default.stat().st_mode & 0o7777 == expected
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX ownership")
+def test_app_data_keeps_writable_non_owned_cache(app_data_default: Path, mocker: MockerFixture) -> None:
+    app_data_default.mkdir()
+    app_data_default.chmod(0o1777)
+    mocker.patch("virtualenv.app_data.os.geteuid", autospec=True, return_value=app_data_default.stat().st_uid + 1)
+    mocker.patch("virtualenv.app_data.os.chmod", autospec=True, side_effect=PermissionError)
+    data: Final = make_app_data(None, read_only=False, env={})
+    assert (isinstance(data, AppDataDiskFolder), str(data), app_data_default.stat().st_mode & 0o7777) == (
+        True,
+        str(app_data_default),
+        0o1777,
+    )
