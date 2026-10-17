@@ -5,7 +5,7 @@ import sys
 from argparse import Namespace
 from shutil import which
 from subprocess import check_output, run
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING
 
 import pytest
 from packaging.version import Version
@@ -170,19 +170,42 @@ def test_cshell_activates_path_with_special_characters(
 
 
 @pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
-def test_cshell_preserves_percent_prompt(csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path) -> None:
-    _, content = csh_venv("plain", prompt="%")
-    (tmp_path / "activate.csh").write_text(content, encoding="utf-8")
-    assert (
-        run(
-            [TCSH, "-fc", f'source {tmp_path / "activate.csh"}; printf "%s" "$VIRTUAL_ENV_PROMPT"'],
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            check=True,
-        ).stdout
-        == "%"
+@pytest.mark.parametrize(
+    ("prompt", "codec"),
+    [
+        pytest.param("%", None, id="percent"),
+        pytest.param("has^caret", None, id="caret"),
+        pytest.param("中^b", "gbk", id="gbk-caret"),
+        pytest.param("中!b", "gbk", id="gbk-history"),
+        pytest.param(r"中\^b", "gbk", id="gbk-backslash-caret"),
+        pytest.param(r"丁\!", "gbk", id="gbk-backslash-history"),
+    ],
+)
+def test_cshell_renders_prompt_literally(
+    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, prompt: str, codec: str | None
+) -> None:
+    env = os.environ.copy()
+    if codec is not None:
+        # a legacy double-byte locale reads the last UTF-8 byte of 中 and the ASCII byte after it as one character
+        locales = check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
+        if (locale := next((i for i in locales if i.lower().replace("-", "").endswith(f".{codec}")), None)) is None:
+            pytest.skip(f"no {codec} locale is installed")
+        env["LC_ALL"] = locale
+    _, content = csh_venv("plain", prompt=prompt)
+    script = tmp_path / "activate.csh"
+    script.write_text(content, encoding="utf-8")
+
+    # only an interactive shell draws the prompt, which is where tcsh turns ^c into a control character
+    result = run(
+        [TCSH, "-f", "-i"],
+        input=f"source {script}\nexit\n".encode(),
+        env=env,
+        capture_output=True,
+        timeout=30,
+        check=True,
     )
+
+    assert f"({prompt}) ".encode() in result.stdout + result.stderr
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
@@ -241,31 +264,3 @@ def test_csh(activation_tester_class, activation_tester) -> None:
             return "echo 'source \"$VIRTUAL_ENV/bin/activate.csh\"; echo $prompt' | csh -i ; echo"
 
     activation_tester(Csh)
-
-
-@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
-@pytest.mark.parametrize(
-    "prompt",
-    [
-        pytest.param("中^b", id="caret"),
-        pytest.param("中!b", id="history"),
-        pytest.param(r"中\^b", id="backslash-caret"),
-        pytest.param(r"丁\!", id="backslash-history"),
-    ],
-)
-def test_cshell_prompt_in_gbk_locale(csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, prompt: str) -> None:
-    locales: Final = check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
-    if (locale := next((name for name in locales if name.lower().replace("-", "").endswith(".gbk")), None)) is None:
-        pytest.skip("GBK locale is unavailable")
-    _, content = csh_venv("plain", prompt=prompt)
-    script = tmp_path / "activate.csh"
-    script.write_text(content, encoding="utf-8")
-    result = run(
-        [TCSH, "-f", "-i"],
-        input=f"source {script}\nexit\n".encode(),
-        env={**os.environ, "LC_ALL": locale},
-        capture_output=True,
-        timeout=30,
-        check=True,
-    )
-    assert f"({prompt}) ".encode() in result.stdout + result.stderr
