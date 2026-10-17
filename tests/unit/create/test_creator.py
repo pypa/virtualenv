@@ -43,42 +43,31 @@ CURRENT = PythonInfo.current_system()
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 @pytest.mark.parametrize(
-    "source",
+    ("args", "clear_env"),
     [
-        pytest.param("before", id="before-dest"),
-        pytest.param("after", id="after-dest"),
-        pytest.param("env", id="environment"),
+        pytest.param(["--clear", "link"], "0", id="before-dest"),
+        pytest.param(["link", "--clear"], "0", id="after-dest"),
+        pytest.param(["link"], "1", id="environment"),
+        pytest.param(["missing/../link", "--clear"], "0", id="missing-parent"),
+        pytest.param(["link/child/..", "--clear"], "0", id="child-parent"),
     ],
 )
 def test_clear_rejects_linked_destination(
-    linked_destination: Path, source: str, capsys: pytest.CaptureFixture[str]
+    linked_destination: Path, args: list[str], clear_env: str, capsys: pytest.CaptureFixture[str]
 ) -> None:
     marker: Final = linked_destination / "keep.txt"
     marker.write_text("keep", encoding="utf-8")
-    args: Final = (
-        ["--clear", str(linked_destination)]
-        if source == "before"
-        else [str(linked_destination), *(["--clear"] if source == "after" else [])]
-    )
     with pytest.raises(SystemExit) as context:
-        cli_run([*args, "--no-seed"], env={**os.environ, "VIRTUALENV_CLEAR": "1" if source == "env" else "0"})
-    assert (context.value.code, marker.read_text(encoding="utf-8"), linked_destination.is_symlink()) == (
-        2,
-        "keep",
-        True,
-    )
-    assert "--clear cannot use a symlink destination" in capsys.readouterr().err
-
-
-@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
-@pytest.mark.parametrize(
-    "suffix",
-    [pytest.param("missing/../link", id="missing-parent"), pytest.param("link/child/..", id="child-parent")],
-)
-def test_clear_rejects_normalized_link(linked_destination: Path, suffix: str) -> None:
-    with pytest.raises(SystemExit) as context:
-        session_via_cli([str(linked_destination.parent / suffix), "--clear", "--no-seed"])
-    assert context.value.code == 2
+        cli_run(
+            [arg if arg == "--clear" else str(linked_destination.parent / arg) for arg in args] + ["--no-seed"],
+            env={**os.environ, "VIRTUALENV_CLEAR": clear_env},
+        )
+    assert (
+        context.value.code,
+        marker.read_text(encoding="utf-8"),
+        linked_destination.is_symlink(),
+        "--clear cannot use a symlink destination" in capsys.readouterr().err,
+    ) == (2, "keep", True, True)
 
 
 @pytest.mark.skipif(not IS_WIN, reason="requires Windows junctions")
