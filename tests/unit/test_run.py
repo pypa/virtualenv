@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+import shutil
+import sys
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -77,8 +79,12 @@ def test_invalid_discovery_method_via_env(monkeypatch: pytest.MonkeyPatch) -> No
 
 @pytest.mark.parametrize("option", [pytest.param("--prompt", id="prompt"), pytest.param("--pip", id="pip")])
 def test_missing_option_value_precedes_interpreter_query(tmp_path: Path, option: str, mocker: MockerFixture) -> None:
-    process = mocker.patch("subprocess.Popen", autospec=True, side_effect=AssertionError("interpreter query started"))
+    executable: Final = tmp_path / "python"
+    shutil.copy2(sys.executable, executable)
+    process: Final = mocker.patch(
+        "python_discovery._cached_py_info.Popen", autospec=True, side_effect=AssertionError("interpreter query started")
+    )
     with pytest.raises(SystemExit) as context:
-        session_via_cli([option, "--python", str(tmp_path / "python"), str(tmp_path / "env")])
+        session_via_cli([option, "--python", str(executable), str(tmp_path / "env")])
     assert context.value.code == 2
     process.assert_not_called()
