@@ -477,8 +477,8 @@ def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> 
         def print_prompt(self) -> str:
             return (
                 'if ((BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1] >= 404)); then printf "%s\\n" "${PS1@P}"; '
-                "else case \"$PS1\" in '(${VIRTUAL_ENV_PROMPT}) '*) "
-                "printf '(%s) %s\\n' \"$VIRTUAL_ENV_PROMPT\" \"${PS1#'(${VIRTUAL_ENV_PROMPT}) '}\";; "
+                "else case \"$PS1\" in '(${VIRTUAL_ENV_PROMPT-}) '*) "
+                "printf '(%s) %s\\n' \"$VIRTUAL_ENV_PROMPT\" \"${PS1#'(${VIRTUAL_ENV_PROMPT-}) '}\";; "
                 "*) printf '%s\\n' \"$PS1\";; esac; fi"
             )
 
@@ -518,19 +518,20 @@ def test_bash_relocation_without_source_preserves_path(moved_bash_activate: Path
 )
 def test_bash_prompt_options(tmp_path: Path, mode: str) -> None:
     session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "bash", "--prompt", "literal"])
-    command: Final = (
-        'shopt -u promptvars; PS1=; . "$1"; printf "%s" "${PS1@P}"'
-        if mode == "disabled"
-        else 'PS1=; . "$1"; set -u; unset VIRTUAL_ENV_PROMPT; printf "%s" "${PS1@P}"'
-    )
+    command: Final = "shopt -u promptvars\nPS1=__END__\n" if mode == "disabled" else "PS1=__END__\n"
     result: Final = subprocess.run(
-        ["bash", "-c", command, "test", str(session.creator.bin_dir / "activate")],
+        ["bash", "--noprofile", "--norc", "-i"],
+        input=command
+        + f". {BashActivator.quote(str(session.creator.bin_dir / 'activate'))}\n"
+        + ("set -u\nunset VIRTUAL_ENV_PROMPT\n" if mode == "unset" else "")
+        + "exit\n",
         capture_output=True,
         text=True,
         encoding="utf-8",
         check=True,
     )
-    assert result.stdout == ("(literal) " if mode == "disabled" else "() ")
+    assert ("(literal) __END__" if mode == "disabled" else "() __END__") in result.stderr
+    assert "unbound variable" not in result.stderr
 
 
 @pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
