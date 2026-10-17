@@ -268,14 +268,19 @@ def test_environment_directories_reject_parent_components(tmp_path: Path) -> Non
 @pytest.mark.parametrize(
     "existing", [pytest.param(False, id="missing-target"), pytest.param(True, id="existing-target")]
 )
-def test_environment_directories_remove_links(tmp_path: Path, existing: bool) -> None:
+def test_environment_directories_remove_links(tmp_path: Path, caplog: pytest.LogCaptureFixture, existing: bool) -> None:
     target: Final = tmp_path / "stored"
     if existing:
         target.mkdir()
     link: Final = tmp_path / "link"
     link.symlink_to(target, target_is_directory=True)
     ensure_within(tmp_path, link / "nested")
-    assert (link.is_symlink(), link.exists(), target.exists()) == (False, True, existing)
+    assert (
+        link.is_symlink(),
+        link.exists(),
+        target.exists(),
+        f"replace environment directory link {link}" in caplog.text,
+    ) == (False, True, existing, True)
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows junctions")

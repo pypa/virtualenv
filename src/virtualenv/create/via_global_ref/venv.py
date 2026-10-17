@@ -8,7 +8,7 @@ from python_discovery import PythonInfo
 
 from virtualenv.create.via_global_ref.store import handle_store_python
 from virtualenv.util.error import ProcessCallFailedError
-from virtualenv.util.path import ensure_dir, ensure_within
+from virtualenv.util.path import ensure_within
 from virtualenv.util.subprocess import run_cmd
 from virtualenv.util.text import collapse_line_boundaries
 
@@ -60,8 +60,6 @@ class Venv(ViaGlobalRefApi):
             self.create_inline()
         else:
             self.create_via_sub_process()
-        for lib in self.libs:  # ty: ignore[not-iterable]
-            ensure_dir(lib)
         if self.describe is not None:
             self.describe.install_venv_shared_libs(self)
         super().create()
