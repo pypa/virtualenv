@@ -7,7 +7,7 @@ import zipfile
 from stat import S_IWGRP, S_IWOTH, S_IWUSR
 from subprocess import Popen, check_call
 from threading import Thread
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from python_discovery import PythonInfo
@@ -23,6 +23,32 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from pytest_mock import MockerFixture
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
+@pytest.mark.parametrize(
+    ("where", "name"),
+    [pytest.param("cwd", "compileall.py", id="cwd-module"), pytest.param("purelib", "planted.pth", id="site-pth")],
+)
+def test_seed_image_compiles_in_isolation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, where: str, name: str
+) -> None:
+    cmd: Final = [
+        str(tmp_path / "env"),
+        "--app-data",
+        str(tmp_path / "cache"),
+        "--symlink-app-data",
+        "--no-periodic-update",
+        "--no-setuptools",
+    ]
+    purelib: Final = cli_run([*cmd, "--without-pip"]).creator.purelib
+    marker: Final = tmp_path / "marker"
+    planted: Final = {"cwd": tmp_path, "purelib": purelib}[where] / name
+    planted.write_text(f"import pathlib; pathlib.Path({str(marker)!r}).touch()", encoding="utf-8")
+    monkeypatch.chdir(tmp_path)
+    session: Final = cli_run(cmd)
+    assert list((session.creator.purelib / "pip" / "__pycache__").glob("__init__.*.pyc"))
+    assert not marker.exists()
 
 
 @pytest.mark.slow
