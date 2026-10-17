@@ -9,7 +9,7 @@ import venv
 from importlib.metadata import distribution
 from pathlib import Path
 from subprocess import check_output
-from typing import Final, NoReturn
+from typing import TYPE_CHECKING, Final, NoReturn
 
 import pytest
 
@@ -17,30 +17,43 @@ import virtualenv
 from virtualenv.__main__ import run_with_catch
 from virtualenv.util.error import ProcessCallFailedError
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+
+@pytest.fixture
+def module_entry_version(monkeypatch: pytest.MonkeyPatch) -> Callable[[], int]:
+    monkeypatch.setattr(sys, "argv", ["virtualenv", "--version"])
+    # runpy warns when the module it is about to execute is already imported
+    monkeypatch.delitem(sys.modules, "virtualenv.__main__")
+
+    def run() -> int:
+        with pytest.raises(SystemExit) as context:
+            runpy.run_module("virtualenv", run_name="__main__")
+        return context.value.code
+
+    return run
+
 
 @pytest.mark.parametrize("implicit", [pytest.param(True, id="working-directory"), pytest.param(False, id="other-path")])
 def test_module_entry_removes_implicit_directory(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, implicit: bool
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, module_entry_version: Callable[[], int], implicit: bool
 ) -> None:
     monkeypatch.chdir(tmp_path)
     original: Final = sys.path.copy()
     monkeypatch.setattr(sys, "path", [str(tmp_path if implicit else tmp_path / "other"), *original])
-    monkeypatch.setattr(sys, "argv", ["virtualenv", "--version"])
-    with pytest.raises(SystemExit) as context:
-        runpy.run_module("virtualenv", run_name="__main__")
-    assert (context.value.code, sys.path) == (0, original if implicit else [str(tmp_path / "other"), *original])
+    assert (module_entry_version(), sys.path) == (0, original if implicit else [str(tmp_path / "other"), *original])
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows keeps the working directory open")
-def test_module_entry_without_working_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_module_entry_without_working_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, module_entry_version: Callable[[], int]
+) -> None:
     directory: Final = tmp_path / "removed"
     directory.mkdir()
     monkeypatch.chdir(directory)
     directory.rmdir()
-    monkeypatch.setattr(sys, "argv", ["virtualenv", "--version"])
-    with pytest.raises(SystemExit) as context:
-        runpy.run_module("virtualenv", run_name="__main__")
-    assert context.value.code == 0
+    assert module_entry_version() == 0
 
 
 @pytest.fixture
@@ -170,6 +183,13 @@ def test_module_entry_from_target_install(tmp_path: Path, safe_path: bool) -> No
                 shutil.copytree(source, target / root)
             elif source.is_file():
                 shutil.copy2(source, target / root)
+    python_path: Final = [target]
+    if safe_path:
+        # with only the metadata left in the working directory, dropping that explicit entry loses the discovery plugin
+        library: Final = tmp_path / "library"
+        library.mkdir()
+        (target / "virtualenv").rename(library / "virtualenv")
+        python_path.append(library)
     bare: Final = tmp_path / "bare"
     venv.EnvBuilder(with_pip=False).create(bare)
     executable: Final = bare / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
@@ -184,7 +204,7 @@ def test_module_entry_from_target_install(tmp_path: Path, safe_path: bool) -> No
             "--activators=",
         ],
         cwd=target,
-        env={**os.environ, "PYTHONPATH": str(target) if safe_path else ""},
+        env={**os.environ, "PYTHONPATH": os.pathsep.join(map(str, python_path)) if safe_path else ""},
         text=True,
         encoding="utf-8",
     )
