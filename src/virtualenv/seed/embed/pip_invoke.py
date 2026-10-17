@@ -2,17 +2,20 @@ from __future__ import annotations
 
 import logging
 from contextlib import contextmanager
+from pathlib import Path
+from shutil import copyfile
 from subprocess import Popen
-from typing import TYPE_CHECKING
+from tempfile import TemporaryDirectory
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.seed.embed.base_embed import BaseEmbed
-from virtualenv.seed.wheels import Version, get_wheel, pip_wheel_env_run
+from virtualenv.seed.wheels import get_wheel, pip_wheel_env_run
 from virtualenv.seed.wheels.acquire import PIP_RUN
+from virtualenv.seed.wheels.util import Version
 from virtualenv.util.subprocess import LogCmd
 
 if TYPE_CHECKING:
     from collections.abc import Generator
-    from pathlib import Path
 
     from virtualenv.config.cli.parser import VirtualEnvOptions
     from virtualenv.create.creator import Creator
@@ -44,7 +47,7 @@ class PipInvoke(BaseEmbed):
 
     @contextmanager
     def get_pip_install_cmd(self, exe: Path, for_py_version: str) -> Generator[list[str], None, None]:
-        cmd = [
+        cmd: Final = [
             str(exe),
             "-c",
             PIP_RUN,
@@ -54,29 +57,28 @@ class PipInvoke(BaseEmbed):
             ":all:",
             "--disable-pip-version-check",
             "--ignore-installed",
+            "--no-index",
         ]
-        if not self.download:
-            cmd.append("--no-index")
-        folders = set()
-        for dist, version in self.distribution_to_versions().items():
-            wheel = get_wheel(
-                distribution=dist,
-                version=version,
-                for_py_version=for_py_version,
-                search_dirs=self.extra_search_dir,
-                download=False,
-                app_data=self.app_data,
-                do_periodic_update=self.periodic_update,
-                env=self.env,
-            )
-            if wheel is None:
-                msg = f"could not get wheel for distribution {dist}"
-                raise RuntimeError(msg)
-            folders.add(str(wheel.path.parent))
-            cmd.append(Version.as_pip_req(dist, wheel.version))
-        for folder in sorted(folders):
-            cmd.extend(["--find-links", str(folder)])
-        yield cmd
+        # Only the selected archives may participate in pip's filename-based selection.
+        with TemporaryDirectory(prefix="virtualenv-seed-") as folder:
+            cmd.extend(["--find-links", folder])
+            for dist, version in self.distribution_to_versions().items():
+                wheel: Final = get_wheel(
+                    distribution=dist,
+                    version=version,
+                    for_py_version=for_py_version,
+                    search_dirs=self.extra_search_dir,
+                    download=self.download,
+                    app_data=self.app_data,
+                    do_periodic_update=self.periodic_update,
+                    env=self.env,
+                )
+                if wheel is None:
+                    msg: Final = f"could not get wheel for distribution {dist}"
+                    raise RuntimeError(msg)
+                copyfile(wheel.path, Path(folder) / wheel.name)
+                cmd.append(Version.as_pip_req(dist, wheel.version))
+            yield cmd
 
 
 __all__ = [

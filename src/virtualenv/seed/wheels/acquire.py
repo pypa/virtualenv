@@ -7,9 +7,11 @@ import re
 import sys
 from pathlib import Path
 from subprocess import PIPE, CalledProcessError, Popen
+from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Final
 
 from packaging.specifiers import InvalidSpecifier, Specifier
+from packaging.utils import canonicalize_name
 
 from .bundle import from_bundle
 from .periodic_update import UnverifiedWheelError, add_wheel_to_update_log, verify_wheel_digest
@@ -106,30 +108,18 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
     to_folder: Path,
     env: dict[str, str],
 ) -> Wheel:
-    """Invoke ``pip download`` in a subprocess to fetch a seed wheel.
+    """Download one wheel into a private staging directory and move it into ``to_folder`` once it checks out.
 
-    :param distribution: PEP 503 normalized project name; rejected if it contains anything other than
-        ``[A-Za-z0-9._-]``.
-    :param version_spec: optional version specifier of the form ``==<ver>`` or ``<<ver>`` as emitted by
-        :func:`Version.as_version_spec`, or ``None``/empty for the latest compatible release.
-    :param for_py_version: major.minor Python version to pass through to ``pip --python-version``.
-    :param search_dirs: additional directories to treat as a local wheel index when bootstrapping pip.
-    :param app_data: application data store used to locate the embedded pip wheel.
-    :param to_folder: directory the downloaded wheel is written into.
-    :param env: environment mapping passed through to the subprocess.
-
-    :returns: the downloaded :class:`Wheel`.
-
-    :raises ValueError: if ``distribution`` or ``version_spec`` fail the strict allow-list check.
-    :raises CalledProcessError: if ``pip download`` exits with a non-zero status.
-    :raises RuntimeError: if no downloaded wheel can be identified from ``pip``'s output or the search directory, or if
-        the caller has not configured a custom index and PyPI's sha256 for the downloaded filename cannot be obtained or
-        does not match, see :func:`virtualenv.seed.wheels.periodic_update.verify_wheel_digest`.
+    :raises ValueError: for an invalid distribution name or version specifier.
+    :raises CalledProcessError: when ``pip download`` fails.
+    :raises UnverifiedWheelError: when PyPI cannot supply the digest to verify against.
+    :raises RuntimeError: when the staged file is not the requested wheel, its digest differs from PyPI's, or it does
+        not support ``for_py_version``; nothing reaches ``to_folder`` in these cases.
 
     """
     _check_distribution(distribution)
     _check_version_spec(version_spec)
-    to_download = f"{distribution}{version_spec or ''}"
+    to_download: Final = f"{distribution}{version_spec or ''}"
     if to_download.lower().endswith((
         ".zip",
         ".whl",
@@ -147,50 +137,55 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         msg = f"refusing to download wheel with archive-like requirement: {to_download!r}"
         raise ValueError(msg)
     LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
-    cmd = [
-        sys.executable,
-        "-c",
-        PIP_RUN,
-        "download",
-        "--progress-bar",
-        "off",
-        "--disable-pip-version-check",
-        "--only-binary=:all:",
-        "--no-deps",
-        "--python-version",
-        for_py_version,
-        "-d",
-        str(to_folder),
-        to_download,
-    ]
-    verify_against_pypi = _uses_default_index(env)
-    # pip has no interface in python - must be a new sub-process
+    verify_against_pypi: Final = _uses_default_index(env)
     env = pip_wheel_env_run(search_dirs, app_data, env)
-    process = Popen(cmd, env=env, stdout=PIPE, stderr=PIPE, universal_newlines=True, encoding="utf-8")
-    out, err = process.communicate()
-    if process.returncode != 0:
-        kwargs = {"output": out, "stderr": err}
-        raise CalledProcessError(process.returncode, cmd, **kwargs)
-    result = _find_downloaded_wheel(distribution, version_spec, for_py_version, to_folder, out)
-    if result is None:
-        msg = f"could not find downloaded wheel for {to_download}"
+    to_folder.mkdir(parents=True, exist_ok=True)
+    with TemporaryDirectory(dir=to_folder, prefix="download-") as staging:
+        cmd: Final = [
+            sys.executable,
+            "-c",
+            PIP_RUN,
+            "download",
+            "--progress-bar",
+            "off",
+            "--disable-pip-version-check",
+            "--only-binary=:all:",
+            "--no-deps",
+            "--python-version",
+            for_py_version,
+            "-d",
+            staging,
+            to_download,
+        ]
+        process: Final = Popen(cmd, env=env, stdout=PIPE, stderr=PIPE, universal_newlines=True, encoding="utf-8")
+        out, err = process.communicate()
+        if process.returncode != 0:
+            raise CalledProcessError(process.returncode, cmd, output=out, stderr=err)
+        result: Final = _downloaded_wheel(Path(staging), distribution, version_spec)
+        if verify_against_pypi:
+            verify_wheel_digest(result)
+        if not result.support_py(for_py_version):
+            msg: Final = f"downloaded wheel {result.name} does not support Python {for_py_version}"
+            raise RuntimeError(msg)
+        destination: Final = to_folder / result.name
+        result.path.replace(destination)
+        return Wheel(destination)
+
+
+def _downloaded_wheel(folder: Path, distribution: str, version_spec: str | None) -> Wheel:
+    files: Final = list(folder.iterdir())
+    if len(files) != 1 or files[0].is_symlink() or not files[0].is_file():
+        msg: Final = f"could not find downloaded wheel for {distribution}: expected one archive"
         raise RuntimeError(msg)
-    LOGGER.debug("downloaded wheel %s", result.name)
-    if verify_against_pypi:
-        verify_wheel_digest(result)
+    result: Final = Wheel.from_path(files[0])
+    if (
+        result is None
+        or canonicalize_name(result.distribution) != canonicalize_name(distribution)
+        or (version_spec and not Specifier(version_spec).contains(result.version))
+    ):
+        msg: Final = f"unexpected downloaded wheel {files[0].name} for {distribution}{version_spec or ''}"
+        raise RuntimeError(msg)
     return result
-
-
-def _find_downloaded_wheel(
-    distribution: str, version_spec: str | None, for_py_version: str, to_folder: Path, out: str
-) -> Wheel | None:
-    for line in out.splitlines():
-        stripped_line = line.lstrip()
-        for marker in ("Saved ", "File was already downloaded "):
-            if stripped_line.startswith(marker):
-                return Wheel(Path(stripped_line[len(marker) :]).absolute())
-    # if for some reason the output does not match fallback to the latest version with that spec
-    return find_compatible_in_house(distribution, version_spec, for_py_version, to_folder)
 
 
 def find_compatible_in_house(
