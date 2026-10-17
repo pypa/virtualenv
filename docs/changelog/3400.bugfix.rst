@@ -1,0 +1,4 @@
+Preserve an existing ``pyvenv.cfg`` when a prompt or configuration value cannot be encoded as UTF-8, instead of leaving
+the file empty after a failed environment creation. The file now ends its lines with LF on every platform.
+
+Debug logs show each configuration line as a Python string literal, so control characters are visible.
