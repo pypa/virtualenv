@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import contextlib
+import csv
+import hashlib
 import os
 import sys
 import zipfile
+from base64 import urlsafe_b64encode
 from stat import S_IWGRP, S_IWOTH, S_IWUSR
-from subprocess import Popen, check_call
+from subprocess import Popen, check_call, run
 from threading import Thread
 from typing import TYPE_CHECKING, Final
 
@@ -52,6 +55,7 @@ def test_seed_image_compiles_in_isolation(
     assert not marker.exists()
 
 
+@pytest.mark.usefixtures("_no_coverage")
 @pytest.mark.parametrize(
     ("metadata_file", "content"),
     [
@@ -136,6 +140,70 @@ def test_seed_metadata_keeps_reseeding_supported(
         linked,
         False,
     )
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        pytest.param("plain", id="plain"),
+        pytest.param("two words", id="space"),
+        pytest.param("owner's env", id="apostrophe"),
+        pytest.param("$(echo a) `echo b`", id="command-substitution"),
+        pytest.param("a" * 120, id="long", marks=pytest.mark.skipif(os.name == "nt", reason="POSIX shebang limit")),
+        pytest.param("env \\path", id="backslash", marks=pytest.mark.skipif(os.name == "nt", reason="POSIX filename")),
+        pytest.param("env\tname", id="tab", marks=pytest.mark.skipif(os.name == "nt", reason="POSIX filename")),
+    ],
+)
+@pytest.mark.parametrize(
+    "via_python",
+    [
+        pytest.param(False, id="launcher"),
+        pytest.param(
+            True, id="python", marks=pytest.mark.skipif(os.name == "nt", reason="Windows launcher is an executable")
+        ),
+    ],
+)
+@pytest.mark.parametrize("seeder", [pytest.param("app-data", id="app-data"), pytest.param("pip", id="pip")])
+def test_console_script_preserves_interpreter_path(
+    tmp_path: Path, current_fastest: str, name: str, via_python: bool, seeder: str
+) -> None:
+    destination: Final = os.path.join(str(tmp_path), name, "env")
+    run(
+        [
+            sys.executable,
+            "-m",
+            "virtualenv",
+            destination,
+            "--seeder",
+            seeder,
+            "--creator",
+            current_fastest,
+            "--activators",
+            "",
+            "--no-periodic-update",
+            "--pip",
+            "embed",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=True,
+    )
+    scripts: Final = os.path.join(destination, "Scripts" if os.name == "nt" else "bin")
+    result: Final = run(
+        [
+            *([os.path.join(scripts, "python")] if via_python else []),
+            os.path.join(scripts, "pip.exe" if os.name == "nt" else "pip"),
+            "--version",
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+        check=True,
+    )
+    assert os.path.normcase(destination) in os.path.normcase(result.stdout)
 
 
 @pytest.mark.slow
@@ -468,3 +536,25 @@ def test_symlink_seed_reports_compilation_failure(tmp_path: Path, mocker: Mocker
             str(tmp_path / "cache"),
             "--no-periodic-update",
         ])
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX shell launchers")
+@pytest.mark.parametrize(
+    ("name", "via_shell"),
+    [
+        pytest.param("plain", False, id="plain"),
+        pytest.param("two words", True, id="space"),
+        pytest.param("env\tname", True, id="tab"),
+    ],
+)
+def test_pip_launcher_record_matches_contents(tmp_path: Path, name: str, via_shell: bool) -> None:
+    session: Final = cli_run([str(tmp_path / name), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
+    record: Final = next(session.creator.purelib.glob("pip-*.dist-info/RECORD"))
+    with record.open(encoding="utf-8", newline="") as stream:
+        row: Final = next(row for row in csv.reader(stream) if row[0].endswith("/bin/pip"))
+    content: Final = (session.creator.script_dir / "pip").read_bytes()
+    assert content.startswith(b"#!/bin/sh\n") is via_shell
+    assert row[1:] == [
+        "sha256=" + urlsafe_b64encode(hashlib.sha256(content).digest()).rstrip(b"=").decode("ascii"),
+        str(len(content)),
+    ]

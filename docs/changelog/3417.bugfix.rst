@@ -1,0 +1,5 @@
+Preserve spaces, quotes, and backslashes in interpreter paths when pip console scripts need a POSIX shell launcher.
+Paths containing tabs also use the shell launcher so the kernel does not split the interpreter name.
+
+Apply the same launcher quoting after pip seeding and refresh the installed file records. Later independent pip installs
+or upgrades can overwrite these launchers; recreate affected environments after upgrading virtualenv.

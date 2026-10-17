@@ -5,6 +5,7 @@ import ntpath
 import os
 import posixpath
 import re
+import shlex
 import zipfile
 from abc import ABC, abstractmethod
 from configparser import ConfigParser
@@ -248,6 +249,13 @@ class ScriptMakerCustom(ScriptMaker):
         self.version_info = version_info.major, version_info.minor  # ty: ignore[unresolved-attribute]
         self.variants = {"", "X", "X.Y"}
         self._name = name
+        self._raw_executable = str(executable)
+
+    def _build_shebang(self, executable: bytes, post_interp: bytes) -> bytes:
+        shebang: Final = super()._build_shebang(executable, post_interp)
+        if os.name != "posix" or len(shebang.split()) == 1:
+            return shebang
+        return shell_shebang(self._raw_executable, post_interp)
 
     def _write_script(
         self, names: set[str], shebang: bytes, script_bytes: bytes, filenames: list[str], ext: str
@@ -260,7 +268,14 @@ class ScriptMakerCustom(ScriptMaker):
         super()._write_script(names, shebang, script_bytes, filenames, ext)
 
 
+def shell_shebang(executable: str, post_interp: bytes = b"") -> bytes:
+    # The exec line is read by both sh and Python; double-quoted backslashes survive both readers.
+    quoted: Final = shlex.quote(executable).replace("\\", "'\"\\\\\"'")
+    return b"#!/bin/sh\n'''exec' " + quoted.encode("utf-8") + post_interp + b' "$0" "$@"\n' + b"' '''\n"
+
+
 __all__ = [
     "EntryPointConfig",
     "PipInstall",
+    "shell_shebang",
 ]
