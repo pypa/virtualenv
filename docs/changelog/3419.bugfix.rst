@@ -1,5 +1,0 @@
-Remove Python's implicit working-directory import entry before handling ``python -m virtualenv`` commands, reducing
-accidental module shadowing during environment creation. Explicit import paths keep their existing order.
-
-Keep the working-directory entry when virtualenv itself is installed there, and preserve explicit paths under Python
-safe-path mode.

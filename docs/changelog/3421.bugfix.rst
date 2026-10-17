@@ -1,4 +1,0 @@
-Create new default app-data directories with owner-only access where supported. For existing POSIX defaults owned by the
-current user, remove group and other write access, preserving group write on setgid shared caches. Keep permissions on
-directories owned by another user and on explicit app-data paths. Warn and use temporary app-data if changing an owned
-default cache's permissions fails.

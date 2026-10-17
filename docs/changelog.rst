@@ -7,6 +7,169 @@
 .. towncrier release notes start
 
 ***********************
+ v21.14.9 (2026-10-17)
+***********************
+
+Bugfixes - 21.14.9
+==================
+
+- Parse ``VIRTUALENV_PERIODIC_UPDATE_INSECURE`` as a boolean, so ``0``, ``false``, ``no`` and ``off`` keep certificate
+  verification enabled. (:issue:`3398`)
+- Reject destinations whose resolved path contains the platform's PATH separator, including separators inherited from
+  the working directory or a directory symlink. (:issue:`3399`)
+- Preserve an existing ``pyvenv.cfg`` when a prompt or configuration value cannot be encoded as UTF-8, instead of
+  leaving the file empty after a failed environment creation. The file now ends its lines with LF on every platform.
+
+  Debug logs show each configuration line as a Python string literal, so control characters are visible. (:issue:`3400`)
+
+- Skip writing a ``.venv`` redirect when the environment name contains a line boundary. The environment is still
+  created, and any existing redirect remains unchanged. (:issue:`3401`)
+- Preserve non-ASCII values in ``activate_this.py`` when applications read the script with a legacy text encoding before
+  executing it. (:issue:`3402`)
+- Reject malformed seed versions and requirements ending in archive suffixes before starting pip, with an error
+  identifying the invalid value instead of a misleading download or local-file error. (:issue:`3403`)
+- Allow a literal percent sign as a csh prompt and preserve carets in tcsh prompt display instead of interpreting them
+  as control-character notation.
+
+  Separate csh history and prompt escapes from preceding non-ASCII text in legacy locales. (:issue:`3404`)
+
+- Report an error when an existing ``pyvenv.cfg`` is not a regular file, instead of trying to read or write directories,
+  pipes, or devices as configuration files. (:issue:`3405`)
+- Preserve percent-containing paths during batch reactivation and show dollar signs literally in command prompts. Skip
+  batch scripts for paths containing line boundaries, and remove stale batch scripts for unsupported paths even when
+  only other activators are selected. (:issue:`3406`)
+- Compile shared seed-cache bytecode without loading site customizations from the destination environment or importing
+  modules from the current working directory. (:issue:`3407`)
+- Keep the bundled seed version when a cached periodic update is older, and stop recording downloads below the bundled
+  version during update checks. (:issue:`3408`)
+- Stop activating a moved environment, leaving ``PATH`` unchanged, when the shell is not bash, the script is evaluated
+  or read from standard input, a path tool fails, the sourced file is not the environment's own activation script, or
+  the new location has no ``pyvenv.cfg``, instead of continuing with an incorrect environment path. (:issue:`3409`)
+- Reject built-in options with missing values before creating the application-data directory or starting interpreter
+  discovery, instead of reporting the argument error after those operations. (:issue:`3410`)
+- Keep unset-variable bookkeeping out of exported xonsh variables, so child shells do not restore an internal sentinel
+  as ``PYTHONHOME``. Skip xonsh activation for destination names that its PATH handling would expand to a different
+  path.
+
+  Restore unset Tcl/Tk library variables when switching between environments in one xonsh session.
+
+  Preserve non-ASCII paths and prompts when xonsh reads activation scripts with a legacy encoding. (:issue:`3411`)
+
+- Skip default shell activators with a warning when a POSIX path encoding is incompatible with their UTF-8 scripts.
+  Explicitly requested incompatible shell activators still report an error. Environments created with ``--activators=``
+  or ``--activators=python`` remain supported in legacy locales. Undecodable parent paths are now caught before any
+  shell activation script is written. (:issue:`3412`)
+- Keep apostrophes and backslashes in fish activation values separate from preceding non-ASCII characters, so fish 3
+  legacy locale decoders cannot consume their escapes as part of a multibyte character. (:issue:`3413`)
+- Preserve backslashes and apostrophes in csh activation values when tcsh's ``backslash_quote`` option is enabled.
+  Assign prompt text before conditional branches so skipped prompt branches do not reinterpret its quoting.
+
+  Display literal backslashes once in bsd-csh prompts. Keep disabled prompts unchanged when generated values contain
+  quotes. (:issue:`3414`)
+
+- Preserve backslashes in POSIX environment directory names during PowerShell activation, including configuration lookup
+  and the default prompt. Resolve relative, home-relative, PSDrive-qualified and filesystem provider-qualified
+  ``-VenvDir`` arguments to absolute paths, and stop activation when that resolution fails. (:issue:`3415`)
+- Keep helper processes for pip, symlink-seed compilation, stdlib venv creation, and periodic wheel updates from
+  importing modules through Python's implicit current-directory entry. Pip helpers retain the selected bootstrap wheel
+  on their import path.
+
+  Preserve Python environment-variable overrides for delegated stdlib venv creation while removing the implicit
+  working-directory import entry.
+
+  Retain explicit Python configuration when compiling symlink seed images, and report compilation failures.
+  (:issue:`3416`)
+
+- Preserve spaces, quotes, and backslashes in interpreter paths when pip console scripts need a POSIX shell launcher.
+  Paths containing tabs also use the shell launcher so the kernel does not split the interpreter name.
+
+  Apply the same launcher quoting after pip seeding and refresh the installed file records. Later independent pip
+  installs or upgrades can overwrite these launchers; recreate affected environments after upgrading virtualenv.
+  (:issue:`3417`)
+
+- Leave ``PS1`` unchanged when sourcing the POSIX activation script in a shell other than bash or zsh, whose prompt
+  escaping rules virtualenv handles; ``VIRTUAL_ENV_PROMPT`` stays available to custom prompts in other shells.
+
+  In bash, keep the prompt literal under older compatibility levels, with ``promptvars`` disabled and in posix mode, and
+  avoid ``nounset`` errors after ``VIRTUAL_ENV_PROMPT`` is unset. (:issue:`3418`)
+
+- Remove Python's implicit working-directory import entry before handling ``python -m virtualenv`` commands, reducing
+  accidental module shadowing during environment creation. Explicit import paths keep their existing order.
+
+  Keep the working-directory entry when virtualenv itself is installed there, and preserve explicit paths under Python
+  safe-path mode. (:issue:`3419`)
+
+- Start periodic wheel updates with the same virtualenv installation or zipapp that scheduled them, even when the host
+  interpreter has another virtualenv version installed or no installed copy.
+
+  Keep standard-library precedence and explicit Python configuration in update processes, and drop only the implicit
+  working-directory import entry before importing anything. (:issue:`3420`)
+
+- Create new default app-data directories with owner-only access where supported. For existing POSIX defaults owned by
+  the current user, remove group and other write access, preserving group write on setgid shared caches. Keep
+  permissions on directories owned by another user and on explicit app-data paths. Warn and use temporary app-data if
+  changing an owned default cache's permissions fails. (:issue:`3421`)
+- Reject ``--clear`` when the normalized destination is a symlink or Windows reparse point, including paths containing
+  ``..``. Pass the target directory explicitly to clear it. Creating an environment through a symlink without
+  ``--clear`` remains supported. (:issue:`3422`)
+- Detach seed-package and launcher symlinks before running the pip seeder. Reseeding an environment created with
+  ``--symlink-app-data`` no longer rewrites its shared wheel image. Unrelated launcher symlinks remain in place.
+
+  Preserve case in console entry-point names and use the last value for duplicate entries when regenerating launchers.
+
+  Remove linked metadata from previous seed versions when reseeding with pip so package listings report the installed
+  version. (:issue:`3423`)
+
+- Replace line-boundary characters in csh prompt text with spaces so activation remains valid.
+
+  When a filesystem path contains a newline, skip csh activation and remove any stale csh activation scripts. Keep
+  filesystem paths unchanged, including other control characters, and omit skipped activators from the creation summary.
+  (:issue:`3424`)
+
+- Apply the current umask when copying interpreter and seed-package files instead of inheriting cached permission bits.
+  Executable sources remain executable within the permissions allowed by that umask. Copied files no longer grant group
+  or world write access, even with a permissive umask. Source modes are not preserved: data files start from 0644 and
+  executable files from 0755 before applying the umask. (:issue:`3425`)
+- Reject destinations containing line boundaries when using the stdlib ``venv`` creator, before it writes
+  ``pyvenv.cfg``. Other creators retain their existing destination support. Write the final configuration from the
+  selected interpreter and virtualenv options instead of merging stdlib's intermediate configuration. GraalPy launcher
+  settings are derived from the selected interpreter. (:issue:`3426`)
+- Preserve file permissions when deletion fails on POSIX. On Windows, clear read-only attributes through a handle that
+  opens the entry itself and prevents replacement, preserving other attributes and rejecting reparse points.
+  (:issue:`3427`)
+- Limit seed-package cleanup to entries inside the environment. Ignore metadata entries that name the environment
+  itself, a directory holding the metadata (a blank ``top_level.txt`` line names ``site-packages``), or resolve outside
+  the environment, with a warning. Launcher entries inside the environment remain supported. (:issue:`3428`)
+- Replace pre-existing directory symlinks and Windows junctions in the environment's executable and library paths before
+  creating files. Links within those paths are replaced even when they point inside the environment. Log replaced links
+  and junctions, and reject a non-directory encountered while creating their replacements. (:issue:`3429`)
+- Verify downloads in a private staging directory before adding them to the reusable wheel cache. Select the downloaded
+  archive from that directory instead of pip's output. The pip seeder now uses the same download verification path and
+  installs pinned versions from a temporary directory containing only the selected wheels, without another index lookup.
+  Seeded packages retain version pins in pip freeze output. (:issue:`3430`)
+- Replace existing symbolic and hard links when writing environment configuration, activation scripts, import hooks, and
+  seed launchers. Create generated text files exclusively so a replacement link cannot redirect the final file open.
+  Before recreating an environment with the stdlib venv creator, replace executable-directory symlinks and Windows
+  junctions with real directories. Remove symbolic and hard links inside that directory before creating interpreter
+  files, including when switching from symlinks to copies. (:issue:`3431`)
+- Write xonsh prompt and path literals as ASCII escapes in every generated activation script. This preserves their
+  values when xonsh reads the script with a legacy encoding such as GBK or Big5. Regenerate existing scripts to apply
+  the fix. (:issue:`3432`)
+- Keep existing redirects whose target has a non-regular configuration file, and allow ``--clear`` to recreate
+  environments with such configuration paths. (:issue:`3433`)
+- Reject invalid and archive-like seed versions while parsing options for both seeders, before creating an environment
+  or looking up wheels, with an error naming the invalid value. Apply the same validation to versions obtained from
+  wheel filenames. (:issue:`3434`)
+- Skip writing ``.venv`` redirects for environment names with leading or trailing whitespace, which redirect readers may
+  strip. (:issue:`3435`)
+
+Improved Documentation - 21.14.9
+================================
+
+- Document the accepted boolean values and environment-only scope of ``VIRTUALENV_PERIODIC_UPDATE_INSECURE``.
+  (:issue:`3436`)
+
+***********************
  v21.14.8 (2026-10-16)
 ***********************
 

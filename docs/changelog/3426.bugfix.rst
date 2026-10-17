@@ -1,4 +1,0 @@
-Reject destinations containing line boundaries when using the stdlib ``venv`` creator, before it writes ``pyvenv.cfg``.
-Other creators retain their existing destination support. Write the final configuration from the selected interpreter
-and virtualenv options instead of merging stdlib's intermediate configuration. GraalPy launcher settings are derived
-from the selected interpreter.

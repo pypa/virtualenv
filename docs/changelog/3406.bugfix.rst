@@ -1,3 +1,0 @@
-Preserve percent-containing paths during batch reactivation and show dollar signs literally in command prompts. Skip
-batch scripts for paths containing line boundaries, and remove stale batch scripts for unsupported paths even when only
-other activators are selected.

@@ -1,3 +1,0 @@
-Reject ``--clear`` when the normalized destination is a symlink or Windows reparse point, including paths containing
-``..``. Pass the target directory explicitly to clear it. Creating an environment through a symlink without ``--clear``
-remains supported.

@@ -1,8 +1,0 @@
-Keep helper processes for pip, symlink-seed compilation, stdlib venv creation, and periodic wheel updates from importing
-modules through Python's implicit current-directory entry. Pip helpers retain the selected bootstrap wheel on their
-import path.
-
-Preserve Python environment-variable overrides for delegated stdlib venv creation while removing the implicit
-working-directory import entry.
-
-Retain explicit Python configuration when compiling symlink seed images, and report compilation failures.
