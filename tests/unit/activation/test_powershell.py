@@ -266,8 +266,10 @@ def test_powershell_rejects_non_filesystem_drive(tmp_path: Path, powershell: str
             "-ExecutionPolicy",
             "Bypass",
             "-Command",
-            (f". {PowerShellActivator.quote(str(session.creator.bin_dir / 'activate.ps1'))} -VenvDir 'Env:/x'; "
-            "Write-Output $env:VIRTUAL_ENV"),
+            (
+                f". {PowerShellActivator.quote(str(session.creator.bin_dir / 'activate.ps1'))} -VenvDir 'Env:/x'; "
+                "Write-Output $env:VIRTUAL_ENV"
+            ),
         ],
         capture_output=True,
         text=True,
