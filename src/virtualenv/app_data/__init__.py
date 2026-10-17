@@ -72,10 +72,34 @@ def _default_app_data_dir(env: Mapping[str, str]) -> str:
     return _cache_dir_with_migration()
 
 
+def _cache_dir_with_migration() -> str:
+    new_dir: Final = user_cache_dir(appname="virtualenv", appauthor="pypa")
+    old_dir: Final = user_data_dir(appname="virtualenv", appauthor="pypa")
+    if new_dir == old_dir:
+        return new_dir
+    if os.path.isdir(old_dir) and os.path.isfile(os.path.join(new_dir, _MIGRATION_MARKER)):
+        _LOGGER.warning("incomplete app data migration from %s to %s, using old location", old_dir, new_dir)
+        return old_dir
+    if os.path.isdir(old_dir) and not os.path.isdir(new_dir):
+        _LOGGER.info("migrating app data from %s to %s", old_dir, new_dir)
+        try:
+            if _is_nested_dir(new_dir, old_dir):
+                # shutil.move cannot move a directory into its descendant.
+                _migrate_into_nested(old_dir, new_dir)
+            else:
+                shutil.move(old_dir, new_dir)
+        except OSError as exception:
+            _LOGGER.warning(
+                "could not migrate app data from %s to %s: %r, using old location", old_dir, new_dir, exception
+            )
+            return old_dir
+    return new_dir
+
+
 def _is_nested_dir(inner: str, outer: str) -> bool:
     try:
         return os.path.normcase(os.path.commonpath((outer, inner))) == os.path.normcase(outer)
-    except ValueError:  # different drives on Windows
+    except ValueError:
         return False
 
 
@@ -89,12 +113,11 @@ def _migrate_into_nested(old_dir: str, new_dir: str) -> None:
                 shutil.move(os.path.join(old_dir, entry), new_dir)
                 moved.append(entry)
     except OSError:
-        failures: Final = sum(not _restore_nested_entry(entry, old_dir, new_dir) for entry in moved)
-        if not failures:
+        if not sum(not _restore_nested_entry(entry, old_dir, new_dir) for entry in moved):
             with suppress(OSError):
                 os.rmdir(new_dir)
         if os.path.isdir(new_dir):
-            pathlib.Path(os.path.join(new_dir, _MIGRATION_MARKER)).touch(exist_ok=False)
+            pathlib.Path(new_dir, _MIGRATION_MARKER).touch(exist_ok=False)
         raise
 
 
@@ -104,30 +127,6 @@ def _restore_nested_entry(entry: str, old_dir: str, new_dir: str) -> bool:
     except OSError:
         return False
     return True
-
-
-def _cache_dir_with_migration() -> str:
-    new_dir: Final = user_cache_dir(appname="virtualenv", appauthor="pypa")
-    old_dir: Final = user_data_dir(appname="virtualenv", appauthor="pypa")
-    if new_dir == old_dir:
-        return new_dir
-    if os.path.isdir(old_dir) and os.path.isfile(os.path.join(new_dir, _MIGRATION_MARKER)):
-        _LOGGER.warning("incomplete app data migration from %s to %s, using old location", old_dir, new_dir)
-        return old_dir
-    if os.path.isdir(old_dir) and not os.path.isdir(new_dir):
-        _LOGGER.info("migrating app data from %s to %s", old_dir, new_dir)
-        try:
-            if _is_nested_dir(new_dir, old_dir):
-                # a directory cannot be moved into its own child, so migrate the content instead
-                _migrate_into_nested(old_dir, new_dir)
-            else:
-                shutil.move(old_dir, new_dir)
-        except OSError as exception:
-            _LOGGER.warning(
-                "could not migrate app data from %s to %s: %r, using old location", old_dir, new_dir, exception
-            )
-            return old_dir
-    return new_dir
 
 
 __all__ = (
