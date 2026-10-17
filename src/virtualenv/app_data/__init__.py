@@ -48,10 +48,12 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
 
 def _prepare_permissions(folder: str) -> bool:
     info: Final = os.stat(folder)
-    loose: Final = S_IMODE(info.st_mode) & (S_IWGRP | S_IWOTH)
     if info.st_uid != os.geteuid():
         _LOGGER.debug("app data folder %s is owned by uid %d, leaving its mode", folder, info.st_uid)
-    elif loose and not (info.st_mode & S_ISGID and loose == S_IWGRP):
+        return True
+    # setgid marks a deliberately group-shared cache, so only other-write is dropped there
+    loose: Final = info.st_mode & (S_IWOTH if info.st_mode & S_ISGID else S_IWGRP | S_IWOTH)
+    if loose:
         try:
             os.chmod(folder, S_IMODE(info.st_mode) & ~loose)
         except OSError:

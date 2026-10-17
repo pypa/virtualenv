@@ -365,11 +365,15 @@ def test_zipapp_read_rejects_path_outside_root(fake_zipapp_root: Path, parts: tu
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
-def test_app_data_preserves_setgid_and_read_access(app_data_default: Path) -> None:
+@pytest.mark.parametrize(
+    ("mode", "expected"),
+    [pytest.param(0o2775, 0o2775, id="group-write"), pytest.param(0o2777, 0o2775, id="other-write")],
+)
+def test_app_data_setgid_keeps_group_write(app_data_default: Path, mode: int, expected: int) -> None:
     app_data_default.mkdir()
-    app_data_default.chmod(0o2775)
+    app_data_default.chmod(mode)
     make_app_data(None, read_only=False, env={})
-    assert app_data_default.stat().st_mode & 0o7777 == 0o2775
+    assert app_data_default.stat().st_mode & 0o7777 == expected
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX ownership")
