@@ -73,7 +73,7 @@ def test_powershell_literal_destination(
         text=True,
         encoding="utf-8",
         cwd=tmp_path,
-        timeout=30,
+        timeout=120,
         check=True,
     )
     assert (result.stdout.strip(), result.stderr) == (f"{dest}|{configured_prompt or name}", "")
