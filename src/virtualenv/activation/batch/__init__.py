@@ -25,7 +25,8 @@ LOGGER = logging.getLogger(__name__)
 # is only live when the caller already has delayed expansion enabled (`setlocal enabledelayedexpansion`,
 # `cmd /V:ON`) - not cmd.exe's default, but confirmed on a real runner that a prompt like `foo!SECRET!`
 # then substitutes the actual value of an existing SECRET variable into the prompt, so it is neutered
-# unconditionally rather than only when that mode happens to be on.
+# unconditionally rather than only when that mode happens to be on. cmd.exe stops reading a line at Ctrl-Z
+# (0x1A) - confirmed on a real runner that `@set "VAR=a<Ctrl-Z>b"` sets `a` and then runs `b"` as the next command.
 _CMD_OPERATORS: Final[tuple[str, ...]] = ("&", "|", "<", ">", "^", "!", '"', "\x1a")
 
 _PATH_REPLACEMENT_NAMES: Final[dict[str, str]] = {
