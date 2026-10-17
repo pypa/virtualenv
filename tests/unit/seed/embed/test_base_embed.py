@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, NamedTuple
 
 import pytest
 
+from virtualenv.config.cli.parser import VirtualEnvOptions
 from virtualenv.run import session_via_cli
 from virtualenv.seed.embed.pip_invoke import PipInvoke
 from virtualenv.seed.embed.via_app_data.via_app_data import FromAppData
@@ -28,6 +29,59 @@ if TYPE_CHECKING:
 def test_download_cli_flag(args, download, tmp_path) -> None:
     session = session_via_cli([*args, str(tmp_path)])
     assert session.seeder.download is download
+
+
+@pytest.mark.parametrize(
+    "groups",
+    [
+        pytest.param((("first",),), id="single"),
+        pytest.param((("first", "second"),), id="multiple-values"),
+        pytest.param((("first",), ("second",)), id="repeated"),
+        pytest.param((("first", "second"), ("third",)), id="mixed"),
+    ],
+)
+def test_extra_search_dir_cli(tmp_path: Path, groups: tuple[tuple[str, ...], ...]) -> None:
+    expected = []
+    args = [str(tmp_path / "env"), "--no-seed"]
+    for group in groups:
+        args.append("--extra-search-dir")
+        for name in group:
+            path = tmp_path / name
+            path.mkdir()
+            expected.append(path)
+            args.append(str(path))
+    options = VirtualEnvOptions()
+
+    session = session_via_cli(args, options=options)
+
+    assert options.extra_search_dir == expected
+    assert session.seeder.extra_search_dir == expected
+
+
+@pytest.mark.parametrize("source", ["env", "ini"])
+@pytest.mark.parametrize("cli_dirs", [(), ("first",), ("first", "second")])
+def test_extra_search_dir_cli_overrides_defaults(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, source: str, cli_dirs: tuple[str, ...]
+) -> None:
+    configured = tmp_path / "configured"
+    configured.mkdir()
+    if source == "env":
+        monkeypatch.setenv("VIRTUALENV_EXTRA_SEARCH_DIR", str(configured))
+    else:
+        config = tmp_path / "virtualenv.ini"
+        config.write_text(f"[virtualenv]\nextra_search_dir = {configured}\n", encoding="utf-8")
+        monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(config))
+    args = [str(tmp_path / "env"), "--no-seed"]
+    expected = []
+    for name in cli_dirs:
+        path = tmp_path / name
+        path.mkdir()
+        args.extend(["--extra-search-dir", str(path)])
+        expected.append(path)
+
+    session = session_via_cli(args)
+
+    assert session.seeder.extra_search_dir == (expected or [configured])
 
 
 @pytest.mark.parametrize(

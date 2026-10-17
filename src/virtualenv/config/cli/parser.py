@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import os
 import shutil
-from argparse import SUPPRESS, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
+from argparse import SUPPRESS, Action, ArgumentDefaultsHelpFormatter, ArgumentParser, Namespace
 from collections import OrderedDict
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
-    from argparse import Action
     from collections.abc import Mapping, Sequence
 
 from virtualenv.config.convert import get_type
@@ -62,6 +61,21 @@ class VirtualEnvOptions(Namespace):
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_'))})"
+
+
+class ExtendAction(Action):
+    """Accumulate CLI groups without including configured defaults."""
+
+    def __call__(
+        self,
+        parser: ArgumentParser,  # ruff:ignore[unused-method-argument] - required argparse signature
+        namespace: Namespace,
+        values: Sequence[object] | None,
+        option_string: str | None = None,  # ruff:ignore[unused-method-argument] - required argparse signature
+    ) -> None:
+        options = cast("VirtualEnvOptions", namespace)
+        previous = getattr(options, self.dest) if options.get_source(self.dest) == "cli" else []
+        setattr(options, self.dest, [*previous, *cast("Sequence[object]", values)])
 
 
 class VirtualEnvConfigParser(ArgumentParser):
@@ -136,6 +150,10 @@ class VirtualEnvConfigParser(ArgumentParser):
             msg = "can only pass in parser.options"
             raise ValueError(msg)
         self._fix_defaults()
+        for action in self._actions:
+            if isinstance(action, ExtendAction):
+                # Staged parsing reads the same arguments again; accumulate only within this parse.
+                self.options.set_src(action.dest, action.default, getattr(action, "default_source", "default"))
         self.options._src = "cli"  # ruff:ignore[private-member-access]
         try:
             namespace.env = self.env
@@ -167,6 +185,7 @@ def _as_passed_flag(const: bool, outcome: tuple[bool, str] | None) -> tuple[bool
 
 
 __all__ = [
+    "ExtendAction",
     "HelpFormatter",
     "VirtualEnvConfigParser",
     "VirtualEnvOptions",

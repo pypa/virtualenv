@@ -370,7 +370,13 @@ Use custom wheel files from a local directory:
 
 .. code-block:: console
 
-    $ virtualenv --extra-search-dir /path/to/wheels venv
+    $ virtualenv venv --extra-search-dir /path/to/wheels
+
+Repeat the option to search more than one directory, in the given order:
+
+.. code-block:: console
+
+    $ virtualenv venv --extra-search-dir /path/to/wheels --extra-search-dir /path/to/other/wheels
 
 Download latest from PyPI
 =========================
