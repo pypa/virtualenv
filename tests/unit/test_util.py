@@ -113,6 +113,50 @@ def app_data_default(tmp_path: Path, mocker: MockerFixture) -> Path:
     return folder
 
 
+@pytest.mark.skipif(os.name != "posix", reason="POSIX permission bits")
+@pytest.mark.parametrize("directory", [pytest.param(False, id="file"), pytest.param(True, id="tree")])
+@pytest.mark.parametrize(
+    ("source_mode", "mask", "expected"),
+    [
+        pytest.param(0o666, 0o022, 0o644, id="normal"),
+        pytest.param(0o666, 0o077, 0o600, id="private"),
+        pytest.param(0o444, 0o022, 0o644, id="read-only-source"),
+        pytest.param(0o600, 0o022, 0o644, id="private-source"),
+        pytest.param(0o777, 0o022, 0o755, id="executable"),
+        pytest.param(0o777, 0o077, 0o700, id="private-executable"),
+        pytest.param(0o666, 0o000, 0o644, id="permissive-umask"),
+        pytest.param(0o777, 0o000, 0o755, id="permissive-executable"),
+        pytest.param(0o666, 0o002, 0o644, id="group-umask"),
+        pytest.param(0o777, 0o002, 0o755, id="group-executable"),
+    ],
+)
+def test_copy_uses_current_umask(tmp_path: Path, directory: bool, source_mode: int, mask: int, expected: int) -> None:
+    source: Final = tmp_path / "source"
+    source.mkdir()
+    payload: Final = source / "entry"
+    payload.write_bytes(b"copied bytes")
+    payload.chmod(source_mode)
+    destination: Final = tmp_path / "destination"
+    previous: Final = os.umask(mask)
+    try:
+        copy(source if directory else payload, destination)
+    finally:
+        os.umask(previous)
+    result: Final = destination / "entry" if directory else destination
+    assert (result.read_bytes(), result.stat().st_mode & 0o777) == (b"copied bytes", expected)
+
+
+@pytest.mark.parametrize("directory", [pytest.param(False, id="file"), pytest.param(True, id="tree")])
+def test_copy_replaces_contents(tmp_path: Path, directory: bool) -> None:
+    source: Final = tmp_path / "source"
+    source.mkdir()
+    (source / "entry").write_bytes(b"new")
+    destination: Final = tmp_path / "destination"
+    destination.write_bytes(b"old")
+    copy(source if directory else source / "entry", destination)
+    assert (destination / "entry" if directory else destination).read_bytes() == b"new"
+
+
 def test_run_fail(tmp_path) -> None:
     code, out, err = run_cmd([str(tmp_path)])
     assert err

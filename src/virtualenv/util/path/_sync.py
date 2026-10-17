@@ -4,12 +4,12 @@ import logging
 import os
 import shutil
 import sys
-from stat import S_IWUSR
-from typing import TYPE_CHECKING
+from pathlib import Path
+from stat import S_IWUSR, S_IXGRP, S_IXOTH, S_IXUSR
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from pathlib import Path
     from types import TracebackType
 
     _ExcInfo = BaseException | tuple[type[BaseException], BaseException, TracebackType]
@@ -44,22 +44,29 @@ def symlink(src: Path, dest: Path) -> None:
 
 
 def copy(src: Path, dest: Path) -> None:
-    ensure_safe_to_do(src, dest)
-    is_dir = src.is_dir()
-    method = copytree if is_dir else shutil.copy
     LOGGER.debug("copy %s", _Debug(src, dest))
-    method(str(src), str(dest))
+    if src.is_dir():
+        ensure_safe_to_do(src, dest)
+        copytree(str(src), str(dest))
+    else:
+        _copy_file(src, dest)
 
 
 def copytree(src: str, dest: str) -> None:
     for root, _, files in os.walk(src):
-        dest_dir = os.path.join(dest, os.path.relpath(root, src))
-        if not os.path.isdir(dest_dir):
-            os.makedirs(dest_dir)
+        dest_dir: Final = Path(dest) / os.path.relpath(root, src)
+        dest_dir.mkdir(parents=True, exist_ok=True)
         for name in files:
-            src_f = os.path.join(root, name)
-            dest_f = os.path.join(dest_dir, name)
-            shutil.copy(src_f, dest_f)
+            _copy_file(Path(root) / name, dest_dir / name)
+
+
+def _copy_file(src: Path, dest: Path) -> None:
+    ensure_safe_to_do(src, dest)
+    mode: Final = 0o755 if src.stat().st_mode & (S_IXUSR | S_IXGRP | S_IXOTH) else 0o644
+    flags: Final = os.O_WRONLY | os.O_CREAT | os.O_EXCL | (os.O_BINARY if os.name == "nt" else 0)
+    # Creation applies the current umask without changing the process-wide setting.
+    with src.open("rb") as source, os.fdopen(os.open(str(dest), flags, mode), "wb") as target:
+        shutil.copyfileobj(source, target, length=1024 * 1024)
 
 
 def safe_delete(dest: Path) -> None:
