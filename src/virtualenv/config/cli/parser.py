@@ -111,6 +111,9 @@ class VirtualEnvConfigParser(ArgumentParser):
             if action_id not in self._fixed:
                 self._fix_default(action)
                 self._fixed.add(action_id)
+            elif isinstance(action, ExtendAction):
+                # Each parsing pass starts from the configured default, not the previous CLI values.
+                self.options.set_src(action.dest, action.default, getattr(action, "default_source", "default"))
 
     def _fix_default(self, action: Action) -> None:
         if hasattr(action, "default") and hasattr(action, "dest") and action.default != SUPPRESS:
@@ -150,10 +153,6 @@ class VirtualEnvConfigParser(ArgumentParser):
             msg = "can only pass in parser.options"
             raise ValueError(msg)
         self._fix_defaults()
-        for action in self._actions:
-            if isinstance(action, ExtendAction):
-                # Staged parsing reads the same arguments again; accumulate only within this parse.
-                self.options.set_src(action.dest, action.default, getattr(action, "default_source", "default"))
         self.options._src = "cli"  # ruff:ignore[private-member-access]
         try:
             namespace.env = self.env
