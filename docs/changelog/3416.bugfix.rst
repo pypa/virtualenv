@@ -4,3 +4,5 @@ import path.
 
 Preserve Python environment-variable overrides for delegated stdlib venv creation while removing the implicit
 working-directory import entry.
+
+Retain explicit Python configuration when compiling symlink seed images, and report compilation failures.

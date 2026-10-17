@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import os
 from stat import S_IREAD, S_IRGRP, S_IROTH
-from subprocess import PIPE, Popen
 from typing import TYPE_CHECKING
 
+from virtualenv.util.error import ProcessCallFailedError
 from virtualenv.util.path import safe_delete, set_tree
+from virtualenv.util.subprocess import run_cmd
 
 from .base import PipInstall
 
@@ -19,9 +20,19 @@ class SymlinkPipInstall(PipInstall):
 
     def _generate_new_files(self) -> set[Path]:
         # create the pyc files, as the build image will be R/O
-        cmd = [str(self._creator.exe), "-I", "-S", "-m", "compileall", str(self._image_dir)]
-        process = Popen(cmd, stdout=PIPE, stderr=PIPE)
-        process.communicate()
+        cmd = [
+            str(self._creator.exe),
+            "-S",
+            "-c",
+            (
+                "import sys; sys.path[:] = [p for p in sys.path if p != '']; "
+                "import runpy; runpy.run_module('compileall', run_name='__main__', alter_sys=True)"
+            ),
+            str(self._image_dir),
+        ]
+        code, out, err = run_cmd(cmd)
+        if code != 0:
+            raise ProcessCallFailedError(code, out, err, cmd)
         # the root pyc is shared, so we'll not symlink that - but still add the pyc files to the RECORD for close
         root_py_cache = self._image_dir / "__pycache__"
         new_files = set()

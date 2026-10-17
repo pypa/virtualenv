@@ -325,3 +325,39 @@ def test_safe_extract_zip_rejects_absolute_entry(tmp_path: Path, entry: str) -> 
 
     with zipfile.ZipFile(str(archive)) as zip_ref, pytest.raises(RuntimeError, match="absolute path"):
         _safe_extract_zip(zip_ref, target)
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
+def test_symlink_seed_compiles_with_empty_local_module(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / "compileall.py").touch()
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("PYTHONHOME", sys.base_prefix)
+    session: Final = cli_run([
+        str(tmp_path / "env"),
+        "--symlink-app-data",
+        "--pip",
+        "embed",
+        "--app-data",
+        str(tmp_path / "cache"),
+        "--no-periodic-update",
+    ])
+    assert list((session.creator.purelib / "pip" / "__pycache__").glob("__init__*.pyc"))
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
+def test_symlink_seed_reports_compilation_failure(tmp_path: Path, mocker: MockerFixture) -> None:
+    mocker.patch(
+        "virtualenv.seed.embed.via_app_data.pip_install.symlink.run_cmd",
+        autospec=True,
+        return_value=(7, "", "compilation failed"),
+    )
+    with pytest.raises(RuntimeError, match="compilation failed"):
+        cli_run([
+            str(tmp_path / "env"),
+            "--symlink-app-data",
+            "--pip",
+            "embed",
+            "--app-data",
+            str(tmp_path / "cache"),
+            "--no-periodic-update",
+        ])
