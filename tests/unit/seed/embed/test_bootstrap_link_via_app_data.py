@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import contextlib
+import csv
+import hashlib
 import os
 import sys
 import zipfile
+from base64 import urlsafe_b64encode
 from stat import S_IWGRP, S_IWOTH, S_IWUSR
 from subprocess import Popen, check_call, run
 from threading import Thread
@@ -159,8 +162,9 @@ def test_seed_metadata_keeps_reseeding_supported(
         ),
     ],
 )
+@pytest.mark.parametrize("seeder", [pytest.param("app-data", id="app-data"), pytest.param("pip", id="pip")])
 def test_console_script_preserves_interpreter_path(
-    tmp_path: Path, current_fastest: str, name: str, via_python: bool
+    tmp_path: Path, current_fastest: str, name: str, via_python: bool, seeder: str
 ) -> None:
     destination: Final = os.path.join(str(tmp_path), name, "env")
     run(
@@ -170,7 +174,7 @@ def test_console_script_preserves_interpreter_path(
             "virtualenv",
             destination,
             "--seeder",
-            "app-data",
+            seeder,
             "--creator",
             current_fastest,
             "--activators",
@@ -531,3 +535,16 @@ def test_symlink_seed_reports_compilation_failure(tmp_path: Path, mocker: Mocker
             str(tmp_path / "cache"),
             "--no-periodic-update",
         ])
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX shell launchers")
+def test_pip_launcher_record_matches_contents(tmp_path: Path) -> None:
+    session: Final = cli_run([str(tmp_path / "two words"), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
+    record: Final = next(session.creator.purelib.glob("pip-*.dist-info/RECORD"))
+    with record.open(encoding="utf-8", newline="") as stream:
+        row: Final = next(row for row in csv.reader(stream) if row[0].endswith("/bin/pip"))
+    content: Final = (session.creator.script_dir / "pip").read_bytes()
+    assert row[1:] == [
+        "sha256=" + urlsafe_b64encode(hashlib.sha256(content).digest()).rstrip(b"=").decode("ascii"),
+        str(len(content)),
+    ]
