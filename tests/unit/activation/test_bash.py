@@ -25,7 +25,7 @@ _BASH: Final = shutil.which("bash")
 @pytest.mark.parametrize(
     ("setup", "expected"),
     [
-        pytest.param("", "(${VIRTUAL_ENV_PROMPT}) base ", id="bash"),
+        pytest.param("", "(${VIRTUAL_ENV_PROMPT-}) base ", id="bash"),
         pytest.param("unset BASH_VERSION ZSH_VERSION;", "base ", id="unrecognized-shell"),
     ],
 )
