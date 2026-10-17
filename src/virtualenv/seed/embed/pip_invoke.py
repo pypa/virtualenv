@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from virtualenv.seed.embed.base_embed import BaseEmbed
 from virtualenv.seed.wheels import Version, get_wheel, pip_wheel_env_run
+from virtualenv.seed.wheels.acquire import PIP_RUN
 from virtualenv.util.subprocess import LogCmd
 
 if TYPE_CHECKING:
@@ -45,8 +46,8 @@ class PipInvoke(BaseEmbed):
     def get_pip_install_cmd(self, exe: Path, for_py_version: str) -> Generator[list[str], None, None]:
         cmd = [
             str(exe),
-            "-m",
-            "pip",
+            "-c",
+            PIP_RUN,
             "-q",
             "install",
             "--only-binary",

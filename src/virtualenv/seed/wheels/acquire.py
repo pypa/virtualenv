@@ -20,6 +20,11 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 
+PIP_RUN: Final[str] = (
+    "import sys; sys.path = [p for p in sys.path if p]; "
+    "import runpy; runpy.run_module('pip', run_name='__main__', alter_sys=True)"
+)
+
 # A private index can legitimately serve a rebuilt wheel under the same distribution, version, and
 # filename PyPI also uses - an internal mirror re-signing or re-packaging a release for policy reasons,
 # for example. Verifying that file against PyPI's own digest would then reject a wheel that came from
@@ -144,8 +149,8 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
     LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
     cmd = [
         sys.executable,
-        "-m",
-        "pip",
+        "-c",
+        PIP_RUN,
         "download",
         "--progress-bar",
         "off",
@@ -240,6 +245,7 @@ def _check_version_spec(version_spec: str | None) -> None:
 
 
 __all__ = [
+    "PIP_RUN",
     "download_wheel",
     "find_compatible_in_house",
     "get_wheel",

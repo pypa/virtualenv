@@ -92,7 +92,15 @@ class Venv(ViaGlobalRefApi):
             raise ProcessCallFailedError(code, out, err, cmd)
 
     def get_host_create_cmd(self) -> list[str]:
-        cmd = [self.interpreter.system_executable, "-m", "venv", "--without-pip"]
+        cmd = [
+            self.interpreter.system_executable,
+            "-c",
+            (
+                "import sys; sys.path[:] = [p for p in sys.path if p != '']; "
+                "import runpy; runpy.run_module('venv', run_name='__main__', alter_sys=True)"
+            ),
+            "--without-pip",
+        ]
         if self.interpreter.version_info >= (3, 13):
             cmd.append("--without-scm-ignore-files")
         if self.enable_system_site_package:

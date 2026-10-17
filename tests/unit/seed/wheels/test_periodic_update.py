@@ -12,7 +12,8 @@ from datetime import datetime, timedelta, timezone
 from io import StringIO
 from itertools import zip_longest
 from pathlib import Path
-from textwrap import dedent
+from shutil import copytree, ignore_patterns
+from textwrap import dedent, indent
 from typing import TYPE_CHECKING, Final
 from urllib.error import URLError
 
@@ -20,6 +21,7 @@ import pytest
 
 from virtualenv import cli_run
 from virtualenv.app_data import AppDataDiskFolder
+from virtualenv.info import ROOT
 from virtualenv.seed.wheels import Wheel
 from virtualenv.seed.wheels.embed import BUNDLE_SUPPORT, get_embed_wheel
 from virtualenv.seed.wheels.periodic_update import (
@@ -442,98 +444,58 @@ def test_periodic_update_trigger(
     assert process.communicate.call_count == bool(env)
 
 
-def test_trigger_update_no_debug(for_py_version, session_app_data, tmp_path, mocker, monkeypatch) -> None:
-    monkeypatch.delenv("_VIRTUALENV_PERIODIC_UPDATE_INLINE", raising=False)
-    current = get_embed_wheel("setuptools", for_py_version)
-    process = mocker.MagicMock()
-    process.pid = 123
-    process.communicate.return_value = None, None
-    Popen = mocker.patch("virtualenv.seed.wheels.periodic_update.Popen", return_value=process)  # ruff:ignore[non-lowercase-variable-in-function]
-
-    trigger_update(
-        "setuptools",
-        for_py_version,
-        current,
-        [tmp_path / "a", tmp_path / "b"],
-        session_app_data,
-        os.environ,
-        True,
+@pytest.mark.parametrize("zipapp", [pytest.param(False, id="installed"), pytest.param(True, id="zipapp")])
+@pytest.mark.parametrize("debug", [pytest.param(False, id="background"), pytest.param(True, id="inline")])
+def test_trigger_update_command(
+    for_py_version: str, session_app_data: AppDataDiskFolder, mocker: MockerFixture, debug: bool, zipapp: bool
+) -> None:
+    mocker.patch("virtualenv.seed.wheels.periodic_update.IS_ZIPAPP", zipapp)
+    current: Final = get_embed_wheel("pip", for_py_version)
+    process: Final = mocker.patch(
+        "virtualenv.seed.wheels.periodic_update.Popen",
+        autospec=True,
     )
-
-    assert Popen.call_count == 1
-    args, kwargs = Popen.call_args
-    cmd = (
-        dedent(
-            """
-        from virtualenv.report import setup_report, MAX_LEVEL
-        from virtualenv.seed.wheels.periodic_update import do_update
-        setup_report(MAX_LEVEL, show_pid=True)
-        do_update({!r}, {!r}, {!r}, {!r}, {!r}, {!r})
-        """,
-        )
-        .strip()
-        .format(
-            "setuptools",
-            for_py_version,
-            str(current.path),
-            str(session_app_data),
-            [str(tmp_path / "a"), str(tmp_path / "b")],
-            True,
-        )
-    )
-
-    assert args == ([sys.executable, "-c", cmd],)
-    expected = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
-    if sys.platform == "win32":
-        expected["creationflags"] = CREATE_NO_WINDOW
-    assert kwargs == expected
-    assert process.communicate.call_count == 0
-
-
-def test_trigger_update_debug(for_py_version, session_app_data, tmp_path, mocker, monkeypatch) -> None:
-    monkeypatch.setenv("_VIRTUALENV_PERIODIC_UPDATE_INLINE", "1")
-    current = get_embed_wheel("pip", for_py_version)
-
-    process = mocker.MagicMock()
-    process.pid = 123
-    process.communicate.return_value = None, None
-    Popen = mocker.patch("virtualenv.seed.wheels.periodic_update.Popen", return_value=process)  # ruff:ignore[non-lowercase-variable-in-function]
-
+    # Python 3.11 rebuilds autospecced children after applying constructor kwargs.
+    process.configure_mock(**{"return_value.pid": 123, "return_value.communicate.return_value": (None, None)})
     trigger_update(
         "pip",
         for_py_version,
         current,
-        [tmp_path / "a", tmp_path / "b"],
+        [Path("a"), Path("b")],
         session_app_data,
-        os.environ,
-        False,
+        {"_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1" if debug else "0"},
+        True,
     )
-
-    assert Popen.call_count == 1
-    args, kwargs = Popen.call_args
-    cmd = (
-        dedent(
-            """
+    update: Final = dedent(
+        """\
         from virtualenv.report import setup_report, MAX_LEVEL
         from virtualenv.seed.wheels.periodic_update import do_update
         setup_report(MAX_LEVEL, show_pid=True)
-        do_update({!r}, {!r}, {!r}, {!r}, {!r}, {!r})
-        """,
-        )
-        .strip()
-        .format(
-            "pip",
-            for_py_version,
-            str(current.path),
-            str(session_app_data),
-            [str(tmp_path / "a"), str(tmp_path / "b")],
-            False,
-        )
+        do_update('pip', {!r}, {!r}, {!r}, {!r}, True)
+        """
+    ).format(for_py_version, str(current.path), str(session_app_data), ["a", "b"])
+    load: Final = (
+        f"import runpy\nwith runpy.run_path({ROOT!r}, run_name='__loader__')['VersionedFindLoad']():\n{indent(update, '    ')}"
+        if zipapp
+        else dedent(
+            """\
+            import importlib.util
+            spec = importlib.util.spec_from_file_location('virtualenv', {!r})
+            package = importlib.util.module_from_spec(spec)
+            sys.modules['virtualenv'] = package
+            spec.loader.exec_module(package)
+            """
+        ).format(str(Path(ROOT) / "virtualenv" / "__init__.py"))
+        + update
     )
-    assert args == ([sys.executable, "-c", cmd],)
-    expected = {"stdout": None, "stderr": None}
-    assert kwargs == expected
-    assert process.communicate.call_count == 1
+    command: Final = f"import sys\nsys.path = [p for p in sys.path if p]\n{load.strip()}"
+    process.assert_called_once_with(
+        [sys.executable, "-c", command],
+        stdout=None if debug else subprocess.DEVNULL,
+        stderr=None if debug else subprocess.DEVNULL,
+        **({"creationflags": CREATE_NO_WINDOW} if not debug and sys.platform == "win32" else {}),
+    )
+    assert process.return_value.communicate.call_count == int(debug)
 
 
 def test_do_update_first(tmp_path, mocker, time_freeze) -> None:
@@ -975,3 +937,27 @@ def test_download_periodic_stop_at_first_usable_with_previous_minor(tmp_path, mo
         },
         downloaded_versions[0].to_dict(),
     ]
+
+
+def test_update_uses_selected_installation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capfd: pytest.CaptureFixture[str]
+) -> None:
+    root: Final = tmp_path / "vendored"
+    package: Final = root / "virtualenv"
+    copytree(Path(ROOT) / "virtualenv", package, ignore=ignore_patterns("__pycache__"))
+    version: Final = package / "version.py"
+    version.write_text('__version__ = "99.0.0"\n', encoding="utf-8")
+    entry: Final = package / "__init__.py"
+    entry.write_text(entry.read_text(encoding="utf-8") + "\nprint(__version__)\n", encoding="utf-8")
+    monkeypatch.setattr("virtualenv.seed.wheels.periodic_update.ROOT", str(root))
+    monkeypatch.setenv("PIP_NO_INDEX", "1")
+    trigger_update(
+        "pip",
+        f"{sys.version_info.major}.{sys.version_info.minor}",
+        None,
+        [],
+        AppDataDiskFolder(str(tmp_path / "data")),
+        {"_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1"},
+        True,
+    )
+    assert "99.0.0" in capfd.readouterr().out

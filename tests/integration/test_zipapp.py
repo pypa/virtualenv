@@ -1,19 +1,27 @@
 from __future__ import annotations
 
+import importlib.util
+import os
 import shutil
 import subprocess
+import sys
 import zipfile
 from contextlib import suppress
 from pathlib import Path
+from typing import Final
 
 import pytest
 from python_discovery import PythonInfo
 
+from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
+from virtualenv.seed.wheels.periodic_update import trigger_update
 
 HERE = Path(__file__).parent
 CURRENT = PythonInfo.current_system()
+# Repackaged sdists omit the zipapp build sources.
+_ZIPAPP_MAIN: Final = pytest.importorskip("tasks.__main__zipapp")
 
 
 @pytest.fixture(scope="session")
@@ -82,6 +90,75 @@ def zipapp_test_env(tmp_path_factory):
     session = cli_run(["-v", "--activators", "", "--without-pip", str(base_path / "env"), "--no-periodic-update"])
     yield session.creator.exe
     shutil.rmtree(str(base_path))
+
+
+@pytest.mark.timeout(600)
+def test_zipapp_loader_context(zipapp: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("tasks.__main__zipapp.ABS_HERE", str(zipapp))
+    monkeypatch.delitem(sys.modules, "filelock", raising=False)
+    with _ZIPAPP_MAIN.VersionedFindLoad():
+        spec: Final = importlib.util.find_spec("filelock")
+        assert spec is not None
+        assert spec.origin is not None
+        assert spec.origin.startswith(str(zipapp))
+    restored: Final = importlib.util.find_spec("filelock")
+    assert restored is not None
+    assert restored.origin is not None
+    assert not restored.origin.startswith(str(zipapp))
+
+
+@pytest.mark.timeout(600)
+def test_zipapp_version(zipapp: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("tasks.__main__zipapp.ABS_HERE", str(zipapp))
+    monkeypatch.setattr(sys, "argv", [str(zipapp), "--version"])
+    with pytest.raises(SystemExit) as context:
+        _ZIPAPP_MAIN.run()
+    assert context.value.code == 0
+
+
+@pytest.mark.timeout(600)
+def test_zipapp_update_command(
+    zipapp: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capfd: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr("virtualenv.seed.wheels.periodic_update.IS_ZIPAPP", True)
+    monkeypatch.setattr("virtualenv.seed.wheels.periodic_update.ROOT", str(zipapp))
+    monkeypatch.setenv("PIP_NO_INDEX", "1")
+    trigger_update(
+        "pip",
+        f"{sys.version_info.major}.{sys.version_info.minor}",
+        None,
+        [],
+        AppDataDiskFolder(str(tmp_path / "data")),
+        {"_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1"},
+        True,
+    )
+    assert "done pip" in capfd.readouterr().out
+
+
+@pytest.mark.timeout(600)
+def test_zipapp_update_without_installed_package(zipapp: Path, zipapp_test_env: Path, tmp_path: Path) -> None:
+    result: Final = subprocess.run(
+        [
+            str(zipapp_test_env),
+            "-I",
+            "-c",
+            (
+                f"import runpy\nwith runpy.run_path({str(zipapp)!r}, run_name='__loader__')['VersionedFindLoad']():\n"
+                "    import sys\n"
+                "    from virtualenv.app_data import AppDataDiskFolder\n"
+                "    from virtualenv.seed.wheels.periodic_update import trigger_update\n"
+                f"    trigger_update('pip', f'{{sys.version_info.major}}.{{sys.version_info.minor}}', None, [], "
+                f"AppDataDiskFolder({str(tmp_path / 'data')!r}), {{'_VIRTUALENV_PERIODIC_UPDATE_INLINE': '1'}}, True)\n"
+            ),
+        ],
+        env={**os.environ, "PIP_NO_INDEX": "1"},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=True,
+    )
+    assert "done pip" in result.stdout
 
 
 @pytest.fixture

@@ -34,6 +34,7 @@ from virtualenv.create.via_global_ref.builtin.cpython.common import is_mac_os_fr
 from virtualenv.info import IS_PYPY, IS_WIN, fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.run.plugin.creators import CreatorSelector
+from virtualenv.util.error import ProcessCallFailedError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -459,6 +460,23 @@ def test_venv_configuration_uses_selected_options(tmp_path: Path, global_package
         "base-executable": executable,
     }
     assert {key: session.creator.pyenv_cfg.content.get(key) for key in expected} == expected
+
+
+@pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
+def test_venv_subprocess_skips_local_venv_module(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / "venv").mkdir()
+    (tmp_path / "venv" / "__init__.py").write_text("raise SystemExit('imported from the working directory')", "utf-8")
+    monkeypatch.chdir(tmp_path)
+    session: Final = cli_run([
+        "-p",
+        str(CURRENT.executable),
+        str(tmp_path / "env"),
+        "--without-pip",
+        "--creator",
+        "venv",
+        "--no-periodic-update",
+    ])
+    assert (session.creator.dest / "pyvenv.cfg").is_file()
 
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
@@ -1158,3 +1176,12 @@ def test_pyenv_cfg_write_logs_escaped_values(tmp_path: Path, caplog: pytest.LogC
     caplog.set_level(logging.DEBUG)
     PyEnvCfg(OrderedDict({"prompt": "a\x1bb"}), tmp_path / "pyvenv.cfg").write()
     assert "\t'prompt = \"a\\x1bb\"'" in caplog.text
+
+
+@pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
+@pytest.mark.skipif(CURRENT.implementation != "CPython", reason="only CPython rejects an invalid PYTHONHOME")
+def test_venv_subprocess_respects_pythonhome(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    session = session_via_cli(["-p", str(CURRENT.executable), str(tmp_path / "env"), "--no-seed", "--creator", "venv"])
+    monkeypatch.setenv("PYTHONHOME", str(tmp_path / "missing-home"))
+    with pytest.raises(ProcessCallFailedError):
+        session.run()
