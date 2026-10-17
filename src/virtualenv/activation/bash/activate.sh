@@ -75,89 +75,102 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-if [ ! -d __VIRTUAL_ENV__ ]; then
-    echo "Virtual environment directory" __VIRTUAL_ENV__ "does not exist!" >&2
-    CURRENT_PATH=$(realpath "${BASH_SOURCE[0]}")
-    CURRENT_DIR=$(dirname "${CURRENT_PATH}")
-    VIRTUAL_ENV="$(realpath "${CURRENT_DIR}/../")"
+if [ ! -d __VIRTUAL_ENV__ ] &&
+    { [ -z "${BASH_VERSION-}" ] || [ -z "${BASH_SOURCE-}" ]; }; then
+    echo "Relocating this activation script requires sourcing it from bash." >&2
+    false
 else
-    VIRTUAL_ENV=__VIRTUAL_ENV__
-fi
-
-case "$(uname)" in
-    CYGWIN*|MSYS*|MINGW*)
-        VIRTUAL_ENV=$(cygpath "$VIRTUAL_ENV")
-        ;;
-esac
-export VIRTUAL_ENV
-
-_OLD_VIRTUAL_PATH="$PATH"
-PATH="$VIRTUAL_ENV/"__BIN_NAME__":$PATH"
-export PATH
-
-_OLD_PKG_CONFIG_PATH="${PKG_CONFIG_PATH:-}"
-PKG_CONFIG_PATH="${VIRTUAL_ENV}/lib/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}"
-export PKG_CONFIG_PATH
-
-if [ "x"__VIRTUAL_PROMPT__ != x ] ; then
-    VIRTUAL_ENV_PROMPT=__VIRTUAL_PROMPT__
-else
-    VIRTUAL_ENV_PROMPT=$(basename "$VIRTUAL_ENV")
-fi
-export VIRTUAL_ENV_PROMPT
-
-# unset PYTHONHOME if set
-if [ -n "${PYTHONHOME:-}" ] ; then
-    _OLD_VIRTUAL_PYTHONHOME="$PYTHONHOME"
-    unset PYTHONHOME
-fi
-
-# an empty saved value tells deactivate to unset the variable
-if [ __TCL_LIBRARY__ != "" ]; then
-    _OLD_VIRTUAL_TCL_LIBRARY="${TCL_LIBRARY:-}"
-    TCL_LIBRARY=__TCL_LIBRARY__
-    export TCL_LIBRARY
-fi
-
-if [ __TK_LIBRARY__ != "" ]; then
-    _OLD_VIRTUAL_TK_LIBRARY="${TK_LIBRARY:-}"
-    TK_LIBRARY=__TK_LIBRARY__
-    export TK_LIBRARY
-fi
-
-if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] ; then
-    _OLD_VIRTUAL_PS1="${PS1-}"
-    _VIRTUAL_PROMPT="${VIRTUAL_ENV_PROMPT}"
-    # bash, and zsh under PROMPT_SUBST, re-expand backslashes, dollar signs and backticks in PS1 on every redraw;
-    # zsh gets the escaping even without the option, since a user can set it after activation. The guards keep
-    # the substitution away from POSIX shells such as dash, which reject it with "Bad substitution"
-    if [ -n "${BASH_VERSION-}" ]; then
-        # bash first decodes its backslash prompt escapes, turning \\ into \ and \$ into $ (or # for root), and only
-        # then expands the result, so each character needs escaping for both passes
-        _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\\/\\\\\\\\}"
-        _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\$/\\\\\$}"
-        _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\`/\\\\\`}"
-    elif [ -n "${ZSH_VERSION-}" ]; then
-        _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\\/\\\\}"
-        _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\$/\\\$}"
-        _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\`/\\\`}"
+    if [ ! -d __VIRTUAL_ENV__ ]; then
+        echo "Virtual environment directory" __VIRTUAL_ENV__ "does not exist!" >&2
+        CURRENT_PATH=$(realpath "${BASH_SOURCE[0]}") || return 1
+        CURRENT_DIR=$(dirname "${CURRENT_PATH}") || return 1
+        CURRENT_ENV="$(realpath "${CURRENT_DIR}/../")" || return 1
+        if [ ! "$CURRENT_PATH" -ef "$CURRENT_ENV/"__BIN_NAME__"/activate" ] || [ ! -f "$CURRENT_ENV/pyvenv.cfg" ]; then
+            echo "Cannot identify relocated environment: $CURRENT_ENV" >&2
+            unset CURRENT_ENV
+            return 1
+        fi
+        VIRTUAL_ENV="$CURRENT_ENV"
+        unset CURRENT_ENV
+    else
+        VIRTUAL_ENV=__VIRTUAL_ENV__
     fi
-    # zsh expands % sequences in PS1 as prompt escapes
-    if [ -n "${ZSH_VERSION-}" ]; then
-        _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\%/%%}"
+
+    case "$(uname)" in
+        CYGWIN*|MSYS*|MINGW*)
+            VIRTUAL_ENV=$(cygpath "$VIRTUAL_ENV")
+            ;;
+    esac
+    export VIRTUAL_ENV
+
+    _OLD_VIRTUAL_PATH="$PATH"
+    PATH="$VIRTUAL_ENV/"__BIN_NAME__":$PATH"
+    export PATH
+
+    _OLD_PKG_CONFIG_PATH="${PKG_CONFIG_PATH:-}"
+    PKG_CONFIG_PATH="${VIRTUAL_ENV}/lib/pkgconfig${PKG_CONFIG_PATH:+:${PKG_CONFIG_PATH}}"
+    export PKG_CONFIG_PATH
+
+    if [ "x"__VIRTUAL_PROMPT__ != x ] ; then
+        VIRTUAL_ENV_PROMPT=__VIRTUAL_PROMPT__
+    else
+        VIRTUAL_ENV_PROMPT=$(basename "$VIRTUAL_ENV")
     fi
-    PS1="(${_VIRTUAL_PROMPT}) ${PS1-}"
-    unset _VIRTUAL_PROMPT
+    export VIRTUAL_ENV_PROMPT
+
+    # unset PYTHONHOME if set
+    if [ -n "${PYTHONHOME:-}" ] ; then
+        _OLD_VIRTUAL_PYTHONHOME="$PYTHONHOME"
+        unset PYTHONHOME
+    fi
+
+    # an empty saved value tells deactivate to unset the variable
+    if [ __TCL_LIBRARY__ != "" ]; then
+        _OLD_VIRTUAL_TCL_LIBRARY="${TCL_LIBRARY:-}"
+        TCL_LIBRARY=__TCL_LIBRARY__
+        export TCL_LIBRARY
+    fi
+
+    if [ __TK_LIBRARY__ != "" ]; then
+        _OLD_VIRTUAL_TK_LIBRARY="${TK_LIBRARY:-}"
+        TK_LIBRARY=__TK_LIBRARY__
+        export TK_LIBRARY
+    fi
+
+    if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] ; then
+        _OLD_VIRTUAL_PS1="${PS1-}"
+        _VIRTUAL_PROMPT="${VIRTUAL_ENV_PROMPT}"
+        # bash, and zsh under PROMPT_SUBST, re-expand backslashes, dollar signs and backticks in PS1 on every redraw;
+        # zsh gets the escaping even without the option, since a user can set it after activation. The guards keep
+        # the substitution away from POSIX shells such as dash, which reject it with "Bad substitution"
+        if [ -n "${BASH_VERSION-}" ]; then
+            # bash first decodes its backslash prompt escapes, turning \\ into \ and \$ into $ (or # for root), and only
+            # then expands the result, so each character needs escaping for both passes
+            _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\\/\\\\\\\\}"
+            _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\$/\\\\\$}"
+            _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\`/\\\\\`}"
+        elif [ -n "${ZSH_VERSION-}" ]; then
+            _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\\/\\\\}"
+            _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\$/\\\$}"
+            _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\`/\\\`}"
+        fi
+        # zsh expands % sequences in PS1 as prompt escapes
+        if [ -n "${ZSH_VERSION-}" ]; then
+            _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\%/%%}"
+        fi
+        PS1="(${_VIRTUAL_PROMPT}) ${PS1-}"
+        unset _VIRTUAL_PROMPT
+    fi
+
+    # Make sure to unalias pydoc if it's already there
+    alias pydoc 2>/dev/null >/dev/null && unalias pydoc || true
+
+    pydoc () {
+        python -m pydoc "$@"
+    }
+
+    # The hash command must be called to get it to forget past
+    # commands. Without forgetting past commands the $PATH changes
+    # we made may not be respected
+    hash -r 2>/dev/null || true
 fi
-
-# Make sure to unalias pydoc if it's already there
-alias pydoc 2>/dev/null >/dev/null && unalias pydoc || true
-
-pydoc () {
-    python -m pydoc "$@"
-}
-
-# The hash command must be called to get it to forget past
-# commands. Without forgetting past commands the $PATH changes
-# we made may not be respected
-hash -r 2>/dev/null || true

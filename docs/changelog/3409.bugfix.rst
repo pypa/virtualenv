@@ -1,0 +1,3 @@
+Stop activating a moved environment, leaving ``PATH`` unchanged, when the shell is not bash, the script is evaluated or
+read from standard input, a path tool fails, the sourced file is not the environment's own activation script, or the new
+location has no ``pyvenv.cfg``, instead of continuing with an incorrect environment path.
