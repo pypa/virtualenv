@@ -982,3 +982,23 @@ def test_pyenv_cfg_rejects_non_file_path(tmp_path: Path, operation: str) -> None
     }[operation]
     with pytest.raises(ValueError, match="configuration path is not a regular file"):
         action()
+
+
+@pytest.mark.skipif(IS_WIN, reason="POSIX locales")
+@pytest.mark.usefixtures("_no_coverage")
+def test_default_activators_allow_legacy_locale(tmp_path: Path) -> None:
+    locales: Final = subprocess.check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
+    if (locale := next((name for name in locales if name.lower() == "aa_dj.iso88591"), None)) is None:
+        pytest.skip("Latin-1 locale is unavailable")
+    parent: Final = os.fsencode(tmp_path) + b"/calf\xe9"
+    os.mkdir(parent)
+    result: Final = subprocess.run(
+        [sys.executable, "-m", "virtualenv", "env", "--no-seed"],
+        cwd=parent,
+        env={**os.environ, "LC_ALL": locale, "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"},
+        capture_output=True,
+        check=True,
+    )
+    assert b"skipping shell activation scripts" in result.stdout + result.stderr
+    assert os.path.isfile(parent + b"/env/pyvenv.cfg")
+    assert not os.path.exists(parent + b"/env/bin/activate")

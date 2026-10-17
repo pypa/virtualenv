@@ -1,3 +1,4 @@
-Reject incompatible POSIX path encodings when generating shell activation scripts. Environments created with
-``--activators=`` or ``--activators=python`` remain supported in legacy locales. Undecodable parent paths now fail
-before shell activation scripts are written.
+Skip default shell activators with a warning when a POSIX path encoding is incompatible with their UTF-8 scripts.
+Explicitly requested incompatible shell activators still report an error. Environments created with ``--activators=`` or
+``--activators=python`` remain supported in legacy locales. Undecodable parent paths now fail before shell activation
+scripts are written.

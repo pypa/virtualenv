@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import os
 import sys
 from argparse import ArgumentTypeError
@@ -19,7 +20,7 @@ if TYPE_CHECKING:
 
 class ActivationSelector(ComponentBuilder):
     def __init__(self, interpreter: PythonInfo, parser: VirtualEnvConfigParser) -> None:
-        self.default = None
+        self.default = ""
         possible = OrderedDict(
             (k, v)
             for k, v in self.options("virtualenv.activate").items()
@@ -33,7 +34,7 @@ class ActivationSelector(ComponentBuilder):
         self.default = ",".join(choices)
         self.parser.add_argument(
             f"--{name}",
-            default=self.default,
+            default=None,
             metavar="comma_sep_list",
             required=False,
             help="activators to generate - default is all supported",
@@ -50,7 +51,7 @@ class ActivationSelector(ComponentBuilder):
 
     def handle_selected_arg_parse(self, options: VirtualEnvOptions) -> None:  # ty: ignore[invalid-method-override]
         selected_activators = (
-            self._extract_activators(self.default) if options.activators is self.default else options.activators
+            self._extract_activators(self.default) if options.activators is None else options.activators
         )
         self.active = {k: v for k, v in self.possible.items() if k in selected_activators}
         self.parser.add_argument(
@@ -78,7 +79,10 @@ class ActivationSelector(ComponentBuilder):
                     f"the file system codec ({sys.getfilesystemencoding()}) does not encode {options.dest!r} as UTF-8 "
                     "does; activation scripts would point at a different directory"
                 )
-                raise ValueError(msg)
+                if options.activators is not None:
+                    raise ValueError(msg)
+                logging.getLogger(__name__).warning("skipping shell activation scripts: %s", msg)
+                self.active = {name: activator for name, activator in self.active.items() if name == "python"}
         return [activator_class(options) for activator_class in self.active.values()]
 
 
