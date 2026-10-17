@@ -148,6 +148,7 @@ def test_seed_metadata_keeps_reseeding_supported(
         pytest.param("plain", id="plain"),
         pytest.param("two words", id="space"),
         pytest.param("owner's env", id="apostrophe"),
+        pytest.param("$(echo a) `echo b`", id="command-substitution"),
         pytest.param("a" * 120, id="long", marks=pytest.mark.skipif(os.name == "nt", reason="POSIX shebang limit")),
         pytest.param("env \\path", id="backslash", marks=pytest.mark.skipif(os.name == "nt", reason="POSIX filename")),
         pytest.param("env\tname", id="tab", marks=pytest.mark.skipif(os.name == "nt", reason="POSIX filename")),
@@ -538,12 +539,21 @@ def test_symlink_seed_reports_compilation_failure(tmp_path: Path, mocker: Mocker
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX shell launchers")
-def test_pip_launcher_record_matches_contents(tmp_path: Path) -> None:
-    session: Final = cli_run([str(tmp_path / "two words"), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
+@pytest.mark.parametrize(
+    ("name", "via_shell"),
+    [
+        pytest.param("plain", False, id="plain"),
+        pytest.param("two words", True, id="space"),
+        pytest.param("env\tname", True, id="tab"),
+    ],
+)
+def test_pip_launcher_record_matches_contents(tmp_path: Path, name: str, via_shell: bool) -> None:
+    session: Final = cli_run([str(tmp_path / name), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
     record: Final = next(session.creator.purelib.glob("pip-*.dist-info/RECORD"))
     with record.open(encoding="utf-8", newline="") as stream:
         row: Final = next(row for row in csv.reader(stream) if row[0].endswith("/bin/pip"))
     content: Final = (session.creator.script_dir / "pip").read_bytes()
+    assert content.startswith(b"#!/bin/sh\n") is via_shell
     assert row[1:] == [
         "sha256=" + urlsafe_b64encode(hashlib.sha256(content).digest()).rstrip(b"=").decode("ascii"),
         str(len(content)),

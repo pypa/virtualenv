@@ -46,6 +46,7 @@ class PipInvoke(BaseEmbed):
 
     def _rewrite_launchers(self, creator: Creator) -> None:
         selected: Final = self.distribution_to_versions()
+        exe: Final = str(creator.exe).encode("utf-8")
         for distribution in distributions(path=sorted({str(creator.purelib), str(creator.platlib)})):
             if distribution.metadata["Name"].lower().replace("-", "_") not in selected:
                 continue
@@ -58,7 +59,7 @@ class PipInvoke(BaseEmbed):
                 content = path.read_bytes()
                 if content.startswith(b"#!/bin/sh\n'''exec' "):
                     body = content.split(b"\n", 3)[3]
-                elif content.startswith(b"#!" + str(creator.exe).encode("utf-8") + b"\n"):
+                elif content.startswith(b"#!" + exe + b"\n") and len(exe.split()) > 1:
                     body = content.split(b"\n", 1)[1]
                 else:
                     continue
