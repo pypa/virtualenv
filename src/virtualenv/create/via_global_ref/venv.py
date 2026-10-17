@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import logging
-from copy import copy
-from typing import TYPE_CHECKING
+from argparse import ArgumentTypeError
+from typing import TYPE_CHECKING, Final
 
 from python_discovery import PythonInfo
 
@@ -10,6 +10,7 @@ from virtualenv.create.via_global_ref.store import handle_store_python
 from virtualenv.util.error import ProcessCallFailedError
 from virtualenv.util.path import ensure_dir
 from virtualenv.util.subprocess import run_cmd
+from virtualenv.util.text import collapse_line_boundaries
 
 from .api import ViaGlobalRefApi, ViaGlobalRefMeta
 from .builtin.cpython.common import is_mac_os_framework
@@ -58,6 +59,20 @@ class Venv(ViaGlobalRefApi):
             self.describe.install_venv_shared_libs(self)
         super().create()
 
+    @classmethod
+    def validate_dest(cls, raw_value: str) -> str:
+        return cls._check_line_boundaries(super().validate_dest(cls._check_line_boundaries(raw_value)))
+
+    @staticmethod
+    def _check_line_boundaries(value: str) -> str:
+        # stdlib venv writes the destination into pyvenv.cfg without escaping line boundaries.
+        if collapse_line_boundaries(value) != value:
+            msg: Final = (
+                f"destination {value!r} must not contain a line boundary as venv cannot record it in pyvenv.cfg"
+            )
+            raise ArgumentTypeError(msg)
+        return value
+
     def create_inline(self) -> None:
         from venv import EnvBuilder  # ruff:ignore[import-outside-top-level]
 
@@ -86,10 +101,11 @@ class Venv(ViaGlobalRefApi):
         return cmd  # ty: ignore[invalid-return-type]
 
     def set_pyenv_cfg(self) -> None:
-        # prefer venv options over ours, but keep our extra
-        venv_content = copy(self.pyenv_cfg.refresh())
         super().set_pyenv_cfg()
-        self.pyenv_cfg.update(venv_content)
+        if self.interpreter.implementation == "GraalPy":
+            # GraalPy launchers need these settings on Windows and macOS.
+            self.pyenv_cfg["venvlauncher_command"] = self.interpreter.system_exe
+            self.pyenv_cfg["base-executable"] = self.interpreter.system_exe
 
     def __getattribute__(self, item: str) -> object:
         describe = object.__getattribute__(self, "describe")
