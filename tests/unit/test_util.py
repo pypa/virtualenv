@@ -489,68 +489,6 @@ class TestCacheDirMigration:
         result = _cache_dir_with_migration()
         assert result == old_dir
 
-    @pytest.mark.parametrize("nested", [True, False], ids=["nested-cache-in-data", "sibling-cache"])
-    def test_migrate_layouts(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, nested: bool
-    ) -> None:
-        old_dir = tmp_path / "data"
-        old_dir.mkdir()
-        (old_dir / "test.txt").write_text("hello", encoding="utf-8")
-        new_dir = old_dir / "Cache" if nested else tmp_path / "cache"
-
-        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: str(new_dir))
-        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: str(old_dir))
-
-        with caplog.at_level("WARNING"):
-            result = _cache_dir_with_migration()
-
-        assert result == str(new_dir)
-        assert new_dir.is_dir()
-        assert (new_dir / "test.txt").read_text(encoding="utf-8") == "hello"
-        assert not caplog.records  # no warning when the migration can be performed
-        if nested:
-            # the cache directory is nested inside the data directory, so the old location stays on disk and only
-            # loses the content that was moved into the new location
-            assert old_dir.is_dir()
-            assert [entry.name for entry in old_dir.iterdir()] == ["Cache"]
-            # a second run is a no-op now that both directories exist
-            assert _cache_dir_with_migration() == str(new_dir)
-        else:
-            assert not old_dir.is_dir()
-
-    def test_nested_migration_failure_keeps_old_location(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
-    ) -> None:
-        old_dir = tmp_path / "data"
-        old_dir.mkdir()
-        (old_dir / "one.txt").write_text("one", encoding="utf-8")
-        (old_dir / "two.txt").write_text("two", encoding="utf-8")
-        new_dir = old_dir / "Cache"
-
-        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: str(new_dir))
-        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: str(old_dir))
-
-        original_move = shutil.move
-        calls = 0
-
-        def flaky_move(src: str, dst: str) -> None:
-            nonlocal calls
-            calls += 1
-            if calls == 2:
-                msg = "permission denied"
-                raise OSError(msg)
-            original_move(src, dst)
-
-        monkeypatch.setattr("virtualenv.app_data.shutil.move", flaky_move)
-
-        with caplog.at_level("WARNING"):
-            result = _cache_dir_with_migration()
-
-        assert result == str(old_dir)
-        assert not new_dir.exists()  # the empty cache directory is removed, so the next run retries
-        assert sorted(entry.name for entry in old_dir.iterdir()) == ["one.txt", "two.txt"]
-        assert any("using old location" in record.getMessage() for record in caplog.records)
-
     @pytest.mark.parametrize("symlink_flag", [True, False])
     def test_symlink_app_data_survives_migration(
         self,
@@ -579,6 +517,97 @@ class TestCacheDirMigration:
         result = _cache_dir_with_migration()
         assert result == new_dir
         assert (tmp_path / "new-cache" / "wheel" / "3.12" / "image" / "pip" / "pip.dist-info" / "METADATA").exists()
+
+
+@pytest.mark.parametrize("nested", [True, False], ids=["nested-cache-in-data", "sibling-cache"])
+def test_cache_dir_migration_layouts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, nested: bool
+) -> None:
+    old_dir = tmp_path / "data"
+    old_dir.mkdir()
+    (old_dir / "test.txt").write_text("hello", encoding="utf-8")
+    new_dir = old_dir / "Cache" if nested else tmp_path / "cache"
+    monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: str(new_dir))
+    monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: str(old_dir))
+
+    with caplog.at_level("WARNING"):
+        result = str(make_app_data(None, read_only=False, env={}))
+
+    assert result == str(new_dir)
+    assert (new_dir / "test.txt").read_text(encoding="utf-8") == "hello"
+    assert not caplog.records
+    if nested:
+        assert [entry.name for entry in old_dir.iterdir()] == ["Cache"]
+        assert str(make_app_data(None, read_only=False, env={})) == str(new_dir)
+    else:
+        assert not old_dir.is_dir()
+
+
+def test_cache_dir_nested_migration_failure_keeps_old_location(
+    nested_cache_dirs: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    old_dir, new_dir = nested_cache_dirs
+    original_move = shutil.move
+    calls = 0
+
+    def flaky_move(src: str, dst: str) -> None:
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            msg = "permission denied"
+            raise OSError(msg)
+        original_move(src, dst)
+
+    monkeypatch.setattr("virtualenv.app_data.shutil.move", flaky_move)
+    with caplog.at_level("WARNING"):
+        result = str(make_app_data(None, read_only=False, env={}))
+
+    assert result == str(old_dir)
+    assert not new_dir.exists()
+    assert sorted(entry.name for entry in old_dir.iterdir()) == ["one.txt", "two.txt"]
+    assert any("using old location" in record.getMessage() for record in caplog.records)
+
+
+def test_cache_dir_migration_failed_rollback_keeps_old_location(
+    nested_cache_dirs: tuple[Path, Path], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    old_dir, new_dir = nested_cache_dirs
+
+    original_move = shutil.move
+    calls = 0
+
+    def failing_move(src: str, dst: str) -> None:
+        nonlocal calls
+        calls += 1
+        if calls in {2, 3}:
+            msg = "permission denied"
+            raise OSError(msg)
+        original_move(src, dst)
+
+    monkeypatch.setattr("virtualenv.app_data.shutil.move", failing_move)
+    assert str(make_app_data(None, read_only=False, env={})) == str(old_dir)
+    assert new_dir.is_dir()
+    assert str(make_app_data(None, read_only=False, env={})) == str(old_dir)
+
+
+def test_cache_dir_existing_nested_cache_stays_selected(nested_cache_dirs: tuple[Path, Path]) -> None:
+    old_dir, new_dir = nested_cache_dirs
+    new_dir.mkdir()
+
+    assert str(make_app_data(None, read_only=False, env={})) == str(new_dir)
+    assert (old_dir / "one.txt").read_text(encoding="utf-8") == "one"
+
+
+@pytest.fixture
+def nested_cache_dirs(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path]:
+    old_dir = tmp_path / "data"
+    old_dir.mkdir()
+    (old_dir / "one.txt").write_text("one", encoding="utf-8")
+    (old_dir / "two.txt").write_text("two", encoding="utf-8")
+    new_dir = old_dir / "Cache"
+    monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: str(new_dir))
+    monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: str(old_dir))
+    return old_dir, new_dir
 
 
 @pytest.fixture

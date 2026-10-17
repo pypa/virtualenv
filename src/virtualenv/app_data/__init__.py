@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import pathlib
 import shutil
 from contextlib import suppress
 from stat import S_IMODE, S_ISGID, S_IWGRP, S_IWOTH
@@ -22,6 +23,7 @@ if TYPE_CHECKING:
     from .base import AppData
 
 _LOGGER: Final = logging.getLogger(__name__)
+_MIGRATION_MARKER: Final = ".virtualenv-migration-incomplete"
 
 
 def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]) -> AppData:
@@ -80,19 +82,28 @@ def _is_nested_dir(inner: str, outer: str) -> bool:
 def _migrate_into_nested(old_dir: str, new_dir: str) -> None:
     os.makedirs(new_dir, exist_ok=True)
     skip: Final = os.path.relpath(new_dir, old_dir).split(os.sep, 1)[0]
-    moved: list[str] = []
+    moved: Final[list[str]] = []
     try:
         for entry in os.listdir(old_dir):
             if entry != skip:
                 shutil.move(os.path.join(old_dir, entry), new_dir)
                 moved.append(entry)
     except OSError:
-        for entry in moved:  # best effort, so the old location stays usable for the fallback below
+        failures: Final = sum(not _restore_nested_entry(entry, old_dir, new_dir) for entry in moved)
+        if not failures:
             with suppress(OSError):
-                shutil.move(os.path.join(new_dir, entry), old_dir)
-        with suppress(OSError):
-            os.rmdir(new_dir)  # only succeeds while empty, so the next run retries the migration
+                os.rmdir(new_dir)
+        if os.path.isdir(new_dir):
+            pathlib.Path(os.path.join(new_dir, _MIGRATION_MARKER)).touch(exist_ok=False)
         raise
+
+
+def _restore_nested_entry(entry: str, old_dir: str, new_dir: str) -> bool:
+    try:
+        shutil.move(os.path.join(new_dir, entry), old_dir)
+    except OSError:
+        return False
+    return True
 
 
 def _cache_dir_with_migration() -> str:
@@ -100,6 +111,9 @@ def _cache_dir_with_migration() -> str:
     old_dir: Final = user_data_dir(appname="virtualenv", appauthor="pypa")
     if new_dir == old_dir:
         return new_dir
+    if os.path.isdir(old_dir) and os.path.isfile(os.path.join(new_dir, _MIGRATION_MARKER)):
+        _LOGGER.warning("incomplete app data migration from %s to %s, using old location", old_dir, new_dir)
+        return old_dir
     if os.path.isdir(old_dir) and not os.path.isdir(new_dir):
         _LOGGER.info("migrating app data from %s to %s", old_dir, new_dir)
         try:
