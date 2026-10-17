@@ -5,7 +5,9 @@ import re
 import shlex
 import sys
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
+
+from virtualenv.util.path import write_file
 
 from .activator import Activator
 
@@ -63,18 +65,13 @@ class ViaTemplateActivator(Activator, ABC):
     def _generate(
         self, replacements: dict[str, str], templates: Iterable[str], to_folder: Path, creator: Creator
     ) -> list[Path]:
-        generated = []
+        generated: Final[list[Path]] = []
         for template in templates:
-            text = self.instantiate_template(replacements, template, creator)
-            dest = to_folder / self.as_name(template)
-            # remove the file if it already exists - this prevents permission
-            # errors when the dest is not writable
-            if dest.exists():
-                dest.unlink()
-            # Powershell assumes Windows 1252 encoding when reading files without BOM
-            encoding = "utf-8-sig" if str(template).endswith(".ps1") else "utf-8"
-            # use write_bytes to avoid platform specific line normalization (\n -> \r\n)
-            dest.write_bytes(text.encode(encoding))
+            text: Final = self.instantiate_template(replacements, template, creator)
+            dest: Final = to_folder / self.as_name(template)
+            # PowerShell assumes Windows 1252 when the UTF-8 BOM is absent.
+            encoding: Final = "utf-8-sig" if str(template).endswith(".ps1") else "utf-8"
+            write_file(dest, text.encode(encoding))
             generated.append(dest)
         return generated
 

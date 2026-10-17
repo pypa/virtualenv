@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 from os.path import commonpath
 
-from virtualenv.util.path import safe_delete
+from virtualenv.util.path import safe_delete, write_file
 from virtualenv.util.subprocess import LogCmd, run_cmd
 from virtualenv.util.text import collapse_line_boundaries
 from virtualenv.version import __version__
@@ -262,7 +262,7 @@ class Creator(ABC):
                 # For information about cache directory tags, see:
                 #   https://bford.info/cachedir/
             """).strip()
-            cachedir_tag_file.write_text(cachedir_tag_text, encoding="utf-8")
+            write_file(cachedir_tag_file, cachedir_tag_text.encode("utf-8"))
 
     def set_pyenv_cfg(self) -> None:
         self.pyenv_cfg.content = OrderedDict()
@@ -286,7 +286,7 @@ class Creator(ABC):
         # mark this folder to be ignored by VCS, handle https://www.python.org/dev/peps/pep-0610/#registered-vcs
         git_ignore = self.dest / ".gitignore"
         if not git_ignore.exists():
-            git_ignore.write_text("# created by virtualenv automatically\n*\n", encoding="utf-8")
+            write_file(git_ignore, b"# created by virtualenv automatically\n*\n")
         # Mercurial - does not support the .hgignore file inside a subdirectory directly, but only if included via the
         # subinclude directive from root, at which point on might as well ignore the directory itself, see
         # https://www.selenic.com/mercurial/hgignore.5.html for more details

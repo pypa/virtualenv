@@ -247,6 +247,10 @@ class ScriptMakerCustom(ScriptMaker):
         self, names: set[str], shebang: bytes, script_bytes: bytes, filenames: list[str], ext: str
     ) -> None:
         names.add(f"{self._name}{self.version_info[0]}.{self.version_info[1]}")
+        for name in names:
+            path: Final = Path(self.target_dir) / (f"{name}.exe" if os.name == "nt" else name)
+            if path.is_symlink():
+                path.unlink()
         super()._write_script(names, shebang, script_bytes, filenames, ext)
 
 

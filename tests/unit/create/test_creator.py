@@ -31,7 +31,7 @@ from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.create.pyenv_cfg import PyEnvCfg
 from virtualenv.create.via_global_ref import api
 from virtualenv.create.via_global_ref.builtin.cpython.common import is_mac_os_framework, is_macos_brew
-from virtualenv.info import IS_PYPY, IS_WIN, fs_is_case_sensitive, fs_supports_symlink
+from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_WIN, fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.run import cli_run, session_via_cli
 from virtualenv.run.plugin.creators import CreatorSelector
 from virtualenv.util.error import ProcessCallFailedError
@@ -116,6 +116,94 @@ def test_clear_direct_destination(tmp_path: Path, parent_link: bool) -> None:
     link.symlink_to(tmp_path, target_is_directory=True)
     session: Final = cli_run([str(link / "target" if parent_link else target), "--clear", "--no-seed"])
     assert (session.creator.dest, marker.exists(), (target / "pyvenv.cfg").is_file()) == (target.resolve(), False, True)
+
+
+@pytest.mark.parametrize("creator_name", [pytest.param("builtin", id="builtin"), pytest.param("venv", id="venv")])
+@pytest.mark.parametrize("existing", [pytest.param(False, id="dangling"), pytest.param(True, id="existing")])
+@pytest.mark.parametrize(
+    "generated",
+    [
+        pytest.param(name, id=name)
+        for name in ("pyvenv.cfg", "activate", "pip", "CACHEDIR.TAG", ".gitignore", "_virtualenv.py", "_virtualenv.pth")
+    ],
+)
+def test_creator_replaces_generated_file_links(
+    tmp_path: Path,
+    creator_name: str,
+    existing: bool,
+    generated: str,
+) -> None:
+    command: Final = [
+        str(tmp_path / "env"),
+        "--creator",
+        creator_name,
+        "--pip",
+        "embed",
+        "--no-periodic-update",
+    ]
+    if generated.startswith("_virtualenv"):
+        if (python39 := shutil.which("python3.9")) is None:
+            pytest.skip("Python 3.9 is unavailable")
+        command.extend(["--python", python39])
+    session: Final = session_via_cli(command)
+    session.creator.bin_dir.mkdir(parents=True)
+    target: Final = session.creator.dest / "original"
+    if existing:
+        target.write_bytes(b"original")
+    path = (
+        session.creator.bin_dir / ("pip.exe" if generated == "pip" and os.name == "nt" else generated)
+        if generated in {"activate", "pip"}
+        else session.creator.dest / generated
+    )
+    if generated.startswith("_virtualenv"):
+        path = session.creator.purelib / generated
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.symlink_to(target)
+    with session:
+        session.run()
+    if existing and (generated == "CACHEDIR.TAG" or (generated == ".gitignore" and creator_name == "builtin")):
+        assert path.is_symlink()
+    else:
+        assert not path.is_symlink()
+    assert (target.read_bytes() if existing else target.exists()) == (b"original" if existing else False)
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        pytest.param("file", id="file"),
+        pytest.param("symlink", id="symlink"),
+        pytest.param("dangling", id="dangling"),
+        pytest.param("junction", id="junction"),
+    ],
+)
+def test_venv_prepares_real_executable_directory(tmp_path: Path, kind: str) -> None:
+    session: Final = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--no-seed", "--activators="])
+    session.creator.dest.mkdir()
+    if kind == "file":
+        session.creator.bin_dir.write_bytes(b"file")
+    else:
+        target: Final = session.creator.dest / "empty"
+        if kind != "dangling":
+            target.mkdir()
+        if kind == "junction":
+            if not IS_WIN:
+                pytest.skip("requires Windows junctions")
+            subprocess.run(
+                ["cmd", "/c", "mklink", "/J", str(session.creator.bin_dir), str(target)],
+                capture_output=True,
+                check=True,
+            )
+        else:
+            if not fs_supports_symlink():
+                pytest.skip("requires directory symlinks")
+            session.creator.bin_dir.symlink_to(target, target_is_directory=True)
+    if kind == "file":
+        with pytest.raises(NotADirectoryError, match="environment directory is not a real directory"):
+            session.run()
+    else:
+        session.run()
+        assert session.creator.bin_dir.resolve() == session.creator.bin_dir
 
 
 def test_os_path_sep_not_allowed(tmp_path, capsys) -> None:
@@ -462,6 +550,21 @@ def test_venv_configuration_uses_selected_options(tmp_path: Path, global_package
     assert {key: session.creator.pyenv_cfg.content.get(key) for key in expected} == expected
 
 
+@pytest.mark.skipif(not CURRENT.has_venv or not fs_supports_symlink(), reason="requires venv and symlinks")
+@pytest.mark.skipif(
+    is_mac_os_framework(CURRENT) or is_macos_brew(CURRENT) or (IS_GRAALPY and not IS_WIN),
+    reason="stdlib creator requires symlinks on this runtime",
+)
+def test_venv_recreate_with_copied_interpreter(tmp_path: Path) -> None:
+    args: Final = [str(tmp_path / "env"), "--creator", "venv", "--no-seed"]
+    cli_run([*args, "--symlinks"])
+    session: Final = cli_run([*args, "--copies"])
+    assert (session.creator.exe.is_file(), session.creator.exe.resolve().parent) == (
+        True,
+        session.creator.bin_dir.resolve(),
+    )
+
+
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
 def test_venv_subprocess_skips_local_venv_module(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     (tmp_path / "venv").mkdir()
@@ -477,6 +580,28 @@ def test_venv_subprocess_skips_local_venv_module(tmp_path: Path, monkeypatch: py
         "--no-periodic-update",
     ])
     assert (session.creator.dest / "pyvenv.cfg").is_file()
+
+
+@pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
+@pytest.mark.parametrize("mode", [pytest.param("--copies", id="copies"), pytest.param("--symlinks", id="symlinks")])
+def test_venv_replaces_hard_linked_files(tmp_path: Path, mode: str) -> None:
+    if mode == "--symlinks" and not fs_supports_symlink():
+        pytest.skip("requires symlinks")
+    if mode == "--copies" and (is_mac_os_framework(CURRENT) or is_macos_brew(CURRENT) or (IS_GRAALPY and not IS_WIN)):
+        pytest.skip("stdlib creator requires symlinks on this runtime")
+    session: Final = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--no-seed", "--activators=", mode])
+    session.creator.bin_dir.mkdir(parents=True)
+    names: Final = (
+        ("python.exe", "pythonw.exe") if IS_WIN else ("python", "python3", f"python3.{CURRENT.version_info.minor}")
+    )
+    planted: Final = [session.creator.dest / "pyvenv.cfg", *(session.creator.bin_dir / name for name in names)]
+    for path in planted:
+        (tmp_path / f"{path.name}.original").write_bytes(b"original")
+        os.link(tmp_path / f"{path.name}.original", path)
+    session.run()
+    assert [((tmp_path / f"{path.name}.original").read_bytes(), path.lstat().st_nlink) for path in planted] == [
+        (b"original", 1)
+    ] * len(planted)
 
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")

@@ -5,10 +5,12 @@ import os
 import shutil
 import sys
 from pathlib import Path
-from stat import S_IXGRP, S_IXOTH, S_IXUSR
+from stat import S_ISDIR, S_ISLNK, S_IXGRP, S_IXOTH, S_IXUSR
 from typing import TYPE_CHECKING, Final
 
 if os.name == "nt":
+    from stat import IO_REPARSE_TAG_MOUNT_POINT
+
     from ._win import clear_readonly
 
 if TYPE_CHECKING:
@@ -24,6 +26,45 @@ def ensure_dir(path: Path) -> None:
     if not path.exists():
         LOGGER.debug("create folder %s", path)
         os.makedirs(str(path))
+
+
+def ensure_within(root: Path, path: Path) -> None:
+    parts: Final = path.relative_to(root).parts
+    if ".." in parts:
+        msg: Final = f"environment directory {path} must remain inside {root}"
+        raise ValueError(msg)
+    ensure_dir(root)
+    folder = root
+    for part in parts:
+        folder /= part
+        try:
+            metadata: Final = folder.lstat()
+        except FileNotFoundError:
+            pass
+        else:
+            if S_ISLNK(metadata.st_mode):
+                LOGGER.warning("replace environment directory link %s", folder)
+                folder.unlink()
+            elif os.name == "nt" and metadata.st_reparse_tag == IO_REPARSE_TAG_MOUNT_POINT:
+                LOGGER.warning("replace environment directory junction %s", folder)
+                folder.rmdir()
+        try:
+            folder.mkdir()
+        except FileExistsError:
+            created: Final = folder.lstat()
+            if not S_ISDIR(created.st_mode) or (
+                os.name == "nt" and created.st_reparse_tag == IO_REPARSE_TAG_MOUNT_POINT
+            ):
+                msg: Final = f"environment directory is not a real directory: {folder}"
+                raise NotADirectoryError(msg) from None
+
+
+def write_file(path: Path, data: bytes) -> None:
+    if path.is_symlink() or path.exists():
+        path.unlink()
+    # Exclusive creation rejects links introduced after the old entry was removed.
+    with path.open("xb") as stream:
+        stream.write(data)
 
 
 def ensure_safe_to_do(src: Path, dest: Path) -> None:
@@ -102,6 +143,8 @@ __all__ = [
     "copy",
     "copytree",
     "ensure_dir",
+    "ensure_within",
     "safe_delete",
     "symlink",
+    "write_file",
 ]

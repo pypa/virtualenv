@@ -5,6 +5,7 @@ import os
 from collections import OrderedDict
 from typing import TYPE_CHECKING, Final
 
+from virtualenv.util.path import write_file
 from virtualenv.util.text import collapse_line_boundaries
 
 if TYPE_CHECKING:
@@ -67,7 +68,7 @@ class PyEnvCfg:
             LOGGER.debug("\t%r", line)
             text += line
             text += "\n"
-        self.path.write_bytes(text.encode("utf-8"))
+        write_file(self.path, text.encode("utf-8"))
 
     def refresh(self) -> OrderedDict[str, str]:
         self.content = self._read_values(self.path)
