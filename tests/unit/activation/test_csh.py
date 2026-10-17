@@ -21,6 +21,39 @@ if TYPE_CHECKING:
 TCSH = which("tcsh")
 
 
+@pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
+@pytest.mark.parametrize(
+    "shell",
+    [
+        pytest.param(shell, id=shell, marks=pytest.mark.skipif(which(shell) is None, reason=f"{shell} is unavailable"))
+        for shell in ("tcsh", "csh")
+    ],
+)
+@pytest.mark.parametrize(
+    "boundary",
+    [pytest.param(value, id=f"U+{ord(value):04X}") for value in "\n\r\v\f\x1c\x1d\x1e\x85\u2028\u2029"],
+)
+def test_cshell_prompt_collapses_line_boundaries(
+    csh_venv: Callable[..., tuple[Path, str]],
+    tmp_path: Path,
+    shell: str,
+    boundary: str,
+) -> None:
+    dest, content = csh_venv("ordinary", prompt=f"first{boundary}second")
+    script: Final = tmp_path / "activate.csh"
+    script.write_text(content, encoding="utf-8")
+    result: Final = run(
+        [shell, "-f"],
+        input=f'set prompt = "> "\nsource {script}\nprintf "%s\\n" "$VIRTUAL_ENV:q" "$VIRTUAL_ENV_PROMPT:q" "$prompt:q"\n',
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=30,
+        check=True,
+    )
+    assert (result.stdout, result.stderr) == (f"{dest}\nfirst second\n(first second) > \n", "")
+
+
 @pytest.mark.parametrize(
     ("tcl_lib", "tk_lib", "present"),
     [
@@ -327,3 +360,41 @@ def test_bsd_cshell_displays_one_backslash(csh_venv: Callable[..., tuple[Path, s
         check=True,
     )
     assert "(a\\b) " in result.stdout + result.stderr
+
+
+@pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
+def test_cshell_skips_multiline_destination(tmp_path: Path) -> None:
+    destination = tmp_path / "env\nname"
+    scripts = destination / "bin"
+    scripts.mkdir(parents=True)
+    (scripts / "activate.csh").write_text("old", encoding="utf-8")
+    session: Final = cli_run([str(destination), "--no-seed", "--activators", "cshell"])
+    assert (list(scripts.glob("*.csh")), session.activators) == ([], [])
+
+
+@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
+@pytest.mark.parametrize(
+    "boundary",
+    [
+        pytest.param("\r", id="carriage-return"),
+        pytest.param("\u2028", id="line-separator"),
+        pytest.param("\x1c", id="file-separator"),
+    ],
+)
+def test_cshell_preserves_non_newline_path(
+    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, boundary: str
+) -> None:
+    dest, _ = csh_venv(f"a{boundary}b")
+    # copied as bytes, because text mode reads the carriage return in the path back as a newline
+    script = tmp_path / "activate.csh"
+    script.write_bytes((dest / "bin" / "activate.csh").read_bytes())
+
+    result = run(
+        [TCSH, "-f"],
+        input=f'source {script}\nprintf "%s" "$VIRTUAL_ENV:q"\n'.encode(),
+        capture_output=True,
+        timeout=30,
+        check=True,
+    )
+
+    assert result.stdout == str(dest).encode()

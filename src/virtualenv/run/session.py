@@ -95,8 +95,7 @@ class Session:
         if self.activators:
             active = ", ".join(type(i).__name__.replace("Activator", "") for i in self.activators)
             LOGGER.info("add activators for %s", active)
-            for activator in self.activators:
-                activator.generate(self.creator)
+            self._activators = [activator for activator in self.activators if activator.generate(self.creator)]
 
     def __enter__(self) -> Self:
         return self
