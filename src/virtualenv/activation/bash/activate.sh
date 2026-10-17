@@ -82,14 +82,10 @@ if [ ! -d __VIRTUAL_ENV__ ] &&
 else
     if [ ! -d __VIRTUAL_ENV__ ]; then
         echo "Virtual environment directory" __VIRTUAL_ENV__ "does not exist!" >&2
-        if [ -z "${BASH_VERSION-}" ]; then
-            echo "Relocating this activation script requires bash." >&2
-            return 1
-        fi
         CURRENT_PATH=$(realpath "${BASH_SOURCE[0]}") || return 1
         CURRENT_DIR=$(dirname "${CURRENT_PATH}") || return 1
         CURRENT_ENV="$(realpath "${CURRENT_DIR}/../")" || return 1
-        if [ ! "$CURRENT_PATH" -ef "$CURRENT_ENV/bin/activate" ] || [ ! -f "$CURRENT_ENV/pyvenv.cfg" ]; then
+        if [ ! "$CURRENT_PATH" -ef "$CURRENT_ENV/"__BIN_NAME__"/activate" ] || [ ! -f "$CURRENT_ENV/pyvenv.cfg" ]; then
             echo "Cannot identify relocated environment: $CURRENT_ENV" >&2
             unset CURRENT_ENV
             return 1

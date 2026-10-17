@@ -5,6 +5,7 @@ import shutil
 import subprocess
 import sys
 from argparse import Namespace
+from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -15,7 +16,6 @@ from virtualenv.run import cli_run
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from pathlib import Path
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
@@ -182,6 +182,21 @@ def test_bash_activate_relocation_resolves_virtual_env(
     assert result.stdout.strip() == str(relocated)
 
 
+@pytest.fixture
+def moved_bash_activate(tmp_path: Path, current_fastest: str) -> Path:
+    session: Final = cli_run([
+        "--without-pip",
+        str(tmp_path / "original"),
+        "--creator",
+        current_fastest,
+        "--no-periodic-update",
+        "--activators",
+        "bash",
+    ])
+    (tmp_path / "original").rename(tmp_path / "moved")
+    return tmp_path / "moved" / session.creator.bin_dir.name / "activate"
+
+
 @pytest.mark.skipif(IS_WIN, reason="requires POSIX shells")
 @pytest.mark.parametrize(
     "failure",
@@ -191,26 +206,41 @@ def test_bash_activate_relocation_resolves_virtual_env(
         pytest.param("config", id="missing-config"),
     ],
 )
-def test_bash_relocation_stops_when_unavailable(tmp_path: Path, failure: str) -> None:
-    cli_run([str(tmp_path / "original"), "--no-seed", "--activators", "bash"])
-    (tmp_path / "original").rename(tmp_path / "moved")
+def test_bash_relocation_stops_when_unavailable(tmp_path: Path, moved_bash_activate: Path, failure: str) -> None:
     if failure == "config":
-        (tmp_path / "moved" / "pyvenv.cfg").unlink()
-    assert (
-        subprocess.run(
-            [
-                "/bin/bash",
-                "-c",
-                'unset BASH_VERSION; . "$1"' if failure == "shell" else '. "$1"',
-                "activate",
-                str(tmp_path / "moved" / "bin" / "activate"),
-            ],
-            env={"PATH": str(tmp_path) if failure == "tools" else "/usr/bin:/bin"},
-            capture_output=True,
-            check=False,
-        ).returncode
-        != 0
+        (moved_bash_activate.parents[1] / "pyvenv.cfg").unlink()
+    path: Final = str(tmp_path) if failure == "tools" else "/usr/bin:/bin"
+    result: Final = subprocess.run(
+        [
+            "/bin/bash",
+            "-c",
+            ("unset BASH_VERSION; " if failure == "shell" else "")
+            + '. "$1"; printf "%s|%s|%s" "$?" "$PATH" "${VIRTUAL_ENV-unset}"',
+            "activate",
+            str(moved_bash_activate),
+        ],
+        env={"PATH": path},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
     )
+    assert result.stdout == f"1|{path}|unset"
+
+
+@pytest.mark.skipif(not IS_WIN, reason="needs Git Bash and a Scripts directory")
+def test_bash_relocation_resolves_under_git_bash(moved_bash_activate: Path) -> None:
+    if (git := shutil.which("git")) is None or not (bash := Path(git).parents[1] / "bin" / "bash.exe").exists():
+        pytest.skip("needs Git for Windows")
+    result: Final = subprocess.run(
+        [str(bash), "-c", 'source "$1" && cygpath -w "$VIRTUAL_ENV"', "bash", str(moved_bash_activate)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout.strip()) == (0, str(moved_bash_activate.parents[1]))
 
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
@@ -411,10 +441,7 @@ def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> 
 
 @pytest.mark.skipif(IS_WIN, reason="requires POSIX shells")
 @pytest.mark.parametrize("mode", [pytest.param("eval", id="eval"), pytest.param("stdin", id="stdin")])
-def test_bash_relocation_without_source_preserves_path(tmp_path: Path, mode: str) -> None:
-    cli_run([str(tmp_path / "original"), "--no-seed", "--activators", "bash"])
-    (tmp_path / "original").rename(tmp_path / "moved")
-    activation: Final = tmp_path / "moved" / "bin" / "activate"
+def test_bash_relocation_without_source_preserves_path(moved_bash_activate: Path, mode: str) -> None:
     result: Final = subprocess.run(
         [
             "/bin/bash",
@@ -423,13 +450,13 @@ def test_bash_relocation_without_source_preserves_path(tmp_path: Path, mode: str
             "-c",
             'eval "$(cat "$1")"; printf "%s|%s" "$PATH" "${VIRTUAL_ENV-unset}"',
             "test",
-            str(activation),
+            str(moved_bash_activate),
         ]
         if mode == "eval"
         else ["/bin/bash", "--noprofile", "--norc"],
         input=None
         if mode == "eval"
-        else activation.read_text(encoding="utf-8") + '\nprintf "%s|%s" "$PATH" "${VIRTUAL_ENV-unset}"',
+        else moved_bash_activate.read_text(encoding="utf-8") + '\nprintf "%s|%s" "$PATH" "${VIRTUAL_ENV-unset}"',
         env={"PATH": "/usr/bin:/bin"},
         capture_output=True,
         text=True,
@@ -440,10 +467,8 @@ def test_bash_relocation_without_source_preserves_path(tmp_path: Path, mode: str
 
 
 @pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
-def test_bash_relocation_rejects_sourced_wrapper(tmp_path: Path) -> None:
-    cli_run([str(tmp_path / "original"), "--no-seed", "--activators", "bash"])
-    (tmp_path / "original").rename(tmp_path / "moved")
-    wrapper: Final = tmp_path / "moved" / "bin" / "wrapper"
+def test_bash_relocation_rejects_sourced_wrapper(moved_bash_activate: Path) -> None:
+    wrapper: Final = moved_bash_activate.with_name("wrapper")
     wrapper.write_text('eval "$(cat "$1")"\n', encoding="utf-8")
     result: Final = subprocess.run(
         [
@@ -452,7 +477,7 @@ def test_bash_relocation_rejects_sourced_wrapper(tmp_path: Path) -> None:
             '. "$1" "$2"; printf "%s|%s" "$PATH" "${VIRTUAL_ENV-unset}"',
             "test",
             str(wrapper),
-            str(wrapper.parent / "activate"),
+            str(moved_bash_activate),
         ],
         env={"PATH": "/usr/bin:/bin"},
         capture_output=True,
