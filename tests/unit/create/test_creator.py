@@ -36,6 +36,8 @@ from virtualenv.run import cli_run, session_via_cli
 from virtualenv.run.plugin.creators import CreatorSelector
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pytest_mock import MockerFixture
 
     from virtualenv.run.session import Session
@@ -70,43 +72,56 @@ def test_resolved_destination_rejects_path_separator(
         Creator.validate_dest("link/env" if linked else "env")
 
 
+_LEGACY_DESTINATIONS: Final = [
+    pytest.param("latin-1", "café", id="latin1"),
+    pytest.param("koi8-r", "тест", id="koi8r"),
+    pytest.param("gbk", "中文", id="gbk"),
+    pytest.param("ascii", "café", id="unencodable"),
+]
+
+
+@pytest.fixture
+def legacy_destination(tmp_path: Path, mocker: MockerFixture) -> Callable[[str, str], Path]:
+    def _make(encoding: str, name: str) -> Path:
+        dest = tmp_path / name / "env"
+        encode = os.fsencode
+
+        def legacy_encode(value: str | bytes | os.PathLike[str] | os.PathLike[bytes]) -> bytes:
+            return str(value).encode(encoding) if value == str(dest) else encode(value)
+
+        mocker.patch("os.fsencode", autospec=True, side_effect=legacy_encode)
+        return dest
+
+    return _make
+
+
 @pytest.mark.skipif(IS_WIN, reason="Windows paths use Unicode APIs")
-@pytest.mark.parametrize(
-    ("encoding", "name"),
-    [
-        pytest.param("latin-1", "café", id="latin1"),
-        pytest.param("koi8-r", "тест", id="koi8r"),
-        pytest.param("gbk", "中文", id="gbk"),
-        pytest.param("ascii", "café", id="unencodable-parent"),
-    ],
-)
-@pytest.mark.parametrize(
-    "activators", [pytest.param("bash", id="bash"), pytest.param("", id="none"), pytest.param("python", id="python")]
-)
-def test_destination_activators_in_legacy_locale(
-    tmp_path: Path, mocker: MockerFixture, encoding: str, name: str, activators: str
+@pytest.mark.parametrize(("encoding", "name"), _LEGACY_DESTINATIONS)
+def test_legacy_locale_rejects_selected_shell_activators(
+    legacy_destination: Callable[[str, str], Path], encoding: str, name: str
 ) -> None:
-    (tmp_path / name).mkdir()
-    encode: Final = os.fsencode
-
-    def legacy_encode(value: str | bytes | os.PathLike[str] | os.PathLike[bytes]) -> bytes:
-        if value == str(tmp_path / name / "env"):
-            return str(value).encode(encoding)
-        return encode(value)
-
-    mocker.patch("os.fsencode", autospec=True, side_effect=legacy_encode)
-    if activators == "bash":
-        with pytest.raises(ValueError, match="activation scripts would point at a different directory"):
-            session_via_cli([str(tmp_path / name / "env"), "--no-seed", "--activators", activators])
-    else:
-        session = cli_run([str(tmp_path / name / "env"), "--no-seed", "--activators", activators])
-        assert (session.creator.dest / "pyvenv.cfg").is_file()
+    with pytest.raises(ValueError, match="activation scripts would point at a different directory"):
+        session_via_cli([str(legacy_destination(encoding, name)), "--no-seed", "--activators", "bash"])
 
 
 @pytest.mark.skipif(IS_WIN, reason="Windows paths use Unicode APIs")
-def test_destination_accepts_ascii_in_legacy_locale(tmp_path: Path, mocker: MockerFixture) -> None:
-    mocker.patch("sys.getfilesystemencoding", autospec=True, return_value="latin-1")
-    assert Creator.validate_dest(str(tmp_path / "env")) == str(tmp_path / "env")
+@pytest.mark.parametrize("activators", [pytest.param("", id="none"), pytest.param("python", id="python")])
+@pytest.mark.parametrize(("encoding", "name"), _LEGACY_DESTINATIONS)
+def test_legacy_locale_allows_python_activator(
+    legacy_destination: Callable[[str, str], Path], encoding: str, name: str, activators: str
+) -> None:
+    session = cli_run([str(legacy_destination(encoding, name)), "--no-seed", "--activators", activators])
+    assert (session.creator.dest / "pyvenv.cfg").is_file()
+
+
+@pytest.mark.skipif(IS_WIN, reason="Windows paths use Unicode APIs")
+@pytest.mark.parametrize(("encoding", "name"), _LEGACY_DESTINATIONS)
+def test_legacy_locale_skips_default_shell_activators(
+    legacy_destination: Callable[[str, str], Path], encoding: str, name: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    session = cli_run([str(legacy_destination(encoding, name)), "--no-seed"], setup_logging=False)
+    assert [type(activator).__name__ for activator in session.activators] == ["PythonActivator"]
+    assert "skipping shell activation scripts" in caplog.text
 
 
 def _non_success_exit_code(capsys, target):
