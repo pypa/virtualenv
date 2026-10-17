@@ -1,0 +1,1 @@
+Document the accepted boolean values and environment-only scope of ``VIRTUALENV_PERIODIC_UPDATE_INSECURE``.

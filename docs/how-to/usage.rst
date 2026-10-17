@@ -269,7 +269,9 @@ The periodic update checks for newer seed wheels by fetching ``https://pypi.org/
 is made with full TLS verification and, if the verified request fails, virtualenv now skips the update rather than
 downgrading the connection. Set ``VIRTUALENV_PERIODIC_UPDATE_INSECURE=1`` to restore the previous behavior and retry
 with an unverified SSL context. This is an escape hatch for hosts with broken trust stores; do not set it on hosts you
-do not control.
+do not control. The variable accepts the standard boolean values: ``1``, ``true``, ``yes``, and ``on`` enable the
+fallback; ``0``, ``false``, ``no``, and ``off`` disable it. Values are case-insensitive. This setting is read from the
+environment, not the ini configuration file.
 
 Configuration priority
 ======================
