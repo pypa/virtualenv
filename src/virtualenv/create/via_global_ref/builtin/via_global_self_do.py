@@ -8,7 +8,7 @@ from virtualenv.create.via_global_ref.builtin.ref import (
     ExePathRefToDest,
     RefWhen,
 )
-from virtualenv.util.path import ensure_dir
+from virtualenv.util.path import ensure_within
 
 from .builtin_way import VirtualenvBuiltin
 
@@ -91,7 +91,7 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
             if any(i for i in dirs if i is not directory and directory.parts == i.parts[: len(directory.parts)]):
                 dirs.remove(directory)
         for directory in sorted(dirs):
-            ensure_dir(directory)
+            ensure_within(self.dest, directory)
 
         self.set_pyenv_cfg()
         self.pyenv_cfg.write()

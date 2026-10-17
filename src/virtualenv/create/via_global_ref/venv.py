@@ -8,7 +8,7 @@ from python_discovery import PythonInfo
 
 from virtualenv.create.via_global_ref.store import handle_store_python
 from virtualenv.util.error import ProcessCallFailedError
-from virtualenv.util.path import ensure_dir, ensure_within
+from virtualenv.util.path import ensure_within
 from virtualenv.util.subprocess import run_cmd
 from virtualenv.util.text import collapse_line_boundaries
 
@@ -51,7 +51,8 @@ class Venv(ViaGlobalRefApi):
     def create(self) -> None:
         # stdlib venv writes interpreter files, configuration and activation scripts in place, so a planted symlink or
         # hard link would receive them outside the environment
-        ensure_within(self.dest, self.bin_dir)
+        for directory in (self.bin_dir, self.purelib, self.platlib):
+            ensure_within(self.dest, directory)
         for path in (self.dest / "pyvenv.cfg", self.dest / ".gitignore", *self.bin_dir.iterdir()):
             if path.is_symlink() or (path.is_file() and path.stat().st_nlink > 1):
                 path.unlink()
@@ -59,8 +60,6 @@ class Venv(ViaGlobalRefApi):
             self.create_inline()
         else:
             self.create_via_sub_process()
-        for lib in self.libs:  # ty: ignore[not-iterable]
-            ensure_dir(lib)
         if self.describe is not None:
             self.describe.install_venv_shared_libs(self)
         super().create()
