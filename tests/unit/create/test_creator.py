@@ -583,6 +583,28 @@ def test_venv_subprocess_skips_local_venv_module(tmp_path: Path, monkeypatch: py
 
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
+@pytest.mark.parametrize("mode", [pytest.param("--copies", id="copies"), pytest.param("--symlinks", id="symlinks")])
+def test_venv_replaces_hard_linked_files(tmp_path: Path, mode: str) -> None:
+    if mode == "--symlinks" and not fs_supports_symlink():
+        pytest.skip("requires symlinks")
+    if mode == "--copies" and (is_mac_os_framework(CURRENT) or is_macos_brew(CURRENT) or (IS_GRAALPY and not IS_WIN)):
+        pytest.skip("stdlib creator requires symlinks on this runtime")
+    session: Final = session_via_cli([str(tmp_path / "env"), "--creator", "venv", "--no-seed", "--activators=", mode])
+    session.creator.bin_dir.mkdir(parents=True)
+    names: Final = (
+        ("python.exe", "pythonw.exe") if IS_WIN else ("python", "python3", f"python3.{CURRENT.version_info.minor}")
+    )
+    planted: Final = [session.creator.dest / "pyvenv.cfg", *(session.creator.bin_dir / name for name in names)]
+    for path in planted:
+        (tmp_path / f"{path.name}.original").write_bytes(b"original")
+        os.link(tmp_path / f"{path.name}.original", path)
+    session.run()
+    assert [((tmp_path / f"{path.name}.original").read_bytes(), path.lstat().st_nlink) for path in planted] == [
+        (b"original", 1)
+    ] * len(planted)
+
+
+@pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
 def test_venv_fails_not_inline(tmp_path, capsys, mocker) -> None:
     if hasattr(os, "geteuid") and os.geteuid() == 0:
         pytest.skip("no way to check permission restriction when running under root")

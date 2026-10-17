@@ -49,10 +49,11 @@ class Venv(ViaGlobalRefApi):
         return None
 
     def create(self) -> None:
-        # stdlib venv writes interpreter files as well as configuration and activation scripts.
+        # stdlib venv writes interpreter files, configuration and activation scripts in place, so a planted symlink or
+        # hard link would receive them outside the environment
         ensure_within(self.dest, self.bin_dir)
         for path in (self.dest / "pyvenv.cfg", self.dest / ".gitignore", *self.bin_dir.iterdir()):
-            if path.is_symlink():
+            if path.is_symlink() or (path.is_file() and path.stat().st_nlink > 1):
                 path.unlink()
         if self.can_be_inline:
             self.create_inline()
