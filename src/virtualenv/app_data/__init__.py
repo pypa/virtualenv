@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import os
 import shutil
+from contextlib import suppress
 from stat import S_IMODE, S_ISGID, S_IWGRP, S_IWOTH
 from typing import TYPE_CHECKING, Final
 
@@ -69,6 +70,31 @@ def _default_app_data_dir(env: Mapping[str, str]) -> str:
     return _cache_dir_with_migration()
 
 
+def _is_nested_dir(inner: str, outer: str) -> bool:
+    try:
+        return os.path.normcase(os.path.commonpath((outer, inner))) == os.path.normcase(outer)
+    except ValueError:  # different drives on Windows
+        return False
+
+
+def _migrate_into_nested(old_dir: str, new_dir: str) -> None:
+    os.makedirs(new_dir, exist_ok=True)
+    skip: Final = os.path.relpath(new_dir, old_dir).split(os.sep, 1)[0]
+    moved: list[str] = []
+    try:
+        for entry in os.listdir(old_dir):
+            if entry != skip:
+                shutil.move(os.path.join(old_dir, entry), new_dir)
+                moved.append(entry)
+    except OSError:
+        for entry in moved:  # best effort, so the old location stays usable for the fallback below
+            with suppress(OSError):
+                shutil.move(os.path.join(new_dir, entry), old_dir)
+        with suppress(OSError):
+            os.rmdir(new_dir)  # only succeeds while empty, so the next run retries the migration
+        raise
+
+
 def _cache_dir_with_migration() -> str:
     new_dir: Final = user_cache_dir(appname="virtualenv", appauthor="pypa")
     old_dir: Final = user_data_dir(appname="virtualenv", appauthor="pypa")
@@ -77,7 +103,11 @@ def _cache_dir_with_migration() -> str:
     if os.path.isdir(old_dir) and not os.path.isdir(new_dir):
         _LOGGER.info("migrating app data from %s to %s", old_dir, new_dir)
         try:
-            shutil.move(old_dir, new_dir)
+            if _is_nested_dir(new_dir, old_dir):
+                # a directory cannot be moved into its own child, so migrate the content instead
+                _migrate_into_nested(old_dir, new_dir)
+            else:
+                shutil.move(old_dir, new_dir)
         except OSError as exception:
             _LOGGER.warning(
                 "could not migrate app data from %s to %s: %r, using old location", old_dir, new_dir, exception
