@@ -128,10 +128,17 @@ def test_venv_redirect_forced_keeps_foreign(redirect: Path, existing: str) -> No
     assert redirect.read_text(encoding="utf-8") == existing
 
 
-def test_venv_redirect_forced_keeps_redirect_to_other_tool(redirect: Path) -> None:
+_NON_FILE_KINDS: Final = [pytest.param("directory", id="directory"), pytest.param("fifo", id="fifo")]
+
+
+@pytest.mark.parametrize("kind", [pytest.param("other_tool", id="other-tool"), *_NON_FILE_KINDS])
+def test_venv_redirect_forced_keeps_other_environment(redirect: Path, kind: str) -> None:
     other = redirect.parent / "other"
     other.mkdir()
-    (other / "pyvenv.cfg").write_text("home = /usr/bin\nuv = 0.12.5\n", encoding="utf-8")
+    if kind == "other_tool":
+        (other / "pyvenv.cfg").write_text("home = /usr/bin\nuv = 0.12.5\n", encoding="utf-8")
+    else:
+        _make_non_file(other / "pyvenv.cfg", kind)
     redirect.write_text("other\n", encoding="utf-8")
 
     _create(redirect.parent / "env", "--venv-redirect")
@@ -171,9 +178,6 @@ def test_venv_redirect_forced_not_write_able(redirect: Path, caplog: pytest.LogC
     assert f"could not point {redirect.resolve()} at {(redirect.parent / 'env').resolve()}" in caplog.text
 
 
-_NON_FILE_KINDS: Final = [pytest.param("directory", id="directory"), pytest.param("fifo", id="fifo")]
-
-
 def _make_non_file(path: Path, kind: str) -> None:
     if kind == "directory":
         path.mkdir()
@@ -181,17 +185,6 @@ def _make_non_file(path: Path, kind: str) -> None:
         os.mkfifo(path)
     else:
         pytest.skip("requires FIFOs")
-
-
-@pytest.mark.parametrize("kind", _NON_FILE_KINDS)
-def test_venv_redirect_keeps_non_file_config(redirect: Path, kind: str) -> None:
-    (redirect.parent / "other").mkdir()
-    _make_non_file(redirect.parent / "other" / "pyvenv.cfg", kind)
-    redirect.write_text("other\n", encoding="utf-8")
-
-    _create(redirect.parent / "new", "--venv-redirect")
-
-    assert redirect.read_text(encoding="utf-8") == "other\n"
 
 
 @pytest.mark.parametrize("kind", _NON_FILE_KINDS)
