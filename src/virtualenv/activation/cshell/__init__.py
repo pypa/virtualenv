@@ -27,9 +27,9 @@ class CShellActivator(ViaTemplateActivator):
 
     @staticmethod
     def quote(string: str) -> str:
-        # csh runs history substitution before it parses quotes, so a ! survives shlex.quote's single
-        # quotes and aborts the whole script with "Event not found"; only a backslash suppresses it
-        return shlex.quote(string).replace("!", "\\!")
+        # csh expands history inside single quotes and parses unquoted percent signs as expression operators.
+        quoted: Final = shlex.quote(string)
+        return (f"'{quoted}'" if quoted == string else quoted).replace("!", "'\\!'")
 
     def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
         # carries its own quoting, so it cannot go through the shared quote() pass with the other replacements;
@@ -58,11 +58,13 @@ def _prompt_literal(value: str, *, tcsh: bool) -> str:
         if char == "'":
             parts.append("'\\''")
         elif char == "!":
-            parts.append("\\\\!")
+            parts.append("'\\\\'\\!")
         elif char == "%" and tcsh:
             parts.append("%%")
+        elif char == "^" and tcsh:
+            parts.append("'\\\\^'")
         elif char == "\\":
-            parts.append("\\\\")
+            parts.append("'\\\\\\\\'")
         else:
             parts.append(char)
     parts.append("'")

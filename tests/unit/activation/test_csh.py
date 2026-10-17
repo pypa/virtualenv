@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from argparse import Namespace
 from shutil import which
@@ -67,8 +68,8 @@ def test_cshell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
     assert 'setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig"' in activate
 
     if present:
-        assert "setenv TCL_LIBRARY /path/to/tcl" in activate
-        assert "setenv TK_LIBRARY /path/to/tk" in activate
+        assert "setenv TCL_LIBRARY '/path/to/tcl'" in activate
+        assert "setenv TK_LIBRARY '/path/to/tk'" in activate
     else:
         assert "setenv TCL_LIBRARY ''" in activate
 
@@ -115,20 +116,14 @@ def csh_plain_activate(tmp_path_factory: pytest.TempPathFactory, current_fastest
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
-def test_cshell_escapes_history_character(csh_venv: Callable[..., tuple[Path, str]]) -> None:
-    dest, content = csh_venv("has!bang")
-
-    assert f"setenv VIRTUAL_ENV '{str(dest).replace('!', chr(92) + '!')}'\n" in content
-
-
-@pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
 @pytest.mark.parametrize(
     ("prompt", "tcsh_escaped", "plain_escaped"),
     [
         pytest.param("plain", "plain", "plain", id="plain"),
-        pytest.param("has!bang", "has\\\\!bang", "has\\\\!bang", id="bang"),
+        pytest.param("has!bang", "has'\\\\'\\!bang", "has'\\\\'\\!bang", id="bang"),
         pytest.param("has%pct", "has%%pct", "has%pct", id="percent"),
-        pytest.param("a!b%p c", "a\\\\!b%%p c", "a\\\\!b%p c", id="bang-and-percent"),
+        pytest.param("has^caret", "has'\\\\^'caret", "has^caret", id="caret"),
+        pytest.param("a!b%p c", "a'\\\\'\\!b%%p c", "a'\\\\'\\!b%p c", id="bang-and-percent"),
     ],
 )
 def test_cshell_escapes_prompt_expansion(
@@ -172,6 +167,45 @@ def test_cshell_activates_path_with_special_characters(
     )
 
     assert result.stdout == str(dest), result.stderr
+
+
+@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
+@pytest.mark.parametrize(
+    ("prompt", "codec"),
+    [
+        pytest.param("%", None, id="percent"),
+        pytest.param("has^caret", None, id="caret"),
+        pytest.param("中^b", "gbk", id="gbk-caret"),
+        pytest.param("中!b", "gbk", id="gbk-history"),
+        pytest.param(r"中\^b", "gbk", id="gbk-backslash-caret"),
+        pytest.param(r"丁\!", "gbk", id="gbk-backslash-history"),
+    ],
+)
+def test_cshell_renders_prompt_literally(
+    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, prompt: str, codec: str | None
+) -> None:
+    env = os.environ.copy()
+    if codec is not None:
+        # a legacy double-byte locale reads the last UTF-8 byte of 中 and the ASCII byte after it as one character
+        locales = check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
+        if (locale := next((i for i in locales if i.lower().replace("-", "").endswith(f".{codec}")), None)) is None:
+            pytest.skip(f"no {codec} locale is installed")
+        env["LC_ALL"] = locale
+    _, content = csh_venv("plain", prompt=prompt)
+    script = tmp_path / "activate.csh"
+    script.write_text(content, encoding="utf-8")
+
+    # only an interactive shell draws the prompt, which is where tcsh turns ^c into a control character
+    result = run(
+        [TCSH, "-f", "-i"],
+        input=f"source {script}\nexit\n".encode(),
+        env=env,
+        capture_output=True,
+        timeout=30,
+        check=True,
+    )
+
+    assert f"({prompt}) ".encode() in result.stdout + result.stderr
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
@@ -220,6 +254,9 @@ def test_csh(activation_tester_class, activation_tester) -> None:
     class Csh(activation_tester_class):
         def __init__(self, session) -> None:
             super().__init__(CShellActivator, session, "csh", "activate.csh", "csh")
+
+        def activate_call(self, script: Path) -> str:
+            return f"source {self.quote(str(script))}"
 
         def print_prompt(self) -> str:
             # Original csh doesn't print the last newline,
