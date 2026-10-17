@@ -189,13 +189,13 @@ def test_populated_read_only_cache_and_symlinked_app_data(tmp_path, current_fast
 def test_populated_read_only_cache_and_copied_app_data(tmp_path, current_fastest, temp_app_data) -> None:
     dest = tmp_path / "venv"
     cmd = [
+        "-p",
+        "python",
         "--seeder",
         "app-data",
         "--creator",
         current_fastest,
         "-vv",
-        "-p",
-        "python",
         str(dest),
     ]
 
