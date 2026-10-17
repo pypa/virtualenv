@@ -11,7 +11,7 @@ from configparser import ConfigParser
 from itertools import chain
 from pathlib import Path
 from tempfile import mkdtemp
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from distlib.scripts import ScriptMaker, enquote_executable
 
@@ -182,35 +182,48 @@ class PipInstall(ABC):
         paths = (p for p in in_folders if p.stem.split("-")[0] == dist_name and p.suffix == ".dist-info" and p.is_dir())
         existing_dist = next(paths, None)
         if existing_dist is not None:
-            self._uninstall_dist(existing_dist)
+            self._uninstall_dist(existing_dist, self._creator.dest)
 
     @staticmethod
-    def _uninstall_dist(dist: Path) -> None:
-        dist_base = dist.parent
+    def _uninstall_dist(dist: Path, env_dir: Path) -> None:
+        dist_base: Final = dist.parent
         LOGGER.debug("uninstall existing distribution %s from %s", dist.stem, dist_base)
 
-        top_txt = dist / "top_level.txt"  # add top level packages at folder level
-        paths = (
+        top_txt: Final = dist / "top_level.txt"
+        paths: Final = (
             {dist.parent / i.strip() for i in top_txt.read_text(encoding="utf-8").splitlines()}
             if top_txt.exists()
             else set()
         )
-        paths.add(dist)  # add the dist-info folder itself
+        paths.add(dist)
 
-        base_dirs, record = paths.copy(), dist / "RECORD"  # collect entries in record that we did not register yet
+        base_dirs: Final = paths.copy()
+        record: Final = dist / "RECORD"
         for name in (
             (i.split(",")[0] for i in record.read_text(encoding="utf-8").splitlines()) if record.exists() else ()
         ):
-            path = dist_base / name
-            if not any(p in base_dirs for p in path.parents):  # only add if not already added as a base dir
+            path: Final = dist_base / name
+            if not any(p in base_dirs for p in path.parents):
                 paths.add(path)
 
-        for path in sorted(paths):  # actually remove stuff in a stable order
-            if path.exists():
-                if path.is_dir() and not path.is_symlink():
-                    safe_delete(path)
+        root: Final = env_dir.resolve()
+        metadata_parents: Final = set(dist.resolve().parents)
+        for entry in sorted(paths):
+            if entry.exists() or entry.is_symlink():
+                linked: Final = entry.is_symlink()
+                # Unlinking the final link leaves its target intact; parent links still affect containment.
+                resolved: Final = entry.parent.resolve() / entry.name if linked else entry.resolve()
+                if root not in resolved.parents or resolved in metadata_parents:
+                    LOGGER.warning(
+                        "skip removal of %s listed by %s: not inside environment %s or a parent of the metadata",
+                        entry,
+                        dist.name,
+                        root,
+                    )
+                elif entry.is_dir() and not linked:
+                    safe_delete(entry)
                 else:
-                    path.unlink()
+                    entry.unlink()
 
     def clear(self) -> None:
         if self._image_dir.exists():
