@@ -44,6 +44,26 @@ def test_fish_quote_preserves_literal(value: str) -> None:
     assert result.stdout == value
 
 
+@pytest.mark.skipif(IS_WIN or FISH is None, reason="fish is required")
+@pytest.mark.parametrize("value", [pytest.param("中's", id="apostrophe"), pytest.param("中\\path", id="backslash")])
+def test_fish_quote_preserves_legacy_locale_bytes(value: str) -> None:
+    version: Final = subprocess.check_output([FISH, "--version"], text=True, encoding="utf-8")
+    if not version.startswith("fish, version 3."):
+        pytest.skip("fish 4 always decodes UTF-8")
+    locales: Final = subprocess.check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
+    if "zh_CN.gbk" not in locales:
+        pytest.skip("GBK locale is unavailable")
+    result: Final = subprocess.run(
+        [FISH, "--no-config"],
+        input=f"printf '%s' {FishActivator.quote(value)}\n".encode(),
+        env={**os.environ, "LC_ALL": "zh_CN.gbk"},
+        capture_output=True,
+        timeout=30,
+        check=True,
+    )
+    assert result.stdout == value.encode()
+
+
 @pytest.mark.parametrize(
     ("value", "expected"),
     [
