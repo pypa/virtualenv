@@ -331,6 +331,37 @@ def test_csh(activation_tester_class, activation_tester) -> None:
     activation_tester(Csh)
 
 
+@pytest.mark.skipif(IS_WIN or which("csh") is None, reason="requires csh")
+def test_cshell_disabled_prompt_preserves_existing_value(csh_venv: Callable[..., tuple[Path, str]]) -> None:
+    dest, _ = csh_venv("plain", prompt="owner's prompt")
+    result: Final = run(
+        ["csh", "-f"],
+        input=f"set prompt = original\nsetenv VIRTUAL_ENV_DISABLE_PROMPT 1\nsource {dest / 'bin' / 'activate.csh'}\necho $prompt\n",
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert result.stdout == "original\n"
+
+
+@pytest.mark.skipif(IS_WIN or which("csh") is None, reason="requires csh")
+def test_bsd_cshell_displays_one_backslash(csh_venv: Callable[..., tuple[Path, str]]) -> None:
+    shell: Final = which("bsd-csh") or which("csh")
+    if run([shell, "-fc", "if ($?tcsh) exit 77"], check=False).returncode == 77:
+        pytest.skip("requires bsd-csh")
+    dest, _ = csh_venv("plain", prompt="a\\b")
+    result: Final = run(
+        [shell, "-f", "-i"],
+        input=f"source {dest / 'bin' / 'activate.csh'}\nexit\n",
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert "(a\\b) " in result.stdout + result.stderr
+
+
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
 def test_cshell_skips_multiline_destination(tmp_path: Path) -> None:
     destination = tmp_path / "env\nname"
