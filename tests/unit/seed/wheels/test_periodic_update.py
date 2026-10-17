@@ -13,7 +13,7 @@ from io import StringIO
 from itertools import zip_longest
 from pathlib import Path
 from shutil import copytree, ignore_patterns
-from textwrap import dedent
+from textwrap import dedent, indent
 from typing import TYPE_CHECKING, Final
 from urllib.error import URLError
 
@@ -444,14 +444,12 @@ def test_periodic_update_trigger(
     assert process.communicate.call_count == bool(env)
 
 
+@pytest.mark.parametrize("zipapp", [pytest.param(False, id="installed"), pytest.param(True, id="zipapp")])
 @pytest.mark.parametrize("debug", [pytest.param(False, id="background"), pytest.param(True, id="inline")])
 def test_trigger_update_command(
-    for_py_version: str,
-    session_app_data: AppDataDiskFolder,
-    tmp_path: Path,
-    mocker: MockerFixture,
-    debug: bool,
+    for_py_version: str, session_app_data: AppDataDiskFolder, mocker: MockerFixture, debug: bool, zipapp: bool
 ) -> None:
+    mocker.patch("virtualenv.seed.wheels.periodic_update.IS_ZIPAPP", zipapp)
     current: Final = get_embed_wheel("pip", for_py_version)
     process: Final = mocker.patch(
         "virtualenv.seed.wheels.periodic_update.Popen",
@@ -463,35 +461,34 @@ def test_trigger_update_command(
         "pip",
         for_py_version,
         current,
-        [tmp_path / "a", tmp_path / "b"],
+        [Path("a"), Path("b")],
         session_app_data,
         {"_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1" if debug else "0"},
         True,
     )
-    command: Final = (
-        dedent(
-            """\
-        import importlib.util, sys
-        if sys.path and sys.path[0] == '': sys.path.pop(0)
-        spec = importlib.util.spec_from_file_location('virtualenv', {!r})
-        package = importlib.util.module_from_spec(spec)
-        sys.modules['virtualenv'] = package
-        spec.loader.exec_module(package)
+    update: Final = dedent(
+        """\
         from virtualenv.report import setup_report, MAX_LEVEL
         from virtualenv.seed.wheels.periodic_update import do_update
         setup_report(MAX_LEVEL, show_pid=True)
         do_update('pip', {!r}, {!r}, {!r}, {!r}, True)
         """
-        )
-        .strip()
-        .format(
-            str(Path(ROOT) / "virtualenv" / "__init__.py"),
-            for_py_version,
-            str(current.path),
-            str(session_app_data),
-            [str(tmp_path / "a"), str(tmp_path / "b")],
-        )
+    ).format(for_py_version, str(current.path), str(session_app_data), ["a", "b"])
+    load: Final = (
+        f"import runpy\nwith runpy.run_path({ROOT!r}, run_name='__loader__')['VersionedFindLoad']():\n{indent(update, '    ')}"
+        if zipapp
+        else dedent(
+            """\
+            import importlib.util
+            spec = importlib.util.spec_from_file_location('virtualenv', {!r})
+            package = importlib.util.module_from_spec(spec)
+            sys.modules['virtualenv'] = package
+            spec.loader.exec_module(package)
+            """
+        ).format(str(Path(ROOT) / "virtualenv" / "__init__.py"))
+        + update
     )
+    command: Final = f"import sys\nsys.path = [p for p in sys.path if p]\n{load.strip()}"
     process.assert_called_once_with(
         [sys.executable, "-c", command],
         stdout=None if debug else subprocess.DEVNULL,

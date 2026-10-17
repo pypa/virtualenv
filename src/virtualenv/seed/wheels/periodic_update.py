@@ -255,15 +255,15 @@ def trigger_update(  # ruff:ignore[too-many-arguments]
         )
     else:
         code = (
-            "import importlib.util, sys\n"
-            "if sys.path and sys.path[0] == '': sys.path.pop(0)\n"
+            "import importlib.util\n"
             f"spec = importlib.util.spec_from_file_location('virtualenv', {str(Path(ROOT) / 'virtualenv' / '__init__.py')!r})\n"
             "package = importlib.util.module_from_spec(spec)\n"
             "sys.modules['virtualenv'] = package\n"
             "spec.loader.exec_module(package)\n"
             f"{code}"
         )
-    cmd: Final = [sys.executable, *(["-I"] if IS_ZIPAPP else []), "-c", code]
+    # drop the implicit working-directory entry before anything else is imported, as sys is built in
+    cmd: Final = [sys.executable, "-c", f"import sys\nsys.path = [p for p in sys.path if p]\n{code}"]
     debug = env.get("_VIRTUALENV_PERIODIC_UPDATE_INLINE") == "1"
     pipe = None if debug else DEVNULL
     kwargs = {"stdout": pipe, "stderr": pipe}

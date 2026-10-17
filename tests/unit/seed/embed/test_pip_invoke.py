@@ -23,6 +23,9 @@ def test_pip_invoke_uses_selected_wheel(
     tmp_path: Path, current_fastest: str, monkeypatch: pytest.MonkeyPatch, safe_path: str
 ) -> None:
     monkeypatch.setenv("PYTHONSAFEPATH", safe_path)
+    (tmp_path / "pip").mkdir()
+    (tmp_path / "pip" / "__init__.py").write_text("raise SystemExit('imported from the working directory')", "utf-8")
+    monkeypatch.chdir(tmp_path)
     session: Final = cli_run([
         str(tmp_path / "env"),
         "--creator",

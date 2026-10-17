@@ -20,7 +20,10 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 
-PIP_RUN: Final = "import sys; sys.path = [p for p in sys.path if p]; import runpy; runpy.run_module('pip', run_name='__main__', alter_sys=True)"
+PIP_RUN: Final[str] = (
+    "import sys; sys.path = [p for p in sys.path if p]; "
+    "import runpy; runpy.run_module('pip', run_name='__main__', alter_sys=True)"
+)
 
 # A private index can legitimately serve a rebuilt wheel under the same distribution, version, and
 # filename PyPI also uses - an internal mirror re-signing or re-packaging a release for policy reasons,

@@ -38,7 +38,9 @@ from virtualenv.util.error import ProcessCallFailedError
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
     from pytest_mock import MockerFixture
+
     from virtualenv.run.session import Session
 
 CURRENT = PythonInfo.current_system()
@@ -461,7 +463,10 @@ def test_venv_configuration_uses_selected_options(tmp_path: Path, global_package
 
 
 @pytest.mark.skipif(not CURRENT.has_venv, reason="requires interpreter with venv")
-def test_venv_subprocess_creates_environment(tmp_path: Path) -> None:
+def test_venv_subprocess_skips_local_venv_module(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    (tmp_path / "venv").mkdir()
+    (tmp_path / "venv" / "__init__.py").write_text("raise SystemExit('imported from the working directory')", "utf-8")
+    monkeypatch.chdir(tmp_path)
     session: Final = cli_run([
         "-p",
         str(CURRENT.executable),

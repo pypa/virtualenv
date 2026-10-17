@@ -107,6 +107,27 @@ def test_download_fails(
     )
 
 
+def test_download_wheel_skips_local_pip_module(
+    mocker: MockerFixture,
+    for_py_version: str,
+    session_app_data: AppDataDiskFolder,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    (tmp_path / "pip").mkdir()
+    (tmp_path / "pip" / "__init__.py").write_text("raise SystemExit('imported from the working directory')", "utf-8")
+    monkeypatch.chdir(tmp_path)
+    mocker.patch("virtualenv.seed.wheels.acquire.verify_wheel_digest")
+    embedded: Final = get_embed_wheel("pip", for_py_version)
+    env: Final = {**os.environ, "PIP_NO_INDEX": "1", "PIP_FIND_LINKS": str(BUNDLE_FOLDER)}
+
+    result: Final = download_wheel(
+        "pip", f"=={embedded.version}", for_py_version, [], session_app_data, tmp_path / "house", env
+    )
+
+    assert result.path == tmp_path / "house" / embedded.name
+
+
 def test_download_wheel_python_io_encoding(mocker, for_py_version, session_app_data) -> None:
     mock_popen = mocker.patch("virtualenv.seed.wheels.acquire.Popen")
     mock_popen.return_value.communicate.return_value = "Saved a-b-c.whl", ""
