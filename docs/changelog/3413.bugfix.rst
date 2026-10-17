@@ -1,0 +1,2 @@
+Keep apostrophes and backslashes in fish activation values separate from preceding non-ASCII characters, so fish 3
+legacy locale decoders cannot consume their escapes as part of a multibyte character.

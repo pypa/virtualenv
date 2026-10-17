@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import subprocess
 import sys
@@ -130,6 +131,8 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
         pytest.param("dest", "&", id="destination-ampersand"),
         pytest.param("dest", "^", id="destination-caret"),
         pytest.param("dest", "!", id="destination-exclamation"),
+        pytest.param("dest", "\u2028", id="destination-line-separator"),
+        pytest.param("tcl_lib", "\x1a", id="tcl-end-of-file"),
         pytest.param("tcl_lib", "&", id="tcl-ampersand"),
         pytest.param("tk_lib", "&", id="tk-ampersand"),
     ],
@@ -144,8 +147,10 @@ def test_batch_skips_changed_paths(
     if field != "dest":
         monkeypatch.setattr(creator.interpreter, field, str(tmp_path / f"lib{character}name"), raising=False)
     creator.bin_dir.mkdir(parents=True)
+    for name in ("activate.bat", "deactivate.bat", "pydoc.bat", "keep.txt"):
+        (creator.bin_dir / name).write_text("old", encoding="utf-8")
     assert BatchActivator(VirtualEnvOptions(prompt=None)).generate(creator) == []
-    assert list(creator.bin_dir.iterdir()) == []
+    assert list(creator.bin_dir.iterdir()) == [creator.bin_dir / "keep.txt"]
     assert "skipping batch activation scripts" in caplog.text
     assert "cannot preserve" in caplog.text
 
@@ -163,7 +168,7 @@ def test_batch_skips_changed_paths(
 def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str) -> None:
     creator: Final[Creator] = session_via_cli([str(tmp_path / name), "--no-seed"], setup_logging=False).creator
     creator.bin_dir.mkdir(parents=True)
-    BatchActivator(VirtualEnvOptions(prompt="roundtrip")).generate(creator)
+    BatchActivator(VirtualEnvOptions(prompt="roundtrip$P")).generate(creator)
     snapshot: Final[str] = (
         f'@"{sys.executable}" -I -c "import json,os; '
         "print(json.dumps({k:os.environ.get(k) for k in ('VIRTUAL_ENV','PATH','PROMPT')}))\""
@@ -185,13 +190,18 @@ def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str) -> None:
     active: Final[dict[str, str]] = {
         "VIRTUAL_ENV": str(creator.dest),
         "PATH": f"{creator.bin_dir};{os.environ['PATH']}",
-        "PROMPT": "(roundtrip) original",
+        "PROMPT": "(roundtrip$$P) original",
     }
     assert [json.loads(line) for line in result.stdout.splitlines()] == [
         active,
         active,
         {"VIRTUAL_ENV": None, "PATH": os.environ["PATH"], "PROMPT": "original"},
     ]
+    assert not result.stderr
+
+
+def test_batch_quote_replaces_end_of_file() -> None:
+    assert BatchActivator.quote("before\x1aafter") == "before after"
 
 
 @pytest.mark.parametrize("activations", [1, 2], ids=["activate_once", "activate_twice"])
@@ -225,7 +235,7 @@ def test_batch(activation_python, activation_tester_class, activation_tester, tm
             return s
 
         def print_prompt(self) -> str:
-            return 'echo "%PROMPT%"'
+            return 'echo "%PROMPT:$$=$%"'
 
     activation_tester(Batch)
 
@@ -272,6 +282,22 @@ def test_batch_output(activation_python, activation_tester_class, activation_tes
             return s
 
         def print_prompt(self) -> str:
-            return 'echo "%PROMPT%"'
+            return 'echo "%PROMPT:$$=$%"'
 
     activation_tester(Batch)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="requires Windows batch activation")
+def test_batch_removes_stale_script_when_unselected(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.DEBUG)
+    session = session_via_cli(
+        [str(tmp_path / "env&name"), "--no-seed", "--activators", "powershell"], setup_logging=False
+    )
+    session.creator.bin_dir.mkdir(parents=True)
+    script = session.creator.bin_dir / "activate.bat"
+    script.write_text("old", encoding="utf-8")
+    session.run()
+    assert not script.exists()
+    assert [record.levelno for record in caplog.records if record.message.startswith("skipping batch")] == [
+        logging.DEBUG
+    ]

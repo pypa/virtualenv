@@ -941,3 +941,17 @@ def test_pyenv_cfg_rejects_non_file_path(tmp_path: Path, operation: str) -> None
     }[operation]
     with pytest.raises(ValueError, match="configuration path is not a regular file"):
         action()
+
+
+def test_pyenv_cfg_encoding_failure_preserves_file(tmp_path: Path) -> None:
+    config: Final = PyEnvCfg(OrderedDict({"prompt": "\udcff"}), tmp_path / "pyvenv.cfg")
+    config.path.write_bytes(b"home = original\n")
+    with pytest.raises(UnicodeEncodeError):
+        config.write()
+    assert config.path.read_bytes() == b"home = original\n"
+
+
+def test_pyenv_cfg_write_logs_escaped_values(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.DEBUG)
+    PyEnvCfg(OrderedDict({"prompt": "a\x1bb"}), tmp_path / "pyvenv.cfg").write()
+    assert "\t'prompt = \"a\\x1bb\"'" in caplog.text

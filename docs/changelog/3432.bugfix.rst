@@ -1,0 +1,2 @@
+Write xonsh prompt and path literals as ASCII escapes in every generated activation script. This preserves their values
+when xonsh reads the script with a legacy encoding such as GBK or Big5. Regenerate existing scripts to apply the fix.

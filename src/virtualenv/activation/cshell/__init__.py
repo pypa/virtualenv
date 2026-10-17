@@ -1,17 +1,21 @@
 from __future__ import annotations
 
+import logging
 import shlex
 from typing import TYPE_CHECKING, Final
 
 from virtualenv.activation.via_template import ViaTemplateActivator
+from virtualenv.util.text import collapse_line_boundaries
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
+    from pathlib import Path
 
     from python_discovery import PythonInfo
 
     from virtualenv.create.creator import Creator
 
+_LOGGER: Final = logging.getLogger(__name__)
 _PROMPT_DISPLAY_TCSH: Final[str] = "__VIRTUAL_PROMPT_DISPLAY_TCSH__"
 _PROMPT_DISPLAY_PLAIN: Final[str] = "__VIRTUAL_PROMPT_DISPLAY_PLAIN__"
 
@@ -25,44 +29,50 @@ class CShellActivator(ViaTemplateActivator):
         yield "activate.csh"
         yield "deactivate.csh"
 
+    def generate(self, creator: Creator) -> list[Path]:
+        values: Final = super().replacements(creator, creator.bin_dir)
+        if any("\n" in values[key] for key in ("__VIRTUAL_ENV__", "__TCL_LIBRARY__", "__TK_LIBRARY__")):
+            _LOGGER.warning("skipping csh activation scripts: a filesystem path contains a newline")
+            for template in self.templates():
+                (creator.bin_dir / self.as_name(template)).unlink(missing_ok=True)
+            return []
+        return super().generate(creator)
+
     @staticmethod
     def quote(string: str) -> str:
-        # csh runs history substitution before it parses quotes, so a ! survives shlex.quote's single
-        # quotes and aborts the whole script with "Event not found"; only a backslash suppresses it
-        return shlex.quote(string).replace("!", "\\!")
+        # csh expands history inside single quotes and parses unquoted percent signs as expression operators.
+        # Backslashes outside quotes retain their meaning with tcsh's backslash_quote option.
+        quoted: Final = shlex.quote(string)
+        return (f"'{quoted}'" if quoted == string else quoted).replace("\\", "'\\\\'").replace("!", "'\\!'")
 
     def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
-        # carries its own quoting, so it cannot go through the shared quote() pass with the other replacements;
-        # tcsh and plain csh disagree on whether % needs escaping, so activate.csh picks one of these at runtime
-        display = creator.env_name if self.flag_prompt is None else self.flag_prompt
+        # Normalize display text without changing the filesystem paths used by activation.
+        values: Final = {
+            **replacements,
+            "__VIRTUAL_PROMPT__": collapse_line_boundaries(replacements["__VIRTUAL_PROMPT__"]),
+        }
+        display: Final = collapse_line_boundaries(creator.env_name if self.flag_prompt is None else self.flag_prompt)
         return {
-            **super().substitutions(replacements, creator),
+            **super().substitutions(values, creator),
             _PROMPT_DISPLAY_TCSH: _prompt_literal(display, tcsh=True),
             _PROMPT_DISPLAY_PLAIN: _prompt_literal(display, tcsh=False),
         }
 
 
 def _prompt_literal(value: str, *, tcsh: bool) -> str:
-    r"""Build csh source whose ``prompt`` renders ``value`` unchanged.
-
-    Both csh and tcsh expand the prompt every time it draws it, and a literal ``!`` turns into the history event number
-    in either; only ``\!`` survives that pass, and it has to reach the variable as a real backslash, which costs a
-    second one in the source. ``%`` is different: tcsh treats a bare ``%`` as the start of an escape such as ``%p`` for
-    the time, and only a doubled ``%%`` survives as a literal percent, but plain csh has no such escape at all - a bare
-    ``%`` is already literal there, and doubling it would show two. Confirmed on tcsh 6.24 and on Debian's bsd-csh
-    package, which is what "csh" actually resolves to on Debian and Ubuntu.
-
-    """
+    """Prompt drawing interprets history escapes and tcsh percent codes a second time."""
     parts = ["'"]
     for char in value:
         if char == "'":
-            parts.append("'\\''")
+            parts.append("'\"'\"'")
         elif char == "!":
-            parts.append("\\\\!")
+            parts.append("'\\\\'\\!")
         elif char == "%" and tcsh:
             parts.append("%%")
+        elif char == "^" and tcsh:
+            parts.append("'\\\\^'")
         elif char == "\\":
-            parts.append("\\\\")
+            parts.append("'\\\\\\\\'" if tcsh else "'\\\\'")
         else:
             parts.append(char)
     parts.append("'")
