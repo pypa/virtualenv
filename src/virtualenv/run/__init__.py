@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import logging
 import os
+from argparse import ArgumentParser
 from functools import partial
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.app_data import make_app_data
 from virtualenv.config.cli.parser import VirtualEnvConfigParser, VirtualEnvOptions
@@ -88,6 +89,7 @@ def build_parser(
     setup_logging: bool = True,  # ruff:ignore[boolean-default-value-positional-argument]
     env: MutableMapping[str, str] | None = None,
 ) -> tuple[VirtualEnvConfigParser, list[ComponentBuilder]]:
+    _validate_option_values(args)
     parser = VirtualEnvConfigParser(options, os.environ if env is None else env)
     add_version_flag(parser)
     parser.add_argument(
@@ -116,6 +118,29 @@ def build_parser(
         element.handle_selected_arg_parse(options)
     parser.enable_help()
     return parser, elements
+
+
+def _validate_option_values(args: list[str] | None) -> None:
+    # Staged parsing can act on later options before noticing that an earlier option lacks its value.
+    parser: Final = ArgumentParser(prog="virtualenv", add_help=False)
+    parser.add_argument("-v", "-q", action="count")
+    for option in (
+        "--app-data",
+        "--discovery",
+        "-p",
+        "--python",
+        "--try-first-with",
+        "--creator",
+        "--seeder",
+        "--activators",
+        "--extra-search-dir",
+        "--pip",
+        "--setuptools",
+        "--wheel",
+        "--prompt",
+    ):
+        parser.add_argument(option)
+    parser.parse_known_args(args)
 
 
 def build_parser_only(args: list[str] | None = None) -> VirtualEnvConfigParser:
