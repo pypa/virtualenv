@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from argparse import Namespace
+from ast import literal_eval
 from shutil import which
 from unittest.mock import create_autospec
 
@@ -58,12 +59,17 @@ def test_xonsh_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
         assert "self.embedded_tk_library = ''" in content
 
 
-def test_xonsh_quote() -> None:
-    # XonshActivator.quote uses repr() so the template substitution produces valid
-    # Python literals — this is what the rest of the tests rely on.
-    assert XonshActivator.quote("hello") == "'hello'"
-    assert XonshActivator.quote("it's") == '"it\'s"'
-    assert XonshActivator.quote("") == "''"
+@pytest.mark.parametrize(
+    "value",
+    [
+        pytest.param("hello", id="plain"),
+        pytest.param("it's", id="apostrophe"),
+        pytest.param("", id="empty"),
+        pytest.param("中'\\name", id="unicode-and-quotes"),
+    ],
+)
+def test_xonsh_quote(value: str) -> None:
+    assert literal_eval(XonshActivator.quote(value).encode("ascii").decode("gbk")) == value
 
 
 @pytest.mark.skipif(which("xonsh") is None, reason="xonsh is not installed")
