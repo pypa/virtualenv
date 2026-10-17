@@ -2,3 +2,6 @@ Preserve backslashes in POSIX environment directory names during PowerShell acti
 and the default prompt.
 
 Resolve relative, home-relative, and PSDrive-qualified ``-VenvDir`` arguments to absolute filesystem paths.
+
+Preserve literal backslashes in POSIX home and PSDrive paths, accept filesystem provider-qualified paths on Windows
+PowerShell 5.1, and resolve home paths from non-filesystem providers. Stop activation if directory resolution fails.

@@ -142,10 +142,27 @@ $VenvExecPath = [IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Definition)
 Write-Verbose "Activation script is located in path: '$VenvExecPath'"
 
 if ($VenvDir) {
-    if ($VenvDir -match '^(~([/\\]|$)|[^/\\]+:)') {
-        $VenvDir = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($VenvDir)
-    } else {
+    try {
+        $VenvDir = $VenvDir -replace '^(?:Microsoft.PowerShell.Core\\)?FileSystem::', ''
+        if ($VenvDir -eq '~') {
+            $VenvDir = $HOME
+        } elseif ($VenvDir -match '^~[/\\]') {
+            $VenvDir = [IO.Path]::Combine($HOME, $VenvDir.Substring(2))
+        }
+        if ([IO.Path]::DirectorySeparatorChar -eq '/' -and $VenvDir -match '^([^/:]+):(.*)$') {
+            $VenvTail = $Matches[2]
+            $VenvDrive = Get-PSDrive -Name $Matches[1] -PSProvider FileSystem -ErrorAction Stop
+            if ($VenvTail.StartsWith('/')) {
+                $VenvDir = [IO.Path]::Combine($VenvDrive.Root, $VenvTail.TrimStart('/'))
+            } else {
+                $VenvDir = [IO.Path]::Combine($VenvDrive.Root, $VenvDrive.CurrentLocation, $VenvTail)
+            }
+        } elseif ($VenvDir -match '^[^/\\]+:') {
+            $VenvDir = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($VenvDir)
+        }
         $VenvDir = [IO.Path]::GetFullPath([IO.Path]::Combine((Get-Location -PSProvider FileSystem).ProviderPath, $VenvDir))
+    } catch {
+        throw "Cannot resolve environment directory '$VenvDir': $_"
     }
     Write-Verbose "VenvDir given as parameter, using '$VenvDir' to determine values"
 } else {
