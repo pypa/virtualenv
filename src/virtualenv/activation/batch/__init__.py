@@ -25,11 +25,9 @@ LOGGER = logging.getLogger(__name__)
 # is only live when the caller already has delayed expansion enabled (`setlocal enabledelayedexpansion`,
 # `cmd /V:ON`) - not cmd.exe's default, but confirmed on a real runner that a prompt like `foo!SECRET!`
 # then substitutes the actual value of an existing SECRET variable into the prompt, so it is neutered
-# unconditionally rather than only when that mode happens to be on.
-_CMD_OPERATORS: Final[tuple[str, ...]] = ("&", "|", "<", ">", "^", "!", '"')
-
-# These are valid filename characters that quote() would replace, changing the target directory.
-_PATH_UNSAFE_CHARS: Final[tuple[str, ...]] = ("&", "^", "!")
+# unconditionally rather than only when that mode happens to be on. cmd.exe stops reading a line at Ctrl-Z
+# (0x1A) - confirmed on a real runner that `@set "VAR=a<Ctrl-Z>b"` sets `a` and then runs `b"` as the next command.
+_CMD_OPERATORS: Final[tuple[str, ...]] = ("&", "|", "<", ">", "^", "!", '"', "\x1a")
 
 _PATH_REPLACEMENT_NAMES: Final[dict[str, str]] = {
     "__VIRTUAL_ENV__": "the destination directory",
@@ -49,13 +47,20 @@ class BatchActivator(ViaTemplateActivator):
         yield "pydoc.bat"
 
     def generate(self, creator: Creator) -> list[Path]:
+        return [] if self.remove_unsafe(creator) else super().generate(creator)
+
+    def remove_unsafe(self, creator: Creator, *, selected: bool = True) -> bool:
         values = super().replacements(creator, creator.bin_dir)
         problems = [reason for key in _PATH_REPLACEMENT_NAMES if (reason := _unsafe_path_reason(key, values[key]))]
         if problems:
             for problem in problems:
-                LOGGER.warning("skipping batch activation scripts: %s", problem)
-            return []
-        return super().generate(creator)
+                LOGGER.log(
+                    logging.WARNING if selected else logging.DEBUG, "skipping batch activation scripts: %s", problem
+                )
+            for template in self.templates():
+                (creator.bin_dir / self.as_name(template)).unlink(missing_ok=True)
+            return True
+        return False
 
     @staticmethod
     def quote(string: str) -> str:
@@ -78,9 +83,15 @@ class BatchActivator(ViaTemplateActivator):
         base = super().instantiate_template(replacements, template, creator)
         return base.replace(os.linesep, "\n").replace("\n", os.linesep)
 
+    def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
+        return {
+            **super().substitutions(replacements, creator),
+            "__VIRTUAL_ENV_CALL__": self.quote(replacements["__VIRTUAL_ENV__"]).replace("%", "%%"),
+        }
+
 
 def _unsafe_path_reason(key: str, value: str) -> str | None:
-    found = sorted({char for char in value if char in _PATH_UNSAFE_CHARS})
+    found = sorted({char for char in value if char in _CMD_OPERATORS or collapse_line_boundaries(char) != char})
     if not found:
         return None
     return (
