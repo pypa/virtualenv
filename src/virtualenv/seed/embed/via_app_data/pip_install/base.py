@@ -207,13 +207,19 @@ class PipInstall(ABC):
                 paths.add(path)
 
         root: Final = env_dir.resolve()
+        metadata_parents: Final = set(dist.resolve().parents)
         for entry in sorted(paths):
             if entry.exists() or entry.is_symlink():
                 linked: Final = entry.is_symlink()
                 # Unlinking the final link leaves its target intact; parent links still affect containment.
                 resolved: Final = entry.parent.resolve() / entry.name if linked else entry.resolve()
-                if root not in resolved.parents:
-                    LOGGER.warning("skip removal of %s listed by %s: not inside environment %s", entry, dist.name, root)
+                if root not in resolved.parents or resolved in metadata_parents:
+                    LOGGER.warning(
+                        "skip removal of %s listed by %s: not inside environment %s or a parent of the metadata",
+                        entry,
+                        dist.name,
+                        root,
+                    )
                 elif entry.is_dir() and not linked:
                     safe_delete(entry)
                 else:

@@ -51,19 +51,61 @@ def test_seed_image_compiles_in_isolation(
     assert not marker.exists()
 
 
-def test_seed_metadata_cannot_remove_environment_root(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+@pytest.mark.parametrize(
+    ("metadata_file", "content"),
+    [
+        pytest.param("top_level.txt", "pip\n{dest}\n", id="top-level-env-root"),
+        pytest.param("top_level.txt", "pip\n\n", id="top-level-blank"),
+        pytest.param("RECORD", "{record}\n{outside},,", id="record-traversal"),
+    ],
+)
+def test_seed_metadata_cleanup_stays_inside_package(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture, metadata_file: str, content: str
+) -> None:
     args: Final = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
     session: Final = cli_run(args, setup_logging=False)
-    marker: Final = session.creator.dest / "keep.txt"
-    marker.write_text("keep", encoding="utf-8")
-    metadata: Final = next(session.creator.purelib.glob("pip-*.dist-info"))
-    (metadata / "top_level.txt").write_text(str(session.creator.dest), encoding="utf-8")
+    purelib: Final = session.creator.purelib
+    markers: Final = [tmp_path / "keep.txt", session.creator.dest / "keep.txt", purelib / "keep.txt"]
+    for marker in markers:
+        marker.write_text("keep", encoding="utf-8")
+    dist_info: Final = next(purelib.glob("pip-*.dist-info"))
+    (dist_info / metadata_file).write_text(
+        content.format(
+            dest=session.creator.dest,
+            outside=os.path.relpath(markers[0], purelib),
+            record=(dist_info / "RECORD").read_text(encoding="utf-8"),
+        ),
+        encoding="utf-8",
+    )
     cli_run(args, setup_logging=False)
-    assert (marker.read_text(encoding="utf-8"), (session.creator.purelib / "pip" / "__init__.py").is_file()) == (
-        "keep",
+    assert (
+        [i.exists() for i in markers],
+        (purelib / "pip" / "__init__.py").is_file(),
+        "skip removal of" in caplog.text,
+    ) == (
+        [True, True, True],
+        True,
         True,
     )
-    assert "skip removal of" in caplog.text
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+def test_seed_metadata_unlinks_symlink_without_following(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    args: Final = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
+    session: Final = cli_run(args, setup_logging=False)
+    outside: Final = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "keep.txt").write_text("keep", encoding="utf-8")
+    link: Final = session.creator.purelib / "linked"
+    link.symlink_to(outside, target_is_directory=True)
+    record: Final = next(session.creator.purelib.glob("pip-*.dist-info")) / "RECORD"
+    record.write_text(f"{record.read_text(encoding='utf-8')}\nlinked,,", encoding="utf-8")
+    cli_run(args, setup_logging=False)
+    assert (link.is_symlink(), (outside / "keep.txt").exists(), "skip removal of" in caplog.text) == (
+        False,
+        True,
+        False,
+    )
 
 
 @pytest.mark.parametrize(

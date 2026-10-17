@@ -1,2 +1,3 @@
-Limit seed-package cleanup to entries inside the environment. Ignore metadata entries that name the environment itself
-or resolve outside it, with a warning. Launcher entries inside the environment remain supported.
+Limit seed-package cleanup to entries inside the environment. Ignore metadata entries that name the environment itself,
+a directory holding the metadata (a blank ``top_level.txt`` line names ``site-packages``), or resolve outside the
+environment, with a warning. Launcher entries inside the environment remain supported.
