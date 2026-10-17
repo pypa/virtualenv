@@ -949,3 +949,9 @@ def test_pyenv_cfg_encoding_failure_preserves_file(tmp_path: Path) -> None:
     with pytest.raises(UnicodeEncodeError):
         config.write()
     assert config.path.read_bytes() == b"home = original\n"
+
+
+def test_pyenv_cfg_write_logs_escaped_values(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.DEBUG)
+    PyEnvCfg(OrderedDict({"prompt": "a\x1bb"}), tmp_path / "pyvenv.cfg").write()
+    assert "\t'prompt = \"a\\x1bb\"'" in caplog.text
