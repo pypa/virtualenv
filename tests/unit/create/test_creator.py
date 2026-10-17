@@ -45,6 +45,78 @@ if TYPE_CHECKING:
 CURRENT = PythonInfo.current_system()
 
 
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+@pytest.mark.parametrize(
+    ("args", "clear_env"),
+    [
+        pytest.param(["--clear", "link"], "0", id="before-dest"),
+        pytest.param(["link", "--clear"], "0", id="after-dest"),
+        pytest.param(["link"], "1", id="environment"),
+        pytest.param(["missing/../link", "--clear"], "0", id="missing-parent"),
+        pytest.param(["link/child/..", "--clear"], "0", id="child-parent"),
+    ],
+)
+def test_clear_rejects_linked_destination(
+    linked_destination: Path, args: list[str], clear_env: str, capsys: pytest.CaptureFixture[str]
+) -> None:
+    marker: Final = linked_destination / "keep.txt"
+    marker.write_text("keep", encoding="utf-8")
+    with pytest.raises(SystemExit) as context:
+        cli_run(
+            [arg if arg == "--clear" else str(linked_destination.parent / arg) for arg in args] + ["--no-seed"],
+            env={**os.environ, "VIRTUALENV_CLEAR": clear_env},
+        )
+    assert (
+        context.value.code,
+        marker.read_text(encoding="utf-8"),
+        linked_destination.is_symlink(),
+        "--clear cannot use a symlink destination" in capsys.readouterr().err,
+    ) == (2, "keep", True, True)
+
+
+@pytest.mark.skipif(not IS_WIN, reason="requires Windows junctions")
+def test_clear_rejects_junction(tmp_path: Path) -> None:
+    target: Final = tmp_path / "target"
+    target.mkdir()
+    junction: Final = tmp_path / "junction"
+    subprocess.run(["cmd", "/c", "mklink", "/J", str(junction), str(target)], check=True, capture_output=True)
+    with pytest.raises(SystemExit) as context:
+        session_via_cli([str(junction), "--clear", "--no-seed"])
+    assert context.value.code == 2
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+def test_create_linked_destination_without_clear(linked_destination: Path) -> None:
+    session: Final = cli_run([str(linked_destination), "--no-seed"])
+    assert (
+        session.creator.dest,
+        linked_destination.is_symlink(),
+        (linked_destination / "pyvenv.cfg").is_file(),
+    ) == (linked_destination.resolve(), True, True)
+
+
+@pytest.fixture
+def linked_destination(tmp_path: Path) -> Path:
+    target: Final = tmp_path / "target"
+    target.mkdir()
+    link: Final = tmp_path / "link"
+    link.symlink_to(target, target_is_directory=True)
+    return link
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+@pytest.mark.parametrize("parent_link", [pytest.param(False, id="direct"), pytest.param(True, id="linked-parent")])
+def test_clear_direct_destination(tmp_path: Path, parent_link: bool) -> None:
+    target: Final = tmp_path / "target"
+    target.mkdir()
+    marker: Final = target / "old.txt"
+    marker.write_text("old", encoding="utf-8")
+    link: Final = tmp_path / "parent"
+    link.symlink_to(tmp_path, target_is_directory=True)
+    session: Final = cli_run([str(link / "target" if parent_link else target), "--clear", "--no-seed"])
+    assert (session.creator.dest, marker.exists(), (target / "pyvenv.cfg").is_file()) == (target.resolve(), False, True)
+
+
 def test_os_path_sep_not_allowed(tmp_path, capsys) -> None:
     target = str(tmp_path / f"a{os.pathsep}b")
     err = _non_success_exit_code(capsys, target)
