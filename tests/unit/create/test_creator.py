@@ -36,6 +36,10 @@ from virtualenv.run import cli_run, session_via_cli
 from virtualenv.run.plugin.creators import CreatorSelector
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from pytest_mock import MockerFixture
+
     from virtualenv.run.session import Session
 
 CURRENT = PythonInfo.current_system()
@@ -66,6 +70,58 @@ def test_resolved_destination_rejects_path_separator(
         monkeypatch.chdir(parent)
     with pytest.raises(ArgumentTypeError, match="must not contain the path separator"):
         Creator.validate_dest("link/env" if linked else "env")
+
+
+_LEGACY_DESTINATIONS: Final = [
+    pytest.param("latin-1", "café", id="latin1"),
+    pytest.param("koi8-r", "тест", id="koi8r"),
+    pytest.param("gbk", "中文", id="gbk"),
+    pytest.param("ascii", "café", id="unencodable"),
+]
+
+
+@pytest.fixture
+def legacy_destination(tmp_path: Path, mocker: MockerFixture) -> Callable[[str, str], Path]:
+    def _make(encoding: str, name: str) -> Path:
+        dest = tmp_path / name / "env"
+        encode = os.fsencode
+
+        def legacy_encode(value: str | bytes | os.PathLike[str] | os.PathLike[bytes]) -> bytes:
+            return str(value).encode(encoding) if value == str(dest) else encode(value)
+
+        mocker.patch("os.fsencode", autospec=True, side_effect=legacy_encode)
+        return dest
+
+    return _make
+
+
+@pytest.mark.skipif(IS_WIN, reason="Windows paths use Unicode APIs")
+@pytest.mark.parametrize(("encoding", "name"), _LEGACY_DESTINATIONS)
+def test_legacy_locale_rejects_selected_shell_activators(
+    legacy_destination: Callable[[str, str], Path], encoding: str, name: str
+) -> None:
+    with pytest.raises(ValueError, match="activation scripts would point at a different directory"):
+        session_via_cli([str(legacy_destination(encoding, name)), "--no-seed", "--activators", "bash"])
+
+
+@pytest.mark.skipif(IS_WIN, reason="Windows paths use Unicode APIs")
+@pytest.mark.parametrize("activators", [pytest.param("", id="none"), pytest.param("python", id="python")])
+@pytest.mark.parametrize(("encoding", "name"), _LEGACY_DESTINATIONS)
+def test_legacy_locale_allows_python_activator(
+    legacy_destination: Callable[[str, str], Path], encoding: str, name: str, activators: str
+) -> None:
+    session = cli_run([str(legacy_destination(encoding, name)), "--no-seed", "--activators", activators])
+    assert (session.creator.dest / "pyvenv.cfg").is_file()
+
+
+@pytest.mark.skipif(IS_WIN, reason="Windows paths use Unicode APIs")
+@pytest.mark.parametrize(("encoding", "name"), _LEGACY_DESTINATIONS)
+def test_legacy_locale_skips_default_shell_activators(
+    legacy_destination: Callable[[str, str], Path], encoding: str, name: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    session = cli_run([str(legacy_destination(encoding, name)), "--no-seed"], setup_logging=False)
+    assert [type(activator).__name__ for activator in session.activators] == ["PythonActivator"]
+    assert "skipping shell activation scripts" in caplog.text
 
 
 def _non_success_exit_code(capsys, target):
@@ -941,6 +997,26 @@ def test_pyenv_cfg_rejects_non_file_path(tmp_path: Path, operation: str) -> None
     }[operation]
     with pytest.raises(ValueError, match="configuration path is not a regular file"):
         action()
+
+
+@pytest.mark.skipif(IS_WIN, reason="POSIX locales")
+@pytest.mark.usefixtures("_no_coverage")
+def test_default_activators_allow_legacy_locale(tmp_path: Path) -> None:
+    locales: Final = subprocess.check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
+    if (locale := next((name for name in locales if name.lower() == "aa_dj.iso88591"), None)) is None:
+        pytest.skip("Latin-1 locale is unavailable")
+    parent: Final = os.fsencode(tmp_path) + b"/calf\xe9"
+    os.mkdir(parent)
+    result: Final = subprocess.run(
+        [sys.executable, "-m", "virtualenv", "env", "--no-seed"],
+        cwd=parent,
+        env={**os.environ, "LC_ALL": locale, "PYTHONUTF8": "0", "PYTHONCOERCECLOCALE": "0"},
+        capture_output=True,
+        check=True,
+    )
+    assert b"skipping shell activation scripts" in result.stdout + result.stderr
+    assert os.path.isfile(parent + b"/env/pyvenv.cfg")
+    assert not os.path.exists(parent + b"/env/bin/activate")
 
 
 def test_pyenv_cfg_encoding_failure_preserves_file(tmp_path: Path) -> None:
