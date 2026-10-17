@@ -3,10 +3,12 @@ from __future__ import annotations
 import contextlib
 import csv
 import hashlib
+import logging
 import os
 import sys
 import zipfile
 from base64 import urlsafe_b64encode
+from pathlib import Path
 from stat import S_IWGRP, S_IWOTH, S_IWUSR
 from subprocess import Popen, check_call, run
 from threading import Thread
@@ -24,9 +26,55 @@ from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
 from virtualenv.util.path import safe_delete
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from pytest_mock import MockerFixture
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        pytest.param("environment", id="environment"),
+        pytest.param("configuration", id="configuration"),
+        pytest.param("command-line", id="command-line"),
+    ],
+)
+def test_transient_seed_survives_cache_cleanup(tmp_path: Path, source: str, unusable_cache: Path) -> None:
+    config: Final = tmp_path / "virtualenv.ini"
+    config.write_text("[virtualenv]\nsymlink_app_data = true\n" if source == "configuration" else "", encoding="utf-8")
+    env: Final = {
+        **os.environ,
+        "VIRTUALENV_CONFIG_FILE": str(config),
+        "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache),
+    }
+    if source == "environment":
+        env["VIRTUALENV_SYMLINK_APP_DATA"] = "true"
+    args: Final = [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"]
+    if source == "command-line":
+        args.append("--symlink-app-data")
+    session: Final = cli_run(args, env=env)
+    assert (
+        session.creator.app_data.transient,
+        Path(str(session.creator.app_data)).exists(),
+        (session.creator.purelib / "pip" / "__init__.py").is_file(),
+    ) == (True, False, True)
+
+
+def test_transient_seed_reports_copy_fallback(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture, unusable_cache: Path
+) -> None:
+    caplog.set_level(logging.DEBUG)
+    cli_run(
+        [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"],
+        env={**os.environ, "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache), "VIRTUALENV_SYMLINK_APP_DATA": "true"},
+        setup_logging=False,
+    )
+    assert "copy seed packages because temporary app-data is removed after creation" in caplog.text
+
+
+@pytest.fixture
+def unusable_cache(tmp_path: Path) -> Path:
+    blocked: Final = tmp_path / "blocked"
+    blocked.touch()
+    return blocked / "cache"
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")

@@ -38,7 +38,9 @@ LOGGER = logging.getLogger(__name__)
 class FromAppData(BaseEmbed):
     def __init__(self, options: VirtualEnvOptions) -> None:
         super().__init__(options)
-        self.symlinks = options.symlink_app_data
+        self.symlinks = options.symlink_app_data and not self.app_data.transient
+        if options.symlink_app_data and self.app_data.transient:
+            LOGGER.debug("copy seed packages because temporary app-data is removed after creation")
 
     @classmethod
     def add_parser_arguments(cls, parser: ArgumentParser, interpreter: PythonInfo, app_data: AppData) -> None:
