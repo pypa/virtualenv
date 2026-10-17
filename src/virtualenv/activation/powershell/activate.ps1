@@ -157,7 +157,8 @@ if ($VenvDir) {
             } else {
                 $VenvDir = [IO.Path]::Combine($VenvDrive.Root, $VenvDrive.CurrentLocation, $VenvTail)
             }
-        } elseif ($VenvDir -match '^[^/\\]+:') {
+        } elseif ($VenvDir -match '^([^/\\:]+):') {
+            Get-PSDrive -Name $Matches[1] -PSProvider FileSystem -ErrorAction Stop | Out-Null
             $VenvDir = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($VenvDir)
         }
         $VenvDir = [IO.Path]::GetFullPath([IO.Path]::Combine((Get-Location -PSProvider FileSystem).ProviderPath, $VenvDir))
