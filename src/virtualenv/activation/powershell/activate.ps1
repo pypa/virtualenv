@@ -63,15 +63,14 @@ function Get-PyVenvConfig(
 ) {
     Write-Verbose "Given ConfigDir=$ConfigDir, obtain values in pyvenv.cfg"
 
-    $pyvenvConfigPath = Resolve-Path -LiteralPath (Join-Path -Path $ConfigDir -ChildPath 'pyvenv.cfg') -ErrorAction Continue
+    $pyvenvConfigPath = [IO.Path]::Combine((Get-Location -PSProvider FileSystem).ProviderPath, $ConfigDir, 'pyvenv.cfg')
 
     $pyvenvConfig = @{ }
 
-    if ($pyvenvConfigPath) {
+    if ([IO.File]::Exists($pyvenvConfigPath)) {
         Write-Verbose "File exists, parse ``key = value`` lines"
-        $pyvenvConfigContent = Get-Content -LiteralPath $pyvenvConfigPath.ProviderPath
 
-        $pyvenvConfigContent | ForEach-Object {
+        [IO.File]::ReadAllLines($pyvenvConfigPath) | ForEach-Object {
             $keyval = $PSItem -split "\s*=\s*", 2
             if ($keyval[0] -and $keyval[1]) {
                 $val = $keyval[1]
@@ -84,6 +83,8 @@ function Get-PyVenvConfig(
                 Write-Verbose "Adding Key: '$($keyval[0])'='$val'"
             }
         }
+    } else {
+        Write-Error "Cannot find configuration file '$pyvenvConfigPath'" -ErrorAction Continue
     }
     return $pyvenvConfig
 }
@@ -136,15 +137,37 @@ function global:pydoc {
     & python -m pydoc $args
 }
 
-$VenvExecPath = Split-Path -Parent $MyInvocation.MyCommand.Definition
-$VenvExecDir = Get-Item -LiteralPath $VenvExecPath
+$VenvExecPath = [IO.Path]::GetDirectoryName($MyInvocation.MyCommand.Definition)
 
 Write-Verbose "Activation script is located in path: '$VenvExecPath'"
 
 if ($VenvDir) {
+    try {
+        $VenvDir = $VenvDir -replace '^(?:Microsoft.PowerShell.Core\\)?FileSystem::', ''
+        if ($VenvDir -eq '~') {
+            $VenvDir = $HOME
+        } elseif ($VenvDir -match '^~[/\\]') {
+            $VenvDir = [IO.Path]::Combine($HOME, $VenvDir.Substring(2))
+        }
+        if ([IO.Path]::DirectorySeparatorChar -eq '/' -and $VenvDir -match '^([^/:]+):(.*)$') {
+            $VenvTail = $Matches[2]
+            $VenvDrive = Get-PSDrive -Name $Matches[1] -PSProvider FileSystem -ErrorAction Stop
+            if ($VenvTail.StartsWith('/')) {
+                $VenvDir = [IO.Path]::Combine($VenvDrive.Root, $VenvTail.TrimStart('/'))
+            } else {
+                $VenvDir = [IO.Path]::Combine($VenvDrive.Root, $VenvDrive.CurrentLocation, $VenvTail)
+            }
+        } elseif ($VenvDir -match '^([^/\\:]+):') {
+            Get-PSDrive -Name $Matches[1] -PSProvider FileSystem -ErrorAction Stop | Out-Null
+            $VenvDir = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($VenvDir)
+        }
+        $VenvDir = [IO.Path]::GetFullPath([IO.Path]::Combine((Get-Location -PSProvider FileSystem).ProviderPath, $VenvDir))
+    } catch {
+        throw "Cannot resolve environment directory '$VenvDir': $_"
+    }
     Write-Verbose "VenvDir given as parameter, using '$VenvDir' to determine values"
 } else {
-    $VenvDir = $VenvExecDir.Parent.FullName.TrimEnd("\\/")
+    $VenvDir = [IO.Path]::GetDirectoryName($VenvExecPath)
     Write-Verbose "VenvDir=$VenvDir"
 }
 
@@ -159,7 +182,9 @@ if ($Prompt) {
     } elseif (__VIRTUAL_PROMPT__ -ne "") {
         $Prompt = __VIRTUAL_PROMPT__
     } else {
-        $Prompt = Split-Path -Path $VenvDir -Leaf
+        $Prompt = [IO.Path]::GetFileName(
+            $VenvDir.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+        )
     }
 }
 
