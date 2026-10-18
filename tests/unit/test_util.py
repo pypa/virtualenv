@@ -593,6 +593,22 @@ def test_cache_dir_nested_migration_failure_selection(
     ) == (str(old_dir), str(new_dir if retry_uses_cache else old_dir))
 
 
+def test_cache_dir_interrupted_migration_keeps_old_location(
+    nested_cache_dirs: tuple[Path, Path], mocker: MockerFixture
+) -> None:
+    mocker.patch(
+        "virtualenv.app_data.shutil.move",
+        autospec=True,
+        wraps=shutil.move,
+        side_effect=[mocker.DEFAULT, KeyboardInterrupt()],
+    )
+
+    with pytest.raises(KeyboardInterrupt):
+        make_app_data(None, read_only=False, env={})
+
+    assert str(make_app_data(None, read_only=False, env={})) == str(nested_cache_dirs[0])
+
+
 def test_cache_dir_existing_nested_cache_stays_selected(nested_cache_dirs: tuple[Path, Path]) -> None:
     new_dir: Final = nested_cache_dirs[1]
     new_dir.mkdir()
