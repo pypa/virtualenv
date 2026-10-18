@@ -43,7 +43,7 @@ jobs:
             exit 1
           fi
       - name: Install the locked version of uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           python-version: "3.15"
           version-file: tasks/release-requirements.txt
@@ -153,13 +153,19 @@ jobs:
       # Immutable releases require all assets at creation.
       - name: Create GitHub Release
         run: |
+          awk -v tag="$GITHUB_REF_NAME" '
+            index($0, " v" tag " (") == 1 { found = 1; next }
+            found && /^ v[0-9]+\.[0-9]+\.[0-9]+ \(/ { exit }
+            found && $0 !~ /^\*+$/ { print }
+          ' docs/changelog.rst > "$RUNNER_TEMP/release-notes.md"
+          test -s "$RUNNER_TEMP/release-notes.md"
           gh release create "$GITHUB_REF_NAME" virtualenv.pyz virtualenv.pyz.intoto.jsonl virtualenv.pyz.cdx.json \
-            virtualenv.cdx.json virtualenv.spdx.json --generate-notes
+            virtualenv.cdx.json virtualenv.spdx.json --verify-tag --notes-file "$RUNNER_TEMP/release-notes.md"
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Mint get-virtualenv app token
         id: app-token
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
           client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
@@ -207,7 +213,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install the locked version of uv
-        uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           python-version: "3.15"
           version-file: tasks/release-requirements.txt
