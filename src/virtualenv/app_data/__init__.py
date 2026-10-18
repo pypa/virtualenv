@@ -107,11 +107,11 @@ def _migrate_into_nested(old_dir: str, new_dir: str) -> None:
     marker: Final = pathlib.Path(old_dir, _MIGRATION_MARKER)
     marker.touch(exist_ok=True)
     os.makedirs(new_dir, exist_ok=True)
-    skip: Final = os.path.relpath(new_dir, old_dir).split(os.sep, 1)[0]
+    skipped_entries: Final = {os.path.relpath(new_dir, old_dir).split(os.sep, 1)[0], _MIGRATION_MARKER}
     moved: Final[list[str]] = []
     try:
         for entry in os.listdir(old_dir):
-            if entry not in {skip, _MIGRATION_MARKER}:
+            if entry not in skipped_entries:
                 shutil.move(os.path.join(old_dir, entry), new_dir)
                 moved.append(entry)
     except OSError:
