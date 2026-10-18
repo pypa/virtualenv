@@ -30,6 +30,18 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Require a changelog section for the tag
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          if [[ ! "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::unexpected release tag $TAG"
+            exit 1
+          fi
+          if ! grep -qE "^ v${TAG//./\\.} \\(" docs/changelog.rst; then
+            echo "::error::docs/changelog.rst has no section for $TAG"
+            exit 1
+          fi
       - name: Install the locked version of uv
         uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
