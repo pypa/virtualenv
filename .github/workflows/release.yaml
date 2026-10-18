@@ -153,12 +153,32 @@ jobs:
       # Immutable releases require all assets at creation.
       - name: Create GitHub Release
         run: |
+          set -euo pipefail
           awk -v tag="$GITHUB_REF_NAME" '
             index($0, " v" tag " (") == 1 { found = 1; next }
             found && /^ v[0-9]+\.[0-9]+\.[0-9]+ \(/ { exit }
             found && $0 !~ /^\*+$/ { print }
           ' docs/changelog.rst > "$RUNNER_TEMP/release-notes.md"
+          python3 - "$RUNNER_TEMP/release-notes.md" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          path = Path(sys.argv[1])
+          body = path.read_text()
+          body = re.sub(r":user:`([^`]+)`", r"\1", body)
+          body = re.sub(r":(?:issue|pr):`(\d+)`", r"#\1", body)
+          body = re.sub(r":[a-z]+:`~?([^`]+)`", lambda match: f"`{match.group(1).split('.')[-1]}`", body)
+          path.write_text(body.replace("``", "`"))
+          PY
           test -s "$RUNNER_TEMP/release-notes.md"
+          printf '\n[PyPI release](https://pypi.org/project/virtualenv/%s/)\n' "$GITHUB_REF_NAME" >> "$RUNNER_TEMP/release-notes.md"
+          previous=$({ gh api 'repos/pypa/virtualenv/releases?per_page=100' --paginate --jq '.[].tag_name'; printf '%s\n' "$GITHUB_REF_NAME"; } | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -Vu | awk -v tag="$GITHUB_REF_NAME" '$0 == tag { print previous; exit } { previous = $0 }')
+          if [[ -n "$previous" ]]; then
+            printf '\n**Full Changelog**: https://github.com/pypa/virtualenv/compare/%s...%s\n' "$previous" "$GITHUB_REF_NAME" >> "$RUNNER_TEMP/release-notes.md"
+          else
+            printf '\n**Full Changelog**: https://github.com/pypa/virtualenv/commits/%s\n' "$GITHUB_REF_NAME" >> "$RUNNER_TEMP/release-notes.md"
+          fi
           gh release create "$GITHUB_REF_NAME" virtualenv.pyz virtualenv.pyz.intoto.jsonl virtualenv.pyz.cdx.json \
             virtualenv.cdx.json virtualenv.spdx.json --verify-tag --notes-file "$RUNNER_TEMP/release-notes.md"
         env:
