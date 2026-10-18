@@ -4,16 +4,16 @@
     "tag": "graal-25.4.4"
   },
   "mermaid": {
-    "version": "12.0.0"
+    "version": "12.1.0"
   },
   "nushell": {
     "assets": {
       "Windows": {
-        "name": "nu-0.116.0-x86_64-pc-windows-msvc.zip",
-        "sha256": "745b165d847e34b5dea80c2cfc867383c02b907d288a59a44b25e39bcac14015"
+        "name": "nu-0.116.1-x86_64-pc-windows-msvc.zip",
+        "sha256": "6658c9e61fe42c88326c1caa99e8dc9ad99bec6c0bc353e6ecb7c5d3f79feed7"
       }
     },
-    "tag": "0.116.0"
+    "tag": "0.116.1"
   },
   "rustpython": {
     "assets": {
