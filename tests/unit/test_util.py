@@ -3,6 +3,7 @@ from __future__ import annotations
 import concurrent.futures
 import ctypes
 import os
+import shutil
 import subprocess
 import sys
 import traceback
@@ -516,6 +517,115 @@ class TestCacheDirMigration:
         result = _cache_dir_with_migration()
         assert result == new_dir
         assert (tmp_path / "new-cache" / "wheel" / "3.12" / "image" / "pip" / "pip.dist-info" / "METADATA").exists()
+
+
+@pytest.mark.parametrize(
+    ("nested", "relative_old"),
+    [
+        pytest.param(True, False, id="nested-cache"),
+        pytest.param(False, False, id="sibling-cache"),
+        pytest.param(False, True, id="relative-data-dir"),
+    ],
+)
+def test_cache_dir_migrates_contents(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, nested: bool, relative_old: bool
+) -> None:
+    old_dir: Final = tmp_path / "data"
+    old_dir.mkdir()
+    (old_dir / "test.txt").write_text("hello", encoding="utf-8")
+    new_dir: Final = old_dir / "Cache" if nested else tmp_path / "cache"
+    if relative_old:
+        monkeypatch.chdir(tmp_path)
+    mocker.patch("virtualenv.app_data.user_cache_dir", autospec=True, return_value=str(new_dir))
+    mocker.patch(
+        "virtualenv.app_data.user_data_dir",
+        autospec=True,
+        return_value=old_dir.name if relative_old else str(old_dir),
+    )
+
+    assert (str(make_app_data(None, read_only=False, env={})), (new_dir / "test.txt").read_text(encoding="utf-8")) == (
+        str(new_dir),
+        "hello",
+    )
+
+
+def test_cache_dir_nested_migration_keeps_parent(nested_cache_dirs: tuple[Path, Path]) -> None:
+    make_app_data(None, read_only=False, env={})
+
+    assert [entry.name for entry in nested_cache_dirs[0].iterdir()] == ["Cache"]
+
+
+@pytest.mark.parametrize(
+    ("rollback_fails", "cleanup_fails", "retry_uses_cache"),
+    [
+        pytest.param(False, False, True, id="rollback-succeeds"),
+        pytest.param(True, False, False, id="rollback-fails"),
+        pytest.param(False, True, False, id="cleanup-fails"),
+    ],
+)
+def test_cache_dir_nested_migration_failure_selection(
+    nested_cache_dirs: tuple[Path, Path],
+    mocker: MockerFixture,
+    rollback_fails: bool,
+    cleanup_fails: bool,
+    retry_uses_cache: bool,
+) -> None:
+    old_dir: Final = nested_cache_dirs[0]
+    new_dir: Final = nested_cache_dirs[1]
+    mocker.patch(
+        "virtualenv.app_data.shutil.move",
+        autospec=True,
+        wraps=shutil.move,
+        side_effect=[
+            mocker.DEFAULT,
+            OSError("permission denied"),
+            OSError("permission denied") if rollback_fails else mocker.DEFAULT,
+            mocker.DEFAULT,
+            mocker.DEFAULT,
+        ],
+    )
+    if cleanup_fails:
+        mocker.patch("virtualenv.app_data.os.rmdir", autospec=True, side_effect=OSError("permission denied"))
+
+    assert (
+        str(make_app_data(None, read_only=False, env={})),
+        str(make_app_data(None, read_only=False, env={})),
+    ) == (str(old_dir), str(new_dir if retry_uses_cache else old_dir))
+
+
+def test_cache_dir_interrupted_migration_keeps_old_location(
+    nested_cache_dirs: tuple[Path, Path], mocker: MockerFixture
+) -> None:
+    mocker.patch(
+        "virtualenv.app_data.shutil.move",
+        autospec=True,
+        wraps=shutil.move,
+        side_effect=[mocker.DEFAULT, KeyboardInterrupt()],
+    )
+
+    with pytest.raises(KeyboardInterrupt):
+        make_app_data(None, read_only=False, env={})
+
+    assert str(make_app_data(None, read_only=False, env={})) == str(nested_cache_dirs[0])
+
+
+def test_cache_dir_existing_nested_cache_stays_selected(nested_cache_dirs: tuple[Path, Path]) -> None:
+    new_dir: Final = nested_cache_dirs[1]
+    new_dir.mkdir()
+
+    assert str(make_app_data(None, read_only=False, env={})) == str(new_dir)
+
+
+@pytest.fixture
+def nested_cache_dirs(tmp_path: Path, mocker: MockerFixture) -> tuple[Path, Path]:
+    old_dir: Final = tmp_path / "data"
+    old_dir.mkdir()
+    (old_dir / "one.txt").write_text("one", encoding="utf-8")
+    (old_dir / "two.txt").write_text("two", encoding="utf-8")
+    new_dir: Final = old_dir / "Cache"
+    mocker.patch("virtualenv.app_data.user_cache_dir", autospec=True, return_value=str(new_dir))
+    mocker.patch("virtualenv.app_data.user_data_dir", autospec=True, return_value=str(old_dir))
+    return old_dir, new_dir
 
 
 @pytest.fixture
