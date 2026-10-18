@@ -527,16 +527,20 @@ class TestCacheDirMigration:
         pytest.param(False, True, id="relative-data-dir"),
     ],
 )
-def test_cache_dir_migrates_contents(tmp_path: Path, mocker: MockerFixture, nested: bool, relative_old: bool) -> None:
+def test_cache_dir_migrates_contents(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, nested: bool, relative_old: bool
+) -> None:
     old_dir: Final = tmp_path / "data"
     old_dir.mkdir()
     (old_dir / "test.txt").write_text("hello", encoding="utf-8")
     new_dir: Final = old_dir / "Cache" if nested else tmp_path / "cache"
+    if relative_old:
+        monkeypatch.chdir(tmp_path)
     mocker.patch("virtualenv.app_data.user_cache_dir", autospec=True, return_value=str(new_dir))
     mocker.patch(
         "virtualenv.app_data.user_data_dir",
         autospec=True,
-        return_value=os.path.relpath(old_dir) if relative_old else str(old_dir),
+        return_value=old_dir.name if relative_old else str(old_dir),
     )
 
     assert (str(make_app_data(None, read_only=False, env={})), (new_dir / "test.txt").read_text(encoding="utf-8")) == (
