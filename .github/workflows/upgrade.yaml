@@ -1,8 +1,7 @@
 name: Upgrade embedded dependencies
 on:
   schedule:
-    - cron: "0 10 * * *" # daily at 10:00 UTC
-    - cron: "0 11 * * 1" # Mondays at 11:00 UTC, after the daily run, to also bump the CI test tools
+    - cron: "0 11 * * 1"
   workflow_dispatch:
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -40,7 +39,6 @@ jobs:
         run: git fetch --force --tags https://github.com/pypa/virtualenv.git
       - name: Pin the newest CI test tools
         id: ci-tools
-        if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 11 * * 1'
         env:
           GH_TOKEN: ${{ github.token }}
         run: uv run --no-project --python 3.15 python tasks/upgrade_ci_tools.py
