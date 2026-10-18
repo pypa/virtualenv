@@ -349,6 +349,7 @@ template = "docs/changelog/template.jinja2"
 title_format = false
 issue_format = ":issue:`{issue}`"
 underlines = [ "*", "=", "-" ]
+ignore = [ "examples.rst" ]
 type = [
   # listing the types explicitly drops towncrier's "misc" default and makes a misspelt suffix fail
   # instead of being silently skipped, as .bufix.rst and .docs.rst were
