@@ -7,6 +7,18 @@
 .. towncrier release notes start
 
 ************************
+ v21.14.11 (2026-10-18)
+************************
+
+Bugfixes - 21.14.11
+===================
+
+- Search all directories supplied by repeated ``--extra-search-dir`` options instead of keeping only the last group.
+  (:issue:`3440`)
+- On Windows, the app data is now migrated into the nested cache directory instead of the migration failing with a
+  warning on every run. (:issue:`3441`)
+
+************************
  v21.14.10 (2026-10-17)
 ************************
 

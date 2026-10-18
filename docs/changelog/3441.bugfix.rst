@@ -1,2 +1,0 @@
-On Windows, the app data is now migrated into the nested cache directory instead of the migration failing with a warning
-on every run.
