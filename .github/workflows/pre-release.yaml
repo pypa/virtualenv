@@ -110,10 +110,16 @@ jobs:
             exit 1
           fi
           git fetch origin main --quiet
-          if [[ "$(git rev-parse origin/main)" != "$GITHUB_SHA" || -n "$(git tag --list "$VERSION")" ]]; then
-            echo "::error::main moved or $VERSION already exists"
+          if [[ -n "$(git tag --list "$VERSION")" ]]; then
+            echo "::error::$VERSION already exists"
             exit 1
           fi
+          if ! git diff --quiet "$GITHUB_SHA" origin/main -- \
+            docs/changelog.rst docs/changelog pyproject.toml tasks/release.py tasks/release-requirements.txt; then
+            echo "::error::release inputs changed after changelog generation"
+            exit 1
+          fi
+          git reset --hard origin/main
           mapfile -d '' candidates < <(git ls-files -z 'docs/changelog/*.rst')
           fragments=()
           for fragment in "${candidates[@]}"; do
