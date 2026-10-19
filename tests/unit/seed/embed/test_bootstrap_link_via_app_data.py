@@ -605,17 +605,15 @@ def test_symlink_seed_compiles_with_empty_local_module(tmp_path: Path, monkeypat
     (tmp_path / "compileall.py").touch()
     monkeypatch.chdir(tmp_path)
     monkeypatch.setenv("PYTHONHOME", sys.base_prefix)
-    session: Final = cli_run(
-        [
-            str(tmp_path / "env"),
-            "--symlink-app-data",
-            "--pip",
-            "embed",
-            "--app-data",
-            str(tmp_path / "cache"),
-            "--no-periodic-update",
-        ]
-    )
+    session: Final = cli_run([
+        str(tmp_path / "env"),
+        "--symlink-app-data",
+        "--pip",
+        "embed",
+        "--app-data",
+        str(tmp_path / "cache"),
+        "--no-periodic-update",
+    ])
     assert list((session.creator.purelib / "pip" / "__pycache__").glob("__init__*.pyc"))
 
 
@@ -627,17 +625,15 @@ def test_symlink_seed_reports_compilation_failure(tmp_path: Path, mocker: Mocker
         return_value=(7, "", "compilation failed"),
     )
     with pytest.raises(RuntimeError, match="compilation failed"):
-        cli_run(
-            [
-                str(tmp_path / "env"),
-                "--symlink-app-data",
-                "--pip",
-                "embed",
-                "--app-data",
-                str(tmp_path / "cache"),
-                "--no-periodic-update",
-            ]
-        )
+        cli_run([
+            str(tmp_path / "env"),
+            "--symlink-app-data",
+            "--pip",
+            "embed",
+            "--app-data",
+            str(tmp_path / "cache"),
+            "--no-periodic-update",
+        ])
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX shell launchers")
