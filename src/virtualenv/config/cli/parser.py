@@ -111,8 +111,9 @@ class VirtualEnvConfigParser(ArgumentParser):
             if action_id not in self._fixed:
                 self._fix_default(action)
                 self._fixed.add(action_id)
-            elif isinstance(action, ExtendAction):
-                # Each parsing pass starts from the configured default, not the previous CLI values.
+            elif self.options.get_source(action.dest) == "cli":
+                # Each parsing pass starts from the configured default, not the previous CLI values, otherwise
+                # accumulating actions (count, append, extend) add the same arguments again on every pass.
                 self.options.set_src(action.dest, action.default, getattr(action, "default_source", "default"))
 
     def _fix_default(self, action: Action) -> None:
