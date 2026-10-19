@@ -595,9 +595,12 @@ def test_seed_entry_points_still_fold_version_suffixed_names(tmp_path: Path) -> 
     (metadata / "entry_points.txt").write_text(
         "[console_scripts]\npip3.13 = example:main\npip3 = example:main\n", encoding="utf-8"
     )
-    installer = CopyPipInstall(tmp_path / "example-1-py3-none-any.whl", session.creator, image)
-    installer.install(session.interpreter.version_info)
-    assert set(installer._console_scripts) == {"pip"}, installer._console_scripts
+    CopyPipInstall(tmp_path / "example-1-py3-none-any.whl", session.creator, image).install(
+        session.interpreter.version_info
+    )
+    scripts = {i.name for i in session.creator.script_dir.iterdir()}
+    # a single base regenerates these, an extra one per declared name would add names like `pip33`
+    assert {"pip", "pip3", "pip3.13", "pip-3.13"} <= scripts, sorted(scripts)
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
