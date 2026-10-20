@@ -300,6 +300,7 @@ git-only = [
   ".readthedocs.yml",
   "_typos.toml",
   "docs/",
+  "pylock.toml",
   "scorecard.yml",
 ]
 sdist-only = [ "src/virtualenv/version.py" ]
