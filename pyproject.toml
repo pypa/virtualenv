@@ -175,6 +175,7 @@ property = [
 release = [
   "docstrfmt>=2.2.1",
   "gitpython>=3.2",
+  "hatch-fancy-pypi-readme>=25.1",
   "hatch-vcs>=0.5",
   "hatchling>=1.28",
   "packaging>=26.3",
@@ -210,6 +211,7 @@ build.hooks.custom.path = "hatch_build.py"
 build.targets.sdist.include = [
   "/.pre-commit-config.yaml",
   "/pylock.zipapp.toml",
+  "/README.md",
   "/src",
   "/tasks",
   "/tests",
