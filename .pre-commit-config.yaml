@@ -66,6 +66,9 @@ repos:
     rev: v1.51.1
     hooks:
       - id: typos
+        exclude: |
+          (?x)
+          ^pylock[.]toml$  # Generated package names are not project prose.
   - repo: meta
     hooks:
       - id: check-hooks-apply
