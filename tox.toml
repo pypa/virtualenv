@@ -295,6 +295,8 @@ commands = [
     "pylock.toml",
     "--group",
     "build",
+    "--python-version",
+    "3.15",
     "--output",
     "{env_tmp_dir}{/}build-constraints.txt",
   ],

@@ -75,6 +75,7 @@ jobs:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
+          version: latest-known
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
           cache-suffix: ${{ matrix.py }}
@@ -106,6 +107,7 @@ jobs:
         if: startsWith(matrix.py, '3.15')
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
+          version: latest-known
           enable-cache: false
           python-version: ${{ matrix.py }}
           activate-environment: true
@@ -262,6 +264,7 @@ jobs:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
+          version: latest-known
           python-version: "3.15"
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
@@ -323,6 +326,7 @@ jobs:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
+          version: latest-known
           python-version: "3.15"
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
@@ -372,6 +376,7 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
+          version: latest-known
           python-version: "3.15"
           enable-cache: false
       - name: Install locked release tools

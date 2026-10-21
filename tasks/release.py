@@ -16,12 +16,11 @@ from release_creator.fragments.names import pending_fragments
 from release_creator.fragments.pull_requests import pull_request_authors
 from release_creator.tags.select import next_tag
 
-ROOT_SRC_DIR: Final[Path] = Path(__file__).resolve().parents[1]
-CHANGELOG_DIR: Final[Path] = ROOT_SRC_DIR / "docs" / "changelog"
-
 
 def main(bump: str, *, push: bool) -> None:
-    repo = Repo(str(ROOT_SRC_DIR))
+    root_src_dir: Final[Path] = Path(__file__).resolve().parents[1]
+    changelog_dir: Final[Path] = root_src_dir / "docs" / "changelog"
+    repo = Repo(str(root_src_dir))
     if repo.is_dirty(untracked_files=True):
         msg = "Current repository is dirty. Commit or discard changes before preparing a release."
         raise RuntimeError(msg)
@@ -30,21 +29,21 @@ def main(bump: str, *, push: bool) -> None:
     version = next_tag(
         bump,
         [tag.name for tag in repo.tags],
-        [fragment.name for fragment in pending_fragments(CHANGELOG_DIR)],
+        [fragment.name for fragment in pending_fragments(changelog_dir)],
         datetime.now(UTC).date(),
     )
-    subjects = commit_subjects_from_git(CHANGELOG_DIR)
+    subjects = commit_subjects_from_git(changelog_dir)
     add_pull_request_links(
-        CHANGELOG_DIR, "pypa/virtualenv", subjects, pull_request_authors("pypa/virtualenv", subjects)
+        changelog_dir, "pypa/virtualenv", subjects, pull_request_authors("pypa/virtualenv", subjects)
     )
-    check_call([sys.executable, "-m", "towncrier", "build", "--yes", "--version", version], cwd=ROOT_SRC_DIR)
+    check_call([sys.executable, "-m", "towncrier", "build", "--yes", "--version", version], cwd=root_src_dir)
     run(
         [sys.executable, "-m", "prek", "run", "docstrfmt", "--files", "docs/changelog.rst"],
-        cwd=ROOT_SRC_DIR,
+        cwd=root_src_dir,
         check=False,
     )
-    check_call([sys.executable, "-m", "prek", "run", "docstrfmt", "--files", "docs/changelog.rst"], cwd=ROOT_SRC_DIR)
-    check_call([sys.executable, "-m", "prek", "run", "--all-files"], cwd=ROOT_SRC_DIR)
+    check_call([sys.executable, "-m", "prek", "run", "docstrfmt", "--files", "docs/changelog.rst"], cwd=root_src_dir)
+    check_call([sys.executable, "-m", "prek", "run", "--all-files"], cwd=root_src_dir)
     repo.git.add("-A", "--", "docs")
     repo.index.commit(f"release {version}")
     repo.create_tag(version)

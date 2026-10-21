@@ -58,7 +58,7 @@ jobs:
           uv pip sync --preview-features pylock --python "$RUNNER_TEMP/tools/bin/python" --group release pylock.toml
           echo "$RUNNER_TEMP/tools/bin" >>"$GITHUB_PATH"
       - name: Select hashed build dependencies
-        run: release-creator build-constraints --lock pylock.toml --group build --output "$RUNNER_TEMP/build-constraints.txt"
+        run: release-creator build-constraints --lock pylock.toml --group build --python-version 3.15 --output "$RUNNER_TEMP/build-constraints.txt"
       - name: Pin build timestamps to the release commit for reproducible artifacts
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
       - name: Build sdist and wheel
@@ -131,6 +131,7 @@ jobs:
           persist-credentials: false
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
+          version: latest-known
           python-version: "3.15"
           enable-cache: false
       - name: Install locked release tools
@@ -185,6 +186,7 @@ jobs:
           path: ${{ runner.temp }}/generated-notes
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
+          version: latest-known
           python-version: "3.15"
           enable-cache: false
       - name: Install locked release tools
@@ -206,9 +208,74 @@ jobs:
           name: github-release-notes
           path: ${{ runner.temp }}/release-notes.md
           if-no-files-found: error
+  pypi-stage:
+    name: Stage PyPI distributions
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      missing-count: ${{ steps.reconcile.outputs.missing-count }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: latest-known
+          python-version: "3.15"
+          enable-cache: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ env.dists-artifact-name }}
+          path: dist/
+      - id: reconcile
+        uses: tox-dev/github-workflows/reconcile-pypi-artifacts@a250ca3524857236e288764651851010939b6f71
+        with:
+          project: virtualenv
+          version: ${{ github.ref_name }}
+          dist: dist
+          mode: stage
+          missing-dir: ${{ runner.temp }}/missing
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pypi-missing-manifest
+          path: ${{ steps.reconcile.outputs.manifest }}
+          if-no-files-found: error
+  github-release-stage:
+    name: Stage GitHub Release draft
+    needs: [build, notes, pypi-stage]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: github-release-notes
+          path: ${{ runner.temp }}/release-notes
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: virtualenv-zipapp
+          path: ${{ runner.temp }}/release-assets
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: virtualenv-sbom
+          path: ${{ runner.temp }}/release-assets
+      - uses: tox-dev/github-workflows/publish-github-release@a250ca3524857236e288764651851010939b6f71
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          repository: ${{ github.repository }}
+          tag: ${{ github.ref_name }}
+          commit: ${{ github.sha }}
+          title: ${{ github.ref_name }}
+          notes-file: ${{ runner.temp }}/release-notes/release-notes.md
+          assets-directory: ${{ runner.temp }}/release-assets
+          mode: stage
   publish-pypi:
     name: Publish to PyPI
-    needs: [build, notes]
+    needs: [pypi-stage, github-release-stage]
+    if: needs.pypi-stage.outputs.missing-count != '0'
     runs-on: ubuntu-24.04
     environment:
       name: release
@@ -221,18 +288,57 @@ jobs:
         with:
           egress-policy: block
           allowed-endpoints: >-
-            fulcio.sigstore.dev:443 ghcr.io:443 pkg-containers.githubusercontent.com:443 rekor.sigstore.dev:443 timestamp.sigstore.dev:443 tuf-repo-cdn.sigstore.dev:443 upload.pypi.org:443
+            api.github.com:443 fulcio.sigstore.dev:443 ghcr.io:443 github.com:443 pkg-containers.githubusercontent.com:443 rekor.sigstore.dev:443 timestamp.sigstore.dev:443 tuf-repo-cdn.sigstore.dev:443 upload.pypi.org:443
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: ${{ env.dists-artifact-name }}
           path: dist/
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: pypi-missing-manifest
+          path: ${{ runner.temp }}/pypi-manifest
+      - uses: tox-dev/github-workflows/select-pypi-artifacts@a250ca3524857236e288764651851010939b6f71
+        with:
+          dist: dist
+          manifest: ${{ runner.temp }}/pypi-manifest/pypi-missing-names.txt
+          output-dir: selected
+          expected-count: ${{ needs.pypi-stage.outputs.missing-count }}
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
         with:
+          packages-dir: selected/
+          skip-existing: true
           attestations: true
+  pypi-verify:
+    name: Verify PyPI distributions
+    needs: [pypi-stage, publish-pypi]
+    if: >-
+      ${{ always() && needs.pypi-stage.result == 'success' && (needs.publish-pypi.result == 'success' || needs.publish-pypi.result == 'skipped') }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: latest-known
+          python-version: "3.15"
+          enable-cache: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ env.dists-artifact-name }}
+          path: dist/
+      - uses: tox-dev/github-workflows/reconcile-pypi-artifacts@a250ca3524857236e288764651851010939b6f71
+        with:
+          project: virtualenv
+          version: ${{ github.ref_name }}
+          dist: dist
+          mode: verify
   github-release:
     name: Publish GitHub Release
-    needs: publish-pypi
+    needs: pypi-verify
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -244,16 +350,22 @@ jobs:
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: virtualenv-zipapp
+          path: ${{ runner.temp }}/release-assets
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: virtualenv-sbom
-      - name: Create GitHub Release
+          path: ${{ runner.temp }}/release-assets
+      - uses: tox-dev/github-workflows/publish-github-release@a250ca3524857236e288764651851010939b6f71
         env:
           GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          TAG: ${{ github.ref_name }}
-        run: >-
-          gh release create "$TAG" virtualenv.pyz virtualenv.pyz.intoto.jsonl virtualenv.pyz.cdx.json virtualenv.cdx.json virtualenv.spdx.json --verify-tag --notes-file "$RUNNER_TEMP/release-notes/release-notes.md"
+        with:
+          repository: ${{ github.repository }}
+          tag: ${{ github.ref_name }}
+          commit: ${{ github.sha }}
+          title: ${{ github.ref_name }}
+          notes-file: ${{ runner.temp }}/release-notes/release-notes.md
+          assets-directory: ${{ runner.temp }}/release-assets
+          mode: publish
   update-bootstrap:
     name: Update get-virtualenv
     needs: github-release
@@ -505,10 +617,13 @@ jobs:
   recovery:
     name: Recovery
     if: >-
-      ${{ always() && needs.build.result == 'success' && (needs.publish-pypi.result == 'failure' || needs.github-release.result == 'failure' || needs.update-bootstrap.result == 'failure') }}
+      ${{ always() && needs.build.result == 'success' && (needs.pypi-stage.result == 'failure' || needs.github-release-stage.result == 'failure' || needs.publish-pypi.result == 'failure' || needs.pypi-verify.result == 'failure' || needs.github-release.result == 'failure' || needs.update-bootstrap.result == 'failure') }}
     needs:
       - build
+      - pypi-stage
+      - github-release-stage
       - publish-pypi
+      - pypi-verify
       - github-release
       - update-bootstrap
     runs-on: ubuntu-24.04

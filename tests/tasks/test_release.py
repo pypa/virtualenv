@@ -46,8 +46,7 @@ def release_checkout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: Mo
     repo.create_tag("1.2.2")
     repo.git.push("origin", "refs/tags/1.2.2")
     monkeypatch.chdir(root)
-    mocker.patch.object(release, "ROOT_SRC_DIR", root)
-    mocker.patch.object(release, "CHANGELOG_DIR", root / "docs" / "changelog")
+    mocker.patch.object(release, "__file__", str(root / "tasks" / "release.py"))
     mocker.patch.object(
         release,
         "pull_request_authors",
@@ -80,7 +79,7 @@ def test_release_rejects_dirty_checkout(release_checkout: tuple[Repo, Repo, Path
 
 def test_release_requires_upstream_remote(tmp_path: Path, mocker: MockerFixture) -> None:
     repo = Repo.init(tmp_path / "checkout")
-    mocker.patch.object(release, "ROOT_SRC_DIR", Path(repo.working_dir))
+    mocker.patch.object(release, "__file__", str(Path(repo.working_dir) / "tasks" / "release.py"))
     with pytest.raises(RuntimeError, match="pypa/virtualenv remote"):
         release.main("auto", push=False)
 

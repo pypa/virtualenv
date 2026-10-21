@@ -220,8 +220,8 @@ bot pull request with a fragment is still checked and its bot account is not cre
 Recovering a partial publication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A failure after the PyPI upload can leave a published package without its GitHub release or bootstrap update. Keep the
-release commit and tag: users may have installed that version, and PyPI `does not allow filename reuse
+A failure can leave a GitHub Release draft, a partial PyPI upload, or an unfinished bootstrap update. Keep the release
+commit and tag: users may have installed that version, and PyPI `does not allow filename reuse
 <https://pypi.org/help/#file-name-reuse>`_. Resetting the tip of ``main`` can also remove an unrelated commit that a
 maintainer merged during publication.
 
@@ -229,11 +229,12 @@ Before retrying, inspect the failed job, the files on PyPI, the GitHub release a
 ``get-virtualenv/public/version.txt``. Compare their hashes with the artifacts from the failed workflow run. Preserve
 those artifacts and logs. A timeout does not prove that an upload failed.
 
-Complete missing publication steps with the original verified artifacts. Do not rerun the full publish job after PyPI
-accepted its upload; the duplicate upload can fail before reaching the remaining destinations. If the artifacts need a
-change, publish a new version and consider yanking the broken release. Use a normal reviewed commit for any bootstrap
-correction, without force-pushing either repository. Follow ``.github/INCIDENT_RESPONSE.md`` if there is evidence of
-tampering or compromised credentials.
+When the failed run's artifacts match the published files, rerun the workflow for the same tag. It stages only files
+missing from PyPI, verifies the complete PyPI file set, resumes a matching GitHub Release draft, and skips a matching
+``get-virtualenv`` update. A mismatched PyPI file or GitHub Release asset stops the run for inspection. If the artifacts
+need a change, publish a new version and consider yanking the broken release. Use a normal reviewed commit for any
+bootstrap correction, without force-pushing either repository. Follow ``.github/INCIDENT_RESPONSE.md`` if there is
+evidence of tampering or compromised credentials.
 
 The release workflow verifies the published wheel, sdist and zipapp after publication. It checks the PyPI attestations
 and compares the distributions with the build artifacts, verifies the zipapp's release workflow, tag and commit, checks
