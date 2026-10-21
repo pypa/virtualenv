@@ -235,10 +235,10 @@ License. Provide tests that cover your changes and run the tests locally first. 
 all these platforms.
 
 Pull Requests should be small to facilitate review. Keep them self-contained, and limited in scope. `Studies have shown
-<https://www.kessler.de/prd/smartbear/BestPracticesForPeerCodeReview.pdf>`_ that review quality falls off as patch size
-grows. Sometimes this will result in many small PRs to land a single large feature. In particular, pull requests must
-not be treated as "feature branches", with ongoing development work happening within the PR. Instead, the feature should
-be broken up into smaller, independent parts which can be reviewed and merged individually.
+<https://smartbear.com/learn/code-review/best-practices-for-peer-code-review/>`_ that review quality falls off as patch
+size grows. Sometimes this will result in many small PRs to land a single large feature. In particular, pull requests
+must not be treated as "feature branches", with ongoing development work happening within the PR. Instead, the feature
+should be broken up into smaller, independent parts which can be reviewed and merged individually.
 
 Additionally, avoid including "cosmetic" changes to code that is unrelated to your change, as these make reviewing the
 PR more difficult. Examples include re-flowing text in comments or documentation, or addition or removal of blank lines
