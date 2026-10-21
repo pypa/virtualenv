@@ -58,7 +58,8 @@ jobs:
       - name: Build sdist and wheel
         run: |
           uv build --python 3.15 --python-preference only-managed --sdist --wheel . --out-dir dist \
-            --build-constraints tasks/release-requirements.txt --require-hashes
+            --build-constraints tasks/release-requirements.txt --require-build-hashes \
+            --preview-features build-dependency-hashes
       - name: Extract the SBOM the wheel build embedded
         run: uv run --no-project --python 3.15 python -m zipfile -e dist/*.whl sbom-extract/ && cp sbom-extract/*.dist-info/sboms/virtualenv.cdx.json .
       - name: Attest the SBOM against the sdist and wheel
