@@ -426,7 +426,7 @@ Documentation
 -------------
 
 - Correct the documented changelog fragment types and example to match the enforced towncrier categories.
-  (:issue:`3323`)
+  (:issue:`3323`) - by :user:`januththedev`.
 - List the Unlicense and the SPDX BSD variants in the runtime dependency licensing policy, matching the ``filelock``
   releases virtualenv installs on Python 3.9, and describe the dependency review check that enforces the policy.
   (:pr:`3329`) - by :user:`gaborbernat`.
@@ -487,7 +487,7 @@ Fixed
 -----
 
 - Include the pre-commit configuration and the zipapp lock file in the source distribution, so downstream packagers can
-  run the test suite from it. (:issue:`3314`)
+  run the test suite from it. (:issue:`3314`) - by :user:`Gonghan-Princess`.
 
 .. _release-21-11-0:
 
@@ -963,7 +963,7 @@ Added
 
 - Stop installing the ``_virtualenv.{py,pth}`` distutils import hook for Python 3.10 and later, where pip, setuptools
   and CPython already ignore the install config keys it guards against; this removes the hook's startup import cost. The
-  hook is still installed for Python 3.9 - :issue:`3181`. (:issue:`3181`)
+  hook is still installed for Python 3.9. (:issue:`3181`) - by :user:`gaborbernat`.
 
 .. _release-21-5-2:
 
@@ -1017,7 +1017,7 @@ Added
 Packaging
 ---------
 
-- Remove the embedded ``wheel`` package at version ``0.47.0``.
+- Remove the embedded ``wheel`` package at version ``0.47.0`` - by :user:`gaborbernat`.
 
 .. _release-21-4-3:
 
@@ -1034,7 +1034,8 @@ Fixed
   CPython's ``getpath.realpath`` (python/cpython#115237), so environments created from a symlink to the interpreter
   binary locate the base stdlib (for example python-build-standalone); a fully symlinked interpreter tree is kept as-is
   - by :user:`gaborbernat`. (:issue:`3157`)
-- Stop exporting ``PS1`` from the bash activator so child processes do not inherit shell prompt state. (:issue:`3158`)
+- Stop exporting ``PS1`` from the bash activator so child processes do not inherit shell prompt state. (:issue:`3158`) -
+  by :user:`karlhillx`.
 - Handle CYGWIN/MSYS/MINGW path conversions in fish activation script - by :user:`LuNoX`. (:issue:`3160`)
 
 .. _release-21-4-3-packaging:
@@ -1137,7 +1138,7 @@ Added
 
 - Re-introduce ``xonsh`` shell activator (``activate.xsh``) previously removed in 20.7.0, and make the plugin loader
   prefer virtualenv's built-in entry points so a third-party package cannot override them by registering a duplicate
-  name. (:issue:`3003`)
+  name. (:issue:`3003`) - by :user:`anki-code`.
 
 .. _release-21-3-0-packaging:
 
@@ -1377,7 +1378,8 @@ Added
 -----
 
 - Add support for PEP 440 version specifiers in the ``--python`` flag. Users can now specify Python versions using
-  operators like ``>=``, ``<=``, ``~=``, etc. For example: ``virtualenv --python=">=3.12" myenv`` `. (:issue:`2994`)
+  operators like ``>=``, ``<=``, ``~=``, etc. For example: ``virtualenv --python=">=3.12" myenv``. (:issue:`2994`) - by
+  :user:`rahuldevikar`.
 
 .. _release-20-35-4:
 
@@ -1556,7 +1558,7 @@ Added
 -----
 
 - Warn on incorrect invocation of the Nushell activation script - by :user:`esafak`.
-- Discover uv-managed Python installations (:issue:`2901`)
+- Discover uv-managed Python installations (:issue:`2901`) - by :user:`edgarrmondragon`.
 
 .. _release-20-32-0-fixed:
 
@@ -1650,7 +1652,7 @@ Packaging
 Fixed
 -----
 
-- Ignore unreadable directories in ``PATH``. (:issue:`2794`)
+- Ignore unreadable directories in ``PATH``. (:issue:`2794`) - by :user:`barneygale`.
 
 .. _release-20-29-2:
 
@@ -1732,8 +1734,7 @@ Fixed
 Added
 -----
 
-- Write CACHEDIR.TAG file on creation - by "user:`neilramsay`. (:pr:`2803`) - by :user:`neilramsay` and
-  :user:`gaborbernat`.
+- Write CACHEDIR.TAG file on creation (:pr:`2803`) - by :user:`neilramsay` and :user:`gaborbernat`.
 
 .. _release-20-27-2:
 
@@ -1781,7 +1782,7 @@ Packaging
 
 - Upgrade embedded wheels:
 
-  - pip to ``24.3.1`` from ``24.2`` (:issue:`2789`)
+  - pip to ``24.3.1`` from ``24.2`` (:issue:`2789`) - by :user:`gaborbernat`.
 
 .. _release-20-27-0:
 
@@ -1856,7 +1857,7 @@ Packaging
 Fixed
 -----
 
-- no longer create `()` output in console during activation of a virtualenv by .bat file. (:issue:`2728`)
+- Stop printing ``()`` during activation through a batch file. (:issue:`2728`) - by :user:`ShootGan`.
 
 .. _release-20-26-4-packaging:
 
@@ -2079,7 +2080,7 @@ Packaging
 Fixed
 -----
 
-- Fixed ResourceWarning on exit caused by periodic update subprocess (:issue:`2472`)
+- Fix ``ResourceWarning`` on exit from the periodic update subprocess (:issue:`2472`) - by :user:`sigma67`.
 
 .. _release-20-24-3-packaging:
 
@@ -2546,7 +2547,7 @@ Fixed
 
 - Fix the incorrect operation when ``setuptools`` plugins output something into ``stdout``. (:pr:`2335`) - by
   :user:`KOLANICH`.
-- CPython3Windows creator ignores missing ``DLLs`` dir. (:issue:`2368`)
+- CPython3Windows creator ignores missing ``DLLs`` dir. (:issue:`2368`) - by :user:`reksar`.
 
 .. _release-20-15-0:
 
@@ -2684,7 +2685,7 @@ Packaging
 Fixed
 -----
 
-- fix "execv() arg 2 must contain only strings" error on M1 MacOS (:issue:`2282`)
+- Fix "execv() arg 2 must contain only strings" on M1 macOS (:issue:`2282`) - by :user:`isac322`.
 
 .. _release-20-13-1-packaging:
 
@@ -2715,9 +2716,9 @@ Fixed
 -----
 
 - Fix ``AttributeError: 'bool' object has no attribute 'error'`` when creating a Python 2.x virtualenv on macOS - by
-  ``moreati``. (:issue:`2269`)
+  :user:`moreati`. (:issue:`2269`)
 - Fix ``PermissionError: [Errno 1] Operation not permitted`` when creating a Python 2.x virtualenv on macOS/arm64 - by
-  ``moreati``. (:issue:`2271`)
+  :user:`moreati`. (:issue:`2271`)
 
 .. _release-20-12-1:
 
@@ -2826,7 +2827,7 @@ Added
 - If a ``"venv"`` install scheme exists in ``sysconfig``, virtualenv now uses it to create new virtual environments.
   This allows Python distributors, such as Fedora, to patch/replace the default install scheme without affecting the
   paths in new virtual environments. A similar technique `was proposed to Python, for the venv module
-  <https://bugs.python.org/issue45413>`_ - by ``hroncok`` (:issue:`2208`)
+  <https://bugs.python.org/issue45413>`_ - by :user:`hroncok` (:issue:`2208`)
 - The activated virtualenv prompt is now always wrapped in parentheses. This affects venvs created with the ``--prompt``
   attribute, and matches virtualenv's behavior on par with venv. (:pr:`2224`) - by :user:`tusharsadhwani`.
 
@@ -2902,14 +2903,15 @@ Packaging
 Added
 -----
 
-- Add the nushell activation script.
+- Add the nushell activation script - by :user:`elferherrera`.
 
 .. _release-20-8-0-packaging:
 
 Packaging
 ---------
 
-- Upgrade embedded setuptools to ``58.0.4`` from ``57.4.0`` and pip to ``21.2.4`` from ``21.2.3``.
+- Upgrade embedded setuptools to ``58.0.4`` from ``57.4.0`` and pip to ``21.2.4`` from ``21.2.3`` - by
+  :user:`gaborbernat`.
 
 .. _release-20-7-2:
 
@@ -3056,7 +3058,7 @@ Packaging
 Fixed
 -----
 
-- Built in discovery class is always preferred over plugin supplied classes. (:issue:`2087`)
+- Built in discovery class is always preferred over plugin supplied classes. (:issue:`2087`) - by :user:`AWhetter`.
 
 .. _release-20-4-4-packaging:
 
@@ -3214,7 +3216,7 @@ Added
 -----
 
 - Optionally skip VCS ignore directive for entire virtualenv directory, using option :option:`no-vcs-ignore`, by default
-  ``False``. (:issue:`2003`)
+  ``False``. (:issue:`2003`) - by :user:`compwiztobe`.
 - Add ``--read-only-app-data`` option to allow for creation based on an existing app data cache which is non-writable.
   This may be useful (for example) to produce a docker image where the app-data is pre-populated.
 
@@ -3318,7 +3320,8 @@ Fixed
   (:issue:`1818`)
 - Avoid spawning new windows when doing seed package upgrades in the background on Windows - by :user:`gaborbernat`.
   (:issue:`1928`)
-- Fix a bug that reading and writing on the same file may cause race on multiple processes. (:issue:`1938`)
+- Fix a bug that reading and writing on the same file may cause race on multiple processes. (:issue:`1938`) - by
+  :user:`frostming`.
 - Provide correct path for bash activator in cygwin or msys2 - by :user:`danyeaw`. (:issue:`1940`)
 - Relax importlib requirement to allow version<3 - by :user:`usamasadiq` and :user:`UsamaSadiq` (:pr:`1953`)
 - pth files were not processed on CPython2 if $PYTHONPATH was pointing to site-packages/ - by :user:`navytux`.
@@ -3964,8 +3967,8 @@ Added
 Fixed
 -----
 
-- Allow the use of ``/`` as pathname component separator on Windows - by ``vphilippon`` (:issue:`1582`)
-- Lower minimal version of six required to 1.9 - by ``ssbarnea`` (:pr:`1606`) - by :user:`ssbarnea`.
+- Allow the use of ``/`` as pathname component separator on Windows - by :user:`vphilippon` (:issue:`1582`)
+- Lower minimal version of six required to 1.9 (:pr:`1606`) - by :user:`ssbarnea`.
 
 .. _release-20-0-3:
 
