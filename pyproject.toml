@@ -148,6 +148,7 @@ docs = [
   "sphinxcontrib-towncrier>=0.2.1a0",
   "towncrier>=26.9",
   "uv>=0.12.22",
+  { include-group = "release" },
 ]
 coverage = [
   "covdefaults>=2.3",
@@ -179,7 +180,9 @@ release = [
   "hatch-vcs>=0.5",
   "hatchling>=1.28",
   "packaging>=26.3",
+  "prek>=0.5",
   "pypi-attestations>=0.0.28",
+  "release-creator @ git+https://github.com/tox-dev/release-creator@5ab33234939cf2969d25a11ba477c31eb264067c",
   "towncrier>=26.9",
   "tox>=4.45",
   "tox-uv>=1.28.1",
@@ -197,6 +200,7 @@ tasks = [
   "gitpython>=3.2",
   "hatchling>=1.28",
   "pre-commit-uv>=4.2",
+  "prek>=0.5",
   "ruff>=0.16.10",
   "towncrier>=26.9",
   { include-group = "test" },
@@ -360,17 +364,22 @@ html.skip_covered = false
 name = "virtualenv"
 directory = "docs/changelog"
 filename = "docs/changelog.rst"
-template = "docs/changelog/template.jinja2"
+template = "release_creator.fragments:template.rst.jinja2"
 title_format = false
-issue_format = ":issue:`{issue}`"
+issue_format = ":pr:`{issue}`"
 underlines = [ "*", "=", "-" ]
 ignore = [ "examples.rst" ]
 type = [
   # listing the types explicitly drops towncrier's "misc" default and makes a misspelt suffix fail
   # instead of being silently skipped, as .bufix.rst and .docs.rst were
-  { directory = "feature", name = "Features", showcontent = true },
-  { directory = "bugfix", name = "Bugfixes", showcontent = true },
-  { directory = "doc", name = "Improved Documentation", showcontent = true },
-  { directory = "deprecation", name = "Deprecations", showcontent = true },
-  { directory = "removal", name = "Removals", showcontent = true }
+  { directory = "feature", name = "Added", showcontent = true },
+  { directory = "change", name = "Changes", showcontent = true },
+  { directory = "bugfix", name = "Fixed", showcontent = true },
+  { directory = "doc", name = "Documentation", showcontent = true },
+  { directory = "breaking", name = "Breaking changes", showcontent = true },
+  { directory = "security", name = "Security", showcontent = true },
+  { directory = "performance", name = "Performance", showcontent = true },
+  { directory = "deprecation", name = "Deprecated", showcontent = true },
+  { directory = "removal", name = "Removed", showcontent = true },
+  { directory = "packaging", name = "Packaging", showcontent = true },
 ]

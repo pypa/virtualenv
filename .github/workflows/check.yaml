@@ -361,8 +361,8 @@ jobs:
           CODEQL: ${{ steps.codeql.outputs.codeql-path }}
   changelog:
     name: News fragment
-    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip news')
-    runs-on: ubuntu-24.04
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     steps:
@@ -374,7 +374,12 @@ jobs:
         with:
           python-version: "3.15"
           enable-cache: false
-      - run: uvx towncrier check --compare-with "origin/${GITHUB_BASE_REF}"
+      - name: Install locked release tools
+        run: |
+          uv venv --python 3.15 "$RUNNER_TEMP/release-tools"
+          uv pip sync --preview-features pylock --python "$RUNNER_TEMP/release-tools/bin/python" --group release pylock.toml
+          echo "$RUNNER_TEMP/release-tools/bin" >>"$GITHUB_PATH"
+      - uses: tox-dev/github-workflows/validate-news@296388849cced16665b3e8b4397a22265418d3dc
   all-checks-pass:
     name: ✅ all checks pass
     # the gate shares the jobs' condition, so every job it needs has run and a skip counts as a failure
@@ -385,11 +390,12 @@ jobs:
     steps:
       - env:
           NEEDS_JSON: ${{ toJSON(needs) }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          jq -e '
+          jq -e --arg event "$EVENT_NAME" '
             all(
               to_entries[];
               .value.result == "success" or
-              (.key == "changelog" and .value.result == "skipped")
+              (.key == "changelog" and .value.result == "skipped" and $event != "pull_request")
             )
           ' <<< "$NEEDS_JSON"

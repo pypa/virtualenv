@@ -156,7 +156,7 @@ commands = [
 [env.tasks]
 description = "run the build and CI tooling tests"
 base_python = [ "3.15" ]
-dependency_groups = [ "tasks" ]
+dependency_groups = [ "release", "tasks" ]
 set_env._COVERAGE_SRC = "{tox_root}"
 set_env.COVERAGE_FILE = "{work_dir}{/}.coverage.{env_name}"
 set_env.COVERAGE_PROCESS_START = "{tox_root}{/}pyproject.toml"
@@ -235,10 +235,10 @@ commands = [
 ]
 
 [env.release]
-description = "do a release, required posarg of the version number"
+description = "prepare a release locally"
 base_python = [ "3.15" ]
 skip_install = true
-deps = [ "-r tasks/release-requirements.txt" ]
+dependency_groups = [ "release" ]
 change_dir = "{tox_root}{/}tasks"
 commands = [ [ "python", "release.py", { replace = "posargs", extend = true } ] ]
 

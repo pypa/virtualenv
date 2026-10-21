@@ -1,0 +1,23 @@
+name: Upgrade release tools
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * 2"
+permissions: {}
+concurrency:
+  group: upgrade-release-tools
+  cancel-in-progress: false
+jobs:
+  upgrade:
+    uses: tox-dev/github-workflows/.github/workflows/upgrade-release-tools.yaml@296388849cced16665b3e8b4397a22265418d3dc
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
+    with:
+      python-version: "3.15"
+      check-workflow: check.yaml
+      commit-message: "build(deps): refresh release lock"
+      pull-request-title: "build(deps): refresh release tool lock"
+      pull-request-body: |-
+        Refresh the project lock across its runtime dependencies, groups, extras, and supported Python versions.

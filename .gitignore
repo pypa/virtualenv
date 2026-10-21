@@ -11,6 +11,7 @@ dist
 
 # tools
 .tox
+.venv
 .*_cache
 .DS_Store
 

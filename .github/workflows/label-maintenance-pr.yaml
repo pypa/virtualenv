@@ -1,0 +1,17 @@
+name: Label maintenance PRs
+on:
+  pull_request_target: # zizmor: ignore[dangerous-triggers] The shared action reads PR metadata without checkout.
+    types: [opened, reopened, synchronize]
+permissions: {}
+jobs:
+  label:
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    steps:
+      - uses: tox-dev/github-workflows/label-bot-news@296388849cced16665b3e8b4397a22265418d3dc
+        with:
+          fragments: docs/changelog
+          extension: rst
