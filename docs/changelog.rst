@@ -6,24 +6,21 @@
 
 .. towncrier release notes start
 
-.. _release-21-14-11:
+.. _release-21-14-12:
 
 ************************
  v21.14.12 (2026-10-21)
 ************************
 
-Bugfixes - 21.14.12
-===================
+.. _release-21-14-12-packaging:
 
-- Upgrade embedded wheels:
+Packaging
+---------
 
-  - setuptools to ``84.2.1`` from ``84.0.0``
-  - pip to ``26.2.2`` from ``26.2.1`` (:issue:`3452`)
+- Upgrade the embedded setuptools wheel from ``84.0.0`` to ``84.2.1`` and the embedded pip wheel from ``26.2.1`` to
+  ``26.2.2``. (:pr:`3452`)
 
-Improved Documentation - 21.14.12
-=================================
-
-- Require a pull request news fragment and a matching changelog section before publishing. (:issue:`3445`)
+.. _release-21-14-11:
 
 ************************
  v21.14.11 (2026-10-18)
@@ -1986,13 +1983,6 @@ Packaging
  v20.25.0 (2023-12-01)
 ***********************
 
-.. _release-20-25-0-added:
-
-Added
------
-
-- The tests now pass on the CI with Python 3.13.0a2 - by :user:`hroncok`. (:pr:`2673`)
-
 .. _release-20-25-0-packaging:
 
 Packaging
@@ -2000,12 +1990,21 @@ Packaging
 
 - Upgrade embedded wheels:
 
-  - wheel to ``0.41.3`` from ``0.41.2`` (:pr:`2665`) - by :user:`gaborbernat`.
-
-- Upgrade embedded wheels:
-
   - wheel to ``0.42.0`` from ``0.41.3``
   - setuptools to ``69.0.2`` from ``68.2.2`` (:pr:`2669`) - by :user:`gaborbernat`.
+
+.. _release-20-24-7:
+
+***********************
+ v20.24.7 (2023-11-21)
+***********************
+
+.. _release-20-24-7-packaging:
+
+Packaging
+---------
+
+- Upgrade the embedded wheel package from ``0.41.2`` to ``0.41.3``. (:pr:`2665`) - by :user:`gaborbernat`.
 
 .. _release-20-24-6:
 
