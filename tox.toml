@@ -246,9 +246,9 @@ commands = [ [ "python", "release.py", { replace = "posargs", extend = true } ] 
 description = "render the CycloneDX SBOM extracted from a wheel as SPDX 2.3 and validate it"
 base_python = [ "3.15" ]
 skip_install = true
-dependency_groups = [ "sbom" ]
-set_env.UV_CONSTRAINT = "{tox_root}{/}tasks{/}release-requirements.txt"
+dependency_groups = []
 commands = [
+  [ "uv", "pip", "sync", "--preview-features", "pylock", "--python", "{env_python}", "--group", "sbom", "pylock.toml" ],
   [ "python", "{tox_root}{/}tasks{/}cyclonedx_to_spdx.py", "virtualenv.cdx.json", "virtualenv.spdx.json" ],
   [ "pyspdxtools", "--infile", "virtualenv.spdx.json" ],
 ]
@@ -272,12 +272,32 @@ uv_seed = true
 description = "generate a zipapp, embed its SBOM and validate the SBOM"
 base_python = [ "3.15" ]
 skip_install = true
-deps = [ "hatchling>=1.28", "packaging>=26.3", "uv>=0.12.19" ]
-dependency_groups = [ "sbom" ]
+dependency_groups = []
 pass_env = [ "SOURCE_DATE_EPOCH" ]
 set_env.PYTHONPATH = "{tox_root}"
-set_env.UV_CONSTRAINT = "{tox_root}{/}tasks{/}release-requirements.txt"
 commands = [
+  [
+    "uv",
+    "pip",
+    "sync",
+    "--preview-features",
+    "pylock",
+    "--python",
+    "{env_python}",
+    "--group",
+    "release",
+    "pylock.toml"
+  ],
+  [
+    "release-creator",
+    "build-constraints",
+    "--lock",
+    "pylock.toml",
+    "--group",
+    "build",
+    "--output",
+    "{env_tmp_dir}{/}build-constraints.txt",
+  ],
   [
     "uv",
     "build",
@@ -285,7 +305,7 @@ commands = [
     "--python",
     "{env_python}",
     "--build-constraints",
-    "{tox_root}{/}tasks{/}release-requirements.txt",
+    "{env_tmp_dir}{/}build-constraints.txt",
     "--require-build-hashes",
     "--preview-features",
     "build-dependency-hashes",

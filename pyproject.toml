@@ -182,7 +182,7 @@ release = [
   "packaging>=26.3",
   "prek>=0.5",
   "pypi-attestations>=0.0.28",
-  "release-creator @ git+https://github.com/tox-dev/release-creator@5ab33234939cf2969d25a11ba477c31eb264067c",
+  "release-creator @ git+https://github.com/tox-dev/release-creator@80ecd0e952a0e0c50d08129ec89aaa8306ea0b05",
   "towncrier>=26.9",
   "tox>=4.45",
   "tox-uv>=1.28.1",

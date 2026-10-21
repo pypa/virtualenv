@@ -319,6 +319,8 @@ The project obtains and updates each kind of dependency this way:
   from PyPI into ``src/virtualenv/seed/wheels/embed`` and records their SHA-256 in ``BUNDLE_SHA256``. The same workflow
   recompiles ``pylock.zipapp.toml``, which pins each distribution the zipapp bundles by version and hash. It leaves out
   releases younger than seven days and opens a pull request with the result.
+- The weekly ``upgrade-release-tools.yaml`` workflow refreshes ``pylock.toml`` across the declared dependency groups,
+  supported Python versions, and platforms. Release builds take their exact tool versions and backend hashes from it.
 - Dependabot bumps the GitHub Actions, which the repository requires to be pinned to a commit SHA, every week after a
   seven-day cooldown. pre-commit.ci bumps the pre-commit hooks, which ``.pre-commit-config.yaml`` freezes to commit
   SHAs. ``upgrade.yaml`` bumps the CI test tools every Monday.
