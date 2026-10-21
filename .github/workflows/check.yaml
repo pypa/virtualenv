@@ -384,7 +384,7 @@ jobs:
           uv venv --python 3.15 "$RUNNER_TEMP/release-tools"
           uv pip sync --preview-features pylock --python "$RUNNER_TEMP/release-tools/bin/python" --group release pylock.toml
           echo "$RUNNER_TEMP/release-tools/bin" >>"$GITHUB_PATH"
-      - uses: tox-dev/github-workflows/validate-news@296388849cced16665b3e8b4397a22265418d3dc
+      - uses: tox-dev/github-workflows/validate-news@16fb799213df587849bcb78ea5ea00a29f750964
   all-checks-pass:
     name: ✅ all checks pass
     # the gate shares the jobs' condition, so every job it needs has run and a skip counts as a failure
