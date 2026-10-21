@@ -12785,14 +12785,14 @@ sha256 = "381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231"
 
 [[packages]]
 name = "release-creator"
-version = "0.4.2.dev56+g2d1124518"
+version = "0.4.2.dev61+ga5873f5d6"
 marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.vcs]
 type = "git"
 url = "https://github.com/tox-dev/release-creator"
-requested-revision = "2d1124518d11c9c5798d375fa70ff0ec8422e3b0"
-commit-id = "2d1124518d11c9c5798d375fa70ff0ec8422e3b0"
+requested-revision = "a5873f5d66c5b1ff07da6294aa2719764fa9f864"
+commit-id = "a5873f5d66c5b1ff07da6294aa2719764fa9f864"
 
 [[packages]]
 name = "requests"
