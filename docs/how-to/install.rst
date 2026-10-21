@@ -9,7 +9,7 @@ Python. Pick the method that fits your setup:
   starting fresh.
 - `pipx <https://pipx.pypa.io/stable/>`_ -- installs Python CLI tools in isolated environments. Use this if you already
   have ``pipx`` set up.
-- `pip <https://pip.pypa.io/stable/>`_ -- the standard Python package installer. Use ``--user`` to avoid modifying
+- `pip <https://pip.pypa.io/en/stable/>`_ -- the standard Python package installer. Use ``--user`` to avoid modifying
   system packages. May not work on distributions with externally-managed Python environments.
 - `zipapp <https://docs.python.org/3/library/zipapp.html>`_ -- a self-contained executable requiring no installation.
   Use this in CI or environments where you cannot install packages.
@@ -62,7 +62,7 @@ Python. Pick the method that fits your setup:
 
 .. tab:: pip
 
-    Install virtualenv using `pip <https://pip.pypa.io/stable/>`_:
+    Install virtualenv using `pip <https://pip.pypa.io/en/stable/>`_:
 
     .. code-block:: console
 
