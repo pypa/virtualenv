@@ -182,7 +182,7 @@ release = [
   "packaging>=26.3",
   "prek>=0.5",
   "pypi-attestations>=0.0.28",
-  "release-creator @ git+https://github.com/tox-dev/release-creator@7db94b1b86ee6559f22970f605a0eef7c4bff02e",
+  "release-creator @ git+https://github.com/tox-dev/release-creator@2d1124518d11c9c5798d375fa70ff0ec8422e3b0",
   "towncrier>=26.9",
   "tox>=4.45",
   "tox-uv>=1.28.1",
@@ -367,7 +367,7 @@ filename = "docs/changelog.rst"
 template = "release_creator.fragments:template.rst.jinja2"
 title_format = false
 issue_format = ":pr:`{issue}`"
-underlines = [ "*", "=", "-" ]
+underlines = [ "*", "-", "~" ]
 ignore = [ "examples.rst" ]
 type = [
   # listing the types explicitly drops towncrier's "misc" default and makes a misspelt suffix fail

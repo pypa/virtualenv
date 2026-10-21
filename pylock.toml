@@ -2839,7 +2839,7 @@ sha256 = "255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360"
 name = "colorama"
 version = "0.4.6"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and ((python_full_version >= '3.10' and python_full_version < '3.12' and os_name == 'nt') or (python_full_version >= '3.12' and python_full_version < '3.15' and os_name == 'nt' and sys_platform != 'linux') or (python_full_version >= '3.15' and os_name == 'nt'))) or (\"property\" in dependency_groups and (sys_platform == 'win32')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10' and sys_platform == 'win32')) or (\"test\" in dependency_groups and (sys_platform == 'win32')) or (\"type\" in dependency_groups and (sys_platform == 'win32'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and ((python_full_version >= '3.10' and python_full_version < '3.12' and os_name == 'nt') or (python_full_version >= '3.10' and os_name == 'nt' and sys_platform != 'linux'))) or (\"property\" in dependency_groups and (sys_platform == 'win32')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10' and sys_platform == 'win32')) or (\"test\" in dependency_groups and (sys_platform == 'win32')) or (\"type\" in dependency_groups and (sys_platform == 'win32'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz"
@@ -7148,7 +7148,7 @@ sha256 = "5a1f80bf1daa489495071efbb095d75a634cf28a8bc299581244063b53176151"
 name = "importlib-metadata"
 version = "9.0.1"
 index = "https://pypi.org/simple"
-marker = "(\"pkg-meta\" in dependency_groups and ((python_full_version >= '3.10' and python_full_version < '3.10.2') or (python_full_version >= '3.10.2' and python_full_version < '3.12' and platform_machine != 'ppc64le' and platform_machine != 's390x')))"
+marker = "(\"pkg-meta\" in dependency_groups and ((python_full_version >= '3.10' and python_full_version < '3.10.2' and platform_machine == 'ppc64le') or (python_full_version >= '3.10' and python_full_version < '3.10.2' and platform_machine == 's390x') or (python_full_version >= '3.10' and python_full_version < '3.12' and platform_machine != 'ppc64le' and platform_machine != 's390x')))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/6f/7e/1e7e8dc30634b93ebb3d58a3dea569ad146e656218d3960ab04f62047b29/importlib_metadata-9.0.1.tar.gz"
@@ -12785,14 +12785,14 @@ sha256 = "381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231"
 
 [[packages]]
 name = "release-creator"
-version = "0.4.2.dev44+g7db94b1b8"
+version = "0.4.2.dev56+g2d1124518"
 marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.vcs]
 type = "git"
 url = "https://github.com/tox-dev/release-creator"
-requested-revision = "7db94b1b86ee6559f22970f605a0eef7c4bff02e"
-commit-id = "7db94b1b86ee6559f22970f605a0eef7c4bff02e"
+requested-revision = "2d1124518d11c9c5798d375fa70ff0ec8422e3b0"
+commit-id = "2d1124518d11c9c5798d375fa70ff0ec8422e3b0"
 
 [[packages]]
 name = "requests"
@@ -18752,7 +18752,7 @@ sha256 = "0b3596c50a5c700c9cb40ba8d86d9f2cc4807e9bedb06bcdf7fac85633e444dc"
 name = "zipp"
 version = "4.1.1"
 index = "https://pypi.org/simple"
-marker = "(\"pkg-meta\" in dependency_groups and ((python_full_version >= '3.10' and python_full_version < '3.10.2') or (python_full_version >= '3.10.2' and python_full_version < '3.12' and platform_machine != 'ppc64le' and platform_machine != 's390x')))"
+marker = "(\"pkg-meta\" in dependency_groups and ((python_full_version >= '3.10' and python_full_version < '3.10.2' and platform_machine == 'ppc64le') or (python_full_version >= '3.10' and python_full_version < '3.10.2' and platform_machine == 's390x') or (python_full_version >= '3.10' and python_full_version < '3.12' and platform_machine != 'ppc64le' and platform_machine != 's390x')))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/dc/23/655a1802fe8041302c959774ca7c80b53bc24737ff3ef45cb50ef11bd96c/zipp-4.1.1.tar.gz"
