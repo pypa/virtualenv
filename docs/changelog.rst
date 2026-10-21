@@ -7,6 +7,23 @@
 .. towncrier release notes start
 
 ************************
+ v21.14.12 (2026-10-21)
+************************
+
+Bugfixes - 21.14.12
+===================
+
+- Upgrade embedded wheels:
+
+  - setuptools to ``84.2.1`` from ``84.0.0``
+  - pip to ``26.2.2`` from ``26.2.1`` (:issue:`3452`)
+
+Improved Documentation - 21.14.12
+=================================
+
+- Require a pull request news fragment and a matching changelog section before publishing. (:issue:`3445`)
+
+************************
  v21.14.11 (2026-10-18)
 ************************
 
