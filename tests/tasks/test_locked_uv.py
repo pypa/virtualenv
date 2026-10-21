@@ -15,11 +15,12 @@ def test_locked_uv_reports_the_pinned_version(tmp_path: Path) -> None:
     lock: Final[Path] = tmp_path / "pylock.toml"
     lock.write_text('[[packages]]\nname = "uv"\nversion = "0.13.4"\n', encoding="utf-8")
     result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
-        [sys.executable, str(Path(locked_uv.__file__).resolve()), str(lock)],
+        [sys.executable, str(Path(locked_uv.__file__).resolve())],
         check=False,
         capture_output=True,
         text=True,
         encoding="utf-8",
+        cwd=tmp_path,
     )
     assert result.returncode == 0
     assert result.stdout == "0.13.4\n"
@@ -45,7 +46,7 @@ def test_locked_uv_reports_the_pinned_version(tmp_path: Path) -> None:
 def test_locked_uv_rejects_an_unusable_lock(contents: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     lock: Final[Path] = tmp_path / "pylock.toml"
     lock.write_text(contents, encoding="utf-8")
-    monkeypatch.setattr(sys, "argv", ["locked_uv.py", str(lock)])
+    monkeypatch.chdir(tmp_path)
     with pytest.raises(SystemExit) as error:
         locked_uv.main()
     assert error.value.code == "pylock.toml must pin one uv version"

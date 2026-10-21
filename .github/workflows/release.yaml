@@ -44,7 +44,7 @@ jobs:
           fi
       - name: Read the locked uv version
         id: locked-uv
-        run: echo "version=$(python3 tasks/locked_uv.py pylock.toml)" >>"$GITHUB_OUTPUT"
+        run: echo "version=$(python3 tasks/locked_uv.py)" >>"$GITHUB_OUTPUT"
       - name: Install the locked version of uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
@@ -375,7 +375,7 @@ jobs:
           persist-credentials: false
       - name: Read the locked uv version
         id: locked-uv
-        run: echo "version=$(python3 tasks/locked_uv.py pylock.toml)" >>"$GITHUB_OUTPUT"
+        run: echo "version=$(python3 tasks/locked_uv.py)" >>"$GITHUB_OUTPUT"
       - name: Install the locked version of uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
