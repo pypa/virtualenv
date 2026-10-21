@@ -1,5 +1,3 @@
-"""Prepare a local release from merged changelog fragments."""
-
 from __future__ import annotations
 
 import argparse
