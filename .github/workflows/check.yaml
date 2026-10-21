@@ -419,4 +419,4 @@ jobs:
               ((.key == "changelog" or .key == "hook-update-cooldown") and
                .value.result == "skipped" and $event != "pull_request")
             )
-          ' <<< "$NEEDS_JSON"
+          ' <<<"$NEEDS_JSON"

@@ -58,12 +58,12 @@ jobs:
             git add -- tasks/ci-tools.json
           fi
           if ! git diff --cached --quiet; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "### Embedded dependency changes" >> "$GITHUB_STEP_SUMMARY"
-            git diff --cached --stat >> "$GITHUB_STEP_SUMMARY"
+            echo "changed=true" >>"$GITHUB_OUTPUT"
+            echo "### Embedded dependency changes" >>"$GITHUB_STEP_SUMMARY"
+            git diff --cached --stat >>"$GITHUB_STEP_SUMMARY"
           else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "### All embedded dependencies are up to date" >> "$GITHUB_STEP_SUMMARY"
+            echo "changed=false" >>"$GITHUB_OUTPUT"
+            echo "### All embedded dependencies are up to date" >>"$GITHUB_STEP_SUMMARY"
           fi
       - name: Check PyPI release age
         if: steps.upgrade.outputs.changed == 'true'
@@ -104,7 +104,7 @@ jobs:
         run: python3 tasks/apply_upgrade_patch.py "$RUNNER_TEMP/upgrade-patch/upgrade.patch"
       - name: Record the validated patch digest
         id: digest
-        run: echo "sha256=$(sha256sum "$RUNNER_TEMP/upgrade-patch/upgrade.patch" | cut -d ' ' -f1)" >> "$GITHUB_OUTPUT"
+        run: echo "sha256=$(sha256sum "$RUNNER_TEMP/upgrade-patch/upgrade.patch" | cut -d ' ' -f1)" >>"$GITHUB_OUTPUT"
   publish:
     name: Open upgrade pull request
     needs: [generate, validate]
