@@ -243,6 +243,7 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
         run: >-
           gh release create "$TAG" virtualenv.pyz virtualenv.pyz.intoto.jsonl virtualenv.pyz.cdx.json virtualenv.cdx.json virtualenv.spdx.json --verify-tag --notes-file "$RUNNER_TEMP/release-notes/release-notes.md"
