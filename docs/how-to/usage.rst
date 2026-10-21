@@ -184,6 +184,8 @@ Disable the prompt modification by setting the ``VIRTUAL_ENV_DISABLE_PROMPT`` en
 
 Access the prompt string via the ``VIRTUAL_ENV_PROMPT`` environment variable.
 
+.. _programmatic-activation:
+
 Programmatic activation
 =======================
 

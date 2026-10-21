@@ -544,7 +544,7 @@ virtualenv provides activation scripts for multiple shells:
   (``activate.bat``)
 - `Nushell <https://www.nushell.sh/>`_ (``activate.nu``)
 - Python (``activate_this.py``) -- for programmatic activation from within a running Python process, see
-  :ref:`how-to/usage:Programmatic activation`
+  :ref:`programmatic-activation`
 
 .. note::
 

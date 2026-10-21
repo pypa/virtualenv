@@ -81,6 +81,8 @@ CPython 3.15:
 
     tox -e tasks
 
+.. _running-linters:
+
 Running linters
 ===============
 
@@ -173,9 +175,10 @@ A full release publishes to `PyPI <https://pypi.org/project/virtualenv/>`_, crea
 Version bumping
 ^^^^^^^^^^^^^^^
 
-The ``--version`` argument to ``tox r -e release`` controls the version. It defaults to ``auto``, which inspects the
-``docs/changelog`` directory: if any ``*.feature.rst`` or ``*.removal.rst`` fragments exist, the minor version is
-bumped, otherwise the patch version is bumped. You can also pass ``major``, ``minor``, or ``patch`` explicitly.
+The release tool reads the latest numeric tag and the pending news fragments. ``auto`` selects a major version for a
+``breaking`` fragment, a minor version for a ``feature`` fragment, and a patch version otherwise. Adding or removing
+Python version support is a feature. The maintainer can choose ``major``, ``minor``, or ``patch`` explicitly, but cannot
+type an arbitrary release version.
 
 Both methods produce identical results: a release commit and tag on ``main``. Pushing the tag triggers the `Release
 workflow <https://github.com/pypa/virtualenv/actions/workflows/release.yaml>`_ which builds the sdist, wheel, and
@@ -186,15 +189,33 @@ zipapp, publishes to PyPI via trusted publisher, creates a `GitHub Release
 **Via GitHub Actions (recommended)**
 
 1. Go to the `Pre-release workflow <https://github.com/pypa/virtualenv/actions/workflows/pre-release.yaml>`_ on GitHub.
-2. Click **Run workflow** and select the bump type (``auto``, ``major``, ``minor``, or ``patch``).
+2. Click **Run workflow** and select ``auto`` or an explicit bump type.
 
 **Locally**
 
 .. code-block:: console
 
-    tox r -e release
+    tox r -e release -- --bump auto --no-push
 
-Pass ``--version <bump>`` to override the default ``auto`` behavior (e.g. ``--version minor``).
+Run that command in a temporary clone to inspect the generated changelog and tag without pushing. Then run it in a clean
+checkout without ``--no-push`` to publish the release commit and tag atomically. Both paths link merged fragments to
+their squash pull requests, add human author credits, format the changelog with ``prek``, and run all hooks.
+
+News fragments
+^^^^^^^^^^^^^^
+
+Add ``docs/changelog/+short-description.<type>.rst`` for each user-facing change. A squash merge supplies the pull
+request number; release preparation adds its link and human author credit. Link a separate issue with ``:issue:`` when
+the text refers to one. Use ``feature`` for adding or removing Python version support, ``bugfix`` for fixes, and
+``packaging`` for installation or shipped dependency changes. Use ``change`` for modified behavior, ``doc`` for user
+guidance, ``security`` for security fixes, ``performance`` for speed or resource improvements, ``breaking`` for
+incompatible behavior, ``deprecation`` for announced removals, and ``removal`` for removed features. Each fragment
+describes a user-visible effect in reStructuredText. A pull request can add several fragments when its changes belong in
+different categories.
+
+Changes confined to CI or maintenance need no news. Apply ``skip news`` to a human pull request without a fragment; the
+label can be added after the pull request opens. Bot pull requests without fragments receive that label automatically. A
+bot pull request with a fragment is still checked and its bot account is not credited as an author.
 
 Recovering a partial publication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -258,15 +279,15 @@ A maintainer reviews each pull request before it merges into ``main`` and checks
   description the outside input it handles, and updates the `threat model
   <https://github.com/pypa/virtualenv/blob/main/.github/THREAT_MODEL.md#update-triggers>`_ when it hits an update
   trigger;
-- a new or bumped dependency meets the :ref:`licensing policy <development:Licensing policy>`.
+- a new or bumped dependency meets the :ref:`licensing policy <licensing-policy>`.
 
 The ``main`` ruleset enforces the rest. A pull request merges only after four checks pass: ``✅ all checks pass``, which
 gathers the test matrix, the type checks, the docs build, the zipapp and SBOM checks and the CodeQL query tests from
 ``check.yaml``; ``🔍 dependency review``; ``pre-commit.ci - pr``; and the Read the Docs build. The ruleset also blocks a
 merge while CodeQL reports an error, or a security alert of high severity or above.
 
-The ruleset asks for one approval from someone other than the last person to push. Repository admins can bypass that
-rule, and the maintainers merge their own pull requests this way once the required checks pass. The `threat model
+The ruleset requires no approval, so a maintainer can merge after the required checks pass. Repository admins can bypass
+the ruleset. The `threat model
 <https://github.com/pypa/virtualenv/blob/main/.github/THREAT_MODEL.md#library-and-supply-chain-threats>`_ records the
 risk of a single reviewer.
 
@@ -316,6 +337,8 @@ Software composition analysis findings follow these thresholds:
   with the reason virtualenv does not reach the vulnerable code.
 - An embedded wheel with no fixed version for a supported Python version stays, and
   :ref:`reference/release-artifacts:Embedded wheel advisories` lists its advisories and the way around them.
+
+.. _licensing-policy:
 
 Licensing policy
 ================
@@ -384,51 +407,7 @@ A finding blocks a merge at these thresholds:
 
 A CodeQL dismissal carries a comment that says who controls the flagged input and why it cannot cross a trust boundary
 that the `threat model <https://github.com/pypa/virtualenv/blob/main/.github/THREAT_MODEL.md>`_ lists. An inline
-suppression names the rule it silences, and :ref:`development:Running linters` says when a ``# noqa`` fits.
-
-NEWS entries
-============
-
-The ``changelog.rst`` file is managed using :pypi:`towncrier` and all non trivial changes must be accompanied by a news
-entry. To add an entry to the news file, first you need to have created an issue describing the change you want to make.
-A Pull Request itself *may* function as such, but it is preferred to have a dedicated issue (for example, in case the PR
-ends up rejected due to code quality reasons).
-
-Once you have an issue or pull request, you take the number and you create a file inside of the ``docs/changelog``
-directory named after that issue number with an extension of:
-
-- ``feature.rst``,
-- ``bugfix.rst``,
-- ``doc.rst``,
-- ``deprecation.rst``,
-- ``removal.rst``.
-
-Thus if your issue or PR number is ``1234`` and this change is fixing a bug, then you would create a file
-``docs/changelog/1234.bugfix.rst``. PRs can span multiple categories by creating multiple files (for instance, if you
-added a feature and deprecated/removed the old feature at the same time, you would create
-``docs/changelog/1234.bugfix.rst`` and ``docs/changelog/1234.removal.rst``). Likewise if a PR touches multiple
-issues/PRs you may create a file for each of them with the same contents and :pypi:`towncrier` will deduplicate them.
-
-Contents of a NEWS entry
-------------------------
-
-The contents of this file are reStructuredText formatted text that will be used as the content of the news file entry.
-You do not need to reference the issue or PR numbers here as towncrier will automatically add a reference to all of the
-affected issues when rendering the news file.
-
-In order to maintain a consistent style in the ``changelog.rst`` file, it is preferred to keep the news entry to the
-point, in sentence case, shorter than 120 characters and in an imperative tone -- an entry should complete the sentence
-``This change will …``. In rare cases, where one line is not enough, use a summary line in an imperative tone followed
-by a blank line separating it from a description of the feature/change in one or more paragraphs, each wrapped at 120
-characters. Remember that a news entry is meant for end users and should only contain details relevant to an end user.
-
-Choosing the type of NEWS entry
--------------------------------
-
-A trivial change is anything that does not warrant an entry in the news file. Some examples are: code refactors that
-don't change anything as far as the public is concerned, typo fixes, white space modification, etc. To mark a PR as
-trivial a contributor simply needs to add a randomly named, empty file to the ``news/`` directory with the extension of
-``.trivial``.
+suppression names the rule it silences, and :ref:`running-linters` says when a ``# noqa`` fits.
 
 Becoming a maintainer
 =====================

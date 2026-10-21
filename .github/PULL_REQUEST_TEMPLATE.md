@@ -6,7 +6,8 @@
 
 - [ ] ensured there are test(s) validating the fix
 
-- [ ] added news fragment in `docs/changelog` folder
+- [ ] added a `docs/changelog/+short-description.<type>.rst` fragment for each user-facing change, or applied
+  `skip news`
 
 - [ ] updated/extended the documentation
 
