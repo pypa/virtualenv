@@ -282,8 +282,37 @@ jobs:
           head=$(gh api repos/pypa/get-virtualenv/git/ref/heads/main --jq .object.sha)
           echo "sha=$head" >>"$GITHUB_OUTPUT"
           echo "tree=$(gh api "repos/pypa/get-virtualenv/git/commits/$head" --jq .tree.sha)" >>"$GITHUB_OUTPUT"
+      - name: Read get-virtualenv files
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          BASE_TREE: ${{ steps.main.outputs.tree }}
+        run: gh api "repos/pypa/get-virtualenv/git/trees/$BASE_TREE?recursive=1" > "$RUNNER_TEMP/get-virtualenv-tree.json"
+      - name: Compare get-virtualenv files
+        id: compare
+        run: |
+          current_zipapp=$(jq -r '.tree[] | select(.path == "public/virtualenv.pyz" and .mode == "100644") | .sha' "$RUNNER_TEMP/get-virtualenv-tree.json")
+          current_version=$(jq -r '.tree[] | select(.path == "public/version.txt" and .mode == "100644") | .sha' "$RUNNER_TEMP/get-virtualenv-tree.json")
+          if [[ -z "$current_zipapp" || -z "$current_version" ]]; then
+            echo '::error::get-virtualenv main is missing a release file'
+            exit 1
+          fi
+          zipapp=$(git hash-object virtualenv.pyz)
+          version=$(printf %s "$GITHUB_REF_NAME" | git hash-object --stdin)
+          if [[ "$current_version" == "$version" ]]; then
+            if [[ "$current_zipapp" != "$zipapp" ]]; then
+              echo '::error::get-virtualenv already has this version with a different zipapp'
+              exit 1
+            fi
+            echo 'update=false' >>"$GITHUB_OUTPUT"
+          elif [[ "$current_zipapp" == "$zipapp" ]]; then
+            echo '::error::get-virtualenv has this zipapp under a different version'
+            exit 1
+          else
+            echo 'update=true' >>"$GITHUB_OUTPUT"
+          fi
       - name: Upload zipapp blob
         id: blob
+        if: steps.compare.outputs.update == 'true'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
@@ -292,6 +321,7 @@ jobs:
           echo "sha=$sha" >>"$GITHUB_OUTPUT"
       - name: Create get-virtualenv tree
         id: tree
+        if: steps.compare.outputs.update == 'true'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           BASE_TREE: ${{ steps.main.outputs.tree }}
@@ -308,6 +338,7 @@ jobs:
       # get-virtualenv main requires signed commits, and GitHub signs commits the app creates through the API
       - name: Create signed get-virtualenv commit
         id: commit
+        if: steps.compare.outputs.update == 'true'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           TREE: ${{ steps.tree.outputs.sha }}
@@ -318,6 +349,7 @@ jobs:
             | gh api repos/pypa/get-virtualenv/git/commits --input - --jq .sha)
           echo "sha=$sha" >>"$GITHUB_OUTPUT"
       - name: Update get-virtualenv main
+        if: steps.compare.outputs.update == 'true'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           COMMIT: ${{ steps.commit.outputs.sha }}
