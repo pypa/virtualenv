@@ -311,9 +311,9 @@ jobs:
           attestations: true
   pypi-verify:
     name: Verify PyPI distributions
-    needs: [pypi-stage, publish-pypi]
+    needs: [pypi-stage, github-release-stage, publish-pypi]
     if: >-
-      ${{ always() && needs.pypi-stage.result == 'success' && (needs.publish-pypi.result == 'success' || needs.publish-pypi.result == 'skipped') }}
+      ${{ always() && needs.pypi-stage.result == 'success' && needs.github-release-stage.result == 'success' && (needs.publish-pypi.result == 'success' || needs.publish-pypi.result == 'skipped') }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read
