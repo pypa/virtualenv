@@ -20,9 +20,16 @@ wheels = [{ url = "https://files.pythonhosted.org/packages/42/14/42b2651a2f46b02
 [[packages]]
 name = "filelock"
 version = "4.1.0"
-marker = "python_full_version >= '3.10'"
+marker = "python_full_version == '3.10.*'"
 sdist = { url = "https://files.pythonhosted.org/packages/4c/58/6fd434bec86eff7c38a3168454cb132b762b2bea9b3ac094101a2f7bc32a/filelock-4.1.0.tar.gz", upload-time = 2026-10-09T19:57:20Z, size = 561277, hashes = { sha256 = "ad7f724afef953e731b1cc39bcd3a09166d72ed7fcdf29e6e88b1c3235c6715d" } }
 wheels = [{ url = "https://files.pythonhosted.org/packages/ee/86/032133892a5de43b5a98200b01aadcad68cc255e274a762f08b8a76d2912/filelock-4.1.0-py3-none-any.whl", upload-time = 2026-10-09T19:57:18Z, size = 133003, hashes = { sha256 = "2ce9818e3e2d8f284c1a964414447ef148d42a5fd5e2a477a7118e574b293ec1" } }]
+
+[[packages]]
+name = "filelock"
+version = "4.1.1"
+marker = "python_full_version >= '3.11'"
+sdist = { url = "https://files.pythonhosted.org/packages/35/c8/1d457d9150ff948f2ce6ada7715e0eeebbe5d3b58a45271a1e222474bcd3/filelock-4.1.1.tar.gz", upload-time = 2026-10-11T16:11:54Z, size = 563430, hashes = { sha256 = "7ba0927482c5a814b0a7f391d029ccdb8010f576f0a74c0dcde1811e8bc4c1b6" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/d7/8b/f837f52905395ba4510fe61f753c24833fb0a9c76e21267bb9f828b664a9/filelock-4.1.1-py3-none-any.whl", upload-time = 2026-10-11T16:11:52Z, size = 132460, hashes = { sha256 = "3f4a557945a7b0f95efeb1f432267affe5d45ac8ddde2aed1b97ebb62382c089" } }]
 
 [[packages]]
 name = "packaging"
