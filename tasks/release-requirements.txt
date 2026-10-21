@@ -567,9 +567,9 @@ docstrfmt==2.2.1 \
     --hash=sha256:9f35b62e746962efe32f7af27b3bf69e104a4e69827a49a9f488da770271bd0e \
     --hash=sha256:a0a9962dbd64684b9bea2af582c631ae174d06850cd960eb37221dd6a0d6cdc4
     # via virtualenv (pyproject.toml:release)
-docutils==0.23 \
-    --hash=sha256:25d013af9bf23bc1c7b2b093dff4208166c53a94786c9e447808335ef1185fea \
-    --hash=sha256:746f5060322511280a1e50eb76846ed6bf2342984b2ac04dc42caa1a8d78799e
+docutils==0.22.4 \
+    --hash=sha256:4db53b1fde9abecbb74d91230d32ab626d94f6badfc575d6db9194a49df29968 \
+    --hash=sha256:d0013f540772d1420576855455d050a2180186c91c15779301ac2ccb3eeb68de
     # via
     #   docstrfmt
     #   docutils-stubs
@@ -582,9 +582,9 @@ email-validator==2.3.0 \
     --hash=sha256:80f13f623413e6b197ae73bb10bf4eb0908faf509ad8362c5edeb0be7fd450b4 \
     --hash=sha256:9fc05c37f2f6cf439ff414f8fc46d917929974a82244c20eb10231ba60c54426
     # via pydantic
-filelock==4.1.0 \
-    --hash=sha256:2ce9818e3e2d8f284c1a964414447ef148d42a5fd5e2a477a7118e574b293ec1 \
-    --hash=sha256:ad7f724afef953e731b1cc39bcd3a09166d72ed7fcdf29e6e88b1c3235c6715d
+filelock==4.1.1 \
+    --hash=sha256:3f4a557945a7b0f95efeb1f432267affe5d45ac8ddde2aed1b97ebb62382c089 \
+    --hash=sha256:7ba0927482c5a814b0a7f391d029ccdb8010f576f0a74c0dcde1811e8bc4c1b6
     # via
     #   python-discovery
     #   tox
@@ -1544,9 +1544,9 @@ towncrier==26.9.0 \
     --hash=sha256:ace9031631c718cc0709107b8755e6e31350eb8acdc877af43df3177addb9a55 \
     --hash=sha256:ae4d223e6aadaff98d29b7f09e58d9c9ccf4cd3b455a2d2e0486d432cd8bf660
     # via virtualenv (pyproject.toml:release)
-tox==4.65.2 \
-    --hash=sha256:6705e05b65701192784c4f5ab47f0c1bed02a41390c31b7d161c02ee0166d9fe \
-    --hash=sha256:6bbac6aca06f21aec1e5c840b8428c49d7d03511bf9bb52c02612c064deb764d
+tox==4.65.5 \
+    --hash=sha256:17baefa138f8f4c6a552f6afc136008e7bce11a94f4b8e47c87b22dd33fc80f8 \
+    --hash=sha256:9b7296cc43f358736665afecb9154b04309e500c1ebe6aafe86632211b8cad41
     # via
     #   virtualenv (pyproject.toml:release)
     #   tox-uv-bare
@@ -1565,9 +1565,9 @@ tuf==7.0.1 \
     --hash=sha256:5ada1db78da3518fa851e28588f4b2249b8662a28ae528f54afa2a1de541fb31 \
     --hash=sha256:d30434bda6e079ab303fb30d1b3006d939a10ca34783b1573d61cd9b802fa45c
     # via sigstore
-types-docutils==0.23.0.20260923 \
-    --hash=sha256:486d9054ea84410cc201a30c15759077a5f32234247cfc08aa7290ff2509f770 \
-    --hash=sha256:62851b429db623e36853a4a189ce15a846e0636fe090c135d6dc5dd4f9108ef5
+types-docutils==0.22.3.20260724 \
+    --hash=sha256:0223ce87f9b8331a5a3a7c7832e828033d289da6b878a0dcfbc74c30ec58850e \
+    --hash=sha256:45e2fe584608671aa648784c4f805d08a36cd69eb2bd542e60522140c46dc89c
     # via docstrfmt
 typing-extensions==4.16.0 \
     --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 \
