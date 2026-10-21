@@ -14,11 +14,10 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       zipapp-sha256: ${{ steps.zipapp-digest.outputs.sha256 }}
+      inputs-sha256: ${{ steps.inputs-digest.outputs.sha256 }}
+      inputs-artifact-id: ${{ steps.upload-inputs.outputs.artifact-id }}
     permissions:
       contents: read # check out the tagged source
-      id-token: write # sign attestations with the workflow identity
-      attestations: write # store the SBOM and provenance attestations
-      artifact-metadata: write # record the attested artifacts
     steps:
       - name: Block outbound traffic outside the allowlist
         uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
@@ -70,20 +69,67 @@ jobs:
             --preview-features build-dependency-hashes
       - name: Extract the SBOM the wheel build embedded
         run: uv run --no-project --python 3.15 python -m zipfile -e dist/*.whl sbom-extract/ && cp sbom-extract/*.dist-info/sboms/virtualenv.cdx.json .
+      - name: Render the SBOM as SPDX
+        run: '"$RUNNER_TEMP/tools/bin/tox" r -e spdx'
+      - name: Build zipapp
+        run: '"$RUNNER_TEMP/tools/bin/tox" r -e zipapp'
+      - name: Record the zipapp digest
+        id: zipapp-digest
+        run: echo "sha256=$(sha256sum virtualenv.pyz | cut -d ' ' -f1)" >> "$GITHUB_OUTPUT"
+      - name: Seal the build inputs
+        id: inputs-digest
+        run: |
+          sha256sum dist/* virtualenv.cdx.json virtualenv.spdx.json virtualenv.pyz virtualenv.pyz.cdx.json > release-inputs.sha256
+          echo "sha256=$(sha256sum release-inputs.sha256 | cut -d ' ' -f1)" >> "$GITHUB_OUTPUT"
+      - name: Store the build inputs
+        id: upload-inputs
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: virtualenv-build-inputs
+          path: |
+            dist/*
+            virtualenv.cdx.json
+            virtualenv.spdx.json
+            virtualenv.pyz
+            virtualenv.pyz.cdx.json
+            release-inputs.sha256
+          if-no-files-found: error
+  attest:
+    name: Attest release artifacts
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - name: Block outbound traffic outside the allowlist
+        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        with:
+          egress-policy: block
+          disable-sudo-and-containers: true
+          allowed-endpoints: >-
+            api.github.com:443 fulcio.sigstore.dev:443 github.com:443 rekor.sigstore.dev:443 release-assets.githubusercontent.com:443
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.build.outputs.inputs-artifact-id }}
+      - name: Verify the sealed build inputs
+        env:
+          EXPECTED_SHA256: ${{ needs.build.outputs.inputs-sha256 }}
+        run: |
+          printf '%s  release-inputs.sha256\n' "$EXPECTED_SHA256" | sha256sum --check
+          sha256sum dist/* virtualenv.cdx.json virtualenv.spdx.json virtualenv.pyz virtualenv.pyz.cdx.json > "$RUNNER_TEMP/current-inputs.sha256"
+          cmp release-inputs.sha256 "$RUNNER_TEMP/current-inputs.sha256"
       - name: Attest the SBOM against the sdist and wheel
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: dist/*
           sbom-path: virtualenv.cdx.json
-      - name: Render the SBOM as SPDX
-        run: '"$RUNNER_TEMP/tools/bin/tox" r -e spdx'
       - name: Attest the SPDX SBOM against the sdist and wheel
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: dist/*
           sbom-path: virtualenv.spdx.json
-      - name: Build zipapp
-        run: '"$RUNNER_TEMP/tools/bin/tox" r -e zipapp'
       - name: Attest provenance for the zipapp
         id: attest
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
@@ -98,15 +144,13 @@ jobs:
         with:
           subject-path: virtualenv.pyz
           sbom-path: virtualenv.pyz.cdx.json
-      - name: Record the zipapp digest
-        id: zipapp-digest
-        run: echo "sha256=$(sha256sum virtualenv.pyz | cut -d ' ' -f1)" >> "$GITHUB_OUTPUT"
       - parallel:
           - name: Store the distribution packages
             uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
             with:
               name: ${{ env.dists-artifact-name }}
               path: dist/*
+              if-no-files-found: error
           - name: Store the SBOM
             uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
             with:
@@ -114,6 +158,7 @@ jobs:
               path: |
                 virtualenv.cdx.json
                 virtualenv.spdx.json
+              if-no-files-found: error
           - name: Store the zipapp
             uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
             with:
@@ -122,6 +167,7 @@ jobs:
                 virtualenv.pyz
                 virtualenv.pyz.intoto.jsonl
                 virtualenv.pyz.cdx.json
+              if-no-files-found: error
   previous:
     name: Find previous release
     runs-on: ubuntu-26.04
@@ -215,7 +261,7 @@ jobs:
           if-no-files-found: error
   pypi-stage:
     name: Stage PyPI distributions
-    needs: build
+    needs: attest
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -249,7 +295,7 @@ jobs:
           if-no-files-found: error
   github-release-stage:
     name: Stage GitHub Release draft
-    needs: [build, notes, pypi-stage]
+    needs: [attest, notes, pypi-stage]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -373,7 +419,7 @@ jobs:
           mode: publish
   update-bootstrap:
     name: Update get-virtualenv
-    needs: [build, github-release]
+    needs: [build, attest, github-release]
     runs-on: ubuntu-24.04
     environment: bootstrap-auth
     permissions:
@@ -633,9 +679,10 @@ jobs:
   recovery:
     name: Recovery
     if: >-
-      ${{ always() && needs.build.result == 'success' && (needs.pypi-stage.result == 'failure' || needs.github-release-stage.result == 'failure' || needs.publish-pypi.result == 'failure' || needs.pypi-verify.result == 'failure' || needs.github-release.result == 'failure' || needs.update-bootstrap.result == 'failure') }}
+      ${{ always() && needs.build.result == 'success' && (needs.attest.result == 'failure' || needs.pypi-stage.result == 'failure' || needs.github-release-stage.result == 'failure' || needs.publish-pypi.result == 'failure' || needs.pypi-verify.result == 'failure' || needs.github-release.result == 'failure' || needs.update-bootstrap.result == 'failure') }}
     needs:
       - build
+      - attest
       - pypi-stage
       - github-release-stage
       - publish-pypi
