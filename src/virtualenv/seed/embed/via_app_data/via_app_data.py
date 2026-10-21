@@ -38,14 +38,21 @@ LOGGER = logging.getLogger(__name__)
 class FromAppData(BaseEmbed):
     def __init__(self, options: VirtualEnvOptions) -> None:
         super().__init__(options)
-        self.symlinks = options.symlink_app_data and not self.app_data.transient
+        # env var and config file values skip the gate on the CLI flag, so apply it here too
+        self.symlinks = options.symlink_app_data and self._can_symlink(self.app_data)
         if options.symlink_app_data and self.app_data.transient:
             LOGGER.debug("copy seed packages because temporary app-data is removed after creation")
+        elif options.symlink_app_data and not self.symlinks:
+            LOGGER.debug("copy seed packages because the filesystem does not support symlinks")
+
+    @staticmethod
+    def _can_symlink(app_data: AppData) -> bool:
+        return app_data.transient is False and fs_supports_symlink()
 
     @classmethod
     def add_parser_arguments(cls, parser: ArgumentParser, interpreter: PythonInfo, app_data: AppData) -> None:
         super().add_parser_arguments(parser, interpreter, app_data)
-        can_symlink = app_data.transient is False and fs_supports_symlink()
+        can_symlink = cls._can_symlink(app_data)
         sym = "" if can_symlink else "not supported - "
         parser.add_argument(
             "--symlink-app-data",
