@@ -245,7 +245,7 @@ jobs:
           uv venv --python 3.15 "$RUNNER_TEMP/release-tools"
           uv pip sync --preview-features pylock --python "$RUNNER_TEMP/release-tools/bin/python" --group release pylock.toml
           echo "$RUNNER_TEMP/release-tools/bin" >>"$GITHUB_PATH"
-      - uses: tox-dev/github-workflows/render-release-notes@8db87d4730353b61630d66cbc592d6bed0c85d2b
+      - uses: tox-dev/github-workflows/render-release-notes@9a4e76e2f4901856f2784f6c0efc89278c518b1f
         with:
           tag: ${{ github.ref_name }}
           changelog: docs/changelog.rst
@@ -281,7 +281,7 @@ jobs:
           name: ${{ env.dists-artifact-name }}
           path: dist/
       - id: reconcile
-        uses: tox-dev/github-workflows/reconcile-pypi-artifacts@8db87d4730353b61630d66cbc592d6bed0c85d2b
+        uses: tox-dev/github-workflows/reconcile-pypi-artifacts@9a4e76e2f4901856f2784f6c0efc89278c518b1f
         with:
           project: virtualenv
           version: ${{ github.ref_name }}
@@ -312,7 +312,7 @@ jobs:
         with:
           name: virtualenv-sbom
           path: ${{ runner.temp }}/release-assets
-      - uses: tox-dev/github-workflows/publish-github-release@8db87d4730353b61630d66cbc592d6bed0c85d2b
+      - uses: tox-dev/github-workflows/publish-github-release@9a4e76e2f4901856f2784f6c0efc89278c518b1f
         env:
           GH_TOKEN: ${{ github.token }}
         with:
@@ -348,7 +348,7 @@ jobs:
         with:
           name: pypi-missing-manifest
           path: ${{ runner.temp }}/pypi-manifest
-      - uses: tox-dev/github-workflows/select-pypi-artifacts@8db87d4730353b61630d66cbc592d6bed0c85d2b
+      - uses: tox-dev/github-workflows/select-pypi-artifacts@9a4e76e2f4901856f2784f6c0efc89278c518b1f
         with:
           dist: dist
           manifest: ${{ runner.temp }}/pypi-manifest/pypi-missing-names.txt
@@ -381,7 +381,7 @@ jobs:
         with:
           name: ${{ env.dists-artifact-name }}
           path: dist/
-      - uses: tox-dev/github-workflows/reconcile-pypi-artifacts@8db87d4730353b61630d66cbc592d6bed0c85d2b
+      - uses: tox-dev/github-workflows/reconcile-pypi-artifacts@9a4e76e2f4901856f2784f6c0efc89278c518b1f
         with:
           project: virtualenv
           version: ${{ github.ref_name }}
@@ -406,7 +406,7 @@ jobs:
         with:
           name: virtualenv-sbom
           path: ${{ runner.temp }}/release-assets
-      - uses: tox-dev/github-workflows/publish-github-release@8db87d4730353b61630d66cbc592d6bed0c85d2b
+      - uses: tox-dev/github-workflows/publish-github-release@9a4e76e2f4901856f2784f6c0efc89278c518b1f
         env:
           GH_TOKEN: ${{ github.token }}
         with:
