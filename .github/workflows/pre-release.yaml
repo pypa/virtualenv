@@ -24,3 +24,5 @@ jobs:
       changelog: docs/changelog.rst
       fragments: docs/changelog
       format: rst
+    secrets:
+      RELEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
