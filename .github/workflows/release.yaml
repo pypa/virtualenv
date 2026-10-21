@@ -267,27 +267,54 @@ jobs:
           owner: pypa
           repositories: get-virtualenv
           permission-contents: write
-      # get-virtualenv main requires signed commits, and GitHub signs commits the app creates through the API
-      - name: Update get-virtualenv
+      - name: Read get-virtualenv main
+        id: main
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          repo=repos/pypa/get-virtualenv
-          head=$(gh api "$repo/git/ref/heads/main" --jq .object.sha)
-          base_tree=$(gh api "$repo/git/commits/$head" --jq .tree.sha)
-          blob=$(base64 --wrap=0 virtualenv.pyz | jq --raw-input --slurp '{content: ., encoding: "base64"}' \
-            | gh api "$repo/git/blobs" --input - --jq .sha)
-          tree=$(jq --null-input --arg base_tree "$base_tree" --arg blob "$blob" --arg version "$GITHUB_REF_NAME" '{
+          head=$(gh api repos/pypa/get-virtualenv/git/ref/heads/main --jq .object.sha)
+          echo "sha=$head" >>"$GITHUB_OUTPUT"
+          echo "tree=$(gh api "repos/pypa/get-virtualenv/git/commits/$head" --jq .tree.sha)" >>"$GITHUB_OUTPUT"
+      - name: Upload zipapp blob
+        id: blob
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          sha=$(base64 --wrap=0 virtualenv.pyz | jq --raw-input --slurp '{content: ., encoding: "base64"}' \
+            | gh api repos/pypa/get-virtualenv/git/blobs --input - --jq .sha)
+          echo "sha=$sha" >>"$GITHUB_OUTPUT"
+      - name: Create get-virtualenv tree
+        id: tree
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          BASE_TREE: ${{ steps.main.outputs.tree }}
+          BLOB: ${{ steps.blob.outputs.sha }}
+        run: |
+          sha=$(jq --null-input --arg base_tree "$BASE_TREE" --arg blob "$BLOB" --arg version "$GITHUB_REF_NAME" '{
             base_tree: $base_tree,
             tree: [
               {path: "public/virtualenv.pyz", mode: "100644", type: "blob", sha: $blob},
               {path: "public/version.txt", mode: "100644", type: "blob", content: $version}
             ]
-          }' | gh api "$repo/git/trees" --input - --jq .sha)
-          commit=$(jq --null-input --arg tree "$tree" --arg head "$head" \
+          }' | gh api repos/pypa/get-virtualenv/git/trees --input - --jq .sha)
+          echo "sha=$sha" >>"$GITHUB_OUTPUT"
+      # get-virtualenv main requires signed commits, and GitHub signs commits the app creates through the API
+      - name: Create signed get-virtualenv commit
+        id: commit
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TREE: ${{ steps.tree.outputs.sha }}
+          BASE_COMMIT: ${{ steps.main.outputs.sha }}
+        run: |
+          sha=$(jq --null-input --arg tree "$TREE" --arg head "$BASE_COMMIT" \
             --arg message "update virtualenv to $GITHUB_REF_NAME" '{message: $message, tree: $tree, parents: [$head]}' \
-            | gh api "$repo/git/commits" --input - --jq .sha)
-          gh api --method PATCH "$repo/git/refs/heads/main" -f sha="$commit" -F force=false
+            | gh api repos/pypa/get-virtualenv/git/commits --input - --jq .sha)
+          echo "sha=$sha" >>"$GITHUB_OUTPUT"
+      - name: Update get-virtualenv main
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          COMMIT: ${{ steps.commit.outputs.sha }}
+        run: gh api --method PATCH repos/pypa/get-virtualenv/git/refs/heads/main -f sha="$COMMIT" -F force=false
   verify:
     name: Verify
     needs: update-bootstrap
