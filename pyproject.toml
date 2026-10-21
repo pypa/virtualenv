@@ -224,8 +224,8 @@ build.targets.sdist.include = [
 ]
 
 [tool.uv]
-dependency-groups.dev = { requires-python = ">=3.12" }
-dependency-groups.docs = { requires-python = ">=3.12" }
+dependency-groups.dev = { requires-python = ">=3.15" }
+dependency-groups.docs = { requires-python = ">=3.15" }
 dependency-groups.lint = { requires-python = ">=3.11" }
 dependency-groups.pkg-meta = { requires-python = ">=3.10" }
 dependency-groups.release = { requires-python = ">=3.15" }
