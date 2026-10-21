@@ -14,31 +14,31 @@ BUNDLE_SUPPORT = {
         "setuptools": "setuptools-82.0.1-py3-none-any.whl",
     },
     "3.10": {
-        "pip": "pip-26.2.1-py3-none-any.whl",
+        "pip": "pip-26.2.2-py3-none-any.whl",
         "setuptools": "setuptools-84.0.0-py3-none-any.whl",
     },
     "3.11": {
-        "pip": "pip-26.2.1-py3-none-any.whl",
+        "pip": "pip-26.2.2-py3-none-any.whl",
         "setuptools": "setuptools-84.0.0-py3-none-any.whl",
     },
     "3.12": {
-        "pip": "pip-26.2.1-py3-none-any.whl",
+        "pip": "pip-26.2.2-py3-none-any.whl",
         "setuptools": "setuptools-84.0.0-py3-none-any.whl",
     },
     "3.13": {
-        "pip": "pip-26.2.1-py3-none-any.whl",
+        "pip": "pip-26.2.2-py3-none-any.whl",
         "setuptools": "setuptools-84.0.0-py3-none-any.whl",
     },
     "3.14": {
-        "pip": "pip-26.2.1-py3-none-any.whl",
+        "pip": "pip-26.2.2-py3-none-any.whl",
         "setuptools": "setuptools-84.0.0-py3-none-any.whl",
     },
     "3.15": {
-        "pip": "pip-26.2.1-py3-none-any.whl",
+        "pip": "pip-26.2.2-py3-none-any.whl",
         "setuptools": "setuptools-84.0.0-py3-none-any.whl",
     },
     "3.16": {
-        "pip": "pip-26.2.1-py3-none-any.whl",
+        "pip": "pip-26.2.2-py3-none-any.whl",
         "setuptools": "setuptools-84.0.0-py3-none-any.whl",
     },
 }
@@ -57,7 +57,7 @@ OLDEST_SUPPORTED = _release_tuple(MIN)
 # being handed to pip. Generated together with ``BUNDLE_SUPPORT`` by ``tasks/upgrade_wheels.py``.
 BUNDLE_SHA256 = {
     "pip-26.0.1-py3-none-any.whl": "bdb1b08f4274833d62c1aa29e20907365a2ceb950410df15fc9521bad440122b",
-    "pip-26.2.1-py3-none-any.whl": "71138adf1f4ca900cdb7d289c21b7494329f2332b6d85f0e1c42108c0384ed3e",
+    "pip-26.2.2-py3-none-any.whl": "fd7f4dfa8190e014013b9f08f3e973f4e4c26ffd179a204895533a7254813a70",
     "setuptools-82.0.1-py3-none-any.whl": "a59e362652f08dcd477c78bb6e7bd9d80a7995bc73ce773050228a348ce2e5bb",
     "setuptools-84.0.0-py3-none-any.whl": "51a52592b3b99e102b609654876bd65f19f999935166d1352678931132b0c670",
 }
