@@ -93,7 +93,7 @@ jobs:
         shell: bash
         # the upgrade workflow keeps tasks/ci-tools.json on the newest release
         run: echo "python-version=graalpy-$(jq --raw-output '.graalpy.tag | ltrimstr("graal-")' tasks/ci-tools.json)" >> "$GITHUB_OUTPUT"
-      # apt and brew each hold a global lock, so each platform's shells share one step
+      # apt and brew each hold a global lock, so each keeps its packages in one step; the rest download on their own
       - parallel:
           - name: 📦 Install tox with this virtualenv
             shell: bash
@@ -111,24 +111,24 @@ jobs:
             with:
               python-version: ${{ steps.graalpy.outputs.python-version || matrix.py }}
               allow-prereleases: true
-          - name: 🦀 Setup RustPython
+          - name: 🦀 Install RustPython
             if: matrix.py == 'rp'
             shell: bash
             env:
               GH_TOKEN: ${{ github.token }}
-            run: |
-              # the upgrade workflow keeps tasks/ci-tools.json on the newest release; tr drops the CR jq.exe may emit
-              read -r tag asset sha256 < <(jq --raw-output --arg os "$RUNNER_OS" \
-                '.rustpython | [.tag, .assets[$os].name, .assets[$os].sha256] | @tsv' tasks/ci-tools.json | tr -d '\r')
-              gh release download "$tag" --repo RustPython/RustPython --pattern "$asset" --dir "$RUNNER_TEMP"
-              (cd "$RUNNER_TEMP" && echo "$sha256  $asset" | sha256sum -c -)
-              if [ "$RUNNER_OS" = "Windows" ]; then
-                cp "$RUNNER_TEMP/$asset" "/c/ProgramData/chocolatey/bin/rustpython.exe"
-              else
-                chmod +x "$RUNNER_TEMP/$asset"
-                sudo mv "$RUNNER_TEMP/$asset" /usr/local/bin/rustpython
-              fi
-          - name: 🐚 Install shells on Linux
+            run: tasks/install_ci_tool.sh rustpython
+          - name: 🐚 Install Nushell
+            shell: bash
+            env:
+              GH_TOKEN: ${{ github.token }}
+            run: tasks/install_ci_tool.sh nushell
+          - name: 🐟 Install fish
+            if: runner.os != 'Windows'
+            shell: bash
+            env:
+              GH_TOKEN: ${{ github.token }}
+            run: tasks/install_ci_tool.sh fish
+          - name: 🐚 Install apt packages
             if: runner.os == 'Linux'
             shell: bash
             run: |
@@ -144,19 +144,11 @@ jobs:
                   sleep 10
                 done
               }
-              retry sudo apt-get install -y software-properties-common
-              retry sudo apt-add-repository ppa:fish-shell/release-4 -y
-              sudo install -m 0755 -d /etc/apt/keyrings
-              curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 https://apt.fury.io/nushell/gpg.key \
-                | sudo gpg --dearmor -o /etc/apt/keyrings/fury-nushell.gpg
-              sudo chmod 0644 /etc/apt/keyrings/fury-nushell.gpg
-              echo "deb [signed-by=/etc/apt/keyrings/fury-nushell.gpg] https://apt.fury.io/nushell/ /" \
-                | sudo tee /etc/apt/sources.list.d/fury.list
               # no job installs from packages.microsoft.com, and its outages fail apt-get update for every job
               sudo find /etc/apt/sources.list.d -type f -exec grep -q packages.microsoft.com {} \; -delete
               retry sudo apt-get update -y
-              retry sudo apt-get install snapd fish csh tcsh zsh locales-all nushell -y
-          - name: 🐚 Install shells on macOS
+              retry sudo apt-get install snapd csh tcsh zsh locales-all -y
+          - name: 🍺 Install brew packages
             if: runner.os == 'macOS'
             shell: bash
             env:
@@ -168,19 +160,7 @@ jobs:
                 brew list --versions "python@$PY" >/dev/null 2>&1 || brew install "python@$PY"
                 echo "/usr/local/opt/python@$PY/libexec/bin" >>"${GITHUB_PATH}"
               fi
-              brew install fish tcsh nushell dash || brew upgrade fish tcsh nushell dash
-          - name: 🐚 Install Nushell on Windows
-            if: runner.os == 'Windows'
-            shell: bash
-            env:
-              GH_TOKEN: ${{ github.token }}
-            run: |
-              read -r nu_tag nu_archive nu_sha256 < <(jq --raw-output \
-                '.nushell | [.tag, .assets.Windows.name, .assets.Windows.sha256] | @tsv' tasks/ci-tools.json | tr -d '\r')
-              gh release download "$nu_tag" --repo nushell/nushell --pattern "$nu_archive" --dir "$RUNNER_TEMP"
-              (cd "$RUNNER_TEMP" && echo "$nu_sha256  $nu_archive" | sha256sum -c -)
-              7z x "$RUNNER_TEMP/$nu_archive" -o"$RUNNER_TEMP/nushell" -y
-              cp "$RUNNER_TEMP/nushell/nu.exe" "/c/ProgramData/chocolatey/bin/nu.exe"
+              brew install tcsh dash || brew upgrade tcsh dash
       - name: 🧬 Pick environment to run
         shell: bash
         env:
@@ -340,19 +320,23 @@ jobs:
       - parallel:
           - name: 📦 Install tox
             run: uv tool install --python-preference only-managed --python 3.15 "tox>=4.45" --with tox-uv
-          - name: 🛠️ Install shells for the property tests
+          - name: 🐚 Install Nushell for the property tests
+            if: matrix.tox_env == 'property' && runner.os == 'Linux'
+            env:
+              GH_TOKEN: ${{ github.token }}
+            run: tasks/install_ci_tool.sh nushell
+          - name: 🐟 Install fish for the property tests
+            if: matrix.tox_env == 'property' && runner.os == 'Linux'
+            env:
+              GH_TOKEN: ${{ github.token }}
+            run: tasks/install_ci_tool.sh fish
+          - name: 🐚 Install apt packages for the property tests
             if: matrix.tox_env == 'property' && runner.os == 'Linux'
             run: |
-              sudo install -m 0755 -d /etc/apt/keyrings
-              curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 https://apt.fury.io/nushell/gpg.key \
-                | sudo gpg --dearmor -o /etc/apt/keyrings/fury-nushell.gpg
-              sudo chmod 0644 /etc/apt/keyrings/fury-nushell.gpg
-              echo "deb [signed-by=/etc/apt/keyrings/fury-nushell.gpg] https://apt.fury.io/nushell/ /" \
-                | sudo tee /etc/apt/sources.list.d/fury.list
               # no job installs from packages.microsoft.com, and its outages fail apt-get update for every job
               sudo find /etc/apt/sources.list.d -type f -exec grep -q packages.microsoft.com {} \; -delete
               sudo apt-get update -y
-              sudo apt-get install -y tcsh zsh fish nushell
+              sudo apt-get install -y tcsh zsh
       - name: 🏗️ Setup check suite
         run: tox run -vv --notest --skip-missing-interpreters false
         env:

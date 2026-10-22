@@ -271,13 +271,18 @@ def test_upgrade_patch_missing_git(monkeypatch: pytest.MonkeyPatch) -> None:
         runpy.run_path(str(Path(__file__).parents[2] / "tasks" / "apply_upgrade_patch.py"), run_name="__main__")
 
 
-_NU_ASSET: Final[str] = "nu-0.116.0-x86_64-pc-windows-msvc.zip"
+_NU_ASSETS: Final[dict[str, str]] = {
+    "Linux": "nu-0.116.0-x86_64-unknown-linux-gnu.tar.gz",
+    "macOS": "nu-0.116.0-aarch64-apple-darwin.tar.gz",
+    "Windows": "nu-0.116.0-x86_64-pc-windows-msvc.zip",
+}
 _RUSTPYTHON_ASSETS: Final[dict[str, str]] = {
     "Linux": "rustpython-release-Linux-x86_64-unknown-linux-gnu",
     "macOS": "rustpython-release-macOS-aarch64-apple-darwin",
     "Windows": "rustpython-release-Windows-x86_64-pc-windows-msvc.exe",
 }
 _OLD_PINS: Final[dict[str, dict[str, str | dict[str, dict[str, str]]]]] = {
+    "fish": {"tag": "4.9.3", "assets": {"Linux": {"name": "fish.tar.xz", "sha256": "old"}}},
     "graalpy": {"tag": "graal-24.1.2", "assets": {}},
     "mermaid": {"version": "11.12.1"},
     "nushell": {"tag": "0.115.1", "assets": {"Windows": {"name": "nu-old.zip", "sha256": "old"}}},
@@ -319,7 +324,9 @@ def github(
                         "data": {
                             "repository": {
                                 "latestRelease": {
-                                    "tagName": "graal-25.4.4" if repository == "graalpython" else nushell_tag
+                                    "tagName": {"graalpython": "graal-25.4.4", "fish-shell": "4.9.3"}.get(
+                                        repository, nushell_tag
+                                    )
                                 },
                                 "releases": {"nodes": [{"tagName": "2026-09-20-main-1"}]},
                             }
@@ -356,16 +363,20 @@ def test_ci_tools_pin_newest_releases(
 ) -> None:
     github(
         "0.116.0",
-        {_NU_ASSET: b"nu", **{name: name.encode() for name in _RUSTPYTHON_ASSETS.values()}},
-        {_NU_ASSET: f"sha256:{hashlib.sha256(b'nu').hexdigest()}"},
+        {name: name.encode() for name in (*_NU_ASSETS.values(), *_RUSTPYTHON_ASSETS.values())},
+        {name: f"sha256:{hashlib.sha256(name.encode()).hexdigest()}" for name in _NU_ASSETS.values()},
     )
     upgrade_ci_tools()
     assert json.loads(ci_tools.read_text(encoding="utf-8")) == {
+        "fish": _OLD_PINS["fish"],
         "graalpy": {"tag": "graal-25.4.4", "assets": {}},
         "mermaid": {"version": "11.12.1"},
         "nushell": {
             "tag": "0.116.0",
-            "assets": {"Windows": {"name": _NU_ASSET, "sha256": hashlib.sha256(b"nu").hexdigest()}},
+            "assets": {
+                runner_os: {"name": name, "sha256": hashlib.sha256(name.encode()).hexdigest()}
+                for runner_os, name in _NU_ASSETS.items()
+            },
         },
         "rustpython": {
             "tag": "2026-09-20-main-1",
@@ -429,13 +440,13 @@ def test_ci_tools_keep_hashes_of_unchanged_tag(
     ("release", "error"),
     [
         pytest.param(
-            ({_NU_ASSET: b"nu"}, {_NU_ASSET: "sha256:0000"}),
-            rf"{_NU_ASSET} hashes to \w+ but GitHub reports sha256:0000",
+            ({_NU_ASSETS["Linux"]: b"nu"}, {_NU_ASSETS["Linux"]: "sha256:0000"}),
+            rf"{_NU_ASSETS['Linux']} hashes to \w+ but GitHub reports sha256:0000",
             id="digest-mismatch",
         ),
         pytest.param(
-            ({"nu-0.116.0-aarch64-pc-windows-msvc.zip": b"nu"}, {}),
-            rf"nushell/nushell 0\.116\.0 has no asset {_NU_ASSET}",
+            ({"nu-0.116.0-aarch64-unknown-linux-gnu.tar.gz": b"nu"}, {}),
+            rf"nushell/nushell 0\.116\.0 has no asset {_NU_ASSETS['Linux']}",
             id="missing-asset",
         ),
     ],
