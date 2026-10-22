@@ -153,6 +153,8 @@ jobs:
             sudo chmod 0644 /etc/apt/keyrings/fury-nushell.gpg
             echo "deb [signed-by=/etc/apt/keyrings/fury-nushell.gpg] https://apt.fury.io/nushell/ /" \
               | sudo tee /etc/apt/sources.list.d/fury.list
+            # no job installs from packages.microsoft.com, and its outages fail apt-get update for every job
+            sudo find /etc/apt/sources.list.d -type f -exec grep -q packages.microsoft.com {} \; -delete
             retry sudo apt-get update -y
             retry sudo apt-get install snapd fish csh tcsh zsh locales-all nushell -y
           elif [ "$RUNNER_OS" = "macOS" ]; then
@@ -338,6 +340,8 @@ jobs:
           sudo chmod 0644 /etc/apt/keyrings/fury-nushell.gpg
           echo "deb [signed-by=/etc/apt/keyrings/fury-nushell.gpg] https://apt.fury.io/nushell/ /" \
             | sudo tee /etc/apt/sources.list.d/fury.list
+          # no job installs from packages.microsoft.com, and its outages fail apt-get update for every job
+          sudo find /etc/apt/sources.list.d -type f -exec grep -q packages.microsoft.com {} \; -delete
           sudo apt-get update -y
           sudo apt-get install -y tcsh zsh fish nushell
       - name: 🏗️ Setup check suite
