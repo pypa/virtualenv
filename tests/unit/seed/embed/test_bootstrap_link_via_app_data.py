@@ -550,6 +550,59 @@ def test_seed_entry_points_preserve_case_and_last_duplicate(tmp_path: Path) -> N
     assert b"from example import main" in source
 
 
+@pytest.mark.parametrize(
+    "script_name",
+    [
+        pytest.param("python3-config", id="interpreter-like"),
+        pytest.param("2to3", id="leading-digits"),
+        pytest.param("3to2", id="trailing-digits-after-text"),
+    ],
+)
+def test_seed_entry_points_keep_names_that_are_not_version_suffixes(tmp_path: Path, script_name: str) -> None:
+    session = cli_run([str(tmp_path / "env"), "--no-seed"])
+    image = tmp_path / "image"
+    metadata = image / "example-1.dist-info"
+    metadata.mkdir(parents=True)
+    (metadata / "entry_points.txt").write_text(f"[console_scripts]\n{script_name} = example:main\n", encoding="utf-8")
+    CopyPipInstall(tmp_path / "example-1-py3-none-any.whl", session.creator, image).install(
+        session.interpreter.version_info
+    )
+    assert session.creator.script(script_name).exists(), (
+        f"{script_name} was not installed; got {sorted(i.name for i in session.creator.script_dir.iterdir())}"
+    )
+
+
+def test_seed_entry_points_do_not_overwrite_the_interpreter(tmp_path: Path) -> None:
+    session = cli_run([str(tmp_path / "env"), "--no-seed"])
+    interpreter = session.creator.script_dir / "python"
+    assert interpreter.is_symlink(), "precondition: the interpreter is a link into the environment"
+    image = tmp_path / "image"
+    metadata = image / "example-1.dist-info"
+    metadata.mkdir(parents=True)
+    (metadata / "entry_points.txt").write_text("[console_scripts]\npython3-config = example:main\n", encoding="utf-8")
+    CopyPipInstall(tmp_path / "example-1-py3-none-any.whl", session.creator, image).install(
+        session.interpreter.version_info
+    )
+    assert interpreter.is_symlink(), "the interpreter executable was replaced by a generated script"
+
+
+def test_seed_entry_points_still_fold_version_suffixed_names(tmp_path: Path) -> None:
+    """``pip3`` and ``pip3.13`` are the same script as ``pip``, and must stay folded onto it."""
+    session = cli_run([str(tmp_path / "env"), "--no-seed"])
+    image = tmp_path / "image"
+    metadata = image / "example-1.dist-info"
+    metadata.mkdir(parents=True)
+    (metadata / "entry_points.txt").write_text(
+        "[console_scripts]\npip3.13 = example:main\npip3 = example:main\n", encoding="utf-8"
+    )
+    CopyPipInstall(tmp_path / "example-1-py3-none-any.whl", session.creator, image).install(
+        session.interpreter.version_info
+    )
+    scripts = {i.name for i in session.creator.script_dir.iterdir()}
+    # a single base regenerates these, an extra one per declared name would add names like `pip33`
+    assert {"pip", "pip3", "pip3.13", "pip-3.13"} <= scripts, sorted(scripts)
+
+
 @pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
 def test_symlink_seed_compiles_with_empty_local_module(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     (tmp_path / "compileall.py").touch()
