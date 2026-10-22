@@ -244,6 +244,25 @@ def test_write_file_replaces_content(tmp_path: Path, existing: bool) -> None:
     assert path.read_bytes() == b"generated"
 
 
+def test_write_file_replaces_read_only_file(tmp_path: Path) -> None:
+    (path := tmp_path / "generated").write_bytes(b"previous")
+    path.chmod(S_IREAD)
+    write_file(path, b"generated")
+    assert path.read_bytes() == b"generated"
+
+
+@pytest.mark.skipif(os.name == "nt" or os.geteuid() == 0, reason="POSIX deletion permissions that root bypasses")
+def test_write_file_reports_read_only_directory(tmp_path: Path) -> None:
+    (folder := tmp_path / "locked").mkdir()
+    (folder / "generated").write_bytes(b"previous")
+    folder.chmod(S_IREAD | S_IEXEC)
+    try:
+        with pytest.raises(PermissionError):
+            write_file(folder / "generated", b"generated")
+    finally:
+        folder.chmod(S_IRWXU)
+
+
 @pytest.mark.parametrize("existing", [pytest.param(False, id="new"), pytest.param(True, id="existing")])
 def test_environment_directories_create_nested_path(tmp_path: Path, existing: bool) -> None:
     folder: Final = tmp_path / "env" / "lib" / "python"

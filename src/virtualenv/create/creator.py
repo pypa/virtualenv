@@ -316,7 +316,7 @@ class Creator(ABC):
             )
             return
         try:
-            redirect.write_text(f"{self.dest.name}\n", encoding="utf-8")
+            write_file(redirect, f"{self.dest.name}\n".encode())
         except OSError as exc:
             LOGGER.warning("could not point %s at %s - %s", redirect, self.dest, exc)
 
