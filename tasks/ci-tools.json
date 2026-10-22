@@ -12,10 +12,6 @@
     },
     "tag": "4.9.3"
   },
-  "graalpy": {
-    "assets": {},
-    "tag": "graal-25.4.4"
-  },
   "mermaid": {
     "version": "12.2.0"
   },

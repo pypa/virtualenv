@@ -283,7 +283,6 @@ _RUSTPYTHON_ASSETS: Final[dict[str, str]] = {
 }
 _OLD_PINS: Final[dict[str, dict[str, str | dict[str, dict[str, str]]]]] = {
     "fish": {"tag": "4.9.3", "assets": {"Linux": {"name": "fish.tar.xz", "sha256": "old"}}},
-    "graalpy": {"tag": "graal-24.1.2", "assets": {}},
     "mermaid": {"version": "11.12.1"},
     "nushell": {"tag": "0.115.1", "assets": {"Windows": {"name": "nu-old.zip", "sha256": "old"}}},
     "rustpython": {"tag": "old", "assets": {"Linux": {"name": "rp-old", "sha256": "old"}}},
@@ -323,11 +322,7 @@ def github(
                     json.dumps({
                         "data": {
                             "repository": {
-                                "latestRelease": {
-                                    "tagName": {"graalpython": "graal-25.4.4", "fish-shell": "4.9.3"}.get(
-                                        repository, nushell_tag
-                                    )
-                                },
+                                "latestRelease": {"tagName": "4.9.3" if repository == "fish-shell" else nushell_tag},
                                 "releases": {"nodes": [{"tagName": "2026-09-20-main-1"}]},
                             }
                         }
@@ -369,7 +364,6 @@ def test_ci_tools_pin_newest_releases(
     upgrade_ci_tools()
     assert json.loads(ci_tools.read_text(encoding="utf-8")) == {
         "fish": _OLD_PINS["fish"],
-        "graalpy": {"tag": "graal-25.4.4", "assets": {}},
         "mermaid": {"version": "11.12.1"},
         "nushell": {
             "tag": "0.116.0",
