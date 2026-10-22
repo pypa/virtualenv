@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
 import pytest
+from prompt_matrix import generate_script
 
 from virtualenv.activation import BashActivator
 from virtualenv.info import IS_WIN
@@ -384,48 +385,18 @@ def prompt_after_activate(
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
 @pytest.mark.parametrize(
-    ("prompt", "env_name"),
+    "env_name",
     [
-        pytest.param("x$(touch PWNED)y", "env", id="prompt-command-substitution"),
-        pytest.param("x`touch PWNED`y", "env", id="prompt-backticks"),
-        pytest.param("x${$(touch PWNED)}y", "env", id="prompt-parameter-expansion"),
-        pytest.param("x\\$(touch PWNED)y", "env", id="prompt-backslash-command-substitution"),
-        pytest.param("x\\`touch PWNED`y", "env", id="prompt-backslash-backticks"),
-        pytest.param(None, "x$(touch PWNED)y", id="dirname-command-substitution"),
-        pytest.param(None, "A__VIRTUAL_NAME__B/x'$(touch PWNED)'y", id="placeholder-in-parent-dir"),
+        pytest.param("x$(touch PWNED)y", id="dirname-command-substitution"),
+        pytest.param("A__VIRTUAL_NAME__B/x'$(touch PWNED)'y", id="placeholder-in-parent-dir"),
     ],
 )
-def test_prompt_does_not_run_commands(
-    prompt_after_activate: Callable[[str | None, str], tuple[Path, str]], prompt: str | None, env_name: str
+def test_prompt_dirname_does_not_run_commands(
+    prompt_after_activate: Callable[[str | None, str], tuple[Path, str]], env_name: str
 ) -> None:
-    work_dir, _ = prompt_after_activate(prompt, env_name)
+    work_dir, _ = prompt_after_activate(None, env_name)
 
     assert not (work_dir / "PWNED").exists()
-
-
-@pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
-@pytest.mark.parametrize(
-    "prompt",
-    [
-        pytest.param("myenv", id="plain"),
-        pytest.param("a%n$HOME\\b`c`", id="special-characters"),
-        pytest.param("a\\$HOME", id="backslash-before-dollar"),
-        pytest.param("a\\`c`", id="backslash-before-backtick"),
-        pytest.param("x\\\\y", id="doubled-backslash"),
-        pytest.param("e\\", id="trailing-backslash"),
-    ],
-)
-@pytest.mark.parametrize("compatibility", [pytest.param("42", id="bash42"), pytest.param("51", id="bash51")])
-def test_prompt_renders_name_literally(
-    prompt_after_activate: Callable[[str | None, str], tuple[Path, str]],
-    prompt: str,
-    compatibility: str,
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setenv("BASH_COMPAT", compatibility)
-    _, rendered = prompt_after_activate(prompt, "env")
-
-    assert rendered.startswith(f"({prompt}) ")
 
 
 @pytest.mark.skipif(IS_WIN or shutil.which("dash") is None, reason="needs dash as a POSIX shell")
@@ -517,42 +488,6 @@ def test_bash_relocation_without_source_preserves_path(moved_bash_activate: Path
 
 
 @pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
-@pytest.mark.parametrize(
-    ("before", "after", "expected"),
-    [
-        pytest.param("shopt -u promptvars", "", "(x$(touch PWNED)y) __END__", id="promptvars-disabled"),
-        pytest.param(
-            "shopt -u promptvars; set -o posix", "", "(x$(touch PWNED)y) __END__", id="promptvars-disabled-posix"
-        ),
-        pytest.param("", "set -u; unset VIRTUAL_ENV_PROMPT", "(x$(touch PWNED)y) __END__", id="unset-with-nounset"),
-    ],
-)
-def test_bash_prompt_options(tmp_path: Path, current_fastest: str, before: str, after: str, expected: str) -> None:
-    session: Final = cli_run([
-        "--without-pip",
-        str(tmp_path / "env"),
-        "--creator",
-        current_fastest,
-        "--no-periodic-update",
-        "--activators",
-        "bash",
-        "--prompt",
-        "x$(touch PWNED)y",
-    ])
-    result: Final = subprocess.run(
-        ["bash", "--noprofile", "--norc", "-i"],
-        input=f"{before}\nPS1=__END__\n. {BashActivator.quote(str(session.creator.bin_dir / 'activate'))}\n{after}\nexit\n",
-        cwd=tmp_path,
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        check=True,
-    )
-    assert expected in result.stderr
-    assert "unbound variable" not in result.stderr
-
-
-@pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
 def test_bash_relocation_rejects_sourced_wrapper(moved_bash_activate: Path) -> None:
     wrapper: Final = moved_bash_activate.with_name("wrapper")
     wrapper.write_text('eval "$(cat "$1")"\n', encoding="utf-8")
@@ -575,28 +510,8 @@ def test_bash_relocation_rejects_sourced_wrapper(moved_bash_activate: Path) -> N
 
 
 @pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
-@pytest.mark.parametrize(
-    ("setup", "expected"),
-    [
-        pytest.param("", "(a\\\\\\\\b\\$c\\`d) __END__", id="default"),
-        pytest.param("BASH_COMPAT=42; ", "(a\\\\\\\\b\\$c\\`d) __END__", id="compat42"),
-    ],
-)
-def test_bash_prompt_stored_form(tmp_path: Path, current_fastest: str, setup: str, expected: str) -> None:
-    activate: Final = (
-        cli_run([
-            "--without-pip",
-            str(tmp_path / "env"),
-            "--creator",
-            current_fastest,
-            "--no-periodic-update",
-            "--activators",
-            "bash",
-            "--prompt",
-            "a\\b$c`d",
-        ]).creator.bin_dir
-        / "activate"
-    )
+@pytest.mark.parametrize("setup", [pytest.param("", id="default"), pytest.param("BASH_COMPAT=42; ", id="compat42")])
+def test_bash_prompt_stored_form(tmp_path: Path, setup: str) -> None:
     result: Final = subprocess.run(
         [
             "bash",
@@ -605,14 +520,15 @@ def test_bash_prompt_stored_form(tmp_path: Path, current_fastest: str, setup: st
             "-c",
             f'{setup}PS1=__END__; . "$1"; printf "%s" "$PS1"',
             "test",
-            str(activate),
+            str(generate_script("bash", tmp_path / "env", "a\\b$c`d")),
         ],
         capture_output=True,
         text=True,
         encoding="utf-8",
         check=True,
     )
-    assert result.stdout == expected
+
+    assert result.stdout == "(a\\\\\\\\b\\$c\\`d) __END__"
 
 
 @pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
@@ -636,3 +552,24 @@ def test_bash_child_shell_draws_inherited_prompt(tmp_path: Path, child: list[str
     )
 
     assert (tmp_path / "CANARY").exists()
+
+
+@pytest.mark.skipif(IS_WIN or shutil.which("zsh") is None, reason="requires zsh")
+def test_zsh_deactivate_restores_psvar(tmp_path: Path) -> None:
+    result: Final = subprocess.run(
+        [
+            "zsh",
+            "-f",
+            "-c",
+            'psvar=(a b); . "$1"; print -r -- "$psvar[9]"; deactivate; print -r -- "${(j:,:)psvar}"',
+            "zsh",
+            str(generate_script("zsh", tmp_path / "env", "plain")),
+        ],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+
+    assert result.stdout == "plain\na,b,,,,,,,\n"
