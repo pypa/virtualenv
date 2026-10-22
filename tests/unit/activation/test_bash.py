@@ -255,7 +255,7 @@ def test_bash_relocation_stops_when_unavailable(tmp_path: Path, moved_bash_activ
     path: Final = str(tmp_path) if failure == "tools" else "/usr/bin:/bin"
     result: Final = subprocess.run(
         [
-            "/bin/bash",
+            _BASH,
             "-c",
             ("unset BASH_VERSION; " if failure == "shell" else "")
             + '. "$1"; printf "%s|%s|%s" "$?" "$PATH" "${VIRTUAL_ENV-unset}"',
@@ -465,7 +465,7 @@ def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> 
 def test_bash_relocation_without_source_preserves_path(moved_bash_activate: Path, mode: str) -> None:
     result: Final = subprocess.run(
         [
-            "/bin/bash",
+            _BASH,
             "--noprofile",
             "--norc",
             "-c",
@@ -474,7 +474,7 @@ def test_bash_relocation_without_source_preserves_path(moved_bash_activate: Path
             str(moved_bash_activate),
         ]
         if mode == "eval"
-        else ["/bin/bash", "--noprofile", "--norc"],
+        else [_BASH, "--noprofile", "--norc"],
         input=None
         if mode == "eval"
         else moved_bash_activate.read_text(encoding="utf-8") + '\nprintf "%s|%s" "$PATH" "${VIRTUAL_ENV-unset}"',
