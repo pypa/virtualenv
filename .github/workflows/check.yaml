@@ -21,6 +21,8 @@ jobs:
       contents: read
     env:
       PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      # macOS ships a 3.9 that uv would pick over downloading one; the brew legs point UV_PYTHON at Homebrew's build
+      UV_PYTHON_PREFERENCE: ${{ startsWith(matrix.py, 'brew@') && 'managed' || 'only-managed' }}
     strategy:
       fail-fast: false
       matrix:
