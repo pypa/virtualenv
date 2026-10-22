@@ -1,0 +1,7 @@
+Escape the bash prompt for both of bash's `PS1` passes whatever `promptvars` and posix mode are at activation, so a
+`--prompt` or environment name holding `$(...)`, backticks or a backslash stays inert after `shopt -s promptvars`, `set
+-o posix` or in a child shell that inherits an exported `PS1` (GHSA-cx6f-vjhg-g3cc); reported by :user:`rozzkml`.
+
+Write the ``.venv`` redirect and the wheel ``RECORD`` files through the exclusive-create path, so a link planted between
+the check and the write cannot redirect the write. A read-only ``.venv`` redirect that already points at a virtualenv is
+now replaced rather than left in place with a warning.

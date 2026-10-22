@@ -25,7 +25,7 @@ _BASH: Final = shutil.which("bash")
 @pytest.mark.parametrize(
     ("setup", "expected"),
     [
-        pytest.param("", "(${VIRTUAL_ENV_PROMPT-}) base ", id="bash"),
+        pytest.param("", "(example) base ", id="bash"),
         pytest.param("unset BASH_VERSION ZSH_VERSION;", "base ", id="unrecognized-shell"),
     ],
 )
@@ -483,9 +483,7 @@ def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> 
         def print_prompt(self) -> str:
             return (
                 'if ((BASH_VERSINFO[0] * 100 + BASH_VERSINFO[1] >= 404)); then printf "%s\\n" "${PS1@P}"; '
-                "else case \"$PS1\" in '(${VIRTUAL_ENV_PROMPT-}) '*) "
-                "printf '(%s) %s\\n' \"$VIRTUAL_ENV_PROMPT\" \"${PS1#'(${VIRTUAL_ENV_PROMPT-}) '}\";; "
-                "*) printf '%s\\n' \"$PS1\";; esac; fi"
+                "else printf 'exit\\n' | PS1=\"$PS1\" bash --noprofile --norc -i 2>&1 >/dev/null; fi"
             )
 
     activation_tester(Bash)
@@ -526,7 +524,7 @@ def test_bash_relocation_without_source_preserves_path(moved_bash_activate: Path
         pytest.param(
             "shopt -u promptvars; set -o posix", "", "(x$(touch PWNED)y) __END__", id="promptvars-disabled-posix"
         ),
-        pytest.param("", "set -u; unset VIRTUAL_ENV_PROMPT", "() __END__", id="unset-with-nounset"),
+        pytest.param("", "set -u; unset VIRTUAL_ENV_PROMPT", "(x$(touch PWNED)y) __END__", id="unset-with-nounset"),
     ],
 )
 def test_bash_prompt_options(tmp_path: Path, current_fastest: str, before: str, after: str, expected: str) -> None:
@@ -574,3 +572,67 @@ def test_bash_relocation_rejects_sourced_wrapper(moved_bash_activate: Path) -> N
         check=True,
     )
     assert result.stdout == "/usr/bin:/bin|unset"
+
+
+@pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
+@pytest.mark.parametrize(
+    ("setup", "expected"),
+    [
+        pytest.param("", "(a\\\\\\\\b\\$c\\`d) __END__", id="default"),
+        pytest.param("BASH_COMPAT=42; ", "(a\\\\\\\\b\\$c\\`d) __END__", id="compat42"),
+    ],
+)
+def test_bash_prompt_stored_form(tmp_path: Path, current_fastest: str, setup: str, expected: str) -> None:
+    activate: Final = (
+        cli_run([
+            "--without-pip",
+            str(tmp_path / "env"),
+            "--creator",
+            current_fastest,
+            "--no-periodic-update",
+            "--activators",
+            "bash",
+            "--prompt",
+            "a\\b$c`d",
+        ]).creator.bin_dir
+        / "activate"
+    )
+    result: Final = subprocess.run(
+        [
+            "bash",
+            "--norc",
+            "--noprofile",
+            "-c",
+            f'{setup}PS1=__END__; . "$1"; printf "%s" "$PS1"',
+            "test",
+            str(activate),
+        ],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert result.stdout == expected
+
+
+@pytest.mark.skipif(IS_WIN, reason="requires POSIX bash")
+@pytest.mark.parametrize(
+    "child",
+    [
+        pytest.param(["bash", "--noprofile", "--norc", "-i"], id="child-bash"),
+        pytest.param(["dash", "-i"], id="child-dash"),
+    ],
+)
+def test_bash_child_shell_draws_inherited_prompt(tmp_path: Path, child: list[str]) -> None:
+    if shutil.which(child[0]) is None:
+        pytest.skip(f"{child[0]} is not installed")
+    subprocess.run(
+        ["bash", "--norc", "--noprofile", "-c", f"export PS1='$(touch CANARY)'; {shlex.join(child)} <<<exit"],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+
+    assert (tmp_path / "CANARY").exists()
