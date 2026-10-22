@@ -14,6 +14,14 @@ dependency-groups = [
     "pkg-meta",
     "property",
     "release",
+    "release-check",
+    "release-notes",
+    "release-news",
+    "release-prepare",
+    "release-validate",
+    "release-build",
+    "release-verify",
+    "release-zipapp",
     "sbom",
     "tasks",
     "build",
@@ -68,7 +76,7 @@ sha256 = "fc6786402dc3fcb2de3cabd5fe455a2db534b371124f1f21de8731783dec828b"
 name = "annotated-types"
 version = "0.8.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/5f/56/a8120250d128bed162cd73c76d45f6ef9991f3e068f62a8ee060afa3104a/annotated_types-0.8.0.tar.gz"
@@ -90,7 +98,7 @@ sha256 = "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0"
 name = "arrow"
 version = "1.4.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/b9/33/032cdc44182491aa708d06a68b62434140d8c50820a087fac7af37703357/arrow-1.4.0.tar.gz"
@@ -142,7 +150,7 @@ sha256 = "315a0b5c819852b1ffe1ca72efc389c7724881f2c33e4aacb8c6bcec49bd5011"
 name = "attrs"
 version = "26.1.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"property\" in dependency_groups and (python_full_version < '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"property\" in dependency_groups and (python_full_version < '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/9a/8e/82a0fe20a541c03148528be8cac2408564a6c9a0cc7e9171802bc1d26985/attrs-26.1.0.tar.gz"
@@ -209,7 +217,7 @@ sha256 = "77e284d754527b01fb1e6fa8a1afe577858ebe4e9dad8919e34c862cb399bc34"
 name = "beartype"
 version = "0.23.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/79/34/c0cfdaee9c796c8381439fed0fcab62810753b8b0adb1ec88fa7f41eaa5d/beartype-0.23.1.tar.gz"
@@ -475,7 +483,7 @@ sha256 = "28842f9a8207cc1df6eb983a35a14c5a0dfcd603d214fe82d84bef552afd2e3a"
 name = "boolean-py"
 version = "5.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/c4/cf/85379f13b76f3a69bca86b60237978af17d6aa0bc5998978c3b8cf05abb2/boolean_py-5.0.tar.gz"
@@ -519,7 +527,7 @@ sha256 = "ecd351a4be9d35a9eaaba244a7687143c9c7d4aea6ac964e7e7ddab20cbcf4e7"
 name = "cachetools"
 version = "7.2.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/31/44/71476a5812da1ddf2c9a3efd31ae76d01480a1cf03ed13ac28aa8f2402e4/cachetools-7.2.1.tar.gz"
@@ -541,7 +549,7 @@ sha256 = "63aa53dfe7473c10cccdd5a01dedf76ef2c4b73a58840d9396e7d0752cbdac3b"
 name = "certifi"
 version = "2026.10.19"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/a6/bd/1436c50cc46699de0230fbaacc1d1de7bfec413176099949e9d5112e88f2/certifi-2026.10.19.tar.gz"
@@ -563,7 +571,7 @@ sha256 = "42d35340cc5b9ba78e818ddbff0c5b1c2b779de448a340fd1b989f5fa8670e1b"
 name = "cffi"
 version = "2.1.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15' and platform_python_implementation != 'PyPy')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15' and platform_python_implementation != 'PyPy')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10' and platform_machine != 'ppc64le' and platform_machine != 's390x' and platform_python_implementation != 'PyPy' and sys_platform == 'linux')) or (\"release\" in dependency_groups and (python_full_version >= '3.15' and platform_python_implementation != 'PyPy'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15' and platform_python_implementation != 'PyPy')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15' and platform_python_implementation != 'PyPy')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10' and platform_machine != 'ppc64le' and platform_machine != 's390x' and platform_python_implementation != 'PyPy' and sys_platform == 'linux')) or (\"release\" in dependency_groups and (python_full_version >= '3.15' and platform_python_implementation != 'PyPy')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15' and platform_python_implementation != 'PyPy'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/9e/ef/008a1939e372c06329a3fce4279c02f328488f3526744906eeec3da7ad5f/cffi-2.1.1.tar.gz"
@@ -1391,7 +1399,7 @@ sha256 = "a8dc6b26ad22ff227d2634a65cb388215ce6cc96bbcc5cfde7641ae87e8dacc0"
 name = "charset-normalizer"
 version = "3.5.2"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/33/1c/f41d4e74c28ab327ff3acd36053f7ea506c55872d7a90b0fa71aa3ab0c89/charset_normalizer-3.5.2.tar.gz"
@@ -2817,7 +2825,7 @@ sha256 = "5ae39c8c434b972f0740d04610759168590713175aab584b012b1b84f6771874"
 name = "click"
 version = "8.5.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-news\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-prepare\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/c7/0e/7fa0ef50764b67090eca4114772a2abf8b6148198475e54c660b97caeee6/click-8.5.0.tar.gz"
@@ -2839,7 +2847,7 @@ sha256 = "255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360"
 name = "colorama"
 version = "0.4.6"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and ((python_full_version >= '3.10' and python_full_version < '3.12' and os_name == 'nt') or (python_full_version >= '3.12' and python_full_version < '3.15' and os_name == 'nt' and sys_platform != 'linux') or (python_full_version >= '3.15' and os_name == 'nt'))) or (\"property\" in dependency_groups and (sys_platform == 'win32')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10' and sys_platform == 'win32')) or (\"test\" in dependency_groups and (sys_platform == 'win32')) or (\"type\" in dependency_groups and (sys_platform == 'win32'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and ((python_full_version >= '3.10' and python_full_version < '3.12' and os_name == 'nt') or (python_full_version >= '3.12' and python_full_version < '3.15' and os_name == 'nt' and sys_platform != 'linux') or (python_full_version >= '3.15' and os_name == 'nt'))) or (\"property\" in dependency_groups and (sys_platform == 'win32')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10' and sys_platform == 'win32')) or (\"test\" in dependency_groups and (sys_platform == 'win32')) or (\"type\" in dependency_groups and (sys_platform == 'win32'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz"
@@ -4717,7 +4725,7 @@ sha256 = "27982522339ec77662965e0d859da5662162962c874d54d2250426506818cbdc"
 name = "cryptography"
 version = "50.0.2"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10' and platform_machine != 'ppc64le' and platform_machine != 's390x' and sys_platform == 'linux')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10' and platform_machine != 'ppc64le' and platform_machine != 's390x' and sys_platform == 'linux')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/9d/af/182eb91b0df3fe75c4d9f26fe70684569566745f6ba7e5c9c73a862c5252/cryptography-50.0.2.tar.gz"
@@ -5195,7 +5203,7 @@ sha256 = "7b75de3c8b3be1cdb1052747c929440c3eea46c1bc2cb8a6e3a48388e9b7b452"
 name = "cyclonedx-python-lib"
 version = "11.12.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/17/40/6509e6cfd7f2f3255501690f46375fdd224949e21fd1e96f4f4c8a9041b1/cyclonedx_python_lib-11.12.0.tar.gz"
@@ -5534,7 +5542,7 @@ sha256 = "9b24b5c8cd536946b62086fcafee6d5509d3f549f72d553d2336af87ffbe0da1"
 name = "defusedxml"
 version = "0.7.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/0f/d5/c66da9b79e5bdb124974bfe172b4daf3c984ebd9c2a06e2b8a4dc7331c72/defusedxml-0.7.1.tar.gz"
@@ -5556,7 +5564,7 @@ sha256 = "a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61"
 name = "distlib"
 version = "0.4.3"
 index = "https://pypi.org/simple"
-marker = "\"project-runtime\" in dependency_groups or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"lint\" in dependency_groups and (python_full_version >= '3.11')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "\"project-runtime\" in dependency_groups or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"lint\" in dependency_groups and (python_full_version >= '3.11')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/c9/02/bd72be9134d25ed783ecbbc38a539ffaefbf90c78418c7fb7229600dbac7/distlib-0.4.3.tar.gz"
@@ -5578,7 +5586,7 @@ sha256 = "4b0ce306c966eb73bc3a7b6abad017c556dadd92c44701562cd528ac7fde4d5b"
 name = "dnspython"
 version = "2.9.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/ef/4a/50822184bd67cc6493f0fb6a880749158fcd31ab3fa07409acfd91f9fc85/dnspython-2.9.0.tar.gz"
@@ -5688,7 +5696,7 @@ sha256 = "157807309de24e8c96af9a13afe207410f1fc6e5aab5d974fd6b9191f04de327"
 name = "email-validator"
 version = "2.3.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/f5/22/900cb125c76b7aaa450ce02fd727f452243f2e91a61af068b40adba60ea9/email_validator-2.3.0.tar.gz"
@@ -5798,7 +5806,7 @@ sha256 = "2ce9818e3e2d8f284c1a964414447ef148d42a5fd5e2a477a7118e574b293ec1"
 name = "filelock"
 version = "4.2.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"lint\" in dependency_groups and (python_full_version >= '3.11')) or (\"project-runtime\" in dependency_groups and (python_full_version >= '3.11')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.11'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"lint\" in dependency_groups and (python_full_version >= '3.11')) or (\"project-runtime\" in dependency_groups and (python_full_version >= '3.11')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.11'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/f4/a9/1af41b37c3279712b22cdc63aac78a52432202b6fe1f9666a2a3d2831fb4/filelock-4.2.0.tar.gz"
@@ -5820,7 +5828,7 @@ sha256 = "2ff5690882e8cdb00ef31fb3d01a3094c29f30985426c59495afb1733f3b7238"
 name = "fqdn"
 version = "1.6.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/02/01/248d44fbda9e78fa1a7b5a475194bef4c4a3e285db286419f3bb42f2efdf/fqdn-1.6.0.tar.gz"
@@ -5995,7 +6003,7 @@ sha256 = "d3a2f3567c4f926ea39849cdf924c7e99e6686c9c8e288ae1037c8fa2a5d937b"
 name = "hatchling"
 version = "1.32.4"
 index = "https://pypi.org/simple"
-marker = "(\"build\" in dependency_groups and (python_full_version >= '3.10')) or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"build\" in dependency_groups and (python_full_version >= '3.10')) or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/f6/97/b5312f01a8c6daf729a9d272dd442e0c546dbcc630495788786c4b567ed0/hatchling-1.32.4.tar.gz"
@@ -7355,7 +7363,7 @@ sha256 = "789a4c1e1222746df8c05e57cc05626ba216bcf7deabdc8ea10160dd8699a2a4"
 name = "id"
 version = "1.6.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/6d/04/c2156091427636080787aac190019dc64096e56a23b7364d3c1764ee3a06/id-1.6.1.tar.gz"
@@ -7399,7 +7407,7 @@ sha256 = "6a16b69b93187244e0548cbfd25b3e4a6f9a7a2ad784625c3bec2b8d27b81aaa"
 name = "idna"
 version = "3.20"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/f5/08/8eea9d4b8302028f3abb2c0813953f7aec26d33b7a8960ed760e65ff29fa/idna-3.20.tar.gz"
@@ -7553,7 +7561,7 @@ sha256 = "28009937d8031054830160fce6d409ed342816b543597cece116d966c6d99e15"
 name = "isoduration"
 version = "20.11.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/7c/1a/3c8edc664e06e6bd06cce40c6b22da5f1429aa4224d0c590f3be21c91ead/isoduration-20.11.0.tar.gz"
@@ -7664,7 +7672,7 @@ sha256 = "97e5714520c16fc0a45695e5365a2e11b81ea79bba796e26f9f1d178cb182683"
 name = "jinja2"
 version = "3.1.6"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-news\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-prepare\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/df/bf/f7da0350254c0ed7c72f3e33cef02e048281fec7ecec5f032d4aac52226b/jinja2-3.1.6.tar.gz"
@@ -7686,7 +7694,7 @@ sha256 = "85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67"
 name = "jsonpointer"
 version = "3.2.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/33/a2/c92f0a7ed439c490d2c8ad712fdb074c311afa4f77870987826a3b1483ba/jsonpointer-3.2.1.tar.gz"
@@ -7708,7 +7716,7 @@ sha256 = "b19ee68644e9ffb51440448d8f7811af2b7406eea1db90603e93f5849323119a"
 name = "jsonschema"
 version = "4.26.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/b3/fc/e067678238fa451312d4c62bf6e6cf5ec56375422aee02f9cb5f909b3047/jsonschema-4.26.0.tar.gz"
@@ -7730,7 +7738,7 @@ sha256 = "d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce"
 name = "jsonschema-specifications"
 version = "2025.9.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/19/74/a633ee74eb36c44aa6d1095e7cc5569bebf04342ee146178e2d36600708b/jsonschema_specifications-2025.9.1.tar.gz"
@@ -7774,7 +7782,7 @@ sha256 = "be4a0b195f149690c166e850609a477c532ddbfbaed96a404d4e43f8d5e2689f"
 name = "lark"
 version = "1.3.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/da/34/28fff3ab31ccff1fd4f6c7c7b0ceb2b6968d8ea4950663eadcb5720591a0/lark-1.3.1.tar.gz"
@@ -8314,7 +8322,7 @@ sha256 = "4fb016ad6ec8485991770dcff3fe072b0296eff6fefe7b3b4e28fb919dea3def"
 name = "license-expression"
 version = "30.4.4"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/40/71/d89bb0e71b1415453980fd32315f2a037aad9f7f70f695c7cec7035feb13/license_expression-30.4.4.tar.gz"
@@ -8336,7 +8344,7 @@ sha256 = "421788fdcadb41f049d2dc934ce666626265aeccefddd25e162a26f23bcbf8a4"
 name = "markdown-it-py"
 version = "4.2.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-news\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-notes\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-prepare\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-validate\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/06/ff/7841249c247aa650a76b9ee4bbaeae59370dc8bfd2f6c01f3630c35eb134/markdown_it_py-4.2.0.tar.gz"
@@ -8358,7 +8366,7 @@ sha256 = "9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a"
 name = "markupsafe"
 version = "3.0.4"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-news\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-prepare\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/38/9b/e422a865e1d5d57d0e509b4e0bf1c1a70a7f6382c29a5aa428df994c8bc8/markupsafe-3.0.4.tar.gz"
@@ -9572,7 +9580,7 @@ sha256 = "6669c1bf34080161ce49c589cc512ef24d4c704ac9d2b2d3667f519c60418378"
 name = "mdformat"
 version = "1.0.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-news\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-notes\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-prepare\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-validate\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/3f/05/32b5e14b192b0a8a309f32232c580aefedd9d06017cb8fe8fce34bec654c/mdformat-1.0.0.tar.gz"
@@ -9594,7 +9602,7 @@ sha256 = "bca015d65a1d063a02e885a91daee303057bc7829c2cd37b2075a50dbb65944b"
 name = "mdformat-gfm"
 version = "1.0.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-news\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-notes\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-prepare\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-validate\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/56/6f/a626ebb142a290474401b67e2d61e73ce096bf7798ee22dfe6270f924b3f/mdformat_gfm-1.0.0.tar.gz"
@@ -9616,7 +9624,7 @@ sha256 = "7305a50efd2a140d7c83505b58e3ac5df2b09e293f9bbe72f6c7bee8c678b005"
 name = "mdit-py-plugins"
 version = "0.6.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-news\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-notes\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-prepare\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-validate\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/59/fc/f8d0863f8862f25602c0404d75568e89fb6b4109804645e5cdfb1be5cf56/mdit_py_plugins-0.6.1.tar.gz"
@@ -9638,7 +9646,7 @@ sha256 = "214c82fb2ac524472ab6a5bcab1de80f73b50443e187f401bfd77efbc7c6481d"
 name = "mdurl"
 version = "0.1.2"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-news\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-notes\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-prepare\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-validate\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz"
@@ -9970,7 +9978,7 @@ sha256 = "edaa16e6c14d7cf395d75d4bbd5a26390f4dc06501a33b4e76282b02cc688a25"
 name = "packageurl-python"
 version = "0.17.6"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/f5/d6/3b5a4e3cfaef7a53869a26ceb034d1ff5e5c27c814ce77260a96d50ab7bb/packageurl_python-0.17.6.tar.gz"
@@ -9992,7 +10000,7 @@ sha256 = "31a85c2717bc41dd818f3c62908685ff9eebcb68588213745b14a6ee9e7df7c9"
 name = "packaging"
 version = "26.3"
 index = "https://pypi.org/simple"
-marker = "\"build\" in dependency_groups or \"project-runtime\" in dependency_groups or \"property\" in dependency_groups or \"test\" in dependency_groups or \"type\" in dependency_groups or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"lint\" in dependency_groups and (python_full_version >= '3.11')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "\"build\" in dependency_groups or \"project-runtime\" in dependency_groups or \"property\" in dependency_groups or \"test\" in dependency_groups or \"type\" in dependency_groups or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"lint\" in dependency_groups and (python_full_version >= '3.11')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-news\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-notes\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-prepare\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-validate\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/7d/fa/3944b40b07da9ce895c0e6303a5ab7d53da063554f534556b134a54d6093/packaging-26.3.tar.gz"
@@ -10014,7 +10022,7 @@ sha256 = "d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c"
 name = "pathspec"
 version = "1.1.1"
 index = "https://pypi.org/simple"
-marker = "\"build\" in dependency_groups or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "\"build\" in dependency_groups or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/5a/82/42f767fc1c1143d6fd36efb827202a2d997a375e160a71eb2888a925aac1/pathspec-1.1.1.tar.gz"
@@ -10058,7 +10066,7 @@ sha256 = "78bfb9db2a8471ed7eebe3c3c932da413911042994e699b384fbb4493fa872d7"
 name = "platformdirs"
 version = "4.13.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"lint\" in dependency_groups and (python_full_version >= '3.11')) or (\"project-runtime\" in dependency_groups and (python_full_version >= '3.11')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.11'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"lint\" in dependency_groups and (python_full_version >= '3.11')) or (\"project-runtime\" in dependency_groups and (python_full_version >= '3.11')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.11'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/80/a8/66d45abadff219e36e2a824181b8f6a67e7ed4572934d6252c71c29d5731/platformdirs-4.13.0.tar.gz"
@@ -10124,7 +10132,7 @@ sha256 = "e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746"
 name = "pluggy"
 version = "1.7.0"
 index = "https://pypi.org/simple"
-marker = "(\"build\" in dependency_groups and (python_full_version >= '3.10')) or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"property\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10')) or (\"test\" in dependency_groups and (python_full_version >= '3.10')) or (\"type\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"build\" in dependency_groups and (python_full_version >= '3.10')) or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"property\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10')) or (\"test\" in dependency_groups and (python_full_version >= '3.10')) or (\"type\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/bf/db/7fc19e6f2dc92a966727031389fc2e08b558f0f25eb7403c1119ad4713cd/pluggy-1.7.0.tar.gz"
@@ -10146,7 +10154,7 @@ sha256 = "7dd7b0d8832ba3cb632c306926ded123429211b83641b35dc5c41ad2d34f9bec"
 name = "ply"
 version = "3.11"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/e5/69/882ee5c9d017149285cab114ebeab373308ef0f874fcdac9beb90e0ac4da/ply-3.11.tar.gz"
@@ -10256,7 +10264,7 @@ sha256 = "9012b09950a50efdcfb03b95355e1f65c14f9a5cb425d12c6bf2c6d6807617d7"
 name = "prek"
 version = "0.5.5"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-check\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-prepare\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-validate\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/9b/7b/11538b8e6cd7e269261feae62a2d08818fdcf8f43c3b1a253cec01a5488d/prek-0.5.5.tar.gz"
@@ -10342,7 +10350,7 @@ sha256 = "3db3191d2509830c75438e20956a47c2259867d18a4106064ed75088b968a0c6"
 name = "py-serializable"
 version = "2.1.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/73/21/d250cfca8ff30c2e5a7447bc13861541126ce9bd4426cd5d0c9f08b5547d/py_serializable-2.1.0.tar.gz"
@@ -10364,7 +10372,7 @@ sha256 = "b56d5d686b5a03ba4f4db5e769dc32336e142fc3bd4d68a8c25579ebb0a67304"
 name = "pyasn1"
 version = "0.6.4"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/a4/9a/23310166d960def5897e91fe20e5b724601b02a22e84ba1f94232c0b7f67/pyasn1-0.6.4.tar.gz"
@@ -10386,7 +10394,7 @@ sha256 = "deda9277cfd454080ec40b207fb6df82206a3a2688735233cdcd8d3d565f088b"
 name = "pycparser"
 version = "3.11"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15' and implementation_name != 'PyPy' and platform_python_implementation != 'PyPy')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15' and implementation_name != 'PyPy' and platform_python_implementation != 'PyPy')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10' and implementation_name != 'PyPy' and platform_machine != 'ppc64le' and platform_machine != 's390x' and platform_python_implementation != 'PyPy' and sys_platform == 'linux')) or (\"release\" in dependency_groups and (python_full_version >= '3.15' and implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15' and implementation_name != 'PyPy' and platform_python_implementation != 'PyPy')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15' and implementation_name != 'PyPy' and platform_python_implementation != 'PyPy')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10' and implementation_name != 'PyPy' and platform_machine != 'ppc64le' and platform_machine != 's390x' and platform_python_implementation != 'PyPy' and sys_platform == 'linux')) or (\"release\" in dependency_groups and (python_full_version >= '3.15' and implementation_name != 'PyPy' and platform_python_implementation != 'PyPy')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15' and implementation_name != 'PyPy' and platform_python_implementation != 'PyPy'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/da/a8/c5fdbeee588bb8ada9458774f43adf1bdd30bd59157055142183e769a024/pycparser-3.11.tar.gz"
@@ -10408,7 +10416,7 @@ sha256 = "51d5a8ba2be0bbe440b99d2112604c95bbbc3c2748a64260186c541e1729cd80"
 name = "pydantic"
 version = "2.14.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/7c/0b/8e10b2e693af8ec54346a14caf36221334775975a747c9ceaa3f8371d96d/pydantic-2.14.1.tar.gz"
@@ -10430,7 +10438,7 @@ sha256 = "9195d967ec791692a04438115466764fb8b9a27b31f14a760437694f40d6b454"
 name = "pydantic-core"
 version = "2.50.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/a6/24/af4ec4be49fbc810f35b0bdcacc3d433b56bbfa469fd3bfd4ae116cd9bf1/pydantic_core-2.50.1.tar.gz"
@@ -11532,7 +11540,7 @@ sha256 = "7f476456ac2bb0d937f75191494a09c83a30765fea4f70f3b404942fe25f6cdf"
 name = "pygments"
 version = "2.21.0"
 index = "https://pypi.org/simple"
-marker = "\"property\" in dependency_groups or \"test\" in dependency_groups or \"type\" in dependency_groups or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "\"property\" in dependency_groups or \"test\" in dependency_groups or \"type\" in dependency_groups or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/49/2e/ced460408999b33da6b31b0021b0f37d329e202d4169aeb164493778f25b/pygments-2.21.0.tar.gz"
@@ -11554,7 +11562,7 @@ sha256 = "2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9"
 name = "pyjwt"
 version = "2.15.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/43/ea/5194e52748b0da83d71e082d75496eaec6e58f419f5e184786ded517e6a9/pyjwt-2.15.1.tar.gz"
@@ -11576,7 +11584,7 @@ sha256 = "42d59d631f7768a1028a64c7ff581a9bf7519804daf91fc5b6c56e30eec5e193"
 name = "pyopenssl"
 version = "26.4.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/3f/e8/7325d258199b159eb2c03fe32107533e2832e70e63f4fb88a6aa00023201/pyopenssl-26.4.0.tar.gz"
@@ -11598,7 +11606,7 @@ sha256 = "f0eb0cb2d581d3ad2b9c489468485e7f2ab6727d08401bcf9d824c3caddf3c1c"
 name = "pyparsing"
 version = "3.3.3"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/e4/11/b213bebff182584360cb8d17c72c1677fec5c5c228de439e63bcf8ab1c8f/pyparsing-3.3.3.tar.gz"
@@ -11620,7 +11628,7 @@ sha256 = "ece8c00a69cf01b45d0b1dedabb469c90d8caf996d4fda40f147627a122849a4"
 name = "pypi-attestations"
 version = "0.0.30"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/97/1e/eb8a0233cdcaf01acb18076ac8b8a057714177b3717baf26b78a11b8d929/pypi_attestations-0.0.30.tar.gz"
@@ -11642,7 +11650,7 @@ sha256 = "b3a9c53f6cb89e5e7b5b70e6cfca97cfc66008c1ed54087355e06e40071cef21"
 name = "pyproject-api"
 version = "1.11.6"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/9c/ef/7e422ead671468b094299f54a1e0be12cf47a1c291b25c6001e60b1d1814/pyproject_api-1.11.6.tar.gz"
@@ -11994,7 +12002,7 @@ sha256 = "202ca578cfeb7370784a8c33d6d05bc6e13b4f25b5053c30a152269fd10f0b88"
 name = "python-dateutil"
 version = "2.9.0.post0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"property\" in dependency_groups and ((python_full_version < '3.10' and platform_python_implementation == 'CPython') or (python_full_version >= '3.13' and platform_python_implementation == 'CPython' and sys_platform == 'win32') or platform_python_implementation == 'GraalVM' or platform_python_implementation == 'PyPy' or platform_python_implementation == 'RustPython')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10')) or (\"tasks\" in dependency_groups and ((python_full_version >= '3.10' and platform_python_implementation == 'GraalVM') or (python_full_version >= '3.10' and platform_python_implementation == 'PyPy') or (python_full_version >= '3.10' and platform_python_implementation == 'RustPython') or (python_full_version >= '3.13' and platform_python_implementation == 'CPython' and sys_platform == 'win32'))) or (\"test\" in dependency_groups and ((python_full_version < '3.10' and platform_python_implementation == 'CPython') or (python_full_version >= '3.13' and platform_python_implementation == 'CPython' and sys_platform == 'win32') or platform_python_implementation == 'GraalVM' or platform_python_implementation == 'PyPy' or platform_python_implementation == 'RustPython')) or (\"type\" in dependency_groups and ((python_full_version < '3.10' and platform_python_implementation == 'CPython') or (python_full_version >= '3.13' and platform_python_implementation == 'CPython' and sys_platform == 'win32') or platform_python_implementation == 'GraalVM' or platform_python_implementation == 'PyPy' or platform_python_implementation == 'RustPython'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"property\" in dependency_groups and ((python_full_version < '3.10' and platform_python_implementation == 'CPython') or (python_full_version >= '3.13' and platform_python_implementation == 'CPython' and sys_platform == 'win32') or platform_python_implementation == 'GraalVM' or platform_python_implementation == 'PyPy' or platform_python_implementation == 'RustPython')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10')) or (\"tasks\" in dependency_groups and ((python_full_version >= '3.10' and platform_python_implementation == 'GraalVM') or (python_full_version >= '3.10' and platform_python_implementation == 'PyPy') or (python_full_version >= '3.10' and platform_python_implementation == 'RustPython') or (python_full_version >= '3.13' and platform_python_implementation == 'CPython' and sys_platform == 'win32'))) or (\"test\" in dependency_groups and ((python_full_version < '3.10' and platform_python_implementation == 'CPython') or (python_full_version >= '3.13' and platform_python_implementation == 'CPython' and sys_platform == 'win32') or platform_python_implementation == 'GraalVM' or platform_python_implementation == 'PyPy' or platform_python_implementation == 'RustPython')) or (\"type\" in dependency_groups and ((python_full_version < '3.10' and platform_python_implementation == 'CPython') or (python_full_version >= '3.13' and platform_python_implementation == 'CPython' and sys_platform == 'win32') or platform_python_implementation == 'GraalVM' or platform_python_implementation == 'PyPy' or platform_python_implementation == 'RustPython'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz"
@@ -12016,7 +12024,7 @@ sha256 = "a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"
 name = "python-discovery"
 version = "1.6.2"
 index = "https://pypi.org/simple"
-marker = "\"project-runtime\" in dependency_groups or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"lint\" in dependency_groups and (python_full_version >= '3.11')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "\"project-runtime\" in dependency_groups or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"lint\" in dependency_groups and (python_full_version >= '3.11')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/b0/73/54993df8fc57e906dc9b7e01d1d9b0b2d3eb0ce3190639e33dccb12853f7/python_discovery-1.6.2.tar.gz"
@@ -12384,7 +12392,7 @@ sha256 = "8a1513379d709975552d202d942d9837758905c8d01eb82b8bcc30918929e7b8"
 name = "pyyaml"
 version = "6.0.3"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"lint\" in dependency_groups and (python_full_version >= '3.11')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"lint\" in dependency_groups and (python_full_version >= '3.11')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-news\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-notes\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-prepare\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-validate\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/05/8e/961c0007c59b8dd7729d542c61a4d537767a59645b82a0b521206e1e25c2/pyyaml-6.0.3.tar.gz"
@@ -13060,7 +13068,7 @@ sha256 = "de04cfe9439565e32f178106c51dd6ca61afaa2907d143835d501d84703d3793"
 name = "rdflib"
 version = "7.6.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/98/f5/18bb77b7af9526add0c727a3b2048959847dc5fb030913e2918bf384fec3/rdflib-7.6.0.tar.gz"
@@ -13104,7 +13112,7 @@ sha256 = "d0dae1f74bb273b534770cb4cccb6bb78735540afdb03c2146f4e19dcd412560"
 name = "referencing"
 version = "0.37.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/22/f5/df4e9027acead3ecc63e50fe1e36aca1523e1719559c499951bb4b53188f/referencing-0.37.0.tar.gz"
@@ -13126,7 +13134,7 @@ sha256 = "381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231"
 name = "release-creator"
 version = "0.5.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-news\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-notes\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-prepare\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-validate\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/65/d3/83211b4ebfbaf87383392aed6ef3aa98d65e0ade613a2aa0ea0f222cb6b1/release_creator-0.5.1.tar.gz"
@@ -13148,7 +13156,7 @@ sha256 = "7aa5f28c5195f6f5e0493abede9c041a58d015bc3a837feee5669cc2062d6053"
 name = "requests"
 version = "2.34.2"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/ac/c3/e2a2b89f2d3e2179abd6d00ebd70bff6273f37fb3e0cc209f48b39d00cbf/requests-2.34.2.tar.gz"
@@ -13192,7 +13200,7 @@ sha256 = "cccfdd665f0a24fcf4726e690f65639d272bb0637b9b92dfd91a5568ccf6bd06"
 name = "rfc3161-client"
 version = "1.0.9"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/56/53/e2f526fb6957023180c928448e2dd71b03b35038c315aed2d12d9a77c3af/rfc3161_client-1.0.9.tar.gz"
@@ -13302,7 +13310,7 @@ sha256 = "908f6a775da4bdce1d39f825a4431f389542696078ef3e4ed911a068bcaf1792"
 name = "rfc3339-validator"
 version = "0.1.4"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/28/ea/a9387748e2d111c3c2b275ba970b735e04e15cdb1eb30693b6b5708c4dbd/rfc3339_validator-0.1.4.tar.gz"
@@ -13324,7 +13332,7 @@ sha256 = "24f6ec1eda14ef823da9e36ec7113124b39c04d50a4d3d3a3c2859577e7791fa"
 name = "rfc3986"
 version = "2.0.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/85/40/1520d68bfa07ab5a6f065a186815fb6610c86fe957bc065754e47f7b0840/rfc3986-2.0.0.tar.gz"
@@ -13346,7 +13354,7 @@ sha256 = "50b1502b60e289cb37883f3dfd34532b8873c7de9f49bb546641ce9cbd256ebd"
 name = "rfc3986-validator"
 version = "0.1.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/da/88/f270de456dd7d11dcc808abfa291ecdd3f45ff44e3b549ffa01b126464d0/rfc3986_validator-0.1.1.tar.gz"
@@ -13368,7 +13376,7 @@ sha256 = "2f235c432ef459970b4306369336b9d5dbdda31b510ca1e327636e01f528bfa9"
 name = "rfc3987-syntax"
 version = "1.1.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/2c/06/37c1a5557acf449e8e406a830a05bf885ac47d33270aec454ef78675008d/rfc3987_syntax-1.1.0.tar.gz"
@@ -13390,7 +13398,7 @@ sha256 = "6c3d97604e4c5ce9f714898e05401a0445a641cfa276432b0a648c80856f6a3f"
 name = "rfc8785"
 version = "0.1.4"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/ef/2f/fa1d2e740c490191b572d33dbca5daa180cb423c24396b856f5886371d8b/rfc8785-0.1.4.tar.gz"
@@ -13412,7 +13420,7 @@ sha256 = "520d690b448ecf0703691c76e1a34a24ddcd4fc5bc41d589cb7c58ec651bcd48"
 name = "rich"
 version = "15.0.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/c0/8f/0722ca900cc807c13a6a0c696dacf35430f72e0ec571c4275d2371fca3e9/rich-15.0.0.tar.gz"
@@ -14404,7 +14412,7 @@ sha256 = "ac37f9f516c51e5753f27dfdef11a88330f04de2d564be3991384b2f3535d02e"
 name = "rpds-py"
 version = "2026.9.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.11')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.11'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.11')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.11'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/42/68/3bd46b8a5e01d3c2ebdf9c5e9497912e3fe0cde02bac21a7130ca866e403/rpds_py-2026.9.1.tar.gz"
@@ -15432,153 +15440,153 @@ sha256 = "b242c27c8f836305a4a72df9cdd564386ac57b807bd252a063223331c9316b37"
 
 [[packages]]
 name = "ruff"
-version = "0.17.0"
+version = "0.17.1"
 index = "https://pypi.org/simple"
 marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
-url = "https://files.pythonhosted.org/packages/e9/a7/70debb024dfacda67b8e560cc7511f52b34b9348a8cc8c1ec23036dcd51d/ruff-0.17.0.tar.gz"
-upload-time = 2026-10-09 19:47:29+00:00
-size = 5320554
+url = "https://files.pythonhosted.org/packages/f9/e7/e6d5749983b020e6cb1055abec0a6f361a8e94f0184cdcf56d4760995f02/ruff-0.17.1.tar.gz"
+upload-time = 2026-10-15 15:23:18+00:00
+size = 5323349
 
 [packages.sdist.hashes]
-sha256 = "5cd03240d8208a557c2a9655a5cb07ebe36aa6bb35065f97d48c1f6adef5a322"
+sha256 = "5bb796c5112e9fb9527f2ef2faa0a130d6312d19de92bcfaddd70dbb2d41020f"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/bc/f8/ee5ab9da6089eae2a33e6008b01deb1eda19992c1c8e10661e98cee1640f/ruff-0.17.0-py3-none-linux_armv6l.whl"
-upload-time = 2026-10-09 19:46:38+00:00
-size = 10148907
+url = "https://files.pythonhosted.org/packages/2e/78/90c46ca6250709f7c37e397b60d06061adee8d0f7d13959ed6a8e49b14fd/ruff-0.17.1-py3-none-linux_armv6l.whl"
+upload-time = 2026-10-15 15:22:33+00:00
+size = 10147528
 
 [packages.wheels.hashes]
-sha256 = "0e271826af9a20d18c6cfae8c51e82959167c24859686ddd3eb9a7f0842ce81e"
+sha256 = "1796c41eafec66f4635125dd1e074a7aa27b8d20c187d484360acf11d247fc4a"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/9f/d9/2f81fb5a9d580afbb11b1c8ff915233a11f2a1b27405d7991f183c5e1976/ruff-0.17.0-py3-none-macosx_10_12_x86_64.whl"
-upload-time = 2026-10-09 19:46:41+00:00
-size = 10224208
+url = "https://files.pythonhosted.org/packages/aa/d2/a2e28bc35b083ae51fa07dfba5280a667c8b01ecaee7802fc8849dcd5c46/ruff-0.17.1-py3-none-macosx_10_12_x86_64.whl"
+upload-time = 2026-10-15 15:22:36+00:00
+size = 10225974
 
 [packages.wheels.hashes]
-sha256 = "5f0ca4a40f81403689c04f12966e22f44e329ae362072d8f1587b7bda87f603b"
+sha256 = "8eadb09a788010be29c895418bdfa513e4e1c65e64b94e5b19e4cd381f6cc7fb"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/a7/20/643f3c8f75594f937b2bf74801241c56a2e2b8e139d24dff8b66b28cdd7f/ruff-0.17.0-py3-none-macosx_11_0_arm64.whl"
-upload-time = 2026-10-09 19:46:44+00:00
-size = 9273324
+url = "https://files.pythonhosted.org/packages/8e/71/7a9029a81c8206ee01a98f6cfeeb56e6c095af86857581a37045c46d7e94/ruff-0.17.1-py3-none-macosx_11_0_arm64.whl"
+upload-time = 2026-10-15 15:22:38+00:00
+size = 9270361
 
 [packages.wheels.hashes]
-sha256 = "cbf7149e0927dc3295d5d64679a4765576eef71b00782b2ae969ef82274d6bb9"
+sha256 = "29b454f18ca3eeaf37fbf140841dcf27d36109e29dee9aae8acecb68c26c6f74"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/ec/91/627700b233d367736cb274f1bd0b47d1f2b12f68878192812bd875adadc3/ruff-0.17.0-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl"
-upload-time = 2026-10-09 19:46:47+00:00
-size = 9953190
+url = "https://files.pythonhosted.org/packages/c0/8c/e075e9c917cb0575297880c96768304e881240171c870cbd8d9b7b54bec2/ruff-0.17.1-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl"
+upload-time = 2026-10-15 15:22:41+00:00
+size = 9938300
 
 [packages.wheels.hashes]
-sha256 = "13ee90156522998c3037059d8f66885c8adeeaf7643bdce2caceee196ecd23e0"
+sha256 = "872e03dd231744d6c5ec5c8af6be52b71323fc6ee096e4c8b34d9f844ee3b978"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/cd/92/91f7b5ed39490f89d6cbf56e1f543c383667a725efa8e2c2dee0f01f5591/ruff-0.17.0-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl"
-upload-time = 2026-10-09 19:46:50+00:00
-size = 9961746
+url = "https://files.pythonhosted.org/packages/87/27/0b4bb926a49de2383f161272b4d863571a4c7ecdbf595a6bc58813a13367/ruff-0.17.1-py3-none-manylinux_2_17_armv7l.manylinux2014_armv7l.whl"
+upload-time = 2026-10-15 15:22:43+00:00
+size = 9948464
 
 [packages.wheels.hashes]
-sha256 = "3d8e4a002a94cd9d0dc48b51dc69d807a172b5b9bf2b668e656424dc5b55ead1"
+sha256 = "4c0d6cb5f8fbac77eec9af49f4fc0eaf856b05545e372b0694d24b4e76b1c640"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/87/c5/7310f9fc63ce11ff6394edbd5e85433dfb0e14c9fbf6ccc97f1538491bc7/ruff-0.17.0-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl"
-upload-time = 2026-10-09 19:46:53+00:00
-size = 10625483
+url = "https://files.pythonhosted.org/packages/14/27/518d57e0e02aecb8ea4acac6b57b51a53173d25fa734952bfdd7d531e88e/ruff-0.17.1-py3-none-manylinux_2_17_i686.manylinux2014_i686.whl"
+upload-time = 2026-10-15 15:22:46+00:00
+size = 10638639
 
 [packages.wheels.hashes]
-sha256 = "c0b8a60c06a218c337e1161638d34757f83449243e2db161483ddf948e53ad14"
+sha256 = "78beced4a3c94dfedbee4b999b95b6a27b35820fdc0afbacc6d37a8da26c1cd1"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/a5/8d/97443f0dca4a03a0bc7629fd396fd494a1cb6666121e38c5075acb217d8f/ruff-0.17.0-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl"
-upload-time = 2026-10-09 19:46:56+00:00
-size = 11350129
+url = "https://files.pythonhosted.org/packages/01/82/d89a4e498ade59e6cee52d67f8da569019372212b87468c1fdeae884601c/ruff-0.17.1-py3-none-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl"
+upload-time = 2026-10-15 15:22:48+00:00
+size = 11337238
 
 [packages.wheels.hashes]
-sha256 = "a330178bdffc4205dbf3bda11d93e059e388fd6546f8cdd304501a9160363c0d"
+sha256 = "7feefc63921202894f0e158b0e32f45a5950d70a7fb693ccb9264816c25b1c05"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/9c/0a/c525efd9777be4b6b012e6969a3012648468e7e6c4b3e5b46af69f46e8eb/ruff-0.17.0-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl"
-upload-time = 2026-10-09 19:47:00+00:00
-size = 10906223
+url = "https://files.pythonhosted.org/packages/a2/7c/3b0fdef9352656317c977086fe1d802902406e4f2a0d8578da90c0e6d1c5/ruff-0.17.1-py3-none-manylinux_2_17_s390x.manylinux2014_s390x.whl"
+upload-time = 2026-10-15 15:22:51+00:00
+size = 10896327
 
 [packages.wheels.hashes]
-sha256 = "7bb08489e234876fa2da67ae3ea938e9a2156da80293e0e4365abd6973d98329"
+sha256 = "684154861a819bf1f433669d2a0ce9c3e54677c65b8ebb866cc2a7ec86345785"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/2c/3c/4a01195d93420cad1175bedad13a515dc8a56f95a6e39789b92e582682f5/ruff-0.17.0-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-upload-time = 2026-10-09 19:47:03+00:00
-size = 10386314
+url = "https://files.pythonhosted.org/packages/62/86/5566290219708ce2928f3a29c4f843a1185b341ec6111c4631a33c5ceced/ruff-0.17.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+upload-time = 2026-10-15 15:22:54+00:00
+size = 10350811
 
 [packages.wheels.hashes]
-sha256 = "bc73e7c133e82d55b5f15897b2a442d72c0cb4a0c886c46801ce3c247150b60c"
+sha256 = "a6ef98e51de8ef38082f90653ceeb84944bd7673783eea13e1647c5b9b064189"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/c7/72/1a3951665485a921f6375f91e754a1854d5a645d41acc3642668064ff64d/ruff-0.17.0-py3-none-manylinux_2_31_riscv64.whl"
-upload-time = 2026-10-09 19:47:05+00:00
-size = 10565464
+url = "https://files.pythonhosted.org/packages/ad/d2/ca8462dabb3c413990d49703ba306c30c862195a75448d080fa8fcce9775/ruff-0.17.1-py3-none-manylinux_2_31_riscv64.whl"
+upload-time = 2026-10-15 15:22:57+00:00
+size = 10569994
 
 [packages.wheels.hashes]
-sha256 = "db4f74c533403ab70fe4007873f6ae0c9f94a8b03158cf48d78788e47cdbe399"
+sha256 = "8f9aa5b5bd5fa1937803ea609c8f153b8de39bf3e0e149897ae34b0c5b52f467"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/90/8c/539b4d8c082f57e18db8ae2be85a460d77861c79dcd5798e32b536a6a06f/ruff-0.17.0-py3-none-musllinux_1_2_aarch64.whl"
-upload-time = 2026-10-09 19:47:08+00:00
-size = 10079468
+url = "https://files.pythonhosted.org/packages/e3/ad/dd1864c1f1db17c8cfb297ce70b352388e6977620f66f7182c52855407df/ruff-0.17.1-py3-none-musllinux_1_2_aarch64.whl"
+upload-time = 2026-10-15 15:23:00+00:00
+size = 10059672
 
 [packages.wheels.hashes]
-sha256 = "3d8cc360e666d1914e47b0777c6906d70cf18891a55532bd0a16844195d70859"
+sha256 = "80e53b0e5faa3c5667f035daaa032893ae42b7cfe708c886d39ed131e54688ab"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/e0/b8/84286966db79434e8c26b585b0a0f6897cb3ab1c51a4aa4df10c28488b62/ruff-0.17.0-py3-none-musllinux_1_2_armv7l.whl"
-upload-time = 2026-10-09 19:47:11+00:00
-size = 9958556
+url = "https://files.pythonhosted.org/packages/65/45/3f56cf1d2168c2165cdd5ac6f9668aee66a4cfdd4caf2b2cc5ccb2b1d568/ruff-0.17.1-py3-none-musllinux_1_2_armv7l.whl"
+upload-time = 2026-10-15 15:23:03+00:00
+size = 9947803
 
 [packages.wheels.hashes]
-sha256 = "d66de796b726c4801e05fa99a2a8d7a780e107be222486c304ab61765561e866"
+sha256 = "056c5d5fa0ac790051ae165d7035c7bf956d02de2db557f2e9b31d877a505fca"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/69/50/27b6eed27b83fcdd5bfa0d52b83231e29094754374698da404d094487ae3/ruff-0.17.0-py3-none-musllinux_1_2_i686.whl"
-upload-time = 2026-10-09 19:47:14+00:00
-size = 10352173
+url = "https://files.pythonhosted.org/packages/aa/4b/5457cb2be4c1d1ea5e919558131a0f197a4a454a0530d9e30820e8206e4c/ruff-0.17.1-py3-none-musllinux_1_2_i686.whl"
+upload-time = 2026-10-15 15:23:05+00:00
+size = 10351807
 
 [packages.wheels.hashes]
-sha256 = "c3f268baf004aea944f040623327119527ea231af15f7fb7890e82cea0679589"
+sha256 = "bd8f5a55b10f371642eacd0e8665a42a8b97da15c9a7187c79e697b77b5e0ce4"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/2a/fa/955399fd13044cd827862044117d784a59e3196f6cce7424908ac9a7f914/ruff-0.17.0-py3-none-musllinux_1_2_x86_64.whl"
-upload-time = 2026-10-09 19:47:16+00:00
-size = 10791761
+url = "https://files.pythonhosted.org/packages/49/fb/db15b4f8fa24a1e36b99e1401f42ef6df16ee299a48670d5d262b771e7d7/ruff-0.17.1-py3-none-musllinux_1_2_x86_64.whl"
+upload-time = 2026-10-15 15:23:08+00:00
+size = 10765716
 
 [packages.wheels.hashes]
-sha256 = "864b6c1acb6b0bccf94b5a3938a1531fd09aaca5e5659a2e7bf0f3cf2a685540"
+sha256 = "ce05e6f3973611d9550a600e04bb531061e368baba31610eb57c1509a8f21a0a"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/ae/bf/024e01e1f6aec87768696725e648ed5b438941341eea8f8100beb681961f/ruff-0.17.0-py3-none-win32.whl"
-upload-time = 2026-10-09 19:47:19+00:00
-size = 9904112
+url = "https://files.pythonhosted.org/packages/0a/e8/1e186578076aff7a80735f625005fde678412ab609cd323ed182eb7d6b87/ruff-0.17.1-py3-none-win32.whl"
+upload-time = 2026-10-15 15:23:10+00:00
+size = 9895093
 
 [packages.wheels.hashes]
-sha256 = "5e50aa5b84decd9fe5b0bb0e6f71c3b592f1767ed09faa4b7207d933961e35cd"
+sha256 = "1de0030a8aa78c65c5fecb84b2e5c390ac684c0452875a02afc7c083d49a496a"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/cc/77/1ee73df41dcc8d1cdb686ee4bc46ea29704ea175feb6b95c78420f631ab8/ruff-0.17.0-py3-none-win_amd64.whl"
-upload-time = 2026-10-09 19:47:22+00:00
-size = 10115585
+url = "https://files.pythonhosted.org/packages/6a/2e/da3d9589bae8e8b58f3a48bd5bc0b980232fb14a83bf02c3be7660f87c1b/ruff-0.17.1-py3-none-win_amd64.whl"
+upload-time = 2026-10-15 15:23:13+00:00
+size = 10097955
 
 [packages.wheels.hashes]
-sha256 = "8ab76bcda86dfd28e13776cb5de3c7bcdcf1ae3d37ed761113d1a5a415dc134c"
+sha256 = "5df76f16580fab58d0f6c98a3ac254a4abceb7b2489b8b678335869cff77b3d7"
 
 [[packages.wheels]]
-url = "https://files.pythonhosted.org/packages/fd/71/eb4f0ccc844aece56963e8578df9c95d4c00f580547d52329d4035d3af18/ruff-0.17.0-py3-none-win_arm64.whl"
-upload-time = 2026-10-09 19:47:26+00:00
-size = 9872035
+url = "https://files.pythonhosted.org/packages/df/c9/0f2a4dea06a5e12c1191ee3d96b1e1233797d0d5e18f97a2b909a95a9836/ruff-0.17.1-py3-none-win_arm64.whl"
+upload-time = 2026-10-15 15:23:16+00:00
+size = 9853542
 
 [packages.wheels.hashes]
-sha256 = "c154c73ff43f9854395e24cac507af13078962e53d2b511605058d22af1fdb88"
+sha256 = "42400b9a6ff8515ff27796f07f92e0195be011c86e81e381606f58ea5502fef4"
 
 [[packages]]
 name = "secretstorage"
@@ -15606,7 +15614,7 @@ sha256 = "0ce65888c0725fcb2c5bc0fdb8e5438eece02c523557ea40ce0703c266248137"
 name = "securesystemslib"
 version = "1.5.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/81/d4/f9323507144693d869f30f13694035438ab6642153b94e3057945cf0584f/securesystemslib-1.5.1.tar.gz"
@@ -15628,7 +15636,7 @@ sha256 = "ada8bdf817da29ece4ba91654f6a162ce7cfbadbc3ae3f840f7313f9d22675de"
 name = "semantic-version"
 version = "2.10.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/7d/31/f2289ce78b9b473d582568c234e104d2a342fd658cc288a7553d83bb8595/semantic_version-2.10.0.tar.gz"
@@ -15716,7 +15724,7 @@ sha256 = "82f34c3e3084fc2b57d397200637cc13f2338004052d2fee47baa5f0e902464e"
 name = "sigstore"
 version = "4.5.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/18/e0/279419065e2d7102413605b3456122adbbccbc42e010b499c7b882fc01f8/sigstore-4.5.0.tar.gz"
@@ -15738,7 +15746,7 @@ sha256 = "f045b207f2e12605cf775ec38e89c5eda625d71ffa7830477db65e47ec2bc8b2"
 name = "sigstore-models"
 version = "0.0.6"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/c6/ed/5c0ff809f90b19f4e971e17c1ed11f4df60082c6010b32a82054087e91e0/sigstore_models-0.0.6.tar.gz"
@@ -15760,7 +15768,7 @@ sha256 = "5201a68f4d7d0f8bec1e2f4378eb646b084c52609a4e31db8c385095fff68b2e"
 name = "sigstore-rekor-types"
 version = "0.0.18"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/b4/54/102e772445c5e849b826fbdcd44eb9ad7b3d10fda17b08964658ec7027dc/sigstore_rekor_types-0.0.18.tar.gz"
@@ -15782,7 +15790,7 @@ sha256 = "b62bf38c5b1a62bc0d7fe0ee51a0709e49311d137c7880c329882a8f4b2d1d78"
 name = "six"
 version = "1.17.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"property\" in dependency_groups and ((python_full_version < '3.10' and platform_python_implementation == 'CPython') or (python_full_version >= '3.13' and platform_python_implementation == 'CPython' and sys_platform == 'win32') or platform_python_implementation == 'GraalVM' or platform_python_implementation == 'PyPy' or platform_python_implementation == 'RustPython')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10')) or (\"tasks\" in dependency_groups and ((python_full_version >= '3.10' and platform_python_implementation == 'GraalVM') or (python_full_version >= '3.10' and platform_python_implementation == 'PyPy') or (python_full_version >= '3.10' and platform_python_implementation == 'RustPython') or (python_full_version >= '3.13' and platform_python_implementation == 'CPython' and sys_platform == 'win32'))) or (\"test\" in dependency_groups and ((python_full_version < '3.10' and platform_python_implementation == 'CPython') or (python_full_version >= '3.13' and platform_python_implementation == 'CPython' and sys_platform == 'win32') or platform_python_implementation == 'GraalVM' or platform_python_implementation == 'PyPy' or platform_python_implementation == 'RustPython')) or (\"type\" in dependency_groups and ((python_full_version < '3.10' and platform_python_implementation == 'CPython') or (python_full_version >= '3.13' and platform_python_implementation == 'CPython' and sys_platform == 'win32') or platform_python_implementation == 'GraalVM' or platform_python_implementation == 'PyPy' or platform_python_implementation == 'RustPython'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"property\" in dependency_groups and ((python_full_version < '3.10' and platform_python_implementation == 'CPython') or (python_full_version >= '3.13' and platform_python_implementation == 'CPython' and sys_platform == 'win32') or platform_python_implementation == 'GraalVM' or platform_python_implementation == 'PyPy' or platform_python_implementation == 'RustPython')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10')) or (\"tasks\" in dependency_groups and ((python_full_version >= '3.10' and platform_python_implementation == 'GraalVM') or (python_full_version >= '3.10' and platform_python_implementation == 'PyPy') or (python_full_version >= '3.10' and platform_python_implementation == 'RustPython') or (python_full_version >= '3.13' and platform_python_implementation == 'CPython' and sys_platform == 'win32'))) or (\"test\" in dependency_groups and ((python_full_version < '3.10' and platform_python_implementation == 'CPython') or (python_full_version >= '3.13' and platform_python_implementation == 'CPython' and sys_platform == 'win32') or platform_python_implementation == 'GraalVM' or platform_python_implementation == 'PyPy' or platform_python_implementation == 'RustPython')) or (\"type\" in dependency_groups and ((python_full_version < '3.10' and platform_python_implementation == 'CPython') or (python_full_version >= '3.13' and platform_python_implementation == 'CPython' and sys_platform == 'win32') or platform_python_implementation == 'GraalVM' or platform_python_implementation == 'PyPy' or platform_python_implementation == 'RustPython'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz"
@@ -15848,7 +15856,7 @@ sha256 = "7e207fa178741da09cdee59d3ecec3827ad5f92b1fc5c9ff3755b639f71f5752"
 name = "sortedcontainers"
 version = "2.4.0"
 index = "https://pypi.org/simple"
-marker = "\"property\" in dependency_groups or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "\"property\" in dependency_groups or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/e8/c4/ba2f8066cceb6f23394729afe52f3bf7adec04bf9ed2c820b39e19299111/sortedcontainers-2.4.0.tar.gz"
@@ -15892,7 +15900,7 @@ sha256 = "fa30e3ba4809cb81ce1f3209f2fbe3e779fc445f0439bc147a0d7c4601743f21"
 name = "spdx-tools"
 version = "0.8.5"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/2f/99/33383f587b59cbd191cc1c0fd5408e550b9275e0090d32561cbddc973fdc/spdx_tools-0.8.5.tar.gz"
@@ -18102,7 +18110,7 @@ sha256 = "32a7b79ac57a2e83670ce329ccf675798bc5a2094783a63676866b70503f2e2b"
 name = "tomli-w"
 version = "1.2.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-news\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-notes\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-prepare\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-validate\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/19/75/241269d1da26b624c0d5e110e8149093c759b7a286138f4efd61a60e75fe/tomli_w-1.2.0.tar.gz"
@@ -18124,7 +18132,7 @@ sha256 = "188306098d013b691fcadc011abd66727d3c414c571bb01b1a174ba8c983cf90"
 name = "tomlkit"
 version = "0.15.1"
 index = "https://pypi.org/simple"
-marker = "(\"build\" in dependency_groups and (python_full_version >= '3.10')) or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"build\" in dependency_groups and (python_full_version >= '3.10')) or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/94/96/e07752635b98536177fa1f37671c8f3cdde2e724c6bcf6034b2cfb571565/tomlkit-0.15.1.tar.gz"
@@ -18146,7 +18154,7 @@ sha256 = "177a05aece5a8ca5266fd3c448abb47b8d352f09d477d3ca8332db4d89b24304"
 name = "towncrier"
 version = "26.9.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-news\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-prepare\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/92/d4/e85ce614bf45b1a7fe13b82cc687819c2eaac5a1dd94b84834322095fd98/towncrier-26.9.0.tar.gz"
@@ -18168,7 +18176,7 @@ sha256 = "ae4d223e6aadaff98d29b7f09e58d9c9ccf4cd3b455a2d2e0486d432cd8bf660"
 name = "tox"
 version = "4.65.5"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/cf/da/fede1f079b72862a9383eeff8508fa87c26c2386427cc97eab0a589fd058/tox-4.65.5.tar.gz"
@@ -18190,7 +18198,7 @@ sha256 = "17baefa138f8f4c6a552f6afc136008e7bce11a94f4b8e47c87b22dd33fc80f8"
 name = "tox-uv"
 version = "1.37.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [[packages.wheels]]
 url = "https://files.pythonhosted.org/packages/2a/65/7cf72148bff33fd0a572e620c7b1573d6a5e4812e9207878d4e29e4a938a/tox_uv-1.37.0-py3-none-any.whl"
@@ -18204,7 +18212,7 @@ sha256 = "f2e7de8f12d7ffd850d2a3dcebf278cf72a8952a9abe75d84cfb54a76ee17ae4"
 name = "tox-uv-bare"
 version = "1.37.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/31/27/203b4dbe73cc6dadc2480e319631310981540dabe95893de983106d7b103/tox_uv_bare-1.37.0.tar.gz"
@@ -18226,7 +18234,7 @@ sha256 = "a596c0726690e2182cc85dfbc2f39e6fddacb8f7ea08bf8bace122a17397cd13"
 name = "trove-classifiers"
 version = "2026.9.21.13"
 index = "https://pypi.org/simple"
-marker = "\"build\" in dependency_groups or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "\"build\" in dependency_groups or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/bf/93/af436dfaa845cab5d96f0adbc1e4f3730532d37fa249e4eb796fb1d7fc82/trove_classifiers-2026.9.21.13.tar.gz"
@@ -18248,7 +18256,7 @@ sha256 = "8b1ff4f9c191b1040b71c37f1e445ab99732911e3cd91de52838453a854d7a17"
 name = "tuf"
 version = "7.0.1"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/9c/dd/52e7390cbac308e6b1cfe6be9bc3a96fe26326d5893cc297a52bb72792a9/tuf-7.0.1.tar.gz"
@@ -18464,7 +18472,7 @@ sha256 = "45e2fe584608671aa648784c4f805d08a36cd69eb2bd542e60522140c46dc89c"
 name = "typing-extensions"
 version = "4.16.0"
 index = "https://pypi.org/simple"
-marker = "(\"build\" in dependency_groups and (python_full_version < '3.11')) or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"project-runtime\" in dependency_groups and (python_full_version < '3.11')) or (\"property\" in dependency_groups and (python_full_version < '3.11')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10' and python_full_version < '3.13')) or (\"tasks\" in dependency_groups and (python_full_version == '3.10.*')) or (\"test\" in dependency_groups and (python_full_version < '3.11')) or (\"type\" in dependency_groups and (python_full_version < '3.11'))"
+marker = "(\"build\" in dependency_groups and (python_full_version < '3.11')) or (\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"project-runtime\" in dependency_groups and (python_full_version < '3.11')) or (\"property\" in dependency_groups and (python_full_version < '3.11')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10' and python_full_version < '3.13')) or (\"tasks\" in dependency_groups and (python_full_version == '3.10.*')) or (\"test\" in dependency_groups and (python_full_version < '3.11')) or (\"type\" in dependency_groups and (python_full_version < '3.11'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/f6/cc/6253133b5bb138fc3306cebfbda2c520f545d36b5be2c7255cc528bb45d6/typing_extensions-4.16.0.tar.gz"
@@ -18486,7 +18494,7 @@ sha256 = "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
 name = "typing-inspection"
 version = "0.4.4"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/a3/26/b09b8010994eccc3c09092e6b34058f36a460eea2d4c3e8b910c695975a0/typing_inspection-0.4.4.tar.gz"
@@ -18508,7 +18516,7 @@ sha256 = "65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147"
 name = "tzdata"
 version = "2026.5"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/d9/68/f1b440335057bfce71b6e50a9d09445aa2ecbd08359a337976627b8409e7/tzdata-2026.5.tar.gz"
@@ -18530,7 +18538,7 @@ sha256 = "b683bd1b6659ddcd810ff02ad09ba821d4bf1065072805063eb35c49617905ac"
 name = "uri-template"
 version = "1.3.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/31/c7/0336f2bd0bcbada6ccef7aaa25e443c118a704f828a0620c6fa0207c1b64/uri-template-1.3.0.tar.gz"
@@ -18552,7 +18560,7 @@ sha256 = "a44a133ea12d44a0c0f06d7d42a52d71282e77e2f937d8abd5655b8d56fc1363"
 name = "uritools"
 version = "6.1.3"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/a3/0d/20d02264b6682f07e92cbf7ee43e5e803670d101a03ef204ba18368c321f/uritools-6.1.3.tar.gz"
@@ -18574,7 +18582,7 @@ sha256 = "136f113e76e53f85bf2d9cce0c3d40ceec775d0409e7d6de9b28f046a7d42838"
 name = "urllib3"
 version = "2.8.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/e3/05/b17359e1cefb4f909b5e40b1b90a496d987258916dbbf88e842c729f510e/urllib3-2.8.0.tar.gz"
@@ -18596,7 +18604,7 @@ sha256 = "0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3"
 name = "uv"
 version = "0.13.4"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"lint\" in dependency_groups and (python_full_version >= '3.11')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"lint\" in dependency_groups and (python_full_version >= '3.11')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"tasks\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/79/55/609455d21e87430c11fe734abfced50a3bdf177b2f49d41fbb19c199cbc3/uv-0.13.4.tar.gz"
@@ -18776,7 +18784,7 @@ sha256 = "f8bebd1302ebc12e67ceb30fc7dd698ec969414b6fa43b30c3f14ac9b1e72c41"
 name = "wcwidth"
 version = "0.9.2"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-build\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-news\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-notes\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-prepare\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-validate\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/f0/b4/7830542634bb2d3e62aa3b586a72d5b3b6c91c3168929e7000ef3fed041d/wcwidth-0.9.2.tar.gz"
@@ -19014,7 +19022,7 @@ sha256 = "89ca642c5bf0101157a09366be69fad0379db1f700ae39a920e103234573670e"
 name = "webcolors"
 version = "25.10.0"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/1d/7a/eb316761ec35664ea5174709a68bbd3389de60d4a1ebab8808bfc264ed67/webcolors-25.10.0.tar.gz"
@@ -19058,7 +19066,7 @@ sha256 = "3fa599046443d4ca830d06e3d180cd0a675d5871af0a68daa5623318bb4d17e3"
 name = "xmltodict"
 version = "1.0.4"
 index = "https://pypi.org/simple"
-marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
+marker = "(\"dev\" in dependency_groups and (python_full_version >= '3.15')) or (\"docs\" in dependency_groups and (python_full_version >= '3.15')) or (\"pkg-meta\" in dependency_groups and (python_full_version >= '3.10')) or (\"release\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-verify\" in dependency_groups and (python_full_version >= '3.15')) or (\"release-zipapp\" in dependency_groups and (python_full_version >= '3.15')) or (\"sbom\" in dependency_groups and (python_full_version >= '3.10'))"
 
 [packages.sdist]
 url = "https://files.pythonhosted.org/packages/19/70/80f3b7c10d2630aa66414bf23d210386700aa390547278c789afa994fd7e/xmltodict-1.0.4.tar.gz"

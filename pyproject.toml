@@ -189,6 +189,40 @@ release = [
   "uv>=0.12.22",
   { include-group = "sbom" },
 ]
+release-build = [
+  "release-creator>=0.5.1",
+  "tox>=4.45",
+  "tox-uv>=1.28.1",
+]
+release-check = [
+  "prek>=0.5",
+]
+release-news = [
+  "release-creator>=0.5.1",
+  "towncrier>=26.9",
+]
+release-notes = [
+  "release-creator>=0.5.1",
+]
+release-prepare = [
+  "prek>=0.5",
+  "release-creator>=0.5.1",
+  "towncrier>=26.9",
+]
+release-validate = [
+  "prek>=0.5",
+  "release-creator>=0.5.1",
+]
+release-verify = [
+  "pypi-attestations>=0.0.28",
+  { include-group = "sbom" },
+]
+release-zipapp = [
+  "hatchling>=1.28",
+  "packaging>=26.3",
+  "release-creator>=0.5.1",
+  { include-group = "sbom" },
+]
 sbom = [
   # The stable release still imports a removed typing API: https://github.com/beartype/beartype/issues/618
   "beartype>=0.23.0rc2; python_version>='3.15'",
@@ -229,6 +263,14 @@ dependency-groups.docs = { requires-python = ">=3.15" }
 dependency-groups.lint = { requires-python = ">=3.11" }
 dependency-groups.pkg-meta = { requires-python = ">=3.10" }
 dependency-groups.release = { requires-python = ">=3.15" }
+dependency-groups.release-build = { requires-python = ">=3.15" }
+dependency-groups.release-check = { requires-python = ">=3.15" }
+dependency-groups.release-news = { requires-python = ">=3.15" }
+dependency-groups.release-notes = { requires-python = ">=3.15" }
+dependency-groups.release-prepare = { requires-python = ">=3.15" }
+dependency-groups.release-validate = { requires-python = ">=3.15" }
+dependency-groups.release-verify = { requires-python = ">=3.15" }
+dependency-groups.release-zipapp = { requires-python = ">=3.15" }
 dependency-groups.sbom = { requires-python = ">=3.10" }
 dependency-groups.tasks = { requires-python = ">=3.10" }
 

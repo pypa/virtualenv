@@ -285,7 +285,7 @@ commands = [
     "--python",
     "{env_python}",
     "--group",
-    "release",
+    "release-zipapp",
     "pylock.toml"
   ],
   [
