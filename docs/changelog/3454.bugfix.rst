@@ -1,0 +1,1 @@
+Copy the content of a symlinked directory when a tree is copied into an environment, instead of dropping it.
