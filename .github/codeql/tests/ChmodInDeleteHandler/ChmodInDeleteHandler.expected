@@ -1,0 +1,1 @@
+| sync.py:13:9:13:29 | Attribute() | Permissions change inside a delete error handler passed to rmtree. |

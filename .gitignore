@@ -29,3 +29,9 @@ dist
 Dockerfile*
 !.oss-scanner/Dockerfile
 .dockerignore
+
+# CodeQL pack installs write lock files next to each qlpack
+.github/codeql/**/codeql-pack.lock.yml
+
+# the redirect virtualenv writes when tox creates .tox/dev inside the project
+.venv

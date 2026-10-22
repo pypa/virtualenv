@@ -21,6 +21,7 @@ from virtualenv.seed.embed.via_app_data.pip_install.base import EntryPointConfig
 from virtualenv.seed.wheels import get_wheel, pip_wheel_env_run
 from virtualenv.seed.wheels.acquire import PIP_RUN
 from virtualenv.seed.wheels.util import Version
+from virtualenv.util.path import write_file
 from virtualenv.util.subprocess import LogCmd
 
 if TYPE_CHECKING:
@@ -75,8 +76,9 @@ class PipInvoke(BaseEmbed):
                 changed = True
             if changed:
                 record: Final = next(row[0] for row in rows if row[0].endswith(".dist-info/RECORD"))
-                with Path(str(distribution.locate_file(record))).open("w", encoding="utf-8", newline="") as stream:
-                    csv.writer(stream).writerows(rows)
+                buffer: Final = io.StringIO()
+                csv.writer(buffer).writerows(rows)
+                write_file(Path(str(distribution.locate_file(record))), buffer.getvalue().encode("utf-8"))
 
     @contextmanager
     def get_pip_install_cmd(self, exe: Path, for_py_version: str) -> Generator[list[str], None, None]:

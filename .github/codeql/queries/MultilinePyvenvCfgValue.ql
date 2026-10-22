@@ -25,8 +25,8 @@ module MultilinePyvenvCfgValueConfig implements DataFlow::ConfigSig {
   }
 
   predicate isSink(DataFlow::Node node) {
-    exists(DataFlow::MethodCallNode call |
-      inPyEnvCfg(call) and call.calls(_, "write_text") and node = call.getArg(0)
+    exists(DataFlow::CallCfgNode call |
+      inPyEnvCfg(call) and call.getFunction().asExpr().(Name).getId() = "write_file" and node = call.getArg(1)
     )
   }
 

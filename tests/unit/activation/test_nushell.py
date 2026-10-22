@@ -3,7 +3,7 @@ from __future__ import annotations
 import subprocess
 from argparse import Namespace
 from shutil import which
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -13,6 +13,8 @@ from virtualenv.run import cli_run
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+_NU: Final = which("nu")
 
 
 def test_nushell_tkinter_generation(tmp_path) -> None:

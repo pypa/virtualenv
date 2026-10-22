@@ -28,7 +28,14 @@ default_base_python = [ "3.15" ]
 package = "wheel"
 wheel_build_env = ".pkg"
 dependency_groups = [ "test" ]
-pass_env = [ "CI_RUN", "PYTEST_*", "PYTHONFAULTHANDLER", "TERM" ]
+pass_env = [
+  "CI_RUN",
+  # without the prebuilt cache the CI image points at, Windows PowerShell rescans every installed module on each launch
+  "PSModuleAnalysisCachePath",
+  "PYTEST_*",
+  "PYTHONFAULTHANDLER",
+  "TERM",
+]
 set_env._COVERAGE_SRC = "{env_site_packages_dir}{/}virtualenv"
 set_env.COVERAGE_FILE = "{work_dir}{/}.coverage.{env_name}"
 set_env.COVERAGE_PROCESS_START = "{tox_root}{/}pyproject.toml"

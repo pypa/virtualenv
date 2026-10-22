@@ -42,10 +42,21 @@ if TYPE_CHECKING:
 
 
 _PINS: Final[Path] = Path("tasks/ci-tools.json")
-# no GraalPy assets to hash: check.yaml hands the tag to setup-python, which downloads the release itself
 _TOOLS: Final[dict[str, tuple[str, bool, dict[str, str]]]] = {
-    "graalpy": ("oracle/graalpython", False, {}),
-    "nushell": ("nushell/nushell", False, {"Windows": "nu-{version}-x86_64-pc-windows-msvc.zip"}),
+    "fish": (
+        "fish-shell/fish-shell",
+        False,
+        {"Linux": "fish-{version}-linux-x86_64.tar.xz", "macOS": "fish-{version}.pkg"},
+    ),
+    "nushell": (
+        "nushell/nushell",
+        False,
+        {
+            "Linux": "nu-{version}-x86_64-unknown-linux-gnu.tar.gz",
+            "macOS": "nu-{version}-aarch64-apple-darwin.tar.gz",
+            "Windows": "nu-{version}-x86_64-pc-windows-msvc.zip",
+        },
+    ),
     "rustpython": (
         "RustPython/RustPython",
         True,

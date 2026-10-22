@@ -1,0 +1,1 @@
+| activators.py:7:16:7:27 | repr() | quote() of a Python-readable activator uses repr() instead of ascii(). |

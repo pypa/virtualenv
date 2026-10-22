@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import sys
 from argparse import Namespace
 from shutil import which
@@ -9,6 +10,7 @@ from typing import TYPE_CHECKING, Final
 
 import pytest
 from packaging.version import Version
+from prompt_matrix import SHELLS, drawn_prompt, generate_script, run_prompt
 
 from virtualenv.activation import CShellActivator
 from virtualenv.info import IS_WIN
@@ -398,3 +400,13 @@ def test_cshell_preserves_non_newline_path(
     )
 
     assert result.stdout == str(dest).encode()
+
+
+@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
+@pytest.mark.parametrize("state", list(SHELLS["cshell"].states))
+def test_cshell_histchars_replaces_hash_in_prompt(tmp_path: Path, state: str) -> None:
+    result: Final = run_prompt(
+        "cshell", generate_script("cshell", tmp_path / "env", "a%#b"), state, "histchars", tmp_path
+    )
+
+    assert re.fullmatch(r"\(a%\d+b\) __END__", drawn_prompt("cshell", result))

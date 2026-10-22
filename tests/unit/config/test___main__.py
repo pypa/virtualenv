@@ -5,7 +5,6 @@ import re
 import runpy
 import shutil
 import sys
-import venv
 from importlib.metadata import distribution
 from pathlib import Path
 from subprocess import check_output
@@ -190,8 +189,10 @@ def test_module_entry_from_target_install(tmp_path: Path, safe_path: bool) -> No
         library.mkdir()
         (target / "virtualenv").rename(library / "virtualenv")
         python_path.append(library)
+    # venv from inside a virtualenv on 3.10 and earlier records the virtualenv as home, which only works where the
+    # interpreter's compiled-in prefix exists
     bare: Final = tmp_path / "bare"
-    venv.EnvBuilder(with_pip=False).create(bare)
+    check_output([sys.executable, "-m", "virtualenv", str(bare), "--no-seed", "--activators="])
     executable: Final = bare / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     check_output(
         [

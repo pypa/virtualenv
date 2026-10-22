@@ -1,16 +1,33 @@
 {
-  "graalpy": {
-    "assets": {},
-    "tag": "graal-25.4.4"
+  "fish": {
+    "assets": {
+      "Linux": {
+        "name": "fish-4.9.3-linux-x86_64.tar.xz",
+        "sha256": "8f643d10ad1abb0ef7072764c01ceb5cf61b2d373fda400cf60f0bad69b7e095"
+      },
+      "macOS": {
+        "name": "fish-4.9.3.pkg",
+        "sha256": "fb489929e25e66b8c026a1da8935f68f828134e115a1706f360ed73149b843a9"
+      }
+    },
+    "tag": "4.9.3"
   },
   "mermaid": {
     "version": "12.2.0"
   },
   "nushell": {
     "assets": {
+      "Linux": {
+        "name": "nu-0.116.1-x86_64-unknown-linux-gnu.tar.gz",
+        "sha256": "d6d8ace4be491ed8abba4026e73b60c0470b4671d7039307e7d772282ef863da"
+      },
       "Windows": {
         "name": "nu-0.116.1-x86_64-pc-windows-msvc.zip",
         "sha256": "6658c9e61fe42c88326c1caa99e8dc9ad99bec6c0bc353e6ecb7c5d3f79feed7"
+      },
+      "macOS": {
+        "name": "nu-0.116.1-aarch64-apple-darwin.tar.gz",
+        "sha256": "302fb3dfc5d44e7fe0d5b8227be8e75b4c3956ca8d4804234e5c68fbdd3e4917"
       }
     },
     "tag": "0.116.1"

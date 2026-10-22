@@ -5,6 +5,7 @@ import os
 import runpy
 import subprocess
 import sys
+import sysconfig
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
 from unittest.mock import create_autospec
@@ -30,6 +31,11 @@ Outcome = tuple[int, str, "str | None"]
 @pytest.fixture
 def junit(tmp_path: Path) -> Path:
     return tmp_path / "junit.xml"
+
+
+@pytest.fixture(autouse=True)
+def compileall(mocker: MockerFixture) -> MagicMock:
+    return mocker.patch("subprocess.run", autospec=True)
 
 
 @pytest.fixture
@@ -132,6 +138,25 @@ def test_graalpy_shard_command(run_shards: Callable[[Sequence[Outcome]], MagicMo
         [sys.executable, "-u", "-m", "pytest", "tests", f"--shard={index}/2", "--junitxml", str(junit.parent / name)]
         for index, name in ((1, "junit.1.xml"), (2, "junit.2.xml"))
     ]
+
+
+def test_graalpy_compiles_shared_trees(
+    run_shards: Callable[[Sequence[Outcome]], MagicMock], compileall: MagicMock
+) -> None:
+    run_shards([_PASS, _PASS])
+    trees: Final = dict.fromkeys(sysconfig.get_path(name) for name in ("stdlib", "purelib", "platlib"))
+    compileall.assert_called_once_with([sys.executable, "-m", "compileall", "-q", "-j0", *trees], check=True)
+
+
+def test_graalpy_compiles_before_shards_start(
+    mocker: MockerFixture, junit: Path, popen: Callable[[Sequence[Outcome]], MagicMock], compileall: MagicMock
+) -> None:
+    started: Final[MagicMock] = popen([_PASS, _PASS])
+    shards_at_compile: Final[list[int]] = []
+    compileall.side_effect = lambda *_args, **_kwargs: shards_at_compile.append(started.call_count)
+    mocker.patch.object(sys, "argv", ["runner", "--shards", "2", str(junit), "tests"])
+    runpy.run_path(str(_RUNNER), run_name="__main__")
+    assert shards_at_compile == [0]
 
 
 def test_graalpy_shard_output_prefixed(
