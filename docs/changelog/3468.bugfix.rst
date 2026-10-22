@@ -1,0 +1,1 @@
+In the test suite, use bash from PATH instead of /bin/bash.
