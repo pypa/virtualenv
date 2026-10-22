@@ -1,0 +1,3 @@
+Copy the seed packages instead of failing when ``VIRTUALENV_SYMLINK_APP_DATA`` or ``symlink_app_data`` in the config
+file turns on symlink seeding on a host that cannot create symlinks, such as Windows without the symlink privilege - by
+:user:`darrenhuai`.
