@@ -169,6 +169,7 @@ pkg-meta = [
 ]
 property = [
   "hypothesis>=6.141.1",
+  "xonsh>=0.23.8",
   { include-group = "test" },
 ]
 release = [

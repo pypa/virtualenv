@@ -154,7 +154,7 @@ jobs:
             echo "deb [signed-by=/etc/apt/keyrings/fury-nushell.gpg] https://apt.fury.io/nushell/ /" \
               | sudo tee /etc/apt/sources.list.d/fury.list
             retry sudo apt-get update -y
-            retry sudo apt-get install snapd fish csh tcsh locales-all nushell -y
+            retry sudo apt-get install snapd fish csh tcsh zsh locales-all nushell -y
           elif [ "$RUNNER_OS" = "macOS" ]; then
             brew update
             if [[ "$MATRIX_PY" == brew@* ]]; then
@@ -162,7 +162,7 @@ jobs:
               brew list --versions "python@$PY" >/dev/null 2>&1 || brew install "python@$PY"
               echo "/usr/local/opt/python@$PY/libexec/bin" >>"${GITHUB_PATH}"
             fi
-            brew install fish tcsh nushell || brew upgrade fish tcsh nushell
+            brew install fish tcsh nushell dash || brew upgrade fish tcsh nushell dash
           elif [ "$RUNNER_OS" = "Windows" ]; then
             read -r nu_tag nu_archive nu_sha256 < <(jq --raw-output \
               '.nushell | [.tag, .assets.Windows.name, .assets.Windows.sha256] | @tsv' tasks/ci-tools.json | tr -d '\r')
@@ -329,6 +329,17 @@ jobs:
           cache-suffix: ${{ matrix.tox_env }}
       - name: 📦 Install tox
         run: uv tool install --python-preference only-managed --python 3.15 "tox>=4.45" --with tox-uv
+      - name: 🛠️ Install shells for the property tests
+        if: matrix.tox_env == 'property' && runner.os == 'Linux'
+        run: |
+          sudo install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 https://apt.fury.io/nushell/gpg.key \
+            | sudo gpg --dearmor -o /etc/apt/keyrings/fury-nushell.gpg
+          sudo chmod 0644 /etc/apt/keyrings/fury-nushell.gpg
+          echo "deb [signed-by=/etc/apt/keyrings/fury-nushell.gpg] https://apt.fury.io/nushell/ /" \
+            | sudo tee /etc/apt/sources.list.d/fury.list
+          sudo apt-get update -y
+          sudo apt-get install -y tcsh zsh fish nushell
       - name: 🏗️ Setup check suite
         run: tox run -vv --notest --skip-missing-interpreters false
         env:
