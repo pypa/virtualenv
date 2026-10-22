@@ -18,8 +18,8 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, Final
-from urllib.request import urlopen
 
+from fetch_url import fetch
 from packaging.markers import Marker
 
 if sys.version_info >= (3, 11):
@@ -94,9 +94,7 @@ def download_locked_wheel(package: LockedPackage, into: Path) -> Path:
         msg = f"{LOCK.name} has no pure-Python wheel for {package['name']} {package['version']}"
         raise RuntimeError(msg)
     url, expected = wheels[0]["url"], wheels[0]["hashes"]["sha256"]
-    with urlopen(url, timeout=60) as response:  # ruff:ignore[suspicious-url-open-usage]  # lock URL, sha256-checked
-        content = response.read()
-    if (actual := hashlib.sha256(content).hexdigest()) != expected:
+    if (actual := hashlib.sha256(content := fetch(url)).hexdigest()) != expected:
         msg = f"{url} has sha256 {actual}, but {LOCK.name} records {expected}"
         raise RuntimeError(msg)
     (dest := into / url.rsplit("/", 1)[1]).write_bytes(content)
