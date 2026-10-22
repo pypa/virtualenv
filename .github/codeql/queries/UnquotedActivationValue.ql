@@ -31,7 +31,9 @@ module UnquotedActivationValueConfig implements DataFlow::ConfigSig {
       yield.getScope() = comp.getFunction() and
       value = yield.getValue().(Tuple).getElt(1).getASubExpression*() and
       value.(Name).getVariable() = comp.getNthInnerLoop(0).getTarget().(Tuple).getAnElt().(Name).getVariable() and
-      not exists(Call quoted | quoted.getFunc().(Attribute).getName() = "quote" and value = quoted.getASubExpression*()) and
+      not exists(Call quoted |
+        quoted.getFunc().(Attribute).getName() = "quote" and value = quoted.getASubExpression*()
+      ) and
       node.asExpr() = value
     )
     or
