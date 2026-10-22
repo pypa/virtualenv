@@ -217,6 +217,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       - name: 📤 Store coverage data
+        id: coverage-upload
+        # the artifact client retries HTTP errors but rethrows ETIMEDOUT and ECONNRESET on the first attempt
+        continue-on-error: true
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage-${{ matrix.py }}-${{ matrix.os }}-${{ strategy.job-index }}
@@ -225,6 +228,16 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
+      - name: 📤 Store coverage data after a network error
+        if: steps.coverage-upload.outcome == 'failure'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-${{ matrix.py }}-${{ matrix.os }}-${{ strategy.job-index }}
+          path: .tox/.coverage*
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+          overwrite: true
   coverage:
     name: 📊 coverage
     needs: test
