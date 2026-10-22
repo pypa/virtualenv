@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 from contextlib import contextmanager
 
 import pytest
@@ -61,6 +62,37 @@ def test_extend_action_resets_between_parses(gen_parser_no_conf_env, monkeypatch
     assert result.paths == ["configured"]
     assert result.get_source("paths") == source
     assert action.default == ["configured"]
+
+
+def test_accumulating_actions_reset_between_parses(gen_parser_no_conf_env, monkeypatch) -> None:
+    monkeypatch.setenv("VIRTUALENV_SPEC", "configured")
+    with gen_parser_no_conf_env() as (parser, run):
+        parser.add_argument("-v", dest="verbose", action="count", default=2)
+        parser.add_argument("--spec", action="append", type=str, default=[])
+
+    for _ in range(3):
+        result = run("-v", "-v", "--spec", "first")
+        assert result.verbose == 4
+        assert result.spec == ["configured", "first"]
+
+    result = run()
+    assert result.verbose == 2
+    assert result.get_source("verbose") == "default"
+    assert result.spec == ["configured"]
+    assert result.get_source("spec") == "env var"
+
+
+@pytest.mark.usefixtures("gen_parser_no_conf_env")
+def test_session_counts_cli_options_once(tmp_path) -> None:
+    options = VirtualEnvOptions()
+    session = session_via_cli(
+        ["-v", "--try-first-with", "missing", "-p", sys.executable, str(tmp_path / "venv")],
+        options=options,
+        setup_logging=False,
+    )
+    assert session.verbosity == 3
+    assert options.python == [sys.executable]
+    assert options.try_first_with == ["missing"]
 
 
 def test_reset_app_data_does_not_conflict_clear() -> None:
