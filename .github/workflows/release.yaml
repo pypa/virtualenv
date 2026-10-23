@@ -60,8 +60,6 @@ jobs:
         with:
           groups: release-build
           venv: ${{ runner.temp }}/tools
-      - name: Add installed tools to PATH
-        run: echo "$RUNNER_TEMP/tools/bin" >>"$GITHUB_PATH"
       - name: Select hashed build dependencies
         id: constraints
         uses: tox-dev/github-workflows/export-build-constraints@1b7d58c3e744b505215e1cb11697a80737b0e94d
@@ -197,8 +195,6 @@ jobs:
         with:
           groups: release-notes
           venv: ${{ runner.temp }}/release-tools
-      - name: Add installed tools to PATH
-        run: echo "$RUNNER_TEMP/release-tools/bin" >>"$GITHUB_PATH"
       - name: Find previous tag
         id: previous
         uses: tox-dev/github-workflows/select-previous-tag@1b7d58c3e744b505215e1cb11697a80737b0e94d
@@ -254,8 +250,6 @@ jobs:
         with:
           groups: release-notes
           venv: ${{ runner.temp }}/release-tools
-      - name: Add installed tools to PATH
-        run: echo "$RUNNER_TEMP/release-tools/bin" >>"$GITHUB_PATH"
       - uses: tox-dev/github-workflows/render-release-notes@1b7d58c3e744b505215e1cb11697a80737b0e94d
         with:
           tag: ${{ github.ref_name }}
