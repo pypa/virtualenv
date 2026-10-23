@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Final
 
 import pytest
 from git import Repo
-from release_creator.fragments.pull_requests import PullRequestAuthor
+from release_creator.fragments.pull_requests import PullRequest, PullRequestAuthor
 
 from tasks import release
 
@@ -49,8 +49,10 @@ def release_checkout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: Mo
     mocker.patch.object(release, "__file__", str(root / "tasks" / "release.py"))
     mocker.patch.object(
         release,
-        "pull_request_authors",
-        return_value={"1": PullRequestAuthor(handle="test-user", is_bot=False)},
+        "fragment_pull_requests",
+        return_value={
+            "+release.bugfix.rst": PullRequest(number="1", author=PullRequestAuthor(handle="test-user", is_bot=False))
+        },
     )
     return repo, remote, root
 

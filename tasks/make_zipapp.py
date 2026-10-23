@@ -19,8 +19,9 @@ from pathlib import Path, PurePosixPath
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, Final
 
-from fetch_url import fetch
 from packaging.markers import Marker
+
+from tasks.fetch_url import fetch
 
 if sys.version_info >= (3, 11):
     import tomllib

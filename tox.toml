@@ -320,7 +320,7 @@ commands = [
     "{env_tmp_dir}",
     ".",
   ],
-  [ "python", "tasks/make_zipapp.py", "--wheel-dir", "{env_tmp_dir}" ],
+  [ "python", "-m", "tasks.make_zipapp", "--wheel-dir", "{env_tmp_dir}" ],
   [ "python", "tasks/zipapp_sbom.py", "virtualenv.pyz", "virtualenv.pyz.cdx.json" ],
   [ "python", "tasks/validate_sbom.py", "virtualenv.pyz" ],
 ]

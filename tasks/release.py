@@ -8,10 +8,10 @@ from subprocess import check_call, run
 from typing import Final
 
 from git import Remote, Repo
-from release_creator.fragments.git import commit_subjects_from_git
+from release_creator.fragments.git import fragment_commits_from_git
 from release_creator.fragments.links import add_pull_request_links
 from release_creator.fragments.names import pending_fragments
-from release_creator.fragments.pull_requests import pull_request_authors
+from release_creator.fragments.pull_requests import fragment_pull_requests
 from release_creator.tags.select import next_tag
 
 
@@ -30,10 +30,8 @@ def main(bump: str, *, push: bool) -> None:
         [fragment.name for fragment in pending_fragments(changelog_dir)],
         datetime.now(UTC).date(),
     )
-    subjects = commit_subjects_from_git(changelog_dir)
-    add_pull_request_links(
-        changelog_dir, "pypa/virtualenv", subjects, pull_request_authors("pypa/virtualenv", subjects)
-    )
+    commits = fragment_commits_from_git(changelog_dir)
+    add_pull_request_links(changelog_dir, "pypa/virtualenv", fragment_pull_requests("pypa/virtualenv", commits))
     check_call([sys.executable, "-m", "towncrier", "build", "--yes", "--version", version], cwd=root_src_dir)
     run(
         [sys.executable, "-m", "prek", "run", "docstrfmt", "--files", "docs/changelog.rst"],
