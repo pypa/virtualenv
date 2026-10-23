@@ -13,7 +13,7 @@ def main() -> None:
     if len(versions) != 1:
         msg = "pylock.toml must pin one uv version"
         raise SystemExit(msg)
-    sys.stdout.write(f"{versions.pop()}\n")
+    sys.stdout.write(f"version={versions.pop()}\n")
 
 
 if __name__ == "__main__":

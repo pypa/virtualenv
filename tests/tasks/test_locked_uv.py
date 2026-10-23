@@ -23,7 +23,7 @@ def test_locked_uv_reports_the_pinned_version(tmp_path: Path) -> None:
         cwd=tmp_path,
     )
     assert result.returncode == 0
-    assert result.stdout == "0.13.4\n"
+    assert result.stdout == "version=0.13.4\n"
 
 
 @pytest.mark.parametrize(
