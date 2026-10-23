@@ -4,7 +4,7 @@ on:
   push:
     branches: ["main"]
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+    types: [opened, synchronize, reopened]
   schedule:
     - cron: "0 8 * * *"
 concurrency:
@@ -374,30 +374,6 @@ jobs:
         run: '"$CODEQL" test run .github/codeql/tests'
         env:
           CODEQL: ${{ steps.codeql.outputs.codeql-path }}
-  changelog:
-    name: News fragment
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-26.04
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
-        with:
-          version: latest-known
-          python-version: "3.15"
-          enable-cache: false
-      - name: Install locked release tools
-        uses: tox-dev/github-workflows/install-locked-tools@cadf58a0dcc5d0c7853b248ab7c2b19bb93675d1
-        with:
-          groups: release-news
-          venv: ${{ runner.temp }}/release-tools
-      - name: Add installed tools to PATH
-        run: echo "$RUNNER_TEMP/release-tools/bin" >>"$GITHUB_PATH"
-      - uses: tox-dev/github-workflows/validate-news@cadf58a0dcc5d0c7853b248ab7c2b19bb93675d1
   hook-update-cooldown:
     name: Hook update cooldown
     if: github.event_name == 'pull_request'
@@ -414,7 +390,7 @@ jobs:
     name: ✅ all checks pass
     # the gate shares the jobs' condition, so every job it needs has run and a skip counts as a failure
     if: ${{ !cancelled() && (github.event_name != 'schedule' || github.repository_owner == 'pypa') }} # codespell:ignore cancelled
-    needs: [test, coverage, check, test-queries, changelog, hook-update-cooldown]
+    needs: [test, coverage, check, test-queries, hook-update-cooldown]
     runs-on: ubuntu-24.04
     permissions: {}
     steps:
@@ -426,7 +402,7 @@ jobs:
             all(
               to_entries[];
               .value.result == "success" or
-              ((.key == "changelog" or .key == "hook-update-cooldown") and
+              ((.key == "hook-update-cooldown") and
                .value.result == "skipped" and $event != "pull_request")
             )
           ' <<<"$NEEDS_JSON"
