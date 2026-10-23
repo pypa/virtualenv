@@ -9,22 +9,21 @@ concurrency:
   cancel-in-progress: false
 jobs:
   upgrade:
-    uses: tox-dev/github-workflows/.github/workflows/upgrade-release-tools.yaml@fcba1cc52c8e8bbb8c3305ee5e4bc454b9ab0c50
+    uses: tox-dev/github-workflows/.github/workflows/upgrade-release-tools.yaml@cadf58a0dcc5d0c7853b248ab7c2b19bb93675d1
     permissions:
       contents: read
     secrets:
       RELEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
     with:
-      check-group: release-check
-      build-requirements: |-
-        Cython>=3.0
-        setuptools>=80
-      python-version: "3.15"
-      exclude-newer-packages: |
-        certifi=2026-10-20T02:25:00Z
-        uv=2026-10-20T15:13:00Z
-        release-creator=2026-10-22T13:51:56Z
+      lock-groups: >-
+        release-build release-check release-news release-notes release-prepare release-spdx release-validate release-verify release-zipapp lock-tools
+      additional-lock: pylock.zipapp.toml
+      additional-lock-selection: project
+      additional-matrix-python: ">=3.9,<3.16"
+      additional-matrix-platforms: >-
+        linux_x86_64 linux_aarch64 linux_i686 linux_armv7l macos_x86_64 macos_arm64 windows_amd64 windows_arm64
+      additional-matrix-implementations: cpython pypy
       commit-message: "build(deps): refresh release lock"
       pull-request-title: "build(deps): refresh release tool lock"
       pull-request-body: |-
-        Refresh the project lock across its runtime dependencies, groups, extras, and supported Python versions.
+        Refresh the release tool groups for the supported Python and platform matrix.

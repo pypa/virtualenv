@@ -210,18 +210,20 @@ from the published wheel and pass them to the build:
     $ cmp rebuild/virtualenv-21.12.1-py3-none-any.whl ../virtualenv-21.12.1-py3-none-any.whl
 
 Tags from 21.13.1 through 21.14.12 pin the backend in ``tasks/release-requirements.txt``. Use that file with
-``--build-constraints`` when rebuilding one of those tags. Later tags record the backend in ``pylock.toml``. Install the
-release group from that tag and select the backend's exact versions and hashes:
+``--build-constraints`` when rebuilding one of those tags. For a tag whose ``pylock.toml`` says ``created-by = "nab"``,
+install its locked build backend and release build tools, then build both distributions with those installed versions:
 
 .. code-block:: console
 
     $ uv venv --python 3.15 .release-tools
-    $ uv pip sync --preview-features pylock --python .release-tools/bin/python --group release pylock.toml
-    $ .release-tools/bin/release-creator build-constraints --lock pylock.toml --group build --output build-constraints.txt
+    $ uv pip sync --preview-features pylock --python .release-tools/bin/python \
+        --group build --group release-build pylock.toml
+    $ SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) uv build --sdist --wheel --python .release-tools/bin/python \
+        --no-build-isolation --out-dir rebuild .
 
-Pass ``--build-constraints build-constraints.txt --require-build-hashes --preview-features build-dependency-hashes`` to
-``uv build``. Build from a git checkout: the SBOM records the source commit, which an sdist does not carry. Wheels up to
-21.10.0 also recorded the build machine, so their rebuilt ``RECORD`` and SBOM differ.
+``uv pip sync`` checks the package hashes in the lock; ``--no-build-isolation`` uses that environment for the build.
+Build from a git checkout: the SBOM records the source commit, which an sdist does not carry. Wheels up to 21.10.0 also
+recorded the build machine, so their rebuilt ``RECORD`` and SBOM differ.
 
 The zipapp of a release from 21.11.0 on rebuilds byte for byte as well. The `pylock.zipapp.toml
 <https://github.com/pypa/virtualenv/blob/main/pylock.zipapp.toml>`_ lock at the tag pins each distribution it bundles by

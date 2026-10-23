@@ -248,7 +248,19 @@ base_python = [ "3.15" ]
 skip_install = true
 dependency_groups = []
 commands = [
-  [ "uv", "pip", "sync", "--preview-features", "pylock", "--python", "{env_python}", "--group", "sbom", "pylock.toml" ],
+  [
+    "uv",
+    "pip",
+    "sync",
+    "--preview-features",
+    "pylock",
+    "--python",
+    "{env_python}",
+    "--group",
+    "release-spdx",
+    "--require-hashes",
+    "pylock.toml",
+  ],
   [ "python", "{tox_root}{/}tasks{/}cyclonedx_to_spdx.py", "virtualenv.cdx.json", "virtualenv.spdx.json" ],
   [ "pyspdxtools", "--infile", "virtualenv.spdx.json" ],
 ]
@@ -286,19 +298,9 @@ commands = [
     "{env_python}",
     "--group",
     "release-zipapp",
-    "pylock.toml"
-  ],
-  [
-    "release-creator",
-    "build-constraints",
-    "--lock",
-    "pylock.toml",
     "--group",
     "build",
-    "--python-version",
-    "3.15",
-    "--output",
-    "{env_tmp_dir}{/}build-constraints.txt",
+    "pylock.toml"
   ],
   [
     "uv",
@@ -306,11 +308,7 @@ commands = [
     "--wheel",
     "--python",
     "{env_python}",
-    "--build-constraints",
-    "{env_tmp_dir}{/}build-constraints.txt",
-    "--require-build-hashes",
-    "--preview-features",
-    "build-dependency-hashes",
+    "--no-build-isolation",
     "--out-dir",
     "{env_tmp_dir}",
     ".",
