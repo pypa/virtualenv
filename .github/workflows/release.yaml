@@ -227,7 +227,7 @@ jobs:
           if-no-files-found: error
   notes:
     name: Render GitHub notes
-    needs: [build, generated-notes]
+    needs: [build, previous, generated-notes]
     runs-on: ubuntu-26.04
     permissions:
       contents: read
@@ -253,6 +253,7 @@ jobs:
       - uses: tox-dev/github-workflows/render-release-notes@1b7d58c3e744b505215e1cb11697a80737b0e94d
         with:
           tag: ${{ github.ref_name }}
+          previous: ${{ needs.previous.outputs.tag }}
           changelog: docs/changelog.rst
           artifact-url: https://pypi.org/project/virtualenv/${{ github.ref_name }}/
           generated-notes: ${{ runner.temp }}/generated-notes/generated-notes.md
