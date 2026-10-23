@@ -21,6 +21,8 @@ jobs:
       contents: read
     env:
       PIP_DISABLE_PIP_VERSION_CHECK: "1"
+      # macOS ships a 3.9 that uv would pick over downloading one; the brew legs point UV_PYTHON at Homebrew's build
+      UV_PYTHON_PREFERENCE: ${{ startsWith(matrix.py, 'brew@') && 'managed' || 'only-managed' }}
     strategy:
       fail-fast: false
       matrix:
@@ -81,98 +83,76 @@ jobs:
           cache-suffix: ${{ matrix.py }}
           python-version: "3.15"
           activate-environment: true
-      - name: 📦 Install tox with this virtualenv
-        shell: bash
-        env:
-          MATRIX_PY: ${{ matrix.py }}
-        run: |
-          if [[ "$MATRIX_PY" == "3.13t" || "$MATRIX_PY" == "3.14t" || "$MATRIX_PY" == "3.15t" || "$MATRIX_PY" == "rp" ]]; then
-            uv tool install --python-preference only-managed --python 3.15 "tox>=4.45" --with .
-          else
-            uv tool install --python-preference only-managed --python 3.15 "tox>=4.45" --with tox-uv --with .
-          fi
-      - name: 🧮 Resolve GraalPy release
-        id: graalpy
-        if: matrix.py == 'graalpy'
-        shell: bash
-        # the upgrade workflow keeps tasks/ci-tools.json on the newest release
-        run: echo "python-version=graalpy-$(jq --raw-output '.graalpy.tag | ltrimstr("graal-")' tasks/ci-tools.json)" >> "$GITHUB_OUTPUT"
-      - name: 🐍 Setup Python for test ${{ matrix.py }}
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-        if: ${{ !startsWith(matrix.py, 'brew@') && !startsWith(matrix.py, '3.15') && matrix.py != 'rp' }}
-        with:
-          python-version: ${{ steps.graalpy.outputs.python-version || matrix.py }}
-          allow-prereleases: true
-      - name: Setup Python 3.15 for tests
-        if: startsWith(matrix.py, '3.15')
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
-        with:
-          version: latest-known
-          enable-cache: false
-          python-version: ${{ matrix.py }}
-          activate-environment: true
-      - name: 🦀 Setup RustPython
-        if: matrix.py == 'rp'
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # the upgrade workflow keeps tasks/ci-tools.json on the newest release; tr drops the CR jq.exe may emit
-          read -r tag asset sha256 < <(jq --raw-output --arg os "$RUNNER_OS" \
-            '.rustpython | [.tag, .assets[$os].name, .assets[$os].sha256] | @tsv' tasks/ci-tools.json | tr -d '\r')
-          gh release download "$tag" --repo RustPython/RustPython --pattern "$asset" --dir "$RUNNER_TEMP"
-          (cd "$RUNNER_TEMP" && echo "$sha256  $asset" | sha256sum -c -)
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            cp "$RUNNER_TEMP/$asset" "/c/ProgramData/chocolatey/bin/rustpython.exe"
-          else
-            chmod +x "$RUNNER_TEMP/$asset"
-            sudo mv "$RUNNER_TEMP/$asset" /usr/local/bin/rustpython
-          fi
-      - name: 🛠️ Install OS dependencies
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          MATRIX_PY: ${{ matrix.py }}
-        run: |
-          if [ "$RUNNER_OS" = "Linux" ]; then
-            retry() {
-              local n=1
-              while ! "$@"; do
-                if [ $n -ge 5 ]; then
-                  echo "Command failed after $n attempts: $*" >&2
-                  return 1
-                fi
-                echo "Attempt $n failed for: $*; retrying in 10s" >&2
-                n=$((n + 1))
-                sleep 10
-              done
-            }
-            retry sudo apt-get install -y software-properties-common
-            retry sudo apt-add-repository ppa:fish-shell/release-4 -y
-            sudo install -m 0755 -d /etc/apt/keyrings
-            curl -fsSL --retry 5 --retry-all-errors --retry-delay 10 https://apt.fury.io/nushell/gpg.key \
-              | sudo gpg --dearmor -o /etc/apt/keyrings/fury-nushell.gpg
-            sudo chmod 0644 /etc/apt/keyrings/fury-nushell.gpg
-            echo "deb [signed-by=/etc/apt/keyrings/fury-nushell.gpg] https://apt.fury.io/nushell/ /" \
-              | sudo tee /etc/apt/sources.list.d/fury.list
-            retry sudo apt-get update -y
-            retry sudo apt-get install snapd fish csh tcsh locales-all nushell -y
-          elif [ "$RUNNER_OS" = "macOS" ]; then
-            brew update
-            if [[ "$MATRIX_PY" == brew@* ]]; then
-              PY=$(echo "$MATRIX_PY" | cut -c 6-)
-              brew list --versions "python@$PY" >/dev/null 2>&1 || brew install "python@$PY"
-              echo "/usr/local/opt/python@$PY/libexec/bin" >>"${GITHUB_PATH}"
-            fi
-            brew install fish tcsh nushell || brew upgrade fish tcsh nushell
-          elif [ "$RUNNER_OS" = "Windows" ]; then
-            read -r nu_tag nu_archive nu_sha256 < <(jq --raw-output \
-              '.nushell | [.tag, .assets.Windows.name, .assets.Windows.sha256] | @tsv' tasks/ci-tools.json | tr -d '\r')
-            gh release download "$nu_tag" --repo nushell/nushell --pattern "$nu_archive" --dir "$RUNNER_TEMP"
-            (cd "$RUNNER_TEMP" && echo "$nu_sha256  $nu_archive" | sha256sum -c -)
-            7z x "$RUNNER_TEMP/$nu_archive" -o"$RUNNER_TEMP/nushell" -y
-            cp "$RUNNER_TEMP/nushell/nu.exe" "/c/ProgramData/chocolatey/bin/nu.exe"
-          fi
+      # apt and brew each hold a global lock, so each keeps its packages in one step; the rest download on their own
+      - parallel:
+          - name: 📦 Install tox with this virtualenv
+            shell: bash
+            env:
+              MATRIX_PY: ${{ matrix.py }}
+            run: |
+              if [[ "$MATRIX_PY" == "3.13t" || "$MATRIX_PY" == "3.14t" || "$MATRIX_PY" == "3.15t" || "$MATRIX_PY" == "rp" ]]; then
+                uv tool install --python-preference only-managed --python 3.15 "tox>=4.45" --with .
+              else
+                uv tool install --python-preference only-managed --python 3.15 "tox>=4.45" --with tox-uv --with .
+              fi
+          - name: 🐍 Setup Python for test ${{ matrix.py }}
+            if: ${{ !startsWith(matrix.py, 'brew@') && matrix.py != 'rp' }}
+            uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+            with:
+              version: latest-known
+              enable-cache: false
+              python-version: ${{ matrix.py }}
+              activate-environment: true
+          - name: 🦀 Install RustPython
+            if: matrix.py == 'rp'
+            shell: bash
+            env:
+              GH_TOKEN: ${{ github.token }}
+            run: tasks/install_ci_tool.sh rustpython
+          - name: 🐚 Install Nushell
+            shell: bash
+            env:
+              GH_TOKEN: ${{ github.token }}
+            run: tasks/install_ci_tool.sh nushell
+          - name: 🐟 Install fish
+            if: runner.os != 'Windows'
+            shell: bash
+            env:
+              GH_TOKEN: ${{ github.token }}
+            run: tasks/install_ci_tool.sh fish
+          - name: 🐚 Install apt packages
+            if: runner.os == 'Linux'
+            shell: bash
+            run: |
+              retry() {
+                local n=1
+                while ! "$@"; do
+                  if [ $n -ge 5 ]; then
+                    echo "Command failed after $n attempts: $*" >&2
+                    return 1
+                  fi
+                  echo "Attempt $n failed for: $*; retrying in 10s" >&2
+                  n=$((n + 1))
+                  sleep 10
+                done
+              }
+              # no job installs from packages.microsoft.com, and its outages fail apt-get update for every job
+              sudo find /etc/apt/sources.list.d -type f -exec grep -q packages.microsoft.com {} \; -delete
+              retry sudo apt-get update -y
+              retry sudo apt-get install csh tcsh zsh locales-all -y
+          - name: 🍺 Install brew packages
+            if: runner.os == 'macOS'
+            shell: bash
+            env:
+              MATRIX_PY: ${{ matrix.py }}
+            run: |
+              brew update
+              if [[ "$MATRIX_PY" == brew@* ]]; then
+                PY=$(echo "$MATRIX_PY" | cut -c 6-)
+                brew list --versions "python@$PY" >/dev/null 2>&1 || brew install "python@$PY"
+                echo "/usr/local/opt/python@$PY/libexec/bin" >>"${GITHUB_PATH}"
+              fi
+              brew install tcsh dash || brew upgrade tcsh dash
       - name: 🧬 Pick environment to run
         shell: bash
         env:
@@ -241,6 +221,9 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       - name: 📤 Store coverage data
+        id: coverage-upload
+        # the artifact client retries HTTP errors but rethrows ETIMEDOUT and ECONNRESET on the first attempt
+        continue-on-error: true
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: coverage-${{ matrix.py }}-${{ matrix.os }}-${{ strategy.job-index }}
@@ -249,6 +232,16 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
+      - name: 📤 Store coverage data after a network error
+        if: steps.coverage-upload.outcome == 'failure'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-${{ matrix.py }}-${{ matrix.os }}-${{ strategy.job-index }}
+          path: .tox/.coverage*
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+          overwrite: true
   coverage:
     name: 📊 coverage
     needs: test
@@ -331,8 +324,26 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
           cache-suffix: ${{ matrix.tox_env }}
-      - name: 📦 Install tox
-        run: uv tool install --python-preference only-managed --python 3.15 "tox>=4.45" --with tox-uv
+      - parallel:
+          - name: 📦 Install tox
+            run: uv tool install --python-preference only-managed --python 3.15 "tox>=4.45" --with tox-uv
+          - name: 🐚 Install Nushell for the property tests
+            if: matrix.tox_env == 'property' && runner.os == 'Linux'
+            env:
+              GH_TOKEN: ${{ github.token }}
+            run: tasks/install_ci_tool.sh nushell
+          - name: 🐟 Install fish for the property tests
+            if: matrix.tox_env == 'property' && runner.os == 'Linux'
+            env:
+              GH_TOKEN: ${{ github.token }}
+            run: tasks/install_ci_tool.sh fish
+          - name: 🐚 Install apt packages for the property tests
+            if: matrix.tox_env == 'property' && runner.os == 'Linux'
+            run: |
+              # no job installs from packages.microsoft.com, and its outages fail apt-get update for every job
+              sudo find /etc/apt/sources.list.d -type f -exec grep -q packages.microsoft.com {} \; -delete
+              sudo apt-get update -y
+              sudo apt-get install -y tcsh zsh
       - name: 🏗️ Setup check suite
         run: tox run -vv --notest --skip-missing-interpreters false
         env:
@@ -402,7 +413,7 @@ jobs:
   all-checks-pass:
     name: ✅ all checks pass
     # the gate shares the jobs' condition, so every job it needs has run and a skip counts as a failure
-    if: always() && (github.event_name != 'schedule' || github.repository_owner == 'pypa')
+    if: ${{ !cancelled() && (github.event_name != 'schedule' || github.repository_owner == 'pypa') }} # codespell:ignore cancelled
     needs: [test, coverage, check, test-queries, changelog, hook-update-cooldown]
     runs-on: ubuntu-24.04
     permissions: {}

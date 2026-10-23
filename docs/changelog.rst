@@ -6,6 +6,25 @@
 
 .. towncrier release notes start
 
+.. _release-21-14-13:
+
+************************
+ v21.14.13 (2026-10-22)
+************************
+
+.. _release-21-14-13-security:
+
+Security
+--------
+
+- Stop bash running commands from ``--prompt`` or an environment name containing ``$(...)``, backticks or a backslash
+  after ``shopt -s promptvars``, ``set -o posix``, or in a child shell that inherits an exported ``PS1``
+  (GHSA-cx6f-vjhg-g3cc); reported by :user:`rozzkml`. zsh now draws the prompt from ``psvar[9]``, which is never parsed
+  as shell syntax. (:pr:`3466`) - by :user:`gaborbernat`.
+- Write the ``.venv`` redirect and the wheel ``RECORD`` with exclusive create, so a link planted after the existence
+  check cannot redirect the write. On POSIX, replace a read-only ``.venv`` redirect that points at a virtualenv.
+  (:pr:`3466`) - by :user:`gaborbernat`.
+
 .. _release-21-14-12:
 
 ************************

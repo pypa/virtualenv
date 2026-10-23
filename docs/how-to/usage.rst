@@ -184,6 +184,10 @@ Disable the prompt modification by setting the ``VIRTUAL_ENV_DISABLE_PROMPT`` en
 
 Access the prompt string via the ``VIRTUAL_ENV_PROMPT`` environment variable.
 
+With ``promptvars`` off, bash shows a backslash doubled and a backtick with a leading backslash, because virtualenv
+escapes the prompt for a later ``shopt -s promptvars``. In posix mode bash shows ``!!`` as ``!``, and under root it
+shows ``#`` for a dollar sign. Zsh shows the prompt as typed under every prompt option.
+
 .. _programmatic-activation:
 
 Programmatic activation

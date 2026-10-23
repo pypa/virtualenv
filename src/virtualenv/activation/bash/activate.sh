@@ -64,6 +64,11 @@ deactivate () {
         unset _OLD_VIRTUAL_PS1
     fi
 
+    if [ -n "${_OLD_VIRTUAL_PSVAR+x}" ] ; then
+        psvar[9]="$_OLD_VIRTUAL_PSVAR"
+        unset _OLD_VIRTUAL_PSVAR
+    fi
+
     unset VIRTUAL_ENV
     unset VIRTUAL_ENV_PROMPT
     if [ ! "${1-}" = "nondestructive" ] ; then
@@ -140,23 +145,33 @@ else
     if [ -z "${VIRTUAL_ENV_DISABLE_PROMPT-}" ] &&
         { [ -n "${BASH_VERSION-}" ] || [ -n "${ZSH_VERSION-}" ]; }; then
         _OLD_VIRTUAL_PS1="${PS1-}"
-        # bash expands PS1 after decoding its prompt escapes when promptvars is on or in posix mode, so the prompt holds a
-        # reference to the variable and its value never reaches that expansion; otherwise only the decode runs and
-        # backslashes need doubling. zsh re-expands backslashes, dollar signs and backticks under PROMPT_SUBST, which a
-        # user can set after activation, and reads % as a prompt escape. The guards keep the substitutions away from
-        # POSIX shells such as dash, which reject them with "Bad substitution"
-        if [ -n "${BASH_VERSION-}" ] && { shopt -q promptvars || shopt -qo posix; }; then
-            PS1='(${VIRTUAL_ENV_PROMPT-}) '"${PS1-}"
+        if [ -n "${BASH_VERSION-}" ]; then
+            # bash decodes its prompt escapes on every draw and expands the result when promptvars is on or in posix
+            # mode; both can change after activation and an exported PS1 reaches child shells, so the value gets escaped
+            # for both passes whatever the state is now. The escapes are built by concatenation because the replacement
+            # in ${var//pat/rep} loses backslashes depending on the bash version, BASH_COMPAT and patsub_replacement
+            _VIRTUAL_REST=$VIRTUAL_ENV_PROMPT
+            _VIRTUAL_PROMPT=
+            while [ -n "$_VIRTUAL_REST" ]; do
+                _VIRTUAL_CHAR=${_VIRTUAL_REST%"${_VIRTUAL_REST#?}"}
+                _VIRTUAL_REST=${_VIRTUAL_REST#?}
+                case $_VIRTUAL_CHAR in
+                    \\) _VIRTUAL_PROMPT="$_VIRTUAL_PROMPT\\\\\\\\" ;;
+                    \$ | \`) _VIRTUAL_PROMPT="$_VIRTUAL_PROMPT\\$_VIRTUAL_CHAR" ;;
+                    *) _VIRTUAL_PROMPT="$_VIRTUAL_PROMPT$_VIRTUAL_CHAR" ;;
+                esac
+            done
+            unset _VIRTUAL_REST _VIRTUAL_CHAR
         else
-            _VIRTUAL_PROMPT="${VIRTUAL_ENV_PROMPT//\\/\\\\}"
-            if [ -n "${ZSH_VERSION-}" ]; then
-                _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\$/\\\$}"
-                _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\`/\\\`}"
-                _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT//\%/%%}"
-            fi
-            PS1="(${_VIRTUAL_PROMPT}) ${PS1-}"
-            unset _VIRTUAL_PROMPT
+            # zsh inserts a psvar entry into the prompt as data under every prompt option, so the value needs no
+            # escaping, and the %9v reference holds nothing for another shell to expand when PS1 is exported. The guard
+            # above keeps POSIX shells such as dash away from the array assignment
+            _OLD_VIRTUAL_PSVAR="${psvar[9]-}"
+            psvar[9]="$VIRTUAL_ENV_PROMPT"
+            _VIRTUAL_PROMPT='%9v'
         fi
+        PS1="(${_VIRTUAL_PROMPT}) ${PS1-}"
+        unset _VIRTUAL_PROMPT
     fi
 
     # Make sure to unalias pydoc if it's already there
