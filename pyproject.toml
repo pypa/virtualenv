@@ -162,7 +162,6 @@ fuzz = [
 lint = [
   "pre-commit-uv>=4.2",
 ]
-lock-tools = [ "nab==0.0.22" ]
 pkg-meta = [
   "check-sdist>=1.6",
   "check-wheel-contents>=0.6.3",
@@ -184,7 +183,7 @@ release = [
   "packaging>=26.3",
   "prek>=0.5",
   "pypi-attestations>=0.0.28",
-  "release-creator>=0.6.5",
+  "release-creator>=1",
   "towncrier>=26.9",
   "tox>=4.45",
   "tox-uv>=1.28.1",
@@ -192,7 +191,7 @@ release = [
   { include-group = "sbom" },
 ]
 release-build = [
-  "release-creator>=0.6.5",
+  "release-creator>=1",
   "tox>=4.45",
   "tox-uv>=1.28.1",
 ]
@@ -200,21 +199,21 @@ release-check = [
   "prek>=0.5",
 ]
 release-news = [
-  "release-creator>=0.6.5",
+  "release-creator>=1",
   "towncrier>=26.9",
 ]
 release-notes = [
-  "release-creator>=0.6.5",
+  "release-creator>=1",
 ]
 release-prepare = [
   "prek>=0.5",
-  "release-creator>=0.6.5",
+  "release-creator>=1",
   "towncrier>=26.9",
 ]
 release-spdx = [ { include-group = "sbom" } ]
 release-validate = [
   "prek>=0.5",
-  "release-creator>=0.6.5",
+  "release-creator>=1",
 ]
 release-verify = [
   "pypi-attestations>=0.0.28",
@@ -223,7 +222,7 @@ release-verify = [
 release-zipapp = [
   "hatchling>=1.28",
   "packaging>=26.3",
-  "release-creator>=0.6.5",
+  "release-creator>=1",
   { include-group = "sbom" },
 ]
 sbom = [
@@ -438,7 +437,7 @@ uploaded-prior-to = "P7D"
 decision-order = "stable"
 matrix.python = ">=3.15,<3.16"
 matrix.platforms = [ "linux_x86_64", "linux_aarch64", "macos_arm64", "windows_amd64" ]
-packages.release-creator.uploaded-prior-to = "2026-10-23T19:54:50Z"
+packages.release-creator.uploaded-prior-to = "2026-10-24T06:07:46Z"
 
 [[tool.nab.package-rules]]
 match = [ "nab", "nab-index", "nab-markersets", "nab-project", "nab-provider", "nab-resolver" ]
