@@ -165,11 +165,11 @@ def load_app_data(
     options, _ = parser.parse_known_args(args, namespace=options)
 
     # here we need a write-able application data (e.g. the zipapp might need this for discovery cache)
-    parser.add_argument(
+    app_data: Final = parser.add_argument(
         "--app-data",
         help="a data folder used as cache by the virtualenv",
         type=partial(make_app_data, read_only=options.read_only_app_data, env=options.env),
-        default=make_app_data(None, read_only=options.read_only_app_data, env=options.env),
+        default=None,
     )
     parser.add_argument(
         "--reset-app-data",
@@ -182,6 +182,10 @@ def load_app_data(
         help="trigger a manual update of the embedded wheels",
     )
     options, _ = parser.parse_known_args(args, namespace=options)
+    if options.app_data is None:
+        # build the default only when no folder was given, since building it creates the folder or, when read-only,
+        # requires it to exist; it is also stored on the action so that --help still shows it
+        options.app_data = app_data.default = make_app_data(None, read_only=options.read_only_app_data, env=options.env)
     if options.reset_app_data:
         options.app_data.reset()
     return options
