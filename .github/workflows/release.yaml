@@ -60,6 +60,8 @@ jobs:
         with:
           groups: release-build
           venv: ${{ runner.temp }}/tools
+          verify-lock: pylock.zipapp.toml
+          verify-groups: project-runtime
       - name: Select hashed build dependencies
         id: constraints
         uses: tox-dev/github-workflows/export-build-constraints@1b7d58c3e744b505215e1cb11697a80737b0e94d
