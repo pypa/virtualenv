@@ -1,0 +1,29 @@
+name: Upgrade release tools
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * 2"
+permissions: {}
+concurrency:
+  group: upgrade-release-tools
+  cancel-in-progress: false
+jobs:
+  upgrade:
+    uses: tox-dev/github-workflows/.github/workflows/upgrade-release-tools.yaml@e2d5e308194a31710039f3237b7157431c0e38b5 # v2.0.0
+    permissions:
+      contents: read
+    secrets:
+      RELEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+    with:
+      lock-groups: >-
+        release-build release-check release-news release-notes release-prepare release-spdx release-validate release-verify release-zipapp
+      additional-lock: pylock.zipapp.toml
+      additional-lock-selection: project
+      additional-matrix-python: ">=3.9,<3.16"
+      additional-matrix-platforms: >-
+        linux_x86_64 linux_aarch64 linux_i686 linux_armv7l macos_x86_64 macos_arm64 windows_amd64 windows_arm64
+      additional-matrix-implementations: cpython pypy
+      commit-message: "build(deps): refresh release lock"
+      pull-request-title: "build(deps): refresh release tool lock"
+      pull-request-body: |-
+        Refresh the release tool groups for the supported Python and platform matrix.

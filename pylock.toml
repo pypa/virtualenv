@@ -1,0 +1,3311 @@
+lock-version = "1.0"
+environments = [
+    "python_version == \"3.15\" and sys_platform == \"linux\" and platform_machine == \"x86_64\" and implementation_name == \"cpython\" and platform_python_implementation == \"CPython\" and platform_system == \"Linux\"",
+    "python_version == \"3.15\" and sys_platform == \"linux\" and platform_machine == \"aarch64\" and implementation_name == \"cpython\" and platform_python_implementation == \"CPython\" and platform_system == \"Linux\"",
+    "python_version == \"3.15\" and sys_platform == \"darwin\" and platform_machine == \"arm64\" and implementation_name == \"cpython\" and platform_python_implementation == \"CPython\" and platform_system == \"Darwin\"",
+    "python_version == \"3.15\" and sys_platform == \"win32\" and platform_machine == \"AMD64\" and implementation_name == \"cpython\" and platform_python_implementation == \"CPython\" and platform_system == \"Windows\"",
+]
+requires-python = ">=3.9"
+dependency-groups = [
+    "build",
+    "project-runtime",
+    "release-build",
+    "release-check",
+    "release-news",
+    "release-notes",
+    "release-prepare",
+    "release-spdx",
+    "release-validate",
+    "release-verify",
+    "release-zipapp",
+]
+default-groups = [
+    "project-runtime",
+]
+created-by = "nab"
+
+[[packages]]
+name = "annotated-types"
+version = "0.8.0"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.10"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "annotated_types-0.8.0.tar.gz"
+upload-time = 2026-07-23 20:16:13.995706+00:00
+url = "https://files.pythonhosted.org/packages/5f/56/a8120250d128bed162cd73c76d45f6ef9991f3e068f62a8ee060afa3104a/annotated_types-0.8.0.tar.gz"
+size = 15893
+
+[packages.sdist.hashes]
+sha256 = "13b2beaad985e05e2d6407ee4c4f35590b11f8d693a258a561055cac8f64cab7"
+
+[[packages.wheels]]
+name = "annotated_types-0.8.0-py3-none-any.whl"
+upload-time = 2026-07-23 20:16:12.938651+00:00
+url = "https://files.pythonhosted.org/packages/99/91/8acff4f5e50511b911bbccb72b8628a49c68ce14148cd9f6431094859a90/annotated_types-0.8.0-py3-none-any.whl"
+size = 13427
+
+[packages.wheels.hashes]
+sha256 = "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0"
+
+[[packages]]
+name = "arrow"
+version = "1.4.0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.8"
+dependencies = [
+    { name = "python-dateutil" },
+    { name = "tzdata" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "arrow-1.4.0.tar.gz"
+upload-time = 2025-10-18 17:46:46.761994+00:00
+url = "https://files.pythonhosted.org/packages/b9/33/032cdc44182491aa708d06a68b62434140d8c50820a087fac7af37703357/arrow-1.4.0.tar.gz"
+size = 152931
+
+[packages.sdist.hashes]
+sha256 = "ed0cc050e98001b8779e84d461b0098c4ac597e88704a655582b21d116e526d7"
+
+[[packages.wheels]]
+name = "arrow-1.4.0-py3-none-any.whl"
+upload-time = 2025-10-18 17:46:45.663184+00:00
+url = "https://files.pythonhosted.org/packages/ed/c9/d7977eaacb9df673210491da99e6a247e93df98c715fc43fd136ce1d3d33/arrow-1.4.0-py3-none-any.whl"
+size = 68797
+
+[packages.wheels.hashes]
+sha256 = "749f0769958ebdc79c173ff0b0670d59051a535fa26e8eba02953dc19eb43205"
+
+[[packages]]
+name = "attrs"
+version = "26.1.0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.9"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "attrs-26.1.0.tar.gz"
+upload-time = 2026-03-19 14:22:25.026315+00:00
+url = "https://files.pythonhosted.org/packages/9a/8e/82a0fe20a541c03148528be8cac2408564a6c9a0cc7e9171802bc1d26985/attrs-26.1.0.tar.gz"
+size = 952055
+
+[packages.sdist.hashes]
+sha256 = "d03ceb89cb322a8fd706d4fb91940737b6642aa36998fe130a9bc96c985eff32"
+
+[[packages.wheels]]
+name = "attrs-26.1.0-py3-none-any.whl"
+upload-time = 2026-03-19 14:22:23.645947+00:00
+url = "https://files.pythonhosted.org/packages/64/b4/17d4b0b2a2dc85a6df63d1157e028ed19f90d4cd97c36717afef2bc2f395/attrs-26.1.0-py3-none-any.whl"
+size = 67548
+
+[packages.wheels.hashes]
+sha256 = "c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309"
+
+[[packages]]
+name = "beartype"
+version = "0.23.1"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.10"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "beartype-0.23.1.tar.gz"
+upload-time = 2026-10-11 05:36:55.251880+00:00
+url = "https://files.pythonhosted.org/packages/79/34/c0cfdaee9c796c8381439fed0fcab62810753b8b0adb1ec88fa7f41eaa5d/beartype-0.23.1.tar.gz"
+size = 1993714
+
+[packages.sdist.hashes]
+sha256 = "8b805f246b32931c74f2b321ea0939fe5bb2ff43c12a3eff19cc4c854b832e1d"
+
+[[packages.wheels]]
+name = "beartype-0.23.1-py3-none-any.whl"
+upload-time = 2026-10-11 05:36:52.431648+00:00
+url = "https://files.pythonhosted.org/packages/1c/cb/2f6aa982e2860c1156830db3da7f823b71784ed7d533ca289ea9b6c6347a/beartype-0.23.1-py3-none-any.whl"
+size = 1582101
+
+[packages.wheels.hashes]
+sha256 = "4461b4dc57e3fdd6c8a8464b22cf118002eea107c33e9fef651c69068ab3cce3"
+
+[[packages]]
+name = "boolean-py"
+version = "5.0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "boolean_py-5.0.tar.gz"
+upload-time = 2025-04-03 10:39:49.734090+00:00
+url = "https://files.pythonhosted.org/packages/c4/cf/85379f13b76f3a69bca86b60237978af17d6aa0bc5998978c3b8cf05abb2/boolean_py-5.0.tar.gz"
+size = 37047
+
+[packages.sdist.hashes]
+sha256 = "60cbc4bad079753721d32649545505362c754e121570ada4658b852a3a318d95"
+
+[[packages.wheels]]
+name = "boolean_py-5.0-py3-none-any.whl"
+upload-time = 2025-04-03 10:39:48.449265+00:00
+url = "https://files.pythonhosted.org/packages/e5/ca/78d423b324b8d77900030fa59c4aa9054261ef0925631cd2501dd015b7b7/boolean_py-5.0-py3-none-any.whl"
+size = 26577
+
+[packages.wheels.hashes]
+sha256 = "ef28a70bd43115208441b53a045d1549e2f0ec6e3d08a9d142cbc41c1938e8d9"
+
+[[packages]]
+name = "cachetools"
+version = "7.2.2"
+marker = "\"release-build\" in dependency_groups"
+requires-python = ">=3.10"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "cachetools-7.2.2.tar.gz"
+upload-time = 2026-10-15 20:46:15.833112+00:00
+url = "https://files.pythonhosted.org/packages/85/e0/27b467a38de29583a68973edbf99eeeee5b105567bdbd7d208e5b07525a7/cachetools-7.2.2.tar.gz"
+size = 42916
+
+[packages.sdist.hashes]
+sha256 = "d521dc98d501ba9efd8d2b1663bbf88163509c0c0a090eea6dc154b421ec5410"
+
+[[packages.wheels]]
+name = "cachetools-7.2.2-py3-none-any.whl"
+upload-time = 2026-10-15 20:46:14.069861+00:00
+url = "https://files.pythonhosted.org/packages/eb/d1/15cc3b3c07cfe11bf6fbe81a4a92ebb9d202d7d903aaa36b713c8f6eabda/cachetools-7.2.2-py3-none-any.whl"
+size = 17819
+
+[packages.wheels.hashes]
+sha256 = "39b6c9291adde28c5de6622d25329375fadf3e8a678226e7872e2e72854e4549"
+
+[[packages]]
+name = "certifi"
+version = "2026.7.22"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.7"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "certifi-2026.7.22.tar.gz"
+upload-time = 2026-07-22 03:35:12.644458+00:00
+url = "https://files.pythonhosted.org/packages/a3/c2/24167ea9858356b47a87a50d39908bfdb72ceeefe0041586e704e5376b3a/certifi-2026.7.22.tar.gz"
+size = 138112
+
+[packages.sdist.hashes]
+sha256 = "741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55"
+
+[[packages.wheels]]
+name = "certifi-2026.7.22-py3-none-any.whl"
+upload-time = 2026-07-22 03:35:11.276376+00:00
+url = "https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl"
+size = 136983
+
+[packages.wheels.hashes]
+sha256 = "62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775"
+
+[[packages]]
+name = "cffi"
+version = "2.1.1"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "pycparser" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "cffi-2.1.1.tar.gz"
+upload-time = 2026-08-03 21:21:18.939988+00:00
+url = "https://files.pythonhosted.org/packages/9e/ef/008a1939e372c06329a3fce4279c02f328488f3526744906eeec3da7ad5f/cffi-2.1.1.tar.gz"
+size = 530807
+
+[packages.sdist.hashes]
+sha256 = "dd31f52ea1086513bb9df30f8fcee9b8918323ae067a3d5b78bc826a000712be"
+
+[[packages.wheels]]
+name = "cffi-2.1.1-cp315-cp315-macosx_11_0_arm64.whl"
+upload-time = 2026-08-03 21:20:52.173342+00:00
+url = "https://files.pythonhosted.org/packages/0c/75/2f5207ff6d1a613133b23a5203cc0c2a628313b5eb3974d7956ae3c57950/cffi-2.1.1-cp315-cp315-macosx_11_0_arm64.whl"
+size = 185002
+
+[packages.wheels.hashes]
+sha256 = "2ae64be792b8966f2c69538199728b290e34726562896df1e5dc8ffd8d8188e8"
+
+[[packages.wheels]]
+name = "cffi-2.1.1-cp315-cp315-manylinux2014_aarch64.manylinux_2_17_aarch64.whl"
+upload-time = 2026-08-03 21:20:53.462549+00:00
+url = "https://files.pythonhosted.org/packages/e2/31/9e1313b0a6e30e91b3b3d3fff51ae99c857c07738e3afcce1f7334e1b7ab/cffi-2.1.1-cp315-cp315-manylinux2014_aarch64.manylinux_2_17_aarch64.whl"
+size = 222271
+
+[packages.wheels.hashes]
+sha256 = "507a24c282e0f42f8ed737cf048572cbf580468da5555764a8331735e9c736b6"
+
+[[packages.wheels]]
+name = "cffi-2.1.1-cp315-cp315-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+upload-time = 2026-08-03 21:20:57.336082+00:00
+url = "https://files.pythonhosted.org/packages/44/16/29e6d01b388bef055ecd6ca8244b3f4d336bd09e92d5d892187b9601084e/cffi-2.1.1-cp315-cp315-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+size = 221630
+
+[packages.wheels.hashes]
+sha256 = "aeae0e330c9f6acd681f647d46cefd30c29f93e3392882e792e82080c9691399"
+
+[[packages.wheels]]
+name = "cffi-2.1.1-cp315-cp315-win_amd64.whl"
+upload-time = 2026-08-03 21:21:16.108179+00:00
+url = "https://files.pythonhosted.org/packages/e0/31/5158704cc474ab65c1647932e88be78dc0873f47130e253be38bcaf13d01/cffi-2.1.1-cp315-cp315-win_amd64.whl"
+size = 187897
+
+[packages.wheels.hashes]
+sha256 = "e6e8cff14d6fb0be70a09c0bdc58096f501952d04624ebf867e0e56da2df8960"
+
+[[packages]]
+name = "charset-normalizer"
+version = "3.5.2"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.7"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "charset_normalizer-3.5.2.tar.gz"
+upload-time = 2026-09-30 04:39:23.398219+00:00
+url = "https://files.pythonhosted.org/packages/33/1c/f41d4e74c28ab327ff3acd36053f7ea506c55872d7a90b0fa71aa3ab0c89/charset_normalizer-3.5.2.tar.gz"
+size = 172659
+
+[packages.sdist.hashes]
+sha256 = "39de2a259fc954455c57274dc94c79d5842774e1247a016aff30bc0efed0f4ef"
+
+[[packages.wheels]]
+name = "charset_normalizer-3.5.2-cp315-cp315-macosx_10_15_universal2.whl"
+upload-time = 2026-09-30 04:37:28.329851+00:00
+url = "https://files.pythonhosted.org/packages/ca/e9/34e597dee616d0b8ee4b34d29399e85c2204ade174157a48505d42baa4ff/charset_normalizer-3.5.2-cp315-cp315-macosx_10_15_universal2.whl"
+size = 367676
+
+[packages.wheels.hashes]
+sha256 = "87475fabc8d9996fd9c27debb395e642e8c838d78a00b6e932227a0e06b81e26"
+
+[[packages.wheels]]
+name = "charset_normalizer-3.5.2-cp315-cp315-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl"
+upload-time = 2026-09-30 04:37:30.167187+00:00
+url = "https://files.pythonhosted.org/packages/60/9f/a5d1c91c0263745e2cd344c5a4415d787c575501ab1d449f1148ac6b495d/charset_normalizer-3.5.2-cp315-cp315-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl"
+size = 248414
+
+[packages.wheels.hashes]
+sha256 = "9409a8bf35cf78353942504b24a57de3d75b708997a1e4bd8db71ac8633ce364"
+
+[[packages.wheels]]
+name = "charset_normalizer-3.5.2-cp315-cp315-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+upload-time = 2026-09-30 04:37:37.397915+00:00
+url = "https://files.pythonhosted.org/packages/a0/a1/4fbf5d0f0f1b2a080474c1cf9a2f12c4c6531bb0e8ba591055e846d2b4e9/charset_normalizer-3.5.2-cp315-cp315-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+size = 257336
+
+[packages.wheels.hashes]
+sha256 = "3df041de8887954562c9b261cba85ca0e9ded74048daf125f45edcfaa4832229"
+
+[[packages.wheels]]
+name = "charset_normalizer-3.5.2-cp315-cp315-win_amd64.whl"
+upload-time = 2026-09-30 04:37:53.427053+00:00
+url = "https://files.pythonhosted.org/packages/98/e8/55d5fd3935b4bce6da4fe0df61898e8c82653e317e677bd58aceb9c60f13/charset_normalizer-3.5.2-cp315-cp315-win_amd64.whl"
+size = 210858
+
+[packages.wheels.hashes]
+sha256 = "89b53f3cda69831909888e0494f4fa0bcd3537e3e138dabeb620bd6ad946bae8"
+
+[[packages.wheels]]
+name = "charset_normalizer-3.5.2-cp37-abi3-macosx_10_9_universal2.whl"
+upload-time = 2026-09-30 04:38:26.216534+00:00
+url = "https://files.pythonhosted.org/packages/8c/ab/176fbfd5b64939c55d652366aa5b9ef1d767af207a3aa6ebeb0d226c484d/charset_normalizer-3.5.2-cp37-abi3-macosx_10_9_universal2.whl"
+size = 331815
+
+[packages.wheels.hashes]
+sha256 = "4275811936e2f06feff5e598fb42a1b7ae852da8e39605211892b56b81a34efd"
+
+[[packages.wheels]]
+name = "charset_normalizer-3.5.2-cp37-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl"
+upload-time = 2026-09-30 04:38:28.032254+00:00
+url = "https://files.pythonhosted.org/packages/7e/84/371eac6b30bdbcbf2d632a1a01809103459216fcaae61b8b8d922c1bfb8a/charset_normalizer-3.5.2-cp37-abi3-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl"
+size = 253276
+
+[packages.wheels.hashes]
+sha256 = "1c50fe28bbc2ced33386f298650d91218076c05420e6cbd790b913adc41659e7"
+
+[[packages.wheels]]
+name = "charset_normalizer-3.5.2-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl"
+upload-time = 2026-09-30 04:38:29.732000+00:00
+url = "https://files.pythonhosted.org/packages/43/6f/c4fbae58febff71709c51bc7e18fdfa55341dc382704740f9f0cbf03817b/charset_normalizer-3.5.2-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl"
+size = 241239
+
+[packages.wheels.hashes]
+sha256 = "d19fbd981a488e22cd04883659ca6b08f50b5974f9fd7c95655ef6a043e5893f"
+
+[[packages.wheels]]
+name = "charset_normalizer-3.5.2-cp37-abi3-win_amd64.whl"
+upload-time = 2026-09-30 04:38:49.707190+00:00
+url = "https://files.pythonhosted.org/packages/9d/8a/b618149cc5207943a0242068d7a27897f56a62947b5a039085f2a22029f8/charset_normalizer-3.5.2-cp37-abi3-win_amd64.whl"
+size = 200092
+
+[packages.wheels.hashes]
+sha256 = "9f56f72050826f63dcee7a7f55b0a77168cb3bfc553fd405e7f8f9ece75a4036"
+
+[[packages.wheels]]
+name = "charset_normalizer-3.5.2-py3-none-any.whl"
+upload-time = 2026-09-30 04:39:21.828049+00:00
+url = "https://files.pythonhosted.org/packages/fc/ad/d07d7862a62ffa6d79d68074d14823243dd235a77c45262acbf6adeb28bf/charset_normalizer-3.5.2-py3-none-any.whl"
+size = 68872
+
+[packages.wheels.hashes]
+sha256 = "b6b751274acb69d77b3323d6b7dbaa3c7fdfc1eb829b7eb61d262f32e1af9685"
+
+[[packages]]
+name = "click"
+version = "8.5.0"
+marker = "\"release-build\" in dependency_groups or \"release-news\" in dependency_groups or \"release-notes\" in dependency_groups or \"release-prepare\" in dependency_groups or \"release-spdx\" in dependency_groups or \"release-validate\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.10"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "click-8.5.0.tar.gz"
+upload-time = 2026-08-26 13:33:14.560531+00:00
+url = "https://files.pythonhosted.org/packages/c7/0e/7fa0ef50764b67090eca4114772a2abf8b6148198475e54c660b97caeee6/click-8.5.0.tar.gz"
+size = 382235
+
+[packages.sdist.hashes]
+sha256 = "ba0d2089de75ea0310e2dde03160e6ca10009947fb95a182f9b54021bb272e34"
+
+[[packages.wheels]]
+name = "click-8.5.0-py3-none-any.whl"
+upload-time = 2026-08-26 13:33:12.928043+00:00
+url = "https://files.pythonhosted.org/packages/58/50/6c0d534c5f134586a8e1ba4e330569e32f057e33372ae556463212fb4cd3/click-8.5.0-py3-none-any.whl"
+size = 125251
+
+[packages.wheels.hashes]
+sha256 = "255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360"
+
+[[packages]]
+name = "colorama"
+version = "0.4.6"
+marker = "\"release-build\" in dependency_groups"
+requires-python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "colorama-0.4.6.tar.gz"
+upload-time = 2022-10-25 02:36:22.414799+00:00
+url = "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz"
+size = 27697
+
+[packages.sdist.hashes]
+sha256 = "08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"
+
+[[packages.wheels]]
+name = "colorama-0.4.6-py2.py3-none-any.whl"
+upload-time = 2022-10-25 02:36:20.889702+00:00
+url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl"
+size = 25335
+
+[packages.wheels.hashes]
+sha256 = "4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"
+
+[[packages]]
+name = "cryptography"
+version = "50.0.2"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = "!=3.9.0,!=3.9.1,>=3.9"
+dependencies = [
+    { name = "cffi" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "cryptography-50.0.2.tar.gz"
+upload-time = 2026-09-30 15:30:04.884601+00:00
+url = "https://files.pythonhosted.org/packages/9d/af/182eb91b0df3fe75c4d9f26fe70684569566745f6ba7e5c9c73a862c5252/cryptography-50.0.2.tar.gz"
+size = 880623
+
+[packages.sdist.hashes]
+sha256 = "7b46165bb56eb4704e2eaaf86f3c940d19154535d9b0ca7d6d590b04060e00d5"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp311-abi3-macosx_11_0_arm64.whl"
+upload-time = 2026-09-30 14:43:44.339921+00:00
+url = "https://files.pythonhosted.org/packages/e5/56/d194340cc4a57535e82e1bee9e89667ac4b7c13b5d3f59686deae3094dd5/cryptography-50.0.2-cp311-abi3-macosx_11_0_arm64.whl"
+size = 3914904
+
+[packages.wheels.hashes]
+sha256 = "fa8f5efb344d6908a1ce62f4a24e2e5780f825d6f53f5f50ec5ffacac72936cb"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp311-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl"
+upload-time = 2026-09-30 14:43:47.113016+00:00
+url = "https://files.pythonhosted.org/packages/d9/69/c9bd862c3bf43d6399c433caf002df16e2dffd4be49bdf515cda38038711/cryptography-50.0.2-cp311-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl"
+size = 4731146
+
+[packages.wheels.hashes]
+sha256 = "79def8d059362e7831389ed3be0ecdf58a89386e1271e35dd9f5af84e81bffd0"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp311-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+upload-time = 2026-09-30 14:43:49.010540+00:00
+url = "https://files.pythonhosted.org/packages/21/69/64cef1f702bf6657e0cc186ed1a2891d50d29fb41586b254e1c07adea261/cryptography-50.0.2-cp311-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+size = 4719841
+
+[packages.wheels.hashes]
+sha256 = "630ebfea3bf689d075f82316324ff7433dc447fe6bc1bfc76524b74b4a9567d2"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp311-abi3-manylinux_2_28_aarch64.whl"
+upload-time = 2026-09-30 14:43:50.932452+00:00
+url = "https://files.pythonhosted.org/packages/38/6b/61a3f8d8c5e1e49a6cddccafc4015cc1c0021360ab0acb4080e7a423644a/cryptography-50.0.2-cp311-abi3-manylinux_2_28_aarch64.whl"
+size = 4738340
+
+[packages.wheels.hashes]
+sha256 = "f9f6143a8c75945eb960d9eb98905a441394abfa24afaae239d514ffb2586480"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp311-abi3-manylinux_2_28_x86_64.whl"
+upload-time = 2026-09-30 14:43:55.272150+00:00
+url = "https://files.pythonhosted.org/packages/1a/f1/b474e930c4d910328780e3940da76f5aa5cbc48ce1fc14e44d239d9ea9db/cryptography-50.0.2-cp311-abi3-manylinux_2_28_x86_64.whl"
+size = 4753050
+
+[packages.wheels.hashes]
+sha256 = "4061c0079120205fb760c58acab6443e217307dcf05e3702cf970e0689972856"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp311-abi3-manylinux_2_34_aarch64.whl"
+upload-time = 2026-09-30 14:43:59.541693+00:00
+url = "https://files.pythonhosted.org/packages/71/37/6202e488cc1eb625ea110c292c6bda92823176e023f427d8d5660ce8d632/cryptography-50.0.2-cp311-abi3-manylinux_2_34_aarch64.whl"
+size = 4737859
+
+[packages.wheels.hashes]
+sha256 = "87e9ce85beb6b328ba370cc6e6aea483c92617b4c95b1d33a49297eb662bfb04"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl"
+upload-time = 2026-09-30 14:44:04.545137+00:00
+url = "https://files.pythonhosted.org/packages/d3/69/2c833a049475e0a3444e94c7d0aca0aa51d166374a449b09e92ac98138de/cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl"
+size = 4752576
+
+[packages.wheels.hashes]
+sha256 = "9dab55f57c74c3cad24c323bacbbd04be4705ba6eb0d92e920b1fc4837ed5079"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp311-abi3-win_amd64.whl"
+upload-time = 2026-09-30 14:44:11.671809+00:00
+url = "https://files.pythonhosted.org/packages/9a/4f/adfc442765721292fff86d314ce385d3249d22db42295c0dd057727b60f3/cryptography-50.0.2-cp311-abi3-win_amd64.whl"
+size = 3824692
+
+[packages.wheels.hashes]
+sha256 = "7afa5a6602a9f29af1f3a2965f831bae7c9d5d597b7cbb716d41ab3b7d89879c"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp315-abi3.abi3t-macosx_11_0_arm64.whl"
+upload-time = 2026-09-30 14:44:41.807195+00:00
+url = "https://files.pythonhosted.org/packages/2d/49/93f6a6e7a87c9aa68d44d3e1cdb5fe8f60c90d5d2f46acae9a56892816b8/cryptography-50.0.2-cp315-abi3.abi3t-macosx_11_0_arm64.whl"
+size = 4133708
+
+[packages.wheels.hashes]
+sha256 = "edc3342adf8f697fc5f59c887a304356f147b397809440ed64e2fa6af2f50f37"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp315-abi3.abi3t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl"
+upload-time = 2026-09-30 14:44:43.693364+00:00
+url = "https://files.pythonhosted.org/packages/8c/75/32ac2a56243d778805c16ca6a32b8f74fb757df7e28d7ecb560afafb59cf/cryptography-50.0.2-cp315-abi3.abi3t-manylinux2014_aarch64.manylinux_2_17_aarch64.whl"
+size = 4956267
+
+[packages.wheels.hashes]
+sha256 = "d370b8d1dfcdf7130178137f6fbee6140774a1acc6cacefc4b42643ec11d0a3a"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp315-abi3.abi3t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+upload-time = 2026-09-30 14:44:45.769143+00:00
+url = "https://files.pythonhosted.org/packages/aa/a4/2c8d734e43d97f0842ee9f1b7b4bfb3d0cf5e19edebf43c2afe6675c2320/cryptography-50.0.2-cp315-abi3.abi3t-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+size = 4966465
+
+[packages.wheels.hashes]
+sha256 = "f2f9bd7f90c64fe89253f0a2c05e3c4856072660429ce8831b4235bf29403a67"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp315-abi3.abi3t-manylinux_2_28_aarch64.whl"
+upload-time = 2026-09-30 14:44:48.211032+00:00
+url = "https://files.pythonhosted.org/packages/c2/58/ee288c829a6f41f6235ae9dd33d82fd19b45442b65b4c8a3da36963d9f7a/cryptography-50.0.2-cp315-abi3.abi3t-manylinux_2_28_aarch64.whl"
+size = 4959356
+
+[packages.wheels.hashes]
+sha256 = "e275096ea1e60cc595cda2836fd4a6c725d1125108b868be17f53684d164e2cc"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp315-abi3.abi3t-manylinux_2_28_x86_64.whl"
+upload-time = 2026-09-30 14:44:53.379605+00:00
+url = "https://files.pythonhosted.org/packages/02/a8/8df951850d6b31d2a00218f19e2b3f999523437ed7a819df7fa427942fca/cryptography-50.0.2-cp315-abi3.abi3t-manylinux_2_28_x86_64.whl"
+size = 5001199
+
+[packages.wheels.hashes]
+sha256 = "58a0c478eeca76fe5e07993c5a0703def34a6dc6a0cda4f5564639b33112ffe7"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp315-abi3.abi3t-manylinux_2_34_aarch64.whl"
+upload-time = 2026-09-30 14:44:59.639056+00:00
+url = "https://files.pythonhosted.org/packages/8c/72/20f99a219f6af47cdd1cbd978c243b92d71496e168a746138af44ded4f29/cryptography-50.0.2-cp315-abi3.abi3t-manylinux_2_34_aarch64.whl"
+size = 4958822
+
+[packages.wheels.hashes]
+sha256 = "fdd28f912fccfec1846a94e2e1e8f9b0012f557f0c46fe4f3eb0d7a87afcf90b"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp315-abi3.abi3t-manylinux_2_34_x86_64.whl"
+upload-time = 2026-09-30 14:45:05.009031+00:00
+url = "https://files.pythonhosted.org/packages/24/95/83378121ef3eaaaf71d4b781577ff794acb39b9e1b87a3f156898c8497ed/cryptography-50.0.2-cp315-abi3.abi3t-manylinux_2_34_x86_64.whl"
+size = 5000859
+
+[packages.wheels.hashes]
+sha256 = "e105ab60406787da31fccc883fc0f733af1efd78f0136a4599692c4083a73d0c"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp315-abi3.abi3t-win_amd64.whl"
+upload-time = 2026-09-30 15:29:20.155896+00:00
+url = "https://files.pythonhosted.org/packages/39/d1/55f8a3f2ef5d1529e16835ef10cf0fe3d559ce237b46dddc440c0bba3649/cryptography-50.0.2-cp315-abi3.abi3t-win_amd64.whl"
+size = 4111557
+
+[packages.wheels.hashes]
+sha256 = "c423ab384a46c4dff7217b2ea5ba2e11cffdeab6441acd04cf65a369caf0366c"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp39-abi3-macosx_11_0_arm64.whl"
+upload-time = 2026-09-30 15:29:22.265815+00:00
+url = "https://files.pythonhosted.org/packages/23/ad/ac987755d00e1e64273760228d2635ae38dae2be83e3c6e0d3289d91dec3/cryptography-50.0.2-cp39-abi3-macosx_11_0_arm64.whl"
+size = 3943588
+
+[packages.wheels.hashes]
+sha256 = "0ec5f09541743261e66e291b4a0cbf0fb2997aeaab6d9e9c740b9dba1b58d1c2"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp39-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl"
+upload-time = 2026-09-30 15:29:24.580797+00:00
+url = "https://files.pythonhosted.org/packages/d5/8d/6d585339bedf85d45044c85d8412dac53f2bb6f918e8b7777efba1787844/cryptography-50.0.2-cp39-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl"
+size = 4756166
+
+[packages.wheels.hashes]
+sha256 = "c5e67125c7dca78d199ec4e116aa93dbb83494808ecbb8211a2cb09b1bf41dbd"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp39-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+upload-time = 2026-09-30 15:29:26.807001+00:00
+url = "https://files.pythonhosted.org/packages/bf/f1/1c1f6874e8550cfddd4b688ceb38cefb6ed15ceed224d56f133f3d88c214/cryptography-50.0.2-cp39-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+size = 4749145
+
+[packages.wheels.hashes]
+sha256 = "ee247f5c245c9a2fe7c8e2214e295918838e44e00a45a6718451e4004219e767"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp39-abi3-manylinux_2_28_aarch64.whl"
+upload-time = 2026-09-30 15:29:28.588698+00:00
+url = "https://files.pythonhosted.org/packages/c1/63/61b15dc1a8de03fe0adbe3fd7608b3ad5c73bf50993bbcb1faaa930afe33/cryptography-50.0.2-cp39-abi3-manylinux_2_28_aarch64.whl"
+size = 4763638
+
+[packages.wheels.hashes]
+sha256 = "dfe9763530994147d9af1def057a5b9658b00e8f8fe8743d144d1e0911c2e454"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp39-abi3-manylinux_2_28_x86_64.whl"
+upload-time = 2026-09-30 15:29:32.605292+00:00
+url = "https://files.pythonhosted.org/packages/4f/87/ef344a9e616871f2519c22d6afcda79ddd5d35e9592d95eb6e677608d055/cryptography-50.0.2-cp39-abi3-manylinux_2_28_x86_64.whl"
+size = 4781387
+
+[packages.wheels.hashes]
+sha256 = "f21e8a22c8605750c7af886bab299a363721264061b4ac0a30efb73cfd58efc5"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp39-abi3-manylinux_2_34_aarch64.whl"
+upload-time = 2026-09-30 15:29:36.149639+00:00
+url = "https://files.pythonhosted.org/packages/bc/ce/7e4f662b1e3c393513569e402cfc85ac7da0bd3d5435e122a3140219eb2d/cryptography-50.0.2-cp39-abi3-manylinux_2_34_aarch64.whl"
+size = 4764319
+
+[packages.wheels.hashes]
+sha256 = "0ddc924c04591c2811ca024d62ecad4f7f6f08af8939c211438f48a16bd23602"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp39-abi3-manylinux_2_34_x86_64.whl"
+upload-time = 2026-09-30 15:29:41.251208+00:00
+url = "https://files.pythonhosted.org/packages/40/cf/6b5c8e2fd9202d98988ab7cb5cc5c991704c4ad55f492ff408e4969f83f1/cryptography-50.0.2-cp39-abi3-manylinux_2_34_x86_64.whl"
+size = 4780973
+
+[packages.wheels.hashes]
+sha256 = "1981f1db4630889b9ef7803fadef12b056f428cb6b85c27ba57b774793b6093c"
+
+[[packages.wheels]]
+name = "cryptography-50.0.2-cp39-abi3-win_amd64.whl"
+upload-time = 2026-09-30 15:29:46.782322+00:00
+url = "https://files.pythonhosted.org/packages/f6/b6/a1faf3a27ae9405fb34b1713cc73b2d8a26b04d5c561578fa2e6ef3e5bb9/cryptography-50.0.2-cp39-abi3-win_amd64.whl"
+size = 3854095
+
+[packages.wheels.hashes]
+sha256 = "4e81d95e5bafc2d6e34e4bed780e53e4d5b9a2f928573428aa4d35fbec1eb0de"
+
+[[packages]]
+name = "cyclonedx-python-lib"
+version = "11.12.0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = "<4.0,>=3.9"
+dependencies = [
+    { name = "jsonschema" },
+    { name = "license-expression" },
+    { name = "packageurl-python" },
+    { name = "py-serializable" },
+    { name = "referencing" },
+    { name = "sortedcontainers" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "cyclonedx_python_lib-11.12.0.tar.gz"
+upload-time = 2026-08-13 07:52:18.675291+00:00
+url = "https://files.pythonhosted.org/packages/17/40/6509e6cfd7f2f3255501690f46375fdd224949e21fd1e96f4f4c8a9041b1/cyclonedx_python_lib-11.12.0.tar.gz"
+size = 1445378
+
+[packages.sdist.hashes]
+sha256 = "16767c4039de90c04e9f03348f8f0ed4b8ff842eaa7eefcad3a95685f970dacf"
+
+[[packages.wheels]]
+name = "cyclonedx_python_lib-11.12.0-py3-none-any.whl"
+upload-time = 2026-08-13 07:52:16.836824+00:00
+url = "https://files.pythonhosted.org/packages/cf/f0/b2cb999244f2f4194df63ecff6939228178fa63a33be809c412684ca8db7/cyclonedx_python_lib-11.12.0-py3-none-any.whl"
+size = 529453
+
+[packages.wheels.hashes]
+sha256 = "0e807521a921a5c3cb8ce1153f8a61d29eedfe76a46aac2796b7c6b573391a54"
+
+[[packages]]
+name = "defusedxml"
+version = "0.7.1"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "defusedxml-0.7.1.tar.gz"
+upload-time = 2021-03-08 10:59:26.269532+00:00
+url = "https://files.pythonhosted.org/packages/0f/d5/c66da9b79e5bdb124974bfe172b4daf3c984ebd9c2a06e2b8a4dc7331c72/defusedxml-0.7.1.tar.gz"
+size = 75520
+
+[packages.sdist.hashes]
+sha256 = "1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69"
+
+[[packages.wheels]]
+name = "defusedxml-0.7.1-py2.py3-none-any.whl"
+upload-time = 2021-03-08 10:59:24.450195+00:00
+url = "https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl"
+size = 25604
+
+[packages.wheels.hashes]
+sha256 = "a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61"
+
+[[packages]]
+name = "distlib"
+version = "0.4.4"
+marker = "\"project-runtime\" in dependency_groups or \"release-build\" in dependency_groups"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "distlib-0.4.4.tar.gz"
+upload-time = 2026-10-16 13:56:34.203008+00:00
+url = "https://files.pythonhosted.org/packages/68/bc/d36966de7304047a1001a7559fbf266c464bb5d8cc85464536ef8c9bcc32/distlib-0.4.4.tar.gz"
+size = 621304
+
+[packages.sdist.hashes]
+sha256 = "ca4175b4ac7f71223cc30ed7248c45d2b38c2439d8ee6e498ab67ed63cf3508d"
+
+[[packages.wheels]]
+name = "distlib-0.4.4-py2.py3-none-any.whl"
+upload-time = 2026-10-16 13:56:32.053304+00:00
+url = "https://files.pythonhosted.org/packages/c1/2b/238f02a4927fa2e27aa995371d240a468b52e42eae44a678434aff736b38/distlib-0.4.4-py2.py3-none-any.whl"
+size = 472099
+
+[packages.wheels.hashes]
+sha256 = "cf09d55b1e85a89576b036aeb71550bfd68320f3f21761ca329eadadad918638"
+
+[[packages]]
+name = "dnspython"
+version = "2.9.0"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.11"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "dnspython-2.9.0.tar.gz"
+upload-time = 2026-10-09 00:07:24.352654+00:00
+url = "https://files.pythonhosted.org/packages/ef/4a/50822184bd67cc6493f0fb6a880749158fcd31ab3fa07409acfd91f9fc85/dnspython-2.9.0.tar.gz"
+size = 423560
+
+[packages.sdist.hashes]
+sha256 = "b44dc6b18f07a8b1c56676a19fbfdb5209415b046a9cece286baafa87ff3f7f1"
+
+[[packages.wheels]]
+name = "dnspython-2.9.0-py3-none-any.whl"
+upload-time = 2026-10-09 00:07:22.622887+00:00
+url = "https://files.pythonhosted.org/packages/10/02/cdcc9b7c051786a103c3b09e1003a82fa0c66bcb91ffbdabcfbf7b4163b9/dnspython-2.9.0-py3-none-any.whl"
+size = 354822
+
+[packages.wheels.hashes]
+sha256 = "9a4aedb833c3c1b49214d04d44d3032ab7a9135f7c1d29a549b4ff78fd82fda9"
+
+[[packages]]
+name = "docutils"
+version = "0.23"
+marker = "\"release-build\" in dependency_groups or \"release-news\" in dependency_groups or \"release-notes\" in dependency_groups or \"release-prepare\" in dependency_groups or \"release-validate\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.9"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "docutils-0.23.tar.gz"
+upload-time = 2026-05-27 17:41:06.934109+00:00
+url = "https://files.pythonhosted.org/packages/39/a4/5180d9afc57e8fca05601dd652bdff19604c218814037fe90ffc7625a50a/docutils-0.23.tar.gz"
+size = 2303823
+
+[packages.sdist.hashes]
+sha256 = "746f5060322511280a1e50eb76846ed6bf2342984b2ac04dc42caa1a8d78799e"
+
+[[packages.wheels]]
+name = "docutils-0.23-py3-none-any.whl"
+upload-time = 2026-05-27 17:40:58.442528+00:00
+url = "https://files.pythonhosted.org/packages/32/91/30151a39f7570f448ed84529390628a651d7f27c87d73c9b887f8189695e/docutils-0.23-py3-none-any.whl"
+size = 634701
+
+[packages.wheels.hashes]
+sha256 = "25d013af9bf23bc1c7b2b093dff4208166c53a94786c9e447808335ef1185fea"
+
+[[packages]]
+name = "email-validator"
+version = "2.3.0"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.8"
+dependencies = [
+    { name = "dnspython" },
+    { name = "idna" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "email_validator-2.3.0.tar.gz"
+upload-time = 2025-08-26 13:09:06.831581+00:00
+url = "https://files.pythonhosted.org/packages/f5/22/900cb125c76b7aaa450ce02fd727f452243f2e91a61af068b40adba60ea9/email_validator-2.3.0.tar.gz"
+size = 51238
+
+[packages.sdist.hashes]
+sha256 = "9fc05c37f2f6cf439ff414f8fc46d917929974a82244c20eb10231ba60c54426"
+
+[[packages.wheels]]
+name = "email_validator-2.3.0-py3-none-any.whl"
+upload-time = 2025-08-26 13:09:05.858779+00:00
+url = "https://files.pythonhosted.org/packages/de/15/545e2b6cf2e3be84bc1ed85613edd75b8aea69807a71c26f4ca6a9258e82/email_validator-2.3.0-py3-none-any.whl"
+size = 35604
+
+[packages.wheels.hashes]
+sha256 = "80f13f623413e6b197ae73bb10bf4eb0908faf509ad8362c5edeb0be7fd450b4"
+
+[[packages]]
+name = "filelock"
+version = "4.2.0"
+marker = "\"project-runtime\" in dependency_groups or \"release-build\" in dependency_groups"
+requires-python = ">=3.11"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "filelock-4.2.0.tar.gz"
+upload-time = 2026-10-14 20:57:13.110136+00:00
+url = "https://files.pythonhosted.org/packages/f4/a9/1af41b37c3279712b22cdc63aac78a52432202b6fe1f9666a2a3d2831fb4/filelock-4.2.0.tar.gz"
+size = 569667
+
+[packages.sdist.hashes]
+sha256 = "7a60906c75227cf04d0c273afadc8219400f11aeb13cc69591d4f6cdc6c8036e"
+
+[[packages.wheels]]
+name = "filelock-4.2.0-py3-none-any.whl"
+upload-time = 2026-10-14 20:57:11.349669+00:00
+url = "https://files.pythonhosted.org/packages/8e/a3/9bc26acff301fe1aaea1cc3d82a1d57e0a34df3e1cadbfa91ac2dbcdde5c/filelock-4.2.0-py3-none-any.whl"
+size = 135032
+
+[packages.wheels.hashes]
+sha256 = "2ff5690882e8cdb00ef31fb3d01a3094c29f30985426c59495afb1733f3b7238"
+
+[[packages]]
+name = "fqdn"
+version = "1.6.0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,<4,>=2.7"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "fqdn-1.6.0.tar.gz"
+upload-time = 2026-09-28 05:43:35.482270+00:00
+url = "https://files.pythonhosted.org/packages/02/01/248d44fbda9e78fa1a7b5a475194bef4c4a3e285db286419f3bb42f2efdf/fqdn-1.6.0.tar.gz"
+size = 130737
+
+[packages.sdist.hashes]
+sha256 = "e39bf62e2a9481aa2cb780554fdfd944dd8ee5f230eb831684d539cbafed8de2"
+
+[[packages.wheels]]
+name = "fqdn-1.6.0-py3-none-any.whl"
+upload-time = 2026-09-28 05:43:33.951821+00:00
+url = "https://files.pythonhosted.org/packages/15/d5/a8f9149b97cced9e1f4bff92ff0b6206120e2c853ae774d7020d6ecd8fa8/fqdn-1.6.0-py3-none-any.whl"
+size = 12569
+
+[packages.wheels.hashes]
+sha256 = "6c793c312ccfa29981e1135b3ef5e1277ebe639731a6b0f7350d90e96e63f0b4"
+
+[[packages]]
+name = "hatch-fancy-pypi-readme"
+version = "25.1.0"
+marker = "\"build\" in dependency_groups"
+requires-python = ">=3.8"
+dependencies = [
+    { name = "hatchling" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "hatch_fancy_pypi_readme-25.1.0.tar.gz"
+upload-time = 2025-05-01 10:34:42.989334+00:00
+url = "https://files.pythonhosted.org/packages/f3/0f/aed57c301f339936eb91cb4d8c1e5088a101081854bd3ec18a889df32365/hatch_fancy_pypi_readme-25.1.0.tar.gz"
+size = 29701
+
+[packages.sdist.hashes]
+sha256 = "9c58ed3dff90d51f43414ce37009ad1d5b0f08ffc9fc216998a06380f01c0045"
+
+[[packages.wheels]]
+name = "hatch_fancy_pypi_readme-25.1.0-py3-none-any.whl"
+upload-time = 2025-05-01 10:34:41.204793+00:00
+url = "https://files.pythonhosted.org/packages/58/b4/ad71e051b34f1935783de37beffee16e343ff2514b204dc515f9e939d4af/hatch_fancy_pypi_readme-25.1.0-py3-none-any.whl"
+size = 10046
+
+[packages.wheels.hashes]
+sha256 = "ce0134c40d63d874ac48f48ccc678b8f3b62b8e50e9318520d2bffc752eedaf3"
+
+[[packages]]
+name = "hatch-vcs"
+version = "0.5.0"
+marker = "\"build\" in dependency_groups"
+requires-python = ">=3.9"
+dependencies = [
+    { name = "hatchling" },
+    { name = "setuptools-scm" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "hatch_vcs-0.5.0.tar.gz"
+upload-time = 2025-05-27 05:16:04.490926+00:00
+url = "https://files.pythonhosted.org/packages/6b/b0/4cc743d38adbee9d57d786fa496ed1daadb17e48589b6da8fa55717a0746/hatch_vcs-0.5.0.tar.gz"
+size = 11424
+
+[packages.sdist.hashes]
+sha256 = "0395fa126940340215090c344a2bf4e2a77bcbe7daab16f41b37b98c95809ff9"
+
+[[packages.wheels]]
+name = "hatch_vcs-0.5.0-py3-none-any.whl"
+upload-time = 2025-05-27 05:16:03.184909+00:00
+url = "https://files.pythonhosted.org/packages/5f/48/1f85cee4b7b4f40b9b814b1febbc661bda6ced9649e410a0b74f6e415dd0/hatch_vcs-0.5.0-py3-none-any.whl"
+size = 8507
+
+[packages.wheels.hashes]
+sha256 = "b49677dbdc597460cc22d01b27ab3696f5e16a21ecf2700fb01bc28e1f2a04a7"
+
+[[packages]]
+name = "hatchling"
+version = "1.32.4"
+marker = "\"build\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "packaging" },
+    { name = "pathspec" },
+    { name = "pluggy" },
+    { name = "tomlkit" },
+    { name = "trove-classifiers" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "hatchling-1.32.4.tar.gz"
+upload-time = 2026-09-20 22:48:45.398505+00:00
+url = "https://files.pythonhosted.org/packages/f6/97/b5312f01a8c6daf729a9d272dd442e0c546dbcc630495788786c4b567ed0/hatchling-1.32.4.tar.gz"
+size = 58065
+
+[packages.sdist.hashes]
+sha256 = "c4468f73144c054d2aab4ef0f0378c43b9878bf07f8ffd6b79690e970d375f07"
+
+[[packages.wheels]]
+name = "hatchling-1.32.4-py3-none-any.whl"
+upload-time = 2026-09-20 22:48:44.190681+00:00
+url = "https://files.pythonhosted.org/packages/5f/80/91f51f439c05d4ec4623c22928ce16a938d6d793bf709477830823497859/hatchling-1.32.4-py3-none-any.whl"
+size = 78748
+
+[packages.wheels.hashes]
+sha256 = "08ecf7548fb48205e7f213d70c71e67b8271b7242093dc3f1da578b42c734a2c"
+
+[[packages]]
+name = "id"
+version = "1.6.1"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.9"
+dependencies = [
+    { name = "urllib3" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "id-1.6.1.tar.gz"
+upload-time = 2026-02-04 16:19:41.260133+00:00
+url = "https://files.pythonhosted.org/packages/6d/04/c2156091427636080787aac190019dc64096e56a23b7364d3c1764ee3a06/id-1.6.1.tar.gz"
+size = 18088
+
+[packages.sdist.hashes]
+sha256 = "d0732d624fb46fd4e7bc4e5152f00214450953b9e772c182c1c22964def1a069"
+
+[[packages.wheels]]
+name = "id-1.6.1-py3-none-any.whl"
+upload-time = 2026-02-04 16:19:40.051745+00:00
+url = "https://files.pythonhosted.org/packages/42/77/de194443bf38daed9452139e960c632b0ef9f9a5dd9ce605fdf18ca9f1b1/id-1.6.1-py3-none-any.whl"
+size = 14689
+
+[packages.wheels.hashes]
+sha256 = "f5ec41ed2629a508f5d0988eda142e190c9c6da971100612c4de9ad9f9b237ca"
+
+[[packages]]
+name = "idna"
+version = "3.20"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.9"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "idna-3.20.tar.gz"
+upload-time = 2026-09-17 14:11:04.752193+00:00
+url = "https://files.pythonhosted.org/packages/f5/08/8eea9d4b8302028f3abb2c0813953f7aec26d33b7a8960ed760e65ff29fa/idna-3.20.tar.gz"
+size = 216463
+
+[packages.sdist.hashes]
+sha256 = "a7db850025b95ded1eae8a46181a1a6c56c92c96f0e2b005d9ff8dc0210cab44"
+
+[[packages.wheels]]
+name = "idna-3.20-py3-none-any.whl"
+upload-time = 2026-09-17 14:11:03.168153+00:00
+url = "https://files.pythonhosted.org/packages/58/a2/bb081bab032533a855d44de1d56f8e8426114ff1ba5d1f07a438a0a654f8/idna-3.20-py3-none-any.whl"
+size = 69583
+
+[packages.wheels.hashes]
+sha256 = "ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c"
+
+[[packages]]
+name = "isoduration"
+version = "20.11.0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.7"
+dependencies = [
+    { name = "arrow" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "isoduration-20.11.0.tar.gz"
+upload-time = 2020-11-01 11:00:00.312591+00:00
+url = "https://files.pythonhosted.org/packages/7c/1a/3c8edc664e06e6bd06cce40c6b22da5f1429aa4224d0c590f3be21c91ead/isoduration-20.11.0.tar.gz"
+size = 11649
+
+[packages.sdist.hashes]
+sha256 = "ac2f9015137935279eac671f94f89eb00584f940f5dc49462a0c4ee692ba1bd9"
+
+[[packages.wheels]]
+name = "isoduration-20.11.0-py3-none-any.whl"
+upload-time = 2020-11-01 10:59:58.020369+00:00
+url = "https://files.pythonhosted.org/packages/7b/55/e5326141505c5d5e34c5e0935d2908a74e4561eca44108fbfb9c13d2911a/isoduration-20.11.0-py3-none-any.whl"
+size = 11321
+
+[packages.wheels.hashes]
+sha256 = "b2904c2a4228c3d44f409c8ae8e2370eb21a26f7ac2ec5446df141dde3452042"
+
+[[packages]]
+name = "jinja2"
+version = "3.1.6"
+marker = "\"release-build\" in dependency_groups or \"release-news\" in dependency_groups or \"release-notes\" in dependency_groups or \"release-prepare\" in dependency_groups or \"release-validate\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.7"
+dependencies = [
+    { name = "markupsafe" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "jinja2-3.1.6.tar.gz"
+upload-time = 2025-03-05 20:05:02.478302+00:00
+url = "https://files.pythonhosted.org/packages/df/bf/f7da0350254c0ed7c72f3e33cef02e048281fec7ecec5f032d4aac52226b/jinja2-3.1.6.tar.gz"
+size = 245115
+
+[packages.sdist.hashes]
+sha256 = "0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d"
+
+[[packages.wheels]]
+name = "jinja2-3.1.6-py3-none-any.whl"
+upload-time = 2025-03-05 20:05:00.369721+00:00
+url = "https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl"
+size = 134899
+
+[packages.wheels.hashes]
+sha256 = "85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67"
+
+[[packages]]
+name = "jsonpointer"
+version = "3.2.1"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.10"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "jsonpointer-3.2.1.tar.gz"
+upload-time = 2026-10-10 21:11:06.988679+00:00
+url = "https://files.pythonhosted.org/packages/33/a2/c92f0a7ed439c490d2c8ad712fdb074c311afa4f77870987826a3b1483ba/jsonpointer-3.2.1.tar.gz"
+size = 11309
+
+[packages.sdist.hashes]
+sha256 = "47c846513b3a4ec46eecef1105207fba075e2a3659048e362bd7daff0fc33342"
+
+[[packages.wheels]]
+name = "jsonpointer-3.2.1-py3-none-any.whl"
+upload-time = 2026-10-10 21:11:05.648089+00:00
+url = "https://files.pythonhosted.org/packages/fa/29/accef8eea16670b88f3a23102c35dee62c6f159db30d9628908043b3e21b/jsonpointer-3.2.1-py3-none-any.whl"
+size = 8332
+
+[packages.wheels.hashes]
+sha256 = "b19ee68644e9ffb51440448d8f7811af2b7406eea1db90603e93f5849323119a"
+
+[[packages]]
+name = "jsonschema"
+version = "4.26.0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "attrs" },
+    { name = "fqdn" },
+    { name = "idna" },
+    { name = "isoduration" },
+    { name = "jsonpointer" },
+    { name = "jsonschema-specifications" },
+    { name = "referencing" },
+    { name = "rfc3339-validator" },
+    { name = "rfc3986-validator" },
+    { name = "rfc3987-syntax" },
+    { name = "rpds-py" },
+    { name = "uri-template" },
+    { name = "webcolors" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "jsonschema-4.26.0.tar.gz"
+upload-time = 2026-01-07 13:41:07.246891+00:00
+url = "https://files.pythonhosted.org/packages/b3/fc/e067678238fa451312d4c62bf6e6cf5ec56375422aee02f9cb5f909b3047/jsonschema-4.26.0.tar.gz"
+size = 366583
+
+[packages.sdist.hashes]
+sha256 = "0c26707e2efad8aa1bfc5b7ce170f3fccc2e4918ff85989ba9ffa9facb2be326"
+
+[[packages.wheels]]
+name = "jsonschema-4.26.0-py3-none-any.whl"
+upload-time = 2026-01-07 13:41:05.306692+00:00
+url = "https://files.pythonhosted.org/packages/69/90/f63fb5873511e014207a475e2bb4e8b2e570d655b00ac19a9a0ca0a385ee/jsonschema-4.26.0-py3-none-any.whl"
+size = 90630
+
+[packages.wheels.hashes]
+sha256 = "d489f15263b8d200f8387e64b4c3a75f06629559fb73deb8fdfb525f2dab50ce"
+
+[[packages]]
+name = "jsonschema-specifications"
+version = "2025.9.1"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.9"
+dependencies = [
+    { name = "referencing" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "jsonschema_specifications-2025.9.1.tar.gz"
+upload-time = 2025-09-08 01:34:59.186960+00:00
+url = "https://files.pythonhosted.org/packages/19/74/a633ee74eb36c44aa6d1095e7cc5569bebf04342ee146178e2d36600708b/jsonschema_specifications-2025.9.1.tar.gz"
+size = 32855
+
+[packages.sdist.hashes]
+sha256 = "b540987f239e745613c7a9176f3edb72b832a4ac465cf02712288397832b5e8d"
+
+[[packages.wheels]]
+name = "jsonschema_specifications-2025.9.1-py3-none-any.whl"
+upload-time = 2025-09-08 01:34:57.871954+00:00
+url = "https://files.pythonhosted.org/packages/41/45/1a4ed80516f02155c51f51e8cedb3c1902296743db0bbc66608a0db2814f/jsonschema_specifications-2025.9.1-py3-none-any.whl"
+size = 18437
+
+[packages.wheels.hashes]
+sha256 = "98802fee3a11ee76ecaca44429fda8a41bff98b00a0f2838151b113f210cc6fe"
+
+[[packages]]
+name = "lark"
+version = "1.3.1"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.8"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "lark-1.3.1.tar.gz"
+upload-time = 2025-10-27 18:25:56.653447+00:00
+url = "https://files.pythonhosted.org/packages/da/34/28fff3ab31ccff1fd4f6c7c7b0ceb2b6968d8ea4950663eadcb5720591a0/lark-1.3.1.tar.gz"
+size = 382732
+
+[packages.sdist.hashes]
+sha256 = "b426a7a6d6d53189d318f2b6236ab5d6429eaf09259f1ca33eb716eed10d2905"
+
+[[packages.wheels]]
+name = "lark-1.3.1-py3-none-any.whl"
+upload-time = 2025-10-27 18:25:54.882451+00:00
+url = "https://files.pythonhosted.org/packages/82/3d/14ce75ef66813643812f3093ab17e46d3a206942ce7376d31ec2d36229e7/lark-1.3.1-py3-none-any.whl"
+size = 113151
+
+[packages.wheels.hashes]
+sha256 = "c629b661023a014c37da873b4ff58a817398d12635d3bbb2c5a03be7fe5d1e12"
+
+[[packages]]
+name = "license-expression"
+version = "30.4.4"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.9"
+dependencies = [
+    { name = "boolean-py" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "license_expression-30.4.4.tar.gz"
+upload-time = 2025-07-22 11:13:32.170576+00:00
+url = "https://files.pythonhosted.org/packages/40/71/d89bb0e71b1415453980fd32315f2a037aad9f7f70f695c7cec7035feb13/license_expression-30.4.4.tar.gz"
+size = 186402
+
+[packages.sdist.hashes]
+sha256 = "73448f0aacd8d0808895bdc4b2c8e01a8d67646e4188f887375398c761f340fd"
+
+[[packages.wheels]]
+name = "license_expression-30.4.4-py3-none-any.whl"
+upload-time = 2025-07-22 11:13:31.217173+00:00
+url = "https://files.pythonhosted.org/packages/af/40/791891d4c0c4dab4c5e187c17261cedc26285fd41541577f900470a45a4d/license_expression-30.4.4-py3-none-any.whl"
+size = 120615
+
+[packages.wheels.hashes]
+sha256 = "421788fdcadb41f049d2dc934ce666626265aeccefddd25e162a26f23bcbf8a4"
+
+[[packages]]
+name = "markdown-it-py"
+version = "4.2.0"
+marker = "\"release-build\" in dependency_groups or \"release-news\" in dependency_groups or \"release-notes\" in dependency_groups or \"release-prepare\" in dependency_groups or \"release-validate\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "mdurl" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "markdown_it_py-4.2.0.tar.gz"
+upload-time = 2026-05-07 12:08:28.360612+00:00
+url = "https://files.pythonhosted.org/packages/06/ff/7841249c247aa650a76b9ee4bbaeae59370dc8bfd2f6c01f3630c35eb134/markdown_it_py-4.2.0.tar.gz"
+size = 82454
+
+[packages.sdist.hashes]
+sha256 = "04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49"
+
+[[packages.wheels]]
+name = "markdown_it_py-4.2.0-py3-none-any.whl"
+upload-time = 2026-05-07 12:08:27.182789+00:00
+url = "https://files.pythonhosted.org/packages/b3/81/4da04ced5a082363ecfa159c010d200ecbd959ae410c10c0264a38cac0f5/markdown_it_py-4.2.0-py3-none-any.whl"
+size = 91687
+
+[packages.wheels.hashes]
+sha256 = "9f7ebbcd14fe59494226453aed97c1070d83f8d24b6fc3a3bcf9a38092641c4a"
+
+[[packages]]
+name = "markupsafe"
+version = "3.0.4"
+marker = "\"release-build\" in dependency_groups or \"release-news\" in dependency_groups or \"release-notes\" in dependency_groups or \"release-prepare\" in dependency_groups or \"release-validate\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.9"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "markupsafe-3.0.4.tar.gz"
+upload-time = 2026-10-02 23:07:22.290270+00:00
+url = "https://files.pythonhosted.org/packages/38/9b/e422a865e1d5d57d0e509b4e0bf1c1a70a7f6382c29a5aa428df994c8bc8/markupsafe-3.0.4.tar.gz"
+size = 153777
+
+[packages.sdist.hashes]
+sha256 = "2e9ad7dd851bf45fab9f75cbff4cb493fee9979e8d8c7c9c3ee119022518edd6"
+
+[[packages.wheels]]
+name = "markupsafe-3.0.4-cp315-cp315-macosx_11_0_arm64.whl"
+upload-time = 2026-10-02 23:06:17.855823+00:00
+url = "https://files.pythonhosted.org/packages/96/24/3ec292b44064c16229e064d770b2625bd8ea941aa61f44905a9fa44942c0/markupsafe-3.0.4-cp315-cp315-macosx_11_0_arm64.whl"
+size = 12075
+
+[packages.wheels.hashes]
+sha256 = "ae9dcb8fbe244cb82f8a6458b455b927a03685e383d9bacf1ea5ce180b96dc97"
+
+[[packages.wheels]]
+name = "markupsafe-3.0.4-cp315-cp315-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl"
+upload-time = 2026-10-02 23:06:18.963942+00:00
+url = "https://files.pythonhosted.org/packages/aa/85/b64fdb1f304848518742136983c24e96d967bfb59a0ea160e92736901ab0/markupsafe-3.0.4-cp315-cp315-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl"
+size = 24656
+
+[packages.wheels.hashes]
+sha256 = "4bced6e2a6dba6a28f7dd3c6ce14df1b2dd495923f16ea484cad03decd463b2b"
+
+[[packages.wheels]]
+name = "markupsafe-3.0.4-cp315-cp315-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+upload-time = 2026-10-02 23:06:22.524416+00:00
+url = "https://files.pythonhosted.org/packages/82/96/ef49135ce260db4ca4a12b119ed468449cd248db6b1468e2112b546d7a2e/markupsafe-3.0.4-cp315-cp315-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+size = 23111
+
+[packages.wheels.hashes]
+sha256 = "925f929d6b59a8b3f8b8c6ac363cd0af7eecc81efb3071770b3c6717c450a369"
+
+[[packages.wheels]]
+name = "markupsafe-3.0.4-cp315-cp315-win_amd64.whl"
+upload-time = 2026-10-02 23:06:33.258900+00:00
+url = "https://files.pythonhosted.org/packages/5b/ec/6000fd82e8791e58fcd0456ec20f098957e2b03d5ed02eb73241a577c0ba/markupsafe-3.0.4-cp315-cp315-win_amd64.whl"
+size = 14496
+
+[packages.wheels.hashes]
+sha256 = "d882a373d8093c2941e01291b7ced96e9cbe4781da9a7751ca7e6c70385e5214"
+
+[[packages]]
+name = "mdformat"
+version = "1.0.0"
+marker = "\"release-build\" in dependency_groups or \"release-news\" in dependency_groups or \"release-notes\" in dependency_groups or \"release-prepare\" in dependency_groups or \"release-validate\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "markdown-it-py" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "mdformat-1.0.0.tar.gz"
+upload-time = 2025-10-16 12:05:03.695033+00:00
+url = "https://files.pythonhosted.org/packages/3f/05/32b5e14b192b0a8a309f32232c580aefedd9d06017cb8fe8fce34bec654c/mdformat-1.0.0.tar.gz"
+size = 56953
+
+[packages.sdist.hashes]
+sha256 = "4954045fcae797c29f86d4ad879e43bb151fa55dbaf74ac6eaeacf1d45bb3928"
+
+[[packages.wheels]]
+name = "mdformat-1.0.0-py3-none-any.whl"
+upload-time = 2025-10-16 12:05:02.607432+00:00
+url = "https://files.pythonhosted.org/packages/54/9a/8fe71b95985ca7a4001effbcc58e5a07a1f2a2884203f74dcf48a3b08315/mdformat-1.0.0-py3-none-any.whl"
+size = 53288
+
+[packages.wheels.hashes]
+sha256 = "bca015d65a1d063a02e885a91daee303057bc7829c2cd37b2075a50dbb65944b"
+
+[[packages]]
+name = "mdformat-gfm"
+version = "1.0.0"
+marker = "\"release-build\" in dependency_groups or \"release-news\" in dependency_groups or \"release-notes\" in dependency_groups or \"release-prepare\" in dependency_groups or \"release-validate\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "markdown-it-py" },
+    { name = "mdformat" },
+    { name = "mdit-py-plugins" },
+    { name = "wcwidth" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "mdformat_gfm-1.0.0.tar.gz"
+upload-time = 2025-10-16 09:12:22.402429+00:00
+url = "https://files.pythonhosted.org/packages/56/6f/a626ebb142a290474401b67e2d61e73ce096bf7798ee22dfe6270f924b3f/mdformat_gfm-1.0.0.tar.gz"
+size = 10112
+
+[packages.sdist.hashes]
+sha256 = "d1d49a409a6acb774ce7635c72d69178df7dce1dc8cdd10e19f78e8e57b72623"
+
+[[packages.wheels]]
+name = "mdformat_gfm-1.0.0-py3-none-any.whl"
+upload-time = 2025-10-16 09:12:21.276157+00:00
+url = "https://files.pythonhosted.org/packages/e6/18/6bc2189b744dd383cad03764f41f30352b1278d2205096f77a29c0b327ad/mdformat_gfm-1.0.0-py3-none-any.whl"
+size = 10970
+
+[packages.wheels.hashes]
+sha256 = "7305a50efd2a140d7c83505b58e3ac5df2b09e293f9bbe72f6c7bee8c678b005"
+
+[[packages]]
+name = "mdit-py-plugins"
+version = "0.6.1"
+marker = "\"release-build\" in dependency_groups or \"release-news\" in dependency_groups or \"release-notes\" in dependency_groups or \"release-prepare\" in dependency_groups or \"release-validate\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "markdown-it-py" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "mdit_py_plugins-0.6.1.tar.gz"
+upload-time = 2026-05-13 09:03:38.910230+00:00
+url = "https://files.pythonhosted.org/packages/59/fc/f8d0863f8862f25602c0404d75568e89fb6b4109804645e5cdfb1be5cf56/mdit_py_plugins-0.6.1.tar.gz"
+size = 56114
+
+[packages.sdist.hashes]
+sha256 = "a2bca0f039f39dbd35fb74ae1b5f998608c437463371f0ff7f49a19a17a114d0"
+
+[[packages.wheels]]
+name = "mdit_py_plugins-0.6.1-py3-none-any.whl"
+upload-time = 2026-05-13 09:03:37.760000+00:00
+url = "https://files.pythonhosted.org/packages/a5/69/6da5581c6a7fede7dc261bf4e67d6adca4196f176b43288b55b3db395b6e/mdit_py_plugins-0.6.1-py3-none-any.whl"
+size = 66663
+
+[packages.wheels.hashes]
+sha256 = "214c82fb2ac524472ab6a5bcab1de80f73b50443e187f401bfd77efbc7c6481d"
+
+[[packages]]
+name = "mdurl"
+version = "0.1.2"
+marker = "\"release-build\" in dependency_groups or \"release-news\" in dependency_groups or \"release-notes\" in dependency_groups or \"release-prepare\" in dependency_groups or \"release-validate\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.7"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "mdurl-0.1.2.tar.gz"
+upload-time = 2022-08-14 12:40:10.846281+00:00
+url = "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz"
+size = 8729
+
+[packages.sdist.hashes]
+sha256 = "bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba"
+
+[[packages.wheels]]
+name = "mdurl-0.1.2-py3-none-any.whl"
+upload-time = 2022-08-14 12:40:09.779676+00:00
+url = "https://files.pythonhosted.org/packages/b3/38/89ba8ad64ae25be8de66a6d463314cf1eb366222074cfda9ee839c56a4b4/mdurl-0.1.2-py3-none-any.whl"
+size = 9979
+
+[packages.wheels.hashes]
+sha256 = "84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"
+
+[[packages]]
+name = "packageurl-python"
+version = "0.17.6"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.8"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "packageurl_python-0.17.6.tar.gz"
+upload-time = 2025-11-24 15:20:17.998933+00:00
+url = "https://files.pythonhosted.org/packages/f5/d6/3b5a4e3cfaef7a53869a26ceb034d1ff5e5c27c814ce77260a96d50ab7bb/packageurl_python-0.17.6.tar.gz"
+size = 50618
+
+[packages.sdist.hashes]
+sha256 = "1252ce3a102372ca6f86eb968e16f9014c4ba511c5c37d95a7f023e2ca6e5c25"
+
+[[packages.wheels]]
+name = "packageurl_python-0.17.6-py3-none-any.whl"
+upload-time = 2025-11-24 15:20:16.962118+00:00
+url = "https://files.pythonhosted.org/packages/b1/2f/c7277b7615a93f51b5fbc1eacfc1b75e8103370e786fd8ce2abf6e5c04ab/packageurl_python-0.17.6-py3-none-any.whl"
+size = 36776
+
+[packages.wheels.hashes]
+sha256 = "31a85c2717bc41dd818f3c62908685ff9eebcb68588213745b14a6ee9e7df7c9"
+
+[[packages]]
+name = "packaging"
+version = "26.3"
+marker = "\"build\" in dependency_groups or \"project-runtime\" in dependency_groups or \"release-build\" in dependency_groups or \"release-news\" in dependency_groups or \"release-notes\" in dependency_groups or \"release-prepare\" in dependency_groups or \"release-validate\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.9"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "packaging-26.3.tar.gz"
+upload-time = 2026-08-04 18:15:28.737071+00:00
+url = "https://files.pythonhosted.org/packages/7d/fa/3944b40b07da9ce895c0e6303a5ab7d53da063554f534556b134a54d6093/packaging-26.3.tar.gz"
+size = 313412
+
+[packages.sdist.hashes]
+sha256 = "94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79"
+
+[[packages.wheels]]
+name = "packaging-26.3-py3-none-any.whl"
+upload-time = 2026-08-04 18:15:27.159957+00:00
+url = "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl"
+size = 129956
+
+[packages.wheels.hashes]
+sha256 = "d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c"
+
+[[packages]]
+name = "pathspec"
+version = "1.1.1"
+marker = "\"build\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.9"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "pathspec-1.1.1.tar.gz"
+upload-time = 2026-04-27 01:46:08.907631+00:00
+url = "https://files.pythonhosted.org/packages/5a/82/42f767fc1c1143d6fd36efb827202a2d997a375e160a71eb2888a925aac1/pathspec-1.1.1.tar.gz"
+size = 135180
+
+[packages.sdist.hashes]
+sha256 = "17db5ecd524104a120e173814c90367a96a98d07c45b2e10c2f3919fff91bf5a"
+
+[[packages.wheels]]
+name = "pathspec-1.1.1-py3-none-any.whl"
+upload-time = 2026-04-27 01:46:07.060850+00:00
+url = "https://files.pythonhosted.org/packages/f1/d9/7fb5aa316bc299258e68c73ba3bddbc499654a07f151cba08f6153988714/pathspec-1.1.1-py3-none-any.whl"
+size = 57328
+
+[packages.wheels.hashes]
+sha256 = "a00ce642f577bf7f473932318056212bc4f8bfdf53128c78bbd5af0b9b20b189"
+
+[[packages]]
+name = "platformdirs"
+version = "4.13.3"
+marker = "\"project-runtime\" in dependency_groups or \"release-build\" in dependency_groups or \"release-verify\" in dependency_groups"
+requires-python = ">=3.11"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "platformdirs-4.13.3.tar.gz"
+upload-time = 2026-10-16 01:16:16.573321+00:00
+url = "https://files.pythonhosted.org/packages/da/91/4a03cfdb03314cfca262921797fff04ff4054bd86a160aed76eddf8aa12b/platformdirs-4.13.3.tar.gz"
+size = 61559
+
+[packages.sdist.hashes]
+sha256 = "5e567f664eb087ab8521c0179cd8d1bd60857d271136567a39719e28e2d383ce"
+
+[[packages.wheels]]
+name = "platformdirs-4.13.3-py3-none-any.whl"
+upload-time = 2026-10-16 01:16:15.051988+00:00
+url = "https://files.pythonhosted.org/packages/45/b8/fd1af06b079af236f5423f7c1821264419cc8f6b4803f79353acbb8bfa53/platformdirs-4.13.3-py3-none-any.whl"
+size = 32762
+
+[packages.wheels.hashes]
+sha256 = "f6ad7f447f24f8a3b82cce5976387428bff894a0eca6c3488f4a17f153c130c4"
+
+[[packages]]
+name = "pluggy"
+version = "1.7.0"
+marker = "\"build\" in dependency_groups or \"release-build\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.10"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "pluggy-1.7.0.tar.gz"
+upload-time = 2026-10-15 09:50:58.343484+00:00
+url = "https://files.pythonhosted.org/packages/bf/db/7fc19e6f2dc92a966727031389fc2e08b558f0f25eb7403c1119ad4713cd/pluggy-1.7.0.tar.gz"
+size = 123304
+
+[packages.sdist.hashes]
+sha256 = "d1eaa46ebb595891b860ab086b4d09c8588af65ebd4361b8e8f4bb8920b90ba8"
+
+[[packages.wheels]]
+name = "pluggy-1.7.0-py3-none-any.whl"
+upload-time = 2026-10-15 09:50:56.808462+00:00
+url = "https://files.pythonhosted.org/packages/40/9e/2b38731e0fc536806f16490e1a12d7f0dc2a1235aa8cc07bcc75416a7daa/pluggy-1.7.0-py3-none-any.whl"
+size = 27082
+
+[packages.wheels.hashes]
+sha256 = "7dd7b0d8832ba3cb632c306926ded123429211b83641b35dc5c41ad2d34f9bec"
+
+[[packages]]
+name = "ply"
+version = "3.11"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "ply-3.11.tar.gz"
+upload-time = 2018-02-15 19:01:31.097641+00:00
+url = "https://files.pythonhosted.org/packages/e5/69/882ee5c9d017149285cab114ebeab373308ef0f874fcdac9beb90e0ac4da/ply-3.11.tar.gz"
+size = 159130
+
+[packages.sdist.hashes]
+sha256 = "00c7c1aaa88358b9c765b6d3000c6eec0ba42abca5351b095321aef446081da3"
+
+[[packages.wheels]]
+name = "ply-3.11-py2.py3-none-any.whl"
+upload-time = 2018-02-15 19:01:27.172483+00:00
+url = "https://files.pythonhosted.org/packages/a3/58/35da89ee790598a0700ea49b2a66594140f44dec458c07e8e3d4979137fc/ply-3.11-py2.py3-none-any.whl"
+size = 49567
+
+[packages.wheels.hashes]
+sha256 = "096f9b8350b65ebd2fd1346b12452efe5b9607f7482813ffca50c22722a807ce"
+
+[[packages]]
+name = "prek"
+version = "0.5.5"
+marker = "\"release-check\" in dependency_groups or \"release-prepare\" in dependency_groups or \"release-validate\" in dependency_groups"
+requires-python = ">=3.8"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "prek-0.5.5.tar.gz"
+upload-time = 2026-10-05 06:08:59.165911+00:00
+url = "https://files.pythonhosted.org/packages/9b/7b/11538b8e6cd7e269261feae62a2d08818fdcf8f43c3b1a253cec01a5488d/prek-0.5.5.tar.gz"
+size = 570428
+
+[packages.sdist.hashes]
+sha256 = "16bf596768bb754779c7d42317e9ca16ac609c0cce7d13bae0829944ab40a26a"
+
+[[packages.wheels]]
+name = "prek-0.5.5-py3-none-macosx_11_0_arm64.whl"
+upload-time = 2026-10-05 06:08:41.428822+00:00
+url = "https://files.pythonhosted.org/packages/63/ea/fc857c6b3f1e3fdb4d81bdca2051076de82e986cb1455a01b351ac7a5cd1/prek-0.5.5-py3-none-macosx_11_0_arm64.whl"
+size = 5548955
+
+[packages.wheels.hashes]
+sha256 = "2f610927b95e84b28173a4c810892a7b5d5bb55bee792ddf97178fa97654633e"
+
+[[packages.wheels]]
+name = "prek-0.5.5-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64.whl"
+upload-time = 2026-10-05 06:08:44.051128+00:00
+url = "https://files.pythonhosted.org/packages/47/c3/2bab54f6393fb9f247225681d476086e24fa6242f329e9ca1e5bd638ec50/prek-0.5.5-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64.whl"
+size = 5848228
+
+[packages.wheels.hashes]
+sha256 = "120ef7d4b6bb58155e74827743c266e48501efb0e4c37ff726b14fe6e86a126b"
+
+[[packages.wheels]]
+name = "prek-0.5.5-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+upload-time = 2026-10-05 06:08:48.645837+00:00
+url = "https://files.pythonhosted.org/packages/93/fc/e566be5919eaffef4cc22488f16e4bbfd08961734bd67c06f85d405e4cbc/prek-0.5.5-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+size = 6269922
+
+[packages.wheels.hashes]
+sha256 = "73d509c0d9556171de2502bada4962be7a25871e7b23e782549074e1416dc850"
+
+[[packages.wheels]]
+name = "prek-0.5.5-py3-none-manylinux_2_28_aarch64.whl"
+upload-time = 2026-10-05 06:08:50.808055+00:00
+url = "https://files.pythonhosted.org/packages/d2/39/a48d8e6203055bff7bb734b1f2f9aede4a4539bee6ab4c9273dbc01fa546/prek-0.5.5-py3-none-manylinux_2_28_aarch64.whl"
+size = 5861518
+
+[packages.wheels.hashes]
+sha256 = "76c867fdbd4e4f19e6b6b2988bd1e1407d1324170ebcf1428e4e34f8f0751a99"
+
+[[packages.wheels]]
+name = "prek-0.5.5-py3-none-win_amd64.whl"
+upload-time = 2026-10-05 06:08:55.056244+00:00
+url = "https://files.pythonhosted.org/packages/8c/04/1e9ccf3a61a3bfd4107b83973f7afde9177b6ff8f2d5d4b00125e77c2100/prek-0.5.5-py3-none-win_amd64.whl"
+size = 5784759
+
+[packages.wheels.hashes]
+sha256 = "15bff9039349466ea9bf6b0c173b822ff08f8ae4cfbfdea782492e519c06d874"
+
+[[packages]]
+name = "py-serializable"
+version = "2.1.0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = "<4.0,>=3.8"
+dependencies = [
+    { name = "defusedxml" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "py_serializable-2.1.0.tar.gz"
+upload-time = 2025-07-21 09:56:48.070686+00:00
+url = "https://files.pythonhosted.org/packages/73/21/d250cfca8ff30c2e5a7447bc13861541126ce9bd4426cd5d0c9f08b5547d/py_serializable-2.1.0.tar.gz"
+size = 52368
+
+[packages.sdist.hashes]
+sha256 = "9d5db56154a867a9b897c0163b33a793c804c80cee984116d02d49e4578fc103"
+
+[[packages.wheels]]
+name = "py_serializable-2.1.0-py3-none-any.whl"
+upload-time = 2025-07-21 09:56:46.848289+00:00
+url = "https://files.pythonhosted.org/packages/9b/bf/7595e817906a29453ba4d99394e781b6fabe55d21f3c15d240f85dd06bb1/py_serializable-2.1.0-py3-none-any.whl"
+size = 23045
+
+[packages.wheels.hashes]
+sha256 = "b56d5d686b5a03ba4f4db5e769dc32336e142fc3bd4d68a8c25579ebb0a67304"
+
+[[packages]]
+name = "pyasn1"
+version = "0.6.4"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.8"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "pyasn1-0.6.4.tar.gz"
+upload-time = 2026-07-09 01:12:33.988388+00:00
+url = "https://files.pythonhosted.org/packages/a4/9a/23310166d960def5897e91fe20e5b724601b02a22e84ba1f94232c0b7f67/pyasn1-0.6.4.tar.gz"
+size = 151262
+
+[packages.sdist.hashes]
+sha256 = "9c447d8431c947fe4c8febc4ed9e760bc29011a5b01e5c74b67025bd9fb8ce81"
+
+[[packages.wheels]]
+name = "pyasn1-0.6.4-py3-none-any.whl"
+upload-time = 2026-07-09 01:12:32.920042+00:00
+url = "https://files.pythonhosted.org/packages/9a/3b/6163796d69c3977d1e4287bea4a6979161cbbdd170ebb430511e8e1999ce/pyasn1-0.6.4-py3-none-any.whl"
+size = 84410
+
+[packages.wheels.hashes]
+sha256 = "deda9277cfd454080ec40b207fb6df82206a3a2688735233cdcd8d3d565f088b"
+
+[[packages]]
+name = "pycparser"
+version = "3.11"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.10"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "pycparser-3.11.tar.gz"
+upload-time = 2026-10-09 12:56:59.539345+00:00
+url = "https://files.pythonhosted.org/packages/da/a8/c5fdbeee588bb8ada9458774f43adf1bdd30bd59157055142183e769a024/pycparser-3.11.tar.gz"
+size = 113796
+
+[packages.sdist.hashes]
+sha256 = "d875f09c3507d00e1aba0eecc6dcadc1352f30fff09dc6bff2f1c2935e97c2bc"
+
+[[packages.wheels]]
+name = "pycparser-3.11-py3-none-any.whl"
+upload-time = 2026-10-09 12:56:58.131173+00:00
+url = "https://files.pythonhosted.org/packages/90/11/0e6f11117525ff0eec40ebac3d313376f102df93ca44ad9e893ee85e4f89/pycparser-3.11-py3-none-any.whl"
+size = 51178
+
+[packages.wheels.hashes]
+sha256 = "51d5a8ba2be0bbe440b99d2112604c95bbbc3c2748a64260186c541e1729cd80"
+
+[[packages]]
+name = "pydantic"
+version = "2.14.1"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "annotated-types" },
+    { name = "email-validator" },
+    { name = "pydantic-core" },
+    { name = "typing-extensions" },
+    { name = "typing-inspection" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "pydantic-2.14.1.tar.gz"
+upload-time = 2026-10-11 18:37:55.396662+00:00
+url = "https://files.pythonhosted.org/packages/7c/0b/8e10b2e693af8ec54346a14caf36221334775975a747c9ceaa3f8371d96d/pydantic-2.14.1.tar.gz"
+size = 900362
+
+[packages.sdist.hashes]
+sha256 = "94f478203dd03404682a1ada216965651dd74b1d2d5ffd62e00e0837caab5c26"
+
+[[packages.wheels]]
+name = "pydantic-2.14.1-py3-none-any.whl"
+upload-time = 2026-10-11 18:37:53.437059+00:00
+url = "https://files.pythonhosted.org/packages/35/ea/a56b9fe5066f3537b7882f77e9c5dfb26d8c2eefdaed9b5fc73d57b4dc22/pydantic-2.14.1-py3-none-any.whl"
+size = 488106
+
+[packages.wheels.hashes]
+sha256 = "9195d967ec791692a04438115466764fb8b9a27b31f14a760437694f40d6b454"
+
+[[packages]]
+name = "pydantic-core"
+version = "2.50.1"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "typing-extensions" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "pydantic_core-2.50.1.tar.gz"
+upload-time = 2026-10-11 18:35:44.820993+00:00
+url = "https://files.pythonhosted.org/packages/a6/24/af4ec4be49fbc810f35b0bdcacc3d433b56bbfa469fd3bfd4ae116cd9bf1/pydantic_core-2.50.1.tar.gz"
+size = 513515
+
+[packages.sdist.hashes]
+sha256 = "e50d7b94baac6c7d09927fa5ca5800a0c7ee5015c7fcff65beb3a1931b5a6e09"
+
+[[packages.wheels]]
+name = "pydantic_core-2.50.1-cp315-cp315-macosx_11_0_arm64.whl"
+upload-time = 2026-10-11 18:34:05.901276+00:00
+url = "https://files.pythonhosted.org/packages/4d/90/a63cf8586abc1d1a3f6d9b18f0224789ebf003851f092ebda3c7c863fd32/pydantic_core-2.50.1-cp315-cp315-macosx_11_0_arm64.whl"
+size = 2024191
+
+[packages.wheels.hashes]
+sha256 = "84f34323a61a365b4e9295de6028474754829aaddd59c7bf1a040e7487ef8f3c"
+
+[[packages.wheels]]
+name = "pydantic_core-2.50.1-cp315-cp315-manylinux_2_17_aarch64.manylinux2014_aarch64.whl"
+upload-time = 2026-10-11 18:34:07.757584+00:00
+url = "https://files.pythonhosted.org/packages/a6/6a/f34bff9808ffb4907fbf5f5040457d253cacf2da7fce9efbc99ca1b1a44d/pydantic_core-2.50.1-cp315-cp315-manylinux_2_17_aarch64.manylinux2014_aarch64.whl"
+size = 2048252
+
+[packages.wheels.hashes]
+sha256 = "23edad659e8dbd8ca7e4e877fe6c81573abbdf215bd25a68b53e1272f58b80c7"
+
+[[packages.wheels]]
+name = "pydantic_core-2.50.1-cp315-cp315-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+upload-time = 2026-10-11 18:34:15.560294+00:00
+url = "https://files.pythonhosted.org/packages/b8/0d/1b1149f60a00ea21ba5f70e28acbd40feb4598af414f80f53c921fac07c9/pydantic_core-2.50.1-cp315-cp315-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+size = 2159961
+
+[packages.wheels.hashes]
+sha256 = "7689580e72a642ab5ec64d5f55b2e33636fa43b4ebe63c0c2c965ef307c7d1aa"
+
+[[packages.wheels]]
+name = "pydantic_core-2.50.1-cp315-cp315-win_amd64.whl"
+upload-time = 2026-10-11 18:34:29.508272+00:00
+url = "https://files.pythonhosted.org/packages/5f/98/f9bd7e1f9b6709f155acb9ef826d9c3884fe925f811fd8e55b9b52280bad/pydantic_core-2.50.1-cp315-cp315-win_amd64.whl"
+size = 2171681
+
+[packages.wheels.hashes]
+sha256 = "983a662de2571cb2502fc8ff47b6770b03d025d2eb314c92f77b3f07c74720ed"
+
+[[packages]]
+name = "pygments"
+version = "2.21.0"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.9"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "pygments-2.21.0.tar.gz"
+upload-time = 2026-08-17 08:02:48.824391+00:00
+url = "https://files.pythonhosted.org/packages/49/2e/ced460408999b33da6b31b0021b0f37d329e202d4169aeb164493778f25b/pygments-2.21.0.tar.gz"
+size = 5005329
+
+[packages.sdist.hashes]
+sha256 = "610ca751c9bc2492b38eb9a38a7fbc93edbbb2d7182edaf34e66ae493dee5c8c"
+
+[[packages.wheels]]
+name = "pygments-2.21.0-py3-none-any.whl"
+upload-time = 2026-08-17 08:02:44.912148+00:00
+url = "https://files.pythonhosted.org/packages/71/46/17f022dd3e953bf20a04a028a21ec746d942f8d2af30fa0f124fa0e6a684/pygments-2.21.0-py3-none-any.whl"
+size = 1250147
+
+[packages.wheels.hashes]
+sha256 = "2363c69b61c4a97c838da3b130dcd6468f4848992b21a82f2a63ec34377137d9"
+
+[[packages]]
+name = "pyjwt"
+version = "2.15.1"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.9"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "pyjwt-2.15.1.tar.gz"
+upload-time = 2026-09-28 18:40:42.598678+00:00
+url = "https://files.pythonhosted.org/packages/43/ea/5194e52748b0da83d71e082d75496eaec6e58f419f5e184786ded517e6a9/pyjwt-2.15.1.tar.gz"
+size = 121252
+
+[packages.sdist.hashes]
+sha256 = "4f259e80cdfb6b3fc18a7de51fd1ef9ec79652f25019bae68975ca2468a34df8"
+
+[[packages.wheels]]
+name = "pyjwt-2.15.1-py3-none-any.whl"
+upload-time = 2026-09-28 18:40:41.429003+00:00
+url = "https://files.pythonhosted.org/packages/50/ca/44de4e75f8aadc457f0634be3b542815078ded46dca30efb960edeecad6e/pyjwt-2.15.1-py3-none-any.whl"
+size = 33860
+
+[packages.wheels.hashes]
+sha256 = "42d59d631f7768a1028a64c7ff581a9bf7519804daf91fc5b6c56e30eec5e193"
+
+[[packages]]
+name = "pyopenssl"
+version = "26.4.0"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.9"
+dependencies = [
+    { name = "cryptography" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "pyopenssl-26.4.0.tar.gz"
+upload-time = 2026-08-01 19:50:50.512064+00:00
+url = "https://files.pythonhosted.org/packages/3f/e8/7325d258199b159eb2c03fe32107533e2832e70e63f4fb88a6aa00023201/pyopenssl-26.4.0.tar.gz"
+size = 182046
+
+[packages.sdist.hashes]
+sha256 = "28dfcce0162b9211413e26dfbfdf1d24317fbeba18fc93c12400a1856b2a0bc7"
+
+[[packages.wheels]]
+name = "pyopenssl-26.4.0-py3-none-any.whl"
+upload-time = 2026-08-01 19:50:48.940195+00:00
+url = "https://files.pythonhosted.org/packages/51/ad/2cf6d3fa2fae5c79e1ed9960c0d42badd0f94d81dd12b50604cdc839e648/pyopenssl-26.4.0-py3-none-any.whl"
+size = 56026
+
+[packages.wheels.hashes]
+sha256 = "f0eb0cb2d581d3ad2b9c489468485e7f2ab6727d08401bcf9d824c3caddf3c1c"
+
+[[packages]]
+name = "pyparsing"
+version = "3.3.3"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.9"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "pyparsing-3.3.3.tar.gz"
+upload-time = 2026-09-20 20:59:05.609622+00:00
+url = "https://files.pythonhosted.org/packages/e4/11/b213bebff182584360cb8d17c72c1677fec5c5c228de439e63bcf8ab1c8f/pyparsing-3.3.3.tar.gz"
+size = 1050487
+
+[packages.sdist.hashes]
+sha256 = "928ae7e20211f3b6f3915a72f06a0cfd29ab9d24279dd6346b6b1a7146397d36"
+
+[[packages.wheels]]
+name = "pyparsing-3.3.3-py3-none-any.whl"
+upload-time = 2026-09-20 20:59:04.025856+00:00
+url = "https://files.pythonhosted.org/packages/38/bb/d215ee7c73b61497b28a5503f9f53523f294fcc936762b7caf90e0c1c2b5/pyparsing-3.3.3-py3-none-any.whl"
+size = 126420
+
+[packages.wheels.hashes]
+sha256 = "ece8c00a69cf01b45d0b1dedabb469c90d8caf996d4fda40f147627a122849a4"
+
+[[packages]]
+name = "pypi-attestations"
+version = "0.0.30"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "cryptography" },
+    { name = "packaging" },
+    { name = "pyasn1" },
+    { name = "pydantic" },
+    { name = "requests" },
+    { name = "rfc3986" },
+    { name = "sigstore" },
+    { name = "sigstore-models" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "pypi_attestations-0.0.30.tar.gz"
+upload-time = 2026-07-28 14:08:35.011386+00:00
+url = "https://files.pythonhosted.org/packages/97/1e/eb8a0233cdcaf01acb18076ac8b8a057714177b3717baf26b78a11b8d929/pypi_attestations-0.0.30.tar.gz"
+size = 139108
+
+[packages.sdist.hashes]
+sha256 = "14ff13c76bbef02a483c2b77532da02bfd746b5141b881f355e06b9807434423"
+
+[[packages.wheels]]
+name = "pypi_attestations-0.0.30-py3-none-any.whl"
+upload-time = 2026-07-28 14:08:33.453745+00:00
+url = "https://files.pythonhosted.org/packages/5f/24/e59078318b5e2bca59be5a21957d70e082e6eb4f478adffe373f3b74daf4/pypi_attestations-0.0.30-py3-none-any.whl"
+size = 23015
+
+[packages.wheels.hashes]
+sha256 = "b3a9c53f6cb89e5e7b5b70e6cfca97cfc66008c1ed54087355e06e40071cef21"
+
+[[packages]]
+name = "pyproject-api"
+version = "1.11.7"
+marker = "\"release-build\" in dependency_groups"
+requires-python = ">=3.11"
+dependencies = [
+    { name = "packaging" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "pyproject_api-1.11.7.tar.gz"
+upload-time = 2026-10-15 21:59:41.310814+00:00
+url = "https://files.pythonhosted.org/packages/ce/04/15a06959a6a40d62b5aa001f6df5d26bba3961a84563f745ac337a79e979/pyproject_api-1.11.7.tar.gz"
+size = 26054
+
+[packages.sdist.hashes]
+sha256 = "408e31b80e054e70d26f11b0ae3f60210ae6d54cd050e904aac63462b56404e9"
+
+[[packages.wheels]]
+name = "pyproject_api-1.11.7-py3-none-any.whl"
+upload-time = 2026-10-15 21:59:40.114757+00:00
+url = "https://files.pythonhosted.org/packages/c0/ab/ed567ad9253b3528e8b16d124944ca646cc8737578c6aa0838b21155e461/pyproject_api-1.11.7-py3-none-any.whl"
+size = 13594
+
+[packages.wheels.hashes]
+sha256 = "e90ddef94bd3027c652e11b04537d269788b6c5d75311c139ffb372e4fcb562c"
+
+[[packages]]
+name = "python-dateutil"
+version = "2.9.0.post0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
+dependencies = [
+    { name = "six" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "python-dateutil-2.9.0.post0.tar.gz"
+upload-time = 2024-03-01 18:36:20.211056+00:00
+url = "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz"
+size = 342432
+
+[packages.sdist.hashes]
+sha256 = "37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3"
+
+[[packages.wheels]]
+name = "python_dateutil-2.9.0.post0-py2.py3-none-any.whl"
+upload-time = 2024-03-01 18:36:18.570437+00:00
+url = "https://files.pythonhosted.org/packages/ec/57/56b9bcc3c9c6a792fcbaf139543cee77261f3651ca9da0c93f5c1221264b/python_dateutil-2.9.0.post0-py2.py3-none-any.whl"
+size = 229892
+
+[packages.wheels.hashes]
+sha256 = "a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427"
+
+[[packages]]
+name = "python-discovery"
+version = "1.6.3"
+marker = "\"project-runtime\" in dependency_groups or \"release-build\" in dependency_groups"
+requires-python = ">=3.9"
+dependencies = [
+    { name = "filelock" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "python_discovery-1.6.3.tar.gz"
+upload-time = 2026-10-16 03:54:29.507753+00:00
+url = "https://files.pythonhosted.org/packages/fc/54/fad125f5c48f7821644ee6f223ebfcedc4e23597c1a16eeb13d33aa4a91a/python_discovery-1.6.3.tar.gz"
+size = 88998
+
+[packages.sdist.hashes]
+sha256 = "a62b301d96cf5489cb96ab023b32e068421867fdd5df2e42eece877869047fa2"
+
+[[packages.wheels]]
+name = "python_discovery-1.6.3-py3-none-any.whl"
+upload-time = 2026-10-16 03:54:28.237016+00:00
+url = "https://files.pythonhosted.org/packages/de/ec/643826e4d69b7bdce4213f221e8f5ed06d0a9dd69fa9b33342578d2cc8c8/python_discovery-1.6.3-py3-none-any.whl"
+size = 39386
+
+[packages.wheels.hashes]
+sha256 = "cb7654125e3dcb594269a6feb56ac693f1f13b7c654493a93eba72dc22d18034"
+
+[[packages]]
+name = "pyyaml"
+version = "6.0.3"
+marker = "\"release-build\" in dependency_groups or \"release-news\" in dependency_groups or \"release-notes\" in dependency_groups or \"release-prepare\" in dependency_groups or \"release-spdx\" in dependency_groups or \"release-validate\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.8"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "pyyaml-6.0.3.tar.gz"
+upload-time = 2025-09-25 21:33:16.546886+00:00
+url = "https://files.pythonhosted.org/packages/05/8e/961c0007c59b8dd7729d542c61a4d537767a59645b82a0b521206e1e25c2/pyyaml-6.0.3.tar.gz"
+size = 130960
+
+[packages.sdist.hashes]
+sha256 = "d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f"
+
+[[packages]]
+name = "rdflib"
+version = "7.6.0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.8.1"
+dependencies = [
+    { name = "pyparsing" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "rdflib-7.6.0.tar.gz"
+upload-time = 2026-02-13 07:15:55.938955+00:00
+url = "https://files.pythonhosted.org/packages/98/f5/18bb77b7af9526add0c727a3b2048959847dc5fb030913e2918bf384fec3/rdflib-7.6.0.tar.gz"
+size = 4943826
+
+[packages.sdist.hashes]
+sha256 = "6c831288d5e4a5a7ece85d0ccde9877d512a3d0f02d7c06455d00d6d0ea379df"
+
+[[packages.wheels]]
+name = "rdflib-7.6.0-py3-none-any.whl"
+upload-time = 2026-02-13 07:15:46.487762+00:00
+url = "https://files.pythonhosted.org/packages/10/c2/6604a71269e0c1bd75656d5a001432d16f2cc5b8c057140ec797155c295e/rdflib-7.6.0-py3-none-any.whl"
+size = 615416
+
+[packages.wheels.hashes]
+sha256 = "30c0a3ebf4c0e09215f066be7246794b6492e054e782d7ac2a34c9f70a15e0dd"
+
+[[packages]]
+name = "referencing"
+version = "0.37.0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "attrs" },
+    { name = "rpds-py" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "referencing-0.37.0.tar.gz"
+upload-time = 2025-10-13 15:30:48.871335+00:00
+url = "https://files.pythonhosted.org/packages/22/f5/df4e9027acead3ecc63e50fe1e36aca1523e1719559c499951bb4b53188f/referencing-0.37.0.tar.gz"
+size = 78036
+
+[packages.sdist.hashes]
+sha256 = "44aefc3142c5b842538163acb373e24cce6632bd54bdb01b21ad5863489f50d8"
+
+[[packages.wheels]]
+name = "referencing-0.37.0-py3-none-any.whl"
+upload-time = 2025-10-13 15:30:47.625937+00:00
+url = "https://files.pythonhosted.org/packages/2c/58/ca301544e1fa93ed4f80d724bf5b194f6e4b945841c5bfd555878eea9fcb/referencing-0.37.0-py3-none-any.whl"
+size = 26766
+
+[packages.wheels.hashes]
+sha256 = "381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231"
+
+[[packages]]
+name = "release-creator"
+version = "1.0.0"
+marker = "\"release-build\" in dependency_groups or \"release-news\" in dependency_groups or \"release-notes\" in dependency_groups or \"release-prepare\" in dependency_groups or \"release-validate\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.15"
+dependencies = [
+    { name = "docutils" },
+    { name = "markdown-it-py" },
+    { name = "mdformat" },
+    { name = "mdformat-gfm" },
+    { name = "packaging" },
+    { name = "pyyaml" },
+    { name = "towncrier" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "release_creator-1.0.0.tar.gz"
+upload-time = 2026-10-24 06:07:45.789370+00:00
+url = "https://files.pythonhosted.org/packages/e2/92/dfc1c6e8f52d50d91a05f77f67592c2408cabd9d96079fedbe551f24530d/release_creator-1.0.0.tar.gz"
+size = 134186
+
+[packages.sdist.hashes]
+sha256 = "1174e3a3fd39e9117eb9c34e3fbc58a8e32c49f5f65d01f39195231b967807f6"
+
+[[packages.wheels]]
+name = "release_creator-1.0.0-py3-none-any.whl"
+upload-time = 2026-10-24 06:07:44.366184+00:00
+url = "https://files.pythonhosted.org/packages/6a/17/b1cd851932786f3e9e9f2187d150bc0860e04adf76cbfd45e6531715bf97/release_creator-1.0.0-py3-none-any.whl"
+size = 53396
+
+[packages.wheels.hashes]
+sha256 = "613a26a0d1b0042d9dad60dfc00f3e78208d84ab9f78cec792a407b6a0a75c24"
+
+[[packages]]
+name = "requests"
+version = "2.34.2"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "certifi" },
+    { name = "charset-normalizer" },
+    { name = "idna" },
+    { name = "urllib3" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "requests-2.34.2.tar.gz"
+upload-time = 2026-05-14 19:25:27.735762+00:00
+url = "https://files.pythonhosted.org/packages/ac/c3/e2a2b89f2d3e2179abd6d00ebd70bff6273f37fb3e0cc209f48b39d00cbf/requests-2.34.2.tar.gz"
+size = 142856
+
+[packages.sdist.hashes]
+sha256 = "f288924cae4e29463698d6d60bc6a4da69c89185ad1e0bcc4104f584e960b9ed"
+
+[[packages.wheels]]
+name = "requests-2.34.2-py3-none-any.whl"
+upload-time = 2026-05-14 19:25:26.443000+00:00
+url = "https://files.pythonhosted.org/packages/a0/f4/c67b0b3f1b9245e8d266f0f112c500d50e5b4e83cb6f3b71b6528104182a/requests-2.34.2-py3-none-any.whl"
+size = 73075
+
+[packages.wheels.hashes]
+sha256 = "2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0"
+
+[[packages]]
+name = "rfc3161-client"
+version = "1.0.9"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.9"
+dependencies = [
+    { name = "cryptography" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "rfc3161_client-1.0.9.tar.gz"
+upload-time = 2026-09-14 19:32:29.113898+00:00
+url = "https://files.pythonhosted.org/packages/56/53/e2f526fb6957023180c928448e2dd71b03b35038c315aed2d12d9a77c3af/rfc3161_client-1.0.9.tar.gz"
+size = 112825
+
+[packages.sdist.hashes]
+sha256 = "66997415086d2c6e5d57a2d315157b32a9c3f4f1312877ca8eb55e2e0ddf8ce4"
+
+[[packages.wheels]]
+name = "rfc3161_client-1.0.9-cp39-abi3-macosx_11_0_arm64.whl"
+upload-time = 2026-09-14 19:32:10.339509+00:00
+url = "https://files.pythonhosted.org/packages/88/cf/bcfb66eaeccdc076457451a6213360c840bcacd0e938e8507951be29373f/rfc3161_client-1.0.9-cp39-abi3-macosx_11_0_arm64.whl"
+size = 2439706
+
+[packages.wheels.hashes]
+sha256 = "a7004edfbf1bb7ec7801978a39fa7a7fe385ca59673df90d7578079b6eba3b24"
+
+[[packages.wheels]]
+name = "rfc3161_client-1.0.9-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl"
+upload-time = 2026-09-14 19:32:12.025939+00:00
+url = "https://files.pythonhosted.org/packages/8e/f3/4b69d47fd7f79238bf8db20902a30d28c908efc0d906fb57abcc89ac75e3/rfc3161_client-1.0.9-cp39-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl"
+size = 2651455
+
+[packages.wheels.hashes]
+sha256 = "7b703b233dbee7228d117d5f1c118363c61d523fa6f018c9217c79e3c6684f86"
+
+[[packages.wheels]]
+name = "rfc3161_client-1.0.9-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+upload-time = 2026-09-14 19:32:17.185308+00:00
+url = "https://files.pythonhosted.org/packages/11/ae/19139fee184916065705d660bad203b676dc40b449afff36f79818c59c4f/rfc3161_client-1.0.9-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+size = 2415566
+
+[packages.wheels.hashes]
+sha256 = "fac3f440a507555e684dc5daba75e33dc08f0f45fdefa48448f19001233a6b21"
+
+[[packages.wheels]]
+name = "rfc3161_client-1.0.9-cp39-abi3-win_amd64.whl"
+upload-time = 2026-09-14 19:32:27.621426+00:00
+url = "https://files.pythonhosted.org/packages/d2/a1/b71d9f2071660a914e039061d3cdcad77b1cbccf7276bff073f95e8b4d1a/rfc3161_client-1.0.9-cp39-abi3-win_amd64.whl"
+size = 2431351
+
+[packages.wheels.hashes]
+sha256 = "908f6a775da4bdce1d39f825a4431f389542696078ef3e4ed911a068bcaf1792"
+
+[[packages]]
+name = "rfc3339-validator"
+version = "0.1.4"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
+dependencies = [
+    { name = "six" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "rfc3339_validator-0.1.4.tar.gz"
+upload-time = 2021-05-12 16:37:54.178122+00:00
+url = "https://files.pythonhosted.org/packages/28/ea/a9387748e2d111c3c2b275ba970b735e04e15cdb1eb30693b6b5708c4dbd/rfc3339_validator-0.1.4.tar.gz"
+size = 5513
+
+[packages.sdist.hashes]
+sha256 = "138a2abdf93304ad60530167e51d2dfb9549521a836871b88d7f4695d0022f6b"
+
+[[packages.wheels]]
+name = "rfc3339_validator-0.1.4-py2.py3-none-any.whl"
+upload-time = 2021-05-12 16:37:52.536885+00:00
+url = "https://files.pythonhosted.org/packages/7b/44/4e421b96b67b2daff264473f7465db72fbdf36a07e05494f50300cc7b0c6/rfc3339_validator-0.1.4-py2.py3-none-any.whl"
+size = 3490
+
+[packages.wheels.hashes]
+sha256 = "24f6ec1eda14ef823da9e36ec7113124b39c04d50a4d3d3a3c2859577e7791fa"
+
+[[packages]]
+name = "rfc3986"
+version = "2.0.0"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.7"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "rfc3986-2.0.0.tar.gz"
+upload-time = 2022-01-10 00:52:30.832978+00:00
+url = "https://files.pythonhosted.org/packages/85/40/1520d68bfa07ab5a6f065a186815fb6610c86fe957bc065754e47f7b0840/rfc3986-2.0.0.tar.gz"
+size = 49026
+
+[packages.sdist.hashes]
+sha256 = "97aacf9dbd4bfd829baad6e6309fa6573aaf1be3f6fa735c8ab05e46cecb261c"
+
+[[packages.wheels]]
+name = "rfc3986-2.0.0-py2.py3-none-any.whl"
+upload-time = 2022-01-10 00:52:29.594625+00:00
+url = "https://files.pythonhosted.org/packages/ff/9a/9afaade874b2fa6c752c36f1548f718b5b83af81ed9b76628329dab81c1b/rfc3986-2.0.0-py2.py3-none-any.whl"
+size = 31326
+
+[packages.wheels.hashes]
+sha256 = "50b1502b60e289cb37883f3dfd34532b8873c7de9f49bb546641ce9cbd256ebd"
+
+[[packages]]
+name = "rfc3986-validator"
+version = "0.1.1"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,>=2.7"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "rfc3986_validator-0.1.1.tar.gz"
+upload-time = 2019-10-28 16:00:19.144483+00:00
+url = "https://files.pythonhosted.org/packages/da/88/f270de456dd7d11dcc808abfa291ecdd3f45ff44e3b549ffa01b126464d0/rfc3986_validator-0.1.1.tar.gz"
+size = 6760
+
+[packages.sdist.hashes]
+sha256 = "3d44bde7921b3b9ec3ae4e3adca370438eccebc676456449b145d533b240d055"
+
+[[packages.wheels]]
+name = "rfc3986_validator-0.1.1-py2.py3-none-any.whl"
+upload-time = 2019-10-28 16:00:13.976195+00:00
+url = "https://files.pythonhosted.org/packages/9e/51/17023c0f8f1869d8806b979a2bffa3f861f26a3f1a66b094288323fba52f/rfc3986_validator-0.1.1-py2.py3-none-any.whl"
+size = 4242
+
+[packages.wheels.hashes]
+sha256 = "2f235c432ef459970b4306369336b9d5dbdda31b510ca1e327636e01f528bfa9"
+
+[[packages]]
+name = "rfc3987-syntax"
+version = "1.1.0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.9"
+dependencies = [
+    { name = "lark" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "rfc3987_syntax-1.1.0.tar.gz"
+upload-time = 2025-07-18 01:05:05.015375+00:00
+url = "https://files.pythonhosted.org/packages/2c/06/37c1a5557acf449e8e406a830a05bf885ac47d33270aec454ef78675008d/rfc3987_syntax-1.1.0.tar.gz"
+size = 14239
+
+[packages.sdist.hashes]
+sha256 = "717a62cbf33cffdd16dfa3a497d81ce48a660ea691b1ddd7be710c22f00b4a0d"
+
+[[packages.wheels]]
+name = "rfc3987_syntax-1.1.0-py3-none-any.whl"
+upload-time = 2025-07-18 01:05:03.843605+00:00
+url = "https://files.pythonhosted.org/packages/7e/71/44ce230e1b7fadd372515a97e32a83011f906ddded8d03e3c6aafbdedbb7/rfc3987_syntax-1.1.0-py3-none-any.whl"
+size = 8046
+
+[packages.wheels.hashes]
+sha256 = "6c3d97604e4c5ce9f714898e05401a0445a641cfa276432b0a648c80856f6a3f"
+
+[[packages]]
+name = "rfc8785"
+version = "0.1.4"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.8"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "rfc8785-0.1.4.tar.gz"
+upload-time = 2024-09-27 16:33:31.206853+00:00
+url = "https://files.pythonhosted.org/packages/ef/2f/fa1d2e740c490191b572d33dbca5daa180cb423c24396b856f5886371d8b/rfc8785-0.1.4.tar.gz"
+size = 14321
+
+[packages.sdist.hashes]
+sha256 = "e545841329fe0eee4f6a3b44e7034343100c12b4ec566dc06ca9735681deb4da"
+
+[[packages.wheels]]
+name = "rfc8785-0.1.4-py3-none-any.whl"
+upload-time = 2024-09-27 16:33:29.683421+00:00
+url = "https://files.pythonhosted.org/packages/4d/78/119878110660b2ad709888c8a1614fce7e2fab39080ab960656dc8605bf6/rfc8785-0.1.4-py3-none-any.whl"
+size = 9240
+
+[packages.wheels.hashes]
+sha256 = "520d690b448ecf0703691c76e1a34a24ddcd4fc5bc41d589cb7c58ec651bcd48"
+
+[[packages]]
+name = "rich"
+version = "15.0.0"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.9.0"
+dependencies = [
+    { name = "markdown-it-py" },
+    { name = "pygments" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "rich-15.0.0.tar.gz"
+upload-time = 2026-04-12 08:24:00.750018+00:00
+url = "https://files.pythonhosted.org/packages/c0/8f/0722ca900cc807c13a6a0c696dacf35430f72e0ec571c4275d2371fca3e9/rich-15.0.0.tar.gz"
+size = 230680
+
+[packages.sdist.hashes]
+sha256 = "edd07a4824c6b40189fb7ac9bc4c52536e9780fbbfbddf6f1e2502c31b068c36"
+
+[[packages.wheels]]
+name = "rich-15.0.0-py3-none-any.whl"
+upload-time = 2026-04-12 08:24:02.830783+00:00
+url = "https://files.pythonhosted.org/packages/82/3b/64d4899d73f91ba49a8c18a8ff3f0ea8f1c1d75481760df8c68ef5235bf5/rich-15.0.0-py3-none-any.whl"
+size = 310654
+
+[packages.wheels.hashes]
+sha256 = "33bd4ef74232fb73fe9279a257718407f169c09b78a87ad3d296f548e27de0bb"
+
+[[packages]]
+name = "rpds-py"
+version = "2026.9.1"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.11"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "rpds_py-2026.9.1.tar.gz"
+upload-time = 2026-10-04 16:32:36.469775+00:00
+url = "https://files.pythonhosted.org/packages/42/68/3bd46b8a5e01d3c2ebdf9c5e9497912e3fe0cde02bac21a7130ca866e403/rpds_py-2026.9.1.tar.gz"
+size = 63948
+
+[packages.sdist.hashes]
+sha256 = "4793ef7f78268b124b73fa933440f01d258bbae01de9fa53e9080c9ab0425a12"
+
+[[packages.wheels]]
+name = "rpds_py-2026.9.1-cp315-cp315-macosx_11_0_arm64.whl"
+upload-time = 2026-10-04 16:30:49.872953+00:00
+url = "https://files.pythonhosted.org/packages/ae/3f/ad45d03df4f84ebae5439577ee81f3999d182711e82235c8037b6528890e/rpds_py-2026.9.1-cp315-cp315-macosx_11_0_arm64.whl"
+size = 342051
+
+[packages.wheels.hashes]
+sha256 = "00ba2d8c7dd4ee537978ddf4b3fbd712bef2d8751603f7f3146b3f4287768e25"
+
+[[packages.wheels]]
+name = "rpds_py-2026.9.1-cp315-cp315-manylinux_2_17_aarch64.manylinux2014_aarch64.whl"
+upload-time = 2026-10-04 16:30:51.508904+00:00
+url = "https://files.pythonhosted.org/packages/7e/31/3dcd68c13d4bcc59c1f7eb33ac8e80698f06f3eb0d8a1e06419836071c20/rpds_py-2026.9.1-cp315-cp315-manylinux_2_17_aarch64.manylinux2014_aarch64.whl"
+size = 374143
+
+[packages.wheels.hashes]
+sha256 = "ec450527cbf485e13c8d3602a54f428ab0432fdade0ede75efd74b735421c871"
+
+[[packages.wheels]]
+name = "rpds_py-2026.9.1-cp315-cp315-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+upload-time = 2026-10-04 16:30:58.295504+00:00
+url = "https://files.pythonhosted.org/packages/57/ca/e2e9a0a46a74ed51a0498ba1fe10f4ea6b2d9a155f372a2f91e51f18cf10/rpds_py-2026.9.1-cp315-cp315-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+size = 372022
+
+[packages.wheels.hashes]
+sha256 = "2c16ab111bc27c646ba8aa005d0527754edc538ebb636f0b1bf8e244b48d1945"
+
+[[packages.wheels]]
+name = "rpds_py-2026.9.1-cp315-cp315-win_amd64.whl"
+upload-time = 2026-10-04 16:31:10.840084+00:00
+url = "https://files.pythonhosted.org/packages/6d/a5/71b5cd00e0521e3b6b81828baea368c62b6b700ebdd9554cd7d41ddf12fa/rpds_py-2026.9.1-cp315-cp315-win_amd64.whl"
+size = 223121
+
+[packages.wheels.hashes]
+sha256 = "75c38c50ab9aca840225d9a9a3810bf11d04bd5c1f186cabbb8aee56db3e9b15"
+
+[[packages]]
+name = "securesystemslib"
+version = "1.5.1"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = "~=3.10"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "securesystemslib-1.5.1.tar.gz"
+upload-time = 2026-09-04 06:55:32.066349+00:00
+url = "https://files.pythonhosted.org/packages/81/d4/f9323507144693d869f30f13694035438ab6642153b94e3057945cf0584f/securesystemslib-1.5.1.tar.gz"
+size = 947087
+
+[packages.sdist.hashes]
+sha256 = "4b8d00abd93707ead10b69eb2b8582376a1364de3b0a71077de534c2ef4985e0"
+
+[[packages.wheels]]
+name = "securesystemslib-1.5.1-py3-none-any.whl"
+upload-time = 2026-09-04 06:55:30.393643+00:00
+url = "https://files.pythonhosted.org/packages/38/fc/c71335a5046d46bf3b761a8c7fa092b40a7721429a5613538f0a28ae80a6/securesystemslib-1.5.1-py3-none-any.whl"
+size = 876390
+
+[packages.wheels.hashes]
+sha256 = "ada8bdf817da29ece4ba91654f6a162ce7cfbadbc3ae3f840f7313f9d22675de"
+
+[[packages]]
+name = "semantic-version"
+version = "2.10.0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=2.7"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "semantic_version-2.10.0.tar.gz"
+upload-time = 2022-05-26 13:35:23.454764+00:00
+url = "https://files.pythonhosted.org/packages/7d/31/f2289ce78b9b473d582568c234e104d2a342fd658cc288a7553d83bb8595/semantic_version-2.10.0.tar.gz"
+size = 52289
+
+[packages.sdist.hashes]
+sha256 = "bdabb6d336998cbb378d4b9db3a4b56a1e3235701dc05ea2690d9a997ed5041c"
+
+[[packages.wheels]]
+name = "semantic_version-2.10.0-py2.py3-none-any.whl"
+upload-time = 2022-05-26 13:35:21.206388+00:00
+url = "https://files.pythonhosted.org/packages/6a/23/8146aad7d88f4fcb3a6218f41a60f6c2d4e3a72de72da1825dc7c8f7877c/semantic_version-2.10.0-py2.py3-none-any.whl"
+size = 15552
+
+[packages.wheels.hashes]
+sha256 = "de78a3b8e0feda74cabc54aab2da702113e33ac9d9eb9d2389bcf1f58b7d9177"
+
+[[packages]]
+name = "setuptools"
+version = "84.0.0"
+marker = "\"build\" in dependency_groups"
+requires-python = ">=3.10"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "setuptools-84.0.0.tar.gz"
+upload-time = 2026-08-08 18:27:58.365696+00:00
+url = "https://files.pythonhosted.org/packages/6d/44/f5da03a8ef95d369145c5bb53050e7877c9f3d312e128605fd9504829143/setuptools-84.0.0.tar.gz"
+size = 1168449
+
+[packages.sdist.hashes]
+sha256 = "f4695c21257f0d9b537ec2692c941d02ee143b7cc1276941349a546573b2ef73"
+
+[[packages.wheels]]
+name = "setuptools-84.0.0-py3-none-any.whl"
+upload-time = 2026-08-08 18:27:56.719708+00:00
+url = "https://files.pythonhosted.org/packages/95/9c/c510029fc6ef33a6275cd2c5d3cecd6613dfd6aa401d57c54f1c18852ccf/setuptools-84.0.0-py3-none-any.whl"
+size = 818216
+
+[packages.wheels.hashes]
+sha256 = "51a52592b3b99e102b609654876bd65f19f999935166d1352678931132b0c670"
+
+[[packages]]
+name = "setuptools-scm"
+version = "10.3.4"
+marker = "\"build\" in dependency_groups"
+requires-python = ">=3.8"
+dependencies = [
+    { name = "packaging" },
+    { name = "setuptools" },
+    { name = "vcs-versioning" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "setuptools_scm-10.3.4.tar.gz"
+upload-time = 2026-09-23 19:21:42.950372+00:00
+url = "https://files.pythonhosted.org/packages/85/d8/fc143f88819ccf10ba2388ba86732ee2de193e578234e25a783f6cc14bf7/setuptools_scm-10.3.4.tar.gz"
+size = 78410
+
+[packages.sdist.hashes]
+sha256 = "a69f28bfc245608781205e912faae437c2b2165773afa4e7b979d77447a69dd2"
+
+[[packages.wheels]]
+name = "setuptools_scm-10.3.4-py3-none-any.whl"
+upload-time = 2026-09-23 19:21:41.607429+00:00
+url = "https://files.pythonhosted.org/packages/da/f5/54538a1f17ea753c42b0928dc2e62986d463f8c393340b9a1e602f2d4dd9/setuptools_scm-10.3.4-py3-none-any.whl"
+size = 33366
+
+[packages.wheels.hashes]
+sha256 = "82f34c3e3084fc2b57d397200637cc13f2338004052d2fee47baa5f0e902464e"
+
+[[packages]]
+name = "sigstore"
+version = "4.5.0"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "cryptography" },
+    { name = "id" },
+    { name = "platformdirs" },
+    { name = "pyasn1" },
+    { name = "pydantic" },
+    { name = "pyjwt" },
+    { name = "pyopenssl" },
+    { name = "requests" },
+    { name = "rfc3161-client" },
+    { name = "rfc8785" },
+    { name = "rich" },
+    { name = "sigstore-models" },
+    { name = "sigstore-rekor-types" },
+    { name = "tuf" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "sigstore-4.5.0.tar.gz"
+upload-time = 2026-07-28 07:34:01.717744+00:00
+url = "https://files.pythonhosted.org/packages/18/e0/279419065e2d7102413605b3456122adbbccbc42e010b499c7b882fc01f8/sigstore-4.5.0.tar.gz"
+size = 90969
+
+[packages.sdist.hashes]
+sha256 = "020d3e07f622b2916bf453e66ff6ff0711e1fdc5ab69e8bd8902f71d9fcb316f"
+
+[[packages.wheels]]
+name = "sigstore-4.5.0-py3-none-any.whl"
+upload-time = 2026-07-28 07:34:00.211729+00:00
+url = "https://files.pythonhosted.org/packages/bf/7f/51dc313c06dd3ec6c5b308e334492cfdea0b02c9184a0da7b2db8c2a30a1/sigstore-4.5.0-py3-none-any.whl"
+size = 111724
+
+[packages.wheels.hashes]
+sha256 = "f045b207f2e12605cf775ec38e89c5eda625d71ffa7830477db65e47ec2bc8b2"
+
+[[packages]]
+name = "sigstore-models"
+version = "0.0.6"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "pydantic" },
+    { name = "typing-extensions" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "sigstore_models-0.0.6.tar.gz"
+upload-time = 2025-11-26 19:18:12.610187+00:00
+url = "https://files.pythonhosted.org/packages/c6/ed/5c0ff809f90b19f4e971e17c1ed11f4df60082c6010b32a82054087e91e0/sigstore_models-0.0.6.tar.gz"
+size = 7037
+
+[packages.sdist.hashes]
+sha256 = "c766c09470c2a7e8a4a333c893f07e2001c56a3ff1757b1a246119f53169a849"
+
+[[packages.wheels]]
+name = "sigstore_models-0.0.6-py3-none-any.whl"
+upload-time = 2025-11-26 19:18:11.365736+00:00
+url = "https://files.pythonhosted.org/packages/12/dc/7a19864a7bc9f43121ab459e12768ab0080590e3e1b60a29b2f2eb01fb85/sigstore_models-0.0.6-py3-none-any.whl"
+size = 13213
+
+[packages.wheels.hashes]
+sha256 = "5201a68f4d7d0f8bec1e2f4378eb646b084c52609a4e31db8c385095fff68b2e"
+
+[[packages]]
+name = "sigstore-rekor-types"
+version = "0.0.18"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.8"
+dependencies = [
+    { name = "pydantic" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "sigstore_rekor_types-0.0.18.tar.gz"
+upload-time = 2024-11-22 13:59:54.009830+00:00
+url = "https://files.pythonhosted.org/packages/b4/54/102e772445c5e849b826fbdcd44eb9ad7b3d10fda17b08964658ec7027dc/sigstore_rekor_types-0.0.18.tar.gz"
+size = 15687
+
+[packages.sdist.hashes]
+sha256 = "19aef25433218ebf9975a1e8b523cc84aaf3cd395ad39a30523b083ea7917ec5"
+
+[[packages.wheels]]
+name = "sigstore_rekor_types-0.0.18-py3-none-any.whl"
+upload-time = 2024-11-22 13:59:52.684229+00:00
+url = "https://files.pythonhosted.org/packages/45/7c/f0b4e19fd424df4cc964f5d454e1d814fd2dc3b386342e6040441024318f/sigstore_rekor_types-0.0.18-py3-none-any.whl"
+size = 20610
+
+[packages.wheels.hashes]
+sha256 = "b62bf38c5b1a62bc0d7fe0ee51a0709e49311d137c7880c329882a8f4b2d1d78"
+
+[[packages]]
+name = "six"
+version = "1.17.0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "six-1.17.0.tar.gz"
+upload-time = 2024-12-04 17:35:28.174320+00:00
+url = "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz"
+size = 34031
+
+[packages.sdist.hashes]
+sha256 = "ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81"
+
+[[packages.wheels]]
+name = "six-1.17.0-py2.py3-none-any.whl"
+upload-time = 2024-12-04 17:35:26.475808+00:00
+url = "https://files.pythonhosted.org/packages/b7/ce/149a00dd41f10bc29e5921b496af8b574d8413afcd5e30dfa0ed46c2cc5e/six-1.17.0-py2.py3-none-any.whl"
+size = 11050
+
+[packages.wheels.hashes]
+sha256 = "4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274"
+
+[[packages]]
+name = "sortedcontainers"
+version = "2.4.0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "sortedcontainers-2.4.0.tar.gz"
+upload-time = 2021-05-16 22:03:42.897871+00:00
+url = "https://files.pythonhosted.org/packages/e8/c4/ba2f8066cceb6f23394729afe52f3bf7adec04bf9ed2c820b39e19299111/sortedcontainers-2.4.0.tar.gz"
+size = 30594
+
+[packages.sdist.hashes]
+sha256 = "25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88"
+
+[[packages.wheels]]
+name = "sortedcontainers-2.4.0-py2.py3-none-any.whl"
+upload-time = 2021-05-16 22:03:41.177807+00:00
+url = "https://files.pythonhosted.org/packages/32/46/9cb0e58b2deb7f82b84065f37f3bffeb12413f947f9388e4cac22c4621ce/sortedcontainers-2.4.0-py2.py3-none-any.whl"
+size = 29575
+
+[packages.wheels.hashes]
+sha256 = "a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0"
+
+[[packages]]
+name = "spdx-tools"
+version = "0.8.5"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "beartype" },
+    { name = "click" },
+    { name = "license-expression" },
+    { name = "ply" },
+    { name = "pyyaml" },
+    { name = "rdflib" },
+    { name = "semantic-version" },
+    { name = "uritools" },
+    { name = "xmltodict" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "spdx_tools-0.8.5.tar.gz"
+upload-time = 2026-03-13 09:29:23.155398+00:00
+url = "https://files.pythonhosted.org/packages/2f/99/33383f587b59cbd191cc1c0fd5408e550b9275e0090d32561cbddc973fdc/spdx_tools-0.8.5.tar.gz"
+size = 696323
+
+[packages.sdist.hashes]
+sha256 = "be600beb2f762f0116025e05490d399e724f668bef84025a7c421bb266688bdb"
+
+[[packages.wheels]]
+name = "spdx_tools-0.8.5-py3-none-any.whl"
+upload-time = 2026-03-13 09:29:20.907842+00:00
+url = "https://files.pythonhosted.org/packages/88/f5/1ac402e1f8d253fa60ac167c4a1fb7eeb0f29a04942788e2d43c984cd749/spdx_tools-0.8.5-py3-none-any.whl"
+size = 286573
+
+[packages.wheels.hashes]
+sha256 = "7c2d5865941be9d2e898f5b084e8d5422dd298dc5a29320ddb198fec304f59c4"
+
+[[packages]]
+name = "tomli-w"
+version = "1.2.0"
+marker = "\"release-build\" in dependency_groups"
+requires-python = ">=3.9"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "tomli_w-1.2.0.tar.gz"
+upload-time = 2025-01-15 12:07:24.262974+00:00
+url = "https://files.pythonhosted.org/packages/19/75/241269d1da26b624c0d5e110e8149093c759b7a286138f4efd61a60e75fe/tomli_w-1.2.0.tar.gz"
+size = 7184
+
+[packages.sdist.hashes]
+sha256 = "2dd14fac5a47c27be9cd4c976af5a12d87fb1f0b4512f81d69cce3b35ae25021"
+
+[[packages.wheels]]
+name = "tomli_w-1.2.0-py3-none-any.whl"
+upload-time = 2025-01-15 12:07:22.074224+00:00
+url = "https://files.pythonhosted.org/packages/c7/18/c86eb8e0202e32dd3df50d43d7ff9854f8e0603945ff398974c1d91ac1ef/tomli_w-1.2.0-py3-none-any.whl"
+size = 6675
+
+[packages.wheels.hashes]
+sha256 = "188306098d013b691fcadc011abd66727d3c414c571bb01b1a174ba8c983cf90"
+
+[[packages]]
+name = "tomlkit"
+version = "0.15.2"
+marker = "\"build\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.9"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "tomlkit-0.15.2.tar.gz"
+upload-time = 2026-10-16 04:07:08.166827+00:00
+url = "https://files.pythonhosted.org/packages/08/72/fc01563df95c189a9f65850096bdc205bc2fe37da6c740cd64afaf18d07e/tomlkit-0.15.2.tar.gz"
+size = 190522
+
+[packages.sdist.hashes]
+sha256 = "83e32755ba1d20d9340bd069ee97e9f6232ba2346b63ffcba425de01f7e327a6"
+
+[[packages.wheels]]
+name = "tomlkit-0.15.2-py3-none-any.whl"
+upload-time = 2026-10-16 04:07:09.216014+00:00
+url = "https://files.pythonhosted.org/packages/da/46/7d84138a60a8bd796825b2d38ebe92d0d16501ca57d501b7c5d677401bbc/tomlkit-0.15.2-py3-none-any.whl"
+size = 52225
+
+[packages.wheels.hashes]
+sha256 = "05562412163a3037b94497385fb7f9204c637bc605af7a48199e41cf2272f437"
+
+[[packages]]
+name = "towncrier"
+version = "26.9.0"
+marker = "\"release-build\" in dependency_groups or \"release-news\" in dependency_groups or \"release-notes\" in dependency_groups or \"release-prepare\" in dependency_groups or \"release-validate\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.9"
+dependencies = [
+    { name = "click" },
+    { name = "jinja2" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "towncrier-26.9.0.tar.gz"
+upload-time = 2026-09-04 12:57:25.341701+00:00
+url = "https://files.pythonhosted.org/packages/92/d4/e85ce614bf45b1a7fe13b82cc687819c2eaac5a1dd94b84834322095fd98/towncrier-26.9.0.tar.gz"
+size = 79338
+
+[packages.sdist.hashes]
+sha256 = "ace9031631c718cc0709107b8755e6e31350eb8acdc877af43df3177addb9a55"
+
+[[packages.wheels]]
+name = "towncrier-26.9.0-py3-none-any.whl"
+upload-time = 2026-09-04 12:57:23.986160+00:00
+url = "https://files.pythonhosted.org/packages/82/88/f9340b545dafa64de053798e760515a2736fbb60092cf9aa6b146ccf3ede/towncrier-26.9.0-py3-none-any.whl"
+size = 67030
+
+[packages.wheels.hashes]
+sha256 = "ae4d223e6aadaff98d29b7f09e58d9c9ccf4cd3b455a2d2e0486d432cd8bf660"
+
+[[packages]]
+name = "tox"
+version = "4.66.0"
+marker = "\"release-build\" in dependency_groups"
+requires-python = ">=3.11"
+dependencies = [
+    { name = "cachetools" },
+    { name = "colorama" },
+    { name = "filelock" },
+    { name = "packaging" },
+    { name = "platformdirs" },
+    { name = "pluggy" },
+    { name = "pyproject-api" },
+    { name = "python-discovery" },
+    { name = "tomli-w" },
+    { name = "virtualenv" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "tox-4.66.0.tar.gz"
+upload-time = 2026-10-16 08:09:14.414776+00:00
+url = "https://files.pythonhosted.org/packages/65/17/183426a492c45f113fb73e26d7e17de63222338222a887b1da055356d0bc/tox-4.66.0.tar.gz"
+size = 344679
+
+[packages.sdist.hashes]
+sha256 = "f9dc2cec9310a3ab5a560669cf860cf6ffad7d04733a0845c7ad7ac00d6b2808"
+
+[[packages.wheels]]
+name = "tox-4.66.0-py3-none-any.whl"
+upload-time = 2026-10-16 08:09:12.609104+00:00
+url = "https://files.pythonhosted.org/packages/b9/e4/929ad087f3f4c6c8dadf64251d7215da77c0b2b6628b8e55c9b2fbcb5d72/tox-4.66.0-py3-none-any.whl"
+size = 237594
+
+[packages.wheels.hashes]
+sha256 = "f12458756246e8be78934f011024dc952c25631008c7a935683fe5843408add4"
+
+[[packages]]
+name = "tox-uv"
+version = "1.37.0"
+marker = "\"release-build\" in dependency_groups"
+requires-python = ">=3.11"
+dependencies = [
+    { name = "tox-uv-bare" },
+    { name = "uv" },
+]
+index = "https://pypi.org/simple/"
+
+[[packages.wheels]]
+name = "tox_uv-1.37.0-py3-none-any.whl"
+upload-time = 2026-10-11 00:33:49.804335+00:00
+url = "https://files.pythonhosted.org/packages/2a/65/7cf72148bff33fd0a572e620c7b1573d6a5e4812e9207878d4e29e4a938a/tox_uv-1.37.0-py3-none-any.whl"
+size = 6564
+
+[packages.wheels.hashes]
+sha256 = "f2e7de8f12d7ffd850d2a3dcebf278cf72a8952a9abe75d84cfb54a76ee17ae4"
+
+[[packages]]
+name = "tox-uv-bare"
+version = "1.37.0"
+marker = "\"release-build\" in dependency_groups"
+requires-python = ">=3.11"
+dependencies = [
+    { name = "packaging" },
+    { name = "tox" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "tox_uv_bare-1.37.0.tar.gz"
+upload-time = 2026-10-11 00:33:52.786394+00:00
+url = "https://files.pythonhosted.org/packages/31/27/203b4dbe73cc6dadc2480e319631310981540dabe95893de983106d7b103/tox_uv_bare-1.37.0.tar.gz"
+size = 32961
+
+[packages.sdist.hashes]
+sha256 = "97418f2febec7da57d010ca6ffed8c7d56be9d425f381b74c7fe8d0213fccad9"
+
+[[packages.wheels]]
+name = "tox_uv_bare-1.37.0-py3-none-any.whl"
+upload-time = 2026-10-11 00:33:51.338731+00:00
+url = "https://files.pythonhosted.org/packages/52/4c/9596668bb448b868c684a3df9190103e9bc2f7de13e646628ac914f928be/tox_uv_bare-1.37.0-py3-none-any.whl"
+size = 22322
+
+[packages.wheels.hashes]
+sha256 = "a596c0726690e2182cc85dfbc2f39e6fddacb8f7ea08bf8bace122a17397cd13"
+
+[[packages]]
+name = "trove-classifiers"
+version = "2026.9.21.13"
+marker = "\"build\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "trove_classifiers-2026.9.21.13.tar.gz"
+upload-time = 2026-09-21 13:29:07.301512+00:00
+url = "https://files.pythonhosted.org/packages/bf/93/af436dfaa845cab5d96f0adbc1e4f3730532d37fa249e4eb796fb1d7fc82/trove_classifiers-2026.9.21.13.tar.gz"
+size = 17085
+
+[packages.sdist.hashes]
+sha256 = "0a9ebc8d4e2f3e8a22848c5258033035bec17a3012ac3fea16dbaa764489eb71"
+
+[[packages.wheels]]
+name = "trove_classifiers-2026.9.21.13-py3-none-any.whl"
+upload-time = 2026-09-21 13:29:06.123578+00:00
+url = "https://files.pythonhosted.org/packages/30/81/0da8afb52a71d0a4f2bd3152357b1a441e393b286374802b9d3addab4ab5/trove_classifiers-2026.9.21.13-py3-none-any.whl"
+size = 14232
+
+[packages.wheels.hashes]
+sha256 = "8b1ff4f9c191b1040b71c37f1e445ab99732911e3cd91de52838453a854d7a17"
+
+[[packages]]
+name = "tuf"
+version = "7.0.1"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "securesystemslib" },
+    { name = "urllib3" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "tuf-7.0.1.tar.gz"
+upload-time = 2026-09-02 06:19:52.071733+00:00
+url = "https://files.pythonhosted.org/packages/9c/dd/52e7390cbac308e6b1cfe6be9bc3a96fe26326d5893cc297a52bb72792a9/tuf-7.0.1.tar.gz"
+size = 274148
+
+[packages.sdist.hashes]
+sha256 = "5ada1db78da3518fa851e28588f4b2249b8662a28ae528f54afa2a1de541fb31"
+
+[[packages.wheels]]
+name = "tuf-7.0.1-py3-none-any.whl"
+upload-time = 2026-09-02 06:19:50.608554+00:00
+url = "https://files.pythonhosted.org/packages/a2/10/171e306e4a19ff980b9029ce5a523881e34bc6a2a52750fb1853f49f0fb9/tuf-7.0.1-py3-none-any.whl"
+size = 56253
+
+[packages.wheels.hashes]
+sha256 = "d30434bda6e079ab303fb30d1b3006d939a10ca34783b1573d61cd9b802fa45c"
+
+[[packages]]
+name = "typing-extensions"
+version = "4.16.0"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.9"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "typing_extensions-4.16.0.tar.gz"
+upload-time = 2026-07-02 08:40:05.920538+00:00
+url = "https://files.pythonhosted.org/packages/f6/cc/6253133b5bb138fc3306cebfbda2c520f545d36b5be2c7255cc528bb45d6/typing_extensions-4.16.0.tar.gz"
+size = 113555
+
+[packages.sdist.hashes]
+sha256 = "dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5"
+
+[[packages.wheels]]
+name = "typing_extensions-4.16.0-py3-none-any.whl"
+upload-time = 2026-07-02 08:40:04.659120+00:00
+url = "https://files.pythonhosted.org/packages/49/d3/b8441a820a491ddfc024b0b0cf0393375b75ea13866d9c66727e54c2fc80/typing_extensions-4.16.0-py3-none-any.whl"
+size = 45571
+
+[packages.wheels.hashes]
+sha256 = "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
+
+[[packages]]
+name = "typing-inspection"
+version = "0.4.4"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.10"
+dependencies = [
+    { name = "typing-extensions" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "typing_inspection-0.4.4.tar.gz"
+upload-time = 2026-08-12 12:37:25.997329+00:00
+url = "https://files.pythonhosted.org/packages/a3/26/b09b8010994eccc3c09092e6b34058f36a460eea2d4c3e8b910c695975a0/typing_inspection-0.4.4.tar.gz"
+size = 76928
+
+[packages.sdist.hashes]
+sha256 = "547274fa6b0a561ccf549cc9524b999a578e737d015d8709d021f9d0d13bea47"
+
+[[packages.wheels]]
+name = "typing_inspection-0.4.4-py3-none-any.whl"
+upload-time = 2026-08-12 12:37:24.648475+00:00
+url = "https://files.pythonhosted.org/packages/67/81/4add07e5172b7ac40d8ed5ff580409a7801a4fe26d529bdd915401dabfbe/typing_inspection-0.4.4-py3-none-any.whl"
+size = 14750
+
+[packages.wheels.hashes]
+sha256 = "65b8397ba37ccbce054456aaccddfc91e6e3083c92824df348d96ca832f3f147"
+
+[[packages]]
+name = "tzdata"
+version = "2026.5"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=2"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "tzdata-2026.5.tar.gz"
+upload-time = 2026-10-03 09:23:14.143086+00:00
+url = "https://files.pythonhosted.org/packages/d9/68/f1b440335057bfce71b6e50a9d09445aa2ecbd08359a337976627b8409e7/tzdata-2026.5.tar.gz"
+size = 200404
+
+[packages.sdist.hashes]
+sha256 = "8cc73c0a0bfca7dbfa59235d60b2eff82231dee33f53d206db1acd9173cfc0a7"
+
+[[packages.wheels]]
+name = "tzdata-2026.5-py2.py3-none-any.whl"
+upload-time = 2026-10-03 09:23:12.535688+00:00
+url = "https://files.pythonhosted.org/packages/94/21/1e5995a1c920cce14e4bffae20c665ec10e7ed03ab25e006cd741092b718/tzdata-2026.5-py2.py3-none-any.whl"
+size = 347996
+
+[packages.wheels.hashes]
+sha256 = "b683bd1b6659ddcd810ff02ad09ba821d4bf1065072805063eb35c49617905ac"
+
+[[packages]]
+name = "uri-template"
+version = "1.3.0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.7"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "uri-template-1.3.0.tar.gz"
+upload-time = 2023-06-21 01:49:05.374755+00:00
+url = "https://files.pythonhosted.org/packages/31/c7/0336f2bd0bcbada6ccef7aaa25e443c118a704f828a0620c6fa0207c1b64/uri-template-1.3.0.tar.gz"
+size = 21678
+
+[packages.sdist.hashes]
+sha256 = "0e00f8eb65e18c7de20d595a14336e9f337ead580c70934141624b6d1ffdacc7"
+
+[[packages.wheels]]
+name = "uri_template-1.3.0-py3-none-any.whl"
+upload-time = 2023-06-21 01:49:03.467606+00:00
+url = "https://files.pythonhosted.org/packages/e7/00/3fca040d7cf8a32776d3d81a00c8ee7457e00f80c649f1e4a863c8321ae9/uri_template-1.3.0-py3-none-any.whl"
+size = 11140
+
+[packages.wheels.hashes]
+sha256 = "a44a133ea12d44a0c0f06d7d42a52d71282e77e2f937d8abd5655b8d56fc1363"
+
+[[packages]]
+name = "uritools"
+version = "6.1.3"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.10"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "uritools-6.1.3.tar.gz"
+upload-time = 2026-07-23 23:17:44.612642+00:00
+url = "https://files.pythonhosted.org/packages/a3/0d/20d02264b6682f07e92cbf7ee43e5e803670d101a03ef204ba18368c321f/uritools-6.1.3.tar.gz"
+size = 23909
+
+[packages.sdist.hashes]
+sha256 = "3a498e7e85ef3249343d5710618d641a414da0fbae6d23053ada7976ee83ea5f"
+
+[[packages.wheels]]
+name = "uritools-6.1.3-py3-none-any.whl"
+upload-time = 2026-07-23 23:17:43.275613+00:00
+url = "https://files.pythonhosted.org/packages/ac/76/e9bb35862bcc5b82218d2c017b1eacdcfeb3ba46ce0c0ca8ffc4db80ddbe/uritools-6.1.3-py3-none-any.whl"
+size = 11981
+
+[packages.wheels.hashes]
+sha256 = "136f113e76e53f85bf2d9cce0c3d40ceec775d0409e7d6de9b28f046a7d42838"
+
+[[packages]]
+name = "urllib3"
+version = "2.8.0"
+marker = "\"release-verify\" in dependency_groups"
+requires-python = ">=3.10"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "urllib3-2.8.0.tar.gz"
+upload-time = 2026-09-15 19:29:36.253420+00:00
+url = "https://files.pythonhosted.org/packages/e3/05/b17359e1cefb4f909b5e40b1b90a496d987258916dbbf88e842c729f510e/urllib3-2.8.0.tar.gz"
+size = 458972
+
+[packages.sdist.hashes]
+sha256 = "63bf2ead4c879426ebf22ef2a781eeb4aa3b4ae798a0435506f8687fd5bb9b63"
+
+[[packages.wheels]]
+name = "urllib3-2.8.0-py3-none-any.whl"
+upload-time = 2026-09-15 19:29:34.577402+00:00
+url = "https://files.pythonhosted.org/packages/92/9d/c4e665119135114480843e7ab388fa94d8480650450e6f8e26b70d323a4c/urllib3-2.8.0-py3-none-any.whl"
+size = 135717
+
+[packages.wheels.hashes]
+sha256 = "0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3"
+
+[[packages]]
+name = "uv"
+version = "0.13.1"
+marker = "\"release-build\" in dependency_groups"
+requires-python = ">=3.8"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "uv-0.13.1.tar.gz"
+upload-time = 2026-10-14 05:13:35.353145+00:00
+url = "https://files.pythonhosted.org/packages/ef/10/81f499de381ac81e09961e1c19255c5cf49563ac418464def4190b6c7400/uv-0.13.1.tar.gz"
+size = 7434239
+
+[packages.sdist.hashes]
+sha256 = "6df50a86b09be66a413f8f1b16258d585d4dd1cbff591077ae1e6f65c26de2eb"
+
+[[packages.wheels]]
+name = "uv-0.13.1-py3-none-macosx_11_0_arm64.whl"
+upload-time = 2026-10-14 05:12:56.056660+00:00
+url = "https://files.pythonhosted.org/packages/3b/31/fad7fd2ac81954d02d33765bf8535eb320fcc2d71f2603a5c1ba0b13b8ef/uv-0.13.1-py3-none-macosx_11_0_arm64.whl"
+size = 14391237
+
+[packages.wheels.hashes]
+sha256 = "cfa719fbbd23f26713394dea2692b7f146aa1b5713ce5e776e878701214ea52c"
+
+[[packages.wheels]]
+name = "uv-0.13.1-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64.whl"
+upload-time = 2026-10-14 05:12:58.371857+00:00
+url = "https://files.pythonhosted.org/packages/9f/6a/ff4c51a245345a167eed090e8cea27d5979e8b665c97617805bb8748966f/uv-0.13.1-py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.musllinux_1_1_aarch64.whl"
+size = 18047204
+
+[packages.wheels.hashes]
+sha256 = "f2518450da2f6d0ea8a943c9f402abda63d5a66acc9999216c2792115b922ba4"
+
+[[packages.wheels]]
+name = "uv-0.13.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+upload-time = 2026-10-14 05:13:13.069021+00:00
+url = "https://files.pythonhosted.org/packages/14/0b/6602a613533602e7a083e908c4375f9b0e78a94ba2e21c29b21c41a0a611/uv-0.13.1-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+size = 17279385
+
+[packages.wheels.hashes]
+sha256 = "696dcf6d807d85da978f4db8472da81dccc1254b18b52cbd1367c4d923c421e0"
+
+[[packages.wheels]]
+name = "uv-0.13.1-py3-none-manylinux_2_28_aarch64.whl"
+upload-time = 2026-10-14 05:13:15.567666+00:00
+url = "https://files.pythonhosted.org/packages/09/f6/52e2136653a1f3a4dc489da83444f062ed588570cc3e5242fda50996951a/uv-0.13.1-py3-none-manylinux_2_28_aarch64.whl"
+size = 16577060
+
+[packages.wheels.hashes]
+sha256 = "ccbe233d4bce39865af7c30ec1fb28b0cc353f9d51711629f54fca71b8db7382"
+
+[[packages.wheels]]
+name = "uv-0.13.1-py3-none-win_amd64.whl"
+upload-time = 2026-10-14 05:13:30.623762+00:00
+url = "https://files.pythonhosted.org/packages/2a/8e/d23278bb327d2a75dc1d033c81b7fe23bbb28e363e02e7f306abd047924a/uv-0.13.1-py3-none-win_amd64.whl"
+size = 15404994
+
+[packages.wheels.hashes]
+sha256 = "4f693cd4feb52f08f30474c4612f24be2050472609be65b9960b635f286da284"
+
+[[packages]]
+name = "vcs-versioning"
+version = "2.6.0"
+marker = "\"build\" in dependency_groups"
+requires-python = ">=3.8"
+dependencies = [
+    { name = "packaging" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "vcs_versioning-2.6.0.tar.gz"
+upload-time = 2026-10-06 22:21:55.024903+00:00
+url = "https://files.pythonhosted.org/packages/ad/e7/2a691db7d076b75d099fdba1a14cd966931f2aeb591e77f6d22f15097326/vcs_versioning-2.6.0.tar.gz"
+size = 166800
+
+[packages.sdist.hashes]
+sha256 = "22e9159288e2d8bca2fa6f6c31c34c9c66aec157f60e9e526f5d160d2516d60f"
+
+[[packages.wheels]]
+name = "vcs_versioning-2.6.0-py3-none-any.whl"
+upload-time = 2026-10-06 22:21:53.267565+00:00
+url = "https://files.pythonhosted.org/packages/73/1d/ad4064bf12f4503bf61e65d74c93c523672776d25ee0a06aaf42ae09ef3f/vcs_versioning-2.6.0-py3-none-any.whl"
+size = 123154
+
+[packages.wheels.hashes]
+sha256 = "f8bebd1302ebc12e67ceb30fc7dd698ec969414b6fa43b30c3f14ac9b1e72c41"
+
+[[packages]]
+name = "virtualenv"
+version = "21.14.8"
+marker = "\"release-build\" in dependency_groups"
+requires-python = ">=3.9"
+dependencies = [
+    { name = "distlib" },
+    { name = "filelock" },
+    { name = "packaging" },
+    { name = "platformdirs" },
+    { name = "python-discovery" },
+]
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "virtualenv-21.14.8.tar.gz"
+upload-time = 2026-10-16 00:09:09.672372+00:00
+url = "https://files.pythonhosted.org/packages/0b/6a/fbdeea5c07d5674139639d42a97a41d26e9b9b8cb2a1265fa936f655ee20/virtualenv-21.14.8.tar.gz"
+size = 5474561
+
+[packages.sdist.hashes]
+sha256 = "394e45ed610ceffb5018e1a179e3a8012c02fd87fe792ab4aae67ce5e7e3afbd"
+
+[[packages.wheels]]
+name = "virtualenv-21.14.8-py3-none-any.whl"
+upload-time = 2026-10-16 00:09:07.441085+00:00
+url = "https://files.pythonhosted.org/packages/14/01/cd63b97dd556293e1c74d76053936d9cef11a28eac605c735ae9f0ee324f/virtualenv-21.14.8-py3-none-any.whl"
+size = 5487606
+
+[packages.wheels.hashes]
+sha256 = "d2a347fdbc1a65e33c2c5e84dc767b4a3538a25749536a752744d4fe1f71c37a"
+
+[[packages]]
+name = "wcwidth"
+version = "0.9.2"
+marker = "\"release-build\" in dependency_groups or \"release-news\" in dependency_groups or \"release-notes\" in dependency_groups or \"release-prepare\" in dependency_groups or \"release-validate\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.9"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "wcwidth-0.9.2.tar.gz"
+upload-time = 2026-10-05 00:24:05.521972+00:00
+url = "https://files.pythonhosted.org/packages/f0/b4/7830542634bb2d3e62aa3b586a72d5b3b6c91c3168929e7000ef3fed041d/wcwidth-0.9.2.tar.gz"
+size = 955039
+
+[packages.sdist.hashes]
+sha256 = "ae0ef90b90f6af38b54f1fe6d58662ec33b3cb4b8391958a62416d654231727b"
+
+[[packages.wheels]]
+name = "wcwidth-0.9.2-cp310-abi3-macosx_11_0_arm64.whl"
+upload-time = 2026-10-05 00:23:27.049292+00:00
+url = "https://files.pythonhosted.org/packages/a0/07/cb6940e81134b7ed25fa312ee9ab536a63db0793b149f88a90e603ceace9/wcwidth-0.9.2-cp310-abi3-macosx_11_0_arm64.whl"
+size = 609960
+
+[packages.wheels.hashes]
+sha256 = "ae0800c5339423cc53d33a266ad264b42ba8aaa16d4464f6e6b1bee607f50b17"
+
+[[packages.wheels]]
+name = "wcwidth-0.9.2-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl"
+upload-time = 2026-10-05 00:23:32.448318+00:00
+url = "https://files.pythonhosted.org/packages/bc/f0/b8ef7758003d66b60f093695831a86dcc726aac01ee6446ffcbda27b61e3/wcwidth-0.9.2-cp310-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl"
+size = 771632
+
+[packages.wheels.hashes]
+sha256 = "674b518af28d38ee645ff97b74f5760abee5fad4bac74413bfc4b881ef2ce724"
+
+[[packages.wheels]]
+name = "wcwidth-0.9.2-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+upload-time = 2026-10-05 00:23:40.175985+00:00
+url = "https://files.pythonhosted.org/packages/db/6c/f940133c71427c208575910e981942bd78c98b1f7cd0d1425ca4b7457c04/wcwidth-0.9.2-cp310-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl"
+size = 769763
+
+[packages.wheels.hashes]
+sha256 = "751bef0ab404b6a1dc028b56b4b85d46486be1c55833f80da533e42dc691f389"
+
+[[packages.wheels]]
+name = "wcwidth-0.9.2-cp310-abi3-win_amd64.whl"
+upload-time = 2026-10-05 00:23:57.489330+00:00
+url = "https://files.pythonhosted.org/packages/5a/d6/b0690f55ea0483530a18bac917fbadbf54f35122510446fc370f5f1c2453/wcwidth-0.9.2-cp310-abi3-win_amd64.whl"
+size = 597827
+
+[packages.wheels.hashes]
+sha256 = "2a9746de704242bd4fdaabb31dd46b82f694a56a8d21081ad89b679a89da9fec"
+
+[[packages.wheels]]
+name = "wcwidth-0.9.2-py3-none-any.whl"
+upload-time = 2026-10-05 00:23:21.097514+00:00
+url = "https://files.pythonhosted.org/packages/9c/b4/0bfa065af506540d9d558e3e5548cff00bc1f9b24e6e2a8512498e8628de/wcwidth-0.9.2-py3-none-any.whl"
+size = 301667
+
+[packages.wheels.hashes]
+sha256 = "89ca642c5bf0101157a09366be69fad0379db1f700ae39a920e103234573670e"
+
+[[packages]]
+name = "webcolors"
+version = "25.10.0"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.10"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "webcolors-25.10.0.tar.gz"
+upload-time = 2025-10-31 07:51:03.977878+00:00
+url = "https://files.pythonhosted.org/packages/1d/7a/eb316761ec35664ea5174709a68bbd3389de60d4a1ebab8808bfc264ed67/webcolors-25.10.0.tar.gz"
+size = 53491
+
+[packages.sdist.hashes]
+sha256 = "62abae86504f66d0f6364c2a8520de4a0c47b80c03fc3a5f1815fedbef7c19bf"
+
+[[packages.wheels]]
+name = "webcolors-25.10.0-py3-none-any.whl"
+upload-time = 2025-10-31 07:51:01.778455+00:00
+url = "https://files.pythonhosted.org/packages/e2/cc/e097523dd85c9cf5d354f78310927f1656c422bd7b2613b2db3e3f9a0f2c/webcolors-25.10.0-py3-none-any.whl"
+size = 14905
+
+[packages.wheels.hashes]
+sha256 = "032c727334856fc0b968f63daa252a1ac93d33db2f5267756623c210e57a4f1d"
+
+[[packages]]
+name = "xmltodict"
+version = "1.0.4"
+marker = "\"release-spdx\" in dependency_groups or \"release-verify\" in dependency_groups or \"release-zipapp\" in dependency_groups"
+requires-python = ">=3.9"
+index = "https://pypi.org/simple/"
+
+[packages.sdist]
+name = "xmltodict-1.0.4.tar.gz"
+upload-time = 2026-02-22 02:21:22.074263+00:00
+url = "https://files.pythonhosted.org/packages/19/70/80f3b7c10d2630aa66414bf23d210386700aa390547278c789afa994fd7e/xmltodict-1.0.4.tar.gz"
+size = 26124
+
+[packages.sdist.hashes]
+sha256 = "6d94c9f834dd9e44514162799d344d815a3a4faec913717a9ecbfa5be1bb8e61"
+
+[[packages.wheels]]
+name = "xmltodict-1.0.4-py3-none-any.whl"
+upload-time = 2026-02-22 02:21:21.039836+00:00
+url = "https://files.pythonhosted.org/packages/38/34/98a2f52245f4d47be93b580dae5f9861ef58977d73a79eb47c58f1ad1f3a/xmltodict-1.0.4-py3-none-any.whl"
+size = 13580
+
+[packages.wheels.hashes]
+sha256 = "a4a00d300b0e1c59fc2bfccb53d7b2e88c32f200df138a0dd2229f842497026a"
+
+[tool.nab]
+nab-version = "0.0.22"
+created-at = 2026-10-24 06:24:13.007814+00:00
+command-line = [
+    "nab",
+    "lock",
+    "--no-cache",
+    "--groups",
+    "release-build",
+    "release-check",
+    "release-news",
+    "release-notes",
+    "release-prepare",
+    "release-spdx",
+    "release-validate",
+    "release-verify",
+    "release-zipapp",
+    "--output",
+    "pylock.toml",
+    "--upgrade",
+]
+input-path = "pyproject.toml"
+mode = "universal"
+python-specifier = ">=3.15,<3.16"
+platforms = [
+    "linux_x86_64",
+    "linux_aarch64",
+    "macos_arm64",
+    "windows_amd64",
+]

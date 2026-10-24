@@ -4,7 +4,7 @@ on:
   push:
     branches: ["main"]
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+    types: [opened, synchronize, reopened]
   schedule:
     - cron: "0 8 * * *"
 concurrency:
@@ -77,6 +77,7 @@ jobs:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
+          version: latest-known
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
           cache-suffix: ${{ matrix.py }}
@@ -98,6 +99,7 @@ jobs:
             if: ${{ !startsWith(matrix.py, 'brew@') && matrix.py != 'rp' }}
             uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
             with:
+              version: latest-known
               enable-cache: false
               python-version: ${{ matrix.py }}
               activate-environment: true
@@ -255,6 +257,7 @@ jobs:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
+          version: latest-known
           python-version: "3.15"
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
@@ -316,6 +319,7 @@ jobs:
       - name: 🚀 Install uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
+          version: latest-known
           python-version: "3.15"
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
@@ -370,37 +374,37 @@ jobs:
         run: '"$CODEQL" test run .github/codeql/tests'
         env:
           CODEQL: ${{ steps.codeql.outputs.codeql-path }}
-  changelog:
-    name: News fragment
-    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip news')
-    runs-on: ubuntu-24.04
+  hook-update-cooldown:
+    name: Hook update cooldown
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-26.04
     permissions:
+      actions: read
       contents: read
+      pull-requests: read
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: tox-dev/github-workflows/check-hook-update-cooldown@e2d5e308194a31710039f3237b7157431c0e38b5 # v2.0.0
         with:
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
-        with:
-          python-version: "3.15"
-          enable-cache: false
-      - run: uvx towncrier check --compare-with "origin/${GITHUB_BASE_REF}"
+          release-app-client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+        env:
+          GH_TOKEN: ${{ github.token }}
   all-checks-pass:
     name: ✅ all checks pass
     # the gate shares the jobs' condition, so every job it needs has run and a skip counts as a failure
-    if: always() && (github.event_name != 'schedule' || github.repository_owner == 'pypa')
-    needs: [test, coverage, check, test-queries, changelog]
+    if: ${{ !cancelled() && (github.event_name != 'schedule' || github.repository_owner == 'pypa') }} # codespell:ignore cancelled
+    needs: [test, coverage, check, test-queries, hook-update-cooldown]
     runs-on: ubuntu-24.04
     permissions: {}
     steps:
       - env:
           NEEDS_JSON: ${{ toJSON(needs) }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          jq -e '
+          jq -e --arg event "$EVENT_NAME" '
             all(
               to_entries[];
               .value.result == "success" or
-              (.key == "changelog" and .value.result == "skipped")
+              ((.key == "hook-update-cooldown") and
+               .value.result == "skipped" and $event != "pull_request")
             )
-          ' <<< "$NEEDS_JSON"
+          ' <<<"$NEEDS_JSON"

@@ -1,2 +1,3 @@
 [default.extend-words]
+certifi = "certifi"
 intoto = "intoto"
