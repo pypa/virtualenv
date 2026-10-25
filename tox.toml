@@ -163,7 +163,7 @@ commands = [
 [env.tasks]
 description = "run the build and CI tooling tests"
 base_python = [ "3.15" ]
-dependency_groups = [ "tasks" ]
+dependency_groups = [ "release", "tasks" ]
 set_env._COVERAGE_SRC = "{tox_root}"
 set_env.COVERAGE_FILE = "{work_dir}{/}.coverage.{env_name}"
 set_env.COVERAGE_PROCESS_START = "{tox_root}{/}pyproject.toml"
@@ -242,10 +242,10 @@ commands = [
 ]
 
 [env.release]
-description = "do a release, required posarg of the version number"
+description = "prepare a release locally"
 base_python = [ "3.15" ]
 skip_install = true
-deps = [ "-r tasks/release-requirements.txt" ]
+dependency_groups = [ "release" ]
 change_dir = "{tox_root}{/}tasks"
 commands = [ [ "python", "release.py", { replace = "posargs", extend = true } ] ]
 
@@ -253,9 +253,21 @@ commands = [ [ "python", "release.py", { replace = "posargs", extend = true } ] 
 description = "render the CycloneDX SBOM extracted from a wheel as SPDX 2.3 and validate it"
 base_python = [ "3.15" ]
 skip_install = true
-dependency_groups = [ "sbom" ]
-set_env.UV_CONSTRAINT = "{tox_root}{/}tasks{/}release-requirements.txt"
+dependency_groups = []
 commands = [
+  [
+    "uv",
+    "pip",
+    "sync",
+    "--preview-features",
+    "pylock",
+    "--python",
+    "{env_python}",
+    "--group",
+    "release-spdx",
+    "--require-hashes",
+    "pylock.toml",
+  ],
   [ "python", "{tox_root}{/}tasks{/}cyclonedx_to_spdx.py", "virtualenv.cdx.json", "virtualenv.spdx.json" ],
   [ "pyspdxtools", "--infile", "virtualenv.spdx.json" ],
 ]
@@ -279,26 +291,37 @@ uv_seed = true
 description = "generate a zipapp, embed its SBOM and validate the SBOM"
 base_python = [ "3.15" ]
 skip_install = true
-deps = [ "hatchling>=1.28", "packaging>=26.3", "uv>=0.12.19" ]
-dependency_groups = [ "sbom" ]
+dependency_groups = []
 pass_env = [ "SOURCE_DATE_EPOCH" ]
 set_env.PYTHONPATH = "{tox_root}"
-set_env.UV_CONSTRAINT = "{tox_root}{/}tasks{/}release-requirements.txt"
 commands = [
+  [
+    "uv",
+    "pip",
+    "sync",
+    "--preview-features",
+    "pylock",
+    "--python",
+    "{env_python}",
+    "--group",
+    "release-zipapp",
+    "--group",
+    "build",
+    "--require-hashes",
+    "pylock.toml"
+  ],
   [
     "uv",
     "build",
     "--wheel",
     "--python",
     "{env_python}",
-    "--build-constraints",
-    "{tox_root}{/}tasks{/}release-requirements.txt",
-    "--require-hashes",
+    "--no-build-isolation",
     "--out-dir",
     "{env_tmp_dir}",
     ".",
   ],
-  [ "python", "tasks/make_zipapp.py", "--wheel-dir", "{env_tmp_dir}" ],
+  [ "python", "-m", "tasks.make_zipapp", "--wheel-dir", "{env_tmp_dir}" ],
   [ "python", "tasks/zipapp_sbom.py", "virtualenv.pyz", "virtualenv.pyz.cdx.json" ],
   [ "python", "tasks/validate_sbom.py", "virtualenv.pyz" ],
 ]

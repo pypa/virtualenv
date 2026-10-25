@@ -1,4 +1,4 @@
-name: 🔍 dependency review
+name: 🛡️ dependency review
 on:
   pull_request:
 concurrency:
@@ -7,12 +7,13 @@ concurrency:
 permissions: {}
 jobs:
   review:
-    name: 🔍 dependency review
+    name: 🛡️ Dependency review
     runs-on: ubuntu-24.04
     permissions:
       contents: read # read the dependency graph diff between the base and head commits
     steps:
-      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+      - name: 🛡️ Review dependency changes
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           # an advisory of any severity in any manifest blocks the change: runtime dependencies run on every install,
           # and the release tooling lock runs in jobs that hold publish and attestation permissions

@@ -1,0 +1,28 @@
+name: 🔒 Upgrade release tools
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * 2"
+permissions: {}
+concurrency:
+  group: upgrade-release-tools
+  cancel-in-progress: false
+jobs:
+  upgrade:
+    name: 🔀 Upgrade release tools
+    uses: tox-dev/github-workflows/.github/workflows/upgrade-release-tools.yaml@259a3d3fb578d00517ffb73341fdd463259b0b2f # 6.0.1
+    permissions:
+      contents: read
+    secrets:
+      RELEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+    with:
+      additional-lock: pylock.zipapp.toml
+      additional-lock-selection: project
+      additional-matrix-python: ">=3.9,<3.16"
+      additional-matrix-platforms: >-
+        linux_x86_64 linux_aarch64 linux_i686 linux_armv7l macos_x86_64 macos_arm64 windows_amd64 windows_arm64
+      additional-matrix-implementations: cpython pypy
+      commit-message: "build(deps): refresh release lock"
+      pull-request-title: "build(deps): refresh release tool lock"
+      pull-request-body: |-
+        Relock `pylock.toml` and `pylock.zipapp.toml`.

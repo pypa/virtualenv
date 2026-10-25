@@ -4,7 +4,7 @@ on:
   push:
     branches: ["main"]
   pull_request:
-    types: [opened, synchronize, reopened, labeled, unlabeled]
+    types: [opened, synchronize, reopened]
   schedule:
     - cron: "0 8 * * *"
 concurrency:
@@ -65,7 +65,7 @@ jobs:
           - {os: windows-2025-vs2026, py: "pypy-3.10"}
           - {os: windows-2025-vs2026, py: "pypy-3.9"}
     steps:
-      - name: 📥 Checkout code
+      - name: 📥 Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
@@ -74,9 +74,10 @@ jobs:
         shell: bash
         run: |
           git fetch --force --tags https://github.com/pypa/virtualenv.git
-      - name: 🚀 Install uv
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - name: 🐍 Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
+          version: latest-known
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
           cache-suffix: ${{ matrix.py }}
@@ -96,8 +97,9 @@ jobs:
               fi
           - name: 🐍 Setup Python for test ${{ matrix.py }}
             if: ${{ !startsWith(matrix.py, 'brew@') && matrix.py != 'rp' }}
-            uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+            uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
             with:
+              version: latest-known
               enable-cache: false
               python-version: ${{ matrix.py }}
               activate-environment: true
@@ -107,18 +109,18 @@ jobs:
             env:
               GH_TOKEN: ${{ github.token }}
             run: tasks/install_ci_tool.sh rustpython
-          - name: 🐚 Install Nushell
+          - name: 📦 Install Nushell
             shell: bash
             env:
               GH_TOKEN: ${{ github.token }}
             run: tasks/install_ci_tool.sh nushell
-          - name: 🐟 Install fish
+          - name: 📦 Install fish
             if: runner.os != 'Windows'
             shell: bash
             env:
               GH_TOKEN: ${{ github.token }}
             run: tasks/install_ci_tool.sh fish
-          - name: 🐚 Install apt packages
+          - name: 📦 Install apt packages
             if: runner.os == 'Linux'
             shell: bash
             run: |
@@ -138,7 +140,7 @@ jobs:
               sudo find /etc/apt/sources.list.d -type f -exec grep -q packages.microsoft.com {} \; -delete
               retry sudo apt-get update -y
               retry sudo apt-get install csh tcsh zsh locales-all -y
-          - name: 🍺 Install brew packages
+          - name: 📦 Install brew packages
             if: runner.os == 'macOS'
             shell: bash
             env:
@@ -151,7 +153,7 @@ jobs:
                 echo "/usr/local/opt/python@$PY/libexec/bin" >>"${GITHUB_PATH}"
               fi
               brew install tcsh dash || brew upgrade tcsh dash
-      - name: 🧬 Pick environment to run
+      - name: ⚙️ Pick environment to run
         shell: bash
         env:
           MATRIX_PY: ${{ matrix.py }}
@@ -164,9 +166,9 @@ jobs:
           fi
           echo "TOXENV=$py" >> "$GITHUB_ENV"
           echo "Set TOXENV=$py"
-      - name: 🏗️ Setup test suite
+      - name: 📦 Setup test suite
         run: tox run -vvvv --notest --skip-missing-interpreters false
-      - name: 🔎 Verify pytest diagnostics
+      - name: 🧪 Verify pytest diagnostics
         if: matrix.diagnostics
         shell: bash
         run: |
@@ -176,7 +178,7 @@ jobs:
             python_path=./.tox/3.13t/bin/python
           fi
           "$python_path" -m pytest tests/tasks/test_pytest_diagnostics.py -n 0 --basetemp=.tox/diagnostics-self-test
-      - name: 🏃 Run test suite
+      - name: 🧪 Run test suite
         run: tox run --skip-pkg-install
         timeout-minutes: ${{ matrix.py == 'graalpy' && 17 || 30 }}
         env:
@@ -241,27 +243,28 @@ jobs:
           retention-days: 1
           overwrite: true
   coverage:
-    name: 📊 coverage
+    name: 📊 Combine coverage
     needs: test
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ubuntu-24.04
     permissions:
       contents: read # check out the sources the report reads
     steps:
-      - name: 📥 Checkout code
+      - name: 📥 Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: 🚀 Install uv
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - name: 🐍 Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
+          version: latest-known
           python-version: "3.15"
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
           cache-suffix: coverage
       - name: 📦 Install tox
         run: uv tool install --python-preference only-managed --python 3.15 "tox>=4.45" --with tox-uv
-      - name: 📥 Download coverage data
+      - name: 📩 Download coverage data
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           # one directory per test run: runs on different OSes write the same .coverage.<env> file name
@@ -269,12 +272,12 @@ jobs:
           path: ${{ runner.temp }}/coverage-data
       - name: 📊 Combine and report coverage
         run: tox run -e coverage -- "$RUNNER_TEMP"/coverage-data/*
-      - name: 📝 Write the coverage summary
+      - name: 📊 Write the coverage summary
         run: .tox/coverage/bin/coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
         env:
           COVERAGE_FILE: .tox/.coverage
   check:
-    name: 🔎 check ${{ matrix.tox_env }} - ${{ matrix.os }}
+    name: 🔍 check ${{ matrix.tox_env }} - ${{ matrix.os }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
     permissions:
@@ -304,7 +307,7 @@ jobs:
           - {os: windows-2025-vs2026, tox_env: type}
           - {os: windows-2025-vs2026, tox_env: type-3.9}
     steps:
-      - name: 📥 Checkout code
+      - name: 📥 Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
@@ -313,9 +316,10 @@ jobs:
         shell: bash
         run: |
           git fetch --force --tags https://github.com/pypa/virtualenv.git
-      - name: 🚀 Install uv
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - name: 🐍 Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
+          version: latest-known
           python-version: "3.15"
           enable-cache: true
           cache-dependency-glob: "pyproject.toml"
@@ -323,84 +327,62 @@ jobs:
       - parallel:
           - name: 📦 Install tox
             run: uv tool install --python-preference only-managed --python 3.15 "tox>=4.45" --with tox-uv
-          - name: 🐚 Install Nushell for the property tests
+          - name: 📦 Install Nushell for the property tests
             if: matrix.tox_env == 'property' && runner.os == 'Linux'
             env:
               GH_TOKEN: ${{ github.token }}
             run: tasks/install_ci_tool.sh nushell
-          - name: 🐟 Install fish for the property tests
+          - name: 📦 Install fish for the property tests
             if: matrix.tox_env == 'property' && runner.os == 'Linux'
             env:
               GH_TOKEN: ${{ github.token }}
             run: tasks/install_ci_tool.sh fish
-          - name: 🐚 Install apt packages for the property tests
+          - name: 📦 Install apt packages for the property tests
             if: matrix.tox_env == 'property' && runner.os == 'Linux'
             run: |
               # no job installs from packages.microsoft.com, and its outages fail apt-get update for every job
               sudo find /etc/apt/sources.list.d -type f -exec grep -q packages.microsoft.com {} \; -delete
               sudo apt-get update -y
               sudo apt-get install -y tcsh zsh
-      - name: 🏗️ Setup check suite
+      - name: 📦 Setup check suite
         run: tox run -vv --notest --skip-missing-interpreters false
         env:
           TOXENV: ${{ matrix.tox_env }}
-      - name: 🏃 Run check for ${{ matrix.tox_env }}
+      - name: 🧪 Run check suite
         run: tox run --skip-pkg-install
         env:
           TOXENV: ${{ matrix.tox_env }}
           UPGRADE_ADVISORY: ${{ matrix.tox_env == 'upgrade' && '1' || '' }}
   test-queries:
-    name: 🔎 test custom queries
+    name: 🧪 Test custom CodeQL queries
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ubuntu-24.04
     permissions:
       contents: read # check out the queries and their test fixtures
       security-events: read # codeql-action needs it to reach its API endpoints
     steps:
-      - name: 📥 Checkout code
+      - name: 📥 Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: 🔎 Install CodeQL
+      - name: 🛡️ Initialize CodeQL
         id: codeql
         uses: github/codeql-action/init@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
         with:
           languages: python
-      - name: 🏃 Run query tests
+      - name: 🧪 Run query tests
         run: '"$CODEQL" test run .github/codeql/tests'
         env:
           CODEQL: ${{ steps.codeql.outputs.codeql-path }}
-  changelog:
-    name: News fragment
-    if: github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'skip news')
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
-        with:
-          python-version: "3.15"
-          enable-cache: false
-      - run: uvx towncrier check --compare-with "origin/${GITHUB_BASE_REF}"
   all-checks-pass:
-    name: ✅ all checks pass
+    name: 🚦 All checks pass
     # the gate shares the jobs' condition, so every job it needs has run and a skip counts as a failure
-    if: always() && (github.event_name != 'schedule' || github.repository_owner == 'pypa')
-    needs: [test, coverage, check, test-queries, changelog]
+    if: ${{ !cancelled() && (github.event_name != 'schedule' || github.repository_owner == 'pypa') }} # codespell:ignore cancelled
+    needs: [test, coverage, check, test-queries]
     runs-on: ubuntu-24.04
     permissions: {}
     steps:
-      - env:
+      - name: 🚦 Require all needed jobs to pass
+        env:
           NEEDS_JSON: ${{ toJSON(needs) }}
-        run: |
-          jq -e '
-            all(
-              to_entries[];
-              .value.result == "success" or
-              (.key == "changelog" and .value.result == "skipped")
-            )
-          ' <<< "$NEEDS_JSON"
+        run: jq -e 'all(to_entries[]; .value.result == "success")' <<<"$NEEDS_JSON"

@@ -209,11 +209,21 @@ from the published wheel and pass them to the build:
         --build-constraint build-constraints.txt --out-dir rebuild .
     $ cmp rebuild/virtualenv-21.12.1-py3-none-any.whl ../virtualenv-21.12.1-py3-none-any.whl
 
-Releases after 21.13.0 also pin the backend in ``tasks/release-requirements.txt``, so on those tags
-``--build-constraints tasks/release-requirements.txt --require-hashes`` replaces the file read from the SBOM. Build from
-a git checkout, since the SBOM records the source commit and an sdist does not carry it. Wheels up to 21.10.0 recorded
-the machine that built them in the SBOM, so a rebuild of those differs in the SBOM and in ``RECORD``, which holds the
-SBOM's hash.
+Tags from 21.13.1 through 21.14.12 pin the backend in ``tasks/release-requirements.txt``. Use that file with
+``--build-constraints`` when rebuilding one of those tags. For a tag whose ``pylock.toml`` says ``created-by = "nab"``,
+install its locked build backend and release build tools, then build both distributions with those installed versions:
+
+.. code-block:: console
+
+    $ uv venv --python 3.15 .release-tools
+    $ uv pip sync --preview-features pylock --python .release-tools/bin/python \
+        --group build --group release-build pylock.toml
+    $ SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct) uv build --sdist --wheel --python .release-tools/bin/python \
+        --no-build-isolation --out-dir rebuild .
+
+``uv pip sync`` checks the package hashes in the lock; ``--no-build-isolation`` uses that environment for the build.
+Build from a git checkout: the SBOM records the source commit, which an sdist does not carry. Wheels up to 21.10.0 also
+recorded the build machine, so their rebuilt ``RECORD`` and SBOM differ.
 
 The zipapp of a release from 21.11.0 on rebuilds byte for byte as well. The `pylock.zipapp.toml
 <https://github.com/pypa/virtualenv/blob/main/pylock.zipapp.toml>`_ lock at the tag pins each distribution it bundles by
@@ -236,5 +246,6 @@ The release runs ``tox`` with the ``tox-uv`` plugin as well. The plugin passes `
 and the ``-x`` override adds ``PIP_BUILD_CONSTRAINT`` for the ``pip wheel`` call that builds the virtualenv wheel inside
 the zipapp.
 
-Releases after 21.13.0 pin those build tools and the SBOM tools in ``tasks/release-requirements.txt`` at the tag, so a
-rebuild of those takes its constraints from that file and needs neither SBOM.
+Tags from 21.13.1 through 21.14.12 pin the build and SBOM tools in ``tasks/release-requirements.txt`` at the tag, so a
+rebuild of those needs neither SBOM to select versions. Later tags use ``pylock.toml`` for the release and SBOM tools;
+``tox r -e zipapp`` installs them from the lock and builds the wheel with the hashed backend selection.

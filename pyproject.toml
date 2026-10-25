@@ -1,6 +1,7 @@
 [build-system]
 build-backend = "hatchling.build"
 requires = [
+  "hatch-fancy-pypi-readme>=25.1",
   "hatch-vcs>=0.5",
   "hatchling<1.28,>=1.27; python_version<'3.10'",
   "hatchling>=1.28; python_version>='3.10'",
@@ -8,8 +9,8 @@ requires = [
 
 [project]
 name = "virtualenv"
+import-names = [ "virtualenv" ]
 description = "Virtual Python Environment builder"
-readme = "README.md"
 keywords = [
   "environments",
   "isolated",
@@ -28,7 +29,6 @@ requires-python = ">=3.9"
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: MacOS :: MacOS X",
   "Operating System :: Microsoft :: Windows",
   "Operating System :: POSIX",
@@ -47,6 +47,7 @@ classifiers = [
   "Topic :: Utilities",
 ]
 dynamic = [
+  "readme",
   "version",
 ]
 dependencies = [
@@ -146,7 +147,16 @@ docs = [
   "sphinxcontrib-mermaid>=2",
   "sphinxcontrib-towncrier>=0.2.1a0",
   "towncrier>=26.9",
-  "uv>=0.12.22",
+  "uv>=0.13.5",
+  { include-group = "release" },
+]
+build = [
+  "cython>=3",
+  "hatch-fancy-pypi-readme>=25.1",
+  "hatch-vcs>=0.5",
+  "hatchling<1.28,>=1.27; python_version<'3.10'",
+  "hatchling>=1.28; python_version>='3.10'",
+  "setuptools>=80",
 ]
 coverage = [
   "covdefaults>=2.3",
@@ -164,7 +174,7 @@ pkg-meta = [
   "check-sdist>=1.6",
   "check-wheel-contents>=0.6.3",
   "twine>=6.2",
-  "uv>=0.12.22",
+  "uv>=0.13.5",
   { include-group = "sbom" },
 ]
 property = [
@@ -175,14 +185,44 @@ property = [
 release = [
   "docstrfmt>=2.2.1",
   "gitpython>=3.2",
+  "hatch-fancy-pypi-readme>=25.1",
   "hatch-vcs>=0.5",
   "hatchling>=1.28",
   "packaging>=26.3",
+  "prek>=0.5",
   "pypi-attestations>=0.0.28",
+  "release-creator>=4.1",
   "towncrier>=26.9",
   "tox>=4.45",
   "tox-uv>=1.28.1",
-  "uv>=0.12.22",
+  "uv>=0.13.5",
+  { include-group = "sbom" },
+]
+release-build = [
+  "release-creator>=4.1",
+  "tox>=4.45",
+  "tox-uv>=1.28.1",
+]
+release-news = [
+  "release-creator>=4.1",
+  "towncrier>=26.9",
+]
+release-notes = [
+  "release-creator>=4.1",
+]
+release-prepare = [
+  "prek>=0.5",
+  "release-creator>=4.1",
+  "towncrier>=26.9",
+]
+release-spdx = [ { include-group = "sbom" } ]
+release-verify = [
+  "pypi-attestations>=0.0.28",
+]
+release-zipapp = [
+  "hatchling>=1.28",
+  "packaging>=26.3",
+  "release-creator>=4.1",
   { include-group = "sbom" },
 ]
 sbom = [
@@ -196,6 +236,7 @@ tasks = [
   "gitpython>=3.2",
   "hatchling>=1.28",
   "pre-commit-uv>=4.2",
+  "prek>=0.5",
   "ruff>=0.16.10",
   "towncrier>=26.9",
   { include-group = "test" },
@@ -203,17 +244,35 @@ tasks = [
 
 [tool.hatch]
 version.source = "vcs"
+metadata.hooks.fancy-pypi-readme.content-type = "text/markdown"
+metadata.hooks.fancy-pypi-readme.fragments = [ { path = "README.md" } ]
 build.hooks.vcs.version-file = "src/virtualenv/version.py"
 build.hooks.custom.path = "hatch_build.py"
 build.targets.sdist.include = [
   "/.pre-commit-config.yaml",
   "/pylock.zipapp.toml",
+  "/README.md",
   "/src",
   "/tasks",
   "/tests",
   "/tox.toml",
   "/hatch_build.py",
 ]
+
+[tool.uv]
+dependency-groups.dev = { requires-python = ">=3.15" }
+dependency-groups.docs = { requires-python = ">=3.15" }
+dependency-groups.lint = { requires-python = ">=3.11" }
+dependency-groups.pkg-meta = { requires-python = ">=3.10" }
+dependency-groups.release = { requires-python = ">=3.15" }
+dependency-groups.release-build = { requires-python = ">=3.15" }
+dependency-groups.release-news = { requires-python = ">=3.15" }
+dependency-groups.release-notes = { requires-python = ">=3.15" }
+dependency-groups.release-prepare = { requires-python = ">=3.15" }
+dependency-groups.release-verify = { requires-python = ">=3.15" }
+dependency-groups.release-zipapp = { requires-python = ">=3.15" }
+dependency-groups.sbom = { requires-python = ">=3.10" }
+dependency-groups.tasks = { requires-python = ">=3.10" }
 
 [tool.ruff]
 line-length = 120
@@ -292,6 +351,7 @@ git-only = [
   ".readthedocs.yml",
   "_typos.toml",
   "docs/",
+  "pylock.toml",
   "scorecard.yml",
 ]
 sdist-only = [ "src/virtualenv/version.py" ]
@@ -346,17 +406,35 @@ html.skip_covered = false
 name = "virtualenv"
 directory = "docs/changelog"
 filename = "docs/changelog.rst"
-template = "docs/changelog/template.jinja2"
+template = "release_creator.fragments:template.rst.jinja2"
 title_format = false
-issue_format = ":issue:`{issue}`"
-underlines = [ "*", "=", "-" ]
+issue_format = ":pr:`{issue}`"
+underlines = [ "*", "-", "~" ]
 ignore = [ "examples.rst" ]
 type = [
   # listing the types explicitly drops towncrier's "misc" default and makes a misspelt suffix fail
   # instead of being silently skipped, as .bufix.rst and .docs.rst were
-  { directory = "feature", name = "Features", showcontent = true },
-  { directory = "bugfix", name = "Bugfixes", showcontent = true },
-  { directory = "doc", name = "Improved Documentation", showcontent = true },
-  { directory = "deprecation", name = "Deprecations", showcontent = true },
-  { directory = "removal", name = "Removals", showcontent = true }
+  { directory = "feature", name = "Added", showcontent = true },
+  { directory = "change", name = "Changes", showcontent = true },
+  { directory = "bugfix", name = "Fixed", showcontent = true },
+  { directory = "doc", name = "Documentation", showcontent = true },
+  { directory = "breaking", name = "Breaking changes", showcontent = true },
+  { directory = "security", name = "Security", showcontent = true },
+  { directory = "performance", name = "Performance", showcontent = true },
+  { directory = "deprecation", name = "Deprecated", showcontent = true },
+  { directory = "removal", name = "Removed", showcontent = true },
+  { directory = "packaging", name = "Packaging", showcontent = true },
 ]
+
+[tool.nab]
+mode = "universal"
+base-group = "project-runtime"
+default-groups = []
+uploaded-prior-to = "P7D"
+decision-order = "stable"
+matrix.python = ">=3.15,<3.16"
+matrix.platforms = [ "linux_x86_64", "windows_amd64" ]
+# temporary, delete after 2026-11-02
+packages.release-creator.uploaded-prior-to = 2026-10-26T18:24:46Z
+# temporary, delete after 2026-10-29
+packages.uv.uploaded-prior-to = 2026-10-22T01:32:34Z
