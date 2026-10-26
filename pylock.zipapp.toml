@@ -6,9 +6,9 @@ requires-python = ">=3.9"
 
 [[packages]]
 name = "distlib"
-version = "0.4.3"
-sdist = { url = "https://files.pythonhosted.org/packages/c9/02/bd72be9134d25ed783ecbbc38a539ffaefbf90c78418c7fb7229600dbac7/distlib-0.4.3.tar.gz", upload-time = 2026-06-12T08:04:52Z, size = 615141, hashes = { sha256 = "f152097224a0ae24be5a0f6bae1b9359af82133bce63f98a95f86cae1aede9ed" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/02/08/9c41fb51ab5b43eb21674aff13df270e8ba6c4b29c8624e328dc7a9482af/distlib-0.4.3-py2.py3-none-any.whl", upload-time = 2026-06-12T08:04:50Z, size = 470628, hashes = { sha256 = "4b0ce306c966eb73bc3a7b6abad017c556dadd92c44701562cd528ac7fde4d5b" } }]
+version = "0.4.4"
+sdist = { url = "https://files.pythonhosted.org/packages/68/bc/d36966de7304047a1001a7559fbf266c464bb5d8cc85464536ef8c9bcc32/distlib-0.4.4.tar.gz", upload-time = 2026-10-16T13:56:34Z, size = 621304, hashes = { sha256 = "ca4175b4ac7f71223cc30ed7248c45d2b38c2439d8ee6e498ab67ed63cf3508d" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/c1/2b/238f02a4927fa2e27aa995371d240a468b52e42eae44a678434aff736b38/distlib-0.4.4-py2.py3-none-any.whl", upload-time = 2026-10-16T13:56:32Z, size = 472099, hashes = { sha256 = "cf09d55b1e85a89576b036aeb71550bfd68320f3f21761ca329eadadad918638" } }]
 
 [[packages]]
 name = "filelock"
@@ -26,10 +26,10 @@ wheels = [{ url = "https://files.pythonhosted.org/packages/ee/86/032133892a5de43
 
 [[packages]]
 name = "filelock"
-version = "4.1.1"
+version = "4.2.4"
 marker = "python_full_version >= '3.11'"
-sdist = { url = "https://files.pythonhosted.org/packages/35/c8/1d457d9150ff948f2ce6ada7715e0eeebbe5d3b58a45271a1e222474bcd3/filelock-4.1.1.tar.gz", upload-time = 2026-10-11T16:11:54Z, size = 563430, hashes = { sha256 = "7ba0927482c5a814b0a7f391d029ccdb8010f576f0a74c0dcde1811e8bc4c1b6" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/d7/8b/f837f52905395ba4510fe61f753c24833fb0a9c76e21267bb9f828b664a9/filelock-4.1.1-py3-none-any.whl", upload-time = 2026-10-11T16:11:52Z, size = 132460, hashes = { sha256 = "3f4a557945a7b0f95efeb1f432267affe5d45ac8ddde2aed1b97ebb62382c089" } }]
+sdist = { url = "https://files.pythonhosted.org/packages/d8/28/3893324bcadf8f89b1616637468d766af3f625008c0735bf704fdfa86617/filelock-4.2.4.tar.gz", upload-time = 2026-10-19T01:57:51Z, size = 652444, hashes = { sha256 = "c6d8663535e1650ee430507b4ffbac7b464dd64b7647ea0112a9f406499d163d" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/e0/1b/5e74289a1878e666bb4b65fe5805a04cafcac2aa5f519ef1ead67ef91c56/filelock-4.2.4-py3-none-any.whl", upload-time = 2026-10-19T01:57:49Z, size = 162475, hashes = { sha256 = "301241438c57936ef93f4243a94f2559022268bfcf9b375a9a72eb0f8db8358e" } }]
 
 [[packages]]
 name = "packaging"
@@ -53,16 +53,16 @@ wheels = [{ url = "https://files.pythonhosted.org/packages/f4/ba/223e00b885e960e
 
 [[packages]]
 name = "platformdirs"
-version = "4.13.0"
+version = "4.13.5"
 marker = "python_full_version >= '3.11'"
-sdist = { url = "https://files.pythonhosted.org/packages/80/a8/66d45abadff219e36e2a824181b8f6a67e7ed4572934d6252c71c29d5731/platformdirs-4.13.0.tar.gz", upload-time = 2026-10-11T02:05:24Z, size = 61094, hashes = { sha256 = "1aa0b0d3f224c1f07c295121e312a5a24a180d6ae5a8425ea1784b3e3863e9c0" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/8d/15/1633010b26e88e872c93b67c0b6c5e174fb74cb6fb5c1472b4d51d4a8f22/platformdirs-4.13.0-py3-none-any.whl", upload-time = 2026-10-11T02:05:22Z, size = 32724, hashes = { sha256 = "3dbcf4cd708f21cf876c4eaa90e58412bc4f033d87143f41b1493ff77c25b7e1" } }]
+sdist = { url = "https://files.pythonhosted.org/packages/58/e6/d0abbb256b44e6a05748c6942511ff67db8dbb068de0c35b24bf1b395b09/platformdirs-4.13.5.tar.gz", upload-time = 2026-10-19T01:02:11Z, size = 62362, hashes = { sha256 = "05831adf87d392760f4b5c3a0a95579ab5a10b18b9b9bd43680dcb47544788a0" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/6c/8a/1d8cb3842909dc193a73835adedf412e32e18f8ffd59f43983949622fe6f/platformdirs-4.13.5-py3-none-any.whl", upload-time = 2026-10-19T01:02:10Z, size = 32779, hashes = { sha256 = "53d3ec4280b815c1e0b02edad7f9ee8fda1ba9c0865dd9c2e6e63849ce82fc1e" } }]
 
 [[packages]]
 name = "python-discovery"
-version = "1.6.2"
-sdist = { url = "https://files.pythonhosted.org/packages/b0/73/54993df8fc57e906dc9b7e01d1d9b0b2d3eb0ce3190639e33dccb12853f7/python_discovery-1.6.2.tar.gz", upload-time = 2026-10-10T01:24:27Z, size = 86921, hashes = { sha256 = "cd1738ca1d37c86ef9d0b654dd46fcee1e41c97c6add12575e8501ced39afdb4" } }
-wheels = [{ url = "https://files.pythonhosted.org/packages/61/3b/50ed32583bfffa737df67d33b9c15d7b25df232c55ab606d059f610ef6ca/python_discovery-1.6.2-py3-none-any.whl", upload-time = 2026-10-10T01:24:26Z, size = 38912, hashes = { sha256 = "f0c697f95a3aaec4174a6e5e58f5885e25768684bafc76f1afde384709ebdcf2" } }]
+version = "1.6.4"
+sdist = { url = "https://files.pythonhosted.org/packages/f3/ee/cf608372c88ce2c136ee13c69ab6f667dbc0d0c1176af188b4ddc8853e66/python_discovery-1.6.4.tar.gz", upload-time = 2026-10-19T01:45:14Z, size = 89883, hashes = { sha256 = "bc70d31f0ec5de11eda13d4d64c16e24b3506a65984684f2b6c98cb83b2ea9df" } }
+wheels = [{ url = "https://files.pythonhosted.org/packages/60/91/1aa70d3dfcab0dbcf88a2cbc3bce7f7c69562287a90216e617eaa4937e25/python_discovery-1.6.4-py3-none-any.whl", upload-time = 2026-10-19T01:45:13Z, size = 39385, hashes = { sha256 = "530179cc51a1816d512b15635b3dc931295ae12efb183783ad31190a5d425d2b" } }]
 
 [[packages]]
 name = "typing-extensions"
