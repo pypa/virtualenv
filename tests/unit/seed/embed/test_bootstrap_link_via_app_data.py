@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextlib
 import csv
+import errno
 import hashlib
 import logging
 import os
@@ -537,6 +538,105 @@ def _run_parallel_threads(tmp_path):
     for thread in threads:
         thread.join()
     return exceptions
+
+
+def _fail_during_extraction(zip_ref: zipfile.ZipFile, target_dir: Path) -> None:
+    # stop short of the last entries, where the wheel keeps its dist-info files
+    for info in zip_ref.infolist()[:-5]:
+        zip_ref.extract(info, str(target_dir))
+    raise OSError(errno.ENOSPC, "No space left on device")
+
+
+def _fail_after_extraction(*_: object) -> None:
+    raise OSError(errno.ENOSPC, "No space left on device")
+
+
+@pytest.mark.parametrize(
+    ("target", "failure", "linked"),
+    [
+        pytest.param("base._safe_extract_zip", _fail_during_extraction, False, id="copy-extract"),
+        pytest.param("base.PipInstall._generate_new_files", _fail_after_extraction, False, id="copy-finish"),
+        pytest.param(
+            "base._safe_extract_zip",
+            _fail_during_extraction,
+            True,
+            id="symlink-extract",
+            marks=pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable"),
+        ),
+        pytest.param(
+            "base.PipInstall._generate_new_files",
+            _fail_after_extraction,
+            True,
+            id="symlink-finish",
+            marks=pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable"),
+        ),
+        pytest.param(
+            "symlink.set_tree",
+            _fail_after_extraction,
+            True,
+            id="symlink-read-only",
+            marks=pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable"),
+        ),
+    ],
+)
+def test_seed_image_build_failure_leaves_no_partial_image(
+    tmp_path: Path, mocker: MockerFixture, target: str, failure: Callable[..., None], linked: bool
+) -> None:
+    cache: Final = tmp_path / "cache"
+    args: Final = [
+        str(tmp_path / "env"),
+        "--app-data",
+        str(cache),
+        "--no-periodic-update",
+        "--no-setuptools",
+        *(["--symlink-app-data"] if linked else []),
+    ]
+    patched: Final = mocker.patch(f"virtualenv.seed.embed.via_app_data.pip_install.{target}", side_effect=failure)
+    with pytest.raises(RuntimeError, match="No space left on device"):
+        cli_run(args, setup_logging=False)
+    mocker.stop(patched)
+    installer: Final = "SymlinkPipInstall" if linked else "CopyPipInstall"
+    images: Final = next(cache.glob("wheel/*/image/1"))
+    left: Final = sorted(i.name for i in [*images.iterdir(), *(images / installer).iterdir()] if i.is_dir())
+    purelib: Final = cli_run(args, setup_logging=False).creator.purelib
+    dist_info: Final = next(purelib.glob("pip-*.dist-info"))
+    assert (
+        left,
+        (dist_info / "INSTALLER").is_file(),
+        (dist_info / "RECORD").is_file(),
+        (purelib / f"{dist_info.stem}.virtualenv").is_file(),
+    ) == ([installer], True, True, True)
+
+
+@pytest.mark.parametrize(
+    ("leftover", "kept"),
+    [pytest.param("staging", False, id="killed-build"), pytest.param("image", True, id="empty-image")],
+)
+def test_seed_image_build_replaces_leftovers(tmp_path: Path, leftover: str, kept: bool) -> None:
+    cache: Final = tmp_path / "cache"
+    version: Final = PythonInfo.current_system().version_release_str
+    wheel: Final = Path(BUNDLE_SUPPORT[version]["pip"]).stem
+    installer: Final = cache / "wheel" / version / "image" / "1" / "CopyPipInstall"
+    path: Final = installer.with_name(f"{installer.name}-{wheel}") if leftover == "staging" else installer / wheel
+    path.mkdir(parents=True)
+    if leftover == "staging":
+        (path / "pip.py").write_text("", encoding="utf-8")
+    args: Final = [str(tmp_path / "env"), "--app-data", str(cache), "--no-periodic-update", "--no-setuptools"]
+    purelib: Final = cli_run([*args, "--pip", "embed"], setup_logging=False).creator.purelib
+    assert (path.exists(), (next(purelib.glob("pip-*.dist-info")) / "RECORD").is_file()) == (kept, True)
+
+
+def test_seed_image_build_direct_call(tmp_path: Path) -> None:
+    session: Final = cli_run([str(tmp_path / "env"), "--no-seed"], setup_logging=False)
+    wheel: Final = BUNDLE_FOLDER / BUNDLE_SUPPORT[session.interpreter.version_release_str]["pip"]
+    image: Final = tmp_path / "image" / "CopyPipInstall" / wheel.stem
+    installer: Final = CopyPipInstall(wheel, session.creator, image)
+    installer.build_image()
+    assert (
+        sorted(i.name for i in image.parent.parent.iterdir()),
+        (next(image.glob("*.dist-info")) / "INSTALLER").is_file(),
+        installer._dist_info.parent,  # ruff:ignore[private-member-access]  # the cache must not point into staging
+    ) == (["CopyPipInstall"], True, image)
 
 
 def _write_zip_with_entry(zip_path: Path, entry_name: str) -> None:

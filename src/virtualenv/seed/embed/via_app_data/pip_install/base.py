@@ -9,6 +9,7 @@ import shlex
 import zipfile
 from abc import ABC, abstractmethod
 from configparser import ConfigParser
+from contextlib import suppress
 from itertools import chain
 from pathlib import Path
 from tempfile import mkdtemp
@@ -70,14 +71,39 @@ class PipInstall(ABC):
         LOGGER.debug("generated console scripts %s", " ".join(i.name for i in consoles))
 
     def build_image(self) -> None:
-        """Extract the seed wheel into the image directory and fix up its RECORD file.
+        """Extract the seed wheel into a staging directory, fix up its RECORD file, then move it into place.
 
         Each archive entry is validated before extraction so a tampered wheel cannot escape the image directory via an
-        absolute path or ``..`` traversal.
+        absolute path or ``..`` traversal. Later runs reuse any image directory they find, so it only appears once the
+        image is complete: a build that fails part way, for example on a full disk or a path that is too long, removes
+        its staging directory, and the next build removes one that a killed process left behind.
 
         :raises RuntimeError: if the wheel contains an entry that would land outside the image directory.
 
         """
+        image_dir: Final = self._image_dir
+        # beside the installer folder the staging path is exactly as long as the image path, so the Windows path length
+        # limits hit the build the same way they would hit the image
+        staging: Final = image_dir.parent.with_name(f"{image_dir.parent.name}-{image_dir.name}")
+        if staging.exists():
+            safe_delete(staging)
+        image_dir.parent.mkdir(parents=True, exist_ok=True)
+        staging.mkdir()
+        self._image_dir = staging
+        try:
+            self._populate_image()
+            # keep the short path Windows may have switched the staging directory to, the install reads through it
+            built: Final = self._image_dir.parent / image_dir.parent.name / image_dir.name
+            with suppress(FileNotFoundError):
+                built.rmdir()  # an empty image directory counts as missing, but blocks the rename on Windows
+            os.replace(self._image_dir, built)
+        except BaseException:
+            safe_delete(self._image_dir)  # the staging directory, through the short path if Windows switched to it
+            raise
+        self._image_dir = built
+        self.__dist_info = None  # it points into the staging directory
+
+    def _populate_image(self) -> None:
         # 1. first extract the wheel
         LOGGER.debug("build install image for %s to %s", self._wheel.name, self._image_dir)
         with zipfile.ZipFile(str(self._wheel)) as zip_ref:

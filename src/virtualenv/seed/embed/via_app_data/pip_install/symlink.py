@@ -57,8 +57,8 @@ class SymlinkPipInstall(PipInstall):
         extra_record_data_str = self._records_text(sorted(extra_record_data, key=str))  # ty: ignore[invalid-argument-type]
         (self._dist_info / "RECORD").write_text(extra_record_data_str, encoding="utf-8")  # ty: ignore[unsupported-operator]
 
-    def build_image(self) -> None:
-        super().build_image()
+    def _populate_image(self) -> None:
+        super()._populate_image()
         # protect the image by making it read only
         set_tree(self._image_dir, S_IREAD | S_IRGRP | S_IROTH)
 
