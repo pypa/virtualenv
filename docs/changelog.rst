@@ -6,6 +6,28 @@
 
 .. towncrier release notes start
 
+.. _release-21-15-0:
+
+**********************
+ 21.15.0 (2026-10-27)
+**********************
+
+.. _release-21-15-0-added:
+
+Added
+-----
+
+- Bundle dependencies for Python 3.15 in the standalone zipapp and stop bundling Python 3.8, which is outside the
+  package's supported range (:pr:`3458`) by :user:`gaborbernat`.
+
+.. _release-21-15-0-packaging:
+
+Packaging
+---------
+
+- Publish GitHub Releases with categorized notes from the tagged changelog, retaining the zipapp, SBOM, and PyPI links
+  (:pr:`3458`) by :user:`gaborbernat`.
+
 .. _release-21-14-13:
 
 ************************
