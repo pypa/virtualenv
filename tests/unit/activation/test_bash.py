@@ -240,7 +240,7 @@ def moved_bash_activate(tmp_path: Path, current_fastest: str) -> Path:
     return tmp_path / "moved" / session.creator.bin_dir.name / "activate"
 
 
-@pytest.mark.skipif(IS_WIN, reason="requires POSIX shells")
+@pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
 @pytest.mark.parametrize(
     "failure",
     [
@@ -460,7 +460,7 @@ def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> 
     activation_tester(Bash)
 
 
-@pytest.mark.skipif(IS_WIN, reason="requires POSIX shells")
+@pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
 @pytest.mark.parametrize("mode", [pytest.param("eval", id="eval"), pytest.param("stdin", id="stdin")])
 def test_bash_relocation_without_source_preserves_path(moved_bash_activate: Path, mode: str) -> None:
     result: Final = subprocess.run(
