@@ -16,12 +16,8 @@ VIRTUALENV_PATCH_FILE = os.path.abspath(__file__)
 
 
 def patch_dist(dist: types.ModuleType) -> None:
-    """Distutils allows user to configure some arguments via a configuration file: https://docs.python.org/3/install/index.html#distutils-configuration-files.
-
-    Some of this arguments though don't make sense in context of the virtual environment files, let's fix them up.
-
-    """
-    # we cannot allow some install config as that would get packages installed outside of the virtual environment
+    # distutils reads install options from configuration files, and some would install packages outside of the virtual
+    # environment: https://docs.python.org/3.11/install/index.html#distutils-configuration-files
     old_parse_config_files = dist.Distribution.parse_config_files
 
     def parse_config_files(self, *args: object, **kwargs: object) -> object:  # ruff:ignore[missing-type-function-argument]

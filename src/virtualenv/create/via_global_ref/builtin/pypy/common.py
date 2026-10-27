@@ -47,7 +47,7 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin, abc.ABC):
 
     @classmethod
     def _add_shared_libs(cls, interpreter: PythonInfo) -> Generator[Path]:
-        # https://bitbucket.org/pypy/pypy/issue/1922/future-proofing-virtualenv
+        # the executable loads a separate libpypy-c next to it: https://github.com/pypy/pypy/issues/1922
         python_dir = Path(interpreter.system_exe).resolve().parent
         yield from cls._shared_libs(python_dir)
 
