@@ -78,30 +78,32 @@ def unusable_cache(tmp_path: Path) -> Path:
 
 
 @pytest.mark.parametrize(
-    "source",
+    ("config_text", "env_vars", "flags"),
     [
-        pytest.param("environment", id="environment"),
-        pytest.param("configuration", id="configuration"),
-        pytest.param("command-line", id="command-line"),
+        pytest.param("", {"VIRTUALENV_SYMLINK_APP_DATA": "true"}, (), id="environment"),
+        pytest.param("[virtualenv]\nsymlink_app_data = true\n", {}, (), id="configuration"),
+        pytest.param("", {}, ("--symlink-app-data",), id="command-line"),
     ],
 )
-def test_seed_copies_when_symlinks_unsupported(tmp_path: Path, source: str, mocker: MockerFixture) -> None:
-    mocker.patch("virtualenv.seed.embed.via_app_data.via_app_data.fs_supports_symlink", return_value=False)
+def test_seed_copies_when_symlinks_unsupported(
+    tmp_path: Path, config_text: str, env_vars: dict[str, str], flags: tuple[str, ...], mocker: MockerFixture
+) -> None:
+    mocker.patch(
+        "virtualenv.seed.embed.via_app_data.via_app_data.fs_supports_symlink", autospec=True, return_value=False
+    )
     config: Final = tmp_path / "virtualenv.ini"
-    config.write_text("[virtualenv]\nsymlink_app_data = true\n" if source == "configuration" else "", encoding="utf-8")
-    env: Final = {**os.environ, "VIRTUALENV_CONFIG_FILE": str(config)}
-    if source == "environment":
-        env["VIRTUALENV_SYMLINK_APP_DATA"] = "true"
-    args: Final = [
-        str(tmp_path / "env"),
-        "--app-data",
-        str(tmp_path / "cache"),
-        "--no-periodic-update",
-        "--no-setuptools",
-    ]
-    if source == "command-line":
-        args.append("--symlink-app-data")
-    session: Final = cli_run(args, env=env)
+    config.write_text(config_text, encoding="utf-8")
+    session: Final = cli_run(
+        [
+            str(tmp_path / "env"),
+            "--app-data",
+            str(tmp_path / "cache"),
+            "--no-periodic-update",
+            "--no-setuptools",
+            *flags,
+        ],
+        env={**os.environ, "VIRTUALENV_CONFIG_FILE": str(config), **env_vars},
+    )
     pip: Final = session.creator.purelib / "pip"
     assert (
         session.creator.app_data.transient,
@@ -113,7 +115,9 @@ def test_seed_copies_when_symlinks_unsupported(tmp_path: Path, source: str, mock
 def test_seed_reports_copy_fallback_when_symlinks_unsupported(
     tmp_path: Path, caplog: pytest.LogCaptureFixture, mocker: MockerFixture
 ) -> None:
-    mocker.patch("virtualenv.seed.embed.via_app_data.via_app_data.fs_supports_symlink", return_value=False)
+    mocker.patch(
+        "virtualenv.seed.embed.via_app_data.via_app_data.fs_supports_symlink", autospec=True, return_value=False
+    )
     caplog.set_level(logging.DEBUG)
     cli_run(
         [str(tmp_path / "env"), "--app-data", str(tmp_path / "cache"), "--no-periodic-update", "--no-setuptools"],
