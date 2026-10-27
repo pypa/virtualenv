@@ -180,8 +180,10 @@ def test_copy_keeps_symlinked_directories(tmp_path: Path) -> None:
     destination: Final = tmp_path / "destination"
     copy(source, destination)
 
-    assert (destination / "link_to_file").read_text(encoding="utf-8") == "content"
-    assert (destination / "link_to_dir" / "inside.txt").read_text(encoding="utf-8") == "content"
+    assert (
+        (destination / "link_to_file").read_text(encoding="utf-8"),
+        (destination / "link_to_dir" / "inside.txt").read_text(encoding="utf-8"),
+    ) == ("content", "content")
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")

@@ -98,18 +98,14 @@ def copy(src: Path, dest: Path) -> None:
     LOGGER.debug("copy %s", _Debug(src, dest))
     if src.is_dir():
         ensure_safe_to_do(src, dest)
-        copytree(str(src), str(dest))
+        _copytree(src, dest, (src.resolve(),))
     else:
         _copy_file(src, dest)
 
 
-def copytree(src: str, dest: str) -> None:
-    _copytree(src, dest, (Path(src).resolve(),))
-
-
-def _copytree(src: str, dest: str, ancestors: tuple[Path, ...]) -> None:
+def _copytree(src: Path, dest: Path, ancestors: tuple[Path, ...]) -> None:
     for root, dirnames, files in os.walk(src):
-        dest_dir: Final = Path(dest) / os.path.relpath(root, src)
+        dest_dir: Final = dest / os.path.relpath(root, src)
         dest_dir.mkdir(parents=True, exist_ok=True)
         for name in files:
             _copy_file(Path(root) / name, dest_dir / name)
@@ -122,7 +118,7 @@ def _copytree(src: str, dest: str, ancestors: tuple[Path, ...]) -> None:
             if any(ancestor.is_relative_to(target) for ancestor in ancestors):
                 LOGGER.warning("skip symlinked directory %s, it points at one of its own parents", link)
                 continue
-            _copytree(str(link), str(dest_dir / name), (*ancestors, target))
+            _copytree(link, dest_dir / name, (*ancestors, target))
 
 
 def _copy_file(src: Path, dest: Path) -> None:
@@ -162,7 +158,6 @@ class _Debug:
 
 __all__ = [
     "copy",
-    "copytree",
     "ensure_dir",
     "ensure_within",
     "safe_delete",
