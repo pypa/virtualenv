@@ -104,11 +104,25 @@ def copy(src: Path, dest: Path) -> None:
 
 
 def copytree(src: str, dest: str) -> None:
-    for root, _, files in os.walk(src):
+    _copytree(src, dest, (Path(src).resolve(),))
+
+
+def _copytree(src: str, dest: str, ancestors: tuple[Path, ...]) -> None:
+    for root, dirnames, files in os.walk(src):
         dest_dir: Final = Path(dest) / os.path.relpath(root, src)
         dest_dir.mkdir(parents=True, exist_ok=True)
         for name in files:
             _copy_file(Path(root) / name, dest_dir / name)
+        for name in dirnames:
+            link: Final = Path(root) / name
+            if not link.is_symlink():
+                continue
+            # os.walk does not descend into a symlinked directory, so its content is copied the way a symlinked file is
+            target: Final = link.resolve()
+            if any(ancestor.is_relative_to(target) for ancestor in ancestors):
+                LOGGER.warning("skip symlinked directory %s, it points at one of its own parents", link)
+                continue
+            _copytree(str(link), str(dest_dir / name), (*ancestors, target))
 
 
 def _copy_file(src: Path, dest: Path) -> None:

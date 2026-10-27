@@ -167,6 +167,37 @@ def test_copy_replaces_contents(tmp_path: Path, directory: bool) -> None:
     assert (destination / "entry" if directory else destination).read_bytes() == b"new"
 
 
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+def test_copy_keeps_symlinked_directories(tmp_path: Path) -> None:
+    source: Final = tmp_path / "source"
+    source.mkdir()
+    target: Final = source / "target"
+    target.mkdir()
+    (target / "inside.txt").write_text("content", encoding="utf-8")
+    (source / "link_to_file").symlink_to(target / "inside.txt")
+    (source / "link_to_dir").symlink_to(target, target_is_directory=True)
+
+    destination: Final = tmp_path / "destination"
+    copy(source, destination)
+
+    assert (destination / "link_to_file").read_text(encoding="utf-8") == "content"
+    assert (destination / "link_to_dir" / "inside.txt").read_text(encoding="utf-8") == "content"
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
+@pytest.mark.parametrize("target", [pytest.param(".", id="itself"), pytest.param("..", id="above-source")])
+def test_copy_does_not_expand_a_symlinked_directory_pointing_at_a_parent(tmp_path: Path, target: str) -> None:
+    source: Final = tmp_path / "source"
+    source.mkdir()
+    (source / "entry.txt").write_text("content", encoding="utf-8")
+    (source / "loop").symlink_to(target, target_is_directory=True)
+
+    destination: Final = tmp_path / "destination"
+    copy(source, destination)
+
+    assert sorted(i.name for i in destination.iterdir()) == ["entry.txt"]
+
+
 @pytest.mark.skipif(sys.platform != "linux", reason="minimal Linux builds can omit ctypes")
 def test_command_line_import_without_ctypes() -> None:
     result: Final = run_cmd([
