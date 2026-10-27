@@ -18,9 +18,10 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from tempfile import TemporaryDirectory
 from typing import TYPE_CHECKING, Any, Final
-from urllib.request import urlopen
 
 from packaging.markers import Marker
+
+from tasks.fetch_url import fetch
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -43,9 +44,9 @@ if TYPE_CHECKING:
         wheels: NotRequired[list[LockedWheel]]
 
 
-HERE = Path(__file__).parent.absolute()
+HERE: Final[Path] = Path(__file__).parent.absolute()
 
-VERSIONS = [f"3.{i}" for i in range(14, 7, -1)]
+VERSIONS: Final[tuple[str, ...]] = tuple(f"3.{i}" for i in range(15, 8, -1))
 LOCK: Final[Path] = HERE.parent / "pylock.zipapp.toml"
 PLATFORMS: Final[tuple[str, ...]] = ("darwin", "linux", "win32")
 
@@ -67,8 +68,10 @@ def get_wheels_for_support_versions(
     wheel = build_virtualenv_wheel(folder) if wheel_dir is None else next(wheel_dir.glob("virtualenv-*.whl"))
     packages["virtualenv"]["==any"][wheel.name] = WheelForVersion(wheel, list(VERSIONS))
     for package in tomllib.loads(LOCK.read_text(encoding="utf-8"))["packages"]:
+        if not (versions := python_versions_for(package)):
+            continue
         wheel = download_locked_wheel(package, folder)
-        packages[package["name"]]["==any"][wheel.name] = WheelForVersion(wheel, python_versions_for(package))
+        packages[package["name"]]["==any"][wheel.name] = WheelForVersion(wheel, versions)
     for name, platforms in packages.items():
         for wheel_name, wheel_for_version in platforms["==any"].items():
             sys.stdout.write(f"{name}: {wheel_name} for {' '.join(wheel_for_version.versions)}\n")
@@ -94,9 +97,7 @@ def download_locked_wheel(package: LockedPackage, into: Path) -> Path:
         msg = f"{LOCK.name} has no pure-Python wheel for {package['name']} {package['version']}"
         raise RuntimeError(msg)
     url, expected = wheels[0]["url"], wheels[0]["hashes"]["sha256"]
-    with urlopen(url, timeout=60) as response:  # ruff:ignore[suspicious-url-open-usage]  # lock URL, sha256-checked
-        content = response.read()
-    if (actual := hashlib.sha256(content).hexdigest()) != expected:
+    if (actual := hashlib.sha256(content := fetch(url)).hexdigest()) != expected:
         msg = f"{url} has sha256 {actual}, but {LOCK.name} records {expected}"
         raise RuntimeError(msg)
     (dest := into / url.rsplit("/", 1)[1]).write_bytes(content)
@@ -110,7 +111,18 @@ def python_versions_for(package: LockedPackage) -> list[str]:
     for version in VERSIONS:
         environment = {"python_version": version, "python_full_version": f"{version}.0"}
         # every bundled wheel is keyed as ==any, so a marker that differs per platform would ship the build host's pick
-        if len(matches := {parsed.evaluate({**environment, "sys_platform": p}) for p in PLATFORMS}) != 1:
+        if (
+            len(
+                matches := {
+                    parsed.evaluate(
+                        {**environment, "sys_platform": platform, "dependency_groups": {"project-runtime"}},
+                        context="lock_file",
+                    )
+                    for platform in PLATFORMS
+                }
+            )
+            != 1
+        ):
             msg = f"{LOCK.name} marks {package['name']} as platform specific ({marker}), which the zipapp cannot select"
             raise RuntimeError(msg)
         if matches.pop():
@@ -195,3 +207,8 @@ def _entry(name: str) -> zipfile.ZipInfo:
 
 if __name__ == "__main__":
     main()
+
+
+__all__ = [
+    "python_versions_for",
+]

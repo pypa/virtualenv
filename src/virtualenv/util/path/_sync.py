@@ -61,7 +61,14 @@ def ensure_within(root: Path, path: Path) -> None:
 
 def write_file(path: Path, data: bytes) -> None:
     if path.is_symlink() or path.exists():
-        path.unlink()
+        try:
+            path.unlink()
+        except PermissionError:
+            # Windows refuses to delete a read-only file, while POSIX deletion depends on the parent directory
+            if os.name != "nt" or path.is_symlink():
+                raise
+            clear_readonly(str(path))
+            path.unlink()
     # Exclusive creation rejects links introduced after the old entry was removed.
     with path.open("xb") as stream:
         stream.write(data)

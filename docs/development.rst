@@ -81,6 +81,8 @@ CPython 3.15:
 
     tox -e tasks
 
+.. _running-linters:
+
 Running linters
 ===============
 
@@ -173,9 +175,10 @@ A full release publishes to `PyPI <https://pypi.org/project/virtualenv/>`_, crea
 Version bumping
 ^^^^^^^^^^^^^^^
 
-The ``--version`` argument to ``tox r -e release`` controls the version. It defaults to ``auto``, which inspects the
-``docs/changelog`` directory: if any ``*.feature.rst`` or ``*.removal.rst`` fragments exist, the minor version is
-bumped, otherwise the patch version is bumped. You can also pass ``major``, ``minor``, or ``patch`` explicitly.
+The release tool reads the latest numeric tag and the pending news fragments. ``auto`` selects a major version for a
+``breaking`` fragment, a minor version for a ``feature`` fragment, and a patch version otherwise. Adding or removing
+Python version support is a feature. The maintainer can choose ``major``, ``minor``, or ``patch`` explicitly, but cannot
+type an arbitrary release version.
 
 Both methods produce identical results: a release commit and tag on ``main``. Pushing the tag triggers the `Release
 workflow <https://github.com/pypa/virtualenv/actions/workflows/release.yaml>`_ which builds the sdist, wheel, and
@@ -186,21 +189,40 @@ zipapp, publishes to PyPI via trusted publisher, creates a `GitHub Release
 **Via GitHub Actions (recommended)**
 
 1. Go to the `Pre-release workflow <https://github.com/pypa/virtualenv/actions/workflows/pre-release.yaml>`_ on GitHub.
-2. Click **Run workflow** and select the bump type (``auto``, ``major``, ``minor``, or ``patch``).
+2. Click **Run workflow** and select ``auto`` or an explicit bump type.
 
 **Locally**
 
 .. code-block:: console
 
-    tox r -e release
+    tox r -e release -- --bump auto --no-push
 
-Pass ``--version <bump>`` to override the default ``auto`` behavior (e.g. ``--version minor``).
+Run that command in a temporary clone to inspect the generated changelog and tag without pushing. Then run it in a clean
+checkout without ``--no-push`` to publish the release commit and tag atomically. Both paths link merged fragments to
+their squash pull requests, credit the human commit authors and co-authors, run ``release-creator contributors`` to add
+a New Contributors subsection, format the changelog with ``prek``, and run all hooks.
+
+News fragments
+^^^^^^^^^^^^^^
+
+Add ``docs/changelog/+short-description.<type>.rst`` for each user-facing change. A squash merge supplies the pull
+request number; release preparation adds its link and credits the commit's human authors and co-authors, so a fragment
+carries no hand-written credit. Link a separate issue with ``:issue:`` when the text refers to one. Use ``feature`` for
+adding or removing Python version support, ``bugfix`` for fixes, and ``packaging`` for installation or shipped
+dependency changes. Use ``change`` for modified behavior, ``doc`` for user guidance, ``security`` for security fixes,
+``performance`` for speed or resource improvements, ``breaking`` for incompatible behavior, ``deprecation`` for
+announced removals, and ``removal`` for removed features. Each fragment describes a user-visible effect in
+reStructuredText. A pull request can add several fragments when its changes belong in different categories.
+
+Changes confined to CI or maintenance need no news. Apply ``skip news`` to a human pull request without a fragment; the
+label can be added after the pull request opens. Bot pull requests without fragments receive that label automatically. A
+bot pull request with a fragment is still checked and its bot account is not credited as an author.
 
 Recovering a partial publication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-A failure after the PyPI upload can leave a published package without its GitHub release or bootstrap update. Keep the
-release commit and tag: users may have installed that version, and PyPI `does not allow filename reuse
+A failure can leave a GitHub Release draft, a partial PyPI upload, or an unfinished bootstrap update. Keep the release
+commit and tag: users may have installed that version, and PyPI `does not allow filename reuse
 <https://pypi.org/help/#file-name-reuse>`_. Resetting the tip of ``main`` can also remove an unrelated commit that a
 maintainer merged during publication.
 
@@ -208,11 +230,12 @@ Before retrying, inspect the failed job, the files on PyPI, the GitHub release a
 ``get-virtualenv/public/version.txt``. Compare their hashes with the artifacts from the failed workflow run. Preserve
 those artifacts and logs. A timeout does not prove that an upload failed.
 
-Complete missing publication steps with the original verified artifacts. Do not rerun the full publish job after PyPI
-accepted its upload; the duplicate upload can fail before reaching the remaining destinations. If the artifacts need a
-change, publish a new version and consider yanking the broken release. Use a normal reviewed commit for any bootstrap
-correction, without force-pushing either repository. Follow ``.github/INCIDENT_RESPONSE.md`` if there is evidence of
-tampering or compromised credentials.
+When the failed run's artifacts match the published files, use **Re-run failed jobs** on that run, so the retry
+publishes the same built files. It verifies the complete PyPI file set, resumes a matching GitHub Release draft, and
+skips a matching ``get-virtualenv`` update. A mismatched PyPI file or GitHub Release asset stops the run for inspection.
+If the artifacts need a change, publish a new version and consider yanking the broken release. Use a normal reviewed
+commit for any bootstrap correction, without force-pushing either repository. Follow ``.github/INCIDENT_RESPONSE.md`` if
+there is evidence of tampering or compromised credentials.
 
 The release workflow verifies the published wheel, sdist and zipapp after publication. It checks the PyPI attestations
 and compares the distributions with the build artifacts, verifies the zipapp's release workflow, tag and commit, checks
@@ -235,10 +258,10 @@ License. Provide tests that cover your changes and run the tests locally first. 
 all these platforms.
 
 Pull Requests should be small to facilitate review. Keep them self-contained, and limited in scope. `Studies have shown
-<https://www.kessler.de/prd/smartbear/BestPracticesForPeerCodeReview.pdf>`_ that review quality falls off as patch size
-grows. Sometimes this will result in many small PRs to land a single large feature. In particular, pull requests must
-not be treated as "feature branches", with ongoing development work happening within the PR. Instead, the feature should
-be broken up into smaller, independent parts which can be reviewed and merged individually.
+<https://smartbear.com/learn/code-review/best-practices-for-peer-code-review/>`_ that review quality falls off as patch
+size grows. Sometimes this will result in many small PRs to land a single large feature. In particular, pull requests
+must not be treated as "feature branches", with ongoing development work happening within the PR. Instead, the feature
+should be broken up into smaller, independent parts which can be reviewed and merged individually.
 
 Additionally, avoid including "cosmetic" changes to code that is unrelated to your change, as these make reviewing the
 PR more difficult. Examples include re-flowing text in comments or documentation, or addition or removal of blank lines
@@ -258,15 +281,15 @@ A maintainer reviews each pull request before it merges into ``main`` and checks
   description the outside input it handles, and updates the `threat model
   <https://github.com/pypa/virtualenv/blob/main/.github/THREAT_MODEL.md#update-triggers>`_ when it hits an update
   trigger;
-- a new or bumped dependency meets the :ref:`licensing policy <development:Licensing policy>`.
+- a new or bumped dependency meets the :ref:`licensing policy <licensing-policy>`.
 
-The ``main`` ruleset enforces the rest. A pull request merges only after four checks pass: ``✅ all checks pass``, which
+The ``main`` ruleset enforces the rest. A pull request merges only after four checks pass: ``🚦 All checks pass``, which
 gathers the test matrix, the type checks, the docs build, the zipapp and SBOM checks and the CodeQL query tests from
-``check.yaml``; ``🔍 dependency review``; ``pre-commit.ci - pr``; and the Read the Docs build. The ruleset also blocks a
+``check.yaml``; ``🛡️ Dependency review``; ``pre-commit.ci - pr``; and the Read the Docs build. The ruleset also blocks a
 merge while CodeQL reports an error, or a security alert of high severity or above.
 
-The ruleset asks for one approval from someone other than the last person to push. Repository admins can bypass that
-rule, and the maintainers merge their own pull requests this way once the required checks pass. The `threat model
+The ruleset requires no approval, so a maintainer can merge after the required checks pass. Repository admins can bypass
+the ruleset. The `threat model
 <https://github.com/pypa/virtualenv/blob/main/.github/THREAT_MODEL.md#library-and-supply-chain-threats>`_ records the
 risk of a single reviewer.
 
@@ -298,9 +321,12 @@ The project obtains and updates each kind of dependency this way:
   from PyPI into ``src/virtualenv/seed/wheels/embed`` and records their SHA-256 in ``BUNDLE_SHA256``. The same workflow
   recompiles ``pylock.zipapp.toml``, which pins each distribution the zipapp bundles by version and hash. It leaves out
   releases younger than seven days and opens a pull request with the result.
-- Dependabot bumps the GitHub Actions, which the repository requires to be pinned to a commit SHA, every week after a
-  seven-day cooldown. pre-commit.ci bumps the pre-commit hooks, which ``.pre-commit-config.yaml`` freezes to commit
-  SHAs. ``upgrade.yaml`` bumps the CI test tools every Monday.
+- The weekly ``upgrade-release-tools.yaml`` workflow refreshes ``pylock.toml`` across every dependency group for the
+  Python version and platforms that CI installs it on. Release builds take their exact tool versions and backend hashes
+  from it.
+- Dependabot bumps the GitHub Actions, which the repository requires to be pinned to a commit SHA, and the pre-commit
+  hooks, which ``.pre-commit-config.yaml`` freezes to commit SHAs, every week after a seven-day cooldown. pre-commit.ci
+  also bumps the hooks once a quarter. ``upgrade.yaml`` bumps the CI test tools every Monday.
 
 We track dependencies through the CycloneDX SBOM in every wheel and the SBOMs attached to each release, which
 :doc:`reference/release-artifacts` describes, and through Dependabot alerts, which cover the pip and GitHub Actions
@@ -311,11 +337,13 @@ Software composition analysis findings follow these thresholds:
 - ``dependency-review.yaml`` fails a pull request that adds a dependency with a known advisory of any severity, in
   runtime or development scope. The ``main`` ruleset requires that check.
 - A shipped package whose license falls outside ``ALLOWED_LICENSES`` fails the SBOM check in ``tox r -e readme`` and
-  ``tox r -e zipapp``, which the required ``✅ all checks pass`` check runs. We accept no exceptions.
+  ``tox r -e zipapp``, which the required ``🚦 All checks pass`` check runs. We accept no exceptions.
 - An open Dependabot alert blocks the next release. The maintainer who cuts the release fixes it first, or dismisses it
   with the reason virtualenv does not reach the vulnerable code.
 - An embedded wheel with no fixed version for a supported Python version stays, and
   :ref:`reference/release-artifacts:Embedded wheel advisories` lists its advisories and the way around them.
+
+.. _licensing-policy:
 
 Licensing policy
 ================
@@ -384,51 +412,7 @@ A finding blocks a merge at these thresholds:
 
 A CodeQL dismissal carries a comment that says who controls the flagged input and why it cannot cross a trust boundary
 that the `threat model <https://github.com/pypa/virtualenv/blob/main/.github/THREAT_MODEL.md>`_ lists. An inline
-suppression names the rule it silences, and :ref:`development:Running linters` says when a ``# noqa`` fits.
-
-NEWS entries
-============
-
-The ``changelog.rst`` file is managed using :pypi:`towncrier` and all non trivial changes must be accompanied by a news
-entry. To add an entry to the news file, first you need to have created an issue describing the change you want to make.
-A Pull Request itself *may* function as such, but it is preferred to have a dedicated issue (for example, in case the PR
-ends up rejected due to code quality reasons).
-
-Once you have an issue or pull request, you take the number and you create a file inside of the ``docs/changelog``
-directory named after that issue number with an extension of:
-
-- ``feature.rst``,
-- ``bugfix.rst``,
-- ``doc.rst``,
-- ``deprecation.rst``,
-- ``removal.rst``.
-
-Thus if your issue or PR number is ``1234`` and this change is fixing a bug, then you would create a file
-``docs/changelog/1234.bugfix.rst``. PRs can span multiple categories by creating multiple files (for instance, if you
-added a feature and deprecated/removed the old feature at the same time, you would create
-``docs/changelog/1234.bugfix.rst`` and ``docs/changelog/1234.removal.rst``). Likewise if a PR touches multiple
-issues/PRs you may create a file for each of them with the same contents and :pypi:`towncrier` will deduplicate them.
-
-Contents of a NEWS entry
-------------------------
-
-The contents of this file are reStructuredText formatted text that will be used as the content of the news file entry.
-You do not need to reference the issue or PR numbers here as towncrier will automatically add a reference to all of the
-affected issues when rendering the news file.
-
-In order to maintain a consistent style in the ``changelog.rst`` file, it is preferred to keep the news entry to the
-point, in sentence case, shorter than 120 characters and in an imperative tone -- an entry should complete the sentence
-``This change will …``. In rare cases, where one line is not enough, use a summary line in an imperative tone followed
-by a blank line separating it from a description of the feature/change in one or more paragraphs, each wrapped at 120
-characters. Remember that a news entry is meant for end users and should only contain details relevant to an end user.
-
-Choosing the type of NEWS entry
--------------------------------
-
-A trivial change is anything that does not warrant an entry in the news file. Some examples are: code refactors that
-don't change anything as far as the public is concerned, typo fixes, white space modification, etc. To mark a PR as
-trivial a contributor simply needs to add a randomly named, empty file to the ``news/`` directory with the extension of
-``.trivial``.
+suppression names the rule it silences, and :ref:`running-linters` says when a ``# noqa`` fits.
 
 Becoming a maintainer
 =====================

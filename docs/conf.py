@@ -68,9 +68,11 @@ html_show_sourcelink = False
 autoclass_content = "both"  # Include __init__ in class documentation
 autodoc_member_order = "bysource"
 autosectionlabel_prefix_document = True
+autosectionlabel_maxdepth = 2
 
 extlinks = {
     "issue": ("https://github.com/pypa/virtualenv/issues/%s", "#%s"),
+    "pr": ("https://github.com/pypa/virtualenv/pull/%s", "PR #%s"),
     "pull": ("https://github.com/pypa/virtualenv/pull/%s", "PR #%s"),
     "user": ("https://github.com/%s", "@%s"),
     "pypi": ("https://pypi.org/project/%s", "%s"),

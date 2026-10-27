@@ -1,93 +1,67 @@
-"""Handles creating a release."""
-
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
-from subprocess import check_call
+from subprocess import check_call, run
+from typing import Final
 
-from git import Commit, Remote, Repo, TagReference
-from packaging.version import Version
+from git import Remote, Repo
+from release_creator.contributors.section import add_new_contributors
+from release_creator.fragments.git import fragment_commits_from_git
+from release_creator.fragments.links import add_pull_request_links
+from release_creator.fragments.names import pending_fragments
+from release_creator.fragments.pull_requests import fragment_pull_requests
+from release_creator.tags.select import next_tag
 
-ROOT_SRC_DIR = Path(__file__).resolve().parents[1]
-CHANGELOG_DIR = ROOT_SRC_DIR / "docs" / "changelog"
 
-
-def main(version_str: str, *, push: bool) -> None:
-    repo = Repo(str(ROOT_SRC_DIR))
-    if repo.is_dirty():
-        msg = "Current repository is dirty. Please commit any changes and try again."
-        raise RuntimeError(msg)
+def main(bump: str, *, push: bool) -> None:
+    root_src_dir: Final[Path] = Path(__file__).resolve().parents[1]
+    changelog_dir: Final[Path] = root_src_dir / "docs" / "changelog"
+    repo = Repo(str(root_src_dir))
     remote = get_remote(repo)
     remote.fetch()
-    version = resolve_version(version_str, repo)
-    print(f"releasing {version}")  # ruff:ignore[print]
-    release_commit = release_changelog(repo, version)
-    tag = tag_release_commit(release_commit, repo, version)
+    version = next_tag(
+        bump,
+        [tag.name for tag in repo.tags],
+        [fragment.name for fragment in pending_fragments(changelog_dir)],
+    )
+    commits = fragment_commits_from_git(changelog_dir)
+    pull_requests = fragment_pull_requests("pypa/virtualenv", {name: commit.sha for name, commit in commits.items()})
+    add_pull_request_links(changelog_dir, "pypa/virtualenv", pull_requests, commits=commits)
+    check_call([sys.executable, "-m", "towncrier", "build", "--yes", "--version", version], cwd=root_src_dir)
+    add_new_contributors(root_src_dir / "docs" / "changelog.rst", version, "pypa/virtualenv")
+    run(
+        [sys.executable, "-m", "prek", "run", "docstrfmt", "--files", "docs/changelog.rst"],
+        cwd=root_src_dir,
+        check=False,
+    )
+    check_call([sys.executable, "-m", "prek", "run", "docstrfmt", "--files", "docs/changelog.rst"], cwd=root_src_dir)
+    check_call([sys.executable, "-m", "prek", "run", "--all-files"], cwd=root_src_dir)
+    repo.git.add("-A", "--", "docs")
+    repo.index.commit(f"release {version}")
+    repo.create_tag(version)
     if push:
-        print("push release commit")  # ruff:ignore[print]
-        repo.git.push(remote.name, "HEAD:main")
-        print("push release tag")  # ruff:ignore[print]
-        repo.git.push(remote.name, tag)
-    print("All done! ✨ 🍰 ✨")  # ruff:ignore[print]
-
-
-def resolve_version(version_str: str, repo: Repo) -> Version:
-    if version_str not in {"auto", "major", "minor", "patch"}:
-        return Version(version_str)
-    latest_tag = repo.git.describe("--tags", "--abbrev=0")
-    parts = [int(x) for x in latest_tag.split(".")]
-    if version_str == "major":
-        parts = [parts[0] + 1, 0, 0]
-    elif version_str == "minor":
-        parts = [parts[0], parts[1] + 1, 0]
-    elif version_str == "patch":
-        parts[2] += 1
-    elif any(CHANGELOG_DIR.glob("*.feature.rst")) or any(CHANGELOG_DIR.glob("*.removal.rst")):
-        parts = [parts[0], parts[1] + 1, 0]
-    else:
-        parts[2] += 1
-    return Version(".".join(str(p) for p in parts))
+        repo.git.push("--atomic", remote.name, "HEAD:main", f"refs/tags/{version}")
+    sys.stdout.write(f"Prepared {version}\n")
 
 
 def get_remote(repo: Repo) -> Remote:
-    upstream_remote = "pypa/virtualenv"
-    urls = set()
     for remote in repo.remotes:
-        for url in remote.urls:
-            if url.rstrip(".git").endswith(upstream_remote):
-                return remote
-            urls.add(url)
-    msg = f"could not find {upstream_remote} remote, has {urls}"
+        if any(url.removesuffix(".git").endswith("pypa/virtualenv") for url in remote.urls):
+            return remote
+    msg = "could not find a pypa/virtualenv remote"
     raise RuntimeError(msg)
 
 
-def release_changelog(repo: Repo, version: Version) -> Commit:
-    print("generate release commit")  # ruff:ignore[print]
-    check_call(
-        [sys.executable, "-m", "towncrier", "build", "--yes", "--version", version.public], cwd=str(ROOT_SRC_DIR)
-    )
-    # pre-commit would resolve hook dependencies unpinned, so wrap the changelog with the locked docstrfmt
-    check_call([sys.executable, "-m", "docstrfmt", "-l", "120", "docs/changelog.rst"], cwd=str(ROOT_SRC_DIR))
-    repo.git.add(".")
-    return repo.index.commit(f"release {version}")
-
-
-def tag_release_commit(release_commit: Commit, repo: Repo, version: Version) -> TagReference:
-    print("tag release commit")  # ruff:ignore[print]
-    existing_tags = [x.name for x in repo.tags]
-    if version in existing_tags:
-        print(f"delete existing tag {version}")  # ruff:ignore[print]
-        repo.delete_tag(version)
-    print(f"create tag {version}")  # ruff:ignore[print]
-    return repo.create_tag(version, ref=release_commit, force=True)
-
-
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser(prog="release")
-    parser.add_argument("--version", default="auto")
+    parser.add_argument("--bump", choices=("auto", "major", "minor", "patch"), default="auto")
     parser.add_argument("--no-push", action="store_true")
     options = parser.parse_args()
-    main(options.version, push=not options.no_push)
+    main(options.bump, push=not options.no_push)
+
+
+__all__ = [
+    "main",
+]

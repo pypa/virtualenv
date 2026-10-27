@@ -1,4 +1,4 @@
-name: 🔎 scorecard
+name: 🛡️ scorecard
 on:
   branch_protection_rule:
   schedule:
@@ -12,7 +12,7 @@ concurrency:
 permissions: {}
 jobs:
   analysis:
-    name: 🔎 scorecard analysis
+    name: 🛡️ Scorecard analysis
     if: github.repository_owner == 'pypa'
     runs-on: ubuntu-26.04
     permissions:
@@ -25,14 +25,17 @@ jobs:
       security-events: write # upload the SARIF results to code scanning
       statuses: read # read commit statuses for the CI-Tests check
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: 📥 Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: ossf/scorecard-action@fa7117db83c52d787ae5a89f350999701505d78e # v2.5.0
+      - name: 🛡️ Run Scorecard analysis
+        uses: ossf/scorecard-action@fa7117db83c52d787ae5a89f350999701505d78e # v2.5.0
         with:
           results_file: results.sarif
           results_format: sarif
           publish_results: true
-      - uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+      - name: 🛡️ Upload Scorecard results to code scanning
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           sarif_file: results.sarif

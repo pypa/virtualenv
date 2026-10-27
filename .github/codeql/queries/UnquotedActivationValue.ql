@@ -26,10 +26,21 @@ module UnquotedActivationValueConfig implements DataFlow::ConfigSig {
   }
 
   predicate isSink(DataFlow::Node node) {
-    exists(DataFlow::MethodCallNode call |
-      call.calls(_, "replace") and
-      call.getScope().(Function).getName() = "instantiate_template" and
-      node = call.getArg(1)
+    exists(DictComp comp, Yield yield, Expr value |
+      comp.getScope().(Function).getName() = "substitutions" and
+      yield.getScope() = comp.getFunction() and
+      value = yield.getValue().(Tuple).getElt(1).getASubExpression*() and
+      value.(Name).getVariable() = comp.getNthInnerLoop(0).getTarget().(Tuple).getAnElt().(Name).getVariable() and
+      not exists(Call quoted |
+        quoted.getFunc().(Attribute).getName() = "quote" and value = quoted.getASubExpression*()
+      ) and
+      node.asExpr() = value
+    )
+    or
+    exists(Return ret, Dict dict |
+      ret.getScope().(Function).getName() = "substitutions" and
+      ret.getValue() = dict and
+      node.asExpr() = dict.getAValue()
     )
   }
 

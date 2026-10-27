@@ -1,31 +1,46 @@
 version: 2
+multi-ecosystem-groups:
+  dependencies:
+    schedule:
+      interval: weekly
+      day: tuesday
+    labels:
+      - dependencies
+      - skip news
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    labels:
-      - dependencies
-      - github_actions
-      - skip news
-    schedule:
-      interval: "weekly"
-      day: "tuesday"
-    groups:
-      github-actions:
-        patterns:
-          - "*"
-    cooldown:
-      default-days: 7
-  - package-ecosystem: "pip"
-    directory: "/"
+  - package-ecosystem: github-actions
+    directory: /
+    patterns:
+      - '*'
+    multi-ecosystem-group: dependencies
     labels:
       - dependencies
       - skip news
-    schedule:
-      interval: "weekly"
-      day: "tuesday"
-    groups:
-      runtime-dependencies:
-        patterns:
-          - "*"
     cooldown:
       default-days: 7
+  - package-ecosystem: pip
+    directory: /
+    patterns:
+      - '*'
+    multi-ecosystem-group: dependencies
+    labels:
+      - dependencies
+      - skip news
+    cooldown:
+      default-days: 7
+  - package-ecosystem: pre-commit
+    directory: /
+    patterns:
+      - '*'
+    multi-ecosystem-group: dependencies
+    labels:
+      - dependencies
+      - skip news
+    cooldown:
+      default-days: 7
+    ignore:
+      # crate-ci/typos also tags its varcon-core crate (varcon-core-v5.0.7), which Dependabot reads as
+      # typos 5.0.7.
+      - dependency-name: https://github.com/crate-ci/typos
+        versions:
+          - '>= 2'
