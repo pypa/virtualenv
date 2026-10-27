@@ -3,12 +3,23 @@ from __future__ import annotations
 import os
 import sys
 from contextlib import contextmanager
+from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 
 from virtualenv.config.cli.parser import ExtendAction, VirtualEnvConfigParser, VirtualEnvOptions
 from virtualenv.config.ini import IniConfig
 from virtualenv.run import session_via_cli
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from contextlib import AbstractContextManager
+    from pathlib import Path
+
+    class _Run(Protocol):
+        def __call__(self, *args: str) -> VirtualEnvOptions: ...
+
+    _GenParser = Callable[[], AbstractContextManager[tuple[VirtualEnvConfigParser, _Run]]]
 
 
 @pytest.fixture
@@ -64,7 +75,9 @@ def test_extend_action_resets_between_parses(gen_parser_no_conf_env, monkeypatch
     assert action.default == ["configured"]
 
 
-def test_accumulating_actions_reset_between_parses(gen_parser_no_conf_env, monkeypatch) -> None:
+def test_accumulating_actions_reset_between_parses(
+    gen_parser_no_conf_env: _GenParser, monkeypatch: pytest.MonkeyPatch
+) -> None:
     monkeypatch.setenv("VIRTUALENV_SPEC", "configured")
     with gen_parser_no_conf_env() as (parser, run):
         parser.add_argument("-v", dest="verbose", action="count", default=2)
@@ -72,27 +85,26 @@ def test_accumulating_actions_reset_between_parses(gen_parser_no_conf_env, monke
 
     for _ in range(3):
         result = run("-v", "-v", "--spec", "first")
-        assert result.verbose == 4
-        assert result.spec == ["configured", "first"]
+        assert (result.verbose, result.spec) == (4, ["configured", "first"])
 
     result = run()
-    assert result.verbose == 2
-    assert result.get_source("verbose") == "default"
-    assert result.spec == ["configured"]
-    assert result.get_source("spec") == "env var"
+    assert (result.verbose, result.get_source("verbose"), result.spec, result.get_source("spec")) == (
+        2,
+        "default",
+        ["configured"],
+        "env var",
+    )
 
 
 @pytest.mark.usefixtures("gen_parser_no_conf_env")
-def test_session_counts_cli_options_once(tmp_path) -> None:
-    options = VirtualEnvOptions()
-    session = session_via_cli(
+def test_session_counts_cli_options_once(tmp_path: Path) -> None:
+    options: Final = VirtualEnvOptions()
+    session: Final = session_via_cli(
         ["-v", "--try-first-with", "missing", "-p", sys.executable, str(tmp_path / "venv")],
         options=options,
         setup_logging=False,
     )
-    assert session.verbosity == 3
-    assert options.python == [sys.executable]
-    assert options.try_first_with == ["missing"]
+    assert (session.verbosity, options.python, options.try_first_with) == (3, [sys.executable], ["missing"])
 
 
 def test_reset_app_data_does_not_conflict_clear() -> None:
