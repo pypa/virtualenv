@@ -1,2 +1,3 @@
-Fix seeding a wheel whose ``console_scripts`` name contains digits truncating the script name at its first digit run,
-which could rename the script and, for ``python3-config``, overwrite the environment's ``python`` executable.
+Keep the name of a seeded ``console_scripts`` entry that contains digits but does not end in a version, such as
+``python3-config`` or ``2to3``, instead of truncating it at the first digit; ``python3-config`` overwrote the
+environment's ``python`` executable.
