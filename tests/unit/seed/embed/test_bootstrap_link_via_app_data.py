@@ -574,9 +574,9 @@ def test_seed_entry_points_keep_names_that_are_not_version_suffixes(
 def test_seed_entry_points_do_not_overwrite_the_interpreter(
     no_seed_session: Session, install_console_scripts: Callable[[str], None]
 ) -> None:
-    interpreter: Final = no_seed_session.creator.exe.read_bytes()
+    original: Final = no_seed_session.creator.exe.read_bytes()
     install_console_scripts("python3-config = example:main\n")
-    assert no_seed_session.creator.exe.read_bytes() == interpreter, "a generated script replaced the interpreter"
+    assert no_seed_session.creator.exe.read_bytes() == original, "a generated script replaced the interpreter"
 
 
 def test_seed_entry_points_still_fold_version_suffixed_names(
