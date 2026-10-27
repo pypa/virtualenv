@@ -1082,6 +1082,14 @@ def test_debug_bad_virtualenv(tmp_path) -> None:
     assert debug_info["exception"]
 
 
+def test_debug_ignores_python_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    extra: Final = tmp_path / "extra"
+    extra.mkdir()
+    monkeypatch.setenv("PYTHONPATH", str(extra))
+    session: Final = cli_run([str(tmp_path / "venv"), "--without-pip", "--activators", ""])
+    assert str(extra) not in session.creator.debug["sys"]["path"]
+
+
 @pytest.mark.graalpy
 @pytest.mark.parametrize("python_path_on", [True, False], ids=["on", "off"])
 def test_python_path(monkeypatch, tmp_path, python_path_on) -> None:

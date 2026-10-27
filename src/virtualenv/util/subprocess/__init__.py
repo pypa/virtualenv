@@ -22,7 +22,7 @@ class LogCmd:
         return cmd_repr
 
 
-def run_cmd(cmd: list[str]) -> tuple[int, str, str]:
+def run_cmd(cmd: list[str], env: Mapping[str, str] | None = None) -> tuple[int, str, str]:
     try:
         process = subprocess.Popen(
             cmd,
@@ -31,6 +31,7 @@ def run_cmd(cmd: list[str]) -> tuple[int, str, str]:
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE,
             encoding="utf-8",
+            env=env,
         )
         out, err = process.communicate()  # input disabled
         code = process.returncode

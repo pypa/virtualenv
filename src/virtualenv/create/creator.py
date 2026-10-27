@@ -347,7 +347,7 @@ def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env
     with app_data.ensure_extracted(debug_script) as debug_script_extracted:
         cmd = [str(env_exe), str(debug_script_extracted)]
         LOGGER.debug("debug via %r", LogCmd(cmd))
-        code, out, err = run_cmd(cmd)
+        code, out, err = run_cmd(cmd, env)
 
     try:
         result = _parse_debug_output(code, out, err)
