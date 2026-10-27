@@ -185,17 +185,17 @@ def test_copy_keeps_symlinked_directories(tmp_path: Path) -> None:
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
-def test_copy_does_not_expand_a_symlinked_directory_pointing_at_itself(tmp_path: Path) -> None:
+@pytest.mark.parametrize("target", [pytest.param(".", id="itself"), pytest.param("..", id="above-source")])
+def test_copy_does_not_expand_a_symlinked_directory_pointing_at_a_parent(tmp_path: Path, target: str) -> None:
     source: Final = tmp_path / "source"
     source.mkdir()
     (source / "entry.txt").write_text("content", encoding="utf-8")
-    (source / "loop").symlink_to(source, target_is_directory=True)
+    (source / "loop").symlink_to(target, target_is_directory=True)
 
     destination: Final = tmp_path / "destination"
     copy(source, destination)
 
-    assert (destination / "entry.txt").read_text(encoding="utf-8") == "content"
-    assert not (destination / "loop" / "loop").exists()
+    assert sorted(i.name for i in destination.iterdir()) == ["entry.txt"]
 
 
 @pytest.mark.skipif(sys.platform != "linux", reason="minimal Linux builds can omit ctypes")
