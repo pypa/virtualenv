@@ -42,7 +42,7 @@ jobs:
           enable-cache: false
           github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: 📦 Install locked release tools
-        uses: tox-dev/github-workflows/install-locked-tools@259a3d3fb578d00517ffb73341fdd463259b0b2f # 6.0.1
+        uses: tox-dev/github-workflows/install-locked-tools@29d4d5e6900db30502d7249043b59c18284a9777 # 6.2.0
         env:
           UV_MANAGED_PYTHON: "true"
         with:
@@ -50,7 +50,7 @@ jobs:
           venv: ${{ runner.temp }}/tools
       - name: 📦 Select hashed build dependencies
         id: constraints
-        uses: tox-dev/github-workflows/export-build-constraints@259a3d3fb578d00517ffb73341fdd463259b0b2f # 6.0.1
+        uses: tox-dev/github-workflows/export-build-constraints@29d4d5e6900db30502d7249043b59c18284a9777 # 6.2.0
       - name: ⚙️ Pin build timestamps to the release commit
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
       - name: 🏗️ Build sdist and wheel
@@ -189,17 +189,17 @@ jobs:
           python-version: "3.15"
           enable-cache: false
       - name: 📦 Install locked release tools
-        uses: tox-dev/github-workflows/install-locked-tools@259a3d3fb578d00517ffb73341fdd463259b0b2f # 6.0.1
+        uses: tox-dev/github-workflows/install-locked-tools@29d4d5e6900db30502d7249043b59c18284a9777 # 6.2.0
         with:
           groups: release-notes
           venv: ${{ runner.temp }}/release-tools
       - name: 🏷️ Select previous tag
         id: previous
-        uses: tox-dev/github-workflows/select-previous-tag@259a3d3fb578d00517ffb73341fdd463259b0b2f # 6.0.1
+        uses: tox-dev/github-workflows/select-previous-tag@29d4d5e6900db30502d7249043b59c18284a9777 # 6.2.0
         with:
           tag: ${{ github.ref_name }}
       - name: 📝 Render release notes
-        uses: tox-dev/github-workflows/render-release-notes@259a3d3fb578d00517ffb73341fdd463259b0b2f # 6.0.1
+        uses: tox-dev/github-workflows/render-release-notes@29d4d5e6900db30502d7249043b59c18284a9777 # 6.2.0
         with:
           tag: ${{ github.ref_name }}
           previous: ${{ steps.previous.outputs.previous }}
@@ -265,7 +265,7 @@ jobs:
           artifact-ids: ${{ needs.attest.outputs.dists-artifact-id }}
           path: dist/
       - name: 🔍 Verify PyPI artifacts
-        uses: tox-dev/github-workflows/reconcile-pypi-artifacts@259a3d3fb578d00517ffb73341fdd463259b0b2f # 6.0.1
+        uses: tox-dev/github-workflows/reconcile-pypi-artifacts@29d4d5e6900db30502d7249043b59c18284a9777 # 6.2.0
         with:
           project: virtualenv
           version: ${{ github.ref_name }}
@@ -293,7 +293,7 @@ jobs:
           artifact-ids: ${{ needs.attest.outputs.sbom-artifact-id }}
           path: ${{ runner.temp }}/release-assets
       - name: 🚀 Publish GitHub release
-        uses: tox-dev/github-workflows/publish-github-release@259a3d3fb578d00517ffb73341fdd463259b0b2f # 6.0.1
+        uses: tox-dev/github-workflows/publish-github-release@29d4d5e6900db30502d7249043b59c18284a9777 # 6.2.0
         env:
           GH_TOKEN: ${{ github.token }}
         with:
@@ -439,7 +439,7 @@ jobs:
           version: ${{ steps.locked-uv.outputs.version }}
           enable-cache: false
       - name: 📦 Install the locked verification tooling
-        uses: tox-dev/github-workflows/install-locked-tools@259a3d3fb578d00517ffb73341fdd463259b0b2f # 6.0.1
+        uses: tox-dev/github-workflows/install-locked-tools@29d4d5e6900db30502d7249043b59c18284a9777 # 6.2.0
         env:
           UV_MANAGED_PYTHON: "true"
         with:
