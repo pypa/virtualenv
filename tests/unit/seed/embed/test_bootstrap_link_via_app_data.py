@@ -85,12 +85,10 @@ def unusable_cache(tmp_path: Path) -> Path:
         pytest.param("", {}, ("--symlink-app-data",), id="command-line"),
     ],
 )
+@pytest.mark.usefixtures("symlinks_unsupported")
 def test_seed_copies_when_symlinks_unsupported(
-    tmp_path: Path, config_text: str, env_vars: dict[str, str], flags: tuple[str, ...], mocker: MockerFixture
+    tmp_path: Path, config_text: str, env_vars: dict[str, str], flags: tuple[str, ...]
 ) -> None:
-    mocker.patch(
-        "virtualenv.seed.embed.via_app_data.via_app_data.fs_supports_symlink", autospec=True, return_value=False
-    )
     config: Final = tmp_path / "virtualenv.ini"
     config.write_text(config_text, encoding="utf-8")
     session: Final = cli_run(
@@ -112,12 +110,8 @@ def test_seed_copies_when_symlinks_unsupported(
     ) == (False, False, True)
 
 
-def test_seed_reports_copy_fallback_when_symlinks_unsupported(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture, mocker: MockerFixture
-) -> None:
-    mocker.patch(
-        "virtualenv.seed.embed.via_app_data.via_app_data.fs_supports_symlink", autospec=True, return_value=False
-    )
+@pytest.mark.usefixtures("symlinks_unsupported")
+def test_seed_reports_copy_fallback_when_symlinks_unsupported(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
     caplog.set_level(logging.DEBUG)
     cli_run(
         [str(tmp_path / "env"), "--app-data", str(tmp_path / "cache"), "--no-periodic-update", "--no-setuptools"],
@@ -125,6 +119,13 @@ def test_seed_reports_copy_fallback_when_symlinks_unsupported(
         setup_logging=False,
     )
     assert "copy seed packages because the filesystem does not support symlinks" in caplog.text
+
+
+@pytest.fixture
+def symlinks_unsupported(mocker: MockerFixture) -> None:
+    mocker.patch(
+        "virtualenv.seed.embed.via_app_data.via_app_data.fs_supports_symlink", autospec=True, return_value=False
+    )
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
