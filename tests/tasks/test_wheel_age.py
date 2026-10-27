@@ -228,7 +228,6 @@ def apply_patch(wheel_repo: Path) -> Callable[[str, str], subprocess.CompletedPr
         pytest.param("src/virtualenv/seed/wheels/embed/__init__.py", id="bundle-index"),
         pytest.param("src/virtualenv/seed/wheels/embed/pip-2-py3-none-any.whl", id="wheel"),
         pytest.param("tasks/ci-tools.json", id="ci-tools"),
-        pytest.param("tasks/release-requirements.txt", id="release-lock"),
     ],
 )
 def test_upgrade_patch_applies(
@@ -243,6 +242,7 @@ def test_upgrade_patch_applies(
     [
         pytest.param(".github/workflows/release.yaml", "100644", id="workflow"),
         pytest.param("tasks/apply_upgrade_patch.py", "100644", id="validator"),
+        pytest.param("tasks/release-requirements.txt", "100644", id="removed-release-lock"),
         pytest.param("src/virtualenv/seed/wheels/embed/subdir/pip.whl", "100644", id="nested-path"),
         pytest.param("THIRD-PARTY-NOTICES.md", "120000", id="symlink"),
         pytest.param("THIRD-PARTY-NOTICES.md", "100755", id="executable"),
