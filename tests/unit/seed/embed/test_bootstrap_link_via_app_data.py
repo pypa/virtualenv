@@ -574,10 +574,9 @@ def test_seed_entry_points_keep_names_that_are_not_version_suffixes(
 def test_seed_entry_points_do_not_overwrite_the_interpreter(
     no_seed_session: Session, install_console_scripts: Callable[[str], None]
 ) -> None:
-    interpreter: Final = no_seed_session.creator.script_dir / "python"
-    assert interpreter.is_symlink(), "precondition: the interpreter is a link into the environment"
+    interpreter: Final = no_seed_session.creator.exe.read_bytes()
     install_console_scripts("python3-config = example:main\n")
-    assert interpreter.is_symlink(), "the interpreter executable was replaced by a generated script"
+    assert no_seed_session.creator.exe.read_bytes() == interpreter, "a generated script replaced the interpreter"
 
 
 def test_seed_entry_points_still_fold_version_suffixed_names(
@@ -585,9 +584,9 @@ def test_seed_entry_points_still_fold_version_suffixed_names(
 ) -> None:
     major, minor = no_seed_session.interpreter.version_info[:2]
     install_console_scripts(f"pip{major}.{minor} = example:main\npip{major} = example:main\n")
-    scripts: Final = {i.name for i in no_seed_session.creator.script_dir.iterdir()}
     # a single base regenerates these, an extra one per declared name would add names like `pip33`
-    assert {"pip", f"pip{major}", f"pip{major}.{minor}", f"pip-{major}.{minor}"} <= scripts, sorted(scripts)
+    expected: Final = ("pip", f"pip{major}", f"pip{major}.{minor}", f"pip-{major}.{minor}")
+    assert [name for name in expected if not no_seed_session.creator.script(name).exists()] == []
 
 
 @pytest.fixture
