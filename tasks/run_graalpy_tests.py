@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+import sysconfig
 import threading
 from argparse import REMAINDER, ArgumentParser
 from pathlib import Path
@@ -34,6 +35,19 @@ def main() -> None:
     group, _, groups = args.group.partition("/")
     if not (group.isdecimal() and groups.isdecimal() and 1 <= int(group) <= int(groups)):
         parser.error("--group requires K/N with 1 <= K <= N")
+    # GraalPy's id() repeats across processes, so shards importing a module for the first time pick the same temporary
+    # bytecode file and one can publish another's half-written cache; compile the trees all shards share in one run
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "compileall",
+            "-q",
+            "-j0",
+            *dict.fromkeys(sysconfig.get_path(name) for name in ("stdlib", "purelib", "platlib")),
+        ],
+        check=True,
+    )
     total: Final[int] = args.shards * int(groups)
     shards: Final[list[_Shard]] = [
         _Shard(index, total, args.junit, args.pytest_args) for index in range(int(group), total + 1, int(groups))

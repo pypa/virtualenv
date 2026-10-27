@@ -1,108 +1,166 @@
-name: Release
+name: 🚀 Release
 on:
   push:
     tags: ["*.*.*"]
 env:
   dists-artifact-name: python-package-distributions
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: release-${{ github.ref }}
   cancel-in-progress: false
 permissions: {}
 jobs:
   build:
-    name: Build
+    name: 🏗️ Build distributions
     runs-on: ubuntu-24.04
+    outputs:
+      zipapp-sha256: ${{ steps.zipapp-digest.outputs.sha256 }}
+      inputs-sha256: ${{ steps.inputs-digest.outputs.sha256 }}
+      inputs-artifact-id: ${{ steps.upload-inputs.outputs.artifact-id }}
     permissions:
       contents: read # check out the tagged source
-      id-token: write # sign attestations with the workflow identity
-      attestations: write # store the SBOM and provenance attestations
-      artifact-metadata: write # record the attested artifacts
     steps:
-      - name: Block outbound traffic outside the allowlist
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+      - name: 🛡️ Block outbound traffic outside the allowlist
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: block
           disable-sudo-and-containers: true
           allowed-endpoints: >-
             api.github.com:443 files.pythonhosted.org:443 fulcio.sigstore.dev:443 github.com:443 pypi.org:443 raw.githubusercontent.com:443 rekor.sigstore.dev:443 release-assets.githubusercontent.com:443 releases.astral.sh:443
-      - name: Checkout code
+      - name: 📥 Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Require a changelog section for the tag
-        env:
-          TAG: ${{ github.ref_name }}
-        run: |
-          if [[ ! "$TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::unexpected release tag $TAG"
-            exit 1
-          fi
-          if ! grep -qE "^ v${TAG//./\\.} \\(" docs/changelog.rst; then
-            echo "::error::docs/changelog.rst has no section for $TAG"
-            exit 1
-          fi
-      - name: Install the locked version of uv
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - name: ⚙️ Read the locked uv version
+        id: locked-uv
+        run: python3 tasks/locked_uv.py >>"$GITHUB_OUTPUT"
+      - name: 🐍 Install the locked version of uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
           python-version: "3.15"
-          version-file: tasks/release-requirements.txt
+          version: ${{ steps.locked-uv.outputs.version }}
           enable-cache: false
           github-token: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install the locked release tooling
-        run: |
-          uv venv --python 3.15 --python-preference only-managed "$RUNNER_TEMP/tools"
-          uv pip sync --python "$RUNNER_TEMP/tools" --require-hashes tasks/release-requirements.txt
-      - name: Pin build timestamps to the release commit for reproducible artifacts
+      - name: 📦 Install locked release tools
+        uses: tox-dev/github-workflows/install-locked-tools@57a765127aae73adf7d0e24a7fe0f067f2d3ea3e # 6.2.1
+        env:
+          UV_MANAGED_PYTHON: "true"
+        with:
+          groups: release-build
+          venv: ${{ runner.temp }}/tools
+      - name: 📦 Select hashed build dependencies
+        id: constraints
+        uses: tox-dev/github-workflows/export-build-constraints@57a765127aae73adf7d0e24a7fe0f067f2d3ea3e # 6.2.1
+      - name: ⚙️ Pin build timestamps to the release commit
         run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
-      - name: Build sdist and wheel
+      - name: 🏗️ Build sdist and wheel
+        env:
+          BUILD_CONSTRAINTS: ${{ steps.constraints.outputs.path }}
         run: |
           uv build --python 3.15 --python-preference only-managed --sdist --wheel . --out-dir dist \
-            --build-constraints tasks/release-requirements.txt --require-hashes
-      - name: Extract the SBOM the wheel build embedded
+            --build-constraints "$BUILD_CONSTRAINTS" --require-build-hashes \
+            --preview-features build-dependency-hashes
+      - name: 🏗️ Extract the SBOM the wheel build embedded
         run: uv run --no-project --python 3.15 python -m zipfile -e dist/*.whl sbom-extract/ && cp sbom-extract/*.dist-info/sboms/virtualenv.cdx.json .
-      - name: Attest the SBOM against the sdist and wheel
+      - name: 🧾 Render the SBOM as SPDX
+        run: '"$RUNNER_TEMP/tools/bin/tox" r -e spdx'
+      - name: 🏗️ Build zipapp
+        run: '"$RUNNER_TEMP/tools/bin/tox" r -e zipapp'
+      - name: ⚙️ Record the zipapp digest
+        id: zipapp-digest
+        run: echo "sha256=$(sha256sum virtualenv.pyz | cut -d ' ' -f1)" >>"$GITHUB_OUTPUT"
+      - name: ⚙️ Seal the build inputs
+        id: inputs-digest
+        run: |
+          sha256sum dist/* virtualenv.cdx.json virtualenv.spdx.json virtualenv.pyz virtualenv.pyz.cdx.json >release-inputs.sha256
+          echo "sha256=$(sha256sum release-inputs.sha256 | cut -d ' ' -f1)" >>"$GITHUB_OUTPUT"
+      - name: 📤 Store the build inputs
+        id: upload-inputs
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: virtualenv-build-inputs
+          path: |
+            dist/*
+            virtualenv.cdx.json
+            virtualenv.spdx.json
+            virtualenv.pyz
+            virtualenv.pyz.cdx.json
+            release-inputs.sha256
+          if-no-files-found: error
+  attest:
+    name: 🧾 Attest release artifacts
+    needs: build
+    runs-on: ubuntu-24.04
+    outputs:
+      dists-artifact-id: ${{ steps.upload-dists.outputs.artifact-id }}
+      sbom-artifact-id: ${{ steps.upload-sbom.outputs.artifact-id }}
+      zipapp-artifact-id: ${{ steps.upload-zipapp.outputs.artifact-id }}
+    permissions:
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - name: 🛡️ Block outbound traffic outside the allowlist
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        with:
+          egress-policy: block
+          disable-sudo-and-containers: true
+          allowed-endpoints: >-
+            api.github.com:443 fulcio.sigstore.dev:443 github.com:443 rekor.sigstore.dev:443 release-assets.githubusercontent.com:443
+      - name: 📩 Download build inputs
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.build.outputs.inputs-artifact-id }}
+      - name: 🔍 Verify the sealed build inputs
+        env:
+          EXPECTED_SHA256: ${{ needs.build.outputs.inputs-sha256 }}
+        run: |
+          printf '%s  release-inputs.sha256\n' "$EXPECTED_SHA256" | sha256sum --check
+          sha256sum dist/* virtualenv.cdx.json virtualenv.spdx.json virtualenv.pyz virtualenv.pyz.cdx.json >"$RUNNER_TEMP/current-inputs.sha256"
+          cmp release-inputs.sha256 "$RUNNER_TEMP/current-inputs.sha256"
+      - name: 🧾 Attest the SBOM against the sdist and wheel
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: dist/*
           sbom-path: virtualenv.cdx.json
-      - name: Render the SBOM as SPDX
-        run: '"$RUNNER_TEMP/tools/bin/tox" r -e spdx'
-      - name: Attest the SPDX SBOM against the sdist and wheel
+      - name: 🧾 Attest the SPDX SBOM against the sdist and wheel
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: dist/*
           sbom-path: virtualenv.spdx.json
-      - name: Build zipapp
-        run: '"$RUNNER_TEMP/tools/bin/tox" r -e zipapp'
-      - name: Attest provenance for the zipapp
+      - name: 🧾 Attest provenance for the zipapp
         id: attest
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: virtualenv.pyz
-      - name: Rename provenance bundle to the release asset name
+      - name: ⚙️ Rename provenance bundle to the release asset name
         env:
           BUNDLE_PATH: ${{ steps.attest.outputs.bundle-path }}
         run: cp "$BUNDLE_PATH" virtualenv.pyz.intoto.jsonl
-      - name: Attest the zipapp SBOM against the zipapp
+      - name: 🧾 Attest the zipapp SBOM against the zipapp
         uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
         with:
           subject-path: virtualenv.pyz
           sbom-path: virtualenv.pyz.cdx.json
       - parallel:
-          - name: Store the distribution packages
+          - name: 📤 Store the distribution packages
+            id: upload-dists
             uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
             with:
               name: ${{ env.dists-artifact-name }}
               path: dist/*
-          - name: Store the SBOM
+              if-no-files-found: error
+          - name: 📤 Store the SBOM
+            id: upload-sbom
             uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
             with:
               name: virtualenv-sbom
               path: |
                 virtualenv.cdx.json
                 virtualenv.spdx.json
-          - name: Store the zipapp
+              if-no-files-found: error
+          - name: 📤 Store the zipapp
+            id: upload-zipapp
             uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
             with:
               name: virtualenv-zipapp
@@ -110,151 +168,296 @@ jobs:
                 virtualenv.pyz
                 virtualenv.pyz.intoto.jsonl
                 virtualenv.pyz.cdx.json
-  publish:
-    name: Publish
-    needs: build
+              if-no-files-found: error
+  notes:
+    name: 📝 Render GitHub Release notes
+    runs-on: ubuntu-26.04
+    outputs:
+      artifact-id: ${{ steps.upload.outputs.artifact-id }}
+    permissions:
+      contents: read
+    steps:
+      - name: 📥 Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: 🐍 Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: latest-known
+          python-version: "3.15"
+          enable-cache: false
+      - name: 📦 Install locked release tools
+        uses: tox-dev/github-workflows/install-locked-tools@57a765127aae73adf7d0e24a7fe0f067f2d3ea3e # 6.2.1
+        with:
+          groups: release-notes
+          venv: ${{ runner.temp }}/release-tools
+      - name: 🏷️ Select previous tag
+        id: previous
+        uses: tox-dev/github-workflows/select-previous-tag@57a765127aae73adf7d0e24a7fe0f067f2d3ea3e # 6.2.1
+        with:
+          tag: ${{ github.ref_name }}
+      - name: 📝 Render release notes
+        uses: tox-dev/github-workflows/render-release-notes@57a765127aae73adf7d0e24a7fe0f067f2d3ea3e # 6.2.1
+        with:
+          tag: ${{ github.ref_name }}
+          previous: ${{ steps.previous.outputs.previous }}
+          changelog: docs/changelog.rst
+          artifact-url: https://pypi.org/project/virtualenv/${{ github.ref_name }}/
+      - name: 📤 Store release notes
+        id: upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: github-release-notes
+          path: ${{ runner.temp }}/release-notes.md
+          if-no-files-found: error
+  publish-pypi:
+    name: 🚀 Publish to PyPI
+    needs:
+      - attest
+      - notes
     runs-on: ubuntu-24.04
     environment:
       name: release
       url: https://pypi.org/project/virtualenv/${{ github.ref_name }}
     permissions:
-      contents: write # create the GitHub release
-      id-token: write # authenticate to PyPI with trusted publishing
+      id-token: write
     steps:
-      - name: Block outbound traffic outside the allowlist
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+      - name: 🛡️ Block outbound traffic outside the allowlist
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: block
           allowed-endpoints: >-
-            api.github.com:443 fulcio.sigstore.dev:443 ghcr.io:443 github.com:443 pkg-containers.githubusercontent.com:443 rekor.sigstore.dev:443 timestamp.sigstore.dev:443 tuf-repo-cdn.sigstore.dev:443 upload.pypi.org:443 uploads.github.com:443
-      - name: Checkout code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - name: Download all the dists
+            api.github.com:443 fulcio.sigstore.dev:443 ghcr.io:443 github.com:443 pkg-containers.githubusercontent.com:443 rekor.sigstore.dev:443 timestamp.sigstore.dev:443 tuf-repo-cdn.sigstore.dev:443 upload.pypi.org:443
+      - name: 📩 Download distributions
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: ${{ env.dists-artifact-name }}
+          artifact-ids: ${{ needs.attest.outputs.dists-artifact-id }}
           path: dist/
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+      - name: 🚀 Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
+          packages-dir: dist
           attestations: true
-      - parallel:
-          - name: Download the zipapp
-            uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-            with:
-              name: virtualenv-zipapp
-          - name: Download the SBOMs
-            uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
-            with:
-              name: virtualenv-sbom
-      # Immutable releases require all assets at creation.
-      - name: Create GitHub Release
-        run: |
-          set -euo pipefail
-          awk -v tag="$GITHUB_REF_NAME" '
-            index($0, " v" tag " (") == 1 { found = 1; next }
-            found && /^ v[0-9]+\.[0-9]+\.[0-9]+ \(/ { exit }
-            found && $0 !~ /^\*+$/ { print }
-          ' docs/changelog.rst > "$RUNNER_TEMP/release-notes.md"
-          python3 - "$RUNNER_TEMP/release-notes.md" <<'PY'
-          import re
-          import sys
-          from pathlib import Path
-
-          path = Path(sys.argv[1])
-          body = path.read_text()
-          body = re.sub(r":user:`([^`]+)`", r"\1", body)
-          body = re.sub(r":(?:issue|pr):`(\d+)`", r"#\1", body)
-          body = re.sub(r":[a-z]+:`~?([^`]+)`", lambda match: f"`{match.group(1).split('.')[-1]}`", body)
-          path.write_text(body.replace("``", "`"))
-          PY
-          test -s "$RUNNER_TEMP/release-notes.md"
-          printf '\n[PyPI release](https://pypi.org/project/virtualenv/%s/)\n' "$GITHUB_REF_NAME" >> "$RUNNER_TEMP/release-notes.md"
-          previous=$({ gh api 'repos/pypa/virtualenv/releases?per_page=100' --paginate --jq '.[].tag_name'; printf '%s\n' "$GITHUB_REF_NAME"; } | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -Vu | awk -v tag="$GITHUB_REF_NAME" '$0 == tag { print previous; exit } { previous = $0 }')
-          if [[ -n "$previous" ]]; then
-            printf '\n**Full Changelog**: https://github.com/pypa/virtualenv/compare/%s...%s\n' "$previous" "$GITHUB_REF_NAME" >> "$RUNNER_TEMP/release-notes.md"
-          else
-            printf '\n**Full Changelog**: https://github.com/pypa/virtualenv/commits/%s\n' "$GITHUB_REF_NAME" >> "$RUNNER_TEMP/release-notes.md"
-          fi
-          gh release create "$GITHUB_REF_NAME" virtualenv.pyz virtualenv.pyz.intoto.jsonl virtualenv.pyz.cdx.json \
-            virtualenv.cdx.json virtualenv.spdx.json --verify-tag --notes-file "$RUNNER_TEMP/release-notes.md"
+  pypi-verify:
+    name: 🔍 Verify PyPI distributions
+    needs:
+      - attest
+      - publish-pypi
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: 📥 Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: 🐍 Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: latest-known
+          python-version: "3.15"
+          enable-cache: false
+      - name: 📩 Download distributions
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.attest.outputs.dists-artifact-id }}
+          path: dist/
+      - name: 🔍 Verify PyPI artifacts
+        uses: tox-dev/github-workflows/reconcile-pypi-artifacts@57a765127aae73adf7d0e24a7fe0f067f2d3ea3e # 6.2.1
+        with:
+          project: virtualenv
+          version: ${{ github.ref_name }}
+          dist: dist
+  github-release:
+    name: 🚀 Publish GitHub Release
+    needs: [attest, notes, pypi-verify]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: 📩 Download release notes
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.notes.outputs.artifact-id }}
+          path: ${{ runner.temp }}/release-notes
+      - name: 📩 Download zipapp
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.attest.outputs.zipapp-artifact-id }}
+          path: ${{ runner.temp }}/release-assets
+      - name: 📩 Download SBOMs
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.attest.outputs.sbom-artifact-id }}
+          path: ${{ runner.temp }}/release-assets
+      - name: 🚀 Publish GitHub release
+        uses: tox-dev/github-workflows/publish-github-release@57a765127aae73adf7d0e24a7fe0f067f2d3ea3e # 6.2.1
         env:
           GH_TOKEN: ${{ github.token }}
-      - name: Mint get-virtualenv app token
+        with:
+          tag: ${{ github.ref_name }}
+          commit: ${{ github.sha }}
+          title: ${{ github.ref_name }}
+          notes-file: ${{ runner.temp }}/release-notes/release-notes.md
+          assets-directory: ${{ runner.temp }}/release-assets
+  update-bootstrap:
+    name: ⬆️ Update get-virtualenv
+    needs: [build, attest, github-release]
+    runs-on: ubuntu-24.04
+    environment: bootstrap-auth
+    permissions:
+      contents: read
+      attestations: read
+    steps:
+      - name: 📩 Download zipapp
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          artifact-ids: ${{ needs.attest.outputs.zipapp-artifact-id }}
+      - name: 🔍 Verify the zipapp before granting App access
+        env:
+          EXPECTED_SHA256: ${{ needs.build.outputs.zipapp-sha256 }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          printf '%s  virtualenv.pyz\n' "$EXPECTED_SHA256" | sha256sum --check
+          gh attestation verify virtualenv.pyz --repo pypa/virtualenv \
+            --bundle virtualenv.pyz.intoto.jsonl \
+            --signer-workflow pypa/virtualenv/.github/workflows/release.yaml \
+            --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" --deny-self-hosted-runners
+      - name: 🔑 Mint get-virtualenv app token
         id: app-token
         uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
-          client-id: ${{ secrets.RELEASE_APP_CLIENT_ID }}
-          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          client-id: ${{ vars.GET_VIRTUALENV_APP_CLIENT_ID }}
+          private-key: ${{ secrets.GET_VIRTUALENV_APP_PRIVATE_KEY }}
           owner: pypa
           repositories: get-virtualenv
           permission-contents: write
-      # get-virtualenv main requires signed commits, and GitHub signs commits the app creates through the API
-      - name: Update get-virtualenv
+      - name: ⚙️ Read get-virtualenv main
+        id: main
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |
-          repo=repos/pypa/get-virtualenv
-          head=$(gh api "$repo/git/ref/heads/main" --jq .object.sha)
-          base_tree=$(gh api "$repo/git/commits/$head" --jq .tree.sha)
-          blob=$(base64 --wrap=0 virtualenv.pyz | jq --raw-input --slurp '{content: ., encoding: "base64"}' \
-            | gh api "$repo/git/blobs" --input - --jq .sha)
-          tree=$(jq --null-input --arg base_tree "$base_tree" --arg blob "$blob" --arg version "$GITHUB_REF_NAME" '{
+          head=$(gh api repos/pypa/get-virtualenv/git/ref/heads/main --jq .object.sha)
+          echo "sha=$head" >>"$GITHUB_OUTPUT"
+          echo "tree=$(gh api "repos/pypa/get-virtualenv/git/commits/$head" --jq .tree.sha)" >>"$GITHUB_OUTPUT"
+      - name: ⚙️ Read get-virtualenv files
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          BASE_TREE: ${{ steps.main.outputs.tree }}
+        run: gh api "repos/pypa/get-virtualenv/git/trees/$BASE_TREE?recursive=1" >"$RUNNER_TEMP/get-virtualenv-tree.json"
+      - name: 🔍 Compare get-virtualenv files
+        id: compare
+        run: |
+          current_zipapp=$(jq -r '.tree[] | select(.path == "public/virtualenv.pyz" and .mode == "100644") | .sha' "$RUNNER_TEMP/get-virtualenv-tree.json")
+          current_version=$(jq -r '.tree[] | select(.path == "public/version.txt" and .mode == "100644") | .sha' "$RUNNER_TEMP/get-virtualenv-tree.json")
+          zipapp=$(git hash-object virtualenv.pyz)
+          version=$(printf %s "$GITHUB_REF_NAME" | git hash-object --stdin)
+          if [[ "$current_version" == "$version" ]]; then
+            if [[ "$current_zipapp" != "$zipapp" ]]; then
+              echo '::error::get-virtualenv already has this version with a different zipapp'
+              exit 1
+            fi
+            echo 'update=false' >>"$GITHUB_OUTPUT"
+          elif [[ "$current_zipapp" == "$zipapp" ]]; then
+            echo '::error::get-virtualenv has this zipapp under a different version'
+            exit 1
+          else
+            echo 'update=true' >>"$GITHUB_OUTPUT"
+          fi
+      - name: ⬆️ Upload zipapp blob
+        id: blob
+        if: steps.compare.outputs.update == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          sha=$(base64 --wrap=0 virtualenv.pyz | jq --raw-input --slurp '{content: ., encoding: "base64"}' |
+            gh api repos/pypa/get-virtualenv/git/blobs --input - --jq .sha)
+          echo "sha=$sha" >>"$GITHUB_OUTPUT"
+      - name: 🏷️ Create get-virtualenv tree
+        id: tree
+        if: steps.compare.outputs.update == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          BASE_TREE: ${{ steps.main.outputs.tree }}
+          BLOB: ${{ steps.blob.outputs.sha }}
+        run: |
+          sha=$(jq --null-input --arg base_tree "$BASE_TREE" --arg blob "$BLOB" --arg version "$GITHUB_REF_NAME" '{
             base_tree: $base_tree,
             tree: [
               {path: "public/virtualenv.pyz", mode: "100644", type: "blob", sha: $blob},
               {path: "public/version.txt", mode: "100644", type: "blob", content: $version}
             ]
-          }' | gh api "$repo/git/trees" --input - --jq .sha)
-          commit=$(jq --null-input --arg tree "$tree" --arg head "$head" \
-            --arg message "update virtualenv to $GITHUB_REF_NAME" '{message: $message, tree: $tree, parents: [$head]}' \
-            | gh api "$repo/git/commits" --input - --jq .sha)
-          gh api --method PATCH "$repo/git/refs/heads/main" -f sha="$commit" -F force=false
+          }' | gh api repos/pypa/get-virtualenv/git/trees --input - --jq .sha)
+          echo "sha=$sha" >>"$GITHUB_OUTPUT"
+      # get-virtualenv main requires signed commits, and GitHub signs commits the app creates through the API
+      - name: 🏷️ Create signed get-virtualenv commit
+        id: commit
+        if: steps.compare.outputs.update == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TREE: ${{ steps.tree.outputs.sha }}
+          BASE_COMMIT: ${{ steps.main.outputs.sha }}
+        run: |
+          sha=$(jq --null-input --arg tree "$TREE" --arg head "$BASE_COMMIT" \
+            --arg message "update virtualenv to $GITHUB_REF_NAME" '{message: $message, tree: $tree, parents: [$head]}' |
+            gh api repos/pypa/get-virtualenv/git/commits --input - --jq .sha)
+          echo "sha=$sha" >>"$GITHUB_OUTPUT"
+      - name: ⬆️ Update get-virtualenv main
+        if: steps.compare.outputs.update == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          COMMIT: ${{ steps.commit.outputs.sha }}
+        run: gh api --method PATCH repos/pypa/get-virtualenv/git/refs/heads/main -f sha="$COMMIT" -F force=false
   verify:
-    name: Verify
-    needs: publish
+    name: 🔍 Verify distributions
+    needs: [attest, update-bootstrap]
     runs-on: ubuntu-24.04
     permissions:
       contents: read # check out the tooling lock and download the published zipapp from the release
       attestations: read # verify the zipapp provenance
     steps:
-      - name: Block outbound traffic outside the allowlist
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+      - name: 🛡️ Block outbound traffic outside the allowlist
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: block
           disable-sudo-and-containers: true
           allowed-endpoints: >-
             api.github.com:443 files.pythonhosted.org:443 github.com:443 pypi.org:443 raw.githubusercontent.com:443 release-assets.githubusercontent.com:443 releases.astral.sh:443 tmaproduction.blob.core.windows.net:443 tuf-repo-cdn.sigstore.dev:443 tuf-repo.github.com:443
-      - name: Checkout code
+      - name: 📥 Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Install the locked version of uv
-        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - name: ⚙️ Read the locked uv version
+        id: locked-uv
+        run: python3 tasks/locked_uv.py >>"$GITHUB_OUTPUT"
+      - name: 🐍 Install the locked version of uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
           python-version: "3.15"
-          version-file: tasks/release-requirements.txt
+          version: ${{ steps.locked-uv.outputs.version }}
           enable-cache: false
-      - name: Install the locked verification tooling
-        run: |
-          uv venv --python 3.15 --python-preference only-managed "$RUNNER_TEMP/tools"
-          uv pip sync --python "$RUNNER_TEMP/tools" --require-hashes tasks/release-requirements.txt
-      - name: Download expected distributions
+      - name: 📦 Install the locked verification tooling
+        uses: tox-dev/github-workflows/install-locked-tools@57a765127aae73adf7d0e24a7fe0f067f2d3ea3e # 6.2.1
+        env:
+          UV_MANAGED_PYTHON: "true"
+        with:
+          groups: release-verify
+          venv: ${{ runner.temp }}/tools
+      - name: 📩 Download expected distributions
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: ${{ env.dists-artifact-name }}
+          artifact-ids: ${{ needs.attest.outputs.dists-artifact-id }}
           path: expected/
-      - name: Download expected SBOMs
+      - name: 📩 Download expected SBOMs
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: virtualenv-sbom
+          artifact-ids: ${{ needs.attest.outputs.sbom-artifact-id }}
           path: expected/
-      - name: Prepare verification directory
+      - name: ⚙️ Prepare verification directory
         run: mkdir published
-      - name: Download and verify published zipapp
+      - name: 🔍 Download and verify published zipapp
         id: zipapp
         background: true
         env:
@@ -273,7 +476,7 @@ jobs:
             --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" --deny-self-hosted-runners --format json |
             jq --exit-status --slurpfile asset published/virtualenv.pyz.cdx.json \
               'any(.[]; .verificationResult.statement.predicate == $asset[0])'
-      - name: Download and verify published distributions
+      - name: 🔍 Download and verify published distributions
         run: |
           curl --fail --silent --show-error --retry 5 --retry-all-errors \
             "https://pypi.org/pypi/virtualenv/$GITHUB_REF_NAME/json" --output release.json
@@ -286,7 +489,7 @@ jobs:
             "$RUNNER_TEMP/tools/bin/pypi-attestations" verify pypi --repository https://github.com/pypa/virtualenv \
               "published/$filename"
           done
-      - name: Download and verify published SBOMs
+      - name: 🔍 Download and verify published SBOMs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -294,7 +497,6 @@ jobs:
             --pattern virtualenv.cdx.json --pattern virtualenv.spdx.json --dir published
           cmp expected/virtualenv.spdx.json published/virtualenv.spdx.json
           unzip -p published/*.whl '*.dist-info/sboms/virtualenv.cdx.json' | cmp - published/virtualenv.cdx.json
-          "$RUNNER_TEMP/tools/bin/pyspdxtools" --infile published/virtualenv.spdx.json
           for artifact in published/*.whl published/*.tar.gz; do
             for sbom in cdx:https://cyclonedx.org/bom spdx:https://spdx.dev/Document/v2.3; do
               gh attestation verify "$artifact" --repo pypa/virtualenv --predicate-type "${sbom#*:}" \
@@ -304,8 +506,9 @@ jobs:
                   'any(.[]; .verificationResult.statement.predicate == $asset[0])'
             done
           done
-      - wait: zipapp
-      - name: Create environments from verified distributions
+      - name: ⏳ Wait for zipapp verification
+        wait: zipapp
+      - name: 🧪 Create environments from verified distributions
         run: |
           for artifact in published/*.whl published/*.tar.gz; do
             installation="$RUNNER_TEMP/$(basename "$artifact")"
@@ -318,7 +521,7 @@ jobs:
             --no-download --no-periodic-update "$RUNNER_TEMP/zipapp-created"
           "$RUNNER_TEMP/zipapp-created/bin/python" -I -m pip --version
   verify-bootstrap:
-    name: Verify bootstrap.pypa.io
+    name: 🔍 Verify bootstrap.pypa.io
     needs: verify
     runs-on: ubuntu-24.04
     timeout-minutes: 150
@@ -326,13 +529,13 @@ jobs:
       contents: read # download the published zipapp from the release
       attestations: read # verify the served zipapp provenance
     steps:
-      - name: Download the verified zipapp
+      - name: 📩 Download the verified zipapp
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release download "$GITHUB_REF_NAME" --repo pypa/virtualenv \
             --pattern virtualenv.pyz --pattern virtualenv.pyz.intoto.jsonl --dir published
-      - name: Download and verify the zipapp served from bootstrap.pypa.io
+      - name: 🔍 Download and verify the zipapp served from bootstrap.pypa.io
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -359,15 +562,20 @@ jobs:
               --source-ref "$GITHUB_REF" --source-digest "$GITHUB_SHA" --deny-self-hosted-runners
           done
   recovery:
-    name: Recovery
-    if: ${{ always() && needs.build.result == 'success' && needs.publish.result == 'failure' }}
+    name: 📊 Report partial publication
+    if: >-
+      ${{ always() && needs.build.result == 'success' && (needs.attest.result == 'failure' || needs.publish-pypi.result == 'failure' || needs.pypi-verify.result == 'failure' || needs.github-release.result == 'failure' || needs.update-bootstrap.result == 'failure') }}
     needs:
       - build
-      - publish
+      - attest
+      - publish-pypi
+      - pypi-verify
+      - github-release
+      - update-bootstrap
     runs-on: ubuntu-24.04
     permissions: {}
     steps:
-      - name: Report partial publication
+      - name: 📊 Report partial publication
         run: |
           echo "::error::Publication failed. Inspect PyPI, the GitHub release, and get-virtualenv before retrying."
           echo "Publication may have succeeded on some destinations. Keep the release tag and commit." >> "$GITHUB_STEP_SUMMARY"

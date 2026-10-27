@@ -76,10 +76,9 @@ def zipapp_build_env(tmp_path_factory):
 @pytest.fixture(scope="session")
 def zipapp(zipapp_build_env, tmp_path_factory):
     into = tmp_path_factory.mktemp("zipapp")
-    path = HERE.parent.parent / "tasks" / "make_zipapp.py"
     filename = into / "virtualenv.pyz"
-    cmd = [zipapp_build_env, str(path), "--dest", str(filename)]
-    subprocess.run(cmd, check=True, timeout=300)
+    cmd = [zipapp_build_env, "-m", "tasks.make_zipapp", "--dest", str(filename)]
+    subprocess.run(cmd, check=True, timeout=300, cwd=HERE.parent.parent)
     yield filename
     shutil.rmtree(str(into))
 
@@ -204,7 +203,8 @@ def test_zipapp_bundles_prebuilt_wheel(zipapp_build_env: str, tmp_path: Path) ->
     subprocess.run(
         [
             zipapp_build_env,
-            str(HERE.parent.parent / "tasks" / "make_zipapp.py"),
+            "-m",
+            "tasks.make_zipapp",
             "--dest",
             str(pyz := tmp_path / "virtualenv.pyz"),
             "--wheel-dir",
@@ -212,6 +212,38 @@ def test_zipapp_bundles_prebuilt_wheel(zipapp_build_env: str, tmp_path: Path) ->
         ],
         check=True,
         timeout=300,
+        cwd=HERE.parent.parent,
     )
     with zipfile.ZipFile(pyz) as archive:
         assert archive.read("virtualenv/prebuilt.txt") == b"prebuilt"
+
+
+@pytest.mark.parametrize(
+    ("marker", "expected"),
+    [
+        pytest.param('"project-runtime" in dependency_groups', True, id="runtime"),
+        pytest.param('"build" in dependency_groups', False, id="build-only"),
+    ],
+)
+def test_zipapp_selects_runtime_lock_group(marker: str, expected: bool) -> None:
+    assert (
+        bool(
+            pytest.importorskip("tasks.make_zipapp").python_versions_for({
+                "name": "example",
+                "version": "1",
+                "marker": marker,
+            })
+        )
+        is expected
+    )
+
+
+def test_zipapp_lock_covers_supported_python() -> None:
+    versions = pytest.importorskip("tasks.make_zipapp").python_versions_for({
+        "name": "example",
+        "version": "1",
+        "marker": 'python_version >= "3.9"',
+    })
+
+    assert "3.15" in versions
+    assert "3.8" not in versions
