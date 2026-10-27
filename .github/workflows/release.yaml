@@ -20,7 +20,7 @@ jobs:
       contents: read # check out the tagged source
     steps:
       - name: 🛡️ Block outbound traffic outside the allowlist
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: block
           disable-sudo-and-containers: true
@@ -101,7 +101,7 @@ jobs:
       artifact-metadata: write
     steps:
       - name: 🛡️ Block outbound traffic outside the allowlist
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: block
           disable-sudo-and-containers: true
@@ -225,7 +225,7 @@ jobs:
       id-token: write
     steps:
       - name: 🛡️ Block outbound traffic outside the allowlist
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: block
           allowed-endpoints: >-
@@ -236,7 +236,7 @@ jobs:
           artifact-ids: ${{ needs.attest.outputs.dists-artifact-id }}
           path: dist/
       - name: 🚀 Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
         with:
           packages-dir: dist
           attestations: true
@@ -419,7 +419,7 @@ jobs:
       attestations: read # verify the zipapp provenance
     steps:
       - name: 🛡️ Block outbound traffic outside the allowlist
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
         with:
           egress-policy: block
           disable-sudo-and-containers: true
