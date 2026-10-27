@@ -26,7 +26,11 @@ from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
 from virtualenv.util.path import safe_delete
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pytest_mock import MockerFixture
+
+    from virtualenv.run.session import Session
 
 
 @pytest.mark.parametrize(
@@ -558,49 +562,51 @@ def test_seed_entry_points_preserve_case_and_last_duplicate(tmp_path: Path) -> N
         pytest.param("3to2", id="trailing-digits-after-text"),
     ],
 )
-def test_seed_entry_points_keep_names_that_are_not_version_suffixes(tmp_path: Path, script_name: str) -> None:
-    session = cli_run([str(tmp_path / "env"), "--no-seed"])
-    image = tmp_path / "image"
-    metadata = image / "example-1.dist-info"
-    metadata.mkdir(parents=True)
-    (metadata / "entry_points.txt").write_text(f"[console_scripts]\n{script_name} = example:main\n", encoding="utf-8")
-    CopyPipInstall(tmp_path / "example-1-py3-none-any.whl", session.creator, image).install(
-        session.interpreter.version_info
-    )
-    assert session.creator.script(script_name).exists(), (
-        f"{script_name} was not installed; got {sorted(i.name for i in session.creator.script_dir.iterdir())}"
+def test_seed_entry_points_keep_names_that_are_not_version_suffixes(
+    no_seed_session: Session, install_console_scripts: Callable[[str], None], script_name: str
+) -> None:
+    install_console_scripts(f"{script_name} = example:main\n")
+    assert no_seed_session.creator.script(script_name).exists(), (
+        f"{script_name} was not installed; got {sorted(i.name for i in no_seed_session.creator.script_dir.iterdir())}"
     )
 
 
-def test_seed_entry_points_do_not_overwrite_the_interpreter(tmp_path: Path) -> None:
-    session = cli_run([str(tmp_path / "env"), "--no-seed"])
-    interpreter = session.creator.script_dir / "python"
+def test_seed_entry_points_do_not_overwrite_the_interpreter(
+    no_seed_session: Session, install_console_scripts: Callable[[str], None]
+) -> None:
+    interpreter: Final = no_seed_session.creator.script_dir / "python"
     assert interpreter.is_symlink(), "precondition: the interpreter is a link into the environment"
-    image = tmp_path / "image"
-    metadata = image / "example-1.dist-info"
-    metadata.mkdir(parents=True)
-    (metadata / "entry_points.txt").write_text("[console_scripts]\npython3-config = example:main\n", encoding="utf-8")
-    CopyPipInstall(tmp_path / "example-1-py3-none-any.whl", session.creator, image).install(
-        session.interpreter.version_info
-    )
+    install_console_scripts("python3-config = example:main\n")
     assert interpreter.is_symlink(), "the interpreter executable was replaced by a generated script"
 
 
-def test_seed_entry_points_still_fold_version_suffixed_names(tmp_path: Path) -> None:
-    """``pip3`` and ``pip3.13`` are the same script as ``pip``, and must stay folded onto it."""
-    session = cli_run([str(tmp_path / "env"), "--no-seed"])
-    image = tmp_path / "image"
-    metadata = image / "example-1.dist-info"
-    metadata.mkdir(parents=True)
-    (metadata / "entry_points.txt").write_text(
-        "[console_scripts]\npip3.13 = example:main\npip3 = example:main\n", encoding="utf-8"
-    )
-    CopyPipInstall(tmp_path / "example-1-py3-none-any.whl", session.creator, image).install(
-        session.interpreter.version_info
-    )
-    scripts = {i.name for i in session.creator.script_dir.iterdir()}
+def test_seed_entry_points_still_fold_version_suffixed_names(
+    no_seed_session: Session, install_console_scripts: Callable[[str], None]
+) -> None:
+    major, minor = no_seed_session.interpreter.version_info[:2]
+    install_console_scripts(f"pip{major}.{minor} = example:main\npip{major} = example:main\n")
+    scripts: Final = {i.name for i in no_seed_session.creator.script_dir.iterdir()}
     # a single base regenerates these, an extra one per declared name would add names like `pip33`
-    assert {"pip", "pip3", "pip3.13", "pip-3.13"} <= scripts, sorted(scripts)
+    assert {"pip", f"pip{major}", f"pip{major}.{minor}", f"pip-{major}.{minor}"} <= scripts, sorted(scripts)
+
+
+@pytest.fixture
+def no_seed_session(tmp_path: Path) -> Session:
+    return cli_run([str(tmp_path / "env"), "--no-seed"])
+
+
+@pytest.fixture
+def install_console_scripts(tmp_path: Path, no_seed_session: Session) -> Callable[[str], None]:
+    def install(entries: str) -> None:
+        image: Final = tmp_path / "image"
+        metadata: Final = image / "example-1.dist-info"
+        metadata.mkdir(parents=True)
+        (metadata / "entry_points.txt").write_text(f"[console_scripts]\n{entries}", encoding="utf-8")
+        CopyPipInstall(tmp_path / "example-1-py3-none-any.whl", no_seed_session.creator, image).install(
+            no_seed_session.interpreter.version_info
+        )
+
+    return install
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")

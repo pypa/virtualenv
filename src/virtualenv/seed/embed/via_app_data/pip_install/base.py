@@ -23,13 +23,6 @@ if TYPE_CHECKING:
 
 LOGGER = logging.getLogger(__name__)
 
-#: A seed wheel may declare the same console script under several versioned names (``pip3``, ``pip-3.13``) so that
-#: only the base name is kept and the versioned launchers are regenerated from it. The suffix is only a version when the
-#: whole remainder of the name is one and the base starts with a letter: a tool that merely ends in digits
-#: (``python3-config``, ``2to3``) keeps its own name, otherwise virtualenv installs it under a truncated name or
-#: overwrites the environment's interpreter.
-_VERSION_SUFFIX: Final = re.compile(r"(?P<base>[^\W\d]\w*?)-?\d+(?:\.\d+)*\Z")
-
 
 def _safe_extract_zip(zip_ref: zipfile.ZipFile, target_dir: Path) -> None:
     # Guard against zip slip: a wheel is a zip and a tampered entry name (absolute path or one containing ``..``)
@@ -169,7 +162,8 @@ class PipInstall(ABC):
                     parser.read_file(file_handler)
                 if "console_scripts" in parser.sections():
                     for name, value in parser.items("console_scripts"):
-                        match = _VERSION_SUFFIX.fullmatch(name)
+                        # fold only a trailing version (pip3, pip-3.13), so python3-config and 2to3 keep their names
+                        match = re.fullmatch(r"([^\W\d]\w*?)-?\d+(?:\.\d+)*", name)
                         our_name = match.group(1) if match else name
                         self._console_entry_points[our_name] = value
         return self._console_entry_points
