@@ -16,16 +16,16 @@ class CopyPipInstall(PipInstall):
     def _sync(self, src: Path, dst: Path) -> None:
         copy(src, dst)
 
-    def _generate_new_files(self) -> set[Path]:
+    def _generate_new_files(self, folder: Path, dist_info: Path) -> set[Path]:
         # create the pyc files
-        new_files = super()._generate_new_files()
-        new_files.update(self._cache_files())
+        new_files = super()._generate_new_files(folder, dist_info)
+        new_files.update(self._cache_files(folder))
         return new_files
 
-    def _cache_files(self) -> Generator[Path, None, None]:
+    def _cache_files(self, folder: Path) -> Generator[Path, None, None]:
         version = self._creator.interpreter.version_info
         py_c_ext = f".{self._creator.interpreter.implementation.lower()}-{version.major}{version.minor}.pyc"
-        for root, dirs, files in os.walk(str(self._image_dir), topdown=True):
+        for root, dirs, files in os.walk(str(folder), topdown=True):
             root_path = Path(root)
             for name in files:
                 if name.endswith(".py"):
@@ -33,9 +33,9 @@ class CopyPipInstall(PipInstall):
             for name in dirs:
                 yield root_path / name / "__pycache__"
 
-    def _fix_records(self, extra_record_data: set[Path]) -> None:
-        extra_record_data_str = self._records_text(extra_record_data)
-        with (self._dist_info / "RECORD").open("ab") as file_handler:  # ty: ignore[unsupported-operator]
+    def _fix_records(self, folder: Path, dist_info: Path, extra_record_data: set[Path]) -> None:
+        extra_record_data_str = self._records_text(folder, extra_record_data)
+        with (dist_info / "RECORD").open("ab") as file_handler:
             file_handler.write(extra_record_data_str.encode("utf-8"))
 
 
