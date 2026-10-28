@@ -1,0 +1,13 @@
+diff --git a/src/virtualenv/util/path/_sync.py b/src/virtualenv/util/path/_sync.py
+index b64fb6d5..ca7571ff 100644
+--- a/src/virtualenv/util/path/_sync.py
++++ b/src/virtualenv/util/path/_sync.py
+@@ -138,7 +138,7 @@ def safe_delete(dest: Path) -> None:
+         # POSIX deletion depends on the parent directory, so changing the entry's mode cannot help.
+         if os.name != "nt" or func not in {os.unlink, os.rmdir} or os.path.islink(path) or os.access(path, os.W_OK):
+             raise exc
+-        clear_readonly(path)
++        os.chmod(path, 0o200)
+         func(path)
+
+     if sys.version_info >= (3, 12):

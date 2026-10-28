@@ -1,0 +1,13 @@
+diff --git a/src/virtualenv/seed/wheels/acquire.py b/src/virtualenv/seed/wheels/acquire.py
+index c82c7359..1b12606a 100644
+--- a/src/virtualenv/seed/wheels/acquire.py
++++ b/src/virtualenv/seed/wheels/acquire.py
+@@ -162,8 +162,6 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
+         if process.returncode != 0:
+             raise CalledProcessError(process.returncode, cmd, output=out, stderr=err)
+         result: Final = _downloaded_wheel(Path(staging), distribution, version_spec)
+-        if verify_against_pypi:
+-            verify_wheel_digest(result)
+         if not result.support_py(for_py_version):
+             msg: Final = f"downloaded wheel {result.name} does not support Python {for_py_version}"
+             raise RuntimeError(msg)

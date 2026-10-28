@@ -402,6 +402,12 @@ Static analysis runs on every pull request and every push to ``main``:
 - ``codeql.yaml`` runs CodeQL with the ``security-extended`` suite and the project queries under
   ``.github/codeql/queries`` on the Python code, and the Actions analysis on the workflows. It also runs every Tuesday.
 
+Each project query comes with a patch under ``.github/codeql/mutants`` that brings back the bug the query guards
+against. The CodeQL query job in ``check.yaml`` fails when a query reports nothing on ``src/virtualenv`` with its patch
+applied, or reports anything without it, so a refactor that moves the code out from under a query fails CI instead of
+leaving the query matching nothing. A patch that no longer applies fails the job too; regenerate it with ``git diff``
+after reintroducing the bug by hand.
+
 A finding blocks a merge at these thresholds:
 
 - Any ruff, zizmor or ty finding fails a required check.
