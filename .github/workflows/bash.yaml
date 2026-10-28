@@ -1,0 +1,57 @@
+name: 🐚 bash versions
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/bash.yaml"
+      - "src/virtualenv/activation/bash/**"
+      - "tests/unit/activation/test_activator.py"
+      - "tests/unit/activation/test_bash.py"
+  schedule:
+    - cron: "0 9 * * 3"
+  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+permissions: {}
+jobs:
+  prompt:
+    name: 🐚 prompt tests on bash ${{ matrix.bash }}
+    if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read # check out the activator and its tests
+    container:
+      image: bash:${{ matrix.bash }}
+      # bash draws an escaped dollar in the prompt as # for root, so the tests run as the runner's own user
+      options: --user 1001
+    strategy:
+      fail-fast: false
+      matrix:
+        bash: ["3.2", "4.0", "4.1", "4.2", "4.3", "4.4", "5.0", "5.1", "5.2", "5.3"]
+    steps:
+      - name: 📥 Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: 🐍 Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: latest-known
+          python-version: "3.15"
+          activate-environment: true
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+          cache-suffix: bash
+      - name: 📦 Install virtualenv and the test dependencies
+        run: uv pip install . --group test
+        env:
+          # the image has no git, so checkout downloads a tarball that hatch-vcs cannot read a version from
+          SETUPTOOLS_SCM_PRETEND_VERSION: "0.0.0"
+      - name: 🐚 Check that bash ${{ matrix.bash }} is the bash on PATH
+        env:
+          MATRIX_BASH: ${{ matrix.bash }}
+        run: test "$(bash -c 'echo "${BASH_VERSINFO[0]}.${BASH_VERSINFO[1]}"')" = "$MATRIX_BASH"
+      - name: 🧪 Run the prompt tests
+        # test_activator.py holds the prompt state matrix every shell shares; the shells the image lacks skip
+        run: python -m pytest tests/unit/activation/test_bash.py tests/unit/activation/test_activator.py -k prompt -n auto
