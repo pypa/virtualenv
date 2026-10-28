@@ -48,17 +48,14 @@ class PipInstall(ABC):
         self._wheel = wheel
         self._creator = creator
         self._image_dir = image_folder
-        self._extracted = False
-        self.__dist_info = None
-        self._console_entry_points = None
 
     @abstractmethod
     def _sync(self, src: Path, dst: Path) -> None:
         raise NotImplementedError
 
     def install(self, version_info: tuple[int, ...]) -> None:
-        self._extracted = True
-        self._uninstall_previous_version()
+        dist_info: Final = self._find_dist_info(self._image_dir)
+        self._uninstall_previous_version(dist_info)
         # sync image
         for filename in self._image_dir.iterdir():
             into = self._creator.purelib / filename.name
@@ -66,7 +63,7 @@ class PipInstall(ABC):
         # generate console executables
         consoles = set()
         script_dir = self._creator.script_dir
-        for name, module in self._console_scripts.items():  # ty: ignore[unresolved-attribute]
+        for name, module in self._read_console_scripts(dist_info).items():
             consoles.update(self._create_console_entry_point(name, module, script_dir, version_info))
         LOGGER.debug("generated console scripts %s", " ".join(i.name for i in consoles))
 
@@ -81,118 +78,98 @@ class PipInstall(ABC):
         :raises RuntimeError: if the wheel contains an entry that would land outside the image directory.
 
         """
-        image_dir: Final = self._image_dir
         # beside the installer folder the staging path is exactly as long as the image path, so the Windows path length
         # limits hit the build the same way they would hit the image
-        staging: Final = image_dir.parent.with_name(f"{image_dir.parent.name}-{image_dir.name}")
+        staging: Final = self._image_dir.parent.with_name(f"{self._image_dir.parent.name}-{self._image_dir.name}")
         if staging.exists():
             safe_delete(staging)
-        image_dir.parent.mkdir(parents=True, exist_ok=True)
+        self._image_dir.parent.mkdir(parents=True, exist_ok=True)
         staging.mkdir()
-        self._image_dir = staging
-        try:
-            self._populate_image()
-            # keep the short path Windows may have switched the staging directory to, the install reads through it
-            built: Final = self._image_dir.parent / image_dir.parent.name / image_dir.name
-            with suppress(FileNotFoundError):
-                built.rmdir()  # an empty image directory counts as missing, but blocks the rename on Windows
-            os.replace(self._image_dir, built)
-        except BaseException:
-            safe_delete(self._image_dir)  # the staging directory, through the short path if Windows switched to it
-            raise
-        self._image_dir = built
-        self.__dist_info = None  # it points into the staging directory
-
-    def _populate_image(self) -> None:
-        # 1. first extract the wheel
-        LOGGER.debug("build install image for %s to %s", self._wheel.name, self._image_dir)
         with zipfile.ZipFile(str(self._wheel)) as zip_ref:
-            self._shorten_path_if_needed(zip_ref)
-            _safe_extract_zip(zip_ref, self._image_dir)
-            self._extracted = True
-        # 2. now add additional files not present in the distribution
-        new_files = self._generate_new_files()
-        # 3. finally fix the records file
-        self._fix_records(new_files)
+            folder: Final = self._short_path_if_needed(zip_ref, staging)
+            try:
+                self._populate_image(zip_ref, folder)
+                # keep the short path Windows may have switched to, the install reads through it
+                built: Final = folder.parent / self._image_dir.parent.name / self._image_dir.name
+                with suppress(FileNotFoundError):
+                    built.rmdir()  # an empty image directory counts as missing, but blocks the rename on Windows
+                os.replace(folder, built)
+            except BaseException:
+                safe_delete(folder)
+                raise
+        self._image_dir = built
 
-    def _shorten_path_if_needed(self, zip_ref: zipfile.ZipFile) -> None:
-        if os.name == "nt":
-            to_folder = str(self._image_dir)
-            # https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
-            zip_max_len = max(len(i) for i in zip_ref.namelist())
-            path_len = zip_max_len + len(to_folder)
-            if path_len > 260:  # ruff:ignore[magic-value-comparison]
-                self._image_dir.mkdir(exist_ok=True)  # to get a short path must exist
+    @staticmethod
+    def _short_path_if_needed(zip_ref: zipfile.ZipFile, folder: Path) -> Path:
+        if os.name != "nt":
+            return folder
+        # https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
+        if max(len(i) for i in zip_ref.namelist()) + len(str(folder)) <= 260:  # ruff:ignore[magic-value-comparison]
+            return folder
+        from virtualenv.util.path import get_short_path_name  # ruff:ignore[import-outside-top-level]
 
-                from virtualenv.util.path import get_short_path_name  # ruff:ignore[import-outside-top-level]
+        return Path(get_short_path_name(str(folder)))
 
-                to_folder = get_short_path_name(to_folder)
-                self._image_dir = Path(to_folder)
+    def _populate_image(self, zip_ref: zipfile.ZipFile, folder: Path) -> None:
+        LOGGER.debug("build install image for %s to %s", self._wheel.name, folder)
+        _safe_extract_zip(zip_ref, folder)
+        dist_info: Final = self._find_dist_info(folder)
+        self._fix_records(folder, dist_info, self._generate_new_files(folder, dist_info))
 
-    def _records_text(self, files: set[Path] | list[Path]) -> str:
-        return "\n".join(f"{os.path.relpath(str(rec), str(self._image_dir))},," for rec in files)
+    @staticmethod
+    def _find_dist_info(folder: Path) -> Path:
+        files = []
+        for filename in folder.iterdir():
+            files.append(filename.name)
+            if filename.suffix == ".dist-info":
+                return filename
+        msg = f"no .dist-info at {folder}, has {', '.join(files)}"
+        raise RuntimeError(msg)  # pragma: no cover
 
-    def _generate_new_files(self) -> set[Path]:
+    def _generate_new_files(self, folder: Path, dist_info: Path) -> set[Path]:
         new_files = set()
-        installer = self._dist_info / "INSTALLER"  # ty: ignore[unsupported-operator]
+        installer = dist_info / "INSTALLER"
         installer.write_text("pip\n", encoding="utf-8")
         new_files.add(installer)
         # inject a no-op root element, as workaround for bug in https://github.com/pypa/pip/issues/7226
-        marker = self._image_dir / f"{self._dist_info.stem}.virtualenv"  # ty: ignore[unresolved-attribute]
+        marker = folder / f"{dist_info.stem}.virtualenv"
         marker.write_text("", encoding="utf-8")
         new_files.add(marker)
-        folder = mkdtemp()
+        to_folder: Final = Path(mkdtemp())
         try:
-            to_folder = Path(folder)
             rel = os.path.relpath(str(self._creator.script_dir), str(self._creator.purelib))
             version_info = self._creator.interpreter.version_info
-            for name, module in self._console_scripts.items():  # ty: ignore[unresolved-attribute]
+            for name, module in self._read_console_scripts(dist_info).items():
                 new_files.update(
-                    Path(os.path.normpath(str(self._image_dir / rel / i.name)))
+                    Path(os.path.normpath(str(folder / rel / i.name)))
                     for i in self._create_console_entry_point(name, module, to_folder, version_info)  # ty: ignore[invalid-argument-type]
                 )
         finally:
-            safe_delete(folder)  # ty: ignore[invalid-argument-type]
+            safe_delete(to_folder)
         return new_files
 
-    @property
-    def _dist_info(self) -> Path | None:
-        if self._extracted is False:
-            return None  # pragma: no cover
-        if self.__dist_info is None:
-            files = []
-            for filename in self._image_dir.iterdir():
-                files.append(filename.name)
-                if filename.suffix == ".dist-info":
-                    self.__dist_info = filename
-                    break
-            else:
-                msg = f"no .dist-info at {self._image_dir}, has {', '.join(files)}"
-                raise RuntimeError(msg)  # pragma: no cover
-        return self.__dist_info
-
     @abstractmethod
-    def _fix_records(self, extra_record_data: set[Path]) -> None:
+    def _fix_records(self, folder: Path, dist_info: Path, extra_record_data: set[Path]) -> None:
         raise NotImplementedError
 
-    @property
-    def _console_scripts(self) -> dict[str, str] | None:
-        if self._extracted is False:
-            return None  # pragma: no cover
-        if self._console_entry_points is None:
-            self._console_entry_points = {}
-            entry_points = self._dist_info / "entry_points.txt"  # ty: ignore[unsupported-operator]
-            if entry_points.exists():
-                parser = EntryPointConfig(interpolation=None, strict=False)
-                with entry_points.open(encoding="utf-8") as file_handler:
-                    parser.read_file(file_handler)
-                if "console_scripts" in parser.sections():
-                    for name, value in parser.items("console_scripts"):
-                        # fold only a trailing version (pip3, pip-3.13), so python3-config and 2to3 keep their names
-                        match = re.fullmatch(r"([^\W\d]\w*?)-?\d+(?:\.\d+)*", name)
-                        our_name = match.group(1) if match else name
-                        self._console_entry_points[our_name] = value
-        return self._console_entry_points
+    @staticmethod
+    def _records_text(folder: Path, files: set[Path] | list[Path]) -> str:
+        return "\n".join(f"{os.path.relpath(str(rec), str(folder))},," for rec in files)
+
+    @staticmethod
+    def _read_console_scripts(dist_info: Path) -> dict[str, str]:
+        scripts: Final[dict[str, str]] = {}
+        entry_points = dist_info / "entry_points.txt"
+        if entry_points.exists():
+            parser = EntryPointConfig(interpolation=None, strict=False)
+            with entry_points.open(encoding="utf-8") as file_handler:
+                parser.read_file(file_handler)
+            if "console_scripts" in parser.sections():
+                for name, value in parser.items("console_scripts"):
+                    # fold only a trailing version (pip3, pip-3.13), so python3-config and 2to3 keep their names
+                    match = re.fullmatch(r"([^\W\d]\w*?)-?\d+(?:\.\d+)*", name)
+                    scripts[match.group(1) if match else name] = value
+        return scripts
 
     def _create_console_entry_point(
         self, name: str, value: str, to_folder: Path, version_info: tuple[int, ...]
@@ -204,8 +181,8 @@ class PipInstall(ABC):
         result.extend(Path(i) for i in new_files)
         return result
 
-    def _uninstall_previous_version(self) -> None:
-        dist_name = self._dist_info.stem.split("-")[0]  # ty: ignore[unresolved-attribute]
+    def _uninstall_previous_version(self, dist_info: Path) -> None:
+        dist_name = dist_info.stem.split("-")[0]
         in_folders = chain.from_iterable([i.iterdir() for i in (self._creator.purelib, self._creator.platlib)])
         paths = (p for p in in_folders if p.stem.split("-")[0] == dist_name and p.suffix == ".dist-info" and p.is_dir())
         existing_dist = next(paths, None)

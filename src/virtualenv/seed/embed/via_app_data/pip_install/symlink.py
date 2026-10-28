@@ -11,6 +11,7 @@ from virtualenv.util.subprocess import run_cmd
 from .base import PipInstall
 
 if TYPE_CHECKING:
+    import zipfile
     from pathlib import Path
 
 
@@ -18,7 +19,7 @@ class SymlinkPipInstall(PipInstall):
     def _sync(self, src: Path, dst: Path) -> None:
         os.symlink(str(src), str(dst))
 
-    def _generate_new_files(self) -> set[Path]:
+    def _generate_new_files(self, folder: Path, dist_info: Path) -> set[Path]:
         # create the pyc files, as the build image will be R/O
         cmd = [
             str(self._creator.exe),
@@ -28,23 +29,23 @@ class SymlinkPipInstall(PipInstall):
                 "import sys; sys.path[:] = [p for p in sys.path if p != '']; "
                 "import runpy; runpy.run_module('compileall', run_name='__main__', alter_sys=True)"
             ),
-            str(self._image_dir),
+            str(folder),
         ]
         code, out, err = run_cmd(cmd)
         if code != 0:
             raise ProcessCallFailedError(code, out, err, cmd)
         # the root pyc is shared, so we'll not symlink that - but still add the pyc files to the RECORD for close
-        root_py_cache = self._image_dir / "__pycache__"
+        root_py_cache = folder / "__pycache__"
         new_files = set()
         if root_py_cache.exists():
             new_files.update(root_py_cache.iterdir())
             new_files.add(root_py_cache)
             safe_delete(root_py_cache)
-        core_new_files = super()._generate_new_files()
+        core_new_files = super()._generate_new_files(folder, dist_info)
         # remove files that are within the image folder deeper than one level (as these will be not linked directly)
         for file in core_new_files:
             try:
-                rel = file.relative_to(self._image_dir)
+                rel = file.relative_to(folder)
                 if len(rel.parts) > 1:
                     continue
             except ValueError:
@@ -52,15 +53,15 @@ class SymlinkPipInstall(PipInstall):
             new_files.add(file)
         return new_files
 
-    def _fix_records(self, extra_record_data: set[Path]) -> None:
-        extra_record_data.update(i for i in self._image_dir.iterdir())
-        extra_record_data_str = self._records_text(sorted(extra_record_data, key=str))  # ty: ignore[invalid-argument-type]
-        (self._dist_info / "RECORD").write_text(extra_record_data_str, encoding="utf-8")  # ty: ignore[unsupported-operator]
+    def _fix_records(self, folder: Path, dist_info: Path, extra_record_data: set[Path]) -> None:
+        extra_record_data.update(folder.iterdir())
+        extra_record_data_str = self._records_text(folder, sorted(extra_record_data, key=str))
+        (dist_info / "RECORD").write_text(extra_record_data_str, encoding="utf-8")
 
-    def _populate_image(self) -> None:
-        super()._populate_image()
+    def _populate_image(self, zip_ref: zipfile.ZipFile, folder: Path) -> None:
+        super()._populate_image(zip_ref, folder)
         # protect the image by making it read only
-        set_tree(self._image_dir, S_IREAD | S_IRGRP | S_IROTH)
+        set_tree(folder, S_IREAD | S_IRGRP | S_IROTH)
 
     def clear(self) -> None:
         if self._image_dir.exists():
