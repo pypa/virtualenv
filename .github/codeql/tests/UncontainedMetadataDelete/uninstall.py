@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import shutil
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -19,7 +19,7 @@ def uninstall_unchecked(dist: Path) -> None:
 
 
 def uninstall_contained(dist: Path, env_dir: Path) -> None:
-    root = env_dir.resolve()
+    root: Final = env_dir.resolve()
     for name in (dist / "top_level.txt").read_text(encoding="utf-8").splitlines():
         entry = dist.parent / name
         if root not in entry.resolve().parents:
