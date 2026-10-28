@@ -408,11 +408,28 @@ jobs:
           exit "$failed"
         env:
           CODEQL: ${{ steps.codeql.outputs.codeql-path }}
+  semgrep:
+    name: 🔍 Semgrep activation rules
+    if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read # check out the rules and the activation template
+    steps:
+      - name: 📥 Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: 🐍 Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          version: latest-known
+      - name: 🔍 Run the semgrep hooks
+        run: uvx --from pre-commit-uv pre-commit run semgrep --all-files
   all-checks-pass:
     name: 🚦 ${{ github.event_name == 'pull_request' && 'Required checks pass' || 'Non-PR checks pass' }}
     # the gate shares the jobs' condition, so every job it needs has run and a skip counts as a failure
     if: ${{ !cancelled() && (github.event_name != 'schedule' || github.repository_owner == 'pypa') }} # codespell:ignore cancelled
-    needs: [test, coverage, check, test-queries]
+    needs: [test, coverage, check, test-queries, semgrep]
     runs-on: ubuntu-24.04
     permissions: {}
     steps:

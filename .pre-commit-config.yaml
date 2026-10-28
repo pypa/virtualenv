@@ -1,5 +1,7 @@
 ci:
   autoupdate_schedule: quarterly
+  # pre-commit.ci caps a hook environment at 250 MiB and semgrep's takes 346 MiB, so check.yaml runs these hooks
+  skip: [semgrep]
 default_language_version:
   python: python3.14
 repos:
@@ -61,6 +63,26 @@ repos:
         exclude: |
           (?x)
           ^pylock[.]toml$  # Generated package names are not project prose.
+  - repo: https://github.com/semgrep/pre-commit
+    rev: dfdeebdd309a043859ba33a555839911e7b11801 # frozen: v1.182.1
+    hooks:
+      - id: semgrep
+        name: semgrep activation rules
+        args:
+          - --config
+          - .github/semgrep/activation.yml
+          - --error
+          - --quiet
+          - --disable-version-check
+          - src/virtualenv/activation/bash/activate.sh
+        files: '^(\.github/semgrep/activation\.yml|src/virtualenv/activation/bash/activate\.sh)$'
+        pass_filenames: false
+      - id: semgrep
+        alias: semgrep-test
+        name: semgrep activation rule tests
+        args: ["--test", "--quiet", "--disable-version-check", ".github/semgrep"]
+        files: '^\.github/semgrep/'
+        pass_filenames: false
   - repo: meta
     hooks:
       - id: check-hooks-apply

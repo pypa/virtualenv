@@ -1,0 +1,41 @@
+rules:
+  - id: ps1-reads-virtual-env-prompt
+    message: $NAME reads VIRTUAL_ENV_PROMPT, which bash and zsh decode on every draw; use the escaped _VIRTUAL_PROMPT
+    languages: [bash]
+    severity: ERROR
+    patterns:
+      - pattern-either:
+          - pattern-inside: $NAME=...
+          - pattern-inside: $NAME+=...
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: ^(PS1|PROMPT|_VIRTUAL_PROMPT)$
+      # the parser keeps single-quoted text as one literal, so a deferred '${VIRTUAL_ENV_PROMPT-}' has no
+      # expansion node to match
+      - pattern-regex: \bVIRTUAL_ENV_PROMPT\b
+  - id: ps1-before-prompt-escaping
+    message: $NAME is set outside the if/else that escapes the prompt; move it below the block
+    languages: [bash]
+    severity: ERROR
+    patterns:
+      - pattern-either:
+          - pattern: $NAME=...
+          - pattern: $NAME+=...
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: ^(PS1|PROMPT)$
+      - pattern-not: $NAME="${_OLD_VIRTUAL_PS1}"
+      # structure only: what the loop does to each character is the prompt tests' job
+      - pattern-not-inside: |
+          if [ -n "${BASH_VERSION-}" ]; then
+              ...
+              while [ -n "${_VIRTUAL_REST}" ]; do
+                  ...
+              done
+              ...
+          else
+              ...
+              psvar[9]="${VIRTUAL_ENV_PROMPT}"
+              ...
+          fi
+          ...
