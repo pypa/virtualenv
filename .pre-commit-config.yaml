@@ -1,5 +1,7 @@
 ci:
   autoupdate_schedule: quarterly
+  # pre-commit.ci caps a hook environment at 250 MiB and semgrep's takes 346 MiB, so check.yaml runs these hooks
+  skip: [semgrep]
 default_language_version:
   python: python3.14
 repos:
