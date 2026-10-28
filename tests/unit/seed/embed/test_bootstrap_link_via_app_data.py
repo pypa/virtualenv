@@ -77,6 +77,57 @@ def unusable_cache(tmp_path: Path) -> Path:
     return blocked / "cache"
 
 
+@pytest.mark.parametrize(
+    ("config_text", "env_vars", "flags"),
+    [
+        pytest.param("", {"VIRTUALENV_SYMLINK_APP_DATA": "true"}, (), id="environment"),
+        pytest.param("[virtualenv]\nsymlink_app_data = true\n", {}, (), id="configuration"),
+        pytest.param("", {}, ("--symlink-app-data",), id="command-line"),
+    ],
+)
+@pytest.mark.usefixtures("symlinks_unsupported")
+def test_seed_copies_when_symlinks_unsupported(
+    tmp_path: Path, config_text: str, env_vars: dict[str, str], flags: tuple[str, ...]
+) -> None:
+    config: Final = tmp_path / "virtualenv.ini"
+    config.write_text(config_text, encoding="utf-8")
+    session: Final = cli_run(
+        [
+            str(tmp_path / "env"),
+            "--app-data",
+            str(tmp_path / "cache"),
+            "--no-periodic-update",
+            "--no-setuptools",
+            *flags,
+        ],
+        env={**os.environ, "VIRTUALENV_CONFIG_FILE": str(config), **env_vars},
+    )
+    pip: Final = session.creator.purelib / "pip"
+    assert (
+        session.creator.app_data.transient,
+        pip.is_symlink(),
+        (pip / "__init__.py").is_file(),
+    ) == (False, False, True)
+
+
+@pytest.mark.usefixtures("symlinks_unsupported")
+def test_seed_reports_copy_fallback_when_symlinks_unsupported(tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
+    caplog.set_level(logging.DEBUG)
+    cli_run(
+        [str(tmp_path / "env"), "--app-data", str(tmp_path / "cache"), "--no-periodic-update", "--no-setuptools"],
+        env={**os.environ, "VIRTUALENV_SYMLINK_APP_DATA": "true"},
+        setup_logging=False,
+    )
+    assert "copy seed packages because the filesystem does not support symlinks" in caplog.text
+
+
+@pytest.fixture
+def symlinks_unsupported(mocker: MockerFixture) -> None:
+    mocker.patch(
+        "virtualenv.seed.embed.via_app_data.via_app_data.fs_supports_symlink", autospec=True, return_value=False
+    )
+
+
 @pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
 @pytest.mark.parametrize(
     ("where", "name"),
