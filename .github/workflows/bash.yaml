@@ -1,5 +1,11 @@
 name: 🐚 bash versions
 on:
+  pull_request:
+    paths:
+      - ".github/workflows/bash.yaml"
+      - "src/virtualenv/activation/bash/**"
+      - "tests/unit/activation/test_activator.py"
+      - "tests/unit/activation/test_bash.py"
   schedule:
     - cron: "0 9 * * 3"
   workflow_dispatch:
@@ -10,7 +16,7 @@ permissions: {}
 jobs:
   prompt:
     name: 🐚 prompt tests on bash ${{ matrix.bash }}
-    if: github.repository_owner == 'pypa'
+    if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
