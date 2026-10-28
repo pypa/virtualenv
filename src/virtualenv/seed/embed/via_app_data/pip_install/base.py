@@ -162,7 +162,8 @@ class PipInstall(ABC):
                     parser.read_file(file_handler)
                 if "console_scripts" in parser.sections():
                     for name, value in parser.items("console_scripts"):
-                        match = re.match(r"(.*?)-?\d\.?\d*", name)
+                        # fold only a trailing version (pip3, pip-3.13), so python3-config and 2to3 keep their names
+                        match = re.fullmatch(r"([^\W\d]\w*?)-?\d+(?:\.\d+)*", name)
                         our_name = match.group(1) if match else name
                         self._console_entry_points[our_name] = value
         return self._console_entry_points
