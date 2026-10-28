@@ -53,9 +53,9 @@ module UncontainedMetadataDeleteConfig implements DataFlow::ConfigSig {
       check.operands(_, op, parents) and
       parents.(AttrNode).getName() = "parents" and
       (
-        op instanceof In and inside = true
+        op.getSymbol() = "in" and inside = true
         or
-        op instanceof NotIn and inside = false
+        op.getSymbol() = "not in" and inside = false
       ) and
       guard.controls(node.asCfgNode().getBasicBlock(), inside)
     )
