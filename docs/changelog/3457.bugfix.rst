@@ -1,2 +1,0 @@
-Count each ``-v``, ``-q``, ``-p`` and ``--try-first-with`` option once instead of once per internal parsing pass, so
-``Session.verbosity`` is 3 rather than 9 for a single ``-v``.

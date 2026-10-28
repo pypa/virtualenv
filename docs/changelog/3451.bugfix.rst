@@ -1,3 +1,0 @@
-Keep the name of a seeded ``console_scripts`` entry that contains digits but does not end in a version, such as
-``python3-config`` or ``2to3``, instead of truncating it at the first digit; ``python3-config`` overwrote the
-environment's ``python`` executable.

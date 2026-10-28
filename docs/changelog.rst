@@ -6,6 +6,32 @@
 
 .. towncrier release notes start
 
+.. _release-21-15-1:
+
+**********************
+ 21.15.1 (2026-10-28)
+**********************
+
+.. _release-21-15-1-fixed:
+
+Fixed
+-----
+
+- Keep the name of a seeded ``console_scripts`` entry that contains digits but does not end in a version, such as
+  ``python3-config`` or ``2to3``, instead of truncating it at the first digit; ``python3-config`` overwrote the
+  environment's ``python`` executable (:pr:`3451`) by :user:`JingHao-Leon` and :user:`gaborbernat`.
+- Copy the content of a symlinked directory when a tree is copied into an environment, instead of dropping it
+  (:pr:`3454`) by :user:`JingHao-Leon` and :user:`gaborbernat`.
+- Count each ``-v``, ``-q``, ``-p`` and ``--try-first-with`` option once instead of once per internal parsing pass, so
+  ``Session.verbosity`` is 3 rather than 9 for a single ``-v`` (:pr:`3457`) by :user:`darrenhuai` and
+  :user:`gaborbernat`.
+- Copy the seed packages instead of failing when ``VIRTUALENV_SYMLINK_APP_DATA`` or ``symlink_app_data`` in the config
+  file turns on symlink seeding on a host that cannot create symlinks, such as Windows without the symlink privilege
+  (:pr:`3465`) by :user:`darrenhuai` and :user:`gaborbernat`.
+- Run the interpreter that collects the target debug information (``-vv`` output and ``Creator.debug``) without
+  ``PYTHONPATH`` and with the environment passed to ``cli_run``, so the reported ``sys.path`` no longer lists the
+  caller's ``PYTHONPATH`` entries (:pr:`3474`) by :user:`RaphaelFakhri` and :user:`gaborbernat`.
+
 .. _release-21-15-0:
 
 **********************
