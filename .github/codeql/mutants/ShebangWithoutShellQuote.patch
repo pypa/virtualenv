@@ -1,0 +1,13 @@
+diff --git a/src/virtualenv/seed/embed/via_app_data/pip_install/base.py b/src/virtualenv/seed/embed/via_app_data/pip_install/base.py
+index 2fd3ac26..3a9153fb 100644
+--- a/src/virtualenv/seed/embed/via_app_data/pip_install/base.py
++++ b/src/virtualenv/seed/embed/via_app_data/pip_install/base.py
+@@ -256,7 +256,7 @@ class ScriptMakerCustom(ScriptMaker):
+         shebang: Final = super()._build_shebang(executable, post_interp)
+         if os.name != "posix" or len(shebang.split()) == 1:
+             return shebang
+-        return shell_shebang(self._raw_executable, post_interp)
++        return b"#!" + self._raw_executable.encode() + post_interp + b"\n"
+
+     def _write_script(
+         self, names: set[str], shebang: bytes, script_bytes: bytes, filenames: list[str], ext: str

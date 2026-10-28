@@ -370,8 +370,42 @@ jobs:
         uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           languages: python
+      - name: 🎨 Check query formatting
+        run: '"$CODEQL" query format --check-only .github/codeql/queries/*.ql'
+        env:
+          CODEQL: ${{ steps.codeql.outputs.codeql-path }}
       - name: 🧪 Run query tests
         run: '"$CODEQL" test run .github/codeql/tests'
+        env:
+          CODEQL: ${{ steps.codeql.outputs.codeql-path }}
+      - name: 🧬 Check queries flag their mutant and pass the clean tree
+        run: |
+          scan() {
+            "$CODEQL" database create "$1/db" --language=python --source-root="$1/src" --quiet
+            "$CODEQL" database analyze "$1/db" "$2" --format=sarif-latest --output="$1/results.sarif" --quiet
+          }
+          failed=0
+          # one database per mutant, so a query cannot pass on another query's mutant
+          for query in .github/codeql/queries/*.ql; do
+            name=$(basename "$query" .ql)
+            tree="$RUNNER_TEMP/mutant-$name"
+            mkdir -p "$tree/src"
+            cp -r src/virtualenv "$tree/src"
+            git -C "$tree" apply "$GITHUB_WORKSPACE/.github/codeql/mutants/$name.patch"
+            scan "$tree" "$query"
+            if ! jq -e '[.runs[].results[]] | length > 0' "$tree/results.sarif" >/dev/null; then
+              echo "::error file=$query::$name reports nothing on the code its mutant patch breaks"
+              failed=1
+            fi
+          done
+          mkdir -p "$RUNNER_TEMP/clean/src"
+          cp -r src/virtualenv "$RUNNER_TEMP/clean/src"
+          scan "$RUNNER_TEMP/clean" .github/codeql/queries
+          jq -r '.runs[].results[] | .locations[0].physicalLocation as $at
+            | "::error file=src/\($at.artifactLocation.uri),line=\($at.region.startLine)::\(.ruleId): \(.message.text)"' \
+            "$RUNNER_TEMP/clean/results.sarif"
+          jq -e '[.runs[].results[]] | length == 0' "$RUNNER_TEMP/clean/results.sarif" >/dev/null
+          exit "$failed"
         env:
           CODEQL: ${{ steps.codeql.outputs.codeql-path }}
   semgrep:

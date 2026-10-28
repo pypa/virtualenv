@@ -17,8 +17,11 @@ from Function download, Call popen
 where
   popen.getScope() = download and
   popen.getFunc().(Name).getId() = "Popen" and
-  exists(StringLiteral subcommand | subcommand.getScope() = download and subcommand.getText() = "download") and
+  exists(StringLiteral subcommand |
+    subcommand.getScope() = download and subcommand.getText() = "download"
+  ) and
   not exists(Call verify |
     verify.getScope() = download and verify.getFunc().(Name).getId() = "verify_wheel_digest"
   )
-select popen, "This pip download in $@ never calls verify_wheel_digest().", download, download.getName()
+select popen, "This pip download in $@ never calls verify_wheel_digest().", download,
+  download.getName()

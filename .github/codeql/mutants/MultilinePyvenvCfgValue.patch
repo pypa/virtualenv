@@ -1,0 +1,13 @@
+diff --git a/src/virtualenv/create/pyenv_cfg.py b/src/virtualenv/create/pyenv_cfg.py
+index 2e0d8692..9ef87885 100644
+--- a/src/virtualenv/create/pyenv_cfg.py
++++ b/src/virtualenv/create/pyenv_cfg.py
+@@ -64,7 +64,7 @@ class PyEnvCfg:
+                 normalized_value = os.path.abspath(value)
+             else:
+                 normalized_value = value
+-            line = f"{collapse_line_boundaries(key)} = {collapse_line_boundaries(normalized_value)}"
++            line = f"{key} = {normalized_value}"
+             LOGGER.debug("\t%r", line)
+             text += line
+             text += "\n"
