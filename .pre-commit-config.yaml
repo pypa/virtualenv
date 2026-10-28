@@ -61,6 +61,26 @@ repos:
         exclude: |
           (?x)
           ^pylock[.]toml$  # Generated package names are not project prose.
+  - repo: https://github.com/semgrep/pre-commit
+    rev: v1.182.1
+    hooks:
+      - id: semgrep
+        name: semgrep activation rules
+        args:
+          - --config
+          - .github/semgrep/activation.yml
+          - --error
+          - --quiet
+          - --disable-version-check
+          - src/virtualenv/activation/bash/activate.sh
+        files: '^(\.github/semgrep/activation\.yml|src/virtualenv/activation/bash/activate\.sh)$'
+        pass_filenames: false
+      - id: semgrep
+        alias: semgrep-test
+        name: semgrep activation rule tests
+        args: ["--test", "--quiet", "--disable-version-check", ".github/semgrep"]
+        files: '^\.github/semgrep/'
+        pass_filenames: false
   - repo: meta
     hooks:
       - id: check-hooks-apply
