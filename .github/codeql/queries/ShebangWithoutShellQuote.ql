@@ -17,5 +17,7 @@ where
   build.getName() = "_build_shebang" and
   owner = build.getScope() and
   owner.getABase().(Name).getId() = "ScriptMaker" and
-  not exists(Call call | call.getScope() = build and call.getFunc().(Name).getId() = "shell_shebang")
+  not exists(Call call |
+    call.getScope() = build and call.getFunc().(Name).getId() = "shell_shebang"
+  )
 select build, "_build_shebang does not quote the interpreter path with shell_shebang()."
