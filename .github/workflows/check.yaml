@@ -409,7 +409,7 @@ jobs:
         env:
           CODEQL: ${{ steps.codeql.outputs.codeql-path }}
   all-checks-pass:
-    name: 🚦 All checks pass
+    name: 🚦 ${{ github.event_name == 'pull_request' && 'Required checks pass' || 'Non-PR checks pass' }}
     # the gate shares the jobs' condition, so every job it needs has run and a skip counts as a failure
     if: ${{ !cancelled() && (github.event_name != 'schedule' || github.repository_owner == 'pypa') }} # codespell:ignore cancelled
     needs: [test, coverage, check, test-queries]
