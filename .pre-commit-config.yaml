@@ -64,7 +64,7 @@ repos:
           (?x)
           ^pylock[.]toml$  # Generated package names are not project prose.
   - repo: https://github.com/semgrep/pre-commit
-    rev: v1.182.1
+    rev: dfdeebdd309a043859ba33a555839911e7b11801 # frozen: v1.182.1
     hooks:
       - id: semgrep
         name: semgrep activation rules

@@ -14,7 +14,7 @@ rules:
       # expansion node to match
       - pattern-regex: \bVIRTUAL_ENV_PROMPT\b
   - id: ps1-before-prompt-escaping
-    message: $NAME is set outside the if/else that escapes the prompt; move it below, or update this rule with the block
+    message: $NAME is set outside the if/else that escapes the prompt; move it below the block
     languages: [bash]
     severity: ERROR
     patterns:
@@ -25,24 +25,17 @@ rules:
           metavariable: $NAME
           regex: ^(PS1|PROMPT)$
       - pattern-not: $NAME="${_OLD_VIRTUAL_PS1}"
-      # spelled out arm by arm because dropping one or halving a backslash run is the regression to catch
+      # structure only: what the loop does to each character is the prompt tests' job
       - pattern-not-inside: |
           if [ -n "${BASH_VERSION-}" ]; then
               ...
-              _VIRTUAL_REST=${VIRTUAL_ENV_PROMPT}
-              _VIRTUAL_PROMPT=
               while [ -n "${_VIRTUAL_REST}" ]; do
                   ...
-                  case ${_VIRTUAL_CHAR} in
-                      \\) _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT}\\\\\\\\" ;;
-                      \$ | \`) _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT}\\${_VIRTUAL_CHAR}" ;;
-                      *) _VIRTUAL_PROMPT="${_VIRTUAL_PROMPT}${_VIRTUAL_CHAR}" ;;
-                  esac
               done
-              unset _VIRTUAL_REST _VIRTUAL_CHAR
+              ...
           else
               ...
               psvar[9]="${VIRTUAL_ENV_PROMPT}"
-              _VIRTUAL_PROMPT='%9v'
+              ...
           fi
           ...

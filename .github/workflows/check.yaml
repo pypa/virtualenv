@@ -379,7 +379,7 @@ jobs:
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ubuntu-24.04
     permissions:
-      contents: read
+      contents: read # check out the rules and the activation template
     steps:
       - name: 📥 Check out code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
