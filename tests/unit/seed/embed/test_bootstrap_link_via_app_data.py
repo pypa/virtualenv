@@ -540,22 +540,21 @@ def _run_parallel_threads(tmp_path):
     return exceptions
 
 
+_DISK_FULL: Final = OSError(errno.ENOSPC, "No space left on device")
+
+
 def _fail_during_extraction(zip_ref: zipfile.ZipFile, target_dir: Path) -> None:
     # stop short of the last entries, where the wheel keeps its dist-info files
     for info in zip_ref.infolist()[:-5]:
         zip_ref.extract(info, str(target_dir))
-    raise OSError(errno.ENOSPC, "No space left on device")
-
-
-def _fail_after_extraction(*_: object) -> None:
-    raise OSError(errno.ENOSPC, "No space left on device")
+    raise _DISK_FULL
 
 
 @pytest.mark.parametrize(
     ("target", "failure", "linked"),
     [
         pytest.param("base._safe_extract_zip", _fail_during_extraction, False, id="copy-extract"),
-        pytest.param("base.PipInstall._generate_new_files", _fail_after_extraction, False, id="copy-finish"),
+        pytest.param("base.PipInstall._generate_new_files", _DISK_FULL, False, id="copy-finish"),
         pytest.param(
             "base._safe_extract_zip",
             _fail_during_extraction,
@@ -565,14 +564,14 @@ def _fail_after_extraction(*_: object) -> None:
         ),
         pytest.param(
             "base.PipInstall._generate_new_files",
-            _fail_after_extraction,
+            _DISK_FULL,
             True,
             id="symlink-finish",
             marks=pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable"),
         ),
         pytest.param(
             "symlink.set_tree",
-            _fail_after_extraction,
+            _DISK_FULL,
             True,
             id="symlink-read-only",
             marks=pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable"),
@@ -580,7 +579,11 @@ def _fail_after_extraction(*_: object) -> None:
     ],
 )
 def test_seed_image_build_failure_leaves_no_partial_image(
-    tmp_path: Path, mocker: MockerFixture, target: str, failure: Callable[..., None], linked: bool
+    tmp_path: Path,
+    mocker: MockerFixture,
+    target: str,
+    failure: Callable[[zipfile.ZipFile, Path], None] | OSError,
+    linked: bool,
 ) -> None:
     cache: Final = tmp_path / "cache"
     args: Final = [
@@ -609,18 +612,19 @@ def test_seed_image_build_failure_leaves_no_partial_image(
 
 
 @pytest.mark.parametrize(
-    ("leftover", "kept"),
-    [pytest.param("staging", False, id="killed-build"), pytest.param("image", True, id="empty-image")],
+    ("leftover", "files", "kept"),
+    [
+        pytest.param("CopyPipInstall-{}", ("pip.py",), False, id="killed-build"),
+        pytest.param("CopyPipInstall/{}", (), True, id="empty-image"),
+    ],
 )
-def test_seed_image_build_replaces_leftovers(tmp_path: Path, leftover: str, kept: bool) -> None:
+def test_seed_image_build_replaces_leftovers(tmp_path: Path, leftover: str, files: tuple[str, ...], kept: bool) -> None:
     cache: Final = tmp_path / "cache"
     version: Final = PythonInfo.current_system().version_release_str
-    wheel: Final = Path(BUNDLE_SUPPORT[version]["pip"]).stem
-    installer: Final = cache / "wheel" / version / "image" / "1" / "CopyPipInstall"
-    path: Final = installer.with_name(f"{installer.name}-{wheel}") if leftover == "staging" else installer / wheel
+    path: Final = cache / "wheel" / version / "image" / "1" / leftover.format(Path(BUNDLE_SUPPORT[version]["pip"]).stem)
     path.mkdir(parents=True)
-    if leftover == "staging":
-        (path / "pip.py").write_text("", encoding="utf-8")
+    for name in files:
+        (path / name).write_text("", encoding="utf-8")
     args: Final = [str(tmp_path / "env"), "--app-data", str(cache), "--no-periodic-update", "--no-setuptools"]
     purelib: Final = cli_run([*args, "--pip", "embed"], setup_logging=False).creator.purelib
     assert (path.exists(), (next(purelib.glob("pip-*.dist-info")) / "RECORD").is_file()) == (kept, True)
@@ -632,11 +636,12 @@ def test_seed_image_build_direct_call(tmp_path: Path) -> None:
     image: Final = tmp_path / "image" / "CopyPipInstall" / wheel.stem
     installer: Final = CopyPipInstall(wheel, session.creator, image)
     installer.build_image()
+    installer.install(session.interpreter.version_info)
     assert (
         sorted(i.name for i in image.parent.parent.iterdir()),
         (next(image.glob("*.dist-info")) / "INSTALLER").is_file(),
-        installer._dist_info.parent,  # ruff:ignore[private-member-access]  # the cache must not point into staging
-    ) == (["CopyPipInstall"], True, image)
+        session.creator.script("pip").exists(),
+    ) == (["CopyPipInstall"], True, True)
 
 
 def _write_zip_with_entry(zip_path: Path, entry_name: str) -> None:
