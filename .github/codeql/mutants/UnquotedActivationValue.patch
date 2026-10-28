@@ -1,0 +1,13 @@
+diff --git a/src/virtualenv/activation/via_template.py b/src/virtualenv/activation/via_template.py
+index b3b29eab..1dff8a9f 100644
+--- a/src/virtualenv/activation/via_template.py
++++ b/src/virtualenv/activation/via_template.py
+@@ -97,7 +97,7 @@ class ViaTemplateActivator(Activator, ABC):
+         :returns: the placeholder to substituted text mapping
+
+         """
+-        return {key: self.quote(self._repr_unicode(creator, value)) for key, value in replacements.items()}
++        return {key: self._repr_unicode(creator, value) for key, value in replacements.items()}
+
+     @staticmethod
+     def _repr_unicode(creator: Creator, value: str) -> str:  # ruff:ignore[unused-static-method-argument]

@@ -1,0 +1,13 @@
+diff --git a/src/virtualenv/activation/python/__init__.py b/src/virtualenv/activation/python/__init__.py
+index 9acdce2b..ef59448b 100644
+--- a/src/virtualenv/activation/python/__init__.py
++++ b/src/virtualenv/activation/python/__init__.py
+@@ -19,7 +19,7 @@ class PythonActivator(ViaTemplateActivator):
+
+     @staticmethod
+     def quote(string: str) -> str:
+-        return ascii(string)
++        return repr(string)
+
+     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:
+         replacements = super().replacements(creator, dest_folder)

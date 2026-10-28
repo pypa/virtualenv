@@ -1,0 +1,13 @@
+diff --git a/src/virtualenv/create/pyenv_cfg.py b/src/virtualenv/create/pyenv_cfg.py
+index 2e0d8692..7921f91c 100644
+--- a/src/virtualenv/create/pyenv_cfg.py
++++ b/src/virtualenv/create/pyenv_cfg.py
+@@ -68,7 +68,7 @@ class PyEnvCfg:
+             LOGGER.debug("\t%r", line)
+             text += line
+             text += "\n"
+-        write_file(self.path, text.encode("utf-8"))
++        self.path.write_text(text, encoding="utf-8")
+
+     def refresh(self) -> OrderedDict[str, str]:
+         self.content = self._read_values(self.path)

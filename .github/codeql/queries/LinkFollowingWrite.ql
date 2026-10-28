@@ -17,13 +17,16 @@ import python
 
 predicate inScope(Location loc) {
   loc.getFile().getRelativePath() != "" and
-  not loc.getFile().getRelativePath().regexpMatch("(.*/)?app_data/.*|(.*/)?pip_install/(base|symlink|copy)\\.py")
+  not loc.getFile()
+      .getRelativePath()
+      .regexpMatch("(.*/)?app_data/.*|(.*/)?pip_install/(base|symlink|copy)\\.py")
 }
 
 predicate writesInPlace(Call call) {
   call.getFunc().(Attribute).getName() in ["write_text", "write_bytes"]
   or
-  call.getFunc().(Name).getId() = "open" and call.getAnArg().(StringLiteral).getText().regexpMatch("[wa]b?")
+  call.getFunc().(Name).getId() = "open" and
+  call.getAnArg().(StringLiteral).getText().regexpMatch("[wa]b?")
   or
   call.getFunc().(Attribute).getName() = "open" and
   call.getAnArg().(StringLiteral).getText().regexpMatch("[wa]b?") and
@@ -37,4 +40,5 @@ predicate writesInPlace(Call call) {
 
 from Call call
 where writesInPlace(call) and inScope(call.getLocation())
-select call, "Writes in place, so a link at the destination receives the write. Use write_file instead."
+select call,
+  "Writes in place, so a link at the destination receives the write. Use write_file instead."
