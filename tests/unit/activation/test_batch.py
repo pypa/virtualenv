@@ -165,7 +165,15 @@ def test_batch_skips_changed_paths(
     ],
 )
 @pytest.mark.parametrize("delayed", [pytest.param("OFF", id="normal"), pytest.param("ON", id="delayed-expansion")])
-def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str) -> None:
+@pytest.mark.parametrize(
+    ("set_prompt", "prompt"),
+    [
+        pytest.param('@set "PROMPT=original"', "original", id="prompt-set"),
+        # cmd shows $P$G when PROMPT is undefined, e.g. after a bare `prompt` command
+        pytest.param("@set PROMPT=", "$P$G", id="prompt-unset"),
+    ],
+)
+def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str, set_prompt: str, prompt: str) -> None:
     creator: Final[Creator] = session_via_cli([str(tmp_path / name), "--no-seed"], setup_logging=False).creator
     creator.bin_dir.mkdir(parents=True)
     BatchActivator(VirtualEnvOptions(prompt="roundtrip$P")).generate(creator)
@@ -174,7 +182,7 @@ def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str) -> None:
         "print(json.dumps({k:os.environ.get(k) for k in ('VIRTUAL_ENV','PATH','PROMPT')}))\""
     )
     (creator.bin_dir / "check.bat").write_text(
-        '@echo off\n@set VIRTUAL_ENV=\n@set _OLD_VIRTUAL_PATH=\n@set _OLD_VIRTUAL_PROMPT=\n@set "PROMPT=original"\n'
+        f"@echo off\n@set VIRTUAL_ENV=\n@set _OLD_VIRTUAL_PATH=\n@set _OLD_VIRTUAL_PROMPT=\n{set_prompt}\n"
         f"@call activate.bat\n{snapshot}\n@call activate.bat\n{snapshot}\n@call deactivate.bat\n{snapshot}",
         encoding="utf-8",
     )
@@ -190,12 +198,12 @@ def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str) -> None:
     active: Final[dict[str, str]] = {
         "VIRTUAL_ENV": str(creator.dest),
         "PATH": f"{creator.bin_dir};{os.environ['PATH']}",
-        "PROMPT": "(roundtrip$$P) original",
+        "PROMPT": f"(roundtrip$$P) {prompt}",
     }
     assert [json.loads(line) for line in result.stdout.splitlines()] == [
         active,
         active,
-        {"VIRTUAL_ENV": None, "PATH": os.environ["PATH"], "PROMPT": "original"},
+        {"VIRTUAL_ENV": None, "PATH": os.environ["PATH"], "PROMPT": prompt},
     ]
     assert not result.stderr
 

@@ -15,12 +15,11 @@
     @for %%d in ("%VIRTUAL_ENV%") do @set "VIRTUAL_ENV_PROMPT=%%~nxd"
 )
 
+@REM cmd expands a block before running it, so default an undefined PROMPT before the block saves it
+@if not defined PROMPT @set "PROMPT=$P$G"
 @if defined _OLD_VIRTUAL_PROMPT (
     @set "PROMPT=%_OLD_VIRTUAL_PROMPT%"
 ) else (
-    @if not defined PROMPT (
-        @set "PROMPT=$P$G"
-    )
     @if not defined VIRTUAL_ENV_DISABLE_PROMPT (
         @set "_OLD_VIRTUAL_PROMPT=%PROMPT%"
     )
