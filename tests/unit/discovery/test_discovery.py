@@ -5,6 +5,7 @@ import os
 import sys
 from argparse import Namespace
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from python_discovery import PythonInfo
@@ -12,6 +13,9 @@ from python_discovery import PythonInfo
 from virtualenv.discovery.builtin import Builtin, get_interpreter
 from virtualenv.info import IS_WIN
 from virtualenv.run import cli_run, session_via_cli
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 def test_relative_path(session_app_data, monkeypatch) -> None:
@@ -61,9 +65,7 @@ def mock_get_interpreter(mocker):
     ("env_var", "python", "expected"),
     [
         pytest.param("python_from_env_var", ["python_from_env_var"], "python_from_env_var", id="env-var-only"),
-        pytest.param(
-            "python_from_env_var", ["python_from_env_var", "python_from_cli"], "python_from_cli", id="env-var-and-cli"
-        ),
+        pytest.param("first,second", ["first", "second"], "first", id="env-var-multiple"),
         pytest.param(None, ["python_from_cli"], "python_from_cli", id="cli-only"),
     ],
 )
@@ -77,6 +79,33 @@ def test_returns_python_specified(  # ruff:ignore[too-many-arguments]
     builtin = Builtin(Namespace(app_data=session_app_data, try_first_with=[], python=python, env=os.environ))
 
     assert builtin.run() == getattr(mocker.sentinel, expected)
+
+
+@pytest.mark.parametrize("source", ["env", "ini"])
+@pytest.mark.parametrize("cli", [(), ("first",), ("first", "second")])
+@pytest.mark.parametrize("dest", ["python", "try_first_with"])
+def test_cli_replaces_configured_interpreters(  # ruff:ignore[too-many-arguments]
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, source: str, cli: tuple[str, ...], dest: str
+) -> None:
+    if source == "env":
+        monkeypatch.setenv(f"VIRTUALENV_{dest.upper()}", "configured-1,configured-2")
+    else:
+        config = tmp_path / "virtualenv.ini"
+        config.write_text(f"[virtualenv]\n{dest} =\n    configured-1\n    configured-2\n", encoding="utf-8")
+        monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(config))
+    tried: list[tuple[str, list[str]]] = []
+    mocker.patch(
+        "virtualenv.discovery.builtin.get_interpreter",
+        lambda key, try_first_with, **_: tried.append((key, list(try_first_with))),
+    )
+    option = f"--{dest.replace('_', '-')}"
+    args = [arg for value in cli for arg in (option, value)]
+
+    with pytest.raises(RuntimeError, match="failed to find interpreter"):
+        session_via_cli([*args, str(tmp_path / "env")])
+
+    expected = list(cli) or ["configured-1", "configured-2"]
+    assert tried == ([(key, []) for key in expected] if dest == "python" else [(sys.executable, expected)])
 
 
 def test_discovery_absolute_path_with_try_first(tmp_path, session_app_data) -> None:
