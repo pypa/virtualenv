@@ -192,13 +192,18 @@ class Creator(ABC):
 
     @classmethod
     def validate_dest(cls, raw_value: str) -> str:  # ruff:ignore[complex-structure]
-        """No path separator in the path, valid chars and must be write-able."""
+        """Not blank, no path separator in the path, valid chars and must be write-able."""
 
         def non_write_able(dest: Path, value: Path) -> NoReturn:
             common = Path(commonpath([str(value), str(dest)]))
             msg = f"the destination {dest.relative_to(common)} is not write-able at {common}"
             raise ArgumentTypeError(msg)
 
+        # an empty value, often an unset shell variable, resolves to the working directory (on Windows so do spaces)
+        # and --clear would delete it
+        if not raw_value.strip():
+            msg = f"destination {raw_value!r} must not be empty or whitespace; pass . to use the current directory"
+            raise ArgumentTypeError(msg)
         # the file system must be able to encode
         # note in newer CPython this is always utf-8 https://www.python.org/dev/peps/pep-0529/
         encoding = sys.getfilesystemencoding()

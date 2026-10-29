@@ -302,6 +302,39 @@ def test_destination_exists_file(tmp_path, capsys) -> None:
     assert msg in err, err
 
 
+@pytest.mark.parametrize(
+    ("args", "clear_env"),
+    [
+        pytest.param([""], "0", id="empty"),
+        pytest.param(["", "--clear"], "0", id="empty-clear"),
+        pytest.param([""], "1", id="empty-clear-environment"),
+        pytest.param([" ", "--clear"], "0", id="space-clear"),
+        pytest.param(["\t"], "0", id="tab"),
+    ],
+)
+def test_blank_destination_leaves_working_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], args: list[str], clear_env: str
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "keep.txt").write_text("keep", encoding="utf-8")
+    deleted: Final[list[Path]] = []
+    monkeypatch.setattr("virtualenv.create.creator.safe_delete", deleted.append)
+    with pytest.raises(SystemExit) as context:
+        cli_run([*args, "--no-seed"], env={**os.environ, "VIRTUALENV_CLEAR": clear_env})
+    assert (
+        context.value.code,
+        deleted,
+        [path.name for path in tmp_path.iterdir()],
+        "must not be empty or whitespace; pass . to use the current directory" in capsys.readouterr().err,
+    ) == (2, [], ["keep.txt"], True)
+
+
+def test_dot_destination_is_working_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    session: Final = session_via_cli([".", "--clear", "--no-seed"])
+    assert (session.creator.dest, session.creator.clear) == (tmp_path.resolve(), True)
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
 def test_destination_not_write_able(tmp_path, capsys) -> None:
     if hasattr(os, "geteuid") and os.geteuid() == 0:
