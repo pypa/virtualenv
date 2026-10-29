@@ -167,6 +167,14 @@ def test_copy_replaces_contents(tmp_path: Path, directory: bool) -> None:
     assert (destination / "entry" if directory else destination).read_bytes() == b"new"
 
 
+def test_copy_replaces_read_only_file(tmp_path: Path) -> None:
+    (source := tmp_path / "source").write_bytes(b"new")
+    (destination := tmp_path / "destination").write_bytes(b"old")
+    destination.chmod(S_IREAD)
+    copy(source, destination)
+    assert destination.read_bytes() == b"new"
+
+
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_copy_keeps_symlinked_directories(tmp_path: Path) -> None:
     source: Final = tmp_path / "source"
@@ -282,6 +290,27 @@ def test_write_file_replaces_read_only_file(tmp_path: Path) -> None:
     path.chmod(S_IREAD)
     write_file(path, b"generated")
     assert path.read_bytes() == b"generated"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows read-only attribute")
+@pytest.mark.parametrize(
+    "replace",
+    [
+        pytest.param(lambda source, path: write_file(path, source.read_bytes()), id="write_file"),
+        pytest.param(copy, id="copy"),
+    ],
+)
+def test_replace_keeps_read_only_hard_link(tmp_path: Path, replace: Callable[[Path, Path], None]) -> None:
+    (twin := tmp_path / "twin").write_bytes(b"original")
+    os.link(twin, path := tmp_path / "generated")
+    twin.chmod(S_IREAD)
+    (source := tmp_path / "source").write_bytes(b"generated")
+    try:
+        with pytest.raises(PermissionError):
+            replace(source, path)
+        assert (twin.read_bytes(), twin.stat().st_mode & S_IWUSR) == (b"original", 0)
+    finally:
+        twin.chmod(S_IREAD | S_IWUSR)
 
 
 @pytest.mark.skipif(os.name == "nt" or os.geteuid() == 0, reason="POSIX deletion permissions that root bypasses")
