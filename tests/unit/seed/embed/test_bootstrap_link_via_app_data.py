@@ -10,7 +10,7 @@ import sys
 import zipfile
 from base64 import urlsafe_b64encode
 from pathlib import Path
-from stat import S_IWGRP, S_IWOTH, S_IWUSR
+from stat import S_IREAD, S_IWGRP, S_IWOTH, S_IWUSR
 from subprocess import Popen, check_call, run
 from threading import Thread
 from typing import TYPE_CHECKING, Final
@@ -244,6 +244,17 @@ def test_seed_metadata_keeps_reseeding_supported(
         linked,
         False,
     )
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows refuses to delete read-only files")
+def test_reseed_over_read_only_environment(tmp_path: Path) -> None:
+    args: Final = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
+    dest: Final = cli_run(args, setup_logging=False).creator.dest
+    for path in dest.rglob("*"):
+        if path.is_file():
+            path.chmod(S_IREAD)
+    session: Final = cli_run(args, setup_logging=False)
+    assert (session.creator.purelib / "pip" / "__init__.py").is_file()
 
 
 @pytest.mark.parametrize(

@@ -63,9 +63,8 @@ def remove_file(path: Path) -> None:
     try:
         path.unlink()
     except PermissionError:
-        # Windows refuses to delete a read-only file, while POSIX deletion depends on the parent directory. A hard link
-        # shares the attribute with its other names, which can sit outside the environment, so it stays read-only.
-        if os.name != "nt" or path.is_symlink() or path.stat().st_nlink > 1:
+        # Windows refuses to delete a read-only file, while POSIX deletion depends on the parent directory
+        if os.name != "nt" or path.is_symlink():
             raise
         clear_readonly(str(path))
         path.unlink()

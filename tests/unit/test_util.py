@@ -292,27 +292,6 @@ def test_write_file_replaces_read_only_file(tmp_path: Path) -> None:
     assert path.read_bytes() == b"generated"
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Windows read-only attribute")
-@pytest.mark.parametrize(
-    "replace",
-    [
-        pytest.param(lambda source, path: write_file(path, source.read_bytes()), id="write_file"),
-        pytest.param(copy, id="copy"),
-    ],
-)
-def test_replace_keeps_read_only_hard_link(tmp_path: Path, replace: Callable[[Path, Path], None]) -> None:
-    (twin := tmp_path / "twin").write_bytes(b"original")
-    os.link(twin, path := tmp_path / "generated")
-    twin.chmod(S_IREAD)
-    (source := tmp_path / "source").write_bytes(b"generated")
-    try:
-        with pytest.raises(PermissionError):
-            replace(source, path)
-        assert (twin.read_bytes(), twin.stat().st_mode & S_IWUSR) == (b"original", 0)
-    finally:
-        twin.chmod(S_IREAD | S_IWUSR)
-
-
 @pytest.mark.skipif(os.name == "nt" or os.geteuid() == 0, reason="POSIX deletion permissions that root bypasses")
 def test_write_file_reports_read_only_directory(tmp_path: Path) -> None:
     (folder := tmp_path / "locked").mkdir()

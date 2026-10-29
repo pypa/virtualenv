@@ -17,7 +17,7 @@ from typing import TYPE_CHECKING, Final
 
 from distlib.scripts import ScriptMaker, enquote_executable
 
-from virtualenv.util.path import safe_delete
+from virtualenv.util.path import remove_file, safe_delete
 
 if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
@@ -228,7 +228,7 @@ class PipInstall(ABC):
                 elif entry.is_dir() and not linked:
                     safe_delete(entry)
                 else:
-                    entry.unlink()
+                    remove_file(entry)
 
     def clear(self) -> None:
         if self._image_dir.exists():
