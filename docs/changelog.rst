@@ -6,6 +6,43 @@
 
 .. towncrier release notes start
 
+.. _release-21-15-2:
+
+**********************
+ 21.15.2 (2026-10-30)
+**********************
+
+.. _release-21-15-2-fixed:
+
+Fixed
+-----
+
+- Build the default application data folder only when no folder was given through ``--app-data``,
+  ``VIRTUALENV_APP_DATA`` or the configuration file, so ``--read-only-app-data`` with an explicit folder works when the
+  default folder is missing, and writable runs stop creating an unused one. Folders from ``VIRTUALENV_APP_DATA`` and the
+  configuration file now get the same checks as ``--app-data`` (:pr:`3488`) by :user:`darrenhuai` and
+  :user:`gaborbernat`.
+- Build the seed wheel image in a staging folder and move it into place only once it is complete, so an extraction that
+  fails part way, for example on a full disk, after a killed process or on a path over the Windows length limit, no
+  longer leaves a partial image that later runs seed as a pip without ``METADATA``, ``RECORD`` or ``INSTALLER``
+  (:pr:`3487`) by :user:`darrenhuai` and :user:`gaborbernat`.
+- Make ``-p``/``--python`` and ``--try-first-with`` replace the interpreters set by ``VIRTUALENV_PYTHON``,
+  ``VIRTUALENV_TRY_FIRST_WITH`` or the configuration file instead of being merged with them, so the configured
+  interpreter no longer wins over the one asked for and a ``-p`` that finds nothing fails instead of falling back to it.
+  Try several ``VIRTUALENV_PYTHON`` values in the order given rather than starting with the second (:pr:`3494`) by
+  :user:`darrenhuai` and :user:`gaborbernat`.
+- On Windows, re-create an environment in place when its copied interpreter files, such as ``python.exe``, or its seeded
+  packages are read-only, instead of failing with ``PermissionError`` (:pr:`3492`) by :user:`darrenhuai` and
+  :user:`gaborbernat`.
+- Reject an empty or whitespace-only destination. An empty one, and on Windows one made only of spaces, resolved to the
+  current directory, so an unset ``VENV`` in ``virtualenv --clear "$VENV"`` deleted the working directory. Pass ``.`` to
+  create the environment in the current directory (:pr:`3491`) by :user:`darrenhuai` and :user:`gaborbernat`.
+- Restore the default prompt in ``deactivate.bat`` when ``PROMPT`` was undefined at activation, instead of leaving the
+  environment name in front of it (:pr:`3489`) by :user:`darrenhuai`.
+- Undefine ``PATH`` again in ``deactivate.bat`` when it was undefined at activation, instead of leaving the
+  environment's ``Scripts`` folder on it, and stop a second ``activate.bat`` from adding that folder twice (:pr:`3493`)
+  by :user:`darrenhuai` and :user:`gaborbernat`.
+
 .. _release-21-15-1:
 
 **********************
