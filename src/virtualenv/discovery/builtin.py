@@ -49,6 +49,7 @@ class Builtin(Discover):
             dest="python",
             metavar="py",
             type=str,
+            # ExtendAction extends the list with the values it gets, so a lone string would split into characters
             nargs=1,
             action=ExtendAction,
             default=[],

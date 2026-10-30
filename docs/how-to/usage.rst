@@ -252,6 +252,9 @@ Specify multiple values on separate lines:
         /path/to/dists
         /path/to/other/dists
 
+A value given on the command line replaces the configured list instead of adding to it. Repeat the option to pass
+several, for example ``-p 3.14 -p 3.13``.
+
 Environment variables
 =====================
 
