@@ -251,10 +251,9 @@ def test_seed_metadata_keeps_reseeding_supported(
 def test_reseed_over_read_only_environment(tmp_path: Path) -> None:
     args: Final = [str(tmp_path / "env"), "--copies", "--pip", "embed", "--no-periodic-update"]
     dest: Final = cli_run(args, setup_logging=False).creator.dest
-    for path in dest.rglob("*"):
-        # chmod follows a link on newer Pythons and would mark the base interpreter read-only
-        if path.is_file() and not path.is_symlink():
-            path.chmod(S_IREAD)
+    # chmod follows a link on newer Pythons and would mark the base interpreter read-only
+    for path in (entry for entry in dest.rglob("*") if entry.is_file() and not entry.is_symlink()):
+        path.chmod(S_IREAD)
     session: Final = cli_run(args, setup_logging=False)
     assert (session.creator.purelib / "pip" / "__init__.py").is_file()
 
