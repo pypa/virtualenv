@@ -317,16 +317,13 @@ def test_blank_destination_leaves_working_directory(
 ) -> None:
     monkeypatch.chdir(tmp_path)
     (tmp_path / "keep.txt").write_text("keep", encoding="utf-8")
-    deleted: Final[list[Path]] = []
-    monkeypatch.setattr("virtualenv.create.creator.safe_delete", deleted.append)
     with pytest.raises(SystemExit) as context:
         cli_run([*args, "--no-seed"], env={**os.environ, "VIRTUALENV_CLEAR": clear_env})
     assert (
         context.value.code,
-        deleted,
         [path.name for path in tmp_path.iterdir()],
         "must not be empty or whitespace; pass . to use the current directory" in capsys.readouterr().err,
-    ) == (2, [], ["keep.txt"], True)
+    ) == (2, ["keep.txt"], True)
 
 
 def test_dot_destination_is_working_directory(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
