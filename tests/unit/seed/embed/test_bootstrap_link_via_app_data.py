@@ -246,12 +246,14 @@ def test_seed_metadata_keeps_reseeding_supported(
     )
 
 
+@pytest.mark.usefixtures("_no_coverage")
 @pytest.mark.skipif(os.name != "nt", reason="Windows refuses to delete read-only files")
 def test_reseed_over_read_only_environment(tmp_path: Path) -> None:
-    args: Final = [str(tmp_path / "env"), "--pip", "embed", "--no-periodic-update"]
+    args: Final = [str(tmp_path / "env"), "--copies", "--pip", "embed", "--no-periodic-update"]
     dest: Final = cli_run(args, setup_logging=False).creator.dest
     for path in dest.rglob("*"):
-        if path.is_file():
+        # chmod follows a link on newer Pythons and would mark the base interpreter read-only
+        if path.is_file() and not path.is_symlink():
             path.chmod(S_IREAD)
     session: Final = cli_run(args, setup_logging=False)
     assert (session.creator.purelib / "pip" / "__init__.py").is_file()
