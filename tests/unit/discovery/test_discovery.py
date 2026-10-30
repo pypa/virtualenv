@@ -5,6 +5,7 @@ import os
 import sys
 from argparse import Namespace
 from pathlib import Path
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from python_discovery import PythonInfo
@@ -12,6 +13,9 @@ from python_discovery import PythonInfo
 from virtualenv.discovery.builtin import Builtin, get_interpreter
 from virtualenv.info import IS_WIN
 from virtualenv.run import cli_run, session_via_cli
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 def test_relative_path(session_app_data, monkeypatch) -> None:
@@ -61,9 +65,7 @@ def mock_get_interpreter(mocker):
     ("env_var", "python", "expected"),
     [
         pytest.param("python_from_env_var", ["python_from_env_var"], "python_from_env_var", id="env-var-only"),
-        pytest.param(
-            "python_from_env_var", ["python_from_env_var", "python_from_cli"], "python_from_cli", id="env-var-and-cli"
-        ),
+        pytest.param("first,second", ["first", "second"], "first", id="env-var-multiple"),
         pytest.param(None, ["python_from_cli"], "python_from_cli", id="cli-only"),
     ],
 )
@@ -77,6 +79,57 @@ def test_returns_python_specified(  # ruff:ignore[too-many-arguments]
     builtin = Builtin(Namespace(app_data=session_app_data, try_first_with=[], python=python, env=os.environ))
 
     assert builtin.run() == getattr(mocker.sentinel, expected)
+
+
+@pytest.mark.parametrize(
+    ("variable", "value"),
+    [
+        pytest.param("VIRTUALENV_{dest}", "configured-1,configured-2", id="env"),
+        pytest.param("VIRTUALENV_CONFIG_FILE", "{config}", id="ini"),
+    ],
+)
+@pytest.mark.parametrize(
+    ("dest", "cli", "tried"),
+    [
+        pytest.param("python", [], [("configured-1", []), ("configured-2", [])], id="python-configured"),
+        pytest.param("python", ["-p", "first"], [("first", [])], id="python-cli-replaces"),
+        pytest.param("python", ["-p", "first", "-p", "second"], [("first", []), ("second", [])], id="python-cli-adds"),
+        pytest.param(
+            "try_first_with", [], [(sys.executable, ["configured-1", "configured-2"])], id="try-first-configured"
+        ),
+        pytest.param(
+            "try_first_with", ["--try-first-with", "first"], [(sys.executable, ["first"])], id="try-first-cli-replaces"
+        ),
+        pytest.param(
+            "try_first_with",
+            ["--try-first-with", "first", "--try-first-with", "second"],
+            [(sys.executable, ["first", "second"])],
+            id="try-first-cli-adds",
+        ),
+    ],
+)
+def test_cli_replaces_configured_interpreters(  # ruff:ignore[too-many-arguments]
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    mocker: MockerFixture,
+    variable: str,
+    value: str,
+    dest: str,
+    cli: list[str],
+    tried: list[tuple[str, list[str]]],
+) -> None:
+    (config := tmp_path / "virtualenv.ini").write_text(
+        f"[virtualenv]\n{dest} =\n    configured-1\n    configured-2\n", encoding="utf-8"
+    )
+    monkeypatch.setenv(variable.format(dest=dest.upper()), value.format(config=config))
+    get_interpreter: Final = mocker.patch(
+        "virtualenv.discovery.builtin.get_interpreter", autospec=True, return_value=None
+    )
+
+    with pytest.raises(RuntimeError, match="failed to find interpreter"):
+        session_via_cli([*cli, str(tmp_path / "env")])
+
+    assert [call.args for call in get_interpreter.call_args_list] == tried
 
 
 def test_discovery_absolute_path_with_try_first(tmp_path, session_app_data) -> None:

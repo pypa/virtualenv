@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 
 from python_discovery import get_interpreter as _get_interpreter
 
+from virtualenv.config.cli.parser import ExtendAction
+
 from .discover import Discover
 
 if TYPE_CHECKING:
@@ -36,8 +38,6 @@ class Builtin(Discover):
     def __init__(self, options: VirtualEnvOptions) -> None:
         super().__init__(options)
         self.python_spec = options.python or [sys.executable]
-        if self._env.get("VIRTUALENV_PYTHON"):
-            self.python_spec = self.python_spec[1:] + self.python_spec[:1]
         self.app_data = options.app_data
         self.try_first_with = options.try_first_with
 
@@ -49,7 +49,9 @@ class Builtin(Discover):
             dest="python",
             metavar="py",
             type=str,
-            action="append",
+            # ExtendAction extends the list with the values it gets, so a lone string would split into characters
+            nargs=1,
+            action=ExtendAction,
             default=[],
             help="interpreter based on what to create environment (path/identifier/version-specifier) "
             "- by default use the interpreter where the tool is installed - first found wins. "
@@ -60,7 +62,8 @@ class Builtin(Discover):
             dest="try_first_with",
             metavar="py_exe",
             type=str,
-            action="append",
+            nargs=1,
+            action=ExtendAction,
             default=[],
             help="try first these interpreters before starting the discovery",
         )
