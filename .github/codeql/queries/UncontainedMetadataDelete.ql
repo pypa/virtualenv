@@ -23,7 +23,9 @@ module UncontainedMetadataDeleteConfig implements DataFlow::ConfigSig {
   }
 
   predicate isSink(DataFlow::Node node) {
-    exists(DataFlow::CallCfgNode call, string name | name in ["unlink", "safe_delete", "rmtree"] |
+    exists(DataFlow::CallCfgNode call, string name |
+      name in ["unlink", "remove_file", "safe_delete", "rmtree"]
+    |
       call.(DataFlow::MethodCallNode).calls(node, name) and not exists(call.getArg(0))
       or
       call.getFunction().asCfgNode().(NameNode).getId() = name and node = call.getArg(0)
@@ -32,7 +34,8 @@ module UncontainedMetadataDeleteConfig implements DataFlow::ConfigSig {
     )
   }
 
-  // safe_delete is a sink itself, so stopping here keeps one alert per delete instead of a second inside its body
+  // safe_delete and remove_file are sinks themselves, so stopping here reports a delete once, at its caller, instead
+  // of again inside their bodies
   predicate isBarrierOut(DataFlow::Node node) { isSink(node) }
 
   // codeql/python-all carries taint across `/` only when an operand traces back to a pathlib constructor call, which

@@ -59,16 +59,20 @@ def ensure_within(root: Path, path: Path) -> None:
                 raise NotADirectoryError(msg) from None
 
 
+def remove_file(path: Path) -> None:
+    try:
+        path.unlink()
+    except PermissionError:
+        # Windows refuses to delete a read-only file, while POSIX deletion depends on the parent directory
+        if os.name != "nt" or path.is_symlink():
+            raise
+        clear_readonly(str(path))
+        path.unlink()
+
+
 def write_file(path: Path, data: bytes) -> None:
     if path.is_symlink() or path.exists():
-        try:
-            path.unlink()
-        except PermissionError:
-            # Windows refuses to delete a read-only file, while POSIX deletion depends on the parent directory
-            if os.name != "nt" or path.is_symlink():
-                raise
-            clear_readonly(str(path))
-            path.unlink()
+        remove_file(path)
     # Exclusive creation rejects links introduced after the old entry was removed.
     with path.open("xb") as stream:
         stream.write(data)
@@ -85,7 +89,7 @@ def ensure_safe_to_do(src: Path, dest: Path) -> None:
         safe_delete(dest)
     else:
         LOGGER.debug("remove file %s", dest)
-        dest.unlink()
+        remove_file(dest)
 
 
 def symlink(src: Path, dest: Path) -> None:
@@ -160,6 +164,7 @@ __all__ = [
     "copy",
     "ensure_dir",
     "ensure_within",
+    "remove_file",
     "safe_delete",
     "symlink",
     "write_file",

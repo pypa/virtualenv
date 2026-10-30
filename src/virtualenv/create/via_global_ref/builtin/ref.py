@@ -10,7 +10,7 @@ from stat import S_IXGRP, S_IXOTH, S_IXUSR
 from typing import TYPE_CHECKING
 
 from virtualenv.info import fs_is_case_sensitive, fs_supports_symlink
-from virtualenv.util.path import copy, make_exe, symlink
+from virtualenv.util.path import copy, make_exe, remove_file, symlink
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -163,7 +163,7 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
         for extra in self.aliases:
             link_file = bin_dir / extra
             if link_file.is_symlink() or link_file.exists():
-                link_file.unlink()
+                remove_file(link_file)
             if symlinks:
                 link_file.symlink_to(self.base)
             else:

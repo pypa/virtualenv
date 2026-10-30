@@ -167,6 +167,14 @@ def test_copy_replaces_contents(tmp_path: Path, directory: bool) -> None:
     assert (destination / "entry" if directory else destination).read_bytes() == b"new"
 
 
+def test_copy_replaces_read_only_file(tmp_path: Path) -> None:
+    (source := tmp_path / "source").write_bytes(b"new")
+    (destination := tmp_path / "destination").write_bytes(b"old")
+    destination.chmod(S_IREAD)
+    copy(source, destination)
+    assert destination.read_bytes() == b"new"
+
+
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_copy_keeps_symlinked_directories(tmp_path: Path) -> None:
     source: Final = tmp_path / "source"

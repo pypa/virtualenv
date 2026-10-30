@@ -794,6 +794,18 @@ def test_recreate_environment_with_dangling_alias(tmp_path: Path, mode: str) -> 
     assert (alias.is_symlink(), alias.is_file(), outside.exists()) == (mode == "--symlinks", True, False)
 
 
+@pytest.mark.skipif(not IS_WIN, reason="Windows refuses to delete read-only files")
+def test_recreate_environment_over_read_only_executables(tmp_path: Path) -> None:
+    args: Final = [str(tmp_path / "venv"), "--creator", "builtin", "--no-seed", "--activators=", "--copies"]
+    executables: Final = list(cli_run(args).creator.bin_dir.iterdir())
+    for path in executables:
+        path.chmod(S_IREAD)
+
+    cli_run(args)
+
+    assert [path.name for path in executables if not os.access(path, os.W_OK)] == []
+
+
 @pytest.mark.skipif(sys.platform == "win32", reason="POSIX only")
 @pytest.mark.skipif(
     bool(CURRENT.sysconfig_vars.get("PYTHONFRAMEWORK")),
