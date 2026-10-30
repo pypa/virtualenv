@@ -173,7 +173,18 @@ def test_batch_skips_changed_paths(
         pytest.param("@set PROMPT=", "$P$G", id="prompt-unset"),
     ],
 )
-def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str, set_prompt: str, prompt: str) -> None:
+@pytest.mark.parametrize(
+    "path_source",
+    [
+        pytest.param("PATH", id="path-set"),
+        # a build script that starts from a clean environment can run `set PATH=` before activating; an undefined
+        # variable expands to nothing in a batch file, so taking PATH from it leaves PATH undefined
+        pytest.param("VIRTUALENV_UNDEFINED_PATH", id="path-unset"),
+    ],
+)
+def test_batch_path_round_trip(  # ruff:ignore[too-many-arguments]
+    tmp_path: Path, name: str, delayed: str, set_prompt: str, prompt: str, path_source: str
+) -> None:
     creator: Final[Creator] = session_via_cli([str(tmp_path / name), "--no-seed"], setup_logging=False).creator
     creator.bin_dir.mkdir(parents=True)
     BatchActivator(VirtualEnvOptions(prompt="roundtrip$P")).generate(creator)
@@ -182,8 +193,11 @@ def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str, set_prom
         "print(json.dumps({k:os.environ.get(k) for k in ('VIRTUAL_ENV','PATH','PROMPT')}))\""
     )
     (creator.bin_dir / "check.bat").write_text(
-        f"@echo off\n@set VIRTUAL_ENV=\n@set _OLD_VIRTUAL_PATH=\n@set _OLD_VIRTUAL_PROMPT=\n{set_prompt}\n"
-        f"@call activate.bat\n{snapshot}\n@call activate.bat\n{snapshot}\n@call deactivate.bat\n{snapshot}",
+        "@echo off\n@set VIRTUAL_ENV=\n@set _OLD_VIRTUAL_PATH=\n@set _OLD_VIRTUAL_PATH_UNSET=\n"
+        f'@set _OLD_VIRTUAL_PROMPT=\n{set_prompt}\n@set "PATH=%{path_source}%"\n'
+        f"@call activate.bat\n{snapshot}\n@call activate.bat\n{snapshot}\n@call deactivate.bat\n{snapshot}\n"
+        # a later activation from another PATH must save that PATH, not state that deactivate left behind
+        f'@set "PATH=%SystemRoot%"\n@call activate.bat\n{snapshot}',
         encoding="utf-8",
     )
     result: Final[subprocess.CompletedProcess[str]] = subprocess.run(
@@ -197,13 +211,14 @@ def test_batch_path_round_trip(tmp_path: Path, name: str, delayed: str, set_prom
     )
     active: Final[dict[str, str]] = {
         "VIRTUAL_ENV": str(creator.dest),
-        "PATH": f"{creator.bin_dir};{os.environ['PATH']}",
+        "PATH": f"{creator.bin_dir};{os.environ.get(path_source, '')}",
         "PROMPT": f"(roundtrip$$P) {prompt}",
     }
     assert [json.loads(line) for line in result.stdout.splitlines()] == [
         active,
         active,
-        {"VIRTUAL_ENV": None, "PATH": os.environ["PATH"], "PROMPT": prompt},
+        {"VIRTUAL_ENV": None, "PATH": os.environ.get(path_source), "PROMPT": prompt},
+        {**active, "PATH": f"{creator.bin_dir};{os.environ['SYSTEMROOT']}"},
     ]
     assert not result.stderr
 
