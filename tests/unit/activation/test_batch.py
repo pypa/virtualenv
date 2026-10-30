@@ -174,15 +174,16 @@ def test_batch_skips_changed_paths(
     ],
 )
 @pytest.mark.parametrize(
-    "unset_path",
+    "path_source",
     [
-        pytest.param("", id="path-set"),
-        # a build script that starts from a clean environment can run `set PATH=` before activating
-        pytest.param("@set PATH=", id="path-unset"),
+        pytest.param("PATH", id="path-set"),
+        # a build script that starts from a clean environment can run `set PATH=` before activating; an undefined
+        # variable expands to nothing in a batch file, so taking PATH from it leaves PATH undefined
+        pytest.param("VIRTUALENV_UNDEFINED_PATH", id="path-unset"),
     ],
 )
 def test_batch_path_round_trip(  # ruff:ignore[too-many-arguments]
-    tmp_path: Path, name: str, delayed: str, set_prompt: str, prompt: str, unset_path: str
+    tmp_path: Path, name: str, delayed: str, set_prompt: str, prompt: str, path_source: str
 ) -> None:
     creator: Final[Creator] = session_via_cli([str(tmp_path / name), "--no-seed"], setup_logging=False).creator
     creator.bin_dir.mkdir(parents=True)
@@ -191,10 +192,9 @@ def test_batch_path_round_trip(  # ruff:ignore[too-many-arguments]
         f'@"{sys.executable}" -I -c "import json,os; '
         "print(json.dumps({k:os.environ.get(k) for k in ('VIRTUAL_ENV','PATH','PROMPT')}))\""
     )
-    path: Final[str | None] = None if unset_path else os.environ["PATH"]
     (creator.bin_dir / "check.bat").write_text(
         "@echo off\n@set VIRTUAL_ENV=\n@set _OLD_VIRTUAL_PATH=\n@set _OLD_VIRTUAL_PATH_UNSET=\n"
-        f"@set _OLD_VIRTUAL_PROMPT=\n{set_prompt}\n{unset_path}\n"
+        f'@set _OLD_VIRTUAL_PROMPT=\n{set_prompt}\n@set "PATH=%{path_source}%"\n'
         f"@call activate.bat\n{snapshot}\n@call activate.bat\n{snapshot}\n@call deactivate.bat\n{snapshot}\n"
         # a later activation from another PATH must save that PATH, not state that deactivate left behind
         f'@set "PATH=%SystemRoot%"\n@call activate.bat\n{snapshot}',
@@ -211,13 +211,13 @@ def test_batch_path_round_trip(  # ruff:ignore[too-many-arguments]
     )
     active: Final[dict[str, str]] = {
         "VIRTUAL_ENV": str(creator.dest),
-        "PATH": f"{creator.bin_dir};{path or ''}",
+        "PATH": f"{creator.bin_dir};{os.environ.get(path_source, '')}",
         "PROMPT": f"(roundtrip$$P) {prompt}",
     }
     assert [json.loads(line) for line in result.stdout.splitlines()] == [
         active,
         active,
-        {"VIRTUAL_ENV": None, "PATH": path, "PROMPT": prompt},
+        {"VIRTUAL_ENV": None, "PATH": os.environ.get(path_source), "PROMPT": prompt},
         {**active, "PATH": f"{creator.bin_dir};{os.environ['SYSTEMROOT']}"},
     ]
     assert not result.stderr
