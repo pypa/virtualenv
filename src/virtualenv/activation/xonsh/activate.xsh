@@ -28,7 +28,7 @@ class _VirtualEnvActivator:
             print("virtualenv activate.xsh: template was not rendered")
             raise
         # Variables this activator may save+override; deactivate walks this list.
-        self.managed_vars = ("PATH", "PYTHONHOME", "TCL_LIBRARY", "TK_LIBRARY")
+        self.managed_vars = ("PATH", "PKG_CONFIG_PATH", "PYTHONHOME", "TCL_LIBRARY", "TK_LIBRARY")
 
     def _backup_name(self, name):
         return f"_OLD_VIRTUAL_{name}"
@@ -65,6 +65,9 @@ class _VirtualEnvActivator:
         $VIRTUAL_ENV_PROMPT = self.embedded_virtual_prompt or basename($VIRTUAL_ENV)
 
         self._override("PATH", [join($VIRTUAL_ENV, self.embedded_bin_name), *$PATH])
+        self._override(
+            "PKG_CONFIG_PATH", [join($VIRTUAL_ENV, "lib", "pkgconfig"), *self.env.get("PKG_CONFIG_PATH", [])]
+        )
         self._drop("PYTHONHOME")
         for name, value in (("TCL_LIBRARY", self.embedded_tcl_library), ("TK_LIBRARY", self.embedded_tk_library)):
             if value:

@@ -113,6 +113,9 @@ def test_xonsh_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
     # tcl_lib/tk_lib.
     assert '"TCL_LIBRARY"' in content
     assert '"TK_LIBRARY"' in content
+    # PKG_CONFIG_PATH is always prepended, and deactivate restores it with the other managed variables
+    assert 'self.managed_vars = ("PATH", "PKG_CONFIG_PATH", "PYTHONHOME", "TCL_LIBRARY", "TK_LIBRARY")' in content
+    assert '[join($VIRTUAL_ENV, "lib", "pkgconfig"), *self.env.get("PKG_CONFIG_PATH", [])]' in content
 
     if present:
         # Paths are embedded in __init__ as Python string literals and used
@@ -159,10 +162,6 @@ def test_xonsh(activation_tester_class, activation_tester) -> None:
 
         def print_prompt(self):
             return 'echo @("(" + $VIRTUAL_ENV_PROMPT + ") ")'
-
-        def assert_pkg_config_path(self, before, activated, deactivated, raw) -> None:
-            # activate.xsh does not manage PKG_CONFIG_PATH
-            assert before == activated == deactivated, raw
 
         def activate_call(self, script):
             return f"source {self.quote(str(script))}"
