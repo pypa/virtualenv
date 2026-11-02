@@ -97,6 +97,20 @@ def test_help_shows_default_app_data(
     ) == (0, True)
 
 
+def test_reset_with_empty_app_data_override_resets_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    default_folder: Final = tmp_path / "cache"
+    mocker.patch("virtualenv.app_data.user_cache_dir", autospec=True, return_value=str(default_folder))
+    mocker.patch("virtualenv.app_data.user_data_dir", autospec=True, return_value=str(tmp_path / "old"))
+    # the empty value used to make the working directory the cache, so the reset deleted it
+    delete: Final = mocker.patch("virtualenv.app_data.via_disk_folder.safe_delete", autospec=True)
+    monkeypatch.setenv("VIRTUALENV_OVERRIDE_APP_DATA", "")
+    session_via_cli(["--reset-app-data", str(tmp_path / "env")])
+    assert delete.call_args_list == [mocker.call(default_folder)]
+
+
 def _on_command_line(_: pytest.MonkeyPatch, folder: Path) -> list[str]:
     return ["--app-data", str(folder)]
 

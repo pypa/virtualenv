@@ -42,13 +42,16 @@ if TYPE_CHECKING:
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
 @pytest.mark.parametrize("existing", [pytest.param(False, id="new"), pytest.param(True, id="existing")])
-def test_app_data_default_permissions(app_data_default: Path, existing: bool) -> None:
+@pytest.mark.parametrize(
+    "env", [pytest.param({}, id="unset"), pytest.param({"VIRTUALENV_OVERRIDE_APP_DATA": ""}, id="empty-override")]
+)
+def test_app_data_default_permissions(app_data_default: Path, existing: bool, env: dict[str, str]) -> None:
     if existing:
         app_data_default.mkdir()
         app_data_default.chmod(0o777)
     previous: Final = os.umask(0)
     try:
-        data: Final = make_app_data(None, read_only=False, env={})
+        data: Final = make_app_data(None, read_only=False, env=env)
     finally:
         os.umask(previous)
     assert (str(data), app_data_default.stat().st_mode & 0o777) == (str(app_data_default), 0o755 if existing else 0o700)
