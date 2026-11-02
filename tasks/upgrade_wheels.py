@@ -14,7 +14,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from textwrap import dedent
 from threading import Thread
-from typing import NoReturn
+from typing import Final, NoReturn
 
 STRICT = "UPGRADE_ADVISORY" not in os.environ
 
@@ -85,7 +85,9 @@ def _write_changelog(added: dict[str, list[str]], removed: dict[str, list[str]])
     changelog = "\n".join(lines)
     print(changelog)  # ruff:ignore[print]
     if len(lines) >= 4:  # ruff:ignore[magic-value-comparison]
-        (Path(__file__).parents[1] / "docs" / "changelog" / "u.bugfix.rst").write_text(changelog, encoding="utf-8")
+        fragment: Final[Path] = Path(__file__).parents[1] / "docs" / "changelog" / "embedded-wheels.bugfix.rst"
+        fragment.parent.mkdir(parents=True, exist_ok=True)
+        fragment.write_text(changelog, encoding="utf-8")
 
 
 def render_init(folders: dict[Path, str] | None = None) -> None:
