@@ -298,8 +298,22 @@ def test_destination_exists_file(tmp_path, capsys) -> None:
     target = tmp_path / "out"
     target.write_text("", encoding="utf-8")
     err = _non_success_exit_code(capsys, str(target))
-    msg = f"the destination {target!s} already exists and is a file"
+    msg = f"the destination {target!s} already exists and is not a directory"
     assert msg in err, err
+
+
+@pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="requires FIFOs and /dev/null")
+@pytest.mark.parametrize("kind", ["fifo", "device"])
+def test_destination_exists_not_directory(tmp_path: Path, capsys: pytest.CaptureFixture[str], kind: str) -> None:
+    target: Final = tmp_path / "fifo" if kind == "fifo" else Path(os.devnull)
+    if kind == "fifo":
+        os.mkfifo(target)
+    with pytest.raises(SystemExit) as context:
+        cli_run([str(target), "--no-seed"])
+    assert (
+        context.value.code,
+        f"the destination {target} already exists and is not a directory" in capsys.readouterr().err,
+    ) == (2, True)
 
 
 @pytest.mark.parametrize(
