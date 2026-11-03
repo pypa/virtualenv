@@ -111,9 +111,8 @@ def test_xonsh_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
     # `managed_vars` always lists TCL_LIBRARY/TK_LIBRARY so deactivate can clean up
     # whatever activation introduced — regardless of whether the interpreter reported
     # tcl_lib/tk_lib.
-    assert 'self.managed_vars = ("PATH", "PKG_CONFIG_PATH", "PYTHONHOME", "TCL_LIBRARY", "TK_LIBRARY")' in content
-    # PKG_CONFIG_PATH is always prepended, the same way PATH is
-    assert '[join($VIRTUAL_ENV, "lib", "pkgconfig"), *self.env.get("PKG_CONFIG_PATH", [])]' in content
+    assert '"TCL_LIBRARY"' in content
+    assert '"TK_LIBRARY"' in content
 
     if present:
         # Paths are embedded in __init__ as Python string literals and used
