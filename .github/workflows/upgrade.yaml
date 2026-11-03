@@ -110,11 +110,10 @@ jobs:
     needs: [generate, validate]
     if: needs.validate.result == 'success'
     runs-on: ubuntu-24.04
-    environment: upgrade
+    environment: release-auth
     permissions:
-      actions: write # dispatch CI on the upgrade branch
-      contents: write # let create-pull-request manage the upgrade branch
-      pull-requests: write # open the upgrade pull request
+      actions: read # download the validated patch
+      contents: read # check out the trusted revision
     steps:
       - name: 🛡️ Block outbound traffic outside the allowlist
         uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
@@ -128,7 +127,7 @@ jobs:
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
-          persist-credentials: true # zizmor: ignore[artipacked] create-pull-request pushes the generated branch
+          persist-credentials: false
       - name: 📩 Download upgrade patch
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -141,10 +140,20 @@ jobs:
           printf '%s  %s\n' "$EXPECTED_SHA256" "$RUNNER_TEMP/upgrade-patch/upgrade.patch" | sha256sum --check
           git apply --check "$RUNNER_TEMP/upgrade-patch/upgrade.patch"
           git apply "$RUNNER_TEMP/upgrade-patch/upgrade.patch"
+      - name: 🔑 Mint release App token
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.RELEASE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
       - name: 🔀 Create Pull Request
-        id: cpr
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
+          token: ${{ steps.app-token.outputs.token }}
           commit-message: "Upgrade embedded dependencies"
           # the checkout pins github.sha, a detached HEAD, so the action cannot infer the base branch
           base: main
@@ -157,12 +166,3 @@ jobs:
             This PR was created automatically by the [upgrade workflow](https://github.com/${{ github.repository }}/actions/workflows/upgrade.yaml).
           labels: |
             dependencies
-      - name: 🧪 Run CI on the upgrade branch
-        if: steps.cpr.outputs.pull-request-number
-        # events from GITHUB_TOKEN start no workflows, except workflow_dispatch, so the pull request gets no CI otherwise
-        run: |
-          gh workflow run check.yaml --ref auto/upgrade-embedded-deps
-          gh workflow run codeql.yaml --ref auto/upgrade-embedded-deps
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
