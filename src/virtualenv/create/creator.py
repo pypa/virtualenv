@@ -195,6 +195,9 @@ class Creator(ABC):
         """Not blank, a directory if it exists, no path separator in the path, valid chars and must be write-able."""
 
         def non_write_able(dest: Path, value: Path) -> NoReturn:
+            if dest.exists() and not dest.is_dir():
+                msg = f"the destination {value} is inside {dest}, which is not a directory"
+                raise ArgumentTypeError(msg)
             common = Path(commonpath([str(value), str(dest)]))
             msg = f"the destination {dest.relative_to(common)} is not write-able at {common}"
             raise ArgumentTypeError(msg)
@@ -236,7 +239,7 @@ class Creator(ABC):
         value = dest
         while dest:
             if dest.exists():
-                if os.access(str(dest), os.W_OK):
+                if dest.is_dir() and os.access(str(dest), os.W_OK):
                     break
                 non_write_able(dest, value)
             base, _ = dest.parent, dest.name

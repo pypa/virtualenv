@@ -316,6 +316,12 @@ def test_destination_exists_not_directory(tmp_path: Path, capsys: pytest.Capture
     ) == (2, True)
 
 
+def test_destination_inside_file(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    (parent := tmp_path / "out").write_text("", encoding="utf-8")
+    err: Final = _non_success_exit_code(capsys, str(parent / "env"))
+    assert f"is inside {parent.resolve()}, which is not a directory" in err, err
+
+
 @pytest.mark.parametrize(
     ("args", "clear_env"),
     [
