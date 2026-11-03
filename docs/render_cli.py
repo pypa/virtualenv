@@ -19,10 +19,6 @@ class TableRow(NamedTuple):
     help: str
 
 
-class TextAsDefault(NamedTuple):
-    text: str
-
-
 CUSTOM = {
     "discovery": ComponentBuilder.entry_points_for("virtualenv.discovery"),
     "creator": ComponentBuilder.entry_points_for("virtualenv.create"),
