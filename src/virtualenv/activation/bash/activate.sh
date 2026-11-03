@@ -168,7 +168,12 @@ else
             # above keeps POSIX shells such as dash away from the array assignment
             _OLD_VIRTUAL_PSVAR="${psvar[9]-}"
             psvar[9]="$VIRTUAL_ENV_PROMPT"
-            _VIRTUAL_PROMPT='%9v'
+            # %Nv counts psvar entries from 1 under every option, but KSH_ARRAYS makes the subscript above count from 0
+            if [[ -o ksharrays ]]; then
+                _VIRTUAL_PROMPT='%10v'
+            else
+                _VIRTUAL_PROMPT='%9v'
+            fi
         fi
         PS1="(${_VIRTUAL_PROMPT}) ${PS1-}"
         unset _VIRTUAL_PROMPT
