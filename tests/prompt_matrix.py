@@ -86,7 +86,7 @@ SHELLS: Final = {
         "bash",
         "activate",
         "zsh",
-        {"default": "", "prompt-subst": "setopt prompt_subst"},
+        {"default": "", "prompt-subst": "setopt prompt_subst", "ksharrays": "setopt ksharrays"},
         {
             "none": "",
             "prompt-subst-on": "setopt prompt_subst",
