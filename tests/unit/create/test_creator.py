@@ -298,8 +298,36 @@ def test_destination_exists_file(tmp_path, capsys) -> None:
     target = tmp_path / "out"
     target.write_text("", encoding="utf-8")
     err = _non_success_exit_code(capsys, str(target))
-    msg = f"the destination {target!s} already exists and is a file"
+    msg = f"the destination {target!s} already exists and is not a directory"
     assert msg in err, err
+
+
+@pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="requires FIFOs")
+def test_destination_exists_fifo(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    target: Final[Path] = tmp_path / "fifo"
+    os.mkfifo(target)
+    with pytest.raises(SystemExit) as context:
+        cli_run([str(target), "--no-seed"])
+    assert (
+        context.value.code,
+        f"the destination {target} already exists and is not a directory" in capsys.readouterr().err,
+    ) == (2, True)
+
+
+def test_destination_exists_device(capsys: pytest.CaptureFixture[str]) -> None:
+    target: Final[Path] = Path(os.devnull)
+    with pytest.raises(SystemExit) as context:
+        cli_run([str(target), "--no-seed"])
+    assert (
+        context.value.code,
+        f"the destination {target} already exists and is not a directory" in capsys.readouterr().err,
+    ) == (2, True)
+
+
+def test_destination_inside_file(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    (parent := tmp_path / "out").write_text("", encoding="utf-8")
+    err: Final[str] = _non_success_exit_code(capsys, str(parent / "env"))
+    assert f"is inside {parent.resolve()}, which is not a directory" in err, err
 
 
 @pytest.mark.parametrize(

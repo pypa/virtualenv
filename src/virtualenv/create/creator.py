@@ -192,9 +192,12 @@ class Creator(ABC):
 
     @classmethod
     def validate_dest(cls, raw_value: str) -> str:  # ruff:ignore[complex-structure]
-        """Not blank, no path separator in the path, valid chars and must be write-able."""
+        """Not blank, a directory if it exists, no path separator in the path, valid chars and must be write-able."""
 
         def non_write_able(dest: Path, value: Path) -> NoReturn:
+            if dest.exists() and not dest.is_dir():
+                msg = f"the destination {value} is inside {dest}, which is not a directory"
+                raise ArgumentTypeError(msg)
             common = Path(commonpath([str(value), str(dest)]))
             msg = f"the destination {dest.relative_to(common)} is not write-able at {common}"
             raise ArgumentTypeError(msg)
@@ -222,8 +225,8 @@ class Creator(ABC):
             msg = f"the file system codec ({encoding}) cannot handle characters {bad!r} within {raw_value!r}"
             raise ArgumentTypeError(msg)
         value = Path(raw_value)
-        if value.exists() and value.is_file():
-            msg = f"the destination {value} already exists and is a file"
+        if value.exists() and not value.is_dir():
+            msg = f"the destination {value} already exists and is not a directory"
             raise ArgumentTypeError(msg)
         dest = Path(os.path.abspath(str(value))).resolve()  # on Windows absolute does not imply resolve so use both
         for destination in (raw_value, str(dest)):
@@ -236,7 +239,7 @@ class Creator(ABC):
         value = dest
         while dest:
             if dest.exists():
-                if os.access(str(dest), os.W_OK):
+                if dest.is_dir() and os.access(str(dest), os.W_OK):
                     break
                 non_write_able(dest, value)
             base, _ = dest.parent, dest.name
