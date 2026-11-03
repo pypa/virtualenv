@@ -6,6 +6,38 @@
 
 .. towncrier release notes start
 
+.. _release-21-15-3:
+
+**********************
+ 21.15.3 (2026-11-03)
+**********************
+
+.. _release-21-15-3-fixed:
+
+Fixed
+-----
+
+- Add the environment's ``lib/pkgconfig`` to ``PKG_CONFIG_PATH`` when activating from xonsh, and restore the previous
+  value or unset it again on ``deactivate``, as the other activators already do (:pr:`3505`) by :user:`darrenhuai` and
+  :user:`gaborbernat`.
+- Read ``virtualenv.ini`` values without interpolation, as environment variables and command line flags already are. A
+  value holding a ``%``, such as ``prompt = 50% done``, was ignored without any message. ``%%`` and ``%(name)s`` are now
+  kept as written, so write a single ``%`` (:pr:`3501`) by :user:`darrenhuai` and :user:`gaborbernat`.
+- Reject a destination that already exists but is not a directory, such as ``/dev/null``, a FIFO or a socket, or that
+  sits inside one, with a usage error instead of a ``NotADirectoryError`` once creation has started. A regular file now
+  gets the same ``is not a directory`` message instead of ``is a file`` (:pr:`3504`) by :user:`darrenhuai` and
+  :user:`gaborbernat`.
+- Set ``TCL_LIBRARY`` and ``TK_LIBRARY`` to the interpreter's Tcl/Tk paths in ``activate.nu``, as the other activators
+  do. Nushell activation used to leave both variables as they were (:pr:`3502`) by :user:`darrenhuai` and
+  :user:`gaborbernat`.
+- Show the environment name in the zsh prompt when ``KSH_ARRAYS`` is set at activation. Since 21.14.13 the prompt read
+  an empty ``psvar`` entry under that option and showed ``()`` instead of the name (:pr:`3506`) by :user:`PDGGK` and
+  :user:`gaborbernat`.
+- Treat an empty or blank ``VIRTUALENV_OVERRIDE_APP_DATA`` and an empty ``VIRTUALENV_CONFIG_FILE`` as unset, as
+  virtualenv already does for its option variables. An empty app-data override, or on Windows one made of spaces, made
+  the current directory the cache, so ``--reset-app-data`` deleted it, and an empty config file path logged an error on
+  every run (:pr:`3503`) by :user:`darrenhuai` and :user:`gaborbernat`.
+
 .. _release-21-15-2:
 
 **********************
