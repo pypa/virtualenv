@@ -60,5 +60,11 @@
   "system_stdlib_platform": "/tmp/pypy3.8-v7.3.8-linux64/lib/pypy3.8",
   "max_size": 9223372036854775807,
   "_creators": null,
-  "free_threaded": false
+  "free_threaded": false,
+  "debug_build": false,
+  "version_nodot": null,
+  "sysconfig_platform": null,
+  "marker_environment": {},
+  "tcl_lib": null,
+  "tk_lib": null
 }

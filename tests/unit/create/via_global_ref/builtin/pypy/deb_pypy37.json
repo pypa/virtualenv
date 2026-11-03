@@ -61,5 +61,11 @@
   "system_stdlib_platform": "/usr/lib/pypy3/lib-python/3.7",
   "max_size": 9223372036854775807,
   "_creators": null,
-  "free_threaded": false
+  "free_threaded": false,
+  "debug_build": false,
+  "version_nodot": null,
+  "sysconfig_platform": null,
+  "marker_environment": {},
+  "tcl_lib": null,
+  "tk_lib": null
 }
