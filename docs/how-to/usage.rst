@@ -270,7 +270,7 @@ Override app-data location
 ==========================
 
 Set the ``VIRTUALENV_OVERRIDE_APP_DATA`` environment variable to override the default app-data cache directory location.
-An empty value counts as unset.
+An empty or blank value counts as unset.
 
 Allow unverified HTTPS for periodic updates
 ===========================================

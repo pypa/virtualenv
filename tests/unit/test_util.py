@@ -43,7 +43,12 @@ if TYPE_CHECKING:
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
 @pytest.mark.parametrize("existing", [pytest.param(False, id="new"), pytest.param(True, id="existing")])
 @pytest.mark.parametrize(
-    "env", [pytest.param({}, id="unset"), pytest.param({"VIRTUALENV_OVERRIDE_APP_DATA": ""}, id="empty-override")]
+    "env",
+    [
+        pytest.param({}, id="unset"),
+        pytest.param({"VIRTUALENV_OVERRIDE_APP_DATA": ""}, id="empty-override"),
+        pytest.param({"VIRTUALENV_OVERRIDE_APP_DATA": " "}, id="blank-override"),
+    ],
 )
 def test_app_data_default_permissions(app_data_default: Path, existing: bool, env: dict[str, str]) -> None:
     if existing:
@@ -119,7 +124,8 @@ def test_app_data_explicit_create_failure(tmp_path: Path, mocker: MockerFixture,
 
 
 @pytest.fixture
-def app_data_default(tmp_path: Path, mocker: MockerFixture) -> Path:
+def app_data_default(tmp_path: Path, mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch) -> Path:
+    monkeypatch.chdir(tmp_path)  # a blank override resolved to the working directory, so keep that inside tmp_path
     folder: Final = tmp_path / "cache"
     mocker.patch("virtualenv.app_data.user_cache_dir", autospec=True, return_value=str(folder))
     mocker.patch("virtualenv.app_data.user_data_dir", autospec=True, return_value=str(tmp_path / "old"))
