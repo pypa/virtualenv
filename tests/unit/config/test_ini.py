@@ -109,3 +109,21 @@ def test_ini_utf8_is_read(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, prefi
     monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(config_file))
 
     assert session_via_cli(["venv"]).creator.clear is True
+
+
+@pytest.mark.parametrize(
+    "prompt",
+    [
+        pytest.param("50% done", id="percent"),
+        pytest.param("100%", id="trailing-percent"),
+        pytest.param("50%% done", id="double-percent"),
+        pytest.param("%(clear)s", id="reference"),
+    ],
+)
+def test_ini_value_is_read_literally(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, prompt: str) -> None:
+    config_file: Final[Path] = tmp_path / "conf.ini"
+    config_file.write_text(f"[virtualenv]\nclear = True\nprompt = {prompt}\n", encoding="utf-8")
+    monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(config_file))
+
+    creator: Final = session_via_cli(["venv"]).creator
+    assert (creator.prompt, creator.clear) == (prompt, True)

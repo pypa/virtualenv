@@ -240,6 +240,9 @@ Derive configuration keys from command-line options by stripping leading ``-`` a
     [virtualenv]
     python = /opt/python-3.14/bin/python
 
+Values are not interpolated, so a ``%`` needs no escaping and references such as ``%APPDATA%`` or ``%(name)s`` are kept
+as written.
+
 Multi-value options
 ===================
 

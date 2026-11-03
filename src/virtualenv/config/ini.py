@@ -39,7 +39,8 @@ class IniConfig:
 
         self.has_config_file: bool | None = None
         self.has_virtualenv_section = False
-        self.config_parser: Final[ConfigParser] = ConfigParser()
+        # no interpolation: values are literal, as env vars and flags are, so a % in a prompt or path survives
+        self.config_parser: Final[ConfigParser] = ConfigParser(interpolation=None)
         exception = None
         try:
             self.has_config_file = self.config_file.exists()
