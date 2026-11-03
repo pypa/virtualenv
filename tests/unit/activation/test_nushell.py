@@ -51,8 +51,15 @@ def test_nushell_tkinter_generation(tmp_path) -> None:
     assert "let new_pkg_config_path = " in content
     assert "PKG_CONFIG_PATH: $new_pkg_config_path" in content
 
-    expected_tcl = f"let $new_env = $new_env | insert TCL_LIBRARY {quoted_tcl_path}"
-    expected_tk = f"let $new_env = $new_env | insert TK_LIBRARY {quoted_tk_path}"
+    # a `let` inside an `if` block only shadows the record within that block, so the script rebinds it in export-env
+    expected_tcl = (
+        f"let new_env = if ({quoted_tcl_path} | is-empty) {{ $new_env }} "
+        f"else {{ $new_env | insert TCL_LIBRARY {quoted_tcl_path} }}"
+    )
+    expected_tk = (
+        f"let new_env = if ({quoted_tk_path} | is-empty) {{ $new_env }} "
+        f"else {{ $new_env | insert TK_LIBRARY {quoted_tk_path} }}"
+    )
 
     assert expected_tcl in content
     assert expected_tk in content
@@ -79,10 +86,6 @@ def test_nushell(activation_tester_class, activation_tester) -> None:
 
         def print_prompt(self) -> str:
             return r"print $env.VIRTUAL_PREFIX"
-
-        def assert_tcl_tk_library(self, before, activated, deactivated, raw) -> None:
-            # activate.nu never sets TCL_LIBRARY or TK_LIBRARY: its `let $new_env` inside `if` only shadows the variable
-            assert before == activated == deactivated, raw
 
         def activate_call(self, script):
             # Commands are called without quotes in Nushell
