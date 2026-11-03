@@ -16,6 +16,8 @@ from textwrap import dedent
 from threading import Thread
 from typing import Final, NoReturn
 
+from virtualenv.util.path import write_file
+
 STRICT = "UPGRADE_ADVISORY" not in os.environ
 
 BUNDLED = ["pip", "setuptools"]
@@ -87,7 +89,7 @@ def _write_changelog(added: dict[str, list[str]], removed: dict[str, list[str]])
     if len(lines) >= 4:  # ruff:ignore[magic-value-comparison]
         fragment: Final[Path] = Path(__file__).parents[1] / "docs" / "changelog" / "embedded-wheels.bugfix.rst"
         fragment.parent.mkdir(parents=True, exist_ok=True)
-        fragment.write_text(changelog, encoding="utf-8")
+        write_file(fragment, changelog.encode("utf-8"))
 
 
 def render_init(folders: dict[Path, str] | None = None) -> None:
