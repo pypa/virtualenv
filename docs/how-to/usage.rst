@@ -228,7 +228,7 @@ Configuration file location
 The configuration file is named ``virtualenv.ini`` and located in the platformdirs app config directory. Run
 ``virtualenv --help`` to see the exact location for your system.
 
-Override the location with the ``VIRTUALENV_CONFIG_FILE`` environment variable.
+Override the location with the ``VIRTUALENV_CONFIG_FILE`` environment variable. An empty value counts as unset.
 
 Configuration format
 ====================
@@ -270,6 +270,7 @@ Override app-data location
 ==========================
 
 Set the ``VIRTUALENV_OVERRIDE_APP_DATA`` environment variable to override the default app-data cache directory location.
+An empty or blank value counts as unset.
 
 Allow unverified HTTPS for periodic updates
 ===========================================

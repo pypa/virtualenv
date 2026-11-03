@@ -59,5 +59,9 @@
   "max_size": 9223372036854775807,
   "_creators": null,
   "free_threaded": false,
-  "debug_build": false
+  "debug_build": false,
+  "sysconfig_platform": null,
+  "marker_environment": {},
+  "tcl_lib": null,
+  "tk_lib": null
 }

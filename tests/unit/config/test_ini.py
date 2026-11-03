@@ -51,6 +51,20 @@ def test_ini_that_fails_to_parse_is_logged(invalid_ini: Path, caplog: pytest.Log
     ]
 
 
+def test_ini_empty_env_var_uses_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    mocker.patch("virtualenv.config.ini.user_config_dir", autospec=True, return_value=str(tmp_path / "config"))
+
+    config: Final[IniConfig] = IniConfig(env={"VIRTUALENV_CONFIG_FILE": ""})
+
+    assert (config.epilog, caplog.records) == (
+        f"\nconfig file {tmp_path / 'config' / 'virtualenv.ini'} missing (change via env var VIRTUALENV_CONFIG_FILE)",
+        [],
+    )
+
+
 def test_ini_that_fails_to_parse_does_not_break_the_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # configparser reads clear = True before it hits the bad line, and the CLI must not apply that partial result
     (invalid_ini := tmp_path / "conf.ini").write_bytes(b"[virtualenv]\nclear = True\ninvalid\n")

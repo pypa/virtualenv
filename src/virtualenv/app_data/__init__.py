@@ -27,7 +27,7 @@ _MIGRATION_MARKER: Final = ".virtualenv-migration-incomplete"
 
 
 def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]) -> AppData:
-    private: Final = folder is None and "VIRTUALENV_OVERRIDE_APP_DATA" not in env
+    private: Final = folder is None and not env.get("VIRTUALENV_OVERRIDE_APP_DATA", "").strip()
     if folder is None:
         folder = _default_app_data_dir(env)
     folder = os.path.abspath(folder)
@@ -66,9 +66,10 @@ def _prepare_permissions(folder: str) -> bool:
 
 
 def _default_app_data_dir(env: Mapping[str, str]) -> str:
-    key: Final = "VIRTUALENV_OVERRIDE_APP_DATA"
-    if key in env:
-        return env[key]
+    # a blank value counts as unset, as an empty one does for the VIRTUALENV_<OPTION> variables; abspath would turn it
+    # into the working directory (on Windows spaces too), which --reset-app-data then deletes
+    if (folder := env.get("VIRTUALENV_OVERRIDE_APP_DATA", "")).strip():
+        return folder
     return _cache_dir_with_migration()
 
 
