@@ -29,7 +29,7 @@ def main() -> None:
         path: Final[PurePosixPath] = PurePosixPath(filename)
         allowed: Final[bool] = filename in {
             "THIRD-PARTY-NOTICES.md",
-            "docs/changelog/u.bugfix.rst",
+            "docs/changelog/embedded-wheels.bugfix.rst",
             "pylock.zipapp.toml",
             "tasks/ci-tools.json",
         } or (

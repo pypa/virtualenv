@@ -191,7 +191,7 @@ release = [
   "packaging>=26.3",
   "prek>=0.5",
   "pypi-attestations>=0.0.28",
-  "release-creator>=4.1",
+  "release-creator>=4.4",
   "towncrier>=26.9",
   "tox>=4.45",
   "tox-uv>=1.28.1",
@@ -199,20 +199,20 @@ release = [
   { include-group = "sbom" },
 ]
 release-build = [
-  "release-creator>=4.1",
+  "release-creator>=4.4",
   "tox>=4.45",
   "tox-uv>=1.28.1",
 ]
 release-news = [
-  "release-creator>=4.1",
+  "release-creator>=4.4",
   "towncrier>=26.9",
 ]
 release-notes = [
-  "release-creator>=4.1",
+  "release-creator>=4.4",
 ]
 release-prepare = [
   "prek>=0.5",
-  "release-creator>=4.1",
+  "release-creator>=4.4",
   "towncrier>=26.9",
 ]
 release-spdx = [ { include-group = "sbom" } ]
@@ -222,7 +222,7 @@ release-verify = [
 release-zipapp = [
   "hatchling>=1.28",
   "packaging>=26.3",
-  "release-creator>=4.1",
+  "release-creator>=4.4",
   { include-group = "sbom" },
 ]
 sbom = [
@@ -434,7 +434,7 @@ uploaded-prior-to = "P7D"
 decision-order = "stable"
 matrix.python = ">=3.15,<3.16"
 matrix.platforms = [ "linux_x86_64", "windows_amd64" ]
-# temporary, delete after 2026-11-02
-packages.release-creator.uploaded-prior-to = 2026-10-26T18:24:46Z
+# release-creator 4.4.0 needs a seven-day cutoff exception through 2026-11-09.
+packages.release-creator.uploaded-prior-to = 2026-11-02T21:45:00Z
 # temporary, delete after 2026-10-29
 packages.uv.uploaded-prior-to = 2026-10-22T01:32:34Z
