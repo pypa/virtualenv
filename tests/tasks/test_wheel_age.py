@@ -135,6 +135,22 @@ def generator_repo(tmp_path: Path) -> Path:
     return tmp_path
 
 
+@pytest.mark.parametrize("linked", [pytest.param(False, id="new-directory"), pytest.param(True, id="symlink")])
+def test_write_changelog_creates_or_replaces_fragment(generator_repo: Path, linked: bool) -> None:
+    write_changelog: Final[Callable[[dict[str, list[str]], dict[str, list[str]]], None]] = runpy.run_path(
+        str(generator_repo / "tasks" / "upgrade_wheels.py")
+    )["_write_changelog"]
+    fragment: Final[Path] = generator_repo / "docs" / "changelog" / "embedded-wheels.bugfix.rst"
+    if linked:
+        fragment.parent.mkdir(parents=True)
+        (generator_repo / "outside").write_text("untouched", encoding="utf-8")
+        fragment.symlink_to(generator_repo / "outside")
+    write_changelog({"pip": ["26.1"]}, {})
+    assert fragment.read_text(encoding="utf-8") == "Upgrade embedded wheels:\n\n- pip to ``26.1``\n"
+    if linked:
+        assert (generator_repo / "outside").read_text(encoding="utf-8") == "untouched"
+
+
 @pytest.fixture
 def regenerate(generator_repo: Path) -> Callable[[], subprocess.CompletedProcess[str]]:
     def invoke() -> subprocess.CompletedProcess[str]:
@@ -223,7 +239,7 @@ def apply_patch(wheel_repo: Path) -> Callable[[str, str], subprocess.CompletedPr
     "filename",
     [
         pytest.param("THIRD-PARTY-NOTICES.md", id="notices"),
-        pytest.param("docs/changelog/u.bugfix.rst", id="changelog"),
+        pytest.param("docs/changelog/embedded-wheels.bugfix.rst", id="changelog"),
         pytest.param("pylock.zipapp.toml", id="zipapp-lock"),
         pytest.param("src/virtualenv/seed/wheels/embed/__init__.py", id="bundle-index"),
         pytest.param("src/virtualenv/seed/wheels/embed/pip-2-py3-none-any.whl", id="wheel"),
