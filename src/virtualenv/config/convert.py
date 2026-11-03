@@ -50,9 +50,6 @@ class NoneType(TypeData):
 
 
 class ListType(TypeData):
-    def _validate(self) -> None:
-        """no op."""
-
     def convert(self, value: str | list[str], flatten: bool = True) -> list[Any]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]
         values = self.split_values(value)
         result = []
