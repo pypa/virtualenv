@@ -274,6 +274,7 @@ jobs:
     name: 🚀 Publish GitHub Release
     needs: [attest, notes, pypi-verify]
     runs-on: ubuntu-24.04
+    environment: release
     permissions:
       contents: write
     steps:
