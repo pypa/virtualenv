@@ -11,29 +11,24 @@ concurrency:
   cancel-in-progress: true
 permissions: {}
 jobs:
-  analyze:
-    name: 🛡️ analyze ${{ matrix.language }}
-    runs-on: ubuntu-24.04
+  # The custom pack holds Python queries only, so the Python analysis loads it and the actions analysis does not.
+  python:
+    name: 🛡️ Python
+    uses: tox-dev/github-workflows/.github/workflows/codeql.yaml@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
     permissions:
-      contents: read # check out the code to analyze
-      security-events: write # upload the analysis results to code scanning
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [python, actions]
-    steps:
-      - name: 📥 Check out code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: 🛡️ Initialize CodeQL
-        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
-        with:
-          languages: ${{ matrix.language }}
-          config-file: ./.github/codeql/codeql-config.yml
-          # the custom pack holds Python queries only, so the actions analysis must not load it
-          queries: ${{ matrix.language == 'python' && '+./.github/codeql/queries' || '' }}
-      - name: 🛡️ Analyze
-        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
-        with:
-          category: "/language:${{ matrix.language }}"
+      contents: read
+      security-events: write
+    with:
+      languages: '["python"]'
+      config-file: ./.github/codeql/codeql-config.yml
+      queries: +./.github/codeql/queries
+  actions:
+    name: 🛡️ Actions
+    uses: tox-dev/github-workflows/.github/workflows/codeql.yaml@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
+    permissions:
+      contents: read
+      security-events: write
+    with:
+      languages: '["actions"]'
+      config-file: ./.github/codeql/codeql-config.yml
+      queries: ""
