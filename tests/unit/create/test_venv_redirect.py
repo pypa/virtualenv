@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
-from stat import S_IREAD, S_IWRITE
+from stat import S_IFMT, S_IREAD, S_IWRITE
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -155,6 +155,16 @@ def test_venv_redirect_forced_keeps_other_environment(redirect: Path, kind: str)
     _create(redirect.parent / "env", "--venv-redirect")
 
     assert redirect.read_text(encoding="utf-8") == "other\n"
+
+
+@pytest.mark.parametrize("kind", _NON_FILE_KINDS)
+def test_venv_redirect_forced_keeps_non_file(redirect: Path, kind: str) -> None:
+    _make_non_file(redirect, kind)
+    file_type = S_IFMT(redirect.stat().st_mode)
+
+    _create(redirect.parent / "env", "--venv-redirect")
+
+    assert S_IFMT(redirect.stat().st_mode) == file_type
 
 
 def test_venv_redirect_forced_keeps_undecodable(redirect: Path) -> None:

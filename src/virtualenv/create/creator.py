@@ -341,6 +341,8 @@ class Creator(ABC):
 
 
 def _points_at_virtualenv(redirect: Path) -> bool:
+    if not redirect.is_file():  # only a regular file holds a redirect, and opening a FIFO would wait for a writer
+        return False
     try:
         line = redirect.read_text(encoding="utf-8").removesuffix("\n")  # universal newlines already turned \r\n into \n
         return bool(line) and "virtualenv" in PyEnvCfg.from_folder(redirect.parent / line)
