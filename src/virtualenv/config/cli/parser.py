@@ -116,7 +116,7 @@ class VirtualEnvConfigParser(ArgumentParser):
                 # accumulating actions (count, append, extend) add the same arguments again on every pass.
                 self.options.set_src(action.dest, action.default, getattr(action, "default_source", "default"))
 
-    def _fix_default(self, action: Action) -> None:
+    def _fix_default(self, action: Action) -> None:  # ruff:ignore[complex-structure]
         if hasattr(action, "default") and hasattr(action, "dest") and action.default != SUPPRESS:
             as_type = get_type(action)
             names = OrderedDict((i.lstrip("-").replace("-", "_"), None) for i in action.option_strings)
@@ -132,6 +132,8 @@ class VirtualEnvConfigParser(ArgumentParser):
                         break
             if tri_state := action.default is None and isinstance(action.const, bool):
                 outcome = _as_passed_flag(action.const, outcome)
+                if outcome is not None and outcome[1] == "file" and self.options.get_source(action.dest) == "env var":
+                    return  # a sibling flag already set this destination from an env var, which beats the file
             if outcome is not None:
                 action.default, default_source = outcome
                 vars(action)["default_source"] = default_source

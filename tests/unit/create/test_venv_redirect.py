@@ -73,6 +73,27 @@ def test_venv_redirect_env_var_and_cli(  # ruff:ignore[too-many-arguments]
     assert project_redirect.exists() is written
 
 
+@pytest.mark.parametrize(
+    ("ini", "env_var", "written"),
+    [
+        pytest.param("no_venv_redirect = true", None, False, id="ini-off"),
+        pytest.param("no_venv_redirect = true", "VIRTUALENV_VENV_REDIRECT", True, id="env-on-beats-ini-off"),
+        pytest.param("venv_redirect = true", "VIRTUALENV_NO_VENV_REDIRECT", False, id="env-off-beats-ini-on"),
+    ],
+)
+def test_venv_redirect_ini_and_env_var(
+    project_redirect: Path, monkeypatch: pytest.MonkeyPatch, ini: str, env_var: str | None, written: bool
+) -> None:
+    (config := project_redirect.parent / "virtualenv.ini").write_text(f"[virtualenv]\n{ini}\n", encoding="utf-8")
+    monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(config))
+    if env_var is not None:
+        monkeypatch.setenv(env_var, "true")
+
+    _create(project_redirect.parent / "env")
+
+    assert project_redirect.exists() is written
+
+
 def test_venv_redirect_forced_points_at_created(redirect: Path) -> None:
     _create(redirect.parent / "env", "--venv-redirect")
 
