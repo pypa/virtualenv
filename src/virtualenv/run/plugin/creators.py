@@ -80,6 +80,9 @@ class CreatorSelector(ComponentBuilder):
     def _get_default(choices: list[str]) -> str:
         return next(iter(choices))
 
+    def _available_for(self) -> str:
+        return f" for {self.interpreter.spec}"  # only the creators that support this interpreter are choices
+
     def populate_selected_argparse(self, selected: str, app_data: object) -> None:
         self.parser.description = f"options for {self.name} {selected}"
         assert self._impl_class is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
