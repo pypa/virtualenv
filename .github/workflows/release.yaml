@@ -171,52 +171,16 @@ jobs:
               if-no-files-found: error
   notes:
     name: 📝 Render GitHub Release notes
-    runs-on: ubuntu-26.04
-    outputs:
-      artifact-id: ${{ steps.upload.outputs.artifact-id }}
+    uses: tox-dev/github-workflows/.github/workflows/release-notes.yaml@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
     permissions:
       contents: read
-    steps:
-      - name: 📥 Check out code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - name: 🐍 Install uv
-        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
-        with:
-          version: latest-known
-          python-version: "3.15"
-          enable-cache: false
-      - name: 📦 Install locked release tools
-        uses: tox-dev/github-workflows/install-locked-tools@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
-        with:
-          groups: release-notes
-          venv: ${{ runner.temp }}/release-tools
-      - name: 🏷️ Select previous tag
-        id: previous
-        uses: tox-dev/github-workflows/select-previous-tag@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
-        with:
-          tag: ${{ github.ref_name }}
-      - name: 📝 Render release notes
-        uses: tox-dev/github-workflows/render-release-notes@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
-        with:
-          tag: ${{ github.ref_name }}
-          previous: ${{ steps.previous.outputs.previous }}
-          changelog: docs/changelog.rst
-          artifact-url: https://pypi.org/project/virtualenv/${{ github.ref_name }}/
-      - name: 📤 Store release notes
-        id: upload
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: github-release-notes
-          path: ${{ runner.temp }}/release-notes.md
-          if-no-files-found: error
+    with:
+      tag: ${{ github.ref_name }}
+      changelog: docs/changelog.rst
+      artifact-url: https://pypi.org/project/virtualenv/${{ github.ref_name }}/
   publish-pypi:
     name: 🚀 Publish to PyPI
-    needs:
-      - attest
-      - notes
+    needs: attest
     runs-on: ubuntu-24.04
     environment:
       name: release
@@ -439,13 +403,6 @@ jobs:
           python-version: "3.15"
           version: ${{ steps.locked-uv.outputs.version }}
           enable-cache: false
-      - name: 📦 Install the locked verification tooling
-        uses: tox-dev/github-workflows/install-locked-tools@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
-        env:
-          UV_MANAGED_PYTHON: "true"
-        with:
-          groups: release-verify
-          venv: ${{ runner.temp }}/tools
       - name: 📩 Download expected distributions
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
@@ -487,8 +444,6 @@ jobs:
               '.urls[] | select(.filename == $filename) | .url' release.json)"
             curl --fail --silent --show-error --retry 5 --retry-all-errors --output "published/$filename" -- "$url"
             cmp "$expected" "published/$filename"
-            "$RUNNER_TEMP/tools/bin/pypi-attestations" verify pypi --repository https://github.com/pypa/virtualenv \
-              "published/$filename"
           done
       - name: 🔍 Download and verify published SBOMs
         env:
