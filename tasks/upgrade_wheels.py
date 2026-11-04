@@ -73,23 +73,24 @@ def _sync_dest(new_packages: set[str], remove_packages: set[str], new_batch: dic
 
 
 def _write_changelog(added: dict[str, list[str]], removed: dict[str, list[str]]) -> None:
-    lines = ["Upgrade embedded wheels:", ""]
-    for key, versions in added.items():
-        text = f"- {key} to {fmt_version(versions)}"
-        if key in removed:
-            rem = ", ".join(f"``{i}``" for i in removed[key])
-            text += f" from {rem}"
-            del removed[key]
-        lines.append(text)
-    for key, versions in removed.items():
-        lines.append(f"Removed {key} of {fmt_version(versions)}")
-    lines.append("")
-    changelog = "\n".join(lines)
+    if not added and not removed:
+        return
+    # towncrier wraps a fragment in its own list item, so the fragment must be a prose paragraph, not a bullet list
+    sentences: list[str] = []
+    if added:
+        upgrades = [
+            f"{key} to {fmt_version(versions)}" + (f" from {fmt_version(removed[key])}" if key in removed else "")
+            for key, versions in added.items()
+        ]
+        sentences.append(f"Upgrade embedded wheels: {', '.join(upgrades)}.")
+    sentences.extend(
+        f"Removed {key} of {fmt_version(versions)}." for key, versions in removed.items() if key not in added
+    )
+    changelog = " ".join(sentences)
     print(changelog)  # ruff:ignore[print]
-    if len(lines) >= 4:  # ruff:ignore[magic-value-comparison]
-        fragment: Final[Path] = Path(__file__).parents[1] / "docs" / "changelog" / "embedded-wheels.bugfix.rst"
-        fragment.parent.mkdir(parents=True, exist_ok=True)
-        write_file(fragment, changelog.encode("utf-8"))
+    fragment: Final[Path] = Path(__file__).parents[1] / "docs" / "changelog" / "embedded-wheels.bugfix.rst"
+    fragment.parent.mkdir(parents=True, exist_ok=True)
+    write_file(fragment, f"{changelog}\n".encode())
 
 
 def render_init(folders: dict[Path, str] | None = None) -> None:

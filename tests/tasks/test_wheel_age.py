@@ -146,7 +146,7 @@ def test_write_changelog_creates_or_replaces_fragment(generator_repo: Path, link
         (generator_repo / "outside").write_text("untouched", encoding="utf-8")
         fragment.symlink_to(generator_repo / "outside")
     write_changelog({"pip": ["26.1"]}, {})
-    assert fragment.read_text(encoding="utf-8") == "Upgrade embedded wheels:\n\n- pip to ``26.1``\n"
+    assert fragment.read_text(encoding="utf-8") == "Upgrade embedded wheels: pip to ``26.1``.\n"
     if linked:
         assert (generator_repo / "outside").read_text(encoding="utf-8") == "untouched"
 
