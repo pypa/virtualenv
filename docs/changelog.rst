@@ -6,6 +6,19 @@
 
 .. towncrier release notes start
 
+.. _release-21-15-4:
+
+**********************
+ 21.15.4 (2026-11-04)
+**********************
+
+.. _release-21-15-4-fixed:
+
+Fixed
+-----
+
+- Upgrade embedded wheels: pip to ``26.3`` from ``26.2.2`` (:pr:`3508`) by :user:`gaborbernat`.
+
 .. _release-21-15-3:
 
 **********************
