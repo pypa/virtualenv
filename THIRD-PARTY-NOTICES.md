@@ -8,7 +8,7 @@ text inside its `.dist-info/licenses/` directory, including the licenses of anyt
 
 ## pip
 
-Bundled as: `pip-26.0.1-py3-none-any.whl`, `pip-26.2.2-py3-none-any.whl`
+Bundled as: `pip-26.0.1-py3-none-any.whl`, `pip-26.3-py3-none-any.whl`
 
 Upstream: https://pypi.org/project/pip/
 
