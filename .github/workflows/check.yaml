@@ -75,7 +75,7 @@ jobs:
         run: |
           git fetch --force --tags https://github.com/pypa/virtualenv.git
       - name: 🐍 Install uv
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: latest-known
           enable-cache: true
@@ -97,7 +97,7 @@ jobs:
               fi
           - name: 🐍 Setup Python for test ${{ matrix.py }}
             if: ${{ !startsWith(matrix.py, 'brew@') && matrix.py != 'rp' }}
-            uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+            uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
             with:
               version: latest-known
               enable-cache: false
@@ -255,7 +255,7 @@ jobs:
         with:
           persist-credentials: false
       - name: 🐍 Install uv
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: latest-known
           python-version: "3.15"
@@ -317,7 +317,7 @@ jobs:
         run: |
           git fetch --force --tags https://github.com/pypa/virtualenv.git
       - name: 🐍 Install uv
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: latest-known
           python-version: "3.15"
@@ -420,7 +420,7 @@ jobs:
         with:
           persist-credentials: false
       - name: 🐍 Install uv
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: latest-known
       - name: 🔍 Run the semgrep hooks
@@ -434,6 +434,6 @@ jobs:
     permissions: {}
     steps:
       - name: 🚦 Require all needed jobs to pass
-        env:
-          NEEDS_JSON: ${{ toJSON(needs) }}
-        run: jq -e 'all(to_entries[]; .value.result == "success")' <<<"$NEEDS_JSON"
+        uses: tox-dev/github-workflows/required-checks@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
+        with:
+          needs: ${{ toJSON(needs) }}

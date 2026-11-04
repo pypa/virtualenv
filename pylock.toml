@@ -5031,37 +5031,37 @@ sha256 = "0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3"
 
 [[packages]]
 name = "uv"
-version = "0.13.5"
+version = "0.13.6"
 marker = "\"dev\" in dependency_groups or \"docs\" in dependency_groups or \"lint\" in dependency_groups or \"pkg-meta\" in dependency_groups or \"release\" in dependency_groups or \"release-build\" in dependency_groups or \"tasks\" in dependency_groups"
 requires-python = ">=3.8"
 index = "https://pypi.org/simple/"
 
 [packages.sdist]
-name = "uv-0.13.5.tar.gz"
-upload-time = 2026-10-22 01:32:33.909691+00:00
-url = "https://files.pythonhosted.org/packages/de/f0/7565e80415f841c3500ed69d86516c7676e3b24470a218ab61b1f43071a2/uv-0.13.5.tar.gz"
-size = 7513309
+name = "uv-0.13.6.tar.gz"
+upload-time = 2026-10-27 00:45:57.605614+00:00
+url = "https://files.pythonhosted.org/packages/08/d5/88d43310d425f6e3a43997ad771658ded3237d0ed78c16a89b2353eddf56/uv-0.13.6.tar.gz"
+size = 7545242
 
 [packages.sdist.hashes]
-sha256 = "979409b8c9a78df140ffb19c53f511b7a73526da8d1d5e36558833055e371c6c"
+sha256 = "d762215478854f6cf20c3faed8f1eb30c8101d568e7bc32a3abafc063929d5c5"
 
 [[packages.wheels]]
-name = "uv-0.13.5-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-upload-time = 2026-10-22 01:32:06.393304+00:00
-url = "https://files.pythonhosted.org/packages/3a/ad/3c2a81d66d1839063662e5b6c0002ec31f8ee987dbc5295747627ca6160a/uv-0.13.5-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
-size = 17211825
+name = "uv-0.13.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+upload-time = 2026-10-27 00:45:31.291019+00:00
+url = "https://files.pythonhosted.org/packages/5c/43/0688ff5142934238f2812e348f4a24e09b57d48bfb38dd8f850325a0d9de/uv-0.13.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+size = 17333810
 
 [packages.wheels.hashes]
-sha256 = "fa8d26e08e34c29c0c4e820cf3181757086d547240b4f4d31ff1d8bd810ca946"
+sha256 = "22759b8895e1103578de6fb4cd27e94b4399d021023378d29f01333717751fba"
 
 [[packages.wheels]]
-name = "uv-0.13.5-py3-none-win_amd64.whl"
-upload-time = 2026-10-22 01:32:28.220679+00:00
-url = "https://files.pythonhosted.org/packages/32/ea/771744a784b16aa21d195cb5d5d5a2878d72fa00fc26f11ea3f9646994fe/uv-0.13.5-py3-none-win_amd64.whl"
-size = 15358650
+name = "uv-0.13.6-py3-none-win_amd64.whl"
+upload-time = 2026-10-27 00:45:52.086199+00:00
+url = "https://files.pythonhosted.org/packages/7c/9d/714523188aea3054644d8e69ae8089aac70325a3cee2d3d05509d4f23398/uv-0.13.6-py3-none-win_amd64.whl"
+size = 15334118
 
 [packages.wheels.hashes]
-sha256 = "1fb29fc46ba12033e2ef95a95ac79d649e71bbb1358419bbbcbd19d86026ef2f"
+sha256 = "7c9bc35ccb65932d8dc10a0669f9c805eaa3c9827ce18ecbecb1bd67944b2cdf"
 
 [[packages]]
 name = "vcs-versioning"
@@ -5302,7 +5302,6 @@ command-line = [
     "--all-groups",
     "--all-extras",
     "--no-cache",
-    "--upgrade",
 ]
 input-path = "pyproject.toml"
 mode = "universal"
