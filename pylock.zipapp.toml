@@ -248,7 +248,7 @@ sha256 = "abd01743f24e5287cd7a5db3752faf1a2d65353f38ec26d98e25a6db65958c85"
 
 [[packages]]
 name = "python-discovery"
-version = "1.6.3"
+version = "1.6.6"
 marker = "\"project-runtime\" in dependency_groups"
 requires-python = ">=3.9"
 dependencies = [
@@ -257,22 +257,22 @@ dependencies = [
 index = "https://pypi.org/simple/"
 
 [packages.sdist]
-name = "python_discovery-1.6.3.tar.gz"
-upload-time = 2026-10-16 03:54:29.507753+00:00
-url = "https://files.pythonhosted.org/packages/fc/54/fad125f5c48f7821644ee6f223ebfcedc4e23597c1a16eeb13d33aa4a91a/python_discovery-1.6.3.tar.gz"
-size = 88998
+name = "python_discovery-1.6.6.tar.gz"
+upload-time = 2026-10-27 19:43:40.605766+00:00
+url = "https://files.pythonhosted.org/packages/8e/3e/0c8cbdb52feeac4a8667ccff3c58fd2568d6d2969db2717ff00a9fdae73a/python_discovery-1.6.6.tar.gz"
+size = 116920
 
 [packages.sdist.hashes]
-sha256 = "a62b301d96cf5489cb96ab023b32e068421867fdd5df2e42eece877869047fa2"
+sha256 = "d687024fec55c489e7a465c7f5644300a4d9dbf7727a556a85660536ee922933"
 
 [[packages.wheels]]
-name = "python_discovery-1.6.3-py3-none-any.whl"
-upload-time = 2026-10-16 03:54:28.237016+00:00
-url = "https://files.pythonhosted.org/packages/de/ec/643826e4d69b7bdce4213f221e8f5ed06d0a9dd69fa9b33342578d2cc8c8/python_discovery-1.6.3-py3-none-any.whl"
-size = 39386
+name = "python_discovery-1.6.6-py3-none-any.whl"
+upload-time = 2026-10-27 19:43:39.226654+00:00
+url = "https://files.pythonhosted.org/packages/23/33/d594dde9e7f510216ca87707b575492a610100497db735ab0b54345c60e2/python_discovery-1.6.6-py3-none-any.whl"
+size = 39043
 
 [packages.wheels.hashes]
-sha256 = "cb7654125e3dcb594269a6feb56ac693f1f13b7c654493a93eba72dc22d18034"
+sha256 = "95e644ce8625c62dc195a603da9f8138ca5a35048224911b2cf7b3028025527a"
 
 [[packages]]
 name = "typing-extensions"
@@ -300,8 +300,8 @@ size = 45571
 sha256 = "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
 
 [tool.nab]
-nab-version = "0.0.22"
-created-at = 2026-10-24 06:24:40.447068+00:00
+nab-version = "0.0.23"
+created-at = 2026-11-03 21:20:43.488068+00:00
 command-line = [
     "nab",
     "lock",
@@ -323,6 +323,7 @@ command-line = [
     "pypy",
     "--output",
     "pylock.zipapp.toml",
+    "--upgrade",
 ]
 input-path = "pyproject.toml"
 mode = "universal"
