@@ -214,7 +214,6 @@ def test_invalid_creator_outside_cli(
     value: str,
 ) -> None:
     set_option(monkeypatch, tmp_path, "creator", value)
-    # argparse checks choices only on the command line, so this used to fail with "No implementation for PythonInfo(...)"
     with pytest.raises(RuntimeError) as error:
         session_via_cli([str(tmp_path / "env")])
     spec: Final = PythonInfo.current_system().spec
