@@ -26,7 +26,7 @@ def discover_wheels(from_folder: Path, distribution: str, version: str | None, f
             for filename in from_folder.iterdir()
             if (wheel := Wheel.from_path(filename))
             and wheel.distribution == distribution
-            and (version is None or wheel.version == version)
+            and (version is None or wheel.has_version(version))
             and wheel.support_py(for_py_version)
         ),
         key=attrgetter("parsed_version", "distribution"),
@@ -79,6 +79,13 @@ class Wheel:
     def parsed_version(self) -> PackagingVersion:
         return PackagingVersion(self.version)
 
+    def has_version(self, version: str) -> bool:
+        """Compare with PEP 440 equality, so a request for ``26.3.0`` or ``v26.3`` matches ``pip-26.3``."""
+        try:
+            return self.parsed_version == PackagingVersion(version)
+        except InvalidVersion:
+            return False
+
     @property
     def name(self) -> str:
         return self.path.name
@@ -114,7 +121,7 @@ class Version:
         if value in {*Version.non_version, "none"}:
             return value
         try:
-            PackagingVersion(value)
+            parsed = PackagingVersion(value)
         except InvalidVersion as exception:
             msg = f"invalid seed version: {value!r}"
             raise ValueError(msg) from exception
@@ -134,7 +141,8 @@ class Version:
         )):
             msg = f"archive-like seed version: {value!r}"
             raise ValueError(msg)
-        return value
+        # the normalized form drops a "v" prefix, surrounding whitespace and casing that pip and wheel names never carry
+        return str(parsed)
 
 
 __all__ = [

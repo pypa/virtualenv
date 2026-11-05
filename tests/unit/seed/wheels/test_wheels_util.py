@@ -6,11 +6,26 @@ from typing import TYPE_CHECKING
 import pytest
 
 from virtualenv.seed.wheels.embed import MAX, MIN, get_embed_wheel
-from virtualenv.seed.wheels.util import Wheel, discover_wheels
+from virtualenv.seed.wheels.util import Version, Wheel, discover_wheels
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        pytest.param("26.3", "26.3", id="canonical"),
+        pytest.param("v26.3", "26.3", id="v-prefix"),
+        pytest.param(" 26.3\r", "26.3", id="whitespace"),
+        pytest.param("26.3RC1", "26.3rc1", id="case"),
+        pytest.param("26.3.0", "26.3.0", id="trailing-zero-kept"),
+        pytest.param("bundle", "bundle", id="bundle"),
+    ],
+)
+def test_validate_normalizes_version(value: str, expected: str) -> None:
+    assert Version.validate(value) == expected
 
 
 @pytest.mark.parametrize(
