@@ -34,7 +34,7 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
     elif not folder.strip():
         # an empty value, often an unset shell variable, resolves to the working directory (on Windows so do spaces)
         # and --reset-app-data would delete it
-        msg = f"app data folder {folder!r} must not be empty or whitespace; pass . to use the current directory"
+        msg = f"app data folder {folder!r} must not be empty or whitespace"
         raise ArgumentTypeError(msg)
     folder = os.path.abspath(folder)
 

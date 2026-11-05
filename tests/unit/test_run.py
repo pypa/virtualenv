@@ -115,10 +115,11 @@ def test_reset_with_empty_app_data_override_resets_default(
 @pytest.mark.parametrize(
     ("args", "env_var"),
     [
-        pytest.param(["--app-data", ""], None, id="empty"),
-        pytest.param(["--app-data", " "], None, id="space"),
-        pytest.param(["--app-data", "\t"], None, id="tab"),
-        pytest.param([], " ", id="space-env-var"),
+        pytest.param(["--app-data", "", "--reset-app-data"], None, id="empty"),
+        pytest.param(["--app-data", " ", "--reset-app-data"], None, id="space"),
+        pytest.param(["--app-data", "\t", "--reset-app-data"], None, id="tab"),
+        pytest.param(["--reset-app-data"], " ", id="space-env-var"),
+        pytest.param(["--app-data", ""], None, id="empty-without-reset"),
     ],
 )
 def test_blank_app_data_leaves_working_directory(  # ruff:ignore[too-many-arguments]
@@ -130,17 +131,19 @@ def test_blank_app_data_leaves_working_directory(  # ruff:ignore[too-many-argume
     env_var: str | None,
 ) -> None:
     monkeypatch.chdir(tmp_path)
-    # a blank folder resolved to the working directory (on Windows so did spaces), so the reset deleted it
+    # a blank folder resolved to the working directory (on Windows so did spaces): the reset deleted it, and without the
+    # reset the cache was written into it
     delete: Final = mocker.patch("virtualenv.app_data.via_disk_folder.safe_delete", autospec=True)
     if env_var is not None:
         monkeypatch.setenv("VIRTUALENV_APP_DATA", env_var)
     with pytest.raises(SystemExit) as context:
-        session_via_cli([*args, "--reset-app-data", str(tmp_path / "env")])
+        session_via_cli([*args, str(tmp_path / "env")])
     assert (
         context.value.code,
         delete.call_args_list,
-        "must not be empty or whitespace; pass . to use the current directory" in capsys.readouterr().err,
-    ) == (2, [], True)
+        list(tmp_path.iterdir()),
+        bool(re.search(r"app data folder '.*' must not be empty or whitespace\n\Z", capsys.readouterr().err)),
+    ) == (2, [], [], True)
 
 
 def _on_command_line(_: pytest.MonkeyPatch, folder: Path) -> list[str]:
