@@ -94,6 +94,15 @@ def test_venv_redirect_ini_and_env_var(
     assert project_redirect.exists() is written
 
 
+def test_venv_redirect_both_env_vars_opt_out(project_redirect: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("VIRTUALENV_VENV_REDIRECT", "1")
+    monkeypatch.setenv("VIRTUALENV_NO_VENV_REDIRECT", "1")
+
+    _create(project_redirect.parent / "env")
+
+    assert not project_redirect.exists()
+
+
 def test_venv_redirect_forced_points_at_created(redirect: Path) -> None:
     _create(redirect.parent / "env", "--venv-redirect")
 
