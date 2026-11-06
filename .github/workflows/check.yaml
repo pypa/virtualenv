@@ -425,11 +425,19 @@ jobs:
           version: latest-known
       - name: 🔍 Run the semgrep hooks
         run: uvx --from pre-commit-uv pre-commit run semgrep --all-files
+  release:
+    name: 🏷️ Release dry run
+    uses: $/.github/workflows/pre-release.yaml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      dry-run: true
   all-checks-pass:
     name: 🚦 ${{ github.event_name == 'pull_request' && 'Required checks pass' || 'Non-PR checks pass' }}
     # the gate shares the jobs' condition, so every job it needs has run and a skip counts as a failure
     if: ${{ !cancelled() && (github.event_name != 'schedule' || github.repository_owner == 'pypa') }} # codespell:ignore cancelled
-    needs: [test, coverage, check, test-queries, semgrep]
+    needs: [test, coverage, check, test-queries, semgrep, release]
     runs-on: ubuntu-24.04
     permissions: {}
     steps:
