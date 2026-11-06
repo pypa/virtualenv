@@ -6,11 +6,15 @@ import sys
 from argparse import Namespace
 from ast import literal_eval
 from textwrap import dedent
+from typing import TYPE_CHECKING
 
 import pytest
 
 from virtualenv.activation import PythonActivator
 from virtualenv.info import IS_WIN
+
+if TYPE_CHECKING:
+    from virtualenv.run.session import Session
 
 
 @pytest.mark.parametrize(
@@ -21,24 +25,23 @@ def test_python_quote_preserves_unicode_across_source_encodings(encoding: str) -
     assert literal_eval(PythonActivator.quote("café 日本語").encode("ascii").decode(encoding)) == "café 日本語"
 
 
-class MockInterpreter:
-    tcl_lib = None
-    tk_lib = None
-
-
-class MockCreator:
-    def __init__(self, dest) -> None:
-        self.dest = dest
-        self.bin_dir = dest / ("Scripts" if IS_WIN else "bin")
-        self.bin_dir.mkdir(parents=True)
-        self.libs = [dest / "Lib" / "site-packages"]
-        self.env_name = "test-env"
-        self.interpreter = MockInterpreter()
-        self.pyenv_cfg = {}
-
-
 def test_python_activator_generates_pkg_config_path(tmp_path) -> None:
     """Test that activate_this.py sets PKG_CONFIG_PATH."""
+
+    class MockInterpreter:
+        tcl_lib = None
+        tk_lib = None
+
+    class MockCreator:
+        def __init__(self, dest) -> None:
+            self.dest = dest
+            self.bin_dir = dest / ("Scripts" if IS_WIN else "bin")
+            self.bin_dir.mkdir(parents=True)
+            self.libs = [dest / "Lib" / "site-packages"]
+            self.env_name = "test-env"
+            self.interpreter = MockInterpreter()
+            self.pyenv_cfg = {}
+
     creator = MockCreator(tmp_path)
     options = Namespace(prompt=None)
     activator = PythonActivator(options)
@@ -55,20 +58,13 @@ def test_python_activator_generates_pkg_config_path(tmp_path) -> None:
     assert 'os.path.join(base, "lib", "pkgconfig")' in content
 
 
-@pytest.mark.parametrize("path", [pytest.param(None, id="unset"), pytest.param("", id="empty")])
-def test_python_activator_adds_no_empty_path_entry(tmp_path, path) -> None:
-    creator = MockCreator(tmp_path)
-    PythonActivator(Namespace(prompt=None)).generate(creator)
-    env = {key: value for key, value in os.environ.items() if key != "PATH"}
-    if path is not None:
-        env["PATH"] = path
-    script = str(creator.bin_dir / "activate_this.py")
+@pytest.mark.parametrize("path_env", [pytest.param({}, id="unset"), pytest.param({"PATH": ""}, id="empty")])
+def test_python_activator_adds_no_empty_path_entry(activation_python: Session, path_env: dict[str, str]) -> None:
+    script = str(activation_python.creator.bin_dir / "activate_this.py")
     code = f"import os, runpy; runpy.run_path({script!r}); print(repr(os.environ['PATH']))"
-
+    env = {key: value for key, value in os.environ.items() if key != "PATH"} | path_env
     out = subprocess.check_output([sys.executable, "-c", code], env=env, text=True, encoding="utf-8")
-
-    # an empty entry would put the current directory on PATH
-    assert literal_eval(out) == str(creator.bin_dir)
+    assert literal_eval(out) == str(activation_python.creator.bin_dir)
 
 
 def test_python(raise_on_non_source_class, activation_tester) -> None:
