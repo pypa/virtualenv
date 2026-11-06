@@ -196,6 +196,9 @@ Programmatic activation
 Activate the environment from within a running Python process using ``activate_this.py``. This modifies ``sys.path`` and
 environment variables in the current process so that subsequent imports resolve from the virtual environment.
 
+The script removes empty ``PATH`` entries before prepending the environment's executable directory. On POSIX, an empty
+entry searches the current directory.
+
 .. code-block:: python
 
     import runpy
