@@ -288,6 +288,72 @@ def test_cshell_deactivate_restores_path(csh_plain_activate: Path, original: str
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
 @pytest.mark.skipif(TCSH is None, reason="tcsh is not installed")
+@pytest.mark.parametrize(
+    ("original_env", "restored"),
+    [
+        pytest.param({}, "<unset>", id="unset"),
+        pytest.param({"PYTHONHOME": ""}, "", id="empty"),
+        pytest.param({"PYTHONHOME": "/some/pythonhome"}, "/some/pythonhome", id="path"),
+        pytest.param({"PYTHONHOME": "a b"}, "a b", id="space"),
+        pytest.param({"PYTHONHOME": r"a\b"}, r"a\b", id="backslash"),
+        pytest.param({"PYTHONHOME": "a!b"}, "a!b", id="history-character"),
+        pytest.param({"PYTHONHOME": 'a"b'}, 'a"b', id="quote"),
+        pytest.param({"PYTHONHOME": "a$HOME"}, "a$HOME", id="dollar"),
+        pytest.param({"PYTHONHOME": "a\nb"}, "a\nb", id="newline"),
+    ],
+)
+def test_cshell_unsets_pythonhome(csh_plain_activate: Path, original_env: dict[str, str], restored: str) -> None:
+    report = 'if ($?PYTHONHOME) then\n    printenv PYTHONHOME\nelse\n    echo "<unset>"\nendif\n'
+    driver = f"source {csh_plain_activate}\n{report}deactivate\n{report}"
+
+    result = run(
+        [TCSH, "-f"],
+        input=driver,
+        env={key: value for key, value in os.environ.items() if key != "PYTHONHOME"} | original_env,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=90,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, f"<unset>\n{restored}\n", "")
+
+
+@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
+def test_cshell_python_starts_with_pythonhome(csh_plain_activate: Path) -> None:
+    result = run(
+        [TCSH, "-f"],
+        input=f"source {csh_plain_activate}\npython -c 'import sys; print(sys.prefix)'\n",
+        env={**os.environ, "PYTHONHOME": "/nonexistent-pythonhome"},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=90,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, f"{csh_plain_activate.parent.parent}\n", "")
+
+
+@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
+def test_cshell_reactivation_restores_pythonhome(csh_plain_activate: Path) -> None:
+    result = run(
+        [TCSH, "-f"],
+        input=f"source {csh_plain_activate}\nsource {csh_plain_activate}\ndeactivate\nprintenv PYTHONHOME\n",
+        env={**os.environ, "PYTHONHOME": "/some/pythonhome"},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=90,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, "/some/pythonhome\n", "")
+
+
+@pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
+@pytest.mark.skipif(TCSH is None, reason="tcsh is not installed")
 def test_cshell_deactivate_removes_aliases(csh_plain_activate: Path) -> None:
     driver = f'source {csh_plain_activate}\ndeactivate\nalias deactivate\nalias pydoc\necho "done"\n'
 
