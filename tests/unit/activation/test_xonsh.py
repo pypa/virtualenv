@@ -72,10 +72,11 @@ def test_xonsh_restores_pythonhome_without_exported_sentinel(
         "import json\n"
         + ("" if original is None else f"$PYTHONHOME = {original!r}\n")
         + f'source "{session.creator.bin_dir / "activate.xsh"}"\n'
-        + "print(json.dumps(__xonsh__.env.get('_OLD_VIRTUAL_PYTHONHOME')))\ndeactivate\n"
+        + "print(json.dumps(__xonsh__.env.get('_OLD_VIRTUAL_PYTHONHOME')))\n"
+        + "print(json.dumps(__xonsh__.env.get('PYTHONHOME')))\ndeactivate\n"
         + "print(json.dumps(__xonsh__.env.get('PYTHONHOME')))\n"
     )
-    assert [json.loads(line) for line in xonsh(script).splitlines()] == [original, original]
+    assert [json.loads(line) for line in xonsh(script).splitlines()] == [original, None, original]
 
 
 @pytest.mark.parametrize(

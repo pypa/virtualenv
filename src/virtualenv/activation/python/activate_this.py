@@ -28,6 +28,7 @@ os.environ["PATH"] = os.pathsep.join([
 ])
 os.environ["VIRTUAL_ENV"] = base  # virtual env is right above bin directory
 os.environ["VIRTUAL_ENV_PROMPT"] = __VIRTUAL_PROMPT__ or os.path.basename(base)  # ty: ignore[unresolved-reference]
+os.environ.pop("PYTHONHOME", None)
 
 # Set PKG_CONFIG_PATH to include the virtualenv's pkgconfig directory
 pkg_config_path = os.path.join(base, "lib", "pkgconfig")

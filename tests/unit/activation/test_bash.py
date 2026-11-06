@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import shlex
 import shutil
 import subprocess
@@ -20,6 +21,34 @@ if TYPE_CHECKING:
 
 
 _BASH: Final = shutil.which("bash")
+
+
+@pytest.mark.skipif(_BASH is None or (IS_WIN and "\\git\\" not in _BASH.lower()), reason="requires native bash")
+@pytest.mark.parametrize("original", [pytest.param("", id="empty"), pytest.param("/some/pythonhome", id="path")])
+def test_bash_clears_pythonhome(tmp_path: Path, original: str) -> None:
+    session = cli_run(["--no-seed", "--activators", "bash", str(tmp_path / "env")])
+    result = subprocess.run(
+        [
+            _BASH,
+            "--norc",
+            "--noprofile",
+            "-c",
+            (
+                '. "$1"; printf "%s|%s\\n" "${PYTHONHOME+x}" "$PYTHONHOME"; deactivate; '
+                'printf "%s|%s\\n" "${PYTHONHOME+x}" "$PYTHONHOME"'
+            ),
+            "test",
+            str(session.creator.bin_dir / "activate"),
+        ],
+        env={**os.environ, "PYTHONHOME": original},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, f"|\nx|{original}\n", "")
 
 
 @pytest.mark.skipif(_BASH is None or (IS_WIN and "\\git\\" not in _BASH.lower()), reason="requires native bash")
