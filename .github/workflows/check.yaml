@@ -433,11 +433,16 @@ jobs:
       pull-requests: read
     with:
       dry-run: true
+  hooks:
+    name: 🧹 Hooks under the cooldown
+    uses: tox-dev/github-workflows/.github/workflows/cooled-hooks.yaml@e9dabf0e11825edd2b7ac6c152d9f4900f188815 # 6.7.0
+    permissions:
+      contents: read
   all-checks-pass:
     name: 🚦 ${{ github.event_name == 'pull_request' && 'Required checks pass' || 'Non-PR checks pass' }}
     # the gate shares the jobs' condition, so every job it needs has run and a skip counts as a failure
     if: ${{ !cancelled() && (github.event_name != 'schedule' || github.repository_owner == 'pypa') }} # codespell:ignore cancelled
-    needs: [test, coverage, check, test-queries, semgrep, release]
+    needs: [test, coverage, check, test-queries, semgrep, release, hooks]
     runs-on: ubuntu-24.04
     permissions: {}
     steps:
