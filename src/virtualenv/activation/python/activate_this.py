@@ -22,7 +22,9 @@ bin_dir = os.path.dirname(abs_file)
 base = bin_dir[: -len(__BIN_NAME__) - 1]  # ty: ignore[unresolved-reference]
 
 # prepend bin to PATH (this file is inside the bin directory)
-os.environ["PATH"] = os.pathsep.join([bin_dir, *os.environ.get("PATH", "").split(os.pathsep)])
+# an empty entry means the current directory, so an unset or empty PATH must not leave one behind
+existing_path = os.environ.get("PATH", "")
+os.environ["PATH"] = os.pathsep.join([bin_dir, existing_path]) if existing_path else bin_dir
 os.environ["VIRTUAL_ENV"] = base  # virtual env is right above bin directory
 os.environ["VIRTUAL_ENV_PROMPT"] = __VIRTUAL_PROMPT__ or os.path.basename(base)  # ty: ignore[unresolved-reference]
 
