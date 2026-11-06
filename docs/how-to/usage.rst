@@ -199,6 +199,9 @@ environment variables in the current process so that subsequent imports resolve 
 The script removes empty ``PATH`` entries before prepending the environment's executable directory. On POSIX, an empty
 entry searches the current directory.
 
+It also removes an inherited ``PYTHONHOME`` from the current process so child Python interpreters use the environment's
+standard library.
+
 .. code-block:: python
 
     import runpy

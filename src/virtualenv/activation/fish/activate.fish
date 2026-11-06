@@ -34,7 +34,7 @@ function deactivate -d 'Exit virtualenv mode and return to the normal environmen
         set -e _OLD_PKG_CONFIG_PATH
     end
 
-    if test -n "$_OLD_VIRTUAL_PYTHONHOME"
+    if set -q _OLD_VIRTUAL_PYTHONHOME
         set -gx PYTHONHOME "$_OLD_VIRTUAL_PYTHONHOME"
         set -e _OLD_VIRTUAL_PYTHONHOME
     end
@@ -99,7 +99,7 @@ end
 
 # Unset `$PYTHONHOME` if set.
 if set -q PYTHONHOME
-    set -gx _OLD_VIRTUAL_PYTHONHOME $PYTHONHOME
+    set -gx _OLD_VIRTUAL_PYTHONHOME "$PYTHONHOME"
     set -e PYTHONHOME
 end
 

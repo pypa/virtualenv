@@ -21,6 +21,35 @@ _POWERSHELLS: Final = [path for name in ("pwsh", "powershell.exe") if (path := s
 
 
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
+def test_powershell_clears_pythonhome(tmp_path: Path, powershell: str) -> None:
+    session = cli_run(["--no-seed", "--activators", "powershell", str(tmp_path / "env")])
+    inherited = str(tmp_path / "missing-pythonhome")
+    activate = PowerShellActivator.quote(str(session.creator.bin_dir / "activate.ps1"))
+    driver = tmp_path / "pythonhome.ps1"
+    driver.write_text(
+        f". {activate}\nWrite-Output (Test-Path env:PYTHONHOME)\npython -c 'import sys; print(sys.prefix)'\n"
+        "deactivate\nWrite-Output $env:PYTHONHOME\n",
+        encoding="utf-8-sig",
+    )
+    result = subprocess.run(
+        [powershell, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(driver)],
+        env={key: value for key, value in os.environ.items() if key != "COVERAGE_PROCESS_START"}
+        | {"PYTHONHOME": inherited},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout.splitlines(), result.stderr) == (
+        0,
+        ["False", str(session.creator.dest), inherited],
+        "",
+    )
+
+
+@pytest.mark.parametrize("powershell", _POWERSHELLS)
 @pytest.mark.parametrize(
     ("name", "mode"),
     [

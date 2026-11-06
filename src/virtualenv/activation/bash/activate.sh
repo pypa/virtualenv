@@ -16,7 +16,7 @@ deactivate () {
         export PATH
         unset _OLD_VIRTUAL_PATH
     fi
-    if [ -n "${_OLD_VIRTUAL_PYTHONHOME:-}" ] ; then
+    if [ -n "${_OLD_VIRTUAL_PYTHONHOME+x}" ] ; then
         PYTHONHOME="$_OLD_VIRTUAL_PYTHONHOME"
         export PYTHONHOME
         unset _OLD_VIRTUAL_PYTHONHOME
@@ -124,7 +124,7 @@ else
     export VIRTUAL_ENV_PROMPT
 
     # unset PYTHONHOME if set
-    if [ -n "${PYTHONHOME:-}" ] ; then
+    if [ -n "${PYTHONHOME+x}" ] ; then
         _OLD_VIRTUAL_PYTHONHOME="$PYTHONHOME"
         unset PYTHONHOME
     fi

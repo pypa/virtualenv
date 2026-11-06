@@ -21,6 +21,32 @@ if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
 
+@pytest.mark.skipif(not IS_WIN, reason="batch activation requires Windows")
+def test_batch_clears_pythonhome(tmp_path: Path) -> None:
+    creator = session_via_cli([str(tmp_path / "env"), "--no-seed"], setup_logging=False).creator
+    creator.bin_dir.mkdir(parents=True)
+    BatchActivator(VirtualEnvOptions(prompt=None)).generate(creator)
+    driver = creator.bin_dir / "pythonhome.bat"
+    driver.write_text(
+        "@echo off\n@call activate.bat\n@if defined PYTHONHOME (echo set) else (echo unset)\n"
+        "@call deactivate.bat\n@echo %PYTHONHOME%\n",
+        encoding="utf-8",
+    )
+    inherited = str(tmp_path / "missing-pythonhome")
+    result = subprocess.run(
+        [os.environ["COMSPEC"], "/D", "/C", driver.name],
+        cwd=creator.bin_dir,
+        env={**os.environ, "PYTHONHOME": inherited},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout.splitlines(), result.stderr) == (0, ["unset", inherited], "")
+
+
 @pytest.fixture(scope="session")
 def special_char_name():
     """Exclude ampersands, which batch activation does not support in paths."""

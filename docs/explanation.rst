@@ -525,6 +525,9 @@ What activation does:
     - ``VIRTUAL_ENV_PROMPT`` - The prompt prefix (the environment name or custom value from ``--prompt``).
     - ``PKG_CONFIG_PATH`` - Modified to include the virtual environment's ``lib/pkgconfig`` directory.
 
+    Activation also clears an inherited ``PYTHONHOME`` so it cannot redirect standard-library lookup outside the
+    environment. Shells that clear it restore the original value on deactivation.
+
 **Prompt modification**
     By default, activation prepends the environment name to your shell prompt, typically shown as ``(venv)`` before the
     regular prompt. This visual indicator helps you remember which environment is active. You can customize this with

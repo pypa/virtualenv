@@ -14,7 +14,35 @@ from virtualenv.activation import PythonActivator
 from virtualenv.info import IS_WIN
 
 if TYPE_CHECKING:
+    from pathlib import Path
+
     from virtualenv.run.session import Session
+
+
+def test_python_activator_clears_pythonhome(activation_python: Session, tmp_path: Path) -> None:
+    activate = activation_python.creator.bin_dir / "activate_this.py"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-E",
+            "-c",
+            (
+                "import runpy, subprocess; "
+                f"runpy.run_path({str(activate)!r}); "
+                f"result = subprocess.run([{str(activation_python.creator.exe)!r}, '-c', 'import sys; print(sys.prefix)'], "
+                "capture_output=True, text=True, check=True); print(result.stdout, end='')"
+            ),
+        ],
+        env={key: value for key, value in os.environ.items() if key != "COVERAGE_PROCESS_START"}
+        | {"PYTHONHOME": str(tmp_path / "missing-pythonhome")},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, f"{activation_python.creator.dest}\n", "")
 
 
 @pytest.mark.parametrize(

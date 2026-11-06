@@ -22,6 +22,31 @@ FISH = shutil.which("fish")
 
 
 @pytest.mark.skipif(IS_WIN or FISH is None, reason="fish is required")
+@pytest.mark.parametrize("original", [pytest.param("", id="empty"), pytest.param("/some/pythonhome", id="path")])
+def test_fish_restores_pythonhome(tmp_path: Path, original: str) -> None:
+    session = cli_run(["--no-seed", "--activators", "fish", str(tmp_path / "env")])
+    result = subprocess.run(
+        [
+            FISH,
+            "--no-config",
+            "-c",
+            (
+                f"source '{session.creator.bin_dir / 'activate.fish'}'; set -q PYTHONHOME; echo $status; "
+                "deactivate; set -q PYTHONHOME; echo $status; printenv PYTHONHOME"
+            ),
+        ],
+        env={**os.environ, "PYTHONHOME": original},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout, result.stderr) == (0, f"1\n0\n{original}\n", "")
+
+
+@pytest.mark.skipif(IS_WIN or FISH is None, reason="fish is required")
 @pytest.mark.parametrize(
     "value",
     [

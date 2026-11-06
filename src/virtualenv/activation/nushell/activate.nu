@@ -85,6 +85,7 @@ export-env {
         $new_env | merge { PROMPT_COMMAND: $new_prompt VIRTUAL_PREFIX: $virtual_prefix }
     }
     load-env $new_env
+    hide-env --ignore-errors PYTHONHOME
 }
 
 export alias pydoc = python -m pydoc

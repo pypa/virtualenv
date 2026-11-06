@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 from argparse import Namespace
 from shutil import which
@@ -15,6 +16,33 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 _NU: Final = which("nu")
+
+
+@pytest.mark.skipif(_NU is None, reason="nu is not installed")
+def test_nushell_clears_pythonhome(tmp_path: Path) -> None:
+    session = cli_run(["--no-seed", "--activators", "nushell", str(tmp_path / "env")])
+    inherited = str(tmp_path / "missing-pythonhome")
+    activate = NushellActivator.quote(str(session.creator.bin_dir / "activate.nu"))
+    result = subprocess.run(
+        [
+            _NU,
+            "--commands",
+            f"overlay use {activate}; print ('PYTHONHOME' in $env); ^python -c 'import sys; print(sys.prefix)'; deactivate; print $env.PYTHONHOME",
+        ],
+        env={key: value for key, value in os.environ.items() if key != "COVERAGE_PROCESS_START"}
+        | {"PYTHONHOME": inherited},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout.splitlines(), result.stderr) == (
+        0,
+        ["false", str(session.creator.dest), inherited],
+        "",
+    )
 
 
 def test_nushell_tkinter_generation(tmp_path) -> None:

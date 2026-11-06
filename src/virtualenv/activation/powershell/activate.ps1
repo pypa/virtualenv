@@ -110,6 +110,15 @@ function global:deactivate([switch] $NonDestructive) {
         Remove-Variable "_OLD_PKG_CONFIG_PATH" -Scope global
     }
 
+    if (Test-Path variable:_OLD_VIRTUAL_PYTHONHOME) {
+        if ($null -eq $variable:_OLD_VIRTUAL_PYTHONHOME) {
+            Remove-Item env:PYTHONHOME -ErrorAction SilentlyContinue
+        } else {
+            $env:PYTHONHOME = $variable:_OLD_VIRTUAL_PYTHONHOME
+        }
+        Remove-Variable "_OLD_VIRTUAL_PYTHONHOME" -Scope global
+    }
+
     if (Test-Path function:_old_virtual_prompt) {
         $function:prompt = $function:_old_virtual_prompt
         Remove-Item function:\_old_virtual_prompt
@@ -192,6 +201,9 @@ deactivate -nondestructive
 
 $env:VIRTUAL_ENV = $VenvDir
 $env:VIRTUAL_ENV_PROMPT = $Prompt
+
+New-Variable -Scope global -Name _OLD_VIRTUAL_PYTHONHOME -Value $env:PYTHONHOME
+Remove-Item env:PYTHONHOME -ErrorAction SilentlyContinue
 
 # a $null saved value tells deactivate to remove the variable
 if (__TCL_LIBRARY__ -ne "") {
