@@ -1,2 +1,2 @@
-Stop ``activate_this.py`` from adding an empty entry, which means the current directory, to ``PATH`` when ``PATH`` is
-unset or empty.
+Remove empty ``PATH`` entries during programmatic activation, including entries in an otherwise nonempty value. On
+POSIX, an empty entry searches the current directory.

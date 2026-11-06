@@ -58,13 +58,30 @@ def test_python_activator_generates_pkg_config_path(tmp_path) -> None:
     assert 'os.path.join(base, "lib", "pkgconfig")' in content
 
 
-@pytest.mark.parametrize("path_env", [pytest.param({}, id="unset"), pytest.param({"PATH": ""}, id="empty")])
-def test_python_activator_adds_no_empty_path_entry(activation_python: Session, path_env: dict[str, str]) -> None:
+@pytest.mark.parametrize(
+    ("path_env", "expected_suffix"),
+    [
+        pytest.param({}, "", id="unset"),
+        pytest.param({"PATH": ""}, "", id="empty"),
+        pytest.param({"PATH": os.pathsep * 2}, "", id="only-separators"),
+        pytest.param({"PATH": f"{os.pathsep}first"}, f"{os.pathsep}first", id="leading"),
+        pytest.param(
+            {"PATH": f"first{os.pathsep}{os.pathsep}second"},
+            f"{os.pathsep}first{os.pathsep}second",
+            id="middle",
+        ),
+        pytest.param({"PATH": f"first{os.pathsep}"}, f"{os.pathsep}first", id="trailing"),
+        pytest.param({"PATH": f"first{os.pathsep}second"}, f"{os.pathsep}first{os.pathsep}second", id="nonempty"),
+    ],
+)
+def test_python_activator_adds_no_empty_path_entry(
+    activation_python: Session, path_env: dict[str, str], expected_suffix: str
+) -> None:
     script = str(activation_python.creator.bin_dir / "activate_this.py")
     code = f"import os, runpy; runpy.run_path({script!r}); print(repr(os.environ['PATH']))"
     env = {key: value for key, value in os.environ.items() if key != "PATH"} | path_env
     out = subprocess.check_output([sys.executable, "-c", code], env=env, text=True, encoding="utf-8")
-    assert literal_eval(out) == str(activation_python.creator.bin_dir)
+    assert literal_eval(out) == f"{activation_python.creator.bin_dir}{expected_suffix}"
 
 
 def test_python(raise_on_non_source_class, activation_tester) -> None:

@@ -515,7 +515,8 @@ What activation does:
 **PATH modification**
     The activation script prepends the virtual environment's ``bin`` directory (``Scripts`` on Windows) to the ``PATH``
     environment variable. This ensures that when you run ``python``, ``pip``, or other executables, the shell finds the
-    virtual environment's versions first.
+    virtual environment's versions first. For programmatic activation with ``activate_this.py``, empty ``PATH`` entries
+    are removed before the environment directory is prepended.
 
 **Environment variables**
     Activation sets several environment variables:
