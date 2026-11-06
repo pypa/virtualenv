@@ -1,3 +1,2 @@
-Unset ``PYTHONHOME`` when activating from csh, and restore it on ``deactivate``, as the other activators already do.
-With it still set, the environment's interpreter looked for the standard library under the old prefix and failed to
-start.
+Unset ``PYTHONHOME`` during C shell activation and restore its original value on deactivation. An inherited value could
+previously prevent the environment's Python interpreter from starting.
