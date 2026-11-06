@@ -1,6 +1,6 @@
 # virtualenv installed from source the way CI installs it (.github/workflows/check.yaml and tox.toml in the virtualenv
 # repository), with the shells whose activation scripts the tests run.
-FROM python:3.14-bookworm
+FROM python:3.14-bookworm@sha256:a8cf203c684b61fd2676ec5a17159cf68ed38ad471481e1f4ebc4679825250bd
 ENV DEBIAN_FRONTEND=noninteractive \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -26,11 +26,13 @@ ENV PATH=/opt/venv/bin:$PATH
 COPY . /src
 WORKDIR /src
 
-# The package with the test, property (Hypothesis) and fuzz (Atheris) dependency groups, plus xonsh for its activator
-# tests. hatch-vcs reads the version from git, so pin one when the checkout has no history.
-RUN pip install --upgrade pip \
+# The package with the test, property (Hypothesis) and fuzz (Atheris) dependency groups, which include xonsh for its
+# activator tests. requirements.txt pins pip and those dependencies by hash (its header holds the command that
+# regenerates it), so the package itself goes in without them. hatch-vcs reads the version from git, so pin one when
+# the checkout has no history.
+RUN pip install --require-hashes -r .oss-scanner/requirements.txt \
     && if ! git -C /src rev-parse --git-dir >/dev/null 2>&1; then export SETUPTOOLS_SCM_PRETEND_VERSION=0.0.0; fi \
-    && pip install -e . --group test --group property --group fuzz xonsh
+    && pip install --no-deps -e .
 
 # Run the fast unit tests so you know the image works, but do not let a failing test abort the build.
 RUN python -m pytest tests/unit --skip-slow -n auto -p no:randomly \
