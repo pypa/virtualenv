@@ -288,6 +288,24 @@ def test_cshell_deactivate_restores_path(csh_plain_activate: Path, original: str
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
 @pytest.mark.skipif(TCSH is None, reason="tcsh is not installed")
+@pytest.mark.parametrize(
+    "original",
+    [pytest.param(None, id="unset"), pytest.param("/some/pythonhome", id="set")],
+)
+def test_cshell_unsets_pythonhome(csh_plain_activate: Path, original: str | None) -> None:
+    setup = "" if original is None else f'setenv PYTHONHOME "{original}"\n'
+    # csh reads a bare ! as history expansion, so the unset arm is an else branch rather than a negated test
+    report = 'if ($?PYTHONHOME) then\n    echo "<$PYTHONHOME>"\nelse\n    echo "<unset>"\nendif\n'
+    driver = f"{setup}source {csh_plain_activate}\n{report}deactivate\n{report}"
+
+    result = run([TCSH, "-f"], input=driver, capture_output=True, text=True, encoding="utf-8", timeout=90, check=False)
+
+    restored = "<unset>" if original is None else f"<{original}>"
+    assert result.stdout == f"<unset>\n{restored}\n", result.stderr
+
+
+@pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
+@pytest.mark.skipif(TCSH is None, reason="tcsh is not installed")
 def test_cshell_deactivate_removes_aliases(csh_plain_activate: Path) -> None:
     driver = f'source {csh_plain_activate}\ndeactivate\nalias deactivate\nalias pydoc\necho "done"\n'
 

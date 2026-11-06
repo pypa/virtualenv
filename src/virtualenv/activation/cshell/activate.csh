@@ -13,6 +13,13 @@ setenv VIRTUAL_ENV __VIRTUAL_ENV__
 set _OLD_VIRTUAL_PATH="$PATH:q"
 setenv PATH "$VIRTUAL_ENV:q/"__BIN_NAME__":$PATH:q"
 
+# PYTHONHOME overrides where the interpreter looks for the standard library, so the environment's python would not
+# start; unset it for the session, as the other activators already do
+if ($?PYTHONHOME) then
+    set _OLD_VIRTUAL_PYTHONHOME="$PYTHONHOME:q"
+    unsetenv PYTHONHOME
+endif
+
 if ($?PKG_CONFIG_PATH) then
     set _OLD_PKG_CONFIG_PATH="$PKG_CONFIG_PATH"
     setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig:${PKG_CONFIG_PATH}"
