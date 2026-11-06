@@ -6,6 +6,26 @@
 
 .. towncrier release notes start
 
+.. _release-21-15-6:
+
+**********************
+ 21.15.6 (2026-11-06)
+**********************
+
+.. _release-21-15-6-fixed:
+
+Fixed
+-----
+
+- Clear inherited ``PYTHONHOME`` during PowerShell, Nushell, and programmatic activation so child interpreters use the
+  environment's standard library. Preserve empty values when Bash and fish deactivate (:pr:`3517`) by
+  :user:`gaborbernat`.
+- Remove empty ``PATH`` entries during programmatic activation, including entries in an otherwise nonempty value. On
+  POSIX, an empty entry searches the current directory (:pr:`3513`) by :user:`qodelicious` and :user:`gaborbernat`.
+- Unset ``PYTHONHOME`` during C shell activation and restore its original value on deactivation. An inherited value
+  could previously prevent the environment's Python interpreter from starting (:pr:`3514`) by :user:`abhishekcpp007` and
+  :user:`gaborbernat`.
+
 .. _release-21-15-5:
 
 **********************
