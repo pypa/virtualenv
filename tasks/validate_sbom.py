@@ -31,6 +31,7 @@ def main() -> None:
         raise SystemExit(1)
     if target.suffix == ".pyz" and (problems := describes_archive(target)):
         for problem in problems:
+            # the validator prints each problem it found to the terminal
             print(f"SBOM invalid: {problem}")  # ruff:ignore[print]
         raise SystemExit(1)
 

@@ -149,9 +149,11 @@ def _create_zipapp(dest: str, packages: dict[str, dict[str, dict[str, WheelForVe
         zip_app.writestr(_entry("__main__.py"), (_HERE / "__main__zipapp.py").read_bytes())
     bio.seek(0)
     zipapp.create_archive(bio, dest)
+    # the build reports the archive it wrote to the terminal
     print(f"zipapp created at {dest} with size {os.path.getsize(dest) / 1024 / 1024:.2f}MB")  # ruff:ignore[print]
 
 
+# the package walk keeps its branches together, one pass over the wheel contents
 def _write_packages_to_zipapp(  # ruff:ignore[complex-structure, too-many-branches]
     base: PurePosixPath,
     dist: dict[str, Any],
@@ -160,6 +162,7 @@ def _write_packages_to_zipapp(  # ruff:ignore[complex-structure, too-many-branch
     zip_app: zipfile.ZipFile,
 ) -> None:
     has = set()
+    # the nested loops walk each package and its files in one pass
     for name, p_w_v in packages.items():  # ruff:ignore[too-many-nested-blocks]
         for platform, w_v in p_w_v.items():
             for wheel_data in w_v.values():
@@ -186,6 +189,7 @@ def _write_packages_to_zipapp(  # ruff:ignore[complex-structure, too-many-branch
                         has.add(dest_str)
                         if "/tests/" in dest_str or "/docs/" in dest_str:
                             continue
+                        # the build lists each file it adds, for the developer at the terminal
                         print(dest_str)  # ruff:ignore[print]
                         content = wheel_zip.read(filename)
                         zip_app.writestr(_entry(dest_str), content)

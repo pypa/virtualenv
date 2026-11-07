@@ -13,6 +13,7 @@ company: Final[str] = "PyPA"
 name = "virtualenv"
 version = ".".join(__version__.split(".")[:2])
 release = __version__
+# Sphinx reads the variable named copyright, which shadows the builtin here
 copyright: Final[str] = f"2007-{datetime.now(tz=timezone.utc).year}, {company}, PyPA"  # ruff:ignore[builtin-variable-shadowing]
 
 extensions = [
@@ -91,6 +92,7 @@ def setup(app) -> None:
     if str(here) not in sys.path:
         sys.path.append(str(here))
 
+    # render_cli sits beside conf.py, so it imports only after the path append above
     from render_cli import CliTable, literal_data  # ruff:ignore[import-outside-top-level]
 
     app.add_css_file("custom.css")

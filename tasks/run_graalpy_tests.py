@@ -103,13 +103,15 @@ class _Shard:
         status: Final[int] = self.process.wait()
         shutdown: Final[bool] = status == 1 and any(_SHUTDOWN in line for line in self.stderr)
         if status not in {0, 5} and not shutdown:
+            # the test runner reports its exit status to the terminal
             print(f"[{self.label}] exit {status}")  # ruff:ignore[print]
             return None
         if (executed := _executed_tests(self.junit)) is None:
+            # the test runner reports its exit status to the terminal
             print(f"[{self.label}] exit {status} without a clean junit report")  # ruff:ignore[print]
             return None
         if shutdown:
-            print(  # ruff:ignore[print]
+            print(  # ruff:ignore[print]  # the test runner reports its exit status to the terminal
                 f"[{self.label}] GraalVM reported its known polyglot shutdown error after a completed test run"
                 " (see #3240).",
             )

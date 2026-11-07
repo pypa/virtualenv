@@ -38,6 +38,7 @@ def rebuild(script_path: Path) -> None:
     match_end = 0
     next_match = None
     count, did_update = 0, False
+    # count is unused, the loop needs only the match
     for count, next_match in enumerate(_FILE_REGEX.finditer(script_content)):  # ruff:ignore[unused-loop-control-variable]
         script_parts += [script_content[match_end : next_match.start()]]
         match_end = next_match.end()
@@ -53,7 +54,7 @@ def rebuild(script_path: Path) -> None:
 
 
 def handle_file(previous_content: str, filename: str, variable_name: str, previous_encoded: str) -> tuple[bool, str]:
-    print(f"Found file {filename}")  # ruff:ignore[print]
+    print(f"Found file {filename}")  # ruff:ignore[print]  # the script reports each file it finds to the terminal
     current_path = os.path.realpath(os.path.join(here, "..", "src", "virtualenv_embedded", filename))
     _, file_type = os.path.splitext(current_path)
     with open(current_path, encoding="utf-8", newline="" if (file_type == ".bat") else None) as current_fh:
@@ -61,10 +62,12 @@ def handle_file(previous_content: str, filename: str, variable_name: str, previo
     current_crc = crc32(current_text)
     current_encoded = _B64.encode(_GZIP.encode(current_text.encode())[0])[0].decode()
     if current_encoded == previous_encoded:
+        # the script reports each file's status to the terminal
         print(f"  File up to date (crc: {current_crc:08x})")  # ruff:ignore[print]
         return False, previous_content
     # Else: content has changed
     previous_text = _GZIP.decode(_B64.decode(previous_encoded.encode())[0])[0].decode()
+    # the script reports each file's status to the terminal
     print(f"  Content changed (crc: {crc32(previous_text):08x} -> {current_crc:08x})")  # ruff:ignore[print]
     file_template: str = '# file {filename}\n{variable} = convert(\n    """\n{data}"""\n)'
     return True, file_template.format(filename=filename, variable=variable_name, data=current_encoded)
@@ -72,12 +75,14 @@ def handle_file(previous_content: str, filename: str, variable_name: str, previo
 
 def report(exit_code: int, new: str, next_match: re.Match[str] | None, current: str, script_path: Path) -> NoReturn:
     if new != current:
+        # the script reports each file's status to the terminal
         print("Content updated; overwriting... ", end="")  # ruff:ignore[print]
         script_path.write_bytes(new)
-        print("done.")  # ruff:ignore[print]
+        print("done.")  # ruff:ignore[print]  # the script reports each file's status to the terminal
     else:
-        print("No changes in content")  # ruff:ignore[print]
+        print("No changes in content")  # ruff:ignore[print]  # the script reports each file's status to the terminal
     if next_match is None:
+        # the script reports each file's status to the terminal
         print("No variables were matched/found")  # ruff:ignore[print]
     raise SystemExit(exit_code)
 

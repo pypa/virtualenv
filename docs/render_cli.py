@@ -184,6 +184,7 @@ class CliTable(SphinxDirective):
                 return True
             if key == "creator":
                 if name == "venv":
+                    # the creator is imported only when this patch runs, keeping the docs import light
                     from virtualenv.create.via_global_ref.venv import (  # ruff:ignore[import-outside-top-level]
                         ViaGlobalRefMeta,
                     )
@@ -191,6 +192,7 @@ class CliTable(SphinxDirective):
                     meta = ViaGlobalRefMeta()
                     meta.symlink_error = None
                     return meta
+                # the creator is imported only when this patch runs, keeping the docs import light
                 from virtualenv.create.via_global_ref.builtin.via_global_self_do import (  # ruff:ignore[import-outside-top-level]
                     BuiltinViaGlobalRefMeta,
                 )
@@ -217,6 +219,7 @@ class TableRow(NamedTuple):
     help: str
 
 
+# the Sphinx role callback signature, this role uses only the raw text
 def literal_data(rawtext, app, of_type, slug, options):  # ruff:ignore[unused-function-argument]
     # Create a link to a BitBucket resource.
     of_class = of_type.split(".")

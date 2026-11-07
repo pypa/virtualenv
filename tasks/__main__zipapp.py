@@ -20,6 +20,7 @@ ABS_HERE: Final[str] = os.path.abspath(os.path.dirname(__file__))
 
 def run() -> None:
     with VersionedFindLoad():
+        # must import inside VersionedFindLoad, so the zipapp finders are active
         from virtualenv.__main__ import run as run_virtualenv  # ruff:ignore[import-outside-top-level]
 
         run_virtualenv()
@@ -77,6 +78,7 @@ class VersionPlatformSelect:
             return self.modules[fullname]
         return None
 
+    # importlib's finder protocol passes an untyped context
     def find_distributions(self, context: Any) -> Iterator[Any]:  # ruff:ignore[any-type]
         dist_class = _versioned_distribution_class()
         if context.name is None:
@@ -84,6 +86,7 @@ class VersionPlatformSelect:
         if (name := context.name.replace("_", "-")) in self.distributions:
             yield dist_class(file_loader=self.get_data, dist_path=self.distributions[name])
 
+    # the distlib finder classes are defined here, they close over self
     def _register_distutils_finder(self) -> None:  # ruff:ignore[complex-structure]
         if "distlib" not in self.modules:
             return
@@ -118,6 +121,7 @@ class VersionPlatformSelect:
                 ]
 
         class DistlibFinder:
+            # distlib passes an untyped loader to its finder
             def __init__(self, path: str, loader: Any) -> None:  # ruff:ignore[any-type]
                 self.path = path
                 self.loader = loader
@@ -137,9 +141,11 @@ class VersionPlatformSelect:
                                 else:
                                     yield child
 
+            # distlib's resource finder returns resources of any type
             def find(self, name: str) -> Any:  # ruff:ignore[any-type]
                 return Resource(self.path, name, self.loader)
 
+        # distlib is importable only once the zipapp is loaded, so the import is deferred
         from distlib.resources import register_finder  # ruff:ignore[import-outside-top-level]
 
         zip_file = self._zip_file
@@ -150,11 +156,14 @@ _VER_DISTRIBUTION_CLASS = None
 
 
 def _versioned_distribution_class() -> type:
+    # a cache of the versioned class, filled on first use
     global _VER_DISTRIBUTION_CLASS  # ruff:ignore[global-statement]
     if _VER_DISTRIBUTION_CLASS is None:
+        # importlib.metadata is imported only when the versioned class is built
         from importlib.metadata import Distribution  # ruff:ignore[import-outside-top-level]
 
         class VersionedDistribution(Distribution):
+            # importlib.metadata passes its file loader untyped
             def __init__(self, file_loader: Any, dist_path: str) -> None:  # ruff:ignore[any-type]
                 self.file_loader = file_loader
                 self.dist_path = dist_path
@@ -183,6 +192,7 @@ class VersionedFindLoad(VersionPlatformSelect, SourceLoader):
         sys.path.remove(self.archive)
         super().__exit__(exc_type, exc_val, exc_tb)
 
+    # the meta path protocol passes these, the finder ignores target and path
     def find_spec(self, fullname: str, path: Any, target: ModuleType | None = None) -> ModuleSpec | None:  # ruff:ignore[unused-method-argument, any-type]
         if self.find_mod(fullname) is not None:
             return spec_from_file_location(name=fullname, loader=self)

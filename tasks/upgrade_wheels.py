@@ -40,6 +40,7 @@ def run() -> NoReturn:
         added = collect_package_versions(new_packages)
         removed = collect_package_versions(remove_packages)
         outcome = (1 if _STRICT else 0) if (added or removed) else 0
+        # the upgrade summary is printed for the developer running the task
         print(f"Outcome {outcome} added {added} removed {removed}")  # ruff:ignore[print]
         _write_changelog(added, removed)
         render_init(folders=folders)
@@ -87,7 +88,7 @@ def _write_changelog(added: dict[str, list[str]], removed: dict[str, list[str]])
         f"Removed {key} of {fmt_version(versions)}." for key, versions in removed.items() if key not in added
     )
     changelog = " ".join(sentences)
-    print(changelog)  # ruff:ignore[print]
+    print(changelog)  # ruff:ignore[print]  # the changelog is the command's output
     fragment: Final[Path] = Path(__file__).parents[1] / "docs" / "changelog" / "embedded-wheels.bugfix.rst"
     fragment.parent.mkdir(parents=True, exist_ok=True)
     write_file(fragment, f"{changelog}\n".encode())
@@ -318,6 +319,7 @@ def collect_package_versions(new_packages: set[str]) -> dict[str, list[str]]:
     result = defaultdict(list)
     for package in new_packages:
         split = package.split("-")
+        # a package name needs a dash to split off its version, 2 is that field count
         if len(split) < 2:  # ruff:ignore[magic-value-comparison]
             raise ValueError(package)
         key, version = split[0:2]
