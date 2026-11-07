@@ -22,7 +22,7 @@ r"""A rough layout of the current storage goes as:
              ├── debug.py
              └── _virtualenv.py
 
-"""  # ruff:ignore[missing-terminal-punctuation]
+"""  # ruff:ignore[missing-terminal-punctuation]  # the directory tree is a literal block that ends the docstring
 
 from __future__ import annotations
 
@@ -77,12 +77,14 @@ class AppDataDiskFolder(AppData):
 
     @contextmanager
     def locked(self, path: Path) -> Generator[None]:
+        # the lock's / operator takes a str key, and path here is a Path
         path_lock = self.lock / path  # ty: ignore[unsupported-operator]
         with path_lock:
             yield path_lock.path
 
     @contextmanager
     def extract(self, path: Path, to_folder: Path | None) -> Generator[Path]:
+        # callers pass a callable for to_folder, despite the Path | None annotation
         root = ReentrantFileLock(to_folder()) if to_folder is not None else self.lock / "unzip" / __version__  # ty: ignore[call-non-callable]
         with root.lock_for_key(path.name):
             dest = root.path / path.name
@@ -95,6 +97,7 @@ class AppDataDiskFolder(AppData):
 
     @property
     def py_info_at(self) -> ReentrantFileLock:
+        # the lock's / operator returns PathLockBase, not the ReentrantFileLock promised here
         return self.lock / "py_info" / "5"  # ty: ignore[invalid-return-type]
 
     def py_info_clear(self) -> None:
@@ -108,6 +111,7 @@ class AppDataDiskFolder(AppData):
                             filename.unlink()
 
     def embed_update_log(self, distribution: str, for_py_version: str) -> EmbedDistributionUpdateStoreDisk:
+        # the lock's / operator returns PathLockBase, which the store does not take
         return EmbedDistributionUpdateStoreDisk(self.lock / "wheel" / for_py_version / "embed" / "3", distribution)  # ty: ignore[invalid-argument-type]
 
     def wheel_image(self, for_py_version: str, name: str) -> Path:
@@ -127,12 +131,13 @@ class JSONStoreDisk(ContentStore, ABC):
     def exists(self) -> bool:
         return self.file.exists()
 
-    def read(self) -> Any:  # ruff:ignore[any-type]
+    def read(self) -> Any:  # ruff:ignore[any-type]  # the stored JSON document may be any type
         data, bad_format = None, False
         try:
             data = json.loads(self.file.read_text(encoding="utf-8"))
         except ValueError:
             bad_format = True
+        # an unreadable file is treated as missing, so the read does not fail
         except Exception:  # ruff:ignore[blind-except, try-except-pass]
             pass
         else:
@@ -152,7 +157,7 @@ class JSONStoreDisk(ContentStore, ABC):
         with self.in_folder.lock_for_key(self.key):
             yield
 
-    def write(self, content: Any) -> None:  # ruff:ignore[any-type]
+    def write(self, content: Any) -> None:  # ruff:ignore[any-type]  # stores any JSON-serializable content
         self.file.parent.mkdir(parents=True, exist_ok=True)
         self.file.write_text(json.dumps(content, sort_keys=True, indent=2), encoding="utf-8")
         LOGGER.debug("wrote %s %s at %s", *self.msg_args)
@@ -160,6 +165,7 @@ class JSONStoreDisk(ContentStore, ABC):
 
 class PyInfoStoreDisk(JSONStoreDisk):
     def __init__(self, in_folder: ReentrantFileLock, path: Path) -> None:
+        # msg_args carries the Path for the log message, but is typed as str
         super().__init__(in_folder, sha256(str(path).encode("utf-8")).hexdigest(), ("python info of", path))  # ty: ignore[invalid-argument-type]
 
 

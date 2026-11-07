@@ -19,6 +19,7 @@ class TypeData:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(base={self.default_type}, as={self.as_type})"
 
+    # a converter returns the type of the option it converts
     def convert(self, value: str) -> Any:  # ruff:ignore[any-type]
         return self.default_type(value)
 
@@ -50,6 +51,7 @@ class NoneType(TypeData):
 
 
 class ListType(TypeData):
+    # flatten is accepted but ignored, removing it would change the converter signature
     def convert(self, value: str | list[str], flatten: bool = True) -> list[Any]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]
         values = self.split_values(value)
         result = []
@@ -74,6 +76,7 @@ class ListType(TypeData):
         return list(value)
 
 
+# the converted value's type depends on as_type
 def convert(value: str, as_type: TypeData, source: str) -> Any:  # ruff:ignore[any-type]
     """Convert the value as a given type where the value comes from the given source."""
     try:

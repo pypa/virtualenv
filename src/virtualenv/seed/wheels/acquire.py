@@ -57,6 +57,7 @@ _DISTRIBUTION_RE: Final[re.Pattern[str]] = re.compile(
 )
 
 
+# the wheel lookup takes each search input separately, as the callers pass them
 def get_wheel(  # ruff:ignore[too-many-arguments]
     distribution: str,
     version: str | None,
@@ -99,6 +100,7 @@ def get_wheel(  # ruff:ignore[too-many-arguments]
     return wheel
 
 
+# the download takes each input separately, as the callers pass them
 def download_wheel(  # ruff:ignore[too-many-arguments]
     distribution: str,
     version_spec: str | None,

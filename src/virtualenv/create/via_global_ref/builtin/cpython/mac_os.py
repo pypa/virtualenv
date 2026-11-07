@@ -50,6 +50,7 @@ class CPythonmacOsFramework(CPython, ABC):
                 for exe in exes:
                     fix_mach_o(str(exe), current, target, self.interpreter.max_size)  # ty: ignore[invalid-argument-type]
                     try:
+                        # codesign ships with macOS and is meant to be found on PATH
                         subprocess.check_call(["codesign", "--force", "--sign", "-", str(exe)])  # ruff:ignore[start-process-with-partial-path]
                     except (OSError, subprocess.CalledProcessError) as e:
                         LOGGER.warning("Could not ad-hoc re-sign %s: %s", exe, e)
@@ -60,6 +61,7 @@ class CPythonmacOsFramework(CPython, ABC):
             # Make sure we use the embedded interpreter inside the framework, even if sys.executable points to the
             # stub executable in ${sys.prefix}/bin.
             # See http://groups.google.com/group/python-virtualenv/browse_thread/thread/17cab2f85da75951
+            # prefix is typed str | None, and Path needs a str
             fixed_host_exe = Path(interpreter.prefix) / "Resources" / "Python.app" / "Contents" / "MacOS" / "Python"  # ty: ignore[invalid-argument-type]
             yield fixed_host_exe, targets, must, when
 
@@ -75,6 +77,7 @@ class CPythonmacOsFramework(CPython, ABC):
 class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
     @property
     def reload_code(self) -> str:
+        # reload_code is defined on a base that ty does not resolve through this super()
         result = super().reload_code  # ty: ignore[unresolved-attribute]
         return dedent(
             f"""
@@ -96,10 +99,12 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
         return "@executable_path/../.Python"
 
     @classmethod
+    # yields PathRef, which the base's Generator[ExePathRefToDest] does not allow
     def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
         yield from super().sources(interpreter)
 
         # add a symlink to the host python image
+        # prefix is typed str | None, and Path needs a str
         exe = Path(interpreter.prefix) / "Python3"  # ty: ignore[invalid-argument-type]
         yield PathRefToDest(exe, dest=lambda self, _: self.dest / ".Python", must=RefMust.SYMLINK)
 
@@ -131,6 +136,7 @@ def fix_mach_o(exe: str, current: str, new: str, max_size: int) -> None:
     try:
         LOGGER.debug("change Mach-O for %s from %s to %s", exe, current, new)
         _builtin_change_mach_o(max_size)(exe, current, new)
+    # install_name_tool is the fallback for any failure of the builtin rewrite
     except Exception as e:  # ruff:ignore[blind-except]
         LOGGER.warning("Could not call _builtin_change_mac_o: %s. Trying to call install_name_tool instead.", e)
         try:
@@ -141,21 +147,30 @@ def fix_mach_o(exe: str, current: str, new: str, max_size: int) -> None:
             raise
 
 
+# the nested helpers share the file view, so the parser stays one function
 def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # ruff:ignore[complex-structure]
+    # the constant keeps its Mach-O header name
     MH_MAGIC = 0xFEEDFACE  # ruff:ignore[non-lowercase-variable-in-function]
+    # the constant keeps its Mach-O header name
     MH_CIGAM = 0xCEFAEDFE  # ruff:ignore[non-lowercase-variable-in-function]
+    # the constant keeps its Mach-O header name
     MH_MAGIC_64 = 0xFEEDFACF  # ruff:ignore[non-lowercase-variable-in-function]
+    # the constant keeps its Mach-O header name
     MH_CIGAM_64 = 0xCFFAEDFE  # ruff:ignore[non-lowercase-variable-in-function]
+    # the constant keeps its Mach-O header name
     FAT_MAGIC = 0xCAFEBABE  # ruff:ignore[non-lowercase-variable-in-function]
+    # the struct byte-order marker is named for what it selects
     BIG_ENDIAN = ">"  # ruff:ignore[non-lowercase-variable-in-function]
+    # the struct byte-order marker is named for what it selects
     LITTLE_ENDIAN = "<"  # ruff:ignore[non-lowercase-variable-in-function]
-    LC_LOAD_DYLIB = 0xC  # ruff:ignore[non-lowercase-variable-in-function]
+    LC_LOAD_DYLIB = 0xC  # ruff:ignore[non-lowercase-variable-in-function]  # the constant keeps its Mach-O header name
 
     class FileView:
         """A proxy for file-like objects that exposes a given view of a file. Modified from macholib."""
 
         def __init__(self, file_obj: FileView | BufferedRandom, start: int = 0, size: int = maxint) -> None:
             if isinstance(file_obj, FileView):
+                # unwraps a nested FileView, which holds the underlying file object
                 self._file_obj = file_obj._file_obj  # ruff:ignore[private-member-access]
             else:
                 self._file_obj = file_obj
@@ -198,7 +213,7 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
             self._pos += len(content)
 
         def read(self, size: int = maxint) -> bytes:
-            assert size >= 0  # ruff:ignore[assert]
+            assert size >= 0  # ruff:ignore[assert]  # a negative size is a parser bug, so fail fast
             here = self._start + self._pos
             self._checkwindow(here, "read")
             size = min(size, self._end - here)
@@ -214,11 +229,13 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
             return res[0]
         return res
 
+    # the nested parser helpers close over the file view, so they stay in one function
     def mach_o_change(at_path: str, what: str, value: str) -> None:  # ruff:ignore[complex-structure]
         """Replace a given name (what) in any LC_LOAD_DYLIB command found in the given binary with a new name (value), provided it's shorter."""
 
         def do_macho(file: FileView, bits: int, endian: str) -> None:
             # Read Mach-O header (the magic number is assumed read by the caller)
+            # read_data returns a tuple for six values, but ty types it as int | tuple
             _cpu_type, _cpu_sub_type, _file_type, n_commands, _size_of_commands, _flags = read_data(file, endian, 6)  # ty: ignore[not-iterable]
             # 64-bits header has one more field.
             if bits == 64:  # ruff:ignore[magic-value-comparison]
@@ -227,17 +244,20 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
             for _ in range(n_commands):
                 where = file.tell()
                 # Read command header
+                # read_data returns a tuple for two values, but ty types it as int | tuple
                 cmd, cmd_size = read_data(file, endian, 2)  # ty: ignore[not-iterable]
                 if cmd == LC_LOAD_DYLIB:
                     # The first data field in LC_LOAD_DYLIB commands is the offset of the name, starting from the
                     # beginning of the  command.
                     name_offset = read_data(file, endian)
+                    # read_data with one value returns an int, but ty types it as int | tuple
                     file.seek(where + name_offset, os.SEEK_SET)  # ty: ignore[unsupported-operator]
                     # Read the NUL terminated string
                     load = file.read(cmd_size - name_offset).decode()  # ty: ignore[unsupported-operator]
                     load = load[: load.index("\0")]
                     # If the string is what is being replaced, overwrite it.
                     if load == what:
+                        # read_data with one value returns an int, but ty types it as int | tuple
                         file.seek(where + name_offset, os.SEEK_SET)  # ty: ignore[unsupported-operator]
                         file.write(value.encode() + b"\0")
                 # Seek to the next command
@@ -249,8 +269,10 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
             if (magic := read_data(file, BIG_ENDIAN)) == FAT_MAGIC:
                 # Fat binaries contain nfat_arch Mach-O binaries
                 n_fat_arch = read_data(file, BIG_ENDIAN)
+                # read_data with one value returns an int, but ty types it as int | tuple
                 for _ in range(n_fat_arch):  # ty: ignore[invalid-argument-type]
                     # Read arch header
+                    # read_data returns a tuple for five values, but ty types it as int | tuple
                     _cpu_type, _cpu_sub_type, offset, size, _align = read_data(file, BIG_ENDIAN, 5)  # ty: ignore[not-iterable]
                     do_file(file, offset, size)
             elif magic == MH_MAGIC:
@@ -262,6 +284,7 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
             elif magic == MH_CIGAM_64:
                 do_macho(file, 64, LITTLE_ENDIAN)
 
+        # the in-place rewrite must not grow the name, so a longer value is a bug
         assert len(what) >= len(value)  # ruff:ignore[assert]
 
         with open(at_path, "r+b") as f:
@@ -276,6 +299,7 @@ class CPython3macOsBrew(CPython3, CPythonPosix):
         return is_macos_brew(interpreter) and super().can_describe(interpreter)
 
     @classmethod
+    # setup_meta takes the interpreter from the base signature, this meta does not use it
     def setup_meta(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta:  # ruff:ignore[unused-class-method-argument]
         meta = BuiltinViaGlobalRefMeta()
         meta.copy_error = "Brew disables copy creation: https://github.com/Homebrew/homebrew-core/issues/138159"

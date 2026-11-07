@@ -21,7 +21,7 @@ LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def fs_supports_symlink() -> bool:
-    global _CAN_SYMLINK  # ruff:ignore[global-statement]
+    global _CAN_SYMLINK  # ruff:ignore[global-statement]  # a module-level cache, filled on first use
 
     if _CAN_SYMLINK is None:
         can = False
@@ -48,7 +48,7 @@ def fs_path_id(path: str) -> str:
 
 
 def fs_is_case_sensitive() -> bool:
-    global _FS_CASE_SENSITIVE  # ruff:ignore[global-statement]
+    global _FS_CASE_SENSITIVE  # ruff:ignore[global-statement]  # a module-level cache, filled on first use
 
     if _FS_CASE_SENSITIVE is None:
         with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:

@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
 
 
+# the bundle lookup takes each search input separately, as the callers pass them
 def from_bundle(  # ruff:ignore[too-many-arguments]
     distribution: str,
     version: str | None,
@@ -42,6 +43,7 @@ def load_embed_wheel(app_data: AppData, distribution: str, for_py_version: str, 
     wheel = get_embed_wheel(distribution, for_py_version)
     if wheel is not None:
         if version is None or wheel.has_version(version):
+            # callers pass a callable for the folder, despite the Path | None annotation
             with app_data.ensure_extracted(wheel.path, lambda: app_data.house) as wheel_path:  # ty: ignore[invalid-argument-type]
                 wheel = Wheel(wheel_path)
         else:  # if version does not match ignore

@@ -36,8 +36,8 @@ class VirtualEnvConfigParser(ArgumentParser):
         self,
         options: VirtualEnvOptions | None = None,
         env: Mapping[str, str] | None = None,
-        *args: Any,  # ruff:ignore[any-type]
-        **kwargs: Any,  # ruff:ignore[any-type]
+        *args: Any,  # ruff:ignore[any-type]  # keeps ArgumentParser's open-ended constructor arguments
+        **kwargs: Any,  # ruff:ignore[any-type]  # keeps ArgumentParser's open-ended constructor arguments
     ) -> None:
         env = os.environ if env is None else env
         self.file_config = IniConfig(env)
@@ -98,6 +98,7 @@ class VirtualEnvConfigParser(ArgumentParser):
                 outcome = action.default, "default"
             self.options.set_src(action.dest, *outcome)
 
+    # narrows the base parse_known_args to VirtualEnvOptions, which ty flags as an override
     def parse_known_args(  # ty: ignore[invalid-method-override]
         self, args: Sequence[str] | None = None, namespace: VirtualEnvOptions | None = None
     ) -> tuple[VirtualEnvOptions, list[str]]:
@@ -107,15 +108,18 @@ class VirtualEnvConfigParser(ArgumentParser):
             msg = "can only pass in parser.options"
             raise ValueError(msg)
         self._fix_defaults()
+        # the parser records the source of each option on the options object
         self.options._src = "cli"  # ruff:ignore[private-member-access]
         try:
             namespace.env = self.env
             return super().parse_known_args(args, namespace=namespace)
         finally:
+            # the parser records the source of each option on the options object
             self.options._src = None  # ruff:ignore[private-member-access]
 
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
+    # argparse passes its formatter keywords through untyped
     def __init__(self, prog: str, **kwargs: Any) -> None:  # ruff:ignore[any-type]
         super().__init__(prog, max_help_position=32, width=shutil.get_terminal_size().columns, **kwargs)
 
@@ -129,11 +133,13 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
 
 
 class VirtualEnvOptions(Namespace):
+    # Namespace takes arbitrary attributes, so the options arrive as kwargs
     def __init__(self, **kwargs: Any) -> None:  # ruff:ignore[any-type]
         super().__init__(**kwargs)
         self._src: str | None = None
         self._sources: dict[str, str] = {}
 
+    # option values have any type, Namespace stores them as-is
     def __setattr__(self, key: str, value: Any) -> None:  # ruff:ignore[any-type]
         if (src := getattr(self, "_src", None)) is not None:
             self._sources[key] = src
@@ -153,6 +159,7 @@ class VirtualEnvOptions(Namespace):
             return None
         return max(self.verbose - self.quiet, 0)
 
+    # option values have any type, Namespace stores them as-is
     def set_src(self, key: str, value: Any, src: str) -> None:  # ruff:ignore[any-type]
         """Set an option value and record where it came from.
 

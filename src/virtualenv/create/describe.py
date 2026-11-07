@@ -84,6 +84,7 @@ class Describe:
         raise NotImplementedError
 
     @classmethod
+    # the base hook takes the interpreter, this describer accepts every one
     def can_describe(cls, interpreter: PythonInfo) -> bool:  # ruff:ignore[unused-class-method-argument]
         """Knows means it knows how the output will look."""
         return True

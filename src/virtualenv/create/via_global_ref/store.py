@@ -18,6 +18,7 @@ def handle_store_python(meta: ViaGlobalRefMeta, interpreter: PythonInfo) -> ViaG
 def is_store_python(interpreter: PythonInfo) -> bool:
     parts = Path(interpreter.system_exe).parts
     return (
+        # a Windows Store path has at least four parts, so shorter paths cannot match
         len(parts) > 4  # ruff:ignore[magic-value-comparison]
         and parts[-4] == "Microsoft"
         and parts[-3] == "WindowsApps"

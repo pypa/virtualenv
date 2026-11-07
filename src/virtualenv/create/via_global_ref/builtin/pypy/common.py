@@ -35,6 +35,7 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin, abc.ABC):
         }
 
     @classmethod
+    # yields PathRef, which the base's Generator[ExePathRefToDest] does not allow
     def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
         yield from cls.executables(interpreter)
         for host in cls._add_shared_libs(interpreter):

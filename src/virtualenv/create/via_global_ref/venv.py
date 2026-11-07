@@ -72,6 +72,7 @@ class Venv(ViaGlobalRefApi):
         super().create()
 
     def create_inline(self) -> None:
+        # the stdlib venv module is imported only when this creator runs, to keep startup cheap
         from venv import EnvBuilder  # ruff:ignore[import-outside-top-level]
 
         builder = EnvBuilder(
@@ -104,6 +105,7 @@ class Venv(ViaGlobalRefApi):
         if self.enable_system_site_package:
             cmd.append("--system-site-packages")
         cmd.extend(("--symlinks" if self.symlinks else "--copies", str(self.dest)))
+        # system_executable is optional in PythonInfo, so the command list is list[str | None]
         return cmd  # ty: ignore[invalid-return-type]
 
     @classmethod

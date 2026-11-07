@@ -105,6 +105,7 @@ class BaseEmbed(Seeder, ABC):
         )
 
     @classmethod
+    # the base hook takes the app data, the embed seeder does not read it
     def add_parser_arguments(cls, parser: ArgumentParser, interpreter: PythonInfo, app_data: AppData) -> None:  # ruff:ignore[unused-class-method-argument]
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
@@ -134,8 +135,10 @@ class BaseEmbed(Seeder, ABC):
         for distribution, default in cls.distributions().items():
             help_ = f"version of {distribution} to install as seed: embed, bundle, none or exact version"
             if interpreter.version_info[:2] >= (3, 12) and distribution == "setuptools":
+                # the default is overridden for setuptools on 3.12+, reusing the loop name is intended
                 default = "none"  # ruff:ignore[redefined-loop-name]
             if distribution == "wheel":
+                # the default is overridden for wheel, reusing the loop name is intended
                 default = None  # ruff:ignore[redefined-loop-name]
                 help_ = SUPPRESS
             parser.add_argument(

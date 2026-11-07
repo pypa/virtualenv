@@ -37,8 +37,10 @@ def run_cmd(cmd: list[str], env: Mapping[str, str] | None = None) -> tuple[int, 
         code = process.returncode
     except OSError as error:
         code, out, err = error.errno, "", error.strerror
+        # errno 2 is ENOENT, the missing executable case on every platform
         if code == 2 and err is not None and "file" in err:  # ruff:ignore[magic-value-comparison]
             err = str(error)  # FileNotFoundError in Python >= 3.3
+    # errno and strerror are optional on OSError, so the tuple is not all str
     return code, out, err  # ty: ignore[invalid-return-type]
 
 

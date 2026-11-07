@@ -27,6 +27,7 @@ class Seeder(ABC):
         self.env = options.env
 
     @classmethod
+    # the base hook takes the interpreter, this seeder does not read it
     def cannot_seed(cls, interpreter: PythonInfo) -> str | None:  # ruff:ignore[unused-class-method-argument]
         """Explain why this seeder cannot install seed packages for the given interpreter.
 

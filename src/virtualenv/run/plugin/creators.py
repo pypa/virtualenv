@@ -28,6 +28,7 @@ class CreatorSelector(ComponentBuilder):
     def __init__(self, interpreter: PythonInfo, parser: VirtualEnvConfigParser) -> None:
         self._parser = parser
         creators, self.key_to_meta, self.describe, self.builtin_key = self.for_interpreter(interpreter)
+        # for_interpreter returns dict[str, type[Creator]], the builder types it as dict[str, type]
         super().__init__(interpreter, parser, "creator", creators)  # ty: ignore[invalid-argument-type]
 
     @classmethod
@@ -38,6 +39,7 @@ class CreatorSelector(ComponentBuilder):
             if key == "builtin":
                 msg = "builtin creator is a reserved name"
                 raise RuntimeError(msg)
+            # plugin classes come from entry points, which ty sees as type
             meta = creator_class.can_create(interpreter)  # ty: ignore[unresolved-attribute]
             if meta:
                 if meta.error:
@@ -86,6 +88,7 @@ class CreatorSelector(ComponentBuilder):
     def populate_selected_argparse(self, selected: str, app_data: object) -> None:
         self.parser.description = f"options for {self.name} {selected}"
         assert self._impl_class is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
+        # plugin classes come from entry points, which ty sees as type
         self._impl_class.add_parser_arguments(self.parser, self.interpreter, self.key_to_meta[selected], app_data)  # ty: ignore[unresolved-attribute]
 
     def create(self, options: VirtualEnvOptions) -> Creator:
@@ -94,7 +97,9 @@ class CreatorSelector(ComponentBuilder):
         options.meta = self.key_to_meta[getattr(options, self.name)]
         assert self._impl_class is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
         if not issubclass(self._impl_class, Describe):
+            # describe is set by for_interpreter, which ty sees as possibly None
             options.describe = self.describe(options, self.interpreter)  # ty: ignore[call-non-callable, invalid-argument-type]
+        # the builder chain returns object from super().create in ty's view
         return super().create(options)  # ty: ignore[invalid-return-type]
 
 

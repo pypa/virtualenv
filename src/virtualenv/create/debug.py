@@ -42,6 +42,7 @@ def run() -> None:
     result["version"] = sys.version
 
     try:
+        # the script runs in the target interpreter, which may lack sysconfig
         import sysconfig  # ruff:ignore[import-outside-top-level]
 
         result["makefile_filename"] = encode_path(sysconfig.get_makefile_filename())
@@ -56,25 +57,32 @@ def run() -> None:
         import site  # site  # ruff:ignore[import-outside-top-level]
 
         result["site"] = repr(site)
+    # the target interpreter may lack site, which the probe reports instead of failing
     except ImportError as exception:  # pragma: no cover
+        # only a target interpreter without site reaches this branch
         result["site"] = repr(exception)  # pragma: no cover
 
     try:
         import datetime as dt  # site  # ruff:ignore[import-outside-top-level]
 
         result["datetime"] = repr(dt)
+    # the target interpreter may lack datetime, which the probe reports instead of failing
     except ImportError as exception:  # pragma: no cover
+        # only a target interpreter without datetime reaches this branch
         result["datetime"] = repr(exception)  # pragma: no cover
 
     try:
         import math  # site  # ruff:ignore[import-outside-top-level]
 
         result["math"] = repr(math)
+    # the target interpreter may lack math, which the probe reports instead of failing
     except ImportError as exception:  # pragma: no cover
+        # only a target interpreter without math reaches this branch
         result["math"] = repr(exception)  # pragma: no cover
 
     # try to print out, this will validate if other core modules are available (json in this case)
     try:
+        # json is probed on purpose, so a missing core module shows up here
         import json  # ruff:ignore[import-outside-top-level]
 
         result["json"] = repr(json)
@@ -83,9 +91,12 @@ def run() -> None:
     else:
         try:
             sys.stdout.write(json.dumps(result, indent=2))
+        # json.dumps fails only on values the probe never builds
         except (ValueError, TypeError) as exception:  # pragma: no cover
             sys.stderr.write(repr(exception))
+            # the fallback output for a result that json cannot encode
             sys.stdout.write(repr(result))  # pragma: no cover
+            # the fallback exit for a result that json cannot encode
             raise SystemExit(1)  # ruff:ignore[raise-without-from-inside-except]  # pragma: no cover
 
 

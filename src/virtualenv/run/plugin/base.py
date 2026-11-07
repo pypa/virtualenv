@@ -75,6 +75,7 @@ class ComponentBuilder(PluginLoader):
     def populate_selected_argparse(self, selected: str, app_data: object) -> None:
         self.parser.description = f"options for {self.name} {selected}"
         assert self._impl_class is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
+        # plugin classes come from entry points, which ty sees as type
         self._impl_class.add_parser_arguments(self.parser, self.interpreter, app_data)  # ty: ignore[unresolved-attribute]
 
     def create(self, options: VirtualEnvOptions) -> object:

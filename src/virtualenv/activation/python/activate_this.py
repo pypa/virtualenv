@@ -4,7 +4,7 @@ import runpy runpy.run_path(this_file)
 
 This can be used when you must use an existing Python interpreter, not the virtualenv bin/python.
 
-"""  # ruff:ignore[missing-terminal-punctuation]
+"""  # ruff:ignore[missing-terminal-punctuation]  # the usage line is code, so the docstring needs no closing sentence
 
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ except NameError as exc:
     raise AssertionError(msg) from exc
 
 bin_dir = os.path.dirname(abs_file)
+# __BIN_NAME__ is filled in when the script is written
 base = bin_dir[: -len(__BIN_NAME__) - 1]  # ty: ignore[unresolved-reference]
 
 # Empty PATH entries search the current directory on POSIX.
@@ -27,6 +28,7 @@ os.environ["PATH"] = os.pathsep.join([
     *(entry for entry in os.environ.get("PATH", "").split(os.pathsep) if entry),
 ])
 os.environ["VIRTUAL_ENV"] = base  # virtual env is right above bin directory
+# __VIRTUAL_PROMPT__ is filled in when the script is written
 os.environ["VIRTUAL_ENV_PROMPT"] = __VIRTUAL_PROMPT__ or os.path.basename(base)  # ty: ignore[unresolved-reference]
 os.environ.pop("PYTHONHOME", None)
 
@@ -39,10 +41,13 @@ else:
 
 # add the virtual environments libraries to the host python import mechanism
 prev_length = len(sys.path)
+# __LIB_FOLDERS__ is filled in when the script is written
 for lib in __LIB_FOLDERS__.split(os.pathsep):  # ty: ignore[unresolved-reference]
     path = os.path.realpath(os.path.join(bin_dir, lib))
+    # __DECODE_PATH__ is filled in as an empty string, so the decode branch never runs
     site.addsitedir(path.decode("utf-8") if __DECODE_PATH__ else path)  # ty: ignore[unresolved-reference,unresolved-attribute]
 sys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]
 
+# sys.real_prefix is a legacy attribute that older tools read
 sys.real_prefix = sys.prefix  # ty: ignore[unresolved-attribute]
 sys.prefix = base

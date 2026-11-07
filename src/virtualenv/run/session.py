@@ -29,6 +29,7 @@ LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 class Session:
     """Represents a virtual environment creation session."""
 
+    # the session keeps each component of a creation as its own argument
     def __init__(  # ruff:ignore[too-many-arguments]
         self,
         verbosity: int,

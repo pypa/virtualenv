@@ -35,6 +35,7 @@ class NushellActivator(ViaTemplateActivator):
         wrapping = "#" * (max_sharps + 1)
         return f"r{wrapping}'{string}'{wrapping}"
 
+    # the replacement hook signature, nushell needs neither argument
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:  # ruff:ignore[unused-method-argument]
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,

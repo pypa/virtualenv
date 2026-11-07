@@ -24,6 +24,7 @@ class ActivationSelector(ComponentBuilder):
         possible = OrderedDict(
             (k, v)
             for k, v in self.options("virtualenv.activate").items()
+            # plugin classes come from entry points, which ty sees as type
             if v.supports(interpreter)  # ty: ignore[unresolved-attribute]
         )
         super().__init__(interpreter, parser, "activators", possible)
@@ -48,6 +49,7 @@ class ActivationSelector(ComponentBuilder):
             raise ArgumentTypeError(msg)
         return elements
 
+    # returns None, while the base hook returns the selected name as str
     def handle_selected_arg_parse(self, options: VirtualEnvOptions) -> None:  # ty: ignore[invalid-method-override]
         selected_activators = (
             self._extract_activators(self.default) if options.activators is self.default else options.activators
@@ -64,6 +66,7 @@ class ActivationSelector(ComponentBuilder):
             default=None,
         )
         for activator in self.active.values():
+            # plugin classes come from entry points, which ty sees as type
             activator.add_parser_arguments(self.parser, self.interpreter)  # ty: ignore[unresolved-attribute]
 
     def create(self, options: VirtualEnvOptions) -> list[Activator]:

@@ -42,6 +42,7 @@ UPDATE_PERIOD: Final[timedelta] = timedelta(days=14)
 UPDATE_ABORTED_DELAY: Final[timedelta] = timedelta(hours=1)
 
 
+# from_bundle passes these inputs through, and the update needs each one
 def periodic_update(  # ruff:ignore[too-many-arguments]
     distribution: str,
     of_version: str | None,
@@ -81,6 +82,7 @@ def periodic_update(  # ruff:ignore[too-many-arguments]
     return wheel
 
 
+# same inputs as periodic_update, forwarded to trigger_update
 def handle_auto_update(  # ruff:ignore[too-many-arguments]
     distribution: str,
     for_py_version: str,
@@ -97,7 +99,7 @@ def handle_auto_update(  # ruff:ignore[too-many-arguments]
         trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, periodic=True, env=env)
 
 
-def trigger_update(  # ruff:ignore[too-many-arguments]
+def trigger_update(  # ruff:ignore[too-many-arguments]  # the background update process needs every input
     distribution: str,
     for_py_version: str,
     wheel: Wheel | None,
@@ -136,6 +138,7 @@ def trigger_update(  # ruff:ignore[too-many-arguments]
     kwargs = {"stdout": pipe, "stderr": pipe}
     if not debug and sys.platform == "win32":
         kwargs["creationflags"] = CREATE_NO_WINDOW
+    # kwargs mixes pipe and creationflags, which ty cannot match to one Popen overload
     process = Popen(cmd, **kwargs)  # ty: ignore[no-matching-overload]
     LOGGER.info(
         "triggered periodic upgrade of %s%s (for python %s) via background process having PID %d",
@@ -153,9 +156,11 @@ def trigger_update(  # ruff:ignore[too-many-arguments]
 
 def add_wheel_to_update_log(wheel: Wheel, for_py_version: str, app_data: AppData) -> None:
     embed_update_log = app_data.embed_update_log(wheel.distribution, for_py_version)
+    # the disk store has a file attribute that ContentStore does not declare
     LOGGER.debug("adding %s information to %s", wheel.name, embed_update_log.file)  # ty: ignore[unresolved-attribute]
     u_log = UpdateLog.from_app_data(app_data, wheel.distribution, for_py_version)
     if any(version.filename == wheel.name for version in u_log.versions):
+        # the disk store has a file attribute that ContentStore does not declare
         LOGGER.warning("%s already present in %s", wheel.name, embed_update_log.file)  # ty: ignore[unresolved-attribute]
         return
     # we don't need a release date for sources other than "periodic"
@@ -175,6 +180,7 @@ def load_datetime(value: str | None) -> datetime | None:
     return None if value is None else datetime.strptime(value, DATETIME_FMT).replace(tzinfo=timezone.utc)
 
 
+# source is reassigned after creation, so instances must not be hashed
 class NewVersion:  # ruff:ignore[eq-without-hash]
     def __init__(self, filename: str, found_date: datetime, release_date: datetime | None, source: str) -> None:
         self.filename = filename
@@ -185,9 +191,12 @@ class NewVersion:  # ruff:ignore[eq-without-hash]
     @classmethod
     def from_dict(cls, dictionary: dict[str, str | None]) -> NewVersion:
         return cls(
+            # the JSON value is typed str | None, but the constructor needs str
             filename=dictionary["filename"],  # ty: ignore[invalid-argument-type]
+            # load_datetime returns datetime | None, and found_date is never None here
             found_date=load_datetime(dictionary["found_date"]),  # ty: ignore[invalid-argument-type]
             release_date=load_datetime(dictionary["release_date"]),
+            # the JSON value is typed str | None, but the constructor needs str
             source=dictionary["source"],  # ty: ignore[invalid-argument-type]
         )
 
@@ -198,6 +207,7 @@ class NewVersion:  # ruff:ignore[eq-without-hash]
         )
 
     def __eq__(self, other: object) -> bool:
+        # exact type match on purpose, so a subclass never compares equal
         return type(self) == type(other) and all(  # ruff:ignore[type-comparison]
             getattr(self, k) == getattr(other, k) for k in ["filename", "release_date", "found_date", "source"]
         )
@@ -217,6 +227,7 @@ class NewVersion:  # ruff:ignore[eq-without-hash]
             "source": self.source,
         }
 
+    # line 74 passes the minor flag positionally, line 479 passes ci by name
     def use(self, now: datetime, ignore_grace_period_minor: bool = False, ignore_grace_period_ci: bool = False) -> bool:  # ruff:ignore[boolean-default-value-positional-argument]
         if self.source == "manual":
             return True
@@ -254,9 +265,13 @@ class UpdateLog:
         if dictionary is None:
             dictionary = {}
         return cls(
+            # the log is parsed JSON, typed object, so the value is not narrowed
             load_datetime(dictionary.get("started")),  # ty: ignore[invalid-argument-type]
+            # the log is parsed JSON, typed object, so the value is not narrowed
             load_datetime(dictionary.get("completed")),  # ty: ignore[invalid-argument-type]
+            # the log is parsed JSON, typed object, so the list is not narrowed
             [NewVersion.from_dict(v) for v in dictionary.get("versions", [])],  # ty: ignore[not-iterable]
+            # the log is parsed JSON, typed object, so the value is not narrowed
             dictionary.get("periodic"),  # ty: ignore[invalid-argument-type]
         )
 
@@ -338,7 +353,9 @@ def _pypi_get_distribution_info(distribution: str) -> dict[str, object] | None:
         for context in _request_context():
             if (content := _fetch_pypi_json(url, context)) is not None:
                 break
+    # a failed metadata lookup is logged and treated as unavailable, not raised
     except Exception as exception:  # ruff:ignore[blind-except]
+        # the log line carries the exception repr, a traceback adds nothing
         LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
     return content
 
@@ -349,14 +366,17 @@ def _request_context() -> Generator[ssl.SSLContext | None, None, None]:
         LOGGER.warning(
             "falling back to unverified HTTPS for PyPI metadata because VIRTUALENV_PERIODIC_UPDATE_INSECURE is enabled",
         )
+        # the private helper is the only way to build an unverified context, opt-in only
         yield ssl._create_unverified_context()  # ruff:ignore[suspicious-unverified-context-usage, private-member-access]
 
 
 def _fetch_pypi_json(url: str, context: ssl.SSLContext | None) -> dict[str, object] | None:
     try:
+        # url is a fixed https://pypi.org address, not user input
         with urlopen(url, context=context) as file_handler:  # ruff:ignore[suspicious-url-open-usage]
             return json.load(file_handler)
     except URLError as exception:
+        # the log line carries the exception repr, a traceback adds nothing
         LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
     return None
 
@@ -384,6 +404,7 @@ def manual_upgrade(app_data: AppData, env: dict[str, str]) -> None:
 
 def _run_manual_upgrade(app_data: AppData, distribution: str, for_py_version: str, env: dict[str, str]) -> None:
     start = datetime.now(tz=timezone.utc)
+    # bundle imports this module, so the import must wait until it is needed
     from .bundle import from_bundle  # ruff:ignore[import-outside-top-level]
 
     current = from_bundle(
@@ -404,6 +425,7 @@ def _run_manual_upgrade(app_data: AppData, distribution: str, for_py_version: st
     versions = do_update(
         distribution=distribution,
         for_py_version=for_py_version,
+        # the bundled wheel exists for every distribution a manual upgrade runs on
         embed_filename=current.path,  # ty: ignore[invalid-argument-type, unresolved-attribute]
         app_data=app_data,
         search_dirs=[],
@@ -422,6 +444,7 @@ def _run_manual_upgrade(app_data: AppData, distribution: str, for_py_version: st
     LOGGER.warning(msg, *args)
 
 
+# the subprocess entry point takes the same six inputs as the generated call
 def do_update(  # ruff:ignore[too-many-arguments]
     distribution: str,
     for_py_version: str,
@@ -438,6 +461,7 @@ def do_update(  # ruff:ignore[too-many-arguments]
     return versions
 
 
+# one update pass; the download loop shares its state with the log bookkeeping
 def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
     app_data: str | AppData,
     distribution: str,
@@ -446,6 +470,7 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
     periodic: bool,
     search_dirs: list[str] | list[Path],
 ) -> list[NewVersion]:
+    # acquire imports this module, so the import must wait until it is needed
     from . import acquire  # ruff:ignore[import-outside-top-level]
 
     wheel_filename = None if embed_filename is None else Path(embed_filename)
@@ -485,7 +510,7 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
             search_dirs=search_dirs,
             app_data=app_data,
             to_folder=wheelhouse,
-            env=os.environ,  # ty: ignore[invalid-argument-type]
+            env=os.environ,  # ty: ignore[invalid-argument-type]  # os.environ is a Mapping, not a dict
         )
         if (
             dest is None
@@ -519,9 +544,12 @@ def release_date_for_wheel_path(dest: Path) -> datetime | None:
     # see https://warehouse.pypa.io/api-reference/json/ for more details
     if (content := _pypi_get_distribution_info_cached(wheel.distribution)) is not None:
         try:
+            # content is parsed JSON, so the subscripts are not type checked
             upload_time = content["releases"][wheel.version][0]["upload_time"]  # ty: ignore[not-subscriptable]
             return datetime.strptime(upload_time, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
+        # a malformed release record must not abort the update, the error is logged
         except Exception as exception:  # ruff:ignore[blind-except]
+            # the log line carries the exception repr, a traceback adds nothing
             LOGGER.error("could not load release date %s because %r", content, exception)  # ruff:ignore[error-instead-of-exception]
     return None
 

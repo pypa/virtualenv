@@ -52,6 +52,7 @@ class PipInstall(ABC):
             if filename.suffix == ".dist-info":
                 return filename
         msg = f"no .dist-info at {folder}, has {', '.join(files)}"
+        # a valid wheel always has a dist-info folder, so this is a corrupt-wheel guard
         raise RuntimeError(msg)  # pragma: no cover
 
     def _uninstall_previous_version(self, dist_info: Path) -> None:
@@ -168,6 +169,7 @@ class PipInstall(ABC):
         # https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
         if max(len(i) for i in zip_ref.namelist()) + len(str(folder)) <= 260:  # ruff:ignore[magic-value-comparison]
             return folder
+        # deferred, only the path-length fallback needs the short-path helper
         from virtualenv.util.path import get_short_path_name  # ruff:ignore[import-outside-top-level]
 
         return Path(get_short_path_name(str(folder)))
@@ -198,6 +200,7 @@ class PipInstall(ABC):
             for name, module in self._read_console_scripts(dist_info).items():
                 new_files.update(
                     Path(os.path.normpath(str(folder / rel / i.name)))
+                    # version_info is a VersionInfo, which the helper types as a plain tuple
                     for i in self._create_console_entry_point(name, module, to_folder, version_info)  # ty: ignore[invalid-argument-type]
                 )
         finally:
@@ -228,6 +231,7 @@ class ScriptMakerCustom(ScriptMaker):
         self.clobber = True  # overwrite
         self.set_mode = True  # ensure they are executable
         self.executable = enquote_executable(str(executable))
+        # callers pass a VersionInfo with .major and .minor, the parameter is typed as tuple
         self.version_info = version_info.major, version_info.minor  # ty: ignore[unresolved-attribute]
         self.variants = {"", "X", "X.Y"}
         self._name = name

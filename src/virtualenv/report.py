@@ -17,8 +17,10 @@ MAX_LEVEL: Final[int] = max(LEVELS.keys())
 LOGGER: Final[logging.Logger] = logging.getLogger()
 
 
+# show_pid keeps its default for the existing setup_report callers
 def setup_report(verbosity: int, show_pid: bool = False) -> int:  # ruff:ignore[boolean-default-value-positional-argument]
     _clean_handlers(LOGGER)
+    # reached only with more -v flags than MAX_LEVEL, which tests do not pass
     verbosity = min(verbosity, MAX_LEVEL)  # pragma: no cover
     level = LEVELS[verbosity]
     msg_format = "%(message)s"

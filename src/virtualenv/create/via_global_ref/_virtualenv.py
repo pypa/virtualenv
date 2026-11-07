@@ -20,6 +20,7 @@ def patch_dist(dist: types.ModuleType) -> None:
     # environment: https://docs.python.org/3.11/install/index.html#distutils-configuration-files
     old_parse_config_files = dist.Distribution.parse_config_files
 
+    # matches the untyped distutils parse_config_files override it replaces
     def parse_config_files(self, *args: object, **kwargs: object) -> object:  # ruff:ignore[missing-type-function-argument]
         result = old_parse_config_files(self, *args, **kwargs)
         install = self.get_option_dict("install")
@@ -49,6 +50,7 @@ class _Finder:
     # See https://github.com/pypa/virtualenv/issues/1895 for details.
     lock = []  # ruff:ignore[mutable-class-default]
 
+    # lock is a shared cell mutated on purpose, so every finder sees one lock
     def find_spec(self, fullname: str, path: object, target: object = None) -> ModuleSpec | None:  # ruff:ignore[unused-method-argument]
         # Guard against race conditions during file rewrite by checking if _DISTUTILS_PATCH is defined.
         # This can happen when the file is being overwritten while it's being imported by another process.
@@ -60,6 +62,7 @@ class _Finder:
         if fullname in distutils_patch and self.fullname is None:
             # initialize lock[0] lazily
             if len(self.lock) == 0:
+                # the hook runs during import, so threading loads only when the lock is built
                 import threading  # ruff:ignore[import-outside-top-level]
 
                 lock = threading.Lock()
@@ -70,13 +73,16 @@ class _Finder:
                 # https://docs.python.org/3/faq/library.html#what-kinds-of-global-value-mutation-are-thread-safe
                 self.lock.append(lock)
 
+            # the hook runs during import, so functools loads only when a spec is patched
             from functools import partial  # ruff:ignore[import-outside-top-level]
+            # the hook runs during import, so importlib.util loads only when a spec is needed
             from importlib.util import find_spec  # ruff:ignore[import-outside-top-level]
 
             with self.lock[0]:
                 self.fullname = fullname
                 spec = None
                 try:
+                    # fullname and path arrive typed as object, find_spec takes str | None
                     spec = find_spec(fullname, path)  # ty: ignore[invalid-argument-type]
                 finally:
                     self.fullname = None
@@ -86,7 +92,9 @@ class _Finder:
 
     def _patch_spec(self, spec: ModuleSpec, partial: Callable[..., object]) -> ModuleSpec:
         if (old := getattr(spec.loader, "exec_module", None)) is not None and old is not self.exec_module:
+            # a loader with a read-only exec_module is left unpatched on purpose
             try:  # ruff:ignore[suppressible-exception]
+                # exec_module is a method on the loader, ty types the assignment as read-only
                 spec.loader.exec_module = partial(self.exec_module, old)  # ty: ignore[invalid-assignment]
             except AttributeError:
                 pass

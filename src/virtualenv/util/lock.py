@@ -29,6 +29,7 @@ class _CountedFileLock(FileLock):
         self.count = 0
         self.thread_safe = RLock()
 
+    # filelock's acquire takes poll_interval as float | None and more keyword arguments, this override narrows them
     def acquire(  # ty: ignore[invalid-method-override]
         self,
         timeout: float | None = None,
@@ -44,6 +45,7 @@ class _CountedFileLock(FileLock):
                 raise
         self.count += 1
 
+    # force is a flag of the lock API, callers set it by keyword
     def release(self, force: bool = False) -> None:  # ruff:ignore[boolean-default-value-positional-argument]
         with self.thread_safe:
             if self.count > 0:
@@ -82,6 +84,7 @@ class PathLockBase(ABC):
 
     @abstractmethod
     @contextmanager
+    # the flag is part of the lock_for_key interface that every lock class implements
     def lock_for_key(self, name: str, no_block: bool = False) -> Generator[None, None, None]:  # ruff:ignore[boolean-default-value-positional-argument]
         raise NotImplementedError
 
@@ -117,6 +120,7 @@ class ReentrantFileLock(PathLockBase):
                 _LOCK_STORE[lock_file] = _CountedFileLock(lock_file)
             return _LOCK_STORE[lock_file]
 
+    # no_block is passed positionally by lock_for_key, the signature stays
     def _lock_file(self, lock: _CountedFileLock, no_block: bool = False) -> None:  # ruff:ignore[boolean-default-value-positional-argument]
         # multiple processes might be trying to get a first lock... so we cannot check if this directory exist without
         # a lock, but that lock might then become expensive, and it's not clear where that lock should live.
@@ -136,6 +140,7 @@ class ReentrantFileLock(PathLockBase):
     def __exit__(
         self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
     ) -> None:
+        # _lock is set by __enter__, so it is not None when __exit__ runs
         self._release(self._lock)  # ty: ignore[invalid-argument-type]
         self._del_lock(self._lock)
         self._lock = None
@@ -145,6 +150,7 @@ class ReentrantFileLock(PathLockBase):
         lock.release()
 
     @contextmanager
+    # the flag is passed through to _lock_file, so every lock class shares the signature
     def lock_for_key(self, name: str, no_block: bool = False) -> Generator[None, None, None]:  # ruff:ignore[boolean-default-value-positional-argument]
         lock = self._create_lock(name)
         try:
@@ -178,10 +184,12 @@ class NoOpFileLock(PathLockBase):
         raise NotImplementedError
 
     @contextmanager
+    # the no-op lock ignores its arguments, the signature matches the lock interface
     def lock_for_key(self, name: str, no_block: bool = False) -> Generator[None, None, None]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]
         yield
 
     @contextmanager
+    # the no-op lock ignores the name, the signature matches the lock interface
     def non_reentrant_lock_for_key(self, name: str) -> Generator[None, None, None]:  # ruff:ignore[unused-method-argument]
         yield
 

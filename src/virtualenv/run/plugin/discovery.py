@@ -41,6 +41,7 @@ def get_discover(parser: VirtualEnvConfigParser, args: list[str] | None) -> Disc
         )
         raise RuntimeError(msg)
     discover_class = discover_types[discovery]
+    # plugin classes come from entry points, which ty sees as type
     discover_class.add_parser_arguments(discovery_parser)  # ty: ignore[unresolved-attribute]
     options, _ = parser.parse_known_args(args, namespace=options)
     return discover_class(options)

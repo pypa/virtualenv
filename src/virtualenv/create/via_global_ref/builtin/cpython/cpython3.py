@@ -38,6 +38,7 @@ class CPython3Posix(CPythonPosix, CPython3):
         )
 
     @classmethod
+    # yields PathRef, which the base's Generator[ExePathRefToDest] does not allow
     def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
         yield from super().sources(interpreter)
         if shared_lib := cls._shared_libpython(interpreter):
@@ -73,12 +74,14 @@ class CPython3Windows(CPythonWindows, CPython3):
     """CPython 3 on Windows."""
 
     @classmethod
+    # returns an optional meta, which the base setup_meta does not allow
     def setup_meta(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta | None:  # ty: ignore[invalid-method-override]
         if is_store_python(interpreter):  # store python is not supported here
             return None
         return super().setup_meta(interpreter)
 
     @classmethod
+    # yields PathRef, which the base's Generator[ExePathRefToDest] does not allow
     def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
         yield from cls.executables(interpreter)
         if not cls.has_shim(interpreter):

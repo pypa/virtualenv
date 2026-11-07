@@ -81,7 +81,9 @@ class FromAppData(BaseEmbed):
                     wheel_img = self.app_data.wheel_image(creator.interpreter.version_release_str, key)
                     installer = installer_class(wheel.path, creator, wheel_img)
                     _build_wheel_image(self.app_data.lock / wheel_img.parent, wheel_img.name, installer)
+                    # version_info is a VersionInfo, which install types as a plain tuple
                     installer.install(creator.interpreter.version_info)  # ty: ignore[invalid-argument-type]
+                # the failure is stored and raised once every install has finished
                 except Exception:  # ruff:ignore[blind-except]
                     exceptions[name] = sys.exc_info()
 
@@ -98,6 +100,7 @@ class FromAppData(BaseEmbed):
                 raise RuntimeError("\n".join(messages))
 
     @contextmanager
+    # the wheel lookup and its image build share one context, splitting it passes the lock around
     def _get_seed_wheels(self, creator: Creator) -> Generator[dict[str, Wheel], None, None]:  # ruff:ignore[complex-structure]
         name_to_whl, lock, fail = {}, Lock(), {}
 

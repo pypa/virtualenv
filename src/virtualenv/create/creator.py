@@ -100,6 +100,7 @@ class Creator(ABC):
         ]
 
     @classmethod
+    # the base hook takes the interpreter, this creator never reads it
     def can_create(cls, interpreter: PythonInfo) -> CreatorMeta | bool | None:  # ruff:ignore[unused-class-method-argument]
         """Determine if we can create a virtual environment.
 
@@ -115,8 +116,11 @@ class Creator(ABC):
     def add_parser_arguments(
         cls,
         parser: ArgumentParser,
+        # the hook signature is shared by every creator, subclasses read these
         interpreter: PythonInfo,  # ruff:ignore[unused-class-method-argument]
+        # the hook signature is shared by every creator, subclasses read these
         meta: CreatorMeta,  # ruff:ignore[unused-class-method-argument]
+        # the hook signature is shared by every creator, subclasses read these
         app_data: AppData,  # ruff:ignore[unused-class-method-argument]
     ) -> None:
         """Add CLI arguments for the creator.
@@ -186,6 +190,7 @@ class Creator(ABC):
         )
 
     @classmethod
+    # the codec check and its message share one pass over the value
     def validate_dest(cls, raw_value: str) -> str:  # ruff:ignore[complex-structure]
         """Not blank, a directory if it exists, no path separator in the path, valid chars and must be write-able."""
 
@@ -212,6 +217,7 @@ class Creator(ABC):
                 trip = char.encode(encoding, **kwargs).decode(encoding)
                 if trip == char:
                     continue
+                # the ValueError is the signal the except branch records the character with
                 raise ValueError(trip)  # ruff:ignore[raise-within-try]
             except ValueError:
                 refused[char] = None
@@ -239,6 +245,7 @@ class Creator(ABC):
                 non_write_able(dest, value)
             base, _ = dest.parent, dest.name
             if base == dest:
+                # reached only when dest is the filesystem root, which tests cannot create
                 non_write_able(dest, value)  # pragma: no cover
             dest = base
         return str(value)
@@ -275,6 +282,7 @@ class Creator(ABC):
     def set_pyenv_cfg(self) -> None:
         self.pyenv_cfg.content = OrderedDict()
         system_executable = self.interpreter.system_executable or self.interpreter.executable
+        # a PythonInfo always has an executable, the assert narrows the optional type
         assert system_executable is not None  # ruff:ignore[assert]
         self.pyenv_cfg["home"] = os.path.dirname(os.path.abspath(system_executable))
         self.pyenv_cfg["implementation"] = self.interpreter.implementation
@@ -361,6 +369,7 @@ def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env
 
     try:
         result = _parse_debug_output(code, out, err)
+    # a failure to parse the debug output is reported with the raw streams instead
     except Exception as exception:  # ruff:ignore[blind-except]
         return {"out": out, "err": err, "returncode": code, "exception": repr(exception)}
     if "sys" in result and "path" in result["sys"]:
@@ -372,9 +381,11 @@ def _parse_debug_output(code: int, out: str, err: str) -> dict[str, Any]:
     if code != 0:
         if out:
             result = literal_eval(out)
+        # exit status 2 is what python reports for a missing script file
         elif code == 2 and "file" in err:  # ruff:ignore[magic-value-comparison]
             raise OSError(err)
         else:
+            # any other failure of the debug script has no narrower exception
             raise Exception(err)  # ruff:ignore[raise-vanilla-class]
     else:
         result = json.loads(out)

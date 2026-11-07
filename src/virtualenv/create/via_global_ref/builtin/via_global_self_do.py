@@ -49,6 +49,7 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
         return meta
 
     @classmethod
+    # the base hook signature, this meta does not depend on the interpreter
     def setup_meta(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta:  # ruff:ignore[unused-class-method-argument]
         return BuiltinViaGlobalRefMeta()
 

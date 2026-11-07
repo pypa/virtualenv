@@ -80,12 +80,14 @@ class ViaTemplateActivator(Activator, ABC):
         return shlex.quote(string)
 
     @staticmethod
+    # the quoting hook shares its signature with the other quoters, creator is unused
     def _repr_unicode(creator: Creator, value: str) -> str:  # ruff:ignore[unused-static-method-argument]
         return value  # by default, we just let it be unicode
 
     def as_name(self, template: str) -> str:
         return template
 
+    # the replacement hook signature, subclasses use these arguments
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:  # ruff:ignore[unused-method-argument]
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,

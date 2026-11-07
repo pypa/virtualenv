@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 def cli_run(
     args: list[str],
     options: VirtualEnvOptions | None = None,
+    # setup_logging keeps its default for existing callers
     setup_logging: bool = True,  # ruff:ignore[boolean-default-value-positional-argument]
     env: MutableMapping[str, str] | None = None,
 ) -> Session:
@@ -51,6 +52,7 @@ def cli_run(
 def session_via_cli(
     args: list[str],
     options: VirtualEnvOptions | None = None,
+    # setup_logging keeps its default for existing callers
     setup_logging: bool = True,  # ruff:ignore[boolean-default-value-positional-argument]
     env: MutableMapping[str, str] | None = None,
 ) -> Session:
@@ -67,18 +69,27 @@ def session_via_cli(
     """
     env = os.environ if env is None else env
     parser, elements = build_parser(args, options, setup_logging, env)
+    # parse_args returns a plain Namespace, not the VirtualEnvOptions it is typed as
     options = parser.parse_args(args)  # ty: ignore[invalid-assignment]
+    # the parser carries the discovered interpreter to the session, which ty cannot see
     options.py_version = parser._interpreter.version_info  # ruff:ignore[private-member-access]  # ty: ignore[invalid-assignment, unresolved-attribute]
     creator, seeder, activators = tuple(
+        # options is set by parse_args above, ty still sees the optional type
         e.create(options)  # ty: ignore[invalid-argument-type]
         for e in elements
     )  # create types
     return Session(
+        # options is set by parse_args above, ty still sees the optional type
         options.verbosity,  # ty: ignore[unresolved-attribute, invalid-argument-type]
+        # options is set by parse_args above, ty still sees the optional type
         options.app_data,  # ty: ignore[unresolved-attribute]
+        # the parser carries the discovered interpreter to the session, which ty cannot see
         parser._interpreter,  # ruff:ignore[private-member-access]  # ty: ignore[invalid-argument-type]
+        # the builders are untyped, so their create results are object to ty
         creator,  # ty: ignore[invalid-argument-type]
+        # the builders are untyped, so their create results are object to ty
         seeder,  # ty: ignore[invalid-argument-type]
+        # the builders are untyped, so their create results are object to ty
         activators,  # ty: ignore[invalid-argument-type]
     )
 
@@ -86,6 +97,7 @@ def session_via_cli(
 def build_parser(
     args: list[str] | None = None,
     options: VirtualEnvOptions | None = None,
+    # setup_logging keeps its default for existing callers
     setup_logging: bool = True,  # ruff:ignore[boolean-default-value-positional-argument]
     env: MutableMapping[str, str] | None = None,
 ) -> tuple[VirtualEnvConfigParser, list[ComponentBuilder]]:
@@ -104,6 +116,7 @@ def build_parser(
     handle_extra_commands(options)
 
     discover = get_discover(parser, args)
+    # the parser carries the discovered interpreter to the session
     parser._interpreter = interpreter = discover.interpreter  # ruff:ignore[private-member-access]
     if interpreter is None:
         msg = f"failed to find interpreter for {discover}"
@@ -144,6 +157,7 @@ def _validate_option_values(args: list[str] | None) -> None:
 
 
 def add_version_flag(parser: VirtualEnvConfigParser) -> None:
+    # virtualenv imports this module, so the import waits until the parser is built
     import virtualenv  # ruff:ignore[import-outside-top-level]
 
     parser.add_argument(
@@ -169,6 +183,7 @@ def _do_report_setup(parser: VirtualEnvConfigParser, args: list[str] | None, set
         return
     option, _ = parser.parse_known_args(args)
     if setup_logging:
+        # verbosity is int | None until the parser has parsed the flags
         setup_report(option.verbosity)  # ty: ignore[invalid-argument-type]
 
 

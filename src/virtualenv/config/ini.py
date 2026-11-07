@@ -76,6 +76,7 @@ class IniConfig:
             raw_value = self.config_parser.get(self.section, key.lower())
             source = "file"
             result = convert(raw_value, as_type, source), source
+        # a value that fails conversion reads as unset instead of failing the run
         except Exception:  # ruff:ignore[blind-except]
             result = None
         self._cache[cache_key] = result

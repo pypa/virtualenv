@@ -37,6 +37,7 @@ class ReadOnlyAppData(AppDataDiskFolder):
 
 
 class _PyInfoStoreDiskReadOnly(PyInfoStoreDisk):
+    # a read-only store always refuses the write, so the content is unused
     def write(self, content: str) -> NoReturn:  # ruff:ignore[unused-method-argument]
         msg = "read-only app data python info cannot be updated"
         raise RuntimeError(msg)

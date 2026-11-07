@@ -38,6 +38,7 @@ class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
         return "graalpy"
 
     @classmethod
+    # yields PathRefToDest, which the base's Generator[ExePathRefToDest] does not allow
     def sources(cls, interpreter: PythonInfo) -> Generator[PathRefToDest]:  # ty: ignore[invalid-method-override]
         yield from super().sources(interpreter)
         python_dir = Path(interpreter.system_exe).resolve().parent
@@ -67,6 +68,7 @@ class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
         super().set_pyenv_cfg()
         # GraalPy 24.0 and older had home without the bin
         version = self.interpreter.version_info
+        # python 3.10 is the last version with the GraalPy home layout that has no bin
         if version.minor <= 10:  # ruff:ignore[magic-value-comparison]
             home = Path(self.pyenv_cfg["home"])
             if home.name == "bin":
@@ -83,6 +85,7 @@ class GraalPyPosix(GraalPy, PosixSupports):
 
 class GraalPyWindows(GraalPy, WindowsSupports):
     @classmethod
+    # the base hook signature, the Windows layout has one native library name
     def _native_lib(cls, lib_dir: Path, platform: str) -> Path:  # ruff:ignore[unused-class-method-argument]
         return lib_dir / "pythonvm.dll"
 

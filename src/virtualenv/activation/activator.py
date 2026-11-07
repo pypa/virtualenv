@@ -26,6 +26,7 @@ class Activator(ABC):
         self.flag_prompt = os.path.basename(os.getcwd()) if options.prompt == "." else options.prompt
 
     @classmethod
+    # the base hook takes the interpreter, this activator supports every one
     def supports(cls, interpreter: PythonInfo) -> bool:  # ruff:ignore[unused-class-method-argument]
         """Check if the activation script is supported in the given interpreter.
 
@@ -36,6 +37,7 @@ class Activator(ABC):
         """
         return True
 
+    # the base activator adds no arguments, subclasses override this hook
     @classmethod  # ruff:ignore[empty-method-without-abstract-decorator]
     def add_parser_arguments(cls, parser: ArgumentParser, interpreter: PythonInfo) -> None:
         """Add CLI arguments for this activation script.

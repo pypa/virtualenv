@@ -133,6 +133,7 @@ class ContentStore(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    # the stored content is JSON of any shape, each store decides its own
     def read(self) -> Any:  # ruff:ignore[any-type]
         """Read the stored content.
 
@@ -142,6 +143,7 @@ class ContentStore(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    # the stored content is JSON of any shape, each store decides its own
     def write(self, content: Any) -> None:  # ruff:ignore[any-type]
         """Write content to the store.
 

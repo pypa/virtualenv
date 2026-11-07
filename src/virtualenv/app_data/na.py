@@ -32,20 +32,25 @@ class AppDataDisabled(AppData):
     def reset(self) -> None:
         """Do nothing."""
 
+    # the no-op store ignores the path, the signature must match the store interface
     def py_info(self, path: Path) -> ContentStoreNA:  # ruff:ignore[unused-method-argument]
         return ContentStoreNA()
 
+    # the no-op store ignores the distribution, the signature must match the store interface
     def embed_update_log(self, distribution: str, for_py_version: str) -> ContentStoreNA:  # ruff:ignore[unused-method-argument]
         return ContentStoreNA()
 
+    # the no-op store never extracts, so the arguments are unused
     def extract(self, path: Path, to_folder: Path | None) -> NoReturn:  # ruff:ignore[unused-method-argument]
         raise self.error
 
     @contextmanager
+    # the no-op store takes no lock, so the path is unused
     def locked(self, path: Path) -> Generator[None]:  # ruff:ignore[unused-method-argument]
         """Do nothing."""
         yield
 
+    # the no-op store never has an image, so the arguments are unused
     def wheel_image(self, for_py_version: str, name: str) -> NoReturn:  # ruff:ignore[unused-method-argument]
         raise self.error
 
@@ -61,6 +66,7 @@ class ContentStoreNA(ContentStore):
         """Nothing to read."""
         return
 
+    # matches the base store's Any content, which this no-op store discards
     def write(self, content: Any) -> None:  # ruff:ignore[any-type]
         """Nothing to write."""
 
