@@ -18,6 +18,15 @@ if TYPE_CHECKING:
 
 
 class CreatorInfo(NamedTuple):
+    """The creators available for an interpreter, with their metadata, the describer and the builtin creator name.
+
+    :param key_to_class: the creator classes keyed by their name
+    :param key_to_meta: the capability metadata of each creator, keyed by name
+    :param describe: the describer class, ``None`` when no describer applies
+    :param builtin_key: the name of the builtin creator
+
+    """
+
     key_to_class: dict[str, type[Creator]]
     key_to_meta: dict[str, CreatorMeta]
     describe: type[Describe] | None
@@ -25,6 +34,17 @@ class CreatorInfo(NamedTuple):
 
 
 class CreatorSelector(ComponentBuilder):
+    """Select the creator of the environment from the creators that can handle the interpreter.
+
+    :param interpreter: the interpreter the environment is created from
+    :param parser: the parser to add the creator options to
+
+    :var describe: the describer class, ``None`` when no describer applies
+    :var builtin_key: the name of the builtin creator
+    :var key_to_meta: the capability metadata of each creator, keyed by name
+
+    """
+
     def __init__(self, interpreter: PythonInfo, parser: VirtualEnvConfigParser) -> None:
         self._parser = parser
         creators, self.key_to_meta, self.describe, self.builtin_key = self.for_interpreter(interpreter)
@@ -33,6 +53,15 @@ class CreatorSelector(ComponentBuilder):
 
     @classmethod
     def for_interpreter(cls, interpreter: PythonInfo) -> CreatorInfo:
+        """Return the creators that can handle the interpreter, with their metadata.
+
+        :param interpreter: the interpreter the environment is created from
+
+        :returns: the creators and their metadata
+
+        :raises RuntimeError: when a creator uses the reserved builtin name or no creator can handle the interpreter
+
+        """
         key_to_class, key_to_meta, builtin_key, describe = OrderedDict(), {}, None, None
         errors = defaultdict(list)
         for key, creator_class in cls.options("virtualenv.create").items():
@@ -68,6 +97,12 @@ class CreatorSelector(ComponentBuilder):
 
     def add_selector_arg_parse(self, name: str, choices: Sequence[str]) -> None:
         # prefer the built-in venv if present, otherwise fallback to first defined type
+        """Add the creator option, with the builtin creator first when it is among the choices.
+
+        :param name: the option name
+        :param choices: the creator names to choose from
+
+        """
         choices = sorted(choices, key=lambda a: 0 if a == "builtin" else 1)
         default_value = self._get_default(choices)
         self.parser.add_argument(
@@ -86,12 +121,25 @@ class CreatorSelector(ComponentBuilder):
         return f" for {self.interpreter.spec}"  # only the creators that support this interpreter are choices
 
     def populate_selected_argparse(self, selected: str, app_data: object) -> None:
+        """Set the parser description and add the options of the chosen creator.
+
+        :param selected: the name of the chosen creator
+        :param app_data: the application data folder
+
+        """
         self.parser.description = f"options for {self.name} {selected}"
         assert self._impl_class is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
         # plugin classes come from entry points, which ty sees as type
         self._impl_class.add_parser_arguments(self.parser, self.interpreter, self.key_to_meta[selected], app_data)  # ty: ignore[unresolved-attribute]
 
     def create(self, options: VirtualEnvOptions) -> Creator:
+        """Create the creator the options select, checking that a clear is not aimed at a symlink.
+
+        :param options: the parsed options
+
+        :returns: the creator of the environment
+
+        """
         if options.clear and getattr(options, "dest_is_link", False):
             self._parser.error("--clear cannot use a symlink destination; pass the target directory explicitly")
         options.meta = self.key_to_meta[getattr(options, self.name)]

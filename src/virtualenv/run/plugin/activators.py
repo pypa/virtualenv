@@ -19,6 +19,16 @@ if TYPE_CHECKING:
 
 
 class ActivationSelector(ComponentBuilder):
+    """Select the activators for the environment, from the defaults and the names given on the command line.
+
+    :param interpreter: the interpreter the environment is created from
+    :param parser: the parser to add the activator options to
+
+    :var default: the comma separated names of the default activators
+    :var active: the activators selected for the environment, keyed by name
+
+    """
+
     def __init__(self, interpreter: PythonInfo, parser: VirtualEnvConfigParser) -> None:
         self.default = None
         possible = OrderedDict(
@@ -32,6 +42,12 @@ class ActivationSelector(ComponentBuilder):
         self.active = None
 
     def add_selector_arg_parse(self, name: str, choices: Sequence[str]) -> None:
+        """Add the option that selects the activators, with the names as the choices.
+
+        :param name: the option name
+        :param choices: the activator names to choose from
+
+        """
         self.default = ",".join(choices)
         self.parser.add_argument(
             f"--{name}",
@@ -51,6 +67,11 @@ class ActivationSelector(ComponentBuilder):
 
     # returns None, while the base hook returns the selected name as str
     def handle_selected_arg_parse(self, options: VirtualEnvOptions) -> None:  # ty: ignore[invalid-method-override]
+        """Store the activators the options select, falling back to the defaults.
+
+        :param options: the parsed options
+
+        """
         selected_activators = (
             self._extract_activators(self.default) if options.activators is self.default else options.activators
         )
@@ -70,6 +91,15 @@ class ActivationSelector(ComponentBuilder):
             activator.add_parser_arguments(self.parser, self.interpreter)  # ty: ignore[unresolved-attribute]
 
     def create(self, options: VirtualEnvOptions) -> list[Activator]:
+        """Create the activators the options select.
+
+        :param options: the parsed options
+
+        :returns: the activators, in the order they were selected
+
+        :raises ValueError: when the file system cannot encode the destination and only some activators are selected
+
+        """
         assert self.active is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
         if self.active.keys() - {"python"} and os.name != "nt":
             try:

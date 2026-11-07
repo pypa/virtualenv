@@ -14,10 +14,23 @@ if TYPE_CHECKING:
 
 
 class SeederSelector(ComponentBuilder):
+    """Selects the seeder of the environment from the seeders installed.
+
+    :param interpreter: the interpreter the environment is created from
+    :param parser: the parser to add the seeder options to
+
+    """
+
     def __init__(self, interpreter: PythonInfo, parser: VirtualEnvConfigParser) -> None:
         super().__init__(interpreter, parser, "seeder", self.options("virtualenv.seed"))
 
     def add_selector_arg_parse(self, name: str, choices: Sequence[str]) -> None:
+        """Add the seeder option, with the names as the choices.
+
+        :param name: the option name
+        :param choices: the seeder names to choose from
+
+        """
         self.parser.add_argument(
             f"--{name}",
             choices=choices,
@@ -38,9 +51,25 @@ class SeederSelector(ComponentBuilder):
         return "app-data"
 
     def handle_selected_arg_parse(self, options: VirtualEnvOptions) -> str:
+        """Validate the selected seeder name and return it.
+
+        :param options: the parsed options
+
+        :returns: the selected seeder name
+
+        """
         return super().handle_selected_arg_parse(options)
 
     def create(self, options: VirtualEnvOptions) -> Seeder:
+        """Create the seeder the options select.
+
+        :param options: the parsed options
+
+        :returns: the seeder of the environment
+
+        :raises RuntimeError: when the selected seeder cannot seed the interpreter
+
+        """
         assert self._impl_class is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
         seeder = self._impl_class(options)
         if seeder.enabled and (reason := seeder.cannot_seed(self.interpreter)) is not None:

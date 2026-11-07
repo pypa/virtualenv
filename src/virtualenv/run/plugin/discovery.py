@@ -10,6 +10,16 @@ if TYPE_CHECKING:
 
 
 def get_discover(parser: VirtualEnvConfigParser, args: list[str] | None) -> Discover:
+    """Return the discovery of the interpreter, chosen from the installed discovery plugins.
+
+    :param parser: the parser to add the discovery options to
+    :param args: the command line arguments
+
+    :returns: the discovery of the interpreter
+
+    :raises RuntimeError: when no discovery plugin is installed
+
+    """
     discover_types = Discovery.entry_points_for("virtualenv.discovery")
     discovery_parser = parser.add_argument_group(
         title="discovery",

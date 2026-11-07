@@ -43,6 +43,18 @@ def build_parser(
     setup_logging: bool = True,  # ruff:ignore[boolean-default-value-positional-argument]
     env: MutableMapping[str, str] | None = None,
 ) -> tuple[VirtualEnvConfigParser, list[ComponentBuilder]]:
+    """Build the command line parser, with the options and the component options of every plugin.
+
+    :param args: the command line arguments, ``None`` for the process arguments
+    :param options: the options to populate, a fresh set when not given
+    :param setup_logging: ``True`` to set up the logging of the run, ``False`` to keep the existing one
+    :param env: the environment variables, ``None`` for the process environment
+
+    :returns: the parser and the component builders that add their own options
+
+    :raises RuntimeError: when no interpreter matches the discovery options
+
+    """
     _validate_option_values(args)
     parser = VirtualEnvConfigParser(options, os.environ if env is None else env)
     add_version_flag(parser)
@@ -99,6 +111,11 @@ def _validate_option_values(args: list[str] | None) -> None:
 
 
 def add_version_flag(parser: VirtualEnvConfigParser) -> None:
+    """Add the ``--version`` flag, which prints the version and exits.
+
+    :param parser: the parser to add the flag to
+
+    """
     # virtualenv imports this module, so the import waits until the parser is built
     import virtualenv  # ruff:ignore[import-outside-top-level]
 
@@ -132,6 +149,15 @@ def _do_report_setup(parser: VirtualEnvConfigParser, args: list[str] | None, set
 def load_app_data(
     args: list[str] | None, parser: VirtualEnvConfigParser, options: VirtualEnvOptions | None
 ) -> VirtualEnvOptions:
+    """Add the app data options and return the options with the app data folder set.
+
+    :param args: the command line arguments
+    :param parser: the parser to read the options from
+    :param options: the options to populate, ``None`` for a fresh set
+
+    :returns: the populated options
+
+    """
     parser.add_argument(
         "--read-only-app-data",
         action="store_true",
@@ -167,6 +193,13 @@ def load_app_data(
 
 
 def handle_extra_commands(options: VirtualEnvOptions) -> None:
+    """Run the extra commands that exit once they finish, such as the embedded wheel upgrade.
+
+    :param options: the parsed options
+
+    :raises SystemExit: with the result of the extra command, after it runs
+
+    """
     if options.upgrade_embed_wheels:
         result = manual_upgrade(options.app_data, options.env)
         raise SystemExit(result)

@@ -72,6 +72,7 @@ class Session:
         return self._verbosity
 
     def run(self) -> None:
+        """Create the environment, seed it, activate it and write its configuration file."""
         self._create()
         self._seed()
         self._activate()
