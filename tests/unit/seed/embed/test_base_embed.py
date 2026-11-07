@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture
 
+    from virtualenv.run.session import Session
     from virtualenv.seed.embed.base_embed import BaseEmbed
 
 
@@ -194,5 +195,5 @@ def test_seed_version_env_normalized(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seeder: str, spelling: str, expected: str
 ) -> None:
     monkeypatch.setenv("VIRTUALENV_PIP", spelling.format("26.3"))
-    session: Final = session_via_cli([str(tmp_path / "env"), "--seeder", seeder])
+    session: Final[Session] = session_via_cli([str(tmp_path / "env"), "--seeder", seeder])
     assert session.seeder.pip_version == expected.format("26.3")

@@ -76,9 +76,9 @@ def test_version_pinned_not_found(app_data, for_py_version) -> None:
     "spelling", ["{}", "{}.0", "v{}", " {} "], ids=["exact", "trailing-zero", "v-prefix", "whitespace"]
 )
 def test_version_pinned_is_embed(app_data: AppDataDiskFolder, for_py_version: str, spelling: str) -> None:
-    expected_wheel: Final = get_embed_wheel("pip", for_py_version)
+    expected_wheel: Final[Wheel | None] = get_embed_wheel("pip", for_py_version)
     assert expected_wheel is not None
-    wheel: Final = from_bundle(
+    wheel: Final[Wheel | None] = from_bundle(
         "pip", spelling.format(expected_wheel.version), for_py_version, [], app_data, False, os.environ
     )
     assert wheel is not None
@@ -89,7 +89,7 @@ def test_version_pinned_is_embed(app_data: AppDataDiskFolder, for_py_version: st
 def test_version_pinned_in_app_data(
     app_data: AppDataDiskFolder, for_py_version: str, next_pip_wheel: Wheel, spelling: str
 ) -> None:
-    wheel: Final = from_bundle(
+    wheel: Final[Wheel | None] = from_bundle(
         "pip", spelling.format(next_pip_wheel.version), for_py_version, [], app_data, False, os.environ
     )
     assert wheel is not None

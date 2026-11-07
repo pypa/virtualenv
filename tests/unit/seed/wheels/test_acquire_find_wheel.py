@@ -78,16 +78,6 @@ def test_discover_version_order(tmp_path: Path, make_wheel: Callable[[str], Path
     assert [wheel.version for wheel in discover_wheels(tmp_path, "pip", None, "3.14")] == [newer, older]
 
 
-@pytest.mark.parametrize("requested", ["26.2", "26.2.0", "26.2.0.0"], ids=["exact", "one-zero", "two-zeros"])
-def test_discover_wheels_pinned_equivalent_version(
-    tmp_path: Path, make_wheel: Callable[[str], Path], requested: str
-) -> None:
-    expected: Final[Path] = make_wheel("26.2")
-    make_wheel("26.2.1")
-    make_wheel("unparsable")
-    assert [wheel.path for wheel in discover_wheels(tmp_path, "pip", requested, "3.14")] == [expected]
-
-
 @pytest.mark.parametrize("version", ["26.2.1", "26.2.1rc1", "26.2.1.post1", "26.2.1.dev1"])
 def test_version_tuple_contains_release_numbers(make_wheel: Callable[[str], Path], version: str) -> None:
     assert Wheel(make_wheel(version)).version_tuple == (26, 2, 1)

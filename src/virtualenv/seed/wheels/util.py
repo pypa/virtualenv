@@ -136,7 +136,7 @@ class Version:
         if (keyword := value.strip()) in {*Version.non_version, "none"}:
             return keyword
         try:
-            parsed: Final = PackagingVersion(value)
+            parsed: Final[PackagingVersion] = PackagingVersion(value)
         except InvalidVersion as exception:
             msg = f"invalid seed version: {value!r}"
             raise ValueError(msg) from exception
