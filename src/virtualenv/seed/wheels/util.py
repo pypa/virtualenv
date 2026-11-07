@@ -126,7 +126,7 @@ class Version:
         except InvalidVersion as exception:
             msg = f"invalid seed version: {value!r}"
             raise ValueError(msg) from exception
-        if value.lower().endswith((
+        if keyword.lower().endswith((
             ".zip",
             ".whl",
             ".tar",

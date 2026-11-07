@@ -163,6 +163,7 @@ class _VersionInfo(NamedTuple):
     [
         pytest.param("1.zip", "invalid", id="zip"),
         pytest.param("1+local.zip", "archive-like", id="local-zip"),
+        pytest.param("1+local.zip ", "archive-like", id="local-zip-space"),
         pytest.param("20.0.0.tar.gz", "invalid", id="tar-gz"),
         pytest.param("./pip.whl", "invalid", id="path"),
         pytest.param("invalid", "invalid", id="word"),
@@ -183,6 +184,7 @@ def test_seed_version_rejected_before_creation(
     [
         pytest.param("{}\r", "{}", id="version-carriage-return"),
         pytest.param("{} ", "{}", id="version-trailing-space"),
+        pytest.param("v{}", "{}", id="version-v-prefix"),
         pytest.param("none\r", "none", id="none-carriage-return"),
         pytest.param("embed\r", "embed", id="embed-carriage-return"),
         pytest.param("bundle\r", "bundle", id="bundle-carriage-return"),

@@ -86,7 +86,7 @@ def test_version_pinned_is_embed_any_spelling(app_data, for_py_version, spelling
     assert wheel.name == expected_wheel.name
 
 
-def test_version_pinned_is_embed_with_trailing_zero(app_data, for_py_version, monkeypatch) -> None:
+def test_version_pinned_is_embed_wheel_trailing_zero(app_data, for_py_version, monkeypatch) -> None:
     embed_wheel = Wheel(Path("pip-24.0-py3-none-any.whl"))
     monkeypatch.setattr("virtualenv.seed.wheels.bundle.get_embed_wheel", lambda *_: embed_wheel)
     wheel = from_bundle("pip", "24", for_py_version, [], app_data, False, os.environ)
