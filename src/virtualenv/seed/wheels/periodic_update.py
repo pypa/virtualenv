@@ -74,7 +74,7 @@ def periodic_update(  # ruff:ignore[too-many-arguments]
                     return _update_wheel(version)
     else:
         for version in u_log.versions:
-            if version.wheel.version == of_version:
+            if version.wheel.has_version(of_version):
                 return _update_wheel(version)
 
     return wheel

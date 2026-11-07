@@ -384,6 +384,19 @@ paths.
  Control seed packages
 ***********************
 
+Pin a seed version
+==================
+
+Pass an exact version to ``--pip`` or ``--setuptools``:
+
+.. code-block:: console
+
+    $ virtualenv venv --pip 26.3.0
+
+Equivalent spellings such as ``26.3``, ``26.3.0`` and ``v26.3`` select the same release from bundled wheels, the cache
+or extra search directories. If that release is unavailable locally, virtualenv attempts a download even with
+``--no-download``. Surrounding whitespace is ignored for versions and the ``embed``, ``bundle`` and ``none`` keywords.
+
 Upgrade embedded wheels
 =======================
 

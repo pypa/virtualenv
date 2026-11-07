@@ -26,7 +26,7 @@ def discover_wheels(from_folder: Path, distribution: str, version: str | None, f
             for filename in from_folder.iterdir()
             if (wheel := Wheel.from_path(filename))
             and wheel.distribution == distribution
-            and (version is None or wheel.version == version)
+            and (version is None or wheel.has_version(version))
             and wheel.support_py(for_py_version)
         ),
         key=attrgetter("parsed_version", "distribution"),
@@ -75,6 +75,19 @@ class Wheel:
     def as_version_tuple(version: str) -> tuple[int, ...]:
         return PackagingVersion(version).release
 
+    def has_version(self, version: str) -> bool:
+        """Match equivalent version spellings when selecting a wheel.
+
+        :param version: requested PEP 440 version
+
+        :returns: whether both versions parse and compare equal
+
+        """
+        try:
+            return self.parsed_version == PackagingVersion(version)
+        except InvalidVersion:
+            return False
+
     @property
     def parsed_version(self) -> PackagingVersion:
         return PackagingVersion(self.version)
@@ -111,14 +124,23 @@ class Version:
 
     @staticmethod
     def validate(value: str) -> str:
-        if value in {*Version.non_version, "none"}:
-            return value
+        """Normalize seed options before wheel selection or download.
+
+        :param value: version or seed keyword, possibly surrounded by whitespace
+
+        :returns: normalized version or stripped keyword
+
+        :raises ValueError: if the value is invalid or resembles an archive filename
+
+        """
+        if (keyword := value.strip()) in {*Version.non_version, "none"}:
+            return keyword
         try:
-            PackagingVersion(value)
+            parsed: Final[PackagingVersion] = PackagingVersion(value)
         except InvalidVersion as exception:
             msg = f"invalid seed version: {value!r}"
             raise ValueError(msg) from exception
-        if value.lower().endswith((
+        if keyword.lower().endswith((
             ".zip",
             ".whl",
             ".tar",
@@ -134,7 +156,7 @@ class Version:
         )):
             msg = f"archive-like seed version: {value!r}"
             raise ValueError(msg)
-        return value
+        return str(parsed)
 
 
 __all__ = [

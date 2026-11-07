@@ -42,8 +42,7 @@ def from_bundle(  # ruff:ignore[too-many-arguments]
 def load_embed_wheel(app_data: AppData, distribution: str, for_py_version: str, version: str | None) -> Wheel | None:
     wheel = get_embed_wheel(distribution, for_py_version)
     if wheel is not None:
-        version_match = version == wheel.version
-        if version is None or version_match:
+        if version is None or wheel.has_version(version):
             with app_data.ensure_extracted(wheel.path, lambda: app_data.house) as wheel_path:  # ty: ignore[invalid-argument-type]
                 wheel = Wheel(wheel_path)
         else:  # if version does not match ignore

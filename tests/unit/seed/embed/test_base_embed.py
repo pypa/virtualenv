@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, Final, NamedTuple
 
 import pytest
 
@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture
 
+    from virtualenv.run.session import Session
     from virtualenv.seed.embed.base_embed import BaseEmbed
 
 
@@ -163,6 +164,7 @@ class _VersionInfo(NamedTuple):
     [
         pytest.param("1.zip", "invalid", id="zip"),
         pytest.param("1+local.zip", "archive-like", id="local-zip"),
+        pytest.param("1+local.zip ", "archive-like", id="local-zip-space"),
         pytest.param("20.0.0.tar.gz", "invalid", id="tar-gz"),
         pytest.param("./pip.whl", "invalid", id="path"),
         pytest.param("invalid", "invalid", id="word"),
@@ -175,3 +177,23 @@ def test_seed_version_rejected_before_creation(
         session_via_cli([str(tmp_path / "env"), "--seeder", seeder, "--pip", version])
     assert (context.value.code, (tmp_path / "env").exists()) == (2, False)
     assert f"argument --pip: {reason} seed version: {version!r}" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("seeder", [pytest.param("pip", id="pip"), pytest.param("app-data", id="app-data")])
+@pytest.mark.parametrize(
+    ("spelling", "expected"),
+    [
+        pytest.param("{}\r", "{}", id="version-carriage-return"),
+        pytest.param("{} ", "{}", id="version-trailing-space"),
+        pytest.param("v{}", "{}", id="version-v-prefix"),
+        pytest.param("none\r", "none", id="none-carriage-return"),
+        pytest.param("embed\r", "embed", id="embed-carriage-return"),
+        pytest.param("bundle\r", "bundle", id="bundle-carriage-return"),
+    ],
+)
+def test_seed_version_env_normalized(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seeder: str, spelling: str, expected: str
+) -> None:
+    monkeypatch.setenv("VIRTUALENV_PIP", spelling.format("26.3"))
+    session: Final[Session] = session_via_cli([str(tmp_path / "env"), "--seeder", seeder])
+    assert session.seeder.pip_version == expected.format("26.3")
