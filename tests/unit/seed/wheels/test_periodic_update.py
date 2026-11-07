@@ -710,19 +710,19 @@ def test_false_update_option_keeps_certificate_verification(
     _assert_release_lookup_verifies_certificate(mocker)
 
 
-def test_unset_update_option_keeps_certificate_verification(
-    monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture
-) -> None:
-    monkeypatch.delenv("VIRTUALENV_PERIODIC_UPDATE_INSECURE", raising=False)
-    _assert_release_lookup_verifies_certificate(mocker)
-
-
 def _assert_release_lookup_verifies_certificate(mocker: MockerFixture) -> None:
     request: Final = mocker.patch(
         "virtualenv.seed.wheels.periodic_update.urlopen", autospec=True, side_effect=URLError("certificate failure")
     )
     assert release_date_for_wheel_path(Path("pip-20.1.whl")) is None
     assert request.call_args_list == [mocker.call("https://pypi.org/pypi/pip/json", context=None)]
+
+
+def test_unset_update_option_keeps_certificate_verification(
+    monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture
+) -> None:
+    monkeypatch.delenv("VIRTUALENV_PERIODIC_UPDATE_INSECURE", raising=False)
+    _assert_release_lookup_verifies_certificate(mocker)
 
 
 def test_get_release_fails(mocker, caplog) -> None:

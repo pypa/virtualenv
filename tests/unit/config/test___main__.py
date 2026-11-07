@@ -165,6 +165,26 @@ def test_session_report_subprocess(tmp_path) -> None:
 _COPY_BY_KIND: Final[dict[bool, Callable[[Path, Path], object]]] = {True: shutil.copytree, False: shutil.copy2}
 
 
+def test_module_entry_from_target_install(tmp_path: Path) -> None:
+    _create_env_from_target(tmp_path, _copy_target_install(tmp_path), flags=[], pythonpath="")
+
+
+def _create_env_from_target(tmp_path: Path, target: Path, flags: list[str], pythonpath: str) -> None:
+    # venv from inside a virtualenv on 3.10 and earlier records the virtualenv as home, which only works where the
+    # interpreter's compiled-in prefix exists
+    bare: Final = tmp_path / "bare"
+    check_output([sys.executable, "-m", "virtualenv", str(bare), "--no-seed", "--activators="])
+    executable: Final = bare / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    check_output(
+        [str(executable), *flags, "-m", "virtualenv", str(tmp_path / "env"), "--no-seed", "--activators="],
+        cwd=target,
+        env={**os.environ, "PYTHONPATH": pythonpath},
+        text=True,
+        encoding="utf-8",
+    )
+    assert (tmp_path / "env" / "pyvenv.cfg").is_file()
+
+
 def _copy_target_install(tmp_path: Path) -> Path:
     target: Final = tmp_path / "target"
     target.mkdir()
@@ -186,26 +206,6 @@ def _copy_target_install(tmp_path: Path) -> Path:
             _COPY_BY_KIND[source.is_dir()](source, target / root)
         copied |= roots
     return target
-
-
-def _create_env_from_target(tmp_path: Path, target: Path, flags: list[str], pythonpath: str) -> None:
-    # venv from inside a virtualenv on 3.10 and earlier records the virtualenv as home, which only works where the
-    # interpreter's compiled-in prefix exists
-    bare: Final = tmp_path / "bare"
-    check_output([sys.executable, "-m", "virtualenv", str(bare), "--no-seed", "--activators="])
-    executable: Final = bare / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
-    check_output(
-        [str(executable), *flags, "-m", "virtualenv", str(tmp_path / "env"), "--no-seed", "--activators="],
-        cwd=target,
-        env={**os.environ, "PYTHONPATH": pythonpath},
-        text=True,
-        encoding="utf-8",
-    )
-    assert (tmp_path / "env" / "pyvenv.cfg").is_file()
-
-
-def test_module_entry_from_target_install(tmp_path: Path) -> None:
-    _create_env_from_target(tmp_path, _copy_target_install(tmp_path), flags=[], pythonpath="")
 
 
 @pytest.mark.skipif(sys.version_info < (3, 11), reason="requires -P")

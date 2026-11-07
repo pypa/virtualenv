@@ -175,6 +175,11 @@ PROMPT_CASES: Final[list[tuple[str, str]]] = [
 ]
 
 
+def unavailable_mark(shell: str, action: str) -> pytest.MarkDecorator:
+    reason: Final = unavailable(shell, action)
+    return pytest.mark.skipif(reason is not None, reason=str(reason))
+
+
 def unavailable(shell: str, action: str) -> str | None:
     # Why the shell, or the child shell the action starts, cannot run here; None when both can.
     if shell not in {"nushell", "powershell"} and (shell == "batch") != IS_WIN:
@@ -184,11 +189,6 @@ def unavailable(shell: str, action: str) -> str | None:
         if program is not None and shutil.which(program) is None:
             return f"{program} is not installed"
     return None
-
-
-def unavailable_mark(shell: str, action: str) -> pytest.MarkDecorator:
-    reason: Final = unavailable(shell, action)
-    return pytest.mark.skipif(reason is not None, reason=str(reason))
 
 
 def generate_script(shell: str, root: Path, prompt: str) -> Path:
