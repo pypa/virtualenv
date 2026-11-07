@@ -67,7 +67,7 @@ def _get_wheels_for_support_versions(
     wheel = _build_virtualenv_wheel(folder) if wheel_dir is None else next(wheel_dir.glob("virtualenv-*.whl"))
     packages["virtualenv"]["==any"][wheel.name] = WheelForVersion(wheel, list(_VERSIONS))
     for package in tomllib.loads(_LOCK.read_text(encoding="utf-8"))["packages"]:
-        if not (versions := _python_versions_for(package)):
+        if not (versions := python_versions_for(package)):
             continue
         wheel = _download_locked_wheel(package, folder)
         packages[package["name"]]["==any"][wheel.name] = WheelForVersion(wheel, versions)
@@ -103,7 +103,7 @@ def _download_locked_wheel(package: LockedPackage, into: Path) -> Path:
     return dest
 
 
-def _python_versions_for(package: LockedPackage) -> list[str]:
+def python_versions_for(package: LockedPackage) -> list[str]:
     if (marker := package.get("marker")) is None:
         return list(_VERSIONS)
     parsed, versions = Marker(marker), []
