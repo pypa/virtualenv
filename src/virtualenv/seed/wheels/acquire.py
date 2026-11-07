@@ -190,7 +190,7 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         if verify_against_pypi:
             verify_wheel_digest(result)
         if not result.support_py(for_py_version):
-            msg: Final = f"downloaded wheel {result.name} does not support Python {for_py_version}"
+            msg = f"downloaded wheel {result.name} does not support Python {for_py_version}"
             raise RuntimeError(msg)
         destination: Final = to_folder / result.name
         result.path.replace(destination)
@@ -244,7 +244,7 @@ def pip_wheel_env_run(search_dirs: list[Path], app_data: AppData, env: dict[str,
 def _downloaded_wheel(folder: Path, distribution: str, version_spec: str | None) -> Wheel:
     files: Final = list(folder.iterdir())
     if len(files) != 1 or files[0].is_symlink() or not files[0].is_file():
-        msg: Final = f"could not find downloaded wheel for {distribution}: expected one archive"
+        msg = f"could not find downloaded wheel for {distribution}: expected one archive"
         raise RuntimeError(msg)
     result: Final = Wheel.from_path(files[0])
     if (
@@ -252,7 +252,7 @@ def _downloaded_wheel(folder: Path, distribution: str, version_spec: str | None)
         or canonicalize_name(result.distribution) != canonicalize_name(distribution)
         or (version_spec and not Specifier(version_spec).contains(result.version))
     ):
-        msg: Final = f"unexpected downloaded wheel {files[0].name} for {distribution}{version_spec or ''}"
+        msg = f"unexpected downloaded wheel {files[0].name} for {distribution}{version_spec or ''}"
         raise RuntimeError(msg)
     return result
 
