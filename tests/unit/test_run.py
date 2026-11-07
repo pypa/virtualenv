@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 import shutil
 import sys
@@ -110,6 +111,36 @@ def test_reset_with_empty_app_data_override_resets_default(
     monkeypatch.setenv("VIRTUALENV_OVERRIDE_APP_DATA", override)
     session_via_cli(["--reset-app-data", str(tmp_path / "env")])
     assert delete.call_args_list == [mocker.call(default_folder)]
+
+
+@pytest.mark.parametrize(
+    ("args", "env_vars"),
+    [
+        pytest.param(["--app-data", "", "--reset-app-data"], {}, id="empty"),
+        pytest.param(["--app-data", " ", "--reset-app-data"], {}, id="space"),
+        pytest.param(["--app-data", "\t", "--reset-app-data"], {}, id="tab"),
+        pytest.param(["--reset-app-data"], {"VIRTUALENV_APP_DATA": " "}, id="space-env-var"),
+        pytest.param(["--app-data", ""], {}, id="empty-without-reset"),
+    ],
+)
+def test_blank_app_data_leaves_working_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    args: list[str],
+    env_vars: dict[str, str],
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    sentinel: Final[Path] = tmp_path / "keep.txt"
+    sentinel.write_text("keep", encoding="utf-8")
+    with pytest.raises(SystemExit) as context:
+        session_via_cli([*args, str(tmp_path / "env")], env={**os.environ, **env_vars})
+    assert (
+        context.value.code,
+        sentinel.read_text(encoding="utf-8"),
+        list(tmp_path.iterdir()),
+        bool(re.search(r"app data folder '.*' must not be empty or whitespace\n\Z", capsys.readouterr().err)),
+    ) == (2, "keep", [sentinel], True)
 
 
 def _on_command_line(_: pytest.MonkeyPatch, folder: Path) -> list[str]:

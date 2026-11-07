@@ -6,6 +6,7 @@ import logging
 import os
 import pathlib
 import shutil
+from argparse import ArgumentTypeError
 from contextlib import suppress
 from stat import S_IMODE, S_ISGID, S_IWGRP, S_IWOTH
 from typing import TYPE_CHECKING, Final
@@ -30,6 +31,11 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
     private: Final = folder is None and not env.get("VIRTUALENV_OVERRIDE_APP_DATA", "").strip()
     if folder is None:
         folder = _default_app_data_dir(env)
+    elif not folder.strip():
+        # an empty value, often an unset shell variable, resolves to the working directory (on Windows so do spaces)
+        # and --reset-app-data would delete it
+        msg: Final[str] = f"app data folder {folder!r} must not be empty or whitespace"
+        raise ArgumentTypeError(msg)
     folder = os.path.abspath(folder)
 
     if read_only:

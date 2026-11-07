@@ -279,7 +279,16 @@ Override app-data location
 ==========================
 
 Set the ``VIRTUALENV_OVERRIDE_APP_DATA`` environment variable to override the default app-data cache directory location.
-An empty or blank value counts as unset.
+
+Use ``--app-data`` for an explicit cache location:
+
+.. code-block:: console
+
+    $ virtualenv --app-data /path/to/cache venv
+
+An empty or whitespace-only ``--app-data`` value is an error, as is a whitespace-only ``VIRTUALENV_APP_DATA``. Check
+shell variables before using ``--app-data "$CACHE"``, especially with ``--reset-app-data``, which deletes the selected
+cache. An empty ``VIRTUALENV_APP_DATA`` or a blank ``VIRTUALENV_OVERRIDE_APP_DATA`` is treated as unset.
 
 Allow unverified HTTPS for periodic updates
 ===========================================
