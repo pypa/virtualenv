@@ -763,7 +763,7 @@ def test_venv_fails_not_inline(tmp_path, capsys, mocker) -> None:
         assert session.creator.can_be_inline is False
         return session
 
-    mocker.patch("virtualenv.run.session_via_cli", side_effect=_session_via_cli, autospec=True)
+    mocker.patch("virtualenv.run.cli.session_via_cli", side_effect=_session_via_cli, autospec=True)
     before = tmp_path.stat().st_mode
     cfg_path = tmp_path / "pyvenv.cfg"
     cfg_path.write_text("", encoding="utf-8")

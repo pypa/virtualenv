@@ -226,7 +226,7 @@ def coverage_env(monkeypatch, link, request):
     # Enable coverage report collection on the created virtual environments by injecting the coverage project
     if _COVERAGE_RUN and "_no_coverage" not in request.fixturenames:
         # we inject right after creation, we cannot collect coverage on site.py - used for helper scripts, such as debug
-        from virtualenv import run  # ruff:ignore[import-outside-top-level]
+        from virtualenv.run import cli  # ruff:ignore[import-outside-top-level]
 
         def _session_via_cli(args, options, setup_logging, env=None):
             session = prev_run(args, options, setup_logging, env)
@@ -243,8 +243,8 @@ def coverage_env(monkeypatch, link, request):
             return session
 
         obj = {"cov": None}
-        prev_run = run.session_via_cli
-        monkeypatch.setattr(run, "session_via_cli", _session_via_cli)
+        prev_run = cli.session_via_cli
+        monkeypatch.setattr(cli, "session_via_cli", _session_via_cli)
 
         def finish() -> None:
             cov = obj["cov"]

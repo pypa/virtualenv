@@ -89,7 +89,7 @@ def test_value_alias(monkeypatch, mocker) -> None:
             action.default = False  # force default copy to be False, we expect env-var to flip it
         return prev(self, action)
 
-    mocker.patch("virtualenv.run.VirtualEnvConfigParser._fix_default", side_effect=func, autospec=True)
+    mocker.patch("virtualenv.config.cli.parser.VirtualEnvConfigParser._fix_default", side_effect=func, autospec=True)
 
     monkeypatch.delenv("SYMLINKS", raising=False)
     monkeypatch.delenv("VIRTUALENV_COPIES", raising=False)
