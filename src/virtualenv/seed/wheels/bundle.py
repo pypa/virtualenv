@@ -74,7 +74,6 @@ def load_embed_wheel(app_data: AppData, distribution: str, for_py_version: str, 
 
 
 def from_dir(distribution: str, version: str | None, for_py_version: str, directories: list[Path]) -> Wheel | None:
-    """Load a compatible wheel from a given folder."""
     for folder in directories:
         for wheel in discover_wheels(folder, distribution, version, for_py_version):
             return wheel

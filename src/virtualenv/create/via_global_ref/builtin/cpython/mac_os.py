@@ -154,29 +154,6 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
 
 
 def fix_mach_o(exe: str, current: str, new: str, max_size: int) -> None:
-    """https://en.wikipedia.org/wiki/Mach-O.
-
-    Mach-O, short for Mach object file format, is a file format for executables, object code, shared libraries,
-    dynamically-loaded code, and core dumps. A replacement for the a.out format, Mach-O offers more extensibility and
-    faster access to information in the symbol table.
-
-    Each Mach-O file is made up of one Mach-O header, followed by a series of load commands, followed by one or more
-    segments, each of which contains between 0 and 255 sections. Mach-O uses the REL relocation format to handle
-    references to symbols. When looking up symbols Mach-O uses a two-level namespace that encodes each symbol into an
-    'object/symbol name' pair that is then linearly searched for by first the object and then the symbol name.
-
-    The basic structure—a list of variable-length "load commands" that reference pages of data elsewhere in the file—was
-    also used in the executable file format for Accent. The Accent file format was in turn, based on an idea from Spice
-    Lisp.
-
-    With the introduction of Mac OS X 10.6 platform the Mach-O file underwent a significant modification that causes
-    binaries compiled on a computer running 10.6 or later to be (by default) executable only on computers running Mac OS
-    X 10.6 or later. The difference stems from load commands that the dynamic linker, in previous Mac OS X versions,
-    does not understand. Another significant change to the Mach-O format is the change in how the Link Edit tables
-    (found in the __LINKEDIT section) function. In 10.6 these new Link Edit tables are compressed by removing unused and
-    unneeded bits of information, however Mac OS X 10.5 and earlier cannot read this new Link Edit table format.
-
-    """
     try:
         LOGGER.debug("change Mach-O for %s from %s to %s", exe, current, new)
         _builtin_change_mach_o(max_size)(exe, current, new)
@@ -209,9 +186,8 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
     LITTLE_ENDIAN = "<"  # ruff:ignore[non-lowercase-variable-in-function]
     LC_LOAD_DYLIB = 0xC  # ruff:ignore[non-lowercase-variable-in-function]  # the constant keeps its Mach-O header name
 
+    # adapted from macholib, which the Mach-O rewriting follows
     class FileView:
-        """A proxy for file-like objects that exposes a given view of a file. Modified from macholib."""
-
         def __init__(self, file_obj: FileView | BufferedRandom, start: int = 0, size: int = maxint) -> None:
             if isinstance(file_obj, FileView):
                 # unwraps a nested FileView, which holds the underlying file object
@@ -267,7 +243,6 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
             return read_bytes
 
     def read_data(file: FileView, endian: str, num: int = 1) -> int | tuple[int, ...]:
-        """Read a given number of 32-bits unsigned integers from the given file with the given endianness."""
         res = struct.unpack(endian + "L" * num, file.read(num * 4))
         if len(res) == 1:
             return res[0]
@@ -275,7 +250,6 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
 
     # the nested parser helpers close over the file view, so they stay in one function
     def mach_o_change(at_path: str, what: str, value: str) -> None:  # ruff:ignore[complex-structure]
-        """Replace a given name (what) in any LC_LOAD_DYLIB command found in the given binary with a new name (value), provided it's shorter."""
 
         def do_macho(file: FileView, bits: int, endian: str) -> None:
             # Read Mach-O header (the magic number is assumed read by the caller)
