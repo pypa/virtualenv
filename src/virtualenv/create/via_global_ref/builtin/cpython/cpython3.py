@@ -263,8 +263,7 @@ class CPython3Windows(CPythonWindows, CPython3):
         :yields: a reference to the zip file, when it exists beside the interpreter
 
         """
-        pattern = f"*python{interpreter.version_nodot}.zip"
-        matched_paths = map(Path, fnmatch.filter(interpreter.path, pattern))
+        matched_paths = map(Path, fnmatch.filter(interpreter.path, f"*python{interpreter.version_nodot}.zip"))
         if (path := next(filter(method("exists"), matched_paths), None)) is not None:
             yield PathRefToDest(path, cls.to_bin)
 
