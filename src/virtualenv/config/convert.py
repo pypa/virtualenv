@@ -64,6 +64,10 @@ class ListType(TypeData):
 
         First this is done by newlines. If there were no newlines in the text, then we next try to split by comma.
 
+        :param value: the raw value, a string, bytes or a list of strings
+
+        :returns: the non-empty values, stripped of surrounding whitespace
+
         """
         if isinstance(value, bytes):
             value = value.decode()
@@ -78,7 +82,15 @@ class ListType(TypeData):
 
 # the converted value's type depends on as_type
 def convert(value: str, as_type: TypeData, source: str) -> Any:  # ruff:ignore[any-type]
-    """Convert the value as a given type where the value comes from the given source."""
+    """Convert the value as a given type where the value comes from the given source.
+
+    :param value: the raw value to convert
+    :param as_type: the type to convert the value to
+    :param source: where the value comes from, used when logging a failed conversion
+
+    :returns: the converted value
+
+    """
     try:
         return as_type.convert(value)
     except Exception as exception:

@@ -30,7 +30,17 @@ class ExtendAction(Action):
 
 
 class VirtualEnvConfigParser(ArgumentParser):
-    """Custom option parser which updates its defaults by checking the configuration files and environmental vars."""
+    """Custom option parser which updates its defaults by checking the configuration files and environmental vars.
+
+    :param options: the options to populate, a fresh set of defaults when not given
+    :param env: the environment variables to read, the process environment when not given
+    :param args: positional arguments passed on to :class:`argparse.ArgumentParser`
+    :param kwargs: keyword arguments passed on to :class:`argparse.ArgumentParser`
+
+    :var file_config: the configuration file reader
+    :var epilog_list: extra epilog entries, empty unless something appends to it
+
+    """
 
     def __init__(
         self,
@@ -152,7 +162,7 @@ class VirtualEnvOptions(Namespace):
     def verbosity(self) -> int | None:
         """The verbosity level, computed as ``verbose - quiet``, clamped to zero.
 
-        :returns: the verbosity level, or ``None`` if neither ``--verbose`` nor ``--quiet`` has been parsed yet
+        The value is ``None`` until either ``--verbose`` or ``--quiet`` has been parsed.
 
         """
         if not hasattr(self, "verbose") and not hasattr(self, "quiet"):
