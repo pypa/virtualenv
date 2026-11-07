@@ -309,6 +309,8 @@ def verify_wheel_digest(wheel: Wheel) -> None:
     A failed metadata request, an unknown filename or a missing sha256 therefore fails like a mismatch: accepting the
     wheel in those cases would let anyone who can block ``pypi.org/pypi`` turn the check off.
 
+    :param wheel: the downloaded wheel to verify
+
     :raises UnverifiedWheelError: if PyPI's sha256 for this exact filename cannot be obtained after retrying.
     :raises RuntimeError: if the sha256 does not match.
 

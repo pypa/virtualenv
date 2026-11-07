@@ -14,7 +14,11 @@ if TYPE_CHECKING:
 
 
 class Seeder(ABC):
-    """A seeder will install some seed packages into a virtual environment."""
+    """A seeder will install some seed packages into a virtual environment.
+
+    :var env: the environment variables the seeding runs with
+
+    """
 
     def __init__(self, options: VirtualEnvOptions, enabled: bool) -> None:
         """Create.
@@ -44,8 +48,8 @@ class Seeder(ABC):
         """Add CLI arguments for this seed mechanisms.
 
         :param parser: the CLI parser
-        :param app_data: the CLI parser
         :param interpreter: the interpreter this virtual environment is based of
+        :param app_data: the application data folder
 
         """
         raise NotImplementedError

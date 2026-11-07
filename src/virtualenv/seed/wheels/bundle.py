@@ -22,7 +22,19 @@ def from_bundle(  # ruff:ignore[too-many-arguments]
     do_periodic_update: bool,
     env: dict[str, str],
 ) -> Wheel | None:
-    """Load the bundled wheel to a cache directory."""
+    """Load the bundled wheel to a cache directory.
+
+    :param distribution: the distribution name, for example ``pip``
+    :param version: the requested version, ``None`` when unpinned
+    :param for_py_version: the Python version the wheel must support, as ``major.minor``
+    :param search_dirs: extra directories searched for a newer wheel
+    :param app_data: the application data folder
+    :param do_periodic_update: ``True`` to check the index for a wheel newer than the bundled one
+    :param env: the environment variables the update check runs with
+
+    :returns: the wheel to seed with, or ``None`` when there is none
+
+    """
     of_version = Version.of_version(version)
     wheel = load_embed_wheel(app_data, distribution, for_py_version, of_version)
 

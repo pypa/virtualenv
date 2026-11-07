@@ -68,7 +68,20 @@ def get_wheel(  # ruff:ignore[too-many-arguments]
     do_periodic_update: bool,
     env: dict[str, str],
 ) -> Wheel | None:
-    """Get a wheel with the given distribution-version-for_py_version trio, by using the extra search dir + download."""
+    """Get a wheel with the given distribution-version-for_py_version trio, by using the extra search dir + download.
+
+    :param distribution: the distribution name, for example ``pip``
+    :param version: the requested version, ``None`` when unpinned
+    :param for_py_version: the Python version the wheel must support, as ``major.minor``
+    :param search_dirs: extra directories searched for a wheel before downloading
+    :param download: ``True`` to download the wheel when neither the bundle nor the search dirs have one
+    :param app_data: the application data folder
+    :param do_periodic_update: ``True`` to check the index for a wheel newer than the bundled one
+    :param env: the environment variables the download runs with
+
+    :returns: the wheel, or ``None`` when none could be acquired
+
+    """
     # not all wheels are compatible with all python versions, so we need to py version qualify it
     wheel = None
 
@@ -111,6 +124,16 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
     env: dict[str, str],
 ) -> Wheel:
     """Download one wheel into a private staging directory and move it into ``to_folder`` once it checks out.
+
+    :param distribution: the distribution name, for example ``pip``
+    :param version_spec: the version specifier appended to the distribution name, ``None`` for any version
+    :param for_py_version: the Python version the wheel must support, as ``major.minor``
+    :param search_dirs: extra directories pip searches for wheels
+    :param app_data: the application data folder
+    :param to_folder: the directory the verified wheel is moved into
+    :param env: the environment variables the pip invocation runs with
+
+    :returns: the downloaded wheel, inside ``to_folder``
 
     :raises ValueError: for an invalid distribution name or version specifier.
     :raises CalledProcessError: when ``pip download`` fails.

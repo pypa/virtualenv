@@ -68,7 +68,13 @@ class Wheel:
         return self.path.name
 
     def support_py(self, py_version: str) -> bool:
-        """Check whether ``Requires-Python`` admits ``py_version``, a ``major.minor`` string."""
+        """Check whether ``Requires-Python`` admits ``py_version``, a ``major.minor`` string.
+
+        :param py_version: the Python version to check, as ``major.minor``
+
+        :returns: ``True`` when the wheel admits the version or declares no requirement, ``False`` otherwise
+
+        """
         name = f"{self.distribution}-{self.version}.dist-info/METADATA"
         with ZipFile(str(self.path), "r") as zip_file:
             requires = HeaderParser().parsestr(zip_file.read(name).decode("utf-8")).get("Requires-Python")
