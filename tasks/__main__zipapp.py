@@ -133,9 +133,7 @@ class VersionPlatformSelect:
                         resource = todo.pop(0)
                         yield resource
                         if resource.is_container:
-                            resource_name = resource.name
-                            for name in resource.resources:
-                                child = self.find(f"{resource_name}/{name}" if resource_name else name)
+                            for child in self._children(resource):
                                 if child.is_container:
                                     todo.append(child)
                                 else:
@@ -144,6 +142,10 @@ class VersionPlatformSelect:
             # distlib's resource finder returns resources of any type
             def find(self, name: str) -> Any:  # ruff:ignore[any-type]
                 return Resource(self.path, name, self.loader)
+
+            def _children(self, resource: Resource) -> Iterator[Resource]:
+                for name in resource.resources:
+                    yield self.find(f"{resource.name}/{name}" if resource.name else name)
 
         # distlib is importable only once the zipapp is loaded, so the import is deferred
         from distlib.resources import register_finder  # ruff:ignore[import-outside-top-level]

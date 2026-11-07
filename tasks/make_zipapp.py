@@ -142,8 +142,12 @@ def _create_zipapp(dest: str, packages: dict[str, dict[str, dict[str, WheelForVe
     base = PurePosixPath("__virtualenv__")
     modules: defaultdict[str, defaultdict[str, dict[str, str]]] = defaultdict(lambda: defaultdict(dict))
     dist: defaultdict[str, defaultdict[str, dict[str, str]]] = defaultdict(lambda: defaultdict(dict))
+    has: set[str] = set()
     with zipfile.ZipFile(bio, "w") as zip_app:
-        _write_packages_to_zipapp(base, dist, modules, packages, zip_app)
+        for name, p_w_v in packages.items():
+            for platform, w_v in p_w_v.items():
+                for wheel_data in w_v.values():
+                    _write_wheel(name, platform, wheel_data, base, dist, modules, has, zip_app)
         zip_app.writestr(_entry("modules.json"), json.dumps(modules, indent=2))
         zip_app.writestr(_entry("distributions.json"), json.dumps(dist, indent=2))
         zip_app.writestr(_entry("__main__.py"), (_HERE / "__main__zipapp.py").read_bytes())
@@ -153,47 +157,56 @@ def _create_zipapp(dest: str, packages: dict[str, dict[str, dict[str, WheelForVe
     print(f"zipapp created at {dest} with size {os.path.getsize(dest) / 1024 / 1024:.2f}MB")  # ruff:ignore[print]
 
 
-# the package walk keeps its branches together, one pass over the wheel contents
-def _write_packages_to_zipapp(  # ruff:ignore[complex-structure, too-many-branches]
+def _write_wheel(  # ruff:ignore[too-many-arguments]  # the wheel walk passes its index state down
+    name: str,
+    platform: str,
+    wheel_data: WheelForVersion,
     base: PurePosixPath,
     dist: defaultdict[str, defaultdict[str, dict[str, str]]],
     modules: defaultdict[str, defaultdict[str, dict[str, str]]],
-    packages: dict[str, dict[str, dict[str, WheelForVersion]]],
+    has: set[str],
     zip_app: zipfile.ZipFile,
 ) -> None:
-    has = set()
-    # the nested loops walk each package and its files in one pass
-    for name, p_w_v in packages.items():  # ruff:ignore[too-many-nested-blocks]
-        for platform, w_v in p_w_v.items():
-            for wheel_data in w_v.values():
-                wheel = wheel_data.wheel
-                with zipfile.ZipFile(str(wheel)) as wheel_zip:
-                    for filename in wheel_zip.namelist():
-                        if name == "virtualenv":
-                            dest = PurePosixPath(filename)
-                        else:
-                            dest = base / wheel.stem / filename
-                            if dest.suffix in {".so", ".pyi"}:
-                                continue
-                            if dest.suffix == ".py":
-                                key = filename[:-3].replace("/", ".").replace("__init__", "").rstrip(".")
-                                for version in wheel_data.versions:
-                                    modules[version][platform][key] = str(dest)
-                            if dest.parent.suffix == ".dist-info":
-                                dist_name = dest.parent.stem.split("-")[0].replace("_", "-")
-                                for version in wheel_data.versions:
-                                    dist[version][platform][dist_name] = str(dest.parent)
-                        dest_str = str(dest)
-                        if dest_str in has:
-                            continue
-                        has.add(dest_str)
-                        if "/tests/" in dest_str or "/docs/" in dest_str:
-                            continue
-                        # the build lists each file it adds, for the developer at the terminal
-                        print(dest_str)  # ruff:ignore[print]
-                        content = wheel_zip.read(filename)
-                        zip_app.writestr(_entry(dest_str), content)
-                        del content
+    with zipfile.ZipFile(str(wheel_data.wheel)) as wheel_zip:
+        for filename in wheel_zip.namelist():
+            if (dest := _index_file(name, platform, wheel_data, base, filename, dist, modules)) is None:
+                continue
+            dest_str = str(dest)
+            if dest_str in has:
+                continue
+            has.add(dest_str)
+            if "/tests/" in dest_str or "/docs/" in dest_str:
+                continue
+            # the build lists each file it adds, for the developer at the terminal
+            print(dest_str)  # ruff:ignore[print]
+            content = wheel_zip.read(filename)
+            zip_app.writestr(_entry(dest_str), content)
+            del content
+
+
+def _index_file(  # ruff:ignore[too-many-arguments]  # each index entry needs the wheel and the target tables
+    name: str,
+    platform: str,
+    wheel_data: WheelForVersion,
+    base: PurePosixPath,
+    filename: str,
+    dist: defaultdict[str, defaultdict[str, dict[str, str]]],
+    modules: defaultdict[str, defaultdict[str, dict[str, str]]],
+) -> PurePosixPath | None:
+    if name == "virtualenv":
+        return PurePosixPath(filename)
+    dest = base / wheel_data.wheel.stem / filename
+    if dest.suffix in {".so", ".pyi"}:
+        return None
+    if dest.suffix == ".py":
+        key = filename[:-3].replace("/", ".").replace("__init__", "").rstrip(".")
+        for version in wheel_data.versions:
+            modules[version][platform][key] = str(dest)
+    if dest.parent.suffix == ".dist-info":
+        dist_name = dest.parent.stem.split("-")[0].replace("_", "-")
+        for version in wheel_data.versions:
+            dist[version][platform][dist_name] = str(dest.parent)
+    return dest
 
 
 def _entry(name: str) -> zipfile.ZipInfo:
