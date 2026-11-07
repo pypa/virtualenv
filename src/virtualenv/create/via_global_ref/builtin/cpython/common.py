@@ -123,8 +123,12 @@ def is_macos_brew(interpreter: PythonInfo) -> bool:
 
 
 _BREW: Final[re.Pattern[str]] = re.compile(
-    r"/(usr/local|opt/homebrew)/(opt/python@3\.\d{1,2}|Cellar/python@3\.\d{1,2}/3\.\d{1,2}\.\d{1,2})/Frameworks/"
-    r"Python\.framework/Versions/3\.\d{1,2}",
+    r"""
+    /(?P<prefix>usr/local|opt/homebrew)                # Intel or Apple Silicon Homebrew prefix
+    /(?P<formula>opt/python@3\.\d{1,2}|Cellar/python@3\.\d{1,2}/3\.\d{1,2}\.\d{1,2})  # the install layout of python
+    /Frameworks/Python\.framework/Versions/3\.\d{1,2}  # the framework that holds the interpreter
+    """,
+    re.VERBOSE,
 )
 
 __all__ = [

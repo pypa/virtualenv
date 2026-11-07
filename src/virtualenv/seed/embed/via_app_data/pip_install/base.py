@@ -131,8 +131,15 @@ class PipInstall(ABC):
             if "console_scripts" in parser.sections():
                 for name, value in parser.items("console_scripts"):
                     # fold only a trailing version (pip3, pip-3.13), so python3-config and 2to3 keep their names
-                    match = re.fullmatch(r"([^\W\d]\w*?)-?\d+(?:\.\d+)*", name)
-                    scripts[match.group(1) if match else name] = value
+                    match = re.fullmatch(
+                        r"""
+                        (?P<name>[^\W\d]\w*?)  # the script name, which starts with a letter
+                        -?\d+(?:\.\d+)*        # an optional dash and the version
+                        """,
+                        name,
+                        re.VERBOSE,
+                    )
+                    scripts[match.group("name") if match else name] = value
         return scripts
 
     def _create_console_entry_point(

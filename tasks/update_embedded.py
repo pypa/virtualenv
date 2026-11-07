@@ -24,7 +24,14 @@ _GZIP: Final[codecs.CodecInfo] = codecs.lookup("zlib")
 _B64: Final[codecs.CodecInfo] = codecs.lookup("base64")
 
 _FILE_REGEX: Final[re.Pattern[str]] = re.compile(
-    r'# file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+) = convert\(\n {4}"""\n(.*?)"""\n\)', re.DOTALL
+    r'''
+    \#\ file\ (?P<filename>.*?)\n                          # the source file the payload was generated from
+    (?P<variable_name>[a-zA-Z][a-zA-Z0-9_]+)\ =\ convert\(\n  # the variable the payload is assigned to
+    \ {4}"""\n                                                # the payload opens on its own indented line
+    (?P<previous_encoded>.*?)                                 # the encoded payload that gets replaced
+    """\n\)                                                   # the payload closes before the call does
+    ''',
+    re.DOTALL | re.VERBOSE,
 )
 
 
@@ -42,7 +49,7 @@ def rebuild(script_path: Path) -> None:
     for count, next_match in enumerate(_FILE_REGEX.finditer(script_content)):  # ruff:ignore[unused-loop-control-variable]
         script_parts += [script_content[match_end : next_match.start()]]
         match_end = next_match.end()
-        filename, variable_name, previous_encoded = next_match.group(1), next_match.group(2), next_match.group(3)
+        filename, variable_name, previous_encoded = next_match.group("filename", "variable_name", "previous_encoded")
         differ, content = handle_file(next_match.group(0), filename, variable_name, previous_encoded)
         script_parts.append(content)
         if differ:
