@@ -661,19 +661,9 @@ def test_seed_image_build_direct_call(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     "ending", [pytest.param(b"", id="no-newline"), pytest.param(b"\n", id="lf"), pytest.param(b"\r\n", id="crlf")]
 )
-def test_copy_seed_preserves_record_rows(tmp_path: Path, ending: bytes) -> None:
+def test_copy_seed_preserves_record_rows(tmp_path: Path, copy_seed_record: tuple[Path, list[list[str]]]) -> None:
     session: Final = cli_run([str(tmp_path / "env"), "--no-seed"], setup_logging=False)
-    bundled: Final = BUNDLE_FOLDER / BUNDLE_SUPPORT[session.interpreter.version_release_str]["pip"]
-    wheel: Final = tmp_path / bundled.name
-    original_rows = []
-    with zipfile.ZipFile(bundled) as source, zipfile.ZipFile(wheel, "w") as target:
-        for info in source.infolist():
-            content = source.read(info)
-            if info.filename.endswith(".dist-info/RECORD"):
-                content = content.rstrip(b"\r\n") + ending
-                original_rows = list(csv.reader(io.StringIO(content.decode("utf-8"))))
-            target.writestr(info, content)
-
+    wheel, original_rows = copy_seed_record
     image: Final = tmp_path / "image" / "CopyPipInstall" / wheel.stem
     installer: Final = CopyPipInstall(wheel, session.creator, image)
     installer.build_image()
@@ -686,6 +676,22 @@ def test_copy_seed_preserves_record_rows(tmp_path: Path, ending: bytes) -> None:
     files: Final = PathDistribution(dist_info).files
     assert files is not None
     assert f"{dist_info.name}/INSTALLER" in {Path(file).as_posix() for file in files}
+
+
+@pytest.fixture
+def copy_seed_record(tmp_path: Path, ending: bytes) -> tuple[Path, list[list[str]]]:
+    bundled: Final = BUNDLE_FOLDER / BUNDLE_SUPPORT[PythonInfo.current_system().version_release_str]["pip"]
+    wheel: Final = tmp_path / bundled.name
+    original_rows: list[list[str]] = []
+    with zipfile.ZipFile(bundled) as source, zipfile.ZipFile(wheel, "w") as target:
+        for info in source.infolist():
+            content = source.read(info)
+            if info.filename.endswith(".dist-info/RECORD"):
+                content = content.rstrip(b"\r\n") + ending
+                original_rows = list(csv.reader(io.StringIO(content.decode("utf-8"))))
+            target.writestr(info, content)
+
+    return wheel, original_rows
 
 
 def _write_zip_with_entry(zip_path: Path, entry_name: str) -> None:
