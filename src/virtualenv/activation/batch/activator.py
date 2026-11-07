@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
     from virtualenv.create.creator import Creator
 
+#: Logs the reasons a batch activation script is skipped.
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 # cmd.exe's own command-line parser looks for these regardless of surrounding quotes: confirmed on a
@@ -37,14 +38,38 @@ _PATH_REPLACEMENT_NAMES: Final[dict[str, str]] = {
 
 
 class BatchActivator(ViaTemplateActivator):
+    """Generate the ``activate.bat``, ``deactivate.bat`` and ``pydoc.bat`` scripts for ``cmd.exe``."""
+
     @classmethod
     def supports(cls, interpreter: PythonInfo) -> bool:
+        """Accept interpreters on Windows.
+
+        :param interpreter: the host interpreter to check
+
+        :returns: ``True`` when the interpreter runs on Windows
+
+        """
         return interpreter.os == "nt"
 
     def generate(self, creator: Creator) -> list[Path]:
+        """Generate the scripts, or remove them when a path holds a character that batch cannot represent.
+
+        :param creator: the creator of the environment
+
+        :returns: the paths of the generated scripts, empty when they were removed
+
+        """
         return [] if self.remove_unsafe(creator) else super().generate(creator)
 
     def remove_unsafe(self, creator: Creator, *, selected: bool = True) -> bool:
+        """Remove the scripts when a path holds a character that batch cannot represent.
+
+        :param creator: the creator of the environment
+        :param selected: ``True`` to log the problems as warnings, ``False`` to log them at debug level
+
+        :returns: ``True`` when the scripts were removed
+
+        """
         values = super().replacements(creator, creator.bin_dir)
         if problems := [reason for key in _PATH_REPLACEMENT_NAMES if (reason := _unsafe_path_reason(key, values[key]))]:
             for problem in problems:
@@ -57,16 +82,38 @@ class BatchActivator(ViaTemplateActivator):
         return False
 
     def templates(self) -> Iterator[str]:
+        """The template file names to instantiate.
+
+        :yields: the template file names
+
+        """
         yield "activate.bat"
         yield "deactivate.bat"
         yield "pydoc.bat"
 
     def instantiate_template(self, replacements: dict[str, str], template: str, creator: Creator) -> str:
+        """Fill the placeholders and end every line with the platform line separator, which batch requires.
+
+        :param replacements: the raw placeholder values
+        :param template: the name of the template file
+        :param creator: the creator of the environment
+
+        :returns: the template text with every placeholder replaced
+
+        """
         # ensure the text has all newlines as \r\n - required by batch
         base = super().instantiate_template(replacements, template, creator)
         return base.replace(os.linesep, "\n").replace("\n", os.linesep)
 
     def substitutions(self, replacements: dict[str, str], creator: Creator) -> dict[str, str]:
+        """Add the quoted environment path, with its ``%`` escaped for batch, to the placeholder values.
+
+        :param replacements: the raw placeholder values
+        :param creator: the creator of the environment
+
+        :returns: the placeholder names mapped to their substituted text
+
+        """
         return {
             **super().substitutions(replacements, creator),
             "__VIRTUAL_ENV_CALL__": self.quote(replacements["__VIRTUAL_ENV__"]).replace("%", "%%"),

@@ -9,7 +9,14 @@ if TYPE_CHECKING:
 
 
 class PowerShellActivator(ViaTemplateActivator):
+    """Generate the ``activate.ps1`` script for PowerShell."""
+
     def templates(self) -> Iterator[str]:
+        """The template file names to instantiate.
+
+        :yields: the template file names
+
+        """
         yield "activate.ps1"
 
     @staticmethod

@@ -28,7 +28,16 @@ else:
 
 
 class ViaTemplateActivator(Activator, ABC):
+    """Base for activators that fill placeholders in a template file and write the result beside the interpreter."""
+
     def generate(self, creator: Creator) -> list[Path]:
+        """Write the activation scripts into the bin folder and set the prompt in ``pyvenv.cfg`` when one was given.
+
+        :param creator: the creator of the environment
+
+        :returns: the paths of the generated scripts
+
+        """
         dest_folder = creator.bin_dir
         generated = self._generate(self.replacements(creator, dest_folder), self.templates(), dest_folder, creator)
         if self.flag_prompt is not None:
@@ -49,6 +58,15 @@ class ViaTemplateActivator(Activator, ABC):
         return generated
 
     def instantiate_template(self, replacements: dict[str, str], template: str, creator: Creator) -> str:
+        """Fill the placeholders in a template file with the substituted values.
+
+        :param replacements: the raw placeholder values
+        :param template: the name of the template file
+        :param creator: the creator of the environment
+
+        :returns: the template text with every placeholder replaced
+
+        """
         # read content as binary to avoid platform specific line normalization (\n -> \r\n)
         # templates ship beside the activator's package, which is the class's own module when it is a package
         package: Final = (
@@ -89,10 +107,25 @@ class ViaTemplateActivator(Activator, ABC):
         return value  # by default, we just let it be unicode
 
     def as_name(self, template: str) -> str:
+        """The file name of the generated script, which is the template name by default.
+
+        :param template: the name of the template file
+
+        :returns: the name of the generated script
+
+        """
         return template
 
     # the replacement hook signature, subclasses use these arguments
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:  # ruff:ignore[unused-method-argument]
+        """The raw placeholder values shared by the activation scripts.
+
+        :param creator: the creator of the environment
+        :param dest_folder: the folder the scripts are written into
+
+        :returns: the placeholder names mapped to their values
+
+        """
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
             "__VIRTUAL_ENV__": str(creator.dest),
@@ -105,6 +138,11 @@ class ViaTemplateActivator(Activator, ABC):
 
     @abstractmethod
     def templates(self) -> Iterator[str]:
+        """The template file names to instantiate.
+
+        :returns: the template file names
+
+        """
         raise NotImplementedError
 
 

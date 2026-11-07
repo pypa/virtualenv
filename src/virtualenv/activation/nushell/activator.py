@@ -12,7 +12,14 @@ if TYPE_CHECKING:
 
 
 class NushellActivator(ViaTemplateActivator):
+    """Generate the ``activate.nu`` script for Nushell."""
+
     def templates(self) -> Iterator[str]:
+        """The template file names to instantiate.
+
+        :yields: the template file names
+
+        """
         yield "activate.nu"
 
     @staticmethod
@@ -41,6 +48,14 @@ class NushellActivator(ViaTemplateActivator):
 
     # the replacement hook signature, nushell needs neither argument
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:  # ruff:ignore[unused-method-argument]
+        """The raw placeholder values, including the Tcl and Tk library paths.
+
+        :param creator: the creator of the environment
+        :param dest_folder: the folder the scripts are written into
+
+        :returns: the placeholder names mapped to their values
+
+        """
         return {
             "__VIRTUAL_PROMPT__": "" if self.flag_prompt is None else self.flag_prompt,
             "__VIRTUAL_ENV__": str(creator.dest),

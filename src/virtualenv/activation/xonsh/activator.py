@@ -14,7 +14,16 @@ if TYPE_CHECKING:
 
 
 class XonshActivator(ViaTemplateActivator):
+    """Generate the ``activate.xsh`` script for xonsh."""
+
     def generate(self, creator: Creator) -> list[Path]:
+        """Generate the script, or remove it when the destination holds xonsh path expansion syntax.
+
+        :param creator: the creator of the environment
+
+        :returns: the paths of the generated scripts, empty when the destination is skipped
+
+        """
         if re.search(r"\$(?:\w+|{)|=~", str(creator.dest)):
             logging.getLogger(__name__).warning(
                 "skipping xonsh activation script: destination %s contains path expansion syntax", creator.dest
@@ -24,6 +33,11 @@ class XonshActivator(ViaTemplateActivator):
         return super().generate(creator)
 
     def templates(self) -> Iterator[str]:
+        """The template file names to instantiate.
+
+        :yields: the template file names
+
+        """
         yield "activate.xsh"
 
     @staticmethod
@@ -38,6 +52,14 @@ class XonshActivator(ViaTemplateActivator):
         return ascii(string)
 
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:
+        """The raw placeholder values, including the Tcl and Tk library paths.
+
+        :param creator: the creator of the environment
+        :param dest_folder: the folder the scripts are written into
+
+        :returns: the placeholder names mapped to their values
+
+        """
         data = super().replacements(creator, dest_folder)
         data.update({
             "__TCL_LIBRARY__": getattr(creator.interpreter, "tcl_lib", None) or "",
