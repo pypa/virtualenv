@@ -82,6 +82,7 @@ repos:
     rev: 7f9d0819ca1c008ade73f4b41fa9d258d48f605b # frozen: v1.51.1
     hooks:
       - id: typos
+        priority: 8
         exclude: |
           (?x)
           ^pylock[.]toml$  # Generated package names are not project prose.
@@ -89,6 +90,7 @@ repos:
     rev: dfdeebdd309a043859ba33a555839911e7b11801 # frozen: v1.182.1
     hooks:
       - id: semgrep
+        priority: 8
         name: semgrep activation rules
         args:
           - --config
@@ -100,6 +102,7 @@ repos:
         files: '^(\.github/semgrep/activation\.yml|src/virtualenv/activation/bash/activate\.sh)$'
         pass_filenames: false
       - id: semgrep
+        priority: 8
         alias: semgrep-test
         name: semgrep activation rule tests
         args: ["--test", "--quiet", "--disable-version-check", ".github/semgrep"]
