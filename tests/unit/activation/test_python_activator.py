@@ -167,9 +167,7 @@ def test_python(raise_on_non_source_class, activation_tester) -> None:
 
             prev_path = out[2]
             prev_sys_path = out[3]
-            assert out[4] == str(self._creator.dest)  # VIRTUAL_ENV now points to the virtual env folder
-
-            assert out[5] == str(self._creator.env_name)  # VIRTUAL_ENV_PROMPT now has the env name
+            assert (out[4], out[5]) == (str(self._creator.dest), str(self._creator.env_name))
 
             new_path = out[6]  # PATH now starts with bin path of current
             assert ([str(self._creator.bin_dir), *prev_path]) == new_path

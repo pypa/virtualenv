@@ -28,5 +28,7 @@ def test_cachedir_tag_ignored_by_tag(tmp_path: Path) -> None:
 
     args = [_TAR, "--create", "--file", "/dev/null", "--exclude-caches", "--verbose", venv.name]
     tar_result = run(args=args, capture_output=True, text=True, encoding="utf-8", cwd=tmp_path)
-    assert tar_result.stdout == ".venv/\n.venv/CACHEDIR.TAG\n"
-    assert tar_result.stderr == f"{_TAR}: .venv/: contains a cache directory tag CACHEDIR.TAG; contents not dumped\n"
+    assert (tar_result.stdout, tar_result.stderr) == (
+        ".venv/\n.venv/CACHEDIR.TAG\n",
+        f"{_TAR}: .venv/: contains a cache directory tag CACHEDIR.TAG; contents not dumped\n",
+    )
