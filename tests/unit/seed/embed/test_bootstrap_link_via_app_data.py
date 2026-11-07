@@ -542,7 +542,11 @@ def _run_parallel_threads(tmp_path):
 
 @pytest.mark.usefixtures("temp_app_data")
 def test_app_data_parallel_fail(tmp_path: Path, mocker: MockerFixture) -> None:
-    mocker.patch("virtualenv.seed.embed.via_app_data.pip_install.base.PipInstall.build_image", side_effect=RuntimeError, autospec=True)
+    mocker.patch(
+        "virtualenv.seed.embed.via_app_data.pip_install.base.PipInstall.build_image",
+        side_effect=RuntimeError,
+        autospec=True,
+    )
     exceptions = _run_parallel_threads(tmp_path)
     assert len(exceptions) == 2
     for exception in exceptions:
@@ -604,7 +608,9 @@ def test_seed_image_build_failure_leaves_no_partial_image(
         "--no-setuptools",
         *(["--symlink-app-data"] if linked else []),
     ]
-    patched: Final = mocker.patch(f"virtualenv.seed.embed.via_app_data.pip_install.{target}", side_effect=failure, autospec=True)
+    patched: Final = mocker.patch(
+        f"virtualenv.seed.embed.via_app_data.pip_install.{target}", side_effect=failure, autospec=True
+    )
     with pytest.raises(RuntimeError, match="No space left on device"):
         cli_run(args, setup_logging=False)
     mocker.stop(patched)

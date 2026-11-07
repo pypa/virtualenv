@@ -13,6 +13,7 @@ import pytest
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
+
     from pytest_mock import MockerFixture, MockType
 
 _CLEAN: Final[str] = '<testsuite tests="1" failures="0" errors="0" skipped="0"/>'

@@ -39,6 +39,7 @@ def run(
     start = perf_counter()
     # deferred so importing this entry module stays cheap
     from virtualenv.run import cli_run  # ruff:ignore[import-outside-top-level]
+
     # deferred with the run import, both load only when the CLI runs
     from virtualenv.util.error import ProcessCallFailedError  # ruff:ignore[import-outside-top-level]
 

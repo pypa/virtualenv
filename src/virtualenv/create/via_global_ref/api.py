@@ -71,8 +71,12 @@ class ViaGlobalRefApi(Creator, ABC):
 
     @classmethod
     def add_parser_arguments(
-        cls, parser: ArgumentParser, interpreter: PythonInfo, meta: ViaGlobalRefMeta, app_data: AppData
-    # narrows meta to ViaGlobalRefMeta, which the base hook types as CreatorMeta
+        cls,
+        parser: ArgumentParser,
+        interpreter: PythonInfo,
+        meta: ViaGlobalRefMeta,
+        app_data: AppData,
+        # narrows meta to ViaGlobalRefMeta, which the base hook types as CreatorMeta
     ) -> None:  # ty: ignore[invalid-method-override]
         super().add_parser_arguments(parser, interpreter, meta, app_data)
         parser.add_argument(

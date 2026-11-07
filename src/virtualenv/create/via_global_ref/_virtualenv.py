@@ -75,6 +75,7 @@ class _Finder:
 
             # the hook runs during import, so functools loads only when a spec is patched
             from functools import partial  # ruff:ignore[import-outside-top-level]
+
             # the hook runs during import, so importlib.util loads only when a spec is needed
             from importlib.util import find_spec  # ruff:ignore[import-outside-top-level]
 

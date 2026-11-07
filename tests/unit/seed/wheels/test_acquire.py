@@ -21,6 +21,7 @@ from virtualenv.seed.wheels.util import Wheel
 if TYPE_CHECKING:
     from collections.abc import Callable
     from ssl import SSLContext
+
     from pytest_mock import MockerFixture, MockType
 
 
@@ -248,7 +249,9 @@ def test_get_wheel_download_not_called(mocker, for_py_version, session_app_data,
 def test_get_wheel_falls_back_to_bundle_when_unverified(
     mocker: MockerFixture, for_py_version: str, session_app_data: AppDataDiskFolder
 ) -> None:
-    mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", side_effect=UnverifiedWheelError("refusing"), autospec=True)
+    mocker.patch(
+        "virtualenv.seed.wheels.acquire.download_wheel", side_effect=UnverifiedWheelError("refusing"), autospec=True
+    )
 
     wheel = get_wheel("setuptools", "bundle", for_py_version, [], True, session_app_data, False, os.environ)
 
@@ -259,7 +262,9 @@ def test_get_wheel_falls_back_to_bundle_when_unverified(
 def test_get_wheel_unverified_pinned_version_fails(
     mocker: MockerFixture, for_py_version: str, session_app_data: AppDataDiskFolder
 ) -> None:
-    mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", side_effect=UnverifiedWheelError("refusing"), autospec=True)
+    mocker.patch(
+        "virtualenv.seed.wheels.acquire.download_wheel", side_effect=UnverifiedWheelError("refusing"), autospec=True
+    )
 
     with pytest.raises(UnverifiedWheelError, match="refusing"):
         get_wheel("setuptools", "0.0.0", for_py_version, [], True, session_app_data, False, os.environ)

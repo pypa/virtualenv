@@ -16,6 +16,7 @@ from virtualenv.seed.wheels.embed import MIN, OLDEST_SUPPORTED
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
+
     from pytest_mock import MockerFixture
 
     from virtualenv.run.session import Session
@@ -144,7 +145,9 @@ def test_base_seeder_never_blocks(at_version: Callable[[int, int], PythonInfo]) 
 
 
 def test_selection_surfaces_the_seeder_reason(tmp_path: Path, mocker: MockerFixture) -> None:
-    mocker.patch.object(FromAppData, "cannot_seed", new=classmethod(lambda _cls, _interpreter: "seeder said no for a specific reason"))
+    mocker.patch.object(
+        FromAppData, "cannot_seed", new=classmethod(lambda _cls, _interpreter: "seeder said no for a specific reason")
+    )
     with pytest.raises(RuntimeError, match="seeder said no for a specific reason"):
         session_via_cli([str(tmp_path)])
 

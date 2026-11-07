@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from typing import TYPE_CHECKING
+
 import pytest
 
 from virtualenv.config.cli.parser import HelpFormatter
@@ -14,7 +15,9 @@ if TYPE_CHECKING:
 def test_help_formatter_uses_terminal_width(mocker: MockerFixture, width: int) -> None:
     # HelpFormatter should use shutil.get_terminal_size() for width.
     mock_size = mocker.patch(
-        "virtualenv.config.cli.parser.shutil.get_terminal_size", autospec=True, return_value=os.terminal_size((width, 24))
+        "virtualenv.config.cli.parser.shutil.get_terminal_size",
+        autospec=True,
+        return_value=os.terminal_size((width, 24)),
     )
     formatter = HelpFormatter("test_prog")
     # argparse keeps the formatter width in _width, which the test checks
