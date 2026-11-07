@@ -20,8 +20,10 @@ class PluginLoader:
     @classmethod
     def entry_points_for(cls, key: str) -> OrderedDict[str, type]:
         if sys.version_info >= (3, 10):
+            # ty on Python 3.10 and 3.15 types entry_points() as object, which has no select
             selected = list(cls.entry_points().select(group=key))  # ty: ignore[unresolved-attribute]
         else:
+            # ty on Python 3.9 types entry_points() as object, which has no get
             selected = list(cls.entry_points().get(key, []))  # ty: ignore[unresolved-attribute]
         # Third-party packages may register entry points with the same name as virtualenv's
         # built-ins (e.g. xonsh's own `virtualenv.activate.xonsh`). Sort so built-ins are

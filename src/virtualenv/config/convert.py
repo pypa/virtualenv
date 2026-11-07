@@ -92,7 +92,7 @@ _CONVERT: Final[dict[type, type]] = {bool: BoolType, type(None): NoneType, list:
 def get_type(action: Action) -> TypeData:
     # a flag that stores a bool over an unset default is tri-state, so its env var and ini values read as bools
     default_type = bool if action.default is None and isinstance(action.const, bool) else type(action.default)
-    return _CONVERT.get(default_type, TypeData)(default_type, default_type if action.type is None else action.type)  # ty: ignore[invalid-argument-type]
+    return _CONVERT.get(default_type, TypeData)(default_type, default_type if action.type is None else action.type)
 
 
 __all__ = [

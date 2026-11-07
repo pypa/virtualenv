@@ -48,7 +48,7 @@ class CPythonmacOsFramework(CPython, ABC):
                 if not self.symlinks:
                     exes.extend(self.bin_dir / a for a in src.aliases)
                 for exe in exes:
-                    fix_mach_o(str(exe), current, target, self.interpreter.max_size)  # ty: ignore[invalid-argument-type]
+                    fix_mach_o(str(exe), current, target, self.interpreter.max_size)
                     try:
                         # codesign ships with macOS and is meant to be found on PATH
                         subprocess.check_call(["codesign", "--force", "--sign", "-", str(exe)])  # ruff:ignore[start-process-with-partial-path]
