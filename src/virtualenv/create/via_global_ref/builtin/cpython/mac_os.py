@@ -69,15 +69,14 @@ class CPythonmacOsFramework(CPython, ABC):
                     except (OSError, subprocess.CalledProcessError) as e:
                         LOGGER.warning("Could not ad-hoc re-sign %s: %s", exe, e)
 
-    @classmethod
-    def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], str, str]]:
-        for _, targets, must, when in super()._executables(interpreter):
-            # Make sure we use the embedded interpreter inside the framework, even if sys.executable points to the
-            # stub executable in ${sys.prefix}/bin.
-            # See http://groups.google.com/group/python-virtualenv/browse_thread/thread/17cab2f85da75951
-            # prefix is typed str | None, and Path needs a str
-            fixed_host_exe = Path(interpreter.prefix) / "Resources" / "Python.app" / "Contents" / "MacOS" / "Python"  # ty: ignore[invalid-argument-type]
-            yield fixed_host_exe, targets, must, when
+    @abstractmethod
+    def desired_mach_o_image_path(self) -> str:
+        """The Mach-O image path the copied executables should reference.
+
+        :returns: the image path inside the environment
+
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def current_mach_o_image_path(self) -> str:
@@ -88,14 +87,15 @@ class CPythonmacOsFramework(CPython, ABC):
         """
         raise NotImplementedError
 
-    @abstractmethod
-    def desired_mach_o_image_path(self) -> str:
-        """The Mach-O image path the copied executables should reference.
-
-        :returns: the image path inside the environment
-
-        """
-        raise NotImplementedError
+    @classmethod
+    def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], str, str]]:
+        for _, targets, must, when in super()._executables(interpreter):
+            # Make sure we use the embedded interpreter inside the framework, even if sys.executable points to the
+            # stub executable in ${sys.prefix}/bin.
+            # See http://groups.google.com/group/python-virtualenv/browse_thread/thread/17cab2f85da75951
+            # prefix is typed str | None, and Path needs a str
+            fixed_host_exe = Path(interpreter.prefix) / "Resources" / "Python.app" / "Contents" / "MacOS" / "Python"  # ty: ignore[invalid-argument-type]
+            yield fixed_host_exe, targets, must, when
 
 
 class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):

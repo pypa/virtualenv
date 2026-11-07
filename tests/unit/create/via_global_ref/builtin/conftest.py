@@ -18,11 +18,6 @@ if TYPE_CHECKING:
 sys.path.append(str(Path(__file__).parent))
 
 
-class _VersionInfo(NamedTuple):
-    major: int
-    minor: int
-
-
 @pytest.fixture
 def py_info(py_info_name):
     return read_fixture(py_info_name)
@@ -58,3 +53,8 @@ def make_interpreter(mocker: MockerFixture) -> MakeInterpreter:
         )
 
     return _make  # type: ignore[return-value]  # autospec PythonInfo is not an Interpreter to ty
+
+
+class _VersionInfo(NamedTuple):
+    major: int
+    minor: int
