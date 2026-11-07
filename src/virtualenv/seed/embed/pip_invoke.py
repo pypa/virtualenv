@@ -33,11 +33,22 @@ if TYPE_CHECKING:
 
 
 class PipInvoke(BaseEmbed):
+    """Seeder that installs the seed packages by running pip in a subprocess.
+
+    :param options: the parsed options
+
+    """
+
     def __init__(self, options: VirtualEnvOptions) -> None:
         super().__init__(options)
         self._wheels: list[Path] = []
 
     def run(self, creator: Creator) -> None:
+        """Install the seed packages into the environment with pip, then rewrite the launchers on POSIX.
+
+        :param creator: the creator of the environment
+
+        """
         if not self.enabled:
             return
         with self.get_pip_install_cmd(creator.exe, creator.interpreter.version_release_str) as cmd:
@@ -48,6 +59,16 @@ class PipInvoke(BaseEmbed):
 
     @contextmanager
     def get_pip_install_cmd(self, exe: Path, for_py_version: str) -> Generator[list[str], None, None]:
+        """Yield the pip command that installs the seed packages for the given interpreter version.
+
+        :param exe: the Python executable of the environment
+        :param for_py_version: the Python version to install for
+
+        :raises RuntimeError: when no wheel is found for a distribution
+
+        :yields: the pip command, as a list of arguments
+
+        """
         self._wheels.clear()
         cmd: Final = [
             str(exe),

@@ -26,12 +26,25 @@ LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class PipInstall(ABC):
+    """Install one seed package from a wheel into the environment, using a cached image of the wheel.
+
+    :param wheel: the wheel to install
+    :param creator: the creator of the environment
+    :param image_folder: the folder holding the cached image of the wheel
+
+    """
+
     def __init__(self, wheel: Path, creator: Creator, image_folder: Path) -> None:
         self._wheel = wheel
         self._creator = creator
         self._image_dir = image_folder
 
     def install(self, version_info: tuple[int, ...]) -> None:
+        """Install the package, replacing any previous version and creating its console scripts.
+
+        :param version_info: the version of the Python interpreter the package is installed for
+
+        """
         dist_info: Final = self._find_dist_info(self._image_dir)
         self._uninstall_previous_version(dist_info)
         # sync image
@@ -212,16 +225,31 @@ class PipInstall(ABC):
         return "\n".join(f"{os.path.relpath(str(rec), str(folder))},," for rec in files)
 
     def clear(self) -> None:
+        """Remove the cached image of the wheel."""
         if self._image_dir.exists():
             safe_delete(self._image_dir)
 
     def has_image(self) -> bool:
+        """Whether the cached image of the wheel exists and holds files.
+
+        :returns: ``True`` when the image has content
+
+        """
         return self._image_dir.exists() and any(self._image_dir.iterdir())
 
 
 class EntryPointConfig(ConfigParser):
+    """Config parser that keeps the option names as written, without lower-casing them."""
+
     @staticmethod
     def optionxform(optionstr: str) -> str:
+        """Keep the option name as written.
+
+        :param optionstr: the option name
+
+        :returns: the option name unchanged
+
+        """
         return optionstr
 
 
@@ -256,6 +284,14 @@ class ScriptMakerCustom(ScriptMaker):
 
 def shell_shebang(executable: str, post_interp: bytes = b"") -> bytes:
     # The exec line is read by both sh and Python; double-quoted backslashes survive both readers.
+    """Build a shebang that runs the executable through ``sh`` and then Python.
+
+    :param executable: the executable to run
+    :param post_interp: the bytes appended after the interpreter path
+
+    :returns: the shebang and the wrapper lines, as bytes
+
+    """
     quoted: Final = shlex.quote(executable).replace("\\", "'\"\\\\\"'")
     return b"#!/bin/sh\n'''exec' " + quoted.encode("utf-8") + post_interp + b' "$0" "$@"\n' + b"' '''\n"
 

@@ -36,6 +36,14 @@ LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class FromAppData(BaseEmbed):
+    """Seeder that installs the seed packages from wheel images cached in the application data folder.
+
+    :param options: the parsed options
+
+    :var symlinks: ``True`` to symlink the packages from the cached images instead of copying them
+
+    """
+
     def __init__(self, options: VirtualEnvOptions) -> None:
         super().__init__(options)
         # env var and config file values skip the gate on the CLI flag, so apply it here too
@@ -56,6 +64,13 @@ class FromAppData(BaseEmbed):
 
     @classmethod
     def add_parser_arguments(cls, parser: ArgumentParser, interpreter: PythonInfo, app_data: AppData) -> None:
+        """Add the option that symlinks the packages from the application data folder, when the platform supports it.
+
+        :param parser: the parser to add the option to
+        :param interpreter: the interpreter the environment is created from
+        :param app_data: the application data folder
+
+        """
         super().add_parser_arguments(parser, interpreter, app_data)
         can_symlink = cls._can_symlink(app_data)
         sym = "" if can_symlink else "not supported - "
@@ -68,6 +83,13 @@ class FromAppData(BaseEmbed):
         )
 
     def run(self, creator: Creator) -> None:
+        """Install the seed packages into the environment from the cached images.
+
+        :param creator: the creator of the environment
+
+        :raises RuntimeError: when an image cannot be built, a wheel entry is invalid or a download fails
+
+        """
         if not self.enabled:
             return
         with self._get_seed_wheels(creator) as name_to_whl:
@@ -158,6 +180,13 @@ class FromAppData(BaseEmbed):
         yield name_to_whl
 
     def installer_class(self, pip_version_tuple: tuple[int, ...] | None) -> type[PipInstall]:
+        """Return the installer class for the pip version, which symlinks the files when pip supports it.
+
+        :param pip_version_tuple: the version of the seed pip, ``None`` when unknown
+
+        :returns: the symlink installer when symlinks are requested and supported, otherwise the copy installer
+
+        """
         if self.symlinks and pip_version_tuple and pip_version_tuple >= (19, 3):  # symlink support requires pip 19.3+
             return SymlinkPipInstall
         return CopyPipInstall

@@ -53,6 +53,20 @@ def periodic_update(  # ruff:ignore[too-many-arguments]
     do_periodic_update: bool,
     env: dict[str, str],
 ) -> Wheel | None:
+    """Return the wheel to seed with, starting a background update of the bundled wheels when one is due.
+
+    :param distribution: the distribution name
+    :param of_version: the version requested, ``None`` for the newest
+    :param for_py_version: the Python version the wheel must support
+    :param wheel: the wheel found so far, ``None`` when none was found
+    :param search_dirs: the folders searched for wheels
+    :param app_data: the application data folder
+    :param do_periodic_update: ``True`` to check for updates in the background
+    :param env: the environment variables for the update
+
+    :returns: the wheel to seed with, possibly a newer one that was already downloaded
+
+    """
     if do_periodic_update:
         handle_auto_update(distribution, for_py_version, wheel, search_dirs, app_data, env)
 
@@ -108,6 +122,17 @@ def trigger_update(  # ruff:ignore[too-many-arguments]  # the background update 
     env: dict[str, str],
     periodic: bool,
 ) -> None:
+    """Start a background process that updates the wheels of a distribution.
+
+    :param distribution: the distribution name
+    :param for_py_version: the Python version the wheel must support
+    :param wheel: the wheel to update, ``None`` when none was found
+    :param search_dirs: the folders searched for wheels
+    :param app_data: the application data folder
+    :param env: the environment variables for the update
+    :param periodic: ``True`` when the update is a periodic check rather than a manual one
+
+    """
     wheel_path = None if wheel is None else str(wheel.path)
     code = (
         dedent(
@@ -155,6 +180,13 @@ def trigger_update(  # ruff:ignore[too-many-arguments]  # the background update 
 
 
 def add_wheel_to_update_log(wheel: Wheel, for_py_version: str, app_data: AppData) -> None:
+    """Record a wheel in the update log of its distribution, unless the log already names it.
+
+    :param wheel: the wheel to record
+    :param for_py_version: the Python version the wheel must support
+    :param app_data: the application data folder
+
+    """
     embed_update_log = app_data.embed_update_log(wheel.distribution, for_py_version)
     # the disk store has a file attribute that ContentStore does not declare
     LOGGER.debug("adding %s information to %s", wheel.name, embed_update_log.file)  # ty: ignore[unresolved-attribute]
@@ -173,15 +205,38 @@ DATETIME_FMT: Final[str] = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 def dump_datetime(value: datetime | None) -> str | None:
+    """Format a datetime for the update log, keeping ``None`` as ``None``.
+
+    :param value: the datetime to format
+
+    :returns: the formatted text, ``None`` for ``None``
+
+    """
     return None if value is None else value.strftime(DATETIME_FMT)
 
 
 def load_datetime(value: str | None) -> datetime | None:
+    """Parse a datetime written by :func:`dump_datetime`, as UTC.
+
+    :param value: the text to parse, ``None`` for no datetime
+
+    :returns: the UTC datetime, ``None`` for ``None``
+
+    """
     return None if value is None else datetime.strptime(value, DATETIME_FMT).replace(tzinfo=timezone.utc)
 
 
 # source is reassigned after creation, so instances must not be hashed
 class NewVersion:  # ruff:ignore[eq-without-hash]
+    """A wheel version found by an update, with where it came from and when it was found.
+
+    :param filename: the wheel file name
+    :param found_date: when the version was found
+    :param release_date: when the version was released, ``None`` when unknown
+    :param source: where the version came from, ``manual``, ``periodic`` or ``download``
+
+    """
+
     def __init__(self, filename: str, found_date: datetime, release_date: datetime | None, source: str) -> None:
         self.filename = filename
         self.found_date = found_date
@@ -190,6 +245,13 @@ class NewVersion:  # ruff:ignore[eq-without-hash]
 
     @classmethod
     def from_dict(cls, dictionary: dict[str, str | None]) -> NewVersion:
+        """Parse a version from the stored form of the update log.
+
+        :param dictionary: the stored form of the version
+
+        :returns: the version
+
+        """
         return cls(
             # the JSON value is typed str | None, but the constructor needs str
             filename=dictionary["filename"],  # ty: ignore[invalid-argument-type]
@@ -217,9 +279,15 @@ class NewVersion:  # ruff:ignore[eq-without-hash]
 
     @property
     def wheel(self) -> Wheel:
+        """The wheel file of the version."""
         return Wheel(Path(self.filename))
 
     def to_dict(self) -> dict[str, str | None]:
+        """Return the stored form of the version, for the update log.
+
+        :returns: the version as a dictionary of text values
+
+        """
         return {
             "filename": self.filename,
             "release_date": dump_datetime(self.release_date),
@@ -229,6 +297,15 @@ class NewVersion:  # ruff:ignore[eq-without-hash]
 
     # line 74 passes the minor flag positionally, line 479 passes ci by name
     def use(self, now: datetime, ignore_grace_period_minor: bool = False, ignore_grace_period_ci: bool = False) -> bool:  # ruff:ignore[boolean-default-value-positional-argument]
+        """Whether the version should be used at the given time, once its grace period has passed.
+
+        :param now: the current time
+        :param ignore_grace_period_minor: ``True`` to use the version without waiting for its minor release grace period
+        :param ignore_grace_period_ci: ``True`` to use the version without waiting for the CI grace period
+
+        :returns: ``True`` when the version can be used
+
+        """
         if self.source == "manual":
             return True
         if self.source == "periodic" and (self.found_date < now - GRACE_PERIOD_CI or ignore_grace_period_ci):
@@ -239,6 +316,15 @@ class NewVersion:  # ruff:ignore[eq-without-hash]
 
 
 class UpdateLog:
+    """The record of the last update of a distribution, with the versions it found.
+
+    :param started: when the last update started, ``None`` when it never did
+    :param completed: when the last update completed, ``None`` when it never did
+    :param versions: the versions found
+    :param periodic: ``True`` when the update was periodic, ``None`` when unknown
+
+    """
+
     def __init__(
         self, started: datetime | None, completed: datetime | None, versions: list[NewVersion], periodic: bool | None
     ) -> None:
@@ -249,6 +335,15 @@ class UpdateLog:
 
     @classmethod
     def from_app_data(cls, app_data: AppData, distribution: str, for_py_version: str) -> UpdateLog:
+        """Load the update log of a distribution from the application data folder.
+
+        :param app_data: the application data folder
+        :param distribution: the distribution name
+        :param for_py_version: the Python version the log is for
+
+        :returns: the update log, empty when none was stored
+
+        """
         store: Final[ContentStore] = app_data.embed_update_log(distribution, for_py_version)
         try:
             return cls.from_dict(store.read())
@@ -262,6 +357,13 @@ class UpdateLog:
 
     @classmethod
     def from_dict(cls, dictionary: dict[str, object] | None) -> UpdateLog:
+        """Parse the update log from the stored form.
+
+        :param dictionary: the stored form of the update log, ``None`` when none was stored
+
+        :returns: the update log
+
+        """
         if dictionary is None:
             dictionary = {}
         return cls(
@@ -277,6 +379,7 @@ class UpdateLog:
 
     @property
     def needs_update(self) -> bool:
+        """Whether an update is due: none has completed, or the last completion is older than the update period."""
         now = datetime.now(tz=timezone.utc)
         if self.completed is None:  # never completed
             return self._check_start(now)
@@ -288,6 +391,11 @@ class UpdateLog:
         return self.started is None or now - self.started > UPDATE_ABORTED_DELAY
 
     def to_dict(self) -> dict[str, object]:
+        """Return the stored form of the update log.
+
+        :returns: the update log as a dictionary
+
+        """
         return {
             "started": dump_datetime(self.started),
             "completed": dump_datetime(self.completed),
@@ -391,6 +499,12 @@ _PYPI_CACHE: Final[dict[str, dict[str, object] | None]] = {}
 
 
 def manual_upgrade(app_data: AppData, env: dict[str, str]) -> None:
+    """Update the bundled wheels of every supported Python version now, in parallel.
+
+    :param app_data: the application data folder
+    :param env: the environment variables for the update
+
+    """
     threads = []
 
     for for_py_version, distribution_to_package in BUNDLE_SUPPORT.items():
@@ -455,6 +569,18 @@ def do_update(  # ruff:ignore[too-many-arguments]
     search_dirs: list[str] | list[Path],
     periodic: bool,
 ) -> list[NewVersion] | None:
+    """Download the newest wheel of a distribution and record it in the update log.
+
+    :param distribution: the distribution name
+    :param for_py_version: the Python version the wheel must support
+    :param embed_filename: the bundled wheel file name, ``None`` when there is none
+    :param app_data: the application data folder, or its path
+    :param search_dirs: the folders searched for wheels
+    :param periodic: ``True`` when the update is a periodic check rather than a manual one
+
+    :returns: the versions downloaded, ``None`` when the update did not run
+
+    """
     versions = None
     try:
         versions = _run_do_update(app_data, distribution, embed_filename, for_py_version, periodic, search_dirs)
@@ -541,6 +667,13 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
 
 
 def release_date_for_wheel_path(dest: Path) -> datetime | None:
+    """Return the release date of a wheel from the package index, ``None`` when it is unknown.
+
+    :param dest: the path of the wheel file
+
+    :returns: the release date in UTC, ``None`` when the index does not know it
+
+    """
     wheel = Wheel(dest)
     # the most accurate is to ask PyPi - e.g. https://pypi.org/pypi/pip/json,
     # see https://warehouse.pypa.io/api-reference/json/ for more details

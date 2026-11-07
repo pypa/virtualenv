@@ -52,6 +52,16 @@ def from_bundle(  # ruff:ignore[too-many-arguments]
 
 
 def load_embed_wheel(app_data: AppData, distribution: str, for_py_version: str, version: str | None) -> Wheel | None:
+    """Return the bundled wheel of a distribution when it matches the version, extracted into the app data folder.
+
+    :param app_data: the application data folder
+    :param distribution: the distribution name
+    :param for_py_version: the Python version the wheel must support
+    :param version: the version to match, ``None`` for any version
+
+    :returns: the wheel, ``None`` when no bundled wheel matches
+
+    """
     wheel = get_embed_wheel(distribution, for_py_version)
     if wheel is not None:
         if version is None or wheel.has_version(version):

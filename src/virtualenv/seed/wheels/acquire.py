@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
+#: The command that runs pip as a module, with the empty path entries removed.
 PIP_RUN: Final[str] = (
     "import sys; sys.path = [p for p in sys.path if p]; "
     "import runpy; runpy.run_module('pip', run_name='__main__', alter_sys=True)"
@@ -217,6 +218,17 @@ def _check_version_spec(version_spec: str | None) -> None:
 
 
 def pip_wheel_env_run(search_dirs: list[Path], app_data: AppData, env: dict[str, str]) -> dict[str, str]:
+    """Build the environment that runs pip from the cached wheels, with the options that keep it offline.
+
+    :param search_dirs: the folders searched for wheels
+    :param app_data: the application data folder
+    :param env: the environment variables to extend
+
+    :returns: the environment variables to run pip with
+
+    :raises RuntimeError: when the embedded pip cannot be found or does not support the Python version
+
+    """
     env = env.copy()
     env.update({"PIP_USE_WHEEL": "1", "PIP_USER": "0", "PIP_NO_INPUT": "1", "PYTHONIOENCODING": "utf-8"})
     wheel = get_wheel(
@@ -255,6 +267,18 @@ def _downloaded_wheel(folder: Path, distribution: str, version_spec: str | None)
 def find_compatible_in_house(
     distribution: str, version_spec: str | None, for_py_version: str, in_folder: Path
 ) -> Wheel | None:
+    """Return the wheel in a folder that matches the distribution and version specifier, if any.
+
+    :param distribution: the distribution name
+    :param version_spec: the version specifier, ``None`` for any version
+    :param for_py_version: the Python version the wheel must support
+    :param in_folder: the folder to search
+
+    :returns: the newest matching wheel, ``None`` when there is none
+
+    :raises ValueError: when the version specifier uses an operator other than ``==`` or ``<``
+
+    """
     wheels: Final[list[Wheel]] = discover_wheels(in_folder, distribution, None, for_py_version)
     if version_spec:
         specifier: Final[Specifier] = Specifier(version_spec)
