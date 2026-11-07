@@ -198,51 +198,46 @@ def _option_in_config_file(monkeypatch: pytest.MonkeyPatch, folder: Path, key: s
 
 
 @pytest.mark.parametrize(
-    ("set_option", "value"),
+    ("set_option", "option", "value"),
     [
-        pytest.param(_option_in_environment, "nope", id="env-var"),
-        pytest.param(_option_in_environment, "builtin ", id="env-var-trailing-space"),
-        pytest.param(_option_in_config_file, "nope", id="ini"),
-        pytest.param(_option_in_config_file, "", id="ini-empty"),
+        pytest.param(_option_in_environment, "creator", "nope", id="creator-env"),
+        pytest.param(_option_in_environment, "creator", "builtin ", id="creator-env-trailing-space"),
+        pytest.param(_option_in_config_file, "creator", "nope", id="creator-ini"),
+        pytest.param(_option_in_config_file, "creator", "", id="creator-ini-empty"),
+        pytest.param(_option_in_environment, "seeder", "nope", id="seeder-env"),
+        pytest.param(_option_in_environment, "seeder", "pip ", id="seeder-env-trailing-space"),
+        pytest.param(_option_in_config_file, "seeder", "nope", id="seeder-ini"),
     ],
+    indirect=["set_option"],
 )
-def test_invalid_creator_outside_cli(
+def test_invalid_plugin_outside_cli(
     tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
     current_creators: CreatorInfo,
-    set_option: Callable[[pytest.MonkeyPatch, Path, str, str], None],
+    set_option: Callable[[str, str], None],
+    option: str,
     value: str,
 ) -> None:
-    set_option(monkeypatch, tmp_path, "creator", value)
+    set_option(option, value)
     with pytest.raises(RuntimeError) as error:
         session_via_cli([str(tmp_path / "env")])
     spec: Final = PythonInfo.current_system().spec
     available: Final = ", ".join(sorted(current_creators.key_to_class))
-    assert str(error.value) == (
-        f"creator {value!r} is not available for {spec}. Available creators: {available}. Is the plugin installed?"
+    assert (
+        str(error.value)
+        == {
+            "creator": (
+                f"creator {value!r} is not available for {spec}. Available creators: {available}. Is the plugin installed?"
+            ),
+            "seeder": f"seeder {value!r} is not available. Available seeders: app-data, pip. Is the plugin installed?",
+        }[option]
     )
 
 
-@pytest.mark.parametrize(
-    ("set_option", "value"),
-    [
-        pytest.param(_option_in_environment, "nope", id="env-var"),
-        pytest.param(_option_in_environment, "pip ", id="env-var-trailing-space"),
-        pytest.param(_option_in_config_file, "nope", id="ini"),
-    ],
-)
-def test_invalid_seeder_outside_cli(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    set_option: Callable[[pytest.MonkeyPatch, Path, str, str], None],
-    value: str,
-) -> None:
-    set_option(monkeypatch, tmp_path, "seeder", value)
-    with pytest.raises(RuntimeError) as error:
-        session_via_cli([str(tmp_path / "env")])
-    assert str(error.value) == (
-        f"seeder {value!r} is not available. Available seeders: app-data, pip. Is the plugin installed?"
-    )
+@pytest.fixture
+def set_option(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> Callable[[str, str], None]:
+    return partial(request.param, monkeypatch, tmp_path)
 
 
 @pytest.mark.parametrize("option", [pytest.param("--prompt", id="prompt"), pytest.param("--pip", id="pip")])

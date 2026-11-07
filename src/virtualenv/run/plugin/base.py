@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 from collections import OrderedDict
 from importlib.metadata import entry_points
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -60,7 +60,7 @@ class ComponentBuilder(PluginLoader):
         selected = getattr(options, self.name)
         if selected not in self.possible:
             # argparse checks choices only on the command line, so a value from an env var or ini file can land here
-            msg = (
+            msg: Final = (
                 f"{self.name} {selected!r} is not available{self._available_for()}. "
                 f"Available {self.name}s: {', '.join(sorted(self.possible))}. Is the plugin installed?"
             )
