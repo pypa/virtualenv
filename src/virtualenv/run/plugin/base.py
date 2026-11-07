@@ -37,7 +37,7 @@ class PluginLoader:
         # Third-party packages may register entry points with the same name as virtualenv's
         # built-ins (e.g. xonsh's own `virtualenv.activate.xonsh`). Sort so built-ins are
         # inserted last into the OrderedDict, making them win on name collision.
-        selected.sort(key=lambda e: e.value.startswith("virtualenv."))
+        selected.sort(key=lambda entry: entry.value.startswith("virtualenv."))
         return OrderedDict((e.name, e.load()) for e in selected)
 
     @staticmethod

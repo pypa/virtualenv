@@ -75,12 +75,12 @@ class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
 
         native_lib = cls._native_lib(python_dir / "lib", interpreter.platform)
         if native_lib.exists():
-            yield PathRefToDest(native_lib, dest=lambda self, s: self.bin_dir.parent / "lib" / s.name)
+            yield PathRefToDest(native_lib, dest=lambda self, source: self.bin_dir.parent / "lib" / source.name)
 
         for jvm_dir_name in ("jvm", "jvmlibs", "modules"):
             jvm_dir = python_dir / jvm_dir_name
             if jvm_dir.exists():
-                yield PathRefToDest(jvm_dir, dest=lambda self, s: self.bin_dir.parent / s.name)
+                yield PathRefToDest(jvm_dir, dest=lambda self, source: self.bin_dir.parent / source.name)
 
     @classmethod
     @abstractmethod

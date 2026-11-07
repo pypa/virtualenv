@@ -27,12 +27,12 @@ def get_discover(parser: VirtualEnvConfigParser, args: list[str] | None) -> Disc
     )
     choices = _get_default_discovery(discover_types)
     # prefer the builtin if present, otherwise fallback to first defined type
-    choices = sorted(choices, key=lambda a: 0 if a == "builtin" else 1)
+    choices = sorted(choices, key=lambda name: 0 if name == "builtin" else 1)
     try:
         default_discovery = next(iter(choices))
-    except StopIteration as e:
+    except StopIteration as error:
         msg = "No discovery plugin found. Try reinstalling virtualenv to fix this issue."
-        raise RuntimeError(msg) from e
+        raise RuntimeError(msg) from error
     discovery_parser.add_argument(
         "--discovery",
         choices=choices,

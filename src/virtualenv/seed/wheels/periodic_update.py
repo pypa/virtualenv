@@ -79,7 +79,7 @@ def periodic_update(  # ruff:ignore[too-many-arguments]
 
     u_log = UpdateLog.from_app_data(app_data, distribution, for_py_version)
     if of_version is None:
-        for _, group in groupby(u_log.versions, key=lambda v: v.wheel.version_tuple[0:2]):
+        for _, group in groupby(u_log.versions, key=lambda entry: entry.wheel.version_tuple[0:2]):
             # use only latest patch version per minor, earlier assumed to be buggy
             all_patches = list(group)
             ignore_grace_period_minor = any(version for version in all_patches if version.use(now))

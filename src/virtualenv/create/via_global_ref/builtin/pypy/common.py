@@ -62,7 +62,7 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin, abc.ABC):
         """
         yield from cls.executables(interpreter)
         for host in cls._add_shared_libs(interpreter):
-            yield PathRefToDest(host, dest=lambda self, s: self.bin_dir / s.name)
+            yield PathRefToDest(host, dest=lambda self, source: self.bin_dir / source.name)
 
     @classmethod
     def executables(cls, interpreter: PythonInfo) -> Generator[PathRef]:

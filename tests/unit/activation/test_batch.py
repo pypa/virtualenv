@@ -284,11 +284,11 @@ def test_batch(activation_tester_class, activation_tester, tmp_path, activations
             # activating again without deactivating must still restore the values from before the first activation
             return " & ".join([super().activate_call(script)] * activations)
 
-        def quote(self, s):
-            if '"' in s or " " in s:
-                text = s.replace('"', r"\"")
+        def quote(self, string):
+            if '"' in string or " " in string:
+                text = string.replace('"', r"\"")
                 return f'"{text}"'
-            return s
+            return string
 
         def print_prompt(self) -> str:
             return 'echo "%PROMPT:$$=$%"'
@@ -325,11 +325,11 @@ def test_batch_output(activation_tester_class, activation_tester, tmp_path) -> N
                 f"@call {intermediary_script_path}",
             ]
 
-        def quote(self, s):
-            if '"' in s or " " in s:
-                text = s.replace('"', r"\"")
+        def quote(self, string):
+            if '"' in string or " " in string:
+                text = string.replace('"', r"\"")
                 return f'"{text}"'
-            return s
+            return string
 
         # the base tester calls assert_output with tmp_path, this check does not use it
         def assert_output(self, out, raw, tmp_path) -> None:  # ruff:ignore[unused-method-argument]

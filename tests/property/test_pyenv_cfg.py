@@ -21,7 +21,7 @@ _PRINTABLE: Final[st.SearchStrategy[str]] = st.characters(blacklist_categories=(
 
 _KEYS: Final[st.SearchStrategy[str]] = st.text(
     st.characters(blacklist_categories=("Cs",), blacklist_characters=f"={_LINE_BOUNDARIES}"), min_size=1
-).filter(lambda k: k.strip() == k and not k.startswith("#"))
+).filter(lambda key: key.strip() == key and not key.startswith("#"))
 contents: Final[st.SearchStrategy[dict[str, str]]] = st.dictionaries(_KEYS, st.text(_PRINTABLE), max_size=6)
 
 
@@ -60,7 +60,12 @@ def test_written_file_has_one_line_per_key(content, tmp_path_factory) -> None:
         _KEYS,
         st.text(st.characters(blacklist_categories=("Cs",), blacklist_characters=_LINE_BOUNDARIES), min_size=1).filter(
             # write() rewrites a value naming an existing path, which is deliberate and not under test.
-            lambda v: v.strip() == v and v[0] not in "'\"" and v[-1] not in "'\"" and not os.path.exists(v)
+            lambda value: (
+                value.strip() == value
+                and value[0] not in "'\""
+                and value[-1] not in "'\""
+                and not os.path.exists(value)
+            )
         ),
         max_size=6,
     )

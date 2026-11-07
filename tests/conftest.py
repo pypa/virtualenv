@@ -63,7 +63,9 @@ def pytest_collection_modifyitems(config, items) -> None:
     if len(items) == 1:
         return
 
-    items.sort(key=lambda i: 2 if i.location[0].startswith(int_location) else (1 if "slow" in i.keywords else 0))
+    items.sort(
+        key=lambda item: 2 if item.location[0].startswith(int_location) else (1 if "slow" in item.keywords else 0)
+    )
 
     if not config.getoption("--int"):
         for item in items:
@@ -389,4 +391,4 @@ else:
 
     @pytest.fixture
     def time_freeze(time_machine):
-        return lambda s: time_machine.move_to(s, tick=False)
+        return lambda moment: time_machine.move_to(moment, tick=False)

@@ -4,7 +4,7 @@ from argparse import SUPPRESS
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, ClassVar, Final, NamedTuple
 
-from docutils import nodes as n
+from docutils import nodes
 from docutils.parsers.rst.directives import unchanged_required
 from sphinx.util.docutils import SphinxDirective
 from sphinxarg.parser import parse_parser
@@ -34,8 +34,8 @@ class CliTable(SphinxDirective):
 
         content = [self._build_table(i["options"], i["title"], i["description"]) for i in core_result["action_groups"]]
         for key, name_to_class in _CUSTOM.items():
-            section = n.section("", ids=[f"section-{key}"])
-            title = n.title("", key)
+            section = nodes.section("", ids=[f"section-{key}"])
+            title = nodes.title("", key)
             section += title
             self.state.document.note_implicit_target(title)
             content.append(section)
@@ -60,44 +60,46 @@ class CliTable(SphinxDirective):
         return content
 
     def _build_table(self, options, title, description):
-        table = n.table()
+        table = nodes.table()
         table["classes"] += ["colwidths-auto"]
 
-        options_group = n.tgroup(cols=3)
+        options_group = nodes.tgroup(cols=3)
         table += options_group
         for _ in range(3):
-            options_group += n.colspec()
+            options_group += nodes.colspec()
         options_group += self._make_table_body(self.build_rows(options), title, description)
         return table
 
     def _make_table_body(self, rows, title, description):
-        t_body = n.tbody()
-        header_row = n.paragraph()
-        header_row += n.strong(text=title)
+        t_body = nodes.tbody()
+        header_row = nodes.paragraph()
+        header_row += nodes.strong(text=title)
         if description:
-            header_row += n.Text(" ⇒ ")
-            header_row += n.Text(description)
-        t_body += n.row("", n.entry("", header_row, morecols=2))
+            header_row += nodes.Text(" ⇒ ")
+            header_row += nodes.Text(description)
+        t_body += nodes.row("", nodes.entry("", header_row, morecols=2))
         for row in rows:
             name_list = self._get_targeted_names(row)
             default = CliTable._get_default(row)
-            t_body += n.row("", n.entry("", name_list), n.entry("", default), n.entry("", CliTable._get_help_text(row)))
+            t_body += nodes.row(
+                "", nodes.entry("", name_list), nodes.entry("", default), nodes.entry("", CliTable._get_help_text(row))
+            )
         return t_body
 
     def _get_targeted_names(self, row):
         names = [name.lstrip("-") for name in row.names]
-        target = n.target("", "", ids=names, names=names)
+        target = nodes.target("", "", ids=names, names=names)
         self.register_target_option(target)
         first = True
         for name, orig in zip(names, row.names):
             if first:
                 first = False
             else:
-                target += n.Text(", ")
-            self_ref = n.reference(refid=name)
-            self_ref += n.literal(text=orig)
+                target += nodes.Text(", ")
+            self_ref = nodes.reference(refid=name)
+            self_ref += nodes.literal(text=orig)
             target += self_ref
-        para = n.paragraph(text="")
+        para = nodes.paragraph(text="")
         para += target
         return para
 
@@ -111,35 +113,35 @@ class CliTable(SphinxDirective):
     def _get_default(row):
         default = row.default
         if (name := row.names[0]) == "-p":
-            default_body = n.Text("the python executable virtualenv is installed into")
+            default_body = nodes.Text("the python executable virtualenv is installed into")
         elif name == "--app-data":
-            default_body = n.Text("platform specific application data folder")
+            default_body = nodes.Text("platform specific application data folder")
         elif name == "--activators":
-            default_body = n.Text("comma separated list of activators supported")
+            default_body = nodes.Text("comma separated list of activators supported")
         elif name == "--creator":
-            default_body = n.paragraph("")
-            default_body += n.literal(text="builtin")
-            default_body += n.Text(" if exist, else ")
-            default_body += n.literal(text="venv")
+            default_body = nodes.paragraph("")
+            default_body += nodes.literal(text="builtin")
+            default_body += nodes.Text(" if exist, else ")
+            default_body += nodes.literal(text="venv")
         elif default is None:
-            default_body = n.paragraph("", text="")
+            default_body = nodes.paragraph("", text="")
         else:
-            default_body = n.literal(text=default if isinstance(default, str) else str(default))
+            default_body = nodes.literal(text=default if isinstance(default, str) else str(default))
         return default_body
 
     @staticmethod
     def _get_help_text(row):
         content = row.help[: row.help.index("(") - 1] if row.names[0] == "--creator" else row.help
-        help_body = n.paragraph("", "", n.Text(content))
+        help_body = nodes.paragraph("", "", nodes.Text(content))
         if row.choices is not None:
-            help_body += n.Text("; choice of: ")
+            help_body += nodes.Text("; choice of: ")
             first = True
             for choice in row.choices:
                 if first:
                     first = False
                 else:
-                    help_body += n.Text(", ")
-                help_body += n.literal(text=choice)
+                    help_body += nodes.Text(", ")
+                help_body += nodes.literal(text=choice)
         return help_body
 
     @staticmethod
@@ -178,7 +180,7 @@ class CliTable(SphinxDirective):
 
     @staticmethod
     def _make_patch_func(prev, key, name):
-        def a(*args, **kwargs):
+        def patched(*args, **kwargs):
             prev(*args, **kwargs)
             if key == "activators":
                 return True
@@ -202,7 +204,7 @@ class CliTable(SphinxDirective):
                 return meta
             raise RuntimeError
 
-        return a
+        return patched
 
     plugins: ClassVar[dict[str, str]] = {
         "creator": "virtualenv.create",
@@ -224,7 +226,7 @@ def literal_data(rawtext, app, of_type, slug, options):  # ruff:ignore[unused-fu
     # Create a link to a BitBucket resource.
     of_class = of_type.split(".")
     data = getattr(__import__(".".join(of_class[:-1]), fromlist=[of_class[-1]]), of_class[-1])
-    return [n.literal("", text=",".join(data))], []
+    return [nodes.literal("", text=",".join(data))], []
 
 
 __all__ = [

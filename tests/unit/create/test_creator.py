@@ -503,14 +503,14 @@ def test_creator_replaces_directory_links(
 _CREATE_METHODS: Final[list[str]] = []
 
 
-for k, v in CreatorSelector.for_interpreter(_CURRENT).key_to_meta.items():
-    if k in _CURRENT_CREATORS:
-        if v.can_copy:
-            if k == "venv" and _CURRENT.implementation == "PyPy" and _CURRENT.pypy_version_info >= [7, 3, 13]:
+for key, meta in CreatorSelector.for_interpreter(_CURRENT).key_to_meta.items():
+    if key in _CURRENT_CREATORS:
+        if meta.can_copy:
+            if key == "venv" and _CURRENT.implementation == "PyPy" and _CURRENT.pypy_version_info >= [7, 3, 13]:
                 continue  # https://foss.heptapod.net/pypy/pypy/-/issues/4019
-            _CREATE_METHODS.append((k, "copies"))
-        if v.can_symlink:
-            _CREATE_METHODS.append((k, "symlinks"))
+            _CREATE_METHODS.append((key, "copies"))
+        if meta.can_symlink:
+            _CREATE_METHODS.append((key, "symlinks"))
 
 
 def _bin_exes(creator_key: str) -> tuple[str, ...]:
@@ -1038,8 +1038,8 @@ def list_files(path):
         level = root.replace(path, "").count(os.sep)
         result += f"{(' ' * 4 * level)}{os.path.basename(root)}/\n"
         sub = " " * 4 * (level + 1)
-        for f in files:
-            result += f"{sub}{f}\n"
+        for name in files:
+            result += f"{sub}{name}\n"
     return result
 
 

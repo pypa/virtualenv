@@ -275,10 +275,10 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch) -> 
             # Commands are called without quotes in PowerShell
             return f"{self.activate_cmd} {self.quote(str(script))}".strip()
 
-        def quote(self, s):
+        def quote(self, string):
             # Tester will pass strings to native commands on Windows so extra parsing rules are used. Check
             # `PowerShellActivator.quote` for more details.
-            text = PowerShellActivator.quote(s)
+            text = PowerShellActivator.quote(string)
             return text.replace('"', '""') if sys.platform == "win32" else text
 
     activation_tester(PowerShell)

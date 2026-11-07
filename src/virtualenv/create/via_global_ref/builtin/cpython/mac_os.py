@@ -66,8 +66,8 @@ class CPythonmacOsFramework(CPython, ABC):
                     try:
                         # codesign ships with macOS and is meant to be found on PATH
                         subprocess.check_call(["codesign", "--force", "--sign", "-", str(exe)])  # ruff:ignore[start-process-with-partial-path]
-                    except (OSError, subprocess.CalledProcessError) as e:
-                        LOGGER.warning("Could not ad-hoc re-sign %s: %s", exe, e)
+                    except (OSError, subprocess.CalledProcessError) as error:
+                        LOGGER.warning("Could not ad-hoc re-sign %s: %s", exe, error)
 
     @abstractmethod
     def desired_mach_o_image_path(self) -> str:
@@ -158,8 +158,8 @@ def fix_mach_o(exe: str, current: str, new: str, max_size: int) -> None:
         LOGGER.debug("change Mach-O for %s from %s to %s", exe, current, new)
         _builtin_change_mach_o(max_size)(exe, current, new)
     # install_name_tool is the fallback for any failure of the builtin rewrite
-    except Exception as e:  # ruff:ignore[blind-except]
-        LOGGER.warning("Could not call _builtin_change_mac_o: %s. Trying to call install_name_tool instead.", e)
+    except Exception as error:  # ruff:ignore[blind-except]
+        LOGGER.warning("Could not call _builtin_change_mac_o: %s. Trying to call install_name_tool instead.", error)
         try:
             cmd = ["install_name_tool", "-change", current, new, exe]
             subprocess.check_call(cmd)
@@ -305,8 +305,8 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
         # the in-place rewrite must not grow the name, so a longer value is a bug
         assert len(what) >= len(value)  # ruff:ignore[assert]
 
-        with open(at_path, "r+b") as f:
-            do_file(f)
+        with open(at_path, "r+b") as file_handler:
+            do_file(file_handler)
 
     return mach_o_change
 

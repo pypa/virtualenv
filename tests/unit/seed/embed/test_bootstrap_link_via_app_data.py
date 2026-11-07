@@ -430,9 +430,9 @@ def read_only_app_data(temp_app_data):
 
 
 @contextlib.contextmanager
-def read_only_dir(d):
+def read_only_dir(directory):
     write = S_IWUSR | S_IWGRP | S_IWOTH
-    for root, _, filenames in os.walk(str(d)):
+    for root, _, filenames in os.walk(str(directory)):
         os.chmod(root, os.stat(root).st_mode & ~write)
         for filename in filenames:
             name = os.path.join(root, filename)
@@ -440,7 +440,7 @@ def read_only_dir(d):
     try:
         yield
     finally:
-        for root, _, filenames in os.walk(str(d)):
+        for root, _, filenames in os.walk(str(directory)):
             os.chmod(root, os.stat(root).st_mode | write)
             for filename in filenames:
                 name = os.path.join(root, filename)

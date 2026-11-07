@@ -114,8 +114,8 @@ class ActivationTester:
     def python_cmd(self, cmd) -> str:
         return f"{os.path.basename(sys.executable)} -c {self.quote(cmd)}"
 
-    def quote(self, s):
-        return self.of_class.quote(s)
+    def quote(self, string):
+        return self.of_class.quote(string)
 
     def activate_call(self, script):
         return f"{self.quote(str(self.activate_cmd))} {self.quote(str(script))}".strip()

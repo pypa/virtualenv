@@ -103,7 +103,7 @@ class CreatorSelector(ComponentBuilder):
         :param choices: the creator names to choose from
 
         """
-        choices = sorted(choices, key=lambda a: 0 if a == "builtin" else 1)
+        choices = sorted(choices, key=lambda name: 0 if name == "builtin" else 1)
         default_value = self._get_default(choices)
         self.parser.add_argument(
             f"--{name}",
