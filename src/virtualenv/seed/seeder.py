@@ -14,10 +14,7 @@ if TYPE_CHECKING:
 
 
 class Seeder(ABC):
-    """A seeder will install some seed packages into a virtual environment.
-
-    :ivar env:
-    """
+    """A seeder will install some seed packages into a virtual environment."""
 
     def __init__(self, options: VirtualEnvOptions, enabled: bool) -> None:
         """Create.

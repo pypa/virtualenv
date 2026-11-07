@@ -14,12 +14,7 @@ if TYPE_CHECKING:
 
 
 class Describe:
-    """Given a host interpreter tell us information about what the created interpreter might look like.
-
-    :param dest:
-    :param interpreter:
-    :cvar suffix:
-    """
+    """Given a host interpreter tell us information about what the created interpreter might look like."""
 
     suffix = ".exe" if IS_WIN else ""
 
@@ -85,19 +80,12 @@ class Describe:
 
     @classmethod
     def exe_stem(cls) -> str:
-        """Executable name without suffix - there seems to be no standard way to get this without creating it.
-
-        :returns:
-        """
+        """Executable name without suffix - there seems to be no standard way to get this without creating it."""
         raise NotImplementedError
 
     @classmethod
     def can_describe(cls, interpreter: PythonInfo) -> bool:  # ruff:ignore[unused-class-method-argument]
-        """Knows means it knows how the output will look.
-
-        :param interpreter:
-        :returns:
-        """
+        """Knows means it knows how the output will look."""
         return True
 
     def script(self, name: str) -> Path:

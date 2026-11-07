@@ -20,10 +20,7 @@ def encode_list_path(value: list[object]) -> list[str | None]:
 
 
 def run() -> None:
-    """Print debug data about the virtual environment.
-
-    :raises SystemExit:
-    """
+    """Print debug data about the virtual environment."""
     sys_info: dict[str, str | list[str | None] | None] = {}
     result: dict[str, str | dict[str, str | list[str | None] | None] | None] = {"sys": sys_info}
     path_keys = (

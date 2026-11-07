@@ -4,13 +4,7 @@ from __future__ import annotations
 
 
 class ProcessCallFailedError(RuntimeError):
-    """Failed a process call.
-
-    :param code:
-    :param out:
-    :param err:
-    :param cmd:
-    """
+    """Failed a process call."""
 
     def __init__(self, code: int, out: str, err: str, cmd: list[str]) -> None:
         super().__init__(code, out, err, cmd)
@@ -18,8 +12,3 @@ class ProcessCallFailedError(RuntimeError):
         self.out = out
         self.err = err
         self.cmd = cmd
-
-
-__all__ = [
-    "ProcessCallFailedError",
-]

@@ -15,10 +15,7 @@ if TYPE_CHECKING:
 
 
 class Activator(ABC):
-    """Generates activate script for the virtual environment.
-
-    :ivar flag_prompt:
-    """
+    """Generates activate script for the virtual environment."""
 
     def __init__(self, options: VirtualEnvOptions) -> None:
         """Create a new activator generator.
@@ -54,7 +51,6 @@ class Activator(ABC):
 
         :param creator: the creator (based of :class:`virtualenv.create.creator.Creator`) we used to create this virtual
             environment
-        :returns:
 
         """
         raise NotImplementedError

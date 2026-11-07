@@ -22,11 +22,7 @@ _LINE_BOUNDARIES: Final[tuple[str, ...]] = (
 
 
 def collapse_line_boundaries(text: str) -> str:
-    """Replace every line-boundary character with a space so text can never become extra lines.
-
-    :param text:
-    :returns:
-    """
+    """Replace every line-boundary character with a space so text can never become extra lines."""
     for boundary in _LINE_BOUNDARIES:
         text = text.replace(boundary, " ")
     return text

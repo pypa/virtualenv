@@ -39,11 +39,7 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
 
     @classmethod
     def can_create(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta | None:
-        """By default, all built-in methods assume that if we can describe it we can create it.
-
-        :param interpreter:
-        :returns:
-        """
+        """By default, all built-in methods assume that if we can describe it we can create it."""
         # first we must be able to describe it
         if not cls.can_describe(interpreter):
             return None
@@ -123,8 +119,7 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
         return self.dest / ("Include" if self.interpreter.os == "nt" else "include")
 
     def set_pyenv_cfg(self) -> None:
-        """We directly inject the base prefix and base exec prefix to avoid site.py needing to discover these from home
-        (which usually is done within the interpreter itself)."""
+        """We directly inject the base prefix and base exec prefix to avoid site.py needing to discover these from home (which usually is done within the interpreter itself)."""
         super().set_pyenv_cfg()
         self.pyenv_cfg["base-prefix"] = self.interpreter.system_prefix
         self.pyenv_cfg["base-exec-prefix"] = self.interpreter.system_exec_prefix

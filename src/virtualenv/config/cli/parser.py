@@ -30,15 +30,7 @@ class ExtendAction(Action):
 
 
 class VirtualEnvConfigParser(ArgumentParser):
-    """Custom option parser which updates its defaults by checking the configuration files and environmental vars.
-
-    :param options:
-    :param env:
-    :param args:
-    :param kwargs:
-    :ivar file_config:
-    :ivar epilog_list:
-    """
+    """Custom option parser which updates its defaults by checking the configuration files and environmental vars."""
 
     def __init__(
         self,

@@ -14,15 +14,12 @@ class PowerShellActivator(ViaTemplateActivator):
 
     @staticmethod
     def quote(string: str) -> str:
-        """This should satisfy PowerShell quoting rules [1], unless the quoted string is passed directly to Windows
-        native commands [2].
+        """This should satisfy PowerShell quoting rules [1], unless the quoted string is passed directly to Windows native commands [2].
 
         [1]: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_quoting_rules
         [2]:
         https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_parsing#passing-arguments-that-contain-quote-characters
 
-        :param string:
-        :returns:
         """
         # PowerShell treats the ASCII apostrophe and the curly single quotes U+2018-U+201B as
         # interchangeable single-quote delimiters, so each must be doubled to stay inert inside the literal.

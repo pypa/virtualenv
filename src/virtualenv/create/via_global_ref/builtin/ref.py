@@ -40,15 +40,7 @@ class RefWhen(StrEnum):
 
 
 class PathRef(ABC):
-    """Base class that checks if a file reference can be symlink/copied.
-
-    :param src:
-    :param must:
-    :param when:
-    :cvar FS_SUPPORTS_SYMLINK:
-    :cvar FS_CASE_SENSITIVE:
-    :ivar exists:
-    """
+    """Base class that checks if a file reference can be symlink/copied."""
 
     FS_SUPPORTS_SYMLINK = fs_supports_symlink()
     FS_CASE_SENSITIVE = fs_is_case_sensitive()
@@ -112,12 +104,7 @@ class PathRef(ABC):
 
 
 class ExePathRef(PathRef, ABC):
-    """Base class that checks if a executable can be references via symlink/copy.
-
-    :param src:
-    :param must:
-    :param when:
-    """
+    """Base class that checks if a executable can be references via symlink/copy."""
 
     def __init__(self, src: Path, must: str = RefMust.NA, when: str = RefWhen.ANY) -> None:
         super().__init__(src, must, when)
@@ -137,13 +124,7 @@ class ExePathRef(PathRef, ABC):
 
 
 class PathRefToDest(PathRef):
-    """Link a path on the file system.
-
-    :param src:
-    :param dest:
-    :param must:
-    :param when:
-    """
+    """Link a path on the file system."""
 
     def __init__(self, src: Path, dest: Callable[..., Path], must: str = RefMust.NA, when: str = RefWhen.ANY) -> None:
         super().__init__(src, must, when)
@@ -160,16 +141,7 @@ class PathRefToDest(PathRef):
 
 
 class ExePathRefToDest(PathRefToDest, ExePathRef):
-    """Link a exe path on the file system.
-
-    :param src:
-    :param targets:
-    :param dest:
-    :param must:
-    :param when:
-    :ivar base:
-    :ivar aliases:
-    """
+    """Link a exe path on the file system."""
 
     def __init__(
         self, src: Path, targets: list[str], dest: Callable[..., Path], must: str = RefMust.NA, when: str = RefWhen.ANY

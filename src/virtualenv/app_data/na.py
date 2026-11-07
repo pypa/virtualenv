@@ -12,12 +12,7 @@ if TYPE_CHECKING:
 
 
 class AppDataDisabled(AppData):
-    """No application cache available (most likely as we don't have write permissions).
-
-    :cvar transient:
-    :cvar can_update:
-    :cvar error:
-    """
+    """No application cache available (most likely as we don't have write permissions)."""
 
     transient = True
     can_update = False
@@ -48,11 +43,7 @@ class AppDataDisabled(AppData):
 
     @contextmanager
     def locked(self, path: Path) -> Generator[None]:  # ruff:ignore[unused-method-argument]
-        """Do nothing.
-
-        :param path:
-        :yields:
-        """
+        """Do nothing."""
         yield
 
     def wheel_image(self, for_py_version: str, name: str) -> NoReturn:  # ruff:ignore[unused-method-argument]
@@ -71,10 +62,7 @@ class ContentStoreNA(ContentStore):
         return
 
     def write(self, content: Any) -> None:  # ruff:ignore[any-type]
-        """Nothing to write.
-
-        :param content:
-        """
+        """Nothing to write."""
 
     def remove(self) -> None:
         """Nothing to remove."""

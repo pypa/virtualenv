@@ -177,8 +177,7 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     def python_zip(cls, interpreter: PythonInfo) -> Generator[PathRefToDest]:
-        """``python{VERSION}.zip`` contains compiled ``*.pyc`` std lib packages, where ``VERSION`` is
-        ``py_version_nodot`` var from the ``sysconfig`` module.
+        """``python{VERSION}.zip`` contains compiled ``*.pyc`` std lib packages, where ``VERSION`` is ``py_version_nodot`` var from the ``sysconfig`` module.
 
         See https://docs.python.org/3/using/windows.html#the-embeddable-package, ``discovery.py_info.PythonInfo`` class
         (interpreter), and ``python -m sysconfig`` output.
@@ -187,8 +186,6 @@ class CPython3Windows(CPythonWindows, CPython3):
         files. User can move/rename the zip file and edit ``sys.path`` by editing the ``_pth`` file. Here the
         ``pattern`` is used only for the default zip file name.
 
-        :param interpreter:
-        :yields:
         """
         pattern = f"*python{interpreter.version_nodot}.zip"
         matches = fnmatch.filter(interpreter.path, pattern)
