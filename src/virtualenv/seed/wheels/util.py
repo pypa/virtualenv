@@ -75,16 +75,22 @@ class Wheel:
     def as_version_tuple(version: str) -> tuple[int, ...]:
         return PackagingVersion(version).release
 
-    @property
-    def parsed_version(self) -> PackagingVersion:
-        return PackagingVersion(self.version)
-
     def has_version(self, version: str) -> bool:
-        """Compare with PEP 440 equality, so a request for ``26.3.0`` or ``v26.3`` matches ``pip-26.3``."""
+        """Match equivalent version spellings when selecting a wheel.
+
+        :param version: requested PEP 440 version
+
+        :returns: whether both versions parse and compare equal
+
+        """
         try:
             return self.parsed_version == PackagingVersion(version)
         except InvalidVersion:
             return False
+
+    @property
+    def parsed_version(self) -> PackagingVersion:
+        return PackagingVersion(self.version)
 
     @property
     def name(self) -> str:
@@ -118,11 +124,19 @@ class Version:
 
     @staticmethod
     def validate(value: str) -> str:
-        """Return the normalized form of a seed version, or a keyword without its surrounding whitespace."""
+        """Normalize seed options before wheel selection or download.
+
+        :param value: version or seed keyword, possibly surrounded by whitespace
+
+        :returns: normalized version or stripped keyword
+
+        :raises ValueError: if the value is invalid or resembles an archive filename
+
+        """
         if (keyword := value.strip()) in {*Version.non_version, "none"}:
             return keyword
         try:
-            parsed = PackagingVersion(value)
+            parsed: Final = PackagingVersion(value)
         except InvalidVersion as exception:
             msg = f"invalid seed version: {value!r}"
             raise ValueError(msg) from exception
@@ -142,7 +156,6 @@ class Version:
         )):
             msg = f"archive-like seed version: {value!r}"
             raise ValueError(msg)
-        # the normalized form drops a "v" prefix, surrounding whitespace and casing that pip and wheel names never carry
         return str(parsed)
 
 

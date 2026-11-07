@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, Final, NamedTuple
 
 import pytest
 
@@ -10,7 +10,7 @@ from virtualenv.run import session_via_cli
 from virtualenv.seed.embed.pip_invoke import PipInvoke
 from virtualenv.seed.embed.via_app_data.via_app_data import FromAppData
 from virtualenv.seed.seeder import Seeder
-from virtualenv.seed.wheels.embed import MIN, OLDEST_SUPPORTED, get_embed_wheel
+from virtualenv.seed.wheels.embed import MIN, OLDEST_SUPPORTED
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -190,10 +190,9 @@ def test_seed_version_rejected_before_creation(
         pytest.param("bundle\r", "bundle", id="bundle-carriage-return"),
     ],
 )
-def test_seed_version_env_normalized(  # ruff:ignore[too-many-arguments]
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, for_py_version: str, seeder: str, spelling: str, expected: str
+def test_seed_version_env_normalized(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seeder: str, spelling: str, expected: str
 ) -> None:
-    version = get_embed_wheel("pip", for_py_version).version
-    monkeypatch.setenv("VIRTUALENV_PIP", spelling.format(version))
-    session = session_via_cli([str(tmp_path / "env"), "--seeder", seeder])
-    assert session.seeder.pip_version == expected.format(version)
+    monkeypatch.setenv("VIRTUALENV_PIP", spelling.format("26.3"))
+    session: Final = session_via_cli([str(tmp_path / "env"), "--seeder", seeder])
+    assert session.seeder.pip_version == expected.format("26.3")

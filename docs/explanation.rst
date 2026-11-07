@@ -439,6 +439,12 @@ Both seeding methods require wheel files for the seed packages. virtualenv acqui
     If no suitable wheel is found in the above locations, or if the ``--download`` flag is set, virtualenv will use pip
     to download the latest compatible version from PyPI.
 
+Pinned versions use `PEP 440 equality
+<https://packaging.python.org/en/latest/specifications/version-specifiers/#version-matching>`_ when selecting bundled,
+cached or extra search directory wheels. For example, a request for ``26.3.0`` can use a wheel named
+``pip-26.3-py3-none-any.whl``. This avoids downloading a release already available locally under an equivalent version
+spelling.
+
 Periodic update mechanism
 =========================
 
