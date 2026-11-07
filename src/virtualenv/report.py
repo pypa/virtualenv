@@ -4,6 +4,7 @@ import logging
 import sys
 from typing import Final
 
+#: Maps each ``-v`` count to the logging level it selects.
 LEVELS: Final[dict[int, int]] = {
     0: logging.CRITICAL,
     1: logging.ERROR,
@@ -13,12 +14,21 @@ LEVELS: Final[dict[int, int]] = {
     5: logging.NOTSET,
 }
 
+#: The highest ``-v`` count that selects a logging level.
 MAX_LEVEL: Final[int] = max(LEVELS.keys())
 LOGGER: Final[logging.Logger] = logging.getLogger()
 
 
 # show_pid keeps its default for the existing setup_report callers
 def setup_report(verbosity: int, show_pid: bool = False) -> int:  # ruff:ignore[boolean-default-value-positional-argument]
+    """Configure the root logger to print messages on stdout at the level the verbosity selects.
+
+    :param verbosity: the number of ``-v`` flags, capped at the highest level
+    :param show_pid: ``True`` to prefix every message with the process id
+
+    :returns: the verbosity, capped at the highest level
+
+    """
     _clean_handlers(LOGGER)
     # reached only with more -v flags than MAX_LEVEL, which tests do not pass
     verbosity = min(verbosity, MAX_LEVEL)  # pragma: no cover
