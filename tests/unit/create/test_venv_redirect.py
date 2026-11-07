@@ -87,7 +87,7 @@ def test_venv_redirect_env_var_and_cli(  # ruff:ignore[too-many-arguments]
 def test_venv_redirect_ini_and_env_var(
     project_redirect: Path, ini: str, env_vars: dict[str, str], written: bool
 ) -> None:
-    config: Final = project_redirect.parent / "virtualenv.ini"
+    config: Final[Path] = project_redirect.parent / "virtualenv.ini"
     config.write_text(f"[virtualenv]\n{ini}\n", encoding="utf-8")
     cli_run(
         [str(project_redirect.parent / "env"), "--without-pip", "--activators", ""],
@@ -95,6 +95,7 @@ def test_venv_redirect_ini_and_env_var(
         env={**os.environ, "VIRTUALENV_CONFIG_FILE": str(config), **env_vars},
     )
 
+    assert (project_redirect.parent / "env" / "pyvenv.cfg").is_file()
     assert project_redirect.exists() is written
 
 
