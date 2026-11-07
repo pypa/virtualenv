@@ -113,6 +113,13 @@ class Creator(ABC):
         def platlib(self) -> Path:
             """The platform specific library directory of the environment."""
 
+    @property
+    def debug(self) -> dict[str, Any] | None:
+        """Debug information about the virtual environment (only valid after :meth:`create` has run)."""
+        if self._debug is None and self.exe is not None:
+            self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data, self.env)
+        return self._debug
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self._args())})"
 
@@ -384,13 +391,6 @@ class Creator(ABC):
             return bool(line) and "virtualenv" in PyEnvCfg.from_folder(redirect.parent / line)
         except (OSError, UnicodeDecodeError, ValueError):  # unreadable, so not a redirect virtualenv can claim
             return False
-
-    @property
-    def debug(self) -> dict[str, Any] | None:
-        """Debug information about the virtual environment (only valid after :meth:`create` has run)."""
-        if self._debug is None and self.exe is not None:
-            self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data, self.env)
-        return self._debug
 
     @staticmethod
     def debug_script() -> Path:
