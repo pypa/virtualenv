@@ -82,6 +82,10 @@ class BatchActivator(ViaTemplateActivator):
         can be represented literally here, so replace them with a space. ``%`` still triggers variable expansion inside
         the quotes, but doubling it to ``%%`` is a real, in-file escape that keeps the literal character.
 
+        :param string: the value to make safe for the ``@set`` line
+
+        :returns: the value with ``%`` doubled and operators and line boundaries replaced by spaces
+
         """
         string = string.replace("%", "%%")
         for operator in _CMD_OPERATORS:
