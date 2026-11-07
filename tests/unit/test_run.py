@@ -107,8 +107,8 @@ def test_reset_with_empty_app_data_override_resets_default(
 ) -> None:
     monkeypatch.chdir(tmp_path)
     default_folder: Final = tmp_path / "cache"
-    mocker.patch("virtualenv.app_data.user_cache_dir", autospec=True, return_value=str(default_folder))
-    mocker.patch("virtualenv.app_data.user_data_dir", autospec=True, return_value=str(tmp_path / "old"))
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(default_folder))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(tmp_path / "old"))
     # a blank value used to make the working directory the cache, so the reset deleted it
     delete: Final = mocker.patch("virtualenv.app_data.via_disk_folder.safe_delete", autospec=True)
     monkeypatch.setenv("VIRTUALENV_OVERRIDE_APP_DATA", override)

@@ -16,13 +16,9 @@ from typing import TYPE_CHECKING, Final
 import pytest
 
 from virtualenv import __version__
-from virtualenv.app_data import (
-    AppDataDiskFolder,
-    TempAppData,
-    _cache_dir_with_migration,
-    _default_app_data_dir,
-    make_app_data,
-)
+from virtualenv.app_data import AppDataDiskFolder, TempAppData, make_app_data
+from virtualenv.app_data.cache_migration import _cache_dir_with_migration
+from virtualenv.app_data.factory import _default_app_data_dir
 from virtualenv.info import fs_supports_symlink
 from virtualenv.util import zipapp
 from virtualenv.util.lock import ReentrantFileLock
@@ -115,7 +111,7 @@ def test_app_data_default_writable(app_data_default: Path) -> None:
 def test_app_data_permission_failure_uses_temporary(app_data_default: Path, mocker: MockerFixture) -> None:
     app_data_default.mkdir()
     app_data_default.chmod(0o777)
-    mocker.patch("virtualenv.app_data.os.chmod", autospec=True, side_effect=PermissionError)
+    mocker.patch("virtualenv.app_data.factory.os.chmod", autospec=True, side_effect=PermissionError)
     data: Final = make_app_data(None, read_only=False, env={})
     try:
         assert isinstance(data, TempAppData)
@@ -126,8 +122,8 @@ def test_app_data_permission_failure_uses_temporary(app_data_default: Path, mock
 
 @pytest.mark.parametrize("writable", [pytest.param(False, id="unwritable"), pytest.param(True, id="writable")])
 def test_app_data_explicit_create_failure(tmp_path: Path, mocker: MockerFixture, writable: bool) -> None:
-    mocker.patch("virtualenv.app_data.os.makedirs", autospec=True, side_effect=PermissionError)
-    mocker.patch("virtualenv.app_data.os.access", autospec=True, return_value=writable)
+    mocker.patch("virtualenv.app_data.factory.os.makedirs", autospec=True, side_effect=PermissionError)
+    mocker.patch("virtualenv.app_data.factory.os.access", autospec=True, return_value=writable)
     data: Final = make_app_data(str(tmp_path), read_only=False, env={})
     try:
         assert (data.transient, str(data) == str(tmp_path)) == (not writable, writable)
@@ -139,8 +135,8 @@ def test_app_data_explicit_create_failure(tmp_path: Path, mocker: MockerFixture,
 def app_data_default(tmp_path: Path, mocker: MockerFixture, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.chdir(tmp_path)  # a blank override resolved to the working directory, so keep that inside tmp_path
     folder: Final = tmp_path / "cache"
-    mocker.patch("virtualenv.app_data.user_cache_dir", autospec=True, return_value=str(folder))
-    mocker.patch("virtualenv.app_data.user_data_dir", autospec=True, return_value=str(tmp_path / "old"))
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(folder))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(tmp_path / "old"))
     return folder
 
 
@@ -575,8 +571,8 @@ class TestCacheDirMigration:
         os.makedirs(old_dir)
         (tmp_path / "old-data" / "test.txt").write_text("hello", encoding="utf-8")
 
-        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: new_dir)
-        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: old_dir)
+        monkeypatch.setattr("virtualenv.app_data.cache_migration.user_cache_dir", lambda **_kw: new_dir)
+        monkeypatch.setattr("virtualenv.app_data.cache_migration.user_data_dir", lambda **_kw: old_dir)
 
         result = _cache_dir_with_migration()
         assert result == new_dir
@@ -588,8 +584,8 @@ class TestCacheDirMigration:
         old_dir = str(tmp_path / "old-data")
         new_dir = str(tmp_path / "new-cache")
 
-        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: new_dir)
-        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: old_dir)
+        monkeypatch.setattr("virtualenv.app_data.cache_migration.user_cache_dir", lambda **_kw: new_dir)
+        monkeypatch.setattr("virtualenv.app_data.cache_migration.user_data_dir", lambda **_kw: old_dir)
 
         result = _cache_dir_with_migration()
         assert result == new_dir
@@ -602,8 +598,8 @@ class TestCacheDirMigration:
         os.makedirs(new_dir)
         (tmp_path / "old-data" / "old.txt").write_text("old", encoding="utf-8")
 
-        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: new_dir)
-        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: old_dir)
+        monkeypatch.setattr("virtualenv.app_data.cache_migration.user_cache_dir", lambda **_kw: new_dir)
+        monkeypatch.setattr("virtualenv.app_data.cache_migration.user_data_dir", lambda **_kw: old_dir)
 
         result = _cache_dir_with_migration()
         assert result == new_dir
@@ -611,8 +607,8 @@ class TestCacheDirMigration:
 
     def test_same_dir_returns_immediately(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         same_dir = str(tmp_path / "same")
-        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: same_dir)
-        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: same_dir)
+        monkeypatch.setattr("virtualenv.app_data.cache_migration.user_cache_dir", lambda **_kw: same_dir)
+        monkeypatch.setattr("virtualenv.app_data.cache_migration.user_data_dir", lambda **_kw: same_dir)
 
         result = _cache_dir_with_migration()
         assert result == same_dir
@@ -622,14 +618,14 @@ class TestCacheDirMigration:
         new_dir = str(tmp_path / "new-cache")
         os.makedirs(old_dir)
 
-        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: new_dir)
-        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: old_dir)
+        monkeypatch.setattr("virtualenv.app_data.cache_migration.user_cache_dir", lambda **_kw: new_dir)
+        monkeypatch.setattr("virtualenv.app_data.cache_migration.user_data_dir", lambda **_kw: old_dir)
 
         def broken_move(_src: str, _dst: str) -> None:
             msg = "permission denied"
             raise OSError(msg)
 
-        monkeypatch.setattr("virtualenv.app_data.shutil.move", broken_move)
+        monkeypatch.setattr("virtualenv.app_data.cache_migration.shutil.move", broken_move)
 
         result = _cache_dir_with_migration()
         assert result == old_dir
@@ -657,8 +653,8 @@ class TestCacheDirMigration:
         except OSError:
             pytest.skip("symlinks not supported on this filesystem")
 
-        monkeypatch.setattr("virtualenv.app_data.user_cache_dir", lambda **_kw: new_dir)
-        monkeypatch.setattr("virtualenv.app_data.user_data_dir", lambda **_kw: old_dir)
+        monkeypatch.setattr("virtualenv.app_data.cache_migration.user_cache_dir", lambda **_kw: new_dir)
+        monkeypatch.setattr("virtualenv.app_data.cache_migration.user_data_dir", lambda **_kw: old_dir)
 
         result = _cache_dir_with_migration()
         assert result == new_dir
@@ -685,8 +681,10 @@ def test_cache_dir_migrates_contents(
     old_dir.mkdir()
     (old_dir / "test.txt").write_text("hello", encoding="utf-8")
     new_dir: Final = tmp_path / new_dir_rel
-    mocker.patch("virtualenv.app_data.user_cache_dir", autospec=True, return_value=str(new_dir))
-    mocker.patch("virtualenv.app_data.user_data_dir", autospec=True, return_value=old_dir_value(old_dir))
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
+    mocker.patch(
+        "virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=old_dir_value(old_dir)
+    )
 
     assert (str(make_app_data(None, read_only=False, env={})), (new_dir / "test.txt").read_text(encoding="utf-8")) == (
         str(new_dir),
@@ -717,7 +715,7 @@ def test_cache_dir_nested_migration_failure_selection(
 ) -> None:
     old_dir: Final = nested_cache_dirs[0]
     mocker.patch(
-        "virtualenv.app_data.shutil.move",
+        "virtualenv.app_data.cache_migration.shutil.move",
         autospec=True,
         wraps=shutil.move,
         side_effect=[
@@ -728,7 +726,9 @@ def test_cache_dir_nested_migration_failure_selection(
             mocker.DEFAULT,
         ],
     )
-    mocker.patch("virtualenv.app_data.os.rmdir", autospec=True, wraps=os.rmdir, side_effect=cleanup_error)
+    mocker.patch(
+        "virtualenv.app_data.cache_migration.os.rmdir", autospec=True, wraps=os.rmdir, side_effect=cleanup_error
+    )
 
     assert (
         str(make_app_data(None, read_only=False, env={})),
@@ -740,7 +740,7 @@ def test_cache_dir_interrupted_migration_keeps_old_location(
     nested_cache_dirs: tuple[Path, Path], mocker: MockerFixture
 ) -> None:
     mocker.patch(
-        "virtualenv.app_data.shutil.move",
+        "virtualenv.app_data.cache_migration.shutil.move",
         autospec=True,
         wraps=shutil.move,
         side_effect=[mocker.DEFAULT, KeyboardInterrupt()],
@@ -766,8 +766,8 @@ def nested_cache_dirs(tmp_path: Path, mocker: MockerFixture) -> tuple[Path, Path
     (old_dir / "one.txt").write_text("one", encoding="utf-8")
     (old_dir / "two.txt").write_text("two", encoding="utf-8")
     new_dir: Final = old_dir / "Cache"
-    mocker.patch("virtualenv.app_data.user_cache_dir", autospec=True, return_value=str(new_dir))
-    mocker.patch("virtualenv.app_data.user_data_dir", autospec=True, return_value=str(old_dir))
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(new_dir))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(old_dir))
     return old_dir, new_dir
 
 
@@ -813,8 +813,10 @@ def test_app_data_setgid_keeps_group_write(app_data_default: Path, mode: int, ex
 def test_app_data_keeps_writable_non_owned_cache(app_data_default: Path, mocker: MockerFixture) -> None:
     app_data_default.mkdir()
     app_data_default.chmod(0o1777)
-    mocker.patch("virtualenv.app_data.os.geteuid", autospec=True, return_value=app_data_default.stat().st_uid + 1)
-    mocker.patch("virtualenv.app_data.os.chmod", autospec=True, side_effect=PermissionError)
+    mocker.patch(
+        "virtualenv.app_data.factory.os.geteuid", autospec=True, return_value=app_data_default.stat().st_uid + 1
+    )
+    mocker.patch("virtualenv.app_data.factory.os.chmod", autospec=True, side_effect=PermissionError)
     data: Final = make_app_data(None, read_only=False, env={})
     assert (isinstance(data, AppDataDiskFolder), str(data), app_data_default.stat().st_mode & 0o7777) == (
         True,
