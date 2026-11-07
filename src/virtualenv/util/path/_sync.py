@@ -23,6 +23,15 @@ _LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def ensure_within(root: Path, path: Path) -> None:
+    """Make sure a path stays inside a root folder, creating its folders and refusing links along the way.
+
+    :param root: the folder the path must stay inside
+    :param path: the path to check, below the root
+
+    :raises ValueError: when the path leaves the root
+    :raises NotADirectoryError: when a folder on the way is a link or a mount point instead of a real directory
+
+    """
     parts: Final = path.relative_to(root).parts
     if ".." in parts:
         msg: Final = f"environment directory {path} must remain inside {root}"
@@ -54,12 +63,23 @@ def ensure_within(root: Path, path: Path) -> None:
 
 
 def ensure_dir(path: Path) -> None:
+    """Create a folder and its parents when it does not exist.
+
+    :param path: the folder to create
+
+    """
     if not path.exists():
         _LOGGER.debug("create folder %s", path)
         os.makedirs(str(path))
 
 
 def write_file(path: Path, data: bytes) -> None:
+    """Write bytes to a file, replacing any existing file or link.
+
+    :param path: the file to write
+    :param data: the bytes to write
+
+    """
     if path.is_symlink() or path.exists():
         remove_file(path)
     # Exclusive creation rejects links introduced after the old entry was removed.
@@ -68,6 +88,11 @@ def write_file(path: Path, data: bytes) -> None:
 
 
 def remove_file(path: Path) -> None:
+    """Remove a file, clearing its read-only flag on Windows when that blocks the removal.
+
+    :param path: the file to remove
+
+    """
     try:
         path.unlink()
     except PermissionError:
@@ -79,6 +104,12 @@ def remove_file(path: Path) -> None:
 
 
 def symlink(src: Path, dest: Path) -> None:
+    """Create a symbolic link at the destination, pointing at the source.
+
+    :param src: the path the link points at
+    :param dest: the path of the link to create
+
+    """
     _ensure_safe_to_do(src, dest)
     _LOGGER.debug("symlink %s", _Debug(src, dest))
     dest.symlink_to(src, target_is_directory=src.is_dir())
@@ -99,6 +130,12 @@ def _ensure_safe_to_do(src: Path, dest: Path) -> None:
 
 
 def safe_delete(dest: Path) -> None:
+    """Delete a file or folder tree, clearing read-only flags where needed.
+
+    :param dest: the path to delete
+
+    """
+
     def onerror(func: Callable[[str], object], path: str, exc_info: _ExcInfo) -> None:
         exc = exc_info[1] if isinstance(exc_info, tuple) else exc_info
         if isinstance(exc, FileNotFoundError):
@@ -125,6 +162,12 @@ class _Debug:
 
 
 def copy(src: Path, dest: Path) -> None:
+    """Copy a file, or a folder tree, to the destination.
+
+    :param src: the file or folder to copy
+    :param dest: the destination path
+
+    """
     _LOGGER.debug("copy %s", _Debug(src, dest))
     if src.is_dir():
         _ensure_safe_to_do(src, dest)

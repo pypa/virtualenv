@@ -7,10 +7,18 @@ from typing import TYPE_CHECKING, Final
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
+#: Process creation flag that hides the console window on Windows.
 CREATE_NO_WINDOW: Final[int] = 0x80000000
 
 
 class LogCmd:
+    """Command line and environment, for logging the command that runs.
+
+    :param cmd: the command and its arguments
+    :param env: the environment the command runs with, ``None`` to inherit it
+
+    """
+
     def __init__(self, cmd: list[str], env: Mapping[str, str] | None = None) -> None:
         self.cmd = cmd
         self.env = env
@@ -23,6 +31,14 @@ class LogCmd:
 
 
 def run_cmd(cmd: list[str], env: Mapping[str, str] | None = None) -> tuple[int, str, str]:
+    """Run a command and collect its exit code and output.
+
+    :param cmd: the command and its arguments
+    :param env: the environment the command runs with, ``None`` to inherit it
+
+    :returns: the exit code, standard output and standard error
+
+    """
     try:
         process = subprocess.Popen(
             cmd,

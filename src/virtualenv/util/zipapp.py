@@ -11,6 +11,15 @@ LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def read(full_path: str | Path) -> str:
+    """Read a file that ships inside the zipapp archive, decoded as UTF-8.
+
+    :param full_path: the path of the file, which must be within the archive root
+
+    :returns: the text of the file
+
+    :raises RuntimeError: when the path is not within the archive root
+
+    """
     with zipfile.ZipFile(ROOT, "r") as zip_file, zip_file.open(_get_path_within_zip(full_path)) as file_handler:
         return file_handler.read().decode("utf-8")
 
@@ -31,6 +40,12 @@ def _get_path_within_zip(full_path: str | Path) -> str:
 
 
 def extract(full_path: str | Path, dest: Path) -> None:
+    """Extract a file from the zipapp archive to the destination, keeping the destination name.
+
+    :param full_path: the path of the file, which must be within the archive root
+    :param dest: the destination file
+
+    """
     LOGGER.debug("extract %s to %s", full_path, dest)
     sub_file = _get_path_within_zip(full_path)
     with zipfile.ZipFile(ROOT, "r") as zip_file:

@@ -95,6 +95,12 @@ class PathLockBase(ABC):
 
 
 class ReentrantFileLock(PathLockBase):
+    """Folder lock whose per-key locks the same thread may take again, with the folder path as its path.
+
+    :param folder: the folder to lock
+
+    """
+
     def __init__(self, folder: str | Path) -> None:
         super().__init__(folder)
         self._lock = None
@@ -152,6 +158,14 @@ class ReentrantFileLock(PathLockBase):
     @contextmanager
     # the flag is passed through to _lock_file, so every lock class shares the signature
     def lock_for_key(self, name: str, no_block: bool = False) -> Generator[None, None, None]:  # ruff:ignore[boolean-default-value-positional-argument]
+        """Hold the lock for a key, taking it again when this thread already holds it.
+
+        :param name: the key to lock
+        :param no_block: ``True`` to fail instead of waiting when the lock is held elsewhere
+
+        :yields: nothing
+
+        """
         lock = self._create_lock(name)
         try:
             with self._lock_and_yield(lock, no_block):
@@ -170,11 +184,20 @@ class ReentrantFileLock(PathLockBase):
 
     @contextmanager
     def non_reentrant_lock_for_key(self, name: str) -> Generator[None, None, None]:
+        """Hold a lock for a key that this thread must not take again.
+
+        :param name: the key to lock
+
+        :yields: nothing
+
+        """
         with _CountedFileLock(str(self.path / f"{name}.lock")):
             yield
 
 
 class NoOpFileLock(PathLockBase):
+    """Lock that takes no lock, for folders that are read only."""
+
     def __enter__(self) -> None:
         raise NotImplementedError
 
@@ -186,11 +209,26 @@ class NoOpFileLock(PathLockBase):
     @contextmanager
     # the no-op lock ignores its arguments, the signature matches the lock interface
     def lock_for_key(self, name: str, no_block: bool = False) -> Generator[None, None, None]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]
+        """Hold no lock, as the folder is read only.
+
+        :param name: the key, ignored since no lock is taken
+        :param no_block: ignored since no lock is taken
+
+        :yields: nothing
+
+        """
         yield
 
     @contextmanager
     # the no-op lock ignores the name, the signature matches the lock interface
     def non_reentrant_lock_for_key(self, name: str) -> Generator[None, None, None]:  # ruff:ignore[unused-method-argument]
+        """Hold no lock, as the folder is read only.
+
+        :param name: the key, ignored since no lock is taken
+
+        :yields: nothing
+
+        """
         yield
 
 

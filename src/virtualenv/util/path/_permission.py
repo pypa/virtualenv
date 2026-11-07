@@ -9,6 +9,11 @@ if TYPE_CHECKING:
 
 
 def make_exe(filename: Path) -> None:
+    """Make a file executable for the classes that can read it, dropping classes the change is refused for.
+
+    :param filename: the file to make executable
+
+    """
     original_mode = filename.stat().st_mode
     levels = [S_IXUSR, S_IXGRP, S_IXOTH]
     for at in range(len(levels), 0, -1):
@@ -23,6 +28,12 @@ def make_exe(filename: Path) -> None:
 
 
 def set_tree(folder: Path, stat: int) -> None:
+    """Set the mode of every file below a folder.
+
+    :param folder: the folder to walk
+    :param stat: the mode to set on each file
+
+    """
     for root, _, files in os.walk(str(folder)):
         for filename in files:
             os.chmod(os.path.join(root, filename), stat)
