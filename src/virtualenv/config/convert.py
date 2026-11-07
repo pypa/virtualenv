@@ -60,15 +60,6 @@ class ListType(TypeData):
         return [self.as_type(i) for i in result]
 
     def split_values(self, value: str | bytes | list[str]) -> list[str]:
-        """Split the provided value into a list.
-
-        First this is done by newlines. If there were no newlines in the text, then we next try to split by comma.
-
-        :param value: the raw value, a string, bytes or a list of strings
-
-        :returns: the non-empty values, stripped of surrounding whitespace
-
-        """
         if isinstance(value, bytes):
             value = value.decode()
         if isinstance(value, str):
