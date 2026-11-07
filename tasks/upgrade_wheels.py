@@ -131,9 +131,13 @@ def render_init(folders: dict[Path, str] | None = None) -> None:
     from virtualenv.info import IS_ZIPAPP, ROOT
     from virtualenv.seed.wheels.util import Wheel
 
+    #: The folder holding the bundled seed wheels.
     BUNDLE_FOLDER: Final[Path] = Path(__file__).absolute().parent
+    #: The bundled wheel file names, keyed by the Python version they support, then by distribution.
     BUNDLE_SUPPORT: Final[dict[str, dict[str, str]]] = {{ {bundle} }}
+    #: The newest Python version with bundled wheels.
     MAX: Final[str] = next(reversed(BUNDLE_SUPPORT))
+    #: The oldest Python version with bundled wheels.
     MIN: Final[str] = next(iter(BUNDLE_SUPPORT))
 
 
@@ -142,13 +146,15 @@ def render_init(folders: dict[Path, str] | None = None) -> None:
 
 
     # oldest target Python version virtualenv still bundles seed wheels for; anything below this has no embedded pip
+    #: The oldest Python version bundled wheels support, as a release tuple.
     OLDEST_SUPPORTED: Final[tuple[int, ...]] = _release_tuple(MIN)
 
     # SHA-256 of every bundled wheel. Verified on load so a corrupted or tampered wheel on disk fails loud instead of
     # being handed to pip. Generated together with ``BUNDLE_SUPPORT`` by ``tasks/upgrade_wheels.py``.
+    #: The SHA-256 digest of each bundled wheel file, keyed by file name.
     BUNDLE_SHA256: Final[dict[str, str]] = {{ {sha_block} }}
 
-    _VERIFIED_WHEELS: set[str] = set()
+    _VERIFIED_WHEELS: Final[set[str]] = set()
 
 
     def get_embed_wheel(distribution: str, for_py_version: str | None) -> Wheel | None:
@@ -187,8 +193,7 @@ def render_init(folders: dict[Path, str] | None = None) -> None:
         if expected is None:
             msg = f"bundled wheel {{name}} has no recorded sha256 in BUNDLE_SHA256"
             raise RuntimeError(msg)
-        actual = _hash_bundled_wheel(path)
-        if actual != expected:
+        if (actual := _hash_bundled_wheel(path)) != expected:
             msg = f"bundled wheel {{name}} sha256 mismatch: expected {{expected}}, got {{actual}}"
             raise RuntimeError(msg)
         _VERIFIED_WHEELS.add(name)
