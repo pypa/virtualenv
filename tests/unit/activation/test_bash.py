@@ -499,7 +499,7 @@ def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> 
             self._invoke_script.append("-h" if hashing_enabled else "+h")
 
         def activate_call(self, script):
-            return super().activate_call(script) + " || exit 1"
+            return f"{super().activate_call(script)} || exit 1"
 
         def print_prompt(self) -> str:
             return (

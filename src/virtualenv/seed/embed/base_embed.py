@@ -108,7 +108,7 @@ class BaseEmbed(Seeder, ABC):
             if version == "none":
                 continue
             result += f" {distribution}={version or 'latest'},"
-        return result[:-1] + ")"
+        return f"{result[:-1]})"
 
     @classmethod
     def cannot_seed(cls, interpreter: PythonInfo) -> str | None:

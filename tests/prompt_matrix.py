@@ -296,7 +296,7 @@ def drawn_prompt(shell: str, result: subprocess.CompletedProcess[str]) -> str:
     # The last prompt an interactive bash, zsh or tcsh drew, up to the __END__ sentinel.
     output: Final = result.stdout if shell == "cshell" else result.stderr
     last: Final = output.rsplit("__END__", 1)[0].rsplit("\n", 1)[-1]
-    return (last.rsplit("> ", 1)[-1] if shell == "cshell" else last) + "__END__"
+    return f"{last.rsplit('> ', 1)[-1] if shell == 'cshell' else last}__END__"
 
 
 def _printed_text(shell: str, prompt: str, action: str) -> str:

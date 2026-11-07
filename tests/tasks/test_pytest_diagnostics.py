@@ -65,8 +65,7 @@ def test_diagnostics_capture_controller_and_workers(diagnostic_pytester: pytest.
 
 def test_diagnostics_rearm_after_failure(diagnostic_pytester: pytest.Pytester) -> None:
     diagnostic_pytester.makepyfile(
-        _WAIT
-        + """
+        f"""{_WAIT}
 def test_failure() -> None:
     raise RuntimeError("intentional failure")
 
@@ -84,8 +83,7 @@ def test_wait_for_stack() -> None:
 
 def test_diagnostics_survive_abrupt_exit(diagnostic_pytester: pytest.Pytester) -> None:
     diagnostic_pytester.makepyfile(
-        _WAIT
-        + """
+        f"""{_WAIT}
 def test_wait_for_stack() -> None:
     wait_for_stack("test_wait_for_stack")
     os._exit(23)
@@ -124,8 +122,7 @@ def test_crash() -> None:
 def test_diagnostics_survive_nested_pytest(diagnostic_pytester: pytest.Pytester) -> None:
     diagnostic_pytester.makepyfile(
         inner="def test_inner() -> None: pass",
-        outer=_WAIT
-        + """
+        outer=f"""{_WAIT}
 import pytest
 
 def test_wait_after_nested_pytest() -> None:

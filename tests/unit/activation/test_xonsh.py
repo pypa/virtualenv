@@ -71,13 +71,12 @@ def test_xonsh_restores_pythonhome_without_exported_sentinel(
     tmp_path: Path, xonsh: Callable[..., str], prelude: str, original: str | None
 ) -> None:
     session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "xonsh"])
+    activate: Final = session.creator.bin_dir / "activate.xsh"
     script: Final = (
-        "import json\n"
-        + prelude
-        + f'source "{session.creator.bin_dir / "activate.xsh"}"\n'
-        + "print(json.dumps(__xonsh__.env.get('_OLD_VIRTUAL_PYTHONHOME')))\n"
-        + "print(json.dumps(__xonsh__.env.get('PYTHONHOME')))\ndeactivate\n"
-        + "print(json.dumps(__xonsh__.env.get('PYTHONHOME')))\n"
+        f'import json\n{prelude}source "{activate}"\n'
+        "print(json.dumps(__xonsh__.env.get('_OLD_VIRTUAL_PYTHONHOME')))\n"
+        "print(json.dumps(__xonsh__.env.get('PYTHONHOME')))\ndeactivate\n"
+        "print(json.dumps(__xonsh__.env.get('PYTHONHOME')))\n"
     )
     assert [json.loads(line) for line in xonsh(script).splitlines()] == [original, None, original]
 

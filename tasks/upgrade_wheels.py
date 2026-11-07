@@ -80,7 +80,7 @@ def _write_changelog(added: dict[str, list[str]], removed: dict[str, list[str]])
     sentences: list[str] = []
     if added:
         upgrades = [
-            f"{key} to {fmt_version(versions)}" + (f" from {fmt_version(removed[key])}" if key in removed else "")
+            f"{key} to {fmt_version(versions)}{f' from {fmt_version(removed[key])}' if key in removed else ''}"
             for key, versions in added.items()
         ]
         sentences.append(f"Upgrade embedded wheels: {', '.join(upgrades)}.")

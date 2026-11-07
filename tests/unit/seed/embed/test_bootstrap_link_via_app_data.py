@@ -884,6 +884,6 @@ def test_pip_launcher_record_matches_contents(tmp_path: Path, name: str, via_she
     content: Final = (session.creator.script_dir / "pip").read_bytes()
     assert content.startswith(b"#!/bin/sh\n") is via_shell
     assert row[1:] == [
-        "sha256=" + urlsafe_b64encode(hashlib.sha256(content).digest()).rstrip(b"=").decode("ascii"),
+        f'sha256={urlsafe_b64encode(hashlib.sha256(content).digest()).rstrip(b"=").decode("ascii")}',
         str(len(content)),
     ]

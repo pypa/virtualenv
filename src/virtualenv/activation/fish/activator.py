@@ -33,7 +33,8 @@ class FishActivator(ViaTemplateActivator):
 
         """
         # Keep escapes beside ASCII quotes so legacy decoders cannot absorb them into a preceding multibyte character.
-        return "'" + re.sub(r"[\\']", lambda match: f"'\\{match.group()}'", string) + "'"
+        escaped = re.sub(r"[\\']", lambda match: f"'\\{match.group()}'", string)
+        return f"'{escaped}'"
 
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:
         """The raw placeholder values, including the Tcl and Tk library paths.
