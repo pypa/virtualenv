@@ -83,35 +83,45 @@ class Creator(ABC):
         self.env = options.env
         self.prompt = getattr(options, "prompt", None)
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self._args())})"
+
     if TYPE_CHECKING:
 
         @property
         def exe(self) -> Path:
             """The path to the Python executable of the environment."""
+            ...
 
         @property
         def env_name(self) -> str:
             """The name of the environment, used in the activation prompt."""
+            ...
 
         @property
         def bin_dir(self) -> Path:
             """The directory holding the environment's executables."""
+            ...
 
         @property
         def script_dir(self) -> Path:
             """The directory holding the scripts the environment installs."""
+            ...
 
         @property
         def libs(self) -> list[Path]:
             """The library directories of the environment."""
+            ...
 
         @property
         def purelib(self) -> Path:
             """The pure Python library directory of the environment."""
+            ...
 
         @property
         def platlib(self) -> Path:
             """The platform specific library directory of the environment."""
+            ...
 
     @property
     def debug(self) -> dict[str, Any] | None:
@@ -120,8 +130,14 @@ class Creator(ABC):
             self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data, self.env)
         return self._debug
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self._args())})"
+    @staticmethod
+    def debug_script() -> Path:
+        """Return the path of the script that reports debug information from the environment's interpreter.
+
+        :returns: the path of the debug script
+
+        """
+        return DEBUG_SCRIPT
 
     def _args(self) -> list[tuple[str, str | bool]]:
         return [
@@ -391,15 +407,6 @@ class Creator(ABC):
             return bool(line) and "virtualenv" in PyEnvCfg.from_folder(redirect.parent / line)
         except (OSError, UnicodeDecodeError, ValueError):  # unreadable, so not a redirect virtualenv can claim
             return False
-
-    @staticmethod
-    def debug_script() -> Path:
-        """Return the path of the script that reports debug information from the environment's interpreter.
-
-        :returns: the path of the debug script
-
-        """
-        return DEBUG_SCRIPT
 
 
 def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env: dict[str, str]) -> dict[str, Any]:

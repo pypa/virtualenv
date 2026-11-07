@@ -86,10 +86,12 @@ class ViaGlobalRefApi(Creator, ABC):
         @property
         def purelib(self) -> Path:
             """The pure Python library directory of the environment."""
+            ...
 
         @property
         def script_dir(self) -> Path:
             """The directory holding the scripts the environment installs."""
+            ...
 
     @classmethod
     def add_parser_arguments(
