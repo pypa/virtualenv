@@ -15,9 +15,9 @@ from virtualenv.seed.wheels.embed import (
     BUNDLE_FOLDER,
     BUNDLE_SHA256,
     BUNDLE_SUPPORT,
+    catalog,
     get_embed_wheel,
 )
-from virtualenv.seed.wheels.embed import catalog
 from virtualenv.seed.wheels.embed.catalog import _verify_bundled_wheel
 from virtualenv.seed.wheels.periodic_update import dump_datetime
 from virtualenv.seed.wheels.util import Version, Wheel

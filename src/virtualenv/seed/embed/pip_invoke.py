@@ -197,7 +197,7 @@ class PipInvoke(BaseEmbed):
                 with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, mode), "wb") as stream:
                     stream.write(content)
                 row[1:] = [
-                    f'sha256={urlsafe_b64encode(hashlib.sha256(content).digest()).rstrip(b"=").decode("ascii")}',
+                    f"sha256={urlsafe_b64encode(hashlib.sha256(content).digest()).rstrip(b'=').decode('ascii')}",
                     str(len(content)),
                 ]
                 changed = True

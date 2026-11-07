@@ -131,7 +131,8 @@ def generator_repo(tmp_path: Path) -> Path:
     embed: Final[Path] = tmp_path / "src" / "virtualenv" / "seed" / "wheels" / "embed"
     embed.mkdir(parents=True)
     (embed / "catalog.py").write_text(
-        'BUNDLE_SUPPORT: Final[dict[str, dict[str, str]]] = {"3.14": {"pip": "pip-1-py3-none-any.whl"}}\n', encoding="utf-8"
+        'BUNDLE_SUPPORT: Final[dict[str, dict[str, str]]] = {"3.14": {"pip": "pip-1-py3-none-any.whl"}}\n',
+        encoding="utf-8",
     )
     with zipfile.ZipFile(embed / "pip-1-py3-none-any.whl", "w") as archive:
         archive.writestr("pip-1.dist-info/METADATA", "Name: pip\nVersion: 1\n")
