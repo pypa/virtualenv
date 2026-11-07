@@ -48,7 +48,6 @@ _HERE: Final[Path] = Path(__file__).parent.absolute()
 
 _VERSIONS: Final[tuple[str, ...]] = tuple(f"3.{i}" for i in range(15, 8, -1))
 _LOCK: Final[Path] = _HERE.parent / "pylock.zipapp.toml"
-_PLATFORMS: Final[tuple[str, ...]] = ("darwin", "linux", "win32")
 
 
 def main() -> None:
@@ -107,6 +106,7 @@ def python_versions_for(package: LockedPackage) -> list[str]:
     if (marker := package.get("marker")) is None:
         return list(_VERSIONS)
     parsed, versions = Marker(marker), []
+    platforms: Final[tuple[str, ...]] = ("darwin", "linux", "win32")
     for version in _VERSIONS:
         environment = {"python_version": version, "python_full_version": f"{version}.0"}
         # every bundled wheel is keyed as ==any, so a marker that differs per platform would ship the build host's pick
@@ -117,7 +117,7 @@ def python_versions_for(package: LockedPackage) -> list[str]:
                         {**environment, "sys_platform": platform, "dependency_groups": {"project-runtime"}},
                         context="lock_file",
                     )
-                    for platform in _PLATFORMS
+                    for platform in platforms
                 }
             )
             != 1

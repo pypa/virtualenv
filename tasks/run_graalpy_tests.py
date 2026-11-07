@@ -16,8 +16,6 @@ if TYPE_CHECKING:
     from argparse import Namespace
     from collections.abc import Sequence
 
-_SHUTDOWN: Final[str] = "did not complete all polyglot threads"
-
 
 def main() -> None:
     parser: Final[ArgumentParser] = ArgumentParser(description=__doc__)
@@ -101,7 +99,9 @@ class _Shard:
         for pump in self.pumps:
             pump.join()
         status: Final[int] = self.process.wait()
-        shutdown: Final[bool] = status == 1 and any(_SHUTDOWN in line for line in self.stderr)
+        shutdown: Final[bool] = status == 1 and any(
+            "did not complete all polyglot threads" in line for line in self.stderr
+        )
         if status not in {0, 5} and not shutdown:
             # the test runner reports its exit status to the terminal
             print(f"[{self.label}] exit {status}")  # ruff:ignore[print]
