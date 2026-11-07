@@ -27,7 +27,16 @@ LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class Session:
-    """Represents a virtual environment creation session."""
+    """Represents a virtual environment creation session.
+
+    :param verbosity: the verbosity level the creation runs with
+    :param app_data: the application data folder
+    :param interpreter: the host interpreter the environment is based on
+    :param creator: the creator that builds the environment
+    :param seeder: the seeder that installs the seed packages
+    :param activators: the activators that generate the activation scripts
+
+    """
 
     # the session keeps each component of a creation as its own argument
     def __init__(  # ruff:ignore[too-many-arguments]

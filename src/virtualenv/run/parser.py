@@ -26,7 +26,13 @@ if TYPE_CHECKING:
 
 
 def build_parser_only(args: list[str] | None = None) -> VirtualEnvConfigParser:
-    """Used to provide a parser for the doc generation."""
+    """Used to provide a parser for the doc generation.
+
+    :param args: the command line arguments to parse the configuration with
+
+    :returns: the configured parser, without the component builders
+
+    """
     return build_parser(args)[0]
 
 
