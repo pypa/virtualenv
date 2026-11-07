@@ -160,6 +160,21 @@ def test_periodic_update_keeps_newer_bundle(app_data: AppDataDiskFolder) -> None
     assert periodic_update("pip", None, "3.9", current, [], app_data, False, {}) == current
 
 
+@pytest.mark.parametrize(
+    ("logged", "pinned"),
+    [pytest.param("26.3", "26.3.0", id="pin-trailing-zero"), pytest.param("26.3.0", "26.3", id="wheel-trailing-zero")],
+)
+def test_periodic_update_pinned_matches_equal_version(app_data: AppDataDiskFolder, logged: str, pinned: str) -> None:
+    completed: Final = datetime.now(tz=timezone.utc) - timedelta(days=30)
+    filename: Final = f"pip-{logged}-py3-none-any.whl"
+    app_data.embed_update_log("pip", "3.9").write(
+        UpdateLog(completed, completed, [NewVersion(filename, completed, completed, "manual")], True).to_dict()
+    )
+    result: Final = periodic_update("pip", pinned, "3.9", None, [], app_data, False, {})
+    assert result is not None
+    assert result.name == filename
+
+
 def test_do_update_ignores_download_below_bundle(app_data: AppDataDiskFolder, mocker: MockerFixture) -> None:
     current: Final = get_embed_wheel("pip", "3.9")
     assert current is not None

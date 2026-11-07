@@ -22,6 +22,7 @@ if TYPE_CHECKING:
         pytest.param("26.3RC1", "26.3rc1", id="case"),
         pytest.param("26.3.0", "26.3.0", id="trailing-zero-kept"),
         pytest.param("bundle", "bundle", id="bundle"),
+        pytest.param(" none\r", "none", id="keyword-whitespace"),
     ],
 )
 def test_validate_normalizes_version(value: str, expected: str) -> None:
@@ -99,6 +100,19 @@ def test_discover_wheels_skips_unsupported(tmp_path: Path, pip_wheel: Callable[[
     pip_wheel("", "1.0")
 
     assert [wheel.version for wheel in discover_wheels(tmp_path, "pip", None, "3.12")] == ["1.0"]
+
+
+@pytest.mark.parametrize(
+    ("on_disk", "pinned"),
+    [pytest.param("1.0", "1.0.0", id="pin-trailing-zero"), pytest.param("1.0.0", "1.0", id="wheel-trailing-zero")],
+)
+def test_discover_wheels_matches_equal_version(
+    tmp_path: Path, pip_wheel: Callable[[str, str], Wheel], on_disk: str, pinned: str
+) -> None:
+    pip_wheel("", "1.0.1")
+    pip_wheel("", on_disk)
+
+    assert [wheel.version for wheel in discover_wheels(tmp_path, "pip", pinned, "3.12")] == [on_disk]
 
 
 @pytest.fixture

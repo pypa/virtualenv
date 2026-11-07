@@ -118,8 +118,9 @@ class Version:
 
     @staticmethod
     def validate(value: str) -> str:
-        if value in {*Version.non_version, "none"}:
-            return value
+        """Return the normalized form of a seed version, or a keyword without its surrounding whitespace."""
+        if (keyword := value.strip()) in {*Version.non_version, "none"}:
+            return keyword
         try:
             parsed = PackagingVersion(value)
         except InvalidVersion as exception:

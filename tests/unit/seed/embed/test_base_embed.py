@@ -10,7 +10,7 @@ from virtualenv.run import session_via_cli
 from virtualenv.seed.embed.pip_invoke import PipInvoke
 from virtualenv.seed.embed.via_app_data.via_app_data import FromAppData
 from virtualenv.seed.seeder import Seeder
-from virtualenv.seed.wheels.embed import MIN, OLDEST_SUPPORTED
+from virtualenv.seed.wheels.embed import MIN, OLDEST_SUPPORTED, get_embed_wheel
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -175,3 +175,23 @@ def test_seed_version_rejected_before_creation(
         session_via_cli([str(tmp_path / "env"), "--seeder", seeder, "--pip", version])
     assert (context.value.code, (tmp_path / "env").exists()) == (2, False)
     assert f"argument --pip: {reason} seed version: {version!r}" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("seeder", [pytest.param("pip", id="pip"), pytest.param("app-data", id="app-data")])
+@pytest.mark.parametrize(
+    ("spelling", "expected"),
+    [
+        pytest.param("{}\r", "{}", id="version-carriage-return"),
+        pytest.param("{} ", "{}", id="version-trailing-space"),
+        pytest.param("none\r", "none", id="none-carriage-return"),
+        pytest.param("embed\r", "embed", id="embed-carriage-return"),
+        pytest.param("bundle\r", "bundle", id="bundle-carriage-return"),
+    ],
+)
+def test_seed_version_env_normalized(  # ruff:ignore[too-many-arguments]
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, for_py_version: str, seeder: str, spelling: str, expected: str
+) -> None:
+    version = get_embed_wheel("pip", for_py_version).version
+    monkeypatch.setenv("VIRTUALENV_PIP", spelling.format(version))
+    session = session_via_cli([str(tmp_path / "env"), "--seeder", seeder])
+    assert session.seeder.pip_version == expected.format(version)

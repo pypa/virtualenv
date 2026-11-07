@@ -86,6 +86,14 @@ def test_version_pinned_is_embed_any_spelling(app_data, for_py_version, spelling
     assert wheel.name == expected_wheel.name
 
 
+def test_version_pinned_is_embed_with_trailing_zero(app_data, for_py_version, monkeypatch) -> None:
+    embed_wheel = Wheel(Path("pip-24.0-py3-none-any.whl"))
+    monkeypatch.setattr("virtualenv.seed.wheels.bundle.get_embed_wheel", lambda *_: embed_wheel)
+    wheel = from_bundle("pip", "24", for_py_version, [], app_data, False, os.environ)
+    assert wheel is not None
+    assert wheel.name == embed_wheel.name
+
+
 @pytest.mark.parametrize("spelling", ["{}", "{}.0"], ids=["exact", "trailing-zero"])
 def test_version_pinned_in_app_data(app_data, for_py_version, next_pip_wheel, spelling) -> None:
     wheel = from_bundle("pip", spelling.format(next_pip_wheel.version), for_py_version, [], app_data, False, os.environ)
