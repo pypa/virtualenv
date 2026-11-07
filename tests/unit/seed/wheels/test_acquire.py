@@ -195,6 +195,7 @@ class _DownloadProcess(NamedTuple):
 @pytest.fixture
 def download_process(mocker: MockerFixture, for_py_version: str) -> _DownloadProcess:
     wheel: Final = get_embed_wheel("pip", for_py_version)
+    assert wheel is not None
     payload: Final = bytearray(wheel.path.read_bytes())
     # PyPy can retain the hash input buffer until garbage collection.
     metadata: Final = json.dumps({
