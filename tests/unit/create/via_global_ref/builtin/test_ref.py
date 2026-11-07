@@ -97,4 +97,4 @@ def test_missing_source_reaches_create_unless_both_modes_need_it(
     tmp_path: Path, creator_meta: Callable[[PathRef], BuiltinViaGlobalRefMeta], when: RefWhen, collected: bool
 ) -> None:
     ref = absent_ref(tmp_path, when)
-    assert creator_meta(ref).sources == ([ref] if collected else [])
+    assert creator_meta(ref).sources == [ref] * collected
