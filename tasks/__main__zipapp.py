@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, Any, Final
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from importlib.machinery import ModuleSpec
+    from importlib.metadata import Distribution, DistributionFinder
     from types import ModuleType, TracebackType
     from typing import Self
 
@@ -78,8 +79,7 @@ class VersionPlatformSelect:
             return self.modules[fullname]
         return None
 
-    # importlib's finder protocol passes an untyped context
-    def find_distributions(self, context: Any) -> Iterator[Any]:  # ruff:ignore[any-type]
+    def find_distributions(self, context: DistributionFinder.Context) -> Iterator[Distribution]:
         dist_class = _versioned_distribution_class()
         if context.name is None:
             return
@@ -126,7 +126,7 @@ class VersionPlatformSelect:
                 self.path = path
                 self.loader = loader
 
-            def iterator(self, resource_name: str) -> Iterator[Any]:
+            def iterator(self, resource_name: str) -> Iterator[Resource]:
                 if (resource := self.find(resource_name)) is not None:
                     todo = [resource]
                     while todo:

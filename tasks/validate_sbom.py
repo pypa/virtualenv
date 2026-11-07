@@ -8,7 +8,7 @@ import subprocess
 import sys
 import zipfile
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Final
 
 from license_policy import ALLOWED_LICENSES
 

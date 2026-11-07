@@ -17,7 +17,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from tempfile import TemporaryDirectory
-from typing import TYPE_CHECKING, Any, Final
+from typing import TYPE_CHECKING, Final
 
 from packaging.markers import Marker
 
@@ -140,8 +140,8 @@ class WheelForVersion:
 def _create_zipapp(dest: str, packages: dict[str, dict[str, dict[str, WheelForVersion]]]) -> None:
     bio = io.BytesIO()
     base = PurePosixPath("__virtualenv__")
-    modules = defaultdict(lambda: defaultdict(dict))
-    dist = defaultdict(lambda: defaultdict(dict))
+    modules: defaultdict[str, defaultdict[str, dict[str, str]]] = defaultdict(lambda: defaultdict(dict))
+    dist: defaultdict[str, defaultdict[str, dict[str, str]]] = defaultdict(lambda: defaultdict(dict))
     with zipfile.ZipFile(bio, "w") as zip_app:
         _write_packages_to_zipapp(base, dist, modules, packages, zip_app)
         zip_app.writestr(_entry("modules.json"), json.dumps(modules, indent=2))
@@ -156,8 +156,8 @@ def _create_zipapp(dest: str, packages: dict[str, dict[str, dict[str, WheelForVe
 # the package walk keeps its branches together, one pass over the wheel contents
 def _write_packages_to_zipapp(  # ruff:ignore[complex-structure, too-many-branches]
     base: PurePosixPath,
-    dist: dict[str, Any],
-    modules: dict[str, Any],
+    dist: defaultdict[str, defaultdict[str, dict[str, str]]],
+    modules: defaultdict[str, defaultdict[str, dict[str, str]]],
     packages: dict[str, dict[str, dict[str, WheelForVersion]]],
     zip_app: zipfile.ZipFile,
 ) -> None:
