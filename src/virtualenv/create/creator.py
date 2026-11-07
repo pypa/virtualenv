@@ -313,7 +313,7 @@ class Creator(ABC):
         if redirect.is_symlink() or redirect.is_dir():
             LOGGER.debug("%s keeps being the default environment", redirect)
             return
-        if redirect.exists() and not _points_at_virtualenv(redirect):
+        if redirect.exists() and not self._points_at_virtualenv(redirect):
             LOGGER.debug("%s points at an environment virtualenv did not create, leaving it", redirect)
             return
         if collapse_line_boundaries(self.dest.name) != self.dest.name or self.dest.name != self.dest.name.strip():
@@ -328,6 +328,18 @@ class Creator(ABC):
         except OSError as exc:
             LOGGER.warning("could not point %s at %s - %s", redirect, self.dest, exc)
 
+    @staticmethod
+    def _points_at_virtualenv(redirect: Path) -> bool:
+        if not redirect.is_file():  # only a regular file holds a redirect, and opening a FIFO would wait for a writer
+            return False
+        try:
+            line: Final = redirect.read_text(encoding="utf-8").removesuffix(
+                "\n"
+            )  # universal newlines already turned \r\n into \n
+            return bool(line) and "virtualenv" in PyEnvCfg.from_folder(redirect.parent / line)
+        except (OSError, UnicodeDecodeError, ValueError):  # unreadable, so not a redirect virtualenv can claim
+            return False
+
     @property
     def debug(self) -> dict[str, Any] | None:
         """Debug information about the virtual environment (only valid after :meth:`create` has run)."""
@@ -338,16 +350,6 @@ class Creator(ABC):
     @staticmethod
     def debug_script() -> Path:
         return DEBUG_SCRIPT
-
-
-def _points_at_virtualenv(redirect: Path) -> bool:
-    if not redirect.is_file():  # only a regular file holds a redirect, and opening a FIFO would wait for a writer
-        return False
-    try:
-        line = redirect.read_text(encoding="utf-8").removesuffix("\n")  # universal newlines already turned \r\n into \n
-        return bool(line) and "virtualenv" in PyEnvCfg.from_folder(redirect.parent / line)
-    except (OSError, UnicodeDecodeError, ValueError):  # unreadable, so not a redirect virtualenv can claim
-        return False
 
 
 def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env: dict[str, str]) -> dict[str, Any]:

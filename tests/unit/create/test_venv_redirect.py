@@ -160,10 +160,11 @@ def test_venv_redirect_forced_keeps_other_environment(redirect: Path, kind: str)
 @pytest.mark.parametrize("kind", _NON_FILE_KINDS)
 def test_venv_redirect_forced_keeps_non_file(redirect: Path, kind: str) -> None:
     _make_non_file(redirect, kind)
-    file_type = S_IFMT(redirect.stat().st_mode)
+    file_type: Final = S_IFMT(redirect.stat().st_mode)
 
     _create(redirect.parent / "env", "--venv-redirect")
 
+    assert (redirect.parent / "env" / "pyvenv.cfg").is_file()
     assert S_IFMT(redirect.stat().st_mode) == file_type
 
 

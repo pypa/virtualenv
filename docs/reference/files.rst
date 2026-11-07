@@ -112,5 +112,7 @@ Format rules virtualenv follows when it writes the file:
     - - Existing redirect
       - Kept, unless you pass ``--venv-redirect`` and its target's ``pyvenv.cfg`` carries the ``virtualenv`` key; one
         that another tool wrote, or that points at a missing folder, stays either way.
+    - - Special file
+      - A FIFO, socket or device named ``.venv`` is left alone, including with ``--venv-redirect``.
     - - Failure
       - Logged as a warning; the environment is still created.
