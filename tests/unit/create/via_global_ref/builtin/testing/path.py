@@ -86,7 +86,7 @@ def MetaPathMock(filelist):  # ruff:ignore[invalid-function-name]
 
 
 def mock_pypy_libs(mocker, pypy_creator_cls, libs) -> None:
-    mocker.patch.object(pypy_creator_cls, "_shared_libs", return_value=tuple(set(map(Path, libs))))
+    mocker.patch.object(pypy_creator_cls, "_shared_libs", return_value=tuple(set(map(Path, libs))), autospec=True)
 
 
 def join(*chunks):

@@ -9,7 +9,6 @@ from argparse import Namespace
 from ast import literal_eval
 from shutil import which
 from typing import TYPE_CHECKING, Final
-from unittest.mock import create_autospec
 
 import pytest
 from python_discovery import PythonInfo
@@ -86,14 +85,14 @@ def test_xonsh_restores_pythonhome_without_exported_sentinel(
         pytest.param(None, None, False, id="missing"),
     ],
 )
-def test_xonsh_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
+def test_xonsh_tkinter_generation(mocker, tmp_path, tcl_lib, tk_lib, present) -> None:
     # GIVEN
-    interpreter = create_autospec(PythonInfo, instance=True, tcl_lib=tcl_lib, tk_lib=tk_lib)
+    interpreter = mocker.create_autospec(PythonInfo, instance=True, tcl_lib=tcl_lib, tk_lib=tk_lib)
 
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
 
-    creator = create_autospec(
+    creator = mocker.create_autospec(
         Creator, instance=True, dest=tmp_path, bin_dir=bin_dir, interpreter=interpreter, pyenv_cfg={}, env_name="my-env"
     )
 

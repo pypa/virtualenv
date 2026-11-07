@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from stat import S_IXGRP, S_IXOTH, S_IXUSR
 from typing import TYPE_CHECKING
@@ -24,8 +25,8 @@ if TYPE_CHECKING:
 def exe_ref(mocker: MockerFixture, request: pytest.FixtureRequest) -> ExePathRefToDest:
     # Mock the source so the mode is ours to pick - Windows only sets execute bits for .exe/.bat/.cmd/.com.
     src = mocker.create_autospec(Path, instance=True)
-    src.stat.return_value = mocker.MagicMock(st_mode=request.param)  # create_autospec drops dotted kwargs before 3.12
-    return ExePathRefToDest(src, targets=["python"], dest=mocker.Mock())
+    src.stat.return_value = mocker.create_autospec(os.stat_result, instance=True, st_mode=request.param)
+    return ExePathRefToDest(src, targets=["python"], dest=mocker.create_autospec(Path, instance=True))
 
 
 @pytest.mark.parametrize(
@@ -52,7 +53,7 @@ def test_can_run_is_cached(exe_ref: ExePathRefToDest) -> None:
 @pytest.fixture
 def creator_meta(mocker: MockerFixture) -> Callable[[PathRef], BuiltinViaGlobalRefMeta]:
     # Force symlink support on, otherwise a host without it starts with symlink_error already set.
-    mocker.patch.object(api, "fs_supports_symlink", return_value=True)
+    mocker.patch.object(api, "fs_supports_symlink", return_value=True, autospec=True)
 
     def build(ref: PathRef) -> BuiltinViaGlobalRefMeta:
         class Creator(ViaGlobalRefVirtualenvBuiltin):

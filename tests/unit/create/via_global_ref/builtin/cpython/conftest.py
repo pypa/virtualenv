@@ -29,6 +29,7 @@ def collect_sources(tmp_path: Path, make_interpreter: MakeInterpreter, mocker: M
         mocker.patch(
             "virtualenv.create.via_global_ref.builtin.cpython.cpython3.Path.exists",
             return_value=True,
+            autospec=True,
         )
         return list(CPython3Posix.sources(interpreter))
 

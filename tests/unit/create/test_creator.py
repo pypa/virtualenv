@@ -713,7 +713,7 @@ def test_venv_fails_not_inline(tmp_path, capsys, mocker) -> None:
         assert session.creator.can_be_inline is False
         return session
 
-    mocker.patch("virtualenv.run.session_via_cli", side_effect=_session_via_cli)
+    mocker.patch("virtualenv.run.session_via_cli", side_effect=_session_via_cli, autospec=True)
     before = tmp_path.stat().st_mode
     cfg_path = tmp_path / "pyvenv.cfg"
     cfg_path.write_text("", encoding="utf-8")
@@ -997,7 +997,8 @@ def list_files(path):
 
 
 def test_install_patch_skipped_on_py310(tmp_path, mocker) -> None:
-    creator = mocker.MagicMock(purelib=tmp_path, interpreter=mocker.MagicMock(version_info=(3, 10, 0)))
+    interpreter = mocker.create_autospec(PythonInfo, instance=True, version_info=(3, 10, 0))
+    creator = mocker.create_autospec(api.ViaGlobalRefApi, instance=True, purelib=tmp_path, interpreter=interpreter)
     creator.env_patch_text.return_value = "import _virtualenv"
     api.ViaGlobalRefApi.install_patch(creator)
     assert not (tmp_path / "_virtualenv.pth").exists()
@@ -1006,7 +1007,8 @@ def test_install_patch_skipped_on_py310(tmp_path, mocker) -> None:
 
 
 def test_install_patch_written_on_py39(tmp_path, mocker) -> None:
-    creator = mocker.MagicMock(purelib=tmp_path, interpreter=mocker.MagicMock(version_info=(3, 9, 21)))
+    interpreter = mocker.create_autospec(PythonInfo, instance=True, version_info=(3, 9, 21))
+    creator = mocker.create_autospec(api.ViaGlobalRefApi, instance=True, purelib=tmp_path, interpreter=interpreter)
     creator.env_patch_text.return_value = "import _virtualenv"
     api.ViaGlobalRefApi.install_patch(creator)
     assert (tmp_path / "_virtualenv.pth").read_text(encoding="utf-8") == "import _virtualenv"
@@ -1243,7 +1245,7 @@ def test_fallback_to_copies_if_symlink_unsupported(tmp_path, python, mocker) -> 
         pytest.skip("brew python on darwin may not support copies, which is tested separately")
 
     # Given a filesystem that does not support symlinks
-    mocker.patch("virtualenv.create.via_global_ref.api.fs_supports_symlink", return_value=False)
+    mocker.patch("virtualenv.create.via_global_ref.api.fs_supports_symlink", return_value=False, autospec=True)
 
     # When creating a virtual environment (no method specified)
     cmd = [
@@ -1265,7 +1267,7 @@ def test_fallback_to_copies_if_symlink_unsupported(tmp_path, python, mocker) -> 
 def test_fail_gracefully_if_no_method_supported(tmp_path, python, mocker) -> None:
     # Test that virtualenv fails gracefully when no creation method is supported.
     # Given a filesystem that does not support symlinks
-    mocker.patch("virtualenv.create.via_global_ref.api.fs_supports_symlink", return_value=False)
+    mocker.patch("virtualenv.create.via_global_ref.api.fs_supports_symlink", return_value=False, autospec=True)
 
     # And a creator that does not support copying
     if not is_macos_brew(PythonInfo.from_exe(python)):

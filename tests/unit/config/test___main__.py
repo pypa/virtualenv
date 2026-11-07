@@ -67,7 +67,7 @@ def raise_on_session_done(mocker):
             prev_session(args, options, setup_logging, env)
             raise exception
 
-        mocker.patch("virtualenv.run.session_via_cli", side_effect=_session_via_cli)
+        mocker.patch("virtualenv.run.session_via_cli", side_effect=_session_via_cli, autospec=True)
 
     return _func
 
@@ -83,7 +83,7 @@ def test_fail_no_traceback(raise_on_session_done, tmp_path, capsys) -> None:
 
 
 def test_discovery_fails_no_discovery_plugin(mocker, tmp_path, capsys) -> None:
-    mocker.patch("virtualenv.run.plugin.discovery.Discovery.entry_points_for", return_value={})
+    mocker.patch("virtualenv.run.plugin.discovery.Discovery.entry_points_for", return_value={}, autospec=True)
     with pytest.raises(SystemExit) as context:
         run_with_catch([str(tmp_path)])
     assert context.value.code == 1

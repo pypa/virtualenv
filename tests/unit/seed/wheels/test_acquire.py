@@ -21,18 +21,16 @@ from virtualenv.seed.wheels.util import Wheel
 if TYPE_CHECKING:
     from collections.abc import Callable
     from ssl import SSLContext
-    from unittest.mock import MagicMock
-
-    from pytest_mock import MockerFixture
+    from pytest_mock import MockerFixture, MockType
 
 
 @pytest.fixture(autouse=True)
 def _fake_release_date(mocker) -> None:
-    mocker.patch("virtualenv.seed.wheels.periodic_update.release_date_for_wheel_path", return_value=None)
+    mocker.patch("virtualenv.seed.wheels.periodic_update.release_date_for_wheel_path", return_value=None, autospec=True)
 
 
 def test_pip_wheel_env_run_could_not_find(session_app_data, mocker) -> None:
-    mocker.patch("virtualenv.seed.wheels.acquire.from_bundle", return_value=None)
+    mocker.patch("virtualenv.seed.wheels.acquire.from_bundle", return_value=None, autospec=True)
     with pytest.raises(RuntimeError, match="could not find the embedded pip"):
         pip_wheel_env_run([], session_app_data, os.environ)
 
@@ -46,7 +44,7 @@ def test_pip_wheel_env_run_could_not_find(session_app_data, mocker) -> None:
     ],
 )
 def test_download_wheel_uses_staged_archive(
-    download_process: tuple[MagicMock, Wheel, bytearray],
+    download_process: tuple[MockType, Wheel, bytearray],
     for_py_version: str,
     session_app_data: AppDataDiskFolder,
     tmp_path: Path,
@@ -62,7 +60,7 @@ def test_download_wheel_uses_staged_archive(
 
 
 def test_download_wheel_not_found_raises(
-    download_process: tuple[MagicMock, Wheel, bytearray],
+    download_process: tuple[MockType, Wheel, bytearray],
     for_py_version: str,
     session_app_data: AppDataDiskFolder,
     tmp_path: Path,
@@ -104,7 +102,7 @@ def test_download_wheel_skips_local_pip_module(
     (tmp_path / "pip").mkdir()
     (tmp_path / "pip" / "__init__.py").write_text("raise SystemExit('imported from the working directory')", "utf-8")
     monkeypatch.chdir(tmp_path)
-    mocker.patch("virtualenv.seed.wheels.acquire.verify_wheel_digest")
+    mocker.patch("virtualenv.seed.wheels.acquire.verify_wheel_digest", autospec=True)
     embedded: Final = get_embed_wheel("pip", for_py_version)
     env: Final = {**os.environ, "PIP_NO_INDEX": "1", "PIP_FIND_LINKS": str(BUNDLE_FOLDER)}
 
@@ -116,7 +114,7 @@ def test_download_wheel_skips_local_pip_module(
 
 
 def test_download_fails(
-    download_process: tuple[MagicMock, Wheel, bytearray],
+    download_process: tuple[MockType, Wheel, bytearray],
     for_py_version: str,
     session_app_data: AppDataDiskFolder,
     tmp_path: Path,
@@ -135,7 +133,7 @@ def test_download_fails(
 
 
 def test_download_wheel_python_io_encoding(
-    download_process: tuple[MagicMock, Wheel, bytearray],
+    download_process: tuple[MockType, Wheel, bytearray],
     for_py_version: str,
     session_app_data: AppDataDiskFolder,
     tmp_path: Path,
@@ -145,7 +143,7 @@ def test_download_wheel_python_io_encoding(
 
 
 def test_download_wheel_keeps_failed_verification_out_of_cache(
-    download_process: tuple[MagicMock, Wheel, bytearray],
+    download_process: tuple[MockType, Wheel, bytearray],
     for_py_version: str,
     session_app_data: AppDataDiskFolder,
     tmp_path: Path,
@@ -168,7 +166,7 @@ def test_download_wheel_keeps_failed_verification_out_of_cache(
     ],
 )
 def test_download_wheel_preserves_custom_index_policy(
-    download_process: tuple[MagicMock, Wheel, bytearray],
+    download_process: tuple[MockType, Wheel, bytearray],
     for_py_version: str,
     session_app_data: AppDataDiskFolder,
     tmp_path: Path,
@@ -188,7 +186,7 @@ def test_download_wheel_preserves_custom_index_policy(
 
 
 @pytest.fixture
-def download_process(mocker: MockerFixture, for_py_version: str) -> tuple[MagicMock, Wheel, bytearray]:
+def download_process(mocker: MockerFixture, for_py_version: str) -> tuple[MockType, Wheel, bytearray]:
     wheel: Final = get_embed_wheel("pip", for_py_version)
     payload: Final = bytearray(wheel.path.read_bytes())
     # PyPy can retain the hash input buffer until garbage collection.
@@ -220,12 +218,12 @@ def download_process(mocker: MockerFixture, for_py_version: str) -> tuple[MagicM
 @pytest.fixture
 def downloaded_wheel(mocker):
     wheel = Wheel.from_path(Path("setuptools-0.0.0-py2.py3-none-any.whl"))
-    return wheel, mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", return_value=wheel)
+    return wheel, mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", return_value=wheel, autospec=True)
 
 
 @pytest.mark.parametrize("version", ["bundle", "0.0.0"])
 def test_get_wheel_download_called(mocker, for_py_version, session_app_data, downloaded_wheel, version) -> None:
-    write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write")
+    write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write", autospec=True)
     wheel = get_wheel("setuptools", version, for_py_version, [], True, session_app_data, False, os.environ)
     assert wheel is not None
     assert wheel.name == downloaded_wheel[0].name
@@ -239,7 +237,7 @@ def test_get_wheel_download_not_called(mocker, for_py_version, session_app_data,
     expected = get_embed_wheel(distribution, for_py_version)
     if version == "pinned":
         version = expected.version
-    write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write")
+    write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write", autospec=True)
     wheel = get_wheel(distribution, version, for_py_version, [], True, session_app_data, False, os.environ)
     assert wheel is not None
     assert wheel.name == expected.name
@@ -250,7 +248,7 @@ def test_get_wheel_download_not_called(mocker, for_py_version, session_app_data,
 def test_get_wheel_falls_back_to_bundle_when_unverified(
     mocker: MockerFixture, for_py_version: str, session_app_data: AppDataDiskFolder
 ) -> None:
-    mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", side_effect=UnverifiedWheelError("refusing"))
+    mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", side_effect=UnverifiedWheelError("refusing"), autospec=True)
 
     wheel = get_wheel("setuptools", "bundle", for_py_version, [], True, session_app_data, False, os.environ)
 
@@ -261,7 +259,7 @@ def test_get_wheel_falls_back_to_bundle_when_unverified(
 def test_get_wheel_unverified_pinned_version_fails(
     mocker: MockerFixture, for_py_version: str, session_app_data: AppDataDiskFolder
 ) -> None:
-    mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", side_effect=UnverifiedWheelError("refusing"))
+    mocker.patch("virtualenv.seed.wheels.acquire.download_wheel", side_effect=UnverifiedWheelError("refusing"), autospec=True)
 
     with pytest.raises(UnverifiedWheelError, match="refusing"):
         get_wheel("setuptools", "0.0.0", for_py_version, [], True, session_app_data, False, os.environ)
@@ -271,7 +269,7 @@ def test_get_wheel_download_cached(
     tmp_path: Path,
     mocker: MockerFixture,
     for_py_version: str,
-    downloaded_wheel: tuple[Wheel, MagicMock],
+    downloaded_wheel: tuple[Wheel, MockType],
     time_freeze: Callable[[datetime], None],
 ) -> None:
     time_freeze(datetime.now(tz=timezone.utc))

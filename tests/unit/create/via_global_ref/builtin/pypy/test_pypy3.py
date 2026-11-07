@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Final
-from unittest.mock import MagicMock
 
 import pytest
+from python_discovery import PythonInfo
 from testing.helpers import contains_exe, contains_ref
 from testing.path import join as path
 
@@ -68,14 +69,16 @@ def test_pypy_portable_deps_txt(tmp_path: Path, mocker: MockerFixture) -> None:
     (host_lib / "unneeded.so").touch()
     (host_lib / "PYPY_PORTABLE_DEPS.txt").write_text("libssl.so\nlibcrypto.so\n", encoding="utf-8")
 
-    interpreter = MagicMock(
+    interpreter = mocker.create_autospec(
+        PythonInfo,
+        instance=True,
         system_prefix=str(tmp_path),
         system_executable=str(tmp_path / "bin" / "pypy3"),
         system_stdlib=str(stdlib),
-        version_info=MagicMock(major=3, minor=10),
+        version_info=SimpleNamespace(major=3, minor=10),
     )
 
-    mocker.patch.object(PyPy3Posix, "_shared_libs", return_value=[])
+    mocker.patch.object(PyPy3Posix, "_shared_libs", return_value=[], autospec=True)
 
     sources = list(PyPy3Posix.sources(interpreter))
     ref_names = {s.src.name for s in sources if isinstance(s, PathRefToDest)}

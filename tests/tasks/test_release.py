@@ -57,6 +57,7 @@ def release_checkout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: Mo
                 credits=(PullRequestCredit(name="test-user", linked=True),),
             )
         },
+        autospec=True,
     )
     return repo, remote, root
 

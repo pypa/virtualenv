@@ -9,5 +9,5 @@ if TYPE_CHECKING:
 
 
 def test_can_symlink_when_symlinks_not_enabled(mocker: MockerFixture) -> None:
-    mocker.patch.object(api, "fs_supports_symlink", return_value=False)
+    mocker.patch.object(api, "fs_supports_symlink", return_value=False, autospec=True)
     assert api.ViaGlobalRefMeta().can_symlink is False

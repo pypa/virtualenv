@@ -27,7 +27,7 @@ _SYSTEM: Final[PythonInfo] = PythonInfo.current_system()
     ({sys.executable} if sys.executable != _SYSTEM.executable else set()) | {_SYSTEM.implementation},
 )
 def test_failed_to_find_implementation(of_id, mocker) -> None:
-    mocker.patch("virtualenv.run.plugin.creators.CreatorSelector._OPTIONS", return_value={})
+    mocker.patch("virtualenv.run.plugin.creators.CreatorSelector._OPTIONS", return_value={}, autospec=True)
     with pytest.raises(RuntimeError) as context:
         cli_run(["-p", of_id])
     assert repr(context.value) == repr(RuntimeError(f"No virtualenv implementation for {PythonInfo.current_system()}"))

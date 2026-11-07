@@ -118,6 +118,7 @@ def test_builtin_discovery_class_preferred(mocker) -> None:
     mocker.patch(
         "virtualenv.run.plugin.discovery._get_default_discovery",
         return_value=["pluginA", "pluginX", "builtin", "Aplugin", "Xplugin"],
+        autospec=True,
     )
 
     options = VirtualEnvOptions()

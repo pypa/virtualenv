@@ -4,6 +4,7 @@ import sys
 from typing import TYPE_CHECKING, Final, NamedTuple
 
 import pytest
+from python_discovery import PythonInfo
 
 from virtualenv.config.cli.parser import VirtualEnvOptions
 from virtualenv.run import session_via_cli
@@ -15,8 +16,6 @@ from virtualenv.seed.wheels.embed import MIN, OLDEST_SUPPORTED
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
-    from unittest.mock import MagicMock
-
     from pytest_mock import MockerFixture
 
     from virtualenv.run.session import Session
@@ -124,7 +123,7 @@ _BUNDLED_SEEDERS = [pytest.param(FromAppData, id="app-data"), pytest.param(PipIn
 
 @pytest.mark.parametrize("seeder", _BUNDLED_SEEDERS)
 def test_bundled_seeder_reports_reason_below_floor(
-    seeder: type[BaseEmbed], at_version: Callable[[int, int], MagicMock]
+    seeder: type[BaseEmbed], at_version: Callable[[int, int], PythonInfo]
 ) -> None:
     reason = seeder.cannot_seed(at_version(3, 8))
     assert reason is not None
@@ -135,30 +134,30 @@ def test_bundled_seeder_reports_reason_below_floor(
 
 @pytest.mark.parametrize("seeder", _BUNDLED_SEEDERS)
 def test_bundled_seeder_has_no_reason_on_oldest_supported(
-    seeder: type[BaseEmbed], at_version: Callable[[int, int], MagicMock]
+    seeder: type[BaseEmbed], at_version: Callable[[int, int], PythonInfo]
 ) -> None:
     assert seeder.cannot_seed(at_version(*OLDEST_SUPPORTED)) is None
 
 
-def test_base_seeder_never_blocks(at_version: Callable[[int, int], MagicMock]) -> None:
+def test_base_seeder_never_blocks(at_version: Callable[[int, int], PythonInfo]) -> None:
     assert Seeder.cannot_seed(at_version(3, 8)) is None
 
 
 def test_selection_surfaces_the_seeder_reason(tmp_path: Path, mocker: MockerFixture) -> None:
-    mocker.patch.object(FromAppData, "cannot_seed", return_value="seeder said no for a specific reason")
+    mocker.patch.object(FromAppData, "cannot_seed", new=classmethod(lambda _cls, _interpreter: "seeder said no for a specific reason"))
     with pytest.raises(RuntimeError, match="seeder said no for a specific reason"):
         session_via_cli([str(tmp_path)])
 
 
 def test_no_seed_bypasses_capability_check(tmp_path: Path, mocker: MockerFixture) -> None:
-    mocker.patch.object(FromAppData, "cannot_seed", return_value="seeder said no")
+    mocker.patch.object(FromAppData, "cannot_seed", new=classmethod(lambda _cls, _interpreter: "seeder said no"))
     assert session_via_cli(["--no-seed", str(tmp_path)]).seeder.enabled is False
 
 
 @pytest.fixture
-def at_version(mocker: MockerFixture) -> Callable[[int, int], MagicMock]:
-    def build(major: int, minor: int) -> MagicMock:
-        return mocker.MagicMock(version_info=_VersionInfo(major, minor))
+def at_version(mocker: MockerFixture) -> Callable[[int, int], PythonInfo]:
+    def build(major: int, minor: int) -> PythonInfo:
+        return mocker.create_autospec(PythonInfo, instance=True, version_info=_VersionInfo(major, minor))
 
     return build
 
