@@ -20,7 +20,7 @@ from .util import Version, Wheel, discover_wheels
 if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 PIP_RUN: Final[str] = (
     "import sys; sys.path = [p for p in sys.path if p]; "
@@ -67,18 +67,7 @@ def get_wheel(  # ruff:ignore[too-many-arguments]
     do_periodic_update: bool,
     env: dict[str, str],
 ) -> Wheel | None:
-    """Get a wheel with the given distribution-version-for_py_version trio, by using the extra search dir + download.
-
-    :param distribution:
-    :param version:
-    :param for_py_version:
-    :param search_dirs:
-    :param download:
-    :param app_data:
-    :param do_periodic_update:
-    :param env:
-    :returns:
-    """
+    """Get a wheel with the given distribution-version-for_py_version trio, by using the extra search dir + download."""
     # not all wheels are compatible with all python versions, so we need to py version qualify it
     wheel = None
 
@@ -102,7 +91,7 @@ def get_wheel(  # ruff:ignore[too-many-arguments]
             # only the bundle request has a local wheel that satisfies it; a pinned version must fail
             if version != Version.bundle:
                 raise
-            _LOGGER.warning("%s, seeding the bundled %s instead", exception, distribution)
+            LOGGER.warning("%s, seeding the bundled %s instead", exception, distribution)
             return from_bundle(distribution, version, for_py_version, search_dirs, app_data, do_periodic_update, env)
         if wheel is not None and app_data.can_update:
             add_wheel_to_update_log(wheel, for_py_version, app_data)
@@ -121,14 +110,6 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
 ) -> Wheel:
     """Download one wheel into a private staging directory and move it into ``to_folder`` once it checks out.
 
-    :param distribution:
-    :param version_spec:
-    :param for_py_version:
-    :param search_dirs:
-    :param app_data:
-    :param to_folder:
-    :param env:
-    :returns:
     :raises ValueError: for an invalid distribution name or version specifier.
     :raises CalledProcessError: when ``pip download`` fails.
     :raises UnverifiedWheelError: when PyPI cannot supply the digest to verify against.
@@ -155,7 +136,7 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
     )):
         msg = f"refusing to download wheel with archive-like requirement: {to_download!r}"
         raise ValueError(msg)
-    _LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
+    LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
     verify_against_pypi: Final = _uses_default_index(env)
     env = pip_wheel_env_run(search_dirs, app_data, env)
     to_folder.mkdir(parents=True, exist_ok=True)

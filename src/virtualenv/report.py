@@ -43,6 +43,6 @@ def _clean_handlers(log: logging.Logger) -> None:
 
 __all__ = [
     "LEVELS",
-    "LOGGER",
+    "MAX_LEVEL",
     "setup_report",
 ]

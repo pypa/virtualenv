@@ -10,13 +10,13 @@ IMPLEMENTATION = platform.python_implementation()
 IS_PYPY = IMPLEMENTATION == "PyPy"
 IS_GRAALPY = IMPLEMENTATION == "GraalVM"
 IS_RUSTPYTHON = IMPLEMENTATION == "RustPython"
-_IS_CPYTHON = IMPLEMENTATION == "CPython"
+IS_CPYTHON = IMPLEMENTATION == "CPython"
 IS_WIN = sys.platform == "win32"
-_IS_MAC_ARM64 = sys.platform == "darwin" and platform.machine() == "arm64"
+IS_MAC_ARM64 = sys.platform == "darwin" and platform.machine() == "arm64"
 ROOT = os.path.realpath(os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir))
 IS_ZIPAPP = os.path.isfile(ROOT)
 _CAN_SYMLINK = _FS_CASE_SENSITIVE = None
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def fs_supports_symlink() -> bool:
@@ -37,12 +37,12 @@ def fs_supports_symlink() -> bool:
                 finally:
                     if os.path.lexists(dest):
                         os.remove(dest)
-            _LOGGER.debug("symlink on filesystem does%s work", "" if can else " not")
+            LOGGER.debug("symlink on filesystem does%s work", "" if can else " not")
         _CAN_SYMLINK = can
     return _CAN_SYMLINK
 
 
-def _fs_path_id(path: str) -> str:
+def fs_path_id(path: str) -> str:
     return path.casefold() if fs_is_case_sensitive() else path
 
 
@@ -52,18 +52,20 @@ def fs_is_case_sensitive() -> bool:
     if _FS_CASE_SENSITIVE is None:
         with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:
             _FS_CASE_SENSITIVE = not os.path.exists(tmp_file.name.lower())
-            _LOGGER.debug("filesystem is %scase-sensitive", "" if _FS_CASE_SENSITIVE else "not ")
+            LOGGER.debug("filesystem is %scase-sensitive", "" if _FS_CASE_SENSITIVE else "not ")
     return _FS_CASE_SENSITIVE
 
 
 __all__ = [
-    "IMPLEMENTATION",
+    "IS_CPYTHON",
     "IS_GRAALPY",
+    "IS_MAC_ARM64",
     "IS_PYPY",
     "IS_RUSTPYTHON",
     "IS_WIN",
     "IS_ZIPAPP",
     "ROOT",
     "fs_is_case_sensitive",
+    "fs_path_id",
     "fs_supports_symlink",
 ]

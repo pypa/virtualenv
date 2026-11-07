@@ -19,7 +19,8 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
+PERIODIC_UPDATE_ON_BY_DEFAULT = True
 
 
 class BaseEmbed(Seeder, ABC):
@@ -42,7 +43,7 @@ class BaseEmbed(Seeder, ABC):
         self.periodic_update = not options.no_periodic_update
 
         if options.wheel is not None or options.no_wheel:
-            _LOGGER.warning(
+            LOGGER.warning(
                 "DEPRECATION: the --wheel and --no-wheel options do nothing; virtualenv no longer bundles wheel. "
                 "They will be removed in a release after 2026-12. Stop passing them.",
             )
@@ -162,7 +163,7 @@ class BaseEmbed(Seeder, ABC):
             dest="no_periodic_update",
             action="store_true",
             help="disable the periodic (once every 14 days) update of the embedded wheels",
-            default=not True,
+            default=not PERIODIC_UPDATE_ON_BY_DEFAULT,
         )
 
 

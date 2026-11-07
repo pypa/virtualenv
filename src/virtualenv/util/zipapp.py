@@ -6,7 +6,7 @@ from pathlib import Path
 
 from virtualenv.info import ROOT
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def read(full_path: str | Path) -> str:
@@ -30,7 +30,7 @@ def _get_path_within_zip(full_path: str | Path) -> str:
 
 
 def extract(full_path: str | Path, dest: Path) -> None:
-    _LOGGER.debug("extract %s to %s", full_path, dest)
+    LOGGER.debug("extract %s to %s", full_path, dest)
     sub_file = _get_path_within_zip(full_path)
     with zipfile.ZipFile(ROOT, "r") as zip_file:
         info = zip_file.getinfo(sub_file)

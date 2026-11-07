@@ -22,7 +22,7 @@ from virtualenv.util.path import remove_file, safe_delete
 if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class PipInstall(ABC):
@@ -42,7 +42,7 @@ class PipInstall(ABC):
         script_dir = self._creator.script_dir
         for name, module in self._read_console_scripts(dist_info).items():
             consoles.update(self._create_console_entry_point(name, module, script_dir, version_info))
-        _LOGGER.debug("generated console scripts %s", " ".join(i.name for i in consoles))
+        LOGGER.debug("generated console scripts %s", " ".join(i.name for i in consoles))
 
     @staticmethod
     def _find_dist_info(folder: Path) -> Path:
@@ -64,7 +64,7 @@ class PipInstall(ABC):
     @staticmethod
     def _uninstall_dist(dist: Path, env_dir: Path) -> None:
         dist_base: Final = dist.parent
-        _LOGGER.debug("uninstall existing distribution %s from %s", dist.stem, dist_base)
+        LOGGER.debug("uninstall existing distribution %s from %s", dist.stem, dist_base)
 
         top_txt: Final = dist / "top_level.txt"
         paths: Final = (
@@ -91,7 +91,7 @@ class PipInstall(ABC):
                 # Unlinking the final link leaves its target intact; parent links still affect containment.
                 resolved: Final = entry.parent.resolve() / entry.name if linked else entry.resolve()
                 if root not in resolved.parents or resolved in metadata_parents:
-                    _LOGGER.warning(
+                    LOGGER.warning(
                         "skip removal of %s listed by %s: not inside environment %s or a parent of the metadata",
                         entry,
                         dist.name,
@@ -173,7 +173,7 @@ class PipInstall(ABC):
         return Path(get_short_path_name(str(folder)))
 
     def _populate_image(self, zip_ref: zipfile.ZipFile, folder: Path) -> None:
-        _LOGGER.debug("build install image for %s to %s", self._wheel.name, folder)
+        LOGGER.debug("build install image for %s to %s", self._wheel.name, folder)
         _safe_extract_zip(zip_ref, folder)
         dist_info: Final = self._find_dist_info(folder)
         self._fix_records(folder, dist_info, self._generate_new_files(folder, dist_info))

@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from argparse import Action
     from typing import Any
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class TypeData:
@@ -62,8 +62,6 @@ class ListType(TypeData):
 
         First this is done by newlines. If there were no newlines in the text, then we next try to split by comma.
 
-        :param value:
-        :returns:
         """
         if isinstance(value, bytes):
             value = value.decode()
@@ -77,17 +75,11 @@ class ListType(TypeData):
 
 
 def convert(value: str, as_type: TypeData, source: str) -> Any:  # ruff:ignore[any-type]
-    """Convert the value as a given type where the value comes from the given source.
-
-    :param value:
-    :param as_type:
-    :param source:
-    :returns:
-    """
+    """Convert the value as a given type where the value comes from the given source."""
     try:
         return as_type.convert(value)
     except Exception as exception:
-        _LOGGER.warning("%s failed to convert %r as %r because %r", source, value, as_type, exception)
+        LOGGER.warning("%s failed to convert %r as %r because %r", source, value, as_type, exception)
         raise
 
 
@@ -102,8 +94,6 @@ def get_type(action: Action) -> TypeData:
 
 __all__ = [
     "BoolType",
-    "ListType",
-    "TypeData",
     "convert",
     "get_type",
 ]

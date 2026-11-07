@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class ViaGlobalRefMeta(CreatorMeta):
@@ -119,17 +119,14 @@ class ViaGlobalRefApi(Creator, ABC):
             return
         if text := self.env_patch_text():
             pth = self.purelib / "_virtualenv.pth"
-            _LOGGER.debug("create virtualenv import hook file %s", pth)
+            LOGGER.debug("create virtualenv import hook file %s", pth)
             write_file(pth, b"import _virtualenv")
             dest_path = self.purelib / "_virtualenv.py"
-            _LOGGER.debug("create %s", dest_path)
+            LOGGER.debug("create %s", dest_path)
             write_file(dest_path, text.encode("utf-8"))
 
     def env_patch_text(self) -> str:
-        """Patch the distutils package to not be derailed by its configuration files.
-
-        :returns:
-        """
+        """Patch the distutils package to not be derailed by its configuration files."""
         with self.app_data.ensure_extracted(Path(__file__).parent / "_virtualenv.py") as resolved_path:
             return resolved_path.read_text(encoding="utf-8")
 

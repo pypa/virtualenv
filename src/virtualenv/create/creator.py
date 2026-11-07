@@ -34,7 +34,7 @@ from .pyenv_cfg import PyEnvCfg
 
 HERE = Path(os.path.abspath(__file__)).parent
 DEBUG_SCRIPT = HERE / "debug.py"
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class CreatorMeta:
@@ -43,17 +43,7 @@ class CreatorMeta:
 
 
 class Creator(ABC):
-    """A class that given a python Interpreter creates a virtual environment.
-
-    :ivar dest:
-    :ivar clear:
-    :ivar no_vcs_ignore:
-    :ivar venv_redirect:
-    :ivar pyenv_cfg:
-    :ivar app_data:
-    :ivar env:
-    :ivar prompt:
-    """
+    """A class that given a python Interpreter creates a virtual environment."""
 
     def __init__(self, options: VirtualEnvOptions, interpreter: PythonInfo) -> None:
         """Construct a new virtual environment creator.
@@ -197,12 +187,7 @@ class Creator(ABC):
 
     @classmethod
     def validate_dest(cls, raw_value: str) -> str:  # ruff:ignore[complex-structure]
-        """Not blank, a directory if it exists, no path separator in the path, valid chars and must be write-able.
-
-        :param raw_value:
-        :returns:
-        :raises ArgumentTypeError:
-        """
+        """Not blank, a directory if it exists, no path separator in the path, valid chars and must be write-able."""
 
         def non_write_able(dest: Path, value: Path) -> NoReturn:
             if dest.exists() and not dest.is_dir():
@@ -260,7 +245,7 @@ class Creator(ABC):
 
     def run(self) -> None:
         if self.dest.exists() and self.clear:
-            _LOGGER.debug("delete %s", self.dest)
+            LOGGER.debug("delete %s", self.dest)
             safe_delete(self.dest)
         self.create()
         self.add_cachedir_tag()
@@ -325,13 +310,13 @@ class Creator(ABC):
         ):  # unset: claim the default only for a project folder that has none yet
             return
         if redirect.is_symlink() or redirect.is_dir():
-            _LOGGER.debug("%s keeps being the default environment", redirect)
+            LOGGER.debug("%s keeps being the default environment", redirect)
             return
         if redirect.exists() and not self._points_at_virtualenv(redirect):
-            _LOGGER.debug("%s points at an environment virtualenv did not create, leaving it", redirect)
+            LOGGER.debug("%s points at an environment virtualenv did not create, leaving it", redirect)
             return
         if collapse_line_boundaries(self.dest.name) != self.dest.name or self.dest.name != self.dest.name.strip():
-            _LOGGER.warning(
+            LOGGER.warning(
                 "could not point %s at %s - the name contains a line boundary or surrounding whitespace",
                 redirect,
                 self.dest,
@@ -340,7 +325,7 @@ class Creator(ABC):
         try:
             write_file(redirect, f"{self.dest.name}\n".encode())
         except OSError as exc:
-            _LOGGER.warning("could not point %s at %s - %s", redirect, self.dest, exc)
+            LOGGER.warning("could not point %s at %s - %s", redirect, self.dest, exc)
 
     @staticmethod
     def _points_at_virtualenv(redirect: Path) -> bool:
@@ -371,7 +356,7 @@ def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env
 
     with app_data.ensure_extracted(debug_script) as debug_script_extracted:
         cmd = [str(env_exe), str(debug_script_extracted)]
-        _LOGGER.debug("debug via %r", LogCmd(cmd))
+        LOGGER.debug("debug via %r", LogCmd(cmd))
         code, out, err = run_cmd(cmd, env)
 
     try:
@@ -399,9 +384,6 @@ def _parse_debug_output(code: int, out: str, err: str) -> dict[str, Any]:
 
 
 __all__ = [
-    "DEBUG_SCRIPT",
-    "HERE",
     "Creator",
     "CreatorMeta",
-    "get_env_debug_info",
 ]

@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
     from virtualenv.create.via_global_ref.builtin.ref import PathRef
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class CPythonmacOsFramework(CPython, ABC):
@@ -48,19 +48,11 @@ class CPythonmacOsFramework(CPython, ABC):
                 if not self.symlinks:
                     exes.extend(self.bin_dir / a for a in src.aliases)
                 for exe in exes:
-                    _fix_mach_o(str(exe), current, target, self.interpreter.max_size)  # ty: ignore[invalid-argument-type]
+                    fix_mach_o(str(exe), current, target, self.interpreter.max_size)  # ty: ignore[invalid-argument-type]
                     try:
                         subprocess.check_call(["codesign", "--force", "--sign", "-", str(exe)])  # ruff:ignore[start-process-with-partial-path]
                     except (OSError, subprocess.CalledProcessError) as e:
-                        _LOGGER.warning("Could not ad-hoc re-sign %s: %s", exe, e)
-
-    @abstractmethod
-    def desired_mach_o_image_path(self) -> str:
-        raise NotImplementedError
-
-    @abstractmethod
-    def current_mach_o_image_path(self) -> str:
-        raise NotImplementedError
+                        LOGGER.warning("Could not ad-hoc re-sign %s: %s", exe, e)
 
     @classmethod
     def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], str, str]]:
@@ -71,8 +63,30 @@ class CPythonmacOsFramework(CPython, ABC):
             fixed_host_exe = Path(interpreter.prefix) / "Resources" / "Python.app" / "Contents" / "MacOS" / "Python"  # ty: ignore[invalid-argument-type]
             yield fixed_host_exe, targets, must, when
 
+    @abstractmethod
+    def current_mach_o_image_path(self) -> str:
+        raise NotImplementedError
+
+    @abstractmethod
+    def desired_mach_o_image_path(self) -> str:
+        raise NotImplementedError
+
 
 class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
+    def current_mach_o_image_path(self) -> str:
+        return "@executable_path/../../../../Python3"
+
+    def desired_mach_o_image_path(self) -> str:
+        return "@executable_path/../.Python"
+
+    @classmethod
+    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
+        yield from super().sources(interpreter)
+
+        # add a symlink to the host python image
+        exe = Path(interpreter.prefix) / "Python3"  # ty: ignore[invalid-argument-type]
+        yield PathRefToDest(exe, dest=lambda self, _: self.dest / ".Python", must=RefMust.SYMLINK)
+
     @property
     def reload_code(self) -> str:
         result = super().reload_code  # ty: ignore[unresolved-attribute]
@@ -89,50 +103,36 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
         """,
         )
 
-    def current_mach_o_image_path(self) -> str:
-        return "@executable_path/../../../../Python3"
 
-    def desired_mach_o_image_path(self) -> str:
-        return "@executable_path/../.Python"
+def fix_mach_o(exe: str, current: str, new: str, max_size: int) -> None:
+    """https://en.wikipedia.org/wiki/Mach-O.
 
-    @classmethod
-    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
-        yield from super().sources(interpreter)
+    Mach-O, short for Mach object file format, is a file format for executables, object code, shared libraries,
+    dynamically-loaded code, and core dumps. A replacement for the a.out format, Mach-O offers more extensibility and
+    faster access to information in the symbol table.
 
-        # add a symlink to the host python image
-        exe = Path(interpreter.prefix) / "Python3"  # ty: ignore[invalid-argument-type]
-        yield PathRefToDest(exe, dest=lambda self, _: self.dest / ".Python", must=RefMust.SYMLINK)
+    Each Mach-O file is made up of one Mach-O header, followed by a series of load commands, followed by one or more
+    segments, each of which contains between 0 and 255 sections. Mach-O uses the REL relocation format to handle
+    references to symbols. When looking up symbols Mach-O uses a two-level namespace that encodes each symbol into an
+    'object/symbol name' pair that is then linearly searched for by first the object and then the symbol name.
 
+    The basic structure—a list of variable-length "load commands" that reference pages of data elsewhere in the file—was
+    also used in the executable file format for Accent. The Accent file format was in turn, based on an idea from Spice
+    Lisp.
 
-def _fix_mach_o(exe: str, current: str, new: str, max_size: int) -> None:
-    # https://en.wikipedia.org/wiki/Mach-O.
-    #
-    # Mach-O, short for Mach object file format, is a file format for executables, object code, shared libraries,
-    # dynamically-loaded code, and core dumps. A replacement for the a.out format, Mach-O offers more extensibility and
-    # faster access to information in the symbol table.
-    #
-    # Each Mach-O file is made up of one Mach-O header, followed by a series of load commands, followed by one or more
-    # segments, each of which contains between 0 and 255 sections. Mach-O uses the REL relocation format to handle
-    # references to symbols. When looking up symbols Mach-O uses a two-level namespace that encodes each symbol into an
-    # 'object/symbol name' pair that is then linearly searched for by first the object and then the symbol name.
-    #
-    # The basic structure—a list of variable-length "load commands" that reference pages of data elsewhere in the
-    # file—was also used in the executable file format for Accent. The Accent file format was in turn, based on an idea
-    # from Spice
-    # Lisp.
-    #
-    # With the introduction of Mac OS X 10.6 platform the Mach-O file underwent a significant modification that causes
-    # binaries compiled on a computer running 10.6 or later to be (by default) executable only on computers running Mac
-    # OS
-    # X 10.6 or later. The difference stems from load commands that the dynamic linker, in previous Mac OS X versions,
-    # does not understand. Another significant change to the Mach-O format is the change in how the Link Edit tables
-    # (found in the __LINKEDIT section) function. In 10.6 these new Link Edit tables are compressed by removing unused
-    # and unneeded bits of information, however Mac OS X 10.5 and earlier cannot read this new Link Edit table format.
+    With the introduction of Mac OS X 10.6 platform the Mach-O file underwent a significant modification that causes
+    binaries compiled on a computer running 10.6 or later to be (by default) executable only on computers running Mac OS
+    X 10.6 or later. The difference stems from load commands that the dynamic linker, in previous Mac OS X versions,
+    does not understand. Another significant change to the Mach-O format is the change in how the Link Edit tables
+    (found in the __LINKEDIT section) function. In 10.6 these new Link Edit tables are compressed by removing unused and
+    unneeded bits of information, however Mac OS X 10.5 and earlier cannot read this new Link Edit table format.
+
+    """
     try:
-        _LOGGER.debug("change Mach-O for %s from %s to %s", exe, current, new)
+        LOGGER.debug("change Mach-O for %s from %s to %s", exe, current, new)
         _builtin_change_mach_o(max_size)(exe, current, new)
     except Exception as e:  # ruff:ignore[blind-except]
-        _LOGGER.warning("Could not call _builtin_change_mac_o: %s. Trying to call install_name_tool instead.", e)
+        LOGGER.warning("Could not call _builtin_change_mac_o: %s. Trying to call install_name_tool instead.", e)
         try:
             cmd = ["install_name_tool", "-change", current, new, exe]
             subprocess.check_call(cmd)
@@ -152,7 +152,8 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
     LC_LOAD_DYLIB = 0xC  # ruff:ignore[non-lowercase-variable-in-function]
 
     class FileView:
-        # A proxy for file-like objects that exposes a given view of a file. Modified from macholib.
+        """A proxy for file-like objects that exposes a given view of a file. Modified from macholib."""
+
         def __init__(self, file_obj: FileView | BufferedRandom, start: int = 0, size: int = maxint) -> None:
             if isinstance(file_obj, FileView):
                 self._file_obj = file_obj._file_obj  # ruff:ignore[private-member-access]
@@ -168,6 +169,11 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
         def tell(self) -> int:
             return self._pos
 
+        def _checkwindow(self, seek_to: int, op: str) -> None:
+            if not (self._start <= seek_to <= self._end):
+                msg = f"{op} to offset {seek_to:d} is outside window [{self._start:d}, {self._end:d}]"
+                raise OSError(msg)
+
         def seek(self, offset: int, whence: int = 0) -> None:
             seek_to = offset
             if whence == os.SEEK_SET:
@@ -182,11 +188,6 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
             self._checkwindow(seek_to, "seek")
             self._file_obj.seek(seek_to)
             self._pos = seek_to - self._start
-
-        def _checkwindow(self, seek_to: int, op: str) -> None:
-            if not (self._start <= seek_to <= self._end):
-                msg = f"{op} to offset {seek_to:d} is outside window [{self._start:d}, {self._end:d}]"
-                raise OSError(msg)
 
         def write(self, content: bytes) -> None:
             here = self._start + self._pos
@@ -207,15 +208,15 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
             return read_bytes
 
     def read_data(file: FileView, endian: str, num: int = 1) -> int | tuple[int, ...]:
-        # Read a given number of 32-bits unsigned integers from the given file with the given endianness.
+        """Read a given number of 32-bits unsigned integers from the given file with the given endianness."""
         res = struct.unpack(endian + "L" * num, file.read(num * 4))
         if len(res) == 1:
             return res[0]
         return res
 
     def mach_o_change(at_path: str, what: str, value: str) -> None:  # ruff:ignore[complex-structure]
-        # Replace a given name (what) in any LC_LOAD_DYLIB command found in the given binary with a new name (value),
-        # provided it's shorter.
+        """Replace a given name (what) in any LC_LOAD_DYLIB command found in the given binary with a new name (value), provided it's shorter."""
+
         def do_macho(file: FileView, bits: int, endian: str) -> None:
             # Read Mach-O header (the magic number is assumed read by the caller)
             _cpu_type, _cpu_sub_type, _file_type, n_commands, _size_of_commands, _flags = read_data(file, endian, 6)  # ty: ignore[not-iterable]
@@ -245,7 +246,8 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
         def do_file(file: FileView | BufferedRandom, offset: int = 0, size: int = maxint) -> None:
             file = FileView(file, offset, size)
             # Read magic number
-            if (magic := read_data(file, BIG_ENDIAN)) == FAT_MAGIC:
+            magic = read_data(file, BIG_ENDIAN)
+            if magic == FAT_MAGIC:
                 # Fat binaries contain nfat_arch Mach-O binaries
                 n_fat_arch = read_data(file, BIG_ENDIAN)
                 for _ in range(n_fat_arch):  # ty: ignore[invalid-argument-type]

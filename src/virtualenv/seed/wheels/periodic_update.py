@@ -35,11 +35,11 @@ if TYPE_CHECKING:
 
     from virtualenv.app_data.base import AppData, ContentStore
 
-_LOGGER = logging.getLogger(__name__)
-_GRACE_PERIOD_CI = timedelta(hours=1)  # prevent version switch in the middle of a CI run
-_GRACE_PERIOD_MINOR = timedelta(days=28)
-_UPDATE_PERIOD = timedelta(days=14)
-_UPDATE_ABORTED_DELAY = timedelta(hours=1)
+LOGGER = logging.getLogger(__name__)
+GRACE_PERIOD_CI = timedelta(hours=1)  # prevent version switch in the middle of a CI run
+GRACE_PERIOD_MINOR = timedelta(days=28)
+UPDATE_PERIOD = timedelta(days=14)
+UPDATE_ABORTED_DELAY = timedelta(hours=1)
 
 
 def periodic_update(  # ruff:ignore[too-many-arguments]
@@ -53,13 +53,13 @@ def periodic_update(  # ruff:ignore[too-many-arguments]
     env: dict[str, str],
 ) -> Wheel | None:
     if do_periodic_update:
-        _handle_auto_update(distribution, for_py_version, wheel, search_dirs, app_data, env)
+        handle_auto_update(distribution, for_py_version, wheel, search_dirs, app_data, env)
 
     now = datetime.now(tz=timezone.utc)
 
     def _update_wheel(ver: NewVersion) -> Wheel:
         updated_wheel = Wheel(app_data.house / ver.filename)
-        _LOGGER.debug("using %supdated wheel %s", "periodically " if updated_wheel else "", updated_wheel)
+        LOGGER.debug("using %supdated wheel %s", "periodically " if updated_wheel else "", updated_wheel)
         return updated_wheel
 
     u_log = UpdateLog.from_app_data(app_data, distribution, for_py_version)
@@ -81,7 +81,7 @@ def periodic_update(  # ruff:ignore[too-many-arguments]
     return wheel
 
 
-def _handle_auto_update(  # ruff:ignore[too-many-arguments]
+def handle_auto_update(  # ruff:ignore[too-many-arguments]
     distribution: str,
     for_py_version: str,
     wheel: Wheel | None,
@@ -137,7 +137,7 @@ def trigger_update(  # ruff:ignore[too-many-arguments]
     if not debug and sys.platform == "win32":
         kwargs["creationflags"] = CREATE_NO_WINDOW
     process = Popen(cmd, **kwargs)  # ty: ignore[no-matching-overload]
-    _LOGGER.info(
+    LOGGER.info(
         "triggered periodic upgrade of %s%s (for python %s) via background process having PID %d",
         distribution,
         "" if wheel is None else f"=={wheel.version}",
@@ -153,10 +153,10 @@ def trigger_update(  # ruff:ignore[too-many-arguments]
 
 def add_wheel_to_update_log(wheel: Wheel, for_py_version: str, app_data: AppData) -> None:
     embed_update_log = app_data.embed_update_log(wheel.distribution, for_py_version)
-    _LOGGER.debug("adding %s information to %s", wheel.name, embed_update_log.file)  # ty: ignore[unresolved-attribute]
+    LOGGER.debug("adding %s information to %s", wheel.name, embed_update_log.file)  # ty: ignore[unresolved-attribute]
     u_log = UpdateLog.from_app_data(app_data, wheel.distribution, for_py_version)
     if any(version.filename == wheel.name for version in u_log.versions):
-        _LOGGER.warning("%s already present in %s", wheel.name, embed_update_log.file)  # ty: ignore[unresolved-attribute]
+        LOGGER.warning("%s already present in %s", wheel.name, embed_update_log.file)  # ty: ignore[unresolved-attribute]
         return
     # we don't need a release date for sources other than "periodic"
     version = NewVersion(wheel.name, datetime.now(tz=timezone.utc), None, "download")
@@ -164,15 +164,15 @@ def add_wheel_to_update_log(wheel: Wheel, for_py_version: str, app_data: AppData
     embed_update_log.write(u_log.to_dict())
 
 
-_DATETIME_FMT: Final[str] = "%Y-%m-%dT%H:%M:%S.%fZ"
+DATETIME_FMT: Final[str] = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 
 def dump_datetime(value: datetime | None) -> str | None:
-    return None if value is None else value.strftime(_DATETIME_FMT)
+    return None if value is None else value.strftime(DATETIME_FMT)
 
 
-def _load_datetime(value: str | None) -> datetime | None:
-    return None if value is None else datetime.strptime(value, _DATETIME_FMT).replace(tzinfo=timezone.utc)
+def load_datetime(value: str | None) -> datetime | None:
+    return None if value is None else datetime.strptime(value, DATETIME_FMT).replace(tzinfo=timezone.utc)
 
 
 class NewVersion:  # ruff:ignore[eq-without-hash]
@@ -186,8 +186,8 @@ class NewVersion:  # ruff:ignore[eq-without-hash]
     def from_dict(cls, dictionary: dict[str, str | None]) -> NewVersion:
         return cls(
             filename=dictionary["filename"],  # ty: ignore[invalid-argument-type]
-            found_date=_load_datetime(dictionary["found_date"]),  # ty: ignore[invalid-argument-type]
-            release_date=_load_datetime(dictionary["release_date"]),
+            found_date=load_datetime(dictionary["found_date"]),  # ty: ignore[invalid-argument-type]
+            release_date=load_datetime(dictionary["release_date"]),
             source=dictionary["source"],  # ty: ignore[invalid-argument-type]
         )
 
@@ -220,9 +220,9 @@ class NewVersion:  # ruff:ignore[eq-without-hash]
     def use(self, now: datetime, ignore_grace_period_minor: bool = False, ignore_grace_period_ci: bool = False) -> bool:  # ruff:ignore[boolean-default-value-positional-argument]
         if self.source == "manual":
             return True
-        if self.source == "periodic" and (self.found_date < now - _GRACE_PERIOD_CI or ignore_grace_period_ci):
+        if self.source == "periodic" and (self.found_date < now - GRACE_PERIOD_CI or ignore_grace_period_ci):
             if not ignore_grace_period_minor:
-                return now - (self.release_date or self.found_date) >= _GRACE_PERIOD_MINOR
+                return now - (self.release_date or self.found_date) >= GRACE_PERIOD_MINOR
             return True
         return False
 
@@ -244,7 +244,7 @@ class UpdateLog:
         except (AttributeError, KeyError, TypeError, ValueError):
             # another virtualenv version or an interrupted run can leave valid JSON of the wrong shape in the shared
             # app data; drop it as read() drops invalid JSON, since an empty log falls back to the bundled wheel
-            _LOGGER.warning("removing malformed embed update log of %s", distribution)
+            LOGGER.warning("removing malformed embed update log of %s", distribution)
             with suppress(OSError):  # another process may remove or rewrite the file at the same time
                 store.remove()
             return cls(None, None, [], None)
@@ -254,8 +254,8 @@ class UpdateLog:
         if dictionary is None:
             dictionary = {}
         return cls(
-            _load_datetime(dictionary.get("started")),  # ty: ignore[invalid-argument-type]
-            _load_datetime(dictionary.get("completed")),  # ty: ignore[invalid-argument-type]
+            load_datetime(dictionary.get("started")),  # ty: ignore[invalid-argument-type]
+            load_datetime(dictionary.get("completed")),  # ty: ignore[invalid-argument-type]
             [NewVersion.from_dict(v) for v in dictionary.get("versions", [])],  # ty: ignore[not-iterable]
             dictionary.get("periodic"),  # ty: ignore[invalid-argument-type]
         )
@@ -265,12 +265,12 @@ class UpdateLog:
         now = datetime.now(tz=timezone.utc)
         if self.completed is None:  # never completed
             return self._check_start(now)
-        if now - self.completed <= _UPDATE_PERIOD:
+        if now - self.completed <= UPDATE_PERIOD:
             return False
         return self._check_start(now)
 
     def _check_start(self, now: datetime) -> bool:
-        return self.started is None or now - self.started > _UPDATE_ABORTED_DELAY
+        return self.started is None or now - self.started > UPDATE_ABORTED_DELAY
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -294,7 +294,6 @@ def verify_wheel_digest(wheel: Wheel) -> None:
     A failed metadata request, an unknown filename or a missing sha256 therefore fails like a mismatch: accepting the
     wheel in those cases would let anyone who can block ``pypi.org/pypi`` turn the check off.
 
-    :param wheel:
     :raises UnverifiedWheelError: if PyPI's sha256 for this exact filename cannot be obtained after retrying.
     :raises RuntimeError: if the sha256 does not match.
 
@@ -303,7 +302,7 @@ def verify_wheel_digest(wheel: Wheel) -> None:
     for delay in _DIGEST_RETRY_DELAYS:
         if expected is not None:
             break
-        _LOGGER.warning("could not obtain the sha256 of %s from PyPI, retrying in %s seconds", wheel.name, delay)
+        LOGGER.warning("could not obtain the sha256 of %s from PyPI, retrying in %s seconds", wheel.name, delay)
         _PYPI_CACHE.pop(wheel.distribution, None)
         sleep(delay)
         expected = _pypi_sha256_for_wheel(wheel)
@@ -340,14 +339,14 @@ def _pypi_get_distribution_info(distribution: str) -> dict[str, object] | None:
             if (content := _fetch_pypi_json(url, context)) is not None:
                 break
     except Exception as exception:  # ruff:ignore[blind-except]
-        _LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
+        LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
     return content
 
 
 def _request_context() -> Generator[ssl.SSLContext | None, None, None]:
     yield None
     if (setting := get_env_var("periodic_update_insecure", BoolType(bool, bool), os.environ)) and setting[0]:
-        _LOGGER.warning(
+        LOGGER.warning(
             "falling back to unverified HTTPS for PyPI metadata because VIRTUALENV_PERIODIC_UPDATE_INSECURE is enabled",
         )
         yield ssl._create_unverified_context()  # ruff:ignore[suspicious-unverified-context-usage, private-member-access]
@@ -358,7 +357,7 @@ def _fetch_pypi_json(url: str, context: ssl.SSLContext | None) -> dict[str, obje
         with urlopen(url, context=context) as file_handler:  # ruff:ignore[suspicious-url-open-usage]
             return json.load(file_handler)
     except URLError as exception:
-        _LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
+        LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
     return None
 
 
@@ -396,7 +395,7 @@ def _run_manual_upgrade(app_data: AppData, distribution: str, for_py_version: st
         do_periodic_update=False,
         env=env,
     )
-    _LOGGER.warning(
+    LOGGER.warning(
         "upgrade %s for python %s with current %s",
         distribution,
         for_py_version,
@@ -420,7 +419,7 @@ def _run_manual_upgrade(app_data: AppData, distribution: str, for_py_version: st
         args.append("\n".join(f"\t{v}" for v in versions))
     ver_update = "new entries found:\n%s" if versions else "no new versions found"
     msg = f"upgraded %s for python %s in %s {ver_update}"
-    _LOGGER.warning(msg, *args)
+    LOGGER.warning(msg, *args)
 
 
 def do_update(  # ruff:ignore[too-many-arguments]
@@ -435,7 +434,7 @@ def do_update(  # ruff:ignore[too-many-arguments]
     try:
         versions = _run_do_update(app_data, distribution, embed_filename, for_py_version, periodic, search_dirs)
     finally:
-        _LOGGER.debug("done %s %s with %s", distribution, for_py_version, versions)
+        LOGGER.debug("done %s %s with %s", distribution, for_py_version, versions)
     return versions
 
 
@@ -496,7 +495,7 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
             break
         release_date = release_date_for_wheel_path(dest.path)
         last = NewVersion(filename=dest.path.name, release_date=release_date, found_date=download_time, source=source)
-        _LOGGER.info("detected %s in %s", last, datetime.now(tz=timezone.utc) - download_time)
+        LOGGER.info("detected %s in %s", last, datetime.now(tz=timezone.utc) - download_time)
         versions.append(last)
         filenames.add(last.filename)
         last_wheel = last.wheel
@@ -523,7 +522,7 @@ def release_date_for_wheel_path(dest: Path) -> datetime | None:
             upload_time = content["releases"][wheel.version][0]["upload_time"]  # ty: ignore[not-subscriptable]
             return datetime.strptime(upload_time, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
         except Exception as exception:  # ruff:ignore[blind-except]
-            _LOGGER.error("could not load release date %s because %r", content, exception)  # ruff:ignore[error-instead-of-exception]
+            LOGGER.error("could not load release date %s because %r", content, exception)  # ruff:ignore[error-instead-of-exception]
     return None
 
 
@@ -534,6 +533,7 @@ __all__ = [
     "add_wheel_to_update_log",
     "do_update",
     "dump_datetime",
+    "load_datetime",
     "manual_upgrade",
     "periodic_update",
     "release_date_for_wheel_path",

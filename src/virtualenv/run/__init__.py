@@ -66,7 +66,7 @@ def session_via_cli(
 
     """
     env = os.environ if env is None else env
-    parser, elements = _build_parser(args, options, setup_logging, env)
+    parser, elements = build_parser(args, options, setup_logging, env)
     options = parser.parse_args(args)  # ty: ignore[invalid-assignment]
     options.py_version = parser._interpreter.version_info  # ruff:ignore[private-member-access]  # ty: ignore[invalid-assignment, unresolved-attribute]
     creator, seeder, activators = tuple(
@@ -83,15 +83,15 @@ def session_via_cli(
     )
 
 
-def _build_parser(
-    args: list[str] | None,
+def build_parser(
+    args: list[str] | None = None,
     options: VirtualEnvOptions | None = None,
     setup_logging: bool = True,  # ruff:ignore[boolean-default-value-positional-argument]
     env: MutableMapping[str, str] | None = None,
 ) -> tuple[VirtualEnvConfigParser, list[ComponentBuilder]]:
     _validate_option_values(args)
     parser = VirtualEnvConfigParser(options, os.environ if env is None else env)
-    _add_version_flag(parser)
+    add_version_flag(parser)
     parser.add_argument(
         "--with-traceback",
         dest="with_traceback",
@@ -100,8 +100,8 @@ def _build_parser(
         help="on failure also display the stacktrace internals of virtualenv",
     )
     _do_report_setup(parser, args, setup_logging)
-    options = _load_app_data(args, parser, options)
-    _handle_extra_commands(options)
+    options = load_app_data(args, parser, options)
+    handle_extra_commands(options)
 
     discover = get_discover(parser, args)
     parser._interpreter = interpreter = discover.interpreter  # ruff:ignore[private-member-access]
@@ -143,7 +143,7 @@ def _validate_option_values(args: list[str] | None) -> None:
     parser.parse_known_args(args)
 
 
-def _add_version_flag(parser: VirtualEnvConfigParser) -> None:
+def add_version_flag(parser: VirtualEnvConfigParser) -> None:
     import virtualenv  # ruff:ignore[import-outside-top-level]
 
     parser.add_argument(
@@ -172,7 +172,7 @@ def _do_report_setup(parser: VirtualEnvConfigParser, args: list[str] | None, set
         setup_report(option.verbosity)  # ty: ignore[invalid-argument-type]
 
 
-def _load_app_data(
+def load_app_data(
     args: list[str] | None, parser: VirtualEnvConfigParser, options: VirtualEnvOptions | None
 ) -> VirtualEnvOptions:
     parser.add_argument(
@@ -209,15 +209,15 @@ def _load_app_data(
     return options
 
 
-def _handle_extra_commands(options: VirtualEnvOptions) -> None:
+def handle_extra_commands(options: VirtualEnvOptions) -> None:
     if options.upgrade_embed_wheels:
         result = manual_upgrade(options.app_data, options.env)
         raise SystemExit(result)
 
 
-def _build_parser_only(args: list[str] | None = None) -> VirtualEnvConfigParser:
-    # Used to provide a parser for the doc generation.
-    return _build_parser(args)[0]
+def build_parser_only(args: list[str] | None = None) -> VirtualEnvConfigParser:
+    """Used to provide a parser for the doc generation."""
+    return build_parser(args)[0]
 
 
 __all__ = [

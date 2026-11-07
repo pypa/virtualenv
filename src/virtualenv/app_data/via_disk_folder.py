@@ -44,17 +44,11 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from pathlib import Path
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class AppDataDiskFolder(AppData):
-    """Store the application data on the disk within a folder layout.
-
-    :param folder:
-    :cvar transient:
-    :cvar can_update:
-    :ivar lock:
-    """
+    """Store the application data on the disk within a folder layout."""
 
     transient = False
     can_update = True
@@ -75,7 +69,7 @@ class AppDataDiskFolder(AppData):
         return path
 
     def reset(self) -> None:
-        _LOGGER.debug("reset app data folder %s", self.lock.path)
+        LOGGER.debug("reset app data folder %s", self.lock.path)
         safe_delete(self.lock.path)
 
     def close(self) -> None:
@@ -142,7 +136,7 @@ class JSONStoreDisk(ContentStore, ABC):
         except Exception:  # ruff:ignore[blind-except, try-except-pass]
             pass
         else:
-            _LOGGER.debug("got %s %s from %s", *self.msg_args)
+            LOGGER.debug("got %s %s from %s", *self.msg_args)
             return data
         if bad_format:
             with suppress(OSError):  # reading and writing on the same file may cause race on multiple processes
@@ -151,7 +145,7 @@ class JSONStoreDisk(ContentStore, ABC):
 
     def remove(self) -> None:
         self.file.unlink()
-        _LOGGER.debug("removed %s %s at %s", *self.msg_args)
+        LOGGER.debug("removed %s %s at %s", *self.msg_args)
 
     @contextmanager
     def locked(self) -> Generator[None]:
@@ -161,7 +155,7 @@ class JSONStoreDisk(ContentStore, ABC):
     def write(self, content: Any) -> None:  # ruff:ignore[any-type]
         self.file.parent.mkdir(parents=True, exist_ok=True)
         self.file.write_text(json.dumps(content, sort_keys=True, indent=2), encoding="utf-8")
-        _LOGGER.debug("wrote %s %s at %s", *self.msg_args)
+        LOGGER.debug("wrote %s %s at %s", *self.msg_args)
 
 
 class PyInfoStoreDisk(JSONStoreDisk):
@@ -180,7 +174,6 @@ class EmbedDistributionUpdateStoreDisk(JSONStoreDisk):
 
 __all__ = [
     "AppDataDiskFolder",
-    "EmbedDistributionUpdateStoreDisk",
     "JSONStoreDisk",
     "PyInfoStoreDisk",
 ]

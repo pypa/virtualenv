@@ -46,7 +46,8 @@ def get_discover(parser: VirtualEnvConfigParser, args: list[str] | None) -> Disc
     return discover_class(options)
 
 
-class Discovery(PluginLoader): ...
+class Discovery(PluginLoader):
+    """Discovery plugins."""
 
 
 def _get_default_discovery(discover_types: dict[str, type]) -> list[str]:
@@ -54,5 +55,6 @@ def _get_default_discovery(discover_types: dict[str, type]) -> list[str]:
 
 
 __all__ = [
+    "Discovery",
     "get_discover",
 ]

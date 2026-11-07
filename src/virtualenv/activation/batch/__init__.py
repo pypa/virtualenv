@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
     from virtualenv.create.creator import Creator
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 # cmd.exe's own command-line parser looks for these regardless of surrounding quotes: confirmed on a
 # real Windows runner that `@set "VAR=x & cmd"` still runs `cmd` as a second statement even though the
@@ -48,7 +48,7 @@ class BatchActivator(ViaTemplateActivator):
         values = super().replacements(creator, creator.bin_dir)
         if problems := [reason for key in _PATH_REPLACEMENT_NAMES if (reason := _unsafe_path_reason(key, values[key]))]:
             for problem in problems:
-                _LOGGER.log(
+                LOGGER.log(
                     logging.WARNING if selected else logging.DEBUG, "skipping batch activation scripts: %s", problem
                 )
             for template in self.templates():
@@ -82,8 +82,6 @@ class BatchActivator(ViaTemplateActivator):
         can be represented literally here, so replace them with a space. ``%`` still triggers variable expansion inside
         the quotes, but doubling it to ``%%`` is a real, in-file escape that keeps the literal character.
 
-        :param string:
-        :returns:
         """
         string = string.replace("%", "%%")
         for operator in _CMD_OPERATORS:

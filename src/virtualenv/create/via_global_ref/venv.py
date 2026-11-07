@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
-_LOGGER = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class Venv(ViaGlobalRefApi):
@@ -84,7 +84,7 @@ class Venv(ViaGlobalRefApi):
 
     def create_via_sub_process(self) -> None:
         cmd = self.get_host_create_cmd()
-        _LOGGER.info("using host built-in venv to create via %s", " ".join(cmd))
+        LOGGER.info("using host built-in venv to create via %s", " ".join(cmd))
         code, out, err = run_cmd(cmd)
         if code != 0:
             raise ProcessCallFailedError(code, out, err, cmd)
