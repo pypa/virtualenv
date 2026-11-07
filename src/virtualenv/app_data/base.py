@@ -87,7 +87,7 @@ class AppData(ABC):
         :param path: the path to ensure is available
         :param to_folder: optional target directory for extraction
 
-        :returns: yields the usable path on disk
+        :yields: the usable path on disk
 
         """
         if IS_ZIPAPP:
@@ -115,6 +115,8 @@ class AppData(ABC):
         """Acquire an exclusive lock on the given path.
 
         :param path: the path to lock
+
+        :returns: a context manager holding the lock
 
         """
         raise NotImplementedError
@@ -160,7 +162,11 @@ class ContentStore(ABC):
     @abstractmethod
     @contextmanager
     def locked(self) -> Generator[None]:
-        """Acquire an exclusive lock on this content store."""
+        """Acquire an exclusive lock on this content store.
+
+        :returns: a context manager holding the lock
+
+        """
 
 
 __all__ = [

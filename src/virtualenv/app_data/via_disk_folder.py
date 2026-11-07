@@ -48,7 +48,15 @@ LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class AppDataDiskFolder(AppData):
-    """Store the application data on the disk within a folder layout."""
+    """Store the application data on the disk within a folder layout.
+
+    :param folder: the folder to store the application data in
+
+    :var transient: always ``False``, the data persists across runs
+    :var can_update: always ``True``, the data can be updated
+    :var lock: the lock guarding the folder
+
+    """
 
     transient = False
     can_update = True

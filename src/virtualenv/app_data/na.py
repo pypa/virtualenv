@@ -12,7 +12,13 @@ if TYPE_CHECKING:
 
 
 class AppDataDisabled(AppData):
-    """No application cache available (most likely as we don't have write permissions)."""
+    """No application cache available (most likely as we don't have write permissions).
+
+    :var transient: always ``True``, nothing is persisted
+    :var can_update: always ``False``, there is nothing to update
+    :var error: the error raised on every access to the cache
+
+    """
 
     transient = True
     can_update = False
@@ -47,7 +53,13 @@ class AppDataDisabled(AppData):
     @contextmanager
     # the no-op store takes no lock, so the path is unused
     def locked(self, path: Path) -> Generator[None]:  # ruff:ignore[unused-method-argument]
-        """Do nothing."""
+        """Do nothing.
+
+        :param path: the path to lock, ignored since no lock is taken
+
+        :yields: nothing
+
+        """
         yield
 
     # the no-op store never has an image, so the arguments are unused
@@ -68,7 +80,11 @@ class ContentStoreNA(ContentStore):
 
     # matches the base store's Any content, which this no-op store discards
     def write(self, content: Any) -> None:  # ruff:ignore[any-type]
-        """Nothing to write."""
+        """Nothing to write.
+
+        :param content: the content to write, discarded
+
+        """
 
     def remove(self) -> None:
         """Nothing to remove."""
