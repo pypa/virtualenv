@@ -33,6 +33,8 @@ from .util import Wheel
 if TYPE_CHECKING:
     from collections.abc import Generator
 
+    from packaging.version import Version as PackagingVersion
+
     from virtualenv.app_data.base import AppData, ContentStore
 
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
@@ -78,22 +80,9 @@ def periodic_update(  # ruff:ignore[too-many-arguments]
         return updated_wheel
 
     u_log = UpdateLog.from_app_data(app_data, distribution, for_py_version)
-    if of_version is None:
-        for _, group in groupby(u_log.versions, key=lambda entry: entry.wheel.version_tuple[0:2]):
-            # use only latest patch version per minor, earlier assumed to be buggy
-            all_patches = list(group)
-            ignore_grace_period_minor = any(version for version in all_patches if version.use(now))
-            for version in all_patches:
-                if wheel is not None and version.wheel.parsed_version <= wheel.parsed_version:
-                    return wheel
-                if version.use(now, ignore_grace_period_minor):
-                    return _update_wheel(version)
-    else:
-        for version in u_log.versions:
-            if version.wheel.has_version(of_version):
-                return _update_wheel(version)
-
-    return wheel
+    if (version := _select_version(u_log, of_version, wheel, now)) is None:
+        return wheel
+    return _update_wheel(version)
 
 
 # same inputs as periodic_update, forwarded to trigger_update
@@ -177,6 +166,24 @@ def trigger_update(  # ruff:ignore[too-many-arguments]  # the background update 
     else:
         # set the returncode here -> no ResourceWarning on main process exit if the subprocess still runs
         process.returncode = 0
+
+
+def _select_version(u_log: UpdateLog, of_version: str | None, wheel: Wheel | None, now: datetime) -> NewVersion | None:
+    if of_version is not None:
+        for version in u_log.versions:
+            if version.wheel.has_version(of_version):
+                return version
+        return None
+    for _, group in groupby(u_log.versions, key=lambda entry: entry.wheel.version_tuple[0:2]):
+        # use only latest patch version per minor, earlier assumed to be buggy
+        all_patches = list(group)
+        ignore_grace_period_minor = any(version for version in all_patches if version.use(now))
+        for version in all_patches:
+            if wheel is not None and version.wheel.parsed_version <= wheel.parsed_version:
+                return None
+            if version.use(now, ignore_grace_period_minor):
+                return version
+    return None
 
 
 def add_wheel_to_update_log(wheel: Wheel, for_py_version: str, app_data: AppData) -> None:
@@ -589,8 +596,8 @@ def do_update(  # ruff:ignore[too-many-arguments]
     return versions
 
 
-# one update pass; the download loop shares its state with the log bookkeeping
-def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
+# one update pass; the download comes first, then the log bookkeeping records what it found
+def _run_do_update(  # ruff:ignore[too-many-arguments]
     app_data: str | AppData,
     distribution: str,
     embed_filename: str | None,
@@ -598,9 +605,6 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
     periodic: bool,
     search_dirs: list[str] | list[Path],
 ) -> list[NewVersion]:
-    # acquire imports this module, so the import must wait until it is needed
-    from . import acquire  # ruff:ignore[import-outside-top-level]
-
     wheel_filename = None if embed_filename is None else Path(embed_filename)
     embed_version = None if wheel_filename is None else Wheel(wheel_filename).parsed_version
     app_data = AppDataDiskFolder(app_data) if isinstance(app_data, str) else app_data
@@ -628,7 +632,35 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
         dest = wheelhouse / wheel_filename.name
         if not dest.exists():
             copy2(str(wheel_filename), str(wheelhouse))
-    last, last_version, versions, filenames = None, None, [], set()
+    versions = _download_newer_versions(
+        distribution, for_py_version, search_dirs, app_data, embed_version, update_versions, source, now
+    )
+    filenames = {version.filename for version in versions}
+    u_log.periodic = periodic
+    if not u_log.periodic:
+        u_log.started = now
+    # update other_versions by removing version we just found
+    other_versions = [version for version in other_versions if version.filename not in filenames]
+    u_log.versions = versions + update_versions + other_versions
+    u_log.completed = datetime.now(tz=timezone.utc)
+    app_data.embed_update_log(distribution, for_py_version).write(u_log.to_dict())
+    return versions
+
+
+def _download_newer_versions(  # ruff:ignore[too-many-arguments]  # the download needs every input of the update pass
+    distribution: str,
+    for_py_version: str,
+    search_dirs: list[Path],
+    app_data: AppData,
+    embed_version: PackagingVersion | None,
+    update_versions: list[NewVersion],
+    source: str,
+    now: datetime,
+) -> list[NewVersion]:
+    # acquire imports this module, so the import must wait until it is needed
+    from . import acquire  # ruff:ignore[import-outside-top-level]
+
+    last, last_version, versions = None, None, []
     while last is None or not last.use(now, ignore_grace_period_ci=True):
         download_time = datetime.now(tz=timezone.utc)
         dest = acquire.download_wheel(
@@ -637,7 +669,7 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
             for_py_version=for_py_version,
             search_dirs=search_dirs,
             app_data=app_data,
-            to_folder=wheelhouse,
+            to_folder=app_data.house,
             env=os.environ,  # ty: ignore[invalid-argument-type]  # os.environ is a Mapping, not a dict
         )
         if (
@@ -650,19 +682,10 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
         last = NewVersion(filename=dest.path.name, release_date=release_date, found_date=download_time, source=source)
         LOGGER.info("detected %s in %s", last, datetime.now(tz=timezone.utc) - download_time)
         versions.append(last)
-        filenames.add(last.filename)
         last_wheel = last.wheel
         last_version = last_wheel.version
         if embed_version is not None and embed_version >= last_wheel.parsed_version:
             break  # stop download if we reach the embed version
-    u_log.periodic = periodic
-    if not u_log.periodic:
-        u_log.started = now
-    # update other_versions by removing version we just found
-    other_versions = [version for version in other_versions if version.filename not in filenames]
-    u_log.versions = versions + update_versions + other_versions
-    u_log.completed = datetime.now(tz=timezone.utc)
-    app_data.embed_update_log(distribution, for_py_version).write(u_log.to_dict())
     return versions
 
 
