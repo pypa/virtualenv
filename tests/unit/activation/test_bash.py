@@ -92,13 +92,31 @@ def test_prompt_requires_known_shell(tmp_path: Path, current_fastest: str, setup
 
 @pytest.mark.skipif(IS_WIN, reason="Github Actions ships with WSL bash")
 @pytest.mark.parametrize(
-    ("tcl_lib", "tk_lib", "present"),
+    ("tcl_lib", "tk_lib", "expected_snippets"),
     [
-        pytest.param("/path/to/tcl", "/path/to/tk", True, id="present"),
-        pytest.param(None, None, False, id="missing"),
+        pytest.param(
+            "/path/to/tcl",
+            "/path/to/tk",
+            [
+                'if [ /path/to/tcl != "" ]; then',
+                "TCL_LIBRARY=/path/to/tcl",
+                "export TCL_LIBRARY",
+                'if [ /path/to/tk != "" ]; then',
+                "TK_LIBRARY=/path/to/tk",
+                "export TK_LIBRARY",
+            ],
+            id="present",
+        ),
+        # When not present, the if condition is false, so the block is not executed
+        pytest.param(
+            None,
+            None,
+            ["if [ '' != \"\" ]; then", "TCL_LIBRARY=''", "export TCL_LIBRARY"],
+            id="missing",
+        ),
     ],
 )
-def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
+def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, expected_snippets: list[str]) -> None:
     # GIVEN
     class MockInterpreter:
         pass
@@ -135,20 +153,8 @@ def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
     assert "export PKG_CONFIG_PATH" in content
     assert 'PKG_CONFIG_PATH="$_OLD_PKG_CONFIG_PATH"' in content
 
-    if present:
-        assert 'if [ /path/to/tcl != "" ]; then' in content
-        assert "TCL_LIBRARY=/path/to/tcl" in content
-        assert "export TCL_LIBRARY" in content
-
-        assert 'if [ /path/to/tk != "" ]; then' in content
-        assert "TK_LIBRARY=/path/to/tk" in content
-        assert "export TK_LIBRARY" in content
-    else:
-        # When not present, the if condition is false, so the block is not executed
-        assert "if [ '' != \"\" ]; then" in content, content
-        assert "TCL_LIBRARY=''" in content
-        # The export is inside the if, so this is fine
-        assert "export TCL_LIBRARY" in content
+    missing: Final = [snippet for snippet in expected_snippets if snippet not in content]
+    assert not missing, (missing, content)
 
 
 @pytest.fixture
@@ -270,22 +276,34 @@ def moved_bash_activate(tmp_path: Path, current_fastest: str) -> Path:
 
 @pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
 @pytest.mark.parametrize(
-    "failure",
+    ("prefix", "path_of", "prepare"),
     [
-        pytest.param("shell", id="unsupported-shell"),
-        pytest.param("tools", id="missing-tools"),
-        pytest.param("config", id="missing-config"),
+        pytest.param(
+            "unset BASH_VERSION; ", lambda _tmp: "/usr/bin:/bin", lambda _activate: None, id="unsupported-shell"
+        ),
+        pytest.param("", str, lambda _activate: None, id="missing-tools"),
+        pytest.param(
+            "",
+            lambda _tmp: "/usr/bin:/bin",
+            lambda activate: (activate.parents[1] / "pyvenv.cfg").unlink(),
+            id="missing-config",
+        ),
     ],
 )
-def test_bash_relocation_stops_when_unavailable(tmp_path: Path, moved_bash_activate: Path, failure: str) -> None:
-    if failure == "config":
-        (moved_bash_activate.parents[1] / "pyvenv.cfg").unlink()
-    path: Final = str(tmp_path) if failure == "tools" else "/usr/bin:/bin"
+def test_bash_relocation_stops_when_unavailable(
+    tmp_path: Path,
+    moved_bash_activate: Path,
+    prefix: str,
+    path_of: Callable[[Path], str],
+    prepare: Callable[[Path], None],
+) -> None:
+    prepare(moved_bash_activate)
+    path: Final = path_of(tmp_path)
     result: Final = subprocess.run(
         [
             _BASH,
             "-c",
-            f'{"unset BASH_VERSION; " if failure == "shell" else ""}. "$1"; printf "%s|%s|%s" "$?" "$PATH" "${{VIRTUAL_ENV-unset}}"',
+            f'{prefix}. "$1"; printf "%s|%s|%s" "$?" "$PATH" "${{VIRTUAL_ENV-unset}}"',
             "activate",
             str(moved_bash_activate),
         ],
@@ -298,12 +316,17 @@ def test_bash_relocation_stops_when_unavailable(tmp_path: Path, moved_bash_activ
     assert result.stdout == f"1|{path}|unset"
 
 
-@pytest.mark.skipif(not IS_WIN, reason="needs Git Bash and a Scripts directory")
-def test_bash_relocation_resolves_under_git_bash(moved_bash_activate: Path) -> None:
+@pytest.fixture
+def git_bash() -> Path:
     if (git := shutil.which("git")) is None or not (bash := Path(git).parents[1] / "bin" / "bash.exe").exists():
         pytest.skip("needs Git for Windows")
+    return bash
+
+
+@pytest.mark.skipif(not IS_WIN, reason="needs Git Bash and a Scripts directory")
+def test_bash_relocation_resolves_under_git_bash(git_bash: Path, moved_bash_activate: Path) -> None:
     result: Final = subprocess.run(
-        [str(bash), "-c", 'source "$1" && cygpath -w "$VIRTUAL_ENV"', "bash", str(moved_bash_activate)],
+        [str(git_bash), "-c", 'source "$1" && cygpath -w "$VIRTUAL_ENV"', "bash", str(moved_bash_activate)],
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -488,8 +511,7 @@ def test_bash(raise_on_non_source_class, hashing_enabled, activation_tester) -> 
 
 
 @pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
-@pytest.mark.parametrize("mode", [pytest.param("eval", id="eval"), pytest.param("stdin", id="stdin")])
-def test_bash_relocation_without_source_preserves_path(moved_bash_activate: Path, mode: str) -> None:
+def test_bash_relocation_eval_without_source_preserves_path(moved_bash_activate: Path) -> None:
     result: Final = subprocess.run(
         [
             _BASH,
@@ -499,12 +521,21 @@ def test_bash_relocation_without_source_preserves_path(moved_bash_activate: Path
             'eval "$(cat "$1")"; printf "%s|%s" "$PATH" "${VIRTUAL_ENV-unset}"',
             "test",
             str(moved_bash_activate),
-        ]
-        if mode == "eval"
-        else [_BASH, "--noprofile", "--norc"],
-        input=None
-        if mode == "eval"
-        else f'{moved_bash_activate.read_text(encoding="utf-8")}\nprintf "%s|%s" "$PATH" "${{VIRTUAL_ENV-unset}}"',
+        ],
+        env={"PATH": "/usr/bin:/bin"},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=True,
+    )
+    assert result.stdout == "/usr/bin:/bin|unset"
+
+
+@pytest.mark.skipif(IS_WIN or _BASH is None, reason="requires POSIX bash")
+def test_bash_relocation_stdin_without_source_preserves_path(moved_bash_activate: Path) -> None:
+    result: Final = subprocess.run(
+        [_BASH, "--noprofile", "--norc"],
+        input=f'{moved_bash_activate.read_text(encoding="utf-8")}\nprintf "%s|%s" "$PATH" "${{VIRTUAL_ENV-unset}}"',
         env={"PATH": "/usr/bin:/bin"},
         capture_output=True,
         text=True,
@@ -562,13 +593,19 @@ def test_bash_prompt_stored_form(tmp_path: Path, setup: str) -> None:
 @pytest.mark.parametrize(
     "child",
     [
-        pytest.param(["bash", "--noprofile", "--norc", "-i"], id="child-bash"),
-        pytest.param(["dash", "-i"], id="child-dash"),
+        pytest.param(
+            ["bash", "--noprofile", "--norc", "-i"],
+            id="child-bash",
+            marks=pytest.mark.skipif(shutil.which("bash") is None, reason="bash is not installed"),
+        ),
+        pytest.param(
+            ["dash", "-i"],
+            id="child-dash",
+            marks=pytest.mark.skipif(shutil.which("dash") is None, reason="dash is not installed"),
+        ),
     ],
 )
 def test_bash_child_shell_draws_inherited_prompt(tmp_path: Path, child: list[str]) -> None:
-    if shutil.which(child[0]) is None:
-        pytest.skip(f"{child[0]} is not installed")
     subprocess.run(
         ["bash", "--norc", "--noprofile", "-c", f"export PS1='$(touch CANARY)'; {shlex.join(child)} <<<exit"],
         cwd=tmp_path,
