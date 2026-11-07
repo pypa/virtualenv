@@ -30,6 +30,7 @@ from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
 from virtualenv.create.pyenv_cfg import PyEnvCfg
 from virtualenv.create.via_global_ref import api
+from virtualenv.create.via_global_ref.api import ViaGlobalRefApi
 from virtualenv.create.via_global_ref.builtin.cpython.common import is_mac_os_framework, is_macos_brew
 from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_WIN, fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.run import cli_run, session_via_cli
@@ -1044,9 +1045,9 @@ def list_files(path):
 
 def test_install_patch_skipped_on_py310(tmp_path, mocker) -> None:
     interpreter = mocker.create_autospec(PythonInfo, instance=True, version_info=(3, 10, 0))
-    creator = mocker.create_autospec(api.ViaGlobalRefApi, instance=True, purelib=tmp_path, interpreter=interpreter)
+    creator = mocker.create_autospec(ViaGlobalRefApi, instance=True, purelib=tmp_path, interpreter=interpreter)
     creator.env_patch_text.return_value = "import _virtualenv"
-    api.ViaGlobalRefApi.install_patch(creator)
+    ViaGlobalRefApi.install_patch(creator)
     assert not (tmp_path / "_virtualenv.pth").exists()
     assert not (tmp_path / "_virtualenv.py").exists()
     creator.env_patch_text.assert_not_called()
@@ -1054,9 +1055,9 @@ def test_install_patch_skipped_on_py310(tmp_path, mocker) -> None:
 
 def test_install_patch_written_on_py39(tmp_path, mocker) -> None:
     interpreter = mocker.create_autospec(PythonInfo, instance=True, version_info=(3, 9, 21))
-    creator = mocker.create_autospec(api.ViaGlobalRefApi, instance=True, purelib=tmp_path, interpreter=interpreter)
+    creator = mocker.create_autospec(ViaGlobalRefApi, instance=True, purelib=tmp_path, interpreter=interpreter)
     creator.env_patch_text.return_value = "import _virtualenv"
-    api.ViaGlobalRefApi.install_patch(creator)
+    ViaGlobalRefApi.install_patch(creator)
     assert (tmp_path / "_virtualenv.pth").read_text(encoding="utf-8") == "import _virtualenv"
     assert (tmp_path / "_virtualenv.py").read_text(encoding="utf-8") == "import _virtualenv"
 
