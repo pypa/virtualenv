@@ -1,15 +1,8 @@
-"""Property tests for the pyvenv.cfg reader and writer.
-
-pyvenv.cfg is a line-based format with no escape syntax, so the invariant that matters is that a value can never be read
-back as extra configuration. These properties are what caught #3247: a prompt containing a line boundary used to inject
-arbitrary keys, overriding any key written before it, including ``home``.
-
-"""
-
 from __future__ import annotations
 
 import os
 from collections import OrderedDict
+from typing import Final
 
 import pytest
 from hypothesis import example, given
@@ -20,16 +13,16 @@ from virtualenv.create.pyenv_cfg import PyEnvCfg
 pytestmark = pytest.mark.property
 
 # Anything str.splitlines() treats as a boundary is what makes a value escape its own line.
-LINE_BOUNDARIES = "\n\r\v\f\x1c\x1d\x1e\x85" + chr(0x2028) + chr(0x2029)
+_LINE_BOUNDARIES: Final[str] = f"\n\r\v\f\x1c\x1d\x1e\x85{chr(0x2028)}{chr(0x2029)}"
 
 # Lone surrogates are excluded throughout: the file is UTF-8, so they cannot be written at all, and
 # the same is true of the stdlib venv. That is a limit of the format rather than of this code.
-printable = st.characters(blacklist_categories=("Cs",), max_codepoint=0x2100)
+_PRINTABLE = st.characters(blacklist_categories=("Cs",), max_codepoint=0x2100)
 
-keys = st.text(
-    st.characters(blacklist_categories=("Cs",), blacklist_characters="=" + LINE_BOUNDARIES), min_size=1
+_KEYS = st.text(
+    st.characters(blacklist_categories=("Cs",), blacklist_characters=f"={_LINE_BOUNDARIES}"), min_size=1
 ).filter(lambda k: k.strip() == k and not k.startswith("#"))
-contents = st.dictionaries(keys, st.text(printable), max_size=6)
+contents = st.dictionaries(_KEYS, st.text(_PRINTABLE), max_size=6)
 
 
 def _round_trip(content: dict[str, str], tmp_path) -> dict[str, str]:
@@ -40,7 +33,7 @@ def _round_trip(content: dict[str, str], tmp_path) -> dict[str, str]:
 
 @given(content=contents)
 @example(content={"prompt": 'x"\nhome = /attacker\nprompt = "z'})
-@example(content={"prompt": "a" + chr(0x2028) + "home = /attacker"})
+@example(content={"prompt": f"a{chr(0x2028)}home = /attacker"})
 @example(content={"home": "a\r\nevil = 1"})
 def test_writing_then_reading_never_invents_keys(content, tmp_path_factory) -> None:
     """A value must never be read back as a new configuration key."""
@@ -64,8 +57,8 @@ def test_written_file_has_one_line_per_key(content, tmp_path_factory) -> None:
 
 @given(
     content=st.dictionaries(
-        keys,
-        st.text(st.characters(blacklist_categories=("Cs",), blacklist_characters=LINE_BOUNDARIES), min_size=1).filter(
+        _KEYS,
+        st.text(st.characters(blacklist_categories=("Cs",), blacklist_characters=_LINE_BOUNDARIES), min_size=1).filter(
             # write() rewrites a value naming an existing path, which is deliberate and not under test.
             lambda v: v.strip() == v and v[0] not in "'\"" and v[-1] not in "'\"" and not os.path.exists(v)
         ),

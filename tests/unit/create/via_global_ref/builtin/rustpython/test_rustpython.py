@@ -19,9 +19,7 @@ def test_can_describe_rustpython_windows(py_info: MagicMock) -> None:
 
 
 def test_can_describe_rejects_cpython() -> None:
-    interpreter = MagicMock()
-    interpreter.implementation = "CPython"
-    interpreter.os = "posix"
+    interpreter = MagicMock(implementation="CPython", os="posix")
     assert not RustPythonPosix.can_describe(interpreter)
     interpreter.os = "nt"
     assert not RustPythonWindows.can_describe(interpreter)
@@ -44,7 +42,5 @@ def test_sources_windows(py_info: MagicMock, mock_files: object) -> None:
 
 
 def test_exe_names() -> None:
-    interpreter = MagicMock()
-    interpreter.version_info = MagicMock(major=3, minor=14)
-    names = RustPythonPosix.exe_names(interpreter)
+    names = RustPythonPosix.exe_names(MagicMock(version_info=MagicMock(major=3, minor=14)))
     assert names == {"rustpython", "python", "python3", "python3.14"}

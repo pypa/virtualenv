@@ -22,8 +22,7 @@ def test_relative_path(session_app_data, monkeypatch) -> None:
     sys_executable = Path(PythonInfo.current_system(session_app_data).system_executable)
     cwd = sys_executable.parents[1]
     monkeypatch.chdir(str(cwd))
-    relative = str(sys_executable.relative_to(cwd))
-    result = get_interpreter(relative, [], session_app_data)
+    result = get_interpreter(str(sys_executable.relative_to(cwd)), [], session_app_data)
     assert result is not None
 
 
@@ -155,20 +154,20 @@ def test_discovery_absolute_path_with_try_first(tmp_path, session_app_data) -> N
 
 
 def test_absolute_path_does_not_exist(tmp_path) -> None:
-    """Test that virtualenv does not fail when an absolute path that does not exist is provided."""
+    # Test that virtualenv does not fail when an absolute path that does not exist is provided.
     session = session_via_cli(["-p", "/this/path/does/not/exist", "-p", sys.executable, str(tmp_path / "dest")])
 
     assert session.interpreter.executable == sys.executable
 
 
 def test_absolute_path_does_not_exist_fails(tmp_path) -> None:
-    """Test that virtualenv fails when a single absolute path that does not exist is provided."""
+    # Test that virtualenv fails when a single absolute path that does not exist is provided.
     with pytest.raises(RuntimeError, match="failed to find interpreter"):
         session_via_cli(["-p", "/this/path/does/not/exist", str(tmp_path / "dest")])
 
 
 def test_discovery_via_version_specifier(session_app_data) -> None:
-    """Test that version specifiers like >=3.11 work correctly through the virtualenv wrapper."""
+    # Test that version specifiers like >=3.11 work correctly through the virtualenv wrapper.
     current = PythonInfo.current_system(session_app_data)
     major, minor = current.version_info.major, current.version_info.minor
 

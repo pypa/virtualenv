@@ -16,18 +16,12 @@ if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
 _LOGGER: Final = logging.getLogger(__name__)
-_PROMPT_DISPLAY_TCSH: Final[str] = "__VIRTUAL_PROMPT_DISPLAY_TCSH__"
-_PROMPT_DISPLAY_PLAIN: Final[str] = "__VIRTUAL_PROMPT_DISPLAY_PLAIN__"
 
 
 class CShellActivator(ViaTemplateActivator):
     @classmethod
     def supports(cls, interpreter: PythonInfo) -> bool:
         return interpreter.os != "nt"
-
-    def templates(self) -> Iterator[str]:
-        yield "activate.csh"
-        yield "deactivate.csh"
 
     def generate(self, creator: Creator) -> list[Path]:
         values: Final = super().replacements(creator, creator.bin_dir)
@@ -37,6 +31,10 @@ class CShellActivator(ViaTemplateActivator):
                 (creator.bin_dir / self.as_name(template)).unlink(missing_ok=True)
             return []
         return super().generate(creator)
+
+    def templates(self) -> Iterator[str]:
+        yield "activate.csh"
+        yield "deactivate.csh"
 
     @staticmethod
     def quote(string: str) -> str:
@@ -54,13 +52,13 @@ class CShellActivator(ViaTemplateActivator):
         display: Final = collapse_line_boundaries(creator.env_name if self.flag_prompt is None else self.flag_prompt)
         return {
             **super().substitutions(values, creator),
-            _PROMPT_DISPLAY_TCSH: _prompt_literal(display, tcsh=True),
-            _PROMPT_DISPLAY_PLAIN: _prompt_literal(display, tcsh=False),
+            "__VIRTUAL_PROMPT_DISPLAY_TCSH__": _prompt_literal(display, tcsh=True),
+            "__VIRTUAL_PROMPT_DISPLAY_PLAIN__": _prompt_literal(display, tcsh=False),
         }
 
 
 def _prompt_literal(value: str, *, tcsh: bool) -> str:
-    """Prompt drawing interprets history escapes and tcsh percent codes a second time."""
+    # Prompt drawing interprets history escapes and tcsh percent codes a second time.
     parts = ["'"]
     for char in value:
         if char == "'":

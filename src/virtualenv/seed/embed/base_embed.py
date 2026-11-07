@@ -19,8 +19,7 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
-LOGGER = logging.getLogger(__name__)
-PERIODIC_UPDATE_ON_BY_DEFAULT = True
+_LOGGER = logging.getLogger(__name__)
 
 
 class BaseEmbed(Seeder, ABC):
@@ -43,7 +42,7 @@ class BaseEmbed(Seeder, ABC):
         self.periodic_update = not options.no_periodic_update
 
         if options.wheel is not None or options.no_wheel:
-            LOGGER.warning(
+            _LOGGER.warning(
                 "DEPRECATION: the --wheel and --no-wheel options do nothing; virtualenv no longer bundles wheel. "
                 "They will be removed in a release after 2026-12. Stop passing them.",
             )
@@ -51,6 +50,13 @@ class BaseEmbed(Seeder, ABC):
 
         if not self.distribution_to_versions():
             self.enabled = False
+
+    def distribution_to_versions(self) -> dict[str, str]:
+        return {
+            distribution: getattr(self, f"{distribution}_version")
+            for distribution in self.distributions()
+            if getattr(self, f"no_{distribution}", None) is False and getattr(self, f"{distribution}_version") != "none"
+        }
 
     @classmethod
     def distributions(cls) -> dict[str, str]:
@@ -60,12 +66,21 @@ class BaseEmbed(Seeder, ABC):
             "wheel": Version.bundle,
         }
 
-    def distribution_to_versions(self) -> dict[str, str]:
-        return {
-            distribution: getattr(self, f"{distribution}_version")
-            for distribution in self.distributions()
-            if getattr(self, f"no_{distribution}", None) is False and getattr(self, f"{distribution}_version") != "none"
-        }
+    def __repr__(self) -> str:
+        result = self.__class__.__name__
+        result += "("
+        if self.extra_search_dir:
+            result += f"extra_search_dir={', '.join(str(i) for i in self.extra_search_dir)},"
+        result += f"download={self.download},"
+        for distribution in self.distributions():
+            if getattr(self, f"no_{distribution}", None):
+                continue
+            version = getattr(self, f"{distribution}_version", None)
+            if version == "none":
+                continue
+            ver = f"={version or 'latest'}"
+            result += f" {distribution}{ver},"
+        return result[:-1] + ")"
 
     @classmethod
     def cannot_seed(cls, interpreter: PythonInfo) -> str | None:
@@ -147,24 +162,8 @@ class BaseEmbed(Seeder, ABC):
             dest="no_periodic_update",
             action="store_true",
             help="disable the periodic (once every 14 days) update of the embedded wheels",
-            default=not PERIODIC_UPDATE_ON_BY_DEFAULT,
+            default=not True,
         )
-
-    def __repr__(self) -> str:
-        result = self.__class__.__name__
-        result += "("
-        if self.extra_search_dir:
-            result += f"extra_search_dir={', '.join(str(i) for i in self.extra_search_dir)},"
-        result += f"download={self.download},"
-        for distribution in self.distributions():
-            if getattr(self, f"no_{distribution}", None):
-                continue
-            version = getattr(self, f"{distribution}_version", None)
-            if version == "none":
-                continue
-            ver = f"={version or 'latest'}"
-            result += f" {distribution}{ver},"
-        return result[:-1] + ")"
 
 
 def _seed_version(value: str) -> str:

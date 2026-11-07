@@ -47,14 +47,14 @@ class ComponentBuilder(PluginLoader):
         self.parser = parser.add_argument_group(title=name)
         self.add_selector_arg_parse(name, list(self.possible))
 
+    def add_selector_arg_parse(self, name: str, choices: Sequence[str]) -> None:
+        raise NotImplementedError
+
     @classmethod
     def options(cls, key: str) -> OrderedDict[str, type]:
         if cls._OPTIONS is None:
             cls._OPTIONS = cls.entry_points_for(key)
         return cls._OPTIONS
-
-    def add_selector_arg_parse(self, name: str, choices: Sequence[str]) -> None:
-        raise NotImplementedError
 
     def handle_selected_arg_parse(self, options: VirtualEnvOptions) -> str:
         selected = getattr(options, self.name)

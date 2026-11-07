@@ -22,8 +22,7 @@ def setup_report(verbosity: int, show_pid: bool = False) -> int:  # ruff:ignore[
     level = LEVELS[verbosity]
     msg_format = "%(message)s"
     if level <= logging.DEBUG:
-        locate = "module"
-        msg_format = f"%(relativeCreated)d {msg_format} [%(levelname)s %({locate})s:%(lineno)d]"
+        msg_format = f"%(relativeCreated)d {msg_format} [%(levelname)s %({'module'})s:%(lineno)d]"
     if show_pid:
         msg_format = f"[%(process)d] {msg_format}"
     formatter = logging.Formatter(msg_format)
@@ -32,8 +31,7 @@ def setup_report(verbosity: int, show_pid: bool = False) -> int:  # ruff:ignore[
     LOGGER.setLevel(logging.NOTSET)
     stream_handler.setFormatter(formatter)
     LOGGER.addHandler(stream_handler)
-    level_name = logging.getLevelName(level)
-    LOGGER.debug("setup logging to %s", level_name)
+    LOGGER.debug("setup logging to %s", logging.getLevelName(level))
     logging.getLogger("distlib").setLevel(logging.ERROR)
     return verbosity
 
@@ -45,6 +43,6 @@ def _clean_handlers(log: logging.Logger) -> None:
 
 __all__ = [
     "LEVELS",
-    "MAX_LEVEL",
+    "LOGGER",
     "setup_report",
 ]

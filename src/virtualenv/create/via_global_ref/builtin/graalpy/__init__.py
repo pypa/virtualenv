@@ -16,18 +16,13 @@ if TYPE_CHECKING:
 
 class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
     @classmethod
-    @abstractmethod
-    def _native_lib(cls, lib_dir: Path, platform: str) -> Path:
-        """Return the path to the native library for this platform."""
-        raise NotImplementedError
-
-    @classmethod
     def can_describe(cls, interpreter: PythonInfo) -> bool:
         return interpreter.implementation == "GraalPy" and super().can_describe(interpreter)
 
     @classmethod
-    def exe_stem(cls) -> str:
-        return "graalpy"
+    def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], RefMust, RefWhen], None, None]:  # ty: ignore[invalid-method-override]
+        host = Path(interpreter.system_exe)
+        yield host, sorted(f"{name}{cls.suffix}" for name in cls.exe_names(interpreter)), RefMust.NA, RefWhen.ANY
 
     @classmethod
     def exe_names(cls, interpreter: PythonInfo) -> set[str]:
@@ -39,10 +34,8 @@ class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
         }
 
     @classmethod
-    def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], RefMust, RefWhen], None, None]:  # ty: ignore[invalid-method-override]
-        host = Path(interpreter.system_exe)
-        targets = sorted(f"{name}{cls.suffix}" for name in cls.exe_names(interpreter))
-        yield host, targets, RefMust.NA, RefWhen.ANY
+    def exe_stem(cls) -> str:
+        return "graalpy"
 
     @classmethod
     def sources(cls, interpreter: PythonInfo) -> Generator[PathRefToDest]:  # ty: ignore[invalid-method-override]
@@ -59,6 +52,12 @@ class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
             jvm_dir = python_dir / jvm_dir_name
             if jvm_dir.exists():
                 yield PathRefToDest(jvm_dir, dest=lambda self, s: self.bin_dir.parent / s.name)
+
+    @classmethod
+    @abstractmethod
+    def _native_lib(cls, lib_dir: Path, platform: str) -> Path:
+        # Return the path to the native library for this platform.
+        raise NotImplementedError
 
     @classmethod
     def _shared_libs(cls, python_dir: Path) -> Iterator[Path]:

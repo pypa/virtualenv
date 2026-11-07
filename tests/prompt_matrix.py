@@ -1,5 +1,3 @@
-"""Prompt payloads, the shell states that change how a stored prompt is read, and one driver for every activator."""
-
 from __future__ import annotations
 
 import os
@@ -177,7 +175,7 @@ PROMPT_CASES: Final = [
 
 
 def unavailable(shell: str, action: str) -> str | None:
-    """Why the shell, or the child shell the action starts, cannot run here; None when both can."""
+    # Why the shell, or the child shell the action starts, cannot run here; None when both can.
     if shell not in {"nushell", "powershell"} and (shell == "batch") != IS_WIN:
         return f"{shell} activation needs {'Windows' if shell == 'batch' else 'a POSIX system'}"
     child: Final = action.removeprefix("child-") if action.startswith("child-") else None
@@ -188,7 +186,7 @@ def unavailable(shell: str, action: str) -> str | None:
 
 
 def generate_script(shell: str, root: Path, prompt: str) -> Path:
-    """Render the shell's activation script in process; the scripts depend on the prompt, not on a real interpreter."""
+    # Render the shell's activation script in process; the scripts depend on the prompt, not on a real interpreter.
     activator: Final = {
         "bash": BashActivator,
         "zsh": BashActivator,
@@ -214,7 +212,7 @@ def generate_script(shell: str, root: Path, prompt: str) -> Path:
 
 
 def run_prompt(shell: str, script: Path, state: str, action: str, cwd: Path) -> subprocess.CompletedProcess[str]:
-    """Activate under the state, apply the later action, and draw the prompt the way that shell does."""
+    # Activate under the state, apply the later action, and draw the prompt the way that shell does.
     spec: Final = SHELLS[shell]
     before: Final = spec.states[state]
     after: Final = spec.actions[action]
@@ -266,15 +264,8 @@ def run_prompt(shell: str, script: Path, state: str, action: str, cwd: Path) -> 
     )
 
 
-def drawn_prompt(shell: str, result: subprocess.CompletedProcess[str]) -> str:
-    """The last prompt an interactive bash, zsh or tcsh drew, up to the __END__ sentinel."""
-    output: Final = result.stdout if shell == "cshell" else result.stderr
-    last: Final = output.rsplit("__END__", 1)[0].rsplit("\n", 1)[-1]
-    return (last.rsplit("> ", 1)[-1] if shell == "cshell" else last) + "__END__"
-
-
 def prompt_shown(shell: str, result: subprocess.CompletedProcess[str], prompt: str, state: str, action: str) -> bool:
-    """Whether the shell showed the prompt the way its display rule says."""
+    # Whether the shell showed the prompt the way its display rule says.
     if shell in {"bash", "zsh", "cshell"}:
         pattern: Final = _drawn_pattern(shell, prompt, state, action)
         return re.fullmatch(rf"\({pattern}\) __END__", drawn_prompt(shell, result)) is not None
@@ -293,6 +284,13 @@ def _drawn_pattern(shell: str, prompt: str, state: str, action: str) -> str:
         return "!".join(r"\d+".join(map(re.escape, piece.split("!"))) for piece in prompt.split("!!"))
     # without promptvars only the escape-decoding pass runs, so the escapes for the expansion pass stay visible
     return re.escape(prompt if promptvars else prompt.replace("\\", "\\\\").replace("`", "\\`"))
+
+
+def drawn_prompt(shell: str, result: subprocess.CompletedProcess[str]) -> str:
+    # The last prompt an interactive bash, zsh or tcsh drew, up to the __END__ sentinel.
+    output: Final = result.stdout if shell == "cshell" else result.stderr
+    last: Final = output.rsplit("__END__", 1)[0].rsplit("\n", 1)[-1]
+    return (last.rsplit("> ", 1)[-1] if shell == "cshell" else last) + "__END__"
 
 
 def _printed_text(shell: str, prompt: str, action: str) -> str:

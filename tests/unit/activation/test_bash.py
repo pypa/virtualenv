@@ -117,8 +117,7 @@ def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
             self.env_name = "my-env"
 
     creator = MockCreator(tmp_path)
-    options = Namespace(prompt=None)
-    activator = BashActivator(options)
+    activator = BashActivator(Namespace(prompt=None))
 
     # WHEN
     activator.generate(creator)
@@ -286,8 +285,7 @@ def test_bash_relocation_stops_when_unavailable(tmp_path: Path, moved_bash_activ
         [
             _BASH,
             "-c",
-            ("unset BASH_VERSION; " if failure == "shell" else "")
-            + '. "$1"; printf "%s|%s|%s" "$?" "$PATH" "${VIRTUAL_ENV-unset}"',
+            f'{"unset BASH_VERSION; " if failure == "shell" else ""}. "$1"; printf "%s|%s|%s" "$?" "$PATH" "${{VIRTUAL_ENV-unset}}"',
             "activate",
             str(moved_bash_activate),
         ],
@@ -506,7 +504,7 @@ def test_bash_relocation_without_source_preserves_path(moved_bash_activate: Path
         else [_BASH, "--noprofile", "--norc"],
         input=None
         if mode == "eval"
-        else moved_bash_activate.read_text(encoding="utf-8") + '\nprintf "%s|%s" "$PATH" "${VIRTUAL_ENV-unset}"',
+        else f'{moved_bash_activate.read_text(encoding="utf-8")}\nprintf "%s|%s" "$PATH" "${{VIRTUAL_ENV-unset}}"',
         env={"PATH": "/usr/bin:/bin"},
         capture_output=True,
         text=True,

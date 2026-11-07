@@ -49,7 +49,7 @@ def test_batch_clears_pythonhome(tmp_path: Path) -> None:
 
 @pytest.fixture(scope="session")
 def special_char_name():
-    """Exclude ampersands, which batch activation does not support in paths."""
+    # Exclude ampersands, which batch activation does not support in paths.
     base = "'\";e-$ èрт🚒♞中片-j"
     if IS_WIN:
         base = base.replace('"', "").replace(";", "")
@@ -57,8 +57,7 @@ def special_char_name():
     result = ""
     for char in base:
         try:
-            trip = char.encode(encoding, errors="strict").decode(encoding)
-            if char == trip:
+            if char == char.encode(encoding, errors="strict").decode(encoding):
                 result += char
         except ValueError:  # ruff:ignore[try-except-in-loop]
             continue
@@ -67,8 +66,7 @@ def special_char_name():
 
 
 def test_batch_pydoc_bat_quoting(tmp_path) -> None:
-    """Test that pydoc.bat properly quotes python.exe path to handle spaces."""
-
+    # Test that pydoc.bat properly quotes python.exe path to handle spaces.
     # GIVEN: A mock interpreter
     class MockInterpreter:
         os = "nt"
@@ -85,8 +83,7 @@ def test_batch_pydoc_bat_quoting(tmp_path) -> None:
             self.env_name = "test-env"
 
     creator = MockCreator(tmp_path)
-    options = Namespace(prompt=None)
-    activator = BatchActivator(options)
+    activator = BatchActivator(Namespace(prompt=None))
 
     # WHEN: Generate activation scripts
     activator.generate(creator)
@@ -124,8 +121,7 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
             self.env_name = "my-env"
 
     creator = MockCreator(tmp_path)
-    options = Namespace(prompt=None)
-    activator = BatchActivator(options)
+    activator = BatchActivator(Namespace(prompt=None))
 
     # WHEN
     activator.generate(creator)
@@ -306,11 +302,9 @@ def test_batch_output(activation_python, activation_tester_class, activation_tes
             self.unix_line_ending = False
 
         def _get_test_lines(self, activate_script):
-            """Build an intermediary script that activates, echoes the current echo setting, then deactivates.
-
-            This is what proves echo state survives activation and deactivation without leaking unwanted output.
-
-            """
+            # Build an intermediary script that activates, echoes the current echo setting, then deactivates.
+            #
+            # This is what proves echo state survives activation and deactivation without leaking unwanted output.
             intermediary_script_path = str(tmp_path / "intermediary.bat")
             activate_script_quoted = self.quote(str(activate_script))
             return [
@@ -321,14 +315,14 @@ def test_batch_output(activation_python, activation_tester_class, activation_tes
                 f"@call {intermediary_script_path}",
             ]
 
-        def assert_output(self, out, raw, tmp_path) -> None:  # ruff:ignore[unused-method-argument]
-            assert out[0] == "ECHO is on.", raw
-
         def quote(self, s):
             if '"' in s or " " in s:
                 text = s.replace('"', r"\"")
                 return f'"{text}"'
             return s
+
+        def assert_output(self, out, raw, tmp_path) -> None:  # ruff:ignore[unused-method-argument]
+            assert out[0] == "ECHO is on.", raw
 
         def print_prompt(self) -> str:
             return 'echo "%PROMPT:$$=$%"'

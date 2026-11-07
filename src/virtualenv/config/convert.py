@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from argparse import Action
     from typing import Any
 
-LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 class TypeData:
@@ -54,8 +54,7 @@ class ListType(TypeData):
         values = self.split_values(value)
         result = []
         for a_value in values:
-            sub_values = a_value.split(os.pathsep)
-            result.extend(sub_values)
+            result.extend(a_value.split(os.pathsep))
         return [self.as_type(i) for i in result]
 
     def split_values(self, value: str | bytes | list[str]) -> list[str]:
@@ -63,6 +62,8 @@ class ListType(TypeData):
 
         First this is done by newlines. If there were no newlines in the text, then we next try to split by comma.
 
+        :param value:
+        :returns:
         """
         if isinstance(value, bytes):
             value = value.decode()
@@ -76,11 +77,17 @@ class ListType(TypeData):
 
 
 def convert(value: str, as_type: TypeData, source: str) -> Any:  # ruff:ignore[any-type]
-    """Convert the value as a given type where the value comes from the given source."""
+    """Convert the value as a given type where the value comes from the given source.
+
+    :param value:
+    :param as_type:
+    :param source:
+    :returns:
+    """
     try:
         return as_type.convert(value)
     except Exception as exception:
-        LOGGER.warning("%s failed to convert %r as %r because %r", source, value, as_type, exception)
+        _LOGGER.warning("%s failed to convert %r as %r because %r", source, value, as_type, exception)
         raise
 
 
@@ -90,12 +97,13 @@ _CONVERT = {bool: BoolType, type(None): NoneType, list: ListType}
 def get_type(action: Action) -> TypeData:
     # a flag that stores a bool over an unset default is tri-state, so its env var and ini values read as bools
     default_type = bool if action.default is None and isinstance(action.const, bool) else type(action.default)
-    as_type = default_type if action.type is None else action.type
-    return _CONVERT.get(default_type, TypeData)(default_type, as_type)  # ty: ignore[invalid-argument-type]
+    return _CONVERT.get(default_type, TypeData)(default_type, default_type if action.type is None else action.type)  # ty: ignore[invalid-argument-type]
 
 
 __all__ = [
     "BoolType",
+    "ListType",
+    "TypeData",
     "convert",
     "get_type",
 ]

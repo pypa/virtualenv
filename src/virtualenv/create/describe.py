@@ -14,7 +14,12 @@ if TYPE_CHECKING:
 
 
 class Describe:
-    """Given a host interpreter tell us information about what the created interpreter might look like."""
+    """Given a host interpreter tell us information about what the created interpreter might look like.
+
+    :param dest:
+    :param interpreter:
+    :cvar suffix:
+    """
 
     suffix = ".exe" if IS_WIN else ""
 
@@ -27,36 +32,22 @@ class Describe:
         self._conf_vars = None
 
     @property
-    def bin_dir(self) -> Path:
-        return self.script_dir
-
-    @property
-    def script_dir(self) -> Path:
-        return self.dest / self.interpreter.install_path("scripts")
-
-    @property
-    def purelib(self) -> Path:
-        return self.dest / self.interpreter.install_path("purelib")
+    def libs(self) -> list[Path]:
+        return list(OrderedDict(((self.platlib, None), (self.purelib, None))).keys())
 
     @property
     def platlib(self) -> Path:
         return self.dest / self.interpreter.install_path("platlib")
 
     @property
-    def libs(self) -> list[Path]:
-        return list(OrderedDict(((self.platlib, None), (self.purelib, None))).keys())
+    def purelib(self) -> Path:
+        return self.dest / self.interpreter.install_path("purelib")
 
     @property
     def stdlib(self) -> Path:
         if self._stdlib is None:
             self._stdlib = Path(self.interpreter.sysconfig_path("stdlib", config_var=self._config_vars))
         return self._stdlib
-
-    @property
-    def stdlib_platform(self) -> Path:
-        if self._stdlib_platform is None:
-            self._stdlib_platform = Path(self.interpreter.sysconfig_path("platstdlib", config_var=self._config_vars))
-        return self._stdlib_platform
 
     @property
     def _config_vars(self) -> dict[str, Any]:
@@ -70,10 +61,11 @@ class Describe:
             return dict(sys_vars)
         return {k: (to if isinstance(v, str) and v.startswith(prefix) else v) for k, v in sys_vars.items()}
 
-    @classmethod
-    def can_describe(cls, interpreter: PythonInfo) -> bool:  # ruff:ignore[unused-class-method-argument]
-        """Knows means it knows how the output will look."""
-        return True
+    @property
+    def stdlib_platform(self) -> Path:
+        if self._stdlib_platform is None:
+            self._stdlib_platform = Path(self.interpreter.sysconfig_path("platstdlib", config_var=self._config_vars))
+        return self._stdlib_platform
 
     @property
     def env_name(self) -> str:
@@ -83,10 +75,30 @@ class Describe:
     def exe(self) -> Path:
         return self.bin_dir / f"{self.exe_stem()}{self.suffix}"
 
+    @property
+    def bin_dir(self) -> Path:
+        return self.script_dir
+
+    @property
+    def script_dir(self) -> Path:
+        return self.dest / self.interpreter.install_path("scripts")
+
     @classmethod
     def exe_stem(cls) -> str:
-        """Executable name without suffix - there seems to be no standard way to get this without creating it."""
+        """Executable name without suffix - there seems to be no standard way to get this without creating it.
+
+        :returns:
+        """
         raise NotImplementedError
+
+    @classmethod
+    def can_describe(cls, interpreter: PythonInfo) -> bool:  # ruff:ignore[unused-class-method-argument]
+        """Knows means it knows how the output will look.
+
+        :param interpreter:
+        :returns:
+        """
+        return True
 
     def script(self, name: str) -> Path:
         return self.script_dir / f"{name}{self.suffix}"

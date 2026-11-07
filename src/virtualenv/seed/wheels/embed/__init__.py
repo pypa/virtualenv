@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import zipfile
 from pathlib import Path
+from typing import Final
 
 from virtualenv.info import IS_ZIPAPP, ROOT
 from virtualenv.seed.wheels.util import Wheel
@@ -62,7 +63,7 @@ BUNDLE_SHA256 = {
     "setuptools-84.2.1-py3-none-any.whl": "ca140b45d5325a9478f880e351484f62fef15f336462e449ca0c03c873d589c2",
 }
 
-_VERIFIED_WHEELS: set[str] = set()
+_VERIFIED_WHEELS: Final[set[str]] = set()
 
 
 def get_embed_wheel(distribution: str, for_py_version: str | None) -> Wheel | None:
@@ -101,8 +102,7 @@ def _verify_bundled_wheel(path: Path) -> None:
     if expected is None:
         msg = f"bundled wheel {name} has no recorded sha256 in BUNDLE_SHA256"
         raise RuntimeError(msg)
-    actual = _hash_bundled_wheel(path)
-    if actual != expected:
+    if (actual := _hash_bundled_wheel(path)) != expected:
         msg = f"bundled wheel {name} sha256 mismatch: expected {expected}, got {actual}"
         raise RuntimeError(msg)
     _VERIFIED_WHEELS.add(name)

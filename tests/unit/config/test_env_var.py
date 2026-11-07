@@ -65,8 +65,7 @@ def test_split_values(value, expected) -> None:
 
 def test_extra_search_dir_via_env_var(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
-    value = f"a{os.linesep}0{os.linesep}b{os.pathsep}c"
-    monkeypatch.setenv("VIRTUALENV_EXTRA_SEARCH_DIR", str(value))
+    monkeypatch.setenv("VIRTUALENV_EXTRA_SEARCH_DIR", str(f"a{os.linesep}0{os.linesep}b{os.pathsep}c"))
     (tmp_path / "a").mkdir()
     (tmp_path / "b").mkdir()
     (tmp_path / "c").mkdir()

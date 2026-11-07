@@ -10,23 +10,13 @@ IMPLEMENTATION = platform.python_implementation()
 IS_PYPY = IMPLEMENTATION == "PyPy"
 IS_GRAALPY = IMPLEMENTATION == "GraalVM"
 IS_RUSTPYTHON = IMPLEMENTATION == "RustPython"
-IS_CPYTHON = IMPLEMENTATION == "CPython"
+_IS_CPYTHON = IMPLEMENTATION == "CPython"
 IS_WIN = sys.platform == "win32"
-IS_MAC_ARM64 = sys.platform == "darwin" and platform.machine() == "arm64"
+_IS_MAC_ARM64 = sys.platform == "darwin" and platform.machine() == "arm64"
 ROOT = os.path.realpath(os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir))
 IS_ZIPAPP = os.path.isfile(ROOT)
 _CAN_SYMLINK = _FS_CASE_SENSITIVE = None
-LOGGER = logging.getLogger(__name__)
-
-
-def fs_is_case_sensitive() -> bool:
-    global _FS_CASE_SENSITIVE  # ruff:ignore[global-statement]
-
-    if _FS_CASE_SENSITIVE is None:
-        with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:
-            _FS_CASE_SENSITIVE = not os.path.exists(tmp_file.name.lower())
-            LOGGER.debug("filesystem is %scase-sensitive", "" if _FS_CASE_SENSITIVE else "not ")
-    return _FS_CASE_SENSITIVE
+_LOGGER = logging.getLogger(__name__)
 
 
 def fs_supports_symlink() -> bool:
@@ -38,8 +28,7 @@ def fs_supports_symlink() -> bool:
             # Creating a symlink can fail for a variety of reasons, indicating that the filesystem does not support it.
             # E.g. on Linux with a VFAT partition mounted.
             with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:
-                temp_dir = os.path.dirname(tmp_file.name)
-                dest = os.path.join(temp_dir, f"{tmp_file.name}-{'b'}")
+                dest = os.path.join(os.path.dirname(tmp_file.name), f"{tmp_file.name}-{'b'}")
                 try:
                     os.symlink(tmp_file.name, dest)
                     can = True
@@ -48,25 +37,33 @@ def fs_supports_symlink() -> bool:
                 finally:
                     if os.path.lexists(dest):
                         os.remove(dest)
-            LOGGER.debug("symlink on filesystem does%s work", "" if can else " not")
+            _LOGGER.debug("symlink on filesystem does%s work", "" if can else " not")
         _CAN_SYMLINK = can
     return _CAN_SYMLINK
 
 
-def fs_path_id(path: str) -> str:
+def _fs_path_id(path: str) -> str:
     return path.casefold() if fs_is_case_sensitive() else path
 
 
-__all__ = (
-    "IS_CPYTHON",
+def fs_is_case_sensitive() -> bool:
+    global _FS_CASE_SENSITIVE  # ruff:ignore[global-statement]
+
+    if _FS_CASE_SENSITIVE is None:
+        with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:
+            _FS_CASE_SENSITIVE = not os.path.exists(tmp_file.name.lower())
+            _LOGGER.debug("filesystem is %scase-sensitive", "" if _FS_CASE_SENSITIVE else "not ")
+    return _FS_CASE_SENSITIVE
+
+
+__all__ = [
+    "IMPLEMENTATION",
     "IS_GRAALPY",
-    "IS_MAC_ARM64",
     "IS_PYPY",
     "IS_RUSTPYTHON",
     "IS_WIN",
     "IS_ZIPAPP",
     "ROOT",
     "fs_is_case_sensitive",
-    "fs_path_id",
     "fs_supports_symlink",
-)
+]

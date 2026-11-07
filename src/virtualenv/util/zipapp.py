@@ -6,22 +6,12 @@ from pathlib import Path
 
 from virtualenv.info import ROOT
 
-LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 def read(full_path: str | Path) -> str:
-    sub_file = _get_path_within_zip(full_path)
-    with zipfile.ZipFile(ROOT, "r") as zip_file, zip_file.open(sub_file) as file_handler:
+    with zipfile.ZipFile(ROOT, "r") as zip_file, zip_file.open(_get_path_within_zip(full_path)) as file_handler:
         return file_handler.read().decode("utf-8")
-
-
-def extract(full_path: str | Path, dest: Path) -> None:
-    LOGGER.debug("extract %s to %s", full_path, dest)
-    sub_file = _get_path_within_zip(full_path)
-    with zipfile.ZipFile(ROOT, "r") as zip_file:
-        info = zip_file.getinfo(sub_file)
-        info.filename = dest.name
-        zip_file.extract(info, str(dest.parent))
 
 
 def _get_path_within_zip(full_path: str | Path) -> str:
@@ -37,6 +27,15 @@ def _get_path_within_zip(full_path: str | Path) -> str:
         raise RuntimeError(msg) from exc
     # Zip entries always use forward slashes regardless of platform.
     return relative.as_posix()
+
+
+def extract(full_path: str | Path, dest: Path) -> None:
+    _LOGGER.debug("extract %s to %s", full_path, dest)
+    sub_file = _get_path_within_zip(full_path)
+    with zipfile.ZipFile(ROOT, "r") as zip_file:
+        info = zip_file.getinfo(sub_file)
+        info.filename = dest.name
+        zip_file.extract(info, str(dest.parent))
 
 
 __all__ = [

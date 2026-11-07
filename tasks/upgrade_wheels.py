@@ -18,12 +18,11 @@ from typing import Final, NoReturn
 
 from virtualenv.util.path import write_file
 
-STRICT = "UPGRADE_ADVISORY" not in os.environ
+_STRICT = "UPGRADE_ADVISORY" not in os.environ
 
-BUNDLED = ["pip", "setuptools"]
-SUPPORT = [(3, i) for i in range(9, 17)]
-DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "wheels" / "embed"
-NOTICES_DEST = Path(__file__).resolve().parents[1] / "THIRD-PARTY-NOTICES.md"
+_SUPPORT = [(3, i) for i in range(9, 17)]
+_DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "wheels" / "embed"
+_NOTICES_DEST = Path(__file__).resolve().parents[1] / "THIRD-PARTY-NOTICES.md"
 
 
 def run() -> NoReturn:
@@ -31,7 +30,7 @@ def run() -> NoReturn:
         render_init()
         render_notices()
         raise SystemExit(0)
-    old_batch = {i.name for i in DEST.iterdir() if i.suffix == ".whl"}
+    old_batch = {i.name for i in _DEST.iterdir() if i.suffix == ".whl"}
     with TemporaryDirectory() as temp:
         folders = _download_all(Path(temp))
         new_batch = {i.name: i for f in folders for i in Path(f).iterdir()}
@@ -40,7 +39,7 @@ def run() -> NoReturn:
         _sync_dest(new_packages, remove_packages, new_batch)
         added = collect_package_versions(new_packages)
         removed = collect_package_versions(remove_packages)
-        outcome = (1 if STRICT else 0) if (added or removed) else 0
+        outcome = (1 if _STRICT else 0) if (added or removed) else 0
         print(f"Outcome {outcome} added {added} removed {removed}")  # ruff:ignore[print]
         _write_changelog(added, removed)
         render_init(folders=folders)
@@ -51,12 +50,13 @@ def run() -> NoReturn:
 def _download_all(temp_path: Path) -> dict[Path, str]:
     folders: dict[Path, str] = {}
     targets: list[Thread] = []
-    for support in SUPPORT:
+    bundled = ["pip", "setuptools"]
+    for support in _SUPPORT:
         support_ver = ".".join(str(i) for i in support)
         into = temp_path / support_ver
         into.mkdir()
         folders[into] = support_ver
-        for package in BUNDLED:
+        for package in bundled:
             thread = Thread(target=download, args=(support_ver, str(into), package))
             targets.append(thread)
             thread.start()
@@ -67,9 +67,9 @@ def _download_all(temp_path: Path) -> dict[Path, str]:
 
 def _sync_dest(new_packages: set[str], remove_packages: set[str], new_batch: dict[str, Path]) -> None:
     for package in remove_packages:
-        (DEST / package).unlink()
+        (_DEST / package).unlink()
     for package in new_packages:
-        shutil.copy2(str(new_batch[package]), DEST / package)
+        shutil.copy2(str(new_batch[package]), _DEST / package)
 
 
 def _write_changelog(added: dict[str, list[str]], removed: dict[str, list[str]]) -> None:
@@ -94,25 +94,24 @@ def _write_changelog(added: dict[str, list[str]], removed: dict[str, list[str]])
 
 
 def render_init(folders: dict[Path, str] | None = None) -> None:
-    """Write ``embed/__init__.py`` from the wheels currently in DEST.
-
-    When called from ``run()`` after a download round, ``folders`` maps each per-python-version temp folder to its
-    version string, which is how support for a wheel is determined. When called with ``--regen`` there are no downloaded
-    folders — the existing ``BUNDLE_SUPPORT`` from the current ``__init__.py`` is used so regeneration is deterministic.
-
-    """
+    # Write ``embed/__init__.py`` from the wheels currently in DEST.
+    #
+    # When called from ``run()`` after a download round, ``folders`` maps each per-python-version temp folder to its
+    # version string, which is how support for a wheel is determined. When called with ``--regen`` there are no
+    # downloaded folders — the existing ``BUNDLE_SUPPORT`` from the current ``__init__.py`` is used so regeneration is
+    # deterministic.
     if folders is None:
         support_table = _support_table_from_existing_init()
     else:
         present = {i.name: i for f in folders for i in Path(f).iterdir() if i.suffix == ".whl"}
-        support_table = OrderedDict((".".join(str(j) for j in i), []) for i in SUPPORT)
+        support_table = OrderedDict((".".join(str(j) for j in i), []) for i in _SUPPORT)
         for package in sorted(present):
             for folder, version in sorted(folders.items()):
                 if (folder / package).exists():
                     support_table[version].append(package)
         support_table = OrderedDict((k, OrderedDict((i.split("-")[0], i) for i in v)) for k, v in support_table.items())
     wheel_names = sorted({wheel for mapping in support_table.values() for wheel in mapping.values()})
-    sha_table = OrderedDict((name, _sha256(DEST / name)) for name in wheel_names)
+    sha_table = OrderedDict((name, _sha256(_DEST / name)) for name in wheel_names)
     nl = "\n"
     bundle = "".join(
         f"\n        {v!r}: {{{nl}{''.join(f'            {p!r}: {f!r},{nl}' for p, f in line.items())}        }},"
@@ -221,22 +220,21 @@ def render_init(folders: dict[Path, str] | None = None) -> None:
 
     """,
     )
-    dest_target = DEST / "__init__.py"
+    dest_target = _DEST / "__init__.py"
     dest_target.write_text(msg, encoding="utf-8")
     subprocess.run([sys.executable, "-m", "ruff", "check", str(dest_target), "--fix", "--unsafe-fixes"], check=False)
     subprocess.run([sys.executable, "-m", "ruff", "format", str(dest_target), "--preview"], check=False)
 
 
 def render_notices() -> None:
-    """Write ``THIRD-PARTY-NOTICES.md`` from the wheels currently bundled in DEST.
-
-    Reads the ``BUNDLE_SHA256`` table ``render_init`` just wrote, so the notices always match what is actually bundled.
-    Only the license of the wheel virtualenv itself redistributes is reproduced here - whatever that wheel in turn
-    vendors (pip's own ``_vendor`` tree, for example) already carries its license inside the wheel and stays there
-    rather than being duplicated at the top level.
-
-    """
-    tree = ast.parse((DEST / "__init__.py").read_text(encoding="utf-8"))
+    # Write ``THIRD-PARTY-NOTICES.md`` from the wheels currently bundled in DEST.
+    #
+    # Reads the ``BUNDLE_SHA256`` table ``render_init`` just wrote, so the notices always match what is actually
+    # bundled.
+    # Only the license of the wheel virtualenv itself redistributes is reproduced here - whatever that wheel in turn
+    # vendors (pip's own ``_vendor`` tree, for example) already carries its license inside the wheel and stays there
+    # rather than being duplicated at the top level.
+    tree = ast.parse((_DEST / "__init__.py").read_text(encoding="utf-8"))
     wheel_names: list[str] = []
     for node in tree.body:
         if isinstance(node, ast.Assign) and any(
@@ -247,7 +245,7 @@ def render_notices() -> None:
     groups: dict[tuple[str, str], list[str]] = defaultdict(list)
     for wheel_name in wheel_names:
         distribution = wheel_name.split("-")[0]
-        groups[distribution, _wheel_license_text(DEST / wheel_name)].append(wheel_name)
+        groups[distribution, _wheel_license_text(_DEST / wheel_name)].append(wheel_name)
     sections = []
     for (distribution, text), names in sorted(groups.items()):
         filenames = ", ".join(f"``{name}``" for name in sorted(names))
@@ -266,11 +264,11 @@ def render_notices() -> None:
         directory, including the licenses of anything it in turn vendors.
 
         """)
-    NOTICES_DEST.write_text(header + "\n".join(sections), encoding="utf-8")
+    _NOTICES_DEST.write_text(header + "\n".join(sections), encoding="utf-8")
     if (pre_commit := shutil.which("pre-commit")) is None:
         msg = "pre-commit must be installed to format THIRD-PARTY-NOTICES.md"
         raise RuntimeError(msg)
-    command = [pre_commit, "run", "mdformat", "--files", str(NOTICES_DEST)]
+    command = [pre_commit, "run", "mdformat", "--files", str(_NOTICES_DEST)]
     subprocess.run(command, check=False)
     subprocess.run(command, check=True)
 
@@ -278,8 +276,7 @@ def render_notices() -> None:
 def _wheel_license_text(path: Path) -> str:
     with zipfile.ZipFile(path) as archive:
         names = archive.namelist()
-        dist_info = next(name.split("/", 1)[0] for name in names if name.endswith(".dist-info/METADATA"))
-        prefix = f"{dist_info}/licenses/"
+        prefix = f"{next(name.split('/', 1)[0] for name in names if name.endswith('.dist-info/METADATA'))}/licenses/"
         # top-level files only: a nested match would be a license belonging to something the wheel itself vendors
         candidates = sorted(
             name
@@ -293,9 +290,7 @@ def _wheel_license_text(path: Path) -> str:
 
 
 def _support_table_from_existing_init() -> OrderedDict[str, OrderedDict[str, str]]:
-    source = (DEST / "__init__.py").read_text(encoding="utf-8")
-    tree = ast.parse(source)
-    for node in tree.body:
+    for node in ast.parse((_DEST / "__init__.py").read_text(encoding="utf-8")).body:
         if isinstance(node, ast.Assign) and any(
             isinstance(t, ast.Name) and t.id == "BUNDLE_SUPPORT" for t in node.targets
         ):
@@ -303,7 +298,7 @@ def _support_table_from_existing_init() -> OrderedDict[str, OrderedDict[str, str
             return OrderedDict(
                 (version, OrderedDict(sorted(mapping.items()))) for version, mapping in bundle_support.items()
             )
-    msg = f"BUNDLE_SUPPORT not found in {DEST / '__init__.py'}"
+    msg = f"BUNDLE_SUPPORT not found in {_DEST / '__init__.py'}"
     raise RuntimeError(msg)
 
 

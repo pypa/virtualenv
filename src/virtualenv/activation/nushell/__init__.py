@@ -23,6 +23,8 @@ class NushellActivator(ViaTemplateActivator):
 
         This method finds the maximum continuous sharps in the string and then quote it with an extra sharp.
 
+        :param string:
+        :returns:
         """
         max_sharps = 0
         current_sharps = 0

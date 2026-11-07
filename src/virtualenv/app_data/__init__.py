@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from .base import AppData
 
 _LOGGER: Final = logging.getLogger(__name__)
-_MIGRATION_MARKER: Final = ".virtualenv-migration-incomplete"
+_MIGRATION_MARKER: Final[str] = ".virtualenv-migration-incomplete"
 
 
 def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]) -> AppData:
@@ -53,22 +53,6 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
         return AppDataDiskFolder(folder)
     _LOGGER.debug("app data folder %s has no write access", folder)
     return TempAppData()
-
-
-def _prepare_permissions(folder: str) -> bool:
-    info: Final = os.stat(folder)
-    if info.st_uid != os.geteuid():
-        _LOGGER.debug("app data folder %s is owned by uid %d, leaving its mode", folder, info.st_uid)
-        return True
-    # setgid marks a deliberately group-shared cache, so only other-write is dropped there
-    loose: Final = info.st_mode & (S_IWOTH if info.st_mode & S_ISGID else S_IWGRP | S_IWOTH)
-    if loose:
-        try:
-            os.chmod(folder, S_IMODE(info.st_mode) & ~loose)
-        except OSError:
-            _LOGGER.warning("using temporary app-data because default cache permissions could not be set")
-            return False
-    return True
 
 
 def _default_app_data_dir(env: Mapping[str, str]) -> str:
@@ -137,10 +121,26 @@ def _restore_nested_entry(entry: str, old_dir: str, new_dir: str) -> bool:
     return True
 
 
-__all__ = (
+def _prepare_permissions(folder: str) -> bool:
+    info: Final = os.stat(folder)
+    if info.st_uid != os.geteuid():
+        _LOGGER.debug("app data folder %s is owned by uid %d, leaving its mode", folder, info.st_uid)
+        return True
+    # setgid marks a deliberately group-shared cache, so only other-write is dropped there
+    loose: Final = info.st_mode & (S_IWOTH if info.st_mode & S_ISGID else S_IWGRP | S_IWOTH)
+    if loose:
+        try:
+            os.chmod(folder, S_IMODE(info.st_mode) & ~loose)
+        except OSError:
+            _LOGGER.warning("using temporary app-data because default cache permissions could not be set")
+            return False
+    return True
+
+
+__all__ = [
     "AppDataDisabled",
     "AppDataDiskFolder",
     "ReadOnlyAppData",
     "TempAppData",
     "make_app_data",
-)
+]

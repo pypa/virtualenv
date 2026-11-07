@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.activation.batch import BatchActivator
 from virtualenv.config.cli.parser import VirtualEnvOptions
@@ -23,11 +23,19 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 class Session:
-    """Represents a virtual environment creation session."""
+    """Represents a virtual environment creation session.
+
+    :param verbosity:
+    :param app_data:
+    :param interpreter:
+    :param creator:
+    :param seeder:
+    :param activators:
+    """
 
     def __init__(  # ruff:ignore[too-many-arguments]
         self,
@@ -45,58 +53,6 @@ class Session:
         self._seeder = seeder
         self._activators = activators
 
-    @property
-    def verbosity(self) -> int:
-        """The verbosity of the run."""
-        return self._verbosity
-
-    @property
-    def interpreter(self) -> PythonInfo:
-        """Create a virtual environment based on this reference interpreter."""
-        return self._interpreter
-
-    @property
-    def creator(self) -> Creator:
-        """The creator used to build the virtual environment (must be compatible with the interpreter)."""
-        return self._creator
-
-    @property
-    def seeder(self) -> Seeder:
-        """The mechanism used to provide the seed packages (pip, setuptools, wheel)."""
-        return self._seeder
-
-    @property
-    def activators(self) -> list[Activator]:
-        """Activators used to generate activations scripts."""
-        return self._activators
-
-    def run(self) -> None:
-        self._create()
-        self._seed()
-        self._activate()
-        self.creator.pyenv_cfg.write()
-
-    def _create(self) -> None:
-        LOGGER.info("create virtual environment via %s", self.creator)
-        self.creator.run()
-        LOGGER.debug(_DEBUG_MARKER)
-        LOGGER.debug("%s", _Debug(self.creator))
-
-    def _seed(self) -> None:
-        if self.seeder is not None and self.seeder.enabled:
-            LOGGER.info("add seed packages via %s", self.seeder)
-            self.seeder.run(self.creator)
-
-    def _activate(self) -> None:
-        if BatchActivator.supports(self.interpreter) and not any(
-            isinstance(i, BatchActivator) for i in self.activators
-        ):
-            BatchActivator(VirtualEnvOptions(prompt=None)).remove_unsafe(self.creator, selected=False)
-        if self.activators:
-            active = ", ".join(type(i).__name__.replace("Activator", "") for i in self.activators)
-            LOGGER.info("add activators for %s", active)
-            self._activators = [activator for activator in self.activators if activator.generate(self.creator)]
-
     def __enter__(self) -> Self:
         return self
 
@@ -108,18 +64,68 @@ class Session:
     ) -> None:
         self._app_data.close()
 
+    @property
+    def verbosity(self) -> int:
+        """The verbosity of the run."""
+        return self._verbosity
 
-_DEBUG_MARKER = "=" * 30 + " target debug " + "=" * 30
+    def run(self) -> None:
+        self._create()
+        self._seed()
+        self._activate()
+        self.creator.pyenv_cfg.write()
+
+    def _create(self) -> None:
+        _LOGGER.info("create virtual environment via %s", self.creator)
+        self.creator.run()
+        _LOGGER.debug(_DEBUG_MARKER)
+        _LOGGER.debug("%s", _Debug(self.creator))
+
+    def _seed(self) -> None:
+        if self.seeder is not None and self.seeder.enabled:
+            _LOGGER.info("add seed packages via %s", self.seeder)
+            self.seeder.run(self.creator)
+
+    @property
+    def seeder(self) -> Seeder:
+        """The mechanism used to provide the seed packages (pip, setuptools, wheel)."""
+        return self._seeder
+
+    def _activate(self) -> None:
+        if BatchActivator.supports(self.interpreter) and not any(
+            isinstance(i, BatchActivator) for i in self.activators
+        ):
+            BatchActivator(VirtualEnvOptions(prompt=None)).remove_unsafe(self.creator, selected=False)
+        if self.activators:
+            active = ", ".join(type(i).__name__.replace("Activator", "") for i in self.activators)
+            _LOGGER.info("add activators for %s", active)
+            self._activators = [activator for activator in self.activators if activator.generate(self.creator)]
+
+    @property
+    def interpreter(self) -> PythonInfo:
+        """Create a virtual environment based on this reference interpreter."""
+        return self._interpreter
+
+    @property
+    def activators(self) -> list[Activator]:
+        """Activators used to generate activations scripts."""
+        return self._activators
+
+    @property
+    def creator(self) -> Creator:
+        """The creator used to build the virtual environment (must be compatible with the interpreter)."""
+        return self._creator
 
 
 class _Debug:
-    """lazily populate debug."""
-
     def __init__(self, creator: Creator) -> None:
         self.creator = creator
 
     def __repr__(self) -> str:
         return json.dumps(self.creator.debug, indent=2)
+
+
+_DEBUG_MARKER: Final[str] = f"{'=' * 30} target debug {'=' * 30}"
 
 
 __all__ = [

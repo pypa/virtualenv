@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture
 
-PYPY3_PATH = (
+_PYPY3_PATH = (
     "virtualenv.create.via_global_ref.builtin.pypy.common.Path",
     "virtualenv.create.via_global_ref.builtin.pypy.pypy3.Path",
 )
@@ -26,7 +26,7 @@ PYPY3_PATH = (
 @pytest.mark.parametrize("py_info_name", ["portable_pypy38"])
 def test_portable_pypy3_virtualenvs_get_their_libs(py_info, mock_files, mock_pypy_libs) -> None:
     py_file = path(py_info.prefix, "lib/libgdbm.so.4")
-    mock_files(PYPY3_PATH, [py_info.system_executable, py_file])
+    mock_files(_PYPY3_PATH, [py_info.system_executable, py_file])
     lib_file = path(py_info.prefix, "bin/libpypy3-c.so")
     mock_pypy_libs(PyPy3Posix, [lib_file])
     sources = tuple(PyPy3Posix.sources(interpreter=py_info))
@@ -39,7 +39,7 @@ def test_portable_pypy3_virtualenvs_get_their_libs(py_info, mock_files, mock_pyp
 @pytest.mark.parametrize("py_info_name", ["deb_pypy37"])
 def test_debian_pypy37_virtualenvs(py_info, mock_files, mock_pypy_libs) -> None:
     # Debian's pypy3 layout, installed to /usr, before 3.8 allowed a /usr prefix
-    mock_files(PYPY3_PATH, [py_info.system_executable])
+    mock_files(_PYPY3_PATH, [py_info.system_executable])
     lib_file = path(py_info.prefix, "bin/libpypy3-c.so")
     mock_pypy_libs(PyPy3Posix, [lib_file])
     sources = tuple(PyPy3Posix.sources(interpreter=py_info))
@@ -50,7 +50,7 @@ def test_debian_pypy37_virtualenvs(py_info, mock_files, mock_pypy_libs) -> None:
 
 @pytest.mark.parametrize("py_info_name", ["deb_pypy38"])
 def test_debian_pypy38_virtualenvs_exclude_usr(py_info, mock_files, mock_pypy_libs) -> None:
-    mock_files(PYPY3_PATH, [py_info.system_executable, "/usr/lib/foo"])
+    mock_files(_PYPY3_PATH, [py_info.system_executable, "/usr/lib/foo"])
     # libpypy3-c.so lives on the ld search path
     mock_pypy_libs(PyPy3Posix, [])
     sources = tuple(PyPy3Posix.sources(interpreter=py_info))
@@ -66,14 +66,14 @@ def test_pypy_portable_deps_txt(tmp_path: Path, mocker: MockerFixture) -> None:
     (host_lib / "libssl.so").touch()
     (host_lib / "libcrypto.so").touch()
     (host_lib / "unneeded.so").touch()
-    deps_file = host_lib / "PYPY_PORTABLE_DEPS.txt"
-    deps_file.write_text("libssl.so\nlibcrypto.so\n", encoding="utf-8")
+    (host_lib / "PYPY_PORTABLE_DEPS.txt").write_text("libssl.so\nlibcrypto.so\n", encoding="utf-8")
 
-    interpreter = MagicMock()
-    interpreter.system_prefix = str(tmp_path)
-    interpreter.system_executable = str(tmp_path / "bin" / "pypy3")
-    interpreter.system_stdlib = str(stdlib)
-    interpreter.version_info = MagicMock(major=3, minor=10)
+    interpreter = MagicMock(
+        system_prefix=str(tmp_path),
+        system_executable=str(tmp_path / "bin" / "pypy3"),
+        system_stdlib=str(stdlib),
+        version_info=MagicMock(major=3, minor=10),
+    )
 
     mocker.patch.object(PyPy3Posix, "_shared_libs", return_value=[])
 

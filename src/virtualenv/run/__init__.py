@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, Final
 from virtualenv.app_data import make_app_data
 from virtualenv.config.cli.parser import VirtualEnvConfigParser, VirtualEnvOptions
 from virtualenv.report import LEVELS, setup_report
-from virtualenv.run.session import Session
 from virtualenv.seed.wheels.periodic_update import manual_upgrade
 from virtualenv.version import __version__
 
@@ -17,6 +16,7 @@ from .plugin.activators import ActivationSelector
 from .plugin.creators import CreatorSelector
 from .plugin.discovery import get_discover
 from .plugin.seeders import SeederSelector
+from .session import Session
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -66,7 +66,7 @@ def session_via_cli(
 
     """
     env = os.environ if env is None else env
-    parser, elements = build_parser(args, options, setup_logging, env)
+    parser, elements = _build_parser(args, options, setup_logging, env)
     options = parser.parse_args(args)  # ty: ignore[invalid-assignment]
     options.py_version = parser._interpreter.version_info  # ruff:ignore[private-member-access]  # ty: ignore[invalid-assignment, unresolved-attribute]
     creator, seeder, activators = tuple(
@@ -83,15 +83,15 @@ def session_via_cli(
     )
 
 
-def build_parser(
-    args: list[str] | None = None,
+def _build_parser(
+    args: list[str] | None,
     options: VirtualEnvOptions | None = None,
     setup_logging: bool = True,  # ruff:ignore[boolean-default-value-positional-argument]
     env: MutableMapping[str, str] | None = None,
 ) -> tuple[VirtualEnvConfigParser, list[ComponentBuilder]]:
     _validate_option_values(args)
     parser = VirtualEnvConfigParser(options, os.environ if env is None else env)
-    add_version_flag(parser)
+    _add_version_flag(parser)
     parser.add_argument(
         "--with-traceback",
         dest="with_traceback",
@@ -100,8 +100,8 @@ def build_parser(
         help="on failure also display the stacktrace internals of virtualenv",
     )
     _do_report_setup(parser, args, setup_logging)
-    options = load_app_data(args, parser, options)
-    handle_extra_commands(options)
+    options = _load_app_data(args, parser, options)
+    _handle_extra_commands(options)
 
     discover = get_discover(parser, args)
     parser._interpreter = interpreter = discover.interpreter  # ruff:ignore[private-member-access]
@@ -143,18 +143,36 @@ def _validate_option_values(args: list[str] | None) -> None:
     parser.parse_known_args(args)
 
 
-def build_parser_only(args: list[str] | None = None) -> VirtualEnvConfigParser:
-    """Used to provide a parser for the doc generation."""
-    return build_parser(args)[0]
+def _add_version_flag(parser: VirtualEnvConfigParser) -> None:
+    import virtualenv  # ruff:ignore[import-outside-top-level]
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {__version__} from {virtualenv.__file__}",
+        help="display the version of the virtualenv package and its location, then exit",
+    )
 
 
-def handle_extra_commands(options: VirtualEnvOptions) -> None:
-    if options.upgrade_embed_wheels:
-        result = manual_upgrade(options.app_data, options.env)
-        raise SystemExit(result)
+def _do_report_setup(parser: VirtualEnvConfigParser, args: list[str] | None, setup_logging: bool) -> None:
+    level_map = ", ".join(f"{logging.getLevelName(line)}={c}" for c, line in sorted(LEVELS.items()))
+    msg = "verbosity = verbose - quiet, default {}, mapping => {}"
+    verbosity_group = parser.add_argument_group(
+        title="verbosity",
+        description=msg.format(logging.getLevelName(LEVELS[3]), level_map),
+    )
+    verbosity = verbosity_group.add_mutually_exclusive_group()
+    verbosity.add_argument("-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=2)
+    verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
+    # do not configure logging if only help is requested, as no logging is required for this
+    if args and any(i in args for i in ("-h", "--help")):
+        return
+    option, _ = parser.parse_known_args(args)
+    if setup_logging:
+        setup_report(option.verbosity)  # ty: ignore[invalid-argument-type]
 
 
-def load_app_data(
+def _load_app_data(
     args: list[str] | None, parser: VirtualEnvConfigParser, options: VirtualEnvOptions | None
 ) -> VirtualEnvOptions:
     parser.add_argument(
@@ -191,33 +209,15 @@ def load_app_data(
     return options
 
 
-def add_version_flag(parser: VirtualEnvConfigParser) -> None:
-    import virtualenv  # ruff:ignore[import-outside-top-level]
-
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"%(prog)s {__version__} from {virtualenv.__file__}",
-        help="display the version of the virtualenv package and its location, then exit",
-    )
+def _handle_extra_commands(options: VirtualEnvOptions) -> None:
+    if options.upgrade_embed_wheels:
+        result = manual_upgrade(options.app_data, options.env)
+        raise SystemExit(result)
 
 
-def _do_report_setup(parser: VirtualEnvConfigParser, args: list[str] | None, setup_logging: bool) -> None:
-    level_map = ", ".join(f"{logging.getLevelName(line)}={c}" for c, line in sorted(LEVELS.items()))
-    msg = "verbosity = verbose - quiet, default {}, mapping => {}"
-    verbosity_group = parser.add_argument_group(
-        title="verbosity",
-        description=msg.format(logging.getLevelName(LEVELS[3]), level_map),
-    )
-    verbosity = verbosity_group.add_mutually_exclusive_group()
-    verbosity.add_argument("-v", "--verbose", action="count", dest="verbose", help="increase verbosity", default=2)
-    verbosity.add_argument("-q", "--quiet", action="count", dest="quiet", help="decrease verbosity", default=0)
-    # do not configure logging if only help is requested, as no logging is required for this
-    if args and any(i in args for i in ("-h", "--help")):
-        return
-    option, _ = parser.parse_known_args(args)
-    if setup_logging:
-        setup_report(option.verbosity)  # ty: ignore[invalid-argument-type]
+def _build_parser_only(args: list[str] | None = None) -> VirtualEnvConfigParser:
+    # Used to provide a parser for the doc generation.
+    return _build_parser(args)[0]
 
 
 __all__ = [

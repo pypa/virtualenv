@@ -1,4 +1,6 @@
-"""Virtual environments in the traditional sense are built as reference to the host python. This file allows declarative references to elements on the file system, allowing our system to automatically detect what modes it can support given the constraints: e.g. can the file system symlink, can the files be read, executed, etc."""
+"""Virtual environments in the traditional sense are built as reference to the host python. This file allows declarative
+references to elements on the file system, allowing our system to automatically detect what modes it can support given
+the constraints: e.g. can the file system symlink, can the files be read, executed, etc."""
 
 from __future__ import annotations
 
@@ -38,7 +40,15 @@ class RefWhen(StrEnum):
 
 
 class PathRef(ABC):
-    """Base class that checks if a file reference can be symlink/copied."""
+    """Base class that checks if a file reference can be symlink/copied.
+
+    :param src:
+    :param must:
+    :param when:
+    :cvar FS_SUPPORTS_SYMLINK:
+    :cvar FS_CASE_SENSITIVE:
+    :ivar exists:
+    """
 
     FS_SUPPORTS_SYMLINK = fs_supports_symlink()
     FS_CASE_SENSITIVE = fs_is_case_sensitive()
@@ -102,7 +112,12 @@ class PathRef(ABC):
 
 
 class ExePathRef(PathRef, ABC):
-    """Base class that checks if a executable can be references via symlink/copy."""
+    """Base class that checks if a executable can be references via symlink/copy.
+
+    :param src:
+    :param must:
+    :param when:
+    """
 
     def __init__(self, src: Path, must: str = RefMust.NA, when: str = RefWhen.ANY) -> None:
         super().__init__(src, must, when)
@@ -117,13 +132,18 @@ class ExePathRef(PathRef, ABC):
     @property
     def can_run(self) -> bool:
         if self._can_run is None:
-            mode = self.src.stat().st_mode
-            self._can_run = bool(mode & (S_IXUSR | S_IXGRP | S_IXOTH))
+            self._can_run = bool(self.src.stat().st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))
         return self._can_run
 
 
 class PathRefToDest(PathRef):
-    """Link a path on the file system."""
+    """Link a path on the file system.
+
+    :param src:
+    :param dest:
+    :param must:
+    :param when:
+    """
 
     def __init__(self, src: Path, dest: Callable[..., Path], must: str = RefMust.NA, when: str = RefWhen.ANY) -> None:
         super().__init__(src, must, when)
@@ -140,7 +160,16 @@ class PathRefToDest(PathRef):
 
 
 class ExePathRefToDest(PathRefToDest, ExePathRef):
-    """Link a exe path on the file system."""
+    """Link a exe path on the file system.
+
+    :param src:
+    :param targets:
+    :param dest:
+    :param must:
+    :param when:
+    :ivar base:
+    :ivar aliases:
+    """
 
     def __init__(
         self, src: Path, targets: list[str], dest: Callable[..., Path], must: str = RefMust.NA, when: str = RefWhen.ANY
@@ -153,11 +182,13 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
         self.aliases = targets[1:]
         self.dest = dest
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(src={self.src}, alias={self.aliases})"
+
     def run(self, creator: object, symlinks: bool) -> None:
         bin_dir = self.dest(creator, self.src).parent
         dest = bin_dir / self.base
-        method = self.method(symlinks)
-        method(self.src, dest)
+        self.method(symlinks)(self.src, dest)
         if not symlinks:
             make_exe(dest)
         for extra in self.aliases:
@@ -170,9 +201,6 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
                 copy(self.src, link_file)
             if not symlinks:
                 make_exe(link_file)
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(src={self.src}, alias={self.aliases})"
 
 
 __all__ = [

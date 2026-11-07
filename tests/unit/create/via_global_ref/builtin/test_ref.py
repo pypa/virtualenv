@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 @pytest.fixture
 def exe_ref(mocker: MockerFixture, request: pytest.FixtureRequest) -> ExePathRefToDest:
-    """Mock the source so the mode is ours to pick - Windows only sets execute bits for .exe/.bat/.cmd/.com."""
+    # Mock the source so the mode is ours to pick - Windows only sets execute bits for .exe/.bat/.cmd/.com.
     src = mocker.create_autospec(Path, instance=True)
     src.stat.return_value = mocker.MagicMock(st_mode=request.param)  # create_autospec drops dotted kwargs before 3.12
     return ExePathRefToDest(src, targets=["python"], dest=mocker.Mock())
@@ -51,7 +51,7 @@ def test_can_run_is_cached(exe_ref: ExePathRefToDest) -> None:
 
 @pytest.fixture
 def creator_meta(mocker: MockerFixture) -> Callable[[PathRef], BuiltinViaGlobalRefMeta]:
-    """Force symlink support on, otherwise a host without it starts with symlink_error already set."""
+    # Force symlink support on, otherwise a host without it starts with symlink_error already set.
     mocker.patch.object(api, "fs_supports_symlink", return_value=True)
 
     def build(ref: PathRef) -> BuiltinViaGlobalRefMeta:
@@ -80,6 +80,10 @@ def test_missing_source_is_reported_against_its_mode(
     assert getattr(creator_meta(ref), reported_on) == f"missing required file {ref}"
 
 
+def absent_ref(tmp_path: Path, when: RefWhen) -> PathRefToDest:
+    return PathRefToDest(tmp_path / "absent", dest=lambda _creator, src: src, when=when)
+
+
 @pytest.mark.parametrize(
     ("when", "collected"),
     [
@@ -93,7 +97,3 @@ def test_missing_source_reaches_create_unless_both_modes_need_it(
 ) -> None:
     ref = absent_ref(tmp_path, when)
     assert creator_meta(ref).sources == ([ref] if collected else [])
-
-
-def absent_ref(tmp_path: Path, when: RefWhen) -> PathRefToDest:
-    return PathRefToDest(tmp_path / "absent", dest=lambda _creator, src: src, when=when)

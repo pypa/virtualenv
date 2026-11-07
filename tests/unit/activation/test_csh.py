@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-TCSH = which("tcsh")
+_TCSH = which("tcsh")
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
@@ -82,8 +82,7 @@ def test_cshell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
             self.env_name = "my-env"
 
     creator = MockCreator(tmp_path)
-    options = Namespace(prompt=None)
-    activator = CShellActivator(options)
+    activator = CShellActivator(Namespace(prompt=None))
 
     # WHEN
     activator.generate(creator)
@@ -126,14 +125,6 @@ def test_cshell_generates_deactivate_script(tmp_path) -> None:
     assert "deactivate.csh" in (creator.bin_dir / "activate.csh").read_text(encoding="utf-8")
 
 
-def _create_csh_venv(dest: Path, current_fastest: str, prompt: str | None = None) -> str:
-    cmd = ["--without-pip", str(dest), "--creator", current_fastest, "--no-periodic-update", "--activators", "cshell"]
-    if prompt is not None:
-        cmd += ["--prompt", prompt]
-    cli_run(cmd)
-    return (dest / "bin" / "activate.csh").read_text(encoding="utf-8")
-
-
 @pytest.fixture
 def csh_venv(tmp_path: Path, current_fastest: str) -> Callable[..., tuple[Path, str]]:
     def create(name: str, *, prompt: str | None = None) -> tuple[Path, str]:
@@ -141,6 +132,14 @@ def csh_venv(tmp_path: Path, current_fastest: str) -> Callable[..., tuple[Path, 
         return dest, _create_csh_venv(dest, current_fastest, prompt)
 
     return create
+
+
+def _create_csh_venv(dest: Path, current_fastest: str, prompt: str | None = None) -> str:
+    cmd = ["--without-pip", str(dest), "--creator", current_fastest, "--no-periodic-update", "--activators", "cshell"]
+    if prompt is not None:
+        cmd += ["--prompt", prompt]
+    cli_run(cmd)
+    return (dest / "bin" / "activate.csh").read_text(encoding="utf-8")
 
 
 # the deactivate tests only source the script, so they share one environment
@@ -173,7 +172,7 @@ def test_cshell_escapes_prompt_expansion(
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
-@pytest.mark.skipif(TCSH is None, reason="tcsh is not installed")
+@pytest.mark.skipif(_TCSH is None, reason="tcsh is not installed")
 @pytest.mark.parametrize(
     "name",
     [
@@ -193,7 +192,7 @@ def test_cshell_activates_path_with_special_characters(
     script.write_text(content, encoding="utf-8")
 
     result = run(
-        [TCSH, "-c", f'source {script} && printf "%s" "$VIRTUAL_ENV"'],
+        [_TCSH, "-c", f'source {script} && printf "%s" "$VIRTUAL_ENV"'],
         capture_output=True,
         text=True,
         encoding="utf-8",
@@ -204,7 +203,7 @@ def test_cshell_activates_path_with_special_characters(
     assert result.stdout == str(dest), result.stderr
 
 
-@pytest.mark.skipif(IS_WIN or TCSH is None, reason="tcsh is required")
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="tcsh is required")
 @pytest.mark.parametrize(
     "option", [pytest.param("", id="default"), pytest.param("set backslash_quote\n", id="backslash-quote")]
 )
@@ -224,7 +223,7 @@ def test_cshell_prompt_preserves_quoting_mode(
     script: Final = tmp_path / "activate.csh"
     script.write_text(content, encoding="utf-8")
     result: Final = run(
-        [TCSH, "-f"],
+        [_TCSH, "-f"],
         input=f'{option}set prompt = "> "\nsource {script}\nprintf "%s\\n" "$VIRTUAL_ENV:q" "$VIRTUAL_ENV_PROMPT:q" "$prompt:q"\n',
         capture_output=True,
         text=True,
@@ -236,7 +235,7 @@ def test_cshell_prompt_preserves_quoting_mode(
     assert result.stdout == f"{dest}\n{value}\n({display}) > \n"
 
 
-@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
 @pytest.mark.parametrize(
     ("prompt", "codec"),
     [
@@ -264,7 +263,7 @@ def test_cshell_renders_prompt_literally(
 
     # only an interactive shell draws the prompt, which is where tcsh turns ^c into a control character
     result = run(
-        [TCSH, "-f", "-i"],
+        [_TCSH, "-f", "-i"],
         input=f"source {script}\nexit\n".encode(),
         env=env,
         capture_output=True,
@@ -276,18 +275,18 @@ def test_cshell_renders_prompt_literally(
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
-@pytest.mark.skipif(TCSH is None, reason="tcsh is not installed")
+@pytest.mark.skipif(_TCSH is None, reason="tcsh is not installed")
 @pytest.mark.parametrize("original", [pytest.param("", id="empty"), pytest.param("/usr/bin:/bin", id="populated")])
 def test_cshell_deactivate_restores_path(csh_plain_activate: Path, original: str) -> None:
     driver = f'setenv PATH "{original}"\nsource {csh_plain_activate}\ndeactivate\necho "PATH=<$PATH>"\n'
 
-    result = run([TCSH, "-f"], input=driver, capture_output=True, text=True, encoding="utf-8", timeout=90, check=False)
+    result = run([_TCSH, "-f"], input=driver, capture_output=True, text=True, encoding="utf-8", timeout=90, check=False)
 
     assert result.stdout == f"PATH=<{original}>\n", result.stderr
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
-@pytest.mark.skipif(TCSH is None, reason="tcsh is not installed")
+@pytest.mark.skipif(_TCSH is None, reason="tcsh is not installed")
 @pytest.mark.parametrize(
     ("original_env", "restored"),
     [
@@ -307,7 +306,7 @@ def test_cshell_unsets_pythonhome(csh_plain_activate: Path, original_env: dict[s
     driver = f"source {csh_plain_activate}\n{report}deactivate\n{report}"
 
     result = run(
-        [TCSH, "-f"],
+        [_TCSH, "-f"],
         input=driver,
         env={key: value for key, value in os.environ.items() if key != "PYTHONHOME"} | original_env,
         capture_output=True,
@@ -320,10 +319,10 @@ def test_cshell_unsets_pythonhome(csh_plain_activate: Path, original_env: dict[s
     assert (result.returncode, result.stdout, result.stderr) == (0, f"<unset>\n{restored}\n", "")
 
 
-@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
 def test_cshell_python_starts_with_pythonhome(csh_plain_activate: Path) -> None:
     result = run(
-        [TCSH, "-f"],
+        [_TCSH, "-f"],
         input=f"source {csh_plain_activate}\npython -c 'import sys; print(sys.prefix)'\n",
         env={**os.environ, "PYTHONHOME": "/nonexistent-pythonhome"},
         capture_output=True,
@@ -336,10 +335,10 @@ def test_cshell_python_starts_with_pythonhome(csh_plain_activate: Path) -> None:
     assert (result.returncode, result.stdout, result.stderr) == (0, f"{csh_plain_activate.parent.parent}\n", "")
 
 
-@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
 def test_cshell_reactivation_restores_pythonhome(csh_plain_activate: Path) -> None:
     result = run(
-        [TCSH, "-f"],
+        [_TCSH, "-f"],
         input=f"source {csh_plain_activate}\nsource {csh_plain_activate}\ndeactivate\nprintenv PYTHONHOME\n",
         env={**os.environ, "PYTHONHOME": "/some/pythonhome"},
         capture_output=True,
@@ -353,24 +352,24 @@ def test_cshell_reactivation_restores_pythonhome(csh_plain_activate: Path) -> No
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
-@pytest.mark.skipif(TCSH is None, reason="tcsh is not installed")
+@pytest.mark.skipif(_TCSH is None, reason="tcsh is not installed")
 def test_cshell_deactivate_removes_aliases(csh_plain_activate: Path) -> None:
     driver = f'source {csh_plain_activate}\ndeactivate\nalias deactivate\nalias pydoc\necho "done"\n'
 
-    result = run([TCSH, "-f"], input=driver, capture_output=True, text=True, encoding="utf-8", timeout=90, check=False)
+    result = run([_TCSH, "-f"], input=driver, capture_output=True, text=True, encoding="utf-8", timeout=90, check=False)
 
     assert result.stdout == "done\n", result.stderr
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
-@pytest.mark.skipif(TCSH is None, reason="tcsh is not installed")
+@pytest.mark.skipif(_TCSH is None, reason="tcsh is not installed")
 def test_cshell_reactivation_restores_original_path(csh_plain_activate: Path) -> None:
     driver = (
         f'setenv PATH "/original/path"\nsource {csh_plain_activate}\nsource {csh_plain_activate}\ndeactivate\n'
         'echo "PATH=<$PATH>"\n'
     )
 
-    result = run([TCSH, "-f"], input=driver, capture_output=True, text=True, encoding="utf-8", timeout=90, check=False)
+    result = run([_TCSH, "-f"], input=driver, capture_output=True, text=True, encoding="utf-8", timeout=90, check=False)
 
     assert result.stdout == "PATH=</original/path>\n", result.stderr
 
@@ -378,11 +377,10 @@ def test_cshell_reactivation_restores_original_path(csh_plain_activate: Path) ->
 @pytest.mark.slow
 def test_csh(activation_tester_class, activation_tester) -> None:
     exe = f"tcsh{'.exe' if sys.platform == 'win32' else ''}"
-    if which(exe):
-        version_text = check_output([exe, "--version"], text=True, encoding="utf-8")
-        version = Version(version_text.split(" ")[1])
-        if version >= Version("6.24.14"):
-            pytest.skip("https://github.com/tcsh-org/tcsh/issues/117")
+    if which(exe) and Version(check_output([exe, "--version"], text=True, encoding="utf-8").split(" ")[1]) >= Version(
+        "6.24.14"
+    ):
+        pytest.skip("https://github.com/tcsh-org/tcsh/issues/117")
 
     class Csh(activation_tester_class):
         def __init__(self, session) -> None:
@@ -440,7 +438,7 @@ def test_cshell_skips_multiline_destination(tmp_path: Path) -> None:
     assert (list(scripts.glob("*.csh")), session.activators) == ([], [])
 
 
-@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
 @pytest.mark.parametrize(
     "boundary",
     [
@@ -458,7 +456,7 @@ def test_cshell_preserves_non_newline_path(
     script.write_bytes((dest / "bin" / "activate.csh").read_bytes())
 
     result = run(
-        [TCSH, "-f"],
+        [_TCSH, "-f"],
         input=f'source {script}\nprintf "%s" "$VIRTUAL_ENV:q"\n'.encode(),
         capture_output=True,
         timeout=30,
@@ -468,7 +466,7 @@ def test_cshell_preserves_non_newline_path(
     assert result.stdout == str(dest).encode()
 
 
-@pytest.mark.skipif(IS_WIN or TCSH is None, reason="requires tcsh")
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
 @pytest.mark.parametrize("state", list(SHELLS["cshell"].states))
 def test_cshell_histchars_replaces_hash_in_prompt(tmp_path: Path, state: str) -> None:
     result: Final = run_prompt(

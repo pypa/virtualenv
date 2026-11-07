@@ -28,8 +28,7 @@ def next_pip_wheel(for_py_version):
     wheel = get_embed_wheel("pip", for_py_version)
     new_version = list(wheel.version_tuple)
     new_version[-1] += 1
-    new_name = wheel.name.replace(wheel.version, ".".join(str(i) for i in new_version))
-    return Wheel.from_path(Path(new_name))
+    return Wheel.from_path(Path(wheel.name.replace(wheel.version, ".".join(str(i) for i in new_version))))
 
 
 @pytest.fixture(scope="module")
@@ -97,8 +96,7 @@ def test_version_pinned_in_app_data(
 
 
 def test_every_bundled_wheel_has_sha256() -> None:
-    referenced = {wheel for mapping in BUNDLE_SUPPORT.values() for wheel in mapping.values()}
-    missing = referenced - BUNDLE_SHA256.keys()
+    missing = {wheel for mapping in BUNDLE_SUPPORT.values() for wheel in mapping.values()} - BUNDLE_SHA256.keys()
     assert not missing, f"bundled wheels missing from BUNDLE_SHA256: {sorted(missing)}"
 
 
@@ -110,8 +108,7 @@ def test_every_wheel_on_disk_has_sha256() -> None:
 def test_notices_mention_every_bundled_distribution() -> None:
     # rooted at this test file rather than BUNDLE_FOLDER: a non-editable install puts the installed package
     # under site-packages with no relationship to the checkout, but tests/ always runs from the repo itself
-    repo_root = Path(__file__).resolve().parents[4]
-    notices = (repo_root / "THIRD-PARTY-NOTICES.md").read_text(encoding="utf-8")
+    notices = (Path(__file__).resolve().parents[4] / "THIRD-PARTY-NOTICES.md").read_text(encoding="utf-8")
     distributions = {wheel_name.split("-")[0] for wheel_name in BUNDLE_SHA256}
     missing = {name for name in distributions if f"## {name}" not in notices}
     assert not missing, f"THIRD-PARTY-NOTICES.md is missing a section for: {sorted(missing)}"
@@ -145,10 +142,10 @@ def test_verify_bundled_wheel_rejects_unknown(tmp_path: Path, monkeypatch: pytes
 def test_verify_bundled_wheel_reads_from_zipapp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # Simulate the layout we get when virtualenv runs out of a ``.pyz``: the wheel lives inside the zipapp rather
     # than on disk, so the hash check has to read it through ``zipfile`` rather than ``path.open``.
-    wheel_name = "fakepkg-0.0.1-py3-none-any.whl"
-    wheel_payload = b"pretend-wheel-bytes"
     fake_root = tmp_path / "virtualenv.pyz"
+    wheel_name = "fakepkg-0.0.1-py3-none-any.whl"
     entry = f"virtualenv/seed/wheels/embed/{wheel_name}"
+    wheel_payload = b"pretend-wheel-bytes"
     with zipfile.ZipFile(str(fake_root), "w") as archive:
         archive.writestr(entry, wheel_payload)
 

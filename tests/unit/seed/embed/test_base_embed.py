@@ -42,8 +42,8 @@ def test_download_cli_flag(args, download, tmp_path) -> None:
     ],
 )
 def test_extra_search_dir_cli(tmp_path: Path, groups: tuple[tuple[str, ...], ...]) -> None:
-    expected = []
     args = [str(tmp_path / "env"), "--no-seed"]
+    expected = []
     for group in groups:
         args.append("--extra-search-dir")
         for name in group:
@@ -107,10 +107,10 @@ def test_wheel_cli_flags_do_nothing(
     ) == (expected, warns)
 
 
-BUNDLED_SEEDERS = [pytest.param(FromAppData, id="app-data"), pytest.param(PipInvoke, id="pip")]
+_BUNDLED_SEEDERS = [pytest.param(FromAppData, id="app-data"), pytest.param(PipInvoke, id="pip")]
 
 
-@pytest.mark.parametrize("seeder", BUNDLED_SEEDERS)
+@pytest.mark.parametrize("seeder", _BUNDLED_SEEDERS)
 def test_bundled_seeder_reports_reason_below_floor(
     seeder: type[BaseEmbed], at_version: Callable[[int, int], MagicMock]
 ) -> None:
@@ -121,7 +121,7 @@ def test_bundled_seeder_reports_reason_below_floor(
     assert "--no-seed" in reason
 
 
-@pytest.mark.parametrize("seeder", BUNDLED_SEEDERS)
+@pytest.mark.parametrize("seeder", _BUNDLED_SEEDERS)
 def test_bundled_seeder_has_no_reason_on_oldest_supported(
     seeder: type[BaseEmbed], at_version: Callable[[int, int], MagicMock]
 ) -> None:
@@ -146,9 +146,7 @@ def test_no_seed_bypasses_capability_check(tmp_path: Path, mocker: MockerFixture
 @pytest.fixture
 def at_version(mocker: MockerFixture) -> Callable[[int, int], MagicMock]:
     def build(major: int, minor: int) -> MagicMock:
-        interpreter = mocker.MagicMock()
-        interpreter.version_info = _VersionInfo(major, minor)
-        return interpreter
+        return mocker.MagicMock(version_info=_VersionInfo(major, minor))
 
     return build
 

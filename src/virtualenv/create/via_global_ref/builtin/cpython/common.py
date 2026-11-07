@@ -40,8 +40,7 @@ class CPythonPosix(CPython, PosixSupports, ABC):
             *((f"python3.{minor}t",) if interpreter.free_threaded else ()),
             host_exe.name,
         ]
-        targets = OrderedDict((i, None) for i in names)
-        yield host_exe, list(targets.keys()), RefMust.NA, RefWhen.ANY
+        yield host_exe, list(OrderedDict((i, None) for i in names).keys()), RefMust.NA, RefWhen.ANY
 
 
 class CPythonWindows(CPython, WindowsSupports, ABC):

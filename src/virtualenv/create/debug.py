@@ -20,7 +20,10 @@ def encode_list_path(value: list[object]) -> list[str | None]:
 
 
 def run() -> None:
-    """Print debug data about the virtual environment."""
+    """Print debug data about the virtual environment.
+
+    :raises SystemExit:
+    """
     sys_info: dict[str, str | list[str | None] | None] = {}
     result: dict[str, str | dict[str, str | list[str | None] | None] | None] = {"sys": sys_info}
     path_keys = (
@@ -82,8 +85,7 @@ def run() -> None:
         result["json"] = repr(exception)
     else:
         try:
-            content = json.dumps(result, indent=2)
-            sys.stdout.write(content)
+            sys.stdout.write(json.dumps(result, indent=2))
         except (ValueError, TypeError) as exception:  # pragma: no cover
             sys.stderr.write(repr(exception))
             sys.stdout.write(repr(result))  # pragma: no cover

@@ -45,8 +45,34 @@ class Wheel:
             return cls(path)
         return None
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({self.path})"
+
+    def __str__(self) -> str:
+        return str(self.path)
+
+    @property
+    def version_tuple(self) -> tuple[int, ...]:
+        return self.as_version_tuple(self.version)
+
+    @staticmethod
+    def as_version_tuple(version: str) -> tuple[int, ...]:
+        return PackagingVersion(version).release
+
+    @property
+    def version(self) -> str:
+        return self._parts[1]
+
+    @property
+    def name(self) -> str:
+        return self.path.name
+
     def support_py(self, py_version: str) -> bool:
-        """Check whether ``Requires-Python`` admits ``py_version``, a ``major.minor`` string."""
+        """Check whether ``Requires-Python`` admits ``py_version``, a ``major.minor`` string.
+
+        :param py_version:
+        :returns:
+        """
         name = f"{self.distribution}-{self.version}.dist-info/METADATA"
         with ZipFile(str(self.path), "r") as zip_file:
             requires = HeaderParser().parsestr(zip_file.read(name).decode("utf-8")).get("Requires-Python")
@@ -62,18 +88,6 @@ class Wheel:
     @property
     def distribution(self) -> str:
         return self._parts[0]
-
-    @property
-    def version(self) -> str:
-        return self._parts[1]
-
-    @property
-    def version_tuple(self) -> tuple[int, ...]:
-        return self.as_version_tuple(self.version)
-
-    @staticmethod
-    def as_version_tuple(version: str) -> tuple[int, ...]:
-        return PackagingVersion(version).release
 
     def has_version(self, version: str) -> bool:
         """Match equivalent version spellings when selecting a wheel.
@@ -91,16 +105,6 @@ class Wheel:
     @property
     def parsed_version(self) -> PackagingVersion:
         return PackagingVersion(self.version)
-
-    @property
-    def name(self) -> str:
-        return self.path.name
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.path})"
-
-    def __str__(self) -> str:
-        return str(self.path)
 
 
 class Version:

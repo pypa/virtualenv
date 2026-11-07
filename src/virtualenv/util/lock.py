@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from types import TracebackType
 
-LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 class _CountedFileLock(FileLock):
@@ -55,8 +55,8 @@ class _CountedFileLock(FileLock):
                     self.thread_safe.release()
 
 
-_lock_store = {}
-_store_lock = Lock()
+_LOCK_STORE = {}
+_STORE_LOCK = Lock()
 
 
 class PathLockBase(ABC):
@@ -96,33 +96,26 @@ class ReentrantFileLock(PathLockBase):
         super().__init__(folder)
         self._lock = None
 
-    def _create_lock(self, name: str = "") -> _CountedFileLock:
-        lock_file = str(self.path / f"{name}.lock")
-        with _store_lock:
-            if lock_file not in _lock_store:
-                _lock_store[lock_file] = _CountedFileLock(lock_file)
-            return _lock_store[lock_file]
+    def __del__(self) -> None:
+        self._del_lock(self._lock)
 
     @staticmethod
     def _del_lock(lock: _CountedFileLock | None) -> None:
         if lock is not None:
-            with _store_lock, lock.thread_safe:
+            with _STORE_LOCK, lock.thread_safe:
                 if lock.count == 0:
-                    _lock_store.pop(lock.lock_file, None)
-
-    def __del__(self) -> None:
-        self._del_lock(self._lock)
+                    _LOCK_STORE.pop(lock.lock_file, None)
 
     def __enter__(self) -> None:
         self._lock = self._create_lock()
         self._lock_file(self._lock)
 
-    def __exit__(
-        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
-    ) -> None:
-        self._release(self._lock)  # ty: ignore[invalid-argument-type]
-        self._del_lock(self._lock)
-        self._lock = None
+    def _create_lock(self, name: str = "") -> _CountedFileLock:
+        lock_file = str(self.path / f"{name}.lock")
+        with _STORE_LOCK:
+            if lock_file not in _LOCK_STORE:
+                _LOCK_STORE[lock_file] = _CountedFileLock(lock_file)
+            return _LOCK_STORE[lock_file]
 
     def _lock_file(self, lock: _CountedFileLock, no_block: bool = False) -> None:  # ruff:ignore[boolean-default-value-positional-argument]
         # multiple processes might be trying to get a first lock... so we cannot check if this directory exist without
@@ -136,9 +129,16 @@ class ReentrantFileLock(PathLockBase):
         except Timeout:
             if no_block:
                 raise
-            LOGGER.debug("lock file %s present, will block until released", lock.lock_file)
+            _LOGGER.debug("lock file %s present, will block until released", lock.lock_file)
             lock.release()  # release the acquire try from above
             lock.acquire()
+
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+    ) -> None:
+        self._release(self._lock)  # ty: ignore[invalid-argument-type]
+        self._del_lock(self._lock)
+        self._lock = None
 
     @staticmethod
     def _release(lock: _CountedFileLock) -> None:
@@ -188,6 +188,6 @@ class NoOpFileLock(PathLockBase):
 
 __all__ = [
     "NoOpFileLock",
+    "PathLockBase",
     "ReentrantFileLock",
-    "Timeout",
 ]

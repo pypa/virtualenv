@@ -1,12 +1,3 @@
-"""Property tests for every activator's prompt across the prompt states and later actions its shell can reach.
-
-The strategy builds prompts from tokens rather than characters, so a search without coverage feedback reaches the shapes
-that matter: a backslash in front of a dollar sign or a backtick, a quote, a parameter expansion, and the marker command
-of the shell under test. Each example runs every state and later action of that shell from the shared matrix, and must
-neither create the marker file nor show the prompt differently from the shell's display rule.
-
-"""
-
 from __future__ import annotations
 
 import tempfile
@@ -33,26 +24,18 @@ def test_prompt_stays_data(shell: str, data: st.DataObject) -> None:
     _check_every_state(shell, data.draw(_prompt_values(shell)))
 
 
-@pytest.mark.parametrize("shell", list(SHELLS))
-def test_prompt_seeds_stay_data(shell: str) -> None:
-    if reason := unavailable(shell, "none"):
-        pytest.skip(reason)
-    seeds: Final = {
-        "bash": [
-            PROMPT_PAYLOADS["backslash-dollar"],
-            PROMPT_PAYLOADS["two-backslashes-dollar"],
-            PROMPT_PAYLOADS["backslash-backtick"],
-        ],
-        "zsh": [PROMPT_PAYLOADS["backslash-dollar"], PROMPT_PAYLOADS["backslash-backtick"], "x%ny"],
-        "fish": [PROMPT_PAYLOADS["fish-backslash-quote"], "x(touch PWNED)y"],
-        "cshell": [PROMPT_PAYLOADS["command-substitution"], PROMPT_PAYLOADS["backticks"]],
-        "nushell": ["x(touch PWNED)y"],
-        "powershell": ["x$(New-Item PWNED)y"],
-        "xonsh": ["x@(touch PWNED)y", "{RED}x"],
-        "batch": ["x&type nul > PWNED&y", "x%PWNED%y", "x!PWNED!y"],
-    }
-    for seed in seeds[shell]:
-        _check_every_state(shell, seed)
+def _check_every_state(shell: str, prompt: str) -> None:
+    spec: Final = SHELLS[shell]
+    with tempfile.TemporaryDirectory() as tmp:
+        root: Final = Path(tmp)
+        script: Final = generate_script(shell, root / "env", prompt)
+        for state, action in product(spec.states, spec.actions):
+            if unavailable(shell, action):
+                continue
+            (cwd := root / f"{state}-{action}").mkdir()
+            result = run_prompt(shell, script, state, action, cwd)
+            observed = ((cwd / "PWNED").exists(), prompt_shown(shell, result, prompt, state, action))
+            assert observed == (False, True), (shell, state, action, prompt, result.stdout + result.stderr)
 
 
 def _prompt_values(shell: str) -> st.SearchStrategy[str]:
@@ -77,15 +60,23 @@ def _prompt_values(shell: str) -> st.SearchStrategy[str]:
     return st.lists(st.sampled_from(tokens[shell]), min_size=1, max_size=6).map("".join)
 
 
-def _check_every_state(shell: str, prompt: str) -> None:
-    spec: Final = SHELLS[shell]
-    with tempfile.TemporaryDirectory() as tmp:
-        root: Final = Path(tmp)
-        script: Final = generate_script(shell, root / "env", prompt)
-        for state, action in product(spec.states, spec.actions):
-            if unavailable(shell, action):
-                continue
-            (cwd := root / f"{state}-{action}").mkdir()
-            result = run_prompt(shell, script, state, action, cwd)
-            observed = ((cwd / "PWNED").exists(), prompt_shown(shell, result, prompt, state, action))
-            assert observed == (False, True), (shell, state, action, prompt, result.stdout + result.stderr)
+@pytest.mark.parametrize("shell", list(SHELLS))
+def test_prompt_seeds_stay_data(shell: str) -> None:
+    if reason := unavailable(shell, "none"):
+        pytest.skip(reason)
+    seeds: Final = {
+        "bash": [
+            PROMPT_PAYLOADS["backslash-dollar"],
+            PROMPT_PAYLOADS["two-backslashes-dollar"],
+            PROMPT_PAYLOADS["backslash-backtick"],
+        ],
+        "zsh": [PROMPT_PAYLOADS["backslash-dollar"], PROMPT_PAYLOADS["backslash-backtick"], "x%ny"],
+        "fish": [PROMPT_PAYLOADS["fish-backslash-quote"], "x(touch PWNED)y"],
+        "cshell": [PROMPT_PAYLOADS["command-substitution"], PROMPT_PAYLOADS["backticks"]],
+        "nushell": ["x(touch PWNED)y"],
+        "powershell": ["x$(New-Item PWNED)y"],
+        "xonsh": ["x@(touch PWNED)y", "{RED}x"],
+        "batch": ["x&type nul > PWNED&y", "x%PWNED%y", "x!PWNED!y"],
+    }
+    for seed in seeds[shell]:
+        _check_every_state(shell, seed)

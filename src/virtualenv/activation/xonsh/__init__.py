@@ -28,7 +28,11 @@ class XonshActivator(ViaTemplateActivator):
 
     @staticmethod
     def quote(string: str) -> str:
-        """Keep literals independent of the encoding xonsh uses to read the script."""
+        """Keep literals independent of the encoding xonsh uses to read the script.
+
+        :param string:
+        :returns:
+        """
         return ascii(string)
 
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:

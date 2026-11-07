@@ -14,55 +14,6 @@ from virtualenv.config.env_var import get_env_var
 from virtualenv.config.ini import IniConfig
 
 
-class VirtualEnvOptions(Namespace):
-    def __init__(self, **kwargs: Any) -> None:  # ruff:ignore[any-type]
-        super().__init__(**kwargs)
-        self._src: str | None = None
-        self._sources: dict[str, str] = {}
-
-    def set_src(self, key: str, value: Any, src: str) -> None:  # ruff:ignore[any-type]
-        """Set an option value and record where it came from.
-
-        :param key: the option name
-        :param value: the option value
-        :param src: the source of the value (e.g. ``"cli"``, ``"env var"``, ``"default"``)
-
-        """
-        setattr(self, key, value)
-        if src.startswith("env var"):
-            src = "env var"
-        self._sources[key] = src
-
-    def __setattr__(self, key: str, value: Any) -> None:  # ruff:ignore[any-type]
-        if (src := getattr(self, "_src", None)) is not None:
-            self._sources[key] = src
-        super().__setattr__(key, value)
-
-    def get_source(self, key: str) -> str | None:
-        """Return the source that provided a given option value.
-
-        :param key: the option name
-
-        :returns: the source string (e.g. ``"cli"``, ``"env var"``, ``"default"``), or ``None`` if not tracked
-
-        """
-        return self._sources.get(key)
-
-    @property
-    def verbosity(self) -> int | None:
-        """The verbosity level, computed as ``verbose - quiet``, clamped to zero.
-
-        :returns: the verbosity level, or ``None`` if neither ``--verbose`` nor ``--quiet`` has been parsed yet
-
-        """
-        if not hasattr(self, "verbose") and not hasattr(self, "quiet"):
-            return None
-        return max(self.verbose - self.quiet, 0)
-
-    def __repr__(self) -> str:
-        return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_'))})"
-
-
 class ExtendAction(Action):
     """Accumulate CLI groups without including configured defaults."""
 
@@ -79,7 +30,15 @@ class ExtendAction(Action):
 
 
 class VirtualEnvConfigParser(ArgumentParser):
-    """Custom option parser which updates its defaults by checking the configuration files and environmental vars."""
+    """Custom option parser which updates its defaults by checking the configuration files and environmental vars.
+
+    :param options:
+    :param env:
+    :param args:
+    :param kwargs:
+    :ivar file_config:
+    :ivar epilog_list:
+    """
 
     def __init__(
         self,
@@ -105,10 +64,13 @@ class VirtualEnvConfigParser(ArgumentParser):
         self._interpreter = None
         self._app_data = None
 
+    def enable_help(self) -> None:
+        self._fix_defaults()
+        self.add_argument("-h", "--help", action="help", default=SUPPRESS, help="show this help message and exit")
+
     def _fix_defaults(self) -> None:
         for action in self._actions:
-            action_id = id(action)
-            if action_id not in self._fixed:
+            if (action_id := id(action)) not in self._fixed:
                 self._fix_default(action)
                 self._fixed.add(action_id)
             elif self.options.get_source(action.dest) == "cli":
@@ -144,10 +106,6 @@ class VirtualEnvConfigParser(ArgumentParser):
                 outcome = action.default, "default"
             self.options.set_src(action.dest, *outcome)
 
-    def enable_help(self) -> None:
-        self._fix_defaults()
-        self.add_argument("-h", "--help", action="help", default=SUPPRESS, help="show this help message and exit")
-
     def parse_known_args(  # ty: ignore[invalid-method-override]
         self, args: Sequence[str] | None = None, namespace: VirtualEnvOptions | None = None
     ) -> tuple[VirtualEnvOptions, list[str]]:
@@ -178,9 +136,58 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
         return text
 
 
+class VirtualEnvOptions(Namespace):
+    def __init__(self, **kwargs: Any) -> None:  # ruff:ignore[any-type]
+        super().__init__(**kwargs)
+        self._src: str | None = None
+        self._sources: dict[str, str] = {}
+
+    def __setattr__(self, key: str, value: Any) -> None:  # ruff:ignore[any-type]
+        if (src := getattr(self, "_src", None)) is not None:
+            self._sources[key] = src
+        super().__setattr__(key, value)
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_'))})"
+
+    @property
+    def verbosity(self) -> int | None:
+        """The verbosity level, computed as ``verbose - quiet``, clamped to zero.
+
+        :returns: the verbosity level, or ``None`` if neither ``--verbose`` nor ``--quiet`` has been parsed yet
+
+        """
+        if not hasattr(self, "verbose") and not hasattr(self, "quiet"):
+            return None
+        return max(self.verbose - self.quiet, 0)
+
+    def set_src(self, key: str, value: Any, src: str) -> None:  # ruff:ignore[any-type]
+        """Set an option value and record where it came from.
+
+        :param key: the option name
+        :param value: the option value
+        :param src: the source of the value (e.g. ``"cli"``, ``"env var"``, ``"default"``)
+
+        """
+        setattr(self, key, value)
+        if src.startswith("env var"):
+            src = "env var"
+        self._sources[key] = src
+
+    def get_source(self, key: str) -> str | None:
+        """Return the source that provided a given option value.
+
+        :param key: the option name
+
+        :returns: the source string (e.g. ``"cli"``, ``"env var"``, ``"default"``), or ``None`` if not tracked
+
+        """
+        return self._sources.get(key)
+
+
 def _as_passed_flag(const: bool, outcome: tuple[bool, str] | None) -> tuple[bool, str] | None:
-    # an env var or ini value for a --x/--no-x pair means "as if the flag was passed": true stores the flag's value, while
-    # false on the negative flag leaves the choice unset rather than flipping it on
+    # an env var or ini value for a --x/--no-x pair means "as if the flag was passed": true stores the flag's value,
+    # while false on the negative flag leaves the choice unset rather than flipping it on
     if outcome is None or const:
         return outcome
     value, source = outcome

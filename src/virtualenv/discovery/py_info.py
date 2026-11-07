@@ -2,8 +2,4 @@
 
 from __future__ import annotations
 
-from python_discovery import PythonInfo
-
-__all__ = [
-    "PythonInfo",
-]
+__all__ = []

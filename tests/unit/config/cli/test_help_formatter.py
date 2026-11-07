@@ -1,5 +1,3 @@
-"""Tests for HelpFormatter terminal width behavior."""
-
 from __future__ import annotations
 
 import os
@@ -12,7 +10,7 @@ from virtualenv.config.cli.parser import HelpFormatter
 
 @pytest.mark.parametrize("width", [80, 120, 200])
 def test_help_formatter_uses_terminal_width(width: int) -> None:
-    """HelpFormatter should use shutil.get_terminal_size() for width."""
+    # HelpFormatter should use shutil.get_terminal_size() for width.
     with patch("virtualenv.config.cli.parser.shutil.get_terminal_size") as mock_size:
         mock_size.return_value = os.terminal_size((width, 24))
         formatter = HelpFormatter("test_prog")
@@ -20,7 +18,7 @@ def test_help_formatter_uses_terminal_width(width: int) -> None:
 
 
 def test_help_formatter_not_hardcoded_240() -> None:
-    """HelpFormatter width should not be hardcoded to 240."""
+    # HelpFormatter width should not be hardcoded to 240.
     with patch("virtualenv.config.cli.parser.shutil.get_terminal_size") as mock_size:
         mock_size.return_value = os.terminal_size((80, 24))
         formatter = HelpFormatter("test_prog")

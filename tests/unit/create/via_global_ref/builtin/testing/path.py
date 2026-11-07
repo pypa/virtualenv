@@ -11,22 +11,21 @@ def is_name(path):
 
 
 class FakeDataABC(ABC):
-    """Provides data to mock the `Path`"""
-
     @property
-    @abstractmethod
-    def filelist(self):
-        """To mock a dir, just mock any child file."""
-        msg = "Collection of (str) file paths to mock"
-        raise NotImplementedError(msg)
+    def fake_dirs(self):
+        return set(chain(*map(attr("parents"), self.fake_files)))
 
     @property
     def fake_files(self):
         return map(type(self), self.filelist)
 
+    # Provides data to mock the `Path`
     @property
-    def fake_dirs(self):
-        return set(chain(*map(attr("parents"), self.fake_files)))
+    @abstractmethod
+    def filelist(self):
+        # To mock a dir, just mock any child file.
+        msg = "Collection of (str) file paths to mock"
+        raise NotImplementedError(msg)
 
     @property
     def contained_fake_names(self):
@@ -44,8 +43,6 @@ class FakeDataABC(ABC):
 
 
 class PathMockABC(FakeDataABC, Path):
-    """Mocks the behavior of `Path`"""
-
     _flavour = getattr(Path(), "_flavour", None)
     if hasattr(_flavour, "altsep"):
         # Allows to pass some tests for Windows via PosixPath.
@@ -75,23 +72,21 @@ class PathMockABC(FakeDataABC, Path):
         yield from map(self.joinpath, self.contained_fake_names)
 
 
-def MetaPathMock(filelist):  # ruff:ignore[invalid-function-name]
-    """Metaclass that creates a `PathMock` class with the `filelist` defined."""
-    return type("PathMock", (PathMockABC,), {"filelist": filelist})
-
-
 def mock_files(mocker, pathlist, filelist) -> None:
     PathMock = MetaPathMock(set(filelist))  # ruff:ignore[non-lowercase-variable-in-function]
     for path in pathlist:
         mocker.patch(path, PathMock)
 
 
+def MetaPathMock(filelist):  # ruff:ignore[invalid-function-name]
+    # Metaclass that creates a `PathMock` class with the `filelist` defined.
+    return type("PathMock", (PathMockABC,), {"filelist": filelist})
+
+
 def mock_pypy_libs(mocker, pypy_creator_cls, libs) -> None:
-    paths = tuple(set(map(Path, libs)))
-    mocker.patch.object(pypy_creator_cls, "_shared_libs", return_value=paths)
+    mocker.patch.object(pypy_creator_cls, "_shared_libs", return_value=tuple(set(map(Path, libs))))
 
 
 def join(*chunks):
     line = "".join(chunks)
-    sep = ("\\" in line and "\\") or ("/" in line and "/") or "/"
-    return sep.join(chunks)
+    return (("\\" in line and "\\") or ("/" in line and "/") or "/").join(chunks)

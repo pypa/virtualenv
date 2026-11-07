@@ -18,12 +18,12 @@ def test_failed_to_find_bad_spec() -> None:
     assert repr(context.value) == msg
 
 
-SYSTEM = PythonInfo.current_system()
+_SYSTEM = PythonInfo.current_system()
 
 
 @pytest.mark.parametrize(
     "of_id",
-    ({sys.executable} if sys.executable != SYSTEM.executable else set()) | {SYSTEM.implementation},
+    ({sys.executable} if sys.executable != _SYSTEM.executable else set()) | {_SYSTEM.implementation},
 )
 def test_failed_to_find_implementation(of_id, mocker) -> None:
     mocker.patch("virtualenv.run.plugin.creators.CreatorSelector._OPTIONS", return_value={})

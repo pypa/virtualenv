@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from virtualenv.seed.wheels.embed import get_embed_wheel
-
+from .embed import get_embed_wheel
 from .periodic_update import periodic_update
 from .util import Version, Wheel, discover_wheels
 
@@ -22,7 +21,17 @@ def from_bundle(  # ruff:ignore[too-many-arguments]
     do_periodic_update: bool,
     env: dict[str, str],
 ) -> Wheel | None:
-    """Load the bundled wheel to a cache directory."""
+    """Load the bundled wheel to a cache directory.
+
+    :param distribution:
+    :param version:
+    :param for_py_version:
+    :param search_dirs:
+    :param app_data:
+    :param do_periodic_update:
+    :param env:
+    :returns:
+    """
     of_version = Version.of_version(version)
     wheel = load_embed_wheel(app_data, distribution, for_py_version, of_version)
 
@@ -33,7 +42,7 @@ def from_bundle(  # ruff:ignore[too-many-arguments]
             wheel = periodic_update(distribution, of_version, for_py_version, wheel, search_dirs, app_data, per, env)
 
         # 3. acquire from extra search dir
-        found_wheel = from_dir(distribution, of_version, for_py_version, search_dirs)
+        found_wheel = _from_dir(distribution, of_version, for_py_version, search_dirs)
         if found_wheel is not None and (wheel is None or found_wheel.parsed_version > wheel.parsed_version):
             wheel = found_wheel
     return wheel
@@ -50,8 +59,8 @@ def load_embed_wheel(app_data: AppData, distribution: str, for_py_version: str, 
     return wheel
 
 
-def from_dir(distribution: str, version: str | None, for_py_version: str, directories: list[Path]) -> Wheel | None:
-    """Load a compatible wheel from a given folder."""
+def _from_dir(distribution: str, version: str | None, for_py_version: str, directories: list[Path]) -> Wheel | None:
+    # Load a compatible wheel from a given folder.
     for folder in directories:
         for wheel in discover_wheels(folder, distribution, version, for_py_version):
             return wheel
@@ -60,5 +69,4 @@ def from_dir(distribution: str, version: str | None, for_py_version: str, direct
 
 __all__ = [
     "from_bundle",
-    "load_embed_wheel",
 ]

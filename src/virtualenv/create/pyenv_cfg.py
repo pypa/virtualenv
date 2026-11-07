@@ -11,9 +11,10 @@ from virtualenv.util.text import collapse_line_boundaries
 if TYPE_CHECKING:
     from pathlib import Path
 
-LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
-# a plain value such as 3.14 or true would otherwise turn into a path whenever the working directory has an entry so named
+# a plain value such as 3.14 or true would otherwise turn into a path whenever the working directory has an entry so
+# named
 _PATH_KEYS: Final[frozenset[str]] = frozenset({
     "home",
     "executable",
@@ -35,8 +36,7 @@ class PyEnvCfg:
 
     @classmethod
     def from_file(cls, path: Path) -> PyEnvCfg:
-        content = cls._read_values(path) if path.exists() else OrderedDict()
-        return PyEnvCfg(content, path)
+        return PyEnvCfg(cls._read_values(path) if path.exists() else OrderedDict(), path)
 
     @staticmethod
     def _read_values(path: Path) -> OrderedDict[str, str]:
@@ -52,9 +52,21 @@ class PyEnvCfg:
             content[key] = value
         return content
 
+    def __setitem__(self, key: str, value: str) -> None:
+        self.content[key] = value
+
+    def __getitem__(self, key: str) -> str:
+        return self.content[key]
+
+    def __contains__(self, item: str) -> bool:
+        return item in self.content
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(path={self.path})"
+
     def write(self) -> None:
         _validate_path(self.path)
-        LOGGER.debug("write %s", self.path)
+        _LOGGER.debug("write %s", self.path)
         text = ""
         for key, value in self.content.items():
             if key == "prompt" and value:
@@ -65,7 +77,7 @@ class PyEnvCfg:
             else:
                 normalized_value = value
             line = f"{collapse_line_boundaries(key)} = {collapse_line_boundaries(normalized_value)}"
-            LOGGER.debug("\t%r", line)
+            _LOGGER.debug("\t%r", line)
             text += line
             text += "\n"
         write_file(self.path, text.encode("utf-8"))
@@ -74,21 +86,9 @@ class PyEnvCfg:
         self.content = self._read_values(self.path)
         return self.content
 
-    def __setitem__(self, key: str, value: str) -> None:
-        self.content[key] = value
-
-    def __getitem__(self, key: str) -> str:
-        return self.content[key]
-
-    def __contains__(self, item: str) -> bool:
-        return item in self.content
-
     def update(self, other: dict[str, str]) -> PyEnvCfg:
         self.content.update(other)
         return self
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(path={self.path})"
 
 
 def _validate_path(path: Path) -> None:

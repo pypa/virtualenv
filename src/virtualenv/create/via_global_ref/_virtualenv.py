@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from importlib.machinery import ModuleSpec
 
-VIRTUALENV_PATCH_FILE = os.path.abspath(__file__)
+_VIRTUALENV_PATCH_FILE = os.path.abspath(__file__)
 
 
 def patch_dist(dist: types.ModuleType) -> None:
@@ -25,10 +25,9 @@ def patch_dist(dist: types.ModuleType) -> None:
         install = self.get_option_dict("install")
 
         if "prefix" in install:  # the prefix governs where to install the libraries
-            install["prefix"] = VIRTUALENV_PATCH_FILE, os.path.abspath(sys.prefix)
+            install["prefix"] = _VIRTUALENV_PATCH_FILE, os.path.abspath(sys.prefix)
         for base in ("purelib", "platlib", "headers", "scripts", "data"):
-            key = f"install_{base}"
-            if key in install:  # do not allow global configs to hijack venv paths
+            if (key := f"install_{base}") in install:  # do not allow global configs to hijack venv paths
                 install.pop(key, None)
         return result
 
@@ -42,8 +41,7 @@ _DISTUTILS_PATCH = "distutils.dist", "setuptools.dist"
 
 
 class _Finder:
-    """A meta path finder that allows patching the imported distutils modules."""
-
+    # A meta path finder that allows patching the imported distutils modules.
     fullname = None
 
     # lock[0] is threading.Lock(), but initialized lazily to avoid importing threading very early at startup,
@@ -87,8 +85,7 @@ class _Finder:
         return None
 
     def _patch_spec(self, spec: ModuleSpec, partial: Callable[..., object]) -> ModuleSpec:
-        old = getattr(spec.loader, "exec_module", None)
-        if old is not None and old is not self.exec_module:
+        if (old := getattr(spec.loader, "exec_module", None)) is not None and old is not self.exec_module:
             try:  # ruff:ignore[suppressible-exception]
                 spec.loader.exec_module = partial(self.exec_module, old)  # ty: ignore[invalid-assignment]
             except AttributeError:

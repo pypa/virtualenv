@@ -8,7 +8,7 @@ from argparse import ArgumentTypeError
 from contextlib import contextmanager
 from functools import partial
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, Final
 
 import pytest
 from python_discovery import PythonInfo
@@ -41,12 +41,11 @@ def _parse_shard(value: str) -> tuple[int, int]:
 
 
 def pytest_configure(config) -> None:
-    """Ensure randomly is called before we re-order"""
+    # Ensure randomly is called before we re-order
     manager = config.pluginmanager
 
     order = manager.hook.pytest_collection_modifyitems.get_hookimpls()
-    dest = next((i for i, p in enumerate(order) if p.plugin is manager.getplugin("randomly")), None)
-    if dest is not None:
+    if (dest := next((i for i, p in enumerate(order) if p.plugin is manager.getplugin("randomly")), None)) is not None:
         from_pos = next(i for i, p in enumerate(order) if p.plugin is manager.getplugin(__file__))
         temp = order[dest]
         order[dest] = order[from_pos]
@@ -153,6 +152,13 @@ def _ensure_py_info_cache_empty(session_app_data):
     PythonInfo.clear_cache(session_app_data)
 
 
+@pytest.fixture(autouse=True, scope="session")
+def _ignore_global_config(tmp_path_factory):
+    filename = str(tmp_path_factory.mktemp("folder") / "virtualenv-test-suite.ini")
+    with change_os_environ("VIRTUALENV_CONFIG_FILE", filename):
+        yield
+
+
 @contextmanager
 def change_os_environ(key, value):
     env_var = key
@@ -163,31 +169,6 @@ def change_os_environ(key, value):
     finally:
         if previous is not None:
             os.environ[env_var] = previous
-
-
-@pytest.fixture(autouse=True, scope="session")
-def _ignore_global_config(tmp_path_factory):
-    filename = str(tmp_path_factory.mktemp("folder") / "virtualenv-test-suite.ini")
-    with change_os_environ("VIRTUALENV_CONFIG_FILE", filename):
-        yield
-
-
-def _assert_environ_stable(old: dict[str, str], to_clean: set[str]) -> None:
-    new = os.environ
-    extra = {k: new[k] for k in set(new) - set(old)}
-    miss = {k: old[k] for k in set(old) - set(new) - to_clean}
-    diff = {
-        f"{k} = {old[k]} vs {new[k]}" for k in set(old) & set(new) if old[k] != new[k] and not k.startswith("PYTEST_")
-    }
-    if extra or miss or diff:
-        msg = "tests changed environ"
-        if extra:
-            msg += f" extra {extra}"
-        if miss:
-            msg += f" miss {miss}"
-        if diff:
-            msg += f" diff {diff}"
-        pytest.fail(msg)
 
 
 @pytest.fixture(autouse=True)
@@ -218,14 +199,32 @@ def _check_os_environ_stable():
             os.environ.update(cleaned)
 
 
-COV_ENV_VAR = "COVERAGE_PROCESS_START"
-COVERAGE_RUN = os.environ.get(str(COV_ENV_VAR))
+def _assert_environ_stable(old: dict[str, str], to_clean: set[str]) -> None:
+    new = os.environ
+    extra = {k: new[k] for k in set(new) - set(old)}
+    miss = {k: old[k] for k in set(old) - set(new) - to_clean}
+    diff = {
+        f"{k} = {old[k]} vs {new[k]}" for k in set(old) & set(new) if old[k] != new[k] and not k.startswith("PYTEST_")
+    }
+    if extra or miss or diff:
+        msg = "tests changed environ"
+        if extra:
+            msg += f" extra {extra}"
+        if miss:
+            msg += f" miss {miss}"
+        if diff:
+            msg += f" diff {diff}"
+        pytest.fail(msg)
+
+
+_COV_ENV_VAR: Final[str] = "COVERAGE_PROCESS_START"
+_COVERAGE_RUN = os.environ.get(str(_COV_ENV_VAR))
 
 
 @pytest.fixture(autouse=True)
 def coverage_env(monkeypatch, link, request):
-    """Enable coverage report collection on the created virtual environments by injecting the coverage project"""
-    if COVERAGE_RUN and "_no_coverage" not in request.fixturenames:
+    # Enable coverage report collection on the created virtual environments by injecting the coverage project
+    if _COVERAGE_RUN and "_no_coverage" not in request.fixturenames:
         # we inject right after creation, we cannot collect coverage on site.py - used for helper scripts, such as debug
         from virtualenv import run  # ruff:ignore[import-outside-top-level]
 
@@ -269,7 +268,7 @@ def _no_coverage() -> None:
     pass
 
 
-if COVERAGE_RUN:
+if _COVERAGE_RUN:
     import coverage
 
     class EnableCoverage:
@@ -287,8 +286,7 @@ if COVERAGE_RUN:
             for entry in self._ROOT_COV_FILES_AND_FOLDERS:
                 target = site_packages / entry.name
                 if not target.exists():
-                    clean = self.link(entry, target)
-                    self.targets.append((target, clean))
+                    self.targets.append((target, self.link(entry, target)))
             return self
 
         def __exit__(self, exc_type, exc_val, exc_tb):
@@ -318,8 +316,7 @@ def special_char_name():
     result = ""
     for char in base:
         try:
-            trip = char.encode(encoding, errors="strict").decode(encoding)
-            if char == trip:
+            if char == char.encode(encoding, errors="strict").decode(encoding):
                 result += char
         except ValueError:  # ruff:ignore[try-except-in-loop]
             continue
@@ -346,15 +343,15 @@ def current_fastest(current_creators):
 
 @pytest.fixture(scope="session")
 def session_app_data(tmp_path_factory):
-    temp_folder = tmp_path_factory.mktemp("session-app-data")
-    app_data = AppDataDiskFolder(folder=str(temp_folder))
+    app_data = AppDataDiskFolder(folder=str(tmp_path_factory.mktemp("session-app-data")))
     with change_env_var("VIRTUALENV_OVERRIDE_APP_DATA", str(app_data.lock.path)):
         yield app_data
 
 
 @contextmanager
 def change_env_var(key, value):
-    """Temporarily change an environment variable. :param key: the key of the env var :param value: the value of the env var"""
+    # Temporarily change an environment variable. :param key: the key of the env var :param value: the value of the env
+    # var
     already_set = key in os.environ
     prev_value = os.environ.get(key)
     os.environ[key] = value
@@ -381,8 +378,7 @@ def for_py_version() -> str:
 
 @pytest.fixture
 def _skip_if_test_in_system(session_app_data) -> None:
-    current = PythonInfo.current(session_app_data)
-    if current.system_executable is not None:
+    if PythonInfo.current(session_app_data).system_executable is not None:
         pytest.skip("test not valid if run under system")
 
 

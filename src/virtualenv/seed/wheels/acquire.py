@@ -20,7 +20,7 @@ from .util import Version, Wheel, discover_wheels
 if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
 
-LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 PIP_RUN: Final[str] = (
     "import sys; sys.path = [p for p in sys.path if p]; "
@@ -67,7 +67,18 @@ def get_wheel(  # ruff:ignore[too-many-arguments]
     do_periodic_update: bool,
     env: dict[str, str],
 ) -> Wheel | None:
-    """Get a wheel with the given distribution-version-for_py_version trio, by using the extra search dir + download."""
+    """Get a wheel with the given distribution-version-for_py_version trio, by using the extra search dir + download.
+
+    :param distribution:
+    :param version:
+    :param for_py_version:
+    :param search_dirs:
+    :param download:
+    :param app_data:
+    :param do_periodic_update:
+    :param env:
+    :returns:
+    """
     # not all wheels are compatible with all python versions, so we need to py version qualify it
     wheel = None
 
@@ -91,7 +102,7 @@ def get_wheel(  # ruff:ignore[too-many-arguments]
             # only the bundle request has a local wheel that satisfies it; a pinned version must fail
             if version != Version.bundle:
                 raise
-            LOGGER.warning("%s, seeding the bundled %s instead", exception, distribution)
+            _LOGGER.warning("%s, seeding the bundled %s instead", exception, distribution)
             return from_bundle(distribution, version, for_py_version, search_dirs, app_data, do_periodic_update, env)
         if wheel is not None and app_data.can_update:
             add_wheel_to_update_log(wheel, for_py_version, app_data)
@@ -110,6 +121,14 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
 ) -> Wheel:
     """Download one wheel into a private staging directory and move it into ``to_folder`` once it checks out.
 
+    :param distribution:
+    :param version_spec:
+    :param for_py_version:
+    :param search_dirs:
+    :param app_data:
+    :param to_folder:
+    :param env:
+    :returns:
     :raises ValueError: for an invalid distribution name or version specifier.
     :raises CalledProcessError: when ``pip download`` fails.
     :raises UnverifiedWheelError: when PyPI cannot supply the digest to verify against.
@@ -136,7 +155,7 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
     )):
         msg = f"refusing to download wheel with archive-like requirement: {to_download!r}"
         raise ValueError(msg)
-    LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
+    _LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
     verify_against_pypi: Final = _uses_default_index(env)
     env = pip_wheel_env_run(search_dirs, app_data, env)
     to_folder.mkdir(parents=True, exist_ok=True)
@@ -172,6 +191,45 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         return Wheel(destination)
 
 
+def _check_distribution(distribution: str) -> None:
+    if not _DISTRIBUTION_RE.fullmatch(distribution):
+        msg = f"refusing to download wheel for suspicious distribution name: {distribution!r}"
+        raise ValueError(msg)
+
+
+def _check_version_spec(version_spec: str | None) -> None:
+    if not version_spec:
+        return
+    if not re.fullmatch(r"(?:==|<)[A-Za-z0-9._+!-]+", version_spec):
+        msg = f"refusing to download wheel with suspicious version spec: {version_spec!r}"
+        raise ValueError(msg)
+    try:
+        Specifier(version_spec)
+    except InvalidSpecifier as exception:
+        msg = f"refusing to download wheel with suspicious version spec: {version_spec!r}"
+        raise ValueError(msg) from exception
+
+
+def pip_wheel_env_run(search_dirs: list[Path], app_data: AppData, env: dict[str, str]) -> dict[str, str]:
+    env = env.copy()
+    env.update({"PIP_USE_WHEEL": "1", "PIP_USER": "0", "PIP_NO_INPUT": "1", "PYTHONIOENCODING": "utf-8"})
+    wheel = get_wheel(
+        distribution="pip",
+        version=None,
+        for_py_version=f"{sys.version_info.major}.{sys.version_info.minor}",
+        search_dirs=search_dirs,
+        download=False,
+        app_data=app_data,
+        do_periodic_update=False,
+        env=env,
+    )
+    if wheel is None:
+        msg = "could not find the embedded pip"
+        raise RuntimeError(msg)
+    env["PYTHONPATH"] = str(wheel.path)
+    return env
+
+
 def _downloaded_wheel(folder: Path, distribution: str, version_spec: str | None) -> Wheel:
     files: Final = list(folder.iterdir())
     if len(files) != 1 or files[0].is_symlink() or not files[0].is_file():
@@ -198,45 +256,6 @@ def find_compatible_in_house(
             raise ValueError(version_spec)
         return next((wheel for wheel in wheels if specifier.contains(wheel.version)), None)
     return next(iter(wheels), None)
-
-
-def pip_wheel_env_run(search_dirs: list[Path], app_data: AppData, env: dict[str, str]) -> dict[str, str]:
-    env = env.copy()
-    env.update({"PIP_USE_WHEEL": "1", "PIP_USER": "0", "PIP_NO_INPUT": "1", "PYTHONIOENCODING": "utf-8"})
-    wheel = get_wheel(
-        distribution="pip",
-        version=None,
-        for_py_version=f"{sys.version_info.major}.{sys.version_info.minor}",
-        search_dirs=search_dirs,
-        download=False,
-        app_data=app_data,
-        do_periodic_update=False,
-        env=env,
-    )
-    if wheel is None:
-        msg = "could not find the embedded pip"
-        raise RuntimeError(msg)
-    env["PYTHONPATH"] = str(wheel.path)
-    return env
-
-
-def _check_distribution(distribution: str) -> None:
-    if not _DISTRIBUTION_RE.fullmatch(distribution):
-        msg = f"refusing to download wheel for suspicious distribution name: {distribution!r}"
-        raise ValueError(msg)
-
-
-def _check_version_spec(version_spec: str | None) -> None:
-    if not version_spec:
-        return
-    if not re.fullmatch(r"(?:==|<)[A-Za-z0-9._+!-]+", version_spec):
-        msg = f"refusing to download wheel with suspicious version spec: {version_spec!r}"
-        raise ValueError(msg)
-    try:
-        Specifier(version_spec)
-    except InvalidSpecifier as exception:
-        msg = f"refusing to download wheel with suspicious version spec: {version_spec!r}"
-        raise ValueError(msg) from exception
 
 
 __all__ = [

@@ -39,13 +39,13 @@ def make_interpreter() -> MakeInterpreter:
         free_threaded: bool = False,
         version_info: tuple[int, ...] = (3, 14, 0),
     ) -> Interpreter:
-        interpreter = MagicMock()
-        interpreter.prefix = prefix
-        interpreter.system_prefix = prefix
-        interpreter.system_executable = f"{prefix}/bin/python3"
-        interpreter.free_threaded = free_threaded
-        interpreter.version_info = MagicMock(major=version_info[0], minor=version_info[1])
-        interpreter.sysconfig_vars = sysconfig_vars or {}
-        return interpreter
+        return MagicMock(
+            prefix=prefix,
+            system_prefix=prefix,
+            system_executable=f"{prefix}/bin/python3",
+            free_threaded=free_threaded,
+            version_info=MagicMock(major=version_info[0], minor=version_info[1]),
+            sysconfig_vars=sysconfig_vars or {},
+        )
 
     return _make  # type: ignore[return-value]

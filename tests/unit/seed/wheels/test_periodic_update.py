@@ -145,6 +145,11 @@ def test_periodic_update_stops_at_current(mocker, session_app_data, for_py_versi
     assert result.path == current.path
 
 
+def wheel_path(wheel, of, pre_release=""):
+    new_version = ".".join(str(i) for i in (tuple(sum(x) for x in zip_longest(wheel.version_tuple, of, fillvalue=0))))
+    return str(wheel.path.parent / wheel.name.replace(wheel.version, new_version + pre_release))
+
+
 def test_periodic_update_keeps_newer_bundle(app_data: AppDataDiskFolder) -> None:
     current: Final = get_embed_wheel("pip", "3.9")
     assert current is not None
@@ -251,13 +256,9 @@ def test_manual_update_honored(mocker, session_app_data, for_py_version) -> None
     assert str(result.path) == expected_path
 
 
-def wheel_path(wheel, of, pre_release=""):
-    new_version = ".".join(str(i) for i in (tuple(sum(x) for x in zip_longest(wheel.version_tuple, of, fillvalue=0))))
-    new_name = wheel.name.replace(wheel.version, new_version + pre_release)
-    return str(wheel.path.parent / new_name)
-
-
 _UP_NOW: Final[datetime] = datetime.now(tz=timezone.utc)
+
+
 _UPDATE_SKIP: Final[dict[str, UpdateLog]] = {
     "started_just_now_no_complete": UpdateLog(started=_UP_NOW, completed=None, versions=[], periodic=True),
     "started_1_hour_no_complete": UpdateLog(
@@ -714,19 +715,17 @@ def test_get_release_fails(mocker, caplog) -> None:
     assert repr(exc) in caplog.text
 
 
-def _pypi_release_response(mocker, filename, digests, version="20.1"):
-    entry = {"filename": filename, "digests": digests}
-    body = json.dumps({"releases": {version: [entry]}})
-    return mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", return_value=StringIO(body))
-
-
 def test_verify_wheel_digest_matches(tmp_path, mocker) -> None:
     wheel = Wheel(tmp_path / "pip-20.1-py3-none-any.whl")
     wheel.path.write_bytes(b"content")
-    sha256 = hashlib.sha256(b"content").hexdigest()
-    _pypi_release_response(mocker, wheel.name, {"sha256": sha256})
+    _pypi_release_response(mocker, wheel.name, {"sha256": hashlib.sha256(b"content").hexdigest()})
 
     verify_wheel_digest(wheel)  # must not raise
+
+
+def _pypi_release_response(mocker, filename, digests, version="20.1"):
+    body = json.dumps({"releases": {version: [{"filename": filename, "digests": digests}]}})
+    return mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", return_value=StringIO(body))
 
 
 def test_verify_wheel_digest_mismatch(tmp_path, mocker) -> None:
@@ -780,21 +779,6 @@ def test_verify_wheel_digest_recovers_on_retry(tmp_path, mocker) -> None:
         verify_wheel_digest(wheel)
 
 
-def mock_download(mocker, pip_version_remote):
-    def download():
-        index = 0
-        while True:
-            path = pip_version_remote[index]
-            index += 1
-            yield Wheel(Path(path))
-
-    do = download()
-    return mocker.patch(
-        "virtualenv.seed.wheels.acquire.download_wheel",
-        side_effect=lambda *_a, **_k: next(do),
-    )
-
-
 def test_download_stop_with_embed(tmp_path, mocker, time_freeze) -> None:
     time_freeze(_UP_NOW)
     wheel = get_embed_wheel("pip", "3.9")
@@ -818,13 +802,27 @@ def test_download_stop_with_embed(tmp_path, mocker, time_freeze) -> None:
     assert write.call_count == 1
 
 
+def mock_download(mocker, pip_version_remote):
+    def download():
+        index = 0
+        while True:
+            path = pip_version_remote[index]
+            index += 1
+            yield Wheel(Path(path))
+
+    do = download()
+    return mocker.patch(
+        "virtualenv.seed.wheels.acquire.download_wheel",
+        side_effect=lambda *_a, **_k: next(do),
+    )
+
+
 def test_download_manual_stop_after_one_download(tmp_path, mocker, time_freeze) -> None:
     time_freeze(_UP_NOW)
     wheel = get_embed_wheel("pip", "3.9")
     app_data_outer = AppDataDiskFolder(str(tmp_path / "app"))
-    pip_version_remote = [wheel_path(wheel, (0, 1, 1))]
 
-    download_wheel = mock_download(mocker, pip_version_remote)
+    download_wheel = mock_download(mocker, [wheel_path(wheel, (0, 1, 1))])
     url_o = mocker.patch("virtualenv.seed.wheels.periodic_update.urlopen", side_effect=URLError("unavailable"))
 
     last_update = _UP_NOW - timedelta(days=14)
@@ -963,7 +961,7 @@ def test_update_uses_selected_installation(
     version: Final = package / "version.py"
     version.write_text('__version__ = "99.0.0"\n', encoding="utf-8")
     entry: Final = package / "__init__.py"
-    entry.write_text(entry.read_text(encoding="utf-8") + "\nprint(__version__)\n", encoding="utf-8")
+    entry.write_text(f"{entry.read_text(encoding='utf-8')}\nprint(__version__)\n", encoding="utf-8")
     monkeypatch.setattr("virtualenv.seed.wheels.periodic_update.ROOT", str(root))
     monkeypatch.setenv("PIP_NO_INDEX", "1")
     trigger_update(

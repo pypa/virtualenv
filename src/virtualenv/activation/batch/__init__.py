@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
     from virtualenv.create.creator import Creator
 
-LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 # cmd.exe's own command-line parser looks for these regardless of surrounding quotes: confirmed on a
 # real Windows runner that `@set "VAR=x & cmd"` still runs `cmd` as a second statement even though the
@@ -41,20 +41,14 @@ class BatchActivator(ViaTemplateActivator):
     def supports(cls, interpreter: PythonInfo) -> bool:
         return interpreter.os == "nt"
 
-    def templates(self) -> Iterator[str]:
-        yield "activate.bat"
-        yield "deactivate.bat"
-        yield "pydoc.bat"
-
     def generate(self, creator: Creator) -> list[Path]:
         return [] if self.remove_unsafe(creator) else super().generate(creator)
 
     def remove_unsafe(self, creator: Creator, *, selected: bool = True) -> bool:
         values = super().replacements(creator, creator.bin_dir)
-        problems = [reason for key in _PATH_REPLACEMENT_NAMES if (reason := _unsafe_path_reason(key, values[key]))]
-        if problems:
+        if problems := [reason for key in _PATH_REPLACEMENT_NAMES if (reason := _unsafe_path_reason(key, values[key]))]:
             for problem in problems:
-                LOGGER.log(
+                _LOGGER.log(
                     logging.WARNING if selected else logging.DEBUG, "skipping batch activation scripts: %s", problem
                 )
             for template in self.templates():
@@ -62,21 +56,10 @@ class BatchActivator(ViaTemplateActivator):
             return True
         return False
 
-    @staticmethod
-    def quote(string: str) -> str:
-        """Make a value safe to sit inside ``@set "VAR=value"``.
-
-        Batch has no escape for a double quote in this context either: it always closes the quoted string, and whatever
-        follows on the line runs as live cmd.exe syntax. A raw line boundary is worse - batch is line-oriented
-        regardless of quote state, so it starts a brand-new statement instead of staying inside the value. None of these
-        can be represented literally here, so replace them with a space. ``%`` still triggers variable expansion inside
-        the quotes, but doubling it to ``%%`` is a real, in-file escape that keeps the literal character.
-
-        """
-        string = string.replace("%", "%%")
-        for operator in _CMD_OPERATORS:
-            string = string.replace(operator, " ")
-        return collapse_line_boundaries(string)
+    def templates(self) -> Iterator[str]:
+        yield "activate.bat"
+        yield "deactivate.bat"
+        yield "pydoc.bat"
 
     def instantiate_template(self, replacements: dict[str, str], template: str, creator: Creator) -> str:
         # ensure the text has all newlines as \r\n - required by batch
@@ -88,6 +71,24 @@ class BatchActivator(ViaTemplateActivator):
             **super().substitutions(replacements, creator),
             "__VIRTUAL_ENV_CALL__": self.quote(replacements["__VIRTUAL_ENV__"]).replace("%", "%%"),
         }
+
+    @staticmethod
+    def quote(string: str) -> str:
+        """Make a value safe to sit inside ``@set "VAR=value"``.
+
+        Batch has no escape for a double quote in this context either: it always closes the quoted string, and whatever
+        follows on the line runs as live cmd.exe syntax. A raw line boundary is worse - batch is line-oriented
+        regardless of quote state, so it starts a brand-new statement instead of staying inside the value. None of these
+        can be represented literally here, so replace them with a space. ``%`` still triggers variable expansion inside
+        the quotes, but doubling it to ``%%`` is a real, in-file escape that keeps the literal character.
+
+        :param string:
+        :returns:
+        """
+        string = string.replace("%", "%%")
+        for operator in _CMD_OPERATORS:
+            string = string.replace(operator, " ")
+        return collapse_line_boundaries(string)
 
 
 def _unsafe_path_reason(key: str, value: str) -> str | None:

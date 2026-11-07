@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
-LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 class ViaGlobalRefMeta(CreatorMeta):
@@ -44,14 +44,6 @@ class ViaGlobalRefApi(Creator, ABC):
         self.symlinks = self._should_symlink(options)
         self.enable_system_site_package = options.system_site
 
-    if TYPE_CHECKING:
-
-        @property
-        def purelib(self) -> Path: ...
-
-        @property
-        def script_dir(self) -> Path: ...
-
     @staticmethod
     def _should_symlink(options: VirtualEnvOptions) -> bool:
         # Priority of where the option is set to follow the order: CLI, env var, file, hardcoded.
@@ -68,6 +60,14 @@ class ViaGlobalRefApi(Creator, ABC):
             if c_opt is True:
                 return False
         return False  # fallback to copy
+
+    if TYPE_CHECKING:
+
+        @property
+        def purelib(self) -> Path: ...
+
+        @property
+        def script_dir(self) -> Path: ...
 
     @classmethod
     def add_parser_arguments(
@@ -117,17 +117,19 @@ class ViaGlobalRefApi(Creator, ABC):
         # startup cost on 3.9. See https://github.com/pypa/virtualenv/issues/3181.
         if self.interpreter.version_info >= (3, 10):
             return
-        text = self.env_patch_text()
-        if text:
+        if text := self.env_patch_text():
             pth = self.purelib / "_virtualenv.pth"
-            LOGGER.debug("create virtualenv import hook file %s", pth)
+            _LOGGER.debug("create virtualenv import hook file %s", pth)
             write_file(pth, b"import _virtualenv")
             dest_path = self.purelib / "_virtualenv.py"
-            LOGGER.debug("create %s", dest_path)
+            _LOGGER.debug("create %s", dest_path)
             write_file(dest_path, text.encode("utf-8"))
 
     def env_patch_text(self) -> str:
-        """Patch the distutils package to not be derailed by its configuration files."""
+        """Patch the distutils package to not be derailed by its configuration files.
+
+        :returns:
+        """
         with self.app_data.ensure_extracted(Path(__file__).parent / "_virtualenv.py") as resolved_path:
             return resolved_path.read_text(encoding="utf-8")
 

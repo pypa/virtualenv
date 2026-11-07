@@ -58,20 +58,6 @@ class IniConfig:
         with self.config_file.open("rt", encoding="utf-8-sig") as file_handler:
             return self.config_parser.read_file(file_handler)
 
-    def get(self, key: str, as_type: TypeData) -> tuple[Any, str] | None:
-        cache_key = key, as_type
-        if cache_key in self._cache:
-            return self._cache[cache_key]
-        try:
-            source = "file"
-            raw_value = self.config_parser.get(self.section, key.lower())
-            value = convert(raw_value, as_type, source)
-            result = value, source
-        except Exception:  # ruff:ignore[blind-except]
-            result = None
-        self._cache[cache_key] = result
-        return result
-
     def __bool__(self) -> bool:
         return bool(self.has_config_file) and bool(self.has_virtualenv_section)
 
@@ -82,5 +68,20 @@ class IniConfig:
             f"(change{'d' if self.is_env_var else ''} via env var {self.VIRTUALENV_CONFIG_FILE_ENV_VAR})"
         )
 
+    def get(self, key: str, as_type: TypeData) -> tuple[Any, str] | None:
+        cache_key = key, as_type
+        if cache_key in self._cache:
+            return self._cache[cache_key]
+        try:
+            raw_value = self.config_parser.get(self.section, key.lower())
+            source = "file"
+            result = convert(raw_value, as_type, source), source
+        except Exception:  # ruff:ignore[blind-except]
+            result = None
+        self._cache[cache_key] = result
+        return result
 
-__all__ = ["IniConfig"]
+
+__all__ = [
+    "IniConfig",
+]

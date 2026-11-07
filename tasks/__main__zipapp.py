@@ -46,23 +46,6 @@ class VersionPlatformSelect:
         content.update(all_platforms.get(f"=={sys.platform}", {}))  # and finish it off with our platform
         return content
 
-    def __enter__(self) -> Self:
-        return self
-
-    def __exit__(
-        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
-    ) -> None:
-        self._zip_file.close()
-
-    def find_mod(self, fullname: str) -> str | None:
-        if fullname in self.modules:
-            return self.modules[fullname]
-        return None
-
-    def get_filename(self, fullname: str) -> str | None:
-        zip_path = self.find_mod(fullname)
-        return None if zip_path is None else os.path.join(ABS_HERE, zip_path)
-
     def get_data(self, filename: str) -> bytes:
         if filename.startswith(ABS_HERE):
             # keep paths relative from the zipfile
@@ -74,16 +57,32 @@ class VersionPlatformSelect:
         with self._zip_file.open(filename) as file_handler:
             return file_handler.read()
 
-    def find_distributions(self, context: Any) -> Iterator[Any]:  # ruff:ignore[any-type]
-        dist_class = versioned_distribution_class()
-        if context.name is None:
-            return
-        name = context.name.replace("_", "-")
-        if name in self.distributions:
-            yield dist_class(file_loader=self.get_data, dist_path=self.distributions[name])
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+    ) -> None:
+        self._zip_file.close()
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={ABS_HERE})"
+
+    def get_filename(self, fullname: str) -> str | None:
+        zip_path = self.find_mod(fullname)
+        return None if zip_path is None else os.path.join(ABS_HERE, zip_path)
+
+    def find_mod(self, fullname: str) -> str | None:
+        if fullname in self.modules:
+            return self.modules[fullname]
+        return None
+
+    def find_distributions(self, context: Any) -> Iterator[Any]:  # ruff:ignore[any-type]
+        dist_class = _versioned_distribution_class()
+        if context.name is None:
+            return
+        if (name := context.name.replace("_", "-")) in self.distributions:
+            yield dist_class(file_loader=self.get_data, dist_path=self.distributions[name])
 
     def _register_distutils_finder(self) -> None:  # ruff:ignore[complex-structure]
         if "distlib" not in self.modules:
@@ -123,12 +122,8 @@ class VersionPlatformSelect:
                 self.path = path
                 self.loader = loader
 
-            def find(self, name: str) -> Any:  # ruff:ignore[any-type]
-                return Resource(self.path, name, self.loader)
-
             def iterator(self, resource_name: str) -> Iterator[Any]:
-                resource = self.find(resource_name)
-                if resource is not None:
+                if (resource := self.find(resource_name)) is not None:
                     todo = [resource]
                     while todo:
                         resource = todo.pop(0)
@@ -142,6 +137,9 @@ class VersionPlatformSelect:
                                 else:
                                     yield child
 
+            def find(self, name: str) -> Any:  # ruff:ignore[any-type]
+                return Resource(self.path, name, self.loader)
+
         from distlib.resources import register_finder  # ruff:ignore[import-outside-top-level]
 
         zip_file = self._zip_file
@@ -151,7 +149,7 @@ class VersionPlatformSelect:
 _VER_DISTRIBUTION_CLASS = None
 
 
-def versioned_distribution_class() -> type:
+def _versioned_distribution_class() -> type:
     global _VER_DISTRIBUTION_CLASS  # ruff:ignore[global-statement]
     if _VER_DISTRIBUTION_CLASS is None:
         from importlib.metadata import Distribution  # ruff:ignore[import-outside-top-level]
@@ -186,8 +184,7 @@ class VersionedFindLoad(VersionPlatformSelect, SourceLoader):
         super().__exit__(exc_type, exc_val, exc_tb)
 
     def find_spec(self, fullname: str, path: Any, target: ModuleType | None = None) -> ModuleSpec | None:  # ruff:ignore[unused-method-argument, any-type]
-        zip_path = self.find_mod(fullname)
-        if zip_path is not None:
+        if self.find_mod(fullname) is not None:
             return spec_from_file_location(name=fullname, loader=self)
         return None
 
@@ -199,4 +196,4 @@ if __name__ == "__main__":
     run()
 
 
-__all__ = ["VersionedFindLoad", "run"]
+__all__ = []

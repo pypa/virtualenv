@@ -4,13 +4,13 @@ from abc import ABC
 from typing import TYPE_CHECKING
 
 from virtualenv.create.via_global_ref.api import ViaGlobalRefApi, ViaGlobalRefMeta
-from virtualenv.create.via_global_ref.builtin.ref import (
-    ExePathRefToDest,
-    RefWhen,
-)
 from virtualenv.util.path import ensure_within
 
 from .builtin_way import VirtualenvBuiltin
+from .ref import (
+    ExePathRefToDest,
+    RefWhen,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Generator
@@ -19,8 +19,9 @@ if TYPE_CHECKING:
     from python_discovery import PythonInfo
 
     from virtualenv.config.cli.parser import VirtualEnvOptions
-    from virtualenv.create.via_global_ref.builtin.ref import PathRef
     from virtualenv.create.via_global_ref.venv import Venv
+
+    from .ref import PathRef
 
 
 class BuiltinViaGlobalRefMeta(ViaGlobalRefMeta):
@@ -38,7 +39,11 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
 
     @classmethod
     def can_create(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta | None:
-        """By default, all built-in methods assume that if we can describe it we can create it."""
+        """By default, all built-in methods assume that if we can describe it we can create it.
+
+        :param interpreter:
+        :returns:
+        """
         # first we must be able to describe it
         if not cls.can_describe(interpreter):
             return None
@@ -46,6 +51,10 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
         if meta is not None and meta:
             cls._sources_can_be_applied(interpreter, meta)
         return meta
+
+    @classmethod
+    def setup_meta(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta:  # ruff:ignore[unused-class-method-argument]
+        return BuiltinViaGlobalRefMeta()
 
     @classmethod
     def _sources_can_be_applied(cls, interpreter: PythonInfo, meta: BuiltinViaGlobalRefMeta) -> None:
@@ -70,20 +79,16 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
             meta.sources.append(src)
 
     @classmethod
-    def setup_meta(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta:  # ruff:ignore[unused-class-method-argument]
-        return BuiltinViaGlobalRefMeta()
-
-    @classmethod
     def sources(cls, interpreter: PythonInfo) -> Generator[ExePathRefToDest]:
         for host_exe, targets, must, when in cls._executables(interpreter):
             yield ExePathRefToDest(host_exe, dest=cls.to_bin, targets=targets, must=must, when=when)
 
-    def to_bin(self, src: Path) -> Path:
-        return self.bin_dir / src.name
-
     @classmethod
     def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], str, str]]:
         raise NotImplementedError
+
+    def to_bin(self, src: Path) -> Path:
+        return self.bin_dir / src.name
 
     def create(self) -> None:
         dirs = self.ensure_directories()
@@ -110,22 +115,23 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
                 self.enable_system_site_package = true_system_site
         super().create()
 
+    def ensure_directories(self) -> set[Path]:
+        return {self.dest, self.bin_dir, self.script_dir, self.stdlib, self.include_dir} | set(self.libs)
+
     @property
     def include_dir(self) -> Path:
         return self.dest / ("Include" if self.interpreter.os == "nt" else "include")
 
-    def install_venv_shared_libs(self, venv_creator: Venv) -> None:
-        pass
-
-    def ensure_directories(self) -> set[Path]:
-        return {self.dest, self.bin_dir, self.script_dir, self.stdlib, self.include_dir} | set(self.libs)
-
     def set_pyenv_cfg(self) -> None:
-        """We directly inject the base prefix and base exec prefix to avoid site.py needing to discover these from home (which usually is done within the interpreter itself)."""
+        """We directly inject the base prefix and base exec prefix to avoid site.py needing to discover these from home
+        (which usually is done within the interpreter itself)."""
         super().set_pyenv_cfg()
         self.pyenv_cfg["base-prefix"] = self.interpreter.system_prefix
         self.pyenv_cfg["base-exec-prefix"] = self.interpreter.system_exec_prefix
         self.pyenv_cfg["base-executable"] = self.interpreter.system_exe
+
+    def install_venv_shared_libs(self, venv_creator: Venv) -> None:
+        pass
 
 
 __all__ = [

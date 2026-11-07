@@ -9,10 +9,6 @@ if TYPE_CHECKING:
     from virtualenv.discovery.discover import Discover
 
 
-class Discovery(PluginLoader):
-    """Discovery plugins."""
-
-
 def get_discover(parser: VirtualEnvConfigParser, args: list[str] | None) -> Discover:
     discover_types = Discovery.entry_points_for("virtualenv.discovery")
     discovery_parser = parser.add_argument_group(
@@ -50,11 +46,13 @@ def get_discover(parser: VirtualEnvConfigParser, args: list[str] | None) -> Disc
     return discover_class(options)
 
 
+class Discovery(PluginLoader): ...
+
+
 def _get_default_discovery(discover_types: dict[str, type]) -> list[str]:
     return list(discover_types.keys())
 
 
 __all__ = [
-    "Discovery",
     "get_discover",
 ]

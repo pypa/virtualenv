@@ -225,9 +225,8 @@ def downloaded_wheel(mocker):
 
 @pytest.mark.parametrize("version", ["bundle", "0.0.0"])
 def test_get_wheel_download_called(mocker, for_py_version, session_app_data, downloaded_wheel, version) -> None:
-    distribution = "setuptools"
     write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write")
-    wheel = get_wheel(distribution, version, for_py_version, [], True, session_app_data, False, os.environ)
+    wheel = get_wheel("setuptools", version, for_py_version, [], True, session_app_data, False, os.environ)
     assert wheel is not None
     assert wheel.name == downloaded_wheel[0].name
     assert downloaded_wheel[1].call_count == 1

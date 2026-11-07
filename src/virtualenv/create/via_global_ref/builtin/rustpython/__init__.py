@@ -20,8 +20,9 @@ class RustPython(ViaGlobalRefVirtualenvBuiltin, Python3Supports, ABC):
         return interpreter.implementation == "RustPython" and super().can_describe(interpreter)
 
     @classmethod
-    def exe_stem(cls) -> str:
-        return "rustpython"
+    def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], RefMust, RefWhen], None, None]:  # ty: ignore[invalid-method-override]
+        host = Path(interpreter.system_exe)
+        yield host, sorted(f"{name}{cls.suffix}" for name in cls.exe_names(interpreter)), RefMust.NA, RefWhen.ANY
 
     @classmethod
     def exe_names(cls, interpreter: PythonInfo) -> set[str]:
@@ -33,10 +34,8 @@ class RustPython(ViaGlobalRefVirtualenvBuiltin, Python3Supports, ABC):
         }
 
     @classmethod
-    def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], RefMust, RefWhen], None, None]:  # ty: ignore[invalid-method-override]
-        host = Path(interpreter.system_exe)
-        targets = sorted(f"{name}{cls.suffix}" for name in cls.exe_names(interpreter))
-        yield host, targets, RefMust.NA, RefWhen.ANY
+    def exe_stem(cls) -> str:
+        return "rustpython"
 
 
 class RustPythonPosix(RustPython, PosixSupports):

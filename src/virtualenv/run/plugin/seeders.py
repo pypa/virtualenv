@@ -15,8 +15,7 @@ if TYPE_CHECKING:
 
 class SeederSelector(ComponentBuilder):
     def __init__(self, interpreter: PythonInfo, parser: VirtualEnvConfigParser) -> None:
-        possible = self.options("virtualenv.seed")
-        super().__init__(interpreter, parser, "seeder", possible)
+        super().__init__(interpreter, parser, "seeder", self.options("virtualenv.seed"))
 
     def add_selector_arg_parse(self, name: str, choices: Sequence[str]) -> None:
         self.parser.add_argument(

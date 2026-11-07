@@ -20,16 +20,6 @@ if TYPE_CHECKING:
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
 
-def get_interpreter(
-    key: str,
-    try_first_with: Iterable[str],
-    cache: PyInfoCache | None = None,
-    env: Mapping[str, str] | None = None,
-    app_data: PyInfoCache | None = None,
-) -> PythonInfo | None:
-    return _get_interpreter(key, try_first_with, cache or app_data, env)
-
-
 class Builtin(Discover):
     python_spec: Sequence[str]
     app_data: PyInfoCache
@@ -40,6 +30,10 @@ class Builtin(Discover):
         self.python_spec = options.python or [sys.executable]
         self.app_data = options.app_data
         self.try_first_with = options.try_first_with
+
+    def __repr__(self) -> str:
+        spec = self.python_spec[0] if len(self.python_spec) == 1 else self.python_spec
+        return f"{self.__class__.__name__} discover of python_spec={spec!r}"
 
     @classmethod
     def add_parser_arguments(cls, parser: ArgumentParser) -> None:
@@ -79,9 +73,15 @@ class Builtin(Discover):
                 return result
         return None
 
-    def __repr__(self) -> str:
-        spec = self.python_spec[0] if len(self.python_spec) == 1 else self.python_spec
-        return f"{self.__class__.__name__} discover of python_spec={spec!r}"
+
+def get_interpreter(
+    key: str,
+    try_first_with: Iterable[str],
+    cache: PyInfoCache | None = None,
+    env: Mapping[str, str] | None = None,
+    app_data: PyInfoCache | None = None,
+) -> PythonInfo | None:
+    return _get_interpreter(key, try_first_with, cache or app_data, env)
 
 
 __all__ = [

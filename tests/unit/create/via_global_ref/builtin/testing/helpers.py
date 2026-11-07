@@ -6,8 +6,16 @@ from pathlib import Path
 from virtualenv.create.via_global_ref.builtin.ref import ExePathRefToDest, PathRef
 
 
-def is_ref(source):
-    return isinstance(source, PathRef)
+def contains_exe(sources, src, target=None):
+    return any(filterby((is_exe, has_src(src), target and has_target(target)), sources))
+
+
+def filterby(filters, sources):
+    return reduce(apply_filter, filters, sources)
+
+
+def apply_filter(values, function):
+    return filter(function, values)
 
 
 def is_exe(source):
@@ -22,19 +30,9 @@ def has_target(target):
     return lambda ref: ref.base == target
 
 
-def apply_filter(values, function):
-    return filter(function, values)
-
-
-def filterby(filters, sources):
-    return reduce(apply_filter, filters, sources)
-
-
-def contains_exe(sources, src, target=None):
-    filters = is_exe, has_src(src), target and has_target(target)
-    return any(filterby(filters, sources))
-
-
 def contains_ref(sources, src):
-    filters = is_ref, has_src(src)
-    return any(filterby(filters, sources))
+    return any(filterby((is_ref, has_src(src)), sources))
+
+
+def is_ref(source):
+    return isinstance(source, PathRef)

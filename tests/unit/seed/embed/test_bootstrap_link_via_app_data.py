@@ -393,8 +393,7 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
 
     # install a different setuptools to test that virtualenv removes this before installing new
     version = f"setuptools<{bundle_ver['setuptools'].split('-')[1]}"
-    install_cmd = [str(result.creator.script("pip")), "--verbose", "--disable-pip-version-check", "install", version]
-    process = Popen(install_cmd)
+    process = Popen([str(result.creator.script("pip")), "--verbose", "--disable-pip-version-check", "install", version])
     process.communicate()
     assert not process.returncode
     assert site_package.exists()
@@ -423,6 +422,13 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
         assert not post_run, "\n".join(str(i) for i in post_run)
 
 
+@pytest.fixture
+def read_only_app_data(temp_app_data):
+    temp_app_data.mkdir()
+    with read_only_dir(temp_app_data):
+        yield temp_app_data
+
+
 @contextlib.contextmanager
 def read_only_dir(d):
     write = S_IWUSR | S_IWGRP | S_IWOTH
@@ -441,19 +447,11 @@ def read_only_dir(d):
                 os.chmod(name, os.stat(name).st_mode | write)
 
 
-@pytest.fixture
-def read_only_app_data(temp_app_data):
-    temp_app_data.mkdir()
-    with read_only_dir(temp_app_data):
-        yield temp_app_data
-
-
 @pytest.mark.slow
 @pytest.mark.skipif(sys.platform == "win32", reason="Windows only applies R/O to files")
 @pytest.mark.usefixtures("read_only_app_data")
 def test_base_bootstrap_link_via_app_data_not_writable(tmp_path, current_fastest) -> None:
-    dest = tmp_path / "venv"
-    result = cli_run(["--seeder", "app-data", "--creator", current_fastest, "-vv", str(dest)])
+    result = cli_run(["--seeder", "app-data", "--creator", current_fastest, "-vv", str(tmp_path / "venv")])
     assert result
 
 
@@ -512,8 +510,7 @@ def test_populated_read_only_cache_and_copied_app_data(tmp_path, current_fastest
 @pytest.mark.parametrize("pkg", ["pip", "setuptools"])
 @pytest.mark.usefixtures("session_app_data", "current_fastest", "coverage_env")
 def test_base_bootstrap_link_via_app_data_no(tmp_path, pkg) -> None:
-    create_cmd = [str(tmp_path), "--seeder", "app-data", f"--no-{pkg}", "--setuptools", "bundle"]
-    result = cli_run(create_cmd)
+    result = cli_run([str(tmp_path), "--seeder", "app-data", f"--no-{pkg}", "--setuptools", "bundle"])
     assert not (result.creator.purelib / pkg).exists()
     for key in {"pip", "setuptools"} - {pkg}:
         assert (result.creator.purelib / key).exists()
@@ -525,6 +522,23 @@ def test_app_data_parallel_ok(tmp_path) -> None:
     assert not exceptions, "\n".join(exceptions)
 
 
+def _run_parallel_threads(tmp_path):
+    exceptions = []
+
+    def _run(name) -> None:
+        try:
+            cli_run(["--seeder", "app-data", str(tmp_path / name), "--no-setuptools"])
+        except Exception as exception:  # ruff:ignore[blind-except]
+            exceptions.append(str(exception))
+
+    threads = [Thread(target=_run, args=(f"env{i}",)) for i in range(1, 3)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    return exceptions
+
+
 @pytest.mark.usefixtures("temp_app_data")
 def test_app_data_parallel_fail(tmp_path: Path, mocker: MockerFixture) -> None:
     mocker.patch("virtualenv.seed.embed.via_app_data.pip_install.base.PipInstall.build_image", side_effect=RuntimeError)
@@ -533,25 +547,6 @@ def test_app_data_parallel_fail(tmp_path: Path, mocker: MockerFixture) -> None:
     for exception in exceptions:
         assert exception.startswith("failed to build image pip because:\nTraceback")
         assert "RuntimeError" in exception, exception
-
-
-def _run_parallel_threads(tmp_path):
-    exceptions = []
-
-    def _run(name) -> None:
-        try:
-            cmd = ["--seeder", "app-data", str(tmp_path / name), "--no-setuptools"]
-            cli_run(cmd)
-        except Exception as exception:  # ruff:ignore[blind-except]
-            as_str = str(exception)
-            exceptions.append(as_str)
-
-    threads = [Thread(target=_run, args=(f"env{i}",)) for i in range(1, 3)]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
-    return exceptions
 
 
 _DISK_FULL: Final = OSError(errno.ENOSPC, "No space left on device")

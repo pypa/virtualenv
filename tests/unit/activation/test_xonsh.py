@@ -88,19 +88,14 @@ def test_xonsh_restores_pythonhome_without_exported_sentinel(
 )
 def test_xonsh_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
     # GIVEN
-    interpreter = create_autospec(PythonInfo, instance=True)
-    interpreter.tcl_lib = tcl_lib
-    interpreter.tk_lib = tk_lib
+    interpreter = create_autospec(PythonInfo, instance=True, tcl_lib=tcl_lib, tk_lib=tk_lib)
 
     bin_dir = tmp_path / "bin"
     bin_dir.mkdir()
 
-    creator = create_autospec(Creator, instance=True)
-    creator.dest = tmp_path
-    creator.bin_dir = bin_dir
-    creator.interpreter = interpreter
-    creator.pyenv_cfg = {}
-    creator.env_name = "my-env"
+    creator = create_autospec(
+        Creator, instance=True, dest=tmp_path, bin_dir=bin_dir, interpreter=interpreter, pyenv_cfg={}, env_name="my-env"
+    )
 
     activator = XonshActivator(Namespace(prompt=None))
 

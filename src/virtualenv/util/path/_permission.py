@@ -28,7 +28,7 @@ def set_tree(folder: Path, stat: int) -> None:
             os.chmod(os.path.join(root, filename), stat)
 
 
-__all__ = (
+__all__ = [
     "make_exe",
     "set_tree",
-)
+]

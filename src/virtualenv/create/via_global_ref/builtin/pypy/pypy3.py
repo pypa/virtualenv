@@ -35,9 +35,6 @@ class PyPy3Posix(PyPy3, PosixSupports):
         # glob for libpypy3-c.so, libpypy3-c.dylib, libpypy3.9-c.so ...
         return python_dir.glob("libpypy3*.*")
 
-    def to_lib(self, src: Path) -> Path:
-        return self.dest / "lib" / src.name
-
     @classmethod
     def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:
         yield from super().sources(interpreter)
@@ -53,14 +50,16 @@ class PyPy3Posix(PyPy3, PosixSupports):
         if host_lib.exists() and host_lib.is_dir():
             if (deps_file := host_lib / "PYPY_PORTABLE_DEPS.txt").exists():
                 for line in deps_file.read_text(encoding="utf-8").splitlines():
-                    dep = line.strip()
-                    if dep and (path := host_lib / dep).exists():
+                    if (dep := line.strip()) and (path := host_lib / dep).exists():
                         yield PathRefToDest(path, dest=cls.to_lib)
             else:
                 for path in host_lib.iterdir():
                     if stdlib == path:
                         continue
                     yield PathRefToDest(path, dest=cls.to_lib)
+
+    def to_lib(self, src: Path) -> Path:
+        return self.dest / "lib" / src.name
 
 
 class Pypy3Windows(PyPy3, WindowsSupports):

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from python_discovery import PythonInfo
 
-    from virtualenv.create.via_global_ref.api import ViaGlobalRefMeta
+    from .api import ViaGlobalRefMeta
 
 
 def handle_store_python(meta: ViaGlobalRefMeta, interpreter: PythonInfo) -> ViaGlobalRefMeta:

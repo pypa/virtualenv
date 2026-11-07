@@ -44,11 +44,17 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from pathlib import Path
 
-LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 class AppDataDiskFolder(AppData):
-    """Store the application data on the disk within a folder layout."""
+    """Store the application data on the disk within a folder layout.
+
+    :param folder:
+    :cvar transient:
+    :cvar can_update:
+    :ivar lock:
+    """
 
     transient = False
     can_update = True
@@ -62,8 +68,14 @@ class AppDataDiskFolder(AppData):
     def __str__(self) -> str:
         return str(self.lock.path)
 
+    @property
+    def house(self) -> Path:
+        path = self.lock.path / "wheel" / "house"
+        path.mkdir(parents=True, exist_ok=True)
+        return path
+
     def reset(self) -> None:
-        LOGGER.debug("reset app data folder %s", self.lock.path)
+        _LOGGER.debug("reset app data folder %s", self.lock.path)
         safe_delete(self.lock.path)
 
     def close(self) -> None:
@@ -84,12 +96,12 @@ class AppDataDiskFolder(AppData):
                 extract(path, dest)
             yield dest
 
+    def py_info(self, path: Path) -> PyInfoStoreDisk:
+        return PyInfoStoreDisk(self.py_info_at, path)
+
     @property
     def py_info_at(self) -> ReentrantFileLock:
         return self.lock / "py_info" / "5"  # ty: ignore[invalid-return-type]
-
-    def py_info(self, path: Path) -> PyInfoStoreDisk:
-        return PyInfoStoreDisk(self.py_info_at, path)
 
     def py_info_clear(self) -> None:
         """clear py info."""
@@ -103,12 +115,6 @@ class AppDataDiskFolder(AppData):
 
     def embed_update_log(self, distribution: str, for_py_version: str) -> EmbedDistributionUpdateStoreDisk:
         return EmbedDistributionUpdateStoreDisk(self.lock / "wheel" / for_py_version / "embed" / "3", distribution)  # ty: ignore[invalid-argument-type]
-
-    @property
-    def house(self) -> Path:
-        path = self.lock.path / "wheel" / "house"
-        path.mkdir(parents=True, exist_ok=True)
-        return path
 
     def wheel_image(self, for_py_version: str, name: str) -> Path:
         return self.lock.path / "wheel" / for_py_version / "image" / "1" / name
@@ -136,7 +142,7 @@ class JSONStoreDisk(ContentStore, ABC):
         except Exception:  # ruff:ignore[blind-except, try-except-pass]
             pass
         else:
-            LOGGER.debug("got %s %s from %s", *self.msg_args)
+            _LOGGER.debug("got %s %s from %s", *self.msg_args)
             return data
         if bad_format:
             with suppress(OSError):  # reading and writing on the same file may cause race on multiple processes
@@ -145,7 +151,7 @@ class JSONStoreDisk(ContentStore, ABC):
 
     def remove(self) -> None:
         self.file.unlink()
-        LOGGER.debug("removed %s %s at %s", *self.msg_args)
+        _LOGGER.debug("removed %s %s at %s", *self.msg_args)
 
     @contextmanager
     def locked(self) -> Generator[None]:
@@ -153,16 +159,14 @@ class JSONStoreDisk(ContentStore, ABC):
             yield
 
     def write(self, content: Any) -> None:  # ruff:ignore[any-type]
-        folder = self.file.parent
-        folder.mkdir(parents=True, exist_ok=True)
+        self.file.parent.mkdir(parents=True, exist_ok=True)
         self.file.write_text(json.dumps(content, sort_keys=True, indent=2), encoding="utf-8")
-        LOGGER.debug("wrote %s %s at %s", *self.msg_args)
+        _LOGGER.debug("wrote %s %s at %s", *self.msg_args)
 
 
 class PyInfoStoreDisk(JSONStoreDisk):
     def __init__(self, in_folder: ReentrantFileLock, path: Path) -> None:
-        key = sha256(str(path).encode("utf-8")).hexdigest()
-        super().__init__(in_folder, key, ("python info of", path))  # ty: ignore[invalid-argument-type]
+        super().__init__(in_folder, sha256(str(path).encode("utf-8")).hexdigest(), ("python info of", path))  # ty: ignore[invalid-argument-type]
 
 
 class EmbedDistributionUpdateStoreDisk(JSONStoreDisk):
@@ -176,6 +180,7 @@ class EmbedDistributionUpdateStoreDisk(JSONStoreDisk):
 
 __all__ = [
     "AppDataDiskFolder",
+    "EmbedDistributionUpdateStoreDisk",
     "JSONStoreDisk",
     "PyInfoStoreDisk",
 ]

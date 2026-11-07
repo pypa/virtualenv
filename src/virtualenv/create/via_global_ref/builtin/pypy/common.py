@@ -23,12 +23,7 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin, abc.ABC):
     @classmethod
     def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], str, str]]:
         host = Path(interpreter.system_exe)
-        targets = sorted(f"{name}{PyPy.suffix}" for name in cls.exe_names(interpreter))
-        yield host, targets, RefMust.NA, RefWhen.ANY
-
-    @classmethod
-    def executables(cls, interpreter: PythonInfo) -> Generator[PathRef]:
-        yield from super().sources(interpreter)
+        yield host, sorted(f"{name}{PyPy.suffix}" for name in cls.exe_names(interpreter)), RefMust.NA, RefWhen.ANY
 
     @classmethod
     def exe_names(cls, interpreter: PythonInfo) -> set[str]:
@@ -46,10 +41,13 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin, abc.ABC):
             yield PathRefToDest(host, dest=lambda self, s: self.bin_dir / s.name)
 
     @classmethod
+    def executables(cls, interpreter: PythonInfo) -> Generator[PathRef]:
+        yield from super().sources(interpreter)
+
+    @classmethod
     def _add_shared_libs(cls, interpreter: PythonInfo) -> Generator[Path]:
         # the executable loads a separate libpypy-c next to it: https://github.com/pypy/pypy/issues/1922
-        python_dir = Path(interpreter.system_exe).resolve().parent
-        yield from cls._shared_libs(python_dir)
+        yield from cls._shared_libs(Path(interpreter.system_exe).resolve().parent)
 
     @classmethod
     def _shared_libs(cls, python_dir: Path) -> Iterator[Path]:

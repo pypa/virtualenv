@@ -23,7 +23,7 @@ _DELIMITERS: Final[frozenset[str]] = frozenset("'\u2018\u2019\u201a\u201b")
 def test_one_input(data: bytes) -> None:
     string = consume_text(data)
     quoted = PowerShellActivator.quote(string)
-    expected = "'" + "".join(char * 2 if char in _DELIMITERS else char for char in string) + "'"
+    expected = f"'{''.join(char * 2 if char in _DELIMITERS else char for char in string)}'"
     assert quoted == expected, (quoted, expected)  # ruff:ignore[assert] atheris treats AssertionError as the crash signal
 
 

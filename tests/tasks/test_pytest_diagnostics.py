@@ -43,7 +43,7 @@ def diagnostic_pytester(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPat
 
 
 def test_diagnostics_capture_controller_and_workers(diagnostic_pytester: pytest.Pytester) -> None:
-    source: Final[str] = _WAIT + '\ndef test_wait_for_stack() -> None:\n    wait_for_stack("test_wait_for_stack")\n'
+    source: Final[str] = f'{_WAIT}\ndef test_wait_for_stack() -> None:\n    wait_for_stack("test_wait_for_stack")\n'
     diagnostic_pytester.makepyfile(test_first=source, test_second=source)
     diagnostic_pytester.runpytest_subprocess("-p", "xdist.plugin", "-n", "2", timeout=30).assert_outcomes(passed=2)
     logs: Final[dict[str, str]] = {

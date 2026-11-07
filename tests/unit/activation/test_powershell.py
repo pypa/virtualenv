@@ -158,8 +158,7 @@ def test_powershell_quote_neutralizes_single_quote_delimiters(tmp_path: Path, de
 
 
 def test_powershell_pydoc_call_operator(tmp_path) -> None:
-    """Test that PowerShell pydoc function uses call operator to handle spaces in python path."""
-
+    # Test that PowerShell pydoc function uses call operator to handle spaces in python path.
     # GIVEN: A mock interpreter
     class MockInterpreter:
         os = "nt"
@@ -176,8 +175,7 @@ def test_powershell_pydoc_call_operator(tmp_path) -> None:
             self.env_name = "test-env"
 
     creator = MockCreator(tmp_path)
-    options = Namespace(prompt=None)
-    activator = PowerShellActivator(options)
+    activator = PowerShellActivator(Namespace(prompt=None))
 
     # WHEN: Generate activation scripts
     activator.generate(creator)
@@ -217,8 +215,7 @@ def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> No
             self.env_name = "my-env"
 
     creator = MockCreator(tmp_path)
-    options = Namespace(prompt=None)
-    activator = PowerShellActivator(options)
+    activator = PowerShellActivator(Namespace(prompt=None))
 
     # WHEN
     activator.generate(creator)
@@ -270,16 +267,15 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch) -> 
         def print_prompt(self) -> str:
             return "prompt"
 
-        def quote(self, s):
-            """Tester will pass strings to native commands on Windows so extra parsing rules are used. Check `PowerShellActivator.quote` for more details."""
-            text = PowerShellActivator.quote(s)
-            return text.replace('"', '""') if sys.platform == "win32" else text
-
         def activate_call(self, script):
             # Commands are called without quotes in PowerShell
-            cmd = self.activate_cmd
-            scr = self.quote(str(script))
-            return f"{cmd} {scr}".strip()
+            return f"{self.activate_cmd} {self.quote(str(script))}".strip()
+
+        def quote(self, s):
+            # Tester will pass strings to native commands on Windows so extra parsing rules are used. Check
+            # `PowerShellActivator.quote` for more details.
+            text = PowerShellActivator.quote(s)
+            return text.replace('"', '""') if sys.platform == "win32" else text
 
     activation_tester(PowerShell)
 

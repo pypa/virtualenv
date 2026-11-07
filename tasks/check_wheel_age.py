@@ -46,7 +46,7 @@ def _changed_wheels() -> list[Path]:
     return [Path(path) for path in sorted(paths) if path]
 
 
-__all__ = ["main"]
+__all__ = []
 
 
 if __name__ == "__main__":

@@ -12,15 +12,24 @@ if TYPE_CHECKING:
 
 
 class AppDataDisabled(AppData):
-    """No application cache available (most likely as we don't have write permissions)."""
+    """No application cache available (most likely as we don't have write permissions).
+
+    :cvar transient:
+    :cvar can_update:
+    :cvar error:
+    """
 
     transient = True
     can_update = False
 
+    error = RuntimeError("no app data folder available, probably no write access to the folder")
+
     def __init__(self) -> None:
         pass
 
-    error = RuntimeError("no app data folder available, probably no write access to the folder")
+    @property
+    def house(self) -> NoReturn:
+        raise self.error
 
     def close(self) -> None:
         """Do nothing."""
@@ -39,12 +48,12 @@ class AppDataDisabled(AppData):
 
     @contextmanager
     def locked(self, path: Path) -> Generator[None]:  # ruff:ignore[unused-method-argument]
-        """Do nothing."""
-        yield
+        """Do nothing.
 
-    @property
-    def house(self) -> NoReturn:
-        raise self.error
+        :param path:
+        :yields:
+        """
+        yield
 
     def wheel_image(self, for_py_version: str, name: str) -> NoReturn:  # ruff:ignore[unused-method-argument]
         raise self.error
@@ -62,7 +71,10 @@ class ContentStoreNA(ContentStore):
         return
 
     def write(self, content: Any) -> None:  # ruff:ignore[any-type]
-        """Nothing to write."""
+        """Nothing to write.
+
+        :param content:
+        """
 
     def remove(self) -> None:
         """Nothing to remove."""

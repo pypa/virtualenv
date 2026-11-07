@@ -25,20 +25,21 @@ from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.config.convert import BoolType
 from virtualenv.config.env_var import get_env_var
 from virtualenv.info import IS_ZIPAPP, ROOT
-from virtualenv.seed.wheels.embed import BUNDLE_SUPPORT
-from virtualenv.seed.wheels.util import Wheel
 from virtualenv.util.subprocess import CREATE_NO_WINDOW
+
+from .embed import BUNDLE_SUPPORT
+from .util import Wheel
 
 if TYPE_CHECKING:
     from collections.abc import Generator
 
     from virtualenv.app_data.base import AppData, ContentStore
 
-LOGGER = logging.getLogger(__name__)
-GRACE_PERIOD_CI = timedelta(hours=1)  # prevent version switch in the middle of a CI run
-GRACE_PERIOD_MINOR = timedelta(days=28)
-UPDATE_PERIOD = timedelta(days=14)
-UPDATE_ABORTED_DELAY = timedelta(hours=1)
+_LOGGER = logging.getLogger(__name__)
+_GRACE_PERIOD_CI = timedelta(hours=1)  # prevent version switch in the middle of a CI run
+_GRACE_PERIOD_MINOR = timedelta(days=28)
+_UPDATE_PERIOD = timedelta(days=14)
+_UPDATE_ABORTED_DELAY = timedelta(hours=1)
 
 
 def periodic_update(  # ruff:ignore[too-many-arguments]
@@ -52,13 +53,13 @@ def periodic_update(  # ruff:ignore[too-many-arguments]
     env: dict[str, str],
 ) -> Wheel | None:
     if do_periodic_update:
-        handle_auto_update(distribution, for_py_version, wheel, search_dirs, app_data, env)
+        _handle_auto_update(distribution, for_py_version, wheel, search_dirs, app_data, env)
 
     now = datetime.now(tz=timezone.utc)
 
     def _update_wheel(ver: NewVersion) -> Wheel:
         updated_wheel = Wheel(app_data.house / ver.filename)
-        LOGGER.debug("using %supdated wheel %s", "periodically " if updated_wheel else "", updated_wheel)
+        _LOGGER.debug("using %supdated wheel %s", "periodically " if updated_wheel else "", updated_wheel)
         return updated_wheel
 
     u_log = UpdateLog.from_app_data(app_data, distribution, for_py_version)
@@ -80,7 +81,7 @@ def periodic_update(  # ruff:ignore[too-many-arguments]
     return wheel
 
 
-def handle_auto_update(  # ruff:ignore[too-many-arguments]
+def _handle_auto_update(  # ruff:ignore[too-many-arguments]
     distribution: str,
     for_py_version: str,
     wheel: Wheel | None,
@@ -94,137 +95,6 @@ def handle_auto_update(  # ruff:ignore[too-many-arguments]
         u_log.started = datetime.now(tz=timezone.utc)
         app_data.embed_update_log(distribution, for_py_version).write(u_log.to_dict())
         trigger_update(distribution, for_py_version, wheel, search_dirs, app_data, periodic=True, env=env)
-
-
-def add_wheel_to_update_log(wheel: Wheel, for_py_version: str, app_data: AppData) -> None:
-    embed_update_log = app_data.embed_update_log(wheel.distribution, for_py_version)
-    LOGGER.debug("adding %s information to %s", wheel.name, embed_update_log.file)  # ty: ignore[unresolved-attribute]
-    u_log = UpdateLog.from_app_data(app_data, wheel.distribution, for_py_version)
-    if any(version.filename == wheel.name for version in u_log.versions):
-        LOGGER.warning("%s already present in %s", wheel.name, embed_update_log.file)  # ty: ignore[unresolved-attribute]
-        return
-    # we don't need a release date for sources other than "periodic"
-    version = NewVersion(wheel.name, datetime.now(tz=timezone.utc), None, "download")
-    u_log.versions.append(version)  # always write at the end for proper updates
-    embed_update_log.write(u_log.to_dict())
-
-
-DATETIME_FMT = "%Y-%m-%dT%H:%M:%S.%fZ"
-
-
-def dump_datetime(value: datetime | None) -> str | None:
-    return None if value is None else value.strftime(DATETIME_FMT)
-
-
-def load_datetime(value: str | None) -> datetime | None:
-    return None if value is None else datetime.strptime(value, DATETIME_FMT).replace(tzinfo=timezone.utc)
-
-
-class NewVersion:  # ruff:ignore[eq-without-hash]
-    def __init__(self, filename: str, found_date: datetime, release_date: datetime | None, source: str) -> None:
-        self.filename = filename
-        self.found_date = found_date
-        self.release_date = release_date
-        self.source = source
-
-    @classmethod
-    def from_dict(cls, dictionary: dict[str, str | None]) -> NewVersion:
-        return cls(
-            filename=dictionary["filename"],  # ty: ignore[invalid-argument-type]
-            found_date=load_datetime(dictionary["found_date"]),  # ty: ignore[invalid-argument-type]
-            release_date=load_datetime(dictionary["release_date"]),
-            source=dictionary["source"],  # ty: ignore[invalid-argument-type]
-        )
-
-    def to_dict(self) -> dict[str, str | None]:
-        return {
-            "filename": self.filename,
-            "release_date": dump_datetime(self.release_date),
-            "found_date": dump_datetime(self.found_date),
-            "source": self.source,
-        }
-
-    def use(self, now: datetime, ignore_grace_period_minor: bool = False, ignore_grace_period_ci: bool = False) -> bool:  # ruff:ignore[boolean-default-value-positional-argument]
-        if self.source == "manual":
-            return True
-        if self.source == "periodic" and (self.found_date < now - GRACE_PERIOD_CI or ignore_grace_period_ci):
-            if not ignore_grace_period_minor:
-                compare_from = self.release_date or self.found_date
-                return now - compare_from >= GRACE_PERIOD_MINOR
-            return True
-        return False
-
-    def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}(filename={self.filename}), found_date={self.found_date}, "
-            f"release_date={self.release_date}, source={self.source})"
-        )
-
-    def __eq__(self, other: object) -> bool:
-        return type(self) == type(other) and all(  # ruff:ignore[type-comparison]
-            getattr(self, k) == getattr(other, k) for k in ["filename", "release_date", "found_date", "source"]
-        )
-
-    def __ne__(self, other: object) -> bool:
-        return not (self == other)
-
-    @property
-    def wheel(self) -> Wheel:
-        return Wheel(Path(self.filename))
-
-
-class UpdateLog:
-    def __init__(
-        self, started: datetime | None, completed: datetime | None, versions: list[NewVersion], periodic: bool | None
-    ) -> None:
-        self.started = started
-        self.completed = completed
-        self.versions = versions
-        self.periodic = periodic
-
-    @classmethod
-    def from_dict(cls, dictionary: dict[str, object] | None) -> UpdateLog:
-        if dictionary is None:
-            dictionary = {}
-        return cls(
-            load_datetime(dictionary.get("started")),  # ty: ignore[invalid-argument-type]
-            load_datetime(dictionary.get("completed")),  # ty: ignore[invalid-argument-type]
-            [NewVersion.from_dict(v) for v in dictionary.get("versions", [])],  # ty: ignore[not-iterable]
-            dictionary.get("periodic"),  # ty: ignore[invalid-argument-type]
-        )
-
-    @classmethod
-    def from_app_data(cls, app_data: AppData, distribution: str, for_py_version: str) -> UpdateLog:
-        store: Final[ContentStore] = app_data.embed_update_log(distribution, for_py_version)
-        try:
-            return cls.from_dict(store.read())
-        except (AttributeError, KeyError, TypeError, ValueError):
-            # another virtualenv version or an interrupted run can leave valid JSON of the wrong shape in the shared
-            # app data; drop it as read() drops invalid JSON, since an empty log falls back to the bundled wheel
-            LOGGER.warning("removing malformed embed update log of %s", distribution)
-            with suppress(OSError):  # another process may remove or rewrite the file at the same time
-                store.remove()
-            return cls(None, None, [], None)
-
-    def to_dict(self) -> dict[str, object]:
-        return {
-            "started": dump_datetime(self.started),
-            "completed": dump_datetime(self.completed),
-            "periodic": self.periodic,
-            "versions": [r.to_dict() for r in self.versions],
-        }
-
-    @property
-    def needs_update(self) -> bool:
-        now = datetime.now(tz=timezone.utc)
-        if self.completed is None:  # never completed
-            return self._check_start(now)
-        if now - self.completed <= UPDATE_PERIOD:
-            return False
-        return self._check_start(now)
-
-    def _check_start(self, now: datetime) -> bool:
-        return self.started is None or now - self.started > UPDATE_ABORTED_DELAY
 
 
 def trigger_update(  # ruff:ignore[too-many-arguments]
@@ -249,19 +119,16 @@ def trigger_update(  # ruff:ignore[too-many-arguments]
         .strip()
         .format(distribution, for_py_version, wheel_path, str(app_data), [str(p) for p in search_dirs], periodic)
     )
-    if IS_ZIPAPP:
-        code = f"import runpy\nwith runpy.run_path({ROOT!r}, run_name='__loader__')['VersionedFindLoad']():\n" + indent(
-            code, "    "
-        )
-    else:
-        code = (
-            "import importlib.util\n"
-            f"spec = importlib.util.spec_from_file_location('virtualenv', {str(Path(ROOT) / 'virtualenv' / '__init__.py')!r})\n"
-            "package = importlib.util.module_from_spec(spec)\n"
-            "sys.modules['virtualenv'] = package\n"
-            "spec.loader.exec_module(package)\n"
-            f"{code}"
-        )
+    code = (
+        f"import runpy\nwith runpy.run_path({ROOT!r}, run_name='__loader__')['VersionedFindLoad']():\n{indent(code, '    ')}"
+        if IS_ZIPAPP
+        else "import importlib.util\n"
+        f"spec = importlib.util.spec_from_file_location('virtualenv', {str(Path(ROOT) / 'virtualenv' / '__init__.py')!r})\n"
+        "package = importlib.util.module_from_spec(spec)\n"
+        "sys.modules['virtualenv'] = package\n"
+        "spec.loader.exec_module(package)\n"
+        f"{code}"
+    )
     # drop the implicit working-directory entry before anything else is imported, as sys is built in
     cmd: Final = [sys.executable, "-c", f"import sys\nsys.path = [p for p in sys.path if p]\n{code}"]
     debug = env.get("_VIRTUALENV_PERIODIC_UPDATE_INLINE") == "1"
@@ -270,7 +137,7 @@ def trigger_update(  # ruff:ignore[too-many-arguments]
     if not debug and sys.platform == "win32":
         kwargs["creationflags"] = CREATE_NO_WINDOW
     process = Popen(cmd, **kwargs)  # ty: ignore[no-matching-overload]
-    LOGGER.info(
+    _LOGGER.info(
         "triggered periodic upgrade of %s%s (for python %s) via background process having PID %d",
         distribution,
         "" if wheel is None else f"=={wheel.version}",
@@ -282,6 +149,278 @@ def trigger_update(  # ruff:ignore[too-many-arguments]
     else:
         # set the returncode here -> no ResourceWarning on main process exit if the subprocess still runs
         process.returncode = 0
+
+
+def add_wheel_to_update_log(wheel: Wheel, for_py_version: str, app_data: AppData) -> None:
+    embed_update_log = app_data.embed_update_log(wheel.distribution, for_py_version)
+    _LOGGER.debug("adding %s information to %s", wheel.name, embed_update_log.file)  # ty: ignore[unresolved-attribute]
+    u_log = UpdateLog.from_app_data(app_data, wheel.distribution, for_py_version)
+    if any(version.filename == wheel.name for version in u_log.versions):
+        _LOGGER.warning("%s already present in %s", wheel.name, embed_update_log.file)  # ty: ignore[unresolved-attribute]
+        return
+    # we don't need a release date for sources other than "periodic"
+    version = NewVersion(wheel.name, datetime.now(tz=timezone.utc), None, "download")
+    u_log.versions.append(version)  # always write at the end for proper updates
+    embed_update_log.write(u_log.to_dict())
+
+
+_DATETIME_FMT: Final[str] = "%Y-%m-%dT%H:%M:%S.%fZ"
+
+
+def dump_datetime(value: datetime | None) -> str | None:
+    return None if value is None else value.strftime(_DATETIME_FMT)
+
+
+def _load_datetime(value: str | None) -> datetime | None:
+    return None if value is None else datetime.strptime(value, _DATETIME_FMT).replace(tzinfo=timezone.utc)
+
+
+class NewVersion:  # ruff:ignore[eq-without-hash]
+    def __init__(self, filename: str, found_date: datetime, release_date: datetime | None, source: str) -> None:
+        self.filename = filename
+        self.found_date = found_date
+        self.release_date = release_date
+        self.source = source
+
+    @classmethod
+    def from_dict(cls, dictionary: dict[str, str | None]) -> NewVersion:
+        return cls(
+            filename=dictionary["filename"],  # ty: ignore[invalid-argument-type]
+            found_date=_load_datetime(dictionary["found_date"]),  # ty: ignore[invalid-argument-type]
+            release_date=_load_datetime(dictionary["release_date"]),
+            source=dictionary["source"],  # ty: ignore[invalid-argument-type]
+        )
+
+    def __repr__(self) -> str:
+        return (
+            f"{self.__class__.__name__}(filename={self.filename}), found_date={self.found_date}, "
+            f"release_date={self.release_date}, source={self.source})"
+        )
+
+    def __eq__(self, other: object) -> bool:
+        return type(self) == type(other) and all(  # ruff:ignore[type-comparison]
+            getattr(self, k) == getattr(other, k) for k in ["filename", "release_date", "found_date", "source"]
+        )
+
+    def __ne__(self, other: object) -> bool:
+        return not (self == other)
+
+    @property
+    def wheel(self) -> Wheel:
+        return Wheel(Path(self.filename))
+
+    def to_dict(self) -> dict[str, str | None]:
+        return {
+            "filename": self.filename,
+            "release_date": dump_datetime(self.release_date),
+            "found_date": dump_datetime(self.found_date),
+            "source": self.source,
+        }
+
+    def use(self, now: datetime, ignore_grace_period_minor: bool = False, ignore_grace_period_ci: bool = False) -> bool:  # ruff:ignore[boolean-default-value-positional-argument]
+        if self.source == "manual":
+            return True
+        if self.source == "periodic" and (self.found_date < now - _GRACE_PERIOD_CI or ignore_grace_period_ci):
+            if not ignore_grace_period_minor:
+                return now - (self.release_date or self.found_date) >= _GRACE_PERIOD_MINOR
+            return True
+        return False
+
+
+class UpdateLog:
+    def __init__(
+        self, started: datetime | None, completed: datetime | None, versions: list[NewVersion], periodic: bool | None
+    ) -> None:
+        self.started = started
+        self.completed = completed
+        self.versions = versions
+        self.periodic = periodic
+
+    @classmethod
+    def from_app_data(cls, app_data: AppData, distribution: str, for_py_version: str) -> UpdateLog:
+        store: Final[ContentStore] = app_data.embed_update_log(distribution, for_py_version)
+        try:
+            return cls.from_dict(store.read())
+        except (AttributeError, KeyError, TypeError, ValueError):
+            # another virtualenv version or an interrupted run can leave valid JSON of the wrong shape in the shared
+            # app data; drop it as read() drops invalid JSON, since an empty log falls back to the bundled wheel
+            _LOGGER.warning("removing malformed embed update log of %s", distribution)
+            with suppress(OSError):  # another process may remove or rewrite the file at the same time
+                store.remove()
+            return cls(None, None, [], None)
+
+    @classmethod
+    def from_dict(cls, dictionary: dict[str, object] | None) -> UpdateLog:
+        if dictionary is None:
+            dictionary = {}
+        return cls(
+            _load_datetime(dictionary.get("started")),  # ty: ignore[invalid-argument-type]
+            _load_datetime(dictionary.get("completed")),  # ty: ignore[invalid-argument-type]
+            [NewVersion.from_dict(v) for v in dictionary.get("versions", [])],  # ty: ignore[not-iterable]
+            dictionary.get("periodic"),  # ty: ignore[invalid-argument-type]
+        )
+
+    @property
+    def needs_update(self) -> bool:
+        now = datetime.now(tz=timezone.utc)
+        if self.completed is None:  # never completed
+            return self._check_start(now)
+        if now - self.completed <= _UPDATE_PERIOD:
+            return False
+        return self._check_start(now)
+
+    def _check_start(self, now: datetime) -> bool:
+        return self.started is None or now - self.started > _UPDATE_ABORTED_DELAY
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "started": dump_datetime(self.started),
+            "completed": dump_datetime(self.completed),
+            "periodic": self.periodic,
+            "versions": [r.to_dict() for r in self.versions],
+        }
+
+
+#: Pauses between PyPI metadata lookups before refusing a wheel we could not verify, to ride out a brief outage or a JSON
+#: API that has not caught up with a fresh upload.
+_DIGEST_RETRY_DELAYS: Final[tuple[float, ...]] = (1.0, 2.0, 4.0)
+
+
+def verify_wheel_digest(wheel: Wheel) -> None:
+    """Verify a downloaded wheel's sha256 against the digest PyPI's JSON API reports for that release.
+
+    ``pip download`` trusts whatever index it is configured to use, and nothing else in this module checks the bytes it
+    hands back. Callers run this only when pip used the default index, so PyPI served the file and must list its digest.
+    A failed metadata request, an unknown filename or a missing sha256 therefore fails like a mismatch: accepting the
+    wheel in those cases would let anyone who can block ``pypi.org/pypi`` turn the check off.
+
+    :param wheel:
+    :raises UnverifiedWheelError: if PyPI's sha256 for this exact filename cannot be obtained after retrying.
+    :raises RuntimeError: if the sha256 does not match.
+
+    """
+    expected = _pypi_sha256_for_wheel(wheel)
+    for delay in _DIGEST_RETRY_DELAYS:
+        if expected is not None:
+            break
+        _LOGGER.warning("could not obtain the sha256 of %s from PyPI, retrying in %s seconds", wheel.name, delay)
+        _PYPI_CACHE.pop(wheel.distribution, None)
+        sleep(delay)
+        expected = _pypi_sha256_for_wheel(wheel)
+    if expected is None:
+        msg = f"refusing downloaded wheel {wheel.name}: could not obtain its sha256 from PyPI to verify it"
+        raise UnverifiedWheelError(msg)
+    if (actual := hashlib.sha256(wheel.path.read_bytes()).hexdigest()) != expected:
+        msg = f"downloaded wheel {wheel.name} has sha256 {actual}, but PyPI reports {expected} for this release"
+        raise RuntimeError(msg)
+
+
+def _pypi_sha256_for_wheel(wheel: Wheel) -> str | None:
+    content = _pypi_get_distribution_info_cached(wheel.distribution)
+    releases = content.get("releases") if isinstance(content, dict) else None
+    entries = releases.get(wheel.version) if isinstance(releases, dict) else None
+    if not isinstance(entries, list):
+        return None
+    entry = next((entry for entry in entries if isinstance(entry, dict) and entry.get("filename") == wheel.name), {})
+    digests = entry.get("digests")
+    sha256 = digests.get("sha256") if isinstance(digests, dict) else None
+    return sha256 if isinstance(sha256, str) else None
+
+
+def _pypi_get_distribution_info_cached(distribution: str) -> dict[str, object] | None:
+    if distribution not in _PYPI_CACHE:
+        _PYPI_CACHE[distribution] = _pypi_get_distribution_info(distribution)
+    return _PYPI_CACHE[distribution]
+
+
+def _pypi_get_distribution_info(distribution: str) -> dict[str, object] | None:
+    content, url = None, f"https://pypi.org/pypi/{distribution}/json"
+    try:
+        for context in _request_context():
+            if (content := _fetch_pypi_json(url, context)) is not None:
+                break
+    except Exception as exception:  # ruff:ignore[blind-except]
+        _LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
+    return content
+
+
+def _request_context() -> Generator[ssl.SSLContext | None, None, None]:
+    yield None
+    if (setting := get_env_var("periodic_update_insecure", BoolType(bool, bool), os.environ)) and setting[0]:
+        _LOGGER.warning(
+            "falling back to unverified HTTPS for PyPI metadata because VIRTUALENV_PERIODIC_UPDATE_INSECURE is enabled",
+        )
+        yield ssl._create_unverified_context()  # ruff:ignore[suspicious-unverified-context-usage, private-member-access]
+
+
+def _fetch_pypi_json(url: str, context: ssl.SSLContext | None) -> dict[str, object] | None:
+    try:
+        with urlopen(url, context=context) as file_handler:  # ruff:ignore[suspicious-url-open-usage]
+            return json.load(file_handler)
+    except URLError as exception:
+        _LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
+    return None
+
+
+class UnverifiedWheelError(RuntimeError):
+    """PyPI's digest for a downloaded wheel was unavailable, so a caller may fall back to the bundled wheel."""
+
+
+_PYPI_CACHE = {}
+
+
+def manual_upgrade(app_data: AppData, env: dict[str, str]) -> None:
+    threads = []
+
+    for for_py_version, distribution_to_package in BUNDLE_SUPPORT.items():
+        # load extra search dir for the given for_py
+        for distribution in distribution_to_package:
+            thread = Thread(target=_run_manual_upgrade, args=(app_data, distribution, for_py_version, env))
+            thread.start()
+            threads.append(thread)
+
+    for thread in threads:
+        thread.join()
+
+
+def _run_manual_upgrade(app_data: AppData, distribution: str, for_py_version: str, env: dict[str, str]) -> None:
+    start = datetime.now(tz=timezone.utc)
+    from .bundle import from_bundle  # ruff:ignore[import-outside-top-level]
+
+    current = from_bundle(
+        distribution=distribution,
+        version=None,
+        for_py_version=for_py_version,
+        search_dirs=[],
+        app_data=app_data,
+        do_periodic_update=False,
+        env=env,
+    )
+    _LOGGER.warning(
+        "upgrade %s for python %s with current %s",
+        distribution,
+        for_py_version,
+        "" if current is None else current.name,
+    )
+    versions = do_update(
+        distribution=distribution,
+        for_py_version=for_py_version,
+        embed_filename=current.path,  # ty: ignore[invalid-argument-type, unresolved-attribute]
+        app_data=app_data,
+        search_dirs=[],
+        periodic=False,
+    )
+
+    args = [
+        distribution,
+        for_py_version,
+        datetime.now(tz=timezone.utc) - start,
+    ]
+    if versions:
+        args.append("\n".join(f"\t{v}" for v in versions))
+    ver_update = "new entries found:\n%s" if versions else "no new versions found"
+    msg = f"upgraded %s for python %s in %s {ver_update}"
+    _LOGGER.warning(msg, *args)
 
 
 def do_update(  # ruff:ignore[too-many-arguments]
@@ -296,7 +435,7 @@ def do_update(  # ruff:ignore[too-many-arguments]
     try:
         versions = _run_do_update(app_data, distribution, embed_filename, for_py_version, periodic, search_dirs)
     finally:
-        LOGGER.debug("done %s %s with %s", distribution, for_py_version, versions)
+        _LOGGER.debug("done %s %s with %s", distribution, for_py_version, versions)
     return versions
 
 
@@ -308,7 +447,7 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
     periodic: bool,
     search_dirs: list[str] | list[Path],
 ) -> list[NewVersion]:
-    from virtualenv.seed.wheels import acquire  # ruff:ignore[import-outside-top-level]
+    from . import acquire  # ruff:ignore[import-outside-top-level]
 
     wheel_filename = None if embed_filename is None else Path(embed_filename)
     embed_version = None if wheel_filename is None else Wheel(wheel_filename).parsed_version
@@ -357,7 +496,7 @@ def _run_do_update(  # ruff:ignore[complex-structure, too-many-arguments]
             break
         release_date = release_date_for_wheel_path(dest.path)
         last = NewVersion(filename=dest.path.name, release_date=release_date, found_date=download_time, source=source)
-        LOGGER.info("detected %s in %s", last, datetime.now(tz=timezone.utc) - download_time)
+        _LOGGER.info("detected %s in %s", last, datetime.now(tz=timezone.utc) - download_time)
         versions.append(last)
         filenames.add(last.filename)
         last_wheel = last.wheel
@@ -379,155 +518,13 @@ def release_date_for_wheel_path(dest: Path) -> datetime | None:
     wheel = Wheel(dest)
     # the most accurate is to ask PyPi - e.g. https://pypi.org/pypi/pip/json,
     # see https://warehouse.pypa.io/api-reference/json/ for more details
-    content = _pypi_get_distribution_info_cached(wheel.distribution)
-    if content is not None:
+    if (content := _pypi_get_distribution_info_cached(wheel.distribution)) is not None:
         try:
             upload_time = content["releases"][wheel.version][0]["upload_time"]  # ty: ignore[not-subscriptable]
             return datetime.strptime(upload_time, "%Y-%m-%dT%H:%M:%S").replace(tzinfo=timezone.utc)
         except Exception as exception:  # ruff:ignore[blind-except]
-            LOGGER.error("could not load release date %s because %r", content, exception)  # ruff:ignore[error-instead-of-exception]
+            _LOGGER.error("could not load release date %s because %r", content, exception)  # ruff:ignore[error-instead-of-exception]
     return None
-
-
-#: Pauses between PyPI metadata lookups before refusing a wheel we could not verify, to ride out a brief outage or a JSON
-#: API that has not caught up with a fresh upload.
-_DIGEST_RETRY_DELAYS: Final[tuple[float, ...]] = (1.0, 2.0, 4.0)
-
-
-def verify_wheel_digest(wheel: Wheel) -> None:
-    """Verify a downloaded wheel's sha256 against the digest PyPI's JSON API reports for that release.
-
-    ``pip download`` trusts whatever index it is configured to use, and nothing else in this module checks the bytes it
-    hands back. Callers run this only when pip used the default index, so PyPI served the file and must list its digest.
-    A failed metadata request, an unknown filename or a missing sha256 therefore fails like a mismatch: accepting the
-    wheel in those cases would let anyone who can block ``pypi.org/pypi`` turn the check off.
-
-    :raises UnverifiedWheelError: if PyPI's sha256 for this exact filename cannot be obtained after retrying.
-    :raises RuntimeError: if the sha256 does not match.
-
-    """
-    expected = _pypi_sha256_for_wheel(wheel)
-    for delay in _DIGEST_RETRY_DELAYS:
-        if expected is not None:
-            break
-        LOGGER.warning("could not obtain the sha256 of %s from PyPI, retrying in %s seconds", wheel.name, delay)
-        _PYPI_CACHE.pop(wheel.distribution, None)
-        sleep(delay)
-        expected = _pypi_sha256_for_wheel(wheel)
-    if expected is None:
-        msg = f"refusing downloaded wheel {wheel.name}: could not obtain its sha256 from PyPI to verify it"
-        raise UnverifiedWheelError(msg)
-    if (actual := hashlib.sha256(wheel.path.read_bytes()).hexdigest()) != expected:
-        msg = f"downloaded wheel {wheel.name} has sha256 {actual}, but PyPI reports {expected} for this release"
-        raise RuntimeError(msg)
-
-
-class UnverifiedWheelError(RuntimeError):
-    """PyPI's digest for a downloaded wheel was unavailable, so a caller may fall back to the bundled wheel."""
-
-
-def _pypi_sha256_for_wheel(wheel: Wheel) -> str | None:
-    content = _pypi_get_distribution_info_cached(wheel.distribution)
-    releases = content.get("releases") if isinstance(content, dict) else None
-    entries = releases.get(wheel.version) if isinstance(releases, dict) else None
-    if not isinstance(entries, list):
-        return None
-    entry = next((entry for entry in entries if isinstance(entry, dict) and entry.get("filename") == wheel.name), {})
-    digests = entry.get("digests")
-    sha256 = digests.get("sha256") if isinstance(digests, dict) else None
-    return sha256 if isinstance(sha256, str) else None
-
-
-def _request_context() -> Generator[ssl.SSLContext | None, None, None]:
-    yield None
-    if (setting := get_env_var("periodic_update_insecure", BoolType(bool, bool), os.environ)) and setting[0]:
-        LOGGER.warning(
-            "falling back to unverified HTTPS for PyPI metadata because VIRTUALENV_PERIODIC_UPDATE_INSECURE is enabled",
-        )
-        yield ssl._create_unverified_context()  # ruff:ignore[suspicious-unverified-context-usage, private-member-access]
-
-
-_PYPI_CACHE = {}
-
-
-def _pypi_get_distribution_info_cached(distribution: str) -> dict[str, object] | None:
-    if distribution not in _PYPI_CACHE:
-        _PYPI_CACHE[distribution] = _pypi_get_distribution_info(distribution)
-    return _PYPI_CACHE[distribution]
-
-
-def _pypi_get_distribution_info(distribution: str) -> dict[str, object] | None:
-    content, url = None, f"https://pypi.org/pypi/{distribution}/json"
-    try:
-        for context in _request_context():
-            if (content := _fetch_pypi_json(url, context)) is not None:
-                break
-    except Exception as exception:  # ruff:ignore[blind-except]
-        LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
-    return content
-
-
-def _fetch_pypi_json(url: str, context: ssl.SSLContext | None) -> dict[str, object] | None:
-    try:
-        with urlopen(url, context=context) as file_handler:  # ruff:ignore[suspicious-url-open-usage]
-            return json.load(file_handler)
-    except URLError as exception:
-        LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
-    return None
-
-
-def manual_upgrade(app_data: AppData, env: dict[str, str]) -> None:
-    threads = []
-
-    for for_py_version, distribution_to_package in BUNDLE_SUPPORT.items():
-        # load extra search dir for the given for_py
-        for distribution in distribution_to_package:
-            thread = Thread(target=_run_manual_upgrade, args=(app_data, distribution, for_py_version, env))
-            thread.start()
-            threads.append(thread)
-
-    for thread in threads:
-        thread.join()
-
-
-def _run_manual_upgrade(app_data: AppData, distribution: str, for_py_version: str, env: dict[str, str]) -> None:
-    start = datetime.now(tz=timezone.utc)
-    from .bundle import from_bundle  # ruff:ignore[import-outside-top-level]
-
-    current = from_bundle(
-        distribution=distribution,
-        version=None,
-        for_py_version=for_py_version,
-        search_dirs=[],
-        app_data=app_data,
-        do_periodic_update=False,
-        env=env,
-    )
-    LOGGER.warning(
-        "upgrade %s for python %s with current %s",
-        distribution,
-        for_py_version,
-        "" if current is None else current.name,
-    )
-    versions = do_update(
-        distribution=distribution,
-        for_py_version=for_py_version,
-        embed_filename=current.path,  # ty: ignore[invalid-argument-type, unresolved-attribute]
-        app_data=app_data,
-        search_dirs=[],
-        periodic=False,
-    )
-
-    args = [
-        distribution,
-        for_py_version,
-        datetime.now(tz=timezone.utc) - start,
-    ]
-    if versions:
-        args.append("\n".join(f"\t{v}" for v in versions))
-    ver_update = "new entries found:\n%s" if versions else "no new versions found"
-    msg = f"upgraded %s for python %s in %s {ver_update}"
-    LOGGER.warning(msg, *args)
 
 
 __all__ = [
@@ -537,7 +534,6 @@ __all__ = [
     "add_wheel_to_update_log",
     "do_update",
     "dump_datetime",
-    "load_datetime",
     "manual_upgrade",
     "periodic_update",
     "release_date_for_wheel_path",

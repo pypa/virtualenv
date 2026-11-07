@@ -45,8 +45,7 @@ class SymlinkPipInstall(PipInstall):
         # remove files that are within the image folder deeper than one level (as these will be not linked directly)
         for file in core_new_files:
             try:
-                rel = file.relative_to(folder)
-                if len(rel.parts) > 1:
+                if len(file.relative_to(folder).parts) > 1:
                     continue
             except ValueError:
                 pass

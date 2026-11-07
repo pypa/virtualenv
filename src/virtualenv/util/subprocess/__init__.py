@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import subprocess
 from shlex import quote
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-CREATE_NO_WINDOW = 0x80000000
+CREATE_NO_WINDOW: Final[int] = 0x80000000
 
 
 class LogCmd:
@@ -42,8 +42,8 @@ def run_cmd(cmd: list[str], env: Mapping[str, str] | None = None) -> tuple[int, 
     return code, out, err  # ty: ignore[invalid-return-type]
 
 
-__all__ = (
+__all__ = [
     "CREATE_NO_WINDOW",
     "LogCmd",
     "run_cmd",
-)
+]

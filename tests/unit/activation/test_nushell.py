@@ -66,8 +66,7 @@ def test_nushell_tkinter_generation(tmp_path) -> None:
             self.env_name = "my-env"
 
     creator = MockCreator(tmp_path)
-    options = Namespace(prompt=None)
-    activator = NushellActivator(options)
+    activator = NushellActivator(Namespace(prompt=None))
 
     # WHEN
     activator.generate(creator)
@@ -117,20 +116,16 @@ def test_nushell(activation_tester_class, activation_tester) -> None:
 
         def activate_call(self, script):
             # Commands are called without quotes in Nushell
-            cmd = self.activate_cmd
-            scr = self.quote(str(script))
-            return f"{cmd} {scr}".strip()
+            return f"{self.activate_cmd} {self.quote(str(script))}".strip()
 
     activation_tester(Nushell)
 
 
 def test_nushell_deactivate_errors(tmp_path: Path) -> None:
-    """Regression for gh-3103: both misuse patterns give actionable inline errors.
-
-    `^nu | complete` captures stderr from child invocations without aborting the outer script, so both cases run in a
-    single subprocess call.
-
-    """
+    # Regression for gh-3103: both misuse patterns give actionable inline errors.
+    #
+    # `^nu | complete` captures stderr from child invocations without aborting the outer script, so both cases run in a
+    # single subprocess call.
     nu = which("nu")
     if nu is None:
         pytest.skip("nu not installed")

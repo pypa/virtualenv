@@ -42,31 +42,6 @@ if TYPE_CHECKING:
 
 
 _PINS: Final[Path] = Path("tasks/ci-tools.json")
-_TOOLS: Final[dict[str, tuple[str, bool, dict[str, str]]]] = {
-    "fish": (
-        "fish-shell/fish-shell",
-        False,
-        {"Linux": "fish-{version}-linux-x86_64.tar.xz", "macOS": "fish-{version}.pkg"},
-    ),
-    "nushell": (
-        "nushell/nushell",
-        False,
-        {
-            "Linux": "nu-{version}-x86_64-unknown-linux-gnu.tar.gz",
-            "macOS": "nu-{version}-aarch64-apple-darwin.tar.gz",
-            "Windows": "nu-{version}-x86_64-pc-windows-msvc.zip",
-        },
-    ),
-    "rustpython": (
-        "RustPython/RustPython",
-        True,
-        {
-            "Linux": "rustpython-release-Linux-x86_64-unknown-linux-gnu",
-            "macOS": "rustpython-release-macOS-aarch64-apple-darwin",
-            "Windows": "rustpython-release-Windows-x86_64-pc-windows-msvc.exe",
-        },
-    ),
-}
 # the REST release listing of RustPython/RustPython comes back empty, so query GraphQL, which sees its releases
 _QUERY: Final[str] = """
 query($owner: String!, $name: String!) {
@@ -85,7 +60,32 @@ def main() -> None:
         msg = "GH_TOKEN is required to query GitHub releases"
         raise SystemExit(msg)
     pins: Final[dict[str, _Pin]] = json.loads(_PINS.read_text(encoding="utf-8"))
-    for tool, (repository, prerelease, patterns) in _TOOLS.items():
+    tools: dict[str, tuple[str, bool, dict[str, str]]] = {
+        "fish": (
+            "fish-shell/fish-shell",
+            False,
+            {"Linux": "fish-{version}-linux-x86_64.tar.xz", "macOS": "fish-{version}.pkg"},
+        ),
+        "nushell": (
+            "nushell/nushell",
+            False,
+            {
+                "Linux": "nu-{version}-x86_64-unknown-linux-gnu.tar.gz",
+                "macOS": "nu-{version}-aarch64-apple-darwin.tar.gz",
+                "Windows": "nu-{version}-x86_64-pc-windows-msvc.zip",
+            },
+        ),
+        "rustpython": (
+            "RustPython/RustPython",
+            True,
+            {
+                "Linux": "rustpython-release-Linux-x86_64-unknown-linux-gnu",
+                "macOS": "rustpython-release-macOS-aarch64-apple-darwin",
+                "Windows": "rustpython-release-Windows-x86_64-pc-windows-msvc.exe",
+            },
+        ),
+    }
+    for tool, (repository, prerelease, patterns) in tools.items():
         # an unchanged tag keeps its recorded hashes, so an asset replaced under the same tag fails CI instead
         if (tag := _newest_tag(token, repository, prerelease=prerelease)) != pins[tool]["tag"]:
             pins[tool] = {"tag": tag, "assets": _pin_assets(token, repository, tag, patterns)}
@@ -169,7 +169,7 @@ def _release_key(version: str) -> tuple[int, ...]:
     return tuple(map(int, version.split(".")))
 
 
-__all__ = ["main"]
+__all__ = []
 
 
 if __name__ == "__main__":

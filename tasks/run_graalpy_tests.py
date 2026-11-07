@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 _SHUTDOWN: Final[str] = "did not complete all polyglot threads"
-_NO_TESTS_COLLECTED: Final[int] = 5
 
 
 def main() -> None:
@@ -98,12 +97,12 @@ class _Shard:
             sink.write(f"[{self.label}] {line}")
 
     def wait(self) -> int | None:
-        """Return how many tests ran, or None when the shard failed."""
+        # Return how many tests ran, or None when the shard failed.
         for pump in self.pumps:
             pump.join()
         status: Final[int] = self.process.wait()
         shutdown: Final[bool] = status == 1 and any(_SHUTDOWN in line for line in self.stderr)
-        if status not in {0, _NO_TESTS_COLLECTED} and not shutdown:
+        if status not in {0, 5} and not shutdown:
             print(f"[{self.label}] exit {status}")  # ruff:ignore[print]
             return None
         if (executed := _executed_tests(self.junit)) is None:
@@ -128,7 +127,7 @@ def _executed_tests(junit_path: Path) -> int | None:
         return None
 
 
-__all__ = ["main"]
+__all__ = []
 
 
 if __name__ == "__main__":
