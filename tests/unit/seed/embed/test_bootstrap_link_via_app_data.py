@@ -4,11 +4,13 @@ import contextlib
 import csv
 import errno
 import hashlib
+import io
 import logging
 import os
 import sys
 import zipfile
 from base64 import urlsafe_b64encode
+from importlib.metadata import PathDistribution
 from pathlib import Path
 from stat import S_IREAD, S_IWGRP, S_IWOTH, S_IWUSR
 from subprocess import Popen, check_call, run
@@ -654,6 +656,36 @@ def test_seed_image_build_direct_call(tmp_path: Path) -> None:
         (next(image.glob("*.dist-info")) / "INSTALLER").is_file(),
         session.creator.script("pip").exists(),
     ) == (["CopyPipInstall"], True, True)
+
+
+@pytest.mark.parametrize(
+    "ending", [pytest.param(b"", id="no-newline"), pytest.param(b"\n", id="lf"), pytest.param(b"\r\n", id="crlf")]
+)
+def test_copy_seed_preserves_record_rows(tmp_path: Path, ending: bytes) -> None:
+    session: Final = cli_run([str(tmp_path / "env"), "--no-seed"], setup_logging=False)
+    bundled: Final = BUNDLE_FOLDER / BUNDLE_SUPPORT[session.interpreter.version_release_str]["pip"]
+    wheel: Final = tmp_path / bundled.name
+    original_rows = []
+    with zipfile.ZipFile(bundled) as source, zipfile.ZipFile(wheel, "w") as target:
+        for info in source.infolist():
+            content = source.read(info)
+            if info.filename.endswith(".dist-info/RECORD"):
+                content = content.rstrip(b"\r\n") + ending
+                original_rows = list(csv.reader(io.StringIO(content.decode("utf-8"))))
+            target.writestr(info, content)
+
+    image: Final = tmp_path / "image" / "CopyPipInstall" / wheel.stem
+    installer: Final = CopyPipInstall(wheel, session.creator, image)
+    installer.build_image()
+    installer.install(session.interpreter.version_info)
+
+    dist_info: Final = next(session.creator.purelib.glob("pip-*.dist-info"))
+    with (dist_info / "RECORD").open(encoding="utf-8", newline="") as stream:
+        rows = list(csv.reader(stream))
+    assert rows[: len(original_rows)] == original_rows
+    files: Final = PathDistribution(dist_info).files
+    assert files is not None
+    assert f"{dist_info.name}/INSTALLER" in {Path(file).as_posix() for file in files}
 
 
 def _write_zip_with_entry(zip_path: Path, entry_name: str) -> None:
