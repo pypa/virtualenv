@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager, suppress
 from pathlib import Path
 from threading import Lock, RLock
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from filelock import FileLock, Timeout
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from types import TracebackType
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class _CountedFileLock(FileLock):
@@ -55,8 +55,8 @@ class _CountedFileLock(FileLock):
                     self.thread_safe.release()
 
 
-_LOCK_STORE = {}
-_STORE_LOCK = Lock()
+_LOCK_STORE: Final[dict[str, _CountedFileLock]] = {}
+_STORE_LOCK: Final[Lock] = Lock()
 
 
 class PathLockBase(ABC):

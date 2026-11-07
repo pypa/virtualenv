@@ -31,7 +31,7 @@ import logging
 from abc import ABC
 from contextlib import contextmanager, suppress
 from hashlib import sha256
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 from virtualenv.util.lock import ReentrantFileLock
 from virtualenv.util.path import safe_delete
@@ -44,7 +44,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from pathlib import Path
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class AppDataDiskFolder(AppData):

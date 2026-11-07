@@ -20,7 +20,7 @@ from .util import Version, Wheel, discover_wheels
 if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 PIP_RUN: Final[str] = (
     "import sys; sys.path = [p for p in sys.path if p]; "
@@ -43,7 +43,7 @@ def _uses_default_index(env: dict[str, str]) -> bool:
 
 # PEP 503 normalized distribution name. Anything outside this character set on the way to ``pip download`` means
 # somebody is smuggling pip options or extras, so reject it before we build the command line.
-_DISTRIBUTION_RE = re.compile(
+_DISTRIBUTION_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     ^
     (?P<name>

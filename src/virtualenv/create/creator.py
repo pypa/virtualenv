@@ -32,9 +32,9 @@ from virtualenv.version import __version__
 
 from .pyenv_cfg import PyEnvCfg
 
-HERE = Path(os.path.abspath(__file__)).parent
-DEBUG_SCRIPT = HERE / "debug.py"
-LOGGER = logging.getLogger(__name__)
+HERE: Final[Path] = Path(os.path.abspath(__file__)).parent
+DEBUG_SCRIPT: Final[Path] = HERE / "debug.py"
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class CreatorMeta:

@@ -9,7 +9,7 @@ import subprocess
 from abc import ABC, abstractmethod
 from pathlib import Path
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.create.via_global_ref.builtin.ref import (
     ExePathRefToDest,
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
 
     from virtualenv.create.via_global_ref.builtin.ref import PathRef
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class CPythonmacOsFramework(CPython, ABC):

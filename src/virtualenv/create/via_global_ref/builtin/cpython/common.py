@@ -4,7 +4,7 @@ import re
 from abc import ABC
 from collections import OrderedDict
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.create.describe import PosixSupports, WindowsSupports
 from virtualenv.create.via_global_ref.builtin.ref import RefMust, RefWhen
@@ -85,7 +85,7 @@ def is_macos_brew(interpreter: PythonInfo) -> bool:
     return interpreter.platform == "darwin" and _BREW.fullmatch(interpreter.system_prefix) is not None
 
 
-_BREW = re.compile(
+_BREW: Final[re.Pattern[str]] = re.compile(
     r"/(usr/local|opt/homebrew)/(opt/python@3\.\d{1,2}|Cellar/python@3\.\d{1,2}/3\.\d{1,2}\.\d{1,2})/Frameworks/"
     r"Python\.framework/Versions/3\.\d{1,2}",
 )

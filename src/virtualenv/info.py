@@ -5,18 +5,19 @@ import os
 import platform
 import sys
 import tempfile
+from typing import Final
 
-IMPLEMENTATION = platform.python_implementation()
-IS_PYPY = IMPLEMENTATION == "PyPy"
-IS_GRAALPY = IMPLEMENTATION == "GraalVM"
-IS_RUSTPYTHON = IMPLEMENTATION == "RustPython"
-IS_CPYTHON = IMPLEMENTATION == "CPython"
-IS_WIN = sys.platform == "win32"
-IS_MAC_ARM64 = sys.platform == "darwin" and platform.machine() == "arm64"
-ROOT = os.path.realpath(os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir))
-IS_ZIPAPP = os.path.isfile(ROOT)
+IMPLEMENTATION: Final[str] = platform.python_implementation()
+IS_PYPY: Final[bool] = IMPLEMENTATION == "PyPy"
+IS_GRAALPY: Final[bool] = IMPLEMENTATION == "GraalVM"
+IS_RUSTPYTHON: Final[bool] = IMPLEMENTATION == "RustPython"
+IS_CPYTHON: Final[bool] = IMPLEMENTATION == "CPython"
+IS_WIN: Final[bool] = sys.platform == "win32"
+IS_MAC_ARM64: Final[bool] = sys.platform == "darwin" and platform.machine() == "arm64"
+ROOT: Final[str] = os.path.realpath(os.path.join(os.path.abspath(__file__), os.path.pardir, os.path.pardir))
+IS_ZIPAPP: Final[bool] = os.path.isfile(ROOT)
 _CAN_SYMLINK = _FS_CASE_SENSITIVE = None
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def fs_supports_symlink() -> bool:

@@ -4,7 +4,7 @@ import logging
 from abc import ABC
 from argparse import SUPPRESS, ArgumentTypeError
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.config.cli.parser import ExtendAction
 from virtualenv.seed.seeder import Seeder
@@ -19,8 +19,8 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
-LOGGER = logging.getLogger(__name__)
-PERIODIC_UPDATE_ON_BY_DEFAULT = True
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+PERIODIC_UPDATE_ON_BY_DEFAULT: Final[bool] = True
 
 
 class BaseEmbed(Seeder, ABC):

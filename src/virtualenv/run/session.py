@@ -23,7 +23,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class Session:

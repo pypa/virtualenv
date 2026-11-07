@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from virtualenv.config.cli.parser import VirtualEnvOptions
     from virtualenv.run.session import Session
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def _run_as_module() -> None:

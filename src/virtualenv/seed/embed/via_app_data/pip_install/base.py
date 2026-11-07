@@ -22,7 +22,7 @@ from virtualenv.util.path import remove_file, safe_delete
 if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class PipInstall(ABC):

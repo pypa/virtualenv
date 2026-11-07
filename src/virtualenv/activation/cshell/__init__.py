@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
     from virtualenv.create.creator import Creator
 
-_LOGGER: Final = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class CShellActivator(ViaTemplateActivator):

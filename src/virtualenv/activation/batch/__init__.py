@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
     from virtualenv.create.creator import Creator
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 # cmd.exe's own command-line parser looks for these regardless of surrounding quotes: confirmed on a
 # real Windows runner that `@set "VAR=x & cmd"` still runs `cmd` as a second statement even though the

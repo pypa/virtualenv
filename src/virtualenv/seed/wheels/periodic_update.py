@@ -35,11 +35,11 @@ if TYPE_CHECKING:
 
     from virtualenv.app_data.base import AppData, ContentStore
 
-LOGGER = logging.getLogger(__name__)
-GRACE_PERIOD_CI = timedelta(hours=1)  # prevent version switch in the middle of a CI run
-GRACE_PERIOD_MINOR = timedelta(days=28)
-UPDATE_PERIOD = timedelta(days=14)
-UPDATE_ABORTED_DELAY = timedelta(hours=1)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+GRACE_PERIOD_CI: Final[timedelta] = timedelta(hours=1)  # prevent version switch in the middle of a CI run
+GRACE_PERIOD_MINOR: Final[timedelta] = timedelta(days=28)
+UPDATE_PERIOD: Final[timedelta] = timedelta(days=14)
+UPDATE_ABORTED_DELAY: Final[timedelta] = timedelta(hours=1)
 
 
 def periodic_update(  # ruff:ignore[too-many-arguments]
@@ -365,7 +365,7 @@ class UnverifiedWheelError(RuntimeError):
     """PyPI's digest for a downloaded wheel was unavailable, so a caller may fall back to the bundled wheel."""
 
 
-_PYPI_CACHE = {}
+_PYPI_CACHE: Final[dict[str, dict[str, object] | None]] = {}
 
 
 def manual_upgrade(app_data: AppData, env: dict[str, str]) -> None:

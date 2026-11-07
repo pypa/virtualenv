@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from subprocess import CalledProcessError
 from threading import Lock, Thread
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.info import fs_supports_symlink
 from virtualenv.seed.embed.base_embed import BaseEmbed
@@ -32,7 +32,7 @@ if TYPE_CHECKING:
 
     from .pip_install.base import PipInstall
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class FromAppData(BaseEmbed):

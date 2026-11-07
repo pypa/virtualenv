@@ -3,10 +3,11 @@ from __future__ import annotations
 import logging
 import zipfile
 from pathlib import Path
+from typing import Final
 
 from virtualenv.info import ROOT
 
-LOGGER = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def read(full_path: str | Path) -> str:

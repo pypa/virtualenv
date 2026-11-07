@@ -23,7 +23,7 @@ if TYPE_CHECKING:
 
     from .base import AppData
 
-_LOGGER: Final = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 _MIGRATION_MARKER: Final[str] = ".virtualenv-migration-incomplete"
 
 

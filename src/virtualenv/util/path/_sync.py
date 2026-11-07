@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
     _ExcInfo = BaseException | tuple[type[BaseException], BaseException, TracebackType]
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def ensure_within(root: Path, path: Path) -> None:
