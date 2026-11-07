@@ -209,7 +209,5 @@ if __name__ == "__main__":
 
 
 __all__ = [
-    "LockedPackage",
-    "LockedWheel",
     "python_versions_for",
 ]
