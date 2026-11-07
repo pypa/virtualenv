@@ -50,7 +50,11 @@ class ViaTemplateActivator(Activator, ABC):
 
     def instantiate_template(self, replacements: dict[str, str], template: str, creator: Creator) -> str:
         # read content as binary to avoid platform specific line normalization (\n -> \r\n)
-        text = read_binary(self.__module__, template).decode("utf-8", errors="strict")
+        # templates ship beside the activator's package, which is the class's own module when it is a package
+        package: Final = (
+            self.__module__ if hasattr(sys.modules[self.__module__], "__path__") else self.__module__.rpartition(".")[0]
+        )
+        text = read_binary(package, template).decode("utf-8", errors="strict")
         substitutions = self.substitutions(replacements, creator)
         # one pass over the template, so a placeholder name inside an already quoted value (a path component named
         # __VIRTUAL_NAME__) stays data instead of being rewritten by a later key from inside the finished literal
