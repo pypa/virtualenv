@@ -21,7 +21,7 @@ from pathlib import Path
 from stat import S_IREAD, S_IRGRP, S_IROTH
 from textwrap import dedent
 from threading import Thread
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, NamedTuple
 
 import pytest
 from python_discovery import PythonInfo
@@ -126,39 +126,39 @@ _SKIP_WITHOUT_PYTHON39: Final[pytest.MarkDecorator] = pytest.mark.skipif(
 )
 
 
+class _GeneratedFile(NamedTuple):
+    name: str
+    folder: Callable[[Creator], Path]
+    extra_args: list[str]
+
+
 @pytest.mark.parametrize("creator_name", [pytest.param("builtin", id="builtin"), pytest.param("venv", id="venv")])
 @pytest.mark.parametrize("link_to", [pytest.param("original", id="existing"), pytest.param("missing", id="dangling")])
 @pytest.mark.parametrize(
-    ("generated", "folder", "extra_args"),
+    "generated",
     [
-        pytest.param("pyvenv.cfg", attrgetter("dest"), [], id="pyvenv.cfg"),
-        pytest.param("activate", attrgetter("bin_dir"), [], id="activate"),
-        pytest.param("pip.exe" if IS_WIN else "pip", attrgetter("bin_dir"), [], id="pip"),
-        pytest.param("CACHEDIR.TAG", attrgetter("dest"), [], id="CACHEDIR.TAG"),
-        pytest.param(".gitignore", attrgetter("dest"), [], id=".gitignore"),
+        pytest.param(_GeneratedFile("pyvenv.cfg", attrgetter("dest"), []), id="pyvenv.cfg"),
+        pytest.param(_GeneratedFile("activate", attrgetter("bin_dir"), []), id="activate"),
+        pytest.param(_GeneratedFile("pip.exe" if IS_WIN else "pip", attrgetter("bin_dir"), []), id="pip"),
+        pytest.param(_GeneratedFile("CACHEDIR.TAG", attrgetter("dest"), []), id="CACHEDIR.TAG"),
+        pytest.param(_GeneratedFile(".gitignore", attrgetter("dest"), []), id=".gitignore"),
         pytest.param(
-            "_virtualenv.py",
-            attrgetter("purelib"),
-            ["--python", "python3.9"],
+            _GeneratedFile("_virtualenv.py", attrgetter("purelib"), ["--python", "python3.9"]),
             id="_virtualenv.py",
             marks=_SKIP_WITHOUT_PYTHON39,
         ),
         pytest.param(
-            "_virtualenv.pth",
-            attrgetter("purelib"),
-            ["--python", "python3.9"],
+            _GeneratedFile("_virtualenv.pth", attrgetter("purelib"), ["--python", "python3.9"]),
             id="_virtualenv.pth",
             marks=_SKIP_WITHOUT_PYTHON39,
         ),
     ],
 )
-def test_creator_replaces_generated_file_links(  # ruff:ignore[too-many-arguments]  # each parametrized case is an argument
+def test_creator_replaces_generated_file_links(
     tmp_path: Path,
     creator_name: str,
     link_to: str,
-    generated: str,
-    folder: Callable[[Creator], Path],
-    extra_args: list[str],
+    generated: _GeneratedFile,
 ) -> None:
     command: Final = [
         str(tmp_path / "env"),
@@ -167,19 +167,19 @@ def test_creator_replaces_generated_file_links(  # ruff:ignore[too-many-argument
         "--pip",
         "embed",
         "--no-periodic-update",
-        *extra_args,
+        *generated.extra_args,
     ]
     session: Final = session_via_cli(command)
     session.creator.bin_dir.mkdir(parents=True)
     target: Final = session.creator.dest / "original"
     target.write_bytes(b"original")
-    path: Final = folder(session.creator) / generated
+    path: Final = generated.folder(session.creator) / generated.name
     path.parent.mkdir(parents=True, exist_ok=True)
     path.symlink_to(session.creator.dest / link_to)
     with session:
         session.run()
     kept: Final = link_to == "original" and (
-        generated == "CACHEDIR.TAG" or (generated == ".gitignore" and creator_name == "builtin")
+        generated.name == "CACHEDIR.TAG" or (generated.name == ".gitignore" and creator_name == "builtin")
     )
     assert path.is_symlink() is kept
     assert (target.read_bytes(), (session.creator.dest / "missing").exists()) == (b"original", False)
@@ -533,8 +533,14 @@ def _assert_system_site_sys_path(sys_path: list[Path], system_sys_path: list[Pat
     )
 
 
+class _NoSeedCase(NamedTuple):
+    creator: tuple[str, str]
+    site_args: list[str]
+    check_sys_path: Callable[[list[Path], list[Path]], None]
+
+
 _NO_SEED_CASES: Final[list[pytest.ParameterSet]] = [
-    pytest.param(creator, site_args, check, id=f"{'-'.join(creator)}-{mode}")
+    pytest.param(_NoSeedCase(creator, site_args, check), id=f"{'-'.join(creator)}-{mode}")
     for creator in _CREATE_METHODS
     for site_args, check, mode in (
         ([], _assert_isolated_sys_path, "isolated"),
@@ -544,18 +550,10 @@ _NO_SEED_CASES: Final[list[pytest.ParameterSet]] = [
 
 
 @pytest.mark.graalpy
-@pytest.mark.parametrize(("creator", "site_args", "check_sys_path"), _NO_SEED_CASES)
-def test_create_no_seed(  # ruff:ignore[too-many-arguments]  # one fixture or parametrized input per argument
-    python,
-    creator,
-    site_args: list[str],
-    check_sys_path: Callable[[list[Path], list[Path]], None],
-    system,
-    coverage_env,
-    special_name_dir,
-) -> None:
+@pytest.mark.parametrize("case", _NO_SEED_CASES)
+def test_create_no_seed(python, case: _NoSeedCase, system, coverage_env, special_name_dir) -> None:
     dest = special_name_dir
-    creator_key, method = creator
+    creator_key, method = case.creator
     cmd = [
         "-v",
         "-v",
@@ -568,7 +566,7 @@ def test_create_no_seed(  # ruff:ignore[too-many-arguments]  # one fixture or pa
         "--creator",
         creator_key,
         f"--{method}",
-        *site_args,
+        *case.site_args,
     ]
     creator = cli_run(cmd).creator
     coverage_env()
@@ -598,7 +596,7 @@ def test_create_no_seed(  # ruff:ignore[too-many-arguments]  # one fixture or pa
     # ensure there's at least a site-packages folder as part of the virtual environment added
     assert any(p for p in our_paths if p.parts[-1] == "site-packages"), our_paths_repr
 
-    check_sys_path(sys_path, system_sys_path)
+    case.check_sys_path(sys_path, system_sys_path)
 
     # the python executables in the bin directory are either files, absolute symlinks outside of the venv,
     # or relative symlinks inside of the venv
@@ -807,13 +805,7 @@ def test_create_clear_resets(tmp_path, creator: str, clear_args: list[str], capl
     assert marker.exists() is not bool(clear_args)
 
 
-@pytest.mark.parametrize(
-    "creator",
-    [
-        pytest.param(c, marks=pytest.mark.skipif(c == "venv", reason="venv has no prompt key"))
-        for c in _CURRENT_CREATORS
-    ],
-)
+@pytest.mark.parametrize("creator", _CURRENT_CREATORS)
 @pytest.mark.parametrize("prompt", ["magic", "."])
 def test_prompt_set(tmp_path: Path, creator: str, prompt: str, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.chdir(tmp_path)

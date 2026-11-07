@@ -472,7 +472,6 @@ def test_safe_delete_preserves_file_mode_when_parent_denies_deletion(tmp_path: P
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
-@pytest.mark.parametrize("operation", [pytest.param(copy, id="copy"), pytest.param(symlink, id="symlink")])
 @pytest.mark.parametrize(
     ("layout", "directory"),
     [
@@ -484,12 +483,39 @@ def test_safe_delete_preserves_file_mode_when_parent_denies_deletion(tmp_path: P
     "link_to",
     [pytest.param("outside", id="missing-target"), pytest.param("destination", id="self-loop")],
 )
-def test_replace_dangling_symlink(
-    tmp_path: Path,
-    operation: Callable[[Path, Path], None],
-    layout: tuple[str, str],
-    directory: bool,
-    link_to: str,
+def test_copy_replaces_dangling_symlink(tmp_path: Path, layout: tuple[str, str], directory: bool, link_to: str) -> None:
+    source_rel, result_rel = layout
+    source: Final[Path] = tmp_path / "source"
+    source.mkdir()
+    (source / "file.txt").write_text("new", encoding="utf-8")
+    destination: Final[Path] = tmp_path / "destination"
+    outside: Final[Path] = tmp_path / "outside"
+    destination.symlink_to(tmp_path / link_to, target_is_directory=directory)
+
+    copy(source / source_rel, destination)
+
+    assert (
+        destination.is_symlink(),
+        (destination / result_rel).read_text(encoding="utf-8"),
+        destination.resolve(),
+        outside.exists(),
+    ) == (False, "new", destination, False)
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="symlink is not supported")
+@pytest.mark.parametrize(
+    ("layout", "directory"),
+    [
+        pytest.param(("file.txt", ""), False, id="file"),
+        pytest.param(("", "file.txt"), True, id="directory"),
+    ],
+)
+@pytest.mark.parametrize(
+    "link_to",
+    [pytest.param("outside", id="missing-target"), pytest.param("destination", id="self-loop")],
+)
+def test_symlink_replaces_dangling_symlink(
+    tmp_path: Path, layout: tuple[str, str], directory: bool, link_to: str
 ) -> None:
     source_rel, result_rel = layout
     source: Final[Path] = tmp_path / "source"
@@ -499,14 +525,14 @@ def test_replace_dangling_symlink(
     outside: Final[Path] = tmp_path / "outside"
     destination.symlink_to(tmp_path / link_to, target_is_directory=directory)
 
-    operation(source / source_rel, destination)
+    symlink(source / source_rel, destination)
 
     assert (
         destination.is_symlink(),
         (destination / result_rel).read_text(encoding="utf-8"),
-        destination.resolve() in {(source / source_rel).resolve(), destination},
+        destination.resolve(),
         outside.exists(),
-    ) == (operation is symlink, "new", True, False)
+    ) == (True, "new", (source / source_rel).resolve(), False)
 
 
 def test_reentrant_file_lock_is_thread_safe(tmp_path) -> None:
