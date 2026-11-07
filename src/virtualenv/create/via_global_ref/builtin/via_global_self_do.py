@@ -85,18 +85,9 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
     def _sources_can_be_applied(cls, interpreter: PythonInfo, meta: BuiltinViaGlobalRefMeta) -> None:
         for src in cls.sources(interpreter):
             if src.exists:
-                if meta.can_copy and not src.can_copy:
-                    meta.copy_error = f"cannot copy {src}"
-                if meta.can_symlink and not src.can_symlink:
-                    meta.symlink_error = f"cannot symlink {src}"
+                cls._record_present_source(meta, src)
             else:
-                msg = f"missing required file {src}"
-                if src.when == RefWhen.ANY:
-                    meta.error = msg
-                elif src.when == RefWhen.COPY:
-                    meta.copy_error = msg
-                elif src.when == RefWhen.SYMLINK:
-                    meta.symlink_error = msg
+                cls._record_missing_source(meta, src)
             if not meta.can_copy and not meta.can_symlink:
                 meta.error = f"neither copy or symlink supported, copy: {meta.copy_error} symlink: {meta.symlink_error}"
             if meta.error:
@@ -128,6 +119,23 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
 
         """
         return self.bin_dir / src.name
+
+    @staticmethod
+    def _record_present_source(meta: BuiltinViaGlobalRefMeta, src: ExePathRefToDest) -> None:
+        if meta.can_copy and not src.can_copy:
+            meta.copy_error = f"cannot copy {src}"
+        if meta.can_symlink and not src.can_symlink:
+            meta.symlink_error = f"cannot symlink {src}"
+
+    @staticmethod
+    def _record_missing_source(meta: BuiltinViaGlobalRefMeta, src: ExePathRefToDest) -> None:
+        msg = f"missing required file {src}"
+        if src.when == RefWhen.ANY:
+            meta.error = msg
+        elif src.when == RefWhen.COPY:
+            meta.copy_error = msg
+        elif src.when == RefWhen.SYMLINK:
+            meta.symlink_error = msg
 
     def create(self) -> None:
         """Create the directories, the configuration and the linked or copied files of the environment.

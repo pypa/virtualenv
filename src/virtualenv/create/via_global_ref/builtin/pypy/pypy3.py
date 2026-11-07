@@ -63,6 +63,10 @@ class PyPy3Posix(PyPy3, PosixSupports):
         # style installation. If this is a standard prefix installation, skip the below:
         if interpreter.system_prefix == "/usr":
             return
+        yield from cls._portable_lib_sources(interpreter)
+
+    @classmethod
+    def _portable_lib_sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:
         # Also copy/symlink anything under prefix/lib, which, for "portable" PyPy builds, includes the tk,tcl runtime
         # and a number of shared objects. In distro-specific builds or on conda this should be empty (on PyPy3.8+ it
         # will, like on CPython, hold the stdlib).

@@ -7,7 +7,9 @@ from collections import OrderedDict
 from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, Sequence
+    from collections.abc import Iterable, Mapping, Sequence
+
+    from virtualenv.config.convert import TypeData
 
 from virtualenv.config.convert import get_type
 from virtualenv.config.env_var import get_env_var
@@ -85,16 +87,7 @@ class VirtualEnvConfigParser(ArgumentParser):
         if hasattr(action, "default") and hasattr(action, "dest") and action.default != SUPPRESS:
             as_type = get_type(action)
             names = OrderedDict((i.lstrip("-").replace("-", "_"), None) for i in action.option_strings)
-            outcome = None
-            for name in names:
-                outcome = get_env_var(name, as_type, self.env)
-                if outcome is not None:
-                    break
-            if outcome is None and self.file_config:
-                for name in names:
-                    outcome = self.file_config.get(name, as_type)
-                    if outcome is not None:
-                        break
+            outcome = self._configured_outcome(names, as_type)
             if tri_state := action.default is None and isinstance(action.const, bool):
                 outcome = _as_passed_flag(action.const, outcome)
             # A sibling flag's environment value takes precedence over this flag's configuration file value.
@@ -108,6 +101,16 @@ class VirtualEnvConfigParser(ArgumentParser):
             else:
                 outcome = action.default, "default"
             self.options.set_src(action.dest, *outcome)
+
+    def _configured_outcome(self, names: Iterable[str], as_type: TypeData) -> tuple[Any, str] | None:
+        for name in names:
+            if (outcome := get_env_var(name, as_type, self.env)) is not None:
+                return outcome
+        if self.file_config:
+            for name in names:
+                if (outcome := self.file_config.get(name, as_type)) is not None:
+                    return outcome
+        return None
 
     # narrows the base parse_known_args to VirtualEnvOptions, which ty flags as an override
     def parse_known_args(  # ty: ignore[invalid-method-override]

@@ -86,6 +86,14 @@ class Creator(ABC):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self._args())})"
 
+    def _args(self) -> list[tuple[str, str | bool]]:
+        return [
+            ("dest", str(self.dest)),
+            ("clear", self.clear),
+            ("no_vcs_ignore", self.no_vcs_ignore),
+            ("venv_redirect", self.venv_redirect),
+        ]
+
     if TYPE_CHECKING:
 
         @property
@@ -138,14 +146,6 @@ class Creator(ABC):
 
         """
         return DEBUG_SCRIPT
-
-    def _args(self) -> list[tuple[str, str | bool]]:
-        return [
-            ("dest", str(self.dest)),
-            ("clear", self.clear),
-            ("no_vcs_ignore", self.no_vcs_ignore),
-            ("venv_redirect", self.venv_redirect),
-        ]
 
     @classmethod
     # the base hook takes the interpreter, this creator never reads it
@@ -238,8 +238,7 @@ class Creator(ABC):
         )
 
     @classmethod
-    # the codec check and its message share one pass over the value
-    def validate_dest(cls, raw_value: str) -> str:  # ruff:ignore[complex-structure]
+    def validate_dest(cls, raw_value: str) -> str:
         """Not blank, a directory if it exists, no path separator in the path, valid chars and must be write-able.
 
         :param raw_value: the destination as given on the command line
@@ -249,20 +248,23 @@ class Creator(ABC):
         :raises ArgumentTypeError: when the destination fails any of the checks above
 
         """
-
-        def non_write_able(dest: Path, value: Path) -> NoReturn:
-            if dest.exists() and not dest.is_dir():
-                msg = f"the destination {value} is inside {dest}, which is not a directory"
-                raise ArgumentTypeError(msg)
-            common = Path(commonpath([str(value), str(dest)]))
-            msg = f"the destination {dest.relative_to(common)} is not write-able at {common}"
-            raise ArgumentTypeError(msg)
-
         # an empty value, often an unset shell variable, resolves to the working directory (on Windows so do spaces)
         # and --clear would delete it
         if not raw_value.strip():
             msg = f"destination {raw_value!r} must not be empty or whitespace; pass . to use the current directory"
             raise ArgumentTypeError(msg)
+        cls._check_codec(raw_value)
+        value = Path(raw_value)
+        if value.exists() and not value.is_dir():
+            msg = f"the destination {value} already exists and is not a directory"
+            raise ArgumentTypeError(msg)
+        dest = Path(os.path.abspath(str(value))).resolve()  # on Windows absolute does not imply resolve so use both
+        cls._check_path_separator(raw_value, dest)
+        cls._ensure_writable(dest)
+        return str(dest)
+
+    @staticmethod
+    def _check_codec(raw_value: str) -> None:
         # the file system must be able to encode
         # note in newer CPython this is always utf-8 https://www.python.org/dev/peps/pep-0529/
         encoding = sys.getfilesystemencoding()
@@ -281,11 +283,9 @@ class Creator(ABC):
             bad = "".join(refused.keys())
             msg = f"the file system codec ({encoding}) cannot handle characters {bad!r} within {raw_value!r}"
             raise ArgumentTypeError(msg)
-        value = Path(raw_value)
-        if value.exists() and not value.is_dir():
-            msg = f"the destination {value} already exists and is not a directory"
-            raise ArgumentTypeError(msg)
-        dest = Path(os.path.abspath(str(value))).resolve()  # on Windows absolute does not imply resolve so use both
+
+    @staticmethod
+    def _check_path_separator(raw_value: str, dest: Path) -> None:
         for destination in (raw_value, str(dest)):
             if os.pathsep in destination:
                 msg = (
@@ -293,18 +293,29 @@ class Creator(ABC):
                     f" as this would break the activation scripts"
                 )
                 raise ArgumentTypeError(msg)
-        value = dest
-        while dest:
-            if dest.exists():
-                if dest.is_dir() and os.access(str(dest), os.W_OK):
+
+    @classmethod
+    def _ensure_writable(cls, dest: Path) -> None:
+        current = dest
+        while current:
+            if current.exists():
+                if current.is_dir() and os.access(str(current), os.W_OK):
                     break
-                non_write_able(dest, value)
-            base, _ = dest.parent, dest.name
-            if base == dest:
-                # reached only when dest is the filesystem root, which tests cannot create
-                non_write_able(dest, value)  # pragma: no cover
-            dest = base
-        return str(value)
+                cls._non_write_able(current, dest)
+            base = current.parent
+            if base == current:
+                # reached only when current is the filesystem root, which tests cannot create
+                cls._non_write_able(current, dest)  # pragma: no cover
+            current = base
+
+    @staticmethod
+    def _non_write_able(dest: Path, value: Path) -> NoReturn:
+        if dest.exists() and not dest.is_dir():
+            msg = f"the destination {value} is inside {dest}, which is not a directory"
+            raise ArgumentTypeError(msg)
+        common = Path(commonpath([str(value), str(dest)]))
+        msg = f"the destination {dest.relative_to(common)} is not write-able at {common}"
+        raise ArgumentTypeError(msg)
 
     def run(self) -> None:
         """Create the environment and write its metadata, ignore file and ``.venv`` redirect.
