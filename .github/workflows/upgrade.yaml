@@ -94,7 +94,7 @@ jobs:
         docs/changelog/embedded-wheels.bugfix.rst
         pylock.zipapp.toml
         tasks/ci-tools.json
-        src/virtualenv/seed/wheels/embed/__init__.py
+        src/virtualenv/seed/wheels/embed/catalog.py
         src/virtualenv/seed/wheels/embed/*.whl
       branch: auto/upgrade-embedded-deps
       title: Upgrade embedded pip/setuptools/wheel and CI test tools

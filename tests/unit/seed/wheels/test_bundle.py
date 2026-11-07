@@ -10,15 +10,15 @@ from typing import Final
 import pytest
 
 from virtualenv.app_data import AppDataDiskFolder
-from virtualenv.seed.wheels import embed
 from virtualenv.seed.wheels.bundle import from_bundle
 from virtualenv.seed.wheels.embed import (
     BUNDLE_FOLDER,
     BUNDLE_SHA256,
     BUNDLE_SUPPORT,
-    _verify_bundled_wheel,
     get_embed_wheel,
 )
+from virtualenv.seed.wheels.embed import catalog
+from virtualenv.seed.wheels.embed.catalog import _verify_bundled_wheel
 from virtualenv.seed.wheels.periodic_update import dump_datetime
 from virtualenv.seed.wheels.util import Version, Wheel
 
@@ -124,7 +124,7 @@ def test_verify_bundled_wheel_rejects_tamper(tmp_path: Path, monkeypatch: pytest
     fake = tmp_path / fake_name
     fake.write_bytes(b"not the real bytes")
     monkeypatch.setitem(BUNDLE_SHA256, fake_name, "0" * 64)
-    monkeypatch.setattr("virtualenv.seed.wheels.embed._VERIFIED_WHEELS", set())
+    monkeypatch.setattr("virtualenv.seed.wheels.embed.catalog._VERIFIED_WHEELS", set())
 
     with pytest.raises(RuntimeError, match="sha256 mismatch"):
         _verify_bundled_wheel(fake)
@@ -133,7 +133,7 @@ def test_verify_bundled_wheel_rejects_tamper(tmp_path: Path, monkeypatch: pytest
 def test_verify_bundled_wheel_rejects_unknown(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     stray = tmp_path / "stray-0.0.1-py3-none-any.whl"
     stray.write_bytes(b"payload")
-    monkeypatch.setattr("virtualenv.seed.wheels.embed._VERIFIED_WHEELS", set())
+    monkeypatch.setattr("virtualenv.seed.wheels.embed.catalog._VERIFIED_WHEELS", set())
 
     with pytest.raises(RuntimeError, match="no recorded sha256"):
         _verify_bundled_wheel(stray)
@@ -149,9 +149,9 @@ def test_verify_bundled_wheel_reads_from_zipapp(tmp_path: Path, monkeypatch: pyt
     with zipfile.ZipFile(str(fake_root), "w") as archive:
         archive.writestr(entry, wheel_payload)
 
-    monkeypatch.setattr(embed, "IS_ZIPAPP", True)
-    monkeypatch.setattr(embed, "ROOT", str(fake_root))
+    monkeypatch.setattr(catalog, "IS_ZIPAPP", True)
+    monkeypatch.setattr(catalog, "ROOT", str(fake_root))
     monkeypatch.setitem(BUNDLE_SHA256, wheel_name, hashlib.sha256(wheel_payload).hexdigest())
-    monkeypatch.setattr(embed, "_VERIFIED_WHEELS", set())
+    monkeypatch.setattr(catalog, "_VERIFIED_WHEELS", set())
 
     _verify_bundled_wheel(fake_root / entry)

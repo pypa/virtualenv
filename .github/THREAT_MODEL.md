@@ -527,7 +527,7 @@ the workflows as I1 describes, and [scorecard.yaml][workflow-scorecard] runs [Op
 [src-batch]: https://github.com/pypa/virtualenv/tree/main/src/virtualenv/activation/batch
 [src-creator]: https://github.com/pypa/virtualenv/blob/main/src/virtualenv/create/creator.py
 [src-embed-dir]: https://github.com/pypa/virtualenv/tree/main/src/virtualenv/seed/wheels/embed
-[src-embed-init]: https://github.com/pypa/virtualenv/blob/main/src/virtualenv/seed/wheels/embed/__init__.py
+[src-embed-init]: https://github.com/pypa/virtualenv/blob/main/src/virtualenv/seed/wheels/embed/catalog.py
 [src-lock]: https://github.com/pypa/virtualenv/blob/main/src/virtualenv/util/lock.py
 [src-periodic-update]: https://github.com/pypa/virtualenv/blob/main/src/virtualenv/seed/wheels/periodic_update.py
 [src-permission]: https://github.com/pypa/virtualenv/blob/main/src/virtualenv/util/path/_permission.py
