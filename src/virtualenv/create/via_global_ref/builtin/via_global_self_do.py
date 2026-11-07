@@ -39,7 +39,13 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
 
     @classmethod
     def can_create(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta | None:
-        """By default, all built-in methods assume that if we can describe it we can create it."""
+        """By default, all built-in methods assume that if we can describe it we can create it.
+
+        :param interpreter: the host interpreter to create the environment from
+
+        :returns: the metadata describing how to create the environment, ``None`` if it cannot be created
+
+        """
         # first we must be able to describe it
         if not cls.can_describe(interpreter):
             return None

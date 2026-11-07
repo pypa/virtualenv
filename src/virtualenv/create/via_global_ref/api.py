@@ -130,7 +130,11 @@ class ViaGlobalRefApi(Creator, ABC):
             write_file(dest_path, text.encode("utf-8"))
 
     def env_patch_text(self) -> str:
-        """Patch the distutils package to not be derailed by its configuration files."""
+        """Patch the distutils package to not be derailed by its configuration files.
+
+        :returns: the source text of the patch module
+
+        """
         with self.app_data.ensure_extracted(Path(__file__).parent / "_virtualenv.py") as resolved_path:
             return resolved_path.read_text(encoding="utf-8")
 

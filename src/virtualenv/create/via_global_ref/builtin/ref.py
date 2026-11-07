@@ -38,7 +38,17 @@ class RefWhen(StrEnum):
 
 
 class PathRef(ABC):
-    """Base class that checks if a file reference can be symlink/copied."""
+    """Base class that checks if a file reference can be symlink/copied.
+
+    :param src: the path to reference
+    :param must: the ``RefMust`` value forcing a symlink or a copy, ``NA`` to pick either
+    :param when: the ``RefWhen`` value deciding when the reference applies
+
+    :var FS_SUPPORTS_SYMLINK: whether the file system supports symlinks
+    :var FS_CASE_SENSITIVE: whether the file system is case sensitive
+    :var exists: whether the referenced path exists
+
+    """
 
     FS_SUPPORTS_SYMLINK = fs_supports_symlink()
     FS_CASE_SENSITIVE = fs_is_case_sensitive()
@@ -102,7 +112,13 @@ class PathRef(ABC):
 
 
 class ExePathRef(PathRef, ABC):
-    """Base class that checks if a executable can be references via symlink/copy."""
+    """Base class that checks if a executable can be references via symlink/copy.
+
+    :param src: the path of the executable to reference
+    :param must: the ``RefMust`` value forcing a symlink or a copy, ``NA`` to pick either
+    :param when: the ``RefWhen`` value deciding when the reference applies
+
+    """
 
     def __init__(self, src: Path, must: str = RefMust.NA, when: str = RefWhen.ANY) -> None:
         super().__init__(src, must, when)
@@ -122,7 +138,14 @@ class ExePathRef(PathRef, ABC):
 
 
 class PathRefToDest(PathRef):
-    """Link a path on the file system."""
+    """Link a path on the file system.
+
+    :param src: the path to link
+    :param dest: callable returning the destination path, or list of paths, for the creator
+    :param must: the ``RefMust`` value forcing a symlink or a copy, ``NA`` to pick either
+    :param when: the ``RefWhen`` value deciding when the reference applies
+
+    """
 
     def __init__(self, src: Path, dest: Callable[..., Path], must: str = RefMust.NA, when: str = RefWhen.ANY) -> None:
         super().__init__(src, must, when)
@@ -139,7 +162,18 @@ class PathRefToDest(PathRef):
 
 
 class ExePathRefToDest(PathRefToDest, ExePathRef):
-    """Link a exe path on the file system."""
+    """Link a exe path on the file system.
+
+    :param src: the path of the executable to link
+    :param targets: the file names the executable is linked as, the first one is the base name
+    :param dest: callable returning the directory the executable is linked into, for the creator
+    :param must: the ``RefMust`` value forcing a symlink or a copy, ``NA`` to pick either
+    :param when: the ``RefWhen`` value deciding when the reference applies
+
+    :var base: the primary file name of the executable
+    :var aliases: the remaining file names of the executable
+
+    """
 
     def __init__(
         self, src: Path, targets: list[str], dest: Callable[..., Path], must: str = RefMust.NA, when: str = RefWhen.ANY

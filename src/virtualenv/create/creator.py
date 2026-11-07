@@ -43,7 +43,19 @@ class CreatorMeta:
 
 
 class Creator(ABC):
-    """A class that given a python Interpreter creates a virtual environment."""
+    """A class that given a python Interpreter creates a virtual environment.
+
+    :var dest: the directory the virtual environment is created in
+    :var clear: ``True`` to delete the destination directory before creating the environment
+    :var no_vcs_ignore: ``True`` to skip writing the VCS ignore file into the destination
+    :var venv_redirect: ``True`` to always write the ``.venv`` redirect file, ``False`` to never write it, ``None`` to
+        write it only beside a project folder that has no ``.venv`` yet
+    :var pyenv_cfg: the ``pyvenv.cfg`` of the destination
+    :var app_data: the application data folder
+    :var env: the environment variables the creation runs with
+    :var prompt: the prompt prefix, ``None`` when none was given
+
+    """
 
     def __init__(self, options: VirtualEnvOptions, interpreter: PythonInfo) -> None:
         """Construct a new virtual environment creator.
@@ -126,9 +138,9 @@ class Creator(ABC):
         """Add CLI arguments for the creator.
 
         :param parser: the CLI parser
-        :param app_data: the application data folder
         :param interpreter: the interpreter we're asked to create virtual environment for
         :param meta: value as returned by :meth:`can_create`
+        :param app_data: the application data folder
 
         """
 
@@ -192,7 +204,15 @@ class Creator(ABC):
     @classmethod
     # the codec check and its message share one pass over the value
     def validate_dest(cls, raw_value: str) -> str:  # ruff:ignore[complex-structure]
-        """Not blank, a directory if it exists, no path separator in the path, valid chars and must be write-able."""
+        """Not blank, a directory if it exists, no path separator in the path, valid chars and must be write-able.
+
+        :param raw_value: the destination as given on the command line
+
+        :returns: the absolute path of the destination
+
+        :raises ArgumentTypeError: when the destination fails any of the checks above
+
+        """
 
         def non_write_able(dest: Path, value: Path) -> NoReturn:
             if dest.exists() and not dest.is_dir():

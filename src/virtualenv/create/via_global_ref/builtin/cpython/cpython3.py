@@ -188,6 +188,10 @@ class CPython3Windows(CPythonWindows, CPython3):
         files. User can move/rename the zip file and edit ``sys.path`` by editing the ``_pth`` file. Here the
         ``pattern`` is used only for the default zip file name.
 
+        :param interpreter: the host interpreter whose zip file is looked up
+
+        :yields: a reference to the zip file, when it exists beside the interpreter
+
         """
         pattern = f"*python{interpreter.version_nodot}.zip"
         matched_paths = map(Path, fnmatch.filter(interpreter.path, pattern))

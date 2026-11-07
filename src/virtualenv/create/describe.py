@@ -12,7 +12,14 @@ if TYPE_CHECKING:
 
 
 class Describe:
-    """Given a host interpreter tell us information about what the created interpreter might look like."""
+    """Given a host interpreter tell us information about what the created interpreter might look like.
+
+    :param dest: the directory the virtual environment is created in
+    :param interpreter: the host interpreter the environment is described from
+
+    :var suffix: the executable suffix, ``.exe`` on Windows and empty elsewhere
+
+    """
 
     suffix = ".exe" if IS_WIN else ""
 
@@ -78,13 +85,23 @@ class Describe:
 
     @classmethod
     def exe_stem(cls) -> str:
-        """Executable name without suffix - there seems to be no standard way to get this without creating it."""
+        """Executable name without suffix - there seems to be no standard way to get this without creating it.
+
+        :returns: the executable name without suffix
+
+        """
         raise NotImplementedError
 
     @classmethod
     # the base hook takes the interpreter, this describer accepts every one
     def can_describe(cls, interpreter: PythonInfo) -> bool:  # ruff:ignore[unused-class-method-argument]
-        """Knows means it knows how the output will look."""
+        """Knows means it knows how the output will look.
+
+        :param interpreter: the host interpreter to check
+
+        :returns: ``True`` if the output for this interpreter can be described
+
+        """
         return True
 
     def script(self, name: str) -> Path:
