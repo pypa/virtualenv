@@ -132,7 +132,10 @@ class VirtualEnvConfigParser(ArgumentParser):
                         break
             if tri_state := action.default is None and isinstance(action.const, bool):
                 outcome = _as_passed_flag(action.const, outcome)
-            if outcome is not None:
+            # A sibling flag's environment value takes precedence over this flag's configuration file value.
+            if outcome is not None and not (
+                tri_state and outcome[1] == "file" and self.options.get_source(action.dest) == "env var"
+            ):
                 action.default, default_source = outcome
                 vars(action)["default_source"] = default_source
             elif tri_state and hasattr(self.options, action.dest):
