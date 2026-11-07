@@ -379,12 +379,6 @@ def for_py_version() -> str:
     return f"{sys.version_info.major}.{sys.version_info.minor}"
 
 
-@pytest.fixture
-def _skip_if_test_in_system(session_app_data) -> None:
-    if PythonInfo.current(session_app_data).system_executable is not None:
-        pytest.skip("test not valid if run under system")
-
-
 if IS_PYPY or IS_GRAALPY or IS_RUSTPYTHON:
 
     @pytest.fixture
