@@ -79,8 +79,7 @@ class BaseEmbed(Seeder, ABC):
             version = getattr(self, f"{distribution}_version", None)
             if version == "none":
                 continue
-            ver = f"={version or 'latest'}"
-            result += f" {distribution}{ver},"
+            result += f" {distribution}={version or 'latest'},"
         return result[:-1] + ")"
 
     @classmethod

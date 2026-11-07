@@ -32,8 +32,7 @@ os.environ.pop("PYTHONHOME", None)
 
 # Set PKG_CONFIG_PATH to include the virtualenv's pkgconfig directory
 pkg_config_path = os.path.join(base, "lib", "pkgconfig")
-existing_pkg_config_path = os.environ.get("PKG_CONFIG_PATH", "")
-if existing_pkg_config_path:
+if existing_pkg_config_path := os.environ.get("PKG_CONFIG_PATH", ""):
     os.environ["PKG_CONFIG_PATH"] = os.pathsep.join([pkg_config_path, existing_pkg_config_path])
 else:
     os.environ["PKG_CONFIG_PATH"] = pkg_config_path

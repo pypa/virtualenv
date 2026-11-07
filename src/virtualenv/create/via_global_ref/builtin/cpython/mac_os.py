@@ -73,20 +73,6 @@ class CPythonmacOsFramework(CPython, ABC):
 
 
 class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
-    def current_mach_o_image_path(self) -> str:
-        return "@executable_path/../../../../Python3"
-
-    def desired_mach_o_image_path(self) -> str:
-        return "@executable_path/../.Python"
-
-    @classmethod
-    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
-        yield from super().sources(interpreter)
-
-        # add a symlink to the host python image
-        exe = Path(interpreter.prefix) / "Python3"  # ty: ignore[invalid-argument-type]
-        yield PathRefToDest(exe, dest=lambda self, _: self.dest / ".Python", must=RefMust.SYMLINK)
-
     @property
     def reload_code(self) -> str:
         result = super().reload_code  # ty: ignore[unresolved-attribute]
@@ -102,6 +88,20 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
             sys._framework = before
         """,
         )
+
+    def current_mach_o_image_path(self) -> str:
+        return "@executable_path/../../../../Python3"
+
+    def desired_mach_o_image_path(self) -> str:
+        return "@executable_path/../.Python"
+
+    @classmethod
+    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
+        yield from super().sources(interpreter)
+
+        # add a symlink to the host python image
+        exe = Path(interpreter.prefix) / "Python3"  # ty: ignore[invalid-argument-type]
+        yield PathRefToDest(exe, dest=lambda self, _: self.dest / ".Python", must=RefMust.SYMLINK)
 
 
 def fix_mach_o(exe: str, current: str, new: str, max_size: int) -> None:
@@ -169,11 +169,6 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
         def tell(self) -> int:
             return self._pos
 
-        def _checkwindow(self, seek_to: int, op: str) -> None:
-            if not (self._start <= seek_to <= self._end):
-                msg = f"{op} to offset {seek_to:d} is outside window [{self._start:d}, {self._end:d}]"
-                raise OSError(msg)
-
         def seek(self, offset: int, whence: int = 0) -> None:
             seek_to = offset
             if whence == os.SEEK_SET:
@@ -188,6 +183,11 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
             self._checkwindow(seek_to, "seek")
             self._file_obj.seek(seek_to)
             self._pos = seek_to - self._start
+
+        def _checkwindow(self, seek_to: int, op: str) -> None:
+            if not (self._start <= seek_to <= self._end):
+                msg = f"{op} to offset {seek_to:d} is outside window [{self._start:d}, {self._end:d}]"
+                raise OSError(msg)
 
         def write(self, content: bytes) -> None:
             here = self._start + self._pos
@@ -246,8 +246,7 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
         def do_file(file: FileView | BufferedRandom, offset: int = 0, size: int = maxint) -> None:
             file = FileView(file, offset, size)
             # Read magic number
-            magic = read_data(file, BIG_ENDIAN)
-            if magic == FAT_MAGIC:
+            if (magic := read_data(file, BIG_ENDIAN)) == FAT_MAGIC:
                 # Fat binaries contain nfat_arch Mach-O binaries
                 n_fat_arch = read_data(file, BIG_ENDIAN)
                 for _ in range(n_fat_arch):  # ty: ignore[invalid-argument-type]

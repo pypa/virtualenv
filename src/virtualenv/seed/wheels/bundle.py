@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from virtualenv.seed.wheels.embed import get_embed_wheel
-
+from .embed import get_embed_wheel
 from .periodic_update import periodic_update
 from .util import Version, Wheel, discover_wheels
 

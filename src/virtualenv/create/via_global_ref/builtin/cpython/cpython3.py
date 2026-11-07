@@ -172,8 +172,7 @@ class CPython3Windows(CPythonWindows, CPython3):
     def _is_pywin32_dll(cls, filename: str) -> bool:
         # Check if a DLL file belongs to pywin32.
         # pywin32 DLLs follow patterns like: pywintypes39.dll, pythoncom39.dll
-        name_lower = filename.lower()
-        return name_lower.startswith(("pywintypes", "pythoncom"))
+        return filename.lower().startswith(("pywintypes", "pythoncom"))
 
     @classmethod
     def python_zip(cls, interpreter: PythonInfo) -> Generator[PathRefToDest]:
@@ -188,10 +187,8 @@ class CPython3Windows(CPythonWindows, CPython3):
 
         """
         pattern = f"*python{interpreter.version_nodot}.zip"
-        matches = fnmatch.filter(interpreter.path, pattern)
-        matched_paths = map(Path, matches)
-        existing_paths = filter(method("exists"), matched_paths)
-        if (path := next(existing_paths, None)) is not None:
+        matched_paths = map(Path, fnmatch.filter(interpreter.path, pattern))
+        if (path := next(filter(method("exists"), matched_paths), None)) is not None:
             yield PathRefToDest(path, cls.to_bin)
 
 

@@ -208,4 +208,8 @@ if __name__ == "__main__":
     main()
 
 
-__all__ = []
+__all__ = [
+    "LockedPackage",
+    "LockedWheel",
+    "python_versions_for",
+]
