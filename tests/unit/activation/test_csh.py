@@ -59,8 +59,8 @@ def test_cshell_prompt_collapses_line_boundaries(
 @pytest.mark.parametrize(
     ("tcl_lib", "tk_lib", "present"),
     [
-        ("/path/to/tcl", "/path/to/tk", True),
-        (None, None, False),
+        pytest.param("/path/to/tcl", "/path/to/tk", True, id="present"),
+        pytest.param(None, None, False, id="missing"),
     ],
 )
 def test_cshell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:

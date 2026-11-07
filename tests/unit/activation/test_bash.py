@@ -94,8 +94,8 @@ def test_prompt_requires_known_shell(tmp_path: Path, current_fastest: str, setup
 @pytest.mark.parametrize(
     ("tcl_lib", "tk_lib", "present"),
     [
-        ("/path/to/tcl", "/path/to/tk", True),
-        (None, None, False),
+        pytest.param("/path/to/tcl", "/path/to/tk", True, id="present"),
+        pytest.param(None, None, False, id="missing"),
     ],
 )
 def test_bash_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:

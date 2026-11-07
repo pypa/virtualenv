@@ -98,8 +98,8 @@ def test_batch_pydoc_bat_quoting(tmp_path) -> None:
 @pytest.mark.parametrize(
     ("tcl_lib", "tk_lib", "present"),
     [
-        ("C:\\tcl", "C:\\tk", True),
-        (None, None, False),
+        pytest.param("C:\\tcl", "C:\\tk", True, id="windows"),
+        pytest.param(None, None, False, id="missing"),
     ],
 )
 def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:

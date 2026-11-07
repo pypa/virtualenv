@@ -120,9 +120,9 @@ def rendered_activate_fish(tmp_path: Path) -> Callable[[str | None, str | None],
 @pytest.mark.parametrize(
     ("tcl_lib", "tk_lib", "present"),
     [
-        ("/path/to/tcl", "/path/to/tk", True),
-        ("/Program Files/tcl", "/Program Files/tk", True),
-        (None, None, False),
+        pytest.param("/path/to/tcl", "/path/to/tk", True, id="present"),
+        pytest.param("/Program Files/tcl", "/Program Files/tk", True, id="spaces"),
+        pytest.param(None, None, False, id="missing"),
     ],
 )
 def test_fish_tkinter_generation(

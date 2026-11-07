@@ -25,7 +25,12 @@ if TYPE_CHECKING:
 
 @pytest.mark.parametrize(
     ("args", "download"),
-    [([], False), (["--no-download"], False), (["--never-download"], False), (["--download"], True)],
+    [
+        pytest.param([], False, id="default"),
+        pytest.param(["--no-download"], False, id="no-download"),
+        pytest.param(["--never-download"], False, id="never-download"),
+        pytest.param(["--download"], True, id="download"),
+    ],
 )
 def test_download_cli_flag(args, download, tmp_path) -> None:
     session = session_via_cli([*args, str(tmp_path)])
@@ -60,7 +65,14 @@ def test_extra_search_dir_cli(tmp_path: Path, groups: tuple[tuple[str, ...], ...
 
 
 @pytest.mark.parametrize("source", ["env", "ini"])
-@pytest.mark.parametrize("cli_dirs", [(), ("first",), ("first", "second")])
+@pytest.mark.parametrize(
+    "cli_dirs",
+    [
+        pytest.param((), id="none"),
+        pytest.param(("first",), id="first"),
+        pytest.param(("first", "second"), id="both"),
+    ],
+)
 def test_extra_search_dir_cli_overrides_defaults(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, source: str, cli_dirs: tuple[str, ...]
 ) -> None:
