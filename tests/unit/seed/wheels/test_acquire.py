@@ -275,6 +275,7 @@ def test_get_wheel_download_cached(
     time_freeze: Callable[[datetime], None],
 ) -> None:
     time_freeze(datetime.now(tz=timezone.utc))
+    # imported with the test, which needs only this store class
     from virtualenv.app_data.via_disk_folder import JSONStoreDisk  # ruff:ignore[import-outside-top-level]
 
     app_data = AppDataDiskFolder(folder=str(tmp_path))

@@ -191,6 +191,7 @@ def test_version(capsys) -> None:
     assert not err
 
     assert __version__ in content
+    # the package file is read for the version check, so the import waits until here
     import virtualenv  # ruff:ignore[import-outside-top-level]
 
     assert virtualenv.__file__ in content.replace("\n", "")

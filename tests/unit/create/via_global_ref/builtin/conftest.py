@@ -48,4 +48,5 @@ def make_interpreter() -> MakeInterpreter:
             sysconfig_vars=sysconfig_vars or {},
         )
 
+    # the MagicMock stands in for PythonInfo, which it cannot satisfy statically
     return _make  # type: ignore[return-value]

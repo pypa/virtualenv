@@ -235,6 +235,7 @@ def coverage_env(monkeypatch, link, request):
             def create_run():
                 result = old_run()
                 obj["cov"] = EnableCoverage(link)
+                # the coverage hook takes the creator, which the with statement cannot pass
                 obj["cov"].__enter__(session.creator)  # ruff:ignore[unnecessary-dunder-call]
                 return result
 
@@ -281,6 +282,7 @@ if _COVERAGE_RUN:
             self.link = link
             self.targets = []
 
+        # the coverage hook takes the creator, unlike the context manager protocol
         def __enter__(self, creator):  # ruff:ignore[unexpected-special-method-signature]
             site_packages = creator.purelib
             for entry in self._ROOT_COV_FILES_AND_FOLDERS:
@@ -318,6 +320,7 @@ def special_char_name():
         try:
             if char == char.encode(encoding, errors="strict").decode(encoding):
                 result += char
+        # a ValueError marks a character the encoding cannot round-trip
         except ValueError:  # ruff:ignore[try-except-in-loop]
             continue
     assert result
@@ -331,6 +334,7 @@ def special_name_dir(tmp_path, special_char_name):
 
 @pytest.fixture(scope="session")
 def current_creators(session_app_data):
+    # deferred so importing conftest does not load the CLI plugins
     from virtualenv.run.plugin.creators import CreatorSelector  # ruff:ignore[import-outside-top-level]
 
     return CreatorSelector.for_interpreter(PythonInfo.current_system(session_app_data))
@@ -360,6 +364,7 @@ def change_env_var(key, value):
         if already_set:
             os.environ[key] = prev_value
         else:
+            # restores an unset variable, which only a test that sets a fresh one reaches
             del os.environ[key]  # pragma: no cover
 
 

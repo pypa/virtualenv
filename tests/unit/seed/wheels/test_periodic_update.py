@@ -50,6 +50,7 @@ if TYPE_CHECKING:
 
 @pytest.fixture(autouse=True)
 def _clear_pypi_info_cache() -> Generator[None, None, None]:
+    # the fixture clears the private cache, so it imports the cache where it clears it
     from virtualenv.seed.wheels.periodic_update import _PYPI_CACHE  # ruff:ignore[import-outside-top-level]
 
     _PYPI_CACHE.clear()
@@ -530,13 +531,16 @@ def test_do_update_first(tmp_path, mocker, time_freeze) -> None:
     ]
     download_wheels = (Wheel(Path(i[0])) for i in pip_version_remote)
 
+    # the fake takes the same keywords as acquire.download_wheel
     def _download_wheel(  # ruff:ignore[too-many-arguments]
         distribution,
+        # the fake takes the same keywords as acquire.download_wheel, this one does not assert on it
         version_spec,  # ruff:ignore[unused-function-argument]
         for_py_version,
         search_dirs,
         app_data,
         to_folder,
+        # the fake takes the same keywords as acquire.download_wheel, this one does not assert on it
         env,  # ruff:ignore[unused-function-argument]
     ):
         assert distribution == "pip"

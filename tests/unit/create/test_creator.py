@@ -377,6 +377,7 @@ def test_destination_not_write_able(tmp_path, capsys) -> None:
 
 
 def cleanup_sys_path(paths):
+    # used only by this helper, so it stays out of the module imports
     from virtualenv.create.creator import HERE  # ruff:ignore[import-outside-top-level]
 
     paths = [p.resolve() for p in (Path(os.path.abspath(i)) for i in paths) if p.exists()]
@@ -484,6 +485,7 @@ for k, v in CreatorSelector.for_interpreter(_CURRENT).key_to_meta.items():
     ("creator", "isolated"),
     [pytest.param(*i, id=f"{'-'.join(i[0])}-{i[1]}") for i in product(_CREATE_METHODS, ["isolated", "global"])],
 )
+# one parametrized test covers each create method and seed mode, branching on both
 def test_create_no_seed(  # ruff:ignore[complex-structure, too-many-branches, too-many-arguments, too-many-statements]
     python,
     creator,
@@ -1219,8 +1221,10 @@ def test_python_path(monkeypatch, tmp_path, python_path_on) -> None:
 # https://github.com/pypa/virtualenv/issues/2419
 @pytest.mark.skipif("venv" not in _CURRENT_CREATORS, reason="test needs venv creator")
 def test_venv_creator_without_write_perms(tmp_path, mocker) -> None:
+    # imported with the test that patches Session._create
     from virtualenv.run.session import Session  # ruff:ignore[import-outside-top-level]
 
+    # the test patches the private _create to simulate a read-only target
     prev = Session._create  # ruff:ignore[private-member-access]
 
     def func(self) -> None:

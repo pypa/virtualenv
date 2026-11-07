@@ -68,6 +68,7 @@ def mock_get_interpreter(mocker):
         pytest.param(None, ["python_from_cli"], "python_from_cli", id="cli-only"),
     ],
 )
+# each parametrized case feeds one argument per field
 def test_returns_python_specified(  # ruff:ignore[too-many-arguments]
     mocker, monkeypatch, session_app_data, env_var: str | None, python: list[str], expected: str
 ) -> None:
@@ -107,6 +108,7 @@ def test_returns_python_specified(  # ruff:ignore[too-many-arguments]
         ),
     ],
 )
+# each parametrized case feeds one argument per field
 def test_cli_replaces_configured_interpreters(  # ruff:ignore[too-many-arguments]
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

@@ -73,11 +73,13 @@ class PathMockABC(FakeDataABC, Path):
 
 
 def mock_files(mocker, pathlist, filelist) -> None:
+    # the variable is named after the class it patches in, as the test reads it
     PathMock = MetaPathMock(set(filelist))  # ruff:ignore[non-lowercase-variable-in-function]
     for path in pathlist:
         mocker.patch(path, PathMock)
 
 
+# builds a class, so it is named like one
 def MetaPathMock(filelist):  # ruff:ignore[invalid-function-name]
     # Metaclass that creates a `PathMock` class with the `filelist` defined.
     return type("PathMock", (PathMockABC,), {"filelist": filelist})

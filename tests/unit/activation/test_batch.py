@@ -59,6 +59,7 @@ def special_char_name():
         try:
             if char == char.encode(encoding, errors="strict").decode(encoding):
                 result += char
+        # a ValueError marks a character the encoding cannot round-trip
         except ValueError:  # ruff:ignore[try-except-in-loop]
             continue
     assert result
@@ -204,6 +205,7 @@ def test_batch_skips_changed_paths(
         pytest.param("VIRTUALENV_UNDEFINED_PATH", id="path-unset"),
     ],
 )
+# the parametrize fields are passed as separate arguments
 def test_batch_path_round_trip(  # ruff:ignore[too-many-arguments]
     tmp_path: Path, name: str, delayed: str, set_prompt: str, prompt: str, path_source: str
 ) -> None:
@@ -321,6 +323,7 @@ def test_batch_output(activation_python, activation_tester_class, activation_tes
                 return f'"{text}"'
             return s
 
+        # the base tester calls assert_output with tmp_path, this check does not use it
         def assert_output(self, out, raw, tmp_path) -> None:  # ruff:ignore[unused-method-argument]
             assert out[0] == "ECHO is on.", raw
 

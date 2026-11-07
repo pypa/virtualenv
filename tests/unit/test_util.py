@@ -476,6 +476,7 @@ def test_reentrant_file_lock_is_thread_safe(tmp_path) -> None:
         for task in tasks:
             try:
                 task.result()
+            # every failed task's traceback is collected, one bad task must not stop the loop
             except Exception:  # ruff:ignore[blind-except, try-except-in-loop]
                 pytest.fail(traceback.format_exc())
 
@@ -563,6 +564,7 @@ class TestCacheDirMigration:
         self,
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
+        # the flag is parametrized to run the case twice, the body does not read it
         symlink_flag: bool,  # ruff:ignore[unused-method-argument]
     ) -> None:
         old_dir = str(tmp_path / "old-data")

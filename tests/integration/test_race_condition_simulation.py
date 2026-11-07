@@ -30,6 +30,7 @@ def test_race_condition_simulation(tmp_path) -> None:
         sys.path.insert(0, str(tmp_path))
         sys.modules.pop("_virtualenv", None)
         try:
+            # the import itself is the check that the module loads
             import _virtualenv  # ruff:ignore[unused-import, import-outside-top-level]
 
             _check_distutils_patch(errors)

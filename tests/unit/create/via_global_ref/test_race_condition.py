@@ -24,6 +24,7 @@ def test_virtualenv_py_race_condition_find_spec(tmp_path) -> None:
 
 
 def _test_finder_behavior() -> None:
+    # the import checks the fixture module is on sys.path, the name is not used
     import _virtualenv_test  # ruff:ignore[import-outside-top-level]
 
     finder = _virtualenv_test.finder

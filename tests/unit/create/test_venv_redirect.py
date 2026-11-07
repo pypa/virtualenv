@@ -58,6 +58,7 @@ def test_venv_redirect_opted_out_in_project(project_redirect: Path) -> None:
         pytest.param("VIRTUALENV_VENV_REDIRECT", "true", ("--no-venv-redirect",), False, id="cli-off-beats-env-on"),
     ],
 )
+# each parametrized case feeds one argument per field
 def test_venv_redirect_env_var_and_cli(  # ruff:ignore[too-many-arguments]
     project_redirect: Path,
     monkeypatch: pytest.MonkeyPatch,

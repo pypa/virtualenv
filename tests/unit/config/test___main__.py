@@ -58,6 +58,7 @@ def test_module_entry_without_working_directory(
 @pytest.fixture
 def raise_on_session_done(mocker):
     def _func(exception) -> None:
+        # imported inside the helper, so the module loads only when the helper runs
         from virtualenv.run import session_via_cli  # ruff:ignore[import-outside-top-level]
 
         prev_session = session_via_cli

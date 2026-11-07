@@ -7,6 +7,7 @@ class _Finder:
     fullname = None
     lock: ClassVar[list] = []
 
+    # the meta path finder protocol passes these, this finder ignores them
     def find_spec(self, fullname, path, target=None) -> None:  # ruff:ignore[unused-method-argument]
         # This should handle the NameError gracefully
         try:

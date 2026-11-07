@@ -64,6 +64,7 @@ class ActivationTester:
             )
         except subprocess.CalledProcessError as exception:
             output = exception.output + exception.stderr
+            # the failing shell's output is the assertion message
             assert not exception.returncode, output  # ruff:ignore[pytest-assert-in-except]
             return None
         else:
@@ -125,6 +126,7 @@ class ActivationTester:
     def print_marker(self, step) -> str:
         return f'echo "__STEP_{step}__"'
 
+    # the base tester defines env with tmp_path, this shell does not use it
     def env(self, tmp_path):  # ruff:ignore[unused-method-argument]
         env = os.environ.copy()
         # add the current python executable folder to the path so we already have another python on the path
@@ -190,6 +192,7 @@ class ActivationTester:
         if sys.platform != "win32":
             result = path
         else:
+            # windll exists only on Windows, and this branch runs only there
             from ctypes import create_unicode_buffer, windll  # ruff:ignore[import-outside-top-level]
 
             buffer_cont = create_unicode_buffer(256)
@@ -229,7 +232,7 @@ class ActivationTester:
 
 
 class RaiseOnNonSourceCall(ActivationTester):
-    def __init__(  # ruff:ignore[too-many-arguments]
+    def __init__(  # ruff:ignore[too-many-arguments]  # the test double mirrors ActivationTester's constructor
         self,
         of_class,
         session,

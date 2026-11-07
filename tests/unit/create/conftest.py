@@ -13,6 +13,7 @@ if TYPE_CHECKING:
 _CURRENT: Final[PythonInfo] = PythonInfo.current_system()
 
 
+# session_app_data is requested so the session data is set up before this fixture
 def root(tmp_path_factory, session_app_data):  # ruff:ignore[unused-function-argument]
     return _CURRENT.system_executable
 

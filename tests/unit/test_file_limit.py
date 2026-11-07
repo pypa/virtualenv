@@ -42,6 +42,7 @@ def _run_cli_with_full_fds(fds: list[int], tmp_path: Path) -> None:
     try:
         fds.extend(os.open(os.devnull, os.O_RDONLY) for _ in range(20))
     except OSError as jit_exc:  # pypy, graalpy
+        # pypy and graalpy raise OSError here, the test checks the errno
         assert jit_exc.errno == errno.EMFILE  # ruff:ignore[pytest-assert-in-except]
     with pytest.raises((SystemExit, OSError, RuntimeError)) as excinfo:
         cli_run([str(tmp_path / "venv")])

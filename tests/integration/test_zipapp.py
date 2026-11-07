@@ -164,6 +164,7 @@ def test_zipapp_update_without_installed_package(zipapp: Path, zipapp_test_env: 
 
 
 @pytest.fixture
+# the other fixtures run first for their side effects, the body does not use them
 def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # ruff:ignore[unused-function-argument]
     def _run(*args) -> None:
         cmd = [str(zipapp_test_env), str(zipapp), "-vv", str(tmp_path / "env"), *list(args)]
@@ -173,6 +174,7 @@ def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # ruff:ignor
 
 
 @pytest.fixture
+# the other fixtures run first for their side effects, the body does not use them
 def call_zipapp_symlink(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # ruff:ignore[unused-function-argument]
     def _run(*args) -> None:
         symlinked = zipapp.parent / "symlinked_virtualenv.pyz"

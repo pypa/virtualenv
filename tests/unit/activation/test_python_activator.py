@@ -159,6 +159,7 @@ def test_python(raise_on_non_source_class, activation_tester) -> None:
             """
             return dedent(raw).splitlines()
 
+        # the base tester calls assert_output with tmp_path, this check does not use it
         def assert_output(self, out, raw, tmp_path) -> None:  # ruff:ignore[unused-method-argument]
             out = [literal_eval(i) for i in out]
             assert out[0] is None  # start with VIRTUAL_ENV None

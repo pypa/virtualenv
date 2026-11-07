@@ -528,6 +528,7 @@ def _run_parallel_threads(tmp_path):
     def _run(name) -> None:
         try:
             cli_run(["--seeder", "app-data", str(tmp_path / name), "--no-setuptools"])
+        # every seeder failure is collected, so the test asserts on all of them together
         except Exception as exception:  # ruff:ignore[blind-except]
             exceptions.append(str(exception))
 
@@ -721,6 +722,7 @@ def test_safe_extract_zip_rejects_parent_traversal(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     "entry",
     [
+        # a literal entry name for the traversal check, nothing is written there
         pytest.param("/tmp/evil.txt", id="posix"),  # ruff:ignore[hardcoded-temp-file]
         pytest.param("C:/Windows/System32/evil.txt", id="windows"),
     ],
