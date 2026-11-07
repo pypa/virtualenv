@@ -333,9 +333,8 @@ class Creator(ABC):
         if not redirect.is_file():  # only a regular file holds a redirect, and opening a FIFO would wait for a writer
             return False
         try:
-            line: Final = redirect.read_text(encoding="utf-8").removesuffix(
-                "\n"
-            )  # universal newlines already turned \r\n into \n
+            # Universal newlines already turned \r\n into \n.
+            line: Final[str] = redirect.read_text(encoding="utf-8").removesuffix("\n")
             return bool(line) and "virtualenv" in PyEnvCfg.from_folder(redirect.parent / line)
         except (OSError, UnicodeDecodeError, ValueError):  # unreadable, so not a redirect virtualenv can claim
             return False
