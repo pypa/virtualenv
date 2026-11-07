@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Final
 if TYPE_CHECKING:
     import types
     from collections.abc import Callable
+    from functools import partial
     from importlib.machinery import ModuleSpec
 
 _VIRTUALENV_PATCH_FILE: Final[str] = os.path.abspath(__file__)
@@ -91,7 +92,7 @@ class _Finder:
                     return self._patch_spec(spec, partial)
         return None
 
-    def _patch_spec(self, spec: ModuleSpec, partial: Callable[..., object]) -> ModuleSpec:
+    def _patch_spec(self, spec: ModuleSpec, partial: type[partial]) -> ModuleSpec:
         if (old := getattr(spec.loader, "exec_module", None)) is not None and old is not self.exec_module:
             # a loader with a read-only exec_module is left unpatched on purpose
             try:  # ruff:ignore[suppressible-exception]
@@ -102,7 +103,7 @@ class _Finder:
         return spec
 
     @staticmethod
-    def exec_module(old: Callable[..., object], module: types.ModuleType) -> None:
+    def exec_module(old: Callable[[types.ModuleType], object], module: types.ModuleType) -> None:
         old(module)
         try:
             distutils_patch = _DISTUTILS_PATCH

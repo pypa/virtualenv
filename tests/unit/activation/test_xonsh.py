@@ -8,7 +8,7 @@ import subprocess
 from argparse import Namespace
 from ast import literal_eval
 from shutil import which
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 from python_discovery import PythonInfo
@@ -19,14 +19,17 @@ from virtualenv.create.creator import Creator
 from virtualenv.run import cli_run, session_via_cli
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from pathlib import Path
 
 _NEEDS_XONSH: Final[pytest.MarkDecorator] = pytest.mark.skipif(which("xonsh") is None, reason="requires xonsh")
 
 
+class _Xonsh(Protocol):
+    def __call__(self, script: str, **env: str) -> str: ...
+
+
 @pytest.fixture
-def xonsh() -> Callable[..., str]:
+def xonsh() -> _Xonsh:
     def run(script: str, **env: str) -> str:
         return subprocess.run(
             ["xonsh", "--no-rc", "-c", script],
@@ -68,7 +71,7 @@ def test_xonsh_skips_expanding_destination(tmp_path: Path, name: str, caplog: py
     ],
 )
 def test_xonsh_restores_pythonhome_without_exported_sentinel(
-    tmp_path: Path, xonsh: Callable[..., str], prelude: str, original: str | None
+    tmp_path: Path, xonsh: _Xonsh, prelude: str, original: str | None
 ) -> None:
     session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "xonsh"])
     activate: Final = session.creator.bin_dir / "activate.xsh"
@@ -168,7 +171,7 @@ def test_xonsh(activation_tester_class, activation_tester) -> None:
 
 
 @_NEEDS_XONSH
-def test_xonsh_switch_restores_unset_tk_libraries(tmp_path: Path, xonsh: Callable[..., str]) -> None:
+def test_xonsh_switch_restores_unset_tk_libraries(tmp_path: Path, xonsh: _Xonsh) -> None:
     activations: Final[list[Path]] = []
     for name, library in (("first", "/test/library"), ("second", None)):
         session = session_via_cli([str(tmp_path / name), "--no-seed", "--activators", "xonsh"])
@@ -190,7 +193,7 @@ def test_xonsh_switch_restores_unset_tk_libraries(tmp_path: Path, xonsh: Callabl
 
 @_NEEDS_XONSH
 @pytest.mark.parametrize("encoding", [pytest.param("gbk", id="gbk"), pytest.param("big5", id="big5")])
-def test_xonsh_preserves_unicode_values(tmp_path: Path, xonsh: Callable[..., str], encoding: str) -> None:
+def test_xonsh_preserves_unicode_values(tmp_path: Path, xonsh: _Xonsh, encoding: str) -> None:
     destination: Final = tmp_path / "中文環境"
     prompt: Final = "中文提示"
     session: Final = cli_run([str(destination), "--no-seed", "--activators", "xonsh", "--prompt", prompt])

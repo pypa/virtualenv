@@ -6,7 +6,7 @@ import sys
 from argparse import Namespace
 from shutil import which
 from subprocess import check_output, run
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Protocol
 
 import pytest
 from packaging.version import Version
@@ -48,7 +48,7 @@ def _is_bsd_csh() -> bool:
     [pytest.param(value, id=f"U+{ord(value):04X}") for value in "\n\r\v\f\x1c\x1d\x1e\x85\u2028\u2029"],
 )
 def test_cshell_prompt_collapses_line_boundaries(
-    csh_venv: Callable[..., tuple[Path, str]],
+    csh_venv: _CshVenv,
     tmp_path: Path,
     shell: str,
     boundary: str,
@@ -138,8 +138,12 @@ def test_cshell_generates_deactivate_script(tmp_path) -> None:
     assert "deactivate.csh" in (creator.bin_dir / "activate.csh").read_text(encoding="utf-8")
 
 
+class _CshVenv(Protocol):
+    def __call__(self, name: str, *, prompt: str | None = None) -> tuple[Path, str]: ...
+
+
 @pytest.fixture
-def csh_venv(tmp_path: Path, current_fastest: str) -> Callable[..., tuple[Path, str]]:
+def csh_venv(tmp_path: Path, current_fastest: str) -> _CshVenv:
     def create(name: str, *, prompt: str | None = None) -> tuple[Path, str]:
         (dest := tmp_path / name / "venv").parent.mkdir(parents=True)
         return dest, _create_csh_venv(dest, current_fastest, prompt)
@@ -174,7 +178,7 @@ def csh_plain_activate(tmp_path_factory: pytest.TempPathFactory, current_fastest
     ],
 )
 def test_cshell_escapes_prompt_expansion(
-    csh_venv: Callable[..., tuple[Path, str]], prompt: str, tcsh_escaped: str, plain_escaped: str
+    csh_venv: _CshVenv, prompt: str, tcsh_escaped: str, plain_escaped: str
 ) -> None:
     _, content = csh_venv(prompt, prompt=prompt)
 
@@ -229,9 +233,7 @@ def test_cshell_activates_path_with_special_characters(
         pytest.param("a\\!b", id="history-character"),
     ],
 )
-def test_cshell_prompt_preserves_quoting_mode(
-    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, value: str, option: str
-) -> None:
+def test_cshell_prompt_preserves_quoting_mode(csh_venv: _CshVenv, tmp_path: Path, value: str, option: str) -> None:
     dest, content = csh_venv("ordinary", prompt=value)
     script: Final = tmp_path / "activate.csh"
     script.write_text(content, encoding="utf-8")
@@ -248,9 +250,7 @@ def test_cshell_prompt_preserves_quoting_mode(
     assert result.stdout == f"{dest}\n{value}\n({display}) > \n"
 
 
-def _assert_prompt_drawn(
-    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, prompt: str, env: dict[str, str]
-) -> None:
+def _assert_prompt_drawn(csh_venv: _CshVenv, tmp_path: Path, prompt: str, env: dict[str, str]) -> None:
     _, content = csh_venv("plain", prompt=prompt)
     script = tmp_path / "activate.csh"
     script.write_text(content, encoding="utf-8")
@@ -270,9 +270,7 @@ def _assert_prompt_drawn(
 
 @pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
 @pytest.mark.parametrize("prompt", [pytest.param("%", id="percent"), pytest.param("has^caret", id="caret")])
-def test_cshell_renders_prompt_literally(
-    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, prompt: str
-) -> None:
+def test_cshell_renders_prompt_literally(csh_venv: _CshVenv, tmp_path: Path, prompt: str) -> None:
     _assert_prompt_drawn(csh_venv, tmp_path, prompt, os.environ.copy())
 
 
@@ -296,7 +294,7 @@ def gbk_env() -> dict[str, str]:
     ],
 )
 def test_cshell_renders_prompt_literally_in_gbk(
-    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, gbk_env: dict[str, str], prompt: str
+    csh_venv: _CshVenv, tmp_path: Path, gbk_env: dict[str, str], prompt: str
 ) -> None:
     _assert_prompt_drawn(csh_venv, tmp_path, prompt, gbk_env)
 
@@ -420,7 +418,7 @@ def test_csh(activation_tester_class, activation_tester) -> None:
 
 
 @pytest.mark.skipif(IS_WIN or which("csh") is None, reason="requires csh")
-def test_cshell_disabled_prompt_preserves_existing_value(csh_venv: Callable[..., tuple[Path, str]]) -> None:
+def test_cshell_disabled_prompt_preserves_existing_value(csh_venv: _CshVenv) -> None:
     dest, _ = csh_venv("plain", prompt="owner's prompt")
     result: Final = run(
         ["csh", "-f"],
@@ -434,7 +432,7 @@ def test_cshell_disabled_prompt_preserves_existing_value(csh_venv: Callable[...,
 
 
 @pytest.mark.skipif(IS_WIN or not _is_bsd_csh(), reason="requires bsd-csh")
-def test_bsd_cshell_displays_one_backslash(csh_venv: Callable[..., tuple[Path, str]]) -> None:
+def test_bsd_cshell_displays_one_backslash(csh_venv: _CshVenv) -> None:
     shell: Final = which("bsd-csh") or which("csh")
     dest, _ = csh_venv("plain", prompt="a\\b")
     result: Final = run(
@@ -467,9 +465,7 @@ def test_cshell_skips_multiline_destination(tmp_path: Path) -> None:
         pytest.param("\x1c", id="file-separator"),
     ],
 )
-def test_cshell_preserves_non_newline_path(
-    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, boundary: str
-) -> None:
+def test_cshell_preserves_non_newline_path(csh_venv: _CshVenv, tmp_path: Path, boundary: str) -> None:
     dest, _ = csh_venv(f"a{boundary}b")
     # copied as bytes, because text mode reads the carriage return in the path back as a newline
     script = tmp_path / "activate.csh"

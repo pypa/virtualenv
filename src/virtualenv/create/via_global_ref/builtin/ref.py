@@ -7,7 +7,7 @@ import sys
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from stat import S_IXGRP, S_IXOTH, S_IXUSR
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from virtualenv.info import fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.util.path import copy, make_exe, remove_file, symlink
@@ -128,7 +128,7 @@ class PathRef(ABC):
         """
         raise NotImplementedError
 
-    def method(self, symlinks: bool) -> Callable[..., None]:
+    def method(self, symlinks: bool) -> Callable[[Path, Path], None]:
         """Pick the function that performs the link or copy of this reference.
 
         :param symlinks: ``True`` to prefer symlinks over copies
@@ -181,7 +181,9 @@ class PathRefToDest(PathRef):
 
     """
 
-    def __init__(self, src: Path, dest: Callable[..., Path], must: str = RefMust.NA, when: str = RefWhen.ANY) -> None:
+    def __init__(
+        self, src: Path, dest: Callable[[Any, Path], Path], must: str = RefMust.NA, when: str = RefWhen.ANY
+    ) -> None:
         super().__init__(src, must, when)
         self.dest = dest
 
@@ -216,7 +218,12 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
     """
 
     def __init__(
-        self, src: Path, targets: list[str], dest: Callable[..., Path], must: str = RefMust.NA, when: str = RefWhen.ANY
+        self,
+        src: Path,
+        targets: list[str],
+        dest: Callable[[Any, Path], Path],
+        must: str = RefMust.NA,
+        when: str = RefWhen.ANY,
     ) -> None:
         ExePathRef.__init__(self, src, must, when)
         PathRefToDest.__init__(self, src, dest, must, when)
