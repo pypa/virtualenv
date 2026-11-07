@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 from collections import OrderedDict
 from importlib.metadata import entry_points
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -59,11 +59,18 @@ class ComponentBuilder(PluginLoader):
     def handle_selected_arg_parse(self, options: VirtualEnvOptions) -> str:
         selected = getattr(options, self.name)
         if selected not in self.possible:
-            msg = f"No implementation for {self.interpreter}"
+            # argparse checks choices only on the command line, so a value from an env var or ini file can land here
+            msg: Final[str] = (
+                f"{self.name} {selected!r} is not available{self._available_for()}. "
+                f"Available {self.name}s: {', '.join(sorted(self.possible))}. Is the plugin installed?"
+            )
             raise RuntimeError(msg)
         self._impl_class = self.possible[selected]
         self.populate_selected_argparse(selected, options.app_data)
         return selected
+
+    def _available_for(self) -> str:
+        return ""
 
     def populate_selected_argparse(self, selected: str, app_data: object) -> None:
         self.parser.description = f"options for {self.name} {selected}"
