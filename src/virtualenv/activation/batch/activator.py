@@ -22,8 +22,9 @@ LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 # real Windows runner that `@set "VAR=x & cmd"` still runs `cmd` as a second statement even though the
 # whole VAR=value expression is quoted. `(` and `)` are not in this set - confirmed on the same runner
 # that `@set "VAR=C:\Program Files (x86)\..."` round-trips unchanged, since parentheses are only special
-# to cmd.exe as block delimiters in control-flow syntax (if/for), not as bare characters in a value. `!`
-# is only live when the caller already has delayed expansion enabled (`setlocal enabledelayedexpansion`,
+# to cmd.exe as block delimiters in control-flow syntax (if/for), not as bare characters in a value.
+#
+# `!` is only live when the caller already has delayed expansion enabled (`setlocal enabledelayedexpansion`,
 # `cmd /V:ON`) - not cmd.exe's default, but confirmed on a real runner that a prompt like `foo!SECRET!`
 # then substitutes the actual value of an existing SECRET variable into the prompt, so it is neutered
 # unconditionally rather than only when that mode happens to be on. cmd.exe stops reading a line at Ctrl-Z

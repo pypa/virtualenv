@@ -31,10 +31,11 @@ PIP_RUN: Final[str] = (
 # A private index can legitimately serve a rebuilt wheel under the same distribution, version, and
 # filename PyPI also uses - an internal mirror re-signing or re-packaging a release for policy reasons,
 # for example. Verifying that file against PyPI's own digest would then reject a wheel that came from
-# exactly the source it was configured to come from, not a compromised one. This does not attempt to
-# find every way pip can be pointed elsewhere (a pip.conf file has the same effect and is invisible
-# here), only the common, explicit one, so treat this as a conservative signal rather than proof either
-# way: it exists to avoid false rejections, not to guarantee verification runs whenever it safely could.
+# exactly the source it was configured to come from, not a compromised one.
+#
+# This does not attempt to find every way pip can be pointed elsewhere (a pip.conf file has the same effect and is
+# invisible here), only the common, explicit one, so treat this as a conservative signal rather than proof either way:
+# it exists to avoid false rejections, not to guarantee verification runs whenever it safely could.
 _CUSTOM_INDEX_ENV_VARS: Final[tuple[str, ...]] = ("PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL", "PIP_INDEX")
 
 

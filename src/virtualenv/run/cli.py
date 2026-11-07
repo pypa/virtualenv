@@ -44,7 +44,8 @@ def session_via_cli(
     setup_logging: bool = True,  # ruff:ignore[boolean-default-value-positional-argument]
     env: MutableMapping[str, str] | None = None,
 ) -> Session:
-    """Create a virtualenv session (same as cli_run, but this does not perform the creation). Use this if you just want to query what the virtual environment would look like, but not actually create it.
+    """Create a virtualenv session (same as cli_run, but this does not perform the creation). Use this if you just
+    want to query what the virtual environment would look like, but not actually create it.
 
     :param args: the command line arguments
     :param options: passing in a ``VirtualEnvOptions`` object allows return of the parsed options

@@ -16,6 +16,7 @@ r"""A rough layout of the current storage goes as:
     │       └── embed
     │           └── 3 -> json format versioning
     │               └── *.json -> for every distribution contains data about newer embed versions and releases
+
     └─── unzip <in zip app we cannot refer to some internal files, so first extract them>
          └── <virtualenv version>
              ├── py_info.py
