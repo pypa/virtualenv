@@ -64,26 +64,14 @@ def test_extra_search_dir_cli(tmp_path: Path, groups: tuple[tuple[str, ...], ...
     assert session.seeder.extra_search_dir == expected
 
 
-@pytest.mark.parametrize("source", ["env", "ini"])
-@pytest.mark.parametrize(
-    "cli_dirs",
-    [
-        pytest.param((), id="none"),
-        pytest.param(("first",), id="first"),
-        pytest.param(("first", "second"), id="both"),
-    ],
-)
-def test_extra_search_dir_cli_overrides_defaults(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, source: str, cli_dirs: tuple[str, ...]
-) -> None:
-    configured = tmp_path / "configured"
-    configured.mkdir()
-    if source == "env":
-        monkeypatch.setenv("VIRTUALENV_EXTRA_SEARCH_DIR", str(configured))
-    else:
-        config = tmp_path / "virtualenv.ini"
-        config.write_text(f"[virtualenv]\nextra_search_dir = {configured}\n", encoding="utf-8")
-        monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(config))
+_CLI_SEARCH_DIRS = [
+    pytest.param((), id="none"),
+    pytest.param(("first",), id="first"),
+    pytest.param(("first", "second"), id="both"),
+]
+
+
+def _cli_search_dir_args(tmp_path: Path, cli_dirs: tuple[str, ...]) -> tuple[list[str], list[Path]]:
     args = [str(tmp_path / "env"), "--no-seed"]
     expected = []
     for name in cli_dirs:
@@ -91,10 +79,42 @@ def test_extra_search_dir_cli_overrides_defaults(
         path.mkdir()
         args.extend(["--extra-search-dir", str(path)])
         expected.append(path)
+    return args, expected
+
+
+@pytest.mark.parametrize("cli_dirs", _CLI_SEARCH_DIRS)
+def test_extra_search_dir_cli_overrides_env_var(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, cli_dirs: tuple[str, ...]
+) -> None:
+    configured = tmp_path / "configured"
+    configured.mkdir()
+    monkeypatch.setenv("VIRTUALENV_EXTRA_SEARCH_DIR", str(configured))
+    args, expected = _cli_search_dir_args(tmp_path, cli_dirs)
 
     session = session_via_cli(args)
 
     assert session.seeder.extra_search_dir == (expected or [configured])
+
+
+@pytest.mark.parametrize("cli_dirs", _CLI_SEARCH_DIRS)
+def test_extra_search_dir_cli_overrides_config_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, cli_dirs: tuple[str, ...]
+) -> None:
+    configured = tmp_path / "configured"
+    configured.mkdir()
+    config = tmp_path / "virtualenv.ini"
+    config.write_text(f"[virtualenv]\nextra_search_dir = {configured}\n", encoding="utf-8")
+    monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(config))
+    args, expected = _cli_search_dir_args(tmp_path, cli_dirs)
+
+    session = session_via_cli(args)
+
+    assert session.seeder.extra_search_dir == (expected or [configured])
+
+
+_BUNDLED_VERSIONS: Final = (
+    {"pip": "bundle"} if sys.version_info[:2] >= (3, 12) else {"pip": "bundle", "setuptools": "bundle"}
+)
 
 
 @pytest.mark.parametrize(
@@ -112,11 +132,10 @@ def test_wheel_cli_flags_do_nothing(
 ) -> None:
     session = session_via_cli([*flags, str(tmp_path)])
     out, err = capsys.readouterr()
-    expected = {"pip": "bundle"} if sys.version_info[:2] >= (3, 12) else {"pip": "bundle", "setuptools": "bundle"}
     assert (
         session.seeder.distribution_to_versions(),
         "the --wheel and --no-wheel options do nothing" in out + err,
-    ) == (expected, warns)
+    ) == (_BUNDLED_VERSIONS, warns)
 
 
 _BUNDLED_SEEDERS = [pytest.param(FromAppData, id="app-data"), pytest.param(PipInvoke, id="pip")]

@@ -69,15 +69,17 @@ def test_fish_quote_preserves_literal(value: str) -> None:
     assert result.stdout == value
 
 
-@pytest.mark.skipif(IS_WIN or _FISH is None, reason="fish is required")
+def _fish_3_with_gbk_locale() -> bool:
+    return (
+        _FISH is not None
+        and subprocess.check_output([_FISH, "--version"], text=True, encoding="utf-8").startswith("fish, version 3.")
+        and "zh_CN.gbk" in subprocess.check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
+    )
+
+
+@pytest.mark.skipif(IS_WIN or not _fish_3_with_gbk_locale(), reason="needs fish 3 and the zh_CN.gbk locale")
 @pytest.mark.parametrize("value", [pytest.param("中's", id="apostrophe"), pytest.param("中\\path", id="backslash")])
 def test_fish_quote_preserves_legacy_locale_bytes(value: str) -> None:
-    version: Final = subprocess.check_output([_FISH, "--version"], text=True, encoding="utf-8")
-    if not version.startswith("fish, version 3."):
-        pytest.skip("fish 4 always decodes UTF-8")
-    locales: Final = subprocess.check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
-    if "zh_CN.gbk" not in locales:
-        pytest.skip("GBK locale is unavailable")
     result: Final = subprocess.run(
         [_FISH, "--no-config"],
         input=f"printf '%s' {FishActivator.quote(value)}\n".encode(),
@@ -118,31 +120,40 @@ def rendered_activate_fish(tmp_path: Path) -> Callable[[str | None, str | None],
 
 
 @pytest.mark.parametrize(
-    ("tcl_lib", "tk_lib", "present"),
+    ("tcl_lib", "tk_lib", "expected_lines"),
     [
-        pytest.param("/path/to/tcl", "/path/to/tk", True, id="present"),
-        pytest.param("/Program Files/tcl", "/Program Files/tk", True, id="spaces"),
-        pytest.param(None, None, False, id="missing"),
+        pytest.param(
+            "/path/to/tcl",
+            "/path/to/tk",
+            ["set -gx TCL_LIBRARY '/path/to/tcl'\n", "set -gx TK_LIBRARY '/path/to/tk'\n"],
+            id="present",
+        ),
+        pytest.param(
+            "/Program Files/tcl",
+            "/Program Files/tk",
+            ["set -gx TCL_LIBRARY '/Program Files/tcl'\n", "set -gx TK_LIBRARY '/Program Files/tk'\n"],
+            id="spaces",
+        ),
+        pytest.param(
+            None,
+            None,
+            ["if test -n ''\n  set -gx _OLD_VIRTUAL_TCL_LIBRARY", "if test -n ''\n  set -gx _OLD_VIRTUAL_TK_LIBRARY"],
+            id="missing",
+        ),
     ],
 )
 def test_fish_tkinter_generation(
     rendered_activate_fish: Callable[[str | None, str | None], Path],
     tcl_lib: str | None,
     tk_lib: str | None,
-    present: bool,
+    expected_lines: list[str],
 ) -> None:
     content = rendered_activate_fish(tcl_lib, tk_lib).read_text(encoding="utf-8")
 
     assert 'set -gx _OLD_PKG_CONFIG_PATH "$PKG_CONFIG_PATH"' in content
     assert 'set -gx PKG_CONFIG_PATH "$VIRTUAL_ENV/lib/pkgconfig:$PKG_CONFIG_PATH"' in content
     assert "set -e _OLD_PKG_CONFIG_PATH" in content
-
-    if present:
-        assert f"set -gx TCL_LIBRARY {FishActivator.quote(tcl_lib)}\n" in content
-        assert f"set -gx TK_LIBRARY {FishActivator.quote(tk_lib)}\n" in content
-    else:
-        assert "if test -n ''\n  set -gx _OLD_VIRTUAL_TCL_LIBRARY" in content
-        assert "if test -n ''\n  set -gx _OLD_VIRTUAL_TK_LIBRARY" in content
+    assert [line for line in expected_lines if line not in content] == []
 
 
 @pytest.mark.skipif(IS_WIN, reason="fish is not available on Windows")
@@ -161,19 +172,26 @@ def test_fish_tkinter_path_does_not_run_commands(
 @pytest.mark.skipif(IS_WIN, reason="fish is not available on Windows")
 @pytest.mark.skipif(_FISH is None, reason="fish is not installed")
 @pytest.mark.parametrize(
-    ("prompt", "env_name"),
+    ("prompt_args", "env_name"),
     [
-        pytest.param(r"x\'$(touch PWNED)'\'", "env", id="prompt-backslash-quote"),
-        pytest.param(None, r"x\'$(touch PWNED)'\'", id="dirname-backslash-quote"),
+        pytest.param(["--prompt", r"x\'$(touch PWNED)'\'"], "env", id="prompt-backslash-quote"),
+        pytest.param([], r"x\'$(touch PWNED)'\'", id="dirname-backslash-quote"),
     ],
 )
 def test_fish_activate_does_not_run_commands(
-    tmp_path: Path, current_fastest: str, prompt: str | None, env_name: str
+    tmp_path: Path, current_fastest: str, prompt_args: list[str], env_name: str
 ) -> None:
     dest = tmp_path / env_name
-    args = ["--without-pip", str(dest), "--creator", current_fastest, "--no-periodic-update", "--activators", "fish"]
-    if prompt is not None:
-        args += ["--prompt", prompt]
+    args = [
+        "--without-pip",
+        str(dest),
+        "--creator",
+        current_fastest,
+        "--no-periodic-update",
+        "--activators",
+        "fish",
+        *prompt_args,
+    ]
     cli_run(args)
     (work_dir := tmp_path / "workdir").mkdir()
 

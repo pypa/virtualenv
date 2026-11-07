@@ -23,6 +23,18 @@ if TYPE_CHECKING:
 _TCSH: Final[str | None] = which("tcsh")
 
 
+def _tcsh_has_issue_117() -> bool:
+    exe = f"tcsh{'.exe' if sys.platform == 'win32' else ''}"
+    return bool(which(exe)) and Version(
+        check_output([exe, "--version"], text=True, encoding="utf-8").split(" ")[1]
+    ) >= Version("6.24.14")
+
+
+def _is_bsd_csh() -> bool:
+    shell = which("bsd-csh") or which("csh")
+    return shell is not None and run([shell, "-fc", "if ($?tcsh) exit 77"], check=False).returncode != 77
+
+
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
 @pytest.mark.parametrize(
     "shell",
@@ -57,13 +69,18 @@ def test_cshell_prompt_collapses_line_boundaries(
 
 
 @pytest.mark.parametrize(
-    ("tcl_lib", "tk_lib", "present"),
+    ("tcl_lib", "tk_lib", "activate_lines"),
     [
-        pytest.param("/path/to/tcl", "/path/to/tk", True, id="present"),
-        pytest.param(None, None, False, id="missing"),
+        pytest.param(
+            "/path/to/tcl",
+            "/path/to/tk",
+            ["setenv TCL_LIBRARY '/path/to/tcl'", "setenv TK_LIBRARY '/path/to/tk'"],
+            id="present",
+        ),
+        pytest.param(None, None, ["setenv TCL_LIBRARY ''"], id="missing"),
     ],
 )
-def test_cshell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
+def test_cshell_tkinter_generation(tmp_path, tcl_lib, tk_lib, activate_lines) -> None:
     # GIVEN
     class MockInterpreter:
         pass
@@ -101,11 +118,7 @@ def test_cshell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
     assert 'setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig:${PKG_CONFIG_PATH}"' in activate
     assert 'setenv PKG_CONFIG_PATH "${VIRTUAL_ENV}/lib/pkgconfig"' in activate
 
-    if present:
-        assert "setenv TCL_LIBRARY '/path/to/tcl'" in activate
-        assert "setenv TK_LIBRARY '/path/to/tk'" in activate
-    else:
-        assert "setenv TCL_LIBRARY ''" in activate
+    assert [line for line in activate_lines if line not in activate] == []
 
 
 def test_cshell_generates_deactivate_script(tmp_path) -> None:
@@ -235,28 +248,9 @@ def test_cshell_prompt_preserves_quoting_mode(
     assert result.stdout == f"{dest}\n{value}\n({display}) > \n"
 
 
-@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
-@pytest.mark.parametrize(
-    ("prompt", "codec"),
-    [
-        pytest.param("%", None, id="percent"),
-        pytest.param("has^caret", None, id="caret"),
-        pytest.param("中^b", "gbk", id="gbk-caret"),
-        pytest.param("中!b", "gbk", id="gbk-history"),
-        pytest.param(r"中\^b", "gbk", id="gbk-backslash-caret"),
-        pytest.param(r"丁\!", "gbk", id="gbk-backslash-history"),
-    ],
-)
-def test_cshell_renders_prompt_literally(
-    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, prompt: str, codec: str | None
+def _assert_prompt_drawn(
+    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, prompt: str, env: dict[str, str]
 ) -> None:
-    env = os.environ.copy()
-    if codec is not None:
-        # a legacy double-byte locale reads the last UTF-8 byte of 中 and the ASCII byte after it as one character
-        locales = check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
-        if (locale := next((i for i in locales if i.lower().replace("-", "").endswith(f".{codec}")), None)) is None:
-            pytest.skip(f"no {codec} locale is installed")
-        env["LC_ALL"] = locale
     _, content = csh_venv("plain", prompt=prompt)
     script = tmp_path / "activate.csh"
     script.write_text(content, encoding="utf-8")
@@ -272,6 +266,39 @@ def test_cshell_renders_prompt_literally(
     )
 
     assert f"({prompt}) ".encode() in result.stdout + result.stderr
+
+
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
+@pytest.mark.parametrize("prompt", [pytest.param("%", id="percent"), pytest.param("has^caret", id="caret")])
+def test_cshell_renders_prompt_literally(
+    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, prompt: str
+) -> None:
+    _assert_prompt_drawn(csh_venv, tmp_path, prompt, os.environ.copy())
+
+
+@pytest.fixture
+def gbk_env() -> dict[str, str]:
+    # a legacy double-byte locale reads the last UTF-8 byte of 中 and the ASCII byte after it as one character
+    locales = check_output(["locale", "-a"], text=True, encoding="utf-8").splitlines()
+    if (locale := next((i for i in locales if i.lower().replace("-", "").endswith(".gbk")), None)) is None:
+        pytest.skip("no gbk locale is installed")
+    return {**os.environ, "LC_ALL": locale}
+
+
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
+@pytest.mark.parametrize(
+    "prompt",
+    [
+        pytest.param("中^b", id="gbk-caret"),
+        pytest.param("中!b", id="gbk-history"),
+        pytest.param(r"中\^b", id="gbk-backslash-caret"),
+        pytest.param(r"丁\!", id="gbk-backslash-history"),
+    ],
+)
+def test_cshell_renders_prompt_literally_in_gbk(
+    csh_venv: Callable[..., tuple[Path, str]], tmp_path: Path, gbk_env: dict[str, str], prompt: str
+) -> None:
+    _assert_prompt_drawn(csh_venv, tmp_path, prompt, gbk_env)
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")
@@ -375,13 +402,8 @@ def test_cshell_reactivation_restores_original_path(csh_plain_activate: Path) ->
 
 
 @pytest.mark.slow
+@pytest.mark.skipif(_tcsh_has_issue_117(), reason="https://github.com/tcsh-org/tcsh/issues/117")
 def test_csh(activation_tester_class, activation_tester) -> None:
-    exe = f"tcsh{'.exe' if sys.platform == 'win32' else ''}"
-    if which(exe) and Version(check_output([exe, "--version"], text=True, encoding="utf-8").split(" ")[1]) >= Version(
-        "6.24.14"
-    ):
-        pytest.skip("https://github.com/tcsh-org/tcsh/issues/117")
-
     class Csh(activation_tester_class):
         def __init__(self, session) -> None:
             super().__init__(CShellActivator, session, "csh", "activate.csh", "csh")
@@ -411,11 +433,9 @@ def test_cshell_disabled_prompt_preserves_existing_value(csh_venv: Callable[...,
     assert result.stdout == "original\n"
 
 
-@pytest.mark.skipif(IS_WIN or which("csh") is None, reason="requires csh")
+@pytest.mark.skipif(IS_WIN or not _is_bsd_csh(), reason="requires bsd-csh")
 def test_bsd_cshell_displays_one_backslash(csh_venv: Callable[..., tuple[Path, str]]) -> None:
     shell: Final = which("bsd-csh") or which("csh")
-    if run([shell, "-fc", "if ($?tcsh) exit 77"], check=False).returncode == 77:
-        pytest.skip("requires bsd-csh")
     dest, _ = csh_venv("plain", prompt="a\\b")
     result: Final = run(
         [shell, "-f", "-i"],

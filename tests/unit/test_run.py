@@ -197,15 +197,12 @@ def test_version(capsys) -> None:
     assert virtualenv.__file__ in content.replace("\n", "")
 
 
-@pytest.mark.parametrize("on", [True, False])
-def test_logging_setup(caplog, on) -> None:
+@pytest.mark.parametrize(("on", "records"), [pytest.param(True, False, id="on"), pytest.param(False, True, id="off")])
+def test_logging_setup(caplog, on: bool, records: bool) -> None:
     caplog.set_level(logging.DEBUG)
     session_via_cli(["env"], setup_logging=on)
     # DEBUG only level output is generated during this phase, default output is WARN, so if on no records should be
-    if on:
-        assert not caplog.records
-    else:
-        assert caplog.records
+    assert bool(caplog.records) is records
 
 
 def test_invalid_discovery_method_via_env(monkeypatch: pytest.MonkeyPatch) -> None:

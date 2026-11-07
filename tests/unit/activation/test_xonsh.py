@@ -61,15 +61,19 @@ def test_xonsh_skips_expanding_destination(tmp_path: Path, name: str, caplog: py
 
 @_NEEDS_XONSH
 @pytest.mark.parametrize(
-    "original", [pytest.param(None, id="unset"), pytest.param("__virtualenv_was_not_set__", id="sentinel-value")]
+    ("prelude", "original"),
+    [
+        pytest.param("", None, id="unset"),
+        pytest.param("$PYTHONHOME = '__virtualenv_was_not_set__'\n", "__virtualenv_was_not_set__", id="sentinel-value"),
+    ],
 )
 def test_xonsh_restores_pythonhome_without_exported_sentinel(
-    tmp_path: Path, xonsh: Callable[..., str], original: str | None
+    tmp_path: Path, xonsh: Callable[..., str], prelude: str, original: str | None
 ) -> None:
     session: Final = cli_run([str(tmp_path / "env"), "--no-seed", "--activators", "xonsh"])
     script: Final = (
         "import json\n"
-        + ("" if original is None else f"$PYTHONHOME = {original!r}\n")
+        + prelude
         + f'source "{session.creator.bin_dir / "activate.xsh"}"\n'
         + "print(json.dumps(__xonsh__.env.get('_OLD_VIRTUAL_PYTHONHOME')))\n"
         + "print(json.dumps(__xonsh__.env.get('PYTHONHOME')))\ndeactivate\n"
@@ -79,13 +83,23 @@ def test_xonsh_restores_pythonhome_without_exported_sentinel(
 
 
 @pytest.mark.parametrize(
-    ("tcl_lib", "tk_lib", "present"),
+    ("tcl_lib", "tk_lib", "expected_lines"),
     [
-        pytest.param("/path/to/tcl", "/path/to/tk", True, id="present"),
-        pytest.param(None, None, False, id="missing"),
+        pytest.param(
+            "/path/to/tcl",
+            "/path/to/tk",
+            ["self.embedded_tcl_library = '/path/to/tcl'", "self.embedded_tk_library = '/path/to/tk'"],
+            id="present",
+        ),
+        pytest.param(
+            None,
+            None,
+            ["self.embedded_tcl_library = ''", "self.embedded_tk_library = ''"],
+            id="missing",
+        ),
     ],
 )
-def test_xonsh_tkinter_generation(mocker, tmp_path, tcl_lib, tk_lib, present) -> None:
+def test_xonsh_tkinter_generation(mocker, tmp_path, tcl_lib, tk_lib, expected_lines) -> None:
     # GIVEN
     interpreter = mocker.create_autospec(PythonInfo, instance=True, tcl_lib=tcl_lib, tk_lib=tk_lib)
 
@@ -109,15 +123,8 @@ def test_xonsh_tkinter_generation(mocker, tmp_path, tcl_lib, tk_lib, present) ->
     assert '"TCL_LIBRARY"' in content
     assert '"TK_LIBRARY"' in content
 
-    if present:
-        # Paths are embedded in __init__ as Python string literals and used
-        # from self.embedded_* attributes during activate().
-        assert "self.embedded_tcl_library = '/path/to/tcl'" in content
-        assert "self.embedded_tk_library = '/path/to/tk'" in content
-    else:
-        # Empty strings are falsy, so the override loop is skipped at runtime.
-        assert "self.embedded_tcl_library = ''" in content
-        assert "self.embedded_tk_library = ''" in content
+    # Paths are embedded in __init__ as Python string literals; empty strings are falsy, so the override loop is skipped
+    assert [line for line in expected_lines if line not in content] == []
 
 
 @pytest.mark.parametrize(

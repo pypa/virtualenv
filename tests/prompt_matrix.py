@@ -9,6 +9,7 @@ from argparse import Namespace
 from typing import TYPE_CHECKING, Final, NamedTuple
 from unittest.mock import create_autospec
 
+import pytest
 from python_discovery import PythonInfo
 
 from virtualenv.activation import (
@@ -185,6 +186,11 @@ def unavailable(shell: str, action: str) -> str | None:
     return None
 
 
+def unavailable_mark(shell: str, action: str) -> pytest.MarkDecorator:
+    reason: Final = unavailable(shell, action)
+    return pytest.mark.skipif(reason is not None, reason=str(reason))
+
+
 def generate_script(shell: str, root: Path, prompt: str) -> Path:
     # Render the shell's activation script in process; the scripts depend on the prompt, not on a real interpreter.
     activator: Final = {
@@ -313,4 +319,5 @@ __all__ = [
     "prompt_shown",
     "run_prompt",
     "unavailable",
+    "unavailable_mark",
 ]

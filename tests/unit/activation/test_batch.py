@@ -97,13 +97,28 @@ def test_batch_pydoc_bat_quoting(tmp_path) -> None:
 
 
 @pytest.mark.parametrize(
-    ("tcl_lib", "tk_lib", "present"),
+    ("tcl_lib", "tk_lib", "activate_lines", "deactivate_lines"),
     [
-        pytest.param("C:\\tcl", "C:\\tk", True, id="windows"),
-        pytest.param(None, None, False, id="missing"),
+        pytest.param(
+            "C:\\tcl",
+            "C:\\tk",
+            [
+                '@if NOT "C:\\tcl"=="" @set "TCL_LIBRARY=C:\\tcl"',
+                '@if NOT "C:\\tk"=="" @set "TK_LIBRARY=C:\\tk"',
+            ],
+            ["if defined _OLD_VIRTUAL_TCL_LIBRARY", "if defined _OLD_VIRTUAL_TK_LIBRARY"],
+            id="windows",
+        ),
+        pytest.param(
+            None,
+            None,
+            ['@if NOT ""=="" @set "TCL_LIBRARY="', '@if NOT ""=="" @set "TK_LIBRARY="'],
+            [],
+            id="missing",
+        ),
     ],
 )
-def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
+def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, activate_lines, deactivate_lines) -> None:
     # GIVEN
     class MockInterpreter:
         os = "nt"
@@ -136,39 +151,34 @@ def test_batch_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
     assert '@if defined _OLD_PKG_CONFIG_PATH @set "PKG_CONFIG_PATH=%_OLD_PKG_CONFIG_PATH%"' in deactivate_content
     assert "@if not defined _OLD_PKG_CONFIG_PATH @set PKG_CONFIG_PATH=" in deactivate_content
     assert "@set _OLD_PKG_CONFIG_PATH=" in deactivate_content
-
-    if present:
-        assert '@if NOT "C:\\tcl"=="" @set "TCL_LIBRARY=C:\\tcl"' in activate_content
-        assert '@if NOT "C:\\tk"=="" @set "TK_LIBRARY=C:\\tk"' in activate_content
-        assert "if defined _OLD_VIRTUAL_TCL_LIBRARY" in deactivate_content
-        assert "if defined _OLD_VIRTUAL_TK_LIBRARY" in deactivate_content
-    else:
-        assert '@if NOT ""=="" @set "TCL_LIBRARY="' in activate_content
-        assert '@if NOT ""=="" @set "TK_LIBRARY="' in activate_content
+    assert [line for line in activate_lines if line not in activate_content] == []
+    assert [line for line in deactivate_lines if line not in deactivate_content] == []
 
 
 # every field feeds the same character check, so the tcl and tk fields need only one of the characters
 @pytest.mark.parametrize(
-    ("field", "character"),
+    ("dest", "libs"),
     [
-        pytest.param("dest", "&", id="destination-ampersand"),
-        pytest.param("dest", "^", id="destination-caret"),
-        pytest.param("dest", "!", id="destination-exclamation"),
-        pytest.param("dest", "\u2028", id="destination-line-separator"),
-        pytest.param("tcl_lib", "\x1a", id="tcl-end-of-file"),
-        pytest.param("tcl_lib", "&", id="tcl-ampersand"),
-        pytest.param("tk_lib", "&", id="tk-ampersand"),
+        pytest.param("env&name", ("lib", "lib"), id="destination-ampersand"),
+        pytest.param("env^name", ("lib", "lib"), id="destination-caret"),
+        pytest.param("env!name", ("lib", "lib"), id="destination-exclamation"),
+        pytest.param("env\u2028name", ("lib", "lib"), id="destination-line-separator"),
+        pytest.param("env", ("lib\x1aname", "lib"), id="tcl-end-of-file"),
+        pytest.param("env", ("lib&name", "lib"), id="tcl-ampersand"),
+        pytest.param("env", ("lib", "lib&name"), id="tk-ampersand"),
     ],
 )
 def test_batch_skips_changed_paths(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture, character: str, field: str
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    caplog: pytest.LogCaptureFixture,
+    dest: str,
+    libs: tuple[str, str],
 ) -> None:
-    creator: Final[Creator] = session_via_cli(
-        [str(tmp_path / (f"env{character}name" if field == "dest" else "env")), "--no-seed"],
-        setup_logging=False,
-    ).creator
-    if field != "dest":
-        monkeypatch.setattr(creator.interpreter, field, str(tmp_path / f"lib{character}name"), raising=False)
+    creator: Final[Creator] = session_via_cli([str(tmp_path / dest), "--no-seed"], setup_logging=False).creator
+    tcl_lib, tk_lib = libs
+    monkeypatch.setattr(creator.interpreter, "tcl_lib", str(tmp_path / tcl_lib), raising=False)
+    monkeypatch.setattr(creator.interpreter, "tk_lib", str(tmp_path / tk_lib), raising=False)
     creator.bin_dir.mkdir(parents=True)
     for name in ("activate.bat", "deactivate.bat", "pydoc.bat", "keep.txt"):
         (creator.bin_dir / name).write_text("old", encoding="utf-8")
@@ -252,9 +262,8 @@ def test_batch_quote_replaces_end_of_file() -> None:
 
 
 @pytest.mark.parametrize("activations", [1, 2], ids=["activate_once", "activate_twice"])
-def test_batch(activation_python, activation_tester_class, activation_tester, tmp_path, activations) -> None:
-    if not (activation_python.creator.bin_dir / "activate.bat").exists():
-        pytest.skip("Batch activation does not support this destination")
+@pytest.mark.skipif(not IS_WIN, reason="the POSIX special-char name keeps a double quote, which batch cannot preserve")
+def test_batch(activation_tester_class, activation_tester, tmp_path, activations) -> None:
     version_script = tmp_path / "version.bat"
     version_script.write_text("ver", encoding="utf-8")
 
@@ -287,9 +296,8 @@ def test_batch(activation_python, activation_tester_class, activation_tester, tm
     activation_tester(Batch)
 
 
-def test_batch_output(activation_python, activation_tester_class, activation_tester, tmp_path) -> None:
-    if not (activation_python.creator.bin_dir / "activate.bat").exists():
-        pytest.skip("Batch activation does not support this destination")
+@pytest.mark.skipif(not IS_WIN, reason="the POSIX special-char name keeps a double quote, which batch cannot preserve")
+def test_batch_output(activation_tester_class, activation_tester, tmp_path) -> None:
     version_script = tmp_path / "version.bat"
     version_script.write_text("ver", encoding="utf-8")
 

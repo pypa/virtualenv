@@ -35,28 +35,30 @@ if TYPE_CHECKING:
 
     from virtualenv.run.session import Session
 
+_SCRIPTS_DIR: Final = "Scripts" if os.name == "nt" else "bin"
+_PIP_EXE: Final = "pip.exe" if os.name == "nt" else "pip"
+
 
 @pytest.mark.parametrize(
-    "source",
+    ("config_text", "extra_env", "extra_args"),
     [
-        pytest.param("environment", id="environment"),
-        pytest.param("configuration", id="configuration"),
-        pytest.param("command-line", id="command-line"),
+        pytest.param("", {"VIRTUALENV_SYMLINK_APP_DATA": "true"}, [], id="environment"),
+        pytest.param("[virtualenv]\nsymlink_app_data = true\n", {}, [], id="configuration"),
+        pytest.param("", {}, ["--symlink-app-data"], id="command-line"),
     ],
 )
-def test_transient_seed_survives_cache_cleanup(tmp_path: Path, source: str, unusable_cache: Path) -> None:
+def test_transient_seed_survives_cache_cleanup(
+    tmp_path: Path, config_text: str, extra_env: dict[str, str], extra_args: list[str], unusable_cache: Path
+) -> None:
     config: Final = tmp_path / "virtualenv.ini"
-    config.write_text("[virtualenv]\nsymlink_app_data = true\n" if source == "configuration" else "", encoding="utf-8")
+    config.write_text(config_text, encoding="utf-8")
     env: Final = {
         **os.environ,
         "VIRTUALENV_CONFIG_FILE": str(config),
         "VIRTUALENV_OVERRIDE_APP_DATA": str(unusable_cache),
+        **extra_env,
     }
-    if source == "environment":
-        env["VIRTUALENV_SYMLINK_APP_DATA"] = "true"
-    args: Final = [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools"]
-    if source == "command-line":
-        args.append("--symlink-app-data")
+    args: Final = [str(tmp_path / "env"), "--no-periodic-update", "--no-setuptools", *extra_args]
     session: Final = cli_run(args, env=env)
     assert (
         session.creator.app_data.transient,
@@ -236,7 +238,7 @@ def test_seed_metadata_keeps_reseeding_supported(
         "--pip",
         "embed",
         "--no-periodic-update",
-        *(["--symlink-app-data"] if linked else []),
+        *{True: ["--symlink-app-data"], False: []}[linked],
     ]
     cli_run(args, setup_logging=False)
     session: Final = cli_run(args, setup_logging=False)
@@ -308,11 +310,11 @@ def test_console_script_preserves_interpreter_path(
         timeout=60,
         check=True,
     )
-    scripts: Final = os.path.join(destination, "Scripts" if os.name == "nt" else "bin")
+    scripts: Final = os.path.join(destination, _SCRIPTS_DIR)
     result: Final = run(
         [
-            *([os.path.join(scripts, "python")] if via_python else []),
-            os.path.join(scripts, "pip.exe" if os.name == "nt" else "pip"),
+            *{True: [os.path.join(scripts, "python")], False: []}[via_python],
+            os.path.join(scripts, _PIP_EXE),
             "--version",
         ],
         capture_output=True,
@@ -345,9 +347,8 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
         "--creator",
         current_fastest,
         "-vv",
+        *{True: [], False: ["--symlink-app-data"]}[copies],
     ]
-    if not copies:
-        create_cmd.append("--symlink-app-data")
     result = cli_run(create_cmd)
     coverage_env()
     assert result
@@ -414,12 +415,11 @@ def test_seed_link_via_app_data(tmp_path, coverage_env, current_fastest, copies)
     _, __ = process.communicate()
     assert not process.returncode
     # pip is greedy here, removing all packages removes the site-package too
-    if site_package.exists():
-        purelib = result.creator.purelib
-        patch_files = {purelib / f"{'_virtualenv'}.{i}" for i in ("py", "pyc", "pth")}
-        patch_files.add(purelib / "__pycache__")
-        post_run = set(site_package.iterdir()) - patch_files
-        assert not post_run, "\n".join(str(i) for i in post_run)
+    purelib = result.creator.purelib
+    patch_files = {purelib / f"{'_virtualenv'}.{i}" for i in ("py", "pyc", "pth")}
+    patch_files.add(purelib / "__pycache__")
+    post_run = set(site_package.glob("*")) - patch_files
+    assert not post_run, "\n".join(str(i) for i in post_run)
 
 
 @pytest.fixture
@@ -606,7 +606,7 @@ def test_seed_image_build_failure_leaves_no_partial_image(
         str(cache),
         "--no-periodic-update",
         "--no-setuptools",
-        *(["--symlink-app-data"] if linked else []),
+        *{True: ["--symlink-app-data"], False: []}[linked],
     ]
     patched: Final = mocker.patch(
         f"virtualenv.seed.embed.via_app_data.pip_install.{target}", side_effect=failure, autospec=True
@@ -614,7 +614,7 @@ def test_seed_image_build_failure_leaves_no_partial_image(
     with pytest.raises(RuntimeError, match="No space left on device"):
         cli_run(args, setup_logging=False)
     mocker.stop(patched)
-    installer: Final = "SymlinkPipInstall" if linked else "CopyPipInstall"
+    installer: Final = {True: "SymlinkPipInstall", False: "CopyPipInstall"}[linked]
     images: Final = next(cache.glob("wheel/*/image/1"))
     left: Final = sorted(i.name for i in [*images.iterdir(), *(images / installer).iterdir()] if i.is_dir())
     purelib: Final = cli_run(args, setup_logging=False).creator.purelib
@@ -743,7 +743,27 @@ def test_safe_extract_zip_rejects_absolute_entry(tmp_path: Path, entry: str) -> 
         _safe_extract_zip(zip_ref, target)
 
 
-def test_seed_entry_points_preserve_case_and_last_duplicate(tmp_path: Path) -> None:
+def _read_windows_launcher(script: Path) -> bytes:
+    with zipfile.ZipFile(script) as archive:
+        return archive.read("__main__.py")
+
+
+@pytest.mark.parametrize(
+    "read_source",
+    [
+        pytest.param(
+            Path.read_bytes, id="posix", marks=pytest.mark.skipif(sys.platform == "win32", reason="POSIX script")
+        ),
+        pytest.param(
+            _read_windows_launcher,
+            id="windows",
+            marks=pytest.mark.skipif(sys.platform != "win32", reason="Windows launcher is an executable"),
+        ),
+    ],
+)
+def test_seed_entry_points_preserve_case_and_last_duplicate(
+    tmp_path: Path, read_source: Callable[[Path], bytes]
+) -> None:
     session = cli_run([str(tmp_path / "env"), "--no-seed"])
     image = tmp_path / "image"
     metadata = image / "example-1.dist-info"
@@ -754,13 +774,7 @@ def test_seed_entry_points_preserve_case_and_last_duplicate(tmp_path: Path) -> N
     CopyPipInstall(tmp_path / "example-1-py3-none-any.whl", session.creator, image).install(
         session.interpreter.version_info
     )
-    script = session.creator.script("MyTool")
-    if sys.platform == "win32":
-        with zipfile.ZipFile(script) as archive:
-            source = archive.read("__main__.py")
-    else:
-        source = script.read_bytes()
-    assert b"from example import main" in source
+    assert b"from example import main" in read_source(session.creator.script("MyTool"))
 
 
 @pytest.mark.parametrize(

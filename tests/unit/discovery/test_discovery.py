@@ -11,7 +11,6 @@ import pytest
 from python_discovery import PythonInfo
 
 from virtualenv.discovery.builtin import Builtin, get_interpreter
-from virtualenv.info import IS_WIN
 from virtualenv.run import cli_run, session_via_cli
 
 if TYPE_CHECKING:
@@ -61,24 +60,29 @@ def mock_get_interpreter(mocker):
 
 @pytest.mark.usefixtures("mock_get_interpreter")
 @pytest.mark.parametrize(
-    ("env_var", "python", "expected"),
+    ("env_var", "expected"),
     [
-        pytest.param("python_from_env_var", ["python_from_env_var"], "python_from_env_var", id="env-var-only"),
-        pytest.param("first,second", ["first", "second"], "first", id="env-var-multiple"),
-        pytest.param(None, ["python_from_cli"], "python_from_cli", id="cli-only"),
+        pytest.param("python_from_env_var", "python_from_env_var", id="env-var-only"),
+        pytest.param("first,second", "first", id="env-var-multiple"),
     ],
 )
-# each parametrized case feeds one argument per field
-def test_returns_python_specified(  # ruff:ignore[too-many-arguments]
-    mocker, monkeypatch, session_app_data, env_var: str | None, python: list[str], expected: str
+def test_returns_python_specified_by_env_var(
+    mocker, monkeypatch, session_app_data, env_var: str, expected: str
 ) -> None:
-    if env_var is None:
-        monkeypatch.delenv("VIRTUALENV_PYTHON", raising=False)
-    else:
-        monkeypatch.setenv("VIRTUALENV_PYTHON", env_var)
-    builtin = Builtin(Namespace(app_data=session_app_data, try_first_with=[], python=python, env=os.environ))
-
+    monkeypatch.setenv("VIRTUALENV_PYTHON", env_var)
+    builtin = Builtin(
+        Namespace(app_data=session_app_data, try_first_with=[], python=env_var.split(","), env=os.environ)
+    )
     assert builtin.run() == getattr(mocker.sentinel, expected)
+
+
+@pytest.mark.usefixtures("mock_get_interpreter")
+def test_returns_python_specified_by_cli(mocker, monkeypatch, session_app_data) -> None:
+    monkeypatch.delenv("VIRTUALENV_PYTHON", raising=False)
+    builtin = Builtin(
+        Namespace(app_data=session_app_data, try_first_with=[], python=["python_from_cli"], env=os.environ)
+    )
+    assert builtin.run() == mocker.sentinel.python_from_cli
 
 
 @pytest.mark.parametrize(
@@ -137,13 +141,8 @@ def test_discovery_absolute_path_with_try_first(tmp_path, session_app_data) -> N
     good_env = tmp_path / "good"
     bad_env = tmp_path / "bad"
 
-    cli_run(["--no-seed", str(good_env)])
-    cli_run(["--no-seed", str(bad_env)])
-
-    scripts_dir = "Scripts" if IS_WIN else "bin"
-    exe_name = "python.exe" if IS_WIN else "python"
-    good_exe = good_env / scripts_dir / exe_name
-    bad_exe = bad_env / scripts_dir / exe_name
+    good_exe = cli_run(["--no-seed", str(good_env)]).creator.exe
+    bad_exe = cli_run(["--no-seed", str(bad_env)]).creator.exe
 
     interpreter = get_interpreter(
         str(good_exe),
@@ -185,8 +184,12 @@ def test_discovery_via_version_specifier(session_app_data) -> None:
     assert interpreter.version_info.major == major
     assert minor <= interpreter.version_info.minor < minor + 10
 
-    spec = f"cpython>={major}.{minor}"
-    interpreter = get_interpreter(spec, [], session_app_data)
-    if current.implementation == "CPython":
-        assert interpreter is not None
-        assert interpreter.implementation == "CPython"
+
+@pytest.mark.skipif(PythonInfo.current_system().implementation != "CPython", reason="requires CPython")
+def test_discovery_via_cpython_specifier(session_app_data) -> None:
+    current = PythonInfo.current_system(session_app_data)
+    interpreter = get_interpreter(
+        f"cpython>={current.version_info.major}.{current.version_info.minor}", [], session_app_data
+    )
+    assert interpreter is not None
+    assert interpreter.implementation == "CPython"

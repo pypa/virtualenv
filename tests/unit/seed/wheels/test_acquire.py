@@ -236,8 +236,7 @@ def test_get_wheel_download_called(mocker, for_py_version, session_app_data, dow
 def test_get_wheel_download_not_called(mocker, for_py_version, session_app_data, downloaded_wheel, version) -> None:
     distribution = "setuptools"
     expected = get_embed_wheel(distribution, for_py_version)
-    if version == "pinned":
-        version = expected.version
+    version = {"embed": "embed", "pinned": expected.version}[version]
     write = mocker.patch("virtualenv.app_data.via_disk_folder.JSONStoreDisk.write", autospec=True)
     wheel = get_wheel(distribution, version, for_py_version, [], True, session_app_data, False, os.environ)
     assert wheel is not None

@@ -25,7 +25,6 @@ def test_race_condition_simulation(tmp_path) -> None:
     (tmp_path / "_virtualenv.pth").write_text("import _virtualenv", encoding="utf-8")
 
     # Simulate the race condition by repeatedly importing
-    errors = []
     for _ in range(5):
         sys.path.insert(0, str(tmp_path))
         sys.modules.pop("_virtualenv", None)
@@ -33,17 +32,6 @@ def test_race_condition_simulation(tmp_path) -> None:
             # the import itself is the check that the module loads
             import _virtualenv  # ruff:ignore[unused-import, import-outside-top-level]
 
-            _check_distutils_patch(errors)
+            importlib.util.find_spec("distutils.dist")
         finally:
-            if str(tmp_path) in sys.path:
-                sys.path.remove(str(tmp_path))
-
-    assert not errors, f"Race condition detected: {errors}"
-
-
-def _check_distutils_patch(errors: list[str]) -> None:
-    try:
-        importlib.util.find_spec("distutils.dist")
-    except NameError as e:
-        if "_DISTUTILS_PATCH" in str(e):
-            errors.append(str(e))
+            sys.path.remove(str(tmp_path))

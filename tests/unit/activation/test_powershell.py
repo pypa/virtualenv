@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 
 
 _POWERSHELLS: Final[list[str]] = [path for name in ("pwsh", "powershell.exe") if (path := shutil.which(name))]
+_VENV_BIN_DIR: Final = "Scripts" if IS_WIN else "bin"
 
 
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
@@ -67,25 +68,26 @@ def test_powershell_literal_destination(
     tmp_path: Path, name: str, configured_prompt: str | None, mode: str, powershell: str
 ) -> None:
     dest: Final = os.path.join(str(tmp_path), name)
-    args: Final = ["--without-pip", "--no-periodic-update", "--activators", "powershell", dest]
-    if configured_prompt is not None:
-        args.extend(["--prompt", configured_prompt])
+    prompt_args: Final = {None: [], "custom": ["--prompt", "custom"]}[configured_prompt]
+    args: Final = ["--without-pip", "--no-periodic-update", "--activators", "powershell", dest, *prompt_args]
     # Simulated-platform tests change pathlib's separators at collection, so create the environment in a fresh process.
     subprocess.run([sys.executable, "-m", "virtualenv", *args], capture_output=True, check=True)
-    venv_dir: Final = {
-        "implicit": None,
-        "relative": name,
-        "drive": f"ReviewEnv:/{name}",
-        "provider": f"FileSystem::{dest}",
-        "home": f"~/{os.path.relpath(dest, os.path.expanduser('~'))}",
+    venv_args: Final = {
+        "implicit": [],
+        "relative": ["-VenvDir", PowerShellActivator.quote(name)],
+        "drive": ["-VenvDir", PowerShellActivator.quote(f"ReviewEnv:/{name}")],
+        "provider": ["-VenvDir", PowerShellActivator.quote(f"FileSystem::{dest}")],
+        "home": ["-VenvDir", PowerShellActivator.quote(f"~/{os.path.relpath(dest, os.path.expanduser('~'))}")],
     }[mode]
-    activate = f". {PowerShellActivator.quote(os.path.join(dest, 'Scripts' if IS_WIN else 'bin', 'activate.ps1'))}"
-    if venv_dir is not None:
-        activate += f" -VenvDir {PowerShellActivator.quote(venv_dir)}"
-    lines: Final = [activate, 'Write-Output "$env:VIRTUAL_ENV|$env:VIRTUAL_ENV_PROMPT"', ""]
-    if mode == "drive":
-        drive_root = PowerShellActivator.quote(str(tmp_path))
-        lines.insert(0, f"New-PSDrive -Name ReviewEnv -PSProvider FileSystem -Root {drive_root} | Out-Null")
+    activate: Final = " ".join([
+        f". {PowerShellActivator.quote(os.path.join(dest, _VENV_BIN_DIR, 'activate.ps1'))}",
+        *venv_args,
+    ])
+    drive_root: Final = PowerShellActivator.quote(str(tmp_path))
+    drive_lines: Final = {
+        "drive": [f"New-PSDrive -Name ReviewEnv -PSProvider FileSystem -Root {drive_root} | Out-Null"],
+    }.get(mode, [])
+    lines: Final = [*drive_lines, activate, 'Write-Output "$env:VIRTUAL_ENV|$env:VIRTUAL_ENV_PROMPT"', ""]
     driver: Final = tmp_path / "driver.ps1"
     driver.write_text("\n".join(lines), encoding="utf-8-sig")
     result: Final = subprocess.run(
@@ -190,13 +192,25 @@ def test_powershell_pydoc_call_operator(tmp_path) -> None:
 
 
 @pytest.mark.parametrize(
-    ("tcl_lib", "tk_lib", "present"),
+    ("tcl_lib", "tk_lib", "expected_lines"),
     [
-        pytest.param("C:\\tcl", "C:\\tk", True, id="windows"),
-        pytest.param(None, None, False, id="missing"),
+        pytest.param(
+            "C:\\tcl",
+            "C:\\tk",
+            [
+                "if ('C:\\tcl' -ne \"\")",
+                "$env:TCL_LIBRARY = 'C:\\tcl'",
+                "if ('C:\\tk' -ne \"\")",
+                "$env:TK_LIBRARY = 'C:\\tk'",
+                "if (Test-Path variable:_OLD_VIRTUAL_TCL_LIBRARY)",
+                "if (Test-Path variable:_OLD_VIRTUAL_TK_LIBRARY)",
+            ],
+            id="windows",
+        ),
+        pytest.param(None, None, ["if ('' -ne \"\")", "$env:TCL_LIBRARY = ''"], id="missing"),
     ],
 )
-def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
+def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, expected_lines) -> None:
     # GIVEN
     class MockInterpreter:
         os = "nt"
@@ -228,17 +242,7 @@ def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> No
     assert "if (Test-Path variable:_OLD_PKG_CONFIG_PATH)" in content
     assert "$env:PKG_CONFIG_PATH = $variable:_OLD_PKG_CONFIG_PATH" in content
     assert 'Remove-Variable "_OLD_PKG_CONFIG_PATH" -Scope global' in content
-
-    if present:
-        assert "if ('C:\\tcl' -ne \"\")" in content
-        assert "$env:TCL_LIBRARY = 'C:\\tcl'" in content
-        assert "if ('C:\\tk' -ne \"\")" in content
-        assert "$env:TK_LIBRARY = 'C:\\tk'" in content
-        assert "if (Test-Path variable:_OLD_VIRTUAL_TCL_LIBRARY)" in content
-        assert "if (Test-Path variable:_OLD_VIRTUAL_TK_LIBRARY)" in content
-    else:
-        assert "if ('' -ne \"\")" in content
-        assert "$env:TCL_LIBRARY = ''" in content
+    assert [line for line in expected_lines if line not in content] == []
 
 
 @pytest.mark.slow

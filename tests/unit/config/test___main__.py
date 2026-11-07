@@ -34,14 +34,22 @@ def module_entry_version(monkeypatch: pytest.MonkeyPatch) -> Callable[[], int]:
     return run
 
 
-@pytest.mark.parametrize("implicit", [pytest.param(True, id="working-directory"), pytest.param(False, id="other-path")])
 def test_module_entry_removes_implicit_directory(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, module_entry_version: Callable[[], int], implicit: bool
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, module_entry_version: Callable[[], int]
 ) -> None:
     monkeypatch.chdir(tmp_path)
     original: Final = sys.path.copy()
-    monkeypatch.setattr(sys, "path", [str(tmp_path if implicit else tmp_path / "other"), *original])
-    assert (module_entry_version(), sys.path) == (0, original if implicit else [str(tmp_path / "other"), *original])
+    monkeypatch.setattr(sys, "path", [str(tmp_path), *original])
+    assert (module_entry_version(), sys.path) == (0, original)
+
+
+def test_module_entry_keeps_other_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, module_entry_version: Callable[[], int]
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    original: Final = sys.path.copy()
+    monkeypatch.setattr(sys, "path", [str(tmp_path / "other"), *original])
+    assert (module_entry_version(), sys.path) == (0, [str(tmp_path / "other"), *original])
 
 
 @pytest.mark.skipif(os.name == "nt", reason="Windows keeps the working directory open")
@@ -154,17 +162,14 @@ def test_session_report_subprocess(tmp_path) -> None:
     _match_regexes(lines, regexes)
 
 
-@pytest.mark.parametrize(
-    "safe_path",
-    [
-        pytest.param(False, id="implicit"),
-        pytest.param(True, id="safe-path", marks=pytest.mark.skipif(sys.version_info < (3, 11), reason="requires -P")),
-    ],
-)
-def test_module_entry_from_target_install(tmp_path: Path, safe_path: bool) -> None:
+_COPY_BY_KIND: Final[dict[bool, Callable[[Path, Path], object]]] = {True: shutil.copytree, False: shutil.copy2}
+
+
+def _copy_target_install(tmp_path: Path) -> Path:
     target: Final = tmp_path / "target"
     target.mkdir()
     shutil.copytree(Path(virtualenv.__file__).parent, target / "virtualenv")
+    copied: Final[set[str]] = {"virtualenv"}
     for name in (
         "virtualenv",
         "distlib",
@@ -175,39 +180,39 @@ def test_module_entry_from_target_install(tmp_path: Path, safe_path: bool) -> No
         *(("typing-extensions",) if sys.version_info < (3, 11) else ()),
     ):
         metadata = distribution(name)
-        for root in {file.parts[0] for file in metadata.files or () if file.parts[0] not in {"..", "__pycache__"}}:
+        roots = {file.parts[0] for file in metadata.files or () if file.parts[0] not in {"..", "__pycache__"}}
+        for root in roots - copied:
             source = Path(str(metadata.locate_file(root)))
-            if (target / root).exists():
-                continue
-            if source.is_dir():
-                shutil.copytree(source, target / root)
-            elif source.is_file():
-                shutil.copy2(source, target / root)
-    python_path: Final = [target]
-    if safe_path:
-        # with only the metadata left in the working directory, dropping that explicit entry loses the discovery plugin
-        library: Final = tmp_path / "library"
-        library.mkdir()
-        (target / "virtualenv").rename(library / "virtualenv")
-        python_path.append(library)
+            _COPY_BY_KIND[source.is_dir()](source, target / root)
+        copied |= roots
+    return target
+
+
+def _create_env_from_target(tmp_path: Path, target: Path, flags: list[str], pythonpath: str) -> None:
     # venv from inside a virtualenv on 3.10 and earlier records the virtualenv as home, which only works where the
     # interpreter's compiled-in prefix exists
     bare: Final = tmp_path / "bare"
     check_output([sys.executable, "-m", "virtualenv", str(bare), "--no-seed", "--activators="])
     executable: Final = bare / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     check_output(
-        [
-            str(executable),
-            *(["-P"] if safe_path else []),
-            "-m",
-            "virtualenv",
-            str(tmp_path / "env"),
-            "--no-seed",
-            "--activators=",
-        ],
+        [str(executable), *flags, "-m", "virtualenv", str(tmp_path / "env"), "--no-seed", "--activators="],
         cwd=target,
-        env={**os.environ, "PYTHONPATH": os.pathsep.join(map(str, python_path)) if safe_path else ""},
+        env={**os.environ, "PYTHONPATH": pythonpath},
         text=True,
         encoding="utf-8",
     )
     assert (tmp_path / "env" / "pyvenv.cfg").is_file()
+
+
+def test_module_entry_from_target_install(tmp_path: Path) -> None:
+    _create_env_from_target(tmp_path, _copy_target_install(tmp_path), flags=[], pythonpath="")
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="requires -P")
+def test_module_entry_from_target_install_safe_path(tmp_path: Path) -> None:
+    target: Final = _copy_target_install(tmp_path)
+    # with only the metadata left in the working directory, dropping that explicit entry loses the discovery plugin
+    library: Final = tmp_path / "library"
+    library.mkdir()
+    (target / "virtualenv").rename(library / "virtualenv")
+    _create_env_from_target(tmp_path, target, flags=["-P"], pythonpath=os.pathsep.join(map(str, [target, library])))

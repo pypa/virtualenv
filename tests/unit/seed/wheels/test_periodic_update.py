@@ -434,19 +434,23 @@ _UPDATE_YES: Final[dict[str, UpdateLog]] = {
 }
 
 
+_DETACHED_KWARGS: Final[dict[str, int | None]] = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL} | (
+    {"creationflags": CREATE_NO_WINDOW} if sys.platform == "win32" else {}
+)
+_INLINE_KWARGS: Final[dict[str, int | None]] = {"stdout": None, "stderr": None}
+
+
 @pytest.mark.parametrize("u_log", list(_UPDATE_YES.values()), ids=list(_UPDATE_YES.keys()))
 @pytest.mark.usefixtures("periodic_update_clock")
-@pytest.mark.parametrize(
-    "env",
-    [pytest.param({}, id="empty-env"), pytest.param({"_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1"}, id="custom-env")],
-)
+@pytest.mark.parametrize("inline", [pytest.param(False, id="empty-env"), pytest.param(True, id="custom-env")])
 def test_periodic_update_trigger(
     u_log: UpdateLog,
     mocker: MockerFixture,
     for_py_version: str,
     app_data: AppDataDiskFolder,
-    env: dict[str, str],
+    inline: bool,
 ) -> None:
+    env: Final = {True: {"_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1"}, False: {}}[inline]
     app_data.embed_update_log("setuptools", for_py_version).write(u_log.to_dict())
     process: Final[MockType] = mocker.create_autospec(subprocess.Popen, instance=True, pid=123)
     popen: Final[MockType] = mocker.patch(
@@ -458,12 +462,8 @@ def test_periodic_update_trigger(
         app_data.embed_update_log("setuptools", for_py_version).read(),
     ) == (None, UpdateLog(_UP_NOW, u_log.completed, [], True).to_dict())
     assert popen.call_count == 1
-    assert popen.call_args.kwargs == {
-        "stdout": None if env else subprocess.DEVNULL,
-        "stderr": None if env else subprocess.DEVNULL,
-        **({"creationflags": CREATE_NO_WINDOW} if not env and sys.platform == "win32" else {}),
-    }
-    assert process.communicate.call_count == bool(env)
+    assert popen.call_args.kwargs == {True: _INLINE_KWARGS, False: _DETACHED_KWARGS}[inline]
+    assert process.communicate.call_count == int(inline)
 
 
 @pytest.mark.parametrize("zipapp", [pytest.param(False, id="installed"), pytest.param(True, id="zipapp")])
@@ -485,7 +485,7 @@ def test_trigger_update_command(
         current,
         [Path("a"), Path("b")],
         session_app_data,
-        {"_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1" if debug else "0"},
+        {"_VIRTUALENV_PERIODIC_UPDATE_INLINE": {True: "1", False: "0"}[debug]},
         True,
     )
     update: Final = dedent(
@@ -496,10 +496,9 @@ def test_trigger_update_command(
         do_update('pip', {!r}, {!r}, {!r}, {!r}, True)
         """
     ).format(for_py_version, str(current.path), str(session_app_data), ["a", "b"])
-    load: Final = (
-        f"import runpy\nwith runpy.run_path({ROOT!r}, run_name='__loader__')['VersionedFindLoad']():\n{indent(update, '    ')}"
-        if zipapp
-        else dedent(
+    loads: Final = {
+        True: f"import runpy\nwith runpy.run_path({ROOT!r}, run_name='__loader__')['VersionedFindLoad']():\n{indent(update, '    ')}",
+        False: dedent(
             """\
             import importlib.util
             spec = importlib.util.spec_from_file_location('virtualenv', {!r})
@@ -508,14 +507,12 @@ def test_trigger_update_command(
             spec.loader.exec_module(package)
             """
         ).format(str(Path(ROOT) / "virtualenv" / "__init__.py"))
-        + update
-    )
+        + update,
+    }
+    load: Final = loads[zipapp]
     command: Final = f"import sys\nsys.path = [p for p in sys.path if p]\n{load.strip()}"
     process.assert_called_once_with(
-        [sys.executable, "-c", command],
-        stdout=None if debug else subprocess.DEVNULL,
-        stderr=None if debug else subprocess.DEVNULL,
-        **({"creationflags": CREATE_NO_WINDOW} if not debug and sys.platform == "win32" else {}),
+        [sys.executable, "-c", command], **{True: _INLINE_KWARGS, False: _DETACHED_KWARGS}[debug]
     )
     assert process.return_value.communicate.call_count == int(debug)
 
@@ -560,7 +557,7 @@ def test_do_update_first(tmp_path, mocker, time_freeze) -> None:
     )
     releases = {
         Wheel(Path(wheel)).version: [
-            {"upload_time": datetime.strftime(release_date, "%Y-%m-%dT%H:%M:%S") if release_date is not None else None},
+            {"upload_time": release_date and datetime.strftime(release_date, "%Y-%m-%dT%H:%M:%S")},
         ]
         for wheel, release_date in pip_version_remote
     }
@@ -589,7 +586,7 @@ def test_do_update_first(tmp_path, mocker, time_freeze) -> None:
     assert copy.call_count == 1
 
     expected = [
-        NewVersion(Path(wheel).name, _UP_NOW, None if release is None else release.replace(microsecond=0), "periodic")
+        NewVersion(Path(wheel).name, _UP_NOW, release and release.replace(microsecond=0), "periodic")
         for wheel, release in pip_version_remote
     ]
     assert versions == expected
@@ -696,7 +693,6 @@ def test_get_release_unsecure(mocker, caplog, monkeypatch) -> None:
 @pytest.mark.parametrize(
     "value",
     [
-        pytest.param(None, id="unset"),
         pytest.param("0", id="zero"),
         pytest.param("false", id="false"),
         pytest.param("no", id="no"),
@@ -708,12 +704,20 @@ def test_get_release_unsecure(mocker, caplog, monkeypatch) -> None:
     ],
 )
 def test_false_update_option_keeps_certificate_verification(
-    monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, value: str | None
+    monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, value: str
 ) -> None:
-    if value is None:
-        monkeypatch.delenv("VIRTUALENV_PERIODIC_UPDATE_INSECURE", raising=False)
-    else:
-        monkeypatch.setenv("VIRTUALENV_PERIODIC_UPDATE_INSECURE", value)
+    monkeypatch.setenv("VIRTUALENV_PERIODIC_UPDATE_INSECURE", value)
+    _assert_release_lookup_verifies_certificate(mocker)
+
+
+def test_unset_update_option_keeps_certificate_verification(
+    monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture
+) -> None:
+    monkeypatch.delenv("VIRTUALENV_PERIODIC_UPDATE_INSECURE", raising=False)
+    _assert_release_lookup_verifies_certificate(mocker)
+
+
+def _assert_release_lookup_verifies_certificate(mocker: MockerFixture) -> None:
     request: Final = mocker.patch(
         "virtualenv.seed.wheels.periodic_update.urlopen", autospec=True, side_effect=URLError("certificate failure")
     )
