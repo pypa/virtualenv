@@ -38,10 +38,6 @@ PIP_RUN: Final[str] = (
 _CUSTOM_INDEX_ENV_VARS: Final[tuple[str, ...]] = ("PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL", "PIP_INDEX")
 
 
-def _uses_default_index(env: dict[str, str]) -> bool:
-    return not any(env.get(var) for var in _CUSTOM_INDEX_ENV_VARS)
-
-
 # PEP 503 normalized distribution name. Anything outside this character set on the way to ``pip download`` means
 # somebody is smuggling pip options or extras, so reject it before we build the command line.
 _DISTRIBUTION_RE: Final[re.Pattern[str]] = re.compile(
@@ -143,7 +139,9 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         not support ``for_py_version``; nothing reaches ``to_folder`` in these cases.
 
     """
-    _check_distribution(distribution)
+    if not _DISTRIBUTION_RE.fullmatch(distribution):
+        msg = f"refusing to download wheel for suspicious distribution name: {distribution!r}"
+        raise ValueError(msg)
     _check_version_spec(version_spec)
     to_download: Final = f"{distribution}{version_spec or ''}"
     if to_download.lower().endswith((
@@ -163,7 +161,7 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         msg = f"refusing to download wheel with archive-like requirement: {to_download!r}"
         raise ValueError(msg)
     LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
-    verify_against_pypi: Final = _uses_default_index(env)
+    verify_against_pypi: Final = not any(env.get(var) for var in _CUSTOM_INDEX_ENV_VARS)
     env = pip_wheel_env_run(search_dirs, app_data, env)
     to_folder.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(dir=to_folder, prefix="download-") as staging:
@@ -196,12 +194,6 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         destination: Final = to_folder / result.name
         result.path.replace(destination)
         return Wheel(destination)
-
-
-def _check_distribution(distribution: str) -> None:
-    if not _DISTRIBUTION_RE.fullmatch(distribution):
-        msg = f"refusing to download wheel for suspicious distribution name: {distribution!r}"
-        raise ValueError(msg)
 
 
 def _check_version_spec(version_spec: str | None) -> None:

@@ -29,7 +29,8 @@ def setup_report(verbosity: int, show_pid: bool = False) -> int:  # ruff:ignore[
     :returns: the verbosity, capped at the highest level
 
     """
-    _clean_handlers(LOGGER)
+    for log_handler in list(LOGGER.handlers):  # remove handlers of libraries
+        LOGGER.removeHandler(log_handler)
     # reached only with more -v flags than MAX_LEVEL, which tests do not pass
     verbosity = min(verbosity, MAX_LEVEL)  # pragma: no cover
     level = LEVELS[verbosity]
@@ -47,11 +48,6 @@ def setup_report(verbosity: int, show_pid: bool = False) -> int:  # ruff:ignore[
     LOGGER.debug("setup logging to %s", logging.getLevelName(level))
     logging.getLogger("distlib").setLevel(logging.ERROR)
     return verbosity
-
-
-def _clean_handlers(log: logging.Logger) -> None:
-    for log_handler in list(log.handlers):  # remove handlers of libraries
-        log.removeHandler(log_handler)
 
 
 __all__ = [
