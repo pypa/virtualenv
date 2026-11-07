@@ -15,8 +15,17 @@ if TYPE_CHECKING:
 
 
 class RustPython(ViaGlobalRefVirtualenvBuiltin, Python3Supports, ABC):
+    """Base for the built-in creators of RustPython interpreters."""
+
     @classmethod
     def can_describe(cls, interpreter: PythonInfo) -> bool:
+        """Accept RustPython interpreters that the base describer also accepts.
+
+        :param interpreter: the host interpreter to check
+
+        :returns: ``True`` if this creator can describe the interpreter
+
+        """
         return interpreter.implementation == "RustPython" and super().can_describe(interpreter)
 
     @classmethod
@@ -26,6 +35,13 @@ class RustPython(ViaGlobalRefVirtualenvBuiltin, Python3Supports, ABC):
 
     @classmethod
     def exe_names(cls, interpreter: PythonInfo) -> set[str]:
+        """The executable names of RustPython environments, the stem and the ``python`` variants.
+
+        :param interpreter: the host interpreter
+
+        :returns: the executable names without suffix
+
+        """
         return {
             cls.exe_stem(),
             "python",
@@ -35,6 +51,11 @@ class RustPython(ViaGlobalRefVirtualenvBuiltin, Python3Supports, ABC):
 
     @classmethod
     def exe_stem(cls) -> str:
+        """The executable name of RustPython environments, ``rustpython``.
+
+        :returns: the executable stem
+
+        """
         return "rustpython"
 
 

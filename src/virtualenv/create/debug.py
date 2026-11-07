@@ -6,6 +6,13 @@ import sys  # built-in
 
 
 def encode_path(value: object) -> str | None:
+    """Encode a value for the JSON debug report, turning types and bytes into strings.
+
+    :param value: the value to encode
+
+    :returns: the encoded value, ``None`` for ``None``
+
+    """
     if value is None:
         return None
     if not isinstance(value, (str, bytes)):
@@ -16,6 +23,13 @@ def encode_path(value: object) -> str | None:
 
 
 def encode_list_path(value: list[object]) -> list[str | None]:
+    """Encode each element of a path list for the JSON debug report.
+
+    :param value: the list of values to encode
+
+    :returns: the encoded values
+
+    """
     return [encode_path(i) for i in value]
 
 

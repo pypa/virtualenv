@@ -21,6 +21,15 @@ LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class ViaGlobalRefMeta(CreatorMeta):
+    """Capability metadata for creators that link to or copy a global interpreter.
+
+    The errors of a failed symlink or copy check are kept in ``symlink_error`` and ``copy_error``.
+
+    :var copy_error: the reason the files cannot be copied, ``None`` when they can
+    :var symlink_error: the reason the files cannot be symlinked, ``None`` when they can
+
+    """
+
     def __init__(self) -> None:
         super().__init__()
         self.copy_error = None
@@ -30,14 +39,26 @@ class ViaGlobalRefMeta(CreatorMeta):
 
     @property
     def can_copy(self) -> bool:
+        """Whether the environment can be created by copying files."""
         return not self.copy_error
 
     @property
     def can_symlink(self) -> bool:
+        """Whether the environment can be created by symlinking files."""
         return not self.symlink_error
 
 
 class ViaGlobalRefApi(Creator, ABC):
+    """Base for creators that build an environment from files of a global interpreter, linking or copying them.
+
+    :param options: the parsed command line options
+    :param interpreter: the interpreter the environment is created from
+
+    :var symlinks: ``True`` to link files instead of copying them
+    :var enable_system_site_package: ``True`` to give the environment access to the system site-packages
+
+    """
+
     def __init__(self, options: VirtualEnvOptions, interpreter: PythonInfo) -> None:
         super().__init__(options, interpreter)
         self.symlinks = self._should_symlink(options)
@@ -63,10 +84,12 @@ class ViaGlobalRefApi(Creator, ABC):
     if TYPE_CHECKING:
 
         @property
-        def purelib(self) -> Path: ...
+        def purelib(self) -> Path:
+            """The pure Python library directory of the environment."""
 
         @property
-        def script_dir(self) -> Path: ...
+        def script_dir(self) -> Path:
+            """The directory holding the scripts the environment installs."""
 
     @classmethod
     def add_parser_arguments(
@@ -77,6 +100,18 @@ class ViaGlobalRefApi(Creator, ABC):
         app_data: AppData,
         # narrows meta to ViaGlobalRefMeta, which the base hook types as CreatorMeta
     ) -> None:  # ty: ignore[invalid-method-override]
+        """Add the ``--system-site-packages``, ``--symlinks`` and ``--copies`` options.
+
+        The copy and symlink options are only added when the matching method is supported.
+
+        :param parser: the parser to add the options to
+        :param interpreter: the interpreter the environment is created from
+        :param meta: the capability metadata of the interpreter
+        :param app_data: the application data folder
+
+        :raises RuntimeError: when neither symlinks nor copies are supported
+
+        """
         super().add_parser_arguments(parser, interpreter, meta, app_data)
         parser.add_argument(
             "--system-site-packages",
@@ -113,9 +148,11 @@ class ViaGlobalRefApi(Creator, ABC):
             )
 
     def create(self) -> None:
+        """Create the environment by installing the patch that guards the import hook."""
         self.install_patch()
 
     def install_patch(self) -> None:
+        """Write the distutils guard files into the purelib folder, only on interpreters older than Python 3.10."""
         # Python 3.10+ ignores the distutils install config keys this patch guards against (pip does so by default,
         # setuptools and CPython's vendored distutils drop them too), so the runtime import hook only earns its
         # startup cost on 3.9. See https://github.com/pypa/virtualenv/issues/3181.
@@ -142,6 +179,7 @@ class ViaGlobalRefApi(Creator, ABC):
         return [*super()._args(), ("global", self.enable_system_site_package)]
 
     def set_pyenv_cfg(self) -> None:
+        """Record whether the system site-packages are visible to the environment."""
         super().set_pyenv_cfg()
         self.pyenv_cfg["include-system-site-packages"] = "true" if self.enable_system_site_package else "false"
 

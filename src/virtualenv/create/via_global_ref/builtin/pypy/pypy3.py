@@ -18,12 +18,26 @@ if TYPE_CHECKING:
 
 
 class PyPy3(PyPy, Python3Supports, abc.ABC):
+    """PyPy 3 interpreters, which are created with the ``pypy3`` executable name."""
+
     @classmethod
     def exe_stem(cls) -> str:
+        """The executable name of PyPy 3 environments, ``pypy3``.
+
+        :returns: the executable stem
+
+        """
         return "pypy3"
 
     @classmethod
     def exe_names(cls, interpreter: PythonInfo) -> set[str]:
+        """The executable names of PyPy 3 environments, adding ``pypy`` to the base names.
+
+        :param interpreter: the host interpreter
+
+        :returns: the executable names without suffix
+
+        """
         return super().exe_names(interpreter) | {"pypy"}
 
 
@@ -37,6 +51,13 @@ class PyPy3Posix(PyPy3, PosixSupports):
 
     @classmethod
     def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:
+        """Yield the POSIX executables and, for portable builds, the files under the interpreter's ``lib`` folder.
+
+        :param interpreter: the host interpreter to take the files from
+
+        :yields: the references to the host files
+
+        """
         yield from super().sources(interpreter)
         # PyPy >= 3.8 supports a standard prefix installation, where older versions always used a portable/development
         # style installation. If this is a standard prefix installation, skip the below:
@@ -59,6 +80,13 @@ class PyPy3Posix(PyPy3, PosixSupports):
                     yield PathRefToDest(path, dest=cls.to_lib)
 
     def to_lib(self, src: Path) -> Path:
+        """Map a host file under the ``lib`` folder to its location in the environment.
+
+        :param src: the host file
+
+        :returns: the path of the file inside the environment's ``lib`` folder
+
+        """
         return self.dest / "lib" / src.name
 
 

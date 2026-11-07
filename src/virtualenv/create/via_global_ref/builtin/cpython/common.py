@@ -17,12 +17,26 @@ if TYPE_CHECKING:
 
 
 class CPython(ViaGlobalRefVirtualenvBuiltin, ABC):
+    """Base for the built-in creators of CPython interpreters."""
+
     @classmethod
     def can_describe(cls, interpreter: PythonInfo) -> bool:
+        """Accept CPython interpreters that the base describer also accepts.
+
+        :param interpreter: the host interpreter to check
+
+        :returns: ``True`` if this creator can describe the interpreter
+
+        """
         return interpreter.implementation == "CPython" and super().can_describe(interpreter)
 
     @classmethod
     def exe_stem(cls) -> str:
+        """The executable name of CPython environments, ``python``.
+
+        :returns: the executable stem
+
+        """
         return "python"
 
 
@@ -44,6 +58,8 @@ class CPythonPosix(CPython, PosixSupports, ABC):
 
 
 class CPythonWindows(CPython, WindowsSupports, ABC):
+    """Base for the built-in creators of CPython interpreters on Windows."""
+
     @classmethod
     def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], str, str]]:
         # symlink of the python executables does not work reliably, copy always instead
@@ -72,16 +88,37 @@ class CPythonWindows(CPython, WindowsSupports, ABC):
 
     @classmethod
     def host_python(cls, interpreter: PythonInfo) -> Path:
+        """The interpreter executable that the environment's files come from.
+
+        :param interpreter: the host interpreter
+
+        :returns: the path of the system executable
+
+        """
         return Path(interpreter.system_exe)
 
 
 def is_mac_os_framework(interpreter: PythonInfo) -> bool:
+    """Whether the interpreter is a macOS framework build.
+
+    :param interpreter: the host interpreter to check
+
+    :returns: ``True`` for a framework build of Python 3
+
+    """
     if interpreter.platform == "darwin":
         return interpreter.sysconfig_vars.get("PYTHONFRAMEWORK") == "Python3"
     return False
 
 
 def is_macos_brew(interpreter: PythonInfo) -> bool:
+    """Whether the interpreter is installed by Homebrew.
+
+    :param interpreter: the host interpreter to check
+
+    :returns: ``True`` when the system prefix matches the Homebrew framework layout
+
+    """
     return interpreter.platform == "darwin" and _BREW.fullmatch(interpreter.system_prefix) is not None
 
 

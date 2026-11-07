@@ -15,8 +15,17 @@ if TYPE_CHECKING:
 
 
 class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
+    """Base for the built-in creators of GraalPy interpreters."""
+
     @classmethod
     def can_describe(cls, interpreter: PythonInfo) -> bool:
+        """Accept GraalPy interpreters that the base describer also accepts.
+
+        :param interpreter: the host interpreter to check
+
+        :returns: ``True`` if this creator can describe the interpreter
+
+        """
         return interpreter.implementation == "GraalPy" and super().can_describe(interpreter)
 
     @classmethod
@@ -26,6 +35,13 @@ class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
 
     @classmethod
     def exe_names(cls, interpreter: PythonInfo) -> set[str]:
+        """The executable names of GraalPy environments, the stem and the ``python`` variants.
+
+        :param interpreter: the host interpreter
+
+        :returns: the executable names without suffix
+
+        """
         return {
             cls.exe_stem(),
             "python",
@@ -35,11 +51,23 @@ class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
 
     @classmethod
     def exe_stem(cls) -> str:
+        """The executable name of GraalPy environments, ``graalpy``.
+
+        :returns: the executable stem
+
+        """
         return "graalpy"
 
     @classmethod
     # yields PathRefToDest, which the base's Generator[ExePathRefToDest] does not allow
     def sources(cls, interpreter: PythonInfo) -> Generator[PathRefToDest]:  # ty: ignore[invalid-method-override]
+        """Yield the host executable, then the native library and JVM folders next to it.
+
+        :param interpreter: the host interpreter to take the files from
+
+        :yields: the references to the host files
+
+        """
         yield from super().sources(interpreter)
         python_dir = Path(interpreter.system_exe).resolve().parent
         if python_dir.name in {"bin", "Scripts"}:
@@ -65,6 +93,7 @@ class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
         raise NotImplementedError
 
     def set_pyenv_cfg(self) -> None:
+        """Record the home of the environment, dropping the ``bin`` suffix on GraalPy 24.0 and older."""
         super().set_pyenv_cfg()
         # GraalPy 24.0 and older had home without the bin
         version = self.interpreter.version_info
@@ -76,6 +105,8 @@ class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
 
 
 class GraalPyPosix(GraalPy, PosixSupports):
+    """GraalPy on POSIX platforms."""
+
     @classmethod
     def _native_lib(cls, lib_dir: Path, platform: str) -> Path:
         if platform == "darwin":
@@ -84,12 +115,15 @@ class GraalPyPosix(GraalPy, PosixSupports):
 
 
 class GraalPyWindows(GraalPy, WindowsSupports):
+    """GraalPy on Windows platforms."""
+
     @classmethod
     # the base hook signature, the Windows layout has one native library name
     def _native_lib(cls, lib_dir: Path, platform: str) -> Path:  # ruff:ignore[unused-class-method-argument]
         return lib_dir / "pythonvm.dll"
 
     def set_pyenv_cfg(self) -> None:
+        """Record the launcher command in the ``pyvenv.cfg`` file, which GraalPy needs on Windows."""
         # GraalPy needs an additional entry in pyvenv.cfg on Windows
         super().set_pyenv_cfg()
         self.pyenv_cfg["venvlauncher_command"] = self.interpreter.system_exe

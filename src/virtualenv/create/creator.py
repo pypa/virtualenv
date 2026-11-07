@@ -38,6 +38,12 @@ LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class CreatorMeta:
+    """Result of a creator capability check, carrying the reason it cannot create an environment in ``error``.
+
+    :var error: the reason the creator cannot create the environment, ``None`` when it can
+
+    """
+
     def __init__(self) -> None:
         self.error = None
 
@@ -80,25 +86,32 @@ class Creator(ABC):
     if TYPE_CHECKING:
 
         @property
-        def exe(self) -> Path: ...
+        def exe(self) -> Path:
+            """The path to the Python executable of the environment."""
 
         @property
-        def env_name(self) -> str: ...
+        def env_name(self) -> str:
+            """The name of the environment, used in the activation prompt."""
 
         @property
-        def bin_dir(self) -> Path: ...
+        def bin_dir(self) -> Path:
+            """The directory holding the environment's executables."""
 
         @property
-        def script_dir(self) -> Path: ...
+        def script_dir(self) -> Path:
+            """The directory holding the scripts the environment installs."""
 
         @property
-        def libs(self) -> list[Path]: ...
+        def libs(self) -> list[Path]:
+            """The library directories of the environment."""
 
         @property
-        def purelib(self) -> Path: ...
+        def purelib(self) -> Path:
+            """The pure Python library directory of the environment."""
 
         @property
-        def platlib(self) -> Path: ...
+        def platlib(self) -> Path:
+            """The platform specific library directory of the environment."""
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self._args())})"
@@ -271,6 +284,11 @@ class Creator(ABC):
         return str(value)
 
     def run(self) -> None:
+        """Create the environment and write its metadata, ignore file and ``.venv`` redirect.
+
+        Delete the destination first when it exists and clearing was requested.
+
+        """
         if self.dest.exists() and self.clear:
             LOGGER.debug("delete %s", self.dest)
             safe_delete(self.dest)
@@ -300,6 +318,7 @@ class Creator(ABC):
             write_file(cachedir_tag_file, cachedir_tag_text.encode("utf-8"))
 
     def set_pyenv_cfg(self) -> None:
+        """Fill the ``pyvenv.cfg`` content with the home, implementation and version of the host interpreter."""
         self.pyenv_cfg.content = OrderedDict()
         system_executable = self.interpreter.system_executable or self.interpreter.executable
         # a PythonInfo always has an executable, the assert narrows the optional type
@@ -375,6 +394,11 @@ class Creator(ABC):
 
     @staticmethod
     def debug_script() -> Path:
+        """Return the path of the script that reports debug information from the environment's interpreter.
+
+        :returns: the path of the debug script
+
+        """
         return DEBUG_SCRIPT
 
 

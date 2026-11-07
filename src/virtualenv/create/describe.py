@@ -33,18 +33,22 @@ class Describe:
 
     @property
     def libs(self) -> list[Path]:
+        """The library directories of the environment, platform specific first."""
         return list(OrderedDict(((self.platlib, None), (self.purelib, None))).keys())
 
     @property
     def platlib(self) -> Path:
+        """The platform specific library directory of the environment."""
         return self.dest / self.interpreter.install_path("platlib")
 
     @property
     def purelib(self) -> Path:
+        """The pure Python library directory of the environment."""
         return self.dest / self.interpreter.install_path("purelib")
 
     @property
     def stdlib(self) -> Path:
+        """The standard library directory of the environment."""
         if self._stdlib is None:
             self._stdlib = Path(self.interpreter.sysconfig_path("stdlib", config_var=self._config_vars))
         return self._stdlib
@@ -63,24 +67,29 @@ class Describe:
 
     @property
     def stdlib_platform(self) -> Path:
+        """The platform specific standard library directory of the environment."""
         if self._stdlib_platform is None:
             self._stdlib_platform = Path(self.interpreter.sysconfig_path("platstdlib", config_var=self._config_vars))
         return self._stdlib_platform
 
     @property
     def env_name(self) -> str:
+        """The name of the environment, taken from the last component of its destination."""
         return self.dest.parts[-1]
 
     @property
     def exe(self) -> Path:
+        """The path to the Python executable of the environment."""
         return self.bin_dir / f"{self.exe_stem()}{self.suffix}"
 
     @property
     def bin_dir(self) -> Path:
+        """The directory holding the environment's executables."""
         return self.script_dir
 
     @property
     def script_dir(self) -> Path:
+        """The directory holding the scripts the environment installs."""
         return self.dest / self.interpreter.install_path("scripts")
 
     @classmethod
@@ -105,22 +114,47 @@ class Describe:
         return True
 
     def script(self, name: str) -> Path:
+        """Return the path of a script in the environment's script directory.
+
+        :param name: the script name without suffix
+
+        :returns: the path of the script with the platform suffix
+
+        """
         return self.script_dir / f"{name}{self.suffix}"
 
 
 class Python3Supports(Describe, ABC):
-    pass
+    """Describer for environments whose interpreter is Python 3."""
 
 
 class PosixSupports(Describe, ABC):
+    """Describer for environments on POSIX hosts."""
+
     @classmethod
     def can_describe(cls, interpreter: PythonInfo) -> bool:
+        """Check the host is POSIX and the base check also accepts it.
+
+        :param interpreter: the host interpreter to check
+
+        :returns: ``True`` if this describer applies to the interpreter
+
+        """
         return interpreter.os == "posix" and super().can_describe(interpreter)
 
 
 class WindowsSupports(Describe, ABC):
+    """Describer for environments on Windows hosts."""
+
     @classmethod
     def can_describe(cls, interpreter: PythonInfo) -> bool:
+        """Check the host is Windows and the base check also accepts it.
+
+        :param interpreter: the host interpreter to check
+
+        :returns: ``True`` if this describer applies to the interpreter
+
+        """
         return interpreter.os == "nt" and super().can_describe(interpreter)
 
 

@@ -26,12 +26,28 @@ else:  # pragma: no cover (py311+)
 
 
 class RefMust(StrEnum):
+    """Whether a reference must be linked, must be copied, or may use either.
+
+    :var NA: the reference may be linked or copied
+    :var COPY: the reference must be copied
+    :var SYMLINK: the reference must be linked
+
+    """
+
     NA = "NA"
     COPY = "copy"
     SYMLINK = "symlink"
 
 
 class RefWhen(StrEnum):
+    """The condition under which a reference applies: always, when copying, or when linking.
+
+    :var ANY: the reference applies to both methods
+    :var COPY: the reference applies only when copying
+    :var SYMLINK: the reference applies only when linking
+
+    """
+
     ANY = "ANY"
     COPY = "copy"
     SYMLINK = "symlink"
@@ -70,6 +86,7 @@ class PathRef(ABC):
 
     @property
     def can_read(self) -> bool:
+        """Whether the referenced file can be read."""
         if self._can_read is None:
             if self.src.is_file():
                 try:
@@ -83,6 +100,7 @@ class PathRef(ABC):
 
     @property
     def can_copy(self) -> bool:
+        """Whether the referenced file can be copied."""
         if self._can_copy is None:
             if self.must == RefMust.SYMLINK:
                 self._can_copy = self.can_symlink
@@ -92,6 +110,7 @@ class PathRef(ABC):
 
     @property
     def can_symlink(self) -> bool:
+        """Whether the referenced file can be linked."""
         if self._can_symlink is None:
             if self.must == RefMust.COPY:
                 self._can_symlink = self.can_copy
@@ -101,9 +120,22 @@ class PathRef(ABC):
 
     @abstractmethod
     def run(self, creator: object, symlinks: bool) -> None:
+        """Link or copy the referenced file to its destination.
+
+        :param creator: the creator the environment is created by
+        :param symlinks: ``True`` to prefer symlinks over copies
+
+        """
         raise NotImplementedError
 
     def method(self, symlinks: bool) -> Callable[..., None]:
+        """Pick the function that performs the link or copy of this reference.
+
+        :param symlinks: ``True`` to prefer symlinks over copies
+
+        :returns: the ``symlink`` or ``copy`` function that applies
+
+        """
         if self.must == RefMust.SYMLINK:
             return symlink
         if self.must == RefMust.COPY:
@@ -126,12 +158,14 @@ class ExePathRef(PathRef, ABC):
 
     @property
     def can_symlink(self) -> bool:
+        """Whether the executable can be linked: symlinks are supported and the file is runnable."""
         if self.FS_SUPPORTS_SYMLINK:
             return self.can_run
         return False
 
     @property
     def can_run(self) -> bool:
+        """Whether the executable file has any execute permission bit set."""
         if self._can_run is None:
             self._can_run = bool(self.src.stat().st_mode & (S_IXUSR | S_IXGRP | S_IXOTH))
         return self._can_run
@@ -152,6 +186,12 @@ class PathRefToDest(PathRef):
         self.dest = dest
 
     def run(self, creator: object, symlinks: bool) -> None:
+        """Link or copy the referenced file to the destination path or each destination path in the list.
+
+        :param creator: the creator the environment is created by
+        :param symlinks: ``True`` to prefer symlinks over copies
+
+        """
         dest = self.dest(creator, self.src)
         method = self.method(symlinks)
         dest_iterable = dest if isinstance(dest, list) else (dest,)
@@ -190,6 +230,12 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
         return f"{self.__class__.__name__}(src={self.src}, alias={self.aliases})"
 
     def run(self, creator: object, symlinks: bool) -> None:
+        """Link or copy the executable, then its aliases, into the destination folder, marking copies executable.
+
+        :param creator: the creator the environment is created by
+        :param symlinks: ``True`` to prefer symlinks over copies
+
+        """
         bin_dir = self.dest(creator, self.src).parent
         dest = bin_dir / self.base
         self.method(symlinks)(self.src, dest)

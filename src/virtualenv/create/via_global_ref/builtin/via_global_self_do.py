@@ -25,12 +25,27 @@ if TYPE_CHECKING:
 
 
 class BuiltinViaGlobalRefMeta(ViaGlobalRefMeta):
+    """Capability metadata that also lists the files the environment links to or copies.
+
+    :var sources: the references to the host files, in the order they are applied
+
+    """
+
     def __init__(self) -> None:
         super().__init__()
         self.sources: list[PathRef] = []
 
 
 class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
+    """Built-in creator that links or copies the executables and libraries of a global interpreter.
+
+    :param options: the parsed command line options
+    :param interpreter: the interpreter the environment is created from
+
+    :var enable_system_site_package: ``True`` to give the environment access to the system site-packages
+
+    """
+
     def __init__(self, options: VirtualEnvOptions, interpreter: PythonInfo) -> None:
         super().__init__(options, interpreter)
         self._sources: list[PathRef] = (
@@ -57,6 +72,13 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
     @classmethod
     # the base hook signature, this meta does not depend on the interpreter
     def setup_meta(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta:  # ruff:ignore[unused-class-method-argument]
+        """Return the metadata for a built-in creator, which does not depend on the interpreter.
+
+        :param interpreter: the host interpreter, unused
+
+        :returns: a new metadata object
+
+        """
         return BuiltinViaGlobalRefMeta()
 
     @classmethod
@@ -83,6 +105,13 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
 
     @classmethod
     def sources(cls, interpreter: PythonInfo) -> Generator[ExePathRefToDest]:
+        """Yield the references to the host executables this creator links or copies.
+
+        :param interpreter: the host interpreter to take the executables from
+
+        :yields: the executable references, each pointing into the environment's bin folder
+
+        """
         for host_exe, targets, must, when in cls._executables(interpreter):
             yield ExePathRefToDest(host_exe, dest=cls.to_bin, targets=targets, must=must, when=when)
 
@@ -91,9 +120,21 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
         raise NotImplementedError
 
     def to_bin(self, src: Path) -> Path:
+        """Map a host file to its location in the environment's bin folder.
+
+        :param src: the host file
+
+        :returns: the path of the file inside the bin folder
+
+        """
         return self.bin_dir / src.name
 
     def create(self) -> None:
+        """Create the directories, the configuration and the linked or copied files of the environment.
+
+        :raises ValueError: when a directory lies outside the destination folder
+
+        """
         dirs = self.ensure_directories()
         for directory in list(dirs):
             if any(i for i in dirs if i is not directory and directory.parts == i.parts[: len(directory.parts)]):
@@ -119,10 +160,16 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
         super().create()
 
     def ensure_directories(self) -> set[Path]:
+        """Return the directories the environment needs.
+
+        :returns: the destination, bin, script, stdlib, include and library directories
+
+        """
         return {self.dest, self.bin_dir, self.script_dir, self.stdlib, self.include_dir} | set(self.libs)
 
     @property
     def include_dir(self) -> Path:
+        """The include directory of the environment, named ``Include`` on Windows."""
         return self.dest / ("Include" if self.interpreter.os == "nt" else "include")
 
     def set_pyenv_cfg(self) -> None:
@@ -133,7 +180,11 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
         self.pyenv_cfg["base-executable"] = self.interpreter.system_exe
 
     def install_venv_shared_libs(self, venv_creator: Venv) -> None:
-        pass
+        """Install shared libraries next to the environment, a no-op for this creator.
+
+        :param venv_creator: the ``venv`` creator that built the environment
+
+        """
 
 
 __all__ = [

@@ -33,11 +33,25 @@ LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class CPythonmacOsFramework(CPython, ABC):
+    """CPython built as a macOS framework, which needs its Mach-O image paths rewritten."""
+
     @classmethod
     def can_describe(cls, interpreter: PythonInfo) -> bool:
+        """Accept interpreters that are macOS framework builds and that the base describer also accepts.
+
+        :param interpreter: the host interpreter to check
+
+        :returns: ``True`` if this creator can describe the interpreter
+
+        """
         return is_mac_os_framework(interpreter) and super().can_describe(interpreter)
 
     def create(self) -> None:
+        """Create the environment, then rewrite and ad-hoc re-sign the copied executables.
+
+        Re-signing failures are logged as warnings and do not stop the creation.
+
+        """
         super().create()
 
         target = self.desired_mach_o_image_path()
@@ -67,16 +81,29 @@ class CPythonmacOsFramework(CPython, ABC):
 
     @abstractmethod
     def current_mach_o_image_path(self) -> str:
+        """The Mach-O image path the copied executables currently reference.
+
+        :returns: the image path the executables were linked against
+
+        """
         raise NotImplementedError
 
     @abstractmethod
     def desired_mach_o_image_path(self) -> str:
+        """The Mach-O image path the copied executables should reference.
+
+        :returns: the image path inside the environment
+
+        """
         raise NotImplementedError
 
 
 class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
+    """CPython 3 built as a macOS framework."""
+
     @property
     def reload_code(self) -> str:
+        """Source of the ``reload_code`` snippet, which turns off the framework site package behavior."""
         # reload_code is defined on a base that ty does not resolve through this super()
         result = super().reload_code  # ty: ignore[unresolved-attribute]
         return dedent(
@@ -93,14 +120,31 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
         )
 
     def current_mach_o_image_path(self) -> str:
+        """The Mach-O image path the copied executables currently reference, relative to the bundle.
+
+        :returns: the image path the executables were linked against
+
+        """
         return "@executable_path/../../../../Python3"
 
     def desired_mach_o_image_path(self) -> str:
+        """The Mach-O image path the copied executables should reference, inside the environment.
+
+        :returns: the image path inside the environment
+
+        """
         return "@executable_path/../.Python"
 
     @classmethod
     # yields PathRef, which the base's Generator[ExePathRefToDest] does not allow
     def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
+        """Yield the framework executables, plus a symlink to the host framework image.
+
+        :param interpreter: the host interpreter to take the files from
+
+        :yields: the references to the host files
+
+        """
         yield from super().sources(interpreter)
 
         # add a symlink to the host python image
@@ -294,13 +338,29 @@ def _builtin_change_mach_o(maxint: int) -> Callable[[str, str, str], None]:  # r
 
 
 class CPython3macOsBrew(CPython3, CPythonPosix):
+    """CPython 3 installed by Homebrew, which is created like a POSIX CPython."""
+
     @classmethod
     def can_describe(cls, interpreter: PythonInfo) -> bool:
+        """Accept interpreters installed by Homebrew, which the base describer also accepts.
+
+        :param interpreter: the host interpreter to check
+
+        :returns: ``True`` if this creator can describe the interpreter
+
+        """
         return is_macos_brew(interpreter) and super().can_describe(interpreter)
 
     @classmethod
     # setup_meta takes the interpreter from the base signature, this meta does not use it
     def setup_meta(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta:  # ruff:ignore[unused-class-method-argument]
+        """Return the metadata for a Homebrew interpreter, which does not depend on the interpreter.
+
+        :param interpreter: the host interpreter, unused
+
+        :returns: a new metadata object
+
+        """
         meta = BuiltinViaGlobalRefMeta()
         meta.copy_error = "Brew disables copy creation: https://github.com/Homebrew/homebrew-core/issues/138159"
         return meta
