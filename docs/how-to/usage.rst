@@ -350,8 +350,8 @@ Pass ``--venv-redirect`` to make another environment the default, or to write th
     $ cat .venv
     py314
 
-virtualenv leaves a ``.venv`` folder alone, and a redirect pointing at an environment it did not create. Delete the
-``.venv`` if you want virtualenv to take it over.
+virtualenv leaves a ``.venv`` folder, symlink or special file such as a FIFO alone, and a redirect pointing at an
+environment it did not create. Delete the ``.venv`` if you want virtualenv to take it over.
 
 Choose once for every environment
 =================================

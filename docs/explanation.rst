@@ -676,6 +676,9 @@ lands in a project folder, one holding a ``pyproject.toml``, and that folder has
     Creating ``.venv`` itself writes nothing, and where a ``.venv`` folder or symlink exists virtualenv leaves it alone,
     since it already is the default.
 
+    Special files such as FIFOs, sockets and devices are also left alone. Reading a FIFO would wait for a writer, so
+    virtualenv only reads regular files when deciding whether to replace a redirect.
+
 **Other tools' redirects stay**
     Even with ``--venv-redirect``, virtualenv honors the PEP's request not to overwrite a redirect another tool wrote.
     The file carries no marker of who wrote it, so virtualenv judges by the target: it takes over the redirect only when
