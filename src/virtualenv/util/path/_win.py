@@ -9,7 +9,13 @@ if os.name == "nt":
 
 
 def get_short_path_name(long_name: str) -> str:
-    """Gets the short path name of a given long path - http://stackoverflow.com/a/23598461/200291."""
+    """Gets the short path name of a given long path - http://stackoverflow.com/a/23598461/200291.
+
+    :param long_name: the long path to shorten
+
+    :returns: the short path name
+
+    """
     # ctypes.windll exists only on Windows, which is the only platform this runs on
     GetShortPathNameW = ctypes.windll.kernel32.GetShortPathNameW  # ruff:ignore[non-lowercase-variable-in-function]  # ty: ignore[unresolved-attribute]
     GetShortPathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
