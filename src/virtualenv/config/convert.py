@@ -25,6 +25,12 @@ class TypeData:
 
 
 class BoolType(TypeData):
+    """Converter for boolean options, accepting the usual yes and no spellings.
+
+    :var BOOLEAN_STATES: the accepted spellings, mapped to the boolean they stand for
+
+    """
+
     BOOLEAN_STATES: ClassVar[dict[str, bool]] = {
         "1": True,
         "yes": True,
@@ -37,6 +43,15 @@ class BoolType(TypeData):
     }
 
     def convert(self, value: str) -> bool:
+        """Convert the text to a boolean, ignoring case.
+
+        :param value: the text to convert
+
+        :returns: the boolean value
+
+        :raises ValueError: when the text is not a recognized boolean spelling
+
+        """
         if value.lower() not in self.BOOLEAN_STATES:
             msg = f"Not a boolean: {value}"
             raise ValueError(msg)
@@ -93,6 +108,13 @@ _CONVERT: Final[dict[type, type]] = {bool: BoolType, type(None): NoneType, list:
 
 
 def get_type(action: Action) -> TypeData:
+    """Return the converter for the type of an argparse action.
+
+    :param action: the argparse action to convert values for
+
+    :returns: the converter matching the default value of the action
+
+    """
     # a flag that stores a bool over an unset default is tri-state, so its env var and ini values read as bools
     default_type = bool if action.default is None and isinstance(action.const, bool) else type(action.default)
     return _CONVERT.get(default_type, TypeData)(default_type, default_type if action.type is None else action.type)

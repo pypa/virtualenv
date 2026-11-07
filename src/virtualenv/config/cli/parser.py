@@ -67,6 +67,7 @@ class VirtualEnvConfigParser(ArgumentParser):
         self._app_data = None
 
     def enable_help(self) -> None:
+        """Add the ``-h`` and ``--help`` options, after fixing the defaults."""
         self._fix_defaults()
         self.add_argument("-h", "--help", action="help", default=SUPPRESS, help="show this help message and exit")
 
@@ -112,6 +113,16 @@ class VirtualEnvConfigParser(ArgumentParser):
     def parse_known_args(  # ty: ignore[invalid-method-override]
         self, args: Sequence[str] | None = None, namespace: VirtualEnvOptions | None = None
     ) -> tuple[VirtualEnvOptions, list[str]]:
+        """Parse the arguments, filling the options with values from the config file and the environment.
+
+        :param args: the arguments to parse, ``None`` for the command line arguments
+        :param namespace: the options to fill, ``None`` for a new set
+
+        :returns: the parsed options and the arguments that were not recognized
+
+        :raises ValueError: when a value from the config file or the environment cannot be converted
+
+        """
         if namespace is None:
             namespace = self.options
         elif namespace is not self.options:
@@ -129,6 +140,13 @@ class VirtualEnvConfigParser(ArgumentParser):
 
 
 class HelpFormatter(ArgumentDefaultsHelpFormatter):
+    """Help formatter that shows the defaults, sized to the terminal width.
+
+    :param prog: the program name
+    :param kwargs: the keyword arguments passed through to the argparse formatter
+
+    """
+
     # argparse passes its formatter keywords through untyped
     def __init__(self, prog: str, **kwargs: Any) -> None:  # ruff:ignore[any-type]
         super().__init__(prog, max_help_position=32, width=shutil.get_terminal_size().columns, **kwargs)
@@ -143,6 +161,12 @@ class HelpFormatter(ArgumentDefaultsHelpFormatter):
 
 
 class VirtualEnvOptions(Namespace):
+    """Namespace of the parsed options, with the source each value came from.
+
+    :param kwargs: the option values
+
+    """
+
     # Namespace takes arbitrary attributes, so the options arrive as kwargs
     def __init__(self, **kwargs: Any) -> None:  # ruff:ignore[any-type]
         super().__init__(**kwargs)
