@@ -11,7 +11,6 @@ from virtualenv.util.path import write_file
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
-    from typing import Any
 
     from python_discovery import PythonInfo
 
@@ -135,7 +134,7 @@ class ViaGlobalRefApi(Creator, ABC):
         with self.app_data.ensure_extracted(Path(__file__).parent / "_virtualenv.py") as resolved_path:
             return resolved_path.read_text(encoding="utf-8")
 
-    def _args(self) -> list[tuple[str, Any]]:
+    def _args(self) -> list[tuple[str, str | bool]]:
         return [*super()._args(), ("global", self.enable_system_site_package)]
 
     def set_pyenv_cfg(self) -> None:

@@ -17,8 +17,6 @@ from .builtin.cpython.mac_os import CPython3macOsBrew
 from .store import handle_store_python
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
@@ -39,7 +37,7 @@ class Venv(ViaGlobalRefApi):
                 return element
         return object.__getattribute__(self, item)
 
-    def _args(self) -> list[tuple[str, Any]]:
+    def _args(self) -> list[tuple[str, str | bool]]:
         return super()._args() + ([("describe", self.describe.__class__.__name__)] if self.describe else [])
 
     @classmethod

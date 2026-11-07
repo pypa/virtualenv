@@ -8,8 +8,6 @@ from typing import TYPE_CHECKING
 from virtualenv.info import IS_WIN
 
 if TYPE_CHECKING:
-    from typing import Any
-
     from python_discovery import PythonInfo
 
 
@@ -45,16 +43,16 @@ class Describe:
         return self._stdlib
 
     @property
-    def _config_vars(self) -> dict[str, Any]:
+    def _config_vars(self) -> dict[str, str | int | None]:
         if self._conf_vars is None:
             self._conf_vars = self._calc_config_vars(self.dest)
         return self._conf_vars
 
-    def _calc_config_vars(self, to: Path) -> dict[str, Any]:
+    def _calc_config_vars(self, to: Path) -> dict[str, str | int | None]:
         sys_vars = self.interpreter.sysconfig_vars
         if (prefix := self.interpreter.prefix) is None:  # no prefix means no value can live under it
             return dict(sys_vars)
-        return {k: (to if isinstance(v, str) and v.startswith(prefix) else v) for k, v in sys_vars.items()}
+        return {k: (str(to) if isinstance(v, str) and v.startswith(prefix) else v) for k, v in sys_vars.items()}
 
     @property
     def stdlib_platform(self) -> Path:

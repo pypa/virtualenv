@@ -91,7 +91,7 @@ class Creator(ABC):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({', '.join(f'{k}={v}' for k, v in self._args())})"
 
-    def _args(self) -> list[tuple[str, Any]]:
+    def _args(self) -> list[tuple[str, str | bool]]:
         return [
             ("dest", str(self.dest)),
             ("clear", self.clear),
