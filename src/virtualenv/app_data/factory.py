@@ -20,6 +20,17 @@ _LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]) -> AppData:
+    """Create the app data store for the given folder, falling back to a temporary one when the folder is unusable.
+
+    :param folder: the folder to use, ``None`` for the default cache directory
+    :param read_only: ``True`` to open the folder without writing to it
+    :param env: the environment variables, used to find the default folder and the override
+
+    :returns: the app data store
+
+    :raises ArgumentTypeError: when the folder is empty or whitespace
+
+    """
     private: Final = folder is None and not env.get("VIRTUALENV_OVERRIDE_APP_DATA", "").strip()
     if folder is None:
         folder = _default_app_data_dir(env)

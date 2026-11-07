@@ -72,11 +72,13 @@ class AppDataDiskFolder(AppData):
 
     @property
     def house(self) -> Path:
+        """The wheel house folder, created when first accessed, holding the downloaded wheels."""
         path = self.lock.path / "wheel" / "house"
         path.mkdir(parents=True, exist_ok=True)
         return path
 
     def reset(self) -> None:
+        """Delete the whole app data folder."""
         LOGGER.debug("reset app data folder %s", self.lock.path)
         safe_delete(self.lock.path)
 
@@ -85,6 +87,13 @@ class AppDataDiskFolder(AppData):
 
     @contextmanager
     def locked(self, path: Path) -> Generator[None]:
+        """Hold the lock for the path while the caller uses it.
+
+        :param path: the path to lock
+
+        :yields: nothing
+
+        """
         # the lock's / operator takes a str key, and path here is a Path
         path_lock = self.lock / path  # ty: ignore[unsupported-operator]
         with path_lock:
@@ -92,6 +101,14 @@ class AppDataDiskFolder(AppData):
 
     @contextmanager
     def extract(self, path: Path, to_folder: Path | None) -> Generator[Path]:
+        """Extract the file into its folder, reusing an earlier extraction.
+
+        :param path: the file to extract
+        :param to_folder: a callable returning the folder to extract into, ``None`` for the default ``unzip`` folder
+
+        :yields: the path of the extracted file
+
+        """
         # callers pass a callable for to_folder, despite the Path | None annotation
         root = ReentrantFileLock(to_folder()) if to_folder is not None else self.lock / "unzip" / __version__  # ty: ignore[call-non-callable]
         with root.lock_for_key(path.name):
@@ -101,10 +118,18 @@ class AppDataDiskFolder(AppData):
             yield dest
 
     def py_info(self, path: Path) -> PyInfoStoreDisk:
+        """Return the store of the python info for the given interpreter path.
+
+        :param path: the interpreter path the info is for
+
+        :returns: the python info store
+
+        """
         return PyInfoStoreDisk(self.py_info_at, path)
 
     @property
     def py_info_at(self) -> ReentrantFileLock:
+        """The lock guarding the python info folder."""
         # the lock's / operator returns PathLockBase, not the ReentrantFileLock promised here
         return self.lock / "py_info" / "5"  # ty: ignore[invalid-return-type]
 
@@ -119,14 +144,42 @@ class AppDataDiskFolder(AppData):
                             filename.unlink()
 
     def embed_update_log(self, distribution: str, for_py_version: str) -> EmbedDistributionUpdateStoreDisk:
+        """Return the store of the embed update log for a distribution and Python version.
+
+        :param distribution: the distribution name
+        :param for_py_version: the Python version
+
+        :returns: the embed update log store
+
+        """
         # the lock's / operator returns PathLockBase, which the store does not take
         return EmbedDistributionUpdateStoreDisk(self.lock / "wheel" / for_py_version / "embed" / "3", distribution)  # ty: ignore[invalid-argument-type]
 
     def wheel_image(self, for_py_version: str, name: str) -> Path:
+        """Return the path of an installed wheel image.
+
+        :param for_py_version: the Python version
+        :param name: the name of the image
+
+        :returns: the path of the image
+
+        """
         return self.lock.path / "wheel" / for_py_version / "image" / "1" / name
 
 
 class JSONStoreDisk(ContentStore, ABC):
+    """JSON file store kept in a folder, with one file per key.
+
+    :param in_folder: the lock of the folder holding the files
+    :param key: the name of the file without suffix
+    :param msg_args: the leading arguments of the debug messages about the file
+
+    :var in_folder: the lock of the folder holding the files
+    :var key: the name of the file without suffix
+    :var msg_args: the leading arguments of the debug messages about the file
+
+    """
+
     def __init__(self, in_folder: ReentrantFileLock, key: str, msg_args: tuple[str, ...]) -> None:
         self.in_folder = in_folder
         self.key = key
@@ -134,12 +187,23 @@ class JSONStoreDisk(ContentStore, ABC):
 
     @property
     def file(self) -> Path:
+        """The path of the JSON file."""
         return self.in_folder.path / f"{self.key}.json"
 
     def exists(self) -> bool:
+        """Whether the JSON file exists.
+
+        :returns: ``True`` when the file exists
+
+        """
         return self.file.exists()
 
     def read(self) -> Any:  # ruff:ignore[any-type]  # the stored JSON document may be any type
+        """Read the stored JSON document, treating a missing or unreadable file as absent.
+
+        :returns: the decoded document, ``None`` when there is none
+
+        """
         data, bad_format = None, False
         try:
             data = json.loads(self.file.read_text(encoding="utf-8"))
@@ -157,21 +221,43 @@ class JSONStoreDisk(ContentStore, ABC):
         return None
 
     def remove(self) -> None:
+        """Delete the JSON file."""
         self.file.unlink()
         LOGGER.debug("removed %s %s at %s", *self.msg_args)
 
     @contextmanager
     def locked(self) -> Generator[None]:
+        """Hold the lock for the key while the caller uses it.
+
+        :yields: nothing
+
+        """
         with self.in_folder.lock_for_key(self.key):
             yield
 
     def write(self, content: Any) -> None:  # ruff:ignore[any-type]  # stores any JSON-serializable content
+        """Store the content as JSON, creating the folder when needed.
+
+        :param content: the JSON-serializable content to store
+
+        """
         self.file.parent.mkdir(parents=True, exist_ok=True)
         self.file.write_text(json.dumps(content, sort_keys=True, indent=2), encoding="utf-8")
         LOGGER.debug("wrote %s %s at %s", *self.msg_args)
 
 
 class PyInfoStoreDisk(JSONStoreDisk):
+    """Store of the python info of one interpreter path, keyed by a hash of the path.
+
+    :param in_folder: the lock of the folder holding the files
+    :param path: the interpreter path the info is for
+
+    :var in_folder: the lock of the folder holding the files
+    :var key: the hash of the interpreter path
+    :var msg_args: the leading arguments of the debug messages about the file
+
+    """
+
     def __init__(self, in_folder: ReentrantFileLock, path: Path) -> None:
         # msg_args carries the Path for the log message, but is typed as str
         super().__init__(in_folder, sha256(str(path).encode("utf-8")).hexdigest(), ("python info of", path))  # ty: ignore[invalid-argument-type]
