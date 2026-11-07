@@ -5,7 +5,7 @@ from typing import Final
 
 import pytest
 
-pytest_plugins = ["pytester"]
+pytest_plugins: Final[list[str]] = ["pytester"]
 
 _WAIT: Final[str] = """
 import os

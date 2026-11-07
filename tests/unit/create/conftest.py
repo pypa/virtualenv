@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import sys
 from subprocess import Popen
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from python_discovery import PythonInfo
 
-_CURRENT = PythonInfo.current_system()
+if TYPE_CHECKING:
+    from pathlib import Path
+
+_CURRENT: Final[PythonInfo] = PythonInfo.current_system()
 
 
 def root(tmp_path_factory, session_app_data):  # ruff:ignore[unused-function-argument]
@@ -24,7 +28,7 @@ def venv(tmp_path_factory, session_app_data):
     return _CURRENT.discover_exe(prefix=str(dest)).original_executable
 
 
-_PYTHON = {
+_PYTHON: Final[dict[str, Path]] = {
     "root": root,
     "venv": venv,
 }

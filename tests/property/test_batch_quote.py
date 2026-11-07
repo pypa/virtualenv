@@ -8,7 +8,7 @@ from hypothesis import strategies as st
 
 from virtualenv.activation.batch import BatchActivator
 
-pytestmark = pytest.mark.property
+pytestmark: Final[pytest.MarkDecorator] = pytest.mark.property
 
 # Confirmed live syntax inside @set "VAR=value" on a real Windows runner, independently of this fix's
 # own implementation - this is not just re-asserting quote()'s source. `!` only turns live when the
@@ -20,7 +20,7 @@ _LINE_BOUNDARIES: Final[str] = f"\n\r\v\f\x1c\x1d\x1e\x85{chr(0x2028)}{chr(0x202
 
 # Lone surrogates are excluded: cmd.exe scripts are read as text, and the same limit applies to the
 # pyvenv.cfg property tests for the same reason.
-values = st.text(st.characters(blacklist_categories=("Cs",), max_codepoint=0x2100))
+values: Final[st.SearchStrategy[str]] = st.text(st.characters(blacklist_categories=("Cs",), max_codepoint=0x2100))
 
 
 @given(value=values)

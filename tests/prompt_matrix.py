@@ -36,7 +36,7 @@ class Shell(NamedTuple):
     payloads: dict[str, str]
 
 
-PROMPT_PAYLOADS: Final = {
+PROMPT_PAYLOADS: Final[dict[str, str]] = {
     "command-substitution": "x$(touch PWNED)y",
     "backticks": "x`touch PWNED`y",
     "parameter-expansion": "x${$(touch PWNED)}y",
@@ -53,7 +53,7 @@ PROMPT_PAYLOADS: Final = {
     "trailing-backslash": "e\\",
 }
 
-SHELLS: Final = {
+SHELLS: Final[dict[str, str]] = {
     "bash": Shell(
         "bash",
         "activate",
@@ -165,7 +165,7 @@ SHELLS: Final = {
     ),
 }
 
-PROMPT_CASES: Final = [
+PROMPT_CASES: Final[list[tuple[str, str]]] = [
     (shell, state, action, payload)
     for shell, spec in SHELLS.items()
     for state in spec.states

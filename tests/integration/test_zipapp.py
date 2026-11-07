@@ -8,7 +8,7 @@ import sys
 import zipfile
 from contextlib import suppress
 from pathlib import Path
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from python_discovery import PythonInfo
@@ -18,10 +18,13 @@ from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
 from virtualenv.seed.wheels.periodic_update import trigger_update
 
-_HERE = Path(__file__).parent
-_CURRENT = PythonInfo.current_system()
+if TYPE_CHECKING:
+    from types import ModuleType
+
+_HERE: Final[Path] = Path(__file__).parent
+_CURRENT: Final[PythonInfo] = PythonInfo.current_system()
 # Repackaged sdists omit the zipapp build sources.
-_ZIPAPP_MAIN: Final = pytest.importorskip("tasks.__main__zipapp")
+_ZIPAPP_MAIN: Final[ModuleType] = pytest.importorskip("tasks.__main__zipapp")
 
 
 @pytest.fixture(scope="session")

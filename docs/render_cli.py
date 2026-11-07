@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from argparse import SUPPRESS
 from contextlib import contextmanager
-from typing import Any, ClassVar, NamedTuple
+from typing import TYPE_CHECKING, Any, ClassVar, Final, NamedTuple
 
 from docutils import nodes as n
 from docutils.parsers.rst.directives import unchanged_required
@@ -11,7 +11,10 @@ from sphinxarg.parser import parse_parser
 
 from virtualenv.run.plugin.base import ComponentBuilder
 
-_CUSTOM = {
+if TYPE_CHECKING:
+    from collections import OrderedDict
+
+_CUSTOM: Final[dict[str, OrderedDict[str, type]]] = {
     "discovery": ComponentBuilder.entry_points_for("virtualenv.discovery"),
     "creator": ComponentBuilder.entry_points_for("virtualenv.create"),
     "seeder": ComponentBuilder.entry_points_for("virtualenv.seed"),

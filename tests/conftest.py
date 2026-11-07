@@ -18,7 +18,7 @@ from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_RUSTPYTHON, IS_WIN, fs_suppo
 from virtualenv.report import LOGGER
 
 # the build and CI tooling tests do not depend on the interpreter; the tasks tox environment runs them once
-collect_ignore = ["tasks"]
+collect_ignore: Final[list[str]] = ["tasks"]
 
 
 def pytest_addoption(parser) -> None:
@@ -218,7 +218,7 @@ def _assert_environ_stable(old: dict[str, str], to_clean: set[str]) -> None:
 
 
 _COV_ENV_VAR: Final[str] = "COVERAGE_PROCESS_START"
-_COVERAGE_RUN = os.environ.get(str(_COV_ENV_VAR))
+_COVERAGE_RUN: Final[str | None] = os.environ.get(str(_COV_ENV_VAR))
 
 
 @pytest.fixture(autouse=True)

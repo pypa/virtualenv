@@ -43,7 +43,7 @@ if TYPE_CHECKING:
 
     from virtualenv.run.session import Session
 
-_CURRENT = PythonInfo.current_system()
+_CURRENT: Final[PythonInfo] = PythonInfo.current_system()
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
@@ -242,7 +242,7 @@ def test_resolved_destination_rejects_path_separator(
         Creator.validate_dest("link/env" if linked else "env")
 
 
-_LEGACY_DESTINATIONS: Final = [
+_LEGACY_DESTINATIONS: Final[list[tuple[str, str]]] = [
     pytest.param("latin-1", "café", id="latin1"),
     pytest.param("koi8-r", "тест", id="koi8r"),
     pytest.param("gbk", "中文", id="gbk"),
@@ -391,7 +391,9 @@ def system(session_app_data):
     return get_env_debug_info(Path(_CURRENT.system_executable), DEBUG_SCRIPT, session_app_data, os.environ)
 
 
-_CURRENT_CREATORS = [i for i in CreatorSelector.for_interpreter(_CURRENT).key_to_class if i != "builtin"]
+_CURRENT_CREATORS: Final[list[str]] = [
+    i for i in CreatorSelector.for_interpreter(_CURRENT).key_to_class if i != "builtin"
+]
 
 
 @pytest.mark.skipif("venv" not in _CURRENT_CREATORS, reason="stdlib venv is unavailable")
@@ -464,7 +466,7 @@ def test_creator_replaces_directory_links(tmp_path: Path, creator_name: str, fol
     assert (link.resolve(), session.creator.exe.is_file(), list(stored.iterdir())) == (link, True, [])
 
 
-_CREATE_METHODS = []
+_CREATE_METHODS: Final[list[str]] = []
 
 
 for k, v in CreatorSelector.for_interpreter(_CURRENT).key_to_meta.items():

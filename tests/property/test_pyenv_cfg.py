@@ -10,19 +10,19 @@ from hypothesis import strategies as st
 
 from virtualenv.create.pyenv_cfg import PyEnvCfg
 
-pytestmark = pytest.mark.property
+pytestmark: Final[pytest.MarkDecorator] = pytest.mark.property
 
 # Anything str.splitlines() treats as a boundary is what makes a value escape its own line.
 _LINE_BOUNDARIES: Final[str] = f"\n\r\v\f\x1c\x1d\x1e\x85{chr(0x2028)}{chr(0x2029)}"
 
 # Lone surrogates are excluded throughout: the file is UTF-8, so they cannot be written at all, and
 # the same is true of the stdlib venv. That is a limit of the format rather than of this code.
-_PRINTABLE = st.characters(blacklist_categories=("Cs",), max_codepoint=0x2100)
+_PRINTABLE: Final[st.SearchStrategy[str]] = st.characters(blacklist_categories=("Cs",), max_codepoint=0x2100)
 
-_KEYS = st.text(
+_KEYS: Final[st.SearchStrategy[str]] = st.text(
     st.characters(blacklist_categories=("Cs",), blacklist_characters=f"={_LINE_BOUNDARIES}"), min_size=1
 ).filter(lambda k: k.strip() == k and not k.startswith("#"))
-contents = st.dictionaries(_KEYS, st.text(_PRINTABLE), max_size=6)
+contents: Final[st.SearchStrategy[dict[str, str]]] = st.dictionaries(_KEYS, st.text(_PRINTABLE), max_size=6)
 
 
 def _round_trip(content: dict[str, str], tmp_path) -> dict[str, str]:

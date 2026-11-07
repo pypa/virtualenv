@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from typing import Final
+
 import pytest
 from testing.helpers import contains_exe, contains_ref, has_src, is_exe
 from testing.path import join as path
 
 from virtualenv.create.via_global_ref.builtin.cpython.cpython3 import CPython3Windows
 
-_CPYTHON3_PATH = (
+_CPYTHON3_PATH: Final[tuple[str, str]] = (
     "virtualenv.create.via_global_ref.builtin.cpython.common.Path",
     "virtualenv.create.via_global_ref.builtin.cpython.cpython3.Path",
 )

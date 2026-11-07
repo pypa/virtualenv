@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-_POWERSHELLS: Final = [path for name in ("pwsh", "powershell.exe") if (path := shutil.which(name))]
+_POWERSHELLS: Final[list[str]] = [path for name in ("pwsh", "powershell.exe") if (path := shutil.which(name))]
 
 
 @pytest.mark.parametrize("powershell", _POWERSHELLS)

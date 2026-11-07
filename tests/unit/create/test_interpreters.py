@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+from typing import Final
 from uuid import uuid4
 
 import pytest
@@ -18,7 +19,7 @@ def test_failed_to_find_bad_spec() -> None:
     assert repr(context.value) == msg
 
 
-_SYSTEM = PythonInfo.current_system()
+_SYSTEM: Final[PythonInfo] = PythonInfo.current_system()
 
 
 @pytest.mark.parametrize(

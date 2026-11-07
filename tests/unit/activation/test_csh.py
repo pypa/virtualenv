@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-_TCSH = which("tcsh")
+_TCSH: Final[str | None] = which("tcsh")
 
 
 @pytest.mark.skipif(IS_WIN, reason="csh is not supported on Windows")

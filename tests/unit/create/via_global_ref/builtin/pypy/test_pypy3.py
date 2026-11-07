@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 from unittest.mock import MagicMock
 
 import pytest
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
     from pytest_mock import MockerFixture
 
-_PYPY3_PATH = (
+_PYPY3_PATH: Final[tuple[str, str]] = (
     "virtualenv.create.via_global_ref.builtin.pypy.common.Path",
     "virtualenv.create.via_global_ref.builtin.pypy.pypy3.Path",
 )

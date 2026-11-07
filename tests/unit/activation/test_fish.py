@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-_FISH = shutil.which("fish")
+_FISH: Final[str | None] = shutil.which("fish")
 
 
 @pytest.mark.skipif(IS_WIN or _FISH is None, reason="fish is required")

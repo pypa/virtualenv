@@ -15,7 +15,7 @@ from virtualenv.run import cli_run
 if TYPE_CHECKING:
     from pathlib import Path
 
-_NU: Final = which("nu")
+_NU: Final[str | None] = which("nu")
 
 
 @pytest.mark.skipif(_NU is None, reason="nu is not installed")

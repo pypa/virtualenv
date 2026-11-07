@@ -18,11 +18,11 @@ from typing import Final, NoReturn
 
 from virtualenv.util.path import write_file
 
-_STRICT = "UPGRADE_ADVISORY" not in os.environ
+_STRICT: Final[bool] = "UPGRADE_ADVISORY" not in os.environ
 
-_SUPPORT = [(3, i) for i in range(9, 17)]
-_DEST = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "wheels" / "embed"
-_NOTICES_DEST = Path(__file__).resolve().parents[1] / "THIRD-PARTY-NOTICES.md"
+_SUPPORT: Final[list[tuple[int, int]]] = [(3, i) for i in range(9, 17)]
+_DEST: Final[Path] = Path(__file__).resolve().parents[1] / "src" / "virtualenv" / "seed" / "wheels" / "embed"
+_NOTICES_DEST: Final[Path] = Path(__file__).resolve().parents[1] / "THIRD-PARTY-NOTICES.md"
 
 
 def run() -> NoReturn:

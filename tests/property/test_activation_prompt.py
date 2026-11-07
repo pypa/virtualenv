@@ -12,7 +12,7 @@ from prompt_matrix import PROMPT_PAYLOADS, SHELLS, generate_script, prompt_shown
 
 # each example launches the shell once per state and later action, so 60 PowerShell examples alone run past the suite's
 # 120 second per-test timeout
-pytestmark = [pytest.mark.property, pytest.mark.timeout(900)]
+pytestmark: Final[list[pytest.MarkDecorator]] = [pytest.mark.property, pytest.mark.timeout(900)]
 
 
 @pytest.mark.parametrize("shell", list(SHELLS))

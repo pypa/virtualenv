@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import ClassVar, Final
 
 
 class _Finder:
@@ -28,4 +28,4 @@ class _Finder:
             pass  # Would call patch_dist(module)
 
 
-finder = _Finder()
+finder: Final[_Finder] = _Finder()

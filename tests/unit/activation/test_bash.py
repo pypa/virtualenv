@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-_BASH: Final = shutil.which("bash")
+_BASH: Final[str | None] = shutil.which("bash")
 
 
 @pytest.mark.skipif(_BASH is None or (IS_WIN and "\\git\\" not in _BASH.lower()), reason="requires native bash")

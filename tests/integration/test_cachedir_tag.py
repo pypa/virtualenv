@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil
 import sys
 from subprocess import check_output, run
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 # gtar => gnu-tar on macOS
-_TAR = next((target for target in ("gtar", "tar") if shutil.which(target)), None)
+_TAR: Final[str | None] = next((target for target in ("gtar", "tar") if shutil.which(target)), None)
 
 
 def compatible_is_tar_present() -> bool:

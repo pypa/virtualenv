@@ -549,7 +549,7 @@ def test_app_data_parallel_fail(tmp_path: Path, mocker: MockerFixture) -> None:
         assert "RuntimeError" in exception, exception
 
 
-_DISK_FULL: Final = OSError(errno.ENOSPC, "No space left on device")
+_DISK_FULL: Final[OSError] = OSError(errno.ENOSPC, "No space left on device")
 
 
 def _fail_during_extraction(zip_ref: zipfile.ZipFile, target_dir: Path) -> None:

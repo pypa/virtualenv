@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
 
-_NEEDS_XONSH: Final = pytest.mark.skipif(which("xonsh") is None, reason="requires xonsh")
+_NEEDS_XONSH: Final[pytest.MarkDecorator] = pytest.mark.skipif(which("xonsh") is None, reason="requires xonsh")
 
 
 @pytest.fixture

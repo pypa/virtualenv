@@ -6,7 +6,7 @@ import codecs
 import locale
 import os
 import re
-from typing import TYPE_CHECKING, NoReturn
+from typing import TYPE_CHECKING, Final, NoReturn
 from zlib import crc32 as _crc32
 
 if TYPE_CHECKING:
@@ -17,13 +17,15 @@ def crc32(data: str) -> int:
     return _crc32(data.encode()) & 0xFFFFFFFF
 
 
-here = os.path.realpath(os.path.dirname(__file__))
-script = os.path.realpath(os.path.join(here, "..", "src", "virtualenv.py"))
+here: Final[str] = os.path.realpath(os.path.dirname(__file__))
+script: Final[str] = os.path.realpath(os.path.join(here, "..", "src", "virtualenv.py"))
 
-_GZIP = codecs.lookup("zlib")
-_B64 = codecs.lookup("base64")
+_GZIP: Final[codecs.CodecInfo] = codecs.lookup("zlib")
+_B64: Final[codecs.CodecInfo] = codecs.lookup("base64")
 
-_FILE_REGEX = re.compile(r'# file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+) = convert\(\n {4}"""\n(.*?)"""\n\)', re.DOTALL)
+_FILE_REGEX: Final[re.Pattern[str]] = re.compile(
+    r'# file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+) = convert\(\n {4}"""\n(.*?)"""\n\)', re.DOTALL
+)
 
 
 def rebuild(script_path: Path) -> None:
