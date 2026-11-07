@@ -5,14 +5,14 @@ from __future__ import annotations
 import contextlib
 import os
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     import types
     from collections.abc import Callable
     from importlib.machinery import ModuleSpec
 
-_VIRTUALENV_PATCH_FILE = os.path.abspath(__file__)
+_VIRTUALENV_PATCH_FILE: Final[str] = os.path.abspath(__file__)
 
 
 def patch_dist(dist: types.ModuleType) -> None:
@@ -37,7 +37,7 @@ def patch_dist(dist: types.ModuleType) -> None:
 
 # Import hook that patches some modules to ignore configuration values that break package installation in case
 # of virtual environments.
-_DISTUTILS_PATCH = "distutils.dist", "setuptools.dist"
+_DISTUTILS_PATCH: Final[tuple[str, str]] = "distutils.dist", "setuptools.dist"
 # https://docs.python.org/3/library/importlib.html#setting-up-an-importer
 
 

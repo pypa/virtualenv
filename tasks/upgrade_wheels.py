@@ -126,14 +126,15 @@ def render_init(folders: dict[Path, str] | None = None) -> None:
     import hashlib
     import zipfile
     from pathlib import Path
+    from typing import Final
 
     from virtualenv.info import IS_ZIPAPP, ROOT
     from virtualenv.seed.wheels.util import Wheel
 
-    BUNDLE_FOLDER = Path(__file__).absolute().parent
-    BUNDLE_SUPPORT = {{ {bundle} }}
-    MAX = next(reversed(BUNDLE_SUPPORT))
-    MIN = next(iter(BUNDLE_SUPPORT))
+    BUNDLE_FOLDER: Final[Path] = Path(__file__).absolute().parent
+    BUNDLE_SUPPORT: Final[dict[str, dict[str, str]]] = {{ {bundle} }}
+    MAX: Final[str] = next(reversed(BUNDLE_SUPPORT))
+    MIN: Final[str] = next(iter(BUNDLE_SUPPORT))
 
 
     def _release_tuple(version: str) -> tuple[int, ...]:
@@ -141,11 +142,11 @@ def render_init(folders: dict[Path, str] | None = None) -> None:
 
 
     # oldest target Python version virtualenv still bundles seed wheels for; anything below this has no embedded pip
-    OLDEST_SUPPORTED = _release_tuple(MIN)
+    OLDEST_SUPPORTED: Final[tuple[int, ...]] = _release_tuple(MIN)
 
     # SHA-256 of every bundled wheel. Verified on load so a corrupted or tampered wheel on disk fails loud instead of
     # being handed to pip. Generated together with ``BUNDLE_SUPPORT`` by ``tasks/upgrade_wheels.py``.
-    BUNDLE_SHA256 = {{ {sha_block} }}
+    BUNDLE_SHA256: Final[dict[str, str]] = {{ {sha_block} }}
 
     _VERIFIED_WHEELS: set[str] = set()
 
@@ -238,9 +239,7 @@ def render_notices() -> None:
     tree = ast.parse((_DEST / "catalog.py").read_text(encoding="utf-8"))
     wheel_names: list[str] = []
     for node in tree.body:
-        if isinstance(node, ast.Assign) and any(
-            isinstance(target, ast.Name) and target.id == "BUNDLE_SHA256" for target in node.targets
-        ):
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == "BUNDLE_SHA256":
             wheel_names = sorted(ast.literal_eval(node.value))
             break
     groups: dict[tuple[str, str], list[str]] = defaultdict(list)
@@ -292,9 +291,7 @@ def _wheel_license_text(path: Path) -> str:
 
 def _support_table_from_existing_init() -> OrderedDict[str, OrderedDict[str, str]]:
     for node in ast.parse((_DEST / "catalog.py").read_text(encoding="utf-8")).body:
-        if isinstance(node, ast.Assign) and any(
-            isinstance(t, ast.Name) and t.id == "BUNDLE_SUPPORT" for t in node.targets
-        ):
+        if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == "BUNDLE_SUPPORT":
             bundle_support = ast.literal_eval(node.value)
             return OrderedDict(
                 (version, OrderedDict(sorted(mapping.items()))) for version, mapping in bundle_support.items()

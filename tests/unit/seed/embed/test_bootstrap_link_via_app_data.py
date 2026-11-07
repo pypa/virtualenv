@@ -35,8 +35,8 @@ if TYPE_CHECKING:
 
     from virtualenv.run.session import Session
 
-_SCRIPTS_DIR: Final = "Scripts" if os.name == "nt" else "bin"
-_PIP_EXE: Final = "pip.exe" if os.name == "nt" else "pip"
+_SCRIPTS_DIR: Final[str] = "Scripts" if os.name == "nt" else "bin"
+_PIP_EXE: Final[str] = "pip.exe" if os.name == "nt" else "pip"
 
 
 @pytest.mark.parametrize(

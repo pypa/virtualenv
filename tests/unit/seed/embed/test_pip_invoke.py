@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
     from virtualenv.run.session import Session
 
-_LAUNCHER_NAME: Final = "pip.exe" if os.name == "nt" else "pip"
+_LAUNCHER_NAME: Final[str] = "pip.exe" if os.name == "nt" else "pip"
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")

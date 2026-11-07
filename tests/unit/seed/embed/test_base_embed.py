@@ -64,7 +64,7 @@ def test_extra_search_dir_cli(tmp_path: Path, groups: tuple[tuple[str, ...], ...
     assert session.seeder.extra_search_dir == expected
 
 
-_CLI_SEARCH_DIRS = [
+_CLI_SEARCH_DIRS: Final[list[pytest.ParameterSet]] = [
     pytest.param((), id="none"),
     pytest.param(("first",), id="first"),
     pytest.param(("first", "second"), id="both"),
@@ -112,7 +112,7 @@ def test_extra_search_dir_cli_overrides_config_file(
     assert session.seeder.extra_search_dir == (expected or [configured])
 
 
-_BUNDLED_VERSIONS: Final = (
+_BUNDLED_VERSIONS: Final[dict[str, str]] = (
     {"pip": "bundle"} if sys.version_info[:2] >= (3, 12) else {"pip": "bundle", "setuptools": "bundle"}
 )
 
@@ -138,7 +138,10 @@ def test_wheel_cli_flags_do_nothing(
     ) == (_BUNDLED_VERSIONS, warns)
 
 
-_BUNDLED_SEEDERS = [pytest.param(FromAppData, id="app-data"), pytest.param(PipInvoke, id="pip")]
+_BUNDLED_SEEDERS: Final[list[pytest.ParameterSet]] = [
+    pytest.param(FromAppData, id="app-data"),
+    pytest.param(PipInvoke, id="pip"),
+]
 
 
 @pytest.mark.parametrize("seeder", _BUNDLED_SEEDERS)

@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 
 
 _POWERSHELLS: Final[list[str]] = [path for name in ("pwsh", "powershell.exe") if (path := shutil.which(name))]
-_VENV_BIN_DIR: Final = "Scripts" if IS_WIN else "bin"
+_VENV_BIN_DIR: Final[str] = "Scripts" if IS_WIN else "bin"
 
 
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
