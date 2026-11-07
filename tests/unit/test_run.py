@@ -220,8 +220,8 @@ def test_invalid_plugin_outside_cli(
     set_option(option, value)
     with pytest.raises(RuntimeError) as error:
         session_via_cli([str(tmp_path / "env")])
-    spec: Final = PythonInfo.current_system().spec
-    available: Final = ", ".join(sorted(current_creators.key_to_class))
+    spec: Final[str] = PythonInfo.current_system().spec
+    available: Final[str] = ", ".join(sorted(current_creators.key_to_class))
     assert (
         str(error.value)
         == {
