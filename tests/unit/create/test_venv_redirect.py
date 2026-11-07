@@ -74,33 +74,28 @@ def test_venv_redirect_env_var_and_cli(  # ruff:ignore[too-many-arguments]
 
 
 @pytest.mark.parametrize(
-    ("ini", "env_var", "written"),
+    ("ini", "env_vars", "written"),
     [
-        pytest.param("no_venv_redirect = true", None, False, id="ini-off"),
-        pytest.param("no_venv_redirect = true", "VIRTUALENV_VENV_REDIRECT", True, id="env-on-beats-ini-off"),
-        pytest.param("venv_redirect = true", "VIRTUALENV_NO_VENV_REDIRECT", False, id="env-off-beats-ini-on"),
+        pytest.param("no_venv_redirect = true", {}, False, id="ini-off"),
+        pytest.param("no_venv_redirect = true", {"VIRTUALENV_VENV_REDIRECT": "true"}, True, id="env-on-beats-ini-off"),
+        pytest.param("venv_redirect = true", {"VIRTUALENV_NO_VENV_REDIRECT": "true"}, False, id="env-off-beats-ini-on"),
+        pytest.param(
+            "", {"VIRTUALENV_VENV_REDIRECT": "1", "VIRTUALENV_NO_VENV_REDIRECT": "1"}, False, id="both-env-opt-out"
+        ),
     ],
 )
 def test_venv_redirect_ini_and_env_var(
-    project_redirect: Path, monkeypatch: pytest.MonkeyPatch, ini: str, env_var: str | None, written: bool
+    project_redirect: Path, ini: str, env_vars: dict[str, str], written: bool
 ) -> None:
-    (config := project_redirect.parent / "virtualenv.ini").write_text(f"[virtualenv]\n{ini}\n", encoding="utf-8")
-    monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(config))
-    if env_var is not None:
-        monkeypatch.setenv(env_var, "true")
-
-    _create(project_redirect.parent / "env")
+    config: Final = project_redirect.parent / "virtualenv.ini"
+    config.write_text(f"[virtualenv]\n{ini}\n", encoding="utf-8")
+    cli_run(
+        [str(project_redirect.parent / "env"), "--without-pip", "--activators", ""],
+        setup_logging=False,
+        env={**os.environ, "VIRTUALENV_CONFIG_FILE": str(config), **env_vars},
+    )
 
     assert project_redirect.exists() is written
-
-
-def test_venv_redirect_both_env_vars_opt_out(project_redirect: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("VIRTUALENV_VENV_REDIRECT", "1")
-    monkeypatch.setenv("VIRTUALENV_NO_VENV_REDIRECT", "1")
-
-    _create(project_redirect.parent / "env")
-
-    assert not project_redirect.exists()
 
 
 def test_venv_redirect_forced_points_at_created(redirect: Path) -> None:

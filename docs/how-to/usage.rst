@@ -353,8 +353,10 @@ Set the choice in the configuration file or an environment variable. ``no_venv_r
     $ export VIRTUALENV_NO_VENV_REDIRECT=1
 
 ``venv_redirect = true`` or ``VIRTUALENV_VENV_REDIRECT=1`` writes it for every environment, as ``--venv-redirect`` does.
-A flag on the command line beats both, so ``virtualenv env --venv-redirect`` writes the file for one run even with
-``no_venv_redirect = true`` set.
+Environment variables override either configuration file key: ``VIRTUALENV_VENV_REDIRECT=1`` also overrides
+``no_venv_redirect = true``. If both environment variables are true, ``VIRTUALENV_NO_VENV_REDIRECT`` wins. A flag on the
+command line beats both, so ``virtualenv env --venv-redirect`` writes the file for one run even with ``no_venv_redirect
+= true`` set.
 
 Commit the file or ignore it
 ============================
