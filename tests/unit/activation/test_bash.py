@@ -7,7 +7,7 @@ import subprocess
 import sys
 from argparse import Namespace
 from pathlib import Path
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, NamedTuple
 
 import pytest
 from prompt_matrix import generate_script
@@ -214,11 +214,15 @@ def test_bash_deactivate_restores_ps1(
     assert out == f"{expected}\n"
 
 
+class _Relocated(NamedTuple):
+    result: subprocess.CompletedProcess[str]
+    relocated: Path
+    work_dir: Path
+
+
 @pytest.fixture
-def relocated_bash_venv(
-    tmp_path: Path, current_fastest: str
-) -> Callable[[str], tuple[subprocess.CompletedProcess[str], Path, Path]]:
-    def source_after_move(name: str) -> tuple[subprocess.CompletedProcess[str], Path, Path]:
+def relocated_bash_venv(tmp_path: Path, current_fastest: str) -> Callable[[str], _Relocated]:
+    def source_after_move(name: str) -> _Relocated:
         original = tmp_path / name
         cli_run([
             "--without-pip",
@@ -241,7 +245,7 @@ def relocated_bash_venv(
             encoding="utf-8",
             check=False,
         )
-        return result, relocated, work_dir
+        return _Relocated(result, relocated, work_dir)
 
     return source_after_move
 

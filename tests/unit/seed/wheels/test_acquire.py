@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 from subprocess import CalledProcessError, Popen
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, NamedTuple
 
 import pytest
 
@@ -186,8 +186,14 @@ def test_download_wheel_preserves_custom_index_policy(
     assert result.path.read_bytes() == bytes(download_process[2])
 
 
+class _DownloadProcess(NamedTuple):
+    process: MockType
+    wheel: Wheel
+    payload: bytearray
+
+
 @pytest.fixture
-def download_process(mocker: MockerFixture, for_py_version: str) -> tuple[MockType, Wheel, bytearray]:
+def download_process(mocker: MockerFixture, for_py_version: str) -> _DownloadProcess:
     wheel: Final = get_embed_wheel("pip", for_py_version)
     payload: Final = bytearray(wheel.path.read_bytes())
     # PyPy can retain the hash input buffer until garbage collection.
@@ -213,7 +219,7 @@ def download_process(mocker: MockerFixture, for_py_version: str) -> tuple[MockTy
 
     process: Final = mocker.patch("virtualenv.seed.wheels.acquire.Popen", autospec=True, side_effect=downloaded)
     process.return_value.configure_mock(**{"communicate.return_value": ("progress complete", ""), "returncode": 0})
-    return process, wheel, payload
+    return _DownloadProcess(process, wheel, payload)
 
 
 @pytest.fixture

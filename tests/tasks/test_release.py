@@ -3,7 +3,7 @@ from __future__ import annotations
 import subprocess
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, NamedTuple
 
 import pytest
 from git import Repo
@@ -15,8 +15,14 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 
+class _Checkout(NamedTuple):
+    repo: Repo
+    remote: Repo
+    root: Path
+
+
 @pytest.fixture
-def release_checkout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture) -> tuple[Repo, Repo, Path]:
+def release_checkout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture) -> _Checkout:
     remote: Final[Repo] = Repo.init(tmp_path / "pypa" / "virtualenv", bare=True)
     repo: Final[Repo] = Repo.init(tmp_path / "checkout")
     root: Final[Path] = Path(repo.working_dir)
@@ -59,7 +65,7 @@ def release_checkout(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: Mo
         },
         autospec=True,
     )
-    return repo, remote, root
+    return _Checkout(repo, remote, root)
 
 
 def test_release_prepares_tag_without_push(release_checkout: tuple[Repo, Repo, Path]) -> None:
