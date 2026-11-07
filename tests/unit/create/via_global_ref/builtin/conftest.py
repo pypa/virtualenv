@@ -41,7 +41,7 @@ def mock_pypy_libs(mocker):
 @pytest.fixture
 def make_interpreter(mocker: MockerFixture) -> MakeInterpreter:
     def _make(
-        sysconfig_vars: dict[str, object] | None = None,
+        sysconfig_vars: dict[str, str | int | None] | None = None,
         prefix: str = "/usr",
         free_threaded: bool = False,
         version_info: tuple[int, ...] = (3, 14, 0),

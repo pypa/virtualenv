@@ -15,12 +15,12 @@ if TYPE_CHECKING:
     from tests.types import MakeInterpreter
     from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest
 
-    CollectSources = Callable[[dict[str, object]], list[PathRefToDest]]
+    CollectSources = Callable[[dict[str, str | int | None]], list[PathRefToDest]]
 
 
 @pytest.fixture
 def collect_sources(tmp_path: Path, make_interpreter: MakeInterpreter, mocker: MockerFixture) -> CollectSources:
-    def _collect(sysconfig_vars: dict[str, object]) -> list[PathRefToDest]:
+    def _collect(sysconfig_vars: dict[str, str | int | None]) -> list[PathRefToDest]:
         interpreter = make_interpreter(
             sysconfig_vars={**sysconfig_vars, "PYTHONFRAMEWORK": ""},
             prefix=str(tmp_path),

@@ -10,6 +10,8 @@ from testing.helpers import contains_exe
 from virtualenv.create.via_global_ref.builtin.rustpython import RustPythonPosix, RustPythonWindows
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from pytest_mock import MockerFixture
 
 
@@ -31,7 +33,7 @@ def test_can_describe_rejects_cpython(mocker: MockerFixture) -> None:
 
 
 @pytest.mark.parametrize("py_info_name", ["rustpython_posix"])
-def test_sources_posix(py_info: PythonInfo, mock_files: object) -> None:
+def test_sources_posix(py_info: PythonInfo, mock_files: Callable[[tuple[str, ...], list[str | None]], None]) -> None:
     mock_files(("virtualenv.create.via_global_ref.builtin.rustpython.Path",), [py_info.system_executable])
     sources = list(RustPythonPosix.sources(interpreter=py_info))
     assert len(sources) == 1
@@ -39,7 +41,7 @@ def test_sources_posix(py_info: PythonInfo, mock_files: object) -> None:
 
 
 @pytest.mark.parametrize("py_info_name", ["rustpython_windows"])
-def test_sources_windows(py_info: PythonInfo, mock_files: object) -> None:
+def test_sources_windows(py_info: PythonInfo, mock_files: Callable[[tuple[str, ...], list[str | None]], None]) -> None:
     mock_files(("virtualenv.create.via_global_ref.builtin.rustpython.Path",), [py_info.system_executable])
     sources = list(RustPythonWindows.sources(interpreter=py_info))
     assert len(sources) == 1
