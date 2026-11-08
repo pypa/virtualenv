@@ -455,3 +455,5 @@ packages.python-sbom.uploaded-prior-to = 2026-11-08T17:54:00Z
 
 [tool.simplint]
 docstring-style = "rst"
+# the CodeQL samples are deliberately bad code that the queries must flag, and they stay byte-identical to upstream
+per-file-ignores = { ".github/codeql/tests/*" = [ "SMP" ] }
