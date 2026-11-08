@@ -11,6 +11,7 @@ from virtualenv.util.text import collapse_line_boundaries
 if TYPE_CHECKING:
     from pathlib import Path
 
+#: Logger of this module.
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 # a plain value such as 3.14 or true would otherwise turn into a path whenever the working directory has an entry so
@@ -132,5 +133,6 @@ def _validate_path(path: Path) -> None:
 
 
 __all__ = [
+    "LOGGER",
     "PyEnvCfg",
 ]

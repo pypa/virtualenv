@@ -80,8 +80,4 @@ if os.name == "nt":
         ]
 
 
-__all__ = [
-    "get_short_path_name",
-]
-if os.name == "nt":
-    __all__ += ["clear_readonly"]
+__all__ = ["clear_readonly", "get_short_path_name"] if os.name == "nt" else ["get_short_path_name"]  # ruff:ignore[invalid-all-format]  # platform dependent

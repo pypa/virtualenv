@@ -37,10 +37,15 @@ if TYPE_CHECKING:
 
     from virtualenv.app_data.base import AppData, ContentStore
 
+#: Logger of this module.
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+#: Delay before a newer wheel is picked up, so a CI run never sees its version change.
 GRACE_PERIOD_CI: Final[timedelta] = timedelta(hours=1)  # prevent version switch in the middle of a CI run
+#: Delay before a newer minor release of a wheel is picked up.
 GRACE_PERIOD_MINOR: Final[timedelta] = timedelta(days=28)
+#: How often the periodic update checks PyPI for newer wheels.
 UPDATE_PERIOD: Final[timedelta] = timedelta(days=14)
+#: An update that started longer ago than this is considered aborted.
 UPDATE_ABORTED_DELAY: Final[timedelta] = timedelta(hours=1)
 
 
@@ -94,6 +99,16 @@ def handle_auto_update(  # ruff:ignore[too-many-arguments]
     app_data: AppData,
     env: dict[str, str],
 ) -> None:
+    """Start a periodic update of the wheel when its update log says one is due.
+
+    :param distribution: the name of the distribution
+    :param for_py_version: the Python version the wheel is for
+    :param wheel: the wheel in use, ``None`` when there is none
+    :param search_dirs: the folders to look for wheels in
+    :param app_data: the application data folder
+    :param env: the environment variables for the update
+
+    """
     u_log = UpdateLog.from_app_data(app_data, distribution, for_py_version)
     if u_log.needs_update:
         u_log.periodic = True
@@ -208,7 +223,9 @@ def add_wheel_to_update_log(wheel: Wheel, for_py_version: str, app_data: AppData
     embed_update_log.write(u_log.to_dict())
 
 
+#: Format of the datetimes stored in the update log.
 DATETIME_FMT: Final[str] = "%Y-%m-%dT%H:%M:%S.%fZ"
+_PyPIJson = dict[str, object]  # simplint: ignore[SMP602]  # PyPI's JSON is parsed as is, its fields are read by name
 
 
 def dump_datetime(value: datetime | None) -> str | None:
@@ -363,7 +380,10 @@ class UpdateLog:
             return cls(None, None, [], None)
 
     @classmethod
-    def from_dict(cls, dictionary: dict[str, object] | None) -> UpdateLog:
+    def from_dict(
+        cls,
+        dictionary: dict[str, object] | None,  # simplint: ignore[SMP602]  # stored log is parsed JSON
+    ) -> UpdateLog:
         """Parse the update log from the stored form.
 
         :param dictionary: the stored form of the update log, ``None`` when none was stored
@@ -397,7 +417,7 @@ class UpdateLog:
     def _check_start(self, now: datetime) -> bool:
         return self.started is None or now - self.started > UPDATE_ABORTED_DELAY
 
-    def to_dict(self) -> dict[str, object]:
+    def to_dict(self) -> dict[str, str | bool | list[dict[str, str | None]] | None]:
         """Return the stored form of the update log.
 
         :returns: the update log as a dictionary
@@ -458,13 +478,13 @@ def _pypi_sha256_for_wheel(wheel: Wheel) -> str | None:
     return sha256 if isinstance(sha256, str) else None
 
 
-def _pypi_get_distribution_info_cached(distribution: str) -> dict[str, object] | None:
+def _pypi_get_distribution_info_cached(distribution: str) -> _PyPIJson | None:
     if distribution not in _PYPI_CACHE:
         _PYPI_CACHE[distribution] = _pypi_get_distribution_info(distribution)
     return _PYPI_CACHE[distribution]
 
 
-def _pypi_get_distribution_info(distribution: str) -> dict[str, object] | None:
+def _pypi_get_distribution_info(distribution: str) -> _PyPIJson | None:
     content, url = None, f"https://pypi.org/pypi/{distribution}/json"
     try:
         for context in _request_context():
@@ -487,7 +507,7 @@ def _request_context() -> Generator[ssl.SSLContext | None, None, None]:
         yield ssl._create_unverified_context()  # ruff:ignore[suspicious-unverified-context-usage, private-member-access]
 
 
-def _fetch_pypi_json(url: str, context: ssl.SSLContext | None) -> dict[str, object] | None:
+def _fetch_pypi_json(url: str, context: ssl.SSLContext | None) -> _PyPIJson | None:
     try:
         # url is a fixed https://pypi.org address, not user input
         with urlopen(url, context=context) as file_handler:  # ruff:ignore[suspicious-url-open-usage]
@@ -502,7 +522,7 @@ class UnverifiedWheelError(RuntimeError):
     """PyPI's digest for a downloaded wheel was unavailable, so a caller may fall back to the bundled wheel."""
 
 
-_PYPI_CACHE: Final[dict[str, dict[str, object] | None]] = {}
+_PYPI_CACHE: Final[dict[str, _PyPIJson | None]] = {}
 
 
 def manual_upgrade(app_data: AppData, env: dict[str, str]) -> None:
@@ -562,9 +582,9 @@ def _run_manual_upgrade(app_data: AppData, distribution: str, for_py_version: st
     ]
     if versions:
         args.append("\n".join(f"\t{v}" for v in versions))
-    ver_update = "new entries found:\n%s" if versions else "no new versions found"
-    msg = f"upgraded %s for python %s in %s {ver_update}"
-    LOGGER.warning(msg, *args)
+        LOGGER.warning("upgraded %s for python %s in %s new entries found:\n%s", *args)
+    else:
+        LOGGER.warning("upgraded %s for python %s in %s no new versions found", *args)
 
 
 # the subprocess entry point takes the same six inputs as the generated call
@@ -711,12 +731,19 @@ def release_date_for_wheel_path(dest: Path) -> datetime | None:
 
 
 __all__ = [
+    "DATETIME_FMT",
+    "GRACE_PERIOD_CI",
+    "GRACE_PERIOD_MINOR",
+    "LOGGER",
+    "UPDATE_ABORTED_DELAY",
+    "UPDATE_PERIOD",
     "NewVersion",
     "UnverifiedWheelError",
     "UpdateLog",
     "add_wheel_to_update_log",
     "do_update",
     "dump_datetime",
+    "handle_auto_update",
     "load_datetime",
     "manual_upgrade",
     "periodic_update",

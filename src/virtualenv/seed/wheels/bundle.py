@@ -74,6 +74,16 @@ def load_embed_wheel(app_data: AppData, distribution: str, for_py_version: str, 
 
 
 def from_dir(distribution: str, version: str | None, for_py_version: str, directories: list[Path]) -> Wheel | None:
+    """Return the first wheel of the distribution found in the folders, or ``None`` when there is none.
+
+    :param distribution: the name of the distribution
+    :param version: the version to find, ``None`` for any
+    :param for_py_version: the Python version the wheel must support
+    :param directories: the folders to search, in order
+
+    :returns: the wheel, or ``None``
+
+    """
     for folder in directories:
         for wheel in discover_wheels(folder, distribution, version, for_py_version):
             return wheel
@@ -82,5 +92,6 @@ def from_dir(distribution: str, version: str | None, for_py_version: str, direct
 
 __all__ = [
     "from_bundle",
+    "from_dir",
     "load_embed_wheel",
 ]

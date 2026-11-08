@@ -23,6 +23,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
+#: Logger of this module.
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
@@ -132,5 +133,6 @@ _DEBUG_MARKER: Final[str] = f"{'=' * 30} target debug {'=' * 30}"
 
 
 __all__ = [
+    "LOGGER",
     "Session",
 ]

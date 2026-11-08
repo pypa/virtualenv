@@ -20,6 +20,7 @@ from .util import Version, Wheel, discover_wheels
 if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
 
+#: Logger of this module.
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 #: The command that runs pip as a module, with the empty path entries removed.
@@ -282,6 +283,7 @@ def find_compatible_in_house(
 
 
 __all__ = [
+    "LOGGER",
     "PIP_RUN",
     "download_wheel",
     "find_compatible_in_house",

@@ -45,6 +45,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from pathlib import Path
 
+#: Logger of this module.
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
@@ -265,6 +266,13 @@ class PyInfoStoreDisk(JSONStoreDisk):
 
 
 class EmbedDistributionUpdateStoreDisk(JSONStoreDisk):
+    """Update log of an embedded distribution, kept as a JSON file in the app data folder.
+
+    :param in_folder: the lock of the folder the log lives in
+    :param distribution: the name of the distribution
+
+    """
+
     def __init__(self, in_folder: ReentrantFileLock, distribution: str) -> None:
         super().__init__(
             in_folder,
@@ -274,7 +282,9 @@ class EmbedDistributionUpdateStoreDisk(JSONStoreDisk):
 
 
 __all__ = [
+    "LOGGER",
     "AppDataDiskFolder",
+    "EmbedDistributionUpdateStoreDisk",
     "JSONStoreDisk",
     "PyInfoStoreDisk",
 ]

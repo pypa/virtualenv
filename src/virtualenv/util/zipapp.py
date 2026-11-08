@@ -7,6 +7,7 @@ from typing import Final
 
 from virtualenv.info import ROOT
 
+#: Logger of this module.
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
@@ -55,6 +56,7 @@ def extract(full_path: str | Path, dest: Path) -> None:
 
 
 __all__ = [
+    "LOGGER",
     "extract",
     "read",
 ]

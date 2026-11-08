@@ -16,6 +16,7 @@ LEVELS: Final[dict[int, int]] = {
 
 #: The highest ``-v`` count that selects a logging level.
 MAX_LEVEL: Final[int] = max(LEVELS.keys())
+#: Logger of this module.
 LOGGER: Final[logging.Logger] = logging.getLogger()
 
 
@@ -52,6 +53,7 @@ def setup_report(verbosity: int, show_pid: bool = False) -> int:  # ruff:ignore[
 
 __all__ = [
     "LEVELS",
+    "LOGGER",
     "MAX_LEVEL",
     "setup_report",
 ]

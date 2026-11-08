@@ -22,6 +22,7 @@ from virtualenv.util.path import remove_file, safe_delete
 if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
+#: Logger of this module.
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
@@ -261,6 +262,19 @@ class EntryPointConfig(ConfigParser):
 
 
 class ScriptMakerCustom(ScriptMaker):
+    """Writes the entry point scripts of a distribution, replacing any existing file of the same name.
+
+    :param target_dir: the directory the scripts are written to
+    :param version_info: the interpreter version, with ``major`` and ``minor``
+    :param executable: the interpreter the scripts run with
+    :param name: the name of the script
+
+    :var clobber: ``True`` so existing scripts are overwritten
+    :var set_mode: ``True`` so the scripts are made executable
+    :var variants: the script variants to write, inherited from ``ScriptMaker``
+
+    """
+
     def __init__(self, target_dir: Path, version_info: tuple[int, ...], executable: Path, name: str) -> None:
         super().__init__(None, str(target_dir))
         self.clobber = True  # overwrite
@@ -322,7 +336,9 @@ def _safe_extract_zip(zip_ref: zipfile.ZipFile, target_dir: Path) -> None:
 
 
 __all__ = [
+    "LOGGER",
     "EntryPointConfig",
     "PipInstall",
+    "ScriptMakerCustom",
     "shell_shebang",
 ]

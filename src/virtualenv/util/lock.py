@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from types import TracebackType
 
+#: Logger of this module.
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
@@ -62,6 +63,14 @@ _STORE_LOCK: Final[Lock] = Lock()
 
 
 class PathLockBase(ABC):
+    """Base of the folder locks, which lock keys within one folder.
+
+    :param folder: the folder the locks live in
+
+    :var path: the folder, resolved when it exists
+
+    """
+
     def __init__(self, folder: str | Path) -> None:
         path = Path(folder)
         self.path = path.resolve() if path.exists() else path
@@ -86,11 +95,26 @@ class PathLockBase(ABC):
     @contextmanager
     # the flag is part of the lock_for_key interface that every lock class implements
     def lock_for_key(self, name: str, no_block: bool = False) -> Generator[None, None, None]:  # ruff:ignore[boolean-default-value-positional-argument]
+        """Hold the lock of ``name`` within this folder, failing instead of waiting when ``no_block`` is set.
+
+        :param name: the key to lock
+        :param no_block: ``True`` to fail instead of waiting for the lock
+
+        :returns: a context manager holding the lock
+
+        """
         raise NotImplementedError
 
     @abstractmethod
     @contextmanager
     def non_reentrant_lock_for_key(self, name: str) -> Generator[None, None, None]:
+        """Hold the lock of ``name`` within this folder, which the same thread may not take again.
+
+        :param name: the key to lock
+
+        :returns: a context manager holding the lock
+
+        """
         raise NotImplementedError
 
 
@@ -233,7 +257,9 @@ class NoOpFileLock(PathLockBase):
 
 
 __all__ = [
+    "LOGGER",
     "NoOpFileLock",
+    "PathLockBase",
     "ReentrantFileLock",
     "Timeout",
 ]

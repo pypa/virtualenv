@@ -8,10 +8,18 @@ if TYPE_CHECKING:
     from argparse import Action
     from typing import Any
 
+#: Logger of this module.
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class TypeData:
+    """Converts a raw option value to the type the option expects.
+
+    :param default_type: the type of the option
+    :param as_type: the type each item of a list option is converted to
+
+    """
+
     def __init__(self, default_type: type, as_type: type) -> None:
         self.default_type = default_type
         self.as_type = as_type
@@ -21,6 +29,13 @@ class TypeData:
 
     # a converter returns the type of the option it converts
     def convert(self, value: str) -> Any:  # ruff:ignore[any-type]
+        """Convert a raw option value to the type of the option.
+
+        :param value: the raw value
+
+        :returns: the converted value
+
+        """
         return self.default_type(value)
 
 
@@ -59,15 +74,34 @@ class BoolType(TypeData):
 
 
 class NoneType(TypeData):
+    """Converter for options that may be empty, where an empty value means ``None``."""
+
     def convert(self, value: str) -> str | None:
+        """Return ``None`` for an empty value, otherwise the value as a string.
+
+        :param value: the raw value
+
+        :returns: the value, ``None`` when empty
+
+        """
         if not value:
             return None
         return str(value)
 
 
 class ListType(TypeData):
+    """Converter for options that take a list of values."""
+
     # flatten is accepted but ignored, removing it would change the converter signature
-    def convert(self, value: str | list[str], flatten: bool = True) -> list[Any]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]
+    def convert(self, value: str | list[str], flatten: bool = True) -> list[Any]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]  # simplint: ignore[SMP602]  # each item has the type of the option, known only at run time
+        """Convert each item of the list to the type of the option.
+
+        :param value: the raw value, a string or a list of strings
+        :param flatten: accepted for the converter signature and ignored
+
+        :returns: the converted items
+
+        """
         values = self.split_values(value)
         result = []
         for a_value in values:
@@ -75,6 +109,13 @@ class ListType(TypeData):
         return [self.as_type(i) for i in result]
 
     def split_values(self, value: str | bytes | list[str]) -> list[str]:
+        """Split a raw value into its items: by line when it has several lines, otherwise by comma.
+
+        :param value: the raw value
+
+        :returns: the items
+
+        """
         if isinstance(value, bytes):
             value = value.decode()
         if isinstance(value, str):
@@ -121,7 +162,11 @@ def get_type(action: Action) -> TypeData:
 
 
 __all__ = [
+    "LOGGER",
     "BoolType",
+    "ListType",
+    "NoneType",
+    "TypeData",
     "convert",
     "get_type",
 ]

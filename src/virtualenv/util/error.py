@@ -19,3 +19,8 @@ class ProcessCallFailedError(RuntimeError):
         self.out = out
         self.err = err
         self.cmd = cmd
+
+
+__all__ = [
+    "ProcessCallFailedError",
+]

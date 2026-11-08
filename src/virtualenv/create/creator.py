@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Final, cast
 if TYPE_CHECKING:
     from argparse import ArgumentParser, Namespace
     from collections.abc import Sequence
-    from typing import Any, NoReturn
+    from typing import NoReturn
 
     from python_discovery import PythonInfo
 
@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
 from os.path import commonpath
+from typing import Any
 
 from virtualenv.util.path import safe_delete, write_file
 from virtualenv.util.subprocess import LogCmd, run_cmd
@@ -32,9 +33,15 @@ from virtualenv.version import __version__
 
 from .pyenv_cfg import PyEnvCfg
 
+#: Directory of this module.
 HERE: Final[Path] = Path(os.path.abspath(__file__)).parent
+#: Script that reports debug information from an interpreter.
 DEBUG_SCRIPT: Final[Path] = HERE / "debug.py"
+#: Logger of this module.
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+
+
+_DebugInfo = dict[str, Any]  # simplint: ignore[SMP602]  # debug JSON keys vary by interpreter
 
 
 class CreatorMeta:
@@ -132,7 +139,7 @@ class Creator(ABC):
             ...
 
     @property
-    def debug(self) -> dict[str, Any] | None:
+    def debug(self) -> _DebugInfo | None:
         """Debug information about the virtual environment (only valid after :meth:`create` has run)."""
         if self._debug is None and self.exe is not None:
             self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data, self.env)
@@ -420,7 +427,17 @@ class Creator(ABC):
             return False
 
 
-def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env: dict[str, str]) -> dict[str, Any]:
+def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env: dict[str, str]) -> _DebugInfo:
+    """Run the debug script with the interpreter at ``env_exe`` and return the report it prints.
+
+    :param env_exe: the interpreter to run the script with
+    :param debug_script: the script that reports the debug information
+    :param app_data: the application data folder
+    :param env: the environment variables to run with
+
+    :returns: the debug information
+
+    """
     env = env.copy()
     env.pop("PYTHONPATH", None)
 
@@ -439,7 +456,7 @@ def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env
     return result
 
 
-def _parse_debug_output(code: int, out: str, err: str) -> dict[str, Any]:
+def _parse_debug_output(code: int, out: str, err: str) -> _DebugInfo:
     if code != 0:
         if out:
             result = literal_eval(out)
@@ -457,6 +474,10 @@ def _parse_debug_output(code: int, out: str, err: str) -> dict[str, Any]:
 
 
 __all__ = [
+    "DEBUG_SCRIPT",
+    "HERE",
+    "LOGGER",
     "Creator",
     "CreatorMeta",
+    "get_env_debug_info",
 ]

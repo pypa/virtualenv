@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 
     from virtualenv.create.via_global_ref.builtin.ref import PathRef
 
+#: Logger of this module.
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
@@ -154,6 +155,14 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
 
 
 def fix_mach_o(exe: str, current: str, new: str, max_size: int) -> None:
+    """Rewrite the Mach-O library reference of an executable, falling back to ``install_name_tool``.
+
+    :param exe: the executable to rewrite
+    :param current: the library reference to replace
+    :param new: the library reference to use instead
+    :param max_size: the largest Mach-O header size the builtin rewrite handles
+
+    """
     try:
         LOGGER.debug("change Mach-O for %s from %s to %s", exe, current, new)
         _builtin_change_mach_o(max_size)(exe, current, new)
@@ -161,8 +170,7 @@ def fix_mach_o(exe: str, current: str, new: str, max_size: int) -> None:
     except Exception as error:  # ruff:ignore[blind-except]
         LOGGER.warning("Could not call _builtin_change_mac_o: %s. Trying to call install_name_tool instead.", error)
         try:
-            cmd = ["install_name_tool", "-change", current, new, exe]
-            subprocess.check_call(cmd)
+            subprocess.check_call(["install_name_tool", "-change", current, new, exe])  # ruff:ignore[start-process-with-partial-path]  # the macOS developer tools put it on PATH
         except Exception:
             logging.fatal("Could not call install_name_tool -- you must have Apple's development tools installed")
             raise
@@ -341,7 +349,9 @@ class CPython3macOsBrew(CPython3, CPythonPosix):
 
 
 __all__ = [
+    "LOGGER",
     "CPython3macOsBrew",
     "CPython3macOsFramework",
     "CPythonmacOsFramework",
+    "fix_mach_o",
 ]

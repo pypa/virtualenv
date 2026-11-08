@@ -19,6 +19,7 @@ from .store import handle_store_python
 if TYPE_CHECKING:
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
+#: Logger of this module.
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
@@ -42,7 +43,7 @@ class Venv(ViaGlobalRefApi):
         self.can_be_inline = interpreter is current and interpreter.executable == interpreter.system_executable
         self._context = None
 
-    def __getattribute__(self, item: str) -> object:
+    def __getattribute__(self, item: str) -> object:  # simplint: ignore[SMP602]  # proxied attributes differ in type
         if (describe := object.__getattribute__(self, "describe")) is not None and hasattr(describe, item):
             element = getattr(describe, item)
             if not callable(element) or item == "script":
@@ -170,5 +171,6 @@ class Venv(ViaGlobalRefApi):
 
 
 __all__ = [
+    "LOGGER",
     "Venv",
 ]
