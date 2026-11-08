@@ -696,11 +696,6 @@ def copy_seed_record(tmp_path: Path, ending: bytes) -> tuple[Path, list[list[str
     return wheel, original_rows
 
 
-def _write_zip_with_entry(zip_path: Path, entry_name: str) -> None:
-    with zipfile.ZipFile(str(zip_path), "w") as archive:
-        archive.writestr(entry_name, "payload")
-
-
 def test_safe_extract_zip_allows_normal_entry(tmp_path: Path) -> None:
     archive = tmp_path / "ok.zip"
     _write_zip_with_entry(archive, "pkg/inner.txt")
@@ -711,6 +706,11 @@ def test_safe_extract_zip_allows_normal_entry(tmp_path: Path) -> None:
         _safe_extract_zip(zip_ref, target)
 
     assert (target / "pkg" / "inner.txt").read_text(encoding="utf-8") == "payload"
+
+
+def _write_zip_with_entry(zip_path: Path, entry_name: str) -> None:
+    with zipfile.ZipFile(str(zip_path), "w") as archive:
+        archive.writestr(entry_name, "payload")
 
 
 def test_safe_extract_zip_rejects_parent_traversal(tmp_path: Path) -> None:
