@@ -4,26 +4,26 @@ import shlex
 
 
 class UnquotedActivator:
-    def generate(self, prompt: str, dest: str) -> dict[str, str]:
-        return self.substitutions(self.replacements(prompt, dest))
+    def replacements(self, prompt: str, dest: str) -> dict[str, str]:  # simplint: ignore[SMP201]  # CodeQL sample keeps its layout  # fmt: skip
+        return {"__VIRTUAL_PROMPT__": prompt, "__VIRTUAL_ENV__": dest}
 
-    def substitutions(self, replacements: dict[str, str]) -> dict[str, str]:
+    def substitutions(self, replacements: dict[str, str]) -> dict[str, str]:  # simplint: ignore[SMP201]  # CodeQL sample keeps its layout  # fmt: skip
         return {key: str(value) for key, value in replacements.items()}
 
-    def replacements(self, prompt: str, dest: str) -> dict[str, str]:
-        return {"__VIRTUAL_PROMPT__": prompt, "__VIRTUAL_ENV__": dest}
+    def generate(self, prompt: str, dest: str) -> dict[str, str]:
+        return self.substitutions(self.replacements(prompt, dest))
 
 
 class QuotedActivator:
-    def generate(self, prompt: str, dest: str) -> dict[str, str]:
-        return self.substitutions(self.replacements(prompt, dest))
-
-    def substitutions(self, replacements: dict[str, str]) -> dict[str, str]:
-        return {key: self.quote(value) for key, value in replacements.items()}
-
     @staticmethod
-    def quote(string: str) -> str:
+    def quote(string: str) -> str:  # simplint: ignore[SMP201]  # CodeQL sample keeps its layout
         return shlex.quote(string)
 
     def replacements(self, prompt: str, dest: str) -> dict[str, str]:
         return {"__VIRTUAL_PROMPT__": prompt, "__VIRTUAL_ENV__": dest}
+
+    def substitutions(self, replacements: dict[str, str]) -> dict[str, str]:  # simplint: ignore[SMP201]  # CodeQL sample keeps its layout  # fmt: skip
+        return {key: self.quote(value) for key, value in replacements.items()}
+
+    def generate(self, prompt: str, dest: str) -> dict[str, str]:
+        return self.substitutions(self.replacements(prompt, dest))
