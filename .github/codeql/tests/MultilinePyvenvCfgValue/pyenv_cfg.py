@@ -6,11 +6,11 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-def collapse_line_boundaries(text: str) -> str:  # simplint: ignore[SMP201]  # CodeQL sample keeps its layout
+def collapse_line_boundaries(text: str) -> str:
     return " ".join(text.splitlines())
 
 
-def write_file(path: Path, data: bytes) -> None:  # simplint: ignore[SMP201]  # CodeQL sample keeps its layout
+def write_file(path: Path, data: bytes) -> None:
     path.write_bytes(data)
 
 
@@ -20,7 +20,7 @@ class RawPyEnvCfg:
         self.path = path
 
     def write(self) -> None:
-        text = "".join(f"{key} = {value}\n" for key, value in self.content.items())  # simplint: ignore[SMP504]  # CodeQL sample keeps its layout  # fmt: skip
+        text = "".join(f"{key} = {value}\n" for key, value in self.content.items())
         write_file(self.path, text.encode("utf-8"))
 
 

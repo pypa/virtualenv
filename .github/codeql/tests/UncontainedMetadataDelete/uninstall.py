@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-def safe_delete(dest: Path) -> None:  # simplint: ignore[SMP201]  # CodeQL sample keeps its layout
+def safe_delete(dest: Path) -> None:
     shutil.rmtree(dest)
 
 
