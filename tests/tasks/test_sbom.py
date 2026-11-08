@@ -19,27 +19,28 @@ from hatchling.builders.wheel import WheelBuilder
 _ROOT: Final[Path] = Path(__file__).parents[2]
 _EMBED: Final[str] = "virtualenv/seed/wheels/embed"
 _LIBRARY: Final[str] = "__virtualenv__/distlib-0.4-py3-none-any"
+_Document = dict[str, Any]  # simplint: ignore[SMP602]  # the SBOM JSON is free-form; assertions pin its shape
 _DISTRIBUTIONS: Final[str] = json.dumps({
     "3.14": {"==any": {"distlib": f"{_LIBRARY}/distlib-0.4.dist-info"}},
     "3.9": {"==any": {"distlib": f"{_LIBRARY}/distlib-0.4.dist-info"}},
 })
 # the layout of src/virtualenv/seed/wheels/embed/catalog.py: another assignment comes before the table
 _BUNDLE_TABLE: Final[str] = (
-    'BUNDLE_FOLDER: Final[Path] = Path(__file__).absolute().parent\n'
+    "BUNDLE_FOLDER: Final[Path] = Path(__file__).absolute().parent\n"
     'BUNDLE_SUPPORT: Final[dict[str, dict[str, str]]] = {"3.14": {"pip": "pip-1.0-py3-none-any.whl"}}\n'
 )
-_PYPA: Final[dict[str, Any]] = {"name": "Python Packaging Authority", "url": ["https://www.pypa.io"]}
 
 
-def test_sbom_seeded_for_python(wheel_sbom: dict[str, Any]) -> None:
+def test_sbom_seeded_for_python(wheel_sbom: _Document) -> None:
     assert wheel_sbom["components"][0]["properties"][:2] == [
         {"name": "virtualenv:bundled-wheel", "value": f"{_EMBED}/pip-1.0-py3-none-any.whl"},
         {"name": "virtualenv:seeded-for-python", "value": "3.14"},
     ]
 
 
-def test_sbom_supplier(wheel_sbom: dict[str, Any]) -> None:
-    assert (wheel_sbom["metadata"]["supplier"], wheel_sbom["components"][0]["supplier"]) == (_PYPA, _PYPA)
+def test_sbom_supplier(wheel_sbom: _Document) -> None:
+    pypa = {"name": "Python Packaging Authority", "url": ["https://www.pypa.io"]}
+    assert (wheel_sbom["metadata"]["supplier"], wheel_sbom["components"][0]["supplier"]) == (pypa, pypa)
 
 
 def test_sbom_wheel_license_policy(wheel: Path, capfd: pytest.CaptureFixture[str]) -> None:
@@ -48,7 +49,21 @@ def test_sbom_wheel_license_policy(wheel: Path, capfd: pytest.CaptureFixture[str
     assert f"bundled:{_EMBED}/pip-1.0-py3-none-any.whl: declares no license" in capfd.readouterr().err
 
 
-def test_sbom_zipapp_components(zipapp_sbom: dict[str, Any]) -> None:
+def validate_sbom(target: Path) -> None:
+    sys.path.insert(0, str(_ROOT / "tasks"))
+    try:
+        main = runpy.run_path(str(_ROOT / "tasks" / "validate_sbom.py"))["main"]
+    finally:
+        sys.path.remove(str(_ROOT / "tasks"))
+    original = sys.argv
+    sys.argv = ["validate_sbom.py", str(target)]
+    try:
+        main()
+    finally:
+        sys.argv = original
+
+
+def test_sbom_zipapp_components(zipapp_sbom: _Document) -> None:
     assert [
         (component["bom-ref"], [child["name"] for child in component.get("components", [])])
         for component in zipapp_sbom["components"]
@@ -69,11 +84,11 @@ def test_sbom_zipapp_components(zipapp_sbom: dict[str, Any]) -> None:
     ]
 
 
-def test_sbom_zipapp_embedded_wheel_matches_wheel_sbom(zipapp_sbom: dict[str, Any], wheel_sbom: dict[str, Any]) -> None:
+def test_sbom_zipapp_embedded_wheel_matches_wheel_sbom(zipapp_sbom: _Document, wheel_sbom: _Document) -> None:
     assert zipapp_sbom["components"][0]["components"][3] == wheel_sbom["components"][0]
 
 
-def test_sbom_zipapp_loaded_for_python(zipapp_sbom: dict[str, Any]) -> None:
+def test_sbom_zipapp_loaded_for_python(zipapp_sbom: _Document) -> None:
     assert zipapp_sbom["components"][1]["properties"][:3] == [
         {"name": "virtualenv:bundled-wheel", "value": _LIBRARY},
         {"name": "virtualenv:loaded-for-python", "value": "3.14"},
@@ -81,7 +96,7 @@ def test_sbom_zipapp_loaded_for_python(zipapp_sbom: dict[str, Any]) -> None:
     ]
 
 
-def test_sbom_zipapp_loader_files(zipapp_sbom: dict[str, Any]) -> None:
+def test_sbom_zipapp_loader_files(zipapp_sbom: _Document) -> None:
     assert [
         (component["name"], component["hashes"][0]["content"])
         for component in zipapp_sbom["metadata"]["component"]["components"]
@@ -94,6 +109,14 @@ def test_sbom_zipapp_loader_files(zipapp_sbom: dict[str, Any]) -> None:
 
 def test_sbom_zipapp_describes_every_file(zipapp: Path) -> None:
     assert describes_archive(zipapp) == []
+
+
+def describes_archive(pyz: Path) -> list[str]:
+    sys.path.insert(0, str(_ROOT / "tasks"))
+    try:
+        return runpy.run_path(str(_ROOT / "tasks" / "validate_sbom.py"))["describes_archive"](pyz)
+    finally:
+        sys.path.remove(str(_ROOT / "tasks"))
 
 
 def test_sbom_zipapp_mismatch(tampered: Path) -> None:
@@ -162,43 +185,6 @@ def test_sbom_zipapp_license_problems(zipapp: Path, capfd: pytest.CaptureFixture
     ] == [True, True, True]
 
 
-def validate_sbom(target: Path) -> None:
-    sys.path.insert(0, str(_ROOT / "tasks"))
-    try:
-        main = runpy.run_path(str(_ROOT / "tasks" / "validate_sbom.py"))["main"]
-    finally:
-        sys.path.remove(str(_ROOT / "tasks"))
-    original = sys.argv
-    sys.argv = ["validate_sbom.py", str(target)]
-    try:
-        main()
-    finally:
-        sys.argv = original
-
-
-def describes_archive(pyz: Path) -> list[str]:
-    sys.path.insert(0, str(_ROOT / "tasks"))
-    try:
-        return runpy.run_path(str(_ROOT / "tasks" / "validate_sbom.py"))["describes_archive"](pyz)
-    finally:
-        sys.path.remove(str(_ROOT / "tasks"))
-
-
-def write_pip_wheel(target: Path | BytesIO, metadata: str) -> None:
-    files: Final[dict[str, bytes]] = {"pip/example.py": b"abc", "pip-1.0.dist-info/METADATA": metadata.encode()}
-    record: Final[StringIO] = StringIO(newline="")
-    csv.writer(record).writerows([
-        *(
-            (name, f"sha256={base64.urlsafe_b64encode(hashlib.sha256(data).digest()).rstrip(b'=').decode()}", len(data))
-            for name, data in files.items()
-        ),
-        ("pip-1.0.dist-info/RECORD", "", ""),
-    ])
-    with zipfile.ZipFile(target, "w") as archive:
-        for name, data in {**files, "pip-1.0.dist-info/RECORD": record.getvalue().encode()}.items():
-            archive.writestr(name, data)
-
-
 @pytest.fixture
 def wheel(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
@@ -240,8 +226,23 @@ content-provider = "tasks.sbom_content:VirtualenvContent"
     return Path(built)
 
 
+def write_pip_wheel(target: Path | BytesIO, metadata: str) -> None:
+    files: Final[dict[str, bytes]] = {"pip/example.py": b"abc", "pip-1.0.dist-info/METADATA": metadata.encode()}
+    record: Final[StringIO] = StringIO(newline="")
+    csv.writer(record).writerows([
+        *(
+            (name, f"sha256={base64.urlsafe_b64encode(hashlib.sha256(data).digest()).rstrip(b'=').decode()}", len(data))
+            for name, data in files.items()
+        ),
+        ("pip-1.0.dist-info/RECORD", "", ""),
+    ])
+    with zipfile.ZipFile(target, "w") as archive:
+        for name, data in {**files, "pip-1.0.dist-info/RECORD": record.getvalue().encode()}.items():
+            archive.writestr(name, data)
+
+
 @pytest.fixture
-def wheel_sbom(wheel: Path) -> dict[str, Any]:
+def wheel_sbom(wheel: Path) -> _Document:
     with zipfile.ZipFile(wheel) as archive:
         return json.loads(archive.read("virtualenv-1.0.dist-info/sboms/virtualenv.cdx.json"))
 
@@ -280,5 +281,5 @@ def zipapp(tmp_path: Path, wheel: Path) -> Path:
 
 
 @pytest.fixture
-def zipapp_sbom(zipapp: Path) -> dict[str, Any]:
+def zipapp_sbom(zipapp: Path) -> _Document:
     return json.loads(zipfile.ZipFile(zipapp).read("virtualenv.pyz.cdx.json"))
