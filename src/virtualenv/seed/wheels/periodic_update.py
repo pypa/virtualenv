@@ -628,10 +628,8 @@ def _run_do_update(  # ruff:ignore[too-many-arguments]
         if update_versions:
             update_versions[0].source = source
 
-    if wheel_filename is not None:
-        dest = wheelhouse / wheel_filename.name
-        if not dest.exists():
-            copy2(str(wheel_filename), str(wheelhouse))
+    if wheel_filename is not None and not (wheelhouse / wheel_filename.name).exists():
+        copy2(str(wheel_filename), str(wheelhouse))
     versions = _download_newer_versions(
         distribution, for_py_version, search_dirs, app_data, embed_version, update_versions, source, now
     )
