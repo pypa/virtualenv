@@ -50,7 +50,7 @@ _VERSIONS: Final[tuple[str, ...]] = tuple(f"3.{i}" for i in range(15, 8, -1))
 _LOCK: Final[Path] = _HERE.parent / "pylock.zipapp.toml"
 
 
-def main() -> None:
+def _main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dest", default="virtualenv.pyz")
     parser.add_argument("--wheel-dir", type=Path, help="bundle the virtualenv wheel from here instead of building one")
@@ -222,7 +222,7 @@ def _entry(name: str) -> zipfile.ZipInfo:
 
 
 if __name__ == "__main__":
-    main()
+    _main()
 
 
 __all__ = [

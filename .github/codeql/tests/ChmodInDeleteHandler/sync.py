@@ -9,7 +9,11 @@ if TYPE_CHECKING:
 
 
 def safe_delete(dest: str) -> None:
-    def onerror(func: Callable[[str], object], path: str, _exc_info: object) -> None:
+    def onerror(
+        func: Callable[[str], object],
+        path: str,
+        _exc_info: object,  # simplint: ignore[SMP602]  # rmtree callback
+    ) -> None:
         os.chmod(path, 0o700)
         func(path)
 
@@ -17,7 +21,11 @@ def safe_delete(dest: str) -> None:
 
 
 def plain_delete(dest: str) -> None:
-    def onerror(func: Callable[[str], object], path: str, _exc_info: object) -> None:
+    def onerror(
+        func: Callable[[str], object],
+        path: str,
+        _exc_info: object,  # simplint: ignore[SMP602]  # rmtree callback
+    ) -> None:
         func(path)
 
     shutil.rmtree(dest, onerror=onerror)

@@ -10,7 +10,7 @@ from typing import Final
 from urllib.request import urlopen
 
 
-def main() -> None:
+def _main() -> None:
     cutoff: Final[datetime] = datetime.now(tz=timezone.utc) - timedelta(days=7)
     rejected: Final[list[str]] = []
     for wheel in _changed_wheels():
@@ -50,4 +50,4 @@ __all__ = []
 
 
 if __name__ == "__main__":
-    main()
+    _main()

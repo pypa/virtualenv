@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
 
-def main() -> None:
+def _main() -> None:
     parser: Final[ArgumentParser] = ArgumentParser(description=__doc__)
     parser.add_argument(
         "--shards",
@@ -118,7 +118,9 @@ class _Shard:
         return executed
 
 
-def _executed_tests(junit_path: Path) -> int | None:
+def _executed_tests(  # simplint: ignore[SMP505]  # JUnit parsing is a task of its own
+    junit_path: Path,
+) -> int | None:
     try:
         root: Final[ET.Element] = ET.parse(junit_path).getroot()  # ruff:ignore[suspicious-xml-element-tree-usage] trusted pytest output
         suites: Final[list[ET.Element]] = list(root.iter("testsuite"))
@@ -133,4 +135,4 @@ __all__ = []
 
 
 if __name__ == "__main__":
-    main()
+    _main()

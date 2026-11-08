@@ -9,7 +9,9 @@ class ScriptMaker:
 
 
 class PlainScriptMaker(ScriptMaker):
-    def _build_shebang(self, executable: bytes, post_interp: bytes) -> bytes:
+    def _build_shebang(  # simplint: ignore[SMP527]  # CodeQL fixture, the override is the flagged shape
+        self, executable: bytes, post_interp: bytes
+    ) -> bytes:
         return super()._build_shebang(executable, post_interp)
 
 

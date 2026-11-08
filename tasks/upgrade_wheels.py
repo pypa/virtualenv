@@ -36,7 +36,10 @@ def run() -> NoReturn:
         new_batch = {i.name: i for f in folders for i in Path(f).iterdir()}
         new_packages = new_batch.keys() - old_batch
         remove_packages = old_batch - new_batch.keys()
-        _sync_dest(new_packages, remove_packages, new_batch)
+        for package in remove_packages:
+            (_DEST / package).unlink()
+        for package in new_packages:
+            shutil.copy2(str(new_batch[package]), _DEST / package)
         added = collect_package_versions(new_packages)
         removed = collect_package_versions(remove_packages)
         outcome = (1 if _STRICT else 0) if (added or removed) else 0
@@ -64,13 +67,6 @@ def _download_all(temp_path: Path) -> dict[Path, str]:
     for thread in targets:
         thread.join()
     return folders
-
-
-def _sync_dest(new_packages: set[str], remove_packages: set[str], new_batch: dict[str, Path]) -> None:
-    for package in remove_packages:
-        (_DEST / package).unlink()
-    for package in new_packages:
-        shutil.copy2(str(new_batch[package]), _DEST / package)
 
 
 def _write_changelog(added: dict[str, list[str]], removed: dict[str, list[str]]) -> None:

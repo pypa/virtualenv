@@ -17,8 +17,8 @@ def crc32(data: str) -> int:
     return _crc32(data.encode()) & 0xFFFFFFFF
 
 
-here: Final[str] = os.path.realpath(os.path.dirname(__file__))
-script: Final[str] = os.path.realpath(os.path.join(here, "..", "src", "virtualenv.py"))
+_HERE: Final[str] = os.path.realpath(os.path.dirname(__file__))
+_SCRIPT: Final[str] = os.path.realpath(os.path.join(_HERE, "..", "src", "virtualenv.py"))
 
 _GZIP: Final[codecs.CodecInfo] = codecs.lookup("zlib")
 _B64: Final[codecs.CodecInfo] = codecs.lookup("base64")
@@ -62,7 +62,7 @@ def rebuild(script_path: Path) -> None:
 
 def handle_file(previous_content: str, filename: str, variable_name: str, previous_encoded: str) -> tuple[bool, str]:
     print(f"Found file {filename}")  # ruff:ignore[print]  # the script reports each file it finds to the terminal
-    current_path = os.path.realpath(os.path.join(here, "..", "src", "virtualenv_embedded", filename))
+    current_path = os.path.realpath(os.path.join(_HERE, "..", "src", "virtualenv_embedded", filename))
     _, file_type = os.path.splitext(current_path)
     with open(current_path, encoding="utf-8", newline="" if (file_type == ".bat") else None) as current_fh:
         current_text = current_fh.read()
@@ -95,4 +95,4 @@ def report(exit_code: int, new: str, next_match: re.Match[str] | None, current: 
 
 
 if __name__ == "__main__":
-    rebuild(script)
+    rebuild(_SCRIPT)

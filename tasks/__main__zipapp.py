@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 ABS_HERE: Final[str] = os.path.abspath(os.path.dirname(__file__))
 
 
-def run() -> None:
+def _run() -> None:
     with VersionedFindLoad():
         # must import inside VersionedFindLoad, so the zipapp finders are active
         from virtualenv.__main__ import run as run_virtualenv  # ruff:ignore[import-outside-top-level]
@@ -27,7 +27,7 @@ def run() -> None:
         run_virtualenv()
 
 
-class VersionPlatformSelect:
+class _VersionPlatformSelect:
     def __init__(self) -> None:
         zipapp = ABS_HERE
         self.archive = zipapp
@@ -180,7 +180,9 @@ def _versioned_distribution_class() -> type:
     return _VER_DISTRIBUTION_CLASS
 
 
-class VersionedFindLoad(VersionPlatformSelect, SourceLoader):
+class VersionedFindLoad(  # simplint: ignore[SMP403]  # the zipapp bootstrap looks this class up by name
+    _VersionPlatformSelect, SourceLoader
+):
     def __enter__(self) -> Self:
         sys.path.insert(0, self.archive)
         sys.meta_path.insert(0, self)
@@ -205,7 +207,7 @@ class VersionedFindLoad(VersionPlatformSelect, SourceLoader):
 
 
 if __name__ == "__main__":
-    run()
+    _run()
 
 
 __all__ = []

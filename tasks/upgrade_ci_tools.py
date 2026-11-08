@@ -55,7 +55,7 @@ query($owner: String!, $name: String!) {
 _NPM_COOLDOWN: Final[timedelta] = timedelta(days=7)
 
 
-def main() -> None:
+def _main() -> None:
     if not (token := os.environ.get("GH_TOKEN")):
         msg = "GH_TOKEN is required to query GitHub releases"
         raise SystemExit(msg)
@@ -173,4 +173,4 @@ __all__ = []
 
 
 if __name__ == "__main__":
-    main()
+    _main()

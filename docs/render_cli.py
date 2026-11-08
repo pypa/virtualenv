@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from argparse import SUPPRESS
 from contextlib import contextmanager
-from typing import TYPE_CHECKING, Any, ClassVar, Final, NamedTuple
+from typing import TYPE_CHECKING, ClassVar, Final, NamedTuple
 
 from docutils import nodes
 from docutils.parsers.rst.directives import unchanged_required
@@ -13,6 +13,7 @@ from virtualenv.run.plugin.base import ComponentBuilder
 
 if TYPE_CHECKING:
     from collections import OrderedDict
+    from collections.abc import Callable
 
 _CUSTOM: Final[dict[str, OrderedDict[str, type]]] = {
     "discovery": ComponentBuilder.entry_points_for("virtualenv.discovery"),
@@ -24,7 +25,10 @@ _CUSTOM: Final[dict[str, OrderedDict[str, type]]] = {
 
 class CliTable(SphinxDirective):
     name: ClassVar[str] = "table_cli"
-    option_spec: ClassVar[str, Any] = {"module": unchanged_required, "func": unchanged_required}
+    option_spec: ClassVar[dict[str, Callable[[str | None], str]]] = {
+        "module": unchanged_required,
+        "func": unchanged_required,
+    }
 
     def run(self):
         module_name, attr_name = self.options["module"], self.options["func"]
@@ -163,7 +167,7 @@ class CliTable(SphinxDirective):
             choices = option.get("choices")
             if (key := names[0].strip("-")) in CliTable.plugins:
                 choices = list(ComponentBuilder.entry_points_for(CliTable.plugins[key]).keys())
-            result.append(TableRow(names, default, choices, option["help"]))
+            result.append(_TableRow(names, default, choices, option["help"]))
         return result
 
     @contextmanager
@@ -214,7 +218,7 @@ class CliTable(SphinxDirective):
     }
 
 
-class TableRow(NamedTuple):
+class _TableRow(NamedTuple):
     names: list[str]
     default: str
     choices: set[str]

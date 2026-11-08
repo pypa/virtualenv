@@ -114,7 +114,7 @@ def test_zipapp_version(zipapp: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("tasks.__main__zipapp.ABS_HERE", str(zipapp))
     monkeypatch.setattr(sys, "argv", [str(zipapp), "--version"])
     with pytest.raises(SystemExit) as context:
-        _ZIPAPP_MAIN.run()
+        _ZIPAPP_MAIN._run()  # ruff:ignore[private-member-access]  # the script entry point is private to the module
     assert context.value.code == 0
 
 
