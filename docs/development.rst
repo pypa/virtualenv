@@ -360,23 +360,25 @@ virtualenv is distributed under the MIT License, and everything in the repositor
 - ``tasks/validate_sbom.py`` enforces the policy on the SBOMs of the built wheel and zipapp, in ``tox r -e readme`` and
   ``tox r -e zipapp``. An SPDX expression passes when each ``OR`` offers an allowed license and every ``AND`` operand is
   allowed; a ``WITH`` exception leaves the verdict to the license it modifies. A package that declares its license by
-  name alone fails the check until ``_CLASSIFIER_LICENSES`` in ``hatch_build.py`` maps the name to an SPDX id.
+  name alone fails the check until `python-sbom <https://github.com/tox-dev/python-sbom>`_ maps the name to an SPDX id.
 - ``.github/workflows/dependency-review.yaml`` fails a pull request that adds a dependency with a known vulnerability to
   any manifest, release tooling lock files included.
 - Adding a runtime dependency or bumping an embedded wheel is a maintainer decision; checking the license of the new
   version is part of that review.
-- ``hatch_build.py`` writes a `CycloneDX <https://cyclonedx.org/>`_ SBOM into every wheel at
-  ``.dist-info/sboms/virtualenv.cdx.json``. It reads the ``BUNDLE_SUPPORT``/``BUNDLE_SHA256`` tables that back the
-  embedded wheels above, so a wheel bump updates it with no extra step. ``tasks/cyclonedx_to_spdx.py`` renders that
-  document as SPDX 2.3 with the standard library alone. ``tox r -e readme`` builds a wheel and validates its SBOM and
-  the SPDX rendering; the release workflow runs ``tox r -e spdx`` to write ``virtualenv.spdx.json`` from
-  ``virtualenv.cdx.json`` and check it with ``pyspdxtools``. Both environments run on Python 3.15 with a Beartype
-  prerelease that fixes its `removed typing API import <https://github.com/beartype/beartype/issues/618>`_.
-- ``tasks/zipapp_sbom.py`` describes a built ``virtualenv.pyz`` from the archive itself: virtualenv, the embedded
-  wheels, and each bundled dependency with the Python versions that load it, down to a SHA-256 per file. It reuses the
-  helpers in ``hatch_build.py``, writes ``virtualenv.pyz.cdx.json`` next to the zipapp and adds the same file to the
-  archive root. ``tox r -e zipapp`` builds the zipapp, runs the script, and has ``tasks/validate_sbom.py`` check that
-  the SBOM lists every file in the archive with its hash.
+- The ``python-sbom`` build hook writes a `CycloneDX <https://cyclonedx.org/>`_ SBOM into every wheel at
+  ``.dist-info/sboms/virtualenv.cdx.json``. Its options live under ``[tool.python-sbom]`` in ``pyproject.toml``, where
+  ``content-provider`` names ``tasks/sbom_content.py``: it adds the ``BUNDLE_SUPPORT`` table that backs the embedded
+  wheels above, so a wheel bump updates the SBOM with no extra step. ``hatch_build.py`` only loads the hook on Python
+  versions python-sbom supports. ``python-sbom spdx`` renders that document as SPDX 2.3. ``tox r -e readme`` builds a
+  wheel and validates its SBOM and the SPDX rendering; the release workflow runs ``tox r -e spdx`` to write
+  ``virtualenv.spdx.json`` from ``virtualenv.cdx.json`` and check it with ``pyspdxtools``. Both environments run on
+  Python 3.15 with a Beartype prerelease that fixes its `removed typing API import
+  <https://github.com/beartype/beartype/issues/618>`_.
+- ``python-sbom archive`` describes a built ``virtualenv.pyz`` the way the hook describes the wheel: virtualenv, the
+  embedded wheels with the same identities as in the wheel's SBOM, and each bundled dependency with the Python versions
+  that load it, down to a SHA-256 per file. ``tox r -e zipapp`` builds the zipapp, writes ``virtualenv.pyz.cdx.json``
+  next to it and into its root, and has ``tasks/validate_sbom.py`` check that the SBOM lists every file in the archive
+  with its hash.
 
 :doc:`reference/release-artifacts` describes every file, SBOM and attestation a release publishes, and
 :doc:`how-to/verify-release` shows users how to check them.
