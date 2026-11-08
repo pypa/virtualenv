@@ -23,9 +23,10 @@ _DISTRIBUTIONS: Final[str] = json.dumps({
     "3.14": {"==any": {"distlib": f"{_LIBRARY}/distlib-0.4.dist-info"}},
     "3.9": {"==any": {"distlib": f"{_LIBRARY}/distlib-0.4.dist-info"}},
 })
-# the layout of src/virtualenv/seed/wheels/embed/__init__.py: another assignment comes before the table
+# the layout of src/virtualenv/seed/wheels/embed/catalog.py: another assignment comes before the table
 _BUNDLE_TABLE: Final[str] = (
-    'BUNDLE_FOLDER = Path(__file__).absolute().parent\nBUNDLE_SUPPORT = {"3.14": {"pip": "pip-1.0-py3-none-any.whl"}}\n'
+    'BUNDLE_FOLDER: Final[Path] = Path(__file__).absolute().parent\n'
+    'BUNDLE_SUPPORT: Final[dict[str, dict[str, str]]] = {"3.14": {"pip": "pip-1.0-py3-none-any.whl"}}\n'
 )
 _PYPA: Final[dict[str, Any]] = {"name": "Python Packaging Authority", "url": ["https://www.pypa.io"]}
 
@@ -57,7 +58,7 @@ def test_sbom_zipapp_components(zipapp_sbom: dict[str, Any]) -> None:
             [
                 "virtualenv-1.0.dist-info/METADATA",
                 "virtualenv/__init__.py",
-                f"{_EMBED}/__init__.py",
+                f"{_EMBED}/catalog.py",
                 "pip",
             ],
         ),
@@ -207,7 +208,7 @@ def wheel(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     (project / "LICENSE").write_text("Copyright (c) example\n", encoding="utf-8")
     (embed := project / "src" / _EMBED).mkdir(parents=True)
     (project / "src" / "virtualenv" / "__init__.py").write_text("", encoding="utf-8")
-    (embed / "__init__.py").write_text(_BUNDLE_TABLE, encoding="utf-8")
+    (embed / "catalog.py").write_text(_BUNDLE_TABLE, encoding="utf-8")
     write_pip_wheel(
         embed / "pip-1.0-py3-none-any.whl",
         "Metadata-Version: 2.4\nName: pip\nVersion: 1.0\nProject-URL: Source, https://github.com/pypa/pip\n",
@@ -255,7 +256,7 @@ def zipapp(tmp_path: Path, wheel: Path) -> Path:
         archive.writestr("distributions.json", _DISTRIBUTIONS)
         archive.writestr("virtualenv-1.0.dist-info/METADATA", "Metadata-Version: 2.4\nName: virtualenv\nVersion: 1.0\n")
         archive.writestr("virtualenv/__init__.py", "")
-        archive.writestr(f"{_EMBED}/__init__.py", _BUNDLE_TABLE)
+        archive.writestr(f"{_EMBED}/catalog.py", _BUNDLE_TABLE)
         archive.writestr(f"{_EMBED}/pip-1.0-py3-none-any.whl", pip)
         archive.writestr(
             f"{_LIBRARY}/distlib-0.4.dist-info/METADATA", "Metadata-Version: 2.4\nName: distlib\nVersion: 0.4\n"
