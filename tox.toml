@@ -268,7 +268,7 @@ commands = [
     "--require-hashes",
     "pylock.toml",
   ],
-  [ "python", "{tox_root}{/}tasks{/}cyclonedx_to_spdx.py", "virtualenv.cdx.json", "virtualenv.spdx.json" ],
+  [ "python-sbom", "spdx", "virtualenv.cdx.json", "virtualenv.spdx.json" ],
   [ "pyspdxtools", "--infile", "virtualenv.spdx.json" ],
 ]
 uv_seed = false
@@ -322,7 +322,7 @@ commands = [
     ".",
   ],
   [ "python", "-m", "tasks.make_zipapp", "--wheel-dir", "{env_tmp_dir}" ],
-  [ "python", "tasks/zipapp_sbom.py", "virtualenv.pyz", "virtualenv.pyz.cdx.json" ],
+  [ "python-sbom", "archive", "virtualenv.pyz", "--build-script", "tasks/make_zipapp.py", "--embed" ],
   [ "python", "tasks/validate_sbom.py", "virtualenv.pyz" ],
 ]
 uv_seed = false
