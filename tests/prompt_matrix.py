@@ -54,7 +54,7 @@ PROMPT_PAYLOADS: Final[dict[str, str]] = {
     "trailing-backslash": "e\\",
 }
 
-SHELLS: Final[dict[str, str]] = {
+SHELLS: Final[dict[str, Shell]] = {
     "bash": Shell(
         "bash",
         "activate",
@@ -166,7 +166,7 @@ SHELLS: Final[dict[str, str]] = {
     ),
 }
 
-PROMPT_CASES: Final[list[tuple[str, str]]] = [
+PROMPT_CASES: Final[list[tuple[str, str, str, str]]] = [
     (shell, state, action, payload)
     for shell, spec in SHELLS.items()
     for state in spec.states
@@ -229,6 +229,8 @@ def run_prompt(shell: str, script: Path, state: str, action: str, cwd: Path) -> 
         # shells an action starts still draw the inherited prompt, into /dev/null, so it cannot mix with the parent's
         argv = [spec.program, "--noprofile", "--norc", "-i"] if shell == "bash" else [spec.program, "-f", "-i"]
         stdin = f"{before}\nPS1=__END__\n. {shlex.quote(str(script))}\n{after}\nexit\n"
+        # without a terminal readline assumes 80 columns and scrolls a longer line, cutting the start of the prompt
+        env = os.environ | {"COLUMNS": "1000"}
     elif shell == "cshell":
         argv = [spec.program, "-f", "-i"]
         stdin = f"{before}\nset prompt = __END__\nsource {script}\n{after}\nexit\n"
