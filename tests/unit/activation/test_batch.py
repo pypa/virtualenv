@@ -261,8 +261,14 @@ def test_batch_quote_replaces_end_of_file() -> None:
     assert BatchActivator.quote("before\x1aafter") == "before after"
 
 
+@pytest.fixture
+def batch_python(activation_python) -> None:
+    if not (activation_python.creator.bin_dir / "activate.bat").exists():
+        pytest.skip("Batch activation does not support this destination")
+
+
 @pytest.mark.parametrize("activations", [1, 2], ids=["activate_once", "activate_twice"])
-@pytest.mark.skipif(not IS_WIN, reason="the POSIX special-char name keeps a double quote, which batch cannot preserve")
+@pytest.mark.usefixtures("batch_python")
 def test_batch(activation_tester_class, activation_tester, tmp_path, activations) -> None:
     version_script = tmp_path / "version.bat"
     version_script.write_text("ver", encoding="utf-8")
@@ -296,7 +302,7 @@ def test_batch(activation_tester_class, activation_tester, tmp_path, activations
     activation_tester(Batch)
 
 
-@pytest.mark.skipif(not IS_WIN, reason="the POSIX special-char name keeps a double quote, which batch cannot preserve")
+@pytest.mark.usefixtures("batch_python")
 def test_batch_output(activation_tester_class, activation_tester, tmp_path) -> None:
     version_script = tmp_path / "version.bat"
     version_script.write_text("ver", encoding="utf-8")
