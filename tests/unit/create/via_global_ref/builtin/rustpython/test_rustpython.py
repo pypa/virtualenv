@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 from python_discovery import PythonInfo
-from testing.helpers import contains_exe
+from testing.ref_filters import contains_exe
 
 from virtualenv.create.via_global_ref.builtin.rustpython import RustPythonPosix, RustPythonWindows
 

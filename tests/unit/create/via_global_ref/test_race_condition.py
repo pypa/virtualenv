@@ -27,7 +27,7 @@ def _test_finder_behavior() -> None:
     # the import checks the fixture module is on sys.path, the name is not used
     import _virtualenv_test  # ruff:ignore[import-outside-top-level]
 
-    finder = _virtualenv_test.finder
+    finder = _virtualenv_test._FINDER  # ruff:ignore[private-member-access]  # the helper is exec'd, its finder is private
 
     result = finder.find_spec("distutils.dist", None)
     assert result is None, "find_spec should return None when _DISTUTILS_PATCH is not defined"

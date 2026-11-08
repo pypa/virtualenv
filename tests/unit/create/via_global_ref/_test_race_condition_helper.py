@@ -29,4 +29,4 @@ class _Finder:
             pass  # Would call patch_dist(module)
 
 
-finder: Final[_Finder] = _Finder()
+_FINDER: Final[_Finder] = _Finder()

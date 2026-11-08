@@ -20,10 +20,10 @@ _LINE_BOUNDARIES: Final[str] = f"\n\r\v\f\x1c\x1d\x1e\x85{chr(0x2028)}{chr(0x202
 
 # Lone surrogates are excluded: cmd.exe scripts are read as text, and the same limit applies to the
 # pyvenv.cfg property tests for the same reason.
-values: Final[st.SearchStrategy[str]] = st.text(st.characters(blacklist_categories=("Cs",), max_codepoint=0x2100))
+_VALUES: Final[st.SearchStrategy[str]] = st.text(st.characters(blacklist_categories=("Cs",), max_codepoint=0x2100))
 
 
-@given(value=values)
+@given(value=_VALUES)
 @example('x" & type nul > pwned.marker & "')  # the confirmed exploit payload
 @example("x^& type nul ^> pwned.marker ^& ")  # caret-escaped: still live outside a quoted context
 @example("x\n@type nul > pwned.marker\n@rem ")  # newline: a full extra statement, not just a breakout
@@ -42,7 +42,7 @@ def test_quote_leaves_parentheses_untouched(value: str) -> None:
     assert BatchActivator.quote(value) == value
 
 
-@given(value=values)
+@given(value=_VALUES)
 def test_quote_keeps_percent_literal_and_balanced(value: str) -> None:
     """Every ``%`` must survive doubled, never as a lone character that triggers expansion."""
     quoted = BatchActivator.quote(value)
@@ -50,7 +50,7 @@ def test_quote_keeps_percent_literal_and_balanced(value: str) -> None:
     assert quoted.replace("%%", "").count("%") == 0
 
 
-@given(value=values)
+@given(value=_VALUES)
 @example('x" & type nul > pwned.marker & "')
 def test_embedding_in_the_set_statement_stays_one_well_formed_line(value: str) -> None:
     """The exact shape the template uses: a single ``@set "VAR=value"`` statement."""

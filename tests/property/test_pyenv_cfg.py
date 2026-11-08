@@ -22,7 +22,7 @@ _PRINTABLE: Final[st.SearchStrategy[str]] = st.characters(blacklist_categories=(
 _KEYS: Final[st.SearchStrategy[str]] = st.text(
     st.characters(blacklist_categories=("Cs",), blacklist_characters=f"={_LINE_BOUNDARIES}"), min_size=1
 ).filter(lambda key: key.strip() == key and not key.startswith("#"))
-contents: Final[st.SearchStrategy[dict[str, str]]] = st.dictionaries(_KEYS, st.text(_PRINTABLE), max_size=6)
+_CONTENTS: Final[st.SearchStrategy[dict[str, str]]] = st.dictionaries(_KEYS, st.text(_PRINTABLE), max_size=6)
 
 
 def _round_trip(content: dict[str, str], tmp_path) -> dict[str, str]:
@@ -31,7 +31,7 @@ def _round_trip(content: dict[str, str], tmp_path) -> dict[str, str]:
     return dict(PyEnvCfg.from_file(path).content)
 
 
-@given(content=contents)
+@given(content=_CONTENTS)
 @example(content={"prompt": 'x"\nhome = /attacker\nprompt = "z'})
 @example(content={"prompt": f"a{chr(0x2028)}home = /attacker"})
 @example(content={"home": "a\r\nevil = 1"})
@@ -42,7 +42,7 @@ def test_writing_then_reading_never_invents_keys(content, tmp_path_factory) -> N
     assert set(read_back) <= set(content)
 
 
-@given(content=contents)
+@given(content=_CONTENTS)
 @example(content={"prompt": 'x"\nhome = /attacker\nprompt = "z'})
 def test_written_file_has_one_line_per_key(content, tmp_path_factory) -> None:
     """However exotic the values, the file keeps its line-per-key shape."""

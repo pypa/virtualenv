@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Final
 
 import pytest
 from python_discovery import PythonInfo
-from testing.helpers import contains_exe, contains_ref
 from testing.path import join as path
+from testing.ref_filters import contains_exe, contains_ref
 
 from virtualenv.create.via_global_ref.builtin.pypy.pypy3 import PyPy3Posix
 from virtualenv.create.via_global_ref.builtin.ref import PathRefToDest

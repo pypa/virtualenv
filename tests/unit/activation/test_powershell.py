@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-_POWERSHELLS: Final[list[str]] = [path for name in ("pwsh", "powershell.exe") if (path := shutil.which(name))]
+_POWERSHELLS: Final[list[str]] = [path for path in map(shutil.which, ("pwsh", "powershell.exe")) if path]
 _VENV_BIN_DIR: Final[str] = "Scripts" if IS_WIN else "bin"
 
 

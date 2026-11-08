@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import Final
 
 import pytest
-from testing.helpers import contains_exe, contains_ref, has_src, is_exe
 from testing.path import join as path
+from testing.ref_filters import contains_exe, contains_ref, has_src, is_exe
 
 from virtualenv.create.via_global_ref.builtin.cpython.cpython3 import CPython3Windows
 

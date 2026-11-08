@@ -7,7 +7,7 @@ import shutil
 import subprocess
 from argparse import Namespace
 from typing import TYPE_CHECKING, Final, NamedTuple
-from unittest.mock import create_autospec
+from unittest.mock import create_autospec  # simplint: ignore[SMP809]  # hypothesis rejects the mocker fixture
 
 import pytest
 from python_discovery import PythonInfo
