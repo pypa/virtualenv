@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import subprocess
 from shlex import quote
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, NamedTuple
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -30,7 +30,7 @@ class LogCmd:
         return cmd_repr
 
 
-def run_cmd(cmd: list[str], env: Mapping[str, str] | None = None) -> tuple[int, str, str]:
+def run_cmd(cmd: list[str], env: Mapping[str, str] | None = None) -> CmdResult:
     """Run a command and collect its exit code and output.
 
     :param cmd: the command and its arguments
@@ -57,11 +57,26 @@ def run_cmd(cmd: list[str], env: Mapping[str, str] | None = None) -> tuple[int, 
         if code == 2 and err is not None and "file" in err:  # ruff:ignore[magic-value-comparison]
             err = str(error)  # FileNotFoundError in Python >= 3.3
     # errno and strerror are optional on OSError, so the tuple is not all str
-    return code, out, err  # ty: ignore[invalid-return-type]
+    return CmdResult(code, out, err)  # ty: ignore[invalid-argument-type]
+
+
+class CmdResult(NamedTuple):
+    """Exit code and output of a command run by :func:`run_cmd`.
+
+    :param code: the exit code of the command
+    :param out: the standard output of the command
+    :param err: the standard error of the command
+
+    """
+
+    code: int
+    out: str
+    err: str
 
 
 __all__ = [
     "CREATE_NO_WINDOW",
+    "CmdResult",
     "LogCmd",
     "run_cmd",
 ]
