@@ -1,4 +1,9 @@
-"""Virtual environments in the traditional sense are built as reference to the host python. This file allows declarative references to elements on the file system, allowing our system to automatically detect what modes it can support given the constraints: e.g. can the file system symlink, can the files be read, executed, etc."""
+"""Virtual environments in the traditional sense reference the host python.
+
+This file allows declarative references to elements on the file system, allowing our system to automatically detect what
+modes it can support given the constraints: e.g. can the file system symlink, can the files be read, executed, etc.
+
+"""
 
 from __future__ import annotations
 
@@ -15,6 +20,8 @@ from virtualenv.util.path import copy, make_exe, remove_file, symlink
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
+
+    from virtualenv.create.creator import Creator
 
 if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
     from enum import StrEnum
@@ -119,7 +126,7 @@ class PathRef(ABC):
         return self._can_symlink
 
     @abstractmethod
-    def run(self, creator: object, symlinks: bool) -> None:
+    def run(self, creator: Creator, symlinks: bool) -> None:
         """Link or copy the referenced file to its destination.
 
         :param creator: the creator the environment is created by
@@ -187,7 +194,7 @@ class PathRefToDest(PathRef):
         super().__init__(src, must, when)
         self.dest = dest
 
-    def run(self, creator: object, symlinks: bool) -> None:
+    def run(self, creator: Creator, symlinks: bool) -> None:
         """Link or copy the referenced file to the destination path or each destination path in the list.
 
         :param creator: the creator the environment is created by
@@ -236,7 +243,7 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(src={self.src}, alias={self.aliases})"
 
-    def run(self, creator: object, symlinks: bool) -> None:
+    def run(self, creator: Creator, symlinks: bool) -> None:
         """Link or copy the executable, then its aliases, into the destination folder, marking copies executable.
 
         :param creator: the creator the environment is created by

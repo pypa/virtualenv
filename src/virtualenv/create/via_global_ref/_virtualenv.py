@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     import types
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
     from functools import partial
     from importlib.machinery import ModuleSpec
 
@@ -22,7 +22,7 @@ def patch_dist(dist: types.ModuleType) -> None:
     old_parse_config_files = dist.Distribution.parse_config_files
 
     # matches the untyped distutils parse_config_files override it replaces
-    def parse_config_files(self, *args: object, **kwargs: object) -> object:  # ruff:ignore[missing-type-function-argument]
+    def parse_config_files(self, *args: object, **kwargs: object) -> object:  # ruff:ignore[missing-type-function-argument]  # simplint: ignore[SMP602]  # forwards the arguments of the distutils method it replaces unchanged, whatever they are
         result = old_parse_config_files(self, *args, **kwargs)
         install = self.get_option_dict("install")
 
@@ -52,7 +52,12 @@ class _Finder:
     lock = []  # ruff:ignore[mutable-class-default]
 
     # lock is a shared cell mutated on purpose, so every finder sees one lock
-    def find_spec(self, fullname: str, path: object, target: object = None) -> ModuleSpec | None:  # ruff:ignore[unused-method-argument]
+    def find_spec(
+        self,
+        fullname: str,
+        path: Sequence[str] | None,
+        target: types.ModuleType | None = None,  # ruff:ignore[unused-method-argument]  # the finder protocol passes target
+    ) -> ModuleSpec | None:
         # Guard against race conditions during file rewrite by checking if _DISTUTILS_PATCH is defined.
         # This can happen when the file is being overwritten while it's being imported by another process.
         # See https://github.com/pypa/virtualenv/issues/2969 for details.

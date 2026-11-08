@@ -10,6 +10,7 @@ if TYPE_CHECKING:
 
     from python_discovery import PythonInfo
 
+    from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvConfigParser, VirtualEnvOptions
 
 
@@ -41,7 +42,7 @@ class PluginLoader:
         return OrderedDict((e.name, e.load()) for e in selected)
 
     @staticmethod
-    def entry_points() -> object:
+    def entry_points() -> object:  # simplint: ignore[SMP602]  # importlib.metadata type varies by Python
         """Return the entry points of all installed packages, loaded once per process.
 
         :returns: the entry points
@@ -124,7 +125,7 @@ class ComponentBuilder(PluginLoader):
     def _available_for(self) -> str:
         return ""
 
-    def populate_selected_argparse(self, selected: str, app_data: object) -> None:
+    def populate_selected_argparse(self, selected: str, app_data: AppData) -> None:
         """Set the parser description and create the chosen plugin's options.
 
         :param selected: the selected plugin name
@@ -136,7 +137,9 @@ class ComponentBuilder(PluginLoader):
         # plugin classes come from entry points, which ty sees as type
         self._impl_class.add_parser_arguments(self.parser, self.interpreter, app_data)  # ty: ignore[unresolved-attribute]
 
-    def create(self, options: VirtualEnvOptions) -> object:
+    def create(
+        self, options: VirtualEnvOptions
+    ) -> object:  # simplint: ignore[SMP602]  # entry point class instance, type known at run time
         """Create the chosen plugin.
 
         :param options: the parsed options

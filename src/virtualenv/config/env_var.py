@@ -12,7 +12,9 @@ if TYPE_CHECKING:
     from .convert import TypeData
 
 
-def get_env_var(key: str, as_type: TypeData, env: Mapping[str, str]) -> tuple[Any, str] | None:
+def get_env_var(
+    key: str, as_type: TypeData, env: Mapping[str, str]
+) -> tuple[Any, str] | None:  # simplint: ignore[SMP602]  # type known at run time
     """Get the environment variable option.
 
     :param key: the config key requested

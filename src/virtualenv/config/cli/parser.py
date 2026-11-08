@@ -95,14 +95,16 @@ class VirtualEnvConfigParser(ArgumentParser):
                 tri_state and outcome[1] == "file" and self.options.get_source(action.dest) == "env var"
             ):
                 action.default, default_source = outcome
-                vars(action)["default_source"] = default_source
+                vars(action)["default_source"] = default_source  # simplint: ignore[SMP604]  # argparse reads it by name
             elif tri_state and hasattr(self.options, action.dest):
                 return  # a sibling flag sharing this destination already set it
             else:
                 outcome = action.default, "default"
             self.options.set_src(action.dest, *outcome)
 
-    def _configured_outcome(self, names: Iterable[str], as_type: TypeData) -> tuple[Any, str] | None:
+    def _configured_outcome(
+        self, names: Iterable[str], as_type: TypeData
+    ) -> tuple[Any, str] | None:  # simplint: ignore[SMP602]  # type known at run time
         for name in names:
             if (outcome := get_env_var(name, as_type, self.env)) is not None:
                 return outcome
@@ -183,7 +185,9 @@ class VirtualEnvOptions(Namespace):
         super().__setattr__(key, value)
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in vars(self).items() if not k.startswith('_'))})"
+        return (
+            f"{type(self).__name__}({', '.join(f'{k}={v}' for k, v in self.__dict__.items() if not k.startswith('_'))})"
+        )
 
     @property
     def verbosity(self) -> int | None:

@@ -5,7 +5,9 @@ from __future__ import annotations
 import sys  # built-in
 
 
-def encode_path(value: object) -> str | None:
+def encode_path(
+    value: object,  # simplint: ignore[SMP602]  # encodes any value the interpreter reports
+) -> str | None:
     """Encode a value for the JSON debug report, turning types and bytes into strings.
 
     :param value: the value to encode
@@ -22,7 +24,9 @@ def encode_path(value: object) -> str | None:
     return value
 
 
-def encode_list_path(value: list[object]) -> list[str | None]:
+def encode_list_path(
+    value: list[object],  # simplint: ignore[SMP602]  # encodes any value the interpreter reports
+) -> list[str | None]:
     """Encode each element of a path list for the JSON debug report.
 
     :param value: the list of values to encode

@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # simplint: ignore[SMP104]  # its import path is used across the seed package
 
 import logging
 from email.parser import HeaderParser

@@ -249,7 +249,9 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     def python_zip(cls, interpreter: PythonInfo) -> Generator[PathRefToDest]:
-        """``python{VERSION}.zip`` contains compiled ``*.pyc`` std lib packages, where ``VERSION`` is ``py_version_nodot`` var from the ``sysconfig`` module.
+        """``python{VERSION}.zip`` holds the compiled ``*.pyc`` std lib packages.
+
+        ``VERSION`` is the ``py_version_nodot`` var from the ``sysconfig`` module.
 
         See https://docs.python.org/3/using/windows.html#the-embeddable-package, ``discovery.py_info.PythonInfo`` class
         (interpreter), and ``python -m sysconfig`` output.

@@ -21,7 +21,7 @@ class PowerShellActivator(ViaTemplateActivator):
 
     @staticmethod
     def quote(string: str) -> str:
-        """This should satisfy PowerShell quoting rules [1], unless the quoted string is passed directly to Windows native commands [2].
+        """Quote by PowerShell's rules [1], unless the string is passed straight to a Windows native command [2].
 
         [1]: https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_quoting_rules
         [2]:

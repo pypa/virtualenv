@@ -84,7 +84,9 @@ class IniConfig:
             f"(change{'d' if self.is_env_var else ''} via env var {self.VIRTUALENV_CONFIG_FILE_ENV_VAR})"
         )
 
-    def get(self, key: str, as_type: TypeData) -> tuple[Any, str] | None:
+    def get(
+        self, key: str, as_type: TypeData
+    ) -> tuple[Any, str] | None:  # simplint: ignore[SMP602]  # type known at run time
         """Return the value of a key from the config file, reading the file once.
 
         :param key: the option name
