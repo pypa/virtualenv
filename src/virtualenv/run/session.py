@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import logging
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.activation.batch import BatchActivator
 from virtualenv.config.cli.parser import VirtualEnvOptions
@@ -23,12 +23,23 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-LOGGER = logging.getLogger(__name__)
+#: Logger of this module.
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class Session:
-    """Represents a virtual environment creation session."""
+    """Represents a virtual environment creation session.
 
+    :param verbosity: the verbosity level the creation runs with
+    :param app_data: the application data folder
+    :param interpreter: the host interpreter the environment is based on
+    :param creator: the creator that builds the environment
+    :param seeder: the seeder that installs the seed packages
+    :param activators: the activators that generate the activation scripts
+
+    """
+
+    # the session keeps each component of a creation as its own argument
     def __init__(  # ruff:ignore[too-many-arguments]
         self,
         verbosity: int,
@@ -45,32 +56,24 @@ class Session:
         self._seeder = seeder
         self._activators = activators
 
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        self._app_data.close()
+
     @property
     def verbosity(self) -> int:
         """The verbosity of the run."""
         return self._verbosity
 
-    @property
-    def interpreter(self) -> PythonInfo:
-        """Create a virtual environment based on this reference interpreter."""
-        return self._interpreter
-
-    @property
-    def creator(self) -> Creator:
-        """The creator used to build the virtual environment (must be compatible with the interpreter)."""
-        return self._creator
-
-    @property
-    def seeder(self) -> Seeder:
-        """The mechanism used to provide the seed packages (pip, setuptools, wheel)."""
-        return self._seeder
-
-    @property
-    def activators(self) -> list[Activator]:
-        """Activators used to generate activations scripts."""
-        return self._activators
-
     def run(self) -> None:
+        """Create the environment, seed it, activate it and write its configuration file."""
         self._create()
         self._seed()
         self._activate()
@@ -87,6 +90,11 @@ class Session:
             LOGGER.info("add seed packages via %s", self.seeder)
             self.seeder.run(self.creator)
 
+    @property
+    def seeder(self) -> Seeder:
+        """The mechanism used to provide the seed packages (pip, setuptools, wheel)."""
+        return self._seeder
+
     def _activate(self) -> None:
         if BatchActivator.supports(self.interpreter) and not any(
             isinstance(i, BatchActivator) for i in self.activators
@@ -97,24 +105,23 @@ class Session:
             LOGGER.info("add activators for %s", active)
             self._activators = [activator for activator in self.activators if activator.generate(self.creator)]
 
-    def __enter__(self) -> Self:
-        return self
+    @property
+    def interpreter(self) -> PythonInfo:
+        """Create a virtual environment based on this reference interpreter."""
+        return self._interpreter
 
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_val: BaseException | None,
-        exc_tb: TracebackType | None,
-    ) -> None:
-        self._app_data.close()
+    @property
+    def activators(self) -> list[Activator]:
+        """Activators used to generate activations scripts."""
+        return self._activators
 
-
-_DEBUG_MARKER = "=" * 30 + " target debug " + "=" * 30
+    @property
+    def creator(self) -> Creator:
+        """The creator used to build the virtual environment (must be compatible with the interpreter)."""
+        return self._creator
 
 
 class _Debug:
-    """lazily populate debug."""
-
     def __init__(self, creator: Creator) -> None:
         self.creator = creator
 
@@ -122,6 +129,10 @@ class _Debug:
         return json.dumps(self.creator.debug, indent=2)
 
 
+_DEBUG_MARKER: Final[str] = f"{'=' * 30} target debug {'=' * 30}"
+
+
 __all__ = [
+    "LOGGER",
     "Session",
 ]

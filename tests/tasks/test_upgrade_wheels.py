@@ -7,7 +7,7 @@ from typing import Final
 
 import pytest
 
-ROOT: Final[Path] = Path(__file__).parents[2]
+_ROOT: Final[Path] = Path(__file__).parents[2]
 
 
 @pytest.fixture
@@ -15,7 +15,7 @@ def upgrade_script(tmp_path: Path) -> Path:
     # run a copy so the fragment lands under tmp_path rather than the checkout's docs/changelog
     script = tmp_path / "tasks" / "upgrade_wheels.py"
     script.parent.mkdir()
-    shutil.copy(ROOT / "tasks" / "upgrade_wheels.py", script)
+    shutil.copy(_ROOT / "tasks" / "upgrade_wheels.py", script)
     return script
 
 

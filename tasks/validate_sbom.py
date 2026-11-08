@@ -1,4 +1,4 @@
-"""Check the SBOM of a built wheel or zipapp with python-sbom, the license policy, and that a zipapp's SBOM matches it."""
+"""Check a wheel's or zipapp's SBOM with python-sbom and the license policy, and that a zipapp's SBOM matches it."""
 
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ if TYPE_CHECKING:
 
 # python-sbom archive --embed writes it at the archive root, next to the zipapp's __main__.py
 _ZIPAPP_SBOM: Final[str] = "virtualenv.pyz.cdx.json"
+_Component = dict[str, Any]  # simplint: ignore[SMP602]  # CycloneDX components are free-form JSON
 
 
 def main() -> None:
@@ -31,6 +32,7 @@ def main() -> None:
         raise SystemExit(1)
     if target.suffix == ".pyz" and (problems := describes_archive(target)):
         for problem in problems:
+            # the validator prints each problem it found to the terminal
             print(f"SBOM invalid: {problem}")  # ruff:ignore[print]
         raise SystemExit(1)
 
@@ -56,7 +58,7 @@ def describes_archive(pyz: Path) -> list[str]:
     return problems
 
 
-def _described_files(components: list[dict[str, Any]]) -> Iterator[tuple[str, str]]:
+def _described_files(components: list[_Component]) -> Iterator[tuple[str, str]]:
     for component in components:
         digest = next((entry["content"] for entry in component.get("hashes", []) if entry["alg"] == "SHA-256"), "")
         if component["type"] == "file":

@@ -6,7 +6,7 @@ import codecs
 import locale
 import os
 import re
-from typing import TYPE_CHECKING, NoReturn
+from typing import TYPE_CHECKING, Final, NoReturn
 from zlib import crc32 as _crc32
 
 if TYPE_CHECKING:
@@ -14,18 +14,25 @@ if TYPE_CHECKING:
 
 
 def crc32(data: str) -> int:
-    """Python version idempotent."""
     return _crc32(data.encode()) & 0xFFFFFFFF
 
 
-here = os.path.realpath(os.path.dirname(__file__))
-script = os.path.realpath(os.path.join(here, "..", "src", "virtualenv.py"))
+_HERE: Final[str] = os.path.realpath(os.path.dirname(__file__))
+_SCRIPT: Final[str] = os.path.realpath(os.path.join(_HERE, "..", "src", "virtualenv.py"))
 
-gzip = codecs.lookup("zlib")
-b64 = codecs.lookup("base64")
+_GZIP: Final[codecs.CodecInfo] = codecs.lookup("zlib")
+_B64: Final[codecs.CodecInfo] = codecs.lookup("base64")
 
-file_regex = re.compile(r'# file (.*?)\n([a-zA-Z][a-zA-Z0-9_]+) = convert\(\n {4}"""\n(.*?)"""\n\)', re.DOTALL)
-file_template = '# file {filename}\n{variable} = convert(\n    """\n{data}"""\n)'
+_FILE_REGEX: Final[re.Pattern[str]] = re.compile(
+    r'''
+    \#\ file\ (?P<filename>.*?)\n                          # the source file the payload was generated from
+    (?P<variable_name>[a-zA-Z][a-zA-Z0-9_]+)\ =\ convert\(\n  # the variable the payload is assigned to
+    \ {4}"""\n                                                # the payload opens on its own indented line
+    (?P<previous_encoded>.*?)                                 # the encoded payload that gets replaced
+    """\n\)                                                   # the payload closes before the call does
+    ''',
+    re.DOTALL | re.VERBOSE,
+)
 
 
 def rebuild(script_path: Path) -> None:
@@ -38,52 +45,54 @@ def rebuild(script_path: Path) -> None:
     match_end = 0
     next_match = None
     count, did_update = 0, False
-    for count, next_match in enumerate(file_regex.finditer(script_content)):  # ruff:ignore[unused-loop-control-variable]
+    # count is unused, the loop needs only the match
+    for count, next_match in enumerate(_FILE_REGEX.finditer(script_content)):  # ruff:ignore[unused-loop-control-variable]
         script_parts += [script_content[match_end : next_match.start()]]
         match_end = next_match.end()
-        filename, variable_name, previous_encoded = next_match.group(1), next_match.group(2), next_match.group(3)
+        filename, variable_name, previous_encoded = next_match.group("filename", "variable_name", "previous_encoded")
         differ, content = handle_file(next_match.group(0), filename, variable_name, previous_encoded)
         script_parts.append(content)
         if differ:
             did_update = True
 
     script_parts += [script_content[match_end:]]
-    new_content = "".join(script_parts)
 
-    report(1 if not count or did_update else 0, new_content, next_match, script_content, script_path)
+    report(1 if not count or did_update else 0, "".join(script_parts), next_match, script_content, script_path)
 
 
 def handle_file(previous_content: str, filename: str, variable_name: str, previous_encoded: str) -> tuple[bool, str]:
-    print(f"Found file {filename}")  # ruff:ignore[print]
-    current_path = os.path.realpath(os.path.join(here, "..", "src", "virtualenv_embedded", filename))
+    print(f"Found file {filename}")  # ruff:ignore[print]  # the script reports each file it finds to the terminal
+    current_path = os.path.realpath(os.path.join(_HERE, "..", "src", "virtualenv_embedded", filename))
     _, file_type = os.path.splitext(current_path)
-    keep_line_ending = file_type == ".bat"
-    with open(current_path, encoding="utf-8", newline="" if keep_line_ending else None) as current_fh:
+    with open(current_path, encoding="utf-8", newline="" if (file_type == ".bat") else None) as current_fh:
         current_text = current_fh.read()
     current_crc = crc32(current_text)
-    current_encoded = b64.encode(gzip.encode(current_text.encode())[0])[0].decode()
+    current_encoded = _B64.encode(_GZIP.encode(current_text.encode())[0])[0].decode()
     if current_encoded == previous_encoded:
+        # the script reports each file's status to the terminal
         print(f"  File up to date (crc: {current_crc:08x})")  # ruff:ignore[print]
         return False, previous_content
     # Else: content has changed
-    previous_text = gzip.decode(b64.decode(previous_encoded.encode())[0])[0].decode()
-    previous_crc = crc32(previous_text)
-    print(f"  Content changed (crc: {previous_crc:08x} -> {current_crc:08x})")  # ruff:ignore[print]
-    new_part = file_template.format(filename=filename, variable=variable_name, data=current_encoded)
-    return True, new_part
+    previous_text = _GZIP.decode(_B64.decode(previous_encoded.encode())[0])[0].decode()
+    # the script reports each file's status to the terminal
+    print(f"  Content changed (crc: {crc32(previous_text):08x} -> {current_crc:08x})")  # ruff:ignore[print]
+    file_template: str = '# file {filename}\n{variable} = convert(\n    """\n{data}"""\n)'
+    return True, file_template.format(filename=filename, variable=variable_name, data=current_encoded)
 
 
 def report(exit_code: int, new: str, next_match: re.Match[str] | None, current: str, script_path: Path) -> NoReturn:
     if new != current:
+        # the script reports each file's status to the terminal
         print("Content updated; overwriting... ", end="")  # ruff:ignore[print]
         script_path.write_bytes(new)
-        print("done.")  # ruff:ignore[print]
+        print("done.")  # ruff:ignore[print]  # the script reports each file's status to the terminal
     else:
-        print("No changes in content")  # ruff:ignore[print]
+        print("No changes in content")  # ruff:ignore[print]  # the script reports each file's status to the terminal
     if next_match is None:
+        # the script reports each file's status to the terminal
         print("No variables were matched/found")  # ruff:ignore[print]
     raise SystemExit(exit_code)
 
 
 if __name__ == "__main__":
-    rebuild(script)
+    rebuild(_SCRIPT)

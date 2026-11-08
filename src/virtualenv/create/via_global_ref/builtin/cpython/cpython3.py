@@ -29,8 +29,17 @@ class CPython3(CPython, Python3Supports, abc.ABC):
 
 
 class CPython3Posix(CPythonPosix, CPython3):
+    """CPython 3 on POSIX platforms."""
+
     @classmethod
     def can_describe(cls, interpreter: PythonInfo) -> bool:
+        """Accept CPython 3 interpreters that are neither macOS framework nor Homebrew builds.
+
+        :param interpreter: the host interpreter to check
+
+        :returns: ``True`` if this creator can describe the interpreter
+
+        """
         return (
             is_mac_os_framework(interpreter) is False
             and is_macos_brew(interpreter) is False
@@ -38,14 +47,18 @@ class CPython3Posix(CPythonPosix, CPython3):
         )
 
     @classmethod
+    # yields PathRef, which the base's Generator[ExePathRefToDest] does not allow
     def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
+        """Yield the POSIX executables, plus the shared library when the interpreter links one.
+
+        :param interpreter: the host interpreter to take the files from
+
+        :yields: the references to the host files
+
+        """
         yield from super().sources(interpreter)
         if shared_lib := cls._shared_libpython(interpreter):
             yield PathRefToDest(shared_lib, dest=cls._to_lib, when=RefWhen.COPY)
-
-    @classmethod
-    def _to_lib(cls, creator: CPython3Posix, src: Path) -> Path:
-        return creator.dest / "lib" / src.name
 
     @classmethod
     def _shared_libpython(cls, interpreter: PythonInfo) -> Path | None:
@@ -59,7 +72,16 @@ class CPython3Posix(CPythonPosix, CPython3):
             return None
         return lib_path
 
+    @classmethod
+    def _to_lib(cls, creator: CPython3Posix, src: Path) -> Path:
+        return creator.dest / "lib" / src.name
+
     def install_venv_shared_libs(self, venv_creator: Venv) -> None:
+        """Copy the shared ``libpython`` next to the environment when it does not link the host's copy.
+
+        :param venv_creator: the ``venv`` creator that built the environment
+
+        """
         if venv_creator.symlinks:
             return
         if not (shared_lib := self._shared_libpython(venv_creator.interpreter)):
@@ -73,24 +95,43 @@ class CPython3Windows(CPythonWindows, CPython3):
     """CPython 3 on Windows."""
 
     @classmethod
+    # returns an optional meta, which the base setup_meta does not allow
     def setup_meta(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta | None:  # ty: ignore[invalid-method-override]
+        """Return the metadata for CPython 3 on Windows, or ``None`` for Windows Store builds.
+
+        :param interpreter: the host interpreter
+
+        :returns: the metadata, or ``None`` when the interpreter is installed from the Windows Store
+
+        """
         if is_store_python(interpreter):  # store python is not supported here
             return None
         return super().setup_meta(interpreter)
 
     @classmethod
+    # yields PathRef, which the base's Generator[ExePathRefToDest] does not allow
     def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
+        """Yield the executables, plus the DLL, ``pyd`` and zip files unless a launcher shim is used.
+
+        :param interpreter: the host interpreter to take the files from
+
+        :yields: the references to the host files
+
+        """
         yield from cls.executables(interpreter)
         if not cls.has_shim(interpreter):
             yield from cls.dll_and_pyd(interpreter)
             yield from cls.python_zip(interpreter)
 
     @classmethod
-    def _debug_suffix(cls, interpreter: PythonInfo) -> str:
-        return "_d" if getattr(interpreter, "debug_build", False) else ""
-
-    @classmethod
     def executables(cls, interpreter: PythonInfo) -> list[PathRef] | Generator[PathRef]:
+        """Yield the executables, using the ``venvlauncher`` shims on Python 3.13 and later.
+
+        :param interpreter: the host interpreter to take the files from
+
+        :returns: the executable references, with the launcher in place of ``python.exe`` when present
+
+        """
         sources = super().sources(interpreter)
         if interpreter.version_info >= (3, 13):
             host = cls.host_python(interpreter)
@@ -123,11 +164,29 @@ class CPython3Windows(CPythonWindows, CPython3):
         return sources
 
     @classmethod
-    def has_shim(cls, interpreter: PythonInfo) -> bool:
-        return cls.shim(interpreter) is not None
+    def host_python(cls, interpreter: PythonInfo) -> Path:
+        """The executable the environment copies, the launcher shim when one exists.
+
+        :param interpreter: the host interpreter
+
+        :returns: the path of the host executable
+
+        """
+        if cls.has_shim(interpreter):
+            # starting with CPython 3.7 Windows ships with a venvlauncher.exe that avoids the need for dll/pyd copies
+            # it also means the wrapper must be copied to avoid bugs such as https://bugs.python.org/issue42013
+            return cls.shim(interpreter)  # ty: ignore[invalid-return-type]
+        return super().host_python(interpreter)
 
     @classmethod
     def shim(cls, interpreter: PythonInfo) -> Path | None:
+        """Find the ``venv`` launcher shim in the standard library of the interpreter.
+
+        :param interpreter: the host interpreter
+
+        :returns: the path of the shim, ``None`` when it does not exist
+
+        """
         root = Path(interpreter.system_stdlib) / "venv" / "scripts" / "nt"
         d_suffix = cls._debug_suffix(interpreter)
         if interpreter.version_info >= (3, 13):
@@ -141,15 +200,29 @@ class CPython3Windows(CPythonWindows, CPython3):
         return None
 
     @classmethod
-    def host_python(cls, interpreter: PythonInfo) -> Path:
-        if cls.has_shim(interpreter):
-            # starting with CPython 3.7 Windows ships with a venvlauncher.exe that avoids the need for dll/pyd copies
-            # it also means the wrapper must be copied to avoid bugs such as https://bugs.python.org/issue42013
-            return cls.shim(interpreter)  # ty: ignore[invalid-return-type]
-        return super().host_python(interpreter)
+    def _debug_suffix(cls, interpreter: PythonInfo) -> str:
+        return "_d" if getattr(interpreter, "debug_build", False) else ""
+
+    @classmethod
+    def has_shim(cls, interpreter: PythonInfo) -> bool:
+        """Whether the interpreter ships a ``venv`` launcher shim.
+
+        :param interpreter: the host interpreter
+
+        :returns: ``True`` when the shim exists
+
+        """
+        return cls.shim(interpreter) is not None
 
     @classmethod
     def dll_and_pyd(cls, interpreter: PythonInfo) -> Generator[PathRefToDest]:
+        """Yield the DLL and ``pyd`` files next to the host executable and in its ``DLLs`` folder.
+
+        :param interpreter: the host interpreter to take the files from
+
+        :yields: the references to the DLL and ``pyd`` files, skipping the pywin32 ones
+
+        """
         folders = [Path(interpreter.system_exe).parent]
 
         # May be missing on some Python hosts.
@@ -170,14 +243,15 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     def _is_pywin32_dll(cls, filename: str) -> bool:
-        """Check if a DLL file belongs to pywin32."""
+        # Check if a DLL file belongs to pywin32.
         # pywin32 DLLs follow patterns like: pywintypes39.dll, pythoncom39.dll
-        name_lower = filename.lower()
-        return name_lower.startswith(("pywintypes", "pythoncom"))
+        return filename.lower().startswith(("pywintypes", "pythoncom"))
 
     @classmethod
     def python_zip(cls, interpreter: PythonInfo) -> Generator[PathRefToDest]:
-        """``python{VERSION}.zip`` contains compiled ``*.pyc`` std lib packages, where ``VERSION`` is ``py_version_nodot`` var from the ``sysconfig`` module.
+        """``python{VERSION}.zip`` holds the compiled ``*.pyc`` std lib packages.
+
+        ``VERSION`` is the ``py_version_nodot`` var from the ``sysconfig`` module.
 
         See https://docs.python.org/3/using/windows.html#the-embeddable-package, ``discovery.py_info.PythonInfo`` class
         (interpreter), and ``python -m sysconfig`` output.
@@ -186,12 +260,13 @@ class CPython3Windows(CPythonWindows, CPython3):
         files. User can move/rename the zip file and edit ``sys.path`` by editing the ``_pth`` file. Here the
         ``pattern`` is used only for the default zip file name.
 
+        :param interpreter: the host interpreter whose zip file is looked up
+
+        :yields: a reference to the zip file, when it exists beside the interpreter
+
         """
-        pattern = f"*python{interpreter.version_nodot}.zip"
-        matches = fnmatch.filter(interpreter.path, pattern)
-        matched_paths = map(Path, matches)
-        existing_paths = filter(method("exists"), matched_paths)
-        if (path := next(existing_paths, None)) is not None:
+        matched_paths = map(Path, fnmatch.filter(interpreter.path, f"*python{interpreter.version_nodot}.zip"))
+        if (path := next(filter(method("exists"), matched_paths), None)) is not None:
             yield PathRefToDest(path, cls.to_bin)
 
 

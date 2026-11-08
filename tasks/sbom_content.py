@@ -22,15 +22,16 @@ class VirtualenvContent(ContentProvider):
 
     @staticmethod
     def _seeded(context: ProviderContext, wheel: PurePosixPath) -> list[Property]:
-        # the BUNDLE_SUPPORT table next to the embedded wheels names the Python versions that seed each one; it is read
-        # by name, without importing the package
-        module = ast.parse(context.read(wheel.parent / "__init__.py").decode("utf-8"))
+        # the BUNDLE_SUPPORT table in catalog.py names the Python versions that seed each embedded wheel; it is read by
+        # name, without importing the package
+        module = ast.parse(context.read(wheel.parent / "catalog.py").decode("utf-8"))
         support: dict[str, dict[str, str]] = ast.literal_eval(
             next(
                 node.value
                 for node in module.body
-                if isinstance(node, ast.Assign)
-                and any(isinstance(target, ast.Name) and target.id == "BUNDLE_SUPPORT" for target in node.targets)
+                if isinstance(node, ast.AnnAssign)
+                and isinstance(node.target, ast.Name)
+                and node.target.id == "BUNDLE_SUPPORT"
             )
         )
         return [

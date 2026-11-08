@@ -20,17 +20,17 @@ if TYPE_CHECKING:
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
 
-def get_interpreter(
-    key: str,
-    try_first_with: Iterable[str],
-    cache: PyInfoCache | None = None,
-    env: Mapping[str, str] | None = None,
-    app_data: PyInfoCache | None = None,
-) -> PythonInfo | None:
-    return _get_interpreter(key, try_first_with, cache or app_data, env)
-
-
 class Builtin(Discover):
+    """Discover the interpreter from the specs given on the command line, trying each spec in turn.
+
+    :param options: the parsed options, providing the cache and the environment
+
+    :var python_spec: the interpreter specs to try, in order
+    :var app_data: the cache of interpreter information
+    :var try_first_with: the interpreter paths to check before the rest
+
+    """
+
     python_spec: Sequence[str]
     app_data: PyInfoCache
     try_first_with: Sequence[str]
@@ -41,8 +41,17 @@ class Builtin(Discover):
         self.app_data = options.app_data
         self.try_first_with = options.try_first_with
 
+    def __repr__(self) -> str:
+        spec = self.python_spec[0] if len(self.python_spec) == 1 else self.python_spec
+        return f"{self.__class__.__name__} discover of python_spec={spec!r}"
+
     @classmethod
     def add_parser_arguments(cls, parser: ArgumentParser) -> None:
+        """Add the options that select the interpreter and the specs to try.
+
+        :param parser: the parser to add the options to
+
+        """
         parser.add_argument(
             "-p",
             "--python",
@@ -69,6 +78,11 @@ class Builtin(Discover):
         )
 
     def run(self) -> PythonInfo | None:
+        """Return the first interpreter that one of the specs matches.
+
+        :returns: the interpreter, ``None`` when no spec matches
+
+        """
         for python_spec in self.python_spec:
             if result := get_interpreter(
                 python_spec,
@@ -79,9 +93,26 @@ class Builtin(Discover):
                 return result
         return None
 
-    def __repr__(self) -> str:
-        spec = self.python_spec[0] if len(self.python_spec) == 1 else self.python_spec
-        return f"{self.__class__.__name__} discover of python_spec={spec!r}"
+
+def get_interpreter(
+    key: str,
+    try_first_with: Iterable[str],
+    cache: PyInfoCache | None = None,
+    env: Mapping[str, str] | None = None,
+    app_data: PyInfoCache | None = None,
+) -> PythonInfo | None:
+    """Find the interpreter that matches a spec, looking at the cache first.
+
+    :param key: the interpreter spec, a path or a name
+    :param try_first_with: the interpreter paths to check before the rest
+    :param cache: the cache of interpreter information, ``None`` for the application data cache
+    :param env: the environment variables, ``None`` for the process environment
+    :param app_data: the application data cache, used when no cache is given
+
+    :returns: the interpreter, ``None`` when none matches
+
+    """
+    return _get_interpreter(key, try_first_with, cache or app_data, env)
 
 
 __all__ = [

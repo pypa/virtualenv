@@ -20,8 +20,10 @@ from .util import Version, Wheel, discover_wheels
 if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
 
-LOGGER = logging.getLogger(__name__)
+#: Logger of this module.
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
+#: The command that runs pip as a module, with the empty path entries removed.
 PIP_RUN: Final[str] = (
     "import sys; sys.path = [p for p in sys.path if p]; "
     "import runpy; runpy.run_module('pip', run_name='__main__', alter_sys=True)"
@@ -30,20 +32,17 @@ PIP_RUN: Final[str] = (
 # A private index can legitimately serve a rebuilt wheel under the same distribution, version, and
 # filename PyPI also uses - an internal mirror re-signing or re-packaging a release for policy reasons,
 # for example. Verifying that file against PyPI's own digest would then reject a wheel that came from
-# exactly the source it was configured to come from, not a compromised one. This does not attempt to
-# find every way pip can be pointed elsewhere (a pip.conf file has the same effect and is invisible
-# here), only the common, explicit one, so treat this as a conservative signal rather than proof either
-# way: it exists to avoid false rejections, not to guarantee verification runs whenever it safely could.
+# exactly the source it was configured to come from, not a compromised one.
+#
+# This does not attempt to find every way pip can be pointed elsewhere (a pip.conf file has the same effect and is
+# invisible here), only the common, explicit one, so treat this as a conservative signal rather than proof either way:
+# it exists to avoid false rejections, not to guarantee verification runs whenever it safely could.
 _CUSTOM_INDEX_ENV_VARS: Final[tuple[str, ...]] = ("PIP_INDEX_URL", "PIP_EXTRA_INDEX_URL", "PIP_INDEX")
-
-
-def _uses_default_index(env: dict[str, str]) -> bool:
-    return not any(env.get(var) for var in _CUSTOM_INDEX_ENV_VARS)
 
 
 # PEP 503 normalized distribution name. Anything outside this character set on the way to ``pip download`` means
 # somebody is smuggling pip options or extras, so reject it before we build the command line.
-_DISTRIBUTION_RE = re.compile(
+_DISTRIBUTION_RE: Final[re.Pattern[str]] = re.compile(
     r"""
     ^
     (?P<name>
@@ -57,6 +56,7 @@ _DISTRIBUTION_RE = re.compile(
 )
 
 
+# the wheel lookup takes each search input separately, as the callers pass them
 def get_wheel(  # ruff:ignore[too-many-arguments]
     distribution: str,
     version: str | None,
@@ -67,7 +67,20 @@ def get_wheel(  # ruff:ignore[too-many-arguments]
     do_periodic_update: bool,
     env: dict[str, str],
 ) -> Wheel | None:
-    """Get a wheel with the given distribution-version-for_py_version trio, by using the extra search dir + download."""
+    """Get a wheel with the given distribution-version-for_py_version trio, by using the extra search dir + download.
+
+    :param distribution: the distribution name, for example ``pip``
+    :param version: the requested version, ``None`` when unpinned
+    :param for_py_version: the Python version the wheel must support, as ``major.minor``
+    :param search_dirs: extra directories searched for a wheel before downloading
+    :param download: ``True`` to download the wheel when neither the bundle nor the search dirs have one
+    :param app_data: the application data folder
+    :param do_periodic_update: ``True`` to check the index for a wheel newer than the bundled one
+    :param env: the environment variables the download runs with
+
+    :returns: the wheel, or ``None`` when none could be acquired
+
+    """
     # not all wheels are compatible with all python versions, so we need to py version qualify it
     wheel = None
 
@@ -99,6 +112,7 @@ def get_wheel(  # ruff:ignore[too-many-arguments]
     return wheel
 
 
+# the download takes each input separately, as the callers pass them
 def download_wheel(  # ruff:ignore[too-many-arguments]
     distribution: str,
     version_spec: str | None,
@@ -110,6 +124,16 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
 ) -> Wheel:
     """Download one wheel into a private staging directory and move it into ``to_folder`` once it checks out.
 
+    :param distribution: the distribution name, for example ``pip``
+    :param version_spec: the version specifier appended to the distribution name, ``None`` for any version
+    :param for_py_version: the Python version the wheel must support, as ``major.minor``
+    :param search_dirs: extra directories pip searches for wheels
+    :param app_data: the application data folder
+    :param to_folder: the directory the verified wheel is moved into
+    :param env: the environment variables the pip invocation runs with
+
+    :returns: the downloaded wheel, inside ``to_folder``
+
     :raises ValueError: for an invalid distribution name or version specifier.
     :raises CalledProcessError: when ``pip download`` fails.
     :raises UnverifiedWheelError: when PyPI cannot supply the digest to verify against.
@@ -117,7 +141,9 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         not support ``for_py_version``; nothing reaches ``to_folder`` in these cases.
 
     """
-    _check_distribution(distribution)
+    if not _DISTRIBUTION_RE.fullmatch(distribution):
+        msg = f"refusing to download wheel for suspicious distribution name: {distribution!r}"
+        raise ValueError(msg)
     _check_version_spec(version_spec)
     to_download: Final = f"{distribution}{version_spec or ''}"
     if to_download.lower().endswith((
@@ -137,7 +163,7 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         msg = f"refusing to download wheel with archive-like requirement: {to_download!r}"
         raise ValueError(msg)
     LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
-    verify_against_pypi: Final = _uses_default_index(env)
+    verify_against_pypi: Final = not any(env.get(var) for var in _CUSTOM_INDEX_ENV_VARS)
     env = pip_wheel_env_run(search_dirs, app_data, env)
     to_folder.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(dir=to_folder, prefix="download-") as staging:
@@ -165,42 +191,38 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
         if verify_against_pypi:
             verify_wheel_digest(result)
         if not result.support_py(for_py_version):
-            msg: Final = f"downloaded wheel {result.name} does not support Python {for_py_version}"
+            msg = f"downloaded wheel {result.name} does not support Python {for_py_version}"
             raise RuntimeError(msg)
         destination: Final = to_folder / result.name
         result.path.replace(destination)
         return Wheel(destination)
 
 
-def _downloaded_wheel(folder: Path, distribution: str, version_spec: str | None) -> Wheel:
-    files: Final = list(folder.iterdir())
-    if len(files) != 1 or files[0].is_symlink() or not files[0].is_file():
-        msg: Final = f"could not find downloaded wheel for {distribution}: expected one archive"
-        raise RuntimeError(msg)
-    result: Final = Wheel.from_path(files[0])
-    if (
-        result is None
-        or canonicalize_name(result.distribution) != canonicalize_name(distribution)
-        or (version_spec and not Specifier(version_spec).contains(result.version))
-    ):
-        msg: Final = f"unexpected downloaded wheel {files[0].name} for {distribution}{version_spec or ''}"
-        raise RuntimeError(msg)
-    return result
-
-
-def find_compatible_in_house(
-    distribution: str, version_spec: str | None, for_py_version: str, in_folder: Path
-) -> Wheel | None:
-    wheels: Final[list[Wheel]] = discover_wheels(in_folder, distribution, None, for_py_version)
-    if version_spec:
-        specifier: Final[Specifier] = Specifier(version_spec)
-        if specifier.operator not in {"==", "<"}:
-            raise ValueError(version_spec)
-        return next((wheel for wheel in wheels if specifier.contains(wheel.version)), None)
-    return next(iter(wheels), None)
+def _check_version_spec(version_spec: str | None) -> None:
+    if not version_spec:
+        return
+    if not re.fullmatch(r"(?:==|<)[A-Za-z0-9._+!-]+", version_spec):
+        msg = f"refusing to download wheel with suspicious version spec: {version_spec!r}"
+        raise ValueError(msg)
+    try:
+        Specifier(version_spec)
+    except InvalidSpecifier as exception:
+        msg = f"refusing to download wheel with suspicious version spec: {version_spec!r}"
+        raise ValueError(msg) from exception
 
 
 def pip_wheel_env_run(search_dirs: list[Path], app_data: AppData, env: dict[str, str]) -> dict[str, str]:
+    """Build the environment that runs pip from the cached wheels, with the options that keep it offline.
+
+    :param search_dirs: the folders searched for wheels
+    :param app_data: the application data folder
+    :param env: the environment variables to extend
+
+    :returns: the environment variables to run pip with
+
+    :raises RuntimeError: when the embedded pip cannot be found or does not support the Python version
+
+    """
     env = env.copy()
     env.update({"PIP_USE_WHEEL": "1", "PIP_USER": "0", "PIP_NO_INPUT": "1", "PYTHONIOENCODING": "utf-8"})
     wheel = get_wheel(
@@ -220,26 +242,48 @@ def pip_wheel_env_run(search_dirs: list[Path], app_data: AppData, env: dict[str,
     return env
 
 
-def _check_distribution(distribution: str) -> None:
-    if not _DISTRIBUTION_RE.fullmatch(distribution):
-        msg = f"refusing to download wheel for suspicious distribution name: {distribution!r}"
-        raise ValueError(msg)
+def _downloaded_wheel(folder: Path, distribution: str, version_spec: str | None) -> Wheel:
+    files: Final = list(folder.iterdir())
+    if len(files) != 1 or files[0].is_symlink() or not files[0].is_file():
+        msg = f"could not find downloaded wheel for {distribution}: expected one archive"
+        raise RuntimeError(msg)
+    result: Final = Wheel.from_path(files[0])
+    if (
+        result is None
+        or canonicalize_name(result.distribution) != canonicalize_name(distribution)
+        or (version_spec and not Specifier(version_spec).contains(result.version))
+    ):
+        msg = f"unexpected downloaded wheel {files[0].name} for {distribution}{version_spec or ''}"
+        raise RuntimeError(msg)
+    return result
 
 
-def _check_version_spec(version_spec: str | None) -> None:
-    if not version_spec:
-        return
-    if not re.fullmatch(r"(?:==|<)[A-Za-z0-9._+!-]+", version_spec):
-        msg = f"refusing to download wheel with suspicious version spec: {version_spec!r}"
-        raise ValueError(msg)
-    try:
-        Specifier(version_spec)
-    except InvalidSpecifier as exception:
-        msg = f"refusing to download wheel with suspicious version spec: {version_spec!r}"
-        raise ValueError(msg) from exception
+def find_compatible_in_house(
+    distribution: str, version_spec: str | None, for_py_version: str, in_folder: Path
+) -> Wheel | None:
+    """Return the wheel in a folder that matches the distribution and version specifier, if any.
+
+    :param distribution: the distribution name
+    :param version_spec: the version specifier, ``None`` for any version
+    :param for_py_version: the Python version the wheel must support
+    :param in_folder: the folder to search
+
+    :returns: the newest matching wheel, ``None`` when there is none
+
+    :raises ValueError: when the version specifier uses an operator other than ``==`` or ``<``
+
+    """
+    wheels: Final[list[Wheel]] = discover_wheels(in_folder, distribution, None, for_py_version)
+    if version_spec:
+        specifier: Final[Specifier] = Specifier(version_spec)
+        if specifier.operator not in {"==", "<"}:
+            raise ValueError(version_spec)
+        return next((wheel for wheel in wheels if specifier.contains(wheel.version)), None)
+    return next(iter(wheels), None)
 
 
 __all__ = [
+    "LOGGER",
     "PIP_RUN",
     "download_wheel",
     "find_compatible_in_house",

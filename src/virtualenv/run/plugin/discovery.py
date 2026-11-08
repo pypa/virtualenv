@@ -9,11 +9,17 @@ if TYPE_CHECKING:
     from virtualenv.discovery.discover import Discover
 
 
-class Discovery(PluginLoader):
-    """Discovery plugins."""
-
-
 def get_discover(parser: VirtualEnvConfigParser, args: list[str] | None) -> Discover:
+    """Return the discovery of the interpreter, chosen from the installed discovery plugins.
+
+    :param parser: the parser to add the discovery options to
+    :param args: the command line arguments
+
+    :returns: the discovery of the interpreter
+
+    :raises RuntimeError: when no discovery plugin is installed
+
+    """
     discover_types = Discovery.entry_points_for("virtualenv.discovery")
     discovery_parser = parser.add_argument_group(
         title="discovery",
@@ -21,12 +27,12 @@ def get_discover(parser: VirtualEnvConfigParser, args: list[str] | None) -> Disc
     )
     choices = _get_default_discovery(discover_types)
     # prefer the builtin if present, otherwise fallback to first defined type
-    choices = sorted(choices, key=lambda a: 0 if a == "builtin" else 1)
+    choices = sorted(choices, key=lambda name: 0 if name == "builtin" else 1)
     try:
         default_discovery = next(iter(choices))
-    except StopIteration as e:
+    except StopIteration as error:
         msg = "No discovery plugin found. Try reinstalling virtualenv to fix this issue."
-        raise RuntimeError(msg) from e
+        raise RuntimeError(msg) from error
     discovery_parser.add_argument(
         "--discovery",
         choices=choices,
@@ -45,9 +51,14 @@ def get_discover(parser: VirtualEnvConfigParser, args: list[str] | None) -> Disc
         )
         raise RuntimeError(msg)
     discover_class = discover_types[discovery]
+    # plugin classes come from entry points, which ty sees as type
     discover_class.add_parser_arguments(discovery_parser)  # ty: ignore[unresolved-attribute]
     options, _ = parser.parse_known_args(args, namespace=options)
     return discover_class(options)
+
+
+class Discovery(PluginLoader):
+    """Discovery plugins."""
 
 
 def _get_default_discovery(discover_types: dict[str, type]) -> list[str]:

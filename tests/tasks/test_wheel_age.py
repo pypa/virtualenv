@@ -86,13 +86,18 @@ def test_new_wheel_age(
     request.assert_called_once_with(f"https://pypi.org/pypi/{wheel[1]}/json", timeout=30)
 
 
-@pytest.mark.parametrize("staged", [pytest.param(False, id="untracked"), pytest.param(True, id="staged")])
-def test_missing_wheel_metadata(
-    wheel_repo: Path, mocker: MockerFixture, check_age: Callable[[], str], staged: bool
+def test_missing_wheel_metadata_untracked(
+    wheel_repo: Path, mocker: MockerFixture, check_age: Callable[[], str]
 ) -> None:
     (wheel_repo / "pip-2-py3-none-any.whl").write_bytes(b"new")
-    if staged:
-        subprocess.run(["git", "add", "."], check=True)
+    mocker.patch("urllib.request.urlopen", autospec=True, return_value=BytesIO(b'{"urls": []}'))
+    with pytest.raises(SystemExit, match=r"PyPI has no upload information for pip-2-py3-none-any\.whl"):
+        check_age()
+
+
+def test_missing_wheel_metadata_staged(wheel_repo: Path, mocker: MockerFixture, check_age: Callable[[], str]) -> None:
+    (wheel_repo / "pip-2-py3-none-any.whl").write_bytes(b"new")
+    subprocess.run(["git", "add", "."], check=True)
     mocker.patch("urllib.request.urlopen", autospec=True, return_value=BytesIO(b'{"urls": []}'))
     with pytest.raises(SystemExit, match=r"PyPI has no upload information for pip-2-py3-none-any\.whl"):
         check_age()
@@ -125,8 +130,9 @@ def generator_repo(tmp_path: Path) -> Path:
     shutil.copyfile(root / "pyproject.toml", tmp_path / "pyproject.toml")
     embed: Final[Path] = tmp_path / "src" / "virtualenv" / "seed" / "wheels" / "embed"
     embed.mkdir(parents=True)
-    (embed / "__init__.py").write_text(
-        'BUNDLE_SUPPORT = {"3.14": {"pip": "pip-1-py3-none-any.whl"}}\n', encoding="utf-8"
+    (embed / "catalog.py").write_text(
+        'BUNDLE_SUPPORT: Final[dict[str, dict[str, str]]] = {"3.14": {"pip": "pip-1-py3-none-any.whl"}}\n',
+        encoding="utf-8",
     )
     with zipfile.ZipFile(embed / "pip-1-py3-none-any.whl", "w") as archive:
         archive.writestr("pip-1.dist-info/METADATA", "Name: pip\nVersion: 1\n")
@@ -135,20 +141,26 @@ def generator_repo(tmp_path: Path) -> Path:
     return tmp_path
 
 
-@pytest.mark.parametrize("linked", [pytest.param(False, id="new-directory"), pytest.param(True, id="symlink")])
-def test_write_changelog_creates_or_replaces_fragment(generator_repo: Path, linked: bool) -> None:
+def test_write_changelog_creates_fragment(generator_repo: Path) -> None:
     write_changelog: Final[Callable[[dict[str, list[str]], dict[str, list[str]]], None]] = runpy.run_path(
         str(generator_repo / "tasks" / "upgrade_wheels.py")
     )["_write_changelog"]
     fragment: Final[Path] = generator_repo / "docs" / "changelog" / "embedded-wheels.bugfix.rst"
-    if linked:
-        fragment.parent.mkdir(parents=True)
-        (generator_repo / "outside").write_text("untouched", encoding="utf-8")
-        fragment.symlink_to(generator_repo / "outside")
     write_changelog({"pip": ["26.1"]}, {})
     assert fragment.read_text(encoding="utf-8") == "Upgrade embedded wheels: pip to ``26.1``.\n"
-    if linked:
-        assert (generator_repo / "outside").read_text(encoding="utf-8") == "untouched"
+
+
+def test_write_changelog_replaces_symlink_without_touching_target(generator_repo: Path) -> None:
+    write_changelog: Final[Callable[[dict[str, list[str]], dict[str, list[str]]], None]] = runpy.run_path(
+        str(generator_repo / "tasks" / "upgrade_wheels.py")
+    )["_write_changelog"]
+    fragment: Final[Path] = generator_repo / "docs" / "changelog" / "embedded-wheels.bugfix.rst"
+    fragment.parent.mkdir(parents=True)
+    (generator_repo / "outside").write_text("untouched", encoding="utf-8")
+    fragment.symlink_to(generator_repo / "outside")
+    write_changelog({"pip": ["26.1"]}, {})
+    assert fragment.read_text(encoding="utf-8") == "Upgrade embedded wheels: pip to ``26.1``.\n"
+    assert (generator_repo / "outside").read_text(encoding="utf-8") == "untouched"
 
 
 @pytest.fixture
@@ -232,14 +244,14 @@ def ci_tools(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 @pytest.fixture
-def npm_registry(time_freeze: Callable[[str], None]) -> dict[str, dict[str, object]]:
+def npm_registry(time_freeze: Callable[[str], None]) -> dict[str, dict[str, dict[str, str]]]:
     time_freeze("2026-09-21T00:00:00+00:00")
     return {"time": {"created": "2014-01-01T00:00:00.000Z"}, "versions": {}}
 
 
 @pytest.fixture
 def github(
-    mocker: MockerFixture, npm_registry: dict[str, dict[str, object]]
+    mocker: MockerFixture, npm_registry: dict[str, dict[str, dict[str, str]]]
 ) -> Callable[[str, dict[str, bytes], dict[str, str]], None]:
     def serve(nushell_tag: str, contents: dict[str, bytes], digests: dict[str, str]) -> None:
         names: Final[list[str]] = sorted(contents)
@@ -317,23 +329,26 @@ def test_ci_tools_pin_newest_releases(
 @pytest.mark.parametrize(
     "release",
     [
-        pytest.param(("11.9.0", "2026-09-10T00:00:00.000Z", {}), id="older-line-published-later"),
-        pytest.param(("12.0.0-rc.1", "2026-09-01T00:00:00.000Z", {}), id="prerelease"),
-        pytest.param(("12.0.0", "2026-09-15T00:00:00.000Z", {}), id="inside-cooldown"),
-        pytest.param(("12.0.0", "2026-09-01T00:00:00.000Z", {"deprecated": "broken"}), id="deprecated"),
-        pytest.param(("12.0.0", "2026-09-01T00:00:00.000Z", None), id="unpublished"),
+        pytest.param(("11.9.0", "2026-09-10T00:00:00.000Z", {"11.9.0": {}}), id="older-line-published-later"),
+        pytest.param(("12.0.0-rc.1", "2026-09-01T00:00:00.000Z", {"12.0.0-rc.1": {}}), id="prerelease"),
+        pytest.param(("12.0.0", "2026-09-15T00:00:00.000Z", {"12.0.0": {}}), id="inside-cooldown"),
+        pytest.param(
+            ("12.0.0", "2026-09-01T00:00:00.000Z", {"12.0.0": {"deprecated": "broken"}}),
+            id="deprecated",
+        ),
+        pytest.param(("12.0.0", "2026-09-01T00:00:00.000Z", {}), id="unpublished"),
     ],
 )
 def test_ci_tools_pin_newest_mermaid(
     ci_tools: Path,
     github: Callable[[str, dict[str, bytes], dict[str, str]], None],
     upgrade_ci_tools: Callable[[], None],
-    npm_registry: dict[str, dict[str, object]],
-    release: tuple[str, str, dict[str, str] | None],
+    npm_registry: dict[str, dict[str, dict[str, str]]],
+    release: tuple[str, str, dict[str, dict[str, str]]],
 ) -> None:
-    version, published, metadata = release
+    version, published, versions = release
     npm_registry["time"] |= {"11.13.0": "2026-08-01T00:00:00.000Z", version: published}
-    npm_registry["versions"] |= {"11.13.0": {}} | ({} if metadata is None else {version: metadata})
+    npm_registry["versions"] |= {"11.13.0": {}} | versions
     github("0.115.1", dict.fromkeys(_RUSTPYTHON_ASSETS.values(), b"rp"), {})
     upgrade_ci_tools()
     assert json.loads(ci_tools.read_text(encoding="utf-8"))["mermaid"] == {"version": "11.13.0"}
@@ -343,7 +358,7 @@ def test_ci_tools_keep_newer_mermaid_pin(
     ci_tools: Path,
     github: Callable[[str, dict[str, bytes], dict[str, str]], None],
     upgrade_ci_tools: Callable[[], None],
-    npm_registry: dict[str, dict[str, object]],
+    npm_registry: dict[str, dict[str, dict[str, str]]],
 ) -> None:
     npm_registry["time"] |= {"11.0.0": "2024-08-01T00:00:00.000Z"}
     npm_registry["versions"] |= {"11.0.0": {}}

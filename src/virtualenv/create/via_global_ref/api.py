@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from abc import ABC
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.create.creator import Creator, CreatorMeta
 from virtualenv.info import fs_supports_symlink
@@ -11,17 +11,26 @@ from virtualenv.util.path import write_file
 
 if TYPE_CHECKING:
     from argparse import ArgumentParser
-    from typing import Any
 
     from python_discovery import PythonInfo
 
     from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
-LOGGER = logging.getLogger(__name__)
+#: Logger of this module.
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class ViaGlobalRefMeta(CreatorMeta):
+    """Capability metadata for creators that link to or copy a global interpreter.
+
+    The errors of a failed symlink or copy check are kept in ``symlink_error`` and ``copy_error``.
+
+    :var copy_error: the reason the files cannot be copied, ``None`` when they can
+    :var symlink_error: the reason the files cannot be symlinked, ``None`` when they can
+
+    """
+
     def __init__(self) -> None:
         super().__init__()
         self.copy_error = None
@@ -31,26 +40,30 @@ class ViaGlobalRefMeta(CreatorMeta):
 
     @property
     def can_copy(self) -> bool:
+        """Whether the environment can be created by copying files."""
         return not self.copy_error
 
     @property
     def can_symlink(self) -> bool:
+        """Whether the environment can be created by symlinking files."""
         return not self.symlink_error
 
 
 class ViaGlobalRefApi(Creator, ABC):
+    """Base for creators that build an environment from files of a global interpreter, linking or copying them.
+
+    :param options: the parsed command line options
+    :param interpreter: the interpreter the environment is created from
+
+    :var symlinks: ``True`` to link files instead of copying them
+    :var enable_system_site_package: ``True`` to give the environment access to the system site-packages
+
+    """
+
     def __init__(self, options: VirtualEnvOptions, interpreter: PythonInfo) -> None:
         super().__init__(options, interpreter)
         self.symlinks = self._should_symlink(options)
         self.enable_system_site_package = options.system_site
-
-    if TYPE_CHECKING:
-
-        @property
-        def purelib(self) -> Path: ...
-
-        @property
-        def script_dir(self) -> Path: ...
 
     @staticmethod
     def _should_symlink(options: VirtualEnvOptions) -> bool:
@@ -69,10 +82,39 @@ class ViaGlobalRefApi(Creator, ABC):
                 return False
         return False  # fallback to copy
 
+    if TYPE_CHECKING:
+
+        @property
+        def purelib(self) -> Path:
+            """The pure Python library directory of the environment."""
+            ...
+
+        @property
+        def script_dir(self) -> Path:
+            """The directory holding the scripts the environment installs."""
+            ...
+
     @classmethod
     def add_parser_arguments(
-        cls, parser: ArgumentParser, interpreter: PythonInfo, meta: ViaGlobalRefMeta, app_data: AppData
+        cls,
+        parser: ArgumentParser,
+        interpreter: PythonInfo,
+        meta: ViaGlobalRefMeta,
+        app_data: AppData,
+        # narrows meta to ViaGlobalRefMeta, which the base hook types as CreatorMeta
     ) -> None:  # ty: ignore[invalid-method-override]
+        """Add the ``--system-site-packages``, ``--symlinks`` and ``--copies`` options.
+
+        The copy and symlink options are only added when the matching method is supported.
+
+        :param parser: the parser to add the options to
+        :param interpreter: the interpreter the environment is created from
+        :param meta: the capability metadata of the interpreter
+        :param app_data: the application data folder
+
+        :raises RuntimeError: when neither symlinks nor copies are supported
+
+        """
         super().add_parser_arguments(parser, interpreter, meta, app_data)
         parser.add_argument(
             "--system-site-packages",
@@ -109,16 +151,17 @@ class ViaGlobalRefApi(Creator, ABC):
             )
 
     def create(self) -> None:
+        """Create the environment by installing the patch that guards the import hook."""
         self.install_patch()
 
     def install_patch(self) -> None:
+        """Write the distutils guard files into the purelib folder, only on interpreters older than Python 3.10."""
         # Python 3.10+ ignores the distutils install config keys this patch guards against (pip does so by default,
         # setuptools and CPython's vendored distutils drop them too), so the runtime import hook only earns its
         # startup cost on 3.9. See https://github.com/pypa/virtualenv/issues/3181.
         if self.interpreter.version_info >= (3, 10):
             return
-        text = self.env_patch_text()
-        if text:
+        if text := self.env_patch_text():
             pth = self.purelib / "_virtualenv.pth"
             LOGGER.debug("create virtualenv import hook file %s", pth)
             write_file(pth, b"import _virtualenv")
@@ -127,19 +170,25 @@ class ViaGlobalRefApi(Creator, ABC):
             write_file(dest_path, text.encode("utf-8"))
 
     def env_patch_text(self) -> str:
-        """Patch the distutils package to not be derailed by its configuration files."""
+        """Patch the distutils package to not be derailed by its configuration files.
+
+        :returns: the source text of the patch module
+
+        """
         with self.app_data.ensure_extracted(Path(__file__).parent / "_virtualenv.py") as resolved_path:
             return resolved_path.read_text(encoding="utf-8")
 
-    def _args(self) -> list[tuple[str, Any]]:
+    def _args(self) -> list[tuple[str, str | bool]]:
         return [*super()._args(), ("global", self.enable_system_site_package)]
 
     def set_pyenv_cfg(self) -> None:
+        """Record whether the system site-packages are visible to the environment."""
         super().set_pyenv_cfg()
         self.pyenv_cfg["include-system-site-packages"] = "true" if self.enable_system_site_package else "false"
 
 
 __all__ = [
+    "LOGGER",
     "ViaGlobalRefApi",
     "ViaGlobalRefMeta",
 ]

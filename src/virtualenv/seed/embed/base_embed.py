@@ -4,7 +4,7 @@ import logging
 from abc import ABC
 from argparse import SUPPRESS, ArgumentTypeError
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.config.cli.parser import ExtendAction
 from virtualenv.seed.seeder import Seeder
@@ -19,11 +19,29 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
-LOGGER = logging.getLogger(__name__)
-PERIODIC_UPDATE_ON_BY_DEFAULT = True
+#: Logger of this module.
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class BaseEmbed(Seeder, ABC):
+    """Base for the seeders that install the bundled pip, setuptools and wheel into the environment.
+
+    :param options: the parsed options
+
+    :var download: ``True`` to download the newest versions from PyPI when no bundled wheel is used
+    :var extra_search_dir: the folders searched for extra wheels
+    :var pip_version: the pip version to seed, ``None`` when not wanted
+    :var setuptools_version: the setuptools version to seed, ``None`` when not wanted
+    :var wheel_version: the wheel version to seed, ``None`` when not wanted
+    :var no_pip: ``True`` to skip seeding pip
+    :var no_setuptools: ``True`` to skip seeding setuptools
+    :var no_wheel: ``True`` to skip seeding wheel
+    :var app_data: the application data folder
+    :var periodic_update: whether the bundled wheels are updated periodically
+    :var enabled: ``False`` when seeding is disabled
+
+    """
+
     def __init__(self, options: VirtualEnvOptions) -> None:
         super().__init__(options, enabled=options.no_seed is False)
 
@@ -52,20 +70,45 @@ class BaseEmbed(Seeder, ABC):
         if not self.distribution_to_versions():
             self.enabled = False
 
+    def distribution_to_versions(self) -> dict[str, str]:
+        """The versions of the distributions to seed, keyed by distribution name.
+
+        :returns: the version of each distribution that is not disabled
+
+        """
+        return {
+            distribution: getattr(self, f"{distribution}_version")
+            for distribution in self.distributions()
+            if getattr(self, f"no_{distribution}", None) is False and getattr(self, f"{distribution}_version") != "none"
+        }
+
     @classmethod
     def distributions(cls) -> dict[str, str]:
+        """The distributions this seeder can install, keyed by name, with the version each defaults to.
+
+        :returns: the default version of each distribution
+
+        """
         return {
             "pip": Version.bundle,
             "setuptools": Version.bundle,
             "wheel": Version.bundle,
         }
 
-    def distribution_to_versions(self) -> dict[str, str]:
-        return {
-            distribution: getattr(self, f"{distribution}_version")
-            for distribution in self.distributions()
-            if getattr(self, f"no_{distribution}", None) is False and getattr(self, f"{distribution}_version") != "none"
-        }
+    def __repr__(self) -> str:
+        result = self.__class__.__name__
+        result += "("
+        if self.extra_search_dir:
+            result += f"extra_search_dir={', '.join(str(i) for i in self.extra_search_dir)},"
+        result += f"download={self.download},"
+        for distribution in self.distributions():
+            if getattr(self, f"no_{distribution}", None):
+                continue
+            version = getattr(self, f"{distribution}_version", None)
+            if version == "none":
+                continue
+            result += f" {distribution}={version or 'latest'},"
+        return f"{result[:-1]})"
 
     @classmethod
     def cannot_seed(cls, interpreter: PythonInfo) -> str | None:
@@ -90,7 +133,15 @@ class BaseEmbed(Seeder, ABC):
         )
 
     @classmethod
+    # the base hook takes the app data, the embed seeder does not read it
     def add_parser_arguments(cls, parser: ArgumentParser, interpreter: PythonInfo, app_data: AppData) -> None:  # ruff:ignore[unused-class-method-argument]
+        """Add the options that control download and the bundled wheels.
+
+        :param parser: the parser to add the options to
+        :param interpreter: the interpreter the environment is created from
+        :param app_data: the application data folder
+
+        """
         group = parser.add_mutually_exclusive_group()
         group.add_argument(
             "--no-download",
@@ -119,8 +170,10 @@ class BaseEmbed(Seeder, ABC):
         for distribution, default in cls.distributions().items():
             help_ = f"version of {distribution} to install as seed: embed, bundle, none or exact version"
             if interpreter.version_info[:2] >= (3, 12) and distribution == "setuptools":
+                # the default is overridden for setuptools on 3.12+, reusing the loop name is intended
                 default = "none"  # ruff:ignore[redefined-loop-name]
             if distribution == "wheel":
+                # the default is overridden for wheel, reusing the loop name is intended
                 default = None  # ruff:ignore[redefined-loop-name]
                 help_ = SUPPRESS
             parser.add_argument(
@@ -147,24 +200,8 @@ class BaseEmbed(Seeder, ABC):
             dest="no_periodic_update",
             action="store_true",
             help="disable the periodic (once every 14 days) update of the embedded wheels",
-            default=not PERIODIC_UPDATE_ON_BY_DEFAULT,
+            default=False,
         )
-
-    def __repr__(self) -> str:
-        result = self.__class__.__name__
-        result += "("
-        if self.extra_search_dir:
-            result += f"extra_search_dir={', '.join(str(i) for i in self.extra_search_dir)},"
-        result += f"download={self.download},"
-        for distribution in self.distributions():
-            if getattr(self, f"no_{distribution}", None):
-                continue
-            version = getattr(self, f"{distribution}_version", None)
-            if version == "none":
-                continue
-            ver = f"={version or 'latest'}"
-            result += f" {distribution}{ver},"
-        return result[:-1] + ")"
 
 
 def _seed_version(value: str) -> str:
@@ -176,5 +213,6 @@ def _seed_version(value: str) -> str:
 
 
 __all__ = [
+    "LOGGER",
     "BaseEmbed",
 ]

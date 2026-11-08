@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Final
 
-# the licensing policy in docs/development.rst refers to this set; tasks/validate_sbom.py hands it to python-sbom validate
+# the licensing policy in docs/development.rst refers to this set; tasks/validate_sbom.py hands it to python-sbom
+# validate
 ALLOWED_LICENSES: Final[frozenset[str]] = frozenset({
     "Apache-2.0",
     "BSD-2-Clause",

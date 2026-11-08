@@ -16,11 +16,8 @@ if TYPE_CHECKING:
     from argparse import Namespace
     from collections.abc import Sequence
 
-_SHUTDOWN: Final[str] = "did not complete all polyglot threads"
-_NO_TESTS_COLLECTED: Final[int] = 5
 
-
-def main() -> None:
+def _main() -> None:
     parser: Final[ArgumentParser] = ArgumentParser(description=__doc__)
     parser.add_argument(
         "--shards",
@@ -98,26 +95,32 @@ class _Shard:
             sink.write(f"[{self.label}] {line}")
 
     def wait(self) -> int | None:
-        """Return how many tests ran, or None when the shard failed."""
+        # Return how many tests ran, or None when the shard failed.
         for pump in self.pumps:
             pump.join()
         status: Final[int] = self.process.wait()
-        shutdown: Final[bool] = status == 1 and any(_SHUTDOWN in line for line in self.stderr)
-        if status not in {0, _NO_TESTS_COLLECTED} and not shutdown:
+        shutdown: Final[bool] = status == 1 and any(
+            "did not complete all polyglot threads" in line for line in self.stderr
+        )
+        if status not in {0, 5} and not shutdown:
+            # the test runner reports its exit status to the terminal
             print(f"[{self.label}] exit {status}")  # ruff:ignore[print]
             return None
         if (executed := _executed_tests(self.junit)) is None:
+            # the test runner reports its exit status to the terminal
             print(f"[{self.label}] exit {status} without a clean junit report")  # ruff:ignore[print]
             return None
         if shutdown:
-            print(  # ruff:ignore[print]
+            print(  # ruff:ignore[print]  # the test runner reports its exit status to the terminal
                 f"[{self.label}] GraalVM reported its known polyglot shutdown error after a completed test run"
                 " (see #3240).",
             )
         return executed
 
 
-def _executed_tests(junit_path: Path) -> int | None:
+def _executed_tests(  # simplint: ignore[SMP505]  # JUnit parsing is a task of its own
+    junit_path: Path,
+) -> int | None:
     try:
         root: Final[ET.Element] = ET.parse(junit_path).getroot()  # ruff:ignore[suspicious-xml-element-tree-usage] trusted pytest output
         suites: Final[list[ET.Element]] = list(root.iter("testsuite"))
@@ -128,8 +131,8 @@ def _executed_tests(junit_path: Path) -> int | None:
         return None
 
 
-__all__ = ["main"]
+__all__ = []
 
 
 if __name__ == "__main__":
-    main()
+    _main()

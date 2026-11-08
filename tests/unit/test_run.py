@@ -107,8 +107,8 @@ def test_reset_with_empty_app_data_override_resets_default(
 ) -> None:
     monkeypatch.chdir(tmp_path)
     default_folder: Final = tmp_path / "cache"
-    mocker.patch("virtualenv.app_data.user_cache_dir", autospec=True, return_value=str(default_folder))
-    mocker.patch("virtualenv.app_data.user_data_dir", autospec=True, return_value=str(tmp_path / "old"))
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(default_folder))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(tmp_path / "old"))
     # a blank value used to make the working directory the cache, so the reset deleted it
     delete: Final = mocker.patch("virtualenv.app_data.via_disk_folder.safe_delete", autospec=True)
     monkeypatch.setenv("VIRTUALENV_OVERRIDE_APP_DATA", override)
@@ -191,20 +191,18 @@ def test_version(capsys) -> None:
     assert not err
 
     assert __version__ in content
+    # the package file is read for the version check, so the import waits until here
     import virtualenv  # ruff:ignore[import-outside-top-level]
 
     assert virtualenv.__file__ in content.replace("\n", "")
 
 
-@pytest.mark.parametrize("on", [True, False])
-def test_logging_setup(caplog, on) -> None:
+@pytest.mark.parametrize(("on", "records"), [pytest.param(True, False, id="on"), pytest.param(False, True, id="off")])
+def test_logging_setup(caplog, on: bool, records: bool) -> None:
     caplog.set_level(logging.DEBUG)
     session_via_cli(["env"], setup_logging=on)
     # DEBUG only level output is generated during this phase, default output is WARN, so if on no records should be
-    if on:
-        assert not caplog.records
-    else:
-        assert caplog.records
+    assert bool(caplog.records) is records
 
 
 def test_invalid_discovery_method_via_env(monkeypatch: pytest.MonkeyPatch) -> None:

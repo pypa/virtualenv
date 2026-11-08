@@ -5,14 +5,15 @@ from __future__ import annotations
 import contextlib
 import os
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     import types
-    from collections.abc import Callable
+    from collections.abc import Callable, Sequence
+    from functools import partial
     from importlib.machinery import ModuleSpec
 
-VIRTUALENV_PATCH_FILE = os.path.abspath(__file__)
+_VIRTUALENV_PATCH_FILE: Final[str] = os.path.abspath(__file__)
 
 
 def patch_dist(dist: types.ModuleType) -> None:
@@ -20,15 +21,15 @@ def patch_dist(dist: types.ModuleType) -> None:
     # environment: https://docs.python.org/3.11/install/index.html#distutils-configuration-files
     old_parse_config_files = dist.Distribution.parse_config_files
 
-    def parse_config_files(self, *args: object, **kwargs: object) -> object:  # ruff:ignore[missing-type-function-argument]
+    # matches the untyped distutils parse_config_files override it replaces
+    def parse_config_files(self, *args: object, **kwargs: object) -> object:  # ruff:ignore[missing-type-function-argument]  # simplint: ignore[SMP602]  # forwards the arguments of the distutils method it replaces unchanged, whatever they are
         result = old_parse_config_files(self, *args, **kwargs)
         install = self.get_option_dict("install")
 
         if "prefix" in install:  # the prefix governs where to install the libraries
-            install["prefix"] = VIRTUALENV_PATCH_FILE, os.path.abspath(sys.prefix)
+            install["prefix"] = _VIRTUALENV_PATCH_FILE, os.path.abspath(sys.prefix)
         for base in ("purelib", "platlib", "headers", "scripts", "data"):
-            key = f"install_{base}"
-            if key in install:  # do not allow global configs to hijack venv paths
+            if (key := f"install_{base}") in install:  # do not allow global configs to hijack venv paths
                 install.pop(key, None)
         return result
 
@@ -37,13 +38,12 @@ def patch_dist(dist: types.ModuleType) -> None:
 
 # Import hook that patches some modules to ignore configuration values that break package installation in case
 # of virtual environments.
-_DISTUTILS_PATCH = "distutils.dist", "setuptools.dist"
+_DISTUTILS_PATCH: Final[tuple[str, str]] = "distutils.dist", "setuptools.dist"
 # https://docs.python.org/3/library/importlib.html#setting-up-an-importer
 
 
 class _Finder:
-    """A meta path finder that allows patching the imported distutils modules."""
-
+    # A meta path finder that allows patching the imported distutils modules.
     fullname = None
 
     # lock[0] is threading.Lock(), but initialized lazily to avoid importing threading very early at startup,
@@ -51,7 +51,13 @@ class _Finder:
     # See https://github.com/pypa/virtualenv/issues/1895 for details.
     lock = []  # ruff:ignore[mutable-class-default]
 
-    def find_spec(self, fullname: str, path: object, target: object = None) -> ModuleSpec | None:  # ruff:ignore[unused-method-argument]
+    # lock is a shared cell mutated on purpose, so every finder sees one lock
+    def find_spec(
+        self,
+        fullname: str,
+        path: Sequence[str] | None,
+        target: types.ModuleType | None = None,  # ruff:ignore[unused-method-argument]  # the finder protocol passes target
+    ) -> ModuleSpec | None:
         # Guard against race conditions during file rewrite by checking if _DISTUTILS_PATCH is defined.
         # This can happen when the file is being overwritten while it's being imported by another process.
         # See https://github.com/pypa/virtualenv/issues/2969 for details.
@@ -62,6 +68,7 @@ class _Finder:
         if fullname in distutils_patch and self.fullname is None:
             # initialize lock[0] lazily
             if len(self.lock) == 0:
+                # the hook runs during import, so threading loads only when the lock is built
                 import threading  # ruff:ignore[import-outside-top-level]
 
                 lock = threading.Lock()
@@ -72,13 +79,17 @@ class _Finder:
                 # https://docs.python.org/3/faq/library.html#what-kinds-of-global-value-mutation-are-thread-safe
                 self.lock.append(lock)
 
+            # the hook runs during import, so functools loads only when a spec is patched
             from functools import partial  # ruff:ignore[import-outside-top-level]
+
+            # the hook runs during import, so importlib.util loads only when a spec is needed
             from importlib.util import find_spec  # ruff:ignore[import-outside-top-level]
 
             with self.lock[0]:
                 self.fullname = fullname
                 spec = None
                 try:
+                    # fullname and path arrive typed as object, find_spec takes str | None
                     spec = find_spec(fullname, path)  # ty: ignore[invalid-argument-type]
                 finally:
                     self.fullname = None
@@ -86,17 +97,18 @@ class _Finder:
                     return self._patch_spec(spec, partial)
         return None
 
-    def _patch_spec(self, spec: ModuleSpec, partial: Callable[..., object]) -> ModuleSpec:
-        old = getattr(spec.loader, "exec_module", None)
-        if old is not None and old is not self.exec_module:
+    def _patch_spec(self, spec: ModuleSpec, partial: type[partial]) -> ModuleSpec:
+        if (old := getattr(spec.loader, "exec_module", None)) is not None and old is not self.exec_module:
+            # a loader with a read-only exec_module is left unpatched on purpose
             try:  # ruff:ignore[suppressible-exception]
+                # exec_module is a method on the loader, ty types the assignment as read-only
                 spec.loader.exec_module = partial(self.exec_module, old)  # ty: ignore[invalid-assignment]
             except AttributeError:
                 pass
         return spec
 
     @staticmethod
-    def exec_module(old: Callable[..., object], module: types.ModuleType) -> None:
+    def exec_module(old: Callable[[types.ModuleType], object], module: types.ModuleType) -> None:
         old(module)
         try:
             distutils_patch = _DISTUTILS_PATCH
