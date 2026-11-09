@@ -113,7 +113,7 @@ def _exit_for_exception(options: VirtualEnvOptions, exception: BaseException) ->
     if getattr(options, "with_traceback", False):
         raise exception
     # sys.exit() without a status exits with 0 too, so SystemExit(None) is a success and not an error to report
-    if not (isinstance(exception, SystemExit) and exception.code in {0, None}):
+    if not (isinstance(exception, SystemExit) and (exception.code is None or exception.code == 0)):
         LOGGER.error("%s: %s", type(exception).__name__, exception)
     sys.exit(exception.code if isinstance(exception, SystemExit) else 1)
 
