@@ -45,7 +45,7 @@ class BaseEmbed(Seeder, ABC):
     def __init__(self, options: VirtualEnvOptions) -> None:
         super().__init__(options, enabled=options.no_seed is False)
 
-        self.download = options.download
+        self.download = options.download is True  # unset means no download
         self.extra_search_dir = [i.resolve() for i in options.extra_search_dir if i.exists()]
 
         self.pip_version = options.pip
@@ -142,21 +142,26 @@ class BaseEmbed(Seeder, ABC):
         :param app_data: the application data folder
 
         """
+        # a tri-state pair like --venv-redirect/--no-venv-redirect: the parser reads a true environment or ini value of
+        # either flag as that flag being passed and lets an environment variable beat the ini file; the opt-out comes
+        # last so that it wins when both flags are set at the same level
         group = parser.add_mutually_exclusive_group()
+        group.add_argument(
+            "--download",
+            dest="download",
+            action="store_const",
+            const=True,
+            help=f"pass to enable download of the latest {'/'.join(cls.distributions())} from PyPI",
+            default=None,
+        )
         group.add_argument(
             "--no-download",
             "--never-download",
             dest="download",
-            action="store_false",
+            action="store_const",
+            const=False,
             help=f"pass to disable download of the latest {'/'.join(cls.distributions())} from PyPI",
-            default=True,
-        )
-        group.add_argument(
-            "--download",
-            dest="download",
-            action="store_true",
-            help=f"pass to enable download of the latest {'/'.join(cls.distributions())} from PyPI",
-            default=False,
+            default=None,
         )
         parser.add_argument(
             "--extra-search-dir",
