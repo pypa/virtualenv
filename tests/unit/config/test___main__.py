@@ -19,6 +19,8 @@ from virtualenv.util.error import ProcessCallFailedError
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from pytest_mock import MockerFixture
+
 
 @pytest.fixture
 def module_entry_version(monkeypatch: pytest.MonkeyPatch) -> Callable[[], int]:
@@ -108,6 +110,27 @@ def test_fail_with_traceback(raise_on_session_done, tmp_path, capsys) -> None:
     out, err = capsys.readouterr()
     assert not out
     assert not err
+
+
+@pytest.mark.parametrize("code", [0, None], ids=["zero", "none"])
+def test_success_exit_not_reported(
+    raise_on_session_done, tmp_path: Path, capsys: pytest.CaptureFixture[str], code: int | None
+) -> None:
+    # both exit statuses end the process with 0, so neither is an error to report
+    raise_on_session_done(SystemExit(code))
+    with pytest.raises(SystemExit) as context:
+        run_with_catch([str(tmp_path)])
+    assert (context.value.code, capsys.readouterr()) == (code, ("", ""))
+
+
+def test_upgrade_embed_wheels_exits_without_error(
+    mocker: MockerFixture, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # manual_upgrade returns None, so a finished upgrade exits with SystemExit(None)
+    upgrade: Final = mocker.patch("virtualenv.run.parser.manual_upgrade", return_value=None, autospec=True)
+    with pytest.raises(SystemExit) as context:
+        run_with_catch(["--upgrade-embed-wheels", "--app-data", str(tmp_path)])
+    assert (context.value.code, upgrade.call_count, capsys.readouterr()) == (None, 1, ("", ""))
 
 
 @pytest.mark.usefixtures("session_app_data")
