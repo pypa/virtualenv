@@ -231,3 +231,20 @@ def test_seed_version_env_normalized(
     monkeypatch.setenv("VIRTUALENV_PIP", spelling.format("26.3"))
     session: Final[Session] = session_via_cli([str(tmp_path / "env"), "--seeder", seeder])
     assert session.seeder.pip_version == expected.format("26.3")
+
+
+@pytest.mark.parametrize(
+    ("on_by_default", "args", "periodic_update"),
+    [
+        pytest.param(True, [], True, id="on"),
+        pytest.param(True, ["--no-periodic-update"], False, id="on-flag"),
+        pytest.param(False, [], False, id="patched-off"),
+    ],
+)
+def test_periodic_update_default_follows_module_switch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, on_by_default: bool, args: list[str], periodic_update: bool
+) -> None:
+    monkeypatch.delenv("VIRTUALENV_NO_PERIODIC_UPDATE")  # conftest turns periodic updates off for every test
+    monkeypatch.setattr("virtualenv.seed.embed.base_embed.PERIODIC_UPDATE_ON_BY_DEFAULT", on_by_default)
+    session = session_via_cli([*args, str(tmp_path / "env")])
+    assert session.seeder.periodic_update is periodic_update
