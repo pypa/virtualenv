@@ -34,6 +34,11 @@ if ($?_OLD_PKG_CONFIG_PATH) then
     unset _OLD_PKG_CONFIG_PATH
 endif
 
+if ($?_OLD_VIRTUAL_PYTHONHOME) then
+    setenv PYTHONHOME "$_OLD_VIRTUAL_PYTHONHOME:q"
+    unset _OLD_VIRTUAL_PYTHONHOME
+endif
+
 if ($?_OLD_VIRTUAL_PROMPT) then
     set prompt="$_OLD_VIRTUAL_PROMPT:q"
     unset _OLD_VIRTUAL_PROMPT

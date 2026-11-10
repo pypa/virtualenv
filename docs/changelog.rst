@@ -6,6 +6,114 @@
 
 .. towncrier release notes start
 
+.. _release-21-15-6:
+
+**********************
+ 21.15.6 (2026-11-06)
+**********************
+
+.. _release-21-15-6-fixed:
+
+Fixed
+-----
+
+- Clear inherited ``PYTHONHOME`` during PowerShell, Nushell, and programmatic activation so child interpreters use the
+  environment's standard library. Preserve empty values when Bash and fish deactivate (:pr:`3517`) by
+  :user:`gaborbernat`.
+- Remove empty ``PATH`` entries during programmatic activation, including entries in an otherwise nonempty value. On
+  POSIX, an empty entry searches the current directory (:pr:`3513`) by :user:`qodelicious` and :user:`gaborbernat`.
+- Unset ``PYTHONHOME`` during C shell activation and restore its original value on deactivation. An inherited value
+  could previously prevent the environment's Python interpreter from starting (:pr:`3514`) by :user:`abhishekcpp007` and
+  :user:`gaborbernat`.
+
+.. _release-21-15-5:
+
+**********************
+ 21.15.5 (2026-11-04)
+**********************
+
+.. _release-21-15-4:
+
+**********************
+ 21.15.4 (2026-11-04)
+**********************
+
+.. _release-21-15-4-fixed:
+
+Fixed
+-----
+
+- Upgrade embedded wheels: pip to ``26.3`` from ``26.2.2`` (:pr:`3508`) by :user:`gaborbernat`.
+
+.. _release-21-15-3:
+
+**********************
+ 21.15.3 (2026-11-03)
+**********************
+
+.. _release-21-15-3-fixed:
+
+Fixed
+-----
+
+- Add the environment's ``lib/pkgconfig`` to ``PKG_CONFIG_PATH`` when activating from xonsh, and restore the previous
+  value or unset it again on ``deactivate``, as the other activators already do (:pr:`3505`) by :user:`darrenhuai` and
+  :user:`gaborbernat`.
+- Read ``virtualenv.ini`` values without interpolation, as environment variables and command line flags already are. A
+  value holding a ``%``, such as ``prompt = 50% done``, was ignored without any message. ``%%`` and ``%(name)s`` are now
+  kept as written, so write a single ``%`` (:pr:`3501`) by :user:`darrenhuai` and :user:`gaborbernat`.
+- Reject a destination that already exists but is not a directory, such as ``/dev/null``, a FIFO or a socket, or that
+  sits inside one, with a usage error instead of a ``NotADirectoryError`` once creation has started. A regular file now
+  gets the same ``is not a directory`` message instead of ``is a file`` (:pr:`3504`) by :user:`darrenhuai` and
+  :user:`gaborbernat`.
+- Set ``TCL_LIBRARY`` and ``TK_LIBRARY`` to the interpreter's Tcl/Tk paths in ``activate.nu``, as the other activators
+  do. Nushell activation used to leave both variables as they were (:pr:`3502`) by :user:`darrenhuai` and
+  :user:`gaborbernat`.
+- Show the environment name in the zsh prompt when ``KSH_ARRAYS`` is set at activation. Since 21.14.13 the prompt read
+  an empty ``psvar`` entry under that option and showed ``()`` instead of the name (:pr:`3506`) by :user:`PDGGK` and
+  :user:`gaborbernat`.
+- Treat an empty or blank ``VIRTUALENV_OVERRIDE_APP_DATA`` and an empty ``VIRTUALENV_CONFIG_FILE`` as unset, as
+  virtualenv already does for its option variables. An empty app-data override, or on Windows one made of spaces, made
+  the current directory the cache, so ``--reset-app-data`` deleted it, and an empty config file path logged an error on
+  every run (:pr:`3503`) by :user:`darrenhuai` and :user:`gaborbernat`.
+
+.. _release-21-15-2:
+
+**********************
+ 21.15.2 (2026-10-30)
+**********************
+
+.. _release-21-15-2-fixed:
+
+Fixed
+-----
+
+- Build the default application data folder only when no folder was given through ``--app-data``,
+  ``VIRTUALENV_APP_DATA`` or the configuration file, so ``--read-only-app-data`` with an explicit folder works when the
+  default folder is missing, and writable runs stop creating an unused one. Folders from ``VIRTUALENV_APP_DATA`` and the
+  configuration file now get the same checks as ``--app-data`` (:pr:`3488`) by :user:`darrenhuai` and
+  :user:`gaborbernat`.
+- Build the seed wheel image in a staging folder and move it into place only once it is complete, so an extraction that
+  fails part way, for example on a full disk, after a killed process or on a path over the Windows length limit, no
+  longer leaves a partial image that later runs seed as a pip without ``METADATA``, ``RECORD`` or ``INSTALLER``
+  (:pr:`3487`) by :user:`darrenhuai` and :user:`gaborbernat`.
+- Make ``-p``/``--python`` and ``--try-first-with`` replace the interpreters set by ``VIRTUALENV_PYTHON``,
+  ``VIRTUALENV_TRY_FIRST_WITH`` or the configuration file instead of being merged with them, so the configured
+  interpreter no longer wins over the one asked for and a ``-p`` that finds nothing fails instead of falling back to it.
+  Try several ``VIRTUALENV_PYTHON`` values in the order given rather than starting with the second (:pr:`3494`) by
+  :user:`darrenhuai` and :user:`gaborbernat`.
+- On Windows, re-create an environment in place when its copied interpreter files, such as ``python.exe``, or its seeded
+  packages are read-only, instead of failing with ``PermissionError`` (:pr:`3492`) by :user:`darrenhuai` and
+  :user:`gaborbernat`.
+- Reject an empty or whitespace-only destination. An empty one, and on Windows one made only of spaces, resolved to the
+  current directory, so an unset ``VENV`` in ``virtualenv --clear "$VENV"`` deleted the working directory. Pass ``.`` to
+  create the environment in the current directory (:pr:`3491`) by :user:`darrenhuai` and :user:`gaborbernat`.
+- Restore the default prompt in ``deactivate.bat`` when ``PROMPT`` was undefined at activation, instead of leaving the
+  environment name in front of it (:pr:`3489`) by :user:`darrenhuai`.
+- Undefine ``PATH`` again in ``deactivate.bat`` when it was undefined at activation, instead of leaving the
+  environment's ``Scripts`` folder on it, and stop a second ``activate.bat`` from adding that folder twice (:pr:`3493`)
+  by :user:`darrenhuai` and :user:`gaborbernat`.
+
 .. _release-21-15-1:
 
 **********************

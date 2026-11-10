@@ -6,7 +6,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
   schedule:
-    - cron: "0 8 * * *"
+    - cron: "35 9 * * *"
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -75,7 +75,7 @@ jobs:
         run: |
           git fetch --force --tags https://github.com/pypa/virtualenv.git
       - name: 🐍 Install uv
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: latest-known
           enable-cache: true
@@ -97,7 +97,7 @@ jobs:
               fi
           - name: 🐍 Setup Python for test ${{ matrix.py }}
             if: ${{ !startsWith(matrix.py, 'brew@') && matrix.py != 'rp' }}
-            uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+            uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
             with:
               version: latest-known
               enable-cache: false
@@ -255,7 +255,7 @@ jobs:
         with:
           persist-credentials: false
       - name: 🐍 Install uv
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: latest-known
           python-version: "3.15"
@@ -317,7 +317,7 @@ jobs:
         run: |
           git fetch --force --tags https://github.com/pypa/virtualenv.git
       - name: 🐍 Install uv
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: latest-known
           python-version: "3.15"
@@ -367,7 +367,7 @@ jobs:
           persist-credentials: false
       - name: 🛡️ Initialize CodeQL
         id: codeql
-        uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           languages: python
       - name: 🎨 Check query formatting
@@ -420,20 +420,33 @@ jobs:
         with:
           persist-credentials: false
       - name: 🐍 Install uv
-        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
         with:
           version: latest-known
       - name: 🔍 Run the semgrep hooks
         run: uvx --from pre-commit-uv pre-commit run semgrep --all-files
+  release:
+    name: 🏷️ Release dry run
+    uses: $/.github/workflows/pre-release.yaml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      dry-run: true
+  hooks:
+    name: 🧹 Hooks under the cooldown
+    uses: tox-dev/github-workflows/.github/workflows/cooled-hooks.yaml@4dfe685cec83f9ace2d4412cd28f5adee4c5506f # 6.7.3
+    permissions:
+      contents: read
   all-checks-pass:
     name: 🚦 ${{ github.event_name == 'pull_request' && 'Required checks pass' || 'Non-PR checks pass' }}
     # the gate shares the jobs' condition, so every job it needs has run and a skip counts as a failure
     if: ${{ !cancelled() && (github.event_name != 'schedule' || github.repository_owner == 'pypa') }} # codespell:ignore cancelled
-    needs: [test, coverage, check, test-queries, semgrep]
+    needs: [test, coverage, check, test-queries, semgrep, release, hooks]
     runs-on: ubuntu-24.04
     permissions: {}
     steps:
       - name: 🚦 Require all needed jobs to pass
-        env:
-          NEEDS_JSON: ${{ toJSON(needs) }}
-        run: jq -e 'all(to_entries[]; .value.result == "success")' <<<"$NEEDS_JSON"
+        uses: tox-dev/github-workflows/required-checks@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
+        with:
+          needs: ${{ toJSON(needs) }}

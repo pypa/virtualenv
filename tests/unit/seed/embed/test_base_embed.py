@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING, Final, NamedTuple
 
 import pytest
+from python_discovery import PythonInfo
 
 from virtualenv.config.cli.parser import VirtualEnvOptions
 from virtualenv.run import session_via_cli
@@ -15,16 +16,21 @@ from virtualenv.seed.wheels.embed import MIN, OLDEST_SUPPORTED
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
-    from unittest.mock import MagicMock
 
     from pytest_mock import MockerFixture
 
+    from virtualenv.run.session import Session
     from virtualenv.seed.embed.base_embed import BaseEmbed
 
 
 @pytest.mark.parametrize(
     ("args", "download"),
-    [([], False), (["--no-download"], False), (["--never-download"], False), (["--download"], True)],
+    [
+        pytest.param([], False, id="default"),
+        pytest.param(["--no-download"], False, id="no-download"),
+        pytest.param(["--never-download"], False, id="never-download"),
+        pytest.param(["--download"], True, id="download"),
+    ],
 )
 def test_download_cli_flag(args, download, tmp_path) -> None:
     session = session_via_cli([*args, str(tmp_path)])
@@ -41,8 +47,8 @@ def test_download_cli_flag(args, download, tmp_path) -> None:
     ],
 )
 def test_extra_search_dir_cli(tmp_path: Path, groups: tuple[tuple[str, ...], ...]) -> None:
-    expected = []
     args = [str(tmp_path / "env"), "--no-seed"]
+    expected = []
     for group in groups:
         args.append("--extra-search-dir")
         for name in group:
@@ -58,19 +64,14 @@ def test_extra_search_dir_cli(tmp_path: Path, groups: tuple[tuple[str, ...], ...
     assert session.seeder.extra_search_dir == expected
 
 
-@pytest.mark.parametrize("source", ["env", "ini"])
-@pytest.mark.parametrize("cli_dirs", [(), ("first",), ("first", "second")])
-def test_extra_search_dir_cli_overrides_defaults(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, source: str, cli_dirs: tuple[str, ...]
-) -> None:
-    configured = tmp_path / "configured"
-    configured.mkdir()
-    if source == "env":
-        monkeypatch.setenv("VIRTUALENV_EXTRA_SEARCH_DIR", str(configured))
-    else:
-        config = tmp_path / "virtualenv.ini"
-        config.write_text(f"[virtualenv]\nextra_search_dir = {configured}\n", encoding="utf-8")
-        monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(config))
+_CLI_SEARCH_DIRS: Final[list[pytest.ParameterSet]] = [
+    pytest.param((), id="none"),
+    pytest.param(("first",), id="first"),
+    pytest.param(("first", "second"), id="both"),
+]
+
+
+def _cli_search_dir_args(tmp_path: Path, cli_dirs: tuple[str, ...]) -> tuple[list[str], list[Path]]:
     args = [str(tmp_path / "env"), "--no-seed"]
     expected = []
     for name in cli_dirs:
@@ -78,10 +79,42 @@ def test_extra_search_dir_cli_overrides_defaults(
         path.mkdir()
         args.extend(["--extra-search-dir", str(path)])
         expected.append(path)
+    return args, expected
+
+
+@pytest.mark.parametrize("cli_dirs", _CLI_SEARCH_DIRS)
+def test_extra_search_dir_cli_overrides_env_var(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, cli_dirs: tuple[str, ...]
+) -> None:
+    configured = tmp_path / "configured"
+    configured.mkdir()
+    monkeypatch.setenv("VIRTUALENV_EXTRA_SEARCH_DIR", str(configured))
+    args, expected = _cli_search_dir_args(tmp_path, cli_dirs)
 
     session = session_via_cli(args)
 
     assert session.seeder.extra_search_dir == (expected or [configured])
+
+
+@pytest.mark.parametrize("cli_dirs", _CLI_SEARCH_DIRS)
+def test_extra_search_dir_cli_overrides_config_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, cli_dirs: tuple[str, ...]
+) -> None:
+    configured = tmp_path / "configured"
+    configured.mkdir()
+    config = tmp_path / "virtualenv.ini"
+    config.write_text(f"[virtualenv]\nextra_search_dir = {configured}\n", encoding="utf-8")
+    monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(config))
+    args, expected = _cli_search_dir_args(tmp_path, cli_dirs)
+
+    session = session_via_cli(args)
+
+    assert session.seeder.extra_search_dir == (expected or [configured])
+
+
+_BUNDLED_VERSIONS: Final[dict[str, str]] = (
+    {"pip": "bundle"} if sys.version_info[:2] >= (3, 12) else {"pip": "bundle", "setuptools": "bundle"}
+)
 
 
 @pytest.mark.parametrize(
@@ -99,19 +132,21 @@ def test_wheel_cli_flags_do_nothing(
 ) -> None:
     session = session_via_cli([*flags, str(tmp_path)])
     out, err = capsys.readouterr()
-    expected = {"pip": "bundle"} if sys.version_info[:2] >= (3, 12) else {"pip": "bundle", "setuptools": "bundle"}
     assert (
         session.seeder.distribution_to_versions(),
         "the --wheel and --no-wheel options do nothing" in out + err,
-    ) == (expected, warns)
+    ) == (_BUNDLED_VERSIONS, warns)
 
 
-BUNDLED_SEEDERS = [pytest.param(FromAppData, id="app-data"), pytest.param(PipInvoke, id="pip")]
+_BUNDLED_SEEDERS: Final[list[pytest.ParameterSet]] = [
+    pytest.param(FromAppData, id="app-data"),
+    pytest.param(PipInvoke, id="pip"),
+]
 
 
-@pytest.mark.parametrize("seeder", BUNDLED_SEEDERS)
+@pytest.mark.parametrize("seeder", _BUNDLED_SEEDERS)
 def test_bundled_seeder_reports_reason_below_floor(
-    seeder: type[BaseEmbed], at_version: Callable[[int, int], MagicMock]
+    seeder: type[BaseEmbed], at_version: Callable[[int, int], PythonInfo]
 ) -> None:
     reason = seeder.cannot_seed(at_version(3, 8))
     assert reason is not None
@@ -120,34 +155,34 @@ def test_bundled_seeder_reports_reason_below_floor(
     assert "--no-seed" in reason
 
 
-@pytest.mark.parametrize("seeder", BUNDLED_SEEDERS)
+@pytest.mark.parametrize("seeder", _BUNDLED_SEEDERS)
 def test_bundled_seeder_has_no_reason_on_oldest_supported(
-    seeder: type[BaseEmbed], at_version: Callable[[int, int], MagicMock]
+    seeder: type[BaseEmbed], at_version: Callable[[int, int], PythonInfo]
 ) -> None:
     assert seeder.cannot_seed(at_version(*OLDEST_SUPPORTED)) is None
 
 
-def test_base_seeder_never_blocks(at_version: Callable[[int, int], MagicMock]) -> None:
+def test_base_seeder_never_blocks(at_version: Callable[[int, int], PythonInfo]) -> None:
     assert Seeder.cannot_seed(at_version(3, 8)) is None
 
 
 def test_selection_surfaces_the_seeder_reason(tmp_path: Path, mocker: MockerFixture) -> None:
-    mocker.patch.object(FromAppData, "cannot_seed", return_value="seeder said no for a specific reason")
+    mocker.patch.object(
+        FromAppData, "cannot_seed", new=classmethod(lambda _cls, _interpreter: "seeder said no for a specific reason")
+    )
     with pytest.raises(RuntimeError, match="seeder said no for a specific reason"):
         session_via_cli([str(tmp_path)])
 
 
 def test_no_seed_bypasses_capability_check(tmp_path: Path, mocker: MockerFixture) -> None:
-    mocker.patch.object(FromAppData, "cannot_seed", return_value="seeder said no")
+    mocker.patch.object(FromAppData, "cannot_seed", new=classmethod(lambda _cls, _interpreter: "seeder said no"))
     assert session_via_cli(["--no-seed", str(tmp_path)]).seeder.enabled is False
 
 
 @pytest.fixture
-def at_version(mocker: MockerFixture) -> Callable[[int, int], MagicMock]:
-    def build(major: int, minor: int) -> MagicMock:
-        interpreter = mocker.MagicMock()
-        interpreter.version_info = _VersionInfo(major, minor)
-        return interpreter
+def at_version(mocker: MockerFixture) -> Callable[[int, int], PythonInfo]:
+    def build(major: int, minor: int) -> PythonInfo:
+        return mocker.create_autospec(PythonInfo, instance=True, version_info=_VersionInfo(major, minor))
 
     return build
 
@@ -163,6 +198,7 @@ class _VersionInfo(NamedTuple):
     [
         pytest.param("1.zip", "invalid", id="zip"),
         pytest.param("1+local.zip", "archive-like", id="local-zip"),
+        pytest.param("1+local.zip ", "archive-like", id="local-zip-space"),
         pytest.param("20.0.0.tar.gz", "invalid", id="tar-gz"),
         pytest.param("./pip.whl", "invalid", id="path"),
         pytest.param("invalid", "invalid", id="word"),
@@ -175,3 +211,23 @@ def test_seed_version_rejected_before_creation(
         session_via_cli([str(tmp_path / "env"), "--seeder", seeder, "--pip", version])
     assert (context.value.code, (tmp_path / "env").exists()) == (2, False)
     assert f"argument --pip: {reason} seed version: {version!r}" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("seeder", [pytest.param("pip", id="pip"), pytest.param("app-data", id="app-data")])
+@pytest.mark.parametrize(
+    ("spelling", "expected"),
+    [
+        pytest.param("{}\r", "{}", id="version-carriage-return"),
+        pytest.param("{} ", "{}", id="version-trailing-space"),
+        pytest.param("v{}", "{}", id="version-v-prefix"),
+        pytest.param("none\r", "none", id="none-carriage-return"),
+        pytest.param("embed\r", "embed", id="embed-carriage-return"),
+        pytest.param("bundle\r", "bundle", id="bundle-carriage-return"),
+    ],
+)
+def test_seed_version_env_normalized(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, seeder: str, spelling: str, expected: str
+) -> None:
+    monkeypatch.setenv("VIRTUALENV_PIP", spelling.format("26.3"))
+    session: Final[Session] = session_via_cli([str(tmp_path / "env"), "--seeder", seeder])
+    assert session.seeder.pip_version == expected.format("26.3")

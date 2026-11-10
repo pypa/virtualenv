@@ -5,7 +5,7 @@ from typing import Final
 
 import pytest
 
-pytest_plugins = ["pytester"]
+pytest_plugins: Final[list[str]] = ["pytester"]
 
 _WAIT: Final[str] = """
 import os
@@ -43,7 +43,7 @@ def diagnostic_pytester(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPat
 
 
 def test_diagnostics_capture_controller_and_workers(diagnostic_pytester: pytest.Pytester) -> None:
-    source: Final[str] = _WAIT + '\ndef test_wait_for_stack() -> None:\n    wait_for_stack("test_wait_for_stack")\n'
+    source: Final[str] = f'{_WAIT}\ndef test_wait_for_stack() -> None:\n    wait_for_stack("test_wait_for_stack")\n'
     diagnostic_pytester.makepyfile(test_first=source, test_second=source)
     diagnostic_pytester.runpytest_subprocess("-p", "xdist.plugin", "-n", "2", timeout=30).assert_outcomes(passed=2)
     logs: Final[dict[str, str]] = {
@@ -51,7 +51,7 @@ def test_diagnostics_capture_controller_and_workers(diagnostic_pytester: pytest.
         for path in (diagnostic_pytester.path / "diagnostics").glob("*.log")
     }
     assert set(logs) == {"controller", "gw0", "gw1"}
-    for worker, text in logs.items():
+    for text in logs.values():
         assert text.count(" DUMP\n") >= 2
         assert "pytest_runtestloop" in text
         assert "pid=" in text
@@ -60,14 +60,12 @@ def test_diagnostics_capture_controller_and_workers(diagnostic_pytester: pytest.
         assert "TEST test_" in text
         assert "call passed test_" in text
         assert text.endswith("EXIT\n")
-        if worker != "controller":
-            assert "in test_wait_for_stack\n" in text
+    assert all("in test_wait_for_stack\n" in logs[worker] for worker in ("gw0", "gw1"))
 
 
 def test_diagnostics_rearm_after_failure(diagnostic_pytester: pytest.Pytester) -> None:
     diagnostic_pytester.makepyfile(
-        _WAIT
-        + """
+        f"""{_WAIT}
 def test_failure() -> None:
     raise RuntimeError("intentional failure")
 
@@ -85,8 +83,7 @@ def test_wait_for_stack() -> None:
 
 def test_diagnostics_survive_abrupt_exit(diagnostic_pytester: pytest.Pytester) -> None:
     diagnostic_pytester.makepyfile(
-        _WAIT
-        + """
+        f"""{_WAIT}
 def test_wait_for_stack() -> None:
     wait_for_stack("test_wait_for_stack")
     os._exit(23)
@@ -125,8 +122,7 @@ def test_crash() -> None:
 def test_diagnostics_survive_nested_pytest(diagnostic_pytester: pytest.Pytester) -> None:
     diagnostic_pytester.makepyfile(
         inner="def test_inner() -> None: pass",
-        outer=_WAIT
-        + """
+        outer=f"""{_WAIT}
 import pytest
 
 def test_wait_after_nested_pytest() -> None:

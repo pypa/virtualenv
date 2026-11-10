@@ -5,6 +5,7 @@ requires = [
   "hatch-vcs>=0.5",
   "hatchling<1.28,>=1.27; python_version<'3.10'",
   "hatchling>=1.28; python_version>='3.10'",
+  "python-sbom[hatch]>=0.1.2; python_version>='3.11'",
 ]
 
 [project]
@@ -156,6 +157,7 @@ build = [
   "hatch-vcs>=0.5",
   "hatchling<1.28,>=1.27; python_version<'3.10'",
   "hatchling>=1.28; python_version>='3.10'",
+  "python-sbom[hatch]>=0.1.2; python_version>='3.11'",
   "setuptools>=80",
 ]
 coverage = [
@@ -191,7 +193,8 @@ release = [
   "packaging>=26.3",
   "prek>=0.5",
   "pypi-attestations>=0.0.28",
-  "release-creator>=4.1",
+  "python-sbom>=0.1.2",
+  "release-creator>=4.4",
   "towncrier>=26.9",
   "tox>=4.45",
   "tox-uv>=1.28.1",
@@ -199,20 +202,20 @@ release = [
   { include-group = "sbom" },
 ]
 release-build = [
-  "release-creator>=4.1",
+  "release-creator>=4.4",
   "tox>=4.45",
   "tox-uv>=1.28.1",
 ]
 release-news = [
-  "release-creator>=4.1",
+  "release-creator>=4.4",
   "towncrier>=26.9",
 ]
 release-notes = [
-  "release-creator>=4.1",
+  "release-creator>=4.4",
 ]
 release-prepare = [
   "prek>=0.5",
-  "release-creator>=4.1",
+  "release-creator>=4.4",
   "towncrier>=26.9",
 ]
 release-spdx = [ { include-group = "sbom" } ]
@@ -222,13 +225,15 @@ release-verify = [
 release-zipapp = [
   "hatchling>=1.28",
   "packaging>=26.3",
-  "release-creator>=4.1",
+  "python-sbom>=0.1.2",
+  "release-creator>=4.4",
   { include-group = "sbom" },
 ]
 sbom = [
-  # The stable release still imports a removed typing API: https://github.com/beartype/beartype/issues/618
+  # spdx-tools, which python-sbom[validate] and the SPDX check need, imports beartype, whose releases before 0.23 import
+  # a removed typing API: https://github.com/beartype/beartype/issues/618
   "beartype>=0.23.0rc2; python_version>='3.15'",
-  "cyclonedx-python-lib[json-validation]>=11.12",
+  "python-sbom[validate]>=0.1.2",
   "spdx-tools>=0.8.5",
 ]
 tasks = [
@@ -237,6 +242,7 @@ tasks = [
   "hatchling>=1.28",
   "pre-commit-uv>=4.2",
   "prek>=0.5",
+  "python-sbom[validate]>=0.1.2",
   "ruff>=0.16.10",
   "towncrier>=26.9",
   { include-group = "test" },
@@ -354,7 +360,7 @@ git-only = [
   "pylock.toml",
   "scorecard.yml",
 ]
-sdist-only = [ "src/virtualenv/version.py" ]
+sdist-only = [ ".python-sbom-revision", "src/virtualenv/version.py" ]
 
 [tool.pyproject-fmt]
 max_supported_python = "3.15"
@@ -426,6 +432,11 @@ type = [
   { directory = "packaging", name = "Packaging", showcontent = true },
 ]
 
+[tool.python-sbom]
+supplier = { name = "Python Packaging Authority", url = [ "https://www.pypa.io" ] }
+bundled-wheels = [ "src/virtualenv/seed/wheels/embed/*.whl" ]
+content-provider = "tasks.sbom_content:VirtualenvContent"
+
 [tool.nab]
 mode = "universal"
 base-group = "project-runtime"
@@ -434,7 +445,15 @@ uploaded-prior-to = "P7D"
 decision-order = "stable"
 matrix.python = ">=3.15,<3.16"
 matrix.platforms = [ "linux_x86_64", "windows_amd64" ]
-# temporary, delete after 2026-11-02
-packages.release-creator.uploaded-prior-to = 2026-10-26T18:24:46Z
-# temporary, delete after 2026-10-29
-packages.uv.uploaded-prior-to = 2026-10-22T01:32:34Z
+# release-creator 4.4.0 needs a seven-day cutoff exception.
+# expires 2026-11-09
+# expires 2026-11-09
+packages.release-creator.uploaded-prior-to = 2026-11-02T21:45:00Z
+# python-sbom 0.1.2 needs a seven-day cutoff exception.
+# expires 2026-11-15
+packages.python-sbom.uploaded-prior-to = 2026-11-08T17:54:00Z
+
+[tool.simplint]
+docstring-style = "rst"
+# the CodeQL samples are deliberately bad code that the queries must flag, and they stay byte-identical to upstream
+per-file-ignores = { ".github/codeql/tests/*" = [ "SMP" ] }

@@ -51,6 +51,20 @@ def test_ini_that_fails_to_parse_is_logged(invalid_ini: Path, caplog: pytest.Log
     ]
 
 
+def test_ini_empty_env_var_uses_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    mocker.patch("virtualenv.config.ini.user_config_dir", autospec=True, return_value=str(tmp_path / "config"))
+
+    config: Final[IniConfig] = IniConfig(env={"VIRTUALENV_CONFIG_FILE": ""})
+
+    assert (config.epilog, caplog.records) == (
+        f"\nconfig file {tmp_path / 'config' / 'virtualenv.ini'} missing (change via env var VIRTUALENV_CONFIG_FILE)",
+        [],
+    )
+
+
 def test_ini_that_fails_to_parse_does_not_break_the_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     # configparser reads clear = True before it hits the bad line, and the CLI must not apply that partial result
     (invalid_ini := tmp_path / "conf.ini").write_bytes(b"[virtualenv]\nclear = True\ninvalid\n")
@@ -95,3 +109,21 @@ def test_ini_utf8_is_read(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, prefi
     monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(config_file))
 
     assert session_via_cli(["venv"]).creator.clear is True
+
+
+@pytest.mark.parametrize(
+    "prompt",
+    [
+        pytest.param("50% done", id="percent"),
+        pytest.param("100%", id="trailing-percent"),
+        pytest.param("50%% done", id="double-percent"),
+        pytest.param("%(clear)s", id="reference"),
+    ],
+)
+def test_ini_value_is_read_literally(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, prompt: str) -> None:
+    config_file: Final[Path] = tmp_path / "conf.ini"
+    config_file.write_text(f"[virtualenv]\nclear = True\nprompt = {prompt}\n", encoding="utf-8")
+    monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(config_file))
+
+    creator: Final = session_via_cli(["venv"]).creator
+    assert (creator.prompt, creator.clear) == (prompt, True)

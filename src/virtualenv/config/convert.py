@@ -2,16 +2,24 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Final
 
 if TYPE_CHECKING:
     from argparse import Action
     from typing import Any
 
-LOGGER = logging.getLogger(__name__)
+#: Logger of this module.
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class TypeData:
+    """Converts a raw option value to the type the option expects.
+
+    :param default_type: the type of the option
+    :param as_type: the type each item of a list option is converted to
+
+    """
+
     def __init__(self, default_type: type, as_type: type) -> None:
         self.default_type = default_type
         self.as_type = as_type
@@ -19,11 +27,25 @@ class TypeData:
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(base={self.default_type}, as={self.as_type})"
 
+    # a converter returns the type of the option it converts
     def convert(self, value: str) -> Any:  # ruff:ignore[any-type]
+        """Convert a raw option value to the type of the option.
+
+        :param value: the raw value
+
+        :returns: the converted value
+
+        """
         return self.default_type(value)
 
 
 class BoolType(TypeData):
+    """Converter for boolean options, accepting the usual yes and no spellings.
+
+    :var BOOLEAN_STATES: the accepted spellings, mapped to the boolean they stand for
+
+    """
+
     BOOLEAN_STATES: ClassVar[dict[str, bool]] = {
         "1": True,
         "yes": True,
@@ -36,6 +58,15 @@ class BoolType(TypeData):
     }
 
     def convert(self, value: str) -> bool:
+        """Convert the text to a boolean, ignoring case.
+
+        :param value: the text to convert
+
+        :returns: the boolean value
+
+        :raises ValueError: when the text is not a recognized boolean spelling
+
+        """
         if value.lower() not in self.BOOLEAN_STATES:
             msg = f"Not a boolean: {value}"
             raise ValueError(msg)
@@ -43,28 +74,46 @@ class BoolType(TypeData):
 
 
 class NoneType(TypeData):
+    """Converter for options that may be empty, where an empty value means ``None``."""
+
     def convert(self, value: str) -> str | None:
+        """Return ``None`` for an empty value, otherwise the value as a string.
+
+        :param value: the raw value
+
+        :returns: the value, ``None`` when empty
+
+        """
         if not value:
             return None
         return str(value)
 
 
 class ListType(TypeData):
-    def _validate(self) -> None:
-        """no op."""
+    """Converter for options that take a list of values."""
 
-    def convert(self, value: str | list[str], flatten: bool = True) -> list[Any]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]
+    # flatten is accepted but ignored, removing it would change the converter signature
+    def convert(self, value: str | list[str], flatten: bool = True) -> list[Any]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]  # simplint: ignore[SMP602]  # each item has the type of the option, known only at run time
+        """Convert each item of the list to the type of the option.
+
+        :param value: the raw value, a string or a list of strings
+        :param flatten: accepted for the converter signature and ignored
+
+        :returns: the converted items
+
+        """
         values = self.split_values(value)
         result = []
         for a_value in values:
-            sub_values = a_value.split(os.pathsep)
-            result.extend(sub_values)
+            result.extend(a_value.split(os.pathsep))
         return [self.as_type(i) for i in result]
 
     def split_values(self, value: str | bytes | list[str]) -> list[str]:
-        """Split the provided value into a list.
+        """Split a raw value into its items: by line when it has several lines, otherwise by comma.
 
-        First this is done by newlines. If there were no newlines in the text, then we next try to split by comma.
+        :param value: the raw value
+
+        :returns: the items
 
         """
         if isinstance(value, bytes):
@@ -78,8 +127,17 @@ class ListType(TypeData):
         return list(value)
 
 
+# the converted value's type depends on as_type
 def convert(value: str, as_type: TypeData, source: str) -> Any:  # ruff:ignore[any-type]
-    """Convert the value as a given type where the value comes from the given source."""
+    """Convert the value as a given type where the value comes from the given source.
+
+    :param value: the raw value to convert
+    :param as_type: the type to convert the value to
+    :param source: where the value comes from, used when logging a failed conversion
+
+    :returns: the converted value
+
+    """
     try:
         return as_type.convert(value)
     except Exception as exception:
@@ -87,18 +145,28 @@ def convert(value: str, as_type: TypeData, source: str) -> Any:  # ruff:ignore[a
         raise
 
 
-_CONVERT = {bool: BoolType, type(None): NoneType, list: ListType}
+_CONVERT: Final[dict[type, type]] = {bool: BoolType, type(None): NoneType, list: ListType}
 
 
 def get_type(action: Action) -> TypeData:
+    """Return the converter for the type of an argparse action.
+
+    :param action: the argparse action to convert values for
+
+    :returns: the converter matching the default value of the action
+
+    """
     # a flag that stores a bool over an unset default is tri-state, so its env var and ini values read as bools
     default_type = bool if action.default is None and isinstance(action.const, bool) else type(action.default)
-    as_type = default_type if action.type is None else action.type
-    return _CONVERT.get(default_type, TypeData)(default_type, as_type)  # ty: ignore[invalid-argument-type]
+    return _CONVERT.get(default_type, TypeData)(default_type, default_type if action.type is None else action.type)
 
 
 __all__ = [
+    "LOGGER",
     "BoolType",
+    "ListType",
+    "NoneType",
+    "TypeData",
     "convert",
     "get_type",
 ]

@@ -16,7 +16,7 @@ deactivate () {
         export PATH
         unset _OLD_VIRTUAL_PATH
     fi
-    if [ -n "${_OLD_VIRTUAL_PYTHONHOME:-}" ] ; then
+    if [ -n "${_OLD_VIRTUAL_PYTHONHOME+x}" ] ; then
         PYTHONHOME="$_OLD_VIRTUAL_PYTHONHOME"
         export PYTHONHOME
         unset _OLD_VIRTUAL_PYTHONHOME
@@ -124,7 +124,7 @@ else
     export VIRTUAL_ENV_PROMPT
 
     # unset PYTHONHOME if set
-    if [ -n "${PYTHONHOME:-}" ] ; then
+    if [ -n "${PYTHONHOME+x}" ] ; then
         _OLD_VIRTUAL_PYTHONHOME="$PYTHONHOME"
         unset PYTHONHOME
     fi
@@ -168,7 +168,12 @@ else
             # above keeps POSIX shells such as dash away from the array assignment
             _OLD_VIRTUAL_PSVAR="${psvar[9]-}"
             psvar[9]="$VIRTUAL_ENV_PROMPT"
-            _VIRTUAL_PROMPT='%9v'
+            # %Nv counts psvar entries from 1 under every option, but KSH_ARRAYS makes the subscript above count from 0
+            if [[ -o ksharrays ]]; then
+                _VIRTUAL_PROMPT='%10v'
+            else
+                _VIRTUAL_PROMPT='%9v'
+            fi
         fi
         PS1="(${_VIRTUAL_PROMPT}) ${PS1-}"
         unset _VIRTUAL_PROMPT

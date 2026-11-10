@@ -6,464 +6,100 @@ import hashlib
 import json
 import runpy
 import shutil
+import subprocess
 import sys
 import zipfile
 from io import BytesIO, StringIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Final
+from typing import Any, Final
 
 import pytest
 from hatchling.builders.wheel import WheelBuilder
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from pytest_mock import MockerFixture
-
+_ROOT: Final[Path] = Path(__file__).parents[2]
+_EMBED: Final[str] = "virtualenv/seed/wheels/embed"
+_LIBRARY: Final[str] = "__virtualenv__/distlib-0.4-py3-none-any"
+_Document = dict[str, Any]  # simplint: ignore[SMP602]  # the SBOM JSON is free-form; assertions pin its shape
 _DISTRIBUTIONS: Final[str] = json.dumps({
-    "3.14": {"==any": {"distlib": "__virtualenv__/distlib-0.4-py3-none-any/distlib-0.4.dist-info"}},
-    "3.9": {"==any": {"distlib": "__virtualenv__/distlib-0.4-py3-none-any/distlib-0.4.dist-info"}},
+    "3.14": {"==any": {"distlib": f"{_LIBRARY}/distlib-0.4.dist-info"}},
+    "3.9": {"==any": {"distlib": f"{_LIBRARY}/distlib-0.4.dist-info"}},
 })
-
-_ALLOWED: Final[str] = "['Apache-2.0', 'BSD-2-Clause', 'BSD-3-Clause', 'ISC', 'MIT', 'PSF-2.0', 'Unlicense']"
-
-
-def _expression(expression: str) -> dict[str, Any]:
-    return {"expression": expression, "acknowledgement": "declared"}
-
-
-def _named(name: str) -> dict[str, Any]:
-    return {"license": {"name": name, "acknowledgement": "declared"}}
-
-
-def _concluded(identifier: str) -> dict[str, Any]:
-    return {"license": {"id": identifier, "acknowledgement": "concluded"}}
-
-
-def _denied(expression: str, bom_ref: str = "pkg:pypi/example@1.0") -> str:
-    return f"{bom_ref}: license {expression} is outside ALLOWED_LICENSES {_ALLOWED}"
-
-
-@pytest.mark.parametrize(
-    "filename",
-    [
-        pytest.param("pip/example.py", id="plain"),
-        pytest.param("pip/a,b.py", id="comma"),
-        pytest.param('pip/a"b.py', id="quote"),
-        pytest.param("pip/a\nb.py", id="newline"),
-    ],
+# the layout of src/virtualenv/seed/wheels/embed/catalog.py: another assignment comes before the table
+_BUNDLE_TABLE: Final[str] = (
+    "BUNDLE_FOLDER: Final[Path] = Path(__file__).absolute().parent\n"
+    'BUNDLE_SUPPORT: Final[dict[str, dict[str, str]]] = {"3.14": {"pip": "pip-1.0-py3-none-any.whl"}}\n'
 )
-def test_sbom_record_paths(build_sbom: Callable[[str, dict[str, str]], str], filename: str) -> None:
-    assert json.loads(build_sbom(filename, {}))["components"][0]["components"] == [
-        {
-            "type": "file",
-            "bom-ref": f"pkg:pypi/pip@1.0#{filename}",
-            "name": filename,
-            "hashes": [
-                {"alg": "SHA-256", "content": "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"}
-            ],
-            "properties": [{"name": "size", "value": "3"}],
-        },
+
+
+def test_sbom_seeded_for_python(wheel_sbom: _Document) -> None:
+    assert wheel_sbom["components"][0]["properties"][:2] == [
+        {"name": "virtualenv:bundled-wheel", "value": f"{_EMBED}/pip-1.0-py3-none-any.whl"},
+        {"name": "virtualenv:seeded-for-python", "value": "3.14"},
     ]
 
 
-def test_sbom_unresolved_dependencies(build_sbom: Callable[[str, dict[str, str]], str]) -> None:
-    document: Final[dict[str, Any]] = json.loads(build_sbom("pip/example.py", {}))
-    assert [entry for entry in document["dependencies"] if not entry["ref"].startswith("tool:")] == [
-        {"ref": "pkg:pypi/virtualenv@1.0", "dependsOn": ["pkg:pypi/pip@1.0", "requires-dist:python-discovery>=1.6"]},
-    ]
+def test_sbom_supplier(wheel_sbom: _Document) -> None:
+    pypa = {"name": "Python Packaging Authority", "url": ["https://www.pypa.io"]}
+    assert (wheel_sbom["metadata"]["supplier"], wheel_sbom["components"][0]["supplier"]) == (pypa, pypa)
 
 
-@pytest.mark.parametrize(
-    ("source", "content"),
-    [
-        pytest.param(
-            "pip/_vendor/vendor.txt", "# bundled\n\n  urllib3==1.26.4 # patched upstream\n", id="pip-manifest"
-        ),
-        pytest.param(
-            "pip/_vendor/urllib3-1.26.4.dist-info/METADATA", "Name: urllib3\nVersion: 1.26.4\n", id="nested-metadata"
-        ),
-    ],
-)
-def test_sbom_vendored_identity(build_sbom: Callable[[str, dict[str, str]], str], source: str, content: str) -> None:
-    document: Final[dict[str, Any]] = json.loads(build_sbom("pip/example.py", {source: content}))
-    assert [child for child in document["components"][0]["components"] if child["type"] == "library"] == [
-        {
-            "type": "library",
-            "bom-ref": "pkg:pypi/pip@1.0#vendored/pkg:pypi/urllib3@1.26.4",
-            "name": "urllib3",
-            "version": "1.26.4",
-            "purl": "pkg:pypi/urllib3@1.26.4",
-            "externalReferences": [],
-            "properties": [{"name": "virtualenv:vendored-manifest", "value": source}],
-            "evidence": {
-                "identity": [
-                    {
-                        "field": "purl",
-                        "confidence": 1,
-                        "methods": [{"technique": "manifest-analysis", "confidence": 1, "value": source}],
-                    }
-                ]
-            },
-        }
-    ]
+def test_sbom_wheel_license_policy(wheel: Path, capfd: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit):
+        validate_sbom(wheel.parent)
+    assert f"bundled:{_EMBED}/pip-1.0-py3-none-any.whl: declares no license" in capfd.readouterr().err
 
 
-def test_sbom_vendored_relationship(build_sbom: Callable[[str, dict[str, str]], str]) -> None:
-    document: Final[dict[str, Any]] = json.loads(
-        build_sbom("pip/example.py", {"pip/_vendor/vendor.txt": "urllib3==1.26.4\n"})
-    )
-    assert [entry for entry in document["dependencies"] if not entry["ref"].startswith("tool:")] == [
-        {"ref": "pkg:pypi/virtualenv@1.0", "dependsOn": ["pkg:pypi/pip@1.0", "requires-dist:python-discovery>=1.6"]},
-        {"ref": "pkg:pypi/pip@1.0", "dependsOn": ["pkg:pypi/pip@1.0#vendored/pkg:pypi/urllib3@1.26.4"]},
-    ]
+def validate_sbom(target: Path) -> None:
+    sys.path.insert(0, str(_ROOT / "tasks"))
+    try:
+        main = runpy.run_path(str(_ROOT / "tasks" / "validate_sbom.py"))["main"]
+    finally:
+        sys.path.remove(str(_ROOT / "tasks"))
+    original = sys.argv
+    sys.argv = ["validate_sbom.py", str(target)]
+    try:
+        main()
+    finally:
+        sys.argv = original
 
 
-def test_sbom_vendored_metadata_precedence(build_sbom: Callable[[str, dict[str, str]], str]) -> None:
-    document: Final[dict[str, Any]] = json.loads(
-        build_sbom(
-            "pip/example.py",
-            {
-                "pip/_vendor/vendor.txt": "urllib3==1.26.4\n",
-                "pip/_vendor/urllib3-1.26.4.dist-info/METADATA": "Name: urllib3\nVersion: 1.26.4\nLicense-Expression: MIT\n",
-            },
-        )
-    )
-    assert [child["licenses"] for child in document["components"][0]["components"] if child["type"] == "library"] == [
-        [{"expression": "MIT", "acknowledgement": "declared"}],
-    ]
-
-
-@pytest.mark.parametrize(
-    ("metadata", "expected"),
-    [
-        pytest.param(
-            "Classifier: License :: OSI Approved :: MIT License\n",
-            [
-                {"license": {"name": "MIT License", "acknowledgement": "declared"}},
-                {"license": {"id": "MIT", "acknowledgement": "concluded"}},
-            ],
-            id="classifier",
-        ),
-        pytest.param(
-            "Classifier: License :: OSI Approved :: Python Software Foundation License\nLicense: PSF-2.0\n",
-            [
-                {"license": {"name": "Python Software Foundation License", "acknowledgement": "declared"}},
-                {"license": {"name": "PSF-2.0", "acknowledgement": "declared"}},
-                {"license": {"id": "PSF-2.0", "acknowledgement": "concluded"}},
-            ],
-            id="classifier-and-id-agree",
-        ),
-        pytest.param(
-            "License: mit\n",
-            [
-                {"license": {"name": "mit", "acknowledgement": "declared"}},
-                {"license": {"id": "MIT", "acknowledgement": "concluded"}},
-            ],
-            id="id-canonical-case",
-        ),
-        pytest.param(
-            "Classifier: License :: OSI Approved :: MIT License\n"
-            "Classifier: License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)\n",
-            [
-                {"license": {"name": "MIT License", "acknowledgement": "declared"}},
-                {"license": {"name": "GNU Lesser General Public License v3 (LGPLv3)", "acknowledgement": "declared"}},
-            ],
-            id="one-unresolved",
-        ),
-        pytest.param(
-            "License: MIT OR Apache-2.0\n",
-            [{"license": {"name": "MIT OR Apache-2.0", "acknowledgement": "declared"}}],
-            id="expression-in-license-field",
-        ),
-        pytest.param(
-            "License: LicenseRef-Proprietary\n",
-            [{"license": {"name": "LicenseRef-Proprietary", "acknowledgement": "declared"}}],
-            id="license-ref",
-        ),
-    ],
-)
-def test_sbom_license_resolution(
-    build_sbom: Callable[[str, dict[str, str]], str], metadata: str, expected: list[dict[str, Any]]
-) -> None:
-    vendored: Final[dict[str, str]] = {
-        "pip/_vendor/urllib3-1.26.4.dist-info/METADATA": f"Name: urllib3\nVersion: 1.26.4\n{metadata}"
-    }
-    document: Final[dict[str, Any]] = json.loads(build_sbom("pip/example.py", vendored))
-    assert [child["licenses"] for child in document["components"][0]["components"] if child["type"] == "library"] == [
-        expected
-    ]
-
-
-@pytest.mark.parametrize(
-    "requirement",
-    [
-        pytest.param("urllib3", id="missing"),
-        pytest.param("urllib3>=1", id="range"),
-        pytest.param("urllib3==1.*", id="wildcard"),
-        pytest.param("urllib3 @ https://example.com/package.whl", id="url"),
-    ],
-)
-def test_sbom_rejects_unpinned_vendor(build_sbom: Callable[[str, dict[str, str]], str], requirement: str) -> None:
-    with pytest.raises(ValueError, match="Unpinned vendored dependency"):
-        build_sbom("pip/example.py", {"pip/_vendor/vendor.txt": requirement})
-
-
-@pytest.mark.parametrize(
-    ("epoch", "expected"),
-    [
-        pytest.param(None, "2020-02-02T00:00:00+00:00", id="hatchling-default"),
-        pytest.param("1700000000", "2023-11-14T22:13:20+00:00", id="source-date-epoch"),
-    ],
-)
-def test_sbom_timestamp(
-    build_sbom: Callable[[str, dict[str, str]], str], monkeypatch: pytest.MonkeyPatch, epoch: str | None, expected: str
-) -> None:
-    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
-    if epoch is not None:
-        monkeypatch.setenv("SOURCE_DATE_EPOCH", epoch)
-    assert json.loads(build_sbom("pip/example.py", {}))["metadata"]["timestamp"] == expected
-
-
-def test_sbom_release_notes_from_project_url(build_sbom: Callable[[str, dict[str, str]], str]) -> None:
-    root: Final[dict[str, Any]] = json.loads(build_sbom("pip/example.py", {}))["metadata"]["component"]
-    assert [reference for reference in root["externalReferences"] if reference["type"] == "release-notes"] == [
-        {"type": "release-notes", "url": "https://example.com/changelog", "comment": "Project-URL: Changelog"},
-    ]
-
-
-def test_sbom_build_host_independent(
-    build_sbom: Callable[[str, dict[str, str]], str],
-    install_tool: Callable[[Path, str, bool, dict[str, bytes]], None],
-    mocker: MockerFixture,
-    tmp_path: Path,
-) -> None:
-    sboms: Final[list[str]] = []
-    for host, extension, installer, sys_version in (
-        (
-            {
-                "system": "Linux",
-                "release": "6.17.0-1022-azure",
-                "version": "#22~24.04.1-Ubuntu SMP",
-                "machine": "x86_64",
-                "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
-                "python_compiler": "GCC 13.3.0",
-                "python_build": ("main", "Aug  5 2026 10:00:00"),
-                "freedesktop_os_release": {"ID": "ubuntu", "VERSION_ID": "24.04"},
-            },
-            "cpython-314-x86_64-linux-gnu.so",
-            b"uv\n",
-            "3.14.7 (main, Aug  5 2026, 10:00:00) [GCC 13.3.0]",
-        ),
-        (
-            {
-                "system": "Linux",
-                "release": "7.0.12-linuxkit",
-                "version": "#1 SMP PREEMPT",
-                "machine": "aarch64",
-                "platform": "Linux-7.0.12-linuxkit-aarch64-with-glibc2.36",
-                "python_compiler": "Clang 20.1.4",
-                "python_build": ("main", "Sep  1 2026 08:00:00"),
-                "freedesktop_os_release": {"ID": "debian", "VERSION_ID": "12"},
-            },
-            "cpython-314-aarch64-linux-gnu.so",
-            b"pip\n",
-            "3.14.7 (main, Sep  1 2026, 08:00:00) [Clang 20.1.4]",
-        ),
-    ):
-        for name, value in host.items():
-            mocker.patch(f"platform.{name}", autospec=True, return_value=value)
-        mocker.patch.object(sys, "version", sys_version)
-        install_tool(site := tmp_path / extension, "native", False, {f"native/_speedups.{extension}": b"\0"})
-        install_tool(site, "pure", True, {"pure-1.0.dist-info/INSTALLER": installer})
-        mocker.patch.object(sys, "path", [str(site), *sys.path])
-        sboms.append(build_sbom("pip/example.py", {}))
-        mocker.stopall()
-    assert sboms[0] == sboms[1]
-
-
-def test_sbom_ci_rerun(build_sbom: Callable[[str, dict[str, str]], str], monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("SOURCE_DATE_EPOCH", "1700000000")
-    monkeypatch.setenv("GITHUB_REPOSITORY", "downstream/project")
-    monkeypatch.setenv("GITHUB_SHA", "a" * 40)
-    monkeypatch.setenv("GITHUB_RUN_ID", "100")
-    monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "1")
-    first: Final[str] = build_sbom("pip/example.py", {})
-    monkeypatch.setenv("GITHUB_SHA", "b" * 40)
-    monkeypatch.setenv("GITHUB_RUN_ID", "200")
-    monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "2")
-    assert build_sbom("pip/example.py", {}) == first
-
-
-def test_sbom_spdx_bundled_wheel(
-    build_sbom: Callable[[str, dict[str, str]], str], render_spdx: Callable[[str], str]
-) -> None:
-    cyclonedx: Final[str] = build_sbom("pip/example.py", {})
-    assert json.loads(render_spdx(cyclonedx))["packages"][1] == {
-        "SPDXID": "SPDXRef-pkg-pypi-pip-1.0",
-        "checksums": [
-            {"algorithm": "SHA256", "checksumValue": json.loads(cyclonedx)["components"][0]["hashes"][0]["content"]}
-        ],
-        "comment": "virtualenv:bundled-wheel: src/virtualenv/seed/wheels/embed/pip-1.0-py3-none-any.whl\n"
-        "virtualenv:seeded-for-python: 3.14",
-        "downloadLocation": "NOASSERTION",
-        "externalRefs": [
-            {"referenceCategory": "PACKAGE-MANAGER", "referenceLocator": "pkg:pypi/pip@1.0", "referenceType": "purl"}
-        ],
-        "filesAnalyzed": False,
-        "licenseConcluded": "NOASSERTION",
-        "licenseDeclared": "NOASSERTION",
-        "name": "pip",
-        "primaryPackagePurpose": "LIBRARY",
-        "versionInfo": "1.0",
-    }
-
-
-def test_sbom_spdx_relationships(
-    build_sbom: Callable[[str, dict[str, str]], str], render_spdx: Callable[[str], str]
-) -> None:
-    rendered: Final[str] = render_spdx(build_sbom("pip/example.py", {"pip/_vendor/vendor.txt": "urllib3==1.26.4\n"}))
+def test_sbom_zipapp_components(zipapp_sbom: _Document) -> None:
     assert [
-        relationship
-        for relationship in json.loads(rendered)["relationships"]
-        if not relationship["spdxElementId"].startswith("SPDXRef-tool-")
-    ] == [
-        {
-            "spdxElementId": "SPDXRef-DOCUMENT",
-            "relationshipType": "DESCRIBES",
-            "relatedSpdxElement": "SPDXRef-pkg-pypi-virtualenv-1.0",
-        },
-        {
-            "spdxElementId": "SPDXRef-pkg-pypi-pip-1.0",
-            "relationshipType": "CONTAINS",
-            "relatedSpdxElement": "SPDXRef-pkg-pypi-pip-1.0-vendored-pkg-pypi-urllib3-1.26.4",
-        },
-        {
-            "spdxElementId": "SPDXRef-pkg-pypi-virtualenv-1.0",
-            "relationshipType": "DEPENDS_ON",
-            "relatedSpdxElement": "SPDXRef-pkg-pypi-pip-1.0",
-        },
-        {
-            "spdxElementId": "SPDXRef-pkg-pypi-virtualenv-1.0",
-            "relationshipType": "DEPENDS_ON",
-            "relatedSpdxElement": "SPDXRef-requires-dist-python-discovery-1.6",
-        },
-        {
-            "spdxElementId": "SPDXRef-pkg-pypi-pip-1.0",
-            "relationshipType": "DEPENDS_ON",
-            "relatedSpdxElement": "SPDXRef-pkg-pypi-pip-1.0-vendored-pkg-pypi-urllib3-1.26.4",
-        },
-    ]
-
-
-def test_sbom_spdx_build_tools(
-    build_sbom: Callable[[str, dict[str, str]], str], render_spdx: Callable[[str], str]
-) -> None:
-    assert {
-        relationship["relatedSpdxElement"]
-        for relationship in json.loads(render_spdx(build_sbom("pip/example.py", {})))["relationships"]
-        if relationship["relationshipType"] == "BUILD_TOOL_OF"
-    } == {"SPDXRef-pkg-pypi-virtualenv-1.0"}
-
-
-@pytest.mark.parametrize(
-    ("metadata", "expected"),
-    [
-        pytest.param("License-Expression: MIT\n", ("MIT", "NOASSERTION", None), id="expression"),
-        pytest.param(
-            "Classifier: License :: OSI Approved :: MIT License\nLicense: MIT\n",
-            ("NOASSERTION", "MIT", "Declared in package metadata as: MIT License; MIT"),
-            id="names",
-        ),
-        pytest.param(
-            "License: LGPLv3\n",
-            ("NOASSERTION", "NOASSERTION", "Declared in package metadata as: LGPLv3"),
-            id="unresolved-name",
-        ),
-        pytest.param("", ("NOASSERTION", "NOASSERTION", None), id="undeclared"),
-    ],
-)
-def test_sbom_spdx_declared_license(
-    build_sbom: Callable[[str, dict[str, str]], str],
-    render_spdx: Callable[[str], str],
-    metadata: str,
-    expected: tuple[str, str, str | None],
-) -> None:
-    vendored: Final[dict[str, str]] = {
-        "pip/_vendor/urllib3-1.26.4.dist-info/METADATA": f"Name: urllib3\nVersion: 1.26.4\n{metadata}"
-    }
-    assert [
-        (package["licenseDeclared"], package["licenseConcluded"], package.get("licenseComments"))
-        for package in json.loads(render_spdx(build_sbom("pip/example.py", vendored)))["packages"]
-        if (package["name"], package.get("versionInfo")) == ("urllib3", "1.26.4")
-    ] == [expected]
-
-
-def test_sbom_spdx_creation_info(
-    build_sbom: Callable[[str, dict[str, str]], str],
-    render_spdx: Callable[[str], str],
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setenv("SOURCE_DATE_EPOCH", "1700000000")
-    cyclonedx: Final[str] = build_sbom("pip/example.py", {})
-    serial: Final[str] = json.loads(cyclonedx)["serialNumber"].removeprefix("urn:uuid:")
-    assert (
-        (document := json.loads(render_spdx(cyclonedx)))["documentNamespace"],
-        document["creationInfo"]["created"],
-    ) == (
-        f"https://github.com/pypa/virtualenv/sboms/virtualenv-1.0-{serial}",
-        "2023-11-14T22:13:20Z",
-    )
-
-
-def test_sbom_zipapp_components(zipapp_sbom: str) -> None:
-    assert [
-        (
-            component["purl"],
-            [prop["value"] for prop in component["properties"] if prop["name"].startswith("virtualenv:")],
-            [child["name"] for child in component["components"]],
-        )
-        for component in json.loads(zipapp_sbom)["components"]
+        (component["bom-ref"], [child["name"] for child in component.get("components", [])])
+        for component in zipapp_sbom["components"]
     ] == [
         (
             "pkg:pypi/virtualenv@1.0",
-            [],
-            ["virtualenv-1.0.dist-info/METADATA", "virtualenv/__init__.py", "pip"],
+            [
+                "virtualenv-1.0.dist-info/METADATA",
+                "virtualenv/__init__.py",
+                f"{_EMBED}/catalog.py",
+                "pip",
+            ],
         ),
         (
-            "pkg:pypi/distlib@0.4",
-            ["__virtualenv__/distlib-0.4-py3-none-any", "3.14", "3.9"],
-            [
-                "__virtualenv__/distlib-0.4-py3-none-any/distlib-0.4.dist-info/METADATA",
-                "__virtualenv__/distlib-0.4-py3-none-any/distlib/__init__.py",
-            ],
+            f"bundled:{_LIBRARY}",
+            [f"{_LIBRARY}/distlib-0.4.dist-info/METADATA", f"{_LIBRARY}/distlib/__init__.py"],
         ),
     ]
 
 
-def test_sbom_zipapp_embedded_wheel(zipapp: Path, zipapp_sbom: str) -> None:
-    with zipfile.ZipFile(zipapp) as archive:
-        digest: Final[str] = hashlib.sha256(
-            archive.read("virtualenv/seed/wheels/embed/pip-1.0-py3-none-any.whl")
-        ).hexdigest()
-    assert json.loads(zipapp_sbom)["components"][0]["components"][2] == {
-        "type": "library",
-        "bom-ref": "pkg:pypi/pip@1.0",
-        "name": "pip",
-        "version": "1.0",
-        "purl": "pkg:pypi/pip@1.0",
-        "externalReferences": [],
-        "hashes": [{"alg": "SHA-256", "content": digest}],
-        "properties": [
-            {"name": "virtualenv:bundled-wheel", "value": "virtualenv/seed/wheels/embed/pip-1.0-py3-none-any.whl"}
-        ],
-    }
+def test_sbom_zipapp_embedded_wheel_matches_wheel_sbom(zipapp_sbom: _Document, wheel_sbom: _Document) -> None:
+    assert zipapp_sbom["components"][0]["components"][3] == wheel_sbom["components"][0]
 
 
-def test_sbom_zipapp_loader_files(zipapp_sbom: str) -> None:
+def test_sbom_zipapp_loaded_for_python(zipapp_sbom: _Document) -> None:
+    assert zipapp_sbom["components"][1]["properties"][:3] == [
+        {"name": "virtualenv:bundled-wheel", "value": _LIBRARY},
+        {"name": "virtualenv:loaded-for-python", "value": "3.14"},
+        {"name": "virtualenv:loaded-for-python", "value": "3.9"},
+    ]
+
+
+def test_sbom_zipapp_loader_files(zipapp_sbom: _Document) -> None:
     assert [
         (component["name"], component["hashes"][0]["content"])
-        for component in json.loads(zipapp_sbom)["metadata"]["component"]["components"]
+        for component in zipapp_sbom["metadata"]["component"]["components"]
     ] == [
         ("__main__.py", hashlib.sha256(b"# loader").hexdigest()),
         ("distributions.json", hashlib.sha256(_DISTRIBUTIONS.encode()).hexdigest()),
@@ -471,251 +107,179 @@ def test_sbom_zipapp_loader_files(zipapp_sbom: str) -> None:
     ]
 
 
-def test_sbom_zipapp_embeds_document(zipapp: Path, zipapp_sbom: str) -> None:
-    with zipfile.ZipFile(zipapp) as archive:
-        assert archive.read("virtualenv.pyz.cdx.json").decode("utf-8") == zipapp_sbom
+def test_sbom_zipapp_describes_every_file(zipapp: Path) -> None:
+    assert describes_archive(zipapp) == []
 
 
-def test_sbom_zipapp_license_problems(
-    zipapp_sbom: str, license_problems: Callable[[list[dict[str, Any]]], list[str]]
-) -> None:
-    assert license_problems(json.loads(zipapp_sbom)["components"]) == [
-        "pkg:pypi/virtualenv@1.0: declares no license",
-        "pkg:pypi/pip@1.0: declares no license",
-        "pkg:pypi/distlib@0.4: declares no license",
+def describes_archive(pyz: Path) -> list[str]:
+    sys.path.insert(0, str(_ROOT / "tasks"))
+    try:
+        return runpy.run_path(str(_ROOT / "tasks" / "validate_sbom.py"))["describes_archive"](pyz)
+    finally:
+        sys.path.remove(str(_ROOT / "tasks"))
+
+
+def test_sbom_zipapp_mismatch(tampered: Path) -> None:
+    assert describes_archive(tampered) == [
+        "virtualenv.pyz holds files the SBOM does not describe: ['extra.py']",
+        "SBOM describes files virtualenv.pyz does not hold: ['modules.json']",
+        "SHA-256 in the SBOM differs from the archive for: ['__main__.py']",
     ]
 
 
-@pytest.mark.parametrize(
-    ("licenses", "expected"),
-    [
-        pytest.param([_expression("MIT")], [], id="allowed"),
-        pytest.param([_expression("mit")], [], id="allowed-any-case"),
-        pytest.param([_expression("GPL-3.0-only")], [_denied("GPL-3.0-only")], id="denied"),
-        pytest.param([_expression("Apache-2.0 OR GPL-3.0-only")], [], id="or-one-allowed"),
-        pytest.param(
-            [_expression("GPL-3.0-only OR MPL-2.0")], [_denied("GPL-3.0-only OR MPL-2.0")], id="or-none-allowed"
-        ),
-        pytest.param([_expression("MIT AND BSD-3-Clause")], [], id="and-all-allowed"),
-        pytest.param([_expression("MIT AND GPL-3.0-only")], [_denied("MIT AND GPL-3.0-only")], id="and-one-denied"),
-        pytest.param([_expression("MIT OR GPL-3.0-only AND LGPL-3.0-only")], [], id="and-binds-tighter"),
-        pytest.param(
-            [_expression("(MIT OR GPL-3.0-only) AND LGPL-3.0-only")],
-            [_denied("(MIT OR GPL-3.0-only) AND LGPL-3.0-only")],
-            id="parentheses",
-        ),
-        pytest.param([_expression("Apache-2.0 WITH LLVM-exception")], [], id="with-allowed"),
-        pytest.param(
-            [_expression("GPL-2.0-only WITH Classpath-exception-2.0")],
-            [_denied("GPL-2.0-only WITH Classpath-exception-2.0")],
-            id="with-denied",
-        ),
-        pytest.param([_named("MIT License"), _concluded("MIT")], [], id="concluded-allowed"),
-        pytest.param([_named("MPL 2.0"), _concluded("MPL-2.0")], [_denied("MPL-2.0")], id="concluded-denied"),
-        pytest.param(
-            [_concluded("MIT"), _concluded("LGPL-3.0-only")], [_denied("LGPL-3.0-only")], id="concluded-all-apply"
-        ),
-        pytest.param(
-            [_named("MIT License")],
-            [
-                (
-                    "pkg:pypi/example@1.0: declares license names ['MIT License'] with no SPDX id; map them in"
-                    " hatch_build.py _CLASSIFIER_LICENSES"
-                )
-            ],
-            id="name-only",
-        ),
-        pytest.param([], ["pkg:pypi/example@1.0: declares no license"], id="undeclared"),
-    ],
-)
-def test_sbom_license_policy(
-    license_problems: Callable[[list[dict[str, Any]]], list[str]],
-    licenses: list[dict[str, Any]],
-    expected: list[str],
+@pytest.fixture
+def tampered(zipapp: Path, tmp_path: Path) -> Path:
+    # the zipapp changed after its SBOM was written: a member dropped, one rewritten and one added
+    with zipfile.ZipFile(zipapp) as source:
+        members = {name: source.read(name) for name in source.namelist() if name != "modules.json"}
+    members["__main__.py"] = b"# another loader"
+    members["extra.py"] = b""
+    (directory := tmp_path / "tampered").mkdir()
+    with zipfile.ZipFile(target := directory / "virtualenv.pyz", "w") as archive:
+        for name, content in members.items():
+            archive.writestr(name, content)
+    return target
+
+
+def test_sbom_zipapp_mismatch_fails_validation(
+    tampered: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    component: Final[dict[str, Any]] = {
-        "type": "library",
-        "bom-ref": "pkg:pypi/example@1.0",
-        "hashes": [{"alg": "SHA-256", "content": "0" * 64}],
-        "licenses": licenses,
-    }
-    assert license_problems([component]) == expected
+    document_valid(monkeypatch)
+    with pytest.raises(SystemExit, match="1"):
+        validate_sbom(tampered)
+    assert capsys.readouterr().out.splitlines()[0] == (
+        "SBOM invalid: virtualenv.pyz holds files the SBOM does not describe: ['extra.py']"
+    )
 
 
-@pytest.mark.parametrize(
-    ("expression", "reason"),
-    [
-        pytest.param("MIT AND", "it ends early", id="trailing-operator"),
-        pytest.param("OR MIT", "unexpected 'OR'", id="leading-operator"),
-        pytest.param("(MIT", "it ends early", id="unclosed"),
-        pytest.param("MIT)", "unexpected ')'", id="unopened"),
-        pytest.param("(MIT Apache-2.0)", "expected ')', got 'Apache-2.0'", id="missing-operator"),
-        pytest.param("MIT and Apache-2.0", "unexpected 'and'", id="lower-case-operator"),
-        pytest.param("Apache-2.0 WITH OR", "unexpected 'OR'", id="with-operator"),
-    ],
-)
-def test_sbom_license_policy_malformed(
-    license_problems: Callable[[list[dict[str, Any]]], list[str]], expression: str, reason: str
+def document_valid(monkeypatch: pytest.MonkeyPatch) -> None:
+    # python-sbom validate judges the document alone and passes here; what follows is the zipapp check. Patched once the
+    # zipapp is built, since building it runs git through subprocess too
+    monkeypatch.setattr(subprocess, "run", lambda command, **_: subprocess.CompletedProcess(command, 0))
+
+
+def test_sbom_zipapp_matching_passes_validation(
+    zipapp: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    component: Final[dict[str, Any]] = {
-        "type": "library",
-        "bom-ref": "pkg:pypi/example@1.0",
-        "hashes": [{"alg": "SHA-256", "content": "0" * 64}],
-        "licenses": [_expression(expression)],
-    }
-    assert license_problems([component]) == [
-        f"pkg:pypi/example@1.0: license expression {expression!r} is malformed: {reason}"
-    ]
+    document_valid(monkeypatch)
+    validate_sbom(zipapp)
+    assert not capsys.readouterr().out
 
 
-@pytest.mark.parametrize(
-    "component",
-    [
-        pytest.param(
-            {"type": "library", "bom-ref": "requires-dist:distlib", "name": "distlib"}, id="declared-requirement"
-        ),
-        pytest.param(
-            {
-                "type": "library",
-                "bom-ref": "pkg:pypi/pip@1.0",
-                "hashes": [{"alg": "SHA-256", "content": "0" * 64}],
-                "licenses": [_expression("MIT")],
-                "components": [
-                    {"type": "library", "bom-ref": "pkg:pypi/pip@1.0#vendored/pkg:pypi/autocommand@2.2.2"},
-                ],
-            },
-            id="vendored-by-seed-wheel",
-        ),
-        pytest.param(
-            {"type": "file", "bom-ref": "loader", "hashes": [{"alg": "SHA-256", "content": "0" * 64}]}, id="file"
-        ),
-    ],
-)
-def test_sbom_license_policy_skips_unshipped(
-    license_problems: Callable[[list[dict[str, Any]]], list[str]], component: dict[str, Any]
-) -> None:
-    assert license_problems([component]) == []
+def test_sbom_needs_one_wheel(tmp_path: Path) -> None:
+    with pytest.raises(SystemExit, match=r"expected exactly one wheel in .*, found 0: \[\]"):
+        validate_sbom(tmp_path)
 
 
-def test_sbom_license_policy_judges_files_owner(
-    license_problems: Callable[[list[dict[str, Any]]], list[str]],
-) -> None:
-    component: Final[dict[str, Any]] = {
-        "type": "library",
-        "bom-ref": "pkg:pypi/distlib@0.4",
-        "licenses": [_concluded("LGPL-3.0-only")],
-        "components": [{"type": "file", "bom-ref": "pkg:pypi/distlib@0.4#distlib/__init__.py"}],
-    }
-    assert license_problems([component]) == [_denied("LGPL-3.0-only", "pkg:pypi/distlib@0.4")]
+def test_sbom_zipapp_license_problems(zipapp: Path, capfd: pytest.CaptureFixture[str]) -> None:
+    with pytest.raises(SystemExit):
+        validate_sbom(zipapp)
+    errors = capfd.readouterr().err
+    assert [
+        problem in errors
+        for problem in (
+            "pkg:pypi/virtualenv@1.0: declares no license",
+            f"bundled:{_EMBED}/pip-1.0-py3-none-any.whl: declares no license",
+            f"bundled:{_LIBRARY}: declares no license",
+        )
+    ] == [True, True, True]
 
 
 @pytest.fixture
-def license_problems() -> Callable[[list[dict[str, Any]]], list[str]]:
-    return runpy.run_path(str(Path(__file__).parents[2] / "tasks" / "license_policy.py"))["license_problems"]
+def wheel(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)
+    project = tmp_path / "project"
+    shutil.copytree(_ROOT / "tasks", project / "tasks", ignore=shutil.ignore_patterns("__pycache__"))
+    shutil.copyfile(_ROOT / "hatch_build.py", project / "hatch_build.py")
+    (project / "LICENSE").write_text("Copyright (c) example\n", encoding="utf-8")
+    (embed := project / "src" / _EMBED).mkdir(parents=True)
+    (project / "src" / "virtualenv" / "__init__.py").write_text("", encoding="utf-8")
+    (embed / "catalog.py").write_text(_BUNDLE_TABLE, encoding="utf-8")
+    write_pip_wheel(
+        embed / "pip-1.0-py3-none-any.whl",
+        "Metadata-Version: 2.4\nName: pip\nVersion: 1.0\nProject-URL: Source, https://github.com/pypa/pip\n",
+    )
+    (project / "pyproject.toml").write_text(
+        """\
+[project]
+name = "virtualenv"
+version = "1.0"
+license = "MIT"
+license-files = ["LICENSE"]
+urls.Source = "https://github.com/pypa/virtualenv"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/virtualenv"]
+
+[tool.hatch.build.hooks.custom]
+path = "hatch_build.py"
+
+[tool.python-sbom]
+supplier = { name = "Python Packaging Authority", url = ["https://www.pypa.io"] }
+bundled-wheels = ["src/virtualenv/seed/wheels/embed/*.whl"]
+content-provider = "tasks.sbom_content:VirtualenvContent"
+""",
+        encoding="utf-8",
+    )
+    builder: Final[WheelBuilder] = WheelBuilder(str(project))
+    (built,) = builder.build(directory=str(tmp_path / "dist"), versions=["standard"])
+    return Path(built)
+
+
+def write_pip_wheel(target: Path | BytesIO, metadata: str) -> None:
+    files: Final[dict[str, bytes]] = {"pip/example.py": b"abc", "pip-1.0.dist-info/METADATA": metadata.encode()}
+    record: Final[StringIO] = StringIO(newline="")
+    csv.writer(record).writerows([
+        *(
+            (name, f"sha256={base64.urlsafe_b64encode(hashlib.sha256(data).digest()).rstrip(b'=').decode()}", len(data))
+            for name, data in files.items()
+        ),
+        ("pip-1.0.dist-info/RECORD", "", ""),
+    ])
+    with zipfile.ZipFile(target, "w") as archive:
+        for name, data in {**files, "pip-1.0.dist-info/RECORD": record.getvalue().encode()}.items():
+            archive.writestr(name, data)
 
 
 @pytest.fixture
-def zipapp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    wheel: Final[BytesIO] = BytesIO()
-    with zipfile.ZipFile(wheel, "w") as archive:
-        archive.writestr("pip-1.0.dist-info/METADATA", "Metadata-Version: 2.4\nName: pip\nVersion: 1.0\n")
-    bundled: Final[str] = "__virtualenv__/distlib-0.4-py3-none-any"
+def wheel_sbom(wheel: Path) -> _Document:
+    with zipfile.ZipFile(wheel) as archive:
+        return json.loads(archive.read("virtualenv-1.0.dist-info/sboms/virtualenv.cdx.json"))
+
+
+@pytest.fixture
+def zipapp(tmp_path: Path, wheel: Path) -> Path:
+    with zipfile.ZipFile(wheel) as built:
+        pip = built.read(f"{_EMBED}/pip-1.0-py3-none-any.whl")
     with zipfile.ZipFile(pyz := tmp_path / "virtualenv.pyz", "w") as archive:
         archive.writestr("__main__.py", "# loader")
         archive.writestr("modules.json", "{}")
         archive.writestr("distributions.json", _DISTRIBUTIONS)
         archive.writestr("virtualenv-1.0.dist-info/METADATA", "Metadata-Version: 2.4\nName: virtualenv\nVersion: 1.0\n")
         archive.writestr("virtualenv/__init__.py", "")
-        archive.writestr("virtualenv/seed/wheels/embed/pip-1.0-py3-none-any.whl", wheel.getvalue())
+        archive.writestr(f"{_EMBED}/catalog.py", _BUNDLE_TABLE)
+        archive.writestr(f"{_EMBED}/pip-1.0-py3-none-any.whl", pip)
         archive.writestr(
-            f"{bundled}/distlib-0.4.dist-info/METADATA", "Metadata-Version: 2.4\nName: distlib\nVersion: 0.4\n"
+            f"{_LIBRARY}/distlib-0.4.dist-info/METADATA", "Metadata-Version: 2.4\nName: distlib\nVersion: 0.4\n"
         )
-        archive.writestr(f"{bundled}/distlib/__init__.py", "")
-    monkeypatch.syspath_prepend(str(Path(__file__).parents[2]))
-    monkeypatch.setattr(sys, "argv", ["zipapp_sbom.py", str(pyz), str(tmp_path / "virtualenv.pyz.cdx.json")])
-    runpy.run_path(str(Path(__file__).parents[2] / "tasks" / "zipapp_sbom.py"), run_name="__main__")
+        archive.writestr(f"{_LIBRARY}/distlib/__init__.py", "")
+    # the project's options, provider and checkout are virtualenv's own, as in the zipapp release step
+    subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "python_sbom",
+            "archive",
+            str(pyz),
+            "--root",
+            str(wheel.parents[1] / "project"),
+            "--embed",
+        ],
+        check=True,
+    )
     return pyz
 
 
 @pytest.fixture
-def zipapp_sbom(zipapp: Path) -> str:
-    return (zipapp.parent / "virtualenv.pyz.cdx.json").read_text(encoding="utf-8")
-
-
-@pytest.fixture
-def render_spdx(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Callable[[str], str]:
-    def render(cyclonedx: str) -> str:
-        (source := tmp_path / "virtualenv.cdx.json").write_text(cyclonedx, encoding="utf-8")
-        monkeypatch.setattr(
-            sys, "argv", ["cyclonedx_to_spdx.py", str(source), str(target := tmp_path / "out.spdx.json")]
-        )
-        runpy.run_path(str(Path(__file__).parents[2] / "tasks" / "cyclonedx_to_spdx.py"), run_name="__main__")
-        return target.read_text(encoding="utf-8")
-
-    return render
-
-
-@pytest.fixture
-def install_tool() -> Callable[[Path, str, bool, dict[str, bytes]], None]:
-    def install(site: Path, name: str, purelib: bool, files: dict[str, bytes]) -> None:
-        record: Final[StringIO] = StringIO(newline="")
-        for path, content in files.items():
-            (target := site / path).parent.mkdir(parents=True, exist_ok=True)
-            target.write_bytes(content)
-            digest = base64.urlsafe_b64encode(hashlib.sha256(content).digest()).rstrip(b"=").decode()
-            csv.writer(record).writerow((path, f"sha256={digest}", len(content)))
-        (dist_info := site / f"{name}-1.0.dist-info").mkdir(exist_ok=True)
-        (dist_info / "METADATA").write_text(f"Metadata-Version: 2.4\nName: {name}\nVersion: 1.0\n", encoding="utf-8")
-        (dist_info / "WHEEL").write_text(
-            f"Wheel-Version: 1.0\nRoot-Is-Purelib: {str(purelib).lower()}\n", encoding="utf-8"
-        )
-        (dist_info / "RECORD").write_text(record.getvalue(), encoding="utf-8", newline="")
-
-    return install
-
-
-@pytest.fixture
-def build_sbom(tmp_path: Path) -> Callable[[str, dict[str, str]], str]:
-    shutil.copyfile(Path(__file__).parents[2] / "hatch_build.py", tmp_path / "hatch_build.py")
-    (tmp_path / "LICENSE").write_text("Copyright (c) example\n", encoding="utf-8")
-    embed: Final[Path] = tmp_path / "src" / "virtualenv" / "seed" / "wheels" / "embed"
-    embed.mkdir(parents=True)
-    (embed / "__init__.py").write_text(
-        'BUNDLE_SUPPORT = {"3.14": {"pip": "pip-1.0-py3-none-any.whl"}}\n', encoding="utf-8"
-    )
-
-    def build(filename: str, vendored_files: dict[str, str]) -> str:
-        record: Final[StringIO] = StringIO(newline="")
-        csv.writer(record).writerows([
-            (filename, "sha256=ungWv48Bz-pBQUDeXa4iI7ADYaOWF3qctBD_YfIAFa0", "3"),
-            ("pip-1.0.dist-info/RECORD", "", ""),
-        ])
-        with zipfile.ZipFile(embed / "pip-1.0-py3-none-any.whl", "w") as archive:
-            for name, content in vendored_files.items():
-                archive.writestr(zipfile.ZipInfo(name), content)
-            archive.writestr(
-                zipfile.ZipInfo("pip-1.0.dist-info/METADATA"), "Metadata-Version: 2.4\nName: pip\nVersion: 1.0\n"
-            )
-            archive.writestr(zipfile.ZipInfo("pip-1.0.dist-info/RECORD"), record.getvalue())
-            archive.writestr(zipfile.ZipInfo(filename), b"abc")
-        builder: Final[WheelBuilder] = WheelBuilder(
-            str(tmp_path),
-            config={
-                "project": {
-                    "name": "virtualenv",
-                    "version": "1.0",
-                    "description": "example",
-                    "requires-python": ">=3.9",
-                    "license": "MIT",
-                    "maintainers": [{"name": "Example"}],
-                    "dependencies": ["python-discovery>=1.6"],
-                    "urls": {"Changelog": "https://example.com/changelog"},
-                },
-                "tool": {"hatch": {"build": {"hooks": {"custom": {"path": "hatch_build.py"}}}}},
-            },
-        )
-        build_data: Final[dict[str, Any]] = builder.get_default_build_data()
-        builder.get_build_hooks(str(tmp_path))["custom"].initialize("standard", build_data)
-        return Path(build_data["sbom_files"][0]).read_text(encoding="utf-8")
-
-    return build
+def zipapp_sbom(zipapp: Path) -> _Document:
+    return json.loads(zipfile.ZipFile(zipapp).read("virtualenv.pyz.cdx.json"))

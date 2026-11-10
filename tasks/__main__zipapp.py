@@ -7,25 +7,27 @@ import zipfile
 from functools import cached_property
 from importlib.abc import SourceLoader
 from importlib.util import spec_from_file_location
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
     from importlib.machinery import ModuleSpec
+    from importlib.metadata import Distribution, DistributionFinder
     from types import ModuleType, TracebackType
     from typing import Self
 
-ABS_HERE = os.path.abspath(os.path.dirname(__file__))
+ABS_HERE: Final[str] = os.path.abspath(os.path.dirname(__file__))
 
 
-def run() -> None:
+def _run() -> None:
     with VersionedFindLoad():
+        # must import inside VersionedFindLoad, so the zipapp finders are active
         from virtualenv.__main__ import run as run_virtualenv  # ruff:ignore[import-outside-top-level]
 
         run_virtualenv()
 
 
-class VersionPlatformSelect:
+class _VersionPlatformSelect:
     def __init__(self) -> None:
         zipapp = ABS_HERE
         self.archive = zipapp
@@ -46,23 +48,6 @@ class VersionPlatformSelect:
         content.update(all_platforms.get(f"=={sys.platform}", {}))  # and finish it off with our platform
         return content
 
-    def __enter__(self) -> Self:
-        return self
-
-    def __exit__(
-        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
-    ) -> None:
-        self._zip_file.close()
-
-    def find_mod(self, fullname: str) -> str | None:
-        if fullname in self.modules:
-            return self.modules[fullname]
-        return None
-
-    def get_filename(self, fullname: str) -> str | None:
-        zip_path = self.find_mod(fullname)
-        return None if zip_path is None else os.path.join(ABS_HERE, zip_path)
-
     def get_data(self, filename: str) -> bytes:
         if filename.startswith(ABS_HERE):
             # keep paths relative from the zipfile
@@ -74,17 +59,34 @@ class VersionPlatformSelect:
         with self._zip_file.open(filename) as file_handler:
             return file_handler.read()
 
-    def find_distributions(self, context: Any) -> Iterator[Any]:  # ruff:ignore[any-type]
-        dist_class = versioned_distribution_class()
-        if context.name is None:
-            return
-        name = context.name.replace("_", "-")
-        if name in self.distributions:
-            yield dist_class(file_loader=self.get_data, dist_path=self.distributions[name])
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None
+    ) -> None:
+        self._zip_file.close()
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(path={ABS_HERE})"
 
+    def get_filename(self, fullname: str) -> str | None:
+        zip_path = self.find_mod(fullname)
+        return None if zip_path is None else os.path.join(ABS_HERE, zip_path)
+
+    def find_mod(self, fullname: str) -> str | None:
+        if fullname in self.modules:
+            return self.modules[fullname]
+        return None
+
+    def find_distributions(self, context: DistributionFinder.Context) -> Iterator[Distribution]:
+        dist_class = _versioned_distribution_class()
+        if context.name is None:
+            return
+        if (name := context.name.replace("_", "-")) in self.distributions:
+            yield dist_class(file_loader=self.get_data, dist_path=self.distributions[name])
+
+    # the distlib finder classes are defined here, they close over self
     def _register_distutils_finder(self) -> None:  # ruff:ignore[complex-structure]
         if "distlib" not in self.modules:
             return
@@ -119,29 +121,33 @@ class VersionPlatformSelect:
                 ]
 
         class DistlibFinder:
+            # distlib passes an untyped loader to its finder
             def __init__(self, path: str, loader: Any) -> None:  # ruff:ignore[any-type]
                 self.path = path
                 self.loader = loader
 
-            def find(self, name: str) -> Any:  # ruff:ignore[any-type]
-                return Resource(self.path, name, self.loader)
-
-            def iterator(self, resource_name: str) -> Iterator[Any]:
-                resource = self.find(resource_name)
-                if resource is not None:
+            def iterator(self, resource_name: str) -> Iterator[Resource]:
+                if (resource := self.find(resource_name)) is not None:
                     todo = [resource]
                     while todo:
                         resource = todo.pop(0)
                         yield resource
                         if resource.is_container:
-                            resource_name = resource.name
-                            for name in resource.resources:
-                                child = self.find(f"{resource_name}/{name}" if resource_name else name)
+                            for child in self._children(resource):
                                 if child.is_container:
                                     todo.append(child)
                                 else:
                                     yield child
 
+            # distlib's resource finder returns resources of any type
+            def find(self, name: str) -> Any:  # ruff:ignore[any-type]
+                return Resource(self.path, name, self.loader)
+
+            def _children(self, resource: Resource) -> Iterator[Resource]:
+                for name in resource.resources:
+                    yield self.find(f"{resource.name}/{name}" if resource.name else name)
+
+        # distlib is importable only once the zipapp is loaded, so the import is deferred
         from distlib.resources import register_finder  # ruff:ignore[import-outside-top-level]
 
         zip_file = self._zip_file
@@ -151,12 +157,15 @@ class VersionPlatformSelect:
 _VER_DISTRIBUTION_CLASS = None
 
 
-def versioned_distribution_class() -> type:
+def _versioned_distribution_class() -> type:
+    # a cache of the versioned class, filled on first use
     global _VER_DISTRIBUTION_CLASS  # ruff:ignore[global-statement]
     if _VER_DISTRIBUTION_CLASS is None:
+        # importlib.metadata is imported only when the versioned class is built
         from importlib.metadata import Distribution  # ruff:ignore[import-outside-top-level]
 
         class VersionedDistribution(Distribution):
+            # importlib.metadata passes its file loader untyped
             def __init__(self, file_loader: Any, dist_path: str) -> None:  # ruff:ignore[any-type]
                 self.file_loader = file_loader
                 self.dist_path = dist_path
@@ -171,7 +180,9 @@ def versioned_distribution_class() -> type:
     return _VER_DISTRIBUTION_CLASS
 
 
-class VersionedFindLoad(VersionPlatformSelect, SourceLoader):
+class VersionedFindLoad(  # simplint: ignore[SMP403]  # the zipapp bootstrap looks this class up by name
+    _VersionPlatformSelect, SourceLoader
+):
     def __enter__(self) -> Self:
         sys.path.insert(0, self.archive)
         sys.meta_path.insert(0, self)
@@ -185,9 +196,9 @@ class VersionedFindLoad(VersionPlatformSelect, SourceLoader):
         sys.path.remove(self.archive)
         super().__exit__(exc_type, exc_val, exc_tb)
 
+    # the meta path protocol passes these, the finder ignores target and path
     def find_spec(self, fullname: str, path: Any, target: ModuleType | None = None) -> ModuleSpec | None:  # ruff:ignore[unused-method-argument, any-type]
-        zip_path = self.find_mod(fullname)
-        if zip_path is not None:
+        if self.find_mod(fullname) is not None:
             return spec_from_file_location(name=fullname, loader=self)
         return None
 
@@ -196,7 +207,7 @@ class VersionedFindLoad(VersionPlatformSelect, SourceLoader):
 
 
 if __name__ == "__main__":
-    run()
+    _run()
 
 
-__all__ = ["VersionedFindLoad", "run"]
+__all__ = []

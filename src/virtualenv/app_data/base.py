@@ -17,6 +17,21 @@ if TYPE_CHECKING:
 class AppData(ABC):
     """Abstract storage interface for the virtualenv application."""
 
+    @property
+    def can_update(self) -> bool:
+        """``True`` if this app data store supports updating cached content."""
+        raise NotImplementedError
+
+    @property
+    def house(self) -> Path:
+        """The root directory of the application data store."""
+        raise NotImplementedError
+
+    @property
+    def transient(self) -> bool:
+        """``True`` if this app data store is transient and does not persist across runs."""
+        raise NotImplementedError
+
     @abstractmethod
     def close(self) -> None:
         """Called before virtualenv exits."""
@@ -41,11 +56,6 @@ class AppData(ABC):
         """Clear all cached interpreter information."""
         raise NotImplementedError
 
-    @property
-    def can_update(self) -> bool:
-        """``True`` if this app data store supports updating cached content."""
-        raise NotImplementedError
-
     @abstractmethod
     def embed_update_log(self, distribution: str, for_py_version: str) -> ContentStore:
         """Return a content store for the embed update log of a distribution.
@@ -56,16 +66,6 @@ class AppData(ABC):
         :returns: a content store for the update log
 
         """
-        raise NotImplementedError
-
-    @property
-    def house(self) -> Path:
-        """The root directory of the application data store."""
-        raise NotImplementedError
-
-    @property
-    def transient(self) -> bool:
-        """``True`` if this app data store is transient and does not persist across runs."""
         raise NotImplementedError
 
     @abstractmethod
@@ -87,7 +87,7 @@ class AppData(ABC):
         :param path: the path to ensure is available
         :param to_folder: optional target directory for extraction
 
-        :returns: yields the usable path on disk
+        :yields: the usable path on disk
 
         """
         if IS_ZIPAPP:
@@ -116,6 +116,8 @@ class AppData(ABC):
 
         :param path: the path to lock
 
+        :returns: a context manager holding the lock
+
         """
         raise NotImplementedError
 
@@ -133,6 +135,7 @@ class ContentStore(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    # the stored content is JSON of any shape, each store decides its own
     def read(self) -> Any:  # ruff:ignore[any-type]
         """Read the stored content.
 
@@ -142,6 +145,7 @@ class ContentStore(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    # the stored content is JSON of any shape, each store decides its own
     def write(self, content: Any) -> None:  # ruff:ignore[any-type]
         """Write content to the store.
 
@@ -158,7 +162,11 @@ class ContentStore(ABC):
     @abstractmethod
     @contextmanager
     def locked(self) -> Generator[None]:
-        """Acquire an exclusive lock on this content store."""
+        """Acquire an exclusive lock on this content store.
+
+        :returns: a context manager holding the lock
+
+        """
 
 
 __all__ = [

@@ -2,8 +2,10 @@ from __future__ import annotations
 
 import logging
 import sys
+from typing import Final
 
-LEVELS = {
+#: Maps each ``-v`` count to the logging level it selects.
+LEVELS: Final[dict[int, int]] = {
     0: logging.CRITICAL,
     1: logging.ERROR,
     2: logging.WARNING,
@@ -12,18 +14,30 @@ LEVELS = {
     5: logging.NOTSET,
 }
 
-MAX_LEVEL = max(LEVELS.keys())
-LOGGER = logging.getLogger()
+#: The highest ``-v`` count that selects a logging level.
+MAX_LEVEL: Final[int] = max(LEVELS.keys())
+#: Logger of this module.
+LOGGER: Final[logging.Logger] = logging.getLogger()
 
 
+# show_pid keeps its default for the existing setup_report callers
 def setup_report(verbosity: int, show_pid: bool = False) -> int:  # ruff:ignore[boolean-default-value-positional-argument]
-    _clean_handlers(LOGGER)
+    """Configure the root logger to print messages on stdout at the level the verbosity selects.
+
+    :param verbosity: the number of ``-v`` flags, capped at the highest level
+    :param show_pid: ``True`` to prefix every message with the process id
+
+    :returns: the verbosity, capped at the highest level
+
+    """
+    for log_handler in list(LOGGER.handlers):  # remove handlers of libraries
+        LOGGER.removeHandler(log_handler)
+    # reached only with more -v flags than MAX_LEVEL, which tests do not pass
     verbosity = min(verbosity, MAX_LEVEL)  # pragma: no cover
     level = LEVELS[verbosity]
     msg_format = "%(message)s"
     if level <= logging.DEBUG:
-        locate = "module"
-        msg_format = f"%(relativeCreated)d {msg_format} [%(levelname)s %({locate})s:%(lineno)d]"
+        msg_format = f"%(relativeCreated)d {msg_format} [%(levelname)s %({'module'})s:%(lineno)d]"
     if show_pid:
         msg_format = f"[%(process)d] {msg_format}"
     formatter = logging.Formatter(msg_format)
@@ -32,19 +46,14 @@ def setup_report(verbosity: int, show_pid: bool = False) -> int:  # ruff:ignore[
     LOGGER.setLevel(logging.NOTSET)
     stream_handler.setFormatter(formatter)
     LOGGER.addHandler(stream_handler)
-    level_name = logging.getLevelName(level)
-    LOGGER.debug("setup logging to %s", level_name)
+    LOGGER.debug("setup logging to %s", logging.getLevelName(level))
     logging.getLogger("distlib").setLevel(logging.ERROR)
     return verbosity
 
 
-def _clean_handlers(log: logging.Logger) -> None:
-    for log_handler in list(log.handlers):  # remove handlers of libraries
-        log.removeHandler(log_handler)
-
-
 __all__ = [
     "LEVELS",
+    "LOGGER",
     "MAX_LEVEL",
     "setup_report",
 ]

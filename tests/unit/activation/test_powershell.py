@@ -17,7 +17,37 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-_POWERSHELLS: Final = [path for name in ("pwsh", "powershell.exe") if (path := shutil.which(name))]
+_POWERSHELLS: Final[list[str]] = [path for path in map(shutil.which, ("pwsh", "powershell.exe")) if path]
+_VENV_BIN_DIR: Final[str] = "Scripts" if IS_WIN else "bin"
+
+
+@pytest.mark.parametrize("powershell", _POWERSHELLS)
+def test_powershell_clears_pythonhome(tmp_path: Path, powershell: str) -> None:
+    session = cli_run(["--no-seed", "--activators", "powershell", str(tmp_path / "env")])
+    inherited = str(tmp_path / "missing-pythonhome")
+    activate = PowerShellActivator.quote(str(session.creator.bin_dir / "activate.ps1"))
+    driver = tmp_path / "pythonhome.ps1"
+    driver.write_text(
+        f". {activate}\nWrite-Output (Test-Path env:PYTHONHOME)\npython -c 'import sys; print(sys.prefix)'\n"
+        "deactivate\nWrite-Output $env:PYTHONHOME\n",
+        encoding="utf-8-sig",
+    )
+    result = subprocess.run(
+        [powershell, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(driver)],
+        env={key: value for key, value in os.environ.items() if key != "COVERAGE_PROCESS_START"}
+        | {"PYTHONHOME": inherited},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout.splitlines(), result.stderr) == (
+        0,
+        ["False", str(session.creator.dest), inherited],
+        "",
+    )
 
 
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
@@ -38,25 +68,26 @@ def test_powershell_literal_destination(
     tmp_path: Path, name: str, configured_prompt: str | None, mode: str, powershell: str
 ) -> None:
     dest: Final = os.path.join(str(tmp_path), name)
-    args: Final = ["--without-pip", "--no-periodic-update", "--activators", "powershell", dest]
-    if configured_prompt is not None:
-        args.extend(["--prompt", configured_prompt])
+    prompt_args: Final = {None: [], "custom": ["--prompt", "custom"]}[configured_prompt]
+    args: Final = ["--without-pip", "--no-periodic-update", "--activators", "powershell", dest, *prompt_args]
     # Simulated-platform tests change pathlib's separators at collection, so create the environment in a fresh process.
     subprocess.run([sys.executable, "-m", "virtualenv", *args], capture_output=True, check=True)
-    venv_dir: Final = {
-        "implicit": None,
-        "relative": name,
-        "drive": f"ReviewEnv:/{name}",
-        "provider": f"FileSystem::{dest}",
-        "home": f"~/{os.path.relpath(dest, os.path.expanduser('~'))}",
+    venv_args: Final = {
+        "implicit": [],
+        "relative": ["-VenvDir", PowerShellActivator.quote(name)],
+        "drive": ["-VenvDir", PowerShellActivator.quote(f"ReviewEnv:/{name}")],
+        "provider": ["-VenvDir", PowerShellActivator.quote(f"FileSystem::{dest}")],
+        "home": ["-VenvDir", PowerShellActivator.quote(f"~/{os.path.relpath(dest, os.path.expanduser('~'))}")],
     }[mode]
-    activate = f". {PowerShellActivator.quote(os.path.join(dest, 'Scripts' if IS_WIN else 'bin', 'activate.ps1'))}"
-    if venv_dir is not None:
-        activate += f" -VenvDir {PowerShellActivator.quote(venv_dir)}"
-    lines: Final = [activate, 'Write-Output "$env:VIRTUAL_ENV|$env:VIRTUAL_ENV_PROMPT"', ""]
-    if mode == "drive":
-        drive_root = PowerShellActivator.quote(str(tmp_path))
-        lines.insert(0, f"New-PSDrive -Name ReviewEnv -PSProvider FileSystem -Root {drive_root} | Out-Null")
+    activate: Final = " ".join([
+        f". {PowerShellActivator.quote(os.path.join(dest, _VENV_BIN_DIR, 'activate.ps1'))}",
+        *venv_args,
+    ])
+    drive_root: Final = PowerShellActivator.quote(str(tmp_path))
+    drive_lines: Final = {
+        "drive": [f"New-PSDrive -Name ReviewEnv -PSProvider FileSystem -Root {drive_root} | Out-Null"],
+    }.get(mode, [])
+    lines: Final = [*drive_lines, activate, 'Write-Output "$env:VIRTUAL_ENV|$env:VIRTUAL_ENV_PROMPT"', ""]
     driver: Final = tmp_path / "driver.ps1"
     driver.write_text("\n".join(lines), encoding="utf-8-sig")
     result: Final = subprocess.run(
@@ -129,8 +160,7 @@ def test_powershell_quote_neutralizes_single_quote_delimiters(tmp_path: Path, de
 
 
 def test_powershell_pydoc_call_operator(tmp_path) -> None:
-    """Test that PowerShell pydoc function uses call operator to handle spaces in python path."""
-
+    # Test that PowerShell pydoc function uses call operator to handle spaces in python path.
     # GIVEN: A mock interpreter
     class MockInterpreter:
         os = "nt"
@@ -147,8 +177,7 @@ def test_powershell_pydoc_call_operator(tmp_path) -> None:
             self.env_name = "test-env"
 
     creator = MockCreator(tmp_path)
-    options = Namespace(prompt=None)
-    activator = PowerShellActivator(options)
+    activator = PowerShellActivator(Namespace(prompt=None))
 
     # WHEN: Generate activation scripts
     activator.generate(creator)
@@ -163,13 +192,25 @@ def test_powershell_pydoc_call_operator(tmp_path) -> None:
 
 
 @pytest.mark.parametrize(
-    ("tcl_lib", "tk_lib", "present"),
+    ("tcl_lib", "tk_lib", "expected_lines"),
     [
-        ("C:\\tcl", "C:\\tk", True),
-        (None, None, False),
+        pytest.param(
+            "C:\\tcl",
+            "C:\\tk",
+            [
+                "if ('C:\\tcl' -ne \"\")",
+                "$env:TCL_LIBRARY = 'C:\\tcl'",
+                "if ('C:\\tk' -ne \"\")",
+                "$env:TK_LIBRARY = 'C:\\tk'",
+                "if (Test-Path variable:_OLD_VIRTUAL_TCL_LIBRARY)",
+                "if (Test-Path variable:_OLD_VIRTUAL_TK_LIBRARY)",
+            ],
+            id="windows",
+        ),
+        pytest.param(None, None, ["if ('' -ne \"\")", "$env:TCL_LIBRARY = ''"], id="missing"),
     ],
 )
-def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> None:
+def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, expected_lines) -> None:
     # GIVEN
     class MockInterpreter:
         os = "nt"
@@ -188,8 +229,7 @@ def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> No
             self.env_name = "my-env"
 
     creator = MockCreator(tmp_path)
-    options = Namespace(prompt=None)
-    activator = PowerShellActivator(options)
+    activator = PowerShellActivator(Namespace(prompt=None))
 
     # WHEN
     activator.generate(creator)
@@ -202,17 +242,7 @@ def test_powershell_tkinter_generation(tmp_path, tcl_lib, tk_lib, present) -> No
     assert "if (Test-Path variable:_OLD_PKG_CONFIG_PATH)" in content
     assert "$env:PKG_CONFIG_PATH = $variable:_OLD_PKG_CONFIG_PATH" in content
     assert 'Remove-Variable "_OLD_PKG_CONFIG_PATH" -Scope global' in content
-
-    if present:
-        assert "if ('C:\\tcl' -ne \"\")" in content
-        assert "$env:TCL_LIBRARY = 'C:\\tcl'" in content
-        assert "if ('C:\\tk' -ne \"\")" in content
-        assert "$env:TK_LIBRARY = 'C:\\tk'" in content
-        assert "if (Test-Path variable:_OLD_VIRTUAL_TCL_LIBRARY)" in content
-        assert "if (Test-Path variable:_OLD_VIRTUAL_TK_LIBRARY)" in content
-    else:
-        assert "if ('' -ne \"\")" in content
-        assert "$env:TCL_LIBRARY = ''" in content
+    assert [line for line in expected_lines if line not in content] == []
 
 
 @pytest.mark.slow
@@ -241,16 +271,15 @@ def test_powershell(activation_tester_class, activation_tester, monkeypatch) -> 
         def print_prompt(self) -> str:
             return "prompt"
 
-        def quote(self, s):
-            """Tester will pass strings to native commands on Windows so extra parsing rules are used. Check `PowerShellActivator.quote` for more details."""
-            text = PowerShellActivator.quote(s)
-            return text.replace('"', '""') if sys.platform == "win32" else text
-
         def activate_call(self, script):
             # Commands are called without quotes in PowerShell
-            cmd = self.activate_cmd
-            scr = self.quote(str(script))
-            return f"{cmd} {scr}".strip()
+            return f"{self.activate_cmd} {self.quote(str(script))}".strip()
+
+        def quote(self, string):
+            # Tester will pass strings to native commands on Windows so extra parsing rules are used. Check
+            # `PowerShellActivator.quote` for more details.
+            text = PowerShellActivator.quote(string)
+            return text.replace('"', '""') if sys.platform == "win32" else text
 
     activation_tester(PowerShell)
 

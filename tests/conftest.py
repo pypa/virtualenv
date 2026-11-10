@@ -8,7 +8,7 @@ from argparse import ArgumentTypeError
 from contextlib import contextmanager
 from functools import partial
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, Final
 
 import pytest
 from python_discovery import PythonInfo
@@ -18,7 +18,7 @@ from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_RUSTPYTHON, IS_WIN, fs_suppo
 from virtualenv.report import LOGGER
 
 # the build and CI tooling tests do not depend on the interpreter; the tasks tox environment runs them once
-collect_ignore = ["tasks"]
+collect_ignore: Final[list[str]] = ["tasks"]
 
 
 def pytest_addoption(parser) -> None:
@@ -41,12 +41,11 @@ def _parse_shard(value: str) -> tuple[int, int]:
 
 
 def pytest_configure(config) -> None:
-    """Ensure randomly is called before we re-order"""
+    # Ensure randomly is called before we re-order
     manager = config.pluginmanager
 
     order = manager.hook.pytest_collection_modifyitems.get_hookimpls()
-    dest = next((i for i, p in enumerate(order) if p.plugin is manager.getplugin("randomly")), None)
-    if dest is not None:
+    if (dest := next((i for i, p in enumerate(order) if p.plugin is manager.getplugin("randomly")), None)) is not None:
         from_pos = next(i for i, p in enumerate(order) if p.plugin is manager.getplugin(__file__))
         temp = order[dest]
         order[dest] = order[from_pos]
@@ -64,7 +63,9 @@ def pytest_collection_modifyitems(config, items) -> None:
     if len(items) == 1:
         return
 
-    items.sort(key=lambda i: 2 if i.location[0].startswith(int_location) else (1 if "slow" in i.keywords else 0))
+    items.sort(
+        key=lambda item: 2 if item.location[0].startswith(int_location) else (1 if "slow" in item.keywords else 0)
+    )
 
     if not config.getoption("--int"):
         for item in items:
@@ -153,6 +154,13 @@ def _ensure_py_info_cache_empty(session_app_data):
     PythonInfo.clear_cache(session_app_data)
 
 
+@pytest.fixture(autouse=True, scope="session")
+def _ignore_global_config(tmp_path_factory):
+    filename = str(tmp_path_factory.mktemp("folder") / "virtualenv-test-suite.ini")
+    with change_os_environ("VIRTUALENV_CONFIG_FILE", filename):
+        yield
+
+
 @contextmanager
 def change_os_environ(key, value):
     env_var = key
@@ -163,31 +171,6 @@ def change_os_environ(key, value):
     finally:
         if previous is not None:
             os.environ[env_var] = previous
-
-
-@pytest.fixture(autouse=True, scope="session")
-def _ignore_global_config(tmp_path_factory):
-    filename = str(tmp_path_factory.mktemp("folder") / "virtualenv-test-suite.ini")
-    with change_os_environ("VIRTUALENV_CONFIG_FILE", filename):
-        yield
-
-
-def _assert_environ_stable(old: dict[str, str], to_clean: set[str]) -> None:
-    new = os.environ
-    extra = {k: new[k] for k in set(new) - set(old)}
-    miss = {k: old[k] for k in set(old) - set(new) - to_clean}
-    diff = {
-        f"{k} = {old[k]} vs {new[k]}" for k in set(old) & set(new) if old[k] != new[k] and not k.startswith("PYTEST_")
-    }
-    if extra or miss or diff:
-        msg = "tests changed environ"
-        if extra:
-            msg += f" extra {extra}"
-        if miss:
-            msg += f" miss {miss}"
-        if diff:
-            msg += f" diff {diff}"
-        pytest.fail(msg)
 
 
 @pytest.fixture(autouse=True)
@@ -218,16 +201,34 @@ def _check_os_environ_stable():
             os.environ.update(cleaned)
 
 
-COV_ENV_VAR = "COVERAGE_PROCESS_START"
-COVERAGE_RUN = os.environ.get(str(COV_ENV_VAR))
+def _assert_environ_stable(old: dict[str, str], to_clean: set[str]) -> None:
+    new = os.environ
+    extra = {k: new[k] for k in set(new) - set(old)}
+    miss = {k: old[k] for k in set(old) - set(new) - to_clean}
+    diff = {
+        f"{k} = {old[k]} vs {new[k]}" for k in set(old) & set(new) if old[k] != new[k] and not k.startswith("PYTEST_")
+    }
+    if extra or miss or diff:
+        msg = "tests changed environ"
+        if extra:
+            msg += f" extra {extra}"
+        if miss:
+            msg += f" miss {miss}"
+        if diff:
+            msg += f" diff {diff}"
+        pytest.fail(msg)
+
+
+_COV_ENV_VAR: Final[str] = "COVERAGE_PROCESS_START"
+_COVERAGE_RUN: Final[str | None] = os.environ.get(str(_COV_ENV_VAR))
 
 
 @pytest.fixture(autouse=True)
 def coverage_env(monkeypatch, link, request):
-    """Enable coverage report collection on the created virtual environments by injecting the coverage project"""
-    if COVERAGE_RUN and "_no_coverage" not in request.fixturenames:
+    # Enable coverage report collection on the created virtual environments by injecting the coverage project
+    if _COVERAGE_RUN and "_no_coverage" not in request.fixturenames:
         # we inject right after creation, we cannot collect coverage on site.py - used for helper scripts, such as debug
-        from virtualenv import run  # ruff:ignore[import-outside-top-level]
+        from virtualenv.run import cli  # ruff:ignore[import-outside-top-level]
 
         def _session_via_cli(args, options, setup_logging, env=None):
             session = prev_run(args, options, setup_logging, env)
@@ -236,6 +237,7 @@ def coverage_env(monkeypatch, link, request):
             def create_run():
                 result = old_run()
                 obj["cov"] = EnableCoverage(link)
+                # the coverage hook takes the creator, which the with statement cannot pass
                 obj["cov"].__enter__(session.creator)  # ruff:ignore[unnecessary-dunder-call]
                 return result
 
@@ -243,8 +245,8 @@ def coverage_env(monkeypatch, link, request):
             return session
 
         obj = {"cov": None}
-        prev_run = run.session_via_cli
-        monkeypatch.setattr(run, "session_via_cli", _session_via_cli)
+        prev_run = cli.session_via_cli
+        monkeypatch.setattr(cli, "session_via_cli", _session_via_cli)
 
         def finish() -> None:
             cov = obj["cov"]
@@ -269,7 +271,7 @@ def _no_coverage() -> None:
     pass
 
 
-if COVERAGE_RUN:
+if _COVERAGE_RUN:
     import coverage
 
     class EnableCoverage:
@@ -282,13 +284,13 @@ if COVERAGE_RUN:
             self.link = link
             self.targets = []
 
+        # the coverage hook takes the creator, unlike the context manager protocol
         def __enter__(self, creator):  # ruff:ignore[unexpected-special-method-signature]
             site_packages = creator.purelib
             for entry in self._ROOT_COV_FILES_AND_FOLDERS:
                 target = site_packages / entry.name
                 if not target.exists():
-                    clean = self.link(entry, target)
-                    self.targets.append((target, clean))
+                    self.targets.append((target, self.link(entry, target)))
             return self
 
         def __exit__(self, exc_type, exc_val, exc_tb):
@@ -318,9 +320,9 @@ def special_char_name():
     result = ""
     for char in base:
         try:
-            trip = char.encode(encoding, errors="strict").decode(encoding)
-            if char == trip:
+            if char == char.encode(encoding, errors="strict").decode(encoding):
                 result += char
+        # a ValueError marks a character the encoding cannot round-trip
         except ValueError:  # ruff:ignore[try-except-in-loop]
             continue
     assert result
@@ -334,6 +336,7 @@ def special_name_dir(tmp_path, special_char_name):
 
 @pytest.fixture(scope="session")
 def current_creators(session_app_data):
+    # deferred so importing conftest does not load the CLI plugins
     from virtualenv.run.plugin.creators import CreatorSelector  # ruff:ignore[import-outside-top-level]
 
     return CreatorSelector.for_interpreter(PythonInfo.current_system(session_app_data))
@@ -346,15 +349,13 @@ def current_fastest(current_creators):
 
 @pytest.fixture(scope="session")
 def session_app_data(tmp_path_factory):
-    temp_folder = tmp_path_factory.mktemp("session-app-data")
-    app_data = AppDataDiskFolder(folder=str(temp_folder))
+    app_data = AppDataDiskFolder(folder=str(tmp_path_factory.mktemp("session-app-data")))
     with change_env_var("VIRTUALENV_OVERRIDE_APP_DATA", str(app_data.lock.path)):
         yield app_data
 
 
 @contextmanager
 def change_env_var(key, value):
-    """Temporarily change an environment variable. :param key: the key of the env var :param value: the value of the env var"""
     already_set = key in os.environ
     prev_value = os.environ.get(key)
     os.environ[key] = value
@@ -364,6 +365,7 @@ def change_env_var(key, value):
         if already_set:
             os.environ[key] = prev_value
         else:
+            # restores an unset variable, which only a test that sets a fresh one reaches
             del os.environ[key]  # pragma: no cover
 
 
@@ -379,13 +381,6 @@ def for_py_version() -> str:
     return f"{sys.version_info.major}.{sys.version_info.minor}"
 
 
-@pytest.fixture
-def _skip_if_test_in_system(session_app_data) -> None:
-    current = PythonInfo.current(session_app_data)
-    if current.system_executable is not None:
-        pytest.skip("test not valid if run under system")
-
-
 if IS_PYPY or IS_GRAALPY or IS_RUSTPYTHON:
 
     @pytest.fixture
@@ -396,4 +391,4 @@ else:
 
     @pytest.fixture
     def time_freeze(time_machine):
-        return lambda s: time_machine.move_to(s, tick=False)
+        return lambda moment: time_machine.move_to(moment, tick=False)

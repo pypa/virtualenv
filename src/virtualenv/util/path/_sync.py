@@ -19,16 +19,19 @@ if TYPE_CHECKING:
 
     _ExcInfo = BaseException | tuple[type[BaseException], BaseException, TracebackType]
 
-LOGGER = logging.getLogger(__name__)
-
-
-def ensure_dir(path: Path) -> None:
-    if not path.exists():
-        LOGGER.debug("create folder %s", path)
-        os.makedirs(str(path))
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def ensure_within(root: Path, path: Path) -> None:
+    """Make sure a path stays inside a root folder, creating its folders and refusing links along the way.
+
+    :param root: the folder the path must stay inside
+    :param path: the path to check, below the root
+
+    :raises ValueError: when the path leaves the root
+    :raises NotADirectoryError: when a folder on the way is a link or a mount point instead of a real directory
+
+    """
     parts: Final = path.relative_to(root).parts
     if ".." in parts:
         msg: Final = f"environment directory {path} must remain inside {root}"
@@ -43,10 +46,10 @@ def ensure_within(root: Path, path: Path) -> None:
             pass
         else:
             if S_ISLNK(metadata.st_mode):
-                LOGGER.warning("replace environment directory link %s", folder)
+                _LOGGER.warning("replace environment directory link %s", folder)
                 folder.unlink()
             elif os.name == "nt" and metadata.st_reparse_tag == IO_REPARSE_TAG_MOUNT_POINT:
-                LOGGER.warning("replace environment directory junction %s", folder)
+                _LOGGER.warning("replace environment directory junction %s", folder)
                 folder.rmdir()
         try:
             folder.mkdir()
@@ -59,78 +62,80 @@ def ensure_within(root: Path, path: Path) -> None:
                 raise NotADirectoryError(msg) from None
 
 
+def ensure_dir(path: Path) -> None:
+    """Create a folder and its parents when it does not exist.
+
+    :param path: the folder to create
+
+    """
+    if not path.exists():
+        _LOGGER.debug("create folder %s", path)
+        os.makedirs(str(path))
+
+
 def write_file(path: Path, data: bytes) -> None:
+    """Write bytes to a file, replacing any existing file or link.
+
+    :param path: the file to write
+    :param data: the bytes to write
+
+    """
     if path.is_symlink() or path.exists():
-        try:
-            path.unlink()
-        except PermissionError:
-            # Windows refuses to delete a read-only file, while POSIX deletion depends on the parent directory
-            if os.name != "nt" or path.is_symlink():
-                raise
-            clear_readonly(str(path))
-            path.unlink()
+        remove_file(path)
     # Exclusive creation rejects links introduced after the old entry was removed.
     with path.open("xb") as stream:
         stream.write(data)
 
 
-def ensure_safe_to_do(src: Path, dest: Path) -> None:
+def remove_file(path: Path) -> None:
+    """Remove a file, clearing its read-only flag on Windows when that blocks the removal.
+
+    :param path: the file to remove
+
+    """
+    try:
+        path.unlink()
+    except PermissionError:
+        # Windows refuses to delete a read-only file, while POSIX deletion depends on the parent directory
+        if os.name != "nt" or path.is_symlink():
+            raise
+        clear_readonly(str(path))
+        path.unlink()
+
+
+def symlink(src: Path, dest: Path) -> None:
+    """Create a symbolic link at the destination, pointing at the source.
+
+    :param src: the path the link points at
+    :param dest: the path of the link to create
+
+    """
+    _ensure_safe_to_do(src, dest)
+    _LOGGER.debug("symlink %s", _Debug(src, dest))
+    dest.symlink_to(src, target_is_directory=src.is_dir())
+
+
+def _ensure_safe_to_do(src: Path, dest: Path) -> None:
     if src == dest:
         msg = f"source and destination is the same {src}"
         raise ValueError(msg)
     if not dest.exists() and not dest.is_symlink():
         return
     if dest.is_dir() and not dest.is_symlink():
-        LOGGER.debug("remove directory %s", dest)
+        _LOGGER.debug("remove directory %s", dest)
         safe_delete(dest)
     else:
-        LOGGER.debug("remove file %s", dest)
-        dest.unlink()
-
-
-def symlink(src: Path, dest: Path) -> None:
-    ensure_safe_to_do(src, dest)
-    LOGGER.debug("symlink %s", _Debug(src, dest))
-    dest.symlink_to(src, target_is_directory=src.is_dir())
-
-
-def copy(src: Path, dest: Path) -> None:
-    LOGGER.debug("copy %s", _Debug(src, dest))
-    if src.is_dir():
-        ensure_safe_to_do(src, dest)
-        _copytree(src, dest, (src.resolve(),))
-    else:
-        _copy_file(src, dest)
-
-
-def _copytree(src: Path, dest: Path, ancestors: tuple[Path, ...]) -> None:
-    for root, dirnames, files in os.walk(src):
-        dest_dir: Final = dest / os.path.relpath(root, src)
-        dest_dir.mkdir(parents=True, exist_ok=True)
-        for name in files:
-            _copy_file(Path(root) / name, dest_dir / name)
-        for name in dirnames:
-            link: Final = Path(root) / name
-            if not link.is_symlink():
-                continue
-            # os.walk does not descend into a symlinked directory, so its content is copied the way a symlinked file is
-            target: Final = link.resolve()
-            if any(ancestor.is_relative_to(target) for ancestor in ancestors):
-                LOGGER.warning("skip symlinked directory %s, it points at one of its own parents", link)
-                continue
-            _copytree(link, dest_dir / name, (*ancestors, target))
-
-
-def _copy_file(src: Path, dest: Path) -> None:
-    ensure_safe_to_do(src, dest)
-    mode: Final = 0o755 if src.stat().st_mode & (S_IXUSR | S_IXGRP | S_IXOTH) else 0o644
-    flags: Final = os.O_WRONLY | os.O_CREAT | os.O_EXCL | (os.O_BINARY if os.name == "nt" else 0)
-    # Creation applies the current umask without changing the process-wide setting.
-    with src.open("rb") as source, os.fdopen(os.open(str(dest), flags, mode), "wb") as target:
-        shutil.copyfileobj(source, target, length=1024 * 1024)
+        _LOGGER.debug("remove file %s", dest)
+        remove_file(dest)
 
 
 def safe_delete(dest: Path) -> None:
+    """Delete a file or folder tree, clearing read-only flags where needed.
+
+    :param dest: the path to delete
+
+    """
+
     def onerror(func: Callable[[str], object], path: str, exc_info: _ExcInfo) -> None:
         exc = exc_info[1] if isinstance(exc_info, tuple) else exc_info
         if isinstance(exc, FileNotFoundError):
@@ -156,10 +161,53 @@ class _Debug:
         return f"{'directory ' if self.src.is_dir() else ''}{self.src!s} to {self.dest!s}"
 
 
+def copy(src: Path, dest: Path) -> None:
+    """Copy a file, or a folder tree, to the destination.
+
+    :param src: the file or folder to copy
+    :param dest: the destination path
+
+    """
+    _LOGGER.debug("copy %s", _Debug(src, dest))
+    if src.is_dir():
+        _ensure_safe_to_do(src, dest)
+        _copytree(src, dest, (src.resolve(),))
+    else:
+        _copy_file(src, dest)
+
+
+def _copytree(src: Path, dest: Path, ancestors: tuple[Path, ...]) -> None:
+    for root, dirnames, files in os.walk(src):
+        dest_dir: Final = dest / os.path.relpath(root, src)
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        for name in files:
+            _copy_file(Path(root) / name, dest_dir / name)
+        for name in dirnames:
+            link: Final = Path(root) / name
+            if not link.is_symlink():
+                continue
+            # os.walk does not descend into a symlinked directory, so its content is copied the way a symlinked file is
+            target: Final = link.resolve()
+            if any(ancestor.is_relative_to(target) for ancestor in ancestors):
+                _LOGGER.warning("skip symlinked directory %s, it points at one of its own parents", link)
+                continue
+            _copytree(link, dest_dir / name, (*ancestors, target))
+
+
+def _copy_file(src: Path, dest: Path) -> None:
+    _ensure_safe_to_do(src, dest)
+    mode: Final = 0o755 if src.stat().st_mode & (S_IXUSR | S_IXGRP | S_IXOTH) else 0o644
+    flags: Final = os.O_WRONLY | os.O_CREAT | os.O_EXCL | (os.O_BINARY if os.name == "nt" else 0)
+    # Creation applies the current umask without changing the process-wide setting.
+    with src.open("rb") as source, os.fdopen(os.open(str(dest), flags, mode), "wb") as target:
+        shutil.copyfileobj(source, target, length=1024 * 1024)
+
+
 __all__ = [
     "copy",
     "ensure_dir",
     "ensure_within",
+    "remove_file",
     "safe_delete",
     "symlink",
     "write_file",

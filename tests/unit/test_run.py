@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import re
 import shutil
 import sys
@@ -9,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Final
 
 import pytest
+from python_discovery import PythonInfo
 
 from virtualenv import __version__
 from virtualenv.app_data import AppDataDiskFolder, ReadOnlyAppData
@@ -19,6 +21,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from pytest_mock import MockerFixture
+
+    from virtualenv.run.plugin.creators import CreatorInfo
 
 
 @pytest.mark.parametrize(
@@ -97,6 +101,51 @@ def test_help_shows_default_app_data(
     ) == (0, True)
 
 
+@pytest.mark.parametrize("override", [pytest.param("", id="empty"), pytest.param(" ", id="space")])
+def test_reset_with_empty_app_data_override_resets_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, mocker: MockerFixture, override: str
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    default_folder: Final = tmp_path / "cache"
+    mocker.patch("virtualenv.app_data.cache_migration.user_cache_dir", autospec=True, return_value=str(default_folder))
+    mocker.patch("virtualenv.app_data.cache_migration.user_data_dir", autospec=True, return_value=str(tmp_path / "old"))
+    # a blank value used to make the working directory the cache, so the reset deleted it
+    delete: Final = mocker.patch("virtualenv.app_data.via_disk_folder.safe_delete", autospec=True)
+    monkeypatch.setenv("VIRTUALENV_OVERRIDE_APP_DATA", override)
+    session_via_cli(["--reset-app-data", str(tmp_path / "env")])
+    assert delete.call_args_list == [mocker.call(default_folder)]
+
+
+@pytest.mark.parametrize(
+    ("args", "env_vars"),
+    [
+        pytest.param(["--app-data", "", "--reset-app-data"], {}, id="empty"),
+        pytest.param(["--app-data", " ", "--reset-app-data"], {}, id="space"),
+        pytest.param(["--app-data", "\t", "--reset-app-data"], {}, id="tab"),
+        pytest.param(["--reset-app-data"], {"VIRTUALENV_APP_DATA": " "}, id="space-env-var"),
+        pytest.param(["--app-data", ""], {}, id="empty-without-reset"),
+    ],
+)
+def test_blank_app_data_leaves_working_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    args: list[str],
+    env_vars: dict[str, str],
+) -> None:
+    monkeypatch.chdir(tmp_path)
+    sentinel: Final[Path] = tmp_path / "keep.txt"
+    sentinel.write_text("keep", encoding="utf-8")
+    with pytest.raises(SystemExit) as context:
+        session_via_cli([*args, str(tmp_path / "env")], env={**os.environ, **env_vars})
+    assert (
+        context.value.code,
+        sentinel.read_text(encoding="utf-8"),
+        list(tmp_path.iterdir()),
+        bool(re.search(r"app data folder '.*' must not be empty or whitespace\n\Z", capsys.readouterr().err)),
+    ) == (2, "keep", [sentinel], True)
+
+
 def _on_command_line(_: pytest.MonkeyPatch, folder: Path) -> list[str]:
     return ["--app-data", str(folder)]
 
@@ -142,20 +191,18 @@ def test_version(capsys) -> None:
     assert not err
 
     assert __version__ in content
+    # the package file is read for the version check, so the import waits until here
     import virtualenv  # ruff:ignore[import-outside-top-level]
 
     assert virtualenv.__file__ in content.replace("\n", "")
 
 
-@pytest.mark.parametrize("on", [True, False])
-def test_logging_setup(caplog, on) -> None:
+@pytest.mark.parametrize(("on", "records"), [pytest.param(True, False, id="on"), pytest.param(False, True, id="off")])
+def test_logging_setup(caplog, on: bool, records: bool) -> None:
     caplog.set_level(logging.DEBUG)
     session_via_cli(["env"], setup_logging=on)
     # DEBUG only level output is generated during this phase, default output is WARN, so if on no records should be
-    if on:
-        assert not caplog.records
-    else:
-        assert caplog.records
+    assert bool(caplog.records) is records
 
 
 def test_invalid_discovery_method_via_env(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -168,6 +215,58 @@ def test_invalid_discovery_method_via_env(monkeypatch: pytest.MonkeyPatch) -> No
     assert "Available discovery methods:" in error_message
     assert "builtin" in error_message
     assert "Is the plugin installed?" in error_message
+
+
+def _option_in_environment(monkeypatch: pytest.MonkeyPatch, _: Path, key: str, value: str) -> None:
+    monkeypatch.setenv(f"VIRTUALENV_{key.upper()}", value)
+
+
+def _option_in_config_file(monkeypatch: pytest.MonkeyPatch, folder: Path, key: str, value: str) -> None:
+    (ini := folder / "virtualenv.ini").write_text(f"[virtualenv]\n{key} = {value}\n", encoding="utf-8")
+    monkeypatch.setenv("VIRTUALENV_CONFIG_FILE", str(ini))
+
+
+@pytest.mark.parametrize(
+    ("set_option", "option", "value"),
+    [
+        pytest.param(_option_in_environment, "creator", "nope", id="creator-env"),
+        pytest.param(_option_in_environment, "creator", "builtin ", id="creator-env-trailing-space"),
+        pytest.param(_option_in_config_file, "creator", "nope", id="creator-ini"),
+        pytest.param(_option_in_config_file, "creator", "", id="creator-ini-empty"),
+        pytest.param(_option_in_environment, "seeder", "nope", id="seeder-env"),
+        pytest.param(_option_in_environment, "seeder", "pip ", id="seeder-env-trailing-space"),
+        pytest.param(_option_in_config_file, "seeder", "nope", id="seeder-ini"),
+    ],
+    indirect=["set_option"],
+)
+def test_invalid_plugin_outside_cli(
+    tmp_path: Path,
+    current_creators: CreatorInfo,
+    set_option: Callable[[str, str], None],
+    option: str,
+    value: str,
+) -> None:
+    set_option(option, value)
+    with pytest.raises(RuntimeError) as error:
+        session_via_cli([str(tmp_path / "env")])
+    spec: Final[str] = PythonInfo.current_system().spec
+    available: Final[str] = ", ".join(sorted(current_creators.key_to_class))
+    assert (
+        str(error.value)
+        == {
+            "creator": (
+                f"creator {value!r} is not available for {spec}. Available creators: {available}. Is the plugin installed?"
+            ),
+            "seeder": f"seeder {value!r} is not available. Available seeders: app-data, pip. Is the plugin installed?",
+        }[option]
+    )
+
+
+@pytest.fixture
+def set_option(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> Callable[[str, str], None]:
+    return partial(request.param, monkeypatch, tmp_path)
 
 
 @pytest.mark.parametrize("option", [pytest.param("--prompt", id="prompt"), pytest.param("--pip", id="pip")])

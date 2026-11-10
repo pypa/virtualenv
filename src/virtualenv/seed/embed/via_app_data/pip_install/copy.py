@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class CopyPipInstall(PipInstall):
+    """Install a seed package by copying its image files into the environment."""
+
     def _sync(self, src: Path, dst: Path) -> None:
         copy(src, dst)
 
@@ -35,7 +37,11 @@ class CopyPipInstall(PipInstall):
 
     def _fix_records(self, folder: Path, dist_info: Path, extra_record_data: set[Path]) -> None:
         extra_record_data_str = self._records_text(folder, extra_record_data)
-        with (dist_info / "RECORD").open("ab") as file_handler:
+        with (dist_info / "RECORD").open("a+b") as file_handler:
+            if file_handler.tell():
+                file_handler.seek(-1, os.SEEK_END)
+                if file_handler.read(1) != b"\n":
+                    file_handler.write(b"\n")
             file_handler.write(extra_record_data_str.encode("utf-8"))
 
 

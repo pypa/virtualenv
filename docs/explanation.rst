@@ -439,6 +439,12 @@ Both seeding methods require wheel files for the seed packages. virtualenv acqui
     If no suitable wheel is found in the above locations, or if the ``--download`` flag is set, virtualenv will use pip
     to download the latest compatible version from PyPI.
 
+Pinned versions use `PEP 440 equality
+<https://packaging.python.org/en/latest/specifications/version-specifiers/#version-matching>`_ when selecting bundled,
+cached or extra search directory wheels. For example, a request for ``26.3.0`` can use a wheel named
+``pip-26.3-py3-none-any.whl``. This avoids downloading a release already available locally under an equivalent version
+spelling.
+
 Periodic update mechanism
 =========================
 
@@ -515,7 +521,8 @@ What activation does:
 **PATH modification**
     The activation script prepends the virtual environment's ``bin`` directory (``Scripts`` on Windows) to the ``PATH``
     environment variable. This ensures that when you run ``python``, ``pip``, or other executables, the shell finds the
-    virtual environment's versions first.
+    virtual environment's versions first. For programmatic activation with ``activate_this.py``, empty ``PATH`` entries
+    are removed before the environment directory is prepended.
 
 **Environment variables**
     Activation sets several environment variables:
@@ -523,6 +530,9 @@ What activation does:
     - ``VIRTUAL_ENV`` - Absolute path to the virtual environment directory.
     - ``VIRTUAL_ENV_PROMPT`` - The prompt prefix (the environment name or custom value from ``--prompt``).
     - ``PKG_CONFIG_PATH`` - Modified to include the virtual environment's ``lib/pkgconfig`` directory.
+
+    Activation also clears an inherited ``PYTHONHOME`` so it cannot redirect standard-library lookup outside the
+    environment. Shells that clear it restore the original value on deactivation.
 
 **Prompt modification**
     By default, activation prepends the environment name to your shell prompt, typically shown as ``(venv)`` before the
@@ -671,6 +681,9 @@ lands in a project folder, one holding a ``pyproject.toml``, and that folder has
 **A ``.venv`` folder stays**
     Creating ``.venv`` itself writes nothing, and where a ``.venv`` folder or symlink exists virtualenv leaves it alone,
     since it already is the default.
+
+    Special files such as FIFOs, sockets and devices are also left alone. Reading a FIFO would wait for a writer, so
+    virtualenv only reads regular files when deciding whether to replace a redirect.
 
 **Other tools' redirects stay**
     Even with ``--venv-redirect``, virtualenv honors the PEP's request not to overwrite a redirect another tool wrote.

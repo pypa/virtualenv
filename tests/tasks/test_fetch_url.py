@@ -23,8 +23,8 @@ def _http_error(code: int) -> HTTPError:
 
 
 @pytest.fixture
-def fetch(mocker: MockerFixture) -> Callable[[list[object]], bytes]:
-    def invoke(responses: list[object]) -> bytes:
+def fetch(mocker: MockerFixture) -> Callable[[list[Exception | io.BytesIO]], bytes]:
+    def invoke(responses: list[Exception | io.BytesIO]) -> bytes:
         mocker.patch("urllib.request.urlopen", autospec=True, side_effect=responses)
         mocker.patch("time.sleep", autospec=True)
         return runpy.run_path(str(Path(__file__).parents[2] / "tasks" / "fetch_url.py"))["fetch"](_URL)
@@ -41,15 +41,17 @@ def fetch(mocker: MockerFixture) -> Callable[[list[object]], bytes]:
         pytest.param(_http_error(503), id="server-error"),
     ],
 )
-def test_fetch_retries_transient_failure(fetch: Callable[[list[object]], bytes], failure: Exception) -> None:
+def test_fetch_retries_transient_failure(
+    fetch: Callable[[list[Exception | io.BytesIO]], bytes], failure: Exception
+) -> None:
     assert fetch([failure, failure, io.BytesIO(_CONTENT)]) == _CONTENT
 
 
-def test_fetch_gives_up_after_three_failures(fetch: Callable[[list[object]], bytes]) -> None:
+def test_fetch_gives_up_after_three_failures(fetch: Callable[[list[Exception | io.BytesIO]], bytes]) -> None:
     with pytest.raises(URLError, match="third"):
         fetch([URLError("first"), URLError("second"), URLError("third"), io.BytesIO(_CONTENT)])
 
 
-def test_fetch_does_not_retry_client_error(fetch: Callable[[list[object]], bytes]) -> None:
+def test_fetch_does_not_retry_client_error(fetch: Callable[[list[Exception | io.BytesIO]], bytes]) -> None:
     with pytest.raises(HTTPError, match="error"):
         fetch([_http_error(404), io.BytesIO(_CONTENT)])

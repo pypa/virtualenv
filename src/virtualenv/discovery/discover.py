@@ -16,18 +16,16 @@ if TYPE_CHECKING:
 
 
 class Discover(ABC):
-    @classmethod
-    def add_parser_arguments(cls, parser: ArgumentParser) -> None:
-        raise NotImplementedError
+    """Base for discovering a Python interpreter, which subclasses implement in ``run``.
+
+    :param options: the parsed options, providing the environment to search
+
+    """
 
     def __init__(self, options: VirtualEnvOptions) -> None:
         self._has_run = False
         self._interpreter: PythonInfo | None = None
         self._env: Mapping[str, str] = options.env if options.env is not None else os.environ
-
-    @abstractmethod
-    def run(self) -> PythonInfo | None:
-        raise NotImplementedError
 
     @property
     def interpreter(self) -> PythonInfo | None:
@@ -36,6 +34,28 @@ class Discover(ABC):
             self._interpreter = self.run()
             self._has_run = True
         return self._interpreter
+
+    @abstractmethod
+    def run(self) -> PythonInfo | None:
+        """Return the interpreter this discovery finds.
+
+        :returns: the interpreter, ``None`` when none is found
+
+        :raises NotImplementedError: always, subclasses implement it
+
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def add_parser_arguments(cls, parser: ArgumentParser) -> None:
+        """Add the command line options this discovery reads.
+
+        :param parser: the parser to add the options to
+
+        :raises NotImplementedError: always, subclasses implement it
+
+        """
+        raise NotImplementedError
 
 
 __all__ = [

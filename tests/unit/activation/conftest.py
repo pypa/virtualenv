@@ -7,19 +7,11 @@ import sys
 from os.path import dirname, normcase
 from pathlib import Path
 from subprocess import Popen
-from typing import Final, NamedTuple
+from typing import NamedTuple
 
 import pytest
 
 from virtualenv.run import cli_run
-
-_STATE_VARS: Final[tuple[str, ...]] = (
-    "VIRTUAL_ENV",
-    "VIRTUAL_ENV_PROMPT",
-    "TCL_LIBRARY",
-    "TK_LIBRARY",
-    "PKG_CONFIG_PATH",
-)
 
 
 class ActivationTester:
@@ -36,30 +28,6 @@ class ActivationTester:
         self.script_encoding = "utf-8"
         self._version = None
         self.unix_line_ending = True
-
-    def get_version(self, raise_on_fail):
-        if self._version is None:
-            # locally we disable, so that contributors don't need to have everything setup
-            try:
-                process = Popen(
-                    self._version_cmd,
-                    stdin=subprocess.DEVNULL,
-                    universal_newlines=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    encoding="utf-8",
-                )
-                out, err = process.communicate(timeout=30)
-            except Exception as exception:
-                self._version = exception
-                if raise_on_fail:
-                    raise
-                return RuntimeError(f"{self} is not available due {exception}")
-            else:
-                result = out or err
-                self._version = result
-                return result
-        return self._version
 
     def __repr__(self) -> str:
         return (
@@ -96,6 +64,7 @@ class ActivationTester:
             )
         except subprocess.CalledProcessError as exception:
             output = exception.output + exception.stderr
+            # the failing shell's output is the assertion message
             assert not exception.returncode, output  # ruff:ignore[pytest-assert-in-except]
             return None
         else:
@@ -106,9 +75,58 @@ class ActivationTester:
         self.assert_output(out, raw, tmp_path)
         return env, activate_script
 
-    def non_source_activate(self, activate_script):
-        return [*self._invoke_script, str(activate_script)]
+    def _generate_test_script(self, activate_script, tmp_path):
+        script = os.linesep.join(self._get_test_lines(activate_script))
+        test_script = tmp_path / f"script.{self.extension}"
+        with test_script.open("wb") as file_handler:
+            file_handler.write(script.encode(self.script_encoding))
+        return test_script
 
+    def _get_test_lines(self, activate_script):
+        state_vars: tuple[str, ...] = (
+            "VIRTUAL_ENV",
+            "VIRTUAL_ENV_PROMPT",
+            "TCL_LIBRARY",
+            "TK_LIBRARY",
+            "PKG_CONFIG_PATH",
+        )
+        steps = [
+            self.print_state(state_vars),
+            self.activate_call(activate_script),
+            self.print_state(state_vars),
+            self.print_prompt(),
+            # \\ loads documentation from the virtualenv site packages
+            self.pydoc_call,
+            self.deactivate,
+            self.print_state(state_vars),
+            "",  # just finish with an empty new line
+        ]
+        result = []
+        for index, step in enumerate(steps):
+            result.extend((self.print_marker(index), step))
+        return result
+
+    def print_state(self, names: tuple[str, ...]) -> str:
+        # one launch per phase instead of one per value, since interpreter startup dominates the probe cost
+        lookups = "; ".join(f'print(os.environ.get("{name}"))' for name in names)
+        return self.python_cmd(f"import os; import sys; print(sys.executable); {lookups}")
+
+    def python_cmd(self, cmd) -> str:
+        return f"{os.path.basename(sys.executable)} -c {self.quote(cmd)}"
+
+    def quote(self, string):
+        return self.of_class.quote(string)
+
+    def activate_call(self, script):
+        return f"{self.quote(str(self.activate_cmd))} {self.quote(str(script))}".strip()
+
+    def print_prompt(self):
+        return NotImplemented
+
+    def print_marker(self, step) -> str:
+        return f'echo "__STEP_{step}__"'
+
+    # the base tester defines env with tmp_path, this shell does not use it
     def env(self, tmp_path):  # ruff:ignore[unused-method-argument]
         env = os.environ.copy()
         # add the current python executable folder to the path so we already have another python on the path
@@ -120,36 +138,8 @@ class ActivationTester:
             del env[key]
         return env
 
-    def _generate_test_script(self, activate_script, tmp_path):
-        commands = self._get_test_lines(activate_script)
-        script = os.linesep.join(commands)
-        test_script = tmp_path / f"script.{self.extension}"
-        with test_script.open("wb") as file_handler:
-            file_handler.write(script.encode(self.script_encoding))
-        return test_script
-
-    def _get_test_lines(self, activate_script):
-        steps = [
-            self.print_state(_STATE_VARS),
-            self.activate_call(activate_script),
-            self.print_state(_STATE_VARS),
-            self.print_prompt(),
-            # \\ loads documentation from the virtualenv site packages
-            self.pydoc_call,
-            self.deactivate,
-            self.print_state(_STATE_VARS),
-            "",  # just finish with an empty new line
-        ]
-        result = []
-        for index, step in enumerate(steps):
-            result.extend((self.print_marker(index), step))
-        return result
-
-    def print_marker(self, step) -> str:
-        return f'echo "__STEP_{step}__"'
-
     def assert_output(self, out, raw, tmp_path) -> None:
-        """Compare _get_test_lines() with the expected values."""
+        # Compare _get_test_lines() with the expected values.
         out = [line for line in out if not line.strip('"').startswith("__STEP_")]
         assert out[0], raw
         assert out[1] == "None", raw
@@ -193,28 +183,6 @@ class ActivationTester:
             str(user_value),
         ), raw
 
-    def quote(self, s):
-        return self.of_class.quote(s)
-
-    def python_cmd(self, cmd) -> str:
-        return f"{os.path.basename(sys.executable)} -c {self.quote(cmd)}"
-
-    def print_python_exe(self):
-        return self.python_cmd("import sys; print(sys.executable)")
-
-    def print_state(self, names: tuple[str, ...]) -> str:
-        # one launch per phase instead of one per value, since interpreter startup dominates the probe cost
-        lookups = "; ".join(f'print(os.environ.get("{name}"))' for name in names)
-        return self.python_cmd(f"import os; import sys; print(sys.executable); {lookups}")
-
-    def print_prompt(self):
-        return NotImplemented
-
-    def activate_call(self, script):
-        cmd = self.quote(str(self.activate_cmd))
-        scr = self.quote(str(script))
-        return f"{cmd} {scr}".strip()
-
     @staticmethod
     def norm_path(path):
         # python may return Windows short paths, normalize
@@ -224,17 +192,47 @@ class ActivationTester:
         if sys.platform != "win32":
             result = path
         else:
+            # windll exists only on Windows, and this branch runs only there
             from ctypes import create_unicode_buffer, windll  # ruff:ignore[import-outside-top-level]
 
             buffer_cont = create_unicode_buffer(256)
-            get_long_path_name = windll.kernel32.GetLongPathNameW
-            get_long_path_name(str(path), buffer_cont, 256)
+            windll.kernel32.GetLongPathNameW(str(path), buffer_cont, 256)
             result = buffer_cont.value or path
         return normcase(result)
 
+    def get_version(self, raise_on_fail):
+        if self._version is None:
+            # locally we disable, so that contributors don't need to have everything setup
+            try:
+                process = Popen(
+                    self._version_cmd,
+                    stdin=subprocess.DEVNULL,
+                    universal_newlines=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    encoding="utf-8",
+                )
+                out, err = process.communicate(timeout=30)
+            except Exception as exception:
+                self._version = exception
+                if raise_on_fail:
+                    raise
+                return RuntimeError(f"{self} is not available due {exception}")
+            else:
+                result = out or err
+                self._version = result
+                return result
+        return self._version
+
+    def non_source_activate(self, activate_script):
+        return [*self._invoke_script, str(activate_script)]
+
+    def print_python_exe(self):
+        return self.python_cmd("import sys; print(sys.executable)")
+
 
 class RaiseOnNonSourceCall(ActivationTester):
-    def __init__(  # ruff:ignore[too-many-arguments]
+    def __init__(  # ruff:ignore[too-many-arguments]  # the test double mirrors ActivationTester's constructor
         self,
         of_class,
         session,
@@ -300,16 +298,15 @@ def activation_python(activation_case: ActivationCase, tmp_path_factory, special
         cmd += ["--prompt", special_char_name]
     session = cli_run(cmd)
     if activation_case.tcl:
-        # the interpreter reports tcl_lib only when TCL_LIBRARY is set during its cached probe, so regenerate the scripts
-        # with the values patched instead
+        # the interpreter reports tcl_lib only when TCL_LIBRARY is set during its cached probe, so regenerate the
+        # scripts with the values patched instead
         with pytest.MonkeyPatch.context() as monkeypatch:
             for name in ("tcl", "tk"):
                 (path := Path(dest).parent / name).mkdir()
                 monkeypatch.setattr(session.creator.interpreter, f"{name}_lib", str(path))
             for activator in session.activators:
                 activator.generate(session.creator)
-    pydoc_test = session.creator.purelib / "pydoc_test.py"
-    pydoc_test.write_text('"""This is pydoc_test.py"""', encoding="utf-8")
+    (session.creator.purelib / "pydoc_test.py").write_text('"""This is pydoc_test.py"""', encoding="utf-8")
     return session
 
 

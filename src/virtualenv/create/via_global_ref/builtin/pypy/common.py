@@ -1,4 +1,4 @@
-from __future__ import annotations
+from __future__ import annotations  # simplint: ignore[SMP104]  # imported by path across the pypy modules
 
 import abc
 from pathlib import Path
@@ -16,22 +16,33 @@ if TYPE_CHECKING:
 
 
 class PyPy(ViaGlobalRefVirtualenvBuiltin, abc.ABC):
+    """Base for the built-in creators of PyPy interpreters."""
+
     @classmethod
     def can_describe(cls, interpreter: PythonInfo) -> bool:
+        """Accept PyPy interpreters that the base describer also accepts.
+
+        :param interpreter: the host interpreter to check
+
+        :returns: ``True`` if this creator can describe the interpreter
+
+        """
         return interpreter.implementation == "PyPy" and super().can_describe(interpreter)
 
     @classmethod
     def _executables(cls, interpreter: PythonInfo) -> Generator[tuple[Path, list[str], str, str]]:
         host = Path(interpreter.system_exe)
-        targets = sorted(f"{name}{PyPy.suffix}" for name in cls.exe_names(interpreter))
-        yield host, targets, RefMust.NA, RefWhen.ANY
-
-    @classmethod
-    def executables(cls, interpreter: PythonInfo) -> Generator[PathRef]:
-        yield from super().sources(interpreter)
+        yield host, sorted(f"{name}{PyPy.suffix}" for name in cls.exe_names(interpreter)), RefMust.NA, RefWhen.ANY
 
     @classmethod
     def exe_names(cls, interpreter: PythonInfo) -> set[str]:
+        """The executable names of PyPy environments, the stem and the ``python`` variants.
+
+        :param interpreter: the host interpreter
+
+        :returns: the executable names without suffix
+
+        """
         return {
             cls.exe_stem(),
             "python",
@@ -40,16 +51,34 @@ class PyPy(ViaGlobalRefVirtualenvBuiltin, abc.ABC):
         }
 
     @classmethod
-    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
+    # yields PathRef, which the base's Generator[ExePathRefToDest] does not allow
+    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[incompatible-method-override]
+        """Yield the executables and the shared libraries of the interpreter.
+
+        :param interpreter: the host interpreter to take the files from
+
+        :yields: the references to the host files
+
+        """
         yield from cls.executables(interpreter)
         for host in cls._add_shared_libs(interpreter):
-            yield PathRefToDest(host, dest=lambda self, s: self.bin_dir / s.name)
+            yield PathRefToDest(host, dest=lambda self, source: self.bin_dir / source.name)
+
+    @classmethod
+    def executables(cls, interpreter: PythonInfo) -> Generator[PathRef]:
+        """Yield the host executable as a reference into the environment's bin folder.
+
+        :param interpreter: the host interpreter to take the files from
+
+        :yields: the executable references
+
+        """
+        yield from super().sources(interpreter)
 
     @classmethod
     def _add_shared_libs(cls, interpreter: PythonInfo) -> Generator[Path]:
         # the executable loads a separate libpypy-c next to it: https://github.com/pypy/pypy/issues/1922
-        python_dir = Path(interpreter.system_exe).resolve().parent
-        yield from cls._shared_libs(python_dir)
+        yield from cls._shared_libs(Path(interpreter.system_exe).resolve().parent)
 
     @classmethod
     def _shared_libs(cls, python_dir: Path) -> Iterator[Path]:

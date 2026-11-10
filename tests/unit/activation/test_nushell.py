@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import subprocess
 from argparse import Namespace
 from shutil import which
@@ -14,7 +15,34 @@ from virtualenv.run import cli_run
 if TYPE_CHECKING:
     from pathlib import Path
 
-_NU: Final = which("nu")
+_NU: Final[str | None] = which("nu")
+
+
+@pytest.mark.skipif(_NU is None, reason="nu is not installed")
+def test_nushell_clears_pythonhome(tmp_path: Path) -> None:
+    session = cli_run(["--no-seed", "--activators", "nushell", str(tmp_path / "env")])
+    inherited = str(tmp_path / "missing-pythonhome")
+    activate = NushellActivator.quote(str(session.creator.bin_dir / "activate.nu"))
+    result = subprocess.run(
+        [
+            _NU,
+            "--commands",
+            f"overlay use {activate}; print ('PYTHONHOME' in $env); ^python -c 'import sys; print(sys.prefix)'; deactivate; print $env.PYTHONHOME",
+        ],
+        env={key: value for key, value in os.environ.items() if key != "COVERAGE_PROCESS_START"}
+        | {"PYTHONHOME": inherited},
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=60,
+        check=False,
+    )
+
+    assert (result.returncode, result.stdout.splitlines(), result.stderr) == (
+        0,
+        ["false", str(session.creator.dest), inherited],
+        "",
+    )
 
 
 def test_nushell_tkinter_generation(tmp_path) -> None:
@@ -38,8 +66,7 @@ def test_nushell_tkinter_generation(tmp_path) -> None:
             self.env_name = "my-env"
 
     creator = MockCreator(tmp_path)
-    options = Namespace(prompt=None)
-    activator = NushellActivator(options)
+    activator = NushellActivator(Namespace(prompt=None))
 
     # WHEN
     activator.generate(creator)
@@ -51,8 +78,15 @@ def test_nushell_tkinter_generation(tmp_path) -> None:
     assert "let new_pkg_config_path = " in content
     assert "PKG_CONFIG_PATH: $new_pkg_config_path" in content
 
-    expected_tcl = f"let $new_env = $new_env | insert TCL_LIBRARY {quoted_tcl_path}"
-    expected_tk = f"let $new_env = $new_env | insert TK_LIBRARY {quoted_tk_path}"
+    # a `let` inside an `if` block only shadows the record within that block, so the script rebinds it in export-env
+    expected_tcl = (
+        f"let new_env = if ({quoted_tcl_path} | is-empty) {{ $new_env }} "
+        f"else {{ $new_env | insert TCL_LIBRARY {quoted_tcl_path} }}"
+    )
+    expected_tk = (
+        f"let new_env = if ({quoted_tk_path} | is-empty) {{ $new_env }} "
+        f"else {{ $new_env | insert TK_LIBRARY {quoted_tk_path} }}"
+    )
 
     assert expected_tcl in content
     assert expected_tk in content
@@ -80,29 +114,20 @@ def test_nushell(activation_tester_class, activation_tester) -> None:
         def print_prompt(self) -> str:
             return r"print $env.VIRTUAL_PREFIX"
 
-        def assert_tcl_tk_library(self, before, activated, deactivated, raw) -> None:
-            # activate.nu never sets TCL_LIBRARY or TK_LIBRARY: its `let $new_env` inside `if` only shadows the variable
-            assert before == activated == deactivated, raw
-
         def activate_call(self, script):
             # Commands are called without quotes in Nushell
-            cmd = self.activate_cmd
-            scr = self.quote(str(script))
-            return f"{cmd} {scr}".strip()
+            return f"{self.activate_cmd} {self.quote(str(script))}".strip()
 
     activation_tester(Nushell)
 
 
+@pytest.mark.skipif(which("nu") is None, reason="nu not installed")
 def test_nushell_deactivate_errors(tmp_path: Path) -> None:
-    """Regression for gh-3103: both misuse patterns give actionable inline errors.
-
-    `^nu | complete` captures stderr from child invocations without aborting the outer script, so both cases run in a
-    single subprocess call.
-
-    """
+    # Regression for gh-3103: both misuse patterns give actionable inline errors.
+    #
+    # `^nu | complete` captures stderr from child invocations without aborting the outer script, so both cases run in a
+    # single subprocess call.
     nu = which("nu")
-    if nu is None:
-        pytest.skip("nu not installed")
 
     activate_nu = cli_run(["--without-pip", str(tmp_path / "venv")]).creator.bin_dir / "activate.nu"
     quoted = NushellActivator.quote(str(activate_nu))

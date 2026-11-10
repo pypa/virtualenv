@@ -13,8 +13,7 @@ permissions: {}
 jobs:
   analysis:
     name: 🛡️ Scorecard analysis
-    if: github.repository_owner == 'pypa'
-    runs-on: ubuntu-26.04
+    if: github.repository == 'pypa/virtualenv'
     permissions:
       actions: read # read workflow runs for the Packaging check
       checks: read # read check runs for the CI-Tests and SAST checks
@@ -24,18 +23,4 @@ jobs:
       pull-requests: read # read reviews for the Code-Review check
       security-events: write # upload the SARIF results to code scanning
       statuses: read # read commit statuses for the CI-Tests check
-    steps:
-      - name: 📥 Check out code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - name: 🛡️ Run Scorecard analysis
-        uses: ossf/scorecard-action@fa7117db83c52d787ae5a89f350999701505d78e # v2.5.0
-        with:
-          results_file: results.sarif
-          results_format: sarif
-          publish_results: true
-      - name: 🛡️ Upload Scorecard results to code scanning
-        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
-        with:
-          sarif_file: results.sarif
+    uses: tox-dev/github-workflows/.github/workflows/scorecard.yaml@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0

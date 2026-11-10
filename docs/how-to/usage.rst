@@ -196,6 +196,12 @@ Programmatic activation
 Activate the environment from within a running Python process using ``activate_this.py``. This modifies ``sys.path`` and
 environment variables in the current process so that subsequent imports resolve from the virtual environment.
 
+The script removes empty ``PATH`` entries before prepending the environment's executable directory. On POSIX, an empty
+entry searches the current directory.
+
+It also removes an inherited ``PYTHONHOME`` from the current process so child Python interpreters use the environment's
+standard library.
+
 .. code-block:: python
 
     import runpy
@@ -228,7 +234,7 @@ Configuration file location
 The configuration file is named ``virtualenv.ini`` and located in the platformdirs app config directory. Run
 ``virtualenv --help`` to see the exact location for your system.
 
-Override the location with the ``VIRTUALENV_CONFIG_FILE`` environment variable.
+Override the location with the ``VIRTUALENV_CONFIG_FILE`` environment variable. An empty value counts as unset.
 
 Configuration format
 ====================
@@ -239,6 +245,9 @@ Derive configuration keys from command-line options by stripping leading ``-`` a
 
     [virtualenv]
     python = /opt/python-3.14/bin/python
+
+Values are not interpolated, so a ``%`` needs no escaping and references such as ``%APPDATA%`` or ``%(name)s`` are kept
+as written.
 
 Multi-value options
 ===================
@@ -251,6 +260,9 @@ Specify multiple values on separate lines:
     extra_search_dir =
         /path/to/dists
         /path/to/other/dists
+
+A value given on the command line replaces the configured list instead of adding to it. Repeat the option to pass
+several, for example ``-p 3.14 -p 3.13``.
 
 Environment variables
 =====================
@@ -267,6 +279,16 @@ Override app-data location
 ==========================
 
 Set the ``VIRTUALENV_OVERRIDE_APP_DATA`` environment variable to override the default app-data cache directory location.
+
+Use ``--app-data`` for an explicit cache location:
+
+.. code-block:: console
+
+    $ virtualenv --app-data /path/to/cache venv
+
+An empty or whitespace-only ``--app-data`` value is an error, as is a whitespace-only ``VIRTUALENV_APP_DATA``. Check
+shell variables before using ``--app-data "$CACHE"``, especially with ``--reset-app-data``, which deletes the selected
+cache. An empty ``VIRTUALENV_APP_DATA`` or a blank ``VIRTUALENV_OVERRIDE_APP_DATA`` is treated as unset.
 
 Allow unverified HTTPS for periodic updates
 ===========================================
@@ -328,8 +350,8 @@ Pass ``--venv-redirect`` to make another environment the default, or to write th
     $ cat .venv
     py314
 
-virtualenv leaves a ``.venv`` folder alone, and a redirect pointing at an environment it did not create. Delete the
-``.venv`` if you want virtualenv to take it over.
+virtualenv leaves a ``.venv`` folder, symlink or special file such as a FIFO alone, and a redirect pointing at an
+environment it did not create. Delete the ``.venv`` if you want virtualenv to take it over.
 
 Choose once for every environment
 =================================
@@ -346,8 +368,10 @@ Set the choice in the configuration file or an environment variable. ``no_venv_r
     $ export VIRTUALENV_NO_VENV_REDIRECT=1
 
 ``venv_redirect = true`` or ``VIRTUALENV_VENV_REDIRECT=1`` writes it for every environment, as ``--venv-redirect`` does.
-A flag on the command line beats both, so ``virtualenv env --venv-redirect`` writes the file for one run even with
-``no_venv_redirect = true`` set.
+Environment variables override either configuration file key: ``VIRTUALENV_VENV_REDIRECT=1`` also overrides
+``no_venv_redirect = true``. If both environment variables are true, ``VIRTUALENV_NO_VENV_REDIRECT`` wins. A flag on the
+command line beats both, so ``virtualenv env --venv-redirect`` writes the file for one run even with ``no_venv_redirect
+= true`` set.
 
 Commit the file or ignore it
 ============================
@@ -359,6 +383,19 @@ paths.
 ***********************
  Control seed packages
 ***********************
+
+Pin a seed version
+==================
+
+Pass an exact version to ``--pip`` or ``--setuptools``:
+
+.. code-block:: console
+
+    $ virtualenv venv --pip 26.3.0
+
+Equivalent spellings such as ``26.3``, ``26.3.0`` and ``v26.3`` select the same release from bundled wheels, the cache
+or extra search directories. If that release is unavailable locally, virtualenv attempts a download even with
+``--no-download``. Surrounding whitespace is ignored for versions and the ``embed``, ``bundle`` and ``none`` keywords.
 
 Upgrade embedded wheels
 =======================

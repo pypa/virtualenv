@@ -9,7 +9,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from subprocess import CalledProcessError
 from threading import Lock, Thread
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.info import fs_supports_symlink
 from virtualenv.seed.embed.base_embed import BaseEmbed
@@ -32,10 +32,19 @@ if TYPE_CHECKING:
 
     from .pip_install.base import PipInstall
 
-LOGGER = logging.getLogger(__name__)
+#: Logger of this module.
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class FromAppData(BaseEmbed):
+    """Seeder that installs the seed packages from wheel images cached in the application data folder.
+
+    :param options: the parsed options
+
+    :var symlinks: ``True`` to symlink the packages from the cached images instead of copying them
+
+    """
+
     def __init__(self, options: VirtualEnvOptions) -> None:
         super().__init__(options)
         # env var and config file values skip the gate on the CLI flag, so apply it here too
@@ -49,8 +58,20 @@ class FromAppData(BaseEmbed):
     def _can_symlink(app_data: AppData) -> bool:
         return app_data.transient is False and fs_supports_symlink()
 
+    def __repr__(self) -> str:
+        msg = f", via={'symlink' if self.symlinks else 'copy'}, app_data_dir={self.app_data}"
+        base = super().__repr__()
+        return f"{base[:-1]}{msg}{base[-1]}"
+
     @classmethod
     def add_parser_arguments(cls, parser: ArgumentParser, interpreter: PythonInfo, app_data: AppData) -> None:
+        """Add the option that symlinks the packages from the application data folder, when the platform supports it.
+
+        :param parser: the parser to add the option to
+        :param interpreter: the interpreter the environment is created from
+        :param app_data: the application data folder
+
+        """
         super().add_parser_arguments(parser, interpreter, app_data)
         can_symlink = cls._can_symlink(app_data)
         sym = "" if can_symlink else "not supported - "
@@ -63,11 +84,17 @@ class FromAppData(BaseEmbed):
         )
 
     def run(self, creator: Creator) -> None:
+        """Install the seed packages into the environment from the cached images.
+
+        :param creator: the creator of the environment
+
+        :raises RuntimeError: when an image cannot be built, a wheel entry is invalid or a download fails
+
+        """
         if not self.enabled:
             return
         with self._get_seed_wheels(creator) as name_to_whl:
-            pip_version = name_to_whl["pip"].version_tuple if "pip" in name_to_whl else None
-            installer_class = self.installer_class(pip_version)
+            installer_class = self.installer_class(name_to_whl["pip"].version_tuple if "pip" in name_to_whl else None)
             exceptions = {}
 
             def _install(name: str, wheel: Wheel) -> None:
@@ -77,7 +104,9 @@ class FromAppData(BaseEmbed):
                     wheel_img = self.app_data.wheel_image(creator.interpreter.version_release_str, key)
                     installer = installer_class(wheel.path, creator, wheel_img)
                     _build_wheel_image(self.app_data.lock / wheel_img.parent, wheel_img.name, installer)
+                    # version_info is a VersionInfo, which install types as a plain tuple
                     installer.install(creator.interpreter.version_info)  # ty: ignore[invalid-argument-type]
+                # the failure is stored and raised once every install has finished
                 except Exception:  # ruff:ignore[blind-except]
                     exceptions[name] = sys.exc_info()
 
@@ -94,6 +123,7 @@ class FromAppData(BaseEmbed):
                 raise RuntimeError("\n".join(messages))
 
     @contextmanager
+    # the wheel lookup and its image build share one context, splitting it passes the lock around
     def _get_seed_wheels(self, creator: Creator) -> Generator[dict[str, Wheel], None, None]:  # ruff:ignore[complex-structure]
         name_to_whl, lock, fail = {}, Lock(), {}
 
@@ -125,8 +155,7 @@ class FromAppData(BaseEmbed):
                     if version is not None:
                         msg += f" version {version}"
                     msg += f", pip download exit code {failure.returncode}"
-                    output = failure.output + failure.stderr
-                    if output:
+                    if output := failure.output + failure.stderr:
                         msg += "\n"
                         msg += output
                 else:
@@ -152,14 +181,16 @@ class FromAppData(BaseEmbed):
         yield name_to_whl
 
     def installer_class(self, pip_version_tuple: tuple[int, ...] | None) -> type[PipInstall]:
+        """Return the installer class for the pip version, which symlinks the files when pip supports it.
+
+        :param pip_version_tuple: the version of the seed pip, ``None`` when unknown
+
+        :returns: the symlink installer when symlinks are requested and supported, otherwise the copy installer
+
+        """
         if self.symlinks and pip_version_tuple and pip_version_tuple >= (19, 3):  # symlink support requires pip 19.3+
             return SymlinkPipInstall
         return CopyPipInstall
-
-    def __repr__(self) -> str:
-        msg = f", via={'symlink' if self.symlinks else 'copy'}, app_data_dir={self.app_data}"
-        base = super().__repr__()
-        return f"{base[:-1]}{msg}{base[-1]}"
 
 
 def _build_wheel_image(parent: PathLockBase, name: str, installer: PipInstall) -> None:
@@ -169,5 +200,6 @@ def _build_wheel_image(parent: PathLockBase, name: str, installer: PipInstall) -
 
 
 __all__ = [
+    "LOGGER",
     "FromAppData",
 ]

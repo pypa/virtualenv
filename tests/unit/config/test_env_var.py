@@ -65,8 +65,7 @@ def test_split_values(value, expected) -> None:
 
 def test_extra_search_dir_via_env_var(tmp_path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
-    value = f"a{os.linesep}0{os.linesep}b{os.pathsep}c"
-    monkeypatch.setenv("VIRTUALENV_EXTRA_SEARCH_DIR", str(value))
+    monkeypatch.setenv("VIRTUALENV_EXTRA_SEARCH_DIR", str(f"a{os.linesep}0{os.linesep}b{os.pathsep}c"))
     (tmp_path / "a").mkdir()
     (tmp_path / "b").mkdir()
     (tmp_path / "c").mkdir()
@@ -77,8 +76,10 @@ def test_extra_search_dir_via_env_var(tmp_path, monkeypatch) -> None:
 @pytest.mark.usefixtures("_empty_conf")
 @pytest.mark.skipif(is_macos_brew(PythonInfo.current_system()), reason="no copy on brew")
 def test_value_alias(monkeypatch, mocker) -> None:
+    # imported with the test, which needs only this parser
     from virtualenv.config.cli.parser import VirtualEnvConfigParser  # ruff:ignore[import-outside-top-level]
 
+    # the test patches the private _fix_default, which has no public accessor
     prev = VirtualEnvConfigParser._fix_default  # ruff:ignore[private-member-access]
 
     def func(self, action):
@@ -88,7 +89,7 @@ def test_value_alias(monkeypatch, mocker) -> None:
             action.default = False  # force default copy to be False, we expect env-var to flip it
         return prev(self, action)
 
-    mocker.patch("virtualenv.run.VirtualEnvConfigParser._fix_default", side_effect=func, autospec=True)
+    mocker.patch("virtualenv.config.cli.parser.VirtualEnvConfigParser._fix_default", side_effect=func, autospec=True)
 
     monkeypatch.delenv("SYMLINKS", raising=False)
     monkeypatch.delenv("VIRTUALENV_COPIES", raising=False)

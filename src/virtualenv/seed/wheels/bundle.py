@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from virtualenv.seed.wheels.embed import get_embed_wheel
-
+from .embed import get_embed_wheel
 from .periodic_update import periodic_update
 from .util import Version, Wheel, discover_wheels
 
@@ -13,6 +12,7 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
 
 
+# the bundle lookup takes each search input separately, as the callers pass them
 def from_bundle(  # ruff:ignore[too-many-arguments]
     distribution: str,
     version: str | None,
@@ -22,7 +22,19 @@ def from_bundle(  # ruff:ignore[too-many-arguments]
     do_periodic_update: bool,
     env: dict[str, str],
 ) -> Wheel | None:
-    """Load the bundled wheel to a cache directory."""
+    """Load the bundled wheel to a cache directory.
+
+    :param distribution: the distribution name, for example ``pip``
+    :param version: the requested version, ``None`` when unpinned
+    :param for_py_version: the Python version the wheel must support, as ``major.minor``
+    :param search_dirs: extra directories searched for a newer wheel
+    :param app_data: the application data folder
+    :param do_periodic_update: ``True`` to check the index for a wheel newer than the bundled one
+    :param env: the environment variables the update check runs with
+
+    :returns: the wheel to seed with, or ``None`` when there is none
+
+    """
     of_version = Version.of_version(version)
     wheel = load_embed_wheel(app_data, distribution, for_py_version, of_version)
 
@@ -40,10 +52,20 @@ def from_bundle(  # ruff:ignore[too-many-arguments]
 
 
 def load_embed_wheel(app_data: AppData, distribution: str, for_py_version: str, version: str | None) -> Wheel | None:
+    """Return the bundled wheel of a distribution when it matches the version, extracted into the app data folder.
+
+    :param app_data: the application data folder
+    :param distribution: the distribution name
+    :param for_py_version: the Python version the wheel must support
+    :param version: the version to match, ``None`` for any version
+
+    :returns: the wheel, ``None`` when no bundled wheel matches
+
+    """
     wheel = get_embed_wheel(distribution, for_py_version)
     if wheel is not None:
-        version_match = version == wheel.version
-        if version is None or version_match:
+        if version is None or wheel.has_version(version):
+            # callers pass a callable for the folder, despite the Path | None annotation
             with app_data.ensure_extracted(wheel.path, lambda: app_data.house) as wheel_path:  # ty: ignore[invalid-argument-type]
                 wheel = Wheel(wheel_path)
         else:  # if version does not match ignore
@@ -52,7 +74,16 @@ def load_embed_wheel(app_data: AppData, distribution: str, for_py_version: str, 
 
 
 def from_dir(distribution: str, version: str | None, for_py_version: str, directories: list[Path]) -> Wheel | None:
-    """Load a compatible wheel from a given folder."""
+    """Return the first wheel of the distribution found in the folders, or ``None`` when there is none.
+
+    :param distribution: the name of the distribution
+    :param version: the version to find, ``None`` for any
+    :param for_py_version: the Python version the wheel must support
+    :param directories: the folders to search, in order
+
+    :returns: the wheel, or ``None``
+
+    """
     for folder in directories:
         for wheel in discover_wheels(folder, distribution, version, for_py_version):
             return wheel
@@ -61,5 +92,6 @@ def from_dir(distribution: str, version: str | None, for_py_version: str, direct
 
 __all__ = [
     "from_bundle",
+    "from_dir",
     "load_embed_wheel",
 ]

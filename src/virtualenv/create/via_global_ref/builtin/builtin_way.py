@@ -13,7 +13,12 @@ if TYPE_CHECKING:
 
 
 class VirtualenvBuiltin(Creator, Describe, ABC):
-    """A creator that does operations itself without delegation, if we can create it we can also describe it."""
+    """A creator that does operations itself without delegation, if we can create it we can also describe it.
+
+    :param options: the CLI options, as for :class:`virtualenv.create.creator.Creator`
+    :param interpreter: the host interpreter the environment is created from
+
+    """
 
     def __init__(self, options: VirtualEnvOptions, interpreter: PythonInfo) -> None:
         Creator.__init__(self, options, interpreter)

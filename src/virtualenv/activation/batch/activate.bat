@@ -7,6 +7,7 @@
 
 @REM Undo an activation that is still in effect, otherwise its values get saved as the ones to restore
 @if defined _OLD_VIRTUAL_PATH @call "__VIRTUAL_ENV_CALL__\__BIN_NAME__\deactivate.bat"
+@if defined _OLD_VIRTUAL_PATH_UNSET @call "__VIRTUAL_ENV_CALL__\__BIN_NAME__\deactivate.bat"
 
 @set "VIRTUAL_ENV=__VIRTUAL_ENV__"
 
@@ -52,6 +53,8 @@
 @REM ) else (
 @if defined _OLD_VIRTUAL_PATH @goto ENDIFVPATH2
     @set "_OLD_VIRTUAL_PATH=%PATH%"
+    @REM An undefined PATH leaves _OLD_VIRTUAL_PATH undefined too, so record it for deactivate.bat
+    @if not defined PATH @set _OLD_VIRTUAL_PATH_UNSET=1
 :ENDIFVPATH2
 
 @set "PATH=%VIRTUAL_ENV%\__BIN_NAME__;%PATH%"

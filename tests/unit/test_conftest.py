@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 import pytest
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-pytest_plugins = ["pytester"]
+pytest_plugins: Final[list[str]] = ["pytester"]
 
 
 @pytest.fixture
