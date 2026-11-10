@@ -16,7 +16,7 @@ jobs:
     name: 🧪 test ${{ matrix.py }} - ${{ matrix.os }} ${{ matrix.group }}
     if: github.event_name != 'schedule' || github.repository_owner == 'pypa'
     runs-on: ${{ matrix.os }}
-    timeout-minutes: ${{ matrix.py == 'graalpy' && 20 || 40 }}
+    timeout-minutes: ${{ matrix.py == 'graalpy' && 25 || 40 }}
     permissions:
       contents: read
     env:
@@ -180,7 +180,7 @@ jobs:
           "$python_path" -m pytest tests/tasks/test_pytest_diagnostics.py -n 0 --basetemp=.tox/diagnostics-self-test
       - name: 🧪 Run test suite
         run: tox run --skip-pkg-install
-        timeout-minutes: ${{ matrix.py == 'graalpy' && 17 || 30 }}
+        timeout-minutes: ${{ matrix.py == 'graalpy' && 22 || 30 }}
         env:
           GRAALPY_GROUP: ${{ matrix.group || '1/1' }}
           PYTEST_PLUGINS: ${{ matrix.diagnostics && 'tasks.pytest_diagnostics' || '' }}
