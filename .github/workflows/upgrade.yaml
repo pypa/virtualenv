@@ -18,19 +18,19 @@ jobs:
       patch-artifact-id: ${{ steps.upload-patch.outputs.artifact-id }}
     steps:
       - name: 🛡️ Block outbound traffic outside the allowlist
-        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
+        uses: step-security/harden-runner@v2.22.3
         with:
           egress-policy: block
           disable-sudo-and-containers: true
           allowed-endpoints: >-
             api.github.com:443 files.pythonhosted.org:443 github.com:443 pypi.org:443 raw.githubusercontent.com:443 registry.npmjs.org:443 release-assets.githubusercontent.com:443 releases.astral.sh:443
       - name: 📥 Check out code
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
       - name: 🐍 Install uv
-        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        uses: astral-sh/setup-uv@v10.3.3
         with:
           version: latest-known
           python-version: "3.15"
@@ -74,7 +74,7 @@ jobs:
       - name: 📤 Store upgrade patch
         if: steps.upgrade.outputs.changed == 'true' && steps.age-check.outputs.skip == 'false'
         id: upload-patch
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: maintenance-patch
           path: ${{ runner.temp }}/maintenance.patch
@@ -86,7 +86,7 @@ jobs:
     if: needs.generate.outputs.publish == 'true'
     permissions:
       contents: read
-    uses: tox-dev/github-workflows/.github/workflows/open-maintenance-pr.yaml@bceb5c005e19823dc8835f536f53f172ae223927 # 6.5.0
+    uses: tox-dev/github-workflows/.github/workflows/open-maintenance-pr.yaml@bf1c3ab0aa137d307a07aad844d507af73039387 # 6.8.0
     with:
       artifact-id: ${{ needs.generate.outputs.patch-artifact-id }}
       allowed-paths: |
