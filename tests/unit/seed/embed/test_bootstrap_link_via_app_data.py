@@ -745,24 +745,23 @@ def test_safe_extract_zip_rejects_absolute_entry(tmp_path: Path, entry: str) -> 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows path limits")
 @pytest.mark.parametrize(
-    ("entry", "shortened"),
+    ("entry", "expected"),
     [
-        pytest.param("f" * 158, False, id="file-fits"),
-        pytest.param("f" * 159, True, id="file-too-long"),
-        pytest.param(f"{'d' * 146}/x", False, id="dir-fits"),
-        pytest.param(f"{'d' * 147}/x", True, id="dir-too-long"),
+        pytest.param("f" * 158, "a" * 97, id="file-fits"),
+        pytest.param("f" * 159, "short", id="file-too-long"),
+        pytest.param(f"{'d' * 146}/x", "a" * 97, id="dir-fits"),
+        pytest.param(f"{'d' * 147}/x", "short", id="dir-too-long"),
     ],
 )
-def test_seed_image_short_path_limits(tmp_path: Path, mocker: MockerFixture, entry: str, shortened: bool) -> None:
+def test_seed_image_short_path_limits(tmp_path: Path, mocker: MockerFixture, entry: str, expected: str) -> None:
     archive: Final = tmp_path / "pkg.whl"
     _write_zip_with_entry(archive, entry)
     folder: Final = Path("C:/", "a" * 97)  # 100 characters, plus the separator before the entry
-    short: Final = Path("C:/short")
-    mocker.patch("virtualenv.util.path.get_short_path_name", autospec=True, return_value=str(short))
+    mocker.patch("virtualenv.util.path.get_short_path_name", autospec=True, return_value="C:/short")
     check: Final = CopyPipInstall._short_path_if_needed  # ruff:ignore[private-member-access]  # the limits live here
     with zipfile.ZipFile(str(archive)) as zip_ref:
         result: Final = check(zip_ref, folder)
-    assert result == {True: short, False: folder}[shortened]
+    assert result == Path("C:/", expected)
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows path limits")
