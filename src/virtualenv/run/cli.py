@@ -62,7 +62,7 @@ def session_via_cli(
     # parse_args returns a plain Namespace, not the VirtualEnvOptions it is typed as
     options = parser.parse_args(args)  # ty: ignore[invalid-assignment]
     # the parser carries the discovered interpreter to the session, which ty cannot see
-    options.py_version = parser._interpreter.version_info  # ruff:ignore[private-member-access]  # ty: ignore[invalid-assignment, unresolved-attribute]
+    options.py_version = parser._interpreter.version_info  # ruff:ignore[private-member-access]  # ty: ignore[invalid-assignment, missing-union-attribute]
     creator, seeder, activators = tuple(
         # options is set by parse_args above, ty still sees the optional type
         e.create(options)  # ty: ignore[invalid-argument-type]
@@ -70,9 +70,9 @@ def session_via_cli(
     )  # create types
     return Session(
         # options is set by parse_args above, ty still sees the optional type
-        options.verbosity,  # ty: ignore[unresolved-attribute, invalid-argument-type]
+        options.verbosity,  # ty: ignore[missing-union-attribute, invalid-argument-type]
         # options is set by parse_args above, ty still sees the optional type
-        options.app_data,  # ty: ignore[unresolved-attribute]
+        options.app_data,  # ty: ignore[missing-union-attribute]
         # the parser carries the discovered interpreter to the session, which ty cannot see
         parser._interpreter,  # ruff:ignore[private-member-access]  # ty: ignore[invalid-argument-type]
         # the builders are untyped, so their create results are object to ty

@@ -31,7 +31,7 @@ class _CountedFileLock(FileLock):
         self.thread_safe = RLock()
 
     # filelock's acquire takes poll_interval as float | None and more keyword arguments, this override narrows them
-    def acquire(  # ty: ignore[invalid-method-override]
+    def acquire(  # ty: ignore[incompatible-method-override]
         self,
         timeout: float | None = None,
         poll_interval: float = 0.05,

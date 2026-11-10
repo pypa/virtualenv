@@ -102,7 +102,7 @@ class ViaGlobalRefApi(Creator, ABC):
         meta: ViaGlobalRefMeta,
         app_data: AppData,
         # narrows meta to ViaGlobalRefMeta, which the base hook types as CreatorMeta
-    ) -> None:  # ty: ignore[invalid-method-override]
+    ) -> None:  # ty: ignore[incompatible-method-override]
         """Add the ``--system-site-packages``, ``--symlinks`` and ``--copies`` options.
 
         The copy and symlink options are only added when the matching method is supported.

@@ -70,7 +70,7 @@ class CreatorSelector(ComponentBuilder):
                 msg = "builtin creator is a reserved name"
                 raise RuntimeError(msg)
             # plugin classes come from entry points, which ty sees as type
-            meta = creator_class.can_create(interpreter)  # ty: ignore[unresolved-attribute]
+            meta = creator_class.can_create(interpreter)  # ty: ignore[missing-attribute]
             if meta:
                 if meta.error:
                     errors[meta.error].append(creator_class)
@@ -146,7 +146,7 @@ class CreatorSelector(ComponentBuilder):
         self.parser.description = f"options for {self.name} {selected}"
         assert self._impl_class is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
         # plugin classes come from entry points, which ty sees as type
-        self._impl_class.add_parser_arguments(self.parser, self.interpreter, self.key_to_meta[selected], app_data)  # ty: ignore[unresolved-attribute]
+        self._impl_class.add_parser_arguments(self.parser, self.interpreter, self.key_to_meta[selected], app_data)  # ty: ignore[missing-attribute]
 
     def create(self, options: VirtualEnvOptions) -> Creator:
         """Create the creator the options select, checking that a clear is not aimed at a symlink.

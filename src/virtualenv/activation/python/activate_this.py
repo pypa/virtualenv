@@ -45,9 +45,9 @@ prev_length = len(sys.path)  # simplint: ignore[SMP102, SMP404, SMP601, SMP903] 
 for lib in __LIB_FOLDERS__.split(os.pathsep):  # ty: ignore[unresolved-reference]
     path = os.path.realpath(os.path.join(bin_dir, lib))  # simplint: ignore[SMP102, SMP404]  # exec'd scripts expose these names  # fmt: skip
     # __DECODE_PATH__ is filled in as an empty string, so the decode branch never runs
-    site.addsitedir(path.decode("utf-8") if __DECODE_PATH__ else path)  # ty: ignore[unresolved-reference,unresolved-attribute]
+    site.addsitedir(path.decode("utf-8") if __DECODE_PATH__ else path)  # ty: ignore[unresolved-reference,missing-attribute]
 sys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]
 
 # sys.real_prefix is a legacy attribute that older tools read
-sys.real_prefix = sys.prefix  # ty: ignore[unresolved-attribute]
+sys.real_prefix = sys.prefix  # ty: ignore[missing-attribute]
 sys.prefix = base
