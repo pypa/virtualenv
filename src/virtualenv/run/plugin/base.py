@@ -31,10 +31,10 @@ class PluginLoader:
         """
         if sys.version_info >= (3, 10):
             # ty on Python 3.10 and 3.15 types entry_points() as object, which has no select
-            selected = list(cls.entry_points().select(group=key))  # ty: ignore[unresolved-attribute]
+            selected = list(cls.entry_points().select(group=key))  # ty: ignore[missing-attribute]
         else:
             # ty on Python 3.9 types entry_points() as object, which has no get
-            selected = list(cls.entry_points().get(key, []))  # ty: ignore[unresolved-attribute]
+            selected = list(cls.entry_points().get(key, []))  # ty: ignore[missing-attribute]
         # Third-party packages may register entry points with the same name as virtualenv's
         # built-ins (e.g. xonsh's own `virtualenv.activate.xonsh`). Sort so built-ins are
         # inserted last into the OrderedDict, making them win on name collision.
@@ -135,7 +135,7 @@ class ComponentBuilder(PluginLoader):
         self.parser.description = f"options for {self.name} {selected}"
         assert self._impl_class is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
         # plugin classes come from entry points, which ty sees as type
-        self._impl_class.add_parser_arguments(self.parser, self.interpreter, app_data)  # ty: ignore[unresolved-attribute]
+        self._impl_class.add_parser_arguments(self.parser, self.interpreter, app_data)  # ty: ignore[missing-attribute]
 
     def create(
         self, options: VirtualEnvOptions

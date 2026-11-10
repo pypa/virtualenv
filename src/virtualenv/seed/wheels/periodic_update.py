@@ -211,11 +211,11 @@ def add_wheel_to_update_log(wheel: Wheel, for_py_version: str, app_data: AppData
     """
     embed_update_log = app_data.embed_update_log(wheel.distribution, for_py_version)
     # the disk store has a file attribute that ContentStore does not declare
-    LOGGER.debug("adding %s information to %s", wheel.name, embed_update_log.file)  # ty: ignore[unresolved-attribute]
+    LOGGER.debug("adding %s information to %s", wheel.name, embed_update_log.file)  # ty: ignore[missing-attribute]
     u_log = UpdateLog.from_app_data(app_data, wheel.distribution, for_py_version)
     if any(version.filename == wheel.name for version in u_log.versions):
         # the disk store has a file attribute that ContentStore does not declare
-        LOGGER.warning("%s already present in %s", wheel.name, embed_update_log.file)  # ty: ignore[unresolved-attribute]
+        LOGGER.warning("%s already present in %s", wheel.name, embed_update_log.file)  # ty: ignore[missing-attribute]
         return
     # we don't need a release date for sources other than "periodic"
     version = NewVersion(wheel.name, datetime.now(tz=timezone.utc), None, "download")
@@ -569,7 +569,7 @@ def _run_manual_upgrade(app_data: AppData, distribution: str, for_py_version: st
         distribution=distribution,
         for_py_version=for_py_version,
         # the bundled wheel exists for every distribution a manual upgrade runs on
-        embed_filename=current.path,  # ty: ignore[invalid-argument-type, unresolved-attribute]
+        embed_filename=current.path,  # ty: ignore[invalid-argument-type, missing-union-attribute]
         app_data=app_data,
         search_dirs=[],
         periodic=False,

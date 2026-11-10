@@ -106,7 +106,7 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
     def reload_code(self) -> str:
         """Source of the ``reload_code`` snippet, which turns off the framework site package behavior."""
         # reload_code is defined on a base that ty does not resolve through this super()
-        result = super().reload_code  # ty: ignore[unresolved-attribute]
+        result = super().reload_code  # ty: ignore[missing-attribute]
         return dedent(
             f"""
         # the bundled site.py always adds the global site package if we're on python framework build, escape this
@@ -138,7 +138,7 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
 
     @classmethod
     # yields PathRef, which the base's Generator[ExePathRefToDest] does not allow
-    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
+    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[incompatible-method-override]
         """Yield the framework executables, plus a symlink to the host framework image.
 
         :param interpreter: the host interpreter to take the files from
