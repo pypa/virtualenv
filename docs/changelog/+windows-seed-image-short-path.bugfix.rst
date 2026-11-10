@@ -1,3 +1,4 @@
-Switch the seed wheel image to its Windows short name whenever its files would pass the path length limits, counting the
-separator and the shorter limit on directories, and read an image reused from an earlier run through that short name too,
-so a deep ``--app-data`` folder no longer fails with ``WinError 206`` on the first run or on every run after it.
+Count the path separator and the 248 character limit on directories when deciding whether a seed wheel image needs its
+Windows short path, and read the image through that short path on every run rather than only while building it. Without
+long path support, a deep ``--app-data`` folder failed with ``WinError 206``, or with ``WinError 3`` from the second run
+on.

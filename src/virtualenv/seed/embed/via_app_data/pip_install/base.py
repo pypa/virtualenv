@@ -186,7 +186,8 @@ class PipInstall(ABC):
             except BaseException:
                 safe_delete(folder)
                 raise
-        self._image_dir = built
+            # built ends in two long names again, so the files may only fit under the short path of the image itself
+            self._image_dir = self._short_path_if_needed(zip_ref, built)
 
     @staticmethod
     def _short_path_if_needed(zip_ref: zipfile.ZipFile, folder: Path) -> Path:
@@ -248,8 +249,8 @@ class PipInstall(ABC):
     def has_image(self) -> bool:
         """Whether the cached image of the wheel exists and holds files.
 
-        On Windows an image that is found switches to its short path when its files do not fit under the long one, the
-        same way its build does, so the install can read it.
+        On Windows an image that is found is switched to its short path when its files do not fit under the long one, as
+        a build does, so the install can read them.
 
         :returns: ``True`` when the image has content
 

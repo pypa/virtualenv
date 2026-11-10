@@ -682,19 +682,26 @@ def test_seed_image_short_path_limits(tmp_path: Path, mocker: MockerFixture, ent
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows path limits")
-def test_seed_image_reused_through_short_path(tmp_path: Path, mocker: MockerFixture) -> None:
-    cache: Final = tmp_path / "cache"
-    args: Final = [str(tmp_path / "env"), "--app-data", str(cache), "--no-periodic-update", "--no-setuptools"]
-    mocker.patch("virtualenv.seed.embed.via_app_data.pip_install.base._MAX_PATH", 0)
-    short: Final = mocker.patch("virtualenv.util.path.get_short_path_name", side_effect=lambda name: name)
-    session: Final = cli_run(args, setup_logging=False)
-    short.reset_mock()
-    cli_run(args, setup_logging=False)
-    version: Final = session.interpreter.version_release_str
-    image: Final = (
-        cache / "wheel" / version / "image" / "1" / "CopyPipInstall" / Path(BUNDLE_SUPPORT[version]["pip"]).stem
+def test_seed_image_read_through_short_path(tmp_path: Path, mocker: MockerFixture, no_seed_session: Session) -> None:
+    wheel: Final = BUNDLE_FOLDER / BUNDLE_SUPPORT[no_seed_session.interpreter.version_release_str]["pip"]
+    image: Final = tmp_path / "image" / "CopyPipInstall" / wheel.stem
+    # an upper case name stands in for the short one, Windows opens the same directory through either
+    mocker.patch(
+        "virtualenv.seed.embed.via_app_data.pip_install.base.PipInstall._short_path_if_needed",
+        side_effect=lambda _zip_ref, folder: folder.with_name(folder.name.upper()),
     )
-    assert short.call_args_list == [mocker.call(str(image))]
+    synced: Final = mocker.spy(CopyPipInstall, "_sync")
+    built: Final = CopyPipInstall(wheel, no_seed_session.creator, image)
+    built.build_image()
+    built.install(no_seed_session.interpreter.version_info)
+    read_after_build: Final = {str(call.args[1].parent) for call in synced.call_args_list}
+    synced.reset_mock()
+    reused: Final = CopyPipInstall(wheel, no_seed_session.creator, image)
+    found: Final = reused.has_image()
+    reused.install(no_seed_session.interpreter.version_info)
+    read_on_reuse: Final = {str(call.args[1].parent) for call in synced.call_args_list}
+    short: Final = str(image.with_name(image.name.upper()))
+    assert (read_after_build, found, read_on_reuse) == ({short}, True, {short})
 
 
 @pytest.mark.parametrize(
