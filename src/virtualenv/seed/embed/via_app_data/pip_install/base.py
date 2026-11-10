@@ -281,7 +281,7 @@ class ScriptMakerCustom(ScriptMaker):
         self.set_mode = True  # ensure they are executable
         self.executable = enquote_executable(str(executable))
         # callers pass a VersionInfo with .major and .minor, the parameter is typed as tuple
-        self.version_info = version_info.major, version_info.minor  # ty: ignore[unresolved-attribute]
+        self.version_info = version_info.major, version_info.minor  # ty: ignore[missing-attribute]
         self.variants = {"", "X", "X.Y"}
         self._name = name
         self._raw_executable = str(executable)

@@ -17,7 +17,7 @@ def get_short_path_name(long_name: str) -> str:
 
     """
     # ctypes.windll exists only on Windows, which is the only platform this runs on
-    GetShortPathNameW = ctypes.windll.kernel32.GetShortPathNameW  # ruff:ignore[non-lowercase-variable-in-function]  # ty: ignore[unresolved-attribute]
+    GetShortPathNameW = ctypes.windll.kernel32.GetShortPathNameW  # ruff:ignore[non-lowercase-variable-in-function]  # ty: ignore[missing-attribute]
     GetShortPathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
     GetShortPathNameW.restype = wintypes.DWORD
     output_buf_size = 0
