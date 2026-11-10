@@ -48,7 +48,7 @@ class CPython3Posix(CPythonPosix, CPython3):
 
     @classmethod
     # yields PathRef, which the base's Generator[ExePathRefToDest] does not allow
-    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
+    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[incompatible-method-override]
         """Yield the POSIX executables, plus the shared library when the interpreter links one.
 
         :param interpreter: the host interpreter to take the files from
@@ -96,7 +96,7 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     # returns an optional meta, which the base setup_meta does not allow
-    def setup_meta(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta | None:  # ty: ignore[invalid-method-override]
+    def setup_meta(cls, interpreter: PythonInfo) -> BuiltinViaGlobalRefMeta | None:  # ty: ignore[incompatible-method-override]
         """Return the metadata for CPython 3 on Windows, or ``None`` for Windows Store builds.
 
         :param interpreter: the host interpreter
@@ -110,7 +110,7 @@ class CPython3Windows(CPythonWindows, CPython3):
 
     @classmethod
     # yields PathRef, which the base's Generator[ExePathRefToDest] does not allow
-    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[invalid-method-override]
+    def sources(cls, interpreter: PythonInfo) -> Generator[PathRef]:  # ty: ignore[incompatible-method-override]
         """Yield the executables, plus the DLL, ``pyd`` and zip files unless a launcher shim is used.
 
         :param interpreter: the host interpreter to take the files from

@@ -60,7 +60,7 @@ class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
 
     @classmethod
     # yields PathRefToDest, which the base's Generator[ExePathRefToDest] does not allow
-    def sources(cls, interpreter: PythonInfo) -> Generator[PathRefToDest]:  # ty: ignore[invalid-method-override]
+    def sources(cls, interpreter: PythonInfo) -> Generator[PathRefToDest]:  # ty: ignore[incompatible-method-override]
         """Yield the host executable, then the native library and JVM folders next to it.
 
         :param interpreter: the host interpreter to take the files from

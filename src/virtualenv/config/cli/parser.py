@@ -115,7 +115,7 @@ class VirtualEnvConfigParser(ArgumentParser):
         return None
 
     # narrows the base parse_known_args to VirtualEnvOptions, which ty flags as an override
-    def parse_known_args(  # ty: ignore[invalid-method-override]
+    def parse_known_args(  # ty: ignore[incompatible-method-override]
         self, args: Sequence[str] | None = None, namespace: VirtualEnvOptions | None = None
     ) -> tuple[VirtualEnvOptions, list[str]]:
         """Parse the arguments, filling the options with values from the config file and the environment.

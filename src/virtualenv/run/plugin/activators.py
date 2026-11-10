@@ -35,7 +35,7 @@ class ActivationSelector(ComponentBuilder):
             (k, v)
             for k, v in self.options("virtualenv.activate").items()
             # plugin classes come from entry points, which ty sees as type
-            if v.supports(interpreter)  # ty: ignore[unresolved-attribute]
+            if v.supports(interpreter)  # ty: ignore[missing-attribute]
         )
         super().__init__(interpreter, parser, "activators", possible)
         self.parser.description = "options for activation scripts"
@@ -66,7 +66,7 @@ class ActivationSelector(ComponentBuilder):
         return elements
 
     # returns None, while the base hook returns the selected name as str
-    def handle_selected_arg_parse(self, options: VirtualEnvOptions) -> None:  # ty: ignore[invalid-method-override]
+    def handle_selected_arg_parse(self, options: VirtualEnvOptions) -> None:  # ty: ignore[incompatible-method-override]
         """Store the activators the options select, falling back to the defaults.
 
         :param options: the parsed options
@@ -88,7 +88,7 @@ class ActivationSelector(ComponentBuilder):
         )
         for activator in self.active.values():
             # plugin classes come from entry points, which ty sees as type
-            activator.add_parser_arguments(self.parser, self.interpreter)  # ty: ignore[unresolved-attribute]
+            activator.add_parser_arguments(self.parser, self.interpreter)  # ty: ignore[missing-union-attribute]
 
     def create(self, options: VirtualEnvOptions) -> list[Activator]:
         """Create the activators the options select.
