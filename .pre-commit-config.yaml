@@ -37,7 +37,7 @@ repos:
       - id: pyproject-fmt
         priority: 3
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "f368fb366ff7f2f808dd324b83a6d32267799e19" # frozen: v0.17.2
+    rev: "25bcf95026b96e2dd3c0aec3090c3d6ef6ca2e6c" # frozen: v0.17.3
     hooks:
       - id: ruff-check
         priority: 5
@@ -48,7 +48,7 @@ repos:
       - id: simplint
         priority: 6
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "f368fb366ff7f2f808dd324b83a6d32267799e19" # frozen: v0.17.2
+    rev: "25bcf95026b96e2dd3c0aec3090c3d6ef6ca2e6c" # frozen: v0.17.3
     hooks:
       - id: ruff-format
         priority: 7
@@ -74,12 +74,12 @@ repos:
         args: ["-l", "120", "--preserve-adornments"]
         additional_dependencies: ["sphinx==9.2.0"]
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: c92afdf2c6ca336aaa8f39e2bd8d48f62dbd8e1f # frozen: v1.31.1
+    rev: 06a39750ec31860bb44f2acf67182c40016cd1e7 # frozen: v1.32.0
     hooks:
       - id: zizmor
         priority: 8
   - repo: https://github.com/crate-ci/typos
-    rev: 7f9d0819ca1c008ade73f4b41fa9d258d48f605b # frozen: v1.51.1
+    rev: 4c8b7f51ca60df14e3c5ca82770dfbbe6c3dae85 # frozen: v1.52.0
     hooks:
       - id: typos
         priority: 8
@@ -87,7 +87,7 @@ repos:
           (?x)
           ^pylock[.]toml$  # Generated package names are not project prose.
   - repo: https://github.com/semgrep/pre-commit
-    rev: dfdeebdd309a043859ba33a555839911e7b11801 # frozen: v1.182.1
+    rev: a19f9deb8c211c43e469e994fa8ee15178bc1b1d # frozen: v1.183.0
     hooks:
       - id: semgrep
         priority: 8
