@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import runpy
+import time
 from email.message import Message
 from pathlib import Path
 from typing import TYPE_CHECKING, Final
@@ -26,8 +27,9 @@ def _http_error(code: int) -> HTTPError:
 def fetch(mocker: MockerFixture) -> Callable[[list[Exception | io.BytesIO]], bytes]:
     def invoke(responses: list[Exception | io.BytesIO]) -> bytes:
         mocker.patch("urllib.request.urlopen", autospec=True, side_effect=responses)
-        mocker.patch("time.sleep", autospec=True)
-        return runpy.run_path(str(Path(__file__).parents[2] / "tasks" / "fetch_url.py"))["fetch"](_URL)
+        fetch_function = runpy.run_path(str(Path(__file__).parents[2] / "tasks" / "fetch_url.py"))["fetch"]
+        mocker.patch.dict(fetch_function.__globals__, {"time": mocker.create_autospec(time)})
+        return fetch_function(_URL)
 
     return invoke
 
