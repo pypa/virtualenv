@@ -265,7 +265,7 @@ def render_notices() -> None:
         directory, including the licenses of anything it in turn vendors.
 
         """)
-    _NOTICES_DEST.write_text(header + "\n".join(sections), encoding="utf-8")
+    write_file(_NOTICES_DEST, (header + "\n".join(sections)).encode("utf-8"))
     if (pre_commit := shutil.which("pre-commit")) is None:
         msg = "pre-commit must be installed to format THIRD-PARTY-NOTICES.md"
         raise RuntimeError(msg)
