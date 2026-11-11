@@ -207,6 +207,21 @@ def test_generator_updates_license(
     assert "Copyright Changed" in (generator_repo / "THIRD-PARTY-NOTICES.md").read_text(encoding="utf-8")
 
 
+def test_generator_replaces_notices_link(
+    generator_repo: Path, regenerate: Callable[[], subprocess.CompletedProcess[str]]
+) -> None:
+    target = generator_repo / "outside"
+    target.write_text("untouched", encoding="utf-8")
+    notices = generator_repo / "THIRD-PARTY-NOTICES.md"
+    notices.symlink_to(target)
+
+    regenerate()
+
+    assert not notices.is_symlink()
+    assert "Copyright Example" in notices.read_text(encoding="utf-8")
+    assert target.read_text(encoding="utf-8") == "untouched"
+
+
 def test_generator_formatter_failure(
     generator_repo: Path, regenerate: Callable[[], subprocess.CompletedProcess[str]]
 ) -> None:
