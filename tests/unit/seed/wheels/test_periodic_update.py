@@ -462,7 +462,7 @@ def test_periodic_update_trigger(
         app_data.embed_update_log("setuptools", for_py_version).read(),
     ) == (None, UpdateLog(_UP_NOW, u_log.completed, [], True).to_dict())
     assert popen.call_count == 1
-    assert popen.call_args.kwargs == {True: _INLINE_KWARGS, False: _DETACHED_KWARGS}[inline]
+    assert popen.call_args.kwargs == {True: _INLINE_KWARGS, False: _DETACHED_KWARGS}[inline] | {"env": env}
     assert process.communicate.call_count == int(inline)
 
 
@@ -479,13 +479,14 @@ def test_trigger_update_command(
     )
     # Python 3.11 rebuilds autospecced children after applying constructor kwargs.
     process.configure_mock(**{"return_value.pid": 123, "return_value.communicate.return_value": (None, None)})
+    env: Final = {"_VIRTUALENV_PERIODIC_UPDATE_INLINE": {True: "1", False: "0"}[debug]}
     trigger_update(
         "pip",
         for_py_version,
         current,
         [Path("a"), Path("b")],
         session_app_data,
-        {"_VIRTUALENV_PERIODIC_UPDATE_INLINE": {True: "1", False: "0"}[debug]},
+        env,
         True,
     )
     update: Final = dedent(
@@ -512,7 +513,7 @@ def test_trigger_update_command(
     load: Final = loads[zipapp]
     command: Final = f"import sys\nsys.path = [p for p in sys.path if p]\n{load.strip()}"
     process.assert_called_once_with(
-        [sys.executable, "-c", command], **{True: _INLINE_KWARGS, False: _DETACHED_KWARGS}[debug]
+        [sys.executable, "-c", command], env=env, **{True: _INLINE_KWARGS, False: _DETACHED_KWARGS}[debug]
     )
     assert process.return_value.communicate.call_count == int(debug)
 
@@ -996,7 +997,7 @@ def test_download_periodic_stop_at_first_usable_with_previous_minor(tmp_path, mo
     ]
 
 
-def test_update_uses_selected_installation(
+def test_update_uses_selected_installation_and_environment(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capfd: pytest.CaptureFixture[str]
 ) -> None:
     root: Final = tmp_path / "vendored"
@@ -1005,16 +1006,23 @@ def test_update_uses_selected_installation(
     version: Final = package / "version.py"
     version.write_text('__version__ = "99.0.0"\n', encoding="utf-8")
     entry: Final = package / "__init__.py"
-    entry.write_text(f"{entry.read_text(encoding='utf-8')}\nprint(__version__)\n", encoding="utf-8")
+    entry.write_text(
+        f"{entry.read_text(encoding='utf-8')}\nprint(__version__)\n"
+        "print(__import__('os').environ['VIRTUALENV_ENV_PROBE'])\n",
+        encoding="utf-8",
+    )
     monkeypatch.setattr("virtualenv.seed.wheels.periodic_update.ROOT", str(root))
     monkeypatch.setenv("PIP_NO_INDEX", "1")
+    monkeypatch.setenv("VIRTUALENV_ENV_PROBE", "parent")
     trigger_update(
         "pip",
         f"{sys.version_info.major}.{sys.version_info.minor}",
         None,
         [],
         AppDataDiskFolder(str(tmp_path / "data")),
-        {"_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1"},
+        {**os.environ, "_VIRTUALENV_PERIODIC_UPDATE_INLINE": "1", "VIRTUALENV_ENV_PROBE": "supplied"},
         True,
     )
-    assert "99.0.0" in capfd.readouterr().out
+    output = capfd.readouterr().out.splitlines()
+    assert "99.0.0" in output
+    assert "supplied" in output

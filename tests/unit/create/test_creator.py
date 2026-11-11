@@ -1498,3 +1498,19 @@ def test_venv_subprocess_respects_pythonhome(tmp_path: Path, monkeypatch: pytest
     monkeypatch.setenv("PYTHONHOME", str(tmp_path / "missing-home"))
     with pytest.raises(ProcessCallFailedError):
         session.run()
+
+
+@pytest.mark.skipif(not _CURRENT.has_venv, reason="requires interpreter with venv")
+@pytest.mark.skipif(_CURRENT.implementation != "CPython", reason="only CPython rejects an invalid PYTHONHOME")
+@pytest.mark.skipif(
+    sys.prefix == sys.base_prefix, reason="run from a virtual environment to use the subprocess creator"
+)
+def test_venv_subprocess_uses_explicit_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    env = os.environ.copy()
+    env.pop("PYTHONHOME", None)
+    monkeypatch.setenv("PYTHONHOME", str(tmp_path / "missing-home"))
+    session = cli_run(
+        ["-p", str(_CURRENT.executable), str(tmp_path / "env"), "--no-seed", "--creator", "venv", "--activators="],
+        env=env,
+    )
+    assert (session.creator.dest / "pyvenv.cfg").is_file()

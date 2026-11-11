@@ -111,7 +111,7 @@ class Venv(ViaGlobalRefApi):
         """
         cmd = self.get_host_create_cmd()
         LOGGER.info("using host built-in venv to create via %s", " ".join(cmd))
-        code, out, err = run_cmd(cmd)
+        code, out, err = run_cmd(cmd, env=self.env)
         if code != 0:
             raise ProcessCallFailedError(code, out, err, cmd)
 
