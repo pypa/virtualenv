@@ -442,7 +442,7 @@ Disable automatic periodic updates of seed packages:
 For distribution maintainers
 ============================
 
-Patch the ``virtualenv.seed.wheels.embed`` module and set ``PERIODIC_UPDATE_ON_BY_DEFAULT`` to ``False`` to disable
+Patch the ``virtualenv.seed.embed.base_embed`` module and set ``PERIODIC_UPDATE_ON_BY_DEFAULT`` to ``False`` to disable
 periodic updates by default. See :doc:`../explanation` for implementation details.
 
 *******************************************
