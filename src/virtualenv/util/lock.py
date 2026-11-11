@@ -58,7 +58,7 @@ class _CountedFileLock(FileLock):
                     self.thread_safe.release()
 
 
-_LOCK_STORE = {}  # simplint: ignore[SMP601]  # ty infers a different value type on Python 3.9 when annotated
+_LOCK_STORE = {}  # simplint: ignore[missing-final]  # ty infers a different value type on Python 3.9 when annotated
 _STORE_LOCK: Final[Lock] = Lock()
 
 

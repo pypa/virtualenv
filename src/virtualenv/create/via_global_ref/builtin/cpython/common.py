@@ -1,4 +1,4 @@
-from __future__ import annotations  # simplint: ignore[SMP104]  # imported by path across the cpython modules
+from __future__ import annotations  # simplint: ignore[catch-all-module]  # imported by path across the cpython modules
 
 import re
 from abc import ABC

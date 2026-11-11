@@ -41,7 +41,7 @@ DEBUG_SCRIPT: Final[Path] = HERE / "debug.py"
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
-_DebugInfo = dict[str, Any]  # simplint: ignore[SMP602]  # debug JSON keys vary by interpreter
+_DebugInfo = dict[str, Any]
 
 
 class CreatorMeta:

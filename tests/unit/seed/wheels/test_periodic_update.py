@@ -49,8 +49,7 @@ if TYPE_CHECKING:
 
 @pytest.fixture(autouse=True)
 def _clear_pypi_info_cache() -> Generator[None, None, None]:
-    # the fixture clears the private cache, so it imports the cache where it clears it
-    from virtualenv.seed.wheels.periodic_update import _PYPI_CACHE  # ruff:ignore[import-outside-top-level]
+    from virtualenv.seed.wheels.periodic_update import _PYPI_CACHE  # ruff:ignore[import-outside-top-level, import-private-name]  # simplint: ignore[private-import-path]  # test cache  # fmt: skip
 
     _PYPI_CACHE.clear()
     yield

@@ -32,8 +32,7 @@ def setup_report(verbosity: int, show_pid: bool = False) -> int:  # ruff:ignore[
     """
     for log_handler in list(LOGGER.handlers):  # remove handlers of libraries
         LOGGER.removeHandler(log_handler)
-    # reached only with more -v flags than MAX_LEVEL, which tests do not pass
-    verbosity = min(verbosity, MAX_LEVEL)  # pragma: no cover
+    verbosity = min(verbosity, MAX_LEVEL)
     level = LEVELS[verbosity]
     msg_format = "%(message)s"
     if level <= logging.DEBUG:

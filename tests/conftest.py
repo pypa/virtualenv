@@ -89,7 +89,7 @@ def link_folder(has_symlink_support):
         return os.symlink
     if sys.platform == "win32":
         # on Windows junctions may be used instead
-        import _winapi  # ruff:ignore[import-outside-top-level]
+        import _winapi  # ruff:ignore[import-outside-top-level, import-private-name]  # simplint: ignore[private-import-path]  # junction API  # fmt: skip
 
         return getattr(_winapi, "CreateJunction", None)
     return None

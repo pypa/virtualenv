@@ -37,9 +37,7 @@ def _cache_dir_with_migration() -> str:
     return new_dir
 
 
-def _is_nested_dir(  # simplint: ignore[SMP505]  # commonpath raises ValueError across drives, helper keeps it
-    inner: str, outer: str
-) -> bool:
+def _is_nested_dir(inner: str, outer: str) -> bool:
     try:
         return os.path.normcase(os.path.commonpath((outer, inner))) == os.path.normcase(outer)
     except ValueError:

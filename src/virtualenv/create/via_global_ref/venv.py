@@ -43,7 +43,9 @@ class Venv(ViaGlobalRefApi):
         self.can_be_inline = interpreter is current and interpreter.executable == interpreter.system_executable
         self._context = None
 
-    def __getattribute__(self, item: str) -> object:  # simplint: ignore[SMP602]  # proxied attributes differ in type
+    def __getattribute__(
+        self, item: str
+    ) -> object:  # simplint: ignore[imprecise-annotation]  # proxied attributes differ in type
         if (describe := object.__getattribute__(self, "describe")) is not None and hasattr(describe, item):
             element = getattr(describe, item)
             if not callable(element) or item == "script":

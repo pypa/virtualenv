@@ -93,7 +93,7 @@ class ListType(TypeData):
     """Converter for options that take a list of values."""
 
     # flatten is accepted but ignored, removing it would change the converter signature
-    def convert(self, value: str | list[str], flatten: bool = True) -> list[Any]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]  # simplint: ignore[SMP602]  # each item has the type of the option, known only at run time
+    def convert(self, value: str | list[str], flatten: bool = True) -> list[Any]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]  # simplint: ignore[imprecise-annotation]  # runtime option type
         """Convert each item of the list to the type of the option.
 
         :param value: the raw value, a string or a list of strings

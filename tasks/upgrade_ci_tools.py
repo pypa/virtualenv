@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Final
 from urllib.request import Request, urlopen
 
 if TYPE_CHECKING:
-    from _hashlib import HASH
     from typing import NotRequired, TypedDict
 
     class _Pin(TypedDict):
@@ -130,7 +129,7 @@ def _pin_assets(token: str, repository: str, tag: str, patterns: dict[str, str])
 
 
 def _sha256(repository: str, asset_id: int) -> str:
-    digest: Final[HASH] = hashlib.sha256()
+    digest: Final = hashlib.sha256()
     # no token: the API redirects to a signed storage URL, and urllib would forward the Authorization header there
     with urlopen(
         Request(

@@ -225,7 +225,7 @@ def add_wheel_to_update_log(wheel: Wheel, for_py_version: str, app_data: AppData
 
 #: Format of the datetimes stored in the update log.
 DATETIME_FMT: Final[str] = "%Y-%m-%dT%H:%M:%S.%fZ"
-_PyPIJson = dict[str, object]  # simplint: ignore[SMP602]  # PyPI's JSON is parsed as is, its fields are read by name
+_PyPIJson = dict[str, object]
 
 
 def dump_datetime(value: datetime | None) -> str | None:
@@ -382,7 +382,7 @@ class UpdateLog:
     @classmethod
     def from_dict(
         cls,
-        dictionary: dict[str, object] | None,  # simplint: ignore[SMP602]  # stored log is parsed JSON
+        dictionary: dict[str, object] | None,  # simplint: ignore[imprecise-annotation]  # stored log is parsed JSON
     ) -> UpdateLog:
         """Parse the update log from the stored form.
 

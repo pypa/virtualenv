@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 import logging
-import ntpath
 import os
-import posixpath
 import re
 import shlex
 import zipfile
@@ -18,6 +16,8 @@ from typing import TYPE_CHECKING, Final
 from distlib.scripts import ScriptMaker, enquote_executable
 
 from virtualenv.util.path import remove_file, safe_delete
+
+from ._safe_extract_zip import extract_zip as _safe_extract_zip
 
 if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
@@ -315,24 +315,6 @@ def shell_shebang(executable: str, post_interp: bytes = b"") -> bytes:
     """
     quoted: Final = shlex.quote(executable).replace("\\", "'\"\\\\\"'")
     return b"#!/bin/sh\n'''exec' " + quoted.encode("utf-8") + post_interp + b' "$0" "$@"\n' + b"' '''\n"
-
-
-def _safe_extract_zip(zip_ref: zipfile.ZipFile, target_dir: Path) -> None:
-    # Guard against zip slip: a wheel is a zip and a tampered entry name (absolute path or one containing ``..``)
-    # could escape ``target_dir``.
-    base = target_dir.resolve()
-    for info in zip_ref.infolist():
-        name = info.filename
-        if name.startswith(("/", "\\")) or ntpath.isabs(name) or posixpath.isabs(name):
-            msg = f"refusing to extract absolute path entry from wheel: {name!r}"
-            raise RuntimeError(msg)
-        candidate = (base / name).resolve()
-        try:
-            candidate.relative_to(base)
-        except ValueError as exc:
-            msg = f"refusing to extract entry escaping target directory: {name!r}"
-            raise RuntimeError(msg) from exc
-    zip_ref.extractall(str(target_dir))
 
 
 __all__ = [
