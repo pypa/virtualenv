@@ -109,6 +109,19 @@ def test_python_activator_adds_no_empty_path_entry(
     assert literal_eval(out) == f"{activation_python.creator.bin_dir}{expected_suffix}"
 
 
+def test_python_activator_sets_exec_prefix(activation_python: Session) -> None:
+    # sysconfig builds the platlib, platstdlib and platinclude paths from sys.exec_prefix on POSIX, so leaving it at the
+    # base interpreter sends compiled packages that pip installs in the activated process to the system site-packages
+    script = str(activation_python.creator.bin_dir / "activate_this.py")
+    code = (
+        f"import runpy, sys, sysconfig; runpy.run_path({script!r}); "
+        "print(repr((sys.prefix, sys.exec_prefix, sysconfig.get_path('platlib') == sysconfig.get_path('purelib'))))"
+    )
+    out = subprocess.check_output([sys.executable, "-c", code], text=True, encoding="utf-8")
+    dest = str(activation_python.creator.dest)
+    assert literal_eval(out) == (dest, dest, True)
+
+
 def test_python(raise_on_non_source_class, activation_tester) -> None:
     class Python(raise_on_non_source_class):
         def __init__(self, session) -> None:

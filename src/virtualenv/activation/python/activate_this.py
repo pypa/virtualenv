@@ -51,3 +51,6 @@ sys.path[:] = sys.path[prev_length:] + sys.path[0:prev_length]
 # sys.real_prefix is a legacy attribute that older tools read
 sys.real_prefix = sys.prefix  # ty: ignore[missing-attribute]
 sys.prefix = base
+# a venv interpreter has both prefixes at the environment, and on POSIX sysconfig derives the platlib, platstdlib and
+# platinclude paths from sys.exec_prefix, so compiled packages pip installs here would otherwise land in the base Python
+sys.exec_prefix = base
