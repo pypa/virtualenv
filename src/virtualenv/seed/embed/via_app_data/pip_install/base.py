@@ -24,6 +24,11 @@ if TYPE_CHECKING:
 
 #: Logger of this module.
 LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+# https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
+# the path length Windows stops at without long path support, counting the terminating null
+_MAX_PATH: Final[int] = 260
+# a directory has to leave room for an 8.3 file name inside it
+_MAX_DIR_PATH: Final[int] = _MAX_PATH - 12
 
 
 class PipInstall(ABC):
@@ -181,14 +186,18 @@ class PipInstall(ABC):
             except BaseException:
                 safe_delete(folder)
                 raise
-        self._image_dir = built
+            # built ends in two long names again, so the files may only fit under the short path of the image itself
+            self._image_dir = self._short_path_if_needed(zip_ref, built)
 
     @staticmethod
     def _short_path_if_needed(zip_ref: zipfile.ZipFile, folder: Path) -> Path:
         if os.name != "nt":
             return folder
-        # https://docs.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
-        if max(len(i) for i in zip_ref.namelist()) + len(str(folder)) <= 260:  # ruff:ignore[magic-value-comparison]
+        names: Final = zip_ref.namelist()
+        prefix: Final = len(str(folder)) + 1  # the separator before each entry
+        longest_file: Final = prefix + max(len(i) for i in names)
+        longest_dir: Final = prefix + max(len(posixpath.dirname(i)) for i in names)
+        if longest_file < _MAX_PATH and longest_dir < _MAX_DIR_PATH:
             return folder
         # deferred, only the path-length fallback needs the short-path helper
         from virtualenv.util.path import get_short_path_name  # ruff:ignore[import-outside-top-level]
@@ -240,10 +249,18 @@ class PipInstall(ABC):
     def has_image(self) -> bool:
         """Whether the cached image of the wheel exists and holds files.
 
+        On Windows an image that is found is switched to its short path when its files do not fit under the long one, as
+        a build does, so the install can read them.
+
         :returns: ``True`` when the image has content
 
         """
-        return self._image_dir.exists() and any(self._image_dir.iterdir())
+        if not (self._image_dir.exists() and any(self._image_dir.iterdir())):
+            return False
+        if os.name == "nt":
+            with zipfile.ZipFile(str(self._wheel)) as zip_ref:
+                self._image_dir = self._short_path_if_needed(zip_ref, self._image_dir)
+        return True
 
 
 class EntryPointConfig(ConfigParser):

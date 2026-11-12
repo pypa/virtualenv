@@ -743,6 +743,51 @@ def test_safe_extract_zip_rejects_absolute_entry(tmp_path: Path, entry: str) -> 
         _safe_extract_zip(zip_ref, target)
 
 
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows path limits")
+@pytest.mark.parametrize(
+    ("entry", "expected"),
+    [
+        pytest.param("f" * 158, "a" * 97, id="file-fits"),
+        pytest.param("f" * 159, "short", id="file-too-long"),
+        pytest.param(f"{'d' * 146}/x", "a" * 97, id="dir-fits"),
+        pytest.param(f"{'d' * 147}/x", "short", id="dir-too-long"),
+    ],
+)
+def test_seed_image_short_path_limits(tmp_path: Path, mocker: MockerFixture, entry: str, expected: str) -> None:
+    archive: Final = tmp_path / "pkg.whl"
+    _write_zip_with_entry(archive, entry)
+    folder: Final = Path("C:/", "a" * 97)  # 100 characters, plus the separator before the entry
+    mocker.patch("virtualenv.util.path.get_short_path_name", autospec=True, return_value="C:/short")
+    check: Final = CopyPipInstall._short_path_if_needed  # ruff:ignore[private-member-access]  # the limits live here
+    with zipfile.ZipFile(str(archive)) as zip_ref:
+        result: Final = check(zip_ref, folder)
+    assert result == Path("C:/", expected)
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows path limits")
+def test_seed_image_read_through_short_path(tmp_path: Path, mocker: MockerFixture, no_seed_session: Session) -> None:
+    wheel: Final = BUNDLE_FOLDER / BUNDLE_SUPPORT[no_seed_session.interpreter.version_release_str]["pip"]
+    image: Final = tmp_path / "image" / "CopyPipInstall" / wheel.stem
+    # an upper case name stands in for the short one, Windows opens the same directory through either
+    mocker.patch(
+        "virtualenv.seed.embed.via_app_data.pip_install.base.PipInstall._short_path_if_needed",
+        autospec=True,
+        side_effect=lambda _zip_ref, folder: folder.with_name(folder.name.upper()),
+    )
+    synced: Final = mocker.spy(CopyPipInstall, "_sync")
+    built: Final = CopyPipInstall(wheel, no_seed_session.creator, image)
+    built.build_image()
+    built.install(no_seed_session.interpreter.version_info)
+    read_after_build: Final = {str(call.args[1].parent) for call in synced.call_args_list}
+    synced.reset_mock()
+    reused: Final = CopyPipInstall(wheel, no_seed_session.creator, image)
+    found: Final = reused.has_image()
+    reused.install(no_seed_session.interpreter.version_info)
+    read_on_reuse: Final = {str(call.args[1].parent) for call in synced.call_args_list}
+    short: Final = str(image.with_name(image.name.upper()))
+    assert (read_after_build, found, read_on_reuse) == ({short}, True, {short})
+
+
 def _read_windows_launcher(script: Path) -> bytes:
     with zipfile.ZipFile(script) as archive:
         return archive.read("__main__.py")
