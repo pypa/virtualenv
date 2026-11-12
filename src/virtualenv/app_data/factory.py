@@ -6,7 +6,7 @@ from argparse import ArgumentTypeError
 from stat import S_IMODE, S_ISGID, S_IWGRP, S_IWOTH
 from typing import TYPE_CHECKING, Final
 
-from .cache_migration import _cache_dir_with_migration
+from .cache_migration import cache_dir_with_migration
 from .read_only import ReadOnlyAppData
 from .via_disk_folder import AppDataDiskFolder
 from .via_tempdir import TempAppData
@@ -33,7 +33,10 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
     """
     private: Final = folder is None and not env.get("VIRTUALENV_OVERRIDE_APP_DATA", "").strip()
     if folder is None:
-        folder = _default_app_data_dir(env)
+        # A blank override must not resolve to the working directory, which --reset-app-data could delete.
+        folder = env.get("VIRTUALENV_OVERRIDE_APP_DATA", "")
+        if not folder.strip():
+            folder = cache_dir_with_migration()
     elif not folder.strip():
         # an empty value, often an unset shell variable, resolves to the working directory (on Windows so do spaces)
         # and --reset-app-data would delete it
@@ -56,14 +59,6 @@ def make_app_data(folder: str | None, *, read_only: bool, env: Mapping[str, str]
         return AppDataDiskFolder(folder)
     _LOGGER.debug("app data folder %s has no write access", folder)
     return TempAppData()
-
-
-def _default_app_data_dir(env: Mapping[str, str]) -> str:
-    # a blank value counts as unset, as an empty one does for the VIRTUALENV_<OPTION> variables; abspath would turn it
-    # into the working directory (on Windows spaces too), which --reset-app-data then deletes
-    if (folder := env.get("VIRTUALENV_OVERRIDE_APP_DATA", "")).strip():
-        return folder
-    return _cache_dir_with_migration()
 
 
 def _prepare_permissions(folder: str) -> bool:

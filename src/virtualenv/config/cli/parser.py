@@ -95,7 +95,7 @@ class VirtualEnvConfigParser(ArgumentParser):
                 tri_state and outcome[1] == "file" and self.options.get_source(action.dest) == "env var"
             ):
                 action.default, default_source = outcome
-                vars(action)["default_source"] = default_source  # simplint: ignore[SMP604]  # argparse reads it by name
+                vars(action)["default_source"] = default_source  # simplint: ignore[vars-call]  # argparse metadata  # fmt: skip
             elif tri_state and hasattr(self.options, action.dest):
                 return  # a sibling flag sharing this destination already set it
             else:
@@ -104,7 +104,7 @@ class VirtualEnvConfigParser(ArgumentParser):
 
     def _configured_outcome(
         self, names: Iterable[str], as_type: TypeData
-    ) -> tuple[Any, str] | None:  # simplint: ignore[SMP602]  # type known at run time
+    ) -> tuple[Any, str] | None:  # simplint: ignore[imprecise-annotation]  # type known at run time
         for name in names:
             if (outcome := get_env_var(name, as_type, self.env)) is not None:
                 return outcome

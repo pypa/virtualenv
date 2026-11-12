@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.activation.via_template import ViaTemplateActivator
 
@@ -10,6 +10,9 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from virtualenv.create.creator import Creator
+
+
+_ESCAPED_PATTERN: Final[re.Pattern[str]] = re.compile(r"[\\']")
 
 
 class FishActivator(ViaTemplateActivator):
@@ -33,7 +36,7 @@ class FishActivator(ViaTemplateActivator):
 
         """
         # Keep escapes beside ASCII quotes so legacy decoders cannot absorb them into a preceding multibyte character.
-        escaped = re.sub(r"[\\']", lambda match: f"'\\{match.group()}'", string)
+        escaped = _ESCAPED_PATTERN.sub(lambda match: f"'\\{match.group()}'", string)
         return f"'{escaped}'"
 
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:

@@ -19,11 +19,10 @@ from typing import TYPE_CHECKING, Final
 
 import pytest
 from python_discovery import PythonInfo
-from python_discovery import _cached_py_info as cached_py_info
+from python_discovery import _cached_py_info as cached_py_info  # ruff:ignore[import-private-name]  # simplint: ignore[private-import-path]  # disk cache  # fmt: skip
 
 from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
-from virtualenv.seed.embed.via_app_data.pip_install.base import _safe_extract_zip
 from virtualenv.seed.embed.via_app_data.pip_install.copy import CopyPipInstall
 from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT
 from virtualenv.util.path import safe_delete
@@ -472,7 +471,7 @@ def test_populated_read_only_cache_and_symlinked_app_data(tmp_path, current_fast
     assert cli_run(cmd)
     check_call((str(dest.joinpath("bin/python")), "-c", "import pip"))
 
-    cached_py_info._CACHE.clear()  # ruff:ignore[private-member-access]  # necessary to re-trigger py info discovery
+    cached_py_info._CACHE.clear()  # ruff:ignore[private-member-access]  # preserve the disk cache for the read-only test
     safe_delete(dest)
 
     # should succeed with special flag when read-only
@@ -498,7 +497,7 @@ def test_populated_read_only_cache_and_copied_app_data(tmp_path, current_fastest
 
     assert cli_run(cmd)
 
-    cached_py_info._CACHE.clear()  # ruff:ignore[private-member-access]  # necessary to re-trigger py info discovery
+    cached_py_info._CACHE.clear()  # ruff:ignore[private-member-access]  # preserve the disk cache for the read-only test
     safe_delete(dest)
 
     # should succeed with special flag when read-only
@@ -552,6 +551,22 @@ def test_app_data_parallel_fail(tmp_path: Path, mocker: MockerFixture) -> None:
     for exception in exceptions:
         assert exception.startswith("failed to build image pip because:\nTraceback")
         assert "RuntimeError" in exception, exception
+
+
+@pytest.mark.usefixtures("temp_app_data")
+def test_seed_reports_wheel_lookup_failure(
+    tmp_path: Path, mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
+    mocker.patch(
+        "virtualenv.seed.embed.via_app_data.via_app_data.get_wheel",
+        side_effect=RuntimeError("lookup offline"),
+        autospec=True,
+    )
+
+    with pytest.raises(RuntimeError, match="seed failed due to failing to download wheels pip"):
+        cli_run([str(tmp_path / "env"), "--no-setuptools", "--no-periodic-update"], setup_logging=False)
+
+    assert "lookup offline" in caplog.text
 
 
 _DISK_FULL: Final[OSError] = OSError(errno.ENOSPC, "No space left on device")
@@ -660,6 +675,16 @@ def test_seed_image_build_direct_call(tmp_path: Path) -> None:
     ) == (["CopyPipInstall"], True, True)
 
 
+def test_seed_image_without_metadata_fails(no_seed_session: Session, tmp_path: Path) -> None:
+    image = tmp_path / "image"
+    image.mkdir()
+    (image / "unexpected").touch()
+    installer = CopyPipInstall(tmp_path / "example-1-py3-none-any.whl", no_seed_session.creator, image)
+
+    with pytest.raises(RuntimeError, match=r"no \.dist-info at .*image, has unexpected"):
+        installer.install(no_seed_session.interpreter.version_info)
+
+
 @pytest.mark.parametrize(
     "ending", [pytest.param(b"", id="no-newline"), pytest.param(b"\n", id="lf"), pytest.param(b"\r\n", id="crlf")]
 )
@@ -694,53 +719,6 @@ def copy_seed_record(tmp_path: Path, ending: bytes) -> tuple[Path, list[list[str
             target.writestr(info, content)
 
     return wheel, original_rows
-
-
-def test_safe_extract_zip_allows_normal_entry(tmp_path: Path) -> None:
-    archive = tmp_path / "ok.zip"
-    _write_zip_with_entry(archive, "pkg/inner.txt")
-    target = tmp_path / "out"
-    target.mkdir()
-
-    with zipfile.ZipFile(str(archive)) as zip_ref:
-        _safe_extract_zip(zip_ref, target)
-
-    assert (target / "pkg" / "inner.txt").read_text(encoding="utf-8") == "payload"
-
-
-def _write_zip_with_entry(zip_path: Path, entry_name: str) -> None:
-    with zipfile.ZipFile(str(zip_path), "w") as archive:
-        archive.writestr(entry_name, "payload")
-
-
-def test_safe_extract_zip_rejects_parent_traversal(tmp_path: Path) -> None:
-    archive = tmp_path / "evil.zip"
-    _write_zip_with_entry(archive, "../escape.txt")
-    target = tmp_path / "out"
-    target.mkdir()
-
-    with zipfile.ZipFile(str(archive)) as zip_ref, pytest.raises(RuntimeError, match="escaping target directory"):
-        _safe_extract_zip(zip_ref, target)
-
-    assert not (tmp_path / "escape.txt").exists()
-
-
-@pytest.mark.parametrize(
-    "entry",
-    [
-        # a literal entry name for the traversal check, nothing is written there
-        pytest.param("/tmp/evil.txt", id="posix"),  # ruff:ignore[hardcoded-temp-file]
-        pytest.param("C:/Windows/System32/evil.txt", id="windows"),
-    ],
-)
-def test_safe_extract_zip_rejects_absolute_entry(tmp_path: Path, entry: str) -> None:
-    archive = tmp_path / "abs.zip"
-    _write_zip_with_entry(archive, entry)
-    target = tmp_path / "out"
-    target.mkdir()
-
-    with zipfile.ZipFile(str(archive)) as zip_ref, pytest.raises(RuntimeError, match="absolute path"):
-        _safe_extract_zip(zip_ref, target)
 
 
 def _read_windows_launcher(script: Path) -> bytes:

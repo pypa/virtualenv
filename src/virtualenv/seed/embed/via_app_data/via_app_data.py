@@ -32,8 +32,7 @@ if TYPE_CHECKING:
 
     from .pip_install.base import PipInstall
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class FromAppData(BaseEmbed):
@@ -50,9 +49,9 @@ class FromAppData(BaseEmbed):
         # env var and config file values skip the gate on the CLI flag, so apply it here too
         self.symlinks = options.symlink_app_data and self._can_symlink(self.app_data)
         if options.symlink_app_data and self.app_data.transient:
-            LOGGER.debug("copy seed packages because temporary app-data is removed after creation")
+            _LOGGER.debug("copy seed packages because temporary app-data is removed after creation")
         elif options.symlink_app_data and not self.symlinks:
-            LOGGER.debug("copy seed packages because the filesystem does not support symlinks")
+            _LOGGER.debug("copy seed packages because the filesystem does not support symlinks")
 
     @staticmethod
     def _can_symlink(app_data: AppData) -> bool:
@@ -98,7 +97,7 @@ class FromAppData(BaseEmbed):
             exceptions = {}
 
             def _install(name: str, wheel: Wheel) -> None:
-                LOGGER.debug("install %s from wheel %s via %s", name, wheel, installer_class.__name__)
+                _LOGGER.debug("install %s from wheel %s via %s", name, wheel, installer_class.__name__)
                 try:
                     key = Path(installer_class.__name__) / wheel.path.stem
                     wheel_img = self.app_data.wheel_image(creator.interpreter.version_release_str, key)
@@ -147,7 +146,7 @@ class FromAppData(BaseEmbed):
                     if result is not None:
                         break
                 except Exception as exception:
-                    LOGGER.exception("fail")
+                    _LOGGER.exception("fail")
                     failure = exception
             if failure:
                 if isinstance(failure, CalledProcessError):
@@ -160,7 +159,7 @@ class FromAppData(BaseEmbed):
                         msg += output
                 else:
                     msg = repr(failure)
-                LOGGER.error(msg)
+                _LOGGER.error(msg)
                 with lock:
                     fail[distribution] = version
             else:
@@ -200,6 +199,5 @@ def _build_wheel_image(parent: PathLockBase, name: str, installer: PipInstall) -
 
 
 __all__ = [
-    "LOGGER",
     "FromAppData",
 ]

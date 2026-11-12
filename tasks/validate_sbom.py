@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 # python-sbom archive --embed writes it at the archive root, next to the zipapp's __main__.py
 _ZIPAPP_SBOM: Final[str] = "virtualenv.pyz.cdx.json"
-_Component = dict[str, Any]  # simplint: ignore[SMP602]  # CycloneDX components are free-form JSON
+_Component = dict[str, Any]
 
 
 def main() -> None:

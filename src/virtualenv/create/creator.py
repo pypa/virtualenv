@@ -37,11 +37,10 @@ from .pyenv_cfg import PyEnvCfg
 HERE: Final[Path] = Path(os.path.abspath(__file__)).parent
 #: Script that reports debug information from an interpreter.
 DEBUG_SCRIPT: Final[Path] = HERE / "debug.py"
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
-_DebugInfo = dict[str, Any]  # simplint: ignore[SMP602]  # debug JSON keys vary by interpreter
+_DebugInfo = dict[str, Any]
 
 
 class CreatorMeta:
@@ -331,7 +330,7 @@ class Creator(ABC):
 
         """
         if self.dest.exists() and self.clear:
-            LOGGER.debug("delete %s", self.dest)
+            _LOGGER.debug("delete %s", self.dest)
             safe_delete(self.dest)
         self.create()
         self.add_cachedir_tag()
@@ -398,13 +397,13 @@ class Creator(ABC):
         ):  # unset: claim the default only for a project folder that has none yet
             return
         if redirect.is_symlink() or redirect.is_dir():
-            LOGGER.debug("%s keeps being the default environment", redirect)
+            _LOGGER.debug("%s keeps being the default environment", redirect)
             return
         if redirect.exists() and not self._points_at_virtualenv(redirect):
-            LOGGER.debug("%s points at an environment virtualenv did not create, leaving it", redirect)
+            _LOGGER.debug("%s points at an environment virtualenv did not create, leaving it", redirect)
             return
         if collapse_line_boundaries(self.dest.name) != self.dest.name or self.dest.name != self.dest.name.strip():
-            LOGGER.warning(
+            _LOGGER.warning(
                 "could not point %s at %s - the name contains a line boundary or surrounding whitespace",
                 redirect,
                 self.dest,
@@ -413,7 +412,7 @@ class Creator(ABC):
         try:
             write_file(redirect, f"{self.dest.name}\n".encode())
         except OSError as exc:
-            LOGGER.warning("could not point %s at %s - %s", redirect, self.dest, exc)
+            _LOGGER.warning("could not point %s at %s - %s", redirect, self.dest, exc)
 
     @staticmethod
     def _points_at_virtualenv(redirect: Path) -> bool:
@@ -443,7 +442,7 @@ def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env
 
     with app_data.ensure_extracted(debug_script) as debug_script_extracted:
         cmd = [str(env_exe), str(debug_script_extracted)]
-        LOGGER.debug("debug via %r", LogCmd(cmd))
+        _LOGGER.debug("debug via %r", LogCmd(cmd))
         code, out, err = run_cmd(cmd, env)
 
     try:
@@ -476,7 +475,6 @@ def _parse_debug_output(code: int, out: str, err: str) -> _DebugInfo:
 __all__ = [
     "DEBUG_SCRIPT",
     "HERE",
-    "LOGGER",
     "Creator",
     "CreatorMeta",
     "get_env_debug_info",

@@ -162,9 +162,9 @@ class CreatorSelector(ComponentBuilder):
         assert self._impl_class is not None  # ruff:ignore[assert]  # Set by handle_selected_arg_parse
         if not issubclass(self._impl_class, Describe):
             # describe is set by for_interpreter, which ty sees as possibly None
-            options.describe = self.describe(options, self.interpreter)  # ty: ignore[call-non-callable, invalid-argument-type]
+            options.describe = self.describe(options, self.interpreter)  # ty: ignore[not-callable, invalid-argument-type]
         # the builder chain returns object from super().create in ty's view
-        return super().create(options)  # ty: ignore[invalid-return-type]
+        return super().create(options)  # ty: ignore[invalid-explicit-return]
 
 
 __all__ = [

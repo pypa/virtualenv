@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.activation.via_template import ViaTemplateActivator
 
@@ -11,6 +11,9 @@ if TYPE_CHECKING:
     from pathlib import Path
 
     from virtualenv.create.creator import Creator
+
+
+_GENERATE_PATTERN: Final[re.Pattern[str]] = re.compile(r"\$(?:\w+|{)|=~")
 
 
 class XonshActivator(ViaTemplateActivator):
@@ -24,7 +27,7 @@ class XonshActivator(ViaTemplateActivator):
         :returns: the paths of the generated scripts, empty when the destination is skipped
 
         """
-        if re.search(r"\$(?:\w+|{)|=~", str(creator.dest)):
+        if _GENERATE_PATTERN.search(str(creator.dest)):
             logging.getLogger(__name__).warning(
                 "skipping xonsh activation script: destination %s contains path expansion syntax", creator.dest
             )

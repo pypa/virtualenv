@@ -8,6 +8,6 @@ index 2e0d8692..9ef87885 100644
                  normalized_value = value
 -            line = f"{collapse_line_boundaries(key)} = {collapse_line_boundaries(normalized_value)}"
 +            line = f"{key} = {normalized_value}"
-             LOGGER.debug("\t%r", line)
+             _LOGGER.debug("\t%r", line)
              text += line
              text += "\n"

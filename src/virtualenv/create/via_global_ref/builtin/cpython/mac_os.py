@@ -29,8 +29,7 @@ if TYPE_CHECKING:
 
     from virtualenv.create.via_global_ref.builtin.ref import PathRef
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class CPythonmacOsFramework(CPython, ABC):
@@ -63,12 +62,12 @@ class CPythonmacOsFramework(CPython, ABC):
                 if not self.symlinks:
                     exes.extend(self.bin_dir / a for a in src.aliases)
                 for exe in exes:
-                    fix_mach_o(str(exe), current, target, self.interpreter.max_size)
+                    _fix_mach_o(str(exe), current, target, self.interpreter.max_size)
                     try:
                         # codesign ships with macOS and is meant to be found on PATH
                         subprocess.check_call(["codesign", "--force", "--sign", "-", str(exe)])  # ruff:ignore[start-process-with-partial-path]
                     except (OSError, subprocess.CalledProcessError) as error:
-                        LOGGER.warning("Could not ad-hoc re-sign %s: %s", exe, error)
+                        _LOGGER.warning("Could not ad-hoc re-sign %s: %s", exe, error)
 
     @abstractmethod
     def desired_mach_o_image_path(self) -> str:
@@ -154,7 +153,7 @@ class CPython3macOsFramework(CPythonmacOsFramework, CPython3, CPythonPosix):
         yield PathRefToDest(exe, dest=lambda self, _: self.dest / ".Python", must=RefMust.SYMLINK)
 
 
-def fix_mach_o(exe: str, current: str, new: str, max_size: int) -> None:
+def _fix_mach_o(exe: str, current: str, new: str, max_size: int) -> None:
     """Rewrite the Mach-O library reference of an executable, falling back to ``install_name_tool``.
 
     :param exe: the executable to rewrite
@@ -162,13 +161,13 @@ def fix_mach_o(exe: str, current: str, new: str, max_size: int) -> None:
     :param new: the library reference to use instead
     :param max_size: the largest Mach-O header size the builtin rewrite handles
 
-    """
+    """  # simplint: ignore[function-docstring]  # existing public docs
     try:
-        LOGGER.debug("change Mach-O for %s from %s to %s", exe, current, new)
+        _LOGGER.debug("change Mach-O for %s from %s to %s", exe, current, new)
         _builtin_change_mach_o(max_size)(exe, current, new)
     # install_name_tool is the fallback for any failure of the builtin rewrite
     except Exception as error:  # ruff:ignore[blind-except]
-        LOGGER.warning("Could not call _builtin_change_mac_o: %s. Trying to call install_name_tool instead.", error)
+        _LOGGER.warning("Could not call _builtin_change_mac_o: %s. Trying to call install_name_tool instead.", error)
         try:
             subprocess.check_call(["install_name_tool", "-change", current, new, exe])  # ruff:ignore[start-process-with-partial-path]  # the macOS developer tools put it on PATH
         except Exception:
@@ -349,9 +348,7 @@ class CPython3macOsBrew(CPython3, CPythonPosix):
 
 
 __all__ = [
-    "LOGGER",
     "CPython3macOsBrew",
     "CPython3macOsFramework",
     "CPythonmacOsFramework",
-    "fix_mach_o",
 ]

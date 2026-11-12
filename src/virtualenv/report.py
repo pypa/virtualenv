@@ -17,7 +17,7 @@ LEVELS: Final[dict[int, int]] = {
 #: The highest ``-v`` count that selects a logging level.
 MAX_LEVEL: Final[int] = max(LEVELS.keys())
 #: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger()
+_LOGGER: Final[logging.Logger] = logging.getLogger()
 
 
 # show_pid keeps its default for the existing setup_report callers
@@ -30,10 +30,9 @@ def setup_report(verbosity: int, show_pid: bool = False) -> int:  # ruff:ignore[
     :returns: the verbosity, capped at the highest level
 
     """
-    for log_handler in list(LOGGER.handlers):  # remove handlers of libraries
-        LOGGER.removeHandler(log_handler)
-    # reached only with more -v flags than MAX_LEVEL, which tests do not pass
-    verbosity = min(verbosity, MAX_LEVEL)  # pragma: no cover
+    for log_handler in list(_LOGGER.handlers):  # remove handlers of libraries
+        _LOGGER.removeHandler(log_handler)
+    verbosity = min(verbosity, MAX_LEVEL)
     level = LEVELS[verbosity]
     msg_format = "%(message)s"
     if level <= logging.DEBUG:
@@ -43,17 +42,16 @@ def setup_report(verbosity: int, show_pid: bool = False) -> int:  # ruff:ignore[
     formatter = logging.Formatter(msg_format)
     stream_handler = logging.StreamHandler(stream=sys.stdout)
     stream_handler.setLevel(level)
-    LOGGER.setLevel(logging.NOTSET)
+    _LOGGER.setLevel(logging.NOTSET)
     stream_handler.setFormatter(formatter)
-    LOGGER.addHandler(stream_handler)
-    LOGGER.debug("setup logging to %s", logging.getLevelName(level))
+    _LOGGER.addHandler(stream_handler)
+    _LOGGER.debug("setup logging to %s", logging.getLevelName(level))
     logging.getLogger("distlib").setLevel(logging.ERROR)
     return verbosity
 
 
 __all__ = [
     "LEVELS",
-    "LOGGER",
     "MAX_LEVEL",
     "setup_report",
 ]

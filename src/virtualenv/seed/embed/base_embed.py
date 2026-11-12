@@ -19,8 +19,7 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class BaseEmbed(Seeder, ABC):
@@ -61,7 +60,7 @@ class BaseEmbed(Seeder, ABC):
         self.periodic_update = not options.no_periodic_update
 
         if options.wheel is not None or options.no_wheel:
-            LOGGER.warning(
+            _LOGGER.warning(
                 "DEPRECATION: the --wheel and --no-wheel options do nothing; virtualenv no longer bundles wheel. "
                 "They will be removed in a release after 2026-12. Stop passing them.",
             )
@@ -213,6 +212,5 @@ def _seed_version(value: str) -> str:
 
 
 __all__ = [
-    "LOGGER",
     "BaseEmbed",
 ]

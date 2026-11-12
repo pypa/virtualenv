@@ -19,7 +19,7 @@ from hatchling.builders.wheel import WheelBuilder
 _ROOT: Final[Path] = Path(__file__).parents[2]
 _EMBED: Final[str] = "virtualenv/seed/wheels/embed"
 _LIBRARY: Final[str] = "__virtualenv__/distlib-0.4-py3-none-any"
-_Document = dict[str, Any]  # simplint: ignore[SMP602]  # the SBOM JSON is free-form; assertions pin its shape
+_Document = dict[str, Any]
 _DISTRIBUTIONS: Final[str] = json.dumps({
     "3.14": {"==any": {"distlib": f"{_LIBRARY}/distlib-0.4.dist-info"}},
     "3.9": {"==any": {"distlib": f"{_LIBRARY}/distlib-0.4.dist-info"}},

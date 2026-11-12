@@ -96,7 +96,7 @@ def test_wait_for_stack() -> None:
     assert "STOP" not in text
 
 
-@pytest.mark.parametrize("nested", [False, True], ids=["direct", "after-nested-pytest"])
+@pytest.mark.parametrize("nested", [pytest.param(False, id="direct"), pytest.param(True, id="after-nested-pytest")])
 def test_diagnostics_retain_worker_crash(diagnostic_pytester: pytest.Pytester, nested: bool) -> None:
     diagnostic_pytester.makepyfile(
         inner="def test_inner() -> None: pass",

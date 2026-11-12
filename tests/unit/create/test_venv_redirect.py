@@ -9,10 +9,13 @@ from typing import TYPE_CHECKING, Final
 import pytest
 
 from virtualenv.run import cli_run
+from virtualenv.util.path import write_file
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
+
+    from pytest_mock import MockerFixture
 
 
 @pytest.fixture
@@ -106,6 +109,23 @@ def test_venv_redirect_forced_points_at_created(redirect: Path) -> None:
     _create(redirect.parent / "env", "--venv-redirect")
 
     assert redirect.read_text(encoding="utf-8") == "env\n"
+
+
+def test_venv_redirect_write_failure_does_not_abort_creation(
+    redirect: Path, mocker: MockerFixture, caplog: pytest.LogCaptureFixture
+) -> None:
+    def fail_redirect(path: Path, data: bytes) -> None:
+        if path == redirect:
+            msg = "write blocked"
+            raise OSError(msg)
+        write_file(path, data)
+
+    mocker.patch("virtualenv.create.creator.write_file", autospec=True, side_effect=fail_redirect)
+
+    _create(redirect.parent / "env", "--venv-redirect")
+
+    assert (redirect.exists(), (redirect.parent / "env" / "pyvenv.cfg").is_file()) == (False, True)
+    assert f"could not point {redirect} at {redirect.parent / 'env'} - write blocked" in caplog.messages
 
 
 _CONTROL_CHARACTERS: Final[tuple[int, ...]] = (10, 13, 11, 12, 28, 29, 30)

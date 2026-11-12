@@ -16,8 +16,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from types import TracebackType
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class _CountedFileLock(FileLock):
@@ -58,7 +57,7 @@ class _CountedFileLock(FileLock):
                     self.thread_safe.release()
 
 
-_LOCK_STORE = {}  # simplint: ignore[SMP601]  # ty infers a different value type on Python 3.9 when annotated
+_LOCK_STORE = {}  # simplint: ignore[missing-final]  # ty infers a different value type on Python 3.9 when annotated
 _STORE_LOCK: Final[Lock] = Lock()
 
 
@@ -163,7 +162,7 @@ class ReentrantFileLock(PathLockBase):
         except Timeout:
             if no_block:
                 raise
-            LOGGER.debug("lock file %s present, will block until released", lock.lock_file)
+            _LOGGER.debug("lock file %s present, will block until released", lock.lock_file)
             lock.release()  # release the acquire try from above
             lock.acquire()
 
@@ -257,7 +256,6 @@ class NoOpFileLock(PathLockBase):
 
 
 __all__ = [
-    "LOGGER",
     "NoOpFileLock",
     "PathLockBase",
     "ReentrantFileLock",

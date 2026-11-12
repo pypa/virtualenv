@@ -45,8 +45,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from pathlib import Path
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class AppDataDiskFolder(AppData):
@@ -81,7 +80,7 @@ class AppDataDiskFolder(AppData):
 
     def reset(self) -> None:
         """Delete the whole app data folder."""
-        LOGGER.debug("reset app data folder %s", self.lock.path)
+        _LOGGER.debug("reset app data folder %s", self.lock.path)
         safe_delete(self.lock.path)
 
     def close(self) -> None:
@@ -112,7 +111,7 @@ class AppDataDiskFolder(AppData):
 
         """
         # callers pass a callable for to_folder, despite the Path | None annotation
-        root = ReentrantFileLock(to_folder()) if to_folder is not None else self.lock / "unzip" / __version__  # ty: ignore[call-non-callable]
+        root = ReentrantFileLock(to_folder()) if to_folder is not None else self.lock / "unzip" / __version__  # ty: ignore[not-callable]
         with root.lock_for_key(path.name):
             dest = root.path / path.name
             if not dest.exists():
@@ -133,7 +132,7 @@ class AppDataDiskFolder(AppData):
     def py_info_at(self) -> ReentrantFileLock:
         """The lock guarding the python info folder."""
         # the lock's / operator returns PathLockBase, not the ReentrantFileLock promised here
-        return self.lock / "py_info" / "5"  # ty: ignore[invalid-return-type]
+        return self.lock / "py_info" / "5"  # ty: ignore[invalid-explicit-return]
 
     def py_info_clear(self) -> None:
         """clear py info."""
@@ -215,7 +214,7 @@ class JSONStoreDisk(ContentStore, ABC):
         except Exception:  # ruff:ignore[blind-except, try-except-pass]
             pass
         else:
-            LOGGER.debug("got %s %s from %s", *self.msg_args)
+            _LOGGER.debug("got %s %s from %s", *self.msg_args)
             return data
         if bad_format:
             with suppress(OSError):  # reading and writing on the same file may cause race on multiple processes
@@ -225,7 +224,7 @@ class JSONStoreDisk(ContentStore, ABC):
     def remove(self) -> None:
         """Delete the JSON file."""
         self.file.unlink()
-        LOGGER.debug("removed %s %s at %s", *self.msg_args)
+        _LOGGER.debug("removed %s %s at %s", *self.msg_args)
 
     @contextmanager
     def locked(self) -> Generator[None]:
@@ -245,7 +244,7 @@ class JSONStoreDisk(ContentStore, ABC):
         """
         self.file.parent.mkdir(parents=True, exist_ok=True)
         self.file.write_text(json.dumps(content, sort_keys=True, indent=2), encoding="utf-8")
-        LOGGER.debug("wrote %s %s at %s", *self.msg_args)
+        _LOGGER.debug("wrote %s %s at %s", *self.msg_args)
 
 
 class PyInfoStoreDisk(JSONStoreDisk):
@@ -282,7 +281,6 @@ class EmbedDistributionUpdateStoreDisk(JSONStoreDisk):
 
 
 __all__ = [
-    "LOGGER",
     "AppDataDiskFolder",
     "EmbedDistributionUpdateStoreDisk",
     "JSONStoreDisk",

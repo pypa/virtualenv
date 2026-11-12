@@ -17,8 +17,7 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class ViaGlobalRefMeta(CreatorMeta):
@@ -163,10 +162,10 @@ class ViaGlobalRefApi(Creator, ABC):
             return
         if text := self.env_patch_text():
             pth = self.purelib / "_virtualenv.pth"
-            LOGGER.debug("create virtualenv import hook file %s", pth)
+            _LOGGER.debug("create virtualenv import hook file %s", pth)
             write_file(pth, b"import _virtualenv")
             dest_path = self.purelib / "_virtualenv.py"
-            LOGGER.debug("create %s", dest_path)
+            _LOGGER.debug("create %s", dest_path)
             write_file(dest_path, text.encode("utf-8"))
 
     def env_patch_text(self) -> str:
@@ -188,7 +187,6 @@ class ViaGlobalRefApi(Creator, ABC):
 
 
 __all__ = [
-    "LOGGER",
     "ViaGlobalRefApi",
     "ViaGlobalRefMeta",
 ]
