@@ -37,7 +37,12 @@ def encode_list_path(
     return [encode_path(i) for i in value]
 
 
-def _run() -> None:
+def run() -> None:
+    """Print debug data about the virtual environment.
+
+    :raises SystemExit: with status 1 when the collected data cannot be encoded as JSON
+
+    """
     sys_info: dict[str, str | list[str | None] | None] = {}
     result: dict[str, str | dict[str, str | list[str | None] | None] | None] = {"sys": sys_info}
     path_keys = (
@@ -115,4 +120,4 @@ def _run() -> None:
 
 
 if __name__ == "__main__":
-    _run()
+    run()

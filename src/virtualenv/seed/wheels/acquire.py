@@ -20,7 +20,7 @@ from .util import Version, Wheel, discover_wheels
 if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
 
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 #: The command that runs pip as a module, with the empty path entries removed.
 PIP_RUN: Final[str] = (
@@ -103,7 +103,7 @@ def get_wheel(  # ruff:ignore[too-many-arguments]
             # only the bundle request has a local wheel that satisfies it; a pinned version must fail
             if version != Version.bundle:
                 raise
-            _LOGGER.warning("%s, seeding the bundled %s instead", exception, distribution)
+            LOGGER.warning("%s, seeding the bundled %s instead", exception, distribution)
             return from_bundle(distribution, version, for_py_version, search_dirs, app_data, do_periodic_update, env)
         if wheel is not None and app_data.can_update:
             add_wheel_to_update_log(wheel, for_py_version, app_data)
@@ -161,7 +161,7 @@ def download_wheel(  # ruff:ignore[too-many-arguments]
     )):
         msg = f"refusing to download wheel with archive-like requirement: {to_download!r}"
         raise ValueError(msg)
-    _LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
+    LOGGER.debug("download wheel %s %s to %s", to_download, for_py_version, to_folder)
     verify_against_pypi: Final = not any(env.get(var) for var in _CUSTOM_INDEX_ENV_VARS)
     env = pip_wheel_env_run(search_dirs, app_data, env)
     to_folder.mkdir(parents=True, exist_ok=True)

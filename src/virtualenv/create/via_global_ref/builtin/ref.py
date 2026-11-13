@@ -12,7 +12,7 @@ import sys
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from stat import S_IXGRP, S_IXOTH, S_IXUSR
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from virtualenv.info import fs_is_case_sensitive, fs_supports_symlink
 from virtualenv.util.path import copy, make_exe, remove_file, symlink
@@ -20,8 +20,6 @@ from virtualenv.util.path import copy, make_exe, remove_file, symlink
 if TYPE_CHECKING:
     from collections.abc import Callable
     from pathlib import Path
-
-    from virtualenv.create.creator import Creator
 
 
 if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
@@ -127,7 +125,11 @@ class PathRef(ABC):
         return self._can_symlink
 
     @abstractmethod
-    def run(self, creator: Creator, symlinks: bool) -> None:
+    def run(
+        self,
+        creator: object,  # simplint: ignore[imprecise-annotation]  # public signature
+        symlinks: bool,
+    ) -> None:
         """Link or copy the referenced file to its destination.
 
         :param creator: the creator the environment is created by
@@ -136,7 +138,7 @@ class PathRef(ABC):
         """
         raise NotImplementedError
 
-    def method(self, symlinks: bool) -> Callable[[Path, Path], None]:
+    def method(self, symlinks: bool) -> Callable[..., None]:  # simplint: ignore[callable-ellipsis]  # public signature
         """Pick the function that performs the link or copy of this reference.
 
         :param symlinks: ``True`` to prefer symlinks over copies
@@ -190,12 +192,20 @@ class PathRefToDest(PathRef):
     """
 
     def __init__(
-        self, src: Path, dest: Callable[[Any, Path], Path], must: str = RefMust.NA, when: str = RefWhen.ANY
+        self,
+        src: Path,
+        dest: Callable[..., Path],  # simplint: ignore[callable-ellipsis]  # public signature
+        must: str = RefMust.NA,
+        when: str = RefWhen.ANY,
     ) -> None:
         super().__init__(src, must, when)
         self.dest = dest
 
-    def run(self, creator: Creator, symlinks: bool) -> None:
+    def run(
+        self,
+        creator: object,  # simplint: ignore[imprecise-annotation]  # public signature
+        symlinks: bool,
+    ) -> None:
         """Link or copy the referenced file to the destination path or each destination path in the list.
 
         :param creator: the creator the environment is created by
@@ -229,7 +239,7 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
         self,
         src: Path,
         targets: list[str],
-        dest: Callable[[Any, Path], Path],
+        dest: Callable[..., Path],  # simplint: ignore[callable-ellipsis]  # public signature
         must: str = RefMust.NA,
         when: str = RefWhen.ANY,
     ) -> None:
@@ -244,7 +254,11 @@ class ExePathRefToDest(PathRefToDest, ExePathRef):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(src={self.src}, alias={self.aliases})"
 
-    def run(self, creator: Creator, symlinks: bool) -> None:
+    def run(
+        self,
+        creator: object,  # simplint: ignore[imprecise-annotation]  # public signature
+        symlinks: bool,
+    ) -> None:
         """Link or copy the executable, then its aliases, into the destination folder, marking copies executable.
 
         :param creator: the creator the environment is created by

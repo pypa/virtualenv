@@ -23,7 +23,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 class Session:
@@ -79,14 +79,14 @@ class Session:
         self.creator.pyenv_cfg.write()
 
     def _create(self) -> None:
-        _LOGGER.info("create virtual environment via %s", self.creator)
+        LOGGER.info("create virtual environment via %s", self.creator)
         self.creator.run()
-        _LOGGER.debug(_DEBUG_MARKER)
-        _LOGGER.debug("%s", _Debug(self.creator))
+        LOGGER.debug(_DEBUG_MARKER)
+        LOGGER.debug("%s", _Debug(self.creator))
 
     def _seed(self) -> None:
         if self.seeder is not None and self.seeder.enabled:
-            _LOGGER.info("add seed packages via %s", self.seeder)
+            LOGGER.info("add seed packages via %s", self.seeder)
             self.seeder.run(self.creator)
 
     @property
@@ -101,7 +101,7 @@ class Session:
             BatchActivator(VirtualEnvOptions(prompt=None)).remove_unsafe(self.creator, selected=False)
         if self.activators:
             active = ", ".join(type(i).__name__.replace("Activator", "") for i in self.activators)
-            _LOGGER.info("add activators for %s", active)
+            LOGGER.info("add activators for %s", active)
             self._activators = [activator for activator in self.activators if activator.generate(self.creator)]
 
     @property

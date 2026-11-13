@@ -26,7 +26,7 @@ ROOT: Final[str] = os.path.realpath(os.path.join(os.path.abspath(__file__), os.p
 #: Whether virtualenv runs from a zipapp archive.
 IS_ZIPAPP: Final[bool] = os.path.isfile(ROOT)
 _CAN_SYMLINK = _FS_CASE_SENSITIVE = None
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 def fs_supports_symlink() -> bool:
@@ -52,7 +52,7 @@ def fs_supports_symlink() -> bool:
                 finally:
                     if os.path.lexists(dest):
                         os.remove(dest)
-            _LOGGER.debug("symlink on filesystem does%s work", "" if can else " not")
+            LOGGER.debug("symlink on filesystem does%s work", "" if can else " not")
         _CAN_SYMLINK = can
     return _CAN_SYMLINK
 
@@ -79,12 +79,11 @@ def fs_is_case_sensitive() -> bool:
     if _FS_CASE_SENSITIVE is None:
         with tempfile.NamedTemporaryFile(prefix="TmP") as tmp_file:
             _FS_CASE_SENSITIVE = not os.path.exists(tmp_file.name.lower())
-            _LOGGER.debug("filesystem is %scase-sensitive", "" if _FS_CASE_SENSITIVE else "not ")
+            LOGGER.debug("filesystem is %scase-sensitive", "" if _FS_CASE_SENSITIVE else "not ")
     return _FS_CASE_SENSITIVE
 
 
 __all__ = [
-    "IMPLEMENTATION",
     "IS_CPYTHON",
     "IS_GRAALPY",
     "IS_MAC_ARM64",

@@ -7,12 +7,17 @@ import pytest
 from python_discovery import PythonInfo
 from testing.ref_filters import contains_exe
 
-from virtualenv.create.via_global_ref.builtin.rustpython import RustPythonPosix, RustPythonWindows
+from virtualenv.create.via_global_ref.builtin.rustpython import RustPython, RustPythonPosix, RustPythonWindows
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from pytest_mock import MockerFixture
+
+
+@pytest.mark.parametrize("creator", [RustPython, RustPythonPosix, RustPythonWindows])
+def test_class_module(creator: type[RustPython]) -> None:
+    assert creator.__module__ == "virtualenv.create.via_global_ref.builtin.rustpython"
 
 
 @pytest.mark.parametrize("py_info_name", ["rustpython_posix"])
@@ -34,7 +39,7 @@ def test_can_describe_rejects_cpython(mocker: MockerFixture) -> None:
 
 @pytest.mark.parametrize("py_info_name", ["rustpython_posix"])
 def test_sources_posix(py_info: PythonInfo, mock_files: Callable[[tuple[str, ...], list[str | None]], None]) -> None:
-    mock_files(("virtualenv.create.via_global_ref.builtin.rustpython.rustpython.Path",), [py_info.system_executable])
+    mock_files(("virtualenv.create.via_global_ref.builtin.rustpython.Path",), [py_info.system_executable])
     sources = list(RustPythonPosix.sources(interpreter=py_info))
     assert len(sources) == 1
     assert contains_exe(sources, py_info.system_executable)
@@ -42,7 +47,7 @@ def test_sources_posix(py_info: PythonInfo, mock_files: Callable[[tuple[str, ...
 
 @pytest.mark.parametrize("py_info_name", ["rustpython_windows"])
 def test_sources_windows(py_info: PythonInfo, mock_files: Callable[[tuple[str, ...], list[str | None]], None]) -> None:
-    mock_files(("virtualenv.create.via_global_ref.builtin.rustpython.rustpython.Path",), [py_info.system_executable])
+    mock_files(("virtualenv.create.via_global_ref.builtin.rustpython.Path",), [py_info.system_executable])
     sources = list(RustPythonWindows.sources(interpreter=py_info))
     assert len(sources) == 1
     assert contains_exe(sources, py_info.system_executable)

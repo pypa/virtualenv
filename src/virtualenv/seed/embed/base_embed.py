@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 class BaseEmbed(Seeder, ABC):
@@ -60,7 +60,7 @@ class BaseEmbed(Seeder, ABC):
         self.periodic_update = not options.no_periodic_update
 
         if options.wheel is not None or options.no_wheel:
-            _LOGGER.warning(
+            LOGGER.warning(
                 "DEPRECATION: the --wheel and --no-wheel options do nothing; virtualenv no longer bundles wheel. "
                 "They will be removed in a release after 2026-12. Stop passing them.",
             )

@@ -91,11 +91,11 @@ def _write_changelog(added: dict[str, list[str]], removed: dict[str, list[str]])
 
 
 def render_init(folders: dict[Path, str] | None = None) -> None:
-    # Write ``embed/catalog.py`` from the wheels currently in DEST.
+    # Write ``embed/__init__.py`` from the wheels currently in DEST.
     #
     # When called from ``run()`` after a download round, ``folders`` maps each per-python-version temp folder to its
     # version string, which is how support for a wheel is determined. When called with ``--regen`` there are no
-    # downloaded folders — the existing ``BUNDLE_SUPPORT`` from the current ``catalog.py`` is used so regeneration is
+    # downloaded folders — the existing ``BUNDLE_SUPPORT`` from the current ``__init__.py`` is used so regeneration is
     # deterministic.
     if folders is None:
         support_table = _support_table_from_existing_init()
@@ -119,13 +119,13 @@ def render_init(folders: dict[Path, str] | None = None) -> None:
         f"""
     from __future__ import annotations
 
-    import hashlib
-    import zipfile
-    from pathlib import Path
-    from typing import Final
+    import hashlib  # simplint: ignore[init-module-content]  # preserve API module
+    import zipfile  # simplint: ignore[init-module-content]  # preserve API module
+    from pathlib import Path  # simplint: ignore[init-module-content]  # preserve API module
+    from typing import Final  # simplint: ignore[init-module-content]  # preserve API module
 
-    from virtualenv.info import IS_ZIPAPP, ROOT
-    from virtualenv.seed.wheels.util import Wheel
+    from virtualenv.info import IS_ZIPAPP, ROOT  # simplint: ignore[init-module-content]  # preserve API module
+    from virtualenv.seed.wheels.util import Wheel  # simplint: ignore[init-module-content]  # preserve API module
 
     #: The folder holding the bundled seed wheels.
     BUNDLE_FOLDER: Final[Path] = Path(__file__).absolute().parent
@@ -223,7 +223,7 @@ def render_init(folders: dict[Path, str] | None = None) -> None:
 
     """,
     )
-    dest_target = _DEST / "catalog.py"
+    dest_target = _DEST / "__init__.py"
     dest_target.write_text(msg, encoding="utf-8")
     subprocess.run([sys.executable, "-m", "ruff", "check", str(dest_target), "--fix", "--unsafe-fixes"], check=False)
     subprocess.run([sys.executable, "-m", "ruff", "format", str(dest_target), "--preview"], check=False)
@@ -237,7 +237,7 @@ def render_notices() -> None:
     # Only the license of the wheel virtualenv itself redistributes is reproduced here - whatever that wheel in turn
     # vendors (pip's own ``_vendor`` tree, for example) already carries its license inside the wheel and stays there
     # rather than being duplicated at the top level.
-    tree = ast.parse((_DEST / "catalog.py").read_text(encoding="utf-8"))
+    tree = ast.parse((_DEST / "__init__.py").read_text(encoding="utf-8"))
     wheel_names: list[str] = []
     for node in tree.body:
         if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == "BUNDLE_SHA256":
@@ -291,13 +291,13 @@ def _wheel_license_text(path: Path) -> str:
 
 
 def _support_table_from_existing_init() -> OrderedDict[str, OrderedDict[str, str]]:
-    for node in ast.parse((_DEST / "catalog.py").read_text(encoding="utf-8")).body:
+    for node in ast.parse((_DEST / "__init__.py").read_text(encoding="utf-8")).body:
         if isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name) and node.target.id == "BUNDLE_SUPPORT":
             bundle_support = ast.literal_eval(node.value)
             return OrderedDict(
                 (version, OrderedDict(sorted(mapping.items()))) for version, mapping in bundle_support.items()
             )
-    msg = f"BUNDLE_SUPPORT not found in {_DEST / 'catalog.py'}"
+    msg = f"BUNDLE_SUPPORT not found in {_DEST / '__init__.py'}"
     raise RuntimeError(msg)
 
 

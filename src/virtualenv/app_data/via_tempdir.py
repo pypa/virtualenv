@@ -11,7 +11,7 @@ from .via_disk_folder import AppDataDiskFolder
 if TYPE_CHECKING:
     from typing import NoReturn
 
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 class TempAppData(AppDataDiskFolder):
@@ -27,14 +27,14 @@ class TempAppData(AppDataDiskFolder):
 
     def __init__(self) -> None:
         super().__init__(folder=mkdtemp())
-        _LOGGER.debug("created temporary app data folder %s", self.lock.path)
+        LOGGER.debug("created temporary app data folder %s", self.lock.path)
 
     def reset(self) -> None:
         """This is a temporary folder, is already empty to start with."""
 
     def close(self) -> None:
         """Remove the temporary folder."""
-        _LOGGER.debug("remove temporary app data folder %s", self.lock.path)
+        LOGGER.debug("remove temporary app data folder %s", self.lock.path)
         safe_delete(self.lock.path)
 
     def embed_update_log(self, distribution: str, for_py_version: str) -> NoReturn:

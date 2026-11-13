@@ -19,7 +19,7 @@ from .store import handle_store_python
 if TYPE_CHECKING:
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 class Venv(ViaGlobalRefApi):
@@ -111,7 +111,7 @@ class Venv(ViaGlobalRefApi):
 
         """
         cmd = self.get_host_create_cmd()
-        _LOGGER.info("using host built-in venv to create via %s", " ".join(cmd))
+        LOGGER.info("using host built-in venv to create via %s", " ".join(cmd))
         code, out, err = run_cmd(cmd)
         if code != 0:
             raise ProcessCallFailedError(code, out, err, cmd)
