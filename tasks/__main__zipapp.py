@@ -34,7 +34,6 @@ class _VersionPlatformSelect:
         self._zip_file = zipfile.ZipFile(zipapp)
         self.modules = self._load("modules.json")
         self.distributions = self._load("distributions.json")
-        self.__cache = {}
 
     def _load(self, of_file: str) -> dict[str, str]:
         version = ".".join(str(i) for i in sys.version_info[0:2])
