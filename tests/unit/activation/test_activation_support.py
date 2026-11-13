@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from argparse import Namespace
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -19,7 +20,7 @@ from virtualenv.activation import (
 if TYPE_CHECKING:
     from virtualenv.activation.activator import Activator
 
-_SUPPORTED_OS: Final[dict[type[Activator], set[str]]] = {
+_SUPPORTED_OS: Final[MappingProxyType[type[Activator], set[str]]] = MappingProxyType({
     BashActivator: {"nt", "posix"},
     BatchActivator: {"nt"},
     CShellActivator: {"posix"},
@@ -27,7 +28,7 @@ _SUPPORTED_OS: Final[dict[type[Activator], set[str]]] = {
     PowerShellActivator: {"nt", "posix"},
     PythonActivator: {"nt", "posix"},
     XonshActivator: {"nt", "posix"},
-}
+})
 
 
 @pytest.mark.parametrize(

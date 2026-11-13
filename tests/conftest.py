@@ -17,7 +17,7 @@ from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_RUSTPYTHON, IS_WIN, fs_supports_symlink
 
 # the build and CI tooling tests do not depend on the interpreter; the tasks tox environment runs them once
-collect_ignore: Final[list[str]] = ["tasks"]
+collect_ignore: Final[tuple[str, ...]] = ("tasks",)
 
 
 def pytest_addoption(parser) -> None:

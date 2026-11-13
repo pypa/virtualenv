@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from subprocess import Popen
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 
 import pytest
@@ -29,10 +30,10 @@ def venv(tmp_path_factory, session_app_data):
     return _CURRENT.discover_exe(prefix=str(dest)).original_executable
 
 
-_PYTHON: Final[dict[str, Path]] = {
+_PYTHON: Final[MappingProxyType[str, Path]] = MappingProxyType({
     "root": root,
     "venv": venv,
-}
+})
 
 
 @pytest.fixture(params=list(_PYTHON.values()), ids=list(_PYTHON.keys()), scope="session")

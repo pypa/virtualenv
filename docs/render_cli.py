@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import functools
 from argparse import SUPPRESS
 from contextlib import contextmanager
+from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar, Final, NamedTuple
 
 from docutils import nodes
@@ -15,12 +17,12 @@ if TYPE_CHECKING:
     from collections import OrderedDict
     from collections.abc import Callable
 
-_CUSTOM: Final[dict[str, OrderedDict[str, type]]] = {
+_CUSTOM: Final[MappingProxyType[str, OrderedDict[str, type]]] = MappingProxyType({
     "discovery": ComponentBuilder.entry_points_for("virtualenv.discovery"),
     "creator": ComponentBuilder.entry_points_for("virtualenv.create"),
     "seeder": ComponentBuilder.entry_points_for("virtualenv.seed"),
     "activators": ComponentBuilder.entry_points_for("virtualenv.activate"),
-}
+})
 
 
 class CliTable(SphinxDirective):
@@ -184,6 +186,7 @@ class CliTable(SphinxDirective):
 
     @staticmethod
     def _make_patch_func(prev, key, name):
+        @functools.wraps(prev)
         def patched(*args, **kwargs):
             prev(*args, **kwargs)
             if key == "activators":

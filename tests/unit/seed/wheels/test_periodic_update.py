@@ -14,6 +14,7 @@ from itertools import zip_longest
 from pathlib import Path
 from shutil import copytree, ignore_patterns
 from textwrap import dedent, indent
+from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 from urllib.error import URLError
 
@@ -262,7 +263,7 @@ def test_manual_update_honored(mocker, session_app_data, for_py_version) -> None
 _UP_NOW: Final[datetime] = datetime.now(tz=timezone.utc)
 
 
-_UPDATE_SKIP: Final[dict[str, UpdateLog]] = {
+_UPDATE_SKIP: Final[MappingProxyType[str, UpdateLog]] = MappingProxyType({
     "started_just_now_no_complete": UpdateLog(started=_UP_NOW, completed=None, versions=[], periodic=True),
     "started_1_hour_no_complete": UpdateLog(
         started=_UP_NOW - timedelta(hours=1),
@@ -288,7 +289,7 @@ _UPDATE_SKIP: Final[dict[str, UpdateLog]] = {
         versions=[],
         periodic=True,
     ),
-}
+})
 
 
 @pytest.mark.parametrize("u_log", list(_UPDATE_SKIP.values()), ids=list(_UPDATE_SKIP.keys()))
@@ -429,7 +430,7 @@ def malformed_app_data(request: pytest.FixtureRequest, tmp_path: Path, for_py_ve
     return app_data
 
 
-_UPDATE_YES: Final[dict[str, UpdateLog]] = {
+_UPDATE_YES: Final[MappingProxyType[str, UpdateLog]] = MappingProxyType({
     "never_started": UpdateLog(started=None, completed=None, versions=[], periodic=False),
     "started_1_hour": UpdateLog(
         started=_UP_NOW - timedelta(hours=1, microseconds=1),
@@ -443,7 +444,7 @@ _UPDATE_YES: Final[dict[str, UpdateLog]] = {
         versions=[],
         periodic=False,
     ),
-}
+})
 
 
 _DETACHED_KWARGS: Final[dict[str, int | None]] = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL} | (
