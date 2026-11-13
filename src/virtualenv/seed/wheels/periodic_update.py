@@ -172,60 +172,96 @@ def trigger_update(  # ruff:ignore[too-many-arguments]  # the background update 
         process.returncode = 0
 
 
-def _select_version(u_log: UpdateLog, of_version: str | None, wheel: Wheel | None, now: datetime) -> NewVersion | None:
-    if of_version is not None:
-        for version in u_log.versions:
-            if version.wheel.has_version(of_version):
-                return version
-        return None
-    for _, group in groupby(u_log.versions, key=lambda entry: entry.wheel.version_tuple[0:2]):
-        # use only latest patch version per minor, earlier assumed to be buggy
-        all_patches = list(group)
-        ignore_grace_period_minor = any(version for version in all_patches if version.use(now))
-        for version in all_patches:
-            if wheel is not None and version.wheel.parsed_version <= wheel.parsed_version:
-                return None
-            if version.use(now, ignore_grace_period_minor):
-                return version
-    return None
+class UpdateLog:
+    """The record of the last update of a distribution, with the versions it found.
 
-
-def add_wheel_to_update_log(wheel: Wheel, for_py_version: str, app_data: AppData) -> None:
-    """Record a wheel in the update log of its distribution, unless the log already names it.
-
-    :param wheel: the wheel to record
-    :param for_py_version: the Python version the wheel must support
-    :param app_data: the application data folder
+    :param started: when the last update started, ``None`` when it never did
+    :param completed: when the last update completed, ``None`` when it never did
+    :param versions: the versions found
+    :param periodic: ``True`` when the update was periodic, ``None`` when unknown
 
     """
-    embed_update_log = app_data.embed_update_log(wheel.distribution, for_py_version)
-    # the disk store has a file attribute that ContentStore does not declare
-    LOGGER.debug("adding %s information to %s", wheel.name, embed_update_log.file)  # ty: ignore[missing-attribute]
-    u_log = UpdateLog.from_app_data(app_data, wheel.distribution, for_py_version)
-    if any(version.filename == wheel.name for version in u_log.versions):
-        # the disk store has a file attribute that ContentStore does not declare
-        LOGGER.warning("%s already present in %s", wheel.name, embed_update_log.file)  # ty: ignore[missing-attribute]
-        return
-    # we don't need a release date for sources other than "periodic"
-    version = NewVersion(wheel.name, datetime.now(tz=timezone.utc), None, "download")
-    u_log.versions.append(version)  # always write at the end for proper updates
-    embed_update_log.write(u_log.to_dict())
 
+    def __init__(
+        self, started: datetime | None, completed: datetime | None, versions: list[NewVersion], periodic: bool | None
+    ) -> None:
+        self.started = started
+        self.completed = completed
+        self.versions = versions
+        self.periodic = periodic
 
-#: Format of the datetimes stored in the update log.
-DATETIME_FMT: Final[str] = "%Y-%m-%dT%H:%M:%S.%fZ"  # simplint: ignore[module-variable-prefix]  # existing name
-_PyPIJson = dict[str, object]
+    @classmethod
+    def from_app_data(cls, app_data: AppData, distribution: str, for_py_version: str) -> UpdateLog:
+        """Load the update log of a distribution from the application data folder.
 
+        :param app_data: the application data folder
+        :param distribution: the distribution name
+        :param for_py_version: the Python version the log is for
 
-def dump_datetime(value: datetime | None) -> str | None:
-    """Format a datetime for the update log, keeping ``None`` as ``None``.
+        :returns: the update log, empty when none was stored
 
-    :param value: the datetime to format
+        """
+        store: Final[ContentStore] = app_data.embed_update_log(distribution, for_py_version)
+        try:
+            return cls.from_dict(store.read())
+        except (AttributeError, KeyError, TypeError, ValueError):
+            # another virtualenv version or an interrupted run can leave valid JSON of the wrong shape in the shared
+            # app data; drop it as read() drops invalid JSON, since an empty log falls back to the bundled wheel
+            LOGGER.warning("removing malformed embed update log of %s", distribution)
+            with suppress(OSError):  # another process may remove or rewrite the file at the same time
+                store.remove()
+            return cls(None, None, [], None)
 
-    :returns: the formatted text, ``None`` for ``None``
+    @classmethod
+    def from_dict(
+        cls,
+        dictionary: dict[str, object] | None,  # simplint: ignore[imprecise-annotation]  # stored log is parsed JSON
+    ) -> UpdateLog:
+        """Parse the update log from the stored form.
 
-    """
-    return None if value is None else value.strftime(DATETIME_FMT)
+        :param dictionary: the stored form of the update log, ``None`` when none was stored
+
+        :returns: the update log
+
+        """
+        if dictionary is None:
+            dictionary = {}
+        return cls(
+            # the log is parsed JSON, typed object, so the value is not narrowed
+            load_datetime(dictionary.get("started")),  # ty: ignore[invalid-argument-type]
+            # the log is parsed JSON, typed object, so the value is not narrowed
+            load_datetime(dictionary.get("completed")),  # ty: ignore[invalid-argument-type]
+            # the log is parsed JSON, typed object, so the list is not narrowed
+            [NewVersion.from_dict(v) for v in dictionary.get("versions", [])],  # ty: ignore[not-iterable]
+            # the log is parsed JSON, typed object, so the value is not narrowed
+            dictionary.get("periodic"),  # ty: ignore[invalid-argument-type]
+        )
+
+    @property
+    def needs_update(self) -> bool:
+        """Whether an update is due: none has completed, or the last completion is older than the update period."""
+        now = datetime.now(tz=timezone.utc)
+        if self.completed is None:  # never completed
+            return self._check_start(now)
+        if now - self.completed <= UPDATE_PERIOD:
+            return False
+        return self._check_start(now)
+
+    def _check_start(self, now: datetime) -> bool:
+        return self.started is None or now - self.started > UPDATE_ABORTED_DELAY
+
+    def to_dict(self) -> dict[str, object]:  # simplint: ignore[imprecise-annotation]  # public signature
+        """Return the stored form of the update log.
+
+        :returns: the update log as a dictionary
+
+        """
+        return {
+            "started": dump_datetime(self.started),
+            "completed": dump_datetime(self.completed),
+            "periodic": self.periodic,
+            "versions": [r.to_dict() for r in self.versions],
+        }
 
 
 def load_datetime(value: str | None) -> datetime | None:
@@ -328,96 +364,60 @@ class NewVersion:  # ruff:ignore[eq-without-hash]
         return False
 
 
-class UpdateLog:
-    """The record of the last update of a distribution, with the versions it found.
+def dump_datetime(value: datetime | None) -> str | None:
+    """Format a datetime for the update log, keeping ``None`` as ``None``.
 
-    :param started: when the last update started, ``None`` when it never did
-    :param completed: when the last update completed, ``None`` when it never did
-    :param versions: the versions found
-    :param periodic: ``True`` when the update was periodic, ``None`` when unknown
+    :param value: the datetime to format
+
+    :returns: the formatted text, ``None`` for ``None``
 
     """
+    return None if value is None else value.strftime(DATETIME_FMT)
 
-    def __init__(
-        self, started: datetime | None, completed: datetime | None, versions: list[NewVersion], periodic: bool | None
-    ) -> None:
-        self.started = started
-        self.completed = completed
-        self.versions = versions
-        self.periodic = periodic
 
-    @classmethod
-    def from_app_data(cls, app_data: AppData, distribution: str, for_py_version: str) -> UpdateLog:
-        """Load the update log of a distribution from the application data folder.
+def _select_version(u_log: UpdateLog, of_version: str | None, wheel: Wheel | None, now: datetime) -> NewVersion | None:
+    if of_version is not None:
+        for version in u_log.versions:
+            if version.wheel.has_version(of_version):
+                return version
+        return None
+    for _, group in groupby(u_log.versions, key=lambda entry: entry.wheel.version_tuple[0:2]):
+        # use only latest patch version per minor, earlier assumed to be buggy
+        all_patches = list(group)
+        ignore_grace_period_minor = any(version for version in all_patches if version.use(now))
+        for version in all_patches:
+            if wheel is not None and version.wheel.parsed_version <= wheel.parsed_version:
+                return None
+            if version.use(now, ignore_grace_period_minor):
+                return version
+    return None
 
-        :param app_data: the application data folder
-        :param distribution: the distribution name
-        :param for_py_version: the Python version the log is for
 
-        :returns: the update log, empty when none was stored
+def add_wheel_to_update_log(wheel: Wheel, for_py_version: str, app_data: AppData) -> None:
+    """Record a wheel in the update log of its distribution, unless the log already names it.
 
-        """
-        store: Final[ContentStore] = app_data.embed_update_log(distribution, for_py_version)
-        try:
-            return cls.from_dict(store.read())
-        except (AttributeError, KeyError, TypeError, ValueError):
-            # another virtualenv version or an interrupted run can leave valid JSON of the wrong shape in the shared
-            # app data; drop it as read() drops invalid JSON, since an empty log falls back to the bundled wheel
-            LOGGER.warning("removing malformed embed update log of %s", distribution)
-            with suppress(OSError):  # another process may remove or rewrite the file at the same time
-                store.remove()
-            return cls(None, None, [], None)
+    :param wheel: the wheel to record
+    :param for_py_version: the Python version the wheel must support
+    :param app_data: the application data folder
 
-    @classmethod
-    def from_dict(
-        cls,
-        dictionary: dict[str, object] | None,  # simplint: ignore[imprecise-annotation]  # stored log is parsed JSON
-    ) -> UpdateLog:
-        """Parse the update log from the stored form.
+    """
+    embed_update_log = app_data.embed_update_log(wheel.distribution, for_py_version)
+    # the disk store has a file attribute that ContentStore does not declare
+    LOGGER.debug("adding %s information to %s", wheel.name, embed_update_log.file)  # ty: ignore[missing-attribute]
+    u_log = UpdateLog.from_app_data(app_data, wheel.distribution, for_py_version)
+    if any(version.filename == wheel.name for version in u_log.versions):
+        # the disk store has a file attribute that ContentStore does not declare
+        LOGGER.warning("%s already present in %s", wheel.name, embed_update_log.file)  # ty: ignore[missing-attribute]
+        return
+    # we don't need a release date for sources other than "periodic"
+    version = NewVersion(wheel.name, datetime.now(tz=timezone.utc), None, "download")
+    u_log.versions.append(version)  # always write at the end for proper updates
+    embed_update_log.write(u_log.to_dict())
 
-        :param dictionary: the stored form of the update log, ``None`` when none was stored
 
-        :returns: the update log
-
-        """
-        if dictionary is None:
-            dictionary = {}
-        return cls(
-            # the log is parsed JSON, typed object, so the value is not narrowed
-            load_datetime(dictionary.get("started")),  # ty: ignore[invalid-argument-type]
-            # the log is parsed JSON, typed object, so the value is not narrowed
-            load_datetime(dictionary.get("completed")),  # ty: ignore[invalid-argument-type]
-            # the log is parsed JSON, typed object, so the list is not narrowed
-            [NewVersion.from_dict(v) for v in dictionary.get("versions", [])],  # ty: ignore[not-iterable]
-            # the log is parsed JSON, typed object, so the value is not narrowed
-            dictionary.get("periodic"),  # ty: ignore[invalid-argument-type]
-        )
-
-    @property
-    def needs_update(self) -> bool:
-        """Whether an update is due: none has completed, or the last completion is older than the update period."""
-        now = datetime.now(tz=timezone.utc)
-        if self.completed is None:  # never completed
-            return self._check_start(now)
-        if now - self.completed <= UPDATE_PERIOD:
-            return False
-        return self._check_start(now)
-
-    def _check_start(self, now: datetime) -> bool:
-        return self.started is None or now - self.started > UPDATE_ABORTED_DELAY
-
-    def to_dict(self) -> dict[str, object]:  # simplint: ignore[imprecise-annotation]  # public signature
-        """Return the stored form of the update log.
-
-        :returns: the update log as a dictionary
-
-        """
-        return {
-            "started": dump_datetime(self.started),
-            "completed": dump_datetime(self.completed),
-            "periodic": self.periodic,
-            "versions": [r.to_dict() for r in self.versions],
-        }
+#: Format of the datetimes stored in the update log.
+DATETIME_FMT: Final[str] = "%Y-%m-%dT%H:%M:%S.%fZ"  # simplint: ignore[module-variable-prefix]  # existing name
+_PyPIJson = dict[str, object]
 
 
 #: Pauses between PyPI metadata lookups before refusing a wheel we could not verify, to ride out a brief outage or a JSON

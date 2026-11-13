@@ -232,6 +232,16 @@ class ActivationTester:
         return self.python_cmd("import sys; print(sys.executable)")
 
 
+@pytest.fixture(scope="session")
+def activation_tester_class():
+    return ActivationTester
+
+
+@pytest.fixture(scope="session")
+def raise_on_non_source_class():
+    return RaiseOnNonSourceCall
+
+
 class RaiseOnNonSourceCall(ActivationTester):
     def __init__(  # ruff:ignore[too-many-arguments]  # the test double mirrors ActivationTester's constructor
         self,
@@ -258,16 +268,6 @@ class RaiseOnNonSourceCall(ActivationTester):
         err = err_.decode("utf-8")
         assert process.returncode
         assert self.non_source_fail_message in err
-
-
-@pytest.fixture(scope="session")
-def activation_tester_class():
-    return ActivationTester
-
-
-@pytest.fixture(scope="session")
-def raise_on_non_source_class():
-    return RaiseOnNonSourceCall
 
 
 class ActivationCase(NamedTuple):

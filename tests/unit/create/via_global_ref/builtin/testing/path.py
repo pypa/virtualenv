@@ -6,10 +6,6 @@ from operator import attrgetter as attr
 from pathlib import Path
 
 
-def is_name(path):
-    return str(path) == path.name
-
-
 class FakeDataABC(ABC):
     @property
     def fake_dirs(self):
@@ -42,6 +38,23 @@ class FakeDataABC(ABC):
             return None
 
 
+def is_name(path):
+    return str(path) == path.name
+
+
+def mock_files(mocker, pathlist, filelist) -> None:
+    # the variable is named after the class it patches in, as the test reads it
+    PathMock = MetaPathMock(set(filelist))  # ruff:ignore[non-lowercase-variable-in-function]
+    for path in pathlist:
+        mocker.patch(path, PathMock)
+
+
+# builds a class, so it is named like one
+def MetaPathMock(filelist):  # ruff:ignore[invalid-function-name]
+    # Metaclass that creates a `PathMock` class with the `filelist` defined.
+    return type("PathMock", (PathMockABC,), {"filelist": filelist})
+
+
 class PathMockABC(FakeDataABC, Path):
     _flavour = getattr(Path(), "_flavour", None)
     if hasattr(_flavour, "altsep"):
@@ -70,19 +83,6 @@ class PathMockABC(FakeDataABC, Path):
             msg = f"No such mocked dir: '{self}'"
             raise FileNotFoundError(msg)
         yield from map(self.joinpath, self.contained_fake_names)
-
-
-def mock_files(mocker, pathlist, filelist) -> None:
-    # the variable is named after the class it patches in, as the test reads it
-    PathMock = MetaPathMock(set(filelist))  # ruff:ignore[non-lowercase-variable-in-function]
-    for path in pathlist:
-        mocker.patch(path, PathMock)
-
-
-# builds a class, so it is named like one
-def MetaPathMock(filelist):  # ruff:ignore[invalid-function-name]
-    # Metaclass that creates a `PathMock` class with the `filelist` defined.
-    return type("PathMock", (PathMockABC,), {"filelist": filelist})
 
 
 def mock_pypy_libs(mocker, pypy_creator_cls, libs) -> None:

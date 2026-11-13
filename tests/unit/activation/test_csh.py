@@ -250,6 +250,12 @@ def test_cshell_prompt_preserves_quoting_mode(csh_venv: _CshVenv, tmp_path: Path
     assert result.stdout == f"{dest}\n{value}\n({display}) > \n"
 
 
+@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
+@pytest.mark.parametrize("prompt", [pytest.param("%", id="percent"), pytest.param("has^caret", id="caret")])
+def test_cshell_renders_prompt_literally(csh_venv: _CshVenv, tmp_path: Path, prompt: str) -> None:
+    _assert_prompt_drawn(csh_venv, tmp_path, prompt, os.environ.copy())
+
+
 def _assert_prompt_drawn(csh_venv: _CshVenv, tmp_path: Path, prompt: str, env: dict[str, str]) -> None:
     _, content = csh_venv("plain", prompt=prompt)
     script = tmp_path / "activate.csh"
@@ -266,12 +272,6 @@ def _assert_prompt_drawn(csh_venv: _CshVenv, tmp_path: Path, prompt: str, env: d
     )
 
     assert f"({prompt}) ".encode() in result.stdout + result.stderr
-
-
-@pytest.mark.skipif(IS_WIN or _TCSH is None, reason="requires tcsh")
-@pytest.mark.parametrize("prompt", [pytest.param("%", id="percent"), pytest.param("has^caret", id="caret")])
-def test_cshell_renders_prompt_literally(csh_venv: _CshVenv, tmp_path: Path, prompt: str) -> None:
-    _assert_prompt_drawn(csh_venv, tmp_path, prompt, os.environ.copy())
 
 
 @pytest.fixture

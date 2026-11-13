@@ -399,17 +399,6 @@ def test_destination_not_write_able(tmp_path, capsys) -> None:
         target.chmod(prev_mod)
 
 
-def cleanup_sys_path(paths):
-    # used only by this helper, so it stays out of the module imports
-    from virtualenv.create.creator import HERE  # ruff:ignore[import-outside-top-level]
-
-    paths = [p.resolve() for p in (Path(os.path.abspath(i)) for i in paths) if p.exists()]
-    to_remove = [Path(HERE)]
-    if os.environ.get("PYCHARM_HELPERS_DIR"):
-        to_remove.extend((Path(os.environ["PYCHARM_HELPERS_DIR"]).parent, Path(os.path.expanduser("~")) / ".PyCharm"))
-    return [i for i in paths if not any(str(i).startswith(str(t)) for t in to_remove)]
-
-
 @pytest.fixture(scope="session")
 def system(session_app_data):
     return get_env_debug_info(Path(_CURRENT.system_executable), DEBUG_SCRIPT, session_app_data, os.environ)
@@ -514,14 +503,6 @@ for key, meta in CreatorSelector.for_interpreter(_CURRENT).key_to_meta.items():
             _CREATE_METHODS.append((key, "symlinks"))
 
 
-def _bin_exes(creator_key: str) -> tuple[str, ...]:
-    if sys.platform == "win32":
-        return ("python.exe",)
-    exes = ("python", f"python{sys.version_info.major}", f"python{sys.version_info.major}.{sys.version_info.minor}")
-    # for venv some repackaging does not includes the pythonx.y
-    return exes[:-1] if creator_key == "venv" else exes
-
-
 def _assert_isolated_sys_path(sys_path: list[Path], system_sys_path: list[Path]) -> None:
     global_sys_path = system_sys_path[-1]
     msg = "\n".join(str(j) for j in sys_path)
@@ -609,6 +590,25 @@ def test_create_no_seed(python, case: _NoSeedCase, system, coverage_env, special
 
     git_ignore = (dest / ".gitignore").read_text(encoding="utf-8")
     assert git_ignore.splitlines() == ["# created by virtualenv automatically", "*"]
+
+
+def cleanup_sys_path(paths):
+    # used only by this helper, so it stays out of the module imports
+    from virtualenv.create.creator import HERE  # ruff:ignore[import-outside-top-level]
+
+    paths = [p.resolve() for p in (Path(os.path.abspath(i)) for i in paths) if p.exists()]
+    to_remove = [Path(HERE)]
+    if os.environ.get("PYCHARM_HELPERS_DIR"):
+        to_remove.extend((Path(os.environ["PYCHARM_HELPERS_DIR"]).parent, Path(os.path.expanduser("~")) / ".PyCharm"))
+    return [i for i in paths if not any(str(i).startswith(str(t)) for t in to_remove)]
+
+
+def _bin_exes(creator_key: str) -> tuple[str, ...]:
+    if sys.platform == "win32":
+        return ("python.exe",)
+    exes = ("python", f"python{sys.version_info.major}", f"python{sys.version_info.major}.{sys.version_info.minor}")
+    # for venv some repackaging does not includes the pythonx.y
+    return exes[:-1] if creator_key == "venv" else exes
 
 
 @pytest.mark.skipif(
@@ -1349,29 +1349,19 @@ def test_fallback_to_copies_if_symlink_unsupported(tmp_path, python, mocker) -> 
     assert result.creator.symlinks is False
 
 
+@pytest.mark.skipif(not is_macos_brew(_CURRENT), reason="requires brew python on darwin")
+def test_fail_gracefully_brew_python_reports_copy_disabled(tmp_path, python, mocker) -> None:
+    mocker.patch("virtualenv.create.via_global_ref.api.fs_supports_symlink", return_value=False, autospec=True)
+    message = _create_without_symlink_or_copy(tmp_path, python)
+    assert "copy: Brew disables copy creation" in message
+
+
 def _create_without_symlink_or_copy(tmp_path: Path, python: Path) -> str:
     with pytest.raises(RuntimeError) as excinfo:
         cli_run(["-p", str(python), str(tmp_path), "--without-pip"])
     assert "neither symlink or copy method supported" in str(excinfo.value)
     assert "symlink: the filesystem does not supports symlink" in str(excinfo.value)
     return str(excinfo.value)
-
-
-def _patch_copy_unsupported(mocker: MockerFixture) -> None:
-    original_init = api.ViaGlobalRefMeta.__init__
-
-    def new_init(self, *args, **kwargs) -> None:
-        original_init(self, *args, **kwargs)
-        self.copy_error = "copying is not supported"
-
-    mocker.patch("virtualenv.create.via_global_ref.api.ViaGlobalRefMeta.__init__", new=new_init)
-
-
-@pytest.mark.skipif(not is_macos_brew(_CURRENT), reason="requires brew python on darwin")
-def test_fail_gracefully_brew_python_reports_copy_disabled(tmp_path, python, mocker) -> None:
-    mocker.patch("virtualenv.create.via_global_ref.api.fs_supports_symlink", return_value=False, autospec=True)
-    message = _create_without_symlink_or_copy(tmp_path, python)
-    assert "copy: Brew disables copy creation" in message
 
 
 @pytest.mark.skipif(
@@ -1383,6 +1373,16 @@ def test_fail_gracefully_if_no_method_supported(tmp_path, python, mocker) -> Non
     _patch_copy_unsupported(mocker)
     message = _create_without_symlink_or_copy(tmp_path, python)
     assert "copy: copying is not supported" in message
+
+
+def _patch_copy_unsupported(mocker: MockerFixture) -> None:
+    original_init = api.ViaGlobalRefMeta.__init__
+
+    def new_init(self, *args, **kwargs) -> None:
+        original_init(self, *args, **kwargs)
+        self.copy_error = "copying is not supported"
+
+    mocker.patch("virtualenv.create.via_global_ref.api.ViaGlobalRefMeta.__init__", new=new_init)
 
 
 @pytest.mark.skipif(not is_mac_os_framework(_CURRENT), reason="requires macOS framework python")

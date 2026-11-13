@@ -25,12 +25,6 @@ _KEYS: Final[st.SearchStrategy[str]] = st.text(
 _CONTENTS: Final[st.SearchStrategy[dict[str, str]]] = st.dictionaries(_KEYS, st.text(_PRINTABLE), max_size=6)
 
 
-def _round_trip(content: dict[str, str], tmp_path) -> dict[str, str]:
-    path = tmp_path / "pyvenv.cfg"
-    PyEnvCfg(OrderedDict(content), path).write()
-    return dict(PyEnvCfg.from_file(path).content)
-
-
 @given(content=_CONTENTS)
 @example(content={"prompt": 'x"\nhome = /attacker\nprompt = "z'})
 @example(content={"prompt": f"a{chr(0x2028)}home = /attacker"})
@@ -40,6 +34,12 @@ def test_writing_then_reading_never_invents_keys(content, tmp_path_factory) -> N
     read_back = _round_trip(content, tmp_path_factory.mktemp("cfg"))
 
     assert set(read_back) <= set(content)
+
+
+def _round_trip(content: dict[str, str], tmp_path) -> dict[str, str]:
+    path = tmp_path / "pyvenv.cfg"
+    PyEnvCfg(OrderedDict(content), path).write()
+    return dict(PyEnvCfg.from_file(path).content)
 
 
 @given(content=_CONTENTS)
