@@ -28,7 +28,7 @@ from python_discovery import PythonInfo
 
 from virtualenv.__main__ import run, run_with_catch
 from virtualenv.create.creator import DEBUG_SCRIPT, Creator, get_env_debug_info
-from virtualenv.create.debug import _run  # ruff:ignore[import-private-name]  # probe runs in process for module patches
+from virtualenv.create.debug import run as debug_run
 from virtualenv.create.pyenv_cfg import PyEnvCfg
 from virtualenv.create.via_global_ref import api
 from virtualenv.create.via_global_ref.api import ViaGlobalRefApi
@@ -765,7 +765,7 @@ def test_venv_fails_not_inline(tmp_path, capsys, mocker) -> None:
         assert session.creator.can_be_inline is False
         return session
 
-    mocker.patch("virtualenv.run.cli.session_via_cli", side_effect=_session_via_cli, autospec=True)
+    mocker.patch("virtualenv.run.session_via_cli", side_effect=_session_via_cli, autospec=True)
     before = tmp_path.stat().st_mode
     cfg_path = tmp_path / "pyvenv.cfg"
     cfg_path.write_text("", encoding="utf-8")
@@ -1214,7 +1214,7 @@ def test_debug_reports_missing_target_module(
 ) -> None:
     with monkeypatch.context() as patch:
         patch.setitem(sys.modules, missing, None)
-        _run()
+        debug_run()
 
     assert "ModuleNotFoundError" in json.loads(capsys.readouterr().out)[missing]
 
@@ -1223,7 +1223,7 @@ def test_debug_reports_json_encoding_failure(mocker: MockerFixture, capsys: pyte
     mocker.patch.object(json, "dumps", autospec=True, side_effect=TypeError("encode failed"))
 
     with pytest.raises(SystemExit, match="1"):
-        _run()
+        debug_run()
 
     output = capsys.readouterr()
     assert "encode failed" in output.err

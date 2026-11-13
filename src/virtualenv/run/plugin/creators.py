@@ -13,7 +13,6 @@ if TYPE_CHECKING:
 
     from python_discovery import PythonInfo
 
-    from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvConfigParser, VirtualEnvOptions
     from virtualenv.create.creator import Creator, CreatorMeta
 
@@ -136,7 +135,11 @@ class CreatorSelector(ComponentBuilder):
     def _available_for(self) -> str:
         return f" for {self.interpreter.spec}"  # only the creators that support this interpreter are choices
 
-    def populate_selected_argparse(self, selected: str, app_data: AppData) -> None:
+    def populate_selected_argparse(
+        self,
+        selected: str,
+        app_data: object,  # simplint: ignore[imprecise-annotation]  # public signature
+    ) -> None:
         """Set the parser description and add the options of the chosen creator.
 
         :param selected: the name of the chosen creator

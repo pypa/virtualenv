@@ -22,7 +22,7 @@ from ._safe_extract_zip import extract_zip as _safe_extract_zip
 if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 _MATCH_PATTERN: Final[re.Pattern[str]] = re.compile(
@@ -64,7 +64,7 @@ class PipInstall(ABC):
         script_dir = self._creator.script_dir
         for name, module in self._read_console_scripts(dist_info).items():
             consoles.update(self._create_console_entry_point(name, module, script_dir, version_info))
-        _LOGGER.debug("generated console scripts %s", " ".join(i.name for i in consoles))
+        LOGGER.debug("generated console scripts %s", " ".join(i.name for i in consoles))
 
     @staticmethod
     def _find_dist_info(folder: Path) -> Path:
@@ -86,7 +86,7 @@ class PipInstall(ABC):
     @staticmethod
     def _uninstall_dist(dist: Path, env_dir: Path) -> None:
         dist_base: Final = dist.parent
-        _LOGGER.debug("uninstall existing distribution %s from %s", dist.stem, dist_base)
+        LOGGER.debug("uninstall existing distribution %s from %s", dist.stem, dist_base)
 
         top_txt: Final = dist / "top_level.txt"
         paths: Final = (
@@ -113,7 +113,7 @@ class PipInstall(ABC):
                 # Unlinking the final link leaves its target intact; parent links still affect containment.
                 resolved: Final = entry.parent.resolve() / entry.name if linked else entry.resolve()
                 if root not in resolved.parents or resolved in metadata_parents:
-                    _LOGGER.warning(
+                    LOGGER.warning(
                         "skip removal of %s listed by %s: not inside environment %s or a parent of the metadata",
                         entry,
                         dist.name,
@@ -146,7 +146,7 @@ class PipInstall(ABC):
     def _create_console_entry_point(
         self, name: str, value: str, to_folder: Path, version_info: tuple[int, ...]
     ) -> list[Path]:
-        new_files = _ScriptMakerCustom(to_folder, version_info, self._creator.exe, name).make(f"{name} = {value}")
+        new_files = ScriptMakerCustom(to_folder, version_info, self._creator.exe, name).make(f"{name} = {value}")
         result = []
         result.extend(Path(i) for i in new_files)
         return result
@@ -196,7 +196,7 @@ class PipInstall(ABC):
         return Path(get_short_path_name(str(folder)))
 
     def _populate_image(self, zip_ref: zipfile.ZipFile, folder: Path) -> None:
-        _LOGGER.debug("build install image for %s to %s", self._wheel.name, folder)
+        LOGGER.debug("build install image for %s to %s", self._wheel.name, folder)
         _safe_extract_zip(zip_ref, folder)
         dist_info: Final = self._find_dist_info(folder)
         self._fix_records(folder, dist_info, self._generate_new_files(folder, dist_info))
@@ -261,7 +261,7 @@ class EntryPointConfig(ConfigParser):
         return optionstr
 
 
-class _ScriptMakerCustom(ScriptMaker):
+class ScriptMakerCustom(ScriptMaker):  # simplint: ignore[unexported-public-name]  # existing name
     """Writes the entry point scripts of a distribution, replacing any existing file of the same name.
 
     :param target_dir: the directory the scripts are written to
@@ -273,7 +273,7 @@ class _ScriptMakerCustom(ScriptMaker):
     :var set_mode: ``True`` so the scripts are made executable
     :var variants: the script variants to write, inherited from ``ScriptMaker``
 
-    """  # simplint: ignore[function-docstring]  # existing public docs
+    """  # simplint: ignore[function-docstring]  # existing docs
 
     def __init__(self, target_dir: Path, version_info: tuple[int, ...], executable: Path, name: str) -> None:
         super().__init__(None, str(target_dir))

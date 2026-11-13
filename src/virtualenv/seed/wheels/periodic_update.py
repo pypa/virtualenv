@@ -37,15 +37,15 @@ if TYPE_CHECKING:
 
     from virtualenv.app_data.base import AppData, ContentStore
 
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 #: Delay before a newer wheel is picked up, so a CI run never sees its version change.
-_GRACE_PERIOD_CI: Final[timedelta] = timedelta(hours=1)  # prevent version switch in the middle of a CI run
+GRACE_PERIOD_CI: Final[timedelta] = timedelta(hours=1)  # simplint: ignore[module-variable-prefix]  # existing name
 #: Delay before a newer minor release of a wheel is picked up.
-_GRACE_PERIOD_MINOR: Final[timedelta] = timedelta(days=28)
+GRACE_PERIOD_MINOR: Final[timedelta] = timedelta(days=28)  # simplint: ignore[module-variable-prefix]  # existing name
 #: How often the periodic update checks PyPI for newer wheels.
-_UPDATE_PERIOD: Final[timedelta] = timedelta(days=14)
+UPDATE_PERIOD: Final[timedelta] = timedelta(days=14)  # simplint: ignore[module-variable-prefix]  # existing name
 #: An update that started longer ago than this is considered aborted.
-_UPDATE_ABORTED_DELAY: Final[timedelta] = timedelta(hours=1)
+UPDATE_ABORTED_DELAY: Final[timedelta] = timedelta(hours=1)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 # from_bundle passes these inputs through, and the update needs each one
@@ -74,13 +74,13 @@ def periodic_update(  # ruff:ignore[too-many-arguments]
 
     """
     if do_periodic_update:
-        _handle_auto_update(distribution, for_py_version, wheel, search_dirs, app_data, env)
+        handle_auto_update(distribution, for_py_version, wheel, search_dirs, app_data, env)
 
     now = datetime.now(tz=timezone.utc)
 
     def _update_wheel(ver: NewVersion) -> Wheel:
         updated_wheel = Wheel(app_data.house / ver.filename)
-        _LOGGER.debug("using %supdated wheel %s", "periodically " if updated_wheel else "", updated_wheel)
+        LOGGER.debug("using %supdated wheel %s", "periodically " if updated_wheel else "", updated_wheel)
         return updated_wheel
 
     u_log = UpdateLog.from_app_data(app_data, distribution, for_py_version)
@@ -90,7 +90,7 @@ def periodic_update(  # ruff:ignore[too-many-arguments]
 
 
 # same inputs as periodic_update, forwarded to trigger_update
-def _handle_auto_update(  # ruff:ignore[too-many-arguments]  # simplint: ignore[single-caller-helper]  # separate update scheduling
+def handle_auto_update(  # ruff:ignore[too-many-arguments]  # simplint: ignore[unexported-public-name]
     distribution: str,
     for_py_version: str,
     wheel: Wheel | None,
@@ -158,7 +158,7 @@ def trigger_update(  # ruff:ignore[too-many-arguments]  # the background update 
         kwargs["creationflags"] = CREATE_NO_WINDOW
     # kwargs mixes pipe and creationflags, which ty cannot match to one Popen overload
     process = Popen(cmd, **kwargs)  # ty: ignore[no-matching-overload]
-    _LOGGER.info(
+    LOGGER.info(
         "triggered periodic upgrade of %s%s (for python %s) via background process having PID %d",
         distribution,
         "" if wheel is None else f"=={wheel.version}",
@@ -200,11 +200,11 @@ def add_wheel_to_update_log(wheel: Wheel, for_py_version: str, app_data: AppData
     """
     embed_update_log = app_data.embed_update_log(wheel.distribution, for_py_version)
     # the disk store has a file attribute that ContentStore does not declare
-    _LOGGER.debug("adding %s information to %s", wheel.name, embed_update_log.file)  # ty: ignore[missing-attribute]
+    LOGGER.debug("adding %s information to %s", wheel.name, embed_update_log.file)  # ty: ignore[missing-attribute]
     u_log = UpdateLog.from_app_data(app_data, wheel.distribution, for_py_version)
     if any(version.filename == wheel.name for version in u_log.versions):
         # the disk store has a file attribute that ContentStore does not declare
-        _LOGGER.warning("%s already present in %s", wheel.name, embed_update_log.file)  # ty: ignore[missing-attribute]
+        LOGGER.warning("%s already present in %s", wheel.name, embed_update_log.file)  # ty: ignore[missing-attribute]
         return
     # we don't need a release date for sources other than "periodic"
     version = NewVersion(wheel.name, datetime.now(tz=timezone.utc), None, "download")
@@ -213,7 +213,7 @@ def add_wheel_to_update_log(wheel: Wheel, for_py_version: str, app_data: AppData
 
 
 #: Format of the datetimes stored in the update log.
-_DATETIME_FMT: Final[str] = "%Y-%m-%dT%H:%M:%S.%fZ"
+DATETIME_FMT: Final[str] = "%Y-%m-%dT%H:%M:%S.%fZ"  # simplint: ignore[module-variable-prefix]  # existing name
 _PyPIJson = dict[str, object]
 
 
@@ -225,7 +225,7 @@ def dump_datetime(value: datetime | None) -> str | None:
     :returns: the formatted text, ``None`` for ``None``
 
     """
-    return None if value is None else value.strftime(_DATETIME_FMT)
+    return None if value is None else value.strftime(DATETIME_FMT)
 
 
 def load_datetime(value: str | None) -> datetime | None:
@@ -236,7 +236,7 @@ def load_datetime(value: str | None) -> datetime | None:
     :returns: the UTC datetime, ``None`` for ``None``
 
     """
-    return None if value is None else datetime.strptime(value, _DATETIME_FMT).replace(tzinfo=timezone.utc)
+    return None if value is None else datetime.strptime(value, DATETIME_FMT).replace(tzinfo=timezone.utc)
 
 
 # source is reassigned after creation, so instances must not be hashed
@@ -321,9 +321,9 @@ class NewVersion:  # ruff:ignore[eq-without-hash]
         """
         if self.source == "manual":
             return True
-        if self.source == "periodic" and (self.found_date < now - _GRACE_PERIOD_CI or ignore_grace_period_ci):
+        if self.source == "periodic" and (self.found_date < now - GRACE_PERIOD_CI or ignore_grace_period_ci):
             if not ignore_grace_period_minor:
-                return now - (self.release_date or self.found_date) >= _GRACE_PERIOD_MINOR
+                return now - (self.release_date or self.found_date) >= GRACE_PERIOD_MINOR
             return True
         return False
 
@@ -363,7 +363,7 @@ class UpdateLog:
         except (AttributeError, KeyError, TypeError, ValueError):
             # another virtualenv version or an interrupted run can leave valid JSON of the wrong shape in the shared
             # app data; drop it as read() drops invalid JSON, since an empty log falls back to the bundled wheel
-            _LOGGER.warning("removing malformed embed update log of %s", distribution)
+            LOGGER.warning("removing malformed embed update log of %s", distribution)
             with suppress(OSError):  # another process may remove or rewrite the file at the same time
                 store.remove()
             return cls(None, None, [], None)
@@ -399,14 +399,14 @@ class UpdateLog:
         now = datetime.now(tz=timezone.utc)
         if self.completed is None:  # never completed
             return self._check_start(now)
-        if now - self.completed <= _UPDATE_PERIOD:
+        if now - self.completed <= UPDATE_PERIOD:
             return False
         return self._check_start(now)
 
     def _check_start(self, now: datetime) -> bool:
-        return self.started is None or now - self.started > _UPDATE_ABORTED_DELAY
+        return self.started is None or now - self.started > UPDATE_ABORTED_DELAY
 
-    def to_dict(self) -> dict[str, str | bool | list[dict[str, str | None]] | None]:
+    def to_dict(self) -> dict[str, object]:  # simplint: ignore[imprecise-annotation]  # public signature
         """Return the stored form of the update log.
 
         :returns: the update log as a dictionary
@@ -443,7 +443,7 @@ def verify_wheel_digest(wheel: Wheel) -> None:
     for delay in _DIGEST_RETRY_DELAYS:
         if expected is not None:
             break
-        _LOGGER.warning("could not obtain the sha256 of %s from PyPI, retrying in %s seconds", wheel.name, delay)
+        LOGGER.warning("could not obtain the sha256 of %s from PyPI, retrying in %s seconds", wheel.name, delay)
         _PYPI_CACHE.pop(wheel.distribution, None)
         sleep(delay)
         expected = _pypi_sha256_for_wheel(wheel)
@@ -482,14 +482,14 @@ def _pypi_get_distribution_info(distribution: str) -> _PyPIJson | None:
     # a failed metadata lookup is logged and treated as unavailable, not raised
     except Exception as exception:  # ruff:ignore[blind-except]
         # the log line carries the exception repr, a traceback adds nothing
-        _LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
+        LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
     return content
 
 
 def _request_context() -> Generator[ssl.SSLContext | None, None, None]:
     yield None
     if (setting := get_env_var("periodic_update_insecure", BoolType(bool, bool), os.environ)) and setting[0]:
-        _LOGGER.warning(
+        LOGGER.warning(
             "falling back to unverified HTTPS for PyPI metadata because VIRTUALENV_PERIODIC_UPDATE_INSECURE is enabled",
         )
         # the private helper is the only way to build an unverified context, opt-in only
@@ -503,7 +503,7 @@ def _fetch_pypi_json(url: str, context: ssl.SSLContext | None) -> _PyPIJson | No
             return json.load(file_handler)
     except URLError as exception:
         # the log line carries the exception repr, a traceback adds nothing
-        _LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
+        LOGGER.error("failed to access %s because %r", url, exception)  # ruff:ignore[error-instead-of-exception]
     return None
 
 
@@ -548,7 +548,7 @@ def _run_manual_upgrade(app_data: AppData, distribution: str, for_py_version: st
         do_periodic_update=False,
         env=env,
     )
-    _LOGGER.warning(
+    LOGGER.warning(
         "upgrade %s for python %s with current %s",
         distribution,
         for_py_version,
@@ -571,9 +571,9 @@ def _run_manual_upgrade(app_data: AppData, distribution: str, for_py_version: st
     ]
     if versions:
         args.append("\n".join(f"\t{v}" for v in versions))
-        _LOGGER.warning("upgraded %s for python %s in %s new entries found:\n%s", *args)
+        LOGGER.warning("upgraded %s for python %s in %s new entries found:\n%s", *args)
     else:
-        _LOGGER.warning("upgraded %s for python %s in %s no new versions found", *args)
+        LOGGER.warning("upgraded %s for python %s in %s no new versions found", *args)
 
 
 # the subprocess entry point takes the same six inputs as the generated call
@@ -601,7 +601,7 @@ def do_update(  # ruff:ignore[too-many-arguments]
     try:
         versions = _run_do_update(app_data, distribution, embed_filename, for_py_version, periodic, search_dirs)
     finally:
-        _LOGGER.debug("done %s %s with %s", distribution, for_py_version, versions)
+        LOGGER.debug("done %s %s with %s", distribution, for_py_version, versions)
     return versions
 
 
@@ -687,7 +687,7 @@ def _download_newer_versions(  # ruff:ignore[too-many-arguments]  # the download
             break
         release_date = release_date_for_wheel_path(dest.path)
         last = NewVersion(filename=dest.path.name, release_date=release_date, found_date=download_time, source=source)
-        _LOGGER.info("detected %s in %s", last, datetime.now(tz=timezone.utc) - download_time)
+        LOGGER.info("detected %s in %s", last, datetime.now(tz=timezone.utc) - download_time)
         versions.append(last)
         last_wheel = last.wheel
         last_version = last_wheel.version
@@ -715,7 +715,7 @@ def release_date_for_wheel_path(dest: Path) -> datetime | None:
         # a malformed release record must not abort the update, the error is logged
         except Exception as exception:  # ruff:ignore[blind-except]
             # the log line carries the exception repr, a traceback adds nothing
-            _LOGGER.error("could not load release date %s because %r", content, exception)  # ruff:ignore[error-instead-of-exception]
+            LOGGER.error("could not load release date %s because %r", content, exception)  # ruff:ignore[error-instead-of-exception]
     return None
 
 

@@ -22,9 +22,9 @@ class VirtualenvContent(ContentProvider):
 
     @staticmethod
     def _seeded(context: ProviderContext, wheel: PurePosixPath) -> list[Property]:
-        # the BUNDLE_SUPPORT table in catalog.py names the Python versions that seed each embedded wheel; it is read by
+        # the BUNDLE_SUPPORT table in __init__.py names the Python versions that seed each embedded wheel; it is read by
         # name, without importing the package
-        module = ast.parse(context.read(wheel.parent / "catalog.py").decode("utf-8"))
+        module = ast.parse(context.read(wheel.parent / "__init__.py").decode("utf-8"))
         support: dict[str, dict[str, str]] = ast.literal_eval(
             next(
                 node.value

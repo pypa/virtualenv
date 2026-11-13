@@ -11,7 +11,7 @@ from virtualenv.util.text import collapse_line_boundaries
 if TYPE_CHECKING:
     from pathlib import Path
 
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 # a plain value such as 3.14 or true would otherwise turn into a path whenever the working directory has an entry so
 # named
@@ -88,7 +88,7 @@ class PyEnvCfg:
     def write(self) -> None:
         """Write the key-value pairs to the file, quoting the prompt and absolutizing existing paths."""
         _validate_path(self.path)
-        _LOGGER.debug("write %s", self.path)
+        LOGGER.debug("write %s", self.path)
         text = ""
         for key, value in self.content.items():
             if key == "prompt" and value:
@@ -99,7 +99,7 @@ class PyEnvCfg:
             else:
                 normalized_value = value
             line = f"{collapse_line_boundaries(key)} = {collapse_line_boundaries(normalized_value)}"
-            _LOGGER.debug("\t%r", line)
+            LOGGER.debug("\t%r", line)
             text += line
             text += "\n"
         write_file(self.path, text.encode("utf-8"))

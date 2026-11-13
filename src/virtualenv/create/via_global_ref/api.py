@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from virtualenv.app_data.base import AppData
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 class ViaGlobalRefMeta(CreatorMeta):
@@ -162,10 +162,10 @@ class ViaGlobalRefApi(Creator, ABC):
             return
         if text := self.env_patch_text():
             pth = self.purelib / "_virtualenv.pth"
-            _LOGGER.debug("create virtualenv import hook file %s", pth)
+            LOGGER.debug("create virtualenv import hook file %s", pth)
             write_file(pth, b"import _virtualenv")
             dest_path = self.purelib / "_virtualenv.py"
-            _LOGGER.debug("create %s", dest_path)
+            LOGGER.debug("create %s", dest_path)
             write_file(dest_path, text.encode("utf-8"))
 
     def env_patch_text(self) -> str:

@@ -10,12 +10,12 @@ from typing import Final
 import pytest
 
 from virtualenv.app_data import AppDataDiskFolder
+from virtualenv.seed.wheels import embed
 from virtualenv.seed.wheels.bundle import from_bundle
 from virtualenv.seed.wheels.embed import (
     BUNDLE_FOLDER,
     BUNDLE_SHA256,
     BUNDLE_SUPPORT,
-    catalog,
     get_embed_wheel,
 )
 from virtualenv.seed.wheels.periodic_update import dump_datetime
@@ -124,6 +124,10 @@ def test_get_embed_wheel_verifies_pip(for_py_version: str) -> None:
     assert wheel is not None
 
 
+def test_get_embed_wheel_definition_module() -> None:
+    assert get_embed_wheel.__module__ == "virtualenv.seed.wheels.embed"
+
+
 def test_verify_bundled_wheel_rejects_tamper(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, for_py_version: str
 ) -> None:
@@ -131,8 +135,8 @@ def test_verify_bundled_wheel_rejects_tamper(
     (tmp_path / fake_name).write_bytes(b"not the real bytes")
     monkeypatch.setitem(BUNDLE_SHA256, fake_name, "0" * 64)
     monkeypatch.setitem(BUNDLE_SUPPORT, for_py_version, {"fake": fake_name})
-    monkeypatch.setattr(catalog, "BUNDLE_FOLDER", tmp_path)
-    monkeypatch.setattr("virtualenv.seed.wheels.embed.catalog._VERIFIED_WHEELS", set())
+    monkeypatch.setattr(embed, "BUNDLE_FOLDER", tmp_path)
+    monkeypatch.setattr(embed, "_VERIFIED_WHEELS", set())
 
     with pytest.raises(RuntimeError, match="sha256 mismatch"):
         get_embed_wheel("fake", for_py_version)
@@ -144,8 +148,8 @@ def test_verify_bundled_wheel_rejects_unknown(
     stray = tmp_path / "stray-0.0.1-py3-none-any.whl"
     stray.write_bytes(b"payload")
     monkeypatch.setitem(BUNDLE_SUPPORT, for_py_version, {"stray": stray.name})
-    monkeypatch.setattr(catalog, "BUNDLE_FOLDER", tmp_path)
-    monkeypatch.setattr("virtualenv.seed.wheels.embed.catalog._VERIFIED_WHEELS", set())
+    monkeypatch.setattr(embed, "BUNDLE_FOLDER", tmp_path)
+    monkeypatch.setattr(embed, "_VERIFIED_WHEELS", set())
 
     with pytest.raises(RuntimeError, match="no recorded sha256"):
         get_embed_wheel("stray", for_py_version)
@@ -163,11 +167,11 @@ def test_verify_bundled_wheel_reads_from_zipapp(
     with zipfile.ZipFile(str(fake_root), "w") as archive:
         archive.writestr(entry, wheel_payload)
 
-    monkeypatch.setattr(catalog, "IS_ZIPAPP", True)
-    monkeypatch.setattr(catalog, "ROOT", str(fake_root))
-    monkeypatch.setattr(catalog, "BUNDLE_FOLDER", fake_root / "virtualenv/seed/wheels/embed")
+    monkeypatch.setattr(embed, "IS_ZIPAPP", True)
+    monkeypatch.setattr(embed, "ROOT", str(fake_root))
+    monkeypatch.setattr(embed, "BUNDLE_FOLDER", fake_root / "virtualenv/seed/wheels/embed")
     monkeypatch.setitem(BUNDLE_SUPPORT, for_py_version, {"fakepkg": wheel_name})
     monkeypatch.setitem(BUNDLE_SHA256, wheel_name, hashlib.sha256(wheel_payload).hexdigest())
-    monkeypatch.setattr(catalog, "_VERIFIED_WHEELS", set())
+    monkeypatch.setattr(embed, "_VERIFIED_WHEELS", set())
 
     assert get_embed_wheel("fakepkg", for_py_version) is not None

@@ -21,7 +21,7 @@ from virtualenv.info import fs_supports_symlink
 from virtualenv.util import zipapp
 from virtualenv.util.lock import ReentrantFileLock
 from virtualenv.util.path import copy, ensure_within, safe_delete, symlink, write_file
-from virtualenv.util.subprocess import run_cmd
+from virtualenv.util.subprocess import LogCmd, run_cmd
 
 if os.name == "nt":
     from ctypes import wintypes
@@ -47,6 +47,14 @@ def _make_app_data_with_zero_umask(env: dict[str, str]) -> TempAppData | AppData
         return make_app_data(None, read_only=False, env=env)
     finally:
         os.umask(previous)
+
+
+def test_package_api_definition_modules() -> None:
+    assert (make_app_data.__module__, LogCmd.__module__, run_cmd.__module__) == (
+        "virtualenv.app_data",
+        "virtualenv.util.subprocess",
+        "virtualenv.util.subprocess",
+    )
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
@@ -108,7 +116,7 @@ def test_app_data_default_writable(app_data_default: Path) -> None:
 def test_app_data_permission_failure_uses_temporary(app_data_default: Path, mocker: MockerFixture) -> None:
     app_data_default.mkdir()
     app_data_default.chmod(0o777)
-    mocker.patch("virtualenv.app_data.factory.os.chmod", autospec=True, side_effect=PermissionError)
+    mocker.patch("virtualenv.app_data.os.chmod", autospec=True, side_effect=PermissionError)
     data: Final = make_app_data(None, read_only=False, env={})
     try:
         assert isinstance(data, TempAppData)
@@ -119,8 +127,8 @@ def test_app_data_permission_failure_uses_temporary(app_data_default: Path, mock
 
 @pytest.mark.parametrize("writable", [pytest.param(False, id="unwritable"), pytest.param(True, id="writable")])
 def test_app_data_explicit_create_failure(tmp_path: Path, mocker: MockerFixture, writable: bool) -> None:
-    mocker.patch("virtualenv.app_data.factory.os.makedirs", autospec=True, side_effect=PermissionError)
-    mocker.patch("virtualenv.app_data.factory.os.access", autospec=True, return_value=writable)
+    mocker.patch("virtualenv.app_data.os.makedirs", autospec=True, side_effect=PermissionError)
+    mocker.patch("virtualenv.app_data.os.access", autospec=True, return_value=writable)
     data: Final = make_app_data(str(tmp_path), read_only=False, env={})
     try:
         assert (data.transient, str(data) == str(tmp_path)) == (not writable, writable)
@@ -385,7 +393,9 @@ def test_environment_directories_report_replaced_junction(tmp_path: Path, caplog
 
 
 def test_run_fail(tmp_path) -> None:
-    code, out, err = run_cmd([str(tmp_path)])
+    result = run_cmd([str(tmp_path)])
+    assert type(result) is tuple
+    code, out, err = result
     assert err
     assert not out
     assert code
@@ -811,10 +821,8 @@ def test_app_data_setgid_keeps_group_write(app_data_default: Path, mode: int, ex
 def test_app_data_keeps_writable_non_owned_cache(app_data_default: Path, mocker: MockerFixture) -> None:
     app_data_default.mkdir()
     app_data_default.chmod(0o1777)
-    mocker.patch(
-        "virtualenv.app_data.factory.os.geteuid", autospec=True, return_value=app_data_default.stat().st_uid + 1
-    )
-    mocker.patch("virtualenv.app_data.factory.os.chmod", autospec=True, side_effect=PermissionError)
+    mocker.patch("virtualenv.app_data.os.geteuid", autospec=True, return_value=app_data_default.stat().st_uid + 1)
+    mocker.patch("virtualenv.app_data.os.chmod", autospec=True, side_effect=PermissionError)
     data: Final = make_app_data(None, read_only=False, env={})
     assert (isinstance(data, AppDataDiskFolder), str(data), app_data_default.stat().st_mode & 0o7777) == (
         True,

@@ -37,7 +37,7 @@ from .pyenv_cfg import PyEnvCfg
 HERE: Final[Path] = Path(os.path.abspath(__file__)).parent
 #: Script that reports debug information from an interpreter.
 DEBUG_SCRIPT: Final[Path] = HERE / "debug.py"
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 _DebugInfo = dict[str, Any]
@@ -138,7 +138,7 @@ class Creator(ABC):
             ...
 
     @property
-    def debug(self) -> _DebugInfo | None:
+    def debug(self) -> dict[str, Any] | None:  # simplint: ignore[imprecise-annotation]  # public signature
         """Debug information about the virtual environment (only valid after :meth:`create` has run)."""
         if self._debug is None and self.exe is not None:
             self._debug = get_env_debug_info(self.exe, self.debug_script(), self.app_data, self.env)
@@ -330,7 +330,7 @@ class Creator(ABC):
 
         """
         if self.dest.exists() and self.clear:
-            _LOGGER.debug("delete %s", self.dest)
+            LOGGER.debug("delete %s", self.dest)
             safe_delete(self.dest)
         self.create()
         self.add_cachedir_tag()
@@ -397,13 +397,13 @@ class Creator(ABC):
         ):  # unset: claim the default only for a project folder that has none yet
             return
         if redirect.is_symlink() or redirect.is_dir():
-            _LOGGER.debug("%s keeps being the default environment", redirect)
+            LOGGER.debug("%s keeps being the default environment", redirect)
             return
         if redirect.exists() and not self._points_at_virtualenv(redirect):
-            _LOGGER.debug("%s points at an environment virtualenv did not create, leaving it", redirect)
+            LOGGER.debug("%s points at an environment virtualenv did not create, leaving it", redirect)
             return
         if collapse_line_boundaries(self.dest.name) != self.dest.name or self.dest.name != self.dest.name.strip():
-            _LOGGER.warning(
+            LOGGER.warning(
                 "could not point %s at %s - the name contains a line boundary or surrounding whitespace",
                 redirect,
                 self.dest,
@@ -412,7 +412,7 @@ class Creator(ABC):
         try:
             write_file(redirect, f"{self.dest.name}\n".encode())
         except OSError as exc:
-            _LOGGER.warning("could not point %s at %s - %s", redirect, self.dest, exc)
+            LOGGER.warning("could not point %s at %s - %s", redirect, self.dest, exc)
 
     @staticmethod
     def _points_at_virtualenv(redirect: Path) -> bool:
@@ -426,7 +426,9 @@ class Creator(ABC):
             return False
 
 
-def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env: dict[str, str]) -> _DebugInfo:
+def get_env_debug_info(
+    env_exe: Path, debug_script: Path, app_data: AppData, env: dict[str, str]
+) -> dict[str, Any]:  # simplint: ignore[imprecise-annotation]  # public signature
     """Run the debug script with the interpreter at ``env_exe`` and return the report it prints.
 
     :param env_exe: the interpreter to run the script with
@@ -436,13 +438,13 @@ def get_env_debug_info(env_exe: Path, debug_script: Path, app_data: AppData, env
 
     :returns: the debug information
 
-    """
+    """  # simplint: ignore[function-docstring]  # existing docs
     env = env.copy()
     env.pop("PYTHONPATH", None)
 
     with app_data.ensure_extracted(debug_script) as debug_script_extracted:
         cmd = [str(env_exe), str(debug_script_extracted)]
-        _LOGGER.debug("debug via %r", LogCmd(cmd))
+        LOGGER.debug("debug via %r", LogCmd(cmd))
         code, out, err = run_cmd(cmd, env)
 
     try:
@@ -473,9 +475,6 @@ def _parse_debug_output(code: int, out: str, err: str) -> _DebugInfo:
 
 
 __all__ = [
-    "DEBUG_SCRIPT",
-    "HERE",
     "Creator",
     "CreatorMeta",
-    "get_env_debug_info",
 ]

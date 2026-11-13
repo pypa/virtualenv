@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from virtualenv.config.cli.parser import VirtualEnvOptions
     from virtualenv.run.session import Session
 
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing API
 
 
 def _run_as_module() -> None:
@@ -46,7 +46,7 @@ def run(
     if args is None:
         args = sys.argv[1:]
     try:
-        _LOGGER.warning(_LogSession(cli_run(args, options, env=env), start))
+        LOGGER.warning(LogSession(cli_run(args, options, env=env), start))
     except ProcessCallFailedError as exception:
         # the failed command is reported to the user as it was run
         print(f"subprocess call failed for {exception.cmd} with code {exception.code}")  # ruff:ignore[print]
@@ -67,7 +67,7 @@ def run(
         raise
 
 
-class _LogSession:
+class LogSession:  # simplint: ignore[unexported-public-name]  # existing import
     def __init__(self, session: Session, start: float) -> None:
         self.session = session
         self.start = start
@@ -103,7 +103,7 @@ def run_with_catch(args: list[str] | None = None, env: MutableMapping[str, str] 
         try:
             _exit_for_exception(options, exception)
         finally:
-            for handler in _LOGGER.handlers:  # force flush of log messages before the trace is printed
+            for handler in LOGGER.handlers:  # force flush of log messages before the trace is printed
                 handler.flush()
 
 
@@ -111,7 +111,7 @@ def _exit_for_exception(options: VirtualEnvOptions, exception: BaseException) ->
     if getattr(options, "with_traceback", False):
         raise exception
     if not (isinstance(exception, SystemExit) and exception.code == 0):
-        _LOGGER.error("%s: %s", type(exception).__name__, exception)
+        LOGGER.error("%s: %s", type(exception).__name__, exception)
     sys.exit(exception.code if isinstance(exception, SystemExit) else 1)
 
 

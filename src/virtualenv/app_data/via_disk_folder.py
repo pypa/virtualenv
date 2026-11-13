@@ -45,7 +45,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from pathlib import Path
 
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 class AppDataDiskFolder(AppData):
@@ -80,7 +80,7 @@ class AppDataDiskFolder(AppData):
 
     def reset(self) -> None:
         """Delete the whole app data folder."""
-        _LOGGER.debug("reset app data folder %s", self.lock.path)
+        LOGGER.debug("reset app data folder %s", self.lock.path)
         safe_delete(self.lock.path)
 
     def close(self) -> None:
@@ -214,7 +214,7 @@ class JSONStoreDisk(ContentStore, ABC):
         except Exception:  # ruff:ignore[blind-except, try-except-pass]
             pass
         else:
-            _LOGGER.debug("got %s %s from %s", *self.msg_args)
+            LOGGER.debug("got %s %s from %s", *self.msg_args)
             return data
         if bad_format:
             with suppress(OSError):  # reading and writing on the same file may cause race on multiple processes
@@ -224,7 +224,7 @@ class JSONStoreDisk(ContentStore, ABC):
     def remove(self) -> None:
         """Delete the JSON file."""
         self.file.unlink()
-        _LOGGER.debug("removed %s %s at %s", *self.msg_args)
+        LOGGER.debug("removed %s %s at %s", *self.msg_args)
 
     @contextmanager
     def locked(self) -> Generator[None]:
@@ -244,7 +244,7 @@ class JSONStoreDisk(ContentStore, ABC):
         """
         self.file.parent.mkdir(parents=True, exist_ok=True)
         self.file.write_text(json.dumps(content, sort_keys=True, indent=2), encoding="utf-8")
-        _LOGGER.debug("wrote %s %s at %s", *self.msg_args)
+        LOGGER.debug("wrote %s %s at %s", *self.msg_args)
 
 
 class PyInfoStoreDisk(JSONStoreDisk):
@@ -264,7 +264,7 @@ class PyInfoStoreDisk(JSONStoreDisk):
         super().__init__(in_folder, sha256(str(path).encode("utf-8")).hexdigest(), ("python info of", path))  # ty: ignore[invalid-argument-type]
 
 
-class EmbedDistributionUpdateStoreDisk(JSONStoreDisk):
+class EmbedDistributionUpdateStoreDisk(JSONStoreDisk):  # simplint: ignore[missing-from-all]  # existing local type
     """Update log of an embedded distribution, kept as a JSON file in the app data folder.
 
     :param in_folder: the lock of the folder the log lives in
@@ -282,7 +282,6 @@ class EmbedDistributionUpdateStoreDisk(JSONStoreDisk):
 
 __all__ = [
     "AppDataDiskFolder",
-    "EmbedDistributionUpdateStoreDisk",
     "JSONStoreDisk",
     "PyInfoStoreDisk",
 ]

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from collections.abc import Generator
     from types import TracebackType
 
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing name
 
 
 class _CountedFileLock(FileLock):
@@ -162,7 +162,7 @@ class ReentrantFileLock(PathLockBase):
         except Timeout:
             if no_block:
                 raise
-            _LOGGER.debug("lock file %s present, will block until released", lock.lock_file)
+            LOGGER.debug("lock file %s present, will block until released", lock.lock_file)
             lock.release()  # release the acquire try from above
             lock.acquire()
 
