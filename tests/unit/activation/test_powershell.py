@@ -22,6 +22,38 @@ _VENV_BIN_DIR: Final[str] = "Scripts" if IS_WIN else "bin"
 
 
 @pytest.mark.parametrize("powershell", _POWERSHELLS)
+@pytest.mark.parametrize("existing_pydoc", [False, True])
+@pytest.mark.parametrize("mode", ["once", "repeat", "switch"])
+def test_powershell_restores_pydoc(tmp_path: Path, powershell: str, existing_pydoc: bool, mode: str) -> None:
+    session = cli_run(["--no-seed", "--activators", "powershell", str(tmp_path / "env")])
+    activate = f". {PowerShellActivator.quote(str(session.creator.bin_dir / 'activate.ps1'))}"
+    lines = ["$ErrorActionPreference = 'Stop'"]
+    if existing_pydoc:
+        lines.append("function global:pydoc { 'original pydoc' }")
+    lines.append(activate)
+    if mode == "repeat":
+        lines.append(activate)
+    elif mode == "switch":
+        other = cli_run(["--no-seed", "--activators", "powershell", str(tmp_path / "other")])
+        lines.append(f". {PowerShellActivator.quote(str(other.creator.bin_dir / 'activate.ps1'))}")
+    lines.extend(["deactivate", "Write-Output (Test-Path function:pydoc)"])
+    if existing_pydoc:
+        lines.append("pydoc")
+    driver = tmp_path / "pydoc.ps1"
+    driver.write_text("\n".join(lines), encoding="utf-8-sig")
+    result = subprocess.run(
+        [powershell, "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", str(driver)],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        timeout=120,
+        check=False,
+    )
+    expected = ["True", "original pydoc"] if existing_pydoc else ["False"]
+    assert (result.returncode, result.stdout.splitlines(), result.stderr) == (0, expected, "")
+
+
+@pytest.mark.parametrize("powershell", _POWERSHELLS)
 def test_powershell_clears_pythonhome(tmp_path: Path, powershell: str) -> None:
     session = cli_run(["--no-seed", "--activators", "powershell", str(tmp_path / "env")])
     inherited = str(tmp_path / "missing-pythonhome")
