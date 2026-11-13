@@ -971,7 +971,7 @@ _MAX_SHEBANG_LENGTH: Final[int] = 512 if sys.platform == "darwin" else 127
 
 @pytest.mark.usefixtures("current_fastest")
 def test_create_long_path(tmp_path) -> None:
-    # filenames can be at most 255 long on macOS, so split to to levels
+    # filenames can be at most 255 long on macOS, so split to two levels
     count = _MAX_SHEBANG_LENGTH - len(str(tmp_path))
     folder = tmp_path / ("a" * (count // 2)) / ("b" * (count // 2)) / "c"
     folder.mkdir(parents=True)
