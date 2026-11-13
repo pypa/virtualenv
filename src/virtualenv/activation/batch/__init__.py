@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
 import os  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
+from types import MappingProxyType  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
 from typing import TYPE_CHECKING, Final  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
 
 from virtualenv.activation.via_template import ViaTemplateActivator  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
@@ -31,11 +32,13 @@ LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[
 # (0x1A) - confirmed on a real runner that `@set "VAR=a<Ctrl-Z>b"` sets `a` and then runs `b"` as the next command.
 _CMD_OPERATORS: Final[tuple[str, ...]] = ("&", "|", "<", ">", "^", "!", '"', "\x1a")  # simplint: ignore[init-module-content]  # preserve class module # fmt: skip
 
-_PATH_REPLACEMENT_NAMES: Final[dict[str, str]] = {  # simplint: ignore[init-module-content]  # keep API
-    "__VIRTUAL_ENV__": "the destination directory",
-    "__TCL_LIBRARY__": "the interpreter's Tcl library path",
-    "__TK_LIBRARY__": "the interpreter's Tk library path",
-}
+_PATH_REPLACEMENT_NAMES: Final[MappingProxyType[str, str]] = (
+    MappingProxyType({  # simplint: ignore[init-module-content]  # keep API
+        "__VIRTUAL_ENV__": "the destination directory",
+        "__TCL_LIBRARY__": "the interpreter's Tcl library path",
+        "__TK_LIBRARY__": "the interpreter's Tk library path",
+    })
+)
 
 
 class BatchActivator(ViaTemplateActivator):  # simplint: ignore[init-module-content]  # preserve class module # fmt: skip

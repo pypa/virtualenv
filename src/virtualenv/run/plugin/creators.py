@@ -17,22 +17,6 @@ if TYPE_CHECKING:
     from virtualenv.create.creator import Creator, CreatorMeta
 
 
-class CreatorInfo(NamedTuple):
-    """The creators available for an interpreter, with their metadata, the describer and the builtin creator name.
-
-    :param key_to_class: the creator classes keyed by their name
-    :param key_to_meta: the capability metadata of each creator, keyed by name
-    :param describe: the describer class, ``None`` when no describer applies
-    :param builtin_key: the name of the builtin creator
-
-    """
-
-    key_to_class: dict[str, type[Creator]]
-    key_to_meta: dict[str, CreatorMeta]
-    describe: type[Describe] | None
-    builtin_key: str
-
-
 class CreatorSelector(ComponentBuilder):
     """Select the creator of the environment from the creators that can handle the interpreter.
 
@@ -168,6 +152,22 @@ class CreatorSelector(ComponentBuilder):
             options.describe = self.describe(options, self.interpreter)  # ty: ignore[not-callable, invalid-argument-type]
         # the builder chain returns object from super().create in ty's view
         return super().create(options)  # ty: ignore[invalid-explicit-return]
+
+
+class CreatorInfo(NamedTuple):
+    """The creators available for an interpreter, with their metadata, the describer and the builtin creator name.
+
+    :param key_to_class: the creator classes keyed by their name
+    :param key_to_meta: the capability metadata of each creator, keyed by name
+    :param describe: the describer class, ``None`` when no describer applies
+    :param builtin_key: the name of the builtin creator
+
+    """
+
+    key_to_class: dict[str, type[Creator]]
+    key_to_meta: dict[str, CreatorMeta]
+    describe: type[Describe] | None
+    builtin_key: str
 
 
 __all__ = [

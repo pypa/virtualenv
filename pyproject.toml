@@ -289,25 +289,24 @@ lint.select = [
   "ALL",
 ]
 lint.ignore = [
-  "boolean-type-hint-positional-argument",  # boolean positional args - pre-existing signatures, changing would break public API
-  "CPY",                                    # No copyright header
-  "D10",                                    # no docstrings
-  "D40",                                    # no imperative mode for docstrings
-  "DOC",                                    # no restructuredtext support
-  "implicit-namespace-package",             # ignore implicit namespace packages
-  "incorrect-blank-line-before-class",      # `incorrect-blank-line-before-class` and `no-blank-line-before-class` are incompatible
-  "line-too-long",                          # line too long - handled by ruff format and docstrfmt
-  "missing-trailing-comma",                 # conflict with formatter
-  "multi-line-summary-second-line",         # multi-line-summary-second-line - conflicts with docstrfmt
-  "no-self-use",                            # Method could be a function, class method, or static method
-  "non-empty-init-module",                  # `__init__` module should only contain docstrings and re-exports
-  "PTH",                                    # no pathlib, <=39 has problems on Windows with absolute/resolve, can revisit once we no longer need 39
-  "subprocess-run-without-check",           # no need for check for subprocess
-  "subprocess-without-shell-equals-true",   # subprocess calls are fine
-  "suspicious-subprocess-import",           # Using subprocess is alright
-  "too-many-locals",                        # Too many local variables
-  "too-many-positional-arguments",          # Too many positional arguments
-  "unnecessary-regular-expression-compile", # conflicts with simplint inline-regex
+  "boolean-type-hint-positional-argument", # boolean positional args - pre-existing signatures, changing would break public API
+  "CPY",                                   # No copyright header
+  "D10",                                   # no docstrings
+  "D40",                                   # no imperative mode for docstrings
+  "DOC",                                   # no restructuredtext support
+  "implicit-namespace-package",            # ignore implicit namespace packages
+  "incorrect-blank-line-before-class",     # `incorrect-blank-line-before-class` and `no-blank-line-before-class` are incompatible
+  "line-too-long",                         # line too long - handled by ruff format and docstrfmt
+  "missing-trailing-comma",                # conflict with formatter
+  "multi-line-summary-second-line",        # multi-line-summary-second-line - conflicts with docstrfmt
+  "no-self-use",                           # Method could be a function, class method, or static method
+  "non-empty-init-module",                 # `__init__` module should only contain docstrings and re-exports
+  "PTH",                                   # no pathlib, <=39 has problems on Windows with absolute/resolve, can revisit once we no longer need 39
+  "subprocess-run-without-check",          # no need for check for subprocess
+  "subprocess-without-shell-equals-true",  # subprocess calls are fine
+  "suspicious-subprocess-import",          # Using subprocess is alright
+  "too-many-locals",                       # Too many local variables
+  "too-many-positional-arguments",         # Too many positional arguments
 ]
 lint.per-file-ignores."docs/**/*.py" = [
   "ANN", # don't require type annotations in docs scripts

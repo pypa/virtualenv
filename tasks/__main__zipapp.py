@@ -34,7 +34,6 @@ class _VersionPlatformSelect:
         self._zip_file = zipfile.ZipFile(zipapp)
         self.modules = self._load("modules.json")
         self.distributions = self._load("distributions.json")
-        self.__cache = {}
 
     def _load(self, of_file: str) -> dict[str, str]:
         version = ".".join(str(i) for i in sys.version_info[0:2])
@@ -154,9 +153,6 @@ class _VersionPlatformSelect:
         register_finder(self, lambda module: DistlibFinder(os.path.dirname(module.__file__), self))
 
 
-_VER_DISTRIBUTION_CLASS = None
-
-
 def _versioned_distribution_class() -> type:
     # a cache of the versioned class, filled on first use
     global _VER_DISTRIBUTION_CLASS  # ruff:ignore[global-statement]
@@ -178,6 +174,9 @@ def _versioned_distribution_class() -> type:
 
         _VER_DISTRIBUTION_CLASS = VersionedDistribution
     return _VER_DISTRIBUTION_CLASS
+
+
+_VER_DISTRIBUTION_CLASS = None
 
 
 class VersionedFindLoad(_VersionPlatformSelect, SourceLoader):  # simplint: ignore[unexported-public-name]  # zipapp bootstrap  # fmt: skip

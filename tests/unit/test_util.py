@@ -41,14 +41,6 @@ _DEFAULT_APP_DATA_ENVS: Final[list[pytest.ParameterSet]] = [
 ]
 
 
-def _make_app_data_with_zero_umask(env: dict[str, str]) -> TempAppData | AppDataDiskFolder:
-    previous: Final = os.umask(0)
-    try:
-        return make_app_data(None, read_only=False, env=env)
-    finally:
-        os.umask(previous)
-
-
 def test_package_api_definition_modules() -> None:
     assert (make_app_data.__module__, LogCmd.__module__, run_cmd.__module__) == (
         "virtualenv.app_data",
@@ -62,6 +54,14 @@ def test_package_api_definition_modules() -> None:
 def test_app_data_default_permissions_new(app_data_default: Path, env: dict[str, str]) -> None:
     data: Final = _make_app_data_with_zero_umask(env)
     assert (str(data), app_data_default.stat().st_mode & 0o777) == (str(app_data_default), 0o700)
+
+
+def _make_app_data_with_zero_umask(env: dict[str, str]) -> TempAppData | AppDataDiskFolder:
+    previous: Final = os.umask(0)
+    try:
+        return make_app_data(None, read_only=False, env=env)
+    finally:
+        os.umask(previous)
 
 
 @pytest.mark.skipif(os.name != "posix", reason="POSIX directory permission bits")
@@ -417,6 +417,8 @@ def test_safe_delete_removes_read_only_files(tmp_path: Path) -> None:
 
 def test_safe_delete_missing_path_is_noop(tmp_path: Path) -> None:
     safe_delete(tmp_path / "does-not-exist")  # --reset-app-data before anything was cached
+
+    assert list(tmp_path.iterdir()) == []
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="only Windows blocks deleting an open file")

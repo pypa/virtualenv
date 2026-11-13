@@ -24,18 +24,6 @@ if TYPE_CHECKING:
     from .ref import PathRef
 
 
-class BuiltinViaGlobalRefMeta(ViaGlobalRefMeta):
-    """Capability metadata that also lists the files the environment links to or copies.
-
-    :var sources: the references to the host files, in the order they are applied
-
-    """
-
-    def __init__(self) -> None:
-        super().__init__()
-        self.sources: list[PathRef] = []
-
-
 class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
     """Built-in creator that links or copies the executables and libraries of a global interpreter.
 
@@ -197,6 +185,18 @@ class ViaGlobalRefVirtualenvBuiltin(ViaGlobalRefApi, VirtualenvBuiltin, ABC):
         :param venv_creator: the ``venv`` creator that built the environment
 
         """
+
+
+class BuiltinViaGlobalRefMeta(ViaGlobalRefMeta):
+    """Capability metadata that also lists the files the environment links to or copies.
+
+    :var sources: the references to the host files, in the order they are applied
+
+    """
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.sources: list[PathRef] = []
 
 
 __all__ = [

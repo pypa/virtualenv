@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar, Final
 
 if TYPE_CHECKING:
@@ -144,7 +145,7 @@ def convert(value: str, as_type: TypeData, source: str) -> Any:  # ruff:ignore[a
         raise
 
 
-_CONVERT: Final[dict[type, type]] = {bool: BoolType, type(None): NoneType, list: ListType}
+_CONVERT: Final[MappingProxyType[type, type]] = MappingProxyType({bool: BoolType, type(None): NoneType, list: ListType})
 
 
 def get_type(action: Action) -> TypeData:

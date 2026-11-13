@@ -29,14 +29,14 @@ def project_redirect(redirect: Path) -> Path:
     return redirect
 
 
-def _create(dest: Path, *args: str) -> None:
-    cli_run([str(dest), "--without-pip", "--activators", "", *args], setup_logging=False)
-
-
 def test_venv_redirect_auto_skips_folder_without_pyproject(redirect: Path) -> None:
     _create(redirect.parent / "env")
 
     assert not redirect.exists()
+
+
+def _create(dest: Path, *args: str) -> None:
+    cli_run([str(dest), "--without-pip", "--activators", "", *args], setup_logging=False)
 
 
 def test_venv_redirect_auto_keeps_existing_redirect(project_redirect: Path) -> None:

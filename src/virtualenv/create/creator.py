@@ -422,7 +422,7 @@ class Creator(ABC):
             # Universal newlines already turned \r\n into \n.
             line: Final[str] = redirect.read_text(encoding="utf-8").removesuffix("\n")
             return bool(line) and "virtualenv" in PyEnvCfg.from_folder(redirect.parent / line)
-        except (OSError, UnicodeDecodeError, ValueError):  # unreadable, so not a redirect virtualenv can claim
+        except (OSError, ValueError):  # unreadable, so not a redirect virtualenv can claim
             return False
 
 
