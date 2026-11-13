@@ -418,6 +418,8 @@ def test_safe_delete_removes_read_only_files(tmp_path: Path) -> None:
 def test_safe_delete_missing_path_is_noop(tmp_path: Path) -> None:
     safe_delete(tmp_path / "does-not-exist")  # --reset-app-data before anything was cached
 
+    assert list(tmp_path.iterdir()) == []
+
 
 @pytest.mark.skipif(sys.platform != "win32", reason="only Windows blocks deleting an open file")
 def test_safe_delete_surfaces_undeletable_entries(tmp_path: Path) -> None:
