@@ -409,9 +409,8 @@ def add_wheel_to_update_log(wheel: Wheel, for_py_version: str, app_data: AppData
         # the disk store has a file attribute that ContentStore does not declare
         LOGGER.warning("%s already present in %s", wheel.name, embed_update_log.file)  # ty: ignore[missing-attribute]
         return
-    # we don't need a release date for sources other than "periodic"
-    version = NewVersion(wheel.name, datetime.now(tz=timezone.utc), None, "download")
-    u_log.versions.append(version)  # always write at the end for proper updates
+    # we don't need a release date for sources other than "periodic"; always write at the end for proper updates
+    u_log.versions.append(NewVersion(wheel.name, datetime.now(tz=timezone.utc), None, "download"))
     embed_update_log.write(u_log.to_dict())
 
 
