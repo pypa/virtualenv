@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Final
 from urllib.request import Request, urlopen
 
 if TYPE_CHECKING:
-    from _hashlib import HASH
     from typing import NotRequired, TypedDict
 
     class _Pin(TypedDict):
@@ -130,7 +129,7 @@ def _pin_assets(token: str, repository: str, tag: str, patterns: dict[str, str])
 
 
 def _sha256(repository: str, asset_id: int) -> str:
-    digest: Final[HASH] = hashlib.sha256()
+    digest: Final = hashlib.sha256()
     # no token: the API redirects to a signed storage URL, and urllib would forward the Authorization header there
     with urlopen(
         Request(
@@ -144,6 +143,9 @@ def _sha256(repository: str, asset_id: int) -> str:
     return digest.hexdigest()
 
 
+_NEWEST_NPM_VERSION_PATTERN: Final[re.Pattern[str]] = re.compile(r"\d+\.\d+\.\d+")
+
+
 def _newest_npm_version(package: str, pinned: str) -> str:
     with urlopen(Request(f"https://registry.npmjs.org/{package}"), timeout=30) as response:
         metadata: Final[_NpmPackage] = json.load(response)
@@ -155,7 +157,7 @@ def _newest_npm_version(package: str, pinned: str) -> str:
             *(
                 version
                 for version, published in metadata["time"].items()
-                if re.fullmatch(r"\d+\.\d+\.\d+", version)
+                if _NEWEST_NPM_VERSION_PATTERN.fullmatch(version)
                 and datetime.strptime(published, "%Y-%m-%dT%H:%M:%S.%f%z") <= cutoff
                 and version in metadata["versions"]
                 and not metadata["versions"][version].get("deprecated")

@@ -8,6 +8,6 @@ index 2fd3ac26..5347c551 100644
                  resolved: Final = entry.parent.resolve() / entry.name if linked else entry.resolve()
 -                if root not in resolved.parents or resolved in metadata_parents:
 +                if resolved in metadata_parents:
-                     LOGGER.warning(
+                     _LOGGER.warning(
                          "skip removal of %s listed by %s: not inside environment %s or a parent of the metadata",
                          entry,

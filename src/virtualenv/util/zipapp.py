@@ -7,8 +7,7 @@ from typing import Final
 
 from virtualenv.info import ROOT
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 def read(full_path: str | Path) -> str:
@@ -47,7 +46,7 @@ def extract(full_path: str | Path, dest: Path) -> None:
     :param dest: the destination file
 
     """
-    LOGGER.debug("extract %s to %s", full_path, dest)
+    _LOGGER.debug("extract %s to %s", full_path, dest)
     sub_file = _get_path_within_zip(full_path)
     with zipfile.ZipFile(ROOT, "r") as zip_file:
         info = zip_file.getinfo(sub_file)
@@ -56,7 +55,6 @@ def extract(full_path: str | Path, dest: Path) -> None:
 
 
 __all__ = [
-    "LOGGER",
     "extract",
     "read",
 ]

@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
 #: Logs the reasons a batch activation script is skipped.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 # cmd.exe's own command-line parser looks for these regardless of surrounding quotes: confirmed on a
 # real Windows runner that `@set "VAR=x & cmd"` still runs `cmd` as a second statement even though the
@@ -74,7 +74,7 @@ class BatchActivator(ViaTemplateActivator):
         values = super().replacements(creator, creator.bin_dir)
         if problems := [reason for key in _PATH_REPLACEMENT_NAMES if (reason := _unsafe_path_reason(key, values[key]))]:
             for problem in problems:
-                LOGGER.log(
+                _LOGGER.log(
                     logging.WARNING if selected else logging.DEBUG, "skipping batch activation scripts: %s", problem
                 )
             for template in self.templates():
@@ -152,6 +152,5 @@ def _unsafe_path_reason(key: str, value: str) -> str | None:
 
 
 __all__ = [
-    "LOGGER",
     "BatchActivator",
 ]

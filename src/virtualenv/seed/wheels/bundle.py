@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import chain
 from typing import TYPE_CHECKING
 
 from .embed import get_embed_wheel
@@ -45,7 +46,12 @@ def from_bundle(  # ruff:ignore[too-many-arguments]
             wheel = periodic_update(distribution, of_version, for_py_version, wheel, search_dirs, app_data, per, env)
 
         # 3. acquire from extra search dir
-        found_wheel = from_dir(distribution, of_version, for_py_version, search_dirs)
+        found_wheel = next(
+            chain.from_iterable(
+                discover_wheels(folder, distribution, of_version, for_py_version) for folder in search_dirs
+            ),
+            None,
+        )
         if found_wheel is not None and (wheel is None or found_wheel.parsed_version > wheel.parsed_version):
             wheel = found_wheel
     return wheel
@@ -73,25 +79,7 @@ def load_embed_wheel(app_data: AppData, distribution: str, for_py_version: str, 
     return wheel
 
 
-def from_dir(distribution: str, version: str | None, for_py_version: str, directories: list[Path]) -> Wheel | None:
-    """Return the first wheel of the distribution found in the folders, or ``None`` when there is none.
-
-    :param distribution: the name of the distribution
-    :param version: the version to find, ``None`` for any
-    :param for_py_version: the Python version the wheel must support
-    :param directories: the folders to search, in order
-
-    :returns: the wheel, or ``None``
-
-    """
-    for folder in directories:
-        for wheel in discover_wheels(folder, distribution, version, for_py_version):
-            return wheel
-    return None
-
-
 __all__ = [
     "from_bundle",
-    "from_dir",
     "load_embed_wheel",
 ]

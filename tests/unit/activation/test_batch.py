@@ -267,7 +267,7 @@ def batch_python(activation_python) -> None:
         pytest.skip("Batch activation does not support this destination")
 
 
-@pytest.mark.parametrize("activations", [1, 2], ids=["activate_once", "activate_twice"])
+@pytest.mark.parametrize("activations", [pytest.param(1, id="activate_once"), pytest.param(2, id="activate_twice")])
 @pytest.mark.usefixtures("batch_python")
 def test_batch(activation_tester_class, activation_tester, tmp_path, activations) -> None:
     version_script = tmp_path / "version.bat"

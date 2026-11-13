@@ -30,7 +30,7 @@ def test_race_condition_simulation(tmp_path) -> None:
         sys.modules.pop("_virtualenv", None)
         try:
             # the import itself is the check that the module loads
-            import _virtualenv  # ruff:ignore[unused-import, import-outside-top-level]
+            import _virtualenv  # ruff:ignore[unused-import, import-outside-top-level, import-private-name]  # simplint: ignore[private-import-path]  # startup hook  # fmt: skip
 
             importlib.util.find_spec("distutils.dist")
         finally:

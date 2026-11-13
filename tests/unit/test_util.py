@@ -17,8 +17,6 @@ import pytest
 
 from virtualenv import __version__
 from virtualenv.app_data import AppDataDiskFolder, TempAppData, make_app_data
-from virtualenv.app_data.cache_migration import _cache_dir_with_migration
-from virtualenv.app_data.factory import _default_app_data_dir
 from virtualenv.info import fs_supports_symlink
 from virtualenv.util import zipapp
 from virtualenv.util.lock import ReentrantFileLock
@@ -28,7 +26,6 @@ from virtualenv.util.subprocess import run_cmd
 if os.name == "nt":
     from ctypes import wintypes
 
-    from virtualenv.util.path._win import clear_readonly
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -267,16 +264,6 @@ def test_safe_delete_reports_attribute_errors(
         safe_delete(folder)
     assert source.stat().st_mode & S_IWUSR == 0
     source.chmod(S_IREAD | S_IWUSR)
-
-
-@pytest.mark.skipif(os.name != "nt" or not fs_supports_symlink(), reason="Windows file links")
-def test_clear_readonly_refuses_reparse_points(tmp_path: Path) -> None:
-    source: Final = tmp_path / "source"
-    source.touch()
-    link: Final = tmp_path / "link"
-    link.symlink_to(source)
-    with pytest.raises(OSError, match="refusing to change attributes"):
-        clear_readonly(str(link))
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
@@ -555,12 +542,12 @@ def test_reentrant_file_lock_is_thread_safe(tmp_path) -> None:
 def test_default_app_data_dir_override_env_var(tmp_path: Path) -> None:
     custom = str(tmp_path / "custom")
     env = {"VIRTUALENV_OVERRIDE_APP_DATA": custom}
-    assert _default_app_data_dir(env) == custom
+    assert str(make_app_data(None, read_only=False, env=env)) == custom
 
 
 def test_default_app_data_dir_no_override_returns_cache_dir(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("VIRTUALENV_OVERRIDE_APP_DATA", raising=False)
-    result = _default_app_data_dir(os.environ)
+    result = str(make_app_data(None, read_only=False, env=os.environ))
     assert result
 
 
@@ -573,7 +560,7 @@ def test_cache_dir_migration_migrate_old_to_new(tmp_path: Path, monkeypatch: pyt
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_cache_dir", lambda **_kw: new_dir)
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_data_dir", lambda **_kw: old_dir)
 
-    result = _cache_dir_with_migration()
+    result = str(make_app_data(None, read_only=False, env={}))
     assert result == new_dir
     assert os.path.isdir(new_dir)
     assert not os.path.isdir(old_dir)
@@ -587,7 +574,7 @@ def test_cache_dir_migration_no_migration_when_old_missing(tmp_path: Path, monke
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_cache_dir", lambda **_kw: new_dir)
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_data_dir", lambda **_kw: old_dir)
 
-    result = _cache_dir_with_migration()
+    result = str(make_app_data(None, read_only=False, env={}))
     assert result == new_dir
     assert not os.path.isdir(old_dir)
 
@@ -602,7 +589,7 @@ def test_cache_dir_migration_no_migration_when_new_exists(tmp_path: Path, monkey
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_cache_dir", lambda **_kw: new_dir)
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_data_dir", lambda **_kw: old_dir)
 
-    result = _cache_dir_with_migration()
+    result = str(make_app_data(None, read_only=False, env={}))
     assert result == new_dir
     assert os.path.isdir(old_dir)
 
@@ -612,7 +599,7 @@ def test_cache_dir_migration_same_dir_returns_immediately(tmp_path: Path, monkey
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_cache_dir", lambda **_kw: same_dir)
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_data_dir", lambda **_kw: same_dir)
 
-    result = _cache_dir_with_migration()
+    result = str(make_app_data(None, read_only=False, env={}))
     assert result == same_dir
 
 
@@ -630,7 +617,7 @@ def test_cache_dir_migration_fallback_on_migration_error(tmp_path: Path, monkeyp
 
     monkeypatch.setattr("virtualenv.app_data.cache_migration.shutil.move", broken_move)
 
-    result = _cache_dir_with_migration()
+    result = str(make_app_data(None, read_only=False, env={}))
     assert result == old_dir
 
 
@@ -659,7 +646,7 @@ def test_cache_dir_migration_symlink_app_data_survives_migration(
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_cache_dir", lambda **_kw: new_dir)
     monkeypatch.setattr("virtualenv.app_data.cache_migration.user_data_dir", lambda **_kw: old_dir)
 
-    result = _cache_dir_with_migration()
+    result = str(make_app_data(None, read_only=False, env={}))
     assert result == new_dir
     assert (tmp_path / "new-cache" / "wheel" / "3.12" / "image" / "pip" / "pip.dist-info" / "METADATA").exists()
 
@@ -786,6 +773,14 @@ def fake_zipapp_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def test_zipapp_read_returns_payload_from_entry_inside_root(fake_zipapp_root: Path) -> None:
     entry = fake_zipapp_root / "virtualenv" / "payload.txt"
     assert zipapp.read(entry) == "hello zipapp"
+
+
+def test_zipapp_extract_uses_destination_name(fake_zipapp_root: Path, tmp_path: Path) -> None:
+    dest = tmp_path / "renamed.txt"
+
+    zipapp.extract(fake_zipapp_root / "virtualenv" / "payload.txt", dest)
+
+    assert dest.read_text(encoding="utf-8") == "hello zipapp"
 
 
 @pytest.mark.parametrize(

@@ -15,7 +15,6 @@ from python_discovery import PythonInfo
 
 from virtualenv.app_data import AppDataDiskFolder
 from virtualenv.info import IS_GRAALPY, IS_PYPY, IS_RUSTPYTHON, IS_WIN, fs_supports_symlink
-from virtualenv.report import LOGGER
 
 # the build and CI tooling tests do not depend on the interpreter; the tasks tox environment runs them once
 collect_ignore: Final[list[str]] = ["tasks"]
@@ -89,7 +88,7 @@ def link_folder(has_symlink_support):
         return os.symlink
     if sys.platform == "win32":
         # on Windows junctions may be used instead
-        import _winapi  # ruff:ignore[import-outside-top-level]
+        import _winapi  # ruff:ignore[import-outside-top-level, import-private-name]  # simplint: ignore[private-import-path]  # junction API  # fmt: skip
 
         return getattr(_winapi, "CreateJunction", None)
     return None
@@ -125,17 +124,18 @@ def link(link_folder, link_file):
 
 @pytest.fixture(autouse=True)
 def _ensure_logging_stable():
-    logger_level = LOGGER.level
-    handlers = list(LOGGER.handlers)
+    logger = logging.getLogger()
+    logger_level = logger.level
+    handlers = list(logger.handlers)
     filelock_logger = logging.getLogger("filelock")
     fl_level = filelock_logger.level
     yield
     filelock_logger.setLevel(fl_level)
-    for handler in LOGGER.handlers:
-        LOGGER.removeHandler(handler)
+    for handler in logger.handlers:
+        logger.removeHandler(handler)
     for handler in handlers:
-        LOGGER.addHandler(handler)
-    LOGGER.setLevel(logger_level)
+        logger.addHandler(handler)
+    logger.setLevel(logger_level)
 
 
 @pytest.fixture(autouse=True)

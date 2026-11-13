@@ -19,8 +19,7 @@ from .store import handle_store_python
 if TYPE_CHECKING:
     from virtualenv.config.cli.parser import VirtualEnvOptions
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class Venv(ViaGlobalRefApi):
@@ -43,7 +42,9 @@ class Venv(ViaGlobalRefApi):
         self.can_be_inline = interpreter is current and interpreter.executable == interpreter.system_executable
         self._context = None
 
-    def __getattribute__(self, item: str) -> object:  # simplint: ignore[SMP602]  # proxied attributes differ in type
+    def __getattribute__(
+        self, item: str
+    ) -> object:  # simplint: ignore[imprecise-annotation]  # proxied attributes differ in type
         if (describe := object.__getattribute__(self, "describe")) is not None and hasattr(describe, item):
             element = getattr(describe, item)
             if not callable(element) or item == "script":
@@ -110,7 +111,7 @@ class Venv(ViaGlobalRefApi):
 
         """
         cmd = self.get_host_create_cmd()
-        LOGGER.info("using host built-in venv to create via %s", " ".join(cmd))
+        _LOGGER.info("using host built-in venv to create via %s", " ".join(cmd))
         code, out, err = run_cmd(cmd)
         if code != 0:
             raise ProcessCallFailedError(code, out, err, cmd)
@@ -136,7 +137,7 @@ class Venv(ViaGlobalRefApi):
             cmd.append("--system-site-packages")
         cmd.extend(("--symlinks" if self.symlinks else "--copies", str(self.dest)))
         # system_executable is optional in PythonInfo, so the command list is list[str | None]
-        return cmd  # ty: ignore[invalid-return-type]
+        return cmd  # ty: ignore[invalid-explicit-return]
 
     @classmethod
     def validate_dest(cls, raw_value: str) -> str:
@@ -171,6 +172,5 @@ class Venv(ViaGlobalRefApi):
 
 
 __all__ = [
-    "LOGGER",
     "Venv",
 ]

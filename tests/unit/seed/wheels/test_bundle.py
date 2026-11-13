@@ -18,7 +18,6 @@ from virtualenv.seed.wheels.embed import (
     catalog,
     get_embed_wheel,
 )
-from virtualenv.seed.wheels.embed.catalog import _verify_bundled_wheel
 from virtualenv.seed.wheels.periodic_update import dump_datetime
 from virtualenv.seed.wheels.util import Version, Wheel
 
@@ -72,7 +71,13 @@ def test_version_pinned_not_found(app_data, for_py_version) -> None:
 
 
 @pytest.mark.parametrize(
-    "spelling", ["{}", "{}.0", "v{}", " {} "], ids=["exact", "trailing-zero", "v-prefix", "whitespace"]
+    "spelling",
+    [
+        pytest.param("{}", id="exact"),
+        pytest.param("{}.0", id="trailing-zero"),
+        pytest.param("v{}", id="v-prefix"),
+        pytest.param(" {} ", id="whitespace"),
+    ],
 )
 def test_version_pinned_is_embed(app_data: AppDataDiskFolder, for_py_version: str, spelling: str) -> None:
     expected_wheel: Final[Wheel | None] = get_embed_wheel("pip", for_py_version)
@@ -84,7 +89,7 @@ def test_version_pinned_is_embed(app_data: AppDataDiskFolder, for_py_version: st
     assert wheel.name == expected_wheel.name
 
 
-@pytest.mark.parametrize("spelling", ["{}", "{}.0"], ids=["exact", "trailing-zero"])
+@pytest.mark.parametrize("spelling", [pytest.param("{}", id="exact"), pytest.param("{}.0", id="trailing-zero")])
 def test_version_pinned_in_app_data(
     app_data: AppDataDiskFolder, for_py_version: str, next_pip_wheel: Wheel, spelling: str
 ) -> None:
@@ -119,27 +124,36 @@ def test_get_embed_wheel_verifies_pip(for_py_version: str) -> None:
     assert wheel is not None
 
 
-def test_verify_bundled_wheel_rejects_tamper(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_verify_bundled_wheel_rejects_tamper(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, for_py_version: str
+) -> None:
     fake_name = "fake-0.0.1-py3-none-any.whl"
-    fake = tmp_path / fake_name
-    fake.write_bytes(b"not the real bytes")
+    (tmp_path / fake_name).write_bytes(b"not the real bytes")
     monkeypatch.setitem(BUNDLE_SHA256, fake_name, "0" * 64)
+    monkeypatch.setitem(BUNDLE_SUPPORT, for_py_version, {"fake": fake_name})
+    monkeypatch.setattr(catalog, "BUNDLE_FOLDER", tmp_path)
     monkeypatch.setattr("virtualenv.seed.wheels.embed.catalog._VERIFIED_WHEELS", set())
 
     with pytest.raises(RuntimeError, match="sha256 mismatch"):
-        _verify_bundled_wheel(fake)
+        get_embed_wheel("fake", for_py_version)
 
 
-def test_verify_bundled_wheel_rejects_unknown(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_verify_bundled_wheel_rejects_unknown(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, for_py_version: str
+) -> None:
     stray = tmp_path / "stray-0.0.1-py3-none-any.whl"
     stray.write_bytes(b"payload")
+    monkeypatch.setitem(BUNDLE_SUPPORT, for_py_version, {"stray": stray.name})
+    monkeypatch.setattr(catalog, "BUNDLE_FOLDER", tmp_path)
     monkeypatch.setattr("virtualenv.seed.wheels.embed.catalog._VERIFIED_WHEELS", set())
 
     with pytest.raises(RuntimeError, match="no recorded sha256"):
-        _verify_bundled_wheel(stray)
+        get_embed_wheel("stray", for_py_version)
 
 
-def test_verify_bundled_wheel_reads_from_zipapp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_verify_bundled_wheel_reads_from_zipapp(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, for_py_version: str
+) -> None:
     # Simulate the layout we get when virtualenv runs out of a ``.pyz``: the wheel lives inside the zipapp rather
     # than on disk, so the hash check has to read it through ``zipfile`` rather than ``path.open``.
     fake_root = tmp_path / "virtualenv.pyz"
@@ -151,7 +165,9 @@ def test_verify_bundled_wheel_reads_from_zipapp(tmp_path: Path, monkeypatch: pyt
 
     monkeypatch.setattr(catalog, "IS_ZIPAPP", True)
     monkeypatch.setattr(catalog, "ROOT", str(fake_root))
+    monkeypatch.setattr(catalog, "BUNDLE_FOLDER", fake_root / "virtualenv/seed/wheels/embed")
+    monkeypatch.setitem(BUNDLE_SUPPORT, for_py_version, {"fakepkg": wheel_name})
     monkeypatch.setitem(BUNDLE_SHA256, wheel_name, hashlib.sha256(wheel_payload).hexdigest())
     monkeypatch.setattr(catalog, "_VERIFIED_WHEELS", set())
 
-    _verify_bundled_wheel(fake_root / entry)
+    assert get_embed_wheel("fakepkg", for_py_version) is not None

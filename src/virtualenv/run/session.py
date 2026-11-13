@@ -23,8 +23,7 @@ if sys.version_info >= (3, 11):
 else:
     from typing_extensions import Self
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class Session:
@@ -80,14 +79,14 @@ class Session:
         self.creator.pyenv_cfg.write()
 
     def _create(self) -> None:
-        LOGGER.info("create virtual environment via %s", self.creator)
+        _LOGGER.info("create virtual environment via %s", self.creator)
         self.creator.run()
-        LOGGER.debug(_DEBUG_MARKER)
-        LOGGER.debug("%s", _Debug(self.creator))
+        _LOGGER.debug(_DEBUG_MARKER)
+        _LOGGER.debug("%s", _Debug(self.creator))
 
     def _seed(self) -> None:
         if self.seeder is not None and self.seeder.enabled:
-            LOGGER.info("add seed packages via %s", self.seeder)
+            _LOGGER.info("add seed packages via %s", self.seeder)
             self.seeder.run(self.creator)
 
     @property
@@ -102,7 +101,7 @@ class Session:
             BatchActivator(VirtualEnvOptions(prompt=None)).remove_unsafe(self.creator, selected=False)
         if self.activators:
             active = ", ".join(type(i).__name__.replace("Activator", "") for i in self.activators)
-            LOGGER.info("add activators for %s", active)
+            _LOGGER.info("add activators for %s", active)
             self._activators = [activator for activator in self.activators if activator.generate(self.creator)]
 
     @property
@@ -133,6 +132,5 @@ _DEBUG_MARKER: Final[str] = f"{'=' * 30} target debug {'=' * 30}"
 
 
 __all__ = [
-    "LOGGER",
     "Session",
 ]

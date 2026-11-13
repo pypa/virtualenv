@@ -2,7 +2,7 @@ diff --git a/src/virtualenv/create/pyenv_cfg.py b/src/virtualenv/create/pyenv_cf
 --- a/src/virtualenv/create/pyenv_cfg.py
 +++ b/src/virtualenv/create/pyenv_cfg.py
 @@ -103,7 +103,7 @@
-             LOGGER.debug("\t%r", line)
+             _LOGGER.debug("\t%r", line)
              text += line
              text += "\n"
 -        write_file(self.path, text.encode("utf-8"))

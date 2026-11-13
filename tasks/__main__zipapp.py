@@ -180,9 +180,7 @@ def _versioned_distribution_class() -> type:
     return _VER_DISTRIBUTION_CLASS
 
 
-class VersionedFindLoad(  # simplint: ignore[SMP403]  # the zipapp bootstrap looks this class up by name
-    _VersionPlatformSelect, SourceLoader
-):
+class VersionedFindLoad(_VersionPlatformSelect, SourceLoader):  # simplint: ignore[unexported-public-name]  # zipapp bootstrap  # fmt: skip
     def __enter__(self) -> Self:
         sys.path.insert(0, self.archive)
         sys.meta_path.insert(0, self)

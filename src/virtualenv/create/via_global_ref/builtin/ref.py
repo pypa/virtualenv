@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 
     from virtualenv.create.creator import Creator
 
+
 if sys.version_info >= (3, 11):  # pragma: no cover (py311+)
     from enum import StrEnum
 else:  # pragma: no cover (py311+)

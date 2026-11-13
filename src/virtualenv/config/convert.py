@@ -8,8 +8,7 @@ if TYPE_CHECKING:
     from argparse import Action
     from typing import Any
 
-#: Logger of this module.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)
 
 
 class TypeData:
@@ -73,8 +72,8 @@ class BoolType(TypeData):
         return self.BOOLEAN_STATES[value.lower()]
 
 
-class NoneType(TypeData):
-    """Converter for options that may be empty, where an empty value means ``None``."""
+class _NoneType(TypeData):
+    """Converter for options that may be empty, where an empty value means ``None``."""  # simplint: ignore[function-docstring]  # existing public docs
 
     def convert(self, value: str) -> str | None:
         """Return ``None`` for an empty value, otherwise the value as a string.
@@ -83,7 +82,7 @@ class NoneType(TypeData):
 
         :returns: the value, ``None`` when empty
 
-        """
+        """  # simplint: ignore[function-docstring]  # existing public docs
         if not value:
             return None
         return str(value)
@@ -93,7 +92,7 @@ class ListType(TypeData):
     """Converter for options that take a list of values."""
 
     # flatten is accepted but ignored, removing it would change the converter signature
-    def convert(self, value: str | list[str], flatten: bool = True) -> list[Any]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]  # simplint: ignore[SMP602]  # each item has the type of the option, known only at run time
+    def convert(self, value: str | list[str], flatten: bool = True) -> list[Any]:  # ruff:ignore[unused-method-argument, boolean-default-value-positional-argument]  # simplint: ignore[function-docstring, imprecise-annotation]  # runtime option type
         """Convert each item of the list to the type of the option.
 
         :param value: the raw value, a string or a list of strings
@@ -108,7 +107,9 @@ class ListType(TypeData):
             result.extend(a_value.split(os.pathsep))
         return [self.as_type(i) for i in result]
 
-    def split_values(self, value: str | bytes | list[str]) -> list[str]:
+    def split_values(
+        self, value: str | bytes | list[str]
+    ) -> list[str]:  # simplint: ignore[function-docstring]  # direct import API
         """Split a raw value into its items: by line when it has several lines, otherwise by comma.
 
         :param value: the raw value
@@ -141,11 +142,11 @@ def convert(value: str, as_type: TypeData, source: str) -> Any:  # ruff:ignore[a
     try:
         return as_type.convert(value)
     except Exception as exception:
-        LOGGER.warning("%s failed to convert %r as %r because %r", source, value, as_type, exception)
+        _LOGGER.warning("%s failed to convert %r as %r because %r", source, value, as_type, exception)
         raise
 
 
-_CONVERT: Final[dict[type, type]] = {bool: BoolType, type(None): NoneType, list: ListType}
+_CONVERT: Final[dict[type, type]] = {bool: BoolType, type(None): _NoneType, list: ListType}
 
 
 def get_type(action: Action) -> TypeData:
@@ -162,10 +163,8 @@ def get_type(action: Action) -> TypeData:
 
 
 __all__ = [
-    "LOGGER",
     "BoolType",
     "ListType",
-    "NoneType",
     "TypeData",
     "convert",
     "get_type",

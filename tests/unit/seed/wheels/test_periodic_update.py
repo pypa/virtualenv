@@ -49,8 +49,7 @@ if TYPE_CHECKING:
 
 @pytest.fixture(autouse=True)
 def _clear_pypi_info_cache() -> Generator[None, None, None]:
-    # the fixture clears the private cache, so it imports the cache where it clears it
-    from virtualenv.seed.wheels.periodic_update import _PYPI_CACHE  # ruff:ignore[import-outside-top-level]
+    from virtualenv.seed.wheels.periodic_update import _PYPI_CACHE  # ruff:ignore[import-outside-top-level, import-private-name]  # simplint: ignore[private-import-path]  # test cache  # fmt: skip
 
     _PYPI_CACHE.clear()
     yield
@@ -380,6 +379,19 @@ def test_add_wheel_to_update_log_drops_malformed_log(
         [NewVersion(wheel.path.name, _UP_NOW, None, "download").to_dict()],
         ["removing malformed embed update log of pip"],
     )
+
+
+def test_add_wheel_to_update_log_keeps_one_entry(
+    app_data: AppDataDiskFolder, for_py_version: str, caplog: pytest.LogCaptureFixture
+) -> None:
+    wheel = get_embed_wheel("pip", for_py_version)
+
+    add_wheel_to_update_log(wheel, for_py_version, app_data)
+    add_wheel_to_update_log(wheel, for_py_version, app_data)
+
+    versions = app_data.embed_update_log("pip", for_py_version).read()["versions"]
+    assert len(versions) == 1
+    assert any("already present" in message for message in caplog.messages)
 
 
 def test_do_update_drops_malformed_log(

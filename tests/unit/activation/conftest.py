@@ -7,11 +7,13 @@ import sys
 from os.path import dirname, normcase
 from pathlib import Path
 from subprocess import Popen
-from typing import NamedTuple
+from typing import Final, NamedTuple
 
 import pytest
 
 from virtualenv.run import cli_run
+
+_CALL_PATTERN: Final[re.Pattern[str]] = re.compile(r"pydev debugger: process \d+ is connecting\n\n", flags=re.MULTILINE)
 
 
 class ActivationTester:
@@ -71,8 +73,7 @@ class ActivationTester:
             raw = raw_.decode(errors="replace")
             assert process.returncode == 0, raw
 
-        out = re.sub(r"pydev debugger: process \d+ is connecting\n\n", "", raw, flags=re.MULTILINE).strip().splitlines()
-        self.assert_output(out, raw, tmp_path)
+        self.assert_output(_CALL_PATTERN.sub("", raw).strip().splitlines(), raw, tmp_path)
         return env, activate_script
 
     def _generate_test_script(self, activate_script, tmp_path):
