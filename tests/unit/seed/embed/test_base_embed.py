@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 from typing import TYPE_CHECKING, Final, NamedTuple
 
@@ -35,6 +36,43 @@ if TYPE_CHECKING:
 def test_download_cli_flag(args, download, tmp_path) -> None:
     session = session_via_cli([*args, str(tmp_path)])
     assert session.seeder.download is download
+
+
+@pytest.mark.parametrize(
+    ("ini", "env_vars", "download", "source"),
+    [
+        pytest.param("", {}, False, "default", id="unset"),
+        pytest.param("", {"VIRTUALENV_NO_DOWNLOAD": "1"}, False, "env var", id="env-off"),
+        pytest.param("", {"VIRTUALENV_NEVER_DOWNLOAD": "1"}, False, "env var", id="never-env-off"),
+        pytest.param("", {"VIRTUALENV_DOWNLOAD": "1"}, True, "env var", id="env-on"),
+        pytest.param("no_download = true", {}, False, "file", id="ini-off"),
+        pytest.param("no_download = false", {}, False, "default", id="ini-negative-false-stays-unset"),
+        pytest.param("download = true", {}, True, "file", id="ini-on"),
+        pytest.param("download = true", {"VIRTUALENV_NO_DOWNLOAD": "1"}, False, "env var", id="env-off-beats-ini-on"),
+        pytest.param("no_download = true", {"VIRTUALENV_DOWNLOAD": "1"}, True, "env var", id="env-on-beats-ini-off"),
+        pytest.param(
+            "", {"VIRTUALENV_DOWNLOAD": "1", "VIRTUALENV_NO_DOWNLOAD": "1"}, False, "env var", id="both-env-opt-out"
+        ),
+        pytest.param("download = true\nno_download = true", {}, False, "file", id="both-ini-opt-out"),
+    ],
+)
+def test_download_ini_and_env_var(
+    tmp_path: Path, ini: str, env_vars: dict[str, str], download: bool, source: str
+) -> None:
+    config: Final[Path] = tmp_path / "virtualenv.ini"
+    config.write_text(f"[virtualenv]\n{ini}\n", encoding="utf-8")
+    # the test suite sets VIRTUALENV_NO_DOWNLOAD for every test, so start from an environment without it
+    env: Final = {key: value for key, value in os.environ.items() if key != "VIRTUALENV_NO_DOWNLOAD"}
+    options: Final = VirtualEnvOptions()
+
+    session: Final = session_via_cli(
+        [str(tmp_path / "env")],
+        options=options,
+        setup_logging=False,
+        env={**env, "VIRTUALENV_CONFIG_FILE": str(config), **env_vars},
+    )
+
+    assert (session.seeder.download, options.get_source("download")) == (download, source)
 
 
 @pytest.mark.parametrize(
