@@ -287,6 +287,8 @@ def test_console_script_preserves_interpreter_path(
     tmp_path: Path, current_fastest: str, name: str, via_python: bool, seeder: str
 ) -> None:
     destination: Final = os.path.join(str(tmp_path), name, "env")
+    # GraalPy on a busy macOS runner takes over a minute to create and seed an environment, so the timeouts only guard
+    # against a hang.
     run(
         [
             sys.executable,
@@ -306,7 +308,7 @@ def test_console_script_preserves_interpreter_path(
         capture_output=True,
         text=True,
         encoding="utf-8",
-        timeout=60,
+        timeout=300,
         check=True,
     )
     scripts: Final = os.path.join(destination, _SCRIPTS_DIR)
@@ -319,7 +321,7 @@ def test_console_script_preserves_interpreter_path(
         capture_output=True,
         text=True,
         encoding="utf-8",
-        timeout=30,
+        timeout=120,
         check=True,
     )
     assert os.path.normcase(destination) in os.path.normcase(result.stdout)
