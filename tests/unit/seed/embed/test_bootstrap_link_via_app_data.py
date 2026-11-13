@@ -827,6 +827,33 @@ def test_symlink_seed_compiles_with_empty_local_module(tmp_path: Path, monkeypat
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
+@pytest.mark.skipif(sys.implementation.name != "cpython", reason="only CPython rejects an invalid PYTHONHOME")
+def test_symlink_seed_uses_explicit_environment(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    env = os.environ.copy()
+    env.pop("PYTHONHOME", None)
+    monkeypatch.setenv("PYTHONHOME", str(tmp_path / "missing-home"))
+    session = cli_run(
+        [
+            str(tmp_path / "env"),
+            "--creator",
+            "builtin",
+            "--symlink-app-data",
+            "--pip",
+            "embed",
+            "--setuptools",
+            "none",
+            "--app-data",
+            str(tmp_path / "cache"),
+            "--no-download",
+            "--no-periodic-update",
+            "--activators=",
+        ],
+        env=env,
+    )
+    assert list((session.creator.purelib / "pip" / "__pycache__").glob("__init__*.pyc"))
+
+
+@pytest.mark.skipif(not fs_supports_symlink(), reason="requires symlinks")
 def test_symlink_seed_reports_compilation_failure(tmp_path: Path, mocker: MockerFixture) -> None:
     mocker.patch(
         "virtualenv.seed.embed.via_app_data.pip_install.symlink.run_cmd",
