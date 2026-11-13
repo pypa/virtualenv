@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import logging  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
 import os  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
-from types import MappingProxyType
-
+from types import MappingProxyType  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
 from typing import TYPE_CHECKING, Final  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
 
 from virtualenv.activation.via_template import ViaTemplateActivator  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
