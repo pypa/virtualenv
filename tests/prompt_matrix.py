@@ -6,6 +6,7 @@ import shlex
 import shutil
 import subprocess
 from argparse import Namespace
+from itertools import product
 from typing import TYPE_CHECKING, Final, NamedTuple
 from unittest.mock import create_autospec
 
@@ -169,9 +170,7 @@ SHELLS: Final[dict[str, Shell]] = {
 PROMPT_CASES: Final[list[tuple[str, str, str, str]]] = [
     (shell, state, action, payload)
     for shell, spec in SHELLS.items()
-    for state in spec.states
-    for action in spec.actions
-    for payload in spec.payloads
+    for state, action, payload in product(spec.states, spec.actions, spec.payloads)
 ]
 
 
