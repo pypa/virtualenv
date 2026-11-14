@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import logging  # simplint: ignore[init-module-content]  # preserve API module
-import os  # simplint: ignore[init-module-content]  # preserve API module
-from argparse import ArgumentTypeError  # simplint: ignore[init-module-content]  # preserve API module
-from stat import S_IMODE, S_ISGID, S_IWGRP, S_IWOTH  # simplint: ignore[init-module-content]  # preserve API module
-from typing import TYPE_CHECKING, Final  # simplint: ignore[init-module-content]  # preserve API module
+import logging
+import os
+from argparse import ArgumentTypeError
+from stat import S_IMODE, S_ISGID, S_IWGRP, S_IWOTH
+from typing import TYPE_CHECKING, Final
 
-from .cache_migration import cache_dir_with_migration  # simplint: ignore[init-module-content]  # preserve API module
+from .cache_migration import cache_dir_with_migration
 from .na import AppDataDisabled
 from .read_only import ReadOnlyAppData
 from .via_disk_folder import AppDataDiskFolder

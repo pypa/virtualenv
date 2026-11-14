@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import logging  # simplint: ignore[init-module-content]  # preserve public __module__
-import os  # simplint: ignore[init-module-content]  # preserve public __module__
-from argparse import ArgumentParser  # simplint: ignore[init-module-content]  # preserve public __module__
-from functools import partial  # simplint: ignore[init-module-content]  # preserve public __module__
-from typing import TYPE_CHECKING, Final  # simplint: ignore[init-module-content]  # preserve public __module__
+import logging
+import os
+from argparse import ArgumentParser
+from functools import partial
+from typing import TYPE_CHECKING, Final
 
 from virtualenv.app_data import make_app_data as make_app_data
 from virtualenv.config.cli.parser import VirtualEnvConfigParser as VirtualEnvConfigParser

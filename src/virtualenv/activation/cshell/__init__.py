@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import logging  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
-import shlex  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
-from typing import TYPE_CHECKING, Final  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
+import logging  # isort: skip # fmt: skip
+import shlex  # isort: skip # fmt: skip
+from typing import TYPE_CHECKING, Final  # isort: skip # fmt: skip
 
-from virtualenv.activation.via_template import ViaTemplateActivator  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
-from virtualenv.util.text import collapse_line_boundaries  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
+from virtualenv.activation.via_template import ViaTemplateActivator  # isort: skip # fmt: skip
+from virtualenv.util.text import collapse_line_boundaries  # isort: skip # fmt: skip
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -15,10 +15,10 @@ if TYPE_CHECKING:
 
     from virtualenv.create.creator import Creator
 
-_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[init-module-content]  # preserve class module # fmt: skip
+_LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # fmt: skip
 
 
-class CShellActivator(ViaTemplateActivator):  # simplint: ignore[init-module-content]  # preserve class module # fmt: skip
+class CShellActivator(ViaTemplateActivator):  # fmt: skip
     """Generate the ``activate.csh`` and ``deactivate.csh`` scripts for csh and tcsh."""
 
     @classmethod
@@ -93,7 +93,7 @@ class CShellActivator(ViaTemplateActivator):  # simplint: ignore[init-module-con
         }
 
 
-def _prompt_literal(value: str, *, tcsh: bool) -> str:  # simplint: ignore[init-module-content]  # preserve class module # fmt: skip
+def _prompt_literal(value: str, *, tcsh: bool) -> str:  # fmt: skip
     # Prompt drawing interprets history escapes and tcsh percent codes a second time.
     parts = ["'"]
     for char in value:

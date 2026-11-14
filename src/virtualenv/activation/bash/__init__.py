@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path  # simplint: ignore[init-module-content]  # public class location # fmt: skip
-from typing import TYPE_CHECKING  # simplint: ignore[init-module-content]  # public class location # fmt: skip
+from pathlib import Path  # fmt: skip
+from typing import TYPE_CHECKING  # fmt: skip
 
-from virtualenv.activation.via_template import ViaTemplateActivator  # simplint: ignore[init-module-content]  # preserve API # isort: skip # fmt: skip
+from virtualenv.activation.via_template import ViaTemplateActivator  # isort: skip # fmt: skip
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
 
-class BashActivator(ViaTemplateActivator):  # simplint: ignore[init-module-content]  # public class location # fmt: skip
+class BashActivator(ViaTemplateActivator):  # fmt: skip
     """Generate the ``activate`` script for POSIX Bourne-compatible shells."""
 
     def templates(self) -> Iterator[str]:
