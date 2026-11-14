@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import re  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
-from typing import TYPE_CHECKING, Final  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
+import re  # isort: skip # fmt: skip
+from typing import TYPE_CHECKING, Final  # isort: skip # fmt: skip
 
-from virtualenv.activation.via_template import ViaTemplateActivator  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
+from virtualenv.activation.via_template import ViaTemplateActivator  # isort: skip # fmt: skip
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -12,10 +12,10 @@ if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
 
-_ESCAPED_PATTERN: Final[re.Pattern[str]] = re.compile(r"[\\']")  # simplint: ignore[init-module-content]  # preserve class module # fmt: skip
+_ESCAPED_PATTERN: Final[re.Pattern[str]] = re.compile(r"[\\']")  # fmt: skip
 
 
-class FishActivator(ViaTemplateActivator):  # simplint: ignore[init-module-content]  # preserve class module # fmt: skip
+class FishActivator(ViaTemplateActivator):  # fmt: skip
     """Generate the ``activate.fish`` script for fish."""
 
     def templates(self) -> Iterator[str]:

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import hashlib  # simplint: ignore[init-module-content]  # preserve API module
-import zipfile  # simplint: ignore[init-module-content]  # preserve API module
-from pathlib import Path  # simplint: ignore[init-module-content]  # preserve API module
-from typing import Final  # simplint: ignore[init-module-content]  # preserve API module
+import hashlib
+import zipfile
+from pathlib import Path
+from typing import Final
 
-from virtualenv.info import IS_ZIPAPP, ROOT  # simplint: ignore[init-module-content]  # preserve API module
-from virtualenv.seed.wheels.util import Wheel  # simplint: ignore[init-module-content]  # preserve API module
+from virtualenv.info import IS_ZIPAPP, ROOT
+from virtualenv.seed.wheels.util import Wheel
 
 #: The folder holding the bundled seed wheels.
 BUNDLE_FOLDER: Final[Path] = Path(__file__).absolute().parent

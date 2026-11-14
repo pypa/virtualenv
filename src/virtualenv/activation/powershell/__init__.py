@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
+from typing import TYPE_CHECKING  # isort: skip # fmt: skip
 
-from virtualenv.activation.via_template import ViaTemplateActivator  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
+from virtualenv.activation.via_template import ViaTemplateActivator  # isort: skip # fmt: skip
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
-class PowerShellActivator(ViaTemplateActivator):  # simplint: ignore[init-module-content]  # preserve class module # fmt: skip
+class PowerShellActivator(ViaTemplateActivator):  # fmt: skip
     """Generate the ``activate.ps1`` script for PowerShell."""
 
     def templates(self) -> Iterator[str]:

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-import subprocess  # simplint: ignore[init-module-content]  # preserve API module
-from shlex import quote  # simplint: ignore[init-module-content]  # preserve API module
-from typing import TYPE_CHECKING, Final  # simplint: ignore[init-module-content]  # preserve API module
+import subprocess
+from shlex import quote
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

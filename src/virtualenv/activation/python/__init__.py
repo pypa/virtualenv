@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import os  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
-from collections import OrderedDict  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
-from typing import TYPE_CHECKING  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
+import os  # isort: skip # fmt: skip
+from collections import OrderedDict  # isort: skip # fmt: skip
+from typing import TYPE_CHECKING  # isort: skip # fmt: skip
 
-from virtualenv.activation.via_template import ViaTemplateActivator  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
+from virtualenv.activation.via_template import ViaTemplateActivator  # isort: skip # fmt: skip
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
 
-class PythonActivator(ViaTemplateActivator):  # simplint: ignore[init-module-content]  # preserve class module # fmt: skip
+class PythonActivator(ViaTemplateActivator):  # fmt: skip
     """Generate the ``activate_this.py`` script that a Python program runs to activate the environment."""
 
     def templates(self) -> Iterator[str]:

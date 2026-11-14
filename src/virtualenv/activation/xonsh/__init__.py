@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import logging  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
-import re  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
-from typing import TYPE_CHECKING, Final  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
+import logging  # isort: skip # fmt: skip
+import re  # isort: skip # fmt: skip
+from typing import TYPE_CHECKING, Final  # isort: skip # fmt: skip
 
-from virtualenv.activation.via_template import ViaTemplateActivator  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
+from virtualenv.activation.via_template import ViaTemplateActivator  # isort: skip # fmt: skip
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -13,10 +13,10 @@ if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
 
-_GENERATE_PATTERN: Final[re.Pattern[str]] = re.compile(r"\$(?:\w+|{)|=~")  # simplint: ignore[init-module-content]  # preserve class module # fmt: skip
+_GENERATE_PATTERN: Final[re.Pattern[str]] = re.compile(r"\$(?:\w+|{)|=~")  # fmt: skip
 
 
-class XonshActivator(ViaTemplateActivator):  # simplint: ignore[init-module-content]  # preserve class module # fmt: skip
+class XonshActivator(ViaTemplateActivator):  # fmt: skip
     """Generate the ``activate.xsh`` script for xonsh."""
 
     def generate(self, creator: Creator) -> list[Path]:

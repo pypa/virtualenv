@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod  # simplint: ignore[init-module-content]  # preserve class __module__
-from pathlib import Path  # simplint: ignore[init-module-content]  # preserve class __module__
-from typing import TYPE_CHECKING  # simplint: ignore[init-module-content]  # preserve class __module__
+from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import TYPE_CHECKING
 
-from virtualenv.create.describe import (  # simplint: ignore[init-module-content]  # preserve class __module__
+from virtualenv.create.describe import (
     PosixSupports,
     WindowsSupports,
 )
-from virtualenv.create.via_global_ref.builtin.ref import (  # simplint: ignore[init-module-content] preserve API
+from virtualenv.create.via_global_ref.builtin.ref import (
     PathRefToDest,
     RefMust,
     RefWhen,
 )
-from virtualenv.create.via_global_ref.builtin.via_global_self_do import (  # simplint: ignore[init-module-content] API
+from virtualenv.create.via_global_ref.builtin.via_global_self_do import (
     ViaGlobalRefVirtualenvBuiltin,
 )
 
@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from python_discovery import PythonInfo
 
 
-class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):  # simplint: ignore[init-module-content]  # preserve class __module__
+class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):
     """Base for the built-in creators of GraalPy interpreters."""
 
     @classmethod
@@ -113,7 +113,7 @@ class GraalPy(ViaGlobalRefVirtualenvBuiltin, ABC):  # simplint: ignore[init-modu
                 self.pyenv_cfg["home"] = str(home.parent)
 
 
-class GraalPyPosix(GraalPy, PosixSupports):  # simplint: ignore[init-module-content]  # preserve class __module__
+class GraalPyPosix(GraalPy, PosixSupports):
     """GraalPy on POSIX platforms."""
 
     @classmethod
@@ -123,7 +123,7 @@ class GraalPyPosix(GraalPy, PosixSupports):  # simplint: ignore[init-module-cont
         return lib_dir / "libpythonvm.so"
 
 
-class GraalPyWindows(GraalPy, WindowsSupports):  # simplint: ignore[init-module-content]  # preserve class __module__
+class GraalPyWindows(GraalPy, WindowsSupports):
     """GraalPy on Windows platforms."""
 
     @classmethod

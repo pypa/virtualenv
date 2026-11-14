@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-from abc import ABC  # simplint: ignore[init-module-content]  # preserve class __module__
-from pathlib import Path  # simplint: ignore[init-module-content]  # preserve class __module__
-from typing import TYPE_CHECKING  # simplint: ignore[init-module-content]  # preserve class __module__
+from abc import ABC
+from pathlib import Path
+from typing import TYPE_CHECKING
 
-from virtualenv.create.describe import (  # simplint: ignore[init-module-content]  # preserve class __module__
+from virtualenv.create.describe import (
     PosixSupports,
     Python3Supports,
     WindowsSupports,
 )
-from virtualenv.create.via_global_ref.builtin.ref import (  # simplint: ignore[init-module-content] preserve API
+from virtualenv.create.via_global_ref.builtin.ref import (
     RefMust,
     RefWhen,
 )
-from virtualenv.create.via_global_ref.builtin.via_global_self_do import (  # simplint: ignore[init-module-content] API
+from virtualenv.create.via_global_ref.builtin.via_global_self_do import (
     ViaGlobalRefVirtualenvBuiltin,
 )
 
@@ -23,9 +23,7 @@ if TYPE_CHECKING:
     from python_discovery import PythonInfo
 
 
-class RustPython(  # simplint: ignore[init-module-content]  # preserve class __module__
-    ViaGlobalRefVirtualenvBuiltin, Python3Supports, ABC
-):
+class RustPython(ViaGlobalRefVirtualenvBuiltin, Python3Supports, ABC):
     """Base for the built-in creators of RustPython interpreters."""
 
     @classmethod
@@ -70,13 +68,11 @@ class RustPython(  # simplint: ignore[init-module-content]  # preserve class __m
         return "rustpython"
 
 
-class RustPythonPosix(RustPython, PosixSupports):  # simplint: ignore[init-module-content]  # preserve class __module__
+class RustPythonPosix(RustPython, PosixSupports):
     """RustPython on POSIX."""
 
 
-class RustPythonWindows(  # simplint: ignore[init-module-content]  # preserve class __module__
-    RustPython, WindowsSupports
-):
+class RustPythonWindows(RustPython, WindowsSupports):
     """RustPython on Windows."""
 
 

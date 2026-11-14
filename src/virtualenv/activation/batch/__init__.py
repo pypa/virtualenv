@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import logging  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
-import os  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
-from types import MappingProxyType  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
-from typing import TYPE_CHECKING, Final  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
+import logging  # isort: skip # fmt: skip
+import os  # isort: skip # fmt: skip
+from types import MappingProxyType  # isort: skip # fmt: skip
+from typing import TYPE_CHECKING, Final  # isort: skip # fmt: skip
 
-from virtualenv.activation.via_template import ViaTemplateActivator  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
-from virtualenv.util.text import collapse_line_boundaries  # simplint: ignore[init-module-content]  # preserve class module # isort: skip # fmt: skip
+from virtualenv.activation.via_template import ViaTemplateActivator  # isort: skip # fmt: skip
+from virtualenv.util.text import collapse_line_boundaries  # isort: skip # fmt: skip
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
 #: Logs the reasons a batch activation script is skipped.
-LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[init-module-content,module-variable-prefix]  # existing API  # fmt: skip
+LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[module-variable-prefix]  # existing API  # fmt: skip
 
 # cmd.exe's own command-line parser looks for these regardless of surrounding quotes: confirmed on a
 # real Windows runner that `@set "VAR=x & cmd"` still runs `cmd` as a second statement even though the
@@ -30,18 +30,16 @@ LOGGER: Final[logging.Logger] = logging.getLogger(__name__)  # simplint: ignore[
 # then substitutes the actual value of an existing SECRET variable into the prompt, so it is neutered
 # unconditionally rather than only when that mode happens to be on. cmd.exe stops reading a line at Ctrl-Z
 # (0x1A) - confirmed on a real runner that `@set "VAR=a<Ctrl-Z>b"` sets `a` and then runs `b"` as the next command.
-_CMD_OPERATORS: Final[tuple[str, ...]] = ("&", "|", "<", ">", "^", "!", '"', "\x1a")  # simplint: ignore[init-module-content]  # preserve class module # fmt: skip
+_CMD_OPERATORS: Final[tuple[str, ...]] = ("&", "|", "<", ">", "^", "!", '"', "\x1a")  # fmt: skip
 
-_PATH_REPLACEMENT_NAMES: Final[MappingProxyType[str, str]] = (
-    MappingProxyType({  # simplint: ignore[init-module-content]  # keep API
-        "__VIRTUAL_ENV__": "the destination directory",
-        "__TCL_LIBRARY__": "the interpreter's Tcl library path",
-        "__TK_LIBRARY__": "the interpreter's Tk library path",
-    })
-)
+_PATH_REPLACEMENT_NAMES: Final[MappingProxyType[str, str]] = MappingProxyType({
+    "__VIRTUAL_ENV__": "the destination directory",
+    "__TCL_LIBRARY__": "the interpreter's Tcl library path",
+    "__TK_LIBRARY__": "the interpreter's Tk library path",
+})
 
 
-class BatchActivator(ViaTemplateActivator):  # simplint: ignore[init-module-content]  # preserve class module # fmt: skip
+class BatchActivator(ViaTemplateActivator):  # fmt: skip
     """Generate the ``activate.bat``, ``deactivate.bat`` and ``pydoc.bat`` scripts for ``cmd.exe``."""
 
     @classmethod
@@ -144,7 +142,7 @@ class BatchActivator(ViaTemplateActivator):  # simplint: ignore[init-module-cont
         return collapse_line_boundaries(string)
 
 
-def _unsafe_path_reason(key: str, value: str) -> str | None:  # simplint: ignore[init-module-content]  # preserve class module # fmt: skip
+def _unsafe_path_reason(key: str, value: str) -> str | None:  # fmt: skip
     found = sorted({char for char in value if char in _CMD_OPERATORS or collapse_line_boundaries(char) != char})
     if not found:
         return None
