@@ -10,7 +10,7 @@ concurrency:
 jobs:
   upgrade:
     name: 🔀 Upgrade release tools
-    uses: tox-dev/github-workflows/.github/workflows/upgrade-release-tools.yaml@bf1c3ab0aa137d307a07aad844d507af73039387 # 6.8.0
+    uses: tox-dev/github-workflows/.github/workflows/upgrade-release-tools.yaml@ef0cd88bef592260a48345753b8b509b209ab189 # 6.8.3
     permissions:
       contents: read
     secrets:
@@ -22,6 +22,5 @@ jobs:
       additional-matrix-platforms: >-
         linux_x86_64 linux_aarch64 linux_i686 linux_armv7l macos_x86_64 macos_arm64 windows_amd64 windows_arm64
       additional-matrix-implementations: cpython pypy
-      pull-request-title: "build(deps): refresh release tool lock"
       pull-request-body: |-
         Relock `pylock.toml` and `pylock.zipapp.toml`.
