@@ -122,9 +122,21 @@ class ListType(TypeData):
             # `splitlines` rather than a manual newline check, so its full line-boundary logic applies.
             values = value.splitlines()
             if len(values) <= 1:
-                values = value.split(",")
+                return self._join_specifiers([stripped for x in value.split(",") if (stripped := x.strip())])
             return [stripped for x in values if (stripped := x.strip())]
         return list(value)
+
+    # a comma also joins the clauses of one version specifier, so ">=3.9,<3.10" is one value; clauses are the pieces that
+    # start with a comparison operator and follow a piece that does too
+    @staticmethod
+    def _join_specifiers(items: list[str]) -> list[str]:
+        result: list[str] = []
+        for item in items:
+            if result and item.startswith(_OPERATORS) and result[-1].startswith(_OPERATORS):
+                result[-1] = f"{result[-1]},{item}"
+            else:
+                result.append(item)
+        return result
 
 
 # the converted value's type depends on as_type
@@ -144,6 +156,8 @@ def convert(value: str, as_type: TypeData, source: str) -> Any:  # ruff:ignore[a
         LOGGER.warning("%s failed to convert %r as %r because %r", source, value, as_type, exception)
         raise
 
+
+_OPERATORS: Final[tuple[str, ...]] = ("===", "==", "!=", "~=", "<=", ">=", "<", ">")
 
 _CONVERT: Final[MappingProxyType[type, type]] = MappingProxyType({bool: BoolType, type(None): NoneType, list: ListType})
 
