@@ -26,8 +26,8 @@ def test_one_input(data: bytes) -> None:
 
 def _longest_run(string: str, char: str) -> int:
     current = longest = 0
-    for c in string:
-        current = current + 1 if c == char else 0
+    for character in string:
+        current = current + 1 if character == char else 0
         longest = max(longest, current)
     return longest
 

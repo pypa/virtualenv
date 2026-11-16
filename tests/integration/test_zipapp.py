@@ -8,7 +8,7 @@ import sys
 import zipfile
 from contextlib import suppress
 from pathlib import Path
-from typing import Final
+from typing import TYPE_CHECKING, Final
 
 import pytest
 from python_discovery import PythonInfo
@@ -18,17 +18,20 @@ from virtualenv.info import fs_supports_symlink
 from virtualenv.run import cli_run
 from virtualenv.seed.wheels.periodic_update import trigger_update
 
-HERE = Path(__file__).parent
-CURRENT = PythonInfo.current_system()
+if TYPE_CHECKING:
+    from types import ModuleType
+
+_HERE: Final[Path] = Path(__file__).parent
+_CURRENT: Final[PythonInfo] = PythonInfo.current_system()
 # Repackaged sdists omit the zipapp build sources.
-_ZIPAPP_MAIN: Final = pytest.importorskip("tasks.__main__zipapp")
+_ZIPAPP_MAIN: Final[ModuleType] = pytest.importorskip("tasks.__main__zipapp")
 
 
 @pytest.fixture(scope="session")
 def zipapp_build_env(tmp_path_factory):
     create_env_path = None
-    if CURRENT.implementation not in {"PyPy", "GraalPy"}:
-        exe = CURRENT.executable  # guaranteed to contain a recent enough pip (tox.ini)
+    if _CURRENT.implementation not in {"PyPy", "GraalPy"}:
+        exe = _CURRENT.executable  # guaranteed to contain a recent enough pip (tox.ini)
     else:
         create_env_path = tmp_path_factory.mktemp("zipapp-create-env")
         exe, found = None, False
@@ -78,7 +81,7 @@ def zipapp(zipapp_build_env, tmp_path_factory):
     into = tmp_path_factory.mktemp("zipapp")
     filename = into / "virtualenv.pyz"
     cmd = [zipapp_build_env, "-m", "tasks.make_zipapp", "--dest", str(filename)]
-    subprocess.run(cmd, check=True, timeout=300, cwd=HERE.parent.parent)
+    subprocess.run(cmd, check=True, timeout=300, cwd=_HERE.parent.parent)
     yield filename
     shutil.rmtree(str(into))
 
@@ -111,7 +114,7 @@ def test_zipapp_version(zipapp: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("tasks.__main__zipapp.ABS_HERE", str(zipapp))
     monkeypatch.setattr(sys, "argv", [str(zipapp), "--version"])
     with pytest.raises(SystemExit) as context:
-        _ZIPAPP_MAIN.run()
+        _ZIPAPP_MAIN._run()  # ruff:ignore[private-member-access]  # the script entry point is private to the module
     assert context.value.code == 0
 
 
@@ -161,6 +164,7 @@ def test_zipapp_update_without_installed_package(zipapp: Path, zipapp_test_env: 
 
 
 @pytest.fixture
+# the other fixtures run first for their side effects, the body does not use them
 def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # ruff:ignore[unused-function-argument]
     def _run(*args) -> None:
         cmd = [str(zipapp_test_env), str(zipapp), "-vv", str(tmp_path / "env"), *list(args)]
@@ -170,6 +174,7 @@ def call_zipapp(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # ruff:ignor
 
 
 @pytest.fixture
+# the other fixtures run first for their side effects, the body does not use them
 def call_zipapp_symlink(zipapp, tmp_path, zipapp_test_env, temp_app_data):  # ruff:ignore[unused-function-argument]
     def _run(*args) -> None:
         symlinked = zipapp.parent / "symlinked_virtualenv.pyz"
@@ -212,7 +217,7 @@ def test_zipapp_bundles_prebuilt_wheel(zipapp_build_env: str, tmp_path: Path) ->
         ],
         check=True,
         timeout=300,
-        cwd=HERE.parent.parent,
+        cwd=_HERE.parent.parent,
     )
     with zipfile.ZipFile(pyz) as archive:
         assert archive.read("virtualenv/prebuilt.txt") == b"prebuilt"

@@ -79,10 +79,15 @@ class _Diagnostics:
             faulthandler.dump_traceback(file=self.stream)
             self._arm_stall_timer()
 
-    def retain_crash_traceback(self) -> None:
-        # pytest's captured stderr can disappear with a crashed xdist worker.
+    def _close(self) -> None:
+        # Keep dumping through interpreter shutdown, after pytest has returned.
+        self._stopped.set()
+        self._dumper.join()
         with self._faulthandler_lock:
-            faulthandler.enable(file=self.stream)
+            faulthandler.cancel_dump_traceback_later()
+            faulthandler.disable()
+        self._record("EXIT")
+        self.stream.close()
 
     def pytest_runtest_logstart(self, nodeid: str) -> None:
         self._record(f"TEST {nodeid}")
@@ -95,15 +100,10 @@ class _Diagnostics:
         self.retain_crash_traceback()
         self._record("STOP")
 
-    def _close(self) -> None:
-        # Keep dumping through interpreter shutdown, after pytest has returned.
-        self._stopped.set()
-        self._dumper.join()
+    def retain_crash_traceback(self) -> None:
+        # pytest's captured stderr can disappear with a crashed xdist worker.
         with self._faulthandler_lock:
-            faulthandler.cancel_dump_traceback_later()
-            faulthandler.disable()
-        self._record("EXIT")
-        self.stream.close()
+            faulthandler.enable(file=self.stream)
 
 
-__all__ = ["pytest_addoption", "pytest_configure"]
+__all__ = []

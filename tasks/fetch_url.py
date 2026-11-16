@@ -27,4 +27,6 @@ def _read(url: str) -> bytes:
         return response.read()
 
 
-__all__ = ["fetch"]
+__all__ = [
+    "fetch",
+]

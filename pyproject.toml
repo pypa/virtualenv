@@ -5,6 +5,7 @@ requires = [
   "hatch-vcs>=0.5",
   "hatchling<1.28,>=1.27; python_version<'3.10'",
   "hatchling>=1.28; python_version>='3.10'",
+  "python-sbom[hatch]>=0.1.2; python_version>='3.11'",
 ]
 
 [project]
@@ -156,6 +157,7 @@ build = [
   "hatch-vcs>=0.5",
   "hatchling<1.28,>=1.27; python_version<'3.10'",
   "hatchling>=1.28; python_version>='3.10'",
+  "python-sbom[hatch]>=0.1.2; python_version>='3.11'",
   "setuptools>=80",
 ]
 coverage = [
@@ -191,6 +193,7 @@ release = [
   "packaging>=26.3",
   "prek>=0.5",
   "pypi-attestations>=0.0.28",
+  "python-sbom>=0.1.2",
   "release-creator>=4.4",
   "towncrier>=26.9",
   "tox>=4.45",
@@ -222,13 +225,15 @@ release-verify = [
 release-zipapp = [
   "hatchling>=1.28",
   "packaging>=26.3",
+  "python-sbom>=0.1.2",
   "release-creator>=4.4",
   { include-group = "sbom" },
 ]
 sbom = [
-  # The stable release still imports a removed typing API: https://github.com/beartype/beartype/issues/618
+  # spdx-tools, which python-sbom[validate] and the SPDX check need, imports beartype, whose releases before 0.23 import
+  # a removed typing API: https://github.com/beartype/beartype/issues/618
   "beartype>=0.23.0rc2; python_version>='3.15'",
-  "cyclonedx-python-lib[json-validation]>=11.12",
+  "python-sbom[validate]>=0.1.2",
   "spdx-tools>=0.8.5",
 ]
 tasks = [
@@ -237,6 +242,7 @@ tasks = [
   "hatchling>=1.28",
   "pre-commit-uv>=4.2",
   "prek>=0.5",
+  "python-sbom[validate]>=0.1.2",
   "ruff>=0.16.10",
   "towncrier>=26.9",
   { include-group = "test" },
@@ -283,31 +289,24 @@ lint.select = [
   "ALL",
 ]
 lint.ignore = [
-  "boolean-type-hint-positional-argument",     # boolean positional args - pre-existing signatures, changing would break public API
-  "CPY",                                       # No copyright header
-  "D10",                                       # no docstrings
-  "D40",                                       # no imperative mode for docstrings
-  "DOC",                                       # no restructuredtext support
-  "escape-sequence-in-docstring",              # use r if any backslashes - conflicts with docstrfmt
-  "hardcoded-bind-all-interfaces",             # Possible binding to all interfaces
-  "implicit-namespace-package",                # ignore implicit namespace packages
-  "incorrect-blank-line-before-class",         # `one-blank-line-before-class` (D203) and `no-blank-line-before-class` (D211) are incompatible
-  "line-too-long",                             # line too long - handled by ruff format and docstrfmt
-  "missing-blank-line-after-summary",          # 1 blank line required between summary and description - conflicts with docstrfmt
-  "missing-trailing-comma",                    # conflict with formatter
-  "multi-line-summary-first-line",             # `multi-line-summary-first-line` (D212) and `multi-line-summary-second-line` (D213) are incompatible
-  "multi-line-summary-second-line",            # multi-line-summary-second-line - conflicts with docstrfmt
-  "new-line-after-last-paragraph",             # multi-line docstring closing quotes - conflicts with docstrfmt
-  "no-self-use",                               # Method could be a function, class method, or static method
-  "non-empty-init-module",                     # `__init__` module should only contain docstrings and re-exports
-  "PTH",                                       # no pathlib, <=39 has problems on Windows with absolute/resolve, can revisit once we no longer need 39
-  "single-line-implicit-string-concatenation", # conflict with formatter
-  "subprocess-run-without-check",              # no need for check for subprocess
-  "subprocess-without-shell-equals-true",      # subprocess calls are fine
-  "suspicious-subprocess-import",              # Using subprocess is alright
-  "too-many-locals",                           # Too many local variables
-  "too-many-positional-arguments",             # Too many positional arguments
-  "unnecessary-multiline-docstring",           # fits on one line - conflicts with docstrfmt
+  "boolean-type-hint-positional-argument", # boolean positional args - pre-existing signatures, changing would break public API
+  "CPY",                                   # No copyright header
+  "D10",                                   # no docstrings
+  "D40",                                   # no imperative mode for docstrings
+  "DOC",                                   # no restructuredtext support
+  "implicit-namespace-package",            # ignore implicit namespace packages
+  "incorrect-blank-line-before-class",     # `incorrect-blank-line-before-class` and `no-blank-line-before-class` are incompatible
+  "line-too-long",                         # line too long - handled by ruff format and docstrfmt
+  "missing-trailing-comma",                # conflict with formatter
+  "multi-line-summary-second-line",        # multi-line-summary-second-line - conflicts with docstrfmt
+  "no-self-use",                           # Method could be a function, class method, or static method
+  "non-empty-init-module",                 # `__init__` module should only contain docstrings and re-exports
+  "PTH",                                   # no pathlib, <=39 has problems on Windows with absolute/resolve, can revisit once we no longer need 39
+  "subprocess-run-without-check",          # no need for check for subprocess
+  "subprocess-without-shell-equals-true",  # subprocess calls are fine
+  "suspicious-subprocess-import",          # Using subprocess is alright
+  "too-many-locals",                       # Too many local variables
+  "too-many-positional-arguments",         # Too many positional arguments
 ]
 lint.per-file-ignores."docs/**/*.py" = [
   "ANN", # don't require type annotations in docs scripts
@@ -316,16 +315,13 @@ lint.per-file-ignores."src/virtualenv/activation/python/activate_this.py" = [
   "undefined-name", # ignore undefined template string placeholders
 ]
 lint.per-file-ignores."tests/**/*.py" = [
-  "ANN",                                  # don't require type annotations in tests (pytest fixtures make this impractical)
-  "assert",                               # asserts allowed in tests
-  "D",                                    # don't care about documentation in tests
-  "FBT",                                  # don't care about booleans as positional arguments in tests
-  "implicit-namespace-package",           # no implicit namespace
-  "import-private-name",                  # Private import
-  "magic-value-comparison",               # Magic value used in comparison, consider replacing with a constant variable
-  "pytest-fixture-autouse",               # shared setup fixtures are meant to apply to every test
-  "start-process-with-partial-path",      # partial executable path is fine in tests
-  "subprocess-without-shell-equals-true", # `subprocess` call: check for execution of untrusted input
+  "ANN",                             # don't require type annotations in tests (pytest fixtures make this impractical)
+  "assert",                          # asserts allowed in tests
+  "D",                               # don't care about documentation in tests
+  "FBT",                             # don't care about booleans as positional arguments in tests
+  "magic-value-comparison",          # Magic value used in comparison, consider replacing with a constant variable
+  "pytest-fixture-autouse",          # shared setup fixtures are meant to apply to every test
+  "start-process-with-partial-path", # partial executable path is fine in tests
 ]
 lint.isort = { known-first-party = [
   "virtualenv",
@@ -354,7 +350,7 @@ git-only = [
   "pylock.toml",
   "scorecard.yml",
 ]
-sdist-only = [ "src/virtualenv/version.py" ]
+sdist-only = [ ".python-sbom-revision", "src/virtualenv/version.py" ]
 
 [tool.pyproject-fmt]
 max_supported_python = "3.15"
@@ -426,6 +422,11 @@ type = [
   { directory = "packaging", name = "Packaging", showcontent = true },
 ]
 
+[tool.python-sbom]
+supplier = { name = "Python Packaging Authority", url = [ "https://www.pypa.io" ] }
+bundled-wheels = [ "src/virtualenv/seed/wheels/embed/*.whl" ]
+content-provider = "tasks.sbom_content:VirtualenvContent"
+
 [tool.nab]
 mode = "universal"
 base-group = "project-runtime"
@@ -434,7 +435,8 @@ uploaded-prior-to = "P7D"
 decision-order = "stable"
 matrix.python = ">=3.15,<3.16"
 matrix.platforms = [ "linux_x86_64", "windows_amd64" ]
-# release-creator 4.4.0 needs a seven-day cutoff exception.
-# expires 2026-11-09
-# expires 2026-11-09
-packages.release-creator.uploaded-prior-to = 2026-11-02T21:45:00Z
+
+[tool.simplint]
+docstring-style = "rst"
+# the CodeQL samples are deliberately bad code that the queries must flag, and they stay byte-identical to upstream
+per-file-ignores = { ".github/codeql/tests/*" = [ "SMP" ] }

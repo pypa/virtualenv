@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import logging
-import re
-from typing import TYPE_CHECKING
+import logging  # isort: skip # fmt: skip
+import re  # isort: skip # fmt: skip
+from typing import TYPE_CHECKING, Final  # isort: skip # fmt: skip
 
-from virtualenv.activation.via_template import ViaTemplateActivator
+from virtualenv.activation.via_template import ViaTemplateActivator  # isort: skip # fmt: skip
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -13,9 +13,21 @@ if TYPE_CHECKING:
     from virtualenv.create.creator import Creator
 
 
-class XonshActivator(ViaTemplateActivator):
+_GENERATE_PATTERN: Final[re.Pattern[str]] = re.compile(r"\$(?:\w+|{)|=~")  # fmt: skip
+
+
+class XonshActivator(ViaTemplateActivator):  # fmt: skip
+    """Generate the ``activate.xsh`` script for xonsh."""
+
     def generate(self, creator: Creator) -> list[Path]:
-        if re.search(r"\$(?:\w+|{)|=~", str(creator.dest)):
+        """Generate the script, or remove it when the destination holds xonsh path expansion syntax.
+
+        :param creator: the creator of the environment
+
+        :returns: the paths of the generated scripts, empty when the destination is skipped
+
+        """
+        if _GENERATE_PATTERN.search(str(creator.dest)):
             logging.getLogger(__name__).warning(
                 "skipping xonsh activation script: destination %s contains path expansion syntax", creator.dest
             )
@@ -24,14 +36,33 @@ class XonshActivator(ViaTemplateActivator):
         return super().generate(creator)
 
     def templates(self) -> Iterator[str]:
+        """The template file names to instantiate.
+
+        :yields: the template file names
+
+        """
         yield "activate.xsh"
 
     @staticmethod
     def quote(string: str) -> str:
-        """Keep literals independent of the encoding xonsh uses to read the script."""
+        """Keep literals independent of the encoding xonsh uses to read the script.
+
+        :param string: the value to quote
+
+        :returns: the ASCII-only literal representation of the string
+
+        """
         return ascii(string)
 
     def replacements(self, creator: Creator, dest_folder: Path) -> dict[str, str]:
+        """The raw placeholder values, including the Tcl and Tk library paths.
+
+        :param creator: the creator of the environment
+        :param dest_folder: the folder the scripts are written into
+
+        :returns: the placeholder names mapped to their values
+
+        """
         data = super().replacements(creator, dest_folder)
         data.update({
             "__TCL_LIBRARY__": getattr(creator.interpreter, "tcl_lib", None) or "",

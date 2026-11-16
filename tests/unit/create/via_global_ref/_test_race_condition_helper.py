@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import ClassVar, Final
 
 
 class _Finder:
     fullname = None
     lock: ClassVar[list] = []
 
+    # the meta path finder protocol passes these, this finder ignores them
     def find_spec(self, fullname, path, target=None) -> None:  # ruff:ignore[unused-method-argument]
         # This should handle the NameError gracefully
         try:
@@ -28,4 +29,4 @@ class _Finder:
             pass  # Would call patch_dist(module)
 
 
-finder = _Finder()
+_FINDER: Final[_Finder] = _Finder()

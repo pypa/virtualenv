@@ -2,15 +2,23 @@ from __future__ import annotations
 
 import subprocess
 from shlex import quote
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-CREATE_NO_WINDOW = 0x80000000
+#: Process creation flag that hides the console window on Windows.
+CREATE_NO_WINDOW: Final[int] = 0x80000000
 
 
 class LogCmd:
+    """Command line and environment, for logging the command that runs.
+
+    :param cmd: the command and its arguments
+    :param env: the environment the command runs with, ``None`` to inherit it
+
+    """
+
     def __init__(self, cmd: list[str], env: Mapping[str, str] | None = None) -> None:
         self.cmd = cmd
         self.env = env
@@ -23,6 +31,14 @@ class LogCmd:
 
 
 def run_cmd(cmd: list[str], env: Mapping[str, str] | None = None) -> tuple[int, str, str]:
+    """Run a command and collect its exit code and output.
+
+    :param cmd: the command and its arguments
+    :param env: the environment the command runs with, ``None`` to inherit it
+
+    :returns: the exit code, standard output and standard error
+
+    """
     try:
         process = subprocess.Popen(
             cmd,
@@ -37,13 +53,14 @@ def run_cmd(cmd: list[str], env: Mapping[str, str] | None = None) -> tuple[int, 
         code = process.returncode
     except OSError as error:
         code, out, err = error.errno, "", error.strerror
+        # errno 2 is ENOENT, the missing executable case on every platform
         if code == 2 and err is not None and "file" in err:  # ruff:ignore[magic-value-comparison]
             err = str(error)  # FileNotFoundError in Python >= 3.3
-    return code, out, err  # ty: ignore[invalid-return-type]
+    return code, out, err  # simplint: ignore[long-tuple-return]  # ty: ignore[invalid-explicit-return]  # tuple API
 
 
-__all__ = (
+__all__ = [
     "CREATE_NO_WINDOW",
     "LogCmd",
     "run_cmd",
-)
+]

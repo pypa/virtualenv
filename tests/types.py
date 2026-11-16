@@ -14,13 +14,13 @@ class Interpreter(Protocol):
     system_executable: str
     free_threaded: bool
     version_info: _VersionInfo
-    sysconfig_vars: dict[str, object]
+    sysconfig_vars: dict[str, str | int | None]
 
 
 class MakeInterpreter(Protocol):
     def __call__(
         self,
-        sysconfig_vars: dict[str, object] | None = ...,
+        sysconfig_vars: dict[str, str | int | None] | None = ...,
         prefix: str = ...,
         free_threaded: bool = ...,
         version_info: tuple[int, ...] = ...,

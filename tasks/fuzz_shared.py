@@ -8,3 +8,8 @@ import atheris
 def consume_text(data: bytes) -> str:
     provider = atheris.FuzzedDataProvider(data)
     return provider.ConsumeUnicodeNoSurrogates(provider.remaining_bytes())
+
+
+__all__ = [
+    "consume_text",
+]

@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 
 
 class SymlinkPipInstall(PipInstall):
+    """Install a seed package by symlinking its image files into the environment."""
+
     def _sync(self, src: Path, dst: Path) -> None:
         os.symlink(str(src), str(dst))
 
@@ -45,8 +47,7 @@ class SymlinkPipInstall(PipInstall):
         # remove files that are within the image folder deeper than one level (as these will be not linked directly)
         for file in core_new_files:
             try:
-                rel = file.relative_to(folder)
-                if len(rel.parts) > 1:
+                if len(file.relative_to(folder).parts) > 1:
                     continue
             except ValueError:
                 pass
@@ -64,6 +65,7 @@ class SymlinkPipInstall(PipInstall):
         set_tree(folder, S_IREAD | S_IRGRP | S_IROTH)
 
     def clear(self) -> None:
+        """Remove the cached image of the wheel, linked files included."""
         if self._image_dir.exists():
             safe_delete(self._image_dir)
         super().clear()

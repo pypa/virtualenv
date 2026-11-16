@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+from pathlib import Path
 from shutil import copytree
 from typing import TYPE_CHECKING, Final
 from zipfile import ZipFile
@@ -15,11 +16,13 @@ from virtualenv.seed.wheels.embed import BUNDLE_FOLDER, BUNDLE_SUPPORT, get_embe
 from virtualenv.util.path import safe_delete
 
 if TYPE_CHECKING:
-    from pathlib import Path
+    from collections.abc import Callable
 
     from pytest_mock import MockerFixture
 
     from virtualenv.run.session import Session
+
+_LAUNCHER_NAME: Final[str] = "pip.exe" if os.name == "nt" else "pip"
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
@@ -62,21 +65,24 @@ def test_pip_reseed_keeps_unrelated_launcher(linked_seed: Session) -> None:
 
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
-@pytest.mark.parametrize("name", [pytest.param("__main__.py", id="file"), pytest.param("_internal", id="directory")])
-def test_pip_reseed_replaces_nested_link(linked_seed: Session, name: str) -> None:
+@pytest.mark.parametrize(
+    ("name", "directory", "remove"),
+    [
+        pytest.param("__main__.py", False, Path.unlink, id="file"),
+        pytest.param("_internal", True, safe_delete, id="directory"),
+    ],
+)
+def test_pip_reseed_replaces_nested_link(
+    linked_seed: Session, name: str, directory: bool, remove: Callable[[Path], object]
+) -> None:
     package: Final = linked_seed.creator.purelib / "pip"
     source: Final = package.resolve()
     package.unlink()
     copytree(source, package)
-    for path in package.rglob("*"):
-        if path.is_file():
-            path.chmod(0o600)
+    for path in filter(Path.is_file, package.rglob("*")):
+        path.chmod(0o600)
     entry: Final = package / name
-    directory: Final = entry.is_dir()
-    if directory:
-        safe_delete(entry)
-    else:
-        entry.unlink()
+    remove(entry)
     entry.symlink_to(source / name, target_is_directory=directory)
     cli_run([str(linked_seed.creator.dest), "--seeder", "pip", "--pip", "embed", "--no-periodic-update"])
     assert (entry.exists(), entry.is_symlink()) == (True, False)
@@ -84,7 +90,7 @@ def test_pip_reseed_replaces_nested_link(linked_seed: Session, name: str) -> Non
 
 @pytest.mark.skipif(not fs_supports_symlink(), reason="symlinks are unavailable")
 def test_pip_reseed_replaces_launcher_link(linked_seed: Session) -> None:
-    launcher: Final = linked_seed.creator.script_dir / ("pip.exe" if os.name == "nt" else "pip")
+    launcher: Final = linked_seed.creator.script_dir / _LAUNCHER_NAME
     launcher.unlink()
     missing: Final = linked_seed.creator.dest / "missing-launcher"
     launcher.symlink_to(missing)
@@ -93,15 +99,21 @@ def test_pip_reseed_replaces_launcher_link(linked_seed: Session) -> None:
 
 
 @pytest.mark.parametrize(
-    "invalid", [pytest.param("entry", id="package-name"), pytest.param("script", id="script-name")]
+    ("invalid", "member", "content"),
+    [
+        pytest.param("entry", "./", "", id="package-name"),
+        pytest.param(
+            "script",
+            "pip-99.0.dist-info/entry_points.txt",
+            "[console_scripts]\n. = pip:main\n",
+            id="script-name",
+        ),
+    ],
 )
-def test_pip_reseed_rejects_invalid_wheel_names(tmp_path: Path, invalid: str) -> None:
+def test_pip_reseed_rejects_invalid_wheel_names(tmp_path: Path, invalid: str, member: str, content: str) -> None:
     with ZipFile(tmp_path / "pip-99.0-py3-none-any.whl", "w") as archive:
         archive.writestr("pip-99.0.dist-info/METADATA", "Name: pip\nVersion: 99.0\n")
-        if invalid == "entry":
-            archive.writestr("./", "")
-        else:
-            archive.writestr("pip-99.0.dist-info/entry_points.txt", "[console_scripts]\n. = pip:main\n")
+        archive.writestr(member, content)
     with pytest.raises(RuntimeError, match=f"invalid seed wheel {invalid}"):
         cli_run([
             str(tmp_path / "env"),
@@ -172,10 +184,16 @@ def test_pip_invoke_uses_selected_wheel(
 
 
 @pytest.mark.parametrize(
-    "excluded",
-    [pytest.param("pip", id="no-pip"), pytest.param("setuptools", id="no-setuptools"), pytest.param("", id="all")],
+    ("excluded", "expected"),
+    [
+        pytest.param(["--no-pip"], {"setuptools"}, id="no-pip"),
+        pytest.param(["--no-setuptools"], {"pip"}, id="no-setuptools"),
+        pytest.param([], {"pip", "setuptools"}, id="all"),
+    ],
 )
-def test_base_bootstrap_via_pip_invoke(tmp_path: Path, current_fastest: str, excluded: str) -> None:
+def test_base_bootstrap_via_pip_invoke(
+    tmp_path: Path, current_fastest: str, excluded: list[str], expected: set[str]
+) -> None:
     command: Final = [
         "--seeder",
         "pip",
@@ -189,13 +207,8 @@ def test_base_bootstrap_via_pip_invoke(tmp_path: Path, current_fastest: str, exc
         "embed",
         "--no-periodic-update",
     ]
-    if excluded:
-        command.append(f"--no-{excluded}")
-    session: Final = cli_run(command)
-    assert {path.name for path in session.creator.purelib.iterdir()} & {"pip", "setuptools"} == {
-        "pip",
-        "setuptools",
-    } - {excluded}
+    session: Final = cli_run([*command, *excluded])
+    assert {path.name for path in session.creator.purelib.iterdir()} & {"pip", "setuptools"} == expected
 
 
 def test_pip_invoke_reports_unavailable_wheel(tmp_path: Path) -> None:
